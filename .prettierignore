@@ -1,0 +1,11 @@
+node_modules
+.expo
+dist
+build
+coverage
+supabase/.temp
+supabase/.branches
+package-lock.json
+docs
+AGENTS.md
+.agents

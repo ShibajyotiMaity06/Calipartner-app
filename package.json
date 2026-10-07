@@ -1,0 +1,37 @@
+{
+  "name": "calipartner",
+  "private": true,
+  "version": "0.0.0",
+  "workspaces": [
+    "app",
+    "packages/*"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "lint": "eslint .",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "test": "npm run test --workspaces --if-present",
+    "check": "npm run lint && npm run typecheck && npm test",
+    "app": "npm run start --workspace app",
+    "supabase:start": "supabase start",
+    "supabase:stop": "supabase stop",
+    "supabase:serve": "supabase functions serve --no-verify-jwt"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.0.0",
+    "@types/deno": "^2.7.0",
+    "eslint": "^9.0.0",
+    "eslint-config-prettier": "^10.0.0",
+    "eslint-plugin-react": "^7.37.0",
+    "eslint-plugin-react-hooks": "^5.0.0",
+    "globals": "^15.0.0",
+    "prettier": "^3.3.0",
+    "supabase": "^2.120.0",
+    "typescript": "~6.0.3",
+    "typescript-eslint": "^8.0.0"
+  }
+}

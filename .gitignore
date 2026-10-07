@@ -1,0 +1,32 @@
+node_modules/
+.expo/
+dist/
+build/
+coverage/
+*.tsbuildinfo
+
+# env / secrets
+.env
+.env.*
+!.env.example
+
+# native generated
+app/ios/
+app/android/
+
+# keys
+*.jks
+*.p8
+*.p12
+*.key
+*.pem
+*.mobileprovision
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Supabase local
+supabase/.temp/
+supabase/.branches/
+supabase/functions/.env
