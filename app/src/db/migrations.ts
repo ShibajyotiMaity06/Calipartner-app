@@ -25,4 +25,18 @@ export const migrations: readonly LocalMigration[] = [
       CREATE INDEX idx_outbox_created_at ON outbox (created_at);
     `,
   },
+  {
+    version: 2,
+    name: 'create_guest_entries',
+    sql: `
+      CREATE TABLE guest_entries (
+        id          TEXT PRIMARY KEY NOT NULL,
+        entity      TEXT NOT NULL,
+        payload     TEXT NOT NULL,            -- JSON
+        created_at  TEXT NOT NULL,            -- ISO-8601 UTC
+        migrated_at TEXT                      -- ISO-8601 UTC once transferred to account
+      );
+      CREATE INDEX idx_guest_entries_migrated ON guest_entries (migrated_at);
+    `,
+  },
 ];

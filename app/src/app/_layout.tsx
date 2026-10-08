@@ -6,6 +6,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { ErrorState } from '@/components/ErrorState';
 import { LoadingState } from '@/components/LoadingState';
+import { AuthProvider } from '@/contexts/AuthContext';
 import { getDb } from '@/db';
 import { createLogger } from '@/lib/logger';
 import { useTheme } from '@/theme/useTheme';
@@ -43,7 +44,9 @@ export default function RootLayout() {
       <SafeAreaProvider>
         <StatusBar style={scheme === 'dark' ? 'light' : 'dark'} />
         <DatabaseGate>
-          <Stack screenOptions={{ headerShown: false }} />
+          <AuthProvider>
+            <Stack screenOptions={{ headerShown: false }} />
+          </AuthProvider>
         </DatabaseGate>
       </SafeAreaProvider>
     </ErrorBoundary>

@@ -1,4 +1,4 @@
-# Supabase local development config (minimal; see https://supabase.com/docs/guides/local-development/cli/config)
+# Supabase local development config (Phase 1)
 project_id = "calipartner"
 
 [api]
@@ -24,7 +24,7 @@ sql_paths = ["./seed.sql"]
 enabled = true
 port = 54323
 
-[inbucket]
+[local_smtp]
 enabled = true
 port = 54324
 
@@ -35,10 +35,33 @@ file_size_limit = "50MiB"
 [auth]
 enabled = true
 site_url = "http://127.0.0.1:3000"
-additional_redirect_urls = []
+additional_redirect_urls = ["calipartner://auth/callback", "exp://localhost:8081/--/auth/callback"]
 jwt_expiry = 3600
 enable_refresh_token_rotation = true
 enable_signup = true
+
+[auth.email]
+enable_signup = true
+double_confirm_changes = true
+enable_confirmations = true
+otp_length = 6
+otp_expiry = 3600
+
+# Phone/SMS auth is forbidden by product policy (AUTH-1)
+[auth.sms]
+enable_signup = false
+enable_confirmations = false
+
+# External OAuth providers (credentials supplied via environment / Supabase secrets in production)
+[auth.external.google]
+enabled = false
+client_id = "env(SUPABASE_AUTH_EXTERNAL_GOOGLE_CLIENT_ID)"
+secret = "env(SUPABASE_AUTH_EXTERNAL_GOOGLE_SECRET)"
+
+[auth.external.apple]
+enabled = false
+client_id = "env(SUPABASE_AUTH_EXTERNAL_APPLE_CLIENT_ID)"
+secret = "env(SUPABASE_AUTH_EXTERNAL_APPLE_SECRET)"
 
 [edge_runtime]
 enabled = true
@@ -47,3 +70,7 @@ policy = "per_worker"
 [functions.health]
 # Public liveness probe. Returns no user data.
 verify_jwt = false
+
+[functions.delete-account]
+# Account deletion endpoint; requires valid user JWT
+verify_jwt = true

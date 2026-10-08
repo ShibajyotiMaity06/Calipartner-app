@@ -1,3 +1,4 @@
+import { Platform } from 'react-native';
 import * as SQLite from 'expo-sqlite';
 import { migrations } from '@/db/migrations';
 import { runMigrations } from '@/db/runner';
@@ -12,6 +13,26 @@ let opening: Promise<SQLite.SQLiteDatabase> | null = null;
 export function getDb(): Promise<SQLite.SQLiteDatabase> {
   if (!opening) {
     opening = (async () => {
+      if (Platform.OS === 'web') {
+        log.info('Running on web; using in-memory mock for UI preview');
+        const mockDb = {
+          async execAsync() {},
+          async runAsync() {
+            return { lastInsertRowId: 1, changes: 1 };
+          },
+          async getAllAsync() {
+            return [];
+          },
+          async getFirstAsync() {
+            return null;
+          },
+          async withTransactionAsync<T>(action: () => Promise<T>) {
+            return action();
+          },
+        } as unknown as SQLite.SQLiteDatabase;
+        return mockDb;
+      }
+
       const db = await SQLite.openDatabaseAsync(DB_NAME);
       await db.execAsync('PRAGMA journal_mode = WAL;');
       const version = await runMigrations(db, migrations);
