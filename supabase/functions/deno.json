@@ -1,0 +1,8 @@
+{
+  "compilerOptions": {
+    "strict": true
+  },
+  "imports": {
+    "@calipartner/core": "../../packages/core/src/index.ts"
+  }
+}

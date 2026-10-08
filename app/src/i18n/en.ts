@@ -118,6 +118,210 @@ export const en = {
     storeSubscriptionNote:
       'Note: If you have an active store subscription (Google Play or App Store), remember to cancel it in your device store settings to avoid future charges.',
   },
+  onboarding: {
+    title: 'Personal Targets',
+    stepIndicator: 'Step {current} of {total}',
+    next: 'Continue',
+    back: 'Back',
+    skip: 'Skip this step',
+    finish: 'Save Targets & Continue',
+    saving: 'Saving your targets…',
+    errorTitle: 'Please check your inputs',
+    steps: {
+      goal: 'Choose Your Goal',
+      bodyStats: 'Body Measurements',
+      activity: 'Typical Activity Level',
+      rate: 'Weekly Pace & Deficit',
+      targetDate: 'Milestone Goal (Optional)',
+      healthScreening: 'Private Health Screening',
+      howCalculated: 'How We Calculated This',
+      summary: 'Your Daily Targets',
+    },
+    goal: {
+      title: 'What is your primary goal?',
+      subtitle:
+        'We calibrate your calorie targets and macronutrient split based on where you want to go.',
+      cutTitle: 'Lose body fat (Cut)',
+      cutDesc: 'A measured deficit that reduces fat while preserving lean muscle mass.',
+      maintainTitle: 'Maintain weight',
+      maintainDesc: 'Eat at your energy baseline to maintain weight and fuel daily life.',
+      bulkTitle: 'Build muscle (Bulk)',
+      bulkDesc: 'A controlled surplus paired with training for lean muscle growth.',
+    },
+    bodyStats: {
+      title: 'Tell us about your body',
+      subtitle: 'Used strictly to calculate your resting metabolic rate and energy needs.',
+      unitsLabel: 'Measurement units',
+      metric: 'Metric (kg, cm)',
+      imperial: 'Imperial (lb, ft/in)',
+      sexLabel: 'Biological sex for metabolic rate',
+      sexHelp:
+        'Metabolic equations use biological sex to estimate baseline energy expenditure.',
+      male: 'Male',
+      female: 'Female',
+      other: 'Other',
+      dobLabel: 'Date of birth',
+      dobPlaceholder: 'YYYY-MM-DD',
+      dobHelp: 'You must be at least 18 years old to use CaliPartner.',
+      under18Error: 'You must be at least 18 years old to use CaliPartner.',
+      invalidDobError: 'Please enter your date of birth as YYYY-MM-DD.',
+      heightLabel: 'Height',
+      heightCmPlaceholder: '175',
+      heightFtPlaceholder: '5',
+      heightInPlaceholder: '9',
+      heightError: 'Please enter a realistic height.',
+      weightLabel: 'Current weight',
+      weightPlaceholder: '70.0',
+      weightError: 'Please enter a realistic weight.',
+      bodyFatLabel: 'Body fat percentage (optional)',
+      bodyFatPlaceholder: 'e.g. 18',
+      bodyFatHelp:
+        'Optional: enables the Katch-McArdle formula for greater precision.',
+      bodyFatError: 'Body fat must be between 3% and 70%.',
+      bmiLabel: 'Current BMI',
+      bmiCategoryUnderweight: 'Underweight',
+      bmiCategoryNormal: 'Normal weight',
+      bmiCategoryOverweight: 'Overweight',
+      bmiCategoryObese: 'Obese',
+      bmiCutWarning:
+        'Your BMI is below 18.5. For your health, calorie reduction is disabled.',
+    },
+    activity: {
+      title: 'How active is a typical week?',
+      subtitle:
+        'Choose based on a typical week including your regular workouts and daily movement.',
+      sedentaryTitle: 'Sedentary',
+      sedentaryDesc: 'Desk job, mostly sitting, little to no intentional exercise.',
+      sedentaryMultiplier: '1.20× baseline',
+      lightTitle: 'Lightly Active',
+      lightDesc: 'Standing work or light movement, workouts 1–3 days per week.',
+      lightMultiplier: '1.375× baseline',
+      moderateTitle: 'Moderately Active',
+      moderateDesc: 'Active daily routine, walking, moderate exercise 3–5 days per week.',
+      moderateMultiplier: '1.55× baseline',
+      veryActiveTitle: 'Very Active',
+      veryActiveDesc:
+        'Demanding physical job or strenuous sports/workouts 6–7 days per week.',
+      veryActiveMultiplier: '1.725× baseline',
+      extraActiveTitle: 'Extra Active',
+      extraActiveDesc:
+        'Heavy physical labor or intense twice-daily athletic training.',
+      extraActiveMultiplier: '1.90× baseline',
+    },
+    rate: {
+      title: 'Choose your weekly pace',
+      subtitle:
+        'We calculate your exact daily calories for each weekly rate so there are no surprises.',
+      maintenanceHeader: 'Estimated Maintenance',
+      maintenanceDesc:
+        'Energy burned each day to stay at your current body weight.',
+      maintenanceKcal: '{kcal} kcal / day',
+      maintainOnlyNotice:
+        'Since your goal is to maintain, your daily target matches your maintenance calories.',
+      rateCardTitle: '{rate} kg / week',
+      rateCardTitleImperial: '{rate} lb / week',
+      targetKcalText: '{kcal} kcal / day',
+      deficitText: '-{diff} kcal / day',
+      surplusText: '+{diff} kcal / day',
+      unavailableBadge: 'Unavailable',
+      reasonFloor: 'Below safe calorie floor ({floor} kcal/day)',
+      reasonCap: 'Exceeds safe rate cap of 1% body weight ({cap} kg/wk)',
+      reasonBmi: 'Cutting is disabled when BMI is under 18.5',
+      advisoryLargeDeficit:
+        'Large deficit advisory: A deficit above 25% of maintenance requires close attention to nutrition.',
+      advisoryLeanGain:
+        'Bulk advisory: Rates above 0.5% body weight/week increase fat gain alongside muscle.',
+    },
+    targetDate: {
+      title: 'Milestone target (Optional)',
+      subtitle:
+        'If you have a target weight and date in mind, we verify if the pace is safe and sustainable.',
+      targetWeightLabel: 'Target weight',
+      targetDateLabel: 'Target date',
+      targetDatePlaceholder: 'YYYY-MM-DD',
+      skipNote: 'You can skip this step at any time.',
+      requiredRateText: 'Required pace: {rate} kg/week to reach your target on time.',
+      earliestDateNotice:
+        'At the maximum safe rate of 1% body weight per week, your earliest realistic date is {date}.',
+      sustainablePaceTitle: 'Sustainable Pace',
+      sustainablePaceBody:
+        'Pacing yourself protects muscle tissue, metabolic rate, and day-to-day energy.',
+      invalidTargetWeight: 'Target weight must be between 20 kg and 500 kg.',
+      invalidTargetDate: 'Target date must be a valid future date (YYYY-MM-DD).',
+    },
+    howCalculated: {
+      title: 'How we calculated this',
+      subtitle:
+        'Complete transparency. Here is the exact science and math behind your numbers.',
+      bmrHeader: '1. Resting Metabolic Rate (BMR)',
+      bmrMifflin: 'Calculated using the Mifflin-St Jeor equation:',
+      bmrKatch: 'Calculated using the Katch-McArdle lean mass equation:',
+      bmrFormulaMifflin:
+        'BMR = (10 × kg) + (6.25 × cm) - (5 × age) + sex offset',
+      bmrFormulaKatch: 'BMR = 370 + (21.6 × Lean Body Mass in kg)',
+      bmrResult: 'BMR: {kcal} kcal / day',
+      tdeeHeader: '2. Daily Energy Expenditure (TDEE)',
+      tdeeFormula: 'TDEE = BMR × Activity Multiplier ({multiplier}×)',
+      tdeeResult: 'TDEE: {kcal} kcal / day',
+      adjustmentHeader: '3. Weekly Goal Adjustment',
+      adjustmentFormula:
+        'Daily change = Rate ({rate} kg/wk) × 7,700 kcal ÷ 7 days',
+      adjustmentResult: 'Adjustment: {diff} kcal / day',
+      safetyHeader: '4. Safety Guards & Ceilings',
+      safetyFloorRule:
+        'Calorie Floor: Never drops below {floor} kcal/day for your health.',
+      safetyCapRule:
+        'Rate Cap: Capped at 1% of body weight ({cap} kg/week) to preserve muscle.',
+      safetyBmiRule: 'BMI Guard: Cutting disabled when BMI is under 18.5.',
+      macrosHeader: '5. Macronutrient Distribution',
+      proteinRule:
+        'Protein ({perKg} g/kg): {grams}g ({kcal} kcal) for muscle preservation.',
+      fatRule:
+        'Fat (25% of calories, min 0.6 g/kg): {grams}g ({kcal} kcal) for hormone health.',
+      carbRule: 'Carbohydrates (remainder): {grams}g ({kcal} kcal) for training fuel.',
+    },
+    healthScreening: {
+      title: 'Private health screening',
+      subtitle:
+        'Optional questions to adapt recommendations and protect your well-being.',
+      whyWeAskTitle: 'Why we ask this',
+      whyWeAskBody:
+        'Your answers are 100% private. They are never shown to room partners or leaderboards. We use them only to hide intermittent fasting and display relevant cautions.',
+      pregnantLabel: 'Pregnant or breastfeeding',
+      pregnantDesc:
+        'Fasting and steep deficits are disabled to ensure sufficient nourishment.',
+      diabetesLabel: 'Diabetes or blood sugar medication',
+      diabetesDesc:
+        'Fasting is disabled and meal timing consistency is recommended.',
+      edLabel: 'Personal history of an eating disorder',
+      edDesc:
+        'Fasting is disabled and weight tracking reminders are softened.',
+      preferNotToSay: 'Prefer not to answer / Skip',
+    },
+    summary: {
+      title: 'Your daily targets',
+      subtitle:
+        'Your personal plan is ready. You can adjust these anytime in your profile.',
+      dailyCaloriesHero: '{kcal}',
+      dailyCaloriesUnit: 'kcal / day',
+      goalBadge: 'Goal: {goal}',
+      macrosTitle: 'Daily Macronutrients',
+      proteinLabel: 'Protein',
+      carbsLabel: 'Carbs',
+      fatLabel: 'Fat',
+      habitsTitle: 'Daily Habits',
+      stepGoalLabel: 'Daily Step Goal',
+      stepGoalValue: '{steps} steps',
+      waterGoalLabel: 'Daily Water Target',
+      waterGoalValue: '{ml} ml',
+      howCalculatedLink: 'How we calculated this (formula breakdown)',
+      emptyTitle: 'No targets calculated yet',
+      emptyBody:
+        'Please go back and enter your body stats to calculate your daily targets.',
+      saveButton: 'Save Targets & Continue',
+      savedSuccess: 'Targets saved successfully!',
+    },
+  },
 } as const;
 
 export type Messages = typeof en;

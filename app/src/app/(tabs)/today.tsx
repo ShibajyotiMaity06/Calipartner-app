@@ -1,11 +1,12 @@
 import { Pressable, Text, View } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useRouter, type Href } from 'expo-router';
 import { ErrorState } from '@/components/ErrorState';
 import { LoadingState } from '@/components/LoadingState';
 import { PlaceholderScreen } from '@/components/PlaceholderScreen';
 import { useAuth } from '@/contexts/AuthContext';
 import { useHealth } from '@/hooks/useHealth';
 import { useNetworkStatus } from '@/hooks/useNetworkStatus';
+import { useTargets } from '@/hooks/useTargets';
 import { t } from '@/i18n';
 import { fontSize, radius, spacing } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
@@ -16,6 +17,7 @@ export default function TodayScreen() {
   const { state, retry } = useHealth();
   const { isOnline } = useNetworkStatus();
   const { user, profile, isGuest, needsProfileSetup } = useAuth();
+  const { currentGoalProfile, loading: targetsLoading } = useTargets();
 
   return (
     <PlaceholderScreen
@@ -23,6 +25,87 @@ export default function TodayScreen() {
       subtitle={t('placeholder.today')}
       testID="screen-today"
     >
+      {/* Onboarding goals prompt if no goal profile exists */}
+      {!targetsLoading && !currentGoalProfile && (
+        <View
+          style={{
+            backgroundColor: colors.surface,
+            borderColor: colors.border,
+            borderWidth: 1,
+            borderRadius: radius.md,
+            padding: spacing.md,
+            marginBottom: spacing.md,
+            gap: spacing.xs,
+          }}
+          testID="banner-onboarding-prompt"
+        >
+          <Text style={{ color: colors.text, fontSize: fontSize.md, fontWeight: '600' }}>
+            {t('onboarding.title')}
+          </Text>
+          <Text style={{ color: colors.textMuted, fontSize: fontSize.sm }}>
+            {t('onboarding.goal.subtitle')}
+          </Text>
+          <Pressable
+            testID="btn-prompt-setup-goals"
+            style={{
+              backgroundColor: colors.accent,
+              borderRadius: radius.sm,
+              paddingVertical: 10,
+              alignItems: 'center',
+              marginTop: spacing.xs,
+            }}
+            onPress={() => router.push('/onboarding' as Href)}
+          >
+            <Text style={{ color: colors.onAccent, fontWeight: '600', fontSize: fontSize.sm }}>
+              {t('onboarding.steps.goal')}
+            </Text>
+          </Pressable>
+        </View>
+      )}
+
+      {/* Active Goal Profile Card */}
+      {currentGoalProfile && (
+        <View
+          style={{
+            backgroundColor: colors.surface,
+            borderColor: colors.border,
+            borderWidth: 1,
+            borderRadius: radius.md,
+            padding: spacing.md,
+            marginBottom: spacing.md,
+            gap: spacing.sm,
+          }}
+          testID="card-current-targets"
+        >
+          <View
+            style={{
+              flexDirection: 'row',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+            }}
+          >
+            <Text style={{ color: colors.text, fontSize: fontSize.md, fontWeight: '600' }}>
+              {t('onboarding.summary.title')}
+            </Text>
+            <Pressable
+              testID="btn-edit-targets"
+              onPress={() => router.push('/onboarding' as Href)}
+              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+            >
+              <Text style={{ color: colors.accent, fontSize: fontSize.sm, fontWeight: '600' }}>
+                Edit
+              </Text>
+            </Pressable>
+          </View>
+          <Text style={{ color: colors.text, fontSize: fontSize.xl, fontWeight: '700' }}>
+            {currentGoalProfile.daily_calorie_target.toLocaleString()} kcal / day
+          </Text>
+          <Text style={{ color: colors.textMuted, fontSize: fontSize.sm }}>
+            Protein {currentGoalProfile.protein_grams}g · Carbs {currentGoalProfile.carb_grams}g ·
+            Fat {currentGoalProfile.fat_grams}g
+          </Text>
+        </View>
+      )}
       {/* Profile setup prompt if signed in without a profile */}
       {needsProfileSetup && (
         <View

@@ -31,6 +31,8 @@ Ranking is by **consistency and percentage of personal goal achieved** — never
 
 Spend all the boldness in one place: the paired view. Everything else stays quiet so that view lands.
 
+Brand colour. The app's identity is violet (brand) and its signature is the duoGradient, rose through violet to aqua, which is what the two people become when they fuse. Use brand for primary buttons (one per view), the active tab, selected chips and the logo. Use brandLight for links and active icons. Use duoGradient only for the logo, the fused seam, the onboarding target ring and the paywall hero. Never use brand or the gradient to show performance, and never on the paired arcs.
+
 The structural idea is a **seam** — a vertical hairline that runs down the center of the Room screen, splitting it into two equal halves, you on the left and your partner on the right. The seam is not decoration; it carries state. It is dim and broken when only one of you has logged, and it fuses into one continuous lit line when both of you have closed the day. That fusing is the app's one moment of celebration. No confetti, no trophies, no badges raining down.
 
 The second idea is **identity color instead of score color**. Each person in a room is assigned one of two hues for the life of the room. Neither hue means good or bad. Green-means-winning and red-means-losing are banned everywhere performance is shown, because they turn a friend into a scoreboard. Red exists in this app only for destructive actions like deleting an account.
@@ -43,7 +45,38 @@ Premium here means restraint and material quality: deep cold slate, one layer of
 
 Write these to `lib/design/tokens.dart` first. Every widget reads from here. No hardcoded hex, no hardcoded padding, anywhere in the app.
 
-### 3.1 Color
+
+### 3.1 Color 
+
+// Base — deep indigo ink (tinted, not neutral)
+ink950  #0B0A1F   app background
+ink900  #131230   card / primary surface
+ink800  #1B1A40   raised surface, inputs, tab bar fill
+ink700  #26245A   pressed states
+hairline    #2D2B5E   1px structural lines
+hairlineLit #6B66A3   active / focused line        3.50:1 on ink900
+
+// Text — measured on ink900
+textHi   #F2F0FF   numerals, headings      16.15:1
+textMid  #AEA9D6   labels, secondary        8.16:1
+textLo   #8B86B8   placeholders, axis       5.36:1
+textOff  #6B66A3   disabled controls only   3.50:1
+
+// Brand — the app's own colour
+brand       #6F52F2   primary button, active tab, logo      white text 5.04:1, 3.60:1 on ink900
+brandLight  #A895FF   links, active icons and text          7.27:1 on ink900
+duoGradient #FB75A7 → #A895FF → #05B0D3   (rose → violet → aqua)
+
+// Identity hues — user-chosen per room, luminance-matched at 0.36 (~7.1:1 on ink900)
+rose    #FB75A7   default person A
+aqua    #05B0D3   default person B
+orchid  #CE83F8
+sky     #78A0FC
+lime    #81B014
+
+// Signals
+amber   #F2B13C   over goal, attention, lapsed plan   9.62:1
+danger  #FF5A5A   destructive only, never performance 5.93:1
 
 The base is a cold slate with a deliberate blue-green undertone — the color of a gym at 6am before the lights warm up. It is not a neutral tinted black.
 

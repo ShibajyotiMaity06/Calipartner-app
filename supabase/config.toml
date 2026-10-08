@@ -74,3 +74,8 @@ verify_jwt = false
 [functions.delete-account]
 # Account deletion endpoint; requires valid user JWT
 verify_jwt = true
+
+[functions.calculate-targets]
+# Deterministic targets calculator; can be called during onboarding
+verify_jwt = false
+
