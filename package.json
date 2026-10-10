@@ -21,7 +21,7 @@
     "supabase:start": "supabase start",
     "supabase:stop": "supabase stop",
     "supabase:serve": "supabase functions serve --no-verify-jwt",
-    "food:seed": "tsx scripts/food_tools.ts"
+    "food:seed": "npx tsx scripts/food_tools.ts"
   },
 
   "devDependencies": {

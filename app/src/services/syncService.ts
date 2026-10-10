@@ -159,6 +159,20 @@ function getLocalTableName(entity: string): string | null {
       return 'local_foods';
     case 'saved_meals':
       return 'local_saved_meals';
+    case 'water_logs':
+      return 'local_water_logs';
+    case 'weight_logs':
+      return 'local_weight_logs';
+    case 'activity_days':
+      return 'local_activity_days';
+    case 'exercises':
+      return 'local_exercises';
+    case 'workouts':
+      return 'local_workouts';
+    case 'workout_exercises':
+      return 'local_workout_exercises';
+    case 'workout_sets':
+      return 'local_workout_sets';
     default:
       return null;
   }
@@ -198,8 +212,13 @@ export async function flushOutbox(
           .eq('id', item.id);
         if (error) throw error;
       } else {
-        // Upsert by primary key (id or user_id + food_id for stats)
-        const onConflict = item.entity === 'user_food_stats' ? 'user_id,food_id' : 'id';
+        // Upsert by primary key (id, user_id+food_id, or user_id+local_date)
+        const onConflict =
+          item.entity === 'user_food_stats'
+            ? 'user_id,food_id'
+            : item.entity === 'activity_days'
+              ? 'user_id,local_date'
+              : 'id';
         const { error } = await supabase.from(item.entity).upsert(item.payload, { onConflict });
         if (error) throw error;
       }
@@ -213,6 +232,11 @@ export async function flushOutbox(
           await db.runAsync(
             `UPDATE ${localTable} SET sync_state = 'synced' WHERE user_id = ? AND food_id = ?`,
             [item.payload.user_id, item.payload.food_id],
+          );
+        } else if (item.entity === 'activity_days') {
+          await db.runAsync(
+            `UPDATE ${localTable} SET sync_state = 'synced' WHERE user_id = ? AND local_date = ?`,
+            [item.payload.user_id, item.payload.local_date],
           );
         } else {
           await db.runAsync(
@@ -472,6 +496,204 @@ export async function pullEntityDelta(
           row.deleted_at ?? null,
         ],
       );
+    } else if (entity === 'water_logs') {
+      await db.runAsync(
+        `INSERT INTO local_water_logs (
+          id, user_id, amount_ml, logged_at, local_date, created_at, updated_at, deleted_at, sync_state
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'synced')
+        ON CONFLICT (id) DO UPDATE SET
+          amount_ml = excluded.amount_ml,
+          logged_at = excluded.logged_at,
+          local_date = excluded.local_date,
+          updated_at = excluded.updated_at,
+          deleted_at = excluded.deleted_at,
+          sync_state = 'synced'`,
+        [
+          row.id,
+          row.user_id,
+          row.amount_ml,
+          row.logged_at,
+          row.local_date,
+          row.created_at ?? row.logged_at,
+          row.updated_at,
+          row.deleted_at ?? null,
+        ],
+      );
+    } else if (entity === 'weight_logs') {
+      await db.runAsync(
+        `INSERT INTO local_weight_logs (
+          id, user_id, weight_kg, logged_at, local_date, notes, created_at, updated_at, deleted_at, sync_state
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'synced')
+        ON CONFLICT (id) DO UPDATE SET
+          weight_kg = excluded.weight_kg,
+          logged_at = excluded.logged_at,
+          local_date = excluded.local_date,
+          notes = excluded.notes,
+          updated_at = excluded.updated_at,
+          deleted_at = excluded.deleted_at,
+          sync_state = 'synced'`,
+        [
+          row.id,
+          row.user_id,
+          row.weight_kg,
+          row.logged_at,
+          row.local_date,
+          row.notes ?? null,
+          row.created_at ?? row.logged_at,
+          row.updated_at,
+          row.deleted_at ?? null,
+        ],
+      );
+    } else if (entity === 'activity_days') {
+      await db.runAsync(
+        `INSERT INTO local_activity_days (
+          id, user_id, local_date, steps, distance_m, source, active_calories, created_at, updated_at, deleted_at, sync_state
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'synced')
+        ON CONFLICT (user_id, local_date) DO UPDATE SET
+          steps = excluded.steps,
+          distance_m = excluded.distance_m,
+          source = excluded.source,
+          active_calories = excluded.active_calories,
+          updated_at = excluded.updated_at,
+          deleted_at = excluded.deleted_at,
+          sync_state = 'synced'`,
+        [
+          row.id,
+          row.user_id,
+          row.local_date,
+          row.steps,
+          row.distance_m ?? 0,
+          row.source,
+          row.active_calories ?? 0,
+          row.created_at ?? new Date().toISOString(),
+          row.updated_at,
+          row.deleted_at ?? null,
+        ],
+      );
+    } else if (entity === 'exercises') {
+      await db.runAsync(
+        `INSERT INTO local_exercises (
+          id, name, muscle_group, equipment, type, owner_id, attribution, created_at, updated_at, deleted_at, sync_state
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'synced')
+        ON CONFLICT (id) DO UPDATE SET
+          name = excluded.name,
+          muscle_group = excluded.muscle_group,
+          equipment = excluded.equipment,
+          type = excluded.type,
+          owner_id = excluded.owner_id,
+          attribution = excluded.attribution,
+          updated_at = excluded.updated_at,
+          deleted_at = excluded.deleted_at,
+          sync_state = 'synced'`,
+        [
+          row.id,
+          row.name,
+          row.muscle_group,
+          row.equipment,
+          row.type,
+          row.owner_id ?? null,
+          row.attribution ?? null,
+          row.created_at ?? new Date().toISOString(),
+          row.updated_at,
+          row.deleted_at ?? null,
+        ],
+      );
+    } else if (entity === 'workouts') {
+      await db.runAsync(
+        `INSERT INTO local_workouts (
+          id, user_id, type, name, start_time, duration_minutes, local_date, notes, effort_rating, created_at, updated_at, deleted_at, sync_state
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'synced')
+        ON CONFLICT (id) DO UPDATE SET
+          user_id = excluded.user_id,
+          type = excluded.type,
+          name = excluded.name,
+          start_time = excluded.start_time,
+          duration_minutes = excluded.duration_minutes,
+          local_date = excluded.local_date,
+          notes = excluded.notes,
+          effort_rating = excluded.effort_rating,
+          updated_at = excluded.updated_at,
+          deleted_at = excluded.deleted_at,
+          sync_state = 'synced'`,
+        [
+          row.id,
+          row.user_id,
+          row.type,
+          row.name ?? null,
+          row.start_time ?? null,
+          row.duration_minutes ?? 0,
+          row.local_date,
+          row.notes ?? null,
+          row.effort_rating ?? null,
+          row.created_at ?? new Date().toISOString(),
+          row.updated_at,
+          row.deleted_at ?? null,
+        ],
+      );
+    } else if (entity === 'workout_exercises') {
+      await db.runAsync(
+        `INSERT INTO local_workout_exercises (
+          id, workout_id, user_id, exercise_id, exercise_name, order_in_workout, notes, created_at, updated_at, deleted_at, sync_state
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'synced')
+        ON CONFLICT (id) DO UPDATE SET
+          workout_id = excluded.workout_id,
+          user_id = excluded.user_id,
+          exercise_id = excluded.exercise_id,
+          exercise_name = excluded.exercise_name,
+          order_in_workout = excluded.order_in_workout,
+          notes = excluded.notes,
+          updated_at = excluded.updated_at,
+          deleted_at = excluded.deleted_at,
+          sync_state = 'synced'`,
+        [
+          row.id,
+          row.workout_id,
+          row.user_id,
+          row.exercise_id ?? null,
+          row.exercise_name,
+          row.order_in_workout ?? 0,
+          row.notes ?? null,
+          row.created_at ?? new Date().toISOString(),
+          row.updated_at,
+          row.deleted_at ?? null,
+        ],
+      );
+    } else if (entity === 'workout_sets') {
+      await db.runAsync(
+        `INSERT INTO local_workout_sets (
+          id, workout_exercise_id, workout_id, user_id, set_number, reps, weight_kg, duration_seconds, distance_meters, is_warmup, completed, created_at, updated_at, deleted_at, sync_state
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'synced')
+        ON CONFLICT (id) DO UPDATE SET
+          workout_exercise_id = excluded.workout_exercise_id,
+          workout_id = excluded.workout_id,
+          user_id = excluded.user_id,
+          set_number = excluded.set_number,
+          reps = excluded.reps,
+          weight_kg = excluded.weight_kg,
+          duration_seconds = excluded.duration_seconds,
+          distance_meters = excluded.distance_meters,
+          is_warmup = excluded.is_warmup,
+          completed = excluded.completed,
+          updated_at = excluded.updated_at,
+          deleted_at = excluded.deleted_at,
+          sync_state = 'synced'`,
+        [
+          row.id,
+          row.workout_exercise_id,
+          row.workout_id,
+          row.user_id,
+          row.set_number ?? 1,
+          row.reps ?? null,
+          row.weight_kg ?? null,
+          row.duration_seconds ?? null,
+          row.distance_meters ?? null,
+          row.is_warmup ? 1 : 0,
+          row.completed ? 1 : 0,
+          row.created_at ?? new Date().toISOString(),
+          row.updated_at,
+          row.deleted_at ?? null,
+        ],
+      );
     }
   }
 
@@ -493,6 +715,13 @@ export async function syncAll(
   pulledEntries: number;
   pulledStats: number;
   pulledFoods: number;
+  pulledWater: number;
+  pulledWeight: number;
+  pulledActivity: number;
+  pulledExercises: number;
+  pulledWorkouts: number;
+  pulledWorkoutExercises: number;
+  pulledWorkoutSets: number;
 }> {
   await recoverInFlightOutbox(db);
 
@@ -503,12 +732,26 @@ export async function syncAll(
   const pullEntries = await pullEntityDelta(db, supabase, 'food_entries');
   const pullStats = await pullEntityDelta(db, supabase, 'user_food_stats');
   const pullFoods = await pullEntityDelta(db, supabase, 'foods');
+  const pullWater = await pullEntityDelta(db, supabase, 'water_logs');
+  const pullWeight = await pullEntityDelta(db, supabase, 'weight_logs');
+  const pullActivity = await pullEntityDelta(db, supabase, 'activity_days');
+  const pullExercises = await pullEntityDelta(db, supabase, 'exercises');
+  const pullWorkouts = await pullEntityDelta(db, supabase, 'workouts');
+  const pullWorkoutExercises = await pullEntityDelta(db, supabase, 'workout_exercises');
+  const pullWorkoutSets = await pullEntityDelta(db, supabase, 'workout_sets');
 
   return {
     pushResult,
     pulledEntries: pullEntries.pulledCount,
     pulledStats: pullStats.pulledCount,
     pulledFoods: pullFoods.pulledCount,
+    pulledWater: pullWater.pulledCount,
+    pulledWeight: pullWeight.pulledCount,
+    pulledActivity: pullActivity.pulledCount,
+    pulledExercises: pullExercises.pulledCount,
+    pulledWorkouts: pullWorkouts.pulledCount,
+    pulledWorkoutExercises: pullWorkoutExercises.pulledCount,
+    pulledWorkoutSets: pullWorkoutSets.pulledCount,
   };
 }
 

@@ -3,7 +3,7 @@
 Keep this file in the repo root. Every agent session reads it first.
 
 ## Source of truth
-- Product requirements: `/docs/prd.md` (v0.3). If code and PRD disagree, stop and report it. Do not guess.
+- Product requirements: `/docs/PRD.md` (v0.4). If code and PRD disagree, stop and report it. Do not guess.
 - Build order: `/docs/BUILD_PLAN.md`. You are given ONE phase at a time. Build only that phase. Do not build future phases, extra features or "nice to haves".
 
 ## Stack (fixed. Do not swap any of it)
@@ -29,12 +29,13 @@ AGENT_RULES.md
 ## Non-negotiable rules
 1. **Security lives in the database.** Every table has Row Level Security enabled with explicit policies. The app is never trusted to hide data, check subscriptions or enforce privacy toggles.
 2. **Never expose another user's data except through a SQL function/view that applies their privacy settings.** Room members must never read each other's base tables directly.
-3. **Entitlements are checked server-side** (RLS/functions/Edge Functions) for rooms, chat, room progress and the AI coach.
+3. **Entitlements and room capacity are checked server-side** (RLS/functions/Edge Functions). The ROOM is the billing unit: members of a usable room need no plan of their own; only the plan holder gets the AI coach and the Partner Finder; the member cap is checked inside the join transaction. Never trust the app for any of it.
 4. **No secrets in the app or in git.** Only `EXPO_PUBLIC_*` values for non-secret config. Provide `.env.example` only.
 5. **All writes from the app must be idempotent** (client-generated UUIDs, upserts) so retries and offline sync never duplicate data.
 6. **All timestamps in UTC.** Per-user "day" boundaries use the user's stored time zone.
 7. **Calculations live in `/packages/core`** and are covered by unit tests (including the PRD 7.2 worked example). Never re-implement a formula in a screen.
-8. **Safety rules are product rules:** calorie floors, rate caps, no ranking by weight loss or lowest calories, no health claims in fasting copy. Do not weaken them.
+8. **Safety rules are product rules:** calorie floors, rate caps, no ranking by weight loss, lowest calories or focus hours, no health claims in fasting copy. Do not weaken them.
+8b. **Partner Finder shows strangers only banded fields** (goal chip, age band, training style, experience, time of day, city, languages, filtered bio). Never weight, height, calories, exact age, exact location, photo or @username before both people accept. No fake profiles. Matching is deterministic code in `/packages/core`, never AI.
 9. **Migrations only.** Never edit the database by hand; every schema change is a new migration file. Never edit an old migration after it has been committed.
 10. **Tests are part of "done".** Logic, RLS policies and sync behaviour need automated tests. Run lint, typecheck and all tests before saying you are finished.
 11. **Don't touch what you weren't asked to.** Don't refactor working code, rename things or change files outside the phase scope unless required (explain why).

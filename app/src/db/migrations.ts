@@ -179,6 +179,146 @@ export const migrations: readonly LocalMigration[] = [
       );
     `,
   },
+  {
+    version: 5,
+    name: 'create_phase4_trackers',
+    sql: `
+      CREATE TABLE IF NOT EXISTS local_water_logs (
+        id              TEXT PRIMARY KEY NOT NULL,
+        user_id         TEXT NOT NULL,
+        amount_ml       INTEGER NOT NULL,
+        logged_at       TEXT NOT NULL,
+        local_date      TEXT NOT NULL,
+        created_at      TEXT NOT NULL,
+        updated_at      TEXT NOT NULL,
+        deleted_at      TEXT,
+        sync_state      TEXT NOT NULL DEFAULT 'pending'
+      );
+      CREATE INDEX IF NOT EXISTS idx_local_water_user_date ON local_water_logs (user_id, local_date, deleted_at);
+      CREATE INDEX IF NOT EXISTS idx_local_water_sync_state ON local_water_logs (sync_state);
+
+      CREATE TABLE IF NOT EXISTS local_weight_logs (
+        id              TEXT PRIMARY KEY NOT NULL,
+        user_id         TEXT NOT NULL,
+        weight_kg       REAL NOT NULL,
+        logged_at       TEXT NOT NULL,
+        local_date      TEXT NOT NULL,
+        notes           TEXT,
+        created_at      TEXT NOT NULL,
+        updated_at      TEXT NOT NULL,
+        deleted_at      TEXT,
+        sync_state      TEXT NOT NULL DEFAULT 'pending'
+      );
+      CREATE INDEX IF NOT EXISTS idx_local_weight_user_date ON local_weight_logs (user_id, local_date, deleted_at);
+      CREATE INDEX IF NOT EXISTS idx_local_weight_sync_state ON local_weight_logs (sync_state);
+
+      CREATE TABLE IF NOT EXISTS local_activity_days (
+        id              TEXT PRIMARY KEY NOT NULL,
+        user_id         TEXT NOT NULL,
+        local_date      TEXT NOT NULL,
+        steps           INTEGER NOT NULL DEFAULT 0,
+        distance_m      REAL NOT NULL DEFAULT 0,
+        source          TEXT NOT NULL,
+        active_calories INTEGER DEFAULT 0,
+        created_at      TEXT NOT NULL,
+        updated_at      TEXT NOT NULL,
+        deleted_at      TEXT,
+        sync_state      TEXT NOT NULL DEFAULT 'pending',
+        UNIQUE (user_id, local_date)
+      );
+      CREATE INDEX IF NOT EXISTS idx_local_activity_user_date ON local_activity_days (user_id, local_date);
+      CREATE INDEX IF NOT EXISTS idx_local_activity_sync_state ON local_activity_days (sync_state);
+    `,
+  },
+  {
+    version: 6,
+    name: 'create_phase6_workouts_and_exercises',
+    sql: `
+      CREATE TABLE IF NOT EXISTS local_exercises (
+        id              TEXT PRIMARY KEY NOT NULL,
+        name            TEXT NOT NULL,
+        muscle_group    TEXT NOT NULL,
+        equipment       TEXT NOT NULL,
+        type            TEXT NOT NULL,
+        owner_id        TEXT,
+        attribution     TEXT,
+        created_at      TEXT NOT NULL,
+        updated_at      TEXT NOT NULL,
+        deleted_at      TEXT,
+        sync_state      TEXT NOT NULL DEFAULT 'synced'
+      );
+      CREATE INDEX IF NOT EXISTS idx_local_exercises_name ON local_exercises (name);
+      CREATE INDEX IF NOT EXISTS idx_local_exercises_muscle ON local_exercises (muscle_group);
+      CREATE INDEX IF NOT EXISTS idx_local_exercises_owner ON local_exercises (owner_id);
+
+      CREATE TABLE IF NOT EXISTS local_workouts (
+        id                TEXT PRIMARY KEY NOT NULL,
+        user_id           TEXT NOT NULL,
+        type              TEXT NOT NULL,
+        name              TEXT,
+        start_time        TEXT,
+        duration_minutes  INTEGER NOT NULL DEFAULT 0,
+        local_date        TEXT NOT NULL,
+        notes             TEXT,
+        effort_rating     INTEGER,
+        created_at        TEXT NOT NULL,
+        updated_at        TEXT NOT NULL,
+        deleted_at        TEXT,
+        sync_state        TEXT NOT NULL DEFAULT 'pending'
+      );
+      CREATE INDEX IF NOT EXISTS idx_local_workouts_user_date ON local_workouts (user_id, local_date, deleted_at);
+      CREATE INDEX IF NOT EXISTS idx_local_workouts_sync_state ON local_workouts (sync_state);
+
+      CREATE TABLE IF NOT EXISTS local_workout_exercises (
+        id                TEXT PRIMARY KEY NOT NULL,
+        workout_id        TEXT NOT NULL,
+        user_id           TEXT NOT NULL,
+        exercise_id       TEXT,
+        exercise_name     TEXT NOT NULL,
+        order_in_workout  INTEGER NOT NULL DEFAULT 0,
+        notes             TEXT,
+        created_at        TEXT NOT NULL,
+        updated_at        TEXT NOT NULL,
+        deleted_at        TEXT,
+        sync_state        TEXT NOT NULL DEFAULT 'pending'
+      );
+      CREATE INDEX IF NOT EXISTS idx_local_we_workout ON local_workout_exercises (workout_id, order_in_workout, deleted_at);
+      CREATE INDEX IF NOT EXISTS idx_local_we_user_ex ON local_workout_exercises (user_id, exercise_id);
+      CREATE INDEX IF NOT EXISTS idx_local_we_sync_state ON local_workout_exercises (sync_state);
+
+      CREATE TABLE IF NOT EXISTS local_workout_sets (
+        id                  TEXT PRIMARY KEY NOT NULL,
+        workout_exercise_id TEXT NOT NULL,
+        workout_id          TEXT NOT NULL,
+        user_id             TEXT NOT NULL,
+        set_number          INTEGER NOT NULL DEFAULT 1,
+        reps                INTEGER,
+        weight_kg           REAL,
+        duration_seconds    INTEGER,
+        distance_meters     REAL,
+        is_warmup           INTEGER NOT NULL DEFAULT 0,
+        completed           INTEGER NOT NULL DEFAULT 1,
+        created_at          TEXT NOT NULL,
+        updated_at          TEXT NOT NULL,
+        deleted_at          TEXT,
+        sync_state          TEXT NOT NULL DEFAULT 'pending'
+      );
+      CREATE INDEX IF NOT EXISTS idx_local_ws_exercise ON local_workout_sets (workout_exercise_id, set_number, deleted_at);
+      CREATE INDEX IF NOT EXISTS idx_local_ws_workout ON local_workout_sets (workout_id);
+      CREATE INDEX IF NOT EXISTS idx_local_ws_sync_state ON local_workout_sets (sync_state);
+
+      CREATE TABLE IF NOT EXISTS local_workout_timers (
+        id                  TEXT PRIMARY KEY NOT NULL,
+        workout_id          TEXT,
+        started_at          TEXT NOT NULL,
+        paused_at           TEXT,
+        total_paused_ms     INTEGER NOT NULL DEFAULT 0,
+        is_running          INTEGER NOT NULL DEFAULT 1,
+        updated_at          TEXT NOT NULL
+      );
+    `,
+  },
 ];
+
 
 

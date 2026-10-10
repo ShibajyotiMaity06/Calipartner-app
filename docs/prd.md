@@ -3,11 +3,11 @@
 
 | Field | Detail |
 |---|---|
-| Product | CaliPartner: an all-in-one fitness app (food, water, steps, workouts, fasting, recipes, progress, room chat and a premium AI coach) built around partners, friends and groups |
-| Version / status | v0.3, draft for team review |
-| Date | 7 October 2026 |
+| Product | CaliPartner: an all-in-one fitness app (food, water, steps, workouts, fasting, focus time, recipes, progress, room chat, a Partner Finder for solo users and a premium AI coach) built around partners, friends and groups |
+| Version / status | v0.4, draft for team review |
+| Date | 10 October 2026 |
 | Platforms | Android and iOS (single cross-platform codebase recommended) |
-| Related documents | CaliPartner Build Plan (phase-by-phase agent prompts); App Layout and Navigation Plan (superseded by Section 6.24); design prompts (maintained separately) |
+| Related documents | CaliPartner Build Plan (phase-by-phase agent prompts); App Layout and Navigation Plan (superseded by Section 6.26); design prompts (maintained separately) |
 | Priority legend | P0 = required for launch<br>P1 = Phase 2 (fast follow)<br>P2 = later / nice to have |
 
 
@@ -19,6 +19,7 @@
 | v0.1 | First draft: nutrition tracking, rooms, privacy, leaderboards, subscription. |
 | v0.2 | Added deterministic calorie, macro and weekly-rate calculation (7.2) with worked example; workout tracker (6.6); unique usernames with invitations and join requests (6.7); room-only chat with image sharing (6.10); progress graphs for individuals and rooms (6.15); five meal sections (Breakfast, Lunch, Dinner, Snacks, Extra); "Previously logged foods" quick-add; detailed water and steps trackers; derived-metric formulas (7.8); updated navigation, data model, timeline, risks and open questions. |
 | v0.3 | Added premium AI coach (no free trial); fasting tracker; our own recipe library; "Rate us" prompt; annual plan; tech stack finalised (React Native + Expo, Supabase, email-code login with no phone OTP, Cloudflare R2 for images, store billing with Dodo for web later); trial now starts at first room use (proposed); build phases replace week-based timeline. |
+| v0.4 | Added the premium Partner Finder for solo users (6.24, 7.12, 8.5); room-size Room Plans with India and international prices for Basic (2 to 5), Plus (6 to 20), Pro (21 to 50) and Community (51 to 100, later) with monthly, 3-month and annual billing (6.18, 7.1, 7.11); billing moved from per user to per room (host or sponsor pays, members join free); Focus Time for personal and room sessions (6.25, 7.13); large-room behaviour; room states Locked and Over capacity (7.6); new data model, analytics, risks, open questions and build phases 9B and 10B. Navigation and acceptance sections renumbered to 6.26 and 6.27. |
 
 
 > Metrics, thresholds, prices and timelines in this document are starting hypotheses. Items marked "proposed" are recommendations that the team should confirm. Legal, tax and nutrition-safety items should be validated with a lawyer, a CA and a registered dietitian before launch.
@@ -29,7 +30,7 @@
 
 ### 1.1 Summary
 
-CaliPartner is a single app where people track everything about their fitness journey in one place: food, water, steps, workouts, fasting and body progress, backed by a library of our own recipes and a premium AI coach. Its difference is the shared layer. Two or more people join a private "room", see each other's day side by side, chat with each other, and compare progress charts. Each person has their own goal (one can be cutting while another is bulking), and the room shows how everyone is doing against their own goal, not against each other's numbers. A weekly leaderboard, seasonal challenges and occasion plans (Winter Arc, birthday, New Year) add motivation.
+CaliPartner is a single app where people track everything about their fitness journey in one place: food, water, steps, workouts, fasting and body progress, backed by a library of our own recipes and a premium AI coach. Its difference is the shared layer. Two or more people join a private "room" (2 to 50 people, depending on the plan), see each other's day side by side, chat with each other, focus together and compare progress charts. People who start alone can use a premium Partner Finder to meet someone with a similar goal. Each person has their own goal (one can be cutting while another is bulking), and the room shows how everyone is doing against their own goal, not against each other's numbers. A focus timer for study and work (solo or shared in a room), a weekly leaderboard, seasonal challenges and occasion plans (Winter Arc, birthday, New Year) add motivation.
 
 
 ### 1.2 Problem
@@ -46,6 +47,9 @@ CaliPartner is a single app where people track everything about their fitness jo
 ### 1.4 Key differentiators
 
 - **Partner and room tracking as the core product, **not an add-on.
+- **Partner Finder for solo users: **people without a gym partner get suggestions of real, opted-in people with similar goals, and start a room after both accept (Premium).
+- **Focus Time: **a stopwatch or timer for study and work that a whole room can join and track together.
+- **Room-size plans: **one plan covers the whole room (2 to 5, 6 to 20 or 21 to 50 people); members join free.
 - **All-in-one: **food, water, steps, workouts, fasting, recipes, progress graphs, chat and an AI coach live inside one app.
 - **Our own recipe library: **original, nutrition-calculated recipes with Indian and regional focus, loggable in one tap.
 - **Premium AI coach: **answers questions using the user's own data, with numbers coming from our deterministic calculators.
@@ -65,7 +69,9 @@ CaliPartner is a single app where people track everything about their fitness jo
 - Make "add your partner" (by username, link or code) the most natural next step after the first logged meal.
 - Keep rooms alive: a room should stay useful even when one member goes quiet, and chat and progress charts give people reasons to open the app daily.
 - Let a user run their entire fitness routine inside CaliPartner without needing other apps.
-- Reach a sustainable subscription business with per-user pricing.
+- Reach a sustainable subscription business with room-size pricing, where one host pays for the whole room.
+- Make the app worth choosing even for people who have no partner yet, through the premium Partner Finder.
+- Give students and professionals a reason to open the app every day through shared focus sessions.
 
 ### 2.2 Non-goals for launch
 
@@ -74,6 +80,8 @@ CaliPartner is a single app where people track everything about their fitness jo
 - Voice or video calls, voice notes, GIF libraries and link previews in chat.
 - Meal planning, grocery lists, user-submitted recipes or a recipe marketplace, dietitian or human-coach accounts.
 - Web app and home-screen widgets.
+- Public rooms, open directories of people, or any dating-style features. The Partner Finder shows only banded, safe information and only to opted-in people.
+- Screen-blocking or app-blocking during focus sessions (P2).
 - Medical or clinical nutrition use cases (diabetes, pregnancy, eating-disorder treatment).
 
 ### 2.3 Success metrics (initial hypotheses)
@@ -90,8 +98,15 @@ CaliPartner is a single app where people track everything about their fitness jo
 | Workout logging | Weekly active users who log at least 1 workout in a week | 30% or more |
 | Retention (rooms) | D7 and D30 retention of users who are in a room | 35% D7 / 15% D30 |
 | Paired retention | Both members of a 2-person room active in week 4 | 50% or more |
-| Trial to paid | Users reaching day 4 who start a paid plan | 8% or more |
+| Trial to paid | Hosts whose 3-day room trial has ended who start a plan | 8% or more |
 | Paid retention | Paid users still subscribed after month 2 | 60% or more |
+| Finder opt-in | New users who turn on "Open to a partner" at the end of onboarding | 25% or more |
+| Finder request rate | Plan holders who send at least 1 partner request within 7 days of viewing suggestions | 50% or more |
+| Finder acceptance | Partner requests accepted within 7 days | 30% or more |
+| Finder to room | Accepted requests that lead to a room with both people active for 3+ days | 50% or more |
+| Focus adoption | Weekly active users who complete at least 1 focus session | 25% or more |
+| Room focus | Active rooms with at least 1 shared focus session per week | 20% or more |
+| Plan mix | Share of paying rooms on Plus or Pro | 20% or more |
 | AI cost control | AI photo-logging and AI coach cost as a share of net revenue | Below 15% |
 | Annual plan share | Share of new paid users who choose the annual plan | 25% or more |
 | Store rating | Average rating on Google Play and the App Store after 100+ ratings | 4.3 or higher |
@@ -101,15 +116,17 @@ CaliPartner is a single app where people track everything about their fitness jo
 
 ## 3. Target Users and Personas
 
-CaliPartner is not limited to couples. Any group of 2 to 10 people can share a room.
+CaliPartner is not limited to couples. Any group of 2 to 50 people can share a room (the plan sets the limit).
 
 
 | Persona | Description | What they need |
 |---|---|---|
 | Gym partners | Two friends (e.g., two guys or two girls), one cutting and one bulking, who train together. | Side-by-side view with separate goals, workout log, chat, progress charts, friendly weekly ranking. |
 | Couples | Partners who eat many meals together and want to support each other. | Shared meals with individual portions, privacy controls, gentle reminders, chat. |
-| Friend or challenge groups | 4 to 10 friends doing a Winter Arc, New Year or pre-event challenge. | Group room, group chat, consistency leaderboard, challenge milestones, group progress charts. |
-| Solo users | People who have no partner yet, or are waiting for one to join. | Great solo tracking of food, water, steps and workouts, personal progress charts, and an easy way to add someone later. |
+| Friend or challenge groups | 4 to 20 friends doing a Winter Arc, New Year or pre-event challenge. | Group room, group chat, consistency leaderboard, challenge milestones, group progress charts. |
+| Solo users | People who have no partner yet, or are waiting for one to join. | Great solo tracking of food, water, steps, workouts and focus time; personal progress charts; the Partner Finder to meet someone with a similar goal; an easy way to add a friend later. |
+| Study and work groups | Students, interns or colleagues (up to 50) who want to study or work together and keep each other accountable. | Shared focus sessions, focus totals per person, room chat, light habit tracking. |
+| Gyms, colleges and clubs (later) | Communities of 21 to 100 people. | Pro and Community plans, large-room views, host tools. |
 
 Primary audience at launch: adults 18+, gym-going and fitness-motivated, India first, then international English-speaking markets.
 
@@ -131,9 +148,9 @@ Primary audience at launch: adults 18+, gym-going and fitness-motivated, India f
 
 | Phase | Includes |
 |---|---|
-| Phase 1: Launch (P0) | Email-code, Google and Apple login; unique usernames; onboarding and deterministic calorie, macro and weekly-rate targets; food logging in 5 sections with search, barcode, AI photo, custom foods and "previously logged" quick-add; Today diary; water, steps and weight trackers; workout tracker; fasting tracker; our own recipe library; rooms with invitations and join requests; side-by-side room view; room-only chat with images; shared meals; nudges and reactions; privacy controls; streaks and weekly consistency score; individual and room progress graphs; weekly leaderboard; premium AI coach; subscriptions (monthly, 3-month, annual) and paywall; push notifications; rate-us prompt; account and settings. |
-| Phase 2 (P1) | Adaptive calorie recalibration; workout routines, rest timer, personal records and shared workouts; chat replies, read receipts, typing indicator and editing; coach food logging by chat; recipe collections and "fits my day" suggestions; seasonal challenges and occasion plans; weekly room summary; body measurements and progress photos; streak freezes; data export; more nutrients; more languages; home-screen widget. |
-| Phase 3 (P2) | Web app with Dodo Payments checkout, GPS run and ride tracking, workout programs, sleep and mood, meal planning and grocery list, dietitian or human-coach rooms, voice notes and GIFs in chat, coach insights by push, chat search. |
+| Phase 1: Launch (P0) | Email-code, Google and Apple login; unique usernames; onboarding and deterministic calorie, macro and weekly-rate targets; food logging in 5 sections with search, barcode, AI photo, custom foods and "previously logged" quick-add; Today diary; water, steps and weight trackers; workout tracker; fasting tracker; our own recipe library; rooms with invitations and join requests; room-size plans (Basic, Plus, Pro); side-by-side room view; room-only chat with images; focus time (personal and room); premium Partner Finder; shared meals; nudges and reactions; privacy controls; streaks and weekly consistency score; individual and room progress graphs; weekly leaderboard; premium AI coach; subscriptions (monthly, 3-month and annual for each room size) and paywall; push notifications; rate-us prompt; account and settings. |
+| Phase 2 (P1) | Adaptive calorie recalibration; focus streaks and goals, break reminders; Partner Finder feedback loop and tuning; slow mode for large rooms; plan holder moves a plan between rooms and extra hosted rooms (SUB-17); workout routines, rest timer, personal records and shared workouts; chat replies, read receipts, typing indicator and editing; coach food logging by chat; recipe collections and "fits my day" suggestions; seasonal challenges and occasion plans; weekly room summary; body measurements and progress photos; streak freezes; data export; more nutrients; more languages; home-screen widget. |
+| Phase 3 (P2) | Community tier (51 to 100) and custom plans for gyms, colleges and companies; group matching and open rooms; Pomodoro and distraction blocking in Focus; web app with Dodo Payments checkout, GPS run and ride tracking, workout programs, sleep and mood, meal planning and grocery list, dietitian or human-coach rooms, voice notes and GIFs in chat, coach insights by push, chat search. |
 
 
 > Scope warning: the product is now broad (workouts, chat, fasting, recipes and an AI coach on top of the core partner experience). Build in the order given in Section 13 so that the core loop (food, rooms, side-by-side view) can be tested with real friends early, before the extra modules are finished.
@@ -172,6 +189,7 @@ Primary audience at launch: adults 18+, gym-going and fitness-motivated, India f
 | ONB-9 | Invited-user variant: show a preview of the room first ("Rahul is waiting for you"), then quick signup, then goal setup, then drop into the room. | P0 |
 | ONB-10 | Edit goal, rate, targets, step goal and water goal later from Me. Changes take effect from the current day and do not rewrite history. | P0 |
 | ONB-11 | Optional private health-screening questions (pregnant or breastfeeding, diabetes or medication affecting food, history of an eating disorder). Answers are used only to hide fasting and show cautions, are never shared with rooms, and can be changed later. | P0 |
+| ONB-12 | After the targets screen and the rate prompt, offer the Partner Finder ("Want a workout partner?") with a two-sentence explanation, the consent, and the matching preferences pre-filled from onboarding. Skippable, and available later from Me. Users without a plan can opt in to be suggested; browsing and sending requires a plan (6.24). | P0 |
 
 
 ### 6.3 Food Logging
@@ -286,7 +304,7 @@ Every user has a unique @username. People can be added to rooms by username, and
 | USR-2 | A username can be changed once every 30 days (proposed). A released username is held for 30 days before others can claim it, to prevent impersonation. | P0 |
 | USR-3 | Search by username: minimum 3 characters, prefix match, at most 10 results, showing avatar, nickname and @username only. Searching is rate-limited to prevent scraping. | P0 |
 | USR-4 | Discoverability setting: "Who can find me by username" with options Everyone (default) or Nobody (only people with the invite link or code can reach me). | P0 |
-| USR-5 | Room invitation: from a room, search a username and send an invitation. The recipient gets a push notification and an in-app request, and can Accept or Decline. Accepting adds them to the room (subject to room access, see SUB rules). | P0 |
+| USR-5 | Room invitation: from a room, search a username and send an invitation. The recipient gets a push notification and an in-app request, and can Accept or Decline. Accepting adds them to the room (subject to the room's capacity, see SUB-6). | P0 |
 | USR-6 | Join request: a user can search a person's @username or enter a room code and send a request to join that person's room. The room host (or the person, if the room has two members) approves or declines. | P0 |
 | USR-7 | Requests inbox with Incoming and Outgoing tabs and statuses (Pending, Accepted, Not accepted, Expired, Cancelled). A declined request is shown to the sender neutrally as "Not accepted". | P0 |
 | USR-8 | Pending invitations and requests expire after 14 days. The sender can cancel a pending request. Limits: 20 pending requests per user and 10 new requests per hour. | P0 |
@@ -300,16 +318,20 @@ Every user has a unique @username. People can be added to rooms by username, and
 
 | ID | Requirement | Priority |
 |---|---|---|
-| ROOM-1 | A user with room access (trial or paid) can create a room with a name. Maximum 10 members per room (proposed; configurable). | P0 |
+| ROOM-1 | A user can create a room with a name if they have an active plan or an unused 3-day trial (SUB-3). Room size is limited by the plan: Basic 5, Plus 20, Pro 50 (Community 100, later). The trial room has the Basic cap. Limits are remotely configurable. | P0 |
 | ROOM-2 | Ways to join: invitation by username (6.7), join request, shareable link, or short code. Links use Android App Links and iOS Universal Links with deferred deep linking, so the invite survives app installation. | P0 |
 | ROOM-3 | Roles: Host and Member. Host can rename the room, regenerate or revoke the invite link, approve join requests, remove members, transfer hosting, and delete the room. Any member can leave. | P0 |
 | ROOM-4 | If the host leaves, hosting transfers automatically to the longest-standing active member. | P0 |
-| ROOM-5 | A user can belong to up to 3 rooms at once (proposed). | P0 |
+| ROOM-5 | A user can be a member of up to 3 rooms at once (proposed). A plan covers one hosted room (SUB-17). | P0 |
 | ROOM-6 | Room states: Active, Dormant and Archived (see Section 7.6). | P0 |
-| ROOM-7 | A member whose access has lapsed sees a clear, non-shaming "Rejoin your room" screen. Other members see "Waiting for [name] to rejoin", never the reason. | P0 |
+| ROOM-7 | When a room is Locked (its plan ended and nobody sponsors it), every member sees a clear, non-shaming "This room is paused" screen with the button "Keep this room going". Nobody is told who stopped paying or why. Personal tracking is never affected. | P0 |
 | ROOM-8 | Report, mute and block another member. Muting hides nudges, reactions and chat from that person for the muting user. | P0 |
 | ROOM-9 | Room setting "Who can invite": Host only (default) or Any member. | P0 |
 | ROOM-10 | "Pause my participation" (travel, illness): the user is excluded from room streak calculations and nudges for a chosen period without leaving. | P1 |
+| ROOM-11 | Plan holder: every room has a plan holder (the host by default, or any member who sponsors the room). The plan holder can be different from the host. Hosting can be transferred without moving the plan; if the plan holder leaves, the plan stays attached until it ends and the room shows "Keep this room going" to everyone after that. | P0 |
+| ROOM-12 | Capacity: the member count is checked on the server whenever someone joins. A full room returns ROOM_FULL; the host sees an upgrade prompt, other members see "This room is full". Pending invitations do not reserve seats. | P0 |
+| ROOM-13 | Large rooms (more than 20 people): the Members list is paged and searchable, join requests need host approval by default, and the invite link can be switched off. | P0 |
+| ROOM-14 | Slow mode for chat in rooms of 21 or more people (one message per member every 10 seconds, set by the host). | P1 |
 
 
 ### 6.9 Room View (Partner Side-by-Side)
@@ -317,15 +339,17 @@ Every user has a unique @username. People can be added to rooms by username, and
 
 | ID | Requirement | Priority |
 |---|---|---|
-| RV-1 | The Room screen has four sections: Today (side-by-side), Chat, Progress and Members. | P0 |
+| RV-1 | The Room screen has five sections: Today (side-by-side), Focus, Chat, Progress and Members. The segmented control scrolls on small screens. | P0 |
 | RV-2 | Header with room name, room streak and member avatars. | P0 |
 | RV-3 | Side-by-side card for two people (me on the left, partner on the right): goal-completion ring (% of their own goal), steps, water, workout status, and a meal checklist for Breakfast, Lunch, Dinner and Snacks (logged or not). Extra is optional and is never shown as missing. | P0 |
-| RV-4 | In rooms with more than 2 people, tapping or swiping an avatar switches the comparison to "me vs this person". An overview row shows everyone's completion at a glance. | P0 |
+| RV-4 | In rooms with more than 2 people, tapping or swiping an avatar switches the comparison to "me vs this person". An overview row shows everyone's completion at a glance (for rooms of more than 12 people it becomes a paged, searchable list). | P0 |
 | RV-5 | Only data the other person has chosen to share is displayed. Hidden items show a neutral lock icon, never an empty or zero value. | P0 |
 | RV-6 | Quick actions: nudge, react to a meal, log a shared meal, open chat. | P0 |
 | RV-7 | Activity feed: logged meals, goals reached, workouts finished, streak milestones, challenge milestones. | P0 |
 | RV-8 | Neutral colours: no red/green "winning/losing" styling between people. | P0 |
 | RV-9 | Weekly room summary card every Monday (consistency, streak, highlights). | P1 |
+| RV-10 | Large rooms: the overview shows me, a room average and a searchable member list; people are listed me first, then alphabetically; the activity feed groups similar events (for example "6 people logged lunch"); realtime updates are limited to what is on screen. | P0 |
+| RV-11 | The Today segment shows a "Focusing now" strip when one or more members are in a focus session, with a Join button. | P0 |
 
 
 ### 6.10 Room Chat
@@ -344,7 +368,7 @@ Chat exists only inside a room and only room members can read or send. There is 
 | CHT-7 | A user can delete their own messages. A deleted message shows "Message deleted" to others and the stored image is removed. | P0 |
 | CHT-8 | Report a message, and block or mute a member. Reported content goes to a moderation queue. Terms of use are accepted before the first message. | P0 |
 | CHT-9 | Automatic system messages inside chat: member joined or left, room created, streak milestones. These can be muted in room settings. | P0 |
-| CHT-10 | Only active members with room access can read or send. A member who leaves loses access immediately; their past messages remain visible to the room (shown with their nickname) unless they delete them first. | P0 |
+| CHT-10 | Only active members of an unlocked room can read or send. A member who leaves loses access immediately; their past messages remain visible to the room (shown with their nickname) unless they delete them first. | P0 |
 | CHT-11 | Rate limits: 20 messages per minute per user and 30 images per hour per user. | P0 |
 | CHT-12 | In a Dormant room (7.6), chat is read-only. | P0 |
 | CHT-13 | Reply to a specific message, emoji reactions on messages, typing indicator, read receipts (user can turn them off), and editing within 15 minutes. | P1 |
@@ -374,7 +398,7 @@ Chat exists only inside a room and only room members can read or send. There is 
 |---|---|---|
 | SOC-1 | Nudge: a one-tap, pre-written, friendly message (e.g., "Rahul logged lunch. Time for yours?"). Limit: 2 nudges per recipient per day; the recipient can mute nudges per room. | P0 |
 | SOC-2 | Reactions on shared items (meals, workouts, milestones) from a fixed set of 5 reactions. | P0 |
-| NTF-1 | Notification types: meal reminders (user-set times), water reminders, fasting reminders (start, end, eating window closing), partner logged, partner finished a workout, nudge received, chat message, invitation or join request received and accepted, streak at risk (evening), weekly summary, leaderboard result, trial ending (days 2 and 3), subscription lapse or payment issue. | P0 |
+| NTF-1 | Notification types: meal reminders (user-set times), water reminders, fasting reminders (start, end, eating window closing), partner logged, partner finished a workout, nudge received, chat message, invitation or join request received and accepted, streak at risk (evening), weekly summary, leaderboard result, trial ending (days 2 and 3), subscription lapse or payment issue, room paused or over capacity (to members and the host), focus session started in a room, focus timer ending, partner request received or accepted, and new partner suggestions (weekly). | P0 |
 | NTF-2 | Per-type toggles, per-room chat mute, quiet hours, and a single "pause all" option. | P0 |
 | NTF-3 | Notification copy is supportive and never reveals another person's calorie numbers; chat notifications can hide message previews. | P0 |
 
@@ -397,6 +421,9 @@ Sharing is configured per room and per data type. Defaults are conservative. The
 | Weight number | Hidden | Hidden by default; sharing is an explicit opt-in |
 | Weight progress (change and % towards goal) | Hidden | Shared / hidden |
 | Fasting status and history | Hidden | Hidden / share "fasting now or completed today" |
+| Focus status (focusing now) and focus totals | Shared | Shared / hidden |
+| Focus session labels (what I am studying or working on) | Hidden | Shared / hidden |
+| Partner Finder profile (age band, goal chip, training style, city, bio) | Not visible to anyone | Visible to opted-in matches only after "Open to a partner" is switched on; off at any time |
 | AI coach conversations | Private to the user | Never visible to room members; user can delete history |
 | Who can find me by username | Everyone | Everyone / Nobody |
 | Chat images | Visible only to room members | Not configurable; deleted on request |
@@ -415,7 +442,7 @@ Sharing is configured per room and per data type. Defaults are conservative. The
 | ID | Requirement | Priority |
 |---|---|---|
 | STR-1 | Personal streak: consecutive logged days (definition in Section 7.4). | P0 |
-| STR-2 | Room streak: consecutive days on which every active, non-paused member had a logged day. | P0 |
+| STR-2 | Room streak: consecutive days on which every active, non-paused member had a logged day in rooms of up to 5 people, and at least 60% of active, non-paused members in larger rooms (rounded up). | P0 |
 | STR-3 | Weekly Consistency Score (0 to 100) per user using the formula in Section 7.3. | P0 |
 | STR-4 | Streak freeze: one per week to protect a streak on a missed day. | P1 |
 
@@ -440,6 +467,7 @@ Progress is shown for the user individually and for everyone in a room. All grap
 | PRG-8 | Consistency score history and streak history. | P0 |
 | PRG-9 | Goal progress: percentage of the way from starting weight to target weight (7.8). | P0 |
 | PRG-10 | Tap a point to see that day's details. Clear empty states explain what to log to see a chart. | P0 |
+| PRG-14 | Focus: minutes per day and per week against the optional goal, totals by label and the longest session (see FOC-10). | P0 |
 | PRG-11 | Auto-generated weekly and monthly summary text built from the numbers (for example average calories vs target, days logged, weight change, workouts). | P1 |
 | PRG-12 | Body measurement charts and progress photo comparison (private). | P1 |
 | PRG-13 | Shareable progress card image with privacy-safe contents. | P1 |
@@ -456,6 +484,8 @@ Progress is shown for the user individually and for everyone in a room. All grap
 | RPG-4 | A summary table for the chosen period shows each member's weight change, average calories vs target, average steps, workouts, and consistency. The default order is me first, then alphabetical. Sorting by rank is allowed only on Consistency; the table never ranks by weight lost or calories eaten. | P0 |
 | RPG-5 | Same date ranges as individual graphs, plus "Since the room started". | P0 |
 | RPG-6 | Milestone markers on charts (joined room, started challenge, hit streak). | P1 |
+| RPG-7 | Large rooms: charts draw up to 8 selected members at once (default: me plus the 3 most recently active) together with a room-average line; a searchable picker adds others. | P0 |
+| RPG-8 | Focus: each member's weekly focus time and the room total, with the same neutral ordering as RPG-4 and no ranking. | P0 |
 
 
 ### 6.16 Leaderboards
@@ -486,32 +516,74 @@ Progress is shown for the user individually and for everyone in a room. All grap
 
 ### 6.18 Subscription and Paywall
 
+From v0.4 the **room is what gets billed**. One user, the plan holder (normally the host), buys a Room Plan sized to the number of people in the room. Everyone else in that room joins for free. The same payment also unlocks the plan holder's personal premium tools: the AI coach and the Partner Finder. Personal tracking stays free for everybody.
 
-| Region | Monthly | 3 months | Annual |
-|---|---|---|---|
-| India | ₹99 | ₹249 | ₹799 (proposed) |
-| International | $4.99 | $12.99 | $34.99 (proposed) |
-| Lower-income countries | Regional pricing set per country in Play Console and App Store Connect | Regional pricing | Regional pricing |
 
+### Room Plans: India (prices include GST; proposed)
+
+| Plan | People in the room | Monthly | 3 months | Annual | Annual per month |
+|---|---|---|---|---|---|
+| Basic | 2 to 5 | ₹99 | ₹249 (about 16% off) | ₹799 (about 33% off) | ₹67 |
+| Plus | 6 to 20 | ₹200 | ₹499 (about 17% off) | ₹1,599 (about 33% off) | ₹133 |
+| Pro | 21 to 50 | ₹300 | ₹749 (about 17% off) | ₹2,399 (about 33% off) | ₹200 |
+| Community (P2, not sold at launch) | 51 to 100 | ₹500 | ₹1,249 | ₹3,999 | ₹333 |
+| Beyond 100 (P2) | Gyms, colleges, companies | Custom quote | Custom quote | Custom quote | n/a |
+
+### Room Plans: International (proposed)
+
+| Plan | People in the room | Monthly | 3 months | Annual | Annual per month |
+|---|---|---|---|---|---|
+| Basic | 2 to 5 | $4.99 | $12.99 | $34.99 | $2.92 |
+| Plus | 6 to 20 | $9.99 | $25.99 | $69.99 | $5.83 |
+| Pro | 21 to 50 | $14.99 | $38.99 | $104.99 | $8.75 |
+| Community (P2, not sold at launch) | 51 to 100 | $24.99 | $64.99 | $174.99 | $14.58 |
+
+Lower-income countries: regional prices are set per country in Play Console and App Store Connect, keeping the same ladder between tiers.
+
+**Why these numbers (reasoning, so the team can change them with confidence)**
+
+- **Same features in every tier.** Only the member cap differs. This keeps the paywall easy to explain: "How many people are in your room?"
+- **Cost per member falls as rooms grow**, which rewards bringing more friends: at a full room Basic is about ₹20 per person per month, Plus ₹10, Pro ₹6 and Community ₹5.
+- **India discount ladder:** the 3-month plan is about 17% cheaper than three monthly payments and the annual plan about 33% cheaper. The original Basic prices (₹249 and ₹799) are kept and the higher tiers follow the same percentages, rounded to clean price points.
+- **International discount ladder:** the 3-month plan is about 13% cheaper and the annual plan about 42% cheaper than monthly, taken from the original Basic anchors ($12.99 and $34.99). Plus costs about 2 times Basic and Pro about 3 times Basic.
+- Each store sets its own allowed price points. Check every price in Play Console and App Store Connect before launch and adjust to the nearest allowed value.
+
+**Margin check (what we keep per plan holder per month)**
+
+| Plan | India monthly plan | India annual plan, per month | International monthly plan | International annual plan, per month |
+|---|---|---|---|---|
+| Basic | about ₹71 | about ₹48 | about $4.24 | about $2.48 |
+| Plus | about ₹144 | about ₹96 | about $8.49 | about $4.96 |
+| Pro | about ₹216 | about ₹144 | about $12.74 | about $7.44 |
+| Community | about ₹360 | about ₹240 | about $21.24 | about $12.40 |
+
+India figures assume the price includes 18% GST and the store keeps 15%. International figures show the amount after a 15% store fee, before any local VAT or sales tax. These amounts must also cover infrastructure, chat storage and AI costs. Confirm tax treatment with a CA.
 
 | ID | Requirement | Priority |
 |---|---|---|
-| SUB-1 | Pricing is per user, not per room. Premium (any paid plan) includes rooms, room chat, room progress and the AI coach. Only users with room access (active room trial or Premium) can create, join, be invited to, chat in, or view rooms. | P0 |
-| SUB-2 | Every new user gets one 3-day free trial of room features. The trial starts the first time the user creates or joins a room (proposed; previously it started at account creation). It includes one room of 2 people, room chat and streaks. It does not include the AI coach. | P0 |
-| SUB-3 | After the trial, all personal tracking (food, water, steps, workouts, fasting, recipes, weight and personal progress graphs) stays free (proposed). Rooms, room chat, room progress and the AI coach require Premium. | P0 |
-| SUB-4 | Purchases use Google Play Billing and Apple In-App Purchase only (not Apple Pay). RevenueCat (recommended) provides the SDK and webhooks, and a single server-side entitlements table (with a source column) is the source of truth. Stores take about 15% (Apple Small Business Program; Google subscription rate), so prices are set accordingly. | P0 |
-| SUB-5 | Paywall appears when a user without access taps Room, accepts an invitation, or tries to create or join a room (from day 4), with soft banners on days 2 and 3 showing days left. For invited users the paywall is shown after the room preview, not before. | P0 |
-| SUB-6 | Paywall shows the monthly, 3-month and annual plans with localised prices, billing terms, "Restore purchases", and what stays free. | P0 |
-| SUB-7 | Payment grace: if a renewal fails, access continues during the store's grace period and the user sees a clear payment-fix message. | P0 |
-| SUB-8 | Subscription management and cancellation link in Me. | P0 |
-| SUB-9 | Entitlement checks happen on the server for every room, chat and progress read and write, not only in the app. | P0 |
-| SUB-10 | Promotional and gift codes. | P1 |
-| SUB-11 | Annual plan available at launch, shown as the best-value option with the saving against 12 monthly payments. | P0 |
-| SUB-12 | The AI coach is Premium-only with no free trial. Free and trial users see a locked preview and the paywall. The server rejects every coach request without Premium. | P0 |
-| SUB-13 | Web checkout through Dodo Payments (merchant of record) once a web app exists. Dodo webhooks write to the same entitlements table. The app does not link or steer users to web checkout except where store rules allow it. | P2 |
+| SUB-1 | Billing unit: a Room Plan belongs to one user (the plan holder) and covers one room, up to the member cap of the tier. Room members do not need their own subscription to join, chat, track together or use focus rooms. | P0 |
+| SUB-2 | Tiers and caps: Basic 2 to 5, Plus 6 to 20, Pro 21 to 50 at launch. Community (51 to 100) is built behind a remote flag and switched on later. Every tier is sold as monthly, 3-month and annual. Features are identical in every tier; only the cap changes. | P0 |
+| SUB-3 | Trial: every new user gets one 3-day trial that starts the first time they create a room (not when they join someone else's room). The trial room has the Basic cap (5 people) and includes chat, room progress and focus rooms. It does not include the AI coach or the Partner Finder. | P0 |
+| SUB-4 | Personal tracking (food, water, steps, workouts, fasting, recipes, weight, personal progress graphs and solo focus time) stays free forever for everyone. | P0 |
+| SUB-5 | Plan holder benefits that are personal: the AI coach, the Partner Finder and the higher AI-photo allowance. Room members who are not plan holders do not get these unless they buy a plan themselves. | P0 |
+| SUB-6 | Capacity is enforced on the server. Accepting an invitation, join request, link or code when the room is full fails with the ROOM_FULL error. The host sees "Your room is full. Plus fits up to 20 people" with an upgrade button. Only active members count; pending invitations do not reserve a seat. | P0 |
+| SUB-7 | Upgrading to a bigger tier takes effect immediately using the store's upgrade flow (all tiers sit in one subscription group per store, ranked by size) and the store handles proration. A downgrade takes effect at renewal. If the room then has more people than the new cap, it becomes Over capacity (Section 7.6). | P0 |
+| SUB-8 | Plan lapse: when a room's plan ends (cancelled, expired, refunded or trial over) and nobody else sponsors it, the room becomes Locked. Any member can press "Keep this room going", buy a plan and become the plan holder without becoming the host. | P0 |
+| SUB-9 | Paywall triggers: the host creates a room after their trial is used; the host adds a person beyond the cap; a member taps "Keep this room going"; anyone taps the AI coach; anyone taps the Partner Finder (as a browser or sender). Soft banners show on trial days 2 and 3. Invited people are never shown a paywall to join a room. | P0 |
+| SUB-10 | Paywall content: a size picker ("How many people will be in your room?" with 2 to 5, 6 to 20, 21 to 50), a monthly, 3-month and annual toggle, localised prices, the annual saving, what each plan includes, what stays free, "Restore purchases", billing terms and links to terms and privacy. The recommended plan is pre-selected from the size the user picked. | P0 |
+| SUB-11 | Store products: at launch 9 subscription products per store (3 tiers by 3 durations) in one subscription group per store; RevenueCat offerings map to them. Community adds 3 more later. | P0 |
+| SUB-12 | Purchases use Google Play Billing and Apple In-App Purchase only (not Apple Pay). RevenueCat provides the SDK and webhooks, and one server-side entitlements table (with a source column) is the source of truth. Stores take about 15% (Apple Small Business Program; Google subscription rate). | P0 |
+| SUB-13 | Payment grace: if a renewal fails, the room keeps working during the store's grace period and the plan holder sees a clear payment-fix message. | P0 |
+| SUB-14 | Subscription management, tier change and cancellation link in Me, showing the room the plan covers, its cap and the current member count. | P0 |
+| SUB-15 | Entitlement and capacity checks happen on the server for every room, chat, progress, focus, Partner Finder and AI coach read and write, not only in the app. | P0 |
+| SUB-16 | The AI coach and the Partner Finder are for plan holders only, with no free trial. Others see a locked preview and the paywall. The server rejects every request without an active plan (Paid or Grace). | P0 |
+| SUB-17 | One plan covers one hosted room. A plan holder can attach the plan to a different room only by moving it (the old room then locks). Extra hosted rooms each need their own plan. | P1 |
+| SUB-18 | Promotional and gift codes. | P1 |
+| SUB-19 | Web checkout through Dodo Payments (merchant of record) once a web app exists. Dodo webhooks write to the same entitlements table. The app does not steer users to web checkout except where store rules allow it. | P2 |
 
+> Pricing-model change in v0.4: earlier versions said "pricing is per user, not per room" and that only paying users could enter rooms. Room-size tiers only make sense when the room (through its host or sponsor) is what is billed, so v0.4 changes this. It is also closer to the original idea of about ₹20 per person: a full Basic room costs about ₹20 per person per month. The alternative (every member pays a personal plan) is listed in the open questions.
 
-> India note: UPI autopay failures cause involuntary churn. The 3-month and annual prepaid plans reduce repeated autopay dependency and should be promoted as better value. Margin check: after GST and a 15% store fee, ₹799 a year nets roughly ₹48 a month, and that must also cover infrastructure and AI costs. Validate with real AI cost data before fixing the annual price.
+> India note: UPI autopay failures cause involuntary churn. The 3-month and annual prepaid plans reduce repeated autopay dependency and should be promoted as better value. Validate margins with real AI and chat-storage cost data from the paid beta before fixing the annual prices.
 
 
 ### 6.19 Settings and Support
@@ -568,12 +640,12 @@ A library of original recipes written by the CaliPartner team. It is not user-ge
 
 ### 6.22 AI Coach (Premium)
 
-A chat assistant inside the app for nutrition and fitness questions. It is available only on a paid plan, with no free trial.
+A chat assistant inside the app for nutrition and fitness questions. It is available only to plan holders (an active paid plan, in any room size), with no free trial.
 
 
 | ID | Requirement | Priority |
 |---|---|---|
-| AIC-1 | Premium only. The server checks entitlement on every request; trial and free users get a locked preview and the paywall. | P0 |
+| AIC-1 | Plan holders only (Paid or Grace). The server checks entitlement on every request; trial users, free users and room members without their own plan get a locked preview and the paywall. | P0 |
 | AIC-2 | Chat screen with conversation history and suggested prompts (for example "How am I doing this week?", "What should I eat tonight to hit my protein?", "Explain my calorie target"). | P0 |
 | AIC-3 | The coach knows the user's own data through a compact server-built summary: goal, targets, today's totals, 7-day averages, weight trend, workouts, steps and water. It never receives other users' or room members' data. | P0 |
 | AIC-4 | All numbers come from the app's deterministic calculators and database tools (targets, remaining macros, recipe nutrition). The model must not invent or recompute targets; if a tool fails it says it cannot work the number out. | P0 |
@@ -600,52 +672,144 @@ A chat assistant inside the app for nutrition and fitness questions. It is avail
 | RAT-6 | A separate, optional "Send feedback" form in Me. It is not tied to the rating prompt. | P0 |
 
 
-### 6.24 Navigation and Information Architecture Update
+### 6.24 Partner Finder (Premium)
+
+Some people have no gym partner. The Partner Finder suggests real, opted-in people with similar goals and routines, so a solo user can still get the partner experience. They send a friend request, and after it is accepted the two of them start or join a room. It is a Premium feature (Section 6.18) and it exists to make the app worth choosing for people who start alone.
+
+**How it works**
+
+1. **Offer.** At the end of onboarding the app asks "Want a workout partner?" and explains the feature in two sentences. It is skippable and can be reached later from Today, the empty Room tab and Me > Find a partner.
+2. **Consent and preferences.** The user switches on "Open to a partner" (off by default), accepts a short separate consent, and confirms or edits the matching preferences below. Most answers are pre-filled from onboarding.
+3. **Suggestions.** Plan holders see up to 10 suggested people at a time, refreshed weekly or when most cards have been handled. Each card shows only safe, banded information and up to three "why you match" reasons.
+4. **Request.** The plan holder sends a request with an optional short note (140 characters, filtered). The other person gets a push notification and a new "Partner request" item in the Requests inbox.
+5. **Accept.** The recipient can accept, decline (shown to the sender neutrally, or not at all) or block and report. Recipients do not need a plan to accept.
+6. **Start a room.** After acceptance both see "Start your room". They create a new room (the plan holder hosts by default) or one of them joins the other's room if it has space. Real profile photos and @usernames become visible only now. All later chat happens inside the room.
+7. **No match yet.** If fewer than 3 people fit, the user is told honestly and notified when someone matches. The app never invents profiles.
+
+**Matching profile (what is used and what is shown)**
+
+| Field | Where it comes from | Shown on the suggestion card |
+|---|---|---|
+| Goal type and pace band (cut, maintain or bulk; slow, moderate or fast) | Onboarding | Yes, as a goal chip with no numbers |
+| Age band (18 to 24, 25 to 29, 30 to 34, 35 to 44, 45 and over) | Date of birth | Yes, band only |
+| Gender (optional) and who the user wants to match with (anyone, same gender, women only, men only) | Profile and Finder preferences | Gender only if the user chooses to show it |
+| Training style (gym, home or calisthenics, running or cardio, yoga or flexibility, sports, mixed) | Finder preferences | Yes |
+| Experience (beginner, intermediate, advanced) | Finder preferences | Yes |
+| Diet preference (vegetarian, eggetarian, non-vegetarian, vegan, no preference) | Finder preferences | Yes, optional |
+| Preferred time (early morning, morning, afternoon, evening, night) and time zone | Finder preferences | Time of day only |
+| City or region (chosen from a list, never GPS) | Finder preferences | City only, optional |
+| Languages | Settings | Yes |
+| Looking for (online accountability, train in person, or either; one partner or a small group) | Finder preferences | Yes |
+| Short bio (up to 140 characters, optional, filtered) | Finder preferences | Yes |
+| Never used or shown: weight, height, calories, food logs, exact age, exact location, photos (until acceptance), @username (until acceptance), health-screening answers | n/a | No |
+
+| ID | Requirement | Priority |
+|---|---|---|
+| FND-1 | Plan holders (Paid or Grace) can browse suggestions and send requests. There is no trial for this feature. Any user, free or paid, can turn on "Open to a partner" to be suggested and can accept or decline incoming requests at no cost. | P0 |
+| FND-2 | "Open to a partner" is off by default and needs a separate consent that lists what strangers will see. Turning it off takes effect immediately: the user disappears from all suggestions and pending suggestions are withdrawn. The consent is stored with a version. | P0 |
+| FND-3 | Entry points: end of onboarding (skippable), the Today room strip when the user has no room, the empty Room tab, and Me > Find a partner. | P0 |
+| FND-4 | Preferences screen with the fields in the table above, with answers pre-filled from onboarding where possible and editable at any time. | P0 |
+| FND-5 | Suggestions screen with up to 10 cards: nickname, illustrated avatar, age band, goal chip, training style, experience, time of day, city, languages, bio, up to three reasons, and the actions Send request, Not interested (hidden for 30 days) and Report. | P0 |
+| FND-6 | Matching runs on the server using the deterministic rules in Section 7.12 (hard filters, then a points score). A database function returns only the banded card fields to the caller; the app never receives raw profile rows or other users' health data. | P0 |
+| FND-7 | Requests carry an optional note of up to 140 characters. Links, phone numbers and social handles are blocked by a server filter. Limits: 10 partner requests per day and 20 pending in total (in addition to USR-8). Requests expire after 14 days. The same pair cannot request again for 30 days after a decline. | P0 |
+| FND-8 | The recipient sees a "Partner request" item with the same safe card and can Accept, Not now, or Block and report. The sender cannot tell the difference between "ignored" and "declined". | P0 |
+| FND-9 | On accept both people see "Start your room": create a new room or join an existing room of either person that has space. The plan holder hosts by default. If neither holds a plan, the creator starts the 3-day trial. | P0 |
+| FND-10 | A safety card is shown once before the first request or acceptance: meet in public places, never share money or ID details, report anyone who makes you uncomfortable. | P0 |
+| FND-11 | Safety: 18+ only; report and block from every card and from the room; repeated reports remove a user from the pool automatically until a person reviews it; notes and bios are moderated on the server; banned users cannot return with the same account or device. | P0 |
+| FND-12 | Women-only matching: any user can choose "women only". Users who choose it are suggested only to women (who also chose a compatible preference) and see only women. Gender is self-declared. | P0 |
+| FND-13 | No fake profiles, bots or padded lists. If fewer than 3 people match, show the empty state and notify when someone does. | P0 |
+| FND-14 | Notifications: weekly "new suggestions" (optional), request received, request accepted. | P0 |
+| FND-15 | Teaser for free users who opted in: "12 people with goals like yours are open to a partner. Get a plan to say hi." It shows a count only and only when the count is 5 or more. No profiles are shown. | P0 |
+| FND-16 | After 7 days in a room that started from a match, ask "How is your match going?" (thumbs up or down) to tune the weights. | P1 |
+| FND-17 | Group matching ("find 3 more people for a Winter Arc room") and hosts listing a room as "open to new members". | P2 |
+
+
+### 6.25 Focus Time
+
+A focus timer for anyone who studies or works. It is a personal tool that anyone can use alone, and a shared tool inside rooms: any room member can start a combined focus session, and any number of members can join it and track their time together. Focus time is not tied to food or calories; it is another part of the all-in-one app.
+
+**Two modes**
+
+- **Stopwatch:** open-ended. It counts up until the person (or the session starter) ends it.
+- **Timer:** counts down from a chosen length (for example 25, 50 or 90 minutes, or a custom value) and ends for everyone at the same moment.
+
+**Personal focus:** free for everyone, works offline, with an optional label such as Study, Work, Reading or Coding.
+
+**Room focus:** a member starts a session in the room (mode, length for timer mode, optional label). Other members get a notification and a banner on the Room tab ("Rahul started a 50-minute focus session. Join?"). Anyone can join or leave at any time. Each person's tracked time is the time between their join and their leave or the session end. Room members see who is focusing now, their elapsed time and whether they are on a break.
+
+| ID | Requirement | Priority |
+|---|---|---|
+| FOC-1 | Start a personal focus session from the Today screen, the + Log sheet or the Room > Focus segment. Choose Stopwatch or Timer, set the length for a timer, and pick or type an optional label (up to 20 characters). | P0 |
+| FOC-2 | While running the screen shows elapsed or remaining time, a Pause or Break button and an End button. Paused time is not counted as focused time. | P0 |
+| FOC-3 | Time is computed from stored UTC timestamps, never from a counter, so it stays correct when the app is backgrounded, killed or the phone restarts. A timer sets a local notification for its end. | P0 |
+| FOC-4 | Personal sessions work offline and sync later with idempotent IDs. Sessions can be edited or deleted afterwards. | P0 |
+| FOC-5 | Room focus: any room member can start a shared session. The start time is set by the server. Timer sessions end for everyone at the same server-time moment. | P0 |
+| FOC-6 | Any number of room members, up to the room's cap, can join or leave while the session runs. Late joiners see the correct remaining time. A participant's tracked time starts when they join. | P0 |
+| FOC-7 | The Room > Focus segment shows the active session (starter, mode, label if shared, participants with status Focusing or On break and elapsed time), the Join and Leave actions, and recent sessions. | P0 |
+| FOC-8 | A stopwatch session ends when the starter ends it or when the last participant leaves. If nobody ends it, every participant is stopped automatically at 12 hours, with a "Still focusing?" check after 4 hours. | P0 |
+| FOC-9 | Notifications: a member started a session (muteable per room, at most one per 10 minutes per room), "5 minutes left" for timers, and the end of the session. Quiet hours are respected. | P0 |
+| FOC-10 | Stats in Progress: focus minutes per day and per week with a goal line, totals by label, and the longest session. Room > Progress shows each member's weekly focus time and the room total, neutrally sorted (me first, then alphabetical), with no ranking. | P0 |
+| FOC-11 | Optional weekly focus goal (hours). A focus streak counts days with at least 25 minutes (setting). Focus is not part of the Weekly Consistency Score or the leaderboards at launch. | P1 |
+| FOC-12 | Healthy-use prompts: a gentle break suggestion after 90 minutes of continuous focus and a supportive check-in if a day passes 10 hours of focus. No guilt or "you are behind" messages. | P1 |
+| FOC-13 | Privacy per room (see Section 6.13): "focusing now" status and focus totals are shared by default; session labels are hidden by default. | P0 |
+| FOC-14 | Rate limits: 10 room sessions started per room per day, and one active room session per room at a time (others join it). A room session needs an unlocked room; personal focus never needs a plan. | P0 |
+| FOC-15 | Pomodoro cycles (focus and break blocks), ambient sounds, and a distraction-blocking mode that uses the phone's screen-time tools. | P2 |
+
+
+### 6.26 Navigation and Information Architecture Update
 
 Five tabs remain. Recipes and the AI coach are reached from Today, the Log sheet and Me rather than from new tabs.
 
 
 | Tab | Contents |
 |---|---|
-| Today | Diary with 5 meal sections, calorie and macro rings, cards for water, steps and distance, workouts and fasting; room avatar strip; entry points to Recipes and Ask Coach. |
-| Room | Segments: Today (side-by-side), Chat, Progress, Members. Requests inbox and invite actions. |
-| + Log (center) | Quick add sheet: Food (Search, Scan, Photo, Previously logged, My Foods, Recipes), Workout, Water, Weight, Fast. |
-| Progress | Segments: My Progress (graphs), Leaderboard, Challenges. |
-| Me | Profile and username, goals and rate, privacy, subscription and plans, fasting settings, AI coach history and consent, rate us and feedback, settings, requests inbox. |
+| Today | Diary with 5 meal sections, calorie and macro rings, cards for water, steps and distance, workouts, fasting and Focus (start a session, today's focus time); room avatar strip (or "Find a partner" card when the user has no room); entry points to Recipes and Ask Coach. |
+| Room | Segments: Today (side-by-side), Focus, Chat, Progress, Members. Requests inbox (invitations, join requests and partner requests) and invite actions. Empty state offers "Invite a friend" and "Find a partner". |
+| + Log (center) | Quick add sheet: Food (Search, Scan, Photo, Previously logged, My Foods, Recipes), Workout, Water, Weight, Fast, Focus. |
+| Progress | Segments: My Progress (graphs, including Focus), Leaderboard, Challenges. |
+| Me | Profile and username, goals and rate, privacy, room plan and subscription (room, cap, member count), Find a partner (preferences and consent), fasting settings, focus settings, AI coach history and consent, rate us and feedback, settings, requests inbox. |
 
 
-### 6.25 Acceptance Criteria for Core Flows
+### 6.27 Acceptance Criteria for Core Flows
 
 - **First log: **a new user can open the app, complete onboarding, and save a first meal within 90 seconds without creating an account.
 - **Targets: **for the same inputs, the app always produces the same maintenance calories, daily calories per rate and macros, matching the worked example in Section 7.2 to the nearest kcal.
 - **Previously logged: **after logging a custom food once, it appears in Previously logged, and a single tap on + adds it again with the last-used quantity to the chosen section.
-- **Username request: **searching an exact @username, sending an invitation, and accepting it on the other phone puts both users in the same room within 5 seconds of acceptance (subject to room access).
+- **Username request: **searching an exact @username, sending an invitation, and accepting it on the other phone puts both users in the same room within 5 seconds of acceptance (subject to the room's capacity).
 - **Invite link: **tapping an invite link on a device without the app opens the store, and after installation lands the user on the room preview with the inviter's name.
 - **Side-by-side: **when one member logs a meal and shares it, the other member's room view updates within 5 seconds when both are online.
 - **Chat: **a text or image message sent by one member appears for an online member within 2 seconds; a non-member can never fetch the message or the image URL.
 - **Privacy: **a hidden data type never appears in any API response to other room members, including in room progress charts, not just in the UI.
 - **Workout: **logging a strength workout with sets works offline, shows last-time performance for each exercise, and appears as "worked out today" in the room once online.
 - **Shared meal: **tagging a partner creates a pending card for them; accepting with a different quantity creates a separate entry with correctly scaled nutrients.
-- **Entitlement: **after a subscription lapses, the user keeps personal tracking, loses room and chat access immediately on the server, and sees the rejoin screen; the room moves to the correct state for the other members.
+- **Entitlement: **when a room's plan ends and nobody sponsors it, the room becomes Locked for every member on the server (chat, room view, progress, focus and realtime channels), personal tracking continues, and each member sees the "This room is paused" screen. When any member buys a plan, the room returns to Active with all data intact.
 - **AI coach: **a user in the 3-day trial or on the free plan cannot get a coach reply (the server rejects it) and sees the locked preview; a Premium user gets a streamed answer built only from their own data; asked for an 800 kcal day, the coach declines and offers a safe alternative.
 - **Fasting: **a 16:8 fast started at 8 PM shows the correct elapsed time after the app is killed and reopened, and an end-of-fast reminder fires on time.
 - **Recipes: **publishing a recipe calculates its nutrition automatically; logging 1.5 servings creates an entry with 1.5 times the per-serving nutrition.
 - **Ratings: **the native review prompt appears at most once during onboarding and never in the flows listed in RAT-5.
-- **Plans: **the paywall shows monthly, 3-month and annual plans with localised prices; buying annual grants one year of access, and restore purchases works.
+- **Plans: **the paywall shows Basic, Plus and Pro with monthly, 3-month and annual prices (localised) and a size picker; buying Plus lifts the cap from 5 to 20 immediately; the sixth person joining a Basic room is refused with ROOM_FULL and the host is offered the upgrade; restore purchases works; a downgrade that leaves the room over its cap puts it in Over capacity with a 7-day notice.
+- **Joining is free: **a user with no plan and no trial can accept an invitation, join by link or code, chat, focus and track inside a paid room, but gets a locked preview for the AI coach and the Partner Finder.
+- **Partner Finder: **a user who switches on "Open to a partner" appears only as banded card fields to eligible plan holders; weight, exact age, exact location and food logs never appear in any response; a plan holder sends a request, the other user accepts without a plan, and both land on "Start your room" with photos and @usernames revealed only then; switching the setting off removes the user from every suggestion list at once; with fewer than 3 matches the app shows the honest empty state.
+- **Focus: **member A starts a 50-minute room timer, member B joins 10 minutes later and sees 40 minutes left, member C joins and leaves at will; the timer ends for all at the same server moment even if their apps were killed; each person's tracked time is their own join-to-leave time; a stopwatch session left running is stopped automatically after 12 hours; a personal session logged offline syncs later without duplicates.
 
 ## 7. Business Rules and Logic
 
 
 ### 7.1 Access and entitlement states
 
+Access has two parts: what the user holds personally, and what state the room is in.
 
-| State | Rooms and chat | Personal tracking | AI coach | Transition |
+**User states (personal)**
+
+| State | Rooms | Personal tracking and solo focus | AI coach and Partner Finder | Transition |
 |---|---|---|---|---|
-| Free (trial not started) | Can create or join a room, which starts the trial | Yes | No (locked preview) | First room create or join starts the 3-day trial |
-| Trial (3 days) | Full room and chat access (one room of 2) | Yes | No (locked preview) | Ends after 3 days unless the user subscribes |
-| Free (trial used) | No create, join, view or chat | Yes (proposed) | No (locked preview) | Subscribes to move to Paid |
-| Paid | Full access | Yes | Yes (daily cap) | Cancels or payment fails: moves to Grace, then Free |
-| Grace | Full access | Yes | Yes | Payment recovered: Paid. Grace expires: Free |
+| No plan, no trial | Can join any room as a member for free. Creating a room starts the trial. | Yes | Locked preview (can still opt in to be suggested and accept partner requests) | First room created starts the 3-day trial |
+| Trial (3 days) | Host one room with the Basic cap (5 people) | Yes | Locked preview | Ends after 3 days unless the user buys a plan |
+| Plan holder (Paid) | Host or sponsor one room up to the tier cap, plus be a member of others | Yes | Yes (daily caps) | Cancels or payment fails: Grace, then Lapsed |
+| Grace | Same as Paid | Yes | Yes | Payment recovered: Paid. Grace ends: Lapsed |
+| Lapsed (trial used, no plan) | Their own room is Locked; can still be a member of other paid rooms | Yes | Locked preview | Buys a plan to become a plan holder |
+
+**Room states** are defined in Section 7.6 (Active, Dormant, Locked, Over capacity, Archived). A room is usable when its plan is Paid, in Grace or in the trial.
 
 
 ### 7.2 Calorie, macro and weekly-rate calculation (deterministic)
@@ -765,28 +929,29 @@ A goal day is a logged day where calories fall inside the goal range for the use
 ### 7.4 Streak rules
 
 - A personal streak continues when the user has a logged day. It resets at the end of the first day with no logged day (unless a freeze is applied).
-- The room streak continues on days when all active, non-paused members have a logged day.
+- The room streak continues on days when all active, non-paused members have a logged day (rooms of up to 5), or at least 60% of them (larger rooms).
 - Days are evaluated in each user's local time zone.
 
 ### 7.5 Leaderboard rules
 
 - Weeks run Monday to Sunday in the user's local time zone. Results are finalised after a 24-hour grace period so late time zones are included.
-- Eligibility: users with room access or an active trial who logged on at least 3 days in the week.
+- Eligibility: users who are in an unlocked room or hold a plan or active trial, and who logged on at least 3 days in the week.
 - Division is taken from the user's goal at the start of the week. Users in their first 28 days are placed in Beginner.
 
 ### 7.6 Room lifecycle
 
-
 | State | Condition | Behaviour |
 |---|---|---|
-| Active | 2 or more members have room access | Everything works normally, including chat |
-| Dormant | Fewer than 2 members have room access | Remaining member sees the room read-only (including chat) with a "Waiting for your partner" card and an invite button. Lapsed members' data is frozen. Lasts up to 30 days (proposed). |
-| Archived | Dormant for more than 30 days or deleted by host | Hidden from lists. Data and chat images retained for 90 days (proposed) so a returning member can restore it, then deleted. |
+| Active | The room's plan is Paid, in Grace or in trial, and the member count is within the cap | Everything works normally: chat, room view, progress, focus, challenges |
+| Dormant | Fewer than 2 active members (the others left or were removed) | The remaining member keeps full access and sees a "Waiting for your partner" card with an invite button. Lasts up to 30 days (proposed), then Archived. |
+| Locked | The plan ended (cancelled, expired, refunded or trial over) and nobody sponsors the room | Chat, room view, progress and focus are hidden from every member; they see "This room is paused" and "Keep this room going". Data is kept. Personal tracking is unaffected. Restored instantly when any member buys a plan. After 90 days (proposed) it becomes Archived. |
+| Over capacity | The member count is above the new cap after a downgrade or refund | For 7 days the room works but accepts no new members and the host sees a banner to upgrade or remove people. After 7 days it becomes Locked until the count is within the cap or the plan is upgraded. |
+| Archived | Dormant or Locked for too long, or deleted by the host | Hidden from lists. Data and chat images are retained for 90 days (proposed) so a returning member can restore it, then deleted. |
 
 
 ### 7.7 AI photo logging limits
 
-- Trial users: up to 3 AI scans per day. Paid users: up to 15 per day (both proposed and tunable by remote config).
+- Trial users: up to 3 AI scans per day. Plan holders: up to 15 per day (both proposed and tunable by remote config).
 - Free users after trial: manual, search, barcode and previously-logged foods only, or a small daily allowance if costs allow.
 - AI calls go through the backend, never directly from the app. Food photos are deleted after processing unless the user chooses to share the photo to a room or chat.
 
@@ -832,6 +997,56 @@ A goal day is a logged day where calories fall inside the goal range for the use
 - Budget: per-user daily token cap, a global monthly budget that first switches to a cheaper model and then disables the coach with a friendly message, and an alert to the team.
 - Retention (proposed): conversations kept 90 days unless the user deletes them sooner; usage rows kept for cost tracking.
 
+### 7.11 Room plan and capacity rules
+
+- A room's cap comes from its plan holder's tier: Basic 5, Plus 20, Pro 50, Community 100 (later). The trial cap is 5.
+- The cap counts active members only (not pending invitations or requests). The check runs inside the join function on the server, in the same transaction as the insert, so two simultaneous joins cannot exceed the cap.
+- One plan covers one hosted room. Joining other rooms as a member needs no plan, up to 3 rooms in total (ROOM-5).
+- Upgrade: immediate. Downgrade: at renewal. A refund or a lower tier that leaves the room above its cap moves it to Over capacity (7.6).
+- If the host leaves, hosting passes to the longest-standing active member. The plan stays with the plan holder; if the plan holder leaves, the plan stays attached to the room until its period ends.
+- When two people both pay for the same room, the higher tier counts and the other subscription is shown in Me as unattached with a prompt to cancel it (we never charge silently without a use).
+- Remote configuration holds the caps, prices shown, the trial length and the Community switch, so they can change without an app release.
+
+### 7.12 Partner matching rules (deterministic)
+
+No AI is used for matching. The same two profiles always give the same result, so it can be tested.
+
+**Hard filters (all must pass)**
+
+- Both users are 18 or older, have switched on "Open to a partner" and were active in the last 14 days.
+- Neither has blocked the other, they are not already in a room together, and neither declined the other in the last 30 days.
+- Gender preferences are satisfied in both directions (including "women only").
+- They share at least one language.
+- Their time zones are within 3 hours, unless both chose "online accountability".
+- If both want to train in person, they must be in the same city.
+
+**Score (0 to 100; weights are remotely configurable)**
+
+| Factor | Points |
+|---|---|
+| Goal fit: same goal 25; maintain with either 15; cut with bulk 12 (different goals can still work as partners) | up to 25 |
+| Preferred training time overlap | up to 20 |
+| Training style overlap | up to 15 |
+| Looking-for alignment (online or in person; one partner or group) | up to 10 |
+| Experience level: same 10; one level apart 5 | up to 10 |
+| Age band: same 10; adjacent 6; otherwise 0 | up to 10 |
+| Diet preference (same, or either has no preference) | up to 5 |
+| Same city | up to 5 |
+
+Labels: Great match (75 or more), Good match (55 to 74), Possible match (40 to 54). Below 40 is not shown. Ties are broken by recent activity, then by a stable per-user random seed so the order does not change on refresh. The three highest-scoring factors become the "why you match" reasons.
+
+**Pool and limits:** a user sees at most 10 suggestions at a time, people they hid are excluded for 30 days, and the same person is not suggested again within 60 days after a decline.
+
+### 7.13 Focus session rules
+
+- A session stores a start timestamp (set by the server for room sessions), a planned length (timer only), an end timestamp, the paused seconds, and a status. Elapsed focus time is always computed from timestamps, never from a counter.
+- Focused time = end minus start minus paused time. A participant's focused time in a room session = their leave (or the session end) minus their join, minus their own paused time.
+- A room session has one starter, any number of participants up to the room cap, and one end time (timer) or an end by the starter or last leaver (stopwatch). The server closes forgotten stopwatch sessions at 12 hours.
+- Days are assigned by the user's local time zone at the session start. Sessions that cross midnight are split by day for the stats.
+- Presence ("focusing now") uses realtime presence only while the Focus screen or the Today strip is visible; the stored join and leave rows are the source of truth.
+- Focus time does not change calorie targets, the Weekly Consistency Score or leaderboards at launch.
+
+
 ## 8. Privacy, Safety and Compliance
 
 
@@ -846,6 +1061,8 @@ A goal day is a logged day where calories fall inside the goal range for the use
 - Region-appropriate support resources (eating-disorder and mental-health helplines), which the team must source and keep current.
 - Fasting safeguards: optional, off by default, 18+, screening questions, 20-hour planned limit, no health claims, never part of rankings or challenges (see 6.20 and 7.9).
 - AI coach safeguards: premium-only, calorie-floor and crash-diet refusals, supportive handling of disordered-eating signals, medical disclaimers, and no access to other users' data (see 6.22 and 7.10).
+- Partner Finder safeguards: 18+ only, opt-in and off by default, banded information only, no photos or usernames before acceptance, no free-text discovery, women-only matching, report and block everywhere, no fake profiles (see 6.24 and 8.5).
+- Focus safeguards: gentle break prompts, an automatic stop for forgotten sessions, and no ranking of focus hours (see 6.25).
 
 ### 8.2 Privacy and data protection
 
@@ -878,6 +1095,20 @@ A goal day is a logged day where calories fall inside the goal range for the use
 | Ratings and reviews | Use only the native review prompts. No incentives for ratings and no filtering of who is asked. |
 | Tax (India) | GST treatment and store payouts to be confirmed with a CA. |
 | Content licences | Open Food Facts (ODbL) requires attribution and share-alike obligations; verify IFCT, exercise library and any paid API terms. |
+| Partner matching | App Store and Google Play user-generated-content rules (report, block, filtering, contact info); choose an age rating that fits user-to-user contact; separate DPDP and GDPR consent for the matching profile; legal review of the safety copy and moderation duties. |
+| Subscriptions by room | Store rules for subscription groups, upgrades and downgrades; clear billing text explaining that the plan covers a room of a given size and that members join free. |
+
+
+### 8.5 Partner Finder safety and privacy
+
+- **Consent and control.** A separate, itemised consent before the matching profile is created. "Open to a partner" is off by default and can be switched off at any time, which removes the user from all suggestions at once. The matching profile is deleted with the account.
+- **Minimal exposure.** Strangers see only banded fields: goal chip, age band, training style, experience, time of day, city, languages and a filtered bio. No weight, height, calories, food logs, exact age, exact location or health-screening answers are ever used or shown. Photos and @usernames appear only after both people accept.
+- **Server-side only.** Matching and the card fields come from a database function that applies the hard filters and returns banded values. The app never receives raw profile rows. Searching for people by browsing is not possible; only suggestions.
+- **Anti-harassment.** Request limits, 14-day expiry, silent declines, a 30-day cooldown, a filtered 140-character note (no links, phone numbers or handles), report and block on every card, automatic removal from the pool after repeated reports, and a 24-hour moderation target.
+- **Women's safety.** Women-only matching, no gender shown unless chosen, and the safety card before the first request or acceptance.
+- **No dating framing.** Copy, imagery and store listing describe workout and study accountability. No swiping, no photo-first cards, no rating of looks.
+- **Honest pool.** No bots, seeded or fake profiles, and no padding of suggestion lists; counts shown to free users are real and appear only above a minimum.
+- **Pricing as a safeguard.** Plan holders only can browse and send, which raises the cost of mass-spamming and funds moderation.
 
 
 ## 9. Non-Functional Requirements
@@ -887,6 +1118,9 @@ A goal day is a logged day where calories fall inside the goal range for the use
 |---|---|
 | Performance | Cold start under 2.5 seconds on a mid-range Android phone. Re-logging a previously logged food in 2 taps or fewer. Search results in under 500 ms (p95) with instant local history. Room screen loads in under 1.5 seconds. Progress graphs for 90 days load in under 1.5 seconds. |
 | Realtime | A partner's shared log appears within 5 seconds when both users are online. Chat messages are delivered within 2 seconds to online members. |
+| Large rooms | A room of 50 people loads its Today and Members views in under 2 seconds; chat fan-out and presence stay within the realtime plan limits; lists are paged; presence and realtime subscriptions are used only while the relevant screen is visible. |
+| Focus accuracy | A timer ends within 1 second of the server end time on every device; a participant's tracked time is within 2 seconds of the true join and leave times; sessions survive app kill and phone restart. |
+| Partner matching | Suggestions are computed in under 1 second per request and cached for the week; the matching function is covered by golden tests. |
 | AI coach latency | First streamed token typically under 3 seconds; a full answer within about 15 seconds; clear states when offline or rate limited. |
 | Offline | Diary, previously logged foods, custom foods, water, workouts and logging work offline; sync with last-write-wins per entry and conflict-safe merges. Chat messages queue offline. |
 | Reliability | API availability of 99.5% or better. Daily backups. Idempotent sync endpoints. |
@@ -907,7 +1141,7 @@ A goal day is a logged day where calories fall inside the goal range for the use
 |---|---|
 | User | id, username (unique, case-insensitive), nickname, avatar, date of birth, sex, height, goal type, time zone, country, trial_ends_at, leaderboard_opt_in, discoverable |
 | GoalProfile | user_id, activity multiplier, weekly rate, calorie target, protein/carb/fat targets, step goal, water goal, target weight, target date, effective_from |
-| Entitlement | user_id, plan, store (Play/Apple), status (trial/paid/grace/free), current_period_end, grace_until |
+| Entitlement | user_id, tier (basic/plus/pro/community), period (monthly/3-month/annual), store (Play/Apple/Dodo), status (trial/paid/grace/lapsed), attached_room_id, current_period_end, grace_until |
 | Food | id, source (OFF/USDA/IFCT/user), name, brand, barcode, serving units, nutrients per 100 g, owner_id for custom foods |
 | FoodEntry | id, user_id, food_id, meal section (breakfast/lunch/dinner/snacks/extra), quantity, unit, nutrient snapshot, logged_at, source (search/scan/photo/history/copy), shared_meal_id |
 | UserFoodStats | user_id, food_id, use_count, last_used_at, last_quantity, last_unit, last_meal_section (powers Previously logged and suggestions) |
@@ -915,9 +1149,9 @@ A goal day is a logged day where calories fall inside the goal range for the use
 | Exercise | id, name, muscle group, equipment, type, source (library/custom), owner_id |
 | Workout | id, user_id, date, type, name, start time, duration, effort, notes, volume, estimated calories |
 | WorkoutExercise / WorkoutSet | workout_id, exercise_id, order; set order, reps, weight, duration, distance |
-| Room | id, name, host_id, invite_code, state, max_members, who_can_invite, created_at |
-| RoomMember | room_id, user_id, role, status (active/locked/paused/left), joined_at, privacy settings per data type |
-| RoomRequest | id, type (invitation/join_request), room_id, from_user, to_user, status, created_at, expires_at |
+| Room | id, name, host_id, plan_holder_id, tier, member_cap, invite_code, state (active/dormant/locked/over_capacity/archived), who_can_invite, created_at |
+| RoomMember | room_id, user_id, role, status (active/paused/left/removed), joined_at, privacy settings per data type |
+| RoomRequest | id, type (invitation/join_request/partner_request), room_id (nullable for partner requests), from_user, to_user, note (partner requests), status, created_at, expires_at |
 | ChatMessage | id, room_id, sender_id, text, created_at, deleted_at, reply_to (P1), edited_at (P1) |
 | ChatAttachment | id, message_id, storage_path, width, height, size, moderation_status |
 | ChatReadState | room_id, user_id, last_read_message_id (unread counts, receipts) |
@@ -925,7 +1159,7 @@ A goal day is a logged day where calories fall inside the goal range for the use
 | SharedMeal | id, room_id, creator_id, base_entry_id, participants with status (pending/accepted/declined) |
 | RoomEvent | id, room_id, actor_id, type, payload, created_at (feed items) |
 | Reaction / Nudge | id, room_id, from_user, to_user, target, type, created_at |
-| DailySummary | user_id, date, calories, macros, steps, water, workout minutes, weight, logged_day flag, goal_day flag (precomputed for graphs) |
+| DailySummary | user_id, date, calories, macros, steps, water, workout minutes, focus minutes, weight, logged_day flag, goal_day flag (precomputed for graphs) |
 | WeeklyScore | user_id, week_start, score, division, cohort_id |
 | Challenge / Participant | id, name, type, start/end, scope (room/global), rules; participant progress |
 | Device / Notification settings | user_id, push token, platform, per-type toggles, per-room chat mute, quiet hours |
@@ -937,6 +1171,13 @@ A goal day is a logged day where calories fall inside the goal range for the use
 | ConsentRecord | user_id, type (health data, AI processing, chat terms), version, accepted_at |
 | RatingPromptState | user_id, times_shown, last_shown_at, trigger |
 | DeviceTrial | hashed device id, user_id, trial_started_at (trial-abuse control) |
+| MatchProfile | user_id, open_to_partner flag, consent_version, goal band, age band, gender and preference, training styles, experience, diet, time of day, city, languages, looking_for, bio, last_active_at, paused_at |
+| MatchSuggestion | user_id, candidate_id, score, label, reasons, batch_week, status (shown/hidden/requested), created_at |
+| MatchFeedback / MatchBlocklist | pair, outcome (declined/cooldown_until), 7-day feedback score |
+| FocusSession | id, user_id, room_session_id (nullable), mode (stopwatch/timer), label, planned_seconds, started_at, ended_at, paused_seconds, status, source |
+| RoomFocusSession | id, room_id, started_by, mode, label, planned_seconds, started_at (server time), ends_at (timer), ended_at, status |
+| RoomFocusParticipant | session_id, user_id, joined_at, left_at, paused_seconds, status (focusing/break/left) |
+| FocusSettings | user_id, weekly_goal_minutes, streak_minimum_minutes, break_reminders, default_label |
 
 
 ## 11. Technical Approach and Integrations
@@ -951,7 +1192,7 @@ A goal day is a logged day where calories fall inside the goal range for the use
 | Login | Supabase Auth with email code, Google and Apple. No phone OTP. Custom SMTP through a transactional email provider (Resend or Brevo) with a verified domain, because the built-in sender is development-only. |
 | Chat and realtime | Supabase Realtime channel per room; messages stored in Postgres with pagination; membership and entitlement checked on every read and write. |
 | Images | Cloudflare R2 private bucket with signed links issued by an Edge Function after a membership check. Compress and make thumbnails on the phone and strip EXIF. Recipe photos use a public bucket with a CDN. |
-| Subscriptions | Google Play Billing and Apple IAP through RevenueCat (free below $2,500 monthly tracked revenue, then 1%). Webhooks write to our own entitlements table. Dodo Payments is added later for web, writing to the same table. |
+| Subscriptions | Google Play Billing and Apple IAP through RevenueCat (free below $2,500 monthly tracked revenue, then 1%). Nine products per store at launch (Basic, Plus and Pro, each monthly, 3-month and annual) in one subscription group per store ranked by size so upgrades and downgrades work. Webhooks write to our own entitlements table, and database functions derive each room's cap and state from it. Dodo Payments is added later for web, writing to the same table. |
 | Push and reminders | Firebase Cloud Messaging (Android, and iOS through APNs) for server-triggered pushes; local notifications for meal, water and fasting reminders. |
 | Food data | Compact bundled Indian and popular foods for instant offline search, plus Open Food Facts, USDA FoodData Central and IFCT lookups cached in our database. Do not load the full public databases into Postgres. |
 | Recipes | Postgres tables with nutrition calculated from linked foods at publish time; authored through an import and validation script or admin tool; images in R2. |
@@ -959,6 +1200,8 @@ A goal day is a logged day where calories fall inside the goal range for the use
 | Calculations | A shared pure-TypeScript package (targets, macros, derived metrics) with golden tests that include the worked example in 7.2, used by both the app and the server. |
 | Health and steps | Health Connect (Android) and HealthKit (iOS) through community libraries, with the phone's step sensor as a fallback. |
 | Background jobs | Scheduled database or Edge Function jobs for daily summaries, streaks, weekly scores, request expiry and notification batches. |
+| Partner matching | A SQL function applies the hard filters and a deterministic score (shared constants from the core package, with golden tests). Suggestions are generated by a weekly job and on demand with a cache. No external AI service is involved. |
+| Focus sessions | Postgres rows with server timestamps; Realtime presence only while the screen is open; a scheduled job closes forgotten sessions; local notifications for timer ends. |
 | Charts | A React Native SVG-based charting library with text summaries for accessibility. |
 | Analytics and quality | PostHog or Firebase Analytics, plus Sentry or Crashlytics. Admin tasks use Supabase Studio and scripts at first. |
 | Deep links | Android App Links and iOS Universal Links. Deferred deep linking through a provider (for example Branch or AppsFlyer) is added during production preparation. Firebase Dynamic Links no longer exists. |
@@ -998,6 +1241,15 @@ A goal day is a logged day where calories fall inside the goal range for the use
 | coach_message_sent / coach_blocked_by_paywall / coach_limit_reached | tokens, safety flag, feedback |
 | rating_prompt_requested | trigger (onboarding, day 7, streak), times shown |
 | annual_plan_viewed / selected | region, price shown |
+| plan_size_selected / tier_upgraded / tier_downgraded | tier, room size at the time, region |
+| room_full_blocked / room_over_capacity / room_locked / room_sponsored | tier, member count |
+| finder_offer_shown / finder_opted_in / finder_opted_out | entry point, preferences completed |
+| finder_suggestions_viewed / finder_request_sent / finder_request_accepted / finder_request_declined | pool size bucket, match label, time to respond |
+| finder_room_started / finder_match_feedback | host role, days active, thumbs |
+| finder_teaser_viewed / finder_paywall_viewed | count bucket |
+| focus_started / focus_ended | mode, planned minutes, scope (personal/room), participants, offline flag |
+| focus_joined / focus_left | late join seconds, session participants |
+| focus_goal_set / focus_break_prompt_shown | goal hours |
 
 
 ## 13. Build Phases and Milestones
@@ -1012,12 +1264,14 @@ The product will be built phase by phase with AI coding agents, with one indepen
 | 2 | Onboarding and the deterministic calorie, macro and weekly-rate calculator with golden tests. | M |
 | 3 | Food database, food logging in 5 sections, previously logged, barcode, custom foods, offline-first sync layer. | L |
 | 4 | Water, weight, steps and distance, with Health Connect and HealthKit. | M |
-| 5 | Rooms: usernames, invitations and join requests, privacy controls, side-by-side view, shared meals, nudges and reactions, trial logic. Milestone: friends alpha. | L |
+| 5 | Rooms: usernames, invitations and join requests, privacy controls, side-by-side view, shared meals, nudges and reactions, room plan capacity and trial logic (host pays, members free), Locked and Over capacity states. Milestone: friends alpha. | L |
 | 6 | Workout tracker and exercise library. | M |
-| 7 | Progress graphs (personal and room), streaks, consistency score, leaderboards. | L |
+| 7 | Progress graphs (personal and room, including large-room views), streaks, consistency score, leaderboards. | L |
 | 8 | Room chat with images, reporting and blocking. | M |
 | 9 | Push and local notifications. | M |
-| 10 | Subscriptions: monthly, 3-month and annual plans, entitlements, paywall. Milestone: paid beta. | M |
+| 9B | Focus Time: personal and room sessions, stats and notifications. | M |
+| 10 | Subscriptions: Basic, Plus and Pro room plans with monthly, 3-month and annual billing, entitlements, size-based paywall, upgrades and lapse handling. Milestone: paid beta. | L |
+| 10B | Partner Finder (Premium): matching profile, consent, suggestions, requests, start-a-room flow, safety tools. | M |
 | 11 | AI photo logging. | M |
 | 12 | Recipe library (the team writes recipes in parallel). | M |
 | 13 | Fasting tracker. | S |
@@ -1026,11 +1280,11 @@ The product will be built phase by phase with AI coding agents, with one indepen
 | 16 | Full review, security and privacy audit, hardening. | M |
 | 17 | Production preparation and store submission. | M |
 
-Milestones: friends alpha after Phase 5 (does the partner effect work?), paid beta after Phase 10, release candidate after Phase 16.
+Milestones: friends alpha after Phase 5 (does the partner effect work?), paid beta after Phase 10 and 10B, release candidate after Phase 16.
 
-Beta exit criteria: at least 50 pairs or groups; paired retention at week 4 at or near target; no critical privacy, chat-access, entitlement or AI-safety bugs; crash-free sessions above 99%.
+Beta exit criteria: at least 50 pairs or groups; paired retention at week 4 at or near target; no critical privacy, chat-access, entitlement, capacity or AI-safety bugs; Partner Finder pool of at least 300 opted-in users in the launch city or language cluster before it is promoted; crash-free sessions above 99%.
 
-After launch (Phase 2 items): challenges and occasion plans, adaptive recalibration, routines, chat upgrades, coach food logging, widgets, more languages, and Dodo web checkout.
+After launch (Phase 2 items): challenges and occasion plans, adaptive recalibration, routines, chat upgrades, coach food logging, widgets, more languages, the Community tier, and Dodo web checkout.
 
 
 ## 14. Risks and Mitigations
@@ -1040,7 +1294,7 @@ After launch (Phase 2 items): challenges and occasion plans, adaptive recalibrat
 |---|---|
 | Scope and timeline growth from building everything in one app | Core-loop alpha at week 14, strict P0/P1 split, shared calculation module, reuse components across food, workout and water logging. |
 | One partner stops and the other loses interest | Useful solo mode, gentle nudges, chat, dormant-room design, pause option, "rejoin" screen, re-invite prompts. |
-| Invited friend hits a paywall and leaves | Room preview before paywall, 3-day trial for every new user, clear free-versus-paid messaging. |
+| Host stops paying and the whole room loses access | Locked state keeps all data for 90 days, any member can sponsor with "Keep this room going", renewal and payment-issue reminders to the host, never naming or shaming. |
 | Privacy concerns about sharing food, weight and photos | Conservative defaults, per-item controls, server-side enforcement, "preview as partner", private signed image links. |
 | Chat abuse, harassment or unsafe images | Reporting, blocking, moderation queue, image scanning, rate limits, host removal, store UGC compliance. |
 | Username spam or scraping | Prefix search minimum, result limits, rate limits, discoverability setting, request caps and expiry. |
@@ -1059,6 +1313,14 @@ After launch (Phase 2 items): challenges and occasion plans, adaptive recalibrat
 | Rating prompt breaks store policy or annoys users | Native prompts only, no incentives or filtering, limited triggers, never during sensitive flows. |
 | Agent-written code has hidden security or logic bugs | One phase at a time, independent GPT review after each phase, mandatory automated RLS and calculation tests, real-device testing. |
 | Annual plan margin too thin once AI costs are known | Track AI cost per paid user from the first beta, keep daily caps, and adjust the annual price or caps before launch. |
+| Partner Finder misused for dating, harassment or unsafe contact | Opt-in, banded information only, no photos or usernames before acceptance, women-only matching, filtered notes, request limits, reporting and fast moderation, plan-holder-only sending, safety card, store UGC compliance. |
+| Too few people in the Finder pool at launch | Free users can opt in and accept, honest empty state with notifications, teaser counts only above a minimum, promote it only in clusters with enough people, no fake profiles. |
+| Host buys a small plan and exceeds it, or one plan is shared across many rooms | Server-side cap check inside the join transaction, one plan per hosted room, Over capacity state, clear upgrade prompts. |
+| One payer per room lowers revenue per user | The price per person is intentional (about ₹20 at full Basic), annual and 3-month plans, upgrade prompts at the cap, and the alternative of personal plans kept as an open question. |
+| Large rooms are noisy and expensive (chat, realtime, storage) | Paged lists, visibility-based realtime, grouped feed items, slow mode, rate limits, cost dashboards, and a price ladder that rises with size. |
+| Store product complexity (nine or more subscription products) | One subscription group per store, RevenueCat offerings, a test matrix for upgrade, downgrade, restore and lapse, and early sandbox testing. |
+| Focus timers drift or stop when the app is killed | Time computed from server and stored UTC timestamps, local notifications, tests for background, kill and restart cases. |
+| Focus encourages overwork or unhealthy comparison | No ranking of focus hours, break prompts, a check-in after very long days, and focus excluded from leaderboards. |
 | Licence obligations of food and exercise data | Review ODbL and other terms before launch; show required attributions. |
 
 
@@ -1071,11 +1333,11 @@ This PRD assumes the recommendation shown for each item. Please confirm or chang
 |---|---|---|
 | 1 | Does personal tracking stay free after the trial? | Yes: food, water, steps, workouts, fasting, recipes, weight and personal graphs stay free |
 | 2 | Which platform launches first? | Both from one codebase; Android beta first |
-| 3 | Maximum members per room and rooms per user? | 10 members, 3 rooms per user |
-| 4 | Can free (post-trial) users be on a leaderboard? | No, trial and Premium users only |
+| 3 | Maximum members per room and rooms per user? | 5 (Basic), 20 (Plus), 50 (Pro), 100 (Community later); a user can be in up to 3 rooms and a plan covers 1 hosted room |
+| 4 | Can users without a plan be on a leaderboard? | Yes if they are in an unlocked room and logged 3+ days; users in locked rooms with no plan are not shown |
 | 5 | Lapsed member's data in a room? | Frozen and hidden; restored on return within 90 days |
 | 6 | Launch languages beyond English? | English first; Hindi and Telugu in Phase 2 |
-| 7 | Annual plan price? | ₹799 and $34.99 (proposed); validate margins with real AI costs |
+| 7 | Annual plan prices? | Basic ₹799 / $34.99, Plus ₹1,599 / $69.99, Pro ₹2,399 / $104.99 (proposed); validate margins with real AI and chat costs |
 | 8 | Is the AI coach included in the single paid plan or a higher tier? | Included in the single plan with a daily cap; revisit after cost data |
 | 9 | Which AI provider, and what caps? | Decide after a cost test; caps as in 7.7 and 7.10 |
 | 10 | Age limit: 18+ or 16+ with parental consent? | 18+ |
@@ -1086,13 +1348,22 @@ This PRD assumes the recommendation shown for each item. Please confirm or chang
 | 15 | Exercise library source and image moderation provider? | Open dataset or curated list (licence check); provider chosen before Phase 8 |
 | 16 | Do workout days count in the consistency score? | Not at launch |
 | 17 | Are workout and step calories added to the calorie target? | No; informational only |
-| 18 | When does the 3-day trial start? | At the first room create or join (changed from account creation) |
+| 18 | When does the 3-day trial start? | When the user creates their first room (joining a room never starts a trial) |
 | 19 | Are recipes free for everyone? | Yes |
 | 20 | Recipe count at launch and who writes and photographs them? | At least 150, written and photographed by the team; start early |
 | 21 | Fasting scope? | Protocols up to 20 hours; no OMAD or multi-day fasts |
 | 22 | Rate-us timing? | End of onboarding after the targets screen, plus a day-7 positive-moment prompt and a permanent Me item |
 | 23 | AI coach conversation retention? | 90 days unless the user deletes sooner |
 | 24 | When to add Dodo web checkout? | When the web app exists (Phase 3) |
+| 25 | Who pays: the room's plan holder, or every member? | The plan holder (host or sponsor) pays and members join free; the alternative is each member buying a personal Basic plan, which would make the size tiers meaningless |
+| 26 | Is the Partner Finder included in every plan or sold as an add-on? | Included in every plan for plan holders; no separate price |
+| 27 | Can free users appear in the Finder pool? | Yes if they opt in; they can accept requests but cannot browse or send |
+| 28 | Are photos shown on suggestion cards? | No; photos and @usernames appear only after both accept |
+| 29 | Women-only matching: how is gender verified? | Self-declared at launch; revisit if abuse appears |
+| 30 | When is the Community tier (51 to 100) switched on, and what about more than 100? | Built behind a flag after launch; custom quotes for gyms, colleges and companies |
+| 31 | Is solo Focus Time free and are room focus sessions part of every plan? | Yes to both; focus is not ranked and not in leaderboards |
+| 32 | App-store age rating given user-to-user contact? | Confirm with the store questionnaires; plan for a higher rating than a plain tracker |
+| 33 | Can a plan holder run more than one paid room? | Not at launch; one plan per hosted room, extra rooms need extra plans (P1) |
 
 
 ## 16. Appendix
@@ -1103,7 +1374,7 @@ This PRD assumes the recommendation shown for each item. Please confirm or chang
 
 | Term | Meaning |
 |---|---|
-| Room | A private group of 2 to 10 people who track and chat together |
+| Room | A private group of 2 to 50 people (by plan) who track, chat and focus together |
 | Username | A unique @handle used to find and invite a person; different from the display nickname |
 | Request | An invitation sent to a user to join a room, or a user's request to join someone's room; both require acceptance |
 | TDEE | Total daily energy expenditure, the estimated maintenance calories |
@@ -1112,9 +1383,15 @@ This PRD assumes the recommendation shown for each item. Please confirm or chang
 | Consistency Score | Weekly 0 to 100 score from logged days and goal days |
 | Previously logged | The list of every food a user has logged before, with one-tap re-log |
 | Shared meal | One meal logged once and tagged to other members, each with their own portion |
-| Dormant room | A room with fewer than 2 members who have room access |
+| Dormant room | A room with fewer than 2 active members |
 | Entitlement | The server-side record of whether a user can access paid features |
-| Premium | Any paid plan (monthly, 3-month or annual). Includes rooms, room chat, room progress and the AI coach |
+| Premium | Holding an active Room Plan (any tier, monthly, 3-month or annual). Unlocks the AI coach and the Partner Finder for the plan holder; room features are unlocked for the whole room |
+| Room Plan | The subscription tier (Basic 2 to 5, Plus 6 to 20, Pro 21 to 50, Community 51 to 100) that sets a room's member cap |
+| Plan holder | The user who pays for a room's plan. Normally the host, but any member can sponsor the room |
+| Locked room | A room whose plan ended with no sponsor; hidden from members until someone restarts it |
+| Partner Finder | The premium feature that suggests opted-in people with similar goals so solo users can start a room |
+| Match | Two people whose profiles pass the hard filters and score above the minimum |
+| Focus session | A timed stopwatch or timer session for study or work, personal or shared in a room |
 | Fast | A timed period without eating, started and ended by the user or by a scheduled eating window |
 | AI coach | The premium in-app assistant that answers questions using the user's own data and our calculators |
 | Recipe | An original CaliPartner recipe with nutrition calculated from its ingredients |
@@ -1123,5 +1400,5 @@ This PRD assumes the recommendation shown for each item. Please confirm or chang
 ### Reference documents
 
 - CaliPartner Build Plan: phase-by-phase agent prompts, review prompts and manual task checklists.
-- CaliPartner App Layout and Navigation Plan (superseded by the navigation in Section 6.24).
+- CaliPartner App Layout and Navigation Plan (superseded by the navigation in Section 6.26).
 - Design prompts (maintained separately by the team).
