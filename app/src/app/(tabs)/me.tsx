@@ -1,7 +1,6 @@
-import { useState } from 'react';
 import {
-  ActivityIndicator,
   Alert,
+  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -17,46 +16,36 @@ import { useTheme } from '@/theme/useTheme';
 export default function MeScreen() {
   const router = useRouter();
   const { colors } = useTheme();
-  const { user, profile, isGuest, signOut, deleteAccount } = useAuth();
-  const [isDeleting, setIsDeleting] = useState(false);
+  const { user, profile, isGuest, signOut } = useAuth();
 
   const handleSignOut = () => {
+    const performSignOut = async () => {
+      await signOut();
+      router.replace('/auth/sign-in');
+    };
+
+    if (Platform.OS === 'web') {
+      const g = globalThis as unknown as { confirm?: (msg: string) => boolean };
+      const confirmed =
+        typeof g.confirm === 'function'
+          ? g.confirm(t('auth.signOutConfirm'))
+          : true;
+      if (confirmed) {
+        void performSignOut();
+      }
+      return;
+    }
+
     Alert.alert(t('auth.signOut'), t('auth.signOutConfirm'), [
       { text: t('common.cancel'), style: 'cancel' },
       {
         text: t('auth.signOut'),
         style: 'destructive',
-        onPress: async () => {
-          await signOut();
-          router.replace('/auth/sign-in');
+        onPress: () => {
+          void performSignOut();
         },
       },
     ]);
-  };
-
-  const handleDeleteAccount = () => {
-    Alert.alert(
-      t('accountDeletion.confirmTitle'),
-      `${t('accountDeletion.confirmBody')}\n\n${t('accountDeletion.storeSubscriptionNote')}`,
-      [
-        { text: t('common.cancel'), style: 'cancel' },
-        {
-          text: t('common.delete'),
-          style: 'destructive',
-          onPress: async () => {
-            setIsDeleting(true);
-            const { error } = await deleteAccount();
-            setIsDeleting(false);
-            if (error) {
-              Alert.alert(t('common.errorTitle'), error.message);
-            } else {
-              Alert.alert(t('accountDeletion.title'), t('accountDeletion.success'));
-              router.replace('/auth/sign-in');
-            }
-          },
-        },
-      ],
-    );
   };
 
   return (
@@ -157,7 +146,7 @@ export default function MeScreen() {
       )}
 
       {/* Account Actions */}
-      {!isGuest && user && (
+      {(user || isGuest) && (
         <View style={styles.actionsSection}>
           <Pressable
             testID="btn-me-signout"
@@ -167,21 +156,6 @@ export default function MeScreen() {
             <Text style={{ color: colors.text, fontSize: fontSize.md, fontWeight: '500' }}>
               {t('auth.signOut')}
             </Text>
-          </Pressable>
-
-          <Pressable
-            testID="btn-me-delete-account"
-            style={[styles.actionRow, { borderColor: colors.border }]}
-            onPress={handleDeleteAccount}
-            disabled={isDeleting}
-          >
-            {isDeleting ? (
-              <ActivityIndicator color={colors.danger} />
-            ) : (
-              <Text style={{ color: colors.danger, fontSize: fontSize.md, fontWeight: '500' }}>
-                {t('accountDeletion.title')}
-              </Text>
-            )}
           </Pressable>
         </View>
       )}

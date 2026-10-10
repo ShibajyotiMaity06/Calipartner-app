@@ -268,13 +268,22 @@ export class OnboardingStateMachine {
   goToStep(step: OnboardingStep): boolean {
     const targetIndex = ONBOARDING_STEPS_ORDER.indexOf(step);
     const currentIndex = ONBOARDING_STEPS_ORDER.indexOf(this.state.currentStep);
+    if (targetIndex === -1) return false;
     if (targetIndex <= currentIndex) {
       this.state.currentStep = step;
       this.state.errors = {};
       return true;
     }
-    // Forward jump requires validation
-    return false;
+    // Forward jump: validate current step
+    const validation = this.validateStep(this.state.currentStep);
+    if (!validation.isValid) {
+      this.state.errors = validation.errors;
+      return false;
+    }
+    this.state.currentStep = step;
+    this.state.errors = {};
+    this.recalculateTargets();
+    return true;
   }
 
   private canCalculateTargets(): boolean {

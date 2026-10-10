@@ -102,4 +102,24 @@ describe('OnboardingStateMachine', () => {
     machine.back();
     expect(machine.getState().currentStep).toBe('goal');
   });
+
+  it('allows goToStep forward transitions when current step is valid', () => {
+    const machine = new OnboardingStateMachine({
+      sex: 'male',
+      dateOfBirth: '2001-01-01',
+      heightCm: 175,
+      weightKg: 70,
+    });
+    // Jump forward from goal to activity_level
+    const moved = machine.goToStep('activity_level');
+    expect(moved).toBe(true);
+    expect(machine.getState().currentStep).toBe('activity_level');
+
+    // From health_screening, allow direct jump to completed
+    machine.goToStep('health_screening');
+    expect(machine.getState().currentStep).toBe('health_screening');
+    const movedToCompleted = machine.goToStep('completed');
+    expect(movedToCompleted).toBe(true);
+    expect(machine.getState().currentStep).toBe('completed');
+  });
 });

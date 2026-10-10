@@ -20,8 +20,10 @@
     "app:web": "npm run web --workspace app",
     "supabase:start": "supabase start",
     "supabase:stop": "supabase stop",
-    "supabase:serve": "supabase functions serve --no-verify-jwt"
+    "supabase:serve": "supabase functions serve --no-verify-jwt",
+    "food:seed": "tsx scripts/food_tools.ts"
   },
+
   "devDependencies": {
     "@eslint/js": "^9.0.0",
     "@types/deno": "^2.7.0",

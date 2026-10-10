@@ -14,7 +14,9 @@ export default tseslint.config(
       '**/coverage/**',
       'app/android/**',
       'app/ios/**',
-      'supabase/functions/**',
+      'app/assets/**',
+      'datasets/**',
+      'supabase/**',
       'docs/**',
       '.agents/**',
     ],
@@ -42,8 +44,8 @@ export default tseslint.config(
     },
   },
   {
-    // The logger is the single place allowed to use console.
-    files: ['app/src/lib/logger.ts'],
+    // The logger and CLI scripts are allowed to use console.
+    files: ['app/src/lib/logger.ts', 'scripts/**/*.{ts,js}'],
     rules: { 'no-console': 'off' },
   },
   {

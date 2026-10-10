@@ -1,11 +1,24 @@
-import { Pressable, Text, View } from 'react-native';
+import { useState } from 'react';
+import {
+  ActivityIndicator,
+  Pressable,
+  ScrollView,
+  Text,
+  View,
+} from 'react-native';
 import { useRouter, type Href } from 'expo-router';
-import { ErrorState } from '@/components/ErrorState';
-import { LoadingState } from '@/components/LoadingState';
-import { PlaceholderScreen } from '@/components/PlaceholderScreen';
+import { Ionicons } from '@expo/vector-icons';
+import type { Food, FoodEntry, MealSection } from '@calipartner/core';
+import { CalorieMacroRing } from '@/components/diary/CalorieMacroRing';
+import { CopyMealModal } from '@/components/diary/CopyMealModal';
+import { FoodLogModal } from '@/components/diary/FoodLogModal';
+import { MealSectionCard } from '@/components/diary/MealSectionCard';
+import { QuantityModal } from '@/components/diary/QuantityModal';
+import { SyncStatusBanner } from '@/components/diary/SyncStatusBanner';
 import { useAuth } from '@/contexts/AuthContext';
-import { useHealth } from '@/hooks/useHealth';
-import { useNetworkStatus } from '@/hooks/useNetworkStatus';
+import { useDiary } from '@/hooks/useDiary';
+import { useAddEntry, useDeleteEntry, useEditEntry } from '@/hooks/useFoodEntries';
+import type { SectionSuggestion } from '@/hooks/useSectionSuggestions';
 import { useTargets } from '@/hooks/useTargets';
 import { t } from '@/i18n';
 import { fontSize, radius, spacing } from '@/theme/tokens';
@@ -14,35 +27,181 @@ import { useTheme } from '@/theme/useTheme';
 export default function TodayScreen() {
   const router = useRouter();
   const { colors } = useTheme();
-  const { state, retry } = useHealth();
-  const { isOnline } = useNetworkStatus();
-  const { user, profile, isGuest, needsProfileSetup } = useAuth();
+  const { user } = useAuth();
   const { currentGoalProfile, loading: targetsLoading } = useTargets();
 
+  // Current selected date in ISO format YYYY-MM-DD
+  const [selectedDate, setSelectedDate] = useState(() => new Date().toISOString().slice(0, 10));
+
+  // Diary hook for selected date
+  const { daySummary, loading: diaryLoading, refresh } = useDiary(selectedDate);
+  const { addEntry } = useAddEntry();
+  const { editEntry } = useEditEntry();
+  const { deleteEntry } = useDeleteEntry();
+
+  // Modals state
+  const [activeLogSection, setActiveLogSection] = useState<MealSection | null>(null);
+  const [editingEntry, setEditingEntry] = useState<FoodEntry | null>(null);
+  const [copyModalState, setCopyModalState] = useState<{
+    visible: boolean;
+    mode: 'meal' | 'day';
+    section?: MealSection;
+  }>({ visible: false, mode: 'day' });
+
+  // Date Navigation Handlers
+  const handleShiftDate = (days: number) => {
+    const d = new Date(selectedDate);
+    d.setDate(d.getDate() + days);
+    setSelectedDate(d.toISOString().slice(0, 10));
+  };
+
+  const isToday = selectedDate === new Date().toISOString().slice(0, 10);
+
+  const targetCalories = currentGoalProfile?.daily_calorie_target ?? 2000;
+  const targetProtein = currentGoalProfile?.protein_grams ?? 140;
+  const targetCarbs = currentGoalProfile?.carb_grams ?? 240;
+  const targetFat = currentGoalProfile?.fat_grams ?? 55;
+
+  const handleEditEntrySave = async (data: {
+    food: Food;
+    quantity: number;
+    unit: string;
+    mealSection: MealSection;
+  }) => {
+    if (editingEntry) {
+      await editEntry(
+        editingEntry.id,
+        {
+          quantity: data.quantity,
+          unit: data.unit,
+          meal_section: data.mealSection,
+        },
+        data.food,
+      );
+      setEditingEntry(null);
+    }
+  };
+
+  const handleSuggestionClick = async (suggestion: SectionSuggestion, section: MealSection) => {
+    // Quick log suggestion directly!
+    const mockFood: Food = {
+      id: suggestion.food_id,
+      source: 'user',
+      name: suggestion.food_name,
+      brand: suggestion.brand_name ?? null,
+      barcode: null,
+      serving_units: [{ unit: suggestion.last_unit, grams: 100 }],
+      calories_per_100g: 200,
+      protein_per_100g: 10,
+      carbs_per_100g: 25,
+      fat_per_100g: 5,
+      fiber_per_100g: 0,
+      sugar_per_100g: 0,
+      sodium_mg_per_100g: 0,
+      owner_id: null,
+      attribution: null,
+    };
+
+    await addEntry({
+      food: mockFood,
+      quantity: suggestion.last_quantity,
+      unit: suggestion.last_unit,
+      mealSection: section,
+      localDate: selectedDate,
+      source: 'history',
+    });
+  };
+
   return (
-    <PlaceholderScreen
-      title={t('tabs.today')}
-      subtitle={t('placeholder.today')}
+    <ScrollView
       testID="screen-today"
+      style={{ flex: 1, backgroundColor: colors.background }}
+      contentContainerStyle={{
+        paddingTop: 54,
+        paddingHorizontal: spacing.md,
+        paddingBottom: 90,
+        gap: spacing.md,
+      }}
+      showsVerticalScrollIndicator={false}
     >
-      {/* Onboarding goals prompt if no goal profile exists */}
+      {/* Date Navigation Header */}
+      <View
+        style={{
+          flexDirection: 'row',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          backgroundColor: colors.surface,
+          borderRadius: radius.md,
+          paddingHorizontal: spacing.sm,
+          paddingVertical: 10,
+          borderWidth: 1,
+          borderColor: colors.border,
+        }}
+      >
+        <Pressable
+          testID="btn-prev-day"
+          onPress={() => handleShiftDate(-1)}
+          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+          style={{ padding: 4 }}
+          accessibilityLabel={t('diary.previousDay')}
+        >
+          <Ionicons name="chevron-back" size={20} color={colors.text} />
+        </Pressable>
+
+        <Pressable
+          testID="btn-jump-today"
+          onPress={() => setSelectedDate(new Date().toISOString().slice(0, 10))}
+          style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}
+        >
+          <Ionicons name="calendar-outline" size={16} color={colors.accent} />
+          <Text style={{ fontSize: fontSize.md, fontWeight: '700', color: colors.text }}>
+            {isToday ? `${t('diary.today')} (${selectedDate})` : selectedDate}
+          </Text>
+        </Pressable>
+
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+          <Pressable
+            testID="btn-copy-day"
+            onPress={() => setCopyModalState({ visible: true, mode: 'day' })}
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+            style={{ padding: 4 }}
+            accessibilityLabel={t('diary.copyDay')}
+          >
+            <Ionicons name="copy-outline" size={18} color={colors.textMuted} />
+          </Pressable>
+
+          <Pressable
+            testID="btn-next-day"
+            onPress={() => handleShiftDate(1)}
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+            style={{ padding: 4 }}
+            accessibilityLabel={t('diary.nextDay')}
+          >
+            <Ionicons name="chevron-forward" size={20} color={colors.text} />
+          </Pressable>
+        </View>
+      </View>
+
+      {/* Offline and Sync Status Banner */}
+      <SyncStatusBanner />
+
+      {/* Onboarding goals prompt if user hasn't set targets */}
       {!targetsLoading && !currentGoalProfile && (
         <View
+          testID="banner-onboarding-prompt"
           style={{
             backgroundColor: colors.surface,
-            borderColor: colors.border,
-            borderWidth: 1,
+            borderColor: colors.accent,
+            borderWidth: 1.5,
             borderRadius: radius.md,
             padding: spacing.md,
-            marginBottom: spacing.md,
             gap: spacing.xs,
           }}
-          testID="banner-onboarding-prompt"
         >
-          <Text style={{ color: colors.text, fontSize: fontSize.md, fontWeight: '600' }}>
+          <Text style={{ color: colors.text, fontSize: fontSize.md, fontWeight: '700' }}>
             {t('onboarding.title')}
           </Text>
-          <Text style={{ color: colors.textMuted, fontSize: fontSize.sm }}>
+          <Text style={{ color: colors.textMuted, fontSize: fontSize.xs }}>
             {t('onboarding.goal.subtitle')}
           </Text>
           <Pressable
@@ -56,187 +215,148 @@ export default function TodayScreen() {
             }}
             onPress={() => router.push('/onboarding' as Href)}
           >
-            <Text style={{ color: colors.onAccent, fontWeight: '600', fontSize: fontSize.sm }}>
+            <Text style={{ color: colors.onAccent, fontWeight: '700', fontSize: fontSize.sm }}>
               {t('onboarding.steps.goal')}
             </Text>
           </Pressable>
         </View>
       )}
 
-      {/* Active Goal Profile Card */}
-      {currentGoalProfile && (
-        <View
-          style={{
-            backgroundColor: colors.surface,
-            borderColor: colors.border,
-            borderWidth: 1,
-            borderRadius: radius.md,
-            padding: spacing.md,
-            marginBottom: spacing.md,
-            gap: spacing.sm,
-          }}
-          testID="card-current-targets"
-        >
-          <View
-            style={{
-              flexDirection: 'row',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-            }}
-          >
-            <Text style={{ color: colors.text, fontSize: fontSize.md, fontWeight: '600' }}>
-              {t('onboarding.summary.title')}
-            </Text>
-            <Pressable
-              testID="btn-edit-targets"
-              onPress={() => router.push('/onboarding' as Href)}
-              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-            >
-              <Text style={{ color: colors.accent, fontSize: fontSize.sm, fontWeight: '600' }}>
-                Edit
-              </Text>
-            </Pressable>
-          </View>
-          <Text style={{ color: colors.text, fontSize: fontSize.xl, fontWeight: '700' }}>
-            {currentGoalProfile.daily_calorie_target.toLocaleString()} kcal / day
-          </Text>
-          <Text style={{ color: colors.textMuted, fontSize: fontSize.sm }}>
-            Protein {currentGoalProfile.protein_grams}g · Carbs {currentGoalProfile.carb_grams}g ·
-            Fat {currentGoalProfile.fat_grams}g
+      {/* Calorie Ring and Macro Bars Hero Card */}
+      <CalorieMacroRing
+        eatenCalories={daySummary.totals.calories}
+        targetCalories={targetCalories}
+        proteinGrams={daySummary.totals.protein}
+        targetProtein={targetProtein}
+        carbGrams={daySummary.totals.carbs}
+        targetCarbs={targetCarbs}
+        fatGrams={daySummary.totals.fat}
+        targetFat={targetFat}
+      />
+
+      {/* Five Meal Sections */}
+      {diaryLoading ? (
+        <View style={{ paddingVertical: spacing.xl, alignItems: 'center' }}>
+          <ActivityIndicator color={colors.accent} size="large" />
+          <Text style={{ fontSize: fontSize.xs, color: colors.textMuted, marginTop: 8 }}>
+            {t('common.loading')}
           </Text>
         </View>
-      )}
-      {/* Profile setup prompt if signed in without a profile */}
-      {needsProfileSetup && (
-        <View
-          style={{
-            backgroundColor: colors.surfaceAlt,
-            borderColor: colors.border,
-            borderWidth: 1,
-            borderRadius: radius.md,
-            padding: spacing.md,
-            marginBottom: spacing.md,
-            gap: spacing.xs,
-          }}
-          testID="banner-needs-profile"
-        >
-          <Text style={{ color: colors.text, fontSize: fontSize.md, fontWeight: '600' }}>
-            {t('profileSetup.title')}
-          </Text>
-          <Text style={{ color: colors.textMuted, fontSize: fontSize.sm }}>
-            {t('profileSetup.subtitle')}
-          </Text>
-          <Pressable
-            testID="btn-prompt-setup-profile"
-            style={{
-              backgroundColor: colors.accent,
-              borderRadius: radius.sm,
-              paddingVertical: 10,
-              alignItems: 'center',
-              marginTop: spacing.xs,
-            }}
-            onPress={() => router.push('/auth/profile-setup')}
-          >
-            <Text style={{ color: colors.onAccent, fontWeight: '600', fontSize: fontSize.sm }}>
-              {t('profileSetup.createProfileButton')}
-            </Text>
-          </Pressable>
+      ) : (
+        <View style={{ gap: spacing.md }}>
+          <MealSectionCard
+            section="breakfast"
+            summary={daySummary.sections.breakfast}
+            onAddFood={(sec) => setActiveLogSection(sec)}
+            onEditEntry={(entry) => setEditingEntry(entry)}
+            onDeleteEntry={(id) => void deleteEntry(id)}
+            onCopyMeal={(sec) =>
+              setCopyModalState({ visible: true, mode: 'meal', section: sec })
+            }
+            onSelectSuggestion={handleSuggestionClick}
+          />
+
+          <MealSectionCard
+            section="lunch"
+            summary={daySummary.sections.lunch}
+            onAddFood={(sec) => setActiveLogSection(sec)}
+            onEditEntry={(entry) => setEditingEntry(entry)}
+            onDeleteEntry={(id) => void deleteEntry(id)}
+            onCopyMeal={(sec) =>
+              setCopyModalState({ visible: true, mode: 'meal', section: sec })
+            }
+            onSelectSuggestion={handleSuggestionClick}
+          />
+
+          <MealSectionCard
+            section="dinner"
+            summary={daySummary.sections.dinner}
+            onAddFood={(sec) => setActiveLogSection(sec)}
+            onEditEntry={(entry) => setEditingEntry(entry)}
+            onDeleteEntry={(id) => void deleteEntry(id)}
+            onCopyMeal={(sec) =>
+              setCopyModalState({ visible: true, mode: 'meal', section: sec })
+            }
+            onSelectSuggestion={handleSuggestionClick}
+          />
+
+          <MealSectionCard
+            section="snacks"
+            summary={daySummary.sections.snacks}
+            onAddFood={(sec) => setActiveLogSection(sec)}
+            onEditEntry={(entry) => setEditingEntry(entry)}
+            onDeleteEntry={(id) => void deleteEntry(id)}
+            onCopyMeal={(sec) =>
+              setCopyModalState({ visible: true, mode: 'meal', section: sec })
+            }
+            onSelectSuggestion={handleSuggestionClick}
+          />
+
+          <MealSectionCard
+            section="extra"
+            summary={daySummary.sections.extra}
+            onAddFood={(sec) => setActiveLogSection(sec)}
+            onEditEntry={(entry) => setEditingEntry(entry)}
+            onDeleteEntry={(id) => void deleteEntry(id)}
+            onCopyMeal={(sec) =>
+              setCopyModalState({ visible: true, mode: 'meal', section: sec })
+            }
+            onSelectSuggestion={handleSuggestionClick}
+          />
         </View>
       )}
 
-      {/* Guest Mode Indicator */}
-      {isGuest && (
-        <View
-          style={{
-            backgroundColor: colors.surfaceAlt,
-            borderColor: colors.border,
-            borderWidth: 1,
-            borderRadius: radius.md,
-            padding: spacing.md,
-            marginBottom: spacing.md,
-            gap: spacing.xs,
-          }}
-          testID="banner-guest-today"
-        >
-          <Text style={{ color: colors.text, fontSize: fontSize.sm, fontWeight: '600' }}>
-            Guest Mode
-          </Text>
-          <Text style={{ color: colors.textMuted, fontSize: fontSize.sm }}>
-            {t('auth.guestNotice')}
-          </Text>
-          <Pressable
-            testID="btn-guest-prompt-signin"
-            style={{
-              borderColor: colors.border,
-              borderWidth: 1,
-              borderRadius: radius.sm,
-              paddingVertical: 8,
-              alignItems: 'center',
-              marginTop: spacing.xs,
-            }}
-            onPress={() => router.push('/auth/sign-in')}
-          >
-            <Text style={{ color: colors.text, fontSize: fontSize.sm }}>{t('auth.title')}</Text>
-          </Pressable>
-        </View>
+      {/* Log Food Bottom Sheet / Modal */}
+      {activeLogSection && (
+        <FoodLogModal
+          visible={Boolean(activeLogSection)}
+          defaultSection={activeLogSection}
+          localDate={selectedDate}
+          onClose={() => setActiveLogSection(null)}
+          onLogged={() => void refresh()}
+        />
       )}
 
-      {/* User greeting if profile exists */}
-      {user && profile && (
-        <View
-          style={{
-            backgroundColor: colors.surface,
-            borderColor: colors.border,
-            borderWidth: 1,
-            borderRadius: radius.md,
-            padding: spacing.md,
-            marginBottom: spacing.md,
+      {/* Edit Entry Quantity Modal */}
+      {editingEntry && (
+        <QuantityModal
+          visible={Boolean(editingEntry)}
+          food={{
+            id: editingEntry.food_id ?? '',
+            source: 'user',
+            name: editingEntry.food_name,
+            brand: editingEntry.brand_name ?? null,
+            barcode: null,
+            serving_units: [{ unit: editingEntry.unit, grams: 100 }],
+            calories_per_100g: editingEntry.calories,
+            protein_per_100g: editingEntry.protein,
+            carbs_per_100g: editingEntry.carbs,
+            fat_per_100g: editingEntry.fat,
+            fiber_per_100g: editingEntry.fiber,
+            sugar_per_100g: editingEntry.sugar,
+            sodium_mg_per_100g: editingEntry.sodium_mg,
+            owner_id: user?.id ?? null,
+            attribution: null,
           }}
-          testID="banner-welcome-user"
-        >
-          <Text style={{ color: colors.text, fontSize: fontSize.md, fontWeight: '600' }}>
-            Welcome, {profile.nickname}!
-          </Text>
-          <Text style={{ color: colors.textMuted, fontSize: fontSize.sm }}>
-            @{profile.username}
-          </Text>
-        </View>
+          initialEntry={editingEntry}
+          defaultSection={editingEntry.meal_section}
+          onClose={() => setEditingEntry(null)}
+          onSave={handleEditEntrySave}
+          onDelete={(id) => void deleteEntry(id)}
+        />
       )}
 
-      {/* Connection & Network Card */}
-      <View
-        style={{
-          backgroundColor: colors.surface,
-          borderColor: colors.border,
-          borderWidth: 1,
-          borderRadius: radius.md,
-          padding: spacing.md,
-          gap: spacing.sm,
-        }}
-      >
-        <Text style={{ color: colors.textMuted, fontSize: fontSize.sm }}>
-          {t('connection.label')}
-        </Text>
-        {state === 'checking' ? <LoadingState label={t('connection.checking')} /> : null}
-        {state === 'connected' ? (
-          <Text
-            testID="health-status"
-            accessibilityLiveRegion="polite"
-            style={{ color: colors.text, fontSize: fontSize.lg, fontWeight: '600' }}
-          >
-            {t('connection.connected')}
-          </Text>
-        ) : null}
-        {state === 'failed' ? <ErrorState title={t('connection.failed')} onRetry={retry} /> : null}
-        {state === 'notConfigured' ? (
-          <Text testID="health-status" style={{ color: colors.text, fontSize: fontSize.md }}>
-            {t('connection.notConfigured')}
-          </Text>
-        ) : null}
-        <Text testID="network-status" style={{ color: colors.textMuted, fontSize: fontSize.sm }}>
-          {isOnline === false ? t('connection.offline') : t('connection.online')}
-        </Text>
-      </View>
-    </PlaceholderScreen>
+      {/* Copy Meal or Day Modal */}
+      {copyModalState.visible && (
+        <CopyMealModal
+          visible={copyModalState.visible}
+          mode={copyModalState.mode}
+          sourceDate={selectedDate}
+          sourceSection={copyModalState.section}
+          onClose={() => setCopyModalState({ visible: false, mode: 'day' })}
+          onSuccess={() => void refresh()}
+        />
+      )}
+    </ScrollView>
   );
 }

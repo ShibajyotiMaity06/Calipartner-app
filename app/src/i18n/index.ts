@@ -21,5 +21,5 @@ export function t(key: TranslationKey, params?: Record<string, string | number>)
   }
   const text = typeof node === 'string' ? node : key;
   if (!params) return text;
-  return text.replace(/\{(\w+)\}/g, (_, name: string) => String(params[name] ?? `{${name}}`));
+  return text.replace(/%?\{(\w+)\}/g, (_, name: string) => String(params[name] ?? `{${name}}`));
 }
