@@ -916,5 +916,235 @@ export interface WorkoutTimerState {
   updated_at: string;
 }
 
+// -----------------------------------------------------------------------------
+// Phase 7: Progress Graphs, Streaks, Consistency Score & Leaderboards
+// -----------------------------------------------------------------------------
+
+export type ProgressDateRange = '7d' | '30d' | '90d' | '6m' | '1y' | 'all';
+export type RoomProgressDateRange =
+  | '7d'
+  | '30d'
+  | '90d'
+  | '6m'
+  | '1y'
+  | 'all'
+  | 'since_start';
+
+export type ProgressMetric =
+  | 'consistency'
+  | 'weight_change'
+  | 'calories_vs_target'
+  | 'steps'
+  | 'water'
+  | 'workouts';
+
+export interface UserStreak {
+  user_id: string;
+  current_streak: number;
+  longest_streak: number;
+  last_logged_date: string | null;
+  updated_at: string;
+}
+
+export interface RoomStreak {
+  room_id: string;
+  current_streak: number;
+  longest_streak: number;
+  last_achieved_date: string | null;
+  updated_at: string;
+}
+
+export interface WeeklyScore {
+  id: string;
+  user_id: string;
+  week_start_date: string; // Monday YYYY-MM-DD
+  division: 'beginner' | 'cutting' | 'bulking' | 'maintain';
+  cohort_id: string;
+  logged_days: number;
+  goal_days: number;
+  consistency_score: number;
+  low_intake_flag: boolean;
+  is_eligible: boolean;
+  earliest_completion_at: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ExerciseProgressionItem {
+  exercise_id: string | null;
+  exercise_name: string;
+  data: Array<{
+    local_date: string;
+    heaviest_weight_kg: number;
+    best_1rm_kg: number;
+  }>;
+}
+
+export interface IndividualWeightProgress {
+  history: Array<{
+    date: string;
+    raw_weight_kg: number | null;
+    trend_weight_kg: number | null;
+  }>;
+  start_weight_kg: number | null;
+  current_weight_kg: number | null;
+  current_trend_kg: number | null;
+  total_change_kg: number | null;
+  total_change_pct: number | null;
+  target_weight_kg: number | null;
+  weekly_pace_kg: number | null;
+  projected_date: string | null;
+  goal_progress_pct: number | null;
+}
+
+export interface IndividualCaloriesProgress {
+  daily: Array<{
+    date: string;
+    calories: number;
+    target_calories: number;
+    is_logged_day: boolean;
+    is_goal_day: boolean;
+  }>;
+  average_calories: number;
+  average_target: number;
+  logged_days_count: number;
+  goal_days_count: number;
+  total_days_in_range: number;
+  adherence_pct: number; // goal_days / logged_days * 100
+}
+
+export interface IndividualMacrosProgress {
+  protein_avg_g: number;
+  carbs_avg_g: number;
+  fat_avg_g: number;
+  protein_target_g: number;
+  carbs_target_g: number;
+  fat_target_g: number;
+}
+
+export interface IndividualStepsProgress {
+  daily: Array<{
+    date: string;
+    steps: number;
+    distance_km: number;
+  }>;
+  average_steps: number;
+  total_steps: number;
+  total_distance_km: number;
+  goal_steps: number;
+}
+
+export interface IndividualWaterProgress {
+  daily: Array<{
+    date: string;
+    water_ml: number;
+  }>;
+  average_water_ml: number;
+  total_water_ml: number;
+  goal_water_ml: number;
+}
+
+export interface IndividualWorkoutsProgress {
+  total_workouts: number;
+  sessions_per_week: number;
+  total_duration_minutes: number;
+  total_volume_kg: number;
+  exercise_progression: ExerciseProgressionItem[];
+}
+
+export interface IndividualConsistencyProgress {
+  current_streak: number;
+  longest_streak: number;
+  weekly_scores: Array<{
+    week_start_date: string;
+    logged_days: number;
+    goal_days: number;
+    consistency_score: number;
+  }>;
+}
+
+export interface IndividualProgressData {
+  range: ProgressDateRange;
+  start_date: string;
+  end_date: string;
+  weight: IndividualWeightProgress;
+  calories: IndividualCaloriesProgress;
+  macros: IndividualMacrosProgress;
+  steps: IndividualStepsProgress;
+  water: IndividualWaterProgress;
+  workouts: IndividualWorkoutsProgress;
+  consistency: IndividualConsistencyProgress;
+  goal_progress_pct: number | null;
+}
+
+export interface RoomProgressMemberSeries {
+  user_id: string;
+  nickname: string;
+  username: string;
+  avatar_url: string | null;
+  status: 'active' | 'paused' | 'locked' | 'left';
+  is_self: boolean;
+  is_locked_member: boolean;
+  is_metric_locked: boolean;
+  data: Array<{
+    date: string;
+    value: number | null; // e.g. weight change, consistency, calories vs target %, steps, etc.
+  }>;
+}
+
+export interface RoomProgressSummaryRow {
+  user_id: string;
+  nickname: string;
+  avatar_url: string | null;
+  status: 'active' | 'paused' | 'locked' | 'left';
+  is_self: boolean;
+  is_locked_member: boolean;
+  weight_change_kg: number | 'locked' | null;
+  weight_change_pct: number | 'locked' | null;
+  goal_progress_pct: number | 'locked' | null;
+  average_calories_vs_target_pct: number | 'locked' | null;
+  average_steps: number | 'locked' | null;
+  total_workouts: number | 'locked' | null;
+  consistency_score: number | 'locked';
+}
+
+export interface RoomProgressData {
+  room_id: string;
+  range: RoomProgressDateRange;
+  start_date: string;
+  end_date: string;
+  total_members: number;
+  is_large_room: boolean;
+  selected_member_ids: string[];
+  members_series: Record<ProgressMetric, RoomProgressMemberSeries[]>;
+  room_average_series: Record<ProgressMetric, Array<{ date: string; value: number }>>;
+  summary_table: RoomProgressSummaryRow[];
+}
+
+export interface LeaderboardRankedUser {
+  rank: number;
+  nickname: string;
+  avatar_url: string | null;
+  consistency_score: number;
+  is_me: boolean;
+}
+
+export interface LeaderboardResponse {
+  opted_out: boolean;
+  division?: 'beginner' | 'cutting' | 'bulking' | 'maintain';
+  cohort_id?: string;
+  week_start_date?: string;
+  top_10?: LeaderboardRankedUser[];
+  my_rank?: {
+    rank: number;
+    nickname: string;
+    avatar_url: string | null;
+    consistency_score: number;
+    is_eligible: boolean;
+  } | null;
+  total_in_cohort?: number;
+  info_note?: string;
+}
+
 
 

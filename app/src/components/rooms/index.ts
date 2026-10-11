@@ -18,3 +18,4 @@ export { ReportModal } from './ReportModal';
 export { BlockUserModal } from './BlockUserModal';
 export { MembersTab } from './MembersTab';
 export { PlaceholderSegment } from './PlaceholderSegment';
+export { RoomProgressView } from './RoomProgressView';

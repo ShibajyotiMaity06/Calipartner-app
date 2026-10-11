@@ -16,6 +16,7 @@ import { MealSectionCard } from '@/components/diary/MealSectionCard';
 import { QuantityModal } from '@/components/diary/QuantityModal';
 import { SyncStatusBanner } from '@/components/diary/SyncStatusBanner';
 import { WaterCard, StepsCard, WeightCard } from '@/components/trackers';
+import { TodayWorkoutCard } from '@/components/workouts';
 import { useAuth } from '@/contexts/AuthContext';
 import { useDiary } from '@/hooks/useDiary';
 import { useAddEntry, useDeleteEntry, useEditEntry } from '@/hooks/useFoodEntries';
@@ -235,11 +236,12 @@ export default function TodayScreen() {
         targetFat={targetFat}
       />
 
-      {/* Phase 4 Trackers: Water, Steps & Distance, Weight */}
+      {/* Phase 4 Trackers: Water, Steps & Distance, Weight, Workouts */}
       <View style={{ gap: spacing.md }} testID="today-trackers-section">
         <WaterCard selectedDate={selectedDate} />
         <StepsCard selectedDate={selectedDate} />
         <WeightCard selectedDate={selectedDate} />
+        <TodayWorkoutCard selectedDate={selectedDate} />
       </View>
 
       {/* Five Meal Sections */}

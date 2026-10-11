@@ -30,6 +30,7 @@ import {
   RequestsInboxModal,
   RoomHeader,
   RoomOverviewRow,
+  RoomProgressView,
   RoomSettingsModal,
   SharedMealCard,
   SideBySideCard,
@@ -347,13 +348,11 @@ export default function RoomScreen() {
               />
             )}
 
-            {/* Segment: Progress (Placeholder for Phase 7) */}
-            {activeSegment === 'progress' && (
-              <PlaceholderSegment
-                icon="trending-up-outline"
-                title={t('rooms.placeholders.progressTitle')}
-                subtitle={t('rooms.placeholders.progressSubtitle')}
-                testID="placeholder-room-progress"
+            {/* Segment: Progress */}
+            {activeSegment === 'progress' && currentRoom && (
+              <RoomProgressView
+                roomId={currentRoom.id}
+                testID="room-progress-segment"
               />
             )}
 

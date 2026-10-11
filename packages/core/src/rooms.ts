@@ -1,7 +1,6 @@
 import type {
   DailySummary,
   Entitlement,
-  Goal,
   LockedMetric,
   Room,
   RoomMember,
@@ -233,30 +232,7 @@ export function evaluateRoomState(
   return 'dormant';
 }
 
-export function evaluateLoggedDay(
-  entryCount: number,
-  calories: number,
-  targetKcal: number,
-): boolean {
-  return entryCount >= 2 && calories >= 0.5 * targetKcal;
-}
-
-export function evaluateGoalDay(
-  isLoggedDay: boolean,
-  goal: Goal,
-  calories: number,
-  targetKcal: number,
-): boolean {
-  if (!isLoggedDay) return false;
-  if (goal === 'cut') {
-    return calories >= 0.85 * targetKcal && calories <= 1.05 * targetKcal;
-  }
-  if (goal === 'bulk') {
-    return calories >= 0.95 * targetKcal && calories <= 1.15 * targetKcal;
-  }
-  // maintain
-  return calories >= 0.9 * targetKcal && calories <= 1.1 * targetKcal;
-}
+export { evaluateLoggedDay, evaluateGoalDay } from './progress';
 
 const LOCKED: LockedMetric = 'locked';
 
