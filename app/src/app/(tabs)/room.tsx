@@ -23,7 +23,6 @@ import {
   NudgeModal,
   OverCapacityBanner,
   PlaceholderPaywallModal,
-  PlaceholderSegment,
   PrivacySettingsModal,
   ReactionModal,
   ReportModal,
@@ -37,6 +36,7 @@ import {
   type PendingSharedMeal,
   type RoomSegment,
 } from '@/components/rooms';
+import { FocusingNowStrip, RoomFocusSegment } from '@/components/focus';
 import { ChatView } from '@/components/chat';
 import { useRoomActions } from '@/hooks/useRoomActions';
 import { useRoomChat } from '@/hooks/useRoomChat';
@@ -401,6 +401,14 @@ export default function RoomScreen() {
                   />
                 )}
 
+                {/* Focusing Now Strip on Room > Today (PRD RV-11) */}
+                <FocusingNowStrip
+                  roomId={activeRoomId}
+                  isVisible={isVisible && activeSegment === 'today'}
+                  userId={callerId}
+                  onOpenFocusSegment={() => setActiveSegment('focus')}
+                />
+
                 {/* Overview Row for 3+ Members (paged & searchable above 12 members) */}
                 {members.length >= 3 && (
                   <RoomOverviewRow
@@ -426,13 +434,14 @@ export default function RoomScreen() {
               </>
             )}
 
-            {/* Segment: Focus (Placeholder for Phase 10B) */}
-            {activeSegment === 'focus' && (
-              <PlaceholderSegment
-                icon="timer-outline"
-                title={t('rooms.placeholders.focusTitle')}
-                subtitle={t('rooms.placeholders.focusSubtitle')}
-                testID="placeholder-room-focus"
+            {/* Segment: Focus (PRD 6.25, RV-1) */}
+            {activeSegment === 'focus' && currentRoom && (
+              <RoomFocusSegment
+                roomId={currentRoom.id}
+                roomName={currentRoom.name}
+                userId={callerId}
+                isVisible={isVisible && activeSegment === 'focus'}
+                isLocked={isRoomLocked}
               />
             )}
 

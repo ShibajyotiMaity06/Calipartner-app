@@ -16,3 +16,5 @@ export * from './exercise_importer';
 export * from './workouts';
 export * from './progress';
 export * from './chat';
+export * from './notifications';
+export * from './focus';

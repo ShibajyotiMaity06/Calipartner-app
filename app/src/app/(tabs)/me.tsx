@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import {
   Alert,
   Platform,
@@ -8,6 +9,8 @@ import {
   View,
 } from 'react-native';
 import { useRouter } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
+import { FocusSettingsModal } from '@/components/focus';
 import { useAuth } from '@/contexts/AuthContext';
 import { t } from '@/i18n';
 import { fontSize, radius, spacing } from '@/theme/tokens';
@@ -17,6 +20,7 @@ export default function MeScreen() {
   const router = useRouter();
   const { colors } = useTheme();
   const { user, profile, isGuest, signOut } = useAuth();
+  const [showFocusSettings, setShowFocusSettings] = useState(false);
 
   const handleSignOut = () => {
     const performSignOut = async () => {
@@ -148,6 +152,32 @@ export default function MeScreen() {
       {/* Account Actions */}
       {(user || isGuest) && (
         <View style={styles.actionsSection}>
+          {user && (
+            <Pressable
+              testID="btn-me-focus-settings"
+              style={[
+                styles.actionRow,
+                {
+                  borderColor: colors.border,
+                  flexDirection: 'row',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                },
+              ]}
+              onPress={() => setShowFocusSettings(true)}
+              accessibilityRole="button"
+              accessibilityLabel={t('focus.settings.title')}
+            >
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+                <Ionicons name="timer-outline" size={20} color={colors.accent} />
+                <Text style={{ color: colors.text, fontSize: fontSize.md, fontWeight: '500' }}>
+                  {t('focus.settings.title')}
+                </Text>
+              </View>
+              <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
+            </Pressable>
+          )}
+
           <Pressable
             testID="btn-me-signout"
             style={[styles.actionRow, { borderColor: colors.border }]}
@@ -171,6 +201,15 @@ export default function MeScreen() {
             {t('auth.title')}
           </Text>
         </Pressable>
+      )}
+
+      {/* Focus Settings Modal */}
+      {showFocusSettings && user && (
+        <FocusSettingsModal
+          visible={showFocusSettings}
+          userId={user.id}
+          onClose={() => setShowFocusSettings(false)}
+        />
       )}
     </ScrollView>
   );

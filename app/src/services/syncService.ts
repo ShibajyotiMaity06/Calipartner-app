@@ -175,6 +175,10 @@ function getLocalTableName(entity: string): string | null {
       return 'local_workout_sets';
     case 'chat_messages':
       return 'local_chat_messages';
+    case 'focus_sessions':
+      return 'local_focus_sessions';
+    case 'focus_settings':
+      return 'local_focus_settings';
     default:
       return null;
   }

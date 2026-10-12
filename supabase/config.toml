@@ -79,3 +79,12 @@ verify_jwt = true
 # Deterministic targets calculator; can be called during onboarding
 verify_jwt = false
 
+[functions.send-push]
+# Push notification delivery worker
+verify_jwt = false
+
+[functions.cron-focus-maintenance]
+# Focus maintenance cron worker
+verify_jwt = false
+
+

@@ -25,6 +25,7 @@ import {
   WeightChart,
   WorkoutsChart,
 } from '@/components/progress';
+import { FocusProgressChart } from '@/components/focus';
 import { useIndividualProgress } from '@/hooks/useIndividualProgress';
 import { t } from '@/i18n';
 import { fontSize, radius, spacing } from '@/theme/tokens';
@@ -248,6 +249,12 @@ export default function ProgressScreen() {
               data={data?.consistency}
               loading={loading}
               testID="progress-chart-consistency"
+            />
+
+            {/* Focus Time Progression & Breakdown (PRG-14, FOC-10) */}
+            <FocusProgressChart
+              range={range}
+              testID="progress-chart-focus"
             />
           </View>
         )}

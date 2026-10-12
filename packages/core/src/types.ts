@@ -555,6 +555,10 @@ export interface RoomPrivacySettings {
   share_weight_number: boolean;
   share_weight_progress: boolean;
   share_fasting: boolean;
+  share_focus_status?: boolean;
+  share_focus_label?: boolean;
+  focus_status?: boolean;
+  focus_label?: boolean;
 }
 
 export type RoomRequestType = 'invitation' | 'join_request';
@@ -1269,5 +1273,263 @@ export type ChatErrorCode =
   | 'UNAUTHENTICATED'
   | 'UNKNOWN_ERROR';
 
+// -----------------------------------------------------------------------------
+// Phase 9: Notifications, Devices & Settings (PRD 6.12, 6.20, 7.1)
+// -----------------------------------------------------------------------------
 
+export type DevicePlatform = 'android' | 'ios' | 'web';
 
+export interface Device {
+  id: string;
+  user_id: string;
+  fcm_token: string;
+  platform: DevicePlatform;
+  app_version: string | null;
+  device_id: string | null;
+  last_seen: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface RegisterDeviceInput {
+  fcm_token: string;
+  platform: DevicePlatform;
+  app_version?: string | null;
+  device_id?: string | null;
+}
+
+export interface MealReminderTimes {
+  breakfast?: string;
+  lunch?: string;
+  dinner?: string;
+  snacks?: string;
+  [key: string]: string | undefined;
+}
+
+export interface NotificationSettings {
+  user_id: string;
+  // Push toggles
+  nudge_enabled: boolean;
+  partner_activity_enabled: boolean;
+  room_requests_enabled: boolean;
+  chat_messages_enabled: boolean;
+  streak_reminders_enabled: boolean;
+  weekly_summary_enabled: boolean;
+  trial_reminders_enabled: boolean;
+  billing_alerts_enabled: boolean;
+  // Local reminder toggles
+  meal_reminders_enabled: boolean;
+  water_reminders_enabled: boolean;
+  weigh_in_reminders_enabled: boolean;
+  fasting_reminders_enabled: boolean;
+  // Global pause
+  pause_all: boolean;
+  // Quiet hours
+  quiet_hours_enabled: boolean;
+  quiet_hours_start: string; // HH:mm
+  quiet_hours_end: string;   // HH:mm
+  // Previews
+  hide_previews: boolean;
+  // Local reminder schedule
+  meal_times: MealReminderTimes;
+  water_interval_hours: number;
+  water_start_time: string; // HH:mm
+  water_end_time: string;   // HH:mm
+  weigh_in_day_of_week: number; // 1 = Monday ... 7 = Sunday
+  weigh_in_time: string;    // HH:mm
+  created_at?: string;
+  updated_at?: string;
+}
+
+export type NotificationType =
+  | 'nudge'
+  | 'partner_workout'
+  | 'partner_food'
+  | 'room_invitation'
+  | 'room_join_request'
+  | 'room_request_accepted'
+  | 'chat_message'
+  | 'streak_at_risk'
+  | 'weekly_summary'
+  | 'trial_ending'
+  | 'subscription_lapse'
+  | 'room_state_change'
+  | 'focus_session';
+
+export type NotificationDeliveryStatus =
+  | 'pending'
+  | 'processing'
+  | 'sent'
+  | 'failed'
+  | 'skipped';
+
+export interface PushNotificationQueueItem {
+  id: string;
+  user_id: string;
+  notification_type: NotificationType;
+  title: string;
+  body: string;
+  data: Record<string, unknown>;
+  status: NotificationDeliveryStatus;
+  skip_reason?: string | null;
+  attempts: number;
+  last_error?: string | null;
+  created_at: string;
+  sent_at?: string | null;
+}
+
+export interface PushPayload {
+  title: string;
+  body: string;
+  data: {
+    type: NotificationType;
+    url?: string;
+    roomId?: string;
+    messageId?: string;
+    workoutId?: string;
+    requestId?: string;
+    [key: string]: unknown;
+  };
+}
+
+export interface LocalReminderSchedule {
+  id: string;
+  type: 'meal' | 'water' | 'weigh_in' | 'fasting';
+  title: string;
+  body: string;
+  trigger: {
+    hour?: number;
+    minute?: number;
+    weekday?: number;
+    repeats?: boolean;
+    seconds?: number;
+  };
+  data?: Record<string, unknown>;
+}
+
+// =============================================================================
+// Phase 9B: Focus Time (Personal & Room Sessions) — PRD 6.25, 7.13, 6.13, 6.15
+// =============================================================================
+
+export type FocusSessionMode = 'stopwatch' | 'timer';
+export type FocusSessionStatus = 'active' | 'paused' | 'ended' | 'auto_ended';
+export type FocusParticipantStatus = 'focusing' | 'break' | 'left';
+
+export interface FocusSession {
+  id: string; // client-generated UUID
+  user_id: string;
+  room_session_id?: string | null;
+  mode: FocusSessionMode;
+  label?: string | null; // <= 20 chars
+  planned_seconds?: number | null;
+  started_at: string;
+  ended_at?: string | null;
+  paused_seconds: number;
+  last_paused_at?: string | null;
+  status: FocusSessionStatus;
+  source: 'personal' | 'room';
+  created_at: string;
+  updated_at: string;
+}
+
+export interface RoomFocusSession {
+  id: string;
+  room_id: string;
+  started_by: string;
+  mode: FocusSessionMode;
+  label?: string | null;
+  planned_seconds?: number | null;
+  started_at: string; // Set by server
+  ends_at?: string | null; // For timers
+  ended_at?: string | null;
+  status: 'active' | 'ended' | 'auto_ended';
+  created_at: string;
+  updated_at: string;
+}
+
+export interface RoomFocusParticipant {
+  id: string;
+  session_id: string;
+  user_id: string;
+  joined_at: string;
+  left_at?: string | null;
+  paused_seconds: number;
+  last_paused_at?: string | null;
+  status: FocusParticipantStatus;
+  created_at: string;
+  updated_at: string;
+  nickname?: string;
+  username?: string;
+  avatar_url?: string | null;
+}
+
+export interface FocusSettings {
+  user_id: string;
+  weekly_goal_minutes: number;
+  streak_minimum_minutes: number;
+  break_reminders: boolean;
+  default_label?: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface FocusStatsDay {
+  local_date: string;
+  focus_minutes: number;
+  session_count: number;
+}
+
+export interface PersonalFocusStats {
+  total_focus_minutes: number;
+  weekly_goal_minutes: number;
+  goal_completion_percent: number;
+  daily_breakdown: FocusStatsDay[];
+  label_breakdown: Array<{ label: string; minutes: number }>;
+  longest_session_minutes: number;
+  current_streak: number;
+}
+
+export interface RoomMemberWeeklyFocus {
+  user_id: string;
+  nickname: string;
+  username: string;
+  avatar_url?: string | null;
+  is_me: boolean;
+  is_hidden: boolean;
+  weekly_focus_minutes: number | null;
+}
+
+export interface RoomWeeklyFocusStats {
+  room_id: string;
+  room_total_minutes: number;
+  members: RoomMemberWeeklyFocus[];
+}
+
+export interface RoomFocusState {
+  active_session: {
+    session: RoomFocusSession;
+    participants: Array<RoomFocusParticipant & { elapsed_seconds: number }>;
+    remaining_seconds?: number | null;
+    is_starter: boolean;
+    is_participating: boolean;
+    my_participant?: RoomFocusParticipant | null;
+  } | null;
+  recent_sessions: Array<{
+    id: string;
+    mode: FocusSessionMode;
+    label: string | null;
+    started_at: string;
+    ended_at: string | null;
+    duration_minutes: number;
+    participant_count: number;
+  }>;
+}
+
+export type FocusErrorCode =
+  | 'ROOM_LOCKED'
+  | 'NOT_A_MEMBER'
+  | 'SESSION_ENDED'
+  | 'RATE_LIMITED'
+  | 'SESSION_ALREADY_ACTIVE'
+  | 'UNAUTHENTICATED'
+  | 'INVALID_ARGUMENT';

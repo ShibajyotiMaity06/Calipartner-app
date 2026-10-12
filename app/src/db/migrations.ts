@@ -383,6 +383,42 @@ export const migrations: readonly LocalMigration[] = [
       );
     `,
   },
+  {
+    version: 9,
+    name: 'create_focus_sessions_and_settings',
+    sql: `
+      CREATE TABLE IF NOT EXISTS local_focus_sessions (
+        id                TEXT PRIMARY KEY NOT NULL,
+        user_id           TEXT NOT NULL,
+        room_session_id   TEXT,
+        mode              TEXT NOT NULL,
+        label             TEXT,
+        planned_seconds   INTEGER,
+        started_at        TEXT NOT NULL,
+        ended_at          TEXT,
+        paused_seconds    INTEGER NOT NULL DEFAULT 0,
+        last_paused_at    TEXT,
+        status            TEXT NOT NULL DEFAULT 'active',
+        source            TEXT NOT NULL DEFAULT 'personal',
+        created_at        TEXT NOT NULL,
+        updated_at        TEXT NOT NULL,
+        sync_state        TEXT NOT NULL DEFAULT 'pending'
+      );
+      CREATE INDEX IF NOT EXISTS idx_local_focus_user_started ON local_focus_sessions (user_id, started_at DESC);
+      CREATE INDEX IF NOT EXISTS idx_local_focus_sync_state ON local_focus_sessions (sync_state);
+
+      CREATE TABLE IF NOT EXISTS local_focus_settings (
+        user_id                TEXT PRIMARY KEY NOT NULL,
+        weekly_goal_minutes    INTEGER NOT NULL DEFAULT 300,
+        streak_minimum_minutes INTEGER NOT NULL DEFAULT 25,
+        break_reminders        INTEGER NOT NULL DEFAULT 1,
+        default_label          TEXT,
+        created_at             TEXT NOT NULL,
+        updated_at             TEXT NOT NULL,
+        sync_state             TEXT NOT NULL DEFAULT 'synced'
+      );
+    `,
+  },
 ];
 
 

@@ -17,6 +17,7 @@ import { QuantityModal } from '@/components/diary/QuantityModal';
 import { SyncStatusBanner } from '@/components/diary/SyncStatusBanner';
 import { WaterCard, StepsCard, WeightCard } from '@/components/trackers';
 import { TodayWorkoutCard } from '@/components/workouts';
+import { FocusCard } from '@/components/focus';
 import { useAuth } from '@/contexts/AuthContext';
 import { useDiary } from '@/hooks/useDiary';
 import { useAddEntry, useDeleteEntry, useEditEntry } from '@/hooks/useFoodEntries';
@@ -242,6 +243,7 @@ export default function TodayScreen() {
         <StepsCard selectedDate={selectedDate} />
         <WeightCard selectedDate={selectedDate} />
         <TodayWorkoutCard selectedDate={selectedDate} />
+        <FocusCard selectedDate={selectedDate} />
       </View>
 
       {/* Five Meal Sections */}

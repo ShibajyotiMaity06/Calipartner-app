@@ -10,6 +10,7 @@ import { AuthProvider } from '@/contexts/AuthContext';
 import { getDb } from '@/db';
 import { createLogger } from '@/lib/logger';
 import { useTheme } from '@/theme/useTheme';
+import { setupNotificationListeners } from '@/lib/deepLinks';
 
 const log = createLogger('root');
 
@@ -39,6 +40,12 @@ function DatabaseGate({ children }: { children: React.ReactNode }) {
 
 export default function RootLayout() {
   const { scheme } = useTheme();
+
+  useEffect(() => {
+    const cleanup = setupNotificationListeners();
+    return cleanup;
+  }, []);
+
   return (
     <ErrorBoundary>
       <SafeAreaProvider>

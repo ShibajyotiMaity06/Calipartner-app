@@ -11,6 +11,9 @@ import { Ionicons } from '@expo/vector-icons';
 import { getMealSectionForTime, type MealSection } from '@calipartner/core';
 import { FoodLogModal } from '@/components/diary/FoodLogModal';
 import { WorkoutLoggerModal } from '@/components/workouts/WorkoutLoggerModal';
+import { FocusStartModal } from '@/components/focus';
+import { useAuth } from '@/contexts/AuthContext';
+import { usePersonalFocus } from '@/hooks/usePersonalFocus';
 import { t } from '@/i18n';
 import { fontSize, radius, spacing } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
@@ -18,9 +21,11 @@ import { useTheme } from '@/theme/useTheme';
 export default function LogScreen() {
   const router = useRouter();
   const { colors } = useTheme();
+  const { user } = useAuth();
+  const { start: startPersonalFocus } = usePersonalFocus({ userId: user?.id ?? '' });
 
   const [sheetVisible, setSheetVisible] = useState(true);
-  const [activeFlow, setActiveFlow] = useState<'picker' | 'food' | 'workout'>('picker');
+  const [activeFlow, setActiveFlow] = useState<'picker' | 'food' | 'workout' | 'focus'>('picker');
 
   const todayDate = new Date().toISOString().slice(0, 10);
   const currentSection: MealSection = getMealSectionForTime(new Date());
@@ -128,6 +133,36 @@ export default function LogScreen() {
                   </View>
                   <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
                 </TouchableOpacity>
+
+                {/* Log Focus Time Option */}
+                <TouchableOpacity
+                  testID="btn-log-sheet-focus"
+                  style={[
+                    styles.optionCard,
+                    { backgroundColor: colors.background, borderColor: colors.border },
+                  ]}
+                  onPress={() => setActiveFlow('focus')}
+                  accessibilityRole="button"
+                  accessibilityLabel={t('focus.logOption.title')}
+                >
+                  <View
+                    style={[
+                      styles.iconCircle,
+                      { backgroundColor: colors.cardHighlight },
+                    ]}
+                  >
+                    <Ionicons name="timer-outline" size={24} color={colors.accent} />
+                  </View>
+                  <View style={styles.optionInfo}>
+                    <Text style={[styles.optionTitle, { color: colors.text }]}>
+                      {t('focus.logOption.title')}
+                    </Text>
+                    <Text style={[styles.optionDesc, { color: colors.textMuted }]}>
+                      {t('focus.logOption.subtitle')}
+                    </Text>
+                  </View>
+                  <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
+                </TouchableOpacity>
               </View>
             </View>
           </View>
@@ -152,6 +187,18 @@ export default function LogScreen() {
           defaultDate={todayDate}
           onClose={handleCloseAll}
           onSaved={handleCloseAll}
+        />
+      )}
+
+      {/* Focus Start Modal Flow */}
+      {activeFlow === 'focus' && (
+        <FocusStartModal
+          visible={sheetVisible}
+          onClose={handleCloseAll}
+          onStartPersonal={async (mode, label, plannedSeconds) => {
+            await startPersonalFocus(mode, label, plannedSeconds);
+            handleCloseAll();
+          }}
         />
       )}
     </View>

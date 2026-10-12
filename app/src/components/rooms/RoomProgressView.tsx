@@ -18,6 +18,7 @@ import type {
   RoomProgressMemberSeries,
 } from '@calipartner/core';
 import { RangeSelector } from '@/components/progress/RangeSelector';
+import { RoomProgressFocusView } from '@/components/focus';
 import { useRoomProgress } from '@/hooks/useRoomProgress';
 import { t } from '@/i18n';
 import { fontSize, radius, spacing } from '@/theme/tokens';
@@ -631,6 +632,9 @@ export function RoomProgressView({
           );
         })}
       </View>
+
+      {/* Room Weekly Focus Totals (PRD RPG-8) */}
+      <RoomProgressFocusView roomId={roomId} testID={`${testID}-focus`} />
 
       {/* Searchable Member Picker Modal for Large Rooms (PRD RPG-7) */}
       <Modal
