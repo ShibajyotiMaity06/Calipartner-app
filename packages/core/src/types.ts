@@ -593,10 +593,81 @@ export interface Entitlement {
   source: EntitlementSource;
   status: EntitlementStatus;
   attached_room_id?: string | null;
+  is_unattached?: boolean;
+  original_transaction_id?: string | null;
+  store_product_id?: string | null;
+  cancel_at_period_end?: boolean;
+  billing_issue_detected_at?: string | null;
+  dodo_customer_id?: string | null;
+  dodo_subscription_id?: string | null;
+  last_event_id?: string | null;
+  last_event_timestamp?: string | null;
   trial_started_at?: string | null;
   period_end?: string | null;
   created_at?: string;
   updated_at?: string;
+}
+
+// -----------------------------------------------------------------------------
+// Phase 10: Subscriptions, Webhooks, Paywalls & Remote Config
+// -----------------------------------------------------------------------------
+
+export type PaywallTrigger =
+  | 'create_room_after_trial'
+  | 'add_member_beyond_cap'
+  | 'sponsor_locked_room'
+  | 'open_ai_coach'
+  | 'open_partner_finder';
+
+export interface PaywallTriggerData {
+  trigger: PaywallTrigger;
+  title: string;
+  subtitle: string;
+  suggestedTier: RoomTier;
+  allowsTrial: boolean;
+}
+
+export type RevenueCatWebhookType =
+  | 'INITIAL_PURCHASE'
+  | 'RENEWAL'
+  | 'PRODUCT_CHANGE'
+  | 'CANCELLATION'
+  | 'EXPIRATION'
+  | 'UNCANCELLATION'
+  | 'BILLING_ISSUE'
+  | 'SUBSCRIPTION_EXTENDED'
+  | 'REVOCATION'
+  | 'TRANSFER';
+
+export interface RevenueCatWebhookPayload {
+  api_version?: string;
+  event: {
+    id: string;
+    type: RevenueCatWebhookType | string;
+    app_user_id: string;
+    original_app_user_id?: string;
+    product_id?: string;
+    store?: 'app_store' | 'play_store' | 'stripe' | string;
+    environment?: 'SANDBOX' | 'PRODUCTION';
+    expiration_at_ms?: number | null;
+    purchased_at_ms?: number | null;
+    event_timestamp_ms: number;
+    entitlement_id?: string | null;
+    entitlement_ids?: string[];
+    presented_offering_id?: string;
+    transaction_id?: string;
+    original_transaction_id?: string;
+    new_product_id?: string;
+    transferred_from?: string[];
+    transferred_to?: string[];
+  };
+}
+
+export interface RemoteConfigMap {
+  room_caps: Record<RoomTier, number>;
+  trial_length_days: number;
+  trial_cap: number;
+  community_tier_enabled: boolean;
 }
 
 export interface Room {

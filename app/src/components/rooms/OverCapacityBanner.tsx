@@ -11,13 +11,27 @@ import { fontSize, radius, spacing } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
 import type { RoomSummary } from '@/types/rooms';
 
-interface OverCapacityBannerProps {
+export interface OverCapacityBannerProps {
   room: RoomSummary;
+  daysRemaining?: number;
   onUpgrade: () => void;
+  onManageMembers?: () => void;
 }
 
-export function OverCapacityBanner({ room, onUpgrade }: OverCapacityBannerProps) {
+/**
+ * Banner shown when a room exceeds its member capacity after a downgrade or refund.
+ * Displays a 7-day countdown for the host to upgrade or remove members.
+ */
+export function OverCapacityBanner({
+  room,
+  daysRemaining = 7,
+  onUpgrade,
+  onManageMembers,
+}: OverCapacityBannerProps) {
   const { colors } = useTheme();
+
+  const isHost = room.role === 'host';
+  const memberCap = room.member_cap ?? 5;
 
   return (
     <View
@@ -31,34 +45,64 @@ export function OverCapacityBanner({ room, onUpgrade }: OverCapacityBannerProps)
       testID="banner-over-capacity"
     >
       <View style={styles.topRow}>
-        <View style={[styles.iconCircle, { backgroundColor: colors.cardHighlight }]}>
-          <Ionicons name="people" size={18} color={colors.accent} />
+        <View
+          style={[styles.iconCircle, { backgroundColor: colors.cardHighlight }]}
+        >
+          <Ionicons name="alert-circle-outline" size={20} color={colors.accent} />
         </View>
         <View style={styles.textContainer}>
           <Text style={[styles.title, { color: colors.text }]}>
             {t('rooms.overCapacity.title')}
           </Text>
           <Text style={[styles.subtitle, { color: colors.textMuted }]}>
-            {t('rooms.overCapacity.subtitleHost', {
-              count: room.member_count,
-              cap: room.member_cap ?? 5,
-            })}
+            {isHost
+              ? t('rooms.overCapacity.subtitleHost', {
+                  count: room.member_count,
+                  cap: memberCap,
+                  days: daysRemaining,
+                })
+              : t('rooms.overCapacity.subtitleMember', {
+                  count: room.member_count,
+                  cap: memberCap,
+                })}
           </Text>
         </View>
       </View>
 
-      <Pressable
-        onPress={onUpgrade}
-        style={[styles.upgradeBtn, { backgroundColor: colors.accent }]}
-        accessibilityRole="button"
-        accessibilityLabel={t('rooms.overCapacity.upgradeBtn')}
-        testID="btn-over-capacity-upgrade"
-      >
-        <Ionicons name="sparkles" size={14} color="#FFFFFF" />
-        <Text style={styles.upgradeBtnText}>
-          {t('rooms.overCapacity.upgradeBtn')}
-        </Text>
-      </Pressable>
+      {/* Host actions */}
+      {isHost && (
+        <View style={styles.actionsRow}>
+          <Pressable
+            onPress={onUpgrade}
+            style={[styles.upgradeBtn, { backgroundColor: colors.accent }]}
+            accessibilityRole="button"
+            accessibilityLabel={t('rooms.overCapacity.upgradeBtn')}
+            testID="btn-over-capacity-upgrade"
+          >
+            <Ionicons name="sparkles" size={14} color="#FFFFFF" />
+            <Text style={styles.upgradeBtnText}>
+              {t('rooms.overCapacity.upgradeBtn')}
+            </Text>
+          </Pressable>
+
+          {onManageMembers && (
+            <Pressable
+              onPress={onManageMembers}
+              style={[
+                styles.manageBtn,
+                { borderColor: colors.border, backgroundColor: colors.surfaceAlt },
+              ]}
+              accessibilityRole="button"
+              accessibilityLabel={t('rooms.overCapacity.manageMembersBtn')}
+              testID="btn-over-capacity-manage"
+            >
+              <Text style={[styles.manageBtnText, { color: colors.text }]}>
+                {t('rooms.overCapacity.manageMembersBtn')}
+              </Text>
+            </Pressable>
+          )}
+        </View>
+      )}
     </View>
   );
 }
@@ -68,7 +112,7 @@ const styles = StyleSheet.create({
     marginHorizontal: spacing.md,
     marginBottom: spacing.md,
     borderRadius: radius.md,
-    borderWidth: 1,
+    borderWidth: 1.5,
     padding: spacing.md,
     gap: spacing.sm,
   },
@@ -96,18 +140,36 @@ const styles = StyleSheet.create({
     fontSize: fontSize.xs,
     lineHeight: 18,
   },
+  actionsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    marginTop: 2,
+  },
   upgradeBtn: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: 10,
+    paddingHorizontal: spacing.md,
     borderRadius: radius.pill,
     gap: 6,
-    alignSelf: 'stretch',
   },
   upgradeBtnText: {
     color: '#FFFFFF',
-    fontSize: fontSize.xs + 1,
+    fontSize: fontSize.xs,
     fontWeight: '700',
+  },
+  manageBtn: {
+    paddingVertical: 9,
+    paddingHorizontal: spacing.md,
+    borderRadius: radius.pill,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  manageBtnText: {
+    fontSize: fontSize.xs,
+    fontWeight: '600',
   },
 });

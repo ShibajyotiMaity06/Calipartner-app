@@ -6,6 +6,8 @@ interface Extra {
   appEnv?: string;
   supabaseUrl?: string;
   supabaseAnonKey?: string;
+  revenueCatAppleKey?: string;
+  revenueCatGoogleKey?: string;
 }
 
 const extra = (Constants.expoConfig?.extra ?? {}) as Extra;
@@ -14,6 +16,8 @@ export const env = {
   appEnv: extra.appEnv ?? 'development',
   supabaseUrl: resolveLocalUrl(extra.supabaseUrl ?? '', Platform.OS),
   supabaseAnonKey: extra.supabaseAnonKey ?? '',
+  revenueCatAppleKey: extra.revenueCatAppleKey ?? '',
+  revenueCatGoogleKey: extra.revenueCatGoogleKey ?? '',
 } as const;
 
 export function isSupabaseConfigured(): boolean {

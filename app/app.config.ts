@@ -41,5 +41,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     appEnv: process.env.EXPO_PUBLIC_APP_ENV ?? 'development',
     supabaseUrl: process.env.EXPO_PUBLIC_SUPABASE_URL ?? '',
     supabaseAnonKey: process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY ?? '',
+    revenueCatAppleKey: process.env.EXPO_PUBLIC_REVENUECAT_APPLE_KEY ?? '',
+    revenueCatGoogleKey: process.env.EXPO_PUBLIC_REVENUECAT_GOOGLE_KEY ?? '',
   },
 });

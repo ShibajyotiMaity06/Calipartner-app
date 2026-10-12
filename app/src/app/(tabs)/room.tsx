@@ -27,12 +27,14 @@ import {
   ReactionModal,
   ReportModal,
   RequestsInboxModal,
+  RoomFullNotice,
   RoomHeader,
   RoomOverviewRow,
   RoomProgressView,
   RoomSettingsModal,
   SharedMealCard,
   SideBySideCard,
+  TrialBanner,
   type PendingSharedMeal,
   type RoomSegment,
 } from '@/components/rooms';
@@ -43,6 +45,7 @@ import { useRoomChat } from '@/hooks/useRoomChat';
 import { useRoomRequests } from '@/hooks/useRoomRequests';
 import { useRoomSnapshot } from '@/hooks/useRoomSnapshot';
 import { useRooms } from '@/hooks/useRooms';
+import { useSubscription } from '@/hooks/useSubscription';
 import { t } from '@/i18n';
 import { fontSize, radius, spacing } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
@@ -64,6 +67,7 @@ export default function RoomScreen() {
   // Core Room Hooks
   const { rooms, loading: roomsLoading, error: roomsError, refresh: refreshRooms, createRoom, joinByCode, leaveRoom } = useRooms();
   const { incoming, outgoing, refresh: refreshRequests, sendInvitation, respondToRequest, cancelRequest, searchUsers } = useRoomRequests();
+  const { isTrial, trialBanner } = useSubscription();
 
   // Selected Room
   const [selectedRoomId, setSelectedRoomId] = useState<string | null>(null);
@@ -348,39 +352,35 @@ export default function RoomScreen() {
               />
             )}
 
-            {/* Over capacity banner for the host (PRD 7.6) */}
-            {currentRoom && currentRoom.state === 'over_capacity' && currentRoom.role === 'host' && (
-              <OverCapacityBanner
-                room={currentRoom}
-                onUpgrade={() => setShowPaywallModal(true)}
+            {/* Trial Banner for Host (PRD 6.18 SUB-9) */}
+            {currentRoom && currentRoom.role === 'host' && (isTrial || trialBanner !== null) && (
+              <TrialBanner
+                daysLeft={trialBanner?.daysRemaining}
+                dayNumber={trialBanner ? Math.max(1, 4 - trialBanner.daysRemaining) : 1}
+                isHost={true}
+                onViewPlans={() => setShowPaywallModal(true)}
               />
             )}
 
-            {/* Room full banner for the host (PRD 6.8 ROOM-12, SUB-6) */}
+            {/* Over capacity banner for the host (PRD 7.6) */}
+            {currentRoom && currentRoom.state === 'over_capacity' && (
+              <OverCapacityBanner
+                room={currentRoom}
+                onUpgrade={() => setShowPaywallModal(true)}
+                onManageMembers={() => setShowSettingsModal(true)}
+              />
+            )}
+
+            {/* Room full notice (Host upgrade sheet & Member notice) (PRD 6.8 ROOM-12, SUB-6) */}
             {currentRoom &&
-              currentRoom.role === 'host' &&
               currentRoom.state !== 'over_capacity' &&
               currentRoom.member_count >= (currentRoom.member_cap ?? 5) && (
-                <View
-                  style={[styles.fullHostBanner, { backgroundColor: colors.surface, borderColor: colors.border }]}
-                  testID="banner-room-full-host"
-                >
-                  <View style={styles.bannerHeaderRow}>
-                    <Ionicons name="people" size={18} color={colors.accent} />
-                    <Text style={[styles.bannerTitleText, { color: colors.text }]}>
-                      {t('rooms.roomFull.hostNotice')}
-                    </Text>
-                  </View>
-                  <Pressable
-                    onPress={() => setShowPaywallModal(true)}
-                    style={[styles.bannerUpgradeBtn, { backgroundColor: colors.accent }]}
-                    accessibilityRole="button"
-                    accessibilityLabel={t('rooms.roomFull.upgradeBtn')}
-                    testID="btn-room-full-host-upgrade"
-                  >
-                    <Text style={styles.bannerUpgradeBtnText}>{t('rooms.roomFull.upgradeBtn')}</Text>
-                  </Pressable>
-                </View>
+                <RoomFullNotice
+                  memberCount={currentRoom.member_count}
+                  memberCap={currentRoom.member_cap ?? 5}
+                  isHost={currentRoom.role === 'host'}
+                  onUpgrade={() => setShowPaywallModal(true)}
+                />
               )}
 
             {/* Segment: Today (Side by side comparison) */}

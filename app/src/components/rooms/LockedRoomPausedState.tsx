@@ -10,29 +10,85 @@ import { t } from '@/i18n';
 import { fontSize, radius, spacing } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
 
-interface LockedRoomPausedStateProps {
+export interface LockedRoomPausedStateProps {
   onKeepRoomGoing: () => void;
 }
 
-export function LockedRoomPausedState({ onKeepRoomGoing }: LockedRoomPausedStateProps) {
+/**
+ * Screen shown to every member when a room's plan lapses.
+ * Strictly non-shaming: never mentions who paid or whose card failed.
+ * Assures members that all history is saved and personal tracking continues.
+ */
+export function LockedRoomPausedState({
+  onKeepRoomGoing,
+}: LockedRoomPausedStateProps) {
   const { colors } = useTheme();
 
   return (
     <View
-      style={[styles.container, { backgroundColor: colors.surface, borderColor: colors.border }]}
+      style={[
+        styles.container,
+        { backgroundColor: colors.surface, borderColor: colors.border },
+      ]}
       testID="screen-locked-room-paused"
     >
-      <View style={[styles.iconCircle, { backgroundColor: colors.cardHighlight }]}>
-        <Ionicons name="pause-circle-outline" size={40} color={colors.accent} />
+      <View
+        style={[styles.iconCircle, { backgroundColor: colors.cardHighlight }]}
+      >
+        <Ionicons name="pause-circle-outline" size={42} color={colors.accent} />
       </View>
 
-      <Text style={[styles.title, { color: colors.text }]} testID="text-locked-room-title">
+      <Text
+        style={[styles.title, { color: colors.text }]}
+        testID="text-locked-room-title"
+      >
         {t('rooms.paused.title')}
       </Text>
 
-      <Text style={[styles.subtitle, { color: colors.textMuted }]} testID="text-locked-room-subtitle">
+      <Text
+        style={[styles.subtitle, { color: colors.textMuted }]}
+        testID="text-locked-room-subtitle"
+      >
         {t('rooms.paused.subtitle')}
       </Text>
+
+      {/* Safety & Preservation guarantees */}
+      <View
+        style={[styles.guaranteesBox, { backgroundColor: colors.surfaceAlt }]}
+      >
+        <View style={styles.guaranteeRow}>
+          <Ionicons
+            name="shield-checkmark-outline"
+            size={16}
+            color={colors.syncSynced}
+          />
+          <Text style={[styles.guaranteeText, { color: colors.text }]}>
+            All room chat, photos and progress are safely saved
+          </Text>
+        </View>
+
+        <View style={styles.guaranteeRow}>
+          <Ionicons
+            name="checkmark-circle-outline"
+            size={16}
+            color={colors.syncSynced}
+          />
+          <Text style={[styles.guaranteeText, { color: colors.text }]}>
+            Personal logging (food, water, steps, workouts) is 100% free
+          </Text>
+        </View>
+
+        <View style={styles.guaranteeRow}>
+          <Ionicons
+            name="people-outline"
+            size={16}
+            color={colors.syncSynced}
+          />
+          <Text style={[styles.guaranteeText, { color: colors.text }]}>
+            Any member can keep this room going with a plan
+          </Text>
+        </View>
+      </View>
 
       <Pressable
         onPress={onKeepRoomGoing}
@@ -41,7 +97,7 @@ export function LockedRoomPausedState({ onKeepRoomGoing }: LockedRoomPausedState
         accessibilityLabel={t('rooms.paused.keepGoingBtn')}
         testID="btn-keep-room-going"
       >
-        <Ionicons name="shield-checkmark-outline" size={18} color="#FFFFFF" />
+        <Ionicons name="sparkles" size={16} color="#FFFFFF" />
         <Text style={styles.keepGoingButtonText}>
           {t('rooms.paused.keepGoingBtn')}
         </Text>
@@ -57,19 +113,18 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     padding: spacing.xl,
     alignItems: 'center',
-    textAlign: 'center',
   },
   iconCircle: {
-    width: 68,
-    height: 68,
-    borderRadius: 34,
+    width: 72,
+    height: 72,
+    borderRadius: 36,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: spacing.md,
   },
   title: {
     fontSize: fontSize.md + 2,
-    fontWeight: '700',
+    fontWeight: '800',
     textAlign: 'center',
     marginBottom: spacing.xs,
   },
@@ -77,8 +132,25 @@ const styles = StyleSheet.create({
     fontSize: fontSize.xs + 1,
     textAlign: 'center',
     lineHeight: 20,
+    marginBottom: spacing.md,
+    maxWidth: 340,
+  },
+  guaranteesBox: {
+    width: '100%',
+    borderRadius: radius.sm,
+    padding: spacing.md,
     marginBottom: spacing.lg,
-    maxWidth: 320,
+    gap: spacing.sm,
+  },
+  guaranteeRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  guaranteeText: {
+    fontSize: fontSize.xs,
+    fontWeight: '500',
+    flex: 1,
   },
   keepGoingButton: {
     flexDirection: 'row',

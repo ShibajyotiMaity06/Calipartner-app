@@ -11,7 +11,9 @@ import {
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { FocusSettingsModal } from '@/components/focus';
+import { MeRoomPlanCard, PaywallModal } from '@/components/rooms';
 import { useAuth } from '@/contexts/AuthContext';
+import { useRooms } from '@/hooks/useRooms';
 import { t } from '@/i18n';
 import { fontSize, radius, spacing } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
@@ -20,7 +22,9 @@ export default function MeScreen() {
   const router = useRouter();
   const { colors } = useTheme();
   const { user, profile, isGuest, signOut } = useAuth();
+  const { rooms } = useRooms();
   const [showFocusSettings, setShowFocusSettings] = useState(false);
+  const [showPaywall, setShowPaywall] = useState(false);
 
   const handleSignOut = () => {
     const performSignOut = async () => {
@@ -149,6 +153,14 @@ export default function MeScreen() {
         </View>
       )}
 
+      {/* Room Plan & Capacity Card (PRD 6.18 SUB-14, 7.11) */}
+      {!isGuest && user && (
+        <MeRoomPlanCard
+          attachedRoom={rooms[0] ?? null}
+          onChangePlan={() => setShowPaywall(true)}
+        />
+      )}
+
       {/* Account Actions */}
       {(user || isGuest) && (
         <View style={styles.actionsSection}>
@@ -177,6 +189,30 @@ export default function MeScreen() {
               <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
             </Pressable>
           )}
+
+          <Pressable
+            testID="btn-me-notification-settings"
+            style={[
+              styles.actionRow,
+              {
+                borderColor: colors.border,
+                flexDirection: 'row',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+              },
+            ]}
+            onPress={() => router.push('/notifications/settings' as never)}
+            accessibilityRole="button"
+            accessibilityLabel={t('notifications.title')}
+          >
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+              <Ionicons name="notifications-outline" size={20} color={colors.accent} />
+              <Text style={{ color: colors.text, fontSize: fontSize.md, fontWeight: '500' }}>
+                {t('notifications.title')}
+              </Text>
+            </View>
+            <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
+          </Pressable>
 
           <Pressable
             testID="btn-me-signout"
@@ -211,6 +247,12 @@ export default function MeScreen() {
           onClose={() => setShowFocusSettings(false)}
         />
       )}
+
+      {/* Paywall Modal */}
+      <PaywallModal
+        visible={showPaywall}
+        onClose={() => setShowPaywall(false)}
+      />
     </ScrollView>
   );
 }
