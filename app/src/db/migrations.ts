@@ -318,6 +318,71 @@ export const migrations: readonly LocalMigration[] = [
       );
     `,
   },
+  {
+    version: 8,
+    name: 'create_chat_and_attachments',
+    sql: `
+      CREATE TABLE IF NOT EXISTS local_chat_messages (
+        id                 TEXT PRIMARY KEY NOT NULL,
+        client_id          TEXT UNIQUE NOT NULL,
+        room_id            TEXT NOT NULL,
+        sender_id          TEXT,
+        sender_nickname    TEXT,
+        sender_username    TEXT,
+        sender_avatar_url  TEXT,
+        message_type       TEXT NOT NULL DEFAULT 'user',
+        system_event_type  TEXT,
+        text               TEXT,
+        created_at         TEXT NOT NULL,
+        deleted_at         TEXT,
+        delivery_status    TEXT NOT NULL DEFAULT 'sent',
+        sync_state         TEXT NOT NULL DEFAULT 'synced',
+        last_error         TEXT
+      );
+      CREATE INDEX IF NOT EXISTS idx_local_chat_room_created ON local_chat_messages (room_id, created_at DESC);
+      CREATE INDEX IF NOT EXISTS idx_local_chat_client_id ON local_chat_messages (client_id);
+      CREATE INDEX IF NOT EXISTS idx_local_chat_delivery ON local_chat_messages (delivery_status);
+
+      CREATE TABLE IF NOT EXISTS local_chat_attachments (
+        id                 TEXT PRIMARY KEY NOT NULL,
+        message_id         TEXT NOT NULL,
+        storage_key        TEXT NOT NULL,
+        local_uri          TEXT,
+        width              INTEGER,
+        height             INTEGER,
+        size               INTEGER NOT NULL,
+        mime_type          TEXT NOT NULL,
+        moderation_status  TEXT NOT NULL DEFAULT 'pending',
+        upload_status      TEXT NOT NULL DEFAULT 'uploaded',
+        created_at         TEXT NOT NULL
+      );
+      CREATE INDEX IF NOT EXISTS idx_local_chat_att_msg ON local_chat_attachments (message_id);
+
+      CREATE TABLE IF NOT EXISTS local_chat_read_state (
+        room_id              TEXT NOT NULL,
+        user_id              TEXT NOT NULL,
+        last_read_message_id TEXT,
+        last_read_at         TEXT NOT NULL,
+        unread_count         INTEGER NOT NULL DEFAULT 0,
+        PRIMARY KEY (room_id, user_id)
+      );
+
+      CREATE TABLE IF NOT EXISTS local_chat_room_settings (
+        room_id              TEXT NOT NULL,
+        user_id              TEXT NOT NULL,
+        mute_system_messages INTEGER NOT NULL DEFAULT 0,
+        PRIMARY KEY (room_id, user_id)
+      );
+
+      CREATE TABLE IF NOT EXISTS local_consent_records (
+        user_id      TEXT NOT NULL,
+        consent_type TEXT NOT NULL,
+        version      TEXT NOT NULL,
+        accepted_at  TEXT NOT NULL,
+        PRIMARY KEY (user_id, consent_type)
+      );
+    `,
+  },
 ];
 
 

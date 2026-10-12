@@ -315,6 +315,8 @@ $$;
 -- -----------------------------------------------------------------------------
 
 -- Helper: start_trial_if_eligible (starts trial when user CREATES a room)
+drop function if exists public.start_trial_if_eligible(uuid, text);
+drop function if exists public.start_trial_if_eligible(uuid, text, uuid);
 create or replace function public.start_trial_if_eligible(
   p_user_id uuid,
   p_device_hash text default null,
@@ -440,6 +442,8 @@ begin
 end;
 $$;
 
+drop function if exists public.dev_grant_premium(uuid);
+drop function if exists public.dev_grant_premium(uuid, integer);
 create or replace function public.dev_grant_premium(
   p_user_id uuid,
   p_days integer default 30
@@ -716,6 +720,8 @@ $$;
 -- -----------------------------------------------------------------------------
 
 -- 1. create_room
+drop function if exists public.create_room(text);
+drop function if exists public.create_room(text, text);
 create or replace function public.create_room(
   p_name text,
   p_device_hash text default null
@@ -811,6 +817,7 @@ end;
 $$;
 
 -- 2. send_room_invitation
+drop function if exists public.send_room_invitation(uuid, text);
 create or replace function public.send_room_invitation(
   p_room_id uuid,
   p_username text
@@ -931,6 +938,8 @@ end;
 $$;
 
 -- 3. request_to_join
+drop function if exists public.request_to_join(text);
+drop function if exists public.request_to_join(text, text);
 create or replace function public.request_to_join(
   p_target text,
   p_device_hash text default null
@@ -1053,6 +1062,8 @@ end;
 $$;
 
 -- 4. respond_to_request (checks capacity under row lock)
+drop function if exists public.respond_to_request(uuid, boolean);
+drop function if exists public.respond_to_request(uuid, boolean, text);
 create or replace function public.respond_to_request(
   p_request_id uuid,
   p_accept boolean,
@@ -1186,6 +1197,8 @@ end;
 $$;
 
 -- 5. join_by_code (checks capacity under row lock)
+drop function if exists public.join_by_code(text);
+drop function if exists public.join_by_code(text, text);
 create or replace function public.join_by_code(
   p_code text,
   p_device_hash text default null
@@ -1301,6 +1314,7 @@ end;
 $$;
 
 -- 6. Update leave_room, remove_member, transfer_host
+drop function if exists public.leave_room(uuid);
 create or replace function public.leave_room(p_room_id uuid)
 returns jsonb
 language plpgsql
@@ -1352,6 +1366,7 @@ begin
 end;
 $$;
 
+drop function if exists public.remove_member(uuid, uuid);
 create or replace function public.remove_member(
   p_room_id uuid,
   p_target_user_id uuid
@@ -1403,6 +1418,7 @@ begin
 end;
 $$;
 
+drop function if exists public.transfer_host(uuid, uuid);
 create or replace function public.transfer_host(
   p_room_id uuid,
   p_target_user_id uuid
@@ -1445,6 +1461,7 @@ end;
 $$;
 
 -- 7. Update nudge, react, tag_shared_meal to require usable room
+drop function if exists public.nudge(uuid, uuid, text);
 create or replace function public.nudge(
   p_room_id uuid,
   p_recipient_id uuid,
@@ -1501,6 +1518,7 @@ begin
 end;
 $$;
 
+drop function if exists public.react(uuid, uuid, text);
 create or replace function public.react(
   p_room_id uuid,
   p_event_id uuid,
@@ -1539,6 +1557,10 @@ begin
 end;
 $$;
 
+drop function if exists public.tag_shared_meal(uuid, uuid, text, text, numeric, text, numeric, numeric, numeric, numeric, jsonb);
+drop function if exists public.tag_shared_meal(uuid, uuid, text, text, numeric, text, numeric, numeric, numeric, numeric, numeric, numeric, numeric, uuid[]);
+drop function if exists public.tag_shared_meal(uuid, uuid, uuid[], numeric);
+drop function if exists public.tag_shared_meal(uuid, uuid, uuid[]);
 create or replace function public.tag_shared_meal(
   p_room_id uuid,
   p_food_entry_id uuid,
@@ -1605,6 +1627,7 @@ $$;
 -- -----------------------------------------------------------------------------
 -- 9. GET_ROOM_SNAPSHOT WITH PAGING, SEARCH & LARGE ROOMS (PRD 6.9 RV-4, RV-10)
 -- -----------------------------------------------------------------------------
+drop function if exists public.get_room_snapshot(uuid, uuid, text, integer, integer);
 drop function if exists public.get_room_snapshot(uuid);
 create or replace function public.get_room_snapshot(
   p_room_id uuid,

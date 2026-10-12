@@ -15,3 +15,4 @@ export * from './exercise_dataset';
 export * from './exercise_importer';
 export * from './workouts';
 export * from './progress';
+export * from './chat';

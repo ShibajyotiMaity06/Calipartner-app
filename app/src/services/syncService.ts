@@ -173,6 +173,8 @@ function getLocalTableName(entity: string): string | null {
       return 'local_workout_exercises';
     case 'workout_sets':
       return 'local_workout_sets';
+    case 'chat_messages':
+      return 'local_chat_messages';
     default:
       return null;
   }
@@ -212,13 +214,15 @@ export async function flushOutbox(
           .eq('id', item.id);
         if (error) throw error;
       } else {
-        // Upsert by primary key (id, user_id+food_id, or user_id+local_date)
+        // Upsert by primary key (id, user_id+food_id, user_id+local_date, or client_id)
         const onConflict =
           item.entity === 'user_food_stats'
             ? 'user_id,food_id'
             : item.entity === 'activity_days'
               ? 'user_id,local_date'
-              : 'id';
+              : item.entity === 'chat_messages'
+                ? 'client_id'
+                : 'id';
         const { error } = await supabase.from(item.entity).upsert(item.payload, { onConflict });
         if (error) throw error;
       }
@@ -228,7 +232,12 @@ export async function flushOutbox(
 
       const localTable = getLocalTableName(item.entity);
       if (localTable) {
-        if (item.entity === 'user_food_stats') {
+        if (item.entity === 'chat_messages') {
+          await db.runAsync(
+            `UPDATE ${localTable} SET sync_state = 'synced', delivery_status = 'sent' WHERE id = ?`,
+            [item.id],
+          );
+        } else if (item.entity === 'user_food_stats') {
           await db.runAsync(
             `UPDATE ${localTable} SET sync_state = 'synced' WHERE user_id = ? AND food_id = ?`,
             [item.payload.user_id, item.payload.food_id],
@@ -272,6 +281,14 @@ export async function flushOutbox(
           item.id,
         ],
       );
+
+      if (item.entity === 'chat_messages') {
+        const deliveryStatus = isPermanentlyFailed ? 'failed' : 'sending';
+        await db.runAsync(
+          `UPDATE local_chat_messages SET sync_state = ?, delivery_status = ?, last_error = ? WHERE id = ?`,
+          [isPermanentlyFailed ? 'failed' : 'pending', deliveryStatus, errorMessage, item.id],
+        );
+      }
 
       const localTable = getLocalTableName(item.entity);
       if (localTable && isPermanentlyFailed) {

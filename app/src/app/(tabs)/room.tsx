@@ -9,7 +9,7 @@ import {
   Text,
   View,
 } from 'react-native';
-import { useFocusEffect } from 'expo-router';
+import { useFocusEffect, useNavigation, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import type { RoomMemberSnapshot } from '@calipartner/core';
 import {
@@ -37,7 +37,9 @@ import {
   type PendingSharedMeal,
   type RoomSegment,
 } from '@/components/rooms';
+import { ChatView } from '@/components/chat';
 import { useRoomActions } from '@/hooks/useRoomActions';
+import { useRoomChat } from '@/hooks/useRoomChat';
 import { useRoomRequests } from '@/hooks/useRoomRequests';
 import { useRoomSnapshot } from '@/hooks/useRoomSnapshot';
 import { useRooms } from '@/hooks/useRooms';
@@ -48,6 +50,7 @@ import type { RoomSummary } from '@/types/rooms';
 
 export default function RoomScreen() {
   const { colors } = useTheme();
+  const router = useRouter();
 
   // Screen focus tracking for visibility-aware realtime subscription
   const [isVisible, setIsVisible] = useState(true);
@@ -152,6 +155,19 @@ export default function RoomScreen() {
   // Room dormant check (fewer than 2 active members)
   const isRoomDormant = currentRoom?.state === 'dormant' || members.length < 2;
 
+  // Hook Room Chat for unread badge and realtime chat notifications
+  const navigation = useNavigation();
+  const { unreadCount } = useRoomChat(activeRoomId, isVisible, {
+    userId: callerId || undefined,
+  });
+
+  React.useEffect(() => {
+    const nav = navigation as unknown as { setOptions?: (options: { tabBarBadge?: number }) => void };
+    nav.setOptions?.({
+      tabBarBadge: unreadCount > 0 ? unreadCount : undefined,
+    });
+  }, [navigation, unreadCount]);
+
   return (
     <SafeAreaView style={[styles.safeArea, { backgroundColor: colors.background }]} testID="screen-room">
       {/* Room Header */}
@@ -161,6 +177,7 @@ export default function RoomScreen() {
         pendingRequestsCount={incoming.length}
         streakDays={streakDays}
         activeSegment={activeSegment}
+        chatUnreadCount={unreadCount}
         onSelectSegment={setActiveSegment}
         onOpenInbox={() => setShowInboxModal(true)}
         onOpenSettings={() => setShowSettingsModal(true)}
@@ -169,28 +186,80 @@ export default function RoomScreen() {
         onCreateOrJoin={() => setShowCreateModal(true)}
       />
 
-      <ScrollView
-        showsVerticalScrollIndicator={false}
-        refreshControl={
-          <RefreshControl
-            refreshing={roomsLoading || snapshotLoading}
-            onRefresh={handleRefresh}
-            tintColor={colors.accent}
-          />
-        }
-        contentContainerStyle={styles.scrollContainer}
-      >
-        {/* Loading State */}
-        {roomsLoading && rooms.length === 0 ? (
-          <View style={styles.loadingContainer}>
-            <ActivityIndicator size="large" color={colors.accent} />
-            <Text style={[styles.loadingText, { color: colors.textMuted }]}>{t('common.loading')}</Text>
+      {/* Content Area */}
+      {roomsLoading && rooms.length === 0 ? (
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color={colors.accent} />
+          <Text style={[styles.loadingText, { color: colors.textMuted }]}>{t('common.loading')}</Text>
+        </View>
+      ) : roomsError && roomsError.code !== 'PLAN_REQUIRED' && rooms.length === 0 ? (
+        /* Error State (Network, Auth, or DB Error) */
+        <ScrollView
+          showsVerticalScrollIndicator={false}
+          refreshControl={
+            <RefreshControl
+              refreshing={roomsLoading}
+              onRefresh={handleRefresh}
+              tintColor={colors.accent}
+            />
+          }
+          contentContainerStyle={styles.scrollContainer}
+        >
+          <View style={[styles.emptyContainer, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+            <View style={[styles.emptyIconCircle, { backgroundColor: colors.cardHighlight }]}>
+              <Ionicons
+                name={roomsError.code === 'UNAUTHENTICATED' ? 'log-in-outline' : 'alert-circle-outline'}
+                size={44}
+                color={colors.accent}
+              />
+            </View>
+            <Text style={[styles.emptyTitle, { color: colors.text }]}>
+              {roomsError.code === 'UNAUTHENTICATED' ? t('auth.title') : t('common.errorTitle')}
+            </Text>
+            <Text style={[styles.emptySubtitle, { color: colors.textMuted }]}>
+              {roomsError.code === 'UNAUTHENTICATED'
+                ? 'Sign in to view your rooms, track goals, and chat with partners.'
+                : roomsError.message || t('common.errorBody')}
+            </Text>
+
+            <View style={styles.emptyButtonsRow}>
+              {roomsError.code === 'UNAUTHENTICATED' ? (
+                <Pressable
+                  onPress={() => router.push('/auth/sign-in')}
+                  style={[styles.primaryButton, { backgroundColor: colors.accent }]}
+                  accessibilityRole="button"
+                  testID="btn-error-signin"
+                >
+                  <Ionicons name="log-in-outline" size={18} color="#FFFFFF" />
+                  <Text style={styles.primaryButtonText}>{t('auth.title')}</Text>
+                </Pressable>
+              ) : (
+                <Pressable
+                  onPress={handleRefresh}
+                  style={[styles.primaryButton, { backgroundColor: colors.accent }]}
+                  accessibilityRole="button"
+                  testID="btn-error-retry"
+                >
+                  <Ionicons name="refresh-outline" size={18} color="#FFFFFF" />
+                  <Text style={styles.primaryButtonText}>{t('common.retry')}</Text>
+                </Pressable>
+              )}
+            </View>
           </View>
-        ) : isRoomLocked ? (
-          /* Locked Room Paused State (PRD 6.8 ROOM-7, 7.6) */
-          <LockedRoomPausedState onKeepRoomGoing={() => setShowPaywallModal(true)} />
-        ) : rooms.length === 0 ? (
-          /* No Active Rooms / Empty State */
+        </ScrollView>
+      ) : rooms.length === 0 ? (
+        /* No Active Rooms / Empty State */
+        <ScrollView
+          showsVerticalScrollIndicator={false}
+          refreshControl={
+            <RefreshControl
+              refreshing={roomsLoading}
+              onRefresh={handleRefresh}
+              tintColor={colors.accent}
+            />
+          }
+          contentContainerStyle={styles.scrollContainer}
+        >
           <View style={[styles.emptyContainer, { backgroundColor: colors.surface, borderColor: colors.border }]}>
             <View style={[styles.emptyIconCircle, { backgroundColor: colors.cardHighlight }]}>
               <Ionicons name="people-outline" size={44} color={colors.accent} />
@@ -238,7 +307,36 @@ export default function RoomScreen() {
               </Pressable>
             )}
           </View>
-        ) : (
+        </ScrollView>
+      ) : activeSegment === 'chat' && currentRoom ? (
+        /* Segment: Chat (Phase 8 View) */
+        <ChatView
+          roomId={currentRoom.id}
+          isVisible={isVisible && activeSegment === 'chat'}
+          options={{
+            userId: callerId || undefined,
+            userNickname: meMember?.nickname,
+            avatarUrl: meMember?.avatar_url ?? undefined,
+          }}
+          isLocked={isRoomLocked}
+          testID="room-chat-segment"
+        />
+      ) : (
+        <ScrollView
+          showsVerticalScrollIndicator={false}
+          refreshControl={
+            <RefreshControl
+              refreshing={roomsLoading || snapshotLoading}
+              onRefresh={handleRefresh}
+              tintColor={colors.accent}
+            />
+          }
+          contentContainerStyle={styles.scrollContainer}
+        >
+          {isRoomLocked ? (
+            /* Locked Room Paused State (PRD 6.8 ROOM-7, 7.6) */
+            <LockedRoomPausedState onKeepRoomGoing={() => setShowPaywallModal(true)} />
+          ) : (
           /* Active Room View */
           <>
             {/* Dormant state / Waiting for Partner banner */}
@@ -338,16 +436,6 @@ export default function RoomScreen() {
               />
             )}
 
-            {/* Segment: Chat (Placeholder for Phase 8) */}
-            {activeSegment === 'chat' && (
-              <PlaceholderSegment
-                icon="chatbubbles-outline"
-                title={t('rooms.placeholders.chatTitle')}
-                subtitle={t('rooms.placeholders.chatSubtitle')}
-                testID="placeholder-room-chat"
-              />
-            )}
-
             {/* Segment: Progress */}
             {activeSegment === 'progress' && currentRoom && (
               <RoomProgressView
@@ -373,6 +461,7 @@ export default function RoomScreen() {
           </>
         )}
       </ScrollView>
+    )}
 
       {/* MODALS */}
 

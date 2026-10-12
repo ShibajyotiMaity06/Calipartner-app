@@ -227,11 +227,8 @@ export async function handleFoodLookup(req: Request): Promise<Response> {
   }
 
   // Prepare Supabase admin client for caching
-  declare const Deno: { env: { get: (key: string) => string | undefined } } | undefined;
-  const envGetter = typeof Deno !== 'undefined' ? Deno.env.get : (k: string) => process.env[k];
-
-  const supabaseUrl = envGetter('SUPABASE_URL');
-  const supabaseServiceKey = envGetter('SUPABASE_SERVICE_ROLE_KEY');
+  const supabaseUrl = Deno.env.get('SUPABASE_URL');
+  const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
 
   const adminClient =
     supabaseUrl && supabaseServiceKey ? createClient(supabaseUrl, supabaseServiceKey) : null;
@@ -353,7 +350,7 @@ export async function handleFoodLookup(req: Request): Promise<Response> {
       }
 
       // Query USDA FoodData Central
-      const usdaApiKey = envGetter('USDA_API_KEY') || 'DEMO_KEY';
+      const usdaApiKey = Deno.env.get('USDA_API_KEY') || 'DEMO_KEY';
       const usdaUrl = `https://api.nal.usda.gov/fdc/v1/foods/search?query=${encodeURIComponent(cleanQuery)}&pageSize=${pageSize}&api_key=${encodeURIComponent(usdaApiKey)}`;
 
       const usdaRes = await fetch(usdaUrl);
@@ -421,12 +418,6 @@ export async function handleFoodLookup(req: Request): Promise<Response> {
   }
 }
 
-declare const Deno:
-  | {
-      serve: (handler: (req: Request) => Promise<Response> | Response) => void;
-    }
-  | undefined;
-
-if (typeof Deno !== 'undefined' && Deno?.serve) {
+if (typeof Deno !== 'undefined') {
   Deno.serve(handleFoodLookup);
 }

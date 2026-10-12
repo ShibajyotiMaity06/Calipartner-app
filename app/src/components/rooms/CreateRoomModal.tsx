@@ -40,7 +40,13 @@ export function CreateRoomModal({ visible, onClose, onCreateRoom }: CreateRoomMo
       onClose();
     } catch (err: unknown) {
       const msg = err && typeof err === 'object' && 'message' in err ? String(err.message) : String(err);
-      setErrorMsg(msg);
+      if (msg.includes('MAX_ROOMS_REACHED')) {
+        setErrorMsg(t('rooms.createModal.errorMaxRooms'));
+      } else if (msg.includes('PLAN_ALREADY_ATTACHED')) {
+        setErrorMsg(t('rooms.createModal.errorPlanAttached'));
+      } else {
+        setErrorMsg(msg);
+      }
     } finally {
       setLoading(false);
     }

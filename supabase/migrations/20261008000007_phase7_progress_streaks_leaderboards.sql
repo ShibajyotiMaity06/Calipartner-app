@@ -26,10 +26,12 @@ create table if not exists public.user_streaks (
 
 alter table public.user_streaks enable row level security;
 
+drop policy if exists user_streaks_select_own on public.user_streaks;
 create policy user_streaks_select_own on public.user_streaks
   for select to authenticated
   using (auth.uid() = user_id);
 
+drop policy if exists user_streaks_no_client_write on public.user_streaks;
 create policy user_streaks_no_client_write on public.user_streaks
   for all to anon, authenticated
   using (false)
@@ -45,6 +47,7 @@ create table if not exists public.room_streaks (
 
 alter table public.room_streaks enable row level security;
 
+drop policy if exists room_streaks_select on public.room_streaks;
 create policy room_streaks_select on public.room_streaks
   for select to authenticated
   using (
@@ -56,6 +59,7 @@ create policy room_streaks_select on public.room_streaks
     )
   );
 
+drop policy if exists room_streaks_no_client_write on public.room_streaks;
 create policy room_streaks_no_client_write on public.room_streaks
   for all to anon, authenticated
   using (false)
@@ -72,19 +76,23 @@ create table if not exists public.leaderboard_settings (
 
 alter table public.leaderboard_settings enable row level security;
 
+drop policy if exists leaderboard_settings_select_own on public.leaderboard_settings;
 create policy leaderboard_settings_select_own on public.leaderboard_settings
   for select to authenticated
   using (auth.uid() = user_id);
 
+drop policy if exists leaderboard_settings_update_own on public.leaderboard_settings;
 create policy leaderboard_settings_update_own on public.leaderboard_settings
   for update to authenticated
   using (auth.uid() = user_id)
   with check (auth.uid() = user_id);
 
+drop policy if exists leaderboard_settings_insert_own on public.leaderboard_settings;
 create policy leaderboard_settings_insert_own on public.leaderboard_settings
   for insert to authenticated
   with check (auth.uid() = user_id);
 
+drop function if exists public.set_leaderboard_opt_out(boolean);
 create or replace function public.set_leaderboard_opt_out(p_opted_out boolean)
 returns void
 language plpgsql
@@ -129,10 +137,12 @@ create index if not exists idx_weekly_scores_lookup
 
 alter table public.weekly_scores enable row level security;
 
+drop policy if exists weekly_scores_select_own on public.weekly_scores;
 create policy weekly_scores_select_own on public.weekly_scores
   for select to authenticated
   using (auth.uid() = user_id);
 
+drop policy if exists weekly_scores_no_client_write on public.weekly_scores;
 create policy weekly_scores_no_client_write on public.weekly_scores
   for all to anon, authenticated
   using (false)
@@ -141,6 +151,7 @@ create policy weekly_scores_no_client_write on public.weekly_scores
 -- -----------------------------------------------------------------------------
 -- 5. COMPLETE RECOMPUTE DAILY SUMMARY WITH LOW-INTAKE RULE & STREAKS
 -- -----------------------------------------------------------------------------
+drop function if exists public.recompute_daily_summary(uuid, text);
 create or replace function public.recompute_daily_summary(
   p_user_id uuid,
   p_local_date text
@@ -335,6 +346,7 @@ $$;
 -- -----------------------------------------------------------------------------
 -- 6. RECOMPUTE USER STREAK & ROOM STREAK FUNCTIONS
 -- -----------------------------------------------------------------------------
+drop function if exists public.recompute_user_streak(uuid);
 create or replace function public.recompute_user_streak(p_user_id uuid)
 returns void
 language plpgsql
@@ -424,6 +436,7 @@ begin
 end;
 $$;
 
+drop function if exists public.recompute_room_streak(uuid);
 create or replace function public.recompute_room_streak(p_room_id uuid)
 returns void
 language plpgsql
@@ -566,6 +579,7 @@ $$;
 -- -----------------------------------------------------------------------------
 -- 7. COMPUTE WEEKLY SCORES & LEADERBOARD SCHEDULED JOB
 -- -----------------------------------------------------------------------------
+drop function if exists public.compute_weekly_scores(text);
 create or replace function public.compute_weekly_scores(p_week_start text)
 returns void
 language plpgsql
@@ -644,15 +658,15 @@ begin
       v_division := 'maintain';
     end if;
 
-    -- Check room access and opt-out
-    select public.has_room_access(v_u.id) into v_has_access;
+    -- Check room access and opt-out (PRD 6.16 RNK-1, 7.11)
+    select (public.has_plan(v_u.id) or public.has_room_access(v_u.id)) into v_has_access;
     if not v_has_access then
-      -- Also eligible if active member of an active/dormant room
+      -- Also eligible if active member of a usable room
       select exists(
         select 1 from public.room_members rm
         join public.rooms r on r.id = rm.room_id
         where rm.user_id = v_u.id and rm.status = 'active'
-          and public.has_room_access(r.host_id)
+          and public.room_is_usable(r.id)
       ) into v_has_access;
     end if;
 
@@ -699,6 +713,7 @@ begin
 end;
 $$;
 
+drop function if exists public.process_scheduled_streaks_and_weekly_scores();
 create or replace function public.process_scheduled_streaks_and_weekly_scores()
 returns void
 language plpgsql
@@ -717,7 +732,7 @@ begin
   end loop;
 
   -- 2. Refresh room streaks
-  for v_r in select id from public.rooms where status in ('active', 'dormant') loop
+  for v_r in select id from public.rooms where state in ('active', 'dormant') loop
     perform public.recompute_room_streak(v_r.id);
   end loop;
 
@@ -739,6 +754,8 @@ $$;
 -- -----------------------------------------------------------------------------
 -- 8. INDIVIDUAL PROGRESS QUERY FUNCTION (PRD 6.15 PRG-1..PRG-10, 7.8)
 -- -----------------------------------------------------------------------------
+drop function if exists public.get_individual_progress(text);
+drop function if exists public.get_individual_progress();
 create or replace function public.get_individual_progress(
   p_range text default '30d'
 )
@@ -1039,6 +1056,8 @@ $$;
 -- -----------------------------------------------------------------------------
 -- 9. ROOM PROGRESS FUNCTIONS (PRD 6.15 RPG-1..RPG-7, RPG-8)
 -- -----------------------------------------------------------------------------
+drop function if exists public.search_room_members_for_progress(uuid, text);
+drop function if exists public.search_room_members_for_progress(uuid);
 create or replace function public.search_room_members_for_progress(
   p_room_id uuid,
   p_query text default null
@@ -1093,6 +1112,9 @@ begin
 end;
 $$;
 
+drop function if exists public.get_room_progress(uuid, text, uuid[]);
+drop function if exists public.get_room_progress(uuid, text);
+drop function if exists public.get_room_progress(uuid);
 create or replace function public.get_room_progress(
   p_room_id uuid,
   p_range text default '30d',
@@ -1461,6 +1483,8 @@ $$;
 -- -----------------------------------------------------------------------------
 -- 10. LEADERBOARDS QUERY FUNCTION (PRD 6.16 RNK-1..RNK-7, 7.5)
 -- -----------------------------------------------------------------------------
+drop function if exists public.get_leaderboard(text);
+drop function if exists public.get_leaderboard();
 create or replace function public.get_leaderboard(
   p_week_start text default null
 )

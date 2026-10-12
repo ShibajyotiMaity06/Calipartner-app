@@ -17,7 +17,15 @@ export function parseLeaderboardError(err: unknown): LeaderboardServiceError {
   if (err instanceof LeaderboardServiceError) {
     return err;
   }
-  const msg = err instanceof Error ? err.message : String(err);
+  const msg =
+    err && typeof err === 'object' && 'message' in err && typeof (err as { message: unknown }).message === 'string'
+      ? (err as { message: string }).message
+      : err instanceof Error
+        ? err.message
+        : typeof err === 'object'
+          ? JSON.stringify(err)
+          : String(err);
+
   if (msg.includes('UNAUTHENTICATED')) {
     return new LeaderboardServiceError('UNAUTHENTICATED', 'User is not signed in', err);
   }

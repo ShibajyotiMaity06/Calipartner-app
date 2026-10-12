@@ -27,22 +27,39 @@ export async function listUserRooms(client: SupabaseClient): Promise<RoomSummary
     const userId = userData.user.id;
 
     // Fetch rooms and caller's membership
-    const { data, error } = await client
+    let data: unknown[] | null = null;
+    const primaryAttempt = await client
       .from('room_members')
       .select(
         `role, status, room_id,
          rooms ( id, name, code, state, who_can_invite, plan_holder_id, member_cap, created_at )`,
       )
       .eq('user_id', userId)
-      .in('status', ['active', 'paused']);
+      .in('status', ['active', 'paused', 'locked']);
 
-    if (error) {
-      throw parseRoomError(error);
+    if (primaryAttempt.error) {
+      // Graceful fallback if migration 20261008000006 is not applied yet on remote DB
+      const fallbackAttempt = await client
+        .from('room_members')
+        .select(
+          `role, status, room_id,
+           rooms ( id, name, code, state, who_can_invite, created_at )`,
+        )
+        .eq('user_id', userId)
+        .in('status', ['active', 'paused', 'locked']);
+
+      if (fallbackAttempt.error) {
+        throw parseRoomError(fallbackAttempt.error);
+      }
+      data = fallbackAttempt.data;
+    } else {
+      data = primaryAttempt.data;
     }
 
     interface RoomMembershipRow {
       room_id: string;
       role: 'host' | 'member';
+      status: 'active' | 'paused' | 'locked';
       rooms: {
         id: string;
         name: string;
@@ -52,7 +69,16 @@ export async function listUserRooms(client: SupabaseClient): Promise<RoomSummary
         who_can_invite?: 'host_only' | 'any_member';
         plan_holder_id?: string | null;
         member_cap?: number;
-      } | null;
+      } | {
+        id: string;
+        name: string;
+        code: string;
+        state: 'active' | 'dormant' | 'locked' | 'over_capacity' | 'archived';
+        created_at: string;
+        who_can_invite?: 'host_only' | 'any_member';
+        plan_holder_id?: string | null;
+        member_cap?: number;
+      }[] | null;
     }
 
     const rows = (data ?? []) as unknown as RoomMembershipRow[];
@@ -62,31 +88,44 @@ export async function listUserRooms(client: SupabaseClient): Promise<RoomSummary
 
     const roomIds = rows.map((item) => item.room_id);
 
-    // Count members in each room
-    const { data: memberCounts, error: countError } = await client
-      .from('room_members')
-      .select('room_id')
-      .in('room_id', roomIds)
-      .in('status', ['active', 'paused']);
-
-    if (countError) {
-      throw parseRoomError(countError);
-    }
-
+    // Count members in each room (resilient fallback)
     const countsMap = new Map<string, number>();
-    for (const m of memberCounts ?? []) {
-      countsMap.set(m.room_id, (countsMap.get(m.room_id) ?? 0) + 1);
+    try {
+      const { data: memberCounts, error: countError } = await client
+        .from('room_members')
+        .select('room_id')
+        .in('room_id', roomIds)
+        .in('status', ['active', 'paused', 'locked']);
+
+      if (!countError && memberCounts) {
+        for (const m of memberCounts) {
+          countsMap.set(m.room_id, (countsMap.get(m.room_id) ?? 0) + 1);
+        }
+      }
+    } catch {
+      // Non-fatal: default to 1 if member count query fails
     }
 
     const result: RoomSummary[] = [];
     for (const row of rows) {
-      const room = row.rooms;
+      const rawRoom = row.rooms;
+      const room = (Array.isArray(rawRoom) ? rawRoom[0] : rawRoom) as {
+        id: string;
+        name: string;
+        code: string;
+        state: 'active' | 'dormant' | 'locked' | 'over_capacity' | 'archived';
+        created_at: string;
+        who_can_invite?: 'host_only' | 'any_member';
+        plan_holder_id?: string | null;
+        member_cap?: number;
+      } | null;
+
       if (room && room.state !== 'archived') {
         result.push({
           id: room.id,
           name: room.name,
           code: room.code,
-          state: room.state,
+          state: row.status === 'locked' ? 'locked' : room.state,
           role: row.role,
           member_count: countsMap.get(room.id) ?? 1,
           created_at: room.created_at,

@@ -21,6 +21,7 @@ interface RoomHeaderProps {
   pendingRequestsCount: number;
   streakDays: number;
   activeSegment: RoomSegment;
+  chatUnreadCount?: number;
   onSelectSegment: (segment: RoomSegment) => void;
   onOpenInbox: () => void;
   onOpenSettings: () => void;
@@ -35,6 +36,7 @@ export function RoomHeader({
   pendingRequestsCount,
   streakDays,
   activeSegment,
+  chatUnreadCount,
   onSelectSegment,
   onOpenInbox,
   onOpenSettings,
@@ -281,6 +283,16 @@ export function RoomHeader({
                 >
                   {seg.label}
                 </Text>
+                {seg.key === 'chat' && typeof chatUnreadCount === 'number' && chatUnreadCount > 0 && (
+                  <View
+                    style={[styles.segmentBadge, { backgroundColor: colors.accent }]}
+                    testID="badge-chat-unread"
+                  >
+                    <Text style={styles.segmentBadgeText}>
+                      {chatUnreadCount > 99 ? '99+' : chatUnreadCount}
+                    </Text>
+                  </View>
+                )}
               </Pressable>
             );
           })}
@@ -457,5 +469,19 @@ const styles = StyleSheet.create({
   },
   segmentTextActive: {
     fontWeight: '700',
+  },
+  segmentBadge: {
+    paddingHorizontal: 5,
+    paddingVertical: 1,
+    borderRadius: radius.pill,
+    minWidth: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginLeft: 2,
+  },
+  segmentBadgeText: {
+    color: '#FFFFFF',
+    fontSize: 9,
+    fontWeight: '800',
   },
 });

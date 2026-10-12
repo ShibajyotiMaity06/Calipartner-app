@@ -40,7 +40,9 @@ export function JoinByCodeModal({ visible, onClose, onJoinByCode }: JoinByCodeMo
       onClose();
     } catch (err: unknown) {
       const msg = err && typeof err === 'object' && 'message' in err ? String(err.message) : String(err);
-      if (msg.includes('ROOM_FULL')) {
+      if (msg.includes('MAX_ROOMS_REACHED')) {
+        setErrorMsg(t('rooms.joinModal.errorMaxRooms'));
+      } else if (msg.includes('ROOM_FULL')) {
         setErrorMsg(t('rooms.roomFull.memberNotice'));
       } else if (msg.includes('ROOM_LOCKED')) {
         setErrorMsg(t('rooms.paused.title'));

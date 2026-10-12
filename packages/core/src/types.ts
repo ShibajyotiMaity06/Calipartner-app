@@ -1146,5 +1146,128 @@ export interface LeaderboardResponse {
   info_note?: string;
 }
 
+// -----------------------------------------------------------------------------
+// Phase 8: Room Chat, Attachments, R2 URLs, Offline Sync & Safety Types
+// -----------------------------------------------------------------------------
+
+export type ChatMessageType = 'user' | 'system';
+export type ChatSystemEventType =
+  | 'member_joined'
+  | 'member_left'
+  | 'room_created'
+  | 'streak_milestone';
+
+export type ChatModerationStatus = 'pending' | 'ok' | 'blocked';
+export type ChatDeliveryStatus = 'sending' | 'sent' | 'failed';
+export type ChatSyncState = 'synced' | 'pending' | 'failed';
+
+export interface ChatAttachment {
+  id: string;
+  message_id: string;
+  storage_key: string;
+  width: number | null;
+  height: number | null;
+  size: number;
+  mime_type: string;
+  moderation_status: ChatModerationStatus;
+  created_at: string;
+  signed_url?: string | null;
+  local_uri?: string | null;
+  upload_status?: 'pending' | 'uploading' | 'uploaded' | 'failed';
+}
+
+export interface ChatMessage {
+  id: string;
+  client_id: string;
+  room_id: string;
+  sender_id: string | null;
+  sender_nickname?: string | null;
+  sender_username?: string | null;
+  sender_avatar_url?: string | null;
+  message_type: ChatMessageType;
+  system_event_type: ChatSystemEventType | null;
+  text: string | null;
+  created_at: string;
+  deleted_at: string | null;
+  attachments: ChatAttachment[];
+  delivery_status?: ChatDeliveryStatus;
+  sync_state?: ChatSyncState;
+}
+
+export interface ChatReadState {
+  room_id: string;
+  user_id: string;
+  last_read_message_id: string | null;
+  last_read_at: string;
+  unread_count?: number;
+}
+
+export interface ChatRoomSettings {
+  room_id: string;
+  user_id: string;
+  mute_system_messages: boolean;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface MemberMute {
+  user_id: string;
+  muted_user_id: string;
+  created_at: string;
+}
+
+export interface ConsentRecord {
+  id: string;
+  user_id: string;
+  consent_type: 'chat_terms' | 'terms' | 'privacy_policy' | 'ai_processing' | 'partner_finder';
+  version: string;
+  metadata?: Record<string, unknown>;
+  accepted_at: string;
+}
+
+export interface ChatUploadUrlRequest {
+  room_id: string;
+  client_id: string;
+  filename: string;
+  mime_type: string;
+  size: number;
+  width?: number;
+  height?: number;
+}
+
+export interface ChatUploadUrlResponse {
+  upload_url: string;
+  storage_key: string;
+  headers: Record<string, string>;
+  expires_in_seconds: number;
+}
+
+export interface ChatSignedUrlRequest {
+  room_id: string;
+  storage_key: string;
+}
+
+export interface ChatSignedUrlResponse {
+  signed_url: string;
+  expires_in_seconds: number;
+}
+
+export type ChatErrorCode =
+  | 'TERMS_REQUIRED'
+  | 'NOT_ROOM_MEMBER'
+  | 'ROOM_LOCKED'
+  | 'ROOM_DORMANT_READ_ONLY'
+  | 'RATE_LIMIT_EXCEEDED'
+  | 'ATTACHMENT_LIMIT_EXCEEDED'
+  | 'FILE_TOO_LARGE'
+  | 'INVALID_FILE_TYPE'
+  | 'MESSAGE_TOO_LONG'
+  | 'MESSAGE_EMPTY'
+  | 'MESSAGE_NOT_FOUND'
+  | 'CANNOT_DELETE_OTHERS'
+  | 'URL_EXPIRED'
+  | 'UNAUTHENTICATED'
+  | 'UNKNOWN_ERROR';
+
 
 
