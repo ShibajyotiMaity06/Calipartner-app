@@ -1,0 +1,371 @@
+[
+  {
+    "id": "recipe-high-protein-paneer-bhurji",
+    "title": "High-Protein Paneer Bhurji",
+    "description": "Scrambled cottage cheese tossed with onion, ripe tomatoes, fresh green chillies, and aromatic spices.",
+    "cuisine": "North Indian",
+    "diet_tags": [
+      "vegetarian",
+      "high-protein",
+      "gluten-free"
+    ],
+    "meal_type": "breakfast",
+    "prep_minutes": 10,
+    "cook_minutes": 15,
+    "difficulty": "easy",
+    "servings": 2,
+    "steps": [
+      "Heat 10g desi cow ghee in a heavy-bottomed pan on medium heat.",
+      "Add finely chopped onions and sauté for 4-5 minutes until golden and translucent.",
+      "Add chopped tomatoes, turmeric, cumin powder, red chilli powder, and salt. Cook until tomatoes turn mushy.",
+      "Crumble 250g fresh paneer and gently fold it into the spiced onion-tomato masala.",
+      "Sauté for 3-4 minutes on low flame to retain softness without releasing moisture. Garnish with chopped fresh coriander leaves."
+    ],
+    "tips": [
+      "Do not overcook paneer beyond 4 minutes to avoid rubberiness.",
+      "Serve warm with whole wheat phulkas or toasted sourdough."
+    ],
+    "image_urls": [
+      "https://pub-r2.calipartner.com/recipes/paneer-bhurji/hero.jpg"
+    ],
+    "status": "published",
+    "nutrition_per_serving": {
+      "calories": 435.1,
+      "protein": 23.9,
+      "carbs": 10.6,
+      "fat": 33.3,
+      "fiber": 1.5,
+      "sugar": 6.5,
+      "sodium_mg": 32
+    },
+    "nutrition_override_reason": null,
+    "version": 1,
+    "created_at": "2026-10-17T14:17:24.137Z",
+    "updated_at": "2026-10-17T14:17:24.138Z",
+    "ingredients": [
+      {
+        "food_id": "f-ifct-paneer-raw",
+        "quantity": 250,
+        "unit": "g",
+        "note": "crumbled fresh low-fat or standard paneer",
+        "display_order": 0
+      },
+      {
+        "food_id": "f-ifct-onion-raw",
+        "quantity": 100,
+        "unit": "g",
+        "note": "finely chopped",
+        "display_order": 1
+      },
+      {
+        "food_id": "f-ifct-tomato-raw",
+        "quantity": 100,
+        "unit": "g",
+        "note": "chopped",
+        "display_order": 2
+      },
+      {
+        "food_id": "f-ifct-ghee",
+        "quantity": 10,
+        "unit": "g",
+        "note": "for sautéing",
+        "display_order": 3
+      }
+    ]
+  },
+  {
+    "id": "recipe-soya-chunks-curry",
+    "title": "High-Protein Soya Chunks Curry",
+    "description": "Juicy textured soya nuggets simmered in a homestyle onion-tomato gravy with warm garam masala.",
+    "cuisine": "North Indian",
+    "diet_tags": [
+      "vegan",
+      "high-protein",
+      "cutting-friendly"
+    ],
+    "meal_type": "dinner",
+    "prep_minutes": 15,
+    "cook_minutes": 20,
+    "difficulty": "medium",
+    "servings": 3,
+    "steps": [
+      "Boil 100g dry soya chunks in lightly salted water for 5 minutes until soft and doubled in size.",
+      "Rinse under cold water and squeeze thoroughly to eliminate any bitterness.",
+      "Heat 10g olive oil in a pan, add chopped onions, and sauté until golden brown.",
+      "Stir in ginger-garlic paste and chopped tomatoes; cook until the masala leaves oil on the edges.",
+      "Add the squeezed soya chunks and 1 cup of warm water. Simmer covered for 8-10 minutes.",
+      "Finish with freshly ground garam masala and fresh cilantro."
+    ],
+    "tips": [
+      "Squeezing out the water thoroughly is key to absorbing the aromatic curry flavors."
+    ],
+    "image_urls": [
+      "https://pub-r2.calipartner.com/recipes/soya-chunks-curry/hero.jpg"
+    ],
+    "status": "published",
+    "nutrition_per_serving": {
+      "calories": 163.8,
+      "protein": 18,
+      "carbs": 15.4,
+      "fat": 3.6,
+      "fiber": 5.3,
+      "sugar": 4.6,
+      "sodium_mg": 9.7
+    },
+    "nutrition_override_reason": null,
+    "version": 1,
+    "created_at": "2026-10-17T14:17:24.138Z",
+    "updated_at": "2026-10-17T14:17:24.138Z",
+    "ingredients": [
+      {
+        "food_id": "f-ifct-soya-chunks",
+        "quantity": 100,
+        "unit": "g",
+        "note": "dry textured soya nuggets",
+        "display_order": 0
+      },
+      {
+        "food_id": "f-ifct-onion-raw",
+        "quantity": 100,
+        "unit": "g",
+        "note": "finely chopped",
+        "display_order": 1
+      },
+      {
+        "food_id": "f-ifct-tomato-raw",
+        "quantity": 100,
+        "unit": "g",
+        "note": "pureed or chopped",
+        "display_order": 2
+      },
+      {
+        "food_id": "f-usda-olive-oil",
+        "quantity": 10,
+        "unit": "g",
+        "note": "for gravy base",
+        "display_order": 3
+      }
+    ]
+  },
+  {
+    "id": "recipe-homestyle-dal-tadka",
+    "title": "Homestyle Yellow Dal Tadka",
+    "description": "Comforting yellow moong lentils tempered with cumin, garlic, and golden desi cow ghee.",
+    "cuisine": "North Indian",
+    "diet_tags": [
+      "vegetarian",
+      "vegan",
+      "gluten-free"
+    ],
+    "meal_type": "lunch",
+    "prep_minutes": 10,
+    "cook_minutes": 20,
+    "difficulty": "easy",
+    "servings": 3,
+    "steps": [
+      "Rinse yellow moong dal and pressure cook with 3 cups water, turmeric, and salt for 3 whistles.",
+      "In a tadka pan, heat 10g desi cow ghee, add cumin seeds, and let them crackle.",
+      "Add chopped onions and fry until light brown, then add chopped tomatoes until soft.",
+      "Pour the sizzling tadka directly over the cooked dal and stir well.",
+      "Simmer for 2 minutes and garnish with fresh coriander."
+    ],
+    "tips": [
+      "For a vegan version, substitute ghee with mustard oil or olive oil."
+    ],
+    "image_urls": [
+      "https://pub-r2.calipartner.com/recipes/dal-tadka/hero.jpg"
+    ],
+    "status": "published",
+    "nutrition_per_serving": {
+      "calories": 82.1,
+      "protein": 3.3,
+      "carbs": 8.5,
+      "fat": 4,
+      "fiber": 2.2,
+      "sugar": 1.4,
+      "sodium_mg": 111.5
+    },
+    "nutrition_override_reason": null,
+    "version": 1,
+    "created_at": "2026-10-17T14:17:24.138Z",
+    "updated_at": "2026-10-17T14:17:24.138Z",
+    "ingredients": [
+      {
+        "food_id": "f-ifct-moong-dal",
+        "quantity": 150,
+        "unit": "g",
+        "note": "yellow moong dal",
+        "display_order": 0
+      },
+      {
+        "food_id": "f-ifct-onion-raw",
+        "quantity": 50,
+        "unit": "g",
+        "note": "chopped",
+        "display_order": 1
+      },
+      {
+        "food_id": "f-ifct-tomato-raw",
+        "quantity": 50,
+        "unit": "g",
+        "note": "chopped",
+        "display_order": 2
+      },
+      {
+        "food_id": "f-ifct-ghee",
+        "quantity": 10,
+        "unit": "g",
+        "note": "for aromatic tadka",
+        "display_order": 3
+      }
+    ]
+  },
+  {
+    "id": "recipe-masala-oats-boiled-eggs",
+    "title": "Savory Masala Oats with Boiled Eggs",
+    "description": "Nutritious rolled oats infused with Indian spices and sautéed vegetables, topped with protein-packed boiled eggs.",
+    "cuisine": "Indian",
+    "diet_tags": [
+      "eggetarian",
+      "high-protein",
+      "cutting-friendly"
+    ],
+    "meal_type": "breakfast",
+    "prep_minutes": 5,
+    "cook_minutes": 10,
+    "difficulty": "easy",
+    "servings": 2,
+    "steps": [
+      "Heat 5g ghee in a pan and lightly sauté chopped onions and tomatoes.",
+      "Add 80g rolled oats along with turmeric, cumin, and black pepper; roast for 1 minute.",
+      "Pour in 2 cups of water and salt, bringing to a gentle boil on medium heat.",
+      "Cook for 4-5 minutes stirring occasionally until thick and creamy.",
+      "Halve 2 large boiled eggs and arrange neatly on top before serving."
+    ],
+    "tips": [
+      "Toss in green peas, diced carrots, or baby spinach for extra micronutrients."
+    ],
+    "image_urls": [
+      "https://pub-r2.calipartner.com/recipes/masala-oats-eggs/hero.jpg"
+    ],
+    "status": "published",
+    "nutrition_per_serving": {
+      "calories": 270,
+      "protein": 13.6,
+      "carbs": 30.4,
+      "fat": 10.6,
+      "fiber": 5,
+      "sugar": 2.7,
+      "sodium_mg": 66.7
+    },
+    "nutrition_override_reason": null,
+    "version": 1,
+    "created_at": "2026-10-17T14:17:24.138Z",
+    "updated_at": "2026-10-17T14:17:24.138Z",
+    "ingredients": [
+      {
+        "food_id": "f-usda-oats",
+        "quantity": 80,
+        "unit": "g",
+        "note": "rolled oats",
+        "display_order": 0
+      },
+      {
+        "food_id": "f-usda-boiled-egg",
+        "quantity": 100,
+        "unit": "g",
+        "note": "2 large hard-boiled eggs",
+        "display_order": 1
+      },
+      {
+        "food_id": "f-ifct-onion-raw",
+        "quantity": 50,
+        "unit": "g",
+        "note": "finely chopped",
+        "display_order": 2
+      },
+      {
+        "food_id": "f-ifct-tomato-raw",
+        "quantity": 50,
+        "unit": "g",
+        "note": "chopped",
+        "display_order": 3
+      },
+      {
+        "food_id": "f-ifct-ghee",
+        "quantity": 5,
+        "unit": "g",
+        "note": "for light tempering",
+        "display_order": 4
+      }
+    ]
+  },
+  {
+    "id": "recipe-tandoori-spiced-chicken-breast",
+    "title": "Tandoori Spiced Grilled Chicken Breast",
+    "description": "Lean chicken breast marinated in thick curd, Kashmiri red chilli, kasuri methi, and grilled to tender perfection.",
+    "cuisine": "North Indian",
+    "diet_tags": [
+      "non-vegetarian",
+      "high-protein",
+      "cutting-friendly",
+      "gluten-free"
+    ],
+    "meal_type": "dinner",
+    "prep_minutes": 15,
+    "cook_minutes": 15,
+    "difficulty": "medium",
+    "servings": 2,
+    "steps": [
+      "Score chicken breasts lightly with shallow diagonal cuts for deep marinade penetration.",
+      "In a bowl, mix 60g curd, Kashmiri chilli powder, garam masala, crushed kasuri methi, and salt.",
+      "Coat chicken thoroughly and let marinate for at least 30 minutes in the refrigerator.",
+      "Brush a cast-iron skillet or grill pan with 10g olive oil on medium-high heat.",
+      "Grill chicken for 6-7 minutes per side until the internal temperature reaches 74°C (165°F).",
+      "Rest for 5 minutes before slicing, then serve with lemon wedges and mint chutney."
+    ],
+    "tips": [
+      "Resting the chicken after cooking locks in juices so it never dries out."
+    ],
+    "image_urls": [
+      "https://pub-r2.calipartner.com/recipes/tandoori-chicken-breast/hero.jpg"
+    ],
+    "status": "published",
+    "nutrition_per_serving": {
+      "calories": 311.2,
+      "protein": 47.5,
+      "carbs": 1.3,
+      "fat": 11.5,
+      "fiber": 0,
+      "sugar": 1.3,
+      "sodium_mg": 124.6
+    },
+    "nutrition_override_reason": null,
+    "version": 1,
+    "created_at": "2026-10-17T14:17:24.139Z",
+    "updated_at": "2026-10-17T14:17:24.139Z",
+    "ingredients": [
+      {
+        "food_id": "f-usda-chicken-breast",
+        "quantity": 300,
+        "unit": "g",
+        "note": "boneless skinless breast fillets",
+        "display_order": 0
+      },
+      {
+        "food_id": "f-ifct-curd-dahi",
+        "quantity": 60,
+        "unit": "g",
+        "note": "thick dahi for marinade",
+        "display_order": 1
+      },
+      {
+        "food_id": "f-usda-olive-oil",
+        "quantity": 10,
+        "unit": "g",
+        "note": "for pan grilling",
+        "display_order": 2
+      }
+    ]
+  }
+]

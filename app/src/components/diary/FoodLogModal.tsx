@@ -9,7 +9,9 @@ import {
   View,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import type { Food, MealSection } from '@calipartner/core';
+import type { Food, FoodCandidateItem, MealSection } from '@calipartner/core';
+import { useAuth } from '@/contexts/AuthContext';
+import { getDb } from '@/db';
 import { useFoodSearch } from '@/hooks/useFoodSearch';
 import {
   usePreviouslyLogged,
@@ -17,11 +19,27 @@ import {
   type PreviouslyLoggedItem,
 } from '@/hooks/usePreviouslyLogged';
 import { t } from '@/i18n';
+import { getSupabase } from '@/lib/supabase';
+import {
+  acceptAiProcessingConsent,
+  analyzeFoodPhoto,
+  checkAiProcessingConsent,
+  getAiFoodPhotoUsageStatus,
+  savePhotoCandidatesToDiary,
+  type SupabaseFunctionsClient,
+} from '@/services/aiFoodPhotoService';
 import { fontSize, radius, spacing } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
 import { BarcodeScannerModal } from './BarcodeScannerModal';
 import { CustomFoodModal } from './CustomFoodModal';
 import { QuantityModal } from './QuantityModal';
+import {
+  AiConsentSheet,
+  FoodPhotoAnalyzingOverlay,
+  FoodPhotoCameraModal,
+  FoodPhotoDailyLimitModal,
+  FoodPhotoResultsEditor,
+} from '@/components/food_photo';
 
 export interface FoodLogModalProps {
   visible: boolean;
@@ -41,12 +59,24 @@ export function FoodLogModal({
   onLogged,
 }: FoodLogModalProps) {
   const { colors } = useTheme();
+  const { user } = useAuth();
 
   const [activeTab, setActiveTab] = useState<TabType>('search');
   const [selectedFoodForQuantity, setSelectedFoodForQuantity] = useState<Food | null>(null);
   const [showBarcodeScanner, setShowBarcodeScanner] = useState(false);
   const [showCustomFoodModal, setShowCustomFoodModal] = useState(false);
   const [prefilledBarcode, setPrefilledBarcode] = useState<string | null>(null);
+
+  // Phase 11 AI Food Photo states
+  const [showPhotoConsent, setShowPhotoConsent] = useState(false);
+  const [showPhotoCamera, setShowPhotoCamera] = useState(false);
+  const [photoAnalyzing, setPhotoAnalyzing] = useState(false);
+  const [photoResults, setPhotoResults] = useState<FoodCandidateItem[] | null>(null);
+  const [showResultsEditor, setShowResultsEditor] = useState(false);
+  const [showDailyLimitModal, setShowDailyLimitModal] = useState(false);
+  const [limitState, setLimitState] = useState<'trial' | 'paid' | 'free' | 'free_after_trial'>('trial');
+  const [limitUsage, setLimitUsage] = useState<{ usedToday: number; dailyCap: number } | null>(null);
+  const [consentLoading, setConsentLoading] = useState(false);
 
   // Search tab hook
   const { query, setQuery, results: searchResults, loading: searchLoading } = useFoodSearch();
@@ -75,6 +105,98 @@ export function FoodLogModal({
 
   const handleLogFromQuantity = (_data?: unknown) => {
     // Handled in today screen via callback or logged directly
+    if (onLogged) onLogged();
+    onClose();
+  };
+
+  const handleStartPhotoScan = async () => {
+    try {
+      const hasConsent = await checkAiProcessingConsent(
+        getSupabase() as unknown as SupabaseFunctionsClient,
+        user?.id ?? '',
+      );
+      if (!hasConsent) {
+        setShowPhotoConsent(true);
+      } else {
+        setShowPhotoCamera(true);
+      }
+    } catch {
+      setShowPhotoConsent(true);
+    }
+  };
+
+  const handleAcceptConsent = async () => {
+    try {
+      setConsentLoading(true);
+      await acceptAiProcessingConsent(
+        getSupabase() as unknown as SupabaseFunctionsClient,
+      );
+      setShowPhotoConsent(false);
+      setShowPhotoCamera(true);
+    } catch {
+      setShowPhotoConsent(false);
+      setShowPhotoCamera(true);
+    } finally {
+      setConsentLoading(false);
+    }
+  };
+
+  const handlePhotoCaptured = async (payload: { base64: string; mimeType: string }) => {
+    setShowPhotoCamera(false);
+    setPhotoAnalyzing(true);
+    try {
+      const response = await analyzeFoodPhoto(
+        getSupabase() as unknown as SupabaseFunctionsClient,
+        {
+          imageBase64: payload.base64,
+          mimeType: payload.mimeType,
+        },
+      );
+
+      setPhotoResults(response.candidates);
+      setShowResultsEditor(true);
+    } catch (err: unknown) {
+      const errorObj = err as { code?: string; message?: string };
+      if (
+        errorObj?.code === 'DAILY_LIMIT_REACHED' ||
+        errorObj?.code === 'FEATURE_DISABLED' ||
+        errorObj?.message?.includes('DAILY_LIMIT_REACHED')
+      ) {
+        try {
+          const status = await getAiFoodPhotoUsageStatus(
+            getSupabase() as unknown as SupabaseFunctionsClient,
+            user?.id ?? '',
+          );
+          setLimitState(status.userState);
+          setLimitUsage({ usedToday: status.usedToday, dailyCap: status.dailyCap });
+        } catch {
+          setLimitState('trial');
+        }
+        setShowDailyLimitModal(true);
+      } else if (errorObj?.code === 'CONSENT_REQUIRED') {
+        setShowPhotoConsent(true);
+      } else {
+        setPhotoResults([]);
+        setShowResultsEditor(true);
+      }
+    } finally {
+      setPhotoAnalyzing(false);
+    }
+  };
+
+  const handleSavePhotoMeal = async (
+    candidatesToSave: FoodCandidateItem[],
+    targetSection: MealSection,
+  ) => {
+    const db = await getDb();
+    await savePhotoCandidatesToDiary(db, {
+      userId: user?.id ?? '',
+      candidates: candidatesToSave,
+      mealSection: targetSection,
+      localDate,
+    });
+    setShowResultsEditor(false);
+    setPhotoResults(null);
     if (onLogged) onLogged();
     onClose();
   };
@@ -286,9 +408,10 @@ export function FoodLogModal({
             </View>
           )}
 
-          {/* TAB 3: Photo (Placeholder PRD LOG-3) */}
+          {/* TAB 3: Photo (PRD LOG-3) */}
           {activeTab === 'photo' && (
             <View
+              testID="tab-view-photo-logging"
               style={{
                 flex: 1,
                 alignItems: 'center',
@@ -299,21 +422,21 @@ export function FoodLogModal({
             >
               <View
                 style={{
-                  width: 72,
-                  height: 72,
+                  width: 80,
+                  height: 80,
                   borderRadius: radius.pill,
-                  backgroundColor: colors.surfaceAlt,
+                  backgroundColor: colors.cardHighlight,
                   alignItems: 'center',
                   justifyContent: 'center',
                 }}
               >
-                <Ionicons name="camera" size={36} color={colors.accent} />
+                <Ionicons name="sparkles" size={40} color={colors.accent} />
               </View>
 
               <View
                 style={{
                   backgroundColor: colors.surfaceAlt,
-                  paddingHorizontal: 10,
+                  paddingHorizontal: 12,
                   paddingVertical: 4,
                   borderRadius: radius.pill,
                   borderWidth: 1,
@@ -328,9 +451,49 @@ export function FoodLogModal({
               <Text style={{ fontSize: fontSize.lg, fontWeight: '700', color: colors.text, textAlign: 'center' }}>
                 {t('foodLog.photo.title')}
               </Text>
-              <Text style={{ fontSize: fontSize.sm, color: colors.textMuted, textAlign: 'center', maxWidth: 280 }}>
-                {t('foodLog.photo.description')}
+              <Text style={{ fontSize: fontSize.sm, color: colors.textMuted, textAlign: 'center', maxWidth: 300, lineHeight: 20 }}>
+                {t('foodLog.photo.subtitle')}
               </Text>
+
+              {/* Start Capture Button */}
+              <Pressable
+                testID="btn-start-photo-scan"
+                accessibilityRole="button"
+                accessibilityLabel={t('foodLog.photo.startScan')}
+                onPress={handleStartPhotoScan}
+                style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  gap: 8,
+                  backgroundColor: colors.accent,
+                  paddingHorizontal: 24,
+                  paddingVertical: 14,
+                  borderRadius: radius.md,
+                  marginTop: spacing.sm,
+                  width: '100%',
+                  maxWidth: 280,
+                  justifyContent: 'center',
+                }}
+              >
+                <Ionicons name="camera" size={20} color={colors.onAccent} />
+                <Text style={{ color: colors.onAccent, fontWeight: '700', fontSize: fontSize.md }}>
+                  {t('foodLog.photo.startScan')}
+                </Text>
+              </Pressable>
+
+              {/* Privacy Reassurance Note */}
+              <Pressable
+                testID="btn-view-ai-consent"
+                accessibilityRole="button"
+                accessibilityLabel="View AI privacy details"
+                onPress={() => setShowPhotoConsent(true)}
+                style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: spacing.xs }}
+              >
+                <Ionicons name="shield-checkmark-outline" size={14} color={colors.textMuted} />
+                <Text style={{ fontSize: fontSize.xs, color: colors.textMuted, textDecorationLine: 'underline' }}>
+                  In-memory processing & privacy guarantees
+                </Text>
+              </Pressable>
             </View>
           )}
 
@@ -538,6 +701,64 @@ export function FoodLogModal({
               onCreated={(f) => {
                 setSelectedFoodForQuantity(f);
               }}
+            />
+          )}
+
+          {/* Phase 11 Food Photo Flow Modals */}
+          {showPhotoConsent && (
+            <AiConsentSheet
+              visible={showPhotoConsent}
+              loading={consentLoading}
+              onAccept={handleAcceptConsent}
+              onDecline={() => setShowPhotoConsent(false)}
+            />
+          )}
+
+          {showPhotoCamera && (
+            <FoodPhotoCameraModal
+              visible={showPhotoCamera}
+              onClose={() => setShowPhotoCamera(false)}
+              onPhotoCaptured={handlePhotoCaptured}
+            />
+          )}
+
+          {photoAnalyzing && (
+            <FoodPhotoAnalyzingOverlay
+              visible={photoAnalyzing}
+              onCancel={() => setPhotoAnalyzing(false)}
+            />
+          )}
+
+          {showDailyLimitModal && (
+            <FoodPhotoDailyLimitModal
+              visible={showDailyLimitModal}
+              userState={limitState}
+              usedToday={limitUsage?.usedToday}
+              dailyCap={limitUsage?.dailyCap}
+              onClose={() => setShowDailyLimitModal(false)}
+              onLogManually={() => {
+                setShowDailyLimitModal(false);
+                setActiveTab('search');
+              }}
+            />
+          )}
+
+          {showResultsEditor && photoResults && (
+            <FoodPhotoResultsEditor
+              visible={showResultsEditor}
+              initialCandidates={photoResults}
+              defaultSection={defaultSection}
+              localDate={localDate}
+              onClose={() => {
+                setShowResultsEditor(false);
+                setPhotoResults(null);
+              }}
+              onRetakePhoto={() => {
+                setShowResultsEditor(false);
+                setPhotoResults(null);
+                setShowPhotoCamera(true);
+              }}
+              onSaveMeal={handleSavePhotoMeal}
             />
           )}
         </View>

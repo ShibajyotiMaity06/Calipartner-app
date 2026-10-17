@@ -179,6 +179,10 @@ function getLocalTableName(entity: string): string | null {
       return 'local_focus_sessions';
     case 'focus_settings':
       return 'local_focus_settings';
+    case 'recipe_favorites':
+      return 'local_recipe_favorites';
+    case 'recipe_reports':
+      return 'local_recipe_reports';
     default:
       return null;
   }

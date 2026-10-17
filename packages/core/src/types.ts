@@ -1604,3 +1604,212 @@ export type FocusErrorCode =
   | 'SESSION_ALREADY_ACTIVE'
   | 'UNAUTHENTICATED'
   | 'INVALID_ARGUMENT';
+
+// -----------------------------------------------------------------------------
+// PHASE 11: AI FOOD-PHOTO LOGGING & USAGE (PRD 6.3 LOG-3, 7.7, 8.2)
+// -----------------------------------------------------------------------------
+
+export type AiUserState = 'trial' | 'paid' | 'free_after_trial';
+
+export interface AiDailyCapsConfig {
+  trial: number;
+  paid: number;
+  free_after_trial: number;
+}
+
+export interface AiMonthlyBudgetConfig {
+  monthly_budget_usd: number;
+  current_month_cost_usd?: number;
+  food_photo_disabled?: boolean;
+  ai_disabled?: boolean;
+}
+
+export interface AiUsageRecord {
+  id?: string;
+  user_id: string;
+  day: string; // YYYY-MM-DD
+  feature: 'food_photo' | 'coach';
+  count: number;
+  tokens: number;
+  estimated_cost: number;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface VisionModelDetectedItem {
+  food_name: string;
+  estimated_grams: number;
+  confidence: number;
+  description?: string;
+}
+
+export interface VisionModelResponse {
+  items: VisionModelDetectedItem[];
+  detected_meal_type?: MealSection;
+  notes?: string;
+}
+
+export interface FoodCandidateItem {
+  id: string;
+  detected_name: string;
+  matched_food: Food;
+  quantity: number;
+  unit: string;
+  estimated_grams: number;
+  confidence: number;
+  is_estimate: boolean;
+  nutrients: NutrientSnapshot;
+}
+
+export interface FoodPhotoAnalysisResponse {
+  success: boolean;
+  candidates: FoodCandidateItem[];
+  detected_meal_type: MealSection;
+  usage: {
+    used_today: number;
+    daily_cap: number;
+    remaining_today: number;
+    user_state: AiUserState;
+  };
+}
+
+export type AiFoodPhotoErrorCode =
+  | 'UNAUTHENTICATED'
+  | 'CONSENT_REQUIRED'
+  | 'DAILY_LIMIT_REACHED'
+  | 'FEATURE_DISABLED'
+  | 'BUDGET_EXCEEDED'
+  | 'INVALID_IMAGE'
+  | 'IMAGE_TOO_LARGE'
+  | 'MALFORMED_OUTPUT'
+  | 'MODEL_ERROR';
+
+// -----------------------------------------------------------------------------
+// Phase 12: Recipe Library
+// -----------------------------------------------------------------------------
+
+export type RecipeMealType =
+  | 'breakfast'
+  | 'lunch'
+  | 'dinner'
+  | 'snack'
+  | 'dessert'
+  | 'beverage';
+
+export type RecipeDifficulty = 'easy' | 'medium' | 'hard';
+
+export type RecipeStatus = 'draft' | 'published';
+
+export interface RecipeNutritionSnapshot {
+  calories: number;
+  protein: number;
+  carbs: number;
+  fat: number;
+  fiber: number;
+  sugar?: number;
+  sodium_mg?: number;
+}
+
+export interface RecipeIngredient {
+  id?: string;
+  recipe_id?: string;
+  food_id: string;
+  food_name?: string;
+  quantity: number;
+  unit: string;
+  note?: string | null;
+  display_order?: number;
+}
+
+export interface Recipe {
+  id: string;
+  title: string;
+  description?: string | null;
+  cuisine: string;
+  diet_tags: string[];
+  meal_type: RecipeMealType;
+  prep_minutes: number;
+  cook_minutes: number;
+  difficulty: RecipeDifficulty;
+  servings: number;
+  steps: string[];
+  tips: string[];
+  image_urls: string[];
+  status: RecipeStatus;
+  nutrition_per_serving: RecipeNutritionSnapshot;
+  nutrition_override_reason?: string | null;
+  version: number;
+  created_at: string;
+  updated_at: string;
+  deleted_at?: string | null;
+  ingredients?: RecipeIngredient[];
+  is_favorite?: boolean;
+}
+
+export interface RecipeFavorite {
+  user_id: string;
+  recipe_id: string;
+  created_at: string;
+}
+
+export interface RecipeReport {
+  id: string;
+  recipe_id: string;
+  user_id: string;
+  reason: string;
+  details?: string | null;
+  status: 'open' | 'reviewed' | 'resolved' | 'dismissed';
+  created_at: string;
+  updated_at?: string;
+}
+
+export interface ScaledRecipeIngredient extends RecipeIngredient {
+  base_quantity: number;
+  scaled_quantity: number;
+}
+
+export interface RecipeImportIngredient {
+  food_id: string;
+  quantity: number;
+  unit: string;
+  note?: string | null;
+}
+
+export interface RecipeImportInput {
+  id?: string;
+  title: string;
+  description?: string;
+  cuisine: string;
+  diet_tags: string[];
+  meal_type: RecipeMealType;
+  prep_minutes: number;
+  cook_minutes: number;
+  difficulty: RecipeDifficulty;
+  servings: number;
+  ingredients: RecipeImportIngredient[];
+  steps: string[];
+  tips?: string[];
+  images: string[];
+  status?: RecipeStatus;
+  manual_nutrition_override?: Partial<RecipeNutritionSnapshot>;
+  nutrition_override_reason?: string | null;
+}
+
+export interface RecipeFilterCriteria {
+  query?: string;
+  meal_type?: RecipeMealType;
+  diet?: string;
+  min_calories?: number;
+  max_calories?: number;
+  min_protein?: number;
+  max_time_minutes?: number;
+  cuisine?: string;
+}
+
+export interface RecipeValidationResult {
+  valid: boolean;
+  errors: string[];
+  suggestions: Record<string, string[]>;
+  computedNutrition: RecipeNutritionSnapshot;
+}
+

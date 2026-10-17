@@ -419,6 +419,79 @@ export const migrations: readonly LocalMigration[] = [
       );
     `,
   },
+  {
+    version: 10,
+    name: 'create_recipe_tables',
+    sql: `
+      CREATE TABLE IF NOT EXISTS local_recipes (
+        id                         TEXT PRIMARY KEY NOT NULL,
+        title                      TEXT NOT NULL,
+        description                TEXT,
+        cuisine                    TEXT NOT NULL,
+        diet_tags                  TEXT NOT NULL,
+        meal_type                  TEXT NOT NULL,
+        prep_minutes               INTEGER NOT NULL DEFAULT 0,
+        cook_minutes               INTEGER NOT NULL DEFAULT 0,
+        difficulty                 TEXT NOT NULL,
+        servings                   REAL NOT NULL,
+        steps                      TEXT NOT NULL,
+        tips                       TEXT NOT NULL,
+        image_urls                 TEXT NOT NULL,
+        status                     TEXT NOT NULL,
+        nutrition_per_serving      TEXT NOT NULL,
+        nutrition_override_reason  TEXT,
+        version                    INTEGER NOT NULL DEFAULT 1,
+        created_at                 TEXT NOT NULL,
+        updated_at                 TEXT NOT NULL,
+        cached_at                  TEXT NOT NULL
+      );
+      CREATE INDEX IF NOT EXISTS idx_local_recipes_cuisine ON local_recipes (cuisine);
+      CREATE INDEX IF NOT EXISTS idx_local_recipes_meal_type ON local_recipes (meal_type);
+      CREATE INDEX IF NOT EXISTS idx_local_recipes_updated_at ON local_recipes (updated_at DESC);
+
+      CREATE TABLE IF NOT EXISTS local_recipe_ingredients (
+        id            TEXT PRIMARY KEY NOT NULL,
+        recipe_id     TEXT NOT NULL,
+        food_id       TEXT NOT NULL,
+        food_name     TEXT,
+        quantity      REAL NOT NULL,
+        unit          TEXT NOT NULL,
+        note          TEXT,
+        display_order INTEGER NOT NULL DEFAULT 0
+      );
+      CREATE INDEX IF NOT EXISTS idx_local_recipe_ingredients_recipe ON local_recipe_ingredients (recipe_id);
+
+      CREATE TABLE IF NOT EXISTS local_recipe_favorites (
+        user_id    TEXT NOT NULL,
+        recipe_id  TEXT NOT NULL,
+        created_at TEXT NOT NULL,
+        sync_state TEXT NOT NULL DEFAULT 'synced',
+        deleted_at TEXT,
+        PRIMARY KEY (user_id, recipe_id)
+      );
+      CREATE INDEX IF NOT EXISTS idx_local_recipe_favorites_user ON local_recipe_favorites (user_id);
+
+      CREATE TABLE IF NOT EXISTS local_recipe_recently_viewed (
+        user_id    TEXT NOT NULL,
+        recipe_id  TEXT NOT NULL,
+        viewed_at  TEXT NOT NULL,
+        PRIMARY KEY (user_id, recipe_id)
+      );
+      CREATE INDEX IF NOT EXISTS idx_local_recipe_viewed_user ON local_recipe_recently_viewed (user_id, viewed_at DESC);
+
+      CREATE TABLE IF NOT EXISTS local_recipe_reports (
+        id         TEXT PRIMARY KEY NOT NULL,
+        recipe_id  TEXT NOT NULL,
+        user_id    TEXT NOT NULL,
+        reason     TEXT NOT NULL,
+        details    TEXT,
+        status     TEXT NOT NULL DEFAULT 'open',
+        created_at TEXT NOT NULL,
+        sync_state TEXT NOT NULL DEFAULT 'pending'
+      );
+      CREATE INDEX IF NOT EXISTS idx_local_recipe_reports_user ON local_recipe_reports (user_id);
+    `,
+  },
 ];
 
 
