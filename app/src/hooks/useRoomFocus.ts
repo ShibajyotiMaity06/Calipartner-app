@@ -42,7 +42,7 @@ export function useRoomFocus(roomId: string | null, options: UseRoomFocusOptions
   const [myElapsedSeconds, setMyElapsedSeconds] = useState<number>(0);
 
   const channelRef = useRef<RealtimeChannel | null>(null);
-  const timerRef = useRef<NodeJS.Timeout | null>(null);
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   // Fetch initial room focus state
   const refresh = useCallback(async () => {

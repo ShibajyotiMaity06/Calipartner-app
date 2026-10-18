@@ -22,7 +22,7 @@ export function usePersonalFocus({ userId }: UsePersonalFocusOptions) {
   const [elapsedSeconds, setElapsedSeconds] = useState<number>(0);
   const [remainingSeconds, setRemainingSeconds] = useState<number | null>(null);
 
-  const timerRef = useRef<NodeJS.Timeout | null>(null);
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   // Initial load: sync server clock & query local active session
   const refreshSession = useCallback(async () => {

@@ -71,7 +71,7 @@ export function useFasting(options: UseFastingOptions) {
   const [error, setError] = useState<string | null>(null);
   const [currentTime, setCurrentTime] = useState<Date>(new Date());
 
-  const timerRef = useRef<NodeJS.Timeout | null>(null);
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   // 1. Evaluate gating
   const gating: FastingGatingResult = useMemo(() => {
