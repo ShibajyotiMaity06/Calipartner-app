@@ -264,8 +264,8 @@ export default function RoomScreen() {
                   accessibilityRole="button"
                   testID="btn-error-signin"
                 >
-                  <Ionicons name="log-in-outline" size={18} color="#FFFFFF" />
-                  <Text style={styles.primaryButtonText}>{t('auth.title')}</Text>
+                  <Ionicons name="log-in-outline" size={18} color={colors.onAccent} />
+                  <Text style={[styles.primaryButtonText, { color: colors.onAccent }]}>{t('auth.title')}</Text>
                 </Pressable>
               ) : (
                 <Pressable
@@ -274,8 +274,8 @@ export default function RoomScreen() {
                   accessibilityRole="button"
                   testID="btn-error-retry"
                 >
-                  <Ionicons name="refresh-outline" size={18} color="#FFFFFF" />
-                  <Text style={styles.primaryButtonText}>{t('common.retry')}</Text>
+                  <Ionicons name="refresh-outline" size={18} color={colors.onAccent} />
+                  <Text style={[styles.primaryButtonText, { color: colors.onAccent }]}>{t('common.retry')}</Text>
                 </Pressable>
               )}
             </View>
@@ -316,8 +316,10 @@ export default function RoomScreen() {
                 accessibilityLabel="Create a new room"
                 testID="btn-empty-create-room"
               >
-                <Ionicons name="add-circle-outline" size={18} color="#FFFFFF" />
-                <Text style={styles.primaryButtonText}>{t('rooms.createRoomBtn')}</Text>
+                <Ionicons name="add-circle-outline" size={18} color={colors.onAccent} />
+                <Text style={[styles.primaryButtonText, { color: colors.onAccent }]}>
+                  {t('rooms.createRoomBtn')}
+                </Text>
               </Pressable>
 
               <Pressable
@@ -711,7 +713,6 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   primaryButtonText: {
-    color: '#FFFFFF',
     fontSize: fontSize.sm,
     fontWeight: '700',
   },
@@ -761,10 +762,5 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.md,
     paddingVertical: 7,
     borderRadius: radius.pill,
-  },
-  bannerUpgradeBtnText: {
-    color: '#FFFFFF',
-    fontSize: fontSize.xs,
-    fontWeight: '700',
   },
 });

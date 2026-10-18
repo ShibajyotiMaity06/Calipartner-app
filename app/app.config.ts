@@ -30,10 +30,24 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     'expo-dev-client',
     'expo-sqlite',
     'expo-status-bar',
-    'expo-font',
+    [
+      'expo-font',
+      {
+        fonts: [
+          './assets/fonts/BricolageGrotesque_600SemiBold.ttf',
+          './assets/fonts/BricolageGrotesque_700Bold.ttf',
+          './assets/fonts/Figtree_400Regular.ttf',
+          './assets/fonts/Figtree_500Medium.ttf',
+          './assets/fonts/Figtree_600SemiBold.ttf',
+          './assets/fonts/AnekDevanagari_400Regular.ttf',
+          './assets/fonts/AnekDevanagari_500Medium.ttf',
+          './assets/fonts/AnekDevanagari_600SemiBold.ttf',
+        ],
+      },
+    ],
     [
       'expo-splash-screen',
-      { image: './assets/splash-icon.png', imageWidth: 200, backgroundColor: '#ffffff' },
+      { image: './assets/splash-icon.png', imageWidth: 200, backgroundColor: '#0E0B08' },
     ],
   ],
   experiments: { typedRoutes: true },

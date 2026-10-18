@@ -55,3 +55,17 @@ AGENT_RULES.md
 4. Assumptions you made.
 5. Anything I must do manually (accounts, keys, console settings).
 6. Anything you noticed that belongs to a later phase (do NOT build it).
+
+## UI rules (from CaliPartner_UI_UX_Spec.md)
+U1. Design source of truth is docs/ui/. Tokens live only in packages/ui/tokens. No hex, font name, spacing or radius literals elsewhere.
+U2. Apricot is the app, not a person. One apricot action per screen. Text and icons on apricot use onBrand (#1C1109), never white.
+U3. Two people = identity hues (default Iris and Teal). Identity colour never means good or bad. Only the pairs in allowedPairs may be used together.
+U4. No red or green for performance. Over goal = cream second lap + the word "over". danger colour only for destructive actions and errors.
+U5. Percent of own goal in any side-by-side view. Raw calories only in a person's own view. Hidden data shows a lock, never zero.
+U6. Fonts: Bricolage Grotesque (numbers, titles), Figtree (UI), Anek Devanagari (Hindi). Static weights only. Tabular numerals on every number that changes.
+U7. Glass only on the tab bar and the Log sheet, with opaque fallback for Reduce Transparency and low-end Android.
+U8. One orchestrated motion moment: the seam fuse. All other motion answers an action. Respect Reduce Motion.
+U9. Every tappable element is at least 44x44. Every icon button has an accessibility label. Text scales to 200% without clipping.
+U10. Copy: plain, warm, second person, sentence case, no emoji, no exclamation marks, no guilt. Verb names the object ("Add to lunch").
+U11. Logging never blocks and works offline. Show status, not spinners.
+U12. UI work never changes logic, schema, RLS, packages/core or entitlement checks.

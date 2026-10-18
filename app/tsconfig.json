@@ -7,7 +7,10 @@
     "noEmit": true,
     "allowJs": false,
     "paths": {
-      "@/*": ["./src/*"]
+      "@/*": ["./src/*"],
+      "@calipartner/ui": ["../packages/ui/src/index.ts"],
+      "@calipartner/ui/*": ["../packages/ui/src/*"],
+      "packages/ui/tokens": ["../packages/ui/src/tokens/index.ts"]
     }
   },
   "include": ["**/*.ts", "**/*.tsx", ".expo/types/**/*.ts", "expo-env.d.ts"],

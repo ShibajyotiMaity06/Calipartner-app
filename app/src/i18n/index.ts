@@ -13,6 +13,10 @@ export function setLocale(next: string): void {
   if (catalogs[next]) locale = next;
 }
 
+export function getLocale(): string {
+  return locale;
+}
+
 /** Look up a user-facing string. Supports `{name}` interpolation. */
 export function t(key: TranslationKey, params?: Record<string, string | number>): string {
   let node: unknown = catalogs[locale] ?? en;

@@ -315,14 +315,4 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: fontSize.xs,
   },
-  retryBtn: {
-    paddingHorizontal: spacing.sm + 4,
-    paddingVertical: spacing.xs,
-    borderRadius: radius.sm,
-  },
-  retryBtnText: {
-    color: '#ffffff',
-    fontSize: fontSize.xs,
-    fontWeight: '600',
-  },
 });

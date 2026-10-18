@@ -3,6 +3,7 @@ import { View } from 'react-native';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { ThemeProvider } from '@calipartner/ui';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { ErrorState } from '@/components/ErrorState';
 import { LoadingState } from '@/components/LoadingState';
@@ -11,20 +12,25 @@ import { getDb } from '@/db';
 import { createLogger } from '@/lib/logger';
 import { useTheme } from '@/theme/useTheme';
 import { setupNotificationListeners } from '@/lib/deepLinks';
+import { loadAppFonts, hideSplashScreen } from '@/theme/fontLoader';
 
 const log = createLogger('root');
 
-function DatabaseGate({ children }: { children: React.ReactNode }) {
+function AppInitializationGate({ children }: { children: React.ReactNode }) {
   const { colors } = useTheme();
   const [state, setState] = useState<'loading' | 'ready' | 'error'>('loading');
 
   const init = useCallback(() => {
     setState('loading');
-    getDb()
-      .then(() => setState('ready'))
+    Promise.all([getDb(), loadAppFonts()])
+      .then(() => {
+        setState('ready');
+        hideSplashScreen().catch(() => {});
+      })
       .catch((e: unknown) => {
-        log.error('local database failed to open', e instanceof Error ? e.message : String(e));
+        log.error('app initialization failed', e instanceof Error ? e.message : String(e));
         setState('error');
+        hideSplashScreen().catch(() => {});
       });
   }, []);
 
@@ -39,8 +45,6 @@ function DatabaseGate({ children }: { children: React.ReactNode }) {
 }
 
 export default function RootLayout() {
-  const { scheme } = useTheme();
-
   useEffect(() => {
     const cleanup = setupNotificationListeners();
     return cleanup;
@@ -48,14 +52,16 @@ export default function RootLayout() {
 
   return (
     <ErrorBoundary>
-      <SafeAreaProvider>
-        <StatusBar style={scheme === 'dark' ? 'light' : 'dark'} />
-        <DatabaseGate>
-          <AuthProvider>
-            <Stack screenOptions={{ headerShown: false }} />
-          </AuthProvider>
-        </DatabaseGate>
-      </SafeAreaProvider>
+      <ThemeProvider initialTheme="dark">
+        <SafeAreaProvider>
+          <StatusBar style="light" />
+          <AppInitializationGate>
+            <AuthProvider>
+              <Stack screenOptions={{ headerShown: false }} />
+            </AuthProvider>
+          </AppInitializationGate>
+        </SafeAreaProvider>
+      </ThemeProvider>
     </ErrorBoundary>
   );
 }
