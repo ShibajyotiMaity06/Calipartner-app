@@ -1,10 +1,5 @@
 import React, { useState } from 'react';
-import {
-  ScrollView,
-  View,
-  StyleSheet,
-  SafeAreaView,
-} from 'react-native';
+import { ScrollView, View, StyleSheet, SafeAreaView } from 'react-native';
 import { useRouter } from 'expo-router';
 import {
   Text,
@@ -110,18 +105,10 @@ export default function ComponentGalleryScreen(): React.JSX.Element | null {
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <ScrollView
-        contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={false}
-      >
+      <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
         {/* Header */}
         <View style={styles.header}>
-          <Button
-            size="sm"
-            variant="tertiary"
-            label="← Back"
-            onPress={() => router.back()}
-          />
+          <Button size="sm" variant="tertiary" label="← Back" onPress={() => router.back()} />
           <Text variant="title1" color={dark.textHi}>
             UI-2 Component Gallery
           </Text>
@@ -216,24 +203,14 @@ export default function ComponentGalleryScreen(): React.JSX.Element | null {
             <Text variant="label" color={dark.textMid} style={styles.subLabel}>
               Secondary (HairlineLit border, textHi label)
             </Text>
-            <Button
-              variant="secondary"
-              label="View past meals"
-              fullWidth
-              onPress={() => {}}
-            />
+            <Button variant="secondary" label="View past meals" fullWidth onPress={() => {}} />
 
             <Text variant="label" color={dark.textMid} style={styles.subLabel}>
               Tertiary & Destructive
             </Text>
             <View style={styles.rowWrap}>
               <Button variant="tertiary" size="md" label="Cancel" onPress={() => {}} />
-              <Button
-                variant="destructive"
-                size="md"
-                label="Delete entry"
-                onPress={() => {}}
-              />
+              <Button variant="destructive" size="md" label="Delete entry" onPress={() => {}} />
             </View>
 
             <Text variant="label" color={dark.textMid} style={styles.subLabel}>
@@ -316,12 +293,7 @@ export default function ComponentGalleryScreen(): React.JSX.Element | null {
               value={fieldVal}
               onChangeText={setFieldVal}
             />
-            <Field
-              label="Calories"
-              placeholder="450"
-              keyboardType="numeric"
-              unitSuffix="kcal"
-            />
+            <Field label="Calories" placeholder="450" keyboardType="numeric" unitSuffix="kcal" />
             <Field
               label="Username (error state demonstration)"
               value="invalid username!"
@@ -545,8 +517,8 @@ export default function ComponentGalleryScreen(): React.JSX.Element | null {
             14. PairRing (CMP-09, Spec 5.2)
           </Text>
           <Text variant="bodyS" color={dark.textMid} style={styles.sectionDesc}>
-            Two arcs on one circle: outer You (10px at 184), inner Partner (7px, 6px gap).
-            Round caps, glow at 100%, cream second lap past 100%, partner percent pill at arc end.
+            Two arcs on one circle: outer You (10px at 184), inner Partner (7px, 6px gap). Round
+            caps, glow at 100%, cream second lap past 100%, partner percent pill at arc end.
           </Text>
           <Card elevation="s1" style={styles.sectionCard}>
             <Text variant="label" color={dark.textMid}>
@@ -567,24 +539,14 @@ export default function ComponentGalleryScreen(): React.JSX.Element | null {
               </View>
 
               <View style={styles.ringItem}>
-                <PairRing
-                  size={120}
-                  userPercent={100}
-                  partnerPercent={100}
-                  partnerName="Priya"
-                />
+                <PairRing size={120} userPercent={100} partnerPercent={100} partnerName="Priya" />
                 <Text variant="micro" color={dark.textMid} style={styles.ringLabel}>
                   120dp 100% Both Glow
                 </Text>
               </View>
 
               <View style={styles.ringItem}>
-                <PairRing
-                  size={64}
-                  userPercent={85}
-                  partnerPercent={70}
-                  partnerName="Priya"
-                />
+                <PairRing size={64} userPercent={85} partnerPercent={70} partnerName="Priya" />
                 <Text variant="micro" color={dark.textMid} style={styles.ringLabel}>
                   64dp List View
                 </Text>
@@ -612,30 +574,47 @@ export default function ComponentGalleryScreen(): React.JSX.Element | null {
             15. The Seam (CMP-10, Spec 5.3)
           </Text>
           <Text variant="bodyS" color={dark.textMid} style={styles.sectionDesc}>
-            1px vertical line with inset 24. Broken (6px dashes), Half-lit (finished person hue + 5px dot),
-            and Fused (sweeping in from both ends over 900ms with 2px iris-teal glow gradient).
+            1px vertical line with inset 24. Broken (6px dashes), Half-lit (finished person hue +
+            5px dot), and Fused (sweeping in from both ends over 900ms with 2px iris-teal glow
+            gradient).
           </Text>
           <Card elevation="s1" style={styles.sectionCard}>
             <View style={styles.seamGrid}>
               <View style={styles.seamCell}>
-                <Text variant="label" color={dark.textMid}>Broken</Text>
+                <Text variant="label" color={dark.textMid}>
+                  Broken
+                </Text>
                 <Seam state="broken" length={160} />
-                <Text variant="micro" color={dark.textLo} style={styles.seamSubText}>Neither logged</Text>
+                <Text variant="micro" color={dark.textLo} style={styles.seamSubText}>
+                  Neither logged
+                </Text>
               </View>
               <View style={styles.seamCell}>
-                <Text variant="label" color={dark.textMid}>Half-lit (You)</Text>
+                <Text variant="label" color={dark.textMid}>
+                  Half-lit (You)
+                </Text>
                 <Seam state="half-lit" finishedPerson="user" length={160} />
-                <Text variant="micro" color={dark.textLo} style={styles.seamSubText}>Dot on left</Text>
+                <Text variant="micro" color={dark.textLo} style={styles.seamSubText}>
+                  Dot on left
+                </Text>
               </View>
               <View style={styles.seamCell}>
-                <Text variant="label" color={dark.textMid}>Half-lit (Partner)</Text>
+                <Text variant="label" color={dark.textMid}>
+                  Half-lit (Partner)
+                </Text>
                 <Seam state="half-lit" finishedPerson="partner" length={160} />
-                <Text variant="micro" color={dark.textLo} style={styles.seamSubText}>Dot on right</Text>
+                <Text variant="micro" color={dark.textLo} style={styles.seamSubText}>
+                  Dot on right
+                </Text>
               </View>
               <View style={styles.seamCell}>
-                <Text variant="label" color={dark.textMid}>Fused</Text>
+                <Text variant="label" color={dark.textMid}>
+                  Fused
+                </Text>
                 <Seam state="fused" streakDays={12} length={160} triggerFuse={fuseAnimTrigger} />
-                <Text variant="micro" color={dark.textLo} style={styles.seamSubText}>2px gradient glow</Text>
+                <Text variant="micro" color={dark.textLo} style={styles.seamSubText}>
+                  2px gradient glow
+                </Text>
               </View>
             </View>
 
@@ -657,7 +636,8 @@ export default function ComponentGalleryScreen(): React.JSX.Element | null {
             16. PairedCard Hero (All 9 Spec States)
           </Text>
           <Text variant="bodyS" color={dark.textMid} style={styles.sectionDesc}>
-            Side-by-side room card composing PairRing, mirrored PersonColumns, central Seam, and NudgeButton.
+            Side-by-side room card composing PairRing, mirrored PersonColumns, central Seam, and
+            NudgeButton.
           </Text>
 
           {/* State 1: Fused (Both logged, Day 12) */}
@@ -792,9 +772,15 @@ export default function ComponentGalleryScreen(): React.JSX.Element | null {
             members={FIXTURE_3PLUS_MEMBERS}
             selectedMemberId={selectedMemberId}
             onSelectMember={setSelectedMemberId}
-            partnerName={FIXTURE_3PLUS_MEMBERS.find((m) => m.id === selectedMemberId)?.name || 'Priya'}
-            partnerHue={FIXTURE_3PLUS_MEMBERS.find((m) => m.id === selectedMemberId)?.identityHue || 'teal'}
-            partnerPercent={FIXTURE_3PLUS_MEMBERS.find((m) => m.id === selectedMemberId)?.percent || 64}
+            partnerName={
+              FIXTURE_3PLUS_MEMBERS.find((m) => m.id === selectedMemberId)?.name || 'Priya'
+            }
+            partnerHue={
+              FIXTURE_3PLUS_MEMBERS.find((m) => m.id === selectedMemberId)?.identityHue || 'teal'
+            }
+            partnerPercent={
+              FIXTURE_3PLUS_MEMBERS.find((m) => m.id === selectedMemberId)?.percent || 64
+            }
             partnerSteps={8100}
             partnerMeals={FIXTURE_PARTNER_MEALS_COMPLETE}
             seamState="fused"
@@ -825,7 +811,7 @@ export default function ComponentGalleryScreen(): React.JSX.Element | null {
           </Text>
           <Text variant="bodyS" color={dark.textMid} style={styles.sectionDesc}>
             {"Single-person ring for Today screen in owner's identity hue (never apricot)."}
-            {" Macro bar in 100/55/28% identity opacity steps with gram values under."}
+            {' Macro bar in 100/55/28% identity opacity steps with gram values under.'}
           </Text>
           <Card elevation="s1" style={styles.sectionCard}>
             <View style={styles.calorieRow}>
@@ -864,8 +850,8 @@ export default function ComponentGalleryScreen(): React.JSX.Element | null {
             18. TimerDisplay (CMP-21)
           </Text>
           <Text variant="bodyS" color={dark.textMid} style={styles.sectionDesc}>
-            Tabular numeral time computed from stored UTC timestamps (never an accumulating counter).
-            Thin 6px progress ring.
+            Tabular numeral time computed from stored UTC timestamps (never an accumulating
+            counter). Thin 6px progress ring.
           </Text>
           <Card elevation="s1" style={styles.sectionCard}>
             <View style={styles.timerRow}>
@@ -917,7 +903,8 @@ export default function ComponentGalleryScreen(): React.JSX.Element | null {
             {sheetSnap === 'half' ? 'Half Sheet' : 'Tall Sheet'}
           </Text>
           <Text variant="body" color={dark.textMid}>
-            Radius 28 on top corners, 36×4 hairlineLit grabber, 55% black scrim. Tap backdrop or button to dismiss.
+            Radius 28 on top corners, 36×4 hairlineLit grabber, 55% black scrim. Tap backdrop or
+            button to dismiss.
           </Text>
           <Button
             variant="primary"
@@ -930,11 +917,7 @@ export default function ComponentGalleryScreen(): React.JSX.Element | null {
       </Sheet>
 
       {/* Permission Primer Sheet */}
-      <Sheet
-        visible={primerOpen}
-        onClose={() => setPrimerOpen(false)}
-        snapPoint="tall"
-      >
+      <Sheet visible={primerOpen} onClose={() => setPrimerOpen(false)} snapPoint="tall">
         <PermissionPrimer
           icon={<Ionicons name="notifications-outline" size={32} color={dark.apricot} />}
           title="Stay synced with your partner"

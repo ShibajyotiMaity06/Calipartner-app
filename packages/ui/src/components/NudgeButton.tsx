@@ -1,10 +1,5 @@
 import React, { useState } from 'react';
-import {
-  TouchableOpacity,
-  StyleSheet,
-  View,
-  type AccessibilityProps,
-} from 'react-native';
+import { TouchableOpacity, StyleSheet, View, type AccessibilityProps } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 import { dark, type IdentityHue, getIdentityColor } from '../tokens/colors';
 import { useReducedMotion } from '../theme/useReducedMotion';
@@ -52,14 +47,18 @@ export function NudgeButton({
 
     // Brief fill in partner's hue (Spec 5.5)
     setIsHighlighted(true);
-    setTimeout(() => {
-      setIsHighlighted(false);
-    }, reduceMotion ? 100 : 250);
+    setTimeout(
+      () => {
+        setIsHighlighted(false);
+      },
+      reduceMotion ? 100 : 250,
+    );
 
     onNudge?.();
   };
 
-  const a11y = accessibilityLabel || `Nudge ${partnerName}${isLimitReached ? ', daily limit reached' : ''}`;
+  const a11y =
+    accessibilityLabel || `Nudge ${partnerName}${isLimitReached ? ', daily limit reached' : ''}`;
 
   return (
     <TouchableOpacity

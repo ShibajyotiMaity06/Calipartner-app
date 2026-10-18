@@ -56,7 +56,9 @@ export function Seam({
   const [sweepVal, setSweepVal] = React.useState(state === 'fused' && !triggerFuse ? 1 : 0);
 
   // Caption fade-in
-  const captionOpacity = useRef(new Animated.Value(state === 'fused' && !triggerFuse ? 1 : 0)).current;
+  const captionOpacity = useRef(
+    new Animated.Value(state === 'fused' && !triggerFuse ? 1 : 0),
+  ).current;
 
   useEffect(() => {
     const id = fuseAnim.addListener(({ value }) => {
@@ -141,7 +143,10 @@ export function Seam({
 
   return (
     <View
-      style={[styles.wrapper, isVertical ? { height: length, width: 24 } : { width: length, height: 24 }]}
+      style={[
+        styles.wrapper,
+        isVertical ? { height: length, width: 24 } : { width: length, height: 24 },
+      ]}
       testID={testID}
       accessibilityRole="text"
       accessibilityLabel={accessibilityLabel || a11yText}
@@ -347,7 +352,10 @@ export function SeamCaption({
   if (state === 'fused') {
     caption = `Both of you logged today. Day ${streakDays}.`;
   } else if (state === 'half-lit') {
-    caption = finishedPerson === 'user' ? `${partnerName} hasn't logged yet today.` : "You haven't logged yet today.";
+    caption =
+      finishedPerson === 'user'
+        ? `${partnerName} hasn't logged yet today.`
+        : "You haven't logged yet today.";
   }
 
   return (

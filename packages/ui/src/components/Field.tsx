@@ -1,11 +1,5 @@
 import React, { useState } from 'react';
-import {
-  View,
-  TextInput,
-  StyleSheet,
-  type TextInputProps,
-  type ViewStyle,
-} from 'react-native';
+import { View, TextInput, StyleSheet, type TextInputProps, type ViewStyle } from 'react-native';
 import { dark } from '../tokens/colors';
 import { radius } from '../tokens/radius';
 import { space } from '../tokens/space';
@@ -95,7 +89,12 @@ export function Field({
       </View>
 
       {error ? (
-        <Text variant="bodyS" color={dark.danger} style={styles.errorText} testID={testID ? `${testID}-error` : undefined}>
+        <Text
+          variant="bodyS"
+          color={dark.danger}
+          style={styles.errorText}
+          testID={testID ? `${testID}-error` : undefined}
+        >
           {error}
         </Text>
       ) : null}

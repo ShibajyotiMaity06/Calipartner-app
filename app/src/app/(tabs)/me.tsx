@@ -274,6 +274,7 @@ const styles = StyleSheet.create({
   content: {
     padding: spacing.lg,
     paddingTop: 56,
+    paddingBottom: 110,
   },
   header: {
     marginBottom: spacing.lg,

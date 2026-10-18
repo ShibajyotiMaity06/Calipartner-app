@@ -1,9 +1,5 @@
 import React from 'react';
-import {
-  View,
-  StyleSheet,
-  type ViewStyle,
-} from 'react-native';
+import { View, StyleSheet, type ViewStyle } from 'react-native';
 import { dark } from '../tokens/colors';
 import { radius } from '../tokens/radius';
 import { space } from '../tokens/space';
@@ -18,12 +14,7 @@ export interface SyncPillProps {
   style?: ViewStyle;
 }
 
-export function SyncPill({
-  status,
-  customText,
-  testID,
-  style,
-}: SyncPillProps): React.JSX.Element {
+export function SyncPill({ status, customText, testID, style }: SyncPillProps): React.JSX.Element {
   const getDotColor = (): string => {
     switch (status) {
       case 'synced':

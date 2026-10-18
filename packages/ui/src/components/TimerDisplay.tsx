@@ -66,18 +66,23 @@ export function TimerDisplay({
   }, [isPaused]);
 
   // Compute times from stored UTC timestamps
-  const startMs = typeof startedAtUtc === 'string' ? new Date(startedAtUtc).getTime() : startedAtUtc;
+  const startMs =
+    typeof startedAtUtc === 'string' ? new Date(startedAtUtc).getTime() : startedAtUtc;
 
   let endMs = 0;
   if (targetEndAtUtc != null) {
-    endMs = typeof targetEndAtUtc === 'string' ? new Date(targetEndAtUtc).getTime() : targetEndAtUtc;
+    endMs =
+      typeof targetEndAtUtc === 'string' ? new Date(targetEndAtUtc).getTime() : targetEndAtUtc;
   } else if (durationMinutes != null) {
     endMs = startMs + durationMinutes * 60 * 1000;
   }
 
-  const effectiveNow = isPaused && pausedAtUtc != null
-    ? (typeof pausedAtUtc === 'string' ? new Date(pausedAtUtc).getTime() : pausedAtUtc)
-    : now;
+  const effectiveNow =
+    isPaused && pausedAtUtc != null
+      ? typeof pausedAtUtc === 'string'
+        ? new Date(pausedAtUtc).getTime()
+        : pausedAtUtc
+      : now;
 
   let displaySeconds = 0;
   let progressPct = 0;
@@ -86,7 +91,10 @@ export function TimerDisplay({
     const totalDurationMs = Math.max(1000, endMs - startMs);
     const remainingMs = Math.max(0, endMs - effectiveNow);
     displaySeconds = Math.ceil(remainingMs / 1000);
-    progressPct = Math.min(100, Math.max(0, ((totalDurationMs - remainingMs) / totalDurationMs) * 100));
+    progressPct = Math.min(
+      100,
+      Math.max(0, ((totalDurationMs - remainingMs) / totalDurationMs) * 100),
+    );
   } else {
     // Elapsed mode (e.g. fasting duration)
     const elapsedMs = Math.max(0, effectiveNow - startMs);
@@ -105,9 +113,8 @@ export function TimerDisplay({
   const seconds = displaySeconds % 60;
 
   const pad = (n: number) => n.toString().padStart(2, '0');
-  const formattedTime = hours > 0
-    ? `${pad(hours)}:${pad(minutes)}:${pad(seconds)}`
-    : `${pad(minutes)}:${pad(seconds)}`;
+  const formattedTime =
+    hours > 0 ? `${pad(hours)}:${pad(minutes)}:${pad(seconds)}` : `${pad(minutes)}:${pad(seconds)}`;
 
   // SVG calculations for 6px ring
   const center = size / 2;

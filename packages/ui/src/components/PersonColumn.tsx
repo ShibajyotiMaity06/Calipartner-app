@@ -1,10 +1,5 @@
 import React from 'react';
-import {
-  View,
-  StyleSheet,
-  TouchableOpacity,
-  type AccessibilityProps,
-} from 'react-native';
+import { View, StyleSheet, TouchableOpacity, type AccessibilityProps } from 'react-native';
 import { dark, type IdentityHue, getIdentityColor } from '../tokens/colors';
 import { space } from '../tokens/space';
 import { Text } from './Text';
@@ -108,12 +103,7 @@ export function PersonColumn({
     >
       {/* 1. Header: Avatar + Name + Percent */}
       <View style={[styles.headerRow, isLeft ? styles.headerRowLeft : styles.headerRowRight]}>
-        <Avatar
-          size="sm"
-          name={name}
-          uri={avatarUrl}
-          identityHue={identityHue}
-        />
+        <Avatar size="sm" name={name} uri={avatarUrl} identityHue={identityHue} />
         <View style={[styles.nameBlock, isLeft ? styles.nameBlockLeft : styles.nameBlockRight]}>
           <Text variant="label" color={dark.textHi} numberOfLines={1}>
             {name}
@@ -201,7 +191,11 @@ export function PersonColumn({
             >
               {isLeft ? (
                 <>
-                  <Text variant="bodyS" color={isLogged ? dark.textHi : dark.textMid} numberOfLines={1}>
+                  <Text
+                    variant="bodyS"
+                    color={isLogged ? dark.textHi : dark.textMid}
+                    numberOfLines={1}
+                  >
                     {label}
                   </Text>
                   {statusGlyph}
@@ -209,7 +203,11 @@ export function PersonColumn({
               ) : (
                 <>
                   {statusGlyph}
-                  <Text variant="bodyS" color={isLogged ? dark.textHi : dark.textMid} numberOfLines={1}>
+                  <Text
+                    variant="bodyS"
+                    color={isLogged ? dark.textHi : dark.textMid}
+                    numberOfLines={1}
+                  >
                     {label}
                   </Text>
                 </>

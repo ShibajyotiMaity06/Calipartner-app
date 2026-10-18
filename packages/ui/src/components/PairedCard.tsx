@@ -1,10 +1,5 @@
 import React from 'react';
-import {
-  View,
-  StyleSheet,
-  TouchableOpacity,
-  useWindowDimensions,
-} from 'react-native';
+import { View, StyleSheet, TouchableOpacity, useWindowDimensions } from 'react-native';
 import { dark, type IdentityHue, getIdentityColor } from '../tokens/colors';
 import { space } from '../tokens/space';
 import { Card } from './Card';
@@ -171,7 +166,9 @@ export function PairedCard({
                     identityHue={m.identityHue}
                     presence={m.hasLoggedToday}
                   />
-                  {isSelected && <View style={[styles.activeDot, { backgroundColor: memberColor }]} />}
+                  {isSelected && (
+                    <View style={[styles.activeDot, { backgroundColor: memberColor }]} />
+                  )}
                 </TouchableOpacity>
               );
             })}

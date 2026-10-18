@@ -62,10 +62,7 @@ export function ListRow({
           accessibilityRole="button"
           accessibilityLabel={accessibilityLabel ?? title}
           testID={testID}
-          style={({ pressed }) => [
-            styles.pressable,
-            pressed && { backgroundColor: dark.s2 },
-          ]}
+          style={({ pressed }) => [styles.pressable, pressed && { backgroundColor: dark.s2 }]}
         >
           {content}
         </Pressable>

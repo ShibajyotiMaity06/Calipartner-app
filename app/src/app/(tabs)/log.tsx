@@ -1,17 +1,38 @@
 import React, { useState } from 'react';
-import { Modal, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { View, StyleSheet, Modal } from 'react-native';
 import { useRouter } from 'expo-router';
-import { Ionicons } from '@expo/vector-icons';
 import { getMealSectionForTime, type MealSection } from '@calipartner/core';
+import {
+  Sheet,
+  LogHubView,
+  type LogTileId,
+  type QuickAddId,
+  type MealSectionType,
+} from '@calipartner/ui';
 import { FoodLogModal } from '@/components/diary/FoodLogModal';
+import { BarcodeScannerModal } from '@/components/diary/BarcodeScannerModal';
 import { WorkoutLoggerModal } from '@/components/workouts/WorkoutLoggerModal';
+import { CustomWaterModal, WeightEntryModal } from '@/components/trackers';
 import { FocusStartModal } from '@/components/focus';
+import { FoodPhotoCameraModal } from '@/components/food_photo';
 import { RecipeBrowseView } from '@/components/recipes';
 import { useAuth } from '@/contexts/AuthContext';
 import { usePersonalFocus } from '@/hooks/usePersonalFocus';
-import { t } from '@/i18n';
-import { fontSize, radius, spacing } from '@/theme/tokens';
+import { useWater } from '@/hooks/useWater';
+import { useWeight } from '@/hooks/useWeight';
 import { useTheme } from '@/theme/useTheme';
+
+type ActiveFlowState =
+  | 'picker'
+  | 'food'
+  | 'workout'
+  | 'water'
+  | 'weight'
+  | 'fast'
+  | 'focus'
+  | 'scan'
+  | 'photo'
+  | 'recipe';
 
 export default function LogScreen() {
   const router = useRouter();
@@ -19,164 +40,101 @@ export default function LogScreen() {
   const { user } = useAuth();
   const { start: startPersonalFocus } = usePersonalFocus({ userId: user?.id ?? '' });
 
-  const [sheetVisible, setSheetVisible] = useState(true);
-  const [activeFlow, setActiveFlow] = useState<'picker' | 'food' | 'workout' | 'focus' | 'recipe'>(
-    'picker',
-  );
-
   const todayDate = new Date().toISOString().slice(0, 10);
-  const currentSection: MealSection = getMealSectionForTime(new Date());
+  const initialSection: MealSection = getMealSectionForTime(new Date());
+
+  const [currentSection, setCurrentSection] = useState<MealSection>(initialSection);
+  const [sheetVisible, setSheetVisible] = useState(true);
+  const [activeFlow, setActiveFlow] = useState<ActiveFlowState>('picker');
+
+  // Tracker hooks for Water and Weight
+  const { addWater } = useWater(todayDate);
+  const { logWeight, latestLog } = useWeight();
 
   const handleCloseAll = () => {
     setSheetVisible(false);
     router.replace('/today');
   };
 
+  const handleCycleMealSection = () => {
+    const cycle: MealSection[] = ['breakfast', 'lunch', 'dinner', 'snacks'];
+    const idx = cycle.indexOf(currentSection);
+    const nextIdx = (idx + 1) % cycle.length;
+    setCurrentSection(cycle[nextIdx] ?? 'lunch');
+  };
+
+  const handleTileSelect = (tile: LogTileId) => {
+    switch (tile) {
+      case 'food':
+        setActiveFlow('food');
+        break;
+      case 'workout':
+        setActiveFlow('workout');
+        break;
+      case 'water':
+        setActiveFlow('water');
+        break;
+      case 'weight':
+        setActiveFlow('weight');
+        break;
+      case 'fast':
+        // Fast tile opens fasting or routes back to today
+        handleCloseAll();
+        break;
+      case 'focus':
+        setActiveFlow('focus');
+        break;
+    }
+  };
+
+  const handleQuickAddSelect = (action: QuickAddId) => {
+    switch (action) {
+      case 'scan':
+        setActiveFlow('scan');
+        break;
+      case 'photo':
+        setActiveFlow('photo');
+        break;
+      case 'recipes':
+        setActiveFlow('recipe');
+        break;
+    }
+  };
+
+  // Map meal section to MealSectionType for UI
+  const uiMealSection: MealSectionType =
+    currentSection === 'breakfast'
+      ? 'breakfast'
+      : currentSection === 'dinner'
+        ? 'dinner'
+        : currentSection === 'snacks'
+          ? 'snack'
+          : 'lunch';
+
   return (
-    <View style={{ flex: 1, backgroundColor: colors.background }}>
-      {/* Quick Log Action Sheet / Picker Modal */}
+    <View style={[styles.rootContainer, { backgroundColor: colors.background }]}>
+      {/* 1. D01: Log Hub Tall Glass Sheet */}
       {activeFlow === 'picker' && (
-        <Modal
+        <Sheet
           testID="log-sheet-modal"
           visible={sheetVisible}
-          transparent
-          animationType="fade"
-          onRequestClose={handleCloseAll}
+          onClose={handleCloseAll}
+          snapPoint="tall"
+          isGlass={true}
+          accessibilityLabel="Log Hub"
         >
-          <View style={styles.backdrop}>
-            <View
-              style={[
-                styles.sheetContainer,
-                { backgroundColor: colors.surface, borderColor: colors.border },
-              ]}
-            >
-              <View style={styles.sheetHeader}>
-                <View style={styles.titleWrap}>
-                  <Text style={[styles.sheetTitle, { color: colors.text }]}>
-                    {t('workouts.logSheet.title')}
-                  </Text>
-                  <Text style={[styles.sheetSubtitle, { color: colors.textMuted }]}>
-                    {t('workouts.logSheet.subtitle')}
-                  </Text>
-                </View>
-                <TouchableOpacity
-                  testID="btn-log-sheet-close"
-                  onPress={handleCloseAll}
-                  style={styles.closeBtn}
-                  accessibilityRole="button"
-                  accessibilityLabel={t('common.cancel')}
-                >
-                  <Ionicons name="close" size={24} color={colors.text} />
-                </TouchableOpacity>
-              </View>
-
-              <View style={styles.optionsWrap}>
-                {/* Log Food Option */}
-                <TouchableOpacity
-                  testID="btn-log-sheet-food"
-                  style={[
-                    styles.optionCard,
-                    { backgroundColor: colors.background, borderColor: colors.border },
-                  ]}
-                  onPress={() => setActiveFlow('food')}
-                  accessibilityRole="button"
-                  accessibilityLabel={t('workouts.logSheet.foodOption')}
-                >
-                  <View style={[styles.iconCircle, { backgroundColor: colors.cardHighlight }]}>
-                    <Ionicons name="restaurant-outline" size={24} color={colors.accent} />
-                  </View>
-                  <View style={styles.optionInfo}>
-                    <Text style={[styles.optionTitle, { color: colors.text }]}>
-                      {t('workouts.logSheet.foodOption')}
-                    </Text>
-                    <Text style={[styles.optionDesc, { color: colors.textMuted }]}>
-                      {t(`diary.sections.${currentSection}` as const)}
-                    </Text>
-                  </View>
-                  <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
-                </TouchableOpacity>
-
-                {/* Log Workout Option */}
-                <TouchableOpacity
-                  testID="btn-log-sheet-workout"
-                  style={[
-                    styles.optionCard,
-                    { backgroundColor: colors.background, borderColor: colors.border },
-                  ]}
-                  onPress={() => setActiveFlow('workout')}
-                  accessibilityRole="button"
-                  accessibilityLabel={t('workouts.logSheet.workoutOption')}
-                >
-                  <View style={[styles.iconCircle, { backgroundColor: colors.cardHighlight }]}>
-                    <Ionicons name="barbell-outline" size={24} color={colors.macroCalories} />
-                  </View>
-                  <View style={styles.optionInfo}>
-                    <Text style={[styles.optionTitle, { color: colors.text }]}>
-                      {t('workouts.logSheet.workoutOption')}
-                    </Text>
-                    <Text style={[styles.optionDesc, { color: colors.textMuted }]}>
-                      {t('workouts.cardTitle')}
-                    </Text>
-                  </View>
-                  <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
-                </TouchableOpacity>
-
-                {/* Log Focus Time Option */}
-                <TouchableOpacity
-                  testID="btn-log-sheet-focus"
-                  style={[
-                    styles.optionCard,
-                    { backgroundColor: colors.background, borderColor: colors.border },
-                  ]}
-                  onPress={() => setActiveFlow('focus')}
-                  accessibilityRole="button"
-                  accessibilityLabel={t('focus.logOption.title')}
-                >
-                  <View style={[styles.iconCircle, { backgroundColor: colors.cardHighlight }]}>
-                    <Ionicons name="timer-outline" size={24} color={colors.accent} />
-                  </View>
-                  <View style={styles.optionInfo}>
-                    <Text style={[styles.optionTitle, { color: colors.text }]}>
-                      {t('focus.logOption.title')}
-                    </Text>
-                    <Text style={[styles.optionDesc, { color: colors.textMuted }]}>
-                      {t('focus.logOption.subtitle')}
-                    </Text>
-                  </View>
-                  <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
-                </TouchableOpacity>
-
-                {/* Recipe Library Option */}
-                <TouchableOpacity
-                  testID="btn-log-sheet-recipe"
-                  style={[
-                    styles.optionCard,
-                    { backgroundColor: colors.background, borderColor: colors.border },
-                  ]}
-                  onPress={() => setActiveFlow('recipe')}
-                  accessibilityRole="button"
-                  accessibilityLabel={t('workouts.logSheet.recipeOption')}
-                >
-                  <View style={[styles.iconCircle, { backgroundColor: colors.cardHighlight }]}>
-                    <Ionicons name="book-outline" size={24} color={colors.accent} />
-                  </View>
-                  <View style={styles.optionInfo}>
-                    <Text style={[styles.optionTitle, { color: colors.text }]}>
-                      {t('workouts.logSheet.recipeOption')}
-                    </Text>
-                    <Text style={[styles.optionDesc, { color: colors.textMuted }]}>
-                      {t('recipes.browse.subtitle')}
-                    </Text>
-                  </View>
-                  <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
-                </TouchableOpacity>
-              </View>
-            </View>
-          </View>
-        </Modal>
+          <LogHubView
+            mealSection={uiMealSection}
+            onCycleMealSection={handleCycleMealSection}
+            onSelectTile={handleTileSelect}
+            onSelectQuickAdd={handleQuickAddSelect}
+            onClose={handleCloseAll}
+            showFastTile={true}
+          />
+        </Sheet>
       )}
 
-      {/* Food Log Modal Flow */}
+      {/* 2. Food Log Modal */}
       {activeFlow === 'food' && (
         <FoodLogModal
           visible={sheetVisible}
@@ -187,7 +145,7 @@ export default function LogScreen() {
         />
       )}
 
-      {/* Workout Logger Modal Flow */}
+      {/* 3. Workout Logger Modal */}
       {activeFlow === 'workout' && (
         <WorkoutLoggerModal
           visible={sheetVisible}
@@ -197,7 +155,38 @@ export default function LogScreen() {
         />
       )}
 
-      {/* Focus Start Modal Flow */}
+      {/* 4. Water Quick Add Modal */}
+      {activeFlow === 'water' && (
+        <CustomWaterModal
+          visible={sheetVisible}
+          onClose={handleCloseAll}
+          onSave={async (amountMl) => {
+            await addWater(amountMl);
+            handleCloseAll();
+          }}
+        />
+      )}
+
+      {/* 5. Weight Entry Modal */}
+      {activeFlow === 'weight' && (
+        <WeightEntryModal
+          visible={sheetVisible}
+          defaultDate={todayDate}
+          startWeight={latestLog?.weight_kg ?? null}
+          currentWeight={latestLog?.weight_kg ?? null}
+          totalChangeKg={null}
+          weeklyPace={null}
+          projectedDate={null}
+          hasEnoughTrend={false}
+          onClose={handleCloseAll}
+          onSave={async (weightKg, notes, date) => {
+            await logWeight(weightKg, notes, date);
+            handleCloseAll();
+          }}
+        />
+      )}
+
+      {/* 6. Focus Start Modal */}
       {activeFlow === 'focus' && (
         <FocusStartModal
           visible={sheetVisible}
@@ -209,7 +198,26 @@ export default function LogScreen() {
         />
       )}
 
-      {/* Recipe Library Flow */}
+      {/* 7. Quick Scan: Barcode Scanner */}
+      {activeFlow === 'scan' && (
+        <BarcodeScannerModal
+          visible={sheetVisible}
+          onClose={handleCloseAll}
+          onFoodFound={() => handleCloseAll()}
+          onCreateCustomFood={() => handleCloseAll()}
+        />
+      )}
+
+      {/* 8. Quick Photo: Food Photo Camera */}
+      {activeFlow === 'photo' && (
+        <FoodPhotoCameraModal
+          visible={sheetVisible}
+          onClose={handleCloseAll}
+          onPhotoCaptured={() => handleCloseAll()}
+        />
+      )}
+
+      {/* 9. Quick Recipes: Recipe Library Flow */}
       {activeFlow === 'recipe' && (
         <Modal
           visible={sheetVisible}
@@ -217,7 +225,7 @@ export default function LogScreen() {
           presentationStyle="pageSheet"
           onRequestClose={handleCloseAll}
         >
-          <View style={{ flex: 1, backgroundColor: colors.background, paddingTop: 40 }}>
+          <View style={[styles.recipeContainer, { backgroundColor: colors.background }]}>
             <RecipeBrowseView
               showBackOrClose={true}
               onBackOrClose={handleCloseAll}
@@ -233,64 +241,11 @@ export default function LogScreen() {
 }
 
 const styles = StyleSheet.create({
-  backdrop: {
+  rootContainer: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.5)',
-    justifyContent: 'flex-end',
   },
-  sheetContainer: {
-    borderTopLeftRadius: radius.lg,
-    borderTopRightRadius: radius.lg,
-    borderTopWidth: 1,
-    padding: spacing.md,
-    gap: spacing.md,
-    paddingBottom: 40,
-  },
-  sheetHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  titleWrap: {
-    gap: 2,
-  },
-  sheetTitle: {
-    fontSize: fontSize.lg,
-    fontWeight: '800',
-  },
-  sheetSubtitle: {
-    fontSize: fontSize.xs,
-  },
-  closeBtn: {
-    padding: 6,
-  },
-  optionsWrap: {
-    gap: spacing.sm,
-  },
-  optionCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: spacing.md,
-    borderRadius: radius.md,
-    borderWidth: 1,
-    gap: spacing.md,
-  },
-  iconCircle: {
-    width: 48,
-    height: 48,
-    borderRadius: radius.pill,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  optionInfo: {
+  recipeContainer: {
     flex: 1,
-    gap: 2,
-  },
-  optionTitle: {
-    fontSize: fontSize.md,
-    fontWeight: '700',
-  },
-  optionDesc: {
-    fontSize: fontSize.xs,
+    paddingTop: 40,
   },
 });

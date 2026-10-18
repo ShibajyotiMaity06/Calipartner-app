@@ -299,7 +299,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   scrollContent: {
-    paddingBottom: spacing.xl,
+    paddingBottom: 110,
   },
   errorBanner: {
     flexDirection: 'row',

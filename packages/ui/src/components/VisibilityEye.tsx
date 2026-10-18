@@ -1,10 +1,5 @@
 import React, { useState } from 'react';
-import {
-  Pressable,
-  View,
-  StyleSheet,
-  type ViewStyle,
-} from 'react-native';
+import { Pressable, View, StyleSheet, type ViewStyle } from 'react-native';
 import { dark } from '../tokens/colors';
 import { space } from '../tokens/space';
 import { Text } from './Text';

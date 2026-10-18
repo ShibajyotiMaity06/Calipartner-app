@@ -1,9 +1,5 @@
 import React from 'react';
-import {
-  View,
-  StyleSheet,
-  type ViewStyle,
-} from 'react-native';
+import { View, StyleSheet, type ViewStyle } from 'react-native';
 import { dark } from '../tokens/colors';
 import { radius } from '../tokens/radius';
 import { space } from '../tokens/space';

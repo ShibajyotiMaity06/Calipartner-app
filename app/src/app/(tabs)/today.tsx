@@ -116,7 +116,7 @@ export default function TodayScreen() {
       contentContainerStyle={{
         paddingTop: 54,
         paddingHorizontal: spacing.md,
-        paddingBottom: 90,
+        paddingBottom: 110,
         gap: spacing.md,
       }}
       showsVerticalScrollIndicator={false}

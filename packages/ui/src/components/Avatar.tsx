@@ -1,10 +1,5 @@
 import React from 'react';
-import {
-  View,
-  Image,
-  StyleSheet,
-  type ViewStyle,
-} from 'react-native';
+import { View, Image, StyleSheet, type ViewStyle } from 'react-native';
 import { dark } from '../tokens/colors';
 import { radius } from '../tokens/radius';
 import { Text } from './Text';
@@ -100,10 +95,7 @@ export function Avatar({
         ]}
       >
         {uri ? (
-          <Image
-            source={{ uri }}
-            style={[styles.image, { borderRadius: radius.full }]}
-          />
+          <Image source={{ uri }} style={[styles.image, { borderRadius: radius.full }]} />
         ) : (
           <Text
             variant={size === 'xs' ? 'micro' : size === 'lg' ? 'title2' : 'label'}

@@ -25,3 +25,7 @@ export * from './PairedCard';
 export * from './CalorieRing';
 export * from './MacroBar';
 export * from './TimerDisplay';
+export * from './Icons';
+export * from './TabBar';
+export * from './Header';
+export * from './LogHubView';

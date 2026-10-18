@@ -43,3 +43,17 @@ if (typeof g.__DEV__ === 'undefined') {
 if (typeof process !== 'undefined' && !process.env.EXPO_OS) {
   process.env.EXPO_OS = 'web';
 }
+
+import { vi } from 'vitest';
+vi.mock('react-native-svg', () => ({
+  default: 'Svg',
+  Svg: 'Svg',
+  Circle: 'Circle',
+  Path: 'Path',
+  Line: 'Line',
+  Rect: 'Rect',
+  Polyline: 'Polyline',
+  Defs: 'Defs',
+  LinearGradient: 'LinearGradient',
+  Stop: 'Stop',
+}));

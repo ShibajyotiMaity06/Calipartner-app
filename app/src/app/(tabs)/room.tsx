@@ -665,7 +665,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   scrollContainer: {
-    paddingBottom: 48,
+    paddingBottom: 110,
   },
   loadingContainer: {
     paddingVertical: spacing.xl * 2,

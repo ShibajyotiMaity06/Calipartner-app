@@ -55,11 +55,19 @@ export function PairRing({
   const reduceMotion = useReducedMotion();
 
   // Animation values for smooth arc transitions
-  const userAnim = useRef(new Animated.Value(hasAnimatedPairRingInSession ? userPercent : 0)).current;
-  const partnerAnim = useRef(new Animated.Value(hasAnimatedPairRingInSession ? partnerPercent : 0)).current;
+  const userAnim = useRef(
+    new Animated.Value(hasAnimatedPairRingInSession ? userPercent : 0),
+  ).current;
+  const partnerAnim = useRef(
+    new Animated.Value(hasAnimatedPairRingInSession ? partnerPercent : 0),
+  ).current;
 
-  const [renderedUserPct, setRenderedUserPct] = React.useState(hasAnimatedPairRingInSession ? userPercent : 0);
-  const [renderedPartnerPct, setRenderedPartnerPct] = React.useState(hasAnimatedPairRingInSession ? partnerPercent : 0);
+  const [renderedUserPct, setRenderedUserPct] = React.useState(
+    hasAnimatedPairRingInSession ? userPercent : 0,
+  );
+  const [renderedPartnerPct, setRenderedPartnerPct] = React.useState(
+    hasAnimatedPairRingInSession ? partnerPercent : 0,
+  );
 
   useEffect(() => {
     const userListener = userAnim.addListener(({ value }) => {

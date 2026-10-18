@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { createContext, useContext, useEffect, useState } from 'react';
 import {
   Modal,
   View,
@@ -7,6 +7,8 @@ import {
   type ViewStyle,
   type StyleProp,
   SafeAreaView,
+  AccessibilityInfo,
+  Platform,
 } from 'react-native';
 import { dark } from '../tokens/colors';
 import { radius } from '../tokens/radius';
@@ -23,6 +25,17 @@ export interface SheetProps {
   accessibilityLabel?: string;
   testID?: string;
   style?: StyleProp<ViewStyle>;
+  /** Only the Log sheet is allowed glass per CMP-04 */
+  isGlass?: boolean;
+  /** Force reduce transparency for testing / accessibility */
+  reduceTransparency?: boolean;
+}
+
+/** Sheet stack depth context to enforce max 1 sheet over another */
+export const SheetStackContext = createContext<number>(0);
+
+export function useSheetDepth(): number {
+  return useContext(SheetStackContext);
 }
 
 export function Sheet({
@@ -34,7 +47,35 @@ export function Sheet({
   accessibilityLabel = 'Bottom sheet',
   testID,
   style,
-}: SheetProps): React.JSX.Element {
+  isGlass = false,
+  reduceTransparency: forcedReduceTransparency,
+}: SheetProps): React.JSX.Element | null {
+  const currentDepth = useSheetDepth();
+  const [reduceTransparency, setReduceTransparency] = useState<boolean>(
+    forcedReduceTransparency ?? false,
+  );
+
+  useEffect(() => {
+    if (forcedReduceTransparency !== undefined) {
+      setReduceTransparency(forcedReduceTransparency);
+      return;
+    }
+
+    if (AccessibilityInfo.isReduceTransparencyEnabled) {
+      AccessibilityInfo.isReduceTransparencyEnabled()
+        .then((enabled) => setReduceTransparency(enabled))
+        .catch(() => {});
+    }
+
+    const sub = AccessibilityInfo.addEventListener?.('reduceTransparencyChanged', (enabled) => {
+      setReduceTransparency(enabled);
+    });
+
+    return () => {
+      sub?.remove?.();
+    };
+  }, [forcedReduceTransparency]);
+
   const getHeightStyle = (): ViewStyle => {
     switch (snapPoint) {
       case 'tall':
@@ -46,6 +87,8 @@ export function Sheet({
         return { height: '55%', maxHeight: '80%' };
     }
   };
+
+  const isGlassActive = isGlass && !reduceTransparency;
 
   return (
     <Modal
@@ -67,7 +110,12 @@ export function Sheet({
 
         {/* Sheet surface */}
         <View
-          style={[styles.sheetSurface, getHeightStyle(), style]}
+          style={[
+            styles.sheetSurface,
+            isGlassActive ? styles.glassSurface : styles.opaqueSurface,
+            getHeightStyle(),
+            style,
+          ]}
           accessibilityRole="none"
           accessibilityLabel={accessibilityLabel}
         >
@@ -77,7 +125,11 @@ export function Sheet({
             </View>
           ) : null}
 
-          <SafeAreaView style={styles.safeContent}>{children}</SafeAreaView>
+          <SafeAreaView style={styles.safeContent}>
+            <SheetStackContext.Provider value={currentDepth + 1}>
+              {children}
+            </SheetStackContext.Provider>
+          </SafeAreaView>
         </View>
       </View>
     </Modal>
@@ -98,13 +150,24 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0, 0, 0, 0.55)',
   },
   sheetSurface: {
-    backgroundColor: dark.s2,
     borderTopLeftRadius: radius.sheet, // 28
     borderTopRightRadius: radius.sheet, // 28
     borderWidth: 1,
     borderColor: dark.hairline,
     borderBottomWidth: 0,
     overflow: 'hidden',
+  },
+  opaqueSurface: {
+    backgroundColor: dark.s2,
+  },
+  glassSurface: {
+    backgroundColor: Platform.OS === 'web' ? 'rgba(36, 30, 24, 0.88)' : dark.s2,
+    ...(Platform.OS === 'web'
+      ? ({
+          backdropFilter: 'blur(20px)',
+          WebkitBackdropFilter: 'blur(20px)',
+        } as unknown as ViewStyle)
+      : {}),
   },
   grabberWrap: {
     alignItems: 'center',

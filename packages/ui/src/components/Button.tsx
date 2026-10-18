@@ -12,7 +12,8 @@ import { radius } from '../tokens/radius';
 import { space } from '../tokens/space';
 import { Text } from './Text';
 
-export type ButtonVariant = 'primary' | 'secondary' | 'tertiary' | 'destructive' | 'destructiveFill';
+export type ButtonVariant =
+  'primary' | 'secondary' | 'tertiary' | 'destructive' | 'destructiveFill';
 export type ButtonSize = 'sm' | 'md' | 'lg';
 
 export interface ButtonProps {

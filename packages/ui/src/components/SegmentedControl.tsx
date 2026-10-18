@@ -1,11 +1,5 @@
 import React from 'react';
-import {
-  View,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  type ViewStyle,
-} from 'react-native';
+import { View, Pressable, ScrollView, StyleSheet, type ViewStyle } from 'react-native';
 import { dark } from '../tokens/colors';
 import { radius } from '../tokens/radius';
 import { space } from '../tokens/space';
