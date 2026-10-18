@@ -15,5 +15,10 @@ export default defineConfig({
     environment: 'node',
     include: ['src/**/*.test.ts'],
     setupFiles: ['./src/testSetup.ts'],
+    server: {
+      deps: {
+        inline: ['react-native', 'react-native-web'],
+      },
+    },
   },
 });
