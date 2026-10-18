@@ -1,8 +1,11 @@
 import * as Notifications from 'expo-notifications';
 import { createLogger } from '@/lib/logger';
 import {
+  buildFastingReminderSchedules,
   buildLocalReminderSchedules,
   isQuietHours,
+  type FastingSession,
+  type FastingSettings,
   type LocalReminderSchedule,
   type NotificationSettings,
 } from '@calipartner/core';
@@ -231,6 +234,54 @@ export async function cancelFastingReminder(id: string): Promise<void> {
     await Notifications.cancelScheduledNotificationAsync(id);
   } catch (err) {
     log.warn(`Error cancelling fasting reminder ${id}: ${err}`);
+  }
+}
+
+/**
+ * Reschedules all fasting reminders for settings and active fast (PRD 6.20 FST-6).
+ * Cancels old fasting reminders and schedules updated ones.
+ */
+export async function rescheduleAllFastingReminders(params: {
+  settings: FastingSettings;
+  activeSession?: FastingSession | null;
+  quietHoursSettings?: {
+    enabled: boolean;
+    start: string;
+    end: string;
+  };
+  referenceTime?: Date;
+}): Promise<number> {
+  if (!isLocalNotificationSupported()) return 0;
+  const { settings, activeSession, quietHoursSettings, referenceTime } = params;
+
+  try {
+    // 1. Cancel previous fasting reminders
+    await cancelFastingReminder('fasting_eating_window_closing');
+    if (activeSession) {
+      await cancelFastingReminder(`fasting_end_${activeSession.id}`);
+    }
+
+    if (!settings.enabled) return 0;
+
+    // 2. Build schedules using pure core calculator
+    const schedules = buildFastingReminderSchedules({
+      settings,
+      activeSession,
+      quietHoursSettings,
+      referenceTime,
+    });
+
+    let scheduledCount = 0;
+    for (const schedule of schedules) {
+      const id = await scheduleSingleReminder(schedule);
+      if (id) scheduledCount++;
+    }
+
+    log.info(`Rescheduled ${scheduledCount} fasting reminders`);
+    return scheduledCount;
+  } catch (err) {
+    log.warn(`Error rescheduling fasting reminders: ${err}`);
+    return 0;
   }
 }
 

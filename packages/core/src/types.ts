@@ -1150,6 +1150,7 @@ export interface IndividualProgressData {
   workouts: IndividualWorkoutsProgress;
   consistency: IndividualConsistencyProgress;
   goal_progress_pct: number | null;
+  fasting?: IndividualFastingProgress;
 }
 
 export interface RoomProgressMemberSeries {
@@ -1811,5 +1812,144 @@ export interface RecipeValidationResult {
   errors: string[];
   suggestions: Record<string, string[]>;
   computedNutrition: RecipeNutritionSnapshot;
+}
+
+// -----------------------------------------------------------------------------
+// Phase 13: Fasting Tracker Types (PRD 6.20, 7.9)
+// -----------------------------------------------------------------------------
+
+export type FastingProtocol =
+  | '12:12'
+  | '14:10'
+  | '16:8'
+  | '18:6'
+  | '20:4'
+  | 'custom';
+
+export type FastingSessionStatus = 'active' | 'completed' | 'ended_early';
+
+export interface FastingProtocolConfig {
+  protocol: FastingProtocol;
+  label: string;
+  fastingHours: number;
+  eatingHours: number;
+  plannedMinutes: number;
+  description: string;
+}
+
+export interface FastingSettings {
+  user_id: string;
+  enabled: boolean;
+  protocol: FastingProtocol;
+  eating_window_start: string; // HH:mm format, e.g. '12:00'
+  eating_window_end: string; // HH:mm format, e.g. '20:00'
+  custom_fasting_hours?: number | null; // 1 to 20 hours
+  created_at: string;
+  updated_at: string;
+}
+
+export interface UpdateFastingSettingsInput {
+  enabled?: boolean;
+  protocol?: FastingProtocol;
+  eating_window_start?: string;
+  eating_window_end?: string;
+  custom_fasting_hours?: number | null;
+}
+
+export interface FastingSession {
+  id: string;
+  user_id: string;
+  start_at: string; // ISO-8601 UTC timestamp
+  planned_minutes: number; // 1 to 1200 minutes (max 20h)
+  end_at?: string | null; // ISO-8601 UTC timestamp
+  status: FastingSessionStatus;
+  local_date: string; // YYYY-MM-DD
+  created_at: string;
+  updated_at: string;
+}
+
+export interface StartFastingSessionInput {
+  id?: string;
+  start_at?: string; // defaults to now (UTC)
+  planned_minutes: number; // max 1200
+  local_date?: string; // YYYY-MM-DD
+}
+
+export interface EditFastingSessionInput {
+  start_at?: string;
+  planned_minutes?: number;
+  end_at?: string | null;
+  status?: FastingSessionStatus;
+  local_date?: string;
+}
+
+export interface FastingComputedState {
+  session: FastingSession | null;
+  isActive: boolean;
+  elapsedMinutes: number;
+  remainingMinutes: number;
+  progressPercentage: number;
+  isPastPlanned: boolean;
+  isCompleted: boolean;
+  checkInPrompt: boolean; // 2 hours past plan or past 20 hours
+  strongEndFastPrompt: boolean; // At or past 24 hours
+}
+
+export interface ScheduledWindowModeState {
+  isEatingWindow: boolean;
+  currentWindowStart: string; // ISO-8601 UTC
+  currentWindowEnd: string; // ISO-8601 UTC
+  nextEatingWindowStart: string; // ISO-8601 UTC
+  nextEatingWindowEnd: string; // ISO-8601 UTC
+  nextFastingWindowStart: string; // ISO-8601 UTC
+  nextFastingWindowEnd: string; // ISO-8601 UTC
+  plannedFastingMinutes: number;
+}
+
+export interface FastingStats {
+  total_fasts: number;
+  completed_fasts: number;
+  ended_early_fasts: number;
+  completion_rate_pct: number;
+  average_duration_minutes: number;
+  average_duration_hours: number;
+  total_fasting_hours: number;
+  longest_fast_minutes: number;
+}
+
+export interface FastingStreak {
+  current_streak: number;
+  longest_streak: number;
+  last_completed_date: string | null;
+}
+
+export interface FastingGatingResult {
+  canAccess: boolean;
+  isPaused: boolean;
+  isHidden: boolean;
+  reason?:
+    | 'under_18'
+    | 'pregnant_or_breastfeeding'
+    | 'diabetes_or_medication'
+    | 'eating_disorder_history'
+    | 'low_intake_paused';
+}
+
+export interface IndividualFastingDailyHours {
+  date: string; // YYYY-MM-DD
+  fasting_hours: number;
+  completed: boolean;
+}
+
+export interface IndividualFastingProgress {
+  total_fasts: number;
+  completed_fasts: number;
+  ended_early_fasts: number;
+  completion_rate_pct: number;
+  average_duration_minutes: number;
+  average_duration_hours: number;
+  total_fasting_hours: number;
+  fasting_hours_per_week: number;
+  daily_hours: IndividualFastingDailyHours[];
 }
 

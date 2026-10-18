@@ -166,6 +166,32 @@ export default function MeScreen() {
         <View style={styles.actionsSection}>
           {user && (
             <Pressable
+              testID="btn-me-ai-coach"
+              style={[
+                styles.actionRow,
+                {
+                  borderColor: colors.border,
+                  flexDirection: 'row',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                },
+              ]}
+              onPress={() => router.push('/coach' as never)}
+              accessibilityRole="button"
+              accessibilityLabel={t('coach.title')}
+            >
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+                <Ionicons name="sparkles" size={20} color={colors.accent} />
+                <Text style={{ color: colors.text, fontSize: fontSize.md, fontWeight: '500' }}>
+                  {t('coach.title')}
+                </Text>
+              </View>
+              <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
+            </Pressable>
+          )}
+
+          {user && (
+            <Pressable
               testID="btn-me-focus-settings"
               style={[
                 styles.actionRow,

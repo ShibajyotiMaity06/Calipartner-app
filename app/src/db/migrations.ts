@@ -492,6 +492,39 @@ export const migrations: readonly LocalMigration[] = [
       CREATE INDEX IF NOT EXISTS idx_local_recipe_reports_user ON local_recipe_reports (user_id);
     `,
   },
+  {
+    version: 11,
+    name: 'create_fasting_tables',
+    sql: `
+      CREATE TABLE IF NOT EXISTS local_fasting_settings (
+        user_id              TEXT PRIMARY KEY NOT NULL,
+        enabled              INTEGER NOT NULL DEFAULT 0,
+        protocol             TEXT NOT NULL DEFAULT '16:8',
+        eating_window_start  TEXT NOT NULL DEFAULT '12:00',
+        eating_window_end    TEXT NOT NULL DEFAULT '20:00',
+        custom_fasting_hours INTEGER,
+        created_at           TEXT NOT NULL,
+        updated_at           TEXT NOT NULL,
+        sync_state           TEXT NOT NULL DEFAULT 'synced'
+      );
+
+      CREATE TABLE IF NOT EXISTS local_fasting_sessions (
+        id              TEXT PRIMARY KEY NOT NULL,
+        user_id         TEXT NOT NULL,
+        start_at        TEXT NOT NULL,
+        planned_minutes INTEGER NOT NULL,
+        end_at          TEXT,
+        status          TEXT NOT NULL DEFAULT 'active',
+        local_date      TEXT NOT NULL,
+        created_at      TEXT NOT NULL,
+        updated_at      TEXT NOT NULL,
+        sync_state      TEXT NOT NULL DEFAULT 'synced'
+      );
+      CREATE INDEX IF NOT EXISTS idx_local_fasting_sessions_user_status ON local_fasting_sessions (user_id, status);
+      CREATE INDEX IF NOT EXISTS idx_local_fasting_sessions_user_start ON local_fasting_sessions (user_id, start_at DESC);
+      CREATE INDEX IF NOT EXISTS idx_local_fasting_sessions_user_date ON local_fasting_sessions (user_id, local_date DESC);
+    `,
+  },
 ];
 
 

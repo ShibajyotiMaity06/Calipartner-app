@@ -246,6 +246,124 @@ export default function TodayScreen() {
         <FocusCard selectedDate={selectedDate} />
       </View>
 
+      {/* Recipe Library Entry Point Banner */}
+      <Pressable
+        testID="card-today-recipes"
+        onPress={() => router.push('/recipes' as Href)}
+        accessibilityRole="button"
+        accessibilityLabel={t('today.recipesCard.title')}
+        style={({ pressed }) => ({
+          flexDirection: 'row',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          backgroundColor: colors.surface,
+          borderColor: colors.border,
+          borderWidth: 1,
+          borderRadius: radius.md,
+          padding: spacing.md,
+          opacity: pressed ? 0.9 : 1,
+        })}
+      >
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, flex: 1 }}>
+          <View
+            style={{
+              width: 44,
+              height: 44,
+              borderRadius: 22,
+              backgroundColor: colors.cardHighlight,
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+          >
+            <Ionicons name="restaurant-outline" size={22} color={colors.accent} />
+          </View>
+          <View style={{ flex: 1 }}>
+            <Text style={{ fontSize: fontSize.md, fontWeight: '700', color: colors.text }}>
+              {t('today.recipesCard.title')}
+            </Text>
+            <Text style={{ fontSize: fontSize.xs, color: colors.textMuted, marginTop: 2 }}>
+              {t('today.recipesCard.subtitle')}
+            </Text>
+          </View>
+        </View>
+
+        <View
+          style={{
+            backgroundColor: colors.surfaceAlt,
+            paddingHorizontal: 10,
+            paddingVertical: 6,
+            borderRadius: radius.pill,
+            flexDirection: 'row',
+            alignItems: 'center',
+            gap: 4,
+          }}
+        >
+          <Text style={{ fontSize: fontSize.xs, fontWeight: '700', color: colors.accent }}>
+            {t('today.recipesCard.cta')}
+          </Text>
+          <Ionicons name="chevron-forward" size={14} color={colors.accent} />
+        </View>
+      </Pressable>
+
+      {/* AI Coach Entry Point Banner */}
+      <Pressable
+        testID="card-today-ai-coach"
+        onPress={() => router.push('/coach' as Href)}
+        accessibilityRole="button"
+        accessibilityLabel={t('coach.title')}
+        style={({ pressed }) => ({
+          flexDirection: 'row',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          backgroundColor: colors.surface,
+          borderColor: colors.border,
+          borderWidth: 1,
+          borderRadius: radius.md,
+          padding: spacing.md,
+          opacity: pressed ? 0.9 : 1,
+        })}
+      >
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, flex: 1 }}>
+          <View
+            style={{
+              width: 44,
+              height: 44,
+              borderRadius: 22,
+              backgroundColor: colors.cardHighlight,
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+          >
+            <Ionicons name="sparkles" size={22} color={colors.accent} />
+          </View>
+          <View style={{ flex: 1 }}>
+            <Text style={{ fontSize: fontSize.md, fontWeight: '700', color: colors.text }}>
+              {t('coach.title')}
+            </Text>
+            <Text style={{ fontSize: fontSize.xs, color: colors.textMuted, marginTop: 2 }}>
+              {t('coach.subtitle')}
+            </Text>
+          </View>
+        </View>
+
+        <View
+          style={{
+            backgroundColor: colors.surfaceAlt,
+            paddingHorizontal: 10,
+            paddingVertical: 6,
+            borderRadius: radius.pill,
+            flexDirection: 'row',
+            alignItems: 'center',
+            gap: 4,
+          }}
+        >
+          <Text style={{ fontSize: fontSize.xs, fontWeight: '700', color: colors.accent }}>
+            Ask Coach
+          </Text>
+          <Ionicons name="chevron-forward" size={14} color={colors.accent} />
+        </View>
+      </Pressable>
+
       {/* Five Meal Sections */}
       {diaryLoading ? (
         <View style={{ paddingVertical: spacing.xl, alignItems: 'center' }}>

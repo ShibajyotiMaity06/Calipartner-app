@@ -12,6 +12,7 @@ import { getMealSectionForTime, type MealSection } from '@calipartner/core';
 import { FoodLogModal } from '@/components/diary/FoodLogModal';
 import { WorkoutLoggerModal } from '@/components/workouts/WorkoutLoggerModal';
 import { FocusStartModal } from '@/components/focus';
+import { RecipeBrowseView } from '@/components/recipes';
 import { useAuth } from '@/contexts/AuthContext';
 import { usePersonalFocus } from '@/hooks/usePersonalFocus';
 import { t } from '@/i18n';
@@ -25,7 +26,7 @@ export default function LogScreen() {
   const { start: startPersonalFocus } = usePersonalFocus({ userId: user?.id ?? '' });
 
   const [sheetVisible, setSheetVisible] = useState(true);
-  const [activeFlow, setActiveFlow] = useState<'picker' | 'food' | 'workout' | 'focus'>('picker');
+  const [activeFlow, setActiveFlow] = useState<'picker' | 'food' | 'workout' | 'focus' | 'recipe'>('picker');
 
   const todayDate = new Date().toISOString().slice(0, 10);
   const currentSection: MealSection = getMealSectionForTime(new Date());
@@ -163,6 +164,36 @@ export default function LogScreen() {
                   </View>
                   <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
                 </TouchableOpacity>
+
+                {/* Recipe Library Option */}
+                <TouchableOpacity
+                  testID="btn-log-sheet-recipe"
+                  style={[
+                    styles.optionCard,
+                    { backgroundColor: colors.background, borderColor: colors.border },
+                  ]}
+                  onPress={() => setActiveFlow('recipe')}
+                  accessibilityRole="button"
+                  accessibilityLabel={t('workouts.logSheet.recipeOption')}
+                >
+                  <View
+                    style={[
+                      styles.iconCircle,
+                      { backgroundColor: colors.cardHighlight },
+                    ]}
+                  >
+                    <Ionicons name="book-outline" size={24} color={colors.accent} />
+                  </View>
+                  <View style={styles.optionInfo}>
+                    <Text style={[styles.optionTitle, { color: colors.text }]}>
+                      {t('workouts.logSheet.recipeOption')}
+                    </Text>
+                    <Text style={[styles.optionDesc, { color: colors.textMuted }]}>
+                      {t('recipes.browse.subtitle')}
+                    </Text>
+                  </View>
+                  <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
+                </TouchableOpacity>
               </View>
             </View>
           </View>
@@ -200,6 +231,26 @@ export default function LogScreen() {
             handleCloseAll();
           }}
         />
+      )}
+
+      {/* Recipe Library Flow */}
+      {activeFlow === 'recipe' && (
+        <Modal
+          visible={sheetVisible}
+          animationType="slide"
+          presentationStyle="pageSheet"
+          onRequestClose={handleCloseAll}
+        >
+          <View style={{ flex: 1, backgroundColor: colors.background, paddingTop: 40 }}>
+            <RecipeBrowseView
+              showBackOrClose={true}
+              onBackOrClose={handleCloseAll}
+              initialMealSection={currentSection}
+              localDate={todayDate}
+              onRecipeLogged={handleCloseAll}
+            />
+          </View>
+        </Modal>
       )}
     </View>
   );

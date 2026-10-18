@@ -40,6 +40,7 @@ import {
   FoodPhotoDailyLimitModal,
   FoodPhotoResultsEditor,
 } from '@/components/food_photo';
+import { RecipeBrowseView } from '@/components/recipes';
 
 export interface FoodLogModalProps {
   visible: boolean;
@@ -49,7 +50,7 @@ export interface FoodLogModalProps {
   onLogged?: () => void;
 }
 
-type TabType = 'search' | 'scan' | 'photo' | 'history' | 'myFoods';
+type TabType = 'search' | 'scan' | 'photo' | 'recipes' | 'history' | 'myFoods';
 
 export function FoodLogModal({
   visible,
@@ -257,7 +258,7 @@ export function FoodLogModal({
               paddingHorizontal: spacing.sm,
             }}
           >
-            {(['search', 'scan', 'photo', 'history', 'myFoods'] as TabType[]).map((tab) => {
+            {(['search', 'scan', 'photo', 'recipes', 'history', 'myFoods'] as TabType[]).map((tab) => {
               const isActive = activeTab === tab;
               return (
                 <Pressable
@@ -494,6 +495,19 @@ export function FoodLogModal({
                   In-memory processing & privacy guarantees
                 </Text>
               </Pressable>
+            </View>
+          )}
+
+          {/* TAB: Recipes */}
+          {activeTab === 'recipes' && (
+            <View style={{ flex: 1 }}>
+              <RecipeBrowseView
+                initialMealSection={defaultSection}
+                localDate={localDate}
+                onRecipeLogged={() => {
+                  onLogged?.();
+                }}
+              />
             </View>
           )}
 
