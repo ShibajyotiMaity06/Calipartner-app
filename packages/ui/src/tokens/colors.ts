@@ -56,3 +56,9 @@ export const light = {
 export type DarkColors = typeof dark;
 export type LightColors = typeof light;
 export type ColorPalette = DarkColors;
+
+export type { IdentityHue } from './pairs';
+
+export function getIdentityColor(hue: string, palette = dark): string {
+  return (palette as Record<string, string>)[hue] || palette.iris;
+}

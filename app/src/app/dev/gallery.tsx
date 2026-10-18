@@ -26,11 +26,55 @@ import {
   VisibilityEye,
   HiddenMetric,
   PermissionPrimer,
+  PairRing,
+  Seam,
+  PairedCard,
+  CalorieRing,
+  MacroBar,
+  TimerDisplay,
   useTheme,
   space,
   dark,
+  type MealStatus,
+  type MealType,
+  type RoomMemberSummary,
 } from '@calipartner/ui';
 import { Ionicons } from '@expo/vector-icons';
+
+const FIXTURE_USER_MEALS_COMPLETE: Record<MealType, MealStatus> = {
+  breakfast: { logged: true, name: 'Eggs & Toast', calories: 420 },
+  lunch: { logged: true, name: 'Dal Khichdi & Salad', calories: 650 },
+  dinner: { logged: true, name: 'Paneer Bowl', calories: 580 },
+  snacks: { logged: true, name: 'Roasted Almonds', calories: 180 },
+};
+
+const FIXTURE_USER_MEALS_PARTIAL: Record<MealType, MealStatus> = {
+  breakfast: { logged: true, name: 'Oatmeal', calories: 380 },
+  lunch: { logged: true, name: 'Rice & Dal', calories: 520 },
+  dinner: { logged: false },
+  snacks: { logged: false },
+};
+
+const FIXTURE_PARTNER_MEALS_COMPLETE: Record<MealType, MealStatus> = {
+  breakfast: { logged: true, name: 'Poha', calories: 350 },
+  lunch: { logged: true, name: 'Roti & Sabzi', calories: 480 },
+  dinner: { logged: true, name: 'Soup & Paneer', calories: 510 },
+  snacks: { logged: true, name: 'Fruit Bowl', calories: 160 },
+};
+
+const FIXTURE_PARTNER_MEALS_EMPTY: Record<MealType, MealStatus> = {
+  breakfast: { logged: false },
+  lunch: { logged: false },
+  dinner: { logged: false },
+  snacks: { logged: false },
+};
+
+const FIXTURE_3PLUS_MEMBERS: RoomMemberSummary[] = [
+  { id: '1', name: 'Priya', identityHue: 'teal', percent: 64, hasLoggedToday: true },
+  { id: '2', name: 'Rahul', identityHue: 'mint', percent: 85, hasLoggedToday: true },
+  { id: '3', name: 'Ananya', identityHue: 'rose', percent: 40, hasLoggedToday: false },
+  { id: '4', name: 'Dev', identityHue: 'sky', percent: 110, hasLoggedToday: true },
+];
 
 export default function ComponentGalleryScreen(): React.JSX.Element | null {
   const router = useRouter();
@@ -48,8 +92,14 @@ export default function ComponentGalleryScreen(): React.JSX.Element | null {
   const [stepperVal, setStepperVal] = useState(250);
   const [switchVal, setSwitchVal] = useState(true);
   const [toastVisible, setToastVisible] = useState(false);
+  const [toastMsg, setToastMsg] = useState('Lunch logged (520 kcal)');
   const [fieldVal, setFieldVal] = useState('');
   const [primerOpen, setPrimerOpen] = useState(false);
+
+  // UI-3 Signature Interactive States
+  const [fuseAnimTrigger, setFuseAnimTrigger] = useState(false);
+  const [selectedMemberId, setSelectedMemberId] = useState('1');
+  const [nudgesSent, setNudgesSent] = useState(0);
 
   // If in production build, disable gallery route
   if (!__DEV__) {
@@ -485,13 +535,371 @@ export default function ComponentGalleryScreen(): React.JSX.Element | null {
           </Card>
         </View>
 
+        {/* ========================================================= */}
+        {/* UI-3 SIGNATURE COMPONENTS (CMP-09 to CMP-13, CMP-21)      */}
+        {/* ========================================================= */}
+
+        {/* 14. PairRing (CMP-09 & Spec 5.2) */}
+        <View style={styles.section}>
+          <Text variant="heading" color={dark.apricot} style={styles.sectionTitle}>
+            14. PairRing (CMP-09, Spec 5.2)
+          </Text>
+          <Text variant="bodyS" color={dark.textMid} style={styles.sectionDesc}>
+            Two arcs on one circle: outer You (10px at 184), inner Partner (7px, 6px gap).
+            Round caps, glow at 100%, cream second lap past 100%, partner percent pill at arc end.
+          </Text>
+          <Card elevation="s1" style={styles.sectionCard}>
+            <Text variant="label" color={dark.textMid}>
+              Sizes 184 (Room Hero), 120 (Today Strip), 64 (List Overview)
+            </Text>
+            <View style={styles.ringShowcaseRow}>
+              <View style={styles.ringItem}>
+                <PairRing
+                  size={184}
+                  userPercent={78}
+                  partnerPercent={64}
+                  partnerName="Priya"
+                  remainingAmount="1,180"
+                />
+                <Text variant="micro" color={dark.textMid} style={styles.ringLabel}>
+                  184dp Standard (78% / 64%)
+                </Text>
+              </View>
+
+              <View style={styles.ringItem}>
+                <PairRing
+                  size={120}
+                  userPercent={100}
+                  partnerPercent={100}
+                  partnerName="Priya"
+                />
+                <Text variant="micro" color={dark.textMid} style={styles.ringLabel}>
+                  120dp 100% Both Glow
+                </Text>
+              </View>
+
+              <View style={styles.ringItem}>
+                <PairRing
+                  size={64}
+                  userPercent={85}
+                  partnerPercent={70}
+                  partnerName="Priya"
+                />
+                <Text variant="micro" color={dark.textMid} style={styles.ringLabel}>
+                  64dp List View
+                </Text>
+              </View>
+            </View>
+
+            <Text variant="label" color={dark.textMid} style={styles.subLabel}>
+              Over Goal (Cream Second Lap on Top, Max Two Laps)
+            </Text>
+            <View style={styles.ringCenter}>
+              <PairRing
+                size={184}
+                userPercent={125}
+                partnerPercent={92}
+                partnerName="Priya"
+                overAmount="320"
+              />
+            </View>
+          </Card>
+        </View>
+
+        {/* 15. The Seam & Day-Complete Fuse (CMP-10 & Spec 5.3) */}
+        <View style={styles.section}>
+          <Text variant="heading" color={dark.apricot} style={styles.sectionTitle}>
+            15. The Seam (CMP-10, Spec 5.3)
+          </Text>
+          <Text variant="bodyS" color={dark.textMid} style={styles.sectionDesc}>
+            1px vertical line with inset 24. Broken (6px dashes), Half-lit (finished person hue + 5px dot),
+            and Fused (sweeping in from both ends over 900ms with 2px iris-teal glow gradient).
+          </Text>
+          <Card elevation="s1" style={styles.sectionCard}>
+            <View style={styles.seamGrid}>
+              <View style={styles.seamCell}>
+                <Text variant="label" color={dark.textMid}>Broken</Text>
+                <Seam state="broken" length={160} />
+                <Text variant="micro" color={dark.textLo} style={styles.seamSubText}>Neither logged</Text>
+              </View>
+              <View style={styles.seamCell}>
+                <Text variant="label" color={dark.textMid}>Half-lit (You)</Text>
+                <Seam state="half-lit" finishedPerson="user" length={160} />
+                <Text variant="micro" color={dark.textLo} style={styles.seamSubText}>Dot on left</Text>
+              </View>
+              <View style={styles.seamCell}>
+                <Text variant="label" color={dark.textMid}>Half-lit (Partner)</Text>
+                <Seam state="half-lit" finishedPerson="partner" length={160} />
+                <Text variant="micro" color={dark.textLo} style={styles.seamSubText}>Dot on right</Text>
+              </View>
+              <View style={styles.seamCell}>
+                <Text variant="label" color={dark.textMid}>Fused</Text>
+                <Seam state="fused" streakDays={12} length={160} triggerFuse={fuseAnimTrigger} />
+                <Text variant="micro" color={dark.textLo} style={styles.seamSubText}>2px gradient glow</Text>
+              </View>
+            </View>
+
+            <Button
+              variant="primary"
+              label="Trigger Seam Fuse Animation (900ms sweep)"
+              onPress={() => {
+                setFuseAnimTrigger(false);
+                setTimeout(() => setFuseAnimTrigger(true), 50);
+              }}
+              style={{ marginTop: space[3] }}
+            />
+          </Card>
+        </View>
+
+        {/* 16. PairedCard Hero — All Required States (Spec J01, 5.4, 5.5) */}
+        <View style={styles.section}>
+          <Text variant="heading" color={dark.apricot} style={styles.sectionTitle}>
+            16. PairedCard Hero (All 9 Spec States)
+          </Text>
+          <Text variant="bodyS" color={dark.textMid} style={styles.sectionDesc}>
+            Side-by-side room card composing PairRing, mirrored PersonColumns, central Seam, and NudgeButton.
+          </Text>
+
+          {/* State 1: Fused (Both logged, Day 12) */}
+          <Text variant="heading" color={dark.textHi} style={styles.stateHeading}>
+            State 1: Fused (Both Logged Today · Day 12)
+          </Text>
+          <PairedCard
+            userPercent={88}
+            userSteps={9420}
+            userMeals={FIXTURE_USER_MEALS_COMPLETE}
+            partnerPercent={76}
+            partnerSteps={8100}
+            partnerMeals={FIXTURE_PARTNER_MEALS_COMPLETE}
+            seamState="fused"
+            streakDays={12}
+            nudgesSentToday={nudgesSent}
+            onNudge={() => {
+              setNudgesSent((n) => n + 1);
+              setToastMsg('Nudged Priya');
+              setToastVisible(true);
+            }}
+            onNudgeLimit={(msg) => {
+              setToastMsg(msg);
+              setToastVisible(true);
+            }}
+          />
+
+          {/* State 2: Half-Lit (User finished, partner not logged yet) */}
+          <Text variant="heading" color={dark.textHi} style={styles.stateHeading}>
+            {"State 2: Half-Lit (You Finished · Priya Hasn't Logged)"}
+          </Text>
+          <PairedCard
+            userPercent={80}
+            userSteps={8200}
+            userMeals={FIXTURE_USER_MEALS_COMPLETE}
+            partnerPercent={0}
+            partnerSteps={1200}
+            partnerMeals={FIXTURE_PARTNER_MEALS_EMPTY}
+            seamState="half-lit"
+            finishedPerson="user"
+          />
+
+          {/* State 3: Partner Not Logged (Broken Seam) */}
+          <Text variant="heading" color={dark.textHi} style={styles.stateHeading}>
+            State 3: Partner Not Logged (Broken Seam)
+          </Text>
+          <PairedCard
+            userPercent={45}
+            userSteps={4100}
+            userMeals={FIXTURE_USER_MEALS_PARTIAL}
+            partnerPercent={0}
+            partnerSteps={800}
+            partnerMeals={FIXTURE_PARTNER_MEALS_EMPTY}
+            seamState="broken"
+          />
+
+          {/* State 4: Over Goal (Cream Second Lap, "320 over") */}
+          <Text variant="heading" color={dark.textHi} style={styles.stateHeading}>
+            {'State 4: Over Goal (Cream Second Lap + "320 over")'}
+          </Text>
+          <PairedCard
+            userPercent={125}
+            userOverAmount="320"
+            userSteps={11500}
+            userMeals={FIXTURE_USER_MEALS_COMPLETE}
+            partnerPercent={82}
+            partnerSteps={8900}
+            partnerMeals={FIXTURE_PARTNER_MEALS_COMPLETE}
+            seamState="fused"
+            streakDays={15}
+          />
+
+          {/* State 5: Hidden Data (CMP-25 Neutral Lock) */}
+          <Text variant="heading" color={dark.textHi} style={styles.stateHeading}>
+            State 5: Hidden Data (CMP-25 Neutral Lock, Never Zero)
+          </Text>
+          <PairedCard
+            userPercent={78}
+            userSteps={8400}
+            userMeals={FIXTURE_USER_MEALS_COMPLETE}
+            partnerPercent={64}
+            partnerSteps={0}
+            partnerMeals={FIXTURE_PARTNER_MEALS_COMPLETE}
+            isPartnerDataHidden={true}
+            seamState="half-lit"
+            finishedPerson="user"
+          />
+
+          {/* State 6: Paused Participation (ROOM-10) */}
+          <Text variant="heading" color={dark.textHi} style={styles.stateHeading}>
+            {'State 6: Paused Participation ("Paused until 24 Oct")'}
+          </Text>
+          <PairedCard
+            userPercent={72}
+            userSteps={7600}
+            userMeals={FIXTURE_USER_MEALS_PARTIAL}
+            partnerPercent={0}
+            isPartnerPaused={true}
+            partnerPauseUntilDate="24 Oct"
+            seamState="half-lit"
+            finishedPerson="user"
+          />
+
+          {/* State 7: No Partner Yet (Dashed Placeholder Half) */}
+          <Text variant="heading" color={dark.textHi} style={styles.stateHeading}>
+            State 7: No Partner Yet (Dashed Outline Placeholder Half)
+          </Text>
+          <PairedCard
+            hasPartner={false}
+            userPercent={65}
+            userSteps={6200}
+            userMeals={FIXTURE_USER_MEALS_PARTIAL}
+            seamState="broken"
+            onInviteFriend={() => {
+              setToastMsg('Invite link copied');
+              setToastVisible(true);
+            }}
+            onFindPartner={() => {
+              setToastMsg('Opening Partner Finder');
+              setToastVisible(true);
+            }}
+          />
+
+          {/* State 8: 3+ People Selector (Avatar Strip & Comparison) */}
+          <Text variant="heading" color={dark.textHi} style={styles.stateHeading}>
+            State 8: 3+ People Selector (Spec J02 Strip & Swap)
+          </Text>
+          <PairedCard
+            userPercent={88}
+            userSteps={9200}
+            userMeals={FIXTURE_USER_MEALS_COMPLETE}
+            members={FIXTURE_3PLUS_MEMBERS}
+            selectedMemberId={selectedMemberId}
+            onSelectMember={setSelectedMemberId}
+            partnerName={FIXTURE_3PLUS_MEMBERS.find((m) => m.id === selectedMemberId)?.name || 'Priya'}
+            partnerHue={FIXTURE_3PLUS_MEMBERS.find((m) => m.id === selectedMemberId)?.identityHue || 'teal'}
+            partnerPercent={FIXTURE_3PLUS_MEMBERS.find((m) => m.id === selectedMemberId)?.percent || 64}
+            partnerSteps={8100}
+            partnerMeals={FIXTURE_PARTNER_MEALS_COMPLETE}
+            seamState="fused"
+            streakDays={9}
+          />
+
+          {/* State 9: Reflow Layout (Stacked Columns at 200% Text Scale) */}
+          <Text variant="heading" color={dark.textHi} style={styles.stateHeading}>
+            State 9: Reflow Layout (Stacked Columns, Horizontal Seam)
+          </Text>
+          <PairedCard
+            forceReflow={true}
+            userPercent={88}
+            userSteps={9420}
+            userMeals={FIXTURE_USER_MEALS_COMPLETE}
+            partnerPercent={76}
+            partnerSteps={8100}
+            partnerMeals={FIXTURE_PARTNER_MEALS_COMPLETE}
+            seamState="fused"
+            streakDays={12}
+          />
+        </View>
+
+        {/* 17. CalorieRing & MacroBar (CMP-13) */}
+        <View style={styles.section}>
+          <Text variant="heading" color={dark.apricot} style={styles.sectionTitle}>
+            17. CalorieRing & MacroBar (CMP-13)
+          </Text>
+          <Text variant="bodyS" color={dark.textMid} style={styles.sectionDesc}>
+            {"Single-person ring for Today screen in owner's identity hue (never apricot)."}
+            {" Macro bar in 100/55/28% identity opacity steps with gram values under."}
+          </Text>
+          <Card elevation="s1" style={styles.sectionCard}>
+            <View style={styles.calorieRow}>
+              <View style={styles.ringItem}>
+                <CalorieRing eaten={1450} target={2100} identityHue="iris" />
+                <Text variant="micro" color={dark.textMid} style={styles.ringLabel}>
+                  Remaining Mode (650 left)
+                </Text>
+              </View>
+              <View style={styles.ringItem}>
+                <CalorieRing eaten={2420} target={2100} identityHue="teal" />
+                <Text variant="micro" color={dark.textMid} style={styles.ringLabel}>
+                  Over Goal (Cream Second Lap)
+                </Text>
+              </View>
+            </View>
+
+            <Text variant="label" color={dark.textMid} style={styles.subLabel}>
+              MacroBar (Three Tonal Steps of Identity Hue)
+            </Text>
+            <MacroBar
+              proteinGrams={140}
+              carbsGrams={210}
+              fatGrams={55}
+              proteinTargetGrams={150}
+              carbsTargetGrams={240}
+              fatTargetGrams={65}
+              identityHue="iris"
+            />
+          </Card>
+        </View>
+
+        {/* 18. TimerDisplay (CMP-21) */}
+        <View style={styles.section}>
+          <Text variant="heading" color={dark.apricot} style={styles.sectionTitle}>
+            18. TimerDisplay (CMP-21)
+          </Text>
+          <Text variant="bodyS" color={dark.textMid} style={styles.sectionDesc}>
+            Tabular numeral time computed from stored UTC timestamps (never an accumulating counter).
+            Thin 6px progress ring.
+          </Text>
+          <Card elevation="s1" style={styles.sectionCard}>
+            <View style={styles.timerRow}>
+              <View style={styles.ringItem}>
+                <TimerDisplay
+                  startedAtUtc={Date.now() - 15 * 60 * 1000}
+                  durationMinutes={25}
+                  mode="countdown"
+                  title="Focus Session"
+                  subtitle="Pomodoro (25 min)"
+                />
+              </View>
+
+              <View style={styles.ringItem}>
+                <TimerDisplay
+                  startedAtUtc={Date.now() - 14 * 3600 * 1000 - 22 * 60 * 1000}
+                  durationMinutes={16 * 60}
+                  mode="elapsed"
+                  title="Fasting Duration"
+                  subtitle="16:8 Protocol"
+                  accentColor={dark.teal}
+                />
+              </View>
+            </View>
+          </Card>
+        </View>
+
         <View style={{ height: 100 }} />
       </ScrollView>
 
       {/* Floating Toast */}
       <Toast
         visible={toastVisible}
-        message="Lunch logged (520 kcal)"
+        message={toastMsg}
         undoLabel="Undo"
         onUndo={() => {}}
         onDismiss={() => setToastVisible(false)}
@@ -574,6 +982,13 @@ const styles = StyleSheet.create({
   sectionTitle: {
     marginBottom: space[2], // 8
   },
+  sectionDesc: {
+    marginBottom: space[3],
+  },
+  stateHeading: {
+    marginTop: space[4],
+    marginBottom: space[2],
+  },
   sectionCard: {
     gap: space[3], // 12
   },
@@ -600,5 +1015,53 @@ const styles = StyleSheet.create({
   sheetBody: {
     padding: space[5], // 20
     gap: space[3], // 12
+  },
+  ringShowcaseRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-around',
+    flexWrap: 'wrap',
+    gap: space[3],
+  },
+  ringItem: {
+    alignItems: 'center',
+    gap: space[2],
+  },
+  ringCenter: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: space[2],
+  },
+  ringLabel: {
+    textAlign: 'center',
+  },
+  seamGrid: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    alignItems: 'flex-start',
+    paddingVertical: space[2],
+  },
+  seamCell: {
+    alignItems: 'center',
+    gap: space[2],
+  },
+  seamSubText: {
+    marginTop: 4,
+  },
+  calorieRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-around',
+    flexWrap: 'wrap',
+    gap: space[4],
+    paddingVertical: space[2],
+  },
+  timerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-around',
+    flexWrap: 'wrap',
+    gap: space[4],
+    paddingVertical: space[2],
   },
 });
