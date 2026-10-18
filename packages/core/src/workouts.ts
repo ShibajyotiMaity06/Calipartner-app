@@ -1,9 +1,4 @@
-import type {
-  CardioMetrics,
-  WorkoutSummary,
-  WorkoutType,
-  WorkoutWithDetails,
-} from './types';
+import type { CardioMetrics, WorkoutSummary, WorkoutType, WorkoutWithDetails } from './types';
 
 /**
  * PRD 7.8: Workout volume = Sum over all sets of (reps x weight)
@@ -62,10 +57,7 @@ export function calculateEstimated1RM(
  * Standard MET values (Compendium of Physical Activities)
  * Adjusted by optional effort rating (1-10).
  */
-export function getStandardMet(
-  type: WorkoutType,
-  effortRating?: number | null,
-): number {
+export function getStandardMet(type: WorkoutType, effortRating?: number | null): number {
   let baseMet = 5.0;
 
   switch (type) {
@@ -185,11 +177,7 @@ export function summarizeWorkout(
   userWeightKg = 70, // Default 70 kg if not provided
 ): WorkoutSummary {
   const met = getStandardMet(workout.type, workout.effort_rating);
-  const calEstimate = calculateWorkoutCalories(
-    met,
-    userWeightKg,
-    workout.duration_minutes,
-  );
+  const calEstimate = calculateWorkoutCalories(met, userWeightKg, workout.duration_minutes);
 
   let totalVolume = 0;
   let totalSets = 0;

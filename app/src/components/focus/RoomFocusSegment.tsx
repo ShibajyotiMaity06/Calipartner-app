@@ -1,12 +1,5 @@
 import React, { useState } from 'react';
-import {
-  ActivityIndicator,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
+import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRoomFocus } from '@/hooks/useRoomFocus';
 import { useRoomWeeklyFocusStats } from '@/hooks/useFocusStats';
@@ -15,10 +8,7 @@ import { fontSize, radius, spacing } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
 import { FocusRunningModal } from './FocusRunningModal';
 import { FocusStartModal } from './FocusStartModal';
-import {
-  formatMinutesDisplay,
-  formatTimeDigits,
-} from './focusUIUtils';
+import { formatMinutesDisplay, formatTimeDigits } from './focusUIUtils';
 
 export interface RoomFocusSegmentProps {
   roomId: string;
@@ -59,19 +49,14 @@ export function RoomFocusSegment({
     refresh,
   } = useRoomFocus(roomId, { userId, isVisible });
 
-  const {
-    stats: weeklyStats,
-    loading: statsLoading,
-  } = useRoomWeeklyFocusStats(roomId);
+  const { stats: weeklyStats, loading: statsLoading } = useRoomWeeklyFocusStats(roomId);
 
   const [startModalVisible, setStartModalVisible] = useState(false);
   const [runningModalVisible, setRunningModalVisible] = useState(false);
   const [actionBusy, setActionBusy] = useState(false);
 
   const isTimer = activeSession?.mode === 'timer';
-  const displayedTimerSeconds = isTimer
-    ? (remainingSeconds ?? 0)
-    : myElapsedSeconds;
+  const displayedTimerSeconds = isTimer ? (remainingSeconds ?? 0) : myElapsedSeconds;
 
   const isMyParticipantPaused = myParticipant?.status === 'break';
 
@@ -119,9 +104,7 @@ export function RoomFocusSegment({
     return (
       <View style={styles.loadingContainer}>
         <ActivityIndicator size="large" color={colors.accent} />
-        <Text style={[styles.loadingText, { color: colors.textMuted }]}>
-          {t('common.loading')}
-        </Text>
+        <Text style={[styles.loadingText, { color: colors.textMuted }]}>{t('common.loading')}</Text>
       </View>
     );
   }
@@ -143,9 +126,7 @@ export function RoomFocusSegment({
         >
           <Ionicons name="lock-closed-outline" size={20} color={colors.textMuted} />
           <View style={{ flex: 1, gap: 2 }}>
-            <Text style={[styles.lockedTitle, { color: colors.text }]}>
-              Room Sessions Paused
-            </Text>
+            <Text style={[styles.lockedTitle, { color: colors.text }]}>Room Sessions Paused</Text>
             <Text style={[styles.lockedDesc, { color: colors.textMuted }]}>
               {t('focus.roomLockedNotice')}
             </Text>
@@ -180,12 +161,7 @@ export function RoomFocusSegment({
         >
           <View style={styles.activeHeaderRow}>
             <View style={styles.badgeRow}>
-              <View
-                style={[
-                  styles.modeBadge,
-                  { backgroundColor: colors.cardHighlight },
-                ]}
-              >
+              <View style={[styles.modeBadge, { backgroundColor: colors.cardHighlight }]}>
                 <Ionicons
                   name={isTimer ? 'hourglass-outline' : 'timer-outline'}
                   size={14}
@@ -197,27 +173,15 @@ export function RoomFocusSegment({
               </View>
 
               {activeSession.label ? (
-                <View
-                  style={[
-                    styles.labelBadge,
-                    { backgroundColor: colors.surfaceAlt },
-                  ]}
-                >
+                <View style={[styles.labelBadge, { backgroundColor: colors.surfaceAlt }]}>
                   <Text style={[styles.labelBadgeText, { color: colors.text }]}>
                     {activeSession.label}
                   </Text>
                 </View>
               ) : (
-                <View
-                  style={[
-                    styles.labelBadge,
-                    { backgroundColor: colors.surfaceAlt },
-                  ]}
-                >
+                <View style={[styles.labelBadge, { backgroundColor: colors.surfaceAlt }]}>
                   <Ionicons name="lock-closed" size={10} color={colors.textMuted} />
-                  <Text
-                    style={[styles.labelBadgeText, { color: colors.textMuted }]}
-                  >
+                  <Text style={[styles.labelBadgeText, { color: colors.textMuted }]}>
                     Private Label
                   </Text>
                 </View>
@@ -230,11 +194,7 @@ export function RoomFocusSegment({
               accessibilityRole="button"
               accessibilityLabel="Open full focus screen"
             >
-              <Ionicons
-                name="expand-outline"
-                size={18}
-                color={colors.textMuted}
-              />
+              <Ionicons name="expand-outline" size={18} color={colors.textMuted} />
             </Pressable>
           </View>
 
@@ -261,17 +221,8 @@ export function RoomFocusSegment({
                 return (
                   <View key={p.user_id} style={styles.participantRow}>
                     <View style={styles.participantLeft}>
-                      <View
-                        style={[
-                          styles.avatarDot,
-                          { backgroundColor: colors.surfaceAlt },
-                        ]}
-                      >
-                        <Ionicons
-                          name="person"
-                          size={12}
-                          color={colors.text}
-                        />
+                      <View style={[styles.avatarDot, { backgroundColor: colors.surfaceAlt }]}>
+                        <Ionicons name="person" size={12} color={colors.text} />
                       </View>
                       <Text
                         style={[
@@ -309,10 +260,7 @@ export function RoomFocusSegment({
                 testID="btn-room-focus-join"
                 onPress={handleJoin}
                 disabled={actionBusy || isLocked}
-                style={[
-                  styles.primaryBtn,
-                  { backgroundColor: colors.accent },
-                ]}
+                style={[styles.primaryBtn, { backgroundColor: colors.accent }]}
                 accessibilityRole="button"
                 accessibilityLabel={t('focus.joinBtn')}
               >
@@ -325,11 +273,7 @@ export function RoomFocusSegment({
               <>
                 {/* Break / Resume */}
                 <Pressable
-                  testID={
-                    isMyParticipantPaused
-                      ? 'btn-room-focus-resume'
-                      : 'btn-room-focus-pause'
-                  }
+                  testID={isMyParticipantPaused ? 'btn-room-focus-resume' : 'btn-room-focus-pause'}
                   onPress={handlePauseToggle}
                   disabled={actionBusy}
                   style={[
@@ -341,9 +285,7 @@ export function RoomFocusSegment({
                   ]}
                   accessibilityRole="button"
                   accessibilityLabel={
-                    isMyParticipantPaused
-                      ? t('focus.resumeBtn')
-                      : t('focus.pauseBtn')
+                    isMyParticipantPaused ? t('focus.resumeBtn') : t('focus.pauseBtn')
                   }
                 >
                   <Ionicons
@@ -352,9 +294,7 @@ export function RoomFocusSegment({
                     color={colors.text}
                   />
                   <Text style={[styles.btnText, { color: colors.text }]}>
-                    {isMyParticipantPaused
-                      ? t('focus.resumeBtn')
-                      : t('focus.pauseBtn')}
+                    {isMyParticipantPaused ? t('focus.resumeBtn') : t('focus.pauseBtn')}
                   </Text>
                 </Pressable>
 
@@ -373,11 +313,7 @@ export function RoomFocusSegment({
                   accessibilityRole="button"
                   accessibilityLabel={t('focus.leaveBtn')}
                 >
-                  <Ionicons
-                    name="exit-outline"
-                    size={16}
-                    color={colors.text}
-                  />
+                  <Ionicons name="exit-outline" size={16} color={colors.text} />
                   <Text style={[styles.btnText, { color: colors.text }]}>
                     {t('focus.leaveBtn')}
                   </Text>
@@ -399,16 +335,8 @@ export function RoomFocusSegment({
                     accessibilityRole="button"
                     accessibilityLabel={t('focus.endRoomSessionBtn')}
                   >
-                    <Ionicons
-                      name="stop-circle-outline"
-                      size={16}
-                      color={colors.accent}
-                    />
-                    <Text
-                      style={[styles.btnText, { color: colors.accent }]}
-                    >
-                      End
-                    </Text>
+                    <Ionicons name="stop-circle-outline" size={16} color={colors.accent} />
+                    <Text style={[styles.btnText, { color: colors.accent }]}>End</Text>
                   </Pressable>
                 )}
               </>
@@ -423,12 +351,7 @@ export function RoomFocusSegment({
             { backgroundColor: colors.surface, borderColor: colors.border },
           ]}
         >
-          <View
-            style={[
-              styles.emptyIconCircle,
-              { backgroundColor: colors.cardHighlight },
-            ]}
-          >
+          <View style={[styles.emptyIconCircle, { backgroundColor: colors.cardHighlight }]}>
             <Ionicons name="timer-outline" size={36} color={colors.accent} />
           </View>
           <Text style={[styles.emptyTitle, { color: colors.text }]}>
@@ -463,10 +386,7 @@ export function RoomFocusSegment({
       {/* 3. ROOM WEEKLY TOTALS SECTION (RPG-8, FOC-10 - NEUTRAL, NO RANKING) */}
       <View
         testID="list-room-focus-weekly-totals"
-        style={[
-          styles.totalsCard,
-          { backgroundColor: colors.surface, borderColor: colors.border },
-        ]}
+        style={[styles.totalsCard, { backgroundColor: colors.surface, borderColor: colors.border }]}
       >
         <View style={styles.totalsHeaderRow}>
           <Text style={[styles.totalsTitle, { color: colors.text }]}>
@@ -500,17 +420,8 @@ export function RoomFocusSegment({
               return (
                 <View key={m.user_id} style={styles.memberTableRow}>
                   <View style={styles.memberNameGroup}>
-                    <View
-                      style={[
-                        styles.avatarDot,
-                        { backgroundColor: colors.surfaceAlt },
-                      ]}
-                    >
-                      <Ionicons
-                        name="person"
-                        size={12}
-                        color={colors.text}
-                      />
+                    <View style={[styles.avatarDot, { backgroundColor: colors.surfaceAlt }]}>
+                      <Ionicons name="person" size={12} color={colors.text} />
                     </View>
                     <Text style={[styles.memberNameText, { color: colors.text }]}>
                       {m.is_me ? `${m.nickname} (You)` : m.nickname}
@@ -546,10 +457,7 @@ export function RoomFocusSegment({
       {/* 4. RECENT SESSIONS SECTION */}
       <View
         testID="list-room-focus-recent"
-        style={[
-          styles.recentCard,
-          { backgroundColor: colors.surface, borderColor: colors.border },
-        ]}
+        style={[styles.recentCard, { backgroundColor: colors.surface, borderColor: colors.border }]}
       >
         <Text style={[styles.recentHeader, { color: colors.text }]}>
           {t('focus.recentSessionsTitle')}
@@ -570,18 +478,11 @@ export function RoomFocusSegment({
                     <Text style={[styles.recentRowTitle, { color: colors.text }]}>
                       {s.label || (s.mode === 'timer' ? 'Focus Timer' : 'Stopwatch')}
                     </Text>
-                    <Text
-                      style={[styles.recentRowSub, { color: colors.textMuted }]}
-                    >
+                    <Text style={[styles.recentRowSub, { color: colors.textMuted }]}>
                       {dateStr} • {s.mode}
                     </Text>
                   </View>
-                  <Text
-                    style={[
-                      styles.recentDurationText,
-                      { color: colors.textMuted },
-                    ]}
-                  >
+                  <Text style={[styles.recentDurationText, { color: colors.textMuted }]}>
                     {formatMinutesDisplay(durationMins)}
                   </Text>
                 </View>

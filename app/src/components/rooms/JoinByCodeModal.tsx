@@ -39,7 +39,8 @@ export function JoinByCodeModal({ visible, onClose, onJoinByCode }: JoinByCodeMo
       setCode('');
       onClose();
     } catch (err: unknown) {
-      const msg = err && typeof err === 'object' && 'message' in err ? String(err.message) : String(err);
+      const msg =
+        err && typeof err === 'object' && 'message' in err ? String(err.message) : String(err);
       if (msg.includes('MAX_ROOMS_REACHED')) {
         setErrorMsg(t('rooms.joinModal.errorMaxRooms'));
       } else if (msg.includes('ROOM_FULL')) {
@@ -131,9 +132,7 @@ export function JoinByCodeModal({ visible, onClose, onJoinByCode }: JoinByCodeMo
               {loading ? (
                 <ActivityIndicator size="small" color="#FFFFFF" />
               ) : (
-                <Text style={styles.submitButtonText}>
-                  {t('rooms.joinModal.submitBtn')}
-                </Text>
+                <Text style={styles.submitButtonText}>{t('rooms.joinModal.submitBtn')}</Text>
               )}
             </Pressable>
           </View>

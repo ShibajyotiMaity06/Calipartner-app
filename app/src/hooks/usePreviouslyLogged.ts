@@ -8,10 +8,7 @@ import {
 import { useAuth } from '@/contexts/AuthContext';
 import { getDb } from '@/db';
 import { diaryEvents } from '@/services/diaryEvents';
-import {
-  getPreviouslyLoggedItems,
-  hideFoodFromHistory,
-} from '@/services/foodService';
+import { getPreviouslyLoggedItems, hideFoodFromHistory } from '@/services/foodService';
 import { useAddEntry } from './useFoodEntries';
 
 export type HistorySortOption = 'recent' | 'frequent' | 'alpha';

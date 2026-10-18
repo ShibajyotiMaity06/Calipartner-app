@@ -1,12 +1,7 @@
 export type Sex = 'male' | 'female' | 'other';
 export type Units = 'metric' | 'imperial';
 export type Goal = 'cut' | 'maintain' | 'bulk';
-export type ActivityLevel =
-  | 'sedentary'
-  | 'light'
-  | 'moderate'
-  | 'very_active'
-  | 'extra_active';
+export type ActivityLevel = 'sedentary' | 'light' | 'moderate' | 'very_active' | 'extra_active';
 
 export interface Profile {
   id: string;
@@ -76,14 +71,9 @@ export interface MacroTargets {
   totalKcal: number;
 }
 
-export type PresetRateUnavailableReason =
-  | 'below_calorie_floor'
-  | 'above_rate_cap'
-  | 'bmi_too_low';
+export type PresetRateUnavailableReason = 'below_calorie_floor' | 'above_rate_cap' | 'bmi_too_low';
 
-export type PresetRateAdvisory =
-  | 'lean_gain_advisory'
-  | 'large_deficit_advisory';
+export type PresetRateAdvisory = 'lean_gain_advisory' | 'large_deficit_advisory';
 
 export interface PresetRateOption {
   rateKgPerWeek: number;
@@ -147,10 +137,7 @@ export interface CalculateTargetsResult {
 }
 
 export type RecomputeReason =
-  | 'initial_onboarding'
-  | 'manual_edit'
-  | 'weight_change'
-  | 'recalibration';
+  'initial_onboarding' | 'manual_edit' | 'weight_change' | 'recalibration';
 
 export interface GoalProfile {
   id: string;
@@ -221,13 +208,7 @@ export type FoodSource = 'ifct' | 'off' | 'usda' | 'user';
 
 export type MealSection = 'breakfast' | 'lunch' | 'dinner' | 'snacks' | 'extra';
 
-export type EntrySource =
-  | 'search'
-  | 'scan'
-  | 'photo'
-  | 'history'
-  | 'copy'
-  | 'recipe';
+export type EntrySource = 'search' | 'scan' | 'photo' | 'history' | 'copy' | 'recipe';
 
 export interface ServingUnit {
   unit: string; // e.g. 'g', 'ml', 'piece', 'bowl', 'katori', 'cup', 'tbsp', 'slice'
@@ -526,12 +507,7 @@ export interface ProjectedDateResult {
 
 export type RoomRole = 'host' | 'member';
 export type RoomMemberStatus = 'active' | 'paused' | 'left';
-export type RoomState =
-  | 'active'
-  | 'dormant'
-  | 'locked'
-  | 'over_capacity'
-  | 'archived';
+export type RoomState = 'active' | 'dormant' | 'locked' | 'over_capacity' | 'archived';
 export type RoomWhoCanInvite = 'host_only' | 'any_member';
 
 export type RoomTier = 'basic' | 'plus' | 'pro' | 'community';
@@ -562,12 +538,7 @@ export interface RoomPrivacySettings {
 }
 
 export type RoomRequestType = 'invitation' | 'join_request';
-export type RoomRequestStatus =
-  | 'pending'
-  | 'accepted'
-  | 'declined'
-  | 'expired'
-  | 'cancelled';
+export type RoomRequestStatus = 'pending' | 'accepted' | 'declined' | 'expired' | 'cancelled';
 
 export interface RoomRequest {
   id: string;
@@ -786,13 +757,9 @@ export interface RoomMemberSnapshotMetrics {
   goal_completion: number | LockedMetric;
   steps: number | LockedMetric;
   water_ml: number | LockedMetric;
-  workout_status:
-    | { worked_out: boolean; duration_minutes: number }
-    | LockedMetric;
+  workout_status: { worked_out: boolean; duration_minutes: number } | LockedMetric;
   calories: number | LockedMetric;
-  macros:
-    | { protein: number; carbs: number; fat: number }
-    | LockedMetric;
+  macros: { protein: number; carbs: number; fat: number } | LockedMetric;
   weight_kg: number | null | LockedMetric;
   weight_progress: number | LockedMetric;
   fasting_status: string | LockedMetric;
@@ -841,24 +808,10 @@ export interface RoomSnapshot {
 // Phase 6: Workout Tracking, Exercises & Running Session Timer
 // -----------------------------------------------------------------------------
 
-export type WorkoutType =
-  | 'strength'
-  | 'cardio'
-  | 'sports'
-  | 'yoga_mobility'
-  | 'walk_run'
-  | 'other';
+export type WorkoutType = 'strength' | 'cardio' | 'sports' | 'yoga_mobility' | 'walk_run' | 'other';
 
 export type MuscleGroup =
-  | 'chest'
-  | 'back'
-  | 'legs'
-  | 'shoulders'
-  | 'arms'
-  | 'core'
-  | 'full_body'
-  | 'cardio'
-  | 'other';
+  'chest' | 'back' | 'legs' | 'shoulders' | 'arms' | 'core' | 'full_body' | 'cardio' | 'other';
 
 export type Equipment =
   | 'barbell'
@@ -871,12 +824,7 @@ export type Equipment =
   | 'other'
   | 'none';
 
-export type ExerciseType =
-  | 'strength'
-  | 'cardio'
-  | 'bodyweight'
-  | 'duration'
-  | 'distance';
+export type ExerciseType = 'strength' | 'cardio' | 'bodyweight' | 'duration' | 'distance';
 
 export interface Exercise {
   id: string;
@@ -996,22 +944,10 @@ export interface WorkoutTimerState {
 // -----------------------------------------------------------------------------
 
 export type ProgressDateRange = '7d' | '30d' | '90d' | '6m' | '1y' | 'all';
-export type RoomProgressDateRange =
-  | '7d'
-  | '30d'
-  | '90d'
-  | '6m'
-  | '1y'
-  | 'all'
-  | 'since_start';
+export type RoomProgressDateRange = '7d' | '30d' | '90d' | '6m' | '1y' | 'all' | 'since_start';
 
 export type ProgressMetric =
-  | 'consistency'
-  | 'weight_change'
-  | 'calories_vs_target'
-  | 'steps'
-  | 'water'
-  | 'workouts';
+  'consistency' | 'weight_change' | 'calories_vs_target' | 'steps' | 'water' | 'workouts';
 
 export interface UserStreak {
   user_id: string;
@@ -1228,10 +1164,7 @@ export interface LeaderboardResponse {
 
 export type ChatMessageType = 'user' | 'system';
 export type ChatSystemEventType =
-  | 'member_joined'
-  | 'member_left'
-  | 'room_created'
-  | 'streak_milestone';
+  'member_joined' | 'member_left' | 'room_created' | 'streak_milestone';
 
 export type ChatModerationStatus = 'pending' | 'ok' | 'blocked';
 export type ChatDeliveryStatus = 'sending' | 'sent' | 'failed';
@@ -1399,16 +1332,16 @@ export interface NotificationSettings {
   // Quiet hours
   quiet_hours_enabled: boolean;
   quiet_hours_start: string; // HH:mm
-  quiet_hours_end: string;   // HH:mm
+  quiet_hours_end: string; // HH:mm
   // Previews
   hide_previews: boolean;
   // Local reminder schedule
   meal_times: MealReminderTimes;
   water_interval_hours: number;
   water_start_time: string; // HH:mm
-  water_end_time: string;   // HH:mm
+  water_end_time: string; // HH:mm
   weigh_in_day_of_week: number; // 1 = Monday ... 7 = Sunday
-  weigh_in_time: string;    // HH:mm
+  weigh_in_time: string; // HH:mm
   created_at?: string;
   updated_at?: string;
 }
@@ -1428,12 +1361,7 @@ export type NotificationType =
   | 'room_state_change'
   | 'focus_session';
 
-export type NotificationDeliveryStatus =
-  | 'pending'
-  | 'processing'
-  | 'sent'
-  | 'failed'
-  | 'skipped';
+export type NotificationDeliveryStatus = 'pending' | 'processing' | 'sent' | 'failed' | 'skipped';
 
 export interface PushNotificationQueueItem {
   id: string;
@@ -1689,13 +1617,7 @@ export type AiFoodPhotoErrorCode =
 // Phase 12: Recipe Library
 // -----------------------------------------------------------------------------
 
-export type RecipeMealType =
-  | 'breakfast'
-  | 'lunch'
-  | 'dinner'
-  | 'snack'
-  | 'dessert'
-  | 'beverage';
+export type RecipeMealType = 'breakfast' | 'lunch' | 'dinner' | 'snack' | 'dessert' | 'beverage';
 
 export type RecipeDifficulty = 'easy' | 'medium' | 'hard';
 
@@ -1818,13 +1740,7 @@ export interface RecipeValidationResult {
 // Phase 13: Fasting Tracker Types (PRD 6.20, 7.9)
 // -----------------------------------------------------------------------------
 
-export type FastingProtocol =
-  | '12:12'
-  | '14:10'
-  | '16:8'
-  | '18:6'
-  | '20:4'
-  | 'custom';
+export type FastingProtocol = '12:12' | '14:10' | '16:8' | '18:6' | '20:4' | 'custom';
 
 export type FastingSessionStatus = 'active' | 'completed' | 'ended_early';
 
@@ -1952,4 +1868,3 @@ export interface IndividualFastingProgress {
   fasting_hours_per_week: number;
   daily_hours: IndividualFastingDailyHours[];
 }
-

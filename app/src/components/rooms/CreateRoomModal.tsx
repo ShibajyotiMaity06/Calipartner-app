@@ -39,7 +39,8 @@ export function CreateRoomModal({ visible, onClose, onCreateRoom }: CreateRoomMo
       setRoomName('');
       onClose();
     } catch (err: unknown) {
-      const msg = err && typeof err === 'object' && 'message' in err ? String(err.message) : String(err);
+      const msg =
+        err && typeof err === 'object' && 'message' in err ? String(err.message) : String(err);
       if (msg.includes('MAX_ROOMS_REACHED')) {
         setErrorMsg(t('rooms.createModal.errorMaxRooms'));
       } else if (msg.includes('PLAN_ALREADY_ATTACHED')) {
@@ -127,9 +128,7 @@ export function CreateRoomModal({ visible, onClose, onCreateRoom }: CreateRoomMo
               {loading ? (
                 <ActivityIndicator size="small" color="#FFFFFF" />
               ) : (
-                <Text style={styles.submitButtonText}>
-                  {t('rooms.createModal.submitBtn')}
-                </Text>
+                <Text style={styles.submitButtonText}>{t('rooms.createModal.submitBtn')}</Text>
               )}
             </Pressable>
           </View>

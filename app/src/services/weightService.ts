@@ -10,10 +10,7 @@ import {
 } from '@calipartner/core';
 import { createLogger } from '@/lib/logger';
 import { generateClientUuid } from './foodService';
-import {
-  enqueueOutbox,
-  type SyncDb,
-} from './syncService';
+import { enqueueOutbox, type SyncDb } from './syncService';
 
 const log = createLogger('weightService');
 
@@ -99,11 +96,7 @@ export async function logWeight(
 /**
  * Returns all active weight logs for a user sorted by date descending.
  */
-export async function getWeightLogs(
-  db: SyncDb,
-  userId: string,
-  limit = 100,
-): Promise<WeightLog[]> {
+export async function getWeightLogs(db: SyncDb, userId: string, limit = 100): Promise<WeightLog[]> {
   const rows = await db.getAllAsync<RawWeightRow>(
     `SELECT * FROM local_weight_logs
      WHERE user_id = ? AND deleted_at IS NULL
@@ -159,19 +152,22 @@ export async function getWeightSummary(
   const today = new Date().toISOString().split('T')[0]!;
   const targetWeight = profile?.targetWeightKg ?? null;
 
-  const projection = targetWeight != null
-    ? calculateProjectedDate({
-        currentTrendKg: latestTrend.trendWeightKg,
-        targetWeightKg: targetWeight,
-        weeklyPaceKg: weeklyPace.weeklyPaceKg,
-        todayDate: today,
-      })
-    : { projectedDate: null, weeksRemaining: null, reason: 'not_enough_trend' as const };
+  const projection =
+    targetWeight != null
+      ? calculateProjectedDate({
+          currentTrendKg: latestTrend.trendWeightKg,
+          targetWeightKg: targetWeight,
+          weeklyPaceKg: weeklyPace.weeklyPaceKg,
+          todayDate: today,
+        })
+      : { projectedDate: null, weeksRemaining: null, reason: 'not_enough_trend' as const };
 
-  const startWeight = profile?.startingWeightKg ?? entries[0]?.weightKg ?? latestTrend.trendWeightKg;
-  const goalProgressPercent = targetWeight != null
-    ? calculateGoalProgressPercent(startWeight, latestTrend.trendWeightKg, targetWeight)
-    : 0;
+  const startWeight =
+    profile?.startingWeightKg ?? entries[0]?.weightKg ?? latestTrend.trendWeightKg;
+  const goalProgressPercent =
+    targetWeight != null
+      ? calculateGoalProgressPercent(startWeight, latestTrend.trendWeightKg, targetWeight)
+      : 0;
 
   return {
     latestLog,

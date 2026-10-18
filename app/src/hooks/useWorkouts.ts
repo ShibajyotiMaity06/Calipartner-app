@@ -42,7 +42,9 @@ export interface UseWorkoutsResult {
   loading: boolean;
   error: Error | null;
   refresh: () => Promise<void>;
-  create: (input: Omit<CreateWorkoutInput, 'userId' | 'localDate'> & { localDate?: string }) => Promise<Workout>;
+  create: (
+    input: Omit<CreateWorkoutInput, 'userId' | 'localDate'> & { localDate?: string },
+  ) => Promise<Workout>;
   update: (workoutId: string, updates: UpdateWorkoutInput) => Promise<Workout>;
   remove: (workoutId: string) => Promise<void>;
   addExercise: (workoutId: string, input: AddExerciseInput) => Promise<WorkoutExercise>;

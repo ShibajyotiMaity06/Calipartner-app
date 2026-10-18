@@ -1,12 +1,5 @@
 import React, { useRef, useState } from 'react';
-import {
-  ActivityIndicator,
-  Modal,
-  Pressable,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
+import { ActivityIndicator, Modal, Pressable, StyleSheet, Text, View } from 'react-native';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import { Ionicons } from '@expo/vector-icons';
 import { t } from '@/i18n';
@@ -191,11 +184,7 @@ export function FoodPhotoCameraModal({
         ) : (
           /* Active Camera Screen */
           <View style={styles.cameraContainer}>
-            <CameraView
-              ref={cameraRef}
-              facing={facing}
-              style={StyleSheet.absoluteFill}
-            />
+            <CameraView ref={cameraRef} facing={facing} style={StyleSheet.absoluteFill} />
 
             {/* Top Bar Controls */}
             <View style={styles.topBar}>

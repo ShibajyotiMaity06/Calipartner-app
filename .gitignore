@@ -30,3 +30,6 @@ Thumbs.db
 supabase/.temp/
 supabase/.branches/
 supabase/functions/.env
+
+# AI agent skills reference docs (Apple HIG, etc.)
+.agents/skills/

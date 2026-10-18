@@ -59,28 +59,52 @@ export function parseChatError(err: unknown): ChatServiceError {
         : String(err);
 
   if (rawMessage.includes('TERMS_REQUIRED')) {
-    return new ChatServiceError('TERMS_REQUIRED', 'Please accept the community terms before sending messages.', err);
+    return new ChatServiceError(
+      'TERMS_REQUIRED',
+      'Please accept the community terms before sending messages.',
+      err,
+    );
   }
   if (rawMessage.includes('NOT_ROOM_MEMBER')) {
-    return new ChatServiceError('NOT_ROOM_MEMBER', 'You are no longer an active member of this room.', err);
+    return new ChatServiceError(
+      'NOT_ROOM_MEMBER',
+      'You are no longer an active member of this room.',
+      err,
+    );
   }
   if (rawMessage.includes('ROOM_LOCKED')) {
     return new ChatServiceError('ROOM_LOCKED', 'This room is paused.', err);
   }
   if (rawMessage.includes('ROOM_DORMANT_READ_ONLY')) {
-    return new ChatServiceError('ROOM_DORMANT_READ_ONLY', 'This room is waiting for partners; chat is read-only.', err);
+    return new ChatServiceError(
+      'ROOM_DORMANT_READ_ONLY',
+      'This room is waiting for partners; chat is read-only.',
+      err,
+    );
   }
   if (rawMessage.includes('RATE_LIMIT_EXCEEDED')) {
-    return new ChatServiceError('RATE_LIMIT_EXCEEDED', 'You are sending messages too quickly. Please slow down.', err);
+    return new ChatServiceError(
+      'RATE_LIMIT_EXCEEDED',
+      'You are sending messages too quickly. Please slow down.',
+      err,
+    );
   }
   if (rawMessage.includes('ATTACHMENT_LIMIT_EXCEEDED')) {
-    return new ChatServiceError('ATTACHMENT_LIMIT_EXCEEDED', 'Maximum 5 images allowed per message.', err);
+    return new ChatServiceError(
+      'ATTACHMENT_LIMIT_EXCEEDED',
+      'Maximum 5 images allowed per message.',
+      err,
+    );
   }
   if (rawMessage.includes('FILE_TOO_LARGE')) {
     return new ChatServiceError('FILE_TOO_LARGE', 'Image exceeds maximum 10 MB limit.', err);
   }
   if (rawMessage.includes('INVALID_FILE_TYPE')) {
-    return new ChatServiceError('INVALID_FILE_TYPE', 'Only JPEG, PNG, HEIC and WebP images are supported.', err);
+    return new ChatServiceError(
+      'INVALID_FILE_TYPE',
+      'Only JPEG, PNG, HEIC and WebP images are supported.',
+      err,
+    );
   }
   if (rawMessage.includes('MESSAGE_TOO_LONG')) {
     return new ChatServiceError('MESSAGE_TOO_LONG', 'Message exceeds 2000 characters.', err);
@@ -89,7 +113,11 @@ export function parseChatError(err: unknown): ChatServiceError {
     return new ChatServiceError('MESSAGE_EMPTY', 'Message cannot be empty.', err);
   }
   if (rawMessage.includes('CANNOT_DELETE_OTHERS')) {
-    return new ChatServiceError('CANNOT_DELETE_OTHERS', 'You can only delete your own messages.', err);
+    return new ChatServiceError(
+      'CANNOT_DELETE_OTHERS',
+      'You can only delete your own messages.',
+      err,
+    );
   }
   if (rawMessage.includes('URL_EXPIRED')) {
     return new ChatServiceError('URL_EXPIRED', 'Image access link has expired.', err);
@@ -98,5 +126,9 @@ export function parseChatError(err: unknown): ChatServiceError {
     return new ChatServiceError('UNAUTHENTICATED', 'You must be signed in.', err);
   }
 
-  return new ChatServiceError('UNKNOWN_ERROR', rawMessage || 'An unexpected chat error occurred.', err);
+  return new ChatServiceError(
+    'UNKNOWN_ERROR',
+    rawMessage || 'An unexpected chat error occurred.',
+    err,
+  );
 }

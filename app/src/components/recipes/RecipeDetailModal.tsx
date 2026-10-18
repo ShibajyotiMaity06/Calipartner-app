@@ -1,19 +1,7 @@
 import React, { useState } from 'react';
-import {
-  Image,
-  Modal,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
+import { Image, Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import {
-  scaleRecipeServings,
-  type MealSection,
-  type Recipe,
-} from '@calipartner/core';
+import { scaleRecipeServings, type MealSection, type Recipe } from '@calipartner/core';
 import { t } from '@/i18n';
 import { fontSize, radius, spacing } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
@@ -60,10 +48,7 @@ export function RecipeDetailModal({
   const nutrition = recipe.nutrition_per_serving;
 
   // Compute scaled ingredients (RCP-5)
-  const { scaledIngredients } = scaleRecipeServings(
-    recipe,
-    currentServings,
-  );
+  const { scaledIngredients } = scaleRecipeServings(recipe, currentServings);
 
   const formatQuantity = (val: number): string => {
     if (Number.isInteger(val)) return String(val);
@@ -150,7 +135,12 @@ export function RecipeDetailModal({
             </View>
 
             {/* Meta Title & Tags */}
-            <View style={[styles.cardSection, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+            <View
+              style={[
+                styles.cardSection,
+                { backgroundColor: colors.surface, borderColor: colors.border },
+              ]}
+            >
               <View style={styles.tagsRow}>
                 <View style={[styles.tagBadge, { backgroundColor: colors.surfaceAlt }]}>
                   <Text style={[styles.tagBadgeText, { color: colors.accent }]}>
@@ -159,7 +149,10 @@ export function RecipeDetailModal({
                 </View>
 
                 {recipe.diet_tags?.map((tag) => (
-                  <View key={tag} style={[styles.tagBadge, { backgroundColor: colors.cardHighlight }]}>
+                  <View
+                    key={tag}
+                    style={[styles.tagBadge, { backgroundColor: colors.cardHighlight }]}
+                  >
                     <Text style={[styles.tagBadgeText, { color: colors.accent }]}>
                       {t(`recipes.dietTags.${tag}` as Parameters<typeof t>[0])}
                     </Text>
@@ -173,9 +166,7 @@ export function RecipeDetailModal({
                 </View>
               </View>
 
-              <Text style={[styles.recipeTitle, { color: colors.text }]}>
-                {recipe.title}
-              </Text>
+              <Text style={[styles.recipeTitle, { color: colors.text }]}>{recipe.title}</Text>
 
               {recipe.description && (
                 <Text style={[styles.description, { color: colors.textMuted }]}>
@@ -213,7 +204,12 @@ export function RecipeDetailModal({
             </View>
 
             {/* Nutrition Per Serving Section */}
-            <View style={[styles.cardSection, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+            <View
+              style={[
+                styles.cardSection,
+                { backgroundColor: colors.surface, borderColor: colors.border },
+              ]}
+            >
               <View style={styles.sectionHeader}>
                 <Ionicons name="nutrition-outline" size={20} color={colors.accent} />
                 <Text style={[styles.sectionTitle, { color: colors.text }]}>
@@ -275,7 +271,12 @@ export function RecipeDetailModal({
             </View>
 
             {/* Servings Scaler & Scaled Ingredients List */}
-            <View style={[styles.cardSection, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+            <View
+              style={[
+                styles.cardSection,
+                { backgroundColor: colors.surface, borderColor: colors.border },
+              ]}
+            >
               <View style={styles.sectionHeader}>
                 <Ionicons name="basket-outline" size={20} color={colors.accent} />
                 <Text style={[styles.sectionTitle, { color: colors.text }]}>
@@ -330,7 +331,12 @@ export function RecipeDetailModal({
             </View>
 
             {/* Instructions Steps */}
-            <View style={[styles.cardSection, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+            <View
+              style={[
+                styles.cardSection,
+                { backgroundColor: colors.surface, borderColor: colors.border },
+              ]}
+            >
               <View style={styles.sectionHeader}>
                 <Ionicons name="list-outline" size={20} color={colors.accent} />
                 <Text style={[styles.sectionTitle, { color: colors.text }]}>
@@ -341,19 +347,12 @@ export function RecipeDetailModal({
               <View style={styles.stepsList}>
                 {recipe.steps.map((step, idx) => (
                   <View key={`step-${idx}`} style={styles.stepRow}>
-                    <View
-                      style={[
-                        styles.stepBadge,
-                        { backgroundColor: colors.accent },
-                      ]}
-                    >
+                    <View style={[styles.stepBadge, { backgroundColor: colors.accent }]}>
                       <Text style={[styles.stepBadgeText, { color: colors.onAccent }]}>
                         {idx + 1}
                       </Text>
                     </View>
-                    <Text style={[styles.stepText, { color: colors.text }]}>
-                      {step}
-                    </Text>
+                    <Text style={[styles.stepText, { color: colors.text }]}>{step}</Text>
                   </View>
                 ))}
               </View>
@@ -376,7 +375,12 @@ export function RecipeDetailModal({
                 <View style={styles.tipsList}>
                   {recipe.tips.map((tip, idx) => (
                     <View key={`tip-${idx}`} style={styles.tipRow}>
-                      <Ionicons name="sparkles" size={14} color={colors.accent} style={{ marginTop: 3 }} />
+                      <Ionicons
+                        name="sparkles"
+                        size={14}
+                        color={colors.accent}
+                        style={{ marginTop: 3 }}
+                      />
                       <Text style={[styles.tipText, { color: colors.text }]}>{tip}</Text>
                     </View>
                   ))}

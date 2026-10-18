@@ -1,13 +1,7 @@
-import {
-  calculateDefaultWaterGoalMl,
-  type WaterLog,
-} from '@calipartner/core';
+import { calculateDefaultWaterGoalMl, type WaterLog } from '@calipartner/core';
 import { createLogger } from '@/lib/logger';
 import { generateClientUuid } from './foodService';
-import {
-  enqueueOutbox,
-  type SyncDb,
-} from './syncService';
+import { enqueueOutbox, type SyncDb } from './syncService';
 
 const log = createLogger('waterService');
 

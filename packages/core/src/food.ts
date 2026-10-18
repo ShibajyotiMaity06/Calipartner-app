@@ -51,9 +51,7 @@ export function resolveUnitGrams(
   const normalized = unit.trim().toLowerCase();
 
   if (food?.serving_units && food.serving_units.length > 0) {
-    const matched = food.serving_units.find(
-      (su) => su.unit.trim().toLowerCase() === normalized,
-    );
+    const matched = food.serving_units.find((su) => su.unit.trim().toLowerCase() === normalized);
     if (matched && matched.grams > 0) {
       return matched.grams;
     }
@@ -75,11 +73,7 @@ function roundOneDecimal(num: number): number {
 /**
  * Scales nutrient values per 100g according to the quantity and chosen unit.
  */
-export function scaleNutrients(
-  food: Food,
-  quantity: number,
-  unit: string,
-): NutrientSnapshot {
+export function scaleNutrients(food: Food, quantity: number, unit: string): NutrientSnapshot {
   if (quantity <= 0) {
     return {
       calories: 0,
@@ -189,10 +183,7 @@ export function calculateDiaryTotals(
  * 18:30 - 22:59: Dinner
  * 23:00 - 04:59: Extra
  */
-export function getMealSectionForTime(
-  dateOrIso?: Date | string,
-  timezone?: string,
-): MealSection {
+export function getMealSectionForTime(dateOrIso?: Date | string, timezone?: string): MealSection {
   const d = dateOrIso
     ? typeof dateOrIso === 'string'
       ? new Date(dateOrIso)

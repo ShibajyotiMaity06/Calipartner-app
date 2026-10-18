@@ -1,13 +1,5 @@
 import { useEffect, useState } from 'react';
-import {
-  Modal,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  View,
-} from 'react-native';
+import { Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import type { WeightLog } from '@calipartner/core';
 import { t } from '@/i18n';
@@ -109,7 +101,9 @@ export function WeightEntryModal({
           onPress={onClose}
           accessibilityLabel={t('common.cancel')}
         />
-        <View style={[styles.sheet, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+        <View
+          style={[styles.sheet, { backgroundColor: colors.surface, borderColor: colors.border }]}
+        >
           {/* Header */}
           <View style={styles.header}>
             <View style={styles.headerTitleRow}>
@@ -150,9 +144,7 @@ export function WeightEntryModal({
               <View style={styles.summaryGrid}>
                 {/* Start Weight */}
                 <View style={styles.summaryItem}>
-                  <Text style={[styles.summaryItemLabel, { color: colors.textMuted }]}>
-                    Start
-                  </Text>
+                  <Text style={[styles.summaryItemLabel, { color: colors.textMuted }]}>Start</Text>
                   <Text style={[styles.summaryItemVal, { color: colors.text }]}>
                     {startWeight !== null ? `${startWeight.toFixed(1)} kg` : '—'}
                   </Text>
@@ -170,9 +162,7 @@ export function WeightEntryModal({
 
                 {/* Change */}
                 <View style={styles.summaryItem}>
-                  <Text style={[styles.summaryItemLabel, { color: colors.textMuted }]}>
-                    Change
-                  </Text>
+                  <Text style={[styles.summaryItemLabel, { color: colors.textMuted }]}>Change</Text>
                   <Text style={[styles.summaryItemVal, { color: colors.text }]}>
                     {totalChangeKg !== null
                       ? `${totalChangeKg > 0 ? '+' : ''}${totalChangeKg.toFixed(1)} kg (${changePercent}%)`

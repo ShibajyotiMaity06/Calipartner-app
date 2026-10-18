@@ -1,12 +1,5 @@
 import React from 'react';
-import {
-  ActivityIndicator,
-  Pressable,
-  StyleSheet,
-  Switch,
-  Text,
-  View,
-} from 'react-native';
+import { ActivityIndicator, Pressable, StyleSheet, Switch, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useLeaderboard } from '@/hooks/useLeaderboard';
 import { t } from '@/i18n';
@@ -162,10 +155,7 @@ export function LeaderboardView({ testID = 'leaderboard-view' }: LeaderboardView
               </View>
             ) : (
               <View
-                style={[
-                  styles.notEligibleCard,
-                  { backgroundColor: colors.surfaceAlt },
-                ]}
+                style={[styles.notEligibleCard, { backgroundColor: colors.surfaceAlt }]}
                 testID={`${testID}-not-eligible`}
               >
                 <Ionicons name="time-outline" size={20} color={colors.textMuted} />

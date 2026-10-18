@@ -56,7 +56,10 @@ export function usePaywall() {
 
       if (trigger === 'create_room_after_trial') {
         // Only if trial is used and user doesn't have an active plan
-        if (!hasPlan && (!isTrial || (entitlement?.period_end && new Date(entitlement.period_end) <= new Date()))) {
+        if (
+          !hasPlan &&
+          (!isTrial || (entitlement?.period_end && new Date(entitlement.period_end) <= new Date()))
+        ) {
           const data = getPaywallTriggerData(trigger, options?.currentTier);
           setPaywallState({
             isOpen: true,

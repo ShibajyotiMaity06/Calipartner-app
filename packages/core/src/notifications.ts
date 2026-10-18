@@ -71,7 +71,8 @@ export function isQuietHours(timeStr: string, quietStart: string, quietEnd: stri
 
 export interface NotificationDeliveryDecision {
   deliver: boolean;
-  reason?: 'pause_all' | 'type_disabled' | 'room_chat_muted' | 'currently_viewing_chat' | 'quiet_hours';
+  reason?:
+    'pause_all' | 'type_disabled' | 'room_chat_muted' | 'currently_viewing_chat' | 'quiet_hours';
 }
 
 /**
@@ -154,10 +155,7 @@ export function shouldDeliverNotification(options: {
  * 2. Never reveal another person's calorie numbers.
  * 3. Chat notifications respect hidePreviews setting.
  */
-export function sanitizePushPayload(
-  payload: PushPayload,
-  hidePreviews = false,
-): PushPayload {
+export function sanitizePushPayload(payload: PushPayload, hidePreviews = false): PushPayload {
   let body = payload.body;
   let title = payload.title;
 
@@ -256,17 +254,16 @@ export function formatNotificationCopy(
       }
       return {
         title: `${sender} in ${room}`,
-        body: params.customMessage
-          ? params.customMessage.slice(0, 100)
-          : 'New message',
+        body: params.customMessage ? params.customMessage.slice(0, 100) : 'New message',
       };
 
     case 'streak_at_risk':
       return {
         title: 'Keep your streak alive!',
-        body: params.streakDays && params.streakDays > 1
-          ? `You have a ${params.streakDays}-day streak! Log today before midnight to protect it.`
-          : 'Don’t break the chain! Log your day before midnight.',
+        body:
+          params.streakDays && params.streakDays > 1
+            ? `You have a ${params.streakDays}-day streak! Log today before midnight to protect it.`
+            : 'Don’t break the chain! Log your day before midnight.',
       };
 
     case 'weekly_summary':
@@ -321,7 +318,9 @@ export function validateFcmToken(token: string): boolean {
  * Generates local reminder schedules based on user preferences.
  * Adheres to PRD 6.12 (NTF-1) & 6.20 (FST-6).
  */
-export function buildLocalReminderSchedules(settings: NotificationSettings): LocalReminderSchedule[] {
+export function buildLocalReminderSchedules(
+  settings: NotificationSettings,
+): LocalReminderSchedule[] {
   if (settings.pause_all) return [];
 
   const schedules: LocalReminderSchedule[] = [];

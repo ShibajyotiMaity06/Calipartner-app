@@ -1,12 +1,5 @@
 import React from 'react';
-import {
-  ActivityIndicator,
-  Image,
-  Pressable,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
+import { ActivityIndicator, Image, Pressable, StyleSheet, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import type { ChatAttachment, ChatMessage } from '@/types/chat';
 import { t } from '@/i18n';
@@ -96,7 +89,12 @@ export function ChatMessageBubble({
       )}
 
       {/* Bubble Container */}
-      <View style={[styles.bubbleWrapper, isMine ? styles.bubbleWrapperMine : styles.bubbleWrapperOther]}>
+      <View
+        style={[
+          styles.bubbleWrapper,
+          isMine ? styles.bubbleWrapperMine : styles.bubbleWrapperOther,
+        ]}
+      >
         {/* Sender name for incoming messages */}
         {!isMine && (
           <Text style={[styles.senderNickname, { color: colors.textMuted }]} numberOfLines={1}>
@@ -128,12 +126,7 @@ export function ChatMessageBubble({
             </Text>
           ) : (
             Boolean(message.text) && (
-              <Text
-                style={[
-                  styles.messageText,
-                  { color: isMine ? '#FFFFFF' : colors.text },
-                ]}
-              >
+              <Text style={[styles.messageText, { color: isMine ? '#FFFFFF' : colors.text }]}>
                 {message.text}
               </Text>
             )
@@ -208,12 +201,8 @@ export function ChatMessageBubble({
                 {isSending && (
                   <ActivityIndicator size={10} color="#FFFFFF" style={styles.sendingSpinner} />
                 )}
-                {isSent && (
-                  <Ionicons name="checkmark" size={12} color="#FFFFFF" />
-                )}
-                {isFailed && (
-                  <Ionicons name="alert-circle" size={14} color="#FCA5A5" />
-                )}
+                {isSent && <Ionicons name="checkmark" size={12} color="#FFFFFF" />}
+                {isFailed && <Ionicons name="alert-circle" size={14} color="#FCA5A5" />}
               </View>
             )}
           </View>

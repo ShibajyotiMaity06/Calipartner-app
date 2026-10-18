@@ -10,12 +10,7 @@ import {
   View,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import type {
-  Exercise,
-  WorkoutSummary,
-  WorkoutType,
-  WorkoutWithDetails,
-} from '@calipartner/core';
+import type { Exercise, WorkoutSummary, WorkoutType, WorkoutWithDetails } from '@calipartner/core';
 import { useWorkouts } from '@/hooks/useWorkouts';
 import { t } from '@/i18n';
 import { fontSize, radius, spacing } from '@/theme/tokens';
@@ -55,7 +50,11 @@ interface WorkoutLoggerModalProps {
   testID?: string;
 }
 
-const WORKOUT_TYPES: Array<{ key: WorkoutType; label: string; icon: keyof typeof Ionicons.glyphMap }> = [
+const WORKOUT_TYPES: Array<{
+  key: WorkoutType;
+  label: string;
+  icon: keyof typeof Ionicons.glyphMap;
+}> = [
   { key: 'strength', label: 'Strength', icon: 'barbell-outline' },
   { key: 'cardio', label: 'Cardio', icon: 'speedometer-outline' },
   { key: 'walk_run', label: 'Walk / Run', icon: 'walk-outline' },
@@ -75,24 +74,13 @@ export function WorkoutLoggerModal({
   const { colors } = useTheme();
   const localDate = defaultDate ?? new Date().toISOString().split('T')[0]!;
 
-  const {
-    create,
-    update,
-    addExercise,
-    addSet,
-    updateSet,
-    getSummary,
-    getPreviousPerformance,
-  } = useWorkouts(localDate);
+  const { create, update, addExercise, addSet, updateSet, getSummary, getPreviousPerformance } =
+    useWorkouts(localDate);
 
   // Form State
-  const [workoutType, setWorkoutType] = useState<WorkoutType>(
-    initialWorkout?.type ?? 'strength',
-  );
+  const [workoutType, setWorkoutType] = useState<WorkoutType>(initialWorkout?.type ?? 'strength');
   const [workoutName, setWorkoutName] = useState(initialWorkout?.name ?? '');
-  const [durationMinutes, setDurationMinutes] = useState(
-    initialWorkout?.duration_minutes ?? 45,
-  );
+  const [durationMinutes, setDurationMinutes] = useState(initialWorkout?.duration_minutes ?? 45);
   const [notes, setNotes] = useState(initialWorkout?.notes ?? '');
   const [effortRating, setEffortRating] = useState<number | null>(
     initialWorkout?.effort_rating ?? null,
@@ -109,9 +97,7 @@ export function WorkoutLoggerModal({
   const [saving, setSaving] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  const [finishedWorkout, setFinishedWorkout] = useState<WorkoutWithDetails | null>(
-    null,
-  );
+  const [finishedWorkout, setFinishedWorkout] = useState<WorkoutWithDetails | null>(null);
   const [finishSummary, setFinishSummary] = useState<WorkoutSummary | null>(null);
   const [showSummaryModal, setShowSummaryModal] = useState(false);
 
@@ -240,11 +226,7 @@ export function WorkoutLoggerModal({
     });
   };
 
-  const handleUpdateSetWeight = (
-    exerciseIndex: number,
-    setIndex: number,
-    delta: number,
-  ) => {
+  const handleUpdateSetWeight = (exerciseIndex: number, setIndex: number, delta: number) => {
     setExercises((prev) => {
       const copy = [...prev];
       const target = copy[exerciseIndex];
@@ -260,11 +242,7 @@ export function WorkoutLoggerModal({
     });
   };
 
-  const handleSetWeightDirect = (
-    exerciseIndex: number,
-    setIndex: number,
-    valText: string,
-  ) => {
+  const handleSetWeightDirect = (exerciseIndex: number, setIndex: number, valText: string) => {
     const num = parseFloat(valText.replace(/[^0-9.]/g, ''));
     const val = isNaN(num) ? 0 : num;
     setExercises((prev) => {
@@ -279,11 +257,7 @@ export function WorkoutLoggerModal({
     });
   };
 
-  const handleUpdateSetReps = (
-    exerciseIndex: number,
-    setIndex: number,
-    delta: number,
-  ) => {
+  const handleUpdateSetReps = (exerciseIndex: number, setIndex: number, delta: number) => {
     setExercises((prev) => {
       const copy = [...prev];
       const target = copy[exerciseIndex];
@@ -299,11 +273,7 @@ export function WorkoutLoggerModal({
     });
   };
 
-  const handleSetRepsDirect = (
-    exerciseIndex: number,
-    setIndex: number,
-    valText: string,
-  ) => {
+  const handleSetRepsDirect = (exerciseIndex: number, setIndex: number, valText: string) => {
     const num = parseInt(valText.replace(/[^0-9]/g, ''), 10);
     const val = isNaN(num) ? 0 : num;
     setExercises((prev) => {
@@ -544,9 +514,7 @@ export function WorkoutLoggerModal({
           </TouchableOpacity>
 
           <Text style={[styles.headerTitle, { color: colors.text }]}>
-            {initialWorkout
-              ? t('workouts.editWorkout')
-              : t('workouts.logWorkout')}
+            {initialWorkout ? t('workouts.editWorkout') : t('workouts.logWorkout')}
           </Text>
 
           <TouchableOpacity
@@ -587,9 +555,7 @@ export function WorkoutLoggerModal({
               ]}
             >
               <Ionicons name="alert-circle" size={18} color={colors.danger} />
-              <Text style={[styles.errorText, { color: colors.danger }]}>
-                {errorMessage}
-              </Text>
+              <Text style={[styles.errorText, { color: colors.danger }]}>{errorMessage}</Text>
             </View>
           )}
 
@@ -641,10 +607,7 @@ export function WorkoutLoggerModal({
 
           {/* General Fields */}
           <View
-            style={[
-              styles.card,
-              { backgroundColor: colors.surface, borderColor: colors.border },
-            ]}
+            style={[styles.card, { backgroundColor: colors.surface, borderColor: colors.border }]}
           >
             {/* Workout Name */}
             <View style={styles.fieldGroup}>
@@ -682,9 +645,7 @@ export function WorkoutLoggerModal({
                   accessibilityRole="button"
                   accessibilityLabel="-5 min"
                 >
-                  <Text style={[styles.stepperBtnText, { color: colors.text }]}>
-                    -5
-                  </Text>
+                  <Text style={[styles.stepperBtnText, { color: colors.text }]}>-5</Text>
                 </TouchableOpacity>
                 <TextInput
                   testID={`${testID}-input-duration`}
@@ -711,9 +672,7 @@ export function WorkoutLoggerModal({
                   accessibilityRole="button"
                   accessibilityLabel="+5 min"
                 >
-                  <Text style={[styles.stepperBtnText, { color: colors.text }]}>
-                    +5
-                  </Text>
+                  <Text style={[styles.stepperBtnText, { color: colors.text }]}>+5</Text>
                 </TouchableOpacity>
               </View>
             </View>
@@ -733,9 +692,7 @@ export function WorkoutLoggerModal({
                       style={[
                         styles.effortPill,
                         {
-                          backgroundColor: isSelected
-                            ? colors.accent
-                            : colors.surfaceAlt,
+                          backgroundColor: isSelected ? colors.accent : colors.surfaceAlt,
                         },
                       ]}
                       onPress={() => setEffortRating(isSelected ? null : level)}
@@ -809,9 +766,7 @@ export function WorkoutLoggerModal({
                 accessibilityLabel={t('workouts.exercises.addExercise')}
               >
                 <Ionicons name="add" size={16} color={colors.onAccent} />
-                <Text
-                  style={[styles.addExerciseBtnText, { color: colors.onAccent }]}
-                >
+                <Text style={[styles.addExerciseBtnText, { color: colors.onAccent }]}>
                   {t('workouts.exercises.addExercise')}
                 </Text>
               </TouchableOpacity>
@@ -835,11 +790,7 @@ export function WorkoutLoggerModal({
                     </Text>
                     {exercise.previousHint && (
                       <View style={styles.hintWrap}>
-                        <Ionicons
-                          name="time-outline"
-                          size={13}
-                          color={colors.accent}
-                        />
+                        <Ionicons name="time-outline" size={13} color={colors.accent} />
                         <Text
                           testID={`exercise-hint-${exIdx}`}
                           style={[styles.hintText, { color: colors.accent }]}
@@ -856,18 +807,11 @@ export function WorkoutLoggerModal({
                       testID={`btn-reorder-up-${exIdx}`}
                       disabled={exIdx === 0}
                       onPress={() => handleMoveExercise(exIdx, 'up')}
-                      style={[
-                        styles.iconActionBtn,
-                        { opacity: exIdx === 0 ? 0.3 : 1 },
-                      ]}
+                      style={[styles.iconActionBtn, { opacity: exIdx === 0 ? 0.3 : 1 }]}
                       accessibilityRole="button"
                       accessibilityLabel={t('workouts.exercises.reorderUp')}
                     >
-                      <Ionicons
-                        name="chevron-up"
-                        size={18}
-                        color={colors.textMuted}
-                      />
+                      <Ionicons name="chevron-up" size={18} color={colors.textMuted} />
                     </TouchableOpacity>
 
                     <TouchableOpacity
@@ -881,11 +825,7 @@ export function WorkoutLoggerModal({
                       accessibilityRole="button"
                       accessibilityLabel={t('workouts.exercises.reorderDown')}
                     >
-                      <Ionicons
-                        name="chevron-down"
-                        size={18}
-                        color={colors.textMuted}
-                      />
+                      <Ionicons name="chevron-down" size={18} color={colors.textMuted} />
                     </TouchableOpacity>
 
                     <TouchableOpacity
@@ -901,12 +841,7 @@ export function WorkoutLoggerModal({
                 </View>
 
                 {/* Table Header for Sets */}
-                <View
-                  style={[
-                    styles.setsTableHeader,
-                    { borderBottomColor: colors.border },
-                  ]}
-                >
+                <View style={[styles.setsTableHeader, { borderBottomColor: colors.border }]}>
                   <Text style={[styles.colHeader, { flex: 0.8, color: colors.textMuted }]}>
                     {t('workouts.sets.headerSet')}
                   </Text>
@@ -919,7 +854,12 @@ export function WorkoutLoggerModal({
                   <Text style={[styles.colHeader, { flex: 1.8, color: colors.textMuted }]}>
                     {t('workouts.sets.headerReps')}
                   </Text>
-                  <Text style={[styles.colHeader, { flex: 0.9, textAlign: 'center', color: colors.textMuted }]}>
+                  <Text
+                    style={[
+                      styles.colHeader,
+                      { flex: 0.9, textAlign: 'center', color: colors.textMuted },
+                    ]}
+                  >
                     {t('workouts.sets.headerDone')}
                   </Text>
                   <Text style={[styles.colHeader, { flex: 0.6 }]} />
@@ -933,17 +873,13 @@ export function WorkoutLoggerModal({
                     style={[
                       styles.setRow,
                       {
-                        backgroundColor: set.completed
-                          ? colors.surfaceAlt
-                          : colors.surface,
+                        backgroundColor: set.completed ? colors.surfaceAlt : colors.surface,
                         borderBottomColor: colors.border,
                       },
                     ]}
                   >
                     {/* Set Number */}
-                    <Text
-                      style={[styles.setNumText, { flex: 0.8, color: colors.text }]}
-                    >
+                    <Text style={[styles.setNumText, { flex: 0.8, color: colors.text }]}>
                       {set.setNumber}
                     </Text>
 
@@ -953,9 +889,7 @@ export function WorkoutLoggerModal({
                       style={[
                         styles.warmupChip,
                         {
-                          backgroundColor: set.isWarmup
-                            ? colors.syncPending
-                            : colors.surfaceAlt,
+                          backgroundColor: set.isWarmup ? colors.syncPending : colors.surfaceAlt,
                           borderColor: colors.border,
                         },
                       ]}
@@ -982,9 +916,7 @@ export function WorkoutLoggerModal({
                         style={[styles.fastStepBtn, { backgroundColor: colors.surfaceAlt }]}
                         onPress={() => handleUpdateSetWeight(exIdx, setIdx, -2.5)}
                       >
-                        <Text style={[styles.fastStepText, { color: colors.text }]}>
-                          -
-                        </Text>
+                        <Text style={[styles.fastStepText, { color: colors.text }]}>-</Text>
                       </TouchableOpacity>
                       <TextInput
                         testID={`input-weight-${exIdx}-${setIdx}`}
@@ -1000,18 +932,14 @@ export function WorkoutLoggerModal({
                         value={set.weightKg > 0 ? String(set.weightKg) : ''}
                         placeholder="0"
                         placeholderTextColor={colors.textMuted}
-                        onChangeText={(txt) =>
-                          handleSetWeightDirect(exIdx, setIdx, txt)
-                        }
+                        onChangeText={(txt) => handleSetWeightDirect(exIdx, setIdx, txt)}
                       />
                       <TouchableOpacity
                         testID={`btn-weight-plus-${exIdx}-${setIdx}`}
                         style={[styles.fastStepBtn, { backgroundColor: colors.surfaceAlt }]}
                         onPress={() => handleUpdateSetWeight(exIdx, setIdx, 2.5)}
                       >
-                        <Text style={[styles.fastStepText, { color: colors.text }]}>
-                          +
-                        </Text>
+                        <Text style={[styles.fastStepText, { color: colors.text }]}>+</Text>
                       </TouchableOpacity>
                     </View>
 
@@ -1022,9 +950,7 @@ export function WorkoutLoggerModal({
                         style={[styles.fastStepBtn, { backgroundColor: colors.surfaceAlt }]}
                         onPress={() => handleUpdateSetReps(exIdx, setIdx, -1)}
                       >
-                        <Text style={[styles.fastStepText, { color: colors.text }]}>
-                          -
-                        </Text>
+                        <Text style={[styles.fastStepText, { color: colors.text }]}>-</Text>
                       </TouchableOpacity>
                       <TextInput
                         testID={`input-reps-${exIdx}-${setIdx}`}
@@ -1040,18 +966,14 @@ export function WorkoutLoggerModal({
                         value={set.reps > 0 ? String(set.reps) : ''}
                         placeholder="0"
                         placeholderTextColor={colors.textMuted}
-                        onChangeText={(txt) =>
-                          handleSetRepsDirect(exIdx, setIdx, txt)
-                        }
+                        onChangeText={(txt) => handleSetRepsDirect(exIdx, setIdx, txt)}
                       />
                       <TouchableOpacity
                         testID={`btn-reps-plus-${exIdx}-${setIdx}`}
                         style={[styles.fastStepBtn, { backgroundColor: colors.surfaceAlt }]}
                         onPress={() => handleUpdateSetReps(exIdx, setIdx, 1)}
                       >
-                        <Text style={[styles.fastStepText, { color: colors.text }]}>
-                          +
-                        </Text>
+                        <Text style={[styles.fastStepText, { color: colors.text }]}>+</Text>
                       </TouchableOpacity>
                     </View>
 

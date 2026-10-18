@@ -1,11 +1,5 @@
 import { useState } from 'react';
-import {
-  Modal,
-  Pressable,
-  Text,
-  TextInput,
-  View,
-} from 'react-native';
+import { Modal, Pressable, Text, TextInput, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import type { MealSection } from '@calipartner/core';
 import { useCopyMeal } from '@/hooks/useFoodEntries';
@@ -85,7 +79,9 @@ export function CopyMealModal({
           >
             <Text style={{ fontSize: fontSize.lg, fontWeight: '700', color: colors.text }}>
               {mode === 'meal'
-                ? t('copy.copyMealTitle', { section: t(`diary.sections.${sourceSection}` as Parameters<typeof t>[0]) })
+                ? t('copy.copyMealTitle', {
+                    section: t(`diary.sections.${sourceSection}` as Parameters<typeof t>[0]),
+                  })
                 : t('copy.copyDayTitle')}
             </Text>
             <Pressable

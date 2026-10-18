@@ -158,7 +158,14 @@ export function useCopyMeal() {
     try {
       const db = await getDb();
       const userId = user?.id || 'guest-user';
-      const copied = await copyMealSection(db, userId, sourceDate, sourceSection, targetDate, targetSection);
+      const copied = await copyMealSection(
+        db,
+        userId,
+        sourceDate,
+        sourceSection,
+        targetDate,
+        targetSection,
+      );
       diaryEvents.emitChange();
 
       if (isOnline && user?.id) {

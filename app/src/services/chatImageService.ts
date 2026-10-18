@@ -22,7 +22,10 @@ export interface UploadImageProgressCallback {
 
 interface SupabaseFunctionsClient {
   functions: {
-    invoke: (name: string, options: { body: unknown }) => Promise<{
+    invoke: (
+      name: string,
+      options: { body: unknown },
+    ) => Promise<{
       data: Record<string, unknown> | null;
       error: { message?: string } | null;
     }>;

@@ -12,7 +12,8 @@ interface GoalStepProps {
 
 interface GoalOption {
   id: Goal;
-  titleKey: 'onboarding.goal.cutTitle' | 'onboarding.goal.maintainTitle' | 'onboarding.goal.bulkTitle';
+  titleKey:
+    'onboarding.goal.cutTitle' | 'onboarding.goal.maintainTitle' | 'onboarding.goal.bulkTitle';
   descKey: 'onboarding.goal.cutDesc' | 'onboarding.goal.maintainDesc' | 'onboarding.goal.bulkDesc';
   badge: string;
 }
@@ -77,11 +78,11 @@ export function GoalStep({ selectedGoal, onSelectGoal }: GoalStepProps) {
                     },
                   ]}
                 >
-                  {isSelected && <View style={[styles.radioDot, { backgroundColor: colors.onAccent }]} />}
+                  {isSelected && (
+                    <View style={[styles.radioDot, { backgroundColor: colors.onAccent }]} />
+                  )}
                 </View>
-                <Text style={[styles.title, { color: colors.text }]}>
-                  {t(option.titleKey)}
-                </Text>
+                <Text style={[styles.title, { color: colors.text }]}>{t(option.titleKey)}</Text>
               </View>
               <View
                 style={[
@@ -92,9 +93,7 @@ export function GoalStep({ selectedGoal, onSelectGoal }: GoalStepProps) {
                   },
                 ]}
               >
-                <Text style={[styles.badgeText, { color: colors.textMuted }]}>
-                  {option.badge}
-                </Text>
+                <Text style={[styles.badgeText, { color: colors.textMuted }]}>{option.badge}</Text>
               </View>
             </View>
 

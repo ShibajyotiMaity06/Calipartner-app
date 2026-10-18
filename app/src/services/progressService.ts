@@ -130,9 +130,7 @@ export async function searchRoomMembersForProgress(
 /**
  * Fetch current user streaks.
  */
-export async function fetchUserStreaks(
-  client: SupabaseClient,
-): Promise<UserStreak | null> {
+export async function fetchUserStreaks(client: SupabaseClient): Promise<UserStreak | null> {
   try {
     const { data: userData } = await client.auth.getUser();
     if (!userData?.user) return null;

@@ -44,25 +44,19 @@ export function CoachHistoryModal({
     if (Platform.OS === 'web') {
       const g = globalThis as unknown as { confirm?: (msg: string) => boolean };
       const confirmed =
-        typeof g.confirm === 'function'
-          ? g.confirm(t('coach.history.confirmMsg'))
-          : true;
+        typeof g.confirm === 'function' ? g.confirm(t('coach.history.confirmMsg')) : true;
       if (confirmed) runDelete();
       return;
     }
 
-    Alert.alert(
-      t('coach.history.confirmTitle'),
-      t('coach.history.confirmMsg'),
-      [
-        { text: t('coach.history.cancelBtn'), style: 'cancel' },
-        {
-          text: t('coach.history.confirmBtn'),
-          style: 'destructive',
-          onPress: runDelete,
-        },
-      ],
-    );
+    Alert.alert(t('coach.history.confirmTitle'), t('coach.history.confirmMsg'), [
+      { text: t('coach.history.cancelBtn'), style: 'cancel' },
+      {
+        text: t('coach.history.confirmBtn'),
+        style: 'destructive',
+        onPress: runDelete,
+      },
+    ]);
   };
 
   return (
@@ -76,10 +70,7 @@ export function CoachHistoryModal({
       <View style={[styles.container, { backgroundColor: colors.background }]}>
         {/* Top Header */}
         <View
-          style={[
-            styles.header,
-            { backgroundColor: colors.surface, borderColor: colors.border },
-          ]}
+          style={[styles.header, { backgroundColor: colors.surface, borderColor: colors.border }]}
         >
           <View style={styles.headerLeft}>
             <Text
@@ -108,23 +99,12 @@ export function CoachHistoryModal({
         >
           {loading ? (
             <View style={styles.emptyContainer} testID="view-coach-history-loading">
-              <Text style={[styles.emptySubtitle, { color: colors.textMuted }]}>
-                Loading…
-              </Text>
+              <Text style={[styles.emptySubtitle, { color: colors.textMuted }]}>Loading…</Text>
             </View>
           ) : conversations.length === 0 ? (
             <View style={styles.emptyContainer} testID="view-coach-history-empty">
-              <View
-                style={[
-                  styles.emptyIconCircle,
-                  { backgroundColor: colors.cardHighlight },
-                ]}
-              >
-                <Ionicons
-                  name="chatbubbles-outline"
-                  size={32}
-                  color={colors.accent}
-                />
+              <View style={[styles.emptyIconCircle, { backgroundColor: colors.cardHighlight }]}>
+                <Ionicons name="chatbubbles-outline" size={32} color={colors.accent} />
               </View>
               <Text style={[styles.emptyTitle, { color: colors.text }]}>
                 {t('coach.history.empty')}
@@ -158,15 +138,10 @@ export function CoachHistoryModal({
                     testID={`btn-select-conv-${conv.id}`}
                   >
                     <View style={styles.titleRow}>
-                      <Text
-                        style={[styles.cardTitle, { color: colors.text }]}
-                        numberOfLines={1}
-                      >
+                      <Text style={[styles.cardTitle, { color: colors.text }]} numberOfLines={1}>
                         {conv.title}
                       </Text>
-                      <Text
-                        style={[styles.cardDate, { color: colors.textMuted }]}
-                      >
+                      <Text style={[styles.cardDate, { color: colors.textMuted }]}>
                         {new Date(conv.updatedAt).toLocaleDateString()}
                       </Text>
                     </View>
@@ -185,11 +160,7 @@ export function CoachHistoryModal({
                     accessibilityLabel={`${t('coach.history.deleteSession')}: ${conv.title}`}
                     testID={`btn-delete-conv-${conv.id}`}
                   >
-                    <Ionicons
-                      name="trash-outline"
-                      size={18}
-                      color={colors.danger}
-                    />
+                    <Ionicons name="trash-outline" size={18} color={colors.danger} />
                   </Pressable>
                 </View>
               ))}
@@ -200,29 +171,17 @@ export function CoachHistoryModal({
         {/* Bottom actions: Delete all history */}
         {conversations.length > 0 && (
           <View
-            style={[
-              styles.footer,
-              { backgroundColor: colors.surface, borderColor: colors.border },
-            ]}
+            style={[styles.footer, { backgroundColor: colors.surface, borderColor: colors.border }]}
           >
             <Pressable
               onPress={handleConfirmDeleteAll}
-              style={[
-                styles.deleteAllBtn,
-                { borderColor: colors.danger },
-              ]}
+              style={[styles.deleteAllBtn, { borderColor: colors.danger }]}
               accessibilityRole="button"
               accessibilityLabel={t('coach.history.deleteAll')}
               testID="btn-delete-all-history"
             >
-              <Ionicons
-                name="trash-bin-outline"
-                size={18}
-                color={colors.danger}
-              />
-              <Text
-                style={[styles.deleteAllBtnText, { color: colors.danger }]}
-              >
+              <Ionicons name="trash-bin-outline" size={18} color={colors.danger} />
+              <Text style={[styles.deleteAllBtnText, { color: colors.danger }]}>
                 {t('coach.history.deleteAll')}
               </Text>
             </Pressable>

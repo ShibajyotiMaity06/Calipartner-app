@@ -1,10 +1,10 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { RealtimeChannel } from '@supabase/supabase-js';
-import type {
-  FocusSessionMode,
-  RoomFocusState,
+import type { FocusSessionMode, RoomFocusState } from '@calipartner/core';
+import {
+  calculateParticipantFocusedSeconds,
+  calculateRemainingTimerSeconds,
 } from '@calipartner/core';
-import { calculateParticipantFocusedSeconds, calculateRemainingTimerSeconds } from '@calipartner/core';
 import { createLogger } from '@/lib/logger';
 import { getSupabase } from '@/lib/supabase';
 import type { FocusError } from '@/services/focusService';
@@ -165,7 +165,10 @@ export function useRoomFocus(roomId: string | null, options: UseRoomFocusOptions
         const p = active.my_participant;
         let totalPaused = p.paused_seconds || 0;
         if (p.status === 'break' && p.last_paused_at) {
-          totalPaused += Math.max(0, Math.floor((now.getTime() - new Date(p.last_paused_at).getTime()) / 1000));
+          totalPaused += Math.max(
+            0,
+            Math.floor((now.getTime() - new Date(p.last_paused_at).getTime()) / 1000),
+          );
         }
         const net = calculateParticipantFocusedSeconds(p.joined_at, now, totalPaused);
         setMyElapsedSeconds(net);

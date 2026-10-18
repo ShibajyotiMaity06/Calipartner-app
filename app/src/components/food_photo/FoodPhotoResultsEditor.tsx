@@ -19,14 +19,8 @@ import {
 import { useAuth } from '@/contexts/AuthContext';
 import { getDb } from '@/db';
 import { t } from '@/i18n';
-import {
-  swapCandidateFood,
-  updateCandidateQuantity,
-} from '@/services/aiFoodPhotoService';
-import {
-  generateClientUuid,
-  searchLocalFoods,
-} from '@/services/foodService';
+import { swapCandidateFood, updateCandidateQuantity } from '@/services/aiFoodPhotoService';
+import { generateClientUuid, searchLocalFoods } from '@/services/foodService';
 import { fontSize, radius, spacing } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
 
@@ -36,10 +30,7 @@ export interface FoodPhotoResultsEditorProps {
   defaultSection?: MealSection;
   localDate?: string;
   onClose: () => void;
-  onSaveMeal: (
-    finalCandidates: FoodCandidateItem[],
-    mealSection: MealSection,
-  ) => Promise<void>;
+  onSaveMeal: (finalCandidates: FoodCandidateItem[], mealSection: MealSection) => Promise<void>;
   onRetakePhoto?: () => void;
 }
 
@@ -83,9 +74,10 @@ export function FoodPhotoResultsEditor({
 
     const isGramUnit = item.unit.toLowerCase() === 'g' || item.unit.toLowerCase() === 'ml';
     const delta = isGramUnit ? 25 : 0.25;
-    const nextQty = direction === 'inc'
-      ? Math.round((item.quantity + delta) * 100) / 100
-      : Math.max(0, Math.round((item.quantity - delta) * 100) / 100);
+    const nextQty =
+      direction === 'inc'
+        ? Math.round((item.quantity + delta) * 100) / 100
+        : Math.max(0, Math.round((item.quantity - delta) * 100) / 100);
 
     const updated = updateCandidateQuantity(item, nextQty);
     setCandidates((prev) => {
@@ -272,9 +264,7 @@ export function FoodPhotoResultsEditor({
                   {t('foodLog.photo.badge')}
                 </Text>
               </View>
-              <Text style={[styles.estimateTitle, { color: colors.text }]}>
-                AI Detected Foods
-              </Text>
+              <Text style={[styles.estimateTitle, { color: colors.text }]}>AI Detected Foods</Text>
             </View>
             <Text style={[styles.estimateNoticeText, { color: colors.textMuted }]}>
               {t('foodLog.photo.estimateNotice')}
@@ -283,9 +273,7 @@ export function FoodPhotoResultsEditor({
 
           {/* Section Picker Pills */}
           <View style={styles.sectionWrap}>
-            <Text style={[styles.sectionHeading, { color: colors.textMuted }]}>
-              Meal Time
-            </Text>
+            <Text style={[styles.sectionHeading, { color: colors.textMuted }]}>Meal Time</Text>
             <View style={styles.sectionRow}>
               {SECTIONS.map((sec) => {
                 const isSelected = selectedSection === sec;
@@ -353,9 +341,7 @@ export function FoodPhotoResultsEditor({
 
               <View style={[styles.macroPill, { backgroundColor: colors.surfaceAlt }]}>
                 <Text style={[styles.macroPillLabel, { color: colors.textMuted }]}>F</Text>
-                <Text style={[styles.macroPillVal, { color: colors.macroFat }]}>
-                  {totals.fat}g
-                </Text>
+                <Text style={[styles.macroPillVal, { color: colors.macroFat }]}>{totals.fat}g</Text>
               </View>
             </View>
           </View>
@@ -370,9 +356,7 @@ export function FoodPhotoResultsEditor({
               ]}
             >
               <Ionicons name="alert-circle" size={18} color={colors.danger} />
-              <Text style={[styles.errorText, { color: colors.danger }]}>
-                {saveError}
-              </Text>
+              <Text style={[styles.errorText, { color: colors.danger }]}>{saveError}</Text>
             </View>
           )}
 
@@ -416,7 +400,11 @@ export function FoodPhotoResultsEditor({
                   onPress={handleOpenAdd}
                   style={[
                     styles.emptyActionBtn,
-                    { backgroundColor: colors.surfaceAlt, borderColor: colors.border, borderWidth: 1 },
+                    {
+                      backgroundColor: colors.surfaceAlt,
+                      borderColor: colors.border,
+                      borderWidth: 1,
+                    },
                   ]}
                 >
                   <Ionicons name="add" size={18} color={colors.text} />
@@ -458,7 +446,8 @@ export function FoodPhotoResultsEditor({
                           {foodName}
                         </Text>
                         <Text style={[styles.confidenceLabel, { color: colors.textMuted }]}>
-                          {Math.round(candidate.confidence * 100)}% match • {candidate.estimated_grams}g
+                          {Math.round(candidate.confidence * 100)}% match •{' '}
+                          {candidate.estimated_grams}g
                         </Text>
                       </View>
 
@@ -510,12 +499,7 @@ export function FoodPhotoResultsEditor({
                     </View>
 
                     {/* Bottom Row: Swap & Remove Actions */}
-                    <View
-                      style={[
-                        styles.candidateActionsRow,
-                        { borderTopColor: colors.border },
-                      ]}
-                    >
+                    <View style={[styles.candidateActionsRow, { borderTopColor: colors.border }]}>
                       <Pressable
                         testID={`btn-swap-candidate-${idx}`}
                         accessibilityRole="button"
@@ -690,7 +674,8 @@ export function FoodPhotoResultsEditor({
                           {f.name}
                         </Text>
                         <Text style={[styles.searchResultMacros, { color: colors.textMuted }]}>
-                          P {f.protein_per_100g}g • C {f.carbs_per_100g}g • F {f.fat_per_100g}g (per 100g)
+                          P {f.protein_per_100g}g • C {f.carbs_per_100g}g • F {f.fat_per_100g}g (per
+                          100g)
                         </Text>
                       </View>
 

@@ -1,7 +1,4 @@
-import {
-  calculateTargets,
-  type CalculateTargetsInput,
-} from '@calipartner/core';
+import { calculateTargets, type CalculateTargetsInput } from '@calipartner/core';
 
 export const corsHeaders = {
   'Access-Control-Allow-Origin': '*',

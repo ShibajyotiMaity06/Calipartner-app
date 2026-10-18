@@ -48,10 +48,7 @@ const METRICS: ProgressMetric[] = [
   'workouts',
 ];
 
-export function RoomProgressView({
-  roomId,
-  testID = 'room-progress-view',
-}: RoomProgressViewProps) {
+export function RoomProgressView({ roomId, testID = 'room-progress-view' }: RoomProgressViewProps) {
   const { colors } = useTheme();
 
   const {
@@ -316,10 +313,7 @@ export function RoomProgressView({
               testID={`${testID}-metric-${metric}`}
             >
               <Text
-                style={[
-                  styles.metricChipText,
-                  { color: isSelected ? '#ffffff' : colors.text },
-                ]}
+                style={[styles.metricChipText, { color: isSelected ? '#ffffff' : colors.text }]}
               >
                 {label}
               </Text>
@@ -330,7 +324,11 @@ export function RoomProgressView({
 
       {/* Member Chips & Filter */}
       <View style={styles.memberChipsContainer}>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.memberChipsList}>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.memberChipsList}
+        >
           {memberSeriesList.map((m) => {
             const isHidden = hiddenMemberIds.includes(m.user_id);
             const color = memberColorMap.get(m.user_id) ?? colors.accent;
@@ -364,14 +362,16 @@ export function RoomProgressView({
 
           {data?.is_large_room && (
             <Pressable
-              style={[styles.memberChip, styles.searchMemberChip, { backgroundColor: colors.surfaceAlt }]}
+              style={[
+                styles.memberChip,
+                styles.searchMemberChip,
+                { backgroundColor: colors.surfaceAlt },
+              ]}
               onPress={() => setShowMemberPicker(true)}
               testID={`${testID}-open-member-picker`}
             >
               <Ionicons name="person-add-outline" size={14} color={colors.text} />
-              <Text style={[styles.memberChipText, { color: colors.text }]}>
-                + Select Members
-              </Text>
+              <Text style={[styles.memberChipText, { color: colors.text }]}>+ Select Members</Text>
             </Pressable>
           )}
         </ScrollView>
@@ -525,10 +525,7 @@ export function RoomProgressView({
               color={sortByConsistency ? '#ffffff' : colors.text}
             />
             <Text
-              style={[
-                styles.sortBtnText,
-                { color: sortByConsistency ? '#ffffff' : colors.text },
-              ]}
+              style={[styles.sortBtnText, { color: sortByConsistency ? '#ffffff' : colors.text }]}
             >
               {t('progress.room.sortConsistency')}
             </Text>
@@ -563,9 +560,7 @@ export function RoomProgressView({
 
                 {/* Consistency Score Badge */}
                 <View style={styles.consistencyPill}>
-                  <Text style={[styles.consistencyLabel, { color: colors.textMuted }]}>
-                    Score:
-                  </Text>
+                  <Text style={[styles.consistencyLabel, { color: colors.textMuted }]}>Score:</Text>
                   <Text style={[styles.consistencyValue, { color: colors.accent }]}>
                     {typeof row.consistency_score === 'number'
                       ? row.consistency_score.toFixed(1)
@@ -577,9 +572,7 @@ export function RoomProgressView({
               {/* Metric Values Grid */}
               <View style={styles.rowDetails}>
                 <View style={styles.detailItem}>
-                  <Text style={[styles.detailKey, { color: colors.textMuted }]}>
-                    Weight
-                  </Text>
+                  <Text style={[styles.detailKey, { color: colors.textMuted }]}>Weight</Text>
                   <Text style={[styles.detailVal, { color: colors.text }]}>
                     {typeof row.weight_change_kg === 'number'
                       ? `${row.weight_change_kg > 0 ? '+' : ''}${row.weight_change_kg.toFixed(1)} kg`
@@ -590,9 +583,7 @@ export function RoomProgressView({
                 </View>
 
                 <View style={styles.detailItem}>
-                  <Text style={[styles.detailKey, { color: colors.textMuted }]}>
-                    Cal vs Target
-                  </Text>
+                  <Text style={[styles.detailKey, { color: colors.textMuted }]}>Cal vs Target</Text>
                   <Text style={[styles.detailVal, { color: colors.text }]}>
                     {typeof row.average_calories_vs_target_pct === 'number'
                       ? `${Math.round(row.average_calories_vs_target_pct)}%`
@@ -603,9 +594,7 @@ export function RoomProgressView({
                 </View>
 
                 <View style={styles.detailItem}>
-                  <Text style={[styles.detailKey, { color: colors.textMuted }]}>
-                    Steps Avg
-                  </Text>
+                  <Text style={[styles.detailKey, { color: colors.textMuted }]}>Steps Avg</Text>
                   <Text style={[styles.detailVal, { color: colors.text }]}>
                     {typeof row.average_steps === 'number'
                       ? Math.round(row.average_steps).toLocaleString()
@@ -616,9 +605,7 @@ export function RoomProgressView({
                 </View>
 
                 <View style={styles.detailItem}>
-                  <Text style={[styles.detailKey, { color: colors.textMuted }]}>
-                    Workouts
-                  </Text>
+                  <Text style={[styles.detailKey, { color: colors.textMuted }]}>Workouts</Text>
                   <Text style={[styles.detailVal, { color: colors.text }]}>
                     {typeof row.total_workouts === 'number'
                       ? row.total_workouts
@@ -649,10 +636,7 @@ export function RoomProgressView({
               <Text style={[styles.modalTitle, { color: colors.text }]}>
                 {t('progress.room.showHideMembers')}
               </Text>
-              <Pressable
-                onPress={() => setShowMemberPicker(false)}
-                style={styles.modalCloseBtn}
-              >
+              <Pressable onPress={() => setShowMemberPicker(false)} style={styles.modalCloseBtn}>
                 <Ionicons name="close" size={20} color={colors.text} />
               </Pressable>
             </View>
@@ -685,10 +669,7 @@ export function RoomProgressView({
                 const isSelected = selectedMemberIds.includes(item.user_id);
                 return (
                   <Pressable
-                    style={[
-                      styles.searchResultRow,
-                      { borderBottomColor: colors.border },
-                    ]}
+                    style={[styles.searchResultRow, { borderBottomColor: colors.border }]}
                     onPress={() => toggleMemberSelection(item.user_id)}
                   >
                     <View>

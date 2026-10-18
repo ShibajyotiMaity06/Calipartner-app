@@ -27,10 +27,7 @@ export function CoachMessageBubble({
 
   return (
     <View
-      style={[
-        styles.rowWrap,
-        isUser ? styles.userRowWrap : styles.coachRowWrap,
-      ]}
+      style={[styles.rowWrap, isUser ? styles.userRowWrap : styles.coachRowWrap]}
       testID={`msg-bubble-${message.id}`}
     >
       {/* Coach Avatar */}
@@ -57,10 +54,7 @@ export function CoachMessageBubble({
           ]}
         >
           <Text
-            style={[
-              styles.messageText,
-              { color: isUser ? '#FFFFFF' : colors.text },
-            ]}
+            style={[styles.messageText, { color: isUser ? '#FFFFFF' : colors.text }]}
             testID={`text-msg-content-${message.id}`}
           >
             {message.content}
@@ -70,9 +64,7 @@ export function CoachMessageBubble({
           {message.isStreaming && (
             <View style={styles.streamingIndicator} testID={`indicator-streaming-${message.id}`}>
               <ActivityIndicator size="small" color={colors.accent} />
-              <Text style={[styles.streamingText, { color: colors.textMuted }]}>
-                typing…
-              </Text>
+              <Text style={[styles.streamingText, { color: colors.textMuted }]}>typing…</Text>
             </View>
           )}
         </View>
@@ -81,11 +73,7 @@ export function CoachMessageBubble({
         {!isUser && message.suggestions && message.suggestions.length > 0 && onLogSuggestion && (
           <View style={styles.suggestionsContainer}>
             {message.suggestions.map((sug) => (
-              <CoachSuggestionCard
-                key={sug.id}
-                suggestion={sug}
-                onLog={onLogSuggestion}
-              />
+              <CoachSuggestionCard key={sug.id} suggestion={sug} onLog={onLogSuggestion} />
             ))}
           </View>
         )}
@@ -95,11 +83,7 @@ export function CoachMessageBubble({
           <View style={styles.coachFooter}>
             {/* Disclaimer Label */}
             <View style={styles.disclaimerRow}>
-              <Ionicons
-                name="alert-circle-outline"
-                size={12}
-                color={colors.textMuted}
-              />
+              <Ionicons name="alert-circle-outline" size={12} color={colors.textMuted} />
               <Text
                 style={[styles.disclaimerText, { color: colors.textMuted }]}
                 testID="text-coach-disclaimer"

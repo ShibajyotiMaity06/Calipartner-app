@@ -68,17 +68,17 @@ export function useWeight(): UseWeightResult {
     } finally {
       setLoading(false);
     }
-  }, [currentGoalProfile?.user_id, currentGoalProfile?.current_weight_kg, currentGoalProfile?.target_weight_kg]);
+  }, [
+    currentGoalProfile?.user_id,
+    currentGoalProfile?.current_weight_kg,
+    currentGoalProfile?.target_weight_kg,
+  ]);
 
   useEffect(() => {
     void loadData();
   }, [loadData]);
 
-  const logWeight = async (
-    weightKg: number,
-    date?: string,
-    notes?: string,
-  ): Promise<WeightLog> => {
+  const logWeight = async (weightKg: number, date?: string, notes?: string): Promise<WeightLog> => {
     const db = await getDb();
     const userId = currentGoalProfile?.user_id ?? 'guest-user';
     const created = await logWeightService(db, userId, weightKg, date, undefined, notes);

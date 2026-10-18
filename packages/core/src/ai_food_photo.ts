@@ -97,10 +97,7 @@ export function getDailyFoodPhotoCap(
 /**
  * Checks if the user has reached or exceeded their daily photo scan limit.
  */
-export function isDailyFoodPhotoLimitReached(
-  usedToday: number,
-  cap: number,
-): boolean {
+export function isDailyFoodPhotoLimitReached(usedToday: number, cap: number): boolean {
   return usedToday >= cap;
 }
 
@@ -255,9 +252,7 @@ export function buildVisionModelSystemPrompt(): string {
 /**
  * Parses and validates raw model output with strict schema rules and sanity bounds.
  */
-export function parseAndValidateVisionModelOutput(
-  raw: string | unknown,
-): VisionModelResponse {
+export function parseAndValidateVisionModelOutput(raw: string | unknown): VisionModelResponse {
   let parsed: unknown;
 
   if (typeof raw === 'string') {
@@ -327,10 +322,8 @@ export function parseAndValidateVisionModelOutput(
       confidence = Math.min(1.0, Math.max(0.0, Math.round(confidence * 100) / 100));
     }
 
-
-    const desc = typeof itemObj.description === 'string'
-      ? sanitizeFoodName(itemObj.description)
-      : undefined;
+    const desc =
+      typeof itemObj.description === 'string' ? sanitizeFoodName(itemObj.description) : undefined;
 
     items.push({
       food_name: foodName,
@@ -372,7 +365,11 @@ export function createFallbackEstimateFood(
     barcode: null,
     serving_units: [
       { unit: 'g', grams: 1 },
-      { unit: 'serving', grams: estimatedGrams, description: `1 estimated portion (~${estimatedGrams}g)` },
+      {
+        unit: 'serving',
+        grams: estimatedGrams,
+        description: `1 estimated portion (~${estimatedGrams}g)`,
+      },
     ],
     calories_per_100g: 140,
     protein_per_100g: 5.0,
@@ -459,15 +456,16 @@ export function mapVisionItemToFood(
   }
 
   // Threshold: if score >= 0.4, use matched database food; otherwise fallback to estimate food
-  const matchedFood = (bestScore >= 0.4 && bestMatch)
-    ? bestMatch
-    : createFallbackEstimateFood(item.food_name, item.estimated_grams, `${clientCandidateId}-food`);
+  const matchedFood =
+    bestScore >= 0.4 && bestMatch
+      ? bestMatch
+      : createFallbackEstimateFood(
+          item.food_name,
+          item.estimated_grams,
+          `${clientCandidateId}-food`,
+        );
 
-  const nutrients: NutrientSnapshot = scaleNutrients(
-    matchedFood,
-    item.estimated_grams,
-    'g',
-  );
+  const nutrients: NutrientSnapshot = scaleNutrients(matchedFood, item.estimated_grams, 'g');
 
   return {
     id: clientCandidateId,
@@ -524,10 +522,7 @@ export class MockVisionModelAdapter implements VisionModelAdapter {
     this.costUsd = costUsd;
   }
 
-  async analyzeFoodPhoto(
-    _imageBuffer: Uint8Array,
-    _mimeType: string,
-  ): Promise<VisionModelResult> {
+  async analyzeFoodPhoto(_imageBuffer: Uint8Array, _mimeType: string): Promise<VisionModelResult> {
     if (this.shouldFailWithError) {
       throw new Error(this.shouldFailWithError);
     }

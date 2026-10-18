@@ -108,7 +108,9 @@ export function WaterHistoryModal({
           onPress={onClose}
           accessibilityLabel={t('common.cancel')}
         />
-        <View style={[styles.sheet, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+        <View
+          style={[styles.sheet, { backgroundColor: colors.surface, borderColor: colors.border }]}
+        >
           {/* Header */}
           <View style={styles.header}>
             <View style={styles.headerTitleRow}>
@@ -240,7 +242,10 @@ export function WaterHistoryModal({
           {/* Close button */}
           <Pressable
             onPress={onClose}
-            style={[styles.closeBtn, { backgroundColor: colors.surfaceAlt, borderColor: colors.border }]}
+            style={[
+              styles.closeBtn,
+              { backgroundColor: colors.surfaceAlt, borderColor: colors.border },
+            ]}
             accessibilityRole="button"
             accessibilityLabel={t('common.cancel')}
           >

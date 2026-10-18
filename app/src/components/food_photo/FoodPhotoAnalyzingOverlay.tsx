@@ -1,12 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import {
-  ActivityIndicator,
-  Modal,
-  Pressable,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
+import { ActivityIndicator, Modal, Pressable, StyleSheet, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { t } from '@/i18n';
 import { fontSize, radius, spacing } from '@/theme/tokens';
@@ -17,15 +10,9 @@ export interface FoodPhotoAnalyzingOverlayProps {
   onCancel?: () => void;
 }
 
-const HINT_STEPS = [
-  'foodLog.photo.analyzingSubtitle',
-  'foodLog.photo.analyzingHint',
-] as const;
+const HINT_STEPS = ['foodLog.photo.analyzingSubtitle', 'foodLog.photo.analyzingHint'] as const;
 
-export function FoodPhotoAnalyzingOverlay({
-  visible,
-  onCancel,
-}: FoodPhotoAnalyzingOverlayProps) {
+export function FoodPhotoAnalyzingOverlay({ visible, onCancel }: FoodPhotoAnalyzingOverlayProps) {
   const { colors } = useTheme();
   const [currentHintIdx, setCurrentHintIdx] = useState(0);
 
@@ -59,12 +46,7 @@ export function FoodPhotoAnalyzingOverlay({
           ]}
         >
           {/* Pulsing Visual / Sparkles Wrap */}
-          <View
-            style={[
-              styles.sparkleWrap,
-              { backgroundColor: colors.cardHighlight },
-            ]}
-          >
+          <View style={[styles.sparkleWrap, { backgroundColor: colors.cardHighlight }]}>
             <Ionicons name="sparkles" size={36} color={colors.accent} />
           </View>
 
@@ -75,10 +57,7 @@ export function FoodPhotoAnalyzingOverlay({
             style={{ marginVertical: spacing.sm }}
           />
 
-          <Text
-            testID="text-analyzing-title"
-            style={[styles.title, { color: colors.text }]}
-          >
+          <Text testID="text-analyzing-title" style={[styles.title, { color: colors.text }]}>
             {t('foodLog.photo.analyzingTitle')}
           </Text>
 

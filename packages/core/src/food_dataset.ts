@@ -213,9 +213,7 @@ export const DEV_100_FOOD_SEED: readonly CreateFoodInput[] = [
     name: 'Plain Dosa',
     brand: null,
     barcode: null,
-    serving_units: [
-      { unit: 'piece', grams: 80, description: '1 medium plain dosa (~80g)' },
-    ],
+    serving_units: [{ unit: 'piece', grams: 80, description: '1 medium plain dosa (~80g)' }],
     calories_per_100g: 168,
     protein_per_100g: 4.2,
     carbs_per_100g: 29.0,
@@ -232,9 +230,7 @@ export const DEV_100_FOOD_SEED: readonly CreateFoodInput[] = [
     name: 'Masala Dosa (with Potato Filling)',
     brand: null,
     barcode: null,
-    serving_units: [
-      { unit: 'piece', grams: 150, description: '1 masala dosa (~150g)' },
-    ],
+    serving_units: [{ unit: 'piece', grams: 150, description: '1 masala dosa (~150g)' }],
     calories_per_100g: 210,
     protein_per_100g: 4.8,
     carbs_per_100g: 32.5,
@@ -272,9 +268,7 @@ export const DEV_100_FOOD_SEED: readonly CreateFoodInput[] = [
     name: 'Whole Wheat Bread',
     brand: null,
     barcode: '073410013588',
-    serving_units: [
-      { unit: 'slice', grams: 35, description: '1 slice (~35g)' },
-    ],
+    serving_units: [{ unit: 'slice', grams: 35, description: '1 slice (~35g)' }],
     calories_per_100g: 247,
     protein_per_100g: 12.0,
     carbs_per_100g: 41.3,
@@ -291,9 +285,7 @@ export const DEV_100_FOOD_SEED: readonly CreateFoodInput[] = [
     name: 'White Bread',
     brand: null,
     barcode: '073410013595',
-    serving_units: [
-      { unit: 'slice', grams: 30, description: '1 slice (~30g)' },
-    ],
+    serving_units: [{ unit: 'slice', grams: 30, description: '1 slice (~30g)' }],
     calories_per_100g: 265,
     protein_per_100g: 8.9,
     carbs_per_100g: 49.0,
@@ -538,9 +530,7 @@ export const DEV_100_FOOD_SEED: readonly CreateFoodInput[] = [
     name: 'Egg Omelette (2 Eggs with Onion & Chilly)',
     brand: null,
     barcode: null,
-    serving_units: [
-      { unit: 'piece', grams: 120, description: '1 full omelette (~120g)' },
-    ],
+    serving_units: [{ unit: 'piece', grams: 120, description: '1 full omelette (~120g)' }],
     calories_per_100g: 190,
     protein_per_100g: 11.2,
     carbs_per_100g: 2.8,
@@ -657,9 +647,7 @@ export const DEV_100_FOOD_SEED: readonly CreateFoodInput[] = [
     name: 'Gold Standard 100% Whey Protein Double Rich Chocolate',
     brand: 'Optimum Nutrition',
     barcode: '748927028669',
-    serving_units: [
-      { unit: 'scoop', grams: 30.4, description: '1 rounded scoop (~30.4g)' },
-    ],
+    serving_units: [{ unit: 'scoop', grams: 30.4, description: '1 rounded scoop (~30.4g)' }],
     calories_per_100g: 395,
     protein_per_100g: 78.9,
     carbs_per_100g: 9.9,
@@ -886,9 +874,7 @@ export const DEV_100_FOOD_SEED: readonly CreateFoodInput[] = [
     name: 'Banana (Fresh)',
     brand: null,
     barcode: null,
-    serving_units: [
-      { unit: 'piece', grams: 118, description: '1 medium banana (~118g)' },
-    ],
+    serving_units: [{ unit: 'piece', grams: 118, description: '1 medium banana (~118g)' }],
     calories_per_100g: 89,
     protein_per_100g: 1.1,
     carbs_per_100g: 22.8,
@@ -925,9 +911,7 @@ export const DEV_100_FOOD_SEED: readonly CreateFoodInput[] = [
     name: 'Orange (Fresh)',
     brand: null,
     barcode: null,
-    serving_units: [
-      { unit: 'piece', grams: 130, description: '1 medium orange (~130g)' },
-    ],
+    serving_units: [{ unit: 'piece', grams: 130, description: '1 medium orange (~130g)' }],
     calories_per_100g: 47,
     protein_per_100g: 0.9,
     carbs_per_100g: 11.8,
@@ -1115,9 +1099,7 @@ export const DEV_100_FOOD_SEED: readonly CreateFoodInput[] = [
     name: 'Aloo Samosa (Fried)',
     brand: null,
     barcode: null,
-    serving_units: [
-      { unit: 'piece', grams: 85, description: '1 medium samosa (~85g)' },
-    ],
+    serving_units: [{ unit: 'piece', grams: 85, description: '1 medium samosa (~85g)' }],
     calories_per_100g: 310,
     protein_per_100g: 4.8,
     carbs_per_100g: 36.2,
@@ -2039,4 +2021,3 @@ export const DEV_100_FOOD_SEED: readonly CreateFoodInput[] = [
     attribution: 'ICMR-NIN IFCT 2017',
   },
 ];
-

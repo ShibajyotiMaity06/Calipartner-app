@@ -1,12 +1,5 @@
 import React from 'react';
-import {
-  Modal,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
-} from 'react-native';
+import { Modal, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import type { WorkoutSummary, WorkoutWithDetails } from '@calipartner/core';
 import { t } from '@/i18n';
@@ -62,10 +55,7 @@ export function WorkoutFinishSummaryModal({
           </TouchableOpacity>
         </View>
 
-        <ScrollView
-          contentContainerStyle={styles.content}
-          showsVerticalScrollIndicator={false}
-        >
+        <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
           {/* Hero Celebration Card */}
           <View
             style={[
@@ -73,12 +63,7 @@ export function WorkoutFinishSummaryModal({
               { backgroundColor: colors.surface, borderColor: colors.border },
             ]}
           >
-            <View
-              style={[
-                styles.iconWrap,
-                { backgroundColor: colors.cardHighlight },
-              ]}
-            >
+            <View style={[styles.iconWrap, { backgroundColor: colors.cardHighlight }]}>
               <Ionicons name="trophy" size={36} color={colors.accent} />
             </View>
             <Text style={[styles.heroTitle, { color: colors.text }]}>
@@ -222,7 +207,8 @@ export function WorkoutFinishSummaryModal({
                       {ex.exercise_name}
                     </Text>
                     <Text style={[styles.exerciseRowSub, { color: colors.textMuted }]}>
-                      {ex.set_count} sets{ex.heaviest_weight_kg ? ` • max ${ex.heaviest_weight_kg} kg` : ''}
+                      {ex.set_count} sets
+                      {ex.heaviest_weight_kg ? ` • max ${ex.heaviest_weight_kg} kg` : ''}
                     </Text>
                   </View>
                   {ex.total_volume_kg > 0 && (

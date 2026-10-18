@@ -45,7 +45,11 @@ describe('Phase 8 — Chat View Layer & UI Logic Tests', () => {
       // In an inverted FlatList (index 0 is newest):
       // If unreadCount = 2, messages at index 0 and index 1 are unread.
       // The divider sits above index 1 (between index 1 and index 2).
-      const calculateDividerPosition = (index: number, unreadCount: number, totalMessages: number) => {
+      const calculateDividerPosition = (
+        index: number,
+        unreadCount: number,
+        totalMessages: number,
+      ) => {
         return unreadCount > 0 && index === unreadCount - 1 && index < totalMessages - 1;
       };
 
@@ -273,7 +277,11 @@ describe('Phase 8 — Chat View Layer & UI Logic Tests', () => {
     });
 
     it('formats image metadata file size and dimensions cleanly', () => {
-      const formatMetadata = (width?: number | null, height?: number | null, sizeBytes?: number) => {
+      const formatMetadata = (
+        width?: number | null,
+        height?: number | null,
+        sizeBytes?: number,
+      ) => {
         const dim = width && height ? `${width} × ${height}` : '';
         const sizeStr = sizeBytes
           ? sizeBytes > 1024 * 1024
@@ -324,7 +332,9 @@ describe('Phase 8 — Chat View Layer & UI Logic Tests', () => {
       const isOnline = false;
       const showOfflineBanner = isOnline === false;
       expect(showOfflineBanner).toBe(true);
-      expect(en.chat.offlineBanner).toBe("You're offline. Messages will send automatically once reconnected.");
+      expect(en.chat.offlineBanner).toBe(
+        "You're offline. Messages will send automatically once reconnected.",
+      );
     });
 
     it('enforces paused state for locked rooms (banner + composer disabled)', () => {
@@ -370,7 +380,9 @@ describe('Phase 8 — Chat View Layer & UI Logic Tests', () => {
       expect(t('chat.muteMember', { username: 'partner' })).toBe('Mute @partner');
       expect(t('chat.savedImageToast')).toBe('Photo saved to your gallery!');
       expect(t('chat.newMessagesDivider')).toBe('New Messages');
-      expect(t('chat.offlineBanner')).toBe("You're offline. Messages will send automatically once reconnected.");
+      expect(t('chat.offlineBanner')).toBe(
+        "You're offline. Messages will send automatically once reconnected.",
+      );
     });
   });
 });

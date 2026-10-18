@@ -264,7 +264,10 @@ export function stripJpegExif(buffer: Uint8Array): Uint8Array {
 
     // Check if APP1 (Exif / XMP) or APP2 (ICC / FlashPix) marker:
     // Strip APP1 (0xE1) and APP2 (0xE2) containing metadata to ensure 100% EXIF removal
-    if (marker === 0xe1 || (marker >= 0xe1 && marker <= 0xef && isExifOrMetadataSegment(buffer, offset))) {
+    if (
+      marker === 0xe1 ||
+      (marker >= 0xe1 && marker <= 0xef && isExifOrMetadataSegment(buffer, offset))
+    ) {
       hasStripped = true;
       offset = segmentEnd;
       continue;
@@ -411,7 +414,12 @@ export function generateChatAttachmentStorageKey(
 }
 
 export function validateChatStorageKey(storageKey: string, expectedRoomId: string): boolean {
-  if (!storageKey || storageKey.includes('..') || storageKey.startsWith('/') || storageKey.includes('\\')) {
+  if (
+    !storageKey ||
+    storageKey.includes('..') ||
+    storageKey.startsWith('/') ||
+    storageKey.includes('\\')
+  ) {
     return false;
   }
   const prefix = `rooms/${expectedRoomId}/messages/`;
@@ -554,7 +562,9 @@ export function formatChatSystemMessage(
 ): string {
   switch (eventType) {
     case 'member_joined':
-      return params.nickname ? `${params.nickname} joined the room` : 'A new member joined the room';
+      return params.nickname
+        ? `${params.nickname} joined the room`
+        : 'A new member joined the room';
     case 'member_left':
       return params.nickname ? `${params.nickname} left the room` : 'A member left the room';
     case 'room_created':
@@ -640,7 +650,5 @@ export function paginateChatMessages(
 // -----------------------------------------------------------------------------
 
 export function hasUserAcceptedChatTerms(consentRecords: ConsentRecord[]): boolean {
-  return consentRecords.some(
-    (c) => c.consent_type === 'chat_terms' || c.consent_type === 'terms',
-  );
+  return consentRecords.some((c) => c.consent_type === 'chat_terms' || c.consent_type === 'terms');
 }

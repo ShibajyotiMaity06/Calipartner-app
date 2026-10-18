@@ -28,10 +28,10 @@ export async function handleCronRoomMaintenance(req: Request): Promise<Response>
 
     if (error) {
       console.error('Error running process_room_lifecycle_cron:', error);
-      return new Response(
-        JSON.stringify({ error: error.message }),
-        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
-      );
+      return new Response(JSON.stringify({ error: error.message }), {
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
     }
 
     return new Response(

@@ -54,9 +54,7 @@ export function calculateRecipeNutrition(
   if (manualOverride && Object.keys(manualOverride).length > 0) {
     const trimmedReason = overrideReason ? overrideReason.trim() : '';
     if (!trimmedReason) {
-      throw new Error(
-        'Manual nutrition override requires a written reason (RCP-3)',
-      );
+      throw new Error('Manual nutrition override requires a written reason (RCP-3)');
     }
     return {
       calories: Math.max(0, roundOneDecimal(manualOverride.calories ?? 0)),
@@ -132,21 +130,15 @@ export function scaleRecipeServings(
   const baseServings = recipe.servings > 0 ? recipe.servings : 1;
   const scaleRatio = targetServings / baseServings;
 
-  const scaledIngredients: ScaledRecipeIngredient[] = (
-    recipe.ingredients || []
-  ).map((ing) => ({
+  const scaledIngredients: ScaledRecipeIngredient[] = (recipe.ingredients || []).map((ing) => ({
     ...ing,
     base_quantity: ing.quantity,
     scaled_quantity: roundTwoDecimals(ing.quantity * scaleRatio),
   }));
 
   const totalNutrition: RecipeNutritionSnapshot = {
-    calories: roundOneDecimal(
-      recipe.nutrition_per_serving.calories * targetServings,
-    ),
-    protein: roundOneDecimal(
-      recipe.nutrition_per_serving.protein * targetServings,
-    ),
+    calories: roundOneDecimal(recipe.nutrition_per_serving.calories * targetServings),
+    protein: roundOneDecimal(recipe.nutrition_per_serving.protein * targetServings),
     carbs: roundOneDecimal(recipe.nutrition_per_serving.carbs * targetServings),
     fat: roundOneDecimal(recipe.nutrition_per_serving.fat * targetServings),
     fiber: roundOneDecimal(recipe.nutrition_per_serving.fiber * targetServings),
@@ -156,9 +148,7 @@ export function scaleRecipeServings(
         : undefined,
     sodium_mg:
       recipe.nutrition_per_serving.sodium_mg !== undefined
-        ? roundOneDecimal(
-            recipe.nutrition_per_serving.sodium_mg * targetServings,
-          )
+        ? roundOneDecimal(recipe.nutrition_per_serving.sodium_mg * targetServings)
         : undefined,
   };
 
@@ -189,9 +179,7 @@ export function scaleLoggedRecipeNutrients(
     fat: roundOneDecimal(nutritionPerServing.fat * s),
     fiber: roundOneDecimal(nutritionPerServing.fiber * s),
     sugar:
-      nutritionPerServing.sugar !== undefined
-        ? roundOneDecimal(nutritionPerServing.sugar * s)
-        : 0,
+      nutritionPerServing.sugar !== undefined ? roundOneDecimal(nutritionPerServing.sugar * s) : 0,
     sodium_mg:
       nutritionPerServing.sodium_mg !== undefined
         ? roundOneDecimal(nutritionPerServing.sodium_mg * s)
@@ -217,23 +205,14 @@ export function filterRecipes(
     // 1. Text Query (name, description, cuisine, diet tags, ingredient names)
     if (normQuery) {
       const matchTitle = recipe.title.toLowerCase().includes(normQuery);
-      const matchDesc =
-        recipe.description?.toLowerCase().includes(normQuery) ?? false;
+      const matchDesc = recipe.description?.toLowerCase().includes(normQuery) ?? false;
       const matchCuisine = recipe.cuisine.toLowerCase().includes(normQuery);
-      const matchTags = recipe.diet_tags.some((t) =>
-        t.toLowerCase().includes(normQuery),
-      );
+      const matchTags = recipe.diet_tags.some((t) => t.toLowerCase().includes(normQuery));
       const matchIngredients = (recipe.ingredients || []).some((ing) =>
         (ing.food_name || ing.food_id).toLowerCase().includes(normQuery),
       );
 
-      if (
-        !matchTitle &&
-        !matchDesc &&
-        !matchCuisine &&
-        !matchTags &&
-        !matchIngredients
-      ) {
+      if (!matchTitle && !matchDesc && !matchCuisine && !matchTags && !matchIngredients) {
         return false;
       }
     }
@@ -392,20 +371,11 @@ export function validateRecipeInput(
     errors.push('Prep and cook minutes must be non-negative');
   }
   if (!['easy', 'medium', 'hard'].includes(input.difficulty)) {
-    errors.push(
-      `Invalid difficulty "${input.difficulty}". Must be easy, medium, or hard.`,
-    );
+    errors.push(`Invalid difficulty "${input.difficulty}". Must be easy, medium, or hard.`);
   }
   if (
     !input.meal_type ||
-    ![
-      'breakfast',
-      'lunch',
-      'dinner',
-      'snack',
-      'dessert',
-      'beverage',
-    ].includes(input.meal_type)
+    !['breakfast', 'lunch', 'dinner', 'snack', 'dessert', 'beverage'].includes(input.meal_type)
   ) {
     errors.push(`Invalid meal_type "${input.meal_type}"`);
   }
@@ -447,28 +417,21 @@ export function validateRecipeInput(
     const foodKey = (ing.food_id || '').trim();
 
     // Check if food exists
-    const matched =
-      foodById.get(foodKey.toLowerCase()) ||
-      foodByName.get(foodKey.toLowerCase());
+    const matched = foodById.get(foodKey.toLowerCase()) || foodByName.get(foodKey.toLowerCase());
 
     if (!matched) {
       const fuzzy = findFuzzyFoodSuggestions(foodKey, foodsCatalog, 3);
-      suggestions[foodKey] = fuzzy.map(
-        (f) => `${f.food.id || ''} (${f.food.name})`,
-      );
+      suggestions[foodKey] = fuzzy.map((f) => `${f.food.id || ''} (${f.food.name})`);
       errors.push(
         `Ingredient #${idx + 1} "${foodKey}": unknown food ID. Did you mean: ${
-          fuzzy.map((f) => `"${f.food.id}" (${f.food.name})`).join(', ') ||
-          'none found'
+          fuzzy.map((f) => `"${f.food.id}" (${f.food.name})`).join(', ') || 'none found'
         }?`,
       );
       continue;
     }
 
     if (!ing.quantity || ing.quantity <= 0) {
-      errors.push(
-        `Ingredient #${idx + 1} (${matched.name}): quantity must be greater than zero`,
-      );
+      errors.push(`Ingredient #${idx + 1} (${matched.name}): quantity must be greater than zero`);
     }
 
     // Check unit convertibility
@@ -487,17 +450,9 @@ export function validateRecipeInput(
   }
 
   // 5. Manual override reason requirement
-  if (
-    input.manual_nutrition_override &&
-    Object.keys(input.manual_nutrition_override).length > 0
-  ) {
-    if (
-      !input.nutrition_override_reason ||
-      input.nutrition_override_reason.trim().length === 0
-    ) {
-      errors.push(
-        'Manual nutrition override requires a written reason field (RCP-3)',
-      );
+  if (input.manual_nutrition_override && Object.keys(input.manual_nutrition_override).length > 0) {
+    if (!input.nutrition_override_reason || input.nutrition_override_reason.trim().length === 0) {
+      errors.push('Manual nutrition override requires a written reason field (RCP-3)');
     }
   }
 

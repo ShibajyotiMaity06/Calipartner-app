@@ -41,7 +41,10 @@ export function StepHeader({
             testID="btn-onboarding-back"
             style={({ pressed }) => [
               styles.backButton,
-              { borderColor: colors.border, backgroundColor: pressed ? colors.surfaceAlt : colors.surface },
+              {
+                borderColor: colors.border,
+                backgroundColor: pressed ? colors.surfaceAlt : colors.surface,
+              },
             ]}
             hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
           >
@@ -88,7 +91,10 @@ export function StepHeader({
           {title}
         </Text>
         {subtitle ? (
-          <Text style={[styles.subtitle, { color: colors.textMuted }]} testID="onboarding-step-subtitle">
+          <Text
+            style={[styles.subtitle, { color: colors.textMuted }]}
+            testID="onboarding-step-subtitle"
+          >
             {subtitle}
           </Text>
         ) : null}

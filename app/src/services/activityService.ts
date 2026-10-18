@@ -8,10 +8,7 @@ import {
 } from '@calipartner/core';
 import { createLogger } from '@/lib/logger';
 import { generateClientUuid } from './foodService';
-import {
-  enqueueOutbox,
-  type SyncDb,
-} from './syncService';
+import { enqueueOutbox, type SyncDb } from './syncService';
 
 const log = createLogger('activityService');
 
@@ -171,13 +168,15 @@ export function getActivityMetrics(
     };
   }
 
-  const distanceM = activity.distance_m > 0
-    ? activity.distance_m
-    : calculateDistanceFromStepsMeters(activity.steps, userStrideLengthCm);
+  const distanceM =
+    activity.distance_m > 0
+      ? activity.distance_m
+      : calculateDistanceFromStepsMeters(activity.steps, userStrideLengthCm);
 
-  const distanceKm = distanceM > 0
-    ? Math.round((distanceM / 1000) * 100) / 100
-    : calculateDistanceFromStepsKm(activity.steps, userStrideLengthCm);
+  const distanceKm =
+    distanceM > 0
+      ? Math.round((distanceM / 1000) * 100) / 100
+      : calculateDistanceFromStepsKm(activity.steps, userStrideLengthCm);
 
   const walkingCalories = calculateWalkingCalories(userWeightKg, distanceKm);
 

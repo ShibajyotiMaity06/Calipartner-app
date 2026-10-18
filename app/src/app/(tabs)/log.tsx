@@ -1,11 +1,5 @@
 import React, { useState } from 'react';
-import {
-  Modal,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
-} from 'react-native';
+import { Modal, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { getMealSectionForTime, type MealSection } from '@calipartner/core';
@@ -26,7 +20,9 @@ export default function LogScreen() {
   const { start: startPersonalFocus } = usePersonalFocus({ userId: user?.id ?? '' });
 
   const [sheetVisible, setSheetVisible] = useState(true);
-  const [activeFlow, setActiveFlow] = useState<'picker' | 'food' | 'workout' | 'focus' | 'recipe'>('picker');
+  const [activeFlow, setActiveFlow] = useState<'picker' | 'food' | 'workout' | 'focus' | 'recipe'>(
+    'picker',
+  );
 
   const todayDate = new Date().toISOString().slice(0, 10);
   const currentSection: MealSection = getMealSectionForTime(new Date());
@@ -86,12 +82,7 @@ export default function LogScreen() {
                   accessibilityRole="button"
                   accessibilityLabel={t('workouts.logSheet.foodOption')}
                 >
-                  <View
-                    style={[
-                      styles.iconCircle,
-                      { backgroundColor: colors.cardHighlight },
-                    ]}
-                  >
+                  <View style={[styles.iconCircle, { backgroundColor: colors.cardHighlight }]}>
                     <Ionicons name="restaurant-outline" size={24} color={colors.accent} />
                   </View>
                   <View style={styles.optionInfo}>
@@ -116,12 +107,7 @@ export default function LogScreen() {
                   accessibilityRole="button"
                   accessibilityLabel={t('workouts.logSheet.workoutOption')}
                 >
-                  <View
-                    style={[
-                      styles.iconCircle,
-                      { backgroundColor: colors.cardHighlight },
-                    ]}
-                  >
+                  <View style={[styles.iconCircle, { backgroundColor: colors.cardHighlight }]}>
                     <Ionicons name="barbell-outline" size={24} color={colors.macroCalories} />
                   </View>
                   <View style={styles.optionInfo}>
@@ -146,12 +132,7 @@ export default function LogScreen() {
                   accessibilityRole="button"
                   accessibilityLabel={t('focus.logOption.title')}
                 >
-                  <View
-                    style={[
-                      styles.iconCircle,
-                      { backgroundColor: colors.cardHighlight },
-                    ]}
-                  >
+                  <View style={[styles.iconCircle, { backgroundColor: colors.cardHighlight }]}>
                     <Ionicons name="timer-outline" size={24} color={colors.accent} />
                   </View>
                   <View style={styles.optionInfo}>
@@ -176,12 +157,7 @@ export default function LogScreen() {
                   accessibilityRole="button"
                   accessibilityLabel={t('workouts.logSheet.recipeOption')}
                 >
-                  <View
-                    style={[
-                      styles.iconCircle,
-                      { backgroundColor: colors.cardHighlight },
-                    ]}
-                  >
+                  <View style={[styles.iconCircle, { backgroundColor: colors.cardHighlight }]}>
                     <Ionicons name="book-outline" size={24} color={colors.accent} />
                   </View>
                   <View style={styles.optionInfo}>

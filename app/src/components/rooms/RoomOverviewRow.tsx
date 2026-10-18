@@ -1,13 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import {
-  Image,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  View,
-} from 'react-native';
+import { Image, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import type { RoomMemberSnapshot } from '@calipartner/core';
 import { t } from '@/i18n';
@@ -87,9 +79,7 @@ export function RoomOverviewRow({
     const isSelected = selectedMemberId === m.user_id;
     const isLocked = m.metrics.goal_completion === 'locked';
     const goalPct =
-      typeof m.metrics.goal_completion === 'number'
-        ? m.metrics.goal_completion
-        : null;
+      typeof m.metrics.goal_completion === 'number' ? m.metrics.goal_completion : null;
 
     const mealsCount =
       typeof m.metrics.meal_checklist === 'object' && m.metrics.meal_checklist !== null
@@ -141,9 +131,7 @@ export function RoomOverviewRow({
         {/* Meals summary or status */}
         <View style={styles.mealsPill}>
           {m.status === 'paused' ? (
-            <Text style={[styles.statusText, { color: colors.textMuted }]}>
-              Paused
-            </Text>
+            <Text style={[styles.statusText, { color: colors.textMuted }]}>Paused</Text>
           ) : (
             <Text style={[styles.mealsCountText, { color: colors.textMuted }]}>
               {mealsCount}/4 meals
@@ -171,7 +159,12 @@ export function RoomOverviewRow({
       {isLargeRoom ? (
         <View style={styles.largeRoomContainer}>
           {/* Search bar */}
-          <View style={[styles.searchRow, { backgroundColor: colors.surfaceAlt, borderColor: colors.border }]}>
+          <View
+            style={[
+              styles.searchRow,
+              { backgroundColor: colors.surfaceAlt, borderColor: colors.border },
+            ]}
+          >
             <Ionicons name="search-outline" size={16} color={colors.textMuted} />
             <TextInput
               value={searchQuery}
@@ -217,9 +210,7 @@ export function RoomOverviewRow({
                 </Text>
               </View>
               <View style={[styles.goalPill, { backgroundColor: colors.cardHighlight }]}>
-                <Text style={[styles.goalText, { color: colors.accent }]}>
-                  {computedAverage}%
-                </Text>
+                <Text style={[styles.goalText, { color: colors.accent }]}>{computedAverage}%</Text>
               </View>
             </View>
           )}
@@ -227,7 +218,10 @@ export function RoomOverviewRow({
           {/* Members Grid / List */}
           {paginatedMembers.length === 0 ? (
             <View style={styles.emptyContainer}>
-              <Text style={[styles.emptyText, { color: colors.textMuted }]} testID="text-overview-no-results">
+              <Text
+                style={[styles.emptyText, { color: colors.textMuted }]}
+                testID="text-overview-no-results"
+              >
                 {t('rooms.today.overviewNoMatches')}
               </Text>
             </View>

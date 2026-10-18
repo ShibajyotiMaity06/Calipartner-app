@@ -105,26 +105,22 @@ export function RoomSettingsModal({
   };
 
   const handleLeave = () => {
-    Alert.alert(
-      t('rooms.settingsModal.leaveRoomBtn'),
-      t('rooms.settingsModal.leaveConfirm'),
-      [
-        { text: t('common.cancel'), style: 'cancel' },
-        {
-          text: t('common.confirm'),
-          style: 'destructive',
-          onPress: async () => {
-            setLoadingAction('leave');
-            try {
-              await onLeaveRoom();
-              onClose();
-            } finally {
-              setLoadingAction(null);
-            }
-          },
+    Alert.alert(t('rooms.settingsModal.leaveRoomBtn'), t('rooms.settingsModal.leaveConfirm'), [
+      { text: t('common.cancel'), style: 'cancel' },
+      {
+        text: t('common.confirm'),
+        style: 'destructive',
+        onPress: async () => {
+          setLoadingAction('leave');
+          try {
+            await onLeaveRoom();
+            onClose();
+          } finally {
+            setLoadingAction(null);
+          }
         },
-      ],
-    );
+      },
+    ]);
   };
 
   return (
@@ -147,7 +143,10 @@ export function RoomSettingsModal({
             </Pressable>
           </View>
 
-          <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
+          <ScrollView
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={styles.scrollContent}
+          >
             {/* Room Info Box */}
             <View style={[styles.infoBox, { backgroundColor: colors.surfaceAlt }]}>
               <Text style={[styles.roomNameTitle, { color: colors.text }]}>{room.name}</Text>
@@ -224,7 +223,10 @@ export function RoomSettingsModal({
                 const isActionLoading = loadingAction?.includes(m.user_id);
 
                 return (
-                  <View key={m.user_id} style={[styles.memberCard, { backgroundColor: colors.surfaceAlt }]}>
+                  <View
+                    key={m.user_id}
+                    style={[styles.memberCard, { backgroundColor: colors.surfaceAlt }]}
+                  >
                     <View style={styles.memberInfoRow}>
                       <View style={[styles.avatarMini, { backgroundColor: colors.surface }]}>
                         <Text style={[styles.avatarText, { color: colors.text }]}>
@@ -239,7 +241,11 @@ export function RoomSettingsModal({
                           <View
                             style={[
                               styles.roleBadge,
-                              { backgroundColor: isMemberHost ? colors.cardHighlight : colors.surface },
+                              {
+                                backgroundColor: isMemberHost
+                                  ? colors.cardHighlight
+                                  : colors.surface,
+                              },
                             ]}
                           >
                             <Text

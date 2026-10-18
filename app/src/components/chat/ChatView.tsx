@@ -70,10 +70,7 @@ export function ChatView({
   const [showTermsModal, setShowTermsModal] = useState(false);
 
   // Handle message dispatch
-  const handleSend = async (
-    text?: string | null,
-    selectedMedia?: SelectedMediaItem[],
-  ) => {
+  const handleSend = async (text?: string | null, selectedMedia?: SelectedMediaItem[]) => {
     if (!roomId) return;
 
     const attachments = (selectedMedia || []).map((m, idx) => ({
@@ -133,7 +130,9 @@ export function ChatView({
           accessibilityLabel="Room paused banner"
         >
           <Ionicons name="lock-closed" size={16} color="#FFFFFF" />
-          <Text style={styles.bannerStripText}>{t('chat.pausedTitle')} — {t('chat.pausedSubtitle')}</Text>
+          <Text style={styles.bannerStripText}>
+            {t('chat.pausedTitle')} — {t('chat.pausedSubtitle')}
+          </Text>
         </View>
       )}
 

@@ -264,12 +264,7 @@ describe('WorkoutService — CRUD, Exercises, Sets & Offline Sync', () => {
     await addSetToExercise(db, bench.id, { reps: 8, weightKg: 70 });
 
     // Copy to today '2026-10-10'
-    const copied = await copyPreviousWorkoutToToday(
-      db,
-      prevWorkout.id,
-      '2026-10-10',
-      userId,
-    );
+    const copied = await copyPreviousWorkoutToToday(db, prevWorkout.id, '2026-10-10', userId);
 
     expect(copied.id).not.toBe(prevWorkout.id);
     expect(copied.local_date).toBe('2026-10-10');
@@ -326,12 +321,7 @@ describe('WorkoutService — CRUD, Exercises, Sets & Offline Sync', () => {
     const forDate = await getWorkoutsForDate(db, userId, '2026-10-10');
     expect(forDate).toHaveLength(2);
 
-    const calendar = await getWorkoutsCalendarData(
-      db,
-      userId,
-      '2026-10-01',
-      '2026-10-15',
-    );
+    const calendar = await getWorkoutsCalendarData(db, userId, '2026-10-01', '2026-10-15');
     expect(calendar['2026-10-08']).toBe(1);
     expect(calendar['2026-10-09']).toBe(1);
     expect(calendar['2026-10-10']).toBe(2);
@@ -459,5 +449,4 @@ describe('Workout Offline Sync Layer Integration', () => {
     const remaining = await getPendingOutboxItems(db);
     expect(remaining).toHaveLength(0);
   });
-
 });

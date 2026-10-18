@@ -20,15 +20,8 @@ export function RunningTimerBar({
   testID = 'running-timer-bar',
 }: RunningTimerBarProps) {
   const { colors } = useTheme();
-  const {
-    timer,
-    formattedTime,
-    isRunning,
-    start,
-    pause,
-    resume,
-    stop,
-  } = useWorkoutTimer(workoutId);
+  const { timer, formattedTime, isRunning, start, pause, resume, stop } =
+    useWorkoutTimer(workoutId);
 
   const hasTimer = Boolean(timer);
 
@@ -73,7 +66,11 @@ export function RunningTimerBar({
         />
         <View style={styles.textWrap}>
           <Text style={[styles.timerLabel, { color: colors.textMuted }]}>
-            {isRunning ? t('workouts.timer.running') : hasTimer ? t('workouts.timer.paused') : t('workouts.timer.title')}
+            {isRunning
+              ? t('workouts.timer.running')
+              : hasTimer
+                ? t('workouts.timer.paused')
+                : t('workouts.timer.title')}
           </Text>
           <Text
             testID={`${testID}-time`}
@@ -98,8 +95,8 @@ export function RunningTimerBar({
             !hasTimer
               ? t('workouts.timer.start')
               : isRunning
-              ? t('workouts.timer.pause')
-              : t('workouts.timer.resume')
+                ? t('workouts.timer.pause')
+                : t('workouts.timer.resume')
           }
         >
           <Ionicons

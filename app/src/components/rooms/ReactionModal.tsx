@@ -1,12 +1,5 @@
 import React, { useState } from 'react';
-import {
-  ActivityIndicator,
-  Modal,
-  Pressable,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
+import { ActivityIndicator, Modal, Pressable, StyleSheet, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import type { RoomMemberSnapshot, RoomReactionType } from '@calipartner/core';
 import { t } from '@/i18n';
@@ -128,7 +121,9 @@ export function ReactionModal({
               <ActivityIndicator size="small" color="#FFFFFF" />
             ) : (
               <Text style={styles.sendButtonText}>
-                {successToast ? t('rooms.reactionModal.sentToast') : t('rooms.reactionModal.sendBtn')}
+                {successToast
+                  ? t('rooms.reactionModal.sentToast')
+                  : t('rooms.reactionModal.sendBtn')}
               </Text>
             )}
           </Pressable>

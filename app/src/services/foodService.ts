@@ -17,10 +17,7 @@ import {
   type UserFoodStats,
 } from '@calipartner/core';
 import { createLogger } from '@/lib/logger';
-import {
-  enqueueOutbox,
-  type SyncDb,
-} from './syncService';
+import { enqueueOutbox, type SyncDb } from './syncService';
 import bundledFoodsJson from '../../assets/bundled_foods.json';
 
 const log = createLogger('foodService');
@@ -68,7 +65,7 @@ export async function ensureBundledFoodsSeeded(db: SyncDb): Promise<number> {
     for (const f of chunk) {
       const foodId = f.id || `f-bundled-${inserted + 1}`;
       const unitsJson = JSON.stringify(f.serving_units ?? [{ unit: 'g', grams: 1 }]);
-      placeholders.push('(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NULL, ?, ?, ?, NULL, \'synced\')');
+      placeholders.push("(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NULL, ?, ?, ?, NULL, 'synced')");
       values.push(
         foodId,
         f.source ?? 'ifct',
@@ -132,9 +129,10 @@ export interface RawFoodRow {
 export function mapRowToFood(row: RawFoodRow): Food {
   let servingUnits: Food['serving_units'] = [];
   try {
-    servingUnits = typeof row.serving_units === 'string'
-      ? JSON.parse(row.serving_units)
-      : row.serving_units || [];
+    servingUnits =
+      typeof row.serving_units === 'string'
+        ? JSON.parse(row.serving_units)
+        : row.serving_units || [];
   } catch {
     servingUnits = [{ unit: 'g', grams: 1 }];
   }
@@ -194,10 +192,7 @@ export async function searchLocalFoods(
 /**
  * Looks up food by barcode in local database.
  */
-export async function findLocalFoodByBarcode(
-  db: SyncDb,
-  barcode: string,
-): Promise<Food | null> {
+export async function findLocalFoodByBarcode(db: SyncDb, barcode: string): Promise<Food | null> {
   const clean = barcode.trim();
   if (!clean) return null;
 
@@ -213,7 +208,14 @@ export async function findLocalFoodByBarcode(
  * Fetches remote food details via Edge Function `food-lookup` or Supabase.
  */
 export async function lookupRemoteFood(
-  supabase: { functions?: { invoke: (fn: string, opts: { body: Record<string, unknown> }) => Promise<{ data?: Record<string, unknown> | null; error?: unknown }> } },
+  supabase: {
+    functions?: {
+      invoke: (
+        fn: string,
+        opts: { body: Record<string, unknown> },
+      ) => Promise<{ data?: Record<string, unknown> | null; error?: unknown }>;
+    };
+  },
   params: { barcode?: string; text?: string },
 ): Promise<Food | null> {
   try {
@@ -249,8 +251,11 @@ export async function saveCustomFood(
   input: CreateFoodInput | (UpdateFoodInput & { id: string }),
 ): Promise<Food> {
   const now = new Date().toISOString();
-  const id = ('id' in input && input.id) ? input.id : generateClientUuid();
-  const servingUnits = input.serving_units ?? [{ unit: 'serving', grams: 100 }, { unit: 'g', grams: 1 }];
+  const id = 'id' in input && input.id ? input.id : generateClientUuid();
+  const servingUnits = input.serving_units ?? [
+    { unit: 'serving', grams: 100 },
+    { unit: 'g', grams: 1 },
+  ];
   const unitsJson = JSON.stringify(servingUnits);
 
   const food: Food = {
@@ -455,15 +460,7 @@ export async function logFoodEntry(
         hidden = 0,
         updated_at = excluded.updated_at,
         sync_state = 'pending'`,
-      [
-        input.userId,
-        input.food.id,
-        now,
-        input.quantity,
-        input.unit,
-        section,
-        now,
-      ],
+      [input.userId, input.food.id, now, input.quantity, input.unit, section, now],
     );
 
     // Enqueue stats to outbox
@@ -477,10 +474,10 @@ export async function logFoodEntry(
       last_meal_section: MealSection;
       hidden: number;
       updated_at: string;
-    }>(
-      `SELECT * FROM local_user_food_stats WHERE user_id = ? AND food_id = ?`,
-      [input.userId, input.food.id],
-    );
+    }>(`SELECT * FROM local_user_food_stats WHERE user_id = ? AND food_id = ?`, [
+      input.userId,
+      input.food.id,
+    ]);
     if (statsRow) {
       await enqueueOutbox(db, {
         id: `stats-${input.userId}-${input.food.id}`,

@@ -287,9 +287,11 @@ describe('Offline-First Sync Layer', () => {
     const pullRes = await pullEntityDelta(db, mockSupabase, 'food_entries');
     expect(pullRes.pulledCount).toBe(1);
 
-    const updatedLocal = await db.getFirstAsync<{ quantity: number; calories: number; updated_at: string }>(
-      `SELECT quantity, calories, updated_at FROM local_food_entries WHERE id = 'entry-lww'`,
-    );
+    const updatedLocal = await db.getFirstAsync<{
+      quantity: number;
+      calories: number;
+      updated_at: string;
+    }>(`SELECT quantity, calories, updated_at FROM local_food_entries WHERE id = 'entry-lww'`);
     expect(updatedLocal?.quantity).toBe(2);
     expect(updatedLocal?.calories).toBe(600);
     expect(updatedLocal?.updated_at).toBe('2026-10-08T12:30:00Z');

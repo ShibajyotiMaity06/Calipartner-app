@@ -1,9 +1,5 @@
 import React from 'react';
-import {
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { fontSize, radius, spacing } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
@@ -15,12 +11,7 @@ interface PlaceholderSegmentProps {
   testID?: string;
 }
 
-export function PlaceholderSegment({
-  icon,
-  title,
-  subtitle,
-  testID,
-}: PlaceholderSegmentProps) {
+export function PlaceholderSegment({ icon, title, subtitle, testID }: PlaceholderSegmentProps) {
   const { colors } = useTheme();
 
   return (

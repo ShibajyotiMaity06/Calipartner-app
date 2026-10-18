@@ -52,7 +52,13 @@ describe('leaderboardService', () => {
       top_10: [
         { rank: 1, nickname: 'Alice', avatar_url: null, consistency_score: 95, is_me: false },
       ],
-      my_rank: { rank: 2, nickname: 'Me', avatar_url: null, consistency_score: 90, is_eligible: true },
+      my_rank: {
+        rank: 2,
+        nickname: 'Me',
+        avatar_url: null,
+        consistency_score: 90,
+        is_eligible: true,
+      },
       total_in_cohort: 80,
       info_note: 'Ranked by consistency, not restriction.',
     };

@@ -1,12 +1,5 @@
 import React from 'react';
-import {
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  View,
-} from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import type { RecipeFilterCriteria, RecipeMealType } from '@calipartner/core';
 import { t } from '@/i18n';
@@ -161,8 +154,7 @@ export function RecipeFilterBar({
 
         {/* Meal Type Chips */}
         {MEAL_TYPES.map(({ key, labelKey }) => {
-          const isActive =
-            key === 'all' ? !criteria.meal_type : criteria.meal_type === key;
+          const isActive = key === 'all' ? !criteria.meal_type : criteria.meal_type === key;
           return (
             <Pressable
               key={`meal-${key}`}
@@ -239,11 +231,7 @@ export function RecipeFilterBar({
             },
           ]}
         >
-          <Ionicons
-            name="time-outline"
-            size={12}
-            color={isQuick ? colors.onAccent : colors.text}
-          />
+          <Ionicons name="time-outline" size={12} color={isQuick ? colors.onAccent : colors.text} />
           <Text
             style={[
               styles.chipText,

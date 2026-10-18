@@ -132,9 +132,7 @@ export function RecipeBrowseView({
 
     // Optimistically update list
     setRecipes((prev) =>
-      prev.map((r) =>
-        r.id === recipe.id ? { ...r, is_favorite: nextFavorite } : r,
-      ),
+      prev.map((r) => (r.id === recipe.id ? { ...r, is_favorite: nextFavorite } : r)),
     );
 
     if (selectedRecipe && selectedRecipe.id === recipe.id) {
@@ -148,9 +146,7 @@ export function RecipeBrowseView({
     } catch {
       // Revert on error
       setRecipes((prev) =>
-        prev.map((r) =>
-          r.id === recipe.id ? { ...r, is_favorite: !nextFavorite } : r,
-        ),
+        prev.map((r) => (r.id === recipe.id ? { ...r, is_favorite: !nextFavorite } : r)),
       );
     }
   };

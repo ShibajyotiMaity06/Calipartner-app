@@ -97,7 +97,9 @@ export function useTargets() {
    * Persists to local SQLite and syncs to Supabase when online.
    */
   const saveGoalProfile = useCallback(
-    async (profile: GoalProfile): Promise<{ success: boolean; synced: boolean; error?: string }> => {
+    async (
+      profile: GoalProfile,
+    ): Promise<{ success: boolean; synced: boolean; error?: string }> => {
       if (!userId) {
         return { success: false, synced: false, error: 'User not logged in' };
       }

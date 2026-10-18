@@ -1,12 +1,5 @@
 import React from 'react';
-import {
-  Modal,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
+import { Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { t } from '@/i18n';
 import { fontSize, radius, spacing } from '@/theme/tokens';
@@ -44,18 +37,10 @@ export function CoachConsentModal({
         >
           {/* Header */}
           <View style={styles.header}>
-            <View
-              style={[
-                styles.iconWrap,
-                { backgroundColor: colors.cardHighlight },
-              ]}
-            >
+            <View style={[styles.iconWrap, { backgroundColor: colors.cardHighlight }]}>
               <Ionicons name="shield-checkmark" size={26} color={colors.accent} />
             </View>
-            <Text
-              style={[styles.title, { color: colors.text }]}
-              testID="text-coach-consent-title"
-            >
+            <Text style={[styles.title, { color: colors.text }]} testID="text-coach-consent-title">
               {t('coach.consent.title')}
             </Text>
             <Text style={[styles.subtitle, { color: colors.textMuted }]}>
@@ -130,12 +115,7 @@ export function CoachConsentModal({
                       accessibilityLabel={t('coach.consent.deleteHistoryLink')}
                       style={{ marginTop: 6 }}
                     >
-                      <Text
-                        style={[
-                          styles.linkText,
-                          { color: colors.accent },
-                        ]}
-                      >
+                      <Text style={[styles.linkText, { color: colors.accent }]}>
                         {t('coach.consent.deleteHistoryLink')} →
                       </Text>
                     </Pressable>
@@ -149,25 +129,17 @@ export function CoachConsentModal({
           <View style={styles.buttonGroup}>
             <Pressable
               onPress={onAgree}
-              style={[
-                styles.primaryBtn,
-                { backgroundColor: colors.accent },
-              ]}
+              style={[styles.primaryBtn, { backgroundColor: colors.accent }]}
               accessibilityRole="button"
               accessibilityLabel={t('coach.consent.agreeBtn')}
               testID="btn-coach-consent-agree"
             >
-              <Text style={styles.primaryBtnText}>
-                {t('coach.consent.agreeBtn')}
-              </Text>
+              <Text style={styles.primaryBtnText}>{t('coach.consent.agreeBtn')}</Text>
             </Pressable>
 
             <Pressable
               onPress={onDecline}
-              style={[
-                styles.secondaryBtn,
-                { borderColor: colors.border },
-              ]}
+              style={[styles.secondaryBtn, { borderColor: colors.border }]}
               accessibilityRole="button"
               accessibilityLabel={t('coach.consent.declineBtn')}
               testID="btn-coach-consent-decline"

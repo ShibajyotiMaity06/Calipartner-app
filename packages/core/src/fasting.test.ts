@@ -586,7 +586,8 @@ describe('Phase 13: Fasting Tracker Logic (PRD 6.20, 7.9, 8.1)', () => {
         referenceTime: refTime,
       });
 
-      const initialDiff = initialSchedules.find((s) => s.id === 'fasting_end_sess-edit')?.trigger.seconds;
+      const initialDiff = initialSchedules.find((s) => s.id === 'fasting_end_sess-edit')?.trigger
+        .seconds;
 
       // Edit planned minutes from 960 to 720 (12 hours)
       const editedSession: FastingSession = {
@@ -601,7 +602,8 @@ describe('Phase 13: Fasting Tracker Logic (PRD 6.20, 7.9, 8.1)', () => {
         referenceTime: refTime,
       });
 
-      const editedDiff = editedSchedules.find((s) => s.id === 'fasting_end_sess-edit')?.trigger.seconds;
+      const editedDiff = editedSchedules.find((s) => s.id === 'fasting_end_sess-edit')?.trigger
+        .seconds;
       expect(editedDiff).toBeLessThan(initialDiff!);
       expect(initialDiff! - editedDiff!).toBe(240 * 60); // Exactly 4 hours (240 mins) less
     });

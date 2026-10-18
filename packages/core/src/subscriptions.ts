@@ -53,7 +53,10 @@ export const REVENUECAT_PRODUCT_IDS: readonly string[] = Object.freeze([
   PRO_PRODUCTS.annual,
 ]);
 
-export const REVENUECAT_OFFERING_IDS: Record<Exclude<RoomTier, 'community'>, string> = Object.freeze({
+export const REVENUECAT_OFFERING_IDS: Record<
+  Exclude<RoomTier, 'community'>,
+  string
+> = Object.freeze({
   basic: 'basic',
   plus: 'plus',
   pro: 'pro',
@@ -113,7 +116,11 @@ export function mapProductIdToTierAndPeriod(
   }
 
   let period: RoomPeriod | null = null;
-  if (normalized.includes('annual') || normalized.includes('yearly') || normalized.includes('year')) {
+  if (
+    normalized.includes('annual') ||
+    normalized.includes('yearly') ||
+    normalized.includes('year')
+  ) {
     period = 'annual';
   } else if (
     normalized.includes('quarterly') ||
@@ -149,10 +156,7 @@ export const DEFAULT_REMOTE_CONFIG: RemoteConfigMap = Object.freeze({
   community_tier_enabled: false,
 });
 
-export function getTierCap(
-  tier: RoomTier,
-  config?: Partial<RemoteConfigMap> | null,
-): number {
+export function getTierCap(tier: RoomTier, config?: Partial<RemoteConfigMap> | null): number {
   if (config?.room_caps && config.room_caps[tier]) {
     return config.room_caps[tier];
   }
@@ -270,7 +274,10 @@ export function reconcileRoomSubscriptions(subscriptions: Entitlement[]): {
 // 7. PAYWALL TRIGGERS AS DATA (PRD 6.18 SUB-9)
 // -----------------------------------------------------------------------------
 
-export const PAYWALL_TRIGGER_METADATA: Record<PaywallTrigger, Omit<PaywallTriggerData, 'trigger'>> = Object.freeze({
+export const PAYWALL_TRIGGER_METADATA: Record<
+  PaywallTrigger,
+  Omit<PaywallTriggerData, 'trigger'>
+> = Object.freeze({
   create_room_after_trial: {
     title: 'Start your Room Plan',
     subtitle: 'Your 3-day trial has ended. Keep tracking together with your friends.',

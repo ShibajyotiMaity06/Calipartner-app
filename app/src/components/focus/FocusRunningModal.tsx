@@ -10,12 +10,12 @@ import {
   View,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import type {
-  FocusSession,
-  RoomFocusParticipant,
-  RoomFocusSession,
+import type { FocusSession, RoomFocusParticipant, RoomFocusSession } from '@calipartner/core';
+import {
+  shouldAutoStopStopwatch,
+  shouldPromptStillFocusing,
+  shouldSuggestBreak,
 } from '@calipartner/core';
-import { shouldAutoStopStopwatch, shouldPromptStillFocusing, shouldSuggestBreak } from '@calipartner/core';
 import { t } from '@/i18n';
 import { fontSize, radius, spacing } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
@@ -76,7 +76,9 @@ export function FocusRunningModal({
 
   const label = isRoom ? roomSession?.label : personalSession?.label;
   const status = isRoom
-    ? (roomParticipants.find((p) => p.status === 'break') ? 'paused' : 'active')
+    ? roomParticipants.find((p) => p.status === 'break')
+      ? 'paused'
+      : 'active'
     : personalSession?.status;
   const isPaused = status === 'paused';
 
@@ -97,9 +99,11 @@ export function FocusRunningModal({
     ? shouldSuggestBreak(sessionStartedAt)
     : displayedSeconds >= 5400;
   const showStillFocusing =
-    !isTimer && (sessionStartedAt ? shouldPromptStillFocusing(sessionStartedAt) : displayedSeconds >= 14400);
+    !isTimer &&
+    (sessionStartedAt ? shouldPromptStillFocusing(sessionStartedAt) : displayedSeconds >= 14400);
   const showAutoStopNotice =
-    !isTimer && (sessionStartedAt ? shouldAutoStopStopwatch(sessionStartedAt) : displayedSeconds >= 43200);
+    !isTimer &&
+    (sessionStartedAt ? shouldAutoStopStopwatch(sessionStartedAt) : displayedSeconds >= 43200);
 
   const handlePauseToggle = async () => {
     try {
@@ -145,9 +149,7 @@ export function FocusRunningModal({
     if (Platform.OS === 'web') {
       const g = globalThis as unknown as { confirm?: (msg: string) => boolean };
       const confirmed =
-        typeof g.confirm === 'function'
-          ? g.confirm(t('focus.confirmEndMessage'))
-          : true;
+        typeof g.confirm === 'function' ? g.confirm(t('focus.confirmEndMessage')) : true;
       if (confirmed) {
         void executeEndSession();
       }
@@ -164,9 +166,7 @@ export function FocusRunningModal({
       transparent={false}
       onRequestClose={onClose}
     >
-      <SafeAreaView
-        style={[styles.container, { backgroundColor: colors.background }]}
-      >
+      <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
         {/* Header Bar */}
         <View style={styles.header}>
           <Pressable
@@ -185,15 +185,8 @@ export function FocusRunningModal({
               {isRoom ? t('focus.roomFocusTitle') : t('focus.cardTitle')}
             </Text>
             {label ? (
-              <View
-                style={[
-                  styles.labelPill,
-                  { backgroundColor: colors.cardHighlight },
-                ]}
-              >
-                <Text style={[styles.labelText, { color: colors.accent }]}>
-                  {label}
-                </Text>
+              <View style={[styles.labelPill, { backgroundColor: colors.cardHighlight }]}>
+                <Text style={[styles.labelText, { color: colors.accent }]}>{label}</Text>
               </View>
             ) : null}
           </View>
@@ -201,18 +194,13 @@ export function FocusRunningModal({
           <View style={{ width: 40 }} />
         </View>
 
-        <ScrollView
-          contentContainerStyle={styles.content}
-          showsVerticalScrollIndicator={false}
-        >
+        <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
           {/* Status Badge */}
           <View
             style={[
               styles.statusBadge,
               {
-                backgroundColor: isPaused
-                  ? colors.surfaceAlt
-                  : colors.cardHighlight,
+                backgroundColor: isPaused ? colors.surfaceAlt : colors.cardHighlight,
                 borderColor: isPaused ? colors.border : colors.accent,
               },
             ]}
@@ -223,10 +211,7 @@ export function FocusRunningModal({
               color={isPaused ? colors.textMuted : colors.accent}
             />
             <Text
-              style={[
-                styles.statusText,
-                { color: isPaused ? colors.textMuted : colors.accent },
-              ]}
+              style={[styles.statusText, { color: isPaused ? colors.textMuted : colors.accent }]}
             >
               {isPaused ? t('focus.pausedStatus') : t('focus.activeStatus')}
             </Text>
@@ -259,11 +244,7 @@ export function FocusRunningModal({
                 },
               ]}
             >
-              <Ionicons
-                name="cafe-outline"
-                size={20}
-                color={colors.accent}
-              />
+              <Ionicons name="cafe-outline" size={20} color={colors.accent} />
               <Text style={[styles.promptText, { color: colors.text }]}>
                 {t('focus.breakPrompt')}
               </Text>
@@ -281,11 +262,7 @@ export function FocusRunningModal({
                 },
               ]}
             >
-              <Ionicons
-                name="heart-outline"
-                size={20}
-                color={colors.accent}
-              />
+              <Ionicons name="heart-outline" size={20} color={colors.accent} />
               <Text style={[styles.promptText, { color: colors.text }]}>
                 {t('focus.stillFocusingPrompt')}
               </Text>
@@ -303,11 +280,7 @@ export function FocusRunningModal({
                 },
               ]}
             >
-              <Ionicons
-                name="time-outline"
-                size={20}
-                color={colors.textMuted}
-              />
+              <Ionicons name="time-outline" size={20} color={colors.textMuted} />
               <Text style={[styles.promptText, { color: colors.textMuted }]}>
                 Stopwatch reached the 12-hour maximum cap.
               </Text>
@@ -326,9 +299,7 @@ export function FocusRunningModal({
                 },
               ]}
             >
-              <Text
-                style={[styles.participantsHeader, { color: colors.text }]}
-              >
+              <Text style={[styles.participantsHeader, { color: colors.text }]}>
                 {t('focus.participantsTitle')} ({roomParticipants.length})
               </Text>
               <View style={styles.participantsList}>
@@ -337,24 +308,10 @@ export function FocusRunningModal({
                   return (
                     <View key={p.user_id} style={styles.participantRow}>
                       <View style={styles.participantInfo}>
-                        <View
-                          style={[
-                            styles.avatarCircle,
-                            { backgroundColor: colors.surfaceAlt },
-                          ]}
-                        >
-                          <Ionicons
-                            name="person"
-                            size={14}
-                            color={colors.text}
-                          />
+                        <View style={[styles.avatarCircle, { backgroundColor: colors.surfaceAlt }]}>
+                          <Ionicons name="person" size={14} color={colors.text} />
                         </View>
-                        <Text
-                          style={[
-                            styles.participantName,
-                            { color: colors.text },
-                          ]}
-                        >
+                        <Text style={[styles.participantName, { color: colors.text }]}>
                           {p.user_id}
                         </Text>
                       </View>
@@ -362,9 +319,7 @@ export function FocusRunningModal({
                         style={[
                           styles.participantBadge,
                           {
-                            backgroundColor: pPaused
-                              ? colors.surfaceAlt
-                              : colors.cardHighlight,
+                            backgroundColor: pPaused ? colors.surfaceAlt : colors.cardHighlight,
                           },
                         ]}
                       >
@@ -372,9 +327,7 @@ export function FocusRunningModal({
                           style={[
                             styles.participantBadgeText,
                             {
-                              color: pPaused
-                                ? colors.textMuted
-                                : colors.accent,
+                              color: pPaused ? colors.textMuted : colors.accent,
                             },
                           ]}
                         >
@@ -398,16 +351,12 @@ export function FocusRunningModal({
               style={[
                 styles.actionBtn,
                 {
-                  backgroundColor: isPaused
-                    ? colors.accent
-                    : colors.surfaceAlt,
+                  backgroundColor: isPaused ? colors.accent : colors.surfaceAlt,
                   borderColor: isPaused ? colors.accent : colors.border,
                 },
               ]}
               accessibilityRole="button"
-              accessibilityLabel={
-                isPaused ? t('focus.resumeBtn') : t('focus.pauseBtn')
-              }
+              accessibilityLabel={isPaused ? t('focus.resumeBtn') : t('focus.pauseBtn')}
             >
               <Ionicons
                 name={isPaused ? 'play' : 'pause'}
@@ -415,10 +364,7 @@ export function FocusRunningModal({
                 color={isPaused ? colors.onAccent : colors.text}
               />
               <Text
-                style={[
-                  styles.actionBtnText,
-                  { color: isPaused ? colors.onAccent : colors.text },
-                ]}
+                style={[styles.actionBtnText, { color: isPaused ? colors.onAccent : colors.text }]}
               >
                 {isPaused ? t('focus.resumeBtn') : t('focus.pauseBtn')}
               </Text>
@@ -440,9 +386,7 @@ export function FocusRunningModal({
               accessibilityLabel={t('focus.endBtn')}
             >
               <Ionicons name="stop" size={22} color={colors.accent} />
-              <Text
-                style={[styles.actionBtnText, { color: colors.text }]}
-              >
+              <Text style={[styles.actionBtnText, { color: colors.text }]}>
                 {t('focus.endBtn')}
               </Text>
             </Pressable>
@@ -468,17 +412,10 @@ export function FocusRunningModal({
                   },
                 ]}
               >
-                <Text
-                  style={[styles.confirmTitle, { color: colors.text }]}
-                >
+                <Text style={[styles.confirmTitle, { color: colors.text }]}>
                   {t('focus.confirmEndTitle')}
                 </Text>
-                <Text
-                  style={[
-                    styles.confirmMessage,
-                    { color: colors.textMuted },
-                  ]}
-                >
+                <Text style={[styles.confirmMessage, { color: colors.textMuted }]}>
                   {t('focus.confirmEndMessage')}
                 </Text>
 
@@ -496,32 +433,19 @@ export function FocusRunningModal({
                     accessibilityRole="button"
                     accessibilityLabel={t('common.cancel')}
                   >
-                    <Text
-                      style={[
-                        styles.confirmBtnText,
-                        { color: colors.text },
-                      ]}
-                    >
+                    <Text style={[styles.confirmBtnText, { color: colors.text }]}>
                       {t('common.cancel')}
                     </Text>
                   </Pressable>
 
                   <Pressable
                     testID="btn-confirm-end-yes"
-                    style={[
-                      styles.confirmBtn,
-                      { backgroundColor: colors.accent },
-                    ]}
+                    style={[styles.confirmBtn, { backgroundColor: colors.accent }]}
                     onPress={executeEndSession}
                     accessibilityRole="button"
                     accessibilityLabel={t('focus.endBtn')}
                   >
-                    <Text
-                      style={[
-                        styles.confirmBtnText,
-                        { color: colors.onAccent },
-                      ]}
-                    >
+                    <Text style={[styles.confirmBtnText, { color: colors.onAccent }]}>
                       {t('focus.endBtn')}
                     </Text>
                   </Pressable>

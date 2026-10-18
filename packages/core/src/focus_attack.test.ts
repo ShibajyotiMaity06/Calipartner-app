@@ -124,7 +124,10 @@ describe('Phase 9B: Focus Attack Tests & Security Invariants', () => {
       members: ['user-a', 'user-b'],
     };
 
-    function checkCanReadRoomFocus(room: SimulatedRoom, userId: string): 'OK' | 'NOT_A_MEMBER' | 'ROOM_LOCKED' {
+    function checkCanReadRoomFocus(
+      room: SimulatedRoom,
+      userId: string,
+    ): 'OK' | 'NOT_A_MEMBER' | 'ROOM_LOCKED' {
       if (!room.members.includes(userId)) {
         return 'NOT_A_MEMBER';
       }

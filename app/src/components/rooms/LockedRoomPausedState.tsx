@@ -1,10 +1,5 @@
 import React from 'react';
-import {
-  Pressable,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { t } from '@/i18n';
 import { fontSize, radius, spacing } from '@/theme/tokens';
@@ -19,29 +14,19 @@ export interface LockedRoomPausedStateProps {
  * Strictly non-shaming: never mentions who paid or whose card failed.
  * Assures members that all history is saved and personal tracking continues.
  */
-export function LockedRoomPausedState({
-  onKeepRoomGoing,
-}: LockedRoomPausedStateProps) {
+export function LockedRoomPausedState({ onKeepRoomGoing }: LockedRoomPausedStateProps) {
   const { colors } = useTheme();
 
   return (
     <View
-      style={[
-        styles.container,
-        { backgroundColor: colors.surface, borderColor: colors.border },
-      ]}
+      style={[styles.container, { backgroundColor: colors.surface, borderColor: colors.border }]}
       testID="screen-locked-room-paused"
     >
-      <View
-        style={[styles.iconCircle, { backgroundColor: colors.cardHighlight }]}
-      >
+      <View style={[styles.iconCircle, { backgroundColor: colors.cardHighlight }]}>
         <Ionicons name="pause-circle-outline" size={42} color={colors.accent} />
       </View>
 
-      <Text
-        style={[styles.title, { color: colors.text }]}
-        testID="text-locked-room-title"
-      >
+      <Text style={[styles.title, { color: colors.text }]} testID="text-locked-room-title">
         {t('rooms.paused.title')}
       </Text>
 
@@ -53,37 +38,23 @@ export function LockedRoomPausedState({
       </Text>
 
       {/* Safety & Preservation guarantees */}
-      <View
-        style={[styles.guaranteesBox, { backgroundColor: colors.surfaceAlt }]}
-      >
+      <View style={[styles.guaranteesBox, { backgroundColor: colors.surfaceAlt }]}>
         <View style={styles.guaranteeRow}>
-          <Ionicons
-            name="shield-checkmark-outline"
-            size={16}
-            color={colors.syncSynced}
-          />
+          <Ionicons name="shield-checkmark-outline" size={16} color={colors.syncSynced} />
           <Text style={[styles.guaranteeText, { color: colors.text }]}>
             All room chat, photos and progress are safely saved
           </Text>
         </View>
 
         <View style={styles.guaranteeRow}>
-          <Ionicons
-            name="checkmark-circle-outline"
-            size={16}
-            color={colors.syncSynced}
-          />
+          <Ionicons name="checkmark-circle-outline" size={16} color={colors.syncSynced} />
           <Text style={[styles.guaranteeText, { color: colors.text }]}>
             Personal logging (food, water, steps, workouts) is 100% free
           </Text>
         </View>
 
         <View style={styles.guaranteeRow}>
-          <Ionicons
-            name="people-outline"
-            size={16}
-            color={colors.syncSynced}
-          />
+          <Ionicons name="people-outline" size={16} color={colors.syncSynced} />
           <Text style={[styles.guaranteeText, { color: colors.text }]}>
             Any member can keep this room going with a plan
           </Text>
@@ -98,9 +69,7 @@ export function LockedRoomPausedState({
         testID="btn-keep-room-going"
       >
         <Ionicons name="sparkles" size={16} color="#FFFFFF" />
-        <Text style={styles.keepGoingButtonText}>
-          {t('rooms.paused.keepGoingBtn')}
-        </Text>
+        <Text style={styles.keepGoingButtonText}>{t('rooms.paused.keepGoingBtn')}</Text>
       </Pressable>
     </View>
   );

@@ -1,10 +1,5 @@
 import React from 'react';
-import {
-  Pressable,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { t } from '@/i18n';
 import { fontSize, radius, spacing } from '@/theme/tokens';
@@ -45,9 +40,7 @@ export function OverCapacityBanner({
       testID="banner-over-capacity"
     >
       <View style={styles.topRow}>
-        <View
-          style={[styles.iconCircle, { backgroundColor: colors.cardHighlight }]}
-        >
+        <View style={[styles.iconCircle, { backgroundColor: colors.cardHighlight }]}>
           <Ionicons name="alert-circle-outline" size={20} color={colors.accent} />
         </View>
         <View style={styles.textContainer}>
@@ -80,9 +73,7 @@ export function OverCapacityBanner({
             testID="btn-over-capacity-upgrade"
           >
             <Ionicons name="sparkles" size={14} color="#FFFFFF" />
-            <Text style={styles.upgradeBtnText}>
-              {t('rooms.overCapacity.upgradeBtn')}
-            </Text>
+            <Text style={styles.upgradeBtnText}>{t('rooms.overCapacity.upgradeBtn')}</Text>
           </Pressable>
 
           {onManageMembers && (

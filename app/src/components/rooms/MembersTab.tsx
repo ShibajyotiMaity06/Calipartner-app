@@ -1,12 +1,5 @@
 import React from 'react';
-import {
-  Image,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
+import { Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import type { RoomMemberSnapshot } from '@calipartner/core';
 import { t } from '@/i18n';
@@ -40,10 +33,15 @@ export function MembersTab({
   return (
     <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.container}>
       {/* Top Banner */}
-      <View style={[styles.topBanner, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+      <View
+        style={[styles.topBanner, { backgroundColor: colors.surface, borderColor: colors.border }]}
+      >
         <View style={styles.bannerInfo}>
           <Text style={[styles.bannerTitle, { color: colors.text }]}>{room.name}</Text>
-          <Text style={[styles.bannerSub, { color: colors.textMuted }]} testID="text-members-capacity">
+          <Text
+            style={[styles.bannerSub, { color: colors.textMuted }]}
+            testID="text-members-capacity"
+          >
             {t('rooms.capacityIndicator', { count: members.length, cap: memberCap })}
           </Text>
         </View>
@@ -74,7 +72,10 @@ export function MembersTab({
       {/* Room Full Host Notice Card */}
       {isRoomFull && isHost && (
         <View
-          style={[styles.fullNoticeCard, { backgroundColor: colors.cardHighlight, borderColor: colors.accent }]}
+          style={[
+            styles.fullNoticeCard,
+            { backgroundColor: colors.cardHighlight, borderColor: colors.accent },
+          ]}
           testID="card-members-room-full-host"
         >
           <Ionicons name="alert-circle-outline" size={18} color={colors.accent} />
@@ -94,7 +95,10 @@ export function MembersTab({
             <Pressable
               key={m.user_id}
               onPress={() => onSelectMember(m.user_id)}
-              style={[styles.memberRow, { backgroundColor: colors.surface, borderColor: colors.border }]}
+              style={[
+                styles.memberRow,
+                { backgroundColor: colors.surface, borderColor: colors.border },
+              ]}
               accessibilityRole="button"
               accessibilityLabel={`View member ${m.nickname}`}
               testID={`member-row-${m.user_id}`}
@@ -132,9 +136,7 @@ export function MembersTab({
                     </Text>
                   </View>
                 </View>
-                <Text style={[styles.username, { color: colors.textMuted }]}>
-                  @{m.username}
-                </Text>
+                <Text style={[styles.username, { color: colors.textMuted }]}>@{m.username}</Text>
               </View>
 
               <Ionicons name="chevron-forward" size={16} color={colors.textMuted} />

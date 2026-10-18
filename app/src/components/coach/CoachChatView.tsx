@@ -26,12 +26,7 @@ import { CoachHistoryModal } from './CoachHistoryModal';
 import { CoachMessageBubble } from './CoachMessageBubble';
 import { CoachReportModal } from './CoachReportModal';
 import { CoachSuggestedPrompts } from './CoachSuggestedPrompts';
-import type {
-  CoachConversation,
-  CoachMessage,
-  CoachReportReason,
-  CoachSuggestion,
-} from './types';
+import type { CoachConversation, CoachMessage, CoachReportReason, CoachSuggestion } from './types';
 import type { Recipe } from '@calipartner/core';
 
 export interface CoachChatViewProps {
@@ -223,9 +218,7 @@ export function CoachChatView({ onBack, initialConversationId }: CoachChatViewPr
   // Thumbs feedback
   const handleThumbsUp = (msgId: string) => {
     setMessages((prev) =>
-      prev.map((m) =>
-        m.id === msgId ? { ...m, feedback: m.feedback === 'up' ? null : 'up' } : m,
-      ),
+      prev.map((m) => (m.id === msgId ? { ...m, feedback: m.feedback === 'up' ? null : 'up' } : m)),
     );
   };
 
@@ -238,11 +231,7 @@ export function CoachChatView({ onBack, initialConversationId }: CoachChatViewPr
   };
 
   // Report message
-  const handleReportSubmit = (
-    _msgId: string,
-    _reason: CoachReportReason,
-    _notes?: string,
-  ) => {
+  const handleReportSubmit = (_msgId: string, _reason: CoachReportReason, _notes?: string) => {
     // Record report locally / feedback
     setReportTargetId(null);
   };
@@ -334,10 +323,7 @@ export function CoachChatView({ onBack, initialConversationId }: CoachChatViewPr
       >
         {/* Header */}
         <View
-          style={[
-            styles.header,
-            { backgroundColor: colors.surface, borderColor: colors.border },
-          ]}
+          style={[styles.header, { backgroundColor: colors.surface, borderColor: colors.border }]}
         >
           {onBack && (
             <Pressable
@@ -350,9 +336,7 @@ export function CoachChatView({ onBack, initialConversationId }: CoachChatViewPr
               <Ionicons name="chevron-back" size={24} color={colors.text} />
             </Pressable>
           )}
-          <Text style={[styles.headerTitle, { color: colors.text }]}>
-            {t('coach.title')}
-          </Text>
+          <Text style={[styles.headerTitle, { color: colors.text }]}>{t('coach.title')}</Text>
         </View>
 
         <ScrollView
@@ -379,10 +363,7 @@ export function CoachChatView({ onBack, initialConversationId }: CoachChatViewPr
     >
       {/* Top Header */}
       <View
-        style={[
-          styles.header,
-          { backgroundColor: colors.surface, borderColor: colors.border },
-        ]}
+        style={[styles.header, { backgroundColor: colors.surface, borderColor: colors.border }]}
       >
         <View style={styles.headerLeft}>
           {onBack && (
@@ -398,18 +379,9 @@ export function CoachChatView({ onBack, initialConversationId }: CoachChatViewPr
           )}
           <View style={styles.titleWrap}>
             <View style={styles.titleRow}>
-              <Text style={[styles.headerTitle, { color: colors.text }]}>
-                {t('coach.title')}
-              </Text>
-              <View
-                style={[
-                  styles.badgePill,
-                  { backgroundColor: colors.cardHighlight },
-                ]}
-              >
-                <Text style={[styles.badgeText, { color: colors.accent }]}>
-                  {t('coach.badge')}
-                </Text>
+              <Text style={[styles.headerTitle, { color: colors.text }]}>{t('coach.title')}</Text>
+              <View style={[styles.badgePill, { backgroundColor: colors.cardHighlight }]}>
+                <Text style={[styles.badgeText, { color: colors.accent }]}>{t('coach.badge')}</Text>
               </View>
             </View>
             <Text style={[styles.headerSubtitle, { color: colors.textMuted }]}>
@@ -465,10 +437,7 @@ export function CoachChatView({ onBack, initialConversationId }: CoachChatViewPr
       </ScrollView>
 
       {/* Suggested Prompts Strip */}
-      <CoachSuggestedPrompts
-        onSelectPrompt={handleSendMessage}
-        disabled={inputDisabled}
-      />
+      <CoachSuggestedPrompts onSelectPrompt={handleSendMessage} disabled={inputDisabled} />
 
       {/* Bottom Input Bar */}
       <View

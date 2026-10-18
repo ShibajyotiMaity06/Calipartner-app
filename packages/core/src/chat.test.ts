@@ -71,9 +71,9 @@ describe('Phase 8: Chat Core Logic Tests', () => {
       expect(validateChatAttachments([{ size: 500, mime_type: 'image/gif' }]).errorCode).toBe(
         'INVALID_FILE_TYPE',
       );
-      expect(
-        validateChatAttachments([{ size: 500, mime_type: 'application/pdf' }]).errorCode,
-      ).toBe('INVALID_FILE_TYPE');
+      expect(validateChatAttachments([{ size: 500, mime_type: 'application/pdf' }]).errorCode).toBe(
+        'INVALID_FILE_TYPE',
+      );
       expect(validateChatAttachments([{ size: 500, mime_type: 'image/bmp' }]).errorCode).toBe(
         'INVALID_FILE_TYPE',
       );
@@ -147,13 +147,41 @@ describe('Phase 8: Chat Core Logic Tests', () => {
       // SOS marker: FF DA, 4 bytes stream
       // EOI marker: FF D9
       return new Uint8Array([
-        0xff, 0xd8, // SOI
-        0xff, 0xe1, 0x00, 0x10, // APP1 marker + length 16
-        0x45, 0x78, 0x69, 0x66, 0x00, 0x00, // Exif\0\0
-        0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, // payload
-        0xff, 0xdb, 0x00, 0x05, 0xaa, 0xbb, 0xcc, // DQT
-        0xff, 0xda, 0x00, 0x02, 0x11, 0x22, // SOS
-        0xff, 0xd9, // EOI
+        0xff,
+        0xd8, // SOI
+        0xff,
+        0xe1,
+        0x00,
+        0x10, // APP1 marker + length 16
+        0x45,
+        0x78,
+        0x69,
+        0x66,
+        0x00,
+        0x00, // Exif\0\0
+        0x01,
+        0x02,
+        0x03,
+        0x04,
+        0x05,
+        0x06,
+        0x07,
+        0x08, // payload
+        0xff,
+        0xdb,
+        0x00,
+        0x05,
+        0xaa,
+        0xbb,
+        0xcc, // DQT
+        0xff,
+        0xda,
+        0x00,
+        0x02,
+        0x11,
+        0x22, // SOS
+        0xff,
+        0xd9, // EOI
       ]);
     }
 
@@ -178,7 +206,9 @@ describe('Phase 8: Chat Core Logic Tests', () => {
     });
 
     it('returns unmodified buffer when JPEG has no EXIF', () => {
-      const cleanJpeg = new Uint8Array([0xff, 0xd8, 0xff, 0xdb, 0x00, 0x04, 0x01, 0x02, 0xff, 0xd9]);
+      const cleanJpeg = new Uint8Array([
+        0xff, 0xd8, 0xff, 0xdb, 0x00, 0x04, 0x01, 0x02, 0xff, 0xd9,
+      ]);
       expect(hasJpegExif(cleanJpeg)).toBe(false);
       const res = stripJpegExif(cleanJpeg);
       expect(res.length).toBe(cleanJpeg.length);
@@ -191,15 +221,36 @@ describe('Phase 8: Chat Core Logic Tests', () => {
       // IEND chunk: len 0 + 'IEND' 4 + 4 crc = 12 bytes
       const pngHeader = [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a];
       const exifChunk = [
-        0x00, 0x00, 0x00, 0x04, // len
-        0x65, 0x58, 0x49, 0x66, // 'eXIf'
-        0x01, 0x02, 0x03, 0x04, // data
-        0xaa, 0xbb, 0xcc, 0xdd, // crc
+        0x00,
+        0x00,
+        0x00,
+        0x04, // len
+        0x65,
+        0x58,
+        0x49,
+        0x66, // 'eXIf'
+        0x01,
+        0x02,
+        0x03,
+        0x04, // data
+        0xaa,
+        0xbb,
+        0xcc,
+        0xdd, // crc
       ];
       const iendChunk = [
-        0x00, 0x00, 0x00, 0x00, // len
-        0x49, 0x45, 0x4e, 0x44, // 'IEND'
-        0xae, 0x42, 0x60, 0x82, // crc
+        0x00,
+        0x00,
+        0x00,
+        0x00, // len
+        0x49,
+        0x45,
+        0x4e,
+        0x44, // 'IEND'
+        0xae,
+        0x42,
+        0x60,
+        0x82, // crc
       ];
       const pngWithExif = new Uint8Array([...pngHeader, ...exifChunk, ...iendChunk]);
 
@@ -212,12 +263,7 @@ describe('Phase 8: Chat Core Logic Tests', () => {
 
   describe('Storage key & path traversal prevention', () => {
     it('generates standard hierarchical storage keys', () => {
-      const key = generateChatAttachmentStorageKey(
-        'room-123',
-        'client-msg-456',
-        0,
-        'jpg',
-      );
+      const key = generateChatAttachmentStorageKey('room-123', 'client-msg-456', 0, 'jpg');
       expect(key).toBe('rooms/room-123/messages/client-msg-456/0.jpg');
     });
 
@@ -230,9 +276,9 @@ describe('Phase 8: Chat Core Logic Tests', () => {
         validateChatStorageKey('rooms/room-999/messages/client-msg-456/0.jpg', 'room-123'),
       ).toBe(false);
       // Path traversal attempts
-      expect(
-        validateChatStorageKey('rooms/room-123/messages/../../secrets.txt', 'room-123'),
-      ).toBe(false);
+      expect(validateChatStorageKey('rooms/room-123/messages/../../secrets.txt', 'room-123')).toBe(
+        false,
+      );
       expect(validateChatStorageKey('/rooms/room-123/messages/0.jpg', 'room-123')).toBe(false);
       expect(validateChatStorageKey('rooms\\room-123\\messages\\0.jpg', 'room-123')).toBe(false);
     });

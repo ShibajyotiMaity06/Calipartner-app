@@ -50,7 +50,9 @@ describe('deepLinks & Notification Routing', () => {
       },
     };
 
-    handleNotificationResponse(mockResponse as unknown as Parameters<typeof handleNotificationResponse>[0]);
+    handleNotificationResponse(
+      mockResponse as unknown as Parameters<typeof handleNotificationResponse>[0],
+    );
     expect(router.push).toHaveBeenCalledWith('/(tabs)/room');
   });
 });

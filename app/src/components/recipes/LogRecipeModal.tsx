@@ -9,11 +9,7 @@ import {
   View,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import {
-  scaleLoggedRecipeNutrients,
-  type MealSection,
-  type Recipe,
-} from '@calipartner/core';
+import { scaleLoggedRecipeNutrients, type MealSection, type Recipe } from '@calipartner/core';
 import { useAuth } from '@/contexts/AuthContext';
 import { getDb } from '@/db';
 import { t } from '@/i18n';
@@ -59,10 +55,7 @@ export function LogRecipeModal({
   if (!recipe) return null;
 
   // Live scaled nutrients preview (RCP-6)
-  const scaledNutrients = scaleLoggedRecipeNutrients(
-    recipe.nutrition_per_serving,
-    servings,
-  );
+  const scaledNutrients = scaleLoggedRecipeNutrients(recipe.nutrition_per_serving, servings);
 
   const handleDecrement = () => {
     setServings((s) => Math.max(0.5, Math.round((s - 0.5) * 10) / 10));
@@ -84,16 +77,13 @@ export function LogRecipeModal({
     try {
       const db = await getDb();
 
-      await logRecipe(
-        db,
-        {
-          userId: user.id,
-          recipeId: recipe.id,
-          servings,
-          mealSection,
-          localDate,
-        },
-      );
+      await logRecipe(db, {
+        userId: user.id,
+        recipeId: recipe.id,
+        servings,
+        mealSection,
+        localDate,
+      });
 
       onLogged?.();
       onClose();
@@ -114,10 +104,7 @@ export function LogRecipeModal({
     >
       <View style={styles.backdrop}>
         <View
-          style={[
-            styles.sheet,
-            { backgroundColor: colors.surface, borderColor: colors.border },
-          ]}
+          style={[styles.sheet, { backgroundColor: colors.surface, borderColor: colors.border }]}
         >
           {/* Header */}
           <View style={styles.header}>
@@ -142,7 +129,12 @@ export function LogRecipeModal({
 
           <ScrollView contentContainerStyle={styles.body} showsVerticalScrollIndicator={false}>
             {errorMsg && (
-              <View style={[styles.errorBox, { backgroundColor: '#FEE2E2', borderColor: colors.danger }]}>
+              <View
+                style={[
+                  styles.errorBox,
+                  { backgroundColor: '#FEE2E2', borderColor: colors.danger },
+                ]}
+              >
                 <Text style={[styles.errorText, { color: colors.danger }]}>{errorMsg}</Text>
               </View>
             )}
@@ -173,7 +165,10 @@ export function LogRecipeModal({
                 </Pressable>
 
                 <View style={styles.stepperValueWrap}>
-                  <Text testID="text-log-servings-value" style={[styles.stepperValueText, { color: colors.text }]}>
+                  <Text
+                    testID="text-log-servings-value"
+                    style={[styles.stepperValueText, { color: colors.text }]}
+                  >
                     {servings}
                   </Text>
                   <Text style={[styles.stepperValueSub, { color: colors.textMuted }]}>

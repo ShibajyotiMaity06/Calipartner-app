@@ -1,12 +1,5 @@
 import React, { useState } from 'react';
-import {
-  ActivityIndicator,
-  Modal,
-  Pressable,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
+import { ActivityIndicator, Modal, Pressable, StyleSheet, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import type { RoomMemberSnapshot } from '@calipartner/core';
 import { t } from '@/i18n';
@@ -107,7 +100,9 @@ export function BlockUserModal({
                 <ActivityIndicator size="small" color="#FFFFFF" />
               ) : (
                 <Text style={styles.blockButtonText}>
-                  {blockedToast ? t('rooms.blockModal.blockedToast') : t('rooms.blockModal.confirmBtn')}
+                  {blockedToast
+                    ? t('rooms.blockModal.blockedToast')
+                    : t('rooms.blockModal.confirmBtn')}
                 </Text>
               )}
             </Pressable>

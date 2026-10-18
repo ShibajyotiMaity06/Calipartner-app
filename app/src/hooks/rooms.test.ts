@@ -129,11 +129,7 @@ describe('Room hooks data layer logic tests', () => {
     const inbox = await roomService.getRequestsInbox(typedMockClient);
     expect(inbox.incoming).toHaveLength(1);
 
-    const respondRes = await roomService.respondToRoomRequest(
-      typedMockClient,
-      'req-1',
-      true,
-    );
+    const respondRes = await roomService.respondToRoomRequest(typedMockClient, 'req-1', true);
     expect(respondRes.status).toBe('accepted');
   });
 
@@ -153,12 +149,7 @@ describe('Room hooks data layer logic tests', () => {
     );
     expect(nudgeRes.status).toBe('sent');
 
-    const reactRes = await roomService.sendReaction(
-      typedMockClient,
-      'r-1',
-      'e-1',
-      'fire',
-    );
+    const reactRes = await roomService.sendReaction(typedMockClient, 'r-1', 'e-1', 'fire');
     expect(reactRes.status).toBe('reacted');
 
     const mealRes = await roomService.respondSharedMeal(

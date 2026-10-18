@@ -168,7 +168,10 @@ export function BodyStatsStep({
           {t('onboarding.bodyStats.unitsLabel')}
         </Text>
         <View
-          style={[styles.segmentContainer, { backgroundColor: colors.surfaceAlt, borderColor: colors.border }]}
+          style={[
+            styles.segmentContainer,
+            { backgroundColor: colors.surfaceAlt, borderColor: colors.border },
+          ]}
           accessible
           accessibilityRole="radiogroup"
         >

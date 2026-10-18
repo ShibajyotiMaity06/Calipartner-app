@@ -121,7 +121,8 @@ export function mapUsdaFoodItem(item: Record<string, unknown>): CreateFoodInput 
 
   const servingUnits: ServingUnit[] = [{ unit: 'g', grams: 1 }];
 
-  const householdText = typeof item.householdServingFullText === 'string' ? item.householdServingFullText : undefined;
+  const householdText =
+    typeof item.householdServingFullText === 'string' ? item.householdServingFullText : undefined;
   if (item.servingSize && Number(item.servingSize) > 0) {
     const sGrams = Number(item.servingSize);
     servingUnits.push({
@@ -132,7 +133,12 @@ export function mapUsdaFoodItem(item: Record<string, unknown>): CreateFoodInput 
   }
 
   const desc = typeof item.description === 'string' ? item.description.trim() : 'Unknown Food';
-  const brand = (typeof item.brandOwner === 'string' ? item.brandOwner : typeof item.brandName === 'string' ? item.brandName : null) || null;
+  const brand =
+    (typeof item.brandOwner === 'string'
+      ? item.brandOwner
+      : typeof item.brandName === 'string'
+        ? item.brandName
+        : null) || null;
   const barcode = typeof item.gtinUpc === 'string' ? item.gtinUpc : null;
 
   return {

@@ -1,11 +1,5 @@
 import { useState } from 'react';
-import {
-  ActivityIndicator,
-  Pressable,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
+import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useWater } from '@/hooks/useWater';
 import { t } from '@/i18n';
@@ -95,7 +89,10 @@ export function WaterCard({ selectedDate, testID = 'water-card' }: WaterCardProp
               testID="btn-water-undo"
               onPress={() => void handleUndo()}
               disabled={actionBusy}
-              style={[styles.smallActionBtn, { borderColor: colors.border, backgroundColor: colors.surfaceAlt }]}
+              style={[
+                styles.smallActionBtn,
+                { borderColor: colors.border, backgroundColor: colors.surfaceAlt },
+              ]}
               accessibilityRole="button"
               accessibilityLabel={t('trackers.water.undo')}
             >
@@ -109,7 +106,10 @@ export function WaterCard({ selectedDate, testID = 'water-card' }: WaterCardProp
           <Pressable
             testID="btn-water-history"
             onPress={() => setHistoryModalVisible(true)}
-            style={[styles.smallActionBtn, { borderColor: colors.border, backgroundColor: colors.surfaceAlt }]}
+            style={[
+              styles.smallActionBtn,
+              { borderColor: colors.border, backgroundColor: colors.surfaceAlt },
+            ]}
             accessibilityRole="button"
             accessibilityLabel={t('trackers.water.history')}
           >

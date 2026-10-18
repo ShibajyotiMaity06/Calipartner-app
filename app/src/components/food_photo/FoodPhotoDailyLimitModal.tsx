@@ -1,11 +1,5 @@
 import React from 'react';
-import {
-  Modal,
-  Pressable,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
+import { Modal, Pressable, StyleSheet, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { t } from '@/i18n';
 import { fontSize, radius, spacing } from '@/theme/tokens';
@@ -63,26 +57,15 @@ export function FoodPhotoDailyLimitModal({
           ]}
         >
           {/* Top Status Icon */}
-          <View
-            style={[
-              styles.iconWrap,
-              { backgroundColor: colors.cardHighlight },
-            ]}
-          >
+          <View style={[styles.iconWrap, { backgroundColor: colors.cardHighlight }]}>
             <Ionicons name="sparkles-outline" size={36} color={colors.accent} />
           </View>
 
-          <Text
-            testID="text-limit-title"
-            style={[styles.title, { color: colors.text }]}
-          >
+          <Text testID="text-limit-title" style={[styles.title, { color: colors.text }]}>
             {t('foodLog.photo.limitTitle')}
           </Text>
 
-          <Text
-            testID="text-limit-body"
-            style={[styles.body, { color: colors.textMuted }]}
-          >
+          <Text testID="text-limit-body" style={[styles.body, { color: colors.textMuted }]}>
             {getLimitBodyText()}
           </Text>
 
@@ -96,7 +79,9 @@ export function FoodPhotoDailyLimitModal({
               ]}
             >
               <Text style={[styles.usageText, { color: colors.textMuted }]}>
-                Today’s Scans: <Text style={{ color: colors.text, fontWeight: '700' }}>{usedToday}</Text> / {dailyCap}
+                Today’s Scans:{' '}
+                <Text style={{ color: colors.text, fontWeight: '700' }}>{usedToday}</Text> /{' '}
+                {dailyCap}
               </Text>
             </View>
           )}

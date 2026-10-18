@@ -48,7 +48,8 @@ export function RequestsInboxModal({
     try {
       await onRespond(item.id, accept);
     } catch (err: unknown) {
-      const msg = err && typeof err === 'object' && 'message' in err ? String(err.message) : String(err);
+      const msg =
+        err && typeof err === 'object' && 'message' in err ? String(err.message) : String(err);
       if (msg.includes('ROOM_FULL')) {
         const isHost = item.type === 'join_request';
         setErrorState({
@@ -167,13 +168,22 @@ export function RequestsInboxModal({
                     const fromUsername = item.sender_profile?.username ?? 'user';
 
                     return (
-                      <View style={[styles.card, { backgroundColor: colors.surfaceAlt, borderColor: colors.border }]}>
+                      <View
+                        style={[
+                          styles.card,
+                          { backgroundColor: colors.surfaceAlt, borderColor: colors.border },
+                        ]}
+                      >
                         <View style={styles.cardHeader}>
                           <View style={styles.cardTextGroup}>
                             <Text style={[styles.cardTitle, { color: colors.text }]}>
                               {item.type === 'invitation'
-                                ? t('rooms.inboxModal.invitationCard', { room: item.room_name ?? 'Room' })
-                                : t('rooms.inboxModal.joinRequestCard', { room: item.room_name ?? 'Room' })}
+                                ? t('rooms.inboxModal.invitationCard', {
+                                    room: item.room_name ?? 'Room',
+                                  })
+                                : t('rooms.inboxModal.joinRequestCard', {
+                                    room: item.room_name ?? 'Room',
+                                  })}
                             </Text>
                             <Text style={[styles.cardSubtitle, { color: colors.textMuted }]}>
                               {t('rooms.inboxModal.fromUser', { username: fromUsername })}
@@ -188,7 +198,11 @@ export function RequestsInboxModal({
                           <Pressable
                             onPress={() => handleRespond(item, false)}
                             disabled={isActing}
-                            style={[styles.actionBtn, styles.declineBtn, { backgroundColor: colors.surface }]}
+                            style={[
+                              styles.actionBtn,
+                              styles.declineBtn,
+                              { backgroundColor: colors.surface },
+                            ]}
                             accessibilityRole="button"
                             accessibilityLabel={`Decline request from @${fromUsername}`}
                             testID={`btn-decline-req-${item.id}`}
@@ -201,7 +215,11 @@ export function RequestsInboxModal({
                           <Pressable
                             onPress={() => handleRespond(item, true)}
                             disabled={isActing}
-                            style={[styles.actionBtn, styles.acceptBtn, { backgroundColor: colors.accent }]}
+                            style={[
+                              styles.actionBtn,
+                              styles.acceptBtn,
+                              { backgroundColor: colors.accent },
+                            ]}
                             accessibilityRole="button"
                             accessibilityLabel={`Accept request from @${fromUsername}`}
                             testID={`btn-accept-req-${item.id}`}
@@ -218,7 +236,10 @@ export function RequestsInboxModal({
 
                         {errorState?.requestId === item.id && (
                           <View
-                            style={[styles.errorBox, { backgroundColor: colors.surface, borderColor: colors.danger }]}
+                            style={[
+                              styles.errorBox,
+                              { backgroundColor: colors.surface, borderColor: colors.danger },
+                            ]}
                             testID={`box-req-error-${item.id}`}
                           >
                             <Ionicons name="alert-circle" size={16} color={colors.danger} />
@@ -258,16 +279,26 @@ export function RequestsInboxModal({
                 keyExtractor={(item) => item.id}
                 renderItem={({ item }) => {
                   const isActing = actingId === item.id;
-                  const toUsername = item.recipient_profile?.username ?? item.room_name ?? 'partner';
+                  const toUsername =
+                    item.recipient_profile?.username ?? item.room_name ?? 'partner';
 
                   return (
-                    <View style={[styles.card, { backgroundColor: colors.surfaceAlt, borderColor: colors.border }]}>
+                    <View
+                      style={[
+                        styles.card,
+                        { backgroundColor: colors.surfaceAlt, borderColor: colors.border },
+                      ]}
+                    >
                       <View style={styles.cardHeader}>
                         <View style={styles.cardTextGroup}>
                           <Text style={[styles.cardTitle, { color: colors.text }]}>
                             {item.type === 'invitation'
-                              ? t('rooms.inboxModal.invitationCard', { room: item.room_name ?? 'Room' })
-                              : t('rooms.inboxModal.joinRequestCard', { room: item.room_name ?? 'Room' })}
+                              ? t('rooms.inboxModal.invitationCard', {
+                                  room: item.room_name ?? 'Room',
+                                })
+                              : t('rooms.inboxModal.joinRequestCard', {
+                                  room: item.room_name ?? 'Room',
+                                })}
                           </Text>
                           <Text style={[styles.cardSubtitle, { color: colors.textMuted }]}>
                             {t('rooms.inboxModal.toUser', { username: toUsername })}

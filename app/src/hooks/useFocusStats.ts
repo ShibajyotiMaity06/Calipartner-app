@@ -7,11 +7,7 @@ import {
   parseFocusError,
 } from '@/services/focusService';
 
-export function usePersonalFocusStats(
-  startDate?: string,
-  endDate?: string,
-  userId?: string,
-) {
+export function usePersonalFocusStats(startDate?: string, endDate?: string, userId?: string) {
   const [stats, setStats] = useState<PersonalFocusStats | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<FocusError | null>(null);
@@ -36,10 +32,7 @@ export function usePersonalFocusStats(
   return { stats, loading, error, refresh };
 }
 
-export function useRoomWeeklyFocusStats(
-  roomId: string | null,
-  weekStart?: string,
-) {
+export function useRoomWeeklyFocusStats(roomId: string | null, weekStart?: string) {
   const [stats, setStats] = useState<RoomWeeklyFocusStats | null>(null);
   const [loading, setLoading] = useState<boolean>(Boolean(roomId));
   const [error, setError] = useState<FocusError | null>(null);

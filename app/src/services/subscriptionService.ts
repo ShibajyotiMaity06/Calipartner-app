@@ -93,7 +93,8 @@ export async function purchasePackage(
 ): Promise<{ customerInfo: CustomerInfo; productIdentifier: string }> {
   try {
     let upgradeInfo: UpgradeInfo | undefined;
-    let productChangeInfo: { oldProductIdentifier: string; prorationMode?: PRORATION_MODE } | undefined;
+    let productChangeInfo:
+      { oldProductIdentifier: string; prorationMode?: PRORATION_MODE } | undefined;
 
     if (options?.oldProductIdentifier) {
       const mode = options.isUpgrade

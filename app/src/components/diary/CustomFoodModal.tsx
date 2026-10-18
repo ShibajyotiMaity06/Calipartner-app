@@ -1,12 +1,5 @@
 import { useState } from 'react';
-import {
-  Modal,
-  Pressable,
-  ScrollView,
-  Text,
-  TextInput,
-  View,
-} from 'react-native';
+import { Modal, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import type { Food } from '@calipartner/core';
 import { useCustomFood } from '@/hooks/useFoodEntries';
@@ -144,7 +137,10 @@ export function CustomFoodModal({
             </Text>
           )}
 
-          <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ gap: spacing.sm }}>
+          <ScrollView
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={{ gap: spacing.sm }}
+          >
             {/* Name */}
             <View style={{ gap: 4 }}>
               <Text style={{ fontSize: fontSize.xs, fontWeight: '600', color: colors.text }}>
@@ -258,7 +254,9 @@ export function CustomFoodModal({
 
             <View style={{ flexDirection: 'row', gap: spacing.sm }}>
               <View style={{ flex: 1, gap: 4 }}>
-                <Text style={{ fontSize: fontSize.xs, fontWeight: '600', color: colors.macroCalories }}>
+                <Text
+                  style={{ fontSize: fontSize.xs, fontWeight: '600', color: colors.macroCalories }}
+                >
                   {t('customFood.caloriesLabel')}
                 </Text>
                 <TextInput
@@ -283,7 +281,9 @@ export function CustomFoodModal({
               </View>
 
               <View style={{ flex: 1, gap: 4 }}>
-                <Text style={{ fontSize: fontSize.xs, fontWeight: '600', color: colors.macroProtein }}>
+                <Text
+                  style={{ fontSize: fontSize.xs, fontWeight: '600', color: colors.macroProtein }}
+                >
                   {t('customFood.proteinLabel')}
                 </Text>
                 <TextInput
@@ -309,7 +309,9 @@ export function CustomFoodModal({
 
             <View style={{ flexDirection: 'row', gap: spacing.sm }}>
               <View style={{ flex: 1, gap: 4 }}>
-                <Text style={{ fontSize: fontSize.xs, fontWeight: '600', color: colors.macroCarbs }}>
+                <Text
+                  style={{ fontSize: fontSize.xs, fontWeight: '600', color: colors.macroCarbs }}
+                >
                   {t('customFood.carbsLabel')}
                 </Text>
                 <TextInput

@@ -82,10 +82,7 @@ export function SummaryStep({
     <View style={styles.container}>
       {/* Hero Calorie Card */}
       <View
-        style={[
-          styles.heroCard,
-          { backgroundColor: colors.surface, borderColor: colors.border },
-        ]}
+        style={[styles.heroCard, { backgroundColor: colors.surface, borderColor: colors.border }]}
         testID="summary-hero-card"
       >
         <View style={styles.heroBadgeRow}>
@@ -100,10 +97,7 @@ export function SummaryStep({
           </View>
         </View>
 
-        <Text
-          style={[styles.heroCalories, { color: colors.text }]}
-          testID="summary-hero-calories"
-        >
+        <Text style={[styles.heroCalories, { color: colors.text }]} testID="summary-hero-calories">
           {t('onboarding.summary.dailyCaloriesHero', { kcal: targetKcal.toLocaleString() })}
         </Text>
         <Text style={[styles.heroUnit, { color: colors.textMuted }]}>
@@ -113,10 +107,7 @@ export function SummaryStep({
 
       {/* Macronutrient Breakdown */}
       <View
-        style={[
-          styles.card,
-          { backgroundColor: colors.surface, borderColor: colors.border },
-        ]}
+        style={[styles.card, { backgroundColor: colors.surface, borderColor: colors.border }]}
         testID="summary-macros-card"
       >
         <Text style={[styles.cardTitle, { color: colors.text }]}>
@@ -151,9 +142,7 @@ export function SummaryStep({
             <Text style={[styles.macroLabel, { color: colors.textMuted }]}>
               {t('onboarding.summary.proteinLabel')}
             </Text>
-            <Text style={[styles.macroValue, { color: colors.text }]}>
-              {macros.proteinGrams}g
-            </Text>
+            <Text style={[styles.macroValue, { color: colors.text }]}>{macros.proteinGrams}g</Text>
             <Text style={[styles.macroSub, { color: colors.textMuted }]}>{proteinPct}%</Text>
           </View>
 
@@ -176,12 +165,7 @@ export function SummaryStep({
       </View>
 
       {/* Daily Habits (Steps & Water) */}
-      <View
-        style={[
-          styles.card,
-          { backgroundColor: colors.surface, borderColor: colors.border },
-        ]}
-      >
+      <View style={[styles.card, { backgroundColor: colors.surface, borderColor: colors.border }]}>
         <Text style={[styles.cardTitle, { color: colors.text }]}>
           {t('onboarding.summary.habitsTitle')}
         </Text>

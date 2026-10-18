@@ -70,7 +70,8 @@ export function InviteUserModal({
       await onSendInvitation(roomId, user.username);
       setInvitedUsernames((prev) => new Set(prev).add(user.username));
     } catch (err: unknown) {
-      const msg = err && typeof err === 'object' && 'message' in err ? String(err.message) : String(err);
+      const msg =
+        err && typeof err === 'object' && 'message' in err ? String(err.message) : String(err);
       if (msg.includes('ROOM_FULL')) {
         setErrorMsg(t('rooms.roomFull.hostNotice'));
       } else {
@@ -107,7 +108,12 @@ export function InviteUserModal({
           </View>
 
           {/* Search Input */}
-          <View style={[styles.searchBox, { backgroundColor: colors.surfaceAlt, borderColor: colors.border }]}>
+          <View
+            style={[
+              styles.searchBox,
+              { backgroundColor: colors.surfaceAlt, borderColor: colors.border },
+            ]}
+          >
             <Ionicons name="search-outline" size={18} color={colors.textMuted} />
             <TextInput
               value={searchQuery}
@@ -161,7 +167,9 @@ export function InviteUserModal({
                       {item.avatar_url ? (
                         <Image source={{ uri: item.avatar_url }} style={styles.avatar} />
                       ) : (
-                        <View style={[styles.avatarPlaceholder, { backgroundColor: colors.surfaceAlt }]}>
+                        <View
+                          style={[styles.avatarPlaceholder, { backgroundColor: colors.surfaceAlt }]}
+                        >
                           <Text style={[styles.avatarInitial, { color: colors.text }]}>
                             {item.nickname.charAt(0).toUpperCase()}
                           </Text>
@@ -169,7 +177,9 @@ export function InviteUserModal({
                       )}
 
                       <View style={styles.userInfo}>
-                        <Text style={[styles.nickname, { color: colors.text }]}>{item.nickname}</Text>
+                        <Text style={[styles.nickname, { color: colors.text }]}>
+                          {item.nickname}
+                        </Text>
                         <Text style={[styles.username, { color: colors.textMuted }]}>
                           @{item.username}
                         </Text>

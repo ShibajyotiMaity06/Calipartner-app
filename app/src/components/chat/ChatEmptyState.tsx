@@ -18,11 +18,7 @@ export function ChatEmptyState({
 }: ChatEmptyStateProps) {
   const { colors } = useTheme();
 
-  const starters = [
-    t('chat.starter1'),
-    t('chat.starter2'),
-    t('chat.starter3'),
-  ];
+  const starters = [t('chat.starter1'), t('chat.starter2'), t('chat.starter3')];
 
   return (
     <View style={styles.container} testID={testID}>
@@ -31,9 +27,7 @@ export function ChatEmptyState({
       </View>
 
       <Text style={[styles.title, { color: colors.text }]}>{t('chat.emptyTitle')}</Text>
-      <Text style={[styles.subtitle, { color: colors.textMuted }]}>
-        {t('chat.emptySubtitle')}
-      </Text>
+      <Text style={[styles.subtitle, { color: colors.textMuted }]}>{t('chat.emptySubtitle')}</Text>
 
       {!disabled && onSelectStarter && (
         <View style={styles.startersContainer}>
@@ -45,7 +39,10 @@ export function ChatEmptyState({
               <Pressable
                 key={index}
                 onPress={() => onSelectStarter(starter)}
-                style={[styles.starterChip, { backgroundColor: colors.surface, borderColor: colors.border }]}
+                style={[
+                  styles.starterChip,
+                  { backgroundColor: colors.surface, borderColor: colors.border },
+                ]}
                 accessibilityRole="button"
                 accessibilityLabel={`Send prompt: ${starter}`}
                 testID={`btn-starter-${index}`}

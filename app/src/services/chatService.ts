@@ -1,20 +1,11 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
-import {
-  mergeMessagesDeduplicated,
-  validateChatMessageInput,
-} from '@calipartner/core';
-import type {
-  ChatAttachment,
-  ChatMessage,
-} from '@/types/chat';
+import { mergeMessagesDeduplicated, validateChatMessageInput } from '@calipartner/core';
+import type { ChatAttachment, ChatMessage } from '@/types/chat';
 import { ChatServiceError, parseChatError } from '@/types/chat';
 import { enqueueOutbox, type SyncDb } from './syncService';
 
 export interface SupabaseRpcClient {
-  rpc: (
-    fn: string,
-    args?: Record<string, unknown>,
-  ) => Promise<{ data: unknown; error: unknown }>;
+  rpc: (fn: string, args?: Record<string, unknown>) => Promise<{ data: unknown; error: unknown }>;
 }
 
 export type ChatSupabaseClient = SupabaseClient | SupabaseRpcClient;
@@ -253,7 +244,8 @@ export async function sendChatMessage(
   senderId: string,
   options: SendMessageOptions,
 ): Promise<ChatMessage> {
-  const clientId = options.clientId || `msg-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
+  const clientId =
+    options.clientId || `msg-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
   const now = new Date().toISOString();
   const msgId = clientId; // Default local ID
 
@@ -367,13 +359,14 @@ export async function sendChatMessage(
       p_room_id: roomId,
       p_client_id: clientId,
       p_text: options.text ?? null,
-      p_attachments: options.attachments?.map((a) => ({
-        storage_key: a.storage_key,
-        mime_type: a.mime_type,
-        size: a.size,
-        width: a.width,
-        height: a.height,
-      })) ?? [],
+      p_attachments:
+        options.attachments?.map((a) => ({
+          storage_key: a.storage_key,
+          mime_type: a.mime_type,
+          size: a.size,
+          width: a.width,
+          height: a.height,
+        })) ?? [],
     });
 
     if (error) {
@@ -459,14 +452,8 @@ export async function deleteChatMessage(
   const now = new Date().toISOString();
 
   // 1. Soft-delete locally
-  await db.runAsync(
-    `UPDATE local_chat_messages SET deleted_at = ? WHERE id = ?`,
-    [now, messageId],
-  );
-  await db.runAsync(
-    `DELETE FROM local_chat_attachments WHERE message_id = ?`,
-    [messageId],
-  );
+  await db.runAsync(`UPDATE local_chat_messages SET deleted_at = ? WHERE id = ?`, [now, messageId]);
+  await db.runAsync(`DELETE FROM local_chat_attachments WHERE message_id = ?`, [messageId]);
 
   // 2. Call Supabase RPC
   const { error } = await supabase.rpc('delete_own_chat_message', {

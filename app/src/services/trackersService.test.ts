@@ -15,11 +15,7 @@ import {
   getWeightSummary,
   logWeight,
 } from './weightService';
-import {
-  getActivityDay,
-  getActivityMetrics,
-  upsertActivityDay,
-} from './activityService';
+import { getActivityDay, getActivityMetrics, upsertActivityDay } from './activityService';
 import {
   flushOutbox,
   getPendingOutboxItems,

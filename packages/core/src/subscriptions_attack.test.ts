@@ -12,12 +12,7 @@ import {
   roomIsUsable,
   verifyWebhookAuth,
 } from './subscriptions';
-import type {
-  Entitlement,
-  Room,
-  RoomMember,
-  RoomState,
-} from './types';
+import type { Entitlement, Room, RoomMember, RoomState } from './types';
 
 /**
  * Server-side Simulation Engine for Phase 10 Subscriptions, Lifecycle & Attack Tests
@@ -48,12 +43,17 @@ class SubscriptionAttackTestEngine {
   }
 
   // 1. Create Room (Starts 3-day trial if eligible)
-  createRoom(userId: string, roomName: string, deviceHash?: string): { roomId: string; state: RoomState } {
+  createRoom(
+    userId: string,
+    roomName: string,
+    deviceHash?: string,
+  ): { roomId: string; state: RoomState } {
     const ent = this.entitlements.get(userId);
 
     // SUB-17: One plan covers one hosted room
     const hostedCount = Array.from(this.rooms.values()).filter(
-      (r) => r.plan_holder_id === userId && ['active', 'dormant', 'over_capacity'].includes(r.state),
+      (r) =>
+        r.plan_holder_id === userId && ['active', 'dormant', 'over_capacity'].includes(r.state),
     ).length;
 
     if (!canCreateRoom(ent, hostedCount)) {
@@ -221,7 +221,9 @@ class SubscriptionAttackTestEngine {
     ent.tier = parsed.tier;
     ent.period = parsed.period;
     ent.status = status;
-    ent.period_end = payload.periodEndMs ? new Date(payload.periodEndMs).toISOString() : ent.period_end;
+    ent.period_end = payload.periodEndMs
+      ? new Date(payload.periodEndMs).toISOString()
+      : ent.period_end;
     ent.last_event_id = payload.eventId;
     ent.last_event_timestamp = new Date(payload.eventTimestampMs).toISOString();
 
@@ -244,7 +246,9 @@ class SubscriptionAttackTestEngine {
 
   // 5. Subscription reconciliation
   reconcileSubscriptions(roomId: string) {
-    const attached = Array.from(this.entitlements.values()).filter((e) => e.attached_room_id === roomId);
+    const attached = Array.from(this.entitlements.values()).filter(
+      (e) => e.attached_room_id === roomId,
+    );
     const { active, unattached } = reconcileRoomSubscriptions(attached);
 
     if (active) {
@@ -273,11 +277,11 @@ class SubscriptionAttackTestEngine {
     const planHolderEnt = room.plan_holder_id ? this.entitlements.get(room.plan_holder_id) : null;
     const hasActivePlan = Boolean(
       planHolderEnt &&
-        ((['paid', 'grace'].includes(planHolderEnt.status) &&
-          (!planHolderEnt.period_end || new Date(planHolderEnt.period_end) > new Date())) ||
-          (planHolderEnt.status === 'trial' &&
-            planHolderEnt.period_end &&
-            new Date(planHolderEnt.period_end) > new Date())),
+      ((['paid', 'grace'].includes(planHolderEnt.status) &&
+        (!planHolderEnt.period_end || new Date(planHolderEnt.period_end) > new Date())) ||
+        (planHolderEnt.status === 'trial' &&
+          planHolderEnt.period_end &&
+          new Date(planHolderEnt.period_end) > new Date())),
     );
 
     const activeMembers = Array.from(this.roomMembers.values()).filter(
@@ -471,7 +475,9 @@ describe('Phase 10: Server-Side Enforcement Attack Tests (All 15 Scenarios)', ()
 
     // Cannot restart trial!
     expect(isTrialEligible(entA, 'user-a', 'user-a')).toBe(false);
-    expect(() => engine.createRoom('user-a', 'Room A 2', 'device-hash-a')).toThrowError('PLAN_REQUIRED');
+    expect(() => engine.createRoom('user-a', 'Room A 2', 'device-hash-a')).toThrowError(
+      'PLAN_REQUIRED',
+    );
   });
 
   it('6. One plan cannot cover two hosted rooms', () => {

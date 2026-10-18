@@ -1,7 +1,4 @@
-import type {
-  FocusSettings,
-  RoomMemberWeeklyFocus,
-} from './types';
+import type { FocusSettings, RoomMemberWeeklyFocus } from './types';
 
 export const AUTO_STOP_STOPWATCH_SECONDS = 12 * 3600; // 12 hours
 export const STILL_FOCUSING_CHECK_SECONDS = 4 * 3600; // 4 hours
@@ -32,7 +29,8 @@ export function calculateFocusedSeconds(
   endedAt: string | Date | null | undefined,
   pausedSeconds = 0,
 ): number {
-  const startMs = typeof startedAt === 'string' ? new Date(startedAt).getTime() : startedAt.getTime();
+  const startMs =
+    typeof startedAt === 'string' ? new Date(startedAt).getTime() : startedAt.getTime();
   const endMs = endedAt
     ? typeof endedAt === 'string'
       ? new Date(endedAt).getTime()
@@ -68,7 +66,8 @@ export function calculateRemainingTimerSeconds(
   currentTime: string | Date = new Date(),
 ): number {
   const endsMs = typeof endsAt === 'string' ? new Date(endsAt).getTime() : endsAt.getTime();
-  const currentMs = typeof currentTime === 'string' ? new Date(currentTime).getTime() : currentTime.getTime();
+  const currentMs =
+    typeof currentTime === 'string' ? new Date(currentTime).getTime() : currentTime.getTime();
 
   if (isNaN(endsMs) || isNaN(currentMs)) {
     return 0;
@@ -85,8 +84,10 @@ export function shouldAutoStopStopwatch(
   startedAt: string | Date,
   currentTime: string | Date = new Date(),
 ): boolean {
-  const startMs = typeof startedAt === 'string' ? new Date(startedAt).getTime() : startedAt.getTime();
-  const currentMs = typeof currentTime === 'string' ? new Date(currentTime).getTime() : currentTime.getTime();
+  const startMs =
+    typeof startedAt === 'string' ? new Date(startedAt).getTime() : startedAt.getTime();
+  const currentMs =
+    typeof currentTime === 'string' ? new Date(currentTime).getTime() : currentTime.getTime();
   if (isNaN(startMs) || isNaN(currentMs) || currentMs <= startMs) {
     return false;
   }
@@ -101,8 +102,10 @@ export function shouldPromptStillFocusing(
   startedAt: string | Date,
   currentTime: string | Date = new Date(),
 ): boolean {
-  const startMs = typeof startedAt === 'string' ? new Date(startedAt).getTime() : startedAt.getTime();
-  const currentMs = typeof currentTime === 'string' ? new Date(currentTime).getTime() : currentTime.getTime();
+  const startMs =
+    typeof startedAt === 'string' ? new Date(startedAt).getTime() : startedAt.getTime();
+  const currentMs =
+    typeof currentTime === 'string' ? new Date(currentTime).getTime() : currentTime.getTime();
   if (isNaN(startMs) || isNaN(currentMs) || currentMs <= startMs) {
     return false;
   }
@@ -121,7 +124,8 @@ export function shouldSuggestBreak(
     typeof continuousFocusStartedAt === 'string'
       ? new Date(continuousFocusStartedAt).getTime()
       : continuousFocusStartedAt.getTime();
-  const currentMs = typeof currentTime === 'string' ? new Date(currentTime).getTime() : currentTime.getTime();
+  const currentMs =
+    typeof currentTime === 'string' ? new Date(currentTime).getTime() : currentTime.getTime();
   if (isNaN(startMs) || isNaN(currentMs) || currentMs <= startMs) {
     return false;
   }
@@ -215,7 +219,11 @@ export function splitSessionAcrossMidnight(
     return [];
   }
 
-  const totalNetSeconds = calculateFocusedSeconds(session.started_at, session.ended_at, session.paused_seconds ?? 0);
+  const totalNetSeconds = calculateFocusedSeconds(
+    session.started_at,
+    session.ended_at,
+    session.paused_seconds ?? 0,
+  );
   const totalElapsedMs = endMs - startMs;
 
   if (totalElapsedMs <= 0 || totalNetSeconds <= 0) {

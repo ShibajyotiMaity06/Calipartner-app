@@ -52,7 +52,9 @@ export function validateAndNormalizeExercise(
     throw new Error('Validation failed: Exercise name cannot be empty');
   }
 
-  const muscleGroup = (raw.muscle_group ? raw.muscle_group.trim().toLowerCase() : '') as MuscleGroup;
+  const muscleGroup = (
+    raw.muscle_group ? raw.muscle_group.trim().toLowerCase() : ''
+  ) as MuscleGroup;
   if (!VALID_MUSCLE_GROUPS.has(muscleGroup)) {
     throw new Error(
       `Validation failed: Invalid muscle group "${raw.muscle_group}". Allowed: ${Array.from(VALID_MUSCLE_GROUPS).join(', ')}`,
@@ -75,7 +77,8 @@ export function validateAndNormalizeExercise(
 
   const id = raw.id && raw.id.trim() ? raw.id.trim() : crypto.randomUUID();
   const owner_id = raw.owner_id !== undefined ? raw.owner_id : defaultOwnerId;
-  const attribution = raw.attribution && raw.attribution.trim() ? raw.attribution.trim() : defaultAttribution;
+  const attribution =
+    raw.attribution && raw.attribution.trim() ? raw.attribution.trim() : defaultAttribution;
 
   return {
     id,
@@ -185,9 +188,7 @@ export function importExercisesFromCsv(
   const attributionIdx = headers.indexOf('attribution');
 
   if (nameIdx === -1 || muscleIdx === -1 || equipmentIdx === -1) {
-    throw new Error(
-      'CSV error: Required header columns (name, muscle_group, equipment) not found',
-    );
+    throw new Error('CSV error: Required header columns (name, muscle_group, equipment) not found');
   }
 
   const exercises: Exercise[] = [];
@@ -207,11 +208,7 @@ export function importExercisesFromCsv(
 
     try {
       exercises.push(
-        validateAndNormalizeExercise(
-          raw,
-          options?.ownerId ?? null,
-          options?.defaultAttribution,
-        ),
+        validateAndNormalizeExercise(raw, options?.ownerId ?? null, options?.defaultAttribution),
       );
     } catch (err) {
       throw new Error(`Line ${i + 1}: ${err instanceof Error ? err.message : String(err)}`);

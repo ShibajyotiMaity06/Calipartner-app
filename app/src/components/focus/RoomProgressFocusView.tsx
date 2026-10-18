@@ -1,11 +1,5 @@
 import React from 'react';
-import {
-  ActivityIndicator,
-  Pressable,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
+import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRoomWeeklyFocusStats } from '@/hooks/useFocusStats';
 import { t } from '@/i18n';
@@ -29,9 +23,7 @@ export function RoomProgressFocusView({
     return (
       <View style={styles.loadingBox}>
         <ActivityIndicator size="small" color={colors.accent} />
-        <Text style={[styles.loadingText, { color: colors.textMuted }]}>
-          {t('common.loading')}
-        </Text>
+        <Text style={[styles.loadingText, { color: colors.textMuted }]}>{t('common.loading')}</Text>
       </View>
     );
   }
@@ -39,16 +31,12 @@ export function RoomProgressFocusView({
   if (error && !stats) {
     return (
       <View style={styles.errorBox} testID="room-progress-focus-error">
-        <Text style={[styles.errorText, { color: colors.textMuted }]}>
-          {error.message}
-        </Text>
+        <Text style={[styles.errorText, { color: colors.textMuted }]}>{error.message}</Text>
         <Pressable
           style={[styles.retryBtn, { backgroundColor: colors.surfaceAlt }]}
           onPress={refresh}
         >
-          <Text style={[styles.retryBtnText, { color: colors.accent }]}>
-            {t('common.retry')}
-          </Text>
+          <Text style={[styles.retryBtnText, { color: colors.accent }]}>{t('common.retry')}</Text>
         </Pressable>
       </View>
     );
@@ -60,19 +48,11 @@ export function RoomProgressFocusView({
   return (
     <View
       testID={testID}
-      style={[
-        styles.card,
-        { backgroundColor: colors.surface, borderColor: colors.border },
-      ]}
+      style={[styles.card, { backgroundColor: colors.surface, borderColor: colors.border }]}
     >
       <View style={styles.headerRow}>
         <View style={styles.titleGroup}>
-          <View
-            style={[
-              styles.iconWrapper,
-              { backgroundColor: colors.surfaceAlt },
-            ]}
-          >
+          <View style={[styles.iconWrapper, { backgroundColor: colors.surfaceAlt }]}>
             <Ionicons name="timer" size={18} color={colors.accent} />
           </View>
           <View>
@@ -87,10 +67,7 @@ export function RoomProgressFocusView({
 
         <View
           testID="room-focus-total-minutes"
-          style={[
-            styles.totalBadge,
-            { backgroundColor: colors.cardHighlight },
-          ]}
+          style={[styles.totalBadge, { backgroundColor: colors.cardHighlight }]}
         >
           <Text style={[styles.totalBadgeText, { color: colors.accent }]}>
             {formatMinutesDisplay(roomTotal)}
@@ -113,20 +90,13 @@ export function RoomProgressFocusView({
                 style={[
                   styles.memberRow,
                   {
-                    backgroundColor: m.is_me
-                      ? colors.cardHighlight
-                      : colors.surfaceAlt,
+                    backgroundColor: m.is_me ? colors.cardHighlight : colors.surfaceAlt,
                     borderColor: colors.border,
                   },
                 ]}
               >
                 <View style={styles.memberLeft}>
-                  <View
-                    style={[
-                      styles.avatarDot,
-                      { backgroundColor: colors.surface },
-                    ]}
-                  >
+                  <View style={[styles.avatarDot, { backgroundColor: colors.surface }]}>
                     <Ionicons
                       name="person"
                       size={14}
@@ -149,24 +119,11 @@ export function RoomProgressFocusView({
                 <View style={styles.memberRight}>
                   {m.is_hidden ? (
                     <View style={styles.hiddenWrap}>
-                      <Ionicons
-                        name="lock-closed"
-                        size={12}
-                        color={colors.textMuted}
-                      />
-                      <Text
-                        style={[styles.hiddenText, { color: colors.textMuted }]}
-                      >
-                        Hidden
-                      </Text>
+                      <Ionicons name="lock-closed" size={12} color={colors.textMuted} />
+                      <Text style={[styles.hiddenText, { color: colors.textMuted }]}>Hidden</Text>
                     </View>
                   ) : (
-                    <Text
-                      style={[
-                        styles.minutesText,
-                        { color: colors.text, fontWeight: '700' },
-                      ]}
-                    >
+                    <Text style={[styles.minutesText, { color: colors.text, fontWeight: '700' }]}>
                       {formatMinutesDisplay(m.weekly_focus_minutes ?? 0)}
                     </Text>
                   )}

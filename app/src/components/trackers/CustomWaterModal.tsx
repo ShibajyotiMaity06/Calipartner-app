@@ -1,12 +1,5 @@
 import { useState } from 'react';
-import {
-  Modal,
-  Pressable,
-  StyleSheet,
-  Text,
-  TextInput,
-  View,
-} from 'react-native';
+import { Modal, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { t } from '@/i18n';
 import { fontSize, radius, spacing } from '@/theme/tokens';
@@ -66,7 +59,9 @@ export function CustomWaterModal({ visible, onClose, onSave }: CustomWaterModalP
           onPress={onClose}
           accessibilityLabel={t('common.cancel')}
         />
-        <View style={[styles.sheet, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+        <View
+          style={[styles.sheet, { backgroundColor: colors.surface, borderColor: colors.border }]}
+        >
           {/* Header */}
           <View style={styles.header}>
             <View style={styles.headerTitleRow}>
@@ -94,8 +89,7 @@ export function CustomWaterModal({ visible, onClose, onSave }: CustomWaterModalP
                 style={[
                   styles.presetChip,
                   {
-                    backgroundColor:
-                      amountText === String(p) ? colors.accent : colors.surfaceAlt,
+                    backgroundColor: amountText === String(p) ? colors.accent : colors.surfaceAlt,
                     borderColor: colors.border,
                   },
                 ]}
@@ -106,8 +100,7 @@ export function CustomWaterModal({ visible, onClose, onSave }: CustomWaterModalP
                   style={[
                     styles.presetText,
                     {
-                      color:
-                        amountText === String(p) ? colors.onAccent : colors.text,
+                      color: amountText === String(p) ? colors.onAccent : colors.text,
                     },
                   ]}
                 >
@@ -125,7 +118,10 @@ export function CustomWaterModal({ visible, onClose, onSave }: CustomWaterModalP
             <View
               style={[
                 styles.inputWrapper,
-                { backgroundColor: colors.surfaceAlt, borderColor: error ? colors.danger : colors.border },
+                {
+                  backgroundColor: colors.surfaceAlt,
+                  borderColor: error ? colors.danger : colors.border,
+                },
               ]}
             >
               <TextInput

@@ -1,13 +1,5 @@
 import React, { useState } from 'react';
-import {
-  Modal,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  View,
-} from 'react-native';
+import { Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { t } from '@/i18n';
 import { fontSize, radius, spacing } from '@/theme/tokens';
@@ -21,12 +13,7 @@ export interface CoachReportModalProps {
   onSubmit: (messageId: string, reason: CoachReportReason, notes?: string) => void;
 }
 
-export function CoachReportModal({
-  visible,
-  messageId,
-  onClose,
-  onSubmit,
-}: CoachReportModalProps) {
+export function CoachReportModal({ visible, messageId, onClose, onSubmit }: CoachReportModalProps) {
   const { colors } = useTheme();
   const [selectedReason, setSelectedReason] = useState<CoachReportReason>('inaccurate');
   const [notes, setNotes] = useState('');
@@ -71,10 +58,7 @@ export function CoachReportModal({
           {/* Header */}
           <View style={styles.header}>
             <View style={styles.headerTop}>
-              <Text
-                style={[styles.title, { color: colors.text }]}
-                testID="text-coach-report-title"
-              >
+              <Text style={[styles.title, { color: colors.text }]} testID="text-coach-report-title">
                 {t('coach.reportModal.title')}
               </Text>
               <Pressable

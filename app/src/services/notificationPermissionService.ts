@@ -8,10 +8,7 @@ const PERMISSION_PROMPTED_KEY = 'calipartner_notif_prompted_moments';
 let memoryPromptedMoments: Set<string> | null = null;
 
 export type NotificationPromptContext =
-  | 'room_joined'
-  | 'reminder_configured'
-  | 'nudge_sent'
-  | 'settings_manual';
+  'room_joined' | 'reminder_configured' | 'nudge_sent' | 'settings_manual';
 
 /**
  * Loads the set of moments for which permission has already been prompted.

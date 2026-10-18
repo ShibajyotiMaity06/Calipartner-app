@@ -1,20 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
-import {
-  Alert,
-  Modal,
-  Pressable,
-  ScrollView,
-  Text,
-  TextInput,
-  View,
-} from 'react-native';
+import { Alert, Modal, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import {
-  scaleNutrients,
-  type Food,
-  type FoodEntry,
-  type MealSection,
-} from '@calipartner/core';
+import { scaleNutrients, type Food, type FoodEntry, type MealSection } from '@calipartner/core';
 import { t } from '@/i18n';
 import { fontSize, radius, spacing } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
@@ -25,12 +12,7 @@ export interface QuantityModalProps {
   initialEntry?: FoodEntry | null;
   defaultSection?: MealSection;
   onClose: () => void;
-  onSave: (data: {
-    food: Food;
-    quantity: number;
-    unit: string;
-    mealSection: MealSection;
-  }) => void;
+  onSave: (data: { food: Food; quantity: number; unit: string; mealSection: MealSection }) => void;
   onDelete?: (entryId: string) => void;
 }
 
@@ -117,21 +99,17 @@ export function QuantityModal({
 
   const handleDelete = () => {
     if (!initialEntry || !onDelete) return;
-    Alert.alert(
-      t('quantity.deleteButton'),
-      t('quantity.confirmDelete'),
-      [
-        { text: t('common.cancel'), style: 'cancel' },
-        {
-          text: t('common.delete'),
-          style: 'destructive',
-          onPress: () => {
-            onDelete(initialEntry.id);
-            onClose();
-          },
+    Alert.alert(t('quantity.deleteButton'), t('quantity.confirmDelete'), [
+      { text: t('common.cancel'), style: 'cancel' },
+      {
+        text: t('common.delete'),
+        style: 'destructive',
+        onPress: () => {
+          onDelete(initialEntry.id);
+          onClose();
         },
-      ],
-    );
+      },
+    ]);
   };
 
   return (
@@ -164,7 +142,11 @@ export function QuantityModal({
           >
             <View style={{ flex: 1 }}>
               <Text style={{ fontSize: fontSize.lg, fontWeight: '700', color: colors.text }}>
-                {initialEntry ? t('quantity.editTitle') : t('quantity.title', { section: t(`diary.sections.${selectedSection}` as Parameters<typeof t>[0]) })}
+                {initialEntry
+                  ? t('quantity.editTitle')
+                  : t('quantity.title', {
+                      section: t(`diary.sections.${selectedSection}` as Parameters<typeof t>[0]),
+                    })}
               </Text>
               <Text style={{ fontSize: fontSize.sm, color: colors.textMuted }} numberOfLines={1}>
                 {food.name} {food.brand ? `• ${food.brand}` : ''}
@@ -180,7 +162,10 @@ export function QuantityModal({
             </Pressable>
           </View>
 
-          <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ gap: spacing.md }}>
+          <ScrollView
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={{ gap: spacing.md }}
+          >
             {/* Live Nutrient Preview Box */}
             <View
               testID="preview-nutrients"
@@ -211,11 +196,27 @@ export function QuantityModal({
                   justifyContent: 'space-between',
                 }}
               >
-                <Text style={{ fontSize: fontSize.xl, fontWeight: '800', color: colors.macroCalories }}>
-                  {preview.calories} <Text style={{ fontSize: fontSize.sm, fontWeight: '500', color: colors.textMuted }}>kcal</Text>
+                <Text
+                  style={{ fontSize: fontSize.xl, fontWeight: '800', color: colors.macroCalories }}
+                >
+                  {preview.calories}{' '}
+                  <Text
+                    style={{ fontSize: fontSize.sm, fontWeight: '500', color: colors.textMuted }}
+                  >
+                    kcal
+                  </Text>
                 </Text>
                 <Text style={{ fontSize: fontSize.sm, color: colors.textMuted, fontWeight: '600' }}>
-                  P <Text style={{ color: colors.macroProtein, fontWeight: '700' }}>{preview.protein}g</Text> • C <Text style={{ color: colors.macroCarbs, fontWeight: '700' }}>{preview.carbs}g</Text> • F <Text style={{ color: colors.macroFat, fontWeight: '700' }}>{preview.fat}g</Text>
+                  P{' '}
+                  <Text style={{ color: colors.macroProtein, fontWeight: '700' }}>
+                    {preview.protein}g
+                  </Text>{' '}
+                  • C{' '}
+                  <Text style={{ color: colors.macroCarbs, fontWeight: '700' }}>
+                    {preview.carbs}g
+                  </Text>{' '}
+                  • F{' '}
+                  <Text style={{ color: colors.macroFat, fontWeight: '700' }}>{preview.fat}g</Text>
                 </Text>
               </View>
             </View>
@@ -251,7 +252,11 @@ export function QuantityModal({
               <Text style={{ fontSize: fontSize.sm, fontWeight: '600', color: colors.text }}>
                 {t('quantity.unitLabel')}
               </Text>
-              <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8 }}>
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={{ gap: 8 }}
+              >
                 {availableUnits.map((u) => {
                   const isSelected = selectedUnit.toLowerCase() === u.toLowerCase();
                   return (

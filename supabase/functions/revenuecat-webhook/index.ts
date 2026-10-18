@@ -26,9 +26,7 @@ export async function handleRevenueCatWebhook(req: Request): Promise<Response> {
     // 1. Verify authorization header
     const authHeader = req.headers.get('Authorization') || req.headers.get('authorization');
     const webhookSecret =
-      Deno.env.get('REVENUECAT_WEBHOOK_SECRET') ||
-      Deno.env.get('REVENUECAT_SHARED_SECRET') ||
-      '';
+      Deno.env.get('REVENUECAT_WEBHOOK_SECRET') || Deno.env.get('REVENUECAT_SHARED_SECRET') || '';
 
     if (webhookSecret && !verifyWebhookAuth(authHeader, webhookSecret)) {
       return new Response(JSON.stringify({ error: 'UNAUTHORIZED: Invalid webhook secret' }), {
@@ -43,7 +41,9 @@ export async function handleRevenueCatWebhook(req: Request): Promise<Response> {
 
     if (!event || !event.id || !event.type || !event.app_user_id) {
       return new Response(
-        JSON.stringify({ error: 'BAD_REQUEST: Missing required event fields (id, type, app_user_id)' }),
+        JSON.stringify({
+          error: 'BAD_REQUEST: Missing required event fields (id, type, app_user_id)',
+        }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
       );
     }

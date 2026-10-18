@@ -60,10 +60,7 @@ export function mapOpenFoodFactsProduct(
   const nutriments = product.nutriments || {};
 
   const name =
-    product.product_name ||
-    product.product_name_en ||
-    product.generic_name ||
-    'Unknown Product';
+    product.product_name || product.product_name_en || product.generic_name || 'Unknown Product';
   const brand = product.brands || product.brand_owner || null;
 
   // Energy in kcal
@@ -250,13 +247,10 @@ export async function handleFoodLookup(req: Request): Promise<Response> {
           .limit(1);
 
         if (cached && cached.length > 0) {
-          return new Response(
-            JSON.stringify({ found: true, source: 'cache', food: cached[0] }),
-            {
-              status: 200,
-              headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-            },
-          );
+          return new Response(JSON.stringify({ found: true, source: 'cache', food: cached[0] }), {
+            status: 200,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          });
         }
       }
 
@@ -270,7 +264,11 @@ export async function handleFoodLookup(req: Request): Promise<Response> {
 
       if (!offRes.ok) {
         return new Response(
-          JSON.stringify({ found: false, barcode: cleanBarcode, message: 'Not found in Open Food Facts' }),
+          JSON.stringify({
+            found: false,
+            barcode: cleanBarcode,
+            message: 'Not found in Open Food Facts',
+          }),
           {
             status: 404,
             headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -281,7 +279,11 @@ export async function handleFoodLookup(req: Request): Promise<Response> {
       const offData = await offRes.json();
       if (offData.status !== 1 || !offData.product) {
         return new Response(
-          JSON.stringify({ found: false, barcode: cleanBarcode, message: 'Product not registered in OFF' }),
+          JSON.stringify({
+            found: false,
+            barcode: cleanBarcode,
+            message: 'Product not registered in OFF',
+          }),
           {
             status: 404,
             headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -308,13 +310,10 @@ export async function handleFoodLookup(req: Request): Promise<Response> {
         }
       }
 
-      return new Response(
-        JSON.stringify({ found: true, source: 'off', food: savedFood }),
-        {
-          status: 200,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        },
-      );
+      return new Response(JSON.stringify({ found: true, source: 'off', food: savedFood }), {
+        status: 200,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
     }
 
     // -------------------------------------------------------------------------
@@ -340,13 +339,10 @@ export async function handleFoodLookup(req: Request): Promise<Response> {
       }
 
       if (cachedFoods.length >= 5) {
-        return new Response(
-          JSON.stringify({ source: 'cache', foods: cachedFoods }),
-          {
-            status: 200,
-            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-          },
-        );
+        return new Response(JSON.stringify({ source: 'cache', foods: cachedFoods }), {
+          status: 200,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
       }
 
       // Query USDA FoodData Central
@@ -356,13 +352,10 @@ export async function handleFoodLookup(req: Request): Promise<Response> {
       const usdaRes = await fetch(usdaUrl);
       if (!usdaRes.ok) {
         // Return whatever cached foods we found
-        return new Response(
-          JSON.stringify({ source: 'cache', foods: cachedFoods }),
-          {
-            status: 200,
-            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-          },
-        );
+        return new Response(JSON.stringify({ source: 'cache', foods: cachedFoods }), {
+          status: 200,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
       }
 
       const usdaData = await usdaRes.json();
@@ -393,13 +386,10 @@ export async function handleFoodLookup(req: Request): Promise<Response> {
         results.push(...mappedList);
       }
 
-      return new Response(
-        JSON.stringify({ source: 'usda', foods: results }),
-        {
-          status: 200,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        },
-      );
+      return new Response(JSON.stringify({ source: 'usda', foods: results }), {
+        status: 200,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
     }
 
     return new Response(JSON.stringify({ error: 'Invalid request' }), {
@@ -408,13 +398,10 @@ export async function handleFoodLookup(req: Request): Promise<Response> {
     });
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : String(err);
-    return new Response(
-      JSON.stringify({ error: 'Food lookup failed', details: message }),
-      {
-        status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      },
-    );
+    return new Response(JSON.stringify({ error: 'Food lookup failed', details: message }), {
+      status: 500,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
   }
 }
 

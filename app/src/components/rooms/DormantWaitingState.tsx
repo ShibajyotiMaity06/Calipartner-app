@@ -1,11 +1,5 @@
 import React, { useState } from 'react';
-import {
-  Pressable,
-  Share,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
+import { Pressable, Share, StyleSheet, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { t } from '@/i18n';
 import { fontSize, radius, spacing } from '@/theme/tokens';
@@ -27,7 +21,10 @@ export function DormantWaitingState({
 
   const handleCopy = async () => {
     try {
-      const nav = typeof navigator !== 'undefined' ? (navigator as unknown as { clipboard?: { writeText: (text: string) => Promise<void> } }) : undefined;
+      const nav =
+        typeof navigator !== 'undefined'
+          ? (navigator as unknown as { clipboard?: { writeText: (text: string) => Promise<void> } })
+          : undefined;
       if (nav?.clipboard?.writeText) {
         await nav.clipboard.writeText(roomCode);
       } else {
@@ -51,14 +48,14 @@ export function DormantWaitingState({
   };
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+    <View
+      style={[styles.container, { backgroundColor: colors.surface, borderColor: colors.border }]}
+    >
       <View style={[styles.iconCircle, { backgroundColor: colors.cardHighlight }]}>
         <Ionicons name="people-outline" size={36} color={colors.accent} />
       </View>
 
-      <Text style={[styles.title, { color: colors.text }]}>
-        {t('rooms.dormant.title')}
-      </Text>
+      <Text style={[styles.title, { color: colors.text }]}>{t('rooms.dormant.title')}</Text>
 
       <Text style={[styles.subtitle, { color: colors.textMuted }]}>
         {t('rooms.dormant.subtitle')}

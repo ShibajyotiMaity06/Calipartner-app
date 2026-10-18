@@ -1,11 +1,5 @@
 import React, { useState } from 'react';
-import {
-  ActivityIndicator,
-  Pressable,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
+import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '@/contexts/AuthContext';
 import { usePersonalFocus } from '@/hooks/usePersonalFocus';
@@ -22,10 +16,7 @@ export interface FocusCardProps {
   testID?: string;
 }
 
-export function FocusCard({
-  selectedDate,
-  testID = 'focus-card',
-}: FocusCardProps) {
+export function FocusCard({ selectedDate, testID = 'focus-card' }: FocusCardProps) {
   const { colors } = useTheme();
   const { user } = useAuth();
   const userId = user?.id ?? '';
@@ -53,9 +44,7 @@ export function FocusCard({
 
   const hasActiveSession = Boolean(session && (isActive || isPaused));
   const isTimer = session?.mode === 'timer';
-  const displayedSeconds = isTimer
-    ? (remainingSeconds ?? 0)
-    : elapsedSeconds;
+  const displayedSeconds = isTimer ? (remainingSeconds ?? 0) : elapsedSeconds;
 
   const todayMinutes = stats?.daily_breakdown?.[0]?.focus_minutes ?? 0;
   const weeklyGoalMinutes = stats?.weekly_goal_minutes ?? 0;
@@ -75,18 +64,11 @@ export function FocusCard({
       {/* Header Row */}
       <View style={styles.headerRow}>
         <View style={styles.titleGroup}>
-          <View
-            style={[
-              styles.iconWrapper,
-              { backgroundColor: colors.surfaceAlt },
-            ]}
-          >
+          <View style={[styles.iconWrapper, { backgroundColor: colors.surfaceAlt }]}>
             <Ionicons name="timer" size={18} color={colors.accent} />
           </View>
           <View>
-            <Text style={[styles.title, { color: colors.text }]}>
-              {t('focus.cardTitle')}
-            </Text>
+            <Text style={[styles.title, { color: colors.text }]}>{t('focus.cardTitle')}</Text>
             <Text style={[styles.subtitle, { color: colors.textMuted }]}>
               {t('focus.cardSubtitle')}
             </Text>
@@ -94,12 +76,7 @@ export function FocusCard({
         </View>
 
         {/* Today Focus Minutes Badge */}
-        <View
-          style={[
-            styles.todayBadge,
-            { backgroundColor: colors.surfaceAlt },
-          ]}
-        >
+        <View style={[styles.todayBadge, { backgroundColor: colors.surfaceAlt }]}>
           {statsLoading ? (
             <ActivityIndicator size="small" color={colors.accent} testID="focus-card-loading" />
           ) : (
@@ -122,9 +99,7 @@ export function FocusCard({
           style={[
             styles.activeSessionBox,
             {
-              backgroundColor: isPaused
-                ? colors.surfaceAlt
-                : colors.cardHighlight,
+              backgroundColor: isPaused ? colors.surfaceAlt : colors.cardHighlight,
               borderColor: isPaused ? colors.border : colors.accent,
             },
           ]}
@@ -135,35 +110,23 @@ export function FocusCard({
                 style={[
                   styles.statusDot,
                   {
-                    backgroundColor: isPaused
-                      ? colors.textMuted
-                      : colors.accent,
+                    backgroundColor: isPaused ? colors.textMuted : colors.accent,
                   },
                 ]}
               />
               <Text
-                style={[
-                  styles.statusLabel,
-                  { color: isPaused ? colors.textMuted : colors.accent },
-                ]}
+                style={[styles.statusLabel, { color: isPaused ? colors.textMuted : colors.accent }]}
               >
                 {isPaused ? t('focus.pausedStatus') : t('focus.activeStatus')}
               </Text>
               {session?.label && (
-                <Text
-                  style={[styles.sessionLabelText, { color: colors.text }]}
-                >
+                <Text style={[styles.sessionLabelText, { color: colors.text }]}>
                   • {session.label}
                 </Text>
               )}
             </View>
 
-            <Text
-              style={[
-                styles.activeTimerDigits,
-                { color: colors.text },
-              ]}
-            >
+            <Text style={[styles.activeTimerDigits, { color: colors.text }]}>
               {formatTimeDigits(displayedSeconds)}
               <Text
                 style={{
@@ -191,31 +154,20 @@ export function FocusCard({
                 },
               ]}
               accessibilityRole="button"
-              accessibilityLabel={
-                isPaused ? t('focus.resumeBtn') : t('focus.pauseBtn')
-              }
+              accessibilityLabel={isPaused ? t('focus.resumeBtn') : t('focus.pauseBtn')}
             >
-              <Ionicons
-                name={isPaused ? 'play' : 'pause'}
-                size={16}
-                color={colors.text}
-              />
+              <Ionicons name={isPaused ? 'play' : 'pause'} size={16} color={colors.text} />
             </Pressable>
 
             {/* View / Open Running Screen */}
             <Pressable
               testID="btn-focus-card-view"
               onPress={() => setRunningModalVisible(true)}
-              style={[
-                styles.viewActionBtn,
-                { backgroundColor: colors.accent },
-              ]}
+              style={[styles.viewActionBtn, { backgroundColor: colors.accent }]}
               accessibilityRole="button"
               accessibilityLabel={t('focus.viewBtn')}
             >
-              <Text
-                style={[styles.viewActionText, { color: colors.onAccent }]}
-              >
+              <Text style={[styles.viewActionText, { color: colors.onAccent }]}>
                 {t('focus.viewBtn')}
               </Text>
             </Pressable>
@@ -242,17 +194,12 @@ export function FocusCard({
           <Pressable
             testID="btn-focus-card-start"
             onPress={() => setStartModalVisible(true)}
-            style={[
-              styles.startBtn,
-              { backgroundColor: colors.accent },
-            ]}
+            style={[styles.startBtn, { backgroundColor: colors.accent }]}
             accessibilityRole="button"
             accessibilityLabel={t('focus.startBtn')}
           >
             <Ionicons name="play" size={14} color={colors.onAccent} />
-            <Text
-              style={[styles.startBtnText, { color: colors.onAccent }]}
-            >
+            <Text style={[styles.startBtnText, { color: colors.onAccent }]}>
               {t('focus.startBtn')}
             </Text>
           </Pressable>

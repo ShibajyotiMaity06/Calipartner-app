@@ -63,19 +63,19 @@ export async function handleChatUploadUrl(req: Request): Promise<Response> {
       .single();
 
     if (memberErr || !member || !['active', 'paused'].includes(member.status)) {
-      return new Response(
-        JSON.stringify({ error: 'NOT_ROOM_MEMBER: Access denied' }),
-        { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
-      );
+      return new Response(JSON.stringify({ error: 'NOT_ROOM_MEMBER: Access denied' }), {
+        status: 403,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
     }
 
     // 2. Room usable check
     const { data: isUsable } = await adminClient.rpc('room_is_usable', { p_room_id: room_id });
     if (!isUsable) {
-      return new Response(
-        JSON.stringify({ error: 'ROOM_LOCKED: This room is paused' }),
-        { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
-      );
+      return new Response(JSON.stringify({ error: 'ROOM_LOCKED: This room is paused' }), {
+        status: 403,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
     }
 
     // 3. Room state check (locked / dormant / archived)
@@ -86,10 +86,10 @@ export async function handleChatUploadUrl(req: Request): Promise<Response> {
       .single();
 
     if (roomData?.state === 'locked') {
-      return new Response(
-        JSON.stringify({ error: 'ROOM_LOCKED: This room is paused' }),
-        { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
-      );
+      return new Response(JSON.stringify({ error: 'ROOM_LOCKED: This room is paused' }), {
+        status: 403,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
     }
     if (roomData?.state === 'dormant') {
       return new Response(

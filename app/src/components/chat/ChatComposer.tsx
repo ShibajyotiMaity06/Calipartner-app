@@ -16,10 +16,7 @@ import { useTheme } from '@/theme/useTheme';
 import { ChatMediaPickerModal, type SelectedMediaItem } from './ChatMediaPickerModal';
 
 export interface ChatComposerProps {
-  onSend: (
-    text?: string | null,
-    attachments?: SelectedMediaItem[],
-  ) => Promise<void>;
+  onSend: (text?: string | null, attachments?: SelectedMediaItem[]) => Promise<void>;
   disabled?: boolean;
   disabledReason?: string;
   termsAccepted: boolean;
@@ -120,7 +117,10 @@ export function ChatComposer({
           {selectedMedia.length < 5 && (
             <Pressable
               onPress={handlePressAttach}
-              style={[styles.addMoreCard, { borderColor: colors.border, backgroundColor: colors.surfaceAlt }]}
+              style={[
+                styles.addMoreCard,
+                { borderColor: colors.border, backgroundColor: colors.surfaceAlt },
+              ]}
               accessibilityRole="button"
               accessibilityLabel="Add another photo"
               testID="btn-add-more-media"
@@ -140,10 +140,7 @@ export function ChatComposer({
         <Pressable
           onPress={handlePressAttach}
           disabled={disabled || selectedMedia.length >= 5}
-          style={[
-            styles.iconBtn,
-            (disabled || selectedMedia.length >= 5) && styles.btnDisabled,
-          ]}
+          style={[styles.iconBtn, (disabled || selectedMedia.length >= 5) && styles.btnDisabled]}
           accessibilityRole="button"
           accessibilityLabel={t('chat.attachPhoto')}
           testID="btn-chat-attach-photo"

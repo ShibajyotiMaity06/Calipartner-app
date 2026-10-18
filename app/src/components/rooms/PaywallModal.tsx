@@ -75,8 +75,7 @@ export function PaywallModal({
   const matchedPackage: PurchasesPackage | null = useMemo(() => {
     if (!offerings) return null;
 
-    const offeringForTier =
-      offerings.all?.[currentTier] ?? offerings.current;
+    const offeringForTier = offerings.all?.[currentTier] ?? offerings.current;
 
     if (!offeringForTier) return null;
 
@@ -86,9 +85,7 @@ export function PaywallModal({
     return (
       packages.find((p) => p.identifier === expectedId) ??
       packages.find(
-        (p) =>
-          p.identifier.includes(currentTier) &&
-          p.identifier.includes(selectedDuration),
+        (p) => p.identifier.includes(currentTier) && p.identifier.includes(selectedDuration),
       ) ??
       null
     );
@@ -203,41 +200,26 @@ export function PaywallModal({
     });
   };
 
-  const tierName =
-    currentTier === 'pro' ? 'Pro' : currentTier === 'plus' ? 'Plus' : 'Basic';
+  const tierName = currentTier === 'pro' ? 'Pro' : currentTier === 'plus' ? 'Plus' : 'Basic';
 
   const actionButtonText = sponsorRoomId
     ? t('rooms.paywall.sponsorPlan', { tier: tierName })
     : isUpgrade
-    ? t('rooms.paywall.upgradePlan', { tier: tierName })
-    : t('rooms.paywall.startPlan', { tier: tierName });
+      ? t('rooms.paywall.upgradePlan', { tier: tierName })
+      : t('rooms.paywall.startPlan', { tier: tierName });
 
   return (
-    <Modal
-      visible={visible}
-      animationType="slide"
-      transparent
-      onRequestClose={onClose}
-    >
+    <Modal visible={visible} animationType="slide" transparent onRequestClose={onClose}>
       <View style={styles.modalOverlay} testID="modal-paywall">
         <View style={[styles.modalSheet, { backgroundColor: colors.surface }]}>
           {/* Header */}
           <View style={styles.headerRow}>
             <View style={styles.headerTitleGroup}>
-              <View
-                style={[
-                  styles.sparklePill,
-                  { backgroundColor: colors.cardHighlight },
-                ]}
-              >
+              <View style={[styles.sparklePill, { backgroundColor: colors.cardHighlight }]}>
                 <Ionicons name="sparkles" size={13} color={colors.accent} />
-                <Text style={[styles.sparkleText, { color: colors.accent }]}>
-                  ROOM PLANS
-                </Text>
+                <Text style={[styles.sparkleText, { color: colors.accent }]}>ROOM PLANS</Text>
               </View>
-              <Text style={[styles.title, { color: colors.text }]}>
-                {t('rooms.paywall.title')}
-              </Text>
+              <Text style={[styles.title, { color: colors.text }]}>{t('rooms.paywall.title')}</Text>
               <Text style={[styles.subtitle, { color: colors.textMuted }]}>
                 {t('rooms.paywall.subtitle')}
               </Text>
@@ -245,10 +227,7 @@ export function PaywallModal({
 
             <Pressable
               onPress={onClose}
-              style={[
-                styles.closeButton,
-                { backgroundColor: colors.surfaceAlt },
-              ]}
+              style={[styles.closeButton, { backgroundColor: colors.surfaceAlt }]}
               accessibilityRole="button"
               accessibilityLabel={t('rooms.paywall.close')}
               testID="btn-close-paywall"
@@ -273,11 +252,7 @@ export function PaywallModal({
                 ]}
                 testID="banner-paywall-status"
               >
-                <Ionicons
-                  name="information-circle-outline"
-                  size={16}
-                  color={colors.accent}
-                />
+                <Ionicons name="information-circle-outline" size={16} color={colors.accent} />
                 <Text style={[styles.statusText, { color: colors.text }]}>
                   {statusMessage ?? subError}
                 </Text>
@@ -298,11 +273,8 @@ export function PaywallModal({
                     styles.sizeCard,
                     {
                       backgroundColor:
-                        selectedSize === '2-5'
-                          ? colors.cardHighlight
-                          : colors.surfaceAlt,
-                      borderColor:
-                        selectedSize === '2-5' ? colors.accent : colors.border,
+                        selectedSize === '2-5' ? colors.cardHighlight : colors.surfaceAlt,
+                      borderColor: selectedSize === '2-5' ? colors.accent : colors.border,
                     },
                   ]}
                   accessibilityRole="radio"
@@ -313,9 +285,7 @@ export function PaywallModal({
                   <Text style={[styles.sizeCardTitle, { color: colors.text }]}>
                     {t('rooms.paywall.sizeBasic')}
                   </Text>
-                  <Text
-                    style={[styles.sizeCardSubtitle, { color: colors.textMuted }]}
-                  >
+                  <Text style={[styles.sizeCardSubtitle, { color: colors.textMuted }]}>
                     Basic (up to 5)
                   </Text>
                 </Pressable>
@@ -327,11 +297,8 @@ export function PaywallModal({
                     styles.sizeCard,
                     {
                       backgroundColor:
-                        selectedSize === '6-20'
-                          ? colors.cardHighlight
-                          : colors.surfaceAlt,
-                      borderColor:
-                        selectedSize === '6-20' ? colors.accent : colors.border,
+                        selectedSize === '6-20' ? colors.cardHighlight : colors.surfaceAlt,
+                      borderColor: selectedSize === '6-20' ? colors.accent : colors.border,
                     },
                   ]}
                   accessibilityRole="radio"
@@ -342,9 +309,7 @@ export function PaywallModal({
                   <Text style={[styles.sizeCardTitle, { color: colors.text }]}>
                     {t('rooms.paywall.sizePlus')}
                   </Text>
-                  <Text
-                    style={[styles.sizeCardSubtitle, { color: colors.textMuted }]}
-                  >
+                  <Text style={[styles.sizeCardSubtitle, { color: colors.textMuted }]}>
                     Plus (up to 20)
                   </Text>
                 </Pressable>
@@ -356,13 +321,8 @@ export function PaywallModal({
                     styles.sizeCard,
                     {
                       backgroundColor:
-                        selectedSize === '21-50'
-                          ? colors.cardHighlight
-                          : colors.surfaceAlt,
-                      borderColor:
-                        selectedSize === '21-50'
-                          ? colors.accent
-                          : colors.border,
+                        selectedSize === '21-50' ? colors.cardHighlight : colors.surfaceAlt,
+                      borderColor: selectedSize === '21-50' ? colors.accent : colors.border,
                     },
                   ]}
                   accessibilityRole="radio"
@@ -373,9 +333,7 @@ export function PaywallModal({
                   <Text style={[styles.sizeCardTitle, { color: colors.text }]}>
                     {t('rooms.paywall.sizePro')}
                   </Text>
-                  <Text
-                    style={[styles.sizeCardSubtitle, { color: colors.textMuted }]}
-                  >
+                  <Text style={[styles.sizeCardSubtitle, { color: colors.textMuted }]}>
                     Pro (up to 50)
                   </Text>
                 </Pressable>
@@ -385,10 +343,7 @@ export function PaywallModal({
             {/* 2. Billing Duration Toggle */}
             <View style={styles.sectionBlock}>
               <View
-                style={[
-                  styles.durationToggleContainer,
-                  { backgroundColor: colors.surfaceAlt },
-                ]}
+                style={[styles.durationToggleContainer, { backgroundColor: colors.surfaceAlt }]}
               >
                 {/* Monthly */}
                 <Pressable
@@ -410,10 +365,7 @@ export function PaywallModal({
                     style={[
                       styles.durationToggleText,
                       {
-                        color:
-                          selectedDuration === 'monthly'
-                            ? colors.text
-                            : colors.textMuted,
+                        color: selectedDuration === 'monthly' ? colors.text : colors.textMuted,
                       },
                     ]}
                   >
@@ -441,10 +393,7 @@ export function PaywallModal({
                     style={[
                       styles.durationToggleText,
                       {
-                        color:
-                          selectedDuration === 'quarterly'
-                            ? colors.text
-                            : colors.textMuted,
+                        color: selectedDuration === 'quarterly' ? colors.text : colors.textMuted,
                       },
                     ]}
                   >
@@ -473,21 +422,13 @@ export function PaywallModal({
                       style={[
                         styles.durationToggleText,
                         {
-                          color:
-                            selectedDuration === 'annual'
-                              ? colors.text
-                              : colors.textMuted,
+                          color: selectedDuration === 'annual' ? colors.text : colors.textMuted,
                         },
                       ]}
                     >
                       {t('rooms.paywall.durationAnnual')}
                     </Text>
-                    <View
-                      style={[
-                        styles.savingsBadge,
-                        { backgroundColor: colors.accent },
-                      ]}
-                    >
+                    <View style={[styles.savingsBadge, { backgroundColor: colors.accent }]}>
                       <Text style={styles.savingsBadgeText}>SAVE 33%</Text>
                     </View>
                   </View>
@@ -511,15 +452,13 @@ export function PaywallModal({
                   <Text style={[styles.planTitleText, { color: colors.text }]}>
                     {tierName} Room Plan
                   </Text>
-                  <Text
-                    style={[styles.planCapSubtitle, { color: colors.textMuted }]}
-                  >
+                  <Text style={[styles.planCapSubtitle, { color: colors.textMuted }]}>
                     Covers room of{' '}
                     {currentTier === 'pro'
                       ? 'up to 50'
                       : currentTier === 'plus'
-                      ? 'up to 20'
-                      : 'up to 5'}{' '}
+                        ? 'up to 20'
+                        : 'up to 5'}{' '}
                     people
                   </Text>
                 </View>
@@ -529,12 +468,7 @@ export function PaywallModal({
                     {perMonthDisplay ? perMonthDisplay : priceDisplay}
                   </Text>
                   {perMonthDisplay && (
-                    <Text
-                      style={[
-                        styles.priceBilledPeriodText,
-                        { color: colors.textMuted },
-                      ]}
-                    >
+                    <Text style={[styles.priceBilledPeriodText, { color: colors.textMuted }]}>
                       Billed as {priceDisplay}
                     </Text>
                   )}
@@ -543,44 +477,27 @@ export function PaywallModal({
             </View>
 
             {/* 4. Features Included */}
-            <View
-              style={[
-                styles.featuresCard,
-                { backgroundColor: colors.surfaceAlt },
-              ]}
-            >
+            <View style={[styles.featuresCard, { backgroundColor: colors.surfaceAlt }]}>
               <Text style={[styles.featuresHeader, { color: colors.text }]}>
                 {t('rooms.paywall.featuresHeader')}
               </Text>
 
               <View style={styles.featureItem}>
-                <Ionicons
-                  name="people-outline"
-                  size={16}
-                  color={colors.accent}
-                />
+                <Ionicons name="people-outline" size={16} color={colors.accent} />
                 <Text style={[styles.featureText, { color: colors.text }]}>
                   {t('rooms.paywall.featureRooms')}
                 </Text>
               </View>
 
               <View style={styles.featureItem}>
-                <Ionicons
-                  name="chatbubbles-outline"
-                  size={16}
-                  color={colors.accent}
-                />
+                <Ionicons name="chatbubbles-outline" size={16} color={colors.accent} />
                 <Text style={[styles.featureText, { color: colors.text }]}>
                   {t('rooms.paywall.featureChat')}
                 </Text>
               </View>
 
               <View style={styles.featureItem}>
-                <Ionicons
-                  name="trending-up-outline"
-                  size={16}
-                  color={colors.accent}
-                />
+                <Ionicons name="trending-up-outline" size={16} color={colors.accent} />
                 <Text style={[styles.featureText, { color: colors.text }]}>
                   {t('rooms.paywall.featureProgress')}
                 </Text>
@@ -594,44 +511,25 @@ export function PaywallModal({
               </View>
 
               <View style={styles.featureItem}>
-                <Ionicons
-                  name="sparkles-outline"
-                  size={16}
-                  color={colors.macroCalories}
-                />
+                <Ionicons name="sparkles-outline" size={16} color={colors.macroCalories} />
                 <Text style={[styles.featureText, { color: colors.text }]}>
                   {t('rooms.paywall.featureCoach')}
                 </Text>
               </View>
 
               <View style={styles.featureItem}>
-                <Ionicons
-                  name="compass-outline"
-                  size={16}
-                  color={colors.macroProtein}
-                />
+                <Ionicons name="compass-outline" size={16} color={colors.macroProtein} />
                 <Text style={[styles.featureText, { color: colors.text }]}>
                   {t('rooms.paywall.featureFinder')}
                 </Text>
               </View>
 
               {/* Free Guarantee Divider */}
-              <View
-                style={[
-                  styles.freeNoticeDivider,
-                  { backgroundColor: colors.border },
-                ]}
-              />
+              <View style={[styles.freeNoticeDivider, { backgroundColor: colors.border }]} />
 
               <View style={styles.freeNoticeRow}>
-                <Ionicons
-                  name="checkmark-circle"
-                  size={16}
-                  color={colors.syncSynced}
-                />
-                <Text
-                  style={[styles.freeNoticeText, { color: colors.textMuted }]}
-                >
+                <Ionicons name="checkmark-circle" size={16} color={colors.syncSynced} />
+                <Text style={[styles.freeNoticeText, { color: colors.textMuted }]}>
                   {t('rooms.paywall.featureFree')}
                 </Text>
               </View>
@@ -668,9 +566,7 @@ export function PaywallModal({
               accessibilityLabel={t('rooms.paywall.restorePurchases')}
               testID="btn-paywall-restore"
             >
-              <Text
-                style={[styles.restoreButtonText, { color: colors.textMuted }]}
-              >
+              <Text style={[styles.restoreButtonText, { color: colors.textMuted }]}>
                 {t('rooms.paywall.restorePurchases')}
               </Text>
             </Pressable>

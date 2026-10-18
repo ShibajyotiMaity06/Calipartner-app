@@ -1,9 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import {
-  calculateSectionSuggestions,
-  type FoodEntry,
-  type MealSection,
-} from '@calipartner/core';
+import { calculateSectionSuggestions, type FoodEntry, type MealSection } from '@calipartner/core';
 import { useAuth } from '@/contexts/AuthContext';
 import { getDb } from '@/db';
 import { diaryEvents } from '@/services/diaryEvents';

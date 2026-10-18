@@ -233,7 +233,13 @@ export async function saveGoalProfileWithSync(
       `INSERT INTO outbox (id, entity, operation, payload, created_at, attempts, last_error)
        VALUES (?, ?, 'upsert', ?, ?, 0, ?)
        ON CONFLICT (id) DO UPDATE SET payload = excluded.payload, attempts = 0, last_error = excluded.last_error`,
-      [profile.id, 'goal_profiles', JSON.stringify(profile), new Date().toISOString(), syncError ?? null],
+      [
+        profile.id,
+        'goal_profiles',
+        JSON.stringify(profile),
+        new Date().toISOString(),
+        syncError ?? null,
+      ],
     );
   }
 
@@ -274,7 +280,13 @@ export async function saveHealthScreeningWithSync(
       `INSERT INTO outbox (id, entity, operation, payload, created_at, attempts, last_error)
        VALUES (?, ?, 'upsert', ?, ?, 0, ?)
        ON CONFLICT (id) DO UPDATE SET payload = excluded.payload, attempts = 0, last_error = excluded.last_error`,
-      [outboxId, 'health_screening', JSON.stringify(screening), new Date().toISOString(), syncError ?? null],
+      [
+        outboxId,
+        'health_screening',
+        JSON.stringify(screening),
+        new Date().toISOString(),
+        syncError ?? null,
+      ],
     );
   }
 
@@ -304,7 +316,9 @@ export async function flushTargetsOutbox(
           await db.runAsync(`UPDATE local_goal_profiles SET is_synced = 1 WHERE id = ?`, [row.id]);
         } else if (row.entity === 'health_screening') {
           const userId = payload.user_id as string;
-          await db.runAsync(`UPDATE local_health_screening SET is_synced = 1 WHERE user_id = ?`, [userId]);
+          await db.runAsync(`UPDATE local_health_screening SET is_synced = 1 WHERE user_id = ?`, [
+            userId,
+          ]);
         }
 
         // Delete from outbox
@@ -318,10 +332,10 @@ export async function flushTargetsOutbox(
       }
     } catch (e: unknown) {
       const errStr = e instanceof Error ? e.message : String(e);
-      await db.runAsync(
-        `UPDATE outbox SET attempts = attempts + 1, last_error = ? WHERE id = ?`,
-        [errStr, row.id],
-      );
+      await db.runAsync(`UPDATE outbox SET attempts = attempts + 1, last_error = ? WHERE id = ?`, [
+        errStr,
+        row.id,
+      ]);
     }
   }
 

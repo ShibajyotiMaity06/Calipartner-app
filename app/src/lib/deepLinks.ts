@@ -68,9 +68,7 @@ export function resolveNotificationRoute(data?: NotificationDeepLinkData): strin
 /**
  * Handles navigation when user interacts with / taps a notification.
  */
-export function handleNotificationResponse(
-  response: Notifications.NotificationResponse,
-): void {
+export function handleNotificationResponse(response: Notifications.NotificationResponse): void {
   try {
     const data = response.notification.request.content.data as NotificationDeepLinkData;
     const targetRoute = resolveNotificationRoute(data);
@@ -86,7 +84,10 @@ export function handleNotificationResponse(
  * Returns an unsubscribe cleanup function.
  */
 export function setupNotificationListeners(): () => void {
-  if (Platform.OS === 'web' || typeof Notifications.addNotificationResponseReceivedListener !== 'function') {
+  if (
+    Platform.OS === 'web' ||
+    typeof Notifications.addNotificationResponseReceivedListener !== 'function'
+  ) {
     return () => {};
   }
 

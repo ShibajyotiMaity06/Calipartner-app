@@ -70,7 +70,9 @@ export function HealthPermissionModal({
           onPress={onClose}
           accessibilityLabel={t('common.cancel')}
         />
-        <View style={[styles.sheet, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+        <View
+          style={[styles.sheet, { backgroundColor: colors.surface, borderColor: colors.border }]}
+        >
           {/* Header */}
           <View style={styles.header}>
             <View style={styles.headerTitleRow}>
@@ -79,9 +81,7 @@ export function HealthPermissionModal({
                 <Text style={[styles.title, { color: colors.text }]}>
                   {t('trackers.permissions.title')}
                 </Text>
-                <Text style={[styles.subtitle, { color: colors.textMuted }]}>
-                  {platformName}
-                </Text>
+                <Text style={[styles.subtitle, { color: colors.textMuted }]}>{platformName}</Text>
               </View>
             </View>
             <Pressable
@@ -109,8 +109,8 @@ export function HealthPermissionModal({
                   backgroundColor: isGranted
                     ? colors.cardHighlight
                     : isDenied
-                    ? colors.surfaceAlt
-                    : colors.surfaceAlt,
+                      ? colors.surfaceAlt
+                      : colors.surfaceAlt,
                   borderColor: isGranted ? colors.syncSynced : colors.border,
                 },
               ]}
@@ -120,38 +120,32 @@ export function HealthPermissionModal({
                   isGranted
                     ? 'checkmark-circle'
                     : isDenied
-                    ? 'alert-circle'
-                    : isUnavailable
-                    ? 'cloud-offline-outline'
-                    : 'information-circle-outline'
+                      ? 'alert-circle'
+                      : isUnavailable
+                        ? 'cloud-offline-outline'
+                        : 'information-circle-outline'
                 }
                 size={22}
-                color={
-                  isGranted
-                    ? colors.syncSynced
-                    : isDenied
-                    ? colors.danger
-                    : colors.accent
-                }
+                color={isGranted ? colors.syncSynced : isDenied ? colors.danger : colors.accent}
               />
               <View style={styles.statusBannerText}>
                 <Text style={[styles.statusBannerTitle, { color: colors.text }]}>
                   {isGranted
                     ? t('trackers.permissions.statusGranted')
                     : isDenied
-                    ? t('trackers.permissions.statusDenied')
-                    : isUnavailable
-                    ? t('trackers.permissions.statusUnavailable')
-                    : t('trackers.permissions.statusNotRequested')}
+                      ? t('trackers.permissions.statusDenied')
+                      : isUnavailable
+                        ? t('trackers.permissions.statusUnavailable')
+                        : t('trackers.permissions.statusNotRequested')}
                 </Text>
                 <Text style={[styles.statusBannerSub, { color: colors.textMuted }]}>
                   {isGranted
                     ? `Synchronized with ${platformName}`
                     : isDenied
-                    ? 'Step counting permissions were declined'
-                    : isUnavailable
-                    ? 'Sensor data will use phone pedometer'
-                    : `Tap below to connect ${platformName}`}
+                      ? 'Step counting permissions were declined'
+                      : isUnavailable
+                        ? 'Sensor data will use phone pedometer'
+                        : `Tap below to connect ${platformName}`}
                 </Text>
               </View>
             </View>
@@ -195,7 +189,10 @@ export function HealthPermissionModal({
                 <Pressable
                   testID="btn-open-settings"
                   onPress={() => void handleOpenSettings()}
-                  style={[styles.settingsBtn, { backgroundColor: colors.surface, borderColor: colors.border }]}
+                  style={[
+                    styles.settingsBtn,
+                    { backgroundColor: colors.surface, borderColor: colors.border },
+                  ]}
                   accessibilityRole="button"
                   accessibilityLabel={t('trackers.permissions.openSettingsButton')}
                 >
@@ -300,8 +297,8 @@ export function HealthPermissionModal({
                   {requesting
                     ? t('common.loading')
                     : isDenied
-                    ? t('trackers.permissions.reconnectButton')
-                    : t('trackers.permissions.connectButton')}
+                      ? t('trackers.permissions.reconnectButton')
+                      : t('trackers.permissions.connectButton')}
                 </Text>
               </Pressable>
             )}

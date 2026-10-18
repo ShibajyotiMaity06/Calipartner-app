@@ -25,16 +25,8 @@ export function HowCalculatedStep({
     );
   }
 
-  const {
-    bmr,
-    tdee,
-    targetKcal,
-    dailyChangeKcal,
-    weeklyRateKg,
-    safety,
-    macros,
-    goal,
-  } = calculatedTargets;
+  const { bmr, tdee, targetKcal, dailyChangeKcal, weeklyRateKg, safety, macros, goal } =
+    calculatedTargets;
 
   const activityMultiplier = bmr > 0 ? (Math.round((tdee / bmr) * 1000) / 1000).toFixed(3) : '1.55';
   const proteinPerKg = goal === 'cut' ? 2.0 : goal === 'maintain' ? 1.6 : 1.8;
@@ -44,10 +36,7 @@ export function HowCalculatedStep({
     <View style={styles.container}>
       {/* 1. BMR Card */}
       <View
-        style={[
-          styles.card,
-          { backgroundColor: colors.surface, borderColor: colors.border },
-        ]}
+        style={[styles.card, { backgroundColor: colors.surface, borderColor: colors.border }]}
         testID="how-calc-bmr"
       >
         <Text style={[styles.cardHeader, { color: colors.text }]}>
@@ -72,10 +61,7 @@ export function HowCalculatedStep({
 
       {/* 2. TDEE Card */}
       <View
-        style={[
-          styles.card,
-          { backgroundColor: colors.surface, borderColor: colors.border },
-        ]}
+        style={[styles.card, { backgroundColor: colors.surface, borderColor: colors.border }]}
         testID="how-calc-tdee"
       >
         <Text style={[styles.cardHeader, { color: colors.text }]}>
@@ -93,10 +79,7 @@ export function HowCalculatedStep({
 
       {/* 3. Goal Adjustment Card */}
       <View
-        style={[
-          styles.card,
-          { backgroundColor: colors.surface, borderColor: colors.border },
-        ]}
+        style={[styles.card, { backgroundColor: colors.surface, borderColor: colors.border }]}
         testID="how-calc-adjustment"
       >
         <Text style={[styles.cardHeader, { color: colors.text }]}>
@@ -109,10 +92,7 @@ export function HowCalculatedStep({
         </View>
         <Text style={[styles.resultText, { color: colors.text }]}>
           {t('onboarding.howCalculated.adjustmentResult', {
-            diff:
-              dailyChangeKcal < 0
-                ? `-${Math.abs(dailyChangeKcal)}`
-                : `+${dailyChangeKcal}`,
+            diff: dailyChangeKcal < 0 ? `-${Math.abs(dailyChangeKcal)}` : `+${dailyChangeKcal}`,
           })}
           {' → '}
           <Text style={{ fontWeight: '700' }}>{targetKcal} kcal / day</Text>
@@ -121,10 +101,7 @@ export function HowCalculatedStep({
 
       {/* 4. Safety Guards Applied */}
       <View
-        style={[
-          styles.card,
-          { backgroundColor: colors.surface, borderColor: colors.border },
-        ]}
+        style={[styles.card, { backgroundColor: colors.surface, borderColor: colors.border }]}
         testID="how-calc-safety"
       >
         <Text style={[styles.cardHeader, { color: colors.text }]}>
@@ -145,10 +122,7 @@ export function HowCalculatedStep({
 
       {/* 5. Macro Distribution Card */}
       <View
-        style={[
-          styles.card,
-          { backgroundColor: colors.surface, borderColor: colors.border },
-        ]}
+        style={[styles.card, { backgroundColor: colors.surface, borderColor: colors.border }]}
         testID="how-calc-macros"
       >
         <Text style={[styles.cardHeader, { color: colors.text }]}>

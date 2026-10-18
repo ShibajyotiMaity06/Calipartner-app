@@ -1,11 +1,5 @@
 import { useState } from 'react';
-import {
-  ActivityIndicator,
-  Pressable,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
+import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import type { ActivitySource } from '@calipartner/core';
 import { useSteps } from '@/hooks/useSteps';
@@ -117,11 +111,8 @@ export function StepsCard({ selectedDate, testID = 'steps-card' }: StepsCardProp
               styles.permissionBadge,
               {
                 backgroundColor:
-                  permissionStatus === 'granted'
-                    ? colors.cardHighlight
-                    : colors.surfaceAlt,
-                borderColor:
-                  permissionStatus === 'granted' ? colors.syncSynced : colors.border,
+                  permissionStatus === 'granted' ? colors.cardHighlight : colors.surfaceAlt,
+                borderColor: permissionStatus === 'granted' ? colors.syncSynced : colors.border,
               },
             ]}
             accessibilityRole="button"
@@ -216,9 +207,7 @@ export function StepsCard({ selectedDate, testID = 'steps-card' }: StepsCardProp
             <View style={styles.metricItem}>
               <Ionicons name="flame-outline" size={16} color={colors.macroCalories} />
               <View>
-                <Text style={[styles.metricLabel, { color: colors.textMuted }]}>
-                  Walking Burn
-                </Text>
+                <Text style={[styles.metricLabel, { color: colors.textMuted }]}>Walking Burn</Text>
                 <Text
                   testID="steps-calories-text"
                   style={[styles.metricValue, { color: colors.text }]}

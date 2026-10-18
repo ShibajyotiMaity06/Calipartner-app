@@ -20,20 +20,10 @@ export interface MeRoomPlanCardProps {
   onChangePlan: () => void;
 }
 
-export function MeRoomPlanCard({
-  attachedRoom,
-  onChangePlan,
-}: MeRoomPlanCardProps) {
+export function MeRoomPlanCard({ attachedRoom, onChangePlan }: MeRoomPlanCardProps) {
   const { colors } = useTheme();
-  const {
-    entitlement,
-    hasPlan,
-    isTrial,
-    isGrace,
-    isLapsed,
-    isUnattached,
-    loading,
-  } = useSubscription();
+  const { entitlement, hasPlan, isTrial, isGrace, isLapsed, isUnattached, loading } =
+    useSubscription();
 
   const handleManageInStore = () => {
     const storeUrl =
@@ -50,10 +40,7 @@ export function MeRoomPlanCard({
   if (loading) {
     return (
       <View
-        style={[
-          styles.card,
-          { backgroundColor: colors.surface, borderColor: colors.border },
-        ]}
+        style={[styles.card, { backgroundColor: colors.surface, borderColor: colors.border }]}
         testID="card-me-room-plan-loading"
       >
         <ActivityIndicator size="small" color={colors.accent} />
@@ -69,22 +56,22 @@ export function MeRoomPlanCard({
     tier === 'pro'
       ? t('me.roomPlan.tierPro')
       : tier === 'plus'
-      ? t('me.roomPlan.tierPlus')
-      : tier === 'basic'
-      ? t('me.roomPlan.tierBasic')
-      : isTrial
-      ? t('me.roomPlan.tierTrial')
-      : t('me.roomPlan.tierFree');
+        ? t('me.roomPlan.tierPlus')
+        : tier === 'basic'
+          ? t('me.roomPlan.tierBasic')
+          : isTrial
+            ? t('me.roomPlan.tierTrial')
+            : t('me.roomPlan.tierFree');
 
   const statusName = isGrace
     ? t('me.roomPlan.statusGrace')
     : isTrial
-    ? t('me.roomPlan.statusTrial')
-    : isLapsed
-    ? t('me.roomPlan.statusLapsed')
-    : hasPlan
-    ? t('me.roomPlan.statusActive')
-    : t('me.roomPlan.tierFree');
+      ? t('me.roomPlan.statusTrial')
+      : isLapsed
+        ? t('me.roomPlan.statusLapsed')
+        : hasPlan
+          ? t('me.roomPlan.statusActive')
+          : t('me.roomPlan.tierFree');
 
   const formattedPeriodEnd = entitlement?.period_end
     ? new Date(entitlement.period_end).toLocaleDateString(undefined, {
@@ -98,29 +85,22 @@ export function MeRoomPlanCard({
     ? isTrial
       ? t('me.roomPlan.trialEnds', { date: formattedPeriodEnd })
       : isLapsed
-      ? t('me.roomPlan.expiredDate', { date: formattedPeriodEnd })
-      : t('me.roomPlan.renewalDate', { date: formattedPeriodEnd })
+        ? t('me.roomPlan.expiredDate', { date: formattedPeriodEnd })
+        : t('me.roomPlan.renewalDate', { date: formattedPeriodEnd })
     : null;
 
-  const roomCap =
-    attachedRoom?.member_cap ??
-    (tier === 'pro' ? 50 : tier === 'plus' ? 20 : 5);
+  const roomCap = attachedRoom?.member_cap ?? (tier === 'pro' ? 50 : tier === 'plus' ? 20 : 5);
   const memberCount = attachedRoom?.member_count ?? 1;
 
   return (
     <View
-      style={[
-        styles.card,
-        { backgroundColor: colors.surface, borderColor: colors.border },
-      ]}
+      style={[styles.card, { backgroundColor: colors.surface, borderColor: colors.border }]}
       testID="card-me-room-plan"
     >
       {/* Header */}
       <View style={styles.headerRow}>
         <View style={styles.titleGroup}>
-          <Text style={[styles.cardTitle, { color: colors.text }]}>
-            {t('me.roomPlan.title')}
-          </Text>
+          <Text style={[styles.cardTitle, { color: colors.text }]}>{t('me.roomPlan.title')}</Text>
           <Text style={[styles.cardSubtitle, { color: colors.textMuted }]}>
             {t('me.roomPlan.subtitle')}
           </Text>
@@ -130,17 +110,12 @@ export function MeRoomPlanCard({
           style={[
             styles.tierBadge,
             {
-              backgroundColor: hasPlan
-                ? colors.cardHighlight
-                : colors.surfaceAlt,
+              backgroundColor: hasPlan ? colors.cardHighlight : colors.surfaceAlt,
             },
           ]}
         >
           <Text
-            style={[
-              styles.tierBadgeText,
-              { color: hasPlan ? colors.accent : colors.textMuted },
-            ]}
+            style={[styles.tierBadgeText, { color: hasPlan ? colors.accent : colors.textMuted }]}
           >
             {tier.toUpperCase()}
           </Text>
@@ -153,28 +128,20 @@ export function MeRoomPlanCard({
           <Text style={[styles.detailLabel, { color: colors.textMuted }]}>
             {t('me.roomPlan.planLabel')}
           </Text>
-          <Text style={[styles.detailValue, { color: colors.text }]}>
-            {tierName}
-          </Text>
+          <Text style={[styles.detailValue, { color: colors.text }]}>{tierName}</Text>
         </View>
 
         <View style={styles.detailRow}>
           <Text style={[styles.detailLabel, { color: colors.textMuted }]}>
             {t('me.roomPlan.statusLabel')}
           </Text>
-          <Text style={[styles.detailValue, { color: colors.text }]}>
-            {statusName}
-          </Text>
+          <Text style={[styles.detailValue, { color: colors.text }]}>{statusName}</Text>
         </View>
 
         {renewalText && (
           <View style={styles.detailRow}>
-            <Text style={[styles.detailLabel, { color: colors.textMuted }]}>
-              Renewal
-            </Text>
-            <Text style={[styles.detailValue, { color: colors.text }]}>
-              {renewalText}
-            </Text>
+            <Text style={[styles.detailLabel, { color: colors.textMuted }]}>Renewal</Text>
+            <Text style={[styles.detailValue, { color: colors.text }]}>{renewalText}</Text>
           </View>
         )}
 
@@ -214,20 +181,12 @@ export function MeRoomPlanCard({
           ]}
           testID="banner-unattached-subscription"
         >
-          <Ionicons
-            name="alert-circle-outline"
-            size={18}
-            color={colors.accent}
-          />
+          <Ionicons name="alert-circle-outline" size={18} color={colors.accent} />
           <View style={styles.unattachedTextWrap}>
-            <Text
-              style={[styles.unattachedTitle, { color: colors.text }]}
-            >
+            <Text style={[styles.unattachedTitle, { color: colors.text }]}>
               {t('me.roomPlan.unattachedAlertTitle')}
             </Text>
-            <Text
-              style={[styles.unattachedDesc, { color: colors.textMuted }]}
-            >
+            <Text style={[styles.unattachedDesc, { color: colors.textMuted }]}>
               {t('me.roomPlan.unattachedAlertDesc')}
             </Text>
           </View>
@@ -244,9 +203,7 @@ export function MeRoomPlanCard({
           testID="btn-me-change-plan"
         >
           <Ionicons name="sparkles" size={14} color="#FFFFFF" />
-          <Text style={styles.primaryBtnText}>
-            {t('me.roomPlan.changePlanBtn')}
-          </Text>
+          <Text style={styles.primaryBtnText}>{t('me.roomPlan.changePlanBtn')}</Text>
         </Pressable>
 
         <Pressable

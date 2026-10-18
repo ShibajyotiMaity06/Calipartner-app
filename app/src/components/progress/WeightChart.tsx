@@ -1,10 +1,6 @@
 import React, { useCallback, useMemo, useState } from 'react';
 import type { LayoutChangeEvent } from 'react-native';
-import {
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 import Svg, { Circle, Line, Path, Text as SvgText } from 'react-native-svg';
 import type { IndividualWeightProgress } from '@calipartner/core';
 import { t } from '@/i18n';
@@ -33,9 +29,7 @@ export function WeightChart({
 
   // Points with actual weight data
   const validPoints = useMemo(() => {
-    return history.filter(
-      (h) => h.raw_weight_kg != null || h.trend_weight_kg != null,
-    );
+    return history.filter((h) => h.raw_weight_kg != null || h.trend_weight_kg != null);
   }, [history]);
 
   const isEmpty = validPoints.length === 0;
@@ -99,15 +93,21 @@ export function WeightChart({
     return { minY: min, maxY: max, pointsCount: Math.max(validPoints.length, 1) };
   }, [validPoints, data?.target_weight_kg]);
 
-  const getY = useCallback((val: number) => {
-    const ratio = (val - minY) / (maxY - minY || 1);
-    return padTop + chartH - ratio * chartH;
-  }, [minY, maxY, chartH]);
+  const getY = useCallback(
+    (val: number) => {
+      const ratio = (val - minY) / (maxY - minY || 1);
+      return padTop + chartH - ratio * chartH;
+    },
+    [minY, maxY, chartH],
+  );
 
-  const getX = useCallback((index: number) => {
-    if (pointsCount <= 1) return padLeft + chartW / 2;
-    return padLeft + (index / (pointsCount - 1)) * chartW;
-  }, [pointsCount, chartW]);
+  const getX = useCallback(
+    (index: number) => {
+      if (pointsCount <= 1) return padLeft + chartW / 2;
+      return padLeft + (index / (pointsCount - 1)) * chartW;
+    },
+    [pointsCount, chartW],
+  );
 
   // Target line Y
   const targetY = data?.target_weight_kg != null ? getY(data.target_weight_kg) : null;
@@ -132,7 +132,9 @@ export function WeightChart({
   return (
     <ChartContainer
       title={t('progress.weight.title')}
-      subtitle={data?.current_weight_kg != null ? `${data.current_weight_kg.toFixed(1)} kg` : undefined}
+      subtitle={
+        data?.current_weight_kg != null ? `${data.current_weight_kg.toFixed(1)} kg` : undefined
+      }
       accessibilitySummary={accessibilitySummary}
       loading={loading}
       empty={isEmpty}
@@ -302,7 +304,10 @@ export function WeightChart({
               {t('progress.weight.totalChange')}
             </Text>
             <Text style={[styles.statValue, { color: colors.text }]}>
-              {data.total_change_kg > 0 ? `+${data.total_change_kg.toFixed(1)}` : data.total_change_kg.toFixed(1)} kg
+              {data.total_change_kg > 0
+                ? `+${data.total_change_kg.toFixed(1)}`
+                : data.total_change_kg.toFixed(1)}{' '}
+              kg
               {data.total_change_pct != null ? ` (${data.total_change_pct.toFixed(1)}%)` : ''}
             </Text>
           </View>
@@ -324,9 +329,7 @@ export function WeightChart({
             <Text style={[styles.statLabel, { color: colors.textMuted }]}>
               {t('progress.weight.projectedDate')}
             </Text>
-            <Text style={[styles.statValue, { color: colors.text }]}>
-              {data.projected_date}
-            </Text>
+            <Text style={[styles.statValue, { color: colors.text }]}>{data.projected_date}</Text>
           </View>
         )}
       </View>

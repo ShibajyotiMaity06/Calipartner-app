@@ -128,9 +128,7 @@ export function ExercisePickerModal({
         accessibilityLabel={`${item.name}, ${item.muscle_group}, ${item.equipment}`}
       >
         <View style={styles.exerciseContent}>
-          <Text style={[styles.exerciseName, { color: colors.text }]}>
-            {item.name}
-          </Text>
+          <Text style={[styles.exerciseName, { color: colors.text }]}>{item.name}</Text>
           <View style={styles.tagRow}>
             <View
               style={[
@@ -148,9 +146,7 @@ export function ExercisePickerModal({
                 { backgroundColor: colors.surfaceAlt, borderColor: colors.border },
               ]}
             >
-              <Text style={[styles.badgeText, { color: colors.textMuted }]}>
-                {item.equipment}
-              </Text>
+              <Text style={[styles.badgeText, { color: colors.textMuted }]}>{item.equipment}</Text>
             </View>
             {item.owner_id && (
               <View
@@ -159,9 +155,7 @@ export function ExercisePickerModal({
                   { backgroundColor: colors.cardHighlight, borderColor: colors.accent },
                 ]}
               >
-                <Text style={[styles.badgeText, { color: colors.accent }]}>
-                  Custom
-                </Text>
+                <Text style={[styles.badgeText, { color: colors.accent }]}>Custom</Text>
               </View>
             )}
           </View>
@@ -269,10 +263,7 @@ export function ExercisePickerModal({
                   accessibilityLabel={item.label}
                 >
                   <Text
-                    style={[
-                      styles.chipText,
-                      { color: active ? colors.onAccent : colors.text },
-                    ]}
+                    style={[styles.chipText, { color: active ? colors.onAccent : colors.text }]}
                   >
                     {item.label}
                   </Text>
@@ -301,9 +292,7 @@ export function ExercisePickerModal({
               accessibilityRole="button"
               accessibilityLabel={t('common.retry')}
             >
-              <Text style={{ color: colors.onAccent, fontWeight: '700' }}>
-                {t('common.retry')}
-              </Text>
+              <Text style={{ color: colors.onAccent, fontWeight: '700' }}>{t('common.retry')}</Text>
             </TouchableOpacity>
           </View>
         ) : exercises.length === 0 ? (
@@ -384,15 +373,22 @@ export function ExercisePickerModal({
                 </Text>
                 <View style={styles.pillWrap}>
                   {(
-                    ['chest', 'back', 'legs', 'shoulders', 'arms', 'core', 'cardio'] as MuscleGroup[]
+                    [
+                      'chest',
+                      'back',
+                      'legs',
+                      'shoulders',
+                      'arms',
+                      'core',
+                      'cardio',
+                    ] as MuscleGroup[]
                   ).map((m) => (
                     <TouchableOpacity
                       key={m}
                       style={[
                         styles.dialogPill,
                         {
-                          backgroundColor:
-                            customMuscle === m ? colors.accent : colors.surfaceAlt,
+                          backgroundColor: customMuscle === m ? colors.accent : colors.surfaceAlt,
                         },
                       ]}
                       onPress={() => setCustomMuscle(m)}
@@ -435,8 +431,7 @@ export function ExercisePickerModal({
                       <Text
                         style={{
                           fontSize: fontSize.xs,
-                          color:
-                            customEquipment === eq ? colors.onAccent : colors.text,
+                          color: customEquipment === eq ? colors.onAccent : colors.text,
                           fontWeight: '600',
                           textTransform: 'capitalize',
                         }}
@@ -460,8 +455,7 @@ export function ExercisePickerModal({
                       style={[
                         styles.dialogPill,
                         {
-                          backgroundColor:
-                            customType === tp ? colors.accent : colors.surfaceAlt,
+                          backgroundColor: customType === tp ? colors.accent : colors.surfaceAlt,
                         },
                       ]}
                       onPress={() => setCustomType(tp)}
@@ -509,10 +503,7 @@ export function ExercisePickerModal({
                   ) : (
                     <Text
                       style={{
-                        color:
-                          customName.trim().length > 0
-                            ? colors.onAccent
-                            : colors.textMuted,
+                        color: customName.trim().length > 0 ? colors.onAccent : colors.textMuted,
                         fontWeight: '700',
                       }}
                     >

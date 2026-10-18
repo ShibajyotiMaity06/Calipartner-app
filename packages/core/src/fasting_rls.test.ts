@@ -11,7 +11,10 @@ import type { FastingSession, FastingSettings } from './types';
 class InMemoryFastingSecurityDb {
   settings = new Map<string, FastingSettings>();
   sessions: FastingSession[] = [];
-  roomMemberships = new Map<string, { room_id: string; user_id: string; privacy_settings: Record<string, unknown> }>();
+  roomMemberships = new Map<
+    string,
+    { room_id: string; user_id: string; privacy_settings: Record<string, unknown> }
+  >();
 
   // --- fasting_settings ---
   insertOrUpdateSettings(callerId: string, item: FastingSettings): FastingSettings {
@@ -93,7 +96,11 @@ class InMemoryFastingSecurityDb {
   }
 
   // --- Room Snapshot Privacy API ---
-  getRoomSnapshotFastingStatus(callerId: string, memberUserId: string, todayLocalDate: string): string {
+  getRoomSnapshotFastingStatus(
+    callerId: string,
+    memberUserId: string,
+    todayLocalDate: string,
+  ): string {
     const membershipKey = `${memberUserId}`;
     const member = this.roomMemberships.get(membershipKey);
     const privacy = member?.privacy_settings ?? {};
@@ -107,9 +114,7 @@ class InMemoryFastingSecurityDb {
 
       const completedToday = this.sessions.find(
         (s) =>
-          s.user_id === memberUserId &&
-          s.status === 'completed' &&
-          s.local_date === todayLocalDate,
+          s.user_id === memberUserId && s.status === 'completed' && s.local_date === todayLocalDate,
       );
       if (completedToday) return 'completed_today';
       return 'none';
@@ -129,9 +134,7 @@ class InMemoryFastingSecurityDb {
 
     const completedToday = this.sessions.find(
       (s) =>
-        s.user_id === memberUserId &&
-        s.status === 'completed' &&
-        s.local_date === todayLocalDate,
+        s.user_id === memberUserId && s.status === 'completed' && s.local_date === todayLocalDate,
     );
     if (completedToday) return 'completed_today';
     return 'none';

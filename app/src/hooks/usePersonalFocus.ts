@@ -104,9 +104,7 @@ export function usePersonalFocus({ userId }: UsePersonalFocusOptions) {
     const db = await getDb();
     await pausePersonalSession(db, session.id);
     const nowIso = getServerCorrectedNow().toISOString();
-    setSession((prev) =>
-      prev ? { ...prev, status: 'paused', last_paused_at: nowIso } : null,
-    );
+    setSession((prev) => (prev ? { ...prev, status: 'paused', last_paused_at: nowIso } : null));
   }, [session]);
 
   const resume = useCallback(async () => {
@@ -116,7 +114,10 @@ export function usePersonalFocus({ userId }: UsePersonalFocusOptions) {
     const now = getServerCorrectedNow();
     let addPause = 0;
     if (session.last_paused_at) {
-      addPause = Math.max(0, Math.floor((now.getTime() - new Date(session.last_paused_at).getTime()) / 1000));
+      addPause = Math.max(
+        0,
+        Math.floor((now.getTime() - new Date(session.last_paused_at).getTime()) / 1000),
+      );
     }
     setSession((prev) =>
       prev

@@ -7,11 +7,7 @@ import {
   scaleRecipeServings,
   validateRecipeInput,
 } from './recipes';
-import type {
-  Food,
-  Recipe,
-  RecipeImportInput,
-} from './types';
+import type { Food, Recipe, RecipeImportInput } from './types';
 
 describe('Phase 12: Recipes Core Logic', () => {
   // Food map from seed
@@ -59,21 +55,11 @@ describe('Phase 12: Recipes Core Logic', () => {
 
     // Missing reason should throw
     expect(() => {
-      calculateRecipeNutrition(
-        ingredients,
-        1,
-        { calories: 300, protein: 20 },
-        null,
-      );
+      calculateRecipeNutrition(ingredients, 1, { calories: 300, protein: 20 }, null);
     }).toThrow('Manual nutrition override requires a written reason');
 
     expect(() => {
-      calculateRecipeNutrition(
-        ingredients,
-        1,
-        { calories: 300, protein: 20 },
-        '   ',
-      );
+      calculateRecipeNutrition(ingredients, 1, { calories: 300, protein: 20 }, '   ');
     }).toThrow('Manual nutrition override requires a written reason');
 
     // With valid reason, manual values are respected
@@ -330,6 +316,8 @@ describe('Phase 12: Recipes Core Logic', () => {
 
     const result = validateRecipeInput(overrideInput, DEV_100_FOOD_SEED);
     expect(result.valid).toBe(false);
-    expect(result.errors.some((e) => e.includes('Manual nutrition override requires a written reason'))).toBe(true);
+    expect(
+      result.errors.some((e) => e.includes('Manual nutrition override requires a written reason')),
+    ).toBe(true);
   });
 });

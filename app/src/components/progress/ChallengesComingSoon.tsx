@@ -21,12 +21,7 @@ export function ChallengesComingSoon({
       accessibilityRole="text"
       accessibilityLabel={`${t('progress.challenges.comingSoon')}. ${t('progress.challenges.comingSoonSubtitle')}`}
     >
-      <View
-        style={[
-          styles.iconContainer,
-          { backgroundColor: colors.surfaceAlt },
-        ]}
-      >
+      <View style={[styles.iconContainer, { backgroundColor: colors.surfaceAlt }]}>
         <Ionicons name="ribbon-outline" size={44} color={colors.accent} />
       </View>
 
@@ -39,15 +34,10 @@ export function ChallengesComingSoon({
       </Text>
 
       <View
-        style={[
-          styles.badge,
-          { backgroundColor: colors.surfaceAlt, borderColor: colors.border },
-        ]}
+        style={[styles.badge, { backgroundColor: colors.surfaceAlt, borderColor: colors.border }]}
       >
         <Ionicons name="sparkles" size={14} color={colors.accent} />
-        <Text style={[styles.badgeText, { color: colors.textMuted }]}>
-          Phase 8 Feature
-        </Text>
+        <Text style={[styles.badgeText, { color: colors.textMuted }]}>Phase 8 Feature</Text>
       </View>
     </View>
   );

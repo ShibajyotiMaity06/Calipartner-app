@@ -166,9 +166,7 @@ export function FocusStartModal({
             {/* Scope Selector if room is provided */}
             {Boolean(roomId && onStartRoom) && (
               <View style={styles.sectionWrap}>
-                <Text style={[styles.sectionTitle, { color: colors.text }]}>
-                  {t('focus.mode')}
-                </Text>
+                <Text style={[styles.sectionTitle, { color: colors.text }]}>{t('focus.mode')}</Text>
                 <View style={[styles.toggleContainer, { backgroundColor: colors.surfaceAlt }]}>
                   <Pressable
                     testID="btn-scope-personal"
@@ -231,9 +229,7 @@ export function FocusStartModal({
 
             {/* Mode Selector: Stopwatch vs Timer */}
             <View style={styles.sectionWrap}>
-              <Text style={[styles.sectionTitle, { color: colors.text }]}>
-                {t('focus.mode')}
-              </Text>
+              <Text style={[styles.sectionTitle, { color: colors.text }]}>{t('focus.mode')}</Text>
               <View style={styles.modeRow}>
                 <Pressable
                   testID="btn-mode-timer"
@@ -254,9 +250,7 @@ export function FocusStartModal({
                     size={24}
                     color={mode === 'timer' ? colors.accent : colors.textMuted}
                   />
-                  <Text style={[styles.modeTitle, { color: colors.text }]}>
-                    {t('focus.timer')}
-                  </Text>
+                  <Text style={[styles.modeTitle, { color: colors.text }]}>{t('focus.timer')}</Text>
                   <Text style={[styles.modeDesc, { color: colors.textMuted }]}>
                     Countdown from chosen length
                   </Text>

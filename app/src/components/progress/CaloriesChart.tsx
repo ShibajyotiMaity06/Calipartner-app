@@ -1,10 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import type { LayoutChangeEvent } from 'react-native';
-import {
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 import Svg, { Line, Rect, Text as SvgText } from 'react-native-svg';
 import type { IndividualCaloriesProgress } from '@calipartner/core';
 import { t } from '@/i18n';
@@ -67,7 +63,7 @@ export function CaloriesChart({
     if (max === 0) {
       max = 2500;
     } else {
-      max = Math.ceil(max * 1.15 / 100) * 100;
+      max = Math.ceil((max * 1.15) / 100) * 100;
     }
     const target = data?.average_target ?? 2000;
     return { maxY: max, targetYVal: target };

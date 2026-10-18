@@ -155,8 +155,7 @@ export const en = {
       metric: 'Metric (kg, cm)',
       imperial: 'Imperial (lb, ft/in)',
       sexLabel: 'Biological sex for metabolic rate',
-      sexHelp:
-        'Metabolic equations use biological sex to estimate baseline energy expenditure.',
+      sexHelp: 'Metabolic equations use biological sex to estimate baseline energy expenditure.',
       male: 'Male',
       female: 'Female',
       other: 'Other',
@@ -175,16 +174,14 @@ export const en = {
       weightError: 'Please enter a realistic weight.',
       bodyFatLabel: 'Body fat percentage (optional)',
       bodyFatPlaceholder: 'e.g. 18',
-      bodyFatHelp:
-        'Optional: enables the Katch-McArdle formula for greater precision.',
+      bodyFatHelp: 'Optional: enables the Katch-McArdle formula for greater precision.',
       bodyFatError: 'Body fat must be between 3% and 70%.',
       bmiLabel: 'Current BMI',
       bmiCategoryUnderweight: 'Underweight',
       bmiCategoryNormal: 'Normal weight',
       bmiCategoryOverweight: 'Overweight',
       bmiCategoryObese: 'Obese',
-      bmiCutWarning:
-        'Your BMI is below 18.5. For your health, calorie reduction is disabled.',
+      bmiCutWarning: 'Your BMI is below 18.5. For your health, calorie reduction is disabled.',
     },
     activity: {
       title: 'How active is a typical week?',
@@ -200,12 +197,10 @@ export const en = {
       moderateDesc: 'Active daily routine, walking, moderate exercise 3–5 days per week.',
       moderateMultiplier: '1.55× baseline',
       veryActiveTitle: 'Very Active',
-      veryActiveDesc:
-        'Demanding physical job or strenuous sports/workouts 6–7 days per week.',
+      veryActiveDesc: 'Demanding physical job or strenuous sports/workouts 6–7 days per week.',
       veryActiveMultiplier: '1.725× baseline',
       extraActiveTitle: 'Extra Active',
-      extraActiveDesc:
-        'Heavy physical labor or intense twice-daily athletic training.',
+      extraActiveDesc: 'Heavy physical labor or intense twice-daily athletic training.',
       extraActiveMultiplier: '1.90× baseline',
     },
     rate: {
@@ -213,8 +208,7 @@ export const en = {
       subtitle:
         'We calculate your exact daily calories for each weekly rate so there are no surprises.',
       maintenanceHeader: 'Estimated Maintenance',
-      maintenanceDesc:
-        'Energy burned each day to stay at your current body weight.',
+      maintenanceDesc: 'Energy burned each day to stay at your current body weight.',
       maintenanceKcal: '{kcal} kcal / day',
       maintainOnlyNotice:
         'Since your goal is to maintain, your daily target matches your maintenance calories.',
@@ -251,57 +245,45 @@ export const en = {
     },
     howCalculated: {
       title: 'How we calculated this',
-      subtitle:
-        'Complete transparency. Here is the exact science and math behind your numbers.',
+      subtitle: 'Complete transparency. Here is the exact science and math behind your numbers.',
       bmrHeader: '1. Resting Metabolic Rate (BMR)',
       bmrMifflin: 'Calculated using the Mifflin-St Jeor equation:',
       bmrKatch: 'Calculated using the Katch-McArdle lean mass equation:',
-      bmrFormulaMifflin:
-        'BMR = (10 × kg) + (6.25 × cm) - (5 × age) + sex offset',
+      bmrFormulaMifflin: 'BMR = (10 × kg) + (6.25 × cm) - (5 × age) + sex offset',
       bmrFormulaKatch: 'BMR = 370 + (21.6 × Lean Body Mass in kg)',
       bmrResult: 'BMR: {kcal} kcal / day',
       tdeeHeader: '2. Daily Energy Expenditure (TDEE)',
       tdeeFormula: 'TDEE = BMR × Activity Multiplier ({multiplier}×)',
       tdeeResult: 'TDEE: {kcal} kcal / day',
       adjustmentHeader: '3. Weekly Goal Adjustment',
-      adjustmentFormula:
-        'Daily change = Rate ({rate} kg/wk) × 7,700 kcal ÷ 7 days',
+      adjustmentFormula: 'Daily change = Rate ({rate} kg/wk) × 7,700 kcal ÷ 7 days',
       adjustmentResult: 'Adjustment: {diff} kcal / day',
       safetyHeader: '4. Safety Guards & Ceilings',
-      safetyFloorRule:
-        'Calorie Floor: Never drops below {floor} kcal/day for your health.',
-      safetyCapRule:
-        'Rate Cap: Capped at 1% of body weight ({cap} kg/week) to preserve muscle.',
+      safetyFloorRule: 'Calorie Floor: Never drops below {floor} kcal/day for your health.',
+      safetyCapRule: 'Rate Cap: Capped at 1% of body weight ({cap} kg/week) to preserve muscle.',
       safetyBmiRule: 'BMI Guard: Cutting disabled when BMI is under 18.5.',
       macrosHeader: '5. Macronutrient Distribution',
-      proteinRule:
-        'Protein ({perKg} g/kg): {grams}g ({kcal} kcal) for muscle preservation.',
-      fatRule:
-        'Fat (25% of calories, min 0.6 g/kg): {grams}g ({kcal} kcal) for hormone health.',
+      proteinRule: 'Protein ({perKg} g/kg): {grams}g ({kcal} kcal) for muscle preservation.',
+      fatRule: 'Fat (25% of calories, min 0.6 g/kg): {grams}g ({kcal} kcal) for hormone health.',
       carbRule: 'Carbohydrates (remainder): {grams}g ({kcal} kcal) for training fuel.',
     },
     healthScreening: {
       title: 'Private health screening',
-      subtitle:
-        'Optional questions to adapt recommendations and protect your well-being.',
+      subtitle: 'Optional questions to adapt recommendations and protect your well-being.',
       whyWeAskTitle: 'Why we ask this',
       whyWeAskBody:
         'Your answers are 100% private. They are never shown to room partners or leaderboards. We use them only to hide intermittent fasting and display relevant cautions.',
       pregnantLabel: 'Pregnant or breastfeeding',
-      pregnantDesc:
-        'Fasting and steep deficits are disabled to ensure sufficient nourishment.',
+      pregnantDesc: 'Fasting and steep deficits are disabled to ensure sufficient nourishment.',
       diabetesLabel: 'Diabetes or blood sugar medication',
-      diabetesDesc:
-        'Fasting is disabled and meal timing consistency is recommended.',
+      diabetesDesc: 'Fasting is disabled and meal timing consistency is recommended.',
       edLabel: 'Personal history of an eating disorder',
-      edDesc:
-        'Fasting is disabled and weight tracking reminders are softened.',
+      edDesc: 'Fasting is disabled and weight tracking reminders are softened.',
       preferNotToSay: 'Prefer not to answer / Skip',
     },
     summary: {
       title: 'Your daily targets',
-      subtitle:
-        'Your personal plan is ready. You can adjust these anytime in your profile.',
+      subtitle: 'Your personal plan is ready. You can adjust these anytime in your profile.',
       dailyCaloriesHero: '{kcal}',
       dailyCaloriesUnit: 'kcal / day',
       goalBadge: 'Goal: {goal}',
@@ -316,8 +298,7 @@ export const en = {
       waterGoalValue: '{ml} ml',
       howCalculatedLink: 'How we calculated this (formula breakdown)',
       emptyTitle: 'No targets calculated yet',
-      emptyBody:
-        'Please go back and enter your body stats to calculate your daily targets.',
+      emptyBody: 'Please go back and enter your body stats to calculate your daily targets.',
       saveButton: 'Save Targets & Continue',
       savedSuccess: 'Targets saved successfully!',
     },
@@ -398,21 +379,26 @@ export const en = {
       retake: 'Retake',
       usePhoto: 'Analyze Photo',
       cameraPermissionTitle: 'Camera Access Needed',
-      cameraPermissionBody: 'CaliPartner needs camera permission to capture and analyze meal photos.',
+      cameraPermissionBody:
+        'CaliPartner needs camera permission to capture and analyze meal photos.',
       grantCamera: 'Enable Camera',
       analyzingTitle: 'Analyzing your meal…',
-      analyzingSubtitle: 'Detecting dishes, estimating portions, and matching nutritional databases.',
+      analyzingSubtitle:
+        'Detecting dishes, estimating portions, and matching nutritional databases.',
       analyzingHint: 'Photos are processed securely in-memory and immediately deleted.',
       consentTitle: 'AI Photo Processing',
       consentSubtitle: 'How CaliPartner analyzes your meal photos',
-      consentBullet1: 'Photos are sent securely to our vision model to detect food items and portions.',
-      consentBullet2: 'Photographs are deleted immediately after analysis and never stored on servers unless you share them to room chat.',
+      consentBullet1:
+        'Photos are sent securely to our vision model to detect food items and portions.',
+      consentBullet2:
+        'Photographs are deleted immediately after analysis and never stored on servers unless you share them to room chat.',
       consentBullet3: 'Your health and food data are never sold or used for advertising.',
       acceptConsent: 'I Agree & Continue',
       declineConsent: 'Not Now',
       resultsTitle: 'Review Meal',
       resultsSubtitle: 'Review detected foods and adjust portions before saving.',
-      estimateNotice: 'All portions and macro values are AI estimates. Please adjust them as needed.',
+      estimateNotice:
+        'All portions and macro values are AI estimates. Please adjust them as needed.',
       totalLabel: 'Estimated Totals',
       addItem: '+ Add Missing Item',
       swapItem: 'Swap',
@@ -421,12 +407,14 @@ export const en = {
       logButton: 'Log Meal ({count} Items)',
       logSingleButton: 'Log Meal (1 Item)',
       noCandidatesTitle: 'No foods detected',
-      noCandidatesSub: 'We couldn’t detect distinct foods in this photo. Try another angle with good lighting.',
+      noCandidatesSub:
+        'We couldn’t detect distinct foods in this photo. Try another angle with good lighting.',
       limitTitle: 'Daily Photo Limit Reached',
       limitBodyTrial: 'You’ve reached your daily limit of 3 AI photo scans on the free trial.',
       limitBodyFree: 'AI photo logging is available on Trial and Paid plans.',
       limitBodyPaid: 'You’ve reached your daily allowance of 15 AI photo scans for today.',
-      upgradeUpsell: 'Upgrade to a Room Plan to get 15 scans per day, shared partner rooms, and an AI coach.',
+      upgradeUpsell:
+        'Upgrade to a Room Plan to get 15 scans per day, shared partner rooms, and an AI coach.',
       upgradeButton: 'View Room Plans',
       logManuallyButton: 'Log Manually',
       swapModalTitle: 'Swap Food Item',
@@ -595,13 +583,17 @@ export const en = {
       subtitle: 'Automatic background step & distance tracking',
       whyConnectTitle: 'Why connect your health data?',
       feature1Title: 'Automatic Step Counting',
-      feature1Desc: 'Steps and distance sync automatically in the background even when CaliPartner is closed.',
+      feature1Desc:
+        'Steps and distance sync automatically in the background even when CaliPartner is closed.',
       feature2Title: 'Measured Platform Distance',
-      feature2Desc: 'Uses accurate platform-measured distance from your smart watch or phone sensors.',
+      feature2Desc:
+        'Uses accurate platform-measured distance from your smart watch or phone sensors.',
       feature3Title: 'Zero Battery Drain',
-      feature3Desc: 'Reads existing device health records without running continuous background GPS.',
+      feature3Desc:
+        'Reads existing device health records without running continuous background GPS.',
       feature4Title: 'Private & Secure',
-      feature4Desc: 'Stored locally and encrypted on your device. Never shared or sold without permission.',
+      feature4Desc:
+        'Stored locally and encrypted on your device. Never shared or sold without permission.',
       statusTitle: 'Connection Status',
       statusGranted: 'Connected & Active',
       statusDenied: 'Permission Denied',
@@ -612,9 +604,11 @@ export const en = {
       openSettingsButton: 'Open Device Settings',
       howToEnableTitle: 'How to enable permissions manually:',
       androidTitle: 'Android (Health Connect):',
-      androidInstructions: '1. Open Android Settings.\n2. Go to Apps > Health Connect (or open Health Connect app).\n3. Tap App permissions > CaliPartner.\n4. Turn ON Steps and Distance permissions.',
+      androidInstructions:
+        '1. Open Android Settings.\n2. Go to Apps > Health Connect (or open Health Connect app).\n3. Tap App permissions > CaliPartner.\n4. Turn ON Steps and Distance permissions.',
       iosTitle: 'iOS (Apple Health):',
-      iosInstructions: '1. Open iPhone Settings.\n2. Tap Privacy & Security > Health.\n3. Tap CaliPartner.\n4. Turn ON Steps and Walking + Running Distance.',
+      iosInstructions:
+        '1. Open iPhone Settings.\n2. Tap Privacy & Security > Health.\n3. Tap CaliPartner.\n4. Turn ON Steps and Walking + Running Distance.',
       fallbackNotice: 'If permissions remain disabled, you can always log steps manually anytime.',
       close: 'Close',
     },
@@ -796,8 +790,10 @@ export const en = {
       submitBtn: 'Create Room',
       creating: 'Creating room…',
       errorMinLength: 'Room name must be at least 3 characters.',
-      errorMaxRooms: 'You can be in up to 3 rooms at a time. Leave an existing room to create a new one.',
-      errorPlanAttached: 'Your subscription already covers an active room. You cannot host two rooms on the same plan.',
+      errorMaxRooms:
+        'You can be in up to 3 rooms at a time. Leave an existing room to create a new one.',
+      errorPlanAttached:
+        'Your subscription already covers an active room. You cannot host two rooms on the same plan.',
     },
     joinModal: {
       title: 'Join Room by Code',
@@ -807,7 +803,8 @@ export const en = {
       submitBtn: 'Join Room',
       joining: 'Joining room…',
       errorCodeLength: 'Please enter a valid 6-character room code.',
-      errorMaxRooms: 'You can be in up to 3 rooms at a time. Leave an existing room to join a new one.',
+      errorMaxRooms:
+        'You can be in up to 3 rooms at a time. Leave an existing room to join a new one.',
     },
     inviteModal: {
       title: 'Invite by Username',
@@ -961,9 +958,11 @@ export const en = {
     retryBtn: 'Retry',
     offlineBanner: "You're offline. Messages will send automatically once reconnected.",
     pausedTitle: 'This room is paused',
-    pausedSubtitle: 'Chat is disabled while the room is locked. Any member can sponsor a plan to keep this room going.',
+    pausedSubtitle:
+      'Chat is disabled while the room is locked. Any member can sponsor a plan to keep this room going.',
     pausedBtn: 'Keep this room going',
-    dormantBanner: 'This room is waiting for a partner. Chat is read-only until a second member joins.',
+    dormantBanner:
+      'This room is waiting for a partner. Chat is read-only until a second member joins.',
     newMessagesDivider: 'New Messages',
     deletedMessage: '[Message deleted]',
     blockedImage: '[Image blocked by safety filter]',
@@ -979,7 +978,8 @@ export const en = {
     copiedToast: 'Message copied to clipboard',
     deleteOwn: 'Delete message',
     deleteConfirmTitle: 'Delete Message?',
-    deleteConfirmMessage: 'This message and its media will be permanently deleted for all room members.',
+    deleteConfirmMessage:
+      'This message and its media will be permanently deleted for all room members.',
     deleteConfirmBtn: 'Delete',
     reportMsg: 'Report message',
     muteMember: 'Mute @{username}',
@@ -987,7 +987,8 @@ export const en = {
     muteSuccessToast: 'Member muted',
     cancel: 'Cancel',
     termsTitle: 'CaliPartner Chat Guidelines',
-    termsSubtitle: 'Please review and accept our community standards before sending your first message.',
+    termsSubtitle:
+      'Please review and accept our community standards before sending your first message.',
     term1: 'Be supportive and encouraging to your room partners.',
     term2: 'No dangerous restriction advice, crash diets, or extreme deficit tips.',
     term3: 'Zero tolerance for harassment, hate speech, spam, or explicit content.',
@@ -1101,7 +1102,8 @@ export const en = {
     details: {
       title: 'Workout Details',
       confirmDeleteTitle: 'Delete Workout',
-      confirmDeleteBody: 'Are you sure you want to delete this workout? This action cannot be undone.',
+      confirmDeleteBody:
+        'Are you sure you want to delete this workout? This action cannot be undone.',
       deleteSuccess: 'Workout deleted.',
     },
     logSheet: {
@@ -1144,8 +1146,7 @@ export const en = {
       weeklyPace: 'Weekly Pace',
       projectedDate: 'Projected Target Date',
       notEnoughTrend: 'Not enough trend yet',
-      empty:
-        'Log your weight across multiple days to view your weight trend and goal projection.',
+      empty: 'Log your weight across multiple days to view your weight trend and goal projection.',
       accessibilitySummary:
         'Weight progress chart showing start weight of {start} kg, current weight of {current} kg, and 7-day trend.',
     },
@@ -1155,8 +1156,7 @@ export const en = {
       target: 'Target',
       adherence: 'Adherence',
       adherenceSubtitle: '{goalDays} of {loggedDays} logged days on goal',
-      empty:
-        'Log your meals to see daily calorie intake compared with your daily target.',
+      empty: 'Log your meals to see daily calorie intake compared with your daily target.',
       accessibilitySummary:
         'Calorie intake chart showing average of {average} calories versus {target} calorie target.',
     },
@@ -1166,16 +1166,14 @@ export const en = {
       carbs: 'Carbs',
       fat: 'Fat',
       empty: 'Log your meals to see daily macronutrient distributions.',
-      accessibilitySummary:
-        'Macro averages: {protein}g protein, {carbs}g carbs, {fat}g fat.',
+      accessibilitySummary: 'Macro averages: {protein}g protein, {carbs}g carbs, {fat}g fat.',
     },
     steps: {
       title: 'Steps & Distance',
       averageSteps: 'Daily Avg',
       totalDistance: 'Total Distance',
       goalSteps: 'Step Goal',
-      empty:
-        'Track your daily steps to view your step and walking distance trends.',
+      empty: 'Track your daily steps to view your step and walking distance trends.',
       accessibilitySummary:
         'Step chart with average of {avg} steps per day and total distance of {dist} km.',
     },
@@ -1184,8 +1182,7 @@ export const en = {
       dailyAverage: 'Daily Avg',
       waterGoal: 'Daily Goal',
       empty: 'Log water intake to track hydration trends.',
-      accessibilitySummary:
-        'Water intake chart with daily average of {avg} ml.',
+      accessibilitySummary: 'Water intake chart with daily average of {avg} ml.',
     },
     workouts: {
       title: 'Workout Activity',
@@ -1193,8 +1190,7 @@ export const en = {
       totalMinutes: 'Total Time',
       totalVolume: 'Total Volume',
       exerciseProgression: 'Exercise Progression',
-      empty:
-        'Log workouts to track training frequency, volume, and exercise progression.',
+      empty: 'Log workouts to track training frequency, volume, and exercise progression.',
       accessibilitySummary:
         'Workout summary showing {count} workouts, {sessions} sessions per week, and {volume} kg total volume.',
     },
@@ -1205,8 +1201,7 @@ export const en = {
       weeklyScores: 'Weekly Scores',
       days: 'days',
       scoreLabel: 'Consistency Score',
-      empty:
-        'Log consistently to build your personal streak and earn weekly consistency points.',
+      empty: 'Log consistently to build your personal streak and earn weekly consistency points.',
       accessibilitySummary:
         'Consistency history with current streak of {current} days and longest streak of {longest} days.',
     },
@@ -1231,8 +1226,7 @@ export const en = {
       cohortLabel: 'Cohort',
       myRank: 'Your Rank',
       optOutLabel: 'Leaderboard Participation',
-      optOutDescription:
-        'Hide your profile and score completely from all weekly leaderboards.',
+      optOutDescription: 'Hide your profile and score completely from all weekly leaderboards.',
       optedOutNotice:
         'You are currently opted out of leaderboards. Turn participation on to compete with your cohort.',
       notEligibleNotice:
@@ -1297,9 +1291,12 @@ export const en = {
     endBtn: 'End Session',
     confirmEndTitle: 'End Focus Session?',
     confirmEndMessage: 'Your focused time will be saved towards your daily and weekly progress.',
-    breakPrompt: 'You have been in the zone for 90 minutes. Feel free to stretch or hydrate whenever you are ready.',
-    stillFocusingPrompt: 'Still focusing? You have been in deep work for 4 hours. Keep going or take a well-deserved rest.',
-    excessiveDayPrompt: 'Incredible dedication! You have logged over 10 hours of focus today. Make sure to rest and recharge.',
+    breakPrompt:
+      'You have been in the zone for 90 minutes. Feel free to stretch or hydrate whenever you are ready.',
+    stillFocusingPrompt:
+      'Still focusing? You have been in deep work for 4 hours. Keep going or take a well-deserved rest.',
+    excessiveDayPrompt:
+      'Incredible dedication! You have logged over 10 hours of focus today. Make sure to rest and recharge.',
     roomFocusTitle: 'Room Focus Sessions',
     roomFocusSubtitle: 'Focus side by side with your partners',
     joinBtn: 'Join Session',
@@ -1314,9 +1311,12 @@ export const en = {
     roomWeeklyTotalsTitle: 'Room Weekly Focus Time',
     roomTotalLabel: 'Total Room Focus',
     neutralSortingNote: 'Sorted alphabetically with no rankings. Every minute counts!',
-    roomLockedNotice: 'This room is currently paused. Personal focus sessions remain free and available anytime.',
-    rateLimitNotice: 'Room session limit reached (10 sessions per day). Others can still focus personally or join the next daily reset.',
-    offlinePersonalNotice: 'You are offline. Your session is saved locally and will sync once back online.',
+    roomLockedNotice:
+      'This room is currently paused. Personal focus sessions remain free and available anytime.',
+    rateLimitNotice:
+      'Room session limit reached (10 sessions per day). Others can still focus personally or join the next daily reset.',
+    offlinePersonalNotice:
+      'You are offline. Your session is saved locally and will sync once back online.',
     settings: {
       title: 'Focus Settings',
       subtitle: 'Configure your weekly goals and session reminders',
@@ -1333,7 +1333,8 @@ export const en = {
       dailyBreakdown: 'Daily Focus (Minutes)',
       labelsBreakdown: 'Focus by Label',
       chartAccessibilitySummary: 'Bar chart showing focus time per day with weekly goal reference.',
-      emptyState: 'No focus sessions logged yet. Start a stopwatch or timer session to see your progress here.',
+      emptyState:
+        'No focus sessions logged yet. Start a stopwatch or timer session to see your progress here.',
     },
     logOption: {
       title: 'Focus Time',
@@ -1499,7 +1500,8 @@ export const en = {
       totalTime: '{mins} mins',
       difficulty: 'Difficulty: {diff}',
       servingsLabel: 'Servings',
-      servingsScalerHint: 'Ingredients scale automatically. Nutrition values below are per serving.',
+      servingsScalerHint:
+        'Ingredients scale automatically. Nutrition values below are per serving.',
       ingredientsTitle: 'Ingredients',
       stepsTitle: 'Instructions',
       stepNumber: 'Step {num}',
@@ -1571,7 +1573,8 @@ export const en = {
     disclaimer: 'AI can make mistakes — not medical advice',
     empty: {
       title: 'Hi! I’m your AI Coach.',
-      subtitle: 'Ask me about your weekly progress, meals to hit your protein targets, or clarifying your calorie goals.',
+      subtitle:
+        'Ask me about your weekly progress, meals to hit your protein targets, or clarifying your calorie goals.',
     },
     prompts: {
       week: 'How am I doing this week?',
@@ -1602,7 +1605,8 @@ export const en = {
     consent: {
       title: 'AI Coach & Privacy',
       subtitle: 'How CaliPartner uses your personal data',
-      bullet1: 'Only your own logs are analyzed: your calorie and macro targets, today’s logged totals, 7-day averages, workouts, steps, and water.',
+      bullet1:
+        'Only your own logs are analyzed: your calorie and macro targets, today’s logged totals, 7-day averages, workouts, steps, and water.',
       bullet2: 'Room members and other users never see your coach conversations or data.',
       bullet3: 'Our AI provider terms strictly forbid training models on your data.',
       bullet4: 'You can delete your conversation history at any time.',
@@ -1612,11 +1616,13 @@ export const en = {
     },
     dailyLimit: {
       title: 'Daily message limit reached',
-      subtitle: 'You’ve reached your daily limit of 30 messages. Your coach will be refreshed tomorrow.',
+      subtitle:
+        'You’ve reached your daily limit of 30 messages. Your coach will be refreshed tomorrow.',
     },
     offline: {
       title: 'You are currently offline',
-      subtitle: 'AI Coach requires an internet connection to assist you. Reconnect to send messages.',
+      subtitle:
+        'AI Coach requires an internet connection to assist you. Reconnect to send messages.',
     },
     history: {
       title: 'Coach History',
@@ -1625,7 +1631,8 @@ export const en = {
       deleteSession: 'Delete conversation',
       deleteAll: 'Delete All History',
       confirmTitle: 'Delete Conversation History',
-      confirmMsg: 'Are you sure you want to delete all past AI coach conversations? This action cannot be undone.',
+      confirmMsg:
+        'Are you sure you want to delete all past AI coach conversations? This action cannot be undone.',
       confirmBtn: 'Delete All',
       cancelBtn: 'Cancel',
       deletedSuccess: 'Conversation history deleted.',
@@ -1655,4 +1662,3 @@ export const en = {
 };
 
 export type Messages = typeof en;
-

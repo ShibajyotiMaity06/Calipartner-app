@@ -165,7 +165,9 @@ export function ReportModal({
               <ActivityIndicator size="small" color="#FFFFFF" />
             ) : (
               <Text style={styles.submitButtonText}>
-                {submittedToast ? t('rooms.reportModal.submittedToast') : t('rooms.reportModal.submitBtn')}
+                {submittedToast
+                  ? t('rooms.reportModal.submittedToast')
+                  : t('rooms.reportModal.submitBtn')}
               </Text>
             )}
           </Pressable>

@@ -309,7 +309,10 @@ export function calculateScheduledWindow(params: {
     nextEatingWindowEnd: nextEatEnd.toISOString(),
     nextFastingWindowStart: nextFastStart.toISOString(),
     nextFastingWindowEnd: nextFastEnd.toISOString(),
-    plannedFastingMinutes: Math.min(MAX_PLANNED_FASTING_MINUTES, Math.max(60, plannedFastingMinutes)),
+    plannedFastingMinutes: Math.min(
+      MAX_PLANNED_FASTING_MINUTES,
+      Math.max(60, plannedFastingMinutes),
+    ),
   };
 }
 
@@ -637,7 +640,8 @@ export function getFoodLogFastingPrompt(isFastingActive: boolean): {
   return {
     shouldPrompt: true,
     title: 'Log this and end your fast?',
-    message: 'You have an active fast running. Would you like to end your fast now, or keep your timer going?',
+    message:
+      'You have an active fast running. Would you like to end your fast now, or keep your timer going?',
   };
 }
 

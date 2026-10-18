@@ -69,19 +69,19 @@ export async function handleChatSignedUrl(req: Request): Promise<Response> {
       .single();
 
     if (memberErr || !member || !['active', 'paused'].includes(member.status)) {
-      return new Response(
-        JSON.stringify({ error: 'NOT_ROOM_MEMBER: Access denied' }),
-        { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
-      );
+      return new Response(JSON.stringify({ error: 'NOT_ROOM_MEMBER: Access denied' }), {
+        status: 403,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
     }
 
     // 3. Room usable & Locked check
     const { data: isUsable } = await adminClient.rpc('room_is_usable', { p_room_id: room_id });
     if (!isUsable) {
-      return new Response(
-        JSON.stringify({ error: 'ROOM_LOCKED: This room is paused' }),
-        { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
-      );
+      return new Response(JSON.stringify({ error: 'ROOM_LOCKED: This room is paused' }), {
+        status: 403,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
     }
 
     const { data: roomData } = await adminClient
@@ -91,10 +91,10 @@ export async function handleChatSignedUrl(req: Request): Promise<Response> {
       .single();
 
     if (roomData?.state === 'locked') {
-      return new Response(
-        JSON.stringify({ error: 'ROOM_LOCKED: This room is paused' }),
-        { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
-      );
+      return new Response(JSON.stringify({ error: 'ROOM_LOCKED: This room is paused' }), {
+        status: 403,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
     }
 
     // 4. Generate short-lived signed GET URL (expires in 15 minutes = 900 seconds)

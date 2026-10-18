@@ -1,15 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import {
-  calculateWeeklyConsistencyScore,
-  sortLeaderboardEntries,
-} from './progress';
-import type {
-  ProgressDateRange,
-  RoomPrivacySettings,
-  Sex,
-  UserStreak,
-  WeeklyScore,
-} from './types';
+import { calculateWeeklyConsistencyScore, sortLeaderboardEntries } from './progress';
+import type { ProgressDateRange, RoomPrivacySettings, Sex, UserStreak, WeeklyScore } from './types';
 
 /**
  * In-memory simulation of Phase 7 tables, RLS policies, and SECURITY DEFINER query functions:
@@ -71,7 +62,10 @@ class InMemoryPhase7Db {
   profiles = new Map<string, SimulatedProfile>();
   dailySummaries: SimulatedDailySummary[] = [];
   userStreaks = new Map<string, UserStreak>();
-  roomStreaks = new Map<string, { room_id: string; current_streak: number; longest_streak: number }>();
+  roomStreaks = new Map<
+    string,
+    { room_id: string; current_streak: number; longest_streak: number }
+  >();
   weeklyScores: WeeklyScore[] = [];
   leaderboardSettings = new Map<string, { opted_out: boolean }>();
   rooms = new Map<string, SimulatedRoom>();
@@ -94,7 +88,10 @@ class InMemoryPhase7Db {
   }
 
   // DIRECT TABLE ACCESS (RLS ENFORCEMENT)
-  selectDailySummariesDirect(callerId: string | null, targetUserId: string): SimulatedDailySummary[] {
+  selectDailySummariesDirect(
+    callerId: string | null,
+    targetUserId: string,
+  ): SimulatedDailySummary[] {
     if (!callerId) {
       throw new Error('RLS violation: unauthenticated direct select denied');
     }
@@ -159,7 +156,10 @@ class InMemoryPhase7Db {
     }
 
     const membership = this.roomMembers.find(
-      (m) => m.room_id === roomId && m.user_id === callerId && (m.status === 'active' || m.status === 'paused'),
+      (m) =>
+        m.room_id === roomId &&
+        m.user_id === callerId &&
+        (m.status === 'active' || m.status === 'paused'),
     );
     if (!membership) {
       throw new Error('NOT_A_ROOM_MEMBER');
@@ -495,7 +495,12 @@ describe('Phase 7 RLS & Attack Tests - Room Progress Security & Privacy Enforcem
 
   it('rejects requests to locked or archived rooms', () => {
     const lockedRoomId = 'room-locked';
-    db.createRoom({ id: lockedRoomId, host_id: aliceId, status: 'locked', created_at: '2026-09-01T00:00:00Z' });
+    db.createRoom({
+      id: lockedRoomId,
+      host_id: aliceId,
+      status: 'locked',
+      created_at: '2026-09-01T00:00:00Z',
+    });
     db.addRoomMember({
       room_id: lockedRoomId,
       user_id: aliceId,
@@ -648,7 +653,9 @@ describe('Phase 7 RLS & Attack Tests - Leaderboards & Opt-Out', () => {
     const res = db.getLeaderboard(u1, weekStart);
     expect(res.opted_out).toBe(false);
     expect(res.top_10).toBeDefined();
-    expect(res.top_10!.find((e: { nickname: string }) => e.nickname === 'SecretUser')).toBeUndefined();
+    expect(
+      res.top_10!.find((e: { nickname: string }) => e.nickname === 'SecretUser'),
+    ).toBeUndefined();
     expect(res.total_in_cohort).toBe(2); // Only u1 and u2
   });
 

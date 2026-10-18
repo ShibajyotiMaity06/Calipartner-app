@@ -65,10 +65,7 @@ export interface UpdateSetInput {
 // 1. WORKOUT CRUD
 // -----------------------------------------------------------------------------
 
-export async function createWorkout(
-  db: SyncDb,
-  input: CreateWorkoutInput,
-): Promise<Workout> {
+export async function createWorkout(db: SyncDb, input: CreateWorkoutInput): Promise<Workout> {
   const id = crypto.randomUUID();
   const now = new Date().toISOString();
   const duration = input.durationMinutes ?? 0;
@@ -149,10 +146,12 @@ export async function updateWorkout(
     type: updates.type ?? existing.type,
     name: updates.name !== undefined ? updates.name : existing.name,
     start_time: updates.startTime !== undefined ? updates.startTime : existing.start_time,
-    duration_minutes: updates.durationMinutes !== undefined ? updates.durationMinutes : existing.duration_minutes,
+    duration_minutes:
+      updates.durationMinutes !== undefined ? updates.durationMinutes : existing.duration_minutes,
     local_date: updates.localDate ?? existing.local_date,
     notes: updates.notes !== undefined ? updates.notes : existing.notes,
-    effort_rating: updates.effortRating !== undefined ? updates.effortRating : existing.effort_rating,
+    effort_rating:
+      updates.effortRating !== undefined ? updates.effortRating : existing.effort_rating,
     updated_at: now,
   };
 
@@ -488,8 +487,10 @@ export async function updateWorkoutSet(
     set_number: existing.set_number,
     reps: updates.reps !== undefined ? updates.reps : existing.reps,
     weight_kg: updates.weightKg !== undefined ? updates.weightKg : existing.weight_kg,
-    duration_seconds: updates.durationSeconds !== undefined ? updates.durationSeconds : existing.duration_seconds,
-    distance_meters: updates.distanceMeters !== undefined ? updates.distanceMeters : existing.distance_meters,
+    duration_seconds:
+      updates.durationSeconds !== undefined ? updates.durationSeconds : existing.duration_seconds,
+    distance_meters:
+      updates.distanceMeters !== undefined ? updates.distanceMeters : existing.distance_meters,
     is_warmup: updates.isWarmup !== undefined ? updates.isWarmup : existing.is_warmup === 1,
     completed: updates.completed !== undefined ? updates.completed : existing.completed === 1,
     created_at: existing.created_at,
@@ -668,10 +669,7 @@ export async function getWorkoutsCalendarData(
   return map;
 }
 
-export function getWorkoutSummary(
-  workout: WorkoutWithDetails,
-  userWeightKg = 70,
-): WorkoutSummary {
+export function getWorkoutSummary(workout: WorkoutWithDetails, userWeightKg = 70): WorkoutSummary {
   return summarizeWorkout(workout, userWeightKg);
 }
 
@@ -839,10 +837,7 @@ export async function getPreviousPerformanceForExercise(
 // 6. RUNNING SESSION TIMER (survives app kill, UTC timestamps, PRD 6.6 WRK-10)
 // -----------------------------------------------------------------------------
 
-export function calculateElapsedSeconds(
-  timer: WorkoutTimerState,
-  now: Date = new Date(),
-): number {
+export function calculateElapsedSeconds(timer: WorkoutTimerState, now: Date = new Date()): number {
   const startedMs = new Date(timer.started_at).getTime();
   const currentMs = timer.is_running
     ? now.getTime()
@@ -975,7 +970,6 @@ export async function resumeWorkoutTimer(
     updated_at: nowIso,
   };
 }
-
 
 export async function stopWorkoutTimer(
   db: SyncDb,

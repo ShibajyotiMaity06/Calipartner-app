@@ -4,10 +4,7 @@ import { getDb } from '@/db';
 import { useNetworkStatus } from '@/hooks/useNetworkStatus';
 import { getSupabase } from '@/lib/supabase';
 import { diaryEvents } from '@/services/diaryEvents';
-import {
-  getSyncStatus,
-  syncAll,
-} from '@/services/syncService';
+import { getSyncStatus, syncAll } from '@/services/syncService';
 
 export type SyncUiState = 'synced' | 'pending' | 'syncing' | 'failed';
 

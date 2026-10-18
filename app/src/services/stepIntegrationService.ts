@@ -5,11 +5,7 @@ import { createLogger } from '@/lib/logger';
 
 const log = createLogger('stepIntegrationService');
 
-export type StepPermissionStatus =
-  | 'granted'
-  | 'denied'
-  | 'not_requested'
-  | 'unavailable';
+export type StepPermissionStatus = 'granted' | 'denied' | 'not_requested' | 'unavailable';
 
 export interface StepReading {
   steps: number;
@@ -82,9 +78,7 @@ export async function setStepPermissionDenied(): Promise<void> {
  * Priority 2: Built-in hardware pedometer -> source: 'pedometer'
  * Priority 3: Manual entry fallback -> null (user logs manually)
  */
-export async function readDeviceSteps(
-  _localDate: string,
-): Promise<StepReading | null> {
+export async function readDeviceSteps(_localDate: string): Promise<StepReading | null> {
   if (Platform.OS === 'web') {
     return null;
   }

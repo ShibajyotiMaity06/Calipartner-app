@@ -62,10 +62,7 @@ export function CoachSuggestedPrompts({
             ]}
           >
             <Ionicons name={item.icon} size={14} color={colors.accent} />
-            <Text
-              style={[styles.chipText, { color: colors.text }]}
-              numberOfLines={1}
-            >
+            <Text style={[styles.chipText, { color: colors.text }]} numberOfLines={1}>
               {item.text}
             </Text>
           </Pressable>

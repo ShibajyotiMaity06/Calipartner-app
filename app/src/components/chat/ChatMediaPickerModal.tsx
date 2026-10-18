@@ -1,12 +1,5 @@
 import React from 'react';
-import {
-  Modal,
-  Platform,
-  Pressable,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
+import { Modal, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { t } from '@/i18n';
 import { fontSize, radius, spacing } from '@/theme/tokens';
@@ -45,7 +38,9 @@ export function ChatMediaPickerModal({
   const remainingSlots = Math.max(0, maxCount - currentCount);
 
   // Helper to process raw files
-  const handleFiles = async (files: ArrayLike<{ name: string; type?: string; arrayBuffer: () => Promise<ArrayBuffer> }>) => {
+  const handleFiles = async (
+    files: ArrayLike<{ name: string; type?: string; arrayBuffer: () => Promise<ArrayBuffer> }>,
+  ) => {
     const list = Array.from(files).slice(0, remainingSlots);
     const results: SelectedMediaItem[] = [];
 
@@ -60,8 +55,12 @@ export function ChatMediaPickerModal({
           1200,
         );
 
-        const urlHelper = (globalThis as unknown as { URL?: { createObjectURL?: (b: unknown) => string } }).URL;
-        const objectUri = urlHelper?.createObjectURL ? urlHelper.createObjectURL(file) : `file://${file.name}`;
+        const urlHelper = (
+          globalThis as unknown as { URL?: { createObjectURL?: (b: unknown) => string } }
+        ).URL;
+        const objectUri = urlHelper?.createObjectURL
+          ? urlHelper.createObjectURL(file)
+          : `file://${file.name}`;
 
         results.push({
           uri: objectUri,
@@ -86,17 +85,29 @@ export function ChatMediaPickerModal({
   // Web input trigger
   const triggerWebFileInput = () => {
     if (Platform.OS === 'web') {
-      const doc = (globalThis as unknown as {
-        document?: {
-          createElement: (tag: string) => {
-            type: string;
-            accept: string;
-            multiple: boolean;
-            onchange: ((e: { target?: { files?: ArrayLike<{ name: string; type?: string; arrayBuffer: () => Promise<ArrayBuffer> }> } }) => void) | null;
-            click: () => void;
+      const doc = (
+        globalThis as unknown as {
+          document?: {
+            createElement: (tag: string) => {
+              type: string;
+              accept: string;
+              multiple: boolean;
+              onchange:
+                | ((e: {
+                    target?: {
+                      files?: ArrayLike<{
+                        name: string;
+                        type?: string;
+                        arrayBuffer: () => Promise<ArrayBuffer>;
+                      }>;
+                    };
+                  }) => void)
+                | null;
+              click: () => void;
+            };
           };
-        };
-      }).document;
+        }
+      ).document;
 
       if (doc) {
         const input = doc.createElement('input');
@@ -120,19 +131,16 @@ export function ChatMediaPickerModal({
   const generateSampleImage = (type: 'camera' | 'gallery') => {
     // Generate minimal valid JPEG binary (with SOI and EOI markers)
     const dummyJpeg = new Uint8Array([
-      0xff, 0xd8, 0xff, 0xe0, 0x00, 0x10, 0x4a, 0x46, 0x49, 0x46, 0x00, 0x01,
-      0x01, 0x01, 0x00, 0x48, 0x00, 0x48, 0x00, 0x00, 0xff, 0xdb, 0x00, 0x43,
-      0x00, 0x08, 0x06, 0x06, 0x07, 0x06, 0x05, 0x08, 0x07, 0x07, 0x07, 0x09,
-      0x09, 0x08, 0x0a, 0x0c, 0x14, 0x0d, 0x0c, 0x0b, 0x0b, 0x0c, 0x19, 0x12,
-      0x13, 0x0f, 0x14, 0x1d, 0x1a, 0x1f, 0x1e, 0x1d, 0x1a, 0x1c, 0x1c, 0x20,
-      0x24, 0x2e, 0x27, 0x20, 0x22, 0x2c, 0x23, 0x1c, 0x1c, 0x28, 0x37, 0x29,
-      0x2c, 0x30, 0x31, 0x34, 0x34, 0x34, 0x1f, 0x27, 0x39, 0x3d, 0x38, 0x32,
-      0x3c, 0x2e, 0x33, 0x34, 0x32, 0xff, 0xc0, 0x00, 0x0b, 0x08, 0x00, 0x10,
-      0x00, 0x10, 0x01, 0x01, 0x11, 0x00, 0xff, 0xc4, 0x00, 0x1f, 0x00, 0x00,
-      0x01, 0x05, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x00, 0x00, 0x00, 0x00,
-      0x00, 0x00, 0x00, 0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08,
-      0x09, 0x0a, 0x0b, 0xff, 0xda, 0x00, 0x08, 0x01, 0x01, 0x00, 0x00, 0x3f,
-      0x00, 0x37, 0xff, 0xd9,
+      0xff, 0xd8, 0xff, 0xe0, 0x00, 0x10, 0x4a, 0x46, 0x49, 0x46, 0x00, 0x01, 0x01, 0x01, 0x00,
+      0x48, 0x00, 0x48, 0x00, 0x00, 0xff, 0xdb, 0x00, 0x43, 0x00, 0x08, 0x06, 0x06, 0x07, 0x06,
+      0x05, 0x08, 0x07, 0x07, 0x07, 0x09, 0x09, 0x08, 0x0a, 0x0c, 0x14, 0x0d, 0x0c, 0x0b, 0x0b,
+      0x0c, 0x19, 0x12, 0x13, 0x0f, 0x14, 0x1d, 0x1a, 0x1f, 0x1e, 0x1d, 0x1a, 0x1c, 0x1c, 0x20,
+      0x24, 0x2e, 0x27, 0x20, 0x22, 0x2c, 0x23, 0x1c, 0x1c, 0x28, 0x37, 0x29, 0x2c, 0x30, 0x31,
+      0x34, 0x34, 0x34, 0x1f, 0x27, 0x39, 0x3d, 0x38, 0x32, 0x3c, 0x2e, 0x33, 0x34, 0x32, 0xff,
+      0xc0, 0x00, 0x0b, 0x08, 0x00, 0x10, 0x00, 0x10, 0x01, 0x01, 0x11, 0x00, 0xff, 0xc4, 0x00,
+      0x1f, 0x00, 0x00, 0x01, 0x05, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x00, 0x00, 0x00, 0x00,
+      0x00, 0x00, 0x00, 0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a, 0x0b,
+      0xff, 0xda, 0x00, 0x08, 0x01, 0x01, 0x00, 0x00, 0x3f, 0x00, 0x37, 0xff, 0xd9,
     ]);
 
     const timestamp = Date.now();
@@ -160,7 +168,10 @@ export function ChatMediaPickerModal({
       testID={testID}
     >
       <Pressable style={styles.backdrop} onPress={onClose}>
-        <View style={[styles.sheetContainer, { backgroundColor: colors.surface }]} testID="sheet-media-picker">
+        <View
+          style={[styles.sheetContainer, { backgroundColor: colors.surface }]}
+          testID="sheet-media-picker"
+        >
           <View style={[styles.handleIndicator, { backgroundColor: colors.border }]} />
 
           <Text style={[styles.sheetTitle, { color: colors.text }]}>{t('chat.attachPhoto')}</Text>
@@ -180,7 +191,9 @@ export function ChatMediaPickerModal({
               <Ionicons name="camera-outline" size={22} color={colors.accent} />
             </View>
             <View style={styles.optionTextContainer}>
-              <Text style={[styles.optionTitle, { color: colors.text }]}>{t('chat.cameraBtn')}</Text>
+              <Text style={[styles.optionTitle, { color: colors.text }]}>
+                {t('chat.cameraBtn')}
+              </Text>
               <Text style={[styles.optionSubtitle, { color: colors.textMuted }]}>
                 Snap a meal or workout photo
               </Text>
@@ -200,7 +213,9 @@ export function ChatMediaPickerModal({
               <Ionicons name="images-outline" size={22} color={colors.accent} />
             </View>
             <View style={styles.optionTextContainer}>
-              <Text style={[styles.optionTitle, { color: colors.text }]}>{t('chat.galleryBtn')}</Text>
+              <Text style={[styles.optionTitle, { color: colors.text }]}>
+                {t('chat.galleryBtn')}
+              </Text>
               <Text style={[styles.optionSubtitle, { color: colors.textMuted }]}>
                 JPEG, PNG, HEIC or WebP (max 10MB)
               </Text>

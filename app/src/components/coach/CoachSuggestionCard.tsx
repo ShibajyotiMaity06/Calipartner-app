@@ -11,10 +11,7 @@ export interface CoachSuggestionCardProps {
   onLog: (suggestion: CoachSuggestion) => void;
 }
 
-export function CoachSuggestionCard({
-  suggestion,
-  onLog,
-}: CoachSuggestionCardProps) {
+export function CoachSuggestionCard({ suggestion, onLog }: CoachSuggestionCardProps) {
   const { colors } = useTheme();
 
   return (
@@ -30,12 +27,7 @@ export function CoachSuggestionCard({
     >
       <View style={styles.topRow}>
         <View style={styles.badgeRow}>
-          <View
-            style={[
-              styles.typeBadge,
-              { backgroundColor: colors.cardHighlight },
-            ]}
-          >
+          <View style={[styles.typeBadge, { backgroundColor: colors.cardHighlight }]}>
             <Ionicons
               name={suggestion.type === 'recipe' ? 'restaurant-outline' : 'nutrition-outline'}
               size={12}
@@ -77,33 +69,25 @@ export function CoachSuggestionCard({
 
       {/* Nutrient breakdown pill row */}
       <View style={styles.macroRow}>
-        <View
-          style={[styles.macroPill, { backgroundColor: colors.surfaceAlt }]}
-        >
+        <View style={[styles.macroPill, { backgroundColor: colors.surfaceAlt }]}>
           <Text style={[styles.macroText, { color: colors.macroCalories, fontWeight: '700' }]}>
             {t('coach.suggestion.cal', { cal: Math.round(suggestion.calories) })}
           </Text>
         </View>
 
-        <View
-          style={[styles.macroPill, { backgroundColor: colors.surfaceAlt }]}
-        >
+        <View style={[styles.macroPill, { backgroundColor: colors.surfaceAlt }]}>
           <Text style={[styles.macroText, { color: colors.macroProtein }]}>
             {t('coach.suggestion.p', { val: Math.round(suggestion.protein) })}
           </Text>
         </View>
 
-        <View
-          style={[styles.macroPill, { backgroundColor: colors.surfaceAlt }]}
-        >
+        <View style={[styles.macroPill, { backgroundColor: colors.surfaceAlt }]}>
           <Text style={[styles.macroText, { color: colors.macroCarbs }]}>
             {t('coach.suggestion.c', { val: Math.round(suggestion.carbs) })}
           </Text>
         </View>
 
-        <View
-          style={[styles.macroPill, { backgroundColor: colors.surfaceAlt }]}
-        >
+        <View style={[styles.macroPill, { backgroundColor: colors.surfaceAlt }]}>
           <Text style={[styles.macroText, { color: colors.macroFat }]}>
             {t('coach.suggestion.f', { val: Math.round(suggestion.fat) })}
           </Text>

@@ -18,7 +18,10 @@ export function parseLeaderboardError(err: unknown): LeaderboardServiceError {
     return err;
   }
   const msg =
-    err && typeof err === 'object' && 'message' in err && typeof (err as { message: unknown }).message === 'string'
+    err &&
+    typeof err === 'object' &&
+    'message' in err &&
+    typeof (err as { message: unknown }).message === 'string'
       ? (err as { message: string }).message
       : err instanceof Error
         ? err.message
@@ -78,9 +81,7 @@ export async function setLeaderboardOptOut(
 /**
  * Fetch current user leaderboard opt-out status.
  */
-export async function fetchLeaderboardOptOutStatus(
-  client: SupabaseClient,
-): Promise<boolean> {
+export async function fetchLeaderboardOptOutStatus(client: SupabaseClient): Promise<boolean> {
   try {
     const { data: userData } = await client.auth.getUser();
     if (!userData?.user) return false;

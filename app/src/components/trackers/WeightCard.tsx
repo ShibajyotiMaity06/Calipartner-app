@@ -1,11 +1,5 @@
 import { useState } from 'react';
-import {
-  ActivityIndicator,
-  Pressable,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
+import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import type { WeightLog } from '@calipartner/core';
 import { useTargets } from '@/hooks/useTargets';
@@ -52,9 +46,7 @@ export function WeightCard({ selectedDate, testID = 'weight-card' }: WeightCardP
     (logs.length > 0 ? logs[logs.length - 1]!.weight_kg : null);
 
   const totalChangeKg =
-    latestWeight !== null && startWeight !== null
-      ? latestWeight - startWeight
-      : null;
+    latestWeight !== null && startWeight !== null ? latestWeight - startWeight : null;
 
   const changePercent =
     startWeight && startWeight > 0 && totalChangeKg !== null
@@ -105,7 +97,10 @@ export function WeightCard({ selectedDate, testID = 'weight-card' }: WeightCardP
         <Pressable
           testID="btn-weight-history"
           onPress={() => setHistoryModalVisible(true)}
-          style={[styles.smallActionBtn, { borderColor: colors.border, backgroundColor: colors.surfaceAlt }]}
+          style={[
+            styles.smallActionBtn,
+            { borderColor: colors.border, backgroundColor: colors.surfaceAlt },
+          ]}
           accessibilityRole="button"
           accessibilityLabel={t('trackers.weight.historyButton')}
         >
@@ -245,7 +240,10 @@ export function WeightCard({ selectedDate, testID = 'weight-card' }: WeightCardP
           setEditingEntry(null);
           setEntryModalVisible(true);
         }}
-        style={[styles.logButton, { backgroundColor: colors.cardHighlight, borderColor: colors.accent }]}
+        style={[
+          styles.logButton,
+          { backgroundColor: colors.cardHighlight, borderColor: colors.accent },
+        ]}
         accessibilityRole="button"
         accessibilityLabel={t('trackers.weight.logWeightButton')}
       >

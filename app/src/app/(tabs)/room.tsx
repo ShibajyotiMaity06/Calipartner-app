@@ -65,8 +65,24 @@ export default function RoomScreen() {
   );
 
   // Core Room Hooks
-  const { rooms, loading: roomsLoading, error: roomsError, refresh: refreshRooms, createRoom, joinByCode, leaveRoom } = useRooms();
-  const { incoming, outgoing, refresh: refreshRequests, sendInvitation, respondToRequest, cancelRequest, searchUsers } = useRoomRequests();
+  const {
+    rooms,
+    loading: roomsLoading,
+    error: roomsError,
+    refresh: refreshRooms,
+    createRoom,
+    joinByCode,
+    leaveRoom,
+  } = useRooms();
+  const {
+    incoming,
+    outgoing,
+    refresh: refreshRequests,
+    sendInvitation,
+    respondToRequest,
+    cancelRequest,
+    searchUsers,
+  } = useRoomRequests();
   const { isTrial, trialBanner } = useSubscription();
 
   // Selected Room
@@ -166,14 +182,19 @@ export default function RoomScreen() {
   });
 
   React.useEffect(() => {
-    const nav = navigation as unknown as { setOptions?: (options: { tabBarBadge?: number }) => void };
+    const nav = navigation as unknown as {
+      setOptions?: (options: { tabBarBadge?: number }) => void;
+    };
     nav.setOptions?.({
       tabBarBadge: unreadCount > 0 ? unreadCount : undefined,
     });
   }, [navigation, unreadCount]);
 
   return (
-    <SafeAreaView style={[styles.safeArea, { backgroundColor: colors.background }]} testID="screen-room">
+    <SafeAreaView
+      style={[styles.safeArea, { backgroundColor: colors.background }]}
+      testID="screen-room"
+    >
       {/* Room Header */}
       <RoomHeader
         currentRoom={currentRoom}
@@ -194,7 +215,9 @@ export default function RoomScreen() {
       {roomsLoading && rooms.length === 0 ? (
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={colors.accent} />
-          <Text style={[styles.loadingText, { color: colors.textMuted }]}>{t('common.loading')}</Text>
+          <Text style={[styles.loadingText, { color: colors.textMuted }]}>
+            {t('common.loading')}
+          </Text>
         </View>
       ) : roomsError && roomsError.code !== 'PLAN_REQUIRED' && rooms.length === 0 ? (
         /* Error State (Network, Auth, or DB Error) */
@@ -209,10 +232,17 @@ export default function RoomScreen() {
           }
           contentContainerStyle={styles.scrollContainer}
         >
-          <View style={[styles.emptyContainer, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+          <View
+            style={[
+              styles.emptyContainer,
+              { backgroundColor: colors.surface, borderColor: colors.border },
+            ]}
+          >
             <View style={[styles.emptyIconCircle, { backgroundColor: colors.cardHighlight }]}>
               <Ionicons
-                name={roomsError.code === 'UNAUTHENTICATED' ? 'log-in-outline' : 'alert-circle-outline'}
+                name={
+                  roomsError.code === 'UNAUTHENTICATED' ? 'log-in-outline' : 'alert-circle-outline'
+                }
                 size={44}
                 color={colors.accent}
               />
@@ -264,12 +294,19 @@ export default function RoomScreen() {
           }
           contentContainerStyle={styles.scrollContainer}
         >
-          <View style={[styles.emptyContainer, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+          <View
+            style={[
+              styles.emptyContainer,
+              { backgroundColor: colors.surface, borderColor: colors.border },
+            ]}
+          >
             <View style={[styles.emptyIconCircle, { backgroundColor: colors.cardHighlight }]}>
               <Ionicons name="people-outline" size={44} color={colors.accent} />
             </View>
             <Text style={[styles.emptyTitle, { color: colors.text }]}>{t('rooms.emptyTitle')}</Text>
-            <Text style={[styles.emptySubtitle, { color: colors.textMuted }]}>{t('rooms.emptySubtitle')}</Text>
+            <Text style={[styles.emptySubtitle, { color: colors.textMuted }]}>
+              {t('rooms.emptySubtitle')}
+            </Text>
 
             <View style={styles.emptyButtonsRow}>
               <Pressable
@@ -341,136 +378,133 @@ export default function RoomScreen() {
             /* Locked Room Paused State (PRD 6.8 ROOM-7, 7.6) */
             <LockedRoomPausedState onKeepRoomGoing={() => setShowPaywallModal(true)} />
           ) : (
-          /* Active Room View */
-          <>
-            {/* Dormant state / Waiting for Partner banner */}
-            {isRoomDormant && currentRoom && (
-              <DormantWaitingState
-                roomName={currentRoom.name}
-                roomCode={currentRoom.code}
-                onInviteByUsername={() => setShowInviteModal(true)}
-              />
-            )}
-
-            {/* Trial Banner for Host (PRD 6.18 SUB-9) */}
-            {currentRoom && currentRoom.role === 'host' && (isTrial || trialBanner !== null) && (
-              <TrialBanner
-                daysLeft={trialBanner?.daysRemaining}
-                dayNumber={trialBanner ? Math.max(1, 4 - trialBanner.daysRemaining) : 1}
-                isHost={true}
-                onViewPlans={() => setShowPaywallModal(true)}
-              />
-            )}
-
-            {/* Over capacity banner for the host (PRD 7.6) */}
-            {currentRoom && currentRoom.state === 'over_capacity' && (
-              <OverCapacityBanner
-                room={currentRoom}
-                onUpgrade={() => setShowPaywallModal(true)}
-                onManageMembers={() => setShowSettingsModal(true)}
-              />
-            )}
-
-            {/* Room full notice (Host upgrade sheet & Member notice) (PRD 6.8 ROOM-12, SUB-6) */}
-            {currentRoom &&
-              currentRoom.state !== 'over_capacity' &&
-              currentRoom.member_count >= (currentRoom.member_cap ?? 5) && (
-                <RoomFullNotice
-                  memberCount={currentRoom.member_count}
-                  memberCap={currentRoom.member_cap ?? 5}
-                  isHost={currentRoom.role === 'host'}
-                  onUpgrade={() => setShowPaywallModal(true)}
+            /* Active Room View */
+            <>
+              {/* Dormant state / Waiting for Partner banner */}
+              {isRoomDormant && currentRoom && (
+                <DormantWaitingState
+                  roomName={currentRoom.name}
+                  roomCode={currentRoom.code}
+                  onInviteByUsername={() => setShowInviteModal(true)}
                 />
               )}
 
-            {/* Segment: Today (Side by side comparison) */}
-            {activeSegment === 'today' && (
-              <>
-                {/* Pending Shared Meal Card (if any) */}
-                {pendingSharedMeal && (
-                  <SharedMealCard
-                    meal={pendingSharedMeal}
-                    onAccept={async (id, qty, sec) => {
-                      await respondSharedMeal(id, true, qty, sec);
-                      setPendingSharedMeal(null);
-                    }}
-                    onDecline={async (id) => {
-                      await respondSharedMeal(id, false);
-                      setPendingSharedMeal(null);
-                    }}
-                  />
-                )}
-
-                {/* Focusing Now Strip on Room > Today (PRD RV-11) */}
-                <FocusingNowStrip
-                  roomId={activeRoomId}
-                  isVisible={isVisible && activeSegment === 'today'}
-                  userId={callerId}
-                  onOpenFocusSegment={() => setActiveSegment('focus')}
+              {/* Trial Banner for Host (PRD 6.18 SUB-9) */}
+              {currentRoom && currentRoom.role === 'host' && (isTrial || trialBanner !== null) && (
+                <TrialBanner
+                  daysLeft={trialBanner?.daysRemaining}
+                  dayNumber={trialBanner ? Math.max(1, 4 - trialBanner.daysRemaining) : 1}
+                  isHost={true}
+                  onViewPlans={() => setShowPaywallModal(true)}
                 />
+              )}
 
-                {/* Overview Row for 3+ Members (paged & searchable above 12 members) */}
-                {members.length >= 3 && (
-                  <RoomOverviewRow
-                    members={members}
-                    selectedMemberId={partnerMember?.user_id}
-                    currentUserId={callerId}
-                    onSelectMember={(uid) => setSelectedPartnerId(uid)}
+              {/* Over capacity banner for the host (PRD 7.6) */}
+              {currentRoom && currentRoom.state === 'over_capacity' && (
+                <OverCapacityBanner
+                  room={currentRoom}
+                  onUpgrade={() => setShowPaywallModal(true)}
+                  onManageMembers={() => setShowSettingsModal(true)}
+                />
+              )}
+
+              {/* Room full notice (Host upgrade sheet & Member notice) (PRD 6.8 ROOM-12, SUB-6) */}
+              {currentRoom &&
+                currentRoom.state !== 'over_capacity' &&
+                currentRoom.member_count >= (currentRoom.member_cap ?? 5) && (
+                  <RoomFullNotice
+                    memberCount={currentRoom.member_count}
+                    memberCap={currentRoom.member_cap ?? 5}
+                    isHost={currentRoom.role === 'host'}
+                    onUpgrade={() => setShowPaywallModal(true)}
                   />
                 )}
 
-                {/* Core Side-by-Side Card */}
-                {meMember && (
-                  <SideBySideCard
-                    me={meMember}
-                    partner={partnerMember}
-                    allMembers={members}
-                    selectedPartnerId={partnerMember?.user_id ?? null}
-                    onSelectPartner={(uid) => setSelectedPartnerId(uid)}
-                    onNudge={(target) => setNudgeTarget(target)}
-                    onReact={(target) => setReactionTarget(target)}
+              {/* Segment: Today (Side by side comparison) */}
+              {activeSegment === 'today' && (
+                <>
+                  {/* Pending Shared Meal Card (if any) */}
+                  {pendingSharedMeal && (
+                    <SharedMealCard
+                      meal={pendingSharedMeal}
+                      onAccept={async (id, qty, sec) => {
+                        await respondSharedMeal(id, true, qty, sec);
+                        setPendingSharedMeal(null);
+                      }}
+                      onDecline={async (id) => {
+                        await respondSharedMeal(id, false);
+                        setPendingSharedMeal(null);
+                      }}
+                    />
+                  )}
+
+                  {/* Focusing Now Strip on Room > Today (PRD RV-11) */}
+                  <FocusingNowStrip
+                    roomId={activeRoomId}
+                    isVisible={isVisible && activeSegment === 'today'}
+                    userId={callerId}
+                    onOpenFocusSegment={() => setActiveSegment('focus')}
                   />
-                )}
-              </>
-            )}
 
-            {/* Segment: Focus (PRD 6.25, RV-1) */}
-            {activeSegment === 'focus' && currentRoom && (
-              <RoomFocusSegment
-                roomId={currentRoom.id}
-                roomName={currentRoom.name}
-                userId={callerId}
-                isVisible={isVisible && activeSegment === 'focus'}
-                isLocked={isRoomLocked}
-              />
-            )}
+                  {/* Overview Row for 3+ Members (paged & searchable above 12 members) */}
+                  {members.length >= 3 && (
+                    <RoomOverviewRow
+                      members={members}
+                      selectedMemberId={partnerMember?.user_id}
+                      currentUserId={callerId}
+                      onSelectMember={(uid) => setSelectedPartnerId(uid)}
+                    />
+                  )}
 
-            {/* Segment: Progress */}
-            {activeSegment === 'progress' && currentRoom && (
-              <RoomProgressView
-                roomId={currentRoom.id}
-                testID="room-progress-segment"
-              />
-            )}
+                  {/* Core Side-by-Side Card */}
+                  {meMember && (
+                    <SideBySideCard
+                      me={meMember}
+                      partner={partnerMember}
+                      allMembers={members}
+                      selectedPartnerId={partnerMember?.user_id ?? null}
+                      onSelectPartner={(uid) => setSelectedPartnerId(uid)}
+                      onNudge={(target) => setNudgeTarget(target)}
+                      onReact={(target) => setReactionTarget(target)}
+                    />
+                  )}
+                </>
+              )}
 
-            {/* Segment: Members Roster */}
-            {activeSegment === 'members' && currentRoom && (
-              <MembersTab
-                room={currentRoom}
-                members={members}
-                currentUserId={callerId}
-                onInvite={() => setShowInviteModal(true)}
-                onOpenSettings={() => setShowSettingsModal(true)}
-                onSelectMember={(uid) => {
-                  setSelectedPartnerId(uid);
-                  setActiveSegment('today');
-                }}
-              />
-            )}
-          </>
-        )}
-      </ScrollView>
-    )}
+              {/* Segment: Focus (PRD 6.25, RV-1) */}
+              {activeSegment === 'focus' && currentRoom && (
+                <RoomFocusSegment
+                  roomId={currentRoom.id}
+                  roomName={currentRoom.name}
+                  userId={callerId}
+                  isVisible={isVisible && activeSegment === 'focus'}
+                  isLocked={isRoomLocked}
+                />
+              )}
+
+              {/* Segment: Progress */}
+              {activeSegment === 'progress' && currentRoom && (
+                <RoomProgressView roomId={currentRoom.id} testID="room-progress-segment" />
+              )}
+
+              {/* Segment: Members Roster */}
+              {activeSegment === 'members' && currentRoom && (
+                <MembersTab
+                  room={currentRoom}
+                  members={members}
+                  currentUserId={callerId}
+                  onInvite={() => setShowInviteModal(true)}
+                  onOpenSettings={() => setShowSettingsModal(true)}
+                  onSelectMember={(uid) => {
+                    setSelectedPartnerId(uid);
+                    setActiveSegment('today');
+                  }}
+                />
+              )}
+            </>
+          )}
+        </ScrollView>
+      )}
 
       {/* MODALS */}
 

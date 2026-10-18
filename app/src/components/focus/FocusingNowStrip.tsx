@@ -1,9 +1,4 @@
-import {
-  Pressable,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRoomFocus } from '@/hooks/useRoomFocus';
 import { t } from '@/i18n';
@@ -28,12 +23,10 @@ export function FocusingNowStrip({
 }: FocusingNowStripProps) {
   const { colors } = useTheme();
 
-  const {
-    activeSession,
-    participants,
-    isParticipating,
-    join,
-  } = useRoomFocus(roomId, { userId, isVisible });
+  const { activeSession, participants, isParticipating, join } = useRoomFocus(roomId, {
+    userId,
+    isVisible,
+  });
 
   if (!activeSession || activeSession.status !== 'active') {
     return null;
@@ -97,14 +90,9 @@ export function FocusingNowStrip({
       <Pressable
         testID={isParticipating ? 'btn-strip-view-focus' : 'btn-strip-join-focus'}
         onPress={handleAction}
-        style={[
-          styles.actionBtn,
-          { backgroundColor: colors.accent },
-        ]}
+        style={[styles.actionBtn, { backgroundColor: colors.accent }]}
         accessibilityRole="button"
-        accessibilityLabel={
-          isParticipating ? t('focus.viewBtn') : t('focus.joinBtn')
-        }
+        accessibilityLabel={isParticipating ? t('focus.viewBtn') : t('focus.joinBtn')}
       >
         <Text style={[styles.actionBtnText, { color: colors.onAccent }]}>
           {isParticipating ? t('focus.viewBtn') : t('focus.joinBtn')}

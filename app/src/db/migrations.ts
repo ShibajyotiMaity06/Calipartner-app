@@ -526,6 +526,3 @@ export const migrations: readonly LocalMigration[] = [
     `,
   },
 ];
-
-
-

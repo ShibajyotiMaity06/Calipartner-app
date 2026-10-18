@@ -159,15 +159,9 @@ describe('Phase 4 Tracker UI Logic & Presentation', () => {
         return 'Maintaining pace towards target';
       };
 
-      expect(getTrendPresentation(false, null, null)).toBe(
-        'Not enough trend yet (need 3+ days)',
-      );
-      expect(getTrendPresentation(true, -0.45, '2026-12-15')).toBe(
-        'Target date: 2026-12-15',
-      );
-      expect(getTrendPresentation(true, -0.02, null)).toBe(
-        'Maintaining pace towards target',
-      );
+      expect(getTrendPresentation(false, null, null)).toBe('Not enough trend yet (need 3+ days)');
+      expect(getTrendPresentation(true, -0.45, '2026-12-15')).toBe('Target date: 2026-12-15');
+      expect(getTrendPresentation(true, -0.02, null)).toBe('Maintaining pace towards target');
     });
   });
 

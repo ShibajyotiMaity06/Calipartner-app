@@ -1,13 +1,5 @@
 import { useState } from 'react';
-import {
-  Alert,
-  Platform,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
+import { Alert, Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { FocusSettingsModal } from '@/components/focus';
@@ -35,9 +27,7 @@ export default function MeScreen() {
     if (Platform.OS === 'web') {
       const g = globalThis as unknown as { confirm?: (msg: string) => boolean };
       const confirmed =
-        typeof g.confirm === 'function'
-          ? g.confirm(t('auth.signOutConfirm'))
-          : true;
+        typeof g.confirm === 'function' ? g.confirm(t('auth.signOutConfirm')) : true;
       if (confirmed) {
         void performSignOut();
       }
@@ -155,10 +145,7 @@ export default function MeScreen() {
 
       {/* Room Plan & Capacity Card (PRD 6.18 SUB-14, 7.11) */}
       {!isGuest && user && (
-        <MeRoomPlanCard
-          attachedRoom={rooms[0] ?? null}
-          onChangePlan={() => setShowPaywall(true)}
-        />
+        <MeRoomPlanCard attachedRoom={rooms[0] ?? null} onChangePlan={() => setShowPaywall(true)} />
       )}
 
       {/* Account Actions */}
@@ -275,10 +262,7 @@ export default function MeScreen() {
       )}
 
       {/* Paywall Modal */}
-      <PaywallModal
-        visible={showPaywall}
-        onClose={() => setShowPaywall(false)}
-      />
+      <PaywallModal visible={showPaywall} onClose={() => setShowPaywall(false)} />
     </ScrollView>
   );
 }

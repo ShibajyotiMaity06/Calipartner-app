@@ -1,10 +1,5 @@
 import React from 'react';
-import {
-  Pressable,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { t } from '@/i18n';
 import { fontSize, radius, spacing } from '@/theme/tokens';
@@ -41,7 +36,9 @@ export function RecipeServingsScaler({
   };
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.surfaceAlt, borderColor: colors.border }]}>
+    <View
+      style={[styles.container, { backgroundColor: colors.surfaceAlt, borderColor: colors.border }]}
+    >
       <View style={styles.topRow}>
         <View style={styles.labelWrap}>
           <Ionicons name="people-outline" size={18} color={colors.accent} />
@@ -51,7 +48,12 @@ export function RecipeServingsScaler({
         </View>
 
         {/* Stepper Buttons */}
-        <View style={[styles.stepperWrap, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+        <View
+          style={[
+            styles.stepperWrap,
+            { backgroundColor: colors.surface, borderColor: colors.border },
+          ]}
+        >
           <Pressable
             testID="btn-servings-dec"
             onPress={handleDecrement}
@@ -68,10 +70,7 @@ export function RecipeServingsScaler({
           </Pressable>
 
           <View style={styles.valueWrap}>
-            <Text
-              testID="text-servings-count"
-              style={[styles.valueText, { color: colors.text }]}
-            >
+            <Text testID="text-servings-count" style={[styles.valueText, { color: colors.text }]}>
               {servings}
             </Text>
           </View>

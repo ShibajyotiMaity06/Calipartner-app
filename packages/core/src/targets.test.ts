@@ -315,33 +315,25 @@ describe('Targets calculation engine', () => {
       };
 
       // 1 kg change does not trigger
-      expect(
-        shouldRecomputeTargets(current, { current_weight_kg: 71 }),
-      ).toEqual({
+      expect(shouldRecomputeTargets(current, { current_weight_kg: 71 })).toEqual({
         shouldRecompute: false,
         reasons: [],
       });
 
       // 2 kg change triggers weight_change
-      expect(
-        shouldRecomputeTargets(current, { current_weight_kg: 72 }),
-      ).toEqual({
+      expect(shouldRecomputeTargets(current, { current_weight_kg: 72 })).toEqual({
         shouldRecompute: true,
         reasons: ['weight_change'],
       });
 
       // Goal change triggers manual_edit
-      expect(
-        shouldRecomputeTargets(current, { goal: 'bulk' }),
-      ).toEqual({
+      expect(shouldRecomputeTargets(current, { goal: 'bulk' })).toEqual({
         shouldRecompute: true,
         reasons: ['manual_edit'],
       });
 
       // Activity level change triggers manual_edit
-      expect(
-        shouldRecomputeTargets(current, { activity_level: 'light' }),
-      ).toEqual({
+      expect(shouldRecomputeTargets(current, { activity_level: 'light' })).toEqual({
         shouldRecompute: true,
         reasons: ['manual_edit'],
       });

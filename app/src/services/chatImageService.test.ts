@@ -12,11 +12,8 @@ describe('chatImageService', () => {
     it('strips EXIF and computes compressed dimensions', () => {
       // JPEG with SOI and EOI
       const mockJpeg = new Uint8Array([
-        0xff, 0xd8,
-        0xff, 0xe1, 0x00, 0x10,
-        0x45, 0x78, 0x69, 0x66, 0x00, 0x00,
-        0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08,
-        0xff, 0xd9,
+        0xff, 0xd8, 0xff, 0xe1, 0x00, 0x10, 0x45, 0x78, 0x69, 0x66, 0x00, 0x00, 0x01, 0x02, 0x03,
+        0x04, 0x05, 0x06, 0x07, 0x08, 0xff, 0xd9,
       ]);
 
       const res = processImageOnDevice(mockJpeg, 'image/jpeg', 3200, 1600);
@@ -28,9 +25,7 @@ describe('chatImageService', () => {
 
     it('throws error for invalid file types', () => {
       const buffer = new Uint8Array([1, 2, 3]);
-      expect(() => processImageOnDevice(buffer, 'image/gif', 500, 500)).toThrow(
-        ChatServiceError,
-      );
+      expect(() => processImageOnDevice(buffer, 'image/gif', 500, 500)).toThrow(ChatServiceError);
       expect(() => processImageOnDevice(buffer, 'application/pdf', 500, 500)).toThrow(
         ChatServiceError,
       );

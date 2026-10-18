@@ -10,7 +10,9 @@ import * as deviceService from './deviceService';
 vi.mock('expo-notifications', () => ({
   getPermissionsAsync: vi.fn().mockResolvedValue({ status: 'undetermined' }),
   requestPermissionsAsync: vi.fn().mockResolvedValue({ status: 'granted' }),
-  getDevicePushTokenAsync: vi.fn().mockResolvedValue({ data: 'mock-fcm-token-1234567890abcdef123' }),
+  getDevicePushTokenAsync: vi
+    .fn()
+    .mockResolvedValue({ data: 'mock-fcm-token-1234567890abcdef123' }),
   PermissionStatus: {
     UNDETERMINED: 'undetermined',
     GRANTED: 'granted',

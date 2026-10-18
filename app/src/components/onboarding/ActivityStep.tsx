@@ -65,10 +65,7 @@ const ACTIVITY_OPTIONS: readonly ActivityOption[] = [
   },
 ];
 
-export function ActivityStep({
-  selectedActivityLevel,
-  onSelectActivityLevel,
-}: ActivityStepProps) {
+export function ActivityStep({ selectedActivityLevel, onSelectActivityLevel }: ActivityStepProps) {
   const { colors } = useTheme();
 
   return (
@@ -107,11 +104,11 @@ export function ActivityStep({
                     },
                   ]}
                 >
-                  {isSelected && <View style={[styles.radioDot, { backgroundColor: colors.onAccent }]} />}
+                  {isSelected && (
+                    <View style={[styles.radioDot, { backgroundColor: colors.onAccent }]} />
+                  )}
                 </View>
-                <Text style={[styles.title, { color: colors.text }]}>
-                  {t(option.titleKey)}
-                </Text>
+                <Text style={[styles.title, { color: colors.text }]}>{t(option.titleKey)}</Text>
               </View>
 
               <View

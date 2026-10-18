@@ -1,10 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { en } from '@/i18n/en';
-import {
-  formatMinutesDisplay,
-  formatTimeAccessible,
-  formatTimeDigits,
-} from './focusUIUtils';
+import { formatMinutesDisplay, formatTimeAccessible, formatTimeDigits } from './focusUIUtils';
 import {
   shouldAutoStopStopwatch,
   shouldPromptStillFocusing,
@@ -46,7 +42,9 @@ describe('Phase 9B — Focus Time View Layer & UI Logic Tests', () => {
       expect(en.focus.confirmEndTitle).toBe('End Focus Session?');
       expect(en.focus.confirmEndMessage).toContain('Your focused time will be saved');
       expect(en.focus.breakPrompt).toContain('You have been in the zone for 90 minutes');
-      expect(en.focus.stillFocusingPrompt).toContain('Still focusing? You have been in deep work for 4 hours');
+      expect(en.focus.stillFocusingPrompt).toContain(
+        'Still focusing? You have been in deep work for 4 hours',
+      );
     });
 
     it('verifies room focus segment strings enforce neutral and supportive language', () => {
@@ -58,7 +56,9 @@ describe('Phase 9B — Focus Time View Layer & UI Logic Tests', () => {
       expect(en.focus.roomWeeklyTotalsTitle).toBe('Room Weekly Focus Time');
       expect(en.focus.roomTotalLabel).toBe('Total Room Focus');
       // No ranking notice
-      expect(en.focus.neutralSortingNote).toBe('Sorted alphabetically with no rankings. Every minute counts!');
+      expect(en.focus.neutralSortingNote).toBe(
+        'Sorted alphabetically with no rankings. Every minute counts!',
+      );
       expect(en.focus.roomLockedNotice).toContain('This room is currently paused');
     });
 
@@ -234,10 +234,7 @@ describe('Phase 9B — Focus Time View Layer & UI Logic Tests', () => {
         { user_id: '3', weekly_focus_minutes: 90 },
       ];
 
-      const roomTotal = members.reduce(
-        (sum, m) => sum + (m.weekly_focus_minutes ?? 0),
-        0,
-      );
+      const roomTotal = members.reduce((sum, m) => sum + (m.weekly_focus_minutes ?? 0), 0);
       expect(roomTotal).toBe(210);
       expect(formatMinutesDisplay(roomTotal)).toBe('3h 30m');
     });

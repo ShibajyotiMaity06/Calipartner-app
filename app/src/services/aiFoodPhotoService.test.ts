@@ -155,7 +155,9 @@ describe('Phase 11: aiFoodPhotoService (Client Service & Diary Integration)', ()
   describe('Photo Preparation & Compression', () => {
     it('validates and encodes JPEG buffer to base64 with stripped EXIF and scaled dims', () => {
       // JPEG header + dummy bytes
-      const jpegBytes = new Uint8Array([0xff, 0xd8, 0xff, 0xe0, 0x00, 0x10, 0x4a, 0x46, 0x49, 0x46]);
+      const jpegBytes = new Uint8Array([
+        0xff, 0xd8, 0xff, 0xe0, 0x00, 0x10, 0x4a, 0x46, 0x49, 0x46,
+      ]);
       const prepared = preparePhotoForAiAnalysis({
         buffer: jpegBytes,
         mimeType: 'image/jpeg',
@@ -266,9 +268,9 @@ describe('Phase 11: aiFoodPhotoService (Client Service & Diary Integration)', ()
         },
       };
 
-      await expect(
-        analyzeFoodPhoto(mockSupabase, { imageBase64: 'abc' }),
-      ).rejects.toThrowError(AiFoodPhotoServiceError);
+      await expect(analyzeFoodPhoto(mockSupabase, { imageBase64: 'abc' })).rejects.toThrowError(
+        AiFoodPhotoServiceError,
+      );
     });
 
     it('translates DAILY_LIMIT_REACHED into typed error', async () => {
@@ -281,9 +283,9 @@ describe('Phase 11: aiFoodPhotoService (Client Service & Diary Integration)', ()
         },
       };
 
-      await expect(
-        analyzeFoodPhoto(mockSupabase, { imageBase64: 'abc' }),
-      ).rejects.toMatchObject({ code: 'DAILY_LIMIT_REACHED' });
+      await expect(analyzeFoodPhoto(mockSupabase, { imageBase64: 'abc' })).rejects.toMatchObject({
+        code: 'DAILY_LIMIT_REACHED',
+      });
     });
 
     it('translates FEATURE_DISABLED and BUDGET_EXCEEDED into typed error', async () => {
@@ -296,9 +298,9 @@ describe('Phase 11: aiFoodPhotoService (Client Service & Diary Integration)', ()
         },
       };
 
-      await expect(
-        analyzeFoodPhoto(mockSupabase, { imageBase64: 'abc' }),
-      ).rejects.toMatchObject({ code: 'FEATURE_DISABLED' });
+      await expect(analyzeFoodPhoto(mockSupabase, { imageBase64: 'abc' })).rejects.toMatchObject({
+        code: 'FEATURE_DISABLED',
+      });
     });
   });
 
@@ -312,7 +314,10 @@ describe('Phase 11: aiFoodPhotoService (Client Service & Diary Integration)', ()
         name: 'Steamed Rice',
         brand: null,
         barcode: null,
-        serving_units: [{ unit: 'bowl', grams: 150 }, { unit: 'g', grams: 1 }],
+        serving_units: [
+          { unit: 'bowl', grams: 150 },
+          { unit: 'g', grams: 1 },
+        ],
         calories_per_100g: 130,
         protein_per_100g: 2.7,
         carbs_per_100g: 28.2,
@@ -394,7 +399,10 @@ describe('Phase 11: aiFoodPhotoService (Client Service & Diary Integration)', ()
           name: 'Dal Fry',
           brand: null,
           barcode: null,
-          serving_units: [{ unit: 'bowl', grams: 150 }, { unit: 'g', grams: 1 }],
+          serving_units: [
+            { unit: 'bowl', grams: 150 },
+            { unit: 'g', grams: 1 },
+          ],
           calories_per_100g: 120,
           protein_per_100g: 6,
           carbs_per_100g: 16,
@@ -449,7 +457,9 @@ describe('Phase 11: aiFoodPhotoService (Client Service & Diary Integration)', ()
 
       // Verify outbox queue mutation was created for sync
       const outbox = await getPendingOutboxItems(db);
-      expect(outbox.some((item) => item.entity === 'food_entries' && item.id === entry.id)).toBe(true);
+      expect(outbox.some((item) => item.entity === 'food_entries' && item.id === entry.id)).toBe(
+        true,
+      );
     });
   });
 

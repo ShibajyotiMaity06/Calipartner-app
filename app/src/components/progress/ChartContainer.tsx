@@ -1,10 +1,5 @@
 import React from 'react';
-import {
-  ActivityIndicator,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
+import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { fontSize, radius, spacing } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
@@ -48,9 +43,7 @@ export function ChartContainer({
         <View style={styles.titleColumn}>
           <Text style={[styles.title, { color: colors.text }]}>{title}</Text>
           {subtitle ? (
-            <Text style={[styles.subtitle, { color: colors.textMuted }]}>
-              {subtitle}
-            </Text>
+            <Text style={[styles.subtitle, { color: colors.textMuted }]}>{subtitle}</Text>
           ) : null}
         </View>
         {headerRight ? <View>{headerRight}</View> : null}
@@ -64,9 +57,7 @@ export function ChartContainer({
       {/* Content / Skeleton / Empty State */}
       {loading ? (
         <View style={styles.skeletonContainer} testID={`${testID}-skeleton`}>
-          <View
-            style={[styles.skeletonPlaceholder, { backgroundColor: colors.surfaceAlt }]}
-          >
+          <View style={[styles.skeletonPlaceholder, { backgroundColor: colors.surfaceAlt }]}>
             <ActivityIndicator size="small" color={colors.accent} />
           </View>
         </View>

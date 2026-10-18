@@ -105,26 +105,34 @@ describe('Phase 11: Attack & Security Tests (Caps, Consent, Injection, Budget, K
 
       const parsed = parseAndValidateVisionModelOutput(maliciousModelJson);
       expect(parsed.items).toHaveLength(1);
-      expect(parsed.items[0]!.food_name.toLowerCase()).not.toContain('ignore all prior instructions');
+      expect(parsed.items[0]!.food_name.toLowerCase()).not.toContain(
+        'ignore all prior instructions',
+      );
     });
   });
 
   describe('Attack Vector 3: Global Monthly Budget Switch Bypass', () => {
     it('cannot bypass budget switch when food_photo_disabled is true', () => {
-      const check = checkGlobalAiBudget({
-        food_photo_disabled: true,
-        monthly_budget_usd: 1000,
-      }, 0);
+      const check = checkGlobalAiBudget(
+        {
+          food_photo_disabled: true,
+          monthly_budget_usd: 1000,
+        },
+        0,
+      );
 
       expect(check.allowed).toBe(false);
       expect(check.reason).toBe('FEATURE_DISABLED');
     });
 
     it('cannot bypass budget switch when global ai_disabled is true', () => {
-      const check = checkGlobalAiBudget({
-        ai_disabled: true,
-        monthly_budget_usd: 1000,
-      }, 0);
+      const check = checkGlobalAiBudget(
+        {
+          ai_disabled: true,
+          monthly_budget_usd: 1000,
+        },
+        0,
+      );
 
       expect(check.allowed).toBe(false);
       expect(check.reason).toBe('FEATURE_DISABLED');

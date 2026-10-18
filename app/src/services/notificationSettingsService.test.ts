@@ -36,7 +36,9 @@ describe('notificationSettingsService', () => {
       }),
     };
 
-    vi.spyOn(supabaseLib, 'getSupabase').mockReturnValue(mockSupabase as unknown as ReturnType<typeof supabaseLib.getSupabase>);
+    vi.spyOn(supabaseLib, 'getSupabase').mockReturnValue(
+      mockSupabase as unknown as ReturnType<typeof supabaseLib.getSupabase>,
+    );
 
     const result = await getNotificationSettings();
     expect(result.user_id).toBe('user-1');
@@ -55,7 +57,9 @@ describe('notificationSettingsService', () => {
       },
     };
 
-    vi.spyOn(supabaseLib, 'getSupabase').mockReturnValue(mockSupabase as unknown as ReturnType<typeof supabaseLib.getSupabase>);
+    vi.spyOn(supabaseLib, 'getSupabase').mockReturnValue(
+      mockSupabase as unknown as ReturnType<typeof supabaseLib.getSupabase>,
+    );
 
     const result = await getNotificationSettings();
     expect(result.user_id).toBe('guest');
@@ -88,7 +92,9 @@ describe('notificationSettingsService', () => {
       }),
     };
 
-    vi.spyOn(supabaseLib, 'getSupabase').mockReturnValue(mockSupabase as unknown as ReturnType<typeof supabaseLib.getSupabase>);
+    vi.spyOn(supabaseLib, 'getSupabase').mockReturnValue(
+      mockSupabase as unknown as ReturnType<typeof supabaseLib.getSupabase>,
+    );
 
     const result = await updateNotificationSettings({ hide_previews: true });
     expect(result).not.toBeNull();
@@ -113,7 +119,9 @@ describe('notificationSettingsService', () => {
       }),
     };
 
-    vi.spyOn(supabaseLib, 'getSupabase').mockReturnValue(mockSupabase as unknown as ReturnType<typeof supabaseLib.getSupabase>);
+    vi.spyOn(supabaseLib, 'getSupabase').mockReturnValue(
+      mockSupabase as unknown as ReturnType<typeof supabaseLib.getSupabase>,
+    );
 
     const setResult = await setRoomChatMute('room-1', true);
     expect(setResult).toBe(true);

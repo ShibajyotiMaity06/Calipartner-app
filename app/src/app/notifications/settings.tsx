@@ -6,9 +6,6 @@ export default function NotificationSettingsRoute() {
   const router = useRouter();
 
   return (
-    <NotificationSettingsScreen
-      onBack={() => router.back()}
-      testID="notification-settings-route"
-    />
+    <NotificationSettingsScreen onBack={() => router.back()} testID="notification-settings-route" />
   );
 }

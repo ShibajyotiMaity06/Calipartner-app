@@ -339,7 +339,14 @@ describe('Food Service & Local Database', () => {
     });
 
     // Copy lunch to dinner on tomorrow
-    const copiedMeal = await copyMealSection(db, 'user-1', '2026-10-08', 'lunch', '2026-10-09', 'dinner');
+    const copiedMeal = await copyMealSection(
+      db,
+      'user-1',
+      '2026-10-08',
+      'lunch',
+      '2026-10-09',
+      'dinner',
+    );
     expect(copiedMeal).toHaveLength(1);
     expect(copiedMeal[0]!.meal_section).toBe('dinner');
     expect(copiedMeal[0]!.local_date).toBe('2026-10-09');

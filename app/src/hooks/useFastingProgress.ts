@@ -12,10 +12,7 @@ export interface UseFastingProgressOptions {
  * Hook providing fasting progress data (fasting hours/week, daily hours breakdown)
  * for the Progress tab and charts (PRD 6.20 FST-7).
  */
-export function useFastingProgress({
-  userId,
-  range = '30d',
-}: UseFastingProgressOptions) {
+export function useFastingProgress({ userId, range = '30d' }: UseFastingProgressOptions) {
   const [data, setData] = useState<IndividualFastingProgress | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);

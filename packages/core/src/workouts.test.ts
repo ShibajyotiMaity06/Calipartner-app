@@ -224,9 +224,16 @@ describe('40 Dev Seed Exercise Library', () => {
       expect(names.has(ex.name)).toBe(false);
       names.add(ex.name);
 
-      expect(['chest', 'back', 'legs', 'shoulders', 'arms', 'core', 'cardio', 'full_body']).toContain(
-        ex.muscle_group,
-      );
+      expect([
+        'chest',
+        'back',
+        'legs',
+        'shoulders',
+        'arms',
+        'core',
+        'cardio',
+        'full_body',
+      ]).toContain(ex.muscle_group);
       expect(ex.attribution).toContain('CC-BY-4.0');
     }
   });
@@ -307,4 +314,3 @@ Squat,legs,barbell`;
     expect(normalized.attribution).toBe('CaliPartner Open Exercise Library (CC-BY-4.0)');
   });
 });
-

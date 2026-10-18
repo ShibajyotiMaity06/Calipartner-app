@@ -10,10 +10,7 @@ export default function RecipesScreen() {
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
-      <RecipeBrowseView
-        showBackOrClose={true}
-        onBackOrClose={() => router.back()}
-      />
+      <RecipeBrowseView showBackOrClose={true} onBackOrClose={() => router.back()} />
     </View>
   );
 }

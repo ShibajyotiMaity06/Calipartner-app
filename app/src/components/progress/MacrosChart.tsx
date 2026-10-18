@@ -12,16 +12,11 @@ interface MacrosChartProps {
   testID?: string;
 }
 
-export function MacrosChart({
-  data,
-  loading = false,
-  testID = 'macros-chart',
-}: MacrosChartProps) {
+export function MacrosChart({ data, loading = false, testID = 'macros-chart' }: MacrosChartProps) {
   const { colors } = useTheme();
 
   const isEmpty =
-    !data ||
-    (data.protein_avg_g === 0 && data.carbs_avg_g === 0 && data.fat_avg_g === 0);
+    !data || (data.protein_avg_g === 0 && data.carbs_avg_g === 0 && data.fat_avg_g === 0);
 
   const accessibilitySummary = useMemo(() => {
     if (isEmpty || !data) {
@@ -73,18 +68,14 @@ export function MacrosChart({
           return (
             <View key={item.label} style={styles.macroRow}>
               <View style={styles.macroHeader}>
-                <Text style={[styles.macroLabel, { color: colors.text }]}>
-                  {item.label}
-                </Text>
+                <Text style={[styles.macroLabel, { color: colors.text }]}>{item.label}</Text>
                 <Text style={[styles.macroValue, { color: colors.textMuted }]}>
                   {Math.round(item.avg)}g / {Math.round(item.target)}g
                 </Text>
               </View>
 
               {/* Progress Bar */}
-              <View
-                style={[styles.track, { backgroundColor: colors.surfaceAlt }]}
-              >
+              <View style={[styles.track, { backgroundColor: colors.surfaceAlt }]}>
                 <View
                   style={[
                     styles.fill,

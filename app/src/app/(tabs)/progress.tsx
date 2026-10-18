@@ -72,10 +72,7 @@ export default function ProgressScreen() {
               style={[
                 styles.segmentText,
                 {
-                  color:
-                    activeSegment === 'my_progress'
-                      ? colors.text
-                      : colors.textMuted,
+                  color: activeSegment === 'my_progress' ? colors.text : colors.textMuted,
                 },
                 activeSegment === 'my_progress' && styles.activeSegmentText,
               ]}
@@ -102,10 +99,7 @@ export default function ProgressScreen() {
               style={[
                 styles.segmentText,
                 {
-                  color:
-                    activeSegment === 'leaderboard'
-                      ? colors.text
-                      : colors.textMuted,
+                  color: activeSegment === 'leaderboard' ? colors.text : colors.textMuted,
                 },
                 activeSegment === 'leaderboard' && styles.activeSegmentText,
               ]}
@@ -132,10 +126,7 @@ export default function ProgressScreen() {
               style={[
                 styles.segmentText,
                 {
-                  color:
-                    activeSegment === 'challenges'
-                      ? colors.text
-                      : colors.textMuted,
+                  color: activeSegment === 'challenges' ? colors.text : colors.textMuted,
                 },
                 activeSegment === 'challenges' && styles.activeSegmentText,
               ]}
@@ -151,11 +142,7 @@ export default function ProgressScreen() {
         style={styles.scrollView}
         contentContainerStyle={styles.scrollContent}
         refreshControl={
-          <RefreshControl
-            refreshing={loading}
-            onRefresh={refresh}
-            tintColor={colors.accent}
-          />
+          <RefreshControl refreshing={loading} onRefresh={refresh} tintColor={colors.accent} />
         }
       >
         {/* SEGMENT 1: MY PROGRESS */}
@@ -215,11 +202,7 @@ export default function ProgressScreen() {
             />
 
             {/* Macros Breakdown */}
-            <MacrosChart
-              data={data?.macros}
-              loading={loading}
-              testID="progress-chart-macros"
-            />
+            <MacrosChart data={data?.macros} loading={loading} testID="progress-chart-macros" />
 
             {/* Steps & Distance */}
             <StepsChart
@@ -252,17 +235,12 @@ export default function ProgressScreen() {
             />
 
             {/* Focus Time Progression & Breakdown (PRG-14, FOC-10) */}
-            <FocusProgressChart
-              range={range}
-              testID="progress-chart-focus"
-            />
+            <FocusProgressChart range={range} testID="progress-chart-focus" />
           </View>
         )}
 
         {/* SEGMENT 2: LEADERBOARD */}
-        {activeSegment === 'leaderboard' && (
-          <LeaderboardView testID="progress-leaderboard-view" />
-        )}
+        {activeSegment === 'leaderboard' && <LeaderboardView testID="progress-leaderboard-view" />}
 
         {/* SEGMENT 3: CHALLENGES */}
         {activeSegment === 'challenges' && (

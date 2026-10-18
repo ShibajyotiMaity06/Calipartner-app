@@ -43,7 +43,10 @@ export function useFoodSearch() {
           const remote = await lookupRemoteFood(getSupabase(), { text: trimmed });
           if (!isCurrent) return;
 
-          if (remote && !localMatches.some((f) => f.name.toLowerCase() === remote.name.toLowerCase())) {
+          if (
+            remote &&
+            !localMatches.some((f) => f.name.toLowerCase() === remote.name.toLowerCase())
+          ) {
             setResults((prev) => [...prev, remote]);
           }
         }

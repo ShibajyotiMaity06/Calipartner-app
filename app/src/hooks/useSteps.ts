@@ -1,15 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
-import {
-  calculateStrideLengthCm,
-  type ActivityDay,
-  type ActivitySource,
-} from '@calipartner/core';
+import { calculateStrideLengthCm, type ActivityDay, type ActivitySource } from '@calipartner/core';
 import { getDb } from '@/db';
-import {
-  getActivityDay,
-  getActivityMetrics,
-  upsertActivityDay,
-} from '@/services/activityService';
+import { getActivityDay, getActivityMetrics, upsertActivityDay } from '@/services/activityService';
 import {
   getStepPermissionStatus,
   readDeviceSteps,
@@ -97,10 +89,7 @@ export function useSteps(date?: string): UseStepsResult {
     return res.granted;
   };
 
-  const logManualSteps = async (
-    steps: number,
-    distanceM?: number,
-  ): Promise<ActivityDay> => {
+  const logManualSteps = async (steps: number, distanceM?: number): Promise<ActivityDay> => {
     const db = await getDb();
     const userId = currentGoalProfile?.user_id ?? 'guest-user';
     const updated = await upsertActivityDay(db, userId, {
@@ -115,9 +104,8 @@ export function useSteps(date?: string): UseStepsResult {
   };
 
   const metrics = getActivityMetrics(activity, userWeightKg, userStrideCm);
-  const progressPercent = goalSteps > 0
-    ? Math.min(100, Math.round((metrics.steps / goalSteps) * 100))
-    : 0;
+  const progressPercent =
+    goalSteps > 0 ? Math.min(100, Math.round((metrics.steps / goalSteps) * 100)) : 0;
 
   return {
     activity,

@@ -45,11 +45,20 @@ class InMemoryPhase5Db {
   roomMembers = new Map<string, RoomMember>(); // key: `${roomId}:${userId}`
   roomRequests = new Map<string, RoomRequest>();
   blocks = new Set<string>(); // key: `${blockerId}:${blockedId}`
-  nudges: Array<{ roomId: string; senderId: string; recipientId: string; message: string; createdAt: Date }> = [];
+  nudges: Array<{
+    roomId: string;
+    senderId: string;
+    recipientId: string;
+    message: string;
+    createdAt: Date;
+  }> = [];
   reactions = new Set<string>(); // key: `${roomId}:${userId}:${eventId}:${reaction}`
   roomEvents = new Map<string, { id: string; roomId: string; eventType: string }>();
   dailySummaries = new Map<string, DailySummary>(); // key: `${userId}:${localDate}`
-  foodEntries = new Map<string, { id: string; userId: string; foodName: string; calories: number; quantity: number }>();
+  foodEntries = new Map<
+    string,
+    { id: string; userId: string; foodName: string; calories: number; quantity: number }
+  >();
   sharedMeals = new Map<string, SharedMeal>();
   sharedMealParticipants = new Map<string, SharedMealParticipant>(); // key: `${sharedMealId}:${userId}`
   rateLimits = new Map<string, { count: number; windowStart: number }>();
@@ -57,12 +66,7 @@ class InMemoryPhase5Db {
   // Mutex lock simulation per room ID to test concurrent joins
   private roomLocks = new Set<string>();
 
-  registerUser(
-    id: string,
-    username: string,
-    nickname: string,
-    discoverable = true,
-  ) {
+  registerUser(id: string, username: string, nickname: string, discoverable = true) {
     this.profiles.set(id, {
       username,
       nickname,
@@ -179,7 +183,8 @@ class InMemoryPhase5Db {
       status,
       attached_room_id: roomId ?? null,
       trial_started_at: this.entitlements.get(userId)?.trial_started_at ?? null,
-      period_end: status === 'lapsed' ? new Date(Date.now() - 1000).toISOString() : periodEnd.toISOString(),
+      period_end:
+        status === 'lapsed' ? new Date(Date.now() - 1000).toISOString() : periodEnd.toISOString(),
     });
 
     if (roomId) {
@@ -220,9 +225,9 @@ class InMemoryPhase5Db {
     const planHolderEnt = room.plan_holder_id ? this.entitlements.get(room.plan_holder_id) : null;
     const hasActivePlan = Boolean(
       planHolderEnt &&
-        (hasPlan(planHolderEnt) ||
-          (planHolderEnt.status === 'trial' &&
-            (!planHolderEnt.period_end || new Date(planHolderEnt.period_end) > new Date()))),
+      (hasPlan(planHolderEnt) ||
+        (planHolderEnt.status === 'trial' &&
+          (!planHolderEnt.period_end || new Date(planHolderEnt.period_end) > new Date()))),
     );
 
     let activeMemberCount = 0;
@@ -475,7 +480,10 @@ class InMemoryPhase5Db {
       }
     }
 
-    if (hostId && (this.blocks.has(`${callerId}:${hostId}`) || this.blocks.has(`${hostId}:${callerId}`))) {
+    if (
+      hostId &&
+      (this.blocks.has(`${callerId}:${hostId}`) || this.blocks.has(`${hostId}:${callerId}`))
+    ) {
       throw new Error('USER_BLOCKED');
     }
 
@@ -596,7 +604,10 @@ class InMemoryPhase5Db {
       }
     }
 
-    if (hostId && (this.blocks.has(`${callerId}:${hostId}`) || this.blocks.has(`${hostId}:${callerId}`))) {
+    if (
+      hostId &&
+      (this.blocks.has(`${callerId}:${hostId}`) || this.blocks.has(`${hostId}:${callerId}`))
+    ) {
       throw new Error('USER_BLOCKED');
     }
 

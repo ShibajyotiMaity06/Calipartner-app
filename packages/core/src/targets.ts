@@ -79,14 +79,9 @@ export function calculateBmr(input: BmrInput): number {
  * Multipliers: Sedentary 1.2, Light 1.375, Moderate 1.55, Very Active 1.725, Extra Active 1.9.
  * TDEE = BMR x activity multiplier (rounded to the nearest kcal).
  */
-export function calculateTdee(
-  bmr: number,
-  activityLevel: ActivityLevel | number,
-): number {
+export function calculateTdee(bmr: number, activityLevel: ActivityLevel | number): number {
   const multiplier =
-    typeof activityLevel === 'number'
-      ? activityLevel
-      : ACTIVITY_MULTIPLIERS[activityLevel];
+    typeof activityLevel === 'number' ? activityLevel : ACTIVITY_MULTIPLIERS[activityLevel];
 
   // Precision note for PRD 7.2 worked example:
   // Raw BMR for 25y/175cm/70kg male is 1673.75; 1673.75 x 1.55 = 2594.3125 -> 2594.
@@ -149,11 +144,7 @@ export function calculateDailyChangeKcal(rateKgPerWeek: number): number {
  * - Fat: 25% of daily calories, never below 0.6 g/kg.
  * - Carbohydrates: remainder of calories (4 kcal/g).
  */
-export function calculateMacros(
-  dailyKcal: number,
-  weightKg: number,
-  goal: Goal,
-): MacroTargets {
+export function calculateMacros(dailyKcal: number, weightKg: number, goal: Goal): MacroTargets {
   // 1. Protein
   let proteinMultiplier = 1.6;
   if (goal === 'cut') {
@@ -224,7 +215,7 @@ export function getPresetRates(params: {
   const rates = goal === 'cut' ? PRESET_CUT_RATES_KG : PRESET_BULK_RATES_KG;
 
   return rates.map((rateKg) => {
-    const rateLb = Number((kgToLb(rateKg)).toFixed(2));
+    const rateLb = Number(kgToLb(rateKg).toFixed(2));
     const dailyChange = calculateDailyChangeKcal(rateKg);
     const targetKcal = goal === 'cut' ? tdee - dailyChange : tdee + dailyChange;
     const advisories: PresetRateAdvisory[] = [];
@@ -304,8 +295,7 @@ export function checkTargetDate(params: {
 }): TargetDateAnalysis {
   const { currentWeightKg, targetWeightKg, targetDate } = params;
   const refDate = params.referenceDate ?? new Date();
-  const target =
-    typeof targetDate === 'string' ? new Date(targetDate + 'T00:00:00Z') : targetDate;
+  const target = typeof targetDate === 'string' ? new Date(targetDate + 'T00:00:00Z') : targetDate;
 
   const weightDiffKg = Math.abs(currentWeightKg - targetWeightKg);
   let goal: Goal = 'maintain';
@@ -370,11 +360,9 @@ export function shouldRecomputeTargets(
 
   const goalChanged = update.goal !== undefined && update.goal !== current.goal;
   const rateChanged =
-    update.weekly_rate_kg !== undefined &&
-    update.weekly_rate_kg !== current.weekly_rate_kg;
+    update.weekly_rate_kg !== undefined && update.weekly_rate_kg !== current.weekly_rate_kg;
   const activityChanged =
-    update.activity_level !== undefined &&
-    update.activity_level !== current.activity_level;
+    update.activity_level !== undefined && update.activity_level !== current.activity_level;
 
   if (goalChanged || rateChanged || activityChanged) {
     reasons.push('manual_edit');

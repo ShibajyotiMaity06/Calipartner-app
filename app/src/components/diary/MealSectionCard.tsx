@@ -153,7 +153,10 @@ export function MealSectionCard({
                 }}
               >
                 <Ionicons name="add" size={13} color={colors.accent} />
-                <Text style={{ fontSize: fontSize.xs, color: colors.text, fontWeight: '600' }} numberOfLines={1}>
+                <Text
+                  style={{ fontSize: fontSize.xs, color: colors.text, fontWeight: '600' }}
+                  numberOfLines={1}
+                >
                   {s.food_name}
                 </Text>
                 <Text style={{ fontSize: fontSize.xs - 1, color: colors.textMuted }}>
@@ -194,7 +197,8 @@ export function MealSectionCard({
                 </Text>
                 <Text style={{ fontSize: fontSize.xs, color: colors.textMuted }}>
                   {entry.quantity} {entry.unit}
-                  {entry.brand_name ? ` • ${entry.brand_name}` : ''} • P {entry.protein}g • C {entry.carbs}g • F {entry.fat}g
+                  {entry.brand_name ? ` • ${entry.brand_name}` : ''} • P {entry.protein}g • C{' '}
+                  {entry.carbs}g • F {entry.fat}g
                 </Text>
               </View>
 

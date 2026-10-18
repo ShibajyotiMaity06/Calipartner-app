@@ -141,4 +141,3 @@ export async function unregisterPushDevice(token?: string): Promise<boolean> {
     return false;
   }
 }
-

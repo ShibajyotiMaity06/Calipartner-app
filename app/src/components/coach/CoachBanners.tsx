@@ -23,9 +23,7 @@ export function CoachDailyLimitBanner() {
         <Ionicons name="time-outline" size={20} color={colors.accent} />
       </View>
       <View style={styles.textWrap}>
-        <Text style={[styles.title, { color: colors.text }]}>
-          {t('coach.dailyLimit.title')}
-        </Text>
+        <Text style={[styles.title, { color: colors.text }]}>{t('coach.dailyLimit.title')}</Text>
         <Text style={[styles.subtitle, { color: colors.textMuted }]}>
           {t('coach.dailyLimit.subtitle')}
         </Text>
@@ -52,9 +50,7 @@ export function CoachOfflineBanner() {
         <Ionicons name="cloud-offline-outline" size={20} color={colors.textMuted} />
       </View>
       <View style={styles.textWrap}>
-        <Text style={[styles.title, { color: colors.text }]}>
-          {t('coach.offline.title')}
-        </Text>
+        <Text style={[styles.title, { color: colors.text }]}>{t('coach.offline.title')}</Text>
         <Text style={[styles.subtitle, { color: colors.textMuted }]}>
           {t('coach.offline.subtitle')}
         </Text>

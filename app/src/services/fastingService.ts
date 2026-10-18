@@ -55,16 +55,19 @@ export function parseFastingError(err: unknown): FastingError {
     );
   }
   if (msg.includes('UNDER_18_BLOCKED')) {
-    return new FastingError(
-      'UNDER_18_BLOCKED',
-      'Fasting is available to users 18 and older only',
-    );
+    return new FastingError('UNDER_18_BLOCKED', 'Fasting is available to users 18 and older only');
   }
   if (msg.includes('SCREENING_INELIGIBLE')) {
-    return new FastingError('SCREENING_INELIGIBLE', 'Fasting is not available based on health screening');
+    return new FastingError(
+      'SCREENING_INELIGIBLE',
+      'Fasting is not available based on health screening',
+    );
   }
   if (msg.includes('LOW_INTAKE_PAUSED')) {
-    return new FastingError('LOW_INTAKE_PAUSED', 'Fasting is paused while low-intake check-in is active');
+    return new FastingError(
+      'LOW_INTAKE_PAUSED',
+      'Fasting is paused while low-intake check-in is active',
+    );
   }
   if (msg.includes('SESSION_NOT_FOUND')) {
     return new FastingError('SESSION_NOT_FOUND', 'Fasting session was not found');
@@ -252,7 +255,9 @@ export async function startFast(
     params.localDate ??
     new Intl.DateTimeFormat('en-CA', { timeZone: timezone }).format(new Date(startAt));
 
-  const sessionId = crypto.randomUUID ? crypto.randomUUID() : `fast_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+  const sessionId = crypto.randomUUID
+    ? crypto.randomUUID()
+    : `fast_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
 
   const session: FastingSession = {
     id: sessionId,
@@ -533,10 +538,10 @@ export async function getFastingHistory(
     local_date: string;
     created_at: string;
     updated_at: string;
-  }>(
-    `SELECT * FROM local_fasting_sessions WHERE user_id = ? ORDER BY start_at DESC LIMIT ?`,
-    [userId, limit],
-  );
+  }>(`SELECT * FROM local_fasting_sessions WHERE user_id = ? ORDER BY start_at DESC LIMIT ?`, [
+    userId,
+    limit,
+  ]);
 
   return rows.map((r) => ({
     id: r.id,

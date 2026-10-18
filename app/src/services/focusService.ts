@@ -63,10 +63,16 @@ export function parseFocusError(err: unknown): FocusError {
     return new FocusError('SESSION_ENDED', 'This focus session has already ended.');
   }
   if (msg.includes('RATE_LIMITED')) {
-    return new FocusError('RATE_LIMITED', 'Daily room focus session limit reached (10 sessions/day).');
+    return new FocusError(
+      'RATE_LIMITED',
+      'Daily room focus session limit reached (10 sessions/day).',
+    );
   }
   if (msg.includes('SESSION_ALREADY_ACTIVE')) {
-    return new FocusError('SESSION_ALREADY_ACTIVE', 'There is already an active focus session in this room.');
+    return new FocusError(
+      'SESSION_ALREADY_ACTIVE',
+      'There is already an active focus session in this room.',
+    );
   }
   if (msg.includes('UNAUTHENTICATED')) {
     return new FocusError('UNAUTHENTICATED', 'You must be signed in.');
@@ -88,9 +94,7 @@ export function getLastClockSyncAt(): number {
  * Synchronizes client clock offset against the database server_time().
  * Survives clock skew and local time changes.
  */
-export async function syncServerClock(
-  supabase = getSupabase(),
-): Promise<number> {
+export async function syncServerClock(supabase = getSupabase()): Promise<number> {
   try {
     const t0 = Date.now();
     const { data, error } = await supabase.rpc('server_time');
@@ -213,10 +217,9 @@ export async function startPersonalSession(
     });
     if (!error && data) {
       if (db) {
-        await db.runAsync(
-          `UPDATE local_focus_sessions SET sync_state = 'synced' WHERE id = ?`,
-          [session.id],
-        );
+        await db.runAsync(`UPDATE local_focus_sessions SET sync_state = 'synced' WHERE id = ?`, [
+          session.id,
+        ]);
       }
       return data as FocusSession;
     }
@@ -305,7 +308,10 @@ export async function resumePersonalSession(
 
   // Reschedule timer notification with remaining seconds if timer
   if (session.mode === 'timer' && session.planned_seconds) {
-    const elapsedSoFar = Math.max(0, Math.floor((now.getTime() - new Date(session.started_at).getTime()) / 1000));
+    const elapsedSoFar = Math.max(
+      0,
+      Math.floor((now.getTime() - new Date(session.started_at).getTime()) / 1000),
+    );
     const netElapsed = Math.max(0, elapsedSoFar - totalPaused);
     const remaining = Math.max(0, session.planned_seconds - netElapsed);
     if (remaining > 0) {
@@ -476,10 +482,7 @@ export async function resumeMyRoomFocus(
   return data as RoomFocusParticipant;
 }
 
-export async function endRoomFocus(
-  sessionId: string,
-  supabase = getSupabase(),
-): Promise<void> {
+export async function endRoomFocus(sessionId: string, supabase = getSupabase()): Promise<void> {
   const { error } = await supabase.rpc('end_room_focus', {
     p_session_id: sessionId,
   });

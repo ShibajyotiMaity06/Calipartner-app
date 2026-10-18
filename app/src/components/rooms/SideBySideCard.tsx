@@ -1,12 +1,5 @@
 import React from 'react';
-import {
-  Image,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
+import { Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import type { RoomMemberSnapshot } from '@calipartner/core';
 import { t } from '@/i18n';
@@ -112,10 +105,7 @@ export function SideBySideCard({
                 color={logged ? colors.accent : colors.textMuted}
               />
               <Text
-                style={[
-                  styles.mealChipText,
-                  { color: logged ? colors.text : colors.textMuted },
-                ]}
+                style={[styles.mealChipText, { color: logged ? colors.text : colors.textMuted }]}
               >
                 {s.label}
               </Text>
@@ -127,10 +117,7 @@ export function SideBySideCard({
   };
 
   // Helper for Member Column
-  const renderMemberColumn = (
-    member: RoomMemberSnapshot,
-    isMe: boolean,
-  ) => {
+  const renderMemberColumn = (member: RoomMemberSnapshot, isMe: boolean) => {
     const metrics = member.metrics;
     const isLockedCal = metrics.goal_completion === 'locked' || metrics.calories === 'locked';
     const isLockedSteps = metrics.steps === 'locked';
@@ -171,7 +158,12 @@ export function SideBySideCard({
           {member.avatar_url ? (
             <Image source={{ uri: member.avatar_url }} style={styles.avatar} />
           ) : (
-            <View style={[styles.avatarPlaceholder, { backgroundColor: isMe ? colors.accent : colors.cardHighlight }]}>
+            <View
+              style={[
+                styles.avatarPlaceholder,
+                { backgroundColor: isMe ? colors.accent : colors.cardHighlight },
+              ]}
+            >
               <Text style={[styles.avatarInitial, { color: isMe ? '#FFFFFF' : colors.text }]}>
                 {member.nickname.charAt(0).toUpperCase()}
               </Text>
@@ -213,12 +205,7 @@ export function SideBySideCard({
           {renderMetric(t('rooms.today.water'), waterVal, isLockedWater, 'water-outline')}
           {renderMetric(t('rooms.today.workout'), workoutVal, isLockedWorkout, 'barbell-outline')}
           {metrics.weight_progress !== undefined &&
-            renderMetric(
-              t('rooms.today.weight'),
-              weightVal,
-              isLockedWeight,
-              'scale-outline',
-            )}
+            renderMetric(t('rooms.today.weight'), weightVal, isLockedWeight, 'scale-outline')}
         </View>
 
         {/* Meals logged checklist */}
@@ -327,7 +314,9 @@ export function SideBySideCard({
         {partner ? (
           renderMemberColumn(partner, false)
         ) : (
-          <View style={[styles.column, styles.emptyPartnerColumn, { backgroundColor: colors.surface }]}>
+          <View
+            style={[styles.column, styles.emptyPartnerColumn, { backgroundColor: colors.surface }]}
+          >
             <Ionicons name="person-add-outline" size={32} color={colors.textMuted} />
             <Text style={[styles.emptyPartnerTitle, { color: colors.text }]}>
               {t('rooms.dormant.badge')}

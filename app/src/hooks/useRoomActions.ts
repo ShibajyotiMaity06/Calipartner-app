@@ -1,9 +1,5 @@
 import { useCallback, useState } from 'react';
-import type {
-  MealSection,
-  RoomPrivacySettings,
-  RoomReactionType,
-} from '@calipartner/core';
+import type { MealSection, RoomPrivacySettings, RoomReactionType } from '@calipartner/core';
 import { getSupabase } from '@/lib/supabase';
 import {
   blockUser as apiBlockUser,
@@ -87,23 +83,12 @@ export function useRoomActions(roomId?: string | null) {
   );
 
   const respondSharedMeal = useCallback(
-    async (
-      sharedMealId: string,
-      accept: boolean,
-      quantity?: number,
-      mealSection?: MealSection,
-    ) => {
+    async (sharedMealId: string, accept: boolean, quantity?: number, mealSection?: MealSection) => {
       setActionLoading(true);
       setActionError(null);
       try {
         const supabase = getSupabase();
-        return await apiRespondSharedMeal(
-          supabase,
-          sharedMealId,
-          accept,
-          quantity,
-          mealSection,
-        );
+        return await apiRespondSharedMeal(supabase, sharedMealId, accept, quantity, mealSection);
       } catch (err: unknown) {
         const serviceErr = handleError(err);
         setActionError(serviceErr);

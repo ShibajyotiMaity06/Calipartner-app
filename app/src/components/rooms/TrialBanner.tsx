@@ -29,8 +29,8 @@ export function TrialBanner({
     dayNumber === 3 || daysLeft <= 0
       ? t('rooms.trialBanner.day3')
       : dayNumber === 2 || daysLeft === 1
-      ? t('rooms.trialBanner.day2')
-      : t('rooms.trialBanner.day1');
+        ? t('rooms.trialBanner.day2')
+        : t('rooms.trialBanner.day1');
 
   return (
     <View
@@ -44,9 +44,7 @@ export function TrialBanner({
       testID="banner-trial-days"
     >
       <View style={styles.contentRow}>
-        <View
-          style={[styles.iconCircle, { backgroundColor: colors.surface }]}
-        >
+        <View style={[styles.iconCircle, { backgroundColor: colors.surface }]}>
           <Ionicons name="sparkles" size={18} color={colors.accent} />
         </View>
 
@@ -66,9 +64,7 @@ export function TrialBanner({
         testID="btn-trial-view-plans"
       >
         <Ionicons name="card-outline" size={14} color="#FFFFFF" />
-        <Text style={styles.actionButtonText}>
-          {t('rooms.trialBanner.viewPlansBtn')}
-        </Text>
+        <Text style={styles.actionButtonText}>{t('rooms.trialBanner.viewPlansBtn')}</Text>
       </Pressable>
     </View>
   );

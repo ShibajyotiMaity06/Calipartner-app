@@ -1,13 +1,5 @@
 import { useState } from 'react';
-import {
-  ActivityIndicator,
-  Alert,
-  Modal,
-  Pressable,
-  Text,
-  TextInput,
-  View,
-} from 'react-native';
+import { ActivityIndicator, Alert, Modal, Pressable, Text, TextInput, View } from 'react-native';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import { Ionicons } from '@expo/vector-icons';
 import type { Food } from '@calipartner/core';
@@ -46,24 +38,20 @@ export function BarcodeScannerModal({
         onFoodFound(res.food);
         onClose();
       } else {
-        Alert.alert(
-          t('foodLog.scan.notFoundTitle'),
-          t('foodLog.scan.notFoundBody'),
-          [
-            {
-              text: t('common.cancel'),
-              onPress: () => setScanned(false),
-              style: 'cancel',
+        Alert.alert(t('foodLog.scan.notFoundTitle'), t('foodLog.scan.notFoundBody'), [
+          {
+            text: t('common.cancel'),
+            onPress: () => setScanned(false),
+            style: 'cancel',
+          },
+          {
+            text: t('foodLog.createCustomFood'),
+            onPress: () => {
+              onClose();
+              onCreateCustomFood(barcodeData);
             },
-            {
-              text: t('foodLog.createCustomFood'),
-              onPress: () => {
-                onClose();
-                onCreateCustomFood(barcodeData);
-              },
-            },
-          ],
-        );
+          },
+        ]);
       }
     } finally {
       setSearching(false);
@@ -145,7 +133,9 @@ export function BarcodeScannerModal({
               <CameraView
                 style={{ flex: 1 }}
                 facing="back"
-                onBarcodeScanned={scanned ? undefined : (result) => handleBarcodeScanned(result.data)}
+                onBarcodeScanned={
+                  scanned ? undefined : (result) => handleBarcodeScanned(result.data)
+                }
               />
 
               {/* Viewfinder overlay rectangle */}

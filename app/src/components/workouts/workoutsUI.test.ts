@@ -69,8 +69,7 @@ describe('Phase 6 — Workout Tracker UI Logic & Presentation Tests', () => {
     });
 
     it('handles reps stepper increments and clamps to non-negative', () => {
-      const stepReps = (current: number, delta: number) =>
-        Math.max(0, current + delta);
+      const stepReps = (current: number, delta: number) => Math.max(0, current + delta);
 
       expect(stepReps(8, 1)).toBe(9);
       expect(stepReps(8, -1)).toBe(7);
@@ -112,9 +111,7 @@ describe('Phase 6 — Workout Tracker UI Logic & Presentation Tests', () => {
       ];
 
       const deleteSetAtIndex = (list: typeof sets, idx: number) =>
-        list
-          .filter((_, i) => i !== idx)
-          .map((s, newIdx) => ({ ...s, setNumber: newIdx + 1 }));
+        list.filter((_, i) => i !== idx).map((s, newIdx) => ({ ...s, setNumber: newIdx + 1 }));
 
       const afterDelete = deleteSetAtIndex(sets, 1); // remove set 2
       expect(afterDelete).toHaveLength(2);

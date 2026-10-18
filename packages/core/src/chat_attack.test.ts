@@ -7,13 +7,7 @@ import {
   validateChatMessageInput,
   validateChatStorageKey,
 } from './chat';
-import type {
-  ChatAttachment,
-  ChatMessage,
-  ConsentRecord,
-  Room,
-  RoomMember,
-} from './types';
+import type { ChatAttachment, ChatMessage, ConsentRecord, Room, RoomMember } from './types';
 
 /**
  * In-memory simulation of Phase 8 Database Engine, RLS policies,
@@ -25,7 +19,10 @@ class InMemoryPhase8ChatDb {
   consentRecords = new Map<string, ConsentRecord>(); // `${userId}:${consentType}`
   chatMessages = new Map<string, ChatMessage>(); // `id`
   chatAttachments = new Map<string, ChatAttachment>(); // `id`
-  chatReadState = new Map<string, { roomId: string; userId: string; lastReadMessageId: string | null; lastReadAt: string }>();
+  chatReadState = new Map<
+    string,
+    { roomId: string; userId: string; lastReadMessageId: string | null; lastReadAt: string }
+  >();
   blocks = new Set<string>(); // `${blockerId}:${blockedId}`
   memberMutes = new Set<string>(); // `${userId}:${mutedUserId}`
   systemMessageMutes = new Set<string>(); // `${roomId}:${userId}`
@@ -83,7 +80,12 @@ class InMemoryPhase8ChatDb {
     return true; // Simplified plan active check for attack harness
   }
 
-  checkRateLimit(key: string, maxRequests: number, windowSeconds: number, now = Date.now()): boolean {
+  checkRateLimit(
+    key: string,
+    maxRequests: number,
+    windowSeconds: number,
+    now = Date.now(),
+  ): boolean {
     const entry = this.rateLimits.get(key);
     if (!entry) {
       this.rateLimits.set(key, { count: 1, windowStart: now });
@@ -139,7 +141,10 @@ class InMemoryPhase8ChatDb {
       return { success: false, error: 'ROOM_LOCKED: This room is paused' };
     }
     if (room.state === 'dormant') {
-      return { success: false, error: 'ROOM_DORMANT_READ_ONLY: Chat is read-only in dormant rooms' };
+      return {
+        success: false,
+        error: 'ROOM_DORMANT_READ_ONLY: Chat is read-only in dormant rooms',
+      };
     }
 
     // 4. Input validation
@@ -215,7 +220,10 @@ class InMemoryPhase8ChatDb {
   }
 
   // Simulates get_chat_messages() query applying RLS
-  fetchMessages(callerId: string, roomId: string): { success: boolean; messages: ChatMessage[]; error?: string } {
+  fetchMessages(
+    callerId: string,
+    roomId: string,
+  ): { success: boolean; messages: ChatMessage[]; error?: string } {
     // 1. Membership check
     if (!this.isRoomMember(roomId, callerId)) {
       return { success: false, messages: [], error: 'NOT_ROOM_MEMBER: Access denied' };
@@ -364,11 +372,7 @@ describe('Phase 8: Comprehensive Attack & Security Tests', () => {
 
   it('ATTACK 2: Non-member cannot obtain signed image URLs', () => {
     const db = createTestHarness();
-    const res = db.getSignedImageUrl(
-      nonMember,
-      roomId,
-      `rooms/${roomId}/messages/c1/0.jpg`,
-    );
+    const res = db.getSignedImageUrl(nonMember, roomId, `rooms/${roomId}/messages/c1/0.jpg`);
     expect(res.success).toBe(false);
     expect(res.signedUrl).toBeUndefined();
     expect(res.error).toContain('NOT_ROOM_MEMBER');
@@ -390,23 +394,14 @@ describe('Phase 8: Comprehensive Attack & Security Tests', () => {
     expect(res.messages.length).toBe(0);
     expect(res.error).toContain('NOT_ROOM_MEMBER');
 
-    const imgRes = db.getSignedImageUrl(
-      userB,
-      roomId,
-      `rooms/${roomId}/messages/c1/0.jpg`,
-    );
+    const imgRes = db.getSignedImageUrl(userB, roomId, `rooms/${roomId}/messages/c1/0.jpg`);
     expect(imgRes.success).toBe(false);
   });
 
   it('ATTACK 4: Signed URLs expire after validity duration', () => {
     const db = createTestHarness();
     const now = 1700000000000;
-    const res = db.getSignedImageUrl(
-      userA,
-      roomId,
-      `rooms/${roomId}/messages/c1/0.jpg`,
-      now,
-    );
+    const res = db.getSignedImageUrl(userA, roomId, `rooms/${roomId}/messages/c1/0.jpg`, now);
     expect(res.success).toBe(true);
     const url = res.signedUrl!;
 
@@ -488,11 +483,13 @@ describe('Phase 8: Comprehensive Attack & Security Tests', () => {
 
     // Send 6 messages each with 5 images = 30 images
     for (let i = 1; i <= 6; i++) {
-      const atts = Array(5).fill(null).map((_, idx) => ({
-        storageKey: `rooms/${roomId}/messages/img-batch-${i}/${idx}.jpg`,
-        size: 50000,
-        mimeType: 'image/jpeg',
-      }));
+      const atts = Array(5)
+        .fill(null)
+        .map((_, idx) => ({
+          storageKey: `rooms/${roomId}/messages/img-batch-${i}/${idx}.jpg`,
+          size: 50000,
+          mimeType: 'image/jpeg',
+        }));
       const res = db.sendMessage(
         userA,
         {

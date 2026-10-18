@@ -1,10 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import type { LayoutChangeEvent } from 'react-native';
-import {
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 import Svg, { Line, Rect, Text as SvgText } from 'react-native-svg';
 import type { IndividualWaterProgress } from '@calipartner/core';
 import { t } from '@/i18n';
@@ -81,9 +77,7 @@ export function WaterChart({
     <ChartContainer
       title={t('progress.water.title')}
       subtitle={
-        data?.average_water_ml != null
-          ? `${Math.round(data.average_water_ml)} ml / day`
-          : undefined
+        data?.average_water_ml != null ? `${Math.round(data.average_water_ml)} ml / day` : undefined
       }
       accessibilitySummary={accessibilitySummary}
       loading={loading}

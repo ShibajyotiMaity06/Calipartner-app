@@ -1,11 +1,5 @@
 import React from 'react';
-import {
-  Image,
-  Pressable,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
+import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import type { Recipe } from '@calipartner/core';
 import { t } from '@/i18n';
@@ -19,12 +13,7 @@ export interface RecipeCardProps {
   testID?: string;
 }
 
-export function RecipeCard({
-  recipe,
-  onPress,
-  onToggleFavorite,
-  testID,
-}: RecipeCardProps) {
+export function RecipeCard({ recipe, onPress, onToggleFavorite, testID }: RecipeCardProps) {
   const { colors } = useTheme();
 
   const totalMinutes = (recipe.prep_minutes || 0) + (recipe.cook_minutes || 0);

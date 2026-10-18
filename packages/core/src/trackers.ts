@@ -24,10 +24,7 @@ export function calculateDefaultWaterGoalMl(weightKg: number): number {
  * Height (cm) x 0.415 for male, x 0.413 for female, x 0.414 for other.
  * (PRD 7.8)
  */
-export function calculateStrideLengthCm(
-  heightCm: number,
-  sex: Sex | 'other',
-): number {
+export function calculateStrideLengthCm(heightCm: number, sex: Sex | 'other'): number {
   if (heightCm <= 0 || !Number.isFinite(heightCm)) return 70;
   const factor = sex === 'male' ? 0.415 : sex === 'female' ? 0.413 : 0.414;
   return Math.round(heightCm * factor * 100) / 100;
@@ -38,10 +35,7 @@ export function calculateStrideLengthCm(
  * Steps x stride length (cm) / 100,000 = km
  * (PRD 7.8)
  */
-export function calculateDistanceFromStepsKm(
-  steps: number,
-  strideLengthCm: number,
-): number {
+export function calculateDistanceFromStepsKm(steps: number, strideLengthCm: number): number {
   if (steps <= 0 || strideLengthCm <= 0) return 0;
   const km = (steps * strideLengthCm) / 100000;
   return Math.round(km * 1000) / 1000;
@@ -51,10 +45,7 @@ export function calculateDistanceFromStepsKm(
  * Distance from steps in meters:
  * Steps x stride length (cm) / 100 = meters
  */
-export function calculateDistanceFromStepsMeters(
-  steps: number,
-  strideLengthCm: number,
-): number {
+export function calculateDistanceFromStepsMeters(steps: number, strideLengthCm: number): number {
   if (steps <= 0 || strideLengthCm <= 0) return 0;
   const meters = (steps * strideLengthCm) / 100;
   return Math.round(meters * 100) / 100;
@@ -66,10 +57,7 @@ export function calculateDistanceFromStepsMeters(
  * Note: Shown for information only; not added to daily calorie target.
  * (PRD 7.8)
  */
-export function calculateWalkingCalories(
-  weightKg: number,
-  distanceKm: number,
-): number {
+export function calculateWalkingCalories(weightKg: number, distanceKm: number): number {
   if (weightKg <= 0 || distanceKm <= 0) return 0;
   return Math.round(0.5 * weightKg * distanceKm);
 }
@@ -142,9 +130,7 @@ export function calculateWeightTrend(
  * If 14 days is not available, calculates over available span of at least 7 days.
  * (PRD 7.8)
  */
-export function calculateWeeklyPace(
-  trendPoints: WeightTrendPoint[],
-): WeeklyPaceResult {
+export function calculateWeeklyPace(trendPoints: WeightTrendPoint[]): WeeklyPaceResult {
   if (!trendPoints || trendPoints.length < 2) {
     return { weeklyPaceKg: null, daysSpan: 0 };
   }
@@ -288,10 +274,7 @@ export function deduplicateActivitySources(
   if (incoming.distance_m != null && incoming.distance_m > 0) {
     resolvedDistanceM = Math.round(incoming.distance_m * 100) / 100;
   } else if (incoming.strideLengthCm && incoming.strideLengthCm > 0) {
-    resolvedDistanceM = calculateDistanceFromStepsMeters(
-      incoming.steps,
-      incoming.strideLengthCm,
-    );
+    resolvedDistanceM = calculateDistanceFromStepsMeters(incoming.steps, incoming.strideLengthCm);
   }
 
   if (!existing) {

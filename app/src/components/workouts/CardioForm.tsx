@@ -40,18 +40,13 @@ export function CardioForm({
   return (
     <View
       testID={testID}
-      style={[
-        styles.container,
-        { backgroundColor: colors.surface, borderColor: colors.border },
-      ]}
+      style={[styles.container, { backgroundColor: colors.surface, borderColor: colors.border }]}
       accessibilityRole="none"
       accessibilityLabel={t('workouts.cardio.title')}
     >
       <View style={styles.headerRow}>
         <Ionicons name="speedometer-outline" size={20} color={colors.accent} />
-        <Text style={[styles.title, { color: colors.text }]}>
-          {t('workouts.cardio.title')}
-        </Text>
+        <Text style={[styles.title, { color: colors.text }]}>{t('workouts.cardio.title')}</Text>
       </View>
 
       {/* Duration Stepper Row */}

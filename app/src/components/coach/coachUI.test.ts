@@ -81,11 +81,7 @@ describe('Phase 14 View Layer: AI Coach UI Specifications & Copy (PRD 6.22)', ()
   describe('2. Component Contract & Props Validation', () => {
     it('verifies suggested prompts triggers callback with exact string', () => {
       const mockSelect = vi.fn();
-      const prompts = [
-        en.coach.prompts.week,
-        en.coach.prompts.protein,
-        en.coach.prompts.target,
-      ];
+      const prompts = [en.coach.prompts.week, en.coach.prompts.protein, en.coach.prompts.target];
 
       prompts.forEach((p) => {
         mockSelect(p);

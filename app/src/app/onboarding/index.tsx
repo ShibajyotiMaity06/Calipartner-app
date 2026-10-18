@@ -10,12 +10,7 @@ import {
   View,
 } from 'react-native';
 import { useRouter } from 'expo-router';
-import {
-  type ActivityLevel,
-  type Goal,
-  type Sex,
-  type Units,
-} from '@calipartner/core';
+import { type ActivityLevel, type Goal, type Sex, type Units } from '@calipartner/core';
 import { ActivityStep } from '@/components/onboarding/ActivityStep';
 import { BodyStatsStep } from '@/components/onboarding/BodyStatsStep';
 import { GoalStep } from '@/components/onboarding/GoalStep';
@@ -28,10 +23,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useTargets } from '@/hooks/useTargets';
 import { t } from '@/i18n';
 import { playClickSound, playSuccessSound } from '@/lib/sound';
-import {
-  OnboardingStateMachine,
-  type OnboardingStep,
-} from '@/services/onboardingStateMachine';
+import { OnboardingStateMachine, type OnboardingStep } from '@/services/onboardingStateMachine';
 import { fontSize, radius, spacing } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
 
@@ -82,10 +74,7 @@ export default function OnboardingScreen() {
   const totalSteps = ACTIVE_ONBOARDING_STEPS.length;
 
   // Step header titles and subtitles
-  const stepTitles: Record<
-    OnboardingStep,
-    { title: string; subtitle: string }
-  > = {
+  const stepTitles: Record<OnboardingStep, { title: string; subtitle: string }> = {
     goal: {
       title: t('onboarding.goal.title'),
       subtitle: t('onboarding.goal.subtitle'),
@@ -299,10 +288,7 @@ export default function OnboardingScreen() {
           keyboardShouldPersistTaps="handled"
         >
           {currentStep === 'goal' && (
-            <GoalStep
-              selectedGoal={snapshot.goal}
-              onSelectGoal={handleSelectGoal}
-            />
+            <GoalStep selectedGoal={snapshot.goal} onSelectGoal={handleSelectGoal} />
           )}
 
           {currentStep === 'body_stats' && (

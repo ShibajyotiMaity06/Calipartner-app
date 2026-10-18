@@ -19,7 +19,10 @@ export function WorkoutsChart({
 }: WorkoutsChartProps) {
   const { colors } = useTheme();
 
-  const isEmpty = !data || (data.total_workouts === 0 && (!data.exercise_progression || data.exercise_progression.length === 0));
+  const isEmpty =
+    !data ||
+    (data.total_workouts === 0 &&
+      (!data.exercise_progression || data.exercise_progression.length === 0));
 
   const accessibilitySummary = useMemo(() => {
     if (isEmpty || !data) {
@@ -37,11 +40,7 @@ export function WorkoutsChart({
   return (
     <ChartContainer
       title={t('progress.workouts.title')}
-      subtitle={
-        data?.total_workouts != null
-          ? `${data.total_workouts} total workouts`
-          : undefined
-      }
+      subtitle={data?.total_workouts != null ? `${data.total_workouts} total workouts` : undefined}
       accessibilitySummary={accessibilitySummary}
       loading={loading}
       empty={isEmpty}
@@ -96,10 +95,7 @@ export function WorkoutsChart({
               return (
                 <View
                   key={exercise.exercise_name}
-                  style={[
-                    styles.exerciseCard,
-                    { backgroundColor: colors.surfaceAlt },
-                  ]}
+                  style={[styles.exerciseCard, { backgroundColor: colors.surfaceAlt }]}
                 >
                   <Text style={[styles.exerciseName, { color: colors.text }]}>
                     {exercise.exercise_name}
@@ -107,10 +103,16 @@ export function WorkoutsChart({
                   {latest && (
                     <View style={styles.exerciseMetrics}>
                       <Text style={[styles.exerciseMetric, { color: colors.textMuted }]}>
-                        Heaviest: <Text style={{ color: colors.text, fontWeight: '600' }}>{latest.heaviest_weight_kg} kg</Text>
+                        Heaviest:{' '}
+                        <Text style={{ color: colors.text, fontWeight: '600' }}>
+                          {latest.heaviest_weight_kg} kg
+                        </Text>
                       </Text>
                       <Text style={[styles.exerciseMetric, { color: colors.textMuted }]}>
-                        Best 1RM: <Text style={{ color: colors.text, fontWeight: '600' }}>{latest.best_1rm_kg} kg</Text>
+                        Best 1RM:{' '}
+                        <Text style={{ color: colors.text, fontWeight: '600' }}>
+                          {latest.best_1rm_kg} kg
+                        </Text>
                       </Text>
                     </View>
                   )}

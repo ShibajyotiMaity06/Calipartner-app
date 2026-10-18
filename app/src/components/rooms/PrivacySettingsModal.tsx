@@ -65,14 +65,34 @@ export function PrivacySettingsModal({
     icon: keyof typeof Ionicons.glyphMap;
   }[] = [
     { key: 'share_streak', label: t('rooms.privacyModal.streak'), icon: 'flame-outline' },
-    { key: 'share_goal_completion', label: t('rooms.privacyModal.goalCompletion'), icon: 'pie-chart-outline' },
+    {
+      key: 'share_goal_completion',
+      label: t('rooms.privacyModal.goalCompletion'),
+      icon: 'pie-chart-outline',
+    },
     { key: 'share_steps', label: t('rooms.privacyModal.steps'), icon: 'footsteps-outline' },
     { key: 'share_water', label: t('rooms.privacyModal.water'), icon: 'water-outline' },
     { key: 'share_workouts', label: t('rooms.privacyModal.workouts'), icon: 'barbell-outline' },
-    { key: 'share_workout_details', label: t('rooms.privacyModal.workoutDetails'), icon: 'fitness-outline' },
-    { key: 'share_calories_macros', label: t('rooms.privacyModal.caloriesMacros'), icon: 'nutrition-outline' },
-    { key: 'share_weight_progress', label: t('rooms.privacyModal.weightProgress'), icon: 'trending-up-outline' },
-    { key: 'share_weight_number', label: t('rooms.privacyModal.weightNumber'), icon: 'scale-outline' },
+    {
+      key: 'share_workout_details',
+      label: t('rooms.privacyModal.workoutDetails'),
+      icon: 'fitness-outline',
+    },
+    {
+      key: 'share_calories_macros',
+      label: t('rooms.privacyModal.caloriesMacros'),
+      icon: 'nutrition-outline',
+    },
+    {
+      key: 'share_weight_progress',
+      label: t('rooms.privacyModal.weightProgress'),
+      icon: 'trending-up-outline',
+    },
+    {
+      key: 'share_weight_number',
+      label: t('rooms.privacyModal.weightNumber'),
+      icon: 'scale-outline',
+    },
   ];
 
   return (
@@ -105,7 +125,10 @@ export function PrivacySettingsModal({
               <ActivityIndicator size="large" color={colors.accent} />
             </View>
           ) : (
-            <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
+            <ScrollView
+              showsVerticalScrollIndicator={false}
+              contentContainerStyle={styles.scrollContent}
+            >
               {/* Notice */}
               <View style={[styles.noticeBox, { backgroundColor: colors.surfaceAlt }]}>
                 <Ionicons name="eye-outline" size={16} color={colors.accent} />
@@ -153,7 +176,12 @@ export function PrivacySettingsModal({
               </View>
 
               {/* Preview as Partner Box */}
-              <View style={[styles.previewBox, { backgroundColor: colors.surfaceAlt, borderColor: colors.border }]}>
+              <View
+                style={[
+                  styles.previewBox,
+                  { backgroundColor: colors.surfaceAlt, borderColor: colors.border },
+                ]}
+              >
                 <View style={styles.previewHeader}>
                   <Ionicons name="shield-checkmark-outline" size={16} color={colors.accent} />
                   <Text style={[styles.previewTitle, { color: colors.text }]}>

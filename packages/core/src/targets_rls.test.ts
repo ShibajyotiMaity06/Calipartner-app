@@ -9,7 +9,10 @@ class InMemoryTargetsDb {
   goalProfiles: GoalProfile[] = [];
   healthScreenings = new Map<string, HealthScreening>();
 
-  insertGoalProfile(callerId: string, profile: Omit<GoalProfile, 'id' | 'created_at'>): GoalProfile {
+  insertGoalProfile(
+    callerId: string,
+    profile: Omit<GoalProfile, 'id' | 'created_at'>,
+  ): GoalProfile {
     // Check constraint: auth.uid() = user_id
     if (callerId !== profile.user_id) {
       throw new Error('RLS check violation: cannot insert goal profile for another user');

@@ -24,10 +24,7 @@ export function formatTimeDigits(totalSeconds: number): string {
 /**
  * Formats seconds into a human-readable screen reader announcement string.
  */
-export function formatTimeAccessible(
-  totalSeconds: number,
-  isRemaining = false,
-): string {
+export function formatTimeAccessible(totalSeconds: number, isRemaining = false): string {
   const safeSec = Math.max(0, Math.floor(totalSeconds));
   const hours = Math.floor(safeSec / 3600);
   const minutes = Math.floor((safeSec % 3600) / 60);
@@ -45,9 +42,7 @@ export function formatTimeAccessible(
   }
 
   const durationText = parts.join(' and ');
-  return isRemaining
-    ? `${durationText} remaining`
-    : `${durationText} elapsed`;
+  return isRemaining ? `${durationText} remaining` : `${durationText} elapsed`;
 }
 
 /**

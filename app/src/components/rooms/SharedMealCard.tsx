@@ -1,11 +1,5 @@
 import React, { useState } from 'react';
-import {
-  ActivityIndicator,
-  Pressable,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
+import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import type { MealSection } from '@calipartner/core';
 import { t } from '@/i18n';
@@ -111,10 +105,7 @@ export function SharedMealCard({ meal, onAccept, onDecline }: SharedMealCardProp
                 accessibilityLabel={`${m}x portion`}
               >
                 <Text
-                  style={[
-                    styles.portionPillText,
-                    { color: isSelected ? '#FFFFFF' : colors.text },
-                  ]}
+                  style={[styles.portionPillText, { color: isSelected ? '#FFFFFF' : colors.text }]}
                 >
                   {m}x
                 </Text>
@@ -191,9 +182,7 @@ export function SharedMealCard({ meal, onAccept, onDecline }: SharedMealCardProp
           {loadingAction === 'accept' ? (
             <ActivityIndicator size="small" color="#FFFFFF" />
           ) : (
-            <Text style={styles.acceptButtonText}>
-              {t('rooms.sharedMealCard.acceptBtn')}
-            </Text>
+            <Text style={styles.acceptButtonText}>{t('rooms.sharedMealCard.acceptBtn')}</Text>
           )}
         </Pressable>
       </View>

@@ -1,10 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import type { LayoutChangeEvent } from 'react-native';
-import {
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import Svg, { Line, Rect, Text as SvgText } from 'react-native-svg';
 import type { ProgressDateRange } from '@calipartner/core';
@@ -21,14 +17,7 @@ export interface FocusProgressChartProps {
   testID?: string;
 }
 
-const NEUTRAL_LABEL_COLORS = [
-  '#3b82f6',
-  '#8b5cf6',
-  '#06b6d4',
-  '#10b981',
-  '#f59e0b',
-  '#64748b',
-];
+const NEUTRAL_LABEL_COLORS = ['#3b82f6', '#8b5cf6', '#06b6d4', '#10b981', '#f59e0b', '#64748b'];
 
 export function FocusProgressChart({
   range = '30d',
@@ -61,20 +50,14 @@ export function FocusProgressChart({
     };
   }, [range]);
 
-  const { stats, loading, error } = usePersonalFocusStats(
-    startDate,
-    endDate,
-    userId,
-  );
+  const { stats, loading, error } = usePersonalFocusStats(startDate, endDate, userId);
 
   const days = useMemo(() => stats?.daily_breakdown ?? [], [stats?.daily_breakdown]);
-  const isEmpty =
-    days.length === 0 || days.every((d) => d.focus_minutes === 0);
+  const isEmpty = days.length === 0 || days.every((d) => d.focus_minutes === 0);
 
   const totalMinutes = stats?.total_focus_minutes ?? 0;
   const longestSessionMinutes = stats?.longest_session_minutes ?? 0;
-  const avgMinutesPerDay =
-    days.length > 0 ? Math.round(totalMinutes / days.length) : 0;
+  const avgMinutesPerDay = days.length > 0 ? Math.round(totalMinutes / days.length) : 0;
   const weeklyGoalHours = stats?.weekly_goal_minutes
     ? Math.round(stats.weekly_goal_minutes / 60)
     : 0;
@@ -175,9 +158,7 @@ export function FocusProgressChart({
                 { backgroundColor: colors.surfaceAlt, borderColor: colors.border },
               ]}
             >
-              <Text style={[styles.statPillLabel, { color: colors.textMuted }]}>
-                Weekly Goal
-              </Text>
+              <Text style={[styles.statPillLabel, { color: colors.textMuted }]}>Weekly Goal</Text>
               <Text style={[styles.statPillValue, { color: colors.text }]}>
                 {weeklyGoalHours}h / week
               </Text>
@@ -253,8 +234,7 @@ export function FocusProgressChart({
             const barH = (day.focus_minutes / (maxY || 1)) * chartH;
             const x = padLeft + idx * slotW + (slotW - barW) / 2;
             const y = padTop + chartH - barH;
-            const isGoalMet =
-              dailyGoalMinutes && day.focus_minutes >= dailyGoalMinutes;
+            const isGoalMet = dailyGoalMinutes && day.focus_minutes >= dailyGoalMinutes;
 
             return (
               <Rect
@@ -274,10 +254,7 @@ export function FocusProgressChart({
         {Boolean(stats?.label_breakdown && stats.label_breakdown.length > 0) && (
           <View
             testID="focus-labels-breakdown"
-            style={[
-              styles.labelsBreakdownBox,
-              { borderTopColor: colors.border },
-            ]}
+            style={[styles.labelsBreakdownBox, { borderTopColor: colors.border }]}
           >
             <Text style={[styles.breakdownTitle, { color: colors.text }]}>
               {t('focus.stats.labelsBreakdown')}
@@ -285,27 +262,17 @@ export function FocusProgressChart({
             <View style={styles.labelsList}>
               {stats!.label_breakdown.map((item, idx) => {
                 const color =
-                  NEUTRAL_LABEL_COLORS[idx % NEUTRAL_LABEL_COLORS.length] ??
-                  colors.accent;
-                const pct =
-                  totalMinutes > 0
-                    ? Math.round((item.minutes / totalMinutes) * 100)
-                    : 0;
+                  NEUTRAL_LABEL_COLORS[idx % NEUTRAL_LABEL_COLORS.length] ?? colors.accent;
+                const pct = totalMinutes > 0 ? Math.round((item.minutes / totalMinutes) * 100) : 0;
 
                 return (
                   <View key={item.label} style={styles.labelRow}>
                     <View style={styles.labelLeft}>
-                      <View
-                        style={[styles.colorSquare, { backgroundColor: color }]}
-                      />
-                      <Text style={[styles.labelName, { color: colors.text }]}>
-                        {item.label}
-                      </Text>
+                      <View style={[styles.colorSquare, { backgroundColor: color }]} />
+                      <Text style={[styles.labelName, { color: colors.text }]}>{item.label}</Text>
                     </View>
                     <View style={styles.labelRight}>
-                      <Text
-                        style={[styles.labelMins, { color: colors.textMuted }]}
-                      >
+                      <Text style={[styles.labelMins, { color: colors.textMuted }]}>
                         {formatMinutesDisplay(item.minutes)} ({pct}%)
                       </Text>
                     </View>

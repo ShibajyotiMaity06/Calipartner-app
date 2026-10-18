@@ -33,11 +33,17 @@ describe('Phase 7 — Progress & Leaderboard UI Presentation & Logic Tests', () 
     it('verifies chart empty states explain what to log for each metric', () => {
       expect(en.progress.weight.empty).toContain('Log your weight across multiple days');
       expect(en.progress.calories.empty).toContain('Log your meals to see daily calorie intake');
-      expect(en.progress.macros.empty).toContain('Log your meals to see daily macronutrient distributions');
-      expect(en.progress.steps.empty).toContain('Track your daily steps to view your step and walking distance trends');
+      expect(en.progress.macros.empty).toContain(
+        'Log your meals to see daily macronutrient distributions',
+      );
+      expect(en.progress.steps.empty).toContain(
+        'Track your daily steps to view your step and walking distance trends',
+      );
       expect(en.progress.water.empty).toContain('Log water intake to track hydration trends');
       expect(en.progress.workouts.empty).toContain('Log workouts to track training frequency');
-      expect(en.progress.consistency.empty).toContain('Log consistently to build your personal streak');
+      expect(en.progress.consistency.empty).toContain(
+        'Log consistently to build your personal streak',
+      );
     });
 
     it('verifies Room Progress metrics translations exist', () => {

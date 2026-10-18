@@ -32,9 +32,4 @@ export interface CoachConversation {
   lastMessageSnippet: string;
 }
 
-export type CoachReportReason =
-  | 'inaccurate'
-  | 'unsafe'
-  | 'disordered'
-  | 'inappropriate'
-  | 'other';
+export type CoachReportReason = 'inaccurate' | 'unsafe' | 'disordered' | 'inappropriate' | 'other';

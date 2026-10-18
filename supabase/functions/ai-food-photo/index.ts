@@ -161,10 +161,10 @@ export async function handleAiFoodPhoto(req: Request): Promise<Response> {
     } = await adminClient.auth.getUser(token);
 
     if (userError || !user) {
-      return new Response(
-        JSON.stringify({ error: 'UNAUTHENTICATED', code: 'UNAUTHENTICATED' }),
-        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
-      );
+      return new Response(JSON.stringify({ error: 'UNAUTHENTICATED', code: 'UNAUTHENTICATED' }), {
+        status: 401,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
     }
 
     const userId = user.id;
@@ -191,10 +191,10 @@ export async function handleAiFoodPhoto(req: Request): Promise<Response> {
         code === 'CONSENT_REQUIRED'
           ? 403
           : code === 'DAILY_LIMIT_REACHED'
-          ? 429
-          : code === 'FEATURE_DISABLED' || code === 'BUDGET_EXCEEDED'
-          ? 503
-          : 403;
+            ? 429
+            : code === 'FEATURE_DISABLED' || code === 'BUDGET_EXCEEDED'
+              ? 503
+              : 403;
 
       return new Response(
         JSON.stringify({
@@ -361,7 +361,10 @@ export async function handleAiFoodPhoto(req: Request): Promise<Response> {
     const message = err instanceof Error ? err.message : String(err);
     console.error('Unhandled ai-food-photo error:', message);
     return new Response(
-      JSON.stringify({ error: 'Internal server error while analyzing photo', code: 'SERVER_ERROR' }),
+      JSON.stringify({
+        error: 'Internal server error while analyzing photo',
+        code: 'SERVER_ERROR',
+      }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
     );
   }

@@ -74,27 +74,19 @@ export function sanitizePrivacySettings(
   return {
     share_streak: input.share_streak ?? DEFAULT_PRIVACY_SETTINGS.share_streak,
     share_goal_completion:
-      input.share_goal_completion ??
-      DEFAULT_PRIVACY_SETTINGS.share_goal_completion,
+      input.share_goal_completion ?? DEFAULT_PRIVACY_SETTINGS.share_goal_completion,
     share_steps: input.share_steps ?? DEFAULT_PRIVACY_SETTINGS.share_steps,
     share_water: input.share_water ?? DEFAULT_PRIVACY_SETTINGS.share_water,
-    share_workouts:
-      input.share_workouts ?? DEFAULT_PRIVACY_SETTINGS.share_workouts,
+    share_workouts: input.share_workouts ?? DEFAULT_PRIVACY_SETTINGS.share_workouts,
     share_workout_details:
-      input.share_workout_details ??
-      DEFAULT_PRIVACY_SETTINGS.share_workout_details,
+      input.share_workout_details ?? DEFAULT_PRIVACY_SETTINGS.share_workout_details,
     share_calories_macros:
-      input.share_calories_macros ??
-      DEFAULT_PRIVACY_SETTINGS.share_calories_macros,
+      input.share_calories_macros ?? DEFAULT_PRIVACY_SETTINGS.share_calories_macros,
     share_meals: meals,
-    share_weight_number:
-      input.share_weight_number ??
-      DEFAULT_PRIVACY_SETTINGS.share_weight_number,
+    share_weight_number: input.share_weight_number ?? DEFAULT_PRIVACY_SETTINGS.share_weight_number,
     share_weight_progress:
-      input.share_weight_progress ??
-      DEFAULT_PRIVACY_SETTINGS.share_weight_progress,
-    share_fasting:
-      input.share_fasting ?? DEFAULT_PRIVACY_SETTINGS.share_fasting,
+      input.share_weight_progress ?? DEFAULT_PRIVACY_SETTINGS.share_weight_progress,
+    share_fasting: input.share_fasting ?? DEFAULT_PRIVACY_SETTINGS.share_fasting,
     share_focus_status: focusStatus,
     share_focus_label: focusLabel,
     focus_status: focusStatus,
@@ -114,10 +106,7 @@ export function roomCap(tier?: RoomTier | null): number {
   return ROOM_TIER_CAPS[tier] ?? 5;
 }
 
-export function hasPlan(
-  entitlement?: Entitlement | null,
-  now: Date = new Date(),
-): boolean {
+export function hasPlan(entitlement?: Entitlement | null, now: Date = new Date()): boolean {
   if (!entitlement) return false;
   if (entitlement.status !== 'paid' && entitlement.status !== 'grace') {
     return false;
@@ -136,9 +125,7 @@ export function canCreateRoom(
     return hostedActiveRoomCount === 0;
   }
   if (entitlement.status === 'trial') {
-    const active = entitlement.period_end
-      ? new Date(entitlement.period_end) > now
-      : true;
+    const active = entitlement.period_end ? new Date(entitlement.period_end) > now : true;
     return active && hostedActiveRoomCount === 0;
   }
   // Eligible if trial hasn't started yet
@@ -163,18 +150,12 @@ export function roomIsUsable(
 }
 
 /** @deprecated use hasPlan */
-export function hasPremium(
-  entitlement?: Entitlement | null,
-  now: Date = new Date(),
-): boolean {
+export function hasPremium(entitlement?: Entitlement | null, now: Date = new Date()): boolean {
   return hasPlan(entitlement, now);
 }
 
 /** @deprecated use roomIsUsable or canCreateRoom */
-export function hasRoomAccess(
-  entitlement?: Entitlement | null,
-  now: Date = new Date(),
-): boolean {
+export function hasRoomAccess(entitlement?: Entitlement | null, now: Date = new Date()): boolean {
   if (!entitlement) return false;
   if (hasPlan(entitlement, now)) return true;
   if (entitlement.status === 'trial') {
@@ -276,8 +257,7 @@ export function maskMemberSnapshot(
   isOverview = false,
 ): RoomMemberSnapshot {
   const calories = summary?.calories ?? 0;
-  const goalCompletion =
-    targetKcal > 0 ? Math.round((calories / targetKcal) * 1000) / 10 : 0;
+  const goalCompletion = targetKcal > 0 ? Math.round((calories / targetKcal) * 1000) / 10 : 0;
 
   let metrics: RoomMemberSnapshotMetrics;
 

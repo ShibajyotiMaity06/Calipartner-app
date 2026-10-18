@@ -33,11 +33,14 @@ vi.mock('@/services/focusService', () => ({
   parseFocusError: vi.fn(
     (err: unknown) =>
       new focusService.FocusError(
-        (((err as { message?: string })?.message as FocusErrorCode) || 'INVALID_ARGUMENT'),
+        ((err as { message?: string })?.message as FocusErrorCode) || 'INVALID_ARGUMENT',
       ),
   ),
   FocusError: class extends Error {
-    constructor(public readonly code: string, message?: string) {
+    constructor(
+      public readonly code: string,
+      message?: string,
+    ) {
       super(message || code);
       this.name = 'FocusError';
     }
@@ -115,7 +118,13 @@ describe('Room focus hook and realtime lifecycle tests', () => {
       updated_at: '2026-10-12T10:00:00Z',
     });
 
-    const sessionId = await focusService.startRoomFocus('room-1', 'timer', 'Math', 1500, typedMockClient);
+    const sessionId = await focusService.startRoomFocus(
+      'room-1',
+      'timer',
+      'Math',
+      1500,
+      typedMockClient,
+    );
     expect(sessionId).toBe('session-created-1');
 
     const participant = await focusService.joinRoomFocus(sessionId, typedMockClient);

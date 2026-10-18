@@ -1,9 +1,6 @@
 import { getSupabase } from '@/lib/supabase';
 import { createLogger } from '@/lib/logger';
-import {
-  getDefaultNotificationSettings,
-  type NotificationSettings,
-} from '@calipartner/core';
+import { getDefaultNotificationSettings, type NotificationSettings } from '@calipartner/core';
 
 const log = createLogger('notificationSettingsService');
 
@@ -13,9 +10,7 @@ let cachedSettings: NotificationSettings | null = null;
  * Fetches the user's notification settings from Supabase.
  * Returns defaults if unauthenticated or on error.
  */
-export async function getNotificationSettings(
-  forceRefresh = false,
-): Promise<NotificationSettings> {
+export async function getNotificationSettings(forceRefresh = false): Promise<NotificationSettings> {
   if (cachedSettings && !forceRefresh) {
     return cachedSettings;
   }

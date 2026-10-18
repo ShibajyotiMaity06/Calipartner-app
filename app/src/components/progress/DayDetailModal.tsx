@@ -1,11 +1,5 @@
 import React from 'react';
-import {
-  Modal,
-  Pressable,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
+import { Modal, Pressable, StyleSheet, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { t } from '@/i18n';
 import { fontSize, radius, spacing } from '@/theme/tokens';
@@ -62,9 +56,7 @@ export function DayDetailModal({
               <Text style={[styles.title, { color: colors.text }]}>
                 {t('progress.dayDetailModal.title')}
               </Text>
-              <Text style={[styles.dateText, { color: colors.textMuted }]}>
-                {data.date}
-              </Text>
+              <Text style={[styles.dateText, { color: colors.textMuted }]}>{data.date}</Text>
             </View>
             <Pressable
               onPress={onClose}
@@ -99,9 +91,7 @@ export function DayDetailModal({
                   style={[
                     styles.badge,
                     {
-                      backgroundColor: data.isLoggedDay
-                        ? colors.surfaceAlt
-                        : colors.surfaceAlt,
+                      backgroundColor: data.isLoggedDay ? colors.surfaceAlt : colors.surfaceAlt,
                       borderColor: colors.border,
                     },
                   ]}
@@ -120,9 +110,7 @@ export function DayDetailModal({
                   style={[
                     styles.badge,
                     {
-                      backgroundColor: data.isGoalDay
-                        ? colors.surfaceAlt
-                        : colors.surfaceAlt,
+                      backgroundColor: data.isGoalDay ? colors.surfaceAlt : colors.surfaceAlt,
                       borderColor: colors.border,
                     },
                   ]}
@@ -169,9 +157,7 @@ export function DayDetailModal({
                 <Text style={[styles.detailLabel, { color: colors.textMuted }]}>
                   {t('progress.water.title')}
                 </Text>
-                <Text style={[styles.detailValue, { color: colors.text }]}>
-                  {data.waterMl} ml
-                </Text>
+                <Text style={[styles.detailValue, { color: colors.text }]}>{data.waterMl} ml</Text>
               </View>
             )}
 
@@ -181,9 +167,7 @@ export function DayDetailModal({
                 <Text style={[styles.detailLabel, { color: colors.textMuted }]}>
                   {data.metricLabel}
                 </Text>
-                <Text style={[styles.detailValue, { color: colors.text }]}>
-                  {data.metricValue}
-                </Text>
+                <Text style={[styles.detailValue, { color: colors.text }]}>{data.metricValue}</Text>
               </View>
             )}
           </View>

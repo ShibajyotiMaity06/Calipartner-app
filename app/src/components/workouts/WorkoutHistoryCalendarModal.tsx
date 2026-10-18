@@ -50,15 +50,14 @@ export function WorkoutHistoryCalendarModal({
   // Calendar state
   const [currentMonthDate, setCurrentMonthDate] = useState(() => new Date());
   const [calendarCounts, setCalendarCounts] = useState<Record<string, number>>({});
-  const [selectedCalendarDate, setSelectedCalendarDate] = useState<string | null>(
-    null,
-  );
+  const [selectedCalendarDate, setSelectedCalendarDate] = useState<string | null>(null);
   const [dateWorkouts, setDateWorkouts] = useState<WorkoutWithDetails[]>([]);
   const [dateLoading, setDateLoading] = useState(false);
 
   // Detail Modal state
-  const [selectedWorkoutDetail, setSelectedWorkoutDetail] =
-    useState<WorkoutWithDetails | null>(null);
+  const [selectedWorkoutDetail, setSelectedWorkoutDetail] = useState<WorkoutWithDetails | null>(
+    null,
+  );
 
   // Load history list
   const loadHistory = useCallback(async () => {
@@ -83,9 +82,10 @@ export function WorkoutHistoryCalendarModal({
       const month = currentMonthDate.getMonth();
       const startStr = `${year}-${String(month + 1).padStart(2, '0')}-01`;
       const endDay = new Date(year, month + 1, 0).getDate();
-      const endStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(
-        endDay,
-      ).padStart(2, '0')}`;
+      const endStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(endDay).padStart(
+        2,
+        '0',
+      )}`;
 
       const counts = await getWorkoutsCalendarData(db, userId, startStr, endStr);
       setCalendarCounts(counts);
@@ -153,9 +153,10 @@ export function WorkoutHistoryCalendarModal({
       cells.push({});
     }
     for (let day = 1; day <= daysInMonth; day++) {
-      const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(
-        day,
-      ).padStart(2, '0')}`;
+      const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(
+        2,
+        '0',
+      )}`;
       cells.push({ dayNum: day, dateStr });
     }
 
@@ -177,9 +178,7 @@ export function WorkoutHistoryCalendarModal({
           >
             <Ionicons name="chevron-back" size={20} color={colors.text} />
           </TouchableOpacity>
-          <Text style={[styles.monthHeaderText, { color: colors.text }]}>
-            {monthName}
-          </Text>
+          <Text style={[styles.monthHeaderText, { color: colors.text }]}>{monthName}</Text>
           <TouchableOpacity
             testID={`${testID}-btn-next-month`}
             onPress={() => handleMonthShift(1)}
@@ -194,10 +193,7 @@ export function WorkoutHistoryCalendarModal({
         {/* Days of Week Row */}
         <View style={styles.daysOfWeekRow}>
           {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((dw) => (
-            <Text
-              key={dw}
-              style={[styles.dayOfWeekText, { color: colors.textMuted }]}
-            >
+            <Text key={dw} style={[styles.dayOfWeekText, { color: colors.textMuted }]}>
               {dw}
             </Text>
           ))}
@@ -230,20 +226,14 @@ export function WorkoutHistoryCalendarModal({
                 accessibilityLabel={`${cell.dateStr}, ${count} workouts`}
               >
                 <Text
-                  style={[
-                    styles.cellDayNum,
-                    { color: isSelected ? colors.accent : colors.text },
-                  ]}
+                  style={[styles.cellDayNum, { color: isSelected ? colors.accent : colors.text }]}
                 >
                   {cell.dayNum}
                 </Text>
                 {count > 0 && (
                   <View
                     testID={`cal-dot-${cell.dateStr}`}
-                    style={[
-                      styles.workoutDot,
-                      { backgroundColor: colors.accent },
-                    ]}
+                    style={[styles.workoutDot, { backgroundColor: colors.accent }]}
                   />
                 )}
               </TouchableOpacity>
@@ -287,11 +277,7 @@ export function WorkoutHistoryCalendarModal({
                       {w.duration_minutes} min • {w.exercises.length} exercises
                     </Text>
                   </View>
-                  <Ionicons
-                    name="chevron-forward"
-                    size={18}
-                    color={colors.textMuted}
-                  />
+                  <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
                 </TouchableOpacity>
               ))
             )}

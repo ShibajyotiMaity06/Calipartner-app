@@ -1,8 +1,5 @@
 import { createClient } from 'jsr:@supabase/supabase-js@2';
-import {
-  StubImageModerationProvider,
-  stripImageExif,
-} from '@calipartner/core';
+import { StubImageModerationProvider, stripImageExif } from '@calipartner/core';
 
 export const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -45,10 +42,10 @@ export async function handleChatImageModeration(req: Request): Promise<Response>
     const { attachment_id, storage_key, mime_type, test_flag } = body;
 
     if (!attachment_id || !storage_key) {
-      return new Response(
-        JSON.stringify({ error: 'Missing attachment_id or storage_key' }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
-      );
+      return new Response(JSON.stringify({ error: 'Missing attachment_id or storage_key' }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
     }
 
     // Call provider adapter

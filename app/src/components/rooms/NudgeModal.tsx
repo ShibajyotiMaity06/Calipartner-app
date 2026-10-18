@@ -1,12 +1,5 @@
 import React, { useState } from 'react';
-import {
-  ActivityIndicator,
-  Modal,
-  Pressable,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
+import { ActivityIndicator, Modal, Pressable, StyleSheet, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import type { RoomMemberSnapshot } from '@calipartner/core';
 import { t } from '@/i18n';
@@ -20,12 +13,7 @@ interface NudgeModalProps {
   onSendNudge: (targetUserId: string, message: string) => Promise<unknown>;
 }
 
-export function NudgeModal({
-  visible,
-  targetMember,
-  onClose,
-  onSendNudge,
-}: NudgeModalProps) {
+export function NudgeModal({ visible, targetMember, onClose, onSendNudge }: NudgeModalProps) {
   const { colors } = useTheme();
 
   const options = [
@@ -52,7 +40,8 @@ export function NudgeModal({
         onClose();
       }, 1200);
     } catch (err: unknown) {
-      const msg = err && typeof err === 'object' && 'message' in err ? String(err.message) : String(err);
+      const msg =
+        err && typeof err === 'object' && 'message' in err ? String(err.message) : String(err);
       setErrorMsg(msg);
     } finally {
       setLoading(false);

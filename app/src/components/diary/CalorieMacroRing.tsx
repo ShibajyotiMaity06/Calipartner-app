@@ -30,10 +30,13 @@ export function CalorieMacroRing({
 
   const remainingCalories = Math.max(0, targetCalories - eatenCalories);
   const isOver = eatenCalories > targetCalories && targetCalories > 0;
-  const calPercent = targetCalories > 0 ? Math.min(100, Math.round((eatenCalories / targetCalories) * 100)) : 0;
+  const calPercent =
+    targetCalories > 0 ? Math.min(100, Math.round((eatenCalories / targetCalories) * 100)) : 0;
 
-  const proPercent = targetProtein > 0 ? Math.min(100, Math.round((proteinGrams / targetProtein) * 100)) : 0;
-  const carbPercent = targetCarbs > 0 ? Math.min(100, Math.round((carbGrams / targetCarbs) * 100)) : 0;
+  const proPercent =
+    targetProtein > 0 ? Math.min(100, Math.round((proteinGrams / targetProtein) * 100)) : 0;
+  const carbPercent =
+    targetCarbs > 0 ? Math.min(100, Math.round((carbGrams / targetCarbs) * 100)) : 0;
   const fatPercent = targetFat > 0 ? Math.min(100, Math.round((fatGrams / targetFat) * 100)) : 0;
 
   const a11ySummary = t('diary.calorieRingA11y', {
@@ -95,9 +98,12 @@ export function CalorieMacroRing({
               borderWidth: 8,
               borderColor: isOver ? colors.danger : colors.macroCalories,
               borderTopColor: isOver ? colors.danger : colors.macroCalories,
-              borderRightColor: calPercent > 25 ? (isOver ? colors.danger : colors.macroCalories) : 'transparent',
-              borderBottomColor: calPercent > 50 ? (isOver ? colors.danger : colors.macroCalories) : 'transparent',
-              borderLeftColor: calPercent > 75 ? (isOver ? colors.danger : colors.macroCalories) : 'transparent',
+              borderRightColor:
+                calPercent > 25 ? (isOver ? colors.danger : colors.macroCalories) : 'transparent',
+              borderBottomColor:
+                calPercent > 50 ? (isOver ? colors.danger : colors.macroCalories) : 'transparent',
+              borderLeftColor:
+                calPercent > 75 ? (isOver ? colors.danger : colors.macroCalories) : 'transparent',
               opacity: 0.9,
             }}
           />
@@ -141,7 +147,8 @@ export function CalorieMacroRing({
               {t('diary.caloriesEaten')}
             </Text>
             <Text style={{ fontSize: fontSize.md, fontWeight: '700', color: colors.macroCalories }}>
-              {eatenCalories} <Text style={{ fontSize: fontSize.xs, color: colors.textMuted }}>kcal</Text>
+              {eatenCalories}{' '}
+              <Text style={{ fontSize: fontSize.xs, color: colors.textMuted }}>kcal</Text>
             </Text>
           </View>
 
@@ -160,7 +167,8 @@ export function CalorieMacroRing({
               {t('diary.caloriesTarget')}
             </Text>
             <Text style={{ fontSize: fontSize.md, fontWeight: '700', color: colors.text }}>
-              {targetCalories} <Text style={{ fontSize: fontSize.xs, color: colors.textMuted }}>kcal</Text>
+              {targetCalories}{' '}
+              <Text style={{ fontSize: fontSize.xs, color: colors.textMuted }}>kcal</Text>
             </Text>
           </View>
         </View>

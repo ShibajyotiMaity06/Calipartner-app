@@ -1,11 +1,5 @@
 import { useState } from 'react';
-import {
-  ActivityIndicator,
-  Pressable,
-  ScrollView,
-  Text,
-  View,
-} from 'react-native';
+import { ActivityIndicator, Pressable, ScrollView, Text, View } from 'react-native';
 import { useRouter, type Href } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import type { Food, FoodEntry, MealSection } from '@calipartner/core';
@@ -380,9 +374,7 @@ export default function TodayScreen() {
             onAddFood={(sec) => setActiveLogSection(sec)}
             onEditEntry={(entry) => setEditingEntry(entry)}
             onDeleteEntry={(id) => void deleteEntry(id)}
-            onCopyMeal={(sec) =>
-              setCopyModalState({ visible: true, mode: 'meal', section: sec })
-            }
+            onCopyMeal={(sec) => setCopyModalState({ visible: true, mode: 'meal', section: sec })}
             onSelectSuggestion={handleSuggestionClick}
           />
 
@@ -392,9 +384,7 @@ export default function TodayScreen() {
             onAddFood={(sec) => setActiveLogSection(sec)}
             onEditEntry={(entry) => setEditingEntry(entry)}
             onDeleteEntry={(id) => void deleteEntry(id)}
-            onCopyMeal={(sec) =>
-              setCopyModalState({ visible: true, mode: 'meal', section: sec })
-            }
+            onCopyMeal={(sec) => setCopyModalState({ visible: true, mode: 'meal', section: sec })}
             onSelectSuggestion={handleSuggestionClick}
           />
 
@@ -404,9 +394,7 @@ export default function TodayScreen() {
             onAddFood={(sec) => setActiveLogSection(sec)}
             onEditEntry={(entry) => setEditingEntry(entry)}
             onDeleteEntry={(id) => void deleteEntry(id)}
-            onCopyMeal={(sec) =>
-              setCopyModalState({ visible: true, mode: 'meal', section: sec })
-            }
+            onCopyMeal={(sec) => setCopyModalState({ visible: true, mode: 'meal', section: sec })}
             onSelectSuggestion={handleSuggestionClick}
           />
 
@@ -416,9 +404,7 @@ export default function TodayScreen() {
             onAddFood={(sec) => setActiveLogSection(sec)}
             onEditEntry={(entry) => setEditingEntry(entry)}
             onDeleteEntry={(id) => void deleteEntry(id)}
-            onCopyMeal={(sec) =>
-              setCopyModalState({ visible: true, mode: 'meal', section: sec })
-            }
+            onCopyMeal={(sec) => setCopyModalState({ visible: true, mode: 'meal', section: sec })}
             onSelectSuggestion={handleSuggestionClick}
           />
 
@@ -428,9 +414,7 @@ export default function TodayScreen() {
             onAddFood={(sec) => setActiveLogSection(sec)}
             onEditEntry={(entry) => setEditingEntry(entry)}
             onDeleteEntry={(id) => void deleteEntry(id)}
-            onCopyMeal={(sec) =>
-              setCopyModalState({ visible: true, mode: 'meal', section: sec })
-            }
+            onCopyMeal={(sec) => setCopyModalState({ visible: true, mode: 'meal', section: sec })}
             onSelectSuggestion={handleSuggestionClick}
           />
         </View>

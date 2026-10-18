@@ -167,7 +167,8 @@ function createWebDb(): SQLite.SQLiteDatabase {
               item.steps = Number(steps);
               item.distance_m = dist !== null && dist !== undefined ? Number(dist) : null;
               item.source = src;
-              item.stride_length_cm = stride !== null && stride !== undefined ? Number(stride) : null;
+              item.stride_length_cm =
+                stride !== null && stride !== undefined ? Number(stride) : null;
               item.updated_at = updatedAt;
               changes++;
             }
@@ -190,9 +191,7 @@ function createWebDb(): SQLite.SQLiteDatabase {
         const filtered = list.filter(
           (r) => r.user_id === userId && r.local_date === localDate && !r.deleted_at,
         );
-        filtered.sort((a, b) =>
-          String(b.logged_at) > String(a.logged_at) ? 1 : -1,
-        );
+        filtered.sort((a, b) => (String(b.logged_at) > String(a.logged_at) ? 1 : -1));
         return filtered as unknown as T[];
       }
 
@@ -206,8 +205,8 @@ function createWebDb(): SQLite.SQLiteDatabase {
               ? 1
               : -1
             : String(b.logged_at) > String(a.logged_at)
-            ? 1
-            : -1,
+              ? 1
+              : -1,
         );
         return filtered as unknown as T[];
       }
@@ -267,4 +266,3 @@ function createWebDb(): SQLite.SQLiteDatabase {
     },
   } as unknown as SQLite.SQLiteDatabase;
 }
-

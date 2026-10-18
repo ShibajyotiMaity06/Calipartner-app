@@ -160,9 +160,7 @@ export function ChatImageViewerModal({
               {attachment.width && attachment.height
                 ? `${attachment.width} × ${attachment.height} px`
                 : ''}
-              {attachment.size
-                ? ` • ${(attachment.size / (1024 * 1024)).toFixed(1)} MB`
-                : ''}
+              {attachment.size ? ` • ${(attachment.size / (1024 * 1024)).toFixed(1)} MB` : ''}
             </Text>
           </View>
         </SafeAreaView>

@@ -1,11 +1,6 @@
 import { useState } from 'react';
 import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
-import {
-  kgToLb,
-  lbToKg,
-  type CalculateTargetsResult,
-  type Units,
-} from '@calipartner/core';
+import { kgToLb, lbToKg, type CalculateTargetsResult, type Units } from '@calipartner/core';
 import { t } from '@/i18n';
 import { playClickSound } from '@/lib/sound';
 import { fontSize, radius, spacing } from '@/theme/tokens';

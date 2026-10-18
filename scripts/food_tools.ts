@@ -173,7 +173,9 @@ export function loadDatasetsFromFolder(datasetsDir: string): CreateFoodInput[] {
         servingUnits.push({
           unit: defaultLabel,
           grams: defaultGrams,
-          description: defaultLabel.includes('(') ? defaultLabel : `1 ${defaultLabel} (~${defaultGrams}g)`,
+          description: defaultLabel.includes('(')
+            ? defaultLabel
+            : `1 ${defaultLabel} (~${defaultGrams}g)`,
         });
       } else {
         servingUnits.push({
@@ -418,10 +420,7 @@ COMMIT;
 /**
  * Builds the compact bundled SQLite food database for offline instant search.
  */
-export function buildBundledSqliteDb(
-  foods: readonly CreateFoodInput[],
-  dbFilePath: string,
-): void {
+export function buildBundledSqliteDb(foods: readonly CreateFoodInput[], dbFilePath: string): void {
   const dir = path.dirname(dbFilePath);
   if (!fs.existsSync(dir)) {
     fs.mkdirSync(dir, { recursive: true });
@@ -503,7 +502,9 @@ export function runFoodTools(args: string[] = process.argv.slice(2)): void {
     const compiled = loadDatasetsFromFolder(datasetsDir);
     if (compiled.length > 0) {
       foodsToProcess = compiled;
-      console.log(`[food_tools] Successfully compiled ${foodsToProcess.length} foods from datasets folder!`);
+      console.log(
+        `[food_tools] Successfully compiled ${foodsToProcess.length} foods from datasets folder!`,
+      );
     }
   }
 
@@ -557,7 +558,9 @@ export function runFoodTools(args: string[] = process.argv.slice(2)): void {
   buildBundledSqliteDb(foodsToProcess, sqlitePath);
   console.log(`[food_tools] Wrote bundled SQLite database to: ${sqlitePath}`);
 
-  console.log(`[food_tools] Successfully generated all seed artifacts for ${foodsToProcess.length} foods!`);
+  console.log(
+    `[food_tools] Successfully generated all seed artifacts for ${foodsToProcess.length} foods!`,
+  );
 }
 
 if (require.main === module) {

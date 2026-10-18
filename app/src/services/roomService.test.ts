@@ -95,7 +95,8 @@ describe('roomService unit tests with mocked Supabase', () => {
     expect(err6.code).toBe('UNKNOWN_ERROR');
 
     const err7 = parseRoomError({
-      message: 'Could not find the function public.create_room(p_device_hash, p_name) in the schema cache',
+      message:
+        'Could not find the function public.create_room(p_device_hash, p_name) in the schema cache',
     });
     expect(err7.code).toBe('UNKNOWN_ERROR');
     expect(err7.message).toContain('Database migration not applied');
@@ -322,7 +323,9 @@ describe('roomService unit tests with mocked Supabase', () => {
       code: 'USER_BLOCKED',
     });
 
-    await expect(sendRoomInvitation(mockClient, 'room-1', 'rate_limited_user')).rejects.toMatchObject({
+    await expect(
+      sendRoomInvitation(mockClient, 'room-1', 'rate_limited_user'),
+    ).rejects.toMatchObject({
       code: 'HOURLY_REQUEST_LIMIT_REACHED',
     });
   });
@@ -375,7 +378,12 @@ describe('roomService unit tests with mocked Supabase', () => {
                   username: 'bob',
                   nickname: 'Bob',
                   is_self: false,
-                  metrics: { calories: 'locked', macros: 'locked', steps: 9000, water_ml: 'locked' },
+                  metrics: {
+                    calories: 'locked',
+                    macros: 'locked',
+                    steps: 9000,
+                    water_ml: 'locked',
+                  },
                 },
               ],
             },
@@ -475,10 +483,16 @@ describe('roomService unit tests with mocked Supabase', () => {
           return { data: { status: 'pending', request_id: 'req-j1' }, error: null };
         }
         if (fn === 'set_who_can_invite') {
-          return { data: { status: 'updated', who_can_invite: args.p_who_can_invite }, error: null };
+          return {
+            data: { status: 'updated', who_can_invite: args.p_who_can_invite },
+            error: null,
+          };
         }
         if (fn === 'block_user') {
-          return { data: { status: 'blocked', target_user_id: args.p_target_user_id }, error: null };
+          return {
+            data: { status: 'blocked', target_user_id: args.p_target_user_id },
+            error: null,
+          };
         }
         if (fn === 'report') {
           return { data: { status: 'reported', report_id: 'rep-1' }, error: null };

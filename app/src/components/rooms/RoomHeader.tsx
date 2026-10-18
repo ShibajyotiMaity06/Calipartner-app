@@ -1,12 +1,5 @@
 import React from 'react';
-import {
-  Pressable,
-  ScrollView,
-  Share,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
+import { Pressable, ScrollView, Share, StyleSheet, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { t } from '@/i18n';
 import { fontSize, radius, spacing } from '@/theme/tokens';
@@ -51,7 +44,10 @@ export function RoomHeader({
   const handleCopyCode = async () => {
     if (!currentRoom?.code) return;
     try {
-      const nav = typeof navigator !== 'undefined' ? (navigator as unknown as { clipboard?: { writeText: (text: string) => Promise<void> } }) : undefined;
+      const nav =
+        typeof navigator !== 'undefined'
+          ? (navigator as unknown as { clipboard?: { writeText: (text: string) => Promise<void> } })
+          : undefined;
       if (nav?.clipboard?.writeText) {
         await nav.clipboard.writeText(currentRoom.code);
       } else {
@@ -73,7 +69,12 @@ export function RoomHeader({
   ];
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.surface, borderBottomColor: colors.border }]}>
+    <View
+      style={[
+        styles.container,
+        { backgroundColor: colors.surface, borderBottomColor: colors.border },
+      ]}
+    >
       {/* Top Bar: Room Title & Action Buttons */}
       <View style={styles.topRow}>
         <View style={styles.titleContainer}>
@@ -199,8 +200,15 @@ export function RoomHeader({
 
       {/* Multiple Rooms Switcher Dropdown */}
       {showRoomSwitcher && allRooms.length > 1 && (
-        <View style={[styles.switcherDropdown, { backgroundColor: colors.surfaceAlt, borderColor: colors.border }]}>
-          <Text style={[styles.switcherHeader, { color: colors.textMuted }]}>{t('rooms.manageRooms')}</Text>
+        <View
+          style={[
+            styles.switcherDropdown,
+            { backgroundColor: colors.surfaceAlt, borderColor: colors.border },
+          ]}
+        >
+          <Text style={[styles.switcherHeader, { color: colors.textMuted }]}>
+            {t('rooms.manageRooms')}
+          </Text>
           {allRooms.map((r) => {
             const isSelected = r.id === currentRoom?.id;
             return (
@@ -220,7 +228,10 @@ export function RoomHeader({
                 <View style={styles.switcherRowContent}>
                   <Text style={[styles.switcherRowName, { color: colors.text }]}>{r.name}</Text>
                   <Text style={[styles.switcherRowRole, { color: colors.textMuted }]}>
-                    {r.role === 'host' ? t('rooms.settingsModal.hostBadge') : t('rooms.settingsModal.memberBadge')} • {r.member_count} members
+                    {r.role === 'host'
+                      ? t('rooms.settingsModal.hostBadge')
+                      : t('rooms.settingsModal.memberBadge')}{' '}
+                    • {r.member_count} members
                   </Text>
                 </View>
                 {isSelected && <Ionicons name="checkmark-circle" size={18} color={colors.accent} />}
@@ -283,16 +294,18 @@ export function RoomHeader({
                 >
                   {seg.label}
                 </Text>
-                {seg.key === 'chat' && typeof chatUnreadCount === 'number' && chatUnreadCount > 0 && (
-                  <View
-                    style={[styles.segmentBadge, { backgroundColor: colors.accent }]}
-                    testID="badge-chat-unread"
-                  >
-                    <Text style={styles.segmentBadgeText}>
-                      {chatUnreadCount > 99 ? '99+' : chatUnreadCount}
-                    </Text>
-                  </View>
-                )}
+                {seg.key === 'chat' &&
+                  typeof chatUnreadCount === 'number' &&
+                  chatUnreadCount > 0 && (
+                    <View
+                      style={[styles.segmentBadge, { backgroundColor: colors.accent }]}
+                      testID="badge-chat-unread"
+                    >
+                      <Text style={styles.segmentBadgeText}>
+                        {chatUnreadCount > 99 ? '99+' : chatUnreadCount}
+                      </Text>
+                    </View>
+                  )}
               </Pressable>
             );
           })}

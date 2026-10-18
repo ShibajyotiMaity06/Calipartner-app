@@ -37,16 +37,12 @@ export function WorkoutDetailModal({
   const { colors } = useTheme();
   const todayDate = new Date().toISOString().split('T')[0]!;
 
-  const { remove, copyToDate, getSummary } = useWorkouts(
-    workout?.local_date ?? todayDate,
-  );
+  const { remove, copyToDate, getSummary } = useWorkouts(workout?.local_date ?? todayDate);
 
   const [isEditing, setIsEditing] = useState(false);
   const [repeating, setRepeating] = useState(false);
   const [deleting, setDeleting] = useState(false);
-  const [repeatSuccessMessage, setRepeatSuccessMessage] = useState<string | null>(
-    null,
-  );
+  const [repeatSuccessMessage, setRepeatSuccessMessage] = useState<string | null>(null);
 
   if (!workout) return null;
 
@@ -69,32 +65,25 @@ export function WorkoutDetailModal({
   };
 
   const handleDelete = () => {
-    Alert.alert(
-      t('workouts.details.confirmDeleteTitle'),
-      t('workouts.details.confirmDeleteBody'),
-      [
-        { text: t('common.cancel'), style: 'cancel' },
-        {
-          text: t('common.delete'),
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              setDeleting(true);
-              await remove(workout.id);
-              if (onDeleted) onDeleted(workout.id);
-              onClose();
-            } catch (e) {
-              Alert.alert(
-                t('common.errorTitle'),
-                e instanceof Error ? e.message : String(e),
-              );
-            } finally {
-              setDeleting(false);
-            }
-          },
+    Alert.alert(t('workouts.details.confirmDeleteTitle'), t('workouts.details.confirmDeleteBody'), [
+      { text: t('common.cancel'), style: 'cancel' },
+      {
+        text: t('common.delete'),
+        style: 'destructive',
+        onPress: async () => {
+          try {
+            setDeleting(true);
+            await remove(workout.id);
+            if (onDeleted) onDeleted(workout.id);
+            onClose();
+          } catch (e) {
+            Alert.alert(t('common.errorTitle'), e instanceof Error ? e.message : String(e));
+          } finally {
+            setDeleting(false);
+          }
         },
-      ],
-    );
+      },
+    ]);
   };
 
   return (
@@ -155,10 +144,7 @@ export function WorkoutDetailModal({
             </View>
           </View>
 
-          <ScrollView
-            contentContainerStyle={styles.content}
-            showsVerticalScrollIndicator={false}
-          >
+          <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
             {/* Success message banner if copied to today */}
             {repeatSuccessMessage && (
               <View
@@ -168,14 +154,8 @@ export function WorkoutDetailModal({
                   { backgroundColor: colors.cardHighlight, borderColor: colors.syncSynced },
                 ]}
               >
-                <Ionicons
-                  name="checkmark-circle"
-                  size={18}
-                  color={colors.syncSynced}
-                />
-                <Text
-                  style={[styles.successBannerText, { color: colors.syncSynced }]}
-                >
+                <Ionicons name="checkmark-circle" size={18} color={colors.syncSynced} />
+                <Text style={[styles.successBannerText, { color: colors.syncSynced }]}>
                   {repeatSuccessMessage}
                 </Text>
               </View>
@@ -183,10 +163,7 @@ export function WorkoutDetailModal({
 
             {/* Workout Overview Card */}
             <View
-              style={[
-                styles.card,
-                { backgroundColor: colors.surface, borderColor: colors.border },
-              ]}
+              style={[styles.card, { backgroundColor: colors.surface, borderColor: colors.border }]}
             >
               <View style={styles.titleRow}>
                 <View style={styles.titleInfo}>
@@ -282,9 +259,7 @@ export function WorkoutDetailModal({
                     { backgroundColor: colors.surfaceAlt, borderColor: colors.border },
                   ]}
                 >
-                  <Text style={[styles.notesText, { color: colors.text }]}>
-                    {workout.notes}
-                  </Text>
+                  <Text style={[styles.notesText, { color: colors.text }]}>{workout.notes}</Text>
                 </View>
               )}
             </View>
@@ -326,9 +301,7 @@ export function WorkoutDetailModal({
                     { backgroundColor: colors.surface, borderColor: colors.border },
                   ]}
                 >
-                  <Text style={[styles.exTitle, { color: colors.text }]}>
-                    {ex.exercise_name}
-                  </Text>
+                  <Text style={[styles.exTitle, { color: colors.text }]}>{ex.exercise_name}</Text>
 
                   {/* Sets List */}
                   <View style={styles.setsList}>
@@ -349,10 +322,7 @@ export function WorkoutDetailModal({
                           </Text>
                           {s.is_warmup && (
                             <View
-                              style={[
-                                styles.warmupTag,
-                                { backgroundColor: colors.syncPending },
-                              ]}
+                              style={[styles.warmupTag, { backgroundColor: colors.syncPending }]}
                             >
                               <Text style={styles.warmupTagText}>Warmup</Text>
                             </View>
@@ -365,15 +335,9 @@ export function WorkoutDetailModal({
                         </Text>
 
                         <Ionicons
-                          name={
-                            s.completed
-                              ? 'checkmark-circle'
-                              : 'checkmark-circle-outline'
-                          }
+                          name={s.completed ? 'checkmark-circle' : 'checkmark-circle-outline'}
                           size={18}
-                          color={
-                            s.completed ? colors.syncSynced : colors.textMuted
-                          }
+                          color={s.completed ? colors.syncSynced : colors.textMuted}
                         />
                       </View>
                     ))}

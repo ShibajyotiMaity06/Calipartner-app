@@ -122,7 +122,8 @@ export class OnboardingStateMachine {
     if (stats.dateOfBirth !== undefined) this.state.dateOfBirth = stats.dateOfBirth;
     if (stats.heightCm !== undefined) this.state.heightCm = stats.heightCm;
     if (stats.weightKg !== undefined) this.state.weightKg = stats.weightKg;
-    if (stats.bodyFatPercentage !== undefined) this.state.bodyFatPercentage = stats.bodyFatPercentage;
+    if (stats.bodyFatPercentage !== undefined)
+      this.state.bodyFatPercentage = stats.bodyFatPercentage;
     this.recalculateTargets();
     return this;
   }
@@ -287,11 +288,7 @@ export class OnboardingStateMachine {
   }
 
   private canCalculateTargets(): boolean {
-    return (
-      Boolean(this.state.dateOfBirth) &&
-      this.state.heightCm > 0 &&
-      this.state.weightKg > 0
-    );
+    return Boolean(this.state.dateOfBirth) && this.state.heightCm > 0 && this.state.weightKg > 0;
   }
 
   private recalculateTargets(): void {

@@ -163,10 +163,7 @@ describe('Phase 7 Core - Personal Streak (PRD 6.14 STR-1, 7.4)', () => {
       { date: '2026-10-03', loggedDay: true },
       { date: '2026-10-04', loggedDay: true },
     ];
-    const { currentStreak, longestStreak } = calculatePersonalStreak(
-      dailyLogs,
-      '2026-10-04',
-    );
+    const { currentStreak, longestStreak } = calculatePersonalStreak(dailyLogs, '2026-10-04');
     expect(currentStreak).toBe(4);
     expect(longestStreak).toBe(4);
   });
@@ -178,10 +175,7 @@ describe('Phase 7 Core - Personal Streak (PRD 6.14 STR-1, 7.4)', () => {
       { date: '2026-10-03', loggedDay: true },
       { date: '2026-10-04', loggedDay: false }, // today not logged yet
     ];
-    const { currentStreak, longestStreak } = calculatePersonalStreak(
-      dailyLogs,
-      '2026-10-04',
-    );
+    const { currentStreak, longestStreak } = calculatePersonalStreak(dailyLogs, '2026-10-04');
     expect(currentStreak).toBe(3); // from yesterday
     expect(longestStreak).toBe(3);
   });
@@ -192,10 +186,7 @@ describe('Phase 7 Core - Personal Streak (PRD 6.14 STR-1, 7.4)', () => {
       { date: '2026-10-02', loggedDay: false }, // missed
       { date: '2026-10-03', loggedDay: false }, // today
     ];
-    const { currentStreak, longestStreak } = calculatePersonalStreak(
-      dailyLogs,
-      '2026-10-03',
-    );
+    const { currentStreak, longestStreak } = calculatePersonalStreak(dailyLogs, '2026-10-03');
     expect(currentStreak).toBe(0);
     expect(longestStreak).toBe(1);
   });
@@ -211,10 +202,7 @@ describe('Phase 7 Core - Personal Streak (PRD 6.14 STR-1, 7.4)', () => {
       { date: '2026-09-07', loggedDay: true },
       { date: '2026-09-08', loggedDay: true }, // current 2-day streak
     ];
-    const { currentStreak, longestStreak } = calculatePersonalStreak(
-      dailyLogs,
-      '2026-09-08',
-    );
+    const { currentStreak, longestStreak } = calculatePersonalStreak(dailyLogs, '2026-09-08');
     expect(currentStreak).toBe(2);
     expect(longestStreak).toBe(5);
   });
@@ -256,10 +244,7 @@ describe('Phase 7 Core - Room Streak (PRD 6.14 STR-2, 7.4)', () => {
       { date: '2026-10-02', activeMemberCount: 3, loggedMemberCount: 3 },
       { date: '2026-10-03', activeMemberCount: 3, loggedMemberCount: 3 },
     ];
-    const { currentStreak, longestStreak } = calculateRoomStreak(
-      records,
-      '2026-10-03',
-    );
+    const { currentStreak, longestStreak } = calculateRoomStreak(records, '2026-10-03');
     expect(currentStreak).toBe(3);
     expect(longestStreak).toBe(3);
   });
@@ -275,7 +260,9 @@ describe('Phase 7 Core - Leaderboards (PRD 6.16, 7.5)', () => {
     // 29 days later -> division follows goal
     expect(determineLeaderboardDivision('cut', created, '2026-10-30T00:00:00Z')).toBe('cutting');
     expect(determineLeaderboardDivision('bulk', created, '2026-10-30T00:00:00Z')).toBe('bulking');
-    expect(determineLeaderboardDivision('maintain', created, '2026-10-30T00:00:00Z')).toBe('maintain');
+    expect(determineLeaderboardDivision('maintain', created, '2026-10-30T00:00:00Z')).toBe(
+      'maintain',
+    );
   });
 
   it('determines leaderboard eligibility', () => {
@@ -283,7 +270,9 @@ describe('Phase 7 Core - Leaderboards (PRD 6.16, 7.5)', () => {
     expect(isLeaderboardEligible({ hasRoomAccess: true, loggedDaysCount: 3 })).toBe(true);
     expect(isLeaderboardEligible({ hasRoomAccess: true, loggedDaysCount: 2 })).toBe(false); // < 3 days
     expect(isLeaderboardEligible({ hasRoomAccess: false, loggedDaysCount: 5 })).toBe(false); // no room access
-    expect(isLeaderboardEligible({ hasRoomAccess: true, loggedDaysCount: 7, isOptedOut: true })).toBe(false); // opted out
+    expect(
+      isLeaderboardEligible({ hasRoomAccess: true, loggedDaysCount: 7, isOptedOut: true }),
+    ).toBe(false); // opted out
   });
 
   it('generates deterministic cohort IDs', () => {

@@ -40,11 +40,20 @@ export interface PreparedPhotoPayload {
 }
 
 export interface SupabaseFunctionsClient {
-  rpc?: (name: string, args: Record<string, unknown>) => Promise<{ data: unknown; error: { message: string } | null }>;
+  rpc?: (
+    name: string,
+    args: Record<string, unknown>,
+  ) => Promise<{ data: unknown; error: { message: string } | null }>;
   from?: (table: string) => {
     select: (cols: string) => {
-      eq: (col1: string, val1: unknown) => {
-        eq: (col2: string, val2: unknown) => {
+      eq: (
+        col1: string,
+        val1: unknown,
+      ) => {
+        eq: (
+          col2: string,
+          val2: unknown,
+        ) => {
           limit: (n: number) => Promise<{ data: unknown[]; error: unknown }>;
         };
       };
@@ -52,7 +61,10 @@ export interface SupabaseFunctionsClient {
     insert: (val: Record<string, unknown>) => Promise<{ error: { message: string } | null }>;
   };
   functions?: {
-    invoke: (name: string, options: { body: unknown }) => Promise<{
+    invoke: (
+      name: string,
+      options: { body: unknown },
+    ) => Promise<{
       data: Record<string, unknown> | null;
       error: { message?: string; status?: number } | null;
     }>;
@@ -108,7 +120,10 @@ export async function acceptAiProcessingConsent(
       p_version: version,
     });
     if (error) {
-      throw new AiFoodPhotoServiceError('SERVER_ERROR', `Failed to accept consent: ${error.message}`);
+      throw new AiFoodPhotoServiceError(
+        'SERVER_ERROR',
+        `Failed to accept consent: ${error.message}`,
+      );
     }
     return;
   }
@@ -120,7 +135,10 @@ export async function acceptAiProcessingConsent(
       accepted_at: new Date().toISOString(),
     });
     if (error) {
-      throw new AiFoodPhotoServiceError('SERVER_ERROR', `Failed to accept consent: ${error.message}`);
+      throw new AiFoodPhotoServiceError(
+        'SERVER_ERROR',
+        `Failed to accept consent: ${error.message}`,
+      );
     }
   }
 }
@@ -164,9 +182,8 @@ export function preparePhotoForAiAnalysis(params: {
       binaryString += String.fromCharCode(byte);
     }
   }
-  const base64 = typeof btoa !== 'undefined'
-    ? btoa(binaryString)
-    : Buffer.from(cleanBuffer).toString('base64');
+  const base64 =
+    typeof btoa !== 'undefined' ? btoa(binaryString) : Buffer.from(cleanBuffer).toString('base64');
 
   return {
     imageBase64: base64,
@@ -190,10 +207,7 @@ export async function analyzeFoodPhoto(
   },
 ): Promise<FoodPhotoAnalysisResponse> {
   if (!supabase.functions) {
-    throw new AiFoodPhotoServiceError(
-      'SERVER_ERROR',
-      'Supabase functions client is unavailable',
-    );
+    throw new AiFoodPhotoServiceError('SERVER_ERROR', 'Supabase functions client is unavailable');
   }
 
   const { data, error } = await supabase.functions.invoke('ai-food-photo', {
@@ -245,14 +259,10 @@ export async function analyzeFoodPhoto(
   if (data.error && !data.success) {
     const errCode = typeof data.code === 'string' ? data.code : 'MODEL_ERROR';
     const errMsg = typeof data.error === 'string' ? data.error : JSON.stringify(data.error);
-    throw new AiFoodPhotoServiceError(
-      errCode,
-      errMsg,
-      data,
-    );
+    throw new AiFoodPhotoServiceError(errCode, errMsg, data);
   }
 
-  return (data as unknown) as FoodPhotoAnalysisResponse;
+  return data as unknown as FoodPhotoAnalysisResponse;
 }
 
 /**
@@ -284,10 +294,7 @@ export function updateCandidateQuantity(
  * Swaps a candidate's matched food with an alternative food item
  * from the database or custom foods, preserving quantity and recomputing nutrients.
  */
-export function swapCandidateFood(
-  candidate: FoodCandidateItem,
-  newFood: Food,
-): FoodCandidateItem {
+export function swapCandidateFood(candidate: FoodCandidateItem, newFood: Food): FoodCandidateItem {
   const unitGrams = resolveUnitGrams(newFood, candidate.unit);
   const estimatedGrams = Math.round(candidate.quantity * unitGrams * 10) / 10;
   const nutrients = scaleNutrients(newFood, candidate.quantity, candidate.unit);

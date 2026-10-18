@@ -531,7 +531,7 @@ describe('Phase 9 Notification Attack & Security Tests', () => {
     expect(activeNotifications.length).toBe(1);
     expect(activeNotifications[0]?.status).toBe('pending');
     expect(removedNotifications.length).toBe(0); // Zero pushes to locked/removed
-    expect(leftNotifications.length).toBe(0);    // Zero pushes to members who left
+    expect(leftNotifications.length).toBe(0); // Zero pushes to members who left
   });
 
   it('6. Token cleanup: invalid tokens and stale tokens are removed', () => {

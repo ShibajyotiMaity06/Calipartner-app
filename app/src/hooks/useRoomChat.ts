@@ -303,7 +303,12 @@ export function useRoomChat(
         setMessages((prev) =>
           prev.map((m) =>
             m.id === messageId
-              ? { ...m, text: '[Message deleted]', deleted_at: new Date().toISOString(), attachments: [] }
+              ? {
+                  ...m,
+                  text: '[Message deleted]',
+                  deleted_at: new Date().toISOString(),
+                  attachments: [],
+                }
               : m,
           ),
         );
@@ -317,36 +322,30 @@ export function useRoomChat(
   );
 
   // Report message action
-  const reportMessage = useCallback(
-    async (messageId: string, reason: string, details?: string) => {
-      const supabase = getSupabase();
-      try {
-        await reportChatMessage(supabase, messageId, reason, details);
-      } catch (err: unknown) {
-        const chatErr = parseChatError(err);
-        setError(chatErr);
-        throw chatErr;
-      }
-    },
-    [],
-  );
+  const reportMessage = useCallback(async (messageId: string, reason: string, details?: string) => {
+    const supabase = getSupabase();
+    try {
+      await reportChatMessage(supabase, messageId, reason, details);
+    } catch (err: unknown) {
+      const chatErr = parseChatError(err);
+      setError(chatErr);
+      throw chatErr;
+    }
+  }, []);
 
   // Mute member action
-  const muteMember = useCallback(
-    async (targetUserId: string) => {
-      const supabase = getSupabase();
-      try {
-        await muteChatMember(supabase, targetUserId);
-        // Hide their messages from state immediately
-        setMessages((prev) => prev.filter((m) => m.sender_id !== targetUserId));
-      } catch (err: unknown) {
-        const chatErr = parseChatError(err);
-        setError(chatErr);
-        throw chatErr;
-      }
-    },
-    [],
-  );
+  const muteMember = useCallback(async (targetUserId: string) => {
+    const supabase = getSupabase();
+    try {
+      await muteChatMember(supabase, targetUserId);
+      // Hide their messages from state immediately
+      setMessages((prev) => prev.filter((m) => m.sender_id !== targetUserId));
+    } catch (err: unknown) {
+      const chatErr = parseChatError(err);
+      setError(chatErr);
+      throw chatErr;
+    }
+  }, []);
 
   // Accept terms action
   const acceptTermsAction = useCallback(async () => {

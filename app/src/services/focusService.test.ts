@@ -52,7 +52,19 @@ describe('Phase 9B: Focus Service & Client Data Layer', () => {
             source,
             createdAt,
             updatedAt,
-          ] = params as [string, string, string, string | null, number | null, string, number, string, string, string, string];
+          ] = params as [
+            string,
+            string,
+            string,
+            string | null,
+            number | null,
+            string,
+            number,
+            string,
+            string,
+            string,
+            string,
+          ];
           localSessionsTable.set(id, {
             id,
             user_id: userId,
@@ -117,7 +129,9 @@ describe('Phase 9B: Focus Service & Client Data Layer', () => {
       expect(parseFocusError(new Error('NOT_A_MEMBER')).code).toBe('NOT_A_MEMBER');
       expect(parseFocusError(new Error('SESSION_ENDED')).code).toBe('SESSION_ENDED');
       expect(parseFocusError(new Error('RATE_LIMITED')).code).toBe('RATE_LIMITED');
-      expect(parseFocusError(new Error('SESSION_ALREADY_ACTIVE')).code).toBe('SESSION_ALREADY_ACTIVE');
+      expect(parseFocusError(new Error('SESSION_ALREADY_ACTIVE')).code).toBe(
+        'SESSION_ALREADY_ACTIVE',
+      );
       expect(parseFocusError(new Error('Random unhandled error')).code).toBe('INVALID_ARGUMENT');
     });
   });
@@ -225,7 +239,9 @@ describe('Phase 9B: Focus Service & Client Data Layer', () => {
         rpc: vi.fn().mockResolvedValue({ data: null, error: { message: 'ROOM_LOCKED' } }),
       } as unknown as SupabaseClient;
 
-      await expect(startRoomFocus('room-1', 'timer', 'Focus', 1500, mockSupabase)).rejects.toThrow(FocusError);
+      await expect(startRoomFocus('room-1', 'timer', 'Focus', 1500, mockSupabase)).rejects.toThrow(
+        FocusError,
+      );
 
       try {
         await startRoomFocus('room-1', 'timer', 'Focus', 1500, mockSupabase);

@@ -171,7 +171,8 @@ describe('Phase 11: AI Food-Photo Core Logic (PRD 6.3 LOG-3, 7.7, 8.2)', () => {
     });
 
     it('handles markdown code block wrappers (```json ... ```)', () => {
-      const wrapped = '```json\n{"items":[{"food_name":"Oatmeal","estimated_grams":150,"confidence":0.88}]}\n```';
+      const wrapped =
+        '```json\n{"items":[{"food_name":"Oatmeal","estimated_grams":150,"confidence":0.88}]}\n```';
       const parsed = parseAndValidateVisionModelOutput(wrapped);
       expect(parsed.items).toHaveLength(1);
       expect(parsed.items[0]!.food_name).toBe('Oatmeal');
@@ -373,9 +374,9 @@ describe('Phase 11: AI Food-Photo Core Logic (PRD 6.3 LOG-3, 7.7, 8.2)', () => {
       const adapter = new MockVisionModelAdapter();
       adapter.setFailure('AI provider timeout');
 
-      await expect(adapter.analyzeFoodPhoto(new Uint8Array([1]), 'image/jpeg')).rejects.toThrowError(
-        'AI provider timeout',
-      );
+      await expect(
+        adapter.analyzeFoodPhoto(new Uint8Array([1]), 'image/jpeg'),
+      ).rejects.toThrowError('AI provider timeout');
     });
   });
 });

@@ -35,7 +35,10 @@ export interface SupabaseSyncClient {
       eq(column: string, value: unknown): PromiseLike<{ error: Error | null }>;
     };
     select(columns?: string): {
-      gt(column: string, value: unknown): {
+      gt(
+        column: string,
+        value: unknown,
+      ): {
         order(
           column: string,
           options?: { ascending?: boolean },
@@ -107,10 +110,7 @@ export async function enqueueOutbox(
 /**
  * Reads pending outbox items that are ready to be sent (now >= next_retry_at).
  */
-export async function getPendingOutboxItems(
-  db: SyncDb,
-  limit = 50,
-): Promise<OutboxItem[]> {
+export async function getPendingOutboxItems(db: SyncDb, limit = 50): Promise<OutboxItem[]> {
   const nowIso = new Date().toISOString();
   const rows = await db.getAllAsync<{
     id: string;
@@ -212,10 +212,10 @@ export async function flushOutbox(
   for (const item of items) {
     // 1. Mark as in_flight
     const flightTime = new Date().toISOString();
-    await db.runAsync(
-      `UPDATE outbox SET status = 'in_flight', updated_at = ? WHERE id = ?`,
-      [flightTime, item.id],
-    );
+    await db.runAsync(`UPDATE outbox SET status = 'in_flight', updated_at = ? WHERE id = ?`, [
+      flightTime,
+      item.id,
+    ]);
 
     try {
       // 2. Perform operation on Supabase
@@ -262,15 +262,13 @@ export async function flushOutbox(
             [item.payload.user_id, item.payload.local_date],
           );
         } else if (item.entity === 'fasting_settings' || item.entity === 'focus_settings') {
-          await db.runAsync(
-            `UPDATE ${localTable} SET sync_state = 'synced' WHERE user_id = ?`,
-            [item.payload.user_id],
-          );
+          await db.runAsync(`UPDATE ${localTable} SET sync_state = 'synced' WHERE user_id = ?`, [
+            item.payload.user_id,
+          ]);
         } else {
-          await db.runAsync(
-            `UPDATE ${localTable} SET sync_state = 'synced' WHERE id = ?`,
-            [item.id],
-          );
+          await db.runAsync(`UPDATE ${localTable} SET sync_state = 'synced' WHERE id = ?`, [
+            item.id,
+          ]);
         }
       }
 
@@ -317,15 +315,13 @@ export async function flushOutbox(
             [item.payload.user_id, item.payload.food_id],
           );
         } else if (item.entity === 'fasting_settings' || item.entity === 'focus_settings') {
-          await db.runAsync(
-            `UPDATE ${localTable} SET sync_state = 'failed' WHERE user_id = ?`,
-            [item.payload.user_id],
-          );
+          await db.runAsync(`UPDATE ${localTable} SET sync_state = 'failed' WHERE user_id = ?`, [
+            item.payload.user_id,
+          ]);
         } else {
-          await db.runAsync(
-            `UPDATE ${localTable} SET sync_state = 'failed' WHERE id = ?`,
-            [item.id],
-          );
+          await db.runAsync(`UPDATE ${localTable} SET sync_state = 'failed' WHERE id = ?`, [
+            item.id,
+          ]);
         }
       }
     }
@@ -348,11 +344,7 @@ export async function getSyncCursor(db: SyncDb, entity: string): Promise<string 
 /**
  * Sets the last pulled timestamp for an entity.
  */
-export async function setSyncCursor(
-  db: SyncDb,
-  entity: string,
-  pulledAt: string,
-): Promise<void> {
+export async function setSyncCursor(db: SyncDb, entity: string, pulledAt: string): Promise<void> {
   await db.runAsync(
     `INSERT INTO sync_cursors (entity, last_pulled_at) VALUES (?, ?)
      ON CONFLICT (entity) DO UPDATE SET last_pulled_at = excluded.last_pulled_at`,
@@ -388,7 +380,8 @@ export async function pullEntityDelta(
   let latestRemoteUpdated = cursor;
 
   for (const row of remoteRows) {
-    const remoteUpdated = (typeof row.updated_at === 'string' ? row.updated_at : null) || new Date().toISOString();
+    const remoteUpdated =
+      (typeof row.updated_at === 'string' ? row.updated_at : null) || new Date().toISOString();
     if (!latestRemoteUpdated || remoteUpdated > latestRemoteUpdated) {
       latestRemoteUpdated = remoteUpdated;
     }
@@ -492,7 +485,10 @@ export async function pullEntityDelta(
       }
     } else if (entity === 'foods') {
       // Custom foods created by owner or synced foods
-      const unitsJson = typeof row.serving_units === 'string' ? row.serving_units : JSON.stringify(row.serving_units ?? []);
+      const unitsJson =
+        typeof row.serving_units === 'string'
+          ? row.serving_units
+          : JSON.stringify(row.serving_units ?? []);
       await db.runAsync(
         `INSERT INTO local_foods (
           id, source, name, brand, barcode, serving_units,

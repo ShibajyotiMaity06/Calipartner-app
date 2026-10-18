@@ -143,9 +143,7 @@ export function InteractiveDobPicker({ value, onChange, error }: InteractiveDobP
           ]}
         >
           <Text style={[styles.boxLabel, { color: colors.textMuted }]}>Month</Text>
-          <Text style={[styles.boxValue, { color: colors.text }]}>
-            {FULL_MONTH_NAMES[month]}
-          </Text>
+          <Text style={[styles.boxValue, { color: colors.text }]}>{FULL_MONTH_NAMES[month]}</Text>
           <Text style={[styles.boxHint, { color: colors.textMuted }]}>Tap to change</Text>
         </Pressable>
 
@@ -353,12 +351,7 @@ export function InteractiveDobPicker({ value, onChange, error }: InteractiveDobP
         <Text style={[styles.ageTitle, { color: colors.text }]}>
           {isAdult ? `🎂 ${age} years old` : `⚠️ ${age} years old`}
         </Text>
-        <Text
-          style={[
-            styles.ageSubtitle,
-            { color: isAdult ? colors.textMuted : colors.danger },
-          ]}
-        >
+        <Text style={[styles.ageSubtitle, { color: isAdult ? colors.textMuted : colors.danger }]}>
           {isAdult
             ? `Born ${FULL_MONTH_NAMES[month]} ${safeDay}, ${year} · Meets 18+ requirement`
             : t('onboarding.bodyStats.under18Error')}

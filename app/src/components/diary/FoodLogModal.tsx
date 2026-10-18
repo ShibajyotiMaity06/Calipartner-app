@@ -75,8 +75,12 @@ export function FoodLogModal({
   const [photoResults, setPhotoResults] = useState<FoodCandidateItem[] | null>(null);
   const [showResultsEditor, setShowResultsEditor] = useState(false);
   const [showDailyLimitModal, setShowDailyLimitModal] = useState(false);
-  const [limitState, setLimitState] = useState<'trial' | 'paid' | 'free' | 'free_after_trial'>('trial');
-  const [limitUsage, setLimitUsage] = useState<{ usedToday: number; dailyCap: number } | null>(null);
+  const [limitState, setLimitState] = useState<'trial' | 'paid' | 'free' | 'free_after_trial'>(
+    'trial',
+  );
+  const [limitUsage, setLimitUsage] = useState<{ usedToday: number; dailyCap: number } | null>(
+    null,
+  );
   const [consentLoading, setConsentLoading] = useState(false);
 
   // Search tab hook
@@ -129,9 +133,7 @@ export function FoodLogModal({
   const handleAcceptConsent = async () => {
     try {
       setConsentLoading(true);
-      await acceptAiProcessingConsent(
-        getSupabase() as unknown as SupabaseFunctionsClient,
-      );
+      await acceptAiProcessingConsent(getSupabase() as unknown as SupabaseFunctionsClient);
       setShowPhotoConsent(false);
       setShowPhotoCamera(true);
     } catch {
@@ -146,13 +148,10 @@ export function FoodLogModal({
     setShowPhotoCamera(false);
     setPhotoAnalyzing(true);
     try {
-      const response = await analyzeFoodPhoto(
-        getSupabase() as unknown as SupabaseFunctionsClient,
-        {
-          imageBase64: payload.base64,
-          mimeType: payload.mimeType,
-        },
-      );
+      const response = await analyzeFoodPhoto(getSupabase() as unknown as SupabaseFunctionsClient, {
+        imageBase64: payload.base64,
+        mimeType: payload.mimeType,
+      });
 
       setPhotoResults(response.candidates);
       setShowResultsEditor(true);
@@ -258,39 +257,41 @@ export function FoodLogModal({
               paddingHorizontal: spacing.sm,
             }}
           >
-            {(['search', 'scan', 'photo', 'recipes', 'history', 'myFoods'] as TabType[]).map((tab) => {
-              const isActive = activeTab === tab;
-              return (
-                <Pressable
-                  key={tab}
-                  testID={`tab-log-${tab}`}
-                  onPress={() => {
-                    if (tab === 'scan') {
-                      setShowBarcodeScanner(true);
-                    } else {
-                      setActiveTab(tab);
-                    }
-                  }}
-                  style={{
-                    flex: 1,
-                    alignItems: 'center',
-                    paddingVertical: 10,
-                    borderBottomWidth: isActive ? 2.5 : 0,
-                    borderBottomColor: colors.accent,
-                  }}
-                >
-                  <Text
+            {(['search', 'scan', 'photo', 'recipes', 'history', 'myFoods'] as TabType[]).map(
+              (tab) => {
+                const isActive = activeTab === tab;
+                return (
+                  <Pressable
+                    key={tab}
+                    testID={`tab-log-${tab}`}
+                    onPress={() => {
+                      if (tab === 'scan') {
+                        setShowBarcodeScanner(true);
+                      } else {
+                        setActiveTab(tab);
+                      }
+                    }}
                     style={{
-                      fontSize: fontSize.xs,
-                      fontWeight: isActive ? '700' : '500',
-                      color: isActive ? colors.accent : colors.textMuted,
+                      flex: 1,
+                      alignItems: 'center',
+                      paddingVertical: 10,
+                      borderBottomWidth: isActive ? 2.5 : 0,
+                      borderBottomColor: colors.accent,
                     }}
                   >
-                    {t(`foodLog.tabs.${tab}` as Parameters<typeof t>[0])}
-                  </Text>
-                </Pressable>
-              );
-            })}
+                    <Text
+                      style={{
+                        fontSize: fontSize.xs,
+                        fontWeight: isActive ? '700' : '500',
+                        color: isActive ? colors.accent : colors.textMuted,
+                      }}
+                    >
+                      {t(`foodLog.tabs.${tab}` as Parameters<typeof t>[0])}
+                    </Text>
+                  </Pressable>
+                );
+              },
+            )}
           </View>
 
           {/* TAB 1: Search */}
@@ -340,12 +341,16 @@ export function FoodLogModal({
                   </Text>
                 </View>
               ) : query.trim().length > 0 && searchResults.length === 0 ? (
-                <View style={{ paddingVertical: spacing.xl, alignItems: 'center', gap: spacing.sm }}>
+                <View
+                  style={{ paddingVertical: spacing.xl, alignItems: 'center', gap: spacing.sm }}
+                >
                   <Ionicons name="search-outline" size={36} color={colors.textMuted} />
                   <Text style={{ fontSize: fontSize.md, fontWeight: '700', color: colors.text }}>
                     {t('foodLog.noResultsTitle')}
                   </Text>
-                  <Text style={{ fontSize: fontSize.xs, color: colors.textMuted, textAlign: 'center' }}>
+                  <Text
+                    style={{ fontSize: fontSize.xs, color: colors.textMuted, textAlign: 'center' }}
+                  >
                     {t('foodLog.noResultsSub')}
                   </Text>
                   <Pressable
@@ -359,13 +364,18 @@ export function FoodLogModal({
                       borderRadius: radius.sm,
                     }}
                   >
-                    <Text style={{ color: colors.onAccent, fontWeight: '700', fontSize: fontSize.sm }}>
+                    <Text
+                      style={{ color: colors.onAccent, fontWeight: '700', fontSize: fontSize.sm }}
+                    >
                       {t('foodLog.createCustomFood')}
                     </Text>
                   </Pressable>
                 </View>
               ) : (
-                <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ gap: 6, paddingBottom: 20 }}>
+                <ScrollView
+                  showsVerticalScrollIndicator={false}
+                  contentContainerStyle={{ gap: 6, paddingBottom: 20 }}
+                >
                   {searchResults.map((f) => (
                     <Pressable
                       key={f.id}
@@ -384,21 +394,40 @@ export function FoodLogModal({
                       })}
                     >
                       <View style={{ flex: 1, gap: 2 }}>
-                        <Text style={{ fontSize: fontSize.md, fontWeight: '600', color: colors.text }} numberOfLines={1}>
+                        <Text
+                          style={{ fontSize: fontSize.md, fontWeight: '600', color: colors.text }}
+                          numberOfLines={1}
+                        >
                           {f.name}
                         </Text>
                         <Text style={{ fontSize: fontSize.xs, color: colors.textMuted }}>
-                          {f.brand ? `${f.brand} • ` : ''}P {f.protein_per_100g}g • C {f.carbs_per_100g}g • F {f.fat_per_100g}g (per 100g)
+                          {f.brand ? `${f.brand} • ` : ''}P {f.protein_per_100g}g • C{' '}
+                          {f.carbs_per_100g}g • F {f.fat_per_100g}g (per 100g)
                         </Text>
                       </View>
 
                       <View style={{ alignItems: 'flex-end', gap: 2 }}>
-                        <Text style={{ fontSize: fontSize.sm, fontWeight: '700', color: colors.macroCalories }}>
+                        <Text
+                          style={{
+                            fontSize: fontSize.sm,
+                            fontWeight: '700',
+                            color: colors.macroCalories,
+                          }}
+                        >
                           {f.calories_per_100g} kcal
                         </Text>
                         {f.owner_id ? (
-                          <View style={{ backgroundColor: colors.surfaceAlt, paddingHorizontal: 6, paddingVertical: 2, borderRadius: radius.pill }}>
-                            <Text style={{ fontSize: 9, fontWeight: '700', color: colors.accent }}>MY FOOD</Text>
+                          <View
+                            style={{
+                              backgroundColor: colors.surfaceAlt,
+                              paddingHorizontal: 6,
+                              paddingVertical: 2,
+                              borderRadius: radius.pill,
+                            }}
+                          >
+                            <Text style={{ fontSize: 9, fontWeight: '700', color: colors.accent }}>
+                              MY FOOD
+                            </Text>
                           </View>
                         ) : null}
                       </View>
@@ -449,10 +478,25 @@ export function FoodLogModal({
                 </Text>
               </View>
 
-              <Text style={{ fontSize: fontSize.lg, fontWeight: '700', color: colors.text, textAlign: 'center' }}>
+              <Text
+                style={{
+                  fontSize: fontSize.lg,
+                  fontWeight: '700',
+                  color: colors.text,
+                  textAlign: 'center',
+                }}
+              >
                 {t('foodLog.photo.title')}
               </Text>
-              <Text style={{ fontSize: fontSize.sm, color: colors.textMuted, textAlign: 'center', maxWidth: 300, lineHeight: 20 }}>
+              <Text
+                style={{
+                  fontSize: fontSize.sm,
+                  color: colors.textMuted,
+                  textAlign: 'center',
+                  maxWidth: 300,
+                  lineHeight: 20,
+                }}
+              >
                 {t('foodLog.photo.subtitle')}
               </Text>
 
@@ -488,10 +532,21 @@ export function FoodLogModal({
                 accessibilityRole="button"
                 accessibilityLabel="View AI privacy details"
                 onPress={() => setShowPhotoConsent(true)}
-                style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: spacing.xs }}
+                style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  gap: 6,
+                  marginTop: spacing.xs,
+                }}
               >
                 <Ionicons name="shield-checkmark-outline" size={14} color={colors.textMuted} />
-                <Text style={{ fontSize: fontSize.xs, color: colors.textMuted, textDecorationLine: 'underline' }}>
+                <Text
+                  style={{
+                    fontSize: fontSize.xs,
+                    color: colors.textMuted,
+                    textDecorationLine: 'underline',
+                  }}
+                >
                   In-memory processing & privacy guarantees
                 </Text>
               </Pressable>
@@ -578,12 +633,17 @@ export function FoodLogModal({
                   <Text style={{ fontSize: fontSize.md, fontWeight: '700', color: colors.text }}>
                     {t('foodLog.history.emptyTitle')}
                   </Text>
-                  <Text style={{ fontSize: fontSize.xs, color: colors.textMuted, textAlign: 'center' }}>
+                  <Text
+                    style={{ fontSize: fontSize.xs, color: colors.textMuted, textAlign: 'center' }}
+                  >
                     {t('foodLog.history.emptySub')}
                   </Text>
                 </View>
               ) : (
-                <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ gap: 6, paddingBottom: 20, marginTop: 4 }}>
+                <ScrollView
+                  showsVerticalScrollIndicator={false}
+                  contentContainerStyle={{ gap: 6, paddingBottom: 20, marginTop: 4 }}
+                >
                   {historyItems.map((item) => (
                     <View
                       key={item.food.id}
@@ -604,11 +664,15 @@ export function FoodLogModal({
                         style={{ flex: 1, gap: 2 }}
                         onPress={() => handleSelectFood(item.food)}
                       >
-                        <Text style={{ fontSize: fontSize.sm, fontWeight: '600', color: colors.text }} numberOfLines={1}>
+                        <Text
+                          style={{ fontSize: fontSize.sm, fontWeight: '600', color: colors.text }}
+                          numberOfLines={1}
+                        >
                           {item.food.name}
                         </Text>
                         <Text style={{ fontSize: fontSize.xs, color: colors.textMuted }}>
-                          {item.stats.last_quantity} {item.stats.last_unit} • {item.stats.use_count}x logged
+                          {item.stats.last_quantity} {item.stats.last_unit} • {item.stats.use_count}
+                          x logged
                         </Text>
                       </Pressable>
 
@@ -630,7 +694,13 @@ export function FoodLogModal({
                           }}
                         >
                           <Ionicons name="add" size={14} color={colors.accent} />
-                          <Text style={{ fontSize: fontSize.xs, fontWeight: '700', color: colors.accent }}>
+                          <Text
+                            style={{
+                              fontSize: fontSize.xs,
+                              fontWeight: '700',
+                              color: colors.accent,
+                            }}
+                          >
                             + Quick
                           </Text>
                         </Pressable>
@@ -673,7 +743,14 @@ export function FoodLogModal({
                 </Text>
               </Pressable>
 
-              <Text style={{ fontSize: fontSize.xs, color: colors.textMuted, fontStyle: 'italic', marginTop: 4 }}>
+              <Text
+                style={{
+                  fontSize: fontSize.xs,
+                  color: colors.textMuted,
+                  fontStyle: 'italic',
+                  marginTop: 4,
+                }}
+              >
                 {t('foodLog.myFoods.emptySub')}
               </Text>
             </View>

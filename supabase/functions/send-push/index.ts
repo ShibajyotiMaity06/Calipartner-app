@@ -259,10 +259,7 @@ export async function handleSendPush(req: Request): Promise<Response> {
       .limit(limit);
 
     if (notification_id) {
-      query = adminClient
-        .from('push_notification_queue')
-        .select('*')
-        .eq('id', notification_id);
+      query = adminClient.from('push_notification_queue').select('*').eq('id', notification_id);
     }
 
     const { data: queueItems, error: queueErr } = await query;
@@ -293,7 +290,8 @@ export async function handleSendPush(req: Request): Promise<Response> {
         JSON.stringify({
           success: true,
           mock: true,
-          message: 'Simulated push delivery in dev environment (FIREBASE_SERVICE_ACCOUNT secret not set)',
+          message:
+            'Simulated push delivery in dev environment (FIREBASE_SERVICE_ACCOUNT secret not set)',
           processed_count: queueItems.length,
         }),
         { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },

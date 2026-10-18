@@ -1,12 +1,5 @@
 import React, { useState } from 'react';
-import {
-  ActivityIndicator,
-  Modal,
-  Pressable,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
+import { ActivityIndicator, Modal, Pressable, StyleSheet, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { t } from '@/i18n';
 import { fontSize, radius, spacing } from '@/theme/tokens';
@@ -64,19 +57,34 @@ export function ChatTermsModal({
 
           {/* Guideline Bullet 1 */}
           <View style={styles.guidelineRow}>
-            <Ionicons name="heart-outline" size={20} color={colors.accent} style={styles.bulletIcon} />
+            <Ionicons
+              name="heart-outline"
+              size={20}
+              color={colors.accent}
+              style={styles.bulletIcon}
+            />
             <Text style={[styles.bulletText, { color: colors.text }]}>{t('chat.term1')}</Text>
           </View>
 
           {/* Guideline Bullet 2 */}
           <View style={styles.guidelineRow}>
-            <Ionicons name="nutrition-outline" size={20} color={colors.accent} style={styles.bulletIcon} />
+            <Ionicons
+              name="nutrition-outline"
+              size={20}
+              color={colors.accent}
+              style={styles.bulletIcon}
+            />
             <Text style={[styles.bulletText, { color: colors.text }]}>{t('chat.term2')}</Text>
           </View>
 
           {/* Guideline Bullet 3 */}
           <View style={styles.guidelineRow}>
-            <Ionicons name="close-circle-outline" size={20} color={colors.accent} style={styles.bulletIcon} />
+            <Ionicons
+              name="close-circle-outline"
+              size={20}
+              color={colors.accent}
+              style={styles.bulletIcon}
+            />
             <Text style={[styles.bulletText, { color: colors.text }]}>{t('chat.term3')}</Text>
           </View>
 

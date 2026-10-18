@@ -24,7 +24,6 @@
     "food:seed": "npx tsx scripts/food_tools.ts",
     "recipes:import": "npx tsx scripts/recipes_import.ts"
   },
-
   "devDependencies": {
     "@eslint/js": "^9.0.0",
     "@types/deno": "^2.7.0",

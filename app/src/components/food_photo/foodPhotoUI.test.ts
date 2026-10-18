@@ -2,10 +2,7 @@ import { describe, expect, it } from 'vitest';
 import type { Food, FoodCandidateItem, MealSection } from '@calipartner/core';
 import { en } from '@/i18n/en';
 import { t } from '@/i18n';
-import {
-  swapCandidateFood,
-  updateCandidateQuantity,
-} from '@/services/aiFoodPhotoService';
+import { swapCandidateFood, updateCandidateQuantity } from '@/services/aiFoodPhotoService';
 
 describe('Phase 11 Prompt B — AI Food Photo UI Screens & State Tests', () => {
   const mockFoodApple: Food = {

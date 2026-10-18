@@ -18,9 +18,7 @@ import { isQuietHours, type NotificationSettings } from '@calipartner/core';
 import { useNotificationSettings } from '@/hooks/useNotificationSettings';
 import { useRooms } from '@/hooks/useRooms';
 import { t } from '@/i18n';
-import {
-  getNotificationPermissionStatus,
-} from '@/services/notificationPermissionService';
+import { getNotificationPermissionStatus } from '@/services/notificationPermissionService';
 import { isRoomChatMuted } from '@/services/notificationSettingsService';
 import { fontSize, radius, spacing } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
@@ -38,14 +36,8 @@ export function NotificationSettingsScreen({
   const router = useRouter();
   const { colors } = useTheme();
 
-  const {
-    settings,
-    isLoading,
-    error,
-    updateSettings,
-    muteRoomChat,
-    refresh,
-  } = useNotificationSettings();
+  const { settings, isLoading, error, updateSettings, muteRoomChat, refresh } =
+    useNotificationSettings();
 
   const { rooms, loading: roomsLoading } = useRooms();
 
@@ -131,7 +123,10 @@ export function NotificationSettingsScreen({
     const validEnd = timeRegex.test(quietEndInput.trim());
 
     if (!validStart || !validEnd) {
-      Alert.alert(t('notifications.quietHours.sectionTitle'), t('notifications.quietHours.invalidTimeError'));
+      Alert.alert(
+        t('notifications.quietHours.sectionTitle'),
+        t('notifications.quietHours.invalidTimeError'),
+      );
       setQuietStartInput(settings.quiet_hours_start || '22:00');
       setQuietEndInput(settings.quiet_hours_end || '07:00');
       return;
@@ -205,9 +200,7 @@ export function NotificationSettingsScreen({
         testID={`${testID}-error`}
       >
         <Ionicons name="alert-circle-outline" size={48} color={colors.textMuted} />
-        <Text style={[styles.errorTitle, { color: colors.text }]}>
-          {t('notifications.error')}
-        </Text>
+        <Text style={[styles.errorTitle, { color: colors.text }]}>{t('notifications.error')}</Text>
         <Text style={[styles.statusText, { color: colors.textMuted, marginBottom: spacing.md }]}>
           {error}
         </Text>
@@ -244,7 +237,9 @@ export function NotificationSettingsScreen({
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]} testID={testID}>
       {/* Top Header */}
-      <View style={[styles.header, { borderColor: colors.border, backgroundColor: colors.surface }]}>
+      <View
+        style={[styles.header, { borderColor: colors.border, backgroundColor: colors.surface }]}
+      >
         <Pressable
           testID="btn-notification-settings-back"
           accessibilityRole="button"
@@ -266,16 +261,15 @@ export function NotificationSettingsScreen({
 
       {/* Floating Save Toast */}
       {toastMessage && (
-        <View style={[styles.toast, { backgroundColor: colors.surfaceAlt, borderColor: colors.border }]}>
+        <View
+          style={[styles.toast, { backgroundColor: colors.surfaceAlt, borderColor: colors.border }]}
+        >
           <Ionicons name="checkmark-circle" size={16} color={colors.accent} />
           <Text style={[styles.toastText, { color: colors.text }]}>{toastMessage}</Text>
         </View>
       )}
 
-      <ScrollView
-        contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={false}
-      >
+      <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
         {/* Permission Priming Banner if not Granted */}
         {permissionStatus !== Notifications.PermissionStatus.GRANTED && (
           <Pressable
@@ -669,13 +663,9 @@ export function NotificationSettingsScreen({
                   )}
                   <View style={styles.row}>
                     <View style={styles.rowText}>
-                      <Text style={[styles.rowTitle, { color: colors.text }]}>
-                        {room.name}
-                      </Text>
+                      <Text style={[styles.rowTitle, { color: colors.text }]}>{room.name}</Text>
                       <Text style={[styles.rowDesc, { color: colors.textMuted }]}>
-                        {isMuted
-                          ? t('notifications.statusMuted')
-                          : t('notifications.statusActive')}
+                        {isMuted ? t('notifications.statusMuted') : t('notifications.statusActive')}
                       </Text>
                     </View>
                     <Switch
@@ -725,14 +715,7 @@ interface SettingToggleRowProps {
   };
 }
 
-function SettingToggleRow({
-  testID,
-  title,
-  desc,
-  value,
-  onChange,
-  colors,
-}: SettingToggleRowProps) {
+function SettingToggleRow({ testID, title, desc, value, onChange, colors }: SettingToggleRowProps) {
   return (
     <View style={styles.row}>
       <View style={styles.rowText}>

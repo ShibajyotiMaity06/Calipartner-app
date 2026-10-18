@@ -1,12 +1,5 @@
 import { useState } from 'react';
-import {
-  Modal,
-  Pressable,
-  StyleSheet,
-  Text,
-  TextInput,
-  View,
-} from 'react-native';
+import { Modal, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { t } from '@/i18n';
 import { fontSize, radius, spacing } from '@/theme/tokens';
@@ -72,7 +65,9 @@ export function ManualStepsModal({ visible, onClose, onSave }: ManualStepsModalP
           onPress={onClose}
           accessibilityLabel={t('common.cancel')}
         />
-        <View style={[styles.sheet, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+        <View
+          style={[styles.sheet, { backgroundColor: colors.surface, borderColor: colors.border }]}
+        >
           {/* Header */}
           <View style={styles.header}>
             <View style={styles.headerTitleRow}>
@@ -99,7 +94,10 @@ export function ManualStepsModal({ visible, onClose, onSave }: ManualStepsModalP
             <View
               style={[
                 styles.inputWrapper,
-                { backgroundColor: colors.surfaceAlt, borderColor: error ? colors.danger : colors.border },
+                {
+                  backgroundColor: colors.surfaceAlt,
+                  borderColor: error ? colors.danger : colors.border,
+                },
               ]}
             >
               <TextInput
@@ -147,9 +145,7 @@ export function ManualStepsModal({ visible, onClose, onSave }: ManualStepsModalP
             </View>
           </View>
 
-          {error ? (
-            <Text style={[styles.errorText, { color: colors.danger }]}>{error}</Text>
-          ) : null}
+          {error ? <Text style={[styles.errorText, { color: colors.danger }]}>{error}</Text> : null}
 
           {/* Actions */}
           <View style={styles.actionsRow}>

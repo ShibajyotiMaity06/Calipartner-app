@@ -60,25 +60,28 @@ export async function listUserRooms(client: SupabaseClient): Promise<RoomSummary
       room_id: string;
       role: 'host' | 'member';
       status: 'active' | 'paused' | 'locked';
-      rooms: {
-        id: string;
-        name: string;
-        code: string;
-        state: 'active' | 'dormant' | 'locked' | 'over_capacity' | 'archived';
-        created_at: string;
-        who_can_invite?: 'host_only' | 'any_member';
-        plan_holder_id?: string | null;
-        member_cap?: number;
-      } | {
-        id: string;
-        name: string;
-        code: string;
-        state: 'active' | 'dormant' | 'locked' | 'over_capacity' | 'archived';
-        created_at: string;
-        who_can_invite?: 'host_only' | 'any_member';
-        plan_holder_id?: string | null;
-        member_cap?: number;
-      }[] | null;
+      rooms:
+        | {
+            id: string;
+            name: string;
+            code: string;
+            state: 'active' | 'dormant' | 'locked' | 'over_capacity' | 'archived';
+            created_at: string;
+            who_can_invite?: 'host_only' | 'any_member';
+            plan_holder_id?: string | null;
+            member_cap?: number;
+          }
+        | {
+            id: string;
+            name: string;
+            code: string;
+            state: 'active' | 'dormant' | 'locked' | 'over_capacity' | 'archived';
+            created_at: string;
+            who_can_invite?: 'host_only' | 'any_member';
+            plan_holder_id?: string | null;
+            member_cap?: number;
+          }[]
+        | null;
     }
 
     const rows = (data ?? []) as unknown as RoomMembershipRow[];

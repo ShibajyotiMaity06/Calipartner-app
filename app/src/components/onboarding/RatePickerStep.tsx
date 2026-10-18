@@ -1,10 +1,5 @@
 import { Pressable, StyleSheet, Text, View } from 'react-native';
-import {
-  kgToLb,
-  type CalculateTargetsResult,
-  type Goal,
-  type Units,
-} from '@calipartner/core';
+import { kgToLb, type CalculateTargetsResult, type Goal, type Units } from '@calipartner/core';
 import { t } from '@/i18n';
 import { playClickSound } from '@/lib/sound';
 import { fontSize, radius, spacing } from '@/theme/tokens';
@@ -260,10 +255,7 @@ export function RatePickerStep({
 
       {/* Validation error */}
       {errorMessage ? (
-        <Text
-          style={[styles.errorText, { color: colors.danger }]}
-          testID="error-rate-selection"
-        >
+        <Text style={[styles.errorText, { color: colors.danger }]} testID="error-rate-selection">
           {errorMessage}
         </Text>
       ) : null}

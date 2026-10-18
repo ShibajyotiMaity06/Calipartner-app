@@ -1,12 +1,5 @@
 import React, { useState } from 'react';
-import {
-  Modal,
-  Pressable,
-  Share,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
+import { Modal, Pressable, Share, StyleSheet, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import type { ChatMessage } from '@/types/chat';
 import { t } from '@/i18n';
@@ -140,8 +133,15 @@ export function ChatMessageMenuModal({
                   accessibilityLabel={t('chat.copyText')}
                   testID="btn-copy-text"
                 >
-                  <Ionicons name="copy-outline" size={20} color={colors.text} style={styles.optionIcon} />
-                  <Text style={[styles.optionLabel, { color: colors.text }]}>{t('chat.copyText')}</Text>
+                  <Ionicons
+                    name="copy-outline"
+                    size={20}
+                    color={colors.text}
+                    style={styles.optionIcon}
+                  />
+                  <Text style={[styles.optionLabel, { color: colors.text }]}>
+                    {t('chat.copyText')}
+                  </Text>
                 </Pressable>
               )}
 
@@ -154,8 +154,15 @@ export function ChatMessageMenuModal({
                   accessibilityLabel={t('chat.deleteOwn')}
                   testID="btn-delete-message"
                 >
-                  <Ionicons name="trash-outline" size={20} color={colors.danger} style={styles.optionIcon} />
-                  <Text style={[styles.optionLabel, { color: colors.danger }]}>{t('chat.deleteOwn')}</Text>
+                  <Ionicons
+                    name="trash-outline"
+                    size={20}
+                    color={colors.danger}
+                    style={styles.optionIcon}
+                  />
+                  <Text style={[styles.optionLabel, { color: colors.danger }]}>
+                    {t('chat.deleteOwn')}
+                  </Text>
                 </Pressable>
               )}
 
@@ -172,8 +179,15 @@ export function ChatMessageMenuModal({
                     accessibilityLabel={t('chat.reportMsg')}
                     testID="btn-report-message"
                   >
-                    <Ionicons name="flag-outline" size={20} color={colors.danger} style={styles.optionIcon} />
-                    <Text style={[styles.optionLabel, { color: colors.danger }]}>{t('chat.reportMsg')}</Text>
+                    <Ionicons
+                      name="flag-outline"
+                      size={20}
+                      color={colors.danger}
+                      style={styles.optionIcon}
+                    />
+                    <Text style={[styles.optionLabel, { color: colors.danger }]}>
+                      {t('chat.reportMsg')}
+                    </Text>
                   </Pressable>
 
                   {message.sender_id && (
@@ -184,7 +198,12 @@ export function ChatMessageMenuModal({
                       accessibilityLabel={`Mute member`}
                       testID="btn-mute-member"
                     >
-                      <Ionicons name="volume-mute-outline" size={20} color={colors.textMuted} style={styles.optionIcon} />
+                      <Ionicons
+                        name="volume-mute-outline"
+                        size={20}
+                        color={colors.textMuted}
+                        style={styles.optionIcon}
+                      />
                       <Text style={[styles.optionLabel, { color: colors.text }]}>
                         {t('chat.muteMember', { username: message.sender_nickname || 'Member' })}
                       </Text>
@@ -201,7 +220,9 @@ export function ChatMessageMenuModal({
                 accessibilityLabel={t('chat.cancel')}
                 testID="btn-menu-cancel"
               >
-                <Text style={[styles.cancelBtnText, { color: colors.text }]}>{t('chat.cancel')}</Text>
+                <Text style={[styles.cancelBtnText, { color: colors.text }]}>
+                  {t('chat.cancel')}
+                </Text>
               </Pressable>
             </>
           )}

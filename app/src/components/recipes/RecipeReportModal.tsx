@@ -62,15 +62,12 @@ export function RecipeReportModal({
     try {
       const db = await getDb();
 
-      await reportRecipe(
-        db,
-        {
-          userId: user.id,
-          recipeId: recipe.id,
-          reason: selectedReason,
-          details: details.trim() || null,
-        },
-      );
+      await reportRecipe(db, {
+        userId: user.id,
+        recipeId: recipe.id,
+        reason: selectedReason,
+        details: details.trim() || null,
+      });
 
       setSubmitted(true);
       setTimeout(() => {
@@ -80,7 +77,9 @@ export function RecipeReportModal({
         onClose();
       }, 1500);
     } catch (err: unknown) {
-      setErrorMsg(err instanceof Error ? err.message : 'Failed to submit report. Please try again.');
+      setErrorMsg(
+        err instanceof Error ? err.message : 'Failed to submit report. Please try again.',
+      );
     } finally {
       setSubmitting(false);
     }
@@ -95,7 +94,9 @@ export function RecipeReportModal({
       onRequestClose={onClose}
     >
       <View style={styles.backdrop}>
-        <View style={[styles.dialog, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+        <View
+          style={[styles.dialog, { backgroundColor: colors.surface, borderColor: colors.border }]}
+        >
           {/* Header */}
           <View style={styles.header}>
             <View style={{ flex: 1 }}>
@@ -127,7 +128,12 @@ export function RecipeReportModal({
           ) : (
             <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.content}>
               {errorMsg && (
-                <View style={[styles.errorBox, { backgroundColor: '#FEE2E2', borderColor: colors.danger }]}>
+                <View
+                  style={[
+                    styles.errorBox,
+                    { backgroundColor: '#FEE2E2', borderColor: colors.danger },
+                  ]}
+                >
                   <Text style={[styles.errorText, { color: colors.danger }]}>{errorMsg}</Text>
                 </View>
               )}

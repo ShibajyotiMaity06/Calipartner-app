@@ -1,11 +1,5 @@
 import React, { useState } from 'react';
-import {
-  ActivityIndicator,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
-} from 'react-native';
+import { ActivityIndicator, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import type { WorkoutWithDetails } from '@calipartner/core';
 import { useWorkouts } from '@/hooks/useWorkouts';
@@ -30,27 +24,17 @@ export function TodayWorkoutCard({
 
   const [loggerVisible, setLoggerVisible] = useState(false);
   const [historyVisible, setHistoryVisible] = useState(false);
-  const [activeDetailWorkout, setActiveDetailWorkout] =
-    useState<WorkoutWithDetails | null>(null);
+  const [activeDetailWorkout, setActiveDetailWorkout] = useState<WorkoutWithDetails | null>(null);
 
   // Compute total aggregates for the day
   const totalDuration = workouts.reduce((acc, w) => acc + w.duration_minutes, 0);
-  const totalVolume = workouts.reduce(
-    (acc, w) => acc + getSummary(w).total_volume_kg,
-    0,
-  );
-  const totalCalories = workouts.reduce(
-    (acc, w) => acc + getSummary(w).estimated_calories,
-    0,
-  );
+  const totalVolume = workouts.reduce((acc, w) => acc + getSummary(w).total_volume_kg, 0);
+  const totalCalories = workouts.reduce((acc, w) => acc + getSummary(w).estimated_calories, 0);
 
   return (
     <View
       testID={testID}
-      style={[
-        styles.card,
-        { backgroundColor: colors.surface, borderColor: colors.border },
-      ]}
+      style={[styles.card, { backgroundColor: colors.surface, borderColor: colors.border }]}
       accessibilityRole="none"
       accessibilityLabel={t('workouts.cardTitle')}
     >
@@ -58,9 +42,7 @@ export function TodayWorkoutCard({
       <View style={styles.headerRow}>
         <View style={styles.headerTitleWrap}>
           <Ionicons name="barbell-outline" size={20} color={colors.accent} />
-          <Text style={[styles.cardTitle, { color: colors.text }]}>
-            {t('workouts.cardTitle')}
-          </Text>
+          <Text style={[styles.cardTitle, { color: colors.text }]}>{t('workouts.cardTitle')}</Text>
         </View>
 
         <View style={styles.headerButtons}>
@@ -93,16 +75,12 @@ export function TodayWorkoutCard({
       {loading ? (
         <View style={styles.centerState}>
           <ActivityIndicator size="small" color={colors.accent} />
-          <Text style={[styles.stateText, { color: colors.textMuted }]}>
-            {t('common.loading')}
-          </Text>
+          <Text style={[styles.stateText, { color: colors.textMuted }]}>{t('common.loading')}</Text>
         </View>
       ) : error ? (
         <View style={styles.centerState}>
           <Ionicons name="alert-circle-outline" size={24} color={colors.danger} />
-          <Text style={[styles.errorText, { color: colors.danger }]}>
-            {error.message}
-          </Text>
+          <Text style={[styles.errorText, { color: colors.danger }]}>{error.message}</Text>
           <TouchableOpacity
             testID="btn-today-workout-retry"
             style={[styles.retryBtn, { backgroundColor: colors.surfaceAlt }]}
@@ -189,9 +167,7 @@ export function TodayWorkoutCard({
                     { backgroundColor: colors.cardHighlight, borderColor: colors.accent },
                   ]}
                 >
-                  <Text style={[styles.microBadgeText, { color: colors.accent }]}>
-                    EST
-                  </Text>
+                  <Text style={[styles.microBadgeText, { color: colors.accent }]}>EST</Text>
                 </View>
               </View>
               <Text
@@ -230,9 +206,7 @@ export function TodayWorkoutCard({
                           { backgroundColor: colors.surfaceAlt, borderColor: colors.border },
                         ]}
                       >
-                        <Text
-                          style={[styles.typeTagText, { color: colors.textMuted }]}
-                        >
+                        <Text style={[styles.typeTagText, { color: colors.textMuted }]}>
                           {t(`workouts.types.${w.type}` as const)}
                         </Text>
                       </View>
@@ -240,17 +214,11 @@ export function TodayWorkoutCard({
 
                     <Text style={[styles.workoutRowSub, { color: colors.textMuted }]}>
                       {w.duration_minutes} min • {w.exercises.length} exercises
-                      {summary.total_volume_kg > 0
-                        ? ` • ${summary.total_volume_kg} kg`
-                        : ''}
+                      {summary.total_volume_kg > 0 ? ` • ${summary.total_volume_kg} kg` : ''}
                     </Text>
                   </View>
 
-                  <Ionicons
-                    name="chevron-forward"
-                    size={16}
-                    color={colors.textMuted}
-                  />
+                  <Ionicons name="chevron-forward" size={16} color={colors.textMuted} />
                 </TouchableOpacity>
               );
             })}

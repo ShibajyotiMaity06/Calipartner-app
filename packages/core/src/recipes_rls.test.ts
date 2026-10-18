@@ -1,10 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import type {
-  Recipe,
-  RecipeFavorite,
-  RecipeIngredient,
-  RecipeReport,
-} from './types';
+import type { Recipe, RecipeFavorite, RecipeIngredient, RecipeReport } from './types';
 
 /**
  * In-memory simulation of Row-Level Security policies for Phase 12 tables:
@@ -98,14 +93,9 @@ class InMemoryRecipeSecurityDb {
   }
 
   // --- Recipe Favorites ---
-  insertFavorite(
-    callerUserId: string,
-    favorite: RecipeFavorite,
-  ): RecipeFavorite {
+  insertFavorite(callerUserId: string, favorite: RecipeFavorite): RecipeFavorite {
     if (favorite.user_id !== callerUserId) {
-      throw new Error(
-        'RLS check violation: cannot favorite recipes on behalf of another user',
-      );
+      throw new Error('RLS check violation: cannot favorite recipes on behalf of another user');
     }
     this.favorites.push(favorite);
     return favorite;
@@ -127,9 +117,7 @@ class InMemoryRecipeSecurityDb {
   // --- Recipe Reports ---
   insertReport(callerUserId: string, report: RecipeReport): RecipeReport {
     if (report.user_id !== callerUserId) {
-      throw new Error(
-        'RLS check violation: cannot file recipe reports for another user',
-      );
+      throw new Error('RLS check violation: cannot file recipe reports for another user');
     }
     this.reports.push(report);
     return report;
@@ -147,9 +135,7 @@ class InMemoryRecipeSecurityDb {
 
   updateReport(callerRole: 'authenticated' | 'service_role', _reportId: string): void {
     if (callerRole !== 'service_role') {
-      throw new Error(
-        'RLS check violation: authenticated users cannot modify recipe reports',
-      );
+      throw new Error('RLS check violation: authenticated users cannot modify recipe reports');
     }
   }
 }

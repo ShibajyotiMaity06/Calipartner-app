@@ -258,10 +258,7 @@ export function FocusSettingsModal({
             testID="btn-save-focus-settings"
             onPress={handleSave}
             disabled={saving || loading}
-            style={[
-              styles.saveBtn,
-              { backgroundColor: colors.accent, opacity: saving ? 0.7 : 1 },
-            ]}
+            style={[styles.saveBtn, { backgroundColor: colors.accent, opacity: saving ? 0.7 : 1 }]}
             accessibilityRole="button"
             accessibilityLabel={t('common.save')}
           >

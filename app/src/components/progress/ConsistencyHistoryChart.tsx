@@ -57,9 +57,7 @@ export function ConsistencyHistoryChart({
         >
           <Ionicons name="flame" size={24} color={colors.accent} />
           <View>
-            <Text style={[styles.streakNumber, { color: colors.text }]}>
-              {currentStreak}
-            </Text>
+            <Text style={[styles.streakNumber, { color: colors.text }]}>{currentStreak}</Text>
             <Text style={[styles.streakLabel, { color: colors.textMuted }]}>
               {t('progress.consistency.currentStreak')}
             </Text>
@@ -74,9 +72,7 @@ export function ConsistencyHistoryChart({
         >
           <Ionicons name="trophy-outline" size={24} color={colors.accent} />
           <View>
-            <Text style={[styles.streakNumber, { color: colors.text }]}>
-              {longestStreak}
-            </Text>
+            <Text style={[styles.streakNumber, { color: colors.text }]}>{longestStreak}</Text>
             <Text style={[styles.streakLabel, { color: colors.textMuted }]}>
               {t('progress.consistency.longestStreak')}
             </Text>
@@ -95,10 +91,7 @@ export function ConsistencyHistoryChart({
             {weeklyScores.slice(-6).map((item) => (
               <View
                 key={item.week_start_date}
-                style={[
-                  styles.scoreCard,
-                  { backgroundColor: colors.surfaceAlt },
-                ]}
+                style={[styles.scoreCard, { backgroundColor: colors.surfaceAlt }]}
               >
                 <View>
                   <Text style={[styles.weekDate, { color: colors.text }]}>
@@ -113,9 +106,7 @@ export function ConsistencyHistoryChart({
                   <Text style={[styles.scoreValue, { color: colors.accent }]}>
                     {item.consistency_score.toFixed(1)}
                   </Text>
-                  <Text style={[styles.scoreMax, { color: colors.textMuted }]}>
-                    / 100
-                  </Text>
+                  <Text style={[styles.scoreMax, { color: colors.textMuted }]}>/ 100</Text>
                 </View>
               </View>
             ))}

@@ -21,7 +21,9 @@ describe('Phase 5C — Room UI Presentation & Logic Tests', () => {
     });
 
     it('preserves neutral locked state without confusing with 0 or empty', () => {
-      const formatMetricValue = (val: number | string | 'locked' | null | undefined): { isLocked: boolean; display: string } => {
+      const formatMetricValue = (
+        val: number | string | 'locked' | null | undefined,
+      ): { isLocked: boolean; display: string } => {
         if (val === 'locked') {
           return { isLocked: true, display: en.rooms.today.lockedItem };
         }
@@ -266,7 +268,9 @@ describe('Phase 5C — Room UI Presentation & Logic Tests', () => {
 
       it('filters members by search query case-insensitively', () => {
         const query = 'zara';
-        const filtered = mockMembers.filter((m) => m.nickname.toLowerCase().includes(query.toLowerCase()));
+        const filtered = mockMembers.filter((m) =>
+          m.nickname.toLowerCase().includes(query.toLowerCase()),
+        );
         expect(filtered).toHaveLength(1);
         expect(filtered[0]?.nickname).toBe('Zara');
       });
@@ -287,7 +291,9 @@ describe('Phase 5C — Room UI Presentation & Logic Tests', () => {
         const numericCompletions = mockMembers
           .map((m) => m.metrics.goal_completion)
           .filter((v): v is number => typeof v === 'number');
-        const avg = Math.round(numericCompletions.reduce((acc, curr) => acc + curr, 0) / numericCompletions.length);
+        const avg = Math.round(
+          numericCompletions.reduce((acc, curr) => acc + curr, 0) / numericCompletions.length,
+        );
         expect(avg).toBeGreaterThan(0);
         expect(avg).toBeLessThanOrEqual(100);
       });

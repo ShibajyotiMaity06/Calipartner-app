@@ -1,11 +1,5 @@
 import React from 'react';
-import {
-  Modal,
-  Pressable,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
+import { Modal, Pressable, StyleSheet, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { t } from '@/i18n';
 import { fontSize, radius, spacing } from '@/theme/tokens';
@@ -27,12 +21,7 @@ export interface RoomFullSheetProps extends RoomFullNoticeProps {
  * Inline notice when a room reaches capacity.
  * Host gets upgrade sheet/card; members get calm, neutral notification.
  */
-export function RoomFullNotice({
-  memberCount,
-  memberCap,
-  isHost,
-  onUpgrade,
-}: RoomFullNoticeProps) {
+export function RoomFullNotice({ memberCount, memberCap, isHost, onUpgrade }: RoomFullNoticeProps) {
   const { colors } = useTheme();
 
   const nextTier = memberCap <= 5 ? 'Plus' : 'Pro';
@@ -51,9 +40,7 @@ export function RoomFullNotice({
         testID="sheet-room-full-host"
       >
         <View style={styles.headerRow}>
-          <View
-            style={[styles.iconCircle, { backgroundColor: colors.cardHighlight }]}
-          >
+          <View style={[styles.iconCircle, { backgroundColor: colors.cardHighlight }]}>
             <Ionicons name="people" size={18} color={colors.accent} />
           </View>
           <View style={styles.textContainer}>
@@ -80,9 +67,7 @@ export function RoomFullNotice({
             testID="btn-room-full-upgrade"
           >
             <Ionicons name="sparkles" size={14} color="#FFFFFF" />
-            <Text style={styles.upgradeBtnText}>
-              {t('rooms.roomFull.upgradeBtn')}
-            </Text>
+            <Text style={styles.upgradeBtnText}>{t('rooms.roomFull.upgradeBtn')}</Text>
           </Pressable>
         )}
       </View>
@@ -102,9 +87,7 @@ export function RoomFullNotice({
       testID="notice-room-full-member"
     >
       <View style={styles.headerRow}>
-        <View
-          style={[styles.iconCircle, { backgroundColor: colors.surface }]}
-        >
+        <View style={[styles.iconCircle, { backgroundColor: colors.surface }]}>
           <Ionicons name="people-outline" size={18} color={colors.textMuted} />
         </View>
         <View style={styles.textContainer}>
@@ -134,12 +117,7 @@ export function RoomFullSheet({
   const { colors } = useTheme();
 
   return (
-    <Modal
-      visible={visible}
-      transparent
-      animationType="fade"
-      onRequestClose={onClose}
-    >
+    <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
       <View style={styles.modalOverlay}>
         <View
           style={[
@@ -154,10 +132,7 @@ export function RoomFullSheet({
             </Text>
             <Pressable
               onPress={onClose}
-              style={[
-                styles.modalCloseBtn,
-                { backgroundColor: colors.surfaceAlt },
-              ]}
+              style={[styles.modalCloseBtn, { backgroundColor: colors.surfaceAlt }]}
               accessibilityRole="button"
               accessibilityLabel={t('rooms.paywall.close')}
               testID="btn-close-room-full-sheet"

@@ -71,9 +71,7 @@ describe('progressService', () => {
       },
     });
 
-    await expect(fetchIndividualProgress(client, '7d')).rejects.toThrowError(
-      ProgressServiceError,
-    );
+    await expect(fetchIndividualProgress(client, '7d')).rejects.toThrowError(ProgressServiceError);
   });
 
   it('fetchRoomProgress calls get_room_progress with room_id and range', async () => {
@@ -98,7 +96,14 @@ describe('progressService', () => {
 
   it('searchRoomMembersForProgress calls search_room_members_for_progress', async () => {
     const mockMembers = [
-      { user_id: 'u1', nickname: 'Rahul', username: 'rahul', avatar_url: null, status: 'active', is_locked: false },
+      {
+        user_id: 'u1',
+        nickname: 'Rahul',
+        username: 'rahul',
+        avatar_url: null,
+        status: 'active',
+        is_locked: false,
+      },
     ];
 
     const client = createMockSupabase({

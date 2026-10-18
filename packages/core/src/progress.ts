@@ -274,10 +274,7 @@ export function calculatePersonalStreak(
  * - In rooms of up to 5 people: EVERY active, non-paused member had a logged day.
  * - In larger rooms (> 5 people): at least 60% of active, non-paused members (rounded up) had a logged day.
  */
-export function isRoomDayAchieved(
-  activeMemberCount: number,
-  loggedMemberCount: number,
-): boolean {
+export function isRoomDayAchieved(activeMemberCount: number, loggedMemberCount: number): boolean {
   if (activeMemberCount <= 0) return false;
   if (loggedMemberCount <= 0) return false;
 
@@ -369,7 +366,8 @@ export function determineLeaderboardDivision(
   accountCreatedAt: string | Date,
   asOfDate: string | Date = new Date(),
 ): LeaderboardDivision {
-  const created = typeof accountCreatedAt === 'string' ? new Date(accountCreatedAt) : accountCreatedAt;
+  const created =
+    typeof accountCreatedAt === 'string' ? new Date(accountCreatedAt) : accountCreatedAt;
   const asOf = typeof asOfDate === 'string' ? new Date(asOfDate) : asOfDate;
 
   const diffMs = asOf.getTime() - created.getTime();
@@ -425,9 +423,7 @@ export function assignCohortId(
  * 3. Earliest completion timestamp (ascending, earliest first)
  * 4. Deterministic fallback by user ID (ascending)
  */
-export function sortLeaderboardEntries(
-  entries: LeaderboardUserEntry[],
-): LeaderboardRankedEntry[] {
+export function sortLeaderboardEntries(entries: LeaderboardUserEntry[]): LeaderboardRankedEntry[] {
   const sorted = [...entries].sort((a, b) => {
     // 1. Consistency score DESC
     if (b.consistencyScore !== a.consistencyScore) {
@@ -440,8 +436,7 @@ export function sortLeaderboardEntries(
     // 3. Earliest completion ASC
     if (a.earliestCompletionAt && b.earliestCompletionAt) {
       const timeDiff =
-        new Date(a.earliestCompletionAt).getTime() -
-        new Date(b.earliestCompletionAt).getTime();
+        new Date(a.earliestCompletionAt).getTime() - new Date(b.earliestCompletionAt).getTime();
       if (timeDiff !== 0) return timeDiff;
     } else if (a.earliestCompletionAt && !b.earliestCompletionAt) {
       return -1;

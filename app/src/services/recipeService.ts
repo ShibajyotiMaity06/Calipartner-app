@@ -1,9 +1,5 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
-import {
-  filterRecipes,
-  scaleLoggedRecipeNutrients,
-  scaleRecipeServings,
-} from '@calipartner/core';
+import { filterRecipes, scaleLoggedRecipeNutrients, scaleRecipeServings } from '@calipartner/core';
 import type {
   FoodEntry,
   MealSection,
@@ -122,10 +118,7 @@ export function parseLocalRecipeRow(row: LocalRecipeRow): Recipe {
 /**
  * Caches a recipe and its ingredients into local SQLite.
  */
-export async function cacheRecipeLocally(
-  db: RecipeDb,
-  recipe: Recipe,
-): Promise<void> {
+export async function cacheRecipeLocally(db: RecipeDb, recipe: Recipe): Promise<void> {
   const now = new Date().toISOString();
   await db.runAsync(
     `INSERT INTO local_recipes (
@@ -178,10 +171,7 @@ export async function cacheRecipeLocally(
   );
 
   if (recipe.ingredients && recipe.ingredients.length > 0) {
-    await db.runAsync(
-      `DELETE FROM local_recipe_ingredients WHERE recipe_id = ?`,
-      [recipe.id],
-    );
+    await db.runAsync(`DELETE FROM local_recipe_ingredients WHERE recipe_id = ?`, [recipe.id]);
 
     for (let i = 0; i < recipe.ingredients.length; i++) {
       const ing = recipe.ingredients[i]!;
@@ -241,12 +231,14 @@ export async function getRecipes(
     try {
       const res = await supabase
         .from('recipes')
-        .select(`
+        .select(
+          `
           id, title, description, cuisine, diet_tags, meal_type,
           prep_minutes, cook_minutes, difficulty, servings,
           steps, tips, image_urls, status, nutrition_per_serving,
           nutrition_override_reason, version, created_at, updated_at
-        `)
+        `,
+        )
         .eq('status', 'published')
         .is('deleted_at', null)
         .order('updated_at', { ascending: false });
@@ -322,10 +314,9 @@ export async function getRecipeDetail(
   let recipe: Recipe | null = null;
 
   // 1. Check local SQLite
-  const row = await db.getFirstAsync<LocalRecipeRow>(
-    `SELECT * FROM local_recipes WHERE id = ?`,
-    [recipeId],
-  );
+  const row = await db.getFirstAsync<LocalRecipeRow>(`SELECT * FROM local_recipes WHERE id = ?`, [
+    recipeId,
+  ]);
 
   if (row) {
     recipe = parseLocalRecipeRow(row);
@@ -383,9 +374,7 @@ export async function getRecipeDetail(
 
   // 3. Fallback to bundled dataset
   if (!recipe) {
-    const bundled = (bundledRecipesData as unknown as Recipe[]).find(
-      (r) => r.id === recipeId,
-    );
+    const bundled = (bundledRecipesData as unknown as Recipe[]).find((r) => r.id === recipeId);
     if (bundled) {
       recipe = bundled;
       await cacheRecipeLocally(db, recipe);
@@ -440,10 +429,7 @@ export function scaleRecipe(
  * Creates a food_entries row with nutrient snapshot and source='recipe'.
  * Syncs seamlessly via the offline outbox queue.
  */
-export async function logRecipe(
-  db: RecipeDb,
-  input: LogRecipeInput,
-): Promise<FoodEntry> {
+export async function logRecipe(db: RecipeDb, input: LogRecipeInput): Promise<FoodEntry> {
   if (input.servings <= 0) {
     throw new Error('Servings must be greater than zero');
   }
@@ -453,10 +439,7 @@ export async function logRecipe(
     throw new Error(`Recipe with ID "${input.recipeId}" not found`);
   }
 
-  const scaledNutrients = scaleLoggedRecipeNutrients(
-    recipe.nutrition_per_serving,
-    input.servings,
-  );
+  const scaledNutrients = scaleLoggedRecipeNutrients(recipe.nutrition_per_serving, input.servings);
 
   const entryId = generateClientUuid();
   const now = input.loggedAt || new Date().toISOString();
@@ -611,10 +594,7 @@ export async function toggleRecipeFavorite(
 /**
  * Gets user's favorite recipes.
  */
-export async function getFavoriteRecipes(
-  db: RecipeDb,
-  userId: string,
-): Promise<Recipe[]> {
+export async function getFavoriteRecipes(db: RecipeDb, userId: string): Promise<Recipe[]> {
   const rows = await db.getAllAsync<LocalRecipeRow>(
     `SELECT r.* FROM local_recipes r
      JOIN local_recipe_favorites f ON f.recipe_id = r.id
@@ -653,10 +633,7 @@ export async function getRecentlyViewedRecipes(
  * Reports an error or issue in a recipe (RCP-9).
  * Inserts into local_recipe_reports and enqueues to outbox.
  */
-export async function reportRecipe(
-  db: RecipeDb,
-  input: ReportRecipeInput,
-): Promise<RecipeReport> {
+export async function reportRecipe(db: RecipeDb, input: ReportRecipeInput): Promise<RecipeReport> {
   const reasonTrimmed = input.reason.trim();
   if (reasonTrimmed.length < 3) {
     throw new Error('Report reason must be at least 3 characters');
