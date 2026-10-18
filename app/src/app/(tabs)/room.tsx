@@ -265,7 +265,9 @@ export default function RoomScreen() {
                   testID="btn-error-signin"
                 >
                   <Ionicons name="log-in-outline" size={18} color={colors.onAccent} />
-                  <Text style={[styles.primaryButtonText, { color: colors.onAccent }]}>{t('auth.title')}</Text>
+                  <Text style={[styles.primaryButtonText, { color: colors.onAccent }]}>
+                    {t('auth.title')}
+                  </Text>
                 </Pressable>
               ) : (
                 <Pressable
@@ -275,7 +277,9 @@ export default function RoomScreen() {
                   testID="btn-error-retry"
                 >
                   <Ionicons name="refresh-outline" size={18} color={colors.onAccent} />
-                  <Text style={[styles.primaryButtonText, { color: colors.onAccent }]}>{t('common.retry')}</Text>
+                  <Text style={[styles.primaryButtonText, { color: colors.onAccent }]}>
+                    {t('common.retry')}
+                  </Text>
                 </Pressable>
               )}
             </View>

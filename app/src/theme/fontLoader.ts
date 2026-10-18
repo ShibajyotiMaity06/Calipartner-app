@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-require-imports */
 import * as Font from 'expo-font';
 import * as SplashScreen from 'expo-splash-screen';
 import { getLocale } from '@/i18n';
@@ -38,7 +39,10 @@ export async function loadAppFonts(): Promise<boolean> {
 
     return true;
   } catch (error) {
-    log.error('Failed to load static fonts', error instanceof Error ? error.message : String(error));
+    log.error(
+      'Failed to load static fonts',
+      error instanceof Error ? error.message : String(error),
+    );
     return false;
   }
 }

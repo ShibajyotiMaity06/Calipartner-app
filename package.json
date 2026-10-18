@@ -10,7 +10,8 @@
     "node": ">=20"
   },
   "scripts": {
-    "lint": "eslint .",
+    "lint": "eslint . && node scripts/lint_tokens.mjs",
+    "lint:tokens": "node scripts/lint_tokens.mjs",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "typecheck": "npm run typecheck --workspaces --if-present",

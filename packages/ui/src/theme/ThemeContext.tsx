@@ -1,4 +1,4 @@
-import React, { createContext } from 'react';
+import { createContext } from 'react';
 import { dark } from '../tokens/colors';
 import type { ThemeContextValue, ColorScheme } from './types';
 

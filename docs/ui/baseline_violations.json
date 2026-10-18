@@ -1,0 +1,1628 @@
+[
+  {
+    "file": "app/src/app/(tabs)/progress.tsx",
+    "line": 285,
+    "type": "hex",
+    "matched": "#000"
+  },
+  {
+    "file": "app/src/app/(tabs)/progress.tsx",
+    "line": 288,
+    "type": "shadow",
+    "matched": "shadowRadius: 2"
+  },
+  {
+    "file": "app/src/app/(tabs)/progress.tsx",
+    "line": 289,
+    "type": "shadow",
+    "matched": "elevation: 2"
+  },
+  {
+    "file": "app/src/app/(tabs)/room.tsx",
+    "line": 686,
+    "type": "radius",
+    "matched": "borderRadius: 40"
+  },
+  {
+    "file": "app/src/app/(tabs)/today.tsx",
+    "line": 266,
+    "type": "radius",
+    "matched": "borderRadius: 22"
+  },
+  {
+    "file": "app/src/app/(tabs)/today.tsx",
+    "line": 325,
+    "type": "radius",
+    "matched": "borderRadius: 22"
+  },
+  {
+    "file": "app/src/app/(tabs)/_layout.tsx",
+    "line": 119,
+    "type": "radius",
+    "matched": "borderRadius: 30"
+  },
+  {
+    "file": "app/src/components/chat/ChatComposer.tsx",
+    "line": 113,
+    "type": "hex",
+    "matched": "#FFFFFF"
+  },
+  {
+    "file": "app/src/components/chat/ChatComposer.tsx",
+    "line": 197,
+    "type": "hex",
+    "matched": "#FFFFFF"
+  },
+  {
+    "file": "app/src/components/chat/ChatComposer.tsx",
+    "line": 202,
+    "type": "hex",
+    "matched": "#FFFFFF"
+  },
+  {
+    "file": "app/src/components/chat/ChatImageViewerModal.tsx",
+    "line": 75,
+    "type": "hex",
+    "matched": "#FFFFFF"
+  },
+  {
+    "file": "app/src/components/chat/ChatImageViewerModal.tsx",
+    "line": 88,
+    "type": "hex",
+    "matched": "#FFFFFF"
+  },
+  {
+    "file": "app/src/components/chat/ChatImageViewerModal.tsx",
+    "line": 101,
+    "type": "hex",
+    "matched": "#FFFFFF"
+  },
+  {
+    "file": "app/src/components/chat/ChatImageViewerModal.tsx",
+    "line": 115,
+    "type": "hex",
+    "matched": "#FFFFFF"
+  },
+  {
+    "file": "app/src/components/chat/ChatImageViewerModal.tsx",
+    "line": 117,
+    "type": "hex",
+    "matched": "#FFFFFF"
+  },
+  {
+    "file": "app/src/components/chat/ChatImageViewerModal.tsx",
+    "line": 125,
+    "type": "hex",
+    "matched": "#10B981"
+  },
+  {
+    "file": "app/src/components/chat/ChatImageViewerModal.tsx",
+    "line": 152,
+    "type": "hex",
+    "matched": "#94A3B8"
+  },
+  {
+    "file": "app/src/components/chat/ChatImageViewerModal.tsx",
+    "line": 175,
+    "type": "hex",
+    "matched": "#000000F5"
+  },
+  {
+    "file": "app/src/components/chat/ChatImageViewerModal.tsx",
+    "line": 216,
+    "type": "hex",
+    "matched": "#FFFFFF"
+  },
+  {
+    "file": "app/src/components/chat/ChatImageViewerModal.tsx",
+    "line": 226,
+    "type": "hex",
+    "matched": "#1E293B"
+  },
+  {
+    "file": "app/src/components/chat/ChatImageViewerModal.tsx",
+    "line": 234,
+    "type": "hex",
+    "matched": "#000000"
+  },
+  {
+    "file": "app/src/components/chat/ChatImageViewerModal.tsx",
+    "line": 236,
+    "type": "shadow",
+    "matched": "shadowRadius: 6"
+  },
+  {
+    "file": "app/src/components/chat/ChatImageViewerModal.tsx",
+    "line": 237,
+    "type": "shadow",
+    "matched": "elevation: 4"
+  },
+  {
+    "file": "app/src/components/chat/ChatImageViewerModal.tsx",
+    "line": 240,
+    "type": "hex",
+    "matched": "#FFFFFF"
+  },
+  {
+    "file": "app/src/components/chat/ChatMessageBubble.tsx",
+    "line": 124,
+    "type": "hex",
+    "matched": "#E2E8F0"
+  },
+  {
+    "file": "app/src/components/chat/ChatMessageBubble.tsx",
+    "line": 129,
+    "type": "hex",
+    "matched": "#FFFFFF"
+  },
+  {
+    "file": "app/src/components/chat/ChatMessageBubble.tsx",
+    "line": 179,
+    "type": "hex",
+    "matched": "#FFFFFF"
+  },
+  {
+    "file": "app/src/components/chat/ChatMessageBubble.tsx",
+    "line": 202,
+    "type": "hex",
+    "matched": "#FFFFFF"
+  },
+  {
+    "file": "app/src/components/chat/ChatMessageBubble.tsx",
+    "line": 204,
+    "type": "hex",
+    "matched": "#FFFFFF"
+  },
+  {
+    "file": "app/src/components/chat/ChatMessageBubble.tsx",
+    "line": 205,
+    "type": "hex",
+    "matched": "#FCA5A5"
+  },
+  {
+    "file": "app/src/components/chat/ChatMessageBubble.tsx",
+    "line": 308,
+    "type": "radius",
+    "matched": "borderBottomRightRadius: 4"
+  },
+  {
+    "file": "app/src/components/chat/ChatMessageBubble.tsx",
+    "line": 311,
+    "type": "radius",
+    "matched": "borderBottomLeftRadius: 4"
+  },
+  {
+    "file": "app/src/components/chat/ChatMessageBubble.tsx",
+    "line": 340,
+    "type": "hex",
+    "matched": "#00000010"
+  },
+  {
+    "file": "app/src/components/chat/ChatMessageMenuModal.tsx",
+    "line": 119,
+    "type": "hex",
+    "matched": "#FFFFFF"
+  },
+  {
+    "file": "app/src/components/chat/ChatReportModal.tsx",
+    "line": 83,
+    "type": "hex",
+    "matched": "#10B981"
+  },
+  {
+    "file": "app/src/components/chat/ChatReportModal.tsx",
+    "line": 169,
+    "type": "hex",
+    "matched": "#FFFFFF"
+  },
+  {
+    "file": "app/src/components/chat/ChatReportModal.tsx",
+    "line": 266,
+    "type": "hex",
+    "matched": "#FFFFFF"
+  },
+  {
+    "file": "app/src/components/chat/ChatTermsModal.tsx",
+    "line": 101,
+    "type": "hex",
+    "matched": "#FFFFFF"
+  },
+  {
+    "file": "app/src/components/chat/ChatTermsModal.tsx",
+    "line": 179,
+    "type": "hex",
+    "matched": "#FFFFFF"
+  },
+  {
+    "file": "app/src/components/chat/ChatView.tsx",
+    "line": 120,
+    "type": "hex",
+    "matched": "#FFFFFF"
+  },
+  {
+    "file": "app/src/components/chat/ChatView.tsx",
+    "line": 132,
+    "type": "hex",
+    "matched": "#FFFFFF"
+  },
+  {
+    "file": "app/src/components/chat/ChatView.tsx",
+    "line": 300,
+    "type": "hex",
+    "matched": "#FFFFFF"
+  },
+  {
+    "file": "app/src/components/coach/CoachChatView.tsx",
+    "line": 484,
+    "type": "hex",
+    "matched": "#FFFFFF"
+  },
+  {
+    "file": "app/src/components/coach/CoachChatView.tsx",
+    "line": 486,
+    "type": "hex",
+    "matched": "#FFFFFF"
+  },
+  {
+    "file": "app/src/components/coach/CoachChatView.tsx",
+    "line": 653,
+    "type": "radius",
+    "matched": "borderRadius: 20"
+  },
+  {
+    "file": "app/src/components/coach/CoachConsentModal.tsx",
+    "line": 181,
+    "type": "radius",
+    "matched": "borderRadius: 26"
+  },
+  {
+    "file": "app/src/components/coach/CoachConsentModal.tsx",
+    "line": 238,
+    "type": "hex",
+    "matched": "#FFFFFF"
+  },
+  {
+    "file": "app/src/components/coach/CoachHistoryModal.tsx",
+    "line": 231,
+    "type": "radius",
+    "matched": "borderRadius: 32"
+  },
+  {
+    "file": "app/src/components/coach/CoachMessageBubble.tsx",
+    "line": 57,
+    "type": "hex",
+    "matched": "#FFFFFF"
+  },
+  {
+    "file": "app/src/components/coach/CoachMessageBubble.tsx",
+    "line": 168,
+    "type": "radius",
+    "matched": "borderRadius: 16"
+  },
+  {
+    "file": "app/src/components/coach/CoachMessageBubble.tsx",
+    "line": 185,
+    "type": "radius",
+    "matched": "borderBottomRightRadius: 2"
+  },
+  {
+    "file": "app/src/components/coach/CoachMessageBubble.tsx",
+    "line": 189,
+    "type": "radius",
+    "matched": "borderBottomLeftRadius: 2"
+  },
+  {
+    "file": "app/src/components/coach/CoachReportModal.tsx",
+    "line": 257,
+    "type": "hex",
+    "matched": "#FFFFFF"
+  },
+  {
+    "file": "app/src/components/coach/CoachSuggestionCard.tsx",
+    "line": 51,
+    "type": "hex",
+    "matched": "#FFFFFF"
+  },
+  {
+    "file": "app/src/components/coach/CoachSuggestionCard.tsx",
+    "line": 140,
+    "type": "hex",
+    "matched": "#FFFFFF"
+  },
+  {
+    "file": "app/src/components/diary/BarcodeScannerModal.tsx",
+    "line": 68,
+    "type": "hex",
+    "matched": "#000000"
+  },
+  {
+    "file": "app/src/components/diary/BarcodeScannerModal.tsx",
+    "line": 82,
+    "type": "hex",
+    "matched": "#FFFFFF"
+  },
+  {
+    "file": "app/src/components/diary/BarcodeScannerModal.tsx",
+    "line": 90,
+    "type": "hex",
+    "matched": "#FFFFFF"
+  },
+  {
+    "file": "app/src/components/diary/BarcodeScannerModal.tsx",
+    "line": 109,
+    "type": "hex",
+    "matched": "#FFFFFF"
+  },
+  {
+    "file": "app/src/components/diary/BarcodeScannerModal.tsx",
+    "line": 167,
+    "type": "hex",
+    "matched": "#FFFFFF"
+  },
+  {
+    "file": "app/src/components/diary/BarcodeScannerModal.tsx",
+    "line": 195,
+    "type": "hex",
+    "matched": "#FFFFFF"
+  },
+  {
+    "file": "app/src/components/diary/BarcodeScannerModal.tsx",
+    "line": 211,
+    "type": "hex",
+    "matched": "#334155"
+  },
+  {
+    "file": "app/src/components/diary/BarcodeScannerModal.tsx",
+    "line": 221,
+    "type": "hex",
+    "matched": "#94A3B8"
+  },
+  {
+    "file": "app/src/components/diary/BarcodeScannerModal.tsx",
+    "line": 224,
+    "type": "hex",
+    "matched": "#1E293B"
+  },
+  {
+    "file": "app/src/components/diary/BarcodeScannerModal.tsx",
+    "line": 225,
+    "type": "hex",
+    "matched": "#FFFFFF"
+  },
+  {
+    "file": "app/src/components/diary/CalorieMacroRing.tsx",
+    "line": 61,
+    "type": "hex",
+    "matched": "#000"
+  },
+  {
+    "file": "app/src/components/diary/CalorieMacroRing.tsx",
+    "line": 64,
+    "type": "shadow",
+    "matched": "shadowRadius: 8"
+  },
+  {
+    "file": "app/src/components/diary/CalorieMacroRing.tsx",
+    "line": 65,
+    "type": "shadow",
+    "matched": "elevation: 2"
+  },
+  {
+    "file": "app/src/components/diary/MealSectionCard.tsx",
+    "line": 54,
+    "type": "hex",
+    "matched": "#000"
+  },
+  {
+    "file": "app/src/components/diary/MealSectionCard.tsx",
+    "line": 57,
+    "type": "shadow",
+    "matched": "shadowRadius: 4"
+  },
+  {
+    "file": "app/src/components/diary/MealSectionCard.tsx",
+    "line": 58,
+    "type": "shadow",
+    "matched": "elevation: 1"
+  },
+  {
+    "file": "app/src/components/focus/FocusCard.tsx",
+    "line": 301,
+    "type": "radius",
+    "matched": "borderRadius: 3"
+  },
+  {
+    "file": "app/src/components/focus/FocusProgressChart.tsx",
+    "line": 20,
+    "type": "hex",
+    "matched": "#3b82f6"
+  },
+  {
+    "file": "app/src/components/focus/FocusProgressChart.tsx",
+    "line": 20,
+    "type": "hex",
+    "matched": "#8b5cf6"
+  },
+  {
+    "file": "app/src/components/focus/FocusProgressChart.tsx",
+    "line": 20,
+    "type": "hex",
+    "matched": "#06b6d4"
+  },
+  {
+    "file": "app/src/components/focus/FocusProgressChart.tsx",
+    "line": 20,
+    "type": "hex",
+    "matched": "#10b981"
+  },
+  {
+    "file": "app/src/components/focus/FocusProgressChart.tsx",
+    "line": 20,
+    "type": "hex",
+    "matched": "#f59e0b"
+  },
+  {
+    "file": "app/src/components/focus/FocusProgressChart.tsx",
+    "line": 20,
+    "type": "hex",
+    "matched": "#64748b"
+  },
+  {
+    "file": "app/src/components/focus/FocusProgressChart.tsx",
+    "line": 345,
+    "type": "radius",
+    "matched": "borderRadius: 2"
+  },
+  {
+    "file": "app/src/components/focus/FocusStartModal.tsx",
+    "line": 558,
+    "type": "hex",
+    "matched": "#000"
+  },
+  {
+    "file": "app/src/components/focus/FocusStartModal.tsx",
+    "line": 560,
+    "type": "shadow",
+    "matched": "shadowRadius: 2"
+  },
+  {
+    "file": "app/src/components/focus/FocusStartModal.tsx",
+    "line": 561,
+    "type": "shadow",
+    "matched": "elevation: 2"
+  },
+  {
+    "file": "app/src/components/food_photo/FoodPhotoAnalyzingOverlay.tsx",
+    "line": 118,
+    "type": "hex",
+    "matched": "#000"
+  },
+  {
+    "file": "app/src/components/food_photo/FoodPhotoAnalyzingOverlay.tsx",
+    "line": 121,
+    "type": "shadow",
+    "matched": "shadowRadius: 16"
+  },
+  {
+    "file": "app/src/components/food_photo/FoodPhotoAnalyzingOverlay.tsx",
+    "line": 122,
+    "type": "shadow",
+    "matched": "elevation: 8"
+  },
+  {
+    "file": "app/src/components/food_photo/FoodPhotoCameraModal.tsx",
+    "line": 198,
+    "type": "hex",
+    "matched": "#FFFFFF"
+  },
+  {
+    "file": "app/src/components/food_photo/FoodPhotoCameraModal.tsx",
+    "line": 210,
+    "type": "hex",
+    "matched": "#FFFFFF"
+  },
+  {
+    "file": "app/src/components/food_photo/FoodPhotoCameraModal.tsx",
+    "line": 232,
+    "type": "hex",
+    "matched": "#FFFFFF"
+  },
+  {
+    "file": "app/src/components/food_photo/FoodPhotoCameraModal.tsx",
+    "line": 246,
+    "type": "hex",
+    "matched": "#000000"
+  },
+  {
+    "file": "app/src/components/food_photo/FoodPhotoCameraModal.tsx",
+    "line": 262,
+    "type": "hex",
+    "matched": "#000000"
+  },
+  {
+    "file": "app/src/components/food_photo/FoodPhotoCameraModal.tsx",
+    "line": 266,
+    "type": "hex",
+    "matched": "#0B0F19"
+  },
+  {
+    "file": "app/src/components/food_photo/FoodPhotoCameraModal.tsx",
+    "line": 309,
+    "type": "hex",
+    "matched": "#FFFFFF"
+  },
+  {
+    "file": "app/src/components/food_photo/FoodPhotoCameraModal.tsx",
+    "line": 335,
+    "type": "hex",
+    "matched": "#38BDF8"
+  },
+  {
+    "file": "app/src/components/food_photo/FoodPhotoCameraModal.tsx",
+    "line": 342,
+    "type": "radius",
+    "matched": "borderTopLeftRadius: 10"
+  },
+  {
+    "file": "app/src/components/food_photo/FoodPhotoCameraModal.tsx",
+    "line": 349,
+    "type": "radius",
+    "matched": "borderTopRightRadius: 10"
+  },
+  {
+    "file": "app/src/components/food_photo/FoodPhotoCameraModal.tsx",
+    "line": 356,
+    "type": "radius",
+    "matched": "borderBottomLeftRadius: 10"
+  },
+  {
+    "file": "app/src/components/food_photo/FoodPhotoCameraModal.tsx",
+    "line": 363,
+    "type": "radius",
+    "matched": "borderBottomRightRadius: 10"
+  },
+  {
+    "file": "app/src/components/food_photo/FoodPhotoCameraModal.tsx",
+    "line": 366,
+    "type": "hex",
+    "matched": "#FFFFFF"
+  },
+  {
+    "file": "app/src/components/food_photo/FoodPhotoCameraModal.tsx",
+    "line": 391,
+    "type": "hex",
+    "matched": "#FFFFFF"
+  },
+  {
+    "file": "app/src/components/food_photo/FoodPhotoCameraModal.tsx",
+    "line": 400,
+    "type": "hex",
+    "matched": "#FFFFFF"
+  },
+  {
+    "file": "app/src/components/food_photo/FoodPhotoCameraModal.tsx",
+    "line": 408,
+    "type": "hex",
+    "matched": "#FFFFFF"
+  },
+  {
+    "file": "app/src/components/food_photo/FoodPhotoCameraModal.tsx",
+    "line": 414,
+    "type": "hex",
+    "matched": "#0B0F19"
+  },
+  {
+    "file": "app/src/components/food_photo/FoodPhotoCameraModal.tsx",
+    "line": 425,
+    "type": "hex",
+    "matched": "#FFFFFF"
+  },
+  {
+    "file": "app/src/components/food_photo/FoodPhotoCameraModal.tsx",
+    "line": 430,
+    "type": "hex",
+    "matched": "#94A3B8"
+  },
+  {
+    "file": "app/src/components/food_photo/FoodPhotoCameraModal.tsx",
+    "line": 446,
+    "type": "hex",
+    "matched": "#2A364F"
+  },
+  {
+    "file": "app/src/components/food_photo/FoodPhotoDailyLimitModal.tsx",
+    "line": 178,
+    "type": "hex",
+    "matched": "#000"
+  },
+  {
+    "file": "app/src/components/food_photo/FoodPhotoDailyLimitModal.tsx",
+    "line": 181,
+    "type": "shadow",
+    "matched": "shadowRadius: 16"
+  },
+  {
+    "file": "app/src/components/food_photo/FoodPhotoDailyLimitModal.tsx",
+    "line": 182,
+    "type": "shadow",
+    "matched": "elevation: 8"
+  },
+  {
+    "file": "app/src/components/notifications/NotificationPrimerModal.tsx",
+    "line": 236,
+    "type": "radius",
+    "matched": "borderRadius: 36"
+  },
+  {
+    "file": "app/src/components/notifications/NotificationSettingsScreen.tsx",
+    "line": 783,
+    "type": "hex",
+    "matched": "#000"
+  },
+  {
+    "file": "app/src/components/notifications/NotificationSettingsScreen.tsx",
+    "line": 786,
+    "type": "shadow",
+    "matched": "shadowRadius: 4"
+  },
+  {
+    "file": "app/src/components/notifications/NotificationSettingsScreen.tsx",
+    "line": 787,
+    "type": "shadow",
+    "matched": "elevation: 3"
+  },
+  {
+    "file": "app/src/components/onboarding/BodyStatsStep.tsx",
+    "line": 502,
+    "type": "hex",
+    "matched": "#000"
+  },
+  {
+    "file": "app/src/components/onboarding/BodyStatsStep.tsx",
+    "line": 505,
+    "type": "shadow",
+    "matched": "shadowRadius: 2"
+  },
+  {
+    "file": "app/src/components/onboarding/BodyStatsStep.tsx",
+    "line": 506,
+    "type": "shadow",
+    "matched": "elevation: 1"
+  },
+  {
+    "file": "app/src/components/onboarding/HowCalculatedStep.tsx",
+    "line": 194,
+    "type": "fontFamily",
+    "matched": "fontFamily: 'monospace'"
+  },
+  {
+    "file": "app/src/components/progress/ChallengesComingSoon.tsx",
+    "line": 53,
+    "type": "hex",
+    "matched": "#000"
+  },
+  {
+    "file": "app/src/components/progress/ChallengesComingSoon.tsx",
+    "line": 56,
+    "type": "shadow",
+    "matched": "shadowRadius: 3"
+  },
+  {
+    "file": "app/src/components/progress/ChallengesComingSoon.tsx",
+    "line": 57,
+    "type": "shadow",
+    "matched": "elevation: 2"
+  },
+  {
+    "file": "app/src/components/progress/ChallengesComingSoon.tsx",
+    "line": 62,
+    "type": "radius",
+    "matched": "borderRadius: 40"
+  },
+  {
+    "file": "app/src/components/progress/ChartContainer.tsx",
+    "line": 84,
+    "type": "hex",
+    "matched": "#000"
+  },
+  {
+    "file": "app/src/components/progress/ChartContainer.tsx",
+    "line": 87,
+    "type": "shadow",
+    "matched": "shadowRadius: 3"
+  },
+  {
+    "file": "app/src/components/progress/ChartContainer.tsx",
+    "line": 88,
+    "type": "shadow",
+    "matched": "elevation: 2"
+  },
+  {
+    "file": "app/src/components/progress/DayDetailModal.tsx",
+    "line": 204,
+    "type": "hex",
+    "matched": "#000"
+  },
+  {
+    "file": "app/src/components/progress/DayDetailModal.tsx",
+    "line": 207,
+    "type": "shadow",
+    "matched": "shadowRadius: 8"
+  },
+  {
+    "file": "app/src/components/progress/DayDetailModal.tsx",
+    "line": 208,
+    "type": "shadow",
+    "matched": "elevation: 6"
+  },
+  {
+    "file": "app/src/components/progress/DayDetailModal.tsx",
+    "line": 227,
+    "type": "radius",
+    "matched": "borderRadius: 16"
+  },
+  {
+    "file": "app/src/components/progress/DayDetailModal.tsx",
+    "line": 273,
+    "type": "hex",
+    "matched": "#ffffff"
+  },
+  {
+    "file": "app/src/components/progress/GoalProgressRing.tsx",
+    "line": 112,
+    "type": "hex",
+    "matched": "#000"
+  },
+  {
+    "file": "app/src/components/progress/GoalProgressRing.tsx",
+    "line": 115,
+    "type": "shadow",
+    "matched": "shadowRadius: 4"
+  },
+  {
+    "file": "app/src/components/progress/GoalProgressRing.tsx",
+    "line": 116,
+    "type": "shadow",
+    "matched": "elevation: 2"
+  },
+  {
+    "file": "app/src/components/progress/LeaderboardView.tsx",
+    "line": 105,
+    "type": "hex",
+    "matched": "#ffffff"
+  },
+  {
+    "file": "app/src/components/progress/LeaderboardView.tsx",
+    "line": 419,
+    "type": "hex",
+    "matched": "#ffffff"
+  },
+  {
+    "file": "app/src/components/progress/RangeSelector.tsx",
+    "line": 88,
+    "type": "hex",
+    "matched": "#000"
+  },
+  {
+    "file": "app/src/components/progress/RangeSelector.tsx",
+    "line": 91,
+    "type": "shadow",
+    "matched": "shadowRadius: 2"
+  },
+  {
+    "file": "app/src/components/progress/RangeSelector.tsx",
+    "line": 92,
+    "type": "shadow",
+    "matched": "elevation: 2"
+  },
+  {
+    "file": "app/src/components/recipes/LogRecipeModal.tsx",
+    "line": 135,
+    "type": "hex",
+    "matched": "#FEE2E2"
+  },
+  {
+    "file": "app/src/components/recipes/LogRecipeModal.tsx",
+    "line": 394,
+    "type": "hex",
+    "matched": "#CBD5E1"
+  },
+  {
+    "file": "app/src/components/recipes/LogRecipeModal.tsx",
+    "line": 427,
+    "type": "radius",
+    "matched": "borderRadius: 22"
+  },
+  {
+    "file": "app/src/components/recipes/RecipeBrowseView.tsx",
+    "line": 241,
+    "type": "hex",
+    "matched": "#EF4444"
+  },
+  {
+    "file": "app/src/components/recipes/RecipeCard.tsx",
+    "line": 73,
+    "type": "hex",
+    "matched": "#EF4444"
+  },
+  {
+    "file": "app/src/components/recipes/RecipeCard.tsx",
+    "line": 73,
+    "type": "hex",
+    "matched": "#FFFFFF"
+  },
+  {
+    "file": "app/src/components/recipes/RecipeCard.tsx",
+    "line": 165,
+    "type": "radius",
+    "matched": "borderRadius: 16"
+  },
+  {
+    "file": "app/src/components/recipes/RecipeCard.tsx",
+    "line": 178,
+    "type": "hex",
+    "matched": "#FFFFFF"
+  },
+  {
+    "file": "app/src/components/recipes/RecipeDetailModal.tsx",
+    "line": 110,
+    "type": "hex",
+    "matched": "#EF4444"
+  },
+  {
+    "file": "app/src/components/recipes/RecipeDetailModal.tsx",
+    "line": 596,
+    "type": "radius",
+    "matched": "borderRadius: 3"
+  },
+  {
+    "file": "app/src/components/recipes/RecipeDetailModal.tsx",
+    "line": 597,
+    "type": "hex",
+    "matched": "#94A3B8"
+  },
+  {
+    "file": "app/src/components/recipes/RecipeDetailModal.tsx",
+    "line": 628,
+    "type": "radius",
+    "matched": "borderRadius: 12"
+  },
+  {
+    "file": "app/src/components/recipes/RecipeReportModal.tsx",
+    "line": 134,
+    "type": "hex",
+    "matched": "#FEE2E2"
+  },
+  {
+    "file": "app/src/components/recipes/RecipeReportModal.tsx",
+    "line": 271,
+    "type": "hex",
+    "matched": "#CBD5E1"
+  },
+  {
+    "file": "app/src/components/rooms/BlockUserModal.tsx",
+    "line": 65,
+    "type": "hex",
+    "matched": "#FEE2E2"
+  },
+  {
+    "file": "app/src/components/rooms/BlockUserModal.tsx",
+    "line": 100,
+    "type": "hex",
+    "matched": "#FFFFFF"
+  },
+  {
+    "file": "app/src/components/rooms/BlockUserModal.tsx",
+    "line": 144,
+    "type": "radius",
+    "matched": "borderRadius: 16"
+  },
+  {
+    "file": "app/src/components/rooms/BlockUserModal.tsx",
+    "line": 155,
+    "type": "radius",
+    "matched": "borderRadius: 30"
+  },
+  {
+    "file": "app/src/components/rooms/BlockUserModal.tsx",
+    "line": 189,
+    "type": "hex",
+    "matched": "#FFFFFF"
+  },
+  {
+    "file": "app/src/components/rooms/CreateRoomModal.tsx",
+    "line": 129,
+    "type": "hex",
+    "matched": "#FFFFFF"
+  },
+  {
+    "file": "app/src/components/rooms/CreateRoomModal.tsx",
+    "line": 175,
+    "type": "radius",
+    "matched": "borderRadius: 16"
+  },
+  {
+    "file": "app/src/components/rooms/CreateRoomModal.tsx",
+    "line": 212,
+    "type": "hex",
+    "matched": "#FFFFFF"
+  },
+  {
+    "file": "app/src/components/rooms/DormantWaitingState.tsx",
+    "line": 98,
+    "type": "hex",
+    "matched": "#FFFFFF"
+  },
+  {
+    "file": "app/src/components/rooms/DormantWaitingState.tsx",
+    "line": 99,
+    "type": "hex",
+    "matched": "#FFFFFF"
+  },
+  {
+    "file": "app/src/components/rooms/DormantWaitingState.tsx",
+    "line": 134,
+    "type": "radius",
+    "matched": "borderRadius: 32"
+  },
+  {
+    "file": "app/src/components/rooms/InviteUserModal.tsx",
+    "line": 202,
+    "type": "hex",
+    "matched": "#FFFFFF"
+  },
+  {
+    "file": "app/src/components/rooms/InviteUserModal.tsx",
+    "line": 208,
+    "type": "hex",
+    "matched": "#FFFFFF"
+  },
+  {
+    "file": "app/src/components/rooms/InviteUserModal.tsx",
+    "line": 259,
+    "type": "radius",
+    "matched": "borderRadius: 16"
+  },
+  {
+    "file": "app/src/components/rooms/InviteUserModal.tsx",
+    "line": 311,
+    "type": "radius",
+    "matched": "borderRadius: 19"
+  },
+  {
+    "file": "app/src/components/rooms/InviteUserModal.tsx",
+    "line": 316,
+    "type": "radius",
+    "matched": "borderRadius: 19"
+  },
+  {
+    "file": "app/src/components/rooms/JoinByCodeModal.tsx",
+    "line": 133,
+    "type": "hex",
+    "matched": "#FFFFFF"
+  },
+  {
+    "file": "app/src/components/rooms/JoinByCodeModal.tsx",
+    "line": 179,
+    "type": "radius",
+    "matched": "borderRadius: 16"
+  },
+  {
+    "file": "app/src/components/rooms/JoinByCodeModal.tsx",
+    "line": 219,
+    "type": "hex",
+    "matched": "#FFFFFF"
+  },
+  {
+    "file": "app/src/components/rooms/LockedFeaturePreviewCards.tsx",
+    "line": 84,
+    "type": "hex",
+    "matched": "#FFFFFF"
+  },
+  {
+    "file": "app/src/components/rooms/LockedFeaturePreviewCards.tsx",
+    "line": 163,
+    "type": "hex",
+    "matched": "#FFFFFF"
+  },
+  {
+    "file": "app/src/components/rooms/LockedFeaturePreviewCards.tsx",
+    "line": 188,
+    "type": "radius",
+    "matched": "borderRadius: 22"
+  },
+  {
+    "file": "app/src/components/rooms/LockedFeaturePreviewCards.tsx",
+    "line": 246,
+    "type": "hex",
+    "matched": "#FFFFFF"
+  },
+  {
+    "file": "app/src/components/rooms/LockedRoomPausedState.tsx",
+    "line": 71,
+    "type": "hex",
+    "matched": "#FFFFFF"
+  },
+  {
+    "file": "app/src/components/rooms/LockedRoomPausedState.tsx",
+    "line": 89,
+    "type": "radius",
+    "matched": "borderRadius: 36"
+  },
+  {
+    "file": "app/src/components/rooms/LockedRoomPausedState.tsx",
+    "line": 135,
+    "type": "hex",
+    "matched": "#FFFFFF"
+  },
+  {
+    "file": "app/src/components/rooms/MembersTab.tsx",
+    "line": 57,
+    "type": "hex",
+    "matched": "#FFFFFF"
+  },
+  {
+    "file": "app/src/components/rooms/MembersTab.tsx",
+    "line": 199,
+    "type": "hex",
+    "matched": "#FFFFFF"
+  },
+  {
+    "file": "app/src/components/rooms/MembersTab.tsx",
+    "line": 218,
+    "type": "radius",
+    "matched": "borderRadius: 20"
+  },
+  {
+    "file": "app/src/components/rooms/MembersTab.tsx",
+    "line": 223,
+    "type": "radius",
+    "matched": "borderRadius: 20"
+  },
+  {
+    "file": "app/src/components/rooms/MeRoomPlanCard.tsx",
+    "line": 205,
+    "type": "hex",
+    "matched": "#FFFFFF"
+  },
+  {
+    "file": "app/src/components/rooms/MeRoomPlanCard.tsx",
+    "line": 322,
+    "type": "hex",
+    "matched": "#FFFFFF"
+  },
+  {
+    "file": "app/src/components/rooms/NudgeModal.tsx",
+    "line": 137,
+    "type": "hex",
+    "matched": "#FFFFFF"
+  },
+  {
+    "file": "app/src/components/rooms/NudgeModal.tsx",
+    "line": 183,
+    "type": "radius",
+    "matched": "borderRadius: 16"
+  },
+  {
+    "file": "app/src/components/rooms/NudgeModal.tsx",
+    "line": 245,
+    "type": "hex",
+    "matched": "#FFFFFF"
+  },
+  {
+    "file": "app/src/components/rooms/OverCapacityBanner.tsx",
+    "line": 75,
+    "type": "hex",
+    "matched": "#FFFFFF"
+  },
+  {
+    "file": "app/src/components/rooms/OverCapacityBanner.tsx",
+    "line": 118,
+    "type": "radius",
+    "matched": "borderRadius: 18"
+  },
+  {
+    "file": "app/src/components/rooms/OverCapacityBanner.tsx",
+    "line": 150,
+    "type": "hex",
+    "matched": "#FFFFFF"
+  },
+  {
+    "file": "app/src/components/rooms/PaywallModal.tsx",
+    "line": 554,
+    "type": "hex",
+    "matched": "#FFFFFF"
+  },
+  {
+    "file": "app/src/components/rooms/PaywallModal.tsx",
+    "line": 656,
+    "type": "radius",
+    "matched": "borderRadius: 16"
+  },
+  {
+    "file": "app/src/components/rooms/PaywallModal.tsx",
+    "line": 721,
+    "type": "hex",
+    "matched": "#000"
+  },
+  {
+    "file": "app/src/components/rooms/PaywallModal.tsx",
+    "line": 724,
+    "type": "shadow",
+    "matched": "shadowRadius: 2"
+  },
+  {
+    "file": "app/src/components/rooms/PaywallModal.tsx",
+    "line": 725,
+    "type": "shadow",
+    "matched": "elevation: 2"
+  },
+  {
+    "file": "app/src/components/rooms/PaywallModal.tsx",
+    "line": 742,
+    "type": "hex",
+    "matched": "#FFFFFF"
+  },
+  {
+    "file": "app/src/components/rooms/PaywallModal.tsx",
+    "line": 819,
+    "type": "hex",
+    "matched": "#FFFFFF"
+  },
+  {
+    "file": "app/src/components/rooms/PlaceholderSegment.tsx",
+    "line": 39,
+    "type": "radius",
+    "matched": "borderRadius: 32"
+  },
+  {
+    "file": "app/src/components/rooms/PrivacySettingsModal.tsx",
+    "line": 170,
+    "type": "hex",
+    "matched": "#FFFFFF"
+  },
+  {
+    "file": "app/src/components/rooms/PrivacySettingsModal.tsx",
+    "line": 278,
+    "type": "radius",
+    "matched": "borderRadius: 16"
+  },
+  {
+    "file": "app/src/components/rooms/ReactionModal.tsx",
+    "line": 121,
+    "type": "hex",
+    "matched": "#FFFFFF"
+  },
+  {
+    "file": "app/src/components/rooms/ReactionModal.tsx",
+    "line": 169,
+    "type": "radius",
+    "matched": "borderRadius: 16"
+  },
+  {
+    "file": "app/src/components/rooms/ReactionModal.tsx",
+    "line": 218,
+    "type": "hex",
+    "matched": "#FFFFFF"
+  },
+  {
+    "file": "app/src/components/rooms/ReportModal.tsx",
+    "line": 165,
+    "type": "hex",
+    "matched": "#FFFFFF"
+  },
+  {
+    "file": "app/src/components/rooms/ReportModal.tsx",
+    "line": 212,
+    "type": "radius",
+    "matched": "borderRadius: 16"
+  },
+  {
+    "file": "app/src/components/rooms/ReportModal.tsx",
+    "line": 266,
+    "type": "hex",
+    "matched": "#FFFFFF"
+  },
+  {
+    "file": "app/src/components/rooms/RequestsInboxModal.tsx",
+    "line": 228,
+    "type": "hex",
+    "matched": "#FFFFFF"
+  },
+  {
+    "file": "app/src/components/rooms/RequestsInboxModal.tsx",
+    "line": 230,
+    "type": "hex",
+    "matched": "#FFFFFF"
+  },
+  {
+    "file": "app/src/components/rooms/RequestsInboxModal.tsx",
+    "line": 372,
+    "type": "radius",
+    "matched": "borderRadius: 16"
+  },
+  {
+    "file": "app/src/components/rooms/RequestsInboxModal.tsx",
+    "line": 389,
+    "type": "shadow",
+    "matched": "elevation: 2"
+  },
+  {
+    "file": "app/src/components/rooms/RequestsInboxModal.tsx",
+    "line": 390,
+    "type": "hex",
+    "matched": "#000"
+  },
+  {
+    "file": "app/src/components/rooms/RequestsInboxModal.tsx",
+    "line": 392,
+    "type": "shadow",
+    "matched": "shadowRadius: 2"
+  },
+  {
+    "file": "app/src/components/rooms/RequestsInboxModal.tsx",
+    "line": 497,
+    "type": "hex",
+    "matched": "#FFFFFF"
+  },
+  {
+    "file": "app/src/components/rooms/RoomFullNotice.tsx",
+    "line": 69,
+    "type": "hex",
+    "matched": "#FFFFFF"
+  },
+  {
+    "file": "app/src/components/rooms/RoomFullNotice.tsx",
+    "line": 176,
+    "type": "radius",
+    "matched": "borderRadius: 18"
+  },
+  {
+    "file": "app/src/components/rooms/RoomFullNotice.tsx",
+    "line": 204,
+    "type": "hex",
+    "matched": "#FFFFFF"
+  },
+  {
+    "file": "app/src/components/rooms/RoomFullNotice.tsx",
+    "line": 235,
+    "type": "radius",
+    "matched": "borderRadius: 15"
+  },
+  {
+    "file": "app/src/components/rooms/RoomHeader.tsx",
+    "line": 400,
+    "type": "radius",
+    "matched": "borderRadius: 9"
+  },
+  {
+    "file": "app/src/components/rooms/RoomHeader.tsx",
+    "line": 406,
+    "type": "hex",
+    "matched": "#FFFFFF"
+  },
+  {
+    "file": "app/src/components/rooms/RoomHeader.tsx",
+    "line": 473,
+    "type": "hex",
+    "matched": "#000000"
+  },
+  {
+    "file": "app/src/components/rooms/RoomHeader.tsx",
+    "line": 476,
+    "type": "shadow",
+    "matched": "shadowRadius: 2"
+  },
+  {
+    "file": "app/src/components/rooms/RoomHeader.tsx",
+    "line": 477,
+    "type": "shadow",
+    "matched": "elevation: 2"
+  },
+  {
+    "file": "app/src/components/rooms/RoomHeader.tsx",
+    "line": 496,
+    "type": "hex",
+    "matched": "#FFFFFF"
+  },
+  {
+    "file": "app/src/components/rooms/RoomOverviewRow.tsx",
+    "line": 389,
+    "type": "radius",
+    "matched": "borderRadius: 16"
+  },
+  {
+    "file": "app/src/components/rooms/RoomOverviewRow.tsx",
+    "line": 395,
+    "type": "radius",
+    "matched": "borderRadius: 16"
+  },
+  {
+    "file": "app/src/components/rooms/RoomProgressView.tsx",
+    "line": 33,
+    "type": "hex",
+    "matched": "#3b82f6"
+  },
+  {
+    "file": "app/src/components/rooms/RoomProgressView.tsx",
+    "line": 34,
+    "type": "hex",
+    "matched": "#8b5cf6"
+  },
+  {
+    "file": "app/src/components/rooms/RoomProgressView.tsx",
+    "line": 35,
+    "type": "hex",
+    "matched": "#06b6d4"
+  },
+  {
+    "file": "app/src/components/rooms/RoomProgressView.tsx",
+    "line": 36,
+    "type": "hex",
+    "matched": "#f59e0b"
+  },
+  {
+    "file": "app/src/components/rooms/RoomProgressView.tsx",
+    "line": 37,
+    "type": "hex",
+    "matched": "#ec4899"
+  },
+  {
+    "file": "app/src/components/rooms/RoomProgressView.tsx",
+    "line": 38,
+    "type": "hex",
+    "matched": "#10b981"
+  },
+  {
+    "file": "app/src/components/rooms/RoomProgressView.tsx",
+    "line": 39,
+    "type": "hex",
+    "matched": "#64748b"
+  },
+  {
+    "file": "app/src/components/rooms/RoomProgressView.tsx",
+    "line": 97,
+    "type": "hex",
+    "matched": "#3b82f6"
+  },
+  {
+    "file": "app/src/components/rooms/RoomProgressView.tsx",
+    "line": 316,
+    "type": "hex",
+    "matched": "#ffffff"
+  },
+  {
+    "file": "app/src/components/rooms/RoomProgressView.tsx",
+    "line": 391,
+    "type": "hex",
+    "matched": "#64748b"
+  },
+  {
+    "file": "app/src/components/rooms/RoomProgressView.tsx",
+    "line": 473,
+    "type": "hex",
+    "matched": "#64748b"
+  },
+  {
+    "file": "app/src/components/rooms/RoomProgressView.tsx",
+    "line": 525,
+    "type": "hex",
+    "matched": "#ffffff"
+  },
+  {
+    "file": "app/src/components/rooms/RoomProgressView.tsx",
+    "line": 528,
+    "type": "hex",
+    "matched": "#ffffff"
+  },
+  {
+    "file": "app/src/components/rooms/RoomProgressView.tsx",
+    "line": 749,
+    "type": "radius",
+    "matched": "borderRadius: 4"
+  },
+  {
+    "file": "app/src/components/rooms/RoomProgressView.tsx",
+    "line": 760,
+    "type": "shadow",
+    "matched": "elevation: 2"
+  },
+  {
+    "file": "app/src/components/rooms/RoomProgressView.tsx",
+    "line": 946,
+    "type": "hex",
+    "matched": "#ffffff"
+  },
+  {
+    "file": "app/src/components/rooms/RoomProgressView.tsx",
+    "line": 970,
+    "type": "hex",
+    "matched": "#ffffff"
+  },
+  {
+    "file": "app/src/components/rooms/RoomSettingsModal.tsx",
+    "line": 384,
+    "type": "radius",
+    "matched": "borderRadius: 16"
+  },
+  {
+    "file": "app/src/components/rooms/RoomSettingsModal.tsx",
+    "line": 450,
+    "type": "radius",
+    "matched": "borderRadius: 16"
+  },
+  {
+    "file": "app/src/components/rooms/SharedMealCard.tsx",
+    "line": 108,
+    "type": "hex",
+    "matched": "#FFFFFF"
+  },
+  {
+    "file": "app/src/components/rooms/SharedMealCard.tsx",
+    "line": 183,
+    "type": "hex",
+    "matched": "#FFFFFF"
+  },
+  {
+    "file": "app/src/components/rooms/SharedMealCard.tsx",
+    "line": 211,
+    "type": "radius",
+    "matched": "borderRadius: 16"
+  },
+  {
+    "file": "app/src/components/rooms/SharedMealCard.tsx",
+    "line": 292,
+    "type": "hex",
+    "matched": "#FFFFFF"
+  },
+  {
+    "file": "app/src/components/rooms/SideBySideCard.tsx",
+    "line": 167,
+    "type": "hex",
+    "matched": "#FFFFFF"
+  },
+  {
+    "file": "app/src/components/rooms/SideBySideCard.tsx",
+    "line": 358,
+    "type": "radius",
+    "matched": "borderRadius: 10"
+  },
+  {
+    "file": "app/src/components/rooms/SideBySideCard.tsx",
+    "line": 396,
+    "type": "radius",
+    "matched": "borderRadius: 17"
+  },
+  {
+    "file": "app/src/components/rooms/SideBySideCard.tsx",
+    "line": 402,
+    "type": "radius",
+    "matched": "borderRadius: 17"
+  },
+  {
+    "file": "app/src/components/rooms/TrialBanner.tsx",
+    "line": 66,
+    "type": "hex",
+    "matched": "#FFFFFF"
+  },
+  {
+    "file": "app/src/components/rooms/TrialBanner.tsx",
+    "line": 90,
+    "type": "radius",
+    "matched": "borderRadius: 18"
+  },
+  {
+    "file": "app/src/components/rooms/TrialBanner.tsx",
+    "line": 118,
+    "type": "hex",
+    "matched": "#FFFFFF"
+  },
+  {
+    "file": "app/src/components/trackers/StepsCard.tsx",
+    "line": 302,
+    "type": "hex",
+    "matched": "#000"
+  },
+  {
+    "file": "app/src/components/trackers/StepsCard.tsx",
+    "line": 305,
+    "type": "shadow",
+    "matched": "shadowRadius: 4"
+  },
+  {
+    "file": "app/src/components/trackers/StepsCard.tsx",
+    "line": 306,
+    "type": "shadow",
+    "matched": "elevation: 1"
+  },
+  {
+    "file": "app/src/components/trackers/WaterCard.tsx",
+    "line": 298,
+    "type": "hex",
+    "matched": "#000"
+  },
+  {
+    "file": "app/src/components/trackers/WaterCard.tsx",
+    "line": 301,
+    "type": "shadow",
+    "matched": "shadowRadius: 4"
+  },
+  {
+    "file": "app/src/components/trackers/WaterCard.tsx",
+    "line": 302,
+    "type": "shadow",
+    "matched": "elevation: 1"
+  },
+  {
+    "file": "app/src/components/trackers/WeightCard.tsx",
+    "line": 296,
+    "type": "hex",
+    "matched": "#000"
+  },
+  {
+    "file": "app/src/components/trackers/WeightCard.tsx",
+    "line": 299,
+    "type": "shadow",
+    "matched": "shadowRadius: 4"
+  },
+  {
+    "file": "app/src/components/trackers/WeightCard.tsx",
+    "line": 300,
+    "type": "shadow",
+    "matched": "elevation: 1"
+  },
+  {
+    "file": "app/src/components/workouts/RunningTimerBar.tsx",
+    "line": 146,
+    "type": "radius",
+    "matched": "borderRadius: 5"
+  },
+  {
+    "file": "app/src/components/workouts/TodayWorkoutCard.tsx",
+    "line": 383,
+    "type": "radius",
+    "matched": "borderRadius: 3"
+  },
+  {
+    "file": "app/src/components/workouts/WorkoutDetailModal.tsx",
+    "line": 468,
+    "type": "radius",
+    "matched": "borderRadius: 4"
+  },
+  {
+    "file": "app/src/components/workouts/WorkoutDetailModal.tsx",
+    "line": 532,
+    "type": "radius",
+    "matched": "borderRadius: 4"
+  },
+  {
+    "file": "app/src/components/workouts/WorkoutDetailModal.tsx",
+    "line": 537,
+    "type": "hex",
+    "matched": "#FFFFFF"
+  },
+  {
+    "file": "app/src/components/workouts/WorkoutHistoryCalendarModal.tsx",
+    "line": 649,
+    "type": "radius",
+    "matched": "borderRadius: 2.5"
+  },
+  {
+    "file": "app/src/components/workouts/WorkoutLoggerModal.tsx",
+    "line": 904,
+    "type": "hex",
+    "matched": "#FFFFFF"
+  },
+  {
+    "file": "app/src/components/workouts/WorkoutLoggerModal.tsx",
+    "line": 997,
+    "type": "hex",
+    "matched": "#FFFFFF"
+  },
+  {
+    "file": "app/src/theme/tokens.ts",
+    "line": 88,
+    "type": "hex",
+    "matched": "#1C1109"
+  }
+]

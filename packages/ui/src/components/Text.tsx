@@ -1,12 +1,12 @@
 import React from 'react';
-import {
-  Text as RNText,
-  type TextProps as RNTextProps,
-  type TextStyle,
-  StyleSheet,
-} from 'react-native';
+import { Text as RNText, type TextProps as RNTextProps, type TextStyle } from 'react-native';
 import { dark } from '../tokens/colors';
-import { type as typeTokens, typeHindi, type TypeVariant } from '../tokens/type';
+import {
+  type as typeTokens,
+  typeHindi,
+  type TypeVariant,
+  type TextStyleToken,
+} from '../tokens/type';
 
 export interface TextProps extends RNTextProps {
   /** Typographic scale variant */
@@ -44,7 +44,9 @@ export function Text({
   children,
   ...rest
 }: TextProps): React.JSX.Element {
-  const tokenSpec = isHindi ? typeHindi[variant] : typeTokens[variant];
+  const tokenSpec: TextStyleToken = isHindi
+    ? typeHindi[variant]
+    : (typeTokens[variant] as TextStyleToken);
 
   // Resolve color
   let resolvedColor: string;
@@ -62,9 +64,7 @@ export function Text({
 
   // Determine tabular numbers
   const hasTabular =
-    tabular !== undefined
-      ? tabular
-      : Boolean(tokenSpec.fontVariant?.includes('tabular-nums'));
+    tabular !== undefined ? tabular : Boolean(tokenSpec.fontVariant?.includes('tabular-nums'));
 
   // Cap font multiplier: 1.3 for numerals/labels/chips/buttons, 2.0 for body/titles
   const effectiveMaxMultiplier =

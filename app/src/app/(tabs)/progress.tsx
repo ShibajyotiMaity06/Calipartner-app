@@ -180,7 +180,7 @@ export default function ProgressScreen() {
                   style={[styles.retryBtn, { backgroundColor: colors.accent }]}
                   onPress={refresh}
                 >
-                  <Text style={styles.retryBtnText}>Retry</Text>
+                  <Text style={[styles.retryBtnText, { color: colors.onAccent }]}>Retry</Text>
                 </Pressable>
               </View>
             )}
@@ -314,5 +314,14 @@ const styles = StyleSheet.create({
   errorBannerText: {
     flex: 1,
     fontSize: fontSize.xs,
+  },
+  retryBtn: {
+    paddingHorizontal: spacing.sm + 4,
+    paddingVertical: spacing.xs,
+    borderRadius: radius.control,
+  },
+  retryBtnText: {
+    fontSize: fontSize.xs,
+    fontWeight: '600',
   },
 });

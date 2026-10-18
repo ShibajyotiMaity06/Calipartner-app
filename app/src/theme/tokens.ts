@@ -5,12 +5,7 @@
  *
  * @deprecated Prefer importing tokens directly from `@calipartner/ui` or `@calipartner/ui/tokens`.
  */
-import {
-  dark,
-  space,
-  radius as radiusTokens,
-  type as typeTokens,
-} from '@calipartner/ui';
+import { dark, space, radius as radiusTokens, type as typeTokens } from '@calipartner/ui';
 
 export interface ThemeColors {
   /** @deprecated Use colors.bg0 instead */
@@ -176,4 +171,4 @@ export function colorsFor(_scheme: ColorScheme): ThemeColors {
   return modernDarkColors;
 }
 
-export { dark, light, allowedPairs, space, motion, typeTokens as type } from '@calipartner/ui';
+export { dark, light, allowedPairs, space, motion, type } from '@calipartner/ui';
