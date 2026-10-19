@@ -82,6 +82,13 @@ export interface PairedCardProps {
   /** Callback when switching partner in 3+ member room */
   onSelectMember?: (memberId: string) => void;
 
+  /** Callback when tapping the PairRing (Spec J01: opens J12 charts) */
+  onPressRing?: () => void;
+  /** Callback when tapping a meal dot to react (Spec SOC-2) */
+  onReactMeal?: (meal: MealType) => void;
+  /** Callback when long-pressing partner's meal row (Spec J07) */
+  onLongPressMeal?: (meal: MealType) => void;
+
   /** Force reflow mode for testing or high text scale */
   forceReflow?: boolean;
   /** Accessibility role for card */
@@ -120,6 +127,9 @@ export function PairedCard({
   members,
   selectedMemberId,
   onSelectMember,
+  onPressRing,
+  onReactMeal,
+  onLongPressMeal,
   forceReflow = false,
   accessibilityRole = 'summary',
   accessibilityLabel,
@@ -178,17 +188,38 @@ export function PairedCard({
 
       {/* Hero PairRing centered */}
       <View style={styles.ringSection}>
-        <PairRing
-          size={isReflow ? 120 : 184}
-          userPercent={userPercent}
-          partnerPercent={partnerPercent}
-          partnerName={partnerName}
-          userHue={userHue}
-          partnerHue={partnerHue}
-          hasPartner={hasPartner}
-          remainingAmount={userRemainingAmount}
-          overAmount={userOverAmount}
-        />
+        {onPressRing ? (
+          <TouchableOpacity
+            activeOpacity={0.85}
+            onPress={onPressRing}
+            accessibilityRole="button"
+            accessibilityLabel={`Goal comparison ring. Your goal ${Math.round(userPercent)}% complete. Tap to view room progress.`}
+          >
+            <PairRing
+              size={isReflow ? 120 : 184}
+              userPercent={userPercent}
+              partnerPercent={partnerPercent}
+              partnerName={partnerName}
+              userHue={userHue}
+              partnerHue={partnerHue}
+              hasPartner={hasPartner}
+              remainingAmount={userRemainingAmount}
+              overAmount={userOverAmount}
+            />
+          </TouchableOpacity>
+        ) : (
+          <PairRing
+            size={isReflow ? 120 : 184}
+            userPercent={userPercent}
+            partnerPercent={partnerPercent}
+            partnerName={partnerName}
+            userHue={userHue}
+            partnerHue={partnerHue}
+            hasPartner={hasPartner}
+            remainingAmount={userRemainingAmount}
+            overAmount={userOverAmount}
+          />
+        )}
       </View>
 
       {/* Main Paired Columns View */}
@@ -205,6 +236,8 @@ export function PairedCard({
             steps={userSteps}
             stepsGoal={userStepsGoal}
             meals={userMeals}
+            onReactMeal={onReactMeal}
+            onLongPressMeal={onLongPressMeal}
           />
 
           {/* Horizontal Seam */}
@@ -232,6 +265,8 @@ export function PairedCard({
               isDataHidden={isPartnerDataHidden}
               isPaused={isPartnerPaused}
               pauseUntilDate={partnerPauseUntilDate}
+              onReactMeal={onReactMeal}
+              onLongPressMeal={onLongPressMeal}
             />
           ) : (
             <View style={styles.emptyPartnerBox}>
@@ -272,6 +307,8 @@ export function PairedCard({
               steps={userSteps}
               stepsGoal={userStepsGoal}
               meals={userMeals}
+              onReactMeal={onReactMeal}
+              onLongPressMeal={onLongPressMeal}
             />
           </View>
 
@@ -311,6 +348,8 @@ export function PairedCard({
                 isDataHidden={isPartnerDataHidden}
                 isPaused={isPartnerPaused}
                 pauseUntilDate={partnerPauseUntilDate}
+                onReactMeal={onReactMeal}
+                onLongPressMeal={onLongPressMeal}
               />
             ) : (
               <View style={styles.emptyPartnerDashed}>

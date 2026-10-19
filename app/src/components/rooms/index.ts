@@ -39,4 +39,6 @@ export { BlockUserModal } from './BlockUserModal';
 export { MembersTab } from './MembersTab';
 export { PlaceholderSegment } from './PlaceholderSegment';
 export { RoomProgressView } from './RoomProgressView';
+export { WhatTheyCanSeeSheet, type WhatTheyCanSeeSheetProps } from './WhatTheyCanSeeSheet';
+export { PartnerMealSheet, type PartnerMealSheetProps } from './PartnerMealSheet';
 export { ChatView } from '../chat/ChatView';

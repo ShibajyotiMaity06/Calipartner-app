@@ -39,13 +39,16 @@ const NEUTRAL_PALETTE = [
   '#64748b', // slate
 ];
 
-const METRICS: ProgressMetric[] = [
+export type ProgressMetricWithFocus = ProgressMetric | 'focus';
+
+const METRICS: ProgressMetricWithFocus[] = [
   'consistency',
   'weight_change',
   'calories_vs_target',
   'steps',
   'water',
   'workouts',
+  'focus',
 ];
 
 export function RoomProgressView({ roomId, testID = 'room-progress-view' }: RoomProgressViewProps) {
@@ -63,9 +66,10 @@ export function RoomProgressView({ roomId, testID = 'room-progress-view' }: Room
     searchMembers,
   } = useRoomProgress(roomId);
 
-  const [selectedMetric, setSelectedMetric] = useState<ProgressMetric>('consistency');
+  const [selectedMetric, setSelectedMetric] = useState<ProgressMetricWithFocus>('consistency');
   const [hiddenMemberIds, setHiddenMemberIds] = useState<string[]>([]);
   const [sortByConsistency, setSortByConsistency] = useState(false);
+  const [viewMode, setViewMode] = useState<'chart' | 'table'>('chart');
 
   // Large room member picker modal state
   const [showMemberPicker, setShowMemberPicker] = useState(false);
@@ -83,10 +87,12 @@ export function RoomProgressView({ roomId, testID = 'room-progress-view' }: Room
 
   // Metric series
   const memberSeriesList: RoomProgressMemberSeries[] = useMemo(() => {
+    if (selectedMetric === 'focus') return [];
     return data?.members_series?.[selectedMetric] ?? [];
   }, [data?.members_series, selectedMetric]);
 
   const roomAvgSeries = useMemo(() => {
+    if (selectedMetric === 'focus') return [];
     return data?.room_average_series?.[selectedMetric] ?? [];
   }, [data?.room_average_series, selectedMetric]);
 
@@ -297,7 +303,9 @@ export function RoomProgressView({ roomId, testID = 'room-progress-view' }: Room
                     ? t('progress.room.metrics.steps')
                     : metric === 'water'
                       ? t('progress.room.metrics.water')
-                      : t('progress.room.metrics.workouts');
+                      : metric === 'workouts'
+                        ? t('progress.room.metrics.workouts')
+                        : 'Focus';
 
           return (
             <Pressable
@@ -387,11 +395,31 @@ export function RoomProgressView({ roomId, testID = 'room-progress-view' }: Room
           <Text style={[styles.chartTitle, { color: colors.text }]}>
             {selectedMetric.replace('_', ' ').toUpperCase()}
           </Text>
-          <View style={styles.avgLegend}>
-            <View style={[styles.dashedLineLegend, { borderColor: '#64748b' }]} />
-            <Text style={[styles.avgLegendText, { color: colors.textMuted }]}>
-              {t('progress.room.roomAverage')}
-            </Text>
+          <View style={styles.headerRightGroup}>
+            {/* CMP-14 View as table toggle */}
+            <Pressable
+              onPress={() => setViewMode((v) => (v === 'chart' ? 'table' : 'chart'))}
+              style={[styles.viewTableBtn, { backgroundColor: colors.surfaceAlt }]}
+              accessibilityRole="button"
+              accessibilityLabel={viewMode === 'chart' ? 'View as table' : 'View as chart'}
+              testID={`${testID}-toggle-table-mode`}
+            >
+              <Ionicons
+                name={viewMode === 'chart' ? 'grid-outline' : 'stats-chart-outline'}
+                size={12}
+                color={colors.accent}
+              />
+              <Text style={[styles.viewTableBtnText, { color: colors.accent }]}>
+                {viewMode === 'chart' ? 'View as table' : 'View chart'}
+              </Text>
+            </Pressable>
+
+            <View style={styles.avgLegend}>
+              <View style={[styles.dashedLineLegend, { borderColor: '#64748b' }]} />
+              <Text style={[styles.avgLegendText, { color: colors.textMuted }]}>
+                {t('progress.room.roomAverage')}
+              </Text>
+            </View>
           </View>
         </View>
 
@@ -405,6 +433,56 @@ export function RoomProgressView({ roomId, testID = 'room-progress-view' }: Room
             <Text style={[styles.emptyText, { color: colors.textMuted }]}>
               {t('progress.room.empty')}
             </Text>
+          </View>
+        ) : viewMode === 'table' ? (
+          /* CMP-14: Accessible Table representation of chart series */
+          <View style={styles.tableDataWrapper} testID={`${testID}-chart-table-view`}>
+            <View style={[styles.tableDataHeaderRow, { borderBottomColor: colors.border }]}>
+              <Text style={[styles.tableDataColHeader, { color: colors.textMuted, flex: 1.2 }]}>
+                Date
+              </Text>
+              <Text style={[styles.tableDataColHeader, { color: colors.textMuted, flex: 1 }]}>
+                Room Avg
+              </Text>
+              {visibleSeries.map((s) => (
+                <Text
+                  key={s.user_id}
+                  style={[
+                    styles.tableDataColHeader,
+                    { color: memberColorMap.get(s.user_id) ?? colors.accent, flex: 1 },
+                  ]}
+                  numberOfLines={1}
+                >
+                  {s.nickname}
+                </Text>
+              ))}
+            </View>
+            <ScrollView style={{ maxHeight: 200 }} nestedScrollEnabled>
+              {dates.map((d) => {
+                const avgVal = roomAvgSeries.find((p) => p.date === d)?.value;
+                return (
+                  <View key={d} style={[styles.tableDataRow, { borderBottomColor: colors.border }]}>
+                    <Text style={[styles.tableDataCell, { color: colors.text, flex: 1.2 }]}>
+                      {d.slice(5)}
+                    </Text>
+                    <Text style={[styles.tableDataCell, { color: colors.textMuted, flex: 1 }]}>
+                      {avgVal != null ? avgVal.toFixed(0) : '—'}
+                    </Text>
+                    {visibleSeries.map((s) => {
+                      const pt = s.data.find((p) => p.date === d);
+                      return (
+                        <Text
+                          key={s.user_id}
+                          style={[styles.tableDataCell, { color: colors.text, flex: 1 }]}
+                        >
+                          {s.is_locked_member ? '🔒' : pt?.value != null ? pt.value.toFixed(0) : '—'}
+                        </Text>
+                      );
+                    })}
+                  </View>
+                );
+              })}
+            </ScrollView>
           </View>
         ) : (
           <View style={styles.svgWrapper}>
@@ -770,6 +848,23 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     letterSpacing: 0.5,
   },
+  headerRightGroup: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+  },
+  viewTableBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: radius.pill,
+  },
+  viewTableBtnText: {
+    fontSize: 10,
+    fontWeight: '700',
+  },
   avgLegend: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -783,6 +878,29 @@ const styles = StyleSheet.create({
   },
   avgLegendText: {
     fontSize: 10,
+  },
+  tableDataWrapper: {
+    paddingVertical: spacing.xs,
+    minHeight: 180,
+  },
+  tableDataHeaderRow: {
+    flexDirection: 'row',
+    paddingVertical: 6,
+    borderBottomWidth: 1,
+  },
+  tableDataColHeader: {
+    fontSize: 10,
+    fontWeight: '700',
+    textTransform: 'uppercase',
+  },
+  tableDataRow: {
+    flexDirection: 'row',
+    paddingVertical: 6,
+    borderBottomWidth: 0.5,
+  },
+  tableDataCell: {
+    fontSize: 11,
+    fontWeight: '500',
   },
   svgWrapper: {
     alignItems: 'center',

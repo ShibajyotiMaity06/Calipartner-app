@@ -29,6 +29,7 @@ import { SyncStatusBanner } from '@/components/diary/SyncStatusBanner';
 import { WaterCard, StepsCard, WeightCard } from '@/components/trackers';
 import { TodayWorkoutCard } from '@/components/workouts';
 import { FocusCard } from '@/components/focus';
+import { FastingCard } from '@/components/fasting';
 import { useAuth } from '@/contexts/AuthContext';
 import { useDiary } from '@/hooks/useDiary';
 import { useAddEntry, useDeleteEntry, useEditEntry } from '@/hooks/useFoodEntries';
@@ -412,11 +413,12 @@ export default function TodayScreen() {
         </View>
       </View>
 
-      {/* 6. Optional Cards in Specified Order: Workouts, Weight, Focus, Recipes, Coach */}
+      {/* 6. Optional Cards in Specified Order: Workouts, Weight, Focus, Fasting, Recipes, Coach */}
       <View style={styles.optionalCardsContainer} testID="today-optional-cards">
         <TodayWorkoutCard selectedDate={selectedDate} />
         <WeightCard selectedDate={selectedDate} />
         <FocusCard selectedDate={selectedDate} />
+        <FastingCard />
 
         {/* Recipes Banner */}
         <Pressable

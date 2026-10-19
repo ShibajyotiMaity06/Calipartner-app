@@ -1,12 +1,37 @@
-import React from 'react';
-import { Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import React, { useMemo, useState } from 'react';
+import { StyleSheet, TouchableOpacity, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import type { RoomMemberSnapshot } from '@calipartner/core';
-import { t } from '@/i18n';
-import { fontSize, radius, spacing } from '@/theme/tokens';
-import { useTheme } from '@/theme/useTheme';
+import type { MealSection, RoomMemberSnapshot, RoomReactionType } from '@calipartner/core';
+import {
+  Avatar,
+  dark,
+  PairedCard,
+  radius,
+  space,
+  Text,
+  VisibilityEye,
+  type IdentityHue,
+  type MealStatus,
+  type MealType,
+  type RoomMemberSummary,
+  type SeamState,
+  type FinishedPerson,
+} from '@calipartner/ui';
+import { WhatTheyCanSeeSheet } from './WhatTheyCanSeeSheet';
+import { PartnerMealSheet } from './PartnerMealSheet';
 
-interface SideBySideCardProps {
+export interface FeedEvent {
+  id: string;
+  userName: string;
+  avatarUrl?: string | null;
+  identityHue: IdentityHue;
+  actionText: string;
+  timeAgo: string;
+  isShared: boolean;
+  itemType?: 'meal' | 'steps' | 'water' | 'workout' | 'general';
+}
+
+export interface SideBySideCardProps {
   me: RoomMemberSnapshot;
   partner: RoomMemberSnapshot | null;
   allMembers: RoomMemberSnapshot[];
@@ -14,8 +39,20 @@ interface SideBySideCardProps {
   onSelectPartner: (partnerId: string) => void;
   onNudge: (targetMember: RoomMemberSnapshot) => void;
   onReact: (targetMember: RoomMemberSnapshot) => void;
+  onOpenChat?: () => void;
+  onOpenProgress?: () => void;
+  onOpenPrivacy?: () => void;
+  onLogSharedMeal?: () => void;
+  onSendPhoto?: () => void;
+  onInviteFriend?: () => void;
+  onFindPartner?: () => void;
 }
 
+/**
+ * J01 & J02 · Room Today Hero Paired View (RV-1 to RV-8, STR-2)
+ * Renders the state sentence, signature PairedCard (PairRing 184, Seam, PersonColumns, NudgeButton),
+ * quick action text pills, and hairline feed rows with 14px visibility eye glyphs.
+ */
 export function SideBySideCard({
   me,
   partner,
@@ -24,526 +61,384 @@ export function SideBySideCard({
   onSelectPartner,
   onNudge,
   onReact,
-}: SideBySideCardProps) {
-  const { colors } = useTheme();
+  onOpenChat,
+  onOpenProgress,
+  onOpenPrivacy,
+  onLogSharedMeal,
+  onSendPhoto,
+  onInviteFriend,
+  onFindPartner,
+}: SideBySideCardProps): React.JSX.Element {
+  // Modal visibility states for J04 and J07
+  const [selectedEyeEvent, setSelectedEyeEvent] = useState<FeedEvent | null>(null);
+  const [partnerMealSheetVisible, setPartnerMealSheetVisible] = useState(false);
+  const [activeMealSection, setActiveMealSection] = useState<MealSection>('lunch');
 
-  // Filter other members (excluding 'me')
-  const otherMembers = allMembers.filter((m) => m.user_id !== me.user_id);
-
-  // Helper to render metric item (number, text or neutral lock)
-  const renderMetric = (
-    label: string,
-    value: string | number | null | undefined,
-    isLocked: boolean,
-    icon: keyof typeof Ionicons.glyphMap,
-  ) => {
-    return (
-      <View style={[styles.metricRow, { backgroundColor: colors.surfaceAlt }]}>
-        <View style={styles.metricLabelRow}>
-          <Ionicons name={icon} size={14} color={colors.textMuted} />
-          <Text style={[styles.metricLabel, { color: colors.textMuted }]}>{label}</Text>
-        </View>
-
-        {isLocked ? (
-          <View style={styles.lockedContainer}>
-            <Ionicons name="lock-closed" size={13} color={colors.textMuted} />
-            <Text style={[styles.lockedText, { color: colors.textMuted }]}>
-              {t('rooms.today.lockedItem')}
-            </Text>
-          </View>
-        ) : (
-          <Text style={[styles.metricValue, { color: colors.text }]} numberOfLines={1}>
-            {value ?? '—'}
-          </Text>
-        )}
-      </View>
-    );
-  };
-
-  // Helper to render meal checklist (Breakfast, Lunch, Dinner, Snacks)
-  // PRD requirement: Extra is optional and never shown as missing!
-  const renderMealChecklist = (
-    mealsLogged: Record<string, boolean> | undefined,
-    isLocked: boolean,
-  ) => {
-    if (isLocked) {
-      return (
-        <View style={[styles.mealLockedRow, { backgroundColor: colors.surfaceAlt }]}>
-          <Ionicons name="lock-closed" size={13} color={colors.textMuted} />
-          <Text style={[styles.lockedText, { color: colors.textMuted }]}>
-            {t('rooms.today.lockedItem')}
-          </Text>
-        </View>
-      );
+  // Convert raw meal checklist to Record<MealType, MealStatus>
+  const parseMealChecklist = (
+    checklist: Record<string, boolean> | 'locked' | undefined,
+  ): Record<MealType, MealStatus> => {
+    if (!checklist || checklist === 'locked') {
+      return {
+        breakfast: { logged: false },
+        lunch: { logged: false },
+        dinner: { logged: false },
+        snacks: { logged: false },
+      };
     }
-
-    const sections: { key: 'breakfast' | 'lunch' | 'dinner' | 'snacks'; label: string }[] = [
-      { key: 'breakfast', label: t('rooms.today.breakfast') },
-      { key: 'lunch', label: t('rooms.today.lunch') },
-      { key: 'dinner', label: t('rooms.today.dinner') },
-      { key: 'snacks', label: t('rooms.today.snacks') },
-    ];
-
-    return (
-      <View style={styles.mealsContainer}>
-        {sections.map((s) => {
-          const logged = Boolean(mealsLogged?.[s.key]);
-          return (
-            <View
-              key={s.key}
-              style={[
-                styles.mealChip,
-                {
-                  backgroundColor: logged ? colors.cardHighlight : colors.surfaceAlt,
-                  borderColor: logged ? colors.accent : colors.border,
-                },
-              ]}
-            >
-              <Ionicons
-                name={logged ? 'checkmark-circle' : 'ellipse-outline'}
-                size={12}
-                color={logged ? colors.accent : colors.textMuted}
-              />
-              <Text
-                style={[styles.mealChipText, { color: logged ? colors.text : colors.textMuted }]}
-              >
-                {s.label}
-              </Text>
-            </View>
-          );
-        })}
-      </View>
-    );
+    return {
+      breakfast: { logged: Boolean(checklist.breakfast) },
+      lunch: { logged: Boolean(checklist.lunch) },
+      dinner: { logged: Boolean(checklist.dinner) },
+      snacks: { logged: Boolean(checklist.snacks) },
+    };
   };
 
-  // Helper for Member Column
-  const renderMemberColumn = (member: RoomMemberSnapshot, isMe: boolean) => {
-    const metrics = member.metrics;
-    const isLockedCal = metrics.goal_completion === 'locked' || metrics.calories === 'locked';
-    const isLockedSteps = metrics.steps === 'locked';
-    const isLockedWater = metrics.water_ml === 'locked';
-    const isLockedWorkout = metrics.workout_status === 'locked';
-    const isLockedWeight = metrics.weight_progress === 'locked' && metrics.weight_kg === 'locked';
-    const isLockedMeals = metrics.meal_checklist === 'locked';
+  const userMeals = useMemo(
+    () => parseMealChecklist(me.metrics.meal_checklist),
+    [me.metrics.meal_checklist],
+  );
 
-    // Goal %
-    const goalPct = typeof metrics.goal_completion === 'number' ? metrics.goal_completion : null;
+  const partnerMeals = useMemo(
+    () => (partner ? parseMealChecklist(partner.metrics.meal_checklist) : undefined),
+    [partner?.metrics.meal_checklist],
+  );
 
-    // Steps
-    const stepsVal = typeof metrics.steps === 'number' ? metrics.steps.toLocaleString() : null;
+  // Completion percentages
+  const userPercent =
+    typeof me.metrics.goal_completion === 'number' ? me.metrics.goal_completion : 0;
+  const partnerPercent =
+    partner && typeof partner.metrics.goal_completion === 'number'
+      ? partner.metrics.goal_completion
+      : 0;
 
-    // Water
-    const waterVal = typeof metrics.water_ml === 'number' ? `${metrics.water_ml} ml` : null;
+  // Over goal calculation for user column (Spec 5.2: cream second lap and "320 over")
+  const userOverAmount =
+    userPercent > 100 && typeof me.metrics.calories === 'number' && me.metrics.calories > 2000
+      ? `${me.metrics.calories - 2000}`
+      : undefined;
 
-    // Workout
-    const workoutVal =
-      metrics.workout_status !== 'locked' && typeof metrics.workout_status === 'object'
-        ? metrics.workout_status.worked_out
-          ? `Workout • ${metrics.workout_status.duration_minutes}m`
-          : t('rooms.today.noWorkout')
-        : null;
+  // Steps
+  const userSteps = typeof me.metrics.steps === 'number' ? me.metrics.steps : 0;
+  const partnerSteps =
+    partner && typeof partner.metrics.steps === 'number' ? partner.metrics.steps : 0;
 
-    // Weight progress
-    const weightVal =
-      typeof metrics.weight_progress === 'number'
-        ? `${metrics.weight_progress > 0 ? '+' : ''}${metrics.weight_progress}%`
-        : typeof metrics.weight_kg === 'number'
-          ? `${metrics.weight_kg} kg`
-          : null;
+  // Logged today determination according to PRD 7.4
+  const isMeLogged = me.metrics.logged_today === true;
+  const isPartnerLogged = partner ? partner.metrics.logged_today === true : false;
 
-    return (
-      <View style={[styles.column, { backgroundColor: colors.surface }]}>
-        {/* Avatar & Profile */}
-        <View style={styles.profileHeader}>
-          {member.avatar_url ? (
-            <Image source={{ uri: member.avatar_url }} style={styles.avatar} />
-          ) : (
-            <View
-              style={[
-                styles.avatarPlaceholder,
-                { backgroundColor: isMe ? colors.accent : colors.cardHighlight },
-              ]}
-            >
-              <Text style={[styles.avatarInitial, { color: isMe ? '#FFFFFF' : colors.text }]}>
-                {member.nickname.charAt(0).toUpperCase()}
-              </Text>
-            </View>
-          )}
+  // Seam state calculation (PRD 5.3)
+  const seamState: SeamState = useMemo(() => {
+    if (!partner) return 'broken';
+    if (isMeLogged && isPartnerLogged) return 'fused';
+    if (isMeLogged || isPartnerLogged) return 'half-lit';
+    return 'broken';
+  }, [partner, isMeLogged, isPartnerLogged]);
 
-          <View style={styles.nameBlock}>
-            <Text style={[styles.nickname, { color: colors.text }]} numberOfLines={1}>
-              {member.nickname} {isMe ? `(${t('rooms.today.me')})` : ''}
-            </Text>
-            <Text style={[styles.username, { color: colors.textMuted }]} numberOfLines={1}>
-              @{member.username}
-            </Text>
-          </View>
-        </View>
+  const finishedPerson: FinishedPerson = isMeLogged ? 'user' : 'partner';
 
-        {/* Goal completion ring indicator */}
-        <View style={[styles.goalRingBox, { backgroundColor: colors.surfaceAlt }]}>
-          <Text style={[styles.goalRingLabel, { color: colors.textMuted }]}>
-            {t('rooms.today.goalRing')}
-          </Text>
-          {isLockedCal ? (
-            <View style={styles.lockedContainer}>
-              <Ionicons name="lock-closed" size={16} color={colors.textMuted} />
-              <Text style={[styles.lockedText, { color: colors.textMuted }]}>
-                {t('rooms.today.lockedItem')}
-              </Text>
-            </View>
-          ) : (
-            <Text style={[styles.goalRingValue, { color: colors.text }]}>
-              {goalPct !== null ? `${goalPct}%` : '—'}
-            </Text>
-          )}
-        </View>
+  // Streak days
+  const streakDays = isMeLogged && isPartnerLogged ? 1 : 0;
 
-        {/* Metrics Rows */}
-        <View style={styles.metricsList}>
-          {renderMetric(t('rooms.today.steps'), stepsVal, isLockedSteps, 'footsteps-outline')}
-          {renderMetric(t('rooms.today.water'), waterVal, isLockedWater, 'water-outline')}
-          {renderMetric(t('rooms.today.workout'), workoutVal, isLockedWorkout, 'barbell-outline')}
-          {metrics.weight_progress !== undefined &&
-            renderMetric(t('rooms.today.weight'), weightVal, isLockedWeight, 'scale-outline')}
-        </View>
+  // State sentence above the paired card (Spec J01 #2)
+  const stateSentence = useMemo(() => {
+    if (!partner) {
+      return 'Find a partner or invite a friend to log together.';
+    }
+    if (isMeLogged && isPartnerLogged) {
+      return "You've both finished logging today.";
+    }
+    if (isMeLogged && !isPartnerLogged) {
+      return `${partner.nickname} hasn't logged yet today.`;
+    }
+    if (!isMeLogged && isPartnerLogged) {
+      return 'You haven’t finished logging today.';
+    }
+    return 'Neither of you has finished logging today.';
+  }, [partner, isMeLogged, isPartnerLogged]);
 
-        {/* Meals logged checklist */}
-        <View style={styles.mealsSection}>
-          <Text style={[styles.mealsSectionTitle, { color: colors.textMuted }]}>
-            {t('rooms.today.mealsTitle')}
-          </Text>
-          {renderMealChecklist(
-            metrics.meal_checklist === 'locked' ? undefined : metrics.meal_checklist,
-            isLockedMeals,
-          )}
-        </View>
+  // Member summaries for 3+ member rooms (Spec J02)
+  const memberSummaries: RoomMemberSummary[] = useMemo(() => {
+    return allMembers.map((m, idx) => ({
+      id: m.user_id,
+      name: m.nickname,
+      avatarUrl: m.avatar_url ?? undefined,
+      identityHue: idx % 2 === 0 ? 'iris' : 'teal',
+      percent: typeof m.metrics.goal_completion === 'number' ? m.metrics.goal_completion : 0,
+      hasLoggedToday: m.metrics.logged_today === true,
+    }));
+  }, [allMembers]);
 
-        {/* Quick action buttons (under partner only) */}
-        {!isMe && (
-          <View style={styles.partnerActionsRow}>
-            <Pressable
-              onPress={() => onNudge(member)}
-              style={[styles.partnerActionButton, { backgroundColor: colors.surfaceAlt }]}
-              accessibilityRole="button"
-              accessibilityLabel={`Send a nudge to ${member.nickname}`}
-              testID="btn-nudge-partner"
-            >
-              <Text style={styles.actionEmoji}>👋</Text>
-              <Text style={[styles.partnerActionText, { color: colors.text }]}>
-                {t('rooms.today.nudgeBtn')}
-              </Text>
-            </Pressable>
-
-            <Pressable
-              onPress={() => onReact(member)}
-              style={[styles.partnerActionButton, { backgroundColor: colors.surfaceAlt }]}
-              accessibilityRole="button"
-              accessibilityLabel={`Send reaction to ${member.nickname}`}
-              testID="btn-react-partner"
-            >
-              <Text style={styles.actionEmoji}>🔥</Text>
-              <Text style={[styles.partnerActionText, { color: colors.text }]}>
-                {t('rooms.today.reactBtn')}
-              </Text>
-            </Pressable>
-          </View>
-        )}
-      </View>
-    );
-  };
+  // Feed items for plain feed rows (Spec J01 #6)
+  const feedItems: FeedEvent[] = useMemo(() => {
+    const items: FeedEvent[] = [];
+    if (partner) {
+      if (partner.metrics.logged_today === true) {
+        items.push({
+          id: `feed-${partner.user_id}-logged`,
+          userName: partner.nickname,
+          avatarUrl: partner.avatar_url,
+          identityHue: 'teal',
+          actionText: `${partner.nickname} completed today's target`,
+          timeAgo: 'Just now',
+          isShared: true,
+          itemType: 'meal',
+        });
+      }
+      if (partnerMeals?.lunch?.logged) {
+        items.push({
+          id: `feed-${partner.user_id}-lunch`,
+          userName: partner.nickname,
+          avatarUrl: partner.avatar_url,
+          identityHue: 'teal',
+          actionText: `${partner.nickname} logged lunch`,
+          timeAgo: '2h ago',
+          isShared: true,
+          itemType: 'meal',
+        });
+      }
+    }
+    if (userMeals.breakfast.logged) {
+      items.push({
+        id: `feed-${me.user_id}-breakfast`,
+        userName: 'You',
+        avatarUrl: me.avatar_url,
+        identityHue: 'iris',
+        actionText: 'You logged breakfast',
+        timeAgo: '4h ago',
+        isShared: true,
+        itemType: 'meal',
+      });
+    }
+    return items;
+  }, [me, partner, partnerMeals, userMeals]);
 
   return (
-    <View style={styles.wrapper}>
-      {/* 3+ Members Avatar Switcher Row */}
-      {otherMembers.length > 1 && (
-        <View style={styles.avatarSelectorWrapper}>
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.avatarSelectorScroll}
-          >
-            {otherMembers.map((m) => {
-              const isSelected = (partner?.user_id ?? selectedPartnerId) === m.user_id;
-              return (
-                <Pressable
-                  key={m.user_id}
-                  onPress={() => onSelectPartner(m.user_id)}
-                  style={[
-                    styles.avatarChip,
-                    {
-                      backgroundColor: isSelected ? colors.cardHighlight : colors.surface,
-                      borderColor: isSelected ? colors.accent : colors.border,
-                    },
-                  ]}
-                  accessibilityRole="button"
-                  accessibilityLabel={`Compare with ${m.nickname}`}
-                  testID={`chip-partner-${m.user_id}`}
-                >
-                  <View style={[styles.chipAvatarMini, { backgroundColor: colors.surfaceAlt }]}>
-                    <Text style={[styles.chipAvatarText, { color: colors.text }]}>
-                      {m.nickname.charAt(0).toUpperCase()}
-                    </Text>
-                  </View>
-                  <Text
-                    style={[
-                      styles.avatarChipLabel,
-                      { color: isSelected ? colors.text : colors.textMuted },
-                      isSelected && styles.avatarChipLabelActive,
-                    ]}
-                    numberOfLines={1}
-                  >
-                    {m.nickname}
+    <View style={styles.container} testID="side-by-side-card-wrapper">
+      {/* 1. State sentence above card (Spec J01 #2) */}
+      <View style={styles.stateSentenceWrap}>
+        <Text variant="bodyS" color={dark.textMid} style={styles.stateSentenceText}>
+          {stateSentence}
+        </Text>
+      </View>
+
+      {/* 2. Signature PairedCard (Spec J01 #4) */}
+      <PairedCard
+        userName="You"
+        userHue="iris"
+        userPercent={userPercent}
+        userOverAmount={userOverAmount}
+        userSteps={userSteps}
+        userMeals={userMeals}
+        hasPartner={Boolean(partner)}
+        partnerName={partner?.nickname ?? 'Partner'}
+        partnerHue="teal"
+        partnerPercent={partnerPercent}
+        partnerSteps={partnerSteps}
+        partnerMeals={partnerMeals}
+        isPartnerDataHidden={partner?.metrics.goal_completion === 'locked'}
+        isPartnerPaused={partner?.status === 'paused'}
+        seamState={seamState}
+        finishedPerson={finishedPerson}
+        streakDays={streakDays}
+        onNudge={() => partner && onNudge(partner)}
+        onInviteFriend={onInviteFriend}
+        onFindPartner={onFindPartner}
+        onPressRing={onOpenProgress}
+        onReactMeal={() => partner && onReact(partner)}
+        onLongPressMeal={(meal) => {
+          setActiveMealSection(meal);
+          setPartnerMealSheetVisible(true);
+        }}
+        members={memberSummaries}
+        selectedMemberId={selectedPartnerId ?? undefined}
+        onSelectMember={onSelectPartner}
+        testID="hero-paired-card"
+      />
+
+      {/* 3. Quick Actions: Three text pills (Spec J01 #5, RV-6) */}
+      <View style={styles.quickActionsRow} testID="quick-actions-row">
+        <TouchableOpacity
+          activeOpacity={0.7}
+          onPress={onLogSharedMeal}
+          style={styles.quickActionPill}
+          accessibilityRole="button"
+          accessibilityLabel="Log a shared meal"
+          testID="btn-quick-shared-meal"
+        >
+          <Ionicons name="restaurant-outline" size={14} color={dark.textHi} />
+          <Text variant="label" color={dark.textHi}>
+            Log a shared meal
+          </Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          activeOpacity={0.7}
+          onPress={onSendPhoto || onOpenChat}
+          style={styles.quickActionPill}
+          accessibilityRole="button"
+          accessibilityLabel="Send a photo"
+          testID="btn-quick-send-photo"
+        >
+          <Ionicons name="camera-outline" size={14} color={dark.textHi} />
+          <Text variant="label" color={dark.textHi}>
+            Send a photo
+          </Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          activeOpacity={0.7}
+          onPress={onOpenChat}
+          style={styles.quickActionPill}
+          accessibilityRole="button"
+          accessibilityLabel="Open chat"
+          testID="btn-quick-open-chat"
+        >
+          <Ionicons name="chatbubble-outline" size={14} color={dark.textHi} />
+          <Text variant="label" color={dark.textHi}>
+            Open chat
+          </Text>
+        </TouchableOpacity>
+      </View>
+
+      {/* 4. Plain Feed: Rows without cards separated by hairlines (Spec J01 #6, RV-7) */}
+      {feedItems.length > 0 && (
+        <View style={styles.feedSection} testID="room-activity-feed">
+          <Text variant="micro" color={dark.textLo} style={styles.feedSectionTitle}>
+            Recent activity
+          </Text>
+          <View style={styles.feedList}>
+            {feedItems.map((item, idx) => (
+              <View key={item.id}>
+                {idx > 0 && <View style={styles.feedHairline} />}
+                <View style={styles.feedRow} testID={`feed-row-${item.id}`}>
+                  <Avatar
+                    size="xs"
+                    name={item.userName}
+                    uri={item.avatarUrl ?? undefined}
+                    identityHue={item.identityHue}
+                  />
+                  <Text variant="bodyS" color={dark.textHi} style={styles.feedActionText} numberOfLines={1}>
+                    {item.actionText}
                   </Text>
-                </Pressable>
-              );
-            })}
-          </ScrollView>
+                  <Text variant="micro" color={dark.textLo}>
+                    {item.timeAgo}
+                  </Text>
+                  {item.isShared && (
+                    <VisibilityEye
+                      audience="Room members"
+                      description={`${item.userName} shared this update with members of this room.`}
+                      onOpenPrivacySettings={onOpenPrivacy}
+                      testID={`btn-eye-${item.id}`}
+                    />
+                  )}
+                </View>
+              </View>
+            ))}
+          </View>
         </View>
       )}
 
-      {/* Main Side-by-Side 2-Column Card */}
-      <View style={[styles.cardContainer, { backgroundColor: colors.border }]}>
-        {/* Left Column: Me */}
-        {renderMemberColumn(me, true)}
+      {/* J04 "Who sees this" Visibility Sheet */}
+      <WhatTheyCanSeeSheet
+        visible={Boolean(selectedEyeEvent)}
+        onClose={() => setSelectedEyeEvent(null)}
+        onOpenPrivacy={onOpenPrivacy}
+        partnerName={partner?.nickname ?? 'Your partner'}
+        itemType={selectedEyeEvent?.itemType ?? 'meal'}
+      />
 
-        {/* Divider */}
-        <View style={[styles.columnDivider, { backgroundColor: colors.border }]} />
-
-        {/* Right Column: Partner (or waiting state) */}
-        {partner ? (
-          renderMemberColumn(partner, false)
-        ) : (
-          <View
-            style={[styles.column, styles.emptyPartnerColumn, { backgroundColor: colors.surface }]}
-          >
-            <Ionicons name="person-add-outline" size={32} color={colors.textMuted} />
-            <Text style={[styles.emptyPartnerTitle, { color: colors.text }]}>
-              {t('rooms.dormant.badge')}
-            </Text>
-            <Text style={[styles.emptyPartnerSubtitle, { color: colors.textMuted }]}>
-              {t('rooms.dormant.subtitle')}
-            </Text>
-          </View>
-        )}
-      </View>
+      {/* J07 Partner's Meal Viewer Sheet */}
+      {partner && (
+        <PartnerMealSheet
+          visible={partnerMealSheetVisible}
+          onClose={() => setPartnerMealSheetVisible(false)}
+          partnerName={partner.nickname}
+          mealSection={activeMealSection}
+          isLogged={Boolean(
+            activeMealSection !== 'extra' &&
+              partnerMeals?.[activeMealSection as MealType]?.logged,
+          )}
+          isDataHidden={partner.metrics.meal_checklist === 'locked'}
+          onSendReaction={(reaction: RoomReactionType) => {
+            onReact(partner);
+          }}
+        />
+      )}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  wrapper: {
-    marginHorizontal: spacing.md,
-    marginTop: spacing.sm,
-    marginBottom: spacing.md,
+  container: {
+    width: '100%',
+    paddingHorizontal: space[3],
+    gap: space[3],
   },
-  avatarSelectorWrapper: {
-    marginBottom: spacing.sm,
+  stateSentenceWrap: {
+    paddingHorizontal: space[2],
+    paddingTop: space[1],
   },
-  avatarSelectorScroll: {
-    gap: spacing.xs,
+  stateSentenceText: {
+    fontSize: 13,
+    lineHeight: 18,
   },
-  avatarChip: {
+  quickActionsRow: {
+    flexDirection: 'row',
+    gap: space[2],
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginTop: space[1],
+  },
+  quickActionPill: {
+    flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: spacing.sm,
-    paddingVertical: 5,
-    borderRadius: radius.pill,
-    borderWidth: 1,
+    justifyContent: 'center',
     gap: 6,
+    paddingVertical: 10,
+    paddingHorizontal: space[2],
+    borderRadius: radius.control,
+    backgroundColor: dark.s1,
+    borderWidth: 1,
+    borderColor: dark.hairlineLit,
+    minHeight: 44,
   },
-  chipAvatarMini: {
-    width: 20,
-    height: 20,
-    borderRadius: 10,
-    alignItems: 'center',
-    justifyContent: 'center',
+  feedSection: {
+    marginTop: space[3],
+    gap: space[2],
   },
-  chipAvatarText: {
-    fontSize: 10,
-    fontWeight: '700',
-  },
-  avatarChipLabel: {
-    fontSize: fontSize.xs,
-    fontWeight: '500',
-  },
-  avatarChipLabelActive: {
-    fontWeight: '700',
-  },
-  cardContainer: {
-    flexDirection: 'row',
-    borderRadius: radius.md,
-    overflow: 'hidden',
-    padding: 1, // subtle outer border effect
-    gap: 1,
-  },
-  column: {
-    flex: 1,
-    padding: spacing.sm + 2,
-  },
-  columnDivider: {
-    width: 1,
-  },
-  profileHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: spacing.sm,
-    minHeight: 38,
-  },
-  avatar: {
-    width: 34,
-    height: 34,
-    borderRadius: 17,
-    marginRight: spacing.xs + 2,
-  },
-  avatarPlaceholder: {
-    width: 34,
-    height: 34,
-    borderRadius: 17,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: spacing.xs + 2,
-  },
-  avatarInitial: {
-    fontSize: fontSize.sm,
-    fontWeight: '700',
-  },
-  nameBlock: {
-    flex: 1,
-  },
-  nickname: {
-    fontSize: fontSize.sm,
-    fontWeight: '700',
-    letterSpacing: -0.2,
-  },
-  username: {
-    fontSize: 11,
-    marginTop: 1,
-  },
-  goalRingBox: {
-    borderRadius: radius.sm,
-    padding: spacing.xs + 2,
-    alignItems: 'center',
-    marginBottom: spacing.sm,
-  },
-  goalRingLabel: {
-    fontSize: 10,
-    fontWeight: '600',
+  feedSectionTitle: {
     textTransform: 'uppercase',
     letterSpacing: 0.5,
+    paddingHorizontal: space[2],
   },
-  goalRingValue: {
-    fontSize: fontSize.lg,
-    fontWeight: '800',
-    marginTop: 2,
-  },
-  metricsList: {
-    gap: 4,
-    marginBottom: spacing.sm,
-  },
-  metricRow: {
-    flexDirection: 'column',
-    borderRadius: radius.sm,
-    paddingHorizontal: spacing.xs + 4,
-    paddingVertical: 5,
-  },
-  metricLabelRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    marginBottom: 2,
-  },
-  metricLabel: {
-    fontSize: 10,
-    fontWeight: '600',
-    textTransform: 'uppercase',
-  },
-  metricValue: {
-    fontSize: fontSize.xs + 1,
-    fontWeight: '700',
-  },
-  lockedContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 3,
-  },
-  lockedText: {
-    fontSize: 11,
-    fontWeight: '500',
-    fontStyle: 'italic',
-  },
-  mealsSection: {
-    marginBottom: spacing.xs,
-  },
-  mealsSectionTitle: {
-    fontSize: 10,
-    fontWeight: '600',
-    textTransform: 'uppercase',
-    marginBottom: 4,
-  },
-  mealsContainer: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 4,
-  },
-  mealChip: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 6,
-    paddingVertical: 3,
-    borderRadius: radius.sm,
+  feedList: {
+    backgroundColor: dark.s1,
+    borderRadius: radius.card,
     borderWidth: 1,
-    gap: 3,
+    borderColor: dark.hairline,
   },
-  mealChipText: {
-    fontSize: 10,
-    fontWeight: '600',
-  },
-  mealLockedRow: {
+  feedRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    borderRadius: radius.sm,
-    paddingHorizontal: 6,
-    paddingVertical: 4,
-    gap: 4,
+    gap: space[2],
+    paddingHorizontal: space[3],
+    paddingVertical: space[2] + 2,
+    minHeight: 44,
   },
-  partnerActionsRow: {
-    flexDirection: 'row',
-    gap: 4,
-    marginTop: spacing.xs,
+  feedHairline: {
+    height: 1,
+    backgroundColor: dark.hairline,
+    marginLeft: space[8],
   },
-  partnerActionButton: {
+  feedActionText: {
     flex: 1,
-    flexDirection: 'row',
+  },
+  eyeTouchArea: {
+    width: 32,
+    height: 32,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 6,
-    borderRadius: radius.pill,
-    gap: 3,
-  },
-  actionEmoji: {
-    fontSize: 12,
-  },
-  partnerActionText: {
-    fontSize: 11,
-    fontWeight: '600',
-  },
-  emptyPartnerColumn: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: spacing.md,
-    textAlign: 'center',
-  },
-  emptyPartnerTitle: {
-    fontSize: fontSize.sm,
-    fontWeight: '700',
-    marginTop: spacing.sm,
-    marginBottom: spacing.xs,
-    textAlign: 'center',
-  },
-  emptyPartnerSubtitle: {
-    fontSize: fontSize.xs,
-    textAlign: 'center',
-    lineHeight: 16,
   },
 });

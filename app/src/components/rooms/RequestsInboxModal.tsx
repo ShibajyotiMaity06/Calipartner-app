@@ -176,6 +176,13 @@ export function RequestsInboxModal({
             </Pressable>
           </View>
 
+          {/* 20 pending requests limit note (Spec K01) */}
+          <View style={styles.limitNoticeRow}>
+            <Text style={[styles.limitNoticeText, { color: colors.textMuted }]}>
+              {t('rooms.inboxModal.pendingLimitNotice')}
+            </Text>
+          </View>
+
           {/* List Content */}
           <View style={styles.listContainer}>
             {activeTab === 'incoming' ? (
@@ -194,6 +201,14 @@ export function RequestsInboxModal({
                     const days = calculateDaysRemaining(item.expires_at);
                     const isActing = actingId === item.id;
                     const fromUsername = item.sender_profile?.username ?? 'user';
+                    const typeLabel =
+                      item.type === 'invitation'
+                        ? t('rooms.inboxModal.typeRoomInvitation')
+                        : item.type === 'join_request'
+                          ? t('rooms.inboxModal.typeJoinRequest')
+                          : item.type === 'partner_request'
+                            ? t('rooms.inboxModal.typePartnerRequest')
+                            : t('rooms.inboxModal.typeSharedMeal');
 
                     return (
                       <View
@@ -204,6 +219,11 @@ export function RequestsInboxModal({
                       >
                         <View style={styles.cardHeader}>
                           <View style={styles.cardTextGroup}>
+                            <View style={[styles.typeChip, { backgroundColor: colors.surface }]}>
+                              <Text style={[styles.typeChipText, { color: colors.accent }]}>
+                                {typeLabel}
+                              </Text>
+                            </View>
                             <Text style={[styles.cardTitle, { color: colors.text }]}>
                               {item.type === 'invitation'
                                 ? t('rooms.inboxModal.invitationCard', {
@@ -315,6 +335,25 @@ export function RequestsInboxModal({
                   const isActing = actingId === item.id;
                   const toUsername =
                     item.recipient_profile?.username ?? item.room_name ?? 'partner';
+                  const typeLabel =
+                    item.type === 'invitation'
+                      ? t('rooms.inboxModal.typeRoomInvitation')
+                      : item.type === 'join_request'
+                        ? t('rooms.inboxModal.typeJoinRequest')
+                        : item.type === 'partner_request'
+                          ? t('rooms.inboxModal.typePartnerRequest')
+                          : t('rooms.inboxModal.typeSharedMeal');
+
+                  const statusLabel =
+                    item.status === 'pending'
+                      ? t('rooms.inboxModal.statusPending')
+                      : item.status === 'accepted'
+                        ? t('rooms.inboxModal.statusAccepted')
+                        : item.status === 'expired'
+                          ? t('rooms.inboxModal.statusExpired')
+                          : item.status === 'cancelled'
+                            ? t('rooms.inboxModal.statusCancelled')
+                            : t('rooms.inboxModal.statusNotAccepted');
 
                   return (
                     <View
@@ -325,6 +364,11 @@ export function RequestsInboxModal({
                     >
                       <View style={styles.cardHeader}>
                         <View style={styles.cardTextGroup}>
+                          <View style={[styles.typeChip, { backgroundColor: colors.surface }]}>
+                            <Text style={[styles.typeChipText, { color: colors.accent }]}>
+                              {typeLabel}
+                            </Text>
+                          </View>
                           <Text style={[styles.cardTitle, { color: colors.text }]}>
                             {item.type === 'invitation'
                               ? t('rooms.inboxModal.invitationCard', {
@@ -340,9 +384,7 @@ export function RequestsInboxModal({
                         </View>
                         <View style={[styles.statusPill, { backgroundColor: colors.surface }]}>
                           <Text style={[styles.statusPillText, { color: colors.textMuted }]}>
-                            {item.status === 'pending'
-                              ? t('rooms.inboxModal.statusPending')
-                              : t('rooms.inboxModal.statusNotAccepted')}
+                            {statusLabel}
                           </Text>
                         </View>
                       </View>
@@ -531,5 +573,26 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: fontSize.xs - 1,
     fontWeight: '700',
+  },
+  limitNoticeRow: {
+    paddingHorizontal: spacing.sm,
+    marginBottom: spacing.xs + 2,
+  },
+  limitNoticeText: {
+    fontSize: 11,
+    lineHeight: 15,
+  },
+  typeChip: {
+    alignSelf: 'flex-start',
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: radius.pill,
+    marginBottom: 4,
+  },
+  typeChipText: {
+    fontSize: 10,
+    fontWeight: '700',
+    textTransform: 'uppercase',
+    letterSpacing: 0.3,
   },
 });

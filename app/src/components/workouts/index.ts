@@ -6,3 +6,5 @@ export * from './WorkoutLoggerModal';
 export * from './WorkoutDetailModal';
 export * from './WorkoutHistoryCalendarModal';
 export * from './TodayWorkoutCard';
+export * from './RestTimerModal';
+export * from './WorkoutRoutinesModal';

@@ -472,6 +472,13 @@ export default function RoomScreen() {
                       onSelectPartner={(uid) => setSelectedPartnerId(uid)}
                       onNudge={(target) => setNudgeTarget(target)}
                       onReact={(target) => setReactionTarget(target)}
+                      onOpenChat={() => setActiveSegment('chat')}
+                      onOpenProgress={() => setActiveSegment('progress')}
+                      onOpenPrivacy={() => setShowPrivacyModal(true)}
+                      onInviteFriend={() => setShowInviteModal(true)}
+                      onFindPartner={() => router.push('/partner-finder' as any)}
+                      onLogSharedMeal={() => router.push('/diary' as any)}
+                      onSendPhoto={() => setActiveSegment('chat')}
                     />
                   )}
                 </>

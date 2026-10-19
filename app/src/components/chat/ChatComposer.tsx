@@ -194,12 +194,12 @@ export function ChatComposer({
           testID="btn-chat-send"
         >
           {isSending ? (
-            <ActivityIndicator size="small" color="#FFFFFF" />
+            <ActivityIndicator size="small" color={colors.onAccent} />
           ) : (
             <Ionicons
               name="arrow-up"
               size={20}
-              color={canSend && !isOverLimit ? '#FFFFFF' : colors.textMuted}
+              color={canSend && !isOverLimit ? colors.onAccent : colors.textMuted}
             />
           )}
         </Pressable>

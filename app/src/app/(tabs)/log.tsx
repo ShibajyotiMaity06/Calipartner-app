@@ -17,6 +17,7 @@ import { FocusStartModal } from '@/components/focus';
 import { FoodPhotoCameraModal } from '@/components/food_photo';
 import { RecipeBrowseView } from '@/components/recipes';
 import { QuickAddCaloriesModal } from '@/components/diary/QuickAddCaloriesModal';
+import { FastingTimerModal } from '@/components/fasting';
 import { useAuth } from '@/contexts/AuthContext';
 import { useAddEntry } from '@/hooks/useFoodEntries';
 import { usePersonalFocus } from '@/hooks/usePersonalFocus';
@@ -82,8 +83,7 @@ export default function LogScreen() {
         setActiveFlow('weight');
         break;
       case 'fast':
-        // Fast tile opens fasting or routes back to today
-        handleCloseAll();
+        setActiveFlow('fast');
         break;
       case 'focus':
         setActiveFlow('focus');
@@ -187,6 +187,15 @@ export default function LogScreen() {
             await logWeight(weightKg, notes, date);
             handleCloseAll();
           }}
+        />
+      )}
+
+      {/* 5.5 Fasting Timer Modal */}
+      {activeFlow === 'fast' && (
+        <FastingTimerModal
+          visible={sheetVisible}
+          onClose={handleCloseAll}
+          userId={user?.id}
         />
       )}
 

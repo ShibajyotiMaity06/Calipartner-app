@@ -159,7 +159,7 @@ export function SharedMealCard({ meal, onAccept, onDecline }: SharedMealCardProp
           disabled={loadingAction !== null}
           style={[styles.declineButton, { backgroundColor: colors.surfaceAlt }]}
           accessibilityRole="button"
-          accessibilityLabel="Dismiss shared meal"
+          accessibilityLabel="Decline shared meal"
           testID="btn-decline-shared-meal"
         >
           {loadingAction === 'decline' ? (
@@ -176,13 +176,15 @@ export function SharedMealCard({ meal, onAccept, onDecline }: SharedMealCardProp
           disabled={loadingAction !== null}
           style={[styles.acceptButton, { backgroundColor: colors.accent }]}
           accessibilityRole="button"
-          accessibilityLabel="Add to my diary"
+          accessibilityLabel={`Add to ${selectedSection}`}
           testID="btn-accept-shared-meal"
         >
           {loadingAction === 'accept' ? (
-            <ActivityIndicator size="small" color="#FFFFFF" />
+            <ActivityIndicator size="small" color={colors.onAccent} />
           ) : (
-            <Text style={styles.acceptButtonText}>{t('rooms.sharedMealCard.acceptBtn')}</Text>
+            <Text style={[styles.acceptButtonText, { color: colors.onAccent }]}>
+              {`Add to ${selectedSection}`}
+            </Text>
           )}
         </Pressable>
       </View>

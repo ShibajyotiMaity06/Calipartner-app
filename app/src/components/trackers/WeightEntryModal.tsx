@@ -1,10 +1,17 @@
-import { useEffect, useState } from 'react';
-import { Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import {
+  Modal,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
+} from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import type { WeightLog } from '@calipartner/core';
+import { dark, radius, space, type as typeTokens } from '@calipartner/ui';
 import { t } from '@/i18n';
-import { fontSize, radius, spacing } from '@/theme/tokens';
-import { useTheme } from '@/theme/useTheme';
 
 export interface WeightEntryModalProps {
   visible: boolean;
@@ -33,13 +40,15 @@ export function WeightEntryModal({
   onClose,
   onSave,
 }: WeightEntryModalProps) {
-  const { colors } = useTheme();
-
+  const [unit, setUnit] = useState<'kg' | 'lb'>('kg');
   const [weightText, setWeightText] = useState('');
   const [dateText, setDateText] = useState('');
   const [notesText, setNotesText] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+
+  const kgToLb = (kg: number) => Math.round(kg * 2.20462 * 10) / 10;
+  const lbToKg = (lb: number) => Math.round((lb / 2.20462) * 10) / 10;
 
   useEffect(() => {
     if (initialEntry) {
@@ -54,9 +63,28 @@ export function WeightEntryModal({
     setError(null);
   }, [initialEntry, defaultDate, currentWeight, visible]);
 
+  const handleUnitToggle = (newUnit: 'kg' | 'lb') => {
+    if (newUnit === unit) return;
+    const parsed = parseFloat(weightText.trim());
+    if (!isNaN(parsed) && parsed > 0) {
+      if (newUnit === 'lb') {
+        setWeightText(String(kgToLb(parsed)));
+      } else {
+        setWeightText(String(lbToKg(parsed)));
+      }
+    }
+    setUnit(newUnit);
+  };
+
   const handleSubmit = async () => {
-    const parsedWeight = parseFloat(weightText.trim());
-    if (isNaN(parsedWeight) || parsedWeight < 20 || parsedWeight > 500) {
+    const rawVal = parseFloat(weightText.trim());
+    if (isNaN(rawVal)) {
+      setError(t('trackers.weight.invalidWeight'));
+      return;
+    }
+
+    const weightKg = unit === 'lb' ? lbToKg(rawVal) : rawVal;
+    if (weightKg < 20 || weightKg > 500) {
       setError(t('trackers.weight.invalidWeight'));
       return;
     }
@@ -70,7 +98,7 @@ export function WeightEntryModal({
     try {
       setSaving(true);
       setError(null);
-      await onSave(parsedWeight, notesText.trim() || undefined, trimmedDate);
+      await onSave(weightKg, notesText.trim() || undefined, trimmedDate);
       onClose();
     } catch {
       setError(t('common.errorBody'));
@@ -80,6 +108,31 @@ export function WeightEntryModal({
   };
 
   const isEditing = Boolean(initialEntry);
+
+  // E05: Change vs last entry in plain words
+  const parsedCurrentInput = parseFloat(weightText.trim());
+  const normalizedInputKg = !isNaN(parsedCurrentInput)
+    ? unit === 'lb'
+      ? lbToKg(parsedCurrentInput)
+      : parsedCurrentInput
+    : null;
+
+  let plainWordsChange: string | null = null;
+  if (normalizedInputKg !== null && currentWeight !== null) {
+    const diff = Math.round((normalizedInputKg - currentWeight) * 10) / 10;
+    if (Math.abs(diff) < 0.05) {
+      plainWordsChange = t('trackers.weight.changeSinceLastSame');
+    } else if (diff < 0) {
+      plainWordsChange = t('trackers.weight.changeSinceLastDown', {
+        amount: `${Math.abs(diff)} kg`,
+      });
+    } else {
+      plainWordsChange = t('trackers.weight.changeSinceLastUp', {
+        amount: `${diff} kg`,
+      });
+    }
+  }
+
   const changePercent =
     startWeight && startWeight > 0 && totalChangeKg !== null
       ? ((totalChangeKg / startWeight) * 100).toFixed(1)
@@ -101,27 +154,47 @@ export function WeightEntryModal({
           onPress={onClose}
           accessibilityLabel={t('common.cancel')}
         />
-        <View
-          style={[styles.sheet, { backgroundColor: colors.surface, borderColor: colors.border }]}
-        >
-          {/* Header */}
+        <View style={styles.sheet} testID="weight-entry-sheet">
+          <View style={styles.grabHandle} />
+
+          {/* Header with Title and Unit Chip */}
           <View style={styles.header}>
             <View style={styles.headerTitleRow}>
-              <Ionicons name="scale-outline" size={20} color={colors.accent} />
-              <Text style={[styles.title, { color: colors.text }]}>
+              <View style={styles.iconBox}>
+                <Ionicons name="scale-outline" size={20} color={dark.apricot} />
+              </View>
+              <Text style={styles.title}>
                 {isEditing
                   ? t('trackers.weight.editModalTitle')
                   : t('trackers.weight.entryModalTitle')}
               </Text>
             </View>
-            <Pressable
-              onPress={onClose}
-              hitSlop={8}
-              accessibilityRole="button"
-              accessibilityLabel={t('common.cancel')}
-            >
-              <Ionicons name="close" size={22} color={colors.textMuted} />
-            </Pressable>
+
+            {/* Unit Chip (kg / lb) */}
+            <View style={styles.unitChipWrap} testID="weight-unit-chips">
+              <Pressable
+                testID="btn-weight-unit-kg"
+                style={[styles.unitChip, unit === 'kg' && styles.unitChipActive]}
+                onPress={() => handleUnitToggle('kg')}
+                accessibilityRole="button"
+                accessibilityLabel="Kilograms"
+              >
+                <Text style={[styles.unitChipText, unit === 'kg' && styles.unitChipTextActive]}>
+                  kg
+                </Text>
+              </Pressable>
+              <Pressable
+                testID="btn-weight-unit-lb"
+                style={[styles.unitChip, unit === 'lb' && styles.unitChipActive]}
+                onPress={() => handleUnitToggle('lb')}
+                accessibilityRole="button"
+                accessibilityLabel="Pounds"
+              >
+                <Text style={[styles.unitChipText, unit === 'lb' && styles.unitChipTextActive]}>
+                  lb
+                </Text>
+              </Pressable>
+            </View>
           </View>
 
           <ScrollView
@@ -129,80 +202,10 @@ export function WeightEntryModal({
             contentContainerStyle={styles.formContent}
             showsVerticalScrollIndicator={false}
           >
-            {/* Simple Trend Summary Card */}
-            <View
-              testID="weight-sheet-trend-summary"
-              style={[
-                styles.trendSummaryCard,
-                { backgroundColor: colors.surfaceAlt, borderColor: colors.border },
-              ]}
-            >
-              <Text style={[styles.summaryTitle, { color: colors.text }]}>
-                {t('trackers.weight.summaryTitle')}
-              </Text>
-
-              <View style={styles.summaryGrid}>
-                {/* Start Weight */}
-                <View style={styles.summaryItem}>
-                  <Text style={[styles.summaryItemLabel, { color: colors.textMuted }]}>Start</Text>
-                  <Text style={[styles.summaryItemVal, { color: colors.text }]}>
-                    {startWeight !== null ? `${startWeight.toFixed(1)} kg` : '—'}
-                  </Text>
-                </View>
-
-                {/* Current Weight */}
-                <View style={styles.summaryItem}>
-                  <Text style={[styles.summaryItemLabel, { color: colors.textMuted }]}>
-                    Current
-                  </Text>
-                  <Text style={[styles.summaryItemVal, { color: colors.text }]}>
-                    {currentWeight !== null ? `${currentWeight.toFixed(1)} kg` : '—'}
-                  </Text>
-                </View>
-
-                {/* Change */}
-                <View style={styles.summaryItem}>
-                  <Text style={[styles.summaryItemLabel, { color: colors.textMuted }]}>Change</Text>
-                  <Text style={[styles.summaryItemVal, { color: colors.text }]}>
-                    {totalChangeKg !== null
-                      ? `${totalChangeKg > 0 ? '+' : ''}${totalChangeKg.toFixed(1)} kg (${changePercent}%)`
-                      : '—'}
-                  </Text>
-                </View>
-              </View>
-
-              {/* Weekly Pace & Projected Date or Not Enough Trend */}
-              <View style={[styles.paceRow, { borderTopColor: colors.border }]}>
-                {hasEnoughTrend && weeklyPace !== null ? (
-                  <View style={styles.paceInfo}>
-                    <Text style={[styles.paceText, { color: colors.accent }]}>
-                      {t('trackers.weight.weeklyPace', { pace: weeklyPace.toFixed(2) })}
-                    </Text>
-                    {projectedDate ? (
-                      <Text style={[styles.projectionText, { color: colors.syncSynced }]}>
-                        {t('trackers.weight.projectedDate', { date: projectedDate })}
-                      </Text>
-                    ) : null}
-                  </View>
-                ) : (
-                  <Text style={[styles.trendPendingText, { color: colors.textMuted }]}>
-                    {t('trackers.weight.notEnoughTrend')}
-                  </Text>
-                )}
-              </View>
-            </View>
-
-            {/* Weight Input */}
-            <View style={styles.inputGroup}>
-              <Text style={[styles.label, { color: colors.textMuted }]}>
-                {t('trackers.weight.weightLabel')}
-              </Text>
-              <View
-                style={[
-                  styles.inputWrapper,
-                  { backgroundColor: colors.surfaceAlt, borderColor: colors.border },
-                ]}
-              >
+            {/* E05 Big Numeric Field */}
+            <View style={styles.bigNumericCard} testID="big-numeric-field-card">
+              <Text style={styles.fieldLabel}>{t('trackers.weight.weightLabel')}</Text>
+              <View style={styles.bigInputWrap}>
                 <TextInput
                   testID="input-weight-value"
                   value={weightText}
@@ -211,26 +214,28 @@ export function WeightEntryModal({
                     if (error) setError(null);
                   }}
                   keyboardType="decimal-pad"
-                  placeholder={t('trackers.weight.weightPlaceholder')}
-                  placeholderTextColor={colors.textMuted}
-                  style={[styles.input, { color: colors.text }]}
+                  placeholder={unit === 'lb' ? '165.0' : '75.0'}
+                  placeholderTextColor={dark.textLo}
+                  style={styles.bigInput}
                   accessibilityLabel={t('trackers.weight.weightLabel')}
                 />
-                <Text style={[styles.unitBadge, { color: colors.textMuted }]}>kg</Text>
+                <Text style={styles.bigUnitSuffix}>{unit}</Text>
               </View>
+
+              {/* Plain words change vs last entry */}
+              {plainWordsChange && (
+                <View style={styles.plainWordsPill} testID="plain-words-change">
+                  <Ionicons name="sparkles-outline" size={14} color={dark.teal} />
+                  <Text style={styles.plainWordsText}>{plainWordsChange}</Text>
+                </View>
+              )}
             </View>
 
-            {/* Date Input */}
+            {/* Date Input (defaults today, back-datable) */}
             <View style={styles.inputGroup}>
-              <Text style={[styles.label, { color: colors.textMuted }]}>
-                {t('trackers.weight.dateLabel')}
-              </Text>
-              <View
-                style={[
-                  styles.inputWrapper,
-                  { backgroundColor: colors.surfaceAlt, borderColor: colors.border },
-                ]}
-              >
+              <Text style={styles.fieldLabel}>{t('trackers.weight.dateLabel')}</Text>
+              <View style={styles.inputWrapper}>
+                <Ionicons name="calendar-outline" size={16} color={dark.textLo} />
                 <TextInput
                   testID="input-weight-date"
                   value={dateText}
@@ -239,8 +244,8 @@ export function WeightEntryModal({
                     if (error) setError(null);
                   }}
                   placeholder="YYYY-MM-DD"
-                  placeholderTextColor={colors.textMuted}
-                  style={[styles.input, { color: colors.text }]}
+                  placeholderTextColor={dark.textLo}
+                  style={styles.input}
                   accessibilityLabel={t('trackers.weight.dateLabel')}
                 />
               </View>
@@ -248,54 +253,98 @@ export function WeightEntryModal({
 
             {/* Notes Input */}
             <View style={styles.inputGroup}>
-              <Text style={[styles.label, { color: colors.textMuted }]}>
-                {t('trackers.weight.notesLabel')}
-              </Text>
-              <View
-                style={[
-                  styles.inputWrapper,
-                  { backgroundColor: colors.surfaceAlt, borderColor: colors.border },
-                ]}
-              >
+              <Text style={styles.fieldLabel}>{t('trackers.weight.notesLabel')}</Text>
+              <View style={styles.inputWrapper}>
                 <TextInput
                   testID="input-weight-notes"
                   value={notesText}
                   onChangeText={setNotesText}
                   placeholder={t('trackers.weight.notesPlaceholder')}
-                  placeholderTextColor={colors.textMuted}
-                  style={[styles.input, { color: colors.text }]}
+                  placeholderTextColor={dark.textLo}
+                  style={styles.input}
                   accessibilityLabel={t('trackers.weight.notesLabel')}
                 />
               </View>
             </View>
 
-            {error ? (
-              <Text style={[styles.errorText, { color: colors.danger }]}>{error}</Text>
-            ) : null}
+            {/* Trend Summary Card */}
+            <View testID="weight-sheet-trend-summary" style={styles.trendSummaryCard}>
+              <Text style={styles.summaryTitle}>{t('trackers.weight.summaryTitle')}</Text>
+
+              <View style={styles.summaryGrid}>
+                <View style={styles.summaryItem}>
+                  <Text style={styles.summaryItemLabel}>Start</Text>
+                  <Text style={styles.summaryItemVal}>
+                    {startWeight !== null ? `${startWeight.toFixed(1)} kg` : '—'}
+                  </Text>
+                </View>
+
+                <View style={styles.summaryItem}>
+                  <Text style={styles.summaryItemLabel}>Current</Text>
+                  <Text style={styles.summaryItemVal}>
+                    {currentWeight !== null ? `${currentWeight.toFixed(1)} kg` : '—'}
+                  </Text>
+                </View>
+
+                <View style={styles.summaryItem}>
+                  <Text style={styles.summaryItemLabel}>Change</Text>
+                  <Text style={styles.summaryItemVal}>
+                    {totalChangeKg !== null
+                      ? `${totalChangeKg > 0 ? '+' : ''}${totalChangeKg.toFixed(1)} kg (${changePercent}%)`
+                      : '—'}
+                  </Text>
+                </View>
+              </View>
+
+              <View style={styles.paceRow}>
+                {hasEnoughTrend && weeklyPace !== null ? (
+                  <View style={styles.paceInfo}>
+                    <Text style={styles.paceText}>
+                      {t('trackers.weight.weeklyPace', { pace: weeklyPace.toFixed(2) })}
+                    </Text>
+                    {projectedDate ? (
+                      <Text style={styles.projectionText}>
+                        {t('trackers.weight.projectedDate', { date: projectedDate })}
+                      </Text>
+                    ) : null}
+                  </View>
+                ) : (
+                  <Text style={styles.trendPendingText}>
+                    {t('trackers.weight.notEnoughTrend')}
+                  </Text>
+                )}
+              </View>
+            </View>
+
+            {/* Error Message */}
+            {error && (
+              <Text testID="weight-entry-error" style={styles.errorText}>
+                {error}
+              </Text>
+            )}
           </ScrollView>
 
           {/* Action Buttons */}
           <View style={styles.actionsRow}>
             <Pressable
-              testID="btn-cancel-weight"
+              testID="btn-weight-cancel"
               onPress={onClose}
-              disabled={saving}
-              style={[styles.btn, styles.cancelBtn, { borderColor: colors.border }]}
+              style={styles.cancelBtn}
               accessibilityRole="button"
               accessibilityLabel={t('common.cancel')}
             >
-              <Text style={[styles.btnText, { color: colors.text }]}>{t('common.cancel')}</Text>
+              <Text style={styles.cancelBtnText}>{t('common.cancel')}</Text>
             </Pressable>
 
             <Pressable
-              testID="btn-save-weight"
-              onPress={handleSubmit}
+              testID="btn-weight-save"
+              onPress={() => void handleSubmit()}
               disabled={saving}
-              style={[styles.btn, styles.submitBtn, { backgroundColor: colors.accent }]}
+              style={[styles.saveBtn, saving && styles.btnDisabled]}
               accessibilityRole="button"
               accessibilityLabel={t('common.save')}
             >
-              <Text style={[styles.btnText, { color: colors.onAccent, fontWeight: '700' }]}>
+              <Text style={styles.saveBtnText}>
                 {saving ? t('common.saving') : t('common.save')}
               </Text>
             </Pressable>
@@ -309,18 +358,26 @@ export function WeightEntryModal({
 const styles = StyleSheet.create({
   overlay: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.5)',
+    backgroundColor: 'rgba(0, 0, 0, 0.65)',
     justifyContent: 'flex-end',
   },
   sheet: {
+    backgroundColor: dark.s1,
+    borderTopLeftRadius: radius.sheet,
+    borderTopRightRadius: radius.sheet,
+    borderWidth: 1,
+    borderColor: dark.hairline,
+    padding: space[4],
+    gap: space[3],
     maxHeight: '90%',
-    borderTopLeftRadius: radius.lg,
-    borderTopRightRadius: radius.lg,
-    borderTopWidth: 1,
-    borderLeftWidth: 1,
-    borderRightWidth: 1,
-    padding: spacing.md,
-    gap: spacing.md,
+  },
+  grabHandle: {
+    width: 36,
+    height: 4,
+    borderRadius: radius.full,
+    backgroundColor: dark.hairlineLit,
+    alignSelf: 'center',
+    marginBottom: space[2],
   },
   header: {
     flexDirection: 'row',
@@ -330,110 +387,231 @@ const styles = StyleSheet.create({
   headerTitleRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: space[2],
+  },
+  iconBox: {
+    width: 36,
+    height: 36,
+    borderRadius: radius.full,
+    backgroundColor: dark.s2,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   title: {
-    fontSize: fontSize.md,
+    fontSize: typeTokens.body.fontSize,
+    fontFamily: typeTokens.body.fontFamily,
+    color: dark.textHi,
     fontWeight: '700',
+  },
+  unitChipWrap: {
+    flexDirection: 'row',
+    backgroundColor: dark.s2,
+    borderRadius: radius.control,
+    padding: 2,
+    borderWidth: 1,
+    borderColor: dark.hairline,
+  },
+  unitChip: {
+    minHeight: 32,
+    paddingHorizontal: space[3],
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderRadius: radius.control - 2,
+  },
+  unitChipActive: {
+    backgroundColor: dark.s3,
+  },
+  unitChipText: {
+    fontSize: typeTokens.micro.fontSize,
+    fontFamily: typeTokens.micro.fontFamily,
+    color: dark.textLo,
+    fontWeight: '700',
+  },
+  unitChipTextActive: {
+    color: dark.textHi,
   },
   formScroll: {
-    maxHeight: 460,
+    maxHeight: 440,
   },
   formContent: {
-    gap: spacing.md,
-    paddingBottom: spacing.xs,
+    gap: space[3],
   },
-  trendSummaryCard: {
-    borderRadius: radius.md,
+  bigNumericCard: {
+    backgroundColor: dark.s2,
+    borderRadius: radius.card,
+    padding: space[3],
     borderWidth: 1,
-    padding: spacing.md,
-    gap: spacing.sm,
+    borderColor: dark.hairline,
+    gap: space[2],
   },
-  summaryTitle: {
-    fontSize: fontSize.xs,
-    fontWeight: '700',
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-  },
-  summaryGrid: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-  },
-  summaryItem: {
-    gap: 2,
-  },
-  summaryItemLabel: {
-    fontSize: fontSize.xs,
-  },
-  summaryItemVal: {
-    fontSize: fontSize.sm,
-    fontWeight: '700',
-  },
-  paceRow: {
-    borderTopWidth: 1,
-    paddingTop: spacing.xs,
-  },
-  paceInfo: {
-    gap: 2,
-  },
-  paceText: {
-    fontSize: fontSize.xs,
-    fontWeight: '700',
-  },
-  projectionText: {
-    fontSize: fontSize.xs,
+  fieldLabel: {
+    fontSize: typeTokens.label.fontSize,
+    fontFamily: typeTokens.label.fontFamily,
+    color: dark.textLo,
     fontWeight: '600',
   },
-  trendPendingText: {
-    fontSize: fontSize.xs,
-    fontStyle: 'italic',
+  bigInputWrap: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    gap: space[2],
+  },
+  bigInput: {
+    fontSize: 40,
+    fontFamily: typeTokens.numeralL.fontFamily,
+    fontVariant: ['tabular-nums'],
+    color: dark.textHi,
+    fontWeight: '800',
+    minWidth: 120,
+    padding: 0,
+  },
+  bigUnitSuffix: {
+    fontSize: typeTokens.title2.fontSize,
+    fontFamily: typeTokens.title2.fontFamily,
+    color: dark.textLo,
+    fontWeight: '700',
+  },
+  plainWordsPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    backgroundColor: dark.s3,
+    paddingHorizontal: space[3],
+    paddingVertical: space[1],
+    borderRadius: radius.full,
+    alignSelf: 'flex-start',
+  },
+  plainWordsText: {
+    fontSize: typeTokens.label.fontSize,
+    fontFamily: typeTokens.label.fontFamily,
+    color: dark.teal,
+    fontWeight: '600',
   },
   inputGroup: {
-    gap: 6,
-  },
-  label: {
-    fontSize: fontSize.xs,
-    fontWeight: '600',
+    gap: space[1],
   },
   inputWrapper: {
     flexDirection: 'row',
     alignItems: 'center',
+    gap: space[2],
+    backgroundColor: dark.s2,
+    borderRadius: radius.control,
     borderWidth: 1,
-    borderRadius: radius.sm,
-    paddingHorizontal: spacing.sm,
-    height: 48,
+    borderColor: dark.hairline,
+    paddingHorizontal: space[3],
+    minHeight: 44,
   },
   input: {
     flex: 1,
-    fontSize: fontSize.md,
+    color: dark.textHi,
+    fontSize: typeTokens.bodyS.fontSize,
+    fontFamily: typeTokens.bodyS.fontFamily,
+    minHeight: 44,
+  },
+  trendSummaryCard: {
+    backgroundColor: dark.s2,
+    borderRadius: radius.card,
+    padding: space[3],
+    borderWidth: 1,
+    borderColor: dark.hairline,
+    gap: space[2],
+  },
+  summaryTitle: {
+    fontSize: typeTokens.label.fontSize,
+    fontFamily: typeTokens.label.fontFamily,
+    color: dark.textHi,
+    fontWeight: '700',
+  },
+  summaryGrid: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginVertical: space[1],
+  },
+  summaryItem: {
+    flex: 1,
+    gap: 2,
+  },
+  summaryItemLabel: {
+    fontSize: typeTokens.micro.fontSize,
+    fontFamily: typeTokens.micro.fontFamily,
+    color: dark.textLo,
+  },
+  summaryItemVal: {
+    fontSize: typeTokens.bodyS.fontSize,
+    fontFamily: typeTokens.bodyS.fontFamily,
+    fontVariant: ['tabular-nums'],
+    color: dark.textHi,
     fontWeight: '600',
   },
-  unitBadge: {
-    fontSize: fontSize.sm,
-    fontWeight: '700',
-    paddingLeft: 4,
+  paceRow: {
+    paddingTop: space[2],
+    borderTopWidth: 1,
+    borderTopColor: dark.hairline,
+  },
+  paceInfo: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    flexWrap: 'wrap',
+    gap: space[2],
+  },
+  paceText: {
+    fontSize: typeTokens.micro.fontSize,
+    fontFamily: typeTokens.micro.fontFamily,
+    color: dark.apricot,
+    fontWeight: '600',
+  },
+  projectionText: {
+    fontSize: typeTokens.micro.fontSize,
+    fontFamily: typeTokens.micro.fontFamily,
+    color: dark.teal,
+    fontWeight: '600',
+  },
+  trendPendingText: {
+    fontSize: typeTokens.micro.fontSize,
+    fontFamily: typeTokens.micro.fontFamily,
+    color: dark.textLo,
   },
   errorText: {
-    fontSize: fontSize.xs,
-    fontWeight: '500',
+    fontSize: typeTokens.label.fontSize,
+    fontFamily: typeTokens.label.fontFamily,
+    color: dark.danger,
   },
   actionsRow: {
     flexDirection: 'row',
-    gap: spacing.sm,
-    marginTop: spacing.xs,
+    gap: space[2],
+    marginTop: space[2],
   },
-  btn: {
+  cancelBtn: {
     flex: 1,
-    height: 48,
-    borderRadius: radius.sm,
+    minHeight: 48,
+    borderRadius: radius.button,
+    backgroundColor: dark.s2,
+    borderWidth: 1,
+    borderColor: dark.hairline,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  cancelBtn: {
-    borderWidth: 1,
+  cancelBtnText: {
+    fontSize: typeTokens.body.fontSize,
+    fontFamily: typeTokens.body.fontFamily,
+    color: dark.textMid,
+    fontWeight: '600',
   },
-  submitBtn: {},
-  btnText: {
-    fontSize: fontSize.sm,
+  saveBtn: {
+    flex: 1,
+    minHeight: 48,
+    borderRadius: radius.button,
+    backgroundColor: dark.apricot,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  saveBtnText: {
+    fontSize: typeTokens.body.fontSize,
+    fontFamily: typeTokens.body.fontFamily,
+    color: dark.onBrand, // #1C1109
+    fontWeight: '700',
+  },
+  btnDisabled: {
+    opacity: 0.5,
   },
 });

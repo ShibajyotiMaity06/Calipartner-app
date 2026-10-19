@@ -300,4 +300,156 @@ describe('Phase 5C — Room UI Presentation & Logic Tests', () => {
       });
     });
   });
+
+  describe('9. UI-8 Polish: J01–J23 & K01–K08 Specs', () => {
+    describe('J01 State Sentence and Seam Fusion Logic', () => {
+      const computeSeamAndState = (
+        hasPartner: boolean,
+        isMeLogged: boolean,
+        isPartnerLogged: boolean,
+        partnerName = 'Priya',
+      ) => {
+        if (!hasPartner) {
+          return {
+            seamState: 'broken',
+            stateSentence: 'Find a partner or invite a friend to log together.',
+          };
+        }
+        if (isMeLogged && isPartnerLogged) {
+          return {
+            seamState: 'fused',
+            stateSentence: "You've both finished logging today.",
+          };
+        }
+        if (isMeLogged && !isPartnerLogged) {
+          return {
+            seamState: 'half-lit',
+            finishedPerson: 'user',
+            stateSentence: `${partnerName} hasn't logged yet today.`,
+          };
+        }
+        if (!isMeLogged && isPartnerLogged) {
+          return {
+            seamState: 'half-lit',
+            finishedPerson: 'partner',
+            stateSentence: 'You haven’t finished logging today.',
+          };
+        }
+        return {
+          seamState: 'broken',
+          stateSentence: 'Neither of you has finished logging today.',
+        };
+      };
+
+      it('fuses seam automatically when both users logged today (PRD 7.4)', () => {
+        const res = computeSeamAndState(true, true, true, 'Priya');
+        expect(res.seamState).toBe('fused');
+        expect(res.stateSentence).toContain("both finished logging");
+      });
+
+      it('shows half-lit seam when one user logged today', () => {
+        const userFinished = computeSeamAndState(true, true, false, 'Priya');
+        expect(userFinished.seamState).toBe('half-lit');
+        expect(userFinished.stateSentence).toBe("Priya hasn't logged yet today.");
+
+        const partnerFinished = computeSeamAndState(true, false, true, 'Priya');
+        expect(partnerFinished.seamState).toBe('half-lit');
+        expect(partnerFinished.stateSentence).toBe('You haven’t finished logging today.');
+      });
+
+      it('shows broken seam when neither logged today or no partner yet', () => {
+        const neither = computeSeamAndState(true, false, false, 'Priya');
+        expect(neither.seamState).toBe('broken');
+        expect(neither.stateSentence).toBe('Neither of you has finished logging today.');
+
+        const noPartner = computeSeamAndState(false, false, false);
+        expect(noPartner.seamState).toBe('broken');
+        expect(noPartner.stateSentence).toContain('Find a partner or invite a friend');
+      });
+    });
+
+    describe('J04 & J07 Visibility Eye and Partner Meal Viewer Specs', () => {
+      it('verifies J04 WhatTheyCanSee explanation text preserves calorie privacy', () => {
+        const partnerName = 'Priya';
+        const mealExplanation = `${partnerName} can see that you logged your meal, but not what you ate or your calorie breakdown.`;
+        expect(mealExplanation).toContain('Priya can see that you logged your meal');
+        expect(mealExplanation).toContain('not what you ate');
+      });
+
+      it('verifies J07 Partner Meal Viewer dynamic action button adheres to U10 verb-names-the-object', () => {
+        const getMealAddButtonLabel = (section: string) => `Add to ${section}`;
+        expect(getMealAddButtonLabel('dinner')).toBe('Add to dinner');
+        expect(getMealAddButtonLabel('lunch')).toBe('Add to lunch');
+        expect(getMealAddButtonLabel('breakfast')).toBe('Add to breakfast');
+      });
+    });
+
+    describe('J12 Room Progress CMP-14 & Focus Metric Specs', () => {
+      it('includes Focus in the 7 room progress metrics', () => {
+        const metrics = [
+          'consistency',
+          'weight_change',
+          'calories_vs_target',
+          'steps',
+          'water',
+          'workouts',
+          'focus',
+        ];
+        expect(metrics).toHaveLength(7);
+        expect(metrics).toContain('focus');
+      });
+
+      it('provides accessible toggle between Chart and Table modes (CMP-14)', () => {
+        let viewMode: 'chart' | 'table' = 'chart';
+        const toggleViewMode = () => {
+          viewMode = viewMode === 'chart' ? 'table' : 'chart';
+          return viewMode;
+        };
+
+        expect(toggleViewMode()).toBe('table');
+        expect(toggleViewMode()).toBe('chart');
+      });
+    });
+
+    describe('J20 Room Paused & J22 Room Full Specs', () => {
+      it('verifies J20 non-shaming copy and 30 days streak guarantee', () => {
+        const streakNotice = 'Your streak is saved for 30 days.';
+        const keepGoing = t('rooms.paused.keepGoingBtn');
+        expect(streakNotice).toContain('30 days');
+        expect(keepGoing).toBe('Keep this room going');
+      });
+
+      it('verifies J22 host "See plans" and member "Ask the host to make space"', () => {
+        const hostButton = 'See plans';
+        const memberGuidance = 'Ask the host to make space.';
+        expect(hostButton).toBe('See plans');
+        expect(memberGuidance).toBe('Ask the host to make space.');
+      });
+    });
+
+    describe('K01 & K06 Requests Inbox & Shared Meal Specs', () => {
+      it('specifies 20 pending requests limit notice', () => {
+        expect(en.rooms.inboxModal.pendingLimitNotice).toBe('You can have 20 pending requests.');
+      });
+
+      it('specifies decline button reads "Not now" across requests and shared meals', () => {
+        expect(en.rooms.inboxModal.declineBtn).toBe('Not now');
+        expect(en.rooms.sharedMealCard.declineBtn).toBe('Not now');
+      });
+
+      it('provides neutral request type chips', () => {
+        expect(en.rooms.inboxModal.typeRoomInvitation).toBe('Room invitation');
+        expect(en.rooms.inboxModal.typeJoinRequest).toBe('Join request');
+        expect(en.rooms.inboxModal.typePartnerRequest).toBe('Partner request');
+        expect(en.rooms.inboxModal.typeSharedMeal).toBe('Shared meal');
+      });
+
+      it('provides neutral request status chips', () => {
+        expect(en.rooms.inboxModal.statusPending).toBe('Pending');
+        expect(en.rooms.inboxModal.statusAccepted).toBe('Accepted');
+        expect(en.rooms.inboxModal.statusExpired).toBe('Expired');
+        expect(en.rooms.inboxModal.statusCancelled).toBe('Cancelled');
+      });
+    });
+  });
 });

@@ -19,6 +19,7 @@ import { CardioForm } from './CardioForm';
 import { ExercisePickerModal } from './ExercisePickerModal';
 import { RunningTimerBar } from './RunningTimerBar';
 import { WorkoutFinishSummaryModal } from './WorkoutFinishSummaryModal';
+import { RestTimerModal } from './RestTimerModal';
 
 interface LocalSetState {
   id?: string;
@@ -100,6 +101,7 @@ export function WorkoutLoggerModal({
   const [finishedWorkout, setFinishedWorkout] = useState<WorkoutWithDetails | null>(null);
   const [finishSummary, setFinishSummary] = useState<WorkoutSummary | null>(null);
   const [showSummaryModal, setShowSummaryModal] = useState(false);
+  const [restTimerVisible, setRestTimerVisible] = useState(false);
 
   // Initialize or reset form when initialWorkout or visible changes
   useEffect(() => {
@@ -1011,19 +1013,34 @@ export function WorkoutLoggerModal({
                   </View>
                 ))}
 
-                {/* Add Set Button */}
-                <TouchableOpacity
-                  testID={`btn-add-set-${exIdx}`}
-                  style={[styles.addSetRowBtn, { backgroundColor: colors.surfaceAlt }]}
-                  onPress={() => handleAddSet(exIdx)}
-                  accessibilityRole="button"
-                  accessibilityLabel={t('workouts.sets.addSet')}
-                >
-                  <Ionicons name="add" size={16} color={colors.accent} />
-                  <Text style={[styles.addSetRowText, { color: colors.accent }]}>
-                    {t('workouts.sets.addSet')}
-                  </Text>
-                </TouchableOpacity>
+                {/* Add Set and Rest Timer Buttons */}
+                <View style={{ flexDirection: 'row', gap: spacing.sm }}>
+                  <TouchableOpacity
+                    testID={`btn-add-set-${exIdx}`}
+                    style={[styles.addSetRowBtn, { backgroundColor: colors.surfaceAlt, flex: 1 }]}
+                    onPress={() => handleAddSet(exIdx)}
+                    accessibilityRole="button"
+                    accessibilityLabel={t('workouts.sets.addSet')}
+                  >
+                    <Ionicons name="add" size={16} color={colors.accent} />
+                    <Text style={[styles.addSetRowText, { color: colors.accent }]}>
+                      {t('workouts.sets.addSet')}
+                    </Text>
+                  </TouchableOpacity>
+
+                  <TouchableOpacity
+                    testID={`btn-rest-timer-${exIdx}`}
+                    style={[styles.addSetRowBtn, { backgroundColor: colors.surfaceAlt, flex: 0.6 }]}
+                    onPress={() => setRestTimerVisible(true)}
+                    accessibilityRole="button"
+                    accessibilityLabel={t('workouts.restTimerTitle')}
+                  >
+                    <Ionicons name="timer-outline" size={16} color={colors.accent} />
+                    <Text style={[styles.addSetRowText, { color: colors.accent }]}>
+                      Rest
+                    </Text>
+                  </TouchableOpacity>
+                </View>
               </View>
             ))}
           </View>
@@ -1042,6 +1059,12 @@ export function WorkoutLoggerModal({
           workout={finishedWorkout}
           summary={finishSummary}
           onClose={handleFinishSummaryDone}
+        />
+
+        {/* E17 Rest Timer Modal */}
+        <RestTimerModal
+          visible={restTimerVisible}
+          onClose={() => setRestTimerVisible(false)}
         />
       </View>
     </Modal>

@@ -63,18 +63,18 @@ export function RoomFullNotice({ memberCount, memberCap, isHost, onUpgrade }: Ro
             onPress={onUpgrade}
             style={[styles.upgradeBtn, { backgroundColor: colors.accent }]}
             accessibilityRole="button"
-            accessibilityLabel={t('rooms.roomFull.upgradeBtn')}
+            accessibilityLabel="See plans"
             testID="btn-room-full-upgrade"
           >
-            <Ionicons name="sparkles" size={14} color="#FFFFFF" />
-            <Text style={styles.upgradeBtnText}>{t('rooms.roomFull.upgradeBtn')}</Text>
+            <Ionicons name="sparkles" size={14} color={colors.onAccent} />
+            <Text style={[styles.upgradeBtnText, { color: colors.onAccent }]}>See plans</Text>
           </Pressable>
         )}
       </View>
     );
   }
 
-  // Non-host member view: calm, plain notification
+  // Non-host member view: calm, plain notification (Spec J22)
   return (
     <View
       style={[
@@ -96,6 +96,9 @@ export function RoomFullNotice({ memberCount, memberCap, isHost, onUpgrade }: Ro
               count: memberCount,
               cap: memberCap,
             })}
+          </Text>
+          <Text style={[styles.subtitle, { color: colors.textMuted }]}>
+            Ask the host to make space.
           </Text>
         </View>
       </View>
