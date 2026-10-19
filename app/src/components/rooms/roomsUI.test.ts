@@ -155,11 +155,10 @@ describe('Phase 5C — Room UI Presentation & Logic Tests', () => {
   });
 
   describe('5. Paywall Presentation & Pricing', () => {
-    it('validates 3 premium plans with annual best value', () => {
-      expect(en.rooms.paywall.annualPrice).toBe('₹799 / year');
-      expect(en.rooms.paywall.threeMonthPrice).toBe('₹249 / 3 mos');
+    it('validates premium plans with annual best value', () => {
+      expect(en.rooms.paywall.annualPrice).toBe('₹599 / year');
       expect(en.rooms.paywall.monthlyPrice).toBe('₹99 / month');
-      expect(en.rooms.paywall.annualSavings).toContain('Save 33%');
+      expect(en.rooms.paywall.annualSavings).toContain('Save 50%');
     });
 
     it('verifies that personal tracking remains free message is included', () => {
@@ -219,7 +218,9 @@ describe('Phase 5C — Room UI Presentation & Logic Tests', () => {
         return isHost ? t('rooms.roomFull.hostNotice') : t('rooms.roomFull.memberNotice');
       };
 
-      expect(getRoomFullNotice(true)).toBe('Your room is full. Plus fits up to 20 people.');
+      expect(getRoomFullNotice(true)).toBe(
+        'Your room is full. Plus fits up to 10 people, and Pro fits up to 20.',
+      );
       expect(getRoomFullNotice(false)).toBe('This room is full');
       expect(t('rooms.roomFull.upgradeBtn')).toBe('Upgrade Plan');
     });

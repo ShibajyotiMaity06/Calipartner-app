@@ -74,9 +74,9 @@ describe('Phase 11: AI Food-Photo Core Logic (PRD 6.3 LOG-3, 7.7, 8.2)', () => {
       expect(resolveAiUserState(null, sampleNow)).toBe('free_after_trial');
     });
 
-    it('returns exact daily caps per state: trial 3/day, paid 15/day, free-after-trial 0', () => {
-      expect(getDailyFoodPhotoCap('trial')).toBe(3);
-      expect(getDailyFoodPhotoCap('paid')).toBe(15);
+    it('returns exact daily caps per state: trial 5/day, paid 5/day, free-after-trial 0', () => {
+      expect(getDailyFoodPhotoCap('trial')).toBe(5);
+      expect(getDailyFoodPhotoCap('paid')).toBe(5);
       expect(getDailyFoodPhotoCap('free_after_trial')).toBe(0);
     });
 

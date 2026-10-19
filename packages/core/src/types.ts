@@ -510,8 +510,59 @@ export type RoomMemberStatus = 'active' | 'paused' | 'left';
 export type RoomState = 'active' | 'dormant' | 'locked' | 'over_capacity' | 'archived';
 export type RoomWhoCanInvite = 'host_only' | 'any_member';
 
-export type RoomTier = 'basic' | 'plus' | 'pro' | 'community';
-export type RoomPeriod = 'monthly' | 'quarterly' | 'annual';
+export type RoomTier = 'free' | 'plus' | 'pro' | 'basic' | 'community';
+export type RoomPeriod = 'monthly' | 'annual' | 'quarterly';
+
+export type AppFeature =
+  | 'food_diary'
+  | 'food_search'
+  | 'barcode_scan'
+  | 'targets'
+  | 'water_tracking'
+  | 'steps_distance'
+  | 'gps_tracking'
+  | 'workout_logging'
+  | 'weight_tracking'
+  | 'personal_graphs'
+  | 'personal_focus'
+  | 'streaks'
+  | 'weekly_leaderboard'
+  | 'starter_recipes'
+  | 'open_to_partner'
+  | 'offline_logging'
+  | 'receive_room_invite'
+  // Plus features:
+  | 'create_room'
+  | 'join_room'
+  | 'room_chat'
+  | 'room_progress'
+  | 'room_leaderboard'
+  | 'shared_meals'
+  | 'nudges_reactions'
+  | 'share_run_ride'
+  | 'shared_focus'
+  | 'seasonal_challenges'
+  | 'friend_challenges'
+  | 'occasion_plans'
+  | 'partner_finder_browse'
+  | 'partner_finder_send'
+  | 'fasting_tracker'
+  | 'additional_nutrients'
+  | 'meal_planner'
+  | 'workout_routines'
+  | 'rest_timer_prs'
+  | 'shared_workouts'
+  | 'body_measurements'
+  | 'full_recipe_library'
+  | 'export_data'
+  // Pro features:
+  | 'ai_coach'
+  | 'ai_photo_logging'
+  | 'chat_to_log'
+  | 'fits_my_day_recipes'
+  | 'weekly_ai_insights'
+  | 'pro_rooms_capacity'
+  | 'priority_support';
 
 export interface RoomTierConfig {
   tier: RoomTier;
@@ -584,11 +635,22 @@ export interface Entitlement {
 // -----------------------------------------------------------------------------
 
 export type PaywallTrigger =
+  | 'accept_room_invite'
+  | 'create_room'
+  | 'join_room'
   | 'create_room_after_trial'
   | 'add_member_beyond_cap'
   | 'sponsor_locked_room'
   | 'open_ai_coach'
-  | 'open_partner_finder';
+  | 'open_partner_finder'
+  | 'ai_photo_scan'
+  | 'fasting_tracker'
+  | 'challenges'
+  | 'meal_planner'
+  | 'workout_routines'
+  | 'body_measurements'
+  | 'recipe_library'
+  | 'extra_nutrients';
 
 export interface PaywallTriggerData {
   trigger: PaywallTrigger;
@@ -635,7 +697,7 @@ export interface RevenueCatWebhookPayload {
 }
 
 export interface RemoteConfigMap {
-  room_caps: Record<RoomTier, number>;
+  room_caps: Partial<Record<RoomTier, number>>;
   trial_length_days: number;
   trial_cap: number;
   community_tier_enabled: boolean;
@@ -1544,6 +1606,16 @@ export interface AiDailyCapsConfig {
   trial: number;
   paid: number;
   free_after_trial: number;
+  free_taste?: number;
+  paid_pro?: number;
+  paid_plus?: number;
+}
+
+export interface AiCoachDailyCapsConfig {
+  trial: number;
+  paid_pro: number;
+  paid_plus: number;
+  free: number;
 }
 
 export interface AiMonthlyBudgetConfig {

@@ -1,4 +1,5 @@
 import type {
+  AppFeature,
   Entitlement,
   EntitlementStatus,
   PaywallTrigger,
@@ -20,8 +21,22 @@ export {
 } from './rooms';
 
 // -----------------------------------------------------------------------------
-// 1. REVENUECAT PRODUCT IDENTIFIERS & MAPPINGS (PRD 6.18 SUB-2, SUB-11)
+// 1. REVENUECAT PRODUCT IDENTIFIERS & MAPPINGS (CaliPartner Pricing Plan v2)
 // -----------------------------------------------------------------------------
+
+export const PLUS_PRODUCTS = Object.freeze({
+  monthly: 'plus_monthly',
+  annual: 'plus_annual',
+  yearly: 'plus_yearly',
+  quarterly: 'plus_quarterly', // legacy
+} as const);
+
+export const PRO_PRODUCTS = Object.freeze({
+  monthly: 'pro_monthly',
+  annual: 'pro_annual',
+  yearly: 'pro_yearly',
+  quarterly: 'pro_quarterly', // legacy
+} as const);
 
 export const BASIC_PRODUCTS = Object.freeze({
   monthly: 'basic_monthly',
@@ -29,17 +44,12 @@ export const BASIC_PRODUCTS = Object.freeze({
   annual: 'basic_annual',
 } as const);
 
-export const PLUS_PRODUCTS = Object.freeze({
-  monthly: 'plus_monthly',
-  quarterly: 'plus_quarterly',
-  annual: 'plus_annual',
-} as const);
-
-export const PRO_PRODUCTS = Object.freeze({
-  monthly: 'pro_monthly',
-  quarterly: 'pro_quarterly',
-  annual: 'pro_annual',
-} as const);
+export const ACTIVE_REVENUECAT_PRODUCT_IDS: readonly string[] = Object.freeze([
+  PLUS_PRODUCTS.monthly,
+  PLUS_PRODUCTS.annual,
+  PRO_PRODUCTS.monthly,
+  PRO_PRODUCTS.annual,
+]);
 
 export const REVENUECAT_PRODUCT_IDS: readonly string[] = Object.freeze([
   BASIC_PRODUCTS.monthly,
@@ -57,6 +67,7 @@ export const REVENUECAT_OFFERING_IDS: Record<
   Exclude<RoomTier, 'community'>,
   string
 > = Object.freeze({
+  free: 'free',
   basic: 'basic',
   plus: 'plus',
   pro: 'pro',
@@ -65,10 +76,79 @@ export const REVENUECAT_OFFERING_IDS: Record<
 export const SUBSCRIPTION_GROUP_IDENTIFIER = 'calipartner_room_plans';
 
 // -----------------------------------------------------------------------------
-// 2. TIER RANKINGS & COMPARISONS (Basic < Plus < Pro < Community)
+// 1b. PRICING PLAN CONSTANTS (v2: Monthly & Annual only, Plus ₹99/₹599, Pro ₹199/₹1199)
+// -----------------------------------------------------------------------------
+
+export const PRICING_PLANS = Object.freeze({
+  free: {
+    name: 'Free',
+    inr: { monthly: '₹0', annual: '₹0', perMonthAnnual: '₹0' },
+    usd: { monthly: '$0', annual: '$0', perMonthAnnual: '$0' },
+    trialDays: 0,
+    roomCap: 0,
+    hostedRoomsMax: 0,
+    aiScansPerDay: 0,
+    aiFreeTasteScans: 3,
+    aiCoachMessagesPerDay: 0,
+  },
+  plus: {
+    name: 'Plus',
+    inr: {
+      monthly: '₹99 / mo',
+      annual: '₹599 / yr',
+      perMonthAnnual: '₹50 / mo',
+      rawAnnual: 599,
+      rawMonthly: 99,
+    },
+    usd: {
+      monthly: '$5.99 / mo',
+      annual: '$39.99 / yr',
+      perMonthAnnual: '$3.33 / mo',
+      rawAnnual: 39.99,
+      rawMonthly: 5.99,
+    },
+    trialDays: 7,
+    roomCap: 10, // Explicit requirement: 10 members for Plus
+    hostedRoomsMax: 1,
+    rawMonthly: 99,
+    rawAnnual: 599,
+    aiScansPerDay: 0,
+    aiFreeTasteScans: 3,
+    aiCoachMessagesPerDay: 0,
+  },
+  pro: {
+    name: 'Pro',
+    inr: {
+      monthly: '₹199 / mo',
+      annual: '₹1,199 / yr',
+      perMonthAnnual: '₹100 / mo',
+      rawAnnual: 1199,
+      rawMonthly: 199,
+    },
+    usd: {
+      monthly: '$11.99 / mo',
+      annual: '$79.99 / yr',
+      perMonthAnnual: '$6.67 / mo',
+      rawAnnual: 79.99,
+      rawMonthly: 11.99,
+    },
+    trialDays: 7,
+    roomCap: 20, // Explicit requirement: 20 members for Pro
+    hostedRoomsMax: 3,
+    rawMonthly: 199,
+    rawAnnual: 1199,
+    aiScansPerDay: 5,
+    aiFreeTasteScans: 3,
+    aiCoachMessagesPerDay: 10,
+  },
+});
+
+// -----------------------------------------------------------------------------
+// 2. TIER RANKINGS & COMPARISONS (Free < Basic < Plus < Pro < Community)
 // -----------------------------------------------------------------------------
 
 export const TIER_RANKS: Record<RoomTier, number> = Object.freeze({
+  free: 0,
   basic: 1,
   plus: 2,
   pro: 3,
@@ -88,7 +168,7 @@ export function isTierDowngrade(currentTier: RoomTier, targetTier: RoomTier): bo
 }
 
 export function getNextHigherTier(currentTier: RoomTier): RoomTier {
-  if (currentTier === 'basic') return 'plus';
+  if (currentTier === 'free' || currentTier === 'basic') return 'plus';
   if (currentTier === 'plus') return 'pro';
   return 'community';
 }
@@ -146,21 +226,86 @@ export function mapProductIdToTierAndPeriod(
 
 export const DEFAULT_REMOTE_CONFIG: RemoteConfigMap = Object.freeze({
   room_caps: Object.freeze({
+    free: 0,
     basic: 5,
-    plus: 20,
-    pro: 50,
-    community: 100,
+    plus: 10,
+    pro: 20,
+    community: 20,
   }),
-  trial_length_days: 3,
-  trial_cap: 5,
+  trial_length_days: 7,
+  trial_cap: 10,
   community_tier_enabled: false,
 });
 
 export function getTierCap(tier: RoomTier, config?: Partial<RemoteConfigMap> | null): number {
-  if (config?.room_caps && config.room_caps[tier]) {
+  if (config?.room_caps && config.room_caps[tier] !== undefined) {
     return config.room_caps[tier];
   }
-  return DEFAULT_REMOTE_CONFIG.room_caps[tier] ?? 5;
+  return DEFAULT_REMOTE_CONFIG.room_caps[tier] ?? (tier === 'pro' ? 20 : tier === 'plus' ? 10 : 5);
+}
+
+// -----------------------------------------------------------------------------
+// 4b. FEATURE GATING & PERMISSIONS (Section 7 Features Matrix)
+// -----------------------------------------------------------------------------
+
+export function getRequiredTierForFeature(feature: AppFeature): 'free' | 'plus' | 'pro' {
+  const freeFeatures: AppFeature[] = [
+    'food_diary',
+    'food_search',
+    'barcode_scan',
+    'targets',
+    'water_tracking',
+    'steps_distance',
+    'gps_tracking',
+    'workout_logging',
+    'weight_tracking',
+    'personal_graphs',
+    'personal_focus',
+    'streaks',
+    'weekly_leaderboard',
+    'starter_recipes',
+    'open_to_partner',
+    'offline_logging',
+    'receive_room_invite',
+  ];
+  if (freeFeatures.includes(feature)) return 'free';
+
+  const proFeatures: AppFeature[] = [
+    'ai_coach',
+    'ai_photo_logging',
+    'chat_to_log',
+    'fits_my_day_recipes',
+    'weekly_ai_insights',
+    'pro_rooms_capacity',
+    'priority_support',
+  ];
+  if (proFeatures.includes(feature)) return 'pro';
+
+  return 'plus';
+}
+
+export function isFeatureAllowed(
+  feature: AppFeature,
+  userTier: RoomTier = 'free',
+  options?: {
+    freeScansRemaining?: number;
+    hasActiveTrial?: boolean;
+  },
+): boolean {
+  const required = getRequiredTierForFeature(feature);
+  if (required === 'free') return true;
+
+  if (feature === 'ai_photo_logging' && (options?.freeScansRemaining ?? 0) > 0) {
+    return true; // 3 free starter scans
+  }
+
+  if (options?.hasActiveTrial) {
+    return true; // Trial grants access
+  }
+
+  const userRank = TIER_RANKS[userTier] ?? 0;
+  const requiredRank = TIER_RANKS[required] ?? 0;
+  return userRank >= requiredRank;
 }
 
 // -----------------------------------------------------------------------------
@@ -271,42 +416,108 @@ export function reconcileRoomSubscriptions(subscriptions: Entitlement[]): {
 }
 
 // -----------------------------------------------------------------------------
-// 7. PAYWALL TRIGGERS AS DATA (PRD 6.18 SUB-9)
+// 7. PAYWALL TRIGGERS AS DATA (PRD 6.18 SUB-9, CaliPartner Pricing Plan v2)
 // -----------------------------------------------------------------------------
 
 export const PAYWALL_TRIGGER_METADATA: Record<
   PaywallTrigger,
   Omit<PaywallTriggerData, 'trigger'>
 > = Object.freeze({
+  accept_room_invite: {
+    title: 'Join Room with Plus',
+    subtitle: 'Joining accountability rooms requires Plus or Pro. Start your 7-day free trial.',
+    suggestedTier: 'plus',
+    allowsTrial: true,
+  },
+  create_room: {
+    title: 'Host an Accountability Room',
+    subtitle: 'Room hosting requires Plus (up to 10 members) or Pro (up to 20 members).',
+    suggestedTier: 'plus',
+    allowsTrial: true,
+  },
+  join_room: {
+    title: 'Join an Accountability Room',
+    subtitle: 'Room participation requires Plus or Pro. Start your 7-day free trial.',
+    suggestedTier: 'plus',
+    allowsTrial: true,
+  },
   create_room_after_trial: {
-    title: 'Start your Room Plan',
-    subtitle: 'Your 3-day trial has ended. Keep tracking together with your friends.',
-    suggestedTier: 'basic',
+    title: 'Keep Your Room Active',
+    subtitle: 'Your 7-day free trial has ended. Subscribe to Plus or Pro to keep tracking together.',
+    suggestedTier: 'plus',
     allowsTrial: false,
   },
   add_member_beyond_cap: {
     title: 'Need room for more friends?',
-    subtitle: 'Upgrade your room plan to add more members.',
-    suggestedTier: 'plus',
+    subtitle: 'Plus covers up to 10 members. Upgrade to Pro for up to 20 members.',
+    suggestedTier: 'pro',
     allowsTrial: false,
   },
   sponsor_locked_room: {
     title: 'Keep this room going',
-    subtitle: 'Sponsor this room with any plan to unlock it for all members.',
-    suggestedTier: 'basic',
+    subtitle: 'Sponsor this room with Plus or Pro to unlock it for all members.',
+    suggestedTier: 'plus',
     allowsTrial: false,
   },
   open_ai_coach: {
     title: 'CaliPartner AI Coach',
-    subtitle: 'Personalized guidance using your actual targets and data. Requires an active plan.',
-    suggestedTier: 'basic',
-    allowsTrial: false,
+    subtitle: 'Personalized guidance using Claude Haiku 5.5 (10 messages per day). Requires Pro.',
+    suggestedTier: 'pro',
+    allowsTrial: true,
   },
   open_partner_finder: {
     title: 'Find Your Partner',
-    subtitle: 'Meet real, goal-aligned workout and diet partners. Requires an active plan.',
-    suggestedTier: 'basic',
-    allowsTrial: false,
+    subtitle: 'Browse goal-aligned partners and send requests. Requires Plus.',
+    suggestedTier: 'plus',
+    allowsTrial: true,
+  },
+  ai_photo_scan: {
+    title: 'AI Food Photo Logging',
+    subtitle: 'Instant meal detection from photos (5 scans per day). Requires Pro.',
+    suggestedTier: 'pro',
+    allowsTrial: true,
+  },
+  fasting_tracker: {
+    title: 'Intermittent Fasting Tracker',
+    subtitle: 'Custom eating windows and fasting protocols require CaliPartner Plus.',
+    suggestedTier: 'plus',
+    allowsTrial: true,
+  },
+  challenges: {
+    title: 'Seasonal & Friend Challenges',
+    subtitle: 'Compete in community and 1-on-1 challenges with CaliPartner Plus.',
+    suggestedTier: 'plus',
+    allowsTrial: true,
+  },
+  meal_planner: {
+    title: 'Meal Planner & Grocery Lists',
+    subtitle: 'Plan your weekly nutrition and generate grocery lists with Plus.',
+    suggestedTier: 'plus',
+    allowsTrial: true,
+  },
+  workout_routines: {
+    title: 'Workout Routines & Programs',
+    subtitle: 'Access structured workout programs and rest timers with Plus.',
+    suggestedTier: 'plus',
+    allowsTrial: true,
+  },
+  body_measurements: {
+    title: 'Body Measurements & Progress Photos',
+    subtitle: 'Track private body circumference and photos with Plus.',
+    suggestedTier: 'plus',
+    allowsTrial: true,
+  },
+  recipe_library: {
+    title: 'Full Recipe Library',
+    subtitle: 'Unlock 150+ high-protein and regional Indian recipes with Plus.',
+    suggestedTier: 'plus',
+    allowsTrial: true,
+  },
+  extra_nutrients: {
+    title: 'Advanced Nutrients',
+    subtitle: 'Track fibre, sugar, sodium, and micronutrients with Plus.',
+    suggestedTier: 'plus',
+    allowsTrial: true,
   },
 });
 
@@ -328,39 +539,40 @@ export function getPaywallTriggerData(
   };
 }
 
-export function shouldShowPaywallForInvite(isInvited: boolean): boolean {
-  // PRD 6.18 SUB-9: "Invited people are never shown a paywall to join a room."
+export function shouldShowPaywallForInvite(isInvited: boolean, hasPlan?: boolean): boolean {
+  if (hasPlan !== undefined) {
+    return isInvited ? !hasPlan : true;
+  }
+  // Fallback for legacy single-argument calls
   return !isInvited;
 }
 
 export function getTrialBannerInfo(
   trialStartedAt: string | Date | null | undefined,
   now: Date = new Date(),
+  trialLengthDays = 7,
 ): { showBanner: boolean; daysRemaining: number } | null {
   if (!trialStartedAt) return null;
   const startMs = new Date(trialStartedAt).getTime();
   const nowMs = now.getTime();
   const elapsedMs = nowMs - startMs;
   const oneDayMs = 24 * 60 * 60 * 1000;
-  const threeDaysMs = 3 * oneDayMs;
+  const totalTrialMs = trialLengthDays * oneDayMs;
 
-  if (elapsedMs < 0 || elapsedMs >= threeDaysMs) {
+  if (elapsedMs < 0 || elapsedMs >= totalTrialMs) {
     return null; // Trial hasn't started or has expired
   }
 
-  const elapsedDays = Math.floor(elapsedMs / oneDayMs); // 0 = day 1, 1 = day 2, 2 = day 3
-  const daysRemaining = 3 - elapsedDays;
+  const elapsedDays = Math.floor(elapsedMs / oneDayMs);
+  const daysRemaining = trialLengthDays - elapsedDays;
 
-  // PRD 6.18 SUB-9: "Soft banners show on trial days 2 and 3."
-  if (elapsedDays === 1 || elapsedDays === 2) {
-    return {
-      showBanner: true,
-      daysRemaining,
-    };
-  }
+  // For 3-day legacy trial: soft banners on days 2 and 3 (elapsedDays 1 or 2)
+  // For 7-day trial: show banner when 3 or fewer days remaining
+  const showBanner =
+    trialLengthDays === 3 ? elapsedDays === 1 || elapsedDays === 2 : daysRemaining <= 3;
 
   return {
-    showBanner: false,
-    daysRemaining: 3,
+    showBanner,
+    daysRemaining,
   };
 }

@@ -17,10 +17,16 @@ import { scaleNutrients } from './food';
 // -----------------------------------------------------------------------------
 
 export const DEFAULT_AI_FOOD_PHOTO_CAPS: Readonly<AiDailyCapsConfig> = Object.freeze({
-  trial: 3,
-  paid: 15,
+  trial: 5,
+  paid: 5,
   free_after_trial: 0,
+  free_taste: 3,
+  paid_pro: 5,
+  paid_plus: 0,
 });
+
+export const DEFAULT_AI_COACH_DAILY_LIMIT = 10;
+export const DEFAULT_AI_FREE_TASTE_SCANS = 3;
 
 export const DEFAULT_AI_BUDGET_CONFIG: Readonly<AiMonthlyBudgetConfig> = Object.freeze({
   monthly_budget_usd: 100.0,
@@ -81,16 +87,23 @@ export function resolveAiUserState(
 export function getDailyFoodPhotoCap(
   userState: AiUserState,
   capsConfig?: Partial<AiDailyCapsConfig> | null,
+  tier?: string,
 ): number {
-  const merged = { ...DEFAULT_AI_FOOD_PHOTO_CAPS, ...capsConfig };
+  if (tier === 'plus') {
+    return capsConfig?.paid_plus ?? DEFAULT_AI_FOOD_PHOTO_CAPS.paid_plus ?? 0;
+  }
   switch (userState) {
     case 'paid':
-      return Math.max(0, merged.paid);
+      if (capsConfig?.paid !== undefined) return Math.max(0, capsConfig.paid);
+      if (capsConfig?.paid_pro !== undefined) return Math.max(0, capsConfig.paid_pro);
+      return Math.max(0, DEFAULT_AI_FOOD_PHOTO_CAPS.paid_pro ?? DEFAULT_AI_FOOD_PHOTO_CAPS.paid);
     case 'trial':
-      return Math.max(0, merged.trial);
+      if (capsConfig?.trial !== undefined) return Math.max(0, capsConfig.trial);
+      return Math.max(0, DEFAULT_AI_FOOD_PHOTO_CAPS.trial);
     case 'free_after_trial':
     default:
-      return Math.max(0, merged.free_after_trial);
+      if (capsConfig?.free_after_trial !== undefined) return Math.max(0, capsConfig.free_after_trial);
+      return Math.max(0, DEFAULT_AI_FOOD_PHOTO_CAPS.free_after_trial);
   }
 }
 

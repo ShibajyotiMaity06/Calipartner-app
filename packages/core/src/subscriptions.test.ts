@@ -19,6 +19,9 @@ import {
   TIER_RANKS,
   verifyWebhookAuth,
   getPaywallTriggerData,
+  PRICING_PLANS,
+  isFeatureAllowed,
+  getRequiredTierForFeature,
 } from './subscriptions';
 import type { Entitlement } from './types';
 
@@ -112,11 +115,10 @@ describe('Phase 10 Core: Subscriptions, Offerings, Tiers & Periods', () => {
     expect(getNextHigherTier('pro')).toBe('community');
   });
 
-  it('reads remote config caps with fallback to defaults', () => {
+  it('reads remote config caps with fallback to defaults (Plus 10, Pro 20)', () => {
     expect(getTierCap('basic')).toBe(5);
-    expect(getTierCap('plus')).toBe(20);
-    expect(getTierCap('pro')).toBe(50);
-    expect(getTierCap('community')).toBe(100);
+    expect(getTierCap('plus')).toBe(10);
+    expect(getTierCap('pro')).toBe(20);
 
     const customConfig = {
       room_caps: { basic: 6, plus: 25, pro: 60, community: 120 },
@@ -126,8 +128,8 @@ describe('Phase 10 Core: Subscriptions, Offerings, Tiers & Periods', () => {
     expect(getTierCap('pro', customConfig)).toBe(60);
 
     expect(DEFAULT_REMOTE_CONFIG.community_tier_enabled).toBe(false);
-    expect(DEFAULT_REMOTE_CONFIG.trial_length_days).toBe(3);
-    expect(DEFAULT_REMOTE_CONFIG.trial_cap).toBe(5);
+    expect(DEFAULT_REMOTE_CONFIG.trial_length_days).toBe(7);
+    expect(DEFAULT_REMOTE_CONFIG.trial_cap).toBe(10);
   });
 });
 
@@ -244,56 +246,111 @@ describe('Phase 10 Core: Two Subscriptions for One Room (PRD 7.11)', () => {
   });
 });
 
-describe('Phase 10 Core: Paywall Triggers & Trial Banners (PRD 6.18 SUB-9)', () => {
-  it('provides structured data for all SUB-9 paywall triggers', () => {
+describe('Phase 10 Core: Paywall Triggers & Trial Banners (CaliPartner Pricing Plan v2)', () => {
+  it('provides structured data for paywall triggers with Plus and Pro tiers', () => {
     const t1 = getPaywallTriggerData('create_room_after_trial');
-    expect(t1.suggestedTier).toBe('basic');
+    expect(t1.suggestedTier).toBe('plus');
     expect(t1.allowsTrial).toBe(false);
 
-    const t2 = getPaywallTriggerData('add_member_beyond_cap', 'basic');
-    expect(t2.suggestedTier).toBe('plus'); // suggests next tier!
+    const t2 = getPaywallTriggerData('add_member_beyond_cap', 'plus');
+    expect(t2.suggestedTier).toBe('pro'); // suggests Pro for up to 20 members!
 
     const t3 = getPaywallTriggerData('sponsor_locked_room');
-    expect(t3.suggestedTier).toBe('basic');
+    expect(t3.suggestedTier).toBe('plus');
 
     const t4 = getPaywallTriggerData('open_ai_coach');
-    expect(t4.allowsTrial).toBe(false);
+    expect(t4.suggestedTier).toBe('pro');
 
     const t5 = getPaywallTriggerData('open_partner_finder');
-    expect(t5.allowsTrial).toBe(false);
+    expect(t5.suggestedTier).toBe('plus');
+
+    const t6 = getPaywallTriggerData('accept_room_invite');
+    expect(t6.suggestedTier).toBe('plus');
+    expect(t6.allowsTrial).toBe(true);
+
+    const t7 = getPaywallTriggerData('ai_photo_scan');
+    expect(t7.suggestedTier).toBe('pro');
   });
 
-  it('never shows a paywall to invited users joining a room', () => {
+  it('correctly gates invited users based on their plan (free users see paywall, paying users do not)', () => {
+    // When free user accepts invite: prompt towards pricing page (Plus or Pro)
+    expect(shouldShowPaywallForInvite(true, false)).toBe(true);
+
+    // When paying/trial user accepts invite: joins directly without paywall
+    expect(shouldShowPaywallForInvite(true, true)).toBe(false);
+
+    // Non-invited users without invite see paywall
+    expect(shouldShowPaywallForInvite(false, false)).toBe(true);
+    expect(shouldShowPaywallForInvite(false, true)).toBe(true);
+
+    // Legacy fallback
     expect(shouldShowPaywallForInvite(true)).toBe(false);
     expect(shouldShowPaywallForInvite(false)).toBe(true);
   });
 
-  it('shows soft trial banner on days 2 and 3 only', () => {
+  it('shows soft trial banner on days 2 and 3 for 3-day legacy trial, and <=3 days left for 7-day trial', () => {
     const base = new Date('2026-10-10T12:00:00Z');
 
-    // Day 1 (elapsed < 24h): no banner
+    // 3-day trial legacy
     const day1 = new Date('2026-10-10T18:00:00Z');
-    expect(getTrialBannerInfo(base, day1)).toEqual({
+    expect(getTrialBannerInfo(base, day1, 3)).toEqual({
       showBanner: false,
       daysRemaining: 3,
     });
 
-    // Day 2 (elapsed 30h): show banner with 2 days left
     const day2 = new Date('2026-10-11T18:00:00Z');
-    expect(getTrialBannerInfo(base, day2)).toEqual({
+    expect(getTrialBannerInfo(base, day2, 3)).toEqual({
       showBanner: true,
       daysRemaining: 2,
     });
 
-    // Day 3 (elapsed 54h): show banner with 1 day left
-    const day3 = new Date('2026-10-12T18:00:00Z');
-    expect(getTrialBannerInfo(base, day3)).toEqual({
+    // 7-day trial
+    const day5 = new Date('2026-10-15T18:00:00Z'); // 5 days elapsed, 2 days remaining
+    expect(getTrialBannerInfo(base, day5, 7)).toEqual({
       showBanner: true,
-      daysRemaining: 1,
+      daysRemaining: 2,
     });
+  });
 
-    // Day 4 (elapsed 75h): trial expired, returns null
-    const day4 = new Date('2026-10-13T18:00:00Z');
-    expect(getTrialBannerInfo(base, day4)).toBeNull();
+  it('validates Pricing Plans v2 (Plus ₹99/₹599 cap 10, Pro ₹199/₹1,199 cap 20)', () => {
+    expect(PRICING_PLANS.plus.roomCap).toBe(10);
+    expect(PRICING_PLANS.plus.rawMonthly).toBe(99);
+    expect(PRICING_PLANS.plus.rawAnnual).toBe(599);
+
+    expect(PRICING_PLANS.pro.roomCap).toBe(20);
+    expect(PRICING_PLANS.pro.rawMonthly).toBe(199);
+    expect(PRICING_PLANS.pro.rawAnnual).toBe(1199);
+    expect(PRICING_PLANS.pro.aiScansPerDay).toBe(5);
+    expect(PRICING_PLANS.pro.aiCoachMessagesPerDay).toBe(10);
+  });
+
+  it('enforces feature permissions matrix across Free, Plus, and Pro', () => {
+    // Free features
+    expect(isFeatureAllowed('food_search', 'free')).toBe(true);
+    expect(isFeatureAllowed('gps_tracking', 'free')).toBe(true);
+    expect(isFeatureAllowed('water_tracking', 'free')).toBe(true);
+    expect(isFeatureAllowed('steps_distance', 'free')).toBe(true);
+    expect(isFeatureAllowed('open_to_partner', 'free')).toBe(true);
+    expect(getRequiredTierForFeature('food_search')).toBe('free');
+
+    // Plus features
+    expect(isFeatureAllowed('create_room', 'free')).toBe(false);
+    expect(isFeatureAllowed('create_room', 'plus')).toBe(true);
+    expect(isFeatureAllowed('create_room', 'pro')).toBe(true);
+    expect(isFeatureAllowed('fasting_tracker', 'free')).toBe(false);
+    expect(isFeatureAllowed('fasting_tracker', 'plus')).toBe(true);
+    expect(isFeatureAllowed('partner_finder_browse', 'free')).toBe(false);
+    expect(isFeatureAllowed('partner_finder_browse', 'plus')).toBe(true);
+
+    // Pro features
+    expect(isFeatureAllowed('ai_coach', 'free')).toBe(false);
+    expect(isFeatureAllowed('ai_coach', 'plus')).toBe(false);
+    expect(isFeatureAllowed('ai_coach', 'pro')).toBe(true);
+    expect(isFeatureAllowed('chat_to_log', 'plus')).toBe(false);
+    expect(isFeatureAllowed('chat_to_log', 'pro')).toBe(true);
+
+    // Free AI photo scans taste (3 scans)
+    expect(isFeatureAllowed('ai_photo_logging', 'free', { freeScansRemaining: 3 })).toBe(true);
+    expect(isFeatureAllowed('ai_photo_logging', 'free', { freeScansRemaining: 0 })).toBe(false);
   });
 });

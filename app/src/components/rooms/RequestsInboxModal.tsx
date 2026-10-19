@@ -12,6 +12,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { t } from '@/i18n';
 import { fontSize, radius, spacing } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
+import { useSubscription } from '@/hooks/useSubscription';
 import type { RoomRequestWithDetails } from '@/types/rooms';
 
 interface RequestsInboxModalProps {
@@ -34,6 +35,12 @@ export function RequestsInboxModal({
   onOpenPaywall,
 }: RequestsInboxModalProps) {
   const { colors } = useTheme();
+  const { hasPlan, isTrial, entitlement } = useSubscription();
+  const hasActiveAccess =
+    hasPlan ||
+    (isTrial &&
+      (!entitlement?.period_end || new Date(entitlement.period_end) > new Date()));
+
   const [activeTab, setActiveTab] = useState<'incoming' | 'outgoing'>('incoming');
   const [actingId, setActingId] = useState<string | null>(null);
   const [errorState, setErrorState] = useState<{
@@ -43,6 +50,19 @@ export function RequestsInboxModal({
   } | null>(null);
 
   const handleRespond = async (item: RoomRequestWithDetails, accept: boolean) => {
+    // Free user attempting to accept a room invitation
+    if (accept && item.type === 'invitation' && !hasActiveAccess) {
+      setErrorState({
+        requestId: item.id,
+        message: t('rooms.inboxModal.planRequiredMessage'),
+        showUpgrade: true,
+      });
+      if (onOpenPaywall) {
+        onOpenPaywall();
+      }
+      return;
+    }
+
     setActingId(item.id);
     setErrorState(null);
     try {
@@ -50,7 +70,16 @@ export function RequestsInboxModal({
     } catch (err: unknown) {
       const msg =
         err && typeof err === 'object' && 'message' in err ? String(err.message) : String(err);
-      if (msg.includes('ROOM_FULL')) {
+      if (msg.includes('PLAN_REQUIRED')) {
+        setErrorState({
+          requestId: item.id,
+          message: t('rooms.inboxModal.planRequiredMessage'),
+          showUpgrade: true,
+        });
+        if (onOpenPaywall) {
+          onOpenPaywall();
+        }
+      } else if (msg.includes('ROOM_FULL')) {
         const isHost = item.type === 'join_request';
         setErrorState({
           requestId: item.id,
@@ -251,11 +280,17 @@ export function RequestsInboxModal({
                                 onPress={onOpenPaywall}
                                 style={[styles.upgradeBtnMini, { backgroundColor: colors.accent }]}
                                 accessibilityRole="button"
-                                accessibilityLabel={t('rooms.roomFull.upgradeBtn')}
+                                accessibilityLabel={
+                                  errorState.message.includes('Plus or Pro')
+                                    ? t('rooms.inboxModal.upgradeToAcceptBtn')
+                                    : t('rooms.roomFull.upgradeBtn')
+                                }
                                 testID={`btn-inbox-room-full-upgrade-${item.id}`}
                               >
                                 <Text style={styles.upgradeBtnMiniText}>
-                                  {t('rooms.roomFull.upgradeBtn')}
+                                  {errorState.message.includes('Plus or Pro')
+                                    ? t('rooms.inboxModal.upgradeToAcceptBtn')
+                                    : t('rooms.roomFull.upgradeBtn')}
                                 </Text>
                               </Pressable>
                             )}

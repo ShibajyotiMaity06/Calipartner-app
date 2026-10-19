@@ -1107,7 +1107,7 @@ describe('Phase 5 v0.4 Comprehensive Room Billing, Capacity & Attack Tests', () 
     db.devGrantPlan(userB, 'plus', 'monthly', 'paid');
     db.sponsorRoom(userB, room1.id);
     expect(db.rooms.get(room1.id)?.state).toBe('active');
-    expect(db.roomCap(room1.id)).toBe(20); // Plus tier cap = 20
+    expect(db.roomCap(room1.id)).toBe(10); // Plus tier cap = 10
     expect(db.getRoomSnapshot(userA, room1.id)).toBeDefined();
   });
 

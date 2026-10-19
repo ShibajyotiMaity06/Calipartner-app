@@ -8,18 +8,20 @@ import {
   ScrollView,
   StyleSheet,
   Text,
+  TextInput,
   View,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import type { PurchasesPackage } from 'react-native-purchases';
+import { PRICING_PLANS } from '@calipartner/core';
 import { t } from '@/i18n';
 import { fontSize, radius, spacing } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
 import { useSubscription } from '@/hooks/useSubscription';
 
-export type RoomSizeBracket = '2-5' | '6-20' | '21-50';
-export type PlanDuration = 'monthly' | 'quarterly' | 'annual';
-export type PlanTier = 'basic' | 'plus' | 'pro';
+export type RoomSizeBracket = '2-5' | '6-20' | '21-50' | 'plus' | 'pro';
+export type PlanDuration = 'monthly' | 'annual';
+export type PlanTier = 'plus' | 'pro' | 'basic';
 
 export interface PaywallModalProps {
   visible: boolean;
@@ -47,95 +49,56 @@ export function PaywallModal({
     sponsor,
   } = useSubscription();
 
-  // Selected state
-  const [selectedSize, setSelectedSize] = useState<RoomSizeBracket>(() => {
-    if (preselectedTier === 'pro') return '21-50';
-    if (preselectedTier === 'plus') return '6-20';
-    return '2-5';
+  // Selected Tier (Plus or Pro)
+  const [selectedTier, setSelectedTier] = useState<'plus' | 'pro'>(() => {
+    if (preselectedTier === 'pro') return 'pro';
+    return 'plus';
   });
 
+  // Selected Duration (Monthly or Annual — default to Annual per section 6)
   const [selectedDuration, setSelectedDuration] = useState<PlanDuration>('annual');
   const [actionLoading, setActionLoading] = useState(false);
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
 
-  // Map size bracket to plan tier
-  const currentTier: PlanTier = useMemo(() => {
-    switch (selectedSize) {
-      case '21-50':
-        return 'pro';
-      case '6-20':
-        return 'plus';
-      case '2-5':
-      default:
-        return 'basic';
-    }
-  }, [selectedSize]);
+  // Promo Code modal state
+  const [showPromoInput, setShowPromoInput] = useState(false);
+  const [promoCode, setPromoCode] = useState('');
+  const [promoMessage, setPromoMessage] = useState<string | null>(null);
 
   // Find corresponding RevenueCat package if offerings are loaded
   const matchedPackage: PurchasesPackage | null = useMemo(() => {
     if (!offerings) return null;
 
-    const offeringForTier = offerings.all?.[currentTier] ?? offerings.current;
-
+    const offeringForTier = offerings.all?.[selectedTier] ?? offerings.current;
     if (!offeringForTier) return null;
 
     const packages = offeringForTier.availablePackages;
-    const expectedId = `${currentTier}_${selectedDuration}`;
+    const expectedId = `${selectedTier}_${selectedDuration}`;
 
     return (
       packages.find((p) => p.identifier === expectedId) ??
       packages.find(
-        (p) => p.identifier.includes(currentTier) && p.identifier.includes(selectedDuration),
+        (p) => p.identifier.includes(selectedTier) && p.identifier.includes(selectedDuration),
       ) ??
       null
     );
-  }, [offerings, currentTier, selectedDuration]);
+  }, [offerings, selectedTier, selectedDuration]);
 
-  // Localized price strings (falls back to PRD 6.18 standard pricing)
+  // Display prices
   const priceDisplay = useMemo(() => {
     if (matchedPackage?.product?.priceString) {
       return matchedPackage.product.priceString;
     }
-
-    // Fallbacks from PRD 6.18
-    const fallbackPrices: Record<PlanTier, Record<PlanDuration, string>> = {
-      basic: {
-        monthly: '₹99 / mo',
-        quarterly: '₹249 / 3 mos',
-        annual: '₹799 / yr',
-      },
-      plus: {
-        monthly: '₹200 / mo',
-        quarterly: '₹499 / 3 mos',
-        annual: '₹1,599 / yr',
-      },
-      pro: {
-        monthly: '₹300 / mo',
-        quarterly: '₹749 / 3 mos',
-        annual: '₹2,399 / yr',
-      },
-    };
-
-    return fallbackPrices[currentTier][selectedDuration];
-  }, [matchedPackage, currentTier, selectedDuration]);
+    const plan = selectedTier === 'pro' ? PRICING_PLANS.pro : PRICING_PLANS.plus;
+    return selectedDuration === 'annual' ? plan.inr.annual : plan.inr.monthly;
+  }, [matchedPackage, selectedTier, selectedDuration]);
 
   // Equivalent per-month cost for annual plan
   const perMonthDisplay = useMemo(() => {
     if (selectedDuration !== 'annual') return null;
-
-    const perMonthMap: Record<PlanTier, string> = {
-      basic: '₹67 / mo',
-      plus: '₹133 / mo',
-      pro: '₹200 / mo',
-    };
-
-    return perMonthMap[currentTier];
-  }, [selectedDuration, currentTier]);
-
-  const handleSizeSelect = (bracket: RoomSizeBracket) => {
-    setSelectedSize(bracket);
-    setStatusMessage(null);
-  };
+    const plan = selectedTier === 'pro' ? PRICING_PLANS.pro : PRICING_PLANS.plus;
+    return plan.inr.perMonthAnnual;
+  }, [selectedDuration, selectedTier]);
 
   const handlePurchase = async () => {
     setActionLoading(true);
@@ -143,7 +106,6 @@ export function PaywallModal({
 
     try {
       if (sponsorRoomId) {
-        // Sponsoring locked room
         const success = await sponsor(sponsorRoomId);
         if (success) {
           setStatusMessage(t('rooms.paused.keepGoingBtn'));
@@ -159,13 +121,13 @@ export function PaywallModal({
           entitlement?.store_product_id ?? undefined,
         );
         if (success) {
-          setStatusMessage('Plan unlocked! ✨');
+          setStatusMessage('Plan unlocked');
           setTimeout(onClose, 1200);
           return;
         }
       } else {
-        // Mock fallback preview for demo/development
-        setStatusMessage('Plan activated for preview! ✨');
+        // Fallback preview activation for dev / testing environments
+        setStatusMessage('Plan activated for preview');
         setTimeout(onClose, 1500);
       }
     } catch (err: unknown) {
@@ -194,19 +156,32 @@ export function PaywallModal({
     }
   };
 
+  const handleApplyPromoCode = () => {
+    const clean = promoCode.trim().toUpperCase();
+    if (!clean) return;
+
+    if (clean.endsWith('50') || clean === 'PARTNER50' || clean === 'LAUNCH50') {
+      setPromoMessage('50% partner discount applied for your first year');
+    } else {
+      setPromoMessage('Invalid or expired code. Please verify with your partner');
+    }
+  };
+
   const openUrl = (url: string) => {
     Linking.openURL(url).catch(() => {
       Alert.alert('Notice', 'Unable to open link');
     });
   };
 
-  const tierName = currentTier === 'pro' ? 'Pro' : currentTier === 'plus' ? 'Plus' : 'Basic';
+  const tierName = selectedTier === 'pro' ? 'Pro' : 'Plus';
 
   const actionButtonText = sponsorRoomId
     ? t('rooms.paywall.sponsorPlan', { tier: tierName })
     : isUpgrade
       ? t('rooms.paywall.upgradePlan', { tier: tierName })
-      : t('rooms.paywall.startPlan', { tier: tierName });
+      : selectedDuration === 'annual'
+        ? t('rooms.paywall.startTrial')
+        : t('rooms.paywall.startPlan', { tier: tierName });
 
   return (
     <Modal visible={visible} animationType="slide" transparent onRequestClose={onClose}>
@@ -217,9 +192,11 @@ export function PaywallModal({
             <View style={styles.headerTitleGroup}>
               <View style={[styles.sparklePill, { backgroundColor: colors.cardHighlight }]}>
                 <Ionicons name="sparkles" size={13} color={colors.accent} />
-                <Text style={[styles.sparkleText, { color: colors.accent }]}>ROOM PLANS</Text>
+                <Text style={[styles.sparkleText, { color: colors.accent }]}>CALIPARTNER PLANS</Text>
               </View>
-              <Text style={[styles.title, { color: colors.text }]}>{t('rooms.paywall.title')}</Text>
+              <Text style={[styles.title, { color: colors.text }]}>
+                {t('rooms.paywall.title')}
+              </Text>
               <Text style={[styles.subtitle, { color: colors.textMuted }]}>
                 {t('rooms.paywall.subtitle')}
               </Text>
@@ -259,149 +236,12 @@ export function PaywallModal({
               </View>
             )}
 
-            {/* 1. Size Picker (PRD SUB-10) */}
-            <View style={styles.sectionBlock}>
-              <Text style={[styles.sectionTitle, { color: colors.text }]}>
-                {t('rooms.paywall.sizePickerTitle')}
-              </Text>
-
-              <View style={styles.sizePickerRow}>
-                {/* 2-5 Basic */}
-                <Pressable
-                  onPress={() => handleSizeSelect('2-5')}
-                  style={[
-                    styles.sizeCard,
-                    {
-                      backgroundColor:
-                        selectedSize === '2-5' ? colors.cardHighlight : colors.surfaceAlt,
-                      borderColor: selectedSize === '2-5' ? colors.accent : colors.border,
-                    },
-                  ]}
-                  accessibilityRole="radio"
-                  accessibilityState={{ selected: selectedSize === '2-5' }}
-                  accessibilityLabel="Size 2 to 5 people, Basic plan"
-                  testID="picker-size-2-5"
-                >
-                  <Text style={[styles.sizeCardTitle, { color: colors.text }]}>
-                    {t('rooms.paywall.sizeBasic')}
-                  </Text>
-                  <Text style={[styles.sizeCardSubtitle, { color: colors.textMuted }]}>
-                    Basic (up to 5)
-                  </Text>
-                </Pressable>
-
-                {/* 6-20 Plus */}
-                <Pressable
-                  onPress={() => handleSizeSelect('6-20')}
-                  style={[
-                    styles.sizeCard,
-                    {
-                      backgroundColor:
-                        selectedSize === '6-20' ? colors.cardHighlight : colors.surfaceAlt,
-                      borderColor: selectedSize === '6-20' ? colors.accent : colors.border,
-                    },
-                  ]}
-                  accessibilityRole="radio"
-                  accessibilityState={{ selected: selectedSize === '6-20' }}
-                  accessibilityLabel="Size 6 to 20 people, Plus plan"
-                  testID="picker-size-6-20"
-                >
-                  <Text style={[styles.sizeCardTitle, { color: colors.text }]}>
-                    {t('rooms.paywall.sizePlus')}
-                  </Text>
-                  <Text style={[styles.sizeCardSubtitle, { color: colors.textMuted }]}>
-                    Plus (up to 20)
-                  </Text>
-                </Pressable>
-
-                {/* 21-50 Pro */}
-                <Pressable
-                  onPress={() => handleSizeSelect('21-50')}
-                  style={[
-                    styles.sizeCard,
-                    {
-                      backgroundColor:
-                        selectedSize === '21-50' ? colors.cardHighlight : colors.surfaceAlt,
-                      borderColor: selectedSize === '21-50' ? colors.accent : colors.border,
-                    },
-                  ]}
-                  accessibilityRole="radio"
-                  accessibilityState={{ selected: selectedSize === '21-50' }}
-                  accessibilityLabel="Size 21 to 50 people, Pro plan"
-                  testID="picker-size-21-50"
-                >
-                  <Text style={[styles.sizeCardTitle, { color: colors.text }]}>
-                    {t('rooms.paywall.sizePro')}
-                  </Text>
-                  <Text style={[styles.sizeCardSubtitle, { color: colors.textMuted }]}>
-                    Pro (up to 50)
-                  </Text>
-                </Pressable>
-              </View>
-            </View>
-
-            {/* 2. Billing Duration Toggle */}
+            {/* 1. Duration Toggle (Annual vs Monthly) */}
             <View style={styles.sectionBlock}>
               <View
                 style={[styles.durationToggleContainer, { backgroundColor: colors.surfaceAlt }]}
               >
-                {/* Monthly */}
-                <Pressable
-                  onPress={() => setSelectedDuration('monthly')}
-                  style={[
-                    styles.durationToggleItem,
-                    selectedDuration === 'monthly' && [
-                      styles.durationToggleSelected,
-                      { backgroundColor: colors.surface },
-                    ],
-                  ]}
-                  accessibilityRole="button"
-                  accessibilityState={{
-                    selected: selectedDuration === 'monthly',
-                  }}
-                  testID="toggle-duration-monthly"
-                >
-                  <Text
-                    style={[
-                      styles.durationToggleText,
-                      {
-                        color: selectedDuration === 'monthly' ? colors.text : colors.textMuted,
-                      },
-                    ]}
-                  >
-                    {t('rooms.paywall.durationMonthly')}
-                  </Text>
-                </Pressable>
-
-                {/* 3 Months */}
-                <Pressable
-                  onPress={() => setSelectedDuration('quarterly')}
-                  style={[
-                    styles.durationToggleItem,
-                    selectedDuration === 'quarterly' && [
-                      styles.durationToggleSelected,
-                      { backgroundColor: colors.surface },
-                    ],
-                  ]}
-                  accessibilityRole="button"
-                  accessibilityState={{
-                    selected: selectedDuration === 'quarterly',
-                  }}
-                  testID="toggle-duration-quarterly"
-                >
-                  <Text
-                    style={[
-                      styles.durationToggleText,
-                      {
-                        color: selectedDuration === 'quarterly' ? colors.text : colors.textMuted,
-                      },
-                    ]}
-                  >
-                    {t('rooms.paywall.durationQuarterly')}
-                  </Text>
-                </Pressable>
-
-                {/* Annual */}
+                {/* Annual (Preselected, 50% Savings) */}
                 <Pressable
                   onPress={() => setSelectedDuration('annual')}
                   style={[
@@ -412,9 +252,8 @@ export function PaywallModal({
                     ],
                   ]}
                   accessibilityRole="button"
-                  accessibilityState={{
-                    selected: selectedDuration === 'annual',
-                  }}
+                  accessibilityState={{ selected: selectedDuration === 'annual' }}
+                  accessibilityLabel="Annual billing, save 50 percent"
                   testID="toggle-duration-annual"
                 >
                   <View style={styles.annualLabelWrap}>
@@ -429,110 +268,253 @@ export function PaywallModal({
                       {t('rooms.paywall.durationAnnual')}
                     </Text>
                     <View style={[styles.savingsBadge, { backgroundColor: colors.accent }]}>
-                      <Text style={styles.savingsBadgeText}>SAVE 33%</Text>
+                      <Text style={[styles.savingsBadgeText, { color: colors.onBrand }]}>
+                        SAVE 50%
+                      </Text>
                     </View>
+                  </View>
+                </Pressable>
+
+                {/* Monthly */}
+                <Pressable
+                  onPress={() => setSelectedDuration('monthly')}
+                  style={[
+                    styles.durationToggleItem,
+                    selectedDuration === 'monthly' && [
+                      styles.durationToggleSelected,
+                      { backgroundColor: colors.surface },
+                    ],
+                  ]}
+                  accessibilityRole="button"
+                  accessibilityState={{ selected: selectedDuration === 'monthly' }}
+                  accessibilityLabel="Monthly billing"
+                  testID="toggle-duration-monthly"
+                >
+                  <Text
+                    style={[
+                      styles.durationToggleText,
+                      {
+                        color: selectedDuration === 'monthly' ? colors.text : colors.textMuted,
+                      },
+                    ]}
+                  >
+                    {t('rooms.paywall.durationMonthly')}
+                  </Text>
+                </Pressable>
+              </View>
+
+              {/* Free Trial Pill on Annual */}
+              {selectedDuration === 'annual' && (
+                <View style={styles.trialCallout}>
+                  <Ionicons name="shield-checkmark-outline" size={14} color={colors.accent} />
+                  <Text style={[styles.trialCalloutText, { color: colors.textMuted }]}>
+                    {t('rooms.paywall.trialNotice')}
+                  </Text>
+                </View>
+              )}
+            </View>
+
+            {/* 2. Tier Selection Cards (Plus vs Pro) */}
+            <View style={styles.sectionBlock}>
+              <Text style={[styles.sectionTitle, { color: colors.text }]}>
+                {t('rooms.paywall.planPickerTitle')}
+              </Text>
+
+              <View style={styles.tierCardsRow}>
+                {/* Plus Card */}
+                <Pressable
+                  onPress={() => setSelectedTier('plus')}
+                  style={[
+                    styles.tierCard,
+                    {
+                      backgroundColor:
+                        selectedTier === 'plus' ? colors.cardHighlight : colors.surfaceAlt,
+                      borderColor: selectedTier === 'plus' ? colors.accent : colors.border,
+                    },
+                  ]}
+                  accessibilityRole="radio"
+                  accessibilityState={{ selected: selectedTier === 'plus' }}
+                  accessibilityLabel="CaliPartner Plus, up to 10 members, 1 hosted room"
+                  testID="picker-size-6-20"
+                >
+                  <View style={styles.tierCardHeader}>
+                    <Text style={[styles.tierCardTitle, { color: colors.text }]}>Plus</Text>
+                    <View style={[styles.memberCapBadge, { backgroundColor: colors.surface }]}>
+                      <Text style={[styles.memberCapText, { color: colors.accent }]}>
+                        10 members
+                      </Text>
+                    </View>
+                  </View>
+
+                  <Text style={[styles.tierPriceText, { color: colors.text }]}>
+                    {selectedDuration === 'annual'
+                      ? PRICING_PLANS.plus.inr.perMonthAnnual
+                      : PRICING_PLANS.plus.inr.monthly}
+                  </Text>
+                  <Text style={[styles.tierPricePeriod, { color: colors.textMuted }]}>
+                    {selectedDuration === 'annual'
+                      ? `Billed as ${PRICING_PLANS.plus.inr.annual}`
+                      : 'Billed monthly'}
+                  </Text>
+
+                  <View style={styles.tierDivider} />
+
+                  <View style={styles.bulletItem}>
+                    <Ionicons name="checkmark" size={13} color={colors.accent} />
+                    <Text style={[styles.bulletText, { color: colors.text }]}>
+                      1 room you host (10 members)
+                    </Text>
+                  </View>
+                  <View style={styles.bulletItem}>
+                    <Ionicons name="checkmark" size={13} color={colors.accent} />
+                    <Text style={[styles.bulletText, { color: colors.text }]}>
+                      Partner Finder & room chat
+                    </Text>
+                  </View>
+                  <View style={styles.bulletItem}>
+                    <Ionicons name="checkmark" size={13} color={colors.accent} />
+                    <Text style={[styles.bulletText, { color: colors.text }]}>
+                      Fasting tracker & challenges
+                    </Text>
+                  </View>
+                  <View style={styles.bulletItem}>
+                    <Ionicons name="checkmark" size={13} color={colors.accent} />
+                    <Text style={[styles.bulletText, { color: colors.text }]}>
+                      Full recipe library (150+)
+                    </Text>
+                  </View>
+                </Pressable>
+
+                {/* Pro Card */}
+                <Pressable
+                  onPress={() => setSelectedTier('pro')}
+                  style={[
+                    styles.tierCard,
+                    {
+                      backgroundColor:
+                        selectedTier === 'pro' ? colors.cardHighlight : colors.surfaceAlt,
+                      borderColor: selectedTier === 'pro' ? colors.accent : colors.border,
+                    },
+                  ]}
+                  accessibilityRole="radio"
+                  accessibilityState={{ selected: selectedTier === 'pro' }}
+                  accessibilityLabel="CaliPartner Pro, up to 20 members, AI coach, 3 hosted rooms"
+                  testID="picker-size-21-50"
+                >
+                  <View style={styles.tierCardHeader}>
+                    <Text style={[styles.tierCardTitle, { color: colors.text }]}>Pro</Text>
+                    <View
+                      style={[
+                        styles.memberCapBadge,
+                        { backgroundColor: colors.accent },
+                      ]}
+                    >
+                      <Text style={[styles.memberCapText, { color: colors.onBrand }]}>
+                        20 members
+                      </Text>
+                    </View>
+                  </View>
+
+                  <Text style={[styles.tierPriceText, { color: colors.text }]}>
+                    {selectedDuration === 'annual'
+                      ? PRICING_PLANS.pro.inr.perMonthAnnual
+                      : PRICING_PLANS.pro.inr.monthly}
+                  </Text>
+                  <Text style={[styles.tierPricePeriod, { color: colors.textMuted }]}>
+                    {selectedDuration === 'annual'
+                      ? `Billed as ${PRICING_PLANS.pro.inr.annual}`
+                      : 'Billed monthly'}
+                  </Text>
+
+                  <View style={styles.tierDivider} />
+
+                  <View style={styles.bulletItem}>
+                    <Ionicons name="checkmark" size={13} color={colors.accent} />
+                    <Text style={[styles.bulletText, { color: colors.text }]}>
+                      3 rooms you host (20 members)
+                    </Text>
+                  </View>
+                  <View style={styles.bulletItem}>
+                    <Ionicons name="sparkles" size={13} color={colors.accent} />
+                    <Text style={[styles.bulletText, { color: colors.text }]}>
+                      AI Coach (10 msgs / day)
+                    </Text>
+                  </View>
+                  <View style={styles.bulletItem}>
+                    <Ionicons name="camera" size={13} color={colors.accent} />
+                    <Text style={[styles.bulletText, { color: colors.text }]}>
+                      AI Photo Log (5 scans / day)
+                    </Text>
+                  </View>
+                  <View style={styles.bulletItem}>
+                    <Ionicons name="chatbubble-ellipses" size={13} color={colors.accent} />
+                    <Text style={[styles.bulletText, { color: colors.text }]}>
+                      Chat-to-log & AI insights
+                    </Text>
                   </View>
                 </Pressable>
               </View>
             </View>
 
-            {/* 3. Price Summary Card */}
-            <View
-              style={[
-                styles.priceCard,
-                {
-                  backgroundColor: colors.cardHighlight,
-                  borderColor: colors.accent,
-                },
-              ]}
-              testID="card-price-summary"
-            >
-              <View style={styles.priceRow}>
-                <View>
-                  <Text style={[styles.planTitleText, { color: colors.text }]}>
-                    {tierName} Room Plan
+            {/* 3. Promo / Collaboration Code Section */}
+            <View style={styles.promoSection}>
+              {!showPromoInput ? (
+                <Pressable
+                  onPress={() => setShowPromoInput(true)}
+                  style={styles.promoTriggerBtn}
+                  accessibilityRole="button"
+                  accessibilityLabel="Enter partner or promo code"
+                >
+                  <Ionicons name="pricetag-outline" size={14} color={colors.accent} />
+                  <Text style={[styles.promoTriggerText, { color: colors.accent }]}>
+                    {t('rooms.paywall.haveCodePrompt')}
                   </Text>
-                  <Text style={[styles.planCapSubtitle, { color: colors.textMuted }]}>
-                    Covers room of{' '}
-                    {currentTier === 'pro'
-                      ? 'up to 50'
-                      : currentTier === 'plus'
-                        ? 'up to 20'
-                        : 'up to 5'}{' '}
-                    people
-                  </Text>
+                </Pressable>
+              ) : (
+                <View
+                  style={[
+                    styles.promoInputRow,
+                    { backgroundColor: colors.surfaceAlt, borderColor: colors.border },
+                  ]}
+                >
+                  <TextInput
+                    value={promoCode}
+                    onChangeText={setPromoCode}
+                    placeholder="e.g. PARTNER50"
+                    placeholderTextColor={colors.textMuted}
+                    autoCapitalize="characters"
+                    style={[styles.promoTextInput, { color: colors.text }]}
+                    accessibilityLabel="Promo code input"
+                  />
+                  <Pressable
+                    onPress={handleApplyPromoCode}
+                    style={[styles.applyPromoBtn, { backgroundColor: colors.accent }]}
+                    accessibilityRole="button"
+                    accessibilityLabel="Apply promo code"
+                  >
+                    <Text style={[styles.applyPromoText, { color: colors.onBrand }]}>Apply</Text>
+                  </Pressable>
                 </View>
+              )}
 
-                <View style={styles.priceTextGroup}>
-                  <Text style={[styles.priceMainText, { color: colors.text }]}>
-                    {perMonthDisplay ? perMonthDisplay : priceDisplay}
-                  </Text>
-                  {perMonthDisplay && (
-                    <Text style={[styles.priceBilledPeriodText, { color: colors.textMuted }]}>
-                      Billed as {priceDisplay}
-                    </Text>
-                  )}
-                </View>
-              </View>
+              {promoMessage && (
+                <Text style={[styles.promoFeedbackText, { color: colors.accent }]}>
+                  {promoMessage}
+                </Text>
+              )}
             </View>
 
-            {/* 4. Features Included */}
-            <View style={[styles.featuresCard, { backgroundColor: colors.surfaceAlt }]}>
-              <Text style={[styles.featuresHeader, { color: colors.text }]}>
-                {t('rooms.paywall.featuresHeader')}
-              </Text>
-
-              <View style={styles.featureItem}>
-                <Ionicons name="people-outline" size={16} color={colors.accent} />
-                <Text style={[styles.featureText, { color: colors.text }]}>
-                  {t('rooms.paywall.featureRooms')}
-                </Text>
-              </View>
-
-              <View style={styles.featureItem}>
-                <Ionicons name="chatbubbles-outline" size={16} color={colors.accent} />
-                <Text style={[styles.featureText, { color: colors.text }]}>
-                  {t('rooms.paywall.featureChat')}
-                </Text>
-              </View>
-
-              <View style={styles.featureItem}>
-                <Ionicons name="trending-up-outline" size={16} color={colors.accent} />
-                <Text style={[styles.featureText, { color: colors.text }]}>
-                  {t('rooms.paywall.featureProgress')}
-                </Text>
-              </View>
-
-              <View style={styles.featureItem}>
-                <Ionicons name="timer-outline" size={16} color={colors.accent} />
-                <Text style={[styles.featureText, { color: colors.text }]}>
-                  {t('rooms.paywall.featureFocus')}
-                </Text>
-              </View>
-
-              <View style={styles.featureItem}>
-                <Ionicons name="sparkles-outline" size={16} color={colors.macroCalories} />
-                <Text style={[styles.featureText, { color: colors.text }]}>
-                  {t('rooms.paywall.featureCoach')}
-                </Text>
-              </View>
-
-              <View style={styles.featureItem}>
-                <Ionicons name="compass-outline" size={16} color={colors.macroProtein} />
-                <Text style={[styles.featureText, { color: colors.text }]}>
-                  {t('rooms.paywall.featureFinder')}
-                </Text>
-              </View>
-
-              {/* Free Guarantee Divider */}
-              <View style={[styles.freeNoticeDivider, { backgroundColor: colors.border }]} />
-
+            {/* 4. Free Forever Guarantee */}
+            <View style={[styles.freeNoticeCard, { backgroundColor: colors.surfaceAlt }]}>
               <View style={styles.freeNoticeRow}>
-                <Ionicons name="checkmark-circle" size={16} color={colors.syncSynced} />
-                <Text style={[styles.freeNoticeText, { color: colors.textMuted }]}>
-                  {t('rooms.paywall.featureFree')}
+                <Ionicons name="checkmark-circle-outline" size={16} color={colors.accent} />
+                <Text style={[styles.freeNoticeTitle, { color: colors.text }]}>
+                  Always free for everyone
                 </Text>
               </View>
+              <Text style={[styles.freeNoticeDesc, { color: colors.textMuted }]}>
+                {t('rooms.paywall.featureFree')}
+              </Text>
             </View>
 
             {/* 5. Purchase Action Button */}
@@ -551,9 +533,11 @@ export function PaywallModal({
               testID="btn-paywall-purchase"
             >
               {actionLoading ? (
-                <ActivityIndicator color="#FFFFFF" size="small" />
+                <ActivityIndicator color={colors.onBrand} size="small" />
               ) : (
-                <Text style={styles.purchaseButtonText}>{actionButtonText}</Text>
+                <Text style={[styles.purchaseButtonText, { color: colors.onBrand }]}>
+                  {actionButtonText}
+                </Text>
               )}
             </Pressable>
 
@@ -648,18 +632,19 @@ const styles = StyleSheet.create({
   subtitle: {
     fontSize: fontSize.xs,
     marginTop: 2,
-    lineHeight: 16,
+    lineHeight: 18,
   },
   closeButton: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
+    width: 44,
+    height: 44,
+    borderRadius: radius.full,
     alignItems: 'center',
     justifyContent: 'center',
     marginLeft: spacing.sm,
   },
   scrollContent: {
-    paddingBottom: spacing.lg,
+    paddingBottom: spacing.xl,
+    paddingTop: spacing.xs,
   },
   statusBanner: {
     flexDirection: 'row',
@@ -668,54 +653,33 @@ const styles = StyleSheet.create({
     borderRadius: radius.sm,
     borderWidth: 1,
     gap: 8,
-    marginBottom: spacing.sm,
+    marginBottom: spacing.md,
   },
   statusText: {
     fontSize: fontSize.xs,
-    flex: 1,
     fontWeight: '500',
+    flex: 1,
   },
   sectionBlock: {
-    marginBottom: spacing.sm,
+    marginBottom: spacing.md,
   },
   sectionTitle: {
-    fontSize: fontSize.xs + 1,
+    fontSize: fontSize.sm,
     fontWeight: '700',
     marginBottom: spacing.xs,
   },
-  sizePickerRow: {
-    flexDirection: 'row',
-    gap: 6,
-  },
-  sizeCard: {
-    flex: 1,
-    borderRadius: radius.sm,
-    borderWidth: 1.5,
-    paddingVertical: spacing.sm,
-    paddingHorizontal: 4,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  sizeCardTitle: {
-    fontSize: fontSize.xs + 1,
-    fontWeight: '700',
-  },
-  sizeCardSubtitle: {
-    fontSize: 9,
-    marginTop: 2,
-    fontWeight: '500',
-  },
   durationToggleContainer: {
     flexDirection: 'row',
-    borderRadius: radius.pill,
+    borderRadius: radius.md,
     padding: 3,
   },
   durationToggleItem: {
     flex: 1,
-    paddingVertical: 8,
+    paddingVertical: 10,
     alignItems: 'center',
     justifyContent: 'center',
-    borderRadius: radius.pill,
+    borderRadius: radius.sm,
+    minHeight: 44,
   },
   durationToggleSelected: {
     shadowColor: '#000',
@@ -725,125 +689,192 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
   durationToggleText: {
-    fontSize: fontSize.xs,
-    fontWeight: '600',
+    fontSize: fontSize.sm,
+    fontWeight: '700',
   },
   annualLabelWrap: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
+    gap: 6,
   },
   savingsBadge: {
-    paddingHorizontal: 5,
-    paddingVertical: 1,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
     borderRadius: radius.pill,
   },
   savingsBadgeText: {
-    color: '#FFFFFF',
-    fontSize: 8,
+    fontSize: 9,
     fontWeight: '800',
+    letterSpacing: 0.3,
   },
-  priceCard: {
-    borderRadius: radius.md,
+  trialCallout: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginTop: 6,
+    justifyContent: 'center',
+  },
+  trialCalloutText: {
+    fontSize: 11,
+    fontWeight: '500',
+  },
+  tierCardsRow: {
+    flexDirection: 'row',
+    gap: 10,
+  },
+  tierCard: {
+    flex: 1,
     borderWidth: 1.5,
-    padding: spacing.md,
-    marginBottom: spacing.sm,
+    borderRadius: radius.md,
+    padding: spacing.sm,
   },
-  priceRow: {
+  tierCardHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+    marginBottom: 4,
   },
-  planTitleText: {
-    fontSize: fontSize.sm + 1,
-    fontWeight: '700',
-  },
-  planCapSubtitle: {
-    fontSize: fontSize.xs,
-    marginTop: 2,
-  },
-  priceTextGroup: {
-    alignItems: 'flex-end',
-  },
-  priceMainText: {
+  tierCardTitle: {
     fontSize: fontSize.md,
     fontWeight: '800',
   },
-  priceBilledPeriodText: {
+  memberCapBadge: {
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: radius.pill,
+  },
+  memberCapText: {
+    fontSize: 9,
+    fontWeight: '800',
+  },
+  tierPriceText: {
+    fontSize: fontSize.md,
+    fontWeight: '800',
+    letterSpacing: -0.2,
+    fontVariant: ['tabular-nums'],
+  },
+  tierPricePeriod: {
     fontSize: 10,
-    marginTop: 1,
+    fontWeight: '500',
+    marginBottom: 6,
   },
-  featuresCard: {
-    borderRadius: radius.md,
-    padding: spacing.md,
-    marginBottom: spacing.md,
-    gap: 8,
+  tierDivider: {
+    height: 1,
+    backgroundColor: 'rgba(128,128,128,0.15)',
+    marginVertical: 6,
   },
-  featuresHeader: {
-    fontSize: fontSize.xs + 1,
-    fontWeight: '700',
-    marginBottom: 2,
-  },
-  featureItem: {
+  bulletItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: 4,
+    marginBottom: 4,
   },
-  featureText: {
-    fontSize: fontSize.xs,
+  bulletText: {
+    fontSize: 11,
     fontWeight: '500',
     flex: 1,
   },
-  freeNoticeDivider: {
-    height: 1,
-    marginVertical: 4,
+  promoSection: {
+    marginBottom: spacing.md,
+  },
+  promoTriggerBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingVertical: 4,
+  },
+  promoTriggerText: {
+    fontSize: fontSize.xs,
+    fontWeight: '600',
+  },
+  promoInputRow: {
+    flexDirection: 'row',
+    borderWidth: 1,
+    borderRadius: radius.sm,
+    overflow: 'hidden',
+    alignItems: 'center',
+  },
+  promoTextInput: {
+    flex: 1,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: 8,
+    fontSize: fontSize.sm,
+    fontWeight: '600',
+  },
+  applyPromoBtn: {
+    paddingHorizontal: spacing.md,
+    paddingVertical: 10,
+    minHeight: 44,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  applyPromoText: {
+    fontSize: fontSize.xs,
+    fontWeight: '800',
+  },
+  promoFeedbackText: {
+    fontSize: 11,
+    fontWeight: '600',
+    marginTop: 4,
+  },
+  freeNoticeCard: {
+    padding: spacing.sm,
+    borderRadius: radius.sm,
+    marginBottom: spacing.md,
   },
   freeNoticeRow: {
     flexDirection: 'row',
-    alignItems: 'flex-start',
-    gap: 8,
+    alignItems: 'center',
+    gap: 6,
+    marginBottom: 2,
   },
-  freeNoticeText: {
-    fontSize: 10,
-    lineHeight: 14,
-    flex: 1,
+  freeNoticeTitle: {
+    fontSize: fontSize.xs,
+    fontWeight: '700',
+  },
+  freeNoticeDesc: {
+    fontSize: 11,
+    lineHeight: 15,
   },
   purchaseButton: {
+    borderRadius: radius.md,
     paddingVertical: 14,
-    borderRadius: radius.pill,
     alignItems: 'center',
     justifyContent: 'center',
+    minHeight: 48,
     marginBottom: spacing.xs,
   },
   purchaseButtonText: {
-    color: '#FFFFFF',
     fontSize: fontSize.sm,
-    fontWeight: '700',
+    fontWeight: '800',
+    letterSpacing: 0.3,
   },
   restoreButton: {
+    paddingVertical: 10,
     alignItems: 'center',
-    paddingVertical: 6,
-    marginBottom: 6,
+    justifyContent: 'center',
+    minHeight: 44,
   },
   restoreButtonText: {
     fontSize: fontSize.xs,
     fontWeight: '600',
-    textDecorationLine: 'underline',
   },
   termsNoticeText: {
     fontSize: 10,
     textAlign: 'center',
     lineHeight: 14,
-    marginBottom: 6,
+    marginVertical: spacing.xs,
   },
   legalLinksRow: {
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
     gap: 8,
+    marginTop: 4,
   },
   legalLink: {
     fontSize: 10,
     fontWeight: '600',
+    textDecorationLine: 'underline',
   },
 });

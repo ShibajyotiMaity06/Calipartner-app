@@ -22,24 +22,24 @@ describe('Phase 11: Attack & Security Tests (Caps, Consent, Injection, Budget, K
       expect(isDailyFoodPhotoLimitReached(1, freeCap)).toBe(true);
     });
 
-    it('strictly cuts off trial users after exactly 3 scans', () => {
+    it('strictly cuts off trial users after exactly 5 scans', () => {
       const trialCap = getDailyFoodPhotoCap('trial');
-      expect(trialCap).toBe(3);
+      expect(trialCap).toBe(5);
 
       expect(isDailyFoodPhotoLimitReached(0, trialCap)).toBe(false);
       expect(isDailyFoodPhotoLimitReached(1, trialCap)).toBe(false);
-      expect(isDailyFoodPhotoLimitReached(2, trialCap)).toBe(false);
-      expect(isDailyFoodPhotoLimitReached(3, trialCap)).toBe(true);
-      expect(isDailyFoodPhotoLimitReached(4, trialCap)).toBe(true);
+      expect(isDailyFoodPhotoLimitReached(4, trialCap)).toBe(false);
+      expect(isDailyFoodPhotoLimitReached(5, trialCap)).toBe(true);
+      expect(isDailyFoodPhotoLimitReached(6, trialCap)).toBe(true);
     });
 
-    it('strictly cuts off paid users after 15 scans', () => {
+    it('strictly cuts off paid users after 5 scans', () => {
       const paidCap = getDailyFoodPhotoCap('paid');
-      expect(paidCap).toBe(15);
+      expect(paidCap).toBe(5);
 
-      expect(isDailyFoodPhotoLimitReached(14, paidCap)).toBe(false);
-      expect(isDailyFoodPhotoLimitReached(15, paidCap)).toBe(true);
-      expect(isDailyFoodPhotoLimitReached(16, paidCap)).toBe(true);
+      expect(isDailyFoodPhotoLimitReached(4, paidCap)).toBe(false);
+      expect(isDailyFoodPhotoLimitReached(5, paidCap)).toBe(true);
+      expect(isDailyFoodPhotoLimitReached(6, paidCap)).toBe(true);
     });
 
     it('treats expired trial as free_after_trial even if trial_started_at was set', () => {

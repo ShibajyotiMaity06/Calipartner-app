@@ -33,16 +33,96 @@ export function usePaywall() {
         roomId?: string;
       },
     ): boolean => {
-      // PRD 6.18 SUB-9: "Invited people are never shown a paywall to join a room."
-      if (options?.isInvited && !shouldShowPaywallForInvite(options.isInvited)) {
+      // Free user accepting invite or joining room
+      if (options?.isInvited !== undefined) {
+        if (!shouldShowPaywallForInvite(options.isInvited, hasPlan)) {
+          return false;
+        }
+      }
+
+      if (trigger === 'accept_room_invite' || trigger === 'join_room') {
+        const hasAccess =
+          hasPlan ||
+          (isTrial &&
+            (!entitlement?.period_end || new Date(entitlement.period_end) > new Date()));
+        if (!hasAccess) {
+          const data = getPaywallTriggerData(trigger, options?.currentTier ?? 'plus');
+          setPaywallState({
+            isOpen: true,
+            trigger,
+            triggerData: data,
+            roomId: options?.roomId,
+          });
+          return true;
+        }
         return false;
       }
 
       // Feature specific gating
-      if (trigger === 'open_ai_coach' || trigger === 'open_partner_finder') {
-        // Plan holders only; no trial
-        if (!hasPlan) {
-          const data = getPaywallTriggerData(trigger, options?.currentTier);
+      if (trigger === 'open_ai_coach') {
+        const isPro = entitlement?.tier === 'pro' && hasPlan;
+        if (!isPro) {
+          const data = getPaywallTriggerData(trigger, 'pro');
+          setPaywallState({
+            isOpen: true,
+            trigger,
+            triggerData: data,
+            roomId: options?.roomId,
+          });
+          return true;
+        }
+        return false;
+      }
+
+      if (trigger === 'open_partner_finder') {
+        const hasAccess =
+          hasPlan ||
+          (isTrial &&
+            (!entitlement?.period_end || new Date(entitlement.period_end) > new Date()));
+        if (!hasAccess) {
+          const data = getPaywallTriggerData(trigger, options?.currentTier ?? 'plus');
+          setPaywallState({
+            isOpen: true,
+            trigger,
+            triggerData: data,
+            roomId: options?.roomId,
+          });
+          return true;
+        }
+        return false;
+      }
+
+      if (trigger === 'ai_photo_scan') {
+        const isPro = entitlement?.tier === 'pro' && hasPlan;
+        if (!isPro) {
+          const data = getPaywallTriggerData(trigger, 'pro');
+          setPaywallState({
+            isOpen: true,
+            trigger,
+            triggerData: data,
+            roomId: options?.roomId,
+          });
+          return true;
+        }
+        return false;
+      }
+
+      // Plus features: fasting, routines, meal planner, challenges, recipes, measurements
+      if (
+        trigger === 'fasting_tracker' ||
+        trigger === 'challenges' ||
+        trigger === 'meal_planner' ||
+        trigger === 'workout_routines' ||
+        trigger === 'body_measurements' ||
+        trigger === 'recipe_library' ||
+        trigger === 'extra_nutrients'
+      ) {
+        const hasAccess =
+          hasPlan ||
+          (isTrial &&
+            (!entitlement?.period_end || new Date(entitlement.period_end) > new Date()));
+        if (!hasAccess) {
+          const data = getPaywallTriggerData(trigger, 'plus');
           setPaywallState({
             isOpen: true,
             trigger,
@@ -60,7 +140,7 @@ export function usePaywall() {
           !hasPlan &&
           (!isTrial || (entitlement?.period_end && new Date(entitlement.period_end) <= new Date()))
         ) {
-          const data = getPaywallTriggerData(trigger, options?.currentTier);
+          const data = getPaywallTriggerData(trigger, options?.currentTier ?? 'plus');
           setPaywallState({
             isOpen: true,
             trigger,
@@ -73,7 +153,7 @@ export function usePaywall() {
       }
 
       if (trigger === 'add_member_beyond_cap' || trigger === 'sponsor_locked_room') {
-        const data = getPaywallTriggerData(trigger, options?.currentTier ?? entitlement?.tier);
+        const data = getPaywallTriggerData(trigger, options?.currentTier ?? entitlement?.tier ?? 'plus');
         setPaywallState({
           isOpen: true,
           trigger,

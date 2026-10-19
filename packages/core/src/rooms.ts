@@ -95,15 +95,16 @@ export function sanitizePrivacySettings(
 }
 
 export const ROOM_TIER_CAPS: Record<RoomTier, number> = Object.freeze({
+  free: 0,
   basic: 5,
-  plus: 20,
-  pro: 50,
-  community: 100,
+  plus: 10,
+  pro: 20,
+  community: 20,
 });
 
 export function roomCap(tier?: RoomTier | null): number {
-  if (!tier) return 5;
-  return ROOM_TIER_CAPS[tier] ?? 5;
+  if (!tier) return 10;
+  return ROOM_TIER_CAPS[tier] ?? 10;
 }
 
 export function hasPlan(entitlement?: Entitlement | null, now: Date = new Date()): boolean {
@@ -121,12 +122,13 @@ export function canCreateRoom(
   now: Date = new Date(),
 ): boolean {
   if (!entitlement) return true; // new user eligible for trial
+  const maxRooms = entitlement.tier === 'pro' ? 3 : 1;
   if (hasPlan(entitlement, now)) {
-    return hostedActiveRoomCount === 0;
+    return hostedActiveRoomCount < maxRooms;
   }
   if (entitlement.status === 'trial') {
     const active = entitlement.period_end ? new Date(entitlement.period_end) > now : true;
-    return active && hostedActiveRoomCount === 0;
+    return active && hostedActiveRoomCount < maxRooms;
   }
   // Eligible if trial hasn't started yet
   return !entitlement.trial_started_at;

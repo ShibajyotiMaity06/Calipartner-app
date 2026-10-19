@@ -550,18 +550,18 @@ describe('Phase 10: Server-Side Enforcement Attack Tests (All 15 Scenarios)', ()
     const { roomId } = engine.createRoom('host-upgrade', 'Scale Room');
     expect(engine.getRoomCap(roomId)).toBe(5);
 
-    // Upgrade to Pro immediately raises cap to 50
+    // Upgrade to Pro immediately raises cap to 20
     engine.processWebhook({
       authHeader: 'Bearer rc_test_secret_abc123',
       eventId: 'evt-upgrade-pro',
       eventType: 'PRODUCT_CHANGE',
       userId: 'host-upgrade',
-      productId: 'pro_monthly', // Cap 50!
+      productId: 'pro_monthly', // Cap 20!
       periodEndMs: Date.now() + 30 * 24 * 60 * 60 * 1000,
       eventTimestampMs: Date.now() + 1000,
     });
 
-    expect(engine.getRoomCap(roomId)).toBe(50);
+    expect(engine.getRoomCap(roomId)).toBe(20);
   });
 
   it('9. Downgrade creates Over capacity and the 7-day job locks it', () => {

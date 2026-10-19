@@ -35,11 +35,12 @@ export interface CoachChatViewProps {
 }
 
 const MAX_CHAR_COUNT = 1000;
-const DAILY_MESSAGE_LIMIT = 30;
+const DAILY_MESSAGE_LIMIT = 10;
 
 export function CoachChatView({ onBack, initialConversationId }: CoachChatViewProps) {
   const { colors } = useTheme();
-  const { hasPlan, loading: subLoading } = useSubscription();
+  const { hasPlan, entitlement, loading: subLoading } = useSubscription();
+  const isPro = entitlement?.tier === 'pro' && hasPlan;
   const { isOnline } = useNetworkStatus();
   const { checkAndTrigger, paywallState } = usePaywall();
 
@@ -314,8 +315,8 @@ export function CoachChatView({ onBack, initialConversationId }: CoachChatViewPr
     );
   }
 
-  // 2. Gating: Plan holders only (PRD 6.22 AIC-1, SUB-16)
-  if (!hasPlan) {
+  // 2. Gating: Pro plan holders only (PRD 6.22 AIC-1, SUB-16)
+  if (!isPro) {
     return (
       <View
         style={[styles.lockedContainer, { backgroundColor: colors.background }]}
@@ -348,6 +349,7 @@ export function CoachChatView({ onBack, initialConversationId }: CoachChatViewPr
 
         <PaywallModal
           visible={showPaywallModal || paywallState.isOpen}
+          preselectedTier="pro"
           onClose={() => setShowPaywallModal(false)}
         />
       </View>

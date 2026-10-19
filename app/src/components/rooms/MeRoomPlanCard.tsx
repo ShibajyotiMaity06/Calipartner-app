@@ -89,7 +89,7 @@ export function MeRoomPlanCard({ attachedRoom, onChangePlan }: MeRoomPlanCardPro
         : t('me.roomPlan.renewalDate', { date: formattedPeriodEnd })
     : null;
 
-  const roomCap = attachedRoom?.member_cap ?? (tier === 'pro' ? 50 : tier === 'plus' ? 20 : 5);
+  const roomCap = attachedRoom?.member_cap ?? (tier === 'pro' ? 20 : tier === 'plus' ? 10 : 10);
   const memberCount = attachedRoom?.member_count ?? 1;
 
   return (

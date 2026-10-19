@@ -3,51 +3,48 @@ import { en } from '@/i18n/en';
 import { t } from '@/i18n';
 
 describe('Phase 10 — View Layer UI Tests (Paywall, Lifecycle & Locked Cards)', () => {
-  describe('1. PaywallModal Presentation & Size Picker Logic', () => {
-    it('maps room size picker brackets to appropriate plan tiers', () => {
-      const getTierForSize = (size: '2-5' | '6-20' | '21-50'): 'basic' | 'plus' | 'pro' => {
-        switch (size) {
-          case '21-50':
-            return 'pro';
-          case '6-20':
-            return 'plus';
-          case '2-5':
-          default:
-            return 'basic';
-        }
+  describe('1. PaywallModal Presentation & Plan Selection Logic', () => {
+    it('maps tier selections properly', () => {
+      const getTierForSize = (size: '2-5' | '6-20' | '21-50' | 'plus' | 'pro'): 'plus' | 'pro' => {
+        if (size === '21-50' || size === 'pro') return 'pro';
+        return 'plus';
       };
 
-      expect(getTierForSize('2-5')).toBe('basic');
       expect(getTierForSize('6-20')).toBe('plus');
       expect(getTierForSize('21-50')).toBe('pro');
+      expect(getTierForSize('plus')).toBe('plus');
+      expect(getTierForSize('pro')).toBe('pro');
     });
 
-    it('calculates annual savings and per-month equivalent pricing', () => {
+    it('calculates annual savings and per-month equivalent pricing for v2 plans', () => {
       const pricingTable = {
-        basic: { monthly: 99, quarterly: 249, annual: 799 },
-        plus: { monthly: 200, quarterly: 499, annual: 1599 },
-        pro: { monthly: 300, quarterly: 749, annual: 2399 },
+        plus: { monthly: 99, annual: 599 },
+        pro: { monthly: 199, annual: 1199 },
       };
 
-      // Basic: 12 months * 99 = 1188. 799 is (1188 - 799)/1188 = ~32.7% savings
-      const basicSavings = Math.round(
-        ((pricingTable.basic.monthly * 12 - pricingTable.basic.annual) /
-          (pricingTable.basic.monthly * 12)) *
+      // Plus: 12 months * 99 = 1188. 599 is (1188 - 599)/1188 = ~49.6% -> ~50% savings
+      const plusSavings = Math.round(
+        ((pricingTable.plus.monthly * 12 - pricingTable.plus.annual) /
+          (pricingTable.plus.monthly * 12)) *
           100,
       );
-      expect(basicSavings).toBe(33);
+      expect(plusSavings).toBe(50);
 
-      // Equivalent per month: 799 / 12 = ~66.5 -> 67
-      const basicPerMonth = Math.round(pricingTable.basic.annual / 12);
-      expect(basicPerMonth).toBe(67);
-
-      // Plus: 12 * 200 = 2400. 1599 is ~33.4% savings, ~133/mo
+      // Equivalent per month: 599 / 12 = ~49.9 -> 50
       const plusPerMonth = Math.round(pricingTable.plus.annual / 12);
-      expect(plusPerMonth).toBe(133);
+      expect(plusPerMonth).toBe(50);
 
-      // Pro: 12 * 300 = 3600. 2399 is ~33.4% savings, ~200/mo
+      // Pro: 12 * 199 = 2388. 1199 is (2388 - 1199)/2388 = ~49.8% -> ~50% savings
+      const proSavings = Math.round(
+        ((pricingTable.pro.monthly * 12 - pricingTable.pro.annual) /
+          (pricingTable.pro.monthly * 12)) *
+          100,
+      );
+      expect(proSavings).toBe(50);
+
+      // Equivalent per month: 1199 / 12 = ~99.9 -> 100
       const proPerMonth = Math.round(pricingTable.pro.annual / 12);
-      expect(proPerMonth).toBe(200);
+      expect(proPerMonth).toBe(100);
     });
 
     it('includes all mandatory plan feature inclusions and free guarantees', () => {
@@ -61,9 +58,9 @@ describe('Phase 10 — View Layer UI Tests (Paywall, Lifecycle & Locked Cards)',
       expect(paywallCopy.featureCoach).toContain('AI Coach');
       expect(paywallCopy.featureFinder).toContain('Partner Finder');
 
-      // Free guarantee (PRD 6.18 SUB-4)
+      // Free guarantee
       expect(paywallCopy.featureFree).toContain('100% free');
-      expect(paywallCopy.featureFree).toContain('Joining any room as a member is always free');
+      expect(paywallCopy.featureFree).toContain('food diary');
 
       // Clear billing terms (auto-renewal disclosure)
       expect(paywallCopy.termsNotice).toContain('auto-renew');
@@ -72,25 +69,11 @@ describe('Phase 10 — View Layer UI Tests (Paywall, Lifecycle & Locked Cards)',
   });
 
   describe('2. TrialBanner Presentation Logic', () => {
-    it('displays appropriate countdown for hosts on days 1, 2, and 3', () => {
-      const getTrialBannerText = (daysLeft: number, dayNumber: number) => {
-        if (dayNumber === 3 || daysLeft <= 0) {
-          return en.rooms.trialBanner.day3;
-        }
-        if (dayNumber === 2 || daysLeft === 1) {
-          return en.rooms.trialBanner.day2;
-        }
-        return en.rooms.trialBanner.day1;
-      };
-
-      expect(getTrialBannerText(2, 1)).toContain('Day 1 of 3');
-      expect(getTrialBannerText(2, 1)).toContain('2 days left');
-
-      expect(getTrialBannerText(1, 2)).toContain('Day 2 of 3');
-      expect(getTrialBannerText(1, 2)).toContain('1 day left');
-
-      expect(getTrialBannerText(0, 3)).toContain('Day 3 of 3');
-      expect(getTrialBannerText(0, 3)).toContain('Final day');
+    it('displays appropriate countdown for 7-day trials', () => {
+      expect(en.rooms.trialBanner.day1).toContain('Day 1 of 7');
+      expect(en.rooms.trialBanner.day1).toContain('6 days left');
+      expect(en.rooms.trialBanner.day7).toContain('Day 7 of 7');
+      expect(en.rooms.trialBanner.day7).toContain('Final day');
     });
 
     it('ensures trial banner is only visible to hosts', () => {
@@ -105,16 +88,16 @@ describe('Phase 10 — View Layer UI Tests (Paywall, Lifecycle & Locked Cards)',
   });
 
   describe('3. Room Full Notices (Host Upgrade Sheet vs Member Plain Notice)', () => {
-    it('generates host upgrade recommendation targeting next capacity tier', () => {
-      const basicFull = t('rooms.roomFull.hostNotice');
-      expect(basicFull).toContain('Plus fits up to 20 people');
+    it('generates host upgrade recommendation targeting 10 and 20 capacity tiers', () => {
+      const hostFull = t('rooms.roomFull.hostNotice');
+      expect(hostFull).toContain('Plus fits up to 10 people');
+      expect(hostFull).toContain('Pro fits up to 20');
       expect(t('rooms.roomFull.upgradeBtn')).toBe('Upgrade Plan');
     });
 
     it('generates plain non-shaming notice for non-host members', () => {
       const memberNotice = t('rooms.roomFull.memberNotice');
       expect(memberNotice).toBe('This room is full');
-      // Must not display billing or upgrade text to members
       expect(memberNotice).not.toContain('Upgrade');
       expect(memberNotice).not.toContain('₹');
     });
