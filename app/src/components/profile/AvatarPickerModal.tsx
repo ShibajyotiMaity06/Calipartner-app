@@ -118,7 +118,8 @@ export function AvatarPickerModal({
           {/* Subtitle & Privacy Notice (Spec B05) */}
           <View style={styles.noticeSection}>
             <Text variant="body" color={dark.textMid} style={styles.noticeText}>
-              Pick an identity avatar or upload a photo. Photo is never shown to strangers in Partner Finder.
+              Pick an identity avatar or upload a photo. Photo is never shown to strangers in
+              Partner Finder.
             </Text>
           </View>
 
@@ -137,16 +138,9 @@ export function AvatarPickerModal({
                   accessibilityState={{ selected: isSelected }}
                   accessibilityLabel={`Avatar ${avatar.name}, ${avatar.hue}`}
                   testID={`avatar-preset-${avatar.id}`}
-                  style={[
-                    styles.avatarCell,
-                    isSelected && styles.avatarCellSelected,
-                  ]}
+                  style={[styles.avatarCell, isSelected && styles.avatarCellSelected]}
                 >
-                  <Avatar
-                    name={avatar.name}
-                    identityHue={avatar.hue}
-                    size="lg"
-                  />
+                  <Avatar name={avatar.name} identityHue={avatar.hue} size="lg" />
                   <Text
                     variant="label"
                     color={isSelected ? dark.apricot : dark.textLo}

@@ -102,7 +102,8 @@ export function getDailyFoodPhotoCap(
       return Math.max(0, DEFAULT_AI_FOOD_PHOTO_CAPS.trial);
     case 'free_after_trial':
     default:
-      if (capsConfig?.free_after_trial !== undefined) return Math.max(0, capsConfig.free_after_trial);
+      if (capsConfig?.free_after_trial !== undefined)
+        return Math.max(0, capsConfig.free_after_trial);
       return Math.max(0, DEFAULT_AI_FOOD_PHOTO_CAPS.free_after_trial);
   }
 }

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { StyleSheet, TextInput, View, TouchableOpacity } from 'react-native';
+import { StyleSheet, TextInput, View } from 'react-native';
 import { kgToLb, lbToKg, type CalculateTargetsResult, type Units } from '@calipartner/core';
 import { Text, Button, space, dark, radius } from '@calipartner/ui';
 import { t } from '@/i18n';

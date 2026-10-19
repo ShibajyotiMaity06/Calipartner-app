@@ -33,11 +33,7 @@ export function GuestDataMergeSheet({
   };
 
   return (
-    <Sheet
-      visible={visible}
-      onClose={onClose}
-      testID={testID}
-    >
+    <Sheet visible={visible} onClose={onClose} testID={testID}>
       <View style={styles.content}>
         <Text variant="heading" color={dark.textHi}>
           Keep your local logs?
@@ -48,7 +44,8 @@ export function GuestDataMergeSheet({
             We found {mealsCount} meals and {daysCount} days on this phone.
           </Text>
           <Text variant="bodyS" color={dark.textMid} style={styles.summaryBody}>
-            You logged these as a guest. Would you like to merge them into your new account or start with a fresh slate?
+            You logged these as a guest. Would you like to merge them into your new account or start
+            with a fresh slate?
           </Text>
         </View>
 

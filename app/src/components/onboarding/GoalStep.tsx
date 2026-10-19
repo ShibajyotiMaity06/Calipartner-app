@@ -13,7 +13,8 @@ interface GoalStepProps {
 
 interface GoalOption {
   id: Goal;
-  titleKey: 'onboarding.goal.cutTitle' | 'onboarding.goal.maintainTitle' | 'onboarding.goal.bulkTitle';
+  titleKey:
+    'onboarding.goal.cutTitle' | 'onboarding.goal.maintainTitle' | 'onboarding.goal.bulkTitle';
   descKey: 'onboarding.goal.cutDesc' | 'onboarding.goal.maintainDesc' | 'onboarding.goal.bulkDesc';
   defaultTitle: string;
   defaultDesc: string;
@@ -81,18 +82,10 @@ export function GoalStep({ selectedGoal, onSelectGoal, onAutoAdvance }: GoalStep
           >
             <View style={styles.contentRow}>
               <View style={styles.textGroup}>
-                <Text
-                  variant="heading"
-                  color={dark.textHi}
-                  style={styles.cardTitle}
-                >
+                <Text variant="heading" color={dark.textHi} style={styles.cardTitle}>
                   {title}
                 </Text>
-                <Text
-                  variant="body"
-                  color={dark.textMid}
-                  style={styles.cardDesc}
-                >
+                <Text variant="body" color={dark.textMid} style={styles.cardDesc}>
                   {desc}
                 </Text>
               </View>

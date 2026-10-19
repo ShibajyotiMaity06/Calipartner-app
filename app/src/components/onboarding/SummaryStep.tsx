@@ -1,15 +1,7 @@
 import React from 'react';
-import { ActivityIndicator, StyleSheet, View, TouchableOpacity } from 'react-native';
+import { StyleSheet, View, TouchableOpacity } from 'react-native';
 import type { CalculateTargetsResult, Goal } from '@calipartner/core';
-import {
-  Text,
-  Button,
-  TargetRevealRing,
-  MacroBar,
-  space,
-  dark,
-  radius,
-} from '@calipartner/ui';
+import { Text, Button, TargetRevealRing, MacroBar, space, dark, radius } from '@calipartner/ui';
 import { t } from '@/i18n';
 import { playClickSound, playSuccessSound } from '@/lib/sound';
 

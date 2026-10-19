@@ -570,4 +570,3 @@ export function CheckIcon({
     </Svg>
   );
 }
-

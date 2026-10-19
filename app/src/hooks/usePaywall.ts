@@ -43,8 +43,7 @@ export function usePaywall() {
       if (trigger === 'accept_room_invite' || trigger === 'join_room') {
         const hasAccess =
           hasPlan ||
-          (isTrial &&
-            (!entitlement?.period_end || new Date(entitlement.period_end) > new Date()));
+          (isTrial && (!entitlement?.period_end || new Date(entitlement.period_end) > new Date()));
         if (!hasAccess) {
           const data = getPaywallTriggerData(trigger, options?.currentTier ?? 'plus');
           setPaywallState({
@@ -77,8 +76,7 @@ export function usePaywall() {
       if (trigger === 'open_partner_finder') {
         const hasAccess =
           hasPlan ||
-          (isTrial &&
-            (!entitlement?.period_end || new Date(entitlement.period_end) > new Date()));
+          (isTrial && (!entitlement?.period_end || new Date(entitlement.period_end) > new Date()));
         if (!hasAccess) {
           const data = getPaywallTriggerData(trigger, options?.currentTier ?? 'plus');
           setPaywallState({
@@ -119,8 +117,7 @@ export function usePaywall() {
       ) {
         const hasAccess =
           hasPlan ||
-          (isTrial &&
-            (!entitlement?.period_end || new Date(entitlement.period_end) > new Date()));
+          (isTrial && (!entitlement?.period_end || new Date(entitlement.period_end) > new Date()));
         if (!hasAccess) {
           const data = getPaywallTriggerData(trigger, 'plus');
           setPaywallState({
@@ -153,7 +150,10 @@ export function usePaywall() {
       }
 
       if (trigger === 'add_member_beyond_cap' || trigger === 'sponsor_locked_room') {
-        const data = getPaywallTriggerData(trigger, options?.currentTier ?? entitlement?.tier ?? 'plus');
+        const data = getPaywallTriggerData(
+          trigger,
+          options?.currentTier ?? entitlement?.tier ?? 'plus',
+        );
         setPaywallState({
           isOpen: true,
           trigger,

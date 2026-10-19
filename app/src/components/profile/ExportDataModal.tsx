@@ -1,13 +1,6 @@
 import React, { useState } from 'react';
 import { View, StyleSheet, Modal, SafeAreaView, TouchableOpacity, Share } from 'react-native';
-import {
-  Text,
-  Button,
-  ChevronLeftIcon,
-  space,
-  dark,
-  radius,
-} from '@calipartner/ui';
+import { Text, Button, ChevronLeftIcon, space, dark, radius } from '@calipartner/ui';
 import { playClickSound, playSuccessSound } from '@/lib/sound';
 
 export interface ExportDataModalProps {
@@ -94,7 +87,8 @@ export function ExportDataModal({
                 Export your diary & logs
               </Text>
               <Text variant="body" color={dark.textMid} style={styles.subtitle}>
-                Download a complete, offline copy of all your food logs, step history, weight records, and workouts.
+                Download a complete, offline copy of all your food logs, step history, weight
+                records, and workouts.
               </Text>
             </View>
 
@@ -106,10 +100,7 @@ export function ExportDataModal({
 
               <TouchableOpacity
                 onPress={() => setFormat('csv')}
-                style={[
-                  styles.formatCard,
-                  format === 'csv' && styles.formatCardSelected,
-                ]}
+                style={[styles.formatCard, format === 'csv' && styles.formatCardSelected]}
                 testID="btn-format-csv"
               >
                 <View style={styles.formatCardContent}>
@@ -121,19 +112,13 @@ export function ExportDataModal({
                   </Text>
                 </View>
                 <View
-                  style={[
-                    styles.radioIndicator,
-                    format === 'csv' && styles.radioIndicatorActive,
-                  ]}
+                  style={[styles.radioIndicator, format === 'csv' && styles.radioIndicatorActive]}
                 />
               </TouchableOpacity>
 
               <TouchableOpacity
                 onPress={() => setFormat('json')}
-                style={[
-                  styles.formatCard,
-                  format === 'json' && styles.formatCardSelected,
-                ]}
+                style={[styles.formatCard, format === 'json' && styles.formatCardSelected]}
                 testID="btn-format-json"
               >
                 <View style={styles.formatCardContent}>
@@ -145,10 +130,7 @@ export function ExportDataModal({
                   </Text>
                 </View>
                 <View
-                  style={[
-                    styles.radioIndicator,
-                    format === 'json' && styles.radioIndicatorActive,
-                  ]}
+                  style={[styles.radioIndicator, format === 'json' && styles.radioIndicatorActive]}
                 />
               </TouchableOpacity>
             </View>

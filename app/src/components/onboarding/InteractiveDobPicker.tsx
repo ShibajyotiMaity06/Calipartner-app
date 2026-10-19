@@ -1,8 +1,7 @@
 import React, { useMemo, useRef, useState, useEffect } from 'react';
-import { View, StyleSheet, TextInput, TouchableOpacity } from 'react-native';
+import { View, StyleSheet, TextInput } from 'react-native';
 import { isAtLeast18 } from '@calipartner/core';
 import { Text, space, dark, radius } from '@calipartner/ui';
-import { playClickSound } from '@/lib/sound';
 
 interface InteractiveDobPickerProps {
   value: string; // YYYY-MM-DD
@@ -207,7 +206,8 @@ export function InteractiveDobPicker({ value, onChange, error }: InteractiveDobP
                 CaliPartner is designed for adults (18+).
               </Text>
               <Text variant="label" color={dark.textLo} style={styles.blockedBody}>
-                For your safety, registration is paused. No personal data has been kept on this device.
+                For your safety, registration is paused. No personal data has been kept on this
+                device.
               </Text>
             </View>
           )}

@@ -1,13 +1,6 @@
 import React, { useState } from 'react';
 import { View, StyleSheet, Modal, SafeAreaView, TextInput, TouchableOpacity } from 'react-native';
-import {
-  Text,
-  Button,
-  ChevronLeftIcon,
-  space,
-  dark,
-  radius,
-} from '@calipartner/ui';
+import { Text, Button, ChevronLeftIcon, space, dark, radius } from '@calipartner/ui';
 import { playClickSound } from '@/lib/sound';
 
 export interface DeleteAccountModalProps {
@@ -102,7 +95,12 @@ export function DeleteAccountModal({
             /* STEP B07: Delete Account Warning & Confirm */
             <View style={styles.content}>
               <View style={styles.header}>
-                <Text variant="title1" color={dark.textHi} style={styles.title} testID="delete-account-title">
+                <Text
+                  variant="title1"
+                  color={dark.textHi}
+                  style={styles.title}
+                  testID="delete-account-title"
+                >
                   Delete your account
                 </Text>
                 <Text variant="body" color={dark.textMid} style={styles.subtitle}>
@@ -127,7 +125,8 @@ export function DeleteAccountModal({
 
                 <View style={styles.storeNoticeBox}>
                   <Text variant="label" color={dark.textLo} style={styles.storeNotice}>
-                    Active store subscription: Google Play or Apple App Store subscriptions must be cancelled in your phone store settings to stop recurring billing.
+                    Active store subscription: Google Play or Apple App Store subscriptions must be
+                    cancelled in your phone store settings to stop recurring billing.
                   </Text>
                 </View>
               </View>

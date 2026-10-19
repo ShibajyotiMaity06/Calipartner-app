@@ -66,14 +66,14 @@ export function InvitePreviewModal({
 
           {/* Inviter Info Header (Spec A15) */}
           <View style={styles.header}>
-            <Avatar
-              name={inviterName}
-              identityHue="teal"
-              size="lg"
-              testID="inviter-avatar"
-            />
+            <Avatar name={inviterName} identityHue="teal" size="lg" testID="inviter-avatar" />
             <View style={styles.titleGroup}>
-              <Text variant="title1" color={dark.textHi} style={styles.title} testID="inviter-heading">
+              <Text
+                variant="title1"
+                color={dark.textHi}
+                style={styles.title}
+                testID="inviter-heading"
+              >
                 {inviterName} is waiting for you.
               </Text>
               <Text variant="bodyS" color={dark.textMid} style={styles.streakLine}>
@@ -110,7 +110,7 @@ export function InvitePreviewModal({
             {isInvalidLink ? (
               <View style={styles.statusBox} testID="invite-invalid-box">
                 <Text variant="body" color={dark.danger} style={styles.statusTitle}>
-                  This invite isn't working.
+                  This invite isn&apos;t working.
                 </Text>
                 <Text variant="label" color={dark.textLo} style={styles.statusBody}>
                   Ask {inviterName} for a new invite link.

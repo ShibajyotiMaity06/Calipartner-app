@@ -84,22 +84,6 @@ export function PaywallModal({
     );
   }, [offerings, selectedTier, selectedDuration]);
 
-  // Display prices
-  const priceDisplay = useMemo(() => {
-    if (matchedPackage?.product?.priceString) {
-      return matchedPackage.product.priceString;
-    }
-    const plan = selectedTier === 'pro' ? PRICING_PLANS.pro : PRICING_PLANS.plus;
-    return selectedDuration === 'annual' ? plan.inr.annual : plan.inr.monthly;
-  }, [matchedPackage, selectedTier, selectedDuration]);
-
-  // Equivalent per-month cost for annual plan
-  const perMonthDisplay = useMemo(() => {
-    if (selectedDuration !== 'annual') return null;
-    const plan = selectedTier === 'pro' ? PRICING_PLANS.pro : PRICING_PLANS.plus;
-    return plan.inr.perMonthAnnual;
-  }, [selectedDuration, selectedTier]);
-
   const handlePurchase = async () => {
     setActionLoading(true);
     setStatusMessage(null);
@@ -192,11 +176,11 @@ export function PaywallModal({
             <View style={styles.headerTitleGroup}>
               <View style={[styles.sparklePill, { backgroundColor: colors.cardHighlight }]}>
                 <Ionicons name="sparkles" size={13} color={colors.accent} />
-                <Text style={[styles.sparkleText, { color: colors.accent }]}>CALIPARTNER PLANS</Text>
+                <Text style={[styles.sparkleText, { color: colors.accent }]}>
+                  CALIPARTNER PLANS
+                </Text>
               </View>
-              <Text style={[styles.title, { color: colors.text }]}>
-                {t('rooms.paywall.title')}
-              </Text>
+              <Text style={[styles.title, { color: colors.text }]}>{t('rooms.paywall.title')}</Text>
               <Text style={[styles.subtitle, { color: colors.textMuted }]}>
                 {t('rooms.paywall.subtitle')}
               </Text>
@@ -403,12 +387,7 @@ export function PaywallModal({
                 >
                   <View style={styles.tierCardHeader}>
                     <Text style={[styles.tierCardTitle, { color: colors.text }]}>Pro</Text>
-                    <View
-                      style={[
-                        styles.memberCapBadge,
-                        { backgroundColor: colors.accent },
-                      ]}
-                    >
+                    <View style={[styles.memberCapBadge, { backgroundColor: colors.accent }]}>
                       <Text style={[styles.memberCapText, { color: colors.onBrand }]}>
                         20 members
                       </Text>

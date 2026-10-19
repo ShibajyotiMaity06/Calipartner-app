@@ -1,7 +1,7 @@
 import React from 'react';
 import { TouchableOpacity, StyleSheet, View } from 'react-native';
 import { kgToLb, type CalculateTargetsResult, type Goal, type Units } from '@calipartner/core';
-import { Text, CheckIcon, Chip, space, dark, radius } from '@calipartner/ui';
+import { Text, CheckIcon, space, dark, radius } from '@calipartner/ui';
 import { t } from '@/i18n';
 import { playClickSound } from '@/lib/sound';
 

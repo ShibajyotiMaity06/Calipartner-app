@@ -443,7 +443,8 @@ export const PAYWALL_TRIGGER_METADATA: Record<
   },
   create_room_after_trial: {
     title: 'Keep Your Room Active',
-    subtitle: 'Your 7-day free trial has ended. Subscribe to Plus or Pro to keep tracking together.',
+    subtitle:
+      'Your 7-day free trial has ended. Subscribe to Plus or Pro to keep tracking together.',
     suggestedTier: 'plus',
     allowsTrial: false,
   },

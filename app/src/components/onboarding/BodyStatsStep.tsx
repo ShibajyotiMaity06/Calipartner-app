@@ -171,10 +171,7 @@ export function BodyStatsStep({
             accessibilityState={{ selected: units === 'metric' }}
             accessibilityLabel={t('onboarding.bodyStats.metric')}
             onPress={() => handleToggleUnits('metric')}
-            style={[
-              styles.segmentItem,
-              units === 'metric' && styles.segmentActive,
-            ]}
+            style={[styles.segmentItem, units === 'metric' && styles.segmentActive]}
           >
             <Text
               variant="bodyS"
@@ -191,10 +188,7 @@ export function BodyStatsStep({
             accessibilityState={{ selected: units === 'imperial' }}
             accessibilityLabel={t('onboarding.bodyStats.imperial')}
             onPress={() => handleToggleUnits('imperial')}
-            style={[
-              styles.segmentItem,
-              units === 'imperial' && styles.segmentActive,
-            ]}
+            style={[styles.segmentItem, units === 'imperial' && styles.segmentActive]}
           >
             <Text
               variant="bodyS"

@@ -166,8 +166,7 @@ export function useSubscription() {
   const currentTier = entitlement?.tier ?? 'free';
   const hasActiveAccess =
     hasPlan ||
-    (isTrial &&
-      (!entitlement?.period_end || new Date(entitlement.period_end) > new Date()));
+    (isTrial && (!entitlement?.period_end || new Date(entitlement.period_end) > new Date()));
 
   return {
     entitlement,

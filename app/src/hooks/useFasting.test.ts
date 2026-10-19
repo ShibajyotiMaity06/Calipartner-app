@@ -35,7 +35,6 @@ describe('Phase 13: Fasting Hooks & Integration Tests', () => {
   });
 
   it('gating: validates screening rules and low-intake pause', () => {
-
     const cleanScreening: HealthScreening = {
       user_id: 'u-1',
       pregnant_or_breastfeeding: false,

@@ -38,8 +38,7 @@ export function RequestsInboxModal({
   const { hasPlan, isTrial, entitlement } = useSubscription();
   const hasActiveAccess =
     hasPlan ||
-    (isTrial &&
-      (!entitlement?.period_end || new Date(entitlement.period_end) > new Date()));
+    (isTrial && (!entitlement?.period_end || new Date(entitlement.period_end) > new Date()));
 
   const [activeTab, setActiveTab] = useState<'incoming' | 'outgoing'>('incoming');
   const [actingId, setActingId] = useState<string | null>(null);

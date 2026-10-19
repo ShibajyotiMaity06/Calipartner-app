@@ -1,15 +1,6 @@
 import React, { useState } from 'react';
-import { View, StyleSheet, Modal, SafeAreaView, TouchableOpacity } from 'react-native';
-import {
-  Text,
-  Button,
-  Chip,
-  SwitchRow,
-  space,
-  dark,
-  radius,
-  Avatar,
-} from '@calipartner/ui';
+import { View, StyleSheet, Modal, SafeAreaView } from 'react-native';
+import { Text, Button, Chip, SwitchRow, space, dark, radius, Avatar } from '@calipartner/ui';
 import { playClickSound, playToggleSound } from '@/lib/sound';
 
 export interface PartnerFinderOfferModalProps {
@@ -60,7 +51,12 @@ export function PartnerFinderOfferModal({
         <View style={styles.container}>
           {/* Header */}
           <View style={styles.header}>
-            <Text variant="title1" color={dark.textHi} style={styles.title} testID="partner-offer-title">
+            <Text
+              variant="title1"
+              color={dark.textHi}
+              style={styles.title}
+              testID="partner-offer-title"
+            >
               Want a workout partner?
             </Text>
             <Text variant="body" color={dark.textMid} style={styles.subtitle}>
@@ -93,7 +89,8 @@ export function PartnerFinderOfferModal({
                   25–34 · Strength & walks · Bangalore
                 </Text>
                 <Text variant="bodyS" color={dark.textMid} style={styles.bioLine}>
-                  "Working towards consistency and looking for a daily accountability partner."
+                  &ldquo;Working towards consistency and looking for a daily accountability
+                  partner.&rdquo;
                 </Text>
               </View>
 

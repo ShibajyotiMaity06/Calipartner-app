@@ -11,16 +11,7 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { isAtLeast18, type Sex, type Units } from '@calipartner/core';
-import {
-  Text,
-  Button,
-  Field,
-  Avatar,
-  space,
-  dark,
-  radius,
-  CheckIcon,
-} from '@calipartner/ui';
+import { Text, Button, Field, Avatar, space, dark, radius, CheckIcon } from '@calipartner/ui';
 import { AvatarPickerModal, type AvatarOption } from '@/components/profile/AvatarPickerModal';
 import { InteractiveDobPicker } from '@/components/onboarding/InteractiveDobPicker';
 import { useAuth } from '@/contexts/AuthContext';
@@ -107,7 +98,7 @@ export default function ProfileSetupScreen() {
     if (error) {
       setSubmitError(error.message);
     } else {
-      router.replace('/today' as any);
+      router.replace('/today' as never);
     }
   };
 
@@ -134,7 +125,12 @@ export default function ProfileSetupScreen() {
         >
           {/* Header */}
           <View style={styles.header}>
-            <Text variant="title1" color={dark.textHi} style={styles.title} testID="profile-setup-title">
+            <Text
+              variant="title1"
+              color={dark.textHi}
+              style={styles.title}
+              testID="profile-setup-title"
+            >
               {t('profileSetup.title')}
             </Text>
             <Text variant="body" color={dark.textMid} style={styles.subtitle}>
@@ -223,10 +219,7 @@ export default function ProfileSetupScreen() {
             <Text variant="label" color={dark.textLo} style={styles.sectionLabel}>
               Date of Birth (18+ required)
             </Text>
-            <InteractiveDobPicker
-              value={dob}
-              onChange={setDob}
-            />
+            <InteractiveDobPicker value={dob} onChange={setDob} />
           </View>
 
           {/* Biological Sex */}
@@ -239,10 +232,7 @@ export default function ProfileSetupScreen() {
                 <TouchableOpacity
                   key={s}
                   testID={`btn-sex-${s}`}
-                  style={[
-                    styles.segmentButton,
-                    sex === s && styles.segmentButtonActive,
-                  ]}
+                  style={[styles.segmentButton, sex === s && styles.segmentButtonActive]}
                   onPress={() => {
                     playClickSound();
                     setSex(s);
@@ -286,10 +276,7 @@ export default function ProfileSetupScreen() {
                 <TouchableOpacity
                   key={u}
                   testID={`btn-units-${u}`}
-                  style={[
-                    styles.segmentButton,
-                    units === u && styles.segmentButtonActive,
-                  ]}
+                  style={[styles.segmentButton, units === u && styles.segmentButtonActive]}
                   onPress={() => {
                     playClickSound();
                     setUnits(u);

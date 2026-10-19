@@ -14,9 +14,9 @@ export default function LaunchScreen() {
     // Spec A01: 200ms smooth transition after fonts and local DB are ready
     const timer = setTimeout(() => {
       if (user || isGuest) {
-        router.replace('/today' as any);
+        router.replace('/today' as never);
       } else {
-        router.replace('/welcome' as any);
+        router.replace('/welcome' as never);
       }
     }, 200);
 

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { isAtLeast18 } from '@calipartner/core';
-import { dark, radius, space } from '@calipartner/ui';
+import { dark } from '@calipartner/ui';
 import { AVATAR_PRESETS } from '../profile/AvatarPickerModal';
 import { type OnboardingStep } from '@/services/onboardingStateMachine';
 import { t, setLocale, getLocale } from '@/i18n';
@@ -49,7 +49,11 @@ describe('UI-5 Onboarding and Account Polish (Spec A01–A15, B01–B09)', () =>
       const GOAL_OPTIONS = [
         { id: 'cut', title: 'Lose fat', desc: 'Eat a little less than you burn.' },
         { id: 'bulk', title: 'Build muscle', desc: 'Eat enough protein and train with intent.' },
-        { id: 'maintain', title: 'Stay where I am', desc: 'Keep your weight and build consistency.' },
+        {
+          id: 'maintain',
+          title: 'Stay where I am',
+          desc: 'Keep your weight and build consistency.',
+        },
       ];
 
       expect(GOAL_OPTIONS.length).toBe(3);
@@ -144,7 +148,8 @@ describe('UI-5 Onboarding and Account Polish (Spec A01–A15, B01–B09)', () =>
     });
 
     it('explains consequence line: "Used only to hide fasting and show cautions. Never shared with your room."', () => {
-      const explanation = 'Used only to hide fasting and show cautions. Never shared with your room.';
+      const explanation =
+        'Used only to hide fasting and show cautions. Never shared with your room.';
       expect(explanation).toContain('Never shared with your room');
     });
   });
@@ -169,9 +174,7 @@ describe('UI-5 Onboarding and Account Polish (Spec A01–A15, B01–B09)', () =>
   describe('9. B01–B03: Sign In & Authentication Rules', () => {
     it('places Apple first on iOS', () => {
       const getProviderOrder = (os: 'ios' | 'android') => {
-        return os === 'ios'
-          ? ['apple', 'google', 'email']
-          : ['google', 'apple', 'email'];
+        return os === 'ios' ? ['apple', 'google', 'email'] : ['google', 'apple', 'email'];
       };
 
       expect(getProviderOrder('ios')).toEqual(['apple', 'google', 'email']);
@@ -218,7 +221,8 @@ describe('UI-5 Onboarding and Account Polish (Spec A01–A15, B01–B09)', () =>
     });
 
     it('includes store cancellation reminder for Apple/Google subscriptions', () => {
-      const notice = 'Active store subscription: Google Play or Apple App Store subscriptions must be cancelled in your phone store settings to stop recurring billing.';
+      const notice =
+        'Active store subscription: Google Play or Apple App Store subscriptions must be cancelled in your phone store settings to stop recurring billing.';
       expect(notice).toContain('cancelled in your phone store settings');
     });
   });

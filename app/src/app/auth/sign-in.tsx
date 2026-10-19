@@ -10,15 +10,7 @@ import {
   View,
 } from 'react-native';
 import { useRouter } from 'expo-router';
-import {
-  Text,
-  Button,
-  Field,
-  PairRing,
-  space,
-  dark,
-  radius,
-} from '@calipartner/ui';
+import { Text, Button, Field, PairRing, space, dark, radius } from '@calipartner/ui';
 import { useAuth } from '@/contexts/AuthContext';
 import { t } from '@/i18n';
 import { playClickSound } from '@/lib/sound';
@@ -84,14 +76,14 @@ export default function SignInScreen() {
     if (error) {
       setErrorMessage(t('auth.invalidCodeError'));
     } else {
-      router.replace('/today' as any);
+      router.replace('/today' as never);
     }
   };
 
   const handleGuest = () => {
     playClickSound();
     continueAsGuest();
-    router.replace('/today' as any);
+    router.replace('/today' as never);
   };
 
   const isAppleFirst = Platform.OS === 'ios';
@@ -315,10 +307,7 @@ export default function SignInScreen() {
                   style={styles.resendButton}
                   testID="btn-resend-otp"
                 >
-                  <Text
-                    variant="bodyS"
-                    color={resendCooldown > 0 ? dark.textOff : dark.apricot}
-                  >
+                  <Text variant="bodyS" color={resendCooldown > 0 ? dark.textOff : dark.apricot}>
                     {resendCooldown > 0
                       ? `Resend code in ${resendCooldown}s`
                       : 'Resend 6-digit code'}

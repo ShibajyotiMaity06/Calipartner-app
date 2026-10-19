@@ -8,8 +8,7 @@ import {
   View,
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { type Goal, type Sex, type Units, type ActivityLevel } from '@calipartner/core';
-import { Text, Button, Sheet, space, dark } from '@calipartner/ui';
+import { Button, Sheet, space, dark } from '@calipartner/ui';
 import { ActivityStep } from '@/components/onboarding/ActivityStep';
 import { BodyStatsStep } from '@/components/onboarding/BodyStatsStep';
 import { GoalStep } from '@/components/onboarding/GoalStep';
@@ -418,11 +417,11 @@ export default function OnboardingScreen() {
         visible={showPartnerOffer}
         onClose={() => {
           setShowPartnerOffer(false);
-          router.replace('/today' as any);
+          router.replace('/today' as never);
         }}
         onAccept={() => {
           setShowPartnerOffer(false);
-          router.replace('/today' as any);
+          router.replace('/today' as never);
         }}
         testID="modal-partner-finder-offer"
       />
