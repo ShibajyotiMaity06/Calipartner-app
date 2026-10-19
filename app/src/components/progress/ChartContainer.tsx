@@ -15,6 +15,9 @@ interface ChartContainerProps {
   testID?: string;
   headerRight?: React.ReactNode;
   children?: React.ReactNode;
+  tableView?: React.ReactNode;
+  actionLabel?: string;
+  onActionPress?: () => void;
 }
 
 export function ChartContainer({
@@ -25,11 +28,15 @@ export function ChartContainer({
   empty = false,
   emptyMessage,
   emptyIcon = 'stats-chart-outline',
-  testID,
+  testID = 'chart-container',
   headerRight,
   children,
+  tableView,
+  actionLabel,
+  onActionPress,
 }: ChartContainerProps) {
   const { colors } = useTheme();
+  const [isTableView, setIsTableView] = React.useState(false);
 
   return (
     <View
@@ -46,7 +53,27 @@ export function ChartContainer({
             <Text style={[styles.subtitle, { color: colors.textMuted }]}>{subtitle}</Text>
           ) : null}
         </View>
-        {headerRight ? <View>{headerRight}</View> : null}
+
+        <View style={styles.headerActions}>
+          {tableView && !empty && !loading ? (
+            <React.Fragment>
+              <View
+                style={styles.tableToggleTouch}
+                accessibilityRole="button"
+                accessibilityLabel={isTableView ? 'View as chart' : 'View as table'}
+                testID={`${testID}-toggle-table`}
+              >
+                <Text
+                  style={[styles.tableToggleText, { color: colors.accent }]}
+                  onPress={() => setIsTableView(!isTableView)}
+                >
+                  {isTableView ? 'View as chart' : 'View as table'}
+                </Text>
+              </View>
+            </React.Fragment>
+          ) : null}
+          {headerRight ? <View>{headerRight}</View> : null}
+        </View>
       </View>
 
       {/* Screen Reader hidden summary text for assistive tech */}
@@ -54,7 +81,7 @@ export function ChartContainer({
         {accessibilitySummary}
       </Text>
 
-      {/* Content / Skeleton / Empty State */}
+      {/* Content / Skeleton / Empty State / Table View */}
       {loading ? (
         <View style={styles.skeletonContainer} testID={`${testID}-skeleton`}>
           <View style={[styles.skeletonPlaceholder, { backgroundColor: colors.surfaceAlt }]}>
@@ -67,7 +94,24 @@ export function ChartContainer({
           <Text style={[styles.emptyText, { color: colors.textMuted }]}>
             {emptyMessage || 'No data recorded yet.'}
           </Text>
+          {actionLabel && onActionPress ? (
+            <View
+              style={[styles.emptyActionButton, { backgroundColor: colors.surfaceAlt }]}
+              accessibilityRole="button"
+              accessibilityLabel={actionLabel}
+              testID={`${testID}-empty-action`}
+            >
+              <Text
+                style={[styles.emptyActionText, { color: colors.accent }]}
+                onPress={onActionPress}
+              >
+                {actionLabel}
+              </Text>
+            </View>
+          ) : null}
         </View>
+      ) : isTableView && tableView ? (
+        <View testID={`${testID}-table-view`}>{tableView}</View>
       ) : (
         children
       )}
@@ -134,5 +178,31 @@ const styles = StyleSheet.create({
     fontSize: fontSize.xs,
     textAlign: 'center',
     lineHeight: 18,
+  },
+  headerActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+  },
+  tableToggleTouch: {
+    minHeight: 44,
+    justifyContent: 'center',
+    paddingHorizontal: spacing.sm,
+  },
+  tableToggleText: {
+    fontSize: fontSize.xs,
+    fontWeight: '600',
+  },
+  emptyActionButton: {
+    marginTop: spacing.xs,
+    minHeight: 44,
+    paddingHorizontal: spacing.md,
+    borderRadius: radius.control,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  emptyActionText: {
+    fontSize: fontSize.xs,
+    fontWeight: '600',
   },
 });

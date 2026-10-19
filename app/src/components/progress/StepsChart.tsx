@@ -6,6 +6,7 @@ import type { IndividualStepsProgress } from '@calipartner/core';
 import { t } from '@/i18n';
 import { fontSize, spacing } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
+import { AccessibleChartTable, type TableColumn } from './AccessibleChartTable';
 import { ChartContainer } from './ChartContainer';
 import type { DayDetailData } from './DayDetailModal';
 
@@ -27,6 +28,30 @@ export function StepsChart({
 
   const daily = useMemo(() => data?.daily ?? [], [data?.daily]);
   const isEmpty = daily.length === 0 || daily.every((d) => d.steps === 0);
+
+  // Table representation for accessibility (CMP-14)
+  const tableColumns: TableColumn[] = [
+    { key: 'date', header: 'Date', width: 90 },
+    { key: 'steps', header: 'Steps', width: 85, align: 'right' },
+    { key: 'goal', header: 'Goal', width: 85, align: 'right' },
+    { key: 'dist', header: 'Distance', width: 85, align: 'right' },
+    { key: 'status', header: 'Status', width: 95, align: 'center' },
+  ];
+
+  const tableRows = useMemo(() => {
+    const targetSteps = data?.goal_steps ?? 10000;
+    return daily.map((d, i) => {
+      const reached = targetSteps > 0 && d.steps >= targetSteps;
+      return {
+        id: d.date || String(i),
+        date: d.date,
+        steps: d.steps.toLocaleString(),
+        goal: targetSteps.toLocaleString(),
+        dist: `${d.distance_km.toFixed(1)} km`,
+        status: d.steps === 0 ? 'Not tracked' : reached ? 'Goal reached' : 'In progress',
+      };
+    });
+  }, [daily, data?.goal_steps]);
 
   const accessibilitySummary = useMemo(() => {
     if (isEmpty || !data) {
@@ -88,6 +113,14 @@ export function StepsChart({
       emptyMessage={t('progress.steps.empty')}
       emptyIcon="footsteps-outline"
       testID={testID}
+      tableView={
+        <AccessibleChartTable
+          columns={tableColumns}
+          rows={tableRows}
+          caption="Daily steps and walking distance table"
+          testID={`${testID}-table`}
+        />
+      }
     >
       <View onLayout={onLayout} style={styles.chartWrapper}>
         <Svg width={containerWidth} height={height}>

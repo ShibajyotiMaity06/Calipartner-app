@@ -6,6 +6,7 @@ import type { IndividualWeightProgress } from '@calipartner/core';
 import { t } from '@/i18n';
 import { fontSize, spacing } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
+import { AccessibleChartTable, type TableColumn } from './AccessibleChartTable';
 import { ChartContainer } from './ChartContainer';
 import type { DayDetailData } from './DayDetailModal';
 
@@ -33,6 +34,24 @@ export function WeightChart({
   }, [history]);
 
   const isEmpty = validPoints.length === 0;
+
+  // Table representation for accessibility (CMP-14)
+  const tableColumns: TableColumn[] = [
+    { key: 'date', header: 'Date', width: 90 },
+    { key: 'raw', header: 'Weight', width: 85, align: 'right' },
+    { key: 'trend', header: '7D Trend', width: 85, align: 'right' },
+    { key: 'target', header: 'Target', width: 80, align: 'right' },
+  ];
+
+  const tableRows = useMemo(() => {
+    return history.map((h, i) => ({
+      id: h.date || String(i),
+      date: h.date,
+      raw: h.raw_weight_kg != null ? `${h.raw_weight_kg.toFixed(1)} kg` : '—',
+      trend: h.trend_weight_kg != null ? `${h.trend_weight_kg.toFixed(1)} kg` : '—',
+      target: data?.target_weight_kg != null ? `${data.target_weight_kg.toFixed(1)} kg` : '—',
+    }));
+  }, [history, data?.target_weight_kg]);
 
   // Accessibility summary text
   const accessibilitySummary = useMemo(() => {
@@ -141,6 +160,14 @@ export function WeightChart({
       emptyMessage={t('progress.weight.empty')}
       emptyIcon="speedometer-outline"
       testID={testID}
+      tableView={
+        <AccessibleChartTable
+          columns={tableColumns}
+          rows={tableRows}
+          caption="Weight log and 7-day trend history"
+          testID={`${testID}-table`}
+        />
+      }
     >
       <View onLayout={onLayout} style={styles.chartWrapper}>
         <Svg width={containerWidth} height={height}>

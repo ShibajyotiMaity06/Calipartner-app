@@ -1,18 +1,40 @@
-import React from 'react';
-import { ActivityIndicator, Pressable, StyleSheet, Switch, Text, View } from 'react-native';
+import React, { useState } from 'react';
+import {
+  ActivityIndicator,
+  Modal,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Switch,
+  Text,
+  View,
+} from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { Avatar, dark, radius, space, type } from '@calipartner/ui';
 import { useLeaderboard } from '@/hooks/useLeaderboard';
 import { t } from '@/i18n';
-import { fontSize, radius, spacing } from '@/theme/tokens';
-import { useTheme } from '@/theme/useTheme';
+import { MondayRecapModal } from './MondayRecapModal';
 
 interface LeaderboardViewProps {
   testID?: string;
 }
 
+type DivisionType = 'cutting' | 'bulking' | 'maintain' | 'beginner';
+
+const DIVISIONS: { id: DivisionType; label: string }[] = [
+  { id: 'cutting', label: 'Cutting' },
+  { id: 'bulking', label: 'Bulking' },
+  { id: 'maintain', label: 'Maintain' },
+  { id: 'beginner', label: 'Beginner' },
+];
+
 export function LeaderboardView({ testID = 'leaderboard-view' }: LeaderboardViewProps) {
-  const { colors } = useTheme();
   const { data, loading, error, refresh, setOptOut } = useLeaderboard();
+  const [selectedDivision, setSelectedDivision] = useState<DivisionType>('cutting');
+  const [showRecapModal, setShowRecapModal] = useState(false);
+  const [inspectUser, setInspectUser] = useState<{ nickname: string; avatarUrl?: string } | null>(
+    null,
+  );
 
   const isOptedOut = data?.opted_out ?? false;
   const top10 = data?.top_10 ?? [];
@@ -20,7 +42,7 @@ export function LeaderboardView({ testID = 'leaderboard-view' }: LeaderboardView
 
   const handleToggleOptOut = async (value: boolean) => {
     try {
-      await setOptOut(!value); // switch is "Participate in leaderboards"
+      await setOptOut(!value);
     } catch {
       // error handled in hook
     }
@@ -29,21 +51,17 @@ export function LeaderboardView({ testID = 'leaderboard-view' }: LeaderboardView
   if (loading && !data) {
     return (
       <View style={styles.loadingContainer} testID={`${testID}-loading`}>
-        <ActivityIndicator size="large" color={colors.accent} />
+        <ActivityIndicator size="large" color={dark.apricot} />
       </View>
     );
   }
 
   if (error && !data) {
     return (
-      <View style={[styles.card, { backgroundColor: colors.surface }]} testID={`${testID}-error`}>
-        <Ionicons name="alert-circle-outline" size={36} color={colors.textMuted} />
-        <Text style={[styles.errorText, { color: colors.text }]}>{error.message}</Text>
-        <Pressable
-          style={[styles.retryBtn, { backgroundColor: colors.accent }]}
-          onPress={refresh}
-          testID={`${testID}-retry`}
-        >
+      <View style={styles.card} testID={`${testID}-error`}>
+        <Ionicons name="alert-circle-outline" size={36} color={dark.textLo} />
+        <Text style={styles.errorText}>{error.message}</Text>
+        <Pressable style={styles.retryBtn} onPress={refresh} testID={`${testID}-retry`}>
           <Text style={styles.retryBtnText}>Retry</Text>
         </Pressable>
       </View>
@@ -52,372 +70,541 @@ export function LeaderboardView({ testID = 'leaderboard-view' }: LeaderboardView
 
   return (
     <View style={styles.container} testID={testID}>
-      {/* Informative Note: Ranked by consistency, not restriction */}
-      <View
-        style={[
-          styles.infoBanner,
-          { backgroundColor: colors.surfaceAlt, borderColor: colors.border },
-        ]}
-      >
-        <Ionicons name="information-circle-outline" size={20} color={colors.accent} />
-        <Text style={[styles.infoBannerText, { color: colors.text }]}>
-          {t('progress.leaderboard.infoNote')}
+      {/* 1. M11: Persistent single line above the list (not behind an info icon) */}
+      <View style={styles.ruleBanner} testID={`${testID}-rule-banner`}>
+        <Text style={styles.ruleBannerText}>
+          Ranked on consistency and how close you get to your own goal. Not on eating least.
         </Text>
       </View>
 
-      {/* Cohort & Division Header */}
-      {!isOptedOut && data?.division && (
-        <View style={[styles.metaCard, { backgroundColor: colors.surface }]}>
-          <View style={styles.metaRow}>
-            <View>
-              <Text style={[styles.metaLabel, { color: colors.textMuted }]}>
-                {t('progress.leaderboard.divisionLabel')}
+      {/* 2. M11: Division chips: Cutting · Bulking · Maintain · Beginner */}
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={styles.divisionChipsRow}
+        testID={`${testID}-division-chips`}
+      >
+        {DIVISIONS.map((div) => {
+          const isSelected = selectedDivision === div.id;
+          return (
+            <Pressable
+              key={div.id}
+              style={[styles.divisionChip, isSelected && styles.divisionChipSelected]}
+              onPress={() => setSelectedDivision(div.id)}
+              accessibilityRole="tab"
+              accessibilityLabel={`Filter by ${div.label} division`}
+              accessibilityState={{ selected: isSelected }}
+              testID={`${testID}-chip-${div.id}`}
+            >
+              <Text
+                style={[styles.divisionChipText, isSelected && styles.divisionChipTextSelected]}
+              >
+                {div.label}
               </Text>
-              <Text style={[styles.metaValue, { color: colors.text }]}>
-                {data.division.toUpperCase()}
-              </Text>
-            </View>
-
-            <View style={styles.cohortBadge}>
-              <Ionicons name="people-outline" size={16} color={colors.textMuted} />
-              <Text style={[styles.cohortText, { color: colors.textMuted }]}>
-                {data.total_in_cohort ?? 100} in cohort
-              </Text>
-            </View>
-          </View>
-        </View>
-      )}
-
-      {/* Opt-out Toggle Card */}
-      <View style={[styles.toggleCard, { backgroundColor: colors.surface }]}>
-        <View style={styles.toggleTextCol}>
-          <Text style={[styles.toggleTitle, { color: colors.text }]}>
-            {t('progress.leaderboard.optOutLabel')}
-          </Text>
-          <Text style={[styles.toggleDesc, { color: colors.textMuted }]}>
-            {t('progress.leaderboard.optOutDescription')}
-          </Text>
-        </View>
-        <Switch
-          value={!isOptedOut}
-          onValueChange={handleToggleOptOut}
-          trackColor={{ false: colors.border, true: colors.accent }}
-          thumbColor="#ffffff"
-          testID={`${testID}-optout-toggle`}
-          accessibilityLabel={t('progress.leaderboard.optOutLabel')}
-        />
-      </View>
+            </Pressable>
+          );
+        })}
+      </ScrollView>
 
       {/* Opted out state banner */}
       {isOptedOut ? (
-        <View style={[styles.card, { backgroundColor: colors.surface }]}>
-          <Ionicons name="eye-off-outline" size={32} color={colors.textMuted} />
-          <Text style={[styles.optedOutText, { color: colors.textMuted }]}>
-            {t('progress.leaderboard.optedOutNotice')}
-          </Text>
+        <View style={styles.optedOutCard} testID={`${testID}-opted-out`}>
+          <Ionicons name="eye-off-outline" size={32} color={dark.textLo} />
+          <Text style={styles.optedOutTitle}>You're hidden</Text>
+          <Text style={styles.optedOutText}>{t('progress.leaderboard.optedOutNotice')}</Text>
+          <Pressable
+            style={styles.optInButton}
+            onPress={() => handleToggleOptOut(true)}
+            accessibilityRole="button"
+            accessibilityLabel="Participate in leaderboard"
+            testID={`${testID}-opt-in-btn`}
+          >
+            <Text style={styles.optInButtonText}>Turn on leaderboard participation</Text>
+          </Pressable>
         </View>
       ) : (
-        <>
-          {/* My Rank Highlight Card */}
+        <View style={styles.leaderboardBody}>
+          {/* Top 10 List Card */}
+          <View style={styles.top10Card}>
+            <View style={styles.cardHeaderRow}>
+              <Text style={styles.top10Title}>{t('progress.leaderboard.top10')}</Text>
+              <Pressable
+                style={styles.recapBtn}
+                onPress={() => setShowRecapModal(true)}
+                accessibilityRole="button"
+                accessibilityLabel="View Monday recap"
+                testID={`${testID}-btn-monday-recap`}
+              >
+                <Ionicons name="calendar-outline" size={14} color={dark.apricot} />
+                <Text style={styles.recapBtnText}>Monday recap</Text>
+              </Pressable>
+            </View>
+
+            {top10.length === 0 ? (
+              <View style={styles.emptyContainer} testID={`${testID}-empty-cohort`}>
+                <Ionicons name="people-outline" size={32} color={dark.textLo} />
+                <Text style={styles.emptyText}>
+                  {t('progress.leaderboard.emptyCohort') ||
+                    'Your first ranking arrives on Monday.'}
+                </Text>
+              </View>
+            ) : (
+              <View style={styles.leadersList}>
+                {top10.map((user) => {
+                  return (
+                    <Pressable
+                      key={user.rank}
+                      style={[styles.leaderRow, user.is_me && styles.meRowInList]}
+                      onPress={() =>
+                        setInspectUser({
+                          nickname: user.nickname,
+                          avatarUrl: user.avatar_url ?? undefined,
+                        })
+                      }
+                      accessibilityRole="button"
+                      accessibilityLabel={`Rank ${user.rank}, ${user.nickname}, consistency score ${user.consistency_score.toFixed(1)}`}
+                      testID={`${testID}-row-${user.rank}`}
+                    >
+                      <View style={styles.leaderLeft}>
+                        {/* Rank in numeral-m: NO medals, no trophies, rank is a number */}
+                        <Text style={styles.leaderRank}>#{user.rank}</Text>
+                        <Avatar
+                          name={user.nickname}
+                          uri={user.avatar_url}
+                          size="sm"
+                          identityHue={user.is_me ? 'apricot' : 'iris'}
+                        />
+                        <Text style={[styles.leaderName, user.is_me && styles.leaderNameMe]}>
+                          {user.nickname} {user.is_me ? '(You)' : ''}
+                        </Text>
+                      </View>
+
+                      {/* Consistency score only: NO weights, no calories */}
+                      <Text style={styles.leaderScore}>{user.consistency_score.toFixed(1)}</Text>
+                    </Pressable>
+                  );
+                })}
+              </View>
+            )}
+          </View>
+
+          {/* 4. M11: Your row pinned at the bottom with hairlineLit edge and s2 fill */}
           {myRank ? (
             myRank.is_eligible ? (
-              <View
-                style={[
-                  styles.myRankCard,
-                  { backgroundColor: colors.surface, borderColor: colors.accent },
-                ]}
-                testID={`${testID}-my-rank`}
-              >
-                <View style={styles.myRankLeft}>
-                  <View style={[styles.rankBadge, { backgroundColor: colors.surfaceAlt }]}>
-                    <Text style={[styles.rankNumber, { color: colors.accent }]}>
-                      #{myRank.rank}
-                    </Text>
-                  </View>
+              <View style={styles.pinnedMyRow} testID={`${testID}-pinned-my-row`}>
+                <View style={styles.pinnedLeft}>
+                  <Text style={styles.pinnedRank}>#{myRank.rank}</Text>
+                  <Avatar
+                    name={myRank.nickname}
+                    uri={myRank.avatar_url}
+                    size="md"
+                    identityHue="apricot"
+                  />
                   <View>
-                    <Text style={[styles.myRankLabel, { color: colors.textMuted }]}>
-                      {t('progress.leaderboard.myRank')}
+                    <Text style={styles.pinnedName}>
+                      {myRank.nickname} <Text style={styles.pinnedYouTag}>(You)</Text>
                     </Text>
-                    <Text style={[styles.myRankName, { color: colors.text }]}>
-                      {myRank.nickname}
+                    <Text style={styles.pinnedCaption}>
+                      {myRank.rank <= 10 ? 'Ranked in Top 10' : 'In your cohort'}
                     </Text>
                   </View>
                 </View>
 
-                <View style={styles.myRankScore}>
-                  <Text style={[styles.scoreValue, { color: colors.text }]}>
-                    {myRank.consistency_score.toFixed(1)}
-                  </Text>
-                  <Text style={[styles.scoreLabel, { color: colors.textMuted }]}>
-                    {t('progress.leaderboard.score')}
-                  </Text>
+                <View style={styles.pinnedRight}>
+                  <Text style={styles.pinnedScore}>{myRank.consistency_score.toFixed(1)}</Text>
+                  <Text style={styles.pinnedScoreLabel}>Score</Text>
                 </View>
               </View>
             ) : (
-              <View
-                style={[styles.notEligibleCard, { backgroundColor: colors.surfaceAlt }]}
-                testID={`${testID}-not-eligible`}
-              >
-                <Ionicons name="time-outline" size={20} color={colors.textMuted} />
-                <Text style={[styles.notEligibleText, { color: colors.textMuted }]}>
+              <View style={styles.notEligibleCard} testID={`${testID}-not-eligible`}>
+                <Ionicons name="time-outline" size={18} color={dark.textLo} />
+                <Text style={styles.notEligibleText}>
                   {t('progress.leaderboard.notEligibleNotice')}
                 </Text>
               </View>
             )
           ) : null}
 
-          {/* Top 10 Leaders List */}
-          <View style={[styles.top10Card, { backgroundColor: colors.surface }]}>
-            <Text style={[styles.top10Title, { color: colors.text }]}>
-              {t('progress.leaderboard.top10')}
-            </Text>
-
-            {top10.length === 0 ? (
-              <Text style={[styles.emptyText, { color: colors.textMuted }]}>
-                {t('progress.leaderboard.emptyCohort')}
-              </Text>
-            ) : (
-              <View style={styles.leadersList}>
-                {top10.map((user) => (
-                  <View
-                    key={user.rank}
-                    style={[
-                      styles.leaderRow,
-                      { borderBottomColor: colors.border },
-                      user.is_me && [styles.meLeaderRow, { backgroundColor: colors.surfaceAlt }],
-                    ]}
-                  >
-                    <View style={styles.leaderLeft}>
-                      <Text style={[styles.leaderRank, { color: colors.textMuted }]}>
-                        #{user.rank}
-                      </Text>
-                      <Text
-                        style={[
-                          styles.leaderName,
-                          { color: colors.text },
-                          user.is_me && { fontWeight: '700' },
-                        ]}
-                      >
-                        {user.nickname} {user.is_me ? '(You)' : ''}
-                      </Text>
-                    </View>
-
-                    <Text style={[styles.leaderScore, { color: colors.text }]}>
-                      {user.consistency_score.toFixed(1)}
-                    </Text>
-                  </View>
-                ))}
-              </View>
-            )}
+          {/* 5. M11: Footer with weekly reset note & link to hide from leaderboards */}
+          <View style={styles.footerRow}>
+            <Text style={styles.footerText}>Weekly reset on Monday.</Text>
+            <Pressable
+              onPress={() => handleToggleOptOut(false)}
+              accessibilityRole="button"
+              accessibilityLabel="Hide me from leaderboards"
+              testID={`${testID}-optout-link`}
+            >
+              <Text style={styles.optOutLinkText}>Hide me from leaderboards</Text>
+            </Pressable>
           </View>
-        </>
+        </View>
       )}
+
+      {/* M11: Lightweight user inspector modal (shows nickname and avatar only) */}
+      <Modal
+        visible={Boolean(inspectUser)}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setInspectUser(null)}
+      >
+        <Pressable style={styles.inspectBackdrop} onPress={() => setInspectUser(null)}>
+          <View style={styles.inspectCard}>
+            <Avatar
+              name={inspectUser?.nickname ?? ''}
+              uri={inspectUser?.avatarUrl}
+              size="lg"
+              identityHue="iris"
+            />
+            <Text style={styles.inspectNickname}>{inspectUser?.nickname}</Text>
+            <Text style={styles.inspectSub}>Cohort Member</Text>
+            <Pressable
+              style={styles.inspectCloseBtn}
+              onPress={() => setInspectUser(null)}
+              accessibilityRole="button"
+              accessibilityLabel="Close"
+            >
+              <Text style={styles.inspectCloseText}>Close</Text>
+            </Pressable>
+          </View>
+        </Pressable>
+      </Modal>
+
+      {/* M12 Monday Recap Modal */}
+      <MondayRecapModal
+        visible={showRecapModal}
+        score={myRank?.consistency_score ?? 84.5}
+        onClose={() => setShowRecapModal(false)}
+        onSeeLeaderboard={() => setShowRecapModal(false)}
+        testID={`${testID}-recap-modal`}
+      />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    paddingBottom: spacing.xl,
+    paddingBottom: space[8],
   },
   loadingContainer: {
-    height: 300,
+    height: 240,
     justifyContent: 'center',
     alignItems: 'center',
   },
   card: {
-    marginHorizontal: spacing.md,
-    marginTop: spacing.sm,
-    padding: spacing.lg,
-    borderRadius: radius.md,
+    marginHorizontal: space[4],
+    marginTop: space[3],
+    padding: space[5],
+    borderRadius: radius.card,
+    backgroundColor: dark.s2,
     alignItems: 'center',
     justifyContent: 'center',
-    gap: spacing.sm,
+    gap: space[2],
   },
-  infoBanner: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.sm,
-    marginHorizontal: spacing.md,
-    marginVertical: spacing.sm,
-    padding: spacing.md,
-    borderRadius: radius.md,
+  errorText: {
+    ...type.bodyS,
+    color: dark.textHi,
+    textAlign: 'center',
+  },
+  retryBtn: {
+    marginTop: space[2],
+    paddingHorizontal: space[4],
+    paddingVertical: space[2],
+    borderRadius: radius.control,
+    backgroundColor: dark.apricot,
+  },
+  retryBtnText: {
+    ...type.label,
+    color: dark.onBrand,
+    fontWeight: '700',
+  },
+  ruleBanner: {
+    marginHorizontal: space[4],
+    marginTop: space[3],
+    marginBottom: space[2],
+    paddingHorizontal: space[4],
+    paddingVertical: space[3],
+    borderRadius: radius.control,
+    backgroundColor: dark.s2,
     borderWidth: 1,
+    borderColor: dark.hairline,
   },
-  infoBannerText: {
-    flex: 1,
-    fontSize: fontSize.xs,
-    fontWeight: '500',
+  ruleBannerText: {
+    ...type.label,
+    color: dark.textHi,
+    fontWeight: '600',
     lineHeight: 18,
+    textAlign: 'center',
   },
-  metaCard: {
-    marginHorizontal: spacing.md,
-    marginBottom: spacing.sm,
-    padding: spacing.md,
-    borderRadius: radius.md,
+  divisionChipsRow: {
+    flexDirection: 'row',
+    paddingHorizontal: space[4],
+    gap: space[2],
+    marginVertical: space[2],
   },
-  metaRow: {
+  divisionChip: {
+    paddingHorizontal: space[4],
+    paddingVertical: space[2],
+    borderRadius: radius.full,
+    backgroundColor: dark.s2,
+    borderWidth: 1,
+    borderColor: dark.hairline,
+    minHeight: 44,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  divisionChipSelected: {
+    backgroundColor: 'rgba(244, 182, 125, 0.16)',
+    borderColor: dark.apricot,
+  },
+  divisionChipText: {
+    ...type.label,
+    color: dark.textMid,
+  },
+  divisionChipTextSelected: {
+    color: dark.apricot,
+    fontWeight: '700',
+  },
+  leaderboardBody: {
+    paddingHorizontal: space[4],
+  },
+  top10Card: {
+    backgroundColor: dark.s1,
+    borderRadius: radius.card,
+    padding: space[4],
+    borderWidth: 1,
+    borderColor: dark.hairline,
+    marginTop: space[2],
+  },
+  cardHeaderRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+    marginBottom: space[3],
   },
-  metaLabel: {
-    fontSize: fontSize.xs,
+  top10Title: {
+    ...type.heading,
+    color: dark.textHi,
   },
-  metaValue: {
-    fontSize: fontSize.md,
-    fontWeight: '700',
-    marginTop: 2,
-  },
-  cohortBadge: {
+  recapBtn: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
+    paddingHorizontal: space[2],
+    paddingVertical: space[1],
+    borderRadius: radius.control,
+    backgroundColor: dark.s2,
   },
-  cohortText: {
-    fontSize: fontSize.xs,
-  },
-  toggleCard: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginHorizontal: spacing.md,
-    marginBottom: spacing.sm,
-    padding: spacing.md,
-    borderRadius: radius.md,
-  },
-  toggleTextCol: {
-    flex: 1,
-    paddingRight: spacing.md,
-  },
-  toggleTitle: {
-    fontSize: fontSize.sm,
+  recapBtnText: {
+    ...type.label,
+    color: dark.apricot,
     fontWeight: '600',
   },
-  toggleDesc: {
-    fontSize: fontSize.xs,
-    marginTop: 2,
-    lineHeight: 16,
-  },
-  optedOutText: {
-    fontSize: fontSize.sm,
-    textAlign: 'center',
-    lineHeight: 20,
-    maxWidth: 280,
-  },
-  myRankCard: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+  emptyContainer: {
+    paddingVertical: space[6],
     alignItems: 'center',
-    marginHorizontal: spacing.md,
-    marginBottom: spacing.sm,
-    padding: spacing.md,
-    borderRadius: radius.md,
-    borderWidth: 1.5,
-  },
-  myRankLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.md,
-  },
-  rankBadge: {
-    paddingHorizontal: spacing.sm + 2,
-    paddingVertical: spacing.xs,
-    borderRadius: radius.sm,
-  },
-  rankNumber: {
-    fontSize: fontSize.md,
-    fontWeight: '800',
-  },
-  myRankLabel: {
-    fontSize: fontSize.xs,
-  },
-  myRankName: {
-    fontSize: fontSize.sm,
-    fontWeight: '700',
-  },
-  myRankScore: {
-    alignItems: 'flex-end',
-  },
-  scoreValue: {
-    fontSize: fontSize.md,
-    fontWeight: '800',
-  },
-  scoreLabel: {
-    fontSize: 10,
-  },
-  notEligibleCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.sm,
-    marginHorizontal: spacing.md,
-    marginBottom: spacing.sm,
-    padding: spacing.md,
-    borderRadius: radius.md,
-  },
-  notEligibleText: {
-    flex: 1,
-    fontSize: fontSize.xs,
-    lineHeight: 18,
-  },
-  top10Card: {
-    marginHorizontal: spacing.md,
-    padding: spacing.md,
-    borderRadius: radius.md,
-  },
-  top10Title: {
-    fontSize: fontSize.sm,
-    fontWeight: '700',
-    marginBottom: spacing.sm,
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
+    justifyContent: 'center',
+    gap: space[2],
   },
   emptyText: {
-    fontSize: fontSize.xs,
+    ...type.bodyS,
+    color: dark.textLo,
     textAlign: 'center',
-    paddingVertical: spacing.md,
   },
-  leadersList: {},
+  leadersList: {
+    gap: space[2],
+  },
   leaderRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingVertical: spacing.sm,
+    paddingVertical: space[2],
     borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: dark.hairline,
+    minHeight: 48,
   },
-  meLeaderRow: {
-    borderRadius: radius.sm,
-    paddingHorizontal: spacing.xs,
+  meRowInList: {
+    backgroundColor: 'rgba(255, 255, 255, 0.03)',
+    borderRadius: radius.control,
+    paddingHorizontal: space[2],
   },
   leaderLeft: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: spacing.md,
+    gap: space[3],
+    flex: 1,
   },
   leaderRank: {
-    fontSize: fontSize.xs,
-    fontWeight: '600',
-    width: 28,
-  },
-  leaderName: {
-    fontSize: fontSize.sm,
-  },
-  leaderScore: {
-    fontSize: fontSize.sm,
-    fontWeight: '700',
-  },
-  errorText: {
-    fontSize: fontSize.sm,
+    ...type.numeralM,
+    fontVariant: ['tabular-nums'] as any,
+    color: dark.textLo,
+    width: 32,
     textAlign: 'center',
   },
-  retryBtn: {
-    paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.xs + 2,
-    borderRadius: radius.sm,
+  leaderName: {
+    ...type.body,
+    color: dark.textHi,
   },
-  retryBtnText: {
-    color: '#ffffff',
-    fontSize: fontSize.xs,
+  leaderNameMe: {
+    fontWeight: '700',
+    color: dark.apricot,
+  },
+  leaderScore: {
+    ...type.numeralM,
+    fontVariant: ['tabular-nums'] as any,
+    color: dark.textHi,
+  },
+  pinnedMyRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: space[3],
+    padding: space[4],
+    backgroundColor: dark.s2,
+    borderRadius: radius.card,
+    borderWidth: 1,
+    borderColor: dark.hairlineLit,
+  },
+  pinnedLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: space[3],
+    flex: 1,
+  },
+  pinnedRank: {
+    ...type.numeralM,
+    fontVariant: ['tabular-nums'] as any,
+    color: dark.apricot,
+    width: 36,
+    textAlign: 'center',
+  },
+  pinnedName: {
+    ...type.heading,
+    color: dark.textHi,
+  },
+  pinnedYouTag: {
+    ...type.label,
+    color: dark.textLo,
+  },
+  pinnedCaption: {
+    ...type.label,
+    color: dark.textLo,
+    marginTop: 2,
+  },
+  pinnedRight: {
+    alignItems: 'flex-end',
+  },
+  pinnedScore: {
+    ...type.numeralL,
+    fontVariant: ['tabular-nums'] as any,
+    color: dark.apricot,
+  },
+  pinnedScoreLabel: {
+    ...type.label,
+    color: dark.textLo,
+  },
+  notEligibleCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: space[2],
+    padding: space[3],
+    backgroundColor: dark.s2,
+    borderRadius: radius.control,
+    marginTop: space[3],
+    borderWidth: 1,
+    borderColor: dark.hairline,
+  },
+  notEligibleText: {
+    ...type.bodyS,
+    color: dark.textLo,
+    flex: 1,
+  },
+  footerRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: space[4],
+    paddingHorizontal: space[2],
+  },
+  footerText: {
+    ...type.label,
+    color: dark.textLo,
+  },
+  optOutLinkText: {
+    ...type.label,
+    color: dark.apricot,
+    fontWeight: '600',
+  },
+  optedOutCard: {
+    backgroundColor: dark.s2,
+    borderRadius: radius.card,
+    marginHorizontal: space[4],
+    marginTop: space[3],
+    padding: space[6],
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: dark.hairline,
+    gap: space[2],
+  },
+  optedOutTitle: {
+    ...type.title2,
+    color: dark.textHi,
+  },
+  optedOutText: {
+    ...type.bodyS,
+    color: dark.textLo,
+    textAlign: 'center',
+    lineHeight: 20,
+  },
+  optInButton: {
+    marginTop: space[3],
+    paddingHorizontal: space[4],
+    paddingVertical: space[2],
+    borderRadius: radius.button,
+    backgroundColor: dark.apricot,
+  },
+  optInButtonText: {
+    ...type.heading,
+    color: dark.onBrand,
+    fontWeight: '700',
+  },
+  inspectBackdrop: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.6)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  inspectCard: {
+    width: 280,
+    backgroundColor: dark.s1,
+    borderRadius: radius.card,
+    padding: space[5],
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: dark.hairlineLit,
+    gap: space[2],
+  },
+  inspectNickname: {
+    ...type.title2,
+    color: dark.textHi,
+    marginTop: space[2],
+  },
+  inspectSub: {
+    ...type.label,
+    color: dark.textLo,
+  },
+  inspectCloseBtn: {
+    marginTop: space[3],
+    height: 44,
+    paddingHorizontal: space[5],
+    borderRadius: radius.control,
+    backgroundColor: dark.s2,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  inspectCloseText: {
+    ...type.label,
+    color: dark.textMid,
     fontWeight: '600',
   },
 });

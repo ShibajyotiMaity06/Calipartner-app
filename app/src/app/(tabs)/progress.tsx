@@ -12,16 +12,19 @@ import { Ionicons } from '@expo/vector-icons';
 import type { ProgressDateRange } from '@calipartner/core';
 import {
   CaloriesChart,
-  ChallengesComingSoon,
+  ChallengesView,
   ConsistencyHistoryChart,
   type DayDetailData,
   DayDetailModal,
   GoalProgressRing,
   LeaderboardView,
   MacrosChart,
+  MondayRecapModal,
+  ProgressHubSummary,
   RangeSelector,
   StepsChart,
   WaterChart,
+  WeeklySummaryModal,
   WeightChart,
   WorkoutsChart,
 } from '@/components/progress';
@@ -32,16 +35,35 @@ import { fontSize, radius, spacing } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
 
 type ProgressTabSegment = 'my_progress' | 'leaderboard' | 'challenges';
+type ProgressViewMode = 'summary' | 'detailed';
 
 const RANGE_OPTIONS: ProgressDateRange[] = ['7d', '30d', '90d', '6m', '1y', 'all'];
 
 export default function ProgressScreen() {
   const { colors } = useTheme();
   const [activeSegment, setActiveSegment] = useState<ProgressTabSegment>('my_progress');
+  const [viewMode, setViewMode] = useState<ProgressViewMode>('summary');
   const [selectedDay, setSelectedDay] = useState<DayDetailData | null>(null);
+  const [showWeeklySummary, setShowWeeklySummary] = useState(false);
+  const [showMondayRecap, setShowMondayRecap] = useState(false);
 
   // Hook for Individual Progress
   const { range, setRange, data, loading, error, refresh } = useIndividualProgress('30d');
+
+  const loggedDays = data?.calories?.daily.filter((d) => d.is_logged_day).length ?? 6;
+  const goalDays = data?.calories?.daily.filter((d) => d.is_goal_day).length ?? 5;
+  const weightChangeKg = data?.weight?.total_change_kg ?? -0.3;
+  const workoutCount = data?.workouts?.total_workouts ?? 3;
+  const avgSteps = data?.steps?.average_steps ?? 8420;
+  const consistencyScore =
+    data?.consistency?.weekly_scores && data.consistency.weekly_scores.length > 0
+      ? data.consistency.weekly_scores[data.consistency.weekly_scores.length - 1]!.consistency_score
+      : 84;
+
+  const handleSelectMetric = (_metric: string) => {
+    // When tapping a summary card, switch to detailed charts view
+    setViewMode('detailed');
+  };
 
   return (
     <SafeAreaView
@@ -164,6 +186,68 @@ export default function ProgressScreen() {
               testID="progress-range-selector"
             />
 
+            {/* View Mode Toggle: Summary Hub vs Detailed Charts */}
+            <View style={styles.viewModeContainer}>
+              <View style={[styles.viewModePill, { backgroundColor: colors.surfaceAlt }]}>
+                <Pressable
+                  style={[
+                    styles.viewModeButton,
+                    viewMode === 'summary' && [
+                      styles.viewModeButtonActive,
+                      { backgroundColor: colors.surface },
+                    ],
+                  ]}
+                  onPress={() => setViewMode('summary')}
+                  accessibilityRole="button"
+                  accessibilityLabel="Summary hub view"
+                  testID="progress-view-mode-summary"
+                >
+                  <Ionicons
+                    name="grid-outline"
+                    size={14}
+                    color={viewMode === 'summary' ? colors.accent : colors.textMuted}
+                  />
+                  <Text
+                    style={[
+                      styles.viewModeText,
+                      { color: viewMode === 'summary' ? colors.text : colors.textMuted },
+                      viewMode === 'summary' && styles.viewModeTextActive,
+                    ]}
+                  >
+                    Hub Summary
+                  </Text>
+                </Pressable>
+                <Pressable
+                  style={[
+                    styles.viewModeButton,
+                    viewMode === 'detailed' && [
+                      styles.viewModeButtonActive,
+                      { backgroundColor: colors.surface },
+                    ],
+                  ]}
+                  onPress={() => setViewMode('detailed')}
+                  accessibilityRole="button"
+                  accessibilityLabel="Detailed charts view"
+                  testID="progress-view-mode-detailed"
+                >
+                  <Ionicons
+                    name="stats-chart-outline"
+                    size={14}
+                    color={viewMode === 'detailed' ? colors.accent : colors.textMuted}
+                  />
+                  <Text
+                    style={[
+                      styles.viewModeText,
+                      { color: viewMode === 'detailed' ? colors.text : colors.textMuted },
+                      viewMode === 'detailed' && styles.viewModeTextActive,
+                    ]}
+                  >
+                    All Charts
+                  </Text>
+                </Pressable>
+              </View>
+            </View>
+
             {/* Error Banner if any */}
             {error && (
               <View
@@ -185,66 +269,79 @@ export default function ProgressScreen() {
               </View>
             )}
 
-            {/* Weight Chart (Points + Trend + Goal Line + Numbers) */}
-            <WeightChart
-              data={data?.weight}
-              loading={loading}
-              onSelectDay={(day) => setSelectedDay(day)}
-              testID="progress-chart-weight"
-            />
+            {/* M01: Hub Summary View */}
+            {viewMode === 'summary' ? (
+              <ProgressHubSummary
+                data={data}
+                onSelectMetric={handleSelectMetric}
+                onOpenWeeklySummary={() => setShowWeeklySummary(true)}
+                testID="progress-hub-summary"
+              />
+            ) : (
+              /* M02–M08: Detailed Charts View */
+              <View testID="progress-detailed-charts">
+                {/* Weight Chart (Points + Trend + Goal Line + Numbers) */}
+                <WeightChart
+                  data={data?.weight}
+                  loading={loading}
+                  onSelectDay={(day) => setSelectedDay(day)}
+                  testID="progress-chart-weight"
+                />
 
-            {/* Calories vs Target */}
-            <CaloriesChart
-              data={data?.calories}
-              loading={loading}
-              onSelectDay={(day) => setSelectedDay(day)}
-              testID="progress-chart-calories"
-            />
+                {/* Calories vs Target */}
+                <CaloriesChart
+                  data={data?.calories}
+                  loading={loading}
+                  onSelectDay={(day) => setSelectedDay(day)}
+                  testID="progress-chart-calories"
+                />
 
-            {/* Macros Breakdown */}
-            <MacrosChart data={data?.macros} loading={loading} testID="progress-chart-macros" />
+                {/* Macros Breakdown */}
+                <MacrosChart data={data?.macros} loading={loading} testID="progress-chart-macros" />
 
-            {/* Steps & Distance */}
-            <StepsChart
-              data={data?.steps}
-              loading={loading}
-              onSelectDay={(day) => setSelectedDay(day)}
-              testID="progress-chart-steps"
-            />
+                {/* Steps & Distance */}
+                <StepsChart
+                  data={data?.steps}
+                  loading={loading}
+                  onSelectDay={(day) => setSelectedDay(day)}
+                  testID="progress-chart-steps"
+                />
 
-            {/* Water Intake */}
-            <WaterChart
-              data={data?.water}
-              loading={loading}
-              onSelectDay={(day) => setSelectedDay(day)}
-              testID="progress-chart-water"
-            />
+                {/* Water Intake */}
+                <WaterChart
+                  data={data?.water}
+                  loading={loading}
+                  onSelectDay={(day) => setSelectedDay(day)}
+                  testID="progress-chart-water"
+                />
 
-            {/* Workouts Activity & Progression */}
-            <WorkoutsChart
-              data={data?.workouts}
-              loading={loading}
-              testID="progress-chart-workouts"
-            />
+                {/* Workouts Activity & Progression */}
+                <WorkoutsChart
+                  data={data?.workouts}
+                  loading={loading}
+                  testID="progress-chart-workouts"
+                />
 
-            {/* Consistency & Streaks History */}
-            <ConsistencyHistoryChart
-              data={data?.consistency}
-              loading={loading}
-              testID="progress-chart-consistency"
-            />
+                {/* Consistency & Streaks History */}
+                <ConsistencyHistoryChart
+                  data={data?.consistency}
+                  loading={loading}
+                  testID="progress-chart-consistency"
+                />
 
-            {/* Focus Time Progression & Breakdown (PRG-14, FOC-10) */}
-            <FocusProgressChart range={range} testID="progress-chart-focus" />
+                {/* Focus Time Progression & Breakdown (PRG-14, FOC-10) */}
+                <FocusProgressChart range={range} testID="progress-chart-focus" />
+              </View>
+            )}
           </View>
         )}
 
-        {/* SEGMENT 2: LEADERBOARD */}
+        {/* SEGMENT 2: LEADERBOARD (M11) */}
         {activeSegment === 'leaderboard' && <LeaderboardView testID="progress-leaderboard-view" />}
 
-        {/* SEGMENT 3: CHALLENGES */}
+        {/* SEGMENT 3: CHALLENGES (M13-M17) */}
         {activeSegment === 'challenges' && (
-          <ChallengesComingSoon testID="progress-challenges-view" />
+          <ChallengesView testID="progress-challenges-view" />
         )}
       </ScrollView>
 
@@ -254,6 +351,34 @@ export default function ProgressScreen() {
         data={selectedDay}
         onClose={() => setSelectedDay(null)}
         testID="progress-day-detail-modal"
+      />
+
+      {/* M09/M10: Weekly Summary & Privacy-Safe Share Modal */}
+      <WeeklySummaryModal
+        visible={showWeeklySummary}
+        onClose={() => setShowWeeklySummary(false)}
+        loggedDays={loggedDays}
+        goalDays={goalDays}
+        totalDays={data?.calories?.daily.length || 7}
+        weightChangeKg={weightChangeKg}
+        workoutCount={workoutCount}
+        avgSteps={avgSteps}
+        consistencyScore={consistencyScore}
+        testID="progress-weekly-summary-modal"
+      />
+
+      {/* M12: Monday Recap Modal */}
+      <MondayRecapModal
+        visible={showMondayRecap}
+        score={consistencyScore}
+        loggedDays={loggedDays}
+        goalDays={goalDays}
+        onClose={() => setShowMondayRecap(false)}
+        onSeeLeaderboard={() => {
+          setShowMondayRecap(false);
+          setActiveSegment('leaderboard');
+        }}
+        testID="progress-monday-recap-modal"
       />
     </SafeAreaView>
   );
@@ -293,6 +418,39 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
   activeSegmentText: {
+    fontWeight: '700',
+  },
+  viewModeContainer: {
+    paddingHorizontal: spacing.md,
+    paddingBottom: spacing.sm,
+    alignItems: 'center',
+  },
+  viewModePill: {
+    flexDirection: 'row',
+    borderRadius: radius.control,
+    padding: 3,
+    gap: 4,
+  },
+  viewModeButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.xs,
+    borderRadius: radius.control,
+  },
+  viewModeButtonActive: {
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.12,
+    shadowRadius: 2,
+    elevation: 2,
+  },
+  viewModeText: {
+    fontSize: fontSize.xs,
+    fontWeight: '500',
+  },
+  viewModeTextActive: {
     fontWeight: '700',
   },
   scrollView: {

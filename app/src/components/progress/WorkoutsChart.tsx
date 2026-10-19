@@ -4,6 +4,7 @@ import type { IndividualWorkoutsProgress } from '@calipartner/core';
 import { t } from '@/i18n';
 import { fontSize, radius, spacing } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
+import { AccessibleChartTable, type TableColumn } from './AccessibleChartTable';
 import { ChartContainer } from './ChartContainer';
 
 interface WorkoutsChartProps {
@@ -37,6 +38,27 @@ export function WorkoutsChart({
 
   const progression = useMemo(() => data?.exercise_progression ?? [], [data?.exercise_progression]);
 
+  // Table representation for accessibility (CMP-14)
+  const tableColumns: TableColumn[] = [
+    { key: 'exercise', header: 'Exercise', width: 120 },
+    { key: 'heaviest', header: 'Heaviest', width: 85, align: 'right' },
+    { key: 'best1rm', header: 'Est. 1RM', width: 85, align: 'right' },
+    { key: 'entries', header: 'Sessions', width: 75, align: 'center' },
+  ];
+
+  const tableRows = useMemo(() => {
+    return progression.map((ex) => {
+      const latest = ex.data[ex.data.length - 1];
+      return {
+        id: ex.exercise_name,
+        exercise: ex.exercise_name,
+        heaviest: latest ? `${latest.heaviest_weight_kg} kg` : '—',
+        best1rm: latest ? `${latest.best_1rm_kg} kg` : '—',
+        entries: ex.data.length,
+      };
+    });
+  }, [progression]);
+
   return (
     <ChartContainer
       title={t('progress.workouts.title')}
@@ -47,6 +69,14 @@ export function WorkoutsChart({
       emptyMessage={t('progress.workouts.empty')}
       emptyIcon="barbell-outline"
       testID={testID}
+      tableView={
+        <AccessibleChartTable
+          columns={tableColumns}
+          rows={tableRows}
+          caption="Exercise progression and strength estimates"
+          testID={`${testID}-table`}
+        />
+      }
     >
       {/* High-level workout stat cards */}
       <View style={styles.statsRow}>

@@ -5,6 +5,7 @@ import type { IndividualConsistencyProgress } from '@calipartner/core';
 import { t } from '@/i18n';
 import { fontSize, radius, spacing } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
+import { AccessibleChartTable, type TableColumn } from './AccessibleChartTable';
 import { ChartContainer } from './ChartContainer';
 
 interface ConsistencyHistoryChartProps {
@@ -26,6 +27,24 @@ export function ConsistencyHistoryChart({
 
   const isEmpty = currentStreak === 0 && longestStreak === 0 && weeklyScores.length === 0;
 
+  // Table representation for accessibility (CMP-14)
+  const tableColumns: TableColumn[] = [
+    { key: 'week', header: 'Week Of', width: 100 },
+    { key: 'score', header: 'Score', width: 75, align: 'right' },
+    { key: 'logged', header: 'Logged', width: 75, align: 'center' },
+    { key: 'goals', header: 'On Goal', width: 75, align: 'center' },
+  ];
+
+  const tableRows = useMemo(() => {
+    return weeklyScores.map((item) => ({
+      id: item.week_start_date,
+      week: item.week_start_date,
+      score: item.consistency_score.toFixed(1),
+      logged: `${item.logged_days}/7`,
+      goals: `${item.goal_days}/7`,
+    }));
+  }, [weeklyScores]);
+
   const accessibilitySummary = useMemo(() => {
     if (isEmpty || !data) {
       return t('progress.consistency.empty');
@@ -46,6 +65,14 @@ export function ConsistencyHistoryChart({
       emptyMessage={t('progress.consistency.empty')}
       emptyIcon="flame-outline"
       testID={testID}
+      tableView={
+        <AccessibleChartTable
+          columns={tableColumns}
+          rows={tableRows}
+          caption="Weekly consistency scores and streak history"
+          testID={`${testID}-table`}
+        />
+      }
     >
       {/* Streaks Badges */}
       <View style={styles.streaksRow}>
@@ -70,7 +97,7 @@ export function ConsistencyHistoryChart({
             { backgroundColor: colors.surfaceAlt, borderColor: colors.border },
           ]}
         >
-          <Ionicons name="trophy-outline" size={24} color={colors.accent} />
+          <Ionicons name="ribbon-outline" size={24} color={colors.accent} />
           <View>
             <Text style={[styles.streakNumber, { color: colors.text }]}>{longestStreak}</Text>
             <Text style={[styles.streakLabel, { color: colors.textMuted }]}>
@@ -78,6 +105,20 @@ export function ConsistencyHistoryChart({
             </Text>
           </View>
         </View>
+      </View>
+
+      {/* M07: Formula Explanation Box (Plain words, not hidden) */}
+      <View
+        style={[
+          styles.formulaCard,
+          { backgroundColor: colors.surfaceAlt, borderColor: colors.border },
+        ]}
+      >
+        <Ionicons name="calculator-outline" size={18} color={colors.accent} />
+        <Text style={[styles.formulaText, { color: colors.textMuted }]}>
+          Consistency score = 100 × (0.4 × logged/7 + 0.6 × goal/7). Days below safety calorie
+          floors do not count.
+        </Text>
       </View>
 
       {/* Weekly Scores */}
@@ -181,5 +222,19 @@ const styles = StyleSheet.create({
   },
   scoreMax: {
     fontSize: 10,
+  },
+  formulaCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    padding: spacing.sm,
+    borderRadius: radius.sm,
+    borderWidth: 1,
+    marginTop: spacing.sm,
+  },
+  formulaText: {
+    flex: 1,
+    fontSize: fontSize.xs,
+    lineHeight: 18,
   },
 });

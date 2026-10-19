@@ -4,6 +4,7 @@ import type { IndividualMacrosProgress } from '@calipartner/core';
 import { t } from '@/i18n';
 import { fontSize, radius, spacing } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
+import { AccessibleChartTable, type TableColumn } from './AccessibleChartTable';
 import { ChartContainer } from './ChartContainer';
 
 interface MacrosChartProps {
@@ -50,6 +51,24 @@ export function MacrosChart({ data, loading = false, testID = 'macros-chart' }: 
     },
   ];
 
+  // Table representation for accessibility (CMP-14)
+  const tableColumns: TableColumn[] = [
+    { key: 'nutrient', header: 'Nutrient', width: 90 },
+    { key: 'avg', header: 'Daily Avg', width: 85, align: 'right' },
+    { key: 'target', header: 'Target', width: 85, align: 'right' },
+    { key: 'pct', header: '% Target', width: 85, align: 'right' },
+  ];
+
+  const tableRows = useMemo(() => {
+    return items.map((item) => ({
+      id: item.label,
+      nutrient: item.label,
+      avg: `${Math.round(item.avg)}g`,
+      target: `${Math.round(item.target)}g`,
+      pct: item.target > 0 ? `${Math.round((item.avg / item.target) * 100)}%` : '—',
+    }));
+  }, [items]);
+
   return (
     <ChartContainer
       title={t('progress.macros.title')}
@@ -59,6 +78,14 @@ export function MacrosChart({ data, loading = false, testID = 'macros-chart' }: 
       emptyMessage={t('progress.macros.empty')}
       emptyIcon="nutrition-outline"
       testID={testID}
+      tableView={
+        <AccessibleChartTable
+          columns={tableColumns}
+          rows={tableRows}
+          caption="Macronutrient averages and target breakdown"
+          testID={`${testID}-table`}
+        />
+      }
     >
       <View style={styles.macrosList}>
         {items.map((item) => {

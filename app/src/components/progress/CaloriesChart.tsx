@@ -6,6 +6,7 @@ import type { IndividualCaloriesProgress } from '@calipartner/core';
 import { t } from '@/i18n';
 import { fontSize, spacing } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
+import { AccessibleChartTable, type TableColumn } from './AccessibleChartTable';
 import { ChartContainer } from './ChartContainer';
 import type { DayDetailData } from './DayDetailModal';
 
@@ -27,6 +28,37 @@ export function CaloriesChart({
 
   const daily = useMemo(() => data?.daily ?? [], [data?.daily]);
   const isEmpty = daily.length === 0 || daily.every((d) => d.calories === 0);
+
+  // Table representation for accessibility (CMP-14)
+  const tableColumns: TableColumn[] = [
+    { key: 'date', header: 'Date', width: 90 },
+    { key: 'calories', header: 'Calories', width: 85, align: 'right' },
+    { key: 'target', header: 'Target', width: 85, align: 'right' },
+    { key: 'status', header: 'Status', width: 95, align: 'center' },
+  ];
+
+  const tableRows = useMemo(() => {
+    return daily.map((d, i) => {
+      const inRange =
+        d.target_calories > 0 &&
+        d.calories >= d.target_calories * 0.85 &&
+        d.calories <= d.target_calories * 1.05;
+      return {
+        id: d.date || String(i),
+        date: d.date,
+        calories: `${d.calories} kcal`,
+        target: `${d.target_calories} kcal`,
+        status:
+          d.calories === 0
+            ? 'Not logged'
+            : inRange
+              ? 'In target'
+              : d.calories > d.target_calories
+                ? 'Over target'
+                : 'Under target',
+      };
+    });
+  }, [daily]);
 
   const accessibilitySummary = useMemo(() => {
     if (isEmpty || !data) {
@@ -94,6 +126,14 @@ export function CaloriesChart({
       emptyMessage={t('progress.calories.empty')}
       emptyIcon="flame-outline"
       testID={testID}
+      tableView={
+        <AccessibleChartTable
+          columns={tableColumns}
+          rows={tableRows}
+          caption="Daily calories vs target table"
+          testID={`${testID}-table`}
+        />
+      }
     >
       <View onLayout={onLayout} style={styles.chartWrapper}>
         <Svg width={containerWidth} height={height}>

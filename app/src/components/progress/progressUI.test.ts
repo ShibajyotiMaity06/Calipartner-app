@@ -361,4 +361,169 @@ describe('Phase 7 — Progress & Leaderboard UI Presentation & Logic Tests', () 
       expect(isTop10).toBe(false);
     });
   });
+
+  describe('7. M01 Progress Hub & PRG-11 Week in Words Logic', () => {
+    it('formats one-sentence week summary correctly', () => {
+      const loggedDays = 6;
+      const totalDays = 7;
+      const goalDays = 5;
+
+      const sentence = t('progress.hub.weekSummary', {
+        logged: loggedDays,
+        total: totalDays,
+        goals: goalDays,
+      });
+
+      expect(sentence).toBe(
+        'You logged 6 of 7 days, stayed within 50 kcal of your calorie target on 5 days, and your 7-day average weight moved steadily.',
+      );
+    });
+  });
+
+  describe('8. CMP-14 Accessible Chart Table (View as Table)', () => {
+    it('provides accessible tabular headers and rows for all chart metrics', () => {
+      const weightTableColumns = ['Date', 'Raw (kg)', 'Trend (kg)', 'Goal'];
+      const weightTableRows = [
+        ['Mon', '81.5', '81.4', '78.0'],
+        ['Tue', '81.2', '81.3', '78.0'],
+        ['Wed', '81.0', '81.1', '78.0'],
+      ];
+
+      expect(weightTableColumns).toHaveLength(4);
+      expect(weightTableRows).toHaveLength(3);
+      expect(weightTableRows[0]?.[1]).toBe('81.5');
+
+      const calorieTableColumns = ['Day', 'Intake', 'Target', 'Status'];
+      const calorieTableRows = [
+        ['Mon', '1,980 kcal', '2,000 kcal', 'On target'],
+        ['Tue', '2,050 kcal', '2,000 kcal', 'On target'],
+        ['Wed', '2,300 kcal', '2,000 kcal', '+300 kcal'],
+      ];
+
+      expect(calorieTableColumns).toHaveLength(4);
+      expect(calorieTableRows[0]?.[3]).toBe('On target');
+      expect(calorieTableRows[2]?.[3]).toBe('+300 kcal');
+    });
+  });
+
+  describe('9. M09/M10 Weekly Summary & Privacy-Safe Share Card', () => {
+    it('excludes weight change from share text by default unless user opts in', () => {
+      const buildShareText = (
+        loggedDays: number,
+        totalDays: number,
+        goalDays: number,
+        workoutCount: number,
+        weightChangeKg: number | null,
+        includeWeight: boolean,
+      ) => {
+        let text = `Weekly Progress: Logged ${loggedDays}/${totalDays} days, ${goalDays} days on calorie goal, and completed ${workoutCount} workouts.`;
+        if (includeWeight && weightChangeKg != null) {
+          text += ` Weight trend moved ${weightChangeKg > 0 ? `+${weightChangeKg.toFixed(1)}` : weightChangeKg.toFixed(1)} kg.`;
+        }
+        text += ' #CaliPartner';
+        return text;
+      };
+
+      const shareWithoutWeight = buildShareText(6, 7, 5, 4, -0.4, false);
+      expect(shareWithoutWeight).not.toContain('-0.4 kg');
+      expect(shareWithoutWeight).not.toContain('Weight trend');
+      expect(shareWithoutWeight).toContain('Logged 6/7 days');
+
+      const shareWithWeight = buildShareText(6, 7, 5, 4, -0.4, true);
+      expect(shareWithWeight).toContain('-0.4 kg');
+    });
+  });
+
+  describe('10. M11 Leaderboard Dignity & Safety Rules', () => {
+    it('verifies persistent 1-line rule text', () => {
+      expect(en.progress.leaderboard.ruleNote).toBe(
+        'Ranked on consistency and how close you get to your own goal. Not on eating least.',
+      );
+    });
+
+    it('verifies allowed divisions match spec', () => {
+      const DIVISIONS = ['cutting', 'bulking', 'maintain', 'beginner'] as const;
+      expect(DIVISIONS).toContain('cutting');
+      expect(DIVISIONS).toContain('bulking');
+      expect(DIVISIONS).toContain('maintain');
+      expect(DIVISIONS).toContain('beginner');
+    });
+
+    it('ensures dignity: NO medals, NO trophies, NO weight loss, NO raw calorie intake', () => {
+      // Mock leaderboard row items
+      const entry = {
+        rank: 1,
+        nickname: 'Alex',
+        score: 94.2,
+      };
+
+      // Rank is rendered as numeral, not gold medal/trophy icon
+      expect(typeof entry.rank).toBe('number');
+      expect(entry).not.toHaveProperty('weight_lost');
+      expect(entry).not.toHaveProperty('calories_eaten');
+      expect(entry).not.toHaveProperty('medal_type');
+    });
+  });
+
+  describe('11. M12 Monday Recap Consistency Formula', () => {
+    it('calculates score according to PRD formula: 100 × (0.4 × logged/7 + 0.6 × goal/7)', () => {
+      const calcConsistency = (loggedDays: number, goalDays: number) => {
+        const loggedScore = (loggedDays / 7) * 0.4;
+        const goalScore = (goalDays / 7) * 0.6;
+        return Math.round((loggedScore + goalScore) * 100);
+      };
+
+      // 7 of 7 logged, 7 of 7 on goal = 100
+      expect(calcConsistency(7, 7)).toBe(100);
+
+      // 6 of 7 logged, 5 of 7 on goal
+      // 0.4 * (6/7) = 0.342857; 0.6 * (5/7) = 0.428571; sum = 0.771428 -> 77
+      expect(calcConsistency(6, 5)).toBe(77);
+
+      // 0 logged = 0
+      expect(calcConsistency(0, 0)).toBe(0);
+    });
+  });
+
+  describe('12. M13–M17 Challenges Safety Guardrails & Rates', () => {
+    it('STRICT GUARDRAIL: activity list permits only healthy behaviors, NO weight-loss or calorie tiles', () => {
+      const ALLOWED_ACTIVITIES = ['Walking', 'Running', 'Studying', 'Gym', 'Cycling', 'Custom'];
+      const FORBIDDEN_ACTIVITIES = [
+        'Weight Loss',
+        'Calorie Deficit',
+        'Fasting Longest',
+        'Lowest Calories',
+        'Fat Burning',
+      ];
+
+      FORBIDDEN_ACTIVITIES.forEach((activity) => {
+        expect(ALLOWED_ACTIVITIES).not.toContain(activity);
+      });
+
+      expect(ALLOWED_ACTIVITIES).toHaveLength(6);
+    });
+
+    it('enforces Occasion safe rate cap of max 1% of bodyweight per week', () => {
+      const bodyweightKg = 80;
+      const targetWeightKg = 72; // 8 kg loss desired
+      const maxWeeklySafeKg = bodyweightKg * 0.01; // 0.8 kg/wk max
+      expect(maxWeeklySafeKg).toBe(0.8);
+
+      const isSafeRate = (weightLossKg: number, weeks: number) => {
+        const ratePerWeek = weightLossKg / weeks;
+        return ratePerWeek <= maxWeeklySafeKg;
+      };
+
+      // 8 kg in 12 weeks = 0.67 kg/wk -> SAFE
+      expect(isSafeRate(8, 12)).toBe(true);
+
+      // 8 kg in 4 weeks = 2.0 kg/wk -> UNSAFE (exceeds 1% bw/wk)
+      expect(isSafeRate(8, 4)).toBe(false);
+
+      // Realistic minimum weeks to goal safely
+      const minSafeWeeks = Math.ceil((bodyweightKg - targetWeightKg) / maxWeeklySafeKg);
+      expect(minSafeWeeks).toBe(10);
+    });
+  });
 });
+

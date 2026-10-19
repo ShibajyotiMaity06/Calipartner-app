@@ -6,6 +6,7 @@ import type { IndividualWaterProgress } from '@calipartner/core';
 import { t } from '@/i18n';
 import { fontSize, spacing } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
+import { AccessibleChartTable, type TableColumn } from './AccessibleChartTable';
 import { ChartContainer } from './ChartContainer';
 import type { DayDetailData } from './DayDetailModal';
 
@@ -27,6 +28,28 @@ export function WaterChart({
 
   const daily = useMemo(() => data?.daily ?? [], [data?.daily]);
   const isEmpty = daily.length === 0 || daily.every((d) => d.water_ml === 0);
+
+  // Table representation for accessibility (CMP-14)
+  const tableColumns: TableColumn[] = [
+    { key: 'date', header: 'Date', width: 90 },
+    { key: 'intake', header: 'Intake', width: 85, align: 'right' },
+    { key: 'goal', header: 'Goal', width: 85, align: 'right' },
+    { key: 'status', header: 'Status', width: 95, align: 'center' },
+  ];
+
+  const tableRows = useMemo(() => {
+    const targetWater = data?.goal_water_ml ?? 2500;
+    return daily.map((d, i) => {
+      const reached = targetWater > 0 && d.water_ml >= targetWater;
+      return {
+        id: d.date || String(i),
+        date: d.date,
+        intake: `${d.water_ml} ml`,
+        goal: `${targetWater} ml`,
+        status: d.water_ml === 0 ? 'Not logged' : reached ? 'Goal reached' : 'In progress',
+      };
+    });
+  }, [daily, data?.goal_water_ml]);
 
   const accessibilitySummary = useMemo(() => {
     if (isEmpty || !data) {
@@ -85,6 +108,14 @@ export function WaterChart({
       emptyMessage={t('progress.water.empty')}
       emptyIcon="water-outline"
       testID={testID}
+      tableView={
+        <AccessibleChartTable
+          columns={tableColumns}
+          rows={tableRows}
+          caption="Daily water intake table"
+          testID={`${testID}-table`}
+        />
+      }
     >
       <View onLayout={onLayout} style={styles.chartWrapper}>
         <Svg width={containerWidth} height={height}>
