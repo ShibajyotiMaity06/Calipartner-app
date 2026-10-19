@@ -1,3 +1,5 @@
+import { vi } from 'vitest';
+
 // Setup for vitest in Node environment
 
 interface GlobalWithExpo {
@@ -44,7 +46,6 @@ if (typeof process !== 'undefined' && !process.env.EXPO_OS) {
   process.env.EXPO_OS = 'web';
 }
 
-import { vi } from 'vitest';
 vi.mock('react-native-svg', () => ({
   default: 'Svg',
   Svg: 'Svg',
@@ -56,4 +57,27 @@ vi.mock('react-native-svg', () => ({
   Defs: 'Defs',
   LinearGradient: 'LinearGradient',
   Stop: 'Stop',
+}));
+
+vi.mock('@expo/vector-icons', () => ({
+  Ionicons: 'Ionicons',
+  MaterialIcons: 'MaterialIcons',
+  FontAwesome: 'FontAwesome',
+  Feather: 'Feather',
+}));
+
+vi.mock('react-native-purchases', () => ({
+  default: {
+    configure: vi.fn(),
+    logIn: vi.fn(),
+    logOut: vi.fn(),
+    getOfferings: vi.fn(),
+    purchasePackage: vi.fn(),
+    restorePurchases: vi.fn(),
+    getCustomerInfo: vi.fn(),
+  },
+  PRORATION_MODE: {
+    IMMEDIATE_WITH_TIME_PRORATION: 1,
+    DEFERRED: 2,
+  },
 }));

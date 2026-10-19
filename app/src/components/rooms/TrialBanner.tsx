@@ -63,8 +63,10 @@ export function TrialBanner({
         accessibilityLabel={t('rooms.trialBanner.viewPlansBtn')}
         testID="btn-trial-view-plans"
       >
-        <Ionicons name="card-outline" size={14} color="#FFFFFF" />
-        <Text style={styles.actionButtonText}>{t('rooms.trialBanner.viewPlansBtn')}</Text>
+        <Ionicons name="card-outline" size={14} color={colors.onAccent} />
+        <Text style={[styles.actionButtonText, { color: colors.onAccent }]}>
+          {t('rooms.trialBanner.viewPlansBtn')}
+        </Text>
       </Pressable>
     </View>
   );
@@ -115,7 +117,6 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
   actionButtonText: {
-    color: '#FFFFFF',
     fontSize: fontSize.xs,
     fontWeight: '700',
   },

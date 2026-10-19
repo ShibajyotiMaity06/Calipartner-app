@@ -1,69 +1,156 @@
 import React, { useMemo, useState } from 'react';
 import {
-  ActivityIndicator,
   Alert,
   Linking,
   Modal,
-  Pressable,
+  SafeAreaView,
   ScrollView,
   StyleSheet,
-  Text,
   TextInput,
+  TouchableOpacity,
   View,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import type { PurchasesPackage } from 'react-native-purchases';
-import { PRICING_PLANS } from '@calipartner/core';
-import { t } from '@/i18n';
-import { fontSize, radius, spacing } from '@/theme/tokens';
-import { useTheme } from '@/theme/useTheme';
+import {
+  Button,
+  Card,
+  ChevronLeftIcon,
+  Chip,
+  dark,
+  radius,
+  space,
+  Text,
+} from '@calipartner/ui';
 import { useSubscription } from '@/hooks/useSubscription';
+import { playClickSound, playSuccessSound } from '@/lib/sound';
 
-export type RoomSizeBracket = '2-5' | '6-20' | '21-50' | 'plus' | 'pro';
-export type PlanDuration = 'monthly' | 'annual';
-export type PlanTier = 'plus' | 'pro' | 'basic';
+export type RoomSizeBracket = '2-5' | '6-20' | '21-50' | 'plus' | 'pro' | 'basic';
+export type PlanDuration = 'monthly' | 'quarterly' | 'annual';
+export type PlanTier = 'basic' | 'plus' | 'pro';
+export type PaywallContext =
+  | 'room'
+  | 'add_people'
+  | 'coach'
+  | 'partner_finder'
+  | 'keep_going'
+  | 'general';
 
 export interface PaywallModalProps {
   visible: boolean;
   onClose: () => void;
+  context?: PaywallContext;
+  roomPartnerName?: string;
+  roomName?: string;
   preselectedTier?: PlanTier;
   sponsorRoomId?: string;
   isUpgrade?: boolean;
+  onSuccess?: () => void;
 }
+
+export const TIER_CONFIG = {
+  basic: {
+    key: 'basic' as PlanTier,
+    label: 'Basic',
+    cap: 5,
+    sizeRange: '2 to 5',
+    testID: 'picker-size-2-5',
+    monthlyPrice: '₹49 / mo',
+    monthlyPriceNum: 49,
+    quarterlyPrice: '₹40 / mo',
+    quarterlyTotal: '₹119',
+    annualPrice: '₹25 / mo',
+    annualTotal: '₹299 / yr',
+  },
+  plus: {
+    key: 'plus' as PlanTier,
+    label: 'Plus',
+    cap: 20,
+    sizeRange: '6 to 20',
+    testID: 'picker-size-6-20',
+    monthlyPrice: '₹99 / mo',
+    monthlyPriceNum: 99,
+    quarterlyPrice: '₹80 / mo',
+    quarterlyTotal: '₹239',
+    annualPrice: '₹50 / mo',
+    annualTotal: '₹599 / yr',
+  },
+  pro: {
+    key: 'pro' as PlanTier,
+    label: 'Pro',
+    cap: 50,
+    sizeRange: '21 to 50',
+    testID: 'picker-size-21-50',
+    monthlyPrice: '₹199 / mo',
+    monthlyPriceNum: 199,
+    quarterlyPrice: '₹160 / mo',
+    quarterlyTotal: '₹479',
+    annualPrice: '₹100 / mo',
+    annualTotal: '₹1,199 / yr',
+  },
+};
 
 export function PaywallModal({
   visible,
   onClose,
+  context = 'general',
+  roomPartnerName,
+  roomName = 'Morning Crew',
   preselectedTier,
   sponsorRoomId,
   isUpgrade,
+  onSuccess,
 }: PaywallModalProps) {
-  const { colors } = useTheme();
   const {
     offerings,
     entitlement,
-    loading: subLoading,
     error: subError,
     purchase,
     restore,
     sponsor,
   } = useSubscription();
 
-  // Selected Tier (Plus or Pro)
-  const [selectedTier, setSelectedTier] = useState<'plus' | 'pro'>(() => {
-    if (preselectedTier === 'pro') return 'pro';
+  // Selected Tier (Basic, Plus, Pro)
+  const [selectedTier, setSelectedTier] = useState<PlanTier>(() => {
+    if (preselectedTier) return preselectedTier;
     return 'plus';
   });
 
-  // Selected Duration (Monthly or Annual — default to Annual per section 6)
+  // Selected Duration (Monthly, 3 Months, Annual — default to Annual)
   const [selectedDuration, setSelectedDuration] = useState<PlanDuration>('annual');
   const [actionLoading, setActionLoading] = useState(false);
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
 
-  // Promo Code modal state
-  const [showPromoInput, setShowPromoInput] = useState(false);
+  // Sub-modal states
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [showRestoreModal, setShowRestoreModal] = useState(false);
+  const [restoreSuccess, setRestoreSuccess] = useState(false);
+  const [showPromoModal, setShowPromoModal] = useState(false);
   const [promoCode, setPromoCode] = useState('');
   const [promoMessage, setPromoMessage] = useState<string | null>(null);
+
+  // Contextual Title (Spec O02 / SUB-9)
+  const contextualTitle = useMemo(() => {
+    switch (context) {
+      case 'room':
+        return roomPartnerName
+          ? `Keep your room with ${roomPartnerName}`
+          : 'Keep your room going';
+      case 'add_people':
+        return 'Add more people';
+      case 'coach':
+        return 'Ask your coach';
+      case 'partner_finder':
+        return 'Find a workout partner';
+      case 'keep_going':
+        return 'Keep your room going';
+      case 'general':
+      default:
+        return 'Choose a room plan';
+    }
+  }, [context, roomPartnerName]);
+
+  const activeTierConfig = TIER_CONFIG[selectedTier];
 
   // Find corresponding RevenueCat package if offerings are loaded
   const matchedPackage: PurchasesPackage | null = useMemo(() => {
@@ -73,27 +160,37 @@ export function PaywallModal({
     if (!offeringForTier) return null;
 
     const packages = offeringForTier.availablePackages;
-    const expectedId = `${selectedTier}_${selectedDuration}`;
+    const durIdentifier =
+      selectedDuration === 'annual'
+        ? 'annual'
+        : selectedDuration === 'quarterly'
+          ? 'quarterly'
+          : 'monthly';
+
+    const expectedId = `${selectedTier}_${durIdentifier}`;
 
     return (
       packages.find((p) => p.identifier === expectedId) ??
       packages.find(
-        (p) => p.identifier.includes(selectedTier) && p.identifier.includes(selectedDuration),
+        (p) => p.identifier.includes(selectedTier) && p.identifier.includes(durIdentifier),
       ) ??
+      packages[0] ??
       null
     );
   }, [offerings, selectedTier, selectedDuration]);
 
   const handlePurchase = async () => {
+    playClickSound();
     setActionLoading(true);
     setStatusMessage(null);
 
     try {
-      if (sponsorRoomId) {
-        const success = await sponsor(sponsorRoomId);
+      if (sponsorRoomId || context === 'keep_going') {
+        const targetId = sponsorRoomId ?? 'current-room-id';
+        const success = await sponsor(targetId);
         if (success) {
-          setStatusMessage(t('rooms.paused.keepGoingBtn'));
-          setTimeout(onClose, 1200);
+          playSuccessSound();
+          setShowSuccessModal(true);
           return;
         }
       }
@@ -105,14 +202,14 @@ export function PaywallModal({
           entitlement?.store_product_id ?? undefined,
         );
         if (success) {
-          setStatusMessage('Plan unlocked');
-          setTimeout(onClose, 1200);
+          playSuccessSound();
+          setShowSuccessModal(true);
           return;
         }
       } else {
-        // Fallback preview activation for dev / testing environments
-        setStatusMessage('Plan activated for preview');
-        setTimeout(onClose, 1500);
+        // Fallback preview activation for dev / test / local environments
+        playSuccessSound();
+        setShowSuccessModal(true);
       }
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : String(err);
@@ -123,18 +220,17 @@ export function PaywallModal({
   };
 
   const handleRestore = async () => {
+    playClickSound();
     setActionLoading(true);
     setStatusMessage(null);
 
     try {
       const success = await restore();
-      if (success) {
-        setStatusMessage(t('rooms.paywall.restoreSuccess'));
-      } else {
-        setStatusMessage(t('rooms.paywall.restoreNotFound'));
-      }
+      setRestoreSuccess(Boolean(success));
+      setShowRestoreModal(true);
     } catch {
-      setStatusMessage(t('rooms.paywall.restoreNotFound'));
+      setRestoreSuccess(false);
+      setShowRestoreModal(true);
     } finally {
       setActionLoading(false);
     }
@@ -145,129 +241,215 @@ export function PaywallModal({
     if (!clean) return;
 
     if (clean.endsWith('50') || clean === 'PARTNER50' || clean === 'LAUNCH50') {
-      setPromoMessage('50% partner discount applied for your first year');
+      playSuccessSound();
+      setPromoMessage('50% partner discount applied for your first year.');
     } else {
-      setPromoMessage('Invalid or expired code. Please verify with your partner');
+      setPromoMessage('Invalid or expired code. Please verify with your partner.');
     }
   };
 
   const openUrl = (url: string) => {
+    playClickSound();
     Linking.openURL(url).catch(() => {
       Alert.alert('Notice', 'Unable to open link');
     });
   };
 
-  const tierName = selectedTier === 'pro' ? 'Pro' : 'Plus';
+  // Renewal sentence in label (Spec O02 item 6)
+  const renewalSentence = useMemo(() => {
+    if (selectedDuration === 'annual') {
+      return `Renews at ${activeTierConfig.annualTotal} every year. Cancel any time in your store settings.`;
+    }
+    if (selectedDuration === 'quarterly') {
+      return `Renews at ${activeTierConfig.quarterlyTotal} every 3 months. Cancel any time in your store settings.`;
+    }
+    return `Renews at ₹${activeTierConfig.monthlyPriceNum} every month. Cancel any time in your store settings.`;
+  }, [selectedDuration, activeTierConfig]);
 
-  const actionButtonText = sponsorRoomId
-    ? t('rooms.paywall.sponsorPlan', { tier: tierName })
-    : isUpgrade
-      ? t('rooms.paywall.upgradePlan', { tier: tierName })
-      : selectedDuration === 'annual'
-        ? t('rooms.paywall.startTrial')
-        : t('rooms.paywall.startPlan', { tier: tierName });
+  // Primary CTA copy (Spec O02 item 6)
+  const primaryCtaLabel = useMemo(() => {
+    if (actionLoading) return 'Connecting to store…';
+    if (sponsorRoomId || context === 'keep_going') {
+      return `Keep room going with ${activeTierConfig.label}`;
+    }
+    if (isUpgrade) {
+      return `Upgrade to ${activeTierConfig.label}`;
+    }
+    // Trial available
+    return 'Start 3-Day Free Trial';
+  }, [actionLoading, sponsorRoomId, context, isUpgrade, activeTierConfig.label]);
 
   return (
-    <Modal visible={visible} animationType="slide" transparent onRequestClose={onClose}>
-      <View style={styles.modalOverlay} testID="modal-paywall">
-        <View style={[styles.modalSheet, { backgroundColor: colors.surface }]}>
-          {/* Header */}
-          <View style={styles.headerRow}>
-            <View style={styles.headerTitleGroup}>
-              <View style={[styles.sparklePill, { backgroundColor: colors.cardHighlight }]}>
-                <Ionicons name="sparkles" size={13} color={colors.accent} />
-                <Text style={[styles.sparkleText, { color: colors.accent }]}>
-                  CALIPARTNER PLANS
-                </Text>
-              </View>
-              <Text style={[styles.title, { color: colors.text }]}>{t('rooms.paywall.title')}</Text>
-              <Text style={[styles.subtitle, { color: colors.textMuted }]}>
-                {t('rooms.paywall.subtitle')}
-              </Text>
-            </View>
-
-            <Pressable
+    <Modal visible={visible} animationType="slide" transparent={false} onRequestClose={onClose}>
+      <SafeAreaView style={styles.safeArea}>
+        <View style={styles.container} testID="modal-paywall">
+          {/* Top Bar with Top-Left Close Button (Spec O02 item 1) */}
+          <View style={styles.topBar}>
+            <TouchableOpacity
               onPress={onClose}
-              style={[styles.closeButton, { backgroundColor: colors.surfaceAlt }]}
               accessibilityRole="button"
-              accessibilityLabel={t('rooms.paywall.close')}
+              accessibilityLabel="Close paywall"
+              style={styles.closeButton}
               testID="btn-close-paywall"
             >
-              <Ionicons name="close" size={18} color={colors.text} />
-            </Pressable>
+              <ChevronLeftIcon color={dark.textHi} size={24} />
+            </TouchableOpacity>
+            <Text variant="heading" color={dark.textHi} style={styles.topBarTitle}>
+              Room Plan
+            </Text>
+            <View style={styles.closeButtonPlaceholder} />
           </View>
 
           <ScrollView
-            showsVerticalScrollIndicator={false}
             contentContainerStyle={styles.scrollContent}
+            showsVerticalScrollIndicator={false}
           >
-            {/* Status / Error Banner */}
-            {(statusMessage || subError) && (
-              <View
-                style={[
-                  styles.statusBanner,
-                  {
-                    backgroundColor: colors.cardHighlight,
-                    borderColor: colors.border,
-                  },
-                ]}
-                testID="banner-paywall-status"
+            {/* Header Titles */}
+            <View style={styles.headerBlock}>
+              <Text
+                variant="title1"
+                color={dark.textHi}
+                style={styles.titleText}
+                testID="text-paywall-title"
               >
-                <Ionicons name="information-circle-outline" size={16} color={colors.accent} />
-                <Text style={[styles.statusText, { color: colors.text }]}>
+                {contextualTitle}
+              </Text>
+              {context === 'keep_going' && (
+                <Text variant="body" color={dark.apricot} style={styles.keepGoingSubtitle}>
+                  {"You'll become the plan holder."}
+                </Text>
+              )}
+              <Text variant="bodyS" color={dark.textMid} style={styles.subtitleText}>
+                The room is billed. Members join free. Personal tracking is yours forever.
+              </Text>
+            </View>
+
+            {/* Status / Error Banner if any */}
+            {(statusMessage || subError) && (
+              <Card elevation="s2" style={styles.statusBanner} testID="banner-paywall-status">
+                <Text variant="bodyS" color={dark.apricot}>
                   {statusMessage ?? subError}
                 </Text>
-              </View>
+              </Card>
             )}
 
-            {/* 1. Duration Toggle (Annual vs Monthly) */}
-            <View style={styles.sectionBlock}>
-              <View
-                style={[styles.durationToggleContainer, { backgroundColor: colors.surfaceAlt }]}
-              >
-                {/* Annual (Preselected, 50% Savings) */}
-                <Pressable
-                  onPress={() => setSelectedDuration('annual')}
-                  style={[
-                    styles.durationToggleItem,
-                    selectedDuration === 'annual' && [
-                      styles.durationToggleSelected,
-                      { backgroundColor: colors.surface },
-                    ],
-                  ]}
-                  accessibilityRole="button"
-                  accessibilityState={{ selected: selectedDuration === 'annual' }}
-                  accessibilityLabel="Annual billing, save 50 percent"
-                  testID="toggle-duration-annual"
-                >
-                  <View style={styles.annualLabelWrap}>
-                    <Text
-                      style={[
-                        styles.durationToggleText,
-                        {
-                          color: selectedDuration === 'annual' ? colors.text : colors.textMuted,
-                        },
-                      ]}
-                    >
-                      {t('rooms.paywall.durationAnnual')}
-                    </Text>
-                    <View style={[styles.savingsBadge, { backgroundColor: colors.accent }]}>
-                      <Text style={[styles.savingsBadgeText, { color: colors.onBrand }]}>
-                        SAVE 50%
-                      </Text>
-                    </View>
-                  </View>
-                </Pressable>
+            {/* 1. Size Picker: "How many people will be in your room?" (Spec O02 item 3) */}
+            <View style={styles.sectionWrap}>
+              <Text variant="label" color={dark.textHi} style={styles.sectionHeading}>
+                How many people will be in your room?
+              </Text>
 
+              <View style={styles.tierCardsRow}>
+                {/* Basic Card (2 to 5) */}
+                <TouchableOpacity
+                  onPress={() => setSelectedTier('basic')}
+                  style={[
+                    styles.tierCard,
+                    selectedTier === 'basic' && styles.tierCardSelected,
+                  ]}
+                  accessibilityRole="radio"
+                  accessibilityState={{ selected: selectedTier === 'basic' }}
+                  accessibilityLabel="Basic room plan, 2 to 5 people, 5 members"
+                  testID="picker-size-2-5"
+                >
+                  <View style={styles.tierCardHeader}>
+                    <Text
+                      variant="heading"
+                      color={selectedTier === 'basic' ? dark.apricot : dark.textHi}
+                    >
+                      Basic
+                    </Text>
+                    <Chip label="5 members" />
+                  </View>
+                  <Text variant="bodyS" color={dark.textMid} style={styles.sizeRangeText}>
+                    2 to 5 people
+                  </Text>
+                  <Text variant="heading" color={dark.textHi} style={styles.tierPrice}>
+                    {selectedDuration === 'annual'
+                      ? TIER_CONFIG.basic.annualPrice
+                      : selectedDuration === 'quarterly'
+                        ? TIER_CONFIG.basic.quarterlyPrice
+                        : TIER_CONFIG.basic.monthlyPrice}
+                  </Text>
+                </TouchableOpacity>
+
+                {/* Plus Card (6 to 20) */}
+                <TouchableOpacity
+                  onPress={() => setSelectedTier('plus')}
+                  style={[
+                    styles.tierCard,
+                    selectedTier === 'plus' && styles.tierCardSelected,
+                  ]}
+                  accessibilityRole="radio"
+                  accessibilityState={{ selected: selectedTier === 'plus' }}
+                  accessibilityLabel="Plus room plan, 6 to 20 people, 20 members"
+                  testID="picker-size-6-20"
+                >
+                  <View style={styles.tierCardHeader}>
+                    <Text
+                      variant="heading"
+                      color={selectedTier === 'plus' ? dark.apricot : dark.textHi}
+                    >
+                      Plus
+                    </Text>
+                    <Chip label="20 members" />
+                  </View>
+                  <Text variant="bodyS" color={dark.textMid} style={styles.sizeRangeText}>
+                    6 to 20 people
+                  </Text>
+                  <Text variant="heading" color={dark.textHi} style={styles.tierPrice}>
+                    {selectedDuration === 'annual'
+                      ? TIER_CONFIG.plus.annualPrice
+                      : selectedDuration === 'quarterly'
+                        ? TIER_CONFIG.plus.quarterlyPrice
+                        : TIER_CONFIG.plus.monthlyPrice}
+                  </Text>
+                </TouchableOpacity>
+
+                {/* Pro Card (21 to 50) */}
+                <TouchableOpacity
+                  onPress={() => setSelectedTier('pro')}
+                  style={[
+                    styles.tierCard,
+                    selectedTier === 'pro' && styles.tierCardSelected,
+                  ]}
+                  accessibilityRole="radio"
+                  accessibilityState={{ selected: selectedTier === 'pro' }}
+                  accessibilityLabel="Pro room plan, 21 to 50 people, 50 members"
+                  testID="picker-size-21-50"
+                >
+                  <View style={styles.tierCardHeader}>
+                    <Text
+                      variant="heading"
+                      color={selectedTier === 'pro' ? dark.apricot : dark.textHi}
+                    >
+                      Pro
+                    </Text>
+                    <Chip label="50 members" />
+                  </View>
+                  <Text variant="bodyS" color={dark.textMid} style={styles.sizeRangeText}>
+                    21 to 50 people
+                  </Text>
+                  <Text variant="heading" color={dark.textHi} style={styles.tierPrice}>
+                    {selectedDuration === 'annual'
+                      ? TIER_CONFIG.pro.annualPrice
+                      : selectedDuration === 'quarterly'
+                        ? TIER_CONFIG.pro.quarterlyPrice
+                        : TIER_CONFIG.pro.monthlyPrice}
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+
+            {/* 2. Billing Toggle: Monthly · 3 months · Annual (Spec O02 item 4) */}
+            <View style={styles.sectionWrap}>
+              <View style={styles.durationToggleContainer}>
                 {/* Monthly */}
-                <Pressable
+                <TouchableOpacity
                   onPress={() => setSelectedDuration('monthly')}
                   style={[
                     styles.durationToggleItem,
-                    selectedDuration === 'monthly' && [
-                      styles.durationToggleSelected,
-                      { backgroundColor: colors.surface },
-                    ],
+                    selectedDuration === 'monthly' && styles.durationToggleSelected,
                   ]}
                   accessibilityRole="button"
                   accessibilityState={{ selected: selectedDuration === 'monthly' }}
@@ -275,585 +457,534 @@ export function PaywallModal({
                   testID="toggle-duration-monthly"
                 >
                   <Text
-                    style={[
-                      styles.durationToggleText,
-                      {
-                        color: selectedDuration === 'monthly' ? colors.text : colors.textMuted,
-                      },
-                    ]}
+                    variant="label"
+                    color={selectedDuration === 'monthly' ? dark.textHi : dark.textMid}
                   >
-                    {t('rooms.paywall.durationMonthly')}
+                    Monthly
                   </Text>
-                </Pressable>
-              </View>
+                </TouchableOpacity>
 
-              {/* Free Trial Pill on Annual */}
-              {selectedDuration === 'annual' && (
-                <View style={styles.trialCallout}>
-                  <Ionicons name="shield-checkmark-outline" size={14} color={colors.accent} />
-                  <Text style={[styles.trialCalloutText, { color: colors.textMuted }]}>
-                    {t('rooms.paywall.trialNotice')}
-                  </Text>
-                </View>
-              )}
-            </View>
-
-            {/* 2. Tier Selection Cards (Plus vs Pro) */}
-            <View style={styles.sectionBlock}>
-              <Text style={[styles.sectionTitle, { color: colors.text }]}>
-                {t('rooms.paywall.planPickerTitle')}
-              </Text>
-
-              <View style={styles.tierCardsRow}>
-                {/* Plus Card */}
-                <Pressable
-                  onPress={() => setSelectedTier('plus')}
+                {/* 3 Months (with quiet savings chip) */}
+                <TouchableOpacity
+                  onPress={() => setSelectedDuration('quarterly')}
                   style={[
-                    styles.tierCard,
-                    {
-                      backgroundColor:
-                        selectedTier === 'plus' ? colors.cardHighlight : colors.surfaceAlt,
-                      borderColor: selectedTier === 'plus' ? colors.accent : colors.border,
-                    },
+                    styles.durationToggleItem,
+                    selectedDuration === 'quarterly' && styles.durationToggleSelected,
                   ]}
-                  accessibilityRole="radio"
-                  accessibilityState={{ selected: selectedTier === 'plus' }}
-                  accessibilityLabel="CaliPartner Plus, up to 10 members, 1 hosted room"
-                  testID="picker-size-6-20"
-                >
-                  <View style={styles.tierCardHeader}>
-                    <Text style={[styles.tierCardTitle, { color: colors.text }]}>Plus</Text>
-                    <View style={[styles.memberCapBadge, { backgroundColor: colors.surface }]}>
-                      <Text style={[styles.memberCapText, { color: colors.accent }]}>
-                        10 members
-                      </Text>
-                    </View>
-                  </View>
-
-                  <Text style={[styles.tierPriceText, { color: colors.text }]}>
-                    {selectedDuration === 'annual'
-                      ? PRICING_PLANS.plus.inr.perMonthAnnual
-                      : PRICING_PLANS.plus.inr.monthly}
-                  </Text>
-                  <Text style={[styles.tierPricePeriod, { color: colors.textMuted }]}>
-                    {selectedDuration === 'annual'
-                      ? `Billed as ${PRICING_PLANS.plus.inr.annual}`
-                      : 'Billed monthly'}
-                  </Text>
-
-                  <View style={styles.tierDivider} />
-
-                  <View style={styles.bulletItem}>
-                    <Ionicons name="checkmark" size={13} color={colors.accent} />
-                    <Text style={[styles.bulletText, { color: colors.text }]}>
-                      1 room you host (10 members)
-                    </Text>
-                  </View>
-                  <View style={styles.bulletItem}>
-                    <Ionicons name="checkmark" size={13} color={colors.accent} />
-                    <Text style={[styles.bulletText, { color: colors.text }]}>
-                      Partner Finder & room chat
-                    </Text>
-                  </View>
-                  <View style={styles.bulletItem}>
-                    <Ionicons name="checkmark" size={13} color={colors.accent} />
-                    <Text style={[styles.bulletText, { color: colors.text }]}>
-                      Fasting tracker & challenges
-                    </Text>
-                  </View>
-                  <View style={styles.bulletItem}>
-                    <Ionicons name="checkmark" size={13} color={colors.accent} />
-                    <Text style={[styles.bulletText, { color: colors.text }]}>
-                      Full recipe library (150+)
-                    </Text>
-                  </View>
-                </Pressable>
-
-                {/* Pro Card */}
-                <Pressable
-                  onPress={() => setSelectedTier('pro')}
-                  style={[
-                    styles.tierCard,
-                    {
-                      backgroundColor:
-                        selectedTier === 'pro' ? colors.cardHighlight : colors.surfaceAlt,
-                      borderColor: selectedTier === 'pro' ? colors.accent : colors.border,
-                    },
-                  ]}
-                  accessibilityRole="radio"
-                  accessibilityState={{ selected: selectedTier === 'pro' }}
-                  accessibilityLabel="CaliPartner Pro, up to 20 members, AI coach, 3 hosted rooms"
-                  testID="picker-size-21-50"
-                >
-                  <View style={styles.tierCardHeader}>
-                    <Text style={[styles.tierCardTitle, { color: colors.text }]}>Pro</Text>
-                    <View style={[styles.memberCapBadge, { backgroundColor: colors.accent }]}>
-                      <Text style={[styles.memberCapText, { color: colors.onBrand }]}>
-                        20 members
-                      </Text>
-                    </View>
-                  </View>
-
-                  <Text style={[styles.tierPriceText, { color: colors.text }]}>
-                    {selectedDuration === 'annual'
-                      ? PRICING_PLANS.pro.inr.perMonthAnnual
-                      : PRICING_PLANS.pro.inr.monthly}
-                  </Text>
-                  <Text style={[styles.tierPricePeriod, { color: colors.textMuted }]}>
-                    {selectedDuration === 'annual'
-                      ? `Billed as ${PRICING_PLANS.pro.inr.annual}`
-                      : 'Billed monthly'}
-                  </Text>
-
-                  <View style={styles.tierDivider} />
-
-                  <View style={styles.bulletItem}>
-                    <Ionicons name="checkmark" size={13} color={colors.accent} />
-                    <Text style={[styles.bulletText, { color: colors.text }]}>
-                      3 rooms you host (20 members)
-                    </Text>
-                  </View>
-                  <View style={styles.bulletItem}>
-                    <Ionicons name="sparkles" size={13} color={colors.accent} />
-                    <Text style={[styles.bulletText, { color: colors.text }]}>
-                      AI Coach (10 msgs / day)
-                    </Text>
-                  </View>
-                  <View style={styles.bulletItem}>
-                    <Ionicons name="camera" size={13} color={colors.accent} />
-                    <Text style={[styles.bulletText, { color: colors.text }]}>
-                      AI Photo Log (5 scans / day)
-                    </Text>
-                  </View>
-                  <View style={styles.bulletItem}>
-                    <Ionicons name="chatbubble-ellipses" size={13} color={colors.accent} />
-                    <Text style={[styles.bulletText, { color: colors.text }]}>
-                      Chat-to-log & AI insights
-                    </Text>
-                  </View>
-                </Pressable>
-              </View>
-            </View>
-
-            {/* 3. Promo / Collaboration Code Section */}
-            <View style={styles.promoSection}>
-              {!showPromoInput ? (
-                <Pressable
-                  onPress={() => setShowPromoInput(true)}
-                  style={styles.promoTriggerBtn}
                   accessibilityRole="button"
-                  accessibilityLabel="Enter partner or promo code"
+                  accessibilityState={{ selected: selectedDuration === 'quarterly' }}
+                  accessibilityLabel="3 months billing, save 20 percent"
+                  testID="toggle-duration-quarterly"
                 >
-                  <Ionicons name="pricetag-outline" size={14} color={colors.accent} />
-                  <Text style={[styles.promoTriggerText, { color: colors.accent }]}>
-                    {t('rooms.paywall.haveCodePrompt')}
-                  </Text>
-                </Pressable>
-              ) : (
-                <View
-                  style={[
-                    styles.promoInputRow,
-                    { backgroundColor: colors.surfaceAlt, borderColor: colors.border },
-                  ]}
-                >
-                  <TextInput
-                    value={promoCode}
-                    onChangeText={setPromoCode}
-                    placeholder="e.g. PARTNER50"
-                    placeholderTextColor={colors.textMuted}
-                    autoCapitalize="characters"
-                    style={[styles.promoTextInput, { color: colors.text }]}
-                    accessibilityLabel="Promo code input"
-                  />
-                  <Pressable
-                    onPress={handleApplyPromoCode}
-                    style={[styles.applyPromoBtn, { backgroundColor: colors.accent }]}
-                    accessibilityRole="button"
-                    accessibilityLabel="Apply promo code"
-                  >
-                    <Text style={[styles.applyPromoText, { color: colors.onBrand }]}>Apply</Text>
-                  </Pressable>
-                </View>
-              )}
+                  <View style={styles.durationLabelWithChip}>
+                    <Text
+                      variant="label"
+                      color={selectedDuration === 'quarterly' ? dark.textHi : dark.textMid}
+                    >
+                      3 Months
+                    </Text>
+                    <View style={styles.quietChip}>
+                      <Text variant="micro" color={dark.textHi}>
+                        Save 20%
+                      </Text>
+                    </View>
+                  </View>
+                </TouchableOpacity>
 
-              {promoMessage && (
-                <Text style={[styles.promoFeedbackText, { color: colors.accent }]}>
-                  {promoMessage}
-                </Text>
-              )}
+                {/* Annual (with quiet savings chip) */}
+                <TouchableOpacity
+                  onPress={() => setSelectedDuration('annual')}
+                  style={[
+                    styles.durationToggleItem,
+                    selectedDuration === 'annual' && styles.durationToggleSelected,
+                  ]}
+                  accessibilityRole="button"
+                  accessibilityState={{ selected: selectedDuration === 'annual' }}
+                  accessibilityLabel="Annual billing, save 50 percent"
+                  testID="toggle-duration-annual"
+                >
+                  <View style={styles.durationLabelWithChip}>
+                    <Text
+                      variant="label"
+                      color={selectedDuration === 'annual' ? dark.textHi : dark.textMid}
+                    >
+                      Annual
+                    </Text>
+                    <View style={styles.quietChip}>
+                      <Text variant="micro" color={dark.textHi}>
+                        Save 50%
+                      </Text>
+                    </View>
+                  </View>
+                </TouchableOpacity>
+              </View>
             </View>
 
-            {/* 4. Free Forever Guarantee */}
-            <View style={[styles.freeNoticeCard, { backgroundColor: colors.surfaceAlt }]}>
-              <View style={styles.freeNoticeRow}>
-                <Ionicons name="checkmark-circle-outline" size={16} color={colors.accent} />
-                <Text style={[styles.freeNoticeTitle, { color: colors.text }]}>
-                  Always free for everyone
+            {/* 3. What you get (Spec O02 item 5) */}
+            <Card elevation="s1" style={styles.whatYouGetCard}>
+              <Text variant="label" color={dark.textHi} style={styles.whatYouGetHeader}>
+                What you get:
+              </Text>
+              <View style={styles.whatYouGetItem}>
+                <Ionicons name="checkmark" size={16} color={dark.apricot} style={styles.checkIcon} />
+                <Text variant="bodyS" color={dark.textHi}>
+                  Room, chat, progress and focus for everyone
                 </Text>
               </View>
-              <Text style={[styles.freeNoticeDesc, { color: colors.textMuted }]}>
-                {t('rooms.paywall.featureFree')}
-              </Text>
-            </View>
-
-            {/* 5. Purchase Action Button */}
-            <Pressable
-              onPress={handlePurchase}
-              disabled={actionLoading || subLoading}
-              style={[
-                styles.purchaseButton,
-                {
-                  backgroundColor: colors.accent,
-                  opacity: actionLoading ? 0.7 : 1,
-                },
-              ]}
-              accessibilityRole="button"
-              accessibilityLabel={actionButtonText}
-              testID="btn-paywall-purchase"
-            >
-              {actionLoading ? (
-                <ActivityIndicator color={colors.onBrand} size="small" />
-              ) : (
-                <Text style={[styles.purchaseButtonText, { color: colors.onBrand }]}>
-                  {actionButtonText}
+              <View style={styles.whatYouGetItem}>
+                <Ionicons name="checkmark" size={16} color={dark.apricot} style={styles.checkIcon} />
+                <Text variant="bodyS" color={dark.textHi}>
+                  AI coach and Partner Finder for you
                 </Text>
-              )}
-            </Pressable>
+              </View>
+              <View style={styles.whatYouGetItem}>
+                <Ionicons name="checkmark" size={16} color={dark.apricot} style={styles.checkIcon} />
+                <Text variant="bodyS" color={dark.textHi}>
+                  Bigger photo allowance
+                </Text>
+              </View>
 
-            {/* 6. Restore Purchases */}
-            <Pressable
-              onPress={handleRestore}
-              disabled={actionLoading}
-              style={styles.restoreButton}
-              accessibilityRole="button"
-              accessibilityLabel={t('rooms.paywall.restorePurchases')}
-              testID="btn-paywall-restore"
-            >
-              <Text style={[styles.restoreButtonText, { color: colors.textMuted }]}>
-                {t('rooms.paywall.restorePurchases')}
+              <View style={styles.freeSentenceDivider} />
+              <Text variant="micro" color={dark.textMid} style={styles.freeSentenceText}>
+                Logging, your diary and your streak stay free.
               </Text>
-            </Pressable>
+            </Card>
 
-            {/* 7. Terms & Privacy Notice */}
-            <Text style={[styles.termsNoticeText, { color: colors.textMuted }]}>
-              {t('rooms.paywall.termsNotice')}
+            {/* Promo Code Trigger */}
+            <TouchableOpacity
+              onPress={() => setShowPromoModal(true)}
+              style={styles.promoTrigger}
+              accessibilityRole="button"
+              accessibilityLabel="Have a partner promo code?"
+              testID="btn-promo-code"
+            >
+              <Text variant="bodyS" color={dark.apricot}>
+                Have a partner promo code? Enter code
+              </Text>
+            </TouchableOpacity>
+          </ScrollView>
+
+          {/* Primary CTA Block with One-Line Renewal Sentence (Spec O02 item 6) */}
+          <View style={styles.ctaBottomBar}>
+            <Button
+              variant="primary"
+              label={primaryCtaLabel}
+              onPress={handlePurchase}
+              disabled={actionLoading}
+              testID="btn-paywall-cta"
+              style={styles.ctaButton}
+            />
+
+            <Text
+              variant="micro"
+              color={dark.textMid}
+              style={styles.renewalSentence}
+              testID="text-renewal-sentence"
+            >
+              {renewalSentence}
             </Text>
 
-            <View style={styles.legalLinksRow}>
-              <Pressable
+            {/* Footer Links (Spec O02 item 7) */}
+            <View style={styles.footerLinksRow}>
+              <TouchableOpacity
+                onPress={handleRestore}
+                accessibilityRole="button"
+                accessibilityLabel="Restore purchases"
+                testID="btn-restore-purchases"
+              >
+                <Text variant="micro" color={dark.textLo}>
+                  Restore purchases
+                </Text>
+              </TouchableOpacity>
+              <Text variant="micro" color={dark.hairlineLit}>
+                •
+              </Text>
+              <TouchableOpacity
                 onPress={() => openUrl('https://calipartner.com/terms')}
                 accessibilityRole="link"
-                accessibilityLabel="Terms of Service"
+                testID="link-paywall-terms"
               >
-                <Text style={[styles.legalLink, { color: colors.accent }]}>
-                  {t('rooms.paywall.termsLink')}
+                <Text variant="micro" color={dark.textLo}>
+                  Terms
                 </Text>
-              </Pressable>
-              <Text style={{ color: colors.textMuted }}>•</Text>
-              <Pressable
+              </TouchableOpacity>
+              <Text variant="micro" color={dark.hairlineLit}>
+                •
+              </Text>
+              <TouchableOpacity
                 onPress={() => openUrl('https://calipartner.com/privacy')}
                 accessibilityRole="link"
-                accessibilityLabel="Privacy Policy"
+                testID="link-paywall-privacy"
               >
-                <Text style={[styles.legalLink, { color: colors.accent }]}>
-                  {t('rooms.paywall.privacyLink')}
+                <Text variant="micro" color={dark.textLo}>
+                  Privacy
                 </Text>
-              </Pressable>
+              </TouchableOpacity>
             </View>
-          </ScrollView>
+          </View>
+
+          {/* O04 Purchase Success Moment */}
+          <Modal
+            visible={showSuccessModal}
+            transparent
+            animationType="fade"
+            onRequestClose={() => {
+              setShowSuccessModal(false);
+              onClose();
+              if (onSuccess) onSuccess();
+            }}
+          >
+            <View style={styles.modalBackdrop}>
+              <Card elevation="s1" style={styles.successModalCard} testID="modal-purchase-success">
+                <Ionicons name="sparkles" size={36} color={dark.apricot} style={styles.successIcon} />
+                <Text variant="title1" color={dark.textHi} style={styles.successTitle}>
+                  {activeTierConfig.label} Plan Unlocked
+                </Text>
+                <Text variant="body" color={dark.textMid} style={styles.successSubtitle}>
+                  {roomName} now fits up to {activeTierConfig.cap} members.
+                </Text>
+
+                <Button
+                  variant="primary"
+                  label="Done"
+                  onPress={() => {
+                    setShowSuccessModal(false);
+                    onClose();
+                    if (onSuccess) onSuccess();
+                  }}
+                  testID="btn-success-done"
+                  style={styles.successDoneBtn}
+                />
+              </Card>
+            </View>
+          </Modal>
+
+          {/* O09 Restore Result Modal */}
+          <Modal
+            visible={showRestoreModal}
+            transparent
+            animationType="fade"
+            onRequestClose={() => setShowRestoreModal(false)}
+          >
+            <View style={styles.modalBackdrop}>
+              <Card elevation="s1" style={styles.resultModalCard} testID="modal-restore-result">
+                <Text variant="heading" color={dark.textHi} style={styles.resultTitle}>
+                  {restoreSuccess ? 'We found your plan' : 'No purchases found'}
+                </Text>
+                <Text variant="bodyS" color={dark.textMid} style={styles.resultSubtitle}>
+                  {restoreSuccess
+                    ? 'Your room plan has been successfully restored.'
+                    : 'No active purchases were found for this store account.'}
+                </Text>
+                <Button
+                  variant="secondary"
+                  label="Close"
+                  onPress={() => setShowRestoreModal(false)}
+                  testID="btn-close-restore-result"
+                  style={styles.resultCloseBtn}
+                />
+              </Card>
+            </View>
+          </Modal>
+
+          {/* O10 Promo Code Modal */}
+          <Modal
+            visible={showPromoModal}
+            transparent
+            animationType="slide"
+            onRequestClose={() => setShowPromoModal(false)}
+          >
+            <View style={styles.modalBackdrop}>
+              <Card elevation="s1" style={styles.promoModalCard} testID="modal-promo-code">
+                <Text variant="heading" color={dark.textHi} style={styles.promoTitle}>
+                  Partner Promo Code
+                </Text>
+                <Text variant="bodyS" color={dark.textMid} style={styles.promoSubtitle}>
+                  Enter a partner collaboration code to apply discounts.
+                </Text>
+
+                <TextInput
+                  value={promoCode}
+                  onChangeText={setPromoCode}
+                  placeholder="e.g. PARTNER50"
+                  placeholderTextColor={dark.textOff}
+                  autoCapitalize="characters"
+                  style={styles.promoInput}
+                  testID="input-promo-code"
+                />
+
+                {promoMessage && (
+                  <Text variant="micro" color={dark.apricot} style={styles.promoFeedback}>
+                    {promoMessage}
+                  </Text>
+                )}
+
+                <Button
+                  variant="primary"
+                  label="Apply Code"
+                  onPress={handleApplyPromoCode}
+                  testID="btn-apply-promo"
+                  style={styles.applyBtn}
+                />
+
+                <Button
+                  variant="secondary"
+                  label="Cancel"
+                  onPress={() => {
+                    setShowPromoModal(false);
+                    setPromoMessage(null);
+                  }}
+                  style={styles.cancelPromoBtn}
+                />
+              </Card>
+            </View>
+          </Modal>
         </View>
-      </View>
+      </SafeAreaView>
     </Modal>
   );
 }
 
 const styles = StyleSheet.create({
-  modalOverlay: {
+  safeArea: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.5)',
-    justifyContent: 'flex-end',
+    backgroundColor: dark.bg0,
   },
-  modalSheet: {
-    borderTopLeftRadius: radius.lg,
-    borderTopRightRadius: radius.lg,
-    padding: spacing.md,
-    maxHeight: '92%',
-  },
-  headerRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    marginBottom: spacing.xs,
-  },
-  headerTitleGroup: {
+  container: {
     flex: 1,
+    backgroundColor: dark.bg0,
   },
-  sparklePill: {
+  topBar: {
+    height: 56,
     flexDirection: 'row',
     alignItems: 'center',
-    alignSelf: 'flex-start',
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: radius.pill,
-    gap: 4,
-    marginBottom: spacing.xs,
-  },
-  sparkleText: {
-    fontSize: 10,
-    fontWeight: '800',
-    letterSpacing: 0.5,
-  },
-  title: {
-    fontSize: fontSize.lg,
-    fontWeight: '800',
-    letterSpacing: -0.3,
-  },
-  subtitle: {
-    fontSize: fontSize.xs,
-    marginTop: 2,
-    lineHeight: 18,
+    justifyContent: 'space-between',
+    paddingHorizontal: space[4],
+    borderBottomWidth: 1,
+    borderBottomColor: dark.hairline,
   },
   closeButton: {
     width: 44,
     height: 44,
-    borderRadius: radius.full,
     alignItems: 'center',
     justifyContent: 'center',
-    marginLeft: spacing.sm,
+  },
+  topBarTitle: {
+    fontWeight: '600',
+  },
+  closeButtonPlaceholder: {
+    width: 44,
   },
   scrollContent: {
-    paddingBottom: spacing.xl,
-    paddingTop: spacing.xs,
+    padding: space[4],
+    paddingBottom: space[6],
+  },
+  headerBlock: {
+    marginBottom: space[4],
+  },
+  titleText: {
+    marginBottom: space[2],
+  },
+  keepGoingSubtitle: {
+    marginBottom: space[2],
+  },
+  subtitleText: {
+    lineHeight: 20,
   },
   statusBanner: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: spacing.sm,
-    borderRadius: radius.sm,
-    borderWidth: 1,
-    gap: 8,
-    marginBottom: spacing.md,
+    padding: space[3],
+    marginBottom: space[4],
   },
-  statusText: {
-    fontSize: fontSize.xs,
-    fontWeight: '500',
-    flex: 1,
+  sectionWrap: {
+    marginBottom: space[4],
   },
-  sectionBlock: {
-    marginBottom: spacing.md,
-  },
-  sectionTitle: {
-    fontSize: fontSize.sm,
-    fontWeight: '700',
-    marginBottom: spacing.xs,
-  },
-  durationToggleContainer: {
-    flexDirection: 'row',
-    borderRadius: radius.md,
-    padding: 3,
-  },
-  durationToggleItem: {
-    flex: 1,
-    paddingVertical: 10,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderRadius: radius.sm,
-    minHeight: 44,
-  },
-  durationToggleSelected: {
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-    elevation: 2,
-  },
-  durationToggleText: {
-    fontSize: fontSize.sm,
-    fontWeight: '700',
-  },
-  annualLabelWrap: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-  },
-  savingsBadge: {
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: radius.pill,
-  },
-  savingsBadgeText: {
-    fontSize: 9,
-    fontWeight: '800',
-    letterSpacing: 0.3,
-  },
-  trialCallout: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    marginTop: 6,
-    justifyContent: 'center',
-  },
-  trialCalloutText: {
-    fontSize: 11,
-    fontWeight: '500',
+  sectionHeading: {
+    marginBottom: space[2],
   },
   tierCardsRow: {
     flexDirection: 'row',
-    gap: 10,
+    gap: space[2],
   },
   tierCard: {
     flex: 1,
+    padding: space[3],
+    backgroundColor: dark.s2,
+    borderRadius: radius.control,
     borderWidth: 1.5,
-    borderRadius: radius.md,
-    padding: spacing.sm,
+    borderColor: dark.hairline,
+  },
+  tierCardSelected: {
+    borderColor: dark.apricot,
+    backgroundColor: dark.s3,
   },
   tierCardHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 4,
+    marginBottom: space[1],
   },
-  tierCardTitle: {
-    fontSize: fontSize.md,
-    fontWeight: '800',
+  sizeRangeText: {
+    marginBottom: space[2],
   },
-  memberCapBadge: {
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: radius.pill,
-  },
-  memberCapText: {
-    fontSize: 9,
-    fontWeight: '800',
-  },
-  tierPriceText: {
-    fontSize: fontSize.md,
-    fontWeight: '800',
-    letterSpacing: -0.2,
+  tierPrice: {
+    marginTop: space[1],
     fontVariant: ['tabular-nums'],
   },
-  tierPricePeriod: {
-    fontSize: 10,
-    fontWeight: '500',
-    marginBottom: 6,
-  },
-  tierDivider: {
-    height: 1,
-    backgroundColor: 'rgba(128,128,128,0.15)',
-    marginVertical: 6,
-  },
-  bulletItem: {
+  durationToggleContainer: {
     flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    marginBottom: 4,
+    backgroundColor: dark.s2,
+    borderRadius: radius.control,
+    padding: 3,
   },
-  bulletText: {
-    fontSize: 11,
-    fontWeight: '500',
+  durationToggleItem: {
     flex: 1,
-  },
-  promoSection: {
-    marginBottom: spacing.md,
-  },
-  promoTriggerBtn: {
-    flexDirection: 'row',
+    minHeight: 44,
     alignItems: 'center',
-    gap: 6,
-    paddingVertical: 4,
+    justifyContent: 'center',
+    borderRadius: radius.control - 2,
   },
-  promoTriggerText: {
-    fontSize: fontSize.xs,
-    fontWeight: '600',
-  },
-  promoInputRow: {
-    flexDirection: 'row',
+  durationToggleSelected: {
+    backgroundColor: dark.s3,
     borderWidth: 1,
-    borderRadius: radius.sm,
-    overflow: 'hidden',
+    borderColor: dark.hairlineLit,
+  },
+  durationLabelWithChip: {
     alignItems: 'center',
-  },
-  promoTextInput: {
-    flex: 1,
-    paddingHorizontal: spacing.sm,
-    paddingVertical: 8,
-    fontSize: fontSize.sm,
-    fontWeight: '600',
-  },
-  applyPromoBtn: {
-    paddingHorizontal: spacing.md,
-    paddingVertical: 10,
-    minHeight: 44,
     justifyContent: 'center',
-    alignItems: 'center',
   },
-  applyPromoText: {
-    fontSize: fontSize.xs,
-    fontWeight: '800',
+  quietChip: {
+    backgroundColor: dark.s1,
+    paddingHorizontal: 6,
+    paddingVertical: 1,
+    borderRadius: radius.full,
+    marginTop: 2,
+    borderWidth: 0.5,
+    borderColor: dark.hairlineLit,
   },
-  promoFeedbackText: {
-    fontSize: 11,
-    fontWeight: '600',
-    marginTop: 4,
+  whatYouGetCard: {
+    padding: space[4],
+    marginBottom: space[4],
   },
-  freeNoticeCard: {
-    padding: spacing.sm,
-    borderRadius: radius.sm,
-    marginBottom: spacing.md,
+  whatYouGetHeader: {
+    marginBottom: space[3],
   },
-  freeNoticeRow: {
+  whatYouGetItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
-    marginBottom: 2,
+    marginBottom: space[2],
   },
-  freeNoticeTitle: {
-    fontSize: fontSize.xs,
-    fontWeight: '700',
+  checkIcon: {
+    marginRight: space[2],
   },
-  freeNoticeDesc: {
-    fontSize: 11,
-    lineHeight: 15,
+  freeSentenceDivider: {
+    height: 1,
+    backgroundColor: dark.hairline,
+    marginVertical: space[3],
   },
-  purchaseButton: {
-    borderRadius: radius.md,
-    paddingVertical: 14,
-    alignItems: 'center',
-    justifyContent: 'center',
-    minHeight: 48,
-    marginBottom: spacing.xs,
+  freeSentenceText: {
+    lineHeight: 18,
   },
-  purchaseButtonText: {
-    fontSize: fontSize.sm,
-    fontWeight: '800',
-    letterSpacing: 0.3,
-  },
-  restoreButton: {
-    paddingVertical: 10,
-    alignItems: 'center',
-    justifyContent: 'center',
+  promoTrigger: {
     minHeight: 44,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginVertical: space[2],
   },
-  restoreButtonText: {
-    fontSize: fontSize.xs,
-    fontWeight: '600',
+  ctaBottomBar: {
+    padding: space[4],
+    borderTopWidth: 1,
+    borderTopColor: dark.hairline,
+    backgroundColor: dark.bg0,
   },
-  termsNoticeText: {
-    fontSize: 10,
+  ctaButton: {
+    width: '100%',
+    marginBottom: space[2],
+  },
+  renewalSentence: {
     textAlign: 'center',
-    lineHeight: 14,
-    marginVertical: spacing.xs,
+    marginBottom: space[3],
+    lineHeight: 18,
   },
-  legalLinksRow: {
+  footerLinksRow: {
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
-    gap: 8,
-    marginTop: 4,
+    gap: space[2],
   },
-  legalLink: {
-    fontSize: 10,
-    fontWeight: '600',
-    textDecorationLine: 'underline',
+  modalBackdrop: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.75)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: space[4],
+  },
+  successModalCard: {
+    width: '100%',
+    maxWidth: 360,
+    padding: space[5],
+    alignItems: 'center',
+  },
+  successIcon: {
+    marginBottom: space[3],
+  },
+  successTitle: {
+    marginBottom: space[2],
+    textAlign: 'center',
+  },
+  successSubtitle: {
+    marginBottom: space[5],
+    textAlign: 'center',
+    lineHeight: 22,
+  },
+  successDoneBtn: {
+    width: '100%',
+  },
+  resultModalCard: {
+    width: '100%',
+    maxWidth: 340,
+    padding: space[4],
+    alignItems: 'center',
+  },
+  resultTitle: {
+    marginBottom: space[2],
+  },
+  resultSubtitle: {
+    marginBottom: space[4],
+    textAlign: 'center',
+  },
+  resultCloseBtn: {
+    width: '100%',
+  },
+  promoModalCard: {
+    width: '100%',
+    maxWidth: 360,
+    padding: space[4],
+  },
+  promoTitle: {
+    marginBottom: space[1],
+  },
+  promoSubtitle: {
+    marginBottom: space[3],
+  },
+  promoInput: {
+    backgroundColor: dark.s2,
+    borderWidth: 1,
+    borderColor: dark.hairline,
+    borderRadius: radius.control,
+    height: 48,
+    paddingHorizontal: space[3],
+    color: dark.textHi,
+    fontSize: 16,
+    marginBottom: space[3],
+  },
+  promoFeedback: {
+    marginBottom: space[3],
+  },
+  applyBtn: {
+    width: '100%',
+    marginBottom: space[2],
+  },
+  cancelPromoBtn: {
+    width: '100%',
   },
 });

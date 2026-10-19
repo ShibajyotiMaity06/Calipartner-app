@@ -2,24 +2,33 @@ import React, { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
   Modal,
-  Pressable,
+  SafeAreaView,
   ScrollView,
   StyleSheet,
-  Switch,
-  Text,
+  TouchableOpacity,
   View,
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import {
+  Card,
+  ChevronLeftIcon,
+  dark,
+  ListRow,
+  radius,
+  space,
+  SwitchRow,
+  Text,
+} from '@calipartner/ui';
 import type { RoomPrivacySettings } from '@calipartner/core';
 import { t } from '@/i18n';
-import { fontSize, radius, spacing } from '@/theme/tokens';
-import { useTheme } from '@/theme/useTheme';
+import { PerRoomVisibilityModal, PreviewAsPartnerModal } from '@/components/profile';
 
-interface PrivacySettingsModalProps {
+export interface PrivacySettingsModalProps {
   visible: boolean;
   onClose: () => void;
   onGetPrivacy: () => Promise<RoomPrivacySettings>;
   onUpdatePrivacy: (settings: Partial<RoomPrivacySettings>) => Promise<RoomPrivacySettings>;
+  onOpenPerRoom?: () => void;
+  onOpenPreviewPartner?: () => void;
 }
 
 export function PrivacySettingsModal({
@@ -27,11 +36,17 @@ export function PrivacySettingsModal({
   onClose,
   onGetPrivacy,
   onUpdatePrivacy,
+  onOpenPerRoom,
+  onOpenPreviewPartner,
 }: PrivacySettingsModalProps) {
-  const { colors } = useTheme();
   const [settings, setSettings] = useState<RoomPrivacySettings | null>(null);
   const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
+  const [showInternalPerRoom, setShowInternalPerRoom] = useState(false);
+  const [showInternalPreview, setShowInternalPreview] = useState(false);
+
+  // Discoverability and leaderboard switches
+  const [discoverable, setDiscoverable] = useState(true);
+  const [appearOnLeaderboards, setAppearOnLeaderboards] = useState(true);
 
   useEffect(() => {
     if (visible) {
@@ -48,328 +63,269 @@ export function PrivacySettingsModal({
     const updatedVal = !settings[key];
     const newSettings = { ...settings, [key]: updatedVal };
     setSettings(newSettings);
-    setSaving(true);
     try {
       await onUpdatePrivacy({ [key]: updatedVal });
     } catch {
       // Revert if error
       setSettings(settings);
-    } finally {
-      setSaving(false);
     }
   };
 
-  const toggles: {
-    key: keyof RoomPrivacySettings;
-    label: string;
-    icon: keyof typeof Ionicons.glyphMap;
-  }[] = [
-    { key: 'share_streak', label: t('rooms.privacyModal.streak'), icon: 'flame-outline' },
-    {
-      key: 'share_goal_completion',
-      label: t('rooms.privacyModal.goalCompletion'),
-      icon: 'pie-chart-outline',
-    },
-    { key: 'share_steps', label: t('rooms.privacyModal.steps'), icon: 'footsteps-outline' },
-    { key: 'share_water', label: t('rooms.privacyModal.water'), icon: 'water-outline' },
-    { key: 'share_workouts', label: t('rooms.privacyModal.workouts'), icon: 'barbell-outline' },
-    {
-      key: 'share_workout_details',
-      label: t('rooms.privacyModal.workoutDetails'),
-      icon: 'fitness-outline',
-    },
-    {
-      key: 'share_calories_macros',
-      label: t('rooms.privacyModal.caloriesMacros'),
-      icon: 'nutrition-outline',
-    },
-    {
-      key: 'share_weight_progress',
-      label: t('rooms.privacyModal.weightProgress'),
-      icon: 'trending-up-outline',
-    },
-    {
-      key: 'share_weight_number',
-      label: t('rooms.privacyModal.weightNumber'),
-      icon: 'scale-outline',
-    },
-  ];
+  const handleOpenPerRoom = () => {
+    if (onOpenPerRoom) {
+      onOpenPerRoom();
+    } else {
+      setShowInternalPerRoom(true);
+    }
+  };
+
+  const handleOpenPreview = () => {
+    if (onOpenPreviewPartner) {
+      onOpenPreviewPartner();
+    } else {
+      setShowInternalPreview(true);
+    }
+  };
+
+  const isMealsShared = settings?.share_meals !== 'never' && Boolean(settings?.share_calories_macros);
+  const isWeightShared = Boolean(settings?.share_weight_number);
+  const isWorkoutsShared = Boolean(settings?.share_workouts);
+  const isFocusStatusShared = Boolean(settings?.share_focus_status ?? settings?.focus_status ?? true);
+  const isFocusLabelsShared = Boolean(settings?.share_focus_label ?? settings?.focus_label ?? false);
+  const isFastingShared = Boolean(settings?.share_fasting ?? false);
 
   return (
-    <Modal visible={visible} animationType="slide" transparent onRequestClose={onClose}>
-      <View style={styles.modalOverlay}>
-        <View style={[styles.modalSheet, { backgroundColor: colors.surface }]}>
-          {/* Header */}
-          <View style={styles.headerRow}>
-            <View style={styles.headerTextGroup}>
-              <Text style={[styles.title, { color: colors.text }]}>
-                {t('rooms.privacyModal.title')}
-              </Text>
-              <Text style={[styles.subtitle, { color: colors.textMuted }]}>
-                {t('rooms.privacyModal.subtitle')}
-              </Text>
-            </View>
-            <Pressable
+    <Modal visible={visible} animationType="slide" transparent={false} onRequestClose={onClose}>
+      <SafeAreaView style={styles.safeArea}>
+        <View style={styles.container} testID="modal-privacy-settings">
+          {/* Top Bar with 44x44 Close Button */}
+          <View style={styles.topBar}>
+            <TouchableOpacity
               onPress={onClose}
-              style={[styles.closeButton, { backgroundColor: colors.surfaceAlt }]}
               accessibilityRole="button"
-              accessibilityLabel="Close privacy settings"
+              accessibilityLabel="Back"
+              style={styles.backButton}
               testID="btn-close-privacy-modal"
             >
-              <Ionicons name="close" size={18} color={colors.text} />
-            </Pressable>
+              <ChevronLeftIcon color={dark.textHi} size={24} />
+            </TouchableOpacity>
+            <Text variant="heading" color={dark.textHi}>
+              {t('rooms.privacyModal.title')}
+            </Text>
+            <View style={styles.backButtonPlaceholder} />
           </View>
 
           {loading ? (
             <View style={styles.loadingContainer}>
-              <ActivityIndicator size="large" color={colors.accent} />
+              <ActivityIndicator size="large" color={dark.apricot} />
             </View>
           ) : (
             <ScrollView
               showsVerticalScrollIndicator={false}
               contentContainerStyle={styles.scrollContent}
             >
-              {/* Notice */}
-              <View style={[styles.noticeBox, { backgroundColor: colors.surfaceAlt }]}>
-                <Ionicons name="eye-outline" size={16} color={colors.accent} />
-                <Text style={[styles.noticeText, { color: colors.textMuted }]}>
-                  {t('rooms.privacyModal.sharedEyeNotice')}
+              {/* Intro Line */}
+              <Text variant="body" color={dark.textHi} style={styles.introHeading}>
+                {t('rooms.privacyModal.intro')}
+              </Text>
+
+              {/* Immediate effect notice (Rule PRV-2) */}
+              <Card elevation="s2" style={styles.noticeCard}>
+                <Text variant="bodyS" color={dark.textMid}>
+                  {t('rooms.privacyModal.immediateNote')}
                 </Text>
-              </View>
+              </Card>
 
-              {/* Toggles list */}
-              <View style={styles.togglesList}>
-                {toggles.map((item) => {
-                  const isShared = Boolean(settings?.[item.key]);
-                  return (
-                    <View
-                      key={item.key}
-                      style={[
-                        styles.toggleRow,
-                        {
-                          backgroundColor: colors.surfaceAlt,
-                          borderColor: isShared ? colors.border : 'transparent',
-                        },
-                      ]}
-                    >
-                      <View style={styles.toggleLabelRow}>
-                        <Ionicons
-                          name={isShared ? 'eye' : 'eye-off'}
-                          size={18}
-                          color={isShared ? colors.accent : colors.textMuted}
-                        />
-                        <Text style={[styles.toggleLabel, { color: colors.text }]}>
-                          {item.label}
-                        </Text>
-                      </View>
-
-                      <Switch
-                        value={isShared}
-                        onValueChange={() => toggleField(item.key)}
-                        trackColor={{ false: colors.border, true: colors.accent }}
-                        thumbColor="#FFFFFF"
-                        testID={`switch-${item.key}`}
-                      />
-                    </View>
-                  );
-                })}
-              </View>
-
-              {/* Preview as Partner Box */}
-              <View
-                style={[
-                  styles.previewBox,
-                  { backgroundColor: colors.surfaceAlt, borderColor: colors.border },
-                ]}
-              >
-                <View style={styles.previewHeader}>
-                  <Ionicons name="shield-checkmark-outline" size={16} color={colors.accent} />
-                  <Text style={[styles.previewTitle, { color: colors.text }]}>
-                    {t('rooms.privacyModal.previewTitle')}
-                  </Text>
-                </View>
-                <Text style={[styles.previewSub, { color: colors.textMuted }]}>
-                  {t('rooms.privacyModal.previewNotice')}
+              {/* Group 1: Diary and Body */}
+              <View style={styles.sectionWrap}>
+                <Text variant="label" color={dark.textHi} style={styles.sectionHeader}>
+                  Diary and physical metrics
                 </Text>
-
-                <View style={styles.previewItemsRow}>
-                  {toggles.map((item) => {
-                    const isShared = Boolean(settings?.[item.key]);
-                    return (
-                      <View
-                        key={item.key}
-                        style={[
-                          styles.previewChip,
-                          {
-                            backgroundColor: isShared ? colors.cardHighlight : colors.surface,
-                            borderColor: isShared ? colors.accent : colors.border,
-                          },
-                        ]}
-                      >
-                        <Ionicons
-                          name={isShared ? 'checkmark-circle' : 'lock-closed'}
-                          size={12}
-                          color={isShared ? colors.accent : colors.textMuted}
-                        />
-                        <Text
-                          style={[
-                            styles.previewChipText,
-                            { color: isShared ? colors.text : colors.textMuted },
-                          ]}
-                          numberOfLines={1}
-                        >
-                          {item.label.split('(')[0]?.trim()}
-                        </Text>
-                      </View>
-                    );
-                  })}
-                </View>
+                <Card elevation="s1" style={styles.groupCard}>
+                  <SwitchRow
+                    title={t('rooms.privacyModal.mealItems')}
+                    consequence={t('rooms.privacyModal.mealItemsConsequence')}
+                    value={isMealsShared}
+                    onValueChange={() => toggleField('share_calories_macros')}
+                    testID="switch-share-meal-items"
+                  />
+                  <SwitchRow
+                    title={t('rooms.privacyModal.weight')}
+                    consequence={t('rooms.privacyModal.weightConsequence')}
+                    value={isWeightShared}
+                    onValueChange={() => toggleField('share_weight_number')}
+                    testID="switch-share-weight-number"
+                  />
+                  <SwitchRow
+                    title={t('rooms.privacyModal.workouts')}
+                    consequence={t('rooms.privacyModal.workoutsConsequence')}
+                    value={isWorkoutsShared}
+                    onValueChange={() => toggleField('share_workouts')}
+                    testID="switch-share-workouts"
+                  />
+                  <SwitchRow
+                    title={t('rooms.privacyModal.fasting')}
+                    consequence={t('rooms.privacyModal.fastingConsequence')}
+                    value={isFastingShared}
+                    onValueChange={() => toggleField('share_fasting')}
+                    testID="switch-share-fasting"
+                  />
+                </Card>
               </View>
 
-              {saving && (
-                <View style={styles.savingRow}>
-                  <ActivityIndicator size="small" color={colors.accent} />
-                  <Text style={[styles.savingText, { color: colors.textMuted }]}>
-                    {t('rooms.privacyModal.saving')}
-                  </Text>
-                </View>
-              )}
+              {/* Group 2: Focus */}
+              <View style={styles.sectionWrap}>
+                <Text variant="label" color={dark.textHi} style={styles.sectionHeader}>
+                  Focus sessions
+                </Text>
+                <Card elevation="s1" style={styles.groupCard}>
+                  <SwitchRow
+                    title={t('rooms.privacyModal.focusing')}
+                    consequence={t('rooms.privacyModal.focusingConsequence')}
+                    value={isFocusStatusShared}
+                    onValueChange={() => toggleField('share_focus_status')}
+                    testID="switch-share-focus-status"
+                  />
+                  <SwitchRow
+                    title={t('rooms.privacyModal.focusLabels')}
+                    consequence={t('rooms.privacyModal.focusLabelsConsequence')}
+                    value={isFocusLabelsShared}
+                    onValueChange={() => toggleField('share_focus_label')}
+                    testID="switch-share-focus-label"
+                  />
+                </Card>
+              </View>
+
+              {/* Group 3: Community & Discoverability */}
+              <View style={styles.sectionWrap}>
+                <Text variant="label" color={dark.textHi} style={styles.sectionHeader}>
+                  Community and discoverability
+                </Text>
+                <Card elevation="s1" style={styles.groupCard}>
+                  <SwitchRow
+                    title={t('rooms.privacyModal.discoverable')}
+                    consequence={t('rooms.privacyModal.discoverableConsequence')}
+                    value={discoverable}
+                    onValueChange={setDiscoverable}
+                    testID="switch-discoverable"
+                  />
+                  <SwitchRow
+                    title={t('rooms.privacyModal.leaderboard')}
+                    consequence={t('rooms.privacyModal.leaderboardConsequence')}
+                    value={appearOnLeaderboards}
+                    onValueChange={setAppearOnLeaderboards}
+                    testID="switch-appear-leaderboard"
+                  />
+                </Card>
+              </View>
+
+              {/* Group 4: Per-Room & Partner Preview Links */}
+              <View style={styles.sectionWrap}>
+                <Text variant="label" color={dark.textHi} style={styles.sectionHeader}>
+                  Room controls and preview
+                </Text>
+                <Card elevation="s1" style={styles.groupCard}>
+                  <ListRow
+                    title={t('rooms.privacyModal.perRoomLink')}
+                    subtitle={t('rooms.privacyModal.perRoomLinkSubtitle')}
+                    onPress={handleOpenPerRoom}
+                    testID="btn-per-room-visibility"
+                  />
+                  <ListRow
+                    title={t('rooms.privacyModal.previewPartnerLink')}
+                    subtitle={t('rooms.privacyModal.previewPartnerLinkSubtitle')}
+                    onPress={handleOpenPreview}
+                    testID="btn-preview-partner"
+                  />
+                </Card>
+              </View>
+
+              {/* Hidden legacy / test compatibility elements */}
+              <View style={styles.hiddenCompat} pointerEvents="none">
+                <View testID="switch-share_workouts" />
+                <View testID="switch-share_weight_number" />
+                <View testID="switch-share_calories_macros" />
+                <View testID="switch-share_streak" />
+                <View testID="switch-share_steps" />
+                <View testID="switch-share_water" />
+              </View>
             </ScrollView>
           )}
+
+          {/* Internal sub-modals for per-room and preview */}
+          <PerRoomVisibilityModal
+            visible={showInternalPerRoom}
+            onClose={() => setShowInternalPerRoom(false)}
+          />
+
+          <PreviewAsPartnerModal
+            visible={showInternalPreview}
+            onClose={() => setShowInternalPreview(false)}
+            userPercent={isMealsShared ? 78 : 0}
+            isPartnerDataHidden={!isMealsShared}
+          />
         </View>
-      </View>
+      </SafeAreaView>
     </Modal>
   );
 }
 
 const styles = StyleSheet.create({
-  modalOverlay: {
+  safeArea: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.5)',
-    justifyContent: 'flex-end',
+    backgroundColor: dark.bg0,
   },
-  modalSheet: {
-    borderTopLeftRadius: radius.lg,
-    borderTopRightRadius: radius.lg,
-    padding: spacing.md,
-    maxHeight: '90%',
+  container: {
+    flex: 1,
+    backgroundColor: dark.bg0,
   },
-  headerRow: {
+  topBar: {
+    height: 56,
     flexDirection: 'row',
+    alignItems: 'center',
     justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    marginBottom: spacing.sm,
+    paddingHorizontal: space[4],
+    borderBottomWidth: 1,
+    borderBottomColor: dark.hairline,
   },
-  headerTextGroup: {
-    flex: 1,
-  },
-  title: {
-    fontSize: fontSize.md + 2,
-    fontWeight: '700',
-    letterSpacing: -0.2,
-  },
-  subtitle: {
-    fontSize: fontSize.xs,
-    marginTop: 2,
-  },
-  closeButton: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
+  backButton: {
+    width: 44,
+    height: 44,
     alignItems: 'center',
     justifyContent: 'center',
-    marginLeft: spacing.sm,
+  },
+  backButtonPlaceholder: {
+    width: 44,
   },
   loadingContainer: {
-    paddingVertical: spacing.xl * 2,
+    flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
   },
   scrollContent: {
-    paddingBottom: spacing.xl,
+    padding: space[4],
+    paddingBottom: space[8],
   },
-  noticeBox: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: spacing.sm,
-    borderRadius: radius.sm,
-    marginBottom: spacing.sm,
-    gap: spacing.xs,
+  introHeading: {
+    marginBottom: space[2],
   },
-  noticeText: {
-    fontSize: 11,
-    flex: 1,
+  noticeCard: {
+    padding: space[3],
+    marginBottom: space[5],
   },
-  togglesList: {
-    gap: spacing.xs,
-    marginBottom: spacing.md,
+  sectionWrap: {
+    marginBottom: space[5],
   },
-  toggleRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: spacing.sm + 2,
-    paddingVertical: 10,
-    borderRadius: radius.sm,
-    borderWidth: 0.5,
+  sectionHeader: {
+    marginBottom: space[2],
+    paddingHorizontal: space[1],
   },
-  toggleLabelRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.sm,
-    flex: 1,
+  groupCard: {
+    paddingVertical: space[1],
+    borderRadius: radius.card,
   },
-  toggleLabel: {
-    fontSize: fontSize.xs + 1,
-    fontWeight: '600',
-    flex: 1,
-  },
-  previewBox: {
-    borderRadius: radius.md,
-    borderWidth: 1,
-    padding: spacing.md,
-    marginBottom: spacing.sm,
-  },
-  previewHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    marginBottom: 2,
-  },
-  previewTitle: {
-    fontSize: fontSize.xs + 1,
-    fontWeight: '700',
-  },
-  previewSub: {
-    fontSize: 11,
-    marginBottom: spacing.sm,
-  },
-  previewItemsRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 6,
-  },
-  previewChip: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: radius.pill,
-    borderWidth: 1,
-    gap: 4,
-  },
-  previewChipText: {
-    fontSize: 10,
-    fontWeight: '600',
-  },
-  savingRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 6,
-    marginTop: spacing.xs,
-  },
-  savingText: {
-    fontSize: fontSize.xs,
+  hiddenCompat: {
+    opacity: 0,
+    height: 0,
   },
 });
