@@ -33,3 +33,17 @@ supabase/functions/.env
 
 # AI agent skills reference docs (Apple HIG, etc.)
 .agents/skills/
+
+# Brag video outputs & hyperframes
+brag-output/
+brag-output-*/
+.hyperframes/
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Cache
+.cache/
