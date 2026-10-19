@@ -1,32 +1,48 @@
-import { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
-  ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
-  Pressable,
+  SafeAreaView,
   ScrollView,
   StyleSheet,
-  Text,
   TextInput,
+  TouchableOpacity,
   View,
 } from 'react-native';
 import { useRouter } from 'expo-router';
+import {
+  Text,
+  Button,
+  Field,
+  PairRing,
+  space,
+  dark,
+  radius,
+} from '@calipartner/ui';
 import { useAuth } from '@/contexts/AuthContext';
 import { t } from '@/i18n';
-import { fontSize, radius, spacing } from '@/theme/tokens';
-import { useTheme } from '@/theme/useTheme';
+import { playClickSound } from '@/lib/sound';
 
 export default function SignInScreen() {
   const router = useRouter();
-  const { colors } = useTheme();
   const { signInWithOtp, verifyOtp, signInWithGoogle, signInWithApple, continueAsGuest } =
     useAuth();
 
   const [email, setEmail] = useState('');
   const [token, setToken] = useState('');
-  const [step, setStep] = useState<'email' | 'otp'>('email');
+  const [step, setStep] = useState<'options' | 'email' | 'otp'>('options');
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [resendCooldown, setResendCooldown] = useState(0);
+
+  // 30s cooldown for OTP resend
+  useEffect(() => {
+    if (resendCooldown <= 0) return;
+    const timer = setInterval(() => {
+      setResendCooldown((prev) => Math.max(0, prev - 1));
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [resendCooldown]);
 
   const handleSendCode = async () => {
     if (!email || !email.includes('@')) {
@@ -48,6 +64,7 @@ export default function SignInScreen() {
       }
     } else {
       setStep('otp');
+      setResendCooldown(30);
     }
   };
 
@@ -61,301 +78,361 @@ export default function SignInScreen() {
     setLoading(true);
     setErrorMessage(null);
 
-    const { error } = await verifyOtp(email, token);
+    const { error } = await verifyOtp(email, cleanToken);
     setLoading(false);
 
     if (error) {
       setErrorMessage(t('auth.invalidCodeError'));
     } else {
-      router.replace('/today');
+      router.replace('/today' as any);
     }
   };
 
   const handleGuest = () => {
+    playClickSound();
     continueAsGuest();
-    router.replace('/today');
+    router.replace('/today' as any);
   };
 
+  const isAppleFirst = Platform.OS === 'ios';
+
   return (
-    <KeyboardAvoidingView
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-      style={[styles.container, { backgroundColor: colors.background }]}
-    >
-      <ScrollView contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled">
-        <View style={styles.header}>
-          <Text style={[styles.title, { color: colors.text }]}>{t('auth.title')}</Text>
-          <Text style={[styles.subtitle, { color: colors.textMuted }]}>{t('auth.subtitle')}</Text>
-        </View>
-
-        {errorMessage && (
-          <View
-            style={[
-              styles.errorContainer,
-              { backgroundColor: colors.surfaceAlt, borderColor: colors.border },
-            ]}
-            testID="auth-error-banner"
-          >
-            <Text style={{ color: colors.danger, fontSize: fontSize.sm }}>{errorMessage}</Text>
-          </View>
-        )}
-
-        {step === 'email' ? (
-          <View style={styles.section}>
-            <Text style={[styles.label, { color: colors.textMuted }]}>{t('auth.emailLabel')}</Text>
-            <TextInput
-              testID="input-email"
-              style={[
-                styles.input,
-                { color: colors.text, backgroundColor: colors.surface, borderColor: colors.border },
-              ]}
-              placeholder={t('auth.emailPlaceholder')}
-              placeholderTextColor={colors.textMuted}
-              keyboardType="email-address"
-              autoCapitalize="none"
-              autoCorrect={false}
-              value={email}
-              onChangeText={(text) => {
-                setEmail(text);
-                setErrorMessage(null);
-              }}
-            />
-
-            <Pressable
-              testID="btn-send-code"
-              accessibilityRole="button"
-              accessibilityLabel={t('auth.sendCode')}
-              style={[styles.primaryButton, { backgroundColor: colors.accent }]}
-              onPress={handleSendCode}
-              disabled={loading}
-            >
-              {loading ? (
-                <ActivityIndicator color={colors.onAccent} />
-              ) : (
-                <Text style={{ color: colors.onAccent, fontWeight: '600', fontSize: fontSize.md }}>
-                  {t('auth.sendCode')}
-                </Text>
-              )}
-            </Pressable>
-          </View>
-        ) : (
-          <View style={styles.section}>
-            <Text
-              style={{ color: colors.textMuted, fontSize: fontSize.sm, marginBottom: spacing.sm }}
-            >
-              {t('auth.codeSentBody', { email })}
+    <SafeAreaView style={styles.safeArea}>
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        style={styles.flexOne}
+      >
+        <ScrollView
+          contentContainerStyle={styles.scrollContent}
+          keyboardShouldPersistTaps="handled"
+        >
+          {/* Logo & Header (Spec B01) */}
+          <View style={styles.header}>
+            <View style={styles.logoRingWrapper}>
+              <PairRing
+                size={64}
+                userPercent={80}
+                partnerPercent={65}
+                userHue="iris"
+                partnerHue="teal"
+                hasPartner={true}
+                testID="auth-logo-ring"
+              />
+            </View>
+            <Text variant="title1" color={dark.textHi} style={styles.title} testID="auth-title">
+              {step === 'options'
+                ? 'Create your account'
+                : step === 'email'
+                  ? 'Sign in with email'
+                  : 'Enter 6-digit code'}
             </Text>
-            <TextInput
-              testID="input-otp"
-              style={[
-                styles.input,
-                styles.otpInput,
-                { color: colors.text, backgroundColor: colors.surface, borderColor: colors.border },
-              ]}
-              placeholder={t('auth.codePlaceholder')}
-              placeholderTextColor={colors.textMuted}
-              keyboardType="number-pad"
-              maxLength={8}
-              value={token}
-              onChangeText={(text) => {
-                setToken(text);
-                setErrorMessage(null);
-              }}
-            />
+            <Text variant="body" color={dark.textMid} style={styles.subtitle}>
+              Your data on this phone moves with you.
+            </Text>
+          </View>
 
-            <Pressable
-              testID="btn-verify-code"
-              accessibilityRole="button"
-              accessibilityLabel={t('auth.verifyCode')}
-              style={[styles.primaryButton, { backgroundColor: colors.accent }]}
-              onPress={handleVerifyCode}
-              disabled={loading}
-            >
-              {loading ? (
-                <ActivityIndicator color={colors.onAccent} />
-              ) : (
-                <Text style={{ color: colors.onAccent, fontWeight: '600', fontSize: fontSize.md }}>
-                  {t('auth.verifyCode')}
-                </Text>
-              )}
-            </Pressable>
-
-            <Pressable
-              testID="btn-back-to-email"
-              accessibilityRole="button"
-              accessibilityLabel={t('common.cancel')}
-              style={styles.textButton}
-              onPress={() => {
-                setStep('email');
-                setToken('');
-                setErrorMessage(null);
-              }}
-            >
-              <Text style={{ color: colors.textMuted, fontSize: fontSize.sm }}>
-                {t('common.retry')}
+          {/* Error Banner */}
+          {errorMessage && (
+            <View style={styles.errorContainer} testID="auth-error-banner">
+              <Text variant="bodyS" color={dark.danger}>
+                {errorMessage}
               </Text>
-            </Pressable>
-          </View>
-        )}
+            </View>
+          )}
 
-        <View style={styles.dividerContainer}>
-          <View style={[styles.dividerLine, { backgroundColor: colors.border }]} />
-        </View>
+          {/* STEP 1: Options (Apple first on iOS, then Google, then Email) */}
+          {step === 'options' && (
+            <View style={styles.section}>
+              <View style={styles.oauthButtons}>
+                {isAppleFirst ? (
+                  <>
+                    <Button
+                      variant="secondary"
+                      size="lg"
+                      label={t('auth.appleSignIn')}
+                      onPress={async () => {
+                        setLoading(true);
+                        const { error } = await signInWithApple();
+                        setLoading(false);
+                        if (error) setErrorMessage(error.message);
+                      }}
+                      disabled={loading}
+                      testID="btn-apple-signin"
+                    />
+                    <Button
+                      variant="secondary"
+                      size="lg"
+                      label={t('auth.googleSignIn')}
+                      onPress={async () => {
+                        setLoading(true);
+                        const { error } = await signInWithGoogle();
+                        setLoading(false);
+                        if (error) setErrorMessage(error.message);
+                      }}
+                      disabled={loading}
+                      testID="btn-google-signin"
+                    />
+                  </>
+                ) : (
+                  <>
+                    <Button
+                      variant="secondary"
+                      size="lg"
+                      label={t('auth.googleSignIn')}
+                      onPress={async () => {
+                        setLoading(true);
+                        const { error } = await signInWithGoogle();
+                        setLoading(false);
+                        if (error) setErrorMessage(error.message);
+                      }}
+                      disabled={loading}
+                      testID="btn-google-signin"
+                    />
+                    <Button
+                      variant="secondary"
+                      size="lg"
+                      label={t('auth.appleSignIn')}
+                      onPress={async () => {
+                        setLoading(true);
+                        const { error } = await signInWithApple();
+                        setLoading(false);
+                        if (error) setErrorMessage(error.message);
+                      }}
+                      disabled={loading}
+                      testID="btn-apple-signin"
+                    />
+                  </>
+                )}
 
-        {/* OAuth Buttons */}
-        <View style={styles.oauthSection}>
-          <Pressable
-            testID="btn-google-signin"
-            accessibilityRole="button"
-            accessibilityLabel={t('auth.googleSignIn')}
-            style={[
-              styles.secondaryButton,
-              { borderColor: colors.border, backgroundColor: colors.surface },
-            ]}
-            onPress={async () => {
-              setLoading(true);
-              const { error } = await signInWithGoogle();
-              setLoading(false);
-              if (error) setErrorMessage(error.message);
-            }}
-          >
-            <Text style={{ color: colors.text, fontWeight: '500', fontSize: fontSize.md }}>
-              {t('auth.googleSignIn')}
-            </Text>
-          </Pressable>
+                <Button
+                  variant="primary"
+                  size="lg"
+                  label="Continue with email"
+                  onPress={() => setStep('email')}
+                  disabled={loading}
+                  testID="btn-continue-email"
+                />
+              </View>
 
-          <Pressable
-            testID="btn-apple-signin"
-            accessibilityRole="button"
-            accessibilityLabel={t('auth.appleSignIn')}
-            style={[
-              styles.secondaryButton,
-              {
-                borderColor: colors.border,
-                backgroundColor: colors.surface,
-                marginTop: spacing.sm,
-              },
-            ]}
-            onPress={async () => {
-              setLoading(true);
-              const { error } = await signInWithApple();
-              setLoading(false);
-              if (error) setErrorMessage(error.message);
-            }}
-          >
-            <Text style={{ color: colors.text, fontWeight: '500', fontSize: fontSize.md }}>
-              {t('auth.appleSignIn')}
-            </Text>
-          </Pressable>
-        </View>
+              {/* Guest Option */}
+              <View style={styles.guestSection}>
+                <TouchableOpacity
+                  onPress={handleGuest}
+                  style={styles.guestButton}
+                  accessibilityRole="button"
+                  accessibilityLabel={t('auth.guestSignIn')}
+                  testID="btn-guest-signin"
+                >
+                  <Text variant="body" color={dark.apricot} style={styles.guestText}>
+                    Explore as guest →
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          )}
 
-        {/* Guest Mode */}
-        <View style={styles.guestSection}>
-          <Text
-            style={{
-              color: colors.textMuted,
-              textAlign: 'center',
-              fontSize: fontSize.sm,
-              marginBottom: spacing.xs,
-            }}
-          >
-            {t('auth.guestNotice')}
-          </Text>
-          <Pressable
-            testID="btn-guest-signin"
-            accessibilityRole="button"
-            accessibilityLabel={t('auth.guestSignIn')}
-            style={styles.ghostButton}
-            onPress={handleGuest}
-          >
-            <Text style={{ color: colors.accent, fontWeight: '600', fontSize: fontSize.md }}>
-              {t('auth.guestSignIn')}
-            </Text>
-          </Pressable>
-        </View>
-      </ScrollView>
-    </KeyboardAvoidingView>
+          {/* STEP 2: Email Entry (Spec B02) */}
+          {step === 'email' && (
+            <View style={styles.section}>
+              <Field
+                label={t('auth.emailLabel')}
+                value={email}
+                onChangeText={(text) => {
+                  setEmail(text);
+                  setErrorMessage(null);
+                }}
+                placeholder={t('auth.emailPlaceholder')}
+                keyboardType="email-address"
+                autoCapitalize="none"
+                autoCorrect={false}
+                testID="input-email"
+              />
+
+              <Button
+                variant="primary"
+                size="lg"
+                label={t('auth.sendCode')}
+                onPress={handleSendCode}
+                loading={loading}
+                testID="btn-send-code"
+              />
+
+              <TouchableOpacity
+                onPress={() => {
+                  setStep('options');
+                  setErrorMessage(null);
+                }}
+                style={styles.backLink}
+                testID="btn-back-to-options"
+              >
+                <Text variant="bodyS" color={dark.textMid}>
+                  ← Back to other sign in options
+                </Text>
+              </TouchableOpacity>
+            </View>
+          )}
+
+          {/* STEP 3: OTP Entry (Spec B03) */}
+          {step === 'otp' && (
+            <View style={styles.section}>
+              <Text variant="bodyS" color={dark.textMid} style={styles.codeSentInfo}>
+                {t('auth.codeSentBody', { email })}
+              </Text>
+
+              <TextInput
+                testID="input-otp"
+                style={styles.otpInput}
+                placeholder="123456"
+                placeholderTextColor={dark.textOff}
+                keyboardType="number-pad"
+                maxLength={6}
+                value={token}
+                onChangeText={(text) => {
+                  setToken(text);
+                  setErrorMessage(null);
+                  if (text.length === 6) {
+                    // Auto-submit on 6 digits
+                    handleVerifyCode();
+                  }
+                }}
+              />
+
+              <Button
+                variant="primary"
+                size="lg"
+                label={t('auth.verifyCode')}
+                onPress={handleVerifyCode}
+                loading={loading}
+                testID="btn-verify-code"
+              />
+
+              <View style={styles.otpFooter}>
+                <TouchableOpacity
+                  onPress={() => {
+                    if (resendCooldown <= 0) handleSendCode();
+                  }}
+                  disabled={resendCooldown > 0}
+                  style={styles.resendButton}
+                  testID="btn-resend-otp"
+                >
+                  <Text
+                    variant="bodyS"
+                    color={resendCooldown > 0 ? dark.textOff : dark.apricot}
+                  >
+                    {resendCooldown > 0
+                      ? `Resend code in ${resendCooldown}s`
+                      : 'Resend 6-digit code'}
+                  </Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  onPress={() => {
+                    setStep('email');
+                    setToken('');
+                    setErrorMessage(null);
+                  }}
+                  style={styles.wrongEmailLink}
+                  testID="btn-back-to-email"
+                >
+                  <Text variant="bodyS" color={dark.textLo}>
+                    Wrong email? Change it
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          )}
+        </ScrollView>
+      </KeyboardAvoidingView>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
+  safeArea: {
+    flex: 1,
+    backgroundColor: dark.bg0,
+  },
+  flexOne: {
     flex: 1,
   },
   scrollContent: {
-    padding: spacing.lg,
-    paddingTop: 56,
+    padding: space[4],
+    paddingTop: space[6],
+    gap: space[4],
   },
   header: {
-    marginBottom: spacing.xl,
+    alignItems: 'center',
+    gap: space[2],
+    marginBottom: space[2],
+  },
+  logoRingWrapper: {
+    marginBottom: space[2],
   },
   title: {
-    fontSize: fontSize.xl,
-    fontWeight: '700',
+    textAlign: 'center',
+    letterSpacing: -0.4,
   },
   subtitle: {
-    fontSize: fontSize.sm,
-    marginTop: spacing.xs,
-  },
-  label: {
-    fontSize: fontSize.sm,
-    marginBottom: spacing.xs,
-    fontWeight: '500',
-  },
-  section: {
-    marginBottom: spacing.lg,
+    textAlign: 'center',
+    lineHeight: 20,
+    maxWidth: 280,
   },
   errorContainer: {
-    padding: spacing.md,
-    borderRadius: radius.sm,
+    backgroundColor: dark.s2,
     borderWidth: 1,
-    marginBottom: spacing.md,
+    borderColor: dark.danger,
+    borderRadius: radius.control,
+    padding: space[3],
   },
-  input: {
-    borderWidth: 1,
-    borderRadius: radius.sm,
-    paddingHorizontal: spacing.md,
-    paddingVertical: 12,
-    fontSize: fontSize.md,
-    marginBottom: spacing.md,
+  section: {
+    gap: space[4],
   },
-  otpInput: {
-    textAlign: 'center',
-    letterSpacing: 8,
-    fontSize: fontSize.xl,
-    fontWeight: '600',
-  },
-  primaryButton: {
-    paddingVertical: 14,
-    borderRadius: radius.sm,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  secondaryButton: {
-    borderWidth: 1,
-    paddingVertical: 14,
-    borderRadius: radius.sm,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  ghostButton: {
-    paddingVertical: 10,
-    alignItems: 'center',
-  },
-  textButton: {
-    marginTop: spacing.sm,
-    alignItems: 'center',
-  },
-  dividerContainer: {
-    marginVertical: spacing.md,
-  },
-  dividerLine: {
-    height: 1,
-  },
-  oauthSection: {
-    marginBottom: spacing.lg,
+  oauthButtons: {
+    gap: space[3],
   },
   guestSection: {
-    marginTop: spacing.sm,
+    marginTop: space[3],
     alignItems: 'center',
+  },
+  guestButton: {
+    minHeight: 44,
+    justifyContent: 'center',
+    paddingHorizontal: space[3],
+  },
+  guestText: {
+    fontWeight: '600',
+  },
+  backLink: {
+    minHeight: 44,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  codeSentInfo: {
+    lineHeight: 20,
+  },
+  otpInput: {
+    height: 56,
+    borderRadius: radius.card,
+    borderWidth: 1,
+    borderColor: dark.hairlineLit,
+    backgroundColor: dark.s2,
+    color: dark.textHi,
+    textAlign: 'center',
+    fontSize: 28,
+    fontWeight: '700',
+    letterSpacing: 10,
+  },
+  otpFooter: {
+    alignItems: 'center',
+    gap: space[2],
+    marginTop: space[1],
+  },
+  resendButton: {
+    minHeight: 44,
+    justifyContent: 'center',
+  },
+  wrongEmailLink: {
+    minHeight: 44,
+    justifyContent: 'center',
   },
 });

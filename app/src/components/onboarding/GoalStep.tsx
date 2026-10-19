@@ -1,21 +1,22 @@
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import React from 'react';
+import { TouchableOpacity, StyleSheet, View } from 'react-native';
 import type { Goal } from '@calipartner/core';
+import { Text, CheckIcon, space, dark, radius } from '@calipartner/ui';
 import { t } from '@/i18n';
 import { playClickSound } from '@/lib/sound';
-import { fontSize, radius, spacing } from '@/theme/tokens';
-import { useTheme } from '@/theme/useTheme';
 
 interface GoalStepProps {
   selectedGoal: Goal;
   onSelectGoal: (goal: Goal) => void;
+  onAutoAdvance?: () => void;
 }
 
 interface GoalOption {
   id: Goal;
-  titleKey:
-    'onboarding.goal.cutTitle' | 'onboarding.goal.maintainTitle' | 'onboarding.goal.bulkTitle';
+  titleKey: 'onboarding.goal.cutTitle' | 'onboarding.goal.maintainTitle' | 'onboarding.goal.bulkTitle';
   descKey: 'onboarding.goal.cutDesc' | 'onboarding.goal.maintainDesc' | 'onboarding.goal.bulkDesc';
-  badge: string;
+  defaultTitle: string;
+  defaultDesc: string;
 }
 
 const GOAL_OPTIONS: readonly GoalOption[] = [
@@ -23,84 +24,93 @@ const GOAL_OPTIONS: readonly GoalOption[] = [
     id: 'cut',
     titleKey: 'onboarding.goal.cutTitle',
     descKey: 'onboarding.goal.cutDesc',
-    badge: '- Deficit',
-  },
-  {
-    id: 'maintain',
-    titleKey: 'onboarding.goal.maintainTitle',
-    descKey: 'onboarding.goal.maintainDesc',
-    badge: 'Baseline',
+    defaultTitle: 'Lose fat',
+    defaultDesc: 'Eat a little less than you burn.',
   },
   {
     id: 'bulk',
     titleKey: 'onboarding.goal.bulkTitle',
     descKey: 'onboarding.goal.bulkDesc',
-    badge: '+ Surplus',
+    defaultTitle: 'Build muscle',
+    defaultDesc: 'Eat enough protein and train with intent.',
+  },
+  {
+    id: 'maintain',
+    titleKey: 'onboarding.goal.maintainTitle',
+    descKey: 'onboarding.goal.maintainDesc',
+    defaultTitle: 'Stay where I am',
+    defaultDesc: 'Keep your weight and build consistency.',
   },
 ];
 
-export function GoalStep({ selectedGoal, onSelectGoal }: GoalStepProps) {
-  const { colors } = useTheme();
+export function GoalStep({ selectedGoal, onSelectGoal, onAutoAdvance }: GoalStepProps) {
+  const handleSelect = (goalId: Goal) => {
+    playClickSound();
+    onSelectGoal(goalId);
+    if (onAutoAdvance) {
+      setTimeout(() => {
+        onAutoAdvance();
+      }, 250);
+    }
+  };
 
   return (
     <View style={styles.container} accessible accessibilityRole="radiogroup">
       {GOAL_OPTIONS.map((option) => {
         const isSelected = selectedGoal === option.id;
+        const title = t(option.titleKey) || option.defaultTitle;
+        const desc = t(option.descKey) || option.defaultDesc;
+
         return (
-          <Pressable
+          <TouchableOpacity
             key={option.id}
             testID={`goal-card-${option.id}`}
             accessibilityRole="radio"
             accessibilityState={{ selected: isSelected }}
-            accessibilityLabel={`${t(option.titleKey)}. ${t(option.descKey)}`}
-            onPress={() => {
-              playClickSound();
-              onSelectGoal(option.id);
-            }}
-            style={({ pressed }) => [
+            accessibilityLabel={`${title}. ${desc}`}
+            onPress={() => handleSelect(option.id)}
+            activeOpacity={0.8}
+            style={[
               styles.card,
               {
-                backgroundColor: isSelected ? colors.surface : colors.surface,
-                borderColor: isSelected ? colors.accent : colors.border,
+                backgroundColor: isSelected ? dark.s2 : dark.s1,
+                borderColor: isSelected ? dark.apricot : dark.hairline,
                 borderWidth: isSelected ? 2 : 1,
-                opacity: pressed ? 0.9 : 1,
               },
             ]}
           >
-            <View style={styles.headerRow}>
-              <View style={styles.titleGroup}>
-                <View
-                  style={[
-                    styles.radioCircle,
-                    {
-                      borderColor: isSelected ? colors.accent : colors.border,
-                      backgroundColor: isSelected ? colors.accent : 'transparent',
-                    },
-                  ]}
+            <View style={styles.contentRow}>
+              <View style={styles.textGroup}>
+                <Text
+                  variant="heading"
+                  color={dark.textHi}
+                  style={styles.cardTitle}
                 >
-                  {isSelected && (
-                    <View style={[styles.radioDot, { backgroundColor: colors.onAccent }]} />
-                  )}
-                </View>
-                <Text style={[styles.title, { color: colors.text }]}>{t(option.titleKey)}</Text>
+                  {title}
+                </Text>
+                <Text
+                  variant="body"
+                  color={dark.textMid}
+                  style={styles.cardDesc}
+                >
+                  {desc}
+                </Text>
               </View>
+
+              {/* Radio Indicator with Check when selected */}
               <View
                 style={[
-                  styles.badgeContainer,
+                  styles.checkCircle,
                   {
-                    backgroundColor: isSelected ? colors.surfaceAlt : colors.surfaceAlt,
-                    borderColor: colors.border,
+                    borderColor: isSelected ? dark.apricot : dark.hairlineLit,
+                    backgroundColor: isSelected ? dark.apricot : 'transparent',
                   },
                 ]}
               >
-                <Text style={[styles.badgeText, { color: colors.textMuted }]}>{option.badge}</Text>
+                {isSelected && <CheckIcon size={14} color={dark.onBrand} />}
               </View>
             </View>
-
-            <Text style={[styles.description, { color: colors.textMuted }]}>
-              {t(option.descKey)}
-            </Text>
-          </Pressable>
+          </TouchableOpacity>
         );
       })}
     </View>
@@ -109,58 +119,39 @@ export function GoalStep({ selectedGoal, onSelectGoal }: GoalStepProps) {
 
 const styles = StyleSheet.create({
   container: {
-    paddingHorizontal: spacing.md,
-    gap: spacing.md,
+    paddingHorizontal: space[4],
+    gap: space[3],
+    paddingTop: space[2],
   },
   card: {
-    padding: spacing.md,
-    borderRadius: radius.md,
-    minHeight: 96,
+    paddingHorizontal: space[4],
+    paddingVertical: space[4],
+    borderRadius: radius.card,
+    minHeight: 88, // Spec A04: three full-width cards (88 high)
     justifyContent: 'center',
-    gap: spacing.xs,
   },
-  headerRow: {
+  contentRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+    gap: space[3],
   },
-  titleGroup: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.sm,
+  textGroup: {
     flex: 1,
+    gap: space[1],
   },
-  radioCircle: {
-    width: 22,
-    height: 22,
-    borderRadius: radius.pill,
+  cardTitle: {
+    fontWeight: '600',
+  },
+  cardDesc: {
+    lineHeight: 20,
+  },
+  checkCircle: {
+    width: 24,
+    height: 24,
+    borderRadius: radius.full,
     borderWidth: 2,
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  radioDot: {
-    width: 8,
-    height: 8,
-    borderRadius: radius.pill,
-  },
-  title: {
-    fontSize: fontSize.md,
-    fontWeight: '600',
-    flexShrink: 1,
-  },
-  badgeContainer: {
-    paddingHorizontal: spacing.sm,
-    paddingVertical: 3,
-    borderRadius: radius.sm,
-    borderWidth: 1,
-  },
-  badgeText: {
-    fontSize: fontSize.sm - 2,
-    fontWeight: '600',
-  },
-  description: {
-    fontSize: fontSize.sm,
-    lineHeight: 20,
-    paddingLeft: 30,
   },
 });

@@ -1,10 +1,9 @@
-import { useState } from 'react';
-import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import React, { useState } from 'react';
+import { StyleSheet, TextInput, View, TouchableOpacity } from 'react-native';
 import { kgToLb, lbToKg, type CalculateTargetsResult, type Units } from '@calipartner/core';
+import { Text, Button, space, dark, radius } from '@calipartner/ui';
 import { t } from '@/i18n';
 import { playClickSound } from '@/lib/sound';
-import { fontSize, radius, spacing } from '@/theme/tokens';
-import { useTheme } from '@/theme/useTheme';
 
 interface TargetDateStepProps {
   units: Units;
@@ -29,8 +28,6 @@ export function TargetDateStep({
   onChangeTargetDate,
   onSkip,
 }: TargetDateStepProps) {
-  const { colors } = useTheme();
-
   const [weightText, setWeightText] = useState(
     targetWeightKg !== null
       ? units === 'metric'
@@ -64,7 +61,7 @@ export function TargetDateStep({
     <View style={styles.container}>
       {/* Target Weight Input */}
       <View style={styles.section}>
-        <Text style={[styles.label, { color: colors.text }]}>
+        <Text variant="label" color={dark.textLo} style={styles.sectionLabel}>
           {t('onboarding.targetDate.targetWeightLabel')} ({units === 'metric' ? 'kg' : 'lb'})
         </Text>
         <TextInput
@@ -72,20 +69,20 @@ export function TargetDateStep({
           value={weightText}
           onChangeText={handleWeightChange}
           placeholder={units === 'metric' ? '65.0' : '143.0'}
-          placeholderTextColor={colors.textMuted}
+          placeholderTextColor={dark.textOff}
           keyboardType="numeric"
           accessibilityLabel={t('onboarding.targetDate.targetWeightLabel')}
           style={[
             styles.input,
             {
-              backgroundColor: colors.surface,
-              borderColor: errorTargetWeight ? colors.danger : colors.border,
-              color: colors.text,
+              backgroundColor: dark.s2,
+              borderColor: errorTargetWeight ? dark.danger : dark.hairline,
+              color: dark.textHi,
             },
           ]}
         />
         {errorTargetWeight ? (
-          <Text style={[styles.errorText, { color: colors.danger }]} testID="error-target-weight">
+          <Text variant="label" color={dark.danger} testID="error-target-weight">
             {errorTargetWeight}
           </Text>
         ) : null}
@@ -93,7 +90,7 @@ export function TargetDateStep({
 
       {/* Target Date Input */}
       <View style={styles.section}>
-        <Text style={[styles.label, { color: colors.text }]}>
+        <Text variant="label" color={dark.textLo} style={styles.sectionLabel}>
           {t('onboarding.targetDate.targetDateLabel')}
         </Text>
         <TextInput
@@ -101,7 +98,7 @@ export function TargetDateStep({
           value={dateText}
           onChangeText={handleDateChange}
           placeholder={t('onboarding.targetDate.targetDatePlaceholder')}
-          placeholderTextColor={colors.textMuted}
+          placeholderTextColor={dark.textOff}
           keyboardType="default"
           autoCapitalize="none"
           autoCorrect={false}
@@ -109,14 +106,14 @@ export function TargetDateStep({
           style={[
             styles.input,
             {
-              backgroundColor: colors.surface,
-              borderColor: errorTargetDate ? colors.danger : colors.border,
-              color: colors.text,
+              backgroundColor: dark.s2,
+              borderColor: errorTargetDate ? dark.danger : dark.hairline,
+              color: dark.textHi,
             },
           ]}
         />
         {errorTargetDate ? (
-          <Text style={[styles.errorText, { color: colors.danger }]} testID="error-target-date">
+          <Text variant="label" color={dark.danger} testID="error-target-date">
             {errorTargetDate}
           </Text>
         ) : null}
@@ -127,42 +124,32 @@ export function TargetDateStep({
         <View style={styles.analysisContainer}>
           {/* If required pace is safe and realistic */}
           {analysis.isRealistic && analysis.requiredRateKgPerWeek !== null && (
-            <View
-              style={[
-                styles.noticeCard,
-                { backgroundColor: colors.surfaceAlt, borderColor: colors.border },
-              ]}
-              testID="target-required-rate-notice"
-            >
+            <View style={styles.noticeCard} testID="target-required-rate-notice">
               <Text
-                style={[styles.noticeTitle, { color: colors.text }]}
+                variant="body"
+                color={dark.textHi}
+                style={styles.noticeTitle}
                 testID="target-required-rate-text"
               >
                 {t('onboarding.targetDate.requiredRateText', {
                   rate: analysis.requiredRateKgPerWeek,
                 })}
               </Text>
-              <Text style={[styles.noticeBody, { color: colors.textMuted }]}>
+              <Text variant="label" color={dark.textMid} style={styles.noticeBody}>
                 {t('onboarding.targetDate.sustainablePaceBody')}
               </Text>
             </View>
           )}
 
-          {/* If pace exceeds weekly cap, show earliest realistic date */}
+          {/* If pace exceeds weekly cap, show earliest realistic date (Spec ONB-5) */}
           {!analysis.isRealistic && analysis.earliestRealisticDate && (
-            <View
-              style={[
-                styles.noticeCard,
-                { backgroundColor: colors.surfaceAlt, borderColor: colors.border },
-              ]}
-              testID="earliest-realistic-date-banner"
-            >
-              <Text style={[styles.noticeTitle, { color: colors.text }]}>
+            <View style={styles.noticeCard} testID="earliest-realistic-date-banner">
+              <Text variant="body" color={dark.textHi} style={styles.noticeTitle}>
                 {t('onboarding.targetDate.earliestDateNotice', {
                   date: analysis.earliestRealisticDate,
                 })}
               </Text>
-              <Text style={[styles.noticeBody, { color: colors.textMuted }]}>
+              <Text variant="label" color={dark.textMid} style={styles.noticeBody}>
                 {t('onboarding.targetDate.sustainablePaceBody')}
               </Text>
             </View>
@@ -170,28 +157,18 @@ export function TargetDateStep({
         </View>
       )}
 
-      {/* Skip button for optional step */}
+      {/* Prominent Skip button for optional step (Spec A07) */}
       <View style={styles.skipContainer}>
-        <Pressable
-          testID="btn-skip-target-date"
-          accessibilityRole="button"
-          accessibilityLabel={t('onboarding.skip')}
+        <Button
+          variant="secondary"
+          size="md"
+          label={t('onboarding.skip')}
           onPress={() => {
             playClickSound();
             onSkip();
           }}
-          style={({ pressed }) => [
-            styles.skipButton,
-            {
-              borderColor: colors.border,
-              backgroundColor: pressed ? colors.surfaceAlt : colors.surface,
-            },
-          ]}
-        >
-          <Text style={[styles.skipButtonText, { color: colors.textMuted }]}>
-            {t('onboarding.skip')}
-          </Text>
-        </Pressable>
+          testID="btn-skip-target-date"
+        />
       </View>
     </View>
   );
@@ -199,59 +176,44 @@ export function TargetDateStep({
 
 const styles = StyleSheet.create({
   container: {
-    paddingHorizontal: spacing.md,
-    gap: spacing.md,
+    paddingHorizontal: space[4],
+    gap: space[4],
+    paddingTop: space[2],
   },
   section: {
-    gap: spacing.xs,
+    gap: space[1],
   },
-  label: {
-    fontSize: fontSize.sm,
+  sectionLabel: {
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
     fontWeight: '600',
   },
   input: {
     minHeight: 48,
-    borderRadius: radius.md,
+    borderRadius: radius.control,
     borderWidth: 1,
-    paddingHorizontal: spacing.md,
-    fontSize: fontSize.md,
-  },
-  errorText: {
-    fontSize: fontSize.sm - 1,
-    fontWeight: '500',
+    paddingHorizontal: space[3],
+    fontSize: 16,
   },
   analysisContainer: {
-    gap: spacing.sm,
+    gap: space[2],
   },
   noticeCard: {
-    padding: spacing.md,
-    borderRadius: radius.md,
+    backgroundColor: dark.s1,
     borderWidth: 1,
-    gap: spacing.xs,
+    borderColor: dark.hairline,
+    borderRadius: radius.card,
+    padding: space[4],
+    gap: space[1],
   },
   noticeTitle: {
-    fontSize: fontSize.sm,
     fontWeight: '600',
-    lineHeight: 20,
   },
   noticeBody: {
-    fontSize: fontSize.sm - 1,
     lineHeight: 18,
   },
   skipContainer: {
-    paddingTop: spacing.xs,
+    marginTop: space[2],
     alignItems: 'center',
-  },
-  skipButton: {
-    minHeight: 44,
-    paddingHorizontal: spacing.lg,
-    borderRadius: radius.pill,
-    borderWidth: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  skipButtonText: {
-    fontSize: fontSize.sm,
-    fontWeight: '500',
   },
 });

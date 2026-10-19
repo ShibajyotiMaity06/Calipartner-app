@@ -1,9 +1,17 @@
-import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
+import React from 'react';
+import { ActivityIndicator, StyleSheet, View, TouchableOpacity } from 'react-native';
 import type { CalculateTargetsResult, Goal } from '@calipartner/core';
+import {
+  Text,
+  Button,
+  TargetRevealRing,
+  MacroBar,
+  space,
+  dark,
+  radius,
+} from '@calipartner/ui';
 import { t } from '@/i18n';
 import { playClickSound, playSuccessSound } from '@/lib/sound';
-import { fontSize, radius, spacing } from '@/theme/tokens';
-import { useTheme } from '@/theme/useTheme';
 
 interface SummaryStepProps {
   goal: Goal;
@@ -14,6 +22,8 @@ interface SummaryStepProps {
   saveError: string | null;
   onSave: () => void;
   onGoBackToStats?: () => void;
+  onGoBackToRate?: () => void;
+  onOpenHowCalculated?: () => void;
 }
 
 export function SummaryStep({
@@ -25,9 +35,9 @@ export function SummaryStep({
   saveError,
   onSave,
   onGoBackToStats,
+  onGoBackToRate,
+  onOpenHowCalculated,
 }: SummaryStepProps) {
-  const { colors } = useTheme();
-
   const handleSave = () => {
     playSuccessSound();
     onSave();
@@ -38,154 +48,146 @@ export function SummaryStep({
     if (onGoBackToStats) onGoBackToStats();
   };
 
+  const handleChangeRate = () => {
+    playClickSound();
+    if (onGoBackToRate) {
+      onGoBackToRate();
+    } else if (onGoBackToStats) {
+      onGoBackToStats();
+    }
+  };
+
   if (!calculatedTargets) {
     return (
       <View style={styles.emptyContainer} testID="summary-empty-state">
-        <Text style={[styles.emptyTitle, { color: colors.text }]}>
+        <Text variant="title1" color={dark.textHi} style={styles.emptyTitle}>
           {t('onboarding.summary.emptyTitle')}
         </Text>
-        <Text style={[styles.emptyBody, { color: colors.textMuted }]}>
+        <Text variant="body" color={dark.textMid} style={styles.emptyBody}>
           {t('onboarding.summary.emptyBody')}
         </Text>
         {onGoBackToStats && (
-          <Pressable
+          <Button
+            variant="primary"
+            size="md"
+            label={t('onboarding.back')}
             onPress={handleGoBack}
-            style={[styles.retryButton, { backgroundColor: colors.accent }]}
-            accessibilityRole="button"
-            accessibilityLabel={t('onboarding.back')}
             testID="btn-summary-empty-back"
-          >
-            <Text style={[styles.retryButtonText, { color: colors.onAccent }]}>
-              {t('onboarding.back')}
-            </Text>
-          </Pressable>
+          />
         )}
       </View>
     );
   }
 
-  const { targetKcal, macros } = calculatedTargets;
+  const { targetKcal, macros, weeklyRateKg } = calculatedTargets;
 
-  // Calculate percentages of total calories
-  const proteinPct = Math.round((macros.proteinKcal / targetKcal) * 100);
-  const fatPct = Math.round((macros.fatKcal / targetKcal) * 100);
-  const carbPct = Math.max(0, 100 - proteinPct - fatPct);
-
-  const goalName =
-    goal === 'cut'
-      ? t('onboarding.goal.cutTitle')
-      : goal === 'maintain'
-        ? t('onboarding.goal.maintainTitle')
-        : t('onboarding.goal.bulkTitle');
+  // Rate statement per Spec A10
+  const rateSentence =
+    goal === 'maintain'
+      ? 'Based on your stats, this maintains your current weight.'
+      : goal === 'cut'
+        ? `Based on your stats, this puts you on track to lose ${weeklyRateKg} kg a week.`
+        : `Based on your stats, this puts you on track to gain ${weeklyRateKg} kg a week.`;
 
   return (
     <View style={styles.container}>
-      {/* Hero Calorie Card */}
-      <View
-        style={[styles.heroCard, { backgroundColor: colors.surface, borderColor: colors.border }]}
-        testID="summary-hero-card"
-      >
-        <View style={styles.heroBadgeRow}>
-          <View
-            style={[
-              styles.goalBadge,
-              { backgroundColor: colors.surfaceAlt, borderColor: colors.border },
-            ]}
-            testID="summary-goal-badge"
-          >
-            <Text style={[styles.goalBadgeText, { color: colors.text }]}>{goalName}</Text>
-          </View>
-        </View>
+      {/* Spec A10: The first "wow" — Single large ring (184) with iris→apricot→teal gradient */}
+      <View style={styles.heroRingCard} testID="summary-hero-card">
+        <TargetRevealRing
+          targetKcal={targetKcal}
+          size={184}
+          strokeWidth={16}
+          caption="kcal a day"
+          testID="summary-hero-calories"
+        />
 
-        <Text style={[styles.heroCalories, { color: colors.text }]} testID="summary-hero-calories">
-          {t('onboarding.summary.dailyCaloriesHero', { kcal: targetKcal.toLocaleString() })}
-        </Text>
-        <Text style={[styles.heroUnit, { color: colors.textMuted }]}>
-          {t('onboarding.summary.dailyCaloriesUnit')}
+        {/* Supportive goal sentence per Spec A10 */}
+        <Text variant="body" color={dark.textMid} style={styles.rateSentence}>
+          {rateSentence}
         </Text>
       </View>
 
-      {/* Macronutrient Breakdown */}
-      <View
-        style={[styles.card, { backgroundColor: colors.surface, borderColor: colors.border }]}
-        testID="summary-macros-card"
-      >
-        <Text style={[styles.cardTitle, { color: colors.text }]}>
+      {/* Macronutrient Distribution Card with MacroBar */}
+      <View style={styles.card} testID="summary-macros-card">
+        <Text variant="heading" color={dark.textHi}>
           {t('onboarding.summary.macrosTitle')}
         </Text>
 
-        {/* Visual Macro Bar */}
-        <View style={styles.macroBarTrack}>
-          <View
-            style={[
-              styles.macroBarSegment,
-              { width: `${proteinPct}%`, backgroundColor: colors.accent },
-            ]}
-          />
-          <View
-            style={[
-              styles.macroBarSegment,
-              { width: `${carbPct}%`, backgroundColor: colors.textMuted },
-            ]}
-          />
-          <View
-            style={[
-              styles.macroBarSegment,
-              { width: `${fatPct}%`, backgroundColor: colors.border },
-            ]}
-          />
-        </View>
+        <MacroBar
+          proteinGrams={macros.proteinGrams}
+          carbsGrams={macros.carbGrams}
+          fatGrams={macros.fatGrams}
+          identityHue="iris"
+        />
 
         {/* 3 Macro Metrics */}
         <View style={styles.macrosRow}>
           <View style={styles.macroMetric} testID="summary-macro-protein">
-            <Text style={[styles.macroLabel, { color: colors.textMuted }]}>
+            <Text variant="label" color={dark.textLo}>
               {t('onboarding.summary.proteinLabel')}
             </Text>
-            <Text style={[styles.macroValue, { color: colors.text }]}>{macros.proteinGrams}g</Text>
-            <Text style={[styles.macroSub, { color: colors.textMuted }]}>{proteinPct}%</Text>
+            <Text variant="body" color={dark.textHi} style={styles.macroValue}>
+              {macros.proteinGrams}g
+            </Text>
           </View>
 
           <View style={styles.macroMetric} testID="summary-macro-carbs">
-            <Text style={[styles.macroLabel, { color: colors.textMuted }]}>
+            <Text variant="label" color={dark.textLo}>
               {t('onboarding.summary.carbsLabel')}
             </Text>
-            <Text style={[styles.macroValue, { color: colors.text }]}>{macros.carbGrams}g</Text>
-            <Text style={[styles.macroSub, { color: colors.textMuted }]}>{carbPct}%</Text>
+            <Text variant="body" color={dark.textHi} style={styles.macroValue}>
+              {macros.carbGrams}g
+            </Text>
           </View>
 
           <View style={styles.macroMetric} testID="summary-macro-fat">
-            <Text style={[styles.macroLabel, { color: colors.textMuted }]}>
+            <Text variant="label" color={dark.textLo}>
               {t('onboarding.summary.fatLabel')}
             </Text>
-            <Text style={[styles.macroValue, { color: colors.text }]}>{macros.fatGrams}g</Text>
-            <Text style={[styles.macroSub, { color: colors.textMuted }]}>{fatPct}%</Text>
+            <Text variant="body" color={dark.textHi} style={styles.macroValue}>
+              {macros.fatGrams}g
+            </Text>
           </View>
         </View>
+
+        {/* Spec A10 & A11: Link to "How is this worked out?" */}
+        {onOpenHowCalculated && (
+          <TouchableOpacity
+            onPress={onOpenHowCalculated}
+            style={styles.howCalcLink}
+            accessibilityRole="button"
+            accessibilityLabel={t('onboarding.summary.howCalculatedLink')}
+            testID="btn-how-calculated-link"
+          >
+            <Text variant="bodyS" color={dark.apricot} style={styles.howCalcText}>
+              How is this worked out? →
+            </Text>
+          </TouchableOpacity>
+        )}
       </View>
 
       {/* Daily Habits (Steps & Water) */}
-      <View style={[styles.card, { backgroundColor: colors.surface, borderColor: colors.border }]}>
-        <Text style={[styles.cardTitle, { color: colors.text }]}>
+      <View style={styles.card}>
+        <Text variant="heading" color={dark.textHi}>
           {t('onboarding.summary.habitsTitle')}
         </Text>
 
         <View style={styles.habitRow}>
           <View style={styles.habitItem} testID="summary-step-goal">
-            <Text style={[styles.habitLabel, { color: colors.textMuted }]}>
+            <Text variant="label" color={dark.textLo}>
               {t('onboarding.summary.stepGoalLabel')}
             </Text>
-            <Text style={[styles.habitValue, { color: colors.text }]}>
-              {t('onboarding.summary.stepGoalValue', { steps: stepGoal.toLocaleString() })}
+            <Text variant="body" color={dark.textHi} style={styles.habitValue}>
+              {stepGoal.toLocaleString()} steps
             </Text>
           </View>
 
           <View style={styles.habitItem} testID="summary-water-goal">
-            <Text style={[styles.habitLabel, { color: colors.textMuted }]}>
+            <Text variant="label" color={dark.textLo}>
               {t('onboarding.summary.waterGoalLabel')}
             </Text>
-            <Text style={[styles.habitValue, { color: colors.text }]}>
-              {t('onboarding.summary.waterGoalValue', { ml: waterMlGoal.toLocaleString() })}
+            <Text variant="body" color={dark.textHi} style={styles.habitValue}>
+              {waterMlGoal.toLocaleString()} ml
             </Text>
           </View>
         </View>
@@ -193,202 +195,124 @@ export function SummaryStep({
 
       {/* Save Error */}
       {saveError && (
-        <View
-          style={[
-            styles.errorBanner,
-            { backgroundColor: colors.surfaceAlt, borderColor: colors.danger },
-          ]}
-          testID="summary-save-error"
-        >
-          <Text style={[styles.errorText, { color: colors.danger }]}>{saveError}</Text>
+        <View style={styles.errorBanner} testID="summary-save-error">
+          <Text variant="bodyS" color={dark.danger}>
+            {saveError}
+          </Text>
         </View>
       )}
 
-      {/* Save / Finish Button */}
-      <Pressable
-        testID="btn-save-targets"
-        accessibilityRole="button"
-        accessibilityLabel={t('onboarding.summary.saveButton')}
-        disabled={isSaving}
-        onPress={handleSave}
-        style={({ pressed }) => [
-          styles.saveButton,
-          {
-            backgroundColor: colors.accent,
-            opacity: isSaving ? 0.7 : pressed ? 0.9 : 1,
-          },
-        ]}
-      >
-        {isSaving ? (
-          <View style={styles.savingRow}>
-            <ActivityIndicator size="small" color={colors.onAccent} />
-            <Text style={[styles.saveButtonText, { color: colors.onAccent }]}>
-              {t('onboarding.saving')}
-            </Text>
-          </View>
-        ) : (
-          <Text style={[styles.saveButtonText, { color: colors.onAccent }]}>
-            {t('onboarding.summary.saveButton')}
-          </Text>
-        )}
-      </Pressable>
+      {/* Primary & Secondary Action Buttons (Spec A10) */}
+      <View style={styles.actionsGroup}>
+        <Button
+          variant="primary"
+          size="lg"
+          label={isSaving ? t('onboarding.saving') : 'Looks good'}
+          onPress={handleSave}
+          disabled={isSaving}
+          testID="btn-save-targets"
+        />
+
+        <Button
+          variant="secondary"
+          size="md"
+          label="Change my rate"
+          onPress={handleChangeRate}
+          disabled={isSaving}
+          testID="btn-change-rate"
+        />
+      </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    paddingHorizontal: spacing.md,
-    gap: spacing.md,
-    paddingBottom: spacing.lg,
+    paddingHorizontal: space[4],
+    gap: space[4],
+    paddingTop: space[2],
+    paddingBottom: space[4],
   },
   emptyContainer: {
-    padding: spacing.xl,
+    padding: space[4],
     alignItems: 'center',
-    gap: spacing.md,
+    gap: space[3],
   },
   emptyTitle: {
-    fontSize: fontSize.lg,
-    fontWeight: '700',
     textAlign: 'center',
   },
   emptyBody: {
-    fontSize: fontSize.sm,
     textAlign: 'center',
     lineHeight: 20,
   },
-  retryButton: {
-    minHeight: 44,
-    paddingHorizontal: spacing.xl,
-    borderRadius: radius.pill,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginTop: spacing.sm,
-  },
-  retryButtonText: {
-    fontSize: fontSize.md,
-    fontWeight: '600',
-  },
-  heroCard: {
-    padding: spacing.lg,
-    borderRadius: radius.lg,
+  heroRingCard: {
+    backgroundColor: dark.s1,
+    borderRadius: radius.card,
     borderWidth: 1,
+    borderColor: dark.hairline,
+    padding: space[4],
     alignItems: 'center',
-    gap: spacing.xs,
+    gap: space[3],
   },
-  heroBadgeRow: {
-    marginBottom: spacing.xs,
-  },
-  goalBadge: {
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.xs,
-    borderRadius: radius.pill,
-    borderWidth: 1,
-  },
-  goalBadgeText: {
-    fontSize: fontSize.sm,
-    fontWeight: '600',
-  },
-  heroCalories: {
-    fontSize: 48,
-    fontWeight: '800',
-    letterSpacing: -1,
-  },
-  heroUnit: {
-    fontSize: fontSize.md,
-    fontWeight: '500',
+  rateSentence: {
+    textAlign: 'center',
+    lineHeight: 22,
+    maxWidth: 320,
   },
   card: {
-    padding: spacing.md,
-    borderRadius: radius.md,
+    backgroundColor: dark.s1,
+    borderRadius: radius.card,
     borderWidth: 1,
-    gap: spacing.md,
-  },
-  cardTitle: {
-    fontSize: fontSize.sm,
-    fontWeight: '700',
-  },
-  macroBarTrack: {
-    flexDirection: 'row',
-    height: 8,
-    borderRadius: radius.pill,
-    overflow: 'hidden',
-    width: '100%',
-  },
-  macroBarSegment: {
-    height: '100%',
+    borderColor: dark.hairline,
+    padding: space[4],
+    gap: space[3],
   },
   macrosRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
+    paddingTop: space[1],
   },
   macroMetric: {
-    flex: 1,
     alignItems: 'center',
+    flex: 1,
     gap: 2,
   },
-  macroLabel: {
-    fontSize: fontSize.sm - 2,
-    fontWeight: '500',
-  },
   macroValue: {
-    fontSize: fontSize.lg,
     fontWeight: '700',
   },
-  macroSub: {
-    fontSize: fontSize.sm - 2,
+  howCalcLink: {
+    minHeight: 44,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: space[1],
+  },
+  howCalcText: {
+    fontWeight: '600',
   },
   habitRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    gap: spacing.md,
+    gap: space[3],
   },
   habitItem: {
     flex: 1,
-    gap: 2,
-  },
-  habitLabel: {
-    fontSize: fontSize.sm - 1,
+    backgroundColor: dark.s2,
+    borderRadius: radius.control,
+    padding: space[3],
+    gap: 4,
   },
   habitValue: {
-    fontSize: fontSize.md,
-    fontWeight: '600',
-  },
-  howCalculatedLink: {
-    padding: spacing.sm,
-    borderRadius: radius.md,
-    borderWidth: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    minHeight: 44,
-  },
-  howCalculatedText: {
-    fontSize: fontSize.sm,
     fontWeight: '600',
   },
   errorBanner: {
-    padding: spacing.md,
-    borderRadius: radius.md,
+    backgroundColor: dark.s2,
     borderWidth: 1,
+    borderColor: dark.danger,
+    borderRadius: radius.control,
+    padding: space[3],
   },
-  errorText: {
-    fontSize: fontSize.sm,
-    fontWeight: '500',
-  },
-  saveButton: {
-    minHeight: 52,
-    borderRadius: radius.pill,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginTop: spacing.xs,
-  },
-  savingRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.sm,
-  },
-  saveButtonText: {
-    fontSize: fontSize.md,
-    fontWeight: '700',
+  actionsGroup: {
+    gap: space[3],
+    marginTop: space[2],
   },
 });

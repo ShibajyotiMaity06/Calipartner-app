@@ -1,8 +1,8 @@
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import React from 'react';
+import { TouchableOpacity, StyleSheet, View } from 'react-native';
+import { Text, ChevronLeftIcon, space, dark, radius } from '@calipartner/ui';
 import { t } from '@/i18n';
 import { playClickSound } from '@/lib/sound';
-import { fontSize, radius, spacing } from '@/theme/tokens';
-import { useTheme } from '@/theme/useTheme';
 
 interface StepHeaderProps {
   currentStepIndex: number;
@@ -11,6 +11,8 @@ interface StepHeaderProps {
   subtitle?: string;
   onBack?: () => void;
   canGoBack: boolean;
+  onSkip?: () => void;
+  canSkip?: boolean;
 }
 
 export function StepHeader({
@@ -20,8 +22,10 @@ export function StepHeader({
   subtitle,
   onBack,
   canGoBack,
+  onSkip,
+  canSkip,
 }: StepHeaderProps) {
-  const { colors } = useTheme();
+  // 4px progress bar calculation
   const progressPercent = Math.min(100, Math.max(0, ((currentStepIndex + 1) / totalSteps) * 100));
 
   const handleBack = () => {
@@ -29,34 +33,50 @@ export function StepHeader({
     if (onBack) onBack();
   };
 
+  const handleSkip = () => {
+    playClickSound();
+    if (onSkip) onSkip();
+  };
+
   return (
     <View style={styles.container} accessible accessibilityRole="header">
-      {/* Top row with Back button and Step indicator */}
+      {/* 4px Thin Progress Bar at Top (Spec Part 7.A) */}
+      <View
+        style={styles.progressTrack}
+        accessible
+        accessibilityRole="progressbar"
+        accessibilityValue={{ min: 1, max: totalSteps, now: currentStepIndex + 1 }}
+      >
+        <View
+          testID="onboarding-progress-fill"
+          style={[styles.progressFill, { width: `${progressPercent}%` }]}
+        />
+      </View>
+
+      {/* Top row with Back button, Step indicator, and optional Skip */}
       <View style={styles.topRow}>
         {canGoBack && onBack ? (
-          <Pressable
+          <TouchableOpacity
             onPress={handleBack}
             accessibilityRole="button"
             accessibilityLabel={t('onboarding.back')}
             testID="btn-onboarding-back"
-            style={({ pressed }) => [
-              styles.backButton,
-              {
-                borderColor: colors.border,
-                backgroundColor: pressed ? colors.surfaceAlt : colors.surface,
-              },
-            ]}
+            style={styles.backButton}
             hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
           >
-            <Text style={[styles.backText, { color: colors.text }]}>← {t('onboarding.back')}</Text>
-          </Pressable>
+            <ChevronLeftIcon size={20} color={dark.textHi} />
+            <Text variant="body" color={dark.textHi} style={styles.backText}>
+              {t('onboarding.back')}
+            </Text>
+          </TouchableOpacity>
         ) : (
           <View style={styles.backButtonPlaceholder} />
         )}
 
         <Text
+          variant="label"
+          color={dark.textLo}
           testID="step-indicator-text"
-          style={[styles.stepIndicator, { color: colors.textMuted }]}
           accessibilityLabel={t('onboarding.stepIndicator', {
             current: currentStepIndex + 1,
             total: totalSteps,
@@ -67,32 +87,40 @@ export function StepHeader({
             total: totalSteps,
           })}
         </Text>
-      </View>
 
-      {/* Progress Bar */}
-      <View
-        style={[styles.progressTrack, { backgroundColor: colors.surfaceAlt }]}
-        accessible
-        accessibilityRole="progressbar"
-        accessibilityValue={{ min: 1, max: totalSteps, now: currentStepIndex + 1 }}
-      >
-        <View
-          testID="onboarding-progress-fill"
-          style={[
-            styles.progressFill,
-            { width: `${progressPercent}%`, backgroundColor: colors.accent },
-          ]}
-        />
+        {canSkip && onSkip ? (
+          <TouchableOpacity
+            onPress={handleSkip}
+            accessibilityRole="button"
+            accessibilityLabel={t('onboarding.skip')}
+            testID="btn-onboarding-skip"
+            style={styles.skipButton}
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+          >
+            <Text variant="bodyS" color={dark.textMid} style={styles.skipText}>
+              {t('onboarding.skip')}
+            </Text>
+          </TouchableOpacity>
+        ) : (
+          <View style={styles.backButtonPlaceholder} />
+        )}
       </View>
 
       {/* Title & Subtitle */}
       <View style={styles.textContainer}>
-        <Text style={[styles.title, { color: colors.text }]} testID="onboarding-step-title">
+        <Text
+          variant="title1"
+          color={dark.textHi}
+          style={styles.title}
+          testID="onboarding-step-title"
+        >
           {title}
         </Text>
         {subtitle ? (
           <Text
-            style={[styles.subtitle, { color: colors.textMuted }]}
+            variant="body"
+            color={dark.textMid}
+            style={styles.subtitle}
             testID="onboarding-step-subtitle"
           >
             {subtitle}
@@ -105,10 +133,23 @@ export function StepHeader({
 
 const styles = StyleSheet.create({
   container: {
-    paddingHorizontal: spacing.md,
-    paddingTop: spacing.md,
-    paddingBottom: spacing.sm,
-    gap: spacing.sm,
+    paddingHorizontal: space[4],
+    paddingTop: space[2],
+    paddingBottom: space[2],
+    gap: space[2],
+  },
+  progressTrack: {
+    height: 4,
+    borderRadius: radius.full,
+    overflow: 'hidden',
+    width: '100%',
+    backgroundColor: dark.s2,
+    marginBottom: space[1],
+  },
+  progressFill: {
+    height: '100%',
+    borderRadius: radius.full,
+    backgroundColor: dark.apricot,
   },
   topRow: {
     flexDirection: 'row',
@@ -117,46 +158,36 @@ const styles = StyleSheet.create({
     minHeight: 44,
   },
   backButton: {
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.xs,
-    borderRadius: radius.pill,
-    borderWidth: 1,
-    minHeight: 40,
-    justifyContent: 'center',
+    flexDirection: 'row',
     alignItems: 'center',
+    gap: space[1],
+    minWidth: 44,
+    minHeight: 44,
+    justifyContent: 'center',
   },
   backButtonPlaceholder: {
     width: 60,
   },
   backText: {
-    fontSize: fontSize.sm,
     fontWeight: '500',
   },
-  stepIndicator: {
-    fontSize: fontSize.sm,
+  skipButton: {
+    minWidth: 44,
+    minHeight: 44,
+    justifyContent: 'center',
+    alignItems: 'flex-end',
+  },
+  skipText: {
     fontWeight: '500',
-  },
-  progressTrack: {
-    height: 6,
-    borderRadius: radius.pill,
-    overflow: 'hidden',
-    width: '100%',
-  },
-  progressFill: {
-    height: '100%',
-    borderRadius: radius.pill,
   },
   textContainer: {
-    paddingTop: spacing.xs,
-    gap: spacing.xs,
+    paddingTop: space[1],
+    gap: space[1],
   },
   title: {
-    fontSize: fontSize.xl,
-    fontWeight: '700',
-    letterSpacing: -0.3,
+    letterSpacing: -0.4,
   },
   subtitle: {
-    fontSize: fontSize.sm,
-    lineHeight: 20,
+    lineHeight: 22,
   },
 });

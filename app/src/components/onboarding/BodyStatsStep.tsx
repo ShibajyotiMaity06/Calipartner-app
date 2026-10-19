@@ -1,5 +1,5 @@
-import { useMemo, useState } from 'react';
-import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import React, { useMemo, useState } from 'react';
+import { StyleSheet, TextInput, View, TouchableOpacity } from 'react-native';
 import {
   cmToFtIn,
   ftInToCm,
@@ -9,11 +9,10 @@ import {
   type Sex,
   type Units,
 } from '@calipartner/core';
+import { Text, space, dark, radius } from '@calipartner/ui';
 import { InteractiveDobPicker } from '@/components/onboarding/InteractiveDobPicker';
 import { t } from '@/i18n';
 import { playClickSound } from '@/lib/sound';
-import { fontSize, radius, spacing } from '@/theme/tokens';
-import { useTheme } from '@/theme/useTheme';
 
 interface BodyStatsStepProps {
   units: Units;
@@ -54,8 +53,6 @@ export function BodyStatsStep({
   onChangeWeightKg,
   onChangeBodyFat,
 }: BodyStatsStepProps) {
-  const { colors } = useTheme();
-
   // Local text input states so user can type freely
   const [heightCmText, setHeightCmText] = useState(heightCm > 0 ? String(heightCm) : '');
   const [weightText, setWeightText] = useState(
@@ -164,18 +161,11 @@ export function BodyStatsStep({
     <View style={styles.container}>
       {/* Units Segmented Toggle */}
       <View style={styles.section}>
-        <Text style={[styles.label, { color: colors.text }]}>
+        <Text variant="label" color={dark.textLo} style={styles.sectionLabel}>
           {t('onboarding.bodyStats.unitsLabel')}
         </Text>
-        <View
-          style={[
-            styles.segmentContainer,
-            { backgroundColor: colors.surfaceAlt, borderColor: colors.border },
-          ]}
-          accessible
-          accessibilityRole="radiogroup"
-        >
-          <Pressable
+        <View style={styles.segmentContainer} accessible accessibilityRole="radiogroup">
+          <TouchableOpacity
             testID="units-toggle-metric"
             accessibilityRole="radio"
             accessibilityState={{ selected: units === 'metric' }}
@@ -183,21 +173,19 @@ export function BodyStatsStep({
             onPress={() => handleToggleUnits('metric')}
             style={[
               styles.segmentItem,
-              units === 'metric' && [styles.segmentActive, { backgroundColor: colors.surface }],
+              units === 'metric' && styles.segmentActive,
             ]}
           >
             <Text
-              style={[
-                styles.segmentText,
-                { color: units === 'metric' ? colors.text : colors.textMuted },
-                units === 'metric' && styles.segmentTextBold,
-              ]}
+              variant="bodyS"
+              color={units === 'metric' ? dark.textHi : dark.textLo}
+              style={units === 'metric' ? styles.segmentTextBold : undefined}
             >
               {t('onboarding.bodyStats.metric')}
             </Text>
-          </Pressable>
+          </TouchableOpacity>
 
-          <Pressable
+          <TouchableOpacity
             testID="units-toggle-imperial"
             accessibilityRole="radio"
             accessibilityState={{ selected: units === 'imperial' }}
@@ -205,35 +193,33 @@ export function BodyStatsStep({
             onPress={() => handleToggleUnits('imperial')}
             style={[
               styles.segmentItem,
-              units === 'imperial' && [styles.segmentActive, { backgroundColor: colors.surface }],
+              units === 'imperial' && styles.segmentActive,
             ]}
           >
             <Text
-              style={[
-                styles.segmentText,
-                { color: units === 'imperial' ? colors.text : colors.textMuted },
-                units === 'imperial' && styles.segmentTextBold,
-              ]}
+              variant="bodyS"
+              color={units === 'imperial' ? dark.textHi : dark.textLo}
+              style={units === 'imperial' ? styles.segmentTextBold : undefined}
             >
               {t('onboarding.bodyStats.imperial')}
             </Text>
-          </Pressable>
+          </TouchableOpacity>
         </View>
       </View>
 
       {/* Sex Chips */}
       <View style={styles.section}>
-        <Text style={[styles.label, { color: colors.text }]}>
+        <Text variant="label" color={dark.textLo} style={styles.sectionLabel}>
           {t('onboarding.bodyStats.sexLabel')}
         </Text>
-        <Text style={[styles.helpText, { color: colors.textMuted }]}>
+        <Text variant="bodyS" color={dark.textMid} style={styles.helpText}>
           {t('onboarding.bodyStats.sexHelp')}
         </Text>
         <View style={styles.chipsRow} accessible accessibilityRole="radiogroup">
           {(['male', 'female', 'other'] as const).map((s) => {
             const isSelected = sex === s;
             return (
-              <Pressable
+              <TouchableOpacity
                 key={s}
                 testID={`sex-chip-${s}`}
                 accessibilityRole="radio"
@@ -246,22 +232,20 @@ export function BodyStatsStep({
                 style={[
                   styles.chip,
                   {
-                    backgroundColor: isSelected ? colors.surface : colors.surfaceAlt,
-                    borderColor: isSelected ? colors.accent : colors.border,
+                    backgroundColor: isSelected ? dark.s2 : dark.s1,
+                    borderColor: isSelected ? dark.apricot : dark.hairline,
                     borderWidth: isSelected ? 2 : 1,
                   },
                 ]}
               >
                 <Text
-                  style={[
-                    styles.chipText,
-                    { color: isSelected ? colors.text : colors.textMuted },
-                    isSelected && styles.chipTextBold,
-                  ]}
+                  variant="body"
+                  color={isSelected ? dark.textHi : dark.textMid}
+                  style={isSelected ? styles.chipTextBold : undefined}
                 >
                   {t(`onboarding.bodyStats.${s}`)}
                 </Text>
-              </Pressable>
+              </TouchableOpacity>
             );
           })}
         </View>
@@ -269,7 +253,7 @@ export function BodyStatsStep({
 
       {/* Interactive Date of Birth Picker */}
       <View style={styles.section}>
-        <Text style={[styles.label, { color: colors.text }]}>
+        <Text variant="label" color={dark.textLo} style={styles.sectionLabel}>
           {t('onboarding.bodyStats.dobLabel')}
         </Text>
         <InteractiveDobPicker
@@ -281,7 +265,7 @@ export function BodyStatsStep({
 
       {/* Height Input (cm vs ft/in) */}
       <View style={styles.section}>
-        <Text style={[styles.label, { color: colors.text }]}>
+        <Text variant="label" color={dark.textLo} style={styles.sectionLabel}>
           {t('onboarding.bodyStats.heightLabel')} ({units === 'metric' ? 'cm' : 'ft & in'})
         </Text>
         {units === 'metric' ? (
@@ -290,15 +274,15 @@ export function BodyStatsStep({
             value={heightCmText}
             onChangeText={handleMetricHeightChange}
             placeholder={t('onboarding.bodyStats.heightCmPlaceholder')}
-            placeholderTextColor={colors.textMuted}
+            placeholderTextColor={dark.textOff}
             keyboardType="numeric"
             accessibilityLabel={`${t('onboarding.bodyStats.heightLabel')} in centimeters`}
             style={[
               styles.input,
               {
-                backgroundColor: colors.surface,
-                borderColor: errorHeight ? colors.danger : colors.border,
-                color: colors.text,
+                backgroundColor: dark.s2,
+                borderColor: errorHeight ? dark.danger : dark.hairline,
+                color: dark.textHi,
               },
             ]}
           />
@@ -310,19 +294,21 @@ export function BodyStatsStep({
                 value={feetText}
                 onChangeText={handleImperialFeetChange}
                 placeholder={t('onboarding.bodyStats.heightFtPlaceholder')}
-                placeholderTextColor={colors.textMuted}
+                placeholderTextColor={dark.textOff}
                 keyboardType="numeric"
                 accessibilityLabel="Height in feet"
                 style={[
                   styles.input,
                   {
-                    backgroundColor: colors.surface,
-                    borderColor: errorHeight ? colors.danger : colors.border,
-                    color: colors.text,
+                    backgroundColor: dark.s2,
+                    borderColor: errorHeight ? dark.danger : dark.hairline,
+                    color: dark.textHi,
                   },
                 ]}
               />
-              <Text style={[styles.unitSuffix, { color: colors.textMuted }]}>ft</Text>
+              <Text variant="bodyS" color={dark.textMid} style={styles.unitSuffix}>
+                ft
+              </Text>
             </View>
             <View style={styles.dualInputItem}>
               <TextInput
@@ -330,24 +316,26 @@ export function BodyStatsStep({
                 value={inchesText}
                 onChangeText={handleImperialInchesChange}
                 placeholder={t('onboarding.bodyStats.heightInPlaceholder')}
-                placeholderTextColor={colors.textMuted}
+                placeholderTextColor={dark.textOff}
                 keyboardType="numeric"
                 accessibilityLabel="Height in inches"
                 style={[
                   styles.input,
                   {
-                    backgroundColor: colors.surface,
-                    borderColor: errorHeight ? colors.danger : colors.border,
-                    color: colors.text,
+                    backgroundColor: dark.s2,
+                    borderColor: errorHeight ? dark.danger : dark.hairline,
+                    color: dark.textHi,
                   },
                 ]}
               />
-              <Text style={[styles.unitSuffix, { color: colors.textMuted }]}>in</Text>
+              <Text variant="bodyS" color={dark.textMid} style={styles.unitSuffix}>
+                in
+              </Text>
             </View>
           </View>
         )}
         {errorHeight ? (
-          <Text style={[styles.errorText, { color: colors.danger }]} testID="error-height">
+          <Text variant="label" color={dark.danger} testID="error-height">
             {errorHeight}
           </Text>
         ) : null}
@@ -355,7 +343,7 @@ export function BodyStatsStep({
 
       {/* Weight Input (kg vs lb) */}
       <View style={styles.section}>
-        <Text style={[styles.label, { color: colors.text }]}>
+        <Text variant="label" color={dark.textLo} style={styles.sectionLabel}>
           {t('onboarding.bodyStats.weightLabel')} ({units === 'metric' ? 'kg' : 'lb'})
         </Text>
         <TextInput
@@ -363,20 +351,20 @@ export function BodyStatsStep({
           value={weightText}
           onChangeText={handleWeightChange}
           placeholder={t('onboarding.bodyStats.weightPlaceholder')}
-          placeholderTextColor={colors.textMuted}
+          placeholderTextColor={dark.textOff}
           keyboardType="numeric"
           accessibilityLabel={`${t('onboarding.bodyStats.weightLabel')} in ${units === 'metric' ? 'kilograms' : 'pounds'}`}
           style={[
             styles.input,
             {
-              backgroundColor: colors.surface,
-              borderColor: errorWeight ? colors.danger : colors.border,
-              color: colors.text,
+              backgroundColor: dark.s2,
+              borderColor: errorWeight ? dark.danger : dark.hairline,
+              color: dark.textHi,
             },
           ]}
         />
         {errorWeight ? (
-          <Text style={[styles.errorText, { color: colors.danger }]} testID="error-weight">
+          <Text variant="label" color={dark.danger} testID="error-weight">
             {errorWeight}
           </Text>
         ) : null}
@@ -384,7 +372,7 @@ export function BodyStatsStep({
 
       {/* Optional Body Fat % */}
       <View style={styles.section}>
-        <Text style={[styles.label, { color: colors.text }]}>
+        <Text variant="label" color={dark.textLo} style={styles.sectionLabel}>
           {t('onboarding.bodyStats.bodyFatLabel')}
         </Text>
         <TextInput
@@ -392,24 +380,24 @@ export function BodyStatsStep({
           value={bodyFatText}
           onChangeText={handleBodyFatChange}
           placeholder={t('onboarding.bodyStats.bodyFatPlaceholder')}
-          placeholderTextColor={colors.textMuted}
+          placeholderTextColor={dark.textOff}
           keyboardType="numeric"
           accessibilityLabel={t('onboarding.bodyStats.bodyFatLabel')}
           style={[
             styles.input,
             {
-              backgroundColor: colors.surface,
-              borderColor: errorBodyFat ? colors.danger : colors.border,
-              color: colors.text,
+              backgroundColor: dark.s2,
+              borderColor: errorBodyFat ? dark.danger : dark.hairline,
+              color: dark.textHi,
             },
           ]}
         />
         {errorBodyFat ? (
-          <Text style={[styles.errorText, { color: colors.danger }]} testID="error-body-fat">
+          <Text variant="label" color={dark.danger} testID="error-body-fat">
             {errorBodyFat}
           </Text>
         ) : (
-          <Text style={[styles.helpText, { color: colors.textMuted }]}>
+          <Text variant="label" color={dark.textLo} style={styles.helpText}>
             {t('onboarding.bodyStats.bodyFatHelp')}
           </Text>
         )}
@@ -421,33 +409,26 @@ export function BodyStatsStep({
           style={[
             styles.bmiCard,
             {
-              backgroundColor: colors.surfaceAlt,
-              borderColor: bmiInfo.isCutUnderweight ? colors.danger : colors.border,
+              borderColor: bmiInfo.isCutUnderweight ? dark.danger : dark.hairline,
             },
           ]}
           testID="bmi-indicator-card"
         >
           <View style={styles.bmiRow}>
-            <Text style={[styles.bmiLabel, { color: colors.text }]}>
+            <Text variant="body" color={dark.textHi}>
               {t('onboarding.bodyStats.bmiLabel')}:{' '}
-              <Text style={{ fontWeight: '700' }}>{bmiInfo.value}</Text>
+              <Text variant="body" color={dark.textHi} style={{ fontWeight: '700' }}>
+                {bmiInfo.value}
+              </Text>
             </Text>
-            <View
-              style={[
-                styles.bmiBadge,
-                {
-                  backgroundColor: colors.surface,
-                  borderColor: colors.border,
-                },
-              ]}
-            >
-              <Text style={[styles.bmiBadgeText, { color: colors.textMuted }]}>
+            <View style={styles.bmiBadge}>
+              <Text variant="label" color={dark.textMid}>
                 {bmiInfo.category}
               </Text>
             </View>
           </View>
           {bmiInfo.isCutUnderweight && (
-            <Text style={[styles.bmiWarning, { color: colors.danger }]} testID="bmi-cut-warning">
+            <Text variant="label" color={dark.danger} testID="bmi-cut-warning">
               {t('onboarding.bodyStats.bmiCutWarning')}
             </Text>
           )}
@@ -459,79 +440,71 @@ export function BodyStatsStep({
 
 const styles = StyleSheet.create({
   container: {
-    paddingHorizontal: spacing.md,
-    gap: spacing.md,
+    paddingHorizontal: space[4],
+    gap: space[4],
+    paddingTop: space[2],
   },
   section: {
-    gap: spacing.xs,
+    gap: space[1],
   },
-  label: {
-    fontSize: fontSize.sm,
+  sectionLabel: {
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
     fontWeight: '600',
   },
   helpText: {
-    fontSize: fontSize.sm - 1,
     lineHeight: 18,
-  },
-  errorText: {
-    fontSize: fontSize.sm - 1,
-    fontWeight: '500',
   },
   input: {
     minHeight: 48,
-    borderRadius: radius.md,
+    borderRadius: radius.control,
     borderWidth: 1,
-    paddingHorizontal: spacing.md,
-    fontSize: fontSize.md,
+    paddingHorizontal: space[3],
+    fontSize: 16,
   },
   segmentContainer: {
     flexDirection: 'row',
-    borderRadius: radius.md,
+    borderRadius: radius.full,
+    backgroundColor: dark.s2,
     borderWidth: 1,
+    borderColor: dark.hairline,
     padding: 3,
     minHeight: 44,
   },
   segmentItem: {
     flex: 1,
-    borderRadius: radius.sm,
+    borderRadius: radius.full,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: spacing.xs,
+    paddingVertical: space[2],
+    minHeight: 40,
   },
   segmentActive: {
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
-    elevation: 1,
-  },
-  segmentText: {
-    fontSize: fontSize.sm,
+    backgroundColor: dark.s1,
+    borderWidth: 1,
+    borderColor: dark.hairlineLit,
   },
   segmentTextBold: {
     fontWeight: '600',
   },
   chipsRow: {
     flexDirection: 'row',
-    gap: spacing.sm,
+    gap: space[2],
   },
   chip: {
     flex: 1,
+    borderRadius: radius.full,
     minHeight: 44,
-    borderRadius: radius.md,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingHorizontal: spacing.sm,
-  },
-  chipText: {
-    fontSize: fontSize.sm,
+    paddingHorizontal: space[2],
   },
   chipTextBold: {
     fontWeight: '600',
   },
   dualInputRow: {
     flexDirection: 'row',
-    gap: spacing.sm,
+    gap: space[2],
   },
   dualInputItem: {
     flex: 1,
@@ -540,38 +513,27 @@ const styles = StyleSheet.create({
   },
   unitSuffix: {
     position: 'absolute',
-    right: spacing.md,
-    fontSize: fontSize.sm,
+    right: space[3],
     fontWeight: '500',
   },
   bmiCard: {
-    padding: spacing.md,
-    borderRadius: radius.md,
+    backgroundColor: dark.s1,
     borderWidth: 1,
-    gap: spacing.xs,
-    marginTop: spacing.xs,
+    borderRadius: radius.card,
+    padding: space[3],
+    gap: space[1],
   },
   bmiRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
   },
-  bmiLabel: {
-    fontSize: fontSize.sm,
-  },
   bmiBadge: {
-    paddingHorizontal: spacing.sm,
-    paddingVertical: 2,
-    borderRadius: radius.sm,
+    backgroundColor: dark.s2,
     borderWidth: 1,
-  },
-  bmiBadgeText: {
-    fontSize: fontSize.sm - 2,
-    fontWeight: '600',
-  },
-  bmiWarning: {
-    fontSize: fontSize.sm - 1,
-    lineHeight: 18,
-    fontWeight: '500',
+    borderColor: dark.hairline,
+    borderRadius: radius.full,
+    paddingHorizontal: space[2],
+    paddingVertical: 2,
   },
 });

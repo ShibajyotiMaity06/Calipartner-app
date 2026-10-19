@@ -1,9 +1,9 @@
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import React from 'react';
+import { TouchableOpacity, StyleSheet, View } from 'react-native';
 import { kgToLb, type CalculateTargetsResult, type Goal, type Units } from '@calipartner/core';
+import { Text, CheckIcon, Chip, space, dark, radius } from '@calipartner/ui';
 import { t } from '@/i18n';
 import { playClickSound } from '@/lib/sound';
-import { fontSize, radius, spacing } from '@/theme/tokens';
-import { useTheme } from '@/theme/useTheme';
 
 interface RatePickerStepProps {
   goal: Goal;
@@ -22,12 +22,10 @@ export function RatePickerStep({
   errorMessage,
   onSelectRate,
 }: RatePickerStepProps) {
-  const { colors } = useTheme();
-
   if (!calculatedTargets) {
     return (
       <View style={styles.emptyContainer} testID="rate-picker-empty">
-        <Text style={[styles.emptyText, { color: colors.textMuted }]}>
+        <Text variant="body" color={dark.textLo}>
           {t('onboarding.summary.emptyBody')}
         </Text>
       </View>
@@ -55,50 +53,47 @@ export function RatePickerStep({
 
   return (
     <View style={styles.container}>
-      {/* Maintenance Baseline Callout */}
-      <View
-        style={[
-          styles.maintenanceCard,
-          { backgroundColor: colors.surfaceAlt, borderColor: colors.border },
-        ]}
-        testID="maintenance-callout-card"
-      >
-        <Text style={[styles.maintenanceHeader, { color: colors.textMuted }]}>
+      {/* Maintenance Baseline Callout with Numeral-XL (Spec A09) */}
+      <View style={styles.maintenanceCard} testID="maintenance-callout-card">
+        <Text variant="label" color={dark.textLo} style={styles.maintenanceHeader}>
           {t('onboarding.rate.maintenanceHeader')}
         </Text>
-        <Text
-          style={[styles.maintenanceKcal, { color: colors.text }]}
-          testID="maintenance-callout-text"
-        >
-          {t('onboarding.rate.maintenanceKcal', { kcal: tdee })}
-        </Text>
-        <Text style={[styles.maintenanceDesc, { color: colors.textMuted }]}>
-          {t('onboarding.rate.maintenanceDesc')}
+        <View style={styles.numeralRow}>
+          <Text
+            variant="numeralXL"
+            color={dark.textHi}
+            style={styles.numeralXL}
+            testID="maintenance-callout-text"
+          >
+            {tdee.toLocaleString()}
+          </Text>
+          <Text variant="body" color={dark.textMid} style={styles.numeralUnit}>
+            kcal a day to stay the same
+          </Text>
+        </View>
+        <Text variant="bodyS" color={dark.textMid} style={styles.maintenanceCopy}>
+          Faster is not always better. 0.5 kg a week is easy to keep up.
         </Text>
       </View>
 
       {/* Maintain-Only Notice */}
       {goal === 'maintain' ? (
-        <View
-          style={[
-            styles.maintainNoticeCard,
-            { backgroundColor: colors.surface, borderColor: colors.border },
-          ]}
-          testID="maintain-notice-card"
-        >
-          <Text style={[styles.maintainNoticeTitle, { color: colors.text }]}>
+        <View style={styles.maintainNoticeCard} testID="maintain-notice-card">
+          <Text variant="heading" color={dark.textHi} style={styles.maintainNoticeTitle}>
             {t('onboarding.rate.targetKcalText', { kcal: tdee })}
           </Text>
-          <Text style={[styles.maintainNoticeText, { color: colors.textMuted }]}>
+          <Text variant="body" color={dark.textMid}>
             {t('onboarding.rate.maintainOnlyNotice')}
           </Text>
         </View>
       ) : (
-        /* Preset Rates List */
+        /* Preset Rates List (0.25, 0.5, 0.75, 1 kg/week) */
         <View style={styles.ratesList} accessible accessibilityRole="radiogroup">
           {presetRates.map((preset) => {
             const isSelected = selectedRateKg === preset.rateKgPerWeek && preset.available;
             const isUnavailable = !preset.available;
+            const isRecommended = preset.rateKgPerWeek === 0.5;
+
             const rateFormatted =
               units === 'metric'
                 ? t('onboarding.rate.rateCardTitle', { rate: preset.rateKgPerWeek })
@@ -116,7 +111,7 @@ export function RatePickerStep({
                   });
 
             return (
-              <Pressable
+              <TouchableOpacity
                 key={preset.rateKgPerWeek}
                 testID={`rate-card-${preset.rateKgPerWeek}`}
                 accessibilityRole="radio"
@@ -132,17 +127,18 @@ export function RatePickerStep({
                   playClickSound();
                   onSelectRate(preset.rateKgPerWeek);
                 }}
-                style={({ pressed }) => [
+                activeOpacity={0.8}
+                style={[
                   styles.rateCard,
                   {
-                    backgroundColor: colors.surface,
+                    backgroundColor: isUnavailable ? dark.s1 : isSelected ? dark.s2 : dark.s1,
                     borderColor: isUnavailable
-                      ? colors.border
+                      ? dark.hairline
                       : isSelected
-                        ? colors.accent
-                        : colors.border,
+                        ? dark.apricot
+                        : dark.hairline,
                     borderWidth: isSelected ? 2 : 1,
-                    opacity: isUnavailable ? 0.55 : pressed ? 0.9 : 1,
+                    opacity: isUnavailable ? 0.45 : 1,
                   },
                 ]}
               >
@@ -153,109 +149,85 @@ export function RatePickerStep({
                         styles.radioCircle,
                         {
                           borderColor: isUnavailable
-                            ? colors.border
+                            ? dark.hairline
                             : isSelected
-                              ? colors.accent
-                              : colors.border,
-                          backgroundColor: isSelected ? colors.accent : 'transparent',
+                              ? dark.apricot
+                              : dark.hairlineLit,
+                          backgroundColor: isSelected ? dark.apricot : 'transparent',
                         },
                       ]}
                     >
-                      {isSelected && (
-                        <View style={[styles.radioDot, { backgroundColor: colors.onAccent }]} />
-                      )}
+                      {isSelected && <CheckIcon size={12} color={dark.onBrand} />}
                     </View>
                     <Text
-                      style={[
-                        styles.rateTitle,
-                        { color: isUnavailable ? colors.textMuted : colors.text },
-                      ]}
+                      variant="body"
+                      color={isUnavailable ? dark.textLo : dark.textHi}
+                      style={styles.rateTitle}
                     >
                       {rateFormatted}
                     </Text>
                   </View>
 
-                  {isUnavailable ? (
-                    <View
-                      style={[
-                        styles.unavailableBadge,
-                        { backgroundColor: colors.surfaceAlt, borderColor: colors.border },
-                      ]}
-                      testID={`rate-disabled-badge-${preset.rateKgPerWeek}`}
-                    >
-                      <Text style={[styles.unavailableBadgeText, { color: colors.textMuted }]}>
-                        {t('onboarding.rate.unavailableBadge')}
+                  <View style={styles.badgeRow}>
+                    {/* Spec A09: Recommended (0.5) marked "Steady" */}
+                    {isRecommended && !isUnavailable && (
+                      <View style={styles.steadyBadge}>
+                        <Text variant="label" color={dark.onBrand} style={styles.steadyBadgeText}>
+                          Steady
+                        </Text>
+                      </View>
+                    )}
+
+                    {isUnavailable ? (
+                      <View
+                        style={styles.unavailableBadge}
+                        testID={`rate-disabled-badge-${preset.rateKgPerWeek}`}
+                      >
+                        <Text variant="label" color={dark.textLo}>
+                          {t('onboarding.rate.unavailableBadge')}
+                        </Text>
+                      </View>
+                    ) : (
+                      <Text variant="bodyS" color={dark.textMid}>
+                        {diffText}
                       </Text>
-                    </View>
-                  ) : (
-                    <Text style={[styles.diffText, { color: colors.textMuted }]}>{diffText}</Text>
-                  )}
+                    )}
+                  </View>
                 </View>
 
                 {/* Daily Calorie Target numeral */}
                 <View style={styles.rateBottomRow}>
                   <Text
-                    style={[
-                      styles.targetKcal,
-                      { color: isUnavailable ? colors.textMuted : colors.text },
-                    ]}
+                    variant="numeralXL"
+                    color={isUnavailable ? dark.textLo : dark.textHi}
+                    style={styles.targetKcalNumber}
                   >
-                    {t('onboarding.rate.targetKcalText', { kcal: preset.targetKcal })}
+                    {preset.targetKcal.toLocaleString()}
+                  </Text>
+                  <Text variant="bodyS" color={dark.textLo} style={styles.targetKcalUnit}>
+                    kcal / day
                   </Text>
                 </View>
 
-                {/* Disabled reason banner */}
+                {/* Disabled Reason / Nearest allowed explanation */}
                 {isUnavailable && preset.reason && (
                   <View
-                    style={[
-                      styles.disabledReasonContainer,
-                      { backgroundColor: colors.surfaceAlt, borderColor: colors.border },
-                    ]}
-                    testID={`rate-disabled-reason-${preset.rateKgPerWeek}`}
+                    style={styles.reasonCard}
+                    testID={`rate-reason-container-${preset.rateKgPerWeek}`}
                   >
-                    <Text style={[styles.disabledReasonText, { color: colors.textMuted }]}>
+                    <Text variant="label" color={dark.danger} style={styles.reasonText}>
                       {renderDisabledReason(preset.reason)}
                     </Text>
                   </View>
                 )}
-              </Pressable>
+              </TouchableOpacity>
             );
           })}
         </View>
       )}
 
-      {/* Advisories */}
-      {safety.advisories.includes('large_deficit_advisory') && (
-        <View
-          style={[
-            styles.advisoryCard,
-            { backgroundColor: colors.surfaceAlt, borderColor: colors.border },
-          ]}
-          testID="rate-advisory-large-deficit"
-        >
-          <Text style={[styles.advisoryText, { color: colors.text }]}>
-            {t('onboarding.rate.advisoryLargeDeficit')}
-          </Text>
-        </View>
-      )}
-
-      {safety.advisories.includes('lean_gain_advisory') && (
-        <View
-          style={[
-            styles.advisoryCard,
-            { backgroundColor: colors.surfaceAlt, borderColor: colors.border },
-          ]}
-          testID="rate-advisory-lean-gain"
-        >
-          <Text style={[styles.advisoryText, { color: colors.text }]}>
-            {t('onboarding.rate.advisoryLeanGain')}
-          </Text>
-        </View>
-      )}
-
-      {/* Validation error */}
       {errorMessage ? (
-        <Text style={[styles.errorText, { color: colors.danger }]} testID="error-rate-selection">
+        <Text variant="label" color={dark.danger} style={styles.errorText}>
           {errorMessage}
         </Text>
       ) : null}
@@ -265,61 +237,61 @@ export function RatePickerStep({
 
 const styles = StyleSheet.create({
   container: {
-    paddingHorizontal: spacing.md,
-    gap: spacing.md,
+    paddingHorizontal: space[4],
+    gap: space[3],
+    paddingTop: space[2],
   },
   emptyContainer: {
-    padding: spacing.xl,
+    padding: space[4],
     alignItems: 'center',
-    justifyContent: 'center',
-  },
-  emptyText: {
-    fontSize: fontSize.md,
-    textAlign: 'center',
   },
   maintenanceCard: {
-    padding: spacing.md,
-    borderRadius: radius.md,
+    backgroundColor: dark.s1,
+    borderRadius: radius.card,
     borderWidth: 1,
-    gap: spacing.xs,
+    borderColor: dark.hairline,
+    padding: space[4],
+    gap: space[2],
   },
   maintenanceHeader: {
-    fontSize: fontSize.sm - 1,
-    fontWeight: '600',
     textTransform: 'uppercase',
     letterSpacing: 0.5,
+    fontWeight: '600',
   },
-  maintenanceKcal: {
-    fontSize: fontSize.xl,
-    fontWeight: '700',
+  numeralRow: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    gap: space[2],
   },
-  maintenanceDesc: {
-    fontSize: fontSize.sm - 1,
-    lineHeight: 18,
+  numeralXL: {
+    lineHeight: 38,
+  },
+  numeralUnit: {
+    flexShrink: 1,
+  },
+  maintenanceCopy: {
+    lineHeight: 20,
+    marginTop: 2,
   },
   maintainNoticeCard: {
-    padding: spacing.lg,
-    borderRadius: radius.md,
+    backgroundColor: dark.s1,
     borderWidth: 1,
-    alignItems: 'center',
-    gap: spacing.sm,
+    borderColor: dark.hairline,
+    borderRadius: radius.card,
+    padding: space[4],
+    gap: space[2],
   },
   maintainNoticeTitle: {
-    fontSize: fontSize.lg,
     fontWeight: '700',
   },
-  maintainNoticeText: {
-    fontSize: fontSize.sm,
-    textAlign: 'center',
-    lineHeight: 20,
-  },
   ratesList: {
-    gap: spacing.sm,
+    gap: space[3],
   },
   rateCard: {
-    padding: spacing.md,
-    borderRadius: radius.md,
-    gap: spacing.xs,
+    borderRadius: radius.card,
+    padding: space[4],
+    gap: space[2],
+    minHeight: 88,
   },
   rateTopRow: {
     flexDirection: 'row',
@@ -329,68 +301,66 @@ const styles = StyleSheet.create({
   rateTitleGroup: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: spacing.sm,
+    gap: space[3],
   },
   radioCircle: {
-    width: 20,
-    height: 20,
-    borderRadius: radius.pill,
+    width: 22,
+    height: 22,
+    borderRadius: radius.full,
     borderWidth: 2,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  radioDot: {
-    width: 8,
-    height: 8,
-    borderRadius: radius.pill,
-  },
   rateTitle: {
-    fontSize: fontSize.md,
     fontWeight: '600',
   },
-  diffText: {
-    fontSize: fontSize.sm,
-    fontWeight: '500',
+  badgeRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: space[2],
+  },
+  steadyBadge: {
+    backgroundColor: dark.apricot,
+    paddingHorizontal: space[2],
+    paddingVertical: 2,
+    borderRadius: radius.control,
+  },
+  steadyBadgeText: {
+    fontWeight: '700',
+    fontSize: 11,
   },
   unavailableBadge: {
-    paddingHorizontal: spacing.sm,
-    paddingVertical: 2,
-    borderRadius: radius.sm,
+    backgroundColor: dark.s2,
     borderWidth: 1,
-  },
-  unavailableBadgeText: {
-    fontSize: fontSize.sm - 2,
-    fontWeight: '600',
+    borderColor: dark.hairline,
+    paddingHorizontal: space[2],
+    paddingVertical: 2,
+    borderRadius: radius.control,
   },
   rateBottomRow: {
-    paddingLeft: 28,
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    gap: space[2],
+    paddingLeft: 34,
   },
-  targetKcal: {
-    fontSize: fontSize.md,
+  targetKcalNumber: {
+    lineHeight: 32,
     fontWeight: '700',
   },
-  disabledReasonContainer: {
-    marginTop: spacing.xs,
-    marginLeft: 28,
-    padding: spacing.sm,
-    borderRadius: radius.sm,
-    borderWidth: 1,
+  targetKcalUnit: {
+    fontWeight: '500',
   },
-  disabledReasonText: {
-    fontSize: fontSize.sm - 1,
-    lineHeight: 17,
+  reasonCard: {
+    backgroundColor: dark.s2,
+    borderRadius: radius.control,
+    padding: space[2],
+    marginTop: space[1],
+    marginLeft: 34,
   },
-  advisoryCard: {
-    padding: spacing.md,
-    borderRadius: radius.md,
-    borderWidth: 1,
-  },
-  advisoryText: {
-    fontSize: fontSize.sm,
-    lineHeight: 19,
+  reasonText: {
+    fontWeight: '500',
   },
   errorText: {
-    fontSize: fontSize.sm,
-    fontWeight: '500',
+    marginTop: space[1],
   },
 });

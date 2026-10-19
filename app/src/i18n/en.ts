@@ -15,6 +15,16 @@ export const en = {
     progress: 'Your progress will appear here.',
     me: 'Your profile and settings will appear here.',
   },
+  welcome: {
+    title: 'Eat well, together.',
+    subtitle: 'Track food, steps and workouts, and keep a friend on the same page.',
+    getStarted: 'Get started',
+    alreadyHaveAccount: 'I already have an account',
+    haveInviteCode: 'Have an invite code?',
+    enterInviteCode: 'Enter invite code',
+    inviteCodePlaceholder: 'e.g. RAHUL8',
+    joinRoom: 'View invite',
+  },
   common: {
     loading: 'Loading…',
     retry: 'Try again',

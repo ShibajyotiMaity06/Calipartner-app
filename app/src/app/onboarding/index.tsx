@@ -1,20 +1,22 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import {
   KeyboardAvoidingView,
   Platform,
-  Pressable,
   SafeAreaView,
   ScrollView,
   StyleSheet,
-  Text,
   View,
 } from 'react-native';
-import { useRouter } from 'expo-router';
-import { type ActivityLevel, type Goal, type Sex, type Units } from '@calipartner/core';
+import { useLocalSearchParams, useRouter } from 'expo-router';
+import { type Goal, type Sex, type Units, type ActivityLevel } from '@calipartner/core';
+import { Text, Button, Sheet, space, dark } from '@calipartner/ui';
 import { ActivityStep } from '@/components/onboarding/ActivityStep';
 import { BodyStatsStep } from '@/components/onboarding/BodyStatsStep';
 import { GoalStep } from '@/components/onboarding/GoalStep';
 import { HealthScreeningStep } from '@/components/onboarding/HealthScreeningStep';
+import { HowCalculatedStep } from '@/components/onboarding/HowCalculatedStep';
+import { InvitePreviewModal } from '@/components/onboarding/InvitePreviewModal';
+import { PartnerFinderOfferModal } from '@/components/onboarding/PartnerFinderOfferModal';
 import { RatePickerStep } from '@/components/onboarding/RatePickerStep';
 import { StepHeader } from '@/components/onboarding/StepHeader';
 import { SummaryStep } from '@/components/onboarding/SummaryStep';
@@ -24,11 +26,9 @@ import { useTargets } from '@/hooks/useTargets';
 import { t } from '@/i18n';
 import { playClickSound, playSuccessSound } from '@/lib/sound';
 import { OnboardingStateMachine, type OnboardingStep } from '@/services/onboardingStateMachine';
-import { fontSize, radius, spacing } from '@/theme/tokens';
-import { useTheme } from '@/theme/useTheme';
 
 /**
- * The 7 active linear onboarding steps (calculation formula step is omitted as requested).
+ * The 7 active linear onboarding steps.
  */
 export const ACTIVE_ONBOARDING_STEPS: readonly OnboardingStep[] = [
   'goal',
@@ -42,7 +42,7 @@ export const ACTIVE_ONBOARDING_STEPS: readonly OnboardingStep[] = [
 
 export default function OnboardingScreen() {
   const router = useRouter();
-  const { colors } = useTheme();
+  const params = useLocalSearchParams<{ inviteCode?: string }>();
   const { user, profile } = useAuth();
   const { saveGoalProfile, saveScreening } = useTargets();
 
@@ -64,6 +64,11 @@ export default function OnboardingScreen() {
   const [snapshot, setSnapshot] = useState(() => machine.getState());
   const [isSaving, setIsSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
+
+  // Sub-sheets & modals (A11, A12, A15)
+  const [showHowCalculatedSheet, setShowHowCalculatedSheet] = useState(false);
+  const [showPartnerOffer, setShowPartnerOffer] = useState(false);
+  const [showInviteModal, setShowInviteModal] = useState(!!params.inviteCode);
 
   const updateState = () => {
     setSnapshot(machine.getState());
@@ -109,7 +114,7 @@ export default function OnboardingScreen() {
     },
   };
 
-  // Navigation handlers with sound
+  // Navigation handlers
   const handleNext = () => {
     playClickSound();
     if (currentStep === 'health_screening') {
@@ -118,7 +123,6 @@ export default function OnboardingScreen() {
       return true;
     }
     const success = machine.next();
-    // Skip review_calculation if state machine targets it
     if (machine.getState().currentStep === 'review_calculation') {
       machine.goToStep('completed');
     }
@@ -231,7 +235,7 @@ export default function OnboardingScreen() {
     updateState();
   };
 
-  // Final Save Handler
+  // Final Save Handler (A10 "Looks good")
   const handleSaveTargets = async () => {
     playSuccessSound();
     const effectiveUserId = user?.id ?? 'guest-user';
@@ -252,10 +256,10 @@ export default function OnboardingScreen() {
 
       // Save health screening
       await saveScreening(screening);
-
       setIsSaving(false);
-      // Navigate to today tab upon successful setup
-      router.replace('/today');
+
+      // Offer Partner Finder (Spec A12 / ONB-12) if unprompted, or proceed
+      setShowPartnerOffer(true);
     } catch (e: unknown) {
       const message = e instanceof Error ? e.message : String(e);
       setSaveError(message);
@@ -264,14 +268,15 @@ export default function OnboardingScreen() {
   };
 
   const currentInfo = stepTitles[currentStep];
+  const canSkipCurrent = currentStep === 'target_weight_date' || currentStep === 'health_screening';
 
   return (
-    <SafeAreaView style={[styles.safeArea, { backgroundColor: colors.background }]}>
+    <SafeAreaView style={styles.safeArea}>
       <KeyboardAvoidingView
         style={styles.flexOne}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       >
-        {/* Step Header with progress bar & back button */}
+        {/* Step Header with 4px progress bar & back button */}
         <StepHeader
           currentStepIndex={currentStepIndex}
           totalSteps={totalSteps}
@@ -279,6 +284,8 @@ export default function OnboardingScreen() {
           subtitle={currentInfo.subtitle}
           onBack={handleBack}
           canGoBack={currentStepIndex > 0}
+          onSkip={handleSkip}
+          canSkip={canSkipCurrent}
         />
 
         {/* Step Content */}
@@ -288,7 +295,11 @@ export default function OnboardingScreen() {
           keyboardShouldPersistTaps="handled"
         >
           {currentStep === 'goal' && (
-            <GoalStep selectedGoal={snapshot.goal} onSelectGoal={handleSelectGoal} />
+            <GoalStep
+              selectedGoal={snapshot.goal}
+              onSelectGoal={handleSelectGoal}
+              onAutoAdvance={handleNext}
+            />
           )}
 
           {currentStep === 'body_stats' && (
@@ -368,35 +379,64 @@ export default function OnboardingScreen() {
               saveError={saveError}
               onSave={handleSaveTargets}
               onGoBackToStats={() => handleGoToStep('body_stats')}
+              onGoBackToRate={() => handleGoToStep('rate_selection')}
+              onOpenHowCalculated={() => setShowHowCalculatedSheet(true)}
             />
           )}
         </ScrollView>
 
-        {/* Bottom Action Footer (for steps prior to completed summary) */}
+        {/* Bottom Action Footer (For steps prior to completed target reveal) */}
         {currentStep !== 'completed' && (
-          <View
-            style={[
-              styles.footer,
-              { backgroundColor: colors.surface, borderTopColor: colors.border },
-            ]}
-          >
-            <Pressable
-              testID="btn-onboarding-next"
-              accessibilityRole="button"
-              accessibilityLabel={t('onboarding.next')}
+          <View style={styles.footer}>
+            <Button
+              variant="primary"
+              size="lg"
+              label={`${t('onboarding.next')} →`}
               onPress={handleNext}
-              style={({ pressed }) => [
-                styles.nextButton,
-                { backgroundColor: colors.accent, opacity: pressed ? 0.9 : 1 },
-              ]}
-            >
-              <Text style={[styles.nextButtonText, { color: colors.onAccent }]}>
-                {t('onboarding.next')} →
-              </Text>
-            </Pressable>
+              testID="btn-onboarding-next"
+            />
           </View>
         )}
       </KeyboardAvoidingView>
+
+      {/* A11 How We Calculated This Sheet */}
+      <Sheet
+        visible={showHowCalculatedSheet}
+        onClose={() => setShowHowCalculatedSheet(false)}
+        testID="sheet-how-calculated"
+      >
+        <ScrollView style={styles.sheetScroll}>
+          <HowCalculatedStep
+            calculatedTargets={snapshot.calculatedTargets}
+            bodyFatPercentage={snapshot.bodyFatPercentage}
+          />
+        </ScrollView>
+      </Sheet>
+
+      {/* A12 Partner Finder Offer Modal */}
+      <PartnerFinderOfferModal
+        visible={showPartnerOffer}
+        onClose={() => {
+          setShowPartnerOffer(false);
+          router.replace('/today' as any);
+        }}
+        onAccept={() => {
+          setShowPartnerOffer(false);
+          router.replace('/today' as any);
+        }}
+        testID="modal-partner-finder-offer"
+      />
+
+      {/* A15 Invite Preview Modal */}
+      <InvitePreviewModal
+        visible={showInviteModal}
+        onClose={() => setShowInviteModal(false)}
+        onJoin={() => {
+          setShowInviteModal(false);
+        }}
+        inviterName="Rahul"
+        testID="modal-invite-preview"
+      />
     </SafeAreaView>
   );
 }
@@ -404,6 +444,7 @@ export default function OnboardingScreen() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
+    backgroundColor: dark.bg0,
   },
   flexOne: {
     flex: 1,
@@ -412,23 +453,18 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   scrollContent: {
-    paddingBottom: spacing.xl,
+    paddingBottom: space[4],
   },
   footer: {
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.md,
+    paddingHorizontal: space[4],
+    paddingVertical: space[3],
     borderTopWidth: 1,
-    minHeight: 80,
+    borderTopColor: dark.hairline,
+    backgroundColor: dark.bg0,
+    minHeight: 76,
     justifyContent: 'center',
   },
-  nextButton: {
-    minHeight: 48,
-    borderRadius: radius.pill,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  nextButtonText: {
-    fontSize: fontSize.md,
-    fontWeight: '700',
+  sheetScroll: {
+    maxHeight: 500,
   },
 });

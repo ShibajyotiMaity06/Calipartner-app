@@ -1,8 +1,8 @@
-import { StyleSheet, Text, View } from 'react-native';
+import React from 'react';
+import { StyleSheet, View } from 'react-native';
 import type { CalculateTargetsResult } from '@calipartner/core';
+import { Text, space, dark, radius } from '@calipartner/ui';
 import { t } from '@/i18n';
-import { fontSize, radius, spacing } from '@/theme/tokens';
-import { useTheme } from '@/theme/useTheme';
 
 interface HowCalculatedStepProps {
   calculatedTargets: CalculateTargetsResult | null;
@@ -13,145 +13,78 @@ export function HowCalculatedStep({
   calculatedTargets,
   bodyFatPercentage,
 }: HowCalculatedStepProps) {
-  const { colors } = useTheme();
-
   if (!calculatedTargets) {
     return (
       <View style={styles.emptyContainer} testID="how-calc-empty">
-        <Text style={[styles.emptyText, { color: colors.textMuted }]}>
+        <Text variant="body" color={dark.textLo}>
           {t('onboarding.summary.emptyBody')}
         </Text>
       </View>
     );
   }
 
-  const { bmr, tdee, targetKcal, dailyChangeKcal, weeklyRateKg, safety, macros, goal } =
-    calculatedTargets;
-
+  const { bmr, tdee, targetKcal, dailyChangeKcal, weeklyRateKg } = calculatedTargets;
   const activityMultiplier = bmr > 0 ? (Math.round((tdee / bmr) * 1000) / 1000).toFixed(3) : '1.55';
-  const proteinPerKg = goal === 'cut' ? 2.0 : goal === 'maintain' ? 1.6 : 1.8;
   const hasBodyFat = bodyFatPercentage !== null && bodyFatPercentage > 0;
 
   return (
     <View style={styles.container}>
-      {/* 1. BMR Card */}
-      <View
-        style={[styles.card, { backgroundColor: colors.surface, borderColor: colors.border }]}
-        testID="how-calc-bmr"
-      >
-        <Text style={[styles.cardHeader, { color: colors.text }]}>
+      {/* 1. BMR Card (Inputs & Formula) */}
+      <View style={styles.card} testID="how-calc-bmr">
+        <Text variant="heading" color={dark.textHi}>
           {t('onboarding.howCalculated.bmrHeader')}
         </Text>
-        <Text style={[styles.formulaIntro, { color: colors.textMuted }]}>
+        <Text variant="bodyS" color={dark.textMid} style={styles.formulaIntro}>
           {hasBodyFat
             ? t('onboarding.howCalculated.bmrKatch')
             : t('onboarding.howCalculated.bmrMifflin')}
         </Text>
-        <View style={[styles.formulaBox, { backgroundColor: colors.surfaceAlt }]}>
-          <Text style={[styles.formulaCode, { color: colors.text }]}>
+        <View style={styles.formulaBox}>
+          <Text variant="label" color={dark.textHi} style={styles.formulaCode}>
             {hasBodyFat
               ? t('onboarding.howCalculated.bmrFormulaKatch')
               : t('onboarding.howCalculated.bmrFormulaMifflin')}
           </Text>
         </View>
-        <Text style={[styles.resultText, { color: colors.text }]}>
-          {t('onboarding.howCalculated.bmrResult', { kcal: bmr })}
+        <Text variant="body" color={dark.textHi} style={styles.resultText}>
+          {t('onboarding.howCalculated.bmrResult', { kcal: bmr.toLocaleString() })}
         </Text>
       </View>
 
       {/* 2. TDEE Card */}
-      <View
-        style={[styles.card, { backgroundColor: colors.surface, borderColor: colors.border }]}
-        testID="how-calc-tdee"
-      >
-        <Text style={[styles.cardHeader, { color: colors.text }]}>
+      <View style={styles.card} testID="how-calc-tdee">
+        <Text variant="heading" color={dark.textHi}>
           {t('onboarding.howCalculated.tdeeHeader')}
         </Text>
-        <View style={[styles.formulaBox, { backgroundColor: colors.surfaceAlt }]}>
-          <Text style={[styles.formulaCode, { color: colors.text }]}>
+        <View style={styles.formulaBox}>
+          <Text variant="label" color={dark.textHi} style={styles.formulaCode}>
             {t('onboarding.howCalculated.tdeeFormula', { multiplier: activityMultiplier })}
           </Text>
         </View>
-        <Text style={[styles.resultText, { color: colors.text }]}>
-          {t('onboarding.howCalculated.tdeeResult', { kcal: tdee })}
+        <Text variant="body" color={dark.textHi} style={styles.resultText}>
+          {t('onboarding.howCalculated.tdeeResult', { kcal: tdee.toLocaleString() })}
         </Text>
       </View>
 
-      {/* 3. Goal Adjustment Card */}
-      <View
-        style={[styles.card, { backgroundColor: colors.surface, borderColor: colors.border }]}
-        testID="how-calc-adjustment"
-      >
-        <Text style={[styles.cardHeader, { color: colors.text }]}>
+      {/* 3. Goal Adjustment Card & Result */}
+      <View style={styles.card} testID="how-calc-adjustment">
+        <Text variant="heading" color={dark.textHi}>
           {t('onboarding.howCalculated.adjustmentHeader')}
         </Text>
-        <View style={[styles.formulaBox, { backgroundColor: colors.surfaceAlt }]}>
-          <Text style={[styles.formulaCode, { color: colors.text }]}>
+        <View style={styles.formulaBox}>
+          <Text variant="label" color={dark.textHi} style={styles.formulaCode}>
             {t('onboarding.howCalculated.adjustmentFormula', { rate: weeklyRateKg })}
           </Text>
         </View>
-        <Text style={[styles.resultText, { color: colors.text }]}>
+        <Text variant="body" color={dark.textHi} style={styles.resultText}>
           {t('onboarding.howCalculated.adjustmentResult', {
             diff: dailyChangeKcal < 0 ? `-${Math.abs(dailyChangeKcal)}` : `+${dailyChangeKcal}`,
           })}
           {' → '}
-          <Text style={{ fontWeight: '700' }}>{targetKcal} kcal / day</Text>
+          <Text variant="body" color={dark.apricot} style={{ fontWeight: '700' }}>
+            {targetKcal.toLocaleString()} kcal / day
+          </Text>
         </Text>
-      </View>
-
-      {/* 4. Safety Guards Applied */}
-      <View
-        style={[styles.card, { backgroundColor: colors.surface, borderColor: colors.border }]}
-        testID="how-calc-safety"
-      >
-        <Text style={[styles.cardHeader, { color: colors.text }]}>
-          {t('onboarding.howCalculated.safetyHeader')}
-        </Text>
-        <View style={styles.bulletList}>
-          <Text style={[styles.bulletItem, { color: colors.textMuted }]}>
-            • {t('onboarding.howCalculated.safetyFloorRule', { floor: safety.calorieFloor })}
-          </Text>
-          <Text style={[styles.bulletItem, { color: colors.textMuted }]}>
-            • {t('onboarding.howCalculated.safetyCapRule', { cap: safety.rateCapKgPerWeek })}
-          </Text>
-          <Text style={[styles.bulletItem, { color: colors.textMuted }]}>
-            • {t('onboarding.howCalculated.safetyBmiRule')}
-          </Text>
-        </View>
-      </View>
-
-      {/* 5. Macro Distribution Card */}
-      <View
-        style={[styles.card, { backgroundColor: colors.surface, borderColor: colors.border }]}
-        testID="how-calc-macros"
-      >
-        <Text style={[styles.cardHeader, { color: colors.text }]}>
-          {t('onboarding.howCalculated.macrosHeader')}
-        </Text>
-        <View style={styles.bulletList}>
-          <Text style={[styles.bulletItem, { color: colors.textMuted }]}>
-            •{' '}
-            {t('onboarding.howCalculated.proteinRule', {
-              perKg: proteinPerKg,
-              grams: macros.proteinGrams,
-              kcal: macros.proteinKcal,
-            })}
-          </Text>
-          <Text style={[styles.bulletItem, { color: colors.textMuted }]}>
-            •{' '}
-            {t('onboarding.howCalculated.fatRule', {
-              grams: macros.fatGrams,
-              kcal: macros.fatKcal,
-            })}
-          </Text>
-          <Text style={[styles.bulletItem, { color: colors.textMuted }]}>
-            •{' '}
-            {t('onboarding.howCalculated.carbRule', {
-              grams: macros.carbGrams,
-              kcal: macros.carbKcal,
-            })}
-          </Text>
-        </View>
       </View>
     </View>
   );
@@ -159,52 +92,37 @@ export function HowCalculatedStep({
 
 const styles = StyleSheet.create({
   container: {
-    paddingHorizontal: spacing.md,
-    gap: spacing.md,
+    gap: space[3],
+    paddingTop: space[2],
   },
   emptyContainer: {
-    padding: spacing.xl,
+    padding: space[4],
     alignItems: 'center',
-    justifyContent: 'center',
-  },
-  emptyText: {
-    fontSize: fontSize.md,
-    textAlign: 'center',
   },
   card: {
-    padding: spacing.md,
-    borderRadius: radius.md,
+    backgroundColor: dark.s1,
+    borderRadius: radius.card,
     borderWidth: 1,
-    gap: spacing.xs,
-  },
-  cardHeader: {
-    fontSize: fontSize.sm,
-    fontWeight: '700',
+    borderColor: dark.hairline,
+    padding: space[4],
+    gap: space[2],
   },
   formulaIntro: {
-    fontSize: fontSize.sm - 1,
+    lineHeight: 18,
   },
   formulaBox: {
-    padding: spacing.sm,
-    borderRadius: radius.sm,
-    marginTop: spacing.xs,
+    backgroundColor: dark.s2,
+    borderRadius: radius.control,
+    padding: space[2],
+    borderWidth: 1,
+    borderColor: dark.hairline,
   },
   formulaCode: {
-    fontSize: fontSize.sm - 1,
     fontFamily: 'monospace',
-    fontWeight: '500',
+    lineHeight: 16,
   },
   resultText: {
-    fontSize: fontSize.sm,
-    marginTop: spacing.xs,
-    fontWeight: '500',
-  },
-  bulletList: {
-    gap: spacing.xs,
-    paddingTop: spacing.xs,
-  },
-  bulletItem: {
-    fontSize: fontSize.sm - 1,
-    lineHeight: 18,
+    fontWeight: '600',
+    marginTop: 2,
   },
 });

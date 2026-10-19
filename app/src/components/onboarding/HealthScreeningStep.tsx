@@ -1,9 +1,9 @@
-import { Pressable, StyleSheet, Switch, Text, View } from 'react-native';
+import React from 'react';
+import { StyleSheet, View } from 'react-native';
 import type { Sex } from '@calipartner/core';
+import { Text, SwitchRow, Button, space, dark, radius } from '@calipartner/ui';
 import { t } from '@/i18n';
 import { playClickSound, playToggleSound } from '@/lib/sound';
-import { fontSize, radius, spacing } from '@/theme/tokens';
-import { useTheme } from '@/theme/useTheme';
 
 interface HealthScreeningStepProps {
   sex?: Sex;
@@ -26,8 +26,6 @@ export function HealthScreeningStep({
   onChangeEatingDisorder,
   onSkip,
 }: HealthScreeningStepProps) {
-  const { colors } = useTheme();
-
   const handleTogglePregnant = (val: boolean) => {
     playToggleSound();
     onChangePregnant(val);
@@ -50,118 +48,60 @@ export function HealthScreeningStep({
 
   return (
     <View style={styles.container}>
-      {/* "Why we ask this" Privacy Banner */}
-      <View
-        style={[
-          styles.privacyBanner,
-          { backgroundColor: colors.surfaceAlt, borderColor: colors.border },
-        ]}
-        testID="health-screening-why-banner"
-      >
-        <Text style={[styles.privacyTitle, { color: colors.text }]}>
-          {t('onboarding.healthScreening.whyWeAskTitle')}
+      {/* Privacy note banner */}
+      <View style={styles.privacyBanner} testID="health-screening-why-banner">
+        <Text variant="body" color={dark.textHi} style={styles.privacyTitle}>
+          A few private questions
         </Text>
-        <Text style={[styles.privacyBody, { color: colors.textMuted }]}>
-          {t('onboarding.healthScreening.whyWeAskBody')}
+        <Text variant="label" color={dark.textMid} style={styles.privacyBody}>
+          Used only to hide fasting and show cautions. Never shared with your room.
         </Text>
       </View>
 
-      {/* Question 1: Pregnant / Breastfeeding (Hidden for biological males) */}
-      {sex !== 'male' && (
-        <View
-          style={[
-            styles.questionCard,
-            { backgroundColor: colors.surface, borderColor: colors.border },
-          ]}
-        >
-          <View style={styles.textColumn}>
-            <Text style={[styles.questionLabel, { color: colors.text }]}>
-              {t('onboarding.healthScreening.pregnantLabel')}
-            </Text>
-            <Text style={[styles.questionDesc, { color: colors.textMuted }]}>
-              {t('onboarding.healthScreening.pregnantDesc')}
-            </Text>
-          </View>
-          <Switch
-            testID="screening-toggle-pregnant"
+      {/* Three SwitchRows (Spec A08) */}
+      <View style={styles.switchList}>
+        {/* Question 1: Pregnant / Breastfeeding (Hidden for biological males) */}
+        {sex !== 'male' && (
+          <SwitchRow
+            title={t('onboarding.healthScreening.pregnantLabel')}
+            consequence={t('onboarding.healthScreening.pregnantDesc')}
             value={pregnantOrBreastfeeding}
             onValueChange={handleTogglePregnant}
-            trackColor={{ false: colors.border, true: colors.accent }}
-            thumbColor={colors.surface}
-            accessibilityLabel={t('onboarding.healthScreening.pregnantLabel')}
+            testID="screening-toggle-pregnant"
+            style={styles.switchCard}
           />
-        </View>
-      )}
+        )}
 
-      {/* Question 2: Diabetes / Medication */}
-      <View
-        style={[
-          styles.questionCard,
-          { backgroundColor: colors.surface, borderColor: colors.border },
-        ]}
-      >
-        <View style={styles.textColumn}>
-          <Text style={[styles.questionLabel, { color: colors.text }]}>
-            {t('onboarding.healthScreening.diabetesLabel')}
-          </Text>
-          <Text style={[styles.questionDesc, { color: colors.textMuted }]}>
-            {t('onboarding.healthScreening.diabetesDesc')}
-          </Text>
-        </View>
-        <Switch
-          testID="screening-toggle-diabetes"
+        {/* Question 2: Diabetes / Medication */}
+        <SwitchRow
+          title={t('onboarding.healthScreening.diabetesLabel')}
+          consequence={t('onboarding.healthScreening.diabetesDesc')}
           value={hasDiabetesOrMedication}
           onValueChange={handleToggleDiabetes}
-          trackColor={{ false: colors.border, true: colors.accent }}
-          thumbColor={colors.surface}
-          accessibilityLabel={t('onboarding.healthScreening.diabetesLabel')}
+          testID="screening-toggle-diabetes"
+          style={styles.switchCard}
         />
-      </View>
 
-      {/* Question 3: History of Eating Disorder */}
-      <View
-        style={[
-          styles.questionCard,
-          { backgroundColor: colors.surface, borderColor: colors.border },
-        ]}
-      >
-        <View style={styles.textColumn}>
-          <Text style={[styles.questionLabel, { color: colors.text }]}>
-            {t('onboarding.healthScreening.edLabel')}
-          </Text>
-          <Text style={[styles.questionDesc, { color: colors.textMuted }]}>
-            {t('onboarding.healthScreening.edDesc')}
-          </Text>
-        </View>
-        <Switch
-          testID="screening-toggle-ed"
+        {/* Question 3: History of Eating Disorder */}
+        <SwitchRow
+          title={t('onboarding.healthScreening.edLabel')}
+          consequence={t('onboarding.healthScreening.edDesc')}
           value={hasEatingDisorderHistory}
           onValueChange={handleToggleEatingDisorder}
-          trackColor={{ false: colors.border, true: colors.accent }}
-          thumbColor={colors.surface}
-          accessibilityLabel={t('onboarding.healthScreening.edLabel')}
+          testID="screening-toggle-ed"
+          style={styles.switchCard}
         />
       </View>
 
-      {/* Skip / Prefer not to say button */}
+      {/* Prominent Skip button for optional health check (Spec A08) */}
       <View style={styles.skipContainer}>
-        <Pressable
-          testID="btn-skip-screening"
-          accessibilityRole="button"
-          accessibilityLabel={t('onboarding.healthScreening.preferNotToSay')}
+        <Button
+          variant="secondary"
+          size="md"
+          label={t('onboarding.skip')}
           onPress={handleSkip}
-          style={({ pressed }) => [
-            styles.skipButton,
-            {
-              borderColor: colors.border,
-              backgroundColor: pressed ? colors.surfaceAlt : colors.surface,
-            },
-          ]}
-        >
-          <Text style={[styles.skipButtonText, { color: colors.textMuted }]}>
-            {t('onboarding.healthScreening.preferNotToSay')}
-          </Text>
-        </Pressable>
+          testID="btn-skip-health-screening"
+        />
       </View>
     </View>
   );
@@ -169,59 +109,36 @@ export function HealthScreeningStep({
 
 const styles = StyleSheet.create({
   container: {
-    paddingHorizontal: spacing.md,
-    gap: spacing.md,
+    paddingHorizontal: space[4],
+    gap: space[4],
+    paddingTop: space[2],
   },
   privacyBanner: {
-    padding: spacing.md,
-    borderRadius: radius.md,
+    backgroundColor: dark.s1,
     borderWidth: 1,
-    gap: spacing.xs,
+    borderColor: dark.hairline,
+    borderRadius: radius.card,
+    padding: space[4],
+    gap: space[1],
   },
   privacyTitle: {
-    fontSize: fontSize.sm,
     fontWeight: '600',
   },
   privacyBody: {
-    fontSize: fontSize.sm - 1,
     lineHeight: 18,
   },
-  questionCard: {
-    padding: spacing.md,
-    borderRadius: radius.md,
+  switchList: {
+    gap: space[3],
+  },
+  switchCard: {
+    backgroundColor: dark.s1,
     borderWidth: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: spacing.md,
-    minHeight: 80,
-  },
-  textColumn: {
-    flex: 1,
-    gap: spacing.xs,
-  },
-  questionLabel: {
-    fontSize: fontSize.sm,
-    fontWeight: '600',
-  },
-  questionDesc: {
-    fontSize: fontSize.sm - 1,
-    lineHeight: 18,
+    borderColor: dark.hairline,
+    borderRadius: radius.card,
+    padding: space[4],
   },
   skipContainer: {
-    paddingTop: spacing.xs,
+    marginTop: space[2],
     alignItems: 'center',
-  },
-  skipButton: {
-    minHeight: 44,
-    paddingHorizontal: spacing.lg,
-    borderRadius: radius.pill,
-    borderWidth: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  skipButtonText: {
-    fontSize: fontSize.sm,
-    fontWeight: '500',
   },
 });

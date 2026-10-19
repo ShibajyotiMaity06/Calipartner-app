@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import * as fastingService from '@/services/fastingService';
 import type { SyncDb } from '@/services/syncService';
-import type { HealthScreening } from '@calipartner/core';
+import { type HealthScreening, evaluateFastingGating } from '@calipartner/core';
 
 vi.mock('@/db', () => ({
   getDb: vi.fn().mockResolvedValue({
@@ -34,8 +34,7 @@ describe('Phase 13: Fasting Hooks & Integration Tests', () => {
     vi.clearAllMocks();
   });
 
-  it('gating: validates screening rules and low-intake pause', async () => {
-    const { evaluateFastingGating } = await import('@calipartner/core');
+  it('gating: validates screening rules and low-intake pause', () => {
 
     const cleanScreening: HealthScreening = {
       user_id: 'u-1',

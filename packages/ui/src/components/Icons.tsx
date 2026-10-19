@@ -552,3 +552,22 @@ export function RecipesIcon({
     </Svg>
   );
 }
+
+export function CheckIcon({
+  size = 24,
+  color = dark.textHi,
+  strokeWidth = 2,
+}: IconProps): React.JSX.Element {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Polyline
+        points="20 6 9 17 4 12"
+        stroke={color}
+        strokeWidth={strokeWidth}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </Svg>
+  );
+}
+

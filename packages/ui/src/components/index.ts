@@ -29,3 +29,4 @@ export * from './Icons';
 export * from './TabBar';
 export * from './Header';
 export * from './LogHubView';
+export * from './TargetRevealRing';

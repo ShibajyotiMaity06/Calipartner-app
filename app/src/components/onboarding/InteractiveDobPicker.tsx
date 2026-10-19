@@ -1,10 +1,8 @@
-import { useMemo, useState } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import React, { useMemo, useRef, useState, useEffect } from 'react';
+import { View, StyleSheet, TextInput, TouchableOpacity } from 'react-native';
 import { isAtLeast18 } from '@calipartner/core';
-import { t } from '@/i18n';
+import { Text, space, dark, radius } from '@calipartner/ui';
 import { playClickSound } from '@/lib/sound';
-import { fontSize, radius, spacing } from '@/theme/tokens';
-import { useTheme } from '@/theme/useTheme';
 
 interface InteractiveDobPickerProps {
   value: string; // YYYY-MM-DD
@@ -12,354 +10,212 @@ interface InteractiveDobPickerProps {
   error?: string;
 }
 
-const MONTH_NAMES = [
-  'Jan',
-  'Feb',
-  'Mar',
-  'Apr',
-  'May',
-  'Jun',
-  'Jul',
-  'Aug',
-  'Sep',
-  'Oct',
-  'Nov',
-  'Dec',
-];
-
-const FULL_MONTH_NAMES = [
-  'January',
-  'February',
-  'March',
-  'April',
-  'May',
-  'June',
-  'July',
-  'August',
-  'September',
-  'October',
-  'November',
-  'December',
-];
-
-function daysInMonth(year: number, monthIndex: number): number {
-  return new Date(year, monthIndex + 1, 0).getDate();
-}
-
 export function InteractiveDobPicker({ value, onChange, error }: InteractiveDobPickerProps) {
-  const { colors } = useTheme();
-
-  // Parse initial YYYY-MM-DD or default to an adult born in 2000
+  // Parse initial YYYY-MM-DD or default
   const parsed = useMemo(() => {
     if (!value || !/^\d{4}-\d{2}-\d{2}$/.test(value)) {
-      return { year: 2000, month: 0, day: 15 };
+      return { year: '2000', month: '01', day: '15' };
     }
-    const [y, m, d] = value.split('-').map(Number);
+    const [y, m, d] = value.split('-');
     return {
-      year: y || 2000,
-      month: Math.max(0, Math.min(11, (m || 1) - 1)),
-      day: Math.max(1, Math.min(31, d || 15)),
+      year: y || '2000',
+      month: m || '01',
+      day: d || '15',
     };
   }, [value]);
 
-  const [year, setYear] = useState(parsed.year);
-  const [month, setMonth] = useState(parsed.month);
-  const [day, setDay] = useState(parsed.day);
-  const [showMonthGrid, setShowMonthGrid] = useState(false);
-  const [showYearGrid, setShowYearGrid] = useState(false);
+  const [dayText, setDayText] = useState(parsed.day);
+  const [monthText, setMonthText] = useState(parsed.month);
+  const [yearText, setYearText] = useState(parsed.year);
 
-  // Sync to parent format YYYY-MM-DD
-  const emitChange = (newYear: number, newMonth: number, newDay: number) => {
-    const maxDays = daysInMonth(newYear, newMonth);
-    const clampedDay = Math.min(newDay, maxDays);
-    const mm = String(newMonth + 1).padStart(2, '0');
-    const dd = String(clampedDay).padStart(2, '0');
-    const iso = `${newYear}-${mm}-${dd}`;
-    onChange(iso);
-  };
+  const monthInputRef = useRef<TextInput>(null);
+  const yearInputRef = useRef<TextInput>(null);
 
-  const handleYearChange = (newYear: number) => {
-    playClickSound();
-    setYear(newYear);
-    emitChange(newYear, month, day);
-  };
+  useEffect(() => {
+    setDayText(parsed.day);
+    setMonthText(parsed.month);
+    setYearText(parsed.year);
+  }, [parsed]);
 
-  const handleMonthChange = (newMonth: number) => {
-    playClickSound();
-    setMonth(newMonth);
-    setShowMonthGrid(false);
-    emitChange(year, newMonth, day);
-  };
+  const emitDob = (d: string, m: string, y: string) => {
+    const dayNum = parseInt(d, 10);
+    const monthNum = parseInt(m, 10);
+    const yearNum = parseInt(y, 10);
 
-  const handleDayChange = (newDay: number) => {
-    playClickSound();
-    setDay(newDay);
-    emitChange(year, month, newDay);
-  };
-
-  const currentMaxDays = daysInMonth(year, month);
-  const safeDay = Math.min(day, currentMaxDays);
-
-  // Calculate live age
-  const age = useMemo(() => {
-    const today = new Date();
-    let calculatedAge = today.getFullYear() - year;
-    const mDiff = today.getMonth() - month;
-    if (mDiff < 0 || (mDiff === 0 && today.getDate() < safeDay)) {
-      calculatedAge--;
+    if (
+      !isNaN(dayNum) &&
+      !isNaN(monthNum) &&
+      !isNaN(yearNum) &&
+      y.length === 4 &&
+      dayNum >= 1 &&
+      dayNum <= 31 &&
+      monthNum >= 1 &&
+      monthNum <= 12
+    ) {
+      const mm = String(monthNum).padStart(2, '0');
+      const dd = String(dayNum).padStart(2, '0');
+      onChange(`${yearNum}-${mm}-${dd}`);
     }
-    return calculatedAge;
-  }, [year, month, safeDay]);
+  };
 
-  const isoString = `${year}-${String(month + 1).padStart(2, '0')}-${String(safeDay).padStart(2, '0')}`;
-  const isAdult = isAtLeast18(isoString);
+  const handleDayChange = (text: string) => {
+    const cleaned = text.replace(/[^0-9]/g, '').slice(0, 2);
+    setDayText(cleaned);
+    emitDob(cleaned, monthText, yearText);
 
-  // Quick decades for rapid jump
-  const decades = [2005, 2000, 1995, 1990, 1985, 1980];
+    // Auto-advance to month if 2 digits entered or if first digit > 3
+    if (cleaned.length === 2 || (cleaned.length === 1 && parseInt(cleaned, 10) > 3)) {
+      monthInputRef.current?.focus();
+    }
+  };
+
+  const handleMonthChange = (text: string) => {
+    const cleaned = text.replace(/[^0-9]/g, '').slice(0, 2);
+    setMonthText(cleaned);
+    emitDob(dayText, cleaned, yearText);
+
+    // Auto-advance to year if 2 digits entered or if first digit > 1
+    if (cleaned.length === 2 || (cleaned.length === 1 && parseInt(cleaned, 10) > 1)) {
+      yearInputRef.current?.focus();
+    }
+  };
+
+  const handleYearChange = (text: string) => {
+    const cleaned = text.replace(/[^0-9]/g, '').slice(0, 4);
+    setYearText(cleaned);
+    emitDob(dayText, monthText, cleaned);
+  };
+
+  // Compute live validation & age
+  const isoCurrent = `${yearText.padStart(4, '0')}-${monthText.padStart(2, '0')}-${dayText.padStart(2, '0')}`;
+  const isDateComplete = yearText.length === 4 && monthText.length > 0 && dayText.length > 0;
+  const isAdult = isDateComplete ? isAtLeast18(isoCurrent) : true;
+
+  const calculatedAge = useMemo(() => {
+    if (!isDateComplete) return null;
+    const y = parseInt(yearText, 10);
+    const m = parseInt(monthText, 10) - 1;
+    const d = parseInt(dayText, 10);
+    const today = new Date();
+    let age = today.getFullYear() - y;
+    const mDiff = today.getMonth() - m;
+    if (mDiff < 0 || (mDiff === 0 && today.getDate() < d)) {
+      age--;
+    }
+    return age;
+  }, [isDateComplete, yearText, monthText, dayText]);
 
   return (
     <View style={styles.container} testID="dob-picker-container">
-      {/* 3 Interactive Selector Cards: Day, Month, Year */}
-      <View style={styles.pickerRow}>
-        {/* Month Selector Box */}
-        <Pressable
-          testID="btn-dob-month-select"
-          accessibilityRole="button"
-          accessibilityLabel={`Month: ${FULL_MONTH_NAMES[month]}`}
-          onPress={() => {
-            playClickSound();
-            setShowMonthGrid(!showMonthGrid);
-            setShowYearGrid(false);
-          }}
-          style={({ pressed }) => [
-            styles.selectorBox,
-            styles.monthBox,
-            {
-              backgroundColor: colors.surface,
-              borderColor: showMonthGrid ? colors.accent : colors.border,
-              borderWidth: showMonthGrid ? 2 : 1,
-              opacity: pressed ? 0.9 : 1,
-            },
-          ]}
-        >
-          <Text style={[styles.boxLabel, { color: colors.textMuted }]}>Month</Text>
-          <Text style={[styles.boxValue, { color: colors.text }]}>{FULL_MONTH_NAMES[month]}</Text>
-          <Text style={[styles.boxHint, { color: colors.textMuted }]}>Tap to change</Text>
-        </Pressable>
-
-        {/* Day Stepper Box */}
-        <View
-          style={[
-            styles.selectorBox,
-            styles.dayBox,
-            { backgroundColor: colors.surface, borderColor: colors.border },
-          ]}
-        >
-          <Text style={[styles.boxLabel, { color: colors.textMuted }]}>Day</Text>
-          <View style={styles.stepperRow}>
-            <Pressable
-              testID="btn-dob-day-minus"
-              accessibilityRole="button"
-              accessibilityLabel="Decrease day"
-              onPress={() => handleDayChange(safeDay <= 1 ? currentMaxDays : safeDay - 1)}
-              style={({ pressed }) => [
-                styles.stepperButton,
-                { backgroundColor: colors.surfaceAlt, opacity: pressed ? 0.7 : 1 },
-              ]}
-              hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
-            >
-              <Text style={[styles.stepperButtonText, { color: colors.text }]}>−</Text>
-            </Pressable>
-
-            <Text style={[styles.stepperValue, { color: colors.text }]} testID="dob-day-value">
-              {safeDay}
-            </Text>
-
-            <Pressable
-              testID="btn-dob-day-plus"
-              accessibilityRole="button"
-              accessibilityLabel="Increase day"
-              onPress={() => handleDayChange(safeDay >= currentMaxDays ? 1 : safeDay + 1)}
-              style={({ pressed }) => [
-                styles.stepperButton,
-                { backgroundColor: colors.surfaceAlt, opacity: pressed ? 0.7 : 1 },
-              ]}
-              hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
-            >
-              <Text style={[styles.stepperButtonText, { color: colors.text }]}>+</Text>
-            </Pressable>
-          </View>
+      {/* 3 Auto-Advancing Numeric Fields (Spec A03) */}
+      <View style={styles.fieldsRow}>
+        {/* Day Field (DD) */}
+        <View style={styles.fieldBox}>
+          <Text variant="label" color={dark.textLo} style={styles.fieldLabel}>
+            Day
+          </Text>
+          <TextInput
+            style={[
+              styles.input,
+              {
+                backgroundColor: dark.s2,
+                borderColor: dark.hairline,
+                color: dark.textHi,
+              },
+            ]}
+            keyboardType="number-pad"
+            maxLength={2}
+            value={dayText}
+            placeholder="DD"
+            placeholderTextColor={dark.textOff}
+            onChangeText={handleDayChange}
+            testID="input-dob-day"
+            accessibilityLabel="Birth day, two digits"
+          />
         </View>
 
-        {/* Year Stepper Box */}
-        <Pressable
-          testID="btn-dob-year-select"
-          accessibilityRole="button"
-          accessibilityLabel={`Year: ${year}`}
-          onPress={() => {
-            playClickSound();
-            setShowYearGrid(!showYearGrid);
-            setShowMonthGrid(false);
-          }}
-          style={({ pressed }) => [
-            styles.selectorBox,
-            styles.yearBox,
-            {
-              backgroundColor: colors.surface,
-              borderColor: showYearGrid ? colors.accent : colors.border,
-              borderWidth: showYearGrid ? 2 : 1,
-              opacity: pressed ? 0.9 : 1,
-            },
-          ]}
-        >
-          <Text style={[styles.boxLabel, { color: colors.textMuted }]}>Year</Text>
-          <View style={styles.stepperRow}>
-            <Pressable
-              testID="btn-dob-year-minus"
-              accessibilityRole="button"
-              accessibilityLabel="Decrease year"
-              onPress={() => handleYearChange(year - 1)}
-              style={({ pressed }) => [
-                styles.stepperButton,
-                { backgroundColor: colors.surfaceAlt, opacity: pressed ? 0.7 : 1 },
-              ]}
-              hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
-            >
-              <Text style={[styles.stepperButtonText, { color: colors.text }]}>−</Text>
-            </Pressable>
+        {/* Month Field (MM) */}
+        <View style={styles.fieldBox}>
+          <Text variant="label" color={dark.textLo} style={styles.fieldLabel}>
+            Month
+          </Text>
+          <TextInput
+            ref={monthInputRef}
+            style={[
+              styles.input,
+              {
+                backgroundColor: dark.s2,
+                borderColor: dark.hairline,
+                color: dark.textHi,
+              },
+            ]}
+            keyboardType="number-pad"
+            maxLength={2}
+            value={monthText}
+            placeholder="MM"
+            placeholderTextColor={dark.textOff}
+            onChangeText={handleMonthChange}
+            testID="input-dob-month"
+            accessibilityLabel="Birth month, two digits"
+          />
+        </View>
 
-            <Text style={[styles.stepperValue, { color: colors.text }]} testID="dob-year-value">
-              {year}
-            </Text>
-
-            <Pressable
-              testID="btn-dob-year-plus"
-              accessibilityRole="button"
-              accessibilityLabel="Increase year"
-              onPress={() => handleYearChange(year + 1)}
-              style={({ pressed }) => [
-                styles.stepperButton,
-                { backgroundColor: colors.surfaceAlt, opacity: pressed ? 0.7 : 1 },
-              ]}
-              hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
-            >
-              <Text style={[styles.stepperButtonText, { color: colors.text }]}>+</Text>
-            </Pressable>
-          </View>
-        </Pressable>
+        {/* Year Field (YYYY) */}
+        <View style={[styles.fieldBox, styles.yearBox]}>
+          <Text variant="label" color={dark.textLo} style={styles.fieldLabel}>
+            Year
+          </Text>
+          <TextInput
+            ref={yearInputRef}
+            style={[
+              styles.input,
+              {
+                backgroundColor: dark.s2,
+                borderColor: dark.hairline,
+                color: dark.textHi,
+              },
+            ]}
+            keyboardType="number-pad"
+            maxLength={4}
+            value={yearText}
+            placeholder="YYYY"
+            placeholderTextColor={dark.textOff}
+            onChangeText={handleYearChange}
+            testID="input-dob-year"
+            accessibilityLabel="Birth year, four digits"
+          />
+        </View>
       </View>
 
-      {/* Month Selection Grid Modal/Sheet */}
-      {showMonthGrid && (
-        <View
-          style={[
-            styles.gridCard,
-            { backgroundColor: colors.surfaceAlt, borderColor: colors.border },
-          ]}
-          testID="dob-month-grid"
-        >
-          <Text style={[styles.gridTitle, { color: colors.textMuted }]}>Select Month</Text>
-          <View style={styles.monthChipsRow}>
-            {MONTH_NAMES.map((mName, idx) => {
-              const isSelected = month === idx;
-              return (
-                <Pressable
-                  key={mName}
-                  testID={`btn-dob-month-${mName}`}
-                  accessibilityRole="button"
-                  accessibilityLabel={FULL_MONTH_NAMES[idx]}
-                  onPress={() => handleMonthChange(idx)}
-                  style={[
-                    styles.chip,
-                    {
-                      backgroundColor: isSelected ? colors.accent : colors.surface,
-                      borderColor: isSelected ? colors.accent : colors.border,
-                    },
-                  ]}
-                >
-                  <Text
-                    style={[
-                      styles.chipText,
-                      { color: isSelected ? colors.onAccent : colors.text },
-                      isSelected && styles.chipTextBold,
-                    ]}
-                  >
-                    {mName}
-                  </Text>
-                </Pressable>
-              );
-            })}
-          </View>
+      {/* Reason Line (Spec A03) */}
+      <Text variant="label" color={dark.textLo} style={styles.reasonLine}>
+        We ask because CaliPartner is for adults.
+      </Text>
+
+      {/* Live Calculated Age Badge or Under-18 Blocked Screen Notice */}
+      {isDateComplete && (
+        <View style={styles.statusRow}>
+          {isAdult ? (
+            <View style={styles.agePill}>
+              <Text variant="bodyS" color={dark.textHi}>
+                {calculatedAge} years old
+              </Text>
+            </View>
+          ) : (
+            <View style={styles.under18Notice} testID="under-18-notice">
+              <Text variant="body" color={dark.danger} style={styles.blockedTitle}>
+                CaliPartner is designed for adults (18+).
+              </Text>
+              <Text variant="label" color={dark.textLo} style={styles.blockedBody}>
+                For your safety, registration is paused. No personal data has been kept on this device.
+              </Text>
+            </View>
+          )}
         </View>
       )}
-
-      {/* Quick Decades / Years selection */}
-      {showYearGrid && (
-        <View
-          style={[
-            styles.gridCard,
-            { backgroundColor: colors.surfaceAlt, borderColor: colors.border },
-          ]}
-          testID="dob-decade-grid"
-        >
-          <Text style={[styles.gridTitle, { color: colors.textMuted }]}>Quick Decade Jump</Text>
-          <View style={styles.decadeChipsRow}>
-            {decades.map((dec) => {
-              const isSelected = Math.abs(year - dec) <= 2;
-              return (
-                <Pressable
-                  key={dec}
-                  testID={`btn-dob-decade-${dec}`}
-                  accessibilityRole="button"
-                  accessibilityLabel={`Born around ${dec}`}
-                  onPress={() => handleYearChange(dec)}
-                  style={[
-                    styles.chip,
-                    {
-                      backgroundColor: isSelected ? colors.accent : colors.surface,
-                      borderColor: isSelected ? colors.accent : colors.border,
-                    },
-                  ]}
-                >
-                  <Text
-                    style={[
-                      styles.chipText,
-                      { color: isSelected ? colors.onAccent : colors.text },
-                      isSelected && styles.chipTextBold,
-                    ]}
-                  >
-                    {dec}
-                  </Text>
-                </Pressable>
-              );
-            })}
-          </View>
-        </View>
-      )}
-
-      {/* Live Calculated Age Card */}
-      <View
-        style={[
-          styles.ageCard,
-          {
-            backgroundColor: isAdult ? colors.surfaceAlt : colors.surfaceAlt,
-            borderColor: isAdult ? colors.border : colors.danger,
-          },
-        ]}
-        testID="dob-live-age-badge"
-      >
-        <Text style={[styles.ageTitle, { color: colors.text }]}>
-          {isAdult ? `🎂 ${age} years old` : `⚠️ ${age} years old`}
-        </Text>
-        <Text style={[styles.ageSubtitle, { color: isAdult ? colors.textMuted : colors.danger }]}>
-          {isAdult
-            ? `Born ${FULL_MONTH_NAMES[month]} ${safeDay}, ${year} · Meets 18+ requirement`
-            : t('onboarding.bodyStats.under18Error')}
-        </Text>
-      </View>
 
       {error ? (
-        <Text style={[styles.errorText, { color: colors.danger }]} testID="error-dob">
+        <Text variant="label" color={dark.danger} style={styles.errorText}>
           {error}
         </Text>
       ) : null}
@@ -369,113 +225,64 @@ export function InteractiveDobPicker({ value, onChange, error }: InteractiveDobP
 
 const styles = StyleSheet.create({
   container: {
-    gap: spacing.sm,
+    gap: space[2],
   },
-  pickerRow: {
+  fieldsRow: {
     flexDirection: 'row',
-    gap: spacing.sm,
+    gap: space[2],
+    alignItems: 'center',
   },
-  selectorBox: {
-    padding: spacing.sm,
-    borderRadius: radius.md,
-    borderWidth: 1,
-    minHeight: 88,
-    justifyContent: 'space-between',
-  },
-  monthBox: {
-    flex: 1.4,
-  },
-  dayBox: {
-    flex: 1.1,
+  fieldBox: {
+    flex: 1,
+    gap: space[1],
   },
   yearBox: {
-    flex: 1.3,
+    flex: 1.5,
   },
-  boxLabel: {
-    fontSize: fontSize.sm - 2,
-    fontWeight: '600',
+  fieldLabel: {
     textTransform: 'uppercase',
     letterSpacing: 0.5,
-  },
-  boxValue: {
-    fontSize: fontSize.md,
-    fontWeight: '700',
-  },
-  boxHint: {
-    fontSize: fontSize.sm - 3,
-  },
-  stepperRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  stepperButton: {
-    width: 28,
-    height: 28,
-    borderRadius: radius.pill,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  stepperButtonText: {
-    fontSize: fontSize.md,
-    fontWeight: '700',
-    lineHeight: 18,
-  },
-  stepperValue: {
-    fontSize: fontSize.md,
-    fontWeight: '700',
-  },
-  gridCard: {
-    padding: spacing.md,
-    borderRadius: radius.md,
-    borderWidth: 1,
-    gap: spacing.sm,
-  },
-  gridTitle: {
-    fontSize: fontSize.sm - 1,
     fontWeight: '600',
   },
-  monthChipsRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: spacing.xs,
-  },
-  decadeChipsRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: spacing.xs,
-  },
-  chip: {
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.xs,
-    borderRadius: radius.sm,
+  input: {
+    height: 48,
+    borderRadius: radius.control,
     borderWidth: 1,
-    minHeight: 36,
-    alignItems: 'center',
-    justifyContent: 'center',
+    textAlign: 'center',
+    fontSize: 18,
+    fontWeight: '600',
   },
-  chipText: {
-    fontSize: fontSize.sm - 1,
+  reasonLine: {
+    lineHeight: 18,
+    marginTop: 2,
   },
-  chipTextBold: {
-    fontWeight: '700',
+  statusRow: {
+    marginTop: space[1],
   },
-  ageCard: {
-    padding: spacing.md,
-    borderRadius: radius.md,
+  agePill: {
+    alignSelf: 'flex-start',
+    backgroundColor: dark.s2,
     borderWidth: 1,
-    gap: 2,
+    borderColor: dark.hairlineLit,
+    borderRadius: radius.full,
+    paddingHorizontal: space[3],
+    paddingVertical: 4,
   },
-  ageTitle: {
-    fontSize: fontSize.md,
-    fontWeight: '700',
+  under18Notice: {
+    backgroundColor: dark.s2,
+    borderWidth: 1,
+    borderColor: dark.danger,
+    borderRadius: radius.card,
+    padding: space[3],
+    gap: 4,
   },
-  ageSubtitle: {
-    fontSize: fontSize.sm - 1,
+  blockedTitle: {
+    fontWeight: '600',
+  },
+  blockedBody: {
     lineHeight: 18,
   },
   errorText: {
-    fontSize: fontSize.sm - 1,
-    fontWeight: '500',
+    marginTop: 2,
   },
 });

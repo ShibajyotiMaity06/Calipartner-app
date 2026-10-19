@@ -1,4 +1,5 @@
 import { en, type Messages } from '@/i18n/en';
+import { hi } from '@/i18n/hi';
 
 type Paths<T> = {
   [K in keyof T & string]: T[K] extends string ? K : `${K}.${Paths<T[K]>}`;
@@ -6,7 +7,7 @@ type Paths<T> = {
 
 export type TranslationKey = Paths<Messages>;
 
-const catalogs: Record<string, Messages> = { en };
+const catalogs: Record<string, unknown> = { en, hi };
 let locale = 'en';
 
 export function setLocale(next: string): void {
@@ -19,9 +20,19 @@ export function getLocale(): string {
 
 /** Look up a user-facing string. Supports `{name}` interpolation. */
 export function t(key: TranslationKey, params?: Record<string, string | number>): string {
-  let node: unknown = catalogs[locale] ?? en;
-  for (const part of key.split('.')) {
-    node = (node as Record<string, unknown> | undefined)?.[part];
+  let node: unknown = catalogs[locale];
+  if (node) {
+    for (const part of key.split('.')) {
+      node = (node as Record<string, unknown> | undefined)?.[part];
+    }
+  }
+  if (typeof node !== 'string') {
+    // Fallback to english
+    let fallbackNode: unknown = en;
+    for (const part of key.split('.')) {
+      fallbackNode = (fallbackNode as Record<string, unknown> | undefined)?.[part];
+    }
+    node = fallbackNode;
   }
   const text = typeof node === 'string' ? node : key;
   if (!params) return text;

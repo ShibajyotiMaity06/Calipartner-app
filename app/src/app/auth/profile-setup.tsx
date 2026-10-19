@@ -1,35 +1,50 @@
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
-  ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
-  Pressable,
+  SafeAreaView,
   ScrollView,
   StyleSheet,
-  Text,
   TextInput,
+  TouchableOpacity,
   View,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { isAtLeast18, type Sex, type Units } from '@calipartner/core';
+import {
+  Text,
+  Button,
+  Field,
+  Avatar,
+  space,
+  dark,
+  radius,
+  CheckIcon,
+} from '@calipartner/ui';
+import { AvatarPickerModal, type AvatarOption } from '@/components/profile/AvatarPickerModal';
+import { InteractiveDobPicker } from '@/components/onboarding/InteractiveDobPicker';
 import { useAuth } from '@/contexts/AuthContext';
 import { useUsername } from '@/hooks/useUsername';
 import { t } from '@/i18n';
-import { fontSize, radius, spacing } from '@/theme/tokens';
-import { useTheme } from '@/theme/useTheme';
+import { playClickSound } from '@/lib/sound';
 
 export default function ProfileSetupScreen() {
   const router = useRouter();
-  const { colors } = useTheme();
   const { createProfile } = useAuth();
   const { status: usernameStatus, checkAvailability } = useUsername();
 
   const [username, setUsername] = useState('');
   const [nickname, setNickname] = useState('');
-  const [dob, setDob] = useState('');
+  const [dob, setDob] = useState('2000-01-15');
   const [sex, setSex] = useState<Sex>('male');
   const [heightCm, setHeightCm] = useState('175');
   const [units, setUnits] = useState<Units>('metric');
+  const [selectedAvatar, setSelectedAvatar] = useState<AvatarOption>({
+    id: 'iris-1',
+    name: 'Alex',
+    hue: 'iris',
+  });
+  const [showAvatarPicker, setShowAvatarPicker] = useState(false);
   const [loading, setLoading] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
 
@@ -56,11 +71,11 @@ export default function ProfileSetupScreen() {
 
     // 2. Validate nickname
     if (!nickname.trim()) {
-      setSubmitError(t('common.errorBody'));
+      setSubmitError('Please enter a display nickname.');
       return;
     }
 
-    // 3. Age gate validation (18+ required)
+    // 3. Age gate validation (18+ required per Spec AUTH-3)
     if (!/^\d{4}-\d{2}-\d{2}$/.test(dob.trim())) {
       setSubmitError(t('profileSetup.invalidDobError'));
       return;
@@ -92,311 +107,328 @@ export default function ProfileSetupScreen() {
     if (error) {
       setSubmitError(error.message);
     } else {
-      router.replace('/today');
+      router.replace('/today' as any);
     }
   };
 
-  const renderUsernameHint = () => {
-    if (!username || username.length < 3) return null;
-    if (usernameStatus === 'checking') {
-      return (
-        <Text style={{ color: colors.textMuted, fontSize: fontSize.sm }}>
-          {t('profileSetup.checkingAvailability')}
-        </Text>
-      );
-    }
+  const renderUsernameStatusIcon = () => {
     if (usernameStatus === 'available') {
       return (
-        <Text
-          style={{ color: colors.text, fontSize: fontSize.sm, fontWeight: '500' }}
-          testID="hint-username-available"
-        >
-          {t('profileSetup.usernameAvailable')}
-        </Text>
-      );
-    }
-    if (usernameStatus === 'taken') {
-      return (
-        <Text style={{ color: colors.danger, fontSize: fontSize.sm }} testID="hint-username-taken">
-          {t('profileSetup.usernameTaken')}
-        </Text>
-      );
-    }
-    if (usernameStatus === 'reserved') {
-      return (
-        <Text
-          style={{ color: colors.danger, fontSize: fontSize.sm }}
-          testID="hint-username-reserved"
-        >
-          {t('profileSetup.usernameReserved')}
-        </Text>
-      );
-    }
-    if (usernameStatus === 'invalid') {
-      return (
-        <Text
-          style={{ color: colors.danger, fontSize: fontSize.sm }}
-          testID="hint-username-invalid"
-        >
-          {t('profileSetup.usernameInvalid')}
-        </Text>
+        <View style={styles.validCheck} testID="hint-username-available">
+          <CheckIcon size={16} color={dark.teal} />
+        </View>
       );
     }
     return null;
   };
 
   return (
-    <KeyboardAvoidingView
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-      style={[styles.container, { backgroundColor: colors.background }]}
-    >
-      <ScrollView contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled">
-        <View style={styles.header}>
-          <Text style={[styles.title, { color: colors.text }]}>{t('profileSetup.title')}</Text>
-          <Text style={[styles.subtitle, { color: colors.textMuted }]}>
-            {t('profileSetup.subtitle')}
-          </Text>
-        </View>
-
-        {submitError && (
-          <View
-            style={[
-              styles.errorBox,
-              { backgroundColor: colors.surfaceAlt, borderColor: colors.border },
-            ]}
-            testID="error-profile-setup"
-          >
-            <Text style={{ color: colors.danger, fontSize: fontSize.sm }}>{submitError}</Text>
-          </View>
-        )}
-
-        {/* Username */}
-        <View style={styles.field}>
-          <Text style={[styles.label, { color: colors.textMuted }]}>
-            {t('profileSetup.usernameLabel')}
-          </Text>
-          <TextInput
-            testID="input-username"
-            style={[
-              styles.input,
-              { color: colors.text, backgroundColor: colors.surface, borderColor: colors.border },
-            ]}
-            placeholder={t('profileSetup.usernamePlaceholder')}
-            placeholderTextColor={colors.textMuted}
-            autoCapitalize="none"
-            autoCorrect={false}
-            value={username}
-            onChangeText={setUsername}
-          />
-          {renderUsernameHint()}
-        </View>
-
-        {/* Nickname */}
-        <View style={styles.field}>
-          <Text style={[styles.label, { color: colors.textMuted }]}>
-            {t('profileSetup.nicknameLabel')}
-          </Text>
-          <TextInput
-            testID="input-nickname"
-            style={[
-              styles.input,
-              { color: colors.text, backgroundColor: colors.surface, borderColor: colors.border },
-            ]}
-            placeholder={t('profileSetup.nicknamePlaceholder')}
-            placeholderTextColor={colors.textMuted}
-            value={nickname}
-            onChangeText={setNickname}
-          />
-        </View>
-
-        {/* Date of Birth / Age Gate */}
-        <View style={styles.field}>
-          <Text style={[styles.label, { color: colors.textMuted }]}>
-            {t('profileSetup.dobLabel')}
-          </Text>
-          <TextInput
-            testID="input-dob"
-            style={[
-              styles.input,
-              { color: colors.text, backgroundColor: colors.surface, borderColor: colors.border },
-            ]}
-            placeholder={t('profileSetup.dobPlaceholder')}
-            placeholderTextColor={colors.textMuted}
-            keyboardType="numbers-and-punctuation"
-            maxLength={10}
-            value={dob}
-            onChangeText={setDob}
-          />
-          <Text style={{ color: colors.textMuted, fontSize: fontSize.sm }}>
-            {t('profileSetup.dobHelp')}
-          </Text>
-        </View>
-
-        {/* Sex */}
-        <View style={styles.field}>
-          <Text style={[styles.label, { color: colors.textMuted }]}>
-            {t('profileSetup.sexLabel')}
-          </Text>
-          <View style={styles.segmentedRow}>
-            {(['male', 'female', 'other'] as const).map((s) => (
-              <Pressable
-                key={s}
-                testID={`btn-sex-${s}`}
-                style={[
-                  styles.segmentButton,
-                  {
-                    backgroundColor: sex === s ? colors.accent : colors.surface,
-                    borderColor: colors.border,
-                  },
-                ]}
-                onPress={() => setSex(s)}
-              >
-                <Text
-                  style={{
-                    color: sex === s ? colors.onAccent : colors.text,
-                    fontSize: fontSize.sm,
-                    fontWeight: '600',
-                  }}
-                >
-                  {t(`profileSetup.${s}`)}
-                </Text>
-              </Pressable>
-            ))}
-          </View>
-        </View>
-
-        {/* Height */}
-        <View style={styles.field}>
-          <Text style={[styles.label, { color: colors.textMuted }]}>
-            {t('profileSetup.heightLabel')}
-          </Text>
-          <TextInput
-            testID="input-height"
-            style={[
-              styles.input,
-              { color: colors.text, backgroundColor: colors.surface, borderColor: colors.border },
-            ]}
-            placeholder={t('profileSetup.heightPlaceholder')}
-            placeholderTextColor={colors.textMuted}
-            keyboardType="decimal-pad"
-            value={heightCm}
-            onChangeText={setHeightCm}
-          />
-        </View>
-
-        {/* Units */}
-        <View style={styles.field}>
-          <Text style={[styles.label, { color: colors.textMuted }]}>
-            {t('profileSetup.unitsLabel')}
-          </Text>
-          <View style={styles.segmentedRow}>
-            {(['metric', 'imperial'] as const).map((u) => (
-              <Pressable
-                key={u}
-                testID={`btn-units-${u}`}
-                style={[
-                  styles.segmentButton,
-                  {
-                    backgroundColor: units === u ? colors.accent : colors.surface,
-                    borderColor: colors.border,
-                  },
-                ]}
-                onPress={() => setUnits(u)}
-              >
-                <Text
-                  style={{
-                    color: units === u ? colors.onAccent : colors.text,
-                    fontSize: fontSize.sm,
-                    fontWeight: '600',
-                  }}
-                >
-                  {t(`profileSetup.${u}`)}
-                </Text>
-              </Pressable>
-            ))}
-          </View>
-        </View>
-
-        {/* Submit Button */}
-        <Pressable
-          testID="btn-submit-profile"
-          accessibilityRole="button"
-          accessibilityLabel={t('profileSetup.createProfileButton')}
-          style={[styles.primaryButton, { backgroundColor: colors.accent, marginTop: spacing.md }]}
-          onPress={handleSubmit}
-          disabled={loading}
+    <SafeAreaView style={styles.safeArea}>
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        style={styles.flexOne}
+      >
+        <ScrollView
+          contentContainerStyle={styles.scrollContent}
+          keyboardShouldPersistTaps="handled"
         >
-          {loading ? (
-            <ActivityIndicator color={colors.onAccent} />
-          ) : (
-            <Text style={{ color: colors.onAccent, fontWeight: '600', fontSize: fontSize.md }}>
-              {t('profileSetup.createProfileButton')}
+          {/* Header */}
+          <View style={styles.header}>
+            <Text variant="title1" color={dark.textHi} style={styles.title} testID="profile-setup-title">
+              {t('profileSetup.title')}
             </Text>
+            <Text variant="body" color={dark.textMid} style={styles.subtitle}>
+              {t('profileSetup.subtitle')}
+            </Text>
+          </View>
+
+          {/* Avatar Preview & Chooser (Spec B05) */}
+          <View style={styles.avatarSection}>
+            <TouchableOpacity
+              onPress={() => setShowAvatarPicker(true)}
+              style={styles.avatarTouchable}
+              accessibilityRole="button"
+              accessibilityLabel="Change avatar"
+              testID="btn-open-avatar-picker"
+            >
+              <Avatar
+                name={selectedAvatar.name}
+                identityHue={selectedAvatar.hue}
+                size="lg"
+                testID="profile-current-avatar"
+              />
+              <Text variant="bodyS" color={dark.apricot} style={styles.changeAvatarText}>
+                Choose avatar →
+              </Text>
+            </TouchableOpacity>
+          </View>
+
+          {submitError && (
+            <View style={styles.errorBox} testID="error-profile-setup">
+              <Text variant="bodyS" color={dark.danger}>
+                {submitError}
+              </Text>
+            </View>
           )}
-        </Pressable>
-      </ScrollView>
-    </KeyboardAvoidingView>
+
+          {/* Nickname (Spec B04) */}
+          <View style={styles.fieldSection}>
+            <Field
+              label={t('profileSetup.nicknameLabel')}
+              value={nickname}
+              onChangeText={setNickname}
+              placeholder={t('profileSetup.nicknamePlaceholder')}
+              testID="input-nickname"
+            />
+          </View>
+
+          {/* Username (@username) with live availability & rules (Spec B04) */}
+          <View style={styles.fieldSection}>
+            <View style={styles.usernameRow}>
+              <View style={styles.flexOne}>
+                <Field
+                  label={t('profileSetup.usernameLabel')}
+                  value={username}
+                  onChangeText={(text) => {
+                    setUsername(text.toLowerCase().replace(/[^a-z0-9_.]/g, ''));
+                  }}
+                  placeholder={t('profileSetup.usernamePlaceholder')}
+                  autoCapitalize="none"
+                  autoCorrect={false}
+                  testID="input-username"
+                />
+              </View>
+              {renderUsernameStatusIcon()}
+            </View>
+
+            {/* Spec B04: Rules under field (3 to 20, letters, numbers, _, .) */}
+            <Text variant="label" color={dark.textLo} style={styles.rulesText}>
+              Rules: 3 to 20 characters, lowercase letters, numbers, _ and .
+            </Text>
+
+            {usernameStatus === 'taken' && (
+              <Text variant="label" color={dark.danger} testID="hint-username-taken">
+                {t('profileSetup.usernameTaken')}
+              </Text>
+            )}
+            {usernameStatus === 'invalid' && (
+              <Text variant="label" color={dark.danger} testID="hint-username-invalid">
+                {t('profileSetup.usernameInvalid')}
+              </Text>
+            )}
+          </View>
+
+          {/* Age Gate DOB (Spec A03) */}
+          <View style={styles.fieldSection}>
+            <Text variant="label" color={dark.textLo} style={styles.sectionLabel}>
+              Date of Birth (18+ required)
+            </Text>
+            <InteractiveDobPicker
+              value={dob}
+              onChange={setDob}
+            />
+          </View>
+
+          {/* Biological Sex */}
+          <View style={styles.fieldSection}>
+            <Text variant="label" color={dark.textLo} style={styles.sectionLabel}>
+              {t('profileSetup.sexLabel')}
+            </Text>
+            <View style={styles.segmentedRow}>
+              {(['male', 'female', 'other'] as const).map((s) => (
+                <TouchableOpacity
+                  key={s}
+                  testID={`btn-sex-${s}`}
+                  style={[
+                    styles.segmentButton,
+                    sex === s && styles.segmentButtonActive,
+                  ]}
+                  onPress={() => {
+                    playClickSound();
+                    setSex(s);
+                  }}
+                >
+                  <Text
+                    variant="bodyS"
+                    color={sex === s ? dark.onBrand : dark.textMid}
+                    style={sex === s ? styles.boldText : undefined}
+                  >
+                    {t(`profileSetup.${s}`)}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          </View>
+
+          {/* Height */}
+          <View style={styles.fieldSection}>
+            <Text variant="label" color={dark.textLo} style={styles.sectionLabel}>
+              {t('profileSetup.heightLabel')}
+            </Text>
+            <TextInput
+              testID="input-height"
+              style={styles.textInput}
+              placeholder={t('profileSetup.heightPlaceholder')}
+              placeholderTextColor={dark.textOff}
+              keyboardType="decimal-pad"
+              value={heightCm}
+              onChangeText={setHeightCm}
+            />
+          </View>
+
+          {/* Units */}
+          <View style={styles.fieldSection}>
+            <Text variant="label" color={dark.textLo} style={styles.sectionLabel}>
+              {t('profileSetup.unitsLabel')}
+            </Text>
+            <View style={styles.segmentedRow}>
+              {(['metric', 'imperial'] as const).map((u) => (
+                <TouchableOpacity
+                  key={u}
+                  testID={`btn-units-${u}`}
+                  style={[
+                    styles.segmentButton,
+                    units === u && styles.segmentButtonActive,
+                  ]}
+                  onPress={() => {
+                    playClickSound();
+                    setUnits(u);
+                  }}
+                >
+                  <Text
+                    variant="bodyS"
+                    color={units === u ? dark.onBrand : dark.textMid}
+                    style={units === u ? styles.boldText : undefined}
+                  >
+                    {t(`profileSetup.${u}`)}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          </View>
+
+          {/* Submit Button */}
+          <View style={styles.submitSection}>
+            <Button
+              variant="primary"
+              size="lg"
+              label={t('profileSetup.createProfileButton')}
+              onPress={handleSubmit}
+              loading={loading}
+              disabled={loading}
+              testID="btn-submit-profile"
+            />
+          </View>
+        </ScrollView>
+      </KeyboardAvoidingView>
+
+      {/* Avatar Picker Modal (Spec B05) */}
+      <AvatarPickerModal
+        visible={showAvatarPicker}
+        selectedAvatarId={selectedAvatar.id}
+        onSelectAvatar={(avatar) => setSelectedAvatar(avatar)}
+        onClose={() => setShowAvatarPicker(false)}
+      />
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
+  safeArea: {
+    flex: 1,
+    backgroundColor: dark.bg0,
+  },
+  flexOne: {
     flex: 1,
   },
   scrollContent: {
-    padding: spacing.lg,
-    paddingTop: 56,
-    paddingBottom: 48,
+    padding: space[4],
+    paddingTop: space[4],
+    paddingBottom: space[6],
+    gap: space[4],
   },
   header: {
-    marginBottom: spacing.lg,
+    gap: space[1],
   },
   title: {
-    fontSize: fontSize.xl,
-    fontWeight: '700',
+    letterSpacing: -0.4,
   },
   subtitle: {
-    fontSize: fontSize.sm,
-    marginTop: spacing.xs,
+    lineHeight: 20,
   },
-  label: {
-    fontSize: fontSize.sm,
-    fontWeight: '500',
-    marginBottom: spacing.xs,
+  avatarSection: {
+    alignItems: 'center',
+    paddingVertical: space[2],
+  },
+  avatarTouchable: {
+    alignItems: 'center',
+    gap: space[2],
+    minHeight: 44,
+  },
+  changeAvatarText: {
+    fontWeight: '600',
   },
   errorBox: {
-    padding: spacing.md,
-    borderRadius: radius.sm,
+    backgroundColor: dark.s2,
     borderWidth: 1,
-    marginBottom: spacing.md,
+    borderColor: dark.danger,
+    borderRadius: radius.control,
+    padding: space[3],
   },
-  field: {
-    marginBottom: spacing.md,
+  fieldSection: {
+    gap: space[1],
   },
-  input: {
-    borderWidth: 1,
-    borderRadius: radius.sm,
-    paddingHorizontal: spacing.md,
-    paddingVertical: 12,
-    fontSize: fontSize.md,
-    marginBottom: spacing.xs,
+  usernameRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: space[2],
+  },
+  validCheck: {
+    paddingTop: space[3],
+    paddingRight: space[1],
+  },
+  rulesText: {
+    lineHeight: 16,
+    marginTop: 2,
+  },
+  sectionLabel: {
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+    fontWeight: '600',
+    marginBottom: space[1],
   },
   segmentedRow: {
     flexDirection: 'row',
-    gap: spacing.sm,
+    backgroundColor: dark.s2,
+    borderWidth: 1,
+    borderColor: dark.hairline,
+    borderRadius: radius.full,
+    padding: 3,
   },
   segmentButton: {
     flex: 1,
-    borderWidth: 1,
-    borderRadius: radius.sm,
-    paddingVertical: 12,
+    borderRadius: radius.full,
     alignItems: 'center',
     justifyContent: 'center',
+    minHeight: 40,
   },
-  primaryButton: {
-    paddingVertical: 14,
-    borderRadius: radius.sm,
-    alignItems: 'center',
-    justifyContent: 'center',
+  segmentButtonActive: {
+    backgroundColor: dark.apricot,
+  },
+  boldText: {
+    fontWeight: '700',
+  },
+  textInput: {
+    height: 48,
+    borderRadius: radius.control,
+    borderWidth: 1,
+    borderColor: dark.hairline,
+    backgroundColor: dark.s2,
+    color: dark.textHi,
+    paddingHorizontal: space[3],
+    fontSize: 16,
+  },
+  submitSection: {
+    marginTop: space[3],
   },
 });
