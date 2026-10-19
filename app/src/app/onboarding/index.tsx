@@ -25,6 +25,7 @@ import { useTargets } from '@/hooks/useTargets';
 import { t } from '@/i18n';
 import { playClickSound, playSuccessSound } from '@/lib/sound';
 import { OnboardingStateMachine, type OnboardingStep } from '@/services/onboardingStateMachine';
+import type { Goal, Units, Sex, ActivityLevel } from '@calipartner/core';
 
 /**
  * The 7 active linear onboarding steps.

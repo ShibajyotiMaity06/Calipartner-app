@@ -62,7 +62,7 @@ export function FoodLogModal({
   const { colors } = useTheme();
   const { user } = useAuth();
 
-  const [activeTab, setActiveTab] = useState<TabType>('search');
+  const [activeTab, setActiveTab] = useState<TabType>('history');
   const [selectedFoodForQuantity, setSelectedFoodForQuantity] = useState<Food | null>(null);
   const [showBarcodeScanner, setShowBarcodeScanner] = useState(false);
   const [showCustomFoodModal, setShowCustomFoodModal] = useState(false);
@@ -257,7 +257,7 @@ export function FoodLogModal({
               paddingHorizontal: spacing.sm,
             }}
           >
-            {(['search', 'scan', 'photo', 'recipes', 'history', 'myFoods'] as TabType[]).map(
+            {(['history', 'search', 'scan', 'photo', 'recipes', 'myFoods'] as TabType[]).map(
               (tab) => {
                 const isActive = activeTab === tab;
                 return (

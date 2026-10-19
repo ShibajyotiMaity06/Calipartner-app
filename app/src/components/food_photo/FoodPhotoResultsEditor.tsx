@@ -344,6 +344,25 @@ export function FoodPhotoResultsEditor({
                 <Text style={[styles.macroPillVal, { color: colors.macroFat }]}>{totals.fat}g</Text>
               </View>
             </View>
+
+            {/* D06: Confidence band & Estimate label */}
+            <View
+              testID="band-confidence-estimate"
+              style={{
+                marginTop: 10,
+                paddingTop: 8,
+                borderTopWidth: 1,
+                borderTopColor: colors.border,
+                gap: 2,
+              }}
+            >
+              <Text style={{ fontSize: fontSize.sm, fontWeight: '700', color: colors.text }}>
+                {`About ${totals.calories} kcal (${Math.round(totals.calories * 0.85)} to ${Math.round(totals.calories * 1.15)})`}
+              </Text>
+              <Text style={{ fontSize: fontSize.xs, color: colors.textMuted }}>
+                Estimate. Check the portions.
+              </Text>
+            </View>
           </View>
 
           {/* Error Banner */}
@@ -557,6 +576,27 @@ export function FoodPhotoResultsEditor({
             { backgroundColor: colors.surface, borderTopColor: colors.border },
           ]}
         >
+          {onRetakePhoto && (
+            <Pressable
+              testID="btn-retake-photo"
+              onPress={onRetakePhoto}
+              style={{
+                paddingVertical: 14,
+                paddingHorizontal: 18,
+                borderRadius: radius.md,
+                borderWidth: 1,
+                borderColor: colors.border,
+                backgroundColor: colors.surfaceAlt,
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
+              <Text style={{ color: colors.text, fontWeight: '600', fontSize: fontSize.md }}>
+                Retake
+              </Text>
+            </Pressable>
+          )}
+
           <Pressable
             testID="btn-save-photo-meal"
             accessibilityRole="button"
@@ -568,6 +608,7 @@ export function FoodPhotoResultsEditor({
               {
                 backgroundColor: colors.accent,
                 opacity: isSaving || activeCandidates.length === 0 ? 0.6 : 1,
+                flex: 1,
               },
             ]}
           >
@@ -577,9 +618,7 @@ export function FoodPhotoResultsEditor({
               <>
                 <Ionicons name="checkmark-circle" size={20} color={colors.onAccent} />
                 <Text style={[styles.saveBtnText, { color: colors.onAccent }]}>
-                  {activeCandidates.length === 1
-                    ? t('foodLog.photo.logSingleButton')
-                    : t('foodLog.photo.logButton', { count: activeCandidates.length })}
+                  {`Add to ${selectedSection}`}
                 </Text>
               </>
             )}

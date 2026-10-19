@@ -16,7 +16,9 @@ import { CustomWaterModal, WeightEntryModal } from '@/components/trackers';
 import { FocusStartModal } from '@/components/focus';
 import { FoodPhotoCameraModal } from '@/components/food_photo';
 import { RecipeBrowseView } from '@/components/recipes';
+import { QuickAddCaloriesModal } from '@/components/diary/QuickAddCaloriesModal';
 import { useAuth } from '@/contexts/AuthContext';
+import { useAddEntry } from '@/hooks/useFoodEntries';
 import { usePersonalFocus } from '@/hooks/usePersonalFocus';
 import { useWater } from '@/hooks/useWater';
 import { useWeight } from '@/hooks/useWeight';
@@ -32,7 +34,8 @@ type ActiveFlowState =
   | 'focus'
   | 'scan'
   | 'photo'
-  | 'recipe';
+  | 'recipe'
+  | 'quick_calories';
 
 export default function LogScreen() {
   const router = useRouter();
@@ -50,6 +53,7 @@ export default function LogScreen() {
   // Tracker hooks for Water and Weight
   const { addWater } = useWater(todayDate);
   const { logWeight, latestLog } = useWeight();
+  const { addEntry } = useAddEntry();
 
   const handleCloseAll = () => {
     setSheetVisible(false);
@@ -202,6 +206,7 @@ export default function LogScreen() {
       {activeFlow === 'scan' && (
         <BarcodeScannerModal
           visible={sheetVisible}
+          defaultSection={currentSection}
           onClose={handleCloseAll}
           onFoodFound={() => handleCloseAll()}
           onCreateCustomFood={() => handleCloseAll()}
@@ -235,6 +240,26 @@ export default function LogScreen() {
             />
           </View>
         </Modal>
+      )}
+
+      {/* 10. Quick Calories Add Modal (D10/D11) */}
+      {activeFlow === 'quick_calories' && (
+        <QuickAddCaloriesModal
+          visible={sheetVisible}
+          defaultSection={currentSection}
+          onClose={handleCloseAll}
+          onSave={async (food, qty, unit, sec) => {
+            await addEntry({
+              food,
+              quantity: qty,
+              unit,
+              mealSection: sec,
+              localDate: todayDate,
+              source: 'history',
+            });
+            handleCloseAll();
+          }}
+        />
       )}
     </View>
   );
