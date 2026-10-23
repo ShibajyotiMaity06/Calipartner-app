@@ -4,6 +4,8 @@ import { useRouter } from 'expo-router';
 import { PairRing, Text, space, dark } from '@calipartner/ui';
 import { useAuth } from '@/contexts/AuthContext';
 
+import { isUserOnboarded } from '@/services/onboardingStatus';
+
 export default function LaunchScreen() {
   const router = useRouter();
   const { user, isGuest, isLoading } = useAuth();
@@ -12,8 +14,15 @@ export default function LaunchScreen() {
     if (isLoading) return;
 
     // Spec A01: 200ms smooth transition after fonts and local DB are ready
-    const timer = setTimeout(() => {
-      if (user || isGuest) {
+    const timer = setTimeout(async () => {
+      if (user) {
+        const onboarded = await isUserOnboarded(user.id);
+        if (onboarded) {
+          router.replace('/today' as never);
+        } else {
+          router.replace('/auth/welcome-celebration' as never);
+        }
+      } else if (isGuest) {
         router.replace('/today' as never);
       } else {
         router.replace('/welcome' as never);

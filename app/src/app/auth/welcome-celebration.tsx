@@ -1,27 +1,37 @@
+import React, { useEffect } from 'react';
 import { Platform, SafeAreaView, StyleSheet, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Button, Text, dark, space } from '@calipartner/ui';
 import { CaliPartnerLogo } from '@/components/brand/CaliPartnerLogo';
 import { playSuccessSound } from '@/lib/sound';
 import { useAuth } from '@/contexts/AuthContext';
+import { isUserOnboarded } from '@/services/onboardingStatus';
 
 export default function WelcomeCelebrationScreen() {
   const router = useRouter();
-  const { user, profile } = useAuth();
+  const { user } = useAuth();
+
+  // If returning user already completed onboarding, skip celebration to today
+  useEffect(() => {
+    let mounted = true;
+    if (user?.id) {
+      isUserOnboarded(user.id).then((onboarded) => {
+        if (mounted && onboarded) {
+          router.replace('/today' as never);
+        }
+      });
+    }
+    return () => {
+      mounted = false;
+    };
+  }, [user?.id, router]);
 
   const handleGetStarted = async () => {
     playSuccessSound();
     try {
       if (user?.id) {
-        // If user is authenticated and already has profile or goals, go to today
-        const { getDb } = await import('@/db');
-        const { getCurrentLocalGoalProfile } = await import('@/services/targetsService');
-        const db = await getDb();
-        const localProfile =
-          (await getCurrentLocalGoalProfile(db, user.id)) ||
-          (await getCurrentLocalGoalProfile(db, 'guest-user'));
-
-        if (localProfile || profile?.nickname) {
+        const onboarded = await isUserOnboarded(user.id);
+        if (onboarded) {
           router.replace('/today' as never);
           return;
         }

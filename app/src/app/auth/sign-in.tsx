@@ -30,7 +30,26 @@ export default function SignInScreen() {
   const router = useRouter();
   const { mode } = useLocalSearchParams<{ mode?: string }>();
   const isSignUp = mode !== 'signin';
-  const { signInWithOtp, verifyOtp, signInWithGoogle, signInWithApple } = useAuth();
+  const { user, signInWithOtp, verifyOtp, signInWithGoogle, signInWithApple } = useAuth();
+
+  // If user is already authenticated (e.g. after OAuth redirect or active session), check status
+  useEffect(() => {
+    let mounted = true;
+    if (user?.id) {
+      import('@/services/onboardingStatus').then(async ({ isUserOnboarded }) => {
+        const onboarded = await isUserOnboarded(user.id);
+        if (!mounted) return;
+        if (onboarded || !isSignUp) {
+          router.replace('/today' as never);
+        } else {
+          router.replace('/auth/welcome-celebration' as never);
+        }
+      });
+    }
+    return () => {
+      mounted = false;
+    };
+  }, [user?.id, isSignUp, router]);
 
   const [email, setEmail] = useState('');
   const [token, setToken] = useState('');
@@ -97,6 +116,22 @@ export default function SignInScreen() {
     if (error) {
       setErrorMessage(t('auth.invalidCodeError'));
     } else {
+      const { getSupabase } = await import('@/lib/supabase');
+      const supabase = getSupabase();
+      const {
+        data: { user: verifiedUser },
+      } = await supabase.auth.getUser();
+      const effectiveId = verifiedUser?.id;
+
+      if (effectiveId) {
+        const { isUserOnboarded } = await import('@/services/onboardingStatus');
+        const onboarded = await isUserOnboarded(effectiveId);
+        if (onboarded || !isSignUp) {
+          router.replace('/today' as never);
+          return;
+        }
+      }
+
       router.replace('/auth/welcome-celebration' as never);
     }
   };

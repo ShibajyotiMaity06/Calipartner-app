@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   KeyboardAvoidingView,
   Platform,
@@ -44,8 +44,24 @@ export const ACTIVE_ONBOARDING_STEPS: readonly OnboardingStep[] = [
 export default function OnboardingScreen() {
   const router = useRouter();
   const params = useLocalSearchParams<{ inviteCode?: string }>();
-  const { user, profile } = useAuth();
+  const { user, profile, refreshProfile } = useAuth();
   const { saveGoalProfile, saveScreening } = useTargets();
+
+  // If user has already completed onboarding, route straight to today
+  useEffect(() => {
+    let mounted = true;
+    if (user?.id) {
+      import('@/services/onboardingStatus').then(async ({ isUserOnboarded }) => {
+        const onboarded = await isUserOnboarded(user.id);
+        if (mounted && onboarded) {
+          router.replace('/today' as never);
+        }
+      });
+    }
+    return () => {
+      mounted = false;
+    };
+  }, [user?.id, router]);
 
   // Instantiate the state machine with preloaded profile data if available
   const [machine] = useState(() => {
@@ -277,22 +293,35 @@ export default function OnboardingScreen() {
       // Save health screening
       await saveScreening(screening);
 
-      // Update user profile in Supabase if logged in
+      // Upsert user profile in Supabase if logged in
       if (user?.id) {
         try {
           const { getSupabase } = await import('@/lib/supabase');
           const supabase = getSupabase();
           const targetName = snapshot.nickname?.trim() || profile?.nickname || 'Maity';
-          await supabase
+
+          const { data: existingProfile } = await supabase
             .from('profiles')
-            .update({
-              nickname: targetName,
-              height_cm: snapshot.heightCm,
-              sex: snapshot.sex,
-              units: snapshot.units,
-              updated_at: new Date().toISOString(),
-            })
-            .eq('id', user.id);
+            .select('username')
+            .eq('id', user.id)
+            .maybeSingle();
+
+          const username =
+            existingProfile?.username || `user_${user.id.replace(/-/g, '').slice(0, 10)}`;
+          const dob = snapshot.dateOfBirth || profile?.date_of_birth || '2000-01-01';
+
+          await supabase.from('profiles').upsert({
+            id: user.id,
+            username,
+            nickname: targetName,
+            height_cm: snapshot.heightCm,
+            sex: snapshot.sex,
+            date_of_birth: dob,
+            units: snapshot.units,
+            updated_at: new Date().toISOString(),
+          });
+
+          await refreshProfile();
         } catch {
           // ignore profile sync failure
         }

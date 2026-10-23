@@ -121,7 +121,7 @@ async function callClaudeChat(
         'content-type': 'application/json',
       },
       body: JSON.stringify({
-        model: model || 'claude-3-5-sonnet-20241022',
+        model: model || 'claude-3-5-haiku-20241022',
         max_tokens: 500,
         system: systemPrompt,
         messages: anthropicMessages,
@@ -294,7 +294,7 @@ USER METRICS & CONTEXT:
     const groqModel = Deno.env.get('GROQ_MODEL') || 'qwen/qwen3.8-27b';
     const geminiKey = Deno.env.get('GEMINI_API_KEY');
     const anthropicKey = Deno.env.get('ANTHROPIC_API_KEY');
-    const claudeModel = Deno.env.get('CLAUDE_MODEL') || 'claude-3-5-sonnet-20241022';
+    const claudeModel = Deno.env.get('CLAUDE_MODEL') || 'claude-3-5-haiku-20241022';
     const openRouterApiKey = Deno.env.get('OPENROUTER_API_KEY');
     const openRouterModel = Deno.env.get('OPENROUTER_MODEL') || DEFAULT_COACH_MODEL;
 
@@ -317,7 +317,12 @@ USER METRICS & CONTEXT:
     // 2. Fallback 1: Groq with fallback key
     if (!assistantResponseText && groqFallbackKey && groqFallbackKey.trim().length > 0) {
       console.warn('Groq primary key unavailable or rate limited. Trying Groq fallback key...');
-      const groqRes = await callGroqChat(groqFallbackKey.trim(), groqModel, systemPrompt, incomingMessages);
+      const groqRes = await callGroqChat(
+        groqFallbackKey.trim(),
+        groqModel,
+        systemPrompt,
+        incomingMessages,
+      );
       if (groqRes) {
         assistantResponseText = groqRes.text;
         tokensUsed = groqRes.tokens;
@@ -353,10 +358,7 @@ USER METRICS & CONTEXT:
           },
           body: JSON.stringify({
             model: openRouterModel,
-            messages: [
-              { role: 'system', content: systemPrompt },
-              ...incomingMessages.slice(-8),
-            ],
+            messages: [{ role: 'system', content: systemPrompt }, ...incomingMessages.slice(-8)],
             temperature: 0.7,
             max_tokens: 2500,
           }),
@@ -377,7 +379,12 @@ USER METRICS & CONTEXT:
     // 5. Ultimate Fallback: Claude (Anthropic API)
     if (!assistantResponseText && anthropicKey && anthropicKey.trim().length > 0) {
       console.warn('All previous providers unavailable. Trying ultimate Claude fallback...');
-      const claudeRes = await callClaudeChat(anthropicKey.trim(), claudeModel, systemPrompt, incomingMessages);
+      const claudeRes = await callClaudeChat(
+        anthropicKey.trim(),
+        claudeModel,
+        systemPrompt,
+        incomingMessages,
+      );
       if (claudeRes) {
         assistantResponseText = claudeRes.text;
         tokensUsed = claudeRes.tokens;
