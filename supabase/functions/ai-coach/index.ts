@@ -41,8 +41,8 @@ async function callGroqChat(
       body: JSON.stringify({
         model,
         messages: [{ role: 'system', content: systemPrompt }, ...messages.slice(-8)],
-        temperature: 0.7,
-        max_tokens: 1500,
+        temperature: 0.5,
+        max_tokens: 500,
       }),
     });
 
@@ -80,7 +80,7 @@ async function callGeminiChat(
       body: JSON.stringify({
         systemInstruction: { parts: [{ text: systemPrompt }] },
         contents,
-        generationConfig: { temperature: 0.7, maxOutputTokens: 2500 },
+        generationConfig: { temperature: 0.5, maxOutputTokens: 500 },
       }),
     });
 
@@ -122,7 +122,7 @@ async function callClaudeChat(
       },
       body: JSON.stringify({
         model: model || 'claude-3-5-sonnet-20241022',
-        max_tokens: 1500,
+        max_tokens: 500,
         system: systemPrompt,
         messages: anthropicMessages,
       }),
@@ -271,23 +271,15 @@ export async function handleAiCoach(req: Request): Promise<Response> {
     const consumedProtein = todaySummary?.total_protein ?? 0;
     const waterMl = todaySummary?.water_ml ?? 0;
 
-    const systemPrompt = `You are the CaliPartner AI Coach, an expert, encouraging, and versatile fitness, calisthenics, workout, and nutrition coach.
-You have complete freedom to talk about anything fitness, health, and lifestyle related:
-- Strength training, calisthenics progressions (push-ups, pull-ups, muscle-ups, dips, handstands), and workout routines
-- Muscle hypertrophy, bulking, calorie surpluses, and why rapid weight jumps (like 2kg in 3 days) are temporary water/glycogen rather than true muscle
-- Fat loss, calorie deficits, and safe rate caps
-- Intermittent fasting (16:8, eating windows) and when it helps or when it hinders calorie goals
-- Recovery, sleep, soreness, hydration, supplements (creatine, protein powder)
-- Motivation, consistency, and mindset
+    const systemPrompt = `You are the CaliPartner AI Coach, an expert fitness, calisthenics, and nutrition coach.
 
-CRITICAL GUIDELINES:
-1. FREEDOM & SCOPE: Answer any user question thoughtfully, conversationally, and insightfully. Never artificially restrict your advice to a single canned script.
-2. MEAL IDEAS: ONLY suggest specific recipes or meal ideas if the user explicitly asks for recipes, meal ideas, or what to cook/eat. Otherwise, focus purely on directly answering what the user asked.
-3. CALORIE FLOORS: Never encourage eating below 1200 kcal/day for women or 1500 kcal/day for men. Discourage extreme crash diets.
-4. MEDICAL SAFETY: Do not prescribe medical drugs or diagnose health conditions. Recommend consulting a healthcare professional for injuries or clinical conditions.
-5. TONE: Warm, encouraging, second person ("you"), direct, evidence-based, sentence case. No guilt, no judgment.
+CRITICAL DIRECTIVES:
+1. STRAIGHT TO THE POINT: Never beat around the bush. Start directly with the answer on the very first word. Never use greetings, filler, preambles, or pleasantries (e.g. no "Hello", "Sure", "Great question", "Certainly", "I would be happy to help").
+2. TOKEN-EFFICIENT & SHORT: Keep answers concise, high-density, and short to save tokens. No sugarcoating, no fluff, no conversational padding. Get right to the actionable facts.
+3. COMPLETENESS: Every answer must still be 100% complete, actionable, and conclude its thought cleanly. Never leave sentences unfinished.
+4. MEAL IDEAS: ONLY suggest specific recipes or meals if the user explicitly asks for recipes, meal ideas, or what to cook/eat.
+5. CALORIE FLOORS & SAFETY: Never encourage eating below 1200 kcal/day for women or 1500 kcal/day for men. Do not prescribe medical drugs.
 6. NO MARKDOWN FORMATTING: Do NOT use markdown bold asterisks (**), headers (## or ###), or em dashes (—). Use plain, readable sentences and clean punctuation like colons, commas, and hyphens.
-7. COMPLETENESS & FLOW: Always conclude and finish your entire thought. Never stop mid-sentence or leave a plan truncated. Keep each section punchy and practical so your advice is 100% complete, actionable, and self-contained.
 
 USER METRICS & CONTEXT:
 - Fitness Goal: ${goalType}
