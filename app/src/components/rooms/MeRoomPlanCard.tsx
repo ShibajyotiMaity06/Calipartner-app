@@ -85,14 +85,14 @@ export function MeRoomPlanCard({
 
   const tierName =
     tier === 'pro'
-      ? 'Pro room plan'
+      ? 'CaliPartner Pro'
       : tier === 'plus'
-        ? 'Plus room plan'
+        ? 'CaliPartner Plus'
         : tier === 'basic'
-          ? 'Basic room plan'
+          ? 'CaliPartner Free'
           : isTrial
-            ? 'Room trial'
-            : 'No plan';
+            ? 'Plus Free Trial'
+            : 'Free Plan';
 
   const formattedPeriodEnd = entitlement?.period_end
     ? new Date(entitlement.period_end).toLocaleDateString(undefined, {
@@ -110,20 +110,22 @@ export function MeRoomPlanCard({
         : t('me.roomPlan.renewalDate', { date: formattedPeriodEnd })
     : null;
 
-  const roomCap = attachedRoom?.member_cap ?? (tier === 'pro' ? 50 : tier === 'plus' ? 20 : 5);
-  const memberCount = attachedRoom?.member_count ?? (isPaidOrTrial ? 3 : 1);
+  const planDefaultCap = tier === 'pro' ? 50 : tier === 'plus' ? 20 : 5;
+  const roomCap = attachedRoom ? Math.max(attachedRoom.member_cap ?? 5, planDefaultCap) : planDefaultCap;
+  const memberCount = attachedRoom?.member_count ?? 1;
+  const capacityText = attachedRoom?.name ? `${memberCount} of ${roomCap} people` : `Up to ${planDefaultCap} people`;
 
-  // 1. FREE STATE: "No plan. Free tracking is yours forever." with a quiet "See plans" (Spec N01, O01)
+  // 1. FREE STATE: "Free Plan. Personal tracking is 100% free forever." with a quiet "See plans" (Spec N01, O01)
   if (!isPaidOrTrial) {
     return (
       <Card elevation="s1" style={styles.card} testID="card-me-room-plan">
         <View style={styles.freeHeaderRow}>
           <View style={styles.freeTextGroup}>
             <Text variant="heading" color={dark.textHi}>
-              No plan
+              Free Plan
             </Text>
             <Text variant="bodyS" color={dark.textMid} style={styles.freeNoticeText}>
-              Free tracking is yours forever.
+              Personal tracking is 100% free forever.
             </Text>
           </View>
 
@@ -131,7 +133,7 @@ export function MeRoomPlanCard({
             onPress={onChangePlan}
             style={styles.seePlansBtn}
             accessibilityRole="button"
-            accessibilityLabel="See room plans"
+            accessibilityLabel="See plans"
             testID="btn-me-change-plan"
           >
             <Text variant="label" color={dark.apricot}>
@@ -184,7 +186,7 @@ export function MeRoomPlanCard({
             Capacity
           </Text>
           <Text variant="bodyS" color={dark.textHi} style={styles.tabularNum}>
-            {memberCount} of {roomCap} people
+            {capacityText}
           </Text>
         </View>
 

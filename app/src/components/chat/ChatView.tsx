@@ -58,6 +58,7 @@ export function ChatView({
     deleteMessage,
     reportMessage,
     muteMember,
+    blockMember,
     acceptTerms,
   } = useRoomChat(roomId, isVisible, options);
 
@@ -264,6 +265,7 @@ export function ChatView({
           setReportTargetMessageId(msgId);
         }}
         onMuteMember={muteMember}
+        onBlockMember={blockMember}
       />
 
       {/* Report Modal */}

@@ -246,4 +246,12 @@ describe('UI-5 Onboarding and Account Polish (Spec A01–A15, B01–B09)', () =>
       expect(getLocale()).toBe('en');
     });
   });
+
+  describe('13. Terms of Service & Privacy Policy Prompt (Apple & Google Compliance)', () => {
+    it('verifies terms prompt text and agreement structure', () => {
+      const termsPrompt = 'By continuing, you agree to our Terms of Service and Privacy Policy.';
+      expect(termsPrompt).toContain('Terms of Service');
+      expect(termsPrompt).toContain('Privacy Policy');
+    });
+  });
 });

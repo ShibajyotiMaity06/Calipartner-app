@@ -1,28 +1,19 @@
 import React, { useEffect, useState } from 'react';
-import { View, StyleSheet, SafeAreaView, TouchableOpacity } from 'react-native';
+import { View, StyleSheet, SafeAreaView } from 'react-native';
 import { useRouter } from 'expo-router';
 import {
   Text,
   Button,
-  Chip,
   PairRing,
-  Sheet,
-  Field,
   space,
   dark,
   useReducedMotion,
 } from '@calipartner/ui';
-import { t, setLocale, getLocale } from '@/i18n';
+import { t } from '@/i18n';
 
 export default function WelcomeScreen() {
   const router = useRouter();
   const reduceMotion = useReducedMotion();
-  const [currentLocale, setCurrentLocale] = useState(getLocale());
-
-  // Invite code sheet state
-  const [showInviteSheet, setShowInviteSheet] = useState(false);
-  const [inviteCode, setInviteCode] = useState('');
-  const [inviteError, setInviteError] = useState<string | null>(null);
 
   // 6-second looping animation for PairRing preview
   const [arcProgress, setArcProgress] = useState({ user: 78, partner: 64 });
@@ -52,47 +43,25 @@ export default function WelcomeScreen() {
     return () => clearInterval(interval);
   }, [reduceMotion]);
 
-  const toggleLanguage = () => {
-    const next = currentLocale === 'en' ? 'hi' : 'en';
-    setLocale(next);
-    setCurrentLocale(next);
-  };
-
   const handleGetStarted = () => {
-    router.push('/onboarding');
+    router.push({
+      pathname: '/auth/sign-in',
+      params: { mode: 'signup' },
+    });
   };
 
   const handleSignIn = () => {
-    router.push('/auth/sign-in');
-  };
-
-  const handleJoinWithCode = () => {
-    const clean = inviteCode.trim().toUpperCase();
-    if (clean.length < 4) {
-      setInviteError('Please enter a valid invite code (e.g. RAHUL8).');
-      return;
-    }
-    setShowInviteSheet(false);
-    // Route to invite preview with the code
     router.push({
-      pathname: '/onboarding',
-      params: { inviteCode: clean },
+      pathname: '/auth/sign-in',
+      params: { mode: 'signin' },
     });
   };
 
   return (
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.container}>
-        {/* Top bar with right-aligned Language chip */}
-        <View style={styles.topBar}>
-          <Chip
-            label={currentLocale === 'en' ? 'हिन्दी' : 'EN'}
-            selected={false}
-            onPress={toggleLanguage}
-            accessibilityLabel={`Switch to ${currentLocale === 'en' ? 'Hindi' : 'English'}`}
-            testID="btn-language-toggle"
-          />
-        </View>
+        {/* Top spacer */}
+        <View style={styles.topBar} />
 
         {/* Center: Decorative PairRing preview */}
         <View
@@ -116,7 +85,7 @@ export default function WelcomeScreen() {
           {/* Value Pitch */}
           <View style={styles.copyBlock}>
             <Text variant="title1" color={dark.textHi} style={styles.title} testID="welcome-title">
-              {t('welcome.title')}
+              Get stronger, together.
             </Text>
             <Text
               variant="body"
@@ -124,7 +93,7 @@ export default function WelcomeScreen() {
               style={styles.subtitle}
               testID="welcome-subtitle"
             >
-              {t('welcome.subtitle')}
+              Track food, steps and workouts, and keep your squad on the same page.
             </Text>
           </View>
         </View>
@@ -146,56 +115,8 @@ export default function WelcomeScreen() {
             onPress={handleSignIn}
             testID="btn-welcome-sign-in"
           />
-
-          <TouchableOpacity
-            onPress={() => setShowInviteSheet(true)}
-            style={styles.inviteLink}
-            accessibilityRole="button"
-            accessibilityLabel={t('welcome.haveInviteCode')}
-            testID="btn-welcome-have-invite"
-          >
-            <Text variant="body" color={dark.apricot} style={styles.inviteText}>
-              {t('welcome.haveInviteCode')}
-            </Text>
-          </TouchableOpacity>
         </View>
       </View>
-
-      {/* Invite Code Sheet */}
-      <Sheet
-        visible={showInviteSheet}
-        onClose={() => {
-          setShowInviteSheet(false);
-          setInviteError(null);
-        }}
-        testID="sheet-invite-code"
-      >
-        <View style={styles.sheetContent}>
-          <Text variant="heading" color={dark.textHi}>
-            {t('welcome.enterInviteCode')}
-          </Text>
-          <Field
-            label="Room Code"
-            value={inviteCode}
-            onChangeText={(text) => {
-              setInviteCode(text);
-              if (inviteError) setInviteError(null);
-            }}
-            placeholder={t('welcome.inviteCodePlaceholder')}
-            autoCapitalize="characters"
-            error={inviteError ?? undefined}
-            testID="input-invite-code"
-          />
-          <Button
-            variant="primary"
-            size="lg"
-            label={t('welcome.joinRoom')}
-            onPress={handleJoinWithCode}
-            style={styles.sheetButton}
-            testID="btn-submit-invite-code"
-          />
-        </View>
-      </Sheet>
     </SafeAreaView>
   );
 }
@@ -246,21 +167,5 @@ const styles = StyleSheet.create({
     width: '100%',
     gap: space[3],
     paddingTop: space[2],
-  },
-  inviteLink: {
-    minHeight: 44,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  inviteText: {
-    textAlign: 'center',
-    fontWeight: '600',
-  },
-  sheetContent: {
-    padding: space[4],
-    gap: space[4],
-  },
-  sheetButton: {
-    marginTop: space[2],
   },
 });

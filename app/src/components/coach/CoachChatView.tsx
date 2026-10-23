@@ -26,8 +26,13 @@ import { CoachHistoryModal } from './CoachHistoryModal';
 import { CoachMessageBubble } from './CoachMessageBubble';
 import { CoachReportModal } from './CoachReportModal';
 import { CoachSuggestedPrompts } from './CoachSuggestedPrompts';
+import { useTargets } from '@/hooks/useTargets';
+import { generateCoachResponse } from '@/services/aiCoachEngine';
+import { createLogger } from '@/lib/logger';
 import type { CoachConversation, CoachMessage, CoachReportReason, CoachSuggestion } from './types';
 import type { Recipe } from '@calipartner/core';
+
+const log = createLogger('CoachChatView');
 
 export interface CoachChatViewProps {
   onBack?: () => void;
@@ -39,6 +44,7 @@ const DAILY_MESSAGE_LIMIT = 10;
 
 export function CoachChatView({ onBack, initialConversationId }: CoachChatViewProps) {
   const { colors } = useTheme();
+  const { currentGoalProfile } = useTargets();
   const { hasPlan, entitlement, loading: subLoading } = useSubscription();
   const isPro = entitlement?.tier === 'pro' && hasPlan;
   const { isOnline } = useNetworkStatus();
@@ -143,36 +149,6 @@ export function CoachChatView({ onBack, initialConversationId }: CoachChatViewPr
 
       setMessages((prev) => [...prev, userMessage]);
 
-      // Determine response based on user input
-      let finalContent =
-        'I’m analyzing your daily logs. Remember that staying consistent with your calorie and hydration targets is key to sustainable progress.';
-      let suggestions: CoachSuggestion[] | undefined;
-
-      const lower = trimmed.toLowerCase();
-      if (lower.includes('protein') || lower.includes('eat tonight')) {
-        finalContent =
-          'To hit your remaining protein target tonight without exceeding your calories, aim for a lean protein base with light vegetables. Here is a curated option from our recipe library:';
-        suggestions = [
-          {
-            id: 'sug-1',
-            type: 'recipe',
-            title: 'High-Protein Tofu & Lentil Bowl',
-            portion: '1 bowl (350g)',
-            calories: 420,
-            protein: 34,
-            carbs: 45,
-            fat: 9,
-            recipeId: 'rec-tofu-lentil',
-          },
-        ];
-      } else if (lower.includes('calorie target') || lower.includes('explain')) {
-        finalContent =
-          'Your calorie target was calculated deterministically based on your Mifflin-St Jeor BMR, activity level, and target pace. We always enforce safety floors so you have plenty of energy for your workouts.';
-      } else if (lower.includes('week') || lower.includes('how am i doing')) {
-        finalContent =
-          'Looking at your past 7 days, you’ve logged meals consistently for 6 days and stayed within 5% of your protein goal. Great consistency!';
-      }
-
       // Append assistant message in streaming state
       const initialAssistantMessage: CoachMessage = {
         id: assistantMsgId,
@@ -180,14 +156,72 @@ export function CoachChatView({ onBack, initialConversationId }: CoachChatViewPr
         content: '',
         timestamp: new Date().toISOString(),
         isStreaming: true,
-        suggestions,
       };
 
       setMessages((prev) => [...prev, initialAssistantMessage]);
 
+      // Determine response from live AI coach (Edge Function or direct Gemini 2.5 Flash)
+      let finalContent = '';
+      let suggestions: CoachSuggestion[] | undefined;
+
+      try {
+        const { queryAiCoach } = await import('@/services/aiCoachClient');
+
+        const historyPayload = [
+          ...messages.map((m) => ({ role: m.role, content: m.content })),
+          { role: 'user' as const, content: trimmed },
+        ];
+
+        const aiResult = await queryAiCoach(
+          historyPayload,
+          {
+            calorieTarget: currentGoalProfile?.daily_calorie_target ?? 2000,
+            proteinTarget: currentGoalProfile?.protein_grams ?? 140,
+            goal: currentGoalProfile?.goal ?? 'maintain',
+          },
+          currentConversationId,
+        );
+
+        finalContent = aiResult.content;
+        suggestions = aiResult.suggestions;
+      } catch (coachErr: any) {
+        if (
+          coachErr?.code === 'CONSENT_REQUIRED' ||
+          coachErr?.message?.includes('CONSENT')
+        ) {
+          setShowConsentModal(true);
+          setMessages((prev) => prev.filter((m) => m.id !== assistantMsgId));
+          setIsSending(false);
+          return;
+        }
+        if (
+          coachErr?.code === 'UPGRADE_REQUIRED' ||
+          coachErr?.message?.includes('UPGRADE')
+        ) {
+          setShowPaywallModal(true);
+          setMessages((prev) => prev.filter((m) => m.id !== assistantMsgId));
+          setIsSending(false);
+          return;
+        }
+
+        log.error('AI Coach call failed:', coachErr);
+        // Show real failure message instead of deceptive hardcoded text
+        const errorText =
+          coachErr?.message || 'Could not connect to AI Coach. Please check your network and try again.';
+        setMessages((prev) =>
+          prev.map((msg) =>
+            msg.id === assistantMsgId
+              ? { ...msg, content: `⚠️ ${errorText}`, isStreaming: false }
+              : msg,
+          ),
+        );
+        setIsSending(false);
+        return;
+      }
+
       // Stream character by character / token chunks
       let currentLength = 0;
-      const chunkSize = 12;
+      const chunkSize = 16;
       const interval = setInterval(() => {
         currentLength += chunkSize;
         const streamedSlice = finalContent.slice(0, currentLength);
@@ -197,7 +231,7 @@ export function CoachChatView({ onBack, initialConversationId }: CoachChatViewPr
           setMessages((prev) =>
             prev.map((msg) =>
               msg.id === assistantMsgId
-                ? { ...msg, content: finalContent, isStreaming: false }
+                ? { ...msg, content: finalContent, isStreaming: false, suggestions }
                 : msg,
             ),
           );
@@ -211,9 +245,9 @@ export function CoachChatView({ onBack, initialConversationId }: CoachChatViewPr
             ),
           );
         }
-      }, 50);
+      }, 35);
     },
-    [inputDisabled, hasConsent],
+    [inputDisabled, hasConsent, currentConversationId, messages],
   );
 
   // Thumbs feedback

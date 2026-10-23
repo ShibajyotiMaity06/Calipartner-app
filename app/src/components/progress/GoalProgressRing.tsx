@@ -68,7 +68,7 @@ export function GoalProgressRing({
         </Svg>
         <View style={styles.centerTextContainer}>
           <Text style={[styles.percentText, { color: colors.text }]}>
-            {progressPct != null ? `${Math.round(validPct)}%` : '--%'}
+            {progressPct != null ? `${Math.round(validPct)}%` : '0%'}
           </Text>
           <Text style={[styles.subText, { color: colors.textMuted }]}>
             {t('progress.goalProgress.title')}

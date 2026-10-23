@@ -28,7 +28,7 @@ export interface DailyGoalsModalProps {
   onSave?: (goals: {
     stepGoal: number;
     waterGoalMl: number;
-    focusGoalMins: number;
+    focusGoalMins?: number;
   }) => Promise<void> | void;
   testID?: string;
 }
@@ -38,13 +38,11 @@ export function DailyGoalsModal({
   onClose,
   currentStepGoal = 8000,
   currentWaterGoalMl = 2500,
-  currentFocusGoalMins = 60,
   onSave,
   testID = 'modal-daily-goals',
 }: DailyGoalsModalProps) {
   const [stepGoal, setStepGoal] = useState<number>(currentStepGoal);
   const [waterGoalMl, setWaterGoalMl] = useState<number>(currentWaterGoalMl);
-  const [focusGoalMins, setFocusGoalMins] = useState<number>(currentFocusGoalMins);
   const [saving, setSaving] = useState(false);
   const [success, setSuccess] = useState(false);
 
@@ -53,7 +51,7 @@ export function DailyGoalsModal({
     setSaving(true);
     try {
       if (onSave) {
-        await onSave({ stepGoal, waterGoalMl, focusGoalMins });
+        await onSave({ stepGoal, waterGoalMl, focusGoalMins: 0 });
       }
       setSuccess(true);
       setTimeout(() => {
@@ -149,35 +147,6 @@ export function DailyGoalsModal({
                   unit={t('me.dailyGoals.waterUnit')}
                   accessibilityLabel="Water goal stepper"
                   testID="stepper-water-goal"
-                />
-              </View>
-            </Card>
-
-            {/* 3. Focus Goal Card */}
-            <Card elevation="s1" style={styles.goalCard}>
-              <View style={styles.goalHeader}>
-                <View>
-                  <Text variant="heading" color={dark.textHi}>
-                    {t('me.dailyGoals.focusGoal')}
-                  </Text>
-                  <Text variant="bodyS" color={dark.textMid}>
-                    Target time for deep work and study
-                  </Text>
-                </View>
-                <Text variant="numeralM" color={dark.iris} style={styles.metricDisplay}>
-                  {focusGoalMins} mins
-                </Text>
-              </View>
-              <View style={styles.stepperWrap}>
-                <Stepper
-                  value={focusGoalMins}
-                  onChange={setFocusGoalMins}
-                  min={15}
-                  max={240}
-                  step={15}
-                  unit={t('me.dailyGoals.focusUnit')}
-                  accessibilityLabel="Focus goal stepper"
-                  testID="stepper-focus-goal"
                 />
               </View>
             </Card>

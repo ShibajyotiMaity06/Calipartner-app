@@ -14,17 +14,28 @@ coverage/
 app/ios/
 app/android/
 
-# keys
+# keys & binaries
 *.jks
 *.p8
 *.p12
 *.key
 *.pem
 *.mobileprovision
+*.exe
+*.dll
+*.dmg
+*.iso
+
+# Vercel & IDE
+.vercel/
+.idea/
+.vscode/
 
 # OS
 .DS_Store
 Thumbs.db
+ehthumbs.db
+[Nn]ew [Ff]older/
 
 # Supabase local
 supabase/.temp/
@@ -47,3 +58,6 @@ yarn-error.log*
 
 # Cache
 .cache/
+.turbo/
+web-build/
+

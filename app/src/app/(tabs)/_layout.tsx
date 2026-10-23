@@ -8,10 +8,9 @@ export default function TabsLayout() {
   const pathname = usePathname();
   const router = useRouter();
 
-  // Hide tab bar on full-screen flows (e.g. full-screen barcode scan, running focus timer)
+  // Hide tab bar on full-screen flows (e.g. full-screen barcode scan, onboarding)
   const isFullScreenFlow =
     pathname.includes('/scan') ||
-    pathname.includes('/focus/running') ||
     pathname.includes('/onboarding');
 
   return (
@@ -60,6 +59,12 @@ export default function TabsLayout() {
             bottomInset={insets.bottom}
             hasRoomBadge={false}
             visible={!isFullScreenFlow}
+            labels={{
+              today: t('tabs.today'),
+              progress: t('tabs.progress'),
+              room: t('tabs.room'),
+              me: t('tabs.me'),
+            }}
           />
         );
       }}

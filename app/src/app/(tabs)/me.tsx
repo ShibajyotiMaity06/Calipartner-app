@@ -21,7 +21,7 @@ import {
   SyncPill,
   Text,
 } from '@calipartner/ui';
-import { FocusSettingsModal } from '@/components/focus';
+
 import {
   MeRoomPlanCard,
   PaywallModal,
@@ -33,7 +33,6 @@ import {
   AppearanceModal,
   AvatarPickerModal,
   DailyGoalsModal,
-  DeleteAccountModal,
   DiscoverabilityModal,
   ExportDataModal,
   GoalsAndBodyModal,
@@ -54,7 +53,7 @@ import { playClickSound } from '@/lib/sound';
 
 export default function MeScreen() {
   const router = useRouter();
-  const { user, profile, isGuest, signOut } = useAuth();
+  const { user, profile, isGuest, signOut, updateProfile } = useAuth();
   const { rooms } = useRooms();
   const { incoming, outgoing, respondToRequest, cancelRequest } = useRoomRequests();
 
@@ -68,7 +67,7 @@ export default function MeScreen() {
   const [showPerRoomVisibility, setShowPerRoomVisibility] = useState(false);
   const [showPreviewPartner, setShowPreviewPartner] = useState(false);
   const [showDiscoverability, setShowDiscoverability] = useState(false);
-  const [showFocusSettings, setShowFocusSettings] = useState(false);
+
   const [showHealthSync, setShowHealthSync] = useState(false);
   const [showUnitsLanguage, setShowUnitsLanguage] = useState(false);
   const [showAppearance, setShowAppearance] = useState(false);
@@ -78,7 +77,6 @@ export default function MeScreen() {
   const [showReportFeedback, setShowReportFeedback] = useState(false);
   const [showAboutLegal, setShowAboutLegal] = useState(false);
   const [showSignOutSheet, setShowSignOutSheet] = useState(false);
-  const [showDeleteAccount, setShowDeleteAccount] = useState(false);
 
   const pendingRequestsCount = incoming.length;
 
@@ -169,6 +167,7 @@ export default function MeScreen() {
                 >
                   <Avatar
                     size="lg"
+                    uri={profile?.avatar_url}
                     name={profile?.nickname ?? 'User'}
                     identityHue="teal"
                   />
@@ -232,7 +231,7 @@ export default function MeScreen() {
               />
               <ListRow
                 title={t('me.dailyGoals.title')}
-                subtitle="Step goal (8,000), water intake, focus goal"
+                subtitle="Step goal (8,000), water intake"
                 onPress={() => {
                   playClickSound();
                   setShowDailyGoals(true);
@@ -314,15 +313,7 @@ export default function MeScreen() {
                 }}
                 testID="row-fasting"
               />
-              <ListRow
-                title="Focus"
-                subtitle="Deep work timers and task tags"
-                onPress={() => {
-                  playClickSound();
-                  setShowFocusSettings(true);
-                }}
-                testID="row-focus"
-              />
+
               <ListRow
                 title="AI coach history"
                 subtitle="Personal fitness and meal check-in logs"
@@ -506,8 +497,18 @@ export default function MeScreen() {
 
         <AvatarPickerModal
           visible={showAvatarPicker}
+          currentAvatarUri={profile?.avatar_url}
           onClose={() => setShowAvatarPicker(false)}
-          onSelectAvatar={() => setShowAvatarPicker(false)}
+          onSelectAvatar={(avatar) => {
+            if (avatar.uri) {
+              updateProfile({ avatar_url: avatar.uri });
+            }
+            setShowAvatarPicker(false);
+          }}
+          onSelectCustomPhoto={(uri) => {
+            updateProfile({ avatar_url: uri });
+            setShowAvatarPicker(false);
+          }}
         />
 
         <GoalsAndBodyModal
@@ -561,11 +562,7 @@ export default function MeScreen() {
           discoverable={profile?.discoverable ?? true}
         />
 
-        <FocusSettingsModal
-          visible={showFocusSettings}
-          onClose={() => setShowFocusSettings(false)}
-          userId={user?.id ?? ''}
-        />
+
 
         <HealthSyncModal
           visible={showHealthSync}
@@ -612,13 +609,6 @@ export default function MeScreen() {
           visible={showSignOutSheet}
           onClose={() => setShowSignOutSheet(false)}
           onConfirmSignOut={performSignOut}
-          onOpenDeleteAccount={() => setShowDeleteAccount(true)}
-        />
-
-        <DeleteAccountModal
-          visible={showDeleteAccount}
-          onClose={() => setShowDeleteAccount(false)}
-          onConfirmDelete={performSignOut}
         />
       </View>
     </SafeAreaView>
@@ -668,7 +658,7 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     padding: space[4],
-    paddingBottom: space[8],
+    paddingBottom: 80,
   },
   guestCard: {
     padding: space[4],

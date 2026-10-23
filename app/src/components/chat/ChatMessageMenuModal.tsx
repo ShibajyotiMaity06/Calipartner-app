@@ -14,6 +14,7 @@ export interface ChatMessageMenuModalProps {
   onDeleteMessage: (messageId: string) => Promise<void>;
   onReportMessage: (messageId: string) => void;
   onMuteMember: (userId: string) => Promise<void>;
+  onBlockMember?: (userId: string) => Promise<void>;
   testID?: string;
 }
 
@@ -25,10 +26,12 @@ export function ChatMessageMenuModal({
   onDeleteMessage,
   onReportMessage,
   onMuteMember,
+  onBlockMember,
   testID = 'chat-message-menu-modal',
 }: ChatMessageMenuModalProps) {
   const { colors } = useTheme();
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [showBlockConfirm, setShowBlockConfirm] = useState(false);
   const [loading, setLoading] = useState(false);
 
   if (!message) return null;
@@ -58,6 +61,18 @@ export function ChatMessageMenuModal({
     } finally {
       setLoading(false);
       setShowDeleteConfirm(false);
+      onClose();
+    }
+  };
+
+  const handleConfirmBlock = async () => {
+    if (!message.sender_id || !onBlockMember) return;
+    setLoading(true);
+    try {
+      await onBlockMember(message.sender_id);
+    } finally {
+      setLoading(false);
+      setShowBlockConfirm(false);
       onClose();
     }
   };
@@ -118,6 +133,40 @@ export function ChatMessageMenuModal({
                 >
                   <Text style={[styles.confirmBtnText, { color: '#FFFFFF' }]}>
                     {t('chat.deleteConfirmBtn')}
+                  </Text>
+                </Pressable>
+              </View>
+            </View>
+          ) : showBlockConfirm ? (
+            <View style={styles.deleteConfirmBox} testID="box-block-confirm">
+              <Text style={[styles.deleteConfirmTitle, { color: colors.danger }]}>
+                Block user
+              </Text>
+              <Text style={[styles.deleteConfirmDesc, { color: colors.textMuted }]}>
+                Are you sure you want to block this user? You will immediately stop seeing their messages, activity, and shared logs.
+              </Text>
+
+              <View style={styles.confirmButtonsRow}>
+                <Pressable
+                  onPress={() => setShowBlockConfirm(false)}
+                  style={[styles.confirmBtn, { backgroundColor: colors.surfaceAlt }]}
+                  accessibilityRole="button"
+                  testID="btn-block-cancel"
+                >
+                  <Text style={[styles.confirmBtnText, { color: colors.text }]}>
+                    {t('chat.cancel')}
+                  </Text>
+                </Pressable>
+
+                <Pressable
+                  onPress={handleConfirmBlock}
+                  disabled={loading}
+                  style={[styles.confirmBtn, { backgroundColor: colors.danger }]}
+                  accessibilityRole="button"
+                  testID="btn-block-confirm"
+                >
+                  <Text style={[styles.confirmBtnText, { color: '#FFFFFF' }]}>
+                    Block User
                   </Text>
                 </Pressable>
               </View>
@@ -189,6 +238,26 @@ export function ChatMessageMenuModal({
                       {t('chat.reportMsg')}
                     </Text>
                   </Pressable>
+
+                  {message.sender_id && onBlockMember && (
+                    <Pressable
+                      onPress={() => setShowBlockConfirm(true)}
+                      style={[styles.menuOptionRow, { borderBottomColor: colors.border }]}
+                      accessibilityRole="button"
+                      accessibilityLabel="Block user"
+                      testID="btn-block-member"
+                    >
+                      <Ionicons
+                        name="ban-outline"
+                        size={20}
+                        color={colors.danger}
+                        style={styles.optionIcon}
+                      />
+                      <Text style={[styles.optionLabel, { color: colors.danger }]}>
+                        Block {message.sender_nickname || 'Member'}
+                      </Text>
+                    </Pressable>
+                  )}
 
                   {message.sender_id && (
                     <Pressable

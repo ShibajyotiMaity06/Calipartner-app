@@ -9,10 +9,17 @@ interface SummaryStepProps {
   goal: Goal;
   stepGoal: number;
   waterMlGoal: number;
+  weightKg?: number;
   calculatedTargets: CalculateTargetsResult | null;
   isSaving: boolean;
   saveError: string | null;
-  onSave: () => void;
+  onSave: (customized?: {
+    proteinGrams?: number;
+    carbGrams?: number;
+    fatGrams?: number;
+    stepGoal?: number;
+    waterMlGoal?: number;
+  }) => void;
   onGoBackToStats?: () => void;
   onGoBackToRate?: () => void;
   onOpenHowCalculated?: () => void;
@@ -22,6 +29,7 @@ export function SummaryStep({
   goal,
   stepGoal,
   waterMlGoal,
+  weightKg,
   calculatedTargets,
   isSaving,
   saveError,
@@ -30,9 +38,18 @@ export function SummaryStep({
   onGoBackToRate,
   onOpenHowCalculated,
 }: SummaryStepProps) {
+  const [customWaterMl, setCustomWaterMl] = React.useState<number>(waterMlGoal || 2500);
+  const [customStepGoal, setCustomStepGoal] = React.useState<number>(stepGoal || 8000);
+
   const handleSave = () => {
     playSuccessSound();
-    onSave();
+    onSave({
+      proteinGrams,
+      carbGrams,
+      fatGrams,
+      stepGoal: customStepGoal,
+      waterMlGoal: customWaterMl,
+    });
   };
 
   const handleGoBack = () => {
@@ -71,7 +88,23 @@ export function SummaryStep({
     );
   }
 
-  const { targetKcal, macros, weeklyRateKg } = calculatedTargets;
+  const [proteinMultiplier, setProteinMultiplier] = React.useState<number>(2.0);
+
+  const rawWeight =
+    weightKg ??
+    (calculatedTargets?.macros?.proteinGrams
+      ? Math.round(calculatedTargets.macros.proteinGrams / 2.0)
+      : 70);
+  const targetKcal = calculatedTargets?.targetKcal ?? 2000;
+  const weeklyRateKg = calculatedTargets?.weeklyRateKg ?? 0.5;
+
+  // Recalculate protein grams based on user choice (1.5x vs 2.0x)
+  const proteinGrams = Math.round(proteinMultiplier * rawWeight);
+  const proteinKcal = proteinGrams * 4;
+  const fatGrams = calculatedTargets?.macros.fatGrams ?? Math.round((targetKcal * 0.25) / 9);
+  const fatKcal = fatGrams * 9;
+  const remainingKcal = Math.max(0, targetKcal - proteinKcal - fatKcal);
+  const carbGrams = Math.round(remainingKcal / 4);
 
   // Rate statement per Spec A10
   const rateSentence =
@@ -99,6 +132,77 @@ export function SummaryStep({
         </Text>
       </View>
 
+      {/* Protein Preference Selector */}
+      <View style={styles.card} testID="summary-protein-selector-card">
+        <View style={styles.proteinHeaderRow}>
+          <Text variant="heading" color={dark.textHi}>
+            Daily Protein Goal
+          </Text>
+          <View style={styles.recommendedBadge}>
+            <Text variant="micro" color={dark.apricot} style={styles.recommendedBadgeText}>
+              Recommended: 1.7x for men • 1.3x for women
+            </Text>
+          </View>
+        </View>
+        <Text variant="bodyS" color={dark.textMid} style={styles.proteinSubtitle}>
+          Choose your preferred daily protein intake based on your training:
+        </Text>
+
+        <View style={styles.proteinOptionsRow}>
+          <TouchableOpacity
+            style={[
+              styles.proteinOptionBtn,
+              proteinMultiplier === 1.5 && styles.proteinOptionBtnActive,
+            ]}
+            onPress={() => {
+              playClickSound();
+              setProteinMultiplier(1.5);
+            }}
+            accessibilityRole="button"
+            testID="btn-protein-1-5x"
+          >
+            <Text
+              variant="button"
+              color={proteinMultiplier === 1.5 ? dark.onBrand : dark.textHi}
+            >
+              1.5x body weight
+            </Text>
+            <Text
+              variant="micro"
+              color={proteinMultiplier === 1.5 ? dark.onBrand : dark.textLo}
+            >
+              {Math.round(1.5 * rawWeight)}g / day
+            </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[
+              styles.proteinOptionBtn,
+              proteinMultiplier === 2.0 && styles.proteinOptionBtnActive,
+            ]}
+            onPress={() => {
+              playClickSound();
+              setProteinMultiplier(2.0);
+            }}
+            accessibilityRole="button"
+            testID="btn-protein-2-0x"
+          >
+            <Text
+              variant="button"
+              color={proteinMultiplier === 2.0 ? dark.onBrand : dark.textHi}
+            >
+              2.0x body weight
+            </Text>
+            <Text
+              variant="micro"
+              color={proteinMultiplier === 2.0 ? dark.onBrand : dark.textLo}
+            >
+              {Math.round(2.0 * rawWeight)}g / day
+            </Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+
       {/* Macronutrient Distribution Card with MacroBar */}
       <View style={styles.card} testID="summary-macros-card">
         <Text variant="heading" color={dark.textHi}>
@@ -106,9 +210,9 @@ export function SummaryStep({
         </Text>
 
         <MacroBar
-          proteinGrams={macros.proteinGrams}
-          carbsGrams={macros.carbGrams}
-          fatGrams={macros.fatGrams}
+          proteinGrams={proteinGrams}
+          carbsGrams={carbGrams}
+          fatGrams={fatGrams}
           identityHue="iris"
         />
 
@@ -119,7 +223,7 @@ export function SummaryStep({
               {t('onboarding.summary.proteinLabel')}
             </Text>
             <Text variant="body" color={dark.textHi} style={styles.macroValue}>
-              {macros.proteinGrams}g
+              {proteinGrams}g
             </Text>
           </View>
 
@@ -128,7 +232,7 @@ export function SummaryStep({
               {t('onboarding.summary.carbsLabel')}
             </Text>
             <Text variant="body" color={dark.textHi} style={styles.macroValue}>
-              {macros.carbGrams}g
+              {carbGrams}g
             </Text>
           </View>
 
@@ -137,50 +241,98 @@ export function SummaryStep({
               {t('onboarding.summary.fatLabel')}
             </Text>
             <Text variant="body" color={dark.textHi} style={styles.macroValue}>
-              {macros.fatGrams}g
+              {fatGrams}g
             </Text>
           </View>
         </View>
-
-        {/* Spec A10 & A11: Link to "How is this worked out?" */}
-        {onOpenHowCalculated && (
-          <TouchableOpacity
-            onPress={onOpenHowCalculated}
-            style={styles.howCalcLink}
-            accessibilityRole="button"
-            accessibilityLabel={t('onboarding.summary.howCalculatedLink')}
-            testID="btn-how-calculated-link"
-          >
-            <Text variant="bodyS" color={dark.apricot} style={styles.howCalcText}>
-              How is this worked out? →
-            </Text>
-          </TouchableOpacity>
-        )}
       </View>
 
-      {/* Daily Habits (Steps & Water) */}
+      {/* Daily Habits (Steps & Water Target Setup) */}
       <View style={styles.card}>
         <Text variant="heading" color={dark.textHi}>
-          {t('onboarding.summary.habitsTitle')}
+          Daily Habits
+        </Text>
+        <Text variant="bodyS" color={dark.textMid}>
+          Set your daily hydration and movement targets.
         </Text>
 
-        <View style={styles.habitRow}>
-          <View style={styles.habitItem} testID="summary-step-goal">
+        {/* Water Target Selector */}
+        <View style={styles.habitControlBlock}>
+          <View style={styles.habitHeaderRow}>
             <Text variant="label" color={dark.textLo}>
-              {t('onboarding.summary.stepGoalLabel')}
+              Daily Water Target
             </Text>
-            <Text variant="body" color={dark.textHi} style={styles.habitValue}>
-              {stepGoal.toLocaleString()} steps
+            <Text variant="body" color={dark.apricot} style={{ fontWeight: '700' }}>
+              {(customWaterMl / 1000).toFixed(1)} L ({customWaterMl} ml)
             </Text>
           </View>
+          <View style={styles.habitChipsRow}>
+            {[2000, 2500, 3000, 3500, 4000].map((ml) => {
+              const isSelected = customWaterMl === ml;
+              return (
+                <TouchableOpacity
+                  key={ml}
+                  onPress={() => {
+                    playClickSound();
+                    setCustomWaterMl(ml);
+                  }}
+                  style={[
+                    styles.habitChip,
+                    isSelected && { backgroundColor: dark.apricot, borderColor: dark.apricot },
+                  ]}
+                  accessibilityRole="button"
+                  accessibilityLabel={`Set water target to ${(ml / 1000).toFixed(1)} litres`}
+                >
+                  <Text
+                    variant="label"
+                    color={isSelected ? dark.onBrand : dark.textMid}
+                    style={{ fontWeight: isSelected ? '700' : '500' }}
+                  >
+                    {(ml / 1000).toFixed(1)}L
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+        </View>
 
-          <View style={styles.habitItem} testID="summary-water-goal">
+        {/* Step Goal Selector */}
+        <View style={styles.habitControlBlock}>
+          <View style={styles.habitHeaderRow}>
             <Text variant="label" color={dark.textLo}>
-              {t('onboarding.summary.waterGoalLabel')}
+              Daily Step Goal
             </Text>
-            <Text variant="body" color={dark.textHi} style={styles.habitValue}>
-              {waterMlGoal.toLocaleString()} ml
+            <Text variant="body" color={dark.apricot} style={{ fontWeight: '700' }}>
+              {customStepGoal.toLocaleString()} steps
             </Text>
+          </View>
+          <View style={styles.habitChipsRow}>
+            {[6000, 8000, 10000, 12000, 15000].map((st) => {
+              const isSelected = customStepGoal === st;
+              return (
+                <TouchableOpacity
+                  key={st}
+                  onPress={() => {
+                    playClickSound();
+                    setCustomStepGoal(st);
+                  }}
+                  style={[
+                    styles.habitChip,
+                    isSelected && { backgroundColor: dark.apricot, borderColor: dark.apricot },
+                  ]}
+                  accessibilityRole="button"
+                  accessibilityLabel={`Set daily step goal to ${st.toLocaleString()}`}
+                >
+                  <Text
+                    variant="label"
+                    color={isSelected ? dark.onBrand : dark.textMid}
+                    style={{ fontWeight: isSelected ? '700' : '500' }}
+                  >
+                    {(st / 1000)}k
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
           </View>
         </View>
       </View>
@@ -296,6 +448,31 @@ const styles = StyleSheet.create({
   habitValue: {
     fontWeight: '600',
   },
+  habitControlBlock: {
+    gap: space[2],
+    marginTop: space[1],
+  },
+  habitHeaderRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  habitChipsRow: {
+    flexDirection: 'row',
+    gap: space[2],
+    flexWrap: 'wrap',
+  },
+  habitChip: {
+    backgroundColor: dark.s2,
+    borderWidth: 1,
+    borderColor: dark.hairline,
+    borderRadius: radius.control,
+    paddingVertical: space[2],
+    paddingHorizontal: space[3],
+    alignItems: 'center',
+    justifyContent: 'center',
+    minWidth: 54,
+  },
   errorBanner: {
     backgroundColor: dark.s2,
     borderWidth: 1,
@@ -306,5 +483,46 @@ const styles = StyleSheet.create({
   actionsGroup: {
     gap: space[3],
     marginTop: space[2],
+  },
+  proteinHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    flexWrap: 'wrap',
+    gap: space[2],
+  },
+  recommendedBadge: {
+    backgroundColor: 'rgba(255, 178, 125, 0.15)',
+    paddingHorizontal: space[2],
+    paddingVertical: 3,
+    borderRadius: radius.full,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 178, 125, 0.3)',
+  },
+  recommendedBadgeText: {
+    fontWeight: '700',
+  },
+  proteinSubtitle: {
+    marginTop: -space[1],
+    marginBottom: space[1],
+  },
+  proteinOptionsRow: {
+    flexDirection: 'row',
+    gap: space[3],
+  },
+  proteinOptionBtn: {
+    flex: 1,
+    backgroundColor: dark.s2,
+    borderRadius: radius.control,
+    paddingVertical: space[3],
+    paddingHorizontal: space[2],
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: dark.hairline,
+    gap: 4,
+  },
+  proteinOptionBtnActive: {
+    backgroundColor: dark.apricot,
+    borderColor: dark.apricot,
   },
 });

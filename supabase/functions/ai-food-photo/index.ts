@@ -1,15 +1,10 @@
 import { createClient } from 'jsr:@supabase/supabase-js@2';
 import {
   buildVisionModelSystemPrompt,
-  checkGlobalAiBudget,
-  DEFAULT_AI_FOOD_PHOTO_CAPS,
-  getDailyFoodPhotoCap,
-  mapVisionItemToFood,
   parseAndValidateVisionModelOutput,
-  resolveAiUserState,
+  mapVisionItemToFood,
   validateFoodPhotoImage,
-  type AiDailyCapsConfig,
-  type AiMonthlyBudgetConfig,
+  DEFAULT_AI_FOOD_PHOTO_CAPS,
   type Food,
   type FoodCandidateItem,
   type FoodPhotoAnalysisResponse,
@@ -27,46 +22,83 @@ const DEFAULT_ESTIMATED_TOKENS = 350;
 const DEFAULT_ESTIMATED_COST_USD = 0.0015;
 
 export interface AiFoodPhotoRequestBody {
-  image?: string; // Base64 encoded image string
+  image: string; // Base64 encoded image string (C03: test mock fields removed from production endpoint)
   mime_type?: string;
-  test_mock_response?: VisionModelResponse;
-  test_raw_output?: string;
 }
 
 /**
- * Calls Gemini or OpenAI Vision model if server secret key is available,
- * or processes mock/fallback for automated test suites.
+ * Calls Gemini Vision model (default for testing) or Claude Vision model (for production when toggled),
+ * or processes standard fallback for environments without an API key.
  */
 async function callVisionModel(
   imageBase64: string,
   mimeType: string,
-  apiKey: string | undefined,
-  mockOutput?: VisionModelResponse,
-  rawOutput?: string,
+  geminiApiKey: string | undefined,
+  anthropicApiKey: string | undefined,
+  preferredProvider: string = 'gemini',
 ): Promise<{ rawText: string; tokens: number; cost: number }> {
-  // If mock/test output is provided directly
-  if (rawOutput !== undefined) {
+  const cleanBase64 = imageBase64.replace(/^data:image\/[a-z]+;base64,/i, '');
+  const prompt = buildVisionModelSystemPrompt();
+
+  // 1. If provider is Claude and Anthropic API key is available
+  if (preferredProvider.toLowerCase() === 'claude' && anthropicApiKey) {
+    const claudeUrl = 'https://api.anthropic.com/v1/messages';
+    const claudeModel = Deno.env.get('CLAUDE_MODEL') || 'claude-3-5-sonnet-20241022';
+
+    const response = await fetch(claudeUrl, {
+      method: 'POST',
+      headers: {
+        'x-api-key': anthropicApiKey,
+        'anthropic-version': '2023-06-01',
+        'content-type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: claudeModel,
+        max_tokens: 1000,
+        system: prompt,
+        messages: [
+          {
+            role: 'user',
+            content: [
+              {
+                type: 'image',
+                source: {
+                  type: 'base64',
+                  media_type: mimeType,
+                  data: cleanBase64,
+                },
+              },
+              {
+                type: 'text',
+                text: 'Analyze this food photo according to the system instructions. Output JSON format only.',
+              },
+            ],
+          },
+        ],
+      }),
+    });
+
+    if (!response.ok) {
+      const errText = await response.text();
+      console.error('Claude Vision API HTTP Error:', response.status, errText);
+      throw new Error(`Claude Vision provider returned error ${response.status}`);
+    }
+
+    const json = await response.json();
+    const rawCandidate = json.content?.[0]?.text || '';
+    const tokens = (json.usage?.input_tokens || 0) + (json.usage?.output_tokens || 0) || DEFAULT_ESTIMATED_TOKENS;
+    const cost = ((json.usage?.input_tokens || 0) * 0.000003) + ((json.usage?.output_tokens || 0) * 0.000015);
+
     return {
-      rawText: rawOutput,
-      tokens: DEFAULT_ESTIMATED_TOKENS,
-      cost: DEFAULT_ESTIMATED_COST_USD,
+      rawText: rawCandidate,
+      tokens,
+      cost: Math.round(cost * 1_000_000) / 1_000_000,
     };
   }
 
-  if (mockOutput !== undefined) {
-    return {
-      rawText: JSON.stringify(mockOutput),
-      tokens: DEFAULT_ESTIMATED_TOKENS,
-      cost: DEFAULT_ESTIMATED_COST_USD,
-    };
-  }
-
-  // If server secret API key is set, call Gemini Vision API
-  if (apiKey) {
-    const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
-
-    const prompt = buildVisionModelSystemPrompt();
-    const cleanBase64 = imageBase64.replace(/^data:image\/[a-z]+;base64,/i, '');
+  // 2. Default: Call Gemini Vision API if Gemini API key is available
+  if (geminiApiKey) {
+    const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${geminiApiKey}`;
 
     const response = await fetch(geminiUrl, {
       method: 'POST',
@@ -94,8 +126,8 @@ async function callVisionModel(
 
     if (!response.ok) {
       const errText = await response.text();
-      console.error('Vision API HTTP Error:', response.status, errText);
-      throw new Error(`Vision provider returned error ${response.status}`);
+      console.error('Gemini Vision API HTTP Error:', response.status, errText);
+      throw new Error(`Gemini Vision provider returned error ${response.status}`);
     }
 
     const json = await response.json();
@@ -110,7 +142,7 @@ async function callVisionModel(
     };
   }
 
-  // Fallback heuristic mock response for test/dev environments without an API key
+  // 3. Fallback heuristic mock response for environments without an API key
   const fallbackMock: VisionModelResponse = {
     items: [
       {
@@ -213,11 +245,11 @@ export async function handleAiFoodPhoto(req: Request): Promise<Response> {
     // 3. IMAGE VALIDATION (PRD 6.3 LOG-3, 8.2)
     // -------------------------------------------------------------------------
     const body: AiFoodPhotoRequestBody = await req.json();
-    const { image, mime_type, test_mock_response, test_raw_output } = body;
+    const { image, mime_type } = body || {};
 
     const mime = (mime_type || 'image/jpeg').toLowerCase().trim();
 
-    if (!image && !test_mock_response && !test_raw_output) {
+    if (!image || typeof image !== 'string' || image.trim().length === 0) {
       return new Response(
         JSON.stringify({ error: 'Missing image payload', code: 'INVALID_IMAGE' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
@@ -225,7 +257,7 @@ export async function handleAiFoodPhoto(req: Request): Promise<Response> {
     }
 
     // Estimate size in bytes from Base64 string if present
-    const imageSizeApprox = image ? Math.floor((image.length * 3) / 4) : 1024;
+    const imageSizeApprox = Math.floor((image.length * 3) / 4);
     const imgValidation = validateFoodPhotoImage(mime, imageSizeApprox);
 
     if (!imgValidation.valid) {
@@ -241,35 +273,40 @@ export async function handleAiFoodPhoto(req: Request): Promise<Response> {
     // -------------------------------------------------------------------------
     // 4. VISION MODEL CALL (EPHEMERAL, SECRET KEY ON SERVER ONLY)
     // -------------------------------------------------------------------------
-    // Read secret key strictly on server - NEVER leaked to app or response
-    const aiApiKey =
-      Deno.env.get('AI_API_KEY') ||
+    const geminiApiKey =
       Deno.env.get('GEMINI_API_KEY') ||
-      Deno.env.get('OPENAI_API_KEY');
+      Deno.env.get('AI_API_KEY');
+
+    const anthropicApiKey =
+      Deno.env.get('ANTHROPIC_API_KEY') ||
+      Deno.env.get('CLAUDE_API_KEY');
+
+    const preferredProvider =
+      Deno.env.get('VISION_PROVIDER') || 'gemini';
 
     let visionResult: { rawText: string; tokens: number; cost: number };
     try {
       visionResult = await callVisionModel(
-        image || '',
+        image,
         mime,
-        aiApiKey,
-        test_mock_response,
-        test_raw_output,
+        geminiApiKey,
+        anthropicApiKey,
+        preferredProvider,
       );
     } catch (modelErr: unknown) {
       const msg = modelErr instanceof Error ? modelErr.message : String(modelErr);
-      console.error('Vision model execution error:', msg);
+      console.error('Vision analysis failure:', msg);
       return new Response(
-        JSON.stringify({ error: 'Failed to analyze food photograph', code: 'MODEL_ERROR' }),
+        JSON.stringify({
+          error: 'Failed to analyze photograph. Please try again.',
+          code: 'MODEL_ERROR',
+        }),
         { status: 502, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
       );
     }
 
-    // Images are processed in-memory and NOT stored anywhere in persistent buckets
-    // (Prompt item 2: Images are processed and deleted; stored only if shared to chat)
-
     // -------------------------------------------------------------------------
-    // 5. PARSE & VALIDATE MODEL OUTPUT (STRICT SCHEMA & PROMPT INJECTION DEFENSE)
+    // 5. OUTPUT SANITIZATION & STRUCTURED VALIDATION (PRD 6.3 LOG-3, 8.2)
     // -------------------------------------------------------------------------
     let parsedModelResponse: VisionModelResponse;
     try {
@@ -287,7 +324,7 @@ export async function handleAiFoodPhoto(req: Request): Promise<Response> {
     }
 
     // -------------------------------------------------------------------------
-    // 6. FOOD CATALOG MAPPING & FALLBACK ESTIMATES
+    // 6. FOOD CATALOG MAPPING & PRIVACY BOUNDARY (C03)
     // -------------------------------------------------------------------------
     const candidates: FoodCandidateItem[] = [];
 
@@ -295,10 +332,16 @@ export async function handleAiFoodPhoto(req: Request): Promise<Response> {
       const detectedItem: VisionModelDetectedItem = parsedModelResponse.items[i];
       const clientCandidateId = `cand-${i + 1}`;
 
-      // Search database for potential food matches
+      // Strictly restrict search to public catalog foods (owner_id is null)
+      // or the caller's own custom foods (owner_id = userId).
+      // Filter out deleted items (deleted_at is null) and omit owner_id (C03).
       const { data: dbFoods } = await adminClient
         .from('foods')
-        .select('*')
+        .select(
+          'id, name, brand, barcode, serving_units, calories_per_100g, protein_per_100g, carbs_per_100g, fat_per_100g, fiber_per_100g, sugar_per_100g, sodium_mg_per_100g, source, attribution',
+        )
+        .is('deleted_at', null)
+        .or(`owner_id.is.null,owner_id.eq.${userId}`)
         .ilike('name', `%${detectedItem.food_name}%`)
         .limit(10);
 
@@ -369,6 +412,13 @@ export async function handleAiFoodPhoto(req: Request): Promise<Response> {
     );
   }
 }
+
+declare const Deno:
+  | {
+      serve: (handler: (req: Request) => Promise<Response> | Response) => void;
+      env: { get: (key: string) => string | undefined };
+    }
+  | undefined;
 
 if (typeof Deno !== 'undefined') {
   Deno.serve(handleAiFoodPhoto);

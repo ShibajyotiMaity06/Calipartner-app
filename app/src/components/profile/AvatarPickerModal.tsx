@@ -1,21 +1,31 @@
 import React, { useState } from 'react';
-import { View, StyleSheet, Modal, SafeAreaView, TouchableOpacity, ScrollView } from 'react-native';
 import {
-  Text,
-  Button,
+  Modal,
+  Platform,
+  SafeAreaView,
+  ScrollView,
+  StyleSheet,
+  TouchableOpacity,
+  View,
+} from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import {
   Avatar,
+  Button,
   ChevronLeftIcon,
-  space,
   dark,
   radius,
+  space,
+  Text,
   type IdentityHue,
 } from '@calipartner/ui';
-import { playClickSound } from '@/lib/sound';
+import { playClickSound, playSuccessSound } from '@/lib/sound';
 
 export interface AvatarOption {
   id: string;
   name: string;
   hue: IdentityHue;
+  uri?: string;
 }
 
 // 24 illustrated/colored avatars in the 6 identity hues (Spec B05)
@@ -60,7 +70,9 @@ export const AVATAR_PRESETS: AvatarOption[] = [
 export interface AvatarPickerModalProps {
   visible: boolean;
   selectedAvatarId?: string;
+  currentAvatarUri?: string | null;
   onSelectAvatar: (avatar: AvatarOption) => void;
+  onSelectCustomPhoto?: (uri: string) => void;
   onClose: () => void;
   testID?: string;
 }
@@ -68,20 +80,110 @@ export interface AvatarPickerModalProps {
 export function AvatarPickerModal({
   visible,
   selectedAvatarId = 'iris-1',
+  currentAvatarUri,
   onSelectAvatar,
+  onSelectCustomPhoto,
   onClose,
   testID = 'avatar-picker-modal',
 }: AvatarPickerModalProps) {
-  const [currentSelected, setCurrentSelected] = useState(selectedAvatarId);
+  const [currentSelected, setCurrentSelected] = useState<string>(
+    currentAvatarUri ? 'custom-photo' : selectedAvatarId,
+  );
+  const [customPhotoUri, setCustomPhotoUri] = useState<string | null>(currentAvatarUri ?? null);
+  const [uploadError, setUploadError] = useState<string | null>(null);
 
-  const handlePick = (option: AvatarOption) => {
+  const handlePickPreset = (option: AvatarOption) => {
     playClickSound();
     setCurrentSelected(option.id);
   };
 
+  const handleTriggerUpload = () => {
+    playClickSound();
+    setUploadError(null);
+
+    if (Platform.OS === 'web') {
+      const doc = (
+        globalThis as unknown as {
+          document?: {
+            createElement: (tag: string) => {
+              type: string;
+              accept: string;
+              onchange:
+                | ((e: {
+                    target?: {
+                      files?: ArrayLike<{
+                        name: string;
+                        type?: string;
+                      }>;
+                    };
+                  }) => void)
+                | null;
+              click: () => void;
+            };
+          };
+        }
+      ).document;
+
+      if (doc) {
+        const input = doc.createElement('input');
+        input.type = 'file';
+        input.accept = 'image/jpeg,image/png,image/webp,image/heic';
+        input.onchange = (e) => {
+          const file = e?.target?.files?.[0];
+          if (file) {
+            const FileReaderClass = (
+              globalThis as unknown as {
+                FileReader?: new () => {
+                  onload: (ev: { target?: { result?: string } }) => void;
+                  onerror: () => void;
+                  readAsDataURL: (f: unknown) => void;
+                };
+              }
+            ).FileReader;
+
+            if (FileReaderClass) {
+              const reader = new FileReaderClass();
+              reader.onload = (ev) => {
+                const dataUrl = ev?.target?.result;
+                if (dataUrl && typeof dataUrl === 'string') {
+                  setCustomPhotoUri(dataUrl);
+                  setCurrentSelected('custom-photo');
+                }
+              };
+              reader.onerror = () => {
+                setUploadError('Failed to read image file');
+              };
+              reader.readAsDataURL(file);
+            }
+          }
+        };
+        input.click();
+        return;
+      }
+    }
+
+    // Default sample/fallback avatar image for testing/platforms without web input
+    const demoPhoto = 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400';
+    setCustomPhotoUri(demoPhoto);
+    setCurrentSelected('custom-photo');
+  };
+
   const handleConfirm = () => {
-    const chosen = AVATAR_PRESETS.find((a) => a.id === currentSelected) ?? AVATAR_PRESETS[0]!;
-    onSelectAvatar(chosen);
+    playSuccessSound();
+    if (currentSelected === 'custom-photo' && customPhotoUri) {
+      if (onSelectCustomPhoto) {
+        onSelectCustomPhoto(customPhotoUri);
+      }
+      onSelectAvatar({
+        id: 'custom-photo',
+        name: 'Profile',
+        hue: 'teal',
+        uri: customPhotoUri,
+      });
+    } else {
+      const chosen = AVATAR_PRESETS.find((a) => a.id === currentSelected) ?? AVATAR_PRESETS[0]!;
+      onSelectAvatar(chosen);
+    }
     onClose();
   };
 
@@ -110,7 +212,7 @@ export function AvatarPickerModal({
               </Text>
             </TouchableOpacity>
             <Text variant="heading" color={dark.textHi} style={styles.topTitle}>
-              Choose Avatar
+              Profile Picture
             </Text>
             <View style={styles.spacer} />
           </View>
@@ -118,39 +220,100 @@ export function AvatarPickerModal({
           {/* Subtitle & Privacy Notice (Spec B05) */}
           <View style={styles.noticeSection}>
             <Text variant="body" color={dark.textMid} style={styles.noticeText}>
-              Pick an identity avatar or upload a photo. Photo is never shown to strangers in
-              Partner Finder.
+              Upload your own photo or pick an identity avatar. Your photo is only visible to
+              members in your squad.
             </Text>
           </View>
 
-          {/* Grid of 24 avatars */}
           <ScrollView
-            contentContainerStyle={styles.gridContainer}
+            contentContainerStyle={styles.scrollContent}
             showsVerticalScrollIndicator={false}
           >
-            {AVATAR_PRESETS.map((avatar) => {
-              const isSelected = currentSelected === avatar.id;
-              return (
+            {/* Custom Photo Upload Card */}
+            <View style={styles.uploadCard}>
+              <View style={styles.uploadHeaderRow}>
                 <TouchableOpacity
-                  key={avatar.id}
-                  onPress={() => handlePick(avatar)}
+                  onPress={handleTriggerUpload}
+                  style={[
+                    styles.customAvatarCircle,
+                    currentSelected === 'custom-photo' && styles.customAvatarSelected,
+                  ]}
                   accessibilityRole="button"
-                  accessibilityState={{ selected: isSelected }}
-                  accessibilityLabel={`Avatar ${avatar.name}, ${avatar.hue}`}
-                  testID={`avatar-preset-${avatar.id}`}
-                  style={[styles.avatarCell, isSelected && styles.avatarCellSelected]}
+                  accessibilityLabel="Upload custom profile photo"
+                  testID="btn-upload-avatar-circle"
                 >
-                  <Avatar name={avatar.name} identityHue={avatar.hue} size="lg" />
-                  <Text
-                    variant="label"
-                    color={isSelected ? dark.apricot : dark.textLo}
-                    style={styles.avatarLabel}
-                  >
-                    {avatar.name}
-                  </Text>
+                  <Avatar
+                    uri={customPhotoUri}
+                    name="You"
+                    identityHue="apricot"
+                    size="lg"
+                  />
+                  <View style={styles.uploadBadge}>
+                    <Ionicons name="camera" size={14} color={dark.onBrand} />
+                  </View>
                 </TouchableOpacity>
-              );
-            })}
+
+                <View style={styles.uploadInfoCol}>
+                  <Text variant="body" color={dark.textHi} style={{ fontWeight: '700' }}>
+                    {customPhotoUri ? 'Custom Photo' : 'Upload Your Photo'}
+                  </Text>
+                  <Text variant="bodyS" color={dark.textMid} style={{ marginTop: 2 }}>
+                    JPEG, PNG, HEIC or WebP
+                  </Text>
+                  <TouchableOpacity
+                    onPress={handleTriggerUpload}
+                    style={styles.uploadActionBtn}
+                    accessibilityRole="button"
+                    testID="btn-pick-custom-photo"
+                  >
+                    <Ionicons name="cloud-upload-outline" size={16} color={dark.apricot} />
+                    <Text variant="bodyS" color={dark.apricot} style={{ fontWeight: '700' }}>
+                      {customPhotoUri ? 'Change Photo' : 'Upload from Device'}
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+
+              {uploadError && (
+                <Text variant="bodyS" color="#FF6B6B" style={{ marginTop: space[2] }}>
+                  {uploadError}
+                </Text>
+              )}
+            </View>
+
+            {/* Presets Title */}
+            <View style={styles.presetsTitleRow}>
+              <Text variant="label" color={dark.textHi} style={{ fontWeight: '700' }}>
+                Or Choose an Identity Avatar
+              </Text>
+            </View>
+
+            {/* Grid of 24 avatars */}
+            <View style={styles.gridContainer}>
+              {AVATAR_PRESETS.map((avatar) => {
+                const isSelected = currentSelected === avatar.id;
+                return (
+                  <TouchableOpacity
+                    key={avatar.id}
+                    onPress={() => handlePickPreset(avatar)}
+                    accessibilityRole="button"
+                    accessibilityState={{ selected: isSelected }}
+                    accessibilityLabel={`Avatar ${avatar.name}, ${avatar.hue}`}
+                    testID={`avatar-preset-${avatar.id}`}
+                    style={[styles.avatarCell, isSelected && styles.avatarCellSelected]}
+                  >
+                    <Avatar name={avatar.name} identityHue={avatar.hue} size="lg" />
+                    <Text
+                      variant="label"
+                      color={isSelected ? dark.apricot : dark.textLo}
+                      style={styles.avatarLabel}
+                    >
+                      {avatar.name}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
           </ScrollView>
 
           {/* Action Footer */}
@@ -158,7 +321,7 @@ export function AvatarPickerModal({
             <Button
               variant="primary"
               size="lg"
-              label="Select avatar"
+              label={currentSelected === 'custom-photo' ? 'Save photo' : 'Select avatar'}
               onPress={handleConfirm}
               testID="btn-confirm-avatar"
             />
@@ -195,7 +358,7 @@ const styles = StyleSheet.create({
     minHeight: 44,
   },
   topTitle: {
-    fontWeight: '600',
+    fontWeight: '700',
   },
   spacer: {
     width: 60,
@@ -205,6 +368,58 @@ const styles = StyleSheet.create({
   },
   noticeText: {
     lineHeight: 20,
+  },
+  scrollContent: {
+    paddingBottom: space[6],
+  },
+  uploadCard: {
+    backgroundColor: dark.s1,
+    borderRadius: radius.card,
+    borderWidth: 1,
+    borderColor: dark.hairlineLit,
+    padding: space[4],
+    marginBottom: space[4],
+  },
+  uploadHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: space[4],
+  },
+  customAvatarCircle: {
+    position: 'relative',
+    borderRadius: radius.full,
+    padding: 3,
+  },
+  customAvatarSelected: {
+    borderWidth: 2,
+    borderColor: dark.apricot,
+  },
+  uploadBadge: {
+    position: 'absolute',
+    bottom: 0,
+    right: 0,
+    backgroundColor: dark.apricot,
+    borderRadius: radius.full,
+    width: 24,
+    height: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 2,
+    borderColor: dark.bg0,
+  },
+  uploadInfoCol: {
+    flex: 1,
+  },
+  uploadActionBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: space[2],
+    marginTop: space[2],
+    paddingVertical: space[1],
+  },
+  presetsTitleRow: {
+    marginBottom: space[2],
+    paddingHorizontal: space[1],
   },
   gridContainer: {
     flexDirection: 'row',

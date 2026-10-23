@@ -16,6 +16,7 @@ import { playClickSound } from '@/lib/sound';
 
 interface BodyStatsStepProps {
   units: Units;
+  nickname?: string;
   sex: Sex;
   dateOfBirth: string;
   heightCm: number;
@@ -27,6 +28,7 @@ interface BodyStatsStepProps {
   errorWeight?: string;
   errorBodyFat?: string;
   onChangeUnits: (units: Units) => void;
+  onChangeNickname?: (nickname: string) => void;
   onChangeSex: (sex: Sex) => void;
   onChangeDateOfBirth: (dob: string) => void;
   onChangeHeightCm: (heightCm: number) => void;
@@ -36,6 +38,7 @@ interface BodyStatsStepProps {
 
 export function BodyStatsStep({
   units,
+  nickname = '',
   sex,
   dateOfBirth,
   heightCm,
@@ -47,6 +50,7 @@ export function BodyStatsStep({
   errorWeight,
   errorBodyFat,
   onChangeUnits,
+  onChangeNickname,
   onChangeSex,
   onChangeDateOfBirth,
   onChangeHeightCm,
@@ -159,6 +163,30 @@ export function BodyStatsStep({
 
   return (
     <View style={styles.container}>
+      {/* What should we call you? (Name / Nickname) */}
+      <View style={styles.section}>
+        <Text variant="label" color={dark.textLo} style={styles.sectionLabel}>
+          What should we call you?
+        </Text>
+        <TextInput
+          style={[
+            styles.input,
+            {
+              backgroundColor: dark.s1,
+              borderColor: dark.hairline,
+              color: dark.textHi,
+            },
+          ]}
+          value={nickname}
+          onChangeText={onChangeNickname}
+          placeholder="Your name or nickname"
+          placeholderTextColor={dark.textOff}
+          autoCapitalize="words"
+          autoCorrect={false}
+          testID="input-nickname"
+        />
+      </View>
+
       {/* Units Segmented Toggle */}
       <View style={styles.section}>
         <Text variant="label" color={dark.textLo} style={styles.sectionLabel}>

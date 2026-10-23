@@ -22,6 +22,7 @@ import { SummaryStep } from '@/components/onboarding/SummaryStep';
 import { TargetDateStep } from '@/components/onboarding/TargetDateStep';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTargets } from '@/hooks/useTargets';
+import { getDb } from '@/db';
 import { t } from '@/i18n';
 import { playClickSound, playSuccessSound } from '@/lib/sound';
 import { OnboardingStateMachine, type OnboardingStep } from '@/services/onboardingStateMachine';
@@ -132,6 +133,10 @@ export default function OnboardingScreen() {
 
   const handleBack = () => {
     playClickSound();
+    if (currentStepIndex === 0) {
+      router.replace('/welcome' as never);
+      return;
+    }
     if (currentStep === 'completed') {
       machine.goToStep('health_screening');
       updateState();
@@ -236,14 +241,29 @@ export default function OnboardingScreen() {
   };
 
   // Final Save Handler (A10 "Looks good")
-  const handleSaveTargets = async () => {
+  const handleSaveTargets = async (customized?: {
+    proteinGrams?: number;
+    carbGrams?: number;
+    fatGrams?: number;
+    stepGoal?: number;
+    waterMlGoal?: number;
+  }) => {
     playSuccessSound();
     const effectiveUserId = user?.id ?? 'guest-user';
     setIsSaving(true);
     setSaveError(null);
 
     try {
+      if (customized?.stepGoal || customized?.waterMlGoal) {
+        machine.setStepAndWaterGoals(customized.stepGoal, customized.waterMlGoal);
+      }
       const goalProfile = machine.buildGoalProfile(effectiveUserId);
+      if (customized?.proteinGrams) goalProfile.protein_grams = customized.proteinGrams;
+      if (customized?.carbGrams) goalProfile.carb_grams = customized.carbGrams;
+      if (customized?.fatGrams) goalProfile.fat_grams = customized.fatGrams;
+      if (customized?.stepGoal) goalProfile.step_goal = customized.stepGoal;
+      if (customized?.waterMlGoal) goalProfile.water_ml_goal = customized.waterMlGoal;
+
       const screening = machine.buildHealthScreening(effectiveUserId);
 
       // Save goal profile
@@ -256,6 +276,46 @@ export default function OnboardingScreen() {
 
       // Save health screening
       await saveScreening(screening);
+
+      // Update user profile in Supabase if logged in
+      if (user?.id) {
+        try {
+          const { getSupabase } = await import('@/lib/supabase');
+          const supabase = getSupabase();
+          const targetName = snapshot.nickname?.trim() || profile?.nickname || 'Maity';
+          await supabase
+            .from('profiles')
+            .update({
+              nickname: targetName,
+              height_cm: snapshot.heightCm,
+              sex: snapshot.sex,
+              units: snapshot.units,
+              updated_at: new Date().toISOString(),
+            })
+            .eq('id', user.id);
+        } catch {
+          // ignore profile sync failure
+        }
+      }
+
+      // Save nickname locally
+      if (snapshot.nickname) {
+        try {
+          const db = await getDb();
+          await db.runAsync(
+            `INSERT OR REPLACE INTO guest_entries (id, entity, payload, created_at) VALUES (?, ?, ?, ?)`,
+            [
+              'guest_profile',
+              'profile',
+              JSON.stringify({ nickname: snapshot.nickname }),
+              new Date().toISOString(),
+            ],
+          );
+        } catch {
+          // ignore
+        }
+      }
+
       setIsSaving(false);
 
       // Offer Partner Finder (Spec A12 / ONB-12) if unprompted, or proceed
@@ -283,7 +343,7 @@ export default function OnboardingScreen() {
           title={currentInfo.title}
           subtitle={currentInfo.subtitle}
           onBack={handleBack}
-          canGoBack={currentStepIndex > 0}
+          canGoBack={true}
           onSkip={handleSkip}
           canSkip={canSkipCurrent}
         />
@@ -298,13 +358,13 @@ export default function OnboardingScreen() {
             <GoalStep
               selectedGoal={snapshot.goal}
               onSelectGoal={handleSelectGoal}
-              onAutoAdvance={handleNext}
             />
           )}
 
           {currentStep === 'body_stats' && (
             <BodyStatsStep
               units={snapshot.units}
+              nickname={snapshot.nickname}
               sex={snapshot.sex}
               dateOfBirth={snapshot.dateOfBirth}
               heightCm={snapshot.heightCm}
@@ -316,6 +376,10 @@ export default function OnboardingScreen() {
               errorWeight={snapshot.errors.weight}
               errorBodyFat={snapshot.errors.bodyFat}
               onChangeUnits={handleChangeUnits}
+              onChangeNickname={(name) => {
+                machine.setNickname(name);
+                updateState();
+              }}
               onChangeSex={handleChangeSex}
               onChangeDateOfBirth={handleChangeDateOfBirth}
               onChangeHeightCm={handleChangeHeightCm}
@@ -374,13 +438,13 @@ export default function OnboardingScreen() {
               goal={snapshot.goal}
               stepGoal={snapshot.stepGoal}
               waterMlGoal={snapshot.waterMlGoal}
+              weightKg={snapshot.weightKg}
               calculatedTargets={snapshot.calculatedTargets}
               isSaving={isSaving}
               saveError={saveError}
               onSave={handleSaveTargets}
               onGoBackToStats={() => handleGoToStep('body_stats')}
               onGoBackToRate={() => handleGoToStep('rate_selection')}
-              onOpenHowCalculated={() => setShowHowCalculatedSheet(true)}
             />
           )}
         </ScrollView>
@@ -398,20 +462,6 @@ export default function OnboardingScreen() {
           </View>
         )}
       </KeyboardAvoidingView>
-
-      {/* A11 How We Calculated This Sheet */}
-      <Sheet
-        visible={showHowCalculatedSheet}
-        onClose={() => setShowHowCalculatedSheet(false)}
-        testID="sheet-how-calculated"
-      >
-        <ScrollView style={styles.sheetScroll}>
-          <HowCalculatedStep
-            calculatedTargets={snapshot.calculatedTargets}
-            bodyFatPercentage={snapshot.bodyFatPercentage}
-          />
-        </ScrollView>
-      </Sheet>
 
       {/* A12 Partner Finder Offer Modal */}
       <PartnerFinderOfferModal

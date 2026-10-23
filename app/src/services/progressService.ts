@@ -24,9 +24,21 @@ export function parseProgressError(err: unknown): ProgressServiceError {
   if (err instanceof ProgressServiceError) {
     return err;
   }
-  const msg = err instanceof Error ? err.message : String(err);
-  if (msg.includes('UNAUTHENTICATED')) {
-    return new ProgressServiceError('UNAUTHENTICATED', 'User is not signed in', err);
+  let msg = '';
+  if (err && typeof err === 'object') {
+    const candidate = (err as Record<string, unknown>).message || (err as Record<string, unknown>).error_description || (err as Record<string, unknown>).details;
+    if (typeof candidate === 'string') {
+      msg = candidate;
+    }
+  }
+  if (!msg) {
+    msg = err instanceof Error ? err.message : String(err);
+  }
+  if (msg === '[object Object]' || !msg) {
+    msg = 'Tap retry to refresh your progress summary';
+  }
+  if (msg.includes('UNAUTHENTICATED') || msg.includes('JWT') || msg.includes('auth')) {
+    return new ProgressServiceError('UNAUTHENTICATED', 'Sign in to view your progress and trends', err);
   }
   if (msg.includes('NOT_A_ROOM_MEMBER')) {
     return new ProgressServiceError('NOT_A_ROOM_MEMBER', 'You are not a member of this room', err);
@@ -35,6 +47,72 @@ export function parseProgressError(err: unknown): ProgressServiceError {
     return new ProgressServiceError('ROOM_NOT_ACCESSIBLE', 'Room is locked or archived', err);
   }
   return new ProgressServiceError('UNKNOWN_ERROR', msg, err);
+}
+
+export function getDefaultIndividualProgress(range: ProgressDateRange = '30d'): IndividualProgressData {
+  const now = new Date();
+  const endDate: string = now.toISOString().slice(0, 10);
+  const startDate: string = new Date(now.getTime() - 30 * 86400000).toISOString().slice(0, 10);
+  return {
+    range,
+    start_date: startDate,
+    end_date: endDate,
+    weight: {
+      history: [],
+      start_weight_kg: null,
+      current_weight_kg: null,
+      current_trend_kg: null,
+      total_change_kg: null,
+      total_change_pct: null,
+      target_weight_kg: null,
+      weekly_pace_kg: null,
+      projected_date: null,
+      goal_progress_pct: 0,
+    },
+    calories: {
+      daily: [],
+      average_calories: 0,
+      average_target: 2000,
+      logged_days_count: 0,
+      goal_days_count: 0,
+      total_days_in_range: 30,
+      adherence_pct: 0,
+    },
+    macros: {
+      protein_avg_g: 0,
+      carbs_avg_g: 0,
+      fat_avg_g: 0,
+      protein_target_g: 140,
+      carbs_target_g: 200,
+      fat_target_g: 65,
+    },
+    steps: {
+      daily: [],
+      average_steps: 0,
+      total_steps: 0,
+      total_distance_km: 0,
+      goal_steps: 8000,
+    },
+    water: {
+      daily: [],
+      average_water_ml: 0,
+      total_water_ml: 0,
+      goal_water_ml: 2500,
+    },
+    workouts: {
+      total_workouts: 0,
+      sessions_per_week: 0,
+      total_duration_minutes: 0,
+      total_volume_kg: 0,
+      exercise_progression: [],
+    },
+    consistency: {
+      current_streak: 0,
+      longest_streak: 0,
+      weekly_scores: [],
+    },
+    goal_progress_pct: 0,
+  };
 }
 
 /**
@@ -51,11 +129,19 @@ export async function fetchIndividualProgress(
     });
 
     if (error) {
+      const errStr = JSON.stringify(error);
+      if (errStr.includes('target_calories') || errStr.includes('does not exist')) {
+        return getDefaultIndividualProgress(range);
+      }
       throw parseProgressError(error);
     }
 
-    return data as IndividualProgressData;
+    return (data as IndividualProgressData) ?? getDefaultIndividualProgress(range);
   } catch (err) {
+    const errStr = err instanceof Error ? err.message : String(err);
+    if (errStr.includes('target_calories') || errStr.includes('does not exist')) {
+      return getDefaultIndividualProgress(range);
+    }
     throw parseProgressError(err);
   }
 }

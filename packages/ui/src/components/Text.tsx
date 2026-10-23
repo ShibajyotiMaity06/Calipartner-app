@@ -1,5 +1,5 @@
 import React from 'react';
-import { Text as RNText, type TextProps as RNTextProps, type TextStyle } from 'react-native';
+import { Platform, Text as RNText, type TextProps as RNTextProps, type TextStyle } from 'react-native';
 import { dark } from '../tokens/colors';
 import {
   type as typeTokens,
@@ -75,7 +75,10 @@ export function Text({
         : 2.0;
 
   const fontStyle: TextStyle = {
-    fontFamily: tokenSpec.fontFamily,
+    fontFamily:
+      Platform.OS === 'web'
+        ? `${tokenSpec.fontFamily}, 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif`
+        : tokenSpec.fontFamily,
     fontSize: tokenSpec.fontSize,
     lineHeight: tokenSpec.lineHeight,
     color: resolvedColor,

@@ -1,5 +1,5 @@
 /**
- * CaliPartner Typography Scale
+ * CaliPartner Typography Scale — Apple Design & Plus Jakarta Sans
  * Source of truth: docs/ui/03-type.md & docs/ui/appendix-b-tokens.md
  */
 
@@ -12,60 +12,60 @@ export interface TextStyleToken {
 
 export const type = {
   numeralXL: {
-    fontFamily: 'Bricolage_700',
+    fontFamily: 'PlusJakartaSans_700',
     fontSize: 48,
     lineHeight: 52,
     fontVariant: ['tabular-nums'] as const,
   },
   numeralL: {
-    fontFamily: 'Bricolage_600',
+    fontFamily: 'PlusJakartaSans_700',
     fontSize: 34,
     lineHeight: 38,
     fontVariant: ['tabular-nums'] as const,
   },
   numeralM: {
-    fontFamily: 'Bricolage_600',
+    fontFamily: 'PlusJakartaSans_600',
     fontSize: 20,
     lineHeight: 24,
     fontVariant: ['tabular-nums'] as const,
   },
   title1: {
-    fontFamily: 'Bricolage_600',
+    fontFamily: 'PlusJakartaSans_700',
     fontSize: 26,
     lineHeight: 32,
   },
   title2: {
-    fontFamily: 'Bricolage_600',
+    fontFamily: 'PlusJakartaSans_600',
     fontSize: 20,
     lineHeight: 26,
   },
   heading: {
-    fontFamily: 'Figtree_600',
+    fontFamily: 'PlusJakartaSans_600',
     fontSize: 17,
     lineHeight: 24,
   },
   body: {
-    fontFamily: 'Figtree_400',
+    fontFamily: 'PlusJakartaSans_400',
     fontSize: 16,
     lineHeight: 24,
   },
   bodyS: {
-    fontFamily: 'Figtree_400',
+    fontFamily: 'PlusJakartaSans_400',
     fontSize: 14,
     lineHeight: 20,
   },
   label: {
-    fontFamily: 'Figtree_500',
+    fontFamily: 'PlusJakartaSans_500',
     fontSize: 13,
     lineHeight: 18,
   },
   micro: {
-    fontFamily: 'Figtree_500',
+    fontFamily: 'PlusJakartaSans_500',
     fontSize: 11,
     lineHeight: 14,
   },
   button: {
-    fontFamily: 'Figtree_600',
+    fontFamily: 'PlusJakartaSans_600',
     fontSize: 16,
     lineHeight: 20,
   },
@@ -75,24 +75,24 @@ export type TypeVariant = keyof typeof type;
 
 /**
  * Hindi (Devanagari) Typography Scale.
- * Numerals stay Latin digits in Bricolage.
+ * Numerals stay Latin digits in Plus Jakarta Sans with tabular-nums.
  * Interface text uses Anek Devanagari with line height scaled x1.15 to avoid clipping matras.
  */
 export const typeHindi: Record<TypeVariant, TextStyleToken> = {
   numeralXL: {
-    fontFamily: 'Bricolage_700',
+    fontFamily: 'PlusJakartaSans_700',
     fontSize: 48,
     lineHeight: Math.round(52 * 1.15),
     fontVariant: ['tabular-nums'],
   },
   numeralL: {
-    fontFamily: 'Bricolage_600',
+    fontFamily: 'PlusJakartaSans_700',
     fontSize: 34,
     lineHeight: Math.round(38 * 1.15),
     fontVariant: ['tabular-nums'],
   },
   numeralM: {
-    fontFamily: 'Bricolage_600',
+    fontFamily: 'PlusJakartaSans_600',
     fontSize: 20,
     lineHeight: Math.round(24 * 1.15),
     fontVariant: ['tabular-nums'],

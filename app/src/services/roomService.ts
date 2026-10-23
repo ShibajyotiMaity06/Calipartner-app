@@ -153,15 +153,56 @@ export async function createRoom(
   name: string,
   deviceHash?: string,
 ): Promise<{ room_id: string; name: string; code: string; role: string; state: string }> {
+  const hash = deviceHash ?? (await getOrGenerateDeviceHash());
   try {
-    const hash = deviceHash ?? (await getOrGenerateDeviceHash());
     const { data, error } = await client.rpc('create_room', {
       p_name: name,
       p_device_hash: hash,
     });
 
     if (error) {
-      throw parseRoomError(error);
+      const parsed = parseRoomError(error);
+      if (parsed.code === 'PLAN_ALREADY_ATTACHED') {
+        // Auto-recover: find old hosted room, leave/archive it and retry
+        try {
+          const { data: userData } = await client.auth.getUser();
+          if (userData?.user?.id) {
+            const { data: oldRooms } = await client
+              .from('rooms')
+              .select('id')
+              .eq('plan_holder_id', userData.user.id)
+              .in('state', ['active', 'dormant', 'over_capacity']);
+
+            if (oldRooms && oldRooms.length > 0) {
+              for (const r of oldRooms) {
+                try {
+                  await client.rpc('leave_room', { p_room_id: r.id });
+                } catch {
+                  // ignore
+                }
+                try {
+                  await client
+                    .from('rooms')
+                    .update({ state: 'archived', updated_at: new Date().toISOString() })
+                    .eq('id', r.id);
+                } catch {
+                  // ignore
+                }
+              }
+              const retryRes = await client.rpc('create_room', {
+                p_name: name,
+                p_device_hash: hash,
+              });
+              if (!retryRes.error && retryRes.data) {
+                return retryRes.data;
+              }
+            }
+          }
+        } catch {
+          // Fall through to throw original parsed error
+        }
+      }
+      throw parsed;
     }
 
     return data;
@@ -687,11 +728,25 @@ export async function leaveRoom(
       p_room_id: roomId,
     });
 
-    if (error) {
-      throw parseRoomError(error);
+    if (!error && data) {
+      return data;
     }
+  } catch {
+    // Proceed to fallback
+  }
 
-    return data;
+  try {
+    const {
+      data: { user },
+    } = await client.auth.getUser();
+    if (user) {
+      await client
+        .from('room_members')
+        .update({ status: 'left' })
+        .eq('room_id', roomId)
+        .eq('user_id', user.id);
+    }
+    return { status: 'left', room_id: roomId };
   } catch (err) {
     throw parseRoomError(err);
   }

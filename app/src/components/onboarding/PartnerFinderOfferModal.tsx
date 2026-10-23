@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import { View, StyleSheet, Modal, SafeAreaView } from 'react-native';
+import { View, StyleSheet, Modal, SafeAreaView, TouchableOpacity } from 'react-native';
+import { useRouter } from 'expo-router';
 import { Text, Button, Chip, SwitchRow, space, dark, radius, Avatar } from '@calipartner/ui';
-import { playClickSound, playToggleSound } from '@/lib/sound';
+import { playClickSound, playToggleSound, playSuccessSound } from '@/lib/sound';
 
 export interface PartnerFinderOfferModalProps {
   visible: boolean;
@@ -18,14 +19,26 @@ export function PartnerFinderOfferModal({
   onSetPreferences,
   testID = 'partner-finder-offer-modal',
 }: PartnerFinderOfferModalProps) {
+  const router = useRouter();
   const [openToPartner, setOpenToPartner] = useState(false);
 
   const handleToggle = (val: boolean) => {
     playToggleSound();
     setOpenToPartner(val);
-    if (val && onAccept) {
+  };
+
+  const handlePartnerCardPress = () => {
+    playClickSound();
+    onClose();
+    router.push('/paywall' as never);
+  };
+
+  const handleConfirm = () => {
+    playSuccessSound();
+    if (openToPartner && onAccept) {
       onAccept();
     }
+    onClose();
   };
 
   const handleSetPreferences = () => {
@@ -64,9 +77,16 @@ export function PartnerFinderOfferModal({
             </Text>
           </View>
 
-          {/* Blurred Match Preview Card (Spec A12) */}
+          {/* Demo Partner Preview Card (Tappable to Paywall) */}
           <View style={styles.cardPreviewWrapper}>
-            <View style={styles.matchCard}>
+            <TouchableOpacity
+              onPress={handlePartnerCardPress}
+              activeOpacity={0.85}
+              style={styles.matchCard}
+              accessibilityRole="button"
+              accessibilityLabel="Demo partner card. Tap to view room plan."
+              testID="demo-partner-card"
+            >
               <View style={styles.matchCardTop}>
                 <Avatar
                   name="Partner"
@@ -94,13 +114,13 @@ export function PartnerFinderOfferModal({
                 </Text>
               </View>
 
-              {/* Gentle overlay indication for privacy & stranger safety */}
+              {/* Gentle indication to upgrade/view room plan */}
               <View style={styles.privacyPill}>
-                <Text variant="label" color={dark.textLo}>
-                  Banded profile · No weight or photos shown to strangers
+                <Text variant="label" color={dark.apricot}>
+                  Demo Partner · Tap to explore Room Plan ›
                 </Text>
               </View>
-            </View>
+            </TouchableOpacity>
           </View>
 
           {/* SwitchRow for Open to Partner (off by default) */}
@@ -122,14 +142,31 @@ export function PartnerFinderOfferModal({
           {/* Action Buttons */}
           <View style={styles.actions}>
             {openToPartner ? (
+              <>
+                <Button
+                  variant="primary"
+                  size="lg"
+                  label="Enable & Continue"
+                  onPress={handleConfirm}
+                  testID="btn-enable-partner-continue"
+                />
+                <Button
+                  variant="secondary"
+                  size="md"
+                  label="Set preferences"
+                  onPress={handleSetPreferences}
+                  testID="btn-set-partner-preferences"
+                />
+              </>
+            ) : (
               <Button
                 variant="primary"
                 size="lg"
-                label="Set preferences"
-                onPress={handleSetPreferences}
-                testID="btn-set-partner-preferences"
+                label="Continue to CaliPartner"
+                onPress={handleConfirm}
+                testID="btn-continue-partner"
               />
-            ) : null}
+            )}
 
             <Button
               variant="secondary"

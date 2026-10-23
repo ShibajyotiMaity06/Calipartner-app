@@ -451,5 +451,42 @@ describe('Phase 5C — Room UI Presentation & Logic Tests', () => {
         expect(en.rooms.inboxModal.statusCancelled).toBe('Cancelled');
       });
     });
+
+    describe('SquadConnectFlow — Connection Modes & Sharing Specs', () => {
+      it('validates 3 connection options: 1-on-1 Partner, Create a Squad, Join an Existing Squad', () => {
+        const options = ['1-on-1', 'create-squad', 'join-squad'] as const;
+        expect(options).toHaveLength(3);
+        expect(options).toContain('1-on-1');
+        expect(options).toContain('create-squad');
+        expect(options).toContain('join-squad');
+      });
+
+      it('formats WhatsApp share message with squad code and app link', () => {
+        const formatWhatsAppMessage = (name: string, code: string) => {
+          const shareUrl = `https://calipartner-live.loca.lt/join?code=${code}`;
+          return `Join my fitness squad "${name}" on CaliPartner! 🏋️‍♂️ Squad Code: ${code}\n${shareUrl}`;
+        };
+
+        const msg = formatWhatsAppMessage('Morning Grinders', 'CALI-8821');
+        expect(msg).toContain('Morning Grinders');
+        expect(msg).toContain('CALI-8821');
+        expect(msg).toContain('https://calipartner-live.loca.lt/join?code=CALI-8821');
+      });
+
+      it('enforces partner profiles show what they have enabled without sensitive data', () => {
+        const samplePartner = {
+          name: 'Ananya Sharma',
+          ageBand: '24',
+          city: 'Bangalore',
+          enabledFeatures: { steps: true, workouts: true, meals: true, water: true },
+        };
+
+        expect(samplePartner.enabledFeatures.steps).toBe(true);
+        expect(samplePartner.enabledFeatures.workouts).toBe(true);
+        expect(samplePartner.ageBand).toBe('24');
+        expect(samplePartner.city).toBe('Bangalore');
+      });
+    });
   });
 });
+

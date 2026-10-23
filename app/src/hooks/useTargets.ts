@@ -40,25 +40,22 @@ export function useTargets() {
     error: null,
   });
 
-  const userId = user?.id;
+  const effectiveUserId = user?.id ?? 'guest-user';
 
   const loadLocalData = useCallback(async () => {
-    if (!userId) {
-      setState((prev) => ({
-        ...prev,
-        currentGoalProfile: null,
-        healthScreening: null,
-        loading: false,
-      }));
-      return;
-    }
-
     try {
       const db = await getDb();
-      const [profile, screening] = await Promise.all([
-        getCurrentLocalGoalProfile(db, userId),
-        getLocalHealthScreening(db, userId),
+      let [profile, screening] = await Promise.all([
+        getCurrentLocalGoalProfile(db, effectiveUserId),
+        getLocalHealthScreening(db, effectiveUserId),
       ]);
+
+      if (!profile && effectiveUserId !== 'guest-user') {
+        profile = await getCurrentLocalGoalProfile(db, 'guest-user');
+      }
+      if (!screening && effectiveUserId !== 'guest-user') {
+        screening = await getLocalHealthScreening(db, 'guest-user');
+      }
 
       setState({
         currentGoalProfile: profile,
@@ -67,8 +64,8 @@ export function useTargets() {
         error: null,
       });
 
-      // If online and supabase configured, flush outbox queue in background
-      if (online) {
+      // If online, logged in and supabase configured, flush outbox queue in background
+      if (online && user?.id) {
         const supabase = getSupabase();
         flushTargetsOutbox(db, supabase).catch(() => {
           // Background sync retry silently
@@ -78,7 +75,7 @@ export function useTargets() {
       const message = e instanceof Error ? e.message : String(e);
       setState((prev) => ({ ...prev, loading: false, error: message }));
     }
-  }, [userId, online]);
+  }, [effectiveUserId, online, user?.id]);
 
   useEffect(() => {
     loadLocalData();
@@ -100,14 +97,15 @@ export function useTargets() {
     async (
       profile: GoalProfile,
     ): Promise<{ success: boolean; synced: boolean; error?: string }> => {
-      if (!userId) {
-        return { success: false, synced: false, error: 'User not logged in' };
-      }
-
       try {
         const db = await getDb();
-        const supabase = online ? getSupabase() : null;
-        const res = await saveGoalProfileWithSync(db, supabase, profile, online);
+        const supabase = online && user?.id ? getSupabase() : null;
+        const res = await saveGoalProfileWithSync(
+          db,
+          supabase,
+          profile,
+          Boolean(online && user?.id),
+        );
 
         setState((prev) => ({
           ...prev,
@@ -121,7 +119,7 @@ export function useTargets() {
         return { success: false, synced: false, error: message };
       }
     },
-    [userId, online],
+    [online, user?.id],
   );
 
   /**
@@ -131,14 +129,15 @@ export function useTargets() {
     async (
       screening: HealthScreening,
     ): Promise<{ success: boolean; synced: boolean; error?: string }> => {
-      if (!userId) {
-        return { success: false, synced: false, error: 'User not logged in' };
-      }
-
       try {
         const db = await getDb();
-        const supabase = online ? getSupabase() : null;
-        const res = await saveHealthScreeningWithSync(db, supabase, screening, online);
+        const supabase = online && user?.id ? getSupabase() : null;
+        const res = await saveHealthScreeningWithSync(
+          db,
+          supabase,
+          screening,
+          Boolean(online && user?.id),
+        );
 
         setState((prev) => ({
           ...prev,
@@ -152,7 +151,7 @@ export function useTargets() {
         return { success: false, synced: false, error: message };
       }
     },
-    [userId, online],
+    [online, user?.id],
   );
 
   /**

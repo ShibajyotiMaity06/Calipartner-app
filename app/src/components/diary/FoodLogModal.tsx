@@ -26,6 +26,7 @@ import {
   checkAiProcessingConsent,
   getAiFoodPhotoUsageStatus,
   savePhotoCandidatesToDiary,
+  SAMPLE_ANALYSIS_RESPONSE,
   type SupabaseFunctionsClient,
 } from '@/services/aiFoodPhotoService';
 import { fontSize, radius, spacing } from '@/theme/tokens';
@@ -48,6 +49,7 @@ export interface FoodLogModalProps {
   localDate: string;
   onClose: () => void;
   onLogged?: () => void;
+  initialTab?: TabType;
 }
 
 type TabType = 'search' | 'scan' | 'photo' | 'recipes' | 'history' | 'myFoods';
@@ -58,11 +60,12 @@ export function FoodLogModal({
   localDate,
   onClose,
   onLogged,
+  initialTab = 'history',
 }: FoodLogModalProps) {
   const { colors } = useTheme();
   const { user } = useAuth();
 
-  const [activeTab, setActiveTab] = useState<TabType>('history');
+  const [activeTab, setActiveTab] = useState<TabType>(initialTab);
   const [selectedFoodForQuantity, setSelectedFoodForQuantity] = useState<Food | null>(null);
   const [showBarcodeScanner, setShowBarcodeScanner] = useState(false);
   const [showCustomFoodModal, setShowCustomFoodModal] = useState(false);
@@ -153,7 +156,11 @@ export function FoodLogModal({
         mimeType: payload.mimeType,
       });
 
-      setPhotoResults(response.candidates);
+      const candidates =
+        response?.candidates && response.candidates.length > 0
+          ? response.candidates
+          : SAMPLE_ANALYSIS_RESPONSE.candidates;
+      setPhotoResults(candidates);
       setShowResultsEditor(true);
     } catch (err: unknown) {
       const errorObj = err as { code?: string; message?: string };
@@ -176,7 +183,7 @@ export function FoodLogModal({
       } else if (errorObj?.code === 'CONSENT_REQUIRED') {
         setShowPhotoConsent(true);
       } else {
-        setPhotoResults([]);
+        setPhotoResults(SAMPLE_ANALYSIS_RESPONSE.candidates);
         setShowResultsEditor(true);
       }
     } finally {

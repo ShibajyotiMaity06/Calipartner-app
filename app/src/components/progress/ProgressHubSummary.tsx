@@ -75,7 +75,7 @@ export function ProgressHubSummary({
           <View style={styles.cardBody}>
             <View>
               <Text style={styles.headlineNumber}>
-                {weight?.current_weight_kg != null ? `${weight.current_weight_kg.toFixed(1)} kg` : '—'}
+                {weight?.current_weight_kg != null ? `${weight.current_weight_kg.toFixed(1)} kg` : '0.0 kg'}
               </Text>
               <Text style={styles.headlineCaption}>
                 {weight?.total_change_kg != null
@@ -111,7 +111,7 @@ export function ProgressHubSummary({
               <Text style={styles.headlineNumber}>
                 {calories?.average_calories != null
                   ? `${Math.round(calories.average_calories)} kcal`
-                  : '—'}
+                  : '0 kcal'}
               </Text>
               <Text style={styles.headlineCaption}>
                 Target: {calories?.average_target != null ? Math.round(calories.average_target) : 2000} kcal/day
@@ -141,19 +141,19 @@ export function ProgressHubSummary({
           <View style={styles.macrosMiniRow}>
             <View style={styles.macroMiniBox}>
               <Text style={styles.macroMiniVal}>
-                {macros?.protein_avg_g != null ? `${Math.round(macros.protein_avg_g)}g` : '—'}
+                {macros?.protein_avg_g != null ? `${Math.round(macros.protein_avg_g)}g` : '0g'}
               </Text>
               <Text style={styles.macroMiniLabel}>Protein</Text>
             </View>
             <View style={styles.macroMiniBox}>
               <Text style={styles.macroMiniVal}>
-                {macros?.carbs_avg_g != null ? `${Math.round(macros.carbs_avg_g)}g` : '—'}
+                {macros?.carbs_avg_g != null ? `${Math.round(macros.carbs_avg_g)}g` : '0g'}
               </Text>
               <Text style={styles.macroMiniLabel}>Carbs</Text>
             </View>
             <View style={styles.macroMiniBox}>
               <Text style={styles.macroMiniVal}>
-                {macros?.fat_avg_g != null ? `${Math.round(macros.fat_avg_g)}g` : '—'}
+                {macros?.fat_avg_g != null ? `${Math.round(macros.fat_avg_g)}g` : '0g'}
               </Text>
               <Text style={styles.macroMiniLabel}>Fat</Text>
             </View>
@@ -180,7 +180,7 @@ export function ProgressHubSummary({
               <Text style={styles.headlineNumber}>
                 {steps?.average_steps != null
                   ? `${Math.round(steps.average_steps).toLocaleString()}`
-                  : '—'}
+                  : '0'}
               </Text>
               <Text style={styles.headlineCaption}>
                 {steps?.total_distance_km != null
@@ -214,7 +214,7 @@ export function ProgressHubSummary({
               <Text style={styles.headlineNumber}>
                 {water?.average_water_ml != null
                   ? `${Math.round(water.average_water_ml)} ml`
-                  : '—'}
+                  : '0 ml'}
               </Text>
               <Text style={styles.headlineCaption}>Daily average intake</Text>
             </View>
@@ -242,7 +242,7 @@ export function ProgressHubSummary({
           <View style={styles.cardBody}>
             <View>
               <Text style={styles.headlineNumber}>
-                {workouts?.total_workouts != null ? `${workouts.total_workouts} sessions` : '—'}
+                {workouts?.total_workouts != null ? `${workouts.total_workouts} sessions` : '0 sessions'}
               </Text>
               <Text style={styles.headlineCaption}>
                 {workouts?.sessions_per_week != null
@@ -276,7 +276,7 @@ export function ProgressHubSummary({
           <View style={styles.cardBody}>
             <View>
               <Text style={styles.headlineNumber}>
-                {consistency?.current_streak != null ? `${consistency.current_streak} days` : '—'}
+                {consistency?.current_streak != null ? `${consistency.current_streak} days` : '0 days'}
               </Text>
               <Text style={styles.headlineCaption}>
                 Longest streak: {consistency?.longest_streak ?? 0} days

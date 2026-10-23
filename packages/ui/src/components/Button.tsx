@@ -51,7 +51,7 @@ export function Button({
   label,
   icon,
   trailingIcon,
-  fullWidth = false,
+  fullWidth = true,
   loading = false,
   disabled = false,
   onPress,
@@ -107,6 +107,7 @@ export function Button({
           flexDirection: 'row',
           alignItems: 'center',
           justifyContent: 'center',
+          width: fullWidth ? '100%' : undefined,
           alignSelf: fullWidth ? 'stretch' : 'flex-start',
         };
 

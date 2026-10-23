@@ -12,7 +12,7 @@ import {
 import { dark } from '../tokens/colors';
 import { radius } from '../tokens/radius';
 import { space } from '../tokens/space';
-import { TodayIcon, RoomIcon, ProgressIcon, MeIcon, PlusIcon } from './Icons';
+import { HomeIcon, TodayIcon, RoomIcon, ProgressIcon, MeIcon, PlusIcon } from './Icons';
 
 export type TabId = 'today' | 'room' | 'log' | 'progress' | 'me';
 
@@ -22,6 +22,13 @@ export interface TabBarItemConfig {
   testID: string;
 }
 
+export interface TabBarLabels {
+  today?: string;
+  room?: string;
+  progress?: string;
+  me?: string;
+}
+
 export interface TabBarProps {
   /** Currently active tab ID */
   activeTab: TabId;
@@ -29,7 +36,7 @@ export interface TabBarProps {
   onTabPress: (tab: TabId) => void;
   /** Callback when the currently active tab is tapped again (for scroll-to-top) */
   onActiveTabPress?: (tab: TabId) => void;
-  /** Whether the Room tab shows the 8px apricot badge dot */
+  /** Whether the Room/Squad tab shows the 8px apricot badge dot */
   hasRoomBadge?: boolean;
   /** Controls visibility (hide on full-screen flows like scan, focus running) */
   visible?: boolean;
@@ -41,6 +48,8 @@ export interface TabBarProps {
   style?: StyleProp<ViewStyle>;
   /** Test identifier */
   testID?: string;
+  /** Configurable tab labels */
+  labels?: TabBarLabels;
 }
 
 export const TAB_BAR_HEIGHT = 64;
@@ -56,6 +65,7 @@ export function TabBar({
   reduceTransparency: forcedReduceTransparency,
   style,
   testID = 'floating-tab-bar',
+  labels,
 }: TabBarProps): React.JSX.Element | null {
   const [reduceTransparency, setReduceTransparency] = useState<boolean>(
     forcedReduceTransparency ?? false,
@@ -155,11 +165,11 @@ export function TabBar({
       ]}
       accessibilityRole="tablist"
     >
-      {/* 1. Today */}
-      {renderNormalTab('today', 'Today', TodayIcon, 'tab-today')}
+      {/* 1. Home */}
+      {renderNormalTab('today', labels?.today ?? 'Home', HomeIcon, 'tab-today')}
 
-      {/* 2. Room */}
-      {renderNormalTab('room', 'Room', RoomIcon, 'tab-room', hasRoomBadge)}
+      {/* 2. Progress */}
+      {renderNormalTab('progress', labels?.progress ?? 'Progress', ProgressIcon, 'tab-progress')}
 
       {/* 3. Center Raised Plus Button */}
       <View style={styles.centerSlot}>
@@ -175,11 +185,11 @@ export function TabBar({
         </TouchableOpacity>
       </View>
 
-      {/* 4. Progress */}
-      {renderNormalTab('progress', 'Progress', ProgressIcon, 'tab-progress')}
+      {/* 4. Squad */}
+      {renderNormalTab('room', labels?.room ?? 'Squad', RoomIcon, 'tab-room', hasRoomBadge)}
 
-      {/* 5. Me */}
-      {renderNormalTab('me', 'Me', MeIcon, 'tab-me')}
+      {/* 5. Account */}
+      {renderNormalTab('me', labels?.me ?? 'Account', MeIcon, 'tab-me')}
     </View>
   );
 }
@@ -246,14 +256,13 @@ const styles = StyleSheet.create({
   },
   centerSlot: {
     width: 60,
+    height: '100%',
     alignItems: 'center',
     justifyContent: 'center',
     zIndex: 110,
   },
   plusButton: {
-    position: 'absolute',
-    top: -8, // Rises 8 above the bar per CMP-05
-    width: 56, // 56 apricot circle
+    width: 56,
     height: 56,
     borderRadius: radius.full,
     backgroundColor: dark.apricot,
@@ -261,5 +270,6 @@ const styles = StyleSheet.create({
     borderColor: dark.bg0,
     alignItems: 'center',
     justifyContent: 'center',
+    transform: [{ translateY: -12 }],
   },
 });

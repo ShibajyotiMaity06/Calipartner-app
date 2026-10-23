@@ -488,7 +488,33 @@ export async function reportChatMessage(
 }
 
 /**
- * Mutes or blocks a room member.
+ * Blocks an abusive user instantly (Apple Guideline 1.2 UGC).
+ */
+export async function blockChatMember(
+  supabase: ChatSupabaseClient,
+  targetUserId: string,
+): Promise<void> {
+  const { error } = await supabase.rpc('block_user', {
+    p_target_user_id: targetUserId,
+  });
+  if (error) throw parseChatError(error);
+}
+
+/**
+ * Unblocks a previously blocked user.
+ */
+export async function unblockChatMember(
+  supabase: ChatSupabaseClient,
+  targetUserId: string,
+): Promise<void> {
+  const { error } = await supabase.rpc('unblock_user', {
+    p_target_user_id: targetUserId,
+  });
+  if (error) throw parseChatError(error);
+}
+
+/**
+ * Mutes a room member.
  */
 export async function muteChatMember(
   supabase: ChatSupabaseClient,

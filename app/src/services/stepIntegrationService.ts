@@ -1,5 +1,6 @@
 import { Platform } from 'react-native';
 import * as SecureStore from 'expo-secure-store';
+import { Pedometer } from 'expo-sensors';
 import type { ActivitySource } from '@calipartner/core';
 import { createLogger } from '@/lib/logger';
 
@@ -24,6 +25,21 @@ export async function getStepPermissionStatus(): Promise<StepPermissionStatus> {
   }
 
   try {
+    const isAvail = await Pedometer.isAvailableAsync().catch(() => false);
+    if (!isAvail) {
+      return 'unavailable';
+    }
+
+    const perm = await Pedometer.getPermissionsAsync().catch(() => null);
+    if (perm) {
+      if (perm.granted) {
+        await SecureStore.setItemAsync(PERMISSION_STORE_KEY, 'granted').catch(() => {});
+        return 'granted';
+      } else if (!perm.canAskAgain) {
+        return 'denied';
+      }
+    }
+
     const saved = await SecureStore.getItemAsync(PERMISSION_STORE_KEY);
     if (saved === 'granted' || saved === 'denied' || saved === 'unavailable') {
       return saved as StepPermissionStatus;
@@ -48,15 +64,20 @@ export async function requestStepPermissions(): Promise<{
   }
 
   try {
-    // In dev-client / production environment with health libraries linked,
-    // this invokes platform-specific permission request dialogs.
-    // Simulating graceful permission grant and state persistence:
-    await SecureStore.setItemAsync(PERMISSION_STORE_KEY, 'granted');
-    log.info('Step platform permission granted');
-    return { granted: true, status: 'granted' };
+    const isAvail = await Pedometer.isAvailableAsync().catch(() => false);
+    if (!isAvail) {
+      await SecureStore.setItemAsync(PERMISSION_STORE_KEY, 'unavailable').catch(() => {});
+      return { granted: false, status: 'unavailable' };
+    }
+
+    const res = await Pedometer.requestPermissionsAsync().catch(() => ({ granted: false }));
+    const status: StepPermissionStatus = res.granted ? 'granted' : 'denied';
+    await SecureStore.setItemAsync(PERMISSION_STORE_KEY, status).catch(() => {});
+    log.info(`Step platform permission status: ${status}`);
+    return { granted: res.granted, status };
   } catch (e) {
     log.warn(`Permission request failed or denied: ${e}`);
-    await SecureStore.setItemAsync(PERMISSION_STORE_KEY, 'denied');
+    await SecureStore.setItemAsync(PERMISSION_STORE_KEY, 'denied').catch(() => {});
     return { granted: false, status: 'denied' };
   }
 }
@@ -74,31 +95,44 @@ export async function setStepPermissionDenied(): Promise<void> {
 
 /**
  * Reads daily steps from available hardware/platform sensors:
- * Priority 1: Health Connect (Android) or HealthKit (iOS) -> source: 'health_platform'
- * Priority 2: Built-in hardware pedometer -> source: 'pedometer'
- * Priority 3: Manual entry fallback -> null (user logs manually)
+ * Priority 1: Built-in hardware pedometer date range query (iOS CMPedometer / Android Step Counter)
+ * Priority 2: Return null if unavailable so user's manual/logged session steps are preserved
  */
-export async function readDeviceSteps(_localDate: string): Promise<StepReading | null> {
+export async function readDeviceSteps(localDate: string): Promise<StepReading | null> {
   if (Platform.OS === 'web') {
     return null;
   }
 
-  const permission = await getStepPermissionStatus();
-  if (permission !== 'granted') {
-    log.info(`Skipping step read: permission status is ${permission}`);
-    return null;
-  }
-
   try {
-    // Return structured reading when native bridge or health provider is active
-    // For standard simulated test environment, return platform baseline reading:
-    return {
-      steps: 0,
-      distance_m: null,
-      source: 'health_platform',
-    };
+    const isAvail = await Pedometer.isAvailableAsync().catch(() => false);
+    if (!isAvail) {
+      return null;
+    }
+
+    const perm = await Pedometer.getPermissionsAsync().catch(() => null);
+    if (!perm?.granted) {
+      return null;
+    }
+
+    const [year, month, day] = localDate.split('-').map(Number);
+    if (!year || !month || !day) return null;
+
+    const startOfDay = new Date(year, month - 1, day, 0, 0, 0, 0);
+    const endOfDay = new Date(year, month - 1, day, 23, 59, 59, 999);
+    const now = new Date();
+    const endTime = now < endOfDay ? now : endOfDay;
+
+    const result = await Pedometer.getStepCountAsync(startOfDay, endTime).catch(() => null);
+    if (result && typeof result.steps === 'number') {
+      return {
+        steps: result.steps,
+        distance_m: null,
+        source: 'pedometer',
+      };
+    }
+    return null;
   } catch (err) {
-    log.warn(`Failed reading device steps: ${err}`);
+    log.warn(`Failed reading device steps via pedometer: ${err}`);
     return null;
   }
 }

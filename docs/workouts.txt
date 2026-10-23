@@ -1,0 +1,536 @@
+# Workout Exercise Names — Home + Gym
+
+## 1. Chest
+
+- Push-Ups
+- Wide-Grip Push-Ups
+- Diamond Push-Ups
+- Incline Push-Ups
+- Decline Push-Ups
+- Archer Push-Ups
+- Knee Push-Ups
+- Dumbbell Bench Press
+- Barbell Bench Press
+- Incline Bench Press
+- Decline Bench Press
+- Dumbbell Fly
+- Cable Fly
+- Pec Deck Fly
+- Incline Dumbbell Fly
+- Chest Press Machine
+- Smith Machine Bench Press
+- Dumbbell Pullover
+- Landmine Press
+- Svend Press
+- Cable Crossover
+- Low-to-High Cable Fly
+- High-to-Low Cable Fly
+- Plate Squeeze Press
+
+## 2. Back
+
+- Pull-Ups
+- Chin-Ups
+- Wide-Grip Pull-Ups
+- Neutral-Grip Pull-Ups
+- Inverted Rows
+- Superman Hold
+- Reverse Snow Angels
+- Resistance Band Rows
+- Barbell Bent-Over Rows
+- Dumbbell Rows
+- Single-Arm Dumbbell Rows
+- T-Bar Rows
+- Seated Cable Rows
+- Lat Pulldowns
+- Close-Grip Lat Pulldowns
+- Straight-Arm Pulldowns
+- Chest-Supported Rows
+- Machine Rows
+- Pendlay Rows
+- Meadows Rows
+- Renegade Rows
+- Rack Pulls
+- Deadlifts
+- Romanian Deadlifts
+- Face Pulls
+- Shrugs
+- Machine Pullovers
+- Cable Shrugs
+
+## 3. Shoulders
+
+- Pike Push-Ups
+- Handstand Push-Ups
+- Dumbbell Shoulder Press
+- Barbell Overhead Press
+- Arnold Press
+- Seated Dumbbell Press
+- Machine Shoulder Press
+- Dumbbell Lateral Raises
+- Cable Lateral Raises
+- Front Raises
+- Plate Front Raises
+- Rear Delt Fly
+- Reverse Pec Deck
+- Bent-Over Lateral Raises
+- Upright Rows
+- Face Pulls
+- Barbell Push Press
+- Landmine Shoulder Press
+- Cuban Rotations
+- Band Pull-Aparts
+- Y-Raises
+- W-Raises
+- Scaption Raises
+- Lu Raises
+
+## 4. Biceps
+
+- Standard Dumbbell Curls
+- Barbell Curls
+- EZ-Bar Curls
+- Hammer Curls
+- Cross-Body Hammer Curls
+- Concentration Curls
+- Preacher Curls
+- Spider Curls
+- Incline Dumbbell Curls
+- Seated Dumbbell Curls
+- Cable Curls
+- Bayesian Curls
+- Reverse Curls
+- Zottman Curls
+- Drag Curls
+- Machine Biceps Curls
+- Resistance Band Curls
+- Alternating Dumbbell Curls
+- Chin-Ups
+- Isometric Biceps Holds
+- 21s Biceps Curls
+- High Cable Curls
+
+## 5. Triceps
+
+- Diamond Push-Ups
+- Close-Grip Push-Ups
+- Bench Dips
+- Parallel Bar Dips
+- Overhead Dumbbell Extensions
+- Dumbbell Kickbacks
+- Triceps Rope Pushdowns
+- Straight-Bar Pushdowns
+- Reverse-Grip Pushdowns
+- Skull Crushers
+- EZ-Bar Extensions
+- Lying Triceps Extensions
+- Close-Grip Bench Press
+- Overhead Cable Extensions
+- Single-Arm Cable Extensions
+- Cross-Body Cable Extensions
+- Machine Triceps Extensions
+- Tate Press
+- JM Press
+- Resistance Band Pushdowns
+- Bodyweight Triceps Extensions
+- Dumbbell Tate Press
+
+## 6. Forearms and Grip
+
+- Wrist Curls
+- Reverse Wrist Curls
+- Dumbbell Wrist Curls
+- Barbell Wrist Curls
+- Reverse Barbell Curls
+- Farmer's Walk
+- Dead Hangs
+- Towel Hangs
+- Plate Pinches
+- Grippers
+- Wrist Roller
+- Finger Extensions
+- Behind-the-Back Wrist Curls
+- Reverse Dumbbell Wrist Curls
+- Fat-Grip Holds
+- Suitcase Carries
+- Hammer Rotations
+- Pronation and Supination
+
+## 7. Abs and Core
+
+- Crunches
+- Sit-Ups
+- Reverse Crunches
+- Bicycle Crunches
+- Russian Twists
+- Plank
+- Side Plank
+- Mountain Climbers
+- Flutter Kicks
+- Leg Raises
+- Hanging Leg Raises
+- Hanging Knee Raises
+- V-Ups
+- Toe Touches
+- Heel Touches
+- Dead Bug
+- Bird Dog
+- Hollow Body Hold
+- L-Sit
+- Ab Wheel Rollouts
+- Cable Crunches
+- Decline Sit-Ups
+- Weighted Crunches
+- Captain's Chair Knee Raises
+- Pallof Press
+- Woodchoppers
+- Dragon Flags
+- Scissor Kicks
+- Plank Shoulder Taps
+- Weighted Russian Twists
+- Stability Ball Crunches
+- Cable Side Bends
+
+## 8. Quadriceps (Front Thighs)
+
+- Bodyweight Squats
+- Jump Squats
+- Goblet Squats
+- Barbell Back Squats
+- Front Squats
+- Hack Squats
+- Bulgarian Split Squats
+- Walking Lunges
+- Reverse Lunges
+- Forward Lunges
+- Step-Ups
+- Leg Extensions
+- Leg Press
+- Smith Machine Squats
+- Sissy Squats
+- Pistol Squats
+- Wall Sits
+- Heels-Elevated Squats
+- Zercher Squats
+- Cyclist Squats
+- Split Squats
+- Belt Squats
+- Pendulum Squats
+- Landmine Squats
+
+## 9. Hamstrings
+
+- Romanian Deadlifts
+- Stiff-Leg Deadlifts
+- Conventional Deadlifts
+- Single-Leg Romanian Deadlifts
+- Lying Leg Curls
+- Seated Leg Curls
+- Standing Leg Curls
+- Nordic Hamstring Curls
+- Glute-Ham Raises
+- Good Mornings
+- Stability Ball Hamstring Curls
+- Sliding Hamstring Curls
+- Resistance Band Leg Curls
+- Kettlebell Swings
+- Cable Pull-Throughs
+- Reverse Lunges
+- Single-Leg Deadlifts
+- Razor Curls
+
+## 10. Glutes
+
+- Glute Bridges
+- Single-Leg Glute Bridges
+- Barbell Hip Thrusts
+- Dumbbell Hip Thrusts
+- Machine Hip Thrusts
+- Donkey Kicks
+- Fire Hydrants
+- Clamshells
+- Cable Kickbacks
+- Banded Kickbacks
+- Bulgarian Split Squats
+- Sumo Squats
+- Sumo Deadlifts
+- Walking Lunges
+- Reverse Lunges
+- Step-Ups
+- Frog Pumps
+- Banded Lateral Walks
+- Hip Abductions
+- Cable Hip Abductions
+- Machine Hip Abductions
+- Curtsy Lunges
+- 45-Degree Back Extensions
+- Single-Leg Romanian Deadlifts
+- Cable Pull-Throughs
+
+## 11. Calves
+
+- Standing Calf Raises
+- Seated Calf Raises
+- Single-Leg Calf Raises
+- Donkey Calf Raises
+- Leg Press Calf Raises
+- Smith Machine Calf Raises
+- Dumbbell Calf Raises
+- Stair Calf Raises
+- Bent-Knee Calf Raises
+- Jump Rope
+- Calf Hops
+- Tibialis Raises
+- Seated Tibialis Raises
+- Toe Walks
+- Farmer's Walk on Toes
+
+## 12. Traps and Upper Back
+
+- Barbell Shrugs
+- Dumbbell Shrugs
+- Smith Machine Shrugs
+- Cable Shrugs
+- Upright Rows
+- Face Pulls
+- Farmer's Walk
+- Rack Pulls
+- High Pulls
+- Barbell High Rows
+- Chest-Supported Rows
+- Reverse Fly
+- Band Pull-Aparts
+- Prone Y-Raises
+- Prone T-Raises
+- Prone W-Raises
+
+## 13. Full-Body Home Workouts
+
+- Burpees
+- Jumping Jacks
+- High Knees
+- Butt Kicks
+- Bear Crawls
+- Crab Walks
+- Inchworms
+- Walkouts
+- Mountain Climbers
+- Squat Thrusts
+- Thrusters
+- Man Makers
+- Dumbbell Complexes
+- Kettlebell Swings
+- Turkish Get-Ups
+- Devil Press
+- Bear Plank
+- Skater Jumps
+- Broad Jumps
+- Tuck Jumps
+- Shadow Boxing
+- Jump Rope
+- Sprawls
+- Plank Jacks
+- Lateral Bounds
+
+## 14. Cardio
+
+- Walking
+- Brisk Walking
+- Running
+- Jogging
+- Sprinting
+- Treadmill Walking
+- Treadmill Running
+- Incline Walking
+- Cycling
+- Stationary Cycling
+- Outdoor Cycling
+- Elliptical Training
+- Rowing Machine
+- Stair Climber
+- Staircase Climbing
+- Jump Rope
+- Swimming
+- Shadow Boxing
+- Boxing Bag Work
+- Battle Ropes
+- Hiking
+- Dance Cardio
+- Step Aerobics
+- HIIT
+- Low-Intensity Steady-State Cardio
+
+## 15. Resistance Band Exercises
+
+- Band Chest Press
+- Band Chest Fly
+- Band Rows
+- Band Lat Pulldowns
+- Band Pull-Aparts
+- Band Face Pulls
+- Band Biceps Curls
+- Band Hammer Curls
+- Band Triceps Pushdowns
+- Band Overhead Extensions
+- Band Lateral Raises
+- Band Front Raises
+- Band Squats
+- Band Deadlifts
+- Band Good Mornings
+- Band Glute Bridges
+- Band Hip Abductions
+- Band Kickbacks
+- Band Leg Curls
+- Band Calf Raises
+- Band Pallof Press
+- Band Woodchoppers
+
+## 16. Dumbbell-Only Exercises
+
+- Dumbbell Bench Press
+- Dumbbell Floor Press
+- Dumbbell Fly
+- Dumbbell Pullover
+- Dumbbell Rows
+- Dumbbell Shoulder Press
+- Arnold Press
+- Dumbbell Lateral Raises
+- Dumbbell Front Raises
+- Dumbbell Rear Delt Fly
+- Dumbbell Curls
+- Hammer Curls
+- Concentration Curls
+- Zottman Curls
+- Dumbbell Kickbacks
+- Overhead Dumbbell Extensions
+- Goblet Squats
+- Dumbbell Lunges
+- Dumbbell Step-Ups
+- Dumbbell Romanian Deadlifts
+- Dumbbell Sumo Squats
+- Dumbbell Hip Thrusts
+- Dumbbell Shrugs
+- Dumbbell Wrist Curls
+- Dumbbell Russian Twists
+- Dumbbell Sit-Ups
+- Dumbbell Farmer's Walk
+- Dumbbell Thrusters
+
+## 17. Barbell Exercises
+
+- Barbell Bench Press
+- Incline Barbell Bench Press
+- Close-Grip Bench Press
+- Barbell Overhead Press
+- Barbell Push Press
+- Barbell Bent-Over Row
+- Pendlay Row
+- T-Bar Row
+- Barbell Shrugs
+- Barbell Curl
+- Reverse Barbell Curl
+- Barbell Back Squat
+- Front Squat
+- Zercher Squat
+- Barbell Lunges
+- Conventional Deadlift
+- Sumo Deadlift
+- Romanian Deadlift
+- Stiff-Leg Deadlift
+- Good Mornings
+- Barbell Hip Thrust
+- Barbell Glute Bridge
+- Rack Pulls
+- Barbell Wrist Curls
+- Landmine Row
+- Landmine Press
+
+## 18. Gym Machine Exercises
+
+- Chest Press Machine
+- Pec Deck Machine
+- Lat Pulldown Machine
+- Seated Row Machine
+- Chest-Supported Row Machine
+- Assisted Pull-Up Machine
+- Assisted Dip Machine
+- Shoulder Press Machine
+- Lateral Raise Machine
+- Reverse Pec Deck
+- Biceps Curl Machine
+- Triceps Extension Machine
+- Leg Press Machine
+- Hack Squat Machine
+- Leg Extension Machine
+- Seated Leg Curl Machine
+- Lying Leg Curl Machine
+- Standing Calf Raise Machine
+- Seated Calf Raise Machine
+- Hip Abduction Machine
+- Hip Adduction Machine
+- Glute Kickback Machine
+- Smith Machine Squats
+- Smith Machine Bench Press
+- Cable Crossover Machine
+- Ab Crunch Machine
+- Back Extension Machine
+- Rotary Torso Machine
+- Stair Climber
+- Elliptical Machine
+
+## 19. Mobility and Flexibility
+
+- Cat-Cow Stretch
+- Child's Pose
+- Cobra Stretch
+- Downward Dog
+- World's Greatest Stretch
+- Hip Flexor Stretch
+- Hamstring Stretch
+- Standing Quad Stretch
+- Figure-Four Stretch
+- Pigeon Pose
+- Butterfly Stretch
+- Calf Wall Stretch
+- Doorway Chest Stretch
+- Cross-Body Shoulder Stretch
+- Overhead Triceps Stretch
+- Lat Stretch
+- Thoracic Rotations
+- Thread the Needle
+- Ankle Mobility Rocks
+- Deep Squat Hold
+- Wrist Flexor Stretch
+- Wrist Extensor Stretch
+- Neck Rotations
+- Shoulder Dislocations
+- Foam Rolling
+
+## 20. Athletic and Explosive Exercises
+
+- Box Jumps
+- Broad Jumps
+- Vertical Jumps
+- Jump Squats
+- Split Squat Jumps
+- Skater Jumps
+- Tuck Jumps
+- Sprint Starts
+- Shuttle Runs
+- Lateral Bounds
+- Medicine Ball Slams
+- Medicine Ball Chest Throws
+- Rotational Medicine Ball Throws
+- Plyometric Push-Ups
+- Clap Push-Ups
+- Kettlebell Swings
+- Battle Rope Slams
+- Sled Pushes
+- Sled Pulls
+- Farmer's Carries
+- Bear Crawls
+- Agility Ladder Drills
+- Cone Drills
+- Single-Leg Hops
+- Jump Rope Double Unders
+

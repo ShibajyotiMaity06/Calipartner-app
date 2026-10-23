@@ -44,15 +44,10 @@ const GOAL_OPTIONS: readonly GoalOption[] = [
   },
 ];
 
-export function GoalStep({ selectedGoal, onSelectGoal, onAutoAdvance }: GoalStepProps) {
+export function GoalStep({ selectedGoal, onSelectGoal }: GoalStepProps) {
   const handleSelect = (goalId: Goal) => {
     playClickSound();
     onSelectGoal(goalId);
-    if (onAutoAdvance) {
-      setTimeout(() => {
-        onAutoAdvance();
-      }, 250);
-    }
   };
 
   return (

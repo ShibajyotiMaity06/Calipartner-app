@@ -6,341 +6,4089 @@ export interface ExerciseSeedItem {
   muscle_group: MuscleGroup;
   equipment: Equipment;
   type: ExerciseType;
+  category?: string;
   attribution: string;
 }
 
 export const EXERCISE_DEV_SEED_40: readonly ExerciseSeedItem[] = [
-  // --- CHEST (5) ---
   {
-    id: '00000000-0000-0000-0000-000000000101',
-    name: 'Barbell Bench Press',
-    muscle_group: 'chest',
-    equipment: 'barbell',
-    type: 'strength',
-    attribution: 'CaliPartner Open Exercise Library (CC-BY-4.0)',
+    "id": "00000000-0000-0000-0000-000000000065",
+    "name": "Push-Ups",
+    "muscle_group": "chest",
+    "equipment": "bodyweight",
+    "type": "bodyweight",
+    "category": "Chest",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
   },
   {
-    id: '00000000-0000-0000-0000-000000000102',
-    name: 'Incline Dumbbell Bench Press',
-    muscle_group: 'chest',
-    equipment: 'dumbbell',
-    type: 'strength',
-    attribution: 'CaliPartner Open Exercise Library (CC-BY-4.0)',
+    "id": "00000000-0000-0000-0000-000000000066",
+    "name": "Wide-Grip Push-Ups",
+    "muscle_group": "chest",
+    "equipment": "bodyweight",
+    "type": "bodyweight",
+    "category": "Chest",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
   },
   {
-    id: '00000000-0000-0000-0000-000000000103',
-    name: 'Push-up',
-    muscle_group: 'chest',
-    equipment: 'bodyweight',
-    type: 'bodyweight',
-    attribution: 'CaliPartner Open Exercise Library (CC-BY-4.0)',
+    "id": "00000000-0000-0000-0000-000000000067",
+    "name": "Diamond Push-Ups",
+    "muscle_group": "chest",
+    "equipment": "bodyweight",
+    "type": "bodyweight",
+    "category": "Chest",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
   },
   {
-    id: '00000000-0000-0000-0000-000000000104',
-    name: 'Cable Chest Fly',
-    muscle_group: 'chest',
-    equipment: 'cable',
-    type: 'strength',
-    attribution: 'CaliPartner Open Exercise Library (CC-BY-4.0)',
+    "id": "00000000-0000-0000-0000-000000000068",
+    "name": "Incline Push-Ups",
+    "muscle_group": "chest",
+    "equipment": "bodyweight",
+    "type": "bodyweight",
+    "category": "Chest",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
   },
   {
-    id: '00000000-0000-0000-0000-000000000105',
-    name: 'Chest Dip',
-    muscle_group: 'chest',
-    equipment: 'bodyweight',
-    type: 'bodyweight',
-    attribution: 'CaliPartner Open Exercise Library (CC-BY-4.0)',
+    "id": "00000000-0000-0000-0000-000000000069",
+    "name": "Decline Push-Ups",
+    "muscle_group": "chest",
+    "equipment": "bodyweight",
+    "type": "bodyweight",
+    "category": "Chest",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
   },
+  {
+    "id": "00000000-0000-0000-0000-00000000006a",
+    "name": "Archer Push-Ups",
+    "muscle_group": "chest",
+    "equipment": "bodyweight",
+    "type": "bodyweight",
+    "category": "Chest",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-00000000006b",
+    "name": "Knee Push-Ups",
+    "muscle_group": "chest",
+    "equipment": "bodyweight",
+    "type": "bodyweight",
+    "category": "Chest",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-00000000006c",
+    "name": "Dumbbell Bench Press",
+    "muscle_group": "chest",
+    "equipment": "dumbbell",
+    "type": "strength",
+    "category": "Chest",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-00000000006d",
+    "name": "Barbell Bench Press",
+    "muscle_group": "chest",
+    "equipment": "barbell",
+    "type": "strength",
+    "category": "Chest",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-00000000006e",
+    "name": "Incline Bench Press",
+    "muscle_group": "chest",
+    "equipment": "other",
+    "type": "strength",
+    "category": "Chest",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-00000000006f",
+    "name": "Decline Bench Press",
+    "muscle_group": "chest",
+    "equipment": "other",
+    "type": "strength",
+    "category": "Chest",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-000000000070",
+    "name": "Dumbbell Fly",
+    "muscle_group": "chest",
+    "equipment": "dumbbell",
+    "type": "strength",
+    "category": "Chest",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-000000000071",
+    "name": "Cable Fly",
+    "muscle_group": "chest",
+    "equipment": "cable",
+    "type": "strength",
+    "category": "Chest",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-000000000072",
+    "name": "Pec Deck Fly",
+    "muscle_group": "chest",
+    "equipment": "machine",
+    "type": "strength",
+    "category": "Chest",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-000000000073",
+    "name": "Incline Dumbbell Fly",
+    "muscle_group": "chest",
+    "equipment": "dumbbell",
+    "type": "strength",
+    "category": "Chest",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-000000000074",
+    "name": "Chest Press Machine",
+    "muscle_group": "chest",
+    "equipment": "machine",
+    "type": "strength",
+    "category": "Chest",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-000000000075",
+    "name": "Smith Machine Bench Press",
+    "muscle_group": "chest",
+    "equipment": "barbell",
+    "type": "strength",
+    "category": "Chest",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-000000000076",
+    "name": "Dumbbell Pullover",
+    "muscle_group": "chest",
+    "equipment": "dumbbell",
+    "type": "strength",
+    "category": "Chest",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-000000000077",
+    "name": "Landmine Press",
+    "muscle_group": "chest",
+    "equipment": "other",
+    "type": "strength",
+    "category": "Chest",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-000000000078",
+    "name": "Svend Press",
+    "muscle_group": "chest",
+    "equipment": "other",
+    "type": "strength",
+    "category": "Chest",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-000000000079",
+    "name": "Cable Crossover",
+    "muscle_group": "chest",
+    "equipment": "cable",
+    "type": "strength",
+    "category": "Chest",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-00000000007a",
+    "name": "Low-to-High Cable Fly",
+    "muscle_group": "chest",
+    "equipment": "cable",
+    "type": "strength",
+    "category": "Chest",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-00000000007b",
+    "name": "High-to-Low Cable Fly",
+    "muscle_group": "chest",
+    "equipment": "cable",
+    "type": "strength",
+    "category": "Chest",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-00000000007c",
+    "name": "Plate Squeeze Press",
+    "muscle_group": "chest",
+    "equipment": "other",
+    "type": "strength",
+    "category": "Chest",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-00000000007d",
+    "name": "Pull-Ups",
+    "muscle_group": "back",
+    "equipment": "bodyweight",
+    "type": "bodyweight",
+    "category": "Back",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-00000000007e",
+    "name": "Chin-Ups",
+    "muscle_group": "back",
+    "equipment": "bodyweight",
+    "type": "bodyweight",
+    "category": "Back",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-00000000007f",
+    "name": "Wide-Grip Pull-Ups",
+    "muscle_group": "back",
+    "equipment": "bodyweight",
+    "type": "bodyweight",
+    "category": "Back",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-000000000080",
+    "name": "Neutral-Grip Pull-Ups",
+    "muscle_group": "back",
+    "equipment": "bodyweight",
+    "type": "bodyweight",
+    "category": "Back",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-000000000081",
+    "name": "Inverted Rows",
+    "muscle_group": "back",
+    "equipment": "other",
+    "type": "strength",
+    "category": "Back",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-000000000082",
+    "name": "Superman Hold",
+    "muscle_group": "back",
+    "equipment": "other",
+    "type": "strength",
+    "category": "Back",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-000000000083",
+    "name": "Reverse Snow Angels",
+    "muscle_group": "back",
+    "equipment": "other",
+    "type": "strength",
+    "category": "Back",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-000000000084",
+    "name": "Resistance Band Rows",
+    "muscle_group": "back",
+    "equipment": "band",
+    "type": "strength",
+    "category": "Back",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-000000000085",
+    "name": "Barbell Bent-Over Rows",
+    "muscle_group": "back",
+    "equipment": "barbell",
+    "type": "strength",
+    "category": "Back",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-000000000086",
+    "name": "Dumbbell Rows",
+    "muscle_group": "back",
+    "equipment": "dumbbell",
+    "type": "strength",
+    "category": "Back",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-000000000087",
+    "name": "Single-Arm Dumbbell Rows",
+    "muscle_group": "back",
+    "equipment": "dumbbell",
+    "type": "strength",
+    "category": "Back",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-000000000088",
+    "name": "T-Bar Rows",
+    "muscle_group": "back",
+    "equipment": "other",
+    "type": "strength",
+    "category": "Back",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-000000000089",
+    "name": "Seated Cable Rows",
+    "muscle_group": "back",
+    "equipment": "cable",
+    "type": "strength",
+    "category": "Back",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-00000000008a",
+    "name": "Lat Pulldowns",
+    "muscle_group": "back",
+    "equipment": "machine",
+    "type": "strength",
+    "category": "Back",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-00000000008b",
+    "name": "Close-Grip Lat Pulldowns",
+    "muscle_group": "back",
+    "equipment": "machine",
+    "type": "strength",
+    "category": "Back",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-00000000008c",
+    "name": "Straight-Arm Pulldowns",
+    "muscle_group": "back",
+    "equipment": "machine",
+    "type": "strength",
+    "category": "Back",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  }
+];
 
-  // --- BACK (5) ---
+export const EXERCISE_DEV_SEED_ALL: readonly ExerciseSeedItem[] = [
   {
-    id: '00000000-0000-0000-0000-000000000106',
-    name: 'Barbell Deadlift',
-    muscle_group: 'back',
-    equipment: 'barbell',
-    type: 'strength',
-    attribution: 'CaliPartner Open Exercise Library (CC-BY-4.0)',
+    "id": "00000000-0000-0000-0000-000000000065",
+    "name": "Push-Ups",
+    "muscle_group": "chest",
+    "equipment": "bodyweight",
+    "type": "bodyweight",
+    "category": "Chest",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
   },
   {
-    id: '00000000-0000-0000-0000-000000000107',
-    name: 'Barbell Bent-Over Row',
-    muscle_group: 'back',
-    equipment: 'barbell',
-    type: 'strength',
-    attribution: 'CaliPartner Open Exercise Library (CC-BY-4.0)',
+    "id": "00000000-0000-0000-0000-000000000066",
+    "name": "Wide-Grip Push-Ups",
+    "muscle_group": "chest",
+    "equipment": "bodyweight",
+    "type": "bodyweight",
+    "category": "Chest",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
   },
   {
-    id: '00000000-0000-0000-0000-000000000108',
-    name: 'Pull-up',
-    muscle_group: 'back',
-    equipment: 'bodyweight',
-    type: 'bodyweight',
-    attribution: 'CaliPartner Open Exercise Library (CC-BY-4.0)',
+    "id": "00000000-0000-0000-0000-000000000067",
+    "name": "Diamond Push-Ups",
+    "muscle_group": "chest",
+    "equipment": "bodyweight",
+    "type": "bodyweight",
+    "category": "Chest",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
   },
   {
-    id: '00000000-0000-0000-0000-000000000109',
-    name: 'Lat Pulldown',
-    muscle_group: 'back',
-    equipment: 'cable',
-    type: 'strength',
-    attribution: 'CaliPartner Open Exercise Library (CC-BY-4.0)',
+    "id": "00000000-0000-0000-0000-000000000068",
+    "name": "Incline Push-Ups",
+    "muscle_group": "chest",
+    "equipment": "bodyweight",
+    "type": "bodyweight",
+    "category": "Chest",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
   },
   {
-    id: '00000000-0000-0000-0000-000000000110',
-    name: 'Seated Cable Row',
-    muscle_group: 'back',
-    equipment: 'cable',
-    type: 'strength',
-    attribution: 'CaliPartner Open Exercise Library (CC-BY-4.0)',
-  },
-
-  // --- LEGS (8) ---
-  {
-    id: '00000000-0000-0000-0000-000000000111',
-    name: 'Barbell Back Squat',
-    muscle_group: 'legs',
-    equipment: 'barbell',
-    type: 'strength',
-    attribution: 'CaliPartner Open Exercise Library (CC-BY-4.0)',
+    "id": "00000000-0000-0000-0000-000000000069",
+    "name": "Decline Push-Ups",
+    "muscle_group": "chest",
+    "equipment": "bodyweight",
+    "type": "bodyweight",
+    "category": "Chest",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
   },
   {
-    id: '00000000-0000-0000-0000-000000000112',
-    name: 'Barbell Front Squat',
-    muscle_group: 'legs',
-    equipment: 'barbell',
-    type: 'strength',
-    attribution: 'CaliPartner Open Exercise Library (CC-BY-4.0)',
+    "id": "00000000-0000-0000-0000-00000000006a",
+    "name": "Archer Push-Ups",
+    "muscle_group": "chest",
+    "equipment": "bodyweight",
+    "type": "bodyweight",
+    "category": "Chest",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
   },
   {
-    id: '00000000-0000-0000-0000-000000000113',
-    name: 'Romanian Deadlift',
-    muscle_group: 'legs',
-    equipment: 'barbell',
-    type: 'strength',
-    attribution: 'CaliPartner Open Exercise Library (CC-BY-4.0)',
+    "id": "00000000-0000-0000-0000-00000000006b",
+    "name": "Knee Push-Ups",
+    "muscle_group": "chest",
+    "equipment": "bodyweight",
+    "type": "bodyweight",
+    "category": "Chest",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
   },
   {
-    id: '00000000-0000-0000-0000-000000000114',
-    name: 'Leg Press',
-    muscle_group: 'legs',
-    equipment: 'machine',
-    type: 'strength',
-    attribution: 'CaliPartner Open Exercise Library (CC-BY-4.0)',
+    "id": "00000000-0000-0000-0000-00000000006c",
+    "name": "Dumbbell Bench Press",
+    "muscle_group": "chest",
+    "equipment": "dumbbell",
+    "type": "strength",
+    "category": "Chest",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
   },
   {
-    id: '00000000-0000-0000-0000-000000000115',
-    name: 'Walking Lunge',
-    muscle_group: 'legs',
-    equipment: 'dumbbell',
-    type: 'strength',
-    attribution: 'CaliPartner Open Exercise Library (CC-BY-4.0)',
+    "id": "00000000-0000-0000-0000-00000000006d",
+    "name": "Barbell Bench Press",
+    "muscle_group": "chest",
+    "equipment": "barbell",
+    "type": "strength",
+    "category": "Chest",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
   },
   {
-    id: '00000000-0000-0000-0000-000000000116',
-    name: 'Bulgarian Split Squat',
-    muscle_group: 'legs',
-    equipment: 'dumbbell',
-    type: 'strength',
-    attribution: 'CaliPartner Open Exercise Library (CC-BY-4.0)',
+    "id": "00000000-0000-0000-0000-00000000006e",
+    "name": "Incline Bench Press",
+    "muscle_group": "chest",
+    "equipment": "other",
+    "type": "strength",
+    "category": "Chest",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
   },
   {
-    id: '00000000-0000-0000-0000-000000000117',
-    name: 'Standing Calf Raise',
-    muscle_group: 'legs',
-    equipment: 'machine',
-    type: 'strength',
-    attribution: 'CaliPartner Open Exercise Library (CC-BY-4.0)',
+    "id": "00000000-0000-0000-0000-00000000006f",
+    "name": "Decline Bench Press",
+    "muscle_group": "chest",
+    "equipment": "other",
+    "type": "strength",
+    "category": "Chest",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
   },
   {
-    id: '00000000-0000-0000-0000-000000000118',
-    name: 'Leg Extension',
-    muscle_group: 'legs',
-    equipment: 'machine',
-    type: 'strength',
-    attribution: 'CaliPartner Open Exercise Library (CC-BY-4.0)',
-  },
-
-  // --- SHOULDERS (5) ---
-  {
-    id: '00000000-0000-0000-0000-000000000119',
-    name: 'Overhead Press',
-    muscle_group: 'shoulders',
-    equipment: 'barbell',
-    type: 'strength',
-    attribution: 'CaliPartner Open Exercise Library (CC-BY-4.0)',
+    "id": "00000000-0000-0000-0000-000000000070",
+    "name": "Dumbbell Fly",
+    "muscle_group": "chest",
+    "equipment": "dumbbell",
+    "type": "strength",
+    "category": "Chest",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
   },
   {
-    id: '00000000-0000-0000-0000-000000000120',
-    name: 'Dumbbell Lateral Raise',
-    muscle_group: 'shoulders',
-    equipment: 'dumbbell',
-    type: 'strength',
-    attribution: 'CaliPartner Open Exercise Library (CC-BY-4.0)',
+    "id": "00000000-0000-0000-0000-000000000071",
+    "name": "Cable Fly",
+    "muscle_group": "chest",
+    "equipment": "cable",
+    "type": "strength",
+    "category": "Chest",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
   },
   {
-    id: '00000000-0000-0000-0000-000000000121',
-    name: 'Face Pull',
-    muscle_group: 'shoulders',
-    equipment: 'cable',
-    type: 'strength',
-    attribution: 'CaliPartner Open Exercise Library (CC-BY-4.0)',
+    "id": "00000000-0000-0000-0000-000000000072",
+    "name": "Pec Deck Fly",
+    "muscle_group": "chest",
+    "equipment": "machine",
+    "type": "strength",
+    "category": "Chest",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
   },
   {
-    id: '00000000-0000-0000-0000-000000000122',
-    name: 'Seated Dumbbell Shoulder Press',
-    muscle_group: 'shoulders',
-    equipment: 'dumbbell',
-    type: 'strength',
-    attribution: 'CaliPartner Open Exercise Library (CC-BY-4.0)',
+    "id": "00000000-0000-0000-0000-000000000073",
+    "name": "Incline Dumbbell Fly",
+    "muscle_group": "chest",
+    "equipment": "dumbbell",
+    "type": "strength",
+    "category": "Chest",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
   },
   {
-    id: '00000000-0000-0000-0000-000000000123',
-    name: 'Arnold Press',
-    muscle_group: 'shoulders',
-    equipment: 'dumbbell',
-    type: 'strength',
-    attribution: 'CaliPartner Open Exercise Library (CC-BY-4.0)',
-  },
-
-  // --- ARMS (6) ---
-  {
-    id: '00000000-0000-0000-0000-000000000124',
-    name: 'Barbell Bicep Curl',
-    muscle_group: 'arms',
-    equipment: 'barbell',
-    type: 'strength',
-    attribution: 'CaliPartner Open Exercise Library (CC-BY-4.0)',
+    "id": "00000000-0000-0000-0000-000000000074",
+    "name": "Chest Press Machine",
+    "muscle_group": "chest",
+    "equipment": "machine",
+    "type": "strength",
+    "category": "Chest",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
   },
   {
-    id: '00000000-0000-0000-0000-000000000125',
-    name: 'Hammer Curl',
-    muscle_group: 'arms',
-    equipment: 'dumbbell',
-    type: 'strength',
-    attribution: 'CaliPartner Open Exercise Library (CC-BY-4.0)',
+    "id": "00000000-0000-0000-0000-000000000075",
+    "name": "Smith Machine Bench Press",
+    "muscle_group": "chest",
+    "equipment": "barbell",
+    "type": "strength",
+    "category": "Chest",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
   },
   {
-    id: '00000000-0000-0000-0000-000000000126',
-    name: 'Tricep Rope Pushdown',
-    muscle_group: 'arms',
-    equipment: 'cable',
-    type: 'strength',
-    attribution: 'CaliPartner Open Exercise Library (CC-BY-4.0)',
+    "id": "00000000-0000-0000-0000-000000000076",
+    "name": "Dumbbell Pullover",
+    "muscle_group": "chest",
+    "equipment": "dumbbell",
+    "type": "strength",
+    "category": "Chest",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
   },
   {
-    id: '00000000-0000-0000-0000-000000000127',
-    name: 'Skull Crusher',
-    muscle_group: 'arms',
-    equipment: 'barbell',
-    type: 'strength',
-    attribution: 'CaliPartner Open Exercise Library (CC-BY-4.0)',
+    "id": "00000000-0000-0000-0000-000000000077",
+    "name": "Landmine Press",
+    "muscle_group": "chest",
+    "equipment": "other",
+    "type": "strength",
+    "category": "Chest",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
   },
   {
-    id: '00000000-0000-0000-0000-000000000128',
-    name: 'Preacher Curl',
-    muscle_group: 'arms',
-    equipment: 'dumbbell',
-    type: 'strength',
-    attribution: 'CaliPartner Open Exercise Library (CC-BY-4.0)',
+    "id": "00000000-0000-0000-0000-000000000078",
+    "name": "Svend Press",
+    "muscle_group": "chest",
+    "equipment": "other",
+    "type": "strength",
+    "category": "Chest",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
   },
   {
-    id: '00000000-0000-0000-0000-000000000129',
-    name: 'Overhead Tricep Extension',
-    muscle_group: 'arms',
-    equipment: 'dumbbell',
-    type: 'strength',
-    attribution: 'CaliPartner Open Exercise Library (CC-BY-4.0)',
-  },
-
-  // --- CORE (5) ---
-  {
-    id: '00000000-0000-0000-0000-000000000130',
-    name: 'Plank',
-    muscle_group: 'core',
-    equipment: 'bodyweight',
-    type: 'duration',
-    attribution: 'CaliPartner Open Exercise Library (CC-BY-4.0)',
+    "id": "00000000-0000-0000-0000-000000000079",
+    "name": "Cable Crossover",
+    "muscle_group": "chest",
+    "equipment": "cable",
+    "type": "strength",
+    "category": "Chest",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
   },
   {
-    id: '00000000-0000-0000-0000-000000000131',
-    name: 'Hanging Leg Raise',
-    muscle_group: 'core',
-    equipment: 'bodyweight',
-    type: 'bodyweight',
-    attribution: 'CaliPartner Open Exercise Library (CC-BY-4.0)',
+    "id": "00000000-0000-0000-0000-00000000007a",
+    "name": "Low-to-High Cable Fly",
+    "muscle_group": "chest",
+    "equipment": "cable",
+    "type": "strength",
+    "category": "Chest",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
   },
   {
-    id: '00000000-0000-0000-0000-000000000132',
-    name: 'Cable Woodchopper',
-    muscle_group: 'core',
-    equipment: 'cable',
-    type: 'strength',
-    attribution: 'CaliPartner Open Exercise Library (CC-BY-4.0)',
+    "id": "00000000-0000-0000-0000-00000000007b",
+    "name": "High-to-Low Cable Fly",
+    "muscle_group": "chest",
+    "equipment": "cable",
+    "type": "strength",
+    "category": "Chest",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
   },
   {
-    id: '00000000-0000-0000-0000-000000000133',
-    name: 'Ab Roller',
-    muscle_group: 'core',
-    equipment: 'other',
-    type: 'bodyweight',
-    attribution: 'CaliPartner Open Exercise Library (CC-BY-4.0)',
+    "id": "00000000-0000-0000-0000-00000000007c",
+    "name": "Plate Squeeze Press",
+    "muscle_group": "chest",
+    "equipment": "other",
+    "type": "strength",
+    "category": "Chest",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
   },
   {
-    id: '00000000-0000-0000-0000-000000000134',
-    name: 'Russian Twist',
-    muscle_group: 'core',
-    equipment: 'bodyweight',
-    type: 'bodyweight',
-    attribution: 'CaliPartner Open Exercise Library (CC-BY-4.0)',
-  },
-
-  // --- CARDIO & WALK/RUN (6) ---
-  {
-    id: '00000000-0000-0000-0000-000000000135',
-    name: 'Treadmill Running',
-    muscle_group: 'cardio',
-    equipment: 'machine',
-    type: 'cardio',
-    attribution: 'CaliPartner Open Exercise Library (CC-BY-4.0)',
+    "id": "00000000-0000-0000-0000-00000000007d",
+    "name": "Pull-Ups",
+    "muscle_group": "back",
+    "equipment": "bodyweight",
+    "type": "bodyweight",
+    "category": "Back",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
   },
   {
-    id: '00000000-0000-0000-0000-000000000136',
-    name: 'Stationary Cycling',
-    muscle_group: 'cardio',
-    equipment: 'machine',
-    type: 'cardio',
-    attribution: 'CaliPartner Open Exercise Library (CC-BY-4.0)',
+    "id": "00000000-0000-0000-0000-00000000007e",
+    "name": "Chin-Ups",
+    "muscle_group": "back",
+    "equipment": "bodyweight",
+    "type": "bodyweight",
+    "category": "Back",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
   },
   {
-    id: '00000000-0000-0000-0000-000000000137',
-    name: 'Rowing Machine',
-    muscle_group: 'cardio',
-    equipment: 'machine',
-    type: 'cardio',
-    attribution: 'CaliPartner Open Exercise Library (CC-BY-4.0)',
+    "id": "00000000-0000-0000-0000-00000000007f",
+    "name": "Wide-Grip Pull-Ups",
+    "muscle_group": "back",
+    "equipment": "bodyweight",
+    "type": "bodyweight",
+    "category": "Back",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
   },
   {
-    id: '00000000-0000-0000-0000-000000000138',
-    name: 'Jump Rope',
-    muscle_group: 'cardio',
-    equipment: 'other',
-    type: 'cardio',
-    attribution: 'CaliPartner Open Exercise Library (CC-BY-4.0)',
+    "id": "00000000-0000-0000-0000-000000000080",
+    "name": "Neutral-Grip Pull-Ups",
+    "muscle_group": "back",
+    "equipment": "bodyweight",
+    "type": "bodyweight",
+    "category": "Back",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
   },
   {
-    id: '00000000-0000-0000-0000-000000000139',
-    name: 'Outdoor Running',
-    muscle_group: 'cardio',
-    equipment: 'none',
-    type: 'distance',
-    attribution: 'CaliPartner Open Exercise Library (CC-BY-4.0)',
+    "id": "00000000-0000-0000-0000-000000000081",
+    "name": "Inverted Rows",
+    "muscle_group": "back",
+    "equipment": "other",
+    "type": "strength",
+    "category": "Back",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
   },
   {
-    id: '00000000-0000-0000-0000-000000000140',
-    name: 'Brisk Walking',
-    muscle_group: 'cardio',
-    equipment: 'none',
-    type: 'distance',
-    attribution: 'CaliPartner Open Exercise Library (CC-BY-4.0)',
+    "id": "00000000-0000-0000-0000-000000000082",
+    "name": "Superman Hold",
+    "muscle_group": "back",
+    "equipment": "other",
+    "type": "strength",
+    "category": "Back",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
   },
-] as const;
+  {
+    "id": "00000000-0000-0000-0000-000000000083",
+    "name": "Reverse Snow Angels",
+    "muscle_group": "back",
+    "equipment": "other",
+    "type": "strength",
+    "category": "Back",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-000000000084",
+    "name": "Resistance Band Rows",
+    "muscle_group": "back",
+    "equipment": "band",
+    "type": "strength",
+    "category": "Back",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-000000000085",
+    "name": "Barbell Bent-Over Rows",
+    "muscle_group": "back",
+    "equipment": "barbell",
+    "type": "strength",
+    "category": "Back",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-000000000086",
+    "name": "Dumbbell Rows",
+    "muscle_group": "back",
+    "equipment": "dumbbell",
+    "type": "strength",
+    "category": "Back",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-000000000087",
+    "name": "Single-Arm Dumbbell Rows",
+    "muscle_group": "back",
+    "equipment": "dumbbell",
+    "type": "strength",
+    "category": "Back",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-000000000088",
+    "name": "T-Bar Rows",
+    "muscle_group": "back",
+    "equipment": "other",
+    "type": "strength",
+    "category": "Back",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-000000000089",
+    "name": "Seated Cable Rows",
+    "muscle_group": "back",
+    "equipment": "cable",
+    "type": "strength",
+    "category": "Back",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-00000000008a",
+    "name": "Lat Pulldowns",
+    "muscle_group": "back",
+    "equipment": "machine",
+    "type": "strength",
+    "category": "Back",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-00000000008b",
+    "name": "Close-Grip Lat Pulldowns",
+    "muscle_group": "back",
+    "equipment": "machine",
+    "type": "strength",
+    "category": "Back",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-00000000008c",
+    "name": "Straight-Arm Pulldowns",
+    "muscle_group": "back",
+    "equipment": "machine",
+    "type": "strength",
+    "category": "Back",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-00000000008d",
+    "name": "Chest-Supported Rows",
+    "muscle_group": "back",
+    "equipment": "other",
+    "type": "strength",
+    "category": "Back",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-00000000008e",
+    "name": "Machine Rows",
+    "muscle_group": "back",
+    "equipment": "machine",
+    "type": "strength",
+    "category": "Back",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-00000000008f",
+    "name": "Pendlay Rows",
+    "muscle_group": "back",
+    "equipment": "other",
+    "type": "strength",
+    "category": "Back",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-000000000090",
+    "name": "Meadows Rows",
+    "muscle_group": "back",
+    "equipment": "other",
+    "type": "strength",
+    "category": "Back",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-000000000091",
+    "name": "Renegade Rows",
+    "muscle_group": "back",
+    "equipment": "other",
+    "type": "strength",
+    "category": "Back",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-000000000092",
+    "name": "Rack Pulls",
+    "muscle_group": "back",
+    "equipment": "other",
+    "type": "strength",
+    "category": "Back",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-000000000093",
+    "name": "Deadlifts",
+    "muscle_group": "back",
+    "equipment": "other",
+    "type": "strength",
+    "category": "Back",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-000000000094",
+    "name": "Romanian Deadlifts",
+    "muscle_group": "back",
+    "equipment": "other",
+    "type": "strength",
+    "category": "Back",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-000000000095",
+    "name": "Face Pulls",
+    "muscle_group": "back",
+    "equipment": "other",
+    "type": "strength",
+    "category": "Back",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-000000000096",
+    "name": "Shrugs",
+    "muscle_group": "back",
+    "equipment": "other",
+    "type": "strength",
+    "category": "Back",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-000000000097",
+    "name": "Machine Pullovers",
+    "muscle_group": "back",
+    "equipment": "machine",
+    "type": "strength",
+    "category": "Back",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-000000000098",
+    "name": "Cable Shrugs",
+    "muscle_group": "back",
+    "equipment": "cable",
+    "type": "strength",
+    "category": "Back",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-000000000099",
+    "name": "Pike Push-Ups",
+    "muscle_group": "shoulders",
+    "equipment": "bodyweight",
+    "type": "bodyweight",
+    "category": "Shoulders",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-00000000009a",
+    "name": "Handstand Push-Ups",
+    "muscle_group": "shoulders",
+    "equipment": "bodyweight",
+    "type": "bodyweight",
+    "category": "Shoulders",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-00000000009b",
+    "name": "Dumbbell Shoulder Press",
+    "muscle_group": "shoulders",
+    "equipment": "dumbbell",
+    "type": "strength",
+    "category": "Shoulders",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-00000000009c",
+    "name": "Barbell Overhead Press",
+    "muscle_group": "shoulders",
+    "equipment": "barbell",
+    "type": "strength",
+    "category": "Shoulders",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-00000000009d",
+    "name": "Arnold Press",
+    "muscle_group": "shoulders",
+    "equipment": "other",
+    "type": "strength",
+    "category": "Shoulders",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-00000000009e",
+    "name": "Seated Dumbbell Press",
+    "muscle_group": "shoulders",
+    "equipment": "dumbbell",
+    "type": "strength",
+    "category": "Shoulders",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-00000000009f",
+    "name": "Machine Shoulder Press",
+    "muscle_group": "shoulders",
+    "equipment": "machine",
+    "type": "strength",
+    "category": "Shoulders",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-0000000000a0",
+    "name": "Dumbbell Lateral Raises",
+    "muscle_group": "shoulders",
+    "equipment": "dumbbell",
+    "type": "strength",
+    "category": "Shoulders",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-0000000000a1",
+    "name": "Cable Lateral Raises",
+    "muscle_group": "shoulders",
+    "equipment": "cable",
+    "type": "strength",
+    "category": "Shoulders",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-0000000000a2",
+    "name": "Front Raises",
+    "muscle_group": "shoulders",
+    "equipment": "other",
+    "type": "strength",
+    "category": "Shoulders",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-0000000000a3",
+    "name": "Plate Front Raises",
+    "muscle_group": "shoulders",
+    "equipment": "other",
+    "type": "strength",
+    "category": "Shoulders",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-0000000000a4",
+    "name": "Rear Delt Fly",
+    "muscle_group": "shoulders",
+    "equipment": "other",
+    "type": "strength",
+    "category": "Shoulders",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-0000000000a5",
+    "name": "Reverse Pec Deck",
+    "muscle_group": "shoulders",
+    "equipment": "machine",
+    "type": "strength",
+    "category": "Shoulders",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-0000000000a6",
+    "name": "Bent-Over Lateral Raises",
+    "muscle_group": "shoulders",
+    "equipment": "other",
+    "type": "strength",
+    "category": "Shoulders",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-0000000000a7",
+    "name": "Upright Rows",
+    "muscle_group": "shoulders",
+    "equipment": "other",
+    "type": "strength",
+    "category": "Shoulders",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-0000000000a8",
+    "name": "Barbell Push Press",
+    "muscle_group": "shoulders",
+    "equipment": "barbell",
+    "type": "strength",
+    "category": "Shoulders",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-0000000000a9",
+    "name": "Landmine Shoulder Press",
+    "muscle_group": "shoulders",
+    "equipment": "other",
+    "type": "strength",
+    "category": "Shoulders",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-0000000000aa",
+    "name": "Cuban Rotations",
+    "muscle_group": "shoulders",
+    "equipment": "other",
+    "type": "strength",
+    "category": "Shoulders",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-0000000000ab",
+    "name": "Band Pull-Aparts",
+    "muscle_group": "shoulders",
+    "equipment": "band",
+    "type": "strength",
+    "category": "Shoulders",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-0000000000ac",
+    "name": "Y-Raises",
+    "muscle_group": "shoulders",
+    "equipment": "other",
+    "type": "strength",
+    "category": "Shoulders",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-0000000000ad",
+    "name": "W-Raises",
+    "muscle_group": "shoulders",
+    "equipment": "other",
+    "type": "strength",
+    "category": "Shoulders",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-0000000000ae",
+    "name": "Scaption Raises",
+    "muscle_group": "shoulders",
+    "equipment": "other",
+    "type": "strength",
+    "category": "Shoulders",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-0000000000af",
+    "name": "Lu Raises",
+    "muscle_group": "shoulders",
+    "equipment": "other",
+    "type": "strength",
+    "category": "Shoulders",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-0000000000b0",
+    "name": "Standard Dumbbell Curls",
+    "muscle_group": "arms",
+    "equipment": "dumbbell",
+    "type": "strength",
+    "category": "Biceps",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-0000000000b1",
+    "name": "Barbell Curls",
+    "muscle_group": "arms",
+    "equipment": "barbell",
+    "type": "strength",
+    "category": "Biceps",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-0000000000b2",
+    "name": "EZ-Bar Curls",
+    "muscle_group": "arms",
+    "equipment": "barbell",
+    "type": "strength",
+    "category": "Biceps",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-0000000000b3",
+    "name": "Hammer Curls",
+    "muscle_group": "arms",
+    "equipment": "other",
+    "type": "strength",
+    "category": "Biceps",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-0000000000b4",
+    "name": "Cross-Body Hammer Curls",
+    "muscle_group": "arms",
+    "equipment": "other",
+    "type": "strength",
+    "category": "Biceps",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-0000000000b5",
+    "name": "Concentration Curls",
+    "muscle_group": "arms",
+    "equipment": "other",
+    "type": "strength",
+    "category": "Biceps",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-0000000000b6",
+    "name": "Preacher Curls",
+    "muscle_group": "arms",
+    "equipment": "other",
+    "type": "strength",
+    "category": "Biceps",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-0000000000b7",
+    "name": "Spider Curls",
+    "muscle_group": "arms",
+    "equipment": "other",
+    "type": "strength",
+    "category": "Biceps",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-0000000000b8",
+    "name": "Incline Dumbbell Curls",
+    "muscle_group": "arms",
+    "equipment": "dumbbell",
+    "type": "strength",
+    "category": "Biceps",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-0000000000b9",
+    "name": "Seated Dumbbell Curls",
+    "muscle_group": "arms",
+    "equipment": "dumbbell",
+    "type": "strength",
+    "category": "Biceps",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-0000000000ba",
+    "name": "Cable Curls",
+    "muscle_group": "arms",
+    "equipment": "cable",
+    "type": "strength",
+    "category": "Biceps",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-0000000000bb",
+    "name": "Bayesian Curls",
+    "muscle_group": "arms",
+    "equipment": "other",
+    "type": "strength",
+    "category": "Biceps",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-0000000000bc",
+    "name": "Reverse Curls",
+    "muscle_group": "arms",
+    "equipment": "other",
+    "type": "strength",
+    "category": "Biceps",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-0000000000bd",
+    "name": "Zottman Curls",
+    "muscle_group": "arms",
+    "equipment": "other",
+    "type": "strength",
+    "category": "Biceps",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-0000000000be",
+    "name": "Drag Curls",
+    "muscle_group": "arms",
+    "equipment": "other",
+    "type": "strength",
+    "category": "Biceps",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-0000000000bf",
+    "name": "Machine Biceps Curls",
+    "muscle_group": "arms",
+    "equipment": "machine",
+    "type": "strength",
+    "category": "Biceps",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-0000000000c0",
+    "name": "Resistance Band Curls",
+    "muscle_group": "arms",
+    "equipment": "band",
+    "type": "strength",
+    "category": "Biceps",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-0000000000c1",
+    "name": "Alternating Dumbbell Curls",
+    "muscle_group": "arms",
+    "equipment": "dumbbell",
+    "type": "strength",
+    "category": "Biceps",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-0000000000c2",
+    "name": "Isometric Biceps Holds",
+    "muscle_group": "arms",
+    "equipment": "other",
+    "type": "strength",
+    "category": "Biceps",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-0000000000c3",
+    "name": "21s Biceps Curls",
+    "muscle_group": "arms",
+    "equipment": "other",
+    "type": "strength",
+    "category": "Biceps",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-0000000000c4",
+    "name": "High Cable Curls",
+    "muscle_group": "arms",
+    "equipment": "cable",
+    "type": "strength",
+    "category": "Biceps",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-0000000000c5",
+    "name": "Close-Grip Push-Ups",
+    "muscle_group": "arms",
+    "equipment": "bodyweight",
+    "type": "bodyweight",
+    "category": "Triceps",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-0000000000c6",
+    "name": "Bench Dips",
+    "muscle_group": "arms",
+    "equipment": "bodyweight",
+    "type": "bodyweight",
+    "category": "Triceps",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-0000000000c7",
+    "name": "Parallel Bar Dips",
+    "muscle_group": "arms",
+    "equipment": "bodyweight",
+    "type": "bodyweight",
+    "category": "Triceps",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-0000000000c8",
+    "name": "Overhead Dumbbell Extensions",
+    "muscle_group": "arms",
+    "equipment": "dumbbell",
+    "type": "strength",
+    "category": "Triceps",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-0000000000c9",
+    "name": "Dumbbell Kickbacks",
+    "muscle_group": "arms",
+    "equipment": "dumbbell",
+    "type": "strength",
+    "category": "Triceps",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-0000000000ca",
+    "name": "Triceps Rope Pushdowns",
+    "muscle_group": "arms",
+    "equipment": "other",
+    "type": "strength",
+    "category": "Triceps",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-0000000000cb",
+    "name": "Straight-Bar Pushdowns",
+    "muscle_group": "arms",
+    "equipment": "other",
+    "type": "strength",
+    "category": "Triceps",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-0000000000cc",
+    "name": "Reverse-Grip Pushdowns",
+    "muscle_group": "arms",
+    "equipment": "other",
+    "type": "strength",
+    "category": "Triceps",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-0000000000cd",
+    "name": "Skull Crushers",
+    "muscle_group": "arms",
+    "equipment": "other",
+    "type": "strength",
+    "category": "Triceps",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-0000000000ce",
+    "name": "EZ-Bar Extensions",
+    "muscle_group": "arms",
+    "equipment": "barbell",
+    "type": "strength",
+    "category": "Triceps",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-0000000000cf",
+    "name": "Lying Triceps Extensions",
+    "muscle_group": "arms",
+    "equipment": "other",
+    "type": "strength",
+    "category": "Triceps",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-0000000000d0",
+    "name": "Close-Grip Bench Press",
+    "muscle_group": "arms",
+    "equipment": "other",
+    "type": "strength",
+    "category": "Triceps",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-0000000000d1",
+    "name": "Overhead Cable Extensions",
+    "muscle_group": "arms",
+    "equipment": "cable",
+    "type": "strength",
+    "category": "Triceps",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-0000000000d2",
+    "name": "Single-Arm Cable Extensions",
+    "muscle_group": "arms",
+    "equipment": "cable",
+    "type": "strength",
+    "category": "Triceps",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-0000000000d3",
+    "name": "Cross-Body Cable Extensions",
+    "muscle_group": "arms",
+    "equipment": "cable",
+    "type": "strength",
+    "category": "Triceps",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-0000000000d4",
+    "name": "Machine Triceps Extensions",
+    "muscle_group": "arms",
+    "equipment": "machine",
+    "type": "strength",
+    "category": "Triceps",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-0000000000d5",
+    "name": "Tate Press",
+    "muscle_group": "arms",
+    "equipment": "other",
+    "type": "strength",
+    "category": "Triceps",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-0000000000d6",
+    "name": "JM Press",
+    "muscle_group": "arms",
+    "equipment": "other",
+    "type": "strength",
+    "category": "Triceps",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-0000000000d7",
+    "name": "Resistance Band Pushdowns",
+    "muscle_group": "arms",
+    "equipment": "band",
+    "type": "strength",
+    "category": "Triceps",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-0000000000d8",
+    "name": "Bodyweight Triceps Extensions",
+    "muscle_group": "arms",
+    "equipment": "other",
+    "type": "strength",
+    "category": "Triceps",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-0000000000d9",
+    "name": "Dumbbell Tate Press",
+    "muscle_group": "arms",
+    "equipment": "dumbbell",
+    "type": "strength",
+    "category": "Triceps",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-0000000000da",
+    "name": "Wrist Curls",
+    "muscle_group": "arms",
+    "equipment": "other",
+    "type": "strength",
+    "category": "Forearms and Grip",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-0000000000db",
+    "name": "Reverse Wrist Curls",
+    "muscle_group": "arms",
+    "equipment": "other",
+    "type": "strength",
+    "category": "Forearms and Grip",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-0000000000dc",
+    "name": "Dumbbell Wrist Curls",
+    "muscle_group": "arms",
+    "equipment": "dumbbell",
+    "type": "strength",
+    "category": "Forearms and Grip",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-0000000000dd",
+    "name": "Barbell Wrist Curls",
+    "muscle_group": "arms",
+    "equipment": "barbell",
+    "type": "strength",
+    "category": "Forearms and Grip",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-0000000000de",
+    "name": "Reverse Barbell Curls",
+    "muscle_group": "arms",
+    "equipment": "barbell",
+    "type": "strength",
+    "category": "Forearms and Grip",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-0000000000df",
+    "name": "Farmer's Walk",
+    "muscle_group": "arms",
+    "equipment": "other",
+    "type": "strength",
+    "category": "Forearms and Grip",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-0000000000e0",
+    "name": "Dead Hangs",
+    "muscle_group": "arms",
+    "equipment": "other",
+    "type": "strength",
+    "category": "Forearms and Grip",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-0000000000e1",
+    "name": "Towel Hangs",
+    "muscle_group": "arms",
+    "equipment": "other",
+    "type": "strength",
+    "category": "Forearms and Grip",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-0000000000e2",
+    "name": "Plate Pinches",
+    "muscle_group": "arms",
+    "equipment": "other",
+    "type": "strength",
+    "category": "Forearms and Grip",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-0000000000e3",
+    "name": "Grippers",
+    "muscle_group": "arms",
+    "equipment": "other",
+    "type": "strength",
+    "category": "Forearms and Grip",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-0000000000e4",
+    "name": "Wrist Roller",
+    "muscle_group": "arms",
+    "equipment": "other",
+    "type": "strength",
+    "category": "Forearms and Grip",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-0000000000e5",
+    "name": "Finger Extensions",
+    "muscle_group": "arms",
+    "equipment": "other",
+    "type": "strength",
+    "category": "Forearms and Grip",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-0000000000e6",
+    "name": "Behind-the-Back Wrist Curls",
+    "muscle_group": "arms",
+    "equipment": "other",
+    "type": "strength",
+    "category": "Forearms and Grip",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-0000000000e7",
+    "name": "Reverse Dumbbell Wrist Curls",
+    "muscle_group": "arms",
+    "equipment": "dumbbell",
+    "type": "strength",
+    "category": "Forearms and Grip",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-0000000000e8",
+    "name": "Fat-Grip Holds",
+    "muscle_group": "arms",
+    "equipment": "other",
+    "type": "strength",
+    "category": "Forearms and Grip",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-0000000000e9",
+    "name": "Suitcase Carries",
+    "muscle_group": "arms",
+    "equipment": "other",
+    "type": "strength",
+    "category": "Forearms and Grip",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-0000000000ea",
+    "name": "Hammer Rotations",
+    "muscle_group": "arms",
+    "equipment": "other",
+    "type": "strength",
+    "category": "Forearms and Grip",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-0000000000eb",
+    "name": "Pronation and Supination",
+    "muscle_group": "arms",
+    "equipment": "other",
+    "type": "strength",
+    "category": "Forearms and Grip",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-0000000000ec",
+    "name": "Crunches",
+    "muscle_group": "core",
+    "equipment": "bodyweight",
+    "type": "cardio",
+    "category": "Abs and Core",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-0000000000ed",
+    "name": "Sit-Ups",
+    "muscle_group": "core",
+    "equipment": "other",
+    "type": "strength",
+    "category": "Abs and Core",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-0000000000ee",
+    "name": "Reverse Crunches",
+    "muscle_group": "core",
+    "equipment": "bodyweight",
+    "type": "cardio",
+    "category": "Abs and Core",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-0000000000ef",
+    "name": "Bicycle Crunches",
+    "muscle_group": "core",
+    "equipment": "bodyweight",
+    "type": "cardio",
+    "category": "Abs and Core",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-0000000000f0",
+    "name": "Russian Twists",
+    "muscle_group": "core",
+    "equipment": "other",
+    "type": "strength",
+    "category": "Abs and Core",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-0000000000f1",
+    "name": "Plank",
+    "muscle_group": "core",
+    "equipment": "bodyweight",
+    "type": "bodyweight",
+    "category": "Abs and Core",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-0000000000f2",
+    "name": "Side Plank",
+    "muscle_group": "core",
+    "equipment": "bodyweight",
+    "type": "bodyweight",
+    "category": "Abs and Core",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-0000000000f3",
+    "name": "Mountain Climbers",
+    "muscle_group": "core",
+    "equipment": "other",
+    "type": "strength",
+    "category": "Abs and Core",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-0000000000f4",
+    "name": "Flutter Kicks",
+    "muscle_group": "core",
+    "equipment": "other",
+    "type": "strength",
+    "category": "Abs and Core",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-0000000000f5",
+    "name": "Leg Raises",
+    "muscle_group": "core",
+    "equipment": "other",
+    "type": "strength",
+    "category": "Abs and Core",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-0000000000f6",
+    "name": "Hanging Leg Raises",
+    "muscle_group": "core",
+    "equipment": "other",
+    "type": "strength",
+    "category": "Abs and Core",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-0000000000f7",
+    "name": "Hanging Knee Raises",
+    "muscle_group": "core",
+    "equipment": "other",
+    "type": "strength",
+    "category": "Abs and Core",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-0000000000f8",
+    "name": "V-Ups",
+    "muscle_group": "core",
+    "equipment": "other",
+    "type": "strength",
+    "category": "Abs and Core",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-0000000000f9",
+    "name": "Toe Touches",
+    "muscle_group": "core",
+    "equipment": "other",
+    "type": "strength",
+    "category": "Abs and Core",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-0000000000fa",
+    "name": "Heel Touches",
+    "muscle_group": "core",
+    "equipment": "other",
+    "type": "strength",
+    "category": "Abs and Core",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-0000000000fb",
+    "name": "Dead Bug",
+    "muscle_group": "core",
+    "equipment": "other",
+    "type": "strength",
+    "category": "Abs and Core",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-0000000000fc",
+    "name": "Bird Dog",
+    "muscle_group": "core",
+    "equipment": "other",
+    "type": "strength",
+    "category": "Abs and Core",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-0000000000fd",
+    "name": "Hollow Body Hold",
+    "muscle_group": "core",
+    "equipment": "other",
+    "type": "strength",
+    "category": "Abs and Core",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-0000000000fe",
+    "name": "L-Sit",
+    "muscle_group": "core",
+    "equipment": "other",
+    "type": "strength",
+    "category": "Abs and Core",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-0000000000ff",
+    "name": "Ab Wheel Rollouts",
+    "muscle_group": "core",
+    "equipment": "other",
+    "type": "strength",
+    "category": "Abs and Core",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-000000000100",
+    "name": "Cable Crunches",
+    "muscle_group": "core",
+    "equipment": "cable",
+    "type": "cardio",
+    "category": "Abs and Core",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-000000000101",
+    "name": "Decline Sit-Ups",
+    "muscle_group": "core",
+    "equipment": "other",
+    "type": "strength",
+    "category": "Abs and Core",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-000000000102",
+    "name": "Weighted Crunches",
+    "muscle_group": "core",
+    "equipment": "bodyweight",
+    "type": "cardio",
+    "category": "Abs and Core",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-000000000103",
+    "name": "Captain's Chair Knee Raises",
+    "muscle_group": "core",
+    "equipment": "other",
+    "type": "strength",
+    "category": "Abs and Core",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-000000000104",
+    "name": "Pallof Press",
+    "muscle_group": "core",
+    "equipment": "other",
+    "type": "strength",
+    "category": "Abs and Core",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-000000000105",
+    "name": "Woodchoppers",
+    "muscle_group": "core",
+    "equipment": "other",
+    "type": "strength",
+    "category": "Abs and Core",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-000000000106",
+    "name": "Dragon Flags",
+    "muscle_group": "core",
+    "equipment": "other",
+    "type": "strength",
+    "category": "Abs and Core",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-000000000107",
+    "name": "Scissor Kicks",
+    "muscle_group": "core",
+    "equipment": "other",
+    "type": "strength",
+    "category": "Abs and Core",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-000000000108",
+    "name": "Plank Shoulder Taps",
+    "muscle_group": "core",
+    "equipment": "bodyweight",
+    "type": "bodyweight",
+    "category": "Abs and Core",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-000000000109",
+    "name": "Weighted Russian Twists",
+    "muscle_group": "core",
+    "equipment": "other",
+    "type": "strength",
+    "category": "Abs and Core",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-00000000010a",
+    "name": "Stability Ball Crunches",
+    "muscle_group": "core",
+    "equipment": "bodyweight",
+    "type": "cardio",
+    "category": "Abs and Core",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-00000000010b",
+    "name": "Cable Side Bends",
+    "muscle_group": "core",
+    "equipment": "cable",
+    "type": "strength",
+    "category": "Abs and Core",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-00000000010c",
+    "name": "Bodyweight Squats",
+    "muscle_group": "legs",
+    "equipment": "other",
+    "type": "strength",
+    "category": "Quadriceps (Front Thighs)",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-00000000010d",
+    "name": "Jump Squats",
+    "muscle_group": "legs",
+    "equipment": "other",
+    "type": "strength",
+    "category": "Quadriceps (Front Thighs)",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-00000000010e",
+    "name": "Goblet Squats",
+    "muscle_group": "legs",
+    "equipment": "other",
+    "type": "strength",
+    "category": "Quadriceps (Front Thighs)",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-00000000010f",
+    "name": "Barbell Back Squats",
+    "muscle_group": "legs",
+    "equipment": "barbell",
+    "type": "strength",
+    "category": "Quadriceps (Front Thighs)",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-000000000110",
+    "name": "Front Squats",
+    "muscle_group": "legs",
+    "equipment": "other",
+    "type": "strength",
+    "category": "Quadriceps (Front Thighs)",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-000000000111",
+    "name": "Hack Squats",
+    "muscle_group": "legs",
+    "equipment": "machine",
+    "type": "strength",
+    "category": "Quadriceps (Front Thighs)",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-000000000112",
+    "name": "Bulgarian Split Squats",
+    "muscle_group": "legs",
+    "equipment": "other",
+    "type": "strength",
+    "category": "Quadriceps (Front Thighs)",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-000000000113",
+    "name": "Walking Lunges",
+    "muscle_group": "legs",
+    "equipment": "other",
+    "type": "strength",
+    "category": "Quadriceps (Front Thighs)",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-000000000114",
+    "name": "Reverse Lunges",
+    "muscle_group": "legs",
+    "equipment": "other",
+    "type": "strength",
+    "category": "Quadriceps (Front Thighs)",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-000000000115",
+    "name": "Forward Lunges",
+    "muscle_group": "legs",
+    "equipment": "other",
+    "type": "strength",
+    "category": "Quadriceps (Front Thighs)",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-000000000116",
+    "name": "Step-Ups",
+    "muscle_group": "legs",
+    "equipment": "other",
+    "type": "strength",
+    "category": "Quadriceps (Front Thighs)",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-000000000117",
+    "name": "Leg Extensions",
+    "muscle_group": "legs",
+    "equipment": "other",
+    "type": "strength",
+    "category": "Quadriceps (Front Thighs)",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-000000000118",
+    "name": "Leg Press",
+    "muscle_group": "legs",
+    "equipment": "machine",
+    "type": "strength",
+    "category": "Quadriceps (Front Thighs)",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-000000000119",
+    "name": "Smith Machine Squats",
+    "muscle_group": "legs",
+    "equipment": "barbell",
+    "type": "strength",
+    "category": "Quadriceps (Front Thighs)",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-00000000011a",
+    "name": "Sissy Squats",
+    "muscle_group": "legs",
+    "equipment": "other",
+    "type": "strength",
+    "category": "Quadriceps (Front Thighs)",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-00000000011b",
+    "name": "Pistol Squats",
+    "muscle_group": "legs",
+    "equipment": "other",
+    "type": "strength",
+    "category": "Quadriceps (Front Thighs)",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-00000000011c",
+    "name": "Wall Sits",
+    "muscle_group": "legs",
+    "equipment": "other",
+    "type": "strength",
+    "category": "Quadriceps (Front Thighs)",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-00000000011d",
+    "name": "Heels-Elevated Squats",
+    "muscle_group": "legs",
+    "equipment": "other",
+    "type": "strength",
+    "category": "Quadriceps (Front Thighs)",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-00000000011e",
+    "name": "Zercher Squats",
+    "muscle_group": "legs",
+    "equipment": "other",
+    "type": "strength",
+    "category": "Quadriceps (Front Thighs)",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-00000000011f",
+    "name": "Cyclist Squats",
+    "muscle_group": "legs",
+    "equipment": "other",
+    "type": "strength",
+    "category": "Quadriceps (Front Thighs)",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-000000000120",
+    "name": "Split Squats",
+    "muscle_group": "legs",
+    "equipment": "other",
+    "type": "strength",
+    "category": "Quadriceps (Front Thighs)",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-000000000121",
+    "name": "Belt Squats",
+    "muscle_group": "legs",
+    "equipment": "other",
+    "type": "strength",
+    "category": "Quadriceps (Front Thighs)",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-000000000122",
+    "name": "Pendulum Squats",
+    "muscle_group": "legs",
+    "equipment": "other",
+    "type": "strength",
+    "category": "Quadriceps (Front Thighs)",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-000000000123",
+    "name": "Landmine Squats",
+    "muscle_group": "legs",
+    "equipment": "other",
+    "type": "strength",
+    "category": "Quadriceps (Front Thighs)",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-000000000124",
+    "name": "Stiff-Leg Deadlifts",
+    "muscle_group": "legs",
+    "equipment": "other",
+    "type": "strength",
+    "category": "Hamstrings",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-000000000125",
+    "name": "Conventional Deadlifts",
+    "muscle_group": "legs",
+    "equipment": "other",
+    "type": "strength",
+    "category": "Hamstrings",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-000000000126",
+    "name": "Single-Leg Romanian Deadlifts",
+    "muscle_group": "legs",
+    "equipment": "other",
+    "type": "strength",
+    "category": "Hamstrings",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-000000000127",
+    "name": "Lying Leg Curls",
+    "muscle_group": "legs",
+    "equipment": "other",
+    "type": "strength",
+    "category": "Hamstrings",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-000000000128",
+    "name": "Seated Leg Curls",
+    "muscle_group": "legs",
+    "equipment": "other",
+    "type": "strength",
+    "category": "Hamstrings",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-000000000129",
+    "name": "Standing Leg Curls",
+    "muscle_group": "legs",
+    "equipment": "other",
+    "type": "strength",
+    "category": "Hamstrings",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-00000000012a",
+    "name": "Nordic Hamstring Curls",
+    "muscle_group": "legs",
+    "equipment": "other",
+    "type": "strength",
+    "category": "Hamstrings",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-00000000012b",
+    "name": "Glute-Ham Raises",
+    "muscle_group": "legs",
+    "equipment": "other",
+    "type": "strength",
+    "category": "Hamstrings",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-00000000012c",
+    "name": "Good Mornings",
+    "muscle_group": "legs",
+    "equipment": "other",
+    "type": "strength",
+    "category": "Hamstrings",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-00000000012d",
+    "name": "Stability Ball Hamstring Curls",
+    "muscle_group": "legs",
+    "equipment": "other",
+    "type": "strength",
+    "category": "Hamstrings",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-00000000012e",
+    "name": "Sliding Hamstring Curls",
+    "muscle_group": "legs",
+    "equipment": "other",
+    "type": "strength",
+    "category": "Hamstrings",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-00000000012f",
+    "name": "Resistance Band Leg Curls",
+    "muscle_group": "legs",
+    "equipment": "band",
+    "type": "strength",
+    "category": "Hamstrings",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-000000000130",
+    "name": "Kettlebell Swings",
+    "muscle_group": "legs",
+    "equipment": "kettlebell",
+    "type": "strength",
+    "category": "Hamstrings",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-000000000131",
+    "name": "Cable Pull-Throughs",
+    "muscle_group": "legs",
+    "equipment": "cable",
+    "type": "strength",
+    "category": "Hamstrings",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-000000000132",
+    "name": "Single-Leg Deadlifts",
+    "muscle_group": "legs",
+    "equipment": "other",
+    "type": "strength",
+    "category": "Hamstrings",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-000000000133",
+    "name": "Razor Curls",
+    "muscle_group": "legs",
+    "equipment": "other",
+    "type": "strength",
+    "category": "Hamstrings",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-000000000134",
+    "name": "Glute Bridges",
+    "muscle_group": "legs",
+    "equipment": "other",
+    "type": "strength",
+    "category": "Glutes",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-000000000135",
+    "name": "Single-Leg Glute Bridges",
+    "muscle_group": "legs",
+    "equipment": "other",
+    "type": "strength",
+    "category": "Glutes",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-000000000136",
+    "name": "Barbell Hip Thrusts",
+    "muscle_group": "legs",
+    "equipment": "barbell",
+    "type": "strength",
+    "category": "Glutes",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-000000000137",
+    "name": "Dumbbell Hip Thrusts",
+    "muscle_group": "legs",
+    "equipment": "dumbbell",
+    "type": "strength",
+    "category": "Glutes",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-000000000138",
+    "name": "Machine Hip Thrusts",
+    "muscle_group": "legs",
+    "equipment": "machine",
+    "type": "strength",
+    "category": "Glutes",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-000000000139",
+    "name": "Donkey Kicks",
+    "muscle_group": "legs",
+    "equipment": "other",
+    "type": "strength",
+    "category": "Glutes",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-00000000013a",
+    "name": "Fire Hydrants",
+    "muscle_group": "legs",
+    "equipment": "other",
+    "type": "strength",
+    "category": "Glutes",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-00000000013b",
+    "name": "Clamshells",
+    "muscle_group": "legs",
+    "equipment": "other",
+    "type": "strength",
+    "category": "Glutes",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-00000000013c",
+    "name": "Cable Kickbacks",
+    "muscle_group": "legs",
+    "equipment": "cable",
+    "type": "strength",
+    "category": "Glutes",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-00000000013d",
+    "name": "Banded Kickbacks",
+    "muscle_group": "legs",
+    "equipment": "band",
+    "type": "strength",
+    "category": "Glutes",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-00000000013e",
+    "name": "Sumo Squats",
+    "muscle_group": "legs",
+    "equipment": "other",
+    "type": "strength",
+    "category": "Glutes",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-00000000013f",
+    "name": "Sumo Deadlifts",
+    "muscle_group": "legs",
+    "equipment": "other",
+    "type": "strength",
+    "category": "Glutes",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-000000000140",
+    "name": "Frog Pumps",
+    "muscle_group": "legs",
+    "equipment": "other",
+    "type": "strength",
+    "category": "Glutes",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-000000000141",
+    "name": "Banded Lateral Walks",
+    "muscle_group": "legs",
+    "equipment": "band",
+    "type": "strength",
+    "category": "Glutes",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-000000000142",
+    "name": "Hip Abductions",
+    "muscle_group": "legs",
+    "equipment": "other",
+    "type": "strength",
+    "category": "Glutes",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-000000000143",
+    "name": "Cable Hip Abductions",
+    "muscle_group": "legs",
+    "equipment": "cable",
+    "type": "strength",
+    "category": "Glutes",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-000000000144",
+    "name": "Machine Hip Abductions",
+    "muscle_group": "legs",
+    "equipment": "machine",
+    "type": "strength",
+    "category": "Glutes",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-000000000145",
+    "name": "Curtsy Lunges",
+    "muscle_group": "legs",
+    "equipment": "other",
+    "type": "strength",
+    "category": "Glutes",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-000000000146",
+    "name": "45-Degree Back Extensions",
+    "muscle_group": "legs",
+    "equipment": "other",
+    "type": "strength",
+    "category": "Glutes",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-000000000147",
+    "name": "Standing Calf Raises",
+    "muscle_group": "legs",
+    "equipment": "other",
+    "type": "strength",
+    "category": "Calves",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-000000000148",
+    "name": "Seated Calf Raises",
+    "muscle_group": "legs",
+    "equipment": "other",
+    "type": "strength",
+    "category": "Calves",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-000000000149",
+    "name": "Single-Leg Calf Raises",
+    "muscle_group": "legs",
+    "equipment": "other",
+    "type": "strength",
+    "category": "Calves",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-00000000014a",
+    "name": "Donkey Calf Raises",
+    "muscle_group": "legs",
+    "equipment": "other",
+    "type": "strength",
+    "category": "Calves",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-00000000014b",
+    "name": "Leg Press Calf Raises",
+    "muscle_group": "legs",
+    "equipment": "machine",
+    "type": "strength",
+    "category": "Calves",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-00000000014c",
+    "name": "Smith Machine Calf Raises",
+    "muscle_group": "legs",
+    "equipment": "barbell",
+    "type": "strength",
+    "category": "Calves",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-00000000014d",
+    "name": "Dumbbell Calf Raises",
+    "muscle_group": "legs",
+    "equipment": "dumbbell",
+    "type": "strength",
+    "category": "Calves",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-00000000014e",
+    "name": "Stair Calf Raises",
+    "muscle_group": "legs",
+    "equipment": "other",
+    "type": "strength",
+    "category": "Calves",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-00000000014f",
+    "name": "Bent-Knee Calf Raises",
+    "muscle_group": "legs",
+    "equipment": "other",
+    "type": "strength",
+    "category": "Calves",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-000000000150",
+    "name": "Jump Rope",
+    "muscle_group": "legs",
+    "equipment": "other",
+    "type": "cardio",
+    "category": "Calves",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-000000000151",
+    "name": "Calf Hops",
+    "muscle_group": "legs",
+    "equipment": "other",
+    "type": "strength",
+    "category": "Calves",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-000000000152",
+    "name": "Tibialis Raises",
+    "muscle_group": "legs",
+    "equipment": "other",
+    "type": "strength",
+    "category": "Calves",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-000000000153",
+    "name": "Seated Tibialis Raises",
+    "muscle_group": "legs",
+    "equipment": "other",
+    "type": "strength",
+    "category": "Calves",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-000000000154",
+    "name": "Toe Walks",
+    "muscle_group": "legs",
+    "equipment": "other",
+    "type": "strength",
+    "category": "Calves",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-000000000155",
+    "name": "Farmer's Walk on Toes",
+    "muscle_group": "legs",
+    "equipment": "other",
+    "type": "strength",
+    "category": "Calves",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-000000000156",
+    "name": "Barbell Shrugs",
+    "muscle_group": "back",
+    "equipment": "barbell",
+    "type": "strength",
+    "category": "Traps and Upper Back",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-000000000157",
+    "name": "Dumbbell Shrugs",
+    "muscle_group": "back",
+    "equipment": "dumbbell",
+    "type": "strength",
+    "category": "Traps and Upper Back",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-000000000158",
+    "name": "Smith Machine Shrugs",
+    "muscle_group": "back",
+    "equipment": "barbell",
+    "type": "strength",
+    "category": "Traps and Upper Back",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-000000000159",
+    "name": "High Pulls",
+    "muscle_group": "back",
+    "equipment": "other",
+    "type": "strength",
+    "category": "Traps and Upper Back",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-00000000015a",
+    "name": "Barbell High Rows",
+    "muscle_group": "back",
+    "equipment": "barbell",
+    "type": "strength",
+    "category": "Traps and Upper Back",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-00000000015b",
+    "name": "Reverse Fly",
+    "muscle_group": "back",
+    "equipment": "other",
+    "type": "strength",
+    "category": "Traps and Upper Back",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-00000000015c",
+    "name": "Prone Y-Raises",
+    "muscle_group": "back",
+    "equipment": "other",
+    "type": "strength",
+    "category": "Traps and Upper Back",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-00000000015d",
+    "name": "Prone T-Raises",
+    "muscle_group": "back",
+    "equipment": "other",
+    "type": "strength",
+    "category": "Traps and Upper Back",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-00000000015e",
+    "name": "Prone W-Raises",
+    "muscle_group": "back",
+    "equipment": "other",
+    "type": "strength",
+    "category": "Traps and Upper Back",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-00000000015f",
+    "name": "Burpees",
+    "muscle_group": "full_body",
+    "equipment": "bodyweight",
+    "type": "cardio",
+    "category": "Full-Body Home Workouts",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-000000000160",
+    "name": "Jumping Jacks",
+    "muscle_group": "full_body",
+    "equipment": "bodyweight",
+    "type": "cardio",
+    "category": "Full-Body Home Workouts",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-000000000161",
+    "name": "High Knees",
+    "muscle_group": "full_body",
+    "equipment": "other",
+    "type": "cardio",
+    "category": "Full-Body Home Workouts",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-000000000162",
+    "name": "Butt Kicks",
+    "muscle_group": "full_body",
+    "equipment": "other",
+    "type": "strength",
+    "category": "Full-Body Home Workouts",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-000000000163",
+    "name": "Bear Crawls",
+    "muscle_group": "full_body",
+    "equipment": "other",
+    "type": "strength",
+    "category": "Full-Body Home Workouts",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-000000000164",
+    "name": "Crab Walks",
+    "muscle_group": "full_body",
+    "equipment": "other",
+    "type": "strength",
+    "category": "Full-Body Home Workouts",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-000000000165",
+    "name": "Inchworms",
+    "muscle_group": "full_body",
+    "equipment": "other",
+    "type": "strength",
+    "category": "Full-Body Home Workouts",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-000000000166",
+    "name": "Walkouts",
+    "muscle_group": "full_body",
+    "equipment": "other",
+    "type": "strength",
+    "category": "Full-Body Home Workouts",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-000000000167",
+    "name": "Squat Thrusts",
+    "muscle_group": "full_body",
+    "equipment": "other",
+    "type": "strength",
+    "category": "Full-Body Home Workouts",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-000000000168",
+    "name": "Thrusters",
+    "muscle_group": "full_body",
+    "equipment": "other",
+    "type": "strength",
+    "category": "Full-Body Home Workouts",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-000000000169",
+    "name": "Man Makers",
+    "muscle_group": "full_body",
+    "equipment": "other",
+    "type": "strength",
+    "category": "Full-Body Home Workouts",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-00000000016a",
+    "name": "Dumbbell Complexes",
+    "muscle_group": "full_body",
+    "equipment": "dumbbell",
+    "type": "strength",
+    "category": "Full-Body Home Workouts",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-00000000016b",
+    "name": "Turkish Get-Ups",
+    "muscle_group": "full_body",
+    "equipment": "other",
+    "type": "strength",
+    "category": "Full-Body Home Workouts",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-00000000016c",
+    "name": "Devil Press",
+    "muscle_group": "full_body",
+    "equipment": "other",
+    "type": "strength",
+    "category": "Full-Body Home Workouts",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-00000000016d",
+    "name": "Bear Plank",
+    "muscle_group": "full_body",
+    "equipment": "bodyweight",
+    "type": "bodyweight",
+    "category": "Full-Body Home Workouts",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-00000000016e",
+    "name": "Skater Jumps",
+    "muscle_group": "full_body",
+    "equipment": "other",
+    "type": "strength",
+    "category": "Full-Body Home Workouts",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-00000000016f",
+    "name": "Broad Jumps",
+    "muscle_group": "full_body",
+    "equipment": "other",
+    "type": "strength",
+    "category": "Full-Body Home Workouts",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-000000000170",
+    "name": "Tuck Jumps",
+    "muscle_group": "full_body",
+    "equipment": "other",
+    "type": "strength",
+    "category": "Full-Body Home Workouts",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-000000000171",
+    "name": "Shadow Boxing",
+    "muscle_group": "full_body",
+    "equipment": "other",
+    "type": "strength",
+    "category": "Full-Body Home Workouts",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-000000000172",
+    "name": "Sprawls",
+    "muscle_group": "full_body",
+    "equipment": "other",
+    "type": "strength",
+    "category": "Full-Body Home Workouts",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-000000000173",
+    "name": "Plank Jacks",
+    "muscle_group": "full_body",
+    "equipment": "bodyweight",
+    "type": "bodyweight",
+    "category": "Full-Body Home Workouts",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-000000000174",
+    "name": "Lateral Bounds",
+    "muscle_group": "full_body",
+    "equipment": "other",
+    "type": "strength",
+    "category": "Full-Body Home Workouts",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-000000000175",
+    "name": "Walking",
+    "muscle_group": "cardio",
+    "equipment": "other",
+    "type": "cardio",
+    "category": "Cardio",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-000000000176",
+    "name": "Brisk Walking",
+    "muscle_group": "cardio",
+    "equipment": "other",
+    "type": "cardio",
+    "category": "Cardio",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-000000000177",
+    "name": "Running",
+    "muscle_group": "cardio",
+    "equipment": "other",
+    "type": "cardio",
+    "category": "Cardio",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-000000000178",
+    "name": "Jogging",
+    "muscle_group": "cardio",
+    "equipment": "other",
+    "type": "cardio",
+    "category": "Cardio",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-000000000179",
+    "name": "Sprinting",
+    "muscle_group": "cardio",
+    "equipment": "other",
+    "type": "cardio",
+    "category": "Cardio",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-00000000017a",
+    "name": "Treadmill Walking",
+    "muscle_group": "cardio",
+    "equipment": "other",
+    "type": "cardio",
+    "category": "Cardio",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-00000000017b",
+    "name": "Treadmill Running",
+    "muscle_group": "cardio",
+    "equipment": "other",
+    "type": "cardio",
+    "category": "Cardio",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-00000000017c",
+    "name": "Incline Walking",
+    "muscle_group": "cardio",
+    "equipment": "other",
+    "type": "cardio",
+    "category": "Cardio",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-00000000017d",
+    "name": "Cycling",
+    "muscle_group": "cardio",
+    "equipment": "other",
+    "type": "cardio",
+    "category": "Cardio",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-00000000017e",
+    "name": "Stationary Cycling",
+    "muscle_group": "cardio",
+    "equipment": "other",
+    "type": "cardio",
+    "category": "Cardio",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-00000000017f",
+    "name": "Outdoor Cycling",
+    "muscle_group": "cardio",
+    "equipment": "other",
+    "type": "cardio",
+    "category": "Cardio",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-000000000180",
+    "name": "Elliptical Training",
+    "muscle_group": "cardio",
+    "equipment": "other",
+    "type": "cardio",
+    "category": "Cardio",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-000000000181",
+    "name": "Rowing Machine",
+    "muscle_group": "cardio",
+    "equipment": "machine",
+    "type": "cardio",
+    "category": "Cardio",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-000000000182",
+    "name": "Stair Climber",
+    "muscle_group": "cardio",
+    "equipment": "other",
+    "type": "cardio",
+    "category": "Cardio",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-000000000183",
+    "name": "Staircase Climbing",
+    "muscle_group": "cardio",
+    "equipment": "other",
+    "type": "cardio",
+    "category": "Cardio",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-000000000184",
+    "name": "Swimming",
+    "muscle_group": "cardio",
+    "equipment": "other",
+    "type": "cardio",
+    "category": "Cardio",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-000000000185",
+    "name": "Boxing Bag Work",
+    "muscle_group": "cardio",
+    "equipment": "other",
+    "type": "cardio",
+    "category": "Cardio",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-000000000186",
+    "name": "Battle Ropes",
+    "muscle_group": "cardio",
+    "equipment": "other",
+    "type": "cardio",
+    "category": "Cardio",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-000000000187",
+    "name": "Hiking",
+    "muscle_group": "cardio",
+    "equipment": "other",
+    "type": "cardio",
+    "category": "Cardio",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-000000000188",
+    "name": "Dance Cardio",
+    "muscle_group": "cardio",
+    "equipment": "other",
+    "type": "cardio",
+    "category": "Cardio",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-000000000189",
+    "name": "Step Aerobics",
+    "muscle_group": "cardio",
+    "equipment": "other",
+    "type": "cardio",
+    "category": "Cardio",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-00000000018a",
+    "name": "HIIT",
+    "muscle_group": "cardio",
+    "equipment": "other",
+    "type": "cardio",
+    "category": "Cardio",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-00000000018b",
+    "name": "Low-Intensity Steady-State Cardio",
+    "muscle_group": "cardio",
+    "equipment": "other",
+    "type": "cardio",
+    "category": "Cardio",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-00000000018c",
+    "name": "Band Chest Press",
+    "muscle_group": "chest",
+    "equipment": "band",
+    "type": "strength",
+    "category": "Resistance Band Exercises",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-00000000018d",
+    "name": "Band Chest Fly",
+    "muscle_group": "full_body",
+    "equipment": "band",
+    "type": "strength",
+    "category": "Resistance Band Exercises",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-00000000018e",
+    "name": "Band Rows",
+    "muscle_group": "back",
+    "equipment": "band",
+    "type": "strength",
+    "category": "Resistance Band Exercises",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-00000000018f",
+    "name": "Band Lat Pulldowns",
+    "muscle_group": "back",
+    "equipment": "band",
+    "type": "strength",
+    "category": "Resistance Band Exercises",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-000000000190",
+    "name": "Band Face Pulls",
+    "muscle_group": "back",
+    "equipment": "band",
+    "type": "strength",
+    "category": "Resistance Band Exercises",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-000000000191",
+    "name": "Band Biceps Curls",
+    "muscle_group": "arms",
+    "equipment": "band",
+    "type": "strength",
+    "category": "Resistance Band Exercises",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-000000000192",
+    "name": "Band Hammer Curls",
+    "muscle_group": "arms",
+    "equipment": "band",
+    "type": "strength",
+    "category": "Resistance Band Exercises",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-000000000193",
+    "name": "Band Triceps Pushdowns",
+    "muscle_group": "arms",
+    "equipment": "band",
+    "type": "strength",
+    "category": "Resistance Band Exercises",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-000000000194",
+    "name": "Band Overhead Extensions",
+    "muscle_group": "shoulders",
+    "equipment": "band",
+    "type": "strength",
+    "category": "Resistance Band Exercises",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-000000000195",
+    "name": "Band Lateral Raises",
+    "muscle_group": "back",
+    "equipment": "band",
+    "type": "strength",
+    "category": "Resistance Band Exercises",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-000000000196",
+    "name": "Band Front Raises",
+    "muscle_group": "shoulders",
+    "equipment": "band",
+    "type": "strength",
+    "category": "Resistance Band Exercises",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-000000000197",
+    "name": "Band Squats",
+    "muscle_group": "legs",
+    "equipment": "band",
+    "type": "strength",
+    "category": "Resistance Band Exercises",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-000000000198",
+    "name": "Band Deadlifts",
+    "muscle_group": "back",
+    "equipment": "band",
+    "type": "strength",
+    "category": "Resistance Band Exercises",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-000000000199",
+    "name": "Band Good Mornings",
+    "muscle_group": "full_body",
+    "equipment": "band",
+    "type": "strength",
+    "category": "Resistance Band Exercises",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-00000000019a",
+    "name": "Band Glute Bridges",
+    "muscle_group": "full_body",
+    "equipment": "band",
+    "type": "strength",
+    "category": "Resistance Band Exercises",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-00000000019b",
+    "name": "Band Hip Abductions",
+    "muscle_group": "core",
+    "equipment": "band",
+    "type": "strength",
+    "category": "Resistance Band Exercises",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-00000000019c",
+    "name": "Band Kickbacks",
+    "muscle_group": "full_body",
+    "equipment": "band",
+    "type": "strength",
+    "category": "Resistance Band Exercises",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-00000000019d",
+    "name": "Band Leg Curls",
+    "muscle_group": "arms",
+    "equipment": "band",
+    "type": "strength",
+    "category": "Resistance Band Exercises",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-00000000019e",
+    "name": "Band Calf Raises",
+    "muscle_group": "legs",
+    "equipment": "band",
+    "type": "strength",
+    "category": "Resistance Band Exercises",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-00000000019f",
+    "name": "Band Pallof Press",
+    "muscle_group": "full_body",
+    "equipment": "band",
+    "type": "strength",
+    "category": "Resistance Band Exercises",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-0000000001a0",
+    "name": "Band Woodchoppers",
+    "muscle_group": "full_body",
+    "equipment": "band",
+    "type": "strength",
+    "category": "Resistance Band Exercises",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-0000000001a1",
+    "name": "Dumbbell Floor Press",
+    "muscle_group": "full_body",
+    "equipment": "dumbbell",
+    "type": "strength",
+    "category": "Dumbbell-Only Exercises",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-0000000001a2",
+    "name": "Dumbbell Front Raises",
+    "muscle_group": "shoulders",
+    "equipment": "dumbbell",
+    "type": "strength",
+    "category": "Dumbbell-Only Exercises",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-0000000001a3",
+    "name": "Dumbbell Rear Delt Fly",
+    "muscle_group": "full_body",
+    "equipment": "dumbbell",
+    "type": "strength",
+    "category": "Dumbbell-Only Exercises",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-0000000001a4",
+    "name": "Dumbbell Curls",
+    "muscle_group": "arms",
+    "equipment": "dumbbell",
+    "type": "strength",
+    "category": "Dumbbell-Only Exercises",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-0000000001a5",
+    "name": "Dumbbell Lunges",
+    "muscle_group": "legs",
+    "equipment": "dumbbell",
+    "type": "strength",
+    "category": "Dumbbell-Only Exercises",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-0000000001a6",
+    "name": "Dumbbell Step-Ups",
+    "muscle_group": "legs",
+    "equipment": "dumbbell",
+    "type": "strength",
+    "category": "Dumbbell-Only Exercises",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-0000000001a7",
+    "name": "Dumbbell Romanian Deadlifts",
+    "muscle_group": "back",
+    "equipment": "dumbbell",
+    "type": "strength",
+    "category": "Dumbbell-Only Exercises",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-0000000001a8",
+    "name": "Dumbbell Sumo Squats",
+    "muscle_group": "legs",
+    "equipment": "dumbbell",
+    "type": "strength",
+    "category": "Dumbbell-Only Exercises",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-0000000001a9",
+    "name": "Dumbbell Russian Twists",
+    "muscle_group": "core",
+    "equipment": "dumbbell",
+    "type": "strength",
+    "category": "Dumbbell-Only Exercises",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-0000000001aa",
+    "name": "Dumbbell Sit-Ups",
+    "muscle_group": "core",
+    "equipment": "dumbbell",
+    "type": "strength",
+    "category": "Dumbbell-Only Exercises",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-0000000001ab",
+    "name": "Dumbbell Farmer's Walk",
+    "muscle_group": "full_body",
+    "equipment": "dumbbell",
+    "type": "strength",
+    "category": "Dumbbell-Only Exercises",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-0000000001ac",
+    "name": "Dumbbell Thrusters",
+    "muscle_group": "legs",
+    "equipment": "dumbbell",
+    "type": "strength",
+    "category": "Dumbbell-Only Exercises",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-0000000001ad",
+    "name": "Incline Barbell Bench Press",
+    "muscle_group": "chest",
+    "equipment": "barbell",
+    "type": "strength",
+    "category": "Barbell Exercises",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-0000000001ae",
+    "name": "Barbell Bent-Over Row",
+    "muscle_group": "back",
+    "equipment": "barbell",
+    "type": "strength",
+    "category": "Barbell Exercises",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-0000000001af",
+    "name": "Pendlay Row",
+    "muscle_group": "back",
+    "equipment": "barbell",
+    "type": "strength",
+    "category": "Barbell Exercises",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-0000000001b0",
+    "name": "T-Bar Row",
+    "muscle_group": "back",
+    "equipment": "barbell",
+    "type": "strength",
+    "category": "Barbell Exercises",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-0000000001b1",
+    "name": "Barbell Curl",
+    "muscle_group": "arms",
+    "equipment": "barbell",
+    "type": "strength",
+    "category": "Barbell Exercises",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-0000000001b2",
+    "name": "Reverse Barbell Curl",
+    "muscle_group": "arms",
+    "equipment": "barbell",
+    "type": "strength",
+    "category": "Barbell Exercises",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-0000000001b3",
+    "name": "Barbell Back Squat",
+    "muscle_group": "legs",
+    "equipment": "barbell",
+    "type": "strength",
+    "category": "Barbell Exercises",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-0000000001b4",
+    "name": "Front Squat",
+    "muscle_group": "legs",
+    "equipment": "barbell",
+    "type": "strength",
+    "category": "Barbell Exercises",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-0000000001b5",
+    "name": "Zercher Squat",
+    "muscle_group": "legs",
+    "equipment": "barbell",
+    "type": "strength",
+    "category": "Barbell Exercises",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-0000000001b6",
+    "name": "Barbell Lunges",
+    "muscle_group": "legs",
+    "equipment": "barbell",
+    "type": "strength",
+    "category": "Barbell Exercises",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-0000000001b7",
+    "name": "Conventional Deadlift",
+    "muscle_group": "back",
+    "equipment": "barbell",
+    "type": "strength",
+    "category": "Barbell Exercises",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-0000000001b8",
+    "name": "Sumo Deadlift",
+    "muscle_group": "back",
+    "equipment": "barbell",
+    "type": "strength",
+    "category": "Barbell Exercises",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-0000000001b9",
+    "name": "Romanian Deadlift",
+    "muscle_group": "back",
+    "equipment": "barbell",
+    "type": "strength",
+    "category": "Barbell Exercises",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-0000000001ba",
+    "name": "Stiff-Leg Deadlift",
+    "muscle_group": "back",
+    "equipment": "barbell",
+    "type": "strength",
+    "category": "Barbell Exercises",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-0000000001bb",
+    "name": "Barbell Hip Thrust",
+    "muscle_group": "legs",
+    "equipment": "barbell",
+    "type": "strength",
+    "category": "Barbell Exercises",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-0000000001bc",
+    "name": "Barbell Glute Bridge",
+    "muscle_group": "full_body",
+    "equipment": "barbell",
+    "type": "strength",
+    "category": "Barbell Exercises",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-0000000001bd",
+    "name": "Landmine Row",
+    "muscle_group": "back",
+    "equipment": "barbell",
+    "type": "strength",
+    "category": "Barbell Exercises",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-0000000001be",
+    "name": "Pec Deck Machine",
+    "muscle_group": "full_body",
+    "equipment": "machine",
+    "type": "strength",
+    "category": "Gym Machine Exercises",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-0000000001bf",
+    "name": "Lat Pulldown Machine",
+    "muscle_group": "back",
+    "equipment": "machine",
+    "type": "strength",
+    "category": "Gym Machine Exercises",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-0000000001c0",
+    "name": "Seated Row Machine",
+    "muscle_group": "back",
+    "equipment": "machine",
+    "type": "strength",
+    "category": "Gym Machine Exercises",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-0000000001c1",
+    "name": "Chest-Supported Row Machine",
+    "muscle_group": "back",
+    "equipment": "machine",
+    "type": "strength",
+    "category": "Gym Machine Exercises",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-0000000001c2",
+    "name": "Assisted Pull-Up Machine",
+    "muscle_group": "back",
+    "equipment": "machine",
+    "type": "strength",
+    "category": "Gym Machine Exercises",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-0000000001c3",
+    "name": "Assisted Dip Machine",
+    "muscle_group": "arms",
+    "equipment": "machine",
+    "type": "strength",
+    "category": "Gym Machine Exercises",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-0000000001c4",
+    "name": "Shoulder Press Machine",
+    "muscle_group": "shoulders",
+    "equipment": "machine",
+    "type": "strength",
+    "category": "Gym Machine Exercises",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-0000000001c5",
+    "name": "Lateral Raise Machine",
+    "muscle_group": "back",
+    "equipment": "machine",
+    "type": "strength",
+    "category": "Gym Machine Exercises",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-0000000001c6",
+    "name": "Biceps Curl Machine",
+    "muscle_group": "arms",
+    "equipment": "machine",
+    "type": "strength",
+    "category": "Gym Machine Exercises",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-0000000001c7",
+    "name": "Triceps Extension Machine",
+    "muscle_group": "arms",
+    "equipment": "machine",
+    "type": "strength",
+    "category": "Gym Machine Exercises",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-0000000001c8",
+    "name": "Leg Press Machine",
+    "muscle_group": "legs",
+    "equipment": "machine",
+    "type": "strength",
+    "category": "Gym Machine Exercises",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-0000000001c9",
+    "name": "Hack Squat Machine",
+    "muscle_group": "legs",
+    "equipment": "machine",
+    "type": "strength",
+    "category": "Gym Machine Exercises",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-0000000001ca",
+    "name": "Leg Extension Machine",
+    "muscle_group": "legs",
+    "equipment": "machine",
+    "type": "strength",
+    "category": "Gym Machine Exercises",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-0000000001cb",
+    "name": "Seated Leg Curl Machine",
+    "muscle_group": "arms",
+    "equipment": "machine",
+    "type": "strength",
+    "category": "Gym Machine Exercises",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-0000000001cc",
+    "name": "Lying Leg Curl Machine",
+    "muscle_group": "arms",
+    "equipment": "machine",
+    "type": "strength",
+    "category": "Gym Machine Exercises",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-0000000001cd",
+    "name": "Standing Calf Raise Machine",
+    "muscle_group": "legs",
+    "equipment": "machine",
+    "type": "strength",
+    "category": "Gym Machine Exercises",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-0000000001ce",
+    "name": "Seated Calf Raise Machine",
+    "muscle_group": "legs",
+    "equipment": "machine",
+    "type": "strength",
+    "category": "Gym Machine Exercises",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-0000000001cf",
+    "name": "Hip Abduction Machine",
+    "muscle_group": "core",
+    "equipment": "machine",
+    "type": "strength",
+    "category": "Gym Machine Exercises",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-0000000001d0",
+    "name": "Hip Adduction Machine",
+    "muscle_group": "full_body",
+    "equipment": "machine",
+    "type": "strength",
+    "category": "Gym Machine Exercises",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-0000000001d1",
+    "name": "Glute Kickback Machine",
+    "muscle_group": "full_body",
+    "equipment": "machine",
+    "type": "strength",
+    "category": "Gym Machine Exercises",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-0000000001d2",
+    "name": "Cable Crossover Machine",
+    "muscle_group": "core",
+    "equipment": "cable",
+    "type": "strength",
+    "category": "Gym Machine Exercises",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-0000000001d3",
+    "name": "Ab Crunch Machine",
+    "muscle_group": "core",
+    "equipment": "machine",
+    "type": "cardio",
+    "category": "Gym Machine Exercises",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-0000000001d4",
+    "name": "Back Extension Machine",
+    "muscle_group": "full_body",
+    "equipment": "machine",
+    "type": "strength",
+    "category": "Gym Machine Exercises",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-0000000001d5",
+    "name": "Rotary Torso Machine",
+    "muscle_group": "full_body",
+    "equipment": "machine",
+    "type": "strength",
+    "category": "Gym Machine Exercises",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-0000000001d6",
+    "name": "Elliptical Machine",
+    "muscle_group": "full_body",
+    "equipment": "machine",
+    "type": "strength",
+    "category": "Gym Machine Exercises",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-0000000001d7",
+    "name": "Cat-Cow Stretch",
+    "muscle_group": "other",
+    "equipment": "none",
+    "type": "strength",
+    "category": "Mobility and Flexibility",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-0000000001d8",
+    "name": "Child's Pose",
+    "muscle_group": "other",
+    "equipment": "none",
+    "type": "strength",
+    "category": "Mobility and Flexibility",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-0000000001d9",
+    "name": "Cobra Stretch",
+    "muscle_group": "other",
+    "equipment": "none",
+    "type": "strength",
+    "category": "Mobility and Flexibility",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-0000000001da",
+    "name": "Downward Dog",
+    "muscle_group": "other",
+    "equipment": "none",
+    "type": "strength",
+    "category": "Mobility and Flexibility",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-0000000001db",
+    "name": "World's Greatest Stretch",
+    "muscle_group": "other",
+    "equipment": "none",
+    "type": "strength",
+    "category": "Mobility and Flexibility",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-0000000001dc",
+    "name": "Hip Flexor Stretch",
+    "muscle_group": "other",
+    "equipment": "none",
+    "type": "strength",
+    "category": "Mobility and Flexibility",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-0000000001dd",
+    "name": "Hamstring Stretch",
+    "muscle_group": "other",
+    "equipment": "none",
+    "type": "strength",
+    "category": "Mobility and Flexibility",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-0000000001de",
+    "name": "Standing Quad Stretch",
+    "muscle_group": "other",
+    "equipment": "none",
+    "type": "strength",
+    "category": "Mobility and Flexibility",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-0000000001df",
+    "name": "Figure-Four Stretch",
+    "muscle_group": "other",
+    "equipment": "none",
+    "type": "strength",
+    "category": "Mobility and Flexibility",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-0000000001e0",
+    "name": "Pigeon Pose",
+    "muscle_group": "other",
+    "equipment": "none",
+    "type": "strength",
+    "category": "Mobility and Flexibility",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-0000000001e1",
+    "name": "Butterfly Stretch",
+    "muscle_group": "other",
+    "equipment": "none",
+    "type": "strength",
+    "category": "Mobility and Flexibility",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-0000000001e2",
+    "name": "Calf Wall Stretch",
+    "muscle_group": "other",
+    "equipment": "none",
+    "type": "strength",
+    "category": "Mobility and Flexibility",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-0000000001e3",
+    "name": "Doorway Chest Stretch",
+    "muscle_group": "other",
+    "equipment": "none",
+    "type": "strength",
+    "category": "Mobility and Flexibility",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-0000000001e4",
+    "name": "Cross-Body Shoulder Stretch",
+    "muscle_group": "other",
+    "equipment": "none",
+    "type": "strength",
+    "category": "Mobility and Flexibility",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-0000000001e5",
+    "name": "Overhead Triceps Stretch",
+    "muscle_group": "other",
+    "equipment": "none",
+    "type": "strength",
+    "category": "Mobility and Flexibility",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-0000000001e6",
+    "name": "Lat Stretch",
+    "muscle_group": "other",
+    "equipment": "none",
+    "type": "strength",
+    "category": "Mobility and Flexibility",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-0000000001e7",
+    "name": "Thoracic Rotations",
+    "muscle_group": "other",
+    "equipment": "none",
+    "type": "strength",
+    "category": "Mobility and Flexibility",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-0000000001e8",
+    "name": "Thread the Needle",
+    "muscle_group": "other",
+    "equipment": "none",
+    "type": "strength",
+    "category": "Mobility and Flexibility",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-0000000001e9",
+    "name": "Ankle Mobility Rocks",
+    "muscle_group": "other",
+    "equipment": "none",
+    "type": "strength",
+    "category": "Mobility and Flexibility",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-0000000001ea",
+    "name": "Deep Squat Hold",
+    "muscle_group": "other",
+    "equipment": "none",
+    "type": "strength",
+    "category": "Mobility and Flexibility",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-0000000001eb",
+    "name": "Wrist Flexor Stretch",
+    "muscle_group": "other",
+    "equipment": "none",
+    "type": "strength",
+    "category": "Mobility and Flexibility",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-0000000001ec",
+    "name": "Wrist Extensor Stretch",
+    "muscle_group": "other",
+    "equipment": "none",
+    "type": "strength",
+    "category": "Mobility and Flexibility",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-0000000001ed",
+    "name": "Neck Rotations",
+    "muscle_group": "other",
+    "equipment": "none",
+    "type": "strength",
+    "category": "Mobility and Flexibility",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-0000000001ee",
+    "name": "Shoulder Dislocations",
+    "muscle_group": "other",
+    "equipment": "none",
+    "type": "strength",
+    "category": "Mobility and Flexibility",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-0000000001ef",
+    "name": "Foam Rolling",
+    "muscle_group": "other",
+    "equipment": "none",
+    "type": "strength",
+    "category": "Mobility and Flexibility",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-0000000001f0",
+    "name": "Box Jumps",
+    "muscle_group": "full_body",
+    "equipment": "other",
+    "type": "strength",
+    "category": "Athletic and Explosive Exercises",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-0000000001f1",
+    "name": "Vertical Jumps",
+    "muscle_group": "full_body",
+    "equipment": "other",
+    "type": "strength",
+    "category": "Athletic and Explosive Exercises",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-0000000001f2",
+    "name": "Split Squat Jumps",
+    "muscle_group": "full_body",
+    "equipment": "bodyweight",
+    "type": "bodyweight",
+    "category": "Athletic and Explosive Exercises",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-0000000001f3",
+    "name": "Sprint Starts",
+    "muscle_group": "full_body",
+    "equipment": "other",
+    "type": "cardio",
+    "category": "Athletic and Explosive Exercises",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-0000000001f4",
+    "name": "Shuttle Runs",
+    "muscle_group": "full_body",
+    "equipment": "other",
+    "type": "cardio",
+    "category": "Athletic and Explosive Exercises",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-0000000001f5",
+    "name": "Medicine Ball Slams",
+    "muscle_group": "full_body",
+    "equipment": "other",
+    "type": "strength",
+    "category": "Athletic and Explosive Exercises",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-0000000001f6",
+    "name": "Medicine Ball Chest Throws",
+    "muscle_group": "full_body",
+    "equipment": "other",
+    "type": "strength",
+    "category": "Athletic and Explosive Exercises",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-0000000001f7",
+    "name": "Rotational Medicine Ball Throws",
+    "muscle_group": "full_body",
+    "equipment": "other",
+    "type": "strength",
+    "category": "Athletic and Explosive Exercises",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-0000000001f8",
+    "name": "Plyometric Push-Ups",
+    "muscle_group": "full_body",
+    "equipment": "bodyweight",
+    "type": "bodyweight",
+    "category": "Athletic and Explosive Exercises",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-0000000001f9",
+    "name": "Clap Push-Ups",
+    "muscle_group": "full_body",
+    "equipment": "bodyweight",
+    "type": "bodyweight",
+    "category": "Athletic and Explosive Exercises",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-0000000001fa",
+    "name": "Battle Rope Slams",
+    "muscle_group": "full_body",
+    "equipment": "other",
+    "type": "strength",
+    "category": "Athletic and Explosive Exercises",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-0000000001fb",
+    "name": "Sled Pushes",
+    "muscle_group": "full_body",
+    "equipment": "other",
+    "type": "strength",
+    "category": "Athletic and Explosive Exercises",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-0000000001fc",
+    "name": "Sled Pulls",
+    "muscle_group": "full_body",
+    "equipment": "other",
+    "type": "strength",
+    "category": "Athletic and Explosive Exercises",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-0000000001fd",
+    "name": "Farmer's Carries",
+    "muscle_group": "full_body",
+    "equipment": "other",
+    "type": "strength",
+    "category": "Athletic and Explosive Exercises",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-0000000001fe",
+    "name": "Agility Ladder Drills",
+    "muscle_group": "full_body",
+    "equipment": "other",
+    "type": "strength",
+    "category": "Athletic and Explosive Exercises",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-0000000001ff",
+    "name": "Cone Drills",
+    "muscle_group": "full_body",
+    "equipment": "other",
+    "type": "strength",
+    "category": "Athletic and Explosive Exercises",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-000000000200",
+    "name": "Single-Leg Hops",
+    "muscle_group": "full_body",
+    "equipment": "other",
+    "type": "strength",
+    "category": "Athletic and Explosive Exercises",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "00000000-0000-0000-0000-000000000201",
+    "name": "Jump Rope Double Unders",
+    "muscle_group": "full_body",
+    "equipment": "other",
+    "type": "cardio",
+    "category": "Athletic and Explosive Exercises",
+    "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  }
+];

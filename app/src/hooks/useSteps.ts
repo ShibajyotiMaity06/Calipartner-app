@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { calculateStrideLengthCm, type ActivityDay, type ActivitySource } from '@calipartner/core';
+import { useAuth } from '@/contexts/AuthContext';
 import { getDb } from '@/db';
 import { getActivityDay, getActivityMetrics, upsertActivityDay } from '@/services/activityService';
 import {
@@ -30,6 +31,7 @@ export interface UseStepsResult {
 export function useSteps(date?: string): UseStepsResult {
   const localDate = date ?? new Date().toISOString().split('T')[0]!;
   const { currentGoalProfile } = useTargets();
+  const { user } = useAuth();
 
   const [activity, setActivity] = useState<ActivityDay | null>(null);
   const [permissionStatus, setPermissionStatus] = useState<StepPermissionStatus>('not_requested');
@@ -37,19 +39,24 @@ export function useSteps(date?: string): UseStepsResult {
 
   const goalSteps = currentGoalProfile?.step_goal ?? 8000;
   const userWeightKg = currentGoalProfile?.current_weight_kg ?? 70;
-  // Fallback 170cm height / other sex -> ~70.38cm stride length
   const userStrideCm = calculateStrideLengthCm(170, 'other');
+
+  const effectiveUserId = user?.id ?? currentGoalProfile?.user_id ?? 'guest-user';
 
   const loadData = useCallback(async () => {
     try {
       setLoading(true);
       const db = await getDb();
-      const userId = currentGoalProfile?.user_id ?? 'guest-user';
 
-      const [act, perm] = await Promise.all([
-        getActivityDay(db, userId, localDate),
+      let [act, perm] = await Promise.all([
+        getActivityDay(db, effectiveUserId, localDate),
         getStepPermissionStatus(),
       ]);
+
+      if (!act && effectiveUserId !== 'guest-user') {
+        const guestAct = await getActivityDay(db, 'guest-user', localDate);
+        if (guestAct) act = guestAct;
+      }
 
       setActivity(act);
       setPermissionStatus(perm);
@@ -58,7 +65,7 @@ export function useSteps(date?: string): UseStepsResult {
     } finally {
       setLoading(false);
     }
-  }, [currentGoalProfile?.user_id, localDate]);
+  }, [effectiveUserId, localDate]);
 
   useEffect(() => {
     void loadData();
@@ -68,8 +75,7 @@ export function useSteps(date?: string): UseStepsResult {
     const reading = await readDeviceSteps(localDate);
     if (reading) {
       const db = await getDb();
-      const userId = currentGoalProfile?.user_id ?? 'guest-user';
-      await upsertActivityDay(db, userId, {
+      await upsertActivityDay(db, effectiveUserId, {
         localDate,
         steps: reading.steps,
         distanceM: reading.distance_m,
@@ -91,8 +97,7 @@ export function useSteps(date?: string): UseStepsResult {
 
   const logManualSteps = async (steps: number, distanceM?: number): Promise<ActivityDay> => {
     const db = await getDb();
-    const userId = currentGoalProfile?.user_id ?? 'guest-user';
-    const updated = await upsertActivityDay(db, userId, {
+    const updated = await upsertActivityDay(db, effectiveUserId, {
       localDate,
       steps,
       distanceM: distanceM ?? null,
@@ -113,7 +118,7 @@ export function useSteps(date?: string): UseStepsResult {
     distanceM: metrics.distanceM,
     distanceKm: metrics.distanceKm,
     walkingCalories: metrics.walkingCalories,
-    source: metrics.source,
+    source: activity?.source ?? null,
     goalSteps,
     progressPercent,
     permissionStatus,

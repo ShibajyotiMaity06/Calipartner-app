@@ -16,7 +16,6 @@ import {
   Button,
   Card,
   ChevronLeftIcon,
-  Chip,
   dark,
   radius,
   space,
@@ -49,46 +48,91 @@ export interface PaywallModalProps {
 }
 
 export const TIER_CONFIG = {
-  basic: {
-    key: 'basic' as PlanTier,
-    label: 'Basic',
-    cap: 5,
-    sizeRange: '2 to 5',
-    testID: 'picker-size-2-5',
-    monthlyPrice: '₹49 / mo',
-    monthlyPriceNum: 49,
-    quarterlyPrice: '₹40 / mo',
-    quarterlyTotal: '₹119',
-    annualPrice: '₹25 / mo',
-    annualTotal: '₹299 / yr',
-  },
   plus: {
     key: 'plus' as PlanTier,
     label: 'Plus',
+    title: 'CaliPartner Plus',
+    badge: '7-DAY TRIAL',
     cap: 20,
     sizeRange: '6 to 20',
+    summary: 'Rooms, Partner Finder, Fasting & Workouts',
     testID: 'picker-size-6-20',
     monthlyPrice: '₹99 / mo',
+    monthlyPriceUsd: '$5.99 / mo',
     monthlyPriceNum: 99,
     quarterlyPrice: '₹80 / mo',
     quarterlyTotal: '₹239',
     annualPrice: '₹50 / mo',
+    annualPriceUsd: '$3.33 / mo',
     annualTotal: '₹599 / yr',
+    annualTotalUsd: '$39.99 / yr',
+    hasTrial: true,
+    trialDays: 7,
   },
   pro: {
     key: 'pro' as PlanTier,
     label: 'Pro',
+    title: 'CaliPartner Pro',
+    badge: 'AI COACH & SCANS',
     cap: 50,
     sizeRange: '21 to 50',
+    summary: 'Everything in Plus + AI Coach & 5 Photo Scans/day',
     testID: 'picker-size-21-50',
     monthlyPrice: '₹199 / mo',
+    monthlyPriceUsd: '$11.99 / mo',
     monthlyPriceNum: 199,
     quarterlyPrice: '₹160 / mo',
     quarterlyTotal: '₹479',
     annualPrice: '₹100 / mo',
+    annualPriceUsd: '$6.67 / mo',
     annualTotal: '₹1,199 / yr',
+    annualTotalUsd: '$79.99 / yr',
+    hasTrial: false,
+    trialDays: 0,
+  },
+  basic: {
+    key: 'basic' as PlanTier,
+    label: 'Basic',
+    title: 'CaliPartner Free',
+    badge: 'FREE FOREVER',
+    cap: 5,
+    sizeRange: '2 to 5',
+    summary: 'Food diary, barcode, steps & GPS tracking free forever',
+    testID: 'picker-size-2-5',
+    monthlyPrice: '₹0 / mo',
+    monthlyPriceUsd: '$0',
+    monthlyPriceNum: 0,
+    quarterlyPrice: '₹0',
+    quarterlyTotal: '₹0',
+    annualPrice: '₹0 / mo',
+    annualPriceUsd: '$0',
+    annualTotal: '₹0 / yr',
+    annualTotalUsd: '$0',
+    hasTrial: false,
+    trialDays: 0,
   },
 };
+
+const PLUS_FEATURES = [
+  'Create or join 1 room (up to 20 people) with chat & side-by-side view',
+  'Partner Finder: browse suggestions and send match requests',
+  'Fasting tracker and eating windows',
+  'Full 150+ recipe library, meal planner & grocery lists',
+  'Workout routines, rest timer, personal records & shared workouts',
+  'Body measurements and private progress photos',
+  'Data export',
+];
+
+const PRO_FEATURES = [
+  'Everything in CaliPartner Plus',
+  'Personal AI Coach (10 messages a day)',
+  'AI photo food logging (5 scans a day)',
+  'Chat-to-log ("I ate two rotis and dal")',
+  'Coach-suggested recipes & "fits my day" collections',
+  'Weekly AI progress insights & macro adjustments',
+  'Up to 3 rooms (up to 50 people each)',
+  'Priority support',
+];
 
 export function PaywallModal({
   visible,
@@ -110,13 +154,13 @@ export function PaywallModal({
     sponsor,
   } = useSubscription();
 
-  // Selected Tier (Basic, Plus, Pro)
+  // Selected Tier (Plus, Pro) - default to Plus
   const [selectedTier, setSelectedTier] = useState<PlanTier>(() => {
-    if (preselectedTier) return preselectedTier;
+    if (preselectedTier === 'pro') return 'pro';
     return 'plus';
   });
 
-  // Selected Duration (Monthly, 3 Months, Annual — default to Annual)
+  // Selected Duration (Monthly, Annual — default to Annual as per Pricing Plan section 1.1)
   const [selectedDuration, setSelectedDuration] = useState<PlanDuration>('annual');
   const [actionLoading, setActionLoading] = useState(false);
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
@@ -129,7 +173,7 @@ export function PaywallModal({
   const [promoCode, setPromoCode] = useState('');
   const [promoMessage, setPromoMessage] = useState<string | null>(null);
 
-  // Contextual Title (Spec O02 / SUB-9)
+  // Contextual Title (CaliPartner pricing, not room plan)
   const contextualTitle = useMemo(() => {
     switch (context) {
       case 'room':
@@ -139,18 +183,18 @@ export function PaywallModal({
       case 'add_people':
         return 'Add more people';
       case 'coach':
-        return 'Ask your coach';
+        return 'Unlock AI Coach';
       case 'partner_finder':
         return 'Find a workout partner';
       case 'keep_going':
         return 'Keep your room going';
       case 'general':
       default:
-        return 'Choose a room plan';
+        return 'Choose your CaliPartner plan';
     }
   }, [context, roomPartnerName]);
 
-  const activeTierConfig = TIER_CONFIG[selectedTier];
+  const activeTierConfig = TIER_CONFIG[selectedTier === 'basic' ? 'plus' : selectedTier];
 
   // Find corresponding RevenueCat package if offerings are loaded
   const matchedPackage: PurchasesPackage | null = useMemo(() => {
@@ -160,13 +204,7 @@ export function PaywallModal({
     if (!offeringForTier) return null;
 
     const packages = offeringForTier.availablePackages;
-    const durIdentifier =
-      selectedDuration === 'annual'
-        ? 'annual'
-        : selectedDuration === 'quarterly'
-          ? 'quarterly'
-          : 'monthly';
-
+    const durIdentifier = selectedDuration === 'annual' ? 'annual' : 'monthly';
     const expectedId = `${selectedTier}_${durIdentifier}`;
 
     return (
@@ -255,35 +293,62 @@ export function PaywallModal({
     });
   };
 
-  // Renewal sentence in label (Spec O02 item 6)
-  const renewalSentence = useMemo(() => {
-    if (selectedDuration === 'annual') {
-      return `Renews at ${activeTierConfig.annualTotal} every year. Cancel any time in your store settings.`;
-    }
-    if (selectedDuration === 'quarterly') {
-      return `Renews at ${activeTierConfig.quarterlyTotal} every 3 months. Cancel any time in your store settings.`;
-    }
-    return `Renews at ₹${activeTierConfig.monthlyPriceNum} every month. Cancel any time in your store settings.`;
-  }, [selectedDuration, activeTierConfig]);
+  // Check if Indian user by timezone
+  const isIndian = useMemo(() => {
+    try {
+      if (typeof Intl !== 'undefined') {
+        const tz = Intl.DateTimeFormat().resolvedOptions().timeZone || '';
+        if (tz.includes('Kolkata') || tz.includes('Calcutta') || tz.includes('India')) return true;
+        // Non-Indian timezone detected
+        if (tz.length > 0 && !tz.includes('UTC')) return false;
+      }
+    } catch {}
+    return true;
+  }, []);
 
-  // Primary CTA copy (Spec O02 item 6)
+  // Renewal sentence in label: Plus has 7-day trial, Pro has NO trial
+  const renewalSentence = useMemo(() => {
+    if (selectedTier === 'plus') {
+      if (selectedDuration === 'annual') {
+        return isIndian
+          ? '7 days free, then ₹599 / year. Cancel any time in your store settings.'
+          : '7 days free, then $39.99 / year. Cancel any time in your store settings.';
+      }
+      return isIndian
+        ? '7 days free, then ₹99 / month. Cancel any time in your store settings.'
+        : '7 days free, then $5.99 / month. Cancel any time in your store settings.';
+    }
+    // Pro plan: No trial
+    if (selectedDuration === 'annual') {
+      return isIndian
+        ? 'Renews at ₹1,199 / year. Cancel any time in your store settings.'
+        : 'Renews at $79.99 / year. Cancel any time in your store settings.';
+    }
+    return isIndian
+      ? 'Renews at ₹199 / month. Cancel any time in your store settings.'
+      : 'Renews at $11.99 / month. Cancel any time in your store settings.';
+  }, [selectedDuration, selectedTier, isIndian]);
+
+  // Primary CTA copy: Plus has trial, Pro has NO trial
   const primaryCtaLabel = useMemo(() => {
     if (actionLoading) return 'Connecting to store…';
     if (sponsorRoomId || context === 'keep_going') {
       return `Keep room going with ${activeTierConfig.label}`;
     }
     if (isUpgrade) {
-      return `Upgrade to ${activeTierConfig.label}`;
+      return `Upgrade to CaliPartner ${activeTierConfig.label}`;
     }
-    // Trial available
-    return 'Start 3-Day Free Trial';
-  }, [actionLoading, sponsorRoomId, context, isUpgrade, activeTierConfig.label]);
+    if (selectedTier === 'plus') {
+      return 'Start 7-Day Free Trial';
+    }
+    return 'Get CaliPartner Pro';
+  }, [actionLoading, sponsorRoomId, context, isUpgrade, activeTierConfig.label, selectedTier]);
 
   return (
     <Modal visible={visible} animationType="slide" transparent={false} onRequestClose={onClose}>
       <SafeAreaView style={styles.safeArea}>
         <View style={styles.container} testID="modal-paywall">
-          {/* Top Bar with Top-Left Close Button (Spec O02 item 1) */}
+          {/* Top Bar with Top-Left Close Button */}
           <View style={styles.topBar}>
             <TouchableOpacity
               onPress={onClose}
@@ -295,7 +360,7 @@ export function PaywallModal({
               <ChevronLeftIcon color={dark.textHi} size={24} />
             </TouchableOpacity>
             <Text variant="heading" color={dark.textHi} style={styles.topBarTitle}>
-              Room Plan
+              CaliPartner Plans
             </Text>
             <View style={styles.closeButtonPlaceholder} />
           </View>
@@ -320,7 +385,7 @@ export function PaywallModal({
                 </Text>
               )}
               <Text variant="bodyS" color={dark.textMid} style={styles.subtitleText}>
-                The room is billed. Members join free. Personal tracking is yours forever.
+                Personal tracking is 100% free forever. Upgrade for rooms, partner finder, and AI coach.
               </Text>
             </View>
 
@@ -333,165 +398,10 @@ export function PaywallModal({
               </Card>
             )}
 
-            {/* 1. Size Picker: "How many people will be in your room?" (Spec O02 item 3) */}
-            <View style={styles.sectionWrap}>
-              <Text variant="label" color={dark.textHi} style={styles.sectionHeading}>
-                How many people will be in your room?
-              </Text>
-
-              <View style={styles.tierCardsRow}>
-                {/* Basic Card (2 to 5) */}
-                <TouchableOpacity
-                  onPress={() => setSelectedTier('basic')}
-                  style={[
-                    styles.tierCard,
-                    selectedTier === 'basic' && styles.tierCardSelected,
-                  ]}
-                  accessibilityRole="radio"
-                  accessibilityState={{ selected: selectedTier === 'basic' }}
-                  accessibilityLabel="Basic room plan, 2 to 5 people, 5 members"
-                  testID="picker-size-2-5"
-                >
-                  <View style={styles.tierCardHeader}>
-                    <Text
-                      variant="heading"
-                      color={selectedTier === 'basic' ? dark.apricot : dark.textHi}
-                    >
-                      Basic
-                    </Text>
-                    <Chip label="5 members" />
-                  </View>
-                  <Text variant="bodyS" color={dark.textMid} style={styles.sizeRangeText}>
-                    2 to 5 people
-                  </Text>
-                  <Text variant="heading" color={dark.textHi} style={styles.tierPrice}>
-                    {selectedDuration === 'annual'
-                      ? TIER_CONFIG.basic.annualPrice
-                      : selectedDuration === 'quarterly'
-                        ? TIER_CONFIG.basic.quarterlyPrice
-                        : TIER_CONFIG.basic.monthlyPrice}
-                  </Text>
-                </TouchableOpacity>
-
-                {/* Plus Card (6 to 20) */}
-                <TouchableOpacity
-                  onPress={() => setSelectedTier('plus')}
-                  style={[
-                    styles.tierCard,
-                    selectedTier === 'plus' && styles.tierCardSelected,
-                  ]}
-                  accessibilityRole="radio"
-                  accessibilityState={{ selected: selectedTier === 'plus' }}
-                  accessibilityLabel="Plus room plan, 6 to 20 people, 20 members"
-                  testID="picker-size-6-20"
-                >
-                  <View style={styles.tierCardHeader}>
-                    <Text
-                      variant="heading"
-                      color={selectedTier === 'plus' ? dark.apricot : dark.textHi}
-                    >
-                      Plus
-                    </Text>
-                    <Chip label="20 members" />
-                  </View>
-                  <Text variant="bodyS" color={dark.textMid} style={styles.sizeRangeText}>
-                    6 to 20 people
-                  </Text>
-                  <Text variant="heading" color={dark.textHi} style={styles.tierPrice}>
-                    {selectedDuration === 'annual'
-                      ? TIER_CONFIG.plus.annualPrice
-                      : selectedDuration === 'quarterly'
-                        ? TIER_CONFIG.plus.quarterlyPrice
-                        : TIER_CONFIG.plus.monthlyPrice}
-                  </Text>
-                </TouchableOpacity>
-
-                {/* Pro Card (21 to 50) */}
-                <TouchableOpacity
-                  onPress={() => setSelectedTier('pro')}
-                  style={[
-                    styles.tierCard,
-                    selectedTier === 'pro' && styles.tierCardSelected,
-                  ]}
-                  accessibilityRole="radio"
-                  accessibilityState={{ selected: selectedTier === 'pro' }}
-                  accessibilityLabel="Pro room plan, 21 to 50 people, 50 members"
-                  testID="picker-size-21-50"
-                >
-                  <View style={styles.tierCardHeader}>
-                    <Text
-                      variant="heading"
-                      color={selectedTier === 'pro' ? dark.apricot : dark.textHi}
-                    >
-                      Pro
-                    </Text>
-                    <Chip label="50 members" />
-                  </View>
-                  <Text variant="bodyS" color={dark.textMid} style={styles.sizeRangeText}>
-                    21 to 50 people
-                  </Text>
-                  <Text variant="heading" color={dark.textHi} style={styles.tierPrice}>
-                    {selectedDuration === 'annual'
-                      ? TIER_CONFIG.pro.annualPrice
-                      : selectedDuration === 'quarterly'
-                        ? TIER_CONFIG.pro.quarterlyPrice
-                        : TIER_CONFIG.pro.monthlyPrice}
-                  </Text>
-                </TouchableOpacity>
-              </View>
-            </View>
-
-            {/* 2. Billing Toggle: Monthly · 3 months · Annual (Spec O02 item 4) */}
+            {/* 1. Billing Duration Toggle: Annual (Save 50%) vs Monthly */}
             <View style={styles.sectionWrap}>
               <View style={styles.durationToggleContainer}>
-                {/* Monthly */}
-                <TouchableOpacity
-                  onPress={() => setSelectedDuration('monthly')}
-                  style={[
-                    styles.durationToggleItem,
-                    selectedDuration === 'monthly' && styles.durationToggleSelected,
-                  ]}
-                  accessibilityRole="button"
-                  accessibilityState={{ selected: selectedDuration === 'monthly' }}
-                  accessibilityLabel="Monthly billing"
-                  testID="toggle-duration-monthly"
-                >
-                  <Text
-                    variant="label"
-                    color={selectedDuration === 'monthly' ? dark.textHi : dark.textMid}
-                  >
-                    Monthly
-                  </Text>
-                </TouchableOpacity>
-
-                {/* 3 Months (with quiet savings chip) */}
-                <TouchableOpacity
-                  onPress={() => setSelectedDuration('quarterly')}
-                  style={[
-                    styles.durationToggleItem,
-                    selectedDuration === 'quarterly' && styles.durationToggleSelected,
-                  ]}
-                  accessibilityRole="button"
-                  accessibilityState={{ selected: selectedDuration === 'quarterly' }}
-                  accessibilityLabel="3 months billing, save 20 percent"
-                  testID="toggle-duration-quarterly"
-                >
-                  <View style={styles.durationLabelWithChip}>
-                    <Text
-                      variant="label"
-                      color={selectedDuration === 'quarterly' ? dark.textHi : dark.textMid}
-                    >
-                      3 Months
-                    </Text>
-                    <View style={styles.quietChip}>
-                      <Text variant="micro" color={dark.textHi}>
-                        Save 20%
-                      </Text>
-                    </View>
-                  </View>
-                </TouchableOpacity>
-
-                {/* Annual (with quiet savings chip) */}
+                {/* Annual (Preselected Default) */}
                 <TouchableOpacity
                   onPress={() => setSelectedDuration('annual')}
                   style={[
@@ -507,47 +417,233 @@ export function PaywallModal({
                     <Text
                       variant="label"
                       color={selectedDuration === 'annual' ? dark.textHi : dark.textMid}
+                      style={{ fontWeight: '700' }}
                     >
                       Annual
                     </Text>
                     <View style={styles.quietChip}>
-                      <Text variant="micro" color={dark.textHi}>
+                      <Text variant="micro" color={dark.teal} style={{ fontWeight: '700' }}>
                         Save 50%
                       </Text>
                     </View>
                   </View>
                 </TouchableOpacity>
+
+                {/* Monthly */}
+                <TouchableOpacity
+                  onPress={() => setSelectedDuration('monthly')}
+                  style={[
+                    styles.durationToggleItem,
+                    selectedDuration === 'monthly' && styles.durationToggleSelected,
+                  ]}
+                  accessibilityRole="button"
+                  accessibilityState={{ selected: selectedDuration === 'monthly' }}
+                  accessibilityLabel="Monthly billing"
+                  testID="toggle-duration-monthly"
+                >
+                  <Text
+                    variant="label"
+                    color={selectedDuration === 'monthly' ? dark.textHi : dark.textMid}
+                    style={{ fontWeight: selectedDuration === 'monthly' ? '700' : '500' }}
+                  >
+                    Monthly
+                  </Text>
+                </TouchableOpacity>
               </View>
             </View>
 
-            {/* 3. What you get (Spec O02 item 5) */}
-            <Card elevation="s1" style={styles.whatYouGetCard}>
-              <Text variant="label" color={dark.textHi} style={styles.whatYouGetHeader}>
-                What you get:
+            {/* 2. Plan Selection Cards: Plus vs Pro (Spacious stacked layout) */}
+            <View style={styles.sectionWrap}>
+              <Text variant="label" color={dark.textHi} style={styles.sectionHeading}>
+                Select your plan
               </Text>
-              <View style={styles.whatYouGetItem}>
-                <Ionicons name="checkmark" size={16} color={dark.apricot} style={styles.checkIcon} />
-                <Text variant="bodyS" color={dark.textHi}>
-                  Room, chat, progress and focus for everyone
-                </Text>
+
+              <View style={styles.planCardsStack}>
+                {/* Plus Card */}
+                <TouchableOpacity
+                  onPress={() => setSelectedTier('plus')}
+                  style={[
+                    styles.planCard,
+                    selectedTier === 'plus' && styles.planCardSelected,
+                  ]}
+                  accessibilityRole="radio"
+                  accessibilityState={{ selected: selectedTier === 'plus' }}
+                  accessibilityLabel="CaliPartner Plus, 7 day free trial, 99 rupees monthly or 599 yearly"
+                  testID="picker-size-6-20"
+                >
+                  <View style={styles.planCardTopRow}>
+                    <View style={styles.planRadioRow}>
+                      <View
+                        style={[
+                          styles.radioCircle,
+                          selectedTier === 'plus' && styles.radioCircleActive,
+                        ]}
+                      >
+                        {selectedTier === 'plus' && <View style={styles.radioDot} />}
+                      </View>
+                      <View>
+                        <Text
+                          variant="heading"
+                          color={selectedTier === 'plus' ? dark.apricot : dark.textHi}
+                          style={styles.planNameText}
+                        >
+                          Plus
+                        </Text>
+                        <Text variant="micro" color={dark.textLo}>
+                          1 room · up to 20 people
+                        </Text>
+                      </View>
+                    </View>
+
+                    <View style={styles.trialBadge}>
+                      <Ionicons name="sparkles" size={12} color={dark.apricot} />
+                      <Text variant="micro" color={dark.apricot} style={{ fontWeight: '700' }}>
+                        7-DAY FREE TRIAL
+                      </Text>
+                    </View>
+                  </View>
+
+                  <Text variant="bodyS" color={dark.textMid} style={styles.planSummaryText}>
+                    Rooms, chat, side-by-side, Partner Finder, fasting & workouts.
+                  </Text>
+
+                  <View style={styles.priceDivider} />
+
+                  <View style={styles.priceContainer}>
+                    <View style={styles.priceMainRow}>
+                      <Text variant="numeralM" color={dark.textHi} style={styles.priceHighlight}>
+                        {isIndian
+                          ? selectedDuration === 'annual'
+                            ? '₹599 / yr'
+                            : '₹99 / mo'
+                          : selectedDuration === 'annual'
+                            ? '$39.99 / yr'
+                            : '$5.99 / mo'}
+                      </Text>
+                      {selectedDuration === 'annual' && (
+                        <Text variant="label" color={dark.textMid} style={styles.monthlyEquiv}>
+                          · {isIndian ? '₹50/mo' : '$3.33/mo'}
+                        </Text>
+                      )}
+                    </View>
+                    <Text variant="micro" color={dark.teal} style={styles.trialSubNote}>
+                      Includes 7-day free trial · Cancel anytime
+                    </Text>
+                  </View>
+                </TouchableOpacity>
+
+                {/* Pro Card */}
+                <TouchableOpacity
+                  onPress={() => setSelectedTier('pro')}
+                  style={[
+                    styles.planCard,
+                    selectedTier === 'pro' && styles.planCardSelected,
+                  ]}
+                  accessibilityRole="radio"
+                  accessibilityState={{ selected: selectedTier === 'pro' }}
+                  accessibilityLabel="CaliPartner Pro, AI Coach, 199 rupees monthly or 1199 yearly, no trial"
+                  testID="picker-size-21-50"
+                >
+                  <View style={styles.planCardTopRow}>
+                    <View style={styles.planRadioRow}>
+                      <View
+                        style={[
+                          styles.radioCircle,
+                          selectedTier === 'pro' && styles.radioCircleActive,
+                        ]}
+                      >
+                        {selectedTier === 'pro' && <View style={styles.radioDot} />}
+                      </View>
+                      <View>
+                        <Text
+                          variant="heading"
+                          color={selectedTier === 'pro' ? dark.apricot : dark.textHi}
+                          style={styles.planNameText}
+                        >
+                          Pro
+                        </Text>
+                        <Text variant="micro" color={dark.textLo}>
+                          3 rooms · up to 50 people each
+                        </Text>
+                      </View>
+                    </View>
+
+                    <View style={styles.aiBadge}>
+                      <Ionicons name="flash" size={12} color={dark.teal} />
+                      <Text variant="micro" color={dark.teal} style={{ fontWeight: '700' }}>
+                        AI COACH & SCANS
+                      </Text>
+                    </View>
+                  </View>
+
+                  <Text variant="bodyS" color={dark.textMid} style={styles.planSummaryText}>
+                    Everything in Plus + Personal AI Coach & 5 photo food scans/day.
+                  </Text>
+
+                  <View style={styles.priceDivider} />
+
+                  <View style={styles.priceContainer}>
+                    <View style={styles.priceMainRow}>
+                      <Text variant="numeralM" color={dark.textHi} style={styles.priceHighlight}>
+                        {isIndian
+                          ? selectedDuration === 'annual'
+                            ? '₹1,199 / yr'
+                            : '₹199 / mo'
+                          : selectedDuration === 'annual'
+                            ? '$79.99 / yr'
+                            : '$11.99 / mo'}
+                      </Text>
+                      {selectedDuration === 'annual' && (
+                        <Text variant="label" color={dark.textMid} style={styles.monthlyEquiv}>
+                          · {isIndian ? '₹100/mo' : '$6.67/mo'}
+                        </Text>
+                      )}
+                    </View>
+                    <Text variant="micro" color={dark.textLo} style={styles.trialSubNote}>
+                      Direct subscription · Instant full access
+                    </Text>
+                  </View>
+                </TouchableOpacity>
               </View>
-              <View style={styles.whatYouGetItem}>
-                <Ionicons name="checkmark" size={16} color={dark.apricot} style={styles.checkIcon} />
-                <Text variant="bodyS" color={dark.textHi}>
-                  AI coach and Partner Finder for you
+            </View>
+
+            {/* 3. Section 7 Feature Checklist: Dynamic for Selected Plan */}
+            <Card elevation="s1" style={styles.whatYouGetCard}>
+              <View style={styles.featuresHeaderRow}>
+                <Text variant="label" color={dark.textHi} style={styles.whatYouGetHeader}>
+                  {selectedTier === 'pro' ? 'What you get with Pro:' : 'What you get with Plus:'}
                 </Text>
-              </View>
-              <View style={styles.whatYouGetItem}>
-                <Ionicons name="checkmark" size={16} color={dark.apricot} style={styles.checkIcon} />
-                <Text variant="bodyS" color={dark.textHi}>
-                  Bigger photo allowance
-                </Text>
+                {selectedTier === 'plus' && (
+                  <View style={styles.badgeQuiet}>
+                    <Text variant="micro" color={dark.apricot} style={{ fontWeight: '600' }}>
+                      7 days free
+                    </Text>
+                  </View>
+                )}
               </View>
 
+              {(selectedTier === 'pro' ? PRO_FEATURES : PLUS_FEATURES).map((feat, index) => (
+                <View key={index} style={styles.whatYouGetItem}>
+                  <Ionicons
+                    name="checkmark-circle"
+                    size={16}
+                    color={dark.apricot}
+                    style={styles.checkIcon}
+                  />
+                  <Text variant="bodyS" color={dark.textHi} style={styles.featureItemText}>
+                    {feat}
+                  </Text>
+                </View>
+              ))}
+
               <View style={styles.freeSentenceDivider} />
-              <Text variant="micro" color={dark.textMid} style={styles.freeSentenceText}>
-                Logging, your diary and your streak stay free.
-              </Text>
+
+              <View style={styles.freeGuaranteeBlock}>
+                <Ionicons name="lock-open-outline" size={15} color={dark.teal} />
+                <Text variant="micro" color={dark.textMid} style={styles.freeSentenceText}>
+                  Personal food diary, barcode scan, water, steps, distance, GPS tracking, workouts & weight stay 100% free forever.
+                </Text>
+              </View>
             </Card>
 
             {/* Promo Code Trigger */}
@@ -564,7 +660,7 @@ export function PaywallModal({
             </TouchableOpacity>
           </ScrollView>
 
-          {/* Primary CTA Block with One-Line Renewal Sentence (Spec O02 item 6) */}
+          {/* Primary CTA Block */}
           <View style={styles.ctaBottomBar}>
             <Button
               variant="primary"
@@ -584,7 +680,7 @@ export function PaywallModal({
               {renewalSentence}
             </Text>
 
-            {/* Footer Links (Spec O02 item 7) */}
+            {/* Footer Links */}
             <View style={styles.footerLinksRow}>
               <TouchableOpacity
                 onPress={handleRestore}
@@ -638,10 +734,12 @@ export function PaywallModal({
               <Card elevation="s1" style={styles.successModalCard} testID="modal-purchase-success">
                 <Ionicons name="sparkles" size={36} color={dark.apricot} style={styles.successIcon} />
                 <Text variant="title1" color={dark.textHi} style={styles.successTitle}>
-                  {activeTierConfig.label} Plan Unlocked
+                  {activeTierConfig.title} Unlocked
                 </Text>
                 <Text variant="body" color={dark.textMid} style={styles.successSubtitle}>
-                  {roomName} now fits up to {activeTierConfig.cap} members.
+                  {selectedTier === 'pro'
+                    ? 'AI Coach, 5 daily photo scans, and 3 rooms unlocked.'
+                    : `${roomName} now fits up to ${activeTierConfig.cap} members.`}
                 </Text>
 
                 <Button
@@ -652,14 +750,14 @@ export function PaywallModal({
                     onClose();
                     if (onSuccess) onSuccess();
                   }}
-                  testID="btn-success-done"
+                  testID="btn-paywall-success-done"
                   style={styles.successDoneBtn}
                 />
               </Card>
             </View>
           </Modal>
 
-          {/* O09 Restore Result Modal */}
+          {/* O09 Restore Results Modal */}
           <Modal
             visible={showRestoreModal}
             transparent
@@ -668,30 +766,36 @@ export function PaywallModal({
           >
             <View style={styles.modalBackdrop}>
               <Card elevation="s1" style={styles.resultModalCard} testID="modal-restore-result">
+                <Ionicons
+                  name={restoreSuccess ? 'checkmark-circle' : 'alert-circle-outline'}
+                  size={36}
+                  color={restoreSuccess ? dark.teal : dark.apricot}
+                  style={styles.successIcon}
+                />
                 <Text variant="heading" color={dark.textHi} style={styles.resultTitle}>
-                  {restoreSuccess ? 'We found your plan' : 'No purchases found'}
+                  {restoreSuccess ? 'Purchases Restored' : 'No Purchases Found'}
                 </Text>
                 <Text variant="bodyS" color={dark.textMid} style={styles.resultSubtitle}>
                   {restoreSuccess
-                    ? 'Your room plan has been successfully restored.'
-                    : 'No active purchases were found for this store account.'}
+                    ? 'Your plan has been successfully restored.'
+                    : 'We could not find any active subscriptions for this store account.'}
                 </Text>
                 <Button
                   variant="secondary"
                   label="Close"
                   onPress={() => setShowRestoreModal(false)}
-                  testID="btn-close-restore-result"
+                  testID="btn-restore-result-close"
                   style={styles.resultCloseBtn}
                 />
               </Card>
             </View>
           </Modal>
 
-          {/* O10 Promo Code Modal */}
+          {/* O10 Partner Promo Code Modal */}
           <Modal
             visible={showPromoModal}
             transparent
-            animationType="slide"
+            animationType="fade"
             onRequestClose={() => setShowPromoModal(false)}
           >
             <View style={styles.modalBackdrop}>
@@ -700,14 +804,14 @@ export function PaywallModal({
                   Partner Promo Code
                 </Text>
                 <Text variant="bodyS" color={dark.textMid} style={styles.promoSubtitle}>
-                  Enter a partner collaboration code to apply discounts.
+                  Enter a partner collaboration code for 50% off your first year.
                 </Text>
 
                 <TextInput
                   value={promoCode}
                   onChangeText={setPromoCode}
                   placeholder="e.g. PARTNER50"
-                  placeholderTextColor={dark.textOff}
+                  placeholderTextColor={dark.textLo}
                   autoCapitalize="characters"
                   style={styles.promoInput}
                   testID="input-promo-code"
@@ -726,14 +830,15 @@ export function PaywallModal({
                   testID="btn-apply-promo"
                   style={styles.applyBtn}
                 />
-
                 <Button
                   variant="secondary"
                   label="Cancel"
                   onPress={() => {
                     setShowPromoModal(false);
+                    setPromoCode('');
                     setPromoMessage(null);
                   }}
+                  testID="btn-cancel-promo"
                   style={styles.cancelPromoBtn}
                 />
               </Card>
@@ -763,72 +868,47 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: dark.hairline,
   },
+  topBarTitle: {
+    fontWeight: '700',
+  },
   closeButton: {
     width: 44,
     height: 44,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  topBarTitle: {
-    fontWeight: '600',
-  },
   closeButtonPlaceholder: {
     width: 44,
   },
   scrollContent: {
-    padding: space[4],
+    paddingHorizontal: space[4],
+    paddingTop: space[4],
     paddingBottom: space[6],
   },
   headerBlock: {
     marginBottom: space[4],
   },
   titleText: {
-    marginBottom: space[2],
+    marginBottom: space[1],
+    fontWeight: '700',
   },
   keepGoingSubtitle: {
-    marginBottom: space[2],
+    marginBottom: space[1],
   },
   subtitleText: {
     lineHeight: 20,
   },
   statusBanner: {
     padding: space[3],
-    marginBottom: space[4],
+    marginBottom: space[3],
+    backgroundColor: dark.s2,
   },
   sectionWrap: {
     marginBottom: space[4],
   },
   sectionHeading: {
     marginBottom: space[2],
-  },
-  tierCardsRow: {
-    flexDirection: 'row',
-    gap: space[2],
-  },
-  tierCard: {
-    flex: 1,
-    padding: space[3],
-    backgroundColor: dark.s2,
-    borderRadius: radius.control,
-    borderWidth: 1.5,
-    borderColor: dark.hairline,
-  },
-  tierCardSelected: {
-    borderColor: dark.apricot,
-    backgroundColor: dark.s3,
-  },
-  tierCardHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: space[1],
-  },
-  sizeRangeText: {
-    marginBottom: space[2],
-  },
-  tierPrice: {
-    marginTop: space[1],
-    fontVariant: ['tabular-nums'],
+    fontWeight: '700',
   },
   durationToggleContainer: {
     flexDirection: 'row',
@@ -849,40 +929,167 @@ const styles = StyleSheet.create({
     borderColor: dark.hairlineLit,
   },
   durationLabelWithChip: {
+    flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
+    gap: space[2],
   },
   quietChip: {
     backgroundColor: dark.s1,
-    paddingHorizontal: 6,
-    paddingVertical: 1,
+    paddingHorizontal: 8,
+    paddingVertical: 2,
     borderRadius: radius.full,
-    marginTop: 2,
     borderWidth: 0.5,
+    borderColor: dark.teal,
+  },
+  planCardsStack: {
+    gap: space[3],
+  },
+  planCard: {
+    width: '100%',
+    padding: space[4],
+    backgroundColor: dark.s1,
+    borderRadius: radius.card,
+    borderWidth: 1.5,
+    borderColor: dark.hairline,
+  },
+  planCardSelected: {
+    borderColor: dark.apricot,
+    backgroundColor: dark.s2,
+  },
+  planCardTopRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: space[2],
+  },
+  planRadioRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: space[3],
+  },
+  radioCircle: {
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    borderWidth: 2,
     borderColor: dark.hairlineLit,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  radioCircleActive: {
+    borderColor: dark.apricot,
+  },
+  radioDot: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    backgroundColor: dark.apricot,
+  },
+  planNameText: {
+    fontWeight: '800',
+    fontSize: 18,
+  },
+  trialBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: dark.s3,
+    paddingHorizontal: space[2],
+    paddingVertical: 3,
+    borderRadius: radius.full,
+    borderWidth: 1,
+    borderColor: dark.apricot,
+  },
+  aiBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: dark.s3,
+    paddingHorizontal: space[2],
+    paddingVertical: 3,
+    borderRadius: radius.full,
+    borderWidth: 1,
+    borderColor: dark.teal,
+  },
+  planSummaryText: {
+    lineHeight: 18,
+    marginBottom: space[2],
+  },
+  priceDivider: {
+    height: 1,
+    backgroundColor: dark.hairline,
+    marginVertical: space[2],
+  },
+  priceContainer: {
+    gap: 2,
+  },
+  priceMainRow: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    gap: space[2],
+  },
+  priceHighlight: {
+    fontWeight: '700',
+  },
+  usdText: {
+    fontVariant: ['tabular-nums'],
+  },
+  monthlyEquiv: {
+    fontWeight: '600',
+  },
+  trialSubNote: {
+    marginTop: 2,
   },
   whatYouGetCard: {
     padding: space[4],
     marginBottom: space[4],
+    backgroundColor: dark.s1,
+    borderRadius: radius.card,
+    borderWidth: 1,
+    borderColor: dark.hairline,
+  },
+  featuresHeaderRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: space[3],
   },
   whatYouGetHeader: {
-    marginBottom: space[3],
+    fontWeight: '700',
+  },
+  badgeQuiet: {
+    backgroundColor: dark.s2,
+    paddingHorizontal: space[2],
+    paddingVertical: 2,
+    borderRadius: radius.full,
   },
   whatYouGetItem: {
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     marginBottom: space[2],
+    gap: space[2],
   },
   checkIcon: {
-    marginRight: space[2],
+    marginTop: 2,
+  },
+  featureItemText: {
+    flex: 1,
+    lineHeight: 19,
   },
   freeSentenceDivider: {
     height: 1,
     backgroundColor: dark.hairline,
     marginVertical: space[3],
   },
+  freeGuaranteeBlock: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: space[2],
+  },
   freeSentenceText: {
-    lineHeight: 18,
+    flex: 1,
+    lineHeight: 17,
   },
   promoTrigger: {
     minHeight: 44,

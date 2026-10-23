@@ -16,6 +16,33 @@ export interface IconProps {
  * Source of truth: docs/ui/04-layout-motion.md (4.6 Iconography)
  */
 
+export function HomeIcon({
+  size = 24,
+  color = dark.textHi,
+  filled = false,
+  strokeWidth = 1.75,
+}: IconProps): React.JSX.Element {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Path
+        d="M3 9.5L12 3l9 6.5V20a1.5 1.5 0 0 1-1.5 1.5H4.5A1.5 1.5 0 0 1 3 20V9.5z"
+        stroke={color}
+        strokeWidth={strokeWidth}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        fill={filled ? color : 'none'}
+      />
+      <Polyline
+        points="9 21 9 12 15 12 15 21"
+        stroke={filled ? dark.onBrand : color}
+        strokeWidth={strokeWidth}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </Svg>
+  );
+}
+
 export function TodayIcon({
   size = 24,
   color = dark.textHi,

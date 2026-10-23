@@ -12,3 +12,4 @@ export * from './WeightHistoryModal';
 export * from './AddMeasurementModal';
 export * from './ProgressPhotosModal';
 export * from './TargetWeightEditorModal';
+export * from './WaterAlarmModal';

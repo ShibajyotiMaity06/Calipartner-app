@@ -41,4 +41,5 @@ export { PlaceholderSegment } from './PlaceholderSegment';
 export { RoomProgressView } from './RoomProgressView';
 export { WhatTheyCanSeeSheet, type WhatTheyCanSeeSheetProps } from './WhatTheyCanSeeSheet';
 export { PartnerMealSheet, type PartnerMealSheetProps } from './PartnerMealSheet';
+export { SquadConnectFlow, type SquadConnectFlowProps } from './SquadConnectFlow';
 export { ChatView } from '../chat/ChatView';

@@ -45,6 +45,8 @@ function createWebDb(): SQLite.SQLiteDatabase {
     local_recipe_recently_viewed: [],
     local_recipe_reports: [],
     outbox: [],
+    local_goal_profiles: [],
+    local_health_screening: [],
     goal_profiles: [],
     health_screenings: [],
   };
@@ -54,6 +56,9 @@ function createWebDb(): SQLite.SQLiteDatabase {
       const saved = localStorage.getItem(STORAGE_KEY);
       if (saved) {
         memory = { ...memory, ...JSON.parse(saved) };
+        if (memory.goal_profiles?.length && !memory.local_goal_profiles?.length) {
+          memory.local_goal_profiles = [...memory.goal_profiles];
+        }
       }
     }
   } catch {
@@ -87,28 +92,44 @@ function createWebDb(): SQLite.SQLiteDatabase {
           const table = match[1]!;
           const cols = match[2]!.split(',').map((c) => c.trim());
           const list = memory[table] || (memory[table] = []);
-          const row: Record<string, unknown> = {};
 
-          let paramIdx = 0;
-          for (let i = 0; i < cols.length; i++) {
-            const col = cols[i]!;
-            row[col] = params[paramIdx++];
-          }
+          const colCount = cols.length;
+          const rowCount = Math.max(1, Math.floor(params.length / colCount));
 
-          if (table === 'local_activity_days') {
-            const existingIdx = list.findIndex(
-              (r) => r.user_id === row.user_id && r.local_date === row.local_date,
-            );
-            if (existingIdx >= 0) {
-              list[existingIdx] = { ...list[existingIdx], ...row };
-              persist();
-              return { lastInsertRowId: existingIdx + 1, changes: 1 };
+          for (let r = 0; r * colCount < params.length; r++) {
+            const row: Record<string, unknown> = {};
+            for (let c = 0; c < colCount; c++) {
+              row[cols[c]!] = params[r * colCount + c];
             }
+            if (table === 'local_activity_days') {
+              const existingIdx = list.findIndex(
+                (ex) => ex.user_id === row.user_id && ex.local_date === row.local_date,
+              );
+              if (existingIdx >= 0) {
+                list[existingIdx] = { ...list[existingIdx], ...row };
+                continue;
+              }
+            }
+            if (table === 'local_goal_profiles') {
+              const existingIdx = list.findIndex(
+                (ex) => ex.id === row.id || (ex.user_id === row.user_id && row.user_id),
+              );
+              if (existingIdx >= 0) {
+                list[existingIdx] = { ...list[existingIdx], ...row };
+                continue;
+              }
+            }
+            if (table === 'local_health_screening') {
+              const existingIdx = list.findIndex((ex) => ex.user_id === row.user_id);
+              if (existingIdx >= 0) {
+                list[existingIdx] = { ...list[existingIdx], ...row };
+                continue;
+              }
+            }
+            list.push(row);
           }
-
-          list.push(row);
           persist();
-          return { lastInsertRowId: list.length, changes: 1 };
+          return { lastInsertRowId: list.length, changes: rowCount };
         }
       }
 
@@ -218,6 +239,89 @@ function createWebDb(): SQLite.SQLiteDatabase {
         return filtered as unknown as T[];
       }
 
+      if (lower.includes('from local_foods')) {
+        let list = memory.local_foods || [];
+        if (list.length === 0) {
+          try {
+            // eslint-disable-next-line @typescript-eslint/no-require-imports
+            const bundled = require('../../assets/bundled_foods.json');
+            list = memory.local_foods = (bundled as Array<Record<string, unknown>>).map((b) => ({
+              ...b,
+              serving_units: JSON.stringify(b.serving_units || [{ unit: 'g', grams: 1 }]),
+              deleted_at: null,
+            }));
+            persist();
+          } catch {}
+        }
+
+        if (lower.includes('like ?') && params.length >= 1) {
+          const rawPat = String(params[0] || '').replace(/%/g, '').toLowerCase().trim();
+          const userId = params[2] ? String(params[2]) : '';
+          const limit = Number(params[params.length - 1]) || 40;
+
+          const matches = list.filter((r) => {
+            if (r.deleted_at) return false;
+            if (r.owner_id && r.owner_id !== userId) return false;
+            const name = String(r.name || '').toLowerCase();
+            const brand = String(r.brand || '').toLowerCase();
+            return name.includes(rawPat) || brand.includes(rawPat);
+          });
+
+          matches.sort((a, b) => {
+            const aName = String(a.name || '').toLowerCase();
+            const bName = String(b.name || '').toLowerCase();
+            if (aName === rawPat && bName !== rawPat) return -1;
+            if (bName === rawPat && aName !== rawPat) return 1;
+            if (aName.startsWith(rawPat) && !bName.startsWith(rawPat)) return -1;
+            if (bName.startsWith(rawPat) && !aName.startsWith(rawPat)) return 1;
+            return aName.localeCompare(bName);
+          });
+
+          return matches.slice(0, limit) as unknown as T[];
+        }
+
+        return list as unknown as T[];
+      }
+
+      if (lower.includes('from local_recipes')) {
+        let list = memory.local_recipes || [];
+        if (list.length === 0) {
+          try {
+            // eslint-disable-next-line @typescript-eslint/no-require-imports
+            const bundled = require('../../assets/bundled_recipes.json');
+            const arr = (bundled.recipes || (Array.isArray(bundled) ? bundled : [])) as Array<Record<string, unknown>>;
+            list = memory.local_recipes = arr.map((r) => ({
+              ...r,
+              diet_tags: Array.isArray(r.diet_tags) ? JSON.stringify(r.diet_tags) : String(r.diet_tags || '[]'),
+              steps: Array.isArray(r.steps) ? JSON.stringify(r.steps) : String(r.steps || '[]'),
+              tips: Array.isArray(r.tips) ? JSON.stringify(r.tips) : String(r.tips || '[]'),
+              image_urls: Array.isArray(r.image_urls) ? JSON.stringify(r.image_urls) : String(r.image_urls || '[]'),
+              nutrition_per_serving:
+                typeof r.nutrition_per_serving === 'object'
+                  ? JSON.stringify(r.nutrition_per_serving)
+                  : String(r.nutrition_per_serving || '{}'),
+            }));
+            persist();
+          } catch {}
+        }
+        return list as unknown as T[];
+      }
+
+      if (lower.includes('from local_goal_profiles')) {
+        const list = memory.local_goal_profiles || memory.goal_profiles || [];
+        return list as unknown as T[];
+      }
+
+      if (lower.includes('from local_food_entries')) {
+        const list = memory.local_food_entries || [];
+        let filtered = list.filter((r) => !r.deleted_at);
+        if (params.length >= 2) {
+          const [userId, localDate] = params as [string, string];
+          filtered = filtered.filter((r) => r.user_id === userId && r.local_date === localDate);
+        }
+        return filtered as unknown as T[];
+      }
+
       return [];
     },
     async getFirstAsync<T>(sql: string, ...args: unknown[]): Promise<T | null> {
@@ -226,6 +330,68 @@ function createWebDb(): SQLite.SQLiteDatabase {
 
       if (lower.includes('pragma user_version')) {
         return { user_version: 5 } as unknown as T;
+      }
+
+      if (lower.includes('from local_goal_profiles')) {
+        const list = memory.local_goal_profiles || memory.goal_profiles || [];
+        if (list.length > 0) {
+          const sorted = [...list].sort((a, b) => {
+            const timeA = String(a.effective_from || a.created_at || '');
+            const timeB = String(b.effective_from || b.created_at || '');
+            return timeB.localeCompare(timeA);
+          });
+          if (params.length > 0 && params[0]) {
+            const userId = String(params[0]);
+            const match = sorted.find((p) => p.user_id === userId);
+            if (match) return match as unknown as T;
+          }
+          return sorted[0] as unknown as T;
+        }
+        return null;
+      }
+
+      if (lower.includes('from local_health_screening')) {
+        const list = memory.local_health_screening || memory.health_screenings || [];
+        if (list.length > 0) {
+          const sorted = [...list].sort((a, b) => {
+            const timeA = String(a.updated_at || a.created_at || '');
+            const timeB = String(b.updated_at || b.created_at || '');
+            return timeB.localeCompare(timeA);
+          });
+          if (params.length > 0 && params[0]) {
+            const userId = String(params[0]);
+            const match = sorted.find((s) => s.user_id === userId);
+            if (match) return match as unknown as T;
+          }
+          return sorted[0] as unknown as T;
+        }
+        return null;
+      }
+
+      if (lower.includes('from local_foods') && lower.includes('count(*) as count')) {
+        let count = (memory.local_foods || []).length;
+        if (count === 0) {
+          try {
+            // eslint-disable-next-line @typescript-eslint/no-require-imports
+            const bundled = require('../../assets/bundled_foods.json');
+            count = bundled.length;
+          } catch {}
+        }
+        return { count } as unknown as T;
+      }
+
+      if (lower.includes('from local_foods') && lower.includes('barcode = ?')) {
+        const [barcode] = params as [string];
+        const list = memory.local_foods || [];
+        const found = list.find((r) => r.barcode === barcode && !r.deleted_at);
+        return (found as unknown as T) || null;
+      }
+
+      if (lower.includes('from local_recipes') && lower.includes('id = ?')) {
+        const [id] = params as [string];
+        const list = memory.local_recipes || [];
+        const found = list.find((r) => r.id === id);
+        return (found as unknown as T) || null;
       }
 
       if (lower.includes('sum(amount_ml)')) {
@@ -266,3 +432,40 @@ function createWebDb(): SQLite.SQLiteDatabase {
     },
   } as unknown as SQLite.SQLiteDatabase;
 }
+
+/**
+ * Wipes all on-device SQLite tables on account deletion (H21 fix).
+ */
+export async function clearAllLocalData(): Promise<void> {
+  const db = await getDb();
+  const tables = [
+    'outbox',
+    'guest_entries',
+    'local_goal_profiles',
+    'local_health_screening',
+    'local_foods',
+    'local_food_entries',
+    'local_water_logs',
+    'local_weight_logs',
+    'local_activity_days',
+    'local_chat_messages',
+    'local_chat_attachments',
+    'local_chat_read_state',
+    'local_chat_room_settings',
+    'local_focus_sessions',
+    'local_recipes',
+    'local_recipe_ingredients',
+    'local_recipe_favorites',
+    'local_recipe_recently_viewed',
+    'local_fasting_sessions',
+  ];
+
+  for (const table of tables) {
+    try {
+      await db.runAsync(`DELETE FROM ${table};`);
+    } catch {
+      // Table may not exist or already be empty, continue
+    }
+  }
+}
+

@@ -130,12 +130,6 @@ export function ActivityStep({ selectedActivityLevel, onSelectActivityLevel }: A
                   {title}
                 </Text>
               </View>
-
-              <View style={styles.badgeContainer}>
-                <Text variant="label" color={dark.textLo} style={styles.badgeText}>
-                  {multiplier}
-                </Text>
-              </View>
             </View>
 
             <Text variant="bodyS" color={dark.textMid} style={styles.description}>

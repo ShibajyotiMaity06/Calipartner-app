@@ -49,13 +49,8 @@ describe('OnboardingStateMachine', () => {
     expect(stateAtRate.calculatedTargets?.tdee).toBe(2594);
     expect(stateAtRate.calculatedTargets?.targetKcal).toBe(2044); // cut 0.5
 
-    // Picking unavailable rate 1.0 (fails floor)
+    // User is allowed to select rate (safe cap is advisory, user choice respected)
     machine.setWeeklyRate(1.0);
-    expect(machine.next()).toBe(false);
-    expect(machine.getState().errors.rate).toBeDefined();
-
-    // Pick valid rate 0.5
-    machine.setWeeklyRate(0.5);
     expect(machine.next()).toBe(true);
     expect(machine.getState().currentStep).toBe('target_weight_date');
 

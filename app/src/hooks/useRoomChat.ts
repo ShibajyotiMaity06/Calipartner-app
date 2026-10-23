@@ -7,6 +7,7 @@ import { getSupabase } from '@/lib/supabase';
 import { getDb } from '@/db';
 import {
   acceptChatTerms,
+  blockChatMember,
   deleteChatMessage,
   getChatMessages,
   getChatUnreadCount,
@@ -347,6 +348,26 @@ export function useRoomChat(
     }
   }, []);
 
+  // Block member action (Apple App Store Guideline 1.2 UGC instant block)
+  const blockMember = useCallback(async (targetUserId: string) => {
+    const supabase = getSupabase();
+    try {
+      await blockChatMember(supabase, targetUserId);
+      // Immediately purge their messages from active state and local SQLite
+      setMessages((prev) => prev.filter((m) => m.sender_id !== targetUserId));
+      try {
+        const db = await getDb();
+        await db.runAsync(`DELETE FROM local_chat_messages WHERE sender_id = ?`, [targetUserId]);
+      } catch {
+        // ignore local delete error
+      }
+    } catch (err: unknown) {
+      const chatErr = parseChatError(err);
+      setError(chatErr);
+      throw chatErr;
+    }
+  }, []);
+
   // Accept terms action
   const acceptTermsAction = useCallback(async () => {
     if (!userId) return;
@@ -377,6 +398,7 @@ export function useRoomChat(
     deleteMessage,
     reportMessage,
     muteMember,
+    blockMember,
     acceptTerms: acceptTermsAction,
     refresh: loadInitialMessages,
   };

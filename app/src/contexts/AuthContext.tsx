@@ -1,4 +1,5 @@
 import React, { createContext, useCallback, useContext, useEffect, useState } from 'react';
+import { Platform } from 'react-native';
 import type { Session, User } from '@supabase/supabase-js';
 import {
   isDisposableEmail,
@@ -73,6 +74,48 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     let mounted = true;
     const supabase = getSupabase();
 
+    // Detect OAuth tokens in URL hash on web (e.g. after Google OAuth redirect)
+    const browserWin =
+      typeof globalThis !== 'undefined' && 'window' in globalThis
+        ? (globalThis as unknown as { window: { location: { hash: string; pathname: string; origin: string }; history: { replaceState: (a: unknown, b: string, c: string) => void } } }).window
+        : null;
+
+    if (Platform.OS === 'web' && browserWin && browserWin.location?.hash) {
+      try {
+        const hash = browserWin.location.hash.startsWith('#')
+          ? browserWin.location.hash.substring(1)
+          : browserWin.location.hash;
+        const params = new URLSearchParams(hash);
+        const accessToken = params.get('access_token');
+        const refreshToken = params.get('refresh_token');
+        if (accessToken && refreshToken) {
+          log.info('Detected OAuth tokens in URL hash, establishing session...');
+          supabase.auth
+            .setSession({ access_token: accessToken, refresh_token: refreshToken })
+            .then(async ({ data, error }) => {
+              if (error) {
+                log.warn('Failed to set session from hash', error.message);
+              } else if (data.session && mounted) {
+                setSession(data.session);
+                setUser(data.session.user);
+                setIsGuest(false);
+                if (data.session.user?.id) {
+                  await fetchProfile(data.session.user.id);
+                }
+              }
+              try {
+                browserWin.history.replaceState(null, '', browserWin.location.pathname);
+              } catch {}
+            })
+            .catch((err) => {
+              log.error('Error in setSession from hash', String(err));
+            });
+        }
+      } catch (e) {
+        log.warn('Failed to parse URL hash for OAuth tokens', String(e));
+      }
+    }
+
     supabase.auth
       .getSession()
       .then(async ({ data: { session } }) => {
@@ -124,7 +167,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           shouldCreateUser: true,
         },
       });
-      return { error: error ? new Error(error.message) : null };
+      if (error) {
+        const rawMsg = error.message || '';
+        if (
+          rawMsg.toLowerCase().includes('security purposes') ||
+          rawMsg.toLowerCase().includes('rate limit') ||
+          rawMsg.toLowerCase().includes('seconds')
+        ) {
+          const match = rawMsg.match(/(\d+)\s*sec/i);
+          const parsedSecs = match && match[1] ? parseInt(match[1], 10) : 30;
+          const cappedSecs = Math.min(30, Math.max(5, parsedSecs));
+          return { error: new Error(`Retry after ${cappedSecs} seconds`) };
+        }
+        return { error: new Error(rawMsg) };
+      }
+      return { error: null };
     } catch (e: unknown) {
       return { error: e instanceof Error ? e : new Error(String(e)) };
     }
@@ -157,10 +214,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const signInWithGoogle = useCallback(async () => {
     try {
       const supabase = getSupabase();
+      const browserOrigin =
+        typeof globalThis !== 'undefined' && 'window' in globalThis
+          ? (globalThis as unknown as { window: { location: { origin: string } } }).window?.location?.origin
+          : undefined;
+      const redirectTo =
+        Platform.OS === 'web'
+          ? (browserOrigin ? `${browserOrigin}/` : undefined)
+          : 'calipartner://auth/callback';
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: 'calipartner://auth/callback',
+          redirectTo,
         },
       });
       return { error: error ? new Error(error.message) : null };
@@ -172,10 +237,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const signInWithApple = useCallback(async () => {
     try {
       const supabase = getSupabase();
+      const browserOrigin =
+        typeof globalThis !== 'undefined' && 'window' in globalThis
+          ? (globalThis as unknown as { window: { location: { origin: string } } }).window?.location?.origin
+          : undefined;
+      const redirectTo =
+        Platform.OS === 'web'
+          ? (browserOrigin ? `${browserOrigin}/` : undefined)
+          : 'calipartner://auth/callback';
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'apple',
         options: {
-          redirectTo: 'calipartner://auth/callback',
+          redirectTo,
         },
       });
       return { error: error ? new Error(error.message) : null };
@@ -205,12 +278,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const deleteAccount = useCallback(async () => {
     try {
       const supabase = getSupabase();
-      const { error } = await supabase.functions.invoke('delete-account', {
+      const { data, error } = await supabase.functions.invoke('delete-account', {
         method: 'POST',
       });
       if (error) {
         return { error: new Error(error.message) };
       }
+      if (data && data.success === false) {
+        return { error: new Error(data.error || 'Failed to delete account') };
+      }
+
+      // Wipe all on-device SQLite database records and caches (H21 fix)
+      try {
+        const { clearAllLocalData } = await import('@/db');
+        await clearAllLocalData();
+      } catch (dbErr) {
+        log.warn('clearAllLocalData error during deletion:', String(dbErr));
+      }
+
       await signOut();
       return { error: null };
     } catch (e: unknown) {
@@ -268,6 +353,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const updateProfile = useCallback(
     async (input: UpdateProfileInput) => {
+      // Optimistically apply update to in-memory profile
+      setProfile((prev) => (prev ? { ...prev, ...input } : null));
+
       if (!user?.id) {
         return { error: new Error('User not authenticated') };
       }
@@ -277,7 +365,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         const { error } = await supabase.from('profiles').update(input).eq('id', user.id);
 
         if (error) {
-          return { error: new Error(error.message) };
+          log.warn('updateProfile error:', error.message);
         }
 
         await fetchProfile(user.id);

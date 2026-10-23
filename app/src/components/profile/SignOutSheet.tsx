@@ -36,13 +36,6 @@ export function SignOutSheet({
     await onConfirmSignOut();
   };
 
-  const handleDeleteLink = () => {
-    onClose();
-    if (onOpenDeleteAccount) {
-      onOpenDeleteAccount();
-    }
-  };
-
   return (
     <Modal visible={visible} animationType="fade" transparent onRequestClose={onClose}>
       <Pressable style={styles.backdrop} onPress={onClose}>
@@ -79,19 +72,6 @@ export function SignOutSheet({
               testID="btn-confirm-sign-out"
               style={styles.actionBtn}
             />
-
-            {/* Delete account link to B07 */}
-            <TouchableOpacity
-              onPress={handleDeleteLink}
-              style={styles.deleteLinkWrap}
-              accessibilityRole="button"
-              accessibilityLabel={t('me.signOutSheet.deleteAccountLink')}
-              testID="link-delete-account-me"
-            >
-              <Text variant="label" color={dark.danger}>
-                {t('me.signOutSheet.deleteAccountLink')}
-              </Text>
-            </TouchableOpacity>
           </View>
         </Pressable>
       </Pressable>

@@ -1,5 +1,14 @@
-import React, { useRef, useState } from 'react';
-import { ActivityIndicator, Modal, Pressable, StyleSheet, Text, View } from 'react-native';
+import React, { useEffect, useRef, useState } from 'react';
+import {
+  ActivityIndicator,
+  Image,
+  Modal,
+  Platform,
+  Pressable,
+  StyleSheet,
+  Text,
+  View,
+} from 'react-native';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import { Ionicons } from '@expo/vector-icons';
 import { t } from '@/i18n';
@@ -24,17 +33,20 @@ export function FoodPhotoCameraModal({
   const [facing, setFacing] = useState<'back' | 'front'>('back');
   const [capturing, setCapturing] = useState(false);
   const [previewBase64, setPreviewBase64] = useState<string | null>(null);
+  const [previewUri, setPreviewUri] = useState<string | null>(null);
   const cameraRef = useRef<CameraView | null>(null);
 
-  // Fallback demo/sample meal JPEG base64 for testing and simulators
-  const SAMPLE_MEAL_BASE64 =
-    '/9j/4AAQSkZJRgABAQEASABIAAD/2wBDAP//////////////////////////////////////////////////////////////////////////////////////wgALCAABAAEBAREA/8QAFBABAAAAAAAAAAAAAAAAAAAAAP/aAAgBAQABPxA=';
+  // Auto-request permission when modal opens on device
+  useEffect(() => {
+    if (visible && !permission?.granted && Platform.OS !== 'web' && requestPermission) {
+      void requestPermission();
+    }
+  }, [visible, permission?.granted, requestPermission]);
 
   const handleCapture = async () => {
     if (capturing) return;
 
-    if (testMode || !cameraRef.current) {
-      setPreviewBase64(SAMPLE_MEAL_BASE64);
+    if (!cameraRef.current) {
       return;
     }
 
@@ -42,18 +54,16 @@ export function FoodPhotoCameraModal({
       setCapturing(true);
       const photo = await cameraRef.current.takePictureAsync({
         base64: true,
-        quality: 0.8,
+        quality: 0.95,
         skipProcessing: false,
       });
 
       if (photo?.base64) {
         setPreviewBase64(photo.base64);
-      } else {
-        setPreviewBase64(SAMPLE_MEAL_BASE64);
+        setPreviewUri(photo.uri);
       }
     } catch {
-      // Fallback on simulator / web
-      setPreviewBase64(SAMPLE_MEAL_BASE64);
+      // Capture error
     } finally {
       setCapturing(false);
     }
@@ -66,11 +76,71 @@ export function FoodPhotoCameraModal({
         mimeType: 'image/jpeg',
       });
       setPreviewBase64(null);
+      setPreviewUri(null);
     }
   };
 
   const handleRetake = () => {
     setPreviewBase64(null);
+    setPreviewUri(null);
+  };
+
+  const handleTriggerCameraOrUpload = async (mode: 'camera' | 'album' = 'camera') => {
+    if (Platform.OS === 'web') {
+      const g = globalThis as unknown as {
+        document?: {
+          getElementById: (id: string) => HTMLInputElement | null;
+          createElement: (tag: string) => HTMLInputElement;
+          body: { appendChild: (el: unknown) => void };
+        };
+        FileReader?: new () => {
+          onload: (e: { target?: { result?: string } }) => void;
+          readAsDataURL: (f: unknown) => void;
+        };
+      };
+      if (g && g.document) {
+        let input: any = g.document.getElementById('food-photo-web-input');
+        if (!input) {
+          input = g.document.createElement('input');
+          input.id = 'food-photo-web-input';
+          input.type = 'file';
+          input.accept = 'image/*';
+          input.style.display = 'none';
+          g.document.body.appendChild(input);
+        }
+        input.value = '';
+        if (mode === 'camera') {
+          input.setAttribute('capture', 'environment');
+          input.capture = 'environment';
+        } else {
+          input.removeAttribute('capture');
+          delete input.capture;
+        }
+
+        input.onchange = (e: any) => {
+          const target = e.target;
+          const file = target?.files?.[0];
+          if (file && g.FileReader) {
+            const reader = new g.FileReader();
+            reader.onload = (event: { target?: { result?: string } }) => {
+              const dataUrl = event.target?.result;
+              if (dataUrl) {
+                const base64 = dataUrl.split(',')[1] || dataUrl;
+                setPreviewBase64(base64);
+                setPreviewUri(dataUrl);
+              }
+            };
+            reader.readAsDataURL(file);
+          }
+        };
+        input.click();
+        return;
+      }
+    }
+
+    if (requestPermission) {
+      await requestPermission();
+    }
   };
 
   return (
@@ -82,7 +152,7 @@ export function FoodPhotoCameraModal({
       onRequestClose={onClose}
     >
       <View style={styles.blackBackground}>
-        {/* Permission Denied / Not Determined Screen */}
+        {/* Permission Denied / Web Upload Screen */}
         {!permission?.granted && !testMode ? (
           <View style={styles.permissionContainer}>
             <View style={[styles.permissionIconWrap, { backgroundColor: colors.surfaceAlt }]}>
@@ -92,31 +162,36 @@ export function FoodPhotoCameraModal({
               {t('foodLog.photo.cameraPermissionTitle')}
             </Text>
             <Text style={[styles.permissionBody, { color: colors.textMuted }]}>
-              {t('foodLog.photo.cameraPermissionBody')}
+              Camera access is required to take photos of your meals for instant AI nutrition analysis.
             </Text>
 
-            <View style={styles.permissionBtnRow}>
+            <View style={[styles.permissionBtnRow, { flexDirection: 'column', gap: 10, width: '100%', maxWidth: 320 }]}>
               <Pressable
                 testID="btn-grant-camera-permission"
                 accessibilityRole="button"
-                accessibilityLabel={t('foodLog.photo.grantCamera')}
-                onPress={requestPermission}
-                style={[styles.primaryBtn, { backgroundColor: colors.accent }]}
+                accessibilityLabel="Take Photo with Camera"
+                onPress={() => handleTriggerCameraOrUpload('camera')}
+                style={[styles.primaryBtn, { backgroundColor: colors.accent, width: '100%' }]}
               >
+                <Ionicons name="camera" size={18} color={colors.onAccent} style={{ marginRight: 6 }} />
                 <Text style={[styles.primaryBtnText, { color: colors.onAccent }]}>
-                  {t('foodLog.photo.grantCamera')}
+                  Take Photo with Camera
                 </Text>
               </Pressable>
 
               <Pressable
-                testID="btn-sample-photo-fallback"
+                testID="btn-choose-from-gallery"
                 accessibilityRole="button"
-                accessibilityLabel="Use Demo Photo"
-                onPress={() => setPreviewBase64(SAMPLE_MEAL_BASE64)}
-                style={[styles.secondaryBtn, { backgroundColor: colors.surfaceAlt }]}
+                accessibilityLabel="Choose from Photos"
+                onPress={() => handleTriggerCameraOrUpload('album')}
+                style={[
+                  styles.primaryBtn,
+                  { backgroundColor: colors.surfaceAlt, borderWidth: 1, borderColor: colors.border, width: '100%' },
+                ]}
               >
-                <Text style={[styles.secondaryBtnText, { color: colors.text }]}>
-                  Use Sample Photo
+                <Ionicons name="images-outline" size={18} color={colors.text} style={{ marginRight: 6 }} />
+                <Text style={[styles.primaryBtnText, { color: colors.text }]}>
+                  Choose from Photos
                 </Text>
               </Pressable>
 
@@ -125,7 +200,7 @@ export function FoodPhotoCameraModal({
                 accessibilityRole="button"
                 accessibilityLabel={t('common.cancel')}
                 onPress={onClose}
-                style={styles.cancelBtn}
+                style={[styles.cancelBtn, { alignSelf: 'center', marginTop: 4 }]}
               >
                 <Text style={{ color: colors.textMuted, fontSize: fontSize.sm }}>
                   {t('common.cancel')}
@@ -142,15 +217,21 @@ export function FoodPhotoCameraModal({
             </View>
 
             <View style={styles.previewFrame}>
-              <View style={[styles.previewMockBox, { backgroundColor: colors.surfaceAlt }]}>
-                <Ionicons name="restaurant" size={54} color={colors.accent} />
-                <Text style={{ color: colors.text, marginTop: spacing.xs, fontWeight: '600' }}>
-                  Meal Photo Ready
-                </Text>
-                <Text style={{ color: colors.textMuted, fontSize: fontSize.xs }}>
-                  Ready for AI nutrition analysis
-                </Text>
-              </View>
+              <Image
+                source={{
+                  uri:
+                    previewUri ||
+                    (previewBase64.startsWith('data:')
+                      ? previewBase64
+                      : `data:image/jpeg;base64,${previewBase64}`),
+                }}
+                style={{
+                  width: '100%',
+                  height: 320,
+                  borderRadius: radius.md,
+                }}
+                resizeMode="cover"
+              />
             </View>
 
             <View style={styles.previewActions}>
@@ -224,14 +305,7 @@ export function FoodPhotoCameraModal({
 
             {/* Bottom Controls */}
             <View style={styles.bottomBar}>
-              <Pressable
-                testID="btn-sample-quick"
-                onPress={() => setPreviewBase64(SAMPLE_MEAL_BASE64)}
-                style={styles.sampleChip}
-              >
-                <Ionicons name="image-outline" size={16} color="#FFFFFF" />
-                <Text style={styles.sampleChipText}>Sample</Text>
-              </Pressable>
+              <View style={{ width: 60 }} />
 
               {/* Shutter Button */}
               <Pressable

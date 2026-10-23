@@ -3,6 +3,7 @@ import {
   ActivityIndicator,
   Alert,
   Modal,
+  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -105,20 +106,39 @@ export function RoomSettingsModal({
   };
 
   const handleLeave = () => {
+    const doLeave = async () => {
+      setLoadingAction('leave');
+      try {
+        await onLeaveRoom();
+        onClose();
+      } catch (err) {
+        console.error('Failed to leave room:', err);
+      } finally {
+        setLoadingAction(null);
+      }
+    };
+
+    const webConfirm =
+      typeof globalThis !== 'undefined'
+        ? (globalThis as unknown as { confirm?: (msg: string) => boolean }).confirm
+        : undefined;
+
+    if (Platform.OS === 'web' && typeof webConfirm === 'function') {
+      const confirmed = webConfirm(
+        t('rooms.settingsModal.leaveConfirm') || 'Are you sure you want to leave this room?',
+      );
+      if (confirmed) {
+        doLeave();
+      }
+      return;
+    }
+
     Alert.alert(t('rooms.settingsModal.leaveRoomBtn'), t('rooms.settingsModal.leaveConfirm'), [
       { text: t('common.cancel'), style: 'cancel' },
       {
         text: t('common.confirm'),
         style: 'destructive',
-        onPress: async () => {
-          setLoadingAction('leave');
-          try {
-            await onLeaveRoom();
-            onClose();
-          } finally {
-            setLoadingAction(null);
-          }
-        },
+        onPress: doLeave,
       },
     ]);
   };

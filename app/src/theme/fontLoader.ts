@@ -4,6 +4,8 @@ import * as SplashScreen from 'expo-splash-screen';
 import { getLocale } from '@/i18n';
 import { createLogger } from '@/lib/logger';
 
+import { Ionicons } from '@expo/vector-icons';
+
 const log = createLogger('fontLoader');
 
 // Prevent native splash screen from hiding until fonts and initialization complete
@@ -18,6 +20,13 @@ export async function loadAppFonts(): Promise<boolean> {
   try {
     if (!baseFontsLoaded) {
       await Font.loadAsync({
+        ...Ionicons.font,
+        Ionicons: require('@expo/vector-icons/build/vendor/react-native-vector-icons/Fonts/Ionicons.ttf'),
+        PlusJakartaSans_400: require('../../assets/fonts/PlusJakartaSans_400Regular.ttf'),
+        PlusJakartaSans_500: require('../../assets/fonts/PlusJakartaSans_500Medium.ttf'),
+        PlusJakartaSans_600: require('../../assets/fonts/PlusJakartaSans_600SemiBold.ttf'),
+        PlusJakartaSans_700: require('../../assets/fonts/PlusJakartaSans_700Bold.ttf'),
+        PlusJakartaSans_800: require('../../assets/fonts/PlusJakartaSans_800ExtraBold.ttf'),
         Bricolage_600: require('../../assets/fonts/BricolageGrotesque_600SemiBold.ttf'),
         Bricolage_700: require('../../assets/fonts/BricolageGrotesque_700Bold.ttf'),
         Figtree_400: require('../../assets/fonts/Figtree_400Regular.ttf'),

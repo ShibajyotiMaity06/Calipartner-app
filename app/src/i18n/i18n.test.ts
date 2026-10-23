@@ -3,7 +3,7 @@ import { t } from './index';
 
 describe('t', () => {
   it('returns English strings by key', () => {
-    expect(t('tabs.today')).toBe('Today');
+    expect(t('tabs.today')).toBe('Home');
     expect(t('connection.connected')).toBe('Connected');
   });
 

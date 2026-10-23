@@ -9,12 +9,14 @@ interface DormantWaitingStateProps {
   roomName: string;
   roomCode: string;
   onInviteByUsername: () => void;
+  onLeaveRoom?: () => void;
 }
 
 export function DormantWaitingState({
   roomName,
   roomCode,
   onInviteByUsername,
+  onLeaveRoom,
 }: DormantWaitingStateProps) {
   const { colors } = useTheme();
   const [copied, setCopied] = useState(false);
@@ -115,6 +117,32 @@ export function DormantWaitingState({
           {t('rooms.inviteModal.title')}
         </Text>
       </Pressable>
+
+      {/* Leave / Delete Empty Squad */}
+      {onLeaveRoom && (
+        <Pressable
+          onPress={onLeaveRoom}
+          style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+            gap: 6,
+            marginTop: spacing.md,
+            paddingVertical: spacing.xs,
+            paddingHorizontal: spacing.md,
+            borderRadius: radius.pill,
+            borderWidth: 1,
+            borderColor: colors.danger,
+          }}
+          accessibilityRole="button"
+          accessibilityLabel="Leave and cancel room"
+          testID="btn-dormant-leave-room"
+        >
+          <Ionicons name="trash-outline" size={14} color={colors.danger} />
+          <Text style={{ color: colors.danger, fontSize: fontSize.xs, fontWeight: '600' }}>
+            Leave & Cancel Room
+          </Text>
+        </Pressable>
+      )}
     </View>
   );
 }

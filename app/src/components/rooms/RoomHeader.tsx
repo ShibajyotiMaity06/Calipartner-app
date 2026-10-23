@@ -6,7 +6,7 @@ import { fontSize, radius, spacing } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
 import type { RoomSummary } from '@/types/rooms';
 
-export type RoomSegment = 'today' | 'focus' | 'chat' | 'progress' | 'members';
+export type RoomSegment = 'today' | 'chat' | 'progress' | 'members';
 
 interface RoomHeaderProps {
   currentRoom: RoomSummary | null;
@@ -62,7 +62,6 @@ export function RoomHeader({
 
   const segments: { key: RoomSegment; label: string; icon: keyof typeof Ionicons.glyphMap }[] = [
     { key: 'today', label: t('rooms.segments.today'), icon: 'calendar-outline' },
-    { key: 'focus', label: t('rooms.segments.focus'), icon: 'timer-outline' },
     { key: 'chat', label: t('rooms.segments.chat'), icon: 'chatbubbles-outline' },
     { key: 'progress', label: t('rooms.segments.progress'), icon: 'trending-up-outline' },
     { key: 'members', label: t('rooms.segments.members'), icon: 'people-outline' },

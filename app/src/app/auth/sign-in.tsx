@@ -9,16 +9,28 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import { useRouter } from 'expo-router';
-import { Text, Button, Field, PairRing, space, dark, radius } from '@calipartner/ui';
+import { useRouter, useLocalSearchParams } from 'expo-router';
+import {
+  Text,
+  Button,
+  Field,
+  PairRing,
+  ChevronLeftIcon,
+  space,
+  dark,
+  radius,
+} from '@calipartner/ui';
+import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '@/contexts/AuthContext';
 import { t } from '@/i18n';
 import { playClickSound } from '@/lib/sound';
+import { TermsOfServiceModal } from '@/components/legal';
 
 export default function SignInScreen() {
   const router = useRouter();
-  const { signInWithOtp, verifyOtp, signInWithGoogle, signInWithApple, continueAsGuest } =
-    useAuth();
+  const { mode } = useLocalSearchParams<{ mode?: string }>();
+  const isSignUp = mode !== 'signin';
+  const { signInWithOtp, verifyOtp, signInWithGoogle, signInWithApple } = useAuth();
 
   const [email, setEmail] = useState('');
   const [token, setToken] = useState('');
@@ -26,6 +38,7 @@ export default function SignInScreen() {
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [resendCooldown, setResendCooldown] = useState(0);
+  const [showTermsModal, setShowTermsModal] = useState(false);
 
   // 30s cooldown for OTP resend
   useEffect(() => {
@@ -52,7 +65,15 @@ export default function SignInScreen() {
       if (error.message === 'DISPOSABLE_EMAIL') {
         setErrorMessage(t('auth.disposableEmailError'));
       } else {
-        setErrorMessage(error.message);
+        const msg = error.message;
+        if (msg.includes('Retry after')) {
+          const match = msg.match(/(\d+)/);
+          const secs = match && match[1] ? Math.min(30, parseInt(match[1], 10)) : 30;
+          setResendCooldown(secs);
+          setErrorMessage(`Retry after ${secs} seconds`);
+        } else {
+          setErrorMessage(msg);
+        }
       }
     } else {
       setStep('otp');
@@ -76,17 +97,24 @@ export default function SignInScreen() {
     if (error) {
       setErrorMessage(t('auth.invalidCodeError'));
     } else {
-      router.replace('/today' as never);
+      router.replace('/auth/welcome-celebration' as never);
     }
   };
 
-  const handleGuest = () => {
-    playClickSound();
-    continueAsGuest();
-    router.replace('/today' as never);
-  };
-
   const isAppleFirst = Platform.OS === 'ios';
+
+  const handleBackNavigation = () => {
+    playClickSound();
+    if (step === 'otp') {
+      setStep('email');
+      setErrorMessage(null);
+    } else if (step === 'email') {
+      setStep('options');
+      setErrorMessage(null);
+    } else {
+      router.replace('/welcome' as never);
+    }
+  };
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -94,6 +122,23 @@ export default function SignInScreen() {
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         style={styles.flexOne}
       >
+        {/* Top Back Navigation Bar */}
+        <View style={styles.topBar}>
+          <TouchableOpacity
+            onPress={handleBackNavigation}
+            style={styles.backNavButton}
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+            accessibilityRole="button"
+            accessibilityLabel="Back"
+            testID="btn-auth-top-back"
+          >
+            <ChevronLeftIcon size={22} color={dark.textHi} />
+            <Text variant="body" color={dark.textHi} style={styles.backNavText}>
+              Back
+            </Text>
+          </TouchableOpacity>
+        </View>
+
         <ScrollView
           contentContainerStyle={styles.scrollContent}
           keyboardShouldPersistTaps="handled"
@@ -113,13 +158,17 @@ export default function SignInScreen() {
             </View>
             <Text variant="title1" color={dark.textHi} style={styles.title} testID="auth-title">
               {step === 'options'
-                ? 'Create your account'
+                ? isSignUp
+                  ? 'Create your account'
+                  : 'Welcome back'
                 : step === 'email'
                   ? 'Sign in with email'
                   : 'Enter 6-digit code'}
             </Text>
             <Text variant="body" color={dark.textMid} style={styles.subtitle}>
-              Your data on this phone moves with you.
+              {isSignUp
+                ? 'Your data on this phone moves with you.'
+                : 'Sign in to access your squad and logs.'}
             </Text>
           </View>
 
@@ -136,89 +185,73 @@ export default function SignInScreen() {
           {step === 'options' && (
             <View style={styles.section}>
               <View style={styles.oauthButtons}>
-                {isAppleFirst ? (
-                  <>
-                    <Button
-                      variant="secondary"
-                      size="lg"
-                      label={t('auth.appleSignIn')}
-                      onPress={async () => {
-                        setLoading(true);
-                        const { error } = await signInWithApple();
-                        setLoading(false);
-                        if (error) setErrorMessage(error.message);
-                      }}
-                      disabled={loading}
-                      testID="btn-apple-signin"
-                    />
-                    <Button
-                      variant="secondary"
-                      size="lg"
-                      label={t('auth.googleSignIn')}
-                      onPress={async () => {
-                        setLoading(true);
-                        const { error } = await signInWithGoogle();
-                        setLoading(false);
-                        if (error) setErrorMessage(error.message);
-                      }}
-                      disabled={loading}
-                      testID="btn-google-signin"
-                    />
-                  </>
-                ) : (
-                  <>
-                    <Button
-                      variant="secondary"
-                      size="lg"
-                      label={t('auth.googleSignIn')}
-                      onPress={async () => {
-                        setLoading(true);
-                        const { error } = await signInWithGoogle();
-                        setLoading(false);
-                        if (error) setErrorMessage(error.message);
-                      }}
-                      disabled={loading}
-                      testID="btn-google-signin"
-                    />
-                    <Button
-                      variant="secondary"
-                      size="lg"
-                      label={t('auth.appleSignIn')}
-                      onPress={async () => {
-                        setLoading(true);
-                        const { error } = await signInWithApple();
-                        setLoading(false);
-                        if (error) setErrorMessage(error.message);
-                      }}
-                      disabled={loading}
-                      testID="btn-apple-signin"
-                    />
-                  </>
+                {Platform.OS === 'ios' && (
+                  <Button
+                    variant="secondary"
+                    size="lg"
+                    label={t('auth.appleSignIn')}
+                    icon={<Ionicons name="logo-apple" size={20} color={dark.textHi} style={{ marginRight: 8 }} />}
+                    onPress={async () => {
+                      setLoading(true);
+                      const { error } = await signInWithApple();
+                      setLoading(false);
+                      if (error) setErrorMessage(error.message);
+                    }}
+                    disabled={loading}
+                    testID="btn-apple-signin"
+                  />
                 )}
+
+                <Button
+                  variant="secondary"
+                  size="lg"
+                  label={t('auth.googleSignIn')}
+                  icon={<Ionicons name="logo-google" size={18} color={dark.textHi} style={{ marginRight: 8 }} />}
+                  onPress={async () => {
+                    setLoading(true);
+                    const { error } = await signInWithGoogle();
+                    setLoading(false);
+                    if (error) setErrorMessage(error.message);
+                  }}
+                  disabled={loading}
+                  testID="btn-google-signin"
+                />
 
                 <Button
                   variant="primary"
                   size="lg"
                   label="Continue with email"
+                  icon={<Ionicons name="mail" size={18} color={dark.onBrand} style={{ marginRight: 8 }} />}
                   onPress={() => setStep('email')}
                   disabled={loading}
                   testID="btn-continue-email"
                 />
               </View>
 
-              {/* Guest Option */}
-              <View style={styles.guestSection}>
-                <TouchableOpacity
-                  onPress={handleGuest}
-                  style={styles.guestButton}
-                  accessibilityRole="button"
-                  accessibilityLabel={t('auth.guestSignIn')}
-                  testID="btn-guest-signin"
-                >
-                  <Text variant="body" color={dark.apricot} style={styles.guestText}>
-                    Explore as guest →
-                  </Text>
-                </TouchableOpacity>
+              {/* Terms of Service & Privacy Policy Prompt (Apple & Google guideline compliance) */}
+              <View style={styles.termsPromptContainer}>
+                <Text variant="bodyS" color={dark.textLo} style={styles.termsPromptText}>
+                  By continuing, you agree to our{' '}
+                  <Text
+                    variant="bodyS"
+                    color={dark.apricot}
+                    onPress={() => setShowTermsModal(true)}
+                    style={styles.termsLink}
+                    testID="link-terms-of-service"
+                  >
+                    Terms of Service
+                  </Text>{' '}
+                  and{' '}
+                  <Text
+                    variant="bodyS"
+                    color={dark.apricot}
+                    onPress={() => setShowTermsModal(true)}
+                    style={styles.termsLink}
+                    testID="link-privacy-policy"
+                  >
+                    Privacy Policy
+                  </Text>.
+                </Text>
               </View>
             </View>
           )}
@@ -282,10 +315,6 @@ export default function SignInScreen() {
                 onChangeText={(text) => {
                   setToken(text);
                   setErrorMessage(null);
-                  if (text.length === 6) {
-                    // Auto-submit on 6 digits
-                    handleVerifyCode();
-                  }
                 }}
               />
 
@@ -332,6 +361,11 @@ export default function SignInScreen() {
           )}
         </ScrollView>
       </KeyboardAvoidingView>
+
+      <TermsOfServiceModal
+        visible={showTermsModal}
+        onClose={() => setShowTermsModal(false)}
+      />
     </SafeAreaView>
   );
 }
@@ -344,9 +378,26 @@ const styles = StyleSheet.create({
   flexOne: {
     flex: 1,
   },
+  topBar: {
+    paddingHorizontal: space[3],
+    paddingTop: space[2],
+    flexDirection: 'row',
+    alignItems: 'center',
+    minHeight: 44,
+  },
+  backNavButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    minHeight: 44,
+    paddingHorizontal: space[2],
+  },
+  backNavText: {
+    fontWeight: '600',
+  },
   scrollContent: {
     padding: space[4],
-    paddingTop: space[6],
+    paddingTop: space[2],
     gap: space[4],
   },
   header: {
@@ -378,18 +429,6 @@ const styles = StyleSheet.create({
   },
   oauthButtons: {
     gap: space[3],
-  },
-  guestSection: {
-    marginTop: space[3],
-    alignItems: 'center',
-  },
-  guestButton: {
-    minHeight: 44,
-    justifyContent: 'center',
-    paddingHorizontal: space[3],
-  },
-  guestText: {
-    fontWeight: '600',
   },
   backLink: {
     minHeight: 44,
@@ -423,5 +462,17 @@ const styles = StyleSheet.create({
   wrongEmailLink: {
     minHeight: 44,
     justifyContent: 'center',
+  },
+  termsPromptContainer: {
+    paddingTop: space[3],
+    paddingHorizontal: space[2],
+    alignItems: 'center',
+  },
+  termsPromptText: {
+    textAlign: 'center',
+    lineHeight: 18,
+  },
+  termsLink: {
+    textDecorationLine: 'underline',
   },
 });

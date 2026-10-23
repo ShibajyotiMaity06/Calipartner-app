@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import type { WaterLog } from '@calipartner/core';
+import { useAuth } from '@/contexts/AuthContext';
 import { getDb } from '@/db';
 import {
   deleteWaterLog,
@@ -29,22 +30,35 @@ export interface UseWaterResult {
 export function useWater(date?: string): UseWaterResult {
   const localDate = date ?? new Date().toISOString().split('T')[0]!;
   const { currentGoalProfile } = useTargets();
+  const { user } = useAuth();
 
   const [logs, setLogs] = useState<WaterLog[]>([]);
   const [totalMl, setTotalMl] = useState(0);
   const [loading, setLoading] = useState(true);
 
   const goalMl = currentGoalProfile?.water_ml_goal ?? 2000;
+  const effectiveUserId = user?.id ?? currentGoalProfile?.user_id ?? 'guest-user';
 
   const loadData = useCallback(async () => {
     try {
       setLoading(true);
       const db = await getDb();
-      const userId = currentGoalProfile?.user_id ?? 'guest-user';
-      const [fetchedLogs, sum] = await Promise.all([
-        getWaterLogsForDate(db, userId, localDate),
-        getWaterTotalForDate(db, userId, localDate),
+      let [fetchedLogs, sum] = await Promise.all([
+        getWaterLogsForDate(db, effectiveUserId, localDate),
+        getWaterTotalForDate(db, effectiveUserId, localDate),
       ]);
+
+      if (fetchedLogs.length === 0 && effectiveUserId !== 'guest-user') {
+        const [guestLogs, guestSum] = await Promise.all([
+          getWaterLogsForDate(db, 'guest-user', localDate),
+          getWaterTotalForDate(db, 'guest-user', localDate),
+        ]);
+        if (guestLogs.length > 0) {
+          fetchedLogs = guestLogs;
+          sum = guestSum;
+        }
+      }
+
       setLogs(fetchedLogs);
       setTotalMl(sum);
     } catch {
@@ -52,7 +66,7 @@ export function useWater(date?: string): UseWaterResult {
     } finally {
       setLoading(false);
     }
-  }, [currentGoalProfile?.user_id, localDate]);
+  }, [effectiveUserId, localDate]);
 
   useEffect(() => {
     void loadData();
@@ -60,32 +74,28 @@ export function useWater(date?: string): UseWaterResult {
 
   const addWater = async (amountMl: number): Promise<WaterLog> => {
     const db = await getDb();
-    const userId = currentGoalProfile?.user_id ?? 'guest-user';
-    const created = await logWater(db, userId, amountMl, localDate);
+    const created = await logWater(db, effectiveUserId, amountMl, localDate);
     await loadData();
     return created;
   };
 
   const undoLast = async (): Promise<WaterLog | null> => {
     const db = await getDb();
-    const userId = currentGoalProfile?.user_id ?? 'guest-user';
-    const undone = await undoLastWaterLog(db, userId, localDate);
+    const undone = await undoLastWaterLog(db, effectiveUserId, localDate);
     await loadData();
     return undone;
   };
 
   const deleteLog = async (id: string): Promise<WaterLog | null> => {
     const db = await getDb();
-    const userId = currentGoalProfile?.user_id ?? 'guest-user';
-    const deleted = await deleteWaterLog(db, userId, id);
+    const deleted = await deleteWaterLog(db, effectiveUserId, id);
     await loadData();
     return deleted;
   };
 
   const editLog = async (id: string, amountMl: number): Promise<WaterLog | null> => {
     const db = await getDb();
-    const userId = currentGoalProfile?.user_id ?? 'guest-user';
-    const edited = await editWaterLog(db, userId, id, amountMl);
+    const edited = await editWaterLog(db, effectiveUserId, id, amountMl);
     await loadData();
     return edited;
   };

@@ -10,6 +10,22 @@ export const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+const ALLOWED_EVENT_TYPES = new Set([
+  'INITIAL_PURCHASE',
+  'RENEWAL',
+  'PRODUCT_CHANGE',
+  'CANCELLATION',
+  'UNCANCELLATION',
+  'BILLING_ISSUE',
+  'EXPIRATION',
+  'REVOCATION',
+  'TRANSFER',
+  'SUBSCRIPTION_EXTENDED',
+  'SUBSCRIPTION_PAUSED',
+]);
+
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
 export async function handleRevenueCatWebhook(req: Request): Promise<Response> {
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders });
@@ -23,12 +39,20 @@ export async function handleRevenueCatWebhook(req: Request): Promise<Response> {
   }
 
   try {
-    // 1. Verify authorization header
+    // 1. Verify authorization header — fail closed if secret is absent or invalid (C02)
     const authHeader = req.headers.get('Authorization') || req.headers.get('authorization');
     const webhookSecret =
       Deno.env.get('REVENUECAT_WEBHOOK_SECRET') || Deno.env.get('REVENUECAT_SHARED_SECRET') || '';
 
-    if (webhookSecret && !verifyWebhookAuth(authHeader, webhookSecret)) {
+    if (!webhookSecret || webhookSecret.trim().length === 0) {
+      console.error('Server misconfiguration: Webhook secret not configured');
+      return new Response(
+        JSON.stringify({ error: 'Server misconfiguration: Webhook secret not configured' }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
+      );
+    }
+
+    if (!verifyWebhookAuth(authHeader, webhookSecret)) {
       return new Response(JSON.stringify({ error: 'UNAUTHORIZED: Invalid webhook secret' }), {
         status: 401,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -48,6 +72,71 @@ export async function handleRevenueCatWebhook(req: Request): Promise<Response> {
       );
     }
 
+    // Validate event type allowlist (C02)
+    if (!ALLOWED_EVENT_TYPES.has(event.type)) {
+      return new Response(
+        JSON.stringify({
+          error: `BAD_REQUEST: Unsupported event type: ${event.type}`,
+        }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
+      );
+    }
+
+    // Validate app_user_id UUID format (C02)
+    if (!UUID_REGEX.test(event.app_user_id)) {
+      return new Response(
+        JSON.stringify({
+          error: 'BAD_REQUEST: app_user_id must be a valid UUID',
+        }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
+      );
+    }
+
+    const eventId = event.id;
+    const eventType = event.type;
+    const appUserId = event.app_user_id;
+    const productId = event.product_id || event.new_product_id || '';
+    const store = event.store || 'app_store';
+    const expirationMs = event.expiration_at_ms;
+
+    const isPurchaseEvent = [
+      'INITIAL_PURCHASE',
+      'RENEWAL',
+      'PRODUCT_CHANGE',
+      'UNCANCELLATION',
+      'SUBSCRIPTION_EXTENDED',
+    ].includes(eventType);
+
+    // Validate product ID for purchase events (C02)
+    const parsedProduct = mapProductIdToTierAndPeriod(productId);
+    if (isPurchaseEvent && !parsedProduct) {
+      return new Response(
+        JSON.stringify({
+          error: `BAD_REQUEST: Unrecognized or invalid product_id: ${productId}`,
+        }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
+      );
+    }
+
+    // Validate expiration: must be positive number if provided; compute fallback if missing on purchase (C02)
+    let periodEnd: string | null = null;
+    if (expirationMs !== undefined && expirationMs !== null) {
+      if (typeof expirationMs !== 'number' || isNaN(expirationMs) || expirationMs <= 0) {
+        return new Response(
+          JSON.stringify({
+            error: 'BAD_REQUEST: Invalid expiration_at_ms value',
+          }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
+        );
+      }
+      periodEnd = new Date(expirationMs).toISOString();
+    } else if (isPurchaseEvent) {
+      const durationDays = parsedProduct?.period === 'annual' ? 365 : 30;
+      periodEnd = new Date(Date.now() + durationDays * 86400 * 1000).toISOString();
+    }
+
+    const eventTimestamp = new Date(event.event_timestamp_ms || Date.now()).toISOString();
+
     const supabaseUrl = Deno.env.get('SUPABASE_URL') || '';
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || '';
 
@@ -60,19 +149,19 @@ export async function handleRevenueCatWebhook(req: Request): Promise<Response> {
 
     const adminClient = createClient(supabaseUrl, supabaseServiceKey);
 
-    const eventId = event.id;
-    const eventType = event.type;
-    const appUserId = event.app_user_id;
-    const productId = event.product_id || event.new_product_id || '';
-    const store = event.store || 'app_store';
-    const expirationMs = event.expiration_at_ms;
-    const periodEnd = expirationMs ? new Date(expirationMs).toISOString() : null;
-    const eventTimestamp = new Date(event.event_timestamp_ms || Date.now()).toISOString();
-
     // 3. Handle TRANSFER event
     if (eventType === 'TRANSFER') {
       const transferredFrom = event.transferred_from || [];
       const transferredTo = event.transferred_to || [appUserId];
+
+      for (const uid of [...transferredFrom, ...transferredTo]) {
+        if (!UUID_REGEX.test(uid)) {
+          return new Response(
+            JSON.stringify({ error: `BAD_REQUEST: Invalid user ID in transfer: ${uid}` }),
+            { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
+          );
+        }
+      }
 
       for (const fromUserId of transferredFrom) {
         // Mark old user entitlement lapsed

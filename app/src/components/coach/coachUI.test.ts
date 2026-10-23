@@ -161,5 +161,22 @@ describe('Phase 14 View Layer: AI Coach UI Specifications & Copy (PRD 6.22)', ()
       expect(checkCap(30)).toBe(true);
       expect(checkCap(31)).toBe(true);
     });
+
+    it('verifies cleanCoachResponse strips asterisks, markdown headers, and em dashes', async () => {
+      const { cleanCoachResponse } = await import('@/services/aiCoachClient');
+      const rawText = `### Core Principles for Hypertrophy (Muscle Growth)
+
+1. **Progressive Overload is King:** This is the absolute most important principle.
+* **Increasing reps:** Doing more repetitions — with the same exercise.
+* **Increasing difficulty:** Moving to harder variations — from push-ups to weighted dips.`;
+
+      const cleaned = cleanCoachResponse(rawText);
+      expect(cleaned).not.toContain('**');
+      expect(cleaned).not.toContain('###');
+      expect(cleaned).not.toContain('—');
+      expect(cleaned).toContain('Progressive Overload is King:');
+      expect(cleaned).toContain('Doing more repetitions, with the same exercise.');
+    }, 15000);
   });
 });
+

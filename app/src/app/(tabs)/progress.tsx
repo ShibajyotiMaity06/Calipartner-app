@@ -11,38 +11,30 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import type { ProgressDateRange } from '@calipartner/core';
 import {
-  CaloriesChart,
   ChallengesView,
-  ConsistencyHistoryChart,
   type DayDetailData,
   DayDetailModal,
   GoalProgressRing,
   LeaderboardView,
-  MacrosChart,
   MondayRecapModal,
   ProgressHubSummary,
   RangeSelector,
-  StepsChart,
-  WaterChart,
   WeeklySummaryModal,
-  WeightChart,
-  WorkoutsChart,
 } from '@/components/progress';
-import { FocusProgressChart } from '@/components/focus';
+import { FloatingAiCoachButton } from '@/components/coach';
+
 import { useIndividualProgress } from '@/hooks/useIndividualProgress';
 import { t } from '@/i18n';
 import { fontSize, radius, spacing } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
 
 type ProgressTabSegment = 'my_progress' | 'leaderboard' | 'challenges';
-type ProgressViewMode = 'summary' | 'detailed';
 
 const RANGE_OPTIONS: ProgressDateRange[] = ['7d', '30d', '90d', '6m', '1y', 'all'];
 
 export default function ProgressScreen() {
   const { colors } = useTheme();
   const [activeSegment, setActiveSegment] = useState<ProgressTabSegment>('my_progress');
-  const [viewMode, setViewMode] = useState<ProgressViewMode>('summary');
   const [selectedDay, setSelectedDay] = useState<DayDetailData | null>(null);
   const [showWeeklySummary, setShowWeeklySummary] = useState(false);
   const [showMondayRecap, setShowMondayRecap] = useState(false);
@@ -61,8 +53,8 @@ export default function ProgressScreen() {
       : 84;
 
   const handleSelectMetric = (_metric: string) => {
-    // When tapping a summary card, switch to detailed charts view
-    setViewMode('detailed');
+    // Open full weekly breakdown summary
+    setShowWeeklySummary(true);
   };
 
   return (
@@ -186,70 +178,8 @@ export default function ProgressScreen() {
               testID="progress-range-selector"
             />
 
-            {/* View Mode Toggle: Summary Hub vs Detailed Charts */}
-            <View style={styles.viewModeContainer}>
-              <View style={[styles.viewModePill, { backgroundColor: colors.surfaceAlt }]}>
-                <Pressable
-                  style={[
-                    styles.viewModeButton,
-                    viewMode === 'summary' && [
-                      styles.viewModeButtonActive,
-                      { backgroundColor: colors.surface },
-                    ],
-                  ]}
-                  onPress={() => setViewMode('summary')}
-                  accessibilityRole="button"
-                  accessibilityLabel="Summary hub view"
-                  testID="progress-view-mode-summary"
-                >
-                  <Ionicons
-                    name="grid-outline"
-                    size={14}
-                    color={viewMode === 'summary' ? colors.accent : colors.textMuted}
-                  />
-                  <Text
-                    style={[
-                      styles.viewModeText,
-                      { color: viewMode === 'summary' ? colors.text : colors.textMuted },
-                      viewMode === 'summary' && styles.viewModeTextActive,
-                    ]}
-                  >
-                    Hub Summary
-                  </Text>
-                </Pressable>
-                <Pressable
-                  style={[
-                    styles.viewModeButton,
-                    viewMode === 'detailed' && [
-                      styles.viewModeButtonActive,
-                      { backgroundColor: colors.surface },
-                    ],
-                  ]}
-                  onPress={() => setViewMode('detailed')}
-                  accessibilityRole="button"
-                  accessibilityLabel="Detailed charts view"
-                  testID="progress-view-mode-detailed"
-                >
-                  <Ionicons
-                    name="stats-chart-outline"
-                    size={14}
-                    color={viewMode === 'detailed' ? colors.accent : colors.textMuted}
-                  />
-                  <Text
-                    style={[
-                      styles.viewModeText,
-                      { color: viewMode === 'detailed' ? colors.text : colors.textMuted },
-                      viewMode === 'detailed' && styles.viewModeTextActive,
-                    ]}
-                  >
-                    All Charts
-                  </Text>
-                </Pressable>
-              </View>
-            </View>
-
             {/* Error Banner if any */}
-            {error && (
+            {error && error.code !== 'UNAUTHENTICATED' && (
               <View
                 style={[
                   styles.errorBanner,
@@ -258,7 +188,9 @@ export default function ProgressScreen() {
               >
                 <Ionicons name="alert-circle-outline" size={20} color={colors.textMuted} />
                 <Text style={[styles.errorBannerText, { color: colors.text }]}>
-                  {error.message}
+                  {typeof error.message === 'string' && error.message !== '[object Object]'
+                    ? error.message
+                    : 'Tap retry to refresh your progress summary'}
                 </Text>
                 <Pressable
                   style={[styles.retryBtn, { backgroundColor: colors.accent }]}
@@ -269,70 +201,13 @@ export default function ProgressScreen() {
               </View>
             )}
 
-            {/* M01: Hub Summary View */}
-            {viewMode === 'summary' ? (
-              <ProgressHubSummary
-                data={data}
-                onSelectMetric={handleSelectMetric}
-                onOpenWeeklySummary={() => setShowWeeklySummary(true)}
-                testID="progress-hub-summary"
-              />
-            ) : (
-              /* M02–M08: Detailed Charts View */
-              <View testID="progress-detailed-charts">
-                {/* Weight Chart (Points + Trend + Goal Line + Numbers) */}
-                <WeightChart
-                  data={data?.weight}
-                  loading={loading}
-                  onSelectDay={(day) => setSelectedDay(day)}
-                  testID="progress-chart-weight"
-                />
-
-                {/* Calories vs Target */}
-                <CaloriesChart
-                  data={data?.calories}
-                  loading={loading}
-                  onSelectDay={(day) => setSelectedDay(day)}
-                  testID="progress-chart-calories"
-                />
-
-                {/* Macros Breakdown */}
-                <MacrosChart data={data?.macros} loading={loading} testID="progress-chart-macros" />
-
-                {/* Steps & Distance */}
-                <StepsChart
-                  data={data?.steps}
-                  loading={loading}
-                  onSelectDay={(day) => setSelectedDay(day)}
-                  testID="progress-chart-steps"
-                />
-
-                {/* Water Intake */}
-                <WaterChart
-                  data={data?.water}
-                  loading={loading}
-                  onSelectDay={(day) => setSelectedDay(day)}
-                  testID="progress-chart-water"
-                />
-
-                {/* Workouts Activity & Progression */}
-                <WorkoutsChart
-                  data={data?.workouts}
-                  loading={loading}
-                  testID="progress-chart-workouts"
-                />
-
-                {/* Consistency & Streaks History */}
-                <ConsistencyHistoryChart
-                  data={data?.consistency}
-                  loading={loading}
-                  testID="progress-chart-consistency"
-                />
-
-                {/* Focus Time Progression & Breakdown (PRG-14, FOC-10) */}
-                <FocusProgressChart range={range} testID="progress-chart-focus" />
-              </View>
-            )}
+            {/* Hub Summary View */}
+            <ProgressHubSummary
+              data={data}
+              onSelectMetric={handleSelectMetric}
+              onOpenWeeklySummary={() => setShowWeeklySummary(true)}
+              testID="progress-hub-summary"
+            />
           </View>
         )}
 
@@ -380,6 +255,7 @@ export default function ProgressScreen() {
         }}
         testID="progress-monday-recap-modal"
       />
+      <FloatingAiCoachButton />
     </SafeAreaView>
   );
 }
@@ -457,7 +333,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   scrollContent: {
-    paddingBottom: 110,
+    paddingBottom: 80,
   },
   errorBanner: {
     flexDirection: 'row',

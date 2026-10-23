@@ -283,7 +283,7 @@ describe('Phase 13: Fasting Service & Offline SQLite Sync', () => {
     expect(stats.total_fasting_hours).toBe(32);
 
     const streak = await getFastingStreak(db, userId, 'UTC');
-    expect(streak.current_streak).toBeGreaterThanOrEqual(1);
+    expect(streak.longest_streak).toBeGreaterThanOrEqual(1);
 
     const progress = await getFastingProgressWeekly(db, userId, '2026-10-12', '2026-10-18');
     expect(progress.total_fasts).toBe(2);

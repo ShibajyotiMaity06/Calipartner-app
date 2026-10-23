@@ -90,24 +90,52 @@ export interface ReportRecipeInput {
  * Parses a SQLite row into a strongly typed Recipe object.
  */
 export function parseLocalRecipeRow(row: LocalRecipeRow): Recipe {
+  const safeJson = <T>(val: unknown, fallback: T): T => {
+    if (!val) return fallback;
+    if (typeof val !== 'string') return val as T;
+    try {
+      return JSON.parse(val) as T;
+    } catch {
+      return fallback;
+    }
+  };
+
+  const parseDietTags = (val: unknown): string[] => {
+    if (!val) return [];
+    if (Array.isArray(val)) return val;
+    const str = String(val).trim();
+    if (str.startsWith('[')) {
+      try {
+        return JSON.parse(str);
+      } catch {
+        // fallback
+      }
+    }
+    return str.split(',').map((s) => s.trim()).filter(Boolean);
+  };
+
   return {
     id: row.id,
     title: row.title,
     description: row.description,
     cuisine: row.cuisine,
-    diet_tags: row.diet_tags ? JSON.parse(row.diet_tags) : [],
+    diet_tags: parseDietTags(row.diet_tags),
     meal_type: row.meal_type as Recipe['meal_type'],
     prep_minutes: row.prep_minutes,
     cook_minutes: row.cook_minutes,
     difficulty: row.difficulty as Recipe['difficulty'],
     servings: row.servings,
-    steps: row.steps ? JSON.parse(row.steps) : [],
-    tips: row.tips ? JSON.parse(row.tips) : [],
-    image_urls: row.image_urls ? JSON.parse(row.image_urls) : [],
+    steps: safeJson<string[]>(row.steps, []),
+    tips: safeJson<string[]>(row.tips, []),
+    image_urls: safeJson<string[]>(row.image_urls, []),
     status: row.status as Recipe['status'],
-    nutrition_per_serving: row.nutrition_per_serving
-      ? JSON.parse(row.nutrition_per_serving)
-      : { calories: 0, protein: 0, carbs: 0, fat: 0, fiber: 0 },
+    nutrition_per_serving: safeJson<RecipeNutritionSnapshot>(row.nutrition_per_serving, {
+      calories: 0,
+      protein: 0,
+      carbs: 0,
+      fat: 0,
+      fiber: 0,
+    }),
     nutrition_override_reason: row.nutrition_override_reason,
     version: row.version,
     created_at: row.created_at,
@@ -262,25 +290,43 @@ export async function getRecipes(
     }
   }
 
-  // Fallback to local SQLite cache
-  if (allRecipes.length === 0) {
+    // Fallback and merge with local SQLite cache and bundled recipes
     const rows = await db.getAllAsync<LocalRecipeRow>(
       `SELECT * FROM local_recipes WHERE status = 'published' ORDER BY updated_at DESC`,
     );
 
+    const recipeMap = new Map<string, Recipe>();
+
+    // 1. Seed bundled Indian recipes (93 complete items from reciepes.csv)
+    const bundled = (bundledRecipesData as unknown as Recipe[]).filter(
+      (r) => r.status === 'published',
+    );
+    for (const b of bundled) {
+      recipeMap.set(b.id, b);
+    }
+
+    // 2. Prioritize local SQLite rows (explicitly cached or updated)
+    const localParsed: Recipe[] = [];
     if (rows && rows.length > 0) {
-      allRecipes = rows.map(parseLocalRecipeRow);
-    } else {
-      // Bundled offline fallback
-      allRecipes = (bundledRecipesData as unknown as Recipe[]).filter(
-        (r) => r.status === 'published',
-      );
-      // Seed bundled into SQLite for future fast queries
-      for (const b of allRecipes) {
-        await cacheRecipeLocally(db, b);
+      for (const r of rows) {
+        try {
+          const parsed = parseLocalRecipeRow(r);
+          recipeMap.set(parsed.id, parsed);
+          localParsed.push(parsed);
+        } catch {
+          // skip corrupted row
+        }
       }
     }
-  }
+
+    // 3. Overlay any remote Supabase rows
+    for (const r of allRecipes) {
+      recipeMap.set(r.id, r);
+    }
+
+    const localSet = new Set(localParsed.map((l) => l.id));
+    const remainder = Array.from(recipeMap.values()).filter((r) => !localSet.has(r.id));
+    allRecipes = [...localParsed, ...remainder];
 
   // Apply deterministic core filters (RCP-4)
   const filtered = filterRecipes(allRecipes, criteria);

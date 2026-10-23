@@ -4,6 +4,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { t } from '@/i18n';
 import { fontSize, radius, spacing } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
+import { cleanCoachResponse } from '@/services/aiCoachClient';
 import { CoachSuggestionCard } from './CoachSuggestionCard';
 import type { CoachMessage, CoachSuggestion } from './types';
 
@@ -57,7 +58,7 @@ export function CoachMessageBubble({
             style={[styles.messageText, { color: isUser ? '#FFFFFF' : colors.text }]}
             testID={`text-msg-content-${message.id}`}
           >
-            {message.content}
+            {isUser ? message.content : cleanCoachResponse(message.content)}
           </Text>
 
           {/* Streaming typing indicator */}

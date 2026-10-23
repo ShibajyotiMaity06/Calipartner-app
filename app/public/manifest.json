@@ -1,0 +1,23 @@
+{
+  "short_name": "CaliPartner",
+  "name": "CaliPartner — Grow stronger, together",
+  "description": "Duolingo-style accountability for nutrition, workouts and habit tracking with a real partner.",
+  "icons": [
+    {
+      "src": "/favicon.png",
+      "type": "image/png",
+      "sizes": "192x192"
+    },
+    {
+      "src": "/icon.png",
+      "type": "image/png",
+      "sizes": "512x512",
+      "purpose": "any maskable"
+    }
+  ],
+  "start_url": "/",
+  "background_color": "#0E0B08",
+  "theme_color": "#FF8A4C",
+  "display": "standalone",
+  "orientation": "portrait"
+}

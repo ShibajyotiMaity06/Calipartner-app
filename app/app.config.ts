@@ -16,9 +16,18 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   ios: {
     supportsTablet: false,
     bundleIdentifier: 'app.calipartner.mobile',
+    infoPlist: {
+      NSMotionUsageDescription: 'CaliPartner uses your motion sensors to count your steps during walking and running workouts.',
+      NSLocationWhenInUseUsageDescription: 'CaliPartner uses your location to track your running distance, pace, and route.',
+    },
   },
   android: {
     package: 'app.calipartner.mobile',
+    permissions: [
+      'android.permission.ACTIVITY_RECOGNITION',
+      'android.permission.ACCESS_FINE_LOCATION',
+      'android.permission.ACCESS_COARSE_LOCATION',
+    ],
     adaptiveIcon: {
       foregroundImage: './assets/android-icon-foreground.png',
       backgroundImage: './assets/android-icon-background.png',
@@ -34,6 +43,11 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
       'expo-font',
       {
         fonts: [
+          './assets/fonts/PlusJakartaSans_400Regular.ttf',
+          './assets/fonts/PlusJakartaSans_500Medium.ttf',
+          './assets/fonts/PlusJakartaSans_600SemiBold.ttf',
+          './assets/fonts/PlusJakartaSans_700Bold.ttf',
+          './assets/fonts/PlusJakartaSans_800ExtraBold.ttf',
           './assets/fonts/BricolageGrotesque_600SemiBold.ttf',
           './assets/fonts/BricolageGrotesque_700Bold.ttf',
           './assets/fonts/Figtree_400Regular.ttf',
@@ -57,5 +71,6 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     supabaseAnonKey: process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY ?? '',
     revenueCatAppleKey: process.env.EXPO_PUBLIC_REVENUECAT_APPLE_KEY ?? '',
     revenueCatGoogleKey: process.env.EXPO_PUBLIC_REVENUECAT_GOOGLE_KEY ?? '',
+    geminiApiKey: process.env.EXPO_PUBLIC_GEMINI_API_KEY ?? '',
   },
 });

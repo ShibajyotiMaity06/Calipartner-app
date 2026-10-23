@@ -111,10 +111,16 @@ export async function getCurrentLocalGoalProfile(
   db: TargetsDb,
   userId: string,
 ): Promise<GoalProfile | null> {
-  const row = await db.getFirstAsync<LocalGoalProfileRow>(
+  let row = await db.getFirstAsync<LocalGoalProfileRow>(
     `SELECT * FROM local_goal_profiles WHERE user_id = ? ORDER BY effective_from DESC LIMIT 1`,
     [userId],
   );
+
+  if (!row) {
+    row = await db.getFirstAsync<LocalGoalProfileRow>(
+      `SELECT * FROM local_goal_profiles ORDER BY effective_from DESC LIMIT 1`,
+    );
+  }
 
   if (!row) return null;
 

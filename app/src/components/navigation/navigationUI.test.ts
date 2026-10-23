@@ -33,11 +33,11 @@ describe('UI-4 Navigation Shell Logic & Integration Tests', () => {
     });
 
     it('verifies all 5 tabs and their internationalized labels exist', () => {
-      expect(t('tabs.today')).toBe('Today');
-      expect(t('tabs.room')).toBe('Room');
+      expect(t('tabs.today')).toBe('Home');
+      expect(t('tabs.room')).toBe('Squad');
       expect(t('tabs.log')).toBe('Log');
       expect(t('tabs.progress')).toBe('Progress');
-      expect(t('tabs.me')).toBe('Me');
+      expect(t('tabs.me')).toBe('Account');
     });
 
     it('verifies center raised plus button geometry: 56 diameter and rises 8 above bar', () => {

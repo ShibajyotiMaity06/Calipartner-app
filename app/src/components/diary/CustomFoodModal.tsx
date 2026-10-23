@@ -125,9 +125,19 @@ export function CustomFoodModal({
             <Pressable
               testID="btn-close-custom-food"
               onPress={onClose}
-              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+              hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+              style={{
+                width: 36,
+                height: 36,
+                borderRadius: 18,
+                backgroundColor: colors.surfaceAlt,
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+              accessibilityRole="button"
+              accessibilityLabel="Close"
             >
-              <Ionicons name="close-circle" size={24} color={colors.textMuted} />
+              <Ionicons name="close" size={20} color={colors.text} />
             </Pressable>
           </View>
 
@@ -360,22 +370,44 @@ export function CustomFoodModal({
             </View>
           </ScrollView>
 
-          <Pressable
-            testID="btn-submit-custom-food"
-            disabled={loading}
-            onPress={handleSave}
-            style={{
-              backgroundColor: colors.accent,
-              borderRadius: radius.sm,
-              paddingVertical: 14,
-              alignItems: 'center',
-              marginTop: spacing.xs,
-            }}
-          >
-            <Text style={{ color: colors.onAccent, fontWeight: '700', fontSize: fontSize.md }}>
-              {loading ? t('common.saving') : t('customFood.saveButton')}
-            </Text>
-          </Pressable>
+          <View style={{ gap: spacing.xs, marginTop: spacing.xs }}>
+            <Pressable
+              testID="btn-submit-custom-food"
+              disabled={loading}
+              onPress={handleSave}
+              style={{
+                backgroundColor: colors.accent,
+                borderRadius: radius.md,
+                paddingVertical: 14,
+                alignItems: 'center',
+                minHeight: 48,
+                justifyContent: 'center',
+              }}
+            >
+              <Text style={{ color: colors.onAccent, fontWeight: '700', fontSize: fontSize.md }}>
+                {loading ? t('common.saving') : t('customFood.saveButton')}
+              </Text>
+            </Pressable>
+
+            <Pressable
+              testID="btn-cancel-custom-food"
+              disabled={loading}
+              onPress={onClose}
+              style={{
+                borderRadius: radius.md,
+                borderWidth: 1,
+                borderColor: colors.border,
+                paddingVertical: 12,
+                alignItems: 'center',
+                minHeight: 44,
+                justifyContent: 'center',
+              }}
+            >
+              <Text style={{ color: colors.textMuted, fontWeight: '600', fontSize: fontSize.sm }}>
+                Cancel
+              </Text>
+            </Pressable>
+          </View>
         </View>
       </View>
     </Modal>

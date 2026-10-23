@@ -182,7 +182,7 @@ describe('UI-10 · Me, Privacy, Plans, and Paywall (Screens N01–N16, O01–O10
       expect(titles.addPeople).toBe('Add more people');
       expect(titles.coach).toBe('Ask your coach');
       expect(titles.partnerFinder).toBe('Find a workout partner');
-      expect(titles.general).toBe('Choose a room plan');
+      expect(titles.general).toBe('Choose your CaliPartner plan');
     });
 
     it('configures the three room size tiers: Basic (2-5), Plus (6-20), Pro (21-50)', () => {
@@ -194,6 +194,14 @@ describe('UI-10 · Me, Privacy, Plans, and Paywall (Screens N01–N16, O01–O10
 
       expect(TIER_CONFIG.pro.sizeRange).toBe('21 to 50');
       expect(TIER_CONFIG.pro.cap).toBe(50);
+    });
+
+    it('enforces 7-day free trial on Plus and NO trial on Pro as per Pricing Plan v2', () => {
+      expect(TIER_CONFIG.plus.hasTrial).toBe(true);
+      expect(TIER_CONFIG.plus.trialDays).toBe(7);
+
+      expect(TIER_CONFIG.pro.hasTrial).toBe(false);
+      expect(TIER_CONFIG.pro.trialDays).toBe(0);
     });
 
     it('displays quiet savings badges without shouting badges', () => {

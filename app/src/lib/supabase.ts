@@ -1,3 +1,4 @@
+import { Platform } from 'react-native';
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 import { env } from '@/lib/env';
 import { secureStoreAdapter } from '@/lib/secureStore';
@@ -16,7 +17,7 @@ export function getSupabase(): SupabaseClient {
         storage: secureStoreAdapter,
         persistSession: true,
         autoRefreshToken: true,
-        detectSessionInUrl: false,
+        detectSessionInUrl: Platform.OS === 'web',
       },
     });
   }

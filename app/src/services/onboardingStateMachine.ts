@@ -34,6 +34,7 @@ export interface OnboardingState {
   currentStep: OnboardingStep;
   goal: Goal;
   units: Units;
+  nickname: string;
   sex: Sex;
   dateOfBirth: string; // YYYY-MM-DD
   heightCm: number;
@@ -58,6 +59,7 @@ export const INITIAL_ONBOARDING_STATE: OnboardingState = {
   currentStep: 'goal',
   goal: 'cut',
   units: 'metric',
+  nickname: '',
   sex: 'male',
   dateOfBirth: '',
   heightCm: 175,
@@ -108,6 +110,11 @@ export class OnboardingStateMachine {
 
   setUnits(units: Units): this {
     this.state.units = units;
+    return this;
+  }
+
+  setNickname(nickname: string): this {
+    this.state.nickname = nickname;
     return this;
   }
 
@@ -198,14 +205,7 @@ export class OnboardingStateMachine {
         break;
 
       case 'rate_selection':
-        if (this.state.calculatedTargets) {
-          const selectedOption = this.state.calculatedTargets.presetRates.find(
-            (p) => p.rateKgPerWeek === this.state.weeklyRateKg,
-          );
-          if (selectedOption && !selectedOption.available) {
-            errors.rate = `Selected rate is unavailable: ${selectedOption.reason}`;
-          }
-        }
+        // Rate chosen by user (safe pace advisory is informational, user choice respected)
         break;
 
       case 'target_weight_date':

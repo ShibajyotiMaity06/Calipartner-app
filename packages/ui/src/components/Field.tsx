@@ -125,6 +125,7 @@ const styles = StyleSheet.create({
     fontFamily: typeTokens.body.fontFamily,
     fontSize: typeTokens.body.fontSize,
     padding: 0,
+    outlineStyle: 'none' as never,
   },
   leadingIconWrap: {
     marginRight: space[2], // 8

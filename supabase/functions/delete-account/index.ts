@@ -48,17 +48,77 @@ Deno.serve(async (req: Request) => {
 
     const userId = user.id;
 
-    // 1. Delete profile and cascade-linked user records
-    const { error: profileError } = await adminClient.from('profiles').delete().eq('id', userId);
+    // 1. Room Preservation & Ownership Transfer (Finding H21)
+    // Avoid cascading rooms and destroying other members' room history
+    const { data: hostedRooms } = await adminClient
+      .from('rooms')
+      .select('id, created_by, plan_holder_id')
+      .or(`created_by.eq.${userId},plan_holder_id.eq.${userId}`);
 
-    if (profileError) {
-      console.warn('Profile deletion warning (may not exist yet):', profileError.message);
+    if (hostedRooms && hostedRooms.length > 0) {
+      for (const room of hostedRooms) {
+        // Find other active members in the room
+        const { data: otherMembers } = await adminClient
+          .from('room_members')
+          .select('user_id, joined_at')
+          .eq('room_id', room.id)
+          .neq('user_id', userId)
+          .order('joined_at', { ascending: true })
+          .limit(1);
+
+        if (otherMembers && otherMembers.length > 0) {
+          const newHost = otherMembers[0].user_id;
+          await adminClient
+            .from('rooms')
+            .update({
+              created_by: room.created_by === userId ? newHost : room.created_by,
+              plan_holder_id: room.plan_holder_id === userId ? null : room.plan_holder_id,
+              state: 'dormant', // Needs a new plan to become active
+              updated_at: new Date().toISOString(),
+            })
+            .eq('id', room.id);
+        } else {
+          // No other members; archive room
+          await adminClient
+            .from('rooms')
+            .update({
+              state: 'archived',
+              plan_holder_id: null,
+              updated_at: new Date().toISOString(),
+            })
+            .eq('id', room.id);
+        }
+      }
     }
 
-    // 2. Delete the user from auth.users (idempotent)
+    // 2. Remove user from room memberships
+    await adminClient.from('room_members').delete().eq('user_id', userId);
+
+    // 3. Delete attachments & chat metadata owned by user
+    await adminClient.from('chat_attachments').delete().eq('owner_id', userId);
+
+    // 4. Delete user profile and all cascade-linked user records
+    const { error: profileError } = await adminClient.from('profiles').delete().eq('id', userId);
+    if (profileError) {
+      console.warn('Profile deletion notice:', profileError.message);
+    }
+
+    // 5. Clean up entitlements & devices
+    await adminClient.from('entitlements').delete().eq('user_id', userId);
+    await adminClient.from('devices').delete().eq('user_id', userId);
+    await adminClient.from('blocks').delete().or(`blocker_id.eq.${userId},blocked_id.eq.${userId}`);
+
+    // 6. Delete user from auth.users (Fail closed - H21 fix)
     const { error: deleteUserError } = await adminClient.auth.admin.deleteUser(userId);
     if (deleteUserError) {
-      console.warn('Auth user delete result:', deleteUserError.message);
+      console.error('Auth user delete failed:', deleteUserError.message);
+      return new Response(
+        JSON.stringify({
+          error: `Failed to remove user account: ${deleteUserError.message}`,
+          code: 'AUTH_DELETE_FAILED',
+        }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
+      );
     }
 
     return new Response(

@@ -51,7 +51,6 @@ export function MealSectionCard({
       testID={testID ?? `card-section-${section}`}
       onPress={() => onOpenDetail?.(section)}
       style={({ pressed }) => [styles.card, pressed && styles.cardPressed]}
-      accessibilityRole="button"
       accessibilityLabel={`${sectionName}, ${summary.calories} calories, ${summary.entries.length} items`}
     >
       {/* Header Row */}

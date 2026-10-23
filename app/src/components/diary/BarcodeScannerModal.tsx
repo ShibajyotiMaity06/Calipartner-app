@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   ActivityIndicator,
   Alert,
   Modal,
+  Platform,
   Pressable,
   StyleSheet,
   TextInput,
@@ -81,6 +82,110 @@ export function BarcodeScannerModal({
     onClose();
   };
 
+  const [webStream, setWebStream] = useState<any>(null);
+  const [webCameraActive, setWebCameraActive] = useState(false);
+  const videoRef = useRef<any>(null);
+
+  // Clean up web camera stream on unmount or close
+  useEffect(() => {
+    return () => {
+      if (webStream && typeof webStream.getTracks === 'function') {
+        webStream.getTracks().forEach((track: any) => track.stop());
+      }
+    };
+  }, [webStream]);
+
+  const handleTriggerBarcodePhoto = () => {
+    const doc = (globalThis as any).document;
+    if (doc) {
+      let input: any = doc.getElementById('barcode-photo-web-input');
+      if (!input) {
+        input = doc.createElement('input');
+        input.id = 'barcode-photo-web-input';
+        input.type = 'file';
+        input.accept = 'image/*';
+        input.setAttribute('capture', 'environment');
+        input.style.display = 'none';
+        doc.body.appendChild(input);
+      }
+      input.value = '';
+      input.onchange = async (e: any) => {
+        const file = e.target?.files?.[0];
+        if (file) {
+          // If BarcodeDetector is available in browser, scan barcode from file
+          const win = (globalThis as any).window || (globalThis as any);
+          if (win && win.BarcodeDetector) {
+            try {
+              setSearching(true);
+              const barcodeDetector = new win.BarcodeDetector({
+                formats: ['ean_13', 'ean_8', 'upc_a', 'upc_e', 'code_128', 'code_39', 'qr_code'],
+              });
+              const imgBitmap = await win.createImageBitmap(file);
+              const barcodes = await barcodeDetector.detect(imgBitmap);
+              if (barcodes && barcodes.length > 0 && barcodes[0].rawValue) {
+                await handleBarcodeScanned(barcodes[0].rawValue);
+                return;
+              }
+            } catch {
+              // Non-fatal, fallback to manual input prompt
+            } finally {
+              setSearching(false);
+            }
+          }
+          // If barcode detector is not supported or didn't find a code, switch to manual entry
+          setShowManualInput(true);
+        }
+      };
+      input.click();
+    }
+  };
+
+  const handleRequestCamera = async () => {
+    if (Platform.OS === 'web') {
+      try {
+        const nav = (globalThis as any).navigator;
+        if (nav && nav.mediaDevices && nav.mediaDevices.getUserMedia) {
+          const stream = await nav.mediaDevices.getUserMedia({
+            video: { facingMode: { ideal: 'environment' } },
+          });
+          setWebStream(stream);
+          setWebCameraActive(true);
+          // Set up scanning loop if BarcodeDetector is supported
+          const win = (globalThis as any).window || (globalThis as any);
+          if (win && win.BarcodeDetector) {
+            const barcodeDetector = new win.BarcodeDetector({
+              formats: ['ean_13', 'ean_8', 'upc_a', 'upc_e', 'code_128', 'code_39', 'qr_code'],
+            });
+            const scanInterval = setInterval(async () => {
+              if (videoRef.current && videoRef.current.readyState >= 2 && !scanned) {
+                try {
+                  const barcodes = await barcodeDetector.detect(videoRef.current);
+                  if (barcodes && barcodes.length > 0 && barcodes[0].rawValue) {
+                    clearInterval(scanInterval);
+                    await handleBarcodeScanned(barcodes[0].rawValue);
+                  }
+                } catch {
+                  // Ignore frame detection errors
+                }
+              }
+            }, 300);
+          }
+        } else {
+          handleTriggerBarcodePhoto();
+        }
+      } catch {
+        handleTriggerBarcodePhoto();
+      }
+      return;
+    }
+
+    if (requestPermission) {
+      await requestPermission();
+    }
+  };
+
+  const isCameraReady = Platform.OS === 'web' ? webCameraActive : !!permission?.granted;
+
   return (
     <Modal visible={visible} animationType="slide" onRequestClose={onClose}>
       <View style={styles.container}>
@@ -92,7 +197,7 @@ export function BarcodeScannerModal({
           <View style={styles.headerActions}>
             <Pressable
               testID="btn-toggle-torch"
-              onPress={() => setTorchEnabled((prev) => !prev)}
+              onPress={() => setTorchEnabled((prev: boolean) => !prev)}
               hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
               style={styles.iconButton}
               accessibilityLabel="Toggle flashlight"
@@ -106,7 +211,12 @@ export function BarcodeScannerModal({
 
             <Pressable
               testID="btn-close-scanner"
-              onPress={onClose}
+              onPress={() => {
+                if (webStream && typeof webStream.getTracks === 'function') {
+                  webStream.getTracks().forEach((track: any) => track.stop());
+                }
+                onClose();
+              }}
               hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
               style={styles.iconButton}
               accessibilityLabel={t('common.cancel')}
@@ -118,29 +228,53 @@ export function BarcodeScannerModal({
 
         {/* Camera Frame or Permission Screen */}
         <View style={styles.cameraWrapper}>
-          {!permission?.granted ? (
+          {!isCameraReady ? (
             <View style={styles.permissionBox}>
               <Ionicons name="camera-outline" size={54} color={dark.apricot} />
               <Text variant="body" color={dark.textHi} style={{ textAlign: 'center' }}>
                 {t('foodLog.scan.cameraPermission')}
               </Text>
-              <Button
-                testID="btn-grant-camera-permission"
-                variant="primary"
-                label={t('foodLog.scan.grantPermission')}
-                onPress={requestPermission}
-              />
+              <View style={{ gap: 10, width: '100%', maxWidth: 280, marginTop: 12 }}>
+                <Button
+                  testID="btn-grant-camera-permission"
+                  variant="primary"
+                  label="Open Camera Scanner"
+                  onPress={handleRequestCamera}
+                />
+                <Button
+                  testID="btn-barcode-photo-fallback"
+                  variant="secondary"
+                  label="Snap / Upload Barcode Photo"
+                  onPress={handleTriggerBarcodePhoto}
+                />
+              </View>
             </View>
           ) : (
             <View style={styles.cameraContainer}>
-              <CameraView
-                style={StyleSheet.absoluteFill}
-                facing="back"
-                enableTorch={torchEnabled}
-                onBarcodeScanned={
-                  scanned ? undefined : (result) => handleBarcodeScanned(result.data)
-                }
-              />
+              {Platform.OS === 'web' ? (
+                React.createElement('video', {
+                  ref: (el: any) => {
+                    videoRef.current = el;
+                    if (el && webStream && el.srcObject !== webStream) {
+                      el.srcObject = webStream;
+                      el.play?.().catch?.(() => {});
+                    }
+                  },
+                  autoPlay: true,
+                  playsInline: true,
+                  muted: true,
+                  style: { width: '100%', height: '100%', objectFit: 'cover' },
+                })
+              ) : (
+                <CameraView
+                  style={StyleSheet.absoluteFill}
+                  facing="back"
+                  enableTorch={torchEnabled}
+                  onBarcodeScanned={
+                    scanned ? undefined : (result) => handleBarcodeScanned(result.data)
+                  }
+                />
+              )}
 
               {/* D04: 260x160 Cutout with Apricot Corner Brackets Only */}
               <View style={styles.cutoutOverlay}>

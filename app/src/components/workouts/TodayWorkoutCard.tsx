@@ -111,8 +111,7 @@ export function TodayWorkoutCard({
             accessibilityRole="button"
             accessibilityLabel={t('workouts.addWorkout')}
           >
-            <Ionicons name="add" size={16} color={dark.onBrand} />
-            <Text style={styles.addBtnText}>{t('workouts.addWorkout')}</Text>
+            <Ionicons name="add" size={20} color={dark.onBrand} />
           </TouchableOpacity>
         </View>
       </View>
@@ -344,11 +343,14 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+    gap: space[2],
   },
   headerTitleWrap: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: space[2],
+    flex: 1,
+    minWidth: 0,
   },
   iconWrapper: {
     width: 36,
@@ -373,6 +375,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: space[2],
+    flexShrink: 0,
   },
   iconBtn: {
     width: 36,
@@ -385,19 +388,12 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   addBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    minHeight: 36,
-    paddingHorizontal: space[3],
-    borderRadius: radius.control,
+    width: 36,
+    height: 36,
+    borderRadius: radius.full,
     backgroundColor: dark.apricot,
-  },
-  addBtnText: {
-    fontSize: typeTokens.label.fontSize,
-    fontFamily: typeTokens.label.fontFamily,
-    color: dark.onBrand, // #1C1109
-    fontWeight: '700',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   centerState: {
     paddingVertical: space[6],

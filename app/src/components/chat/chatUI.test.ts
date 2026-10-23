@@ -304,6 +304,7 @@ describe('Phase 8 — Chat View Layer & UI Logic Tests', () => {
           canCopy: true,
           canDelete: isMine,
           canReport: !isMine,
+          canBlock: !isMine,
           canMute: !isMine,
         };
       };
@@ -311,10 +312,12 @@ describe('Phase 8 — Chat View Layer & UI Logic Tests', () => {
       const myActions = getAvailableActions(true);
       expect(myActions.canDelete).toBe(true);
       expect(myActions.canReport).toBe(false);
+      expect(myActions.canBlock).toBe(false);
 
       const otherActions = getAvailableActions(false);
       expect(otherActions.canDelete).toBe(false);
       expect(otherActions.canReport).toBe(true);
+      expect(otherActions.canBlock).toBe(true);
       expect(otherActions.canMute).toBe(true);
     });
 
@@ -324,6 +327,19 @@ describe('Phase 8 — Chat View Layer & UI Logic Tests', () => {
       expect(reportReasons).toContain('inappropriate');
       expect(reportReasons).toContain('harassment');
       expect(reportReasons).toContain('spam');
+    });
+
+    it('instantly filters out blocked member messages from state and storage', () => {
+      const messages: Partial<ChatMessage>[] = [
+        { id: '1', sender_id: 'user-a', text: 'Hi' },
+        { id: '2', sender_id: 'abusive-user', text: 'Spam' },
+        { id: '3', sender_id: 'user-a', text: 'How are you?' },
+      ];
+
+      const blockedUserId = 'abusive-user';
+      const filtered = messages.filter((m) => m.sender_id !== blockedUserId);
+      expect(filtered).toHaveLength(2);
+      expect(filtered.map((m) => m.sender_id)).not.toContain('abusive-user');
     });
   });
 

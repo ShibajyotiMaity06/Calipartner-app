@@ -13,14 +13,14 @@ import { FoodLogModal } from '@/components/diary/FoodLogModal';
 import { BarcodeScannerModal } from '@/components/diary/BarcodeScannerModal';
 import { WorkoutLoggerModal } from '@/components/workouts/WorkoutLoggerModal';
 import { CustomWaterModal, WeightEntryModal } from '@/components/trackers';
-import { FocusStartModal } from '@/components/focus';
+
 import { FoodPhotoCameraModal } from '@/components/food_photo';
 import { RecipeBrowseView } from '@/components/recipes';
 import { QuickAddCaloriesModal } from '@/components/diary/QuickAddCaloriesModal';
 import { FastingTimerModal } from '@/components/fasting';
 import { useAuth } from '@/contexts/AuthContext';
 import { useAddEntry } from '@/hooks/useFoodEntries';
-import { usePersonalFocus } from '@/hooks/usePersonalFocus';
+
 import { useWater } from '@/hooks/useWater';
 import { useWeight } from '@/hooks/useWeight';
 import { useTheme } from '@/theme/useTheme';
@@ -32,7 +32,6 @@ type ActiveFlowState =
   | 'water'
   | 'weight'
   | 'fast'
-  | 'focus'
   | 'scan'
   | 'photo'
   | 'recipe'
@@ -42,7 +41,6 @@ export default function LogScreen() {
   const router = useRouter();
   const { colors } = useTheme();
   const { user } = useAuth();
-  const { start: startPersonalFocus } = usePersonalFocus({ userId: user?.id ?? '' });
 
   const todayDate = new Date().toISOString().slice(0, 10);
   const initialSection: MealSection = getMealSectionForTime(new Date());
@@ -85,9 +83,7 @@ export default function LogScreen() {
       case 'fast':
         setActiveFlow('fast');
         break;
-      case 'focus':
-        setActiveFlow('focus');
-        break;
+
     }
   };
 
@@ -199,17 +195,7 @@ export default function LogScreen() {
         />
       )}
 
-      {/* 6. Focus Start Modal */}
-      {activeFlow === 'focus' && (
-        <FocusStartModal
-          visible={sheetVisible}
-          onClose={handleCloseAll}
-          onStartPersonal={async (mode, label, plannedSeconds) => {
-            await startPersonalFocus(mode, label, plannedSeconds);
-            handleCloseAll();
-          }}
-        />
-      )}
+
 
       {/* 7. Quick Scan: Barcode Scanner */}
       {activeFlow === 'scan' && (
@@ -222,12 +208,15 @@ export default function LogScreen() {
         />
       )}
 
-      {/* 8. Quick Photo: Food Photo Camera */}
+      {/* 8. Quick Photo: Food Photo Camera & AI Scanner */}
       {activeFlow === 'photo' && (
-        <FoodPhotoCameraModal
+        <FoodLogModal
           visible={sheetVisible}
+          defaultSection={currentSection}
+          localDate={todayDate}
+          initialTab="photo"
           onClose={handleCloseAll}
-          onPhotoCaptured={() => handleCloseAll()}
+          onLogged={handleCloseAll}
         />
       )}
 

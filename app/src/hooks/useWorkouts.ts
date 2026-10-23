@@ -279,18 +279,34 @@ export function useWorkoutTimer(workoutId?: string | null): UseWorkoutTimerResul
 
   const pause = useCallback(async () => {
     if (!timer) return;
-    const db = await getDb();
-    const paused = await pauseWorkoutTimer(db, timer.id);
-    setTimer(paused);
-    setElapsedSeconds(calculateElapsedSeconds(paused));
+    const now = new Date();
+    // Optimistic pause update for instantaneous UI feedback
+    setTimer((prev) =>
+      prev ? { ...prev, is_running: false, paused_at: now.toISOString() } : null,
+    );
+    try {
+      const db = await getDb();
+      const paused = await pauseWorkoutTimer(db, timer.id, now);
+      setTimer(paused);
+      setElapsedSeconds(calculateElapsedSeconds(paused));
+    } catch (e) {
+      // Keep optimistic state if db fails
+    }
   }, [timer]);
 
   const resume = useCallback(async () => {
     if (!timer) return;
-    const db = await getDb();
-    const resumed = await resumeWorkoutTimer(db, timer.id);
-    setTimer(resumed);
-    setElapsedSeconds(calculateElapsedSeconds(resumed));
+    const now = new Date();
+    // Optimistic resume update for instantaneous UI feedback
+    setTimer((prev) => (prev ? { ...prev, is_running: true, paused_at: null } : null));
+    try {
+      const db = await getDb();
+      const resumed = await resumeWorkoutTimer(db, timer.id, now);
+      setTimer(resumed);
+      setElapsedSeconds(calculateElapsedSeconds(resumed));
+    } catch (e) {
+      // Keep optimistic state if db fails
+    }
   }, [timer]);
 
   const stop = useCallback(async () => {

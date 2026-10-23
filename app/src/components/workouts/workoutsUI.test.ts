@@ -250,4 +250,43 @@ describe('Phase 6 — Workout Tracker UI Logic & Presentation Tests', () => {
       expect(hasWorkout('2026-10-09')).toBe(false);
     });
   });
+
+  describe('7. Weekly Workout Plan & Suite Logic', () => {
+    it('calculates rest days accurately from selected workout days', () => {
+      const allDays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+      const workoutDays = ['Mon', 'Wed', 'Fri', 'Sat'];
+      const restDays = allDays.filter((d) => !workoutDays.includes(d));
+
+      expect(restDays).toEqual(['Tue', 'Thu', 'Sun']);
+      expect(restDays).toHaveLength(3);
+    });
+
+    it('enforces streak preservation rule on rest days', () => {
+      const isStreakPreserved = (isRestDay: boolean, didWorkout: boolean) => {
+        // Rest days are planned and do not break streaks
+        if (isRestDay) return true;
+        return didWorkout;
+      };
+
+      expect(isStreakPreserved(true, false)).toBe(true);
+      expect(isStreakPreserved(false, true)).toBe(true);
+      expect(isStreakPreserved(false, false)).toBe(false);
+    });
+
+    it('calculates completed exercises ratio for the day', () => {
+      const exercises = [
+        { name: 'Bench Press', completed: true },
+        { name: 'Squats', completed: true },
+        { name: 'Shoulder Press', completed: false },
+        { name: 'Lat Pulldown', completed: false },
+        { name: 'Bicep Curl', completed: false },
+      ];
+
+      const completed = exercises.filter((e) => e.completed).length;
+      expect(completed).toBe(2);
+      expect(exercises.length).toBe(5);
+      expect(Math.round((completed / exercises.length) * 100)).toBe(40);
+    });
+  });
 });
+

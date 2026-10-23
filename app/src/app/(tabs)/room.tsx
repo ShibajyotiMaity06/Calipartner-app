@@ -22,7 +22,7 @@ import {
   MembersTab,
   NudgeModal,
   OverCapacityBanner,
-  PlaceholderPaywallModal,
+  PaywallModal,
   PrivacySettingsModal,
   ReactionModal,
   ReportModal,
@@ -34,11 +34,12 @@ import {
   RoomSettingsModal,
   SharedMealCard,
   SideBySideCard,
+  SquadConnectFlow,
   TrialBanner,
   type PendingSharedMeal,
   type RoomSegment,
 } from '@/components/rooms';
-import { FocusingNowStrip, RoomFocusSegment } from '@/components/focus';
+
 import { ChatView } from '@/components/chat';
 import { useRoomActions } from '@/hooks/useRoomActions';
 import { useRoomChat } from '@/hooks/useRoomChat';
@@ -83,7 +84,8 @@ export default function RoomScreen() {
     cancelRequest,
     searchUsers,
   } = useRoomRequests();
-  const { isTrial, trialBanner } = useSubscription();
+  const { isTrial, trialBanner, currentTier, hasPlan, hasActiveAccess } = useSubscription();
+  const isPlusOrPro = hasPlan || hasActiveAccess || currentTier === 'plus' || currentTier === 'pro';
 
   // Selected Room
   const [selectedRoomId, setSelectedRoomId] = useState<string | null>(null);
@@ -286,88 +288,39 @@ export default function RoomScreen() {
           </View>
         </ScrollView>
       ) : rooms.length === 0 ? (
-        /* No Active Rooms / Empty State */
-        <ScrollView
-          showsVerticalScrollIndicator={false}
-          refreshControl={
-            <RefreshControl
-              refreshing={roomsLoading}
-              onRefresh={handleRefresh}
-              tintColor={colors.accent}
-            />
-          }
-          contentContainerStyle={styles.scrollContainer}
-        >
-          <View
-            style={[
-              styles.emptyContainer,
-              { backgroundColor: colors.surface, borderColor: colors.border },
-            ]}
-          >
-            <View style={[styles.emptyIconCircle, { backgroundColor: colors.cardHighlight }]}>
-              <Ionicons name="people-outline" size={44} color={colors.accent} />
-            </View>
-            <Text style={[styles.emptyTitle, { color: colors.text }]}>{t('rooms.emptyTitle')}</Text>
-            <Text style={[styles.emptySubtitle, { color: colors.textMuted }]}>
-              {t('rooms.emptySubtitle')}
-            </Text>
-
-            <View style={styles.emptyButtonsRow}>
-              <Pressable
-                onPress={() => setShowCreateModal(true)}
-                style={[styles.primaryButton, { backgroundColor: colors.accent }]}
-                accessibilityRole="button"
-                accessibilityLabel="Create a new room"
-                testID="btn-empty-create-room"
-              >
-                <Ionicons name="add-circle-outline" size={18} color={colors.onAccent} />
-                <Text style={[styles.primaryButtonText, { color: colors.onAccent }]}>
-                  {t('rooms.createRoomBtn')}
-                </Text>
-              </Pressable>
-
-              <Pressable
-                onPress={() => setShowJoinModal(true)}
-                style={[styles.secondaryButton, { backgroundColor: colors.surfaceAlt }]}
-                accessibilityRole="button"
-                accessibilityLabel="Join room with code"
-                testID="btn-empty-join-code"
-              >
-                <Ionicons name="key-outline" size={18} color={colors.text} />
-                <Text style={[styles.secondaryButtonText, { color: colors.text }]}>
-                  {t('rooms.joinByCodeBtn')}
-                </Text>
-              </Pressable>
-            </View>
-
-            {incoming.length > 0 && (
-              <Pressable
-                onPress={() => setShowInboxModal(true)}
-                style={styles.inboxNoticeLink}
-                accessibilityRole="button"
-                testID="btn-empty-check-inbox"
-              >
-                <Ionicons name="mail-unread-outline" size={16} color={colors.accent} />
-                <Text style={[styles.inboxNoticeText, { color: colors.accent }]}>
-                  {incoming.length} pending invitations in inbox
-                </Text>
-              </Pressable>
-            )}
-          </View>
-        </ScrollView>
+        /* Find a Partner / Squad Connect Flow (Screenshot 1: 1-on-1, Squad, Join) */
+        <SquadConnectFlow
+          isPlusOrPro={isPlusOrPro}
+          onOpenPaywall={() => setShowPaywallModal(true)}
+          onCreateSquad={async (name) => {
+            const res = await createRoom(name);
+            if (res && typeof res === 'object' && 'room_id' in res && res.room_id) {
+              setSelectedRoomId(String(res.room_id));
+            }
+            await refreshRooms();
+            return res as any;
+          }}
+          onJoinSquad={() => setShowJoinModal(true)}
+          onSquadCreatedAndReady={async (roomId) => {
+            setSelectedRoomId(roomId);
+            await refreshRooms();
+          }}
+        />
       ) : activeSegment === 'chat' && currentRoom ? (
         /* Segment: Chat (Phase 8 View) */
-        <ChatView
-          roomId={currentRoom.id}
-          isVisible={isVisible && activeSegment === 'chat'}
-          options={{
-            userId: callerId || undefined,
-            userNickname: meMember?.nickname,
-            avatarUrl: meMember?.avatar_url ?? undefined,
-          }}
-          isLocked={isRoomLocked}
-          testID="room-chat-segment"
-        />
+        <View style={styles.chatWrapper}>
+          <ChatView
+            roomId={currentRoom.id}
+            isVisible={isVisible && activeSegment === 'chat'}
+            options={{
+              userId: callerId || undefined,
+              userNickname: meMember?.nickname,
+              avatarUrl: meMember?.avatar_url ?? undefined,
+            }}
+            isLocked={isRoomLocked}
+            testID="room-chat-segment"
+          />
+        </View>
       ) : (
         <ScrollView
           showsVerticalScrollIndicator={false}
@@ -382,7 +335,15 @@ export default function RoomScreen() {
         >
           {isRoomLocked ? (
             /* Locked Room Paused State (PRD 6.8 ROOM-7, 7.6) */
-            <LockedRoomPausedState onKeepRoomGoing={() => setShowPaywallModal(true)} />
+            <LockedRoomPausedState
+              onKeepRoomGoing={() => setShowPaywallModal(true)}
+              onLeaveRoom={async () => {
+                if (currentRoom) {
+                  await leaveRoom(currentRoom.id);
+                  await refreshRooms();
+                }
+              }}
+            />
           ) : (
             /* Active Room View */
             <>
@@ -392,6 +353,11 @@ export default function RoomScreen() {
                   roomName={currentRoom.name}
                   roomCode={currentRoom.code}
                   onInviteByUsername={() => setShowInviteModal(true)}
+                  onLeaveRoom={async () => {
+                    await leaveRoom(currentRoom.id);
+                    setSelectedRoomId(null);
+                    await refreshRooms();
+                  }}
                 />
               )}
 
@@ -444,13 +410,7 @@ export default function RoomScreen() {
                     />
                   )}
 
-                  {/* Focusing Now Strip on Room > Today (PRD RV-11) */}
-                  <FocusingNowStrip
-                    roomId={activeRoomId}
-                    isVisible={isVisible && activeSegment === 'today'}
-                    userId={callerId}
-                    onOpenFocusSegment={() => setActiveSegment('focus')}
-                  />
+
 
                   {/* Overview Row for 3+ Members (paged & searchable above 12 members) */}
                   {members.length >= 3 && (
@@ -484,16 +444,7 @@ export default function RoomScreen() {
                 </>
               )}
 
-              {/* Segment: Focus (PRD 6.25, RV-1) */}
-              {activeSegment === 'focus' && currentRoom && (
-                <RoomFocusSegment
-                  roomId={currentRoom.id}
-                  roomName={currentRoom.name}
-                  userId={callerId}
-                  isVisible={isVisible && activeSegment === 'focus'}
-                  isLocked={isRoomLocked}
-                />
-              )}
+
 
               {/* Segment: Progress */}
               {activeSegment === 'progress' && currentRoom && (
@@ -619,10 +570,12 @@ export default function RoomScreen() {
         }}
       />
 
-      {/* Placeholder Paywall Modal */}
-      <PlaceholderPaywallModal
+      {/* Paywall Modal */}
+      <PaywallModal
         visible={showPaywallModal}
         onClose={() => setShowPaywallModal(false)}
+        context="room"
+        roomName={currentRoom?.name ?? 'Accountability Squad'}
       />
 
       {/* Nudge Modal */}
@@ -671,8 +624,12 @@ const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
   },
+  chatWrapper: {
+    flex: 1,
+    paddingBottom: 78,
+  },
   scrollContainer: {
-    paddingBottom: 110,
+    paddingBottom: 80,
   },
   loadingContainer: {
     paddingVertical: spacing.xl * 2,

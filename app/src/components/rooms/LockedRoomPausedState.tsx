@@ -25,6 +25,20 @@ export function LockedRoomPausedState({
   const { colors } = useTheme();
 
   const handleLeaveConfirm = () => {
+    const webConfirm =
+      typeof globalThis !== 'undefined'
+        ? (globalThis as unknown as { confirm?: (msg: string) => boolean }).confirm
+        : undefined;
+    if (typeof webConfirm === 'function') {
+      const confirmed = webConfirm(
+        'Are you sure you want to leave this room? Personal diaries and logged entries remain yours.',
+      );
+      if (confirmed && onLeaveRoom) {
+        onLeaveRoom();
+      }
+      return;
+    }
+
     Alert.alert(
       'Leave room',
       'Are you sure you want to leave this room? Personal diaries and logged entries remain yours.',

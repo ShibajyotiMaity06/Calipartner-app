@@ -53,29 +53,6 @@ export function RatePickerStep({
 
   return (
     <View style={styles.container}>
-      {/* Maintenance Baseline Callout with Numeral-XL (Spec A09) */}
-      <View style={styles.maintenanceCard} testID="maintenance-callout-card">
-        <Text variant="label" color={dark.textLo} style={styles.maintenanceHeader}>
-          {t('onboarding.rate.maintenanceHeader')}
-        </Text>
-        <View style={styles.numeralRow}>
-          <Text
-            variant="numeralXL"
-            color={dark.textHi}
-            style={styles.numeralXL}
-            testID="maintenance-callout-text"
-          >
-            {tdee.toLocaleString()}
-          </Text>
-          <Text variant="body" color={dark.textMid} style={styles.numeralUnit}>
-            kcal a day to stay the same
-          </Text>
-        </View>
-        <Text variant="bodyS" color={dark.textMid} style={styles.maintenanceCopy}>
-          Faster is not always better. 0.5 kg a week is easy to keep up.
-        </Text>
-      </View>
-
       {/* Maintain-Only Notice */}
       {goal === 'maintain' ? (
         <View style={styles.maintainNoticeCard} testID="maintain-notice-card">
@@ -90,8 +67,8 @@ export function RatePickerStep({
         /* Preset Rates List (0.25, 0.5, 0.75, 1 kg/week) */
         <View style={styles.ratesList} accessible accessibilityRole="radiogroup">
           {presetRates.map((preset) => {
-            const isSelected = selectedRateKg === preset.rateKgPerWeek && preset.available;
-            const isUnavailable = !preset.available;
+            const isSelected = selectedRateKg === preset.rateKgPerWeek;
+            const isBeyondSafe = !preset.available;
             const isRecommended = preset.rateKgPerWeek === 0.5;
 
             const rateFormatted =
@@ -117,12 +94,10 @@ export function RatePickerStep({
                 accessibilityRole="radio"
                 accessibilityState={{
                   selected: isSelected,
-                  disabled: isUnavailable,
                 }}
                 accessibilityLabel={`${rateFormatted}, ${preset.targetKcal} calories per day. ${
-                  isUnavailable ? renderDisabledReason(preset.reason) : ''
+                  isBeyondSafe ? renderDisabledReason(preset.reason) : ''
                 }`}
-                disabled={isUnavailable}
                 onPress={() => {
                   playClickSound();
                   onSelectRate(preset.rateKgPerWeek);
@@ -131,14 +106,9 @@ export function RatePickerStep({
                 style={[
                   styles.rateCard,
                   {
-                    backgroundColor: isUnavailable ? dark.s1 : isSelected ? dark.s2 : dark.s1,
-                    borderColor: isUnavailable
-                      ? dark.hairline
-                      : isSelected
-                        ? dark.apricot
-                        : dark.hairline,
+                    backgroundColor: isSelected ? dark.s2 : dark.s1,
+                    borderColor: isSelected ? dark.apricot : dark.hairline,
                     borderWidth: isSelected ? 2 : 1,
-                    opacity: isUnavailable ? 0.45 : 1,
                   },
                 ]}
               >
@@ -148,29 +118,21 @@ export function RatePickerStep({
                       style={[
                         styles.radioCircle,
                         {
-                          borderColor: isUnavailable
-                            ? dark.hairline
-                            : isSelected
-                              ? dark.apricot
-                              : dark.hairlineLit,
+                          borderColor: isSelected ? dark.apricot : dark.hairlineLit,
                           backgroundColor: isSelected ? dark.apricot : 'transparent',
                         },
                       ]}
                     >
                       {isSelected && <CheckIcon size={12} color={dark.onBrand} />}
                     </View>
-                    <Text
-                      variant="body"
-                      color={isUnavailable ? dark.textLo : dark.textHi}
-                      style={styles.rateTitle}
-                    >
+                    <Text variant="body" color={dark.textHi} style={styles.rateTitle}>
                       {rateFormatted}
                     </Text>
                   </View>
 
                   <View style={styles.badgeRow}>
-                    {/* Spec A09: Recommended (0.5) marked "Steady" */}
-                    {isRecommended && !isUnavailable && (
+                    {/* Recommended (0.5) marked "Steady" */}
+                    {isRecommended && !isBeyondSafe && (
                       <View style={styles.steadyBadge}>
                         <Text variant="label" color={dark.onBrand} style={styles.steadyBadgeText}>
                           Steady
@@ -178,13 +140,13 @@ export function RatePickerStep({
                       </View>
                     )}
 
-                    {isUnavailable ? (
+                    {isBeyondSafe ? (
                       <View
                         style={styles.unavailableBadge}
                         testID={`rate-disabled-badge-${preset.rateKgPerWeek}`}
                       >
-                        <Text variant="label" color={dark.textLo}>
-                          {t('onboarding.rate.unavailableBadge')}
+                        <Text variant="label" color={dark.textMid}>
+                          Beyond safe pace
                         </Text>
                       </View>
                     ) : (
@@ -197,11 +159,7 @@ export function RatePickerStep({
 
                 {/* Daily Calorie Target numeral */}
                 <View style={styles.rateBottomRow}>
-                  <Text
-                    variant="numeralXL"
-                    color={isUnavailable ? dark.textLo : dark.textHi}
-                    style={styles.targetKcalNumber}
-                  >
+                  <Text variant="numeralXL" color={dark.textHi} style={styles.targetKcalNumber}>
                     {preset.targetKcal.toLocaleString()}
                   </Text>
                   <Text variant="bodyS" color={dark.textLo} style={styles.targetKcalUnit}>
@@ -209,14 +167,14 @@ export function RatePickerStep({
                   </Text>
                 </View>
 
-                {/* Disabled Reason / Nearest allowed explanation */}
-                {isUnavailable && preset.reason && (
+                {/* Informational Reason if beyond safe pace */}
+                {isBeyondSafe && preset.reason && (
                   <View
                     style={styles.reasonCard}
                     testID={`rate-reason-container-${preset.rateKgPerWeek}`}
                   >
-                    <Text variant="label" color={dark.danger} style={styles.reasonText}>
-                      {renderDisabledReason(preset.reason)}
+                    <Text variant="label" color={dark.textLo} style={styles.reasonText}>
+                      Notice: {renderDisabledReason(preset.reason)}
                     </Text>
                   </View>
                 )}
