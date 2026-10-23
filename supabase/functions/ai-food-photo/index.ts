@@ -163,7 +163,7 @@ async function callVisionModel(
     console.warn('All previous vision models unavailable. Trying ultimate Claude fallback...');
     try {
       const claudeUrl = 'https://api.anthropic.com/v1/messages';
-      const claudeModel = Deno.env.get('CLAUDE_MODEL') || 'claude-3-5-haiku-20241022';
+      const claudeModel = Deno.env.get('CLAUDE_MODEL') || 'claude-haiku-5-5';
 
       const response = await fetch(claudeUrl, {
         method: 'POST',
