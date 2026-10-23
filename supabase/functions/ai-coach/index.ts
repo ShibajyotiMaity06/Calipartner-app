@@ -24,6 +24,128 @@ interface CoachRequestBody {
   conversation_id?: string;
 }
 
+async function callGroqChat(
+  apiKey: string,
+  model: string,
+  systemPrompt: string,
+  messages: CoachMessageInput[],
+): Promise<{ text: string; tokens: number } | null> {
+  try {
+    const groqUrl = 'https://api.groq.com/openai/v1/chat/completions';
+    const response = await fetch(groqUrl, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model,
+        messages: [{ role: 'system', content: systemPrompt }, ...messages.slice(-8)],
+        temperature: 0.7,
+        max_tokens: 1500,
+      }),
+    });
+
+    if (!response.ok) {
+      const errText = await response.text();
+      console.warn(`Groq (${model}) returned HTTP ${response.status}:`, errText);
+      return null;
+    }
+
+    const json = await response.json();
+    const text = json?.choices?.[0]?.message?.content || '';
+    const tokens = json?.usage?.total_tokens || DEFAULT_ESTIMATED_TOKENS;
+    return text ? { text, tokens } : null;
+  } catch (err: unknown) {
+    console.warn(`Groq (${model}) network error:`, err);
+    return null;
+  }
+}
+
+async function callGeminiChat(
+  apiKey: string,
+  systemPrompt: string,
+  messages: CoachMessageInput[],
+): Promise<{ text: string; tokens: number } | null> {
+  try {
+    const geminiEndpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
+    const contents = messages.slice(-8).map((m) => ({
+      role: m.role === 'assistant' ? 'model' : 'user',
+      parts: [{ text: m.content }],
+    }));
+
+    const res = await fetch(geminiEndpoint, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        systemInstruction: { parts: [{ text: systemPrompt }] },
+        contents,
+        generationConfig: { temperature: 0.7, maxOutputTokens: 2500 },
+      }),
+    });
+
+    if (!res.ok) {
+      const errText = await res.text();
+      console.warn(`Gemini returned HTTP ${res.status}:`, errText);
+      return null;
+    }
+
+    const resJson = await res.json();
+    const text = resJson?.candidates?.[0]?.content?.parts?.[0]?.text || '';
+    const tokens = resJson?.usageMetadata?.totalTokenCount || DEFAULT_ESTIMATED_TOKENS;
+    return text ? { text, tokens } : null;
+  } catch (err: unknown) {
+    console.warn('Gemini chat network error:', err);
+    return null;
+  }
+}
+
+async function callClaudeChat(
+  apiKey: string,
+  model: string,
+  systemPrompt: string,
+  messages: CoachMessageInput[],
+): Promise<{ text: string; tokens: number } | null> {
+  try {
+    const claudeUrl = 'https://api.anthropic.com/v1/messages';
+    const anthropicMessages = messages
+      .slice(-8)
+      .filter((m) => m.role === 'user' || m.role === 'assistant')
+      .map((m) => ({ role: m.role, content: m.content }));
+
+    const res = await fetch(claudeUrl, {
+      method: 'POST',
+      headers: {
+        'x-api-key': apiKey,
+        'anthropic-version': '2023-06-01',
+        'content-type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: model || 'claude-3-5-sonnet-20241022',
+        max_tokens: 1500,
+        system: systemPrompt,
+        messages: anthropicMessages,
+      }),
+    });
+
+    if (!res.ok) {
+      const errText = await res.text();
+      console.warn(`Claude returned HTTP ${res.status}:`, errText);
+      return null;
+    }
+
+    const resJson = await res.json();
+    const text = resJson?.content?.[0]?.text || '';
+    const tokens =
+      (resJson?.usage?.input_tokens || 0) + (resJson?.usage?.output_tokens || 0) ||
+      DEFAULT_ESTIMATED_TOKENS;
+    return text ? { text, tokens } : null;
+  } catch (err: unknown) {
+    console.warn('Claude chat network error:', err);
+    return null;
+  }
+}
+
 export async function handleAiCoach(req: Request): Promise<Response> {
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders });
@@ -175,81 +297,105 @@ USER METRICS & CONTEXT:
 - Today's Consumed Protein: ${consumedProtein} g (Remaining: ${Math.max(0, targetProtein - consumedProtein)} g)
 - Today's Hydration: ${waterMl} ml`;
 
+    const groqKey = Deno.env.get('GROQ_API_KEY');
+    const groqFallbackKey = Deno.env.get('GROQ_API_KEY_FALLBACK');
+    const groqModel = Deno.env.get('GROQ_MODEL') || 'qwen/qwen3.8-27b';
+    const geminiKey = Deno.env.get('GEMINI_API_KEY');
+    const anthropicKey = Deno.env.get('ANTHROPIC_API_KEY');
+    const claudeModel = Deno.env.get('CLAUDE_MODEL') || 'claude-3-5-sonnet-20241022';
     const openRouterApiKey = Deno.env.get('OPENROUTER_API_KEY');
-    const modelName = Deno.env.get('OPENROUTER_MODEL') || DEFAULT_COACH_MODEL;
+    const openRouterModel = Deno.env.get('OPENROUTER_MODEL') || DEFAULT_COACH_MODEL;
 
     let assistantResponseText = '';
     let tokensUsed = DEFAULT_ESTIMATED_TOKENS;
     let costUsd = DEFAULT_ESTIMATED_COST_USD;
+    let modelUsed = groqModel;
 
-    if (openRouterApiKey && openRouterApiKey.trim().length > 0) {
-      // Call OpenRouter API using deepseek/deepseek-v4-flash:free
-      const openRouterUrl = 'https://openrouter.ai/api/v1/chat/completions';
-
-      const response = await fetch(openRouterUrl, {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${openRouterApiKey}`,
-          'Content-Type': 'application/json',
-          'HTTP-Referer': 'https://calipartner.app',
-          'X-Title': 'CaliPartner AI Dietitian',
-        },
-        body: JSON.stringify({
-          model: modelName,
-          messages: [
-            { role: 'system', content: systemPrompt },
-            ...incomingMessages.slice(-8), // Keep conversation history compact
-          ],
-          temperature: 0.7,
-          max_tokens: 2500,
-        }),
-      });
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error('OpenRouter API error:', response.status, errorText);
-        throw new Error(`OpenRouter returned status ${response.status}`);
+    // 1. Primary: Groq with primary key (qwen/qwen3.8-27b or openai/gpt-oss-120b)
+    if (groqKey && groqKey.trim().length > 0) {
+      const groqRes = await callGroqChat(groqKey.trim(), groqModel, systemPrompt, incomingMessages);
+      if (groqRes) {
+        assistantResponseText = groqRes.text;
+        tokensUsed = groqRes.tokens;
+        costUsd = 0;
+        modelUsed = `groq:${groqModel}`;
       }
+    }
 
-      const responseData = await response.json();
-      assistantResponseText =
-        responseData?.choices?.[0]?.message?.content ||
-        'I am here to help you review your training and targets. How can I support your fitness journey today?';
-      tokensUsed = responseData?.usage?.total_tokens || DEFAULT_ESTIMATED_TOKENS;
-      costUsd = 0; // deepseek-v4-flash:free is free tier on OpenRouter
-    } else if (Deno.env.get('GEMINI_API_KEY')) {
-      // Call Google Gemini 2.5 Flash directly
-      const geminiApiKey = Deno.env.get('GEMINI_API_KEY')!;
-      const geminiEndpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${geminiApiKey}`;
-
-      const contents = incomingMessages.slice(-8).map((m) => ({
-        role: m.role === 'assistant' ? 'model' : 'user',
-        parts: [{ text: m.content }],
-      }));
-
-      const res = await fetch(geminiEndpoint, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          systemInstruction: { parts: [{ text: systemPrompt }] },
-          contents,
-          generationConfig: { temperature: 0.7, maxOutputTokens: 2500 },
-        }),
-      });
-
-      if (!res.ok) {
-        const errorText = await res.text();
-        console.error('Gemini API error:', res.status, errorText);
-        throw new Error(`Gemini API returned status ${res.status}`);
+    // 2. Fallback 1: Groq with fallback key
+    if (!assistantResponseText && groqFallbackKey && groqFallbackKey.trim().length > 0) {
+      console.warn('Groq primary key unavailable or rate limited. Trying Groq fallback key...');
+      const groqRes = await callGroqChat(groqFallbackKey.trim(), groqModel, systemPrompt, incomingMessages);
+      if (groqRes) {
+        assistantResponseText = groqRes.text;
+        tokensUsed = groqRes.tokens;
+        costUsd = 0;
+        modelUsed = `groq:${groqModel}:fallback`;
       }
+    }
 
-      const resJson = await res.json();
-      assistantResponseText =
-        resJson?.candidates?.[0]?.content?.parts?.[0]?.text ||
-        'I am here to help you review your training and targets. How can I support your fitness journey today?';
-      tokensUsed = resJson?.usageMetadata?.totalTokenCount || DEFAULT_ESTIMATED_TOKENS;
-      costUsd = 0;
-    } else {
+    // 3. Fallback 2: Google Gemini (gemini-2.5-flash)
+    if (!assistantResponseText && geminiKey && geminiKey.trim().length > 0) {
+      console.warn('Groq unavailable or rate limited. Trying Gemini fallback...');
+      const geminiRes = await callGeminiChat(geminiKey.trim(), systemPrompt, incomingMessages);
+      if (geminiRes) {
+        assistantResponseText = geminiRes.text;
+        tokensUsed = geminiRes.tokens;
+        costUsd = 0;
+        modelUsed = 'gemini-2.5-flash';
+      }
+    }
+
+    // 4. Fallback 3: OpenRouter (if configured)
+    if (!assistantResponseText && openRouterApiKey && openRouterApiKey.trim().length > 0) {
+      console.warn('Trying OpenRouter fallback...');
+      try {
+        const openRouterUrl = 'https://openrouter.ai/api/v1/chat/completions';
+        const response = await fetch(openRouterUrl, {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${openRouterApiKey}`,
+            'Content-Type': 'application/json',
+            'HTTP-Referer': 'https://calipartner.app',
+            'X-Title': 'CaliPartner AI Dietitian',
+          },
+          body: JSON.stringify({
+            model: openRouterModel,
+            messages: [
+              { role: 'system', content: systemPrompt },
+              ...incomingMessages.slice(-8),
+            ],
+            temperature: 0.7,
+            max_tokens: 2500,
+          }),
+        });
+
+        if (response.ok) {
+          const responseData = await response.json();
+          assistantResponseText = responseData?.choices?.[0]?.message?.content || '';
+          tokensUsed = responseData?.usage?.total_tokens || DEFAULT_ESTIMATED_TOKENS;
+          costUsd = 0;
+          modelUsed = openRouterModel;
+        }
+      } catch (orErr) {
+        console.warn('OpenRouter fallback failed:', orErr);
+      }
+    }
+
+    // 5. Ultimate Fallback: Claude (Anthropic API)
+    if (!assistantResponseText && anthropicKey && anthropicKey.trim().length > 0) {
+      console.warn('All previous providers unavailable. Trying ultimate Claude fallback...');
+      const claudeRes = await callClaudeChat(anthropicKey.trim(), claudeModel, systemPrompt, incomingMessages);
+      if (claudeRes) {
+        assistantResponseText = claudeRes.text;
+        tokensUsed = claudeRes.tokens;
+        costUsd = 0.0015;
+        modelUsed = `claude:${claudeModel}`;
+      }
+    }
+
+    // 6. Built-in rule-based heuristic fallback if all AI APIs are exhausted
+    if (!assistantResponseText) {
       const latestUserMessage =
         incomingMessages[incomingMessages.length - 1]?.content?.toLowerCase() || '';
 
@@ -348,7 +494,7 @@ Great protein sources:
           role: 'assistant',
           content: cleanResponseText,
         },
-        model: modelName,
+        model: modelUsed,
       }),
       { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
     );
