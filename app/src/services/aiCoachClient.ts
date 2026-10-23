@@ -170,7 +170,15 @@ USER METRICS & CONTEXT:
     throw new Error(`AI Coach service error (${res.status}). Please try again.`);
   }
 
-  const geminiData = await res.json();
+  const geminiData = (await res.json()) as {
+    candidates?: Array<{
+      content?: {
+        parts?: Array<{
+          text?: string;
+        }>;
+      };
+    }>;
+  };
   const rawReply = geminiData?.candidates?.[0]?.content?.parts?.[0]?.text;
 
   if (!rawReply) {

@@ -74,7 +74,7 @@ export function CardioTrackerModal({
 
   // Shared Session Metrics
   const [elapsedSeconds, setElapsedSeconds] = useState<number>(0);
-  const timerRef = useRef<NodeJS.Timeout | null>(null);
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const watchIdRef = useRef<number | null>(null);
   const [pedometerAvailable, setPedometerAvailable] = useState<boolean | null>(null);
   const pedometerSubRef = useRef<{ remove: () => void } | null>(null);
