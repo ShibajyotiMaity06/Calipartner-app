@@ -19,6 +19,7 @@
     "check": "npm run lint && npm run typecheck && npm test",
     "app": "npm run start --workspace app",
     "app:web": "npm run web --workspace app",
+    "build:web": "npm run build:web --workspace app",
     "supabase:start": "supabase start",
     "supabase:stop": "supabase stop",
     "supabase:serve": "supabase functions serve --no-verify-jwt",
