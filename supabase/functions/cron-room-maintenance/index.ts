@@ -52,6 +52,11 @@ export async function handleCronRoomMaintenance(req: Request): Promise<Response>
   }
 }
 
+declare const Deno: {
+  serve: (handler: (req: Request) => Promise<Response> | Response) => void;
+  env: { get: (key: string) => string | undefined };
+};
+
 if (typeof Deno !== 'undefined' && typeof Deno.serve === 'function') {
   Deno.serve(handleCronRoomMaintenance);
 }
