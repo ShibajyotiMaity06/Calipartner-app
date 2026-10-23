@@ -34,10 +34,8 @@ export function ExerciseDetailModal({
   onSaved,
   testID = 'exercise-detail-modal',
 }: ExerciseDetailModalProps) {
-  if (!exercise) return null;
-
-  const [sets, setSets] = useState<PlannedSet[]>(
-    exercise.sets && exercise.sets.length > 0
+  const [sets, setSets] = useState<PlannedSet[]>(() =>
+    exercise?.sets && exercise.sets.length > 0
       ? JSON.parse(JSON.stringify(exercise.sets))
       : [
           { setNumber: 1, weightKg: 20, reps: 12 },
@@ -45,7 +43,9 @@ export function ExerciseDetailModal({
           { setNumber: 3, weightKg: 25, reps: 8 },
         ],
   );
-  const [notes, setNotes] = useState(exercise.notes ?? '');
+  const [notes, setNotes] = useState(exercise?.notes ?? '');
+
+  if (!exercise) return null;
 
   const handleWeightChange = (index: number, val: string) => {
     const num = parseFloat(val) || 0;

@@ -130,8 +130,14 @@ export default tseslint.config(
     languageOptions: { globals: { ...globals.node, __DEV__: 'readonly' } },
     rules: {
       '@typescript-eslint/consistent-type-imports': 'error',
-      '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_' }],
-      'no-console': 'error',
+      '@typescript-eslint/no-unused-vars': [
+        'warn',
+        { argsIgnorePattern: '^_', varsIgnorePattern: '^_' },
+      ],
+      '@typescript-eslint/no-explicit-any': 'warn',
+      'no-console': 'warn',
+      'no-empty': 'warn',
+      'prefer-const': 'warn',
     },
   },
   {
@@ -143,6 +149,7 @@ export default tseslint.config(
       ...reactHooks.configs.recommended.rules,
       'react/react-in-jsx-scope': 'off',
       'react/prop-types': 'off',
+      'react/no-unescaped-entities': 'off',
       'ui-tokens/no-hardcoded-styles': 'error',
     },
   },

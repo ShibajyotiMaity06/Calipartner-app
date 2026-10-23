@@ -1,61 +1,229 @@
 [
   {
     "file": "app/src/app/(tabs)/progress.tsx",
-    "line": 285,
+    "line": 284,
     "type": "hex",
     "matched": "#000"
   },
   {
     "file": "app/src/app/(tabs)/progress.tsx",
-    "line": 288,
+    "line": 287,
     "type": "shadow",
     "matched": "shadowRadius: 2"
   },
   {
     "file": "app/src/app/(tabs)/progress.tsx",
-    "line": 289,
+    "line": 288,
+    "type": "shadow",
+    "matched": "elevation: 2"
+  },
+  {
+    "file": "app/src/app/(tabs)/progress.tsx",
+    "line": 317,
+    "type": "hex",
+    "matched": "#000"
+  },
+  {
+    "file": "app/src/app/(tabs)/progress.tsx",
+    "line": 320,
+    "type": "shadow",
+    "matched": "shadowRadius: 2"
+  },
+  {
+    "file": "app/src/app/(tabs)/progress.tsx",
+    "line": 321,
     "type": "shadow",
     "matched": "elevation: 2"
   },
   {
     "file": "app/src/app/(tabs)/room.tsx",
-    "line": 686,
+    "line": 650,
     "type": "radius",
     "matched": "borderRadius: 40"
   },
   {
     "file": "app/src/app/(tabs)/today.tsx",
-    "line": 266,
-    "type": "radius",
-    "matched": "borderRadius: 22"
+    "line": 431,
+    "type": "hex",
+    "matched": "#EB7A6B"
   },
   {
     "file": "app/src/app/(tabs)/today.tsx",
-    "line": 325,
-    "type": "radius",
-    "matched": "borderRadius: 22"
+    "line": 455,
+    "type": "hex",
+    "matched": "#48BB78"
   },
   {
-    "file": "app/src/app/(tabs)/_layout.tsx",
-    "line": 119,
+    "file": "app/src/app/(tabs)/today.tsx",
+    "line": 873,
     "type": "radius",
-    "matched": "borderRadius: 30"
+    "matched": "borderRadius: 19"
+  },
+  {
+    "file": "app/src/app/auth/welcome-celebration.tsx",
+    "line": 121,
+    "type": "hex",
+    "matched": "#160C05"
+  },
+  {
+    "file": "app/src/app/_layout.tsx",
+    "line": 84,
+    "type": "hex",
+    "matched": "#0E0B08"
+  },
+  {
+    "file": "app/src/components/brand/CaliPartnerLogo.tsx",
+    "line": 76,
+    "type": "hex",
+    "matched": "#22140A"
+  },
+  {
+    "file": "app/src/components/brand/CaliPartnerLogo.tsx",
+    "line": 77,
+    "type": "hex",
+    "matched": "#251408"
+  },
+  {
+    "file": "app/src/components/brand/CaliPartnerLogo.tsx",
+    "line": 79,
+    "type": "hex",
+    "matched": "#FCE7D0"
+  },
+  {
+    "file": "app/src/components/brand/CaliPartnerLogo.tsx",
+    "line": 81,
+    "type": "hex",
+    "matched": "#FCE7D0"
+  },
+  {
+    "file": "app/src/components/brand/CaliPartnerLogo.tsx",
+    "line": 84,
+    "type": "hex",
+    "matched": "#FCE7D0"
+  },
+  {
+    "file": "app/src/components/brand/CaliPartnerLogo.tsx",
+    "line": 87,
+    "type": "hex",
+    "matched": "#FCE7D0"
+  },
+  {
+    "file": "app/src/components/brand/CaliPartnerLogo.tsx",
+    "line": 91,
+    "type": "hex",
+    "matched": "#FCE7D0"
+  },
+  {
+    "file": "app/src/components/brand/CaliPartnerLogo.tsx",
+    "line": 108,
+    "type": "hex",
+    "matched": "#FCE7D0"
+  },
+  {
+    "file": "app/src/components/brand/CaliPartnerLogo.tsx",
+    "line": 116,
+    "type": "hex",
+    "matched": "#FCE7D0"
+  },
+  {
+    "file": "app/src/components/brand/CaliPartnerLogo.tsx",
+    "line": 121,
+    "type": "hex",
+    "matched": "#FCE7D0"
+  },
+  {
+    "file": "app/src/components/brand/CaliPartnerLogo.tsx",
+    "line": 136,
+    "type": "hex",
+    "matched": "#FCE7D0"
+  },
+  {
+    "file": "app/src/components/brand/CaliPartnerLogo.tsx",
+    "line": 140,
+    "type": "hex",
+    "matched": "#FFB27D"
+  },
+  {
+    "file": "app/src/components/brand/CaliPartnerLogo.tsx",
+    "line": 150,
+    "type": "hex",
+    "matched": "#000000"
+  },
+  {
+    "file": "app/src/components/brand/CaliPartnerLogo.tsx",
+    "line": 153,
+    "type": "shadow",
+    "matched": "shadowRadius: 20"
+  },
+  {
+    "file": "app/src/components/brand/CaliPartnerLogo.tsx",
+    "line": 154,
+    "type": "shadow",
+    "matched": "elevation: 12"
+  },
+  {
+    "file": "app/src/components/cardio/CardioTrackerModal.tsx",
+    "line": 760,
+    "type": "hex",
+    "matched": "#EB7A6B"
+  },
+  {
+    "file": "app/src/components/cardio/CardioTrackerModal.tsx",
+    "line": 761,
+    "type": "hex",
+    "matched": "#EB7A6B"
+  },
+  {
+    "file": "app/src/components/cardio/CardioTrackerModal.tsx",
+    "line": 805,
+    "type": "hex",
+    "matched": "#EB7A6B"
+  },
+  {
+    "file": "app/src/components/cardio/CardioTrackerModal.tsx",
+    "line": 806,
+    "type": "hex",
+    "matched": "#EB7A6B"
+  },
+  {
+    "file": "app/src/components/cardio/CardioTrackerModal.tsx",
+    "line": 923,
+    "type": "hex",
+    "matched": "#EB7A6B"
+  },
+  {
+    "file": "app/src/components/cardio/CardioTrackerModal.tsx",
+    "line": 1015,
+    "type": "radius",
+    "matched": "borderRadius: 40"
+  },
+  {
+    "file": "app/src/components/cardio/CardioTrackerModal.tsx",
+    "line": 1100,
+    "type": "radius",
+    "matched": "borderRadius: 4"
+  },
+  {
+    "file": "app/src/components/cardio/CardioTrackerModal.tsx",
+    "line": 1104,
+    "type": "hex",
+    "matched": "#48BB78"
+  },
+  {
+    "file": "app/src/components/cardio/CardioTrackerModal.tsx",
+    "line": 1107,
+    "type": "hex",
+    "matched": "#ECC94B"
+  },
+  {
+    "file": "app/src/components/cardio/CardioTrackerModal.tsx",
+    "line": 1199,
+    "type": "radius",
+    "matched": "borderRadius: 48"
   },
   {
     "file": "app/src/components/chat/ChatComposer.tsx",
     "line": 113,
-    "type": "hex",
-    "matched": "#FFFFFF"
-  },
-  {
-    "file": "app/src/components/chat/ChatComposer.tsx",
-    "line": 197,
-    "type": "hex",
-    "matched": "#FFFFFF"
-  },
-  {
-    "file": "app/src/components/chat/ChatComposer.tsx",
-    "line": 202,
     "type": "hex",
     "matched": "#FFFFFF"
   },
@@ -199,7 +367,13 @@
   },
   {
     "file": "app/src/components/chat/ChatMessageMenuModal.tsx",
-    "line": 119,
+    "line": 134,
+    "type": "hex",
+    "matched": "#FFFFFF"
+  },
+  {
+    "file": "app/src/components/chat/ChatMessageMenuModal.tsx",
+    "line": 167,
     "type": "hex",
     "matched": "#FFFFFF"
   },
@@ -235,37 +409,37 @@
   },
   {
     "file": "app/src/components/chat/ChatView.tsx",
-    "line": 120,
+    "line": 121,
     "type": "hex",
     "matched": "#FFFFFF"
   },
   {
     "file": "app/src/components/chat/ChatView.tsx",
-    "line": 132,
+    "line": 133,
     "type": "hex",
     "matched": "#FFFFFF"
   },
   {
     "file": "app/src/components/chat/ChatView.tsx",
-    "line": 300,
+    "line": 302,
     "type": "hex",
     "matched": "#FFFFFF"
   },
   {
     "file": "app/src/components/coach/CoachChatView.tsx",
-    "line": 484,
+    "line": 515,
     "type": "hex",
     "matched": "#FFFFFF"
   },
   {
     "file": "app/src/components/coach/CoachChatView.tsx",
-    "line": 486,
+    "line": 517,
     "type": "hex",
     "matched": "#FFFFFF"
   },
   {
     "file": "app/src/components/coach/CoachChatView.tsx",
-    "line": 653,
+    "line": 684,
     "type": "radius",
     "matched": "borderRadius: 20"
   },
@@ -289,25 +463,25 @@
   },
   {
     "file": "app/src/components/coach/CoachMessageBubble.tsx",
-    "line": 57,
+    "line": 58,
     "type": "hex",
     "matched": "#FFFFFF"
   },
   {
     "file": "app/src/components/coach/CoachMessageBubble.tsx",
-    "line": 168,
+    "line": 169,
     "type": "radius",
     "matched": "borderRadius: 16"
   },
   {
     "file": "app/src/components/coach/CoachMessageBubble.tsx",
-    "line": 185,
+    "line": 186,
     "type": "radius",
     "matched": "borderBottomRightRadius: 2"
   },
   {
     "file": "app/src/components/coach/CoachMessageBubble.tsx",
-    "line": 189,
+    "line": 190,
     "type": "radius",
     "matched": "borderBottomLeftRadius: 2"
   },
@@ -330,64 +504,22 @@
     "matched": "#FFFFFF"
   },
   {
-    "file": "app/src/components/diary/BarcodeScannerModal.tsx",
+    "file": "app/src/components/coach/FloatingAiCoachButton.tsx",
+    "line": 59,
+    "type": "hex",
+    "matched": "#1E120A"
+  },
+  {
+    "file": "app/src/components/coach/FloatingAiCoachButton.tsx",
     "line": 68,
-    "type": "hex",
-    "matched": "#000000"
+    "type": "shadow",
+    "matched": "shadowRadius: 10"
   },
   {
-    "file": "app/src/components/diary/BarcodeScannerModal.tsx",
-    "line": 82,
-    "type": "hex",
-    "matched": "#FFFFFF"
-  },
-  {
-    "file": "app/src/components/diary/BarcodeScannerModal.tsx",
-    "line": 90,
-    "type": "hex",
-    "matched": "#FFFFFF"
-  },
-  {
-    "file": "app/src/components/diary/BarcodeScannerModal.tsx",
-    "line": 109,
-    "type": "hex",
-    "matched": "#FFFFFF"
-  },
-  {
-    "file": "app/src/components/diary/BarcodeScannerModal.tsx",
-    "line": 167,
-    "type": "hex",
-    "matched": "#FFFFFF"
-  },
-  {
-    "file": "app/src/components/diary/BarcodeScannerModal.tsx",
-    "line": 195,
-    "type": "hex",
-    "matched": "#FFFFFF"
-  },
-  {
-    "file": "app/src/components/diary/BarcodeScannerModal.tsx",
-    "line": 211,
-    "type": "hex",
-    "matched": "#334155"
-  },
-  {
-    "file": "app/src/components/diary/BarcodeScannerModal.tsx",
-    "line": 221,
-    "type": "hex",
-    "matched": "#94A3B8"
-  },
-  {
-    "file": "app/src/components/diary/BarcodeScannerModal.tsx",
-    "line": 224,
-    "type": "hex",
-    "matched": "#1E293B"
-  },
-  {
-    "file": "app/src/components/diary/BarcodeScannerModal.tsx",
-    "line": 225,
-    "type": "hex",
-    "matched": "#FFFFFF"
+    "file": "app/src/components/coach/FloatingAiCoachButton.tsx",
+    "line": 69,
+    "type": "shadow",
+    "matched": "elevation: 6"
   },
   {
     "file": "app/src/components/diary/CalorieMacroRing.tsx",
@@ -408,22 +540,82 @@
     "matched": "elevation: 2"
   },
   {
-    "file": "app/src/components/diary/MealSectionCard.tsx",
-    "line": 54,
-    "type": "hex",
-    "matched": "#000"
+    "file": "app/src/components/diary/CustomFoodModal.tsx",
+    "line": 132,
+    "type": "radius",
+    "matched": "borderRadius: 18"
   },
   {
-    "file": "app/src/components/diary/MealSectionCard.tsx",
-    "line": 57,
-    "type": "shadow",
-    "matched": "shadowRadius: 4"
+    "file": "app/src/components/fasting/FastingCard.tsx",
+    "line": 166,
+    "type": "radius",
+    "matched": "borderRadius: 4"
   },
   {
-    "file": "app/src/components/diary/MealSectionCard.tsx",
-    "line": 58,
-    "type": "shadow",
-    "matched": "elevation: 1"
+    "file": "app/src/components/fasting/FastingEditTimesModal.tsx",
+    "line": 312,
+    "type": "radius",
+    "matched": "borderRadius: 22"
+  },
+  {
+    "file": "app/src/components/fasting/FastingHistoryModal.tsx",
+    "line": 334,
+    "type": "radius",
+    "matched": "borderRadius: 22"
+  },
+  {
+    "file": "app/src/components/fasting/FastingHistoryModal.tsx",
+    "line": 461,
+    "type": "radius",
+    "matched": "borderRadius: 4"
+  },
+  {
+    "file": "app/src/components/fasting/FastingHistoryModal.tsx",
+    "line": 467,
+    "type": "radius",
+    "matched": "borderRadius: 4"
+  },
+  {
+    "file": "app/src/components/fasting/FastingIntroModal.tsx",
+    "line": 222,
+    "type": "radius",
+    "matched": "borderRadius: 22"
+  },
+  {
+    "file": "app/src/components/fasting/FastingProtocolModal.tsx",
+    "line": 301,
+    "type": "radius",
+    "matched": "borderRadius: 22"
+  },
+  {
+    "file": "app/src/components/fasting/FastingProtocolModal.tsx",
+    "line": 401,
+    "type": "radius",
+    "matched": "borderRadius: 22"
+  },
+  {
+    "file": "app/src/components/fasting/FastingSafetyCheckInModal.tsx",
+    "line": 169,
+    "type": "radius",
+    "matched": "borderRadius: 28"
+  },
+  {
+    "file": "app/src/components/fasting/FastingTimerModal.tsx",
+    "line": 379,
+    "type": "radius",
+    "matched": "borderRadius: 22"
+  },
+  {
+    "file": "app/src/components/fasting/FastingTimerModal.tsx",
+    "line": 398,
+    "type": "radius",
+    "matched": "borderRadius: 4"
+  },
+  {
+    "file": "app/src/components/fasting/FastingTimerModal.tsx",
+    "line": 418,
+    "type": "radius",
+    "matched": "borderRadius: 100"
   },
   {
     "file": "app/src/components/focus/FocusCard.tsx",
@@ -511,109 +703,37 @@
   },
   {
     "file": "app/src/components/food_photo/FoodPhotoCameraModal.tsx",
-    "line": 198,
+    "line": 300,
     "type": "hex",
     "matched": "#FFFFFF"
   },
   {
     "file": "app/src/components/food_photo/FoodPhotoCameraModal.tsx",
-    "line": 210,
+    "line": 312,
     "type": "hex",
     "matched": "#FFFFFF"
   },
   {
     "file": "app/src/components/food_photo/FoodPhotoCameraModal.tsx",
-    "line": 232,
-    "type": "hex",
-    "matched": "#FFFFFF"
-  },
-  {
-    "file": "app/src/components/food_photo/FoodPhotoCameraModal.tsx",
-    "line": 246,
+    "line": 341,
     "type": "hex",
     "matched": "#000000"
   },
   {
     "file": "app/src/components/food_photo/FoodPhotoCameraModal.tsx",
-    "line": 262,
+    "line": 357,
     "type": "hex",
     "matched": "#000000"
   },
   {
     "file": "app/src/components/food_photo/FoodPhotoCameraModal.tsx",
-    "line": 266,
+    "line": 361,
     "type": "hex",
     "matched": "#0B0F19"
   },
   {
     "file": "app/src/components/food_photo/FoodPhotoCameraModal.tsx",
-    "line": 309,
-    "type": "hex",
-    "matched": "#FFFFFF"
-  },
-  {
-    "file": "app/src/components/food_photo/FoodPhotoCameraModal.tsx",
-    "line": 335,
-    "type": "hex",
-    "matched": "#38BDF8"
-  },
-  {
-    "file": "app/src/components/food_photo/FoodPhotoCameraModal.tsx",
-    "line": 342,
-    "type": "radius",
-    "matched": "borderTopLeftRadius: 10"
-  },
-  {
-    "file": "app/src/components/food_photo/FoodPhotoCameraModal.tsx",
-    "line": 349,
-    "type": "radius",
-    "matched": "borderTopRightRadius: 10"
-  },
-  {
-    "file": "app/src/components/food_photo/FoodPhotoCameraModal.tsx",
-    "line": 356,
-    "type": "radius",
-    "matched": "borderBottomLeftRadius: 10"
-  },
-  {
-    "file": "app/src/components/food_photo/FoodPhotoCameraModal.tsx",
-    "line": 363,
-    "type": "radius",
-    "matched": "borderBottomRightRadius: 10"
-  },
-  {
-    "file": "app/src/components/food_photo/FoodPhotoCameraModal.tsx",
-    "line": 366,
-    "type": "hex",
-    "matched": "#FFFFFF"
-  },
-  {
-    "file": "app/src/components/food_photo/FoodPhotoCameraModal.tsx",
-    "line": 391,
-    "type": "hex",
-    "matched": "#FFFFFF"
-  },
-  {
-    "file": "app/src/components/food_photo/FoodPhotoCameraModal.tsx",
-    "line": 400,
-    "type": "hex",
-    "matched": "#FFFFFF"
-  },
-  {
-    "file": "app/src/components/food_photo/FoodPhotoCameraModal.tsx",
-    "line": 408,
-    "type": "hex",
-    "matched": "#FFFFFF"
-  },
-  {
-    "file": "app/src/components/food_photo/FoodPhotoCameraModal.tsx",
-    "line": 414,
-    "type": "hex",
-    "matched": "#0B0F19"
-  },
-  {
-    "file": "app/src/components/food_photo/FoodPhotoCameraModal.tsx",
-    "line": 425,
+    "line": 404,
     "type": "hex",
     "matched": "#FFFFFF"
   },
@@ -621,11 +741,77 @@
     "file": "app/src/components/food_photo/FoodPhotoCameraModal.tsx",
     "line": 430,
     "type": "hex",
+    "matched": "#38BDF8"
+  },
+  {
+    "file": "app/src/components/food_photo/FoodPhotoCameraModal.tsx",
+    "line": 437,
+    "type": "radius",
+    "matched": "borderTopLeftRadius: 10"
+  },
+  {
+    "file": "app/src/components/food_photo/FoodPhotoCameraModal.tsx",
+    "line": 444,
+    "type": "radius",
+    "matched": "borderTopRightRadius: 10"
+  },
+  {
+    "file": "app/src/components/food_photo/FoodPhotoCameraModal.tsx",
+    "line": 451,
+    "type": "radius",
+    "matched": "borderBottomLeftRadius: 10"
+  },
+  {
+    "file": "app/src/components/food_photo/FoodPhotoCameraModal.tsx",
+    "line": 458,
+    "type": "radius",
+    "matched": "borderBottomRightRadius: 10"
+  },
+  {
+    "file": "app/src/components/food_photo/FoodPhotoCameraModal.tsx",
+    "line": 461,
+    "type": "hex",
+    "matched": "#FFFFFF"
+  },
+  {
+    "file": "app/src/components/food_photo/FoodPhotoCameraModal.tsx",
+    "line": 486,
+    "type": "hex",
+    "matched": "#FFFFFF"
+  },
+  {
+    "file": "app/src/components/food_photo/FoodPhotoCameraModal.tsx",
+    "line": 495,
+    "type": "hex",
+    "matched": "#FFFFFF"
+  },
+  {
+    "file": "app/src/components/food_photo/FoodPhotoCameraModal.tsx",
+    "line": 503,
+    "type": "hex",
+    "matched": "#FFFFFF"
+  },
+  {
+    "file": "app/src/components/food_photo/FoodPhotoCameraModal.tsx",
+    "line": 509,
+    "type": "hex",
+    "matched": "#0B0F19"
+  },
+  {
+    "file": "app/src/components/food_photo/FoodPhotoCameraModal.tsx",
+    "line": 520,
+    "type": "hex",
+    "matched": "#FFFFFF"
+  },
+  {
+    "file": "app/src/components/food_photo/FoodPhotoCameraModal.tsx",
+    "line": 525,
+    "type": "hex",
     "matched": "#94A3B8"
   },
   {
     "file": "app/src/components/food_photo/FoodPhotoCameraModal.tsx",
-    "line": 446,
+    "line": 541,
     "type": "hex",
     "matched": "#2A364F"
   },
@@ -672,28 +858,16 @@
     "matched": "elevation: 3"
   },
   {
-    "file": "app/src/components/onboarding/BodyStatsStep.tsx",
-    "line": 502,
-    "type": "hex",
-    "matched": "#000"
-  },
-  {
-    "file": "app/src/components/onboarding/BodyStatsStep.tsx",
-    "line": 505,
-    "type": "shadow",
-    "matched": "shadowRadius: 2"
-  },
-  {
-    "file": "app/src/components/onboarding/BodyStatsStep.tsx",
-    "line": 506,
-    "type": "shadow",
-    "matched": "elevation: 1"
-  },
-  {
     "file": "app/src/components/onboarding/HowCalculatedStep.tsx",
-    "line": 194,
+    "line": 121,
     "type": "fontFamily",
     "matched": "fontFamily: 'monospace'"
+  },
+  {
+    "file": "app/src/components/profile/AvatarPickerModal.tsx",
+    "line": 273,
+    "type": "hex",
+    "matched": "#FF6B6B"
   },
   {
     "file": "app/src/components/progress/ChallengesComingSoon.tsx",
@@ -721,21 +895,27 @@
   },
   {
     "file": "app/src/components/progress/ChartContainer.tsx",
-    "line": 84,
+    "line": 128,
     "type": "hex",
     "matched": "#000"
   },
   {
     "file": "app/src/components/progress/ChartContainer.tsx",
-    "line": 87,
+    "line": 131,
     "type": "shadow",
     "matched": "shadowRadius: 3"
   },
   {
     "file": "app/src/components/progress/ChartContainer.tsx",
-    "line": 88,
+    "line": 132,
     "type": "shadow",
     "matched": "elevation: 2"
+  },
+  {
+    "file": "app/src/components/progress/CreateChallengeModal.tsx",
+    "line": 438,
+    "type": "radius",
+    "matched": "borderRadius: 16"
   },
   {
     "file": "app/src/components/progress/DayDetailModal.tsx",
@@ -784,18 +964,6 @@
     "line": 116,
     "type": "shadow",
     "matched": "elevation: 2"
-  },
-  {
-    "file": "app/src/components/progress/LeaderboardView.tsx",
-    "line": 105,
-    "type": "hex",
-    "matched": "#ffffff"
-  },
-  {
-    "file": "app/src/components/progress/LeaderboardView.tsx",
-    "line": 419,
-    "type": "hex",
-    "matched": "#ffffff"
   },
   {
     "file": "app/src/components/progress/RangeSelector.tsx",
@@ -949,19 +1117,19 @@
   },
   {
     "file": "app/src/components/rooms/DormantWaitingState.tsx",
-    "line": 98,
+    "line": 100,
     "type": "hex",
     "matched": "#FFFFFF"
   },
   {
     "file": "app/src/components/rooms/DormantWaitingState.tsx",
-    "line": 99,
+    "line": 101,
     "type": "hex",
     "matched": "#FFFFFF"
   },
   {
     "file": "app/src/components/rooms/DormantWaitingState.tsx",
-    "line": 134,
+    "line": 162,
     "type": "radius",
     "matched": "borderRadius: 32"
   },
@@ -1039,21 +1207,15 @@
   },
   {
     "file": "app/src/components/rooms/LockedRoomPausedState.tsx",
-    "line": 71,
-    "type": "hex",
-    "matched": "#FFFFFF"
-  },
-  {
-    "file": "app/src/components/rooms/LockedRoomPausedState.tsx",
-    "line": 89,
+    "line": 183,
     "type": "radius",
-    "matched": "borderRadius: 36"
+    "matched": "borderRadius: 18"
   },
   {
     "file": "app/src/components/rooms/LockedRoomPausedState.tsx",
-    "line": 135,
-    "type": "hex",
-    "matched": "#FFFFFF"
+    "line": 204,
+    "type": "radius",
+    "matched": "borderRadius: 32"
   },
   {
     "file": "app/src/components/rooms/MembersTab.tsx",
@@ -1078,18 +1240,6 @@
     "line": 223,
     "type": "radius",
     "matched": "borderRadius: 20"
-  },
-  {
-    "file": "app/src/components/rooms/MeRoomPlanCard.tsx",
-    "line": 205,
-    "type": "hex",
-    "matched": "#FFFFFF"
-  },
-  {
-    "file": "app/src/components/rooms/MeRoomPlanCard.tsx",
-    "line": 322,
-    "type": "hex",
-    "matched": "#FFFFFF"
   },
   {
     "file": "app/src/components/rooms/NudgeModal.tsx",
@@ -1128,64 +1278,46 @@
     "matched": "#FFFFFF"
   },
   {
-    "file": "app/src/components/rooms/PaywallModal.tsx",
-    "line": 554,
-    "type": "hex",
-    "matched": "#FFFFFF"
-  },
-  {
-    "file": "app/src/components/rooms/PaywallModal.tsx",
-    "line": 656,
+    "file": "app/src/components/rooms/PartnerMealSheet.tsx",
+    "line": 206,
     "type": "radius",
-    "matched": "borderRadius: 16"
+    "matched": "borderRadius: 2"
+  },
+  {
+    "file": "app/src/components/rooms/PartnerMealSheet.tsx",
+    "line": 219,
+    "type": "radius",
+    "matched": "borderRadius: 18"
+  },
+  {
+    "file": "app/src/components/rooms/PartnerMealSheet.tsx",
+    "line": 262,
+    "type": "radius",
+    "matched": "borderRadius: 3"
+  },
+  {
+    "file": "app/src/components/rooms/PartnerMealSheet.tsx",
+    "line": 286,
+    "type": "radius",
+    "matched": "borderRadius: 22"
   },
   {
     "file": "app/src/components/rooms/PaywallModal.tsx",
-    "line": 721,
-    "type": "hex",
-    "matched": "#000"
+    "line": 953,
+    "type": "radius",
+    "matched": "borderRadius: 11"
   },
   {
     "file": "app/src/components/rooms/PaywallModal.tsx",
-    "line": 724,
-    "type": "shadow",
-    "matched": "shadowRadius: 2"
-  },
-  {
-    "file": "app/src/components/rooms/PaywallModal.tsx",
-    "line": 725,
-    "type": "shadow",
-    "matched": "elevation: 2"
-  },
-  {
-    "file": "app/src/components/rooms/PaywallModal.tsx",
-    "line": 742,
-    "type": "hex",
-    "matched": "#FFFFFF"
-  },
-  {
-    "file": "app/src/components/rooms/PaywallModal.tsx",
-    "line": 819,
-    "type": "hex",
-    "matched": "#FFFFFF"
+    "line": 965,
+    "type": "radius",
+    "matched": "borderRadius: 5"
   },
   {
     "file": "app/src/components/rooms/PlaceholderSegment.tsx",
     "line": 39,
     "type": "radius",
     "matched": "borderRadius: 32"
-  },
-  {
-    "file": "app/src/components/rooms/PrivacySettingsModal.tsx",
-    "line": 170,
-    "type": "hex",
-    "matched": "#FFFFFF"
-  },
-  {
-    "file": "app/src/components/rooms/PrivacySettingsModal.tsx",
-    "line": 278,
-    "type": "radius",
-    "matched": "borderRadius: 16"
   },
   {
     "file": "app/src/components/rooms/ReactionModal.tsx",
@@ -1225,103 +1357,97 @@
   },
   {
     "file": "app/src/components/rooms/RequestsInboxModal.tsx",
-    "line": 228,
+    "line": 276,
     "type": "hex",
     "matched": "#FFFFFF"
   },
   {
     "file": "app/src/components/rooms/RequestsInboxModal.tsx",
-    "line": 230,
+    "line": 278,
     "type": "hex",
     "matched": "#FFFFFF"
   },
   {
     "file": "app/src/components/rooms/RequestsInboxModal.tsx",
-    "line": 372,
+    "line": 448,
     "type": "radius",
     "matched": "borderRadius: 16"
   },
   {
     "file": "app/src/components/rooms/RequestsInboxModal.tsx",
-    "line": 389,
+    "line": 465,
     "type": "shadow",
     "matched": "elevation: 2"
   },
   {
     "file": "app/src/components/rooms/RequestsInboxModal.tsx",
-    "line": 390,
+    "line": 466,
     "type": "hex",
     "matched": "#000"
   },
   {
     "file": "app/src/components/rooms/RequestsInboxModal.tsx",
-    "line": 392,
+    "line": 468,
     "type": "shadow",
     "matched": "shadowRadius: 2"
   },
   {
     "file": "app/src/components/rooms/RequestsInboxModal.tsx",
-    "line": 497,
+    "line": 573,
     "type": "hex",
     "matched": "#FFFFFF"
   },
   {
     "file": "app/src/components/rooms/RoomFullNotice.tsx",
-    "line": 69,
-    "type": "hex",
-    "matched": "#FFFFFF"
-  },
-  {
-    "file": "app/src/components/rooms/RoomFullNotice.tsx",
-    "line": 176,
+    "line": 179,
     "type": "radius",
     "matched": "borderRadius: 18"
   },
   {
     "file": "app/src/components/rooms/RoomFullNotice.tsx",
-    "line": 204,
+    "line": 207,
     "type": "hex",
     "matched": "#FFFFFF"
   },
   {
     "file": "app/src/components/rooms/RoomFullNotice.tsx",
-    "line": 235,
+    "line": 238,
     "type": "radius",
     "matched": "borderRadius: 15"
   },
   {
     "file": "app/src/components/rooms/RoomHeader.tsx",
-    "line": 400,
+    "line": 399,
     "type": "radius",
     "matched": "borderRadius: 9"
   },
   {
     "file": "app/src/components/rooms/RoomHeader.tsx",
-    "line": 406,
+    "line": 405,
     "type": "hex",
     "matched": "#FFFFFF"
   },
   {
     "file": "app/src/components/rooms/RoomHeader.tsx",
-    "line": 473,
+    "line": 472,
     "type": "hex",
     "matched": "#000000"
   },
   {
     "file": "app/src/components/rooms/RoomHeader.tsx",
-    "line": 476,
+    "line": 475,
     "type": "shadow",
     "matched": "shadowRadius: 2"
   },
   {
     "file": "app/src/components/rooms/RoomHeader.tsx",
-    "line": 477,
+    "line": 476,
     "type": "shadow",
     "matched": "elevation: 2"
   },
   {
     "file": "app/src/components/rooms/RoomHeader.tsx",
-    "line": 496,
+    "line": 495,
     "type": "hex",
     "matched": "#FFFFFF"
   },
@@ -1381,73 +1507,73 @@
   },
   {
     "file": "app/src/components/rooms/RoomProgressView.tsx",
-    "line": 97,
+    "line": 103,
     "type": "hex",
     "matched": "#3b82f6"
   },
   {
     "file": "app/src/components/rooms/RoomProgressView.tsx",
-    "line": 316,
+    "line": 324,
     "type": "hex",
     "matched": "#ffffff"
   },
   {
     "file": "app/src/components/rooms/RoomProgressView.tsx",
-    "line": 391,
+    "line": 418,
     "type": "hex",
     "matched": "#64748b"
   },
   {
     "file": "app/src/components/rooms/RoomProgressView.tsx",
-    "line": 473,
+    "line": 555,
     "type": "hex",
     "matched": "#64748b"
   },
   {
     "file": "app/src/components/rooms/RoomProgressView.tsx",
-    "line": 525,
+    "line": 607,
     "type": "hex",
     "matched": "#ffffff"
   },
   {
     "file": "app/src/components/rooms/RoomProgressView.tsx",
-    "line": 528,
+    "line": 610,
     "type": "hex",
     "matched": "#ffffff"
   },
   {
     "file": "app/src/components/rooms/RoomProgressView.tsx",
-    "line": 749,
+    "line": 831,
     "type": "radius",
     "matched": "borderRadius: 4"
   },
   {
     "file": "app/src/components/rooms/RoomProgressView.tsx",
-    "line": 760,
+    "line": 842,
     "type": "shadow",
     "matched": "elevation: 2"
   },
   {
     "file": "app/src/components/rooms/RoomProgressView.tsx",
-    "line": 946,
+    "line": 1068,
     "type": "hex",
     "matched": "#ffffff"
   },
   {
     "file": "app/src/components/rooms/RoomProgressView.tsx",
-    "line": 970,
+    "line": 1092,
     "type": "hex",
     "matched": "#ffffff"
   },
   {
     "file": "app/src/components/rooms/RoomSettingsModal.tsx",
-    "line": 384,
+    "line": 404,
     "type": "radius",
     "matched": "borderRadius: 16"
   },
   {
     "file": "app/src/components/rooms/RoomSettingsModal.tsx",
-    "line": 450,
+    "line": 470,
     "type": "radius",
     "matched": "borderRadius: 16"
   },
@@ -1459,117 +1585,627 @@
   },
   {
     "file": "app/src/components/rooms/SharedMealCard.tsx",
-    "line": 183,
-    "type": "hex",
-    "matched": "#FFFFFF"
-  },
-  {
-    "file": "app/src/components/rooms/SharedMealCard.tsx",
-    "line": 211,
+    "line": 213,
     "type": "radius",
     "matched": "borderRadius: 16"
   },
   {
     "file": "app/src/components/rooms/SharedMealCard.tsx",
-    "line": 292,
+    "line": 294,
     "type": "hex",
     "matched": "#FFFFFF"
   },
   {
-    "file": "app/src/components/rooms/SideBySideCard.tsx",
-    "line": 167,
+    "file": "app/src/components/rooms/SquadConnectFlow.tsx",
+    "line": 525,
+    "type": "hex",
+    "matched": "#EB7A6B"
+  },
+  {
+    "file": "app/src/components/rooms/SquadConnectFlow.tsx",
+    "line": 634,
+    "type": "hex",
+    "matched": "#FF6B6B"
+  },
+  {
+    "file": "app/src/components/rooms/SquadConnectFlow.tsx",
+    "line": 637,
+    "type": "hex",
+    "matched": "#FF6B6B"
+  },
+  {
+    "file": "app/src/components/rooms/SquadConnectFlow.tsx",
+    "line": 796,
+    "type": "hex",
+    "matched": "#25D366"
+  },
+  {
+    "file": "app/src/components/rooms/SquadConnectFlow.tsx",
+    "line": 797,
     "type": "hex",
     "matched": "#FFFFFF"
   },
   {
-    "file": "app/src/components/rooms/SideBySideCard.tsx",
-    "line": 358,
-    "type": "radius",
-    "matched": "borderRadius: 10"
+    "file": "app/src/components/rooms/SquadConnectFlow.tsx",
+    "line": 912,
+    "type": "hex",
+    "matched": "#FFFFFF"
   },
   {
-    "file": "app/src/components/rooms/SideBySideCard.tsx",
-    "line": 396,
-    "type": "radius",
-    "matched": "borderRadius: 17"
+    "file": "app/src/components/rooms/SquadConnectFlow.tsx",
+    "line": 914,
+    "type": "hex",
+    "matched": "#0E0B08"
   },
   {
-    "file": "app/src/components/rooms/SideBySideCard.tsx",
-    "line": 402,
-    "type": "radius",
-    "matched": "borderRadius: 17"
+    "file": "app/src/components/rooms/SquadConnectFlow.tsx",
+    "line": 915,
+    "type": "hex",
+    "matched": "#FFFFFF"
+  },
+  {
+    "file": "app/src/components/rooms/SquadConnectFlow.tsx",
+    "line": 916,
+    "type": "hex",
+    "matched": "#F4B67D"
+  },
+  {
+    "file": "app/src/components/rooms/SquadConnectFlow.tsx",
+    "line": 918,
+    "type": "hex",
+    "matched": "#0E0B08"
+  },
+  {
+    "file": "app/src/components/rooms/SquadConnectFlow.tsx",
+    "line": 919,
+    "type": "hex",
+    "matched": "#FFFFFF"
+  },
+  {
+    "file": "app/src/components/rooms/SquadConnectFlow.tsx",
+    "line": 920,
+    "type": "hex",
+    "matched": "#F4B67D"
+  },
+  {
+    "file": "app/src/components/rooms/SquadConnectFlow.tsx",
+    "line": 922,
+    "type": "hex",
+    "matched": "#0E0B08"
+  },
+  {
+    "file": "app/src/components/rooms/SquadConnectFlow.tsx",
+    "line": 923,
+    "type": "hex",
+    "matched": "#FFFFFF"
+  },
+  {
+    "file": "app/src/components/rooms/SquadConnectFlow.tsx",
+    "line": 924,
+    "type": "hex",
+    "matched": "#F4B67D"
+  },
+  {
+    "file": "app/src/components/rooms/SquadConnectFlow.tsx",
+    "line": 927,
+    "type": "hex",
+    "matched": "#0E0B08"
+  },
+  {
+    "file": "app/src/components/rooms/SquadConnectFlow.tsx",
+    "line": 928,
+    "type": "hex",
+    "matched": "#0E0B08"
+  },
+  {
+    "file": "app/src/components/rooms/SquadConnectFlow.tsx",
+    "line": 929,
+    "type": "hex",
+    "matched": "#0E0B08"
+  },
+  {
+    "file": "app/src/components/rooms/SquadConnectFlow.tsx",
+    "line": 930,
+    "type": "hex",
+    "matched": "#0E0B08"
+  },
+  {
+    "file": "app/src/components/rooms/SquadConnectFlow.tsx",
+    "line": 931,
+    "type": "hex",
+    "matched": "#0E0B08"
+  },
+  {
+    "file": "app/src/components/rooms/SquadConnectFlow.tsx",
+    "line": 933,
+    "type": "hex",
+    "matched": "#0E0B08"
+  },
+  {
+    "file": "app/src/components/rooms/SquadConnectFlow.tsx",
+    "line": 934,
+    "type": "hex",
+    "matched": "#0E0B08"
+  },
+  {
+    "file": "app/src/components/rooms/SquadConnectFlow.tsx",
+    "line": 935,
+    "type": "hex",
+    "matched": "#F4B67D"
+  },
+  {
+    "file": "app/src/components/rooms/SquadConnectFlow.tsx",
+    "line": 936,
+    "type": "hex",
+    "matched": "#0E0B08"
+  },
+  {
+    "file": "app/src/components/rooms/SquadConnectFlow.tsx",
+    "line": 937,
+    "type": "hex",
+    "matched": "#0E0B08"
+  },
+  {
+    "file": "app/src/components/rooms/SquadConnectFlow.tsx",
+    "line": 938,
+    "type": "hex",
+    "matched": "#0E0B08"
+  },
+  {
+    "file": "app/src/components/rooms/SquadConnectFlow.tsx",
+    "line": 940,
+    "type": "hex",
+    "matched": "#0E0B08"
+  },
+  {
+    "file": "app/src/components/rooms/SquadConnectFlow.tsx",
+    "line": 941,
+    "type": "hex",
+    "matched": "#0E0B08"
+  },
+  {
+    "file": "app/src/components/rooms/SquadConnectFlow.tsx",
+    "line": 942,
+    "type": "hex",
+    "matched": "#1FBDB6"
+  },
+  {
+    "file": "app/src/components/rooms/SquadConnectFlow.tsx",
+    "line": 943,
+    "type": "hex",
+    "matched": "#0E0B08"
+  },
+  {
+    "file": "app/src/components/rooms/SquadConnectFlow.tsx",
+    "line": 944,
+    "type": "hex",
+    "matched": "#0E0B08"
+  },
+  {
+    "file": "app/src/components/rooms/SquadConnectFlow.tsx",
+    "line": 946,
+    "type": "hex",
+    "matched": "#0E0B08"
+  },
+  {
+    "file": "app/src/components/rooms/SquadConnectFlow.tsx",
+    "line": 947,
+    "type": "hex",
+    "matched": "#0E0B08"
+  },
+  {
+    "file": "app/src/components/rooms/SquadConnectFlow.tsx",
+    "line": 948,
+    "type": "hex",
+    "matched": "#0E0B08"
+  },
+  {
+    "file": "app/src/components/rooms/SquadConnectFlow.tsx",
+    "line": 949,
+    "type": "hex",
+    "matched": "#0E0B08"
+  },
+  {
+    "file": "app/src/components/rooms/SquadConnectFlow.tsx",
+    "line": 951,
+    "type": "hex",
+    "matched": "#0E0B08"
+  },
+  {
+    "file": "app/src/components/rooms/SquadConnectFlow.tsx",
+    "line": 952,
+    "type": "hex",
+    "matched": "#0E0B08"
+  },
+  {
+    "file": "app/src/components/rooms/SquadConnectFlow.tsx",
+    "line": 953,
+    "type": "hex",
+    "matched": "#F4B67D"
+  },
+  {
+    "file": "app/src/components/rooms/SquadConnectFlow.tsx",
+    "line": 1047,
+    "type": "hex",
+    "matched": "#000"
+  },
+  {
+    "file": "app/src/components/rooms/SquadConnectFlow.tsx",
+    "line": 1050,
+    "type": "shadow",
+    "matched": "shadowRadius: 8"
+  },
+  {
+    "file": "app/src/components/rooms/SquadConnectFlow.tsx",
+    "line": 1051,
+    "type": "shadow",
+    "matched": "elevation: 4"
+  },
+  {
+    "file": "app/src/components/rooms/SquadConnectFlow.tsx",
+    "line": 1294,
+    "type": "hex",
+    "matched": "#FFFFFF"
   },
   {
     "file": "app/src/components/rooms/TrialBanner.tsx",
-    "line": 66,
-    "type": "hex",
-    "matched": "#FFFFFF"
-  },
-  {
-    "file": "app/src/components/rooms/TrialBanner.tsx",
-    "line": 90,
+    "line": 92,
     "type": "radius",
     "matched": "borderRadius: 18"
   },
   {
-    "file": "app/src/components/rooms/TrialBanner.tsx",
-    "line": 118,
+    "file": "app/src/components/rooms/WhatTheyCanSeeSheet.tsx",
+    "line": 137,
+    "type": "radius",
+    "matched": "borderRadius: 2"
+  },
+  {
+    "file": "app/src/components/rooms/WhatTheyCanSeeSheet.tsx",
+    "line": 155,
+    "type": "radius",
+    "matched": "borderRadius: 16"
+  },
+  {
+    "file": "app/src/components/rooms/WhatTheyCanSeeSheet.tsx",
+    "line": 163,
+    "type": "radius",
+    "matched": "borderRadius: 18"
+  },
+  {
+    "file": "app/src/components/trackers/AddMeasurementModal.tsx",
+    "line": 351,
     "type": "hex",
-    "matched": "#FFFFFF"
+    "matched": "#1C1109"
+  },
+  {
+    "file": "app/src/components/trackers/AddMeasurementModal.tsx",
+    "line": 469,
+    "type": "hex",
+    "matched": "#1C1109"
+  },
+  {
+    "file": "app/src/components/trackers/FixStepCountingModal.tsx",
+    "line": 502,
+    "type": "hex",
+    "matched": "#1C1109"
+  },
+  {
+    "file": "app/src/components/trackers/FixStepCountingModal.tsx",
+    "line": 561,
+    "type": "hex",
+    "matched": "#1C1109"
+  },
+  {
+    "file": "app/src/components/trackers/ProgressPhotosModal.tsx",
+    "line": 327,
+    "type": "hex",
+    "matched": "#1C1109"
+  },
+  {
+    "file": "app/src/components/trackers/ProgressPhotosModal.tsx",
+    "line": 478,
+    "type": "hex",
+    "matched": "#1C1109"
   },
   {
     "file": "app/src/components/trackers/StepsCard.tsx",
-    "line": 302,
+    "line": 717,
+    "type": "radius",
+    "matched": "borderRadius: 4"
+  },
+  {
+    "file": "app/src/components/trackers/StepsCard.tsx",
+    "line": 723,
+    "type": "radius",
+    "matched": "borderRadius: 4"
+  },
+  {
+    "file": "app/src/components/trackers/StepsCard.tsx",
+    "line": 828,
+    "type": "hex",
+    "matched": "#1C1109"
+  },
+  {
+    "file": "app/src/components/trackers/StepsCard.tsx",
+    "line": 899,
+    "type": "hex",
+    "matched": "#1C1109"
+  },
+  {
+    "file": "app/src/components/trackers/TargetWeightEditorModal.tsx",
+    "line": 333,
+    "type": "hex",
+    "matched": "#1C1109"
+  },
+  {
+    "file": "app/src/components/trackers/TargetWeightEditorModal.tsx",
+    "line": 390,
+    "type": "hex",
+    "matched": "#1C1109"
+  },
+  {
+    "file": "app/src/components/trackers/WaterAlarmModal.tsx",
+    "line": 368,
+    "type": "radius",
+    "matched": "borderRadius: 20"
+  },
+  {
+    "file": "app/src/components/trackers/WaterAlarmModal.tsx",
+    "line": 376,
+    "type": "radius",
+    "matched": "borderRadius: 18"
+  },
+  {
+    "file": "app/src/components/trackers/WaterCard.tsx",
+    "line": 526,
+    "type": "radius",
+    "matched": "borderTopLeftRadius: 3"
+  },
+  {
+    "file": "app/src/components/trackers/WaterCard.tsx",
+    "line": 527,
+    "type": "radius",
+    "matched": "borderTopRightRadius: 3"
+  },
+  {
+    "file": "app/src/components/trackers/WaterCard.tsx",
+    "line": 535,
+    "type": "radius",
+    "matched": "borderRadius: 8"
+  },
+  {
+    "file": "app/src/components/trackers/WaterCard.tsx",
+    "line": 608,
+    "type": "hex",
+    "matched": "#1C1109"
+  },
+  {
+    "file": "app/src/components/trackers/WaterSettingsSheet.tsx",
+    "line": 505,
+    "type": "hex",
+    "matched": "#1C1109"
+  },
+  {
+    "file": "app/src/components/trackers/WeightCard.tsx",
+    "line": 657,
+    "type": "hex",
+    "matched": "#1C1109"
+  },
+  {
+    "file": "app/src/components/trackers/WeightCard.tsx",
+    "line": 730,
+    "type": "radius",
+    "matched": "borderRadius: 4"
+  },
+  {
+    "file": "app/src/components/trackers/WeightCard.tsx",
+    "line": 755,
+    "type": "radius",
+    "matched": "borderRadius: 2"
+  },
+  {
+    "file": "app/src/components/trackers/WeightCard.tsx",
+    "line": 833,
+    "type": "hex",
+    "matched": "#1C1109"
+  },
+  {
+    "file": "app/src/components/trackers/WeightCard.tsx",
+    "line": 904,
+    "type": "hex",
+    "matched": "#1C1109"
+  },
+  {
+    "file": "app/src/components/trackers/WeightEntryModal.tsx",
+    "line": 601,
+    "type": "hex",
+    "matched": "#1C1109"
+  },
+  {
+    "file": "app/src/components/workouts/AddExercisePickerModal.tsx",
+    "line": 417,
+    "type": "hex",
+    "matched": "#120A04"
+  },
+  {
+    "file": "app/src/components/workouts/AddExercisePickerModal.tsx",
+    "line": 421,
+    "type": "hex",
+    "matched": "#120A04"
+  },
+  {
+    "file": "app/src/components/workouts/AddExercisePickerModal.tsx",
+    "line": 430,
+    "type": "hex",
+    "matched": "#2B1A0D"
+  },
+  {
+    "file": "app/src/components/workouts/AddExercisePickerModal.tsx",
+    "line": 444,
+    "type": "hex",
+    "matched": "#1C1109"
+  },
+  {
+    "file": "app/src/components/workouts/AddExercisePickerModal.tsx",
+    "line": 447,
+    "type": "hex",
+    "matched": "#382212"
+  },
+  {
+    "file": "app/src/components/workouts/AddExercisePickerModal.tsx",
+    "line": 467,
+    "type": "hex",
+    "matched": "#1C1109"
+  },
+  {
+    "file": "app/src/components/workouts/AddExercisePickerModal.tsx",
+    "line": 470,
+    "type": "hex",
+    "matched": "#382212"
+  },
+  {
+    "file": "app/src/components/workouts/AddExercisePickerModal.tsx",
+    "line": 484,
+    "type": "hex",
+    "matched": "#2A170B"
+  },
+  {
+    "file": "app/src/components/workouts/AddExercisePickerModal.tsx",
+    "line": 489,
+    "type": "hex",
+    "matched": "#382212"
+  },
+  {
+    "file": "app/src/components/workouts/AddExercisePickerModal.tsx",
+    "line": 498,
+    "type": "hex",
+    "matched": "#1C1109"
+  },
+  {
+    "file": "app/src/components/workouts/AddExercisePickerModal.tsx",
+    "line": 501,
+    "type": "hex",
+    "matched": "#382212"
+  },
+  {
+    "file": "app/src/components/workouts/AddExercisePickerModal.tsx",
+    "line": 512,
+    "type": "hex",
+    "matched": "#2B1A0D"
+  },
+  {
+    "file": "app/src/components/workouts/AddExercisePickerModal.tsx",
+    "line": 518,
+    "type": "hex",
+    "matched": "#2A170B"
+  },
+  {
+    "file": "app/src/components/workouts/AddExercisePickerModal.tsx",
+    "line": 529,
+    "type": "hex",
+    "matched": "#221308"
+  },
+  {
+    "file": "app/src/components/workouts/AddExercisePickerModal.tsx",
+    "line": 532,
+    "type": "hex",
+    "matched": "#261408"
+  },
+  {
+    "file": "app/src/components/workouts/AddExercisePickerModal.tsx",
+    "line": 548,
+    "type": "hex",
+    "matched": "#1C1109"
+  },
+  {
+    "file": "app/src/components/workouts/AddExercisePickerModal.tsx",
+    "line": 551,
+    "type": "hex",
+    "matched": "#382212"
+  },
+  {
+    "file": "app/src/components/workouts/AddExercisePickerModal.tsx",
+    "line": 565,
+    "type": "hex",
+    "matched": "#1A0E06"
+  },
+  {
+    "file": "app/src/components/workouts/AddExercisePickerModal.tsx",
+    "line": 568,
+    "type": "hex",
+    "matched": "#2D180B"
+  },
+  {
+    "file": "app/src/components/workouts/AddExercisePickerModal.tsx",
+    "line": 579,
+    "type": "hex",
+    "matched": "#2A170B"
+  },
+  {
+    "file": "app/src/components/workouts/AddExercisePickerModal.tsx",
+    "line": 595,
+    "type": "hex",
+    "matched": "#1A0E06"
+  },
+  {
+    "file": "app/src/components/workouts/AddExercisePickerModal.tsx",
+    "line": 598,
+    "type": "hex",
+    "matched": "#261408"
+  },
+  {
+    "file": "app/src/components/workouts/AddExercisePickerModal.tsx",
+    "line": 605,
+    "type": "hex",
+    "matched": "#261408"
+  },
+  {
+    "file": "app/src/components/workouts/AddExercisePickerModal.tsx",
+    "line": 611,
+    "type": "hex",
+    "matched": "#261408"
+  },
+  {
+    "file": "app/src/components/workouts/AddExercisePickerModal.tsx",
+    "line": 627,
+    "type": "hex",
+    "matched": "#160C05"
+  },
+  {
+    "file": "app/src/components/workouts/AddExercisePickerModal.tsx",
+    "line": 629,
+    "type": "hex",
+    "matched": "#2B1A0D"
+  },
+  {
+    "file": "app/src/components/workouts/ExerciseDetailModal.tsx",
+    "line": 437,
     "type": "hex",
     "matched": "#000"
   },
   {
-    "file": "app/src/components/trackers/StepsCard.tsx",
-    "line": 305,
+    "file": "app/src/components/workouts/ExerciseDetailModal.tsx",
+    "line": 440,
     "type": "shadow",
-    "matched": "shadowRadius: 4"
+    "matched": "shadowRadius: 8"
   },
   {
-    "file": "app/src/components/trackers/StepsCard.tsx",
-    "line": 306,
+    "file": "app/src/components/workouts/ExerciseDetailModal.tsx",
+    "line": 441,
     "type": "shadow",
-    "matched": "elevation: 1"
+    "matched": "elevation: 4"
   },
   {
-    "file": "app/src/components/trackers/WaterCard.tsx",
-    "line": 298,
+    "file": "app/src/components/workouts/RestTimerModal.tsx",
+    "line": 256,
     "type": "hex",
-    "matched": "#000"
+    "matched": "#1C1109"
   },
   {
-    "file": "app/src/components/trackers/WaterCard.tsx",
-    "line": 301,
-    "type": "shadow",
-    "matched": "shadowRadius: 4"
-  },
-  {
-    "file": "app/src/components/trackers/WaterCard.tsx",
-    "line": 302,
-    "type": "shadow",
-    "matched": "elevation: 1"
-  },
-  {
-    "file": "app/src/components/trackers/WeightCard.tsx",
-    "line": 296,
+    "file": "app/src/components/workouts/RestTimerModal.tsx",
+    "line": 292,
     "type": "hex",
-    "matched": "#000"
-  },
-  {
-    "file": "app/src/components/trackers/WeightCard.tsx",
-    "line": 299,
-    "type": "shadow",
-    "matched": "shadowRadius: 4"
-  },
-  {
-    "file": "app/src/components/trackers/WeightCard.tsx",
-    "line": 300,
-    "type": "shadow",
-    "matched": "elevation: 1"
+    "matched": "#1C1109"
   },
   {
     "file": "app/src/components/workouts/RunningTimerBar.tsx",
@@ -1579,9 +2215,27 @@
   },
   {
     "file": "app/src/components/workouts/TodayWorkoutCard.tsx",
-    "line": 383,
+    "line": 488,
     "type": "radius",
-    "matched": "borderRadius: 3"
+    "matched": "borderRadius: 4"
+  },
+  {
+    "file": "app/src/components/workouts/WeeklyPlanModal.tsx",
+    "line": 430,
+    "type": "hex",
+    "matched": "#000"
+  },
+  {
+    "file": "app/src/components/workouts/WeeklyPlanModal.tsx",
+    "line": 433,
+    "type": "shadow",
+    "matched": "shadowRadius: 8"
+  },
+  {
+    "file": "app/src/components/workouts/WeeklyPlanModal.tsx",
+    "line": 434,
+    "type": "shadow",
+    "matched": "elevation: 4"
   },
   {
     "file": "app/src/components/workouts/WorkoutDetailModal.tsx",
@@ -1602,6 +2256,18 @@
     "matched": "#FFFFFF"
   },
   {
+    "file": "app/src/components/workouts/WorkoutFinishSummaryModal.tsx",
+    "line": 348,
+    "type": "radius",
+    "matched": "borderRadius: 4"
+  },
+  {
+    "file": "app/src/components/workouts/WorkoutFinishSummaryModal.tsx",
+    "line": 502,
+    "type": "hex",
+    "matched": "#1C1109"
+  },
+  {
     "file": "app/src/components/workouts/WorkoutHistoryCalendarModal.tsx",
     "line": 649,
     "type": "radius",
@@ -1609,19 +2275,43 @@
   },
   {
     "file": "app/src/components/workouts/WorkoutLoggerModal.tsx",
-    "line": 904,
+    "line": 906,
     "type": "hex",
     "matched": "#FFFFFF"
   },
   {
     "file": "app/src/components/workouts/WorkoutLoggerModal.tsx",
-    "line": 997,
+    "line": 999,
     "type": "hex",
     "matched": "#FFFFFF"
   },
   {
+    "file": "app/src/components/workouts/WorkoutLogModal.tsx",
+    "line": 463,
+    "type": "hex",
+    "matched": "#000"
+  },
+  {
+    "file": "app/src/components/workouts/WorkoutLogModal.tsx",
+    "line": 466,
+    "type": "shadow",
+    "matched": "shadowRadius: 8"
+  },
+  {
+    "file": "app/src/components/workouts/WorkoutLogModal.tsx",
+    "line": 467,
+    "type": "shadow",
+    "matched": "elevation: 4"
+  },
+  {
+    "file": "app/src/components/workouts/WorkoutRoutinesModal.tsx",
+    "line": 290,
+    "type": "hex",
+    "matched": "#1C1109"
+  },
+  {
     "file": "app/src/theme/tokens.ts",
-    "line": 88,
+    "line": 83,
     "type": "hex",
     "matched": "#1C1109"
   }

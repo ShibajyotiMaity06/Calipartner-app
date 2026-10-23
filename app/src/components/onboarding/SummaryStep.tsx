@@ -36,10 +36,11 @@ export function SummaryStep({
   onSave,
   onGoBackToStats,
   onGoBackToRate,
-  onOpenHowCalculated,
+  onOpenHowCalculated: _onOpenHowCalculated,
 }: SummaryStepProps) {
   const [customWaterMl, setCustomWaterMl] = React.useState<number>(waterMlGoal || 2500);
   const [customStepGoal, setCustomStepGoal] = React.useState<number>(stepGoal || 8000);
+  const [proteinMultiplier, setProteinMultiplier] = React.useState<number>(2.0);
 
   const handleSave = () => {
     playSuccessSound();
@@ -87,8 +88,6 @@ export function SummaryStep({
       </View>
     );
   }
-
-  const [proteinMultiplier, setProteinMultiplier] = React.useState<number>(2.0);
 
   const rawWeight =
     weightKg ??

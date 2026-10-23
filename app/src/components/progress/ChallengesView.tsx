@@ -3,8 +3,8 @@ import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Avatar, PairRing, dark, radius, space, type } from '@calipartner/ui';
 import { t } from '@/i18n';
-import { ChallengeDetailData, ChallengeDetailModal } from './ChallengeDetailModal';
-import { ChallengeCreatedPayload, CreateChallengeModal } from './CreateChallengeModal';
+import { type ChallengeDetailData, ChallengeDetailModal } from './ChallengeDetailModal';
+import { type ChallengeCreatedPayload, CreateChallengeModal } from './CreateChallengeModal';
 import { OccasionPlanModal } from './OccasionPlanModal';
 import { ChallengeResultModal } from './ChallengeResultModal';
 
