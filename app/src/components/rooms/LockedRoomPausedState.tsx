@@ -97,7 +97,10 @@ export function LockedRoomPausedState({
           Your streak is saved for 30 days.
         </Text>
 
-        <Text style={[styles.subtitle, { color: colors.textMuted }]} testID="text-locked-room-subtitle">
+        <Text
+          style={[styles.subtitle, { color: colors.textMuted }]}
+          testID="text-locked-room-subtitle"
+        >
           {t('rooms.paused.subtitle')}
         </Text>
 

@@ -32,10 +32,25 @@ const MUSCLE_OPTIONS: MuscleOption[] = [
   { key: 'chest', label: 'Chest', icon: 'barbell-outline', filterValue: 'chest' },
   { key: 'back', label: 'Back & Traps', icon: 'body-outline', filterValue: 'back' },
   { key: 'shoulders', label: 'Shoulders', icon: 'shield-outline', filterValue: 'shoulders' },
-  { key: 'arms', label: 'Arms (Biceps, Triceps, Forearms)', icon: 'fitness-outline', filterValue: 'arms' },
-  { key: 'legs', label: 'Legs (Quads, Hamstrings, Glutes, Calves)', icon: 'walk-outline', filterValue: 'legs' },
+  {
+    key: 'arms',
+    label: 'Arms (Biceps, Triceps, Forearms)',
+    icon: 'fitness-outline',
+    filterValue: 'arms',
+  },
+  {
+    key: 'legs',
+    label: 'Legs (Quads, Hamstrings, Glutes, Calves)',
+    icon: 'walk-outline',
+    filterValue: 'legs',
+  },
   { key: 'core', label: 'Abs & Core', icon: 'contract-outline', filterValue: 'core' },
-  { key: 'full_body', label: 'Full Body & Explosive', icon: 'flash-outline', filterValue: 'full_body' },
+  {
+    key: 'full_body',
+    label: 'Full Body & Explosive',
+    icon: 'flash-outline',
+    filterValue: 'full_body',
+  },
   { key: 'cardio', label: 'Cardio & Conditioning', icon: 'heart-outline', filterValue: 'cardio' },
   { key: 'other', label: 'Mobility & Flexibility', icon: 'leaf-outline', filterValue: 'other' },
 ];
@@ -63,17 +78,18 @@ export function AddExercisePickerModal({
     MUSCLE_OPTIONS.find((opt) => opt.filterValue === selectedMuscle) ?? MUSCLE_OPTIONS[0]!;
 
   const filteredExercises = useMemo(() => {
-    return (exercisesSeedData as Array<{
-      id: string;
-      name: string;
-      muscle_group: string;
-      equipment: string;
-    }>).filter((ex) => {
+    return (
+      exercisesSeedData as Array<{
+        id: string;
+        name: string;
+        muscle_group: string;
+        equipment: string;
+      }>
+    ).filter((ex) => {
       const matchesSearch =
         !searchQuery.trim() || ex.name.toLowerCase().includes(searchQuery.toLowerCase().trim());
       const matchesMuscle =
-        selectedMuscle === 'All' ||
-        ex.muscle_group.toLowerCase() === selectedMuscle.toLowerCase();
+        selectedMuscle === 'All' || ex.muscle_group.toLowerCase() === selectedMuscle.toLowerCase();
       return matchesSearch && matchesMuscle;
     });
   }, [searchQuery, selectedMuscle]);
@@ -81,9 +97,7 @@ export function AddExercisePickerModal({
   const handleAdd = () => {
     playSuccessSound();
     const finalName = customExerciseName.trim() || selectedExerciseName || 'Custom Exercise';
-    const found = exercisesSeedData.find(
-      (e) => e.name.toLowerCase() === finalName.toLowerCase(),
-    );
+    const found = exercisesSeedData.find((e) => e.name.toLowerCase() === finalName.toLowerCase());
     const muscleGroup = found
       ? found.muscle_group.charAt(0).toUpperCase() + found.muscle_group.slice(1)
       : selectedMuscle !== 'All'
@@ -129,7 +143,12 @@ export function AddExercisePickerModal({
 
           {/* Search Box */}
           <View style={styles.searchRow}>
-            <Ionicons name="search" size={18} color={dark.textLo} style={{ marginRight: space[2] }} />
+            <Ionicons
+              name="search"
+              size={18}
+              color={dark.textLo}
+              style={{ marginRight: space[2] }}
+            />
             <TextInput
               value={searchQuery}
               onChangeText={setSearchQuery}
@@ -175,7 +194,12 @@ export function AddExercisePickerModal({
                     {filteredExercises.length}
                   </Text>
                 </View>
-                <Ionicons name="chevron-down" size={18} color={dark.textMid} style={{ marginLeft: 6 }} />
+                <Ionicons
+                  name="chevron-down"
+                  size={18}
+                  color={dark.textMid}
+                  style={{ marginLeft: 6 }}
+                />
               </View>
             </TouchableOpacity>
           </View>
@@ -235,8 +259,7 @@ export function AddExercisePickerModal({
           {/* Exercise List */}
           <ScrollView style={styles.exerciseScroll} showsVerticalScrollIndicator={false}>
             {filteredExercises.map((ex) => {
-              const isSelected =
-                !customExerciseName.trim() && selectedExerciseName === ex.name;
+              const isSelected = !customExerciseName.trim() && selectedExerciseName === ex.name;
               return (
                 <TouchableOpacity
                   key={ex.id}
@@ -296,7 +319,8 @@ export function AddExercisePickerModal({
             >
               <Ionicons name="checkmark" size={20} color={dark.onBrand} />
               <Text variant="heading" color={dark.onBrand} style={styles.addConfirmBtnText}>
-                Add {customExerciseName.trim() || selectedExerciseName || 'Exercise'} ({plannedSets} sets)
+                Add {customExerciseName.trim() || selectedExerciseName || 'Exercise'} ({plannedSets}{' '}
+                sets)
               </Text>
             </TouchableOpacity>
           </View>
@@ -331,7 +355,9 @@ export function AddExercisePickerModal({
                 {MUSCLE_OPTIONS.map((opt) => {
                   const isOptSelected = selectedMuscle === opt.filterValue;
                   const count = (exercisesSeedData as Array<{ muscle_group: string }>).filter(
-                    (e) => opt.filterValue === 'All' || e.muscle_group.toLowerCase() === opt.filterValue.toLowerCase(),
+                    (e) =>
+                      opt.filterValue === 'All' ||
+                      e.muscle_group.toLowerCase() === opt.filterValue.toLowerCase(),
                   ).length;
 
                   return (

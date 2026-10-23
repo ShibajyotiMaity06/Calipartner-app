@@ -1,11 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import {
-  Modal,
-  Pressable,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
+import { Modal, Pressable, StyleSheet, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { dark, radius, space, type as typeTokens } from '@calipartner/ui';
 import { t } from '@/i18n';
@@ -126,10 +120,7 @@ export function RestTimerModal({
               <Pressable
                 key={secs}
                 testID={`btn-preset-${secs}`}
-                style={[
-                  styles.presetChip,
-                  remainingSeconds === secs && styles.presetChipActive,
-                ]}
+                style={[styles.presetChip, remainingSeconds === secs && styles.presetChipActive]}
                 onPress={() => handleSelectPreset(secs)}
                 accessibilityRole="button"
                 accessibilityLabel={`${secs} seconds rest`}

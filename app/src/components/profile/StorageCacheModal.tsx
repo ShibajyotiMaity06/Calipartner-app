@@ -1,20 +1,6 @@
 import React, { useState } from 'react';
-import {
-  Modal,
-  SafeAreaView,
-  ScrollView,
-  StyleSheet,
-  TouchableOpacity,
-  View,
-} from 'react-native';
-import {
-  Button,
-  Card,
-  ChevronLeftIcon,
-  dark,
-  space,
-  Text,
-} from '@calipartner/ui';
+import { Modal, SafeAreaView, ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
+import { Button, Card, ChevronLeftIcon, dark, space, Text } from '@calipartner/ui';
 import { t } from '@/i18n';
 import { playClickSound, playSuccessSound } from '@/lib/sound';
 
@@ -90,7 +76,9 @@ export function StorageCacheModal({
             <View style={styles.actionWrap}>
               <Button
                 variant="secondary"
-                label={cleared ? t('me.storageCache.clearSuccess') : t('me.storageCache.clearCacheBtn')}
+                label={
+                  cleared ? t('me.storageCache.clearSuccess') : t('me.storageCache.clearCacheBtn')
+                }
                 onPress={handleClearCache}
                 testID="btn-clear-food-cache"
                 style={styles.clearBtn}

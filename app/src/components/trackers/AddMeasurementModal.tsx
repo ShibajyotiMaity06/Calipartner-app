@@ -1,13 +1,5 @@
 import React, { useState } from 'react';
-import {
-  Modal,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  View,
-} from 'react-native';
+import { Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { dark, radius, space, type as typeTokens } from '@calipartner/ui';
 import { t } from '@/i18n';
@@ -21,7 +13,11 @@ export interface AddMeasurementModalProps {
 
 type MeasurementLocation = 'waist' | 'chest' | 'hips' | 'arms' | 'thighs' | 'neck';
 
-const LOCATIONS: Array<{ key: MeasurementLocation; label: string; icon: keyof typeof Ionicons.glyphMap }> = [
+const LOCATIONS: Array<{
+  key: MeasurementLocation;
+  label: string;
+  icon: keyof typeof Ionicons.glyphMap;
+}> = [
   { key: 'waist', label: 'Waist', icon: 'body-outline' },
   { key: 'chest', label: 'Chest', icon: 'shirt-outline' },
   { key: 'hips', label: 'Hips', icon: 'walk-outline' },
@@ -113,10 +109,7 @@ export function AddMeasurementModal({
                   <Pressable
                     key={loc.key}
                     testID={`btn-meas-loc-${loc.key}`}
-                    style={[
-                      styles.locChip,
-                      selectedLocation === loc.key && styles.locChipActive,
-                    ]}
+                    style={[styles.locChip, selectedLocation === loc.key && styles.locChipActive]}
                     onPress={() => setSelectedLocation(loc.key)}
                     accessibilityRole="button"
                     accessibilityLabel={loc.label}
@@ -152,10 +145,7 @@ export function AddMeasurementModal({
                     accessibilityLabel="Centimeters"
                   >
                     <Text
-                      style={[
-                        styles.unitToggleText,
-                        unit === 'cm' && styles.unitToggleTextActive,
-                      ]}
+                      style={[styles.unitToggleText, unit === 'cm' && styles.unitToggleTextActive]}
                     >
                       cm
                     </Text>
@@ -168,10 +158,7 @@ export function AddMeasurementModal({
                     accessibilityLabel="Inches"
                   >
                     <Text
-                      style={[
-                        styles.unitToggleText,
-                        unit === 'in' && styles.unitToggleTextActive,
-                      ]}
+                      style={[styles.unitToggleText, unit === 'in' && styles.unitToggleTextActive]}
                     >
                       in
                     </Text>

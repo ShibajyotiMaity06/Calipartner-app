@@ -1,12 +1,5 @@
 import React, { useState } from 'react';
-import {
-  Modal,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
+import { Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { dark, radius, space, type as typeTokens } from '@calipartner/ui';
 import { t } from '@/i18n';
@@ -132,9 +125,7 @@ export function ProgressPhotosModal({
               </Text>
             </Pressable>
 
-            {compareMode && (
-              <Text style={styles.compareHint}>Select 2 photos to compare</Text>
-            )}
+            {compareMode && <Text style={styles.compareHint}>Select 2 photos to compare</Text>}
           </View>
 
           <ScrollView style={styles.scrollArea} contentContainerStyle={styles.scrollContent}>

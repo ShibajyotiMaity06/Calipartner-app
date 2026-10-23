@@ -1,21 +1,6 @@
 import React, { useState } from 'react';
-import {
-  Modal,
-  SafeAreaView,
-  ScrollView,
-  StyleSheet,
-  TouchableOpacity,
-  View,
-} from 'react-native';
-import {
-  Button,
-  Card,
-  ChevronLeftIcon,
-  dark,
-  radius,
-  space,
-  Text,
-} from '@calipartner/ui';
+import { Modal, SafeAreaView, ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
+import { Button, Card, ChevronLeftIcon, dark, radius, space, Text } from '@calipartner/ui';
 import { t } from '@/i18n';
 import { playClickSound } from '@/lib/sound';
 
@@ -92,7 +77,9 @@ export function HealthSyncModal({
                       : t('me.healthSync.statusDisconnected')}
                   </Text>
                   <Text variant="micro" color={dark.textLo} style={styles.syncTime}>
-                    {connected ? t('me.healthSync.lastSynced', { time: lastSyncedAt }) : 'No active health link'}
+                    {connected
+                      ? t('me.healthSync.lastSynced', { time: lastSyncedAt })
+                      : 'No active health link'}
                   </Text>
                 </View>
                 <View
@@ -175,13 +162,15 @@ export function HealthSyncModal({
                   Step counting troubleshooting (E04):
                 </Text>
                 <Text variant="bodyS" color={dark.textMid} style={styles.guideStep}>
-                  1. Check device Settings → Privacy & Security → Motion & Fitness and verify CaliPartner is allowed.
+                  1. Check device Settings → Privacy & Security → Motion & Fitness and verify
+                  CaliPartner is allowed.
                 </Text>
                 <Text variant="bodyS" color={dark.textMid} style={styles.guideStep}>
                   2. Ensure battery saver is not aggressively killing background pedometer sensors.
                 </Text>
                 <Text variant="bodyS" color={dark.textMid} style={styles.guideStep}>
-                  3. If using Health Connect or Apple Health, confirm &quot;Steps&quot; has read permission enabled.
+                  3. If using Health Connect or Apple Health, confirm &quot;Steps&quot; has read
+                  permission enabled.
                 </Text>
               </Card>
             )}

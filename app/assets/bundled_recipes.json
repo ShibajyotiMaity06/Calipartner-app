@@ -4,12 +4,7 @@
     "title": "Idli (3 idlis)",
     "description": "Idli (3 idlis) (idly; steamed rice cake). Wholesome South Indian preparation rich in balanced nutrients.",
     "cuisine": "South Indian",
-    "diet_tags": [
-      "vegan",
-      "vegetarian",
-      "low-calorie",
-      "low-fat"
-    ],
+    "diet_tags": ["vegan", "vegetarian", "low-calorie", "low-fat"],
     "meal_type": "breakfast",
     "prep_minutes": 10,
     "cook_minutes": 20,
@@ -64,12 +59,7 @@
     "title": "Plain dosa (2 dosas)",
     "description": "Plain dosa (2 dosas) (dosa; dosai). Wholesome South Indian preparation rich in balanced nutrients.",
     "cuisine": "South Indian",
-    "diet_tags": [
-      "vegan",
-      "vegetarian",
-      "low-calorie",
-      "low-fat"
-    ],
+    "diet_tags": ["vegan", "vegetarian", "low-calorie", "low-fat"],
     "meal_type": "breakfast",
     "prep_minutes": 10,
     "cook_minutes": 20,
@@ -132,11 +122,7 @@
     "title": "Masala dosa (1 dosa)",
     "description": "Masala dosa (1 dosa) (masala dosai; potato dosa). Wholesome South Indian preparation rich in balanced nutrients.",
     "cuisine": "South Indian",
-    "diet_tags": [
-      "vegan",
-      "vegetarian",
-      "low-fat"
-    ],
+    "diet_tags": ["vegan", "vegetarian", "low-fat"],
     "meal_type": "breakfast",
     "prep_minutes": 10,
     "cook_minutes": 20,
@@ -247,12 +233,7 @@
     "title": "Uttapam (1 piece)",
     "description": "Uttapam (1 piece) (uthappam). Wholesome South Indian preparation rich in balanced nutrients.",
     "cuisine": "South Indian",
-    "diet_tags": [
-      "vegan",
-      "vegetarian",
-      "low-calorie",
-      "low-fat"
-    ],
+    "diet_tags": ["vegan", "vegetarian", "low-calorie", "low-fat"],
     "meal_type": "breakfast",
     "prep_minutes": 10,
     "cook_minutes": 20,
@@ -264,10 +245,7 @@
       "Add main base ingredients (Uttapam (1 piece)) and sauté on medium heat until cooked thoroughly.",
       "Simmer for 8-10 minutes to allow flavours to meld, season to taste, and serve hot."
     ],
-    "tips": [
-      "Also known as: uthappam.",
-      "Each serving is approximately 130g with 5.4g protein."
-    ],
+    "tips": ["Also known as: uthappam.", "Each serving is approximately 130g with 5.4g protein."],
     "image_urls": [],
     "status": "published",
     "nutrition_per_serving": {
@@ -339,12 +317,7 @@
     "title": "Pesarattu (2 pieces)",
     "description": "Pesarattu (2 pieces) (moong dosa; pesarattu upma). Wholesome Andhra preparation rich in balanced nutrients.",
     "cuisine": "Andhra",
-    "diet_tags": [
-      "vegan",
-      "vegetarian",
-      "high-fibre",
-      "low-fat"
-    ],
+    "diet_tags": ["vegan", "vegetarian", "high-fibre", "low-fat"],
     "meal_type": "breakfast",
     "prep_minutes": 10,
     "cook_minutes": 20,
@@ -439,12 +412,7 @@
     "title": "Ragi dosa (2 dosas)",
     "description": "Ragi dosa (2 dosas) (ragi dosai; finger millet dosa). Wholesome South Indian preparation rich in balanced nutrients.",
     "cuisine": "South Indian",
-    "diet_tags": [
-      "vegan",
-      "vegetarian",
-      "low-calorie",
-      "low-fat"
-    ],
+    "diet_tags": ["vegan", "vegetarian", "low-calorie", "low-fat"],
     "meal_type": "breakfast",
     "prep_minutes": 10,
     "cook_minutes": 20,
@@ -515,11 +483,7 @@
     "title": "Rava upma",
     "description": "Rava upma (upma; uppittu). Wholesome South Indian preparation rich in balanced nutrients.",
     "cuisine": "South Indian",
-    "diet_tags": [
-      "vegan",
-      "vegetarian",
-      "high-fibre"
-    ],
+    "diet_tags": ["vegan", "vegetarian", "high-fibre"],
     "meal_type": "breakfast",
     "prep_minutes": 10,
     "cook_minutes": 20,
@@ -630,10 +594,7 @@
     "title": "Poha",
     "description": "Poha (aval; flattened rice; kanda poha). Wholesome West Indian preparation rich in balanced nutrients.",
     "cuisine": "West Indian",
-    "diet_tags": [
-      "vegan",
-      "vegetarian"
-    ],
+    "diet_tags": ["vegan", "vegetarian"],
     "meal_type": "breakfast",
     "prep_minutes": 10,
     "cook_minutes": 20,
@@ -752,9 +713,7 @@
     "title": "Ven pongal",
     "description": "Ven pongal (khara pongal; pongal). Wholesome South Indian preparation rich in balanced nutrients.",
     "cuisine": "South Indian",
-    "diet_tags": [
-      "vegetarian"
-    ],
+    "diet_tags": ["vegetarian"],
     "meal_type": "breakfast",
     "prep_minutes": 10,
     "cook_minutes": 20,
@@ -857,11 +816,7 @@
     "title": "Besan chilla (2 pieces)",
     "description": "Besan chilla (2 pieces) (besan cheela; gram flour pancake). Wholesome North Indian preparation rich in balanced nutrients.",
     "cuisine": "North Indian",
-    "diet_tags": [
-      "vegan",
-      "vegetarian",
-      "high-fibre"
-    ],
+    "diet_tags": ["vegan", "vegetarian", "high-fibre"],
     "meal_type": "breakfast",
     "prep_minutes": 10,
     "cook_minutes": 20,
@@ -956,9 +911,7 @@
     "title": "Oats porridge with milk",
     "description": "Oats porridge with milk (oatmeal; oats with milk). Wholesome Global preparation rich in balanced nutrients.",
     "cuisine": "Global",
-    "diet_tags": [
-      "vegetarian"
-    ],
+    "diet_tags": ["vegetarian"],
     "meal_type": "breakfast",
     "prep_minutes": 10,
     "cook_minutes": 20,
@@ -1013,10 +966,7 @@
     "title": "Overnight oats with banana",
     "description": "Overnight oats with banana (overnight oats). Wholesome Global preparation rich in balanced nutrients.",
     "cuisine": "Global",
-    "diet_tags": [
-      "vegetarian",
-      "high-fibre"
-    ],
+    "diet_tags": ["vegetarian", "high-fibre"],
     "meal_type": "breakfast",
     "prep_minutes": 10,
     "cook_minutes": 20,
@@ -1095,11 +1045,7 @@
     "title": "Egg bhurji (2 eggs)",
     "description": "Egg bhurji (2 eggs) (anda bhurji; scrambled eggs indian). Wholesome North Indian preparation rich in balanced nutrients.",
     "cuisine": "North Indian",
-    "diet_tags": [
-      "eggetarian",
-      "high-protein",
-      "low-calorie"
-    ],
+    "diet_tags": ["eggetarian", "high-protein", "low-calorie"],
     "meal_type": "breakfast",
     "prep_minutes": 10,
     "cook_minutes": 20,
@@ -1186,11 +1132,7 @@
     "title": "Masala omelette (2 eggs)",
     "description": "Masala omelette (2 eggs) (omelette; omlet). Wholesome Indian preparation rich in balanced nutrients.",
     "cuisine": "Indian",
-    "diet_tags": [
-      "eggetarian",
-      "high-protein",
-      "low-calorie"
-    ],
+    "diet_tags": ["eggetarian", "high-protein", "low-calorie"],
     "meal_type": "breakfast",
     "prep_minutes": 10,
     "cook_minutes": 20,
@@ -1269,12 +1211,7 @@
     "title": "Egg white omelette (4 whites)",
     "description": "Egg white omelette (4 whites) (egg white omelette). Wholesome Global preparation rich in balanced nutrients.",
     "cuisine": "Global",
-    "diet_tags": [
-      "eggetarian",
-      "high-protein",
-      "low-calorie",
-      "low-fat"
-    ],
+    "diet_tags": ["eggetarian", "high-protein", "low-calorie", "low-fat"],
     "meal_type": "breakfast",
     "prep_minutes": 10,
     "cook_minutes": 20,
@@ -1353,11 +1290,7 @@
     "title": "Plain paratha (1)",
     "description": "Plain paratha (1) (paratha; parota). Wholesome North Indian preparation rich in balanced nutrients.",
     "cuisine": "North Indian",
-    "diet_tags": [
-      "vegan",
-      "vegetarian",
-      "high-fibre"
-    ],
+    "diet_tags": ["vegan", "vegetarian", "high-fibre"],
     "meal_type": "breakfast",
     "prep_minutes": 10,
     "cook_minutes": 20,
@@ -1412,11 +1345,7 @@
     "title": "Aloo paratha (1)",
     "description": "Aloo paratha (1) (potato paratha). Wholesome North Indian preparation rich in balanced nutrients.",
     "cuisine": "North Indian",
-    "diet_tags": [
-      "vegan",
-      "vegetarian",
-      "high-fibre"
-    ],
+    "diet_tags": ["vegan", "vegetarian", "high-fibre"],
     "meal_type": "breakfast",
     "prep_minutes": 10,
     "cook_minutes": 20,
@@ -1503,11 +1432,7 @@
     "title": "Paneer paratha (1)",
     "description": "Paneer paratha (1) (paneer stuffed paratha). Wholesome North Indian preparation rich in balanced nutrients.",
     "cuisine": "North Indian",
-    "diet_tags": [
-      "vegetarian",
-      "high-protein",
-      "high-fibre"
-    ],
+    "diet_tags": ["vegetarian", "high-protein", "high-fibre"],
     "meal_type": "breakfast",
     "prep_minutes": 10,
     "cook_minutes": 20,
@@ -1586,11 +1511,7 @@
     "title": "Methi thepla (1)",
     "description": "Methi thepla (1) (thepla; fenugreek flatbread). Wholesome Gujarati preparation rich in balanced nutrients.",
     "cuisine": "Gujarati",
-    "diet_tags": [
-      "vegetarian",
-      "low-calorie",
-      "low-fat"
-    ],
+    "diet_tags": ["vegetarian", "low-calorie", "low-fat"],
     "meal_type": "breakfast",
     "prep_minutes": 10,
     "cook_minutes": 20,
@@ -1677,12 +1598,7 @@
     "title": "Medu vada (2 vadas)",
     "description": "Medu vada (2 vadas) (vada; ulundu vada; garelu). Wholesome South Indian preparation rich in balanced nutrients.",
     "cuisine": "South Indian",
-    "diet_tags": [
-      "vegan",
-      "vegetarian",
-      "low-calorie",
-      "high-fibre"
-    ],
+    "diet_tags": ["vegan", "vegetarian", "low-calorie", "high-fibre"],
     "meal_type": "breakfast",
     "prep_minutes": 10,
     "cook_minutes": 20,
@@ -1777,11 +1693,7 @@
     "title": "Veg sandwich (2 slices)",
     "description": "Veg sandwich (2 slices) (vegetable sandwich). Wholesome Indian preparation rich in balanced nutrients.",
     "cuisine": "Indian",
-    "diet_tags": [
-      "vegetarian",
-      "low-calorie",
-      "low-fat"
-    ],
+    "diet_tags": ["vegetarian", "low-calorie", "low-fat"],
     "meal_type": "breakfast",
     "prep_minutes": 10,
     "cook_minutes": 20,
@@ -1860,10 +1772,7 @@
     "title": "Egg sandwich",
     "description": "Egg sandwich (egg sandwich). Wholesome Global preparation rich in balanced nutrients.",
     "cuisine": "Global",
-    "diet_tags": [
-      "eggetarian",
-      "high-protein"
-    ],
+    "diet_tags": ["eggetarian", "high-protein"],
     "meal_type": "breakfast",
     "prep_minutes": 10,
     "cook_minutes": 20,
@@ -1926,12 +1835,7 @@
     "title": "Toor dal tadka",
     "description": "Toor dal tadka (dal tadka; dal fry; arhar dal). Wholesome North Indian preparation rich in balanced nutrients.",
     "cuisine": "North Indian",
-    "diet_tags": [
-      "vegan",
-      "vegetarian",
-      "low-calorie",
-      "low-fat"
-    ],
+    "diet_tags": ["vegan", "vegetarian", "low-calorie", "low-fat"],
     "meal_type": "lunch",
     "prep_minutes": 10,
     "cook_minutes": 20,
@@ -2058,12 +1962,7 @@
     "title": "Moong dal tadka",
     "description": "Moong dal tadka (yellow dal; moong dal fry). Wholesome North Indian preparation rich in balanced nutrients.",
     "cuisine": "North Indian",
-    "diet_tags": [
-      "vegan",
-      "vegetarian",
-      "low-calorie",
-      "low-fat"
-    ],
+    "diet_tags": ["vegan", "vegetarian", "low-calorie", "low-fat"],
     "meal_type": "lunch",
     "prep_minutes": 10,
     "cook_minutes": 20,
@@ -2174,12 +2073,7 @@
     "title": "Tomato pappu",
     "description": "Tomato pappu (andhra dal; tomato dal; pappu). Wholesome Andhra preparation rich in balanced nutrients.",
     "cuisine": "Andhra",
-    "diet_tags": [
-      "vegan",
-      "vegetarian",
-      "low-calorie",
-      "low-fat"
-    ],
+    "diet_tags": ["vegan", "vegetarian", "low-calorie", "low-fat"],
     "meal_type": "lunch",
     "prep_minutes": 10,
     "cook_minutes": 20,
@@ -2314,11 +2208,7 @@
     "title": "Dal makhani",
     "description": "Dal makhani (dal makhani). Wholesome North Indian preparation rich in balanced nutrients.",
     "cuisine": "North Indian",
-    "diet_tags": [
-      "vegetarian",
-      "low-calorie",
-      "high-fibre"
-    ],
+    "diet_tags": ["vegetarian", "low-calorie", "high-fibre"],
     "meal_type": "lunch",
     "prep_minutes": 10,
     "cook_minutes": 20,
@@ -2437,11 +2327,7 @@
     "title": "Chana masala",
     "description": "Chana masala (chole; chickpea curry). Wholesome North Indian preparation rich in balanced nutrients.",
     "cuisine": "North Indian",
-    "diet_tags": [
-      "vegan",
-      "vegetarian",
-      "high-fibre"
-    ],
+    "diet_tags": ["vegan", "vegetarian", "high-fibre"],
     "meal_type": "lunch",
     "prep_minutes": 10,
     "cook_minutes": 20,
@@ -2568,11 +2454,7 @@
     "title": "Rajma masala",
     "description": "Rajma masala (rajma; kidney bean curry). Wholesome North Indian preparation rich in balanced nutrients.",
     "cuisine": "North Indian",
-    "diet_tags": [
-      "vegan",
-      "vegetarian",
-      "high-fibre"
-    ],
+    "diet_tags": ["vegan", "vegetarian", "high-fibre"],
     "meal_type": "lunch",
     "prep_minutes": 10,
     "cook_minutes": 20,
@@ -2691,13 +2573,7 @@
     "title": "Sambar",
     "description": "Sambar (sambhar; sambar). Wholesome South Indian preparation rich in balanced nutrients.",
     "cuisine": "South Indian",
-    "diet_tags": [
-      "vegan",
-      "vegetarian",
-      "low-calorie",
-      "high-fibre",
-      "low-fat"
-    ],
+    "diet_tags": ["vegan", "vegetarian", "low-calorie", "high-fibre", "low-fat"],
     "meal_type": "lunch",
     "prep_minutes": 10,
     "cook_minutes": 20,
@@ -2848,12 +2724,7 @@
     "title": "Rasam",
     "description": "Rasam (charu; pappu charu; saaru). Wholesome South Indian preparation rich in balanced nutrients.",
     "cuisine": "South Indian",
-    "diet_tags": [
-      "vegan",
-      "vegetarian",
-      "low-calorie",
-      "low-fat"
-    ],
+    "diet_tags": ["vegan", "vegetarian", "low-calorie", "low-fat"],
     "meal_type": "lunch",
     "prep_minutes": 10,
     "cook_minutes": 20,
@@ -2972,11 +2843,7 @@
     "title": "Coconut chutney",
     "description": "Coconut chutney (kobbari pachadi; chutney). Wholesome South Indian preparation rich in balanced nutrients.",
     "cuisine": "South Indian",
-    "diet_tags": [
-      "vegan",
-      "vegetarian",
-      "low-calorie"
-    ],
+    "diet_tags": ["vegan", "vegetarian", "low-calorie"],
     "meal_type": "side",
     "prep_minutes": 10,
     "cook_minutes": 20,
@@ -3071,10 +2938,7 @@
     "title": "Palak paneer",
     "description": "Palak paneer (spinach paneer). Wholesome North Indian preparation rich in balanced nutrients.",
     "cuisine": "North Indian",
-    "diet_tags": [
-      "vegetarian",
-      "low-calorie"
-    ],
+    "diet_tags": ["vegetarian", "low-calorie"],
     "meal_type": "lunch",
     "prep_minutes": 10,
     "cook_minutes": 20,
@@ -3193,9 +3057,7 @@
     "title": "Paneer butter masala",
     "description": "Paneer butter masala (paneer makhani). Wholesome North Indian preparation rich in balanced nutrients.",
     "cuisine": "North Indian",
-    "diet_tags": [
-      "vegetarian"
-    ],
+    "diet_tags": ["vegetarian"],
     "meal_type": "lunch",
     "prep_minutes": 10,
     "cook_minutes": 20,
@@ -3322,10 +3184,7 @@
     "title": "Kadai paneer",
     "description": "Kadai paneer (kadhai paneer). Wholesome North Indian preparation rich in balanced nutrients.",
     "cuisine": "North Indian",
-    "diet_tags": [
-      "vegetarian",
-      "low-calorie"
-    ],
+    "diet_tags": ["vegetarian", "low-calorie"],
     "meal_type": "lunch",
     "prep_minutes": 10,
     "cook_minutes": 20,
@@ -3436,10 +3295,7 @@
     "title": "Matar paneer",
     "description": "Matar paneer (peas paneer). Wholesome North Indian preparation rich in balanced nutrients.",
     "cuisine": "North Indian",
-    "diet_tags": [
-      "vegetarian",
-      "low-calorie"
-    ],
+    "diet_tags": ["vegetarian", "low-calorie"],
     "meal_type": "lunch",
     "prep_minutes": 10,
     "cook_minutes": 20,
@@ -3550,10 +3406,7 @@
     "title": "Paneer bhurji",
     "description": "Paneer bhurji (paneer scramble). Wholesome North Indian preparation rich in balanced nutrients.",
     "cuisine": "North Indian",
-    "diet_tags": [
-      "vegetarian",
-      "high-protein"
-    ],
+    "diet_tags": ["vegetarian", "high-protein"],
     "meal_type": "lunch",
     "prep_minutes": 10,
     "cook_minutes": 20,
@@ -3648,12 +3501,7 @@
     "title": "Aloo gobi",
     "description": "Aloo gobi (potato cauliflower dry curry). Wholesome North Indian preparation rich in balanced nutrients.",
     "cuisine": "North Indian",
-    "diet_tags": [
-      "vegan",
-      "vegetarian",
-      "low-calorie",
-      "low-fat"
-    ],
+    "diet_tags": ["vegan", "vegetarian", "low-calorie", "low-fat"],
     "meal_type": "lunch",
     "prep_minutes": 10,
     "cook_minutes": 20,
@@ -3764,12 +3612,7 @@
     "title": "Aloo jeera",
     "description": "Aloo jeera (jeera aloo). Wholesome North Indian preparation rich in balanced nutrients.",
     "cuisine": "North Indian",
-    "diet_tags": [
-      "vegan",
-      "vegetarian",
-      "low-calorie",
-      "low-fat"
-    ],
+    "diet_tags": ["vegan", "vegetarian", "low-calorie", "low-fat"],
     "meal_type": "lunch",
     "prep_minutes": 10,
     "cook_minutes": 20,
@@ -3781,10 +3624,7 @@
       "Add main base ingredients (Aloo jeera) and sauté on medium heat until cooked thoroughly.",
       "Simmer for 8-10 minutes to allow flavours to meld, season to taste, and serve hot."
     ],
-    "tips": [
-      "Also known as: jeera aloo.",
-      "Each serving is approximately 130g with 1.9g protein."
-    ],
+    "tips": ["Also known as: jeera aloo.", "Each serving is approximately 130g with 1.9g protein."],
     "image_urls": [],
     "status": "published",
     "nutrition_per_serving": {
@@ -3856,11 +3696,7 @@
     "title": "Bhindi masala",
     "description": "Bhindi masala (okra fry; vendakkai; bendakaya). Wholesome North Indian preparation rich in balanced nutrients.",
     "cuisine": "North Indian",
-    "diet_tags": [
-      "vegan",
-      "vegetarian",
-      "low-calorie"
-    ],
+    "diet_tags": ["vegan", "vegetarian", "low-calorie"],
     "meal_type": "lunch",
     "prep_minutes": 10,
     "cook_minutes": 20,
@@ -3963,13 +3799,7 @@
     "title": "Baingan bharta",
     "description": "Baingan bharta (vankaya; roasted brinjal). Wholesome North Indian preparation rich in balanced nutrients.",
     "cuisine": "North Indian",
-    "diet_tags": [
-      "vegan",
-      "vegetarian",
-      "low-calorie",
-      "high-fibre",
-      "low-fat"
-    ],
+    "diet_tags": ["vegan", "vegetarian", "low-calorie", "high-fibre", "low-fat"],
     "meal_type": "lunch",
     "prep_minutes": 10,
     "cook_minutes": 20,
@@ -4072,13 +3902,7 @@
     "title": "Mixed vegetable curry",
     "description": "Mixed vegetable curry (veg curry; sabzi). Wholesome Indian preparation rich in balanced nutrients.",
     "cuisine": "Indian",
-    "diet_tags": [
-      "vegan",
-      "vegetarian",
-      "low-calorie",
-      "high-fibre",
-      "low-fat"
-    ],
+    "diet_tags": ["vegan", "vegetarian", "low-calorie", "high-fibre", "low-fat"],
     "meal_type": "lunch",
     "prep_minutes": 10,
     "cook_minutes": 20,
@@ -4205,12 +4029,7 @@
     "title": "Lauki sabzi",
     "description": "Lauki sabzi (bottle gourd curry; sorakaya). Wholesome North Indian preparation rich in balanced nutrients.",
     "cuisine": "North Indian",
-    "diet_tags": [
-      "vegan",
-      "vegetarian",
-      "low-calorie",
-      "low-fat"
-    ],
+    "diet_tags": ["vegan", "vegetarian", "low-calorie", "low-fat"],
     "meal_type": "lunch",
     "prep_minutes": 10,
     "cook_minutes": 20,
@@ -4297,14 +4116,7 @@
     "title": "Soya chunks curry",
     "description": "Soya chunks curry (meal maker curry; nutrela curry). Wholesome Indian preparation rich in balanced nutrients.",
     "cuisine": "Indian",
-    "diet_tags": [
-      "vegan",
-      "vegetarian",
-      "high-protein",
-      "low-calorie",
-      "high-fibre",
-      "low-fat"
-    ],
+    "diet_tags": ["vegan", "vegetarian", "high-protein", "low-calorie", "high-fibre", "low-fat"],
     "meal_type": "lunch",
     "prep_minutes": 10,
     "cook_minutes": 20,
@@ -4415,12 +4227,7 @@
     "title": "Tofu vegetable stir-fry",
     "description": "Tofu vegetable stir-fry (tofu stir fry). Wholesome Global preparation rich in balanced nutrients.",
     "cuisine": "Global",
-    "diet_tags": [
-      "vegan",
-      "vegetarian",
-      "high-protein",
-      "high-fibre"
-    ],
+    "diet_tags": ["vegan", "vegetarian", "high-protein", "high-fibre"],
     "meal_type": "lunch",
     "prep_minutes": 10,
     "cook_minutes": 20,
@@ -4507,12 +4314,7 @@
     "title": "Steamed rice (1 katori cooked)",
     "description": "Steamed rice (1 katori cooked) (plain rice; annam). Wholesome Indian preparation rich in balanced nutrients.",
     "cuisine": "Indian",
-    "diet_tags": [
-      "vegan",
-      "vegetarian",
-      "low-calorie",
-      "low-fat"
-    ],
+    "diet_tags": ["vegan", "vegetarian", "low-calorie", "low-fat"],
     "meal_type": "lunch",
     "prep_minutes": 10,
     "cook_minutes": 20,
@@ -4567,11 +4369,7 @@
     "title": "Jeera rice",
     "description": "Jeera rice (cumin rice). Wholesome North Indian preparation rich in balanced nutrients.",
     "cuisine": "North Indian",
-    "diet_tags": [
-      "vegetarian",
-      "low-calorie",
-      "low-fat"
-    ],
+    "diet_tags": ["vegetarian", "low-calorie", "low-fat"],
     "meal_type": "lunch",
     "prep_minutes": 10,
     "cook_minutes": 20,
@@ -4583,10 +4381,7 @@
       "Add main base ingredients (Jeera rice) and sauté on medium heat until cooked thoroughly.",
       "Simmer for 8-10 minutes to allow flavours to meld, season to taste, and serve hot."
     ],
-    "tips": [
-      "Also known as: cumin rice.",
-      "Each serving is approximately 200g with 4.1g protein."
-    ],
+    "tips": ["Also known as: cumin rice.", "Each serving is approximately 200g with 4.1g protein."],
     "image_urls": [],
     "status": "published",
     "nutrition_per_serving": {
@@ -4634,11 +4429,7 @@
     "title": "Vegetable pulao",
     "description": "Vegetable pulao (veg pulao). Wholesome North Indian preparation rich in balanced nutrients.",
     "cuisine": "North Indian",
-    "diet_tags": [
-      "vegan",
-      "vegetarian",
-      "low-fat"
-    ],
+    "diet_tags": ["vegan", "vegetarian", "low-fat"],
     "meal_type": "lunch",
     "prep_minutes": 10,
     "cook_minutes": 20,
@@ -4650,10 +4441,7 @@
       "Add main base ingredients (Vegetable pulao) and sauté on medium heat until cooked thoroughly.",
       "Simmer for 8-10 minutes to allow flavours to meld, season to taste, and serve hot."
     ],
-    "tips": [
-      "Also known as: veg pulao.",
-      "Each serving is approximately 250g with 5.7g protein."
-    ],
+    "tips": ["Also known as: veg pulao.", "Each serving is approximately 250g with 5.7g protein."],
     "image_urls": [],
     "status": "published",
     "nutrition_per_serving": {
@@ -4749,10 +4537,7 @@
     "title": "Khichdi",
     "description": "Khichdi (moong dal khichdi; pongal khichdi). Wholesome Indian preparation rich in balanced nutrients.",
     "cuisine": "Indian",
-    "diet_tags": [
-      "vegetarian",
-      "low-fat"
-    ],
+    "diet_tags": ["vegetarian", "low-fat"],
     "meal_type": "lunch",
     "prep_minutes": 10,
     "cook_minutes": 20,
@@ -4839,9 +4624,7 @@
     "title": "Curd rice",
     "description": "Curd rice (perugu annam; thayir sadam). Wholesome South Indian preparation rich in balanced nutrients.",
     "cuisine": "South Indian",
-    "diet_tags": [
-      "vegetarian"
-    ],
+    "diet_tags": ["vegetarian"],
     "meal_type": "lunch",
     "prep_minutes": 10,
     "cook_minutes": 20,
@@ -4944,10 +4727,7 @@
     "title": "Lemon rice",
     "description": "Lemon rice (chitranna; nimmakaya pulihora). Wholesome South Indian preparation rich in balanced nutrients.",
     "cuisine": "South Indian",
-    "diet_tags": [
-      "vegan",
-      "vegetarian"
-    ],
+    "diet_tags": ["vegan", "vegetarian"],
     "meal_type": "lunch",
     "prep_minutes": 10,
     "cook_minutes": 20,
@@ -5058,10 +4838,7 @@
     "title": "Tomato rice",
     "description": "Tomato rice (tomato bath). Wholesome South Indian preparation rich in balanced nutrients.",
     "cuisine": "South Indian",
-    "diet_tags": [
-      "vegan",
-      "vegetarian"
-    ],
+    "diet_tags": ["vegan", "vegetarian"],
     "meal_type": "lunch",
     "prep_minutes": 10,
     "cook_minutes": 20,
@@ -5164,10 +4941,7 @@
     "title": "Tamarind rice",
     "description": "Tamarind rice (pulihora; puliyodarai). Wholesome South Indian preparation rich in balanced nutrients.",
     "cuisine": "South Indian",
-    "diet_tags": [
-      "vegan",
-      "vegetarian"
-    ],
+    "diet_tags": ["vegan", "vegetarian"],
     "meal_type": "lunch",
     "prep_minutes": 10,
     "cook_minutes": 20,
@@ -5278,10 +5052,7 @@
     "title": "Vegetable biryani",
     "description": "Vegetable biryani (veg biryani). Wholesome Hyderabadi preparation rich in balanced nutrients.",
     "cuisine": "Hyderabadi",
-    "diet_tags": [
-      "vegetarian",
-      "high-fibre"
-    ],
+    "diet_tags": ["vegetarian", "high-fibre"],
     "meal_type": "lunch",
     "prep_minutes": 10,
     "cook_minutes": 20,
@@ -5448,10 +5219,7 @@
     "title": "Egg biryani",
     "description": "Egg biryani (anda biryani). Wholesome Hyderabadi preparation rich in balanced nutrients.",
     "cuisine": "Hyderabadi",
-    "diet_tags": [
-      "eggetarian",
-      "high-protein"
-    ],
+    "diet_tags": ["eggetarian", "high-protein"],
     "meal_type": "lunch",
     "prep_minutes": 10,
     "cook_minutes": 20,
@@ -5586,10 +5354,7 @@
     "title": "Chicken biryani",
     "description": "Chicken biryani (hyderabadi chicken dum biryani; kodi biryani). Wholesome Hyderabadi preparation rich in balanced nutrients.",
     "cuisine": "Hyderabadi",
-    "diet_tags": [
-      "non-vegetarian",
-      "high-protein"
-    ],
+    "diet_tags": ["non-vegetarian", "high-protein"],
     "meal_type": "lunch",
     "prep_minutes": 10,
     "cook_minutes": 20,
@@ -5756,10 +5521,7 @@
     "title": "Mutton biryani",
     "description": "Mutton biryani (goat biryani; mamsam biryani). Wholesome Hyderabadi preparation rich in balanced nutrients.",
     "cuisine": "Hyderabadi",
-    "diet_tags": [
-      "non-vegetarian",
-      "high-protein"
-    ],
+    "diet_tags": ["non-vegetarian", "high-protein"],
     "meal_type": "lunch",
     "prep_minutes": 10,
     "cook_minutes": 20,
@@ -5918,10 +5680,7 @@
     "title": "Chicken curry",
     "description": "Chicken curry (kodi kura; murgh curry; andhra chicken curry). Wholesome Indian preparation rich in balanced nutrients.",
     "cuisine": "Indian",
-    "diet_tags": [
-      "non-vegetarian",
-      "high-protein"
-    ],
+    "diet_tags": ["non-vegetarian", "high-protein"],
     "meal_type": "lunch",
     "prep_minutes": 10,
     "cook_minutes": 20,
@@ -6048,10 +5807,7 @@
     "title": "Butter chicken",
     "description": "Butter chicken (murgh makhani). Wholesome North Indian preparation rich in balanced nutrients.",
     "cuisine": "North Indian",
-    "diet_tags": [
-      "non-vegetarian",
-      "high-protein"
-    ],
+    "diet_tags": ["non-vegetarian", "high-protein"],
     "meal_type": "lunch",
     "prep_minutes": 10,
     "cook_minutes": 20,
@@ -6178,10 +5934,7 @@
     "title": "Andhra chicken fry",
     "description": "Andhra chicken fry (kodi vepudu; chicken fry). Wholesome Andhra preparation rich in balanced nutrients.",
     "cuisine": "Andhra",
-    "diet_tags": [
-      "non-vegetarian",
-      "high-protein"
-    ],
+    "diet_tags": ["non-vegetarian", "high-protein"],
     "meal_type": "lunch",
     "prep_minutes": 10,
     "cook_minutes": 20,
@@ -6300,11 +6053,7 @@
     "title": "Chicken tikka",
     "description": "Chicken tikka (grilled chicken tikka). Wholesome North Indian preparation rich in balanced nutrients.",
     "cuisine": "North Indian",
-    "diet_tags": [
-      "non-vegetarian",
-      "high-protein",
-      "low-calorie"
-    ],
+    "diet_tags": ["non-vegetarian", "high-protein", "low-calorie"],
     "meal_type": "lunch",
     "prep_minutes": 10,
     "cook_minutes": 20,
@@ -6399,10 +6148,7 @@
     "title": "Tandoori chicken",
     "description": "Tandoori chicken (tandoori murgh). Wholesome North Indian preparation rich in balanced nutrients.",
     "cuisine": "North Indian",
-    "diet_tags": [
-      "non-vegetarian",
-      "high-protein"
-    ],
+    "diet_tags": ["non-vegetarian", "high-protein"],
     "meal_type": "lunch",
     "prep_minutes": 10,
     "cook_minutes": 20,
@@ -6497,10 +6243,7 @@
     "title": "Chicken 65",
     "description": "Chicken 65 (chicken sixty five). Wholesome South Indian preparation rich in balanced nutrients.",
     "cuisine": "South Indian",
-    "diet_tags": [
-      "non-vegetarian",
-      "high-protein"
-    ],
+    "diet_tags": ["non-vegetarian", "high-protein"],
     "meal_type": "snack",
     "prep_minutes": 10,
     "cook_minutes": 20,
@@ -6611,10 +6354,7 @@
     "title": "Egg curry",
     "description": "Egg curry (kodi guddu pulusu; anda curry). Wholesome Indian preparation rich in balanced nutrients.",
     "cuisine": "Indian",
-    "diet_tags": [
-      "eggetarian",
-      "high-protein"
-    ],
+    "diet_tags": ["eggetarian", "high-protein"],
     "meal_type": "lunch",
     "prep_minutes": 10,
     "cook_minutes": 20,
@@ -6725,10 +6465,7 @@
     "title": "Fish curry (rohu)",
     "description": "Fish curry (rohu) (chepala pulusu; machher jhol). Wholesome Indian preparation rich in balanced nutrients.",
     "cuisine": "Indian",
-    "diet_tags": [
-      "non-vegetarian",
-      "high-protein"
-    ],
+    "diet_tags": ["non-vegetarian", "high-protein"],
     "meal_type": "lunch",
     "prep_minutes": 10,
     "cook_minutes": 20,
@@ -6847,10 +6584,7 @@
     "title": "Fish fry (pan-fried)",
     "description": "Fish fry (pan-fried) (chepala vepudu; masala fish fry). Wholesome Indian preparation rich in balanced nutrients.",
     "cuisine": "Indian",
-    "diet_tags": [
-      "non-vegetarian",
-      "high-protein"
-    ],
+    "diet_tags": ["non-vegetarian", "high-protein"],
     "meal_type": "lunch",
     "prep_minutes": 10,
     "cook_minutes": 20,
@@ -6929,11 +6663,7 @@
     "title": "Prawn masala",
     "description": "Prawn masala (royyala iguru; shrimp curry). Wholesome Andhra preparation rich in balanced nutrients.",
     "cuisine": "Andhra",
-    "diet_tags": [
-      "non-vegetarian",
-      "high-protein",
-      "low-calorie"
-    ],
+    "diet_tags": ["non-vegetarian", "high-protein", "low-calorie"],
     "meal_type": "lunch",
     "prep_minutes": 10,
     "cook_minutes": 20,
@@ -7044,10 +6774,7 @@
     "title": "Mutton curry",
     "description": "Mutton curry (mutton masala; goat curry; mamsam kura). Wholesome Indian preparation rich in balanced nutrients.",
     "cuisine": "Indian",
-    "diet_tags": [
-      "non-vegetarian",
-      "high-protein"
-    ],
+    "diet_tags": ["non-vegetarian", "high-protein"],
     "meal_type": "lunch",
     "prep_minutes": 10,
     "cook_minutes": 20,
@@ -7158,10 +6885,7 @@
     "title": "Grilled chicken salad",
     "description": "Grilled chicken salad (chicken salad). Wholesome Global preparation rich in balanced nutrients.",
     "cuisine": "Global",
-    "diet_tags": [
-      "non-vegetarian",
-      "high-protein"
-    ],
+    "diet_tags": ["non-vegetarian", "high-protein"],
     "meal_type": "lunch",
     "prep_minutes": 10,
     "cook_minutes": 20,
@@ -7248,11 +6972,7 @@
     "title": "Chicken and rice bowl (gym meal)",
     "description": "Chicken and rice bowl (gym meal) (chicken rice bowl; bulking meal). Wholesome Global preparation rich in balanced nutrients.",
     "cuisine": "Global",
-    "diet_tags": [
-      "non-vegetarian",
-      "high-protein",
-      "high-fibre"
-    ],
+    "diet_tags": ["non-vegetarian", "high-protein", "high-fibre"],
     "meal_type": "lunch",
     "prep_minutes": 10,
     "cook_minutes": 20,
@@ -7331,12 +7051,7 @@
     "title": "Chicken soup",
     "description": "Chicken soup (clear chicken soup). Wholesome Indian preparation rich in balanced nutrients.",
     "cuisine": "Indian",
-    "diet_tags": [
-      "non-vegetarian",
-      "high-protein",
-      "low-calorie",
-      "low-fat"
-    ],
+    "diet_tags": ["non-vegetarian", "high-protein", "low-calorie", "low-fat"],
     "meal_type": "snack",
     "prep_minutes": 10,
     "cook_minutes": 20,
@@ -7415,11 +7130,7 @@
     "title": "Tomato soup",
     "description": "Tomato soup (tamatar soup). Wholesome Indian preparation rich in balanced nutrients.",
     "cuisine": "Indian",
-    "diet_tags": [
-      "vegetarian",
-      "low-calorie",
-      "low-fat"
-    ],
+    "diet_tags": ["vegetarian", "low-calorie", "low-fat"],
     "meal_type": "snack",
     "prep_minutes": 10,
     "cook_minutes": 20,
@@ -7490,14 +7201,7 @@
     "title": "Sprouts salad",
     "description": "Sprouts salad (moong sprouts chaat). Wholesome Indian preparation rich in balanced nutrients.",
     "cuisine": "Indian",
-    "diet_tags": [
-      "vegan",
-      "vegetarian",
-      "low-calorie",
-      "high-protein",
-      "high-fibre",
-      "low-fat"
-    ],
+    "diet_tags": ["vegan", "vegetarian", "low-calorie", "high-protein", "high-fibre", "low-fat"],
     "meal_type": "snack",
     "prep_minutes": 10,
     "cook_minutes": 20,
@@ -7576,12 +7280,7 @@
     "title": "Fruit salad",
     "description": "Fruit salad (mixed fruit bowl). Wholesome Global preparation rich in balanced nutrients.",
     "cuisine": "Global",
-    "diet_tags": [
-      "vegan",
-      "vegetarian",
-      "low-calorie",
-      "low-fat"
-    ],
+    "diet_tags": ["vegan", "vegetarian", "low-calorie", "low-fat"],
     "meal_type": "snack",
     "prep_minutes": 10,
     "cook_minutes": 20,
@@ -7660,10 +7359,7 @@
     "title": "Samosa (1 piece)",
     "description": "Samosa (1 piece) (aloo samosa). Wholesome North Indian preparation rich in balanced nutrients.",
     "cuisine": "North Indian",
-    "diet_tags": [
-      "vegan",
-      "vegetarian"
-    ],
+    "diet_tags": ["vegan", "vegetarian"],
     "meal_type": "snack",
     "prep_minutes": 10,
     "cook_minutes": 20,
@@ -7675,10 +7371,7 @@
       "Add main base ingredients (Samosa (1 piece)) and sauté on medium heat until cooked thoroughly.",
       "Simmer for 8-10 minutes to allow flavours to meld, season to taste, and serve hot."
     ],
-    "tips": [
-      "Also known as: aloo samosa.",
-      "Each serving is approximately 90g with 5.9g protein."
-    ],
+    "tips": ["Also known as: aloo samosa.", "Each serving is approximately 90g with 5.9g protein."],
     "image_urls": [],
     "status": "published",
     "nutrition_per_serving": {
@@ -7742,10 +7435,7 @@
     "title": "Onion pakora",
     "description": "Onion pakora (onion bhaji; pakoda; ulli pakodi). Wholesome North Indian preparation rich in balanced nutrients.",
     "cuisine": "North Indian",
-    "diet_tags": [
-      "vegan",
-      "vegetarian"
-    ],
+    "diet_tags": ["vegan", "vegetarian"],
     "meal_type": "snack",
     "prep_minutes": 10,
     "cook_minutes": 20,
@@ -7824,11 +7514,7 @@
     "title": "Dhokla",
     "description": "Dhokla (khaman dhokla). Wholesome Gujarati preparation rich in balanced nutrients.",
     "cuisine": "Gujarati",
-    "diet_tags": [
-      "vegetarian",
-      "low-calorie",
-      "low-fat"
-    ],
+    "diet_tags": ["vegetarian", "low-calorie", "low-fat"],
     "meal_type": "snack",
     "prep_minutes": 10,
     "cook_minutes": 20,
@@ -7915,11 +7601,7 @@
     "title": "Bhel puri",
     "description": "Bhel puri (bhelpuri). Wholesome West Indian preparation rich in balanced nutrients.",
     "cuisine": "West Indian",
-    "diet_tags": [
-      "vegan",
-      "vegetarian",
-      "low-fat"
-    ],
+    "diet_tags": ["vegan", "vegetarian", "low-fat"],
     "meal_type": "snack",
     "prep_minutes": 10,
     "cook_minutes": 20,
@@ -7931,10 +7613,7 @@
       "Add main base ingredients (Bhel puri) and sauté on medium heat until cooked thoroughly.",
       "Simmer for 8-10 minutes to allow flavours to meld, season to taste, and serve hot."
     ],
-    "tips": [
-      "Also known as: bhelpuri.",
-      "Each serving is approximately 120g with 6.3g protein."
-    ],
+    "tips": ["Also known as: bhelpuri.", "Each serving is approximately 120g with 6.3g protein."],
     "image_urls": [],
     "status": "published",
     "nutrition_per_serving": {
@@ -8014,10 +7693,7 @@
     "title": "Vada pav",
     "description": "Vada pav (wada pav). Wholesome West Indian preparation rich in balanced nutrients.",
     "cuisine": "West Indian",
-    "diet_tags": [
-      "vegan",
-      "vegetarian"
-    ],
+    "diet_tags": ["vegan", "vegetarian"],
     "meal_type": "snack",
     "prep_minutes": 10,
     "cook_minutes": 20,
@@ -8029,10 +7705,7 @@
       "Add main base ingredients (Vada pav) and sauté on medium heat until cooked thoroughly.",
       "Simmer for 8-10 minutes to allow flavours to meld, season to taste, and serve hot."
     ],
-    "tips": [
-      "Also known as: wada pav.",
-      "Each serving is approximately 130g with 8.2g protein."
-    ],
+    "tips": ["Also known as: wada pav.", "Each serving is approximately 130g with 8.2g protein."],
     "image_urls": [],
     "status": "published",
     "nutrition_per_serving": {
@@ -8096,10 +7769,7 @@
     "title": "Pav bhaji (2 pav)",
     "description": "Pav bhaji (2 pav) (pav bhaji). Wholesome West Indian preparation rich in balanced nutrients.",
     "cuisine": "West Indian",
-    "diet_tags": [
-      "vegetarian",
-      "high-fibre"
-    ],
+    "diet_tags": ["vegetarian", "high-fibre"],
     "meal_type": "lunch",
     "prep_minutes": 10,
     "cook_minutes": 20,
@@ -8111,10 +7781,7 @@
       "Add main base ingredients (Pav bhaji (2 pav)) and sauté on medium heat until cooked thoroughly.",
       "Simmer for 8-10 minutes to allow flavours to meld, season to taste, and serve hot."
     ],
-    "tips": [
-      "Also known as: pav bhaji.",
-      "Each serving is approximately 350g with 12.1g protein."
-    ],
+    "tips": ["Also known as: pav bhaji.", "Each serving is approximately 350g with 12.1g protein."],
     "image_urls": [],
     "status": "published",
     "nutrition_per_serving": {
@@ -8202,12 +7869,7 @@
     "title": "Jowar roti (1)",
     "description": "Jowar roti (1) (jolada rotti; sorghum roti). Wholesome Indian preparation rich in balanced nutrients.",
     "cuisine": "Indian",
-    "diet_tags": [
-      "vegan",
-      "vegetarian",
-      "low-calorie",
-      "low-fat"
-    ],
+    "diet_tags": ["vegan", "vegetarian", "low-calorie", "low-fat"],
     "meal_type": "lunch",
     "prep_minutes": 10,
     "cook_minutes": 20,
@@ -8254,12 +7916,7 @@
     "title": "Bajra roti (1)",
     "description": "Bajra roti (1) (pearl millet roti). Wholesome Indian preparation rich in balanced nutrients.",
     "cuisine": "Indian",
-    "diet_tags": [
-      "vegan",
-      "vegetarian",
-      "low-calorie",
-      "low-fat"
-    ],
+    "diet_tags": ["vegan", "vegetarian", "low-calorie", "low-fat"],
     "meal_type": "lunch",
     "prep_minutes": 10,
     "cook_minutes": 20,
@@ -8306,12 +7963,7 @@
     "title": "Ragi mudde (1 ball)",
     "description": "Ragi mudde (1 ball) (ragi sangati; finger millet ball). Wholesome South Indian preparation rich in balanced nutrients.",
     "cuisine": "South Indian",
-    "diet_tags": [
-      "vegan",
-      "vegetarian",
-      "low-calorie",
-      "low-fat"
-    ],
+    "diet_tags": ["vegan", "vegetarian", "low-calorie", "low-fat"],
     "meal_type": "lunch",
     "prep_minutes": 10,
     "cook_minutes": 20,
@@ -8358,11 +8010,7 @@
     "title": "Roti with ghee (1)",
     "description": "Roti with ghee (1) (ghee chapati). Wholesome Indian preparation rich in balanced nutrients.",
     "cuisine": "Indian",
-    "diet_tags": [
-      "vegetarian",
-      "low-calorie",
-      "low-fat"
-    ],
+    "diet_tags": ["vegetarian", "low-calorie", "low-fat"],
     "meal_type": "lunch",
     "prep_minutes": 10,
     "cook_minutes": 20,
@@ -8417,9 +8065,7 @@
     "title": "Banana milkshake",
     "description": "Banana milkshake (banana shake). Wholesome Global preparation rich in balanced nutrients.",
     "cuisine": "Global",
-    "diet_tags": [
-      "vegetarian"
-    ],
+    "diet_tags": ["vegetarian"],
     "meal_type": "drink",
     "prep_minutes": 10,
     "cook_minutes": 20,
@@ -8482,10 +8128,7 @@
     "title": "Protein shake (whey, milk, banana)",
     "description": "Protein shake (whey, milk, banana) (whey shake; gym shake). Wholesome Global preparation rich in balanced nutrients.",
     "cuisine": "Global",
-    "diet_tags": [
-      "vegetarian",
-      "high-protein"
-    ],
+    "diet_tags": ["vegetarian", "high-protein"],
     "meal_type": "drink",
     "prep_minutes": 10,
     "cook_minutes": 20,
@@ -8548,11 +8191,7 @@
     "title": "Sweet lassi",
     "description": "Sweet lassi (lassi). Wholesome North Indian preparation rich in balanced nutrients.",
     "cuisine": "North Indian",
-    "diet_tags": [
-      "vegetarian",
-      "low-calorie",
-      "low-fat"
-    ],
+    "diet_tags": ["vegetarian", "low-calorie", "low-fat"],
     "meal_type": "drink",
     "prep_minutes": 10,
     "cook_minutes": 20,
@@ -8564,10 +8203,7 @@
       "Add main base ingredients (Sweet lassi) and sauté on medium heat until cooked thoroughly.",
       "Simmer for 8-10 minutes to allow flavours to meld, season to taste, and serve hot."
     ],
-    "tips": [
-      "Also known as: lassi.",
-      "Each serving is approximately 320g with 6.9g protein."
-    ],
+    "tips": ["Also known as: lassi.", "Each serving is approximately 320g with 6.9g protein."],
     "image_urls": [],
     "status": "published",
     "nutrition_per_serving": {
@@ -8615,11 +8251,7 @@
     "title": "Buttermilk (chaas)",
     "description": "Buttermilk (chaas) (majjiga; moru; chaas). Wholesome Indian preparation rich in balanced nutrients.",
     "cuisine": "Indian",
-    "diet_tags": [
-      "vegetarian",
-      "low-calorie",
-      "low-fat"
-    ],
+    "diet_tags": ["vegetarian", "low-calorie", "low-fat"],
     "meal_type": "drink",
     "prep_minutes": 10,
     "cook_minutes": 20,
@@ -8690,11 +8322,7 @@
     "title": "Masala chai (milk tea)",
     "description": "Masala chai (milk tea) (chai; tea with milk and sugar). Wholesome Indian preparation rich in balanced nutrients.",
     "cuisine": "Indian",
-    "diet_tags": [
-      "vegetarian",
-      "low-calorie",
-      "low-fat"
-    ],
+    "diet_tags": ["vegetarian", "low-calorie", "low-fat"],
     "meal_type": "drink",
     "prep_minutes": 10,
     "cook_minutes": 20,
@@ -8757,11 +8385,7 @@
     "title": "Coffee with milk and sugar",
     "description": "Coffee with milk and sugar (filter coffee). Wholesome Indian preparation rich in balanced nutrients.",
     "cuisine": "Indian",
-    "diet_tags": [
-      "vegetarian",
-      "low-calorie",
-      "low-fat"
-    ],
+    "diet_tags": ["vegetarian", "low-calorie", "low-fat"],
     "meal_type": "drink",
     "prep_minutes": 10,
     "cook_minutes": 20,
@@ -8824,9 +8448,7 @@
     "title": "Kheer (rice pudding)",
     "description": "Kheer (rice pudding) (payasam; payasa). Wholesome Indian preparation rich in balanced nutrients.",
     "cuisine": "Indian",
-    "diet_tags": [
-      "vegetarian"
-    ],
+    "diet_tags": ["vegetarian"],
     "meal_type": "dessert",
     "prep_minutes": 10,
     "cook_minutes": 20,
@@ -8913,9 +8535,7 @@
     "title": "Suji halwa",
     "description": "Suji halwa (rava kesari; sheera). Wholesome Indian preparation rich in balanced nutrients.",
     "cuisine": "Indian",
-    "diet_tags": [
-      "vegetarian"
-    ],
+    "diet_tags": ["vegetarian"],
     "meal_type": "dessert",
     "prep_minutes": 10,
     "cook_minutes": 20,
@@ -8994,10 +8614,7 @@
     "title": "Besan ladoo (1)",
     "description": "Besan ladoo (1) (besan laddu). Wholesome Indian preparation rich in balanced nutrients.",
     "cuisine": "Indian",
-    "diet_tags": [
-      "vegetarian",
-      "low-calorie"
-    ],
+    "diet_tags": ["vegetarian", "low-calorie"],
     "meal_type": "dessert",
     "prep_minutes": 10,
     "cook_minutes": 20,
@@ -9009,10 +8626,7 @@
       "Add main base ingredients (Besan ladoo (1)) and sauté on medium heat until cooked thoroughly.",
       "Simmer for 8-10 minutes to allow flavours to meld, season to taste, and serve hot."
     ],
-    "tips": [
-      "Also known as: besan laddu.",
-      "Each serving is approximately 40g with 4.5g protein."
-    ],
+    "tips": ["Also known as: besan laddu.", "Each serving is approximately 40g with 4.5g protein."],
     "image_urls": [],
     "status": "published",
     "nutrition_per_serving": {
@@ -9060,9 +8674,7 @@
     "title": "Carrot halwa",
     "description": "Carrot halwa (gajar halwa). Wholesome North Indian preparation rich in balanced nutrients.",
     "cuisine": "North Indian",
-    "diet_tags": [
-      "vegetarian"
-    ],
+    "diet_tags": ["vegetarian"],
     "meal_type": "dessert",
     "prep_minutes": 10,
     "cook_minutes": 20,

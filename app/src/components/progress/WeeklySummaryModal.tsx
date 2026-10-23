@@ -88,7 +88,10 @@ export function WeeklySummaryModal({
             </Pressable>
           </View>
 
-          <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
+          <ScrollView
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={styles.scrollContent}
+          >
             {/* Auto-generated Paragraph (M09, PRG-11) */}
             <View style={styles.paragraphCard}>
               <Text style={styles.paragraphText} testID={`${testID}-paragraph`}>
@@ -143,7 +146,9 @@ export function WeeklySummaryModal({
               <View style={styles.privacyRow}>
                 <View style={styles.privacyTextCol}>
                   <Text style={styles.privacyLabel}>Include weight change</Text>
-                  <Text style={styles.privacySub}>Off by default. Shows change, never raw weight.</Text>
+                  <Text style={styles.privacySub}>
+                    Off by default. Shows change, never raw weight.
+                  </Text>
                 </View>
                 <Switch
                   value={includeWeight}

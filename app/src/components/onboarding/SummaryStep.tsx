@@ -161,16 +161,10 @@ export function SummaryStep({
             accessibilityRole="button"
             testID="btn-protein-1-5x"
           >
-            <Text
-              variant="button"
-              color={proteinMultiplier === 1.5 ? dark.onBrand : dark.textHi}
-            >
+            <Text variant="button" color={proteinMultiplier === 1.5 ? dark.onBrand : dark.textHi}>
               1.5x body weight
             </Text>
-            <Text
-              variant="micro"
-              color={proteinMultiplier === 1.5 ? dark.onBrand : dark.textLo}
-            >
+            <Text variant="micro" color={proteinMultiplier === 1.5 ? dark.onBrand : dark.textLo}>
               {Math.round(1.5 * rawWeight)}g / day
             </Text>
           </TouchableOpacity>
@@ -187,16 +181,10 @@ export function SummaryStep({
             accessibilityRole="button"
             testID="btn-protein-2-0x"
           >
-            <Text
-              variant="button"
-              color={proteinMultiplier === 2.0 ? dark.onBrand : dark.textHi}
-            >
+            <Text variant="button" color={proteinMultiplier === 2.0 ? dark.onBrand : dark.textHi}>
               2.0x body weight
             </Text>
-            <Text
-              variant="micro"
-              color={proteinMultiplier === 2.0 ? dark.onBrand : dark.textLo}
-            >
+            <Text variant="micro" color={proteinMultiplier === 2.0 ? dark.onBrand : dark.textLo}>
               {Math.round(2.0 * rawWeight)}g / day
             </Text>
           </TouchableOpacity>
@@ -328,7 +316,7 @@ export function SummaryStep({
                     color={isSelected ? dark.onBrand : dark.textMid}
                     style={{ fontWeight: isSelected ? '700' : '500' }}
                   >
-                    {(st / 1000)}k
+                    {st / 1000}k
                   </Text>
                 </TouchableOpacity>
               );

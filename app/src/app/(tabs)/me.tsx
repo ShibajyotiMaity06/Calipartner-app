@@ -1,12 +1,5 @@
 import React, { useState } from 'react';
-import {
-  Alert,
-  SafeAreaView,
-  ScrollView,
-  StyleSheet,
-  TouchableOpacity,
-  View,
-} from 'react-native';
+import { Alert, SafeAreaView, ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import {
@@ -139,7 +132,8 @@ export default function MeScreen() {
                 Guest Mode
               </Text>
               <Text variant="bodyS" color={dark.textMid} style={styles.guestDesc}>
-                Create an account to keep your data, join accountability rooms, and match with partners.
+                Create an account to keep your data, join accountability rooms, and match with
+                partners.
               </Text>
               <Button
                 variant="primary"
@@ -517,10 +511,7 @@ export default function MeScreen() {
           currentHeightCm={profile?.height_cm ?? 175}
         />
 
-        <DailyGoalsModal
-          visible={showDailyGoals}
-          onClose={() => setShowDailyGoals(false)}
-        />
+        <DailyGoalsModal visible={showDailyGoals} onClose={() => setShowDailyGoals(false)} />
 
         <PrivacySettingsModal
           visible={showPrivacy}
@@ -562,12 +553,7 @@ export default function MeScreen() {
           discoverable={profile?.discoverable ?? true}
         />
 
-
-
-        <HealthSyncModal
-          visible={showHealthSync}
-          onClose={() => setShowHealthSync(false)}
-        />
+        <HealthSyncModal visible={showHealthSync} onClose={() => setShowHealthSync(false)} />
 
         <UnitsLanguageModal
           visible={showUnitsLanguage}
@@ -575,35 +561,20 @@ export default function MeScreen() {
           currentUnits={profile?.units ?? 'metric'}
         />
 
-        <AppearanceModal
-          visible={showAppearance}
-          onClose={() => setShowAppearance(false)}
-        />
+        <AppearanceModal visible={showAppearance} onClose={() => setShowAppearance(false)} />
 
-        <StorageCacheModal
-          visible={showStorageCache}
-          onClose={() => setShowStorageCache(false)}
-        />
+        <StorageCacheModal visible={showStorageCache} onClose={() => setShowStorageCache(false)} />
 
-        <ExportDataModal
-          visible={showExportData}
-          onClose={() => setShowExportData(false)}
-        />
+        <ExportDataModal visible={showExportData} onClose={() => setShowExportData(false)} />
 
-        <HelpCentreModal
-          visible={showHelpCentre}
-          onClose={() => setShowHelpCentre(false)}
-        />
+        <HelpCentreModal visible={showHelpCentre} onClose={() => setShowHelpCentre(false)} />
 
         <ReportFeedbackModal
           visible={showReportFeedback}
           onClose={() => setShowReportFeedback(false)}
         />
 
-        <AboutLegalModal
-          visible={showAboutLegal}
-          onClose={() => setShowAboutLegal(false)}
-        />
+        <AboutLegalModal visible={showAboutLegal} onClose={() => setShowAboutLegal(false)} />
 
         <SignOutSheet
           visible={showSignOutSheet}

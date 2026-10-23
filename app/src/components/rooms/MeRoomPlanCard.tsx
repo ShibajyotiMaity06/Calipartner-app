@@ -8,14 +8,7 @@ import {
   View,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import {
-  Button,
-  Card,
-  dark,
-  radius,
-  space,
-  Text,
-} from '@calipartner/ui';
+import { Button, Card, dark, radius, space, Text } from '@calipartner/ui';
 import { t } from '@/i18n';
 import { useSubscription } from '@/hooks/useSubscription';
 import type { RoomSummary } from '@/types/rooms';
@@ -111,9 +104,13 @@ export function MeRoomPlanCard({
     : null;
 
   const planDefaultCap = tier === 'pro' ? 50 : tier === 'plus' ? 20 : 5;
-  const roomCap = attachedRoom ? Math.max(attachedRoom.member_cap ?? 5, planDefaultCap) : planDefaultCap;
+  const roomCap = attachedRoom
+    ? Math.max(attachedRoom.member_cap ?? 5, planDefaultCap)
+    : planDefaultCap;
   const memberCount = attachedRoom?.member_count ?? 1;
-  const capacityText = attachedRoom?.name ? `${memberCount} of ${roomCap} people` : `Up to ${planDefaultCap} people`;
+  const capacityText = attachedRoom?.name
+    ? `${memberCount} of ${roomCap} people`
+    : `Up to ${planDefaultCap} people`;
 
   // 1. FREE STATE: "Free Plan. Personal tracking is 100% free forever." with a quiet "See plans" (Spec N01, O01)
   if (!isPaidOrTrial) {
@@ -150,7 +147,7 @@ export function MeRoomPlanCard({
             testID="btn-me-restore-free"
           >
             <Text variant="micro" color={dark.textLo}>
-              {restoring ? 'Restoring…' : restoreMessage ?? 'Restore purchases'}
+              {restoring ? 'Restoring…' : (restoreMessage ?? 'Restore purchases')}
             </Text>
           </TouchableOpacity>
         </View>
@@ -244,7 +241,7 @@ export function MeRoomPlanCard({
         testID="btn-me-restore"
       >
         <Text variant="micro" color={dark.textLo}>
-          {restoring ? 'Restoring…' : restoreMessage ?? 'Restore purchases'}
+          {restoring ? 'Restoring…' : (restoreMessage ?? 'Restore purchases')}
         </Text>
       </TouchableOpacity>
     </Card>

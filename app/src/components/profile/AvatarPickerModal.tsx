@@ -242,12 +242,7 @@ export function AvatarPickerModal({
                   accessibilityLabel="Upload custom profile photo"
                   testID="btn-upload-avatar-circle"
                 >
-                  <Avatar
-                    uri={customPhotoUri}
-                    name="You"
-                    identityHue="apricot"
-                    size="lg"
-                  />
+                  <Avatar uri={customPhotoUri} name="You" identityHue="apricot" size="lg" />
                   <View style={styles.uploadBadge}>
                     <Ionicons name="camera" size={14} color={dark.onBrand} />
                   </View>

@@ -77,7 +77,8 @@ export async function handleAiCoach(req: Request): Promise<Response> {
     if (accessErr || !coachAccess?.allowed) {
       return new Response(
         JSON.stringify({
-          error: 'AI Coach is included with CaliPartner Pro. Upgrade to access personalized dietitian guidance.',
+          error:
+            'AI Coach is included with CaliPartner Pro. Upgrade to access personalized dietitian guidance.',
           code: 'UPGRADE_REQUIRED',
         }),
         { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },

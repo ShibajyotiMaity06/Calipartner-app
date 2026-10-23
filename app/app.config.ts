@@ -17,8 +17,10 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     supportsTablet: false,
     bundleIdentifier: 'app.calipartner.mobile',
     infoPlist: {
-      NSMotionUsageDescription: 'CaliPartner uses your motion sensors to count your steps during walking and running workouts.',
-      NSLocationWhenInUseUsageDescription: 'CaliPartner uses your location to track your running distance, pace, and route.',
+      NSMotionUsageDescription:
+        'CaliPartner uses your motion sensors to count your steps during walking and running workouts.',
+      NSLocationWhenInUseUsageDescription:
+        'CaliPartner uses your location to track your running distance, pace, and route.',
     },
   },
   android: {

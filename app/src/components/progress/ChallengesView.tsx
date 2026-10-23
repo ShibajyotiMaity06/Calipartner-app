@@ -1,22 +1,10 @@
 import React, { useState } from 'react';
-import {
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Avatar, PairRing, dark, radius, space, type } from '@calipartner/ui';
 import { t } from '@/i18n';
-import {
-  ChallengeDetailData,
-  ChallengeDetailModal,
-} from './ChallengeDetailModal';
-import {
-  ChallengeCreatedPayload,
-  CreateChallengeModal,
-} from './CreateChallengeModal';
+import { ChallengeDetailData, ChallengeDetailModal } from './ChallengeDetailModal';
+import { ChallengeCreatedPayload, CreateChallengeModal } from './CreateChallengeModal';
 import { OccasionPlanModal } from './OccasionPlanModal';
 import { ChallengeResultModal } from './ChallengeResultModal';
 
@@ -117,9 +105,8 @@ const COMPLETED_CHALLENGES = [
 
 export function ChallengesView({ testID = 'challenges-view' }: ChallengesViewProps) {
   const [activeSegment, setActiveSegment] = useState<ChallengeSegment>('all');
-  const [activeChallenges, setActiveChallenges] = useState<ChallengeDetailData[]>(
-    DEFAULT_ACTIVE_CHALLENGES,
-  );
+  const [activeChallenges, setActiveChallenges] =
+    useState<ChallengeDetailData[]>(DEFAULT_ACTIVE_CHALLENGES);
   const [selectedChallenge, setSelectedChallenge] = useState<ChallengeDetailData | null>(null);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showOccasionModal, setShowOccasionModal] = useState(false);
@@ -129,7 +116,9 @@ export function ChallengesView({ testID = 'challenges-view' }: ChallengesViewPro
   const handleCreateSubmit = (payload: ChallengeCreatedPayload) => {
     const newChallenge: ChallengeDetailData = {
       id: `ch-user-${Date.now()}`,
-      title: payload.customName || `${payload.activity.charAt(0).toUpperCase() + payload.activity.slice(1)} Challenge`,
+      title:
+        payload.customName ||
+        `${payload.activity.charAt(0).toUpperCase() + payload.activity.slice(1)} Challenge`,
       activity: payload.activity,
       icon:
         payload.activity === 'walking'
@@ -282,7 +271,11 @@ export function ChallengesView({ testID = 'challenges-view' }: ChallengesViewPro
           <Text style={styles.sectionHeader}>Seasonal Challenges</Text>
           <View style={styles.seasonalStack}>
             {SEASONAL_CHALLENGES.map((season) => (
-              <View key={season.id} style={styles.seasonalCard} testID={`${testID}-seasonal-${season.id}`}>
+              <View
+                key={season.id}
+                style={styles.seasonalCard}
+                testID={`${testID}-seasonal-${season.id}`}
+              >
                 <View style={styles.seasonalHeader}>
                   <View style={styles.seasonalIconBox}>
                     <Ionicons name={season.icon} size={22} color={dark.apricot} />
@@ -338,7 +331,8 @@ export function ChallengesView({ testID = 'challenges-view' }: ChallengesViewPro
               </View>
               <Text style={styles.occasionTitle}>Plan for an event</Text>
               <Text style={styles.occasionSub}>
-                Build a safe, realistic timeline with your partner before a wedding, birthday, or vacation.
+                Build a safe, realistic timeline with your partner before a wedding, birthday, or
+                vacation.
               </Text>
             </View>
             <View style={styles.occasionAction}>
@@ -371,7 +365,8 @@ export function ChallengesView({ testID = 'challenges-view' }: ChallengesViewPro
                 <View style={styles.completedInfo}>
                   <Text style={styles.completedTitle}>{comp.title}</Text>
                   <Text style={styles.completedSub}>
-                    {comp.daysCompleted} of {comp.totalDays} days with {comp.partner} • {comp.completedDate}
+                    {comp.daysCompleted} of {comp.totalDays} days with {comp.partner} •{' '}
+                    {comp.completedDate}
                   </Text>
                 </View>
                 <Ionicons name="chevron-forward" size={16} color={dark.textLo} />

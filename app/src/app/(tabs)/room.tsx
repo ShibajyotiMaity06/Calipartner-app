@@ -410,8 +410,6 @@ export default function RoomScreen() {
                     />
                   )}
 
-
-
                   {/* Overview Row for 3+ Members (paged & searchable above 12 members) */}
                   {members.length >= 3 && (
                     <RoomOverviewRow
@@ -443,8 +441,6 @@ export default function RoomScreen() {
                   )}
                 </>
               )}
-
-
 
               {/* Segment: Progress */}
               {activeSegment === 'progress' && currentRoom && (

@@ -1,13 +1,5 @@
 import React, { useState } from 'react';
-import {
-  Modal,
-  ScrollView,
-  StyleSheet,
-  Switch,
-  Text,
-  TouchableOpacity,
-  View,
-} from 'react-native';
+import { Modal, ScrollView, StyleSheet, Switch, Text, TouchableOpacity, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import type { WorkoutSummary, WorkoutWithDetails } from '@calipartner/core';
 import { dark, radius, space, type as typeTokens } from '@calipartner/ui';
@@ -73,9 +65,7 @@ export function WorkoutFinishSummaryModal({
             <Text style={styles.heroTitle}>
               {workout.name || t(`workouts.types.${workout.type}` as const)}
             </Text>
-            <Text style={styles.heroSubtitle}>
-              {t('workouts.summary.summarySubtitle')}
-            </Text>
+            <Text style={styles.heroSubtitle}>{t('workouts.summary.summarySubtitle')}</Text>
 
             {/* PR Badges (plain text neutral chips) */}
             <View style={styles.prChipsRow}>
@@ -106,7 +96,9 @@ export function WorkoutFinishSummaryModal({
               <Ionicons name="barbell-outline" size={20} color={dark.iris} />
               <Text style={styles.metricLabel}>{t('workouts.summary.volume')}</Text>
               <Text testID={`${testID}-stat-volume`} style={styles.metricValue}>
-                {summary.total_volume_kg > 0 ? `${summary.total_volume_kg.toLocaleString()} kg` : '0 kg'}
+                {summary.total_volume_kg > 0
+                  ? `${summary.total_volume_kg.toLocaleString()} kg`
+                  : '0 kg'}
               </Text>
             </View>
 
@@ -137,9 +129,7 @@ export function WorkoutFinishSummaryModal({
           {/* Calorie Disclaimer */}
           <View style={styles.disclaimerCard}>
             <Ionicons name="information-circle-outline" size={16} color={dark.textLo} />
-            <Text style={styles.disclaimerText}>
-              {t('workouts.calorieEstimateDisclaimer')}
-            </Text>
+            <Text style={styles.disclaimerText}>{t('workouts.calorieEstimateDisclaimer')}</Text>
           </View>
 
           {/* Room Share Toggle */}

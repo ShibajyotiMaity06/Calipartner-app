@@ -14,12 +14,7 @@ import { Avatar, dark, radius, space, type } from '@calipartner/ui';
 import { t } from '@/i18n';
 
 export type ChallengeActivityType =
-  | 'walking'
-  | 'running'
-  | 'studying'
-  | 'gym'
-  | 'cycling'
-  | 'custom';
+  'walking' | 'running' | 'studying' | 'gym' | 'cycling' | 'custom';
 
 export type ChallengeDuration = '1d' | '7d' | '30d';
 
@@ -170,7 +165,13 @@ export function CreateChallengeModal({
   };
 
   return (
-    <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose} testID={testID}>
+    <Modal
+      visible={visible}
+      transparent
+      animationType="slide"
+      onRequestClose={onClose}
+      testID={testID}
+    >
       <View style={styles.overlay}>
         <Pressable style={styles.backdrop} onPress={onClose} accessibilityLabel="Close creator" />
 
@@ -191,10 +192,15 @@ export function CreateChallengeModal({
             </Pressable>
           </View>
 
-          <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
+          <ScrollView
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={styles.scrollContent}
+          >
             {/* 1. Activity Section: 3x2 Grid */}
             <View style={styles.section}>
-              <Text style={styles.sectionLabel}>{t('progress.challenges.create.activityLabel')}</Text>
+              <Text style={styles.sectionLabel}>
+                {t('progress.challenges.create.activityLabel')}
+              </Text>
               <View style={styles.tilesGrid} accessibilityRole="radiogroup">
                 {ACTIVITIES.map((act) => {
                   const isSelected = selectedActivity === act.id;
@@ -274,7 +280,9 @@ export function CreateChallengeModal({
 
             {/* 3. Duration Section: 1d · 7d · 30d */}
             <View style={styles.section}>
-              <Text style={styles.sectionLabel}>{t('progress.challenges.create.durationLabel')}</Text>
+              <Text style={styles.sectionLabel}>
+                {t('progress.challenges.create.durationLabel')}
+              </Text>
               <View style={styles.chipsRow}>
                 {(['1d', '7d', '30d'] as ChallengeDuration[]).map((dur) => {
                   const isSelected = duration === dur;
@@ -289,7 +297,9 @@ export function CreateChallengeModal({
                       accessibilityState={{ selected: isSelected }}
                       testID={`${testID}-chip-dur-${dur}`}
                     >
-                      <Text style={[styles.durationText, isSelected && styles.durationTextSelected]}>
+                      <Text
+                        style={[styles.durationText, isSelected && styles.durationTextSelected]}
+                      >
                         {label}
                       </Text>
                     </Pressable>
@@ -300,15 +310,24 @@ export function CreateChallengeModal({
 
             {/* 4. Partner Section */}
             <View style={styles.section}>
-              <Text style={styles.sectionLabel}>{t('progress.challenges.create.partnerLabel')}</Text>
+              <Text style={styles.sectionLabel}>
+                {t('progress.challenges.create.partnerLabel')}
+              </Text>
               <View style={styles.partnerRow}>
                 <View style={styles.partnerAvatarCol}>
-                  <Avatar name={partnerNickname} uri={partnerAvatarUrl} size="md" identityHue="iris" />
+                  <Avatar
+                    name={partnerNickname}
+                    uri={partnerAvatarUrl}
+                    size="md"
+                    identityHue="iris"
+                  />
                   <Text style={styles.partnerNameText}>{partnerNickname}</Text>
                 </View>
 
                 <View style={styles.wholeRoomCol}>
-                  <Text style={styles.wholeRoomLabel}>{t('progress.challenges.create.wholeRoom')}</Text>
+                  <Text style={styles.wholeRoomLabel}>
+                    {t('progress.challenges.create.wholeRoom')}
+                  </Text>
                   <Switch
                     value={isWholeRoom}
                     onValueChange={setIsWholeRoom}

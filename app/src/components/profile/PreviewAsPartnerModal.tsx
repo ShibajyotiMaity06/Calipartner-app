@@ -1,20 +1,6 @@
 import React from 'react';
-import {
-  Modal,
-  SafeAreaView,
-  ScrollView,
-  StyleSheet,
-  TouchableOpacity,
-  View,
-} from 'react-native';
-import {
-  Card,
-  ChevronLeftIcon,
-  dark,
-  PairedCard,
-  space,
-  Text,
-} from '@calipartner/ui';
+import { Modal, SafeAreaView, ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
+import { Card, ChevronLeftIcon, dark, PairedCard, space, Text } from '@calipartner/ui';
 import { t } from '@/i18n';
 
 export interface PreviewAsPartnerModalProps {

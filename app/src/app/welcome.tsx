@@ -1,14 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { View, StyleSheet, SafeAreaView } from 'react-native';
 import { useRouter } from 'expo-router';
-import {
-  Text,
-  Button,
-  PairRing,
-  space,
-  dark,
-  useReducedMotion,
-} from '@calipartner/ui';
+import { Text, Button, PairRing, space, dark, useReducedMotion } from '@calipartner/ui';
 import { t } from '@/i18n';
 
 export default function WelcomeScreen() {

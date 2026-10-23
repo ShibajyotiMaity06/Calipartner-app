@@ -76,7 +76,8 @@ export function WhatTheyCanSeeSheet({
             <View style={styles.privacyNoteRow}>
               <Ionicons name="shield-checkmark-outline" size={16} color={dark.teal} />
               <Text variant="micro" color={dark.textMid} style={styles.privacyNoteText}>
-                Your raw calorie limits, weight entries, and personal notes are never shared without explicit consent.
+                Your raw calorie limits, weight entries, and personal notes are never shared without
+                explicit consent.
               </Text>
             </View>
           </View>

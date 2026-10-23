@@ -355,10 +355,7 @@ export default function OnboardingScreen() {
           keyboardShouldPersistTaps="handled"
         >
           {currentStep === 'goal' && (
-            <GoalStep
-              selectedGoal={snapshot.goal}
-              onSelectGoal={handleSelectGoal}
-            />
+            <GoalStep selectedGoal={snapshot.goal} onSelectGoal={handleSelectGoal} />
           )}
 
           {currentStep === 'body_stats' && (

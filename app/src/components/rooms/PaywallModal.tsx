@@ -12,15 +12,7 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import type { PurchasesPackage } from 'react-native-purchases';
-import {
-  Button,
-  Card,
-  ChevronLeftIcon,
-  dark,
-  radius,
-  space,
-  Text,
-} from '@calipartner/ui';
+import { Button, Card, ChevronLeftIcon, dark, radius, space, Text } from '@calipartner/ui';
 import { useSubscription } from '@/hooks/useSubscription';
 import { playClickSound, playSuccessSound } from '@/lib/sound';
 
@@ -28,12 +20,7 @@ export type RoomSizeBracket = '2-5' | '6-20' | '21-50' | 'plus' | 'pro' | 'basic
 export type PlanDuration = 'monthly' | 'quarterly' | 'annual';
 export type PlanTier = 'basic' | 'plus' | 'pro';
 export type PaywallContext =
-  | 'room'
-  | 'add_people'
-  | 'coach'
-  | 'partner_finder'
-  | 'keep_going'
-  | 'general';
+  'room' | 'add_people' | 'coach' | 'partner_finder' | 'keep_going' | 'general';
 
 export interface PaywallModalProps {
   visible: boolean;
@@ -145,14 +132,7 @@ export function PaywallModal({
   isUpgrade,
   onSuccess,
 }: PaywallModalProps) {
-  const {
-    offerings,
-    entitlement,
-    error: subError,
-    purchase,
-    restore,
-    sponsor,
-  } = useSubscription();
+  const { offerings, entitlement, error: subError, purchase, restore, sponsor } = useSubscription();
 
   // Selected Tier (Plus, Pro) - default to Plus
   const [selectedTier, setSelectedTier] = useState<PlanTier>(() => {
@@ -177,9 +157,7 @@ export function PaywallModal({
   const contextualTitle = useMemo(() => {
     switch (context) {
       case 'room':
-        return roomPartnerName
-          ? `Keep your room with ${roomPartnerName}`
-          : 'Keep your room going';
+        return roomPartnerName ? `Keep your room with ${roomPartnerName}` : 'Keep your room going';
       case 'add_people':
         return 'Add more people';
       case 'coach':
@@ -385,7 +363,8 @@ export function PaywallModal({
                 </Text>
               )}
               <Text variant="bodyS" color={dark.textMid} style={styles.subtitleText}>
-                Personal tracking is 100% free forever. Upgrade for rooms, partner finder, and AI coach.
+                Personal tracking is 100% free forever. Upgrade for rooms, partner finder, and AI
+                coach.
               </Text>
             </View>
 
@@ -462,10 +441,7 @@ export function PaywallModal({
                 {/* Plus Card */}
                 <TouchableOpacity
                   onPress={() => setSelectedTier('plus')}
-                  style={[
-                    styles.planCard,
-                    selectedTier === 'plus' && styles.planCardSelected,
-                  ]}
+                  style={[styles.planCard, selectedTier === 'plus' && styles.planCardSelected]}
                   accessibilityRole="radio"
                   accessibilityState={{ selected: selectedTier === 'plus' }}
                   accessibilityLabel="CaliPartner Plus, 7 day free trial, 99 rupees monthly or 599 yearly"
@@ -535,10 +511,7 @@ export function PaywallModal({
                 {/* Pro Card */}
                 <TouchableOpacity
                   onPress={() => setSelectedTier('pro')}
-                  style={[
-                    styles.planCard,
-                    selectedTier === 'pro' && styles.planCardSelected,
-                  ]}
+                  style={[styles.planCard, selectedTier === 'pro' && styles.planCardSelected]}
                   accessibilityRole="radio"
                   accessibilityState={{ selected: selectedTier === 'pro' }}
                   accessibilityLabel="CaliPartner Pro, AI Coach, 199 rupees monthly or 1199 yearly, no trial"
@@ -641,7 +614,8 @@ export function PaywallModal({
               <View style={styles.freeGuaranteeBlock}>
                 <Ionicons name="lock-open-outline" size={15} color={dark.teal} />
                 <Text variant="micro" color={dark.textMid} style={styles.freeSentenceText}>
-                  Personal food diary, barcode scan, water, steps, distance, GPS tracking, workouts & weight stay 100% free forever.
+                  Personal food diary, barcode scan, water, steps, distance, GPS tracking, workouts
+                  & weight stay 100% free forever.
                 </Text>
               </View>
             </Card>
@@ -732,7 +706,12 @@ export function PaywallModal({
           >
             <View style={styles.modalBackdrop}>
               <Card elevation="s1" style={styles.successModalCard} testID="modal-purchase-success">
-                <Ionicons name="sparkles" size={36} color={dark.apricot} style={styles.successIcon} />
+                <Ionicons
+                  name="sparkles"
+                  size={36}
+                  color={dark.apricot}
+                  style={styles.successIcon}
+                />
                 <Text variant="title1" color={dark.textHi} style={styles.successTitle}>
                   {activeTierConfig.title} Unlocked
                 </Text>

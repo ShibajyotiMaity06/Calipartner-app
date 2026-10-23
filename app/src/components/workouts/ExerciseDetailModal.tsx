@@ -117,7 +117,10 @@ export function ExerciseDetailModal({
             </TouchableOpacity>
           </View>
 
-          <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+          <ScrollView
+            contentContainerStyle={styles.scrollContent}
+            showsVerticalScrollIndicator={false}
+          >
             {/* Visual Icon Illustration Card */}
             <View style={styles.illustrationCard}>
               <View style={styles.exerciseIconCircle}>
@@ -174,7 +177,11 @@ export function ExerciseDetailModal({
 
               {sets.map((s, idx) => (
                 <View key={s.setNumber} style={styles.setRow} testID={`set-row-${idx}`}>
-                  <Text variant="body" color={dark.textHi} style={[styles.setNumCol, { flex: 0.8 }]}>
+                  <Text
+                    variant="body"
+                    color={dark.textHi}
+                    style={[styles.setNumCol, { flex: 0.8 }]}
+                  >
                     {s.setNumber}
                   </Text>
                   <View style={[styles.inputCellWrapper, { flex: 2 }]}>

@@ -9,9 +9,7 @@ export default function TabsLayout() {
   const router = useRouter();
 
   // Hide tab bar on full-screen flows (e.g. full-screen barcode scan, onboarding)
-  const isFullScreenFlow =
-    pathname.includes('/scan') ||
-    pathname.includes('/onboarding');
+  const isFullScreenFlow = pathname.includes('/scan') || pathname.includes('/onboarding');
 
   return (
     <Tabs

@@ -36,7 +36,8 @@ export function WorkoutHubModal({
   const [showHistoryModal, setShowHistoryModal] = useState(false);
   const [showExercisePicker, setShowExercisePicker] = useState(false);
   const [pickerMuscle, setPickerMuscle] = useState<string>('All');
-  const [selectedExerciseForDetail, setSelectedExerciseForDetail] = useState<PlannedExercise | null>(null);
+  const [selectedExerciseForDetail, setSelectedExerciseForDetail] =
+    useState<PlannedExercise | null>(null);
 
   const handleOpenLog = () => {
     playClickSound();
@@ -134,7 +135,10 @@ export function WorkoutHubModal({
             <View style={{ width: 44 }} />
           </View>
 
-          <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+          <ScrollView
+            contentContainerStyle={styles.scrollContent}
+            showsVerticalScrollIndicator={false}
+          >
             {/* Atmospheric Gym Hero Image Banner */}
             <View style={styles.heroBannerCard}>
               <Image

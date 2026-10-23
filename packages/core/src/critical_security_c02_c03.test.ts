@@ -1,12 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import {
-  mapProductIdToTierAndPeriod,
-  verifyWebhookAuth,
-} from './subscriptions';
-import {
-  mapVisionItemToFood,
-  validateFoodPhotoImage,
-} from './ai_food_photo';
+import { mapProductIdToTierAndPeriod, verifyWebhookAuth } from './subscriptions';
+import { mapVisionItemToFood, validateFoodPhotoImage } from './ai_food_photo';
 import type { Food, VisionModelDetectedItem } from './types';
 
 describe('Critical Security Finding C02: Webhook Secret & Payload Validation', () => {
@@ -37,7 +31,10 @@ describe('Critical Security Finding C02: Webhook Secret & Payload Validation', (
     expect(mapProductIdToTierAndPeriod('pro_monthly')).toEqual({ tier: 'pro', period: 'monthly' });
     expect(mapProductIdToTierAndPeriod('pro_yearly')).toEqual({ tier: 'pro', period: 'annual' });
     expect(mapProductIdToTierAndPeriod('plus_annual')).toEqual({ tier: 'plus', period: 'annual' });
-    expect(mapProductIdToTierAndPeriod('plus_monthly')).toEqual({ tier: 'plus', period: 'monthly' });
+    expect(mapProductIdToTierAndPeriod('plus_monthly')).toEqual({
+      tier: 'plus',
+      period: 'monthly',
+    });
     // Unknown or invalid products must return null
     expect(mapProductIdToTierAndPeriod('forged_product')).toBeNull();
     expect(mapProductIdToTierAndPeriod('')).toBeNull();
@@ -117,6 +114,8 @@ describe('Critical Security Finding C03: AI Food Photo Privacy & Boundary Contro
     expect(strangerCandidate.matched_food.id).toBe('cand-2-food');
     expect(strangerCandidate.is_estimate).toBe(true);
     // Confidential records of strangerId are never accessible
-    expect((strangerCandidate.matched_food as unknown as Record<string, unknown>).owner_id).toBeFalsy();
+    expect(
+      (strangerCandidate.matched_food as unknown as Record<string, unknown>).owner_id,
+    ).toBeFalsy();
   });
 });

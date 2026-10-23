@@ -48,11 +48,13 @@ export function AccessibleChartTable({
           {/* Header Row */}
           <View style={styles.headerRow} accessibilityRole={'row' as any}>
             {columns.map((col) => (
-               <View
+              <View
                 key={col.key}
                 style={[
                   styles.headerCell,
-                  col.width ? { width: typeof col.width === 'number' ? col.width : 100 } : { minWidth: 80 },
+                  col.width
+                    ? { width: typeof col.width === 'number' ? col.width : 100 }
+                    : { minWidth: 80 },
                   col.align === 'right' && styles.alignRight,
                   col.align === 'center' && styles.alignCenter,
                 ]}
@@ -64,7 +66,11 @@ export function AccessibleChartTable({
           </View>
 
           {/* Body Rows */}
-          <ScrollView style={styles.bodyScroll} nestedScrollEnabled showsVerticalScrollIndicator={false}>
+          <ScrollView
+            style={styles.bodyScroll}
+            nestedScrollEnabled
+            showsVerticalScrollIndicator={false}
+          >
             {rows.map((row, idx) => (
               <View
                 key={row.id || String(idx)}
@@ -78,7 +84,9 @@ export function AccessibleChartTable({
                       key={col.key}
                       style={[
                         styles.cell,
-                        col.width ? { width: typeof col.width === 'number' ? col.width : 100 } : { minWidth: 80 },
+                        col.width
+                          ? { width: typeof col.width === 'number' ? col.width : 100 }
+                          : { minWidth: 80 },
                         col.align === 'right' && styles.alignRight,
                         col.align === 'center' && styles.alignCenter,
                       ]}

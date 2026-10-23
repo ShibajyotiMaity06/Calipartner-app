@@ -1,12 +1,5 @@
 import React, { useState } from 'react';
-import {
-  FlatList,
-  Modal,
-  SafeAreaView,
-  StyleSheet,
-  TouchableOpacity,
-  View,
-} from 'react-native';
+import { FlatList, Modal, SafeAreaView, StyleSheet, TouchableOpacity, View } from 'react-native';
 import {
   Button,
   Card,

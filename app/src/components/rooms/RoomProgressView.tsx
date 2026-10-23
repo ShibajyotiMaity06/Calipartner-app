@@ -475,7 +475,11 @@ export function RoomProgressView({ roomId, testID = 'room-progress-view' }: Room
                           key={s.user_id}
                           style={[styles.tableDataCell, { color: colors.text, flex: 1 }]}
                         >
-                          {s.is_locked_member ? '🔒' : pt?.value != null ? pt.value.toFixed(0) : '—'}
+                          {s.is_locked_member
+                            ? '🔒'
+                            : pt?.value != null
+                              ? pt.value.toFixed(0)
+                              : '—'}
                         </Text>
                       );
                     })}

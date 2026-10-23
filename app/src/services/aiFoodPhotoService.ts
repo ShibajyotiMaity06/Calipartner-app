@@ -220,7 +220,10 @@ function createSampleCandidate(params: {
     name: params.name,
     brand: null,
     barcode: null,
-    serving_units: [{ unit: 'g', grams: 1 }, { unit: 'serving', grams: params.grams }],
+    serving_units: [
+      { unit: 'g', grams: 1 },
+      { unit: 'serving', grams: params.grams },
+    ],
     calories_per_100g: Math.round((params.calories / params.grams) * 100),
     protein_per_100g: Math.round((params.protein / params.grams) * 100 * 10) / 10,
     carbs_per_100g: Math.round((params.carbs / params.grams) * 100 * 10) / 10,
@@ -352,7 +355,11 @@ export async function analyzeFoodPhoto(
       );
     }
 
-    if (status === 404 || errorMsg.includes('NOT_FOUND') || errorMsg.includes('Failed to send a request')) {
+    if (
+      status === 404 ||
+      errorMsg.includes('NOT_FOUND') ||
+      errorMsg.includes('Failed to send a request')
+    ) {
       return SAMPLE_ANALYSIS_RESPONSE;
     }
 

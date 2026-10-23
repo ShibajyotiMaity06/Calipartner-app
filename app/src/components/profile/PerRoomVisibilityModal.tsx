@@ -1,12 +1,5 @@
 import React, { useState } from 'react';
-import {
-  Modal,
-  SafeAreaView,
-  ScrollView,
-  StyleSheet,
-  TouchableOpacity,
-  View,
-} from 'react-native';
+import { Modal, SafeAreaView, ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
 import {
   Button,
   Card,
@@ -34,9 +27,7 @@ export function PerRoomVisibilityModal({
   rooms = [],
   testID = 'modal-per-room-visibility',
 }: PerRoomVisibilityModalProps) {
-  const [selectedRoomId, setSelectedRoomId] = useState<string>(
-    rooms[0]?.id ?? 'room-default',
-  );
+  const [selectedRoomId, setSelectedRoomId] = useState<string>(rooms[0]?.id ?? 'room-default');
   const [shareMeals, setShareMeals] = useState(true);
   const [shareWeight, setShareWeight] = useState(false);
   const [shareWorkouts, setShareWorkouts] = useState(true);
@@ -101,18 +92,12 @@ export function PerRoomVisibilityModal({
                     <TouchableOpacity
                       key={room.id}
                       onPress={() => setSelectedRoomId(room.id)}
-                      style={[
-                        styles.roomTile,
-                        isSelected && styles.roomTileSelected,
-                      ]}
+                      style={[styles.roomTile, isSelected && styles.roomTileSelected]}
                       accessibilityRole="button"
                       accessibilityState={{ selected: isSelected }}
                       testID={`room-option-${room.id}`}
                     >
-                      <Text
-                        variant="heading"
-                        color={isSelected ? dark.apricot : dark.textHi}
-                      >
+                      <Text variant="heading" color={isSelected ? dark.apricot : dark.textHi}>
                         {room.name}
                       </Text>
                       <Text variant="micro" color={dark.textLo}>

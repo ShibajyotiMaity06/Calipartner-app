@@ -1,12 +1,5 @@
 import React, { useState } from 'react';
-import {
-  Modal,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
+import { Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import type { FastingProtocol } from '@calipartner/core';
 import { dark, radius, space, type as typeTokens } from '@calipartner/ui';
@@ -58,7 +51,9 @@ export function FastingTimerModal({
   const [showProtocol, setShowProtocol] = useState(false);
   const [showEditTimes, setShowEditTimes] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
-  const [safetyCheckInVariant, setSafetyCheckInVariant] = useState<'checkIn20' | 'checkIn24' | 'unwell' | null>(null);
+  const [safetyCheckInVariant, setSafetyCheckInVariant] = useState<
+    'checkIn20' | 'checkIn24' | 'unwell' | null
+  >(null);
   const [actionBusy, setActionBusy] = useState(false);
 
   React.useEffect(() => {
@@ -119,7 +114,13 @@ export function FastingTimerModal({
     }
   };
 
-  const handleSaveTimes = async ({ startAt, endAt }: { startAt: string; endAt?: string | null }) => {
+  const handleSaveTimes = async ({
+    startAt,
+    endAt,
+  }: {
+    startAt: string;
+    endAt?: string | null;
+  }) => {
     if (activeSession) {
       await editSession({
         sessionId: activeSession.id,
@@ -167,10 +168,7 @@ export function FastingTimerModal({
 
             <View style={styles.statePill}>
               <View
-                style={[
-                  styles.stateDot,
-                  { backgroundColor: isFasting ? dark.iris : dark.teal },
-                ]}
+                style={[styles.stateDot, { backgroundColor: isFasting ? dark.iris : dark.teal }]}
               />
               <Text style={styles.statePillText}>
                 {isFasting ? t('fasting.fastingState') : t('fasting.eatingWindowState')}
@@ -261,11 +259,7 @@ export function FastingTimerModal({
               accessibilityLabel={isFasting ? t('fasting.endFast') : t('fasting.startFast')}
             >
               <Text style={styles.primaryActionText}>
-                {actionBusy
-                  ? 'Saving…'
-                  : isFasting
-                    ? t('fasting.endFast')
-                    : t('fasting.startFast')}
+                {actionBusy ? 'Saving…' : isFasting ? t('fasting.endFast') : t('fasting.startFast')}
               </Text>
             </Pressable>
 

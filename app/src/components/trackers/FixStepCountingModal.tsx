@@ -1,12 +1,5 @@
 import React, { useState } from 'react';
-import {
-  Modal,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
+import { Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import type { ActivitySource } from '@calipartner/core';
 import { dark, radius, space, type as typeTokens } from '@calipartner/ui';
@@ -187,9 +180,7 @@ export function FixStepCountingModal({
                     />
                     <View>
                       <Text style={styles.sourceName}>Phone hardware sensor</Text>
-                      <Text style={styles.sourceDesc}>
-                        {t('trackers.steps.countingOnPhone')}
-                      </Text>
+                      <Text style={styles.sourceDesc}>{t('trackers.steps.countingOnPhone')}</Text>
                     </View>
                   </View>
                   {currentSource === 'pedometer' && (
@@ -200,10 +191,7 @@ export function FixStepCountingModal({
                 {/* Manual */}
                 <Pressable
                   testID="source-option-manual"
-                  style={[
-                    styles.sourceRow,
-                    currentSource === 'manual' && styles.sourceRowActive,
-                  ]}
+                  style={[styles.sourceRow, currentSource === 'manual' && styles.sourceRowActive]}
                   onPress={() => onSelectSource?.('manual')}
                   accessibilityRole="button"
                   accessibilityLabel="Manual step entry"
@@ -216,9 +204,7 @@ export function FixStepCountingModal({
                     />
                     <View>
                       <Text style={styles.sourceName}>Manual entry</Text>
-                      <Text style={styles.sourceDesc}>
-                        Log step counts directly each day
-                      </Text>
+                      <Text style={styles.sourceDesc}>Log step counts directly each day</Text>
                     </View>
                   </View>
                   {currentSource === 'manual' && (
@@ -234,9 +220,7 @@ export function FixStepCountingModal({
 
               <Pressable
                 style={styles.checkRow}
-                onPress={() =>
-                  setChecklist((prev) => ({ ...prev, autostart: !prev.autostart }))
-                }
+                onPress={() => setChecklist((prev) => ({ ...prev, autostart: !prev.autostart }))}
                 accessibilityRole="checkbox"
                 accessibilityState={{ checked: checklist.autostart }}
                 accessibilityLabel="Allow CaliPartner to run in background"
@@ -246,16 +230,12 @@ export function FixStepCountingModal({
                   size={20}
                   color={checklist.autostart ? dark.teal : dark.textLo}
                 />
-                <Text style={styles.checkLabel}>
-                  Allow CaliPartner to run in the background
-                </Text>
+                <Text style={styles.checkLabel}>Allow CaliPartner to run in the background</Text>
               </Pressable>
 
               <Pressable
                 style={styles.checkRow}
-                onPress={() =>
-                  setChecklist((prev) => ({ ...prev, battery: !prev.battery }))
-                }
+                onPress={() => setChecklist((prev) => ({ ...prev, battery: !prev.battery }))}
                 accessibilityRole="checkbox"
                 accessibilityState={{ checked: checklist.battery }}
                 accessibilityLabel="Disable aggressive battery saving"

@@ -31,8 +31,12 @@ describe('UI-10 · Me, Privacy, Plans, and Paywall (Screens N01–N16, O01–O10
 
   describe('3. N03: Goals & Body Measurements', () => {
     it('includes calorie floor metabolism notice and history non-rewriting rule', () => {
-      expect(en.me.goalsAndBody.subtitle).toContain('Changes apply from today; history is not rewritten');
-      expect(en.me.goalsAndBody.calorieFloorNotice).toContain('Calorie floors protect your metabolism');
+      expect(en.me.goalsAndBody.subtitle).toContain(
+        'Changes apply from today; history is not rewritten',
+      );
+      expect(en.me.goalsAndBody.calorieFloorNotice).toContain(
+        'Calorie floors protect your metabolism',
+      );
     });
   });
 
@@ -72,9 +76,7 @@ describe('UI-10 · Me, Privacy, Plans, and Paywall (Screens N01–N16, O01–O10
 
       // Focusing
       expect(p.focusing).toBe("Show that I'm focusing");
-      expect(p.focusingConsequence).toBe(
-        'Shows the live focus beacon when your timer is running.',
-      );
+      expect(p.focusingConsequence).toBe('Shows the live focus beacon when your timer is running.');
 
       // Focus labels
       expect(p.focusLabels).toBe('Show my focus labels');
@@ -84,9 +86,7 @@ describe('UI-10 · Me, Privacy, Plans, and Paywall (Screens N01–N16, O01–O10
 
       // Fasting
       expect(p.fasting).toBe('Share fasting status');
-      expect(p.fastingConsequence).toBe(
-        'Shows your active fast and elapsed hours in the room.',
-      );
+      expect(p.fastingConsequence).toBe('Shows your active fast and elapsed hours in the room.');
 
       // Discoverable
       expect(p.discoverable).toBe('Who can find me by username');
@@ -112,10 +112,10 @@ describe('UI-10 · Me, Privacy, Plans, and Paywall (Screens N01–N16, O01–O10
     });
 
     it('enforces that partners only see percentage of goal and never raw calories', () => {
-      expect(en.me.previewPartner.goalCompletionOnly).toContain(
-        'percentage, never raw calories',
+      expect(en.me.previewPartner.goalCompletionOnly).toContain('percentage, never raw calories');
+      expect(en.me.previewPartner.readOnlyNotice).toContain(
+        'Private metrics are hidden behind a lock',
       );
-      expect(en.me.previewPartner.readOnlyNotice).toContain('Private metrics are hidden behind a lock');
     });
   });
 
@@ -159,7 +159,9 @@ describe('UI-10 · Me, Privacy, Plans, and Paywall (Screens N01–N16, O01–O10
     });
 
     it('provides plain consequence text and account deletion link on sign out (N16 / AUTH-5)', () => {
-      expect(en.me.signOutSheet.consequence).toContain('pause notifications until you sign back in');
+      expect(en.me.signOutSheet.consequence).toContain(
+        'pause notifications until you sign back in',
+      );
       expect(en.me.signOutSheet.consequence).toContain('diary data is safe on this device');
       expect(en.me.signOutSheet.deleteAccountLink).toBe('Delete account instead');
     });

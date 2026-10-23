@@ -201,10 +201,7 @@ export function WaterCard({ selectedDate, testID = 'water-card' }: WaterCardProp
             {/* Numeral-L Progress & Status */}
             <View style={styles.progressDetail}>
               <View style={styles.numeralRow}>
-                <Text
-                  testID="water-progress-text"
-                  style={styles.progressNumber}
-                >
+                <Text testID="water-progress-text" style={styles.progressNumber}>
                   {`${currentDisplayAmount.toLocaleString()}`}
                 </Text>
                 <Text style={styles.progressGoalText}>
@@ -213,15 +210,15 @@ export function WaterCard({ selectedDate, testID = 'water-card' }: WaterCardProp
               </View>
 
               <Text
-                style={[
-                  styles.statusBadgeText,
-                  { color: isGoalMet ? dark.teal : dark.textMid },
-                ]}
+                style={[styles.statusBadgeText, { color: isGoalMet ? dark.teal : dark.textMid }]}
               >
                 {isGoalMet
                   ? t('trackers.water.goalMetText')
                   : t('trackers.water.remainingText', {
-                      remaining: Math.max(0, unit === 'fl_oz' ? mlToFloz(remainingMl) : remainingMl),
+                      remaining: Math.max(
+                        0,
+                        unit === 'fl_oz' ? mlToFloz(remainingMl) : remainingMl,
+                      ),
                     })}
               </Text>
 
@@ -277,9 +274,7 @@ export function WaterCard({ selectedDate, testID = 'water-card' }: WaterCardProp
               accessibilityLabel={t('trackers.water.glass')}
             >
               <Ionicons name="pint-outline" size={18} color={dark.apricot} />
-              <Text style={styles.thumbBtnLabel}>
-                {unit === 'fl_oz' ? '8 oz' : '250 ml'}
-              </Text>
+              <Text style={styles.thumbBtnLabel}>{unit === 'fl_oz' ? '8 oz' : '250 ml'}</Text>
               <Text style={styles.thumbBtnSub}>Glass</Text>
             </Pressable>
 
@@ -292,9 +287,7 @@ export function WaterCard({ selectedDate, testID = 'water-card' }: WaterCardProp
               accessibilityLabel={t('trackers.water.bottle')}
             >
               <Ionicons name="water-outline" size={18} color={dark.apricot} />
-              <Text style={styles.thumbBtnLabel}>
-                {unit === 'fl_oz' ? '17 oz' : '500 ml'}
-              </Text>
+              <Text style={styles.thumbBtnLabel}>{unit === 'fl_oz' ? '17 oz' : '500 ml'}</Text>
               <Text style={styles.thumbBtnSub}>Bottle</Text>
             </Pressable>
 
@@ -307,9 +300,7 @@ export function WaterCard({ selectedDate, testID = 'water-card' }: WaterCardProp
               accessibilityLabel={t('trackers.water.large')}
             >
               <Ionicons name="flask-outline" size={18} color={dark.apricot} />
-              <Text style={styles.thumbBtnLabel}>
-                {unit === 'fl_oz' ? '34 oz' : '1 L'}
-              </Text>
+              <Text style={styles.thumbBtnLabel}>{unit === 'fl_oz' ? '34 oz' : '1 L'}</Text>
               <Text style={styles.thumbBtnSub}>Large</Text>
             </Pressable>
           </View>
@@ -324,9 +315,7 @@ export function WaterCard({ selectedDate, testID = 'water-card' }: WaterCardProp
               accessibilityLabel={t('trackers.water.customAmount')}
             >
               <Ionicons name="options-outline" size={16} color={dark.apricot} />
-              <Text style={styles.customTextButtonLabel}>
-                {t('trackers.water.customAmount')}
-              </Text>
+              <Text style={styles.customTextButtonLabel}>{t('trackers.water.customAmount')}</Text>
             </Pressable>
           </View>
 
@@ -341,9 +330,7 @@ export function WaterCard({ selectedDate, testID = 'water-card' }: WaterCardProp
                     minute: '2-digit',
                   });
                   const disp =
-                    unit === 'fl_oz'
-                      ? `${mlToFloz(log.amount_ml)} fl oz`
-                      : `${log.amount_ml} ml`;
+                    unit === 'fl_oz' ? `${mlToFloz(log.amount_ml)} fl oz` : `${log.amount_ml} ml`;
                   return (
                     <View key={log.id} style={styles.entryRow} testID={`water-entry-${log.id}`}>
                       <View style={styles.entryLeft}>

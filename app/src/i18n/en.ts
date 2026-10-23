@@ -621,7 +621,8 @@ export const en = {
       editTargetWeight: 'Edit target weight',
       privateNotice: 'Only you can see this',
       measurementsTitle: 'Body measurements',
-      measurementsPrivateNotice: 'Only you can see these measurements. They are never shared in rooms.',
+      measurementsPrivateNotice:
+        'Only you can see these measurements. They are never shared in rooms.',
       measurementSelectPrompt: 'Select measurement location',
       measurementValueLabel: 'Measurement value',
       measurementSaveBtn: 'Save measurement',
@@ -1317,7 +1318,8 @@ export const en = {
       daysCompleted: '{count} of {total} days completed',
       todaysTask: 'Today: {task}',
       taskDone: 'Done today',
-      noActive: 'No active challenges right now. Start one with your partner or join a seasonal challenge.',
+      noActive:
+        'No active challenges right now. Start one with your partner or join a seasonal challenge.',
       scoringRule: 'Counts days you reach your goal. Not calories.',
       leaveChallenge: 'Leave challenge',
       leaveConfirmTitle: 'Leave this challenge?',
@@ -2110,7 +2112,8 @@ export const en = {
     whoShouldNotFast: 'Who should not fast',
     healthScreeningRisk: 'Fasting is not available based on your health profile.',
     screeningWarningPregnant: 'Fasting is not recommended during pregnancy or breastfeeding.',
-    screeningWarningDiabetes: 'Fasting is not recommended for individuals with diabetes without physician guidance.',
+    screeningWarningDiabetes:
+      'Fasting is not recommended for individuals with diabetes without physician guidance.',
     screeningWarningDisorder: 'Fasting is not recommended with a history of disordered eating.',
     screeningWarningUnder18: 'Fasting is only available for adults 18 and older.',
     chooseProtocol: 'Choose protocol',
@@ -2121,16 +2124,20 @@ export const en = {
     endTime: 'End time',
     saveTimes: 'Save fast times',
     foodLogCheckTitle: 'Log this and end your fast?',
-    foodLogCheckSubtitle: 'You are currently in a fasting window. Logging food will conclude your fast.',
+    foodLogCheckSubtitle:
+      'You are currently in a fasting window. Logging food will conclude your fast.',
     logAndEnd: 'Log and end fast',
     logAndKeep: 'Log and keep fasting',
     checkIn20Title: 'How are you feeling?',
-    checkIn20Subtitle: 'You have been fasting for 20 hours. Take a moment to check in with yourself.',
+    checkIn20Subtitle:
+      'You have been fasting for 20 hours. Take a moment to check in with yourself.',
     checkIn20Keep: 'Keep going',
     checkIn24Title: 'Time to eat.',
-    checkIn24Subtitle: 'You have reached 24 hours. Prolonged fasts beyond 24 hours are not supported. Break your fast gently.',
+    checkIn24Subtitle:
+      'You have reached 24 hours. Prolonged fasts beyond 24 hours are not supported. Break your fast gently.',
     checkInFeelingUnwell: 'I feel unwell',
-    unwellHelp: 'Please break your fast and have a gentle snack or water. Your well-being comes first.',
+    unwellHelp:
+      'Please break your fast and have a gentle snack or water. Your well-being comes first.',
     historyEmpty: 'No past fasts yet.',
     totalFasts: 'Total fasts',
     completionRate: 'Completion rate',

@@ -60,9 +60,19 @@ export function TargetDateStep({
   return (
     <View style={styles.container}>
       {/* Informational Guidance */}
-      <View style={{ backgroundColor: dark.s1, padding: space[3], borderRadius: radius.control, borderWidth: 1, borderColor: dark.hairline, marginBottom: space[2] }}>
+      <View
+        style={{
+          backgroundColor: dark.s1,
+          padding: space[3],
+          borderRadius: radius.control,
+          borderWidth: 1,
+          borderColor: dark.hairline,
+          marginBottom: space[2],
+        }}
+      >
         <Text variant="bodyS" color={dark.textMid} style={{ lineHeight: 18 }}>
-          Your daily calories and macros are determined by your Cut/Bulk pace. This target weight sets your personal milestone for your squad progress.
+          Your daily calories and macros are determined by your Cut/Bulk pace. This target weight
+          sets your personal milestone for your squad progress.
         </Text>
       </View>
 

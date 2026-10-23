@@ -1,18 +1,7 @@
 import React, { useState } from 'react';
-import {
-  Modal,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  View,
-} from 'react-native';
+import { Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import {
-  FASTING_PROTOCOLS,
-  type FastingProtocol,
-} from '@calipartner/core';
+import { FASTING_PROTOCOLS, type FastingProtocol } from '@calipartner/core';
 import { dark, radius, space, type as typeTokens } from '@calipartner/ui';
 import { t } from '@/i18n';
 
@@ -32,14 +21,7 @@ export interface FastingProtocolModalProps {
   testID?: string;
 }
 
-const AVAILABLE_PROTOCOLS: FastingProtocol[] = [
-  '12:12',
-  '14:10',
-  '16:8',
-  '18:6',
-  '20:4',
-  'custom',
-];
+const AVAILABLE_PROTOCOLS: FastingProtocol[] = ['12:12', '14:10', '16:8', '18:6', '20:4', 'custom'];
 
 export function FastingProtocolModal({
   visible,

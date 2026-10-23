@@ -63,7 +63,8 @@ export function WeightCard({ selectedDate, testID = 'weight-card' }: WeightCardP
     currentGoalProfile?.current_weight_kg ??
     (logs.length > 0 ? logs[logs.length - 1]!.weight_kg : null);
 
-  const targetWeight = currentGoalProfile?.target_weight_kg ?? (latestWeight ? latestWeight - 5 : 70);
+  const targetWeight =
+    currentGoalProfile?.target_weight_kg ?? (latestWeight ? latestWeight - 5 : 70);
 
   const totalChangeKg =
     latestWeight !== null && startWeight !== null ? latestWeight - startWeight : null;
@@ -90,8 +91,14 @@ export function WeightCard({ selectedDate, testID = 'weight-card' }: WeightCardP
 
   // Mock / Filtered entries for the CMP-14 chart
   const chartPoints = logs.slice(0, 10).reverse();
-  const minChartKg = chartPoints.length > 0 ? Math.min(...chartPoints.map((p) => p.weight_kg), targetWeight) - 1 : 65;
-  const maxChartKg = chartPoints.length > 0 ? Math.max(...chartPoints.map((p) => p.weight_kg), targetWeight) + 1 : 80;
+  const minChartKg =
+    chartPoints.length > 0
+      ? Math.min(...chartPoints.map((p) => p.weight_kg), targetWeight) - 1
+      : 65;
+  const maxChartKg =
+    chartPoints.length > 0
+      ? Math.max(...chartPoints.map((p) => p.weight_kg), targetWeight) + 1
+      : 80;
 
   return (
     <View testID={testID} style={styles.card}>
@@ -155,9 +162,7 @@ export function WeightCard({ selectedDate, testID = 'weight-card' }: WeightCardP
                   ? `${totalChangeKg > 0 ? '+' : ''}${totalChangeKg.toFixed(1)} kg`
                   : '—'}
               </Text>
-              {changePercent && (
-                <Text style={styles.summarySubVal}>{`${changePercent}%`}</Text>
-              )}
+              {changePercent && <Text style={styles.summarySubVal}>{`${changePercent}%`}</Text>}
             </View>
 
             <View style={styles.summaryDivider} />
@@ -202,10 +207,7 @@ export function WeightCard({ selectedDate, testID = 'weight-card' }: WeightCardP
                 <Pressable
                   key={chip}
                   testID={`btn-range-${chip}`}
-                  style={[
-                    styles.rangeChip,
-                    selectedRange === chip && styles.rangeChipActive,
-                  ]}
+                  style={[styles.rangeChip, selectedRange === chip && styles.rangeChipActive]}
                   onPress={() => setSelectedRange(chip)}
                   accessibilityRole="button"
                   accessibilityLabel={chip}
@@ -241,7 +243,10 @@ export function WeightCard({ selectedDate, testID = 'weight-card' }: WeightCardP
                 {/* Simulated CMP-14 Data Points (faint raw dots + thick 2.5px MA line) */}
                 <View style={styles.pointsTrack}>
                   {chartPoints.map((point, idx) => {
-                    const ratio = Math.max(0, Math.min(1, (point.weight_kg - minChartKg) / (maxChartKg - minChartKg || 1)));
+                    const ratio = Math.max(
+                      0,
+                      Math.min(1, (point.weight_kg - minChartKg) / (maxChartKg - minChartKg || 1)),
+                    );
                     const isSelected = selectedPointIndex === idx;
                     return (
                       <Pressable
@@ -259,7 +264,9 @@ export function WeightCard({ selectedDate, testID = 'weight-card' }: WeightCardP
                             <Text style={styles.tooltipDate}>{point.local_date}</Text>
                           </View>
                         )}
-                        <View style={[styles.rawDot, { bottom: `${Math.round(ratio * 70) + 15}%` }]} />
+                        <View
+                          style={[styles.rawDot, { bottom: `${Math.round(ratio * 70) + 15}%` }]}
+                        />
                         <Text style={styles.axisDate}>{point.local_date.slice(5)}</Text>
                       </Pressable>
                     );
@@ -359,9 +366,7 @@ export function WeightCard({ selectedDate, testID = 'weight-card' }: WeightCardP
             accessibilityLabel={t('trackers.weight.logWeightButton')}
           >
             <Ionicons name="add" size={18} color={dark.onBrand} />
-            <Text style={styles.primaryLogBtnText}>
-              {t('trackers.weight.logWeightButton')}
-            </Text>
+            <Text style={styles.primaryLogBtnText}>{t('trackers.weight.logWeightButton')}</Text>
           </Pressable>
         </>
       )}

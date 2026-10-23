@@ -250,537 +250,540 @@ export default function TodayScreen() {
     <View style={{ flex: 1, backgroundColor: dark.bg0 }}>
       <ScrollView
         testID="screen-today"
-      style={styles.root}
-      contentContainerStyle={styles.scrollContent}
-      showsVerticalScrollIndicator={false}
-      refreshControl={
-        <RefreshControl refreshing={diaryLoading} onRefresh={handlePullRefresh} tintColor={dark.apricot} />
-      }
-    >
-      {/* 1. Header (Brand: CaliPartner 🌿 - Centered) */}
-      <View style={styles.topBrandBar} testID="today-brand-header">
-        <View style={styles.brandTitleRow}>
-          <Text variant="heading" color={dark.textHi} style={styles.brandName}>
-            CaliPartner
-          </Text>
-          <Text style={styles.brandLeaf}>🌿</Text>
-        </View>
-      </View>
-
-      {/* 2. Greeting & Dynamic Timezone Question */}
-      <View style={styles.greetingSection}>
-        <Text variant="heading" color={dark.textHi} style={styles.greetingTitle}>
-          Hi, {userName} 👋
-        </Text>
-        <Text variant="body" color={dark.textMid} style={styles.greetingQuestion}>
-          {getContextualQuestion()}
-        </Text>
-      </View>
-
-      {/* 3. Choose Your Activity (2x2 Grid: Cardio, Workout, Water, Food Logging) */}
-      <View style={styles.sectionBlock}>
-        <Text variant="heading" color={dark.textHi} style={styles.sectionHeaderTitle}>
-          Choose Your Activity
-        </Text>
-
-        <View style={styles.activityGrid}>
-          {/* Cardio */}
-          <Pressable
-            testID="activity-card-cardio"
-            style={({ pressed }) => [styles.activityTile, pressed && styles.tilePressed]}
-            onPress={() => setShowCardioModal(true)}
-            accessibilityRole="button"
-            accessibilityLabel="Cardio activity"
-          >
-            <View style={styles.activityTileTop}>
-              <View
-                style={[
-                  styles.activityIconCircle,
-                  { backgroundColor: 'rgba(244, 182, 125, 0.15)' },
-                ]}
-              >
-                <Ionicons name="walk" size={20} color={dark.apricot} />
-              </View>
-              <Ionicons name="chevron-forward" size={16} color={dark.textLo} />
-            </View>
-            <Text variant="body" color={dark.textHi} style={styles.activityLabel}>
-              Cardio
-            </Text>
-          </Pressable>
-
-          {/* Workout */}
-          <Pressable
-            testID="activity-card-workout"
-            style={({ pressed }) => [styles.activityTile, pressed && styles.tilePressed]}
-            onPress={() => setShowWorkoutModal(true)}
-            accessibilityRole="button"
-            accessibilityLabel="Workout activity"
-          >
-            <View style={styles.activityTileTop}>
-              <View
-                style={[
-                  styles.activityIconCircle,
-                  { backgroundColor: 'rgba(235, 122, 107, 0.15)' },
-                ]}
-              >
-                <Ionicons name="barbell" size={20} color={dark.danger} />
-              </View>
-              <Ionicons name="chevron-forward" size={16} color={dark.textLo} />
-            </View>
-            <Text variant="body" color={dark.textHi} style={styles.activityLabel}>
-              Workout
-            </Text>
-          </Pressable>
-
-          {/* Water */}
-          <Pressable
-            testID="activity-card-water"
-            style={({ pressed }) => [styles.activityTile, pressed && styles.tilePressed]}
-            onPress={() => setShowWaterAlarmModal(true)}
-            accessibilityRole="button"
-            accessibilityLabel="Water activity and phone alarms"
-          >
-            <View style={styles.activityTileTop}>
-              <View
-                style={[
-                  styles.activityIconCircle,
-                  { backgroundColor: 'rgba(56, 178, 172, 0.15)' },
-                ]}
-              >
-                <Ionicons name="water" size={20} color={dark.teal} />
-              </View>
-              <Ionicons name="chevron-forward" size={16} color={dark.textLo} />
-            </View>
-            <Text variant="body" color={dark.textHi} style={styles.activityLabel}>
-              Water
-            </Text>
-          </Pressable>
-
-          {/* Food Logging */}
-          <Pressable
-            testID="activity-card-food-logging"
-            style={({ pressed }) => [styles.activityTile, pressed && styles.tilePressed]}
-            onPress={() => setActiveLogSection(currentSuggestedMeal)}
-            accessibilityRole="button"
-            accessibilityLabel="Food logging"
-          >
-            <View style={styles.activityTileTop}>
-              <View
-                style={[
-                  styles.activityIconCircle,
-                  { backgroundColor: 'rgba(244, 182, 125, 0.15)' },
-                ]}
-              >
-                <Ionicons name="restaurant" size={20} color={dark.apricot} />
-              </View>
-              <Ionicons name="chevron-forward" size={16} color={dark.textLo} />
-            </View>
-            <Text variant="body" color={dark.textHi} style={styles.activityLabel}>
-              Food Logging
-            </Text>
-          </Pressable>
-        </View>
-      </View>
-
-      {/* 4. Today's Progress (Steps, Calories, Water, Protein - with View Details >) */}
-      <View style={styles.sectionBlock}>
-        <View style={styles.sectionHeaderRow}>
-          <Text variant="heading" color={dark.textHi} style={styles.sectionHeaderTitle}>
-            Today's Progress
-          </Text>
-          <Pressable
-            onPress={() => setShowCaloriesDetail(true)}
-            hitSlop={8}
-            accessibilityRole="button"
-            accessibilityLabel="View progress details"
-          >
-            <Text variant="bodyS" color={dark.apricot} style={{ fontWeight: '600' }}>
-              View Details ›
-            </Text>
-          </Pressable>
-        </View>
-
-        <View style={styles.progressRingsRow}>
-          {/* Steps */}
-          <MiniRing
-            icon="footsteps"
-            value={steps > 999 ? `${(steps / 1000).toFixed(1)}k` : steps}
-            target={effectiveGoalSteps > 999 ? `${Math.round(effectiveGoalSteps / 1000)}k` : effectiveGoalSteps}
-            label="Steps"
-            progressRatio={effectiveGoalSteps > 0 ? steps / effectiveGoalSteps : 0}
-            color={dark.apricot}
-            testID="ring-steps"
-            onPress={() => router.push('/(tabs)/progress' as Href)}
+        style={styles.root}
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={diaryLoading}
+            onRefresh={handlePullRefresh}
+            tintColor={dark.apricot}
           />
-
-          {/* Calories */}
-          <MiniRing
-            icon="flame"
-            value={eatenCalories}
-            target={targetCalories}
-            label="Calories"
-            progressRatio={targetCalories > 0 ? eatenCalories / targetCalories : 0}
-            color="#EB7A6B"
-            testID="ring-calories"
-            onPress={() => setShowCaloriesDetail(true)}
-          />
-
-          {/* Water */}
-          <MiniRing
-            icon="water"
-            value={(totalMl / 1000).toFixed(1)}
-            target={`${(effectiveGoalMl / 1000).toFixed(0)} L`}
-            label="Water"
-            progressRatio={effectiveGoalMl > 0 ? totalMl / effectiveGoalMl : 0}
-            color={dark.teal}
-            testID="ring-water"
-            onPress={() => setShowWaterAlarmModal(true)}
-          />
-
-          {/* Protein (instead of workout session) */}
-          <MiniRing
-            icon="barbell"
-            value={`${eatenProtein}g`}
-            target={`${targetProtein}g`}
-            label="Protein"
-            progressRatio={targetProtein > 0 ? eatenProtein / targetProtein : 0}
-            color="#48BB78"
-            testID="ring-protein"
-            onPress={() => setShowCaloriesDetail(true)}
-          />
-        </View>
-      </View>
-
-      {/* 5. Your Squad (replaces partner, shows 2-3 avatars, streak card, no bottom scenic image) */}
-      <View style={styles.sectionBlock}>
-        <Pressable
-          testID="card-your-squad"
-          style={styles.squadCard}
-          onPress={() => router.push('/(tabs)/room' as Href)}
-          accessibilityRole="button"
-          accessibilityLabel="Your squad"
-        >
-          <View style={styles.squadHeaderRow}>
-            <View style={styles.squadTitleLeft}>
-              <Ionicons name="people" size={16} color={dark.apricot} />
-              <Text variant="bodyS" color={dark.textHi} style={{ fontWeight: '700' }}>
-                {currentRoom?.name ? currentRoom.name : 'Your Squad'}
-              </Text>
-              <Text style={{ fontSize: 13 }}>👑</Text>
-            </View>
+        }
+      >
+        {/* 1. Header (Brand: CaliPartner 🌿 - Centered) */}
+        <View style={styles.topBrandBar} testID="today-brand-header">
+          <View style={styles.brandTitleRow}>
+            <Text variant="heading" color={dark.textHi} style={styles.brandName}>
+              CaliPartner
+            </Text>
+            <Text style={styles.brandLeaf}>🌿</Text>
           </View>
+        </View>
 
-          <View style={styles.squadContentRow}>
-            {/* Overlapping member avatars */}
-            <View style={styles.squadAvatarsRow}>
-              <Avatar
-                size="sm"
-                uri={profile?.avatar_url}
-                name={userName}
-                identityHue="iris"
-                style={styles.avatarFirst}
-              />
-              <Avatar
-                size="sm"
-                name={currentRoom?.name ? 'Partner' : 'Squad'}
-                identityHue="teal"
-                style={styles.avatarSecond}
-              />
-              {currentRoom && currentRoom.member_count > 2 && (
-                <Avatar
-                  size="sm"
-                  name="Member"
-                  identityHue="peach"
-                  style={styles.avatarThird}
-                />
-              )}
-            </View>
+        {/* 2. Greeting & Dynamic Timezone Question */}
+        <View style={styles.greetingSection}>
+          <Text variant="heading" color={dark.textHi} style={styles.greetingTitle}>
+            Hi, {userName} 👋
+          </Text>
+          <Text variant="body" color={dark.textMid} style={styles.greetingQuestion}>
+            {getContextualQuestion()}
+          </Text>
+        </View>
 
-            {/* Motivational message & subtle progress line */}
-            <View style={styles.squadMessageCol}>
-              <Text variant="bodyS" color={dark.textHi} style={{ fontWeight: '600' }}>
-                You both are doing great! 💪
-              </Text>
-              <View style={styles.squadProgressTrack}>
+        {/* 3. Choose Your Activity (2x2 Grid: Cardio, Workout, Water, Food Logging) */}
+        <View style={styles.sectionBlock}>
+          <Text variant="heading" color={dark.textHi} style={styles.sectionHeaderTitle}>
+            Choose Your Activity
+          </Text>
+
+          <View style={styles.activityGrid}>
+            {/* Cardio */}
+            <Pressable
+              testID="activity-card-cardio"
+              style={({ pressed }) => [styles.activityTile, pressed && styles.tilePressed]}
+              onPress={() => setShowCardioModal(true)}
+              accessibilityRole="button"
+              accessibilityLabel="Cardio activity"
+            >
+              <View style={styles.activityTileTop}>
                 <View
                   style={[
-                    styles.squadProgressFill,
-                    { width: `${Math.min(100, Math.max(30, currentStreak * 25))}%` },
+                    styles.activityIconCircle,
+                    { backgroundColor: 'rgba(244, 182, 125, 0.15)' },
                   ]}
-                />
+                >
+                  <Ionicons name="walk" size={20} color={dark.apricot} />
+                </View>
+                <Ionicons name="chevron-forward" size={16} color={dark.textLo} />
+              </View>
+              <Text variant="body" color={dark.textHi} style={styles.activityLabel}>
+                Cardio
+              </Text>
+            </Pressable>
+
+            {/* Workout */}
+            <Pressable
+              testID="activity-card-workout"
+              style={({ pressed }) => [styles.activityTile, pressed && styles.tilePressed]}
+              onPress={() => setShowWorkoutModal(true)}
+              accessibilityRole="button"
+              accessibilityLabel="Workout activity"
+            >
+              <View style={styles.activityTileTop}>
+                <View
+                  style={[
+                    styles.activityIconCircle,
+                    { backgroundColor: 'rgba(235, 122, 107, 0.15)' },
+                  ]}
+                >
+                  <Ionicons name="barbell" size={20} color={dark.danger} />
+                </View>
+                <Ionicons name="chevron-forward" size={16} color={dark.textLo} />
+              </View>
+              <Text variant="body" color={dark.textHi} style={styles.activityLabel}>
+                Workout
+              </Text>
+            </Pressable>
+
+            {/* Water */}
+            <Pressable
+              testID="activity-card-water"
+              style={({ pressed }) => [styles.activityTile, pressed && styles.tilePressed]}
+              onPress={() => setShowWaterAlarmModal(true)}
+              accessibilityRole="button"
+              accessibilityLabel="Water activity and phone alarms"
+            >
+              <View style={styles.activityTileTop}>
+                <View
+                  style={[
+                    styles.activityIconCircle,
+                    { backgroundColor: 'rgba(56, 178, 172, 0.15)' },
+                  ]}
+                >
+                  <Ionicons name="water" size={20} color={dark.teal} />
+                </View>
+                <Ionicons name="chevron-forward" size={16} color={dark.textLo} />
+              </View>
+              <Text variant="body" color={dark.textHi} style={styles.activityLabel}>
+                Water
+              </Text>
+            </Pressable>
+
+            {/* Food Logging */}
+            <Pressable
+              testID="activity-card-food-logging"
+              style={({ pressed }) => [styles.activityTile, pressed && styles.tilePressed]}
+              onPress={() => setActiveLogSection(currentSuggestedMeal)}
+              accessibilityRole="button"
+              accessibilityLabel="Food logging"
+            >
+              <View style={styles.activityTileTop}>
+                <View
+                  style={[
+                    styles.activityIconCircle,
+                    { backgroundColor: 'rgba(244, 182, 125, 0.15)' },
+                  ]}
+                >
+                  <Ionicons name="restaurant" size={20} color={dark.apricot} />
+                </View>
+                <Ionicons name="chevron-forward" size={16} color={dark.textLo} />
+              </View>
+              <Text variant="body" color={dark.textHi} style={styles.activityLabel}>
+                Food Logging
+              </Text>
+            </Pressable>
+          </View>
+        </View>
+
+        {/* 4. Today's Progress (Steps, Calories, Water, Protein - with View Details >) */}
+        <View style={styles.sectionBlock}>
+          <View style={styles.sectionHeaderRow}>
+            <Text variant="heading" color={dark.textHi} style={styles.sectionHeaderTitle}>
+              Today's Progress
+            </Text>
+            <Pressable
+              onPress={() => setShowCaloriesDetail(true)}
+              hitSlop={8}
+              accessibilityRole="button"
+              accessibilityLabel="View progress details"
+            >
+              <Text variant="bodyS" color={dark.apricot} style={{ fontWeight: '600' }}>
+                View Details ›
+              </Text>
+            </Pressable>
+          </View>
+
+          <View style={styles.progressRingsRow}>
+            {/* Steps */}
+            <MiniRing
+              icon="footsteps"
+              value={steps > 999 ? `${(steps / 1000).toFixed(1)}k` : steps}
+              target={
+                effectiveGoalSteps > 999
+                  ? `${Math.round(effectiveGoalSteps / 1000)}k`
+                  : effectiveGoalSteps
+              }
+              label="Steps"
+              progressRatio={effectiveGoalSteps > 0 ? steps / effectiveGoalSteps : 0}
+              color={dark.apricot}
+              testID="ring-steps"
+              onPress={() => router.push('/(tabs)/progress' as Href)}
+            />
+
+            {/* Calories */}
+            <MiniRing
+              icon="flame"
+              value={eatenCalories}
+              target={targetCalories}
+              label="Calories"
+              progressRatio={targetCalories > 0 ? eatenCalories / targetCalories : 0}
+              color="#EB7A6B"
+              testID="ring-calories"
+              onPress={() => setShowCaloriesDetail(true)}
+            />
+
+            {/* Water */}
+            <MiniRing
+              icon="water"
+              value={(totalMl / 1000).toFixed(1)}
+              target={`${(effectiveGoalMl / 1000).toFixed(0)} L`}
+              label="Water"
+              progressRatio={effectiveGoalMl > 0 ? totalMl / effectiveGoalMl : 0}
+              color={dark.teal}
+              testID="ring-water"
+              onPress={() => setShowWaterAlarmModal(true)}
+            />
+
+            {/* Protein (instead of workout session) */}
+            <MiniRing
+              icon="barbell"
+              value={`${eatenProtein}g`}
+              target={`${targetProtein}g`}
+              label="Protein"
+              progressRatio={targetProtein > 0 ? eatenProtein / targetProtein : 0}
+              color="#48BB78"
+              testID="ring-protein"
+              onPress={() => setShowCaloriesDetail(true)}
+            />
+          </View>
+        </View>
+
+        {/* 5. Your Squad (replaces partner, shows 2-3 avatars, streak card, no bottom scenic image) */}
+        <View style={styles.sectionBlock}>
+          <Pressable
+            testID="card-your-squad"
+            style={styles.squadCard}
+            onPress={() => router.push('/(tabs)/room' as Href)}
+            accessibilityRole="button"
+            accessibilityLabel="Your squad"
+          >
+            <View style={styles.squadHeaderRow}>
+              <View style={styles.squadTitleLeft}>
+                <Ionicons name="people" size={16} color={dark.apricot} />
+                <Text variant="bodyS" color={dark.textHi} style={{ fontWeight: '700' }}>
+                  {currentRoom?.name ? currentRoom.name : 'Your Squad'}
+                </Text>
+                <Text style={{ fontSize: 13 }}>👑</Text>
               </View>
             </View>
 
-            {/* Streak Pill */}
-            <Pressable
-              testID="btn-squad-streak"
-              onPress={() => setShowStreakDetail(true)}
-              style={styles.squadStreakPill}
-              accessibilityLabel={`${currentStreak} day streak`}
-            >
-              <Ionicons name="flame" size={16} color={dark.apricot} />
-              <View>
-                <Text variant="micro" color={dark.textHi} style={{ fontWeight: '700' }}>
-                  {currentStreak} Day
-                </Text>
-                <Text variant="micro" color={dark.textLo} style={{ fontSize: 9 }}>
-                  Streak ›
-                </Text>
+            <View style={styles.squadContentRow}>
+              {/* Overlapping member avatars */}
+              <View style={styles.squadAvatarsRow}>
+                <Avatar
+                  size="sm"
+                  uri={profile?.avatar_url}
+                  name={userName}
+                  identityHue="iris"
+                  style={styles.avatarFirst}
+                />
+                <Avatar
+                  size="sm"
+                  name={currentRoom?.name ? 'Partner' : 'Squad'}
+                  identityHue="teal"
+                  style={styles.avatarSecond}
+                />
+                {currentRoom && currentRoom.member_count > 2 && (
+                  <Avatar size="sm" name="Member" identityHue="peach" style={styles.avatarThird} />
+                )}
               </View>
-            </Pressable>
-          </View>
-        </Pressable>
-      </View>
 
-      {/* 6. Date Selector & Meal Logging Diary Sections */}
-      <View style={styles.sectionBlock}>
-        <View style={styles.dateSelectorRow}>
-          <Pressable
-            testID="btn-prev-day"
-            onPress={() => handleShiftDate(-1)}
-            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-            accessibilityLabel={t('diary.previousDay')}
-          >
-            <Ionicons name="chevron-back" size={18} color={dark.textMid} />
-          </Pressable>
+              {/* Motivational message & subtle progress line */}
+              <View style={styles.squadMessageCol}>
+                <Text variant="bodyS" color={dark.textHi} style={{ fontWeight: '600' }}>
+                  You both are doing great! 💪
+                </Text>
+                <View style={styles.squadProgressTrack}>
+                  <View
+                    style={[
+                      styles.squadProgressFill,
+                      { width: `${Math.min(100, Math.max(30, currentStreak * 25))}%` },
+                    ]}
+                  />
+                </View>
+              </View>
 
-          <Pressable
-            testID="btn-open-date-picker"
-            onPress={() => setShowDatePicker(true)}
-            style={styles.datePickerChip}
-            accessibilityLabel={`Selected date ${selectedDate}`}
-          >
-            <Ionicons name="calendar-outline" size={14} color={dark.apricot} />
-            <Text variant="label" color={dark.textHi} style={{ fontWeight: '600' }}>
-              {isToday ? `${t('diary.today')} (${selectedDate})` : selectedDate}
-            </Text>
-          </Pressable>
-
-          <Pressable
-            testID="btn-next-day"
-            onPress={() => handleShiftDate(1)}
-            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-            accessibilityLabel={t('diary.nextDay')}
-          >
-            <Ionicons name="chevron-forward" size={18} color={dark.textMid} />
+              {/* Streak Pill */}
+              <Pressable
+                testID="btn-squad-streak"
+                onPress={() => setShowStreakDetail(true)}
+                style={styles.squadStreakPill}
+                accessibilityLabel={`${currentStreak} day streak`}
+              >
+                <Ionicons name="flame" size={16} color={dark.apricot} />
+                <View>
+                  <Text variant="micro" color={dark.textHi} style={{ fontWeight: '700' }}>
+                    {currentStreak} Day
+                  </Text>
+                  <Text variant="micro" color={dark.textLo} style={{ fontSize: 9 }}>
+                    Streak ›
+                  </Text>
+                </View>
+              </Pressable>
+            </View>
           </Pressable>
         </View>
 
-        {diaryLoading ? (
-          <View style={styles.loadingBox}>
-            <ActivityIndicator color={dark.apricot} size="small" />
-            <Text variant="micro" color={dark.textLo} style={{ marginTop: 6 }}>
-              {t('common.loading')}
-            </Text>
+        {/* 6. Date Selector & Meal Logging Diary Sections */}
+        <View style={styles.sectionBlock}>
+          <View style={styles.dateSelectorRow}>
+            <Pressable
+              testID="btn-prev-day"
+              onPress={() => handleShiftDate(-1)}
+              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+              accessibilityLabel={t('diary.previousDay')}
+            >
+              <Ionicons name="chevron-back" size={18} color={dark.textMid} />
+            </Pressable>
+
+            <Pressable
+              testID="btn-open-date-picker"
+              onPress={() => setShowDatePicker(true)}
+              style={styles.datePickerChip}
+              accessibilityLabel={`Selected date ${selectedDate}`}
+            >
+              <Ionicons name="calendar-outline" size={14} color={dark.apricot} />
+              <Text variant="label" color={dark.textHi} style={{ fontWeight: '600' }}>
+                {isToday ? `${t('diary.today')} (${selectedDate})` : selectedDate}
+              </Text>
+            </Pressable>
+
+            <Pressable
+              testID="btn-next-day"
+              onPress={() => handleShiftDate(1)}
+              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+              accessibilityLabel={t('diary.nextDay')}
+            >
+              <Ionicons name="chevron-forward" size={18} color={dark.textMid} />
+            </Pressable>
           </View>
-        ) : (
-          <View style={styles.mealsContainer} testID="meals-section">
-            {MEAL_SECTIONS.map((sec) => (
-              <MealSectionCard
-                key={sec}
-                section={sec}
-                summary={daySummary.sections[sec]}
-                isCurrentMealSuggestion={currentSuggestedMeal === sec}
-                onAddFood={(s) => setActiveLogSection(s)}
-                onOpenDetail={(s) => setInspectingSection(s)}
-                onEditEntry={(entry) => setEditingEntry(entry)}
-                onDeleteEntry={(id) => void deleteEntry(id)}
-                onCopyMeal={(s) => setCopyModalState({ visible: true, mode: 'meal', section: s })}
-              />
-            ))}
-          </View>
+
+          {diaryLoading ? (
+            <View style={styles.loadingBox}>
+              <ActivityIndicator color={dark.apricot} size="small" />
+              <Text variant="micro" color={dark.textLo} style={{ marginTop: 6 }}>
+                {t('common.loading')}
+              </Text>
+            </View>
+          ) : (
+            <View style={styles.mealsContainer} testID="meals-section">
+              {MEAL_SECTIONS.map((sec) => (
+                <MealSectionCard
+                  key={sec}
+                  section={sec}
+                  summary={daySummary.sections[sec]}
+                  isCurrentMealSuggestion={currentSuggestedMeal === sec}
+                  onAddFood={(s) => setActiveLogSection(s)}
+                  onOpenDetail={(s) => setInspectingSection(s)}
+                  onEditEntry={(entry) => setEditingEntry(entry)}
+                  onDeleteEntry={(id) => void deleteEntry(id)}
+                  onCopyMeal={(s) => setCopyModalState({ visible: true, mode: 'meal', section: s })}
+                />
+              ))}
+            </View>
+          )}
+        </View>
+
+        {/* Floating Bottom Spacer for Navigation Bar */}
+        <View style={{ height: 32 }} />
+
+        {/* MODALS */}
+        {/* 1. Food Log Modal */}
+        {activeLogSection && (
+          <FoodLogModal
+            visible={Boolean(activeLogSection)}
+            defaultSection={activeLogSection}
+            localDate={selectedDate}
+            onClose={() => setActiveLogSection(null)}
+            onLogged={() => {
+              setActiveLogSection(null);
+              void refresh();
+            }}
+          />
         )}
-      </View>
 
-      {/* Floating Bottom Spacer for Navigation Bar */}
-      <View style={{ height: 32 }} />
+        {/* 2. Water Alarm & Logging Modal */}
+        <WaterAlarmModal
+          visible={showWaterAlarmModal}
+          onClose={() => {
+            setShowWaterAlarmModal(false);
+            void refresh();
+          }}
+          selectedDate={selectedDate}
+        />
 
-      {/* MODALS */}
-      {/* 1. Food Log Modal */}
-      {activeLogSection && (
-        <FoodLogModal
-          visible={Boolean(activeLogSection)}
-          defaultSection={activeLogSection}
-          localDate={selectedDate}
-          onClose={() => setActiveLogSection(null)}
-          onLogged={() => {
-            setActiveLogSection(null);
+        {/* 3. Workout Suite Hub Modal */}
+        <WorkoutHubModal
+          visible={showWorkoutModal}
+          onClose={() => {
+            setShowWorkoutModal(false);
             void refresh();
           }}
         />
-      )}
 
-      {/* 2. Water Alarm & Logging Modal */}
-      <WaterAlarmModal
-        visible={showWaterAlarmModal}
-        onClose={() => {
-          setShowWaterAlarmModal(false);
-          void refresh();
-        }}
-        selectedDate={selectedDate}
-      />
-
-      {/* 3. Workout Suite Hub Modal */}
-      <WorkoutHubModal
-        visible={showWorkoutModal}
-        onClose={() => {
-          setShowWorkoutModal(false);
-          void refresh();
-        }}
-      />
-
-      {/* 3.5 Dedicated Cardio Tracker Modal (Walking & Running GPS) */}
-      <CardioTrackerModal
-        visible={showCardioModal}
-        onClose={() => {
-          setShowCardioModal(false);
-          void refresh();
-        }}
-        selectedDate={selectedDate}
-      />
-
-      {/* 4. Date Picker Sheet */}
-      <DatePickerSheet
-        visible={showDatePicker}
-        selectedDate={selectedDate}
-        onSelectDate={(date) => {
-          setSelectedDate(date);
-          setShowDatePicker(false);
-        }}
-        onClose={() => setShowDatePicker(false)}
-      />
-
-      {/* 5. Streak Detail Sheet */}
-      <StreakDetailSheet
-        visible={showStreakDetail}
-        currentStreak={currentStreak}
-        longestStreak={streakData?.longest_streak ?? currentStreak}
-        onClose={() => setShowStreakDetail(false)}
-      />
-
-      {/* 6. Calories & Macros Detail Sheet */}
-      <CaloriesDetailSheet
-        visible={showCaloriesDetail}
-        eatenCalories={eatenCalories}
-        targetCalories={targetCalories}
-        proteinGrams={daySummary.totals.protein}
-        carbGrams={daySummary.totals.carbs}
-        fatGrams={daySummary.totals.fat}
-        targetProtein={targetProtein}
-        targetCarbs={currentGoalProfile?.carb_grams ?? 240}
-        targetFat={currentGoalProfile?.fat_grams ?? 55}
-        onClose={() => setShowCaloriesDetail(false)}
-      />
-
-      {/* 7. Meal Detail Sheet */}
-      {inspectingSection && (
-        <MealDetailSheet
-          visible={Boolean(inspectingSection)}
-          section={inspectingSection}
-          summary={daySummary.sections[inspectingSection]}
-          onClose={() => setInspectingSection(null)}
-          onAddFood={() => {
-            const sec = inspectingSection;
-            setInspectingSection(null);
-            setActiveLogSection(sec);
-          }}
-          onEditEntry={(entry) => {
-            setInspectingSection(null);
-            setEditingEntry(entry);
-          }}
-          onDeleteEntry={async (id) => {
-            await deleteEntry(id);
+        {/* 3.5 Dedicated Cardio Tracker Modal (Walking & Running GPS) */}
+        <CardioTrackerModal
+          visible={showCardioModal}
+          onClose={() => {
+            setShowCardioModal(false);
             void refresh();
           }}
-          onCopyMeal={(s) => setCopyModalState({ visible: true, mode: 'meal', section: s })}
+          selectedDate={selectedDate}
         />
-      )}
 
-      {/* 8. Quantity / Edit Entry Modal */}
-      {editingEntry && (
-        <QuantityModal
-          visible={Boolean(editingEntry)}
-          food={{
-            id: editingEntry.food_id ?? editingEntry.id,
-            source: 'user',
-            name: editingEntry.food_name,
-            brand: null,
-            barcode: null,
-            serving_units: [{ unit: editingEntry.unit, grams: 100 }],
-            calories_per_100g: editingEntry.calories,
-            protein_per_100g: editingEntry.protein,
-            carbs_per_100g: editingEntry.carbs,
-            fat_per_100g: editingEntry.fat,
-            fiber_per_100g: 0,
-            sugar_per_100g: 0,
-            sodium_mg_per_100g: 0,
-            owner_id: null,
-            attribution: null,
+        {/* 4. Date Picker Sheet */}
+        <DatePickerSheet
+          visible={showDatePicker}
+          selectedDate={selectedDate}
+          onSelectDate={(date) => {
+            setSelectedDate(date);
+            setShowDatePicker(false);
           }}
-          initialEntry={editingEntry}
-          defaultSection={editingEntry.meal_section}
-          onClose={() => setEditingEntry(null)}
-          onSave={async (data) => {
-            await editEntry(
-              editingEntry.id,
-              {
-                quantity: data.quantity,
-                unit: data.unit,
-                meal_section: data.mealSection,
-              },
-              data.food,
-            );
-            setEditingEntry(null);
+          onClose={() => setShowDatePicker(false)}
+        />
+
+        {/* 5. Streak Detail Sheet */}
+        <StreakDetailSheet
+          visible={showStreakDetail}
+          currentStreak={currentStreak}
+          longestStreak={streakData?.longest_streak ?? currentStreak}
+          onClose={() => setShowStreakDetail(false)}
+        />
+
+        {/* 6. Calories & Macros Detail Sheet */}
+        <CaloriesDetailSheet
+          visible={showCaloriesDetail}
+          eatenCalories={eatenCalories}
+          targetCalories={targetCalories}
+          proteinGrams={daySummary.totals.protein}
+          carbGrams={daySummary.totals.carbs}
+          fatGrams={daySummary.totals.fat}
+          targetProtein={targetProtein}
+          targetCarbs={currentGoalProfile?.carb_grams ?? 240}
+          targetFat={currentGoalProfile?.fat_grams ?? 55}
+          onClose={() => setShowCaloriesDetail(false)}
+        />
+
+        {/* 7. Meal Detail Sheet */}
+        {inspectingSection && (
+          <MealDetailSheet
+            visible={Boolean(inspectingSection)}
+            section={inspectingSection}
+            summary={daySummary.sections[inspectingSection]}
+            onClose={() => setInspectingSection(null)}
+            onAddFood={() => {
+              const sec = inspectingSection;
+              setInspectingSection(null);
+              setActiveLogSection(sec);
+            }}
+            onEditEntry={(entry) => {
+              setInspectingSection(null);
+              setEditingEntry(entry);
+            }}
+            onDeleteEntry={async (id) => {
+              await deleteEntry(id);
+              void refresh();
+            }}
+            onCopyMeal={(s) => setCopyModalState({ visible: true, mode: 'meal', section: s })}
+          />
+        )}
+
+        {/* 8. Quantity / Edit Entry Modal */}
+        {editingEntry && (
+          <QuantityModal
+            visible={Boolean(editingEntry)}
+            food={{
+              id: editingEntry.food_id ?? editingEntry.id,
+              source: 'user',
+              name: editingEntry.food_name,
+              brand: null,
+              barcode: null,
+              serving_units: [{ unit: editingEntry.unit, grams: 100 }],
+              calories_per_100g: editingEntry.calories,
+              protein_per_100g: editingEntry.protein,
+              carbs_per_100g: editingEntry.carbs,
+              fat_per_100g: editingEntry.fat,
+              fiber_per_100g: 0,
+              sugar_per_100g: 0,
+              sodium_mg_per_100g: 0,
+              owner_id: null,
+              attribution: null,
+            }}
+            initialEntry={editingEntry}
+            defaultSection={editingEntry.meal_section}
+            onClose={() => setEditingEntry(null)}
+            onSave={async (data) => {
+              await editEntry(
+                editingEntry.id,
+                {
+                  quantity: data.quantity,
+                  unit: data.unit,
+                  meal_section: data.mealSection,
+                },
+                data.food,
+              );
+              setEditingEntry(null);
+              void refresh();
+            }}
+          />
+        )}
+
+        {/* 9. Copy Meal Modal */}
+        <CopyMealModal
+          visible={copyModalState.visible}
+          mode={copyModalState.mode}
+          sourceSection={copyModalState.section}
+          sourceDate={selectedDate}
+          onClose={() => setCopyModalState({ visible: false, mode: 'day' })}
+          onSuccess={() => {
+            setCopyModalState({ visible: false, mode: 'day' });
             void refresh();
           }}
         />
-      )}
 
-      {/* 9. Copy Meal Modal */}
-      <CopyMealModal
-        visible={copyModalState.visible}
-        mode={copyModalState.mode}
-        sourceSection={copyModalState.section}
-        sourceDate={selectedDate}
-        onClose={() => setCopyModalState({ visible: false, mode: 'day' })}
-        onSuccess={() => {
-          setCopyModalState({ visible: false, mode: 'day' });
-          void refresh();
-        }}
-      />
+        {/* 10. Water Alarm & Logging Modal */}
+        <WaterAlarmModal
+          visible={showWaterAlarmModal}
+          onClose={() => {
+            setShowWaterAlarmModal(false);
+            void refreshWater();
+          }}
+          selectedDate={selectedDate}
+        />
 
-      {/* 10. Water Alarm & Logging Modal */}
-      <WaterAlarmModal
-        visible={showWaterAlarmModal}
-        onClose={() => {
-          setShowWaterAlarmModal(false);
-          void refreshWater();
-        }}
-        selectedDate={selectedDate}
-      />
+        {/* 11. Workout Hub Modal */}
+        <WorkoutHubModal
+          visible={showWorkoutModal}
+          onClose={() => {
+            setShowWorkoutModal(false);
+            void refresh();
+          }}
+        />
 
-      {/* 11. Workout Hub Modal */}
-      <WorkoutHubModal
-        visible={showWorkoutModal}
-        onClose={() => {
-          setShowWorkoutModal(false);
-          void refresh();
-        }}
-      />
-
-      {/* 12. Cardio Tracker Modal */}
-      <CardioTrackerModal
-        visible={showCardioModal}
-        onClose={() => {
-          setShowCardioModal(false);
-          void refreshSteps();
-        }}
-        selectedDate={selectedDate}
-      />
-    </ScrollView>
-    <FloatingAiCoachButton />
-  </View>
-);
+        {/* 12. Cardio Tracker Modal */}
+        <CardioTrackerModal
+          visible={showCardioModal}
+          onClose={() => {
+            setShowCardioModal(false);
+            void refreshSteps();
+          }}
+          selectedDate={selectedDate}
+        />
+      </ScrollView>
+      <FloatingAiCoachButton />
+    </View>
+  );
 }
 
 const styles = StyleSheet.create({

@@ -84,9 +84,7 @@ export function MondayRecapModal({
           <View style={styles.highlightCard}>
             <Ionicons name="sparkles-outline" size={20} color={dark.apricot} />
             <View style={styles.highlightContent}>
-              <Text style={styles.highlightText}>
-                {t('progress.recap.highlight')}
-              </Text>
+              <Text style={styles.highlightText}>{t('progress.recap.highlight')}</Text>
               <Text style={styles.statsDetail}>
                 {loggedDays} of 7 days logged • {goalDays} of 7 days on goal
               </Text>
@@ -94,9 +92,7 @@ export function MondayRecapModal({
           </View>
 
           {/* Tie breaker rule reminder */}
-          <Text style={styles.tieBreakerText}>
-            {t('progress.recap.tieBreaker')}
-          </Text>
+          <Text style={styles.tieBreakerText}>{t('progress.recap.tieBreaker')}</Text>
 
           {/* Pinned Action Button */}
           <Pressable
@@ -109,9 +105,7 @@ export function MondayRecapModal({
             accessibilityLabel={t('progress.recap.seeLeaderboard')}
             testID={`${testID}-see-leaderboard`}
           >
-            <Text style={styles.primaryButtonText}>
-              {t('progress.recap.seeLeaderboard')}
-            </Text>
+            <Text style={styles.primaryButtonText}>{t('progress.recap.seeLeaderboard')}</Text>
           </Pressable>
         </View>
       </View>

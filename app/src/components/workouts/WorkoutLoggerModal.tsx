@@ -1036,9 +1036,7 @@ export function WorkoutLoggerModal({
                     accessibilityLabel={t('workouts.restTimerTitle')}
                   >
                     <Ionicons name="timer-outline" size={16} color={colors.accent} />
-                    <Text style={[styles.addSetRowText, { color: colors.accent }]}>
-                      Rest
-                    </Text>
+                    <Text style={[styles.addSetRowText, { color: colors.accent }]}>Rest</Text>
                   </TouchableOpacity>
                 </View>
               </View>
@@ -1062,10 +1060,7 @@ export function WorkoutLoggerModal({
         />
 
         {/* E17 Rest Timer Modal */}
-        <RestTimerModal
-          visible={restTimerVisible}
-          onClose={() => setRestTimerVisible(false)}
-        />
+        <RestTimerModal visible={restTimerVisible} onClose={() => setRestTimerVisible(false)} />
       </View>
     </Modal>
   );

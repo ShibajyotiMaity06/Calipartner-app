@@ -75,7 +75,9 @@ export function ProgressHubSummary({
           <View style={styles.cardBody}>
             <View>
               <Text style={styles.headlineNumber}>
-                {weight?.current_weight_kg != null ? `${weight.current_weight_kg.toFixed(1)} kg` : '0.0 kg'}
+                {weight?.current_weight_kg != null
+                  ? `${weight.current_weight_kg.toFixed(1)} kg`
+                  : '0.0 kg'}
               </Text>
               <Text style={styles.headlineCaption}>
                 {weight?.total_change_kg != null
@@ -114,7 +116,9 @@ export function ProgressHubSummary({
                   : '0 kcal'}
               </Text>
               <Text style={styles.headlineCaption}>
-                Target: {calories?.average_target != null ? Math.round(calories.average_target) : 2000} kcal/day
+                Target:{' '}
+                {calories?.average_target != null ? Math.round(calories.average_target) : 2000}{' '}
+                kcal/day
               </Text>
             </View>
             <View style={styles.pillBadge}>
@@ -242,7 +246,9 @@ export function ProgressHubSummary({
           <View style={styles.cardBody}>
             <View>
               <Text style={styles.headlineNumber}>
-                {workouts?.total_workouts != null ? `${workouts.total_workouts} sessions` : '0 sessions'}
+                {workouts?.total_workouts != null
+                  ? `${workouts.total_workouts} sessions`
+                  : '0 sessions'}
               </Text>
               <Text style={styles.headlineCaption}>
                 {workouts?.sessions_per_week != null
@@ -252,7 +258,9 @@ export function ProgressHubSummary({
             </View>
             {workouts?.total_volume_kg != null ? (
               <View style={styles.pillBadge}>
-                <Text style={styles.pillText}>{Math.round(workouts.total_volume_kg).toLocaleString()} kg vol</Text>
+                <Text style={styles.pillText}>
+                  {Math.round(workouts.total_volume_kg).toLocaleString()} kg vol
+                </Text>
               </View>
             ) : null}
           </View>
@@ -276,7 +284,9 @@ export function ProgressHubSummary({
           <View style={styles.cardBody}>
             <View>
               <Text style={styles.headlineNumber}>
-                {consistency?.current_streak != null ? `${consistency.current_streak} days` : '0 days'}
+                {consistency?.current_streak != null
+                  ? `${consistency.current_streak} days`
+                  : '0 days'}
               </Text>
               <Text style={styles.headlineCaption}>
                 Longest streak: {consistency?.longest_streak ?? 0} days
@@ -284,7 +294,11 @@ export function ProgressHubSummary({
             </View>
             <View style={styles.pillBadge}>
               <Text style={styles.pillText}>
-                Score {consistency?.weekly_scores[consistency.weekly_scores.length - 1]?.consistency_score.toFixed(0) ?? 80}/100
+                Score{' '}
+                {consistency?.weekly_scores[
+                  consistency.weekly_scores.length - 1
+                ]?.consistency_score.toFixed(0) ?? 80}
+                /100
               </Text>
             </View>
           </View>

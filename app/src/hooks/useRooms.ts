@@ -51,7 +51,11 @@ export function useRooms() {
         if (staleRooms.length > 0) {
           for (const s of staleRooms) {
             try {
-              await supabase.from('room_members').delete().eq('user_id', user.id).eq('room_id', s.id);
+              await supabase
+                .from('room_members')
+                .delete()
+                .eq('user_id', user.id)
+                .eq('room_id', s.id);
             } catch (err) {
               // Ignore cleanup error if already removed
               void err;
@@ -134,9 +138,17 @@ export function useRooms() {
         } = await supabase.auth.getUser();
         if (user) {
           try {
-            await supabase.from('room_members').delete().eq('room_id', roomId).eq('user_id', user.id);
+            await supabase
+              .from('room_members')
+              .delete()
+              .eq('room_id', roomId)
+              .eq('user_id', user.id);
           } catch {
-            await supabase.from('room_members').update({ status: 'left' }).eq('room_id', roomId).eq('user_id', user.id);
+            await supabase
+              .from('room_members')
+              .update({ status: 'left' })
+              .eq('room_id', roomId)
+              .eq('user_id', user.id);
           }
         }
         await refresh();

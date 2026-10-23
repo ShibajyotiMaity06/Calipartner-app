@@ -139,11 +139,10 @@ export function ChatMessageMenuModal({
             </View>
           ) : showBlockConfirm ? (
             <View style={styles.deleteConfirmBox} testID="box-block-confirm">
-              <Text style={[styles.deleteConfirmTitle, { color: colors.danger }]}>
-                Block user
-              </Text>
+              <Text style={[styles.deleteConfirmTitle, { color: colors.danger }]}>Block user</Text>
               <Text style={[styles.deleteConfirmDesc, { color: colors.textMuted }]}>
-                Are you sure you want to block this user? You will immediately stop seeing their messages, activity, and shared logs.
+                Are you sure you want to block this user? You will immediately stop seeing their
+                messages, activity, and shared logs.
               </Text>
 
               <View style={styles.confirmButtonsRow}>
@@ -165,9 +164,7 @@ export function ChatMessageMenuModal({
                   accessibilityRole="button"
                   testID="btn-block-confirm"
                 >
-                  <Text style={[styles.confirmBtnText, { color: '#FFFFFF' }]}>
-                    Block User
-                  </Text>
+                  <Text style={[styles.confirmBtnText, { color: '#FFFFFF' }]}>Block User</Text>
                 </Pressable>
               </View>
             </View>

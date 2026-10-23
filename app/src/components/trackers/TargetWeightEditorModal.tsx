@@ -1,11 +1,5 @@
 import React, { useState } from 'react';
-import {
-  Modal,
-  Pressable,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
+import { Modal, Pressable, StyleSheet, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { dark, radius, space, type as typeTokens } from '@calipartner/ui';
 import { t } from '@/i18n';
@@ -104,7 +98,9 @@ export function TargetWeightEditorModal({
 
           {/* Target Weight Stepper Card */}
           <View style={styles.sectionCard} testID="target-weight-stepper-card">
-            <Text style={styles.sectionLabel}>{t('trackers.weight.targetWeightGoalLabel', { unit: 'kg' })}</Text>
+            <Text style={styles.sectionLabel}>
+              {t('trackers.weight.targetWeightGoalLabel', { unit: 'kg' })}
+            </Text>
             <View style={styles.stepperRow}>
               <Pressable
                 testID="btn-target-minus"
@@ -147,19 +143,13 @@ export function TargetWeightEditorModal({
                 <Pressable
                   key={rate}
                   testID={`btn-pace-${rate}`}
-                  style={[
-                    styles.paceChip,
-                    weeklyPace === rate && styles.paceChipActive,
-                  ]}
+                  style={[styles.paceChip, weeklyPace === rate && styles.paceChipActive]}
                   onPress={() => setWeeklyPace(rate)}
                   accessibilityRole="button"
                   accessibilityLabel={`${rate} kg per week`}
                 >
                   <Text
-                    style={[
-                      styles.paceChipText,
-                      weeklyPace === rate && styles.paceChipTextActive,
-                    ]}
+                    style={[styles.paceChipText, weeklyPace === rate && styles.paceChipTextActive]}
                   >
                     {`${rate} kg/wk`}
                   </Text>

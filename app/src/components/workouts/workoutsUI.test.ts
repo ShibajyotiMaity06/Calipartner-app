@@ -289,4 +289,3 @@ describe('Phase 6 — Workout Tracker UI Logic & Presentation Tests', () => {
     });
   });
 });
-

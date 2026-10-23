@@ -127,7 +127,9 @@ export function SquadConnectFlow({
   const dynamicBottom = Math.max(96, insets.bottom + 68);
 
   // Current screen step: 'choice' | 'partner_profiles' | 'create_squad' | 'invite_squad'
-  const [step, setStep] = useState<'choice' | 'partner_profiles' | 'create_squad' | 'invite_squad'>('choice');
+  const [step, setStep] = useState<'choice' | 'partner_profiles' | 'create_squad' | 'invite_squad'>(
+    'choice',
+  );
   const [selectedChoice, setSelectedChoice] = useState<ConnectChoice>('1-on-1');
 
   // Plus Feature required modal state
@@ -190,7 +192,9 @@ export function SquadConnectFlow({
           ? String(res.code)
           : `CALI-${Math.floor(1000 + Math.random() * 9000)}`;
       const roomId =
-        res && typeof res === 'object' && 'room_id' in res && res.room_id ? String(res.room_id) : '';
+        res && typeof res === 'object' && 'room_id' in res && res.room_id
+          ? String(res.room_id)
+          : '';
 
       setCreatedSquadName(trimmed);
       setCreatedSquadCode(code);
@@ -228,7 +232,11 @@ export function SquadConnectFlow({
     const shareUrl = `https://calipartner-live.loca.lt/join?code=${createdSquadCode}`;
 
     if (Platform.OS === 'web' && typeof globalThis !== 'undefined') {
-      const nav = (globalThis as unknown as { navigator?: { clipboard?: { writeText: (s: string) => Promise<void> } } }).navigator;
+      const nav = (
+        globalThis as unknown as {
+          navigator?: { clipboard?: { writeText: (s: string) => Promise<void> } };
+        }
+      ).navigator;
       if (nav?.clipboard?.writeText) {
         await nav.clipboard.writeText(shareUrl);
       }
@@ -242,7 +250,10 @@ export function SquadConnectFlow({
   if (step === 'choice') {
     return (
       <View style={styles.container} testID={testID}>
-        <ScrollView contentContainerStyle={styles.choiceScroll} showsVerticalScrollIndicator={false}>
+        <ScrollView
+          contentContainerStyle={styles.choiceScroll}
+          showsVerticalScrollIndicator={false}
+        >
           {/* Header */}
           <View style={styles.choiceHeader}>
             <Text variant="title1" color={dark.textHi} style={styles.mainTitle}>
@@ -263,10 +274,7 @@ export function SquadConnectFlow({
             accessibilityLabel="1-on-1 Partner. Track activities with one partner."
             accessibilityState={{ selected: selectedChoice === '1-on-1' }}
             testID="option-1-on-1-partner"
-            style={[
-              styles.optionCard,
-              selectedChoice === '1-on-1' && styles.optionCardSelected,
-            ]}
+            style={[styles.optionCard, selectedChoice === '1-on-1' && styles.optionCardSelected]}
           >
             <View style={styles.optionIconContainer}>
               <Ionicons name="person" size={28} color={dark.apricot} />
@@ -373,8 +381,8 @@ export function SquadConnectFlow({
                 Squads & Partners
               </Text>
               <Text variant="body" color={dark.textMid} style={styles.plusDesc}>
-                Accountability rooms and 1-on-1 partners are included with CaliPartner Plus. Connect with
-                real partners to log food, workouts, and reach your goals together.
+                Accountability rooms and 1-on-1 partners are included with CaliPartner Plus. Connect
+                with real partners to log food, workouts, and reach your goals together.
               </Text>
 
               <View style={styles.plusBenefitsList}>
@@ -453,16 +461,24 @@ export function SquadConnectFlow({
           </View>
         </View>
 
-        <ScrollView contentContainerStyle={styles.partnerListScroll} showsVerticalScrollIndicator={false}>
+        <ScrollView
+          contentContainerStyle={styles.partnerListScroll}
+          showsVerticalScrollIndicator={false}
+        >
           <Text variant="bodyS" color={dark.textMid} style={styles.partnerListIntro}>
-            Browse partners with compatible fitness goals and see what activities they have enabled to share.
+            Browse partners with compatible fitness goals and see what activities they have enabled
+            to share.
           </Text>
 
           {SAMPLE_PARTNERS.map((partner) => {
             const isSent = sentRequests.has(partner.id);
 
             return (
-              <View key={partner.id} style={styles.partnerCard} testID={`card-partner-${partner.id}`}>
+              <View
+                key={partner.id}
+                style={styles.partnerCard}
+                testID={`card-partner-${partner.id}`}
+              >
                 {/* Top Row: Avatar + Name + Goal */}
                 <View style={styles.partnerHeaderRow}>
                   <Avatar name={partner.name} identityHue={partner.avatarHue} size="md" />
@@ -577,11 +593,20 @@ export function SquadConnectFlow({
         </View>
 
         <ScrollView contentContainerStyle={styles.createFormScroll}>
-          <Text variant="body" color={dark.textMid} style={{ marginBottom: space[4], lineHeight: 22 }}>
-            Give your accountability squad a name. Once created, you will get an invite code, WhatsApp share link, and QR code for friends.
+          <Text
+            variant="body"
+            color={dark.textMid}
+            style={{ marginBottom: space[4], lineHeight: 22 }}
+          >
+            Give your accountability squad a name. Once created, you will get an invite code,
+            WhatsApp share link, and QR code for friends.
           </Text>
 
-          <Text variant="label" color={dark.textHi} style={{ marginBottom: space[2], fontWeight: '700' }}>
+          <Text
+            variant="label"
+            color={dark.textHi}
+            style={{ marginBottom: space[2], fontWeight: '700' }}
+          >
             Squad Name
           </Text>
           <TextInput
@@ -612,7 +637,8 @@ export function SquadConnectFlow({
               <Text variant="bodyS" color="#FF6B6B">
                 {createError}
               </Text>
-              {(createError.includes('previous squad') || createError.includes('PLAN_ALREADY_ATTACHED')) && (
+              {(createError.includes('previous squad') ||
+                createError.includes('PLAN_ALREADY_ATTACHED')) && (
                 <TouchableOpacity
                   onPress={async () => {
                     setIsCreating(true);
@@ -670,22 +696,28 @@ export function SquadConnectFlow({
           )}
 
           {/* Quick Suggestions */}
-          <Text variant="micro" color={dark.textLo} style={{ marginTop: space[4], marginBottom: space[2] }}>
+          <Text
+            variant="micro"
+            color={dark.textLo}
+            style={{ marginTop: space[4], marginBottom: space[2] }}
+          >
             Suggestions:
           </Text>
           <View style={styles.suggestionsRow}>
-            {['Morning Grinders', 'Iron Squad', 'Calorie Crushers', '10k Steps Daily'].map((sug) => (
-              <TouchableOpacity
-                key={sug}
-                onPress={() => setSquadName(sug)}
-                style={styles.suggestionChip}
-                accessibilityRole="button"
-              >
-                <Text variant="micro" color={dark.apricot}>
-                  + {sug}
-                </Text>
-              </TouchableOpacity>
-            ))}
+            {['Morning Grinders', 'Iron Squad', 'Calorie Crushers', '10k Steps Daily'].map(
+              (sug) => (
+                <TouchableOpacity
+                  key={sug}
+                  onPress={() => setSquadName(sug)}
+                  style={styles.suggestionChip}
+                  accessibilityRole="button"
+                >
+                  <Text variant="micro" color={dark.apricot}>
+                    + {sug}
+                  </Text>
+                </TouchableOpacity>
+              ),
+            )}
           </View>
         </ScrollView>
 
@@ -731,10 +763,19 @@ export function SquadConnectFlow({
 
         {/* Big Code Card */}
         <View style={styles.codeCard}>
-          <Text variant="micro" color={dark.textLo} style={{ textTransform: 'uppercase', letterSpacing: 1 }}>
+          <Text
+            variant="micro"
+            color={dark.textLo}
+            style={{ textTransform: 'uppercase', letterSpacing: 1 }}
+          >
             Squad Invite Code
           </Text>
-          <Text variant="title1" color={dark.apricot} style={styles.codeText} testID="text-squad-code">
+          <Text
+            variant="title1"
+            color={dark.apricot}
+            style={styles.codeText}
+            testID="text-squad-code"
+          >
             {createdSquadCode}
           </Text>
           <Text variant="micro" color={dark.textMid}>
@@ -775,7 +816,11 @@ export function SquadConnectFlow({
             testID="btn-share-copy-link"
           >
             <View style={[styles.shareIconCircle, { backgroundColor: dark.s3 }]}>
-              <Ionicons name={copyFeedback ? 'checkmark' : 'copy-outline'} size={22} color={dark.apricot} />
+              <Ionicons
+                name={copyFeedback ? 'checkmark' : 'copy-outline'}
+                size={22}
+                color={dark.apricot}
+              />
             </View>
             <View style={styles.shareTextCol}>
               <Text variant="body" color={dark.textHi} style={{ fontWeight: '700' }}>
@@ -846,10 +891,18 @@ export function SquadConnectFlow({
       >
         <View style={styles.plusBackdrop}>
           <View style={styles.qrModalCard} testID="modal-squad-qr">
-            <Text variant="title2" color={dark.textHi} style={{ fontWeight: '700', marginBottom: 4 }}>
+            <Text
+              variant="title2"
+              color={dark.textHi}
+              style={{ fontWeight: '700', marginBottom: 4 }}
+            >
               Scan to Join Squad
             </Text>
-            <Text variant="bodyS" color={dark.textMid} style={{ marginBottom: space[4], textAlign: 'center' }}>
+            <Text
+              variant="bodyS"
+              color={dark.textMid}
+              style={{ marginBottom: space[4], textAlign: 'center' }}
+            >
               Point camera at QR code to join &ldquo;{createdSquadName}&rdquo;
             </Text>
 
@@ -902,7 +955,11 @@ export function SquadConnectFlow({
             </View>
 
             <View style={styles.qrCodeBadge}>
-              <Text variant="title2" color={dark.apricot} style={{ fontWeight: '800', letterSpacing: 2 }}>
+              <Text
+                variant="title2"
+                color={dark.apricot}
+                style={{ fontWeight: '800', letterSpacing: 2 }}
+              >
                 {createdSquadCode}
               </Text>
             </View>

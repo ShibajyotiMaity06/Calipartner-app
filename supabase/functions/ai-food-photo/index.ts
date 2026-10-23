@@ -86,8 +86,11 @@ async function callVisionModel(
 
     const json = await response.json();
     const rawCandidate = json.content?.[0]?.text || '';
-    const tokens = (json.usage?.input_tokens || 0) + (json.usage?.output_tokens || 0) || DEFAULT_ESTIMATED_TOKENS;
-    const cost = ((json.usage?.input_tokens || 0) * 0.000003) + ((json.usage?.output_tokens || 0) * 0.000015);
+    const tokens =
+      (json.usage?.input_tokens || 0) + (json.usage?.output_tokens || 0) ||
+      DEFAULT_ESTIMATED_TOKENS;
+    const cost =
+      (json.usage?.input_tokens || 0) * 0.000003 + (json.usage?.output_tokens || 0) * 0.000015;
 
     return {
       rawText: rawCandidate,
@@ -273,16 +276,11 @@ export async function handleAiFoodPhoto(req: Request): Promise<Response> {
     // -------------------------------------------------------------------------
     // 4. VISION MODEL CALL (EPHEMERAL, SECRET KEY ON SERVER ONLY)
     // -------------------------------------------------------------------------
-    const geminiApiKey =
-      Deno.env.get('GEMINI_API_KEY') ||
-      Deno.env.get('AI_API_KEY');
+    const geminiApiKey = Deno.env.get('GEMINI_API_KEY') || Deno.env.get('AI_API_KEY');
 
-    const anthropicApiKey =
-      Deno.env.get('ANTHROPIC_API_KEY') ||
-      Deno.env.get('CLAUDE_API_KEY');
+    const anthropicApiKey = Deno.env.get('ANTHROPIC_API_KEY') || Deno.env.get('CLAUDE_API_KEY');
 
-    const preferredProvider =
-      Deno.env.get('VISION_PROVIDER') || 'gemini';
+    const preferredProvider = Deno.env.get('VISION_PROVIDER') || 'gemini';
 
     let visionResult: { rawText: string; tokens: number; cost: number };
     try {

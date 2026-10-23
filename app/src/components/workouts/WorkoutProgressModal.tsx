@@ -1,12 +1,5 @@
 import React, { useState } from 'react';
-import {
-  Modal,
-  SafeAreaView,
-  ScrollView,
-  StyleSheet,
-  TouchableOpacity,
-  View,
-} from 'react-native';
+import { Modal, SafeAreaView, ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import Svg, { Circle, Defs, LinearGradient, Path, Stop } from 'react-native-svg';
 import { ChevronLeftIcon, dark, radius, space, Text } from '@calipartner/ui';
@@ -118,7 +111,10 @@ export function WorkoutProgressModal({
             })}
           </View>
 
-          <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+          <ScrollView
+            contentContainerStyle={styles.scrollContent}
+            showsVerticalScrollIndicator={false}
+          >
             {/* TAB 1: OVERVIEW */}
             {activeTab === 'Overview' && (
               <>
@@ -205,21 +201,31 @@ export function WorkoutProgressModal({
 
                 {/* Split Highlights */}
                 <View style={styles.chartCard}>
-                  <Text variant="heading" color={dark.textHi} style={{ fontWeight: '700', marginBottom: space[2] }}>
+                  <Text
+                    variant="heading"
+                    color={dark.textHi}
+                    style={{ fontWeight: '700', marginBottom: space[2] }}
+                  >
                     Target Muscle Groups
                   </Text>
                   <View style={styles.splitRow}>
                     <View style={styles.splitTag}>
                       <Ionicons name="barbell-outline" size={16} color={dark.apricot} />
-                      <Text variant="bodyS" color={dark.textHi} style={{ marginLeft: 6 }}>Chest & Triceps</Text>
+                      <Text variant="bodyS" color={dark.textHi} style={{ marginLeft: 6 }}>
+                        Chest & Triceps
+                      </Text>
                     </View>
                     <View style={styles.splitTag}>
                       <Ionicons name="body-outline" size={16} color={dark.teal} />
-                      <Text variant="bodyS" color={dark.textHi} style={{ marginLeft: 6 }}>Back & Biceps</Text>
+                      <Text variant="bodyS" color={dark.textHi} style={{ marginLeft: 6 }}>
+                        Back & Biceps
+                      </Text>
                     </View>
                     <View style={styles.splitTag}>
                       <Ionicons name="walk-outline" size={16} color={dark.apricot} />
-                      <Text variant="bodyS" color={dark.textHi} style={{ marginLeft: 6 }}>Legs & Core</Text>
+                      <Text variant="bodyS" color={dark.textHi} style={{ marginLeft: 6 }}>
+                        Legs & Core
+                      </Text>
                     </View>
                   </View>
                 </View>
@@ -254,7 +260,11 @@ export function WorkoutProgressModal({
 
                 {/* Weight Lifted Chart Card */}
                 <View style={styles.chartCard}>
-                  <Text variant="bodyS" color={dark.textMid} style={{ fontWeight: '600', marginBottom: space[2] }}>
+                  <Text
+                    variant="bodyS"
+                    color={dark.textMid}
+                    style={{ fontWeight: '600', marginBottom: space[2] }}
+                  >
                     Weight Lifted (kg) — {selectedExercise}
                   </Text>
 
@@ -268,9 +278,24 @@ export function WorkoutProgressModal({
                         </LinearGradient>
                       </Defs>
 
-                      <Path d="M 0 30 L 320 30" stroke={dark.hairline} strokeWidth="1" strokeDasharray="4 4" />
-                      <Path d="M 0 70 L 320 70" stroke={dark.hairline} strokeWidth="1" strokeDasharray="4 4" />
-                      <Path d="M 0 110 L 320 110" stroke={dark.hairline} strokeWidth="1" strokeDasharray="4 4" />
+                      <Path
+                        d="M 0 30 L 320 30"
+                        stroke={dark.hairline}
+                        strokeWidth="1"
+                        strokeDasharray="4 4"
+                      />
+                      <Path
+                        d="M 0 70 L 320 70"
+                        stroke={dark.hairline}
+                        strokeWidth="1"
+                        strokeDasharray="4 4"
+                      />
+                      <Path
+                        d="M 0 110 L 320 110"
+                        stroke={dark.hairline}
+                        strokeWidth="1"
+                        strokeDasharray="4 4"
+                      />
 
                       <Path
                         d="M 20 120 C 80 110, 120 100, 160 90 C 200 80, 240 60, 300 40 L 300 145 L 20 145 Z"
@@ -284,11 +309,46 @@ export function WorkoutProgressModal({
                         strokeWidth="3.5"
                       />
 
-                      <Circle cx="20" cy="120" r="5" fill={dark.apricot} stroke={dark.bg0} strokeWidth="2" />
-                      <Circle cx="100" cy="104" r="5" fill={dark.apricot} stroke={dark.bg0} strokeWidth="2" />
-                      <Circle cx="180" cy="85" r="5" fill={dark.apricot} stroke={dark.bg0} strokeWidth="2" />
-                      <Circle cx="260" cy="55" r="5" fill={dark.apricot} stroke={dark.bg0} strokeWidth="2" />
-                      <Circle cx="300" cy="40" r="6" fill={dark.apricot} stroke={dark.bg0} strokeWidth="2" />
+                      <Circle
+                        cx="20"
+                        cy="120"
+                        r="5"
+                        fill={dark.apricot}
+                        stroke={dark.bg0}
+                        strokeWidth="2"
+                      />
+                      <Circle
+                        cx="100"
+                        cy="104"
+                        r="5"
+                        fill={dark.apricot}
+                        stroke={dark.bg0}
+                        strokeWidth="2"
+                      />
+                      <Circle
+                        cx="180"
+                        cy="85"
+                        r="5"
+                        fill={dark.apricot}
+                        stroke={dark.bg0}
+                        strokeWidth="2"
+                      />
+                      <Circle
+                        cx="260"
+                        cy="55"
+                        r="5"
+                        fill={dark.apricot}
+                        stroke={dark.bg0}
+                        strokeWidth="2"
+                      />
+                      <Circle
+                        cx="300"
+                        cy="40"
+                        r="6"
+                        fill={dark.apricot}
+                        stroke={dark.bg0}
+                        strokeWidth="2"
+                      />
                     </Svg>
 
                     {/* X Axis Labels */}
@@ -341,11 +401,22 @@ export function WorkoutProgressModal({
             {activeTab === 'Volume' && (
               <>
                 <View style={styles.chartCard}>
-                  <Text variant="heading" color={dark.textHi} style={{ fontWeight: '700', marginBottom: space[1] }}>
+                  <Text
+                    variant="heading"
+                    color={dark.textHi}
+                    style={{ fontWeight: '700', marginBottom: space[1] }}
+                  >
                     Total Tonnage Lifted
                   </Text>
-                  <Text variant="title1" color={dark.apricot} style={{ fontWeight: '800', marginVertical: space[2] }}>
-                    {totalVolumeKg.toLocaleString()} <Text variant="body" color={dark.textLo}>KG</Text>
+                  <Text
+                    variant="title1"
+                    color={dark.apricot}
+                    style={{ fontWeight: '800', marginVertical: space[2] }}
+                  >
+                    {totalVolumeKg.toLocaleString()}{' '}
+                    <Text variant="body" color={dark.textLo}>
+                      KG
+                    </Text>
                   </Text>
                   <Text variant="micro" color={dark.textMid}>
                     Cumulative volume across all completed sets and reps.
@@ -373,7 +444,6 @@ export function WorkoutProgressModal({
                 </View>
               </>
             )}
-
           </ScrollView>
         </View>
 

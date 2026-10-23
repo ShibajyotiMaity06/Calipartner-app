@@ -74,45 +74,17 @@ export function CaliPartnerLogo({
     >
       <Svg viewBox="0 0 400 400" width={size} height={size}>
         {/* Background rounded container (Dark Espresso/Chocolate #22140A) */}
-        <Rect
-          x="10"
-          y="10"
-          width="380"
-          height="380"
-          rx="72"
-          fill="#251408"
-        />
+        <Rect x="10" y="10" width="380" height="380" rx="72" fill="#251408" />
 
         {/* 3 Stepped Progress Pillars (#FCE7D0 warm cream) */}
         {/* Step 1: Leftmost lowest block */}
-        <Rect
-          x="54"
-          y="288"
-          width="90"
-          height="54"
-          rx="27"
-          fill="#FCE7D0"
-        />
+        <Rect x="54" y="288" width="90" height="54" rx="27" fill="#FCE7D0" />
 
         {/* Step 2: Middle step */}
-        <Rect
-          x="152"
-          y="244"
-          width="92"
-          height="98"
-          rx="24"
-          fill="#FCE7D0"
-        />
+        <Rect x="152" y="244" width="92" height="98" rx="24" fill="#FCE7D0" />
 
         {/* Step 3: Rightmost highest step */}
-        <Rect
-          x="252"
-          y="200"
-          width="94"
-          height="142"
-          rx="24"
-          fill="#FCE7D0"
-        />
+        <Rect x="252" y="200" width="94" height="142" rx="24" fill="#FCE7D0" />
 
         {/* --- Top Partner (Person on right pillar reaching down to help) --- */}
         {/* Head */}

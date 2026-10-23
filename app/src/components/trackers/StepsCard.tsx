@@ -91,9 +91,7 @@ export function StepsCard({ selectedDate, testID = 'steps-card' }: StepsCardProp
     { dayLabel: 'S', steps: steps, isToday: true, dateStr: 'Today' },
   ];
 
-  const weeklyAverage = Math.round(
-    weekDays.reduce((acc, d) => acc + d.steps, 0) / weekDays.length,
-  );
+  const weeklyAverage = Math.round(weekDays.reduce((acc, d) => acc + d.steps, 0) / weekDays.length);
   const maxWeekSteps = Math.max(currentGoal, ...weekDays.map((d) => d.steps));
 
   return (
@@ -277,9 +275,7 @@ export function StepsCard({ selectedDate, testID = 'steps-card' }: StepsCardProp
             accessibilityLabel={`${sourceName} · Last synced 2:14 pm. Tap to fix step counting.`}
           >
             <Ionicons name="information-circle-outline" size={15} color={dark.textLo} />
-            <Text style={styles.sourceLineText}>
-              {`${sourceName} · Last synced 2:14 pm`}
-            </Text>
+            <Text style={styles.sourceLineText}>{`${sourceName} · Last synced 2:14 pm`}</Text>
             <Text style={styles.fixCountingLink}>{t('trackers.steps.fixStepCounting')}</Text>
           </Pressable>
 
@@ -293,7 +289,9 @@ export function StepsCard({ selectedDate, testID = 'steps-card' }: StepsCardProp
           >
             <Text style={styles.editGoalText}>{t('trackers.steps.editGoal')}</Text>
             <View style={styles.editGoalRight}>
-              <Text style={styles.currentGoalDisplay}>{`${currentGoal.toLocaleString()} steps`}</Text>
+              <Text
+                style={styles.currentGoalDisplay}
+              >{`${currentGoal.toLocaleString()} steps`}</Text>
               <Ionicons name="chevron-forward" size={14} color={dark.textLo} />
             </View>
           </Pressable>
@@ -407,7 +405,12 @@ export function StepsCard({ selectedDate, testID = 'steps-card' }: StepsCardProp
 
               {weekDays.map((row, idx) => (
                 <View key={idx} style={styles.tableGridRow}>
-                  <Text style={[styles.cellText, { flex: 1.2, fontWeight: row.isToday ? '700' : '400' }]}>
+                  <Text
+                    style={[
+                      styles.cellText,
+                      { flex: 1.2, fontWeight: row.isToday ? '700' : '400' },
+                    ]}
+                  >
                     {row.dateStr}
                   </Text>
                   <Text style={[styles.cellText, { flex: 1.5, fontVariant: ['tabular-nums'] }]}>

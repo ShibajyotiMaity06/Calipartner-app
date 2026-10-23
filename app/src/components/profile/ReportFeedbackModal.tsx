@@ -139,11 +139,7 @@ export function ReportFeedbackModal({
             <Button
               variant="primary"
               label={
-                submitted
-                  ? 'Sent'
-                  : submitting
-                    ? 'Submitting…'
-                    : t('me.reportFeedback.submitBtn')
+                submitted ? 'Sent' : submitting ? 'Submitting…' : t('me.reportFeedback.submitBtn')
               }
               onPress={handleSubmit}
               disabled={submitting || !message.trim()}

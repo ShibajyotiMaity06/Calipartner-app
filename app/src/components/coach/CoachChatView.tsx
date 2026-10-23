@@ -185,19 +185,13 @@ export function CoachChatView({ onBack, initialConversationId }: CoachChatViewPr
         finalContent = aiResult.content;
         suggestions = aiResult.suggestions;
       } catch (coachErr: any) {
-        if (
-          coachErr?.code === 'CONSENT_REQUIRED' ||
-          coachErr?.message?.includes('CONSENT')
-        ) {
+        if (coachErr?.code === 'CONSENT_REQUIRED' || coachErr?.message?.includes('CONSENT')) {
           setShowConsentModal(true);
           setMessages((prev) => prev.filter((m) => m.id !== assistantMsgId));
           setIsSending(false);
           return;
         }
-        if (
-          coachErr?.code === 'UPGRADE_REQUIRED' ||
-          coachErr?.message?.includes('UPGRADE')
-        ) {
+        if (coachErr?.code === 'UPGRADE_REQUIRED' || coachErr?.message?.includes('UPGRADE')) {
           setShowPaywallModal(true);
           setMessages((prev) => prev.filter((m) => m.id !== assistantMsgId));
           setIsSending(false);
@@ -207,7 +201,8 @@ export function CoachChatView({ onBack, initialConversationId }: CoachChatViewPr
         log.error('AI Coach call failed:', coachErr);
         // Show real failure message instead of deceptive hardcoded text
         const errorText =
-          coachErr?.message || 'Could not connect to AI Coach. Please check your network and try again.';
+          coachErr?.message ||
+          'Could not connect to AI Coach. Please check your network and try again.';
         setMessages((prev) =>
           prev.map((msg) =>
             msg.id === assistantMsgId

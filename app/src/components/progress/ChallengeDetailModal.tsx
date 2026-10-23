@@ -1,13 +1,5 @@
 import React, { useState } from 'react';
-import {
-  Alert,
-  Modal,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
+import { Alert, Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Avatar, PairRing, dark, radius, space, type } from '@calipartner/ui';
 import { t } from '@/i18n';
@@ -64,9 +56,19 @@ export function ChallengeDetailModal({
   };
 
   return (
-    <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose} testID={testID}>
+    <Modal
+      visible={visible}
+      transparent
+      animationType="slide"
+      onRequestClose={onClose}
+      testID={testID}
+    >
       <View style={styles.overlay}>
-        <Pressable style={styles.backdrop} onPress={onClose} accessibilityLabel="Close challenge detail" />
+        <Pressable
+          style={styles.backdrop}
+          onPress={onClose}
+          accessibilityLabel="Close challenge detail"
+        />
 
         <View style={styles.sheet}>
           <View style={styles.handle} />
@@ -80,7 +82,8 @@ export function ChallengeDetailModal({
               <View>
                 <Text style={styles.title}>{challenge.title}</Text>
                 <Text style={styles.subtitle}>
-                  Day {challenge.currentDay} of {challenge.totalDays} · {challenge.startDate} - {challenge.endDate}
+                  Day {challenge.currentDay} of {challenge.totalDays} · {challenge.startDate} -{' '}
+                  {challenge.endDate}
                 </Text>
               </View>
             </View>
@@ -96,7 +99,10 @@ export function ChallengeDetailModal({
             </Pressable>
           </View>
 
-          <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
+          <ScrollView
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={styles.scrollContent}
+          >
             {/* Paired or Group Progress: PairRing for two people */}
             <View style={styles.progressHero}>
               <PairRing
@@ -109,12 +115,15 @@ export function ChallengeDetailModal({
               <View style={styles.legendRow}>
                 <View style={styles.legendItem}>
                   <View style={[styles.legendDot, { backgroundColor: dark.iris }]} />
-                  <Text style={styles.legendText}>You ({Math.round(challenge.userProgressPct)}%)</Text>
+                  <Text style={styles.legendText}>
+                    You ({Math.round(challenge.userProgressPct)}%)
+                  </Text>
                 </View>
                 <View style={styles.legendItem}>
                   <View style={[styles.legendDot, { backgroundColor: dark.teal }]} />
                   <Text style={styles.legendText}>
-                    {challenge.partnerNickname ?? 'Partner'} ({Math.round(challenge.partnerProgressPct)}%)
+                    {challenge.partnerNickname ?? 'Partner'} (
+                    {Math.round(challenge.partnerProgressPct)}%)
                   </Text>
                 </View>
               </View>
@@ -134,7 +143,11 @@ export function ChallengeDetailModal({
               <Text style={styles.sectionTitle}>Challenge Activity</Text>
               {challenge.feed.map((item) => (
                 <View key={item.id} style={styles.feedRow}>
-                  <Avatar name={item.user} size="sm" identityHue={item.user === 'You' ? 'iris' : 'teal'} />
+                  <Avatar
+                    name={item.user}
+                    size="sm"
+                    identityHue={item.user === 'You' ? 'iris' : 'teal'}
+                  />
                   <View style={styles.feedContent}>
                     <Text style={styles.feedUser}>{item.user}</Text>
                     <Text style={styles.feedText}>{item.text}</Text>

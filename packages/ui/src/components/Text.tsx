@@ -1,5 +1,10 @@
 import React from 'react';
-import { Platform, Text as RNText, type TextProps as RNTextProps, type TextStyle } from 'react-native';
+import {
+  Platform,
+  Text as RNText,
+  type TextProps as RNTextProps,
+  type TextStyle,
+} from 'react-native';
 import { dark } from '../tokens/colors';
 import {
   type as typeTokens,

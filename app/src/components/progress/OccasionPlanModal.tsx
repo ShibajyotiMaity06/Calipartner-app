@@ -1,13 +1,5 @@
 import React, { useState } from 'react';
-import {
-  Modal,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  View,
-} from 'react-native';
+import { Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { dark, radius, space, type } from '@calipartner/ui';
 import { t } from '@/i18n';
@@ -65,9 +57,19 @@ export function OccasionPlanModal({
   };
 
   return (
-    <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose} testID={testID}>
+    <Modal
+      visible={visible}
+      transparent
+      animationType="slide"
+      onRequestClose={onClose}
+      testID={testID}
+    >
       <View style={styles.overlay}>
-        <Pressable style={styles.backdrop} onPress={onClose} accessibilityLabel="Close occasion planner" />
+        <Pressable
+          style={styles.backdrop}
+          onPress={onClose}
+          accessibilityLabel="Close occasion planner"
+        />
 
         <View style={styles.sheet}>
           <View style={styles.handle} />
@@ -88,7 +90,10 @@ export function OccasionPlanModal({
             </Pressable>
           </View>
 
-          <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
+          <ScrollView
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={styles.scrollContent}
+          >
             {/* Step 1: Pick Event & Timeline */}
             {step === 1 && (
               <View style={styles.stepContainer} testID={`${testID}-step-1`}>
@@ -209,7 +214,7 @@ export function OccasionPlanModal({
                 </Text>
                 <View style={styles.milestonesList}>
                   {[1, 2, 3, 4].map((wk) => {
-                    const projected = currentWeightKg - (requiredRatePerWeek * wk);
+                    const projected = currentWeightKg - requiredRatePerWeek * wk;
                     return (
                       <View key={wk} style={styles.milestoneRow}>
                         <Text style={styles.milestoneWeek}>Week {wk}</Text>
@@ -227,7 +232,9 @@ export function OccasionPlanModal({
             style={styles.primaryBtn}
             onPress={handleNext}
             accessibilityRole="button"
-            accessibilityLabel={step === 3 ? t('progress.challenges.occasion.makeRoomChallenge') : 'Next'}
+            accessibilityLabel={
+              step === 3 ? t('progress.challenges.occasion.makeRoomChallenge') : 'Next'
+            }
             testID={`${testID}-next-btn`}
           >
             <Text style={styles.primaryBtnText}>

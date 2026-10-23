@@ -77,7 +77,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // Detect OAuth tokens in URL hash on web (e.g. after Google OAuth redirect)
     const browserWin =
       typeof globalThis !== 'undefined' && 'window' in globalThis
-        ? (globalThis as unknown as { window: { location: { hash: string; pathname: string; origin: string }; history: { replaceState: (a: unknown, b: string, c: string) => void } } }).window
+        ? (
+            globalThis as unknown as {
+              window: {
+                location: { hash: string; pathname: string; origin: string };
+                history: { replaceState: (a: unknown, b: string, c: string) => void };
+              };
+            }
+          ).window
         : null;
 
     if (Platform.OS === 'web' && browserWin && browserWin.location?.hash) {
@@ -216,11 +223,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const supabase = getSupabase();
       const browserOrigin =
         typeof globalThis !== 'undefined' && 'window' in globalThis
-          ? (globalThis as unknown as { window: { location: { origin: string } } }).window?.location?.origin
+          ? (globalThis as unknown as { window: { location: { origin: string } } }).window?.location
+              ?.origin
           : undefined;
       const redirectTo =
         Platform.OS === 'web'
-          ? (browserOrigin ? `${browserOrigin}/` : undefined)
+          ? browserOrigin
+            ? `${browserOrigin}/`
+            : undefined
           : 'calipartner://auth/callback';
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
@@ -239,11 +249,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const supabase = getSupabase();
       const browserOrigin =
         typeof globalThis !== 'undefined' && 'window' in globalThis
-          ? (globalThis as unknown as { window: { location: { origin: string } } }).window?.location?.origin
+          ? (globalThis as unknown as { window: { location: { origin: string } } }).window?.location
+              ?.origin
           : undefined;
       const redirectTo =
         Platform.OS === 'web'
-          ? (browserOrigin ? `${browserOrigin}/` : undefined)
+          ? browserOrigin
+            ? `${browserOrigin}/`
+            : undefined
           : 'calipartner://auth/callback';
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'apple',

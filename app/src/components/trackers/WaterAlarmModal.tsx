@@ -278,10 +278,7 @@ export function WaterAlarmModal({
                         ].map((item) => (
                           <Pressable
                             key={item.hours}
-                            style={[
-                              styles.chip,
-                              intervalHours === item.hours && styles.chipActive,
-                            ]}
+                            style={[styles.chip, intervalHours === item.hours && styles.chipActive]}
                             onPress={() => setIntervalHours(item.hours)}
                             accessibilityLabel={item.label}
                           >

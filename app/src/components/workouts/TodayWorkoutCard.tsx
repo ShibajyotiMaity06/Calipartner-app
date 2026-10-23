@@ -47,7 +47,7 @@ export function TodayWorkoutCard({
     { id: 'pw-3', name: 'Full Body Circuit', type: 'strength', duration: 40, volume: 2400 },
   ];
 
-  const handleQuickRepeat = async (item: typeof previousWorkouts[0]) => {
+  const handleQuickRepeat = async (item: (typeof previousWorkouts)[0]) => {
     try {
       setRepeatingId(item.id);
       // If there are real workouts we can copy, or open logger with this prefilled
@@ -139,10 +139,7 @@ export function TodayWorkoutCard({
       ) : workouts.length === 0 ? (
         /* Empty State */
         <View style={styles.emptyContainer}>
-          <Text
-            testID="today-workout-empty-text"
-            style={styles.emptyText}
-          >
+          <Text testID="today-workout-empty-text" style={styles.emptyText}>
             {t('workouts.noWorkoutsToday')}
           </Text>
 
@@ -164,10 +161,7 @@ export function TodayWorkoutCard({
           <View style={styles.aggregateBanner}>
             <View style={styles.aggItem}>
               <Text style={styles.aggLabel}>{t('workouts.totalDuration')}</Text>
-              <Text
-                testID="today-workout-total-duration"
-                style={styles.aggValue}
-              >
+              <Text testID="today-workout-total-duration" style={styles.aggValue}>
                 {`${totalDuration} min`}
               </Text>
             </View>
@@ -176,10 +170,7 @@ export function TodayWorkoutCard({
 
             <View style={styles.aggItem}>
               <Text style={styles.aggLabel}>{t('workouts.totalVolume')}</Text>
-              <Text
-                testID="today-workout-total-volume"
-                style={styles.aggValue}
-              >
+              <Text testID="today-workout-total-volume" style={styles.aggValue}>
                 {totalVolume > 0 ? `${totalVolume.toLocaleString()} kg` : '0 kg'}
               </Text>
             </View>
@@ -193,10 +184,7 @@ export function TodayWorkoutCard({
                   <Text style={styles.microBadgeText}>EST</Text>
                 </View>
               </View>
-              <Text
-                testID="today-workout-total-calories"
-                style={styles.aggValue}
-              >
+              <Text testID="today-workout-total-calories" style={styles.aggValue}>
                 {`${totalCalories} kcal`}
               </Text>
             </View>

@@ -87,7 +87,12 @@ export default function WelcomeCelebrationScreen() {
           <Text variant="numeralL" color={dark.textHi} style={styles.title} testID="welcome-title">
             CaliPartner
           </Text>
-          <Text variant="title1" color={dark.apricot} style={styles.tagline} testID="welcome-tagline">
+          <Text
+            variant="title1"
+            color={dark.apricot}
+            style={styles.tagline}
+            testID="welcome-tagline"
+          >
             Grow stronger, together.
           </Text>
           <Text variant="body" color={dark.textMid} style={styles.description}>

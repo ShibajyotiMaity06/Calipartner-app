@@ -344,7 +344,7 @@ describe('Phase 5C — Room UI Presentation & Logic Tests', () => {
       it('fuses seam automatically when both users logged today (PRD 7.4)', () => {
         const res = computeSeamAndState(true, true, true, 'Priya');
         expect(res.seamState).toBe('fused');
-        expect(res.stateSentence).toContain("both finished logging");
+        expect(res.stateSentence).toContain('both finished logging');
       });
 
       it('shows half-lit seam when one user logged today', () => {
@@ -489,4 +489,3 @@ describe('Phase 5C — Room UI Presentation & Logic Tests', () => {
     });
   });
 });
-

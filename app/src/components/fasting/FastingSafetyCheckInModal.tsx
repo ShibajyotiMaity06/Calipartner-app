@@ -21,7 +21,9 @@ export function FastingSafetyCheckInModal({
   onClose,
   testID = 'fasting-safety-modal',
 }: FastingSafetyCheckInModalProps) {
-  const [currentVariant, setCurrentVariant] = useState<'checkIn20' | 'checkIn24' | 'unwell'>(initialVariant);
+  const [currentVariant, setCurrentVariant] = useState<'checkIn20' | 'checkIn24' | 'unwell'>(
+    initialVariant,
+  );
 
   React.useEffect(() => {
     setCurrentVariant(initialVariant);
@@ -45,7 +47,13 @@ export function FastingSafetyCheckInModal({
           {/* Header Icon */}
           <View style={[styles.iconCircle, isUnwell && styles.iconCircleDanger]}>
             <Ionicons
-              name={isUnwell ? 'heart-dislike-outline' : is24h ? 'restaurant-outline' : 'shield-checkmark-outline'}
+              name={
+                isUnwell
+                  ? 'heart-dislike-outline'
+                  : is24h
+                    ? 'restaurant-outline'
+                    : 'shield-checkmark-outline'
+              }
               size={28}
               color={isUnwell ? dark.danger : dark.apricot}
             />
@@ -84,10 +92,7 @@ export function FastingSafetyCheckInModal({
             {/* Primary End Fast Button */}
             <Pressable
               testID="button-safety-end-fast"
-              style={({ pressed }) => [
-                styles.primaryButton,
-                pressed && styles.buttonPressed,
-              ]}
+              style={({ pressed }) => [styles.primaryButton, pressed && styles.buttonPressed]}
               onPress={onEndFast}
               accessibilityRole="button"
               accessibilityLabel={t('fasting.endFast')}
@@ -99,10 +104,7 @@ export function FastingSafetyCheckInModal({
             {!is24h && !isUnwell && onKeepGoing && (
               <Pressable
                 testID="button-safety-keep-going"
-                style={({ pressed }) => [
-                  styles.secondaryButton,
-                  pressed && styles.buttonPressed,
-                ]}
+                style={({ pressed }) => [styles.secondaryButton, pressed && styles.buttonPressed]}
                 onPress={onKeepGoing}
                 accessibilityRole="button"
                 accessibilityLabel={t('fasting.checkIn20Keep')}
@@ -115,10 +117,7 @@ export function FastingSafetyCheckInModal({
             {!is24h && !isUnwell && (
               <Pressable
                 testID="button-safety-unwell"
-                style={({ pressed }) => [
-                  styles.textButton,
-                  pressed && styles.buttonPressed,
-                ]}
+                style={({ pressed }) => [styles.textButton, pressed && styles.buttonPressed]}
                 onPress={() => setCurrentVariant('unwell')}
                 accessibilityRole="button"
                 accessibilityLabel={t('fasting.checkInFeelingUnwell')}

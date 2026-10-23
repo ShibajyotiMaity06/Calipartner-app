@@ -111,7 +111,10 @@ export function parseLocalRecipeRow(row: LocalRecipeRow): Recipe {
         // fallback
       }
     }
-    return str.split(',').map((s) => s.trim()).filter(Boolean);
+    return str
+      .split(',')
+      .map((s) => s.trim())
+      .filter(Boolean);
   };
 
   return {
@@ -290,43 +293,43 @@ export async function getRecipes(
     }
   }
 
-    // Fallback and merge with local SQLite cache and bundled recipes
-    const rows = await db.getAllAsync<LocalRecipeRow>(
-      `SELECT * FROM local_recipes WHERE status = 'published' ORDER BY updated_at DESC`,
-    );
+  // Fallback and merge with local SQLite cache and bundled recipes
+  const rows = await db.getAllAsync<LocalRecipeRow>(
+    `SELECT * FROM local_recipes WHERE status = 'published' ORDER BY updated_at DESC`,
+  );
 
-    const recipeMap = new Map<string, Recipe>();
+  const recipeMap = new Map<string, Recipe>();
 
-    // 1. Seed bundled Indian recipes (93 complete items from reciepes.csv)
-    const bundled = (bundledRecipesData as unknown as Recipe[]).filter(
-      (r) => r.status === 'published',
-    );
-    for (const b of bundled) {
-      recipeMap.set(b.id, b);
-    }
+  // 1. Seed bundled Indian recipes (93 complete items from reciepes.csv)
+  const bundled = (bundledRecipesData as unknown as Recipe[]).filter(
+    (r) => r.status === 'published',
+  );
+  for (const b of bundled) {
+    recipeMap.set(b.id, b);
+  }
 
-    // 2. Prioritize local SQLite rows (explicitly cached or updated)
-    const localParsed: Recipe[] = [];
-    if (rows && rows.length > 0) {
-      for (const r of rows) {
-        try {
-          const parsed = parseLocalRecipeRow(r);
-          recipeMap.set(parsed.id, parsed);
-          localParsed.push(parsed);
-        } catch {
-          // skip corrupted row
-        }
+  // 2. Prioritize local SQLite rows (explicitly cached or updated)
+  const localParsed: Recipe[] = [];
+  if (rows && rows.length > 0) {
+    for (const r of rows) {
+      try {
+        const parsed = parseLocalRecipeRow(r);
+        recipeMap.set(parsed.id, parsed);
+        localParsed.push(parsed);
+      } catch {
+        // skip corrupted row
       }
     }
+  }
 
-    // 3. Overlay any remote Supabase rows
-    for (const r of allRecipes) {
-      recipeMap.set(r.id, r);
-    }
+  // 3. Overlay any remote Supabase rows
+  for (const r of allRecipes) {
+    recipeMap.set(r.id, r);
+  }
 
-    const localSet = new Set(localParsed.map((l) => l.id));
-    const remainder = Array.from(recipeMap.values()).filter((r) => !localSet.has(r.id));
-    allRecipes = [...localParsed, ...remainder];
+  const localSet = new Set(localParsed.map((l) => l.id));
+  const remainder = Array.from(recipeMap.values()).filter((r) => !localSet.has(r.id));
+  allRecipes = [...localParsed, ...remainder];
 
   // Apply deterministic core filters (RCP-4)
   const filtered = filterRecipes(allRecipes, criteria);

@@ -162,10 +162,16 @@ export function FoodPhotoCameraModal({
               {t('foodLog.photo.cameraPermissionTitle')}
             </Text>
             <Text style={[styles.permissionBody, { color: colors.textMuted }]}>
-              Camera access is required to take photos of your meals for instant AI nutrition analysis.
+              Camera access is required to take photos of your meals for instant AI nutrition
+              analysis.
             </Text>
 
-            <View style={[styles.permissionBtnRow, { flexDirection: 'column', gap: 10, width: '100%', maxWidth: 320 }]}>
+            <View
+              style={[
+                styles.permissionBtnRow,
+                { flexDirection: 'column', gap: 10, width: '100%', maxWidth: 320 },
+              ]}
+            >
               <Pressable
                 testID="btn-grant-camera-permission"
                 accessibilityRole="button"
@@ -173,7 +179,12 @@ export function FoodPhotoCameraModal({
                 onPress={() => handleTriggerCameraOrUpload('camera')}
                 style={[styles.primaryBtn, { backgroundColor: colors.accent, width: '100%' }]}
               >
-                <Ionicons name="camera" size={18} color={colors.onAccent} style={{ marginRight: 6 }} />
+                <Ionicons
+                  name="camera"
+                  size={18}
+                  color={colors.onAccent}
+                  style={{ marginRight: 6 }}
+                />
                 <Text style={[styles.primaryBtnText, { color: colors.onAccent }]}>
                   Take Photo with Camera
                 </Text>
@@ -186,10 +197,20 @@ export function FoodPhotoCameraModal({
                 onPress={() => handleTriggerCameraOrUpload('album')}
                 style={[
                   styles.primaryBtn,
-                  { backgroundColor: colors.surfaceAlt, borderWidth: 1, borderColor: colors.border, width: '100%' },
+                  {
+                    backgroundColor: colors.surfaceAlt,
+                    borderWidth: 1,
+                    borderColor: colors.border,
+                    width: '100%',
+                  },
                 ]}
               >
-                <Ionicons name="images-outline" size={18} color={colors.text} style={{ marginRight: 6 }} />
+                <Ionicons
+                  name="images-outline"
+                  size={18}
+                  color={colors.text}
+                  style={{ marginRight: 6 }}
+                />
                 <Text style={[styles.primaryBtnText, { color: colors.text }]}>
                   Choose from Photos
                 </Text>

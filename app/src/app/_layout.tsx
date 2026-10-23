@@ -74,19 +74,31 @@ export default function RootLayout() {
         manifestLink.href = '/manifest.json';
         doc.head.appendChild(manifestLink);
 
-        const themeMeta = doc.createElement('meta') as unknown as { id: string; name: string; content: string };
+        const themeMeta = doc.createElement('meta') as unknown as {
+          id: string;
+          name: string;
+          content: string;
+        };
         themeMeta.id = 'theme-color-meta';
         themeMeta.name = 'theme-color';
         themeMeta.content = '#0E0B08';
         doc.head.appendChild(themeMeta as unknown);
 
-        const mobileMeta = doc.createElement('meta') as unknown as { id: string; name: string; content: string };
+        const mobileMeta = doc.createElement('meta') as unknown as {
+          id: string;
+          name: string;
+          content: string;
+        };
         mobileMeta.id = 'mobile-web-app-meta';
         mobileMeta.name = 'mobile-web-app-capable';
         mobileMeta.content = 'yes';
         doc.head.appendChild(mobileMeta as unknown);
 
-        const appleMeta = doc.createElement('meta') as unknown as { id: string; name: string; content: string };
+        const appleMeta = doc.createElement('meta') as unknown as {
+          id: string;
+          name: string;
+          content: string;
+        };
         appleMeta.id = 'apple-mobile-web-app-meta';
         appleMeta.name = 'apple-mobile-web-app-capable';
         appleMeta.content = 'yes';

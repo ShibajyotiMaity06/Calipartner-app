@@ -1,12 +1,5 @@
 import React, { useState } from 'react';
-import {
-  Modal,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
+import { Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import type { FastingSession, FastingStats, FastingStreak } from '@calipartner/core';
 import { dark, radius, space, type as typeTokens } from '@calipartner/ui';
@@ -192,39 +185,44 @@ export function FastingHistoryModal({
                 /* 7-Session Visual Mini Bar Chart */
                 <View style={styles.chartContainer} testID="fasting-chart-bars">
                   <View style={styles.barsRow}>
-                    {history.slice(0, 7).reverse().map((item, idx) => {
-                      const actualM = item.end_at
-                        ? Math.max(
-                            0,
-                            Math.round(
-                              (new Date(item.end_at).getTime() -
-                                new Date(item.start_at).getTime()) /
-                                60000,
-                            ),
-                          )
-                        : 0;
-                      const actualH = actualM / 60;
-                      const barHeight = Math.min(100, Math.max(12, (actualH / 20) * 100));
+                    {history
+                      .slice(0, 7)
+                      .reverse()
+                      .map((item, idx) => {
+                        const actualM = item.end_at
+                          ? Math.max(
+                              0,
+                              Math.round(
+                                (new Date(item.end_at).getTime() -
+                                  new Date(item.start_at).getTime()) /
+                                  60000,
+                              ),
+                            )
+                          : 0;
+                        const actualH = actualM / 60;
+                        const barHeight = Math.min(100, Math.max(12, (actualH / 20) * 100));
 
-                      return (
-                        <View key={item.id || idx} style={styles.barCol}>
-                          <Text style={styles.barValue}>{actualH > 0 ? `${actualH.toFixed(0)}h` : ''}</Text>
-                          <View style={styles.barTrack}>
-                            <View
-                              style={[
-                                styles.barFill,
-                                {
-                                  height: `${barHeight}%`,
-                                  backgroundColor:
-                                    item.status === 'completed' ? dark.iris : dark.hairline,
-                                },
-                              ]}
-                            />
+                        return (
+                          <View key={item.id || idx} style={styles.barCol}>
+                            <Text style={styles.barValue}>
+                              {actualH > 0 ? `${actualH.toFixed(0)}h` : ''}
+                            </Text>
+                            <View style={styles.barTrack}>
+                              <View
+                                style={[
+                                  styles.barFill,
+                                  {
+                                    height: `${barHeight}%`,
+                                    backgroundColor:
+                                      item.status === 'completed' ? dark.iris : dark.hairline,
+                                  },
+                                ]}
+                              />
+                            </View>
+                            <Text style={styles.barLabel}>{item.local_date.slice(5)}</Text>
                           </View>
-                          <Text style={styles.barLabel}>{item.local_date.slice(5)}</Text>
-                        </View>
-                      );
-                    })}
+                        );
+                      })}
                   </View>
                   <Text style={styles.chartCaption}>
                     Shows recent fasts up to the 20-hour safety cap.
@@ -252,7 +250,11 @@ export function FastingHistoryModal({
                       )
                     : sess.planned_minutes;
                   return (
-                    <View key={sess.id} style={styles.historyCard} testID={`fasting-item-${sess.id}`}>
+                    <View
+                      key={sess.id}
+                      style={styles.historyCard}
+                      testID={`fasting-item-${sess.id}`}
+                    >
                       <View style={styles.historyCardHeader}>
                         <View>
                           <Text style={styles.historyDate}>{sess.local_date}</Text>

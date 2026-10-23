@@ -1,12 +1,5 @@
 import React, { useState } from 'react';
-import {
-  Modal,
-  SafeAreaView,
-  ScrollView,
-  StyleSheet,
-  TouchableOpacity,
-  View,
-} from 'react-native';
+import { Modal, SafeAreaView, ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Button, ChevronLeftIcon, dark, radius, space, Text } from '@calipartner/ui';
 import { playClickSound, playSuccessSound } from '@/lib/sound';
@@ -106,7 +99,10 @@ export function WeeklyPlanModal({
             </TouchableOpacity>
           </View>
 
-          <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+          <ScrollView
+            contentContainerStyle={styles.scrollContent}
+            showsVerticalScrollIndicator={false}
+          >
             {/* Header Titles */}
             <View style={styles.titleSection}>
               <Text variant="title1" color={dark.textHi} style={styles.screenTitle}>
@@ -129,10 +125,7 @@ export function WeeklyPlanModal({
                     <TouchableOpacity
                       key={num}
                       onPress={() => handleSelectDaysCount(num)}
-                      style={[
-                        styles.countCircle,
-                        isSelected && styles.countCircleSelected,
-                      ]}
+                      style={[styles.countCircle, isSelected && styles.countCircleSelected]}
                       accessibilityRole="button"
                       accessibilityLabel={`${num} workout days per week`}
                       accessibilityState={{ selected: isSelected }}
@@ -163,10 +156,7 @@ export function WeeklyPlanModal({
                     <TouchableOpacity
                       key={day}
                       onPress={() => handleToggleDay(day)}
-                      style={[
-                        styles.dayChip,
-                        isSelected && styles.dayChipSelected,
-                      ]}
+                      style={[styles.dayChip, isSelected && styles.dayChipSelected]}
                       accessibilityRole="button"
                       accessibilityLabel={`${day} workout day`}
                       accessibilityState={{ selected: isSelected }}
@@ -213,7 +203,11 @@ export function WeeklyPlanModal({
                 <Ionicons name="information-circle" size={24} color={dark.apricot} />
               </View>
               <View style={styles.infoTextCol}>
-                <Text variant="bodyS" color={dark.textHi} style={{ fontWeight: '700', marginBottom: 2 }}>
+                <Text
+                  variant="bodyS"
+                  color={dark.textHi}
+                  style={{ fontWeight: '700', marginBottom: 2 }}
+                >
                   Rest days are included in your plan and will not break your streak.
                 </Text>
                 <Text variant="micro" color={dark.textMid} style={{ lineHeight: 16 }}>
@@ -237,10 +231,7 @@ export function WeeklyPlanModal({
                   return (
                     <View
                       key={day}
-                      style={[
-                        styles.previewDayCard,
-                        isWorkout && styles.previewDayCardWorkout,
-                      ]}
+                      style={[styles.previewDayCard, isWorkout && styles.previewDayCardWorkout]}
                       testID={`preview-card-${day}`}
                     >
                       <Text

@@ -1,12 +1,5 @@
 import React, { useState } from 'react';
-import {
-  Modal,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
+import { Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { dark, radius, space, type as typeTokens } from '@calipartner/ui';
 import { t } from '@/i18n';
@@ -27,9 +20,21 @@ export interface WorkoutRoutinesModalProps {
 }
 
 const SAMPLE_ROUTINES: RoutineItem[] = [
-  { id: 'r1', name: 'Upper Body Push (Chest & Shoulders)', type: 'Strength', exerciseCount: 5, estimatedMinutes: 45 },
+  {
+    id: 'r1',
+    name: 'Upper Body Push (Chest & Shoulders)',
+    type: 'Strength',
+    exerciseCount: 5,
+    estimatedMinutes: 45,
+  },
   { id: 'r2', name: 'Lower Body & Core', type: 'Strength', exerciseCount: 4, estimatedMinutes: 50 },
-  { id: 'r3', name: 'High-Intensity Interval Run', type: 'Cardio', exerciseCount: 1, estimatedMinutes: 30 },
+  {
+    id: 'r3',
+    name: 'High-Intensity Interval Run',
+    type: 'Cardio',
+    exerciseCount: 1,
+    estimatedMinutes: 30,
+  },
 ];
 
 export function WorkoutRoutinesModal({
@@ -99,7 +104,11 @@ export function WorkoutRoutinesModal({
               </View>
             ) : (
               routines.map((routine) => (
-                <View key={routine.id} style={styles.routineCard} testID={`routine-card-${routine.id}`}>
+                <View
+                  key={routine.id}
+                  style={styles.routineCard}
+                  testID={`routine-card-${routine.id}`}
+                >
                   <View style={styles.routineInfo}>
                     <Text style={styles.routineName}>{routine.name}</Text>
                     <Text style={styles.routineMeta}>

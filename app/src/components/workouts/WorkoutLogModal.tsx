@@ -1,12 +1,5 @@
 import React, { useState } from 'react';
-import {
-  Modal,
-  SafeAreaView,
-  ScrollView,
-  StyleSheet,
-  TouchableOpacity,
-  View,
-} from 'react-native';
+import { Modal, SafeAreaView, ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { ChevronLeftIcon, dark, radius, space, Text } from '@calipartner/ui';
 import { playClickSound, playSuccessSound } from '@/lib/sound';
@@ -39,7 +32,8 @@ export function WorkoutLogModal({
   const [exercises, setExercises] = useState<PlannedExercise[]>(() =>
     getPlannedExercisesForDate(currentDateStr),
   );
-  const [selectedExerciseForDetail, setSelectedExerciseForDetail] = useState<PlannedExercise | null>(null);
+  const [selectedExerciseForDetail, setSelectedExerciseForDetail] =
+    useState<PlannedExercise | null>(null);
   const [showAddExercisePicker, setShowAddExercisePicker] = useState<boolean>(false);
 
   const completedCount = exercises.filter((e) => e.completed).length;
@@ -121,7 +115,10 @@ export function WorkoutLogModal({
             </TouchableOpacity>
           </View>
 
-          <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+          <ScrollView
+            contentContainerStyle={styles.scrollContent}
+            showsVerticalScrollIndicator={false}
+          >
             {/* Date Navigator Header */}
             <View style={styles.dateNavigatorRow}>
               <TouchableOpacity onPress={playClickSound} style={styles.arrowBtn}>
@@ -146,10 +143,7 @@ export function WorkoutLogModal({
               {weekDays.map((item) => (
                 <View
                   key={item.name}
-                  style={[
-                    styles.dayStripCell,
-                    item.isToday && styles.dayStripCellToday,
-                  ]}
+                  style={[styles.dayStripCell, item.isToday && styles.dayStripCellToday]}
                   testID={`strip-day-${item.name}`}
                 >
                   <Text
@@ -199,10 +193,7 @@ export function WorkoutLogModal({
               {/* Progress Bar */}
               <View style={styles.progressBarTrack}>
                 <View
-                  style={[
-                    styles.progressBarFill,
-                    { width: `${Math.round(progressRatio * 100)}%` },
-                  ]}
+                  style={[styles.progressBarFill, { width: `${Math.round(progressRatio * 100)}%` }]}
                 />
               </View>
             </View>
@@ -238,10 +229,7 @@ export function WorkoutLogModal({
                   {/* Completion Checkmark */}
                   <TouchableOpacity
                     onPress={() => handleToggleCheck(ex.id)}
-                    style={[
-                      styles.checkCircle,
-                      ex.completed && styles.checkCircleActive,
-                    ]}
+                    style={[styles.checkCircle, ex.completed && styles.checkCircleActive]}
                     accessibilityRole="checkbox"
                     accessibilityState={{ checked: ex.completed }}
                     testID={`checkbox-${ex.id}`}

@@ -318,7 +318,12 @@ export function SideBySideCard({
                     uri={item.avatarUrl ?? undefined}
                     identityHue={item.identityHue}
                   />
-                  <Text variant="bodyS" color={dark.textHi} style={styles.feedActionText} numberOfLines={1}>
+                  <Text
+                    variant="bodyS"
+                    color={dark.textHi}
+                    style={styles.feedActionText}
+                    numberOfLines={1}
+                  >
                     {item.actionText}
                   </Text>
                   <Text variant="micro" color={dark.textLo}>
@@ -356,8 +361,7 @@ export function SideBySideCard({
           partnerName={partner.nickname}
           mealSection={activeMealSection}
           isLogged={Boolean(
-            activeMealSection !== 'extra' &&
-              partnerMeals?.[activeMealSection as MealType]?.logged,
+            activeMealSection !== 'extra' && partnerMeals?.[activeMealSection as MealType]?.logged,
           )}
           isDataHidden={partner.metrics.meal_checklist === 'locked'}
           onSendReaction={(reaction: RoomReactionType) => {

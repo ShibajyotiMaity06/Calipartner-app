@@ -87,11 +87,16 @@ export function PrivacySettingsModal({
     }
   };
 
-  const isMealsShared = settings?.share_meals !== 'never' && Boolean(settings?.share_calories_macros);
+  const isMealsShared =
+    settings?.share_meals !== 'never' && Boolean(settings?.share_calories_macros);
   const isWeightShared = Boolean(settings?.share_weight_number);
   const isWorkoutsShared = Boolean(settings?.share_workouts);
-  const isFocusStatusShared = Boolean(settings?.share_focus_status ?? settings?.focus_status ?? true);
-  const isFocusLabelsShared = Boolean(settings?.share_focus_label ?? settings?.focus_label ?? false);
+  const isFocusStatusShared = Boolean(
+    settings?.share_focus_status ?? settings?.focus_status ?? true,
+  );
+  const isFocusLabelsShared = Boolean(
+    settings?.share_focus_label ?? settings?.focus_label ?? false,
+  );
   const isFastingShared = Boolean(settings?.share_fasting ?? false);
 
   return (

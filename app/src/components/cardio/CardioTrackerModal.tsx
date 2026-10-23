@@ -10,15 +10,7 @@ import {
   Platform,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import {
-  Text,
-  Button,
-  Card,
-  ChevronLeftIcon,
-  dark,
-  space,
-  radius,
-} from '@calipartner/ui';
+import { Text, Button, Card, ChevronLeftIcon, dark, space, radius } from '@calipartner/ui';
 import { useSteps } from '@/hooks/useSteps';
 import { useWorkouts } from '@/hooks/useWorkouts';
 import { useTargets } from '@/hooks/useTargets';
@@ -117,7 +109,7 @@ export function CardioTrackerModal({
           // accumulate realistic walking cadence steps (~100 steps/minute)
           if (activeTab === 'walking' && pedometerAvailable !== true) {
             setWalkSessionSteps((curr) => {
-              const add = nextSec % 3 === 0 ? 2 : (nextSec % 2 === 0 ? 2 : 1);
+              const add = nextSec % 3 === 0 ? 2 : nextSec % 2 === 0 ? 2 : 1;
               return curr + add;
             });
           }
@@ -135,7 +127,10 @@ export function CardioTrackerModal({
   // GPS tracking for Running (Real GPS only - NO fake simulation)
   useEffect(() => {
     if (sessionState === 'active' && activeTab === 'running') {
-      const nav = typeof globalThis !== 'undefined' && 'navigator' in globalThis ? (globalThis as any).navigator : null;
+      const nav =
+        typeof globalThis !== 'undefined' && 'navigator' in globalThis
+          ? (globalThis as any).navigator
+          : null;
       if (nav && nav.geolocation) {
         setGpsStatus('searching');
         watchIdRef.current = nav.geolocation.watchPosition(
@@ -164,13 +159,16 @@ export function CardioTrackerModal({
             setGpsStatus('unavailable');
             setPermissionError('GPS signal lost or unavailable.');
           },
-          { enableHighAccuracy: true, timeout: 15000, maximumAge: 3000 }
+          { enableHighAccuracy: true, timeout: 15000, maximumAge: 3000 },
         );
       } else {
         setGpsStatus('unavailable');
       }
     } else {
-      const nav = typeof globalThis !== 'undefined' && 'navigator' in globalThis ? (globalThis as any).navigator : null;
+      const nav =
+        typeof globalThis !== 'undefined' && 'navigator' in globalThis
+          ? (globalThis as any).navigator
+          : null;
       if (watchIdRef.current !== null && nav && nav.geolocation) {
         nav.geolocation.clearWatch(watchIdRef.current);
         watchIdRef.current = null;
@@ -178,7 +176,10 @@ export function CardioTrackerModal({
     }
 
     return () => {
-      const nav = typeof globalThis !== 'undefined' && 'navigator' in globalThis ? (globalThis as any).navigator : null;
+      const nav =
+        typeof globalThis !== 'undefined' && 'navigator' in globalThis
+          ? (globalThis as any).navigator
+          : null;
       if (watchIdRef.current !== null && nav && nav.geolocation) {
         nav.geolocation.clearWatch(watchIdRef.current);
         watchIdRef.current = null;
@@ -191,7 +192,10 @@ export function CardioTrackerModal({
     setPermissionError(null);
 
     if (activeTab === 'running') {
-      const nav = typeof globalThis !== 'undefined' && 'navigator' in globalThis ? (globalThis as any).navigator : null;
+      const nav =
+        typeof globalThis !== 'undefined' && 'navigator' in globalThis
+          ? (globalThis as any).navigator
+          : null;
       if (!nav || !nav.geolocation) {
         setPermissionError('Location services not available on this device.');
         return;
@@ -209,9 +213,11 @@ export function CardioTrackerModal({
         },
         (_err: any) => {
           setGpsStatus('unavailable');
-          setPermissionError('Location permission is required for outdoor GPS running tracking. Please enable location permissions.');
+          setPermissionError(
+            'Location permission is required for outdoor GPS running tracking. Please enable location permissions.',
+          );
         },
-        { enableHighAccuracy: true, timeout: 10000 }
+        { enableHighAccuracy: true, timeout: 10000 },
       );
       return;
     }
@@ -290,7 +296,7 @@ export function CardioTrackerModal({
     } else {
       const finalDist = Math.max(0.01, runDistanceKm);
       const calories = Math.round(finalDist * userWeightKg * 1.036);
-      const paceMinutesPerKm = finalDist > 0 ? (duration / 60) / finalDist : 0;
+      const paceMinutesPerKm = finalDist > 0 ? duration / 60 / finalDist : 0;
       const paceMins = Math.floor(paceMinutesPerKm);
       const paceSecs = Math.round((paceMinutesPerKm - paceMins) * 60);
       const formattedPace = `${paceMins}'${paceSecs < 10 ? '0' : ''}${paceSecs}" / km`;
@@ -340,7 +346,7 @@ export function CardioTrackerModal({
   // Live running calories
   const liveRunningCalories = Math.round(runDistanceKm * userWeightKg * 1.036);
   // Live running pace
-  const livePaceMinutesPerKm = runDistanceKm > 0.05 ? (elapsedSeconds / 60) / runDistanceKm : 0;
+  const livePaceMinutesPerKm = runDistanceKm > 0.05 ? elapsedSeconds / 60 / runDistanceKm : 0;
   const livePaceMins = Math.floor(livePaceMinutesPerKm);
   const livePaceSecs = Math.round((livePaceMinutesPerKm - livePaceMins) * 60);
   const livePaceString =
@@ -355,7 +361,11 @@ export function CardioTrackerModal({
           {/* Header */}
           <View style={styles.topBar}>
             <TouchableOpacity
-              onPress={sessionState === 'active' || sessionState === 'paused' ? handleFinishSession : handleResetAndClose}
+              onPress={
+                sessionState === 'active' || sessionState === 'paused'
+                  ? handleFinishSession
+                  : handleResetAndClose
+              }
               accessibilityRole="button"
               accessibilityLabel="Back"
               style={styles.backButton}
@@ -418,21 +428,30 @@ export function CardioTrackerModal({
           </View>
 
           {/* MAIN CONTENT */}
-          <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+          <ScrollView
+            contentContainerStyle={styles.scrollContent}
+            showsVerticalScrollIndicator={false}
+          >
             {/* 1. IDLE STATE: SETUP VIEW */}
             {sessionState === 'idle' && (
               <View style={styles.idleBlock}>
                 {activeTab === 'walking' ? (
                   <>
                     <View style={styles.iconHero}>
-                      <View style={[styles.heroIconCircle, { backgroundColor: 'rgba(244, 182, 125, 0.15)' }]}>
+                      <View
+                        style={[
+                          styles.heroIconCircle,
+                          { backgroundColor: 'rgba(244, 182, 125, 0.15)' },
+                        ]}
+                      >
                         <Ionicons name="walk" size={40} color={dark.apricot} />
                       </View>
                       <Text variant="title1" color={dark.textHi} style={styles.heroTitle}>
                         Walking Session
                       </Text>
                       <Text variant="bodyS" color={dark.textMid} style={styles.heroSubtitle}>
-                        Set your target steps and time. Steps will calculate live and add to your daily total.
+                        Set your target steps and time. Steps will calculate live and add to your
+                        daily total.
                       </Text>
                     </View>
 
@@ -449,11 +468,16 @@ export function CardioTrackerModal({
                               setStepGoal(count);
                               setCustomStepText('');
                             }}
-                            style={[styles.chip, stepGoal === count && !customStepText && styles.chipActive]}
+                            style={[
+                              styles.chip,
+                              stepGoal === count && !customStepText && styles.chipActive,
+                            ]}
                           >
                             <Text
                               variant="bodyS"
-                              color={stepGoal === count && !customStepText ? dark.onBrand : dark.textHi}
+                              color={
+                                stepGoal === count && !customStepText ? dark.onBrand : dark.textHi
+                              }
                               style={{ fontWeight: '700' }}
                             >
                               {count.toLocaleString()}
@@ -491,7 +515,10 @@ export function CardioTrackerModal({
                           <TouchableOpacity
                             key={mins}
                             onPress={() => setTargetDurationMinutes(mins)}
-                            style={[styles.chip, targetDurationMinutes === mins && styles.chipActive]}
+                            style={[
+                              styles.chip,
+                              targetDurationMinutes === mins && styles.chipActive,
+                            ]}
                           >
                             <Text
                               variant="bodyS"
@@ -508,14 +535,20 @@ export function CardioTrackerModal({
                 ) : (
                   <>
                     <View style={styles.iconHero}>
-                      <View style={[styles.heroIconCircle, { backgroundColor: 'rgba(56, 178, 172, 0.15)' }]}>
+                      <View
+                        style={[
+                          styles.heroIconCircle,
+                          { backgroundColor: 'rgba(56, 178, 172, 0.15)' },
+                        ]}
+                      >
                         <Ionicons name="location" size={40} color={dark.teal} />
                       </View>
                       <Text variant="title1" color={dark.textHi} style={styles.heroTitle}>
                         Outdoor Running
                       </Text>
                       <Text variant="bodyS" color={dark.textMid} style={styles.heroSubtitle}>
-                        GPS tracks your live path, distance, pace, and calories burned like Nike Run & Strava.
+                        GPS tracks your live path, distance, pace, and calories burned like Nike Run
+                        & Strava.
                       </Text>
                     </View>
 
@@ -580,7 +613,9 @@ export function CardioTrackerModal({
                   <Button
                     variant="primary"
                     size="lg"
-                    label={activeTab === 'walking' ? 'Start Walking Session' : 'Start Running (GPS)'}
+                    label={
+                      activeTab === 'walking' ? 'Start Walking Session' : 'Start Running (GPS)'
+                    }
                     onPress={handleStartSession}
                     fullWidth
                     testID="btn-start-cardio"
@@ -594,7 +629,12 @@ export function CardioTrackerModal({
               <View style={styles.liveSessionBlock}>
                 {/* Status Indicator */}
                 <View style={styles.sessionStatusPill}>
-                  <View style={[styles.statusDot, sessionState === 'active' ? styles.dotGreen : styles.dotAmber]} />
+                  <View
+                    style={[
+                      styles.statusDot,
+                      sessionState === 'active' ? styles.dotGreen : styles.dotAmber,
+                    ]}
+                  />
                   <Text variant="micro" color={dark.textHi} style={{ fontWeight: '700' }}>
                     {sessionState === 'active' ? 'SESSION IN PROGRESS' : 'PAUSED'}
                   </Text>
@@ -615,7 +655,11 @@ export function CardioTrackerModal({
                     {/* Device Hardware Pedometer Sensor Indicator */}
                     <View style={styles.liveGpsPill}>
                       <Ionicons name="footsteps" size={15} color={dark.apricot} />
-                      <Text variant="micro" color={dark.apricot} style={{ marginLeft: 6, fontWeight: '600' }}>
+                      <Text
+                        variant="micro"
+                        color={dark.apricot}
+                        style={{ marginLeft: 6, fontWeight: '600' }}
+                      >
                         {pedometerAvailable === false
                           ? 'Walking session active · Cadence step tracking active (~100 steps/min)'
                           : 'Hardware Pedometer Active · Recording real steps as you walk'}
@@ -623,7 +667,14 @@ export function CardioTrackerModal({
                     </View>
 
                     {/* Quick Step Adjuster */}
-                    <View style={{ flexDirection: 'row', justifyContent: 'center', gap: 8, marginVertical: 8 }}>
+                    <View
+                      style={{
+                        flexDirection: 'row',
+                        justifyContent: 'center',
+                        gap: 8,
+                        marginVertical: 8,
+                      }}
+                    >
                       <TouchableOpacity
                         onPress={() => setWalkSessionSteps((s) => s + 100)}
                         style={{
@@ -635,7 +686,9 @@ export function CardioTrackerModal({
                           borderColor: dark.hairline,
                         }}
                       >
-                        <Text variant="micro" color={dark.textHi}>+100 Steps</Text>
+                        <Text variant="micro" color={dark.textHi}>
+                          +100 Steps
+                        </Text>
                       </TouchableOpacity>
                       <TouchableOpacity
                         onPress={() => setWalkSessionSteps((s) => s + 500)}
@@ -648,7 +701,9 @@ export function CardioTrackerModal({
                           borderColor: dark.hairline,
                         }}
                       >
-                        <Text variant="micro" color={dark.textHi}>+500 Steps</Text>
+                        <Text variant="micro" color={dark.textHi}>
+                          +500 Steps
+                        </Text>
                       </TouchableOpacity>
                       <TouchableOpacity
                         onPress={() => setWalkSessionSteps((s) => s + 1000)}
@@ -661,7 +716,9 @@ export function CardioTrackerModal({
                           borderColor: dark.hairline,
                         }}
                       >
-                        <Text variant="micro" color={dark.textHi}>+1,000 Steps</Text>
+                        <Text variant="micro" color={dark.textHi}>
+                          +1,000 Steps
+                        </Text>
                       </TouchableOpacity>
                     </View>
 
@@ -679,7 +736,9 @@ export function CardioTrackerModal({
                         <View
                           style={[
                             styles.fill,
-                            { width: `${Math.min(100, Math.round((walkSessionSteps / stepGoal) * 100))}%` },
+                            {
+                              width: `${Math.min(100, Math.round((walkSessionSteps / stepGoal) * 100))}%`,
+                            },
                           ]}
                         />
                       </View>
@@ -756,7 +815,11 @@ export function CardioTrackerModal({
                     {/* GPS Signal Banner */}
                     <View style={styles.liveGpsPill}>
                       <Ionicons name="radio" size={14} color={dark.teal} />
-                      <Text variant="micro" color={dark.teal} style={{ marginLeft: 6, fontWeight: '600' }}>
+                      <Text
+                        variant="micro"
+                        color={dark.teal}
+                        style={{ marginLeft: 6, fontWeight: '600' }}
+                      >
                         GPS Tracking Active · {gpsCoordinates.length} waypoints recorded
                       </Text>
                     </View>
@@ -769,14 +832,20 @@ export function CardioTrackerModal({
                     onPress={handleTogglePause}
                     style={[styles.controlBtn, styles.pauseBtn]}
                     accessibilityRole="button"
-                    accessibilityLabel={sessionState === 'active' ? 'Pause session' : 'Resume session'}
+                    accessibilityLabel={
+                      sessionState === 'active' ? 'Pause session' : 'Resume session'
+                    }
                   >
                     <Ionicons
                       name={sessionState === 'active' ? 'pause' : 'play'}
                       size={24}
                       color={dark.textHi}
                     />
-                    <Text variant="body" color={dark.textHi} style={{ fontWeight: '700', marginLeft: 8 }}>
+                    <Text
+                      variant="body"
+                      color={dark.textHi}
+                      style={{ fontWeight: '700', marginLeft: 8 }}
+                    >
                       {sessionState === 'active' ? 'Pause' : 'Resume'}
                     </Text>
                   </TouchableOpacity>
@@ -788,7 +857,11 @@ export function CardioTrackerModal({
                     accessibilityLabel="Finish session"
                   >
                     <Ionicons name="checkmark-done" size={24} color={dark.onBrand} />
-                    <Text variant="body" color={dark.onBrand} style={{ fontWeight: '700', marginLeft: 8 }}>
+                    <Text
+                      variant="body"
+                      color={dark.onBrand}
+                      style={{ fontWeight: '700', marginLeft: 8 }}
+                    >
                       Finish
                     </Text>
                   </TouchableOpacity>

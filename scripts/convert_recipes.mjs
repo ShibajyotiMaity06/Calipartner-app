@@ -145,7 +145,9 @@ export function buildFullBundledRecipes() {
     ];
 
     const tips = [
-      aliases ? `Also known as: ${aliases}.` : `Best paired with phulkas, brown rice, or side salad.`,
+      aliases
+        ? `Also known as: ${aliases}.`
+        : `Best paired with phulkas, brown rice, or side salad.`,
       `Each serving is approximately ${servingG}g with ${protein}g protein.`,
     ];
 

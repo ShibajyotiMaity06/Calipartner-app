@@ -144,8 +144,7 @@ export function LeaderboardView({ testID = 'leaderboard-view' }: LeaderboardView
               <View style={styles.emptyContainer} testID={`${testID}-empty-cohort`}>
                 <Ionicons name="people-outline" size={32} color={dark.textLo} />
                 <Text style={styles.emptyText}>
-                  {t('progress.leaderboard.emptyCohort') ||
-                    'Your first ranking arrives on Monday.'}
+                  {t('progress.leaderboard.emptyCohort') || 'Your first ranking arrives on Monday.'}
                 </Text>
               </View>
             ) : (

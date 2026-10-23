@@ -526,4 +526,3 @@ describe('Phase 7 — Progress & Leaderboard UI Presentation & Logic Tests', () 
     });
   });
 });
-

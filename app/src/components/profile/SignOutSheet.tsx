@@ -1,18 +1,6 @@
 import React from 'react';
-import {
-  Modal,
-  Pressable,
-  StyleSheet,
-  TouchableOpacity,
-  View,
-} from 'react-native';
-import {
-  Button,
-  dark,
-  radius,
-  space,
-  Text,
-} from '@calipartner/ui';
+import { Modal, Pressable, StyleSheet, TouchableOpacity, View } from 'react-native';
+import { Button, dark, radius, space, Text } from '@calipartner/ui';
 import { t } from '@/i18n';
 import { playClickSound } from '@/lib/sound';
 

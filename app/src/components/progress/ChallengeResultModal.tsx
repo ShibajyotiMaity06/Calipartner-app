@@ -28,7 +28,13 @@ export function ChallengeResultModal({
   if (!visible) return null;
 
   return (
-    <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose} testID={testID}>
+    <Modal
+      visible={visible}
+      transparent
+      animationType="slide"
+      onRequestClose={onClose}
+      testID={testID}
+    >
       <View style={styles.overlay}>
         <Pressable style={styles.backdrop} onPress={onClose} accessibilityLabel="Close result" />
 
@@ -88,7 +94,9 @@ export function ChallengeResultModal({
               accessibilityLabel={t('progress.challenges.result.startAnother')}
               testID={`${testID}-start-another-btn`}
             >
-              <Text style={styles.anotherBtnText}>{t('progress.challenges.result.startAnother')}</Text>
+              <Text style={styles.anotherBtnText}>
+                {t('progress.challenges.result.startAnother')}
+              </Text>
             </Pressable>
           </View>
         </View>

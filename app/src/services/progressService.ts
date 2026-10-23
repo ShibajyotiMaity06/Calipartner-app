@@ -26,7 +26,10 @@ export function parseProgressError(err: unknown): ProgressServiceError {
   }
   let msg = '';
   if (err && typeof err === 'object') {
-    const candidate = (err as Record<string, unknown>).message || (err as Record<string, unknown>).error_description || (err as Record<string, unknown>).details;
+    const candidate =
+      (err as Record<string, unknown>).message ||
+      (err as Record<string, unknown>).error_description ||
+      (err as Record<string, unknown>).details;
     if (typeof candidate === 'string') {
       msg = candidate;
     }
@@ -38,7 +41,11 @@ export function parseProgressError(err: unknown): ProgressServiceError {
     msg = 'Tap retry to refresh your progress summary';
   }
   if (msg.includes('UNAUTHENTICATED') || msg.includes('JWT') || msg.includes('auth')) {
-    return new ProgressServiceError('UNAUTHENTICATED', 'Sign in to view your progress and trends', err);
+    return new ProgressServiceError(
+      'UNAUTHENTICATED',
+      'Sign in to view your progress and trends',
+      err,
+    );
   }
   if (msg.includes('NOT_A_ROOM_MEMBER')) {
     return new ProgressServiceError('NOT_A_ROOM_MEMBER', 'You are not a member of this room', err);
@@ -49,7 +56,9 @@ export function parseProgressError(err: unknown): ProgressServiceError {
   return new ProgressServiceError('UNKNOWN_ERROR', msg, err);
 }
 
-export function getDefaultIndividualProgress(range: ProgressDateRange = '30d'): IndividualProgressData {
+export function getDefaultIndividualProgress(
+  range: ProgressDateRange = '30d',
+): IndividualProgressData {
   const now = new Date();
   const endDate: string = now.toISOString().slice(0, 10);
   const startDate: string = new Date(now.getTime() - 30 * 86400000).toISOString().slice(0, 10);

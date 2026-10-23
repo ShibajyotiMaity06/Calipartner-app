@@ -256,7 +256,9 @@ describe('Phase UI-7: Fasting UI Logic, Copy & Safety Rules (F01–F06)', () => 
       expect(state.elapsedMinutes).toBe(STRONG_END_FAST_MINUTES);
       expect(state.strongEndFastPrompt).toBe(true);
       expect(t('fasting.checkIn24Title')).toBe('Time to eat.');
-      expect(t('fasting.checkIn24Subtitle')).toContain('Prolonged fasts beyond 24 hours are not supported');
+      expect(t('fasting.checkIn24Subtitle')).toContain(
+        'Prolonged fasts beyond 24 hours are not supported',
+      );
     });
   });
 

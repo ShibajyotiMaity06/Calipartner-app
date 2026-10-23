@@ -81,10 +81,7 @@ export function FastingCard({ testID = 'fasting-card' }: FastingCardProps) {
         <View style={styles.cardHeader}>
           <View style={styles.titleRow}>
             <View
-              style={[
-                styles.statusDot,
-                { backgroundColor: isFasting ? dark.iris : dark.teal },
-              ]}
+              style={[styles.statusDot, { backgroundColor: isFasting ? dark.iris : dark.teal }]}
             />
             <Text style={styles.cardTitle}>{t('fasting.title')}</Text>
             <View style={styles.protocolBadge}>
@@ -105,9 +102,7 @@ export function FastingCard({ testID = 'fasting-card' }: FastingCardProps) {
               {isFasting ? elapsedText : 'Eating Window'}
             </Text>
             <Text style={styles.targetSubtext} testID="fasting-card-target">
-              {isFasting
-                ? t('fasting.ofHours', { hours: plannedHours })
-                : nextTransitionText}
+              {isFasting ? t('fasting.ofHours', { hours: plannedHours }) : nextTransitionText}
             </Text>
           </View>
 

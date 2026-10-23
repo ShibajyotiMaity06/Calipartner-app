@@ -26,23 +26,25 @@ export interface AiCoachCallResult {
  */
 export function cleanCoachResponse(text: string): string {
   if (!text) return text;
-  return text
-    // Remove markdown headers: e.g. "### Core Principles" -> "Core Principles"
-    .replace(/^#{1,6}\s+/gm, '')
-    // Remove markdown bold: "**Bold Text**" -> "Bold Text"
-    .replace(/\*\*(.*?)\*\*/g, '$1')
-    // Remove markdown italics: "*Italic Text*" -> "Italic Text"
-    .replace(/\*(.*?)\*/g, '$1')
-    // Remove any remaining stray asterisks
-    .replace(/\*\*/g, '')
-    // Replace em dashes (—) and en dashes (–) with standard comma or hyphen
-    .replace(/\s*—\s*/g, ', ')
-    .replace(/\s*–\s*/g, ' - ')
-    .replace(/—/g, ', ')
-    .replace(/–/g, '-')
-    // Replace double hyphens "--" used as em dash
-    .replace(/\s*--\s*/g, ', ')
-    .trim();
+  return (
+    text
+      // Remove markdown headers: e.g. "### Core Principles" -> "Core Principles"
+      .replace(/^#{1,6}\s+/gm, '')
+      // Remove markdown bold: "**Bold Text**" -> "Bold Text"
+      .replace(/\*\*(.*?)\*\*/g, '$1')
+      // Remove markdown italics: "*Italic Text*" -> "Italic Text"
+      .replace(/\*(.*?)\*/g, '$1')
+      // Remove any remaining stray asterisks
+      .replace(/\*\*/g, '')
+      // Replace em dashes (—) and en dashes (–) with standard comma or hyphen
+      .replace(/\s*—\s*/g, ', ')
+      .replace(/\s*–\s*/g, ' - ')
+      .replace(/—/g, ', ')
+      .replace(/–/g, '-')
+      // Replace double hyphens "--" used as em dash
+      .replace(/\s*--\s*/g, ', ')
+      .trim()
+  );
 }
 
 /**
@@ -86,7 +88,10 @@ export async function queryAiCoach(
       ) {
         throw error;
       }
-      log.info('Supabase ai-coach edge function unavailable, trying direct Gemini fallback:', error);
+      log.info(
+        'Supabase ai-coach edge function unavailable, trying direct Gemini fallback:',
+        error,
+      );
     }
   } catch (edgeErr: any) {
     if (
@@ -102,10 +107,7 @@ export async function queryAiCoach(
 
   // 2. Direct Gemini 2.5 Flash Fallback
   const extra = Constants.expoConfig?.extra;
-  const geminiKey =
-    extra?.geminiApiKey ||
-    process.env.EXPO_PUBLIC_GEMINI_API_KEY ||
-    '';
+  const geminiKey = extra?.geminiApiKey || process.env.EXPO_PUBLIC_GEMINI_API_KEY || '';
 
   if (!geminiKey) {
     throw new Error('AI Coach service is temporarily unavailable. Please try again later.');

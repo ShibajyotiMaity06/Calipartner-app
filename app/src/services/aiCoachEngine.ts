@@ -147,7 +147,12 @@ export function generateCoachResponse(
     q.includes('increase weight') ||
     (q.includes('gain') && q.includes('fast'))
   ) {
-    if (q.includes('3 days') || q.includes('2 days') || q.includes('week') || q.includes('2kg in')) {
+    if (
+      q.includes('3 days') ||
+      q.includes('2 days') ||
+      q.includes('week') ||
+      q.includes('2kg in')
+    ) {
       responseContent = `Biologically, gaining 2kg of real muscle or lean tissue in 3 days is impossible. Gaining 2kg of real body mass requires approximately ~15,000 extra calories! Any quick weight jump in 2 to 3 days would only be temporary water retention, sodium, and digestive bloat—not quality mass. Intermittent fasting would actually work against you here, because fasting restricts your eating window and makes getting enough calories much harder.
 
 To gain healthy weight and muscle sustainably:
@@ -173,7 +178,10 @@ Pair this with progressive resistance training (3 to 5 sessions a week) to signa
   }
 
   // 2. Fasting & Meal Timing (Strict word boundary, ignores "faster")
-  else if (/\b(fasting|fast|16:8|intermittent fasting|eating window)\b/i.test(q) && !q.includes('faster')) {
+  else if (
+    /\b(fasting|fast|16:8|intermittent fasting|eating window)\b/i.test(q) &&
+    !q.includes('faster')
+  ) {
     responseContent = `Intermittent fasting (such as 16:8 or 14:10) is a meal-timing schedule where you consume all your daily food within an 8 to 10 hour window. 
 
 Key facts to know:
@@ -280,7 +288,12 @@ Top protein sources:
   }
 
   // 6. Water & Hydration
-  else if (q.includes('water') || q.includes('hydrate') || q.includes('hydration') || q.includes('drink')) {
+  else if (
+    q.includes('water') ||
+    q.includes('hydrate') ||
+    q.includes('hydration') ||
+    q.includes('drink')
+  ) {
     responseContent = `Hydration is essential for nutrient delivery, joint lubrication, and physical performance:
 • Aim for 2.5 to 3.5 liters daily. On days with intense workouts or hot weather, increase by another 500ml.
 • A simple guide: your urine should be light straw-colored.
@@ -294,7 +307,9 @@ Top protein sources:
   }
 
   // 8. Greetings & Open Questions
-  else if (/^(hi|hello|hey|yo|namaste|good morning|good evening|good afternoon|sup|who are you)/.test(q)) {
+  else if (
+    /^(hi|hello|hey|yo|namaste|good morning|good evening|good afternoon|sup|who are you)/.test(q)
+  ) {
     responseContent = `Hello! I am your personal CaliPartner AI Coach. I'm here to help you freely with whatever you need—whether that's workout advice, training tips, nutrition questions, or adjusting your daily habits to hit your ${calorieTarget} kcal and ${proteinTarget}g protein targets. What's on your mind today?`;
   }
 

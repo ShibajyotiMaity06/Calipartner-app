@@ -190,7 +190,14 @@ export default function SignInScreen() {
                     variant="secondary"
                     size="lg"
                     label={t('auth.appleSignIn')}
-                    icon={<Ionicons name="logo-apple" size={20} color={dark.textHi} style={{ marginRight: 8 }} />}
+                    icon={
+                      <Ionicons
+                        name="logo-apple"
+                        size={20}
+                        color={dark.textHi}
+                        style={{ marginRight: 8 }}
+                      />
+                    }
                     onPress={async () => {
                       setLoading(true);
                       const { error } = await signInWithApple();
@@ -206,7 +213,14 @@ export default function SignInScreen() {
                   variant="secondary"
                   size="lg"
                   label={t('auth.googleSignIn')}
-                  icon={<Ionicons name="logo-google" size={18} color={dark.textHi} style={{ marginRight: 8 }} />}
+                  icon={
+                    <Ionicons
+                      name="logo-google"
+                      size={18}
+                      color={dark.textHi}
+                      style={{ marginRight: 8 }}
+                    />
+                  }
                   onPress={async () => {
                     setLoading(true);
                     const { error } = await signInWithGoogle();
@@ -221,7 +235,14 @@ export default function SignInScreen() {
                   variant="primary"
                   size="lg"
                   label="Continue with email"
-                  icon={<Ionicons name="mail" size={18} color={dark.onBrand} style={{ marginRight: 8 }} />}
+                  icon={
+                    <Ionicons
+                      name="mail"
+                      size={18}
+                      color={dark.onBrand}
+                      style={{ marginRight: 8 }}
+                    />
+                  }
                   onPress={() => setStep('email')}
                   disabled={loading}
                   testID="btn-continue-email"
@@ -250,7 +271,8 @@ export default function SignInScreen() {
                     testID="link-privacy-policy"
                   >
                     Privacy Policy
-                  </Text>.
+                  </Text>
+                  .
                 </Text>
               </View>
             </View>
@@ -362,10 +384,7 @@ export default function SignInScreen() {
         </ScrollView>
       </KeyboardAvoidingView>
 
-      <TermsOfServiceModal
-        visible={showTermsModal}
-        onClose={() => setShowTermsModal(false)}
-      />
+      <TermsOfServiceModal visible={showTermsModal} onClose={() => setShowTermsModal(false)} />
     </SafeAreaView>
   );
 }

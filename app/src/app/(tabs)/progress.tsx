@@ -215,9 +215,7 @@ export default function ProgressScreen() {
         {activeSegment === 'leaderboard' && <LeaderboardView testID="progress-leaderboard-view" />}
 
         {/* SEGMENT 3: CHALLENGES (M13-M17) */}
-        {activeSegment === 'challenges' && (
-          <ChallengesView testID="progress-challenges-view" />
-        )}
+        {activeSegment === 'challenges' && <ChallengesView testID="progress-challenges-view" />}
       </ScrollView>
 
       {/* Day Details Modal (Triggered on point/bar tap) */}

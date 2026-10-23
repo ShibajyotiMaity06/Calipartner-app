@@ -255,7 +255,10 @@ function createWebDb(): SQLite.SQLiteDatabase {
         }
 
         if (lower.includes('like ?') && params.length >= 1) {
-          const rawPat = String(params[0] || '').replace(/%/g, '').toLowerCase().trim();
+          const rawPat = String(params[0] || '')
+            .replace(/%/g, '')
+            .toLowerCase()
+            .trim();
           const userId = params[2] ? String(params[2]) : '';
           const limit = Number(params[params.length - 1]) || 40;
 
@@ -289,13 +292,19 @@ function createWebDb(): SQLite.SQLiteDatabase {
           try {
             // eslint-disable-next-line @typescript-eslint/no-require-imports
             const bundled = require('../../assets/bundled_recipes.json');
-            const arr = (bundled.recipes || (Array.isArray(bundled) ? bundled : [])) as Array<Record<string, unknown>>;
+            const arr = (bundled.recipes || (Array.isArray(bundled) ? bundled : [])) as Array<
+              Record<string, unknown>
+            >;
             list = memory.local_recipes = arr.map((r) => ({
               ...r,
-              diet_tags: Array.isArray(r.diet_tags) ? JSON.stringify(r.diet_tags) : String(r.diet_tags || '[]'),
+              diet_tags: Array.isArray(r.diet_tags)
+                ? JSON.stringify(r.diet_tags)
+                : String(r.diet_tags || '[]'),
               steps: Array.isArray(r.steps) ? JSON.stringify(r.steps) : String(r.steps || '[]'),
               tips: Array.isArray(r.tips) ? JSON.stringify(r.tips) : String(r.tips || '[]'),
-              image_urls: Array.isArray(r.image_urls) ? JSON.stringify(r.image_urls) : String(r.image_urls || '[]'),
+              image_urls: Array.isArray(r.image_urls)
+                ? JSON.stringify(r.image_urls)
+                : String(r.image_urls || '[]'),
               nutrition_per_serving:
                 typeof r.nutrition_per_serving === 'object'
                   ? JSON.stringify(r.nutrition_per_serving)
@@ -468,4 +477,3 @@ export async function clearAllLocalData(): Promise<void> {
     }
   }
 }
-

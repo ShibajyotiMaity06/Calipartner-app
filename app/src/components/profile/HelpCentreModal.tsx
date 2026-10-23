@@ -9,15 +9,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import {
-  Button,
-  Card,
-  ChevronLeftIcon,
-  dark,
-  radius,
-  space,
-  Text,
-} from '@calipartner/ui';
+import { Button, Card, ChevronLeftIcon, dark, radius, space, Text } from '@calipartner/ui';
 import { t } from '@/i18n';
 import { playClickSound } from '@/lib/sound';
 

@@ -179,4 +179,3 @@ describe('Phase 14 View Layer: AI Coach UI Specifications & Copy (PRD 6.22)', ()
     }, 15000);
   });
 });
-

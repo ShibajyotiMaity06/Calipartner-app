@@ -83,7 +83,6 @@ export default function LogScreen() {
       case 'fast':
         setActiveFlow('fast');
         break;
-
     }
   };
 
@@ -188,14 +187,8 @@ export default function LogScreen() {
 
       {/* 5.5 Fasting Timer Modal */}
       {activeFlow === 'fast' && (
-        <FastingTimerModal
-          visible={sheetVisible}
-          onClose={handleCloseAll}
-          userId={user?.id}
-        />
+        <FastingTimerModal visible={sheetVisible} onClose={handleCloseAll} userId={user?.id} />
       )}
-
-
 
       {/* 7. Quick Scan: Barcode Scanner */}
       {activeFlow === 'scan' && (
