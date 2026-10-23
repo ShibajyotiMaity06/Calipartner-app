@@ -1,5 +1,10 @@
 import { createClient } from 'jsr:@supabase/supabase-js@2';
 
+declare const Deno: {
+  serve: (handler: (req: Request) => Promise<Response> | Response) => void;
+  env: { get: (key: string) => string | undefined };
+};
+
 export const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
@@ -361,13 +366,6 @@ Great protein sources:
   }
 }
 
-declare const Deno:
-  | {
-      serve: (handler: (req: Request) => Promise<Response> | Response) => void;
-      env: { get: (key: string) => string | undefined };
-    }
-  | undefined;
-
-if (typeof Deno !== 'undefined') {
+if (typeof Deno !== 'undefined' && typeof Deno.serve === 'function') {
   Deno.serve(handleAiCoach);
 }

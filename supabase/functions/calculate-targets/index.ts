@@ -26,12 +26,6 @@ export async function handleCalculateTargets(req: Request): Promise<Response> {
   }
 }
 
-declare const Deno:
-  | {
-      serve: (handler: (req: Request) => Promise<Response> | Response) => void;
-    }
-  | undefined;
-
-if (typeof Deno !== 'undefined' && Deno?.serve) {
+if (typeof Deno !== 'undefined' && typeof Deno.serve === 'function') {
   Deno.serve(handleCalculateTargets);
 }

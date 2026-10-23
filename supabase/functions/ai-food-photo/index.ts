@@ -411,13 +411,6 @@ export async function handleAiFoodPhoto(req: Request): Promise<Response> {
   }
 }
 
-declare const Deno:
-  | {
-      serve: (handler: (req: Request) => Promise<Response> | Response) => void;
-      env: { get: (key: string) => string | undefined };
-    }
-  | undefined;
-
-if (typeof Deno !== 'undefined') {
+if (typeof Deno !== 'undefined' && typeof Deno.serve === 'function') {
   Deno.serve(handleAiFoodPhoto);
 }
