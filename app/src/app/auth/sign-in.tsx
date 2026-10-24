@@ -43,7 +43,7 @@ export default function SignInScreen() {
           if (onboarded) {
             router.replace('/today' as never);
           } else {
-            router.replace((isSignUp ? '/auth/welcome-celebration' : '/onboarding') as never);
+            router.replace('/onboarding' as never);
           }
         })
         .catch(() => {
@@ -122,8 +122,6 @@ export default function SignInScreen() {
     }
     // Auth-state navigation above chooses Today or goal setup. Login never creates a new account.
   };
-
-  const isAppleFirst = Platform.OS === 'ios';
 
   const handleBackNavigation = () => {
     playClickSound();

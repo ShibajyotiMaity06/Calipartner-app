@@ -1,8 +1,9 @@
 import {
-  calculateTargets,
+  calculateGymTargets,
+  isGymPlanSafe,
   isAtLeast18,
   type ActivityLevel,
-  type CalculateTargetsResult,
+  type GymTargetsResult,
   type Goal,
   type HealthScreening,
   type Sex,
@@ -11,6 +12,9 @@ import {
 import { generateClientUuid } from './foodService';
 
 export type OnboardingStep =
+  | 'motivation'
+  | 'premium'
+  | 'paywall'
   | 'goal'
   | 'body_stats'
   | 'activity_level'
@@ -22,12 +26,12 @@ export type OnboardingStep =
 
 export const ONBOARDING_STEPS_ORDER: readonly OnboardingStep[] = [
   'goal',
-  'body_stats',
+  'motivation',
   'activity_level',
+  'body_stats',
   'rate_selection',
-  'target_weight_date',
-  'health_screening',
-  'review_calculation',
+  'premium',
+  'paywall',
   'completed',
 ] as const;
 
@@ -42,6 +46,9 @@ export interface OnboardingState {
   weightKg: number;
   bodyFatPercentage: number | null;
   activityLevel: ActivityLevel;
+  gymDays: number;
+  dailyAdjustmentKcal: number | null;
+  goalProfileId: string;
   weeklyRateKg: number;
   targetWeightKg: number | null;
   targetDate: string | null; // YYYY-MM-DD
@@ -52,7 +59,7 @@ export interface OnboardingState {
   };
   stepGoal: number;
   waterMlGoal: number;
-  calculatedTargets: CalculateTargetsResult | null;
+  calculatedTargets: GymTargetsResult | null;
   errors: Record<string, string>;
 }
 
@@ -67,6 +74,9 @@ export const INITIAL_ONBOARDING_STATE: OnboardingState = {
   weightKg: 70,
   bodyFatPercentage: null,
   activityLevel: 'moderate',
+  gymDays: 3,
+  dailyAdjustmentKcal: null,
+  goalProfileId: '',
   weeklyRateKg: 0.5,
   targetWeightKg: null,
   targetDate: null,
@@ -88,6 +98,7 @@ export class OnboardingStateMachine {
     this.state = {
       ...INITIAL_ONBOARDING_STATE,
       ...initialState,
+      goalProfileId: initialState?.goalProfileId || generateClientUuid(),
     };
     if (this.canCalculateTargets()) {
       this.recalculateTargets();
@@ -100,6 +111,7 @@ export class OnboardingStateMachine {
 
   setGoal(goal: Goal): this {
     this.state.goal = goal;
+    this.state.dailyAdjustmentKcal = null;
     if (goal === 'maintain') {
       this.state.weeklyRateKg = 0;
     } else if (this.state.weeklyRateKg === 0) {
@@ -144,7 +156,27 @@ export class OnboardingStateMachine {
 
   setWeeklyRate(rateKg: number): this {
     this.state.weeklyRateKg = rateKg;
+    this.state.dailyAdjustmentKcal = null;
     this.recalculateTargets();
+    return this;
+  }
+
+  setGymDays(days: number): this {
+    this.state.gymDays = days;
+    this.recalculateTargets();
+    return this;
+  }
+
+  setDailyAdjustment(kcal: number): this {
+    this.state.dailyAdjustmentKcal = kcal;
+    this.state.weeklyRateKg = kcal / 1100;
+    this.recalculateTargets();
+    return this;
+  }
+
+  useRecommendedRate(): this {
+    if (this.state.calculatedTargets)
+      this.setWeeklyRate(this.state.calculatedTargets.recommendedRateKg);
     return this;
   }
 
@@ -185,10 +217,18 @@ export class OnboardingStateMachine {
         } else if (!isAtLeast18(this.state.dateOfBirth)) {
           errors.dateOfBirth = 'You must be at least 18 years old to use CaliPartner';
         }
-        if (this.state.heightCm < 50 || this.state.heightCm > 300) {
+        if (
+          !Number.isFinite(this.state.heightCm) ||
+          this.state.heightCm < 50 ||
+          this.state.heightCm > 300
+        ) {
           errors.height = 'Please enter a valid height';
         }
-        if (this.state.weightKg < 20 || this.state.weightKg > 500) {
+        if (
+          !Number.isFinite(this.state.weightKg) ||
+          this.state.weightKg < 20 ||
+          this.state.weightKg > 500
+        ) {
           errors.weight = 'Please enter a valid weight';
         }
         if (
@@ -197,6 +237,12 @@ export class OnboardingStateMachine {
         ) {
           errors.bodyFat = 'Body fat percentage must be between 3% and 70%';
         }
+        if (
+          !Number.isInteger(this.state.gymDays) ||
+          this.state.gymDays < 0 ||
+          this.state.gymDays > 7
+        )
+          errors.gymDays = 'Gym days must be between 0 and 7';
         break;
 
       case 'activity_level':
@@ -206,7 +252,21 @@ export class OnboardingStateMachine {
         break;
 
       case 'rate_selection':
-        // Rate chosen by user (safe pace advisory is informational, user choice respected)
+        if (!this.state.calculatedTargets || !isGymPlanSafe(this.state.calculatedTargets))
+          errors.rate = 'Choose a pace within your calorie floor and weekly limit';
+        if (
+          this.state.targetWeightKg !== null &&
+          (!Number.isFinite(this.state.targetWeightKg) ||
+            this.state.targetWeightKg < 20 ||
+            this.state.targetWeightKg > 500)
+        )
+          errors.targetWeight = 'Please enter a valid target weight';
+        if (
+          this.state.targetWeightKg !== null &&
+          ((this.state.goal === 'bulk' && this.state.targetWeightKg <= this.state.weightKg) ||
+            (this.state.goal === 'cut' && this.state.targetWeightKg >= this.state.weightKg))
+        )
+          errors.targetWeight = 'Target weight must match your chosen goal';
         break;
 
       case 'target_weight_date':
@@ -294,23 +354,26 @@ export class OnboardingStateMachine {
 
   private recalculateTargets(): void {
     if (!this.canCalculateTargets()) {
+      this.state.calculatedTargets = null;
       return;
     }
     try {
-      this.state.calculatedTargets = calculateTargets({
+      this.state.calculatedTargets = calculateGymTargets({
         sex: this.state.sex,
         dateOfBirth: this.state.dateOfBirth,
         heightCm: this.state.heightCm,
         weightKg: this.state.weightKg,
         bodyFatPercentage: this.state.bodyFatPercentage,
         activityLevel: this.state.activityLevel,
+        gymDays: this.state.gymDays,
+        dailyAdjustmentKcal: this.state.dailyAdjustmentKcal ?? undefined,
         goal: this.state.goal,
         weeklyRateKg: this.state.weeklyRateKg,
         targetWeightKg: this.state.targetWeightKg ?? undefined,
         targetDate: this.state.targetDate ?? undefined,
       });
     } catch {
-      // Targets calculation will be retried when inputs are complete
+      this.state.calculatedTargets = null;
     }
   }
 
@@ -322,6 +385,8 @@ export class OnboardingStateMachine {
     user_id: string;
     goal: Goal;
     activity_level: ActivityLevel;
+    gym_days: number;
+    input_height_cm: number;
     current_weight_kg: number;
     body_fat_percentage: number | null;
     weekly_rate_kg: number;
@@ -343,16 +408,21 @@ export class OnboardingStateMachine {
     if (!this.state.calculatedTargets) {
       throw new Error('Cannot build goal profile: targets not calculated');
     }
+    if (!isGymPlanSafe(this.state.calculatedTargets)) throw new Error('Plan exceeds safety limits');
+    if (!this.validateStep('body_stats').isValid || !this.validateStep('rate_selection').isValid)
+      throw new Error('Complete your body details and goal before saving');
 
     const now = new Date().toISOString();
     return {
-      id: generateClientUuid(),
+      id: this.state.goalProfileId,
       user_id: userId,
       goal: this.state.goal,
       activity_level: this.state.activityLevel,
+      gym_days: this.state.gymDays,
+      input_height_cm: this.state.heightCm,
       current_weight_kg: this.state.weightKg,
       body_fat_percentage: this.state.bodyFatPercentage,
-      weekly_rate_kg: this.state.weeklyRateKg,
+      weekly_rate_kg: this.state.calculatedTargets.weeklyRateKg,
       target_weight_kg: this.state.targetWeightKg,
       target_date: this.state.targetDate,
       daily_calorie_target: this.state.calculatedTargets.targetKcal,

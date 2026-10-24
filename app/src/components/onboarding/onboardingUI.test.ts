@@ -1,33 +1,25 @@
 import { describe, expect, it } from 'vitest';
 import { isAtLeast18 } from '@calipartner/core';
-import { dark } from '@calipartner/ui';
 import { AVATAR_PRESETS } from '../profile/AvatarPickerModal';
-import { type OnboardingStep } from '@/services/onboardingStateMachine';
+import { ONBOARDING_STEPS_ORDER } from '@/services/onboardingStateMachine';
 import { t, setLocale, getLocale } from '@/i18n';
 
-const ACTIVE_ONBOARDING_STEPS: readonly OnboardingStep[] = [
-  'goal',
-  'body_stats',
-  'activity_level',
-  'rate_selection',
-  'target_weight_date',
-  'health_screening',
-  'completed',
-] as const;
+const ACTIVE_ONBOARDING_STEPS = ONBOARDING_STEPS_ORDER;
 
 describe('UI-5 Onboarding and Account Polish (Spec A01–A15, B01–B09)', () => {
   describe('1. Active Onboarding Flow Geometry & Order (Spec 7.A)', () => {
-    it('has exactly 7 linear steps with one question per screen and 4px progress bar', () => {
+    it('has 8 steps after welcome and account setup with one question per screen and 4px progress bar', () => {
       expect(ACTIVE_ONBOARDING_STEPS).toEqual([
         'goal',
-        'body_stats',
+        'motivation',
         'activity_level',
+        'body_stats',
         'rate_selection',
-        'target_weight_date',
-        'health_screening',
+        'premium',
+        'paywall',
         'completed',
       ]);
-      expect(ACTIVE_ONBOARDING_STEPS.length).toBe(7);
+      expect(ACTIVE_ONBOARDING_STEPS.length).toBe(8);
     });
 
     it('calculates 4px progress percentage accurately across all steps', () => {
@@ -60,11 +52,6 @@ describe('UI-5 Onboarding and Account Polish (Spec A01–A15, B01–B09)', () =>
       expect(GOAL_OPTIONS[0]?.title).toBe('Lose fat');
       expect(GOAL_OPTIONS[1]?.title).toBe('Build muscle');
       expect(GOAL_OPTIONS[2]?.title).toBe('Stay where I am');
-    });
-
-    it('enforces auto-advance delay of 250ms upon goal selection', () => {
-      const AUTO_ADVANCE_DELAY_MS = 250;
-      expect(AUTO_ADVANCE_DELAY_MS).toBe(250);
     });
   });
 
@@ -100,23 +87,6 @@ describe('UI-5 Onboarding and Account Polish (Spec A01–A15, B01–B09)', () =>
       expect(getReasonExplanation('below_calorie_floor', 1500, 0.8)).toContain('1500');
       expect(getReasonExplanation('above_rate_cap', 1500, 0.8)).toContain('0.8');
       expect(getReasonExplanation('bmi_too_low', 1500, 0.8)).toContain('18.5');
-    });
-  });
-
-  describe('4. A10: Target Reveal Ring Specifications', () => {
-    it('uses 184dp diameter and iris -> apricot -> teal gradient per Spec A10', () => {
-      const TARGET_RING_SIZE = 184;
-      const TARGET_STROKE_WIDTH = 16;
-      const radius = (TARGET_RING_SIZE - TARGET_STROKE_WIDTH) / 2;
-      const circumference = 2 * Math.PI * radius;
-
-      expect(TARGET_RING_SIZE).toBe(184);
-      expect(TARGET_STROKE_WIDTH).toBe(16);
-      expect(Math.round(circumference)).toBe(528);
-
-      // 3 Gradient stops
-      const gradientColors = [dark.iris, dark.apricot, dark.teal];
-      expect(gradientColors).toEqual(['#B49AFC', '#F4B67D', '#1FBDB6']);
     });
   });
 

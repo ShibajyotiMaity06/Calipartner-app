@@ -1,5 +1,7 @@
 # CaliPartner: Product Requirements Document (PRD)
 
+> Owner-approved update, 24 October 2026: the onboarding journey and new-plan calculator are superseded by [the onboarding redesign](ONBOARDING_REDESIGN.md). Existing pricing is retained: free Basic, a 7-day Plus trial, and no Pro trial. Historical targets retain their previous calculator.
+
 
 | Field | Detail |
 |---|---|

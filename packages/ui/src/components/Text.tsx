@@ -6,6 +6,7 @@ import {
   type TextStyle,
 } from 'react-native';
 import { dark } from '../tokens/colors';
+import { onboardingType } from '../tokens/onboarding';
 import {
   type as typeTokens,
   typeHindi,
@@ -14,6 +15,7 @@ import {
 } from '../tokens/type';
 
 export interface TextProps extends RNTextProps {
+  fontSet?: 'app' | 'onboarding';
   /** Typographic scale variant */
   variant?: TypeVariant;
   /** Color token key (e.g. 'textHi', 'textMid', 'apricot', 'onBrand') or color hex string */
@@ -39,6 +41,7 @@ const CAPPED_VARIANTS: ReadonlySet<TypeVariant> = new Set([
  * respects allowFontScaling with capped maxFontSizeMultiplier to prevent clipping.
  */
 export function Text({
+  fontSet = 'app',
   variant = 'body',
   color,
   isHindi = false,
@@ -51,7 +54,9 @@ export function Text({
 }: TextProps): React.JSX.Element {
   const tokenSpec: TextStyleToken = isHindi
     ? typeHindi[variant]
-    : (typeTokens[variant] as TextStyleToken);
+    : fontSet === 'onboarding'
+      ? onboardingType[variant]
+      : (typeTokens[variant] as TextStyleToken);
 
   // Resolve color
   let resolvedColor: string;
@@ -75,9 +80,11 @@ export function Text({
   const effectiveMaxMultiplier =
     maxFontSizeMultiplier !== undefined
       ? maxFontSizeMultiplier
-      : CAPPED_VARIANTS.has(variant)
-        ? 1.3
-        : 2.0;
+      : fontSet === 'onboarding'
+        ? 2
+        : CAPPED_VARIANTS.has(variant)
+          ? 1.3
+          : 2.0;
 
   const fontStyle: TextStyle = {
     fontFamily:

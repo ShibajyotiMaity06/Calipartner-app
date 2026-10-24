@@ -513,7 +513,7 @@ export default function MeScreen() {
           <GoalsAndBodyModal
             visible={showGoalsBody}
             onClose={() => setShowGoalsBody(false)}
-            currentHeightCm={profile.height_cm}
+            currentHeightCm={currentGoalProfile.input_height_cm ?? profile.height_cm}
             currentGoal={currentGoalProfile.goal}
             currentRate={currentGoalProfile.weekly_rate_kg}
             currentWeightKg={currentGoalProfile.current_weight_kg}

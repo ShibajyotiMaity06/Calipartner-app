@@ -58,6 +58,8 @@ class MockTargetsDb implements TargetsDb {
         recompute_reason: p[19] != null ? String(p[19]) : null,
         created_at: String(p[20]),
         is_synced: Number(p[21]),
+        gym_days: p[22] != null ? Number(p[22]) : null,
+        input_height_cm: p[23] != null ? Number(p[23]) : null,
       };
       if (existingIdx >= 0) this.tables.local_goal_profiles[existingIdx] = row;
       else this.tables.local_goal_profiles.push(row);

@@ -24,6 +24,7 @@ interface AuthContextValue {
   isLoading: boolean;
   isGuest: boolean;
   needsProfileSetup: boolean;
+  profileError: string | null;
   signInWithOtp: (email: string, shouldCreateUser?: boolean) => Promise<{ error: Error | null }>;
   verifyOtp: (email: string, token: string) => Promise<{ error: Error | null }>;
   signInWithGoogle: () => Promise<{ error: Error | null }>;
@@ -43,6 +44,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
+  const [profileError, setProfileError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isGuest, setIsGuest] = useState(false);
   const [profileCheckedUserId, setProfileCheckedUserId] = useState<string | null>(null);
@@ -51,6 +53,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const fetchProfile = useCallback(async (userId: string) => {
     const cacheKey = `calipartner.profile.${userId}`;
+    setProfileError(null);
     try {
       const cached = await secureStoreAdapter.getItem(cacheKey);
       if (activeUserId.current !== userId) return;
@@ -63,6 +66,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         .maybeSingle();
 
       if (error) {
+        if (activeUserId.current === userId) setProfileError(error.message);
         log.warn('Failed to fetch profile', error.message);
         return;
       }
@@ -71,6 +75,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setProfileCheckedUserId(userId);
       if (data) await secureStoreAdapter.setItem(cacheKey, JSON.stringify(data));
     } catch (e: unknown) {
+      if (activeUserId.current === userId)
+        setProfileError(e instanceof Error ? e.message : String(e));
       log.error('Error fetching profile', e instanceof Error ? e.message : String(e));
     }
   }, []);
@@ -326,10 +332,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           units: input.units ?? 'metric',
           timezone: input.timezone ?? 'UTC',
           country: input.country ?? null,
+          place: input.place?.trim() || null,
           discoverable: input.discoverable ?? true,
         };
 
-        const { error } = await supabase.from('profiles').insert(profileRow);
+        const { error } = await supabase.from('profiles').upsert(profileRow);
         if (error) {
           return { error: new Error(error.message) };
         }
@@ -420,6 +427,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         isLoading,
         isGuest,
         needsProfileSetup,
+        profileError,
         signInWithOtp,
         verifyOtp,
         signInWithGoogle,

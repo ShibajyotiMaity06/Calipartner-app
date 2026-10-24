@@ -1,4 +1,9 @@
-import { calculateTargets, type CalculateTargetsInput } from '@calipartner/core';
+import {
+  calculateTargets,
+  calculateGymTargets,
+  type CalculateTargetsInput,
+  type GymTargetsInput,
+} from '@calipartner/core';
 
 export const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -12,7 +17,8 @@ export async function handleCalculateTargets(req: Request): Promise<Response> {
 
   try {
     const body = (await req.json()) as CalculateTargetsInput;
-    const result = calculateTargets(body);
+    const result =
+      'gymDays' in body ? calculateGymTargets(body as GymTargetsInput) : calculateTargets(body);
     return new Response(JSON.stringify(result), {
       status: 200,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },

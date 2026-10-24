@@ -57,6 +57,8 @@ async function persistPendingGoalProfile(db: TargetsDb, profile: GoalProfile): P
 }
 
 export interface LocalGoalProfileRow {
+  gym_days?: number | null;
+  input_height_cm?: number | null;
   id: string;
   user_id: string;
   goal: string;
@@ -104,8 +106,8 @@ export async function saveLocalGoalProfile(
       id, user_id, goal, activity_level, current_weight_kg, body_fat_percentage,
       weekly_rate_kg, target_weight_kg, target_date, daily_calorie_target,
       protein_grams, fat_grams, carb_grams, bmr, tdee, step_goal, water_ml_goal,
-      effective_from, confirmed_at, recompute_reason, created_at, is_synced
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      effective_from, confirmed_at, recompute_reason, created_at, is_synced, gym_days, input_height_cm
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     ON CONFLICT (id) DO UPDATE SET
       goal = excluded.goal,
       activity_level = excluded.activity_level,
@@ -125,7 +127,9 @@ export async function saveLocalGoalProfile(
       effective_from = excluded.effective_from,
       confirmed_at = excluded.confirmed_at,
       recompute_reason = excluded.recompute_reason,
-      is_synced = excluded.is_synced`,
+      is_synced = excluded.is_synced,
+      gym_days = excluded.gym_days,
+      input_height_cm = excluded.input_height_cm`,
     [
       profile.id,
       profile.user_id,
@@ -149,6 +153,8 @@ export async function saveLocalGoalProfile(
       profile.recompute_reason,
       profile.created_at,
       isSynced ? 1 : 0,
+      profile.gym_days ?? null,
+      profile.input_height_cm ?? null,
     ],
   );
 }
@@ -172,6 +178,8 @@ export async function getCurrentLocalGoalProfile(
     user_id: row.user_id,
     goal: row.goal as GoalProfile['goal'],
     activity_level: row.activity_level as GoalProfile['activity_level'],
+    ...(row.gym_days != null ? { gym_days: row.gym_days } : {}),
+    ...(row.input_height_cm != null ? { input_height_cm: row.input_height_cm } : {}),
     current_weight_kg: row.current_weight_kg,
     body_fat_percentage: row.body_fat_percentage,
     weekly_rate_kg: row.weekly_rate_kg,
@@ -303,7 +311,7 @@ export async function saveGoalProfileWithSync(
       accountWasReset = await beforeTrackingSync();
       const { error } = accountWasReset
         ? { error: null }
-        : await supabase.from('goal_profiles').upsert(profile);
+        : await syncGoalProfile(supabase, profile);
       if (!error) {
         synced = !accountWasReset;
       } else {
@@ -392,7 +400,10 @@ export async function flushTargetsOutbox(
     try {
       const payload = JSON.parse(row.payload) as Record<string, unknown>;
       if (payload.user_id !== userId) continue;
-      const { error } = await supabase.from(row.entity).upsert(payload);
+      const { error } =
+        row.entity === 'goal_profiles'
+          ? await syncGoalProfile(supabase, payload as unknown as GoalProfile)
+          : await supabase.from(row.entity).upsert(payload);
       if (!error) {
         // Mark synced locally if goal profile
         if (row.entity === 'goal_profiles') {
@@ -423,4 +434,16 @@ export async function flushTargetsOutbox(
   }
 
   return { flushedCount };
+}
+
+/** Profile measurements sync before the dependent plan; retries remain idempotent. */
+async function syncGoalProfile(supabase: SupabaseClient, profile: GoalProfile) {
+  if (profile.gym_days != null && profile.input_height_cm != null) {
+    const { error } = await supabase
+      .from('profiles')
+      .update({ height_cm: profile.input_height_cm })
+      .eq('id', profile.user_id);
+    if (error) return { error };
+  }
+  return supabase.from('goal_profiles').upsert(profile);
 }

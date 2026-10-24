@@ -17,6 +17,7 @@ export type ButtonVariant =
 export type ButtonSize = 'sm' | 'md' | 'lg';
 
 export interface ButtonProps {
+  fontSet?: 'app' | 'onboarding';
   /** Visual variant */
   variant?: ButtonVariant;
   /** Size variant: sm (36h / 44 hit area), md (44h), lg (56h) */
@@ -46,6 +47,7 @@ export interface ButtonProps {
 }
 
 export function Button({
+  fontSet = 'app',
   variant = 'primary',
   size = 'lg',
   label,
@@ -99,8 +101,9 @@ export function Button({
       style={({ pressed }) => {
         const h = getHeight();
         const baseStyle: ViewStyle = {
-          height: h,
-          minHeight: 44, // Rule U9: 44x44 minimum touch target
+          height: fontSet === 'onboarding' ? undefined : h,
+          minHeight: fontSet === 'onboarding' ? h : 44,
+          paddingVertical: fontSet === 'onboarding' ? space[3] : undefined,
           minWidth: 44,
           paddingHorizontal: getPaddingHorizontal(),
           borderRadius: radius.button,
@@ -167,7 +170,12 @@ export function Button({
         }
       }}
     >
-      <View style={styles.contentRow}>
+      <View
+        style={[
+          styles.contentRow,
+          fontSet === 'onboarding' ? { width: '100%', flexShrink: 1 } : undefined,
+        ]}
+      >
         {loading ? (
           <ActivityIndicator
             size="small"
@@ -185,6 +193,7 @@ export function Button({
         ) : null}
 
         <Text
+          fontSet={fontSet}
           variant={size === 'sm' ? 'label' : 'button'}
           color={
             isDisabled
@@ -199,7 +208,7 @@ export function Button({
                       ? dark.danger
                       : dark.textHi
           }
-          style={styles.label}
+          style={[styles.label, fontSet === 'onboarding' ? { flexShrink: 1 } : undefined]}
         >
           {label}
         </Text>

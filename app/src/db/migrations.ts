@@ -525,4 +525,17 @@ export const migrations: readonly LocalMigration[] = [
       CREATE INDEX IF NOT EXISTS idx_local_fasting_sessions_user_date ON local_fasting_sessions (user_id, local_date DESC);
     `,
   },
+  {
+    version: 12,
+    name: 'onboarding_gym_days',
+    sql: `
+      ALTER TABLE local_goal_profiles ADD COLUMN gym_days INTEGER CHECK (gym_days BETWEEN 0 AND 7);
+      ALTER TABLE local_goal_profiles ADD COLUMN input_height_cm REAL CHECK (input_height_cm BETWEEN 50 AND 300);
+      CREATE TABLE local_onboarding_drafts (
+        user_id TEXT PRIMARY KEY NOT NULL,
+        payload TEXT NOT NULL,
+        updated_at TEXT NOT NULL
+      );
+    `,
+  },
 ];

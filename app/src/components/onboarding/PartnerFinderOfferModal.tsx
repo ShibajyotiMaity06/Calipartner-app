@@ -1,7 +1,17 @@
 import React, { useState } from 'react';
 import { View, StyleSheet, Modal, SafeAreaView, TouchableOpacity } from 'react-native';
 import { useRouter } from 'expo-router';
-import { Text, Button, Chip, SwitchRow, space, dark, radius, Avatar } from '@calipartner/ui';
+import {
+  Text,
+  Button,
+  SwitchRow,
+  space,
+  dark,
+  radius,
+  Avatar,
+  useReducedMotion,
+} from '@calipartner/ui';
+import { t } from '@/i18n';
 import { playClickSound, playToggleSound, playSuccessSound } from '@/lib/sound';
 
 export interface PartnerFinderOfferModalProps {
@@ -20,6 +30,7 @@ export function PartnerFinderOfferModal({
   testID = 'partner-finder-offer-modal',
 }: PartnerFinderOfferModalProps) {
   const router = useRouter();
+  const reduceMotion = useReducedMotion();
   const [openToPartner, setOpenToPartner] = useState(false);
 
   const handleToggle = (val: boolean) => {
@@ -55,7 +66,7 @@ export function PartnerFinderOfferModal({
   return (
     <Modal
       visible={visible}
-      animationType="slide"
+      animationType={reduceMotion ? 'none' : 'slide'}
       transparent={false}
       onRequestClose={onClose}
       testID={testID}
@@ -95,7 +106,9 @@ export function PartnerFinderOfferModal({
                   testID="partner-preview-avatar"
                 />
                 <View style={styles.matchBadgeRow}>
-                  <Chip label="Lose fat" selected={true} />
+                  <Text variant="bodyS" color={dark.textHi}>
+                    {t('onboarding.goal.cutTitle')}
+                  </Text>
                   <View style={styles.adherenceBadge}>
                     <Text variant="label" color={dark.teal} style={styles.adherenceText}>
                       88% adherence

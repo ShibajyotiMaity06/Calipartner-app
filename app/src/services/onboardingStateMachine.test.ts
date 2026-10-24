@@ -1,123 +1,103 @@
 import { describe, expect, it } from 'vitest';
-import { OnboardingStateMachine } from './onboardingStateMachine';
+import { OnboardingStateMachine, ONBOARDING_STEPS_ORDER } from './onboardingStateMachine';
 
-describe('OnboardingStateMachine', () => {
-  it('initializes with default state', () => {
-    const machine = new OnboardingStateMachine();
-    const state = machine.getState();
+const adult = {
+  nickname: 'Ari',
+  sex: 'male' as const,
+  dateOfBirth: '2001-01-01',
+  heightCm: 175,
+  weightKg: 70,
+  gymDays: 5,
+};
 
-    expect(state.currentStep).toBe('goal');
-    expect(state.goal).toBe('cut');
-    expect(state.weeklyRateKg).toBe(0.5);
+describe('Onboarding redesign state machine', () => {
+  it('follows the approved journey after signup and profile setup', () => {
+    const machine = new OnboardingStateMachine(adult);
+    const visited = [machine.getState().currentStep];
+    while (machine.next()) visited.push(machine.getState().currentStep);
+    expect(visited).toEqual(ONBOARDING_STEPS_ORDER);
+    expect(visited).toEqual([
+      'goal',
+      'motivation',
+      'activity_level',
+      'body_stats',
+      'rate_selection',
+      'premium',
+      'paywall',
+      'completed',
+    ]);
   });
 
-  it('validates each step sequentially according to PRD 6.2 rules', () => {
-    const machine = new OnboardingStateMachine();
-
-    // 1. Goal step
-    expect(machine.next()).toBe(true);
-    expect(machine.getState().currentStep).toBe('body_stats');
-
-    // 2. Body stats step - fails when DOB is missing
+  it('blocks missing body details, minors, invalid training days, and stale calculations', () => {
+    const machine = new OnboardingStateMachine({ ...adult, heightCm: 0 });
+    machine.goToStep('body_stats');
     expect(machine.next()).toBe(false);
-    expect(machine.getState().errors.dateOfBirth).toBeDefined();
-
-    // Blocked if under 18 (AUTH-3)
-    machine.setBodyStats({ dateOfBirth: '2020-01-01' });
+    machine.setBodyStats({ heightCm: 175, dateOfBirth: '2020-01-01' });
     expect(machine.next()).toBe(false);
-    expect(machine.getState().errors.dateOfBirth).toContain('18 years old');
-
-    // Valid adult DOB, height, weight (25 years old from 2026)
-    machine.setBodyStats({
-      dateOfBirth: '2001-01-01',
-      heightCm: 175,
-      weightKg: 70,
-      sex: 'male',
-    });
+    machine.setBodyStats({ dateOfBirth: adult.dateOfBirth });
+    machine.setGymDays(8);
+    expect(machine.getState().calculatedTargets).toBeNull();
+    expect(machine.next()).toBe(false);
+    machine.setGymDays(3);
     expect(machine.next()).toBe(true);
-    expect(machine.getState().currentStep).toBe('activity_level');
-
-    // 3. Activity level step
-    machine.setActivityLevel('moderate');
-    expect(machine.next()).toBe(true);
-    expect(machine.getState().currentStep).toBe('rate_selection');
-
-    // 4. Rate selection step - live targets are already calculated
-    const stateAtRate = machine.getState();
-    expect(stateAtRate.calculatedTargets).not.toBeNull();
-    expect(stateAtRate.calculatedTargets?.bmr).toBe(1674);
-    expect(stateAtRate.calculatedTargets?.tdee).toBe(2594);
-    expect(stateAtRate.calculatedTargets?.targetKcal).toBe(2044); // cut 0.5
-
-    // User is allowed to select rate (safe cap is advisory, user choice respected)
-    machine.setWeeklyRate(1.0);
-    expect(machine.next()).toBe(true);
-    expect(machine.getState().currentStep).toBe('target_weight_date');
-
-    // 5. Target weight and date step (optional)
-    expect(machine.next()).toBe(true);
-    expect(machine.getState().currentStep).toBe('health_screening');
-
-    // 6. Health screening step (optional private questions)
-    machine.setHealthScreening({ pregnantOrBreastfeeding: false });
-    expect(machine.next()).toBe(true);
-    expect(machine.getState().currentStep).toBe('review_calculation');
-
-    // 7. Review calculation step
-    expect(machine.next()).toBe(true);
-    expect(machine.getState().currentStep).toBe('completed');
+    machine.setBodyStats({ weightKg: NaN });
+    expect(machine.getState().calculatedTargets).toBeNull();
+    expect(() => machine.buildGoalProfile('user-a')).toThrow();
   });
 
-  it('builds final GoalProfile matching PRD worked example', () => {
-    const machine = new OnboardingStateMachine();
-    machine.setGoal('cut');
-    machine.setBodyStats({
-      sex: 'male',
-      dateOfBirth: '2001-01-01', // 25y
-      heightCm: 175,
-      weightKg: 70,
-    });
-    machine.setActivityLevel('moderate');
-    machine.setWeeklyRate(0.5);
+  it('prevents both navigation and persistence of unsafe custom plans', () => {
+    const machine = new OnboardingStateMachine(adult);
+    machine.goToStep('rate_selection');
+    machine.setWeeklyRate(1);
+    expect(machine.next()).toBe(false);
+    expect(() => machine.buildGoalProfile('user-a')).toThrow('safety');
+    machine.useRecommendedRate();
+    expect(machine.next()).toBe(true);
+    machine.setDailyAdjustment(2000);
+    expect(() => machine.buildGoalProfile('user-a')).toThrow('safety');
+  });
 
-    const goalProfile = machine.buildGoalProfile('test-user-123');
-    expect(goalProfile.id).toMatch(
-      /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i,
+  it('keeps a single UUID across save retries and draft recovery', () => {
+    const machine = new OnboardingStateMachine(adult);
+    const first = machine.buildGoalProfile('user-a');
+    expect(first.id).toMatch(/^[0-9a-f-]{36}$/i);
+    expect(machine.buildGoalProfile('user-a').id).toBe(first.id);
+    const restored = new OnboardingStateMachine(machine.getState());
+    expect(restored.buildGoalProfile('user-a').id).toBe(first.id);
+    expect(first.gym_days).toBe(5);
+    expect(first.input_height_cm).toBe(175);
+  });
+
+  it('supports a safe custom daily surplus and recomputes after edits', () => {
+    const machine = new OnboardingStateMachine(adult).setGoal('bulk').setDailyAdjustment(300);
+    const first = machine.buildGoalProfile('user-a');
+    expect(first.weekly_rate_kg).toBeCloseTo(300 / 1100);
+    machine.setBodyStats({ weightKg: 72 });
+    expect(machine.buildGoalProfile('user-a').daily_calorie_target).not.toBe(
+      first.daily_calorie_target,
     );
-    expect(goalProfile.user_id).toBe('test-user-123');
-    expect(goalProfile.daily_calorie_target).toBe(2044);
-    expect(goalProfile.protein_grams).toBe(140);
-    expect(goalProfile.fat_grams).toBe(57);
-    expect(goalProfile.carb_grams).toBe(243);
-    expect(goalProfile.bmr).toBe(1674);
-    expect(goalProfile.tdee).toBe(2594);
+    machine.setGymDays(0);
+    expect(machine.getState().calculatedTargets?.activityMultiplier).toBe(1.35);
+    machine.setGoal('maintain');
+    expect(machine.buildGoalProfile('user-a').weekly_rate_kg).toBe(0);
   });
 
-  it('allows going back to previous steps and changing inputs', () => {
-    const machine = new OnboardingStateMachine();
-    machine.next(); // to body_stats
-    expect(machine.getState().currentStep).toBe('body_stats');
-    machine.back();
-    expect(machine.getState().currentStep).toBe('goal');
+  it('rejects goal weights in the wrong direction and permits missing optional goals', () => {
+    const machine = new OnboardingStateMachine(adult).setGoal('bulk');
+    machine.setTargetWeightAndDate(65, null);
+    expect(machine.validateStep('rate_selection').isValid).toBe(false);
+    machine.setTargetWeightAndDate(null, null);
+    expect(machine.validateStep('rate_selection').isValid).toBe(true);
   });
 
-  it('allows goToStep forward transitions when current step is valid', () => {
-    const machine = new OnboardingStateMachine({
-      sex: 'male',
-      dateOfBirth: '2001-01-01',
-      heightCm: 175,
-      weightKg: 70,
-    });
-    // Jump forward from goal to activity_level
-    const moved = machine.goToStep('activity_level');
-    expect(moved).toBe(true);
-    expect(machine.getState().currentStep).toBe('activity_level');
-
-    // From health_screening, allow direct jump to completed
-    machine.goToStep('health_screening');
-    expect(machine.getState().currentStep).toBe('health_screening');
-    const movedToCompleted = machine.goToStep('completed');
-    expect(movedToCompleted).toBe(true);
-    expect(machine.getState().currentStep).toBe('completed');
+  it('can dismiss either premium step and go back to edit inputs', () => {
+    for (const step of ['premium', 'paywall'] as const) {
+      const machine = new OnboardingStateMachine(adult);
+      machine.goToStep(step);
+      expect(machine.goToStep('completed')).toBe(true);
+      expect(machine.goToStep('body_stats')).toBe(true);
+      machine.setBodyStats({ weightKg: 72 });
+      expect(machine.getState().weightKg).toBe(72);
+    }
   });
 });

@@ -1,5 +1,7 @@
 ## Part 7 — Screen inventory
 
+> Owner-approved update, 24 October 2026: the onboarding journey and new-plan calculator are superseded by [the onboarding redesign](../ONBOARDING_REDESIGN.md). Existing pricing is retained: free Basic, a 7-day Plus trial, and no Pro trial. Historical targets retain their previous calculator.
+
 ### 7.0 How to read this part
 There are **180 entries (38 hero, 142 compact)**. Hero screens are written in full. Secondary screens, sheets and states are in compact tables with the same facts in short form (Layout = top to bottom). Priority is P0 (launch), P1 (soon after), P2 (later) as in the PRD. Anything marked **NEW** is not in PRD v0.4 and needs your approval.
 

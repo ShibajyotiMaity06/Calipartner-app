@@ -1,5 +1,20 @@
 import { describe, it, expect } from 'vitest';
 import { type, typeHindi, getTypeStyle } from '../tokens/type';
+import { onboardingType } from '../tokens/onboarding';
+
+describe('Onboarding typography contract', () => {
+  it('uses static Bricolage titles and numerals with tabular figures', () => {
+    expect(onboardingType.title1.fontFamily).toBe('Bricolage_700');
+    expect(onboardingType.numeralXL.fontFamily).toBe('Bricolage_700');
+    expect(onboardingType.numeralXL.fontVariant).toContain('tabular-nums');
+  });
+  it('uses static Figtree UI weights without altering the existing app font set', () => {
+    expect(onboardingType.body.fontFamily).toBe('Figtree_400');
+    expect(onboardingType.label.fontFamily).toBe('Figtree_500');
+    expect(onboardingType.heading.fontFamily).toBe('Figtree_600');
+    expect(type.body.fontFamily).toBe('PlusJakartaSans_400');
+  });
+});
 
 describe('Typography Scale (Plus Jakarta Sans & Apple Design)', () => {
   it('includes all required type scale variants', () => {

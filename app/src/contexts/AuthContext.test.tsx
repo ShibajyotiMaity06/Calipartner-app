@@ -107,6 +107,18 @@ afterEach(async () => {
 });
 
 describe('returning user sessions', () => {
+  it('exposes a failed profile load for retry and clears it after recovery', async () => {
+    state.profileError = true;
+    await mount();
+    expect(auth.profileError).toBe('Network unavailable');
+    expect(auth.needsProfileSetup).toBe(false);
+    state.profileError = false;
+    await act(async () => {
+      await auth.refreshProfile();
+    });
+    expect(auth.profileError).toBeNull();
+    expect(auth.profile?.nickname).toBe('Saved user');
+  });
   it('restores a session without sending another email code', async () => {
     await mount();
     expect(auth.user?.id).toBe('returning-user');

@@ -4,6 +4,7 @@ export type Goal = 'cut' | 'maintain' | 'bulk';
 export type ActivityLevel = 'sedentary' | 'light' | 'moderate' | 'very_active' | 'extra_active';
 
 export interface Profile {
+  place?: string | null;
   id: string;
   username: string;
   nickname: string;
@@ -27,6 +28,7 @@ export interface PublicUserProfile {
 }
 
 export interface CreateProfileInput {
+  place?: string | null;
   username: string;
   nickname: string;
   avatar_url?: string | null;
@@ -40,6 +42,7 @@ export interface CreateProfileInput {
 }
 
 export interface UpdateProfileInput {
+  place?: string | null;
   nickname?: string;
   avatar_url?: string | null;
   height_cm?: number;
@@ -71,7 +74,8 @@ export interface MacroTargets {
   totalKcal: number;
 }
 
-export type PresetRateUnavailableReason = 'below_calorie_floor' | 'above_rate_cap' | 'bmi_too_low';
+export type PresetRateUnavailableReason =
+  'below_calorie_floor' | 'above_rate_cap' | 'bmi_too_low' | 'macro_allocation';
 
 export type PresetRateAdvisory = 'lean_gain_advisory' | 'large_deficit_advisory';
 
@@ -140,6 +144,9 @@ export type RecomputeReason =
   'initial_onboarding' | 'manual_edit' | 'weight_change' | 'recalibration';
 
 export interface GoalProfile {
+  /** Null/absent retains the original calculator for historical plans. */
+  gym_days?: number | null;
+  input_height_cm?: number | null;
   id: string;
   user_id: string;
   goal: Goal;

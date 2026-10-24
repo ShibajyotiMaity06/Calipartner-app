@@ -12,7 +12,17 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import type { PurchasesPackage } from 'react-native-purchases';
-import { Button, Card, ChevronLeftIcon, dark, radius, space, Text } from '@calipartner/ui';
+import {
+  Button,
+  Card,
+  dark,
+  radius,
+  space,
+  Text,
+  onboardingLayout,
+  useReducedMotion,
+} from '@calipartner/ui';
+import { t } from '@/i18n';
 import { useSubscription } from '@/hooks/useSubscription';
 import { playClickSound, playSuccessSound } from '@/lib/sound';
 
@@ -132,6 +142,7 @@ export function PaywallModal({
   isUpgrade,
   onSuccess,
 }: PaywallModalProps) {
+  const reduceMotion = useReducedMotion();
   const { offerings, entitlement, error: subError, purchase, restore, sponsor } = useSubscription();
 
   // Selected Tier (Plus, Pro) - default to Plus
@@ -190,7 +201,6 @@ export function PaywallModal({
       packages.find(
         (p) => p.identifier.includes(selectedTier) && p.identifier.includes(durIdentifier),
       ) ??
-      packages[0] ??
       null
     );
   }, [offerings, selectedTier, selectedDuration]);
@@ -223,9 +233,7 @@ export function PaywallModal({
           return;
         }
       } else {
-        // Fallback preview activation for dev / test / local environments
-        playSuccessSound();
-        setShowSuccessModal(true);
+        setStatusMessage(t('setup.storeUnavailable'));
       }
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : String(err);
@@ -280,7 +288,9 @@ export function PaywallModal({
         // Non-Indian timezone detected
         if (tz.length > 0 && !tz.includes('UTC')) return false;
       }
-    } catch {}
+    } catch {
+      return true;
+    }
     return true;
   }, []);
 
@@ -323,7 +333,12 @@ export function PaywallModal({
   }, [actionLoading, sponsorRoomId, context, isUpgrade, activeTierConfig.label, selectedTier]);
 
   return (
-    <Modal visible={visible} animationType="slide" transparent={false} onRequestClose={onClose}>
+    <Modal
+      visible={visible}
+      animationType={reduceMotion ? 'none' : 'slide'}
+      transparent={false}
+      onRequestClose={onClose}
+    >
       <SafeAreaView style={styles.safeArea}>
         <View style={styles.container} testID="modal-paywall">
           {/* Top Bar with Top-Left Close Button */}
@@ -331,11 +346,11 @@ export function PaywallModal({
             <TouchableOpacity
               onPress={onClose}
               accessibilityRole="button"
-              accessibilityLabel="Close paywall"
+              accessibilityLabel={t('setup.closePremium')}
               style={styles.closeButton}
               testID="btn-close-paywall"
             >
-              <ChevronLeftIcon color={dark.textHi} size={24} />
+              <Ionicons name="close-outline" color={dark.textHi} size={onboardingLayout.icon} />
             </TouchableOpacity>
             <Text variant="heading" color={dark.textHi} style={styles.topBarTitle}>
               CaliPartner Plans
@@ -697,7 +712,7 @@ export function PaywallModal({
           <Modal
             visible={showSuccessModal}
             transparent
-            animationType="fade"
+            animationType={reduceMotion ? 'none' : 'fade'}
             onRequestClose={() => {
               setShowSuccessModal(false);
               onClose();
@@ -740,7 +755,7 @@ export function PaywallModal({
           <Modal
             visible={showRestoreModal}
             transparent
-            animationType="fade"
+            animationType={reduceMotion ? 'none' : 'fade'}
             onRequestClose={() => setShowRestoreModal(false)}
           >
             <View style={styles.modalBackdrop}>
@@ -774,7 +789,7 @@ export function PaywallModal({
           <Modal
             visible={showPromoModal}
             transparent
-            animationType="fade"
+            animationType={reduceMotion ? 'none' : 'fade'}
             onRequestClose={() => setShowPromoModal(false)}
           >
             <View style={styles.modalBackdrop}>
@@ -851,8 +866,8 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   closeButton: {
-    width: 44,
-    height: 44,
+    width: onboardingLayout.touch,
+    minHeight: onboardingLayout.touch,
     alignItems: 'center',
     justifyContent: 'center',
   },

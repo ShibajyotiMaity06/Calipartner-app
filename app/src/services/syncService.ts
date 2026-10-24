@@ -228,6 +228,18 @@ export async function flushOutbox(
           .eq('id', item.id);
         if (error) throw error;
       } else {
+        // Gym plans carry the actual height collected after initial account setup.
+        if (
+          item.entity === 'goal_profiles' &&
+          item.payload.gym_days != null &&
+          item.payload.input_height_cm != null
+        ) {
+          const { error } = await supabase
+            .from('profiles')
+            .update({ height_cm: item.payload.input_height_cm })
+            .eq('id', item.payload.user_id);
+          if (error) throw error;
+        }
         // Upsert by primary key (id, user_id+food_id, user_id+local_date, user_id, or client_id)
         const onConflict =
           item.entity === 'user_food_stats'
@@ -245,6 +257,13 @@ export async function flushOutbox(
 
       // 3. Mark succeeded locally: delete from outbox and update local sync_state to 'synced'
       await db.runAsync(`DELETE FROM outbox WHERE id = ?`, [item.id]);
+
+      if (item.entity === 'goal_profiles')
+        await db.runAsync('UPDATE local_goal_profiles SET is_synced = 1 WHERE id = ?', [item.id]);
+      if (item.entity === 'health_screening')
+        await db.runAsync('UPDATE local_health_screening SET is_synced = 1 WHERE user_id = ?', [
+          item.payload.user_id,
+        ]);
 
       const localTable = getLocalTableName(item.entity);
       if (localTable) {

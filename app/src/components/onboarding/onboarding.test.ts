@@ -2,19 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { playClickSound, playSuccessSound, playToggleSound, soundManager } from '@/lib/sound';
 import { isAtLeast18 } from '@calipartner/core';
 
-/**
- * Expected active onboarding steps matching PRD 6.2 and user design constraints:
- * Calculation formula review step is skipped.
- */
-const EXPECTED_ONBOARDING_STEPS = [
-  'goal',
-  'body_stats',
-  'activity_level',
-  'rate_selection',
-  'target_weight_date',
-  'health_screening',
-  'completed',
-] as const;
+import { ONBOARDING_STEPS_ORDER as EXPECTED_ONBOARDING_STEPS } from '@/services/onboardingStateMachine';
 
 describe('Onboarding UI and Interaction Logic', () => {
   describe('Sound Manager', () => {
@@ -29,18 +17,19 @@ describe('Onboarding UI and Interaction Logic', () => {
   });
 
   describe('Active Onboarding Steps Configuration', () => {
-    it('contains exactly 7 linear steps and omits calculation formula review step as requested', () => {
+    it('contains the 8 approved onboarding steps and omits calculation formula review step as requested', () => {
       expect(EXPECTED_ONBOARDING_STEPS).toEqual([
         'goal',
-        'body_stats',
+        'motivation',
         'activity_level',
+        'body_stats',
         'rate_selection',
-        'target_weight_date',
-        'health_screening',
+        'premium',
+        'paywall',
         'completed',
       ]);
       expect(EXPECTED_ONBOARDING_STEPS).not.toContain('review_calculation');
-      expect(EXPECTED_ONBOARDING_STEPS.length).toBe(7);
+      expect(EXPECTED_ONBOARDING_STEPS.length).toBe(8);
     });
   });
 

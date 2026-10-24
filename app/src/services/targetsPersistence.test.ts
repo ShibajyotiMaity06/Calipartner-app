@@ -6,6 +6,8 @@ vi.mock('expo-sqlite', () => ({}));
 import { createWebDb } from '@/db';
 import { migrations } from '@/db/migrations';
 import { registerAccountSyncCheck } from './accountSyncGate';
+import { clearOnboardingDraft, loadOnboardingDraft, saveOnboardingDraft } from './onboardingDraft';
+import { OnboardingStateMachine } from './onboardingStateMachine';
 import {
   getCurrentLocalGoalProfile,
   saveGoalProfileWithSync,
@@ -18,6 +20,7 @@ import {
 function nativeDb(): TargetsDb {
   const sql = new DatabaseSync(':memory:');
   sql.exec(migrations.find((migration) => migration.version === 3)!.sql);
+  sql.exec(migrations.find((migration) => migration.version === 12)!.sql);
   sql.exec(
     `CREATE TABLE outbox (id TEXT PRIMARY KEY, entity TEXT, operation TEXT, payload TEXT, created_at TEXT, attempts INTEGER, last_error TEXT)`,
   );
@@ -96,6 +99,62 @@ afterEach(() => vi.unstubAllGlobals());
 
 describe.each(['native SQLite', 'browser persistence'])('saved targets: %s', (platform) => {
   const open = () => (platform === 'native SQLite' ? nativeDb() : createWebDb());
+
+  it('recovers account-scoped drafts without uploading them or retaining stale calculations', async () => {
+    let db = open();
+    const machine = new OnboardingStateMachine({
+      nickname: 'Ari',
+      dateOfBirth: '2001-01-01',
+      gymDays: 5,
+    });
+    await saveOnboardingDraft(db, 'account-a', machine.getState());
+    machine.setGymDays(2);
+    await saveOnboardingDraft(db, 'account-a', machine.getState());
+    if (platform === 'browser persistence') db = createWebDb();
+    const recovered = await loadOnboardingDraft(db, 'account-a');
+    expect(recovered?.gymDays).toBe(2);
+    expect(recovered?.calculatedTargets).toBeUndefined();
+    expect(recovered?.goalProfileId).toBe(machine.getState().goalProfileId);
+    expect(await loadOnboardingDraft(db, 'account-b')).toBeNull();
+    expect(await db.getAllAsync('SELECT * FROM outbox')).toHaveLength(0);
+    await clearOnboardingDraft(db, 'account-a');
+    expect(await loadOnboardingDraft(db, 'account-a')).toBeNull();
+  });
+
+  it('retains gym inputs across offline restart and syncs profile measurements before the plan', async () => {
+    let db = open();
+    const gymGoal = { ...goal, gym_days: 5, input_height_cm: 157.5 };
+    await saveGoalProfileWithSync(db, null, gymGoal, false);
+    await saveGoalProfileWithSync(db, null, gymGoal, false);
+    if (platform === 'browser persistence') db = createWebDb();
+    expect(await getCurrentLocalGoalProfile(db, goal.user_id)).toEqual(gymGoal);
+    const calls: string[] = [];
+    let fail = true;
+    const client = {
+      from: (entity: string) => ({
+        update: (payload: unknown) => ({
+          eq: async (_key: string, id: string) => {
+            calls.push(entity);
+            expect(payload).toEqual({ height_cm: 157.5 });
+            expect(id).toBe(goal.user_id);
+            return { error: fail ? { message: 'Offline' } : null };
+          },
+        }),
+        upsert: async (payload: unknown) => {
+          calls.push(entity);
+          expect(payload).toEqual(gymGoal);
+          return { error: null };
+        },
+      }),
+    } as unknown as SupabaseClient;
+    expect(await flushTargetsOutbox(db, client, goal.user_id)).toEqual({ flushedCount: 0 });
+    expect(calls).toEqual(['profiles']);
+    expect(await db.getAllAsync('SELECT * FROM outbox')).toHaveLength(1);
+    fail = false;
+    expect(await flushTargetsOutbox(db, client, goal.user_id)).toEqual({ flushedCount: 1 });
+    expect(calls).toEqual(['profiles', 'profiles', 'goal_profiles']);
+    expect(await db.getAllAsync('SELECT * FROM outbox')).toHaveLength(0);
+  });
 
   it('retains custom macros and goals across restart with an idempotent offline outbox', async () => {
     let db = open();

@@ -147,7 +147,7 @@ export function createWebDb(): SQLite.SQLiteDatabase {
                 continue;
               }
             }
-            if (table === 'local_health_screening') {
+            if (table === 'local_health_screening' || table === 'local_onboarding_drafts') {
               const existingIdx = list.findIndex((ex) => ex.user_id === row.user_id);
               if (existingIdx >= 0) {
                 list[existingIdx] = { ...list[existingIdx], ...row };
@@ -178,7 +178,7 @@ export function createWebDb(): SQLite.SQLiteDatabase {
         return { lastInsertRowId: 0, changes };
       }
       const targetMutation = sql.match(
-        /^(update|delete from)\s+(local_goal_profiles|local_health_screening|outbox)\b/i,
+        /^(update|delete from)\s+(local_goal_profiles|local_health_screening|local_onboarding_drafts|outbox)\b/i,
       );
       if (targetMutation) {
         const table = targetMutation[2]!;
@@ -442,6 +442,11 @@ export function createWebDb(): SQLite.SQLiteDatabase {
         return { user_version: 5 } as unknown as T;
       }
 
+      if (lower.includes('from local_onboarding_drafts')) {
+        return ((memory.local_onboarding_drafts || []).find((row) => row.user_id === params[0]) ??
+          null) as T | null;
+      }
+
       if (lower.includes('from local_goal_profiles')) {
         const list = memory.local_goal_profiles || memory.goal_profiles || [];
         if (list.length > 0) {
@@ -581,6 +586,7 @@ export async function clearAllLocalData(): Promise<void> {
     'outbox',
     'guest_entries',
     'local_goal_profiles',
+    'local_onboarding_drafts',
     'local_health_screening',
     'local_foods',
     'local_food_entries',

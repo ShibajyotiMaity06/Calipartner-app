@@ -120,6 +120,46 @@ function createTestDb(): SyncDb {
 }
 
 describe('Offline-First Sync Layer', () => {
+  it('syncs a gym plan only after its profile measurement succeeds, then marks the local plan synced', async () => {
+    const db = createTestDb();
+    await db.runAsync('CREATE TABLE local_goal_profiles (id TEXT PRIMARY KEY, is_synced INTEGER)');
+    await db.runAsync("INSERT INTO local_goal_profiles VALUES ('gym-plan', 0)");
+    await enqueueOutbox(db, {
+      id: 'gym-plan',
+      entity: 'goal_profiles',
+      operation: 'upsert',
+      payload: { id: 'gym-plan', user_id: 'u1', gym_days: 5, input_height_cm: 157.5 },
+    });
+    const calls: string[] = [];
+    let failProfile = true;
+    const client = {
+      from: (table: string) => ({
+        update: (values: unknown) => ({
+          eq: async (_key: string, userId: string) => {
+            expect(values).toEqual({ height_cm: 157.5 });
+            expect(userId).toBe('u1');
+            calls.push(table);
+            return { error: failProfile ? new Error('Offline') : null };
+          },
+        }),
+        upsert: async () => {
+          calls.push(table);
+          return { error: null };
+        },
+      }),
+    } as unknown as SupabaseSyncClient;
+    expect((await flushOutbox(db, client)).failed).toBe(1);
+    expect(calls).toEqual(['profiles']);
+    failProfile = false;
+    await db.runAsync(
+      "UPDATE outbox SET status = 'pending', next_retry_at = NULL WHERE id = 'gym-plan'",
+    );
+    expect((await flushOutbox(db, client)).succeeded).toBe(1);
+    expect(calls).toEqual(['profiles', 'profiles', 'goal_profiles']);
+    expect(await db.getFirstAsync('SELECT is_synced FROM local_goal_profiles')).toEqual({
+      is_synced: 1,
+    });
+  });
   it('calculates exponential backoff delay correctly', () => {
     expect(calculateBackoffMs(0)).toBe(1000);
     expect(calculateBackoffMs(1)).toBe(2000);
