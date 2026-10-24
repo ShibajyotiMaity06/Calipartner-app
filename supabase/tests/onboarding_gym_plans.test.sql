@@ -1,5 +1,5 @@
 begin;
-select plan(12);
+select plan(14);
 
 insert into auth.users (id, email) values
   ('a0000000-0000-4000-8000-000000000001', 'onboard_a@example.com'),
@@ -10,6 +10,8 @@ insert into public.profiles (id, username, nickname, date_of_birth, sex, height_
 
 select ok((select relrowsecurity from pg_class where oid = 'public.profiles'::regclass), 'Profile RLS remains enabled');
 select ok((select relrowsecurity from pg_class where oid = 'public.goal_profiles'::regclass), 'Goal RLS remains enabled');
+select ok((select 'security_invoker=true' = any(reloptions) from pg_class where oid = 'public.current_goal_profiles'::regclass), 'Restored current-goal view runs as its caller');
+select ok(has_table_privilege('authenticated', 'public.current_goal_profiles', 'SELECT'), 'Restored current-goal view retains its authenticated grant');
 
 set local role authenticated;
 set local "request.jwt.claims" to '{"sub":"a0000000-0000-4000-8000-000000000001","role":"authenticated"}';
@@ -38,7 +40,8 @@ $sql$, 'P0001', null, 'The database rejects a low-BMI cut using the actual input
 
 set local "request.jwt.claims" to '{"sub":"a0000000-0000-4000-8000-000000000002","role":"authenticated"}';
 select results_eq('select count(*)::integer from public.goal_profiles', array[0], 'Another user cannot read gym inputs or targets');
-select is((with edited as (update public.goal_profiles set gym_days = 1 returning id) select count(*)::integer from edited), 0, 'Another user cannot alter the plan');
+with edited as (update public.goal_profiles set gym_days = 1 returning id)
+select is((select count(*)::integer from edited), 0, 'Another user cannot alter the plan');
 
 select * from finish();
 rollback;

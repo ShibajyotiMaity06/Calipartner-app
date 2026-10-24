@@ -35,7 +35,21 @@ Safety remains mandatory: per-sex calorie floors (1,500/1,200/1,350), a strict 1
 
 ## Deployment and review
 
-Apply `20261024050000_onboarding_gym_plans.sql` and redeploy `calculate-targets` before releasing the client. SQLite migration 12 runs automatically. Existing RLS and explicit public/room projections protect the new private columns. The migration adds a server-side safety trigger for new gym plans.
+The live Calipartner Supabase project was updated on 24 October 2026. Apply these migrations in order, in one transaction, when deploying to another environment:
+
+1. `20261024045959_prepare_onboarding_rate_precision.sql`
+2. `20261024050000_onboarding_gym_plans.sql`
+3. `20261024050001_restore_current_goal_profiles.sql`
+
+The surrounding migrations detach and restore `current_goal_profiles`: PostgreSQL cannot widen a column while that view depends on it. The original committed migration remains unchanged. The restored view retains invoker security and its existing Supabase role grants. SQLite migration 12 runs automatically. Existing RLS and explicit public/room projections protect the private columns, and the new trigger enforces server-side safety for gym plans.
+
+The `calculate-targets` Edge Function is also deployed. Its function-local `deno.json` resolves the shared core modules, including their extensionless TypeScript imports. To deploy again, load the access token from the ignored `supabase/.env` into the deployment process environment, then run:
+
+```sh
+supabase functions deploy calculate-targets --project-ref ipxsziqwrowxblwalnqj --use-api --import-map supabase/functions/calculate-targets/deno.json
+```
+
+The project reference is public configuration. Keep management tokens and service-account credentials in ignored server environment files, outside app configuration.
 
 Validate the real 7-day Plus introductory offer and Pro's absence of an introductory offer in RevenueCat/App Store Connect/Play Console. Native VoiceOver/TalkBack, 200% text, reduced motion, purchases and restore need a development-build device pass. Local SQL tests require a running Supabase/Postgres instance with pgTAP.
 
@@ -47,7 +61,8 @@ Validate the real 7-day Plus introductory offer and Pro's absence of an introduc
 - UI: `Test Files 5 passed (5)` / `Tests 52 passed (52)`.
 - `npm run format:check`: `All matched files use Prettier code style!`.
 - Expo web export passed. A browser walkthrough with an isolated fake backend covered profile signup, name interpolation, goal-specific encouragement, training input, unavailable rates, both premium close paths, exact reference totals, calculation details, draft recovery after reload, a 320px viewport, simulated 200% text, unsafe-plan blocking, offline completion and one queued goal UUID. No browser page errors occurred.
-- Added 12 pgTAP assertions covering the private columns and database safety trigger. These were not run: this machine has no Docker/Postgres instance. Run `supabase test db` after applying the migrations to a local Supabase stack.
+- The 14 pgTAP assertions covering private columns, database safety, and restored-view permissions passed against the live database through the Supabase management API. All test fixtures and temporary extension setup were rolled back. The migration sequence also passed an isolated PostgreSQL (PGlite) deployment check.
+- Live `calculate-targets` verification passed for the supplied 2,392 kcal reference, the original 2,044 kcal golden example, and invalid-training-day rejection.
 
 Changed areas: welcome/auth/profile views; onboarding components, state and local drafts; the core version-2 calculator and tests; SQLite migration 12, target persistence and sync tests; onboarding typography/layout tokens and opt-in text/button scaling; the calculate-targets Edge Function; the new SQL migration and pgTAP tests; PRD and UI override notes. Account settings read the saved input height so it is accurate before an offline plan syncs.
 
