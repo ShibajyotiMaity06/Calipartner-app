@@ -125,10 +125,7 @@ function isAskingForMealIdea(q: string): boolean {
  * Job 1: Answers any fitness, workout, health, or nutrition question freely, accurately, and without restrictions.
  * Job 2: Suggests relevant meal ideas ONLY if the user is asking for them.
  */
-export function generateCoachResponse(
-  query: string,
-  ctx: CoachContext = { calorieTarget: 2000, proteinTarget: 140, goal: 'maintain' },
-): CoachEngineResult {
+export function generateCoachResponse(query: string, ctx: CoachContext): CoachEngineResult {
   const q = query.toLowerCase().trim();
   const { calorieTarget, proteinTarget, goal } = ctx;
   const wantsMeal = isAskingForMealIdea(q);

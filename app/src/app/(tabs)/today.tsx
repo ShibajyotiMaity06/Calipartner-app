@@ -12,6 +12,7 @@ import { Ionicons } from '@expo/vector-icons';
 import Svg, { Circle } from 'react-native-svg';
 import {
   getMealSectionForTime,
+  getLocalDateString,
   type Food,
   type FoodEntry,
   type MealSection,
@@ -134,11 +135,20 @@ function MiniRing({
 export default function TodayScreen() {
   const router = useRouter();
   const { user, profile } = useAuth();
-  const { currentGoalProfile } = useTargets();
+  const {
+    currentGoalProfile,
+    loading: targetsLoading,
+    error: targetsError,
+    refresh: refreshTargets,
+  } = useTargets();
   const { rooms } = useRooms();
 
   // Current selected date in ISO format YYYY-MM-DD
-  const [selectedDate, setSelectedDate] = useState(() => new Date().toISOString().slice(0, 10));
+  const todayDate = getLocalDateString(
+    new Date(),
+    profile?.timezone ?? Intl.DateTimeFormat().resolvedOptions().timeZone,
+  );
+  const [selectedDate, setSelectedDate] = useState(todayDate);
 
   // User streak state
   const [streakData, setStreakData] = useState<UserStreak | null>(null);
@@ -195,7 +205,7 @@ export default function TodayScreen() {
     setSelectedDate(d.toISOString().slice(0, 10));
   };
 
-  const isToday = selectedDate === new Date().toISOString().slice(0, 10);
+  const isToday = selectedDate === todayDate;
   const currentSuggestedMeal = getMealSectionForTime(new Date());
 
   const [guestName, setGuestName] = useState<string | null>(null);
@@ -220,14 +230,14 @@ export default function TodayScreen() {
     }
   }, [profile?.nickname]);
 
-  const targetCalories = currentGoalProfile?.daily_calorie_target ?? 2000;
-  const targetProtein = currentGoalProfile?.protein_grams ?? 140;
+  const targetCalories = currentGoalProfile?.daily_calorie_target ?? null;
+  const targetProtein = currentGoalProfile?.protein_grams ?? null;
   const effectiveGoalSteps = currentGoalProfile?.step_goal ?? goalSteps;
   const effectiveGoalMl = currentGoalProfile?.water_ml_goal ?? goalMl;
 
   const eatenCalories = daySummary.totals.calories;
   const eatenProtein = daySummary.totals.protein;
-  const currentStreak = streakData?.current_streak ?? 1;
+  const currentStreak = streakData?.current_streak ?? 0;
 
   // Dynamic question based on user local time
   const getContextualQuestion = () => {
@@ -404,6 +414,22 @@ export default function TodayScreen() {
             </Pressable>
           </View>
 
+          {!currentGoalProfile && (
+            <Pressable
+              onPress={() => void refreshTargets()}
+              accessibilityRole="button"
+              accessibilityLabel={t('common.retry')}
+              testID="btn-retry-targets"
+            >
+              <Text variant="bodyS" color={dark.textMid} accessibilityLiveRegion="polite">
+                {targetsLoading
+                  ? t('common.targetsLoading')
+                  : targetsError
+                    ? t('common.errorBody')
+                    : t('common.targetUnavailable')}
+              </Text>
+            </Pressable>
+          )}
           <View style={styles.progressRingsRow}>
             {/* Steps */}
             <MiniRing
@@ -425,9 +451,11 @@ export default function TodayScreen() {
             <MiniRing
               icon="flame"
               value={eatenCalories}
-              target={targetCalories}
+              target={targetCalories ?? t('common.unavailable')}
               label="Calories"
-              progressRatio={targetCalories > 0 ? eatenCalories / targetCalories : 0}
+              progressRatio={
+                targetCalories != null && targetCalories > 0 ? eatenCalories / targetCalories : 0
+              }
               color="#EB7A6B"
               testID="ring-calories"
               onPress={() => setShowCaloriesDetail(true)}
@@ -449,9 +477,11 @@ export default function TodayScreen() {
             <MiniRing
               icon="barbell"
               value={`${eatenProtein}g`}
-              target={`${targetProtein}g`}
+              target={targetProtein == null ? t('common.unavailable') : `${targetProtein}g`}
               label="Protein"
-              progressRatio={targetProtein > 0 ? eatenProtein / targetProtein : 0}
+              progressRatio={
+                targetProtein != null && targetProtein > 0 ? eatenProtein / targetProtein : 0
+              }
               color="#48BB78"
               testID="ring-protein"
               onPress={() => setShowCaloriesDetail(true)}
@@ -670,8 +700,8 @@ export default function TodayScreen() {
           carbGrams={daySummary.totals.carbs}
           fatGrams={daySummary.totals.fat}
           targetProtein={targetProtein}
-          targetCarbs={currentGoalProfile?.carb_grams ?? 240}
-          targetFat={currentGoalProfile?.fat_grams ?? 55}
+          targetCarbs={currentGoalProfile?.carb_grams ?? null}
+          targetFat={currentGoalProfile?.fat_grams ?? null}
           onClose={() => setShowCaloriesDetail(false)}
         />
 

@@ -29,22 +29,26 @@ import { TermsOfServiceModal } from '@/components/legal';
 export default function SignInScreen() {
   const router = useRouter();
   const { mode } = useLocalSearchParams<{ mode?: string }>();
-  const isSignUp = mode !== 'signin';
+  const isSignUp = mode === 'signup';
   const { user, signInWithOtp, verifyOtp, signInWithGoogle, signInWithApple } = useAuth();
 
   // If user is already authenticated (e.g. after OAuth redirect or active session), check status
   useEffect(() => {
     let mounted = true;
     if (user?.id) {
-      import('@/services/onboardingStatus').then(async ({ isUserOnboarded }) => {
-        const onboarded = await isUserOnboarded(user.id);
-        if (!mounted) return;
-        if (onboarded || !isSignUp) {
-          router.replace('/today' as never);
-        } else {
-          router.replace('/auth/welcome-celebration' as never);
-        }
-      });
+      import('@/services/onboardingStatus')
+        .then(async ({ isUserOnboarded }) => {
+          const onboarded = await isUserOnboarded(user.id);
+          if (!mounted) return;
+          if (onboarded) {
+            router.replace('/today' as never);
+          } else {
+            router.replace((isSignUp ? '/auth/welcome-celebration' : '/onboarding') as never);
+          }
+        })
+        .catch(() => {
+          if (mounted) setErrorMessage(t('common.errorBody'));
+        });
     }
     return () => {
       mounted = false;
@@ -77,7 +81,7 @@ export default function SignInScreen() {
     setLoading(true);
     setErrorMessage(null);
 
-    const { error } = await signInWithOtp(email);
+    const { error } = await signInWithOtp(email, isSignUp);
     setLoading(false);
 
     if (error) {
@@ -115,25 +119,8 @@ export default function SignInScreen() {
 
     if (error) {
       setErrorMessage(t('auth.invalidCodeError'));
-    } else {
-      const { getSupabase } = await import('@/lib/supabase');
-      const supabase = getSupabase();
-      const {
-        data: { user: verifiedUser },
-      } = await supabase.auth.getUser();
-      const effectiveId = verifiedUser?.id;
-
-      if (effectiveId) {
-        const { isUserOnboarded } = await import('@/services/onboardingStatus');
-        const onboarded = await isUserOnboarded(effectiveId);
-        if (onboarded || !isSignUp) {
-          router.replace('/today' as never);
-          return;
-        }
-      }
-
-      router.replace('/auth/welcome-celebration' as never);
     }
+    // Auth-state navigation above chooses Today or goal setup. Login never creates a new account.
   };
 
   const isAppleFirst = Platform.OS === 'ios';

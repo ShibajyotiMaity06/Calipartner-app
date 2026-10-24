@@ -31,7 +31,7 @@ export function getDb(): Promise<SQLite.SQLiteDatabase> {
   return opening;
 }
 
-function createWebDb(): SQLite.SQLiteDatabase {
+export function createWebDb(): SQLite.SQLiteDatabase {
   const STORAGE_KEY = 'calipartner_web_db';
   let memory: Record<string, Record<string, unknown>[]> = {
     local_water_logs: [],
@@ -65,14 +65,13 @@ function createWebDb(): SQLite.SQLiteDatabase {
     // fallback to in-memory
   }
 
+  let inTransaction = false;
+  let transactionTail: Promise<void> = Promise.resolve();
   const persist = () => {
-    try {
-      if (typeof localStorage !== 'undefined') {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(memory));
-      }
-    } catch {
-      // ignore
-    }
+    if (inTransaction) return;
+    // A failed durable save must be reported rather than silently pretending it was saved.
+    if (typeof localStorage === 'undefined') throw new Error('Browser storage unavailable');
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(memory));
   };
 
   return {
@@ -80,7 +79,26 @@ function createWebDb(): SQLite.SQLiteDatabase {
       // no-op for CREATE TABLE / PRAGMA in web mock
     },
     async withTransactionAsync<T>(action: () => Promise<T>): Promise<T> {
-      return action();
+      const previous = transactionTail;
+      let release!: () => void;
+      transactionTail = new Promise<void>((resolve) => {
+        release = resolve;
+      });
+      await previous;
+      const snapshot = JSON.stringify(memory);
+      inTransaction = true;
+      try {
+        const result = await action();
+        inTransaction = false;
+        persist();
+        return result;
+      } catch (error) {
+        memory = JSON.parse(snapshot);
+        throw error;
+      } finally {
+        inTransaction = false;
+        release();
+      }
     },
     async runAsync(sql: string, ...args: unknown[]) {
       const params = (Array.isArray(args[0]) ? args[0] : args) as unknown[];
@@ -93,13 +111,25 @@ function createWebDb(): SQLite.SQLiteDatabase {
           const cols = match[2]!.split(',').map((c) => c.trim());
           const list = memory[table] || (memory[table] = []);
 
-          const colCount = cols.length;
-          const rowCount = Math.max(1, Math.floor(params.length / colCount));
+          const valuesMatch = sql.match(/values\s*\(([^)]+)\)/i);
+          if (!valuesMatch) throw new Error('Unsupported INSERT values');
+          const values = valuesMatch[1]!.split(',').map((value) => value.trim());
+          const parameterCount = values.filter((value) => value === '?').length;
+          const rowCount = Math.max(1, Math.floor(params.length / parameterCount));
 
-          for (let r = 0; r * colCount < params.length; r++) {
+          for (let r = 0; r < rowCount; r++) {
             const row: Record<string, unknown> = {};
-            for (let c = 0; c < colCount; c++) {
-              row[cols[c]!] = params[r * colCount + c];
+            let parameterIndex = r * parameterCount;
+            for (let c = 0; c < cols.length; c++) {
+              const value = values[c]!;
+              row[cols[c]!] =
+                value === '?'
+                  ? params[parameterIndex++]
+                  : /^null$/i.test(value)
+                    ? null
+                    : value.startsWith("'")
+                      ? value.slice(1, -1)
+                      : Number(value);
             }
             if (table === 'local_activity_days') {
               const existingIdx = list.findIndex(
@@ -111,9 +141,7 @@ function createWebDb(): SQLite.SQLiteDatabase {
               }
             }
             if (table === 'local_goal_profiles') {
-              const existingIdx = list.findIndex(
-                (ex) => ex.id === row.id || (ex.user_id === row.user_id && row.user_id),
-              );
+              const existingIdx = list.findIndex((ex) => ex.id === row.id);
               if (existingIdx >= 0) {
                 list[existingIdx] = { ...list[existingIdx], ...row };
                 continue;
@@ -126,11 +154,72 @@ function createWebDb(): SQLite.SQLiteDatabase {
                 continue;
               }
             }
+            if (table === 'outbox') {
+              const existingIdx = list.findIndex((ex) => ex.id === row.id);
+              if (existingIdx >= 0) {
+                list[existingIdx] = { ...list[existingIdx], ...row };
+                continue;
+              }
+            }
             list.push(row);
           }
           persist();
           return { lastInsertRowId: list.length, changes: rowCount };
         }
+      }
+
+      // Target persistence and its outbox must behave the same on web and native SQLite.
+      const clearTable = sql.trim().match(/^delete\s+from\s+(\w+)\s*;?$/i);
+      if (clearTable) {
+        const table = clearTable[1]!;
+        const changes = memory[table]?.length ?? 0;
+        memory[table] = [];
+        persist();
+        return { lastInsertRowId: 0, changes };
+      }
+      const targetMutation = sql.match(
+        /^(update|delete from)\s+(local_goal_profiles|local_health_screening|outbox)\b/i,
+      );
+      if (targetMutation) {
+        const table = targetMutation[2]!;
+        const list = memory[table] || [];
+        const assignments = lower.startsWith('update')
+          ? sql.match(/set\s+([\s\S]+?)\s+where/i)![1]!.split(',')
+          : [];
+        let parameterIndex = 0;
+        const updates: Record<string, unknown> = {};
+        const increments: Record<string, { source: string; amount: number }> = {};
+        for (const assignment of assignments) {
+          const [column, rawValue] = assignment.split('=').map((part) => part.trim());
+          const increment = rawValue?.match(/^(\w+)\s*\+\s*(\d+)$/);
+          if (increment) {
+            increments[column!] = { source: increment[1]!, amount: Number(increment[2]) };
+            continue;
+          }
+          updates[column!] = rawValue === '?' ? params[parameterIndex++] : Number(rawValue);
+        }
+        const conditions =
+          sql
+            .match(/where\s+([\s\S]+)/i)?.[1]
+            ?.replace(/;$/, '')
+            .split(/\s+and\s+/i) ?? [];
+        const filters = conditions.map((condition) => {
+          const [column] = condition.split('=');
+          return { column: column!.trim(), value: params[parameterIndex++] };
+        });
+        const matches = (row: Record<string, unknown>) =>
+          filters.every(({ column, value }) => row[column] === value);
+        const changes = list.filter(matches).length;
+        if (lower.startsWith('delete')) memory[table] = list.filter((row) => !matches(row));
+        else
+          for (const row of list.filter(matches)) {
+            Object.assign(row, updates);
+            for (const [column, increment] of Object.entries(increments)) {
+              row[column] = Number(row[increment.source] ?? 0) + increment.amount;
+            }
+          }
+        persist();
+        return { lastInsertRowId: 0, changes };
       }
 
       if (lower.startsWith('update')) {
@@ -205,6 +294,10 @@ function createWebDb(): SQLite.SQLiteDatabase {
     async getAllAsync<T>(sql: string, ...args: unknown[]): Promise<T[]> {
       const params = (Array.isArray(args[0]) ? args[0] : args) as unknown[];
       const lower = sql.toLowerCase();
+
+      if (lower.includes('from sqlite_master')) {
+        return Object.keys(memory).map((name) => ({ name })) as T[];
+      }
 
       if (lower.includes('from local_water_logs')) {
         const [userId, localDate] = params as [string, string];
@@ -318,7 +411,15 @@ function createWebDb(): SQLite.SQLiteDatabase {
 
       if (lower.includes('from local_goal_profiles')) {
         const list = memory.local_goal_profiles || memory.goal_profiles || [];
-        return list as unknown as T[];
+        return list.filter((row) => !params[0] || row.user_id === params[0]) as unknown as T[];
+      }
+
+      if (lower.includes('from outbox')) {
+        return (memory.outbox || []).filter(
+          (row) =>
+            !lower.includes("'goal_profiles'") ||
+            ['goal_profiles', 'health_screening'].includes(String(row.entity)),
+        ) as unknown as T[];
       }
 
       if (lower.includes('from local_food_entries')) {
@@ -344,17 +445,23 @@ function createWebDb(): SQLite.SQLiteDatabase {
       if (lower.includes('from local_goal_profiles')) {
         const list = memory.local_goal_profiles || memory.goal_profiles || [];
         if (list.length > 0) {
-          const sorted = [...list].sort((a, b) => {
-            const timeA = String(a.effective_from || a.created_at || '');
-            const timeB = String(b.effective_from || b.created_at || '');
-            return timeB.localeCompare(timeA);
-          });
+          const sorted = list
+            .filter(
+              (row) =>
+                (!params[0] || row.user_id === params[0]) &&
+                (!lower.includes('is_synced = 0') || row.is_synced === 0),
+            )
+            .sort((a, b) => {
+              const timeA = String(a.effective_from || a.created_at || '');
+              const timeB = String(b.effective_from || b.created_at || '');
+              return timeB.localeCompare(timeA);
+            });
           if (params.length > 0 && params[0]) {
             const userId = String(params[0]);
             const match = sorted.find((p) => p.user_id === userId);
             if (match) return match as unknown as T;
           }
-          return sorted[0] as unknown as T;
+          return (sorted[0] ?? null) as unknown as T;
         }
         return null;
       }
@@ -362,17 +469,19 @@ function createWebDb(): SQLite.SQLiteDatabase {
       if (lower.includes('from local_health_screening')) {
         const list = memory.local_health_screening || memory.health_screenings || [];
         if (list.length > 0) {
-          const sorted = [...list].sort((a, b) => {
-            const timeA = String(a.updated_at || a.created_at || '');
-            const timeB = String(b.updated_at || b.created_at || '');
-            return timeB.localeCompare(timeA);
-          });
+          const sorted = list
+            .filter((row) => !params[0] || row.user_id === params[0])
+            .sort((a, b) => {
+              const timeA = String(a.updated_at || a.created_at || '');
+              const timeB = String(b.updated_at || b.created_at || '');
+              return timeB.localeCompare(timeA);
+            });
           if (params.length > 0 && params[0]) {
             const userId = String(params[0]);
             const match = sorted.find((s) => s.user_id === userId);
             if (match) return match as unknown as T;
           }
-          return sorted[0] as unknown as T;
+          return (sorted[0] ?? null) as unknown as T;
         }
         return null;
       }
@@ -440,6 +549,27 @@ function createWebDb(): SQLite.SQLiteDatabase {
       return null;
     },
   } as unknown as SQLite.SQLiteDatabase;
+}
+
+/** One-time administrative fresh start. Auth tokens, identities, and remote memberships are untouched. */
+export async function clearTrackingDataForReset(customDb?: SQLite.SQLiteDatabase): Promise<void> {
+  const db = customDb ?? (await getDb());
+  const tables = await db.getAllAsync<{ name: string }>(
+    `SELECT name FROM sqlite_master WHERE type = 'table'`,
+  );
+  const reset = async () => {
+    for (const { name } of tables) {
+      if (
+        /^local_[a-z_]+$/.test(name) ||
+        ['outbox', 'guest_entries', 'sync_cursors', 'goal_profiles', 'health_screenings'].includes(
+          name,
+        )
+      ) {
+        await db.runAsync(`DELETE FROM ${name}`);
+      }
+    }
+  };
+  await db.withTransactionAsync(reset);
 }
 
 /**

@@ -81,6 +81,9 @@ describe('OnboardingStateMachine', () => {
     machine.setWeeklyRate(0.5);
 
     const goalProfile = machine.buildGoalProfile('test-user-123');
+    expect(goalProfile.id).toMatch(
+      /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i,
+    );
     expect(goalProfile.user_id).toBe('test-user-123');
     expect(goalProfile.daily_calorie_target).toBe(2044);
     expect(goalProfile.protein_grams).toBe(140);

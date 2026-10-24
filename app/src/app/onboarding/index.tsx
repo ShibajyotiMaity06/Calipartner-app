@@ -51,12 +51,16 @@ export default function OnboardingScreen() {
   useEffect(() => {
     let mounted = true;
     if (user?.id) {
-      import('@/services/onboardingStatus').then(async ({ isUserOnboarded }) => {
-        const onboarded = await isUserOnboarded(user.id);
-        if (mounted && onboarded) {
-          router.replace('/today' as never);
-        }
-      });
+      import('@/services/onboardingStatus')
+        .then(async ({ isUserOnboarded }) => {
+          const onboarded = await isUserOnboarded(user.id);
+          if (mounted && onboarded) {
+            router.replace('/today' as never);
+          }
+        })
+        .catch(() => {
+          if (mounted) setSaveError(t('common.targetUnavailable'));
+        });
     }
     return () => {
       mounted = false;
@@ -274,9 +278,10 @@ export default function OnboardingScreen() {
         machine.setStepAndWaterGoals(customized.stepGoal, customized.waterMlGoal);
       }
       const goalProfile = machine.buildGoalProfile(effectiveUserId);
-      if (customized?.proteinGrams) goalProfile.protein_grams = customized.proteinGrams;
-      if (customized?.carbGrams) goalProfile.carb_grams = customized.carbGrams;
-      if (customized?.fatGrams) goalProfile.fat_grams = customized.fatGrams;
+      if (customized?.proteinGrams !== undefined)
+        goalProfile.protein_grams = customized.proteinGrams;
+      if (customized?.carbGrams !== undefined) goalProfile.carb_grams = customized.carbGrams;
+      if (customized?.fatGrams !== undefined) goalProfile.fat_grams = customized.fatGrams;
       if (customized?.stepGoal) goalProfile.step_goal = customized.stepGoal;
       if (customized?.waterMlGoal) goalProfile.water_ml_goal = customized.waterMlGoal;
 
@@ -284,8 +289,8 @@ export default function OnboardingScreen() {
 
       // Save goal profile
       const goalRes = await saveGoalProfile(goalProfile);
-      if (!goalRes.success && goalRes.error && user?.id) {
-        setSaveError(goalRes.error);
+      if (!goalRes.success) {
+        setSaveError(goalRes.error ?? t('common.errorBody'));
         setIsSaving(false);
         return;
       }
@@ -298,7 +303,12 @@ export default function OnboardingScreen() {
         try {
           const { getSupabase } = await import('@/lib/supabase');
           const supabase = getSupabase();
-          const targetName = snapshot.nickname?.trim() || profile?.nickname || 'Maity';
+          const targetName =
+            snapshot.nickname?.trim() ||
+            profile?.nickname ||
+            user.user_metadata?.name ||
+            profile?.username;
+          if (!targetName) throw new Error('Profile nickname is required');
 
           const { data: existingProfile } = await supabase
             .from('profiles')
@@ -308,7 +318,8 @@ export default function OnboardingScreen() {
 
           const username =
             existingProfile?.username || `user_${user.id.replace(/-/g, '').slice(0, 10)}`;
-          const dob = snapshot.dateOfBirth || profile?.date_of_birth || '2000-01-01';
+          const dob = snapshot.dateOfBirth || profile?.date_of_birth;
+          if (!dob) throw new Error('Date of birth is required');
 
           await supabase.from('profiles').upsert({
             id: user.id,

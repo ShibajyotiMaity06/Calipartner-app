@@ -1,6 +1,6 @@
-import React, { createContext, useCallback, useContext, useEffect, useState } from 'react';
-import { Platform } from 'react-native';
-import type { Session, User } from '@supabase/supabase-js';
+import React, { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
+import { AppState, Platform } from 'react-native';
+import { isAuthRetryableFetchError, type Session, type User } from '@supabase/supabase-js';
 import {
   isDisposableEmail,
   type CreateProfileInput,
@@ -9,7 +9,10 @@ import {
 } from '@calipartner/core';
 import { getDb } from '@/db';
 import { createLogger } from '@/lib/logger';
-import { getSupabase } from '@/lib/supabase';
+import { AUTH_STORAGE_KEY, getSupabase, sessionStorage } from '@/lib/supabase';
+import { secureStoreAdapter } from '@/lib/secureStore';
+import { readOfflineSession } from '@/services/sessionPersistence';
+import { useNetworkStatus } from '@/hooks/useNetworkStatus';
 import { migrateGuestData } from '@/services/guestMigration';
 
 const log = createLogger('auth-context');
@@ -21,7 +24,7 @@ interface AuthContextValue {
   isLoading: boolean;
   isGuest: boolean;
   needsProfileSetup: boolean;
-  signInWithOtp: (email: string) => Promise<{ error: Error | null }>;
+  signInWithOtp: (email: string, shouldCreateUser?: boolean) => Promise<{ error: Error | null }>;
   verifyOtp: (email: string, token: string) => Promise<{ error: Error | null }>;
   signInWithGoogle: () => Promise<{ error: Error | null }>;
   signInWithApple: () => Promise<{ error: Error | null }>;
@@ -42,9 +45,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isGuest, setIsGuest] = useState(false);
+  const [profileCheckedUserId, setProfileCheckedUserId] = useState<string | null>(null);
+  const activeUserId = useRef<string | null>(null);
+  const { isOnline } = useNetworkStatus();
 
   const fetchProfile = useCallback(async (userId: string) => {
+    const cacheKey = `calipartner.profile.${userId}`;
     try {
+      const cached = await secureStoreAdapter.getItem(cacheKey);
+      if (activeUserId.current !== userId) return;
+      if (cached) setProfile(JSON.parse(cached) as Profile);
       const supabase = getSupabase();
       const { data, error } = await supabase
         .from('profiles')
@@ -54,13 +64,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       if (error) {
         log.warn('Failed to fetch profile', error.message);
-        setProfile(null);
         return;
       }
+      if (activeUserId.current !== userId) return;
       setProfile((data as Profile) ?? null);
+      setProfileCheckedUserId(userId);
+      if (data) await secureStoreAdapter.setItem(cacheKey, JSON.stringify(data));
     } catch (e: unknown) {
       log.error('Error fetching profile', e instanceof Error ? e.message : String(e));
-      setProfile(null);
     }
   }, []);
 
@@ -74,93 +85,71 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     let mounted = true;
     const supabase = getSupabase();
 
-    // Detect OAuth tokens in URL hash on web (e.g. after Google OAuth redirect)
-    const browserWin =
-      typeof globalThis !== 'undefined' && 'window' in globalThis
-        ? (
-            globalThis as unknown as {
-              window: {
-                location: { hash: string; pathname: string; origin: string };
-                history: { replaceState: (a: unknown, b: string, c: string) => void };
-              };
-            }
-          ).window
-        : null;
-
-    if (Platform.OS === 'web' && browserWin && browserWin.location?.hash) {
-      try {
-        const hash = browserWin.location.hash.startsWith('#')
-          ? browserWin.location.hash.substring(1)
-          : browserWin.location.hash;
-        const params = new URLSearchParams(hash);
-        const accessToken = params.get('access_token');
-        const refreshToken = params.get('refresh_token');
-        if (accessToken && refreshToken) {
-          log.info('Detected OAuth tokens in URL hash, establishing session...');
-          supabase.auth
-            .setSession({ access_token: accessToken, refresh_token: refreshToken })
-            .then(async ({ data, error }) => {
-              if (error) {
-                log.warn('Failed to set session from hash', error.message);
-              } else if (data.session && mounted) {
-                setSession(data.session);
-                setUser(data.session.user);
-                setIsGuest(false);
-                if (data.session.user?.id) {
-                  await fetchProfile(data.session.user.id);
-                }
-              }
-              try {
-                browserWin.history.replaceState(null, '', browserWin.location.pathname);
-              } catch {}
-            })
-            .catch((err) => {
-              log.error('Error in setSession from hash', String(err));
-            });
-        }
-      } catch (e) {
-        log.warn('Failed to parse URL hash for OAuth tokens', String(e));
-      }
-    }
-
-    supabase.auth
-      .getSession()
-      .then(async ({ data: { session } }) => {
-        if (!mounted) return;
-        setSession(session);
-        setUser(session?.user ?? null);
-        if (session?.user?.id) {
-          setIsGuest(false);
-          await fetchProfile(session.user.id);
-        }
-      })
-      .catch((err) => {
-        log.warn('getSession error', String(err));
-      })
-      .finally(() => {
-        if (mounted) setIsLoading(false);
-      });
-
-    const { data: authListener } = supabase.auth.onAuthStateChange(async (_event, newSession) => {
+    const applySession = (nextSession: Session | null) => {
       if (!mounted) return;
-      setSession(newSession);
-      setUser(newSession?.user ?? null);
-      if (newSession?.user?.id) {
-        setIsGuest(false);
-        await fetchProfile(newSession.user.id);
-      } else {
-        setProfile(null);
-      }
+      activeUserId.current = nextSession?.user.id ?? null;
+      setSession(nextSession);
+      setUser(nextSession?.user ?? null);
+      if (nextSession) setIsGuest(false);
+      else setProfile(null);
       setIsLoading(false);
+    };
+
+    // Auth callbacks must finish synchronously. Database requests here can deadlock refresh.
+    const { data: authListener } = supabase.auth.onAuthStateChange((_event, newSession) => {
+      if (_event === 'INITIAL_SESSION') return; // restoreSession handles expired offline sessions.
+      applySession(newSession);
     });
+
+    const restoreSession = async () => {
+      try {
+        if (isOnline === false) {
+          applySession(await readOfflineSession(sessionStorage, AUTH_STORAGE_KEY));
+          return;
+        }
+        const { data, error } = await supabase.auth.getSession();
+        if (error && isAuthRetryableFetchError(error)) {
+          applySession(await readOfflineSession(sessionStorage, AUTH_STORAGE_KEY));
+        } else {
+          applySession(data.session);
+        }
+      } catch (error) {
+        log.warn('Session restore failed', error instanceof Error ? error.message : String(error));
+        if (mounted) setIsLoading(false);
+      }
+    };
+    void restoreSession();
+
+    const handleAppState = (state: string) => {
+      if (state === 'active') {
+        // Checking storage also enforces the inactivity window after a long background period.
+        void restoreSession();
+        if (isOnline !== false) supabase.auth.startAutoRefresh();
+      } else {
+        supabase.auth.stopAutoRefresh();
+      }
+    };
+    const appStateListener =
+      Platform.OS === 'web' ? null : AppState.addEventListener('change', handleAppState);
+    if (Platform.OS !== 'web' && AppState.currentState === 'active' && isOnline !== false) {
+      supabase.auth.startAutoRefresh();
+    }
 
     return () => {
       mounted = false;
-      authListener?.subscription.unsubscribe();
+      authListener.subscription.unsubscribe();
+      appStateListener?.remove();
+      if (Platform.OS !== 'web') supabase.auth.stopAutoRefresh();
     };
-  }, [fetchProfile]);
+  }, [isOnline]);
 
-  const signInWithOtp = useCallback(async (email: string) => {
+  useEffect(() => {
+    setProfile(null);
+    setProfileCheckedUserId(null);
+    if (user?.id) void fetchProfile(user.id);
+  }, [fetchProfile, user?.id]);
+
+  const signInWithOtp = useCallback(async (email: string, shouldCreateUser = false) => {
     const cleanEmail = email.trim();
     if (isDisposableEmail(cleanEmail)) {
       return { error: new Error('DISPOSABLE_EMAIL') };
@@ -171,7 +160,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const { error } = await supabase.auth.signInWithOtp({
         email: cleanEmail,
         options: {
-          shouldCreateUser: true,
+          shouldCreateUser,
         },
       });
       if (error) {
@@ -281,6 +270,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } catch (e) {
       log.warn('signOut error', String(e));
     } finally {
+      activeUserId.current = null;
       setSession(null);
       setUser(null);
       setProfile(null);
@@ -302,6 +292,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
 
       // Wipe all on-device SQLite database records and caches (H21 fix)
+      if (user?.id) await secureStoreAdapter.removeItem(`calipartner.profile.${user.id}`);
       try {
         const { clearAllLocalData } = await import('@/db');
         await clearAllLocalData();
@@ -314,7 +305,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } catch (e: unknown) {
       return { error: e instanceof Error ? e : new Error(String(e)) };
     }
-  }, [signOut]);
+  }, [signOut, user?.id]);
 
   const createProfile = useCallback(
     async (input: CreateProfileInput) => {
@@ -416,7 +407,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     [fetchProfile, user?.id],
   );
 
-  const needsProfileSetup = Boolean(user && !profile && !isLoading);
+  const needsProfileSetup = Boolean(
+    user && !profile && profileCheckedUserId === user.id && !isLoading,
+  );
 
   return (
     <AuthContext.Provider

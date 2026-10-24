@@ -15,11 +15,15 @@ export default function WelcomeCelebrationScreen() {
   useEffect(() => {
     let mounted = true;
     if (user?.id) {
-      isUserOnboarded(user.id).then((onboarded) => {
-        if (mounted && onboarded) {
-          router.replace('/today' as never);
-        }
-      });
+      isUserOnboarded(user.id)
+        .then((onboarded) => {
+          if (mounted && onboarded) {
+            router.replace('/today' as never);
+          }
+        })
+        .catch(() => {
+          if (mounted) router.replace('/today' as never);
+        });
     }
     return () => {
       mounted = false;

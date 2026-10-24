@@ -1,4 +1,5 @@
 import { createLogger } from '@/lib/logger';
+import { beforeTrackingSync } from './accountSyncGate';
 
 const log = createLogger('syncService');
 
@@ -201,6 +202,7 @@ export async function flushOutbox(
   supabase: SupabaseSyncClient,
   limit = 50,
 ): Promise<{ processed: number; succeeded: number; failed: number }> {
+  await beforeTrackingSync();
   const items = await getPendingOutboxItems(db, limit);
   if (items.length === 0) {
     return { processed: 0, succeeded: 0, failed: 0 };

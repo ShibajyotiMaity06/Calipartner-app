@@ -8,6 +8,7 @@ import {
   type Sex,
   type Units,
 } from '@calipartner/core';
+import { generateClientUuid } from './foodService';
 
 export type OnboardingStep =
   | 'goal'
@@ -345,7 +346,7 @@ export class OnboardingStateMachine {
 
     const now = new Date().toISOString();
     return {
-      id: `gp-${userId}-${Date.now()}`,
+      id: generateClientUuid(),
       user_id: userId,
       goal: this.state.goal,
       activity_level: this.state.activityLevel,

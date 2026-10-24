@@ -15,7 +15,12 @@ import {
   getWeightSummary,
   logWeight,
 } from './weightService';
-import { getActivityDay, getActivityMetrics, upsertActivityDay } from './activityService';
+import {
+  getActivityDay,
+  getActivityWeek,
+  getActivityMetrics,
+  upsertActivityDay,
+} from './activityService';
 import {
   flushOutbox,
   getPendingOutboxItems,
@@ -107,6 +112,21 @@ function createTestDb(): SyncDb {
     },
   };
 }
+
+it('uses only the current account recorded step history and leaves missing days unknown', async () => {
+  const db = createTestDb();
+  await upsertActivityDay(db, 'user-1', { localDate: '2026-10-22', steps: 321, source: 'manual' });
+  await upsertActivityDay(db, 'other-user', {
+    localDate: '2026-10-23',
+    steps: 9999,
+    source: 'manual',
+  });
+  const week = await getActivityWeek(db, 'user-1', '2026-10-23');
+  expect(week).toHaveLength(7);
+  expect(week[0]).toEqual({ localDate: '2026-10-17', steps: null });
+  expect(week[5]).toEqual({ localDate: '2026-10-22', steps: 321 });
+  expect(week[6]).toEqual({ localDate: '2026-10-23', steps: null });
+});
 
 interface MockRemoteStores {
   water_logs: Array<Record<string, unknown>>;

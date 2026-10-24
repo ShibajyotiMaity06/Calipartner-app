@@ -238,7 +238,7 @@ describe('TargetsService', () => {
       },
     } as unknown as SupabaseClient;
 
-    const flushResult = await flushTargetsOutbox(db, mockSupabase);
+    const flushResult = await flushTargetsOutbox(db, mockSupabase, userId);
     expect(flushResult.flushedCount).toBe(2);
     expect(db.tables.outbox).toHaveLength(0);
     expect(remoteUpserts.goal_profiles).toHaveLength(1);

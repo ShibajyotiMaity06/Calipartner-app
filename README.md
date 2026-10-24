@@ -1,4 +1,5 @@
 # CaliPartner
+
 hi ra
 Monorepo (npm workspaces):
 
@@ -96,6 +97,61 @@ When deploying Edge Functions to Supabase Cloud, set the required secrets:
 ```bash
 npx supabase secrets set SUPABASE_SERVICE_ROLE_KEY=<service-role-secret>
 ```
+
+### E. Returning-user sessions
+
+The app persists encrypted native sessions (including large OAuth sessions), refreshes tokens when
+the app is active, and retains cached targets during offline use. After 30 consecutive days without
+a successful sign-in or token refresh, it requests **sign in**, preserving saved targets and logs.
+
+For the hosted project, check **Authentication > Settings > Sessions**:
+
+- Disable the absolute session timebox and single-session restriction, so normal daily use or
+  another device does not force a new OTP.
+- Set the inactivity timeout to **30 days / 720 hours** when the project plan supports it.
+- Keep JWT expiry at **3600 seconds**; refresh tokens maintain the session without another OTP.
+
+`supabase/config.toml` sets the local inactivity timeout to `720h`; it does not update a hosted
+project automatically. Hosted session limits require Supabase Pro or above. See
+[Supabase session settings](https://supabase.com/docs/guides/auth/sessions).
+
+Verify on a development build: sign in, record custom targets, restart, then reopen offline and
+confirm the targets remain. Test walking with the phone stationary and with sensor access denied;
+the count must stay unchanged without hardware events. Android historical step queries are not
+supported by Expo Pedometer; live walking sessions record measured steps, with manual entry
+available when a sensor is unavailable. The explicit fresh start below removes old tracking data;
+the app does not estimate a step count when the sensor is unavailable.
+
+### F. Requested fresh start (24 October 2026)
+
+`supabase/maintenance/fresh_start_20261023.sql` is a one-time, explicitly requested data cleanup.
+It preserves auth identities/sessions, profiles, rooms, room memberships, entitlement and billing
+records, and trial-abuse/security records. It clears personal tracking, targets, preferences,
+consents and room activity/chat data. Its fixed reset epoch prevents a repeat run from erasing
+newly entered data.
+
+On the updated app's next online check, stale local tracking and queued writes are cleared once
+before synchronization; login tokens are retained and accounts return to goal setup. After saving
+new targets, future restarts and logins retain them. Server guards reject queued records created
+before the reset, including uploads from older installed clients. A failed network check keeps
+cached access and pending local saves available without uploading unchecked data.
+
+The hosted project is currently on Supabase Free: updating the server inactivity timeout returns
+HTTP 402. Its existing settings already have no timebox/single-session restriction and enable
+refresh rotation. The app implements the requested 30-day offline reauthentication window;
+server-enforced inactivity limits require a separate Supabase hosting upgrade, unrelated to users'
+CaliPartner Pro subscriptions.
+
+The live migration ledger is behind several older repository migrations. Do not blindly apply
+all pending migrations: `20261021000003_fix_progress_target_calories_and_leave_room.sql` includes
+membership deletions. The targeted `20261024035839_fix_saved_target_queries.sql` and
+`20261024040216_reject_stale_tracking_after_reset.sql` repairs are applied separately and do not
+alter subscriptions or memberships.
+
+Cleanup status: the two backend repairs are deployed, but the destructive all-account cleanup
+was rejected by automatic approval review and has **not** run. An administrator can review and
+execute `supabase/maintenance/fresh_start_20261023.sql` in the Supabase SQL editor. A verified
+recovery backup is stored outside the repository under the user's local AppData directory.
 
 ---
 

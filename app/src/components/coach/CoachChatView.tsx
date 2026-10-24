@@ -165,6 +165,7 @@ export function CoachChatView({ onBack, initialConversationId }: CoachChatViewPr
       let suggestions: CoachSuggestion[] | undefined;
 
       try {
+        if (!currentGoalProfile) throw new Error(t('common.targetUnavailable'));
         const { queryAiCoach } = await import('@/services/aiCoachClient');
 
         const historyPayload = [
@@ -175,9 +176,9 @@ export function CoachChatView({ onBack, initialConversationId }: CoachChatViewPr
         const aiResult = await queryAiCoach(
           historyPayload,
           {
-            calorieTarget: currentGoalProfile?.daily_calorie_target ?? 2000,
-            proteinTarget: currentGoalProfile?.protein_grams ?? 140,
-            goal: currentGoalProfile?.goal ?? 'maintain',
+            calorieTarget: currentGoalProfile.daily_calorie_target,
+            proteinTarget: currentGoalProfile.protein_grams,
+            goal: currentGoalProfile.goal,
           },
           currentConversationId,
         );

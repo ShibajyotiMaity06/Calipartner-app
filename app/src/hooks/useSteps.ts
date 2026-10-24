@@ -1,8 +1,18 @@
-import { useCallback, useEffect, useState } from 'react';
-import { calculateStrideLengthCm, type ActivityDay, type ActivitySource } from '@calipartner/core';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import {
+  calculateStrideLengthCm,
+  getLocalDateString,
+  type ActivityDay,
+  type ActivitySource,
+} from '@calipartner/core';
 import { useAuth } from '@/contexts/AuthContext';
 import { getDb } from '@/db';
-import { getActivityDay, getActivityMetrics, upsertActivityDay } from '@/services/activityService';
+import {
+  getActivityDay,
+  getActivityWeek,
+  getActivityMetrics,
+  upsertActivityDay,
+} from '@/services/activityService';
 import {
   getStepPermissionStatus,
   readDeviceSteps,
@@ -22,6 +32,10 @@ export interface UseStepsResult {
   progressPercent: number;
   permissionStatus: StepPermissionStatus;
   loading: boolean;
+  error: string | null;
+  week: { localDate: string; steps: number | null }[];
+  logPedometerSession: (baseline: number, measuredSteps: number) => Promise<void>;
+  updateStepGoal: (goal: number) => Promise<void>;
   requestPermission: () => Promise<boolean>;
   logManualSteps: (steps: number, distanceM?: number) => Promise<ActivityDay>;
   syncFromPlatform: () => Promise<void>;
@@ -29,43 +43,57 @@ export interface UseStepsResult {
 }
 
 export function useSteps(date?: string): UseStepsResult {
-  const localDate = date ?? new Date().toISOString().split('T')[0]!;
-  const { currentGoalProfile } = useTargets();
-  const { user } = useAuth();
+  const { currentGoalProfile, updateDailyGoals } = useTargets();
+  const { user, profile } = useAuth();
+  const localDate =
+    date ??
+    getLocalDateString(
+      new Date(),
+      profile?.timezone ?? Intl.DateTimeFormat().resolvedOptions().timeZone,
+    );
 
   const [activity, setActivity] = useState<ActivityDay | null>(null);
   const [permissionStatus, setPermissionStatus] = useState<StepPermissionStatus>('not_requested');
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [week, setWeek] = useState<{ localDate: string; steps: number | null }[]>([]);
 
   const goalSteps = currentGoalProfile?.step_goal ?? 8000;
-  const userWeightKg = currentGoalProfile?.current_weight_kg ?? 70;
-  const userStrideCm = calculateStrideLengthCm(170, 'other');
+  const userWeightKg = currentGoalProfile?.current_weight_kg ?? 0;
+  const userStrideCm = profile?.height_cm
+    ? calculateStrideLengthCm(profile.height_cm, profile.sex)
+    : 0;
 
   const effectiveUserId = user?.id ?? currentGoalProfile?.user_id ?? 'guest-user';
+  const ownerKey = `${effectiveUserId}/${localDate}`;
+  const activeKey = useRef(ownerKey);
+  activeKey.current = ownerKey;
+  const [loadedKey, setLoadedKey] = useState<string | null>(null);
 
   const loadData = useCallback(async () => {
     try {
       setLoading(true);
       const db = await getDb();
 
-      let [act, perm] = await Promise.all([
+      const [act, perm, history] = await Promise.all([
         getActivityDay(db, effectiveUserId, localDate),
         getStepPermissionStatus(),
+        getActivityWeek(db, effectiveUserId, localDate),
       ]);
 
-      if (!act && effectiveUserId !== 'guest-user') {
-        const guestAct = await getActivityDay(db, 'guest-user', localDate);
-        if (guestAct) act = guestAct;
-      }
-
+      if (activeKey.current !== ownerKey) return;
+      setLoadedKey(ownerKey);
       setActivity(act);
       setPermissionStatus(perm);
-    } catch {
-      // Graceful fallback
+      setWeek(history);
+      setError(null);
+    } catch (error) {
+      if (activeKey.current === ownerKey)
+        setError(error instanceof Error ? error.message : String(error));
     } finally {
-      setLoading(false);
+      if (activeKey.current === ownerKey) setLoading(false);
     }
-  }, [effectiveUserId, localDate]);
+  }, [effectiveUserId, localDate, ownerKey]);
 
   useEffect(() => {
     void loadData();
@@ -95,6 +123,20 @@ export function useSteps(date?: string): UseStepsResult {
     return res.granted;
   };
 
+  const logPedometerSession = async (baseline: number, measuredSteps: number): Promise<void> => {
+    if (!Number.isInteger(measuredSteps) || measuredSteps <= 0) return;
+    const reading = await readDeviceSteps(localDate);
+    const db = await getDb();
+    await upsertActivityDay(db, effectiveUserId, {
+      localDate,
+      steps: reading?.steps ?? baseline + measuredSteps,
+      distanceM: reading?.distance_m,
+      source: 'pedometer',
+      strideLengthCm: userStrideCm,
+    });
+    await loadData();
+  };
+
   const logManualSteps = async (steps: number, distanceM?: number): Promise<ActivityDay> => {
     const db = await getDb();
     const updated = await upsertActivityDay(db, effectiveUserId, {
@@ -108,21 +150,27 @@ export function useSteps(date?: string): UseStepsResult {
     return updated;
   };
 
-  const metrics = getActivityMetrics(activity, userWeightKg, userStrideCm);
+  const currentActivity =
+    activity?.user_id === effectiveUserId && activity.local_date === localDate ? activity : null;
+  const metrics = getActivityMetrics(currentActivity, userWeightKg, userStrideCm);
   const progressPercent =
     goalSteps > 0 ? Math.min(100, Math.round((metrics.steps / goalSteps) * 100)) : 0;
 
   return {
-    activity,
+    activity: currentActivity,
     steps: metrics.steps,
     distanceM: metrics.distanceM,
     distanceKm: metrics.distanceKm,
     walkingCalories: metrics.walkingCalories,
-    source: activity?.source ?? null,
+    source: currentActivity?.source ?? null,
     goalSteps,
     progressPercent,
     permissionStatus,
     loading,
+    error,
+    week: loadedKey === ownerKey ? week : [],
+    logPedometerSession,
+    updateStepGoal: (goal) => updateDailyGoals(goal, currentGoalProfile?.water_ml_goal ?? 0),
     requestPermission,
     logManualSteps,
     syncFromPlatform,

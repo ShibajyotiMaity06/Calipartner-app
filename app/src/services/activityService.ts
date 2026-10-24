@@ -3,6 +3,7 @@ import {
   calculateDistanceFromStepsMeters,
   calculateWalkingCalories,
   deduplicateActivitySources,
+  addDaysToDateString,
   type ActivityDay,
   type ActivitySource,
 } from '@calipartner/core';
@@ -11,6 +12,16 @@ import { generateClientUuid } from './foodService';
 import { enqueueOutbox, type SyncDb } from './syncService';
 
 const log = createLogger('activityService');
+
+export async function getActivityWeek(db: SyncDb, userId: string, endDate: string) {
+  return Promise.all(
+    Array.from({ length: 7 }, async (_, index) => {
+      const localDate = addDaysToDateString(endDate, index - 6);
+      const activity = await getActivityDay(db, userId, localDate);
+      return { localDate, steps: activity?.steps ?? null };
+    }),
+  );
+}
 
 export interface RawActivityRow {
   id: string;

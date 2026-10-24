@@ -5,9 +5,12 @@ import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { ThemeProvider } from '@calipartner/ui';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
+import { SessionNavigationGuard } from '@/components/SessionNavigationGuard';
+import { AccountDataResetGate } from '@/components/AccountDataResetGate';
 import { ErrorState } from '@/components/ErrorState';
 import { LoadingState } from '@/components/LoadingState';
 import { AuthProvider } from '@/contexts/AuthContext';
+import { TargetsProvider } from '@/hooks/useTargets';
 import { getDb } from '@/db';
 import { createLogger } from '@/lib/logger';
 import { useTheme } from '@/theme/useTheme';
@@ -204,8 +207,13 @@ export default function RootLayout() {
           <StatusBar style="light" />
           <AppInitializationGate>
             <AuthProvider>
-              <HardwareBackHandler />
-              <Stack screenOptions={{ headerShown: false }} />
+              <AccountDataResetGate>
+                <TargetsProvider>
+                  <HardwareBackHandler />
+                  <SessionNavigationGuard />
+                  <Stack screenOptions={{ headerShown: false }} />
+                </TargetsProvider>
+              </AccountDataResetGate>
             </AuthProvider>
           </AppInitializationGate>
         </SafeAreaProvider>

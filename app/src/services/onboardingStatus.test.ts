@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { isUserOnboarded } from './onboardingStatus';
 import * as targetsModule from '@/services/targetsService';
 import type { TargetsDb } from '@/services/targetsService';
+import type { SupabaseClient } from '@supabase/supabase-js';
 
 describe('isUserOnboarded', () => {
   const fakeDb: TargetsDb = {
@@ -14,6 +15,25 @@ describe('isUserOnboarded', () => {
     expect(await isUserOnboarded(null, fakeDb)).toBe(false);
     expect(await isUserOnboarded(undefined, fakeDb)).toBe(false);
     expect(await isUserOnboarded('', fakeDb)).toBe(false);
+  });
+
+  it('reports unavailable server data instead of classifying an existing user as new', async () => {
+    vi.spyOn(targetsModule, 'getCurrentLocalGoalProfile').mockResolvedValue(null);
+    const query = {
+      select: vi.fn(),
+      eq: vi.fn(),
+      order: vi.fn(),
+      limit: vi.fn(),
+      maybeSingle: async () => ({ data: null, error: { message: 'Network unavailable' } }),
+    };
+    query.select.mockReturnValue(query);
+    query.eq.mockReturnValue(query);
+    query.order.mockReturnValue(query);
+    query.limit.mockReturnValue(query);
+    const client = { from: () => query } as unknown as SupabaseClient;
+    await expect(isUserOnboarded('existing-user', fakeDb, client)).rejects.toThrow(
+      'Network unavailable',
+    );
   });
 
   it('returns true if local goal profile exists in SQLite', async () => {
@@ -63,7 +83,7 @@ describe('isUserOnboarded', () => {
     expect(saveLocalSpy).toHaveBeenCalled();
   });
 
-  it('returns true if profile with nickname exists in Supabase', async () => {
+  it('requires saved targets even when an existing account has a nickname', async () => {
     vi.spyOn(targetsModule, 'getCurrentLocalGoalProfile').mockResolvedValue(null);
 
     const mockSupabase = {
@@ -95,7 +115,7 @@ describe('isUserOnboarded', () => {
     } as any;
 
     const result = await isUserOnboarded('user-789', fakeDb, mockSupabase);
-    expect(result).toBe(true);
+    expect(result).toBe(false);
   });
 
   it('returns false if neither local nor remote profile exists', async () => {

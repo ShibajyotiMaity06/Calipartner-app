@@ -9,7 +9,7 @@ interface SummaryStepProps {
   goal: Goal;
   stepGoal: number;
   waterMlGoal: number;
-  weightKg?: number;
+  weightKg: number;
   calculatedTargets: CalculateTargetsResult | null;
   isSaving: boolean;
   saveError: string | null;
@@ -38,8 +38,8 @@ export function SummaryStep({
   onGoBackToRate,
   onOpenHowCalculated: _onOpenHowCalculated,
 }: SummaryStepProps) {
-  const [customWaterMl, setCustomWaterMl] = React.useState<number>(waterMlGoal || 2500);
-  const [customStepGoal, setCustomStepGoal] = React.useState<number>(stepGoal || 8000);
+  const [customWaterMl, setCustomWaterMl] = React.useState<number>(waterMlGoal);
+  const [customStepGoal, setCustomStepGoal] = React.useState<number>(stepGoal);
   const [proteinMultiplier, setProteinMultiplier] = React.useState<number>(2.0);
 
   const handleSave = () => {
@@ -89,18 +89,14 @@ export function SummaryStep({
     );
   }
 
-  const rawWeight =
-    weightKg ??
-    (calculatedTargets?.macros?.proteinGrams
-      ? Math.round(calculatedTargets.macros.proteinGrams / 2.0)
-      : 70);
-  const targetKcal = calculatedTargets?.targetKcal ?? 2000;
-  const weeklyRateKg = calculatedTargets?.weeklyRateKg ?? 0.5;
+  const rawWeight = weightKg;
+  const targetKcal = calculatedTargets.targetKcal;
+  const weeklyRateKg = calculatedTargets.weeklyRateKg;
 
   // Recalculate protein grams based on user choice (1.5x vs 2.0x)
   const proteinGrams = Math.round(proteinMultiplier * rawWeight);
   const proteinKcal = proteinGrams * 4;
-  const fatGrams = calculatedTargets?.macros.fatGrams ?? Math.round((targetKcal * 0.25) / 9);
+  const fatGrams = calculatedTargets.macros.fatGrams;
   const fatKcal = fatGrams * 9;
   const remainingKcal = Math.max(0, targetKcal - proteinKcal - fatKcal);
   const carbGrams = Math.round(remainingKcal / 4);

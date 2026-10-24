@@ -14,6 +14,25 @@ export interface StepReading {
   source: ActivitySource;
 }
 
+/** Every update comes from hardware. Unsupported/denied sensors never synthesize steps. */
+export async function watchWalkingSteps(
+  onSteps: (steps: number) => void,
+): Promise<{ status: StepPermissionStatus; remove: () => void }> {
+  const unavailable = { status: 'unavailable' as const, remove: () => {} };
+  if (Platform.OS === 'web') return unavailable;
+  try {
+    if (!(await Pedometer.isAvailableAsync())) return unavailable;
+    const permission = await Pedometer.requestPermissionsAsync();
+    if (!permission.granted) return { status: 'denied', remove: () => {} };
+    const subscription = Pedometer.watchStepCount(({ steps }) => {
+      if (Number.isInteger(steps) && steps >= 0) onSteps(steps);
+    });
+    return { status: 'granted', remove: () => subscription.remove() };
+  } catch {
+    return unavailable;
+  }
+}
+
 const PERMISSION_STORE_KEY = 'calipartner_step_permission_status';
 
 /**
@@ -38,6 +57,7 @@ export async function getStepPermissionStatus(): Promise<StepPermissionStatus> {
       } else if (!perm.canAskAgain) {
         return 'denied';
       }
+      return perm.status === 'undetermined' ? 'not_requested' : 'denied';
     }
 
     const saved = await SecureStore.getItemAsync(PERMISSION_STORE_KEY);
@@ -95,11 +115,11 @@ export async function setStepPermissionDenied(): Promise<void> {
 
 /**
  * Reads daily steps from available hardware/platform sensors:
- * Priority 1: Built-in hardware pedometer date range query (iOS CMPedometer / Android Step Counter)
+ * iOS supports historical queries; Android requires live hardware updates or Health Connect.
  * Priority 2: Return null if unavailable so user's manual/logged session steps are preserved
  */
 export async function readDeviceSteps(localDate: string): Promise<StepReading | null> {
-  if (Platform.OS === 'web') {
+  if (Platform.OS !== 'ios') {
     return null;
   }
 
@@ -123,7 +143,7 @@ export async function readDeviceSteps(localDate: string): Promise<StepReading | 
     const endTime = now < endOfDay ? now : endOfDay;
 
     const result = await Pedometer.getStepCountAsync(startOfDay, endTime).catch(() => null);
-    if (result && typeof result.steps === 'number') {
+    if (result && Number.isInteger(result.steps) && result.steps >= 0) {
       return {
         steps: result.steps,
         distance_m: null,

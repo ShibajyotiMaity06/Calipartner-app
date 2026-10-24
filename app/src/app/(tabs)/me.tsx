@@ -41,12 +41,14 @@ import {
 import { useAuth } from '@/contexts/AuthContext';
 import { useRooms } from '@/hooks/useRooms';
 import { useRoomRequests } from '@/hooks/useRoomRequests';
+import { useTargets } from '@/hooks/useTargets';
 import { t } from '@/i18n';
 import { playClickSound } from '@/lib/sound';
 
 export default function MeScreen() {
   const router = useRouter();
   const { user, profile, isGuest, signOut, updateProfile } = useAuth();
+  const { currentGoalProfile, updateDailyGoals } = useTargets();
   const { rooms } = useRooms();
   const { incoming, outgoing, respondToRequest, cancelRequest } = useRoomRequests();
 
@@ -138,7 +140,9 @@ export default function MeScreen() {
               <Button
                 variant="primary"
                 label={t('auth.title')}
-                onPress={() => router.push('/auth/sign-in')}
+                onPress={() =>
+                  router.push({ pathname: '/auth/sign-in', params: { mode: 'signup' } })
+                }
                 testID="btn-me-signin"
                 style={styles.guestSignInBtn}
               />
@@ -505,13 +509,27 @@ export default function MeScreen() {
           }}
         />
 
-        <GoalsAndBodyModal
-          visible={showGoalsBody}
-          onClose={() => setShowGoalsBody(false)}
-          currentHeightCm={profile?.height_cm ?? 175}
-        />
+        {showGoalsBody && currentGoalProfile && profile && (
+          <GoalsAndBodyModal
+            visible={showGoalsBody}
+            onClose={() => setShowGoalsBody(false)}
+            currentHeightCm={profile.height_cm}
+            currentGoal={currentGoalProfile.goal}
+            currentRate={currentGoalProfile.weekly_rate_kg}
+            currentWeightKg={currentGoalProfile.current_weight_kg}
+            currentSex={profile.sex}
+          />
+        )}
 
-        <DailyGoalsModal visible={showDailyGoals} onClose={() => setShowDailyGoals(false)} />
+        {showDailyGoals && currentGoalProfile && (
+          <DailyGoalsModal
+            visible={showDailyGoals}
+            onClose={() => setShowDailyGoals(false)}
+            currentStepGoal={currentGoalProfile.step_goal}
+            currentWaterGoalMl={currentGoalProfile.water_ml_goal}
+            onSave={({ stepGoal, waterGoalMl }) => updateDailyGoals(stepGoal, waterGoalMl)}
+          />
+        )}
 
         <PrivacySettingsModal
           visible={showPrivacy}

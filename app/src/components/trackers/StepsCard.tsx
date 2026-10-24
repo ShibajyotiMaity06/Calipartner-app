@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
   Modal,
@@ -24,7 +24,7 @@ export interface StepsCardProps {
 
 interface DayStepData {
   dayLabel: string;
-  steps: number;
+  steps: number | null;
   isToday: boolean;
   dateStr: string;
 }
@@ -32,6 +32,10 @@ interface DayStepData {
 export function StepsCard({ selectedDate, testID = 'steps-card' }: StepsCardProps) {
   const {
     steps,
+    activity,
+    week,
+    error,
+    updateStepGoal,
     distanceKm,
     walkingCalories,
     source,
@@ -49,7 +53,9 @@ export function StepsCard({ selectedDate, testID = 'steps-card' }: StepsCardProp
   const [fixModalVisible, setFixModalVisible] = useState(false);
   const [tableModalVisible, setTableModalVisible] = useState(false);
   const [goalModalVisible, setGoalModalVisible] = useState(false);
-  const [currentGoal, setCurrentGoal] = useState(goalSteps > 0 ? goalSteps : 8000);
+  const [currentGoal, setCurrentGoal] = useState(goalSteps);
+  const [goalSaveError, setGoalSaveError] = useState(false);
+  useEffect(() => setCurrentGoal(goalSteps), [goalSteps]);
   const [syncing, setSyncing] = useState(false);
 
   const handleSync = async () => {
@@ -62,7 +68,7 @@ export function StepsCard({ selectedDate, testID = 'steps-card' }: StepsCardProp
   };
 
   const getSourceLabel = (src: ActivitySource | null) => {
-    if (!src) return 'From Phone Sensor';
+    if (!src) return t('trackers.steps.noReading');
     switch (src) {
       case 'health_platform':
         return 'From Health Connect';
@@ -80,19 +86,20 @@ export function StepsCard({ selectedDate, testID = 'steps-card' }: StepsCardProp
   const isGoalMet = steps >= currentGoal && currentGoal > 0;
   const sourceName = getSourceLabel(source);
 
-  // 7-day data for CMP-14 bar chart (mock week centered around today)
-  const weekDays: DayStepData[] = [
-    { dayLabel: 'M', steps: Math.round(currentGoal * 0.85), isToday: false, dateStr: 'Mon' },
-    { dayLabel: 'T', steps: Math.round(currentGoal * 0.92), isToday: false, dateStr: 'Tue' },
-    { dayLabel: 'W', steps: Math.round(currentGoal * 1.05), isToday: false, dateStr: 'Wed' },
-    { dayLabel: 'T', steps: Math.round(currentGoal * 0.78), isToday: false, dateStr: 'Thu' },
-    { dayLabel: 'F', steps: Math.round(currentGoal * 0.95), isToday: false, dateStr: 'Fri' },
-    { dayLabel: 'S', steps: Math.round(currentGoal * 1.1), isToday: false, dateStr: 'Sat' },
-    { dayLabel: 'S', steps: steps, isToday: true, dateStr: 'Today' },
-  ];
-
-  const weeklyAverage = Math.round(weekDays.reduce((acc, d) => acc + d.steps, 0) / weekDays.length);
-  const maxWeekSteps = Math.max(currentGoal, ...weekDays.map((d) => d.steps));
+  const weekDays: DayStepData[] = week.map((day, index) => ({
+    dayLabel: new Date(`${day.localDate}T12:00:00`).toLocaleDateString('en', { weekday: 'short' }),
+    dateStr: day.localDate,
+    isToday: index === week.length - 1,
+    steps: day.steps,
+  }));
+  const recorded = weekDays.filter((day) => day.steps != null);
+  const weeklyAverage = recorded.length
+    ? Math.round(recorded.reduce((total, day) => total + day.steps!, 0) / recorded.length)
+    : null;
+  const maxWeekSteps = Math.max(1, currentGoal, ...weekDays.map((day) => day.steps ?? 0));
+  const sourceSummary = activity
+    ? `${sourceName} ? ${t('trackers.steps.updatedAt', { time: new Date(activity.updated_at).toLocaleTimeString() })}`
+    : sourceName;
 
   return (
     <View testID={testID} style={styles.card}>
@@ -141,6 +148,11 @@ export function StepsCard({ selectedDate, testID = 'steps-card' }: StepsCardProp
         </View>
       </View>
 
+      {error && (
+        <Text accessibilityRole="alert" style={styles.emptyNoticeText} testID="steps-error-state">
+          {t('common.errorBody')}
+        </Text>
+      )}
       {/* Loading State */}
       {loading ? (
         <View style={styles.loadingContainer} testID="steps-loading-state">
@@ -215,14 +227,18 @@ export function StepsCard({ selectedDate, testID = 'steps-card' }: StepsCardProp
             <View style={styles.statTile}>
               <Ionicons name="stats-chart-outline" size={16} color={dark.iris} />
               <Text style={styles.tileLabel}>This week avg</Text>
-              <Text style={styles.tileValue}>{weeklyAverage.toLocaleString()}</Text>
+              <Text style={styles.tileValue}>
+                {weeklyAverage == null
+                  ? t('common.noRecordedData')
+                  : weeklyAverage.toLocaleString()}
+              </Text>
             </View>
           </View>
 
           {/* E03 7-day Bar Chart (CMP-14: today outlined, View as table) */}
           <View style={styles.chartContainer} testID="steps-7day-chart">
             <View style={styles.chartHeader}>
-              <Text style={styles.chartTitle}>Past 7 days</Text>
+              <Text style={styles.chartTitle}>{t('trackers.steps.pastWeek')}</Text>
               <Pressable
                 testID="btn-steps-view-table"
                 onPress={() => setTableModalVisible(true)}
@@ -235,9 +251,15 @@ export function StepsCard({ selectedDate, testID = 'steps-card' }: StepsCardProp
               </Pressable>
             </View>
 
-            <View style={styles.barsRow}>
+            <View
+              style={styles.barsRow}
+              accessible
+              accessibilityLabel={weekDays
+                .map((day) => `${day.dateStr}: ${day.steps ?? t('common.noRecordedData')}`)
+                .join(', ')}
+            >
               {weekDays.map((d, index) => {
-                const heightRatio = Math.max(0.08, d.steps / maxWeekSteps);
+                const heightRatio = (d.steps ?? 0) / maxWeekSteps;
                 return (
                   <View key={index} style={styles.barCol}>
                     <View style={styles.barTrack}>
@@ -414,7 +436,7 @@ export function StepsCard({ selectedDate, testID = 'steps-card' }: StepsCardProp
                     {row.dateStr}
                   </Text>
                   <Text style={[styles.cellText, { flex: 1.5, fontVariant: ['tabular-nums'] }]}>
-                    {row.steps.toLocaleString()}
+                    {row.steps == null ? t('common.noRecordedData') : row.steps.toLocaleString()}
                   </Text>
                   <Text style={[styles.cellText, { flex: 1.5, color: dark.textLo }]}>
                     {currentGoal.toLocaleString()}
@@ -424,12 +446,16 @@ export function StepsCard({ selectedDate, testID = 'steps-card' }: StepsCardProp
                       styles.cellText,
                       {
                         flex: 1,
-                        color: row.steps >= currentGoal ? dark.teal : dark.textMid,
+                        color: (row.steps ?? 0) >= currentGoal ? dark.teal : dark.textMid,
                         fontWeight: '600',
                       },
                     ]}
                   >
-                    {row.steps >= currentGoal ? 'Met' : 'Pending'}
+                    {row.steps == null
+                      ? t('common.noRecordedData')
+                      : (row.steps ?? 0) >= currentGoal
+                        ? 'Met'
+                        : 'Pending'}
                   </Text>
                 </View>
               ))}
@@ -460,6 +486,11 @@ export function StepsCard({ selectedDate, testID = 'steps-card' }: StepsCardProp
             <View style={styles.tableCard}>
               <Text style={styles.tableTitle}>{t('trackers.steps.editGoal')}</Text>
               <Text style={styles.sectionSub}>Adjust your daily movement target</Text>
+              {goalSaveError && (
+                <Text accessibilityRole="alert" style={styles.emptyNoticeText}>
+                  {t('common.errorBody')}
+                </Text>
+              )}
 
               <View style={styles.goalStepperRow}>
                 <Pressable
@@ -490,7 +521,12 @@ export function StepsCard({ selectedDate, testID = 'steps-card' }: StepsCardProp
               <Pressable
                 testID="btn-save-step-goal"
                 style={styles.tableDoneBtn}
-                onPress={() => setGoalModalVisible(false)}
+                onPress={() => {
+                  setGoalSaveError(false);
+                  void updateStepGoal(currentGoal)
+                    .then(() => setGoalModalVisible(false))
+                    .catch(() => setGoalSaveError(true));
+                }}
                 accessibilityRole="button"
                 accessibilityLabel={t('common.save')}
               >

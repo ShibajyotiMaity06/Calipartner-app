@@ -8,13 +8,13 @@ export interface CaloriesDetailSheetProps {
   visible: boolean;
   onClose: () => void;
   eatenCalories: number;
-  targetCalories: number;
+  targetCalories: number | null;
   proteinGrams: number;
-  targetProtein: number;
+  targetProtein: number | null;
   carbGrams: number;
-  targetCarbs: number;
+  targetCarbs: number | null;
   fatGrams: number;
-  targetFat: number;
+  targetFat: number | null;
   fiberGrams?: number;
   sugarGrams?: number;
   sodiumMg?: number;
@@ -43,9 +43,10 @@ export function CaloriesDetailSheet({
 }: CaloriesDetailSheetProps) {
   const [selectedMacro, setSelectedMacro] = useState<MacroType>(null);
 
-  const remainingCalories = Math.max(0, targetCalories - eatenCalories);
-  const isOver = eatenCalories > targetCalories && targetCalories > 0;
-  const overAmount = isOver ? eatenCalories - targetCalories : 0;
+  const remainingCalories =
+    targetCalories == null ? null : Math.max(0, targetCalories - eatenCalories);
+  const isOver = targetCalories != null && eatenCalories > targetCalories && targetCalories > 0;
+  const overAmount = isOver && targetCalories != null ? eatenCalories - targetCalories : 0;
 
   // Filter top contributing foods for selected macro
   const contributingFoods = React.useMemo(() => {
@@ -71,8 +72,8 @@ export function CaloriesDetailSheet({
       testID="sheet-calories-detail"
       accessibilityLabel={t('diary.calorieRingA11y', {
         eaten: eatenCalories,
-        target: targetCalories,
-        remaining: isOver ? overAmount : remainingCalories,
+        target: targetCalories ?? t('common.unavailable'),
+        remaining: (isOver ? overAmount : remainingCalories) ?? t('common.unavailable'),
       })}
     >
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.content}>
@@ -88,14 +89,20 @@ export function CaloriesDetailSheet({
 
         {/* Ring Center Hero */}
         <View style={styles.ringHero}>
-          <CalorieRing
-            eaten={eatenCalories}
-            target={targetCalories}
-            identityHue={identityHue}
-            size={160}
-            strokeWidth={14}
-            testID="detail-calorie-ring"
-          />
+          {targetCalories != null ? (
+            <CalorieRing
+              eaten={eatenCalories}
+              target={targetCalories}
+              identityHue={identityHue}
+              size={160}
+              strokeWidth={14}
+              testID="detail-calorie-ring"
+            />
+          ) : (
+            <Text variant="bodyS" color={dark.textMid} testID="calorie-target-unavailable">
+              {t('common.targetUnavailable')}
+            </Text>
+          )}
         </View>
 
         {/* Summary Pill */}
@@ -114,7 +121,7 @@ export function CaloriesDetailSheet({
               {t('diary.caloriesTarget')}
             </Text>
             <Text variant="numeralM" color={dark.textHi}>
-              {targetCalories}
+              {targetCalories ?? t('common.unavailable')}
             </Text>
           </View>
           <View style={styles.statDivider} />
@@ -123,7 +130,7 @@ export function CaloriesDetailSheet({
               {isOver ? t('diary.caloriesOver') : t('diary.caloriesRemaining')}
             </Text>
             <Text variant="numeralM" color={isOver ? dark.cream : dark.textHi}>
-              {isOver ? `${overAmount} over` : remainingCalories}
+              {isOver ? `${overAmount} over` : (remainingCalories ?? t('common.unavailable'))}
             </Text>
           </View>
         </View>
@@ -147,7 +154,7 @@ export function CaloriesDetailSheet({
                   Protein
                 </Text>
                 <Text variant="bodyS" color={dark.textLo}>
-                  Target: {targetProtein}g
+                  {targetProtein == null ? t('common.unavailable') : `Target: ${targetProtein}g`}
                 </Text>
               </View>
             </View>
@@ -156,7 +163,9 @@ export function CaloriesDetailSheet({
                 {proteinGrams}g
               </Text>
               <Text variant="bodyS" color={dark.textMid}>
-                {Math.max(0, targetProtein - proteinGrams)}g left
+                {targetProtein == null
+                  ? t('common.unavailable')
+                  : `${Math.max(0, targetProtein - proteinGrams)}g left`}
               </Text>
             </View>
           </Pressable>
@@ -174,7 +183,7 @@ export function CaloriesDetailSheet({
                   Carbohydrates
                 </Text>
                 <Text variant="bodyS" color={dark.textLo}>
-                  Target: {targetCarbs}g
+                  {targetCarbs == null ? t('common.unavailable') : `Target: ${targetCarbs}g`}
                 </Text>
               </View>
             </View>
@@ -183,7 +192,9 @@ export function CaloriesDetailSheet({
                 {carbGrams}g
               </Text>
               <Text variant="bodyS" color={dark.textMid}>
-                {Math.max(0, targetCarbs - carbGrams)}g left
+                {targetCarbs == null
+                  ? t('common.unavailable')
+                  : `${Math.max(0, targetCarbs - carbGrams)}g left`}
               </Text>
             </View>
           </Pressable>
@@ -201,7 +212,7 @@ export function CaloriesDetailSheet({
                   Fat
                 </Text>
                 <Text variant="bodyS" color={dark.textLo}>
-                  Target: {targetFat}g
+                  {targetFat == null ? t('common.unavailable') : `Target: ${targetFat}g`}
                 </Text>
               </View>
             </View>
@@ -210,7 +221,9 @@ export function CaloriesDetailSheet({
                 {fatGrams}g
               </Text>
               <Text variant="bodyS" color={dark.textMid}>
-                {Math.max(0, targetFat - fatGrams)}g left
+                {targetFat == null
+                  ? t('common.unavailable')
+                  : `${Math.max(0, targetFat - fatGrams)}g left`}
               </Text>
             </View>
           </Pressable>

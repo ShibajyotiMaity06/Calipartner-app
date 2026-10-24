@@ -40,6 +40,10 @@ jwt_expiry = 3600
 enable_refresh_token_rotation = true
 enable_signup = true
 
+[auth.sessions]
+# Sliding inactivity limit; keep the absolute session timebox disabled.
+inactivity_timeout = "720h"
+
 [auth.email]
 enable_signup = true
 double_confirm_changes = true

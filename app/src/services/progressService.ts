@@ -81,7 +81,7 @@ export function getDefaultIndividualProgress(
     calories: {
       daily: [],
       average_calories: 0,
-      average_target: 2000,
+      average_target: 0,
       logged_days_count: 0,
       goal_days_count: 0,
       total_days_in_range: 30,
@@ -91,9 +91,9 @@ export function getDefaultIndividualProgress(
       protein_avg_g: 0,
       carbs_avg_g: 0,
       fat_avg_g: 0,
-      protein_target_g: 140,
-      carbs_target_g: 200,
-      fat_target_g: 65,
+      protein_target_g: 0,
+      carbs_target_g: 0,
+      fat_target_g: 0,
     },
     steps: {
       daily: [],

@@ -97,7 +97,7 @@ export function CaloriesChart({
     } else {
       max = Math.ceil((max * 1.15) / 100) * 100;
     }
-    const target = data?.average_target ?? 2000;
+    const target = data?.average_target ?? 0;
     return { maxY: max, targetYVal: target };
   }, [daily, data?.average_target]);
 

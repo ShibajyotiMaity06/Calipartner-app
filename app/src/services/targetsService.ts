@@ -1,10 +1,59 @@
 import type { GoalProfile, HealthScreening } from '@calipartner/core';
 import type { SupabaseClient } from '@supabase/supabase-js';
+import { generateClientUuid } from './foodService';
+import { beforeTrackingSync } from './accountSyncGate';
 
 export interface TargetsDb {
+  withTransactionAsync?(action: () => Promise<void>): Promise<void>;
   runAsync(sql: string, ...params: unknown[]): Promise<unknown>;
   getAllAsync<T>(sql: string, ...params: unknown[]): Promise<T[]>;
   getFirstAsync<T>(sql: string, ...params: unknown[]): Promise<T | null>;
+}
+
+const repairJobs = new WeakMap<TargetsDb, Map<string, Promise<void>>>();
+
+/** Repair previously generated non-UUID IDs without recalculating or replacing the user's targets. */
+export function repairLegacyGoalProfile(db: TargetsDb, userId: string): Promise<void> {
+  let jobs = repairJobs.get(db);
+  if (!jobs) {
+    jobs = new Map();
+    repairJobs.set(db, jobs);
+  }
+  const existing = jobs.get(userId);
+  if (existing) return existing;
+  const job = repairLegacyGoalProfileOnce(db, userId).finally(() => jobs.delete(userId));
+  jobs.set(userId, job);
+  return job;
+}
+
+async function repairLegacyGoalProfileOnce(db: TargetsDb, userId: string): Promise<void> {
+  const profile = await getCurrentLocalGoalProfile(db, userId);
+  if (
+    !profile ||
+    /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(profile.id)
+  )
+    return;
+  const repaired = { ...profile, id: generateClientUuid() };
+  const repair = async () => {
+    await persistPendingGoalProfile(db, repaired);
+    await db.runAsync(`DELETE FROM local_goal_profiles WHERE id = ? AND user_id = ?`, [
+      profile.id,
+      userId,
+    ]);
+    await db.runAsync(`DELETE FROM outbox WHERE id = ?`, [profile.id]);
+  };
+  if (db.withTransactionAsync) await db.withTransactionAsync(repair);
+  else await repair();
+}
+
+async function persistPendingGoalProfile(db: TargetsDb, profile: GoalProfile): Promise<void> {
+  await saveLocalGoalProfile(db, profile, false);
+  await db.runAsync(
+    `INSERT INTO outbox (id, entity, operation, payload, created_at, attempts, last_error)
+     VALUES (?, ?, 'upsert', ?, ?, 0, ?)
+     ON CONFLICT (id) DO UPDATE SET payload = excluded.payload, attempts = 0, last_error = excluded.last_error`,
+    [profile.id, 'goal_profiles', JSON.stringify(profile), new Date().toISOString(), null],
+  );
 }
 
 export interface LocalGoalProfileRow {
@@ -111,16 +160,10 @@ export async function getCurrentLocalGoalProfile(
   db: TargetsDb,
   userId: string,
 ): Promise<GoalProfile | null> {
-  let row = await db.getFirstAsync<LocalGoalProfileRow>(
+  const row = await db.getFirstAsync<LocalGoalProfileRow>(
     `SELECT * FROM local_goal_profiles WHERE user_id = ? ORDER BY effective_from DESC LIMIT 1`,
     [userId],
   );
-
-  if (!row) {
-    row = await db.getFirstAsync<LocalGoalProfileRow>(
-      `SELECT * FROM local_goal_profiles ORDER BY effective_from DESC LIMIT 1`,
-    );
-  }
 
   if (!row) return null;
 
@@ -147,6 +190,36 @@ export async function getCurrentLocalGoalProfile(
     recompute_reason: row.recompute_reason as GoalProfile['recompute_reason'],
     created_at: row.created_at,
   };
+}
+
+/** Restore a returning user's exact saved targets, never another user's or invented defaults. */
+export async function restoreGoalProfile(
+  db: TargetsDb,
+  supabase: SupabaseClient,
+  userId: string,
+): Promise<GoalProfile | null> {
+  const { data, error } = await supabase
+    .from('goal_profiles')
+    .select('*')
+    .eq('user_id', userId)
+    .order('effective_from', { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  if (error) throw new Error(error.message);
+  const local = await getCurrentLocalGoalProfile(db, userId);
+  if (!data) return local;
+  const remote = data as GoalProfile;
+  if (remote.user_id !== userId) throw new Error('Goal profile owner mismatch');
+  // Unsynced edits always win over a server copy, including edits to the same profile ID.
+  const pending = await db.getFirstAsync<{ id: string }>(
+    `SELECT id FROM local_goal_profiles WHERE user_id = ? AND is_synced = 0 LIMIT 1`,
+    [userId],
+  );
+  if (pending || (local && Date.parse(local.effective_from) > Date.parse(remote.effective_from))) {
+    return local;
+  }
+  await saveLocalGoalProfile(db, remote, true);
+  return remote;
 }
 
 /**
@@ -215,13 +288,24 @@ export async function saveGoalProfileWithSync(
   isOnline: boolean,
 ): Promise<{ synced: boolean; error?: string }> {
   let synced = false;
+  let accountWasReset = false;
   let syncError: string | undefined;
+
+  // Persist and queue before touching the network so a slow/failed request cannot lose targets.
+  const persist = async () => {
+    await persistPendingGoalProfile(db, profile);
+  };
+  if (db.withTransactionAsync) await db.withTransactionAsync(persist);
+  else await persist();
 
   if (isOnline && supabase) {
     try {
-      const { error } = await supabase.from('goal_profiles').upsert(profile);
+      accountWasReset = await beforeTrackingSync();
+      const { error } = accountWasReset
+        ? { error: null }
+        : await supabase.from('goal_profiles').upsert(profile);
       if (!error) {
-        synced = true;
+        synced = !accountWasReset;
       } else {
         syncError = error.message;
       }
@@ -230,23 +314,13 @@ export async function saveGoalProfileWithSync(
     }
   }
 
-  // 1. Save locally with sync status
-  await saveLocalGoalProfile(db, profile, synced);
+  if (accountWasReset) throw new Error('Account data was reset; enter your targets again');
 
-  // 2. If not synced, queue into SQLite outbox
-  if (!synced) {
-    await db.runAsync(
-      `INSERT INTO outbox (id, entity, operation, payload, created_at, attempts, last_error)
-       VALUES (?, ?, 'upsert', ?, ?, 0, ?)
-       ON CONFLICT (id) DO UPDATE SET payload = excluded.payload, attempts = 0, last_error = excluded.last_error`,
-      [
-        profile.id,
-        'goal_profiles',
-        JSON.stringify(profile),
-        new Date().toISOString(),
-        syncError ?? null,
-      ],
-    );
+  if (synced) {
+    await saveLocalGoalProfile(db, profile, true);
+    await db.runAsync(`DELETE FROM outbox WHERE id = ?`, [profile.id]);
+  } else if (syncError) {
+    await db.runAsync(`UPDATE outbox SET last_error = ? WHERE id = ?`, [syncError, profile.id]);
   }
 
   return { synced, error: syncError };
@@ -305,7 +379,9 @@ export async function saveHealthScreeningWithSync(
 export async function flushTargetsOutbox(
   db: TargetsDb,
   supabase: SupabaseClient,
+  userId: string,
 ): Promise<{ flushedCount: number }> {
+  await beforeTrackingSync();
   const rows = await db.getAllAsync<{ id: string; entity: string; payload: string }>(
     `SELECT id, entity, payload FROM outbox WHERE entity IN ('goal_profiles', 'health_screening') ORDER BY created_at ASC`,
   );
@@ -315,6 +391,7 @@ export async function flushTargetsOutbox(
   for (const row of rows) {
     try {
       const payload = JSON.parse(row.payload) as Record<string, unknown>;
+      if (payload.user_id !== userId) continue;
       const { error } = await supabase.from(row.entity).upsert(payload);
       if (!error) {
         // Mark synced locally if goal profile

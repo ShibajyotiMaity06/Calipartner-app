@@ -7,7 +7,6 @@ import {
   TouchableOpacity,
   ScrollView,
   TextInput,
-  Platform,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Text, Button, Card, ChevronLeftIcon, dark, space, radius } from '@calipartner/ui';
@@ -15,7 +14,15 @@ import { useSteps } from '@/hooks/useSteps';
 import { useWorkouts } from '@/hooks/useWorkouts';
 import { useTargets } from '@/hooks/useTargets';
 import { playClickSound, playSuccessSound } from '@/lib/sound';
-import { Pedometer } from 'expo-sensors';
+import { watchWalkingSteps } from '@/services/stepIntegrationService';
+import { t } from '@/i18n';
+import {
+  calculateDistanceFromStepsKm,
+  calculateStrideLengthCm,
+  calculateWalkingCalories,
+  getLocalDateString,
+} from '@calipartner/core';
+import { useAuth } from '@/contexts/AuthContext';
 
 export interface CardioTrackerModalProps {
   visible: boolean;
@@ -48,12 +55,21 @@ export function CardioTrackerModal({
   selectedDate,
   testID = 'modal-cardio-tracker',
 }: CardioTrackerModalProps) {
-  const localDate = selectedDate ?? new Date().toISOString().slice(0, 10);
-  const { steps: dailySteps, logManualSteps, refresh: refreshSteps } = useSteps(localDate);
+  const { profile } = useAuth();
+  const localDate =
+    selectedDate ??
+    getLocalDateString(
+      new Date(),
+      profile?.timezone ?? Intl.DateTimeFormat().resolvedOptions().timeZone,
+    );
+  const { steps: dailySteps, logPedometerSession, refresh: refreshSteps } = useSteps(localDate);
   const { create: createWorkoutRecord } = useWorkouts(localDate);
   const { currentGoalProfile } = useTargets();
 
-  const userWeightKg = currentGoalProfile?.current_weight_kg ?? 70;
+  const userWeightKg = currentGoalProfile?.current_weight_kg ?? 0;
+  const strideCm = profile?.height_cm ? calculateStrideLengthCm(profile.height_cm, profile.sex) : 0;
+  const walkingCalories = (count: number) =>
+    calculateWalkingCalories(userWeightKg, calculateDistanceFromStepsKm(count, strideCm));
 
   // Tabs: Walking vs Running
   const [activeTab, setActiveTab] = useState<CardioMode>('walking');
@@ -74,9 +90,11 @@ export function CardioTrackerModal({
 
   // Shared Session Metrics
   const [elapsedSeconds, setElapsedSeconds] = useState<number>(0);
-  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const watchIdRef = useRef<number | null>(null);
   const [pedometerAvailable, setPedometerAvailable] = useState<boolean | null>(null);
+  const measuredStepsRef = useRef(0);
+  const dailyBaselineRef = useRef(0);
+  const finishingRef = useRef(false);
   const pedometerSubRef = useRef<{ remove: () => void } | null>(null);
 
   // Summary state after session completion
@@ -99,30 +117,36 @@ export function CardioTrackerModal({
     };
   }, []);
 
-  // Timer and cadence step logic for active session
+  // Time never generates activity. Only real hardware events change the step count.
   useEffect(() => {
-    if (sessionState === 'active') {
-      timerRef.current = setInterval(() => {
-        setElapsedSeconds((prev) => {
-          const nextSec = prev + 1;
-          // When pedometer is unavailable (web or phone without pedometer chip),
-          // accumulate realistic walking cadence steps (~100 steps/minute)
-          if (activeTab === 'walking' && pedometerAvailable !== true) {
-            setWalkSessionSteps((curr) => {
-              const add = nextSec % 3 === 0 ? 2 : nextSec % 2 === 0 ? 2 : 1;
-              return curr + add;
-            });
-          }
-          return nextSec;
-        });
-      }, 1000);
-    } else {
-      if (timerRef.current) clearInterval(timerRef.current);
-    }
+    if (sessionState !== 'active' || !visible) return;
+    const timer = setInterval(() => setElapsedSeconds((seconds) => seconds + 1), 1000);
+    return () => clearInterval(timer);
+  }, [sessionState, visible]);
+
+  useEffect(() => {
+    if (sessionState !== 'active' || activeTab !== 'walking' || !visible) return;
+    let cancelled = false;
+    const offset = measuredStepsRef.current;
+    void watchWalkingSteps((count) => {
+      if (cancelled || finishingRef.current) return;
+      measuredStepsRef.current = Math.max(measuredStepsRef.current, offset + count);
+      setWalkSessionSteps(measuredStepsRef.current);
+    }).then((watcher) => {
+      if (cancelled) {
+        watcher.remove();
+        return;
+      }
+      pedometerSubRef.current = watcher;
+      setPedometerAvailable(watcher.status === 'granted');
+      if (watcher.status !== 'granted') setPermissionError(t('trackers.steps.sensorUnavailable'));
+    });
     return () => {
-      if (timerRef.current) clearInterval(timerRef.current);
+      cancelled = true;
+      pedometerSubRef.current?.remove();
+      pedometerSubRef.current = null;
     };
-  }, [sessionState, activeTab, pedometerAvailable]);
+  }, [sessionState, activeTab, visible]);
 
   // GPS tracking for Running (Real GPS only - NO fake simulation)
   useEffect(() => {
@@ -228,29 +252,10 @@ export function CardioTrackerModal({
     setRunDistanceKm(0);
     setGpsCoordinates([]);
 
-    // Subscribe to device pedometer hardware sensor
-    Pedometer.isAvailableAsync()
-      .then((avail) => {
-        setPedometerAvailable(avail);
-        if (avail) {
-          Pedometer.requestPermissionsAsync().then((perm) => {
-            if (perm.granted) {
-              let initialStepCount = -1;
-              pedometerSubRef.current = Pedometer.watchStepCount((result) => {
-                if (initialStepCount === -1) {
-                  initialStepCount = result.steps;
-                }
-                const diff = Math.max(0, result.steps - initialStepCount);
-                setWalkSessionSteps(diff);
-              });
-            }
-          });
-        }
-      })
-      .catch(() => {
-        setPedometerAvailable(false);
-      });
-
+    measuredStepsRef.current = 0;
+    dailyBaselineRef.current = dailySteps;
+    finishingRef.current = false;
+    setPedometerAvailable(null);
     setSessionState('active');
   };
 
@@ -260,6 +265,9 @@ export function CardioTrackerModal({
   };
 
   const handleFinishSession = async () => {
+    if (finishingRef.current) return;
+    finishingRef.current = true;
+    setSessionState('paused');
     playSuccessSound();
     if (pedometerSubRef.current) {
       pedometerSubRef.current.remove();
@@ -270,7 +278,7 @@ export function CardioTrackerModal({
     const mode = activeTab;
 
     if (mode === 'walking') {
-      const calories = Math.round(walkSessionSteps * 0.04);
+      const calories = walkingCalories(walkSessionSteps);
       setSummaryData({
         mode: 'walking',
         steps: walkSessionSteps,
@@ -281,7 +289,7 @@ export function CardioTrackerModal({
       // Automatically add walking session steps to daily total
       try {
         if (walkSessionSteps > 0) {
-          await logManualSteps(dailySteps + walkSessionSteps);
+          await logPedometerSession(dailyBaselineRef.current, walkSessionSteps);
           await refreshSteps();
         }
         await createWorkoutRecord({
@@ -294,7 +302,7 @@ export function CardioTrackerModal({
         console.warn('Failed to log walking session', err);
       }
     } else {
-      const finalDist = Math.max(0.01, runDistanceKm);
+      const finalDist = runDistanceKm;
       const calories = Math.round(finalDist * userWeightKg * 1.036);
       const paceMinutesPerKm = finalDist > 0 ? duration / 60 / finalDist : 0;
       const paceMins = Math.floor(paceMinutesPerKm);
@@ -327,6 +335,8 @@ export function CardioTrackerModal({
 
   const handleResetAndClose = () => {
     playClickSound();
+    finishingRef.current = false;
+    measuredStepsRef.current = 0;
     setSessionState('idle');
     setElapsedSeconds(0);
     setWalkSessionSteps(0);
@@ -342,7 +352,7 @@ export function CardioTrackerModal({
   };
 
   // Live walking calories
-  const liveWalkingCalories = Math.round(walkSessionSteps * 0.04);
+  const liveWalkingCalories = walkingCalories(walkSessionSteps);
   // Live running calories
   const liveRunningCalories = Math.round(runDistanceKm * userWeightKg * 1.036);
   // Live running pace
@@ -660,66 +670,12 @@ export function CardioTrackerModal({
                         color={dark.apricot}
                         style={{ marginLeft: 6, fontWeight: '600' }}
                       >
-                        {pedometerAvailable === false
-                          ? 'Walking session active · Cadence step tracking active (~100 steps/min)'
-                          : 'Hardware Pedometer Active · Recording real steps as you walk'}
+                        {pedometerAvailable === true
+                          ? t('trackers.steps.sensorActive')
+                          : pedometerAvailable === false
+                            ? t('trackers.steps.sensorUnavailable')
+                            : t('trackers.steps.sensorChecking')}
                       </Text>
-                    </View>
-
-                    {/* Quick Step Adjuster */}
-                    <View
-                      style={{
-                        flexDirection: 'row',
-                        justifyContent: 'center',
-                        gap: 8,
-                        marginVertical: 8,
-                      }}
-                    >
-                      <TouchableOpacity
-                        onPress={() => setWalkSessionSteps((s) => s + 100)}
-                        style={{
-                          backgroundColor: dark.s2,
-                          paddingHorizontal: 12,
-                          paddingVertical: 6,
-                          borderRadius: radius.control,
-                          borderWidth: 1,
-                          borderColor: dark.hairline,
-                        }}
-                      >
-                        <Text variant="micro" color={dark.textHi}>
-                          +100 Steps
-                        </Text>
-                      </TouchableOpacity>
-                      <TouchableOpacity
-                        onPress={() => setWalkSessionSteps((s) => s + 500)}
-                        style={{
-                          backgroundColor: dark.s2,
-                          paddingHorizontal: 12,
-                          paddingVertical: 6,
-                          borderRadius: radius.control,
-                          borderWidth: 1,
-                          borderColor: dark.hairline,
-                        }}
-                      >
-                        <Text variant="micro" color={dark.textHi}>
-                          +500 Steps
-                        </Text>
-                      </TouchableOpacity>
-                      <TouchableOpacity
-                        onPress={() => setWalkSessionSteps((s) => s + 1000)}
-                        style={{
-                          backgroundColor: dark.s2,
-                          paddingHorizontal: 12,
-                          paddingVertical: 6,
-                          borderRadius: radius.control,
-                          borderWidth: 1,
-                          borderColor: dark.hairline,
-                        }}
-                      >
-                        <Text variant="micro" color={dark.textHi}>
-                          +1,000 Steps
-                        </Text>
-                      </TouchableOpacity>
                     </View>
 
                     {/* Goal Progress Bar */}
