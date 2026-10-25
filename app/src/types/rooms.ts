@@ -12,6 +12,7 @@ import type {
 } from '@calipartner/core';
 
 export type RoomErrorCode =
+  | 'HOSTED_ROOM_LIMIT'
   | 'ROOM_FULL'
   | 'ROOM_LOCKED'
   | 'PLAN_REQUIRED'
@@ -64,6 +65,7 @@ export function parseRoomError(err: unknown): RoomServiceError {
       : String(err);
 
   const recognizedCodes: RoomErrorCode[] = [
+    'HOSTED_ROOM_LIMIT',
     'PLAN_ALREADY_ATTACHED',
     'HOURLY_REQUEST_LIMIT_REACHED',
     'REQUEST_LIMIT_REACHED',

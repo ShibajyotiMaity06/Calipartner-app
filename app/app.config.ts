@@ -38,6 +38,15 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   },
   plugins: [
     'expo-router',
+    'expo-video',
+    [
+      'expo-image-picker',
+      {
+        photosPermission: 'Choose photos and videos to share with your room.',
+        cameraPermission: 'Take a photo to share with your room.',
+        microphonePermission: false,
+      },
+    ],
     'expo-dev-client',
     'expo-sqlite',
     'expo-status-bar',

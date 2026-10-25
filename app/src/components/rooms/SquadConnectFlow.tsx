@@ -16,6 +16,7 @@ import { Ionicons } from '@expo/vector-icons';
 import Svg, { Path, Rect } from 'react-native-svg';
 import { Avatar, Button, Chip, dark, radius, space, Text } from '@calipartner/ui';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { t } from '@/i18n';
 import { playClickSound, playSuccessSound } from '@/lib/sound';
 
 export type ConnectChoice = '1-on-1' | 'create-squad' | 'join-squad';
@@ -133,7 +134,7 @@ export function SquadConnectFlow({
   const [selectedChoice, setSelectedChoice] = useState<ConnectChoice>('1-on-1');
 
   // Plus Feature required modal state
-  const [showPlusModal, setShowPlusModal] = useState(!isPlusOrPro);
+  const [showPlusModal, setShowPlusModal] = useState(false);
 
   // Partner profiles request states
   const [sentRequests, setSentRequests] = useState<Set<string>>(new Set());
@@ -153,7 +154,7 @@ export function SquadConnectFlow({
   // Ensure free users see the Plus modal when attempting to connect
   const handleNextFromChoice = () => {
     playClickSound();
-    if (!isPlusOrPro) {
+    if (!isPlusOrPro && selectedChoice === '1-on-1') {
       setShowPlusModal(true);
       return;
     }
@@ -207,6 +208,8 @@ export function SquadConnectFlow({
         setCreateError(
           'You already have an active squad attached to your plan. Leave or finish your previous squad before creating a new one.',
         );
+      } else if (msg.includes('HOSTED_ROOM_LIMIT')) {
+        setCreateError(t('setup.hostRoomLimit'));
       } else if (msg.includes('MAX_ROOMS_REACHED')) {
         setCreateError('You have reached the maximum limit of 3 joined squads.');
       } else {
@@ -381,8 +384,7 @@ export function SquadConnectFlow({
                 Squads & Partners
               </Text>
               <Text variant="body" color={dark.textMid} style={styles.plusDesc}>
-                Accountability rooms and 1-on-1 partners are included with CaliPartner Plus. Connect
-                with real partners to log food, workouts, and reach your goals together.
+                {t('setup.finderPaid')}
               </Text>
 
               <View style={styles.plusBenefitsList}>
@@ -401,7 +403,7 @@ export function SquadConnectFlow({
                 <View style={styles.plusBenefitItem}>
                   <Ionicons name="checkmark-circle" size={18} color={dark.apricot} />
                   <Text variant="bodyS" color={dark.textHi}>
-                    Squad chat, meal reactions & photo check-ins
+                    {t('setup.roomPaidFeatures')}
                   </Text>
                 </View>
               </View>

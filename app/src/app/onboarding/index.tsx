@@ -239,6 +239,7 @@ export default function OnboardingScreen() {
     activity_level: t('onboarding.activity.title'),
     body_stats: t('setup.trainingTitle'),
     rate_selection: t('setup.paceTitle'),
+    daily_goals: t('setup.dailyGoalsTitle'),
     premium: t('setup.premiumTitle'),
     paywall: t('setup.premiumTitle'),
     completed: t('setup.reviewTitle'),
@@ -253,13 +254,15 @@ export default function OnboardingScreen() {
         ? t('setup.activitySubtitle')
         : current === 'body_stats'
           ? t('setup.trainingSubtitle')
-          : current === 'rate_selection'
-            ? t('setup.paceSubtitle')
-            : current === 'premium' || current === 'paywall'
-              ? t('setup.premiumSubtitle')
-              : current === 'completed'
-                ? t('setup.reviewSubtitle')
-                : null;
+          : current === 'daily_goals'
+            ? t('setup.dailyGoalsSubtitle')
+            : current === 'rate_selection'
+              ? t('setup.paceSubtitle')
+              : current === 'premium' || current === 'paywall'
+                ? t('setup.premiumSubtitle')
+                : current === 'completed'
+                  ? t('setup.reviewSubtitle')
+                  : null;
   const setWeight = (value: number) => {
     machine.setBodyStats({ weightKg: value });
     update();
@@ -457,6 +460,33 @@ export default function OnboardingScreen() {
                   </Text>
                 </Pressable>
               </View>
+            ) : null}
+            {current === 'daily_goals' ? (
+              <PlanCard>
+                <NumberField
+                  label={t('setup.waterGoal')}
+                  value={snapshot.waterMlGoal}
+                  onChange={(value) => {
+                    machine.setStepAndWaterGoals(undefined, value ?? NaN);
+                    update();
+                  }}
+                  testID="input-water-goal"
+                />
+                <NumberField
+                  label={t('setup.stepGoal')}
+                  value={snapshot.stepGoal}
+                  onChange={(value) => {
+                    machine.setStepAndWaterGoals(value ?? NaN);
+                    update();
+                  }}
+                  testID="input-step-goal"
+                />
+                {Object.keys(snapshot.errors).length ? (
+                  <Text fontSet="onboarding" color={colors.danger} accessibilityRole="alert">
+                    {t('setup.dailyGoalsError')}
+                  </Text>
+                ) : null}
+              </PlanCard>
             ) : null}
             {current === 'premium' || current === 'paywall' ? <PremiumStep /> : null}
             {current === 'completed' ? (

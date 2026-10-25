@@ -13,6 +13,7 @@ import {
   type TagSharedMealInput,
   type UserSummary,
 } from '@/types/rooms';
+import { generateClientUuid } from './foodService';
 import { getOrGenerateDeviceHash } from './deviceService';
 
 /**
@@ -146,64 +147,22 @@ export async function listUserRooms(client: SupabaseClient): Promise<RoomSummary
 }
 
 /**
- * Create a new room. Starts trial automatically if user has not yet used it.
+ * Create a room without starting a trial or changing existing rooms.
  */
 export async function createRoom(
   client: SupabaseClient,
   name: string,
   deviceHash?: string,
+  clientId = generateClientUuid(),
 ): Promise<{ room_id: string; name: string; code: string; role: string; state: string }> {
   const hash = deviceHash ?? (await getOrGenerateDeviceHash());
   try {
-    const { data, error } = await client.rpc('create_room', {
+    const { data, error } = await client.rpc('create_room_v3', {
+      p_client_id: clientId,
       p_name: name,
       p_device_hash: hash,
     });
-
-    if (error) {
-      const parsed = parseRoomError(error);
-      if (parsed.code === 'PLAN_ALREADY_ATTACHED') {
-        // Auto-recover: find old hosted room, leave/archive it and retry
-        try {
-          const { data: userData } = await client.auth.getUser();
-          if (userData?.user?.id) {
-            const { data: oldRooms } = await client
-              .from('rooms')
-              .select('id')
-              .eq('plan_holder_id', userData.user.id)
-              .in('state', ['active', 'dormant', 'over_capacity']);
-
-            if (oldRooms && oldRooms.length > 0) {
-              for (const r of oldRooms) {
-                try {
-                  await client.rpc('leave_room', { p_room_id: r.id });
-                } catch {
-                  // ignore
-                }
-                try {
-                  await client
-                    .from('rooms')
-                    .update({ state: 'archived', updated_at: new Date().toISOString() })
-                    .eq('id', r.id);
-                } catch {
-                  // ignore
-                }
-              }
-              const retryRes = await client.rpc('create_room', {
-                p_name: name,
-                p_device_hash: hash,
-              });
-              if (!retryRes.error && retryRes.data) {
-                return retryRes.data;
-              }
-            }
-          }
-        } catch {
-          // Fall through to throw original parsed error
-        }
-      }
-      throw parsed;
-    }
+    if (error) throw parseRoomError(error);
 
     return data;
   } catch (err) {

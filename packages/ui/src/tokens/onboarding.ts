@@ -22,9 +22,9 @@ export const onboardingType = Object.fromEntries(
 export const onboardingLayout = {
   contentWidth: 640,
   touch: 48,
-  logo: 144,
-  ring: 184,
-  ringStroke: 14,
+  logo: 112,
+  ring: 164,
+  ringStroke: 12,
   icon: 24,
   border: 1,
 } as const;

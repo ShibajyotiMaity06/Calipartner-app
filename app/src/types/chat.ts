@@ -58,6 +58,10 @@ export function parseChatError(err: unknown): ChatServiceError {
         ? String((err as { message: unknown }).message)
         : String(err);
 
+  if (rawMessage.includes('PLUS_REQUIRED'))
+    return new ChatServiceError('PLUS_REQUIRED', 'Plus is required to send messages.', err);
+  if (rawMessage.includes('PRO_REQUIRED'))
+    return new ChatServiceError('PRO_REQUIRED', 'Pro is required to send media.', err);
   if (rawMessage.includes('TERMS_REQUIRED')) {
     return new ChatServiceError(
       'TERMS_REQUIRED',

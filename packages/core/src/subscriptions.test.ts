@@ -116,8 +116,8 @@ describe('Phase 10 Core: Subscriptions, Offerings, Tiers & Periods', () => {
   });
 
   it('reads remote config caps with fallback to defaults (Plus 10, Pro 20)', () => {
-    expect(getTierCap('basic')).toBe(5);
-    expect(getTierCap('plus')).toBe(10);
+    expect(getTierCap('basic')).toBe(2);
+    expect(getTierCap('plus')).toBe(5);
     expect(getTierCap('pro')).toBe(20);
 
     const customConfig = {
@@ -129,7 +129,7 @@ describe('Phase 10 Core: Subscriptions, Offerings, Tiers & Periods', () => {
 
     expect(DEFAULT_REMOTE_CONFIG.community_tier_enabled).toBe(false);
     expect(DEFAULT_REMOTE_CONFIG.trial_length_days).toBe(7);
-    expect(DEFAULT_REMOTE_CONFIG.trial_cap).toBe(10);
+    expect(DEFAULT_REMOTE_CONFIG.trial_cap).toBe(5);
   });
 });
 
@@ -272,20 +272,11 @@ describe('Phase 10 Core: Paywall Triggers & Trial Banners (CaliPartner Pricing P
     expect(t7.suggestedTier).toBe('pro');
   });
 
-  it('correctly gates invited users based on their plan (free users see paywall, paying users do not)', () => {
-    // When free user accepts invite: prompt towards pricing page (Plus or Pro)
-    expect(shouldShowPaywallForInvite(true, false)).toBe(true);
-
-    // When paying/trial user accepts invite: joins directly without paywall
+  it('never paywalls a recipient for joining a host-funded room', () => {
+    expect(shouldShowPaywallForInvite(true, false)).toBe(false);
     expect(shouldShowPaywallForInvite(true, true)).toBe(false);
-
-    // Non-invited users without invite see paywall
-    expect(shouldShowPaywallForInvite(false, false)).toBe(true);
-    expect(shouldShowPaywallForInvite(false, true)).toBe(true);
-
-    // Legacy fallback
-    expect(shouldShowPaywallForInvite(true)).toBe(false);
-    expect(shouldShowPaywallForInvite(false)).toBe(true);
+    expect(shouldShowPaywallForInvite(false, false)).toBe(false);
+    expect(shouldShowPaywallForInvite(false, true)).toBe(false);
   });
 
   it('shows soft trial banner on days 2 and 3 for 3-day legacy trial, and <=3 days left for 7-day trial', () => {
@@ -313,7 +304,7 @@ describe('Phase 10 Core: Paywall Triggers & Trial Banners (CaliPartner Pricing P
   });
 
   it('validates Pricing Plans v2 (Plus ₹99/₹599 cap 10, Pro ₹199/₹1,199 cap 20)', () => {
-    expect(PRICING_PLANS.plus.roomCap).toBe(10);
+    expect(PRICING_PLANS.plus.roomCap).toBe(5);
     expect(PRICING_PLANS.plus.rawMonthly).toBe(99);
     expect(PRICING_PLANS.plus.rawAnnual).toBe(599);
 
@@ -334,7 +325,7 @@ describe('Phase 10 Core: Paywall Triggers & Trial Banners (CaliPartner Pricing P
     expect(getRequiredTierForFeature('food_search')).toBe('free');
 
     // Plus features
-    expect(isFeatureAllowed('create_room', 'free')).toBe(false);
+    expect(isFeatureAllowed('create_room', 'free')).toBe(true);
     expect(isFeatureAllowed('create_room', 'plus')).toBe(true);
     expect(isFeatureAllowed('create_room', 'pro')).toBe(true);
     expect(isFeatureAllowed('fasting_tracker', 'free')).toBe(false);

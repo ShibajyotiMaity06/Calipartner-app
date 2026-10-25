@@ -22,6 +22,7 @@ describe('Onboarding redesign state machine', () => {
       'activity_level',
       'body_stats',
       'rate_selection',
+      'daily_goals',
       'premium',
       'paywall',
       'completed',
@@ -99,5 +100,21 @@ describe('Onboarding redesign state machine', () => {
       machine.setBodyStats({ weightKg: 72 });
       expect(machine.getState().weightKg).toBe(72);
     }
+  });
+});
+
+describe('daily water and step goals', () => {
+  it('validates whole-number goals and rejects empty or non-finite values', () => {
+    const machine = new OnboardingStateMachine();
+    machine.setStepAndWaterGoals(8500, 2200);
+    expect(machine.validateStep('daily_goals').isValid).toBe(true);
+    expect(machine.getState().stepGoal).toBe(8500);
+    expect(machine.getState().waterMlGoal).toBe(2200);
+    for (const value of [0, -1, NaN, Infinity, 2.5, 100001]) {
+      machine.setStepAndWaterGoals(value, 2200);
+      expect(machine.validateStep('daily_goals').isValid).toBe(false);
+    }
+    machine.setStepAndWaterGoals(8500, 20001);
+    expect(machine.validateStep('daily_goals').isValid).toBe(false);
   });
 });

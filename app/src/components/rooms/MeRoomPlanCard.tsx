@@ -103,10 +103,8 @@ export function MeRoomPlanCard({
         : t('me.roomPlan.renewalDate', { date: formattedPeriodEnd })
     : null;
 
-  const planDefaultCap = tier === 'pro' ? 50 : tier === 'plus' ? 20 : 5;
-  const roomCap = attachedRoom
-    ? Math.max(attachedRoom.member_cap ?? 5, planDefaultCap)
-    : planDefaultCap;
+  const planDefaultCap = tier === 'pro' ? 20 : tier === 'plus' ? 5 : 2;
+  const roomCap = attachedRoom ? planDefaultCap : planDefaultCap;
   const memberCount = attachedRoom?.member_count ?? 1;
   const capacityText = attachedRoom?.name
     ? `${memberCount} of ${roomCap} people`

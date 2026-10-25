@@ -24,7 +24,7 @@ interface SupabaseFunctionsClient {
   functions: {
     invoke: (
       name: string,
-      options: { body: unknown },
+      options: { body: Record<string, unknown> },
     ) => Promise<{
       data: Record<string, unknown> | null;
       error: { message?: string } | null;

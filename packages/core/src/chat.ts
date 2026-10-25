@@ -14,6 +14,9 @@ export const ALLOWED_CHAT_MIME_TYPES = [
   'image/png',
   'image/heic',
   'image/webp',
+  'video/mp4',
+  'video/quicktime',
+  'video/webm',
 ] as const;
 
 export const CHAT_MESSAGE_RATE_LIMIT_COUNT = 20;

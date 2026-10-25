@@ -2,6 +2,8 @@
 
 Put this file at `/docs/BUILD_PLAN.md`, the PRD at `/docs/PRD.md`, and `AGENT_RULES.md` in the repo root.
 
+> Current authorized change: [Rooms and onboarding v3](ROOMS_V3.md), requested by the owner on 24 October 2026. Its specified changes supersede conflicting phase restrictions below; unrelated future work remains out of scope.
+
 ---
 
 ## 1. How to work (the loop)

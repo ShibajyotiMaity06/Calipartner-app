@@ -76,3 +76,9 @@ U9. Every tappable element is at least 44x44. Every icon button has an accessibi
 U10. Copy: plain, warm, second person, sentence case, no emoji, no exclamation marks, no guilt. Verb names the object ("Add to lunch").
 U11. Logging never blocks and works offline. Show status, not spinners.
 U12. UI work never changes logic, schema, RLS, packages/core or entitlement checks.
+
+## Git delivery (owner instruction, 24 October 2026)
+
+- Commit and push requested changes after all required checks pass: format check, lint, typecheck and every test suite, plus an appropriate build check for UI/runtime changes.
+- Do not push while any required check fails. Existing unrelated lint warnings do not authorize broad refactoring.
+- Use the locally available CaliPartner deploy SSH identity matching the owner's supplied public key. Never copy a private key into the repository or logs.

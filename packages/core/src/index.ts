@@ -23,3 +23,4 @@ export * from './subscriptions';
 export * from './ai_food_photo';
 export * from './recipes';
 export * from './fasting';
+export * from './monthlyReview';

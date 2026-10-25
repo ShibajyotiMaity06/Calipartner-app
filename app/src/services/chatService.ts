@@ -396,6 +396,8 @@ export async function sendChatMessage(
 
     // Hard errors (permanent): fail immediately and remove from outbox
     if (
+      chatErr.code === 'PLUS_REQUIRED' ||
+      chatErr.code === 'PRO_REQUIRED' ||
       chatErr.code === 'ROOM_LOCKED' ||
       chatErr.code === 'NOT_ROOM_MEMBER' ||
       chatErr.code === 'ROOM_DORMANT_READ_ONLY' ||

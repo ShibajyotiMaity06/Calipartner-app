@@ -1,9 +1,10 @@
 import React from 'react';
 import { Pressable, View } from 'react-native';
 import type { OnboardingState } from '@/services/onboardingStateMachine';
-import { Text, useTheme } from '@calipartner/ui';
+import { CheckIcon, Text, onboardingLayout as layout, useTheme } from '@calipartner/ui';
 import { t } from '@/i18n';
 import { NumberField, PlanCard, planStyles } from './PlanPrimitives';
+import { HeightField } from './HeightField';
 
 export function TrainingStep({
   state,
@@ -26,12 +27,7 @@ export function TrainingStep({
           onChange={(value) => onWeight(value ?? NaN)}
           testID="input-weight"
         />
-        <NumberField
-          label={t('setup.height')}
-          value={state.heightCm}
-          onChange={(value) => onHeight(value ?? NaN)}
-          testID="input-height"
-        />
+        <HeightField value={state.heightCm} onChange={onHeight} />
       </PlanCard>
       <PlanCard>
         <Text fontSet="onboarding" variant="heading" color={colors.textHi}>
@@ -56,19 +52,34 @@ export function TrainingStep({
               style={({ pressed }) => [
                 planStyles.radio,
                 {
-                  borderColor: day === state.gymDays ? colors.textHi : colors.hairlineLit,
-                  backgroundColor: pressed || day === state.gymDays ? colors.s3 : colors.s2,
+                  borderColor: day === state.gymDays ? colors.cream : colors.hairlineLit,
+                  backgroundColor:
+                    day === state.gymDays ? colors.cream : pressed ? colors.s3 : colors.s2,
                 },
               ]}
             >
-              <Text fontSet="onboarding" tabular color={colors.textHi} maxFontSizeMultiplier={2}>
+              <Text
+                fontSet="onboarding"
+                tabular
+                color={day === state.gymDays ? colors.onBrand : colors.textHi}
+                maxFontSizeMultiplier={2}
+              >
                 {day}
               </Text>
+              {day === state.gymDays ? (
+                <CheckIcon size={layout.icon} color={colors.onBrand} />
+              ) : null}
             </Pressable>
           ))}
         </View>
-        <Text fontSet="onboarding" variant="bodyS" color={colors.textMid}>
-          {t('setup.activityNote')}
+        <Text
+          fontSet="onboarding"
+          variant="bodyS"
+          tabular
+          accessibilityLiveRegion="polite"
+          color={colors.textHi}
+        >
+          {t('setup.selectedDays', { days: state.gymDays })}
         </Text>
       </PlanCard>
       {Object.keys(state.errors).length > 0 ? (

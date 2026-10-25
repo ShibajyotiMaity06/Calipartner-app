@@ -42,6 +42,7 @@ export interface CreateProfileInput {
 }
 
 export interface UpdateProfileInput {
+  sex?: Sex;
   place?: string | null;
   nickname?: string;
   avatar_url?: string | null;
@@ -521,6 +522,8 @@ export type RoomTier = 'free' | 'plus' | 'pro' | 'basic' | 'community';
 export type RoomPeriod = 'monthly' | 'annual' | 'quarterly';
 
 export type AppFeature =
+  | 'chat_media'
+  | 'monthly_plan_review'
   | 'food_diary'
   | 'food_search'
   | 'barcode_scan'
@@ -826,9 +829,9 @@ export interface RoomMemberSnapshotMetrics {
   goal_completion: number | LockedMetric;
   steps: number | LockedMetric;
   water_ml: number | LockedMetric;
-  workout_status: { worked_out: boolean; duration_minutes: number } | LockedMetric;
+  workout_status: { worked_out: boolean; duration_minutes: number | LockedMetric } | LockedMetric;
   calories: number | LockedMetric;
-  macros: { protein: number; carbs: number; fat: number } | LockedMetric;
+  macros: { protein: number; carbs: number; fat?: number; fiber?: number } | LockedMetric;
   weight_kg: number | null | LockedMetric;
   weight_progress: number | LockedMetric;
   fasting_status: string | LockedMetric;
@@ -1331,6 +1334,8 @@ export interface ChatSignedUrlResponse {
 }
 
 export type ChatErrorCode =
+  | 'PLUS_REQUIRED'
+  | 'PRO_REQUIRED'
   | 'TERMS_REQUIRED'
   | 'NOT_ROOM_MEMBER'
   | 'ROOM_LOCKED'

@@ -18,6 +18,7 @@ export type OnboardingStep =
   | 'goal'
   | 'body_stats'
   | 'activity_level'
+  | 'daily_goals'
   | 'rate_selection'
   | 'target_weight_date'
   | 'health_screening'
@@ -30,6 +31,7 @@ export const ONBOARDING_STEPS_ORDER: readonly OnboardingStep[] = [
   'activity_level',
   'body_stats',
   'rate_selection',
+  'daily_goals',
   'premium',
   'paywall',
   'completed',
@@ -205,6 +207,20 @@ export class OnboardingStateMachine {
     const errors: Record<string, string> = {};
 
     switch (step) {
+      case 'daily_goals':
+        if (
+          !Number.isInteger(this.state.stepGoal) ||
+          this.state.stepGoal < 1 ||
+          this.state.stepGoal > 100000
+        )
+          errors.stepGoal = 'Invalid step goal';
+        if (
+          !Number.isInteger(this.state.waterMlGoal) ||
+          this.state.waterMlGoal < 1 ||
+          this.state.waterMlGoal > 20000
+        )
+          errors.waterMlGoal = 'Invalid water goal';
+        break;
       case 'goal':
         if (!['cut', 'maintain', 'bulk'].includes(this.state.goal)) {
           errors.goal = 'Please choose a goal';
@@ -409,7 +425,11 @@ export class OnboardingStateMachine {
       throw new Error('Cannot build goal profile: targets not calculated');
     }
     if (!isGymPlanSafe(this.state.calculatedTargets)) throw new Error('Plan exceeds safety limits');
-    if (!this.validateStep('body_stats').isValid || !this.validateStep('rate_selection').isValid)
+    if (
+      !this.validateStep('body_stats').isValid ||
+      !this.validateStep('rate_selection').isValid ||
+      !this.validateStep('daily_goals').isValid
+    )
       throw new Error('Complete your body details and goal before saving');
 
     const now = new Date().toISOString();

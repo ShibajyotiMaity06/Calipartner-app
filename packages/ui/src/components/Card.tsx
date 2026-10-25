@@ -34,7 +34,7 @@ export function Card({
   elevation = 's1',
   onPress,
   lit = false,
-  padding = space[4], // 16
+  padding = space[3], // compact default
   borderRadius = radius.card, // 20
   accessibilityRole,
   accessibilityLabel,

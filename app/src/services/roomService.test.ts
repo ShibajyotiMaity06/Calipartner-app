@@ -183,7 +183,7 @@ describe('roomService unit tests with mocked Supabase', () => {
     });
 
     const result = await createRoom(mockClient, 'New Room', 'test-device-hash');
-    expect(calledRpc).toBe('create_room');
+    expect(calledRpc).toBe('create_room_v3');
     const recorded = calledArgs as Record<string, unknown> | null;
     expect(recorded?.p_name).toBe('New Room');
     expect(recorded?.p_device_hash).toBe('test-device-hash');

@@ -95,16 +95,16 @@ export function sanitizePrivacySettings(
 }
 
 export const ROOM_TIER_CAPS: Record<RoomTier, number> = Object.freeze({
-  free: 0,
-  basic: 5,
-  plus: 10,
+  free: 2,
+  basic: 2,
+  plus: 5,
   pro: 20,
   community: 20,
 });
 
 export function roomCap(tier?: RoomTier | null): number {
-  if (!tier) return 10;
-  return ROOM_TIER_CAPS[tier] ?? 10;
+  if (!tier) return 2;
+  return ROOM_TIER_CAPS[tier] ?? 2;
 }
 
 export function hasPlan(entitlement?: Entitlement | null, now: Date = new Date()): boolean {
@@ -121,32 +121,41 @@ export function canCreateRoom(
   hostedActiveRoomCount = 0,
   now: Date = new Date(),
 ): boolean {
-  if (!entitlement) return true; // new user eligible for trial
-  const maxRooms = entitlement.tier === 'pro' ? 3 : 1;
-  if (hasPlan(entitlement, now)) {
-    return hostedActiveRoomCount < maxRooms;
-  }
-  if (entitlement.status === 'trial') {
-    const active = entitlement.period_end ? new Date(entitlement.period_end) > now : true;
-    return active && hostedActiveRoomCount < maxRooms;
-  }
-  // Eligible if trial hasn't started yet
-  return !entitlement.trial_started_at;
+  const active =
+    hasPlan(entitlement, now) ||
+    Boolean(
+      entitlement?.status === 'trial' &&
+      entitlement.tier === 'plus' &&
+      entitlement.period_end &&
+      new Date(entitlement.period_end) > now,
+    );
+  const maxRooms = active
+    ? entitlement?.tier === 'pro'
+      ? 5
+      : entitlement?.tier === 'plus'
+        ? 2
+        : 1
+    : 1;
+  return hostedActiveRoomCount < maxRooms;
 }
 
 export function roomIsUsable(
-  room: Pick<Room, 'state'>,
+  room: Pick<Room, 'state'> & { member_cap?: number; requires_host_plan?: boolean },
   planHolderEntitlement?: Entitlement | null,
   now: Date = new Date(),
 ): boolean {
   if (room.state === 'locked' || room.state === 'archived') {
     return false;
   }
+  if (!room.requires_host_plan && (room.member_cap ?? 2) <= 2) return true;
   if (!planHolderEntitlement) return false;
-  if (hasPlan(planHolderEntitlement, now)) return true;
+  if (hasPlan(planHolderEntitlement, now))
+    return planHolderEntitlement.tier === 'plus' || planHolderEntitlement.tier === 'pro';
   if (planHolderEntitlement.status === 'trial') {
-    if (!planHolderEntitlement.period_end) return true;
-    return new Date(planHolderEntitlement.period_end) > now;
+    return (
+      planHolderEntitlement.tier === 'plus' &&
+      Boolean(planHolderEntitlement.period_end && new Date(planHolderEntitlement.period_end) > now)
+    );
   }
   return false;
 }
@@ -184,6 +193,7 @@ export function isTrialEligible(
 
 export interface EvaluateRoomStateParams {
   hasActivePlan: boolean;
+  requiresHostPlan?: boolean;
   activeMemberCount: number;
   memberCap: number;
   dormantSince?: Date | null;
@@ -212,25 +222,17 @@ export function evaluateRoomState(
   const p = paramsOrCount;
   const currentNow = p.now ?? now;
 
-  if (!p.hasActivePlan) {
+  if (!p.hasActivePlan && (p.requiresHostPlan || p.activeMemberCount > 2)) {
     if (p.lockedSince) {
-      const ninetyDaysMs = 90 * 24 * 60 * 60 * 1000;
-      if (currentNow.getTime() - p.lockedSince.getTime() > ninetyDaysMs) {
+      const thirtyDaysMs = 30 * 24 * 60 * 60 * 1000;
+      if (currentNow.getTime() - p.lockedSince.getTime() >= thirtyDaysMs) {
         return 'archived';
       }
     }
     return 'locked';
   }
 
-  if (p.activeMemberCount > p.memberCap) {
-    if (p.overCapacitySince) {
-      const sevenDaysMs = 7 * 24 * 60 * 60 * 1000;
-      if (currentNow.getTime() - p.overCapacitySince.getTime() > sevenDaysMs) {
-        return 'locked';
-      }
-    }
-    return 'over_capacity';
-  }
+  if (p.activeMemberCount > p.memberCap) return 'locked';
 
   if (p.activeMemberCount >= 2) {
     return 'active';

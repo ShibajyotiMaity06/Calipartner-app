@@ -18,6 +18,7 @@ import {
   space,
   Text,
 } from '@calipartner/ui';
+import { HeightField } from '@/components/onboarding/HeightField';
 import { t } from '@/i18n';
 import { playClickSound } from '@/lib/sound';
 
@@ -57,6 +58,7 @@ export function GoalsAndBodyModal({
   const [sex, setSex] = useState<'male' | 'female' | 'other'>(currentSex);
   const [saving, setSaving] = useState(false);
   const [success, setSuccess] = useState(false);
+  const [saveError, setSaveError] = useState(false);
 
   const goalOptions = [
     { value: 'cut', label: 'Lose fat' },
@@ -73,10 +75,11 @@ export function GoalsAndBodyModal({
 
   const handleSave = async () => {
     playClickSound();
+    setSaveError(false);
     setSaving(true);
     try {
-      const parsedHeight = parseFloat(heightCm) || 175;
-      const parsedWeight = parseFloat(weightKg) || 72;
+      const parsedHeight = parseFloat(heightCm);
+      const parsedWeight = parseFloat(weightKg);
       if (onSave) {
         await onSave({
           goal,
@@ -93,6 +96,7 @@ export function GoalsAndBodyModal({
         onClose();
       }, 600);
     } catch {
+      setSaveError(true);
       setSaving(false);
     }
   };
@@ -168,17 +172,9 @@ export function GoalsAndBodyModal({
 
               <View style={styles.inputRow}>
                 <View style={styles.inputCol}>
-                  <Text variant="micro" color={dark.textMid} style={styles.inputLabel}>
-                    Height (cm)
-                  </Text>
-                  <TextInput
-                    value={heightCm}
-                    onChangeText={setHeightCm}
-                    keyboardType="numeric"
-                    style={styles.textInput}
-                    placeholderTextColor={dark.textOff}
-                    testID="input-height-cm"
-                    accessibilityLabel="Height in centimeters"
+                  <HeightField
+                    value={Number(heightCm)}
+                    onChange={(value) => setHeightCm(String(value))}
                   />
                 </View>
 
@@ -217,6 +213,11 @@ export function GoalsAndBodyModal({
             </View>
           </ScrollView>
 
+          {saveError ? (
+            <Text accessibilityRole="alert" color={dark.danger}>
+              {t('setup.detailsError')}
+            </Text>
+          ) : null}
           {/* Bottom Save Action */}
           <View style={styles.bottomBar}>
             <Button

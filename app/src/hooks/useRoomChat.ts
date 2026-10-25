@@ -265,6 +265,7 @@ export function useRoomChat(
         height?: number;
         local_uri?: string;
       }>,
+      clientId?: string,
     ) => {
       if (!roomId || !userId) return;
 
@@ -275,6 +276,7 @@ export function useRoomChat(
         const sent = await sendChatMessage(supabase, db, roomId, userId, {
           text,
           attachments,
+          clientId,
           nickname: options.userNickname,
           username: options.username,
           avatarUrl: options.avatarUrl,

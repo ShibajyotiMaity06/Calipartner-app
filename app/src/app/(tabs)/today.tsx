@@ -19,6 +19,7 @@ import {
   type UserStreak,
 } from '@calipartner/core';
 import { Avatar, dark, radius, space, Text } from '@calipartner/ui';
+import { MonthlyPlanCheckIn } from '@/components/profile/MonthlyPlanCheckIn';
 import { CaloriesDetailSheet } from '@/components/diary/CaloriesDetailSheet';
 import { CopyMealModal } from '@/components/diary/CopyMealModal';
 import { DatePickerSheet } from '@/components/diary/DatePickerSheet';
@@ -277,9 +278,10 @@ export default function TodayScreen() {
             <Text variant="heading" color={dark.textHi} style={styles.brandName}>
               CaliPartner
             </Text>
-            <Text style={styles.brandLeaf}>🌿</Text>
           </View>
         </View>
+
+        <MonthlyPlanCheckIn />
 
         {/* 2. Greeting & Dynamic Timezone Question */}
         <View style={styles.greetingSection}>

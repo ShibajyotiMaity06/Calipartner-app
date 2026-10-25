@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import {
   ActivityIndicator,
   FlatList,
@@ -11,7 +11,15 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import type { ChatAttachment, ChatMessage } from '@/types/chat';
 import { useRoomChat, type UseRoomChatOptions } from '@/hooks/useRoomChat';
+import { useSubscription } from '@/hooks/useSubscription';
 import { useNetworkStatus } from '@/hooks/useNetworkStatus';
+import { generateClientUuid } from '@/services/foodService';
+import {
+  requestUploadPresignedUrl,
+  uploadImageToR2,
+  getSignedImageUrl,
+} from '@/services/chatImageService';
+import { getSupabase } from '@/lib/supabase';
 import { t } from '@/i18n';
 import { fontSize, radius, spacing } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
@@ -41,6 +49,7 @@ export function ChatView({
 }: ChatViewProps) {
   const { colors } = useTheme();
   const { isOnline } = useNetworkStatus();
+  const { hasActiveAccess, currentTier } = useSubscription();
 
   // Core Chat Hook
   const {
@@ -64,26 +73,44 @@ export function ChatView({
 
   const effectiveIsLocked = Boolean(isLockedProp || isLockedFromHook);
 
+  const [mediaReadError, setMediaReadError] = useState(false);
   // Active interaction modals state
   const [activeImageAttachment, setActiveImageAttachment] = useState<ChatAttachment | null>(null);
   const [activeMenuMessage, setActiveMenuMessage] = useState<ChatMessage | null>(null);
   const [reportTargetMessageId, setReportTargetMessageId] = useState<string | null>(null);
   const [showTermsModal, setShowTermsModal] = useState(false);
 
-  // Handle message dispatch
+  const pending = useRef<{ signature: string; id: string } | null>(null);
   const handleSend = async (text?: string | null, selectedMedia?: SelectedMediaItem[]) => {
     if (!roomId) return;
-
-    const attachments = (selectedMedia || []).map((m, idx) => ({
-      storage_key: `rooms/${roomId}/messages/${Date.now()}-${idx}.jpg`,
-      size: m.size,
-      mime_type: m.mimeType,
-      width: m.width,
-      height: m.height,
-      local_uri: m.uri,
-    }));
-
-    await sendMessage(text, attachments.length > 0 ? attachments : undefined);
+    const signature = JSON.stringify([roomId, text, selectedMedia?.map((m) => m.uri)]);
+    if (pending.current?.signature !== signature)
+      pending.current = { signature, id: generateClientUuid() };
+    const clientId = pending.current.id;
+    const attachments = [];
+    for (const [index, m] of (selectedMedia ?? []).entries()) {
+      const signed = await requestUploadPresignedUrl(getSupabase(), {
+        room_id: roomId,
+        client_id: clientId,
+        filename: m.name,
+        mime_type: m.mimeType,
+        size: m.size,
+        width: m.width,
+        height: m.height,
+        attachmentIndex: index,
+      });
+      await uploadImageToR2(signed.upload_url, m.buffer, m.mimeType);
+      attachments.push({
+        storage_key: signed.storage_key,
+        size: m.size,
+        mime_type: m.mimeType,
+        width: m.width,
+        height: m.height,
+        local_uri: m.uri,
+      });
+    }
+    await sendMessage(text, attachments.length ? attachments : undefined, clientId);
+    pending.current = null;
   };
 
   // Handle retry
@@ -96,7 +123,7 @@ export function ChatView({
       height: att.height ?? undefined,
       local_uri: att.local_uri ?? undefined,
     }));
-    await sendMessage(failedMessage.text, retryAttachments);
+    await sendMessage(failedMessage.text, retryAttachments, failedMessage.client_id);
   };
 
   const isCurrentUserId = (senderId: string | null | undefined) => {
@@ -111,6 +138,7 @@ export function ChatView({
       style={[styles.container, { backgroundColor: colors.background }]}
       testID={testID}
     >
+      {mediaReadError ? <Text accessibilityRole="alert">{t('common.errorBody')}</Text> : null}
       {/* 1. Offline Banner */}
       {isOnline === false && (
         <View
@@ -193,7 +221,12 @@ export function ChatView({
                   message={item}
                   isMine={isMine}
                   onRetry={handleRetry}
-                  onPressImage={(att) => setActiveImageAttachment(att)}
+                  onPressImage={(att) => {
+                    if (roomId)
+                      void getSignedImageUrl(getSupabase(), roomId, att.storage_key)
+                        .then((signed_url) => setActiveImageAttachment({ ...att, signed_url }))
+                        .catch(() => setMediaReadError(true));
+                  }}
                   onLongPress={(msg) => setActiveMenuMessage(msg)}
                   testID={`bubble-${item.id}`}
                 />
@@ -214,7 +247,7 @@ export function ChatView({
           }}
           ListEmptyComponent={
             <ChatEmptyState
-              disabled={effectiveIsLocked || isDormant}
+              disabled={effectiveIsLocked || isDormant || !hasActiveAccess}
               onSelectStarter={(prompt) => handleSend(prompt)}
             />
           }
@@ -232,14 +265,17 @@ export function ChatView({
       {/* 5. Message Composer */}
       <ChatComposer
         onSend={handleSend}
-        disabled={effectiveIsLocked || isDormant}
+        disabled={effectiveIsLocked || isDormant || !hasActiveAccess}
         disabledReason={
-          effectiveIsLocked
-            ? t('chat.pausedTitle')
-            : isDormant
-              ? t('chat.dormantBanner')
-              : undefined
+          !hasActiveAccess
+            ? t('setup.chatPlus')
+            : effectiveIsLocked
+              ? t('chat.pausedTitle')
+              : isDormant
+                ? t('chat.dormantBanner')
+                : undefined
         }
+        allowMedia={hasActiveAccess && currentTier === 'pro'}
         termsAccepted={termsAccepted}
         onRequireTerms={() => setShowTermsModal(true)}
       />

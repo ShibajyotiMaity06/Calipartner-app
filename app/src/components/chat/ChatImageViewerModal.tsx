@@ -10,6 +10,7 @@ import {
   Text,
   View,
 } from 'react-native';
+import { ChatVideo } from './ChatVideo';
 import { Ionicons } from '@expo/vector-icons';
 import type { ChatAttachment } from '@/types/chat';
 import { t } from '@/i18n';
@@ -135,7 +136,9 @@ export function ChatImageViewerModal({
             showsHorizontalScrollIndicator={false}
             showsVerticalScrollIndicator={false}
           >
-            {imageUri ? (
+            {imageUri && attachment.mime_type.startsWith('video/') ? (
+              <ChatVideo uri={imageUri} />
+            ) : imageUri ? (
               <Image
                 source={{ uri: imageUri }}
                 style={[

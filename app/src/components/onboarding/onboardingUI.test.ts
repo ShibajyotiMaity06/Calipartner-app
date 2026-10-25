@@ -8,18 +8,19 @@ const ACTIVE_ONBOARDING_STEPS = ONBOARDING_STEPS_ORDER;
 
 describe('UI-5 Onboarding and Account Polish (Spec A01–A15, B01–B09)', () => {
   describe('1. Active Onboarding Flow Geometry & Order (Spec 7.A)', () => {
-    it('has 8 steps after welcome and account setup with one question per screen and 4px progress bar', () => {
+    it('has 9 steps after welcome and account setup with one question per screen and 4px progress bar', () => {
       expect(ACTIVE_ONBOARDING_STEPS).toEqual([
         'goal',
         'motivation',
         'activity_level',
         'body_stats',
         'rate_selection',
+        'daily_goals',
         'premium',
         'paywall',
         'completed',
       ]);
-      expect(ACTIVE_ONBOARDING_STEPS.length).toBe(8);
+      expect(ACTIVE_ONBOARDING_STEPS.length).toBe(9);
     });
 
     it('calculates 4px progress percentage accurately across all steps', () => {

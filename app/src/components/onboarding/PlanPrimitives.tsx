@@ -153,9 +153,19 @@ export function PlanChoice({
 }
 
 export const planStyles = StyleSheet.create({
-  card: { borderRadius: radius.card, borderWidth: layout.border, padding: space[4], gap: space[3] },
+  unitOption: {
+    flex: 1,
+    minHeight: layout.touch,
+    padding: space[2],
+    borderWidth: layout.border,
+    borderRadius: radius.control,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  reviewContent: { padding: space[3], gap: space[3] },
+  card: { borderRadius: radius.card, borderWidth: layout.border, padding: space[3], gap: space[3] },
   gap: { gap: space[2] },
-  section: { gap: space[4] },
+  section: { gap: space[3] },
   flex: { flex: 1, gap: space[2] },
   row: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: space[3] },
   input: {

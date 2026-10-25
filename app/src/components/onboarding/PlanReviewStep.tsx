@@ -67,8 +67,8 @@ export function PlanReviewStep({
   onAdjustment: (value: number) => void;
   onRecommended: () => void;
   onPlanned: () => void;
-  onCalculation: () => void;
-  onHealth: () => void;
+  onCalculation?: () => void;
+  onHealth?: () => void;
   onChangeGoal: () => void;
   saving: boolean;
   error: string | null;
@@ -187,28 +187,32 @@ export function PlanReviewStep({
           })}
         </Text>
       </PlanCard>
-      <Pressable
-        onPress={onCalculation}
-        accessibilityRole="button"
-        accessibilityLabel={t('setup.howCalculated')}
-        testID="btn-how-calculated"
-        style={planStyles.link}
-      >
-        <Text fontSet="onboarding" variant="bodyS" color={colors.textMid}>
-          {t('setup.howCalculated')}
-        </Text>
-      </Pressable>
-      <Pressable
-        onPress={onHealth}
-        accessibilityRole="button"
-        accessibilityLabel={t('setup.privateHealth')}
-        testID="btn-private-health"
-        style={planStyles.link}
-      >
-        <Text fontSet="onboarding" variant="bodyS" color={colors.textMid}>
-          {t('setup.privateHealth')}
-        </Text>
-      </Pressable>
+      {onCalculation ? (
+        <Pressable
+          onPress={onCalculation}
+          accessibilityRole="button"
+          accessibilityLabel={t('setup.howCalculated')}
+          testID="btn-how-calculated"
+          style={planStyles.link}
+        >
+          <Text fontSet="onboarding" variant="bodyS" color={colors.textMid}>
+            {t('setup.howCalculated')}
+          </Text>
+        </Pressable>
+      ) : null}
+      {onHealth ? (
+        <Pressable
+          onPress={onHealth}
+          accessibilityRole="button"
+          accessibilityLabel={t('setup.privateHealth')}
+          testID="btn-private-health"
+          style={planStyles.link}
+        >
+          <Text fontSet="onboarding" variant="bodyS" color={colors.textMid}>
+            {t('setup.privateHealth')}
+          </Text>
+        </Pressable>
+      ) : null}
       {error ? (
         <Text
           fontSet="onboarding"

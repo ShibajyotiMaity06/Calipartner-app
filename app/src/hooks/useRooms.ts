@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { generateClientUuid } from '@/services/foodService';
 import { getSupabase } from '@/lib/supabase';
 import {
   createRoom as apiCreateRoom,
@@ -89,12 +90,16 @@ export function useRooms() {
     refresh();
   }, [refresh]);
 
+  const createRequest = useRef<{ name: string; id: string } | null>(null);
   const createRoom = useCallback(
     async (name: string) => {
       setError(null);
       try {
         const supabase = getSupabase();
-        const result = await apiCreateRoom(supabase, name);
+        if (createRequest.current?.name !== name)
+          createRequest.current = { name, id: generateClientUuid() };
+        const result = await apiCreateRoom(supabase, name, undefined, createRequest.current.id);
+        createRequest.current = null;
         await refresh();
         return result;
       } catch (err: unknown) {

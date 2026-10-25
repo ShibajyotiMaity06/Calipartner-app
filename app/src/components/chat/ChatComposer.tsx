@@ -18,6 +18,7 @@ import { ChatMediaPickerModal, type SelectedMediaItem } from './ChatMediaPickerM
 export interface ChatComposerProps {
   onSend: (text?: string | null, attachments?: SelectedMediaItem[]) => Promise<void>;
   disabled?: boolean;
+  allowMedia?: boolean;
   disabledReason?: string;
   termsAccepted: boolean;
   onRequireTerms: () => void;
@@ -27,6 +28,7 @@ export interface ChatComposerProps {
 export function ChatComposer({
   onSend,
   disabled = false,
+  allowMedia = true,
   disabledReason,
   termsAccepted,
   onRequireTerms,
@@ -37,6 +39,7 @@ export function ChatComposer({
   const [selectedMedia, setSelectedMedia] = useState<SelectedMediaItem[]>([]);
   const [isSending, setIsSending] = useState(false);
   const [showPickerModal, setShowPickerModal] = useState(false);
+  const [sendError, setSendError] = useState(false);
 
   const canSend = !disabled && !isSending && (text.trim().length > 0 || selectedMedia.length > 0);
   const remainingChars = 2000 - text.length;
@@ -44,7 +47,7 @@ export function ChatComposer({
   const isOverLimit = text.length > 2000;
 
   const handlePressAttach = () => {
-    if (disabled) return;
+    if (disabled || !allowMedia) return;
     if (selectedMedia.length >= 5) return;
     setShowPickerModal(true);
   };
@@ -64,11 +67,14 @@ export function ChatComposer({
     const trimmedText = text.trim();
     const mediaToSend = [...selectedMedia];
 
+    setSendError(false);
     setIsSending(true);
     try {
       await onSend(trimmedText || null, mediaToSend.length > 0 ? mediaToSend : undefined);
       setText('');
       setSelectedMedia([]);
+    } catch {
+      setSendError(true);
     } finally {
       setIsSending(false);
     }
@@ -82,6 +88,14 @@ export function ChatComposer({
       ]}
       testID={testID}
     >
+      {sendError ? (
+        <Text
+          accessibilityRole="alert"
+          style={[styles.disabledNoticeText, { color: colors.danger }]}
+        >
+          {t('setup.sendMediaError')}
+        </Text>
+      ) : null}
       {/* Disabled reason notice (e.g. read-only dormant room or paused locked room) */}
       {disabled && Boolean(disabledReason) && (
         <View style={[styles.disabledNoticeWrap, { backgroundColor: colors.surfaceAlt }]}>
@@ -92,6 +106,11 @@ export function ChatComposer({
         </View>
       )}
 
+      {!allowMedia && !disabled ? (
+        <Text style={[styles.disabledNoticeText, { color: colors.textMuted }]}>
+          {t('setup.mediaPro')}
+        </Text>
+      ) : null}
       {/* Selected media preview strip */}
       {selectedMedia.length > 0 && (
         <ScrollView

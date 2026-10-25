@@ -1,5 +1,85 @@
 export const en = {
   setup: {
+    hostRoomLimit: 'Your plan has reached its hosted room limit. Free: 1, Plus: 2, Pro: 5.',
+    subscriptionPending:
+      'Your purchase is confirmed. Waiting for your plan to sync. Try again in a moment.',
+    takeoverCheck:
+      'Check your plan capacity and available hosted rooms, then try taking over again.',
+    progressPlus:
+      'Shared progress charts are included with Plus. Your daily room summary stays free.',
+
+    nutritionPrivate: 'Nutrition is not shared',
+    logPrivate: 'Logging status is not shared',
+    workoutPrivate: 'Training status is not shared',
+    sharedMacros: '{protein} g protein ? {carbs} g carbs ? {fiber} g fibre',
+    loggedToday: 'Logged today',
+    notLoggedToday: 'No log today yet',
+    trainedToday: 'Trained today',
+    notTrainedToday: 'No workout today yet',
+    workoutsTogether: 'Shared workouts',
+    roomOnline: 'Connect to load or share with your room. Your personal logs work offline.',
+    shareWorkout: 'Share a workout',
+    shareWorkoutConsent:
+      'Share this workout and its sets with your room. Personal notes stay private.',
+    noWorkoutsToShare: 'Log and sync a workout to share it here.',
+    noSharedWorkouts: 'No workouts shared yet.',
+    workout: 'Workout',
+    workoutMinutes: '{minutes} minutes',
+    sharedSet: '{reps} reps ? {weight} kg ? {seconds} seconds ? {meters} m',
+    pairChallenge: 'Seven days of showing up',
+    pairChallengeBody: 'Log each day together for seven days. Both people need Plus or Pro.',
+    bothPlus: 'Both people need Plus or Pro to start this challenge.',
+    inviteChallenge: 'Invite your partner to a challenge',
+    noChallenges: 'No pair challenges yet.',
+    challengePending: 'Waiting for your partner',
+    challengeDeclined: 'Invitation declined',
+    challengeActive: 'Seven-day challenge',
+    challengeCompleted: 'Seven-day challenge complete',
+    challengeDays: '{name}: {days} of 7 days logged',
+    acceptChallenge: 'Accept challenge',
+    declineChallenge: 'Decline challenge',
+
+    chooseMedia: 'Choose photos or videos',
+    mediaLimit: 'Up to 5 files, 10 MB each.',
+    mediaError: 'Choose a supported photo or video under 10 MB and try again.',
+    sendMediaError: 'Your message is still here. Check your connection and try sending again.',
+    playVideo: 'Play shared video',
+
+    finderPaid:
+      'Partner Finder is included with Plus. Create a room for two with someone you know for free.',
+    roomChoices: 'Two people free. Up to five with a Plus host, or 20 with Pro.',
+    roomPaidFeatures: 'Text and workouts with Plus. Photos and videos with Pro.',
+    plusRoomFeature: 'Host 2 rooms, up to 5 people each. Friends join free.',
+    plusChatFeature: 'Send text chat and share exact workouts',
+    pairChallengeFeature: 'Pair challenges when both people have Plus',
+    proRoomFeature: 'Host 5 rooms, up to 20 people each',
+    proMediaFeature: 'Share photos and videos in room chat',
+    proReviewFeature: 'Monthly weight check-in and refreshed macros',
+
+    heightCm: 'Centimetres',
+    heightFeet: 'Feet and inches',
+    feet: 'Height in feet',
+    inches: 'Height in inches',
+    selectedDays: '{days} days selected',
+    dailyGoalsTitle: 'Make your everyday goals yours',
+    dailyGoalsSubtitle: 'Choose a daily water and step goal. You can change them anytime.',
+    waterGoal: 'Daily water (ml)',
+    stepGoal: 'Daily steps',
+    dailyGoalsError: 'Enter whole numbers: 1 to 20,000 ml of water and 1 to 100,000 steps.',
+    premiumHighlightOne: 'Your own AI coach',
+    premiumHighlightTwo: 'Log meals from a photo',
+    premiumHighlightThree: 'Share workouts. Build habits together.',
+    premiumHighlightFour: 'A fresh macro plan as your body changes',
+    reviewMonthly: 'Your monthly plan check-in',
+    reviewMonthlyBody:
+      'Has your weight or routine changed? Review your details and confirm your updated macros.',
+    reviewMonthlyAction: 'Review my plan',
+    reviewMonthlyLater: 'Later',
+    chatPlus: 'Plus lets you send messages and share workouts. You can still read your room here.',
+    mediaPro: 'Photo and video sharing requires Pro.',
+    frozenRoom:
+      'Renew or take over with an eligible plan within 30 days. After that, this room is deleted. Your personal logs stay yours.',
+
     signup: 'Create your account',
     welcomeEyebrow: 'Your people. Your pace.',
     welcomeNote: 'A little structure. A lot of support.',
@@ -67,18 +147,18 @@ export const en = {
     maintainPaceBody:
       'Your daily target matches your estimated maintenance. There is no surplus or deficit to choose.',
     floorReason: 'Below your minimum of {floor} kcal per day.',
-    capReason: 'Above your weekly limit of {cap} kg.',
+    capReason: 'Choose another available pace.',
     bmiReason:
       'A cut is unavailable at this body weight and height. Choose maintain or bulk to continue.',
     macroReason:
       'This intake is too low to fit the protein and fat targets. Choose a smaller deficit.',
     chooseSafePace: 'Choose an available pace before continuing.',
     premiumTitle: 'More support for the days ahead',
-    premiumSubtitle: 'Your personal plan is yours on Basic. Add more tools whenever you are ready.',
+    premiumSubtitle: 'A little extra support. A lot more possibilities.',
     plus: 'CaliPartner Plus',
     plusBadge: '7 days to try Plus',
     plusBody: 'Make showing up a shared habit.',
-    plusFeatureOne: 'A room for up to 20 people, with chat and shared progress',
+    plusFeatureOne: 'Two rooms for up to five people each, with chat and shared progress',
     plusFeatureTwo: 'Partner Finder to help you meet someone with a similar goal',
     plusFeatureThree: 'Fasting and workout tools for your routine',
     pro: 'CaliPartner Pro',
@@ -930,7 +1010,7 @@ export const en = {
     },
     roomFull: {
       memberNotice: 'This room is full',
-      hostNotice: 'Your room is full. Plus fits up to 10 people, and Pro fits up to 20.',
+      hostNotice: 'Your room is full. Plus fits up to 5 people, and Pro fits up to 20.',
       upgradeBtn: 'Upgrade Plan',
       sheetTitle: 'Room is Full',
       sheetSubtitle: 'Upgrade your room plan to add more members.',
@@ -1011,8 +1091,8 @@ export const en = {
       tierPlus: 'Plus',
       tierPro: 'Pro',
       tierBasicDesc: 'Personal diary, calories, steps & GPS runs free forever',
-      tierPlusDesc: 'Rooms up to 20 people • Partner Finder • Fasting & challenges',
-      tierProDesc: 'AI Coach (10 msgs/day) • AI Photo Scans (5/day) • 3 Rooms',
+      tierPlusDesc: '2 rooms of up to 5 people, Partner Finder, fasting and challenges',
+      tierProDesc: '5 rooms of up to 20 people, AI coach and photo scans',
       durationMonthly: 'Monthly',
       durationQuarterly: '3 Months',
       durationAnnual: 'Annual',
@@ -1094,8 +1174,7 @@ export const en = {
       errorMinLength: 'Room name must be at least 3 characters.',
       errorMaxRooms:
         'You can be in up to 3 rooms at a time. Leave an existing room to create a new one.',
-      errorPlanAttached:
-        'Your subscription already covers an active room. You cannot host two rooms on the same plan.',
+      errorPlanAttached: 'Your plan has reached its hosted room limit. Free: 1, Plus: 2, Pro: 5.',
     },
     joinModal: {
       title: 'Join Room by Code',
@@ -1143,8 +1222,7 @@ export const en = {
       statusCancelled: 'Cancelled',
       expiresIn: 'Expires in {days} days',
       planRequiredTitle: 'Plan Required',
-      planRequiredMessage:
-        'Joining an accountability room requires CaliPartner Plus or Pro. Start your 7-day free trial to accept this invitation!',
+      planRequiredMessage: 'The host needs a plan that supports this room. Members can join free.',
       upgradeToAcceptBtn: 'View Plans & Free Trial',
     },
     settingsModal: {

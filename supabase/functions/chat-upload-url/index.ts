@@ -69,6 +69,15 @@ export async function handleChatUploadUrl(req: Request): Promise<Response> {
       });
     }
 
+    const { data: tier, error: tierError } = await adminClient.rpc('active_room_tier', {
+      p_user_id: user.id,
+    });
+    if (tierError || tier !== 'pro')
+      return new Response(JSON.stringify({ error: 'PRO_REQUIRED' }), {
+        status: 403,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+
     // 2. Room usable check
     const { data: isUsable } = await adminClient.rpc('room_is_usable', { p_room_id: room_id });
     if (!isUsable) {

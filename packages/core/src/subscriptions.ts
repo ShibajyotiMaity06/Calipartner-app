@@ -85,8 +85,8 @@ export const PRICING_PLANS = Object.freeze({
     inr: { monthly: '₹0', annual: '₹0', perMonthAnnual: '₹0' },
     usd: { monthly: '$0', annual: '$0', perMonthAnnual: '$0' },
     trialDays: 0,
-    roomCap: 0,
-    hostedRoomsMax: 0,
+    roomCap: 2,
+    hostedRoomsMax: 1,
     aiScansPerDay: 0,
     aiFreeTasteScans: 3,
     aiCoachMessagesPerDay: 0,
@@ -108,8 +108,8 @@ export const PRICING_PLANS = Object.freeze({
       rawMonthly: 5.99,
     },
     trialDays: 7,
-    roomCap: 10, // Explicit requirement: 10 members for Plus
-    hostedRoomsMax: 1,
+    roomCap: 5,
+    hostedRoomsMax: 2,
     rawMonthly: 99,
     rawAnnual: 599,
     aiScansPerDay: 0,
@@ -132,9 +132,9 @@ export const PRICING_PLANS = Object.freeze({
       rawAnnual: 79.99,
       rawMonthly: 11.99,
     },
-    trialDays: 7,
+    trialDays: 0,
     roomCap: 20, // Explicit requirement: 20 members for Pro
-    hostedRoomsMax: 3,
+    hostedRoomsMax: 5,
     rawMonthly: 199,
     rawAnnual: 1199,
     aiScansPerDay: 5,
@@ -226,14 +226,14 @@ export function mapProductIdToTierAndPeriod(
 
 export const DEFAULT_REMOTE_CONFIG: RemoteConfigMap = Object.freeze({
   room_caps: Object.freeze({
-    free: 0,
-    basic: 5,
-    plus: 10,
+    free: 2,
+    basic: 2,
+    plus: 5,
     pro: 20,
     community: 20,
   }),
   trial_length_days: 7,
-  trial_cap: 10,
+  trial_cap: 5,
   community_tier_enabled: false,
 });
 
@@ -241,7 +241,7 @@ export function getTierCap(tier: RoomTier, config?: Partial<RemoteConfigMap> | n
   if (config?.room_caps && config.room_caps[tier] !== undefined) {
     return config.room_caps[tier];
   }
-  return DEFAULT_REMOTE_CONFIG.room_caps[tier] ?? (tier === 'pro' ? 20 : tier === 'plus' ? 10 : 5);
+  return DEFAULT_REMOTE_CONFIG.room_caps[tier] ?? (tier === 'pro' ? 20 : tier === 'plus' ? 5 : 2);
 }
 
 // -----------------------------------------------------------------------------
@@ -267,6 +267,8 @@ export function getRequiredTierForFeature(feature: AppFeature): 'free' | 'plus' 
     'open_to_partner',
     'offline_logging',
     'receive_room_invite',
+    'create_room',
+    'join_room',
   ];
   if (freeFeatures.includes(feature)) return 'free';
 
@@ -278,6 +280,8 @@ export function getRequiredTierForFeature(feature: AppFeature): 'free' | 'plus' 
     'weekly_ai_insights',
     'pro_rooms_capacity',
     'priority_support',
+    'chat_media',
+    'monthly_plan_review',
   ];
   if (proFeatures.includes(feature)) return 'pro';
 
@@ -299,7 +303,7 @@ export function isFeatureAllowed(
     return true; // 3 free starter scans
   }
 
-  if (options?.hasActiveTrial) {
+  if (options?.hasActiveTrial && required === 'plus') {
     return true; // Trial grants access
   }
 
@@ -540,12 +544,9 @@ export function getPaywallTriggerData(
   };
 }
 
-export function shouldShowPaywallForInvite(isInvited: boolean, hasPlan?: boolean): boolean {
-  if (hasPlan !== undefined) {
-    return isInvited ? !hasPlan : true;
-  }
-  // Fallback for legacy single-argument calls
-  return !isInvited;
+/** Room admission is funded by the host; recipients never need a plan. */
+export function shouldShowPaywallForInvite(_isInvited: boolean, _hasPlan?: boolean): boolean {
+  return false;
 }
 
 export function getTrialBannerInfo(

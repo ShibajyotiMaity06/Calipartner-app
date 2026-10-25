@@ -50,8 +50,8 @@ export const TIER_CONFIG = {
     label: 'Plus',
     title: 'CaliPartner Plus',
     badge: '7-DAY TRIAL',
-    cap: 20,
-    sizeRange: '6 to 20',
+    cap: 5,
+    sizeRange: '3 to 5',
     summary: 'Rooms, Partner Finder, Fasting & Workouts',
     testID: 'picker-size-6-20',
     monthlyPrice: '₹99 / mo',
@@ -71,8 +71,8 @@ export const TIER_CONFIG = {
     label: 'Pro',
     title: 'CaliPartner Pro',
     badge: 'AI COACH & SCANS',
-    cap: 50,
-    sizeRange: '21 to 50',
+    cap: 20,
+    sizeRange: '6 to 20',
     summary: 'Everything in Plus + AI Coach & 5 Photo Scans/day',
     testID: 'picker-size-21-50',
     monthlyPrice: '₹199 / mo',
@@ -92,8 +92,8 @@ export const TIER_CONFIG = {
     label: 'Basic',
     title: 'CaliPartner Free',
     badge: 'FREE FOREVER',
-    cap: 5,
-    sizeRange: '2 to 5',
+    cap: 2,
+    sizeRange: '2 people',
     summary: 'Food diary, barcode, steps & GPS tracking free forever',
     testID: 'picker-size-2-5',
     monthlyPrice: '₹0 / mo',
@@ -111,7 +111,9 @@ export const TIER_CONFIG = {
 };
 
 const PLUS_FEATURES = [
-  'Create or join 1 room (up to 20 people) with chat & side-by-side view',
+  'setup.plusRoomFeature',
+  'setup.plusChatFeature',
+  'setup.pairChallengeFeature',
   'Partner Finder: browse suggestions and send match requests',
   'Fasting tracker and eating windows',
   'Full 150+ recipe library, meal planner & grocery lists',
@@ -127,7 +129,9 @@ const PRO_FEATURES = [
   'Chat-to-log ("I ate two rotis and dal")',
   'Coach-suggested recipes & "fits my day" collections',
   'Weekly AI progress insights & macro adjustments',
-  'Up to 3 rooms (up to 50 people each)',
+  'setup.proRoomFeature',
+  'setup.proMediaFeature',
+  'setup.proReviewFeature',
   'Priority support',
 ];
 
@@ -143,7 +147,16 @@ export function PaywallModal({
   onSuccess,
 }: PaywallModalProps) {
   const reduceMotion = useReducedMotion();
-  const { offerings, entitlement, error: subError, purchase, restore, sponsor } = useSubscription();
+  const {
+    offerings,
+    entitlement,
+    error: subError,
+    purchase,
+    restore,
+    sponsor,
+    hasActiveAccess,
+    refresh,
+  } = useSubscription();
 
   // Selected Tier (Plus, Pro) - default to Plus
   const [selectedTier, setSelectedTier] = useState<PlanTier>(() => {
@@ -154,6 +167,7 @@ export function PaywallModal({
   // Selected Duration (Monthly, Annual — default to Annual as per Pricing Plan section 1.1)
   const [selectedDuration, setSelectedDuration] = useState<PlanDuration>('annual');
   const [actionLoading, setActionLoading] = useState(false);
+  const [awaitingEntitlement, setAwaitingEntitlement] = useState(false);
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
 
   // Sub-modal states
@@ -211,12 +225,20 @@ export function PaywallModal({
     setStatusMessage(null);
 
     try {
-      if (sponsorRoomId || context === 'keep_going') {
-        const targetId = sponsorRoomId ?? 'current-room-id';
-        const success = await sponsor(targetId);
+      if (sponsorRoomId && (hasActiveAccess || awaitingEntitlement)) {
+        if (awaitingEntitlement) await refresh();
+        const success = await sponsor(sponsorRoomId);
         if (success) {
           playSuccessSound();
           setShowSuccessModal(true);
+          return;
+        }
+        if (
+          awaitingEntitlement ||
+          entitlement?.tier === selectedTier ||
+          entitlement?.tier === 'pro'
+        ) {
+          setStatusMessage(t('setup.takeoverCheck'));
           return;
         }
       }
@@ -228,6 +250,11 @@ export function PaywallModal({
           entitlement?.store_product_id ?? undefined,
         );
         if (success) {
+          if (sponsorRoomId && !(await sponsor(sponsorRoomId))) {
+            setAwaitingEntitlement(true);
+            setStatusMessage(t('setup.subscriptionPending'));
+            return;
+          }
           playSuccessSound();
           setShowSuccessModal(true);
           return;
@@ -481,7 +508,7 @@ export function PaywallModal({
                           Plus
                         </Text>
                         <Text variant="micro" color={dark.textLo}>
-                          1 room · up to 20 people
+                          {t('setup.plusRoomFeature')}
                         </Text>
                       </View>
                     </View>
@@ -551,7 +578,7 @@ export function PaywallModal({
                           Pro
                         </Text>
                         <Text variant="micro" color={dark.textLo}>
-                          3 rooms · up to 50 people each
+                          {t('setup.proRoomFeature')}
                         </Text>
                       </View>
                     </View>
@@ -619,7 +646,7 @@ export function PaywallModal({
                     style={styles.checkIcon}
                   />
                   <Text variant="bodyS" color={dark.textHi} style={styles.featureItemText}>
-                    {feat}
+                    {feat.startsWith('setup.') ? t(feat as Parameters<typeof t>[0]) : feat}
                   </Text>
                 </View>
               ))}
@@ -732,7 +759,7 @@ export function PaywallModal({
                 </Text>
                 <Text variant="body" color={dark.textMid} style={styles.successSubtitle}>
                   {selectedTier === 'pro'
-                    ? 'AI Coach, 5 daily photo scans, and 3 rooms unlocked.'
+                    ? 'AI Coach, 5 daily photo scans, and 5 rooms unlocked.'
                     : `${roomName} now fits up to ${activeTierConfig.cap} members.`}
                 </Text>
 

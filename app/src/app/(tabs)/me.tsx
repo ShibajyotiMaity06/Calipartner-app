@@ -42,13 +42,14 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useRooms } from '@/hooks/useRooms';
 import { useRoomRequests } from '@/hooks/useRoomRequests';
 import { useTargets } from '@/hooks/useTargets';
+import { OnboardingStateMachine } from '@/services/onboardingStateMachine';
 import { t } from '@/i18n';
 import { playClickSound } from '@/lib/sound';
 
 export default function MeScreen() {
   const router = useRouter();
   const { user, profile, isGuest, signOut, updateProfile } = useAuth();
-  const { currentGoalProfile, updateDailyGoals } = useTargets();
+  const { currentGoalProfile, updateDailyGoals, saveGoalProfile } = useTargets();
   const { rooms } = useRooms();
   const { incoming, outgoing, respondToRequest, cancelRequest } = useRoomRequests();
 
@@ -518,6 +519,31 @@ export default function MeScreen() {
             currentRate={currentGoalProfile.weekly_rate_kg}
             currentWeightKg={currentGoalProfile.current_weight_kg}
             currentSex={profile.sex}
+            onSave={async (details) => {
+              if (!user) throw new Error('Sign in to save your plan');
+              if (details.sex !== profile.sex) {
+                const changed = await updateProfile({ sex: details.sex });
+                if (changed.error) throw changed.error;
+              }
+              const machine = new OnboardingStateMachine({
+                goal: details.goal,
+                sex: details.sex,
+                dateOfBirth: profile.date_of_birth,
+                heightCm: details.heightCm,
+                weightKg: details.weightKg,
+                bodyFatPercentage: currentGoalProfile.body_fat_percentage,
+                activityLevel: currentGoalProfile.activity_level,
+                gymDays: currentGoalProfile.gym_days ?? 3,
+                weeklyRateKg: details.goal === 'maintain' ? 0 : details.rate,
+                stepGoal: currentGoalProfile.step_goal,
+                waterMlGoal: currentGoalProfile.water_ml_goal,
+              });
+              const saved = await saveGoalProfile({
+                ...machine.buildGoalProfile(user.id),
+                recompute_reason: 'manual_edit',
+              });
+              if (!saved.success) throw new Error(saved.error);
+            }}
           />
         )}
 

@@ -14,7 +14,7 @@ export interface LockedRoomPausedStateProps {
 /**
  * J20 · Room paused (Locked) (ROOM-7, SUB-8)
  * Layout: Paired card desaturated to textLo with dashed seam, centred card:
- * "This room is paused." · "Your streak is saved for 30 days." ·
+ * "This room is paused." · "{t('setup.frozenRoom')}" ·
  * Primary "Keep this room going" (opens paywall) · secondary "Leave room" (confirm).
  * Strictly non-shaming: nobody is told who stopped paying or why.
  */
@@ -94,7 +94,7 @@ export function LockedRoomPausedState({
         </Text>
 
         <Text style={[styles.streakSavedNotice, { color: colors.text }]}>
-          Your streak is saved for 30 days.
+          {t('setup.frozenRoom')}
         </Text>
 
         <Text

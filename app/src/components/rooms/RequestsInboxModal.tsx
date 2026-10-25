@@ -12,7 +12,6 @@ import { Ionicons } from '@expo/vector-icons';
 import { t } from '@/i18n';
 import { fontSize, radius, spacing } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
-import { useSubscription } from '@/hooks/useSubscription';
 import type { RoomRequestWithDetails } from '@/types/rooms';
 
 interface RequestsInboxModalProps {
@@ -35,11 +34,6 @@ export function RequestsInboxModal({
   onOpenPaywall,
 }: RequestsInboxModalProps) {
   const { colors } = useTheme();
-  const { hasPlan, isTrial, entitlement } = useSubscription();
-  const hasActiveAccess =
-    hasPlan ||
-    (isTrial && (!entitlement?.period_end || new Date(entitlement.period_end) > new Date()));
-
   const [activeTab, setActiveTab] = useState<'incoming' | 'outgoing'>('incoming');
   const [actingId, setActingId] = useState<string | null>(null);
   const [errorState, setErrorState] = useState<{
@@ -49,19 +43,6 @@ export function RequestsInboxModal({
   } | null>(null);
 
   const handleRespond = async (item: RoomRequestWithDetails, accept: boolean) => {
-    // Free user attempting to accept a room invitation
-    if (accept && item.type === 'invitation' && !hasActiveAccess) {
-      setErrorState({
-        requestId: item.id,
-        message: t('rooms.inboxModal.planRequiredMessage'),
-        showUpgrade: true,
-      });
-      if (onOpenPaywall) {
-        onOpenPaywall();
-      }
-      return;
-    }
-
     setActingId(item.id);
     setErrorState(null);
     try {

@@ -121,12 +121,14 @@ export function ChatMessageBubble({
         >
           {/* Message Text */}
           {isDeleted ? (
-            <Text style={[styles.deletedText, { color: isMine ? '#E2E8F0' : colors.textMuted }]}>
+            <Text
+              style={[styles.deletedText, { color: isMine ? colors.onAccent : colors.textMuted }]}
+            >
               {t('chat.deletedMessage')}
             </Text>
           ) : (
             Boolean(message.text) && (
-              <Text style={[styles.messageText, { color: isMine ? '#FFFFFF' : colors.text }]}>
+              <Text style={[styles.messageText, { color: isMine ? colors.onAccent : colors.text }]}>
                 {message.text}
               </Text>
             )
@@ -162,7 +164,14 @@ export function ChatMessageBubble({
                     accessibilityLabel="Chat photo attachment. Tap to view full screen."
                     testID={`att-image-${att.id || idx}`}
                   >
-                    {imageUri ? (
+                    {att.mime_type.startsWith('video/') ? (
+                      <Ionicons
+                        name="play-circle-outline"
+                        size={32}
+                        color={colors.text}
+                        accessibilityLabel={t('setup.playVideo')}
+                      />
+                    ) : imageUri ? (
                       <Image
                         source={{ uri: imageUri }}
                         style={styles.attachmentThumbnail}

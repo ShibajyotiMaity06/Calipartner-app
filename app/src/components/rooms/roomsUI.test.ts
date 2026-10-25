@@ -219,7 +219,7 @@ describe('Phase 5C — Room UI Presentation & Logic Tests', () => {
       };
 
       expect(getRoomFullNotice(true)).toBe(
-        'Your room is full. Plus fits up to 10 people, and Pro fits up to 20.',
+        'Your room is full. Plus fits up to 5 people, and Pro fits up to 20.',
       );
       expect(getRoomFullNotice(false)).toBe('This room is full');
       expect(t('rooms.roomFull.upgradeBtn')).toBe('Upgrade Plan');

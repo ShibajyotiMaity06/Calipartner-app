@@ -40,6 +40,8 @@ import {
   type RoomSegment,
 } from '@/components/rooms';
 
+import { BasicRoomCard } from '@/components/rooms/BasicRoomCard';
+import { RoomExtras } from '@/components/rooms/RoomExtras';
 import { ChatView } from '@/components/chat';
 import { useRoomActions } from '@/hooks/useRoomActions';
 import { useRoomChat } from '@/hooks/useRoomChat';
@@ -84,8 +86,8 @@ export default function RoomScreen() {
     cancelRequest,
     searchUsers,
   } = useRoomRequests();
-  const { isTrial, trialBanner, currentTier, hasPlan, hasActiveAccess } = useSubscription();
-  const isPlusOrPro = hasPlan || hasActiveAccess || currentTier === 'plus' || currentTier === 'pro';
+  const { isTrial, trialBanner, currentTier, hasActiveAccess } = useSubscription();
+  const isPlusOrPro = hasActiveAccess;
 
   // Selected Room
   const [selectedRoomId, setSelectedRoomId] = useState<string | null>(null);
@@ -169,13 +171,14 @@ export default function RoomScreen() {
   };
 
   // Paywall / Access check (PRD 6.8 ROOM-7: Locked room shows "This room is paused" screen)
+  const roomState = snapshot?.room.id === activeRoomId ? snapshot.room.state : currentRoom?.state;
   const isRoomLocked =
     roomsError?.code === 'PLAN_REQUIRED' ||
     snapshotError?.code === 'ROOM_LOCKED' ||
-    currentRoom?.state === 'locked';
+    roomState === 'locked';
 
   // Room dormant check (fewer than 2 active members)
-  const isRoomDormant = currentRoom?.state === 'dormant' || members.length < 2;
+  const isRoomDormant = roomState === 'dormant' || members.length < 2;
 
   // Hook Room Chat for unread badge and realtime chat notifications
   const navigation = useNavigation();
@@ -421,7 +424,7 @@ export default function RoomScreen() {
                   )}
 
                   {/* Core Side-by-Side Card */}
-                  {meMember && (
+                  {meMember && hasActiveAccess && (
                     <SideBySideCard
                       me={meMember}
                       partner={partnerMember}
@@ -439,13 +442,28 @@ export default function RoomScreen() {
                       onSendPhoto={() => setActiveSegment('chat')}
                     />
                   )}
+                  <BasicRoomCard members={members} />
+                  {currentRoom ? (
+                    <RoomExtras
+                      key={currentRoom.id}
+                      roomId={currentRoom.id}
+                      userId={callerId ?? ''}
+                      partnerId={partnerMember?.user_id ?? null}
+                      refreshToken={snapshot}
+                      canSend={hasActiveAccess}
+                    />
+                  ) : null}
                 </>
               )}
 
               {/* Segment: Progress */}
-              {activeSegment === 'progress' && currentRoom && (
-                <RoomProgressView roomId={currentRoom.id} testID="room-progress-segment" />
-              )}
+              {activeSegment === 'progress' &&
+                currentRoom &&
+                (hasActiveAccess ? (
+                  <RoomProgressView roomId={currentRoom.id} testID="room-progress-segment" />
+                ) : (
+                  <Text>{t('setup.progressPlus')}</Text>
+                ))}
 
               {/* Segment: Members Roster */}
               {activeSegment === 'members' && currentRoom && (
@@ -570,7 +588,12 @@ export default function RoomScreen() {
       <PaywallModal
         visible={showPaywallModal}
         onClose={() => setShowPaywallModal(false)}
-        context="room"
+        context={isRoomLocked ? 'keep_going' : 'room'}
+        sponsorRoomId={isRoomLocked ? currentRoom?.id : undefined}
+        onSuccess={() => {
+          setShowPaywallModal(false);
+          void handleRefresh();
+        }}
         roomName={currentRoom?.name ?? 'Accountability Squad'}
       />
 

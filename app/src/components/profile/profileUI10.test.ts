@@ -188,14 +188,14 @@ describe('UI-10 · Me, Privacy, Plans, and Paywall (Screens N01–N16, O01–O10
     });
 
     it('configures the three room size tiers: Basic (2-5), Plus (6-20), Pro (21-50)', () => {
-      expect(TIER_CONFIG.basic.sizeRange).toBe('2 to 5');
-      expect(TIER_CONFIG.basic.cap).toBe(5);
+      expect(TIER_CONFIG.basic.sizeRange).toBe('2 people');
+      expect(TIER_CONFIG.basic.cap).toBe(2);
 
-      expect(TIER_CONFIG.plus.sizeRange).toBe('6 to 20');
-      expect(TIER_CONFIG.plus.cap).toBe(20);
+      expect(TIER_CONFIG.plus.sizeRange).toBe('3 to 5');
+      expect(TIER_CONFIG.plus.cap).toBe(5);
 
-      expect(TIER_CONFIG.pro.sizeRange).toBe('21 to 50');
-      expect(TIER_CONFIG.pro.cap).toBe(50);
+      expect(TIER_CONFIG.pro.sizeRange).toBe('6 to 20');
+      expect(TIER_CONFIG.pro.cap).toBe(20);
     });
 
     it('enforces 7-day free trial on Plus and NO trial on Pro as per Pricing Plan v2', () => {
