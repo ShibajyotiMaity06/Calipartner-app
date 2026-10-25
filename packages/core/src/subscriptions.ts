@@ -109,7 +109,7 @@ export const PRICING_PLANS = Object.freeze({
     },
     trialDays: 7,
     roomCap: 5,
-    hostedRoomsMax: 2,
+    hostedRoomsMax: 3,
     rawMonthly: 99,
     rawAnnual: 599,
     aiScansPerDay: 0,

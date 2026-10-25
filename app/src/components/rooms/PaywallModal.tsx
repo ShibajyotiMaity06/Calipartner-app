@@ -111,6 +111,7 @@ export const TIER_CONFIG = {
 };
 
 const PLUS_FEATURES = [
+  'setup.plusFriendRequests',
   'setup.plusRoomFeature',
   'setup.plusChatFeature',
   'setup.pairChallengeFeature',

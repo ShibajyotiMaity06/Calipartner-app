@@ -30,7 +30,7 @@ describe('Individual subscription security boundaries', () => {
     expect(PRICING_PLANS.pro.aiCoachMessagesPerDay).toBe(10);
     expect(PRICING_PLANS.pro.aiScansPerDay).toBe(5);
     expect(PRICING_PLANS.pro.trialDays).toBe(0);
-    expect(PRICING_PLANS.plus.hostedRoomsMax).toBe(2);
+    expect(PRICING_PLANS.plus.hostedRoomsMax).toBe(3);
     expect(PRICING_PLANS.pro.hostedRoomsMax).toBe(5);
   });
   it('rejects forged and absent webhook authorization', () => {

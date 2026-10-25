@@ -39,7 +39,8 @@ describe('Rooms v3 permission boundaries', () => {
   });
   it('enforces Plus and Pro hosted room limits and expiry', () => {
     expect(canCreateRoom(entitlement('plus'), 1, now)).toBe(true);
-    expect(canCreateRoom(entitlement('plus'), 2, now)).toBe(false);
+    expect(canCreateRoom(entitlement('plus'), 2, now)).toBe(true);
+    expect(canCreateRoom(entitlement('plus'), 3, now)).toBe(false);
     expect(canCreateRoom(entitlement('pro'), 4, now)).toBe(true);
     expect(canCreateRoom(entitlement('pro'), 5, now)).toBe(false);
     expect(canCreateRoom({ ...entitlement('pro'), period_end: now.toISOString() }, 1, now)).toBe(

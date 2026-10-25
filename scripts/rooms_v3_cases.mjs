@@ -85,18 +85,19 @@ export async function runRoomTests(db) {
       [rid(1), uid(1)],
     );
   });
-  await test('Plus hosts two rooms of five; a sixth and a third room are denied', async () => {
+  await test('Plus hosts three rooms of five; a sixth member and a fourth room are denied', async () => {
     await plan(4, 'plus');
     plus = await create(4, 4);
     await create(4, 5);
-    await fails('select public.create_room_v3($1,$2)', /HOSTED_ROOM_LIMIT/, [rid(6), 'Third']);
+    await create(4, 6);
+    await fails('select public.create_room_v3($1,$2)', /HOSTED_ROOM_LIMIT/, [rid(9), 'Fourth']);
     for (const i of [5, 6, 7, 8]) await join(i, plus.code);
     await user(9);
     await fails('select public.join_by_code($1,$2)', /ROOM_FULL/, [plus.code, null]);
   });
   await test('Pro hosts five rooms and admits a sixth free member', async () => {
     await plan(4, 'pro');
-    for (const n of [6, 7, 8]) await create(4, n);
+    for (const n of [7, 8]) await create(4, n);
     await fails('select public.create_room_v3($1,$2)', /HOSTED_ROOM_LIMIT/, [rid(9), 'Sixth']);
     await join(9, plus.code);
     assert.equal(await scalar('select public.room_cap($1)', [rid(4)]), 20);

@@ -133,7 +133,7 @@ export function canCreateRoom(
     ? entitlement?.tier === 'pro'
       ? 5
       : entitlement?.tier === 'plus'
-        ? 2
+        ? 3
         : 1
     : 1;
   return hostedActiveRoomCount < maxRooms;

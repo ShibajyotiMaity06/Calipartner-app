@@ -2,6 +2,8 @@
 
 Put this file at `/docs/BUILD_PLAN.md`, the PRD at `/docs/PRD.md`, and `AGENT_RULES.md` in the repo root.
 
+> Current authorized scope: [Friends, social profiles and room limits](FRIENDS_AND_ROOM_LIMITS.md), explicitly requested by the owner. This supersedes conflicting room quotas and phase restrictions for these changes only.
+
 > Current authorized change: [Rooms and onboarding v3](ROOMS_V3.md), requested by the owner on 24 October 2026. Its specified changes supersede conflicting phase restrictions below; unrelated future work remains out of scope.
 
 ---

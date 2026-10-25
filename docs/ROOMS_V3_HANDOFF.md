@@ -1,5 +1,7 @@
 # Rooms v3 implementation handoff
 
+For the final room limits, friends feature and combined feature-wise delivery report, see [Feature changes](FEATURE_CHANGES.md). The original implementation notes below describe the earlier delivery; Plus now hosts three rooms.
+
 Built the owner-requested free pair model, individual chat/workout/media permissions, Plus and Pro host quotas, mutual seven-day challenges, 30-day freeze/takeover/deletion lifecycle, monthly Pro plan reviews, and onboarding/UI changes described in [the approved revision](ROOMS_V3.md).
 
 Existing subscription amounts and AI allowances are retained. Assumptions: Free hosts one two-person room, Plus hosts two five-person rooms, and Pro hosts five 20-person rooms. A normal free pair stays available when a member's paid features lapse. Sharing nutrition remains opt-in. The removed weekly-limit wording does not remove calculator or database safety caps.

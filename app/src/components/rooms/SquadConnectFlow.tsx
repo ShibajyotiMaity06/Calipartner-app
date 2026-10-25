@@ -109,6 +109,7 @@ const SAMPLE_PARTNERS: PartnerProfileItem[] = [
 
 export interface SquadConnectFlowProps {
   isPlusOrPro: boolean;
+  onFindFriend?: () => void;
   onOpenPaywall: () => void;
   onCreateSquad: (name: string) => Promise<{ room_id: string; code?: string } | void>;
   onJoinSquad: () => void;
@@ -118,6 +119,7 @@ export interface SquadConnectFlowProps {
 
 export function SquadConnectFlow({
   isPlusOrPro,
+  onFindFriend,
   onOpenPaywall,
   onCreateSquad,
   onJoinSquad,
@@ -154,6 +156,10 @@ export function SquadConnectFlow({
   // Ensure free users see the Plus modal when attempting to connect
   const handleNextFromChoice = () => {
     playClickSound();
+    if (selectedChoice === '1-on-1' && onFindFriend) {
+      onFindFriend();
+      return;
+    }
     if (!isPlusOrPro && selectedChoice === '1-on-1') {
       setShowPlusModal(true);
       return;

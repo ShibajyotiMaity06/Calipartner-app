@@ -1,5 +1,7 @@
 # CaliPartner: Product Requirements Document (PRD)
 
+> Latest owner-approved revision: [Friends, social profiles and room limits](FRIENDS_AND_ROOM_LIMITS.md). Free hosts one pair room, Plus hosts three rooms of up to five, and Pro hosts five rooms of up to 20. The revision also defines free username search, social profiles and the weekly friend-request allowance.
+
 > Owner-approved revision, 24 October 2026: [Rooms and onboarding v3](ROOMS_V3.md) supersedes conflicting room access, host capacities, individual feature gates, lifecycle and onboarding requirements below.
 
 > Owner-approved update, 24 October 2026: the onboarding journey and new-plan calculator are superseded by [the onboarding redesign](ONBOARDING_REDESIGN.md). Existing pricing is retained: free Basic, a 7-day Plus trial, and no Pro trial. Historical targets retain their previous calculator.

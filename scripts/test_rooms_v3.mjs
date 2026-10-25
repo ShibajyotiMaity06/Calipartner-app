@@ -23,6 +23,8 @@ console.log(`Database migrations: ${migrations} passed`);
 const { runRoomTests } = await import('./rooms_v3_cases.mjs');
 try {
   await runRoomTests(db);
+  const { runFriendTests } = await import('./friends_cases.mjs');
+  await runFriendTests(db);
 } finally {
   await db.close();
 }

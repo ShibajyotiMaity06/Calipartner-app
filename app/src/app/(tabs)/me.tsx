@@ -192,6 +192,18 @@ export default function MeScreen() {
 
               <Button
                 variant="secondary"
+                label={t('friends.editProfile')}
+                onPress={() => router.push('/friends?edit=1' as never)}
+                testID="me-social-profile"
+              />
+              <Button
+                variant="secondary"
+                label={t('friends.title')}
+                onPress={() => router.push('/friends' as never)}
+                testID="me-friends"
+              />
+              <Button
+                variant="secondary"
                 label={profile ? t('profileEdit.title') : t('profileSetup.title')}
                 onPress={() => {
                   playClickSound();

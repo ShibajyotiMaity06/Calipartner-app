@@ -1,5 +1,7 @@
 # Rooms and onboarding revision — 24 October 2026
 
+The later [friends and room-limit revision](FRIENDS_AND_ROOM_LIMITS.md) updates Plus to three hosted rooms and adds free username search and limited friend requests. It supersedes the affected limits and Partner Finder statements below.
+
 This owner-requested revision supersedes conflicting room, subscription and onboarding requirements in the PRD, build plan and UI specification. Scope is limited to this revision.
 
 - Free: one hosted room, two people, with neither person required to subscribe. Shared nutrition is limited to calories, protein, fibre and carbohydrates, subject to each person's privacy choices. Logged-today and trained-today status are included. Other members' base tables remain private.

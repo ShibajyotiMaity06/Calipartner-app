@@ -538,4 +538,28 @@ export const migrations: readonly LocalMigration[] = [
       );
     `,
   },
+  {
+    version: 13,
+    name: 'social_profiles_friend_outbox',
+    sql: `
+      CREATE TABLE local_social_cache (
+        id TEXT PRIMARY KEY NOT NULL,
+        owner_id TEXT NOT NULL,
+        cache_key TEXT NOT NULL,
+        payload TEXT NOT NULL,
+        updated_at TEXT NOT NULL
+      );
+      CREATE INDEX local_social_cache_owner ON local_social_cache(owner_id,cache_key);
+      CREATE TABLE local_social_outbox (
+        id TEXT PRIMARY KEY NOT NULL,
+        owner_id TEXT NOT NULL,
+        rpc_name TEXT NOT NULL,
+        payload TEXT NOT NULL,
+        status TEXT NOT NULL DEFAULT 'pending',
+        last_error TEXT,
+        created_at TEXT NOT NULL
+      );
+      CREATE INDEX local_social_outbox_owner ON local_social_outbox(owner_id,created_at);
+    `,
+  },
 ];

@@ -1,3 +1,4 @@
+import { FriendsSyncGate } from '@/components/FriendsSyncGate';
 import { useCallback, useEffect, useState } from 'react';
 import { BackHandler, Platform, View } from 'react-native';
 import { Stack, useRouter } from 'expo-router';
@@ -209,6 +210,7 @@ export default function RootLayout() {
             <AuthProvider>
               <AccountDataResetGate>
                 <TargetsProvider>
+                  <FriendsSyncGate />
                   <HardwareBackHandler />
                   <SessionNavigationGuard />
                   <Stack screenOptions={{ headerShown: false }} />

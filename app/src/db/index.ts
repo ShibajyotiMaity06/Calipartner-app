@@ -154,7 +154,11 @@ export function createWebDb(): SQLite.SQLiteDatabase {
                 continue;
               }
             }
-            if (table === 'outbox') {
+            if (
+              table === 'outbox' ||
+              table === 'local_social_cache' ||
+              table === 'local_social_outbox'
+            ) {
               const existingIdx = list.findIndex((ex) => ex.id === row.id);
               if (existingIdx >= 0) {
                 list[existingIdx] = { ...list[existingIdx], ...row };
@@ -178,7 +182,7 @@ export function createWebDb(): SQLite.SQLiteDatabase {
         return { lastInsertRowId: 0, changes };
       }
       const targetMutation = sql.match(
-        /^(update|delete from)\s+(local_goal_profiles|local_health_screening|local_onboarding_drafts|outbox)\b/i,
+        /^(update|delete from)\s+(local_goal_profiles|local_health_screening|local_onboarding_drafts|outbox|local_social_cache|local_social_outbox)\b/i,
       );
       if (targetMutation) {
         const table = targetMutation[2]!;
@@ -294,6 +298,22 @@ export function createWebDb(): SQLite.SQLiteDatabase {
     async getAllAsync<T>(sql: string, ...args: unknown[]): Promise<T[]> {
       const params = (Array.isArray(args[0]) ? args[0] : args) as unknown[];
       const lower = sql.toLowerCase();
+
+      if (lower.includes('from local_social_cache') || lower.includes('from local_social_outbox')) {
+        const table = lower.includes('from local_social_cache')
+          ? 'local_social_cache'
+          : 'local_social_outbox';
+        const rows = (memory[table] || []).filter(
+          (row) =>
+            row.owner_id === params[0] &&
+            (table !== 'local_social_cache' ||
+              !lower.includes('cache_key = ?') ||
+              row.cache_key === params[1]),
+        );
+        return rows.sort((a, b) =>
+          String(a.created_at ?? '').localeCompare(String(b.created_at ?? '')),
+        ) as T[];
+      }
 
       if (lower.includes('from sqlite_master')) {
         return Object.keys(memory).map((name) => ({ name })) as T[];
@@ -587,6 +607,8 @@ export async function clearAllLocalData(): Promise<void> {
     'guest_entries',
     'local_goal_profiles',
     'local_onboarding_drafts',
+    'local_social_cache',
+    'local_social_outbox',
     'local_health_screening',
     'local_foods',
     'local_food_entries',

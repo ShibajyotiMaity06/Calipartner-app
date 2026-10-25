@@ -294,6 +294,7 @@ export default function RoomScreen() {
         /* Find a Partner / Squad Connect Flow (Screenshot 1: 1-on-1, Squad, Join) */
         <SquadConnectFlow
           isPlusOrPro={isPlusOrPro}
+          onFindFriend={() => router.push('/friends' as never)}
           onOpenPaywall={() => setShowPaywallModal(true)}
           onCreateSquad={async (name) => {
             const res = await createRoom(name);
@@ -437,7 +438,7 @@ export default function RoomScreen() {
                       onOpenProgress={() => setActiveSegment('progress')}
                       onOpenPrivacy={() => setShowPrivacyModal(true)}
                       onInviteFriend={() => setShowInviteModal(true)}
-                      onFindPartner={() => router.push('/partner-finder' as any)}
+                      onFindPartner={() => router.push('/friends' as never)}
                       onLogSharedMeal={() => router.push('/diary' as any)}
                       onSendPhoto={() => setActiveSegment('chat')}
                     />
