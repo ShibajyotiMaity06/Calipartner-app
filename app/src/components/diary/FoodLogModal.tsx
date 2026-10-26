@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import {
   ActivityIndicator,
   Modal,
@@ -13,6 +13,7 @@ import type { Food, FoodCandidateItem, MealSection } from '@calipartner/core';
 import { useAuth } from '@/contexts/AuthContext';
 import { getDb } from '@/db';
 import { useFoodSearch } from '@/hooks/useFoodSearch';
+import { useAddEntry } from '@/hooks/useFoodEntries';
 import {
   usePreviouslyLogged,
   type HistorySortOption,
@@ -26,7 +27,6 @@ import {
   checkAiProcessingConsent,
   getAiFoodPhotoUsageStatus,
   savePhotoCandidatesToDiary,
-  SAMPLE_ANALYSIS_RESPONSE,
   type SupabaseFunctionsClient,
 } from '@/services/aiFoodPhotoService';
 import { fontSize, radius, spacing } from '@/theme/tokens';
@@ -67,7 +67,7 @@ export function FoodLogModal({
 
   const [activeTab, setActiveTab] = useState<TabType>(initialTab);
   const [selectedFoodForQuantity, setSelectedFoodForQuantity] = useState<Food | null>(null);
-  const [showBarcodeScanner, setShowBarcodeScanner] = useState(false);
+  const [showBarcodeScanner, setShowBarcodeScanner] = useState(initialTab === 'scan');
   const [showCustomFoodModal, setShowCustomFoodModal] = useState(false);
   const [prefilledBarcode, setPrefilledBarcode] = useState<string | null>(null);
 
@@ -78,13 +78,13 @@ export function FoodLogModal({
   const [photoResults, setPhotoResults] = useState<FoodCandidateItem[] | null>(null);
   const [showResultsEditor, setShowResultsEditor] = useState(false);
   const [showDailyLimitModal, setShowDailyLimitModal] = useState(false);
-  const [limitState, setLimitState] = useState<'trial' | 'paid' | 'free' | 'free_after_trial'>(
-    'trial',
-  );
+  const [limitState, setLimitState] = useState<string>('free_taste');
   const [limitUsage, setLimitUsage] = useState<{ usedToday: number; dailyCap: number } | null>(
     null,
   );
   const [consentLoading, setConsentLoading] = useState(false);
+  const [photoError, setPhotoError] = useState<string | null>(null);
+  const { addEntry, error: saveError } = useAddEntry();
 
   // Search tab hook
   const { query, setQuery, results: searchResults, loading: searchLoading } = useFoodSearch();
@@ -111,13 +111,19 @@ export function FoodLogModal({
     onClose();
   };
 
-  const handleLogFromQuantity = (_data?: unknown) => {
-    // Handled in today screen via callback or logged directly
+  const handleLogFromQuantity = async (data: Parameters<typeof addEntry>[0]) => {
+    const saved = await addEntry({
+      ...data,
+      localDate,
+      source: data.food.barcode ? 'scan' : 'search',
+    });
+    if (!saved) return;
     if (onLogged) onLogged();
     onClose();
   };
 
   const handleStartPhotoScan = async () => {
+    setPhotoError(null);
     try {
       const hasConsent = await checkAiProcessingConsent(
         getSupabase() as unknown as SupabaseFunctionsClient,
@@ -140,8 +146,7 @@ export function FoodLogModal({
       setShowPhotoConsent(false);
       setShowPhotoCamera(true);
     } catch {
-      setShowPhotoConsent(false);
-      setShowPhotoCamera(true);
+      setPhotoError(t('capture.photoUnavailable'));
     } finally {
       setConsentLoading(false);
     }
@@ -156,17 +161,17 @@ export function FoodLogModal({
         mimeType: payload.mimeType,
       });
 
-      const candidates =
-        response?.candidates && response.candidates.length > 0
-          ? response.candidates
-          : SAMPLE_ANALYSIS_RESPONSE.candidates;
-      setPhotoResults(candidates);
+      if (!response.candidates.length) {
+        setPhotoError(t('capture.noFood'));
+        return;
+      }
+      setPhotoResults(response.candidates);
       setShowResultsEditor(true);
     } catch (err: unknown) {
       const errorObj = err as { code?: string; message?: string };
       if (
         errorObj?.code === 'DAILY_LIMIT_REACHED' ||
-        errorObj?.code === 'FEATURE_DISABLED' ||
+        errorObj?.code === 'UPGRADE_REQUIRED' ||
         errorObj?.message?.includes('DAILY_LIMIT_REACHED')
       ) {
         try {
@@ -183,8 +188,10 @@ export function FoodLogModal({
       } else if (errorObj?.code === 'CONSENT_REQUIRED') {
         setShowPhotoConsent(true);
       } else {
-        setPhotoResults(SAMPLE_ANALYSIS_RESPONSE.candidates);
-        setShowResultsEditor(true);
+        setPhotoResults(null);
+        setPhotoError(
+          t(errorObj?.code === 'NO_FOOD_DETECTED' ? 'capture.noFood' : 'capture.photoUnavailable'),
+        );
       }
     } finally {
       setPhotoAnalyzing(false);
@@ -255,6 +262,15 @@ export function FoodLogModal({
             </Pressable>
           </View>
 
+          {saveError && (
+            <Text
+              accessibilityRole="alert"
+              testID="food-log-save-error"
+              style={{ color: colors.text }}
+            >
+              {saveError}
+            </Text>
+          )}
           {/* 5 Tab Navigation Bar */}
           <View
             style={{
@@ -507,6 +523,15 @@ export function FoodLogModal({
                 {t('foodLog.photo.subtitle')}
               </Text>
 
+              {photoError && (
+                <Text
+                  accessibilityRole="alert"
+                  testID="food-photo-error"
+                  style={{ color: colors.text }}
+                >
+                  {photoError}
+                </Text>
+              )}
               {/* Start Capture Button */}
               <Pressable
                 testID="btn-start-photo-scan"
@@ -777,6 +802,7 @@ export function FoodLogModal({
           {showBarcodeScanner && (
             <BarcodeScannerModal
               visible={showBarcodeScanner}
+              defaultSection={defaultSection}
               onClose={() => setShowBarcodeScanner(false)}
               onFoodFound={(f) => {
                 setSelectedFoodForQuantity(f);

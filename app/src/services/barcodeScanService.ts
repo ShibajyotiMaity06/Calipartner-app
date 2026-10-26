@@ -1,4 +1,5 @@
-import { type Food } from '@calipartner/core';
+import { normalizeProductBarcode, type Food } from '@calipartner/core';
+import { t } from '@/i18n';
 import { createLogger } from '@/lib/logger';
 import { getDb } from '@/db';
 import { getSupabase } from '@/lib/supabase';
@@ -23,16 +24,15 @@ export async function lookupBarcode(
   barcode: string,
   customDb?: SyncDb,
   isOnline = true,
+  userId?: string,
 ): Promise<BarcodeLookupResult> {
-  const clean = barcode.trim();
-  if (!clean) {
-    return { food: null, source: 'not_found' };
-  }
+  const clean = normalizeProductBarcode(barcode);
+  if (!clean) throw new Error(t('capture.barcodeInvalid'));
 
   const db = customDb ?? (await getDb());
 
   // 1. Check local SQLite first
-  const localMatch = await findLocalFoodByBarcode(db, clean);
+  const localMatch = await findLocalFoodByBarcode(db, clean, userId);
   if (localMatch) {
     log.info(`Found barcode ${clean} in local cache`);
     return { food: localMatch, source: 'local' };
@@ -42,7 +42,7 @@ export async function lookupBarcode(
   if (isOnline) {
     try {
       const supabase = getSupabase();
-      const remoteFood = await lookupRemoteFood(supabase, { barcode: clean });
+      const remoteFood = await lookupRemoteFood(supabase, { barcode: clean }, true);
 
       if (remoteFood) {
         log.info(`Found barcode ${clean} from remote lookup; caching locally`);
@@ -95,6 +95,7 @@ export async function lookupBarcode(
       }
     } catch (e) {
       log.warn(`Remote barcode lookup error: ${e}`);
+      throw new Error(t('capture.barcodeError'));
     }
   }
 

@@ -1,5 +1,7 @@
 # CaliPartner: Product Requirements Document (PRD)
 
+> Owner-requested repair, 26 October 2026: [device steps, dates and food capture](DEVICE_AND_CAMERA_SETUP.md) clarifies native versus installed-web step support and authorizes the corresponding repairs.
+
 > Latest owner-requested corrections, 25 October 2026: [Payment, profile and goal corrections](PAYMENT_PROFILE_GOAL_CORRECTIONS.md) supersede conflicting restrictions for this task.
 > Latest owner-approved revision: [Friends, social profiles and room limits](FRIENDS_AND_ROOM_LIMITS.md). Free hosts one pair room, Plus hosts three rooms of up to five, and Pro hosts five rooms of up to 20. The revision also defines free username search, social profiles and the weekly friend-request allowance.
 

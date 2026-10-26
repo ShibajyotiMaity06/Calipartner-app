@@ -306,6 +306,10 @@ export function deduplicateActivitySources(
   }
 
   // Same priority: take highest steps / distance
+  // Health aggregates are authoritative snapshots and may correct an earlier total downward.
+  if (incoming.source === 'health_platform') {
+    return { steps: incoming.steps, distance_m: resolvedDistanceM, source: incoming.source };
+  }
   return {
     steps: Math.max(existing.steps, incoming.steps),
     distance_m: Math.max(existing.distance_m, resolvedDistanceM),

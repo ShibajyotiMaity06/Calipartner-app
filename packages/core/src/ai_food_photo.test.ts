@@ -266,6 +266,42 @@ describe('Phase 11: AI Food-Photo Core Logic (PRD 6.3 LOG-3, 7.7, 8.2)', () => {
   });
 
   describe('Food Catalog Mapping & Fallback Estimates', () => {
+    it('rejects invented generic nutrition for a food missing from the catalog', () => {
+      expect(() =>
+        mapVisionItemToFood(
+          { food_name: 'Unknown food', estimated_grams: 100, confidence: 0.9 },
+          [],
+        ),
+      ).toThrow('Missing food-specific nutrition');
+    });
+    it('recognizes non-food output and validates food-specific macros', () => {
+      expect(
+        parseAndValidateVisionModelOutput({
+          is_food: false,
+          items: [{ food_name: 'Invented rice' }],
+        }).items,
+      ).toEqual([]);
+      expect(() =>
+        parseAndValidateVisionModelOutput({
+          items: [
+            {
+              food_name: 'Cake',
+              nutrition_per_100g: { calories: -20, protein: 2, carbs: 4, fat: 2 },
+            },
+          ],
+        }),
+      ).toThrow();
+      const candidate = mapVisionItemToFood(
+        {
+          food_name: 'A specific meal',
+          estimated_grams: 200,
+          confidence: 0.8,
+          nutrition_per_100g: { calories: 210, protein: 14, carbs: 25, fat: 6 },
+        },
+        [],
+      );
+      expect(candidate.nutrients).toMatchObject({ calories: 420, protein: 28, carbs: 50, fat: 12 });
+    });
     const mockCatalog: Food[] = [
       {
         id: 'food-roti',
@@ -328,7 +364,12 @@ describe('Phase 11: AI Food-Photo Core Logic (PRD 6.3 LOG-3, 7.7, 8.2)', () => {
 
     it('falls back to estimate food with "AI Estimate" attribution for unknown foods', () => {
       const candidate = mapVisionItemToFood(
-        { food_name: 'Rare Exotic Berries Cake', estimated_grams: 120, confidence: 0.75 },
+        {
+          food_name: 'Rare Exotic Berries Cake',
+          estimated_grams: 120,
+          confidence: 0.75,
+          nutrition_per_100g: { calories: 220, protein: 8, carbs: 30, fat: 7, fiber: 2 },
+        },
         mockCatalog,
         'cand-2',
       );

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Modal, SafeAreaView, ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { ChevronLeftIcon, dark, radius, space, Text } from '@calipartner/ui';
@@ -12,6 +12,9 @@ import {
 } from '@/services/workoutPlanService';
 import { ExerciseDetailModal } from './ExerciseDetailModal';
 import { AddExercisePickerModal } from './AddExercisePickerModal';
+import { addDaysToDateString, formatCalendarDate, getCalendarWeek } from '@calipartner/core';
+import { useCurrentLocalDate } from '@/hooks/useCurrentLocalDate';
+import { t } from '@/i18n';
 
 export interface WorkoutLogModalProps {
   visible: boolean;
@@ -26,7 +29,9 @@ export function WorkoutLogModal({
   onOpenProgress,
   testID = 'workout-log-modal',
 }: WorkoutLogModalProps) {
-  const currentDateStr = 'Wed, 15 Oct 2025';
+  const { localDate: today } = useCurrentLocalDate();
+  const [selectedDate, setSelectedDate] = useState<string | null>(null);
+  const currentDateStr = selectedDate ?? today;
   const plan = getWeeklyPlan();
 
   const [exercises, setExercises] = useState<PlannedExercise[]>(() =>
@@ -35,6 +40,9 @@ export function WorkoutLogModal({
   const [selectedExerciseForDetail, setSelectedExerciseForDetail] =
     useState<PlannedExercise | null>(null);
   const [showAddExercisePicker, setShowAddExercisePicker] = useState<boolean>(false);
+  useEffect(() => {
+    if (visible) setExercises([...getPlannedExercisesForDate(currentDateStr)]);
+  }, [visible, currentDateStr]);
 
   const completedCount = exercises.filter((e) => e.completed).length;
   const progressRatio = exercises.length > 0 ? completedCount / exercises.length : 0;
@@ -68,15 +76,19 @@ export function WorkoutLogModal({
     setExercises((prev) => [...prev, newEx]);
   };
 
-  const weekDays = [
-    { name: 'Mon', dateNum: 13, isRest: !plan.workoutDays.includes('Mon'), isToday: false },
-    { name: 'Tue', dateNum: 14, isRest: !plan.workoutDays.includes('Tue'), isToday: false },
-    { name: 'Wed', dateNum: 15, isRest: !plan.workoutDays.includes('Wed'), isToday: true },
-    { name: 'Thu', dateNum: 16, isRest: !plan.workoutDays.includes('Thu'), isToday: false },
-    { name: 'Fri', dateNum: 17, isRest: !plan.workoutDays.includes('Fri'), isToday: false },
-    { name: 'Sat', dateNum: 18, isRest: !plan.workoutDays.includes('Sat'), isToday: false },
-    { name: 'Sun', dateNum: 19, isRest: !plan.workoutDays.includes('Sun'), isToday: false },
-  ];
+  const weekDays = getCalendarWeek(currentDateStr).map((date) => {
+    const name = new Date(`${date}T12:00:00Z`).toLocaleDateString('en', {
+      timeZone: 'UTC',
+      weekday: 'short',
+    });
+    return {
+      date,
+      name,
+      dateNum: Number(date.slice(-2)),
+      isRest: !plan.workoutDays.includes(name),
+      isToday: date === today,
+    };
+  });
 
   return (
     <Modal
@@ -121,19 +133,29 @@ export function WorkoutLogModal({
           >
             {/* Date Navigator Header */}
             <View style={styles.dateNavigatorRow}>
-              <TouchableOpacity onPress={playClickSound} style={styles.arrowBtn}>
+              <TouchableOpacity
+                onPress={() => setSelectedDate(addDaysToDateString(currentDateStr, -1))}
+                style={styles.arrowBtn}
+                accessibilityLabel={t('capture.previousDay')}
+                testID="workout-previous-day"
+              >
                 <Ionicons name="chevron-back" size={18} color={dark.textMid} />
               </TouchableOpacity>
 
               <View style={styles.dateBadgeBox}>
                 <Ionicons name="calendar-outline" size={16} color={dark.apricot} />
                 <Text variant="body" color={dark.textHi} style={{ fontWeight: '700' }}>
-                  {currentDateStr}
+                  {formatCalendarDate(currentDateStr)}
                 </Text>
                 <Ionicons name="chevron-down" size={14} color={dark.textLo} />
               </View>
 
-              <TouchableOpacity onPress={playClickSound} style={styles.arrowBtn}>
+              <TouchableOpacity
+                onPress={() => setSelectedDate(addDaysToDateString(currentDateStr, 1))}
+                style={styles.arrowBtn}
+                accessibilityLabel={t('capture.nextDay')}
+                testID="workout-next-day"
+              >
                 <Ionicons name="chevron-forward" size={18} color={dark.textMid} />
               </TouchableOpacity>
             </View>
@@ -141,8 +163,11 @@ export function WorkoutLogModal({
             {/* Weekday Strip */}
             <View style={styles.weekStripRow}>
               {weekDays.map((item) => (
-                <View
+                <TouchableOpacity
                   key={item.name}
+                  onPress={() => setSelectedDate(item.date)}
+                  accessibilityLabel={formatCalendarDate(item.date)}
+                  accessibilityRole="button"
                   style={[styles.dayStripCell, item.isToday && styles.dayStripCellToday]}
                   testID={`strip-day-${item.name}`}
                 >
@@ -165,9 +190,9 @@ export function WorkoutLogModal({
                     color={item.isToday ? dark.apricot : dark.textOff}
                     style={{ fontSize: 9 }}
                   >
-                    {item.isToday ? 'Today' : item.isRest ? 'Rest' : '•'}
+                    {item.isToday ? t('diary.today') : item.isRest ? t('capture.restDay') : '•'}
                   </Text>
-                </View>
+                </TouchableOpacity>
               ))}
             </View>
 

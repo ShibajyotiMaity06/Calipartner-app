@@ -1,3 +1,4 @@
+import { useCurrentLocalDate } from '@/hooks/useCurrentLocalDate';
 import React, { useState } from 'react';
 import {
   ActivityIndicator,
@@ -35,7 +36,7 @@ export function WorkoutDetailModal({
   testID = 'workout-detail-modal',
 }: WorkoutDetailModalProps) {
   const { colors } = useTheme();
-  const todayDate = new Date().toISOString().split('T')[0]!;
+  const { localDate: todayDate } = useCurrentLocalDate();
 
   const { remove, copyToDate, getSummary } = useWorkouts(workout?.local_date ?? todayDate);
 

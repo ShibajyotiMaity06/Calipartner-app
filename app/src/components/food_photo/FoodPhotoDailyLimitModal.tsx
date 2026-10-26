@@ -29,8 +29,11 @@ export function FoodPhotoDailyLimitModal({
   const getLimitBodyText = () => {
     switch (userState) {
       case 'paid':
+      case 'paid_pro':
         return t('foodLog.photo.limitBodyPaid');
       case 'free':
+      case 'free_taste':
+      case 'free_after_trial':
         return t('foodLog.photo.limitBodyFree');
       case 'trial':
       default:
@@ -38,7 +41,7 @@ export function FoodPhotoDailyLimitModal({
     }
   };
 
-  const showUpsell = userState !== 'paid';
+  const showUpsell = userState !== 'paid' && userState !== 'paid_pro';
 
   return (
     <Modal
@@ -79,8 +82,12 @@ export function FoodPhotoDailyLimitModal({
               ]}
             >
               <Text style={[styles.usageText, { color: colors.textMuted }]}>
-                Today’s Scans:{' '}
-                <Text style={{ color: colors.text, fontWeight: '700' }}>{usedToday}</Text> /{' '}
+                {t(
+                  userState === 'free_taste' || userState === 'free_after_trial'
+                    ? 'capture.starterScans'
+                    : 'capture.todayScans',
+                )}
+                : <Text style={{ color: colors.text, fontWeight: '700' }}>{usedToday}</Text> /{' '}
                 {dailyCap}
               </Text>
             </View>

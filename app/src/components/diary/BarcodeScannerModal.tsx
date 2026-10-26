@@ -1,7 +1,6 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
   ActivityIndicator,
-  Alert,
   Modal,
   Platform,
   Pressable,
@@ -15,6 +14,12 @@ import type { Food, MealSection } from '@calipartner/core';
 import { Text, Button, dark, space, radius } from '@calipartner/ui';
 import { lookupBarcode } from '@/services/barcodeScanService';
 import { t } from '@/i18n';
+import { useAuth } from '@/contexts/AuthContext';
+import { useNetworkStatus } from '@/hooks/useNetworkStatus';
+import * as ImagePicker from 'expo-image-picker';
+import * as ImageManipulator from 'expo-image-manipulator';
+import { decodeBarcodeImage } from '@/services/barcodeImageService';
+import type { IScannerControls } from '@zxing/browser';
 
 export interface BarcodeScannerModalProps {
   visible: boolean;
@@ -31,6 +36,8 @@ export function BarcodeScannerModal({
   onFoodFound,
   onCreateCustomFood,
 }: BarcodeScannerModalProps) {
+  const { user } = useAuth();
+  const { isOnline } = useNetworkStatus();
   const [permission, requestPermission] = useCameraPermissions();
   const [scanned, setScanned] = useState(false);
   const [torchEnabled, setTorchEnabled] = useState(false);
@@ -41,151 +48,141 @@ export function BarcodeScannerModal({
 
   const sectionName = t(`diary.sections.${defaultSection}` as Parameters<typeof t>[0]);
 
-  const handleBarcodeScanned = async (barcodeData: string) => {
-    if (scanned || searching) return;
-    setScanned(true);
-    setSearching(true);
-
-    try {
-      const res = await lookupBarcode(barcodeData);
-      if (res.food) {
-        setFoundFood(res.food);
-      } else {
-        Alert.alert(t('foodLog.scan.notFoundTitle'), t('foodLog.scan.notFoundBody'), [
-          {
-            text: t('common.cancel'),
-            onPress: () => setScanned(false),
-            style: 'cancel',
-          },
-          {
-            text: t('foodLog.createCustomFood'),
-            onPress: () => {
-              onClose();
-              onCreateCustomFood(barcodeData);
-            },
-          },
-        ]);
+  const scanLock = useRef(false);
+  const generation = useRef(0);
+  const [scanError, setScanError] = useState<string | null>(null);
+  const [webCameraActive, setWebCameraActive] = useState(false);
+  const videoRef = useRef<HTMLVideoElement | null>(null);
+  const controlsRef = useRef<IScannerControls | null>(null);
+  const resetScan = () => {
+    scanLock.current = false;
+    setScanned(false);
+    setScanError(null);
+    setFoundFood(null);
+  };
+  useEffect(() => {
+    generation.current++;
+    resetScan();
+    if (!visible) {
+      controlsRef.current?.stop();
+      setWebCameraActive(false);
+    }
+    return () => {
+      generation.current++;
+    };
+  }, [visible]);
+  const handleBarcodeScanned = useCallback(
+    async (barcodeData: string) => {
+      if (scanLock.current) return;
+      scanLock.current = true;
+      const current = generation.current;
+      setScanned(true);
+      setSearching(true);
+      setScanError(null);
+      try {
+        const result = await lookupBarcode(barcodeData, undefined, isOnline !== false, user?.id);
+        if (generation.current !== current) return;
+        if (result.food) {
+          setFoundFood(result.food);
+          controlsRef.current?.stop();
+        } else {
+          setManualCode(barcodeData);
+          setScanError(t('capture.barcodeNotFound'));
+        }
+      } catch (error) {
+        if (generation.current === current)
+          setScanError(error instanceof Error ? error.message : t('capture.barcodeError'));
+      } finally {
+        if (generation.current === current) setSearching(false);
       }
+    },
+    [isOnline, user?.id],
+  );
+  const handleManualLookup = () => {
+    if (!manualCode.trim()) return;
+    resetScan();
+    void handleBarcodeScanned(manualCode.trim());
+  };
+  const handleConfirmFoundFood = () => {
+    if (foundFood) {
+      onFoodFound(foundFood);
+      onClose();
+    }
+  };
+  const handleTriggerBarcodePhoto = async () => {
+    try {
+      const result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'] });
+      const asset = result.canceled ? undefined : result.assets?.[0];
+      if (!asset) return;
+      const current = generation.current;
+      setSearching(true);
+      resetScan();
+      const resize =
+        Math.max(asset.width, asset.height) > 2048
+          ? [{ resize: asset.width >= asset.height ? { width: 2048 } : { height: 2048 } }]
+          : [];
+      const photo = await ImageManipulator.manipulateAsync(asset.uri, resize, {
+        base64: true,
+        compress: 0.95,
+        format: ImageManipulator.SaveFormat.JPEG,
+      });
+      const code = photo.base64 ? await decodeBarcodeImage(photo.base64) : null;
+      if (current !== generation.current) return;
+      if (code) await handleBarcodeScanned(code);
+      else {
+        setScanError(t('capture.barcodeMissing'));
+        setShowManualInput(true);
+      }
+    } catch {
+      setScanError(t('capture.cameraError'));
     } finally {
       setSearching(false);
     }
   };
-
-  const handleManualLookup = () => {
-    if (!manualCode.trim()) return;
-    void handleBarcodeScanned(manualCode.trim());
-  };
-
-  const handleConfirmFoundFood = () => {
-    if (!foundFood) return;
-    onFoodFound(foundFood);
-    onClose();
-  };
-
-  const [webStream, setWebStream] = useState<any>(null);
-  const [webCameraActive, setWebCameraActive] = useState(false);
-  const videoRef = useRef<any>(null);
-
-  // Clean up web camera stream on unmount or close
-  useEffect(() => {
-    return () => {
-      if (webStream && typeof webStream.getTracks === 'function') {
-        webStream.getTracks().forEach((track: any) => track.stop());
-      }
-    };
-  }, [webStream]);
-
-  const handleTriggerBarcodePhoto = () => {
-    const doc = (globalThis as any).document;
-    if (doc) {
-      let input: any = doc.getElementById('barcode-photo-web-input');
-      if (!input) {
-        input = doc.createElement('input');
-        input.id = 'barcode-photo-web-input';
-        input.type = 'file';
-        input.accept = 'image/*';
-        input.setAttribute('capture', 'environment');
-        input.style.display = 'none';
-        doc.body.appendChild(input);
-      }
-      input.value = '';
-      input.onchange = async (e: any) => {
-        const file = e.target?.files?.[0];
-        if (file) {
-          // If BarcodeDetector is available in browser, scan barcode from file
-          const win = (globalThis as any).window || (globalThis as any);
-          if (win && win.BarcodeDetector) {
-            try {
-              setSearching(true);
-              const barcodeDetector = new win.BarcodeDetector({
-                formats: ['ean_13', 'ean_8', 'upc_a', 'upc_e', 'code_128', 'code_39', 'qr_code'],
-              });
-              const imgBitmap = await win.createImageBitmap(file);
-              const barcodes = await barcodeDetector.detect(imgBitmap);
-              if (barcodes && barcodes.length > 0 && barcodes[0].rawValue) {
-                await handleBarcodeScanned(barcodes[0].rawValue);
-                return;
-              }
-            } catch {
-              // Non-fatal, fallback to manual input prompt
-            } finally {
-              setSearching(false);
-            }
-          }
-          // If barcode detector is not supported or didn't find a code, switch to manual entry
-          setShowManualInput(true);
-        }
-      };
-      input.click();
-    }
-  };
-
   const handleRequestCamera = async () => {
+    resetScan();
     if (Platform.OS === 'web') {
-      try {
-        const nav = (globalThis as any).navigator;
-        if (nav && nav.mediaDevices && nav.mediaDevices.getUserMedia) {
-          const stream = await nav.mediaDevices.getUserMedia({
-            video: { facingMode: { ideal: 'environment' } },
-          });
-          setWebStream(stream);
-          setWebCameraActive(true);
-          // Set up scanning loop if BarcodeDetector is supported
-          const win = (globalThis as any).window || (globalThis as any);
-          if (win && win.BarcodeDetector) {
-            const barcodeDetector = new win.BarcodeDetector({
-              formats: ['ean_13', 'ean_8', 'upc_a', 'upc_e', 'code_128', 'code_39', 'qr_code'],
-            });
-            const scanInterval = setInterval(async () => {
-              if (videoRef.current && videoRef.current.readyState >= 2 && !scanned) {
-                try {
-                  const barcodes = await barcodeDetector.detect(videoRef.current);
-                  if (barcodes && barcodes.length > 0 && barcodes[0].rawValue) {
-                    clearInterval(scanInterval);
-                    await handleBarcodeScanned(barcodes[0].rawValue);
-                  }
-                } catch {
-                  // Ignore frame detection errors
-                }
-              }
-            }, 300);
-          }
-        } else {
-          handleTriggerBarcodePhoto();
-        }
-      } catch {
-        handleTriggerBarcodePhoto();
-      }
+      setWebCameraActive(true);
       return;
     }
-
-    if (requestPermission) {
+    try {
       await requestPermission();
+    } catch {
+      setScanError(t('capture.cameraError'));
     }
   };
+  useEffect(() => {
+    if (!visible || !webCameraActive || Platform.OS !== 'web') return;
+    let disposed = false;
+    let controls: IScannerControls | undefined;
+    void import('@zxing/browser')
+      .then(async ({ BrowserMultiFormatReader }) => {
+        controls = await new BrowserMultiFormatReader().decodeFromConstraints(
+          { video: { facingMode: { ideal: 'environment' } }, audio: false },
+          videoRef.current ?? undefined,
+          (result) => {
+            if (!disposed && result) void handleBarcodeScanned(result.getText());
+          },
+        );
+        if (disposed) controls.stop();
+        else controlsRef.current = controls;
+      })
+      .catch(() => {
+        if (!disposed) {
+          setWebCameraActive(false);
+          setScanError(t('capture.cameraError'));
+        }
+      });
+    return () => {
+      disposed = true;
+      controls?.stop();
+      controlsRef.current = null;
+    };
+  }, [visible, webCameraActive, handleBarcodeScanned]);
 
   const isCameraReady = Platform.OS === 'web' ? webCameraActive : !!permission?.granted;
 
+  if (!visible) return null;
   return (
     <Modal visible={visible} animationType="slide" onRequestClose={onClose}>
       <View style={styles.container}>
@@ -200,7 +197,7 @@ export function BarcodeScannerModal({
               onPress={() => setTorchEnabled((prev: boolean) => !prev)}
               hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
               style={styles.iconButton}
-              accessibilityLabel="Toggle flashlight"
+              accessibilityLabel={t('capture.flashlight')}
             >
               <Ionicons
                 name={torchEnabled ? 'flash' : 'flash-outline'}
@@ -212,9 +209,7 @@ export function BarcodeScannerModal({
             <Pressable
               testID="btn-close-scanner"
               onPress={() => {
-                if (webStream && typeof webStream.getTracks === 'function') {
-                  webStream.getTracks().forEach((track: any) => track.stop());
-                }
+                controlsRef.current?.stop();
                 onClose();
               }}
               hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
@@ -238,13 +233,13 @@ export function BarcodeScannerModal({
                 <Button
                   testID="btn-grant-camera-permission"
                   variant="primary"
-                  label="Open Camera Scanner"
+                  label={t('capture.openScanner')}
                   onPress={handleRequestCamera}
                 />
                 <Button
                   testID="btn-barcode-photo-fallback"
                   variant="secondary"
-                  label="Snap / Upload Barcode Photo"
+                  label={t('capture.barcodePhoto')}
                   onPress={handleTriggerBarcodePhoto}
                 />
               </View>
@@ -253,13 +248,7 @@ export function BarcodeScannerModal({
             <View style={styles.cameraContainer}>
               {Platform.OS === 'web' ? (
                 React.createElement('video', {
-                  ref: (el: any) => {
-                    videoRef.current = el;
-                    if (el && webStream && el.srcObject !== webStream) {
-                      el.srcObject = webStream;
-                      el.play?.().catch?.(() => {});
-                    }
-                  },
+                  ref: videoRef,
                   autoPlay: true,
                   playsInline: true,
                   muted: true,
@@ -269,6 +258,10 @@ export function BarcodeScannerModal({
                 <CameraView
                   style={StyleSheet.absoluteFill}
                   facing="back"
+                  barcodeScannerSettings={{
+                    barcodeTypes: ['ean13', 'ean8', 'upc_a', 'upc_e', 'code128'],
+                  }}
+                  onMountError={() => setScanError(t('capture.cameraError'))}
                   enableTorch={torchEnabled}
                   onBarcodeScanned={
                     scanned ? undefined : (result) => handleBarcodeScanned(result.data)
@@ -306,6 +299,28 @@ export function BarcodeScannerModal({
           )}
         </View>
 
+        {scanError && (
+          <View style={styles.foundFoodCard} testID="barcode-error">
+            <Text variant="bodyS" color={dark.textHi} accessibilityRole="alert">
+              {scanError}
+            </Text>
+            <Button
+              variant="secondary"
+              label={t('capture.tryAgain')}
+              onPress={resetScan}
+              testID="barcode-retry"
+            />
+            <Button
+              variant="secondary"
+              label={t('capture.createFood')}
+              onPress={() => {
+                onCreateCustomFood(manualCode);
+                onClose();
+              }}
+              testID="barcode-create-food"
+            />
+          </View>
+        )}
         {/* Found Food Slide-up Card */}
         {foundFood && (
           <View style={styles.foundFoodCard} testID="card-scanned-food">
@@ -331,7 +346,7 @@ export function BarcodeScannerModal({
           </View>
         )}
 
-        {/* Bottom "Type the number" link & Manual Input */}
+        {/* Bottom "{t('capture.typeBarcode')}" link & Manual Input */}
         <View style={styles.bottomBar}>
           {!showManualInput ? (
             <Pressable

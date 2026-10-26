@@ -1,7 +1,12 @@
 import { Platform } from 'react-native';
 import * as SecureStore from 'expo-secure-store';
 import { Pedometer } from 'expo-sensors';
-import type { ActivitySource } from '@calipartner/core';
+import { getLocalDayBounds, type ActivitySource } from '@calipartner/core';
+import {
+  getNativeHealthPermission,
+  readNativeHealthSteps,
+  requestNativeHealthPermission,
+} from './nativeHealthService';
 import { createLogger } from '@/lib/logger';
 
 const log = createLogger('stepIntegrationService');
@@ -44,6 +49,8 @@ export async function getStepPermissionStatus(): Promise<StepPermissionStatus> {
   }
 
   try {
+    const healthStatus = await getNativeHealthPermission();
+    if (healthStatus !== 'unavailable') return healthStatus;
     const isAvail = await Pedometer.isAvailableAsync().catch(() => false);
     if (!isAvail) {
       return 'unavailable';
@@ -84,6 +91,9 @@ export async function requestStepPermissions(): Promise<{
   }
 
   try {
+    const healthStatus = await requestNativeHealthPermission();
+    if (healthStatus !== 'unavailable')
+      return { granted: healthStatus === 'granted', status: healthStatus };
     const isAvail = await Pedometer.isAvailableAsync().catch(() => false);
     if (!isAvail) {
       await SecureStore.setItemAsync(PERMISSION_STORE_KEY, 'unavailable').catch(() => {});
@@ -118,7 +128,20 @@ export async function setStepPermissionDenied(): Promise<void> {
  * iOS supports historical queries; Android requires live hardware updates or Health Connect.
  * Priority 2: Return null if unavailable so user's manual/logged session steps are preserved
  */
-export async function readDeviceSteps(localDate: string): Promise<StepReading | null> {
+export async function readDeviceSteps(
+  localDate: string,
+  timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone,
+): Promise<StepReading | null> {
+  if (Platform.OS === 'web') return null;
+  try {
+    const health = await readNativeHealthSteps(localDate, timeZone);
+    if (health) return health;
+  } catch (error) {
+    log.warn(
+      'Health step history unavailable',
+      error instanceof Error ? error.message : String(error),
+    );
+  }
   if (Platform.OS !== 'ios') {
     return null;
   }
@@ -134,13 +157,10 @@ export async function readDeviceSteps(localDate: string): Promise<StepReading | 
       return null;
     }
 
-    const [year, month, day] = localDate.split('-').map(Number);
-    if (!year || !month || !day) return null;
-
-    const startOfDay = new Date(year, month - 1, day, 0, 0, 0, 0);
-    const endOfDay = new Date(year, month - 1, day, 23, 59, 59, 999);
+    const { start: startOfDay, end: endOfDay } = getLocalDayBounds(localDate, timeZone);
     const now = new Date();
     const endTime = now < endOfDay ? now : endOfDay;
+    if (endTime <= startOfDay) return null;
 
     const result = await Pedometer.getStepCountAsync(startOfDay, endTime).catch(() => null);
     if (result && Number.isInteger(result.steps) && result.steps >= 0) {

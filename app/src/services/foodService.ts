@@ -192,13 +192,17 @@ export async function searchLocalFoods(
 /**
  * Looks up food by barcode in local database.
  */
-export async function findLocalFoodByBarcode(db: SyncDb, barcode: string): Promise<Food | null> {
+export async function findLocalFoodByBarcode(
+  db: SyncDb,
+  barcode: string,
+  userId?: string,
+): Promise<Food | null> {
   const clean = barcode.trim();
   if (!clean) return null;
 
   const row = await db.getFirstAsync<RawFoodRow>(
-    `SELECT * FROM local_foods WHERE barcode = ? AND deleted_at IS NULL LIMIT 1`,
-    [clean],
+    `SELECT * FROM local_foods WHERE barcode = ? AND deleted_at IS NULL AND (owner_id IS NULL OR owner_id = ?) ORDER BY CASE WHEN owner_id = ? THEN 0 ELSE 1 END LIMIT 1`,
+    [clean, userId ?? '', userId ?? ''],
   );
 
   return row ? mapRowToFood(row) : null;
@@ -217,16 +221,25 @@ export async function lookupRemoteFood(
     };
   },
   params: { barcode?: string; text?: string },
+  throwOnFailure = false,
 ): Promise<Food | null> {
   try {
     if (!supabase.functions) return null;
     const { data, error } = await supabase.functions.invoke('food-lookup', {
-      body: params,
+      body: { barcode: params.barcode, query: params.text },
     });
 
     if (error || !data) {
+      const status =
+        (error as { context?: { status?: number }; status?: number } | null)?.context?.status ??
+        (error as { status?: number } | null)?.status;
+      if (throwOnFailure && status !== 404 && data?.found !== false)
+        throw error ?? new Error('FOOD_LOOKUP_UNAVAILABLE');
       return null;
     }
+
+    if (data.food) return data.food as Food;
+    if (Array.isArray(data.foods) && data.foods.length) return data.foods[0] as Food;
 
     if (data.product) {
       return data.product as Food;
@@ -236,6 +249,7 @@ export async function lookupRemoteFood(
     }
     return null;
   } catch (e) {
+    if (throwOnFailure) throw e;
     log.info(`Remote lookup failed or offline: ${e}`);
     return null;
   }

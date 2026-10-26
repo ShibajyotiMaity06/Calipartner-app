@@ -27,6 +27,8 @@ try {
   await runFriendTests(db);
   const { runBillingGoalTests } = await import('./billing_goal_cases.mjs');
   await runBillingGoalTests(db);
+  const { runFoodCaptureTests } = await import('./food_capture_cases.mjs');
+  await runFoodCaptureTests(db);
 } finally {
   await db.close();
 }

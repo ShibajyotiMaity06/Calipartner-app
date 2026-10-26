@@ -1,4 +1,9 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+vi.mock('./nativeHealthService', () => ({
+  getNativeHealthPermission: async () => 'unavailable',
+  requestNativeHealthPermission: async () => 'unavailable',
+  readNativeHealthSteps: async () => null,
+}));
 const hardware = vi.hoisted(() => ({
   os: 'android',
   available: true,

@@ -1,5 +1,7 @@
 # CaliPartner — Master Build Plan (copy-paste prompts)
 
+> Owner-requested repair, 26 October 2026: [device steps, dates and food capture](DEVICE_AND_CAMERA_SETUP.md) authorizes the fixes and native integrations in that scope; unrelated phases remain out of scope.
+
 > Latest owner-requested corrections, 25 October 2026: [Payment, profile and goal corrections](PAYMENT_PROFILE_GOAL_CORRECTIONS.md) supersede conflicting restrictions for this task.
 Put this file at `/docs/BUILD_PLAN.md`, the PRD at `/docs/PRD.md`, and `AGENT_RULES.md` in the repo root.
 

@@ -106,12 +106,13 @@ describe('Critical Security Finding C03: AI Food Photo Privacy & Boundary Contro
     // Searching for stranger recipe not present in allowed catalog falls back to safe estimate food
     const strangerDetectedItem: VisionModelDetectedItem = {
       food_name: 'Secret stranger recovery recipe',
+      nutrition_per_100g: { calories: 220, protein: 8, carbs: 30, fat: 7, fiber: 2 },
       estimated_grams: 200,
       confidence: 0.8,
     };
 
     const strangerCandidate = mapVisionItemToFood(strangerDetectedItem, allowedCatalog, 'cand-2');
-    expect(strangerCandidate.matched_food.id).toBe('cand-2-food');
+    expect(strangerCandidate.matched_food.id).toBe('cand-2');
     expect(strangerCandidate.is_estimate).toBe(true);
     // Confidential records of strangerId are never accessible
     expect(

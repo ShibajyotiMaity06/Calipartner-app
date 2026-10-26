@@ -304,6 +304,47 @@ describe('Phase 11: aiFoodPhotoService (Client Service & Diary Integration)', ()
     });
   });
 
+  describe('honest photo failures', () => {
+    it('preserves a non-food error returned by the actual Supabase HTTP error context', async () => {
+      const client = {
+        functions: {
+          invoke: async () => ({
+            data: null,
+            error: {
+              message: 'non-2xx response',
+              context: {
+                status: 422,
+                json: async () => ({ code: 'NO_FOOD_DETECTED', error: 'Provide a food photo.' }),
+              },
+            },
+          }),
+        },
+      };
+      await expect(analyzeFoodPhoto(client, { imageBase64: 'abc' })).rejects.toMatchObject({
+        code: 'NO_FOOD_DETECTED',
+      });
+    });
+    it('does not invent results when the function is missing or the network fails', async () => {
+      const client = {
+        functions: {
+          invoke: async () => ({ data: null, error: { message: 'NOT_FOUND', status: 404 } }),
+        },
+      };
+      await expect(analyzeFoodPhoto(client, { imageBase64: 'abc' })).rejects.toMatchObject({
+        code: 'MODEL_ERROR',
+      });
+    });
+    it('treats an empty candidate list as a non-food result', async () => {
+      const client = {
+        functions: {
+          invoke: async () => ({ data: { success: true, candidates: [] }, error: null }),
+        },
+      };
+      await expect(analyzeFoodPhoto(client, { imageBase64: 'abc' })).rejects.toMatchObject({
+        code: 'NO_FOOD_DETECTED',
+      });
+    });
+  });
   describe('Candidate Editing & Swapping', () => {
     const sampleCandidate: FoodCandidateItem = {
       id: 'cand-1',
@@ -457,6 +498,14 @@ describe('Phase 11: aiFoodPhotoService (Client Service & Diary Integration)', ()
 
       // Verify outbox queue mutation was created for sync
       const outbox = await getPendingOutboxItems(db);
+      expect(
+        outbox.some(
+          (item) =>
+            item.entity === 'foods' &&
+            item.payload.id === candidate.matched_food.id &&
+            item.payload.owner_id === 'user-photo-tester',
+        ),
+      ).toBe(true);
       expect(outbox.some((item) => item.entity === 'food_entries' && item.id === entry.id)).toBe(
         true,
       );

@@ -1612,7 +1612,8 @@ export type FocusErrorCode =
 // PHASE 11: AI FOOD-PHOTO LOGGING & USAGE (PRD 6.3 LOG-3, 7.7, 8.2)
 // -----------------------------------------------------------------------------
 
-export type AiUserState = 'trial' | 'paid' | 'free_after_trial';
+export type AiUserState =
+  'trial' | 'paid' | 'free_after_trial' | 'paid_pro' | 'paid_plus' | 'free_taste';
 
 export interface AiDailyCapsConfig {
   trial: number;
@@ -1654,6 +1655,13 @@ export interface VisionModelDetectedItem {
   estimated_grams: number;
   confidence: number;
   description?: string;
+  nutrition_per_100g?: {
+    calories: number;
+    protein: number;
+    carbs: number;
+    fat: number;
+    fiber?: number;
+  };
 }
 
 export interface VisionModelResponse {
@@ -1695,6 +1703,7 @@ export type AiFoodPhotoErrorCode =
   | 'INVALID_IMAGE'
   | 'IMAGE_TOO_LARGE'
   | 'MALFORMED_OUTPUT'
+  | 'NO_FOOD_DETECTED'
   | 'MODEL_ERROR';
 
 // -----------------------------------------------------------------------------

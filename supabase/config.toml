@@ -103,3 +103,11 @@ verify_jwt = false
 
 [functions.revenuecat-webhook]
 verify_jwt = false
+
+[functions.ai-food-photo]
+# Authenticated in the handler with Supabase Auth; supports current signing keys.
+verify_jwt = false
+
+[functions.food-lookup]
+# Public catalog only. The service-role cache must exclude every private custom food.
+verify_jwt = false

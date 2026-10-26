@@ -36,6 +36,7 @@ import {
   type UpdateWorkoutInput,
 } from '@/services/workoutService';
 import { useTargets } from './useTargets';
+import { useCurrentLocalDate } from './useCurrentLocalDate';
 
 export interface UseWorkoutsResult {
   workouts: WorkoutWithDetails[];
@@ -59,7 +60,8 @@ export interface UseWorkoutsResult {
 }
 
 export function useWorkouts(date?: string): UseWorkoutsResult {
-  const localDate = date ?? new Date().toISOString().split('T')[0]!;
+  const { localDate: today } = useCurrentLocalDate();
+  const localDate = date ?? today;
   const { currentGoalProfile } = useTargets();
   const userId = currentGoalProfile?.user_id ?? 'guest-user';
   const userWeightKg = currentGoalProfile?.current_weight_kg ?? 70;

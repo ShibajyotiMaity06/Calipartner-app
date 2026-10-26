@@ -29,6 +29,8 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
       'android.permission.ACTIVITY_RECOGNITION',
       'android.permission.ACCESS_FINE_LOCATION',
       'android.permission.ACCESS_COARSE_LOCATION',
+      'android.permission.health.READ_STEPS',
+      'android.permission.health.READ_DISTANCE',
     ],
     adaptiveIcon: {
       foregroundImage: './assets/android-icon-foreground.png',
@@ -40,14 +42,34 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     'expo-router',
     'expo-video',
     [
+      'expo-camera',
+      {
+        cameraPermission: 'Allow CaliPartner to photograph food and scan product barcodes.',
+        recordAudioAndroid: false,
+      },
+    ],
+    'react-native-health-connect',
+    ['expo-build-properties', { android: { minSdkVersion: 26 } }],
+    [
+      '@kingstinct/react-native-healthkit',
+      {
+        NSHealthShareUsageDescription:
+          'CaliPartner reads your daily steps and walking distance to update your activity, including steps recorded while the app is closed.',
+        NSHealthUpdateUsageDescription: false,
+        background: false,
+      },
+    ],
+    [
       'expo-image-picker',
       {
-        photosPermission: 'Choose photos and videos to share with your room.',
-        cameraPermission: 'Take a photo to share with your room.',
+        photosPermission: 'Choose food photos, product barcodes, or media to share with your room.',
+        cameraPermission:
+          'Photograph your food, scan a product barcode, or take a photo to share with your room.',
         microphonePermission: false,
       },
     ],
     'expo-dev-client',
+    'expo-secure-store',
     'expo-sqlite',
     'expo-status-bar',
     [

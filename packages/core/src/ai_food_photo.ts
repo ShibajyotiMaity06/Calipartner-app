@@ -93,6 +93,12 @@ export function getDailyFoodPhotoCap(
     return capsConfig?.paid_plus ?? DEFAULT_AI_FOOD_PHOTO_CAPS.paid_plus ?? 0;
   }
   switch (userState) {
+    case 'paid_pro':
+      return capsConfig?.paid_pro ?? DEFAULT_AI_FOOD_PHOTO_CAPS.paid_pro ?? 5;
+    case 'paid_plus':
+      return 0;
+    case 'free_taste':
+      return capsConfig?.free_taste ?? DEFAULT_AI_FOOD_PHOTO_CAPS.free_taste ?? 3;
     case 'paid':
       if (capsConfig?.paid !== undefined) return Math.max(0, capsConfig.paid);
       if (capsConfig?.paid_pro !== undefined) return Math.max(0, capsConfig.paid_pro);
@@ -242,16 +248,18 @@ export function buildVisionModelSystemPrompt(): string {
   return [
     'You are a professional nutrition vision assistant for CaliPartner.',
     'Analyze the provided food photograph and detect all distinct edible items and drinks.',
+    'First decide whether actual food or drink is visible. For a non-food image, an empty plate, an unreadable image or a photo of text alone, return {"items":[],"is_food":false}. Never invent food.',
     'For each item, provide:',
     '1. "food_name": concise name of the food item (e.g. "Roti", "Dal Makhani", "Steamed Basmati Rice", "Grilled Chicken Breast").',
     '2. "estimated_grams": estimated weight in grams (number between 1 and 5000).',
     '3. "confidence": estimation confidence score between 0.0 and 1.0.',
     '4. "description": optional short note on visual portion or appearance.',
+    '5. "nutrition_per_100g": estimated nutrition for this specific food with numeric calories (kcal), protein, carbs, fat and fiber (grams), per 100 grams. Include it for every food. These are estimates for review, not measured values.',
     '',
     'Output MUST be strictly valid JSON matching this schema:',
     '{',
     '  "items": [',
-    '    { "food_name": "string", "estimated_grams": number, "confidence": number, "description": "string" }',
+    '    { "food_name": "string", "estimated_grams": number, "confidence": number, "description": "string", "nutrition_per_100g": {"calories": number, "protein": number, "carbs": number, "fat": number, "fiber": number} }',
     '  ],',
     '  "detected_meal_type": "breakfast" | "lunch" | "dinner" | "snacks" | "extra"',
     '}',
@@ -293,6 +301,7 @@ export function parseAndValidateVisionModelOutput(raw: string | unknown): Vision
   }
 
   const record = parsed as Record<string, unknown>;
+  if (record.is_food === false) return { items: [] };
 
   if (!Array.isArray(record.items)) {
     throw new MalformedAiModelOutputError('Vision model output missing items array');
@@ -344,6 +353,10 @@ export function parseAndValidateVisionModelOutput(raw: string | unknown): Vision
       estimated_grams: grams,
       confidence,
       description: desc,
+      nutrition_per_100g:
+        itemObj.nutrition_per_100g == null
+          ? undefined
+          : validateVisionNutrition(itemObj.nutrition_per_100g),
     });
   }
 
@@ -359,15 +372,48 @@ export function parseAndValidateVisionModelOutput(raw: string | unknown): Vision
 // -----------------------------------------------------------------------------
 
 /**
- * Creates a generic fallback Food entry for unrecognized items.
- * Uses a balanced general macronutrient profile (~140 kcal, 5g P, 18g C, 5g F per 100g)
- * and labels the food explicitly with attribution "AI Estimate".
+ * Creates a food-specific estimate for an item missing from the catalog.
+ * Requires validated model nutrition rather than substituting a generic macro profile.
  */
+function validateVisionNutrition(
+  raw: unknown,
+): NonNullable<VisionModelDetectedItem['nutrition_per_100g']> {
+  if (!raw || typeof raw !== 'object')
+    throw new MalformedAiModelOutputError('Missing food-specific nutrition');
+  const value = raw as Record<string, unknown>;
+  for (const key of ['calories', 'protein', 'carbs', 'fat'] as const) {
+    if (
+      typeof value[key] !== 'number' ||
+      !Number.isFinite(value[key]) ||
+      value[key] < 0 ||
+      value[key] > (key === 'calories' ? 1000 : 100)
+    )
+      throw new MalformedAiModelOutputError('Invalid food nutrition');
+  }
+  if (
+    value.fiber != null &&
+    (typeof value.fiber !== 'number' ||
+      !Number.isFinite(value.fiber) ||
+      value.fiber < 0 ||
+      value.fiber > 100)
+  )
+    throw new MalformedAiModelOutputError('Invalid food fiber');
+  return {
+    calories: value.calories as number,
+    protein: value.protein as number,
+    carbs: value.carbs as number,
+    fat: value.fat as number,
+    fiber: value.fiber as number | undefined,
+  };
+}
+
 export function createFallbackEstimateFood(
   foodName: string,
   estimatedGrams: number,
   clientUuid = 'estimate-food',
+  nutrition?: VisionModelDetectedItem['nutrition_per_100g'],
 ): Food {
+  const nutrients = validateVisionNutrition(nutrition);
   const safeName = sanitizeFoodName(foodName);
   const now = new Date().toISOString();
 
@@ -385,13 +431,13 @@ export function createFallbackEstimateFood(
         description: `1 estimated portion (~${estimatedGrams}g)`,
       },
     ],
-    calories_per_100g: 140,
-    protein_per_100g: 5.0,
-    carbs_per_100g: 18.0,
-    fat_per_100g: 5.0,
-    fiber_per_100g: 2.0,
-    sugar_per_100g: 2.0,
-    sodium_mg_per_100g: 150,
+    calories_per_100g: nutrients.calories,
+    protein_per_100g: nutrients.protein,
+    carbs_per_100g: nutrients.carbs,
+    fat_per_100g: nutrients.fat,
+    fiber_per_100g: nutrients.fiber ?? 0,
+    sugar_per_100g: 0,
+    sodium_mg_per_100g: 0,
     owner_id: null,
     attribution: 'AI Estimate',
     created_at: now,
@@ -476,7 +522,8 @@ export function mapVisionItemToFood(
       : createFallbackEstimateFood(
           item.food_name,
           item.estimated_grams,
-          `${clientCandidateId}-food`,
+          clientCandidateId,
+          item.nutrition_per_100g,
         );
 
   const nutrients: NutrientSnapshot = scaleNutrients(matchedFood, item.estimated_grams, 'g');

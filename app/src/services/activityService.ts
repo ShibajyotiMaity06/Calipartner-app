@@ -74,7 +74,31 @@ export async function getActivityDay(
  * Platform-measured distance beats calculated distance.
  * Merge-safe: one row per user per local date.
  */
-export async function upsertActivityDay(
+const activityWrites = new WeakMap<SyncDb, Map<string, Promise<ActivityDay>>>();
+
+export function upsertActivityDay(
+  ...args: Parameters<typeof saveActivityDay>
+): Promise<ActivityDay> {
+  const [db, userId, input] = args;
+  let queue = activityWrites.get(db);
+  if (!queue) {
+    queue = new Map();
+    activityWrites.set(db, queue);
+  }
+  const key = `${userId}/${input.localDate}`;
+  const task = (queue.get(key) ?? Promise.resolve())
+    .catch(() => {})
+    .then(() => saveActivityDay(...args));
+  queue.set(key, task);
+  void task
+    .finally(() => {
+      if (queue.get(key) === task) queue.delete(key);
+    })
+    .catch(() => {});
+  return task;
+}
+
+async function saveActivityDay(
   db: SyncDb,
   userId: string,
   input: {
@@ -97,6 +121,13 @@ export async function upsertActivityDay(
   });
 
   const recordId = existing?.id ?? generateClientUuid();
+  if (
+    existing &&
+    existing.steps === dedupeResult.steps &&
+    existing.distance_m === dedupeResult.distance_m &&
+    existing.source === dedupeResult.source
+  )
+    return existing;
 
   await db.runAsync(
     `INSERT INTO local_activity_days (

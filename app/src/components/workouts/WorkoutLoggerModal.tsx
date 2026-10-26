@@ -1,3 +1,4 @@
+import { useCurrentLocalDate } from '@/hooks/useCurrentLocalDate';
 import React, { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
@@ -73,7 +74,8 @@ export function WorkoutLoggerModal({
   testID = 'workout-logger-modal',
 }: WorkoutLoggerModalProps) {
   const { colors } = useTheme();
-  const localDate = defaultDate ?? new Date().toISOString().split('T')[0]!;
+  const { localDate: today } = useCurrentLocalDate();
+  const localDate = defaultDate ?? today;
 
   const { create, update, addExercise, addSet, updateSet, getSummary, getPreviousPerformance } =
     useWorkouts(localDate);

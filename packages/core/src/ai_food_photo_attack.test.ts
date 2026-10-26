@@ -211,7 +211,12 @@ describe('Phase 11: Attack & Security Tests (Caps, Consent, Injection, Budget, K
     it('ensures server secret key is never embedded in candidates or estimate foods', () => {
       // Simulate mapping and fallback creation
       const candidate = mapVisionItemToFood(
-        { food_name: 'Tandoori Chicken', estimated_grams: 250, confidence: 0.95 },
+        {
+          food_name: 'Tandoori Chicken',
+          estimated_grams: 250,
+          confidence: 0.95,
+          nutrition_per_100g: { calories: 220, protein: 8, carbs: 30, fat: 7, fiber: 2 },
+        },
         [],
         'cand-test',
       );
@@ -224,7 +229,12 @@ describe('Phase 11: Attack & Security Tests (Caps, Consent, Injection, Budget, K
     });
 
     it('ensures fallback estimate food never leaks sensitive system metadata', () => {
-      const fallback = createFallbackEstimateFood('Dal', 150, 'cand-fallback');
+      const fallback = createFallbackEstimateFood('Dal', 150, 'cand-fallback', {
+        calories: 110,
+        protein: 6,
+        carbs: 14,
+        fat: 3,
+      });
       const serialized = JSON.stringify(fallback);
 
       expect(serialized).not.toContain('sk-');

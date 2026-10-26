@@ -1,3 +1,4 @@
+import { useCurrentLocalDate } from '@/hooks/useCurrentLocalDate';
 import React, { useState } from 'react';
 import {
   Image,
@@ -30,6 +31,7 @@ export function WorkoutHubModal({
   onClose,
   testID = 'workout-hub-modal',
 }: WorkoutHubModalProps) {
+  const { localDate } = useCurrentLocalDate();
   const [showLogModal, setShowLogModal] = useState(false);
   const [showPlanModal, setShowPlanModal] = useState(false);
   const [showProgressModal, setShowProgressModal] = useState(false);
@@ -79,7 +81,7 @@ export function WorkoutHubModal({
     muscleGroup: string;
     plannedSets: number;
   }) => {
-    const todayStr = 'Wed, 15 Oct 2025';
+    const todayStr = localDate;
     const newEx = addExerciseToDate(todayStr, {
       name: chosen.name,
       muscleGroup: chosen.muscleGroup,
@@ -321,7 +323,7 @@ export function WorkoutHubModal({
           <ExerciseDetailModal
             visible={!!selectedExerciseForDetail}
             exercise={selectedExerciseForDetail}
-            dateStr="Wed, 15 Oct 2025"
+            dateStr={localDate}
             onClose={() => setSelectedExerciseForDetail(null)}
             onSaved={() => {
               setSelectedExerciseForDetail(null);

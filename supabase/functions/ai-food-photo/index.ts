@@ -1,4 +1,4 @@
-import { createClient } from 'jsr:@supabase/supabase-js@2';
+import { createClient, type SupabaseClient } from 'jsr:@supabase/supabase-js@2';
 import {
   buildVisionModelSystemPrompt,
   parseAndValidateVisionModelOutput,
@@ -15,6 +15,7 @@ import {
 export const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Methods': 'POST, OPTIONS',
 };
 
 // Cost model estimation: ~0.000005 per token or ~$0.0015 per vision scan
@@ -30,7 +31,7 @@ export interface AiFoodPhotoRequestBody {
  * Calls Gemini Vision model (default for testing) or Claude Vision model (for production when toggled),
  * or processes standard fallback for environments without an API key.
  */
-async function callVisionModel(
+export async function callVisionModel(
   imageBase64: string,
   mimeType: string,
   geminiApiKey: string | undefined,
@@ -49,12 +50,13 @@ async function callVisionModel(
       const groqUrl = 'https://api.groq.com/openai/v1/chat/completions';
       const response = await fetch(groqUrl, {
         method: 'POST',
+        signal: AbortSignal.timeout(20000),
         headers: {
           Authorization: `Bearer ${apiKey}`,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          model: 'qwen/qwen3.8-27b',
+          model: Deno.env.get('GROQ_VISION_MODEL') || 'qwen/qwen3.8-27b',
           messages: [
             {
               role: 'user',
@@ -83,7 +85,10 @@ async function callVisionModel(
       const rawCandidate = json.choices?.[0]?.message?.content || '';
       if (rawCandidate) {
         const tokens = json.usage?.total_tokens || DEFAULT_ESTIMATED_TOKENS;
-        return { rawText: rawCandidate, tokens, cost: 0 };
+        const cost =
+          ((json.usage?.prompt_tokens ?? tokens) * 0.8 + (json.usage?.completion_tokens ?? 0) * 4) /
+          1000000;
+        return { rawText: rawCandidate, tokens, cost: Math.round(cost * 1000000) / 1000000 };
       }
     } catch (groqErr) {
       console.warn('Groq Vision network error:', groqErr);
@@ -94,10 +99,11 @@ async function callVisionModel(
   // 1. Primary: Gemini Vision API (gemini-2.5-flash)
   if (geminiApiKey && geminiApiKey.trim().length > 0) {
     try {
-      const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${geminiApiKey}`;
+      const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent`;
       const response = await fetch(geminiUrl, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        signal: AbortSignal.timeout(20000),
+        headers: { 'Content-Type': 'application/json', 'x-goog-api-key': geminiApiKey },
         body: JSON.stringify({
           contents: [
             {
@@ -167,6 +173,7 @@ async function callVisionModel(
 
       const response = await fetch(claudeUrl, {
         method: 'POST',
+        signal: AbortSignal.timeout(20000),
         headers: {
           'x-api-key': anthropicApiKey.trim(),
           'anthropic-version': '2023-06-01',
@@ -224,32 +231,23 @@ async function callVisionModel(
     }
   }
 
-  // 5. Fallback heuristic mock response for offline / test environments
-  const fallbackMock: VisionModelResponse = {
-    items: [
-      {
-        food_name: 'Mixed Indian Meal',
-        estimated_grams: 350,
-        confidence: 0.85,
-        description: 'Dal, Roti, and Rice',
-      },
-    ],
-    detected_meal_type: 'lunch',
-  };
-
-  return {
-    rawText: JSON.stringify(fallbackMock),
-    tokens: DEFAULT_ESTIMATED_TOKENS,
-    cost: DEFAULT_ESTIMATED_COST_USD,
-  };
+  throw new Error('VISION_PROVIDER_UNAVAILABLE');
 }
 
-export async function handleAiFoodPhoto(req: Request): Promise<Response> {
+export async function handleAiFoodPhoto(
+  req: Request,
+  dependencies: { admin?: SupabaseClient; model?: typeof callVisionModel } = {},
+): Promise<Response> {
   const startTime = Date.now();
 
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders });
   }
+  if (req.method !== 'POST')
+    return new Response(JSON.stringify({ code: 'METHOD_NOT_ALLOWED' }), {
+      status: 405,
+      headers: corsHeaders,
+    });
 
   try {
     // -------------------------------------------------------------------------
@@ -266,7 +264,7 @@ export async function handleAiFoodPhoto(req: Request): Promise<Response> {
     const supabaseUrl = Deno.env.get('SUPABASE_URL') || '';
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || '';
 
-    const adminClient = createClient(supabaseUrl, supabaseServiceKey);
+    const adminClient = dependencies.admin ?? createClient(supabaseUrl, supabaseServiceKey);
     const token = authHeader.replace(/^Bearer\s+/i, '');
 
     const {
@@ -362,7 +360,7 @@ export async function handleAiFoodPhoto(req: Request): Promise<Response> {
 
     let visionResult: { rawText: string; tokens: number; cost: number };
     try {
-      visionResult = await callVisionModel(
+      visionResult = await (dependencies.model ?? callVisionModel)(
         image,
         mime,
         geminiApiKey,
@@ -403,11 +401,29 @@ export async function handleAiFoodPhoto(req: Request): Promise<Response> {
     // -------------------------------------------------------------------------
     // 6. FOOD CATALOG MAPPING & PRIVACY BOUNDARY (C03)
     // -------------------------------------------------------------------------
+    const { error: usageError } = await adminClient.rpc('record_ai_usage', {
+      p_user_id: userId,
+      p_feature: 'food_photo',
+      p_tokens: visionResult.tokens,
+      p_cost: visionResult.cost,
+    });
+    if (usageError) throw new Error('AI_USAGE_NOT_RECORDED');
+    if (!parsedModelResponse.items.length)
+      return new Response(
+        JSON.stringify({
+          code: 'NO_FOOD_DETECTED',
+          error: 'This does not look like a food photo. Please provide a clear photo of your food.',
+        }),
+        {
+          status: 422,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        },
+      );
     const candidates: FoodCandidateItem[] = [];
 
     for (let i = 0; i < parsedModelResponse.items.length; i++) {
       const detectedItem: VisionModelDetectedItem = parsedModelResponse.items[i];
-      const clientCandidateId = `cand-${i + 1}`;
+      const clientCandidateId = crypto.randomUUID();
 
       // Strictly restrict search to public catalog foods (owner_id is null)
       // or the caller's own custom foods (owner_id = userId).
@@ -422,23 +438,25 @@ export async function handleAiFoodPhoto(req: Request): Promise<Response> {
         .ilike('name', `%${detectedItem.food_name}%`)
         .limit(10);
 
-      const candidate = mapVisionItemToFood(
-        detectedItem,
-        (dbFoods as Food[]) || [],
-        clientCandidateId,
-      );
+      let candidate: FoodCandidateItem;
+      try {
+        candidate = mapVisionItemToFood(detectedItem, (dbFoods as Food[]) || [], clientCandidateId);
+      } catch {
+        return new Response(
+          JSON.stringify({
+            code: 'MALFORMED_OUTPUT',
+            error:
+              'We could not estimate this food reliably. Please try a clearer photo or search for your food.',
+          }),
+          { status: 422, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
+        );
+      }
       candidates.push(candidate);
     }
 
     // -------------------------------------------------------------------------
     // 7. RECORD AI USAGE (PRD 7.7, 7.10)
     // -------------------------------------------------------------------------
-    await adminClient.rpc('record_ai_usage', {
-      p_user_id: userId,
-      p_feature: 'food_photo',
-      p_tokens: visionResult.tokens,
-      p_cost: visionResult.cost,
-    });
 
     const usedToday = (accessCheck.used || 0) + 1;
     const dailyCap = accessCheck.cap || DEFAULT_AI_FOOD_PHOTO_CAPS.paid;
@@ -495,6 +513,6 @@ declare const Deno: {
   env: { get: (key: string) => string | undefined };
 };
 
-if (typeof Deno !== 'undefined' && typeof Deno.serve === 'function') {
-  Deno.serve(handleAiFoodPhoto);
+if (import.meta.main) {
+  Deno.serve((req) => handleAiFoodPhoto(req));
 }

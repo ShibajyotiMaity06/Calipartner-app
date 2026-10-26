@@ -254,6 +254,16 @@ describe('Trackers Core - Activity Source Priority & Deduplication', () => {
     expect(res.steps).toBe(8500);
   });
 
+  it('uses corrected platform totals rather than preserving an inflated previous maximum', () => {
+    const corrected = deduplicateActivitySources(existingHealth, {
+      source: 'health_platform',
+      steps: 6099,
+      distance_m: 4567,
+    });
+    expect(corrected.steps).toBe(6099);
+    expect(corrected.distance_m).toBe(4567);
+  });
+
   it('higher priority source replaces lower priority source', () => {
     const existingManual: ActivityDay = {
       id: 'act-2',

@@ -10,6 +10,8 @@ import {
   View,
 } from 'react-native';
 import { CameraView, useCameraPermissions } from 'expo-camera';
+import * as ImagePicker from 'expo-image-picker';
+import * as ImageManipulator from 'expo-image-manipulator';
 import { Ionicons } from '@expo/vector-icons';
 import { t } from '@/i18n';
 import { fontSize, radius, spacing } from '@/theme/tokens';
@@ -35,13 +37,48 @@ export function FoodPhotoCameraModal({
   const [previewBase64, setPreviewBase64] = useState<string | null>(null);
   const [previewUri, setPreviewUri] = useState<string | null>(null);
   const cameraRef = useRef<CameraView | null>(null);
+  const [cameraError, setCameraError] = useState<string | null>(null);
+  const [cameraReady, setCameraReady] = useState(false);
+  const showPreparedPhoto = async (asset: { uri: string; width?: number; height?: number }) => {
+    const size = Math.max(asset.width ?? 0, asset.height ?? 0);
+    const resize =
+      size > 1600
+        ? [
+            {
+              resize:
+                (asset.width ?? 0) >= (asset.height ?? 0) ? { width: 1600 } : { height: 1600 },
+            },
+          ]
+        : [];
+    const prepared = await ImageManipulator.manipulateAsync(asset.uri, resize, {
+      compress: 0.8,
+      format: ImageManipulator.SaveFormat.JPEG,
+      base64: true,
+    });
+    if (!prepared.base64) throw new Error('PHOTO_ENCODING_FAILED');
+    setPreviewBase64(prepared.base64);
+    setPreviewUri(prepared.uri);
+  };
+  useEffect(() => {
+    if (!visible) {
+      setPreviewBase64(null);
+      setPreviewUri(null);
+      setCameraError(null);
+      setCameraReady(false);
+    }
+  }, [visible]);
 
   // Auto-request permission when modal opens on device
   useEffect(() => {
-    if (visible && !permission?.granted && Platform.OS !== 'web' && requestPermission) {
-      void requestPermission();
+    if (
+      visible &&
+      permission?.status === 'undetermined' &&
+      Platform.OS !== 'web' &&
+      requestPermission
+    ) {
+      void requestPermission().catch(() => setCameraError(t('capture.cameraError')));
     }
-  }, [visible, permission?.granted, requestPermission]);
+  }, [visible, permission?.status, requestPermission]);
 
   const handleCapture = async () => {
     if (capturing) return;
@@ -58,12 +95,10 @@ export function FoodPhotoCameraModal({
         skipProcessing: false,
       });
 
-      if (photo?.base64) {
-        setPreviewBase64(photo.base64);
-        setPreviewUri(photo.uri);
-      }
+      if (!photo?.uri) throw new Error('CAPTURE_FAILED');
+      await showPreparedPhoto(photo);
     } catch {
-      // Capture error
+      setCameraError(t('capture.cameraError'));
     } finally {
       setCapturing(false);
     }
@@ -86,63 +121,29 @@ export function FoodPhotoCameraModal({
   };
 
   const handleTriggerCameraOrUpload = async (mode: 'camera' | 'album' = 'camera') => {
-    if (Platform.OS === 'web') {
-      const g = globalThis as unknown as {
-        document?: {
-          getElementById: (id: string) => HTMLInputElement | null;
-          createElement: (tag: string) => HTMLInputElement;
-          body: { appendChild: (el: unknown) => void };
-        };
-        FileReader?: new () => {
-          onload: (e: { target?: { result?: string } }) => void;
-          readAsDataURL: (f: unknown) => void;
-        };
-      };
-      if (g && g.document) {
-        let input: any = g.document.getElementById('food-photo-web-input');
-        if (!input) {
-          input = g.document.createElement('input');
-          input.id = 'food-photo-web-input';
-          input.type = 'file';
-          input.accept = 'image/*';
-          input.style.display = 'none';
-          g.document.body.appendChild(input);
-        }
-        input.value = '';
-        if (mode === 'camera') {
-          input.setAttribute('capture', 'environment');
-          input.capture = 'environment';
-        } else {
-          input.removeAttribute('capture');
-          delete input.capture;
-        }
-
-        input.onchange = (e: any) => {
-          const target = e.target;
-          const file = target?.files?.[0];
-          if (file && g.FileReader) {
-            const reader = new g.FileReader();
-            reader.onload = (event: { target?: { result?: string } }) => {
-              const dataUrl = event.target?.result;
-              if (dataUrl) {
-                const base64 = dataUrl.split(',')[1] || dataUrl;
-                setPreviewBase64(base64);
-                setPreviewUri(dataUrl);
-              }
-            };
-            reader.readAsDataURL(file);
-          }
-        };
-        input.click();
-        return;
+    setCameraError(null);
+    if (mode === 'album') {
+      try {
+        const result = await ImagePicker.launchImageLibraryAsync({
+          mediaTypes: ['images'],
+          quality: 0.8,
+        });
+        const asset = result.canceled ? undefined : result.assets?.[0];
+        if (asset) await showPreparedPhoto(asset);
+      } catch {
+        setCameraError(t('capture.cameraError'));
       }
+      return;
     }
-
-    if (requestPermission) {
-      await requestPermission();
+    try {
+      const result = await requestPermission();
+      if (!result.granted) setCameraError(t('capture.cameraError'));
+    } catch {
+      setCameraError(t('capture.cameraError'));
     }
   };
 
+  if (!visible) return null;
   return (
     <Modal
       testID="modal-food-photo-camera"
@@ -152,8 +153,13 @@ export function FoodPhotoCameraModal({
       onRequestClose={onClose}
     >
       <View style={styles.blackBackground}>
+        {cameraError && (
+          <Text accessibilityRole="alert" testID="food-camera-error" style={{ color: colors.text }}>
+            {cameraError}
+          </Text>
+        )}
         {/* Permission Denied / Web Upload Screen */}
-        {!permission?.granted && !testMode ? (
+        {!permission?.granted && !testMode && !previewBase64 ? (
           <View style={styles.permissionContainer}>
             <View style={[styles.permissionIconWrap, { backgroundColor: colors.surfaceAlt }]}>
               <Ionicons name="camera-outline" size={44} color={colors.accent} />
@@ -162,8 +168,7 @@ export function FoodPhotoCameraModal({
               {t('foodLog.photo.cameraPermissionTitle')}
             </Text>
             <Text style={[styles.permissionBody, { color: colors.textMuted }]}>
-              Camera access is required to take photos of your meals for instant AI nutrition
-              analysis.
+              {t('capture.cameraReason')}
             </Text>
 
             <View
@@ -175,7 +180,7 @@ export function FoodPhotoCameraModal({
               <Pressable
                 testID="btn-grant-camera-permission"
                 accessibilityRole="button"
-                accessibilityLabel="Take Photo with Camera"
+                accessibilityLabel={t('capture.takePhoto')}
                 onPress={() => handleTriggerCameraOrUpload('camera')}
                 style={[styles.primaryBtn, { backgroundColor: colors.accent, width: '100%' }]}
               >
@@ -193,7 +198,7 @@ export function FoodPhotoCameraModal({
               <Pressable
                 testID="btn-choose-from-gallery"
                 accessibilityRole="button"
-                accessibilityLabel="Choose from Photos"
+                accessibilityLabel={t('capture.choosePhoto')}
                 onPress={() => handleTriggerCameraOrUpload('album')}
                 style={[
                   styles.primaryBtn,
@@ -286,7 +291,13 @@ export function FoodPhotoCameraModal({
         ) : (
           /* Active Camera Screen */
           <View style={styles.cameraContainer}>
-            <CameraView ref={cameraRef} facing={facing} style={StyleSheet.absoluteFill} />
+            <CameraView
+              ref={cameraRef}
+              facing={facing}
+              onCameraReady={() => setCameraReady(true)}
+              onMountError={() => setCameraError(t('capture.cameraError'))}
+              style={StyleSheet.absoluteFill}
+            />
 
             {/* Top Bar Controls */}
             <View style={styles.topBar}>
@@ -305,7 +316,7 @@ export function FoodPhotoCameraModal({
               <Pressable
                 testID="btn-flip-camera"
                 accessibilityRole="button"
-                accessibilityLabel="Flip camera"
+                accessibilityLabel={t('capture.flipCamera')}
                 onPress={() => setFacing(facing === 'back' ? 'front' : 'back')}
                 style={styles.iconCircle}
               >
@@ -333,7 +344,7 @@ export function FoodPhotoCameraModal({
                 testID="btn-camera-shutter"
                 accessibilityRole="button"
                 accessibilityLabel={t('foodLog.photo.capture')}
-                disabled={capturing}
+                disabled={capturing || !cameraReady}
                 onPress={handleCapture}
                 style={styles.shutterOuter}
               >
@@ -342,7 +353,17 @@ export function FoodPhotoCameraModal({
                 </View>
               </Pressable>
 
-              <View style={{ width: 60 }} />
+              <Pressable
+                testID="food-camera-gallery"
+                accessibilityRole="button"
+                accessibilityLabel={t('capture.choosePhoto')}
+                style={styles.iconCircle}
+                onPress={() => {
+                  void handleTriggerCameraOrUpload('album');
+                }}
+              >
+                <Ionicons name="images-outline" size={24} color={colors.text} />
+              </Pressable>
             </View>
           </View>
         )}

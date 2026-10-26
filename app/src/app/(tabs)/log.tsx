@@ -10,11 +10,9 @@ import {
   type MealSectionType,
 } from '@calipartner/ui';
 import { FoodLogModal } from '@/components/diary/FoodLogModal';
-import { BarcodeScannerModal } from '@/components/diary/BarcodeScannerModal';
 import { WorkoutLoggerModal } from '@/components/workouts/WorkoutLoggerModal';
 import { CustomWaterModal, WeightEntryModal } from '@/components/trackers';
 
-import { FoodPhotoCameraModal } from '@/components/food_photo';
 import { RecipeBrowseView } from '@/components/recipes';
 import { QuickAddCaloriesModal } from '@/components/diary/QuickAddCaloriesModal';
 import { FastingTimerModal } from '@/components/fasting';
@@ -24,6 +22,7 @@ import { useAddEntry } from '@/hooks/useFoodEntries';
 import { useWater } from '@/hooks/useWater';
 import { useWeight } from '@/hooks/useWeight';
 import { useTheme } from '@/theme/useTheme';
+import { useCurrentLocalDate } from '@/hooks/useCurrentLocalDate';
 
 type ActiveFlowState =
   | 'picker'
@@ -42,7 +41,7 @@ export default function LogScreen() {
   const { colors } = useTheme();
   const { user } = useAuth();
 
-  const todayDate = new Date().toISOString().slice(0, 10);
+  const { localDate: todayDate } = useCurrentLocalDate();
   const initialSection: MealSection = getMealSectionForTime(new Date());
 
   const [currentSection, setCurrentSection] = useState<MealSection>(initialSection);
@@ -192,12 +191,13 @@ export default function LogScreen() {
 
       {/* 7. Quick Scan: Barcode Scanner */}
       {activeFlow === 'scan' && (
-        <BarcodeScannerModal
+        <FoodLogModal
           visible={sheetVisible}
           defaultSection={currentSection}
+          localDate={todayDate}
+          initialTab="scan"
           onClose={handleCloseAll}
-          onFoodFound={() => handleCloseAll()}
-          onCreateCustomFood={() => handleCloseAll()}
+          onLogged={handleCloseAll}
         />
       )}
 

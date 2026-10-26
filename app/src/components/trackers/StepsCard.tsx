@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
   Modal,
+  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -71,7 +72,9 @@ export function StepsCard({ selectedDate, testID = 'steps-card' }: StepsCardProp
     if (!src) return t('trackers.steps.noReading');
     switch (src) {
       case 'health_platform':
-        return 'From Health Connect';
+        return t(
+          Platform.OS === 'ios' ? 'capture.appleHealthSource' : 'capture.healthConnectSource',
+        );
       case 'pedometer':
         return 'From Phone Sensor';
       case 'manual':
@@ -103,6 +106,9 @@ export function StepsCard({ selectedDate, testID = 'steps-card' }: StepsCardProp
 
   return (
     <View testID={testID} style={styles.card}>
+      <Text style={styles.subtitle}>
+        {t(Platform.OS === 'web' ? 'capture.webSteps' : 'capture.healthSteps')}
+      </Text>
       {/* Header */}
       <View style={styles.headerRow}>
         <View style={styles.titleGroup}>
@@ -390,6 +396,11 @@ export function StepsCard({ selectedDate, testID = 'steps-card' }: StepsCardProp
         <FixStepCountingModal
           visible={fixModalVisible}
           currentSource={source}
+          lastSyncedText={
+            activity
+              ? new Date(activity.updated_at).toLocaleTimeString()
+              : t('trackers.steps.noReading')
+          }
           onClose={() => setFixModalVisible(false)}
         />
       )}

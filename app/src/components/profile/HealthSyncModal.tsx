@@ -1,8 +1,22 @@
-import React, { useState } from 'react';
-import { Modal, SafeAreaView, ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import {
+  Modal,
+  Platform,
+  SafeAreaView,
+  ScrollView,
+  StyleSheet,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 import { Button, Card, ChevronLeftIcon, dark, radius, space, Text } from '@calipartner/ui';
 import { t } from '@/i18n';
 import { playClickSound } from '@/lib/sound';
+import {
+  disconnectNativeHealth,
+  getNativeHealthPermission,
+  requestNativeHealthPermission,
+  openNativeHealthSettings,
+} from '@/services/nativeHealthService';
 
 export interface HealthSyncModalProps {
   visible: boolean;
@@ -16,12 +30,23 @@ export interface HealthSyncModalProps {
 export function HealthSyncModal({
   visible,
   onClose,
-  isConnected = true,
-  lastSyncedAt = 'Today, 12:45 PM',
+  isConnected,
+  lastSyncedAt,
   onToggleConnection,
   testID = 'modal-health-sync',
 }: HealthSyncModalProps) {
-  const [connected, setConnected] = useState<boolean>(isConnected);
+  const [connected, setConnected] = useState<boolean>(isConnected ?? false);
+  const [error, setError] = useState<string | null>(null);
+  useEffect(() => {
+    let active = true;
+    if (visible)
+      void getNativeHealthPermission().then((status) => {
+        if (active) setConnected(isConnected ?? status === 'granted');
+      });
+    return () => {
+      active = false;
+    };
+  }, [visible, isConnected]);
   const [loading, setLoading] = useState<boolean>(false);
   const [showTroubleshoot, setShowTroubleshoot] = useState<boolean>(false);
 
@@ -29,11 +54,24 @@ export function HealthSyncModal({
     playClickSound();
     setLoading(true);
     const next = !connected;
-    setConnected(next);
-    if (onToggleConnection) {
-      await onToggleConnection(next);
+    setError(null);
+    try {
+      if (onToggleConnection) {
+        await onToggleConnection(next);
+        setConnected(next);
+      } else if (!next) {
+        await disconnectNativeHealth();
+        setConnected(false);
+      } else {
+        const status = await requestNativeHealthPermission();
+        setConnected(status === 'granted');
+        if (status !== 'granted') setError(t('capture.healthPermissionHelp'));
+      }
+    } catch {
+      setError(t('capture.healthPermissionHelp'));
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   const handleFixStepCounting = () => {
@@ -64,7 +102,7 @@ export function HealthSyncModal({
 
           <ScrollView contentContainerStyle={styles.content}>
             <Text variant="bodyS" color={dark.textMid} style={styles.introSubtitle}>
-              {t('me.healthSync.subtitle')}
+              {t(Platform.OS === 'web' ? 'capture.webSteps' : 'capture.healthSteps')}
             </Text>
 
             {/* Status Card */}
@@ -77,9 +115,9 @@ export function HealthSyncModal({
                       : t('me.healthSync.statusDisconnected')}
                   </Text>
                   <Text variant="micro" color={dark.textLo} style={styles.syncTime}>
-                    {connected
+                    {lastSyncedAt
                       ? t('me.healthSync.lastSynced', { time: lastSyncedAt })
-                      : 'No active health link'}
+                      : t('trackers.steps.noReading')}
                   </Text>
                 </View>
                 <View
@@ -104,10 +142,27 @@ export function HealthSyncModal({
                       : t('me.healthSync.connectBtn')
                 }
                 onPress={handleToggle}
-                disabled={loading}
+                disabled={loading || Platform.OS === 'web'}
                 testID="btn-toggle-health-sync"
                 style={styles.connectButton}
               />
+              {error && (
+                <Text variant="bodyS" accessibilityRole="alert" testID="health-sync-error">
+                  {error}
+                </Text>
+              )}
+              {Platform.OS !== 'web' && (
+                <Button
+                  variant="secondary"
+                  label={t('capture.healthSettings')}
+                  onPress={() => {
+                    void openNativeHealthSettings().catch(() =>
+                      setError(t('capture.healthPermissionHelp')),
+                    );
+                  }}
+                  testID="health-open-settings"
+                />
+              )}
             </Card>
 
             {/* Data Permissions List */}
@@ -123,22 +178,7 @@ export function HealthSyncModal({
               </View>
               <View style={styles.permissionItem}>
                 <Text variant="bodyS" color={dark.textHi}>
-                  • {t('me.healthSync.readEnergy')}
-                </Text>
-              </View>
-              <View style={styles.permissionItem}>
-                <Text variant="bodyS" color={dark.textHi}>
-                  • {t('me.healthSync.readWorkouts')}
-                </Text>
-              </View>
-              <View style={styles.permissionItem}>
-                <Text variant="bodyS" color={dark.textHi}>
-                  • {t('me.healthSync.readWater')}
-                </Text>
-              </View>
-              <View style={styles.permissionItem}>
-                <Text variant="bodyS" color={dark.textHi}>
-                  • {t('me.healthSync.readWeight')}
+                  • {t('capture.readDistance')}
                 </Text>
               </View>
             </Card>

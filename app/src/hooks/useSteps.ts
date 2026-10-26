@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { AppState } from 'react-native';
 import {
   calculateStrideLengthCm,
-  getLocalDateString,
+  addDaysToDateString,
   type ActivityDay,
   type ActivitySource,
 } from '@calipartner/core';
@@ -20,6 +21,7 @@ import {
   type StepPermissionStatus,
 } from '@/services/stepIntegrationService';
 import { useTargets } from './useTargets';
+import { useCurrentLocalDate } from './useCurrentLocalDate';
 
 export interface UseStepsResult {
   activity: ActivityDay | null;
@@ -45,12 +47,8 @@ export interface UseStepsResult {
 export function useSteps(date?: string): UseStepsResult {
   const { currentGoalProfile, updateDailyGoals } = useTargets();
   const { user, profile } = useAuth();
-  const localDate =
-    date ??
-    getLocalDateString(
-      new Date(),
-      profile?.timezone ?? Intl.DateTimeFormat().resolvedOptions().timeZone,
-    );
+  const { localDate: today, timeZone } = useCurrentLocalDate();
+  const localDate = date ?? today;
 
   const [activity, setActivity] = useState<ActivityDay | null>(null);
   const [permissionStatus, setPermissionStatus] = useState<StepPermissionStatus>('not_requested');
@@ -99,20 +97,54 @@ export function useSteps(date?: string): UseStepsResult {
     void loadData();
   }, [loadData]);
 
-  const syncFromPlatform = async (): Promise<void> => {
-    const reading = await readDeviceSteps(localDate);
-    if (reading) {
+  const syncFromPlatform = useCallback(async (): Promise<void> => {
+    const dates =
+      localDate === today
+        ? Array.from({ length: 7 }, (_, index) => addDaysToDateString(today, -index))
+        : [localDate];
+    for (const day of dates) {
+      const reading = await readDeviceSteps(day, timeZone);
+      if (!reading || activeKey.current !== ownerKey) continue;
       const db = await getDb();
+      if (activeKey.current !== ownerKey) return;
       await upsertActivityDay(db, effectiveUserId, {
-        localDate,
+        localDate: day,
         steps: reading.steps,
         distanceM: reading.distance_m,
         source: reading.source,
         strideLengthCm: userStrideCm,
       });
-      await loadData();
     }
-  };
+    await loadData();
+  }, [localDate, today, timeZone, ownerKey, effectiveUserId, userStrideCm, loadData]);
+
+  useEffect(() => {
+    let disposed = false;
+    let running = false;
+    const sync = async () => {
+      if (disposed || running) return;
+      running = true;
+      try {
+        await syncFromPlatform();
+      } catch (failure) {
+        if (!disposed) setError(failure instanceof Error ? failure.message : String(failure));
+      } finally {
+        running = false;
+      }
+    };
+    void sync();
+    const listener = AppState.addEventListener('change', (state) => {
+      if (state === 'active') void sync();
+    });
+    const timer = setInterval(() => {
+      if (AppState.currentState === 'active') void sync();
+    }, 60000);
+    return () => {
+      disposed = true;
+      clearInterval(timer);
+      listener.remove();
+    };
+  }, [syncFromPlatform]);
 
   const requestPermission = async (): Promise<boolean> => {
     const res = await requestStepPermissions();
@@ -125,13 +157,13 @@ export function useSteps(date?: string): UseStepsResult {
 
   const logPedometerSession = async (baseline: number, measuredSteps: number): Promise<void> => {
     if (!Number.isInteger(measuredSteps) || measuredSteps <= 0) return;
-    const reading = await readDeviceSteps(localDate);
+    const reading = await readDeviceSteps(localDate, timeZone);
     const db = await getDb();
     await upsertActivityDay(db, effectiveUserId, {
       localDate,
       steps: reading?.steps ?? baseline + measuredSteps,
       distanceM: reading?.distance_m,
-      source: 'pedometer',
+      source: reading?.source ?? 'pedometer',
       strideLengthCm: userStrideCm,
     });
     await loadData();

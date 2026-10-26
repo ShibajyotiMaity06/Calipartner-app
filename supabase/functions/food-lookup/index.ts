@@ -1,4 +1,5 @@
-import { createClient } from 'jsr:@supabase/supabase-js@2';
+import { createClient, type SupabaseClient } from 'jsr:@supabase/supabase-js@2';
+import { normalizeProductBarcode } from '@calipartner/core';
 
 export const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -167,7 +168,11 @@ export function mapUsdaFoodItem(item: Record<string, any>): FoodLookupResult {
   };
 }
 
-export async function handleFoodLookup(req: Request): Promise<Response> {
+export async function handleFoodLookup(
+  req: Request,
+  dependencies: { admin?: SupabaseClient; fetch?: typeof fetch } = {},
+): Promise<Response> {
+  const remoteFetch = dependencies.fetch ?? fetch;
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders });
   }
@@ -228,14 +233,20 @@ export async function handleFoodLookup(req: Request): Promise<Response> {
   const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
 
   const adminClient =
-    supabaseUrl && supabaseServiceKey ? createClient(supabaseUrl, supabaseServiceKey) : null;
+    dependencies.admin ??
+    (supabaseUrl && supabaseServiceKey ? createClient(supabaseUrl, supabaseServiceKey) : null);
 
   try {
     // -------------------------------------------------------------------------
     // 1. BARCODE LOOKUP
     // -------------------------------------------------------------------------
     if (barcode) {
-      const cleanBarcode = barcode.trim();
+      const cleanBarcode = normalizeProductBarcode(barcode);
+      if (!cleanBarcode)
+        return new Response(JSON.stringify({ error: 'Invalid product barcode' }), {
+          status: 400,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
 
       // Check DB cache first
       if (adminClient) {
@@ -243,6 +254,7 @@ export async function handleFoodLookup(req: Request): Promise<Response> {
           .from('foods')
           .select('*')
           .eq('barcode', cleanBarcode)
+          .is('owner_id', null)
           .is('deleted_at', null)
           .limit(1);
 
@@ -256,7 +268,8 @@ export async function handleFoodLookup(req: Request): Promise<Response> {
 
       // Query Open Food Facts API
       const offUrl = `https://world.openfoodfacts.org/api/v2/product/${encodeURIComponent(cleanBarcode)}.json`;
-      const offRes = await fetch(offUrl, {
+      const offRes = await remoteFetch(offUrl, {
+        signal: AbortSignal.timeout(15000),
         headers: {
           'User-Agent': 'CaliPartnerApp - Mobile/Web - Version 1.0 - contact@calipartner.com',
         },
@@ -270,7 +283,7 @@ export async function handleFoodLookup(req: Request): Promise<Response> {
             message: 'Not found in Open Food Facts',
           }),
           {
-            status: 404,
+            status: offRes.status === 404 ? 404 : 502,
             headers: { ...corsHeaders, 'Content-Type': 'application/json' },
           },
         );
@@ -307,6 +320,11 @@ export async function handleFoodLookup(req: Request): Promise<Response> {
 
         if (!insertErr && inserted) {
           savedFood = inserted;
+        } else {
+          return new Response(JSON.stringify({ error: 'Could not cache product. Please retry.' }), {
+            status: 503,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          });
         }
       }
 
@@ -405,6 +423,6 @@ export async function handleFoodLookup(req: Request): Promise<Response> {
   }
 }
 
-if (typeof Deno !== 'undefined') {
-  Deno.serve(handleFoodLookup);
+if (import.meta.main) {
+  Deno.serve((req) => handleFoodLookup(req));
 }

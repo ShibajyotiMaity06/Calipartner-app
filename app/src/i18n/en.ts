@@ -1,4 +1,42 @@
 export const en = {
+  capture: {
+    starterScans: 'Starter scans',
+    todayScans: 'Scans today',
+    healthPermissionHelp:
+      'Allow steps and walking distance in your phone’s health settings, then open CaliPartner again.',
+    healthSettings: 'Open health settings',
+    appleHealthSource: 'From Apple Health',
+    healthConnectSource: 'From Health Connect',
+    readDistance: 'Walking and running distance',
+    previousDay: 'Previous day',
+    nextDay: 'Next day',
+    restDay: 'Rest',
+    noFood:
+      'This does not look like a food photo. Please take or choose a clear photo of your food.',
+    photoUnavailable: 'We could not analyze this photo. Please try again or search for your food.',
+    cameraError:
+      'We could not open the camera or read the photo. Please try again or choose a photo.',
+    choosePhoto: 'Choose a photo',
+    takePhoto: 'Take a photo',
+    flipCamera: 'Flip camera',
+    cameraReason: 'Take or choose a clear photo of your food to estimate its calories and macros.',
+    barcodeMissing: 'No barcode was found. Try a clearer photo or type the number.',
+    barcodeError: 'We could not look up this barcode. Check your connection and try again.',
+    barcodeInvalid: 'Enter a valid product barcode using 8, 12, 13 or 14 digits.',
+    barcodeNotFound:
+      'We could not find this product. You can create a custom food using its label.',
+    openScanner: 'Open camera scanner',
+    barcodePhoto: 'Choose a barcode photo',
+    typeBarcode: 'Type the number',
+    tryAgain: 'Try again',
+    createFood: 'Create a custom food',
+    per100g: 'Per 100 g: {calories} kcal',
+    flashlight: 'Toggle flashlight',
+    healthSteps:
+      'Your phone records steps while CaliPartner is closed. We refresh its daily totals when you open the app.',
+    webSteps:
+      'Automatic steps need the native Android or iPhone app. Installing from Chrome does not enable phone step access.',
+  },
   fixes: {
     choosePlanAgain: 'Return to plan selection',
     checkoutPrice: 'See price at Dodo checkout',
@@ -772,9 +810,10 @@ export const en = {
       noCandidatesSub:
         'We couldn’t detect distinct foods in this photo. Try another angle with good lighting.',
       limitTitle: 'Daily Photo Limit Reached',
-      limitBodyTrial: 'You’ve reached your daily limit of 3 AI photo scans on the free trial.',
-      limitBodyFree: 'AI photo logging is available on Trial and Paid plans.',
-      limitBodyPaid: 'You’ve reached your daily allowance of 15 AI photo scans for today.',
+      limitBodyTrial:
+        'AI photo logging is included with Pro. Plus and its trial do not include AI photo scans.',
+      limitBodyFree: 'You’ve used your 3 starter scans. Pro includes 5 AI photo scans each day.',
+      limitBodyPaid: 'You’ve reached your daily allowance of 5 AI photo scans for today.',
       upgradeUpsell:
         'Upgrade to a Room Plan to get 15 scans per day, shared partner rooms, and an AI coach.',
       upgradeButton: 'View Room Plans',
