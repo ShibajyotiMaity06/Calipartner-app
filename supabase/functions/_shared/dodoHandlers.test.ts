@@ -13,19 +13,40 @@ const subscription = {
   next_billing_date: '2099-01-01',
   metadata: { checkout_id: 'fa000000-0000-4000-8000-000000000002' },
 };
-function setup() {
+function setup(existing = true, badCurrency = false, country = 'IN') {
   let writes = 0;
   let creates = 0;
+  let sessionInput: Record<string, unknown> | null = null;
   const sdk = new DodoPayments({ bearerToken: 'not-a-real-key', webhookKey: secret });
   const config = {
     origin: 'https://app.example',
     products: { pro_annual: 'pdt_test' },
+    globalProducts: country === 'US' ? { pro_annual: 'pdt_usd' } : null,
     dodo: {
+      products: {
+        retrieve: async (id: string) => ({
+          is_recurring: true,
+          price: {
+            type: 'recurring_price',
+            currency: id === 'pdt_usd' || badCurrency ? 'USD' : 'INR',
+            price: id === 'pdt_usd' ? 4999 : 249900,
+            payment_frequency_count: 1,
+            payment_frequency_interval: 'Year',
+            trial_period_days: 0,
+          },
+        }),
+      },
       webhooks: sdk.webhooks,
-      subscriptions: { retrieve: async () => subscription },
+      subscriptions: {
+        retrieve: async () => ({
+          ...subscription,
+          product_id: country === 'US' ? 'pdt_usd' : 'pdt_test',
+        }),
+      },
       checkoutSessions: {
-        create: async () => {
+        create: async (input: Record<string, unknown>) => {
           creates++;
+          sessionInput = input;
           return {
             checkout_url: 'https://checkout.dodopayments.com/session',
             session_id: 'cks_test',
@@ -52,20 +73,30 @@ function setup() {
         eq() {
           return this;
         },
+        insert: async () => ({ error: null }),
+        update() {
+          return this;
+        },
+        then(resolve: (value: unknown) => void) {
+          resolve({ error: null });
+        },
         maybeSingle: async () => ({
           data:
-            table === 'dodo_checkouts'
+            table === 'dodo_checkouts' && existing
               ? {
                   user_id: 'user-a',
                   product_key: 'pro_annual',
+                  product_id: 'pdt_test',
                   checkout_url: 'https://checkout.dodopayments.com/existing',
                 }
-              : null,
+              : table === 'profiles'
+                ? { country }
+                : null,
         }),
       }),
     },
   } as unknown as ReturnType<typeof dodoConfig>;
-  return { config, writes: () => writes, creates: () => creates };
+  return { config, writes: () => writes, creates: () => creates, sessionInput: () => sessionInput };
 }
 function signed(body: string, valid = true) {
   const timestamp = new Date();
@@ -157,5 +188,75 @@ Deno.test(
     });
     assert.equal((await handleDodoCheckout(request, () => state.config)).status, 400);
     assert.equal(state.creates(), 0);
+  },
+);
+
+function checkoutRequest() {
+  return new Request('https://functions.example/dodo-checkout', {
+    method: 'POST',
+    headers: { Authorization: 'Bearer user-token' },
+    body: JSON.stringify({
+      tier: 'pro',
+      duration: 'annual',
+      request_id: subscription.metadata.checkout_id,
+    }),
+  });
+}
+Deno.test(
+  'A new checkout verifies the configured recurring price and returns the hosted URL',
+  async () => {
+    const state = setup(false);
+    const r = await handleDodoCheckout(checkoutRequest(), () => state.config);
+    assert.equal(r.status, 200);
+    assert.equal(state.creates(), 1);
+    assert.equal(state.sessionInput()?.billing_currency, 'INR');
+    assert.deepEqual(state.sessionInput()?.feature_flags, {
+      allow_currency_selection: false,
+      redirect_immediately: true,
+    });
+    assert.ok(String(state.sessionInput()?.cancel_url).endsWith('&cancelled=1'));
+    assert.equal((await r.json()).checkout_url, 'https://checkout.dodopayments.com/session');
+  },
+);
+Deno.test('The INR/USD annual product mistake cannot create a provider checkout', async () => {
+  const state = setup(false, true);
+  const r = await handleDodoCheckout(checkoutRequest(), () => state.config);
+  assert.equal(r.status, 503);
+  assert.equal(state.creates(), 0);
+  assert.equal(state.writes(), 0);
+});
+Deno.test(
+  'Catalog requires authentication and fails closed when provider terms disagree',
+  async () => {
+    const state = setup(false, true);
+    const r = await handleDodoCheckout(
+      new Request('https://functions.example/dodo-checkout', {
+        method: 'POST',
+        headers: { Authorization: 'Bearer user-token' },
+        body: '{"action":"catalog"}',
+      }),
+      () => state.config,
+    );
+    assert.equal(r.status, 503);
+    assert.equal(state.creates(), 0);
+  },
+);
+
+Deno.test(
+  'International accounts use the USD product and matching webhooks resolve its plan',
+  async () => {
+    const state = setup(false, false, 'US');
+    const r = await handleDodoCheckout(checkoutRequest(), () => state.config);
+    assert.equal(r.status, 200);
+    assert.equal(state.sessionInput()?.billing_currency, 'USD');
+    assert.deepEqual(state.sessionInput()?.product_cart, [{ product_id: 'pdt_usd', quantity: 1 }]);
+    Deno.env.set('DODO_PAYMENTS_WEBHOOK_KEY', secret);
+    const event = JSON.stringify({
+      type: 'subscription.active',
+      timestamp: new Date().toISOString(),
+      data: subscription,
+    });
+    assert.equal((await handleDodoWebhook(signed(event), () => state.config)).status, 200);
+    assert.equal(state.writes(), 1);
   },
 );

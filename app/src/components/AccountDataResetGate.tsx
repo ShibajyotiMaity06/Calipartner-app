@@ -78,7 +78,10 @@ export function AccountDataResetGate({ children }: { children: ReactNode }) {
     if (!isLoading) void verify().catch(() => {});
   }, [generation, isLoading, verify]);
 
-  if (!user || isLoading || isOnline === false) return <>{children}</>;
+  // Mount navigation once after session restoration. Mounting it during auth loading
+  // then removing it for reset verification loses browser checkout return routes.
+  if (isLoading) return <LoadingState />;
+  if (!user || isOnline === false) return <>{children}</>;
   if (error) return <ErrorState onRetry={retry} />;
   if (readyUserId !== userId || resetting) return <LoadingState />;
   return <>{children}</>;

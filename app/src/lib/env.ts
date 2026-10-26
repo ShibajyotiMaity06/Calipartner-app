@@ -13,11 +13,17 @@ interface Extra {
 const extra = (Constants.expoConfig?.extra ?? {}) as Extra;
 
 export const env = {
-  appEnv: extra.appEnv ?? 'development',
-  supabaseUrl: resolveLocalUrl(extra.supabaseUrl ?? '', Platform.OS),
-  supabaseAnonKey: extra.supabaseAnonKey ?? '',
-  revenueCatAppleKey: extra.revenueCatAppleKey ?? '',
-  revenueCatGoogleKey: extra.revenueCatGoogleKey ?? '',
+  // Static web exports inline EXPO_PUBLIC_* references but may have no Expo manifest.
+  appEnv: process.env.EXPO_PUBLIC_APP_ENV ?? extra.appEnv ?? 'development',
+  supabaseUrl: resolveLocalUrl(
+    process.env.EXPO_PUBLIC_SUPABASE_URL ?? extra.supabaseUrl ?? '',
+    Platform.OS,
+  ),
+  supabaseAnonKey: process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY ?? extra.supabaseAnonKey ?? '',
+  revenueCatAppleKey:
+    process.env.EXPO_PUBLIC_REVENUECAT_APPLE_KEY ?? extra.revenueCatAppleKey ?? '',
+  revenueCatGoogleKey:
+    process.env.EXPO_PUBLIC_REVENUECAT_GOOGLE_KEY ?? extra.revenueCatGoogleKey ?? '',
 } as const;
 
 export function isSupabaseConfigured(): boolean {

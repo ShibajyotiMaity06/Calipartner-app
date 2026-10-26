@@ -76,7 +76,7 @@ export const REVENUECAT_OFFERING_IDS: Record<
 export const SUBSCRIPTION_GROUP_IDENTIFIER = 'calipartner_room_plans';
 
 // -----------------------------------------------------------------------------
-// 1b. PRICING PLAN CONSTANTS (v2: Monthly & Annual only, Plus ₹99/₹599, Pro ₹199/₹1199)
+// 1b. PRICING PLAN CONSTANTS (docs/PLANS_AND_FEATURES.md, October 2026)
 // -----------------------------------------------------------------------------
 
 export const PRICING_PLANS = Object.freeze({
@@ -94,24 +94,24 @@ export const PRICING_PLANS = Object.freeze({
   plus: {
     name: 'Plus',
     inr: {
-      monthly: '₹99 / mo',
-      annual: '₹599 / yr',
-      perMonthAnnual: '₹50 / mo',
-      rawAnnual: 599,
-      rawMonthly: 99,
+      monthly: '₹249 / mo',
+      annual: '₹1,499 / yr',
+      perMonthAnnual: '₹125 / mo',
+      rawAnnual: 1499,
+      rawMonthly: 249,
     },
     usd: {
-      monthly: '$5.99 / mo',
-      annual: '$39.99 / yr',
-      perMonthAnnual: '$3.33 / mo',
-      rawAnnual: 39.99,
-      rawMonthly: 5.99,
+      monthly: '$4.99 / mo',
+      annual: '$29.99 / yr',
+      perMonthAnnual: '$2.50 / mo',
+      rawAnnual: 29.99,
+      rawMonthly: 4.99,
     },
     trialDays: 7,
     roomCap: 5,
     hostedRoomsMax: 3,
-    rawMonthly: 99,
-    rawAnnual: 599,
+    rawMonthly: 249,
+    rawAnnual: 1499,
     aiScansPerDay: 0,
     aiFreeTasteScans: 3,
     aiCoachMessagesPerDay: 0,
@@ -119,24 +119,24 @@ export const PRICING_PLANS = Object.freeze({
   pro: {
     name: 'Pro',
     inr: {
-      monthly: '₹199 / mo',
-      annual: '₹1,199 / yr',
-      perMonthAnnual: '₹100 / mo',
-      rawAnnual: 1199,
-      rawMonthly: 199,
+      monthly: '₹499 / mo',
+      annual: '₹2,499 / yr',
+      perMonthAnnual: '₹208 / mo',
+      rawAnnual: 2499,
+      rawMonthly: 499,
     },
     usd: {
-      monthly: '$11.99 / mo',
-      annual: '$79.99 / yr',
-      perMonthAnnual: '$6.67 / mo',
-      rawAnnual: 79.99,
-      rawMonthly: 11.99,
+      monthly: '$9.99 / mo',
+      annual: '$49.99 / yr',
+      perMonthAnnual: '$4.17 / mo',
+      rawAnnual: 49.99,
+      rawMonthly: 9.99,
     },
     trialDays: 0,
     roomCap: 20, // Explicit requirement: 20 members for Pro
     hostedRoomsMax: 5,
-    rawMonthly: 199,
-    rawAnnual: 1199,
+    rawMonthly: 499,
+    rawAnnual: 2499,
     aiScansPerDay: 5,
     aiFreeTasteScans: 3,
     aiCoachMessagesPerDay: 10,

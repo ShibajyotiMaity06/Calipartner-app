@@ -1,4 +1,4 @@
-import React, { useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   Alert,
   Platform,
@@ -24,10 +24,15 @@ import {
   useReducedMotion,
 } from '@calipartner/ui';
 import { t } from '@/i18n';
-import { createDodoCheckout, navigateToCheckout, openDodoPortal } from '@/services/dodoService';
+import {
+  createDodoCheckout,
+  fetchDodoCatalog,
+  navigateToCheckout,
+  openDodoPortal,
+} from '@/services/dodoService';
 import { generateClientUuid } from '@/services/foodService';
 import { findSubscriptionPackage } from '@/services/subscriptionPackages';
-import { hasPlan } from '@calipartner/core';
+import { hasPlan, PRICING_PLANS, type DodoCatalogProduct } from '@calipartner/core';
 import { useSubscription } from '@/hooks/useSubscription';
 import { playClickSound, playSuccessSound } from '@/lib/sound';
 
@@ -48,6 +53,7 @@ export interface PaywallModalProps {
   isUpgrade?: boolean;
   onSuccess?: () => void;
   checkoutReturn?: { tier: 'plus' | 'pro'; duration: 'monthly' | 'annual'; requestId: string };
+  checkoutCancelled?: boolean;
 }
 
 export const TIER_CONFIG = {
@@ -60,15 +66,15 @@ export const TIER_CONFIG = {
     sizeRange: '3 to 5',
     summary: 'Rooms, Partner Finder, Fasting & Workouts',
     testID: 'picker-size-6-20',
-    monthlyPrice: '₹99 / mo',
-    monthlyPriceUsd: '$5.99 / mo',
-    monthlyPriceNum: 99,
+    monthlyPrice: PRICING_PLANS.plus.inr.monthly,
+    monthlyPriceUsd: PRICING_PLANS.plus.usd.monthly,
+    monthlyPriceNum: PRICING_PLANS.plus.rawMonthly,
     quarterlyPrice: '₹80 / mo',
     quarterlyTotal: '₹239',
-    annualPrice: '₹50 / mo',
-    annualPriceUsd: '$3.33 / mo',
-    annualTotal: '₹599 / yr',
-    annualTotalUsd: '$39.99 / yr',
+    annualPrice: PRICING_PLANS.plus.inr.perMonthAnnual,
+    annualPriceUsd: PRICING_PLANS.plus.usd.perMonthAnnual,
+    annualTotal: PRICING_PLANS.plus.inr.annual,
+    annualTotalUsd: PRICING_PLANS.plus.usd.annual,
     hasTrial: true,
     trialDays: 7,
   },
@@ -81,15 +87,15 @@ export const TIER_CONFIG = {
     sizeRange: '6 to 20',
     summary: 'Everything in Plus + AI Coach & 5 Photo Scans/day',
     testID: 'picker-size-21-50',
-    monthlyPrice: '₹199 / mo',
-    monthlyPriceUsd: '$11.99 / mo',
-    monthlyPriceNum: 199,
+    monthlyPrice: PRICING_PLANS.pro.inr.monthly,
+    monthlyPriceUsd: PRICING_PLANS.pro.usd.monthly,
+    monthlyPriceNum: PRICING_PLANS.pro.rawMonthly,
     quarterlyPrice: '₹160 / mo',
     quarterlyTotal: '₹479',
-    annualPrice: '₹100 / mo',
-    annualPriceUsd: '$6.67 / mo',
-    annualTotal: '₹1,199 / yr',
-    annualTotalUsd: '$79.99 / yr',
+    annualPrice: PRICING_PLANS.pro.inr.perMonthAnnual,
+    annualPriceUsd: PRICING_PLANS.pro.usd.perMonthAnnual,
+    annualTotal: PRICING_PLANS.pro.inr.annual,
+    annualTotalUsd: PRICING_PLANS.pro.usd.annual,
     hasTrial: false,
     trialDays: 0,
   },
@@ -153,6 +159,7 @@ export function PaywallModal({
   isUpgrade,
   onSuccess,
   checkoutReturn,
+  checkoutCancelled = false,
 }: PaywallModalProps) {
   const reduceMotion = useReducedMotion();
   const {
@@ -164,6 +171,7 @@ export function PaywallModal({
     sponsor,
     hasActiveAccess,
     refresh,
+    loading: subscriptionLoading,
   } = useSubscription();
 
   // Selected Tier (Plus, Pro) - default to Plus
@@ -184,8 +192,30 @@ export function PaywallModal({
       : null,
   );
   const [actionLoading, setActionLoading] = useState(false);
-  const [awaitingEntitlement, setAwaitingEntitlement] = useState(Boolean(checkoutReturn));
-  const [statusMessage, setStatusMessage] = useState<string | null>(null);
+  const [awaitingEntitlement, setAwaitingEntitlement] = useState(
+    Boolean(checkoutReturn) && !checkoutCancelled,
+  );
+  const [statusMessage, setStatusMessage] = useState<string | null>(
+    checkoutCancelled ? t('fixes.storeCancelled') : null,
+  );
+  const [catalog, setCatalog] = useState<DodoCatalogProduct[]>([]);
+  const [catalogLoading, setCatalogLoading] = useState(Platform.OS === 'web');
+  const [catalogError, setCatalogError] = useState<string | null>(null);
+  const loadCatalog = useCallback(async () => {
+    setCatalogLoading(true);
+    setCatalogError(null);
+    try {
+      setCatalog(await fetchDodoCatalog());
+    } catch (err) {
+      setCatalog([]);
+      setCatalogError(err instanceof Error ? err.message : t('fixes.dodoNotReady'));
+    } finally {
+      setCatalogLoading(false);
+    }
+  }, []);
+  useEffect(() => {
+    if (visible && Platform.OS === 'web') void loadCatalog();
+  }, [visible, loadCatalog]);
 
   // Sub-modal states
   const [showSuccessModal, setShowSuccessModal] = useState(false);
@@ -194,6 +224,46 @@ export function PaywallModal({
   const [showPromoModal, setShowPromoModal] = useState(false);
   const [promoCode, setPromoCode] = useState('');
   const [promoMessage, setPromoMessage] = useState<string | null>(null);
+
+  // A redirect is only a cue to poll our server; it never proves that payment succeeded.
+  const returnedCheckoutId = checkoutReturn?.requestId;
+  useEffect(() => {
+    if (!visible || !returnedCheckoutId || !awaitingEntitlement) return;
+    let cancelled = false;
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    let attempts = 0;
+    const check = async () => {
+      const latest = await refresh();
+      if (cancelled) return;
+      const active =
+        hasPlan(latest) ||
+        Boolean(
+          latest?.status === 'trial' &&
+          latest.period_end &&
+          new Date(latest.period_end) > new Date(),
+        );
+      if (
+        active &&
+        latest?.source === 'dodo' &&
+        latest.tier === selectedTier &&
+        latest.period === selectedDuration
+      ) {
+        setAwaitingEntitlement(false);
+        playSuccessSound();
+        setShowSuccessModal(true);
+        return;
+      }
+      if (++attempts < 15)
+        timer = setTimeout(() => {
+          void check();
+        }, 2000);
+    };
+    void check();
+    return () => {
+      cancelled = true;
+      if (timer) clearTimeout(timer);
+    };
+  }, [visible, returnedCheckoutId, awaitingEntitlement, refresh, selectedTier, selectedDuration]);
 
   // Contextual Title (CaliPartner pricing, not room plan)
   const contextualTitle = useMemo(() => {
@@ -222,7 +292,17 @@ export function PaywallModal({
     [offerings, selectedTier, selectedDuration],
   );
   const storePrice = (tier: PlanTier) => {
-    if (Platform.OS === 'web') return t('fixes.checkoutPrice');
+    if (Platform.OS === 'web') {
+      const product = catalog.find((p) => p.key === `${tier}_${selectedDuration}`);
+      if (!product) return t(catalogLoading ? 'fixes.loadingPrices' : 'fixes.priceUnavailable');
+      return t('fixes.storePrice', {
+        price: new Intl.NumberFormat(product.currency === 'INR' ? 'en-IN' : 'en-US', {
+          style: 'currency',
+          currency: product.currency,
+        }).format(product.amount),
+        period: t(selectedDuration === 'annual' ? 'fixes.annual' : 'fixes.monthly'),
+      });
+    }
     const pkg = findSubscriptionPackage(offerings, tier, selectedDuration);
     return pkg
       ? t('fixes.storePrice', {
@@ -280,6 +360,10 @@ export function PaywallModal({
       }
 
       if (Platform.OS === 'web') {
+        if (!catalog.length) {
+          await loadCatalog();
+          return;
+        }
         if (hasActiveAccess) {
           if (entitlement?.source === 'dodo') await openDodoPortal();
           else setStatusMessage(t('fixes.nativeManagement'));
@@ -366,7 +450,8 @@ export function PaywallModal({
   // Trial eligibility and the final terms are confirmed by the store.
   const primaryCtaLabel = useMemo(() => {
     if (awaitingEntitlement) return t('fixes.checkPayment');
-    if (actionLoading) return 'Connecting to store…';
+    if (actionLoading) return t('fixes.connectingPayment');
+    if (catalogError) return t('fixes.retryPrices');
     if (sponsorRoomId || context === 'keep_going') {
       return `Keep room going with ${activeTierConfig.label}`;
     }
@@ -385,6 +470,7 @@ export function PaywallModal({
     isUpgrade,
     activeTierConfig.label,
     selectedTier,
+    catalogError,
   ]);
 
   return (
@@ -439,10 +525,10 @@ export function PaywallModal({
             </View>
 
             {/* Status / Error Banner if any */}
-            {(statusMessage || subError) && (
+            {(statusMessage || subError || catalogError) && (
               <Card elevation="s2" style={styles.statusBanner} testID="banner-paywall-status">
                 <Text variant="bodyS" color={dark.apricot}>
-                  {statusMessage ?? subError}
+                  {statusMessage ?? subError ?? catalogError}
                 </Text>
               </Card>
             )}
@@ -553,7 +639,7 @@ export function PaywallModal({
                       </Text>
                     </View>
                     <Text variant="micro" color={dark.teal} style={styles.trialSubNote}>
-                      {t('fixes.storeTerms')}
+                      {t('fixes.plusTrialTerms')}
                     </Text>
                   </View>
                 </TouchableOpacity>
@@ -613,7 +699,7 @@ export function PaywallModal({
                       </Text>
                     </View>
                     <Text variant="micro" color={dark.textLo} style={styles.trialSubNote}>
-                      {t('fixes.storeTerms')}
+                      {t('fixes.proBillingTerms')}
                     </Text>
                   </View>
                 </TouchableOpacity>
@@ -680,7 +766,7 @@ export function PaywallModal({
               variant="primary"
               label={primaryCtaLabel}
               onPress={handlePurchase}
-              disabled={actionLoading}
+              disabled={actionLoading || subscriptionLoading || catalogLoading}
               testID="btn-paywall-cta"
               style={styles.ctaButton}
             />

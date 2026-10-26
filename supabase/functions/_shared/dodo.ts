@@ -6,6 +6,10 @@ export function dodoConfig() {
   const apiKey = Deno.env.get('DODO_PAYMENTS_API_KEY');
   const appUrl = Deno.env.get('DODO_APP_URL');
   const products = JSON.parse(Deno.env.get('DODO_PRODUCTS_JSON') ?? '{}') as Record<string, string>;
+  const globalProducts = JSON.parse(Deno.env.get('DODO_PRODUCTS_USD_JSON') ?? 'null') as Record<
+    string,
+    string
+  > | null;
   const environment = Deno.env.get('DODO_ENVIRONMENT') ?? 'live_mode';
   const productIds = DODO_PRODUCT_KEYS.map((key) => products[key]);
   if (
@@ -13,6 +17,14 @@ export function dodoConfig() {
     new Set(productIds).size !== 4
   )
     throw new Error('DODO_PRODUCTS_NOT_CONFIGURED');
+  if (
+    globalProducts &&
+    (DODO_PRODUCT_KEYS.some(
+      (key) => typeof globalProducts[key] !== 'string' || !globalProducts[key].trim(),
+    ) ||
+      new Set([...productIds, ...DODO_PRODUCT_KEYS.map((key) => globalProducts[key])]).size !== 8)
+  )
+    throw new Error('DODO_GLOBAL_PRODUCTS_NOT_CONFIGURED');
   if (
     !apiKey ||
     !appUrl ||
@@ -29,6 +41,7 @@ export function dodoConfig() {
   return {
     origin,
     products,
+    globalProducts,
     dodo: new DodoPayments({
       bearerToken: apiKey,
       environment: environment as 'live_mode' | 'test_mode',

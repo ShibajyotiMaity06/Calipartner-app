@@ -2,6 +2,11 @@ export const en = {
   fixes: {
     choosePlanAgain: 'Return to plan selection',
     checkoutPrice: 'See price at Dodo checkout',
+    loadingPrices: 'Loading prices',
+    retryPrices: 'Retry loading prices',
+    connectingPayment: 'Connecting to checkout',
+    plusTrialTerms: '7 days free, then your selected price. Auto-renews until you cancel.',
+    proBillingTerms: 'No free trial. Billed now and auto-renews until you cancel.',
     dodoNotReady:
       'Dodo checkout is not available yet. Please try again once payments are configured.',
     nativeManagement:
@@ -1202,13 +1207,13 @@ export const en = {
       durationQuarterlySaving: 'Save 20%',
       durationAnnualSaving: 'Save 50%',
       annualPlan: 'Annual Plan',
-      annualPrice: '₹599 / year',
+      annualPrice: '₹1,499 / year',
       annualSavings: 'Save 50% • Best Value',
       annualSavingsBadge: 'SAVE 50%',
       threeMonthPlan: '3 Months',
       threeMonthPrice: '—',
       monthlyPlan: 'Monthly',
-      monthlyPrice: '₹99 / month',
+      monthlyPrice: '₹249 / month',
       perMonthSuffix: '/ mo',
       billedPeriodically: 'Billed as {price}',
       trialNotice: 'Includes 7-day free trial on Plus • Cancel anytime',

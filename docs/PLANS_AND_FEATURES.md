@@ -131,7 +131,7 @@ Nutrition goals are not static. As members lose fat or gain muscle, their Total 
 | `Promonthlyrupees` | `pdt_0NqYkgvwBKDtjSQRQxwbm` | ₹499.00 | Pro Monthly (INR) | 0 Days |
 | `Proyearlyrupees` | `pdt_0NqYkSYMM9n1wJoZLJp9Y` | ₹2,499.00 | Pro Annual (INR) | 0 Days |
 | `Plusmonthlydollar` | `pdt_0Np8JSfvie3Eqg47kDEzZ` | $4.99 | Plus Monthly (USD) | 7 Days |
-| `Plusyearlydollars` | `pdt_0Np8JdWRcfrMjQyruTzkE` | $29.99 | Plus Annual (USD) | 7 Days |
+| `Plusyearlydollars` | `pdt_0Np8JdWRcfrMJqyruTzkE` | $29.99 | Plus Annual (USD) | 7 Days |
 | `Promonthlydollar` | `pdt_0Np8JFZXhiKHXsUJH9GD8` | $9.99 | Pro Monthly (USD) | 0 Days |
 | `Proyearlydollar` | `pdt_0Np8IxfM0q2BFdPQHPMDC` | $49.99 | Pro Annual (USD) | 0 Days |
 

@@ -156,8 +156,8 @@ describe('Phase 5C — Room UI Presentation & Logic Tests', () => {
 
   describe('5. Paywall Presentation & Pricing', () => {
     it('validates premium plans with annual best value', () => {
-      expect(en.rooms.paywall.annualPrice).toBe('₹599 / year');
-      expect(en.rooms.paywall.monthlyPrice).toBe('₹99 / month');
+      expect(en.rooms.paywall.annualPrice).toBe('₹1,499 / year');
+      expect(en.rooms.paywall.monthlyPrice).toBe('₹249 / month');
       expect(en.rooms.paywall.annualSavings).toContain('Save 50%');
     });
 

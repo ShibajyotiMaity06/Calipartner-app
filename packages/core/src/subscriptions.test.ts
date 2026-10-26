@@ -303,14 +303,20 @@ describe('Phase 10 Core: Paywall Triggers & Trial Banners (CaliPartner Pricing P
     });
   });
 
-  it('validates Pricing Plans v2 (Plus ₹99/₹599 cap 10, Pro ₹199/₹1,199 cap 20)', () => {
+  it('validates October 2026 pricing and capacities', () => {
     expect(PRICING_PLANS.plus.roomCap).toBe(5);
-    expect(PRICING_PLANS.plus.rawMonthly).toBe(99);
-    expect(PRICING_PLANS.plus.rawAnnual).toBe(599);
+    expect(PRICING_PLANS.plus.rawMonthly).toBe(249);
+    expect(PRICING_PLANS.plus.rawAnnual).toBe(1499);
+    expect(PRICING_PLANS.plus.usd.rawMonthly).toBe(4.99);
+    expect(PRICING_PLANS.plus.usd.rawAnnual).toBe(29.99);
+    expect(PRICING_PLANS.plus.trialDays).toBe(7);
 
     expect(PRICING_PLANS.pro.roomCap).toBe(20);
-    expect(PRICING_PLANS.pro.rawMonthly).toBe(199);
-    expect(PRICING_PLANS.pro.rawAnnual).toBe(1199);
+    expect(PRICING_PLANS.pro.rawMonthly).toBe(499);
+    expect(PRICING_PLANS.pro.rawAnnual).toBe(2499);
+    expect(PRICING_PLANS.pro.usd.rawMonthly).toBe(9.99);
+    expect(PRICING_PLANS.pro.usd.rawAnnual).toBe(49.99);
+    expect(PRICING_PLANS.pro.trialDays).toBe(0);
     expect(PRICING_PLANS.pro.aiScansPerDay).toBe(5);
     expect(PRICING_PLANS.pro.aiCoachMessagesPerDay).toBe(10);
   });

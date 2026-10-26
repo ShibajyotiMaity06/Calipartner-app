@@ -25,8 +25,8 @@ describe('Individual subscription security boundaries', () => {
     expect(isFeatureAllowed('room_chat', 'free', { hasActiveTrial: true })).toBe(true);
   });
   it('retains prices and existing Pro allowances', () => {
-    expect(PRICING_PLANS.plus.rawMonthly).toBe(99);
-    expect(PRICING_PLANS.pro.rawAnnual).toBe(1199);
+    expect(PRICING_PLANS.plus.rawMonthly).toBe(249);
+    expect(PRICING_PLANS.pro.rawAnnual).toBe(2499);
     expect(PRICING_PLANS.pro.aiCoachMessagesPerDay).toBe(10);
     expect(PRICING_PLANS.pro.aiScansPerDay).toBe(5);
     expect(PRICING_PLANS.pro.trialDays).toBe(0);

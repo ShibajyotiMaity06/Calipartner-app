@@ -9,6 +9,7 @@ const state = vi.hoisted(() => ({
   clear: vi.fn(),
   checks: vi.fn(),
   unavailable: false,
+  authLoading: false,
 }));
 vi.mock('react-native', () => ({
   AppState: {
@@ -19,7 +20,10 @@ vi.mock('react-native', () => ({
   },
 }));
 vi.mock('@/contexts/AuthContext', () => ({
-  useAuth: () => ({ user: { id: 'existing-user' }, isLoading: false }),
+  useAuth: () => ({
+    user: state.authLoading ? null : { id: 'existing-user' },
+    isLoading: state.authLoading,
+  }),
 }));
 vi.mock('@/hooks/useNetworkStatus', () => ({
   useNetworkStatus: () => ({ isOnline: state.online }),
@@ -58,6 +62,7 @@ beforeEach(() => {
   state.reset = false;
   state.mounts = 0;
   state.unavailable = false;
+  state.authLoading = false;
   vi.clearAllMocks();
   (globalThis as unknown as { IS_REACT_ACT_ENVIRONMENT: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 });
@@ -65,6 +70,22 @@ afterEach(async () => {
   await act(async () => renderer.unmount());
 });
 describe('safe reset before sync', () => {
+  it('preserves checkout return navigation by mounting only after session and reset checks', async () => {
+    state.authLoading = true;
+    await act(async () => {
+      renderer = create(tree());
+    });
+    expect(state.mounts).toBe(0);
+    state.authLoading = false;
+    await act(async () => {
+      renderer.update(tree());
+    });
+    expect(state.mounts).toBe(1);
+    await act(async () => {
+      state.foreground?.('active');
+    });
+    expect(state.mounts).toBe(1);
+  });
   it('retains cached access during a server outage while blocking uploads until verification', async () => {
     state.unavailable = true;
     await act(async () => {

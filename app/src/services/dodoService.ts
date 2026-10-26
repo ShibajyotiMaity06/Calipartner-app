@@ -1,5 +1,29 @@
 import { getSupabase } from '@/lib/supabase';
 import { t } from '@/i18n';
+import { DODO_PRODUCT_KEYS, type DodoCatalogProduct } from '@calipartner/core';
+
+export async function fetchDodoCatalog(): Promise<DodoCatalogProduct[]> {
+  const { data, error } = await getSupabase().functions.invoke('dodo-checkout', {
+    body: { action: 'catalog' },
+  });
+  const products = data?.products as DodoCatalogProduct[] | undefined;
+  if (
+    error ||
+    !Array.isArray(products) ||
+    products.length !== DODO_PRODUCT_KEYS.length ||
+    !DODO_PRODUCT_KEYS.every((key) =>
+      products.some(
+        (p) =>
+          p.key === key &&
+          (p.currency === 'INR' || p.currency === 'USD') &&
+          Number.isFinite(p.amount) &&
+          p.amount > 0,
+      ),
+    )
+  )
+    throw new Error(t('fixes.dodoNotReady'));
+  return products;
+}
 
 export async function createDodoCheckout(
   tier: 'plus' | 'pro',
@@ -34,6 +58,11 @@ export async function openDodoPortal(): Promise<void> {
   });
   if (error || !data?.portal_url || !data.portal_url.startsWith('https://'))
     throw new Error(t('fixes.dodoNotReady'));
+  // Same-tab navigation remains reliable after the asynchronous portal request in Chrome.
+  if ((globalThis as unknown as { location?: unknown }).location) {
+    navigateToCheckout(data.portal_url);
+    return;
+  }
   const { Linking } = await import('react-native');
   await Linking.openURL(data.portal_url);
 }

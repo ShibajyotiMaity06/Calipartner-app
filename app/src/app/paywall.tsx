@@ -4,7 +4,12 @@ import { PaywallModal } from '@/components/rooms/PaywallModal';
 
 export default function PaywallScreen() {
   const router = useRouter();
-  const params = useLocalSearchParams<{ checkout?: string; tier?: string; duration?: string }>();
+  const params = useLocalSearchParams<{
+    checkout?: string;
+    tier?: string;
+    duration?: string;
+    cancelled?: string;
+  }>();
   const checkoutReturn:
     { tier: 'plus' | 'pro'; duration: 'monthly' | 'annual'; requestId: string } | undefined =
     params.checkout &&
@@ -25,6 +30,7 @@ export default function PaywallScreen() {
     <PaywallModal
       visible={true}
       checkoutReturn={checkoutReturn}
+      checkoutCancelled={params.cancelled === '1'}
       onClose={handleClose}
       context="partner_finder"
       onSuccess={handleClose}

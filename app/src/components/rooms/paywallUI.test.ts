@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { en } from '@/i18n/en';
 import { t } from '@/i18n';
+import { PRICING_PLANS } from '@calipartner/core';
 
 describe('Phase 10 — View Layer UI Tests (Paywall, Lifecycle & Locked Cards)', () => {
   describe('1. PaywallModal Presentation & Plan Selection Logic', () => {
@@ -16,13 +17,12 @@ describe('Phase 10 — View Layer UI Tests (Paywall, Lifecycle & Locked Cards)',
       expect(getTierForSize('pro')).toBe('pro');
     });
 
-    it('calculates annual savings and per-month equivalent pricing for v2 plans', () => {
+    it('calculates annual savings from the approved live prices', () => {
       const pricingTable = {
-        plus: { monthly: 99, annual: 599 },
-        pro: { monthly: 199, annual: 1199 },
+        plus: { monthly: PRICING_PLANS.plus.rawMonthly, annual: PRICING_PLANS.plus.rawAnnual },
+        pro: { monthly: PRICING_PLANS.pro.rawMonthly, annual: PRICING_PLANS.pro.rawAnnual },
       };
 
-      // Plus: 12 months * 99 = 1188. 599 is (1188 - 599)/1188 = ~49.6% -> ~50% savings
       const plusSavings = Math.round(
         ((pricingTable.plus.monthly * 12 - pricingTable.plus.annual) /
           (pricingTable.plus.monthly * 12)) *
@@ -30,21 +30,18 @@ describe('Phase 10 — View Layer UI Tests (Paywall, Lifecycle & Locked Cards)',
       );
       expect(plusSavings).toBe(50);
 
-      // Equivalent per month: 599 / 12 = ~49.9 -> 50
       const plusPerMonth = Math.round(pricingTable.plus.annual / 12);
-      expect(plusPerMonth).toBe(50);
+      expect(plusPerMonth).toBe(125);
 
-      // Pro: 12 * 199 = 2388. 1199 is (2388 - 1199)/2388 = ~49.8% -> ~50% savings
       const proSavings = Math.round(
         ((pricingTable.pro.monthly * 12 - pricingTable.pro.annual) /
           (pricingTable.pro.monthly * 12)) *
           100,
       );
-      expect(proSavings).toBe(50);
+      expect(proSavings).toBe(58);
 
-      // Equivalent per month: 1199 / 12 = ~99.9 -> 100
       const proPerMonth = Math.round(pricingTable.pro.annual / 12);
-      expect(proPerMonth).toBe(100);
+      expect(proPerMonth).toBe(208);
     });
 
     it('includes all mandatory plan feature inclusions and free guarantees', () => {

@@ -3,6 +3,7 @@ import {
   hasPlan,
   DODO_PRODUCT_KEYS,
   dodoSubscriptionEvent,
+  verifiedDodoProduct,
 } from '@calipartner/core';
 import { dodoConfig, dodoCors, dodoResponse } from './dodo.ts';
 
@@ -10,7 +11,7 @@ export async function handleDodoCheckout(req: Request, getConfig = dodoConfig) {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: dodoCors });
   if (req.method !== 'POST') return dodoResponse({ error: 'METHOD_NOT_ALLOWED' }, 405);
   try {
-    const { admin, dodo, origin, products } = getConfig();
+    const { admin, dodo, origin, products: defaultProducts, globalProducts } = getConfig();
     const token = req.headers.get('Authorization')?.replace(/^Bearer /i, '');
     if (!token) return dodoResponse({ error: 'UNAUTHENTICATED' }, 401);
     const {
@@ -25,6 +26,24 @@ export async function handleDodoCheckout(req: Request, getConfig = dodoConfig) {
       p_window_seconds: 60,
     });
     if (rateError || !allowed) return dodoResponse({ error: 'RATE_LIMITED' }, 429);
+    const { data: profile, error: profileError } = await admin
+      .from('profiles')
+      .select('country')
+      .eq('id', user.id)
+      .maybeSingle();
+    if (profileError) throw profileError;
+    const products =
+      globalProducts && profile?.country && profile.country.toUpperCase() !== 'IN'
+        ? globalProducts
+        : defaultProducts;
+    if (body.action === 'catalog') {
+      const catalog = await Promise.all(
+        DODO_PRODUCT_KEYS.map(async (key) =>
+          verifiedDodoProduct(key, await dodo.products.retrieve(products[key])),
+        ),
+      );
+      return dodoResponse({ products: catalog });
+    }
     if (body.action === 'portal') {
       const { data: subscription } = await admin
         .from('dodo_subscriptions')
@@ -66,12 +85,18 @@ export async function handleDodoCheckout(req: Request, getConfig = dodoConfig) {
       .eq('id', requestId)
       .maybeSingle();
     if (existing) {
-      if (existing.user_id !== user.id || existing.product_key !== key)
+      if (
+        existing.user_id !== user.id ||
+        existing.product_key !== key ||
+        existing.product_id !== productId
+      )
         return dodoResponse({ error: 'INVALID_CHECKOUT' }, 403);
       return existing.checkout_url
         ? dodoResponse({ checkout_url: existing.checkout_url })
         : dodoResponse({ error: 'CHECKOUT_PENDING' }, 409);
     }
+    // Verify currency, price, recurring cadence and trial before reserving a checkout.
+    const verified = verifiedDodoProduct(key, await dodo.products.retrieve(productId));
     const { error: reservationError } = await admin
       .from('dodo_checkouts')
       .insert({ id: requestId, user_id: user.id, product_key: key, product_id: productId });
@@ -81,8 +106,11 @@ export async function handleDodoCheckout(req: Request, getConfig = dodoConfig) {
       {
         product_cart: [{ product_id: productId, quantity: 1 }],
         customer: { email: user.email },
+        billing_currency: verified.currency,
+        feature_flags: { allow_currency_selection: false, redirect_immediately: true },
         metadata: { checkout_id: requestId },
         return_url: `${origin}/paywall?checkout=${requestId}&tier=${body.tier}&duration=${body.duration}`,
+        cancel_url: `${origin}/paywall?checkout=${requestId}&tier=${body.tier}&duration=${body.duration}&cancelled=1`,
       },
       { maxRetries: 0 },
     );
@@ -104,7 +132,7 @@ export async function handleDodoWebhook(req: Request, getConfig = dodoConfig) {
   try {
     if (!Deno.env.get('DODO_PAYMENTS_WEBHOOK_KEY'))
       return dodoResponse({ error: 'WEBHOOK_NOT_CONFIGURED' }, 503);
-    const { dodo, admin, products } = getConfig();
+    const { dodo, admin, products, globalProducts } = getConfig();
     const raw = await req.text();
     let event;
     try {
@@ -130,7 +158,11 @@ export async function handleDodoWebhook(req: Request, getConfig = dodoConfig) {
     }
     if (!subscriptionId) return dodoResponse({ status: 'ignored' });
     const subscription = await dodo.subscriptions.retrieve(subscriptionId);
-    const key = DODO_PRODUCT_KEYS.find((key) => products[key] === subscription.product_id);
+    const key = DODO_PRODUCT_KEYS.find(
+      (key) =>
+        products[key] === subscription.product_id ||
+        globalProducts?.[key] === subscription.product_id,
+    );
     if (!key) return dodoResponse({ error: 'UNKNOWN_PRODUCT' }, 400);
     const normalized = dodoSubscriptionEvent(subscription, revoked);
     const { error } = await admin.rpc('apply_dodo_event', {
