@@ -46,16 +46,16 @@ describe('Onboarding redesign state machine', () => {
     expect(() => machine.buildGoalProfile('user-a')).toThrow();
   });
 
-  it('prevents both navigation and persistence of unsafe custom plans', () => {
-    const machine = new OnboardingStateMachine(adult);
+  it('accepts a custom pace and surplus above recommendations while rejecting invalid totals', () => {
+    const machine = new OnboardingStateMachine(adult).setGoal('bulk');
     machine.goToStep('rate_selection');
-    machine.setWeeklyRate(1);
-    expect(machine.next()).toBe(false);
-    expect(() => machine.buildGoalProfile('user-a')).toThrow('safety');
-    machine.useRecommendedRate();
+    machine.setWeeklyRate(1.5);
     expect(machine.next()).toBe(true);
+    expect(machine.buildGoalProfile('user-a').weekly_rate_kg).toBe(1.5);
     machine.setDailyAdjustment(2000);
-    expect(() => machine.buildGoalProfile('user-a')).toThrow('safety');
+    expect(machine.buildGoalProfile('user-a').weekly_rate_kg).toBeCloseTo(2000 / 1100);
+    machine.setGoal('cut').setDailyAdjustment(10000);
+    expect(() => machine.buildGoalProfile('user-a')).toThrow('invalid');
   });
 
   it('keeps a single UUID across save retries and draft recovery', () => {

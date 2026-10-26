@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { Platform } from 'react-native';
 import Purchases, {
   type CustomerInfo,
   type PurchasesOfferings,
@@ -17,6 +18,13 @@ import {
   sponsorRoom,
 } from './subscriptionService';
 
+vi.mock('@/lib/env', () => ({
+  env: {
+    appEnv: 'production',
+    revenueCatAppleKey: 'appl_test',
+    revenueCatGoogleKey: 'goog_test',
+  },
+}));
 vi.mock('react-native-purchases', () => {
   return {
     default: {
@@ -36,13 +44,39 @@ vi.mock('react-native-purchases', () => {
 });
 
 describe('Phase 10: subscriptionService (Client SDK & Supabase Sync)', () => {
-  beforeEach(() => {
+  beforeEach(async () => {
     vi.clearAllMocks();
+    Platform.OS = 'android';
+    await initPurchases('user-123');
   });
 
   it('configures Purchases SDK on initPurchases', async () => {
     const success = await initPurchases('user-123');
-    expect(typeof success).toBe('boolean');
+    expect(success).toBe(true);
+  });
+
+  it('never configures RevenueCat or simulates a native purchase in a browser', async () => {
+    Platform.OS = 'web';
+    expect(await initPurchases('web-user')).toBe(false);
+    await expect(
+      purchasePackage({ identifier: 'plus_annual' } as PurchasesPackage),
+    ).rejects.toThrow();
+    expect(Purchases.purchasePackage).not.toHaveBeenCalled();
+  });
+
+  it('refuses anonymous purchases and does not invent paid access for an email address', async () => {
+    expect(await initPurchases()).toBe(false);
+    const maybeSingle = vi.fn().mockResolvedValue({ data: null, error: null });
+    const client = {
+      auth: {
+        getUser: async () => ({
+          data: { user: { id: 'vip', email: 'shibajyoti.maity06@gmail.com' } },
+        }),
+      },
+      from: vi.fn(() => ({ select: () => ({ eq: () => ({ maybeSingle }) }) })),
+    } as unknown as SupabaseClient;
+    expect(await fetchUserEntitlement(client)).toBeNull();
+    expect(client.from).toHaveBeenCalledWith('entitlements');
   });
 
   it('fetches offerings from Purchases SDK', async () => {

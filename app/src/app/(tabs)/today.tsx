@@ -436,12 +436,8 @@ export default function TodayScreen() {
             {/* Steps */}
             <MiniRing
               icon="footsteps"
-              value={steps > 999 ? `${(steps / 1000).toFixed(1)}k` : steps}
-              target={
-                effectiveGoalSteps > 999
-                  ? `${Math.round(effectiveGoalSteps / 1000)}k`
-                  : effectiveGoalSteps
-              }
+              value={steps.toLocaleString()}
+              target={effectiveGoalSteps.toLocaleString()}
               label="Steps"
               progressRatio={effectiveGoalSteps > 0 ? steps / effectiveGoalSteps : 0}
               color={dark.apricot}

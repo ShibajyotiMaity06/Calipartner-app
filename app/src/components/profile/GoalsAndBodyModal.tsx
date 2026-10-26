@@ -18,6 +18,7 @@ import {
   space,
   Text,
 } from '@calipartner/ui';
+import { NumberField } from '@/components/onboarding/PlanPrimitives';
 import { HeightField } from '@/components/onboarding/HeightField';
 import { t } from '@/i18n';
 import { playClickSound } from '@/lib/sound';
@@ -158,8 +159,14 @@ export function GoalsAndBodyModal({
                   onChange={(val: string) => setRate(parseFloat(val))}
                   testID="segment-rate-pace"
                 />
+                <NumberField
+                  label={t('fixes.customPace')}
+                  value={rate}
+                  onChange={(value) => setRate(value ?? NaN)}
+                  testID="input-profile-custom-pace"
+                />
                 <Text variant="micro" color={dark.textLo} style={styles.helperText}>
-                  {t('me.goalsAndBody.calorieFloorNotice')}
+                  {t('fixes.advisory')}
                 </Text>
               </View>
             )}

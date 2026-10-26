@@ -19,65 +19,7 @@ export function useRooms() {
     setError(null);
     try {
       const supabase = getSupabase();
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-      const VIP_EMAILS = [
-        'shibajyoti.maity06@gmail.com',
-        'nav71063@gmail.com',
-        'naveennav6227@gmail.com',
-        'fathimarida220@gmail.com',
-      ];
-      const isVip = Boolean(user?.email && VIP_EMAILS.includes(user.email.toLowerCase()));
-
-      if (isVip && user) {
-        try {
-          await supabase.rpc('dev_grant_plan', {
-            p_user_id: user.id,
-            p_tier: 'pro',
-            p_period: 'annual',
-            p_status: 'paid',
-            p_days: 365,
-          });
-        } catch {
-          // non-fatal
-        }
-      }
-
-      const list = await listUserRooms(supabase);
-
-      // Auto-purge stale room 'hb jnkkm' / 'TLEWJX' for shibajyoti.maity06@gmail.com to start fresh
-      if (user?.email?.toLowerCase() === 'shibajyoti.maity06@gmail.com') {
-        const staleRooms = list.filter((r) => r.name === 'hb jnkkm' || r.code === 'TLEWJX');
-        if (staleRooms.length > 0) {
-          for (const s of staleRooms) {
-            try {
-              await supabase
-                .from('room_members')
-                .delete()
-                .eq('user_id', user.id)
-                .eq('room_id', s.id);
-            } catch (err) {
-              // Ignore cleanup error if already removed
-              void err;
-            }
-          }
-          const fresh = list.filter((r) => r.name !== 'hb jnkkm' && r.code !== 'TLEWJX');
-          setRooms(fresh);
-          return;
-        }
-      }
-
-      if (isVip) {
-        setRooms(
-          list.map((r) => ({
-            ...r,
-            state: r.state === 'locked' ? 'active' : r.state,
-          })),
-        );
-      } else {
-        setRooms(list);
-      }
+      setRooms(await listUserRooms(supabase));
     } catch (err: unknown) {
       const serviceErr = err instanceof RoomServiceError ? err : parseRoomError(err);
       setError(serviceErr);

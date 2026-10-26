@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { calculateGymTargets, isGymPlanSafe, type GymTargetsInput } from './gymTargets';
+import {
+  calculateGymTargets,
+  isGymPlanSafe,
+  isGymPlanValid,
+  type GymTargetsInput,
+} from './gymTargets';
 
 const reference: GymTargetsInput = {
   sex: 'male',
@@ -34,6 +39,33 @@ describe('Approved gym-day calculator', () => {
     );
     expect(isGymPlanSafe(largeCut)).toBe(true);
   });
+  it('keeps high custom gains available without changing conservative recommendations', () => {
+    const result = calculateGymTargets({
+      ...reference,
+      weeklyRateKg: 2,
+      dailyAdjustmentKcal: undefined,
+    });
+    expect(result.weeklyRateKg).toBe(2);
+    expect(result.recommendedRateKg).toBeLessThan(2);
+    expect(isGymPlanValid(result)).toBe(true);
+    expect(isGymPlanSafe(result)).toBe(false);
+    expect(result.safety.advisories).toContain('lean_gain_advisory');
+  });
+
+  it('avoids near-duplicate pace choices and rejects impossible targets', () => {
+    const result = calculateGymTargets({ ...reference, weightKg: 48 });
+    const rates = result.presetRates.map((item) => item.rateKgPerWeek);
+    expect(rates).toContain(0.24);
+    expect(rates).not.toContain(0.25);
+    expect(rates).toContain(0.5);
+    expect(result.presetRates.find((item) => item.rateKgPerWeek === 0.5)?.available).toBe(true);
+    expect(
+      isGymPlanValid(
+        calculateGymTargets({ ...reference, goal: 'cut', dailyAdjustmentKcal: 10000 }),
+      ),
+    ).toBe(false);
+  });
+
   it('matches the supplied reference using full precision before display rounding', () => {
     const result = calculateGymTargets(reference);
     expect(result.rawBmr).toBe(1349.375);

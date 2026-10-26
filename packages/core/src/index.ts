@@ -25,3 +25,4 @@ export * from './recipes';
 export * from './fasting';
 export * from './monthlyReview';
 export * from './friends';
+export * from './dodoBilling';

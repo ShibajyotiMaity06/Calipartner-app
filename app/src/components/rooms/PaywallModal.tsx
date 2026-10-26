@@ -1,6 +1,7 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useRef, useState } from 'react';
 import {
   Alert,
+  Platform,
   Linking,
   Modal,
   SafeAreaView,
@@ -23,6 +24,10 @@ import {
   useReducedMotion,
 } from '@calipartner/ui';
 import { t } from '@/i18n';
+import { createDodoCheckout, navigateToCheckout, openDodoPortal } from '@/services/dodoService';
+import { generateClientUuid } from '@/services/foodService';
+import { findSubscriptionPackage } from '@/services/subscriptionPackages';
+import { hasPlan } from '@calipartner/core';
 import { useSubscription } from '@/hooks/useSubscription';
 import { playClickSound, playSuccessSound } from '@/lib/sound';
 
@@ -42,6 +47,7 @@ export interface PaywallModalProps {
   sponsorRoomId?: string;
   isUpgrade?: boolean;
   onSuccess?: () => void;
+  checkoutReturn?: { tier: 'plus' | 'pro'; duration: 'monthly' | 'annual'; requestId: string };
 }
 
 export const TIER_CONFIG = {
@@ -146,6 +152,7 @@ export function PaywallModal({
   sponsorRoomId,
   isUpgrade,
   onSuccess,
+  checkoutReturn,
 }: PaywallModalProps) {
   const reduceMotion = useReducedMotion();
   const {
@@ -161,14 +168,23 @@ export function PaywallModal({
 
   // Selected Tier (Plus, Pro) - default to Plus
   const [selectedTier, setSelectedTier] = useState<PlanTier>(() => {
+    if (checkoutReturn) return checkoutReturn.tier;
     if (preselectedTier === 'pro') return 'pro';
     return 'plus';
   });
 
   // Selected Duration (Monthly, Annual — default to Annual as per Pricing Plan section 1.1)
-  const [selectedDuration, setSelectedDuration] = useState<PlanDuration>('annual');
+  const [selectedDuration, setSelectedDuration] = useState<PlanDuration>(
+    checkoutReturn?.duration ?? 'annual',
+  );
+  const actionInFlight = useRef(false);
+  const webRequest = useRef<{ key: string; id: string } | null>(
+    checkoutReturn
+      ? { key: `${checkoutReturn.tier}_${checkoutReturn.duration}`, id: checkoutReturn.requestId }
+      : null,
+  );
   const [actionLoading, setActionLoading] = useState(false);
-  const [awaitingEntitlement, setAwaitingEntitlement] = useState(false);
+  const [awaitingEntitlement, setAwaitingEntitlement] = useState(Boolean(checkoutReturn));
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
 
   // Sub-modal states
@@ -201,47 +217,81 @@ export function PaywallModal({
   const activeTierConfig = TIER_CONFIG[selectedTier === 'basic' ? 'plus' : selectedTier];
 
   // Find corresponding RevenueCat package if offerings are loaded
-  const matchedPackage: PurchasesPackage | null = useMemo(() => {
-    if (!offerings) return null;
-
-    const offeringForTier = offerings.all?.[selectedTier] ?? offerings.current;
-    if (!offeringForTier) return null;
-
-    const packages = offeringForTier.availablePackages;
-    const durIdentifier = selectedDuration === 'annual' ? 'annual' : 'monthly';
-    const expectedId = `${selectedTier}_${durIdentifier}`;
-
-    return (
-      packages.find((p) => p.identifier === expectedId) ??
-      packages.find(
-        (p) => p.identifier.includes(selectedTier) && p.identifier.includes(durIdentifier),
-      ) ??
-      null
-    );
-  }, [offerings, selectedTier, selectedDuration]);
+  const matchedPackage: PurchasesPackage | null = useMemo(
+    () => findSubscriptionPackage(offerings, selectedTier, selectedDuration),
+    [offerings, selectedTier, selectedDuration],
+  );
+  const storePrice = (tier: PlanTier) => {
+    if (Platform.OS === 'web') return t('fixes.checkoutPrice');
+    const pkg = findSubscriptionPackage(offerings, tier, selectedDuration);
+    return pkg
+      ? t('fixes.storePrice', {
+          price: pkg.product.priceString,
+          period: t(selectedDuration === 'annual' ? 'fixes.annual' : 'fixes.monthly'),
+        })
+      : t('fixes.priceUnavailable');
+  };
 
   const handlePurchase = async () => {
+    if (actionInFlight.current) return;
+    actionInFlight.current = true;
     playClickSound();
     setActionLoading(true);
     setStatusMessage(null);
 
     try {
-      if (sponsorRoomId && (hasActiveAccess || awaitingEntitlement)) {
-        if (awaitingEntitlement) await refresh();
+      if (awaitingEntitlement) {
+        const latest = await refresh();
+        const active =
+          hasPlan(latest) ||
+          Boolean(
+            latest?.status === 'trial' &&
+            latest.period_end &&
+            new Date(latest.period_end) > new Date(),
+          );
+        const matches =
+          latest?.tier === selectedTier &&
+          latest?.period === selectedDuration &&
+          (!checkoutReturn || latest?.source === 'dodo');
+        if (!active || !matches) {
+          setStatusMessage(t('fixes.paymentPending'));
+          return;
+        }
+        if (sponsorRoomId && !(await sponsor(sponsorRoomId))) {
+          setStatusMessage(t('setup.takeoverCheck'));
+          return;
+        }
+        setAwaitingEntitlement(false);
+        playSuccessSound();
+        setShowSuccessModal(true);
+        return;
+      }
+      if (sponsorRoomId && hasActiveAccess) {
         const success = await sponsor(sponsorRoomId);
         if (success) {
           playSuccessSound();
           setShowSuccessModal(true);
           return;
         }
-        if (
-          awaitingEntitlement ||
-          entitlement?.tier === selectedTier ||
-          entitlement?.tier === 'pro'
-        ) {
+        if (entitlement?.tier === selectedTier || entitlement?.tier === 'pro') {
           setStatusMessage(t('setup.takeoverCheck'));
           return;
         }
+      }
+
+      if (Platform.OS === 'web') {
+        if (hasActiveAccess) {
+          if (entitlement?.source === 'dodo') await openDodoPortal();
+          else setStatusMessage(t('fixes.nativeManagement'));
+          return;
+        }
+        const tier = selectedTier === 'pro' ? 'pro' : 'plus';
+        const duration = selectedDuration === 'monthly' ? 'monthly' : 'annual';
+        const key = `${tier}_${duration}`;
+        if (webRequest.current?.key !== key) webRequest.current = { key, id: generateClientUuid() };
+        const url = await createDodoCheckout(tier, duration, webRequest.current.id);
+        navigateToCheckout(url);
+        return;
       }
 
       if (matchedPackage) {
@@ -250,7 +300,12 @@ export function PaywallModal({
           Boolean(isUpgrade),
           entitlement?.store_product_id ?? undefined,
         );
-        if (success) {
+        if (success === 'pending') {
+          setAwaitingEntitlement(true);
+          setStatusMessage(t('fixes.paymentPending'));
+          return;
+        }
+        if (success === 'verified') {
           if (sponsorRoomId && !(await sponsor(sponsorRoomId))) {
             setAwaitingEntitlement(true);
             setStatusMessage(t('setup.subscriptionPending'));
@@ -267,11 +322,14 @@ export function PaywallModal({
       const msg = err instanceof Error ? err.message : String(err);
       setStatusMessage(msg);
     } finally {
+      actionInFlight.current = false;
       setActionLoading(false);
     }
   };
 
   const handleRestore = async () => {
+    if (actionInFlight.current) return;
+    actionInFlight.current = true;
     playClickSound();
     setActionLoading(true);
     setStatusMessage(null);
@@ -284,6 +342,7 @@ export function PaywallModal({
       setRestoreSuccess(false);
       setShowRestoreModal(true);
     } finally {
+      actionInFlight.current = false;
       setActionLoading(false);
     }
   };
@@ -292,12 +351,7 @@ export function PaywallModal({
     const clean = promoCode.trim().toUpperCase();
     if (!clean) return;
 
-    if (clean.endsWith('50') || clean === 'PARTNER50' || clean === 'LAUNCH50') {
-      playSuccessSound();
-      setPromoMessage('50% partner discount applied for your first year.');
-    } else {
-      setPromoMessage('Invalid or expired code. Please verify with your partner.');
-    }
+    setPromoMessage(t('fixes.promoUnavailable'));
   };
 
   const openUrl = (url: string) => {
@@ -307,46 +361,11 @@ export function PaywallModal({
     });
   };
 
-  // Check if Indian user by timezone
-  const isIndian = useMemo(() => {
-    try {
-      if (typeof Intl !== 'undefined') {
-        const tz = Intl.DateTimeFormat().resolvedOptions().timeZone || '';
-        if (tz.includes('Kolkata') || tz.includes('Calcutta') || tz.includes('India')) return true;
-        // Non-Indian timezone detected
-        if (tz.length > 0 && !tz.includes('UTC')) return false;
-      }
-    } catch {
-      return true;
-    }
-    return true;
-  }, []);
+  const renewalSentence = t('fixes.storeTerms');
 
-  // Renewal sentence in label: Plus has 7-day trial, Pro has NO trial
-  const renewalSentence = useMemo(() => {
-    if (selectedTier === 'plus') {
-      if (selectedDuration === 'annual') {
-        return isIndian
-          ? '7 days free, then ₹599 / year. Cancel any time in your store settings.'
-          : '7 days free, then $39.99 / year. Cancel any time in your store settings.';
-      }
-      return isIndian
-        ? '7 days free, then ₹99 / month. Cancel any time in your store settings.'
-        : '7 days free, then $5.99 / month. Cancel any time in your store settings.';
-    }
-    // Pro plan: No trial
-    if (selectedDuration === 'annual') {
-      return isIndian
-        ? 'Renews at ₹1,199 / year. Cancel any time in your store settings.'
-        : 'Renews at $79.99 / year. Cancel any time in your store settings.';
-    }
-    return isIndian
-      ? 'Renews at ₹199 / month. Cancel any time in your store settings.'
-      : 'Renews at $11.99 / month. Cancel any time in your store settings.';
-  }, [selectedDuration, selectedTier, isIndian]);
-
-  // Primary CTA copy: Plus has trial, Pro has NO trial
+  // Trial eligibility and the final terms are confirmed by the store.
   const primaryCtaLabel = useMemo(() => {
+    if (awaitingEntitlement) return t('fixes.checkPayment');
     if (actionLoading) return 'Connecting to store…';
     if (sponsorRoomId || context === 'keep_going') {
       return `Keep room going with ${activeTierConfig.label}`;
@@ -355,10 +374,18 @@ export function PaywallModal({
       return `Upgrade to CaliPartner ${activeTierConfig.label}`;
     }
     if (selectedTier === 'plus') {
-      return 'Start 7-Day Free Trial';
+      return t('fixes.buyPlus');
     }
-    return 'Get CaliPartner Pro';
-  }, [actionLoading, sponsorRoomId, context, isUpgrade, activeTierConfig.label, selectedTier]);
+    return t('fixes.buyPro');
+  }, [
+    actionLoading,
+    awaitingEntitlement,
+    sponsorRoomId,
+    context,
+    isUpgrade,
+    activeTierConfig.label,
+    selectedTier,
+  ]);
 
   return (
     <Modal
@@ -425,6 +452,7 @@ export function PaywallModal({
               <View style={styles.durationToggleContainer}>
                 {/* Annual (Preselected Default) */}
                 <TouchableOpacity
+                  disabled={actionLoading || awaitingEntitlement}
                   onPress={() => setSelectedDuration('annual')}
                   style={[
                     styles.durationToggleItem,
@@ -432,7 +460,7 @@ export function PaywallModal({
                   ]}
                   accessibilityRole="button"
                   accessibilityState={{ selected: selectedDuration === 'annual' }}
-                  accessibilityLabel="Annual billing, save 50 percent"
+                  accessibilityLabel={t('fixes.annual')}
                   testID="toggle-duration-annual"
                 >
                   <View style={styles.durationLabelWithChip}>
@@ -443,16 +471,12 @@ export function PaywallModal({
                     >
                       Annual
                     </Text>
-                    <View style={styles.quietChip}>
-                      <Text variant="micro" color={dark.teal} style={{ fontWeight: '700' }}>
-                        Save 50%
-                      </Text>
-                    </View>
                   </View>
                 </TouchableOpacity>
 
                 {/* Monthly */}
                 <TouchableOpacity
+                  disabled={actionLoading || awaitingEntitlement}
                   onPress={() => setSelectedDuration('monthly')}
                   style={[
                     styles.durationToggleItem,
@@ -483,11 +507,12 @@ export function PaywallModal({
               <View style={styles.planCardsStack}>
                 {/* Plus Card */}
                 <TouchableOpacity
+                  disabled={actionLoading || awaitingEntitlement}
                   onPress={() => setSelectedTier('plus')}
                   style={[styles.planCard, selectedTier === 'plus' && styles.planCardSelected]}
                   accessibilityRole="radio"
                   accessibilityState={{ selected: selectedTier === 'plus' }}
-                  accessibilityLabel="CaliPartner Plus, 7 day free trial, 99 rupees monthly or 599 yearly"
+                  accessibilityLabel={`CaliPartner Plus, ${storePrice('plus')}`}
                   testID="picker-size-6-20"
                 >
                   <View style={styles.planCardTopRow}>
@@ -513,13 +538,6 @@ export function PaywallModal({
                         </Text>
                       </View>
                     </View>
-
-                    <View style={styles.trialBadge}>
-                      <Ionicons name="sparkles" size={12} color={dark.apricot} />
-                      <Text variant="micro" color={dark.apricot} style={{ fontWeight: '700' }}>
-                        7-DAY FREE TRIAL
-                      </Text>
-                    </View>
                   </View>
 
                   <Text variant="bodyS" color={dark.textMid} style={styles.planSummaryText}>
@@ -531,33 +549,23 @@ export function PaywallModal({
                   <View style={styles.priceContainer}>
                     <View style={styles.priceMainRow}>
                       <Text variant="numeralM" color={dark.textHi} style={styles.priceHighlight}>
-                        {isIndian
-                          ? selectedDuration === 'annual'
-                            ? '₹599 / yr'
-                            : '₹99 / mo'
-                          : selectedDuration === 'annual'
-                            ? '$39.99 / yr'
-                            : '$5.99 / mo'}
+                        {storePrice('plus')}
                       </Text>
-                      {selectedDuration === 'annual' && (
-                        <Text variant="label" color={dark.textMid} style={styles.monthlyEquiv}>
-                          · {isIndian ? '₹50/mo' : '$3.33/mo'}
-                        </Text>
-                      )}
                     </View>
                     <Text variant="micro" color={dark.teal} style={styles.trialSubNote}>
-                      Includes 7-day free trial · Cancel anytime
+                      {t('fixes.storeTerms')}
                     </Text>
                   </View>
                 </TouchableOpacity>
 
                 {/* Pro Card */}
                 <TouchableOpacity
+                  disabled={actionLoading || awaitingEntitlement}
                   onPress={() => setSelectedTier('pro')}
                   style={[styles.planCard, selectedTier === 'pro' && styles.planCardSelected]}
                   accessibilityRole="radio"
                   accessibilityState={{ selected: selectedTier === 'pro' }}
-                  accessibilityLabel="CaliPartner Pro, AI Coach, 199 rupees monthly or 1199 yearly, no trial"
+                  accessibilityLabel={`CaliPartner Pro, ${storePrice('pro')}`}
                   testID="picker-size-21-50"
                 >
                   <View style={styles.planCardTopRow}>
@@ -601,22 +609,11 @@ export function PaywallModal({
                   <View style={styles.priceContainer}>
                     <View style={styles.priceMainRow}>
                       <Text variant="numeralM" color={dark.textHi} style={styles.priceHighlight}>
-                        {isIndian
-                          ? selectedDuration === 'annual'
-                            ? '₹1,199 / yr'
-                            : '₹199 / mo'
-                          : selectedDuration === 'annual'
-                            ? '$79.99 / yr'
-                            : '$11.99 / mo'}
+                        {storePrice('pro')}
                       </Text>
-                      {selectedDuration === 'annual' && (
-                        <Text variant="label" color={dark.textMid} style={styles.monthlyEquiv}>
-                          · {isIndian ? '₹100/mo' : '$6.67/mo'}
-                        </Text>
-                      )}
                     </View>
                     <Text variant="micro" color={dark.textLo} style={styles.trialSubNote}>
-                      Direct subscription · Instant full access
+                      {t('fixes.storeTerms')}
                     </Text>
                   </View>
                 </TouchableOpacity>
@@ -687,6 +684,19 @@ export function PaywallModal({
               testID="btn-paywall-cta"
               style={styles.ctaButton}
             />
+
+            {awaitingEntitlement ? (
+              <Button
+                variant="secondary"
+                size="md"
+                label={t('fixes.choosePlanAgain')}
+                onPress={() => {
+                  setAwaitingEntitlement(false);
+                  setStatusMessage(null);
+                }}
+                testID="btn-resume-plan-selection"
+              />
+            ) : null}
 
             <Text
               variant="micro"

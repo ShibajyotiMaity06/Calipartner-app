@@ -26,6 +26,9 @@
     "../../../packages/core/src/units": "../../../packages/core/src/units.ts",
     "../../../packages/core/src/username": "../../../packages/core/src/username.ts",
     "../../../packages/core/src/version": "../../../packages/core/src/version.ts",
-    "../../../packages/core/src/workouts": "../../../packages/core/src/workouts.ts"
+    "../../../packages/core/src/workouts": "../../../packages/core/src/workouts.ts",
+    "../../../packages/core/src/friends": "../../../packages/core/src/friends.ts",
+    "../../../packages/core/src/monthlyReview": "../../../packages/core/src/monthlyReview.ts",
+    "../../../packages/core/src/dodoBilling": "../../../packages/core/src/dodoBilling.ts"
   }
 }

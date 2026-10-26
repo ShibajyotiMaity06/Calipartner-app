@@ -2,6 +2,7 @@ import { createClient } from 'jsr:@supabase/supabase-js@2';
 import {
   mapProductIdToTierAndPeriod,
   verifyWebhookAuth,
+  shouldApplyRevenueCatEvent,
   type RevenueCatWebhookPayload,
 } from '@calipartner/core';
 
@@ -90,6 +91,14 @@ export async function handleRevenueCatWebhook(req: Request): Promise<Response> {
         }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
       );
+    }
+
+    // Production access must never be granted by the Test Store or a sandbox receipt.
+    if (!shouldApplyRevenueCatEvent(event, Deno.env.get('REVENUECAT_ALLOW_SANDBOX') === 'true')) {
+      return new Response(JSON.stringify({ status: 'ignored_test_event' }), {
+        status: 200,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
     }
 
     const eventId = event.id;

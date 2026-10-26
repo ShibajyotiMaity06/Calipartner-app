@@ -36,11 +36,13 @@ function FriendsView() {
       setEditing(true);
     }
   }, [params.edit, friends.ownProfile]);
-  const errorLabel = friends.error?.includes('INVALID_QUERY')
-    ? t('friends.queryError')
-    : friends.error?.includes('PROFILE_UNAVAILABLE')
-      ? t('friends.unavailable')
-      : t('friends.genericError');
+  const errorLabel = friends.error?.includes('SOCIAL_BACKEND_UNAVAILABLE')
+    ? t('fixes.friendsSetup')
+    : friends.error?.includes('INVALID_QUERY')
+      ? t('friends.queryError')
+      : friends.error?.includes('PROFILE_UNAVAILABLE')
+        ? t('friends.unavailable')
+        : t('friends.genericError');
   const pending = friends.outbox.filter((item) => item.status === 'pending');
   const selected = friends.selected;
   const queued = Boolean(

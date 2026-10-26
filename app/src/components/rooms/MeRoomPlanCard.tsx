@@ -11,6 +11,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { Button, Card, dark, radius, space, Text } from '@calipartner/ui';
 import { t } from '@/i18n';
 import { useSubscription } from '@/hooks/useSubscription';
+import { openDodoPortal } from '@/services/dodoService';
 import type { RoomSummary } from '@/types/rooms';
 import { playClickSound } from '@/lib/sound';
 
@@ -30,8 +31,16 @@ export function MeRoomPlanCard({
   const [restoring, setRestoring] = useState(false);
   const [restoreMessage, setRestoreMessage] = useState<string | null>(null);
 
-  const handleManageInStore = () => {
+  const handleManageInStore = async () => {
     playClickSound();
+    if (entitlement?.source === 'dodo') {
+      await openDodoPortal().catch(() => setRestoreMessage(t('fixes.storeNotReady')));
+      return;
+    }
+    if (Platform.OS === 'web') {
+      setRestoreMessage(t('fixes.nativeManagement'));
+      return;
+    }
     const storeUrl =
       Platform.OS === 'ios'
         ? 'https://apps.apple.com/account/subscriptions'
@@ -50,9 +59,12 @@ export function MeRoomPlanCard({
       if (onRestorePurchases) {
         await onRestorePurchases();
       } else {
-        await restore();
+        if (!(await restore())) {
+          setRestoreMessage(t('fixes.paymentPending'));
+          return;
+        }
       }
-      setRestoreMessage('Purchases restored');
+      setRestoreMessage(t('fixes.restoreSuccess'));
       setTimeout(() => setRestoreMessage(null), 2500);
     } catch {
       setRestoreMessage('No purchases found');

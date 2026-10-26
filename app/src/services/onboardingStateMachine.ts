@@ -1,6 +1,6 @@
 import {
   calculateGymTargets,
-  isGymPlanSafe,
+  isGymPlanValid,
   isAtLeast18,
   type ActivityLevel,
   type GymTargetsResult,
@@ -268,8 +268,8 @@ export class OnboardingStateMachine {
         break;
 
       case 'rate_selection':
-        if (!this.state.calculatedTargets || !isGymPlanSafe(this.state.calculatedTargets))
-          errors.rate = 'Choose a pace within your calorie floor and weekly limit';
+        if (!this.state.calculatedTargets || !isGymPlanValid(this.state.calculatedTargets))
+          errors.rate = 'Enter a valid pace with enough calories for your macros';
         if (
           this.state.targetWeightKg !== null &&
           (!Number.isFinite(this.state.targetWeightKg) ||
@@ -424,7 +424,8 @@ export class OnboardingStateMachine {
     if (!this.state.calculatedTargets) {
       throw new Error('Cannot build goal profile: targets not calculated');
     }
-    if (!isGymPlanSafe(this.state.calculatedTargets)) throw new Error('Plan exceeds safety limits');
+    if (!isGymPlanValid(this.state.calculatedTargets))
+      throw new Error('Plan has invalid calorie or macro totals');
     if (
       !this.validateStep('body_stats').isValid ||
       !this.validateStep('rate_selection').isValid ||

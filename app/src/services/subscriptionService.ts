@@ -14,13 +14,14 @@ import {
   type RoomTier,
 } from '@calipartner/core';
 import { env } from '@/lib/env';
+import { t } from '@/i18n';
 import { getSupabase } from '@/lib/supabase';
 import { createLogger } from '@/lib/logger';
 
 const logger = createLogger('subscriptionService');
 
-const isTestEnv = typeof process !== 'undefined' && process.env?.NODE_ENV === 'test';
-let isPurchasesConfigured = isTestEnv;
+let isPurchasesConfigured = false;
+let configuredApiKey = '';
 
 /**
  * Initialize RevenueCat SDK with platform-specific non-secret public API key.
@@ -33,24 +34,27 @@ export async function initPurchases(userId?: string): Promise<boolean> {
         ? env.revenueCatGoogleKey
         : '';
 
-  if (!apiKey) {
+  if (!userId || !apiKey || apiKey.startsWith('test_') || Platform.OS === 'web') {
+    isPurchasesConfigured = false;
     logger.warn('RevenueCat API key not configured for current platform');
     return false;
   }
 
   try {
-    if (!isPurchasesConfigured) {
+    if (!isPurchasesConfigured || configuredApiKey !== apiKey) {
       Purchases.configure({
         apiKey,
         appUserID: userId ?? null,
       });
       isPurchasesConfigured = true;
+      configuredApiKey = apiKey;
       logger.info('RevenueCat Purchases configured successfully', { userId });
     } else if (userId) {
       await Purchases.logIn(userId);
     }
     return true;
   } catch (err) {
+    isPurchasesConfigured = false;
     logger.error('Failed to configure RevenueCat Purchases', { err });
     return false;
   }
@@ -94,7 +98,7 @@ export async function purchasePackage(
   },
 ): Promise<{ customerInfo: CustomerInfo; productIdentifier: string }> {
   if (!isPurchasesConfigured) {
-    throw new Error('RevenueCat Purchases is not configured');
+    throw new Error(t('fixes.storeNotReady'));
   }
   try {
     let upgradeInfo: UpgradeInfo | undefined;
@@ -132,8 +136,9 @@ export async function purchasePackage(
  */
 export async function restorePurchases(): Promise<CustomerInfo> {
   if (!isPurchasesConfigured) {
-    throw new Error('RevenueCat Purchases is not configured');
+    throw new Error(t('fixes.storeNotReady'));
   }
+  if (Platform.OS === 'web') throw new Error(t('fixes.webRestore'));
   try {
     const customerInfo = await Purchases.restorePurchases();
     return customerInfo;
@@ -171,27 +176,6 @@ export async function fetchUserEntitlement(
 
     if (userErr || !user) {
       return null;
-    }
-
-    const VIP_PRO_EMAILS = [
-      'shibajyoti.maity06@gmail.com',
-      'nav71063@gmail.com',
-      'naveennav6227@gmail.com',
-      'fathimarida220@gmail.com',
-    ];
-
-    if (user.email && VIP_PRO_EMAILS.includes(user.email.toLowerCase())) {
-      const oneYearFromNow = new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString();
-      return {
-        user_id: user.id,
-        plan: 'annual',
-        source: 'none',
-        status: 'paid',
-        tier: 'pro',
-        period_end: oneYearFromNow,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-      } as Entitlement;
     }
 
     const { data, error } = await client

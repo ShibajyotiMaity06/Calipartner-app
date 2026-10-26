@@ -15,7 +15,7 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "typecheck": "npm run typecheck --workspaces --if-present",
-    "test": "npm run test --workspaces --if-present && npm run test:db",
+    "test": "npm run test --workspaces --if-present && npm run test:db && npm run test:billing",
     "test:db": "node scripts/test_rooms_v3.mjs",
     "check": "npm run lint && npm run typecheck && npm test",
     "app": "npm run start --workspace app",
@@ -25,7 +25,8 @@
     "supabase:stop": "supabase stop",
     "supabase:serve": "supabase functions serve --no-verify-jwt",
     "food:seed": "npx tsx scripts/food_tools.ts",
-    "recipes:import": "npx tsx scripts/recipes_import.ts"
+    "recipes:import": "npx tsx scripts/recipes_import.ts",
+    "test:billing": "npx --yes deno@2.9.6 test --allow-env --config supabase/functions/dodo-checkout/deno.json supabase/functions/_shared/dodoHandlers.test.ts"
   },
   "devDependencies": {
     "@electric-sql/pglite": "^0.5.11",

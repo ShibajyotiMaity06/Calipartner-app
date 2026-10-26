@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
+import { Platform } from 'react-native';
 import type { PurchasesOfferings, PurchasesPackage } from 'react-native-purchases';
 import {
   DEFAULT_REMOTE_CONFIG,
@@ -18,6 +19,7 @@ import {
 } from '@/services/subscriptionService';
 import { getSupabase } from '@/lib/supabase';
 import { createLogger } from '@/lib/logger';
+import { t } from '@/i18n';
 
 const logger = createLogger('useSubscription');
 
@@ -51,10 +53,12 @@ export function useSubscription() {
       setEntitlement(ent);
       setRemoteConfig(config);
       setOfferings(offs);
+      return ent;
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : String(err);
       setError(msg);
       logger.error('Failed to load subscription data', { err });
+      return null;
     } finally {
       setLoading(false);
     }
@@ -111,21 +115,42 @@ export function useSubscription() {
     pkg: PurchasesPackage,
     isUpgrade?: boolean,
     oldProductId?: string,
-  ): Promise<boolean> => {
+  ): Promise<'verified' | 'pending' | 'cancelled' | 'failed'> => {
     try {
       setLoading(true);
       setError(null);
-      await purchasePackage(pkg, {
+      const client = getSupabase();
+      const {
+        data: { user },
+      } = await client.auth.getUser();
+      if (!user) throw new Error(t('fixes.signInPayment'));
+      if (!(await initPurchases(user.id))) throw new Error(t('fixes.storeNotReady'));
+      const result = await purchasePackage(pkg, {
         isUpgrade,
         oldProductIdentifier: oldProductId,
       });
-      // Refresh entitlement from database (source of truth)
-      await loadData();
-      return true;
+      // A completed checkout is not an entitlement. Wait for the authenticated webhook.
+      for (let attempt = 0; attempt < 4; attempt++) {
+        if (attempt) await new Promise((resolve) => setTimeout(resolve, 1000));
+        const latest = await fetchUserEntitlement(client);
+        if (
+          latest?.user_id === user.id &&
+          latest.store_product_id === result.productIdentifier &&
+          (checkHasPlan(latest) ||
+            (latest.status === 'trial' &&
+              Boolean(latest.period_end && new Date(latest.period_end) > new Date())))
+        ) {
+          setEntitlement(latest);
+          return 'verified';
+        }
+      }
+      return 'pending';
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : String(err);
-      setError(msg);
-      return false;
+      const cancelled = Boolean(
+        err && typeof err === 'object' && 'userCancelled' in err && err.userCancelled,
+      );
+      setError(t(cancelled ? 'fixes.storeCancelled' : 'fixes.paymentFailed'));
+      return cancelled ? 'cancelled' : 'failed';
     } finally {
       setLoading(false);
     }
@@ -135,9 +160,17 @@ export function useSubscription() {
     try {
       setLoading(true);
       setError(null);
-      await restorePurchases();
-      await loadData();
-      return true;
+      if (Platform.OS !== 'web') await restorePurchases();
+      const latest = await loadData();
+      const active =
+        checkHasPlan(latest) ||
+        Boolean(
+          latest?.status === 'trial' &&
+          latest.period_end &&
+          new Date(latest.period_end) > new Date(),
+        );
+      if (!active) setError(t('fixes.paymentPending'));
+      return active;
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : String(err);
       setError(msg);

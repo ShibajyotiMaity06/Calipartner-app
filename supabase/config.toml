@@ -92,3 +92,14 @@ verify_jwt = false
 verify_jwt = false
 
 
+
+[functions.dodo-checkout]
+# The handler validates the bearer token against Supabase Auth.
+verify_jwt = false
+
+[functions.dodo-webhook]
+# Verifies the Dodo Standard Webhooks signature.
+verify_jwt = false
+
+[functions.revenuecat-webhook]
+verify_jwt = false

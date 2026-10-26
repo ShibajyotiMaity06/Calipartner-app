@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Linking, Modal, ScrollView } from 'react-native';
+import React from 'react';
+import { Modal, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Avatar, Button, HiddenMetric, Text, useTheme } from '@calipartner/ui';
 import type { FriendAction, SocialProfile } from '@calipartner/core';
@@ -30,10 +30,6 @@ export function PublicSocialProfile({
   onReport: () => void;
 }) {
   const { colors } = useTheme();
-  const [linkError, setLinkError] = useState(false);
-  const open = (url: string) => {
-    void Linking.openURL(url).catch(() => setLinkError(true));
-  };
   return (
     <Modal visible onRequestClose={onClose} animationType="slide">
       <SafeAreaView style={{ flex: 1, backgroundColor: colors.bg0 }}>
@@ -54,30 +50,11 @@ export function PublicSocialProfile({
           ) : (
             <>
               <Text>{profile.bio || t('friends.noBio')}</Text>
-              {profile.training_style ? <Text>{profile.training_style}</Text> : null}
-              {profile.instagram_handle ? (
-                <Button
-                  variant="secondary"
-                  label={t('friends.openInstagram')}
-                  onPress={() =>
-                    open(
-                      `https://www.instagram.com/${encodeURIComponent(profile.instagram_handle)}/`,
-                    )
-                  }
-                  testID="open-social-instagram"
-                />
-              ) : null}
-              {profile.website_url ? (
-                <Button
-                  variant="secondary"
-                  label={t('friends.openWebsite')}
-                  onPress={() => open(profile.website_url)}
-                  testID="open-social-website"
-                />
+              {profile.training_style === 'bulk' || profile.training_style === 'cut' ? (
+                <Text>{t(profile.training_style === 'bulk' ? 'fixes.bulk' : 'fixes.cut')}</Text>
               ) : null}
             </>
           )}
-          {linkError ? <Text accessibilityRole="alert">{t('friends.genericError')}</Text> : null}
           {queued ? <Text accessibilityLiveRegion="polite">{t('friends.queued')}</Text> : null}
           {profile.relationship === 'none' ? (
             limitReached ? (

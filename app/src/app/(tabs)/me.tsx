@@ -190,32 +190,39 @@ export default function MeScreen() {
                 </View>
               </View>
 
-              <Button
-                variant="secondary"
-                label={t('friends.editProfile')}
-                onPress={() => router.push('/friends?edit=1' as never)}
-                testID="me-social-profile"
-              />
-              <Button
-                variant="secondary"
-                label={t('friends.title')}
-                onPress={() => router.push('/friends' as never)}
-                testID="me-friends"
-              />
-              <Button
-                variant="secondary"
-                label={profile ? t('profileEdit.title') : t('profileSetup.title')}
-                onPress={() => {
-                  playClickSound();
-                  if (!profile) {
-                    router.push('/auth/profile-setup');
-                  } else {
-                    router.push('/profile/edit');
-                  }
-                }}
-                testID="btn-me-edit-profile"
-                style={styles.editProfileBtn}
-              />
+              <View style={styles.profileActions}>
+                <Button
+                  variant="secondary"
+                  size="md"
+                  fontSet="onboarding"
+                  label={t('friends.editProfile')}
+                  onPress={() => router.push('/profile/social' as never)}
+                  testID="me-social-profile"
+                />
+                <Button
+                  variant="secondary"
+                  size="md"
+                  fontSet="onboarding"
+                  label={t('friends.title')}
+                  onPress={() => router.push('/friends' as never)}
+                  testID="me-friends"
+                />
+                <Button
+                  variant="secondary"
+                  size="md"
+                  fontSet="onboarding"
+                  label={profile ? t('profileEdit.title') : t('profileSetup.title')}
+                  onPress={() => {
+                    playClickSound();
+                    if (!profile) {
+                      router.push('/auth/profile-setup');
+                    } else {
+                      router.push('/profile/edit');
+                    }
+                  }}
+                  testID="btn-me-edit-profile"
+                />
+              </View>
             </Card>
           )}
 
@@ -242,7 +249,13 @@ export default function MeScreen() {
               />
               <ListRow
                 title={t('me.dailyGoals.title')}
-                subtitle="Step goal (8,000), water intake"
+                subtitle={
+                  currentGoalProfile
+                    ? t('fixes.dailyGoalsSummary', {
+                        steps: currentGoalProfile.step_goal.toLocaleString(),
+                      })
+                    : t('common.loading')
+                }
                 onPress={() => {
                   playClickSound();
                   setShowDailyGoals(true);
@@ -698,6 +711,10 @@ const styles = StyleSheet.create({
   },
   guestSignInBtn: {
     width: '100%',
+  },
+  profileActions: {
+    gap: space[3],
+    marginTop: space[3],
   },
   profileCard: {
     padding: space[4],

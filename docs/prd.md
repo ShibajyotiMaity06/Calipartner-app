@@ -1,5 +1,6 @@
 # CaliPartner: Product Requirements Document (PRD)
 
+> Latest owner-requested corrections, 25 October 2026: [Payment, profile and goal corrections](PAYMENT_PROFILE_GOAL_CORRECTIONS.md) supersede conflicting restrictions for this task.
 > Latest owner-approved revision: [Friends, social profiles and room limits](FRIENDS_AND_ROOM_LIMITS.md). Free hosts one pair room, Plus hosts three rooms of up to five, and Pro hosts five rooms of up to 20. The revision also defines free username search, social profiles and the weekly friend-request allowance.
 
 > Owner-approved revision, 24 October 2026: [Rooms and onboarding v3](ROOMS_V3.md) supersedes conflicting room access, host capacities, individual feature gates, lifecycle and onboarding requirements below.

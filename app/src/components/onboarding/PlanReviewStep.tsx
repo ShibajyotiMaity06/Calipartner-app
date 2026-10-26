@@ -1,7 +1,7 @@
 import React from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import Svg, { Circle } from 'react-native-svg';
-import { calculateGymTargets, isGymPlanSafe, type GymTargetsResult } from '@calipartner/core';
+import { calculateGymTargets, isGymPlanValid, type GymTargetsResult } from '@calipartner/core';
 import { Button, Text, onboardingLayout as layout, space, useTheme } from '@calipartner/ui';
 import type { OnboardingState } from '@/services/onboardingStateMachine';
 import { t } from '@/i18n';
@@ -15,17 +15,7 @@ export function PlanSafetyNotice({ result }: { result: GymTargetsResult | null }
         {t('setup.detailsError')}
       </Text>
     );
-  const { safety } = result;
-  const reason = safety.isBmiTooLowForCut
-    ? t('setup.bmiReason')
-    : safety.isFloorApplied
-      ? t('setup.floorReason', { floor: safety.calorieFloor })
-      : safety.isCapApplied
-        ? t('setup.capReason', { cap: safety.rateCapKgPerWeek })
-        : !isGymPlanSafe(result)
-          ? t('setup.macroReason')
-          : null;
-  if (reason)
+  if (!isGymPlanValid(result))
     return (
       <Text
         fontSet="onboarding"
@@ -33,7 +23,28 @@ export function PlanSafetyNotice({ result }: { result: GymTargetsResult | null }
         accessibilityRole="alert"
         testID="plan-safety-notice"
       >
-        {reason}
+        {t('fixes.invalidPlan')}
+      </Text>
+    );
+  const { safety } = result;
+  const reason = safety.isBmiTooLowForCut
+    ? t('fixes.bmiAdvisory')
+    : safety.isFloorApplied
+      ? t('fixes.floorAdvisory', { floor: safety.calorieFloor })
+      : safety.isCapApplied
+        ? t('fixes.rateAdvisory')
+        : !isGymPlanValid(result)
+          ? t('setup.macroReason')
+          : null;
+  if (reason)
+    return (
+      <Text
+        fontSet="onboarding"
+        color={colors.textMid}
+        accessibilityRole="alert"
+        testID="plan-safety-notice"
+      >
+        {reason} {t('fixes.advisory')}
       </Text>
     );
   const advisory = safety.advisories.includes('lean_gain_advisory')
@@ -117,7 +128,7 @@ export function PlanReviewStep({
               {t('setup.estimateNote')}
             </Text>
           </PlanCard>
-          {isGymPlanSafe(result) ? <MacroSplit result={result} /> : null}
+          {isGymPlanValid(result) ? <MacroSplit result={result} /> : null}
         </>
       ) : (
         <PlanCard>
@@ -232,7 +243,7 @@ export function PlanReviewStep({
         fontSet="onboarding"
         label={t('setup.useRecommended')}
         onPress={onRecommended}
-        disabled={saving || !recommendation || !isGymPlanSafe(recommendation)}
+        disabled={saving || !recommendation || !isGymPlanValid(recommendation)}
         testID="btn-use-recommended"
       />
       <Button
@@ -240,7 +251,7 @@ export function PlanReviewStep({
         variant="secondary"
         label={t('setup.usePlanned')}
         onPress={onPlanned}
-        disabled={saving || !result || !isGymPlanSafe(result)}
+        disabled={saving || !result || !isGymPlanValid(result)}
         testID="btn-use-planned"
       />
     </View>

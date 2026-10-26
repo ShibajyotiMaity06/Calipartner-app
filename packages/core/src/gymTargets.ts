@@ -2,7 +2,7 @@ import { calculateAge } from './age';
 import { calculateBmi, calculateRawBmr, checkTargetDate, getCalorieFloor } from './targets';
 import type { CalculateTargetsInput, CalculateTargetsResult, PresetRateOption } from './types';
 
-/** Version 2, approved 2026-10-24. Legacy targets retain the original PRD calculator. */
+/** Version 2, updated 2026-10-25: recommendations are advisory. Legacy targets retain the original PRD calculator. */
 export interface GymTargetsInput extends CalculateTargetsInput {
   weightKg: number;
   heightCm: number;
@@ -80,7 +80,9 @@ export function calculateGymTargets(input: GymTargetsInput): GymTargetsResult {
     goal === 'maintain'
       ? [0]
       : [...new Set([recommendedRateKg, 0.25, 0.5, 0.75, ...(goal === 'cut' ? [1] : [])])]
-          .filter((r) => r > 0)
+          .filter(
+            (r) => r > 0 && (r == recommendedRateKg || Math.abs(r - recommendedRateKg) >= 0.05),
+          )
           .sort((a, b) => a - b);
   const presetRates: PresetRateOption[] = rates.map((rate) => {
     const change = Math.round(rate * 1100) * (goal === 'cut' ? -1 : goal === 'maintain' ? 0 : 1);
@@ -101,7 +103,7 @@ export function calculateGymTargets(input: GymTargetsInput): GymTargetsResult {
       rateLbPerWeek: Number((rate * 2.2046226218).toFixed(2)),
       dailyChangeKcal: change,
       targetKcal: kcal,
-      available: reason === null,
+      available: rawKcal > 0 && rawKcal >= proteinKcal + fatKcal,
       reason,
       advisories: [],
       macros: null,
@@ -159,6 +161,17 @@ export function isGymPlanSafe(result: GymTargetsResult): boolean {
     !result.safety.isFloorApplied &&
     !result.safety.isCapApplied &&
     !result.safety.isBmiTooLowForCut &&
+    result.macros.proteinKcal + result.macros.fatKcal <= result.targetKcal
+  );
+}
+
+/** Custom plans may exceed recommendations; reject invalid or inconsistent totals. */
+export function isGymPlanValid(result: GymTargetsResult): boolean {
+  return (
+    Number.isFinite(result.targetKcal) &&
+    result.targetKcal > 0 &&
+    Number.isFinite(result.weeklyRateKg) &&
+    result.weeklyRateKg >= 0 &&
     result.macros.proteinKcal + result.macros.fatKcal <= result.targetKcal
   );
 }

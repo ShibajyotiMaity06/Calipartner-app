@@ -26,7 +26,7 @@ import {
   type SocialDb,
 } from '@/services/friendsService';
 
-export function useFriends() {
+export function useFriends({ profileOnly = false }: { profileOnly?: boolean } = {}) {
   const { user, profile } = useAuth();
   const { isOnline } = useNetworkStatus();
   const id = user?.id;
@@ -55,7 +55,7 @@ export function useFriends() {
       const client = getSupabase();
       if (isOnline) await flushSocialOutbox(db, client, id);
       const [friends, me] = await Promise.allSettled([
-        loadFriendInbox(db, client, id, Boolean(isOnline)),
+        profileOnly ? Promise.resolve(null) : loadFriendInbox(db, client, id, Boolean(isOnline)),
         loadSocialProfile(db, client, id, id, Boolean(isOnline)),
       ]);
       if (owner.current !== id) return;
@@ -63,13 +63,15 @@ export function useFriends() {
       if (owner.current !== id) return;
       setDataOwner(id);
       setOutbox(pending);
-      if (friends.status === 'fulfilled') {
+      if (friends.status === 'fulfilled' && friends.value) {
         setInbox(friends.value.data);
         setCached(friends.value.cached);
         setError(null);
-      } else {
+      } else if (friends.status === 'rejected') {
         setError(friends.reason instanceof Error ? friends.reason.message : String(friends.reason));
         setCached(true);
+      } else {
+        setError(null);
       }
       if (me.status === 'fulfilled') setOwnProfile(me.value.data);
       else if (profile)
@@ -91,7 +93,7 @@ export function useFriends() {
     } finally {
       if (owner.current === id) setLoading(false);
     }
-  }, [id, isOnline, profile]);
+  }, [id, isOnline, profile, profileOnly]);
   useEffect(() => {
     setInbox(null);
     setOwnProfile(null);

@@ -1,4 +1,44 @@
 export const en = {
+  fixes: {
+    choosePlanAgain: 'Return to plan selection',
+    checkoutPrice: 'See price at Dodo checkout',
+    dodoNotReady:
+      'Dodo checkout is not available yet. Please try again once payments are configured.',
+    nativeManagement:
+      'Manage this plan in the App Store or Google Play account where you subscribed.',
+    floorAdvisory: 'This is below the recommended minimum of {floor} kcal per day.',
+    rateAdvisory: 'This pace is above the recommended range.',
+    bmiAdvisory: 'Weight loss is not recommended at your current BMI.',
+    restoreSuccess: 'Purchases restored',
+    buyPlus: 'Get CaliPartner Plus',
+    buyPro: 'Get CaliPartner Pro',
+    dailyGoalsSummary: 'Step goal ({steps}), water intake',
+    socialGoal: 'Your goal',
+    bulk: 'Bulk',
+    cut: 'Cut',
+    friendsSetup:
+      'Friends is not available on the server yet. Update the app backend, then refresh.',
+    customPace: 'Your weekly pace (kg/week)',
+    advisory:
+      'This is outside our recommendation. You can choose your own pace and daily adjustment.',
+    invalidPlan:
+      'Enter a valid pace. Your calorie target must be positive and fit your protein and fat targets.',
+    storePrice: '{price} / {period}',
+    monthly: 'month',
+    annual: 'year',
+    priceUnavailable: 'Price unavailable',
+    storeTerms:
+      'Your checkout shows the price, eligible trial and renewal terms before you confirm.',
+    paymentPending: 'Waiting for payment verification. Check your plan status to continue.',
+    checkPayment: 'Check plan status',
+    promoUnavailable: 'Discounts are validated in checkout. No discount has been applied.',
+    signInPayment: 'Sign in before buying a plan so your purchase is linked to your account.',
+    paymentFailed: 'Payment was not completed. Please try again.',
+    storeNotReady: 'Payments are not configured for this platform yet.',
+    storeCancelled: 'Checkout was cancelled. Your plan has not changed.',
+    webRestore:
+      'Web subscriptions are linked to your account. Sign in with the account you used to pay.',
+  },
   friends: {
     title: 'Your friends',
     intro: 'Find someone you know by their username.',
@@ -45,8 +85,7 @@ export const en = {
       'Only share details you want people to see. Your body data and tracking logs stay private.',
     privateProfile: 'Social details are private',
     noBio: 'No social details added yet.',
-    profileRules:
-      'Up to 240 characters about you and 80 for training. Use a valid Instagram username and an HTTPS website.',
+    profileRules: 'Keep your bio within 240 characters.',
     save: 'Save social profile',
     savedLocally: 'Your changes save on this device first and sync when you are connected.',
     cached: 'Showing saved information. Refresh when you are connected.',

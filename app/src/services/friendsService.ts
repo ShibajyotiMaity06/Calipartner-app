@@ -273,7 +273,12 @@ async function remoteOrCache<T>(
       } = await client.auth.getUser();
       if (user?.id !== owner) throw new Error('NOT_AUTHORIZED');
       const { data, error } = await client.rpc(rpc, { ...args, p_actor_id: owner });
-      if (error) throw new Error(error.message);
+      if (error)
+        throw new Error(
+          /PGRST202|PGRST205|42883|42P01/.test(error.code ?? '')
+            ? 'SOCIAL_BACKEND_UNAVAILABLE'
+            : error.message,
+        );
       const visible = await filterBlocked(data);
       await cache(db, owner, key, visible);
       return { data: visible, cached: false };

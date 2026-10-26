@@ -1,5 +1,6 @@
 # CaliPartner — Master Build Plan (copy-paste prompts)
 
+> Latest owner-requested corrections, 25 October 2026: [Payment, profile and goal corrections](PAYMENT_PROFILE_GOAL_CORRECTIONS.md) supersede conflicting restrictions for this task.
 Put this file at `/docs/BUILD_PLAN.md`, the PRD at `/docs/PRD.md`, and `AGENT_RULES.md` in the repo root.
 
 > Current authorized scope: [Friends, social profiles and room limits](FRIENDS_AND_ROOM_LIMITS.md), explicitly requested by the owner. This supersedes conflicting room quotas and phase restrictions for these changes only.

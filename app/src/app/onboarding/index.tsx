@@ -433,9 +433,8 @@ export default function OnboardingScreen() {
                       key={rate.rateKgPerWeek}
                       testID={`rate-card-${rate.rateKgPerWeek}`}
                       title={t('setup.rate', { rate: rate.rateKgPerWeek })}
-                      description={`${t('setup.kcalDay', { kcal: rate.targetKcal.toLocaleString() })}${rate.rateKgPerWeek === snapshot.calculatedTargets?.recommendedRateKg ? ` · ${t('setup.recommended')}` : ''}${!rate.available ? ` · ${t('setup.unavailable')}: ${rate.reason === 'bmi_too_low' ? t('setup.bmiReason') : rate.reason === 'below_calorie_floor' ? t('setup.floorReason', { floor: snapshot.calculatedTargets?.safety.calorieFloor ?? 0 }) : rate.reason === 'macro_allocation' ? t('setup.macroReason') : t('setup.capReason', { cap: snapshot.calculatedTargets?.safety.rateCapKgPerWeek ?? 0 })}` : ''}`}
+                      description={`${t('setup.kcalDay', { kcal: rate.targetKcal.toLocaleString() })}${rate.rateKgPerWeek === snapshot.calculatedTargets?.recommendedRateKg ? ` - ${t('setup.recommended')}` : ''}`}
                       selected={snapshot.weeklyRateKg === rate.rateKgPerWeek}
-                      disabled={!rate.available}
                       onPress={() => {
                         machine.setWeeklyRate(rate.rateKgPerWeek);
                         update();
@@ -443,10 +442,21 @@ export default function OnboardingScreen() {
                     />
                   ))}
                 </View>
+                {snapshot.goal !== 'maintain' ? (
+                  <NumberField
+                    label={t('fixes.customPace')}
+                    value={snapshot.weeklyRateKg}
+                    onChange={(value) => {
+                      machine.setWeeklyRate(value ?? NaN);
+                      update();
+                    }}
+                    testID="input-custom-pace"
+                  />
+                ) : null}
                 <PlanSafetyNotice result={snapshot.calculatedTargets} />
                 {snapshot.errors.rate ? (
                   <Text fontSet="onboarding" accessibilityRole="alert" color={colors.danger}>
-                    {t('setup.chooseSafePace')}
+                    {t('fixes.invalidPlan')}
                   </Text>
                 ) : null}
                 <Pressable

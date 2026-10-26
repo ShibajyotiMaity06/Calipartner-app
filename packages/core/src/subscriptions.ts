@@ -578,3 +578,17 @@ export function getTrialBannerInfo(
     daysRemaining,
   };
 }
+
+/** Never apply simulated-store events; sandbox events need an isolated backend opt-in. */
+export function shouldApplyRevenueCatEvent(
+  event: { store?: string; environment?: string },
+  allowSandbox = false,
+): boolean {
+  const store = event.store?.toUpperCase();
+  if (
+    !store ||
+    !['APP_STORE', 'PLAY_STORE', 'MAC_APP_STORE', 'RC_BILLING', 'STRIPE', 'AMAZON'].includes(store)
+  )
+    return false;
+  return event.environment === 'PRODUCTION' || (allowSandbox && event.environment === 'SANDBOX');
+}

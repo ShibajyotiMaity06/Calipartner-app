@@ -1,7 +1,7 @@
 import React from 'react';
 import { Pressable, View } from 'react-native';
 import type { OnboardingState } from '@/services/onboardingStateMachine';
-import { CheckIcon, Text, onboardingLayout as layout, useTheme } from '@calipartner/ui';
+import { Text, useTheme } from '@calipartner/ui';
 import { t } from '@/i18n';
 import { NumberField, PlanCard, planStyles } from './PlanPrimitives';
 import { HeightField } from './HeightField';
@@ -66,9 +66,6 @@ export function TrainingStep({
               >
                 {day}
               </Text>
-              {day === state.gymDays ? (
-                <CheckIcon size={layout.icon} color={colors.onBrand} />
-              ) : null}
             </Pressable>
           ))}
         </View>

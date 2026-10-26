@@ -15,6 +15,7 @@ vi.mock('@calipartner/ui', () => ({
   HiddenMetric: 'HiddenMetric',
   Text: 'Text',
   SwitchRow: 'SwitchRow',
+  SegmentedControl: 'SegmentedControl',
   useTheme: () => ({ colors: { bg0: 'background', danger: 'danger' } }),
 }));
 vi.mock('@/components/onboarding/PlanPrimitives', () => ({
@@ -112,7 +113,7 @@ describe('social profile controls', () => {
     );
     await act(async () => renderer.unmount());
   });
-  it('requires a safe link and explicit sharing, and keeps the editor open when the durable save fails', async () => {
+  it('offers bio and bulk/cut without contact links, preserves explicit sharing and reports failed saves', async () => {
     const save = vi.fn(async () => false);
     const close = vi.fn();
     let renderer!: ReactTestRenderer;
@@ -122,19 +123,10 @@ describe('social profile controls', () => {
       );
     });
     expect(renderer.root.findByProps({ testID: 'social-sharing' }).props.value).toBe(false);
+    expect(renderer.root.findAllByProps({ testID: 'social-website' })).toHaveLength(0);
+    expect(renderer.root.findAllByProps({ testID: 'social-instagram' })).toHaveLength(0);
     await act(async () =>
-      renderer.root
-        .findByProps({ testID: 'social-website' })
-        .props.onChangeText('javascript:alert(1)'),
-    );
-    await act(async () =>
-      renderer.root.findByProps({ testID: 'save-social-profile' }).props.onPress(),
-    );
-    expect(save).not.toHaveBeenCalled();
-    await act(async () =>
-      renderer.root
-        .findByProps({ testID: 'social-website' })
-        .props.onChangeText('https://example.com/'),
+      renderer.root.findByProps({ testID: 'social-goal' }).props.onChange('bulk'),
     );
     await act(async () =>
       renderer.root.findByProps({ testID: 'social-sharing' }).props.onValueChange(true),
@@ -143,7 +135,12 @@ describe('social profile controls', () => {
       renderer.root.findByProps({ testID: 'save-social-profile' }).props.onPress(),
     );
     expect(save).toHaveBeenLastCalledWith(
-      expect.objectContaining({ is_public: true, website_url: 'https://example.com/' }),
+      expect.objectContaining({
+        is_public: true,
+        training_style: 'bulk',
+        website_url: '',
+        instagram_handle: '',
+      }),
     );
     expect(close).not.toHaveBeenCalled();
     save.mockResolvedValue(true);
