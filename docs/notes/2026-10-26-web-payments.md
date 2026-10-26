@@ -23,6 +23,8 @@ The production Expo export was served locally and opened in installed Google Chr
 
 No payment details were submitted, no charge or trial subscription was activated, and no entitlement was granted. The disposable Supabase account and its dependent test rows were deleted afterward. Browser screenshots and sanitized checkout summaries remain in the ignored local `.cache` directory. No existing customer's subscription or entitlement was altered.
 
+A second Chrome run verified a retry against the live function returned the same checkout URL. Dodo's actual back arrow and cancellation confirmation returned to the configured cancellation URL, showing the cancellation message without activation. An unpaid return preserved `/paywall` and remained pending. For that return check, browser requests to the configured app origin served the new local export; this verifies the return flow, not publication of the frontend to Vercel. Its separate disposable account was also removed.
+
 Automated coverage includes incorrect currency/price/cadence/trial rejection, international product and webhook mapping, exact checkout selection and retry reuse, signature rejection, account-bound webhook application/replay, unavailable catalog retry, cancellation, unverified return URLs, automatic confirmation from a matching server entitlement, startup navigation preservation, public build configuration, and same-tab portal navigation.
 
 ```text
@@ -39,6 +41,7 @@ Billing and goal database tests: 5 passed, 0 failed.
 Dodo Edge tests: ok | 9 passed | 0 failed.
 Web build: Exported: dist.
 Chrome: 8 live hosted checkout variants passed; no unpaid entitlement.
+Chrome: provider checkout cancellation, unpaid return and live retry reuse passed.
 ```
 
 ## Assumptions
@@ -49,7 +52,9 @@ This task covers the existing payment flow and approved pricing, rather than imp
 
 The checkout and webhook functions are deployed to `ipxsziqwrowxblwalnqj`. The repaired product secrets are live. The updated frontend must be published by the existing hosting deployment; a Git push alone is not evidence that Vercel has finished publishing it.
 
-A real customer must complete a purchase or eligible Plus trial, then confirm Dodo webhook delivery HTTP 200 and the matching Supabase entitlement. A real renewal, refund, cancellation and customer-portal session have not been exercised. Native store purchases remain outside this Chrome verification. The app never activates access merely because a browser returns from checkout.
+Implementation commit `38a6a6b` was pushed to `main` with the repository's configured CaliPartner deploy SSH identity after all checks passed. A subsequent public-host check still returned the previous bundle. Vercel is not connected in this session; publishing from here requires installing and connecting that integration, or deploying the pushed source through the existing Vercel account.
+
+A real customer must complete a purchase or eligible Plus trial, then confirm Dodo webhook delivery HTTP 200 and the matching Supabase entitlement. A real renewal, refund, subscription cancellation and customer-portal session have not been exercised. Native store purchases remain outside this Chrome verification. The app never activates access merely because a browser returns from checkout.
 
 ## Later work observed
 
