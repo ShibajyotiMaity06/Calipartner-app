@@ -3,7 +3,7 @@
 Chrome uses Dodo directly. Android and iOS retain RevenueCat store billing. The browser requires no RevenueCat web key or Stripe account.
 
 1. Create or open your [Dodo account](https://app.dodopayments.com), finish the business/account verification and enable live payments. Test mode is for an isolated test backend.
-2. Create four recurring subscription products: Plus monthly, Plus yearly, Pro monthly and Pro yearly. Retain the approved amounts/currencies. Configure the 7-day trial on Plus only; Pro has no trial. Copy each product ID (`pdt_...`). The live checkout displays the final local price, taxes and renewal/trial terms.
+2. Create four recurring subscription products: Plus monthly (₹249 / $4.99), Plus yearly (₹1,499 / $29.99), Pro monthly (₹499 / $9.99) and Pro yearly (₹2,499 / $49.99). Configure the 7-day trial on Plus only; Pro has no trial. Copy each product ID (`pdt_...`). The live checkout displays the final local price, taxes and renewal/trial terms.
 3. In Dodo Developer settings, create a live API key. In Supabase Project Settings, Edge Functions, Secrets, set these values. Do not paste secret values into chat, app config, git or any `EXPO_PUBLIC_*` variable.
 
 ```dotenv
@@ -11,7 +11,9 @@ DODO_PAYMENTS_API_KEY=<live API key>
 DODO_ENVIRONMENT=live_mode
 DODO_ALLOW_TEST_MODE=false
 DODO_APP_URL=https://<your existing app domain>
-DODO_PRODUCTS_JSON={"plus_monthly":"pdt_...","plus_annual":"pdt_...","pro_monthly":"pdt_...","pro_annual":"pdt_..."}
+# Production India INR products:
+DODO_PRODUCTS_JSON={"plus_monthly":"pdt_0NqYkFnrBtumqnnW6amME","plus_annual":"pdt_0NqYjxau37A8F15U4ovnt","pro_monthly":"pdt_0NqYkgvwBKDtjSQRQxwbm","pro_annual":"pdt_0NqYkSYMM9n1wJoZLJp9Y"}
+# (Or Global USD products: {"plus_monthly":"pdt_0Np8JSfvie3Eqg47kDEzZ","plus_annual":"pdt_0Np8JdWRcfrMjQyruTzkE","pro_monthly":"pdt_0Np8JFZXhiKHXsUJH9GD8","pro_annual":"pdt_0Np8IxfM0q2BFdPQHPMDC"})
 ```
 
 4. In Dodo, open **Developer > Webhooks > Add endpoint**. Use `https://ipxsziqwrowxblwalnqj.supabase.co/functions/v1/dodo-webhook`. Subscribe to subscription events, `refund.succeeded` and `dispute.lost`. Copy the endpoint signing secret to the Supabase secret `DODO_PAYMENTS_WEBHOOK_KEY`.

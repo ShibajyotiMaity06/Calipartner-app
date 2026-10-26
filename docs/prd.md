@@ -5,7 +5,8 @@
 
 > Owner-approved revision, 24 October 2026: [Rooms and onboarding v3](ROOMS_V3.md) supersedes conflicting room access, host capacities, individual feature gates, lifecycle and onboarding requirements below.
 
-> Owner-approved update, 24 October 2026: the onboarding journey and new-plan calculator are superseded by [the onboarding redesign](ONBOARDING_REDESIGN.md). Existing pricing is retained: free Basic, a 7-day Plus trial, and no Pro trial. Historical targets retain their previous calculator.
+> Owner-approved update, 26 October 2026: the official pricing and feature specifications are defined in [Plans, Features and Pricing](PLANS_AND_FEATURES.md). Live pricing is **Plus: ₹249/mo ($4.99), ₹1,499/yr ($29.99)** with a 7-day trial; **Pro: ₹499/mo ($9.99), ₹2,499/yr ($49.99)** with no trial. Basic remains free forever.
+> Owner-approved update, 24 October 2026: the onboarding journey and new-plan calculator are superseded by [the onboarding redesign](ONBOARDING_REDESIGN.md). Historical targets retain their previous calculator.
 
 
 | Field | Detail |
@@ -522,6 +523,9 @@ Progress is shown for the user individually and for everyone in a room. All grap
 
 
 ### 6.18 Subscription and Paywall
+
+> [!NOTE]
+> **Owner Update (26 October 2026):** Official current pricing and tier rules are maintained in [Plans, Features and Pricing (PLANS_AND_FEATURES.md)](PLANS_AND_FEATURES.md) and [ROOMS_V3.md](ROOMS_V3.md). Current pricing: **Plus** ₹249/mo ($4.99) & ₹1,499/yr ($29.99) with 7-day trial; **Pro** ₹499/mo ($9.99) & ₹2,499/yr ($49.99) with no trial. The tables below show earlier v0.4 proposals retained for context.
 
 From v0.4 the **room is what gets billed**. One user, the plan holder (normally the host), buys a Room Plan sized to the number of people in the room. Everyone else in that room joins for free. The same payment also unlocks the plan holder's personal premium tools: the AI coach and the Partner Finder. Personal tracking stays free for everybody.
 

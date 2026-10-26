@@ -4,6 +4,8 @@
 
 This replaces the earlier pricing completely. I researched what your stack actually costs (database, servers, AI, email, store fees, GST), what Indian and global users pay for similar apps, and ran a month-by-month model for five years.
 
+> **Owner Update (26 October 2026):** The live pricing has been updated to **Plus: ₹249/mo ($4.99), ₹1,499/yr ($29.99)** with a 7-day trial; **Pro: ₹499/mo ($9.99), ₹2,499/yr ($49.99)** with no trial. See the full official breakdown in [PLANS_AND_FEATURES.md](PLANS_AND_FEATURES.md).
+
 > **What changed from v1 (your latest decisions).** (1) **AI is Claude Haiku 5.5 only**, capped at **5 photo scans and 10 coach messages per day**. (2) **No 50% price for everyone who joins a room.** Joiners buy Plus at full price with a 7-day trial; discount codes exist only for partners you choose. (3) **Lean launch:** the only spend is store fees, hosting and nothing for marketing, and the profit tables **exclude marketing** (section 5.7 shows what ads would do). (4) **GPS tracking is Free** along with steps and distance.
 
 > **How to read the numbers.** Costs are researched (sources at the end). Conversion, retention and install volume are **assumptions** anchored on published benchmarks, shown as three scenarios. Treat the profit tables as a range, not a forecast. "Profit" means cash left after servers, AI, store fees, GST, support and fixed costs, **before** marketing, your own salary and income tax (about 25% for a company).
@@ -12,15 +14,15 @@ This replaces the earlier pricing completely. I researched what your stack actua
 
 ## 1. The answer
 
-### 1.1 Final plans
+### 1.1 Final plans (Updated 26 Oct 2026)
 
 | | **Free** | **Plus** | **Pro** |
 |---|---|---|---|
-| Per month | ₹0 | **₹99** ($5.99) | **₹199** ($11.99) |
-| Per year | ₹0 | **₹599** ($39.99) · about ₹50 a month | **₹1,199** ($79.99) · about ₹100 a month |
-| Annual saving | — | about 50% in ₹ (₹589 less than 12 months), 44% in $ | about 50% in ₹ (₹1,189 less), 44% in $ |
+| Per month | ₹0 | **₹249** ($4.99) | **₹499** ($9.99) |
+| Per year | ₹0 | **₹1,499** ($29.99) · ₹125 a month | **₹2,499** ($49.99) · ₹208 a month |
+| Annual saving | — | about 50% in ₹ (₹1,489 less than 12 months), 50% in $ | about 58% in ₹ (₹3,489 less), 58% in $ |
 | Who it is for | Anyone who wants to track food, steps, runs and workouts | Anyone who wants a partner or a room, plus power tools | People who want the AI coach and photo logging |
-| Free trial | — | 7 days | 7 days |
+| Free trial | — | 7 days | No trial (0 days) |
 
 **Joining a room has no discount.** Someone who joins with a code or link and has no plan sees Plus at the normal price with the 7-day trial. If they already hold Plus or Pro, nothing changes. **Collaboration codes** (section 8.2) give 50% off the first year, only to people who come through partners you choose.
 
