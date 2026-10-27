@@ -284,7 +284,7 @@ export function WeightCard({ selectedDate, testID = 'weight-card' }: WeightCardP
             {/* Projected Date in body-s */}
             {projectedDate && (
               <View style={styles.projectionNoticeRow} testID="weight-projected-date">
-                <Ionicons name="sparkles" size={14} color={dark.teal} />
+                <Ionicons name="information-circle-outline" size={14} color={dark.teal} />
                 <Text style={styles.projectionBodyS}>
                   {t('trackers.weight.projectedReach', { date: projectedDate })}
                 </Text>

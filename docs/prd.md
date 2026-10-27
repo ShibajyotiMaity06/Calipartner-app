@@ -1,5 +1,8 @@
 # CaliPartner: Product Requirements Document (PRD)
 
+> Owner-requested repairs, 27 October 2026: repair barcode focus/capture and narrow-screen layouts, reset the Log hub on every opening, remove decorative stars, repair room invitation notifications against the current host schema, preserve scan nutrition including fibre/sugar/sodium/saturated fat/cholesterol, and restrict advanced scan displays to active Plus/Pro with a locked upgrade preview for Free. Replace fabricated home squad content with actual room state. This scope authorizes the necessary view, core, sync, database and Edge Function repairs only; unrelated phases remain excluded.
+
+
 > Owner-requested corrections, 26 October 2026: all signed-in users can browse discoverable profiles with one goal filter (bulk, cut or maintain) and universal username search; Free remains limited to three friend requests per rolling seven days. Onboarding shows a random real profile. Squad creation replaces the separate pair entry point, inviting accepted friends under the existing host quotas (Free one friend, Plus four, Pro nineteen). Friendship still requires explicit room invitation acceptance before sharing. Friend sends and acceptance use the existing request push channel and inbox badges. Remove the workout hub Cardio shortcut and floating Pro AI badge; use a green food icon and neutral browser chrome. These changes supersede conflicting phase, paid-discovery and UI-only restrictions for this request.
 
 

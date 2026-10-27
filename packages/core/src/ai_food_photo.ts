@@ -254,12 +254,12 @@ export function buildVisionModelSystemPrompt(): string {
     '2. "estimated_grams": estimated weight in grams (number between 1 and 5000).',
     '3. "confidence": estimation confidence score between 0.0 and 1.0.',
     '4. "description": optional short note on visual portion or appearance.',
-    '5. "nutrition_per_100g": estimated nutrition for this specific food with numeric calories (kcal), protein, carbs, fat and fiber (grams), per 100 grams. Include it for every food. These are estimates for review, not measured values.',
+    '5. "nutrition_per_100g": estimated nutrition for this specific food with numeric calories (kcal), protein, carbs, fat, fiber, sugar, saturated_fat (grams), sodium_mg and cholesterol_mg (milligrams), per 100 grams. Use null for unknown optional saturated_fat or cholesterol_mg; never invent measured values. Include it for every food. These are estimates for review, not measured values.',
     '',
     'Output MUST be strictly valid JSON matching this schema:',
     '{',
     '  "items": [',
-    '    { "food_name": "string", "estimated_grams": number, "confidence": number, "description": "string", "nutrition_per_100g": {"calories": number, "protein": number, "carbs": number, "fat": number, "fiber": number} }',
+    '    { "food_name": "string", "estimated_grams": number, "confidence": number, "description": "string", "nutrition_per_100g": {"calories": number, "protein": number, "carbs": number, "fat": number, "fiber": number, "sugar": number, "sodium_mg": number, "saturated_fat": number|null, "cholesterol_mg": number|null} }',
     '  ],',
     '  "detected_meal_type": "breakfast" | "lunch" | "dinner" | "snacks" | "extra"',
     '}',
@@ -390,20 +390,32 @@ function validateVisionNutrition(
     )
       throw new MalformedAiModelOutputError('Invalid food nutrition');
   }
-  if (
-    value.fiber != null &&
-    (typeof value.fiber !== 'number' ||
-      !Number.isFinite(value.fiber) ||
-      value.fiber < 0 ||
-      value.fiber > 100)
-  )
-    throw new MalformedAiModelOutputError('Invalid food fiber');
+  for (const [key, maximum] of [
+    ['fiber', 100],
+    ['sugar', 100],
+    ['sodium_mg', 100000],
+    ['saturated_fat', 100],
+    ['cholesterol_mg', 100000],
+  ] as const) {
+    if (
+      value[key] != null &&
+      (typeof value[key] !== 'number' ||
+        !Number.isFinite(value[key]) ||
+        Number(value[key]) < 0 ||
+        Number(value[key]) > maximum)
+    )
+      throw new MalformedAiModelOutputError('Invalid food nutrition');
+  }
   return {
     calories: value.calories as number,
     protein: value.protein as number,
     carbs: value.carbs as number,
     fat: value.fat as number,
     fiber: value.fiber as number | undefined,
+    sugar: value.sugar as number | undefined,
+    sodium_mg: value.sodium_mg as number | undefined,
+    saturated_fat: value.saturated_fat as number | null | undefined,
+    cholesterol_mg: value.cholesterol_mg as number | null | undefined,
   };
 }
 
@@ -436,8 +448,12 @@ export function createFallbackEstimateFood(
     carbs_per_100g: nutrients.carbs,
     fat_per_100g: nutrients.fat,
     fiber_per_100g: nutrients.fiber ?? 0,
-    sugar_per_100g: 0,
-    sodium_mg_per_100g: 0,
+    sugar_per_100g: nutrients.sugar ?? 0,
+    sodium_mg_per_100g: nutrients.sodium_mg ?? 0,
+    nutrition_details: {
+      saturated_fat: nutrients.saturated_fat ?? null,
+      cholesterol_mg: nutrients.cholesterol_mg ?? null,
+    },
     owner_id: null,
     attribution: 'AI Estimate',
     created_at: now,
@@ -489,6 +505,7 @@ export function mapVisionItemToFood(
 
   // Search catalog for closest name match
   for (const food of foodsCatalog) {
+    if (food.nutrition_details?.locked) continue;
     // Exact or substring match gets high priority
     const lowerItem = item.food_name.toLowerCase().trim();
     const lowerFood = food.name.toLowerCase().trim();
@@ -516,7 +533,7 @@ export function mapVisionItemToFood(
   }
 
   // Threshold: if score >= 0.4, use matched database food; otherwise fallback to estimate food
-  const matchedFood =
+  let matchedFood =
     bestScore >= 0.4 && bestMatch
       ? bestMatch
       : createFallbackEstimateFood(
@@ -525,6 +542,19 @@ export function mapVisionItemToFood(
           clientCandidateId,
           item.nutrition_per_100g,
         );
+
+  if (bestScore >= 0.4 && bestMatch && item.nutrition_per_100g) {
+    const estimate = validateVisionNutrition(item.nutrition_per_100g);
+    matchedFood = {
+      ...matchedFood,
+      nutrition_details: {
+        saturated_fat:
+          matchedFood.nutrition_details?.saturated_fat ?? estimate.saturated_fat ?? null,
+        cholesterol_mg:
+          matchedFood.nutrition_details?.cholesterol_mg ?? estimate.cholesterol_mg ?? null,
+      },
+    };
+  }
 
   const nutrients: NutrientSnapshot = scaleNutrients(matchedFood, item.estimated_grams, 'g');
 

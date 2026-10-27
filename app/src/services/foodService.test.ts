@@ -35,6 +35,7 @@ function createTestDb(): SyncDb {
     );
 
     CREATE TABLE local_foods (
+      nutrition_details TEXT,
       id TEXT PRIMARY KEY NOT NULL,
       source TEXT NOT NULL,
       name TEXT NOT NULL,
@@ -57,6 +58,7 @@ function createTestDb(): SyncDb {
     );
 
     CREATE TABLE local_food_entries (
+      nutrition_details TEXT,
       id TEXT PRIMARY KEY NOT NULL,
       user_id TEXT NOT NULL,
       food_id TEXT,
@@ -139,6 +141,49 @@ function createTestDb(): SyncDb {
 }
 
 describe('Food Service & Local Database', () => {
+  it('preserves scan nutrition through offline logging, editing, copying and queued sync', async () => {
+    const db = createTestDb();
+    const food = await saveCustomFood(db, 'u1', {
+      name: 'Scanned cereal',
+      calories_per_100g: 400,
+      protein_per_100g: 12,
+      carbs_per_100g: 70,
+      fat_per_100g: 7,
+      fiber_per_100g: 9,
+      sugar_per_100g: 11,
+      sodium_mg_per_100g: 350,
+      serving_units: [{ unit: 'g', grams: 1 }],
+      nutrition_details: { saturated_fat: 2, cholesterol_mg: 10 },
+    });
+    const cached = (await searchLocalFoods(db, 'Scanned cereal', 'u1'))[0]!;
+    expect(cached.nutrition_details).toEqual(food.nutrition_details);
+    const entry = await logFoodEntry(db, {
+      userId: 'u1',
+      food,
+      quantity: 50,
+      unit: 'g',
+      localDate: '2026-10-27',
+      mealSection: 'breakfast',
+      source: 'photo',
+    });
+    expect(entry.nutrition_details).toEqual({ saturated_fat: 1, cholesterol_mg: 5 });
+    await editFoodEntry(db, entry.id, { quantity: 100 });
+    const edited = (await getEntriesForDate(db, 'u1', '2026-10-27'))[0]!;
+    expect(edited).toMatchObject({
+      fiber: 9,
+      sugar: 11,
+      sodium_mg: 350,
+      nutrition_details: food.nutrition_details,
+    });
+    const copied = await copyEntireDay(db, 'u1', '2026-10-27', '2026-10-28');
+    expect(copied[0]?.nutrition_details).toEqual(food.nutrition_details);
+    expect((await getEntriesForDate(db, 'u1', '2026-10-28'))[0]?.nutrition_details).toEqual(
+      food.nutrition_details,
+    );
+    const queued = await getPendingOutboxItems(db);
+    const payload = queued.find((item) => item.id === entry.id)!.payload;
+    expect(payload).toMatchObject({ nutrition_details: food.nutrition_details });
+  });
   it('seeds bundled foods on initial run and is idempotent', async () => {
     const db = createTestDb();
 

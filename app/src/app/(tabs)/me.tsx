@@ -85,7 +85,7 @@ export default function MeScreen() {
       'Enjoying your accountability partner journey? Your review helps more people reach their health goals.',
       [
         { text: 'Not now', style: 'cancel' },
-        { text: '5 Stars ★', onPress: () => {} },
+        { text: '5 Stars', onPress: () => {} },
       ],
     );
   };

@@ -36,7 +36,7 @@ export function ChallengesComingSoon({
       <View
         style={[styles.badge, { backgroundColor: colors.surfaceAlt, borderColor: colors.border }]}
       >
-        <Ionicons name="sparkles" size={14} color={colors.accent} />
+        <Ionicons name="information-circle-outline" size={14} color={colors.accent} />
         <Text style={[styles.badgeText, { color: colors.textMuted }]}>Phase 8 Feature</Text>
       </View>
     </View>

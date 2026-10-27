@@ -33,7 +33,7 @@ export async function lookupBarcode(
 
   // 1. Check local SQLite first
   const localMatch = await findLocalFoodByBarcode(db, clean, userId);
-  if (localMatch) {
+  if (localMatch && (!isOnline || !localMatch.nutrition_details?.locked)) {
     log.info(`Found barcode ${clean} in local cache`);
     return { food: localMatch, source: 'local' };
   }
@@ -55,8 +55,8 @@ export async function lookupBarcode(
             id, source, name, brand, barcode, serving_units,
             calories_per_100g, protein_per_100g, carbs_per_100g, fat_per_100g,
             fiber_per_100g, sugar_per_100g, sodium_mg_per_100g,
-            owner_id, attribution, created_at, updated_at, deleted_at, sync_state
-          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NULL, ?, ?, ?, NULL, 'synced')
+            owner_id, attribution, created_at, updated_at, deleted_at, sync_state, nutrition_details
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NULL, ?, ?, ?, NULL, 'synced', ?)
           ON CONFLICT (id) DO UPDATE SET
             name = excluded.name,
             brand = excluded.brand,
@@ -70,6 +70,7 @@ export async function lookupBarcode(
             sugar_per_100g = excluded.sugar_per_100g,
             sodium_mg_per_100g = excluded.sodium_mg_per_100g,
             attribution = excluded.attribution,
+            nutrition_details = excluded.nutrition_details,
             updated_at = excluded.updated_at`,
           [
             remoteFood.id,
@@ -88,6 +89,7 @@ export async function lookupBarcode(
             remoteFood.attribution ?? 'Open Food Facts',
             now,
             now,
+            JSON.stringify(remoteFood.nutrition_details ?? null),
           ],
         );
 

@@ -3,6 +3,7 @@
     "strict": true
   },
   "imports": {
-    "@calipartner/core": "../../packages/core/src/index.ts"
+    "@calipartner/core": "../../packages/core/src/index.ts",
+    "../../../packages/core/src/advancedNutrition": "../../../packages/core/src/advancedNutrition.ts"
   }
 }

@@ -72,7 +72,7 @@ export function OverCapacityBanner({
             accessibilityLabel={t('rooms.overCapacity.upgradeBtn')}
             testID="btn-over-capacity-upgrade"
           >
-            <Ionicons name="sparkles" size={14} color="#FFFFFF" />
+            <Ionicons name="information-circle-outline" size={14} color="#FFFFFF" />
             <Text style={styles.upgradeBtnText}>{t('rooms.overCapacity.upgradeBtn')}</Text>
           </Pressable>
 

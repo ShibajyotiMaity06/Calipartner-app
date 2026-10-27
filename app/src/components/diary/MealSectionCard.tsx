@@ -2,7 +2,7 @@ import React from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import type { DiarySectionSummary, FoodEntry, MealSection } from '@calipartner/core';
-import { Text, dark, space, radius } from '@calipartner/ui';
+import { Text, dark, space, radius, captureLayout } from '@calipartner/ui';
 import { useSectionSuggestions, type SectionSuggestion } from '@/hooks/useSectionSuggestions';
 import { t } from '@/i18n';
 
@@ -51,7 +51,11 @@ export function MealSectionCard({
       testID={testID ?? `card-section-${section}`}
       onPress={() => onOpenDetail?.(section)}
       style={({ pressed }) => [styles.card, pressed && styles.cardPressed]}
-      accessibilityLabel={`${sectionName}, ${summary.calories} calories, ${summary.entries.length} items`}
+      accessibilityLabel={t('repairs.mealSummary', {
+        section: sectionName,
+        calories: summary.calories,
+        count: summary.entries.length,
+      })}
     >
       {/* Header Row */}
       <View style={styles.headerRow}>
@@ -65,26 +69,11 @@ export function MealSectionCard({
               color={isCurrentMealSuggestion ? dark.onBrand : dark.textMid}
             />
           </View>
-          <View>
-            <Text variant="heading" color={dark.textHi}>
-              {sectionName}
-            </Text>
-            {summary.entries.length > 0 ? (
-              <Text variant="bodyS" color={dark.textLo}>
-                P {summary.protein}g · C {summary.carbs}g · F {summary.fat}g
-              </Text>
-            ) : null}
-          </View>
-        </View>
-
-        <View style={styles.headerRight}>
-          <Text variant="numeralM" color={summary.calories > 0 ? dark.textHi : dark.textLo}>
-            {summary.calories}{' '}
-            <Text variant="bodyS" color={dark.textLo}>
-              kcal
-            </Text>
+          <Text variant="heading" color={dark.textHi} style={styles.sectionTitle}>
+            {sectionName}
           </Text>
-
+        </View>
+        <View style={styles.headerRight}>
           {/* Trailing 32 Circle ＋ Button (Spec C01) */}
           <Pressable
             testID={`btn-add-food-${section}`}
@@ -95,7 +84,7 @@ export function MealSectionCard({
             hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
             style={[styles.addPlusButton, isCurrentMealSuggestion && styles.addPlusButtonSuggested]}
             accessibilityRole="button"
-            accessibilityLabel={`Add food to ${sectionName}`}
+            accessibilityLabel={t('repairs.addFood', { section: sectionName })}
           >
             <Ionicons
               name="add"
@@ -106,11 +95,31 @@ export function MealSectionCard({
         </View>
       </View>
 
+      <View style={styles.metrics} testID={`meal-metrics-${section}`}>
+        {(
+          [
+            ['calories', 'kcal', t('repairs.calories')],
+            ['protein', 'g', t('repairs.protein')],
+            ['carbs', 'g', t('repairs.carbs')],
+            ['fat', 'g', t('repairs.fat')],
+          ] as const
+        ).map(([key, unit, label]) => (
+          <View key={key} style={styles.metric}>
+            <Text variant="bodyS" color={dark.textMid}>
+              {label}
+            </Text>
+            <Text variant="body" color={dark.textHi} style={styles.metricValue}>
+              {summary[key]} {unit}
+            </Text>
+          </View>
+        ))}
+      </View>
+
       {/* Smart Section Suggestions Bar for non-empty meals (LOG-14) */}
       {summary.entries.length > 0 && suggestions.length > 0 && (
         <View style={styles.suggestionsContainer}>
           <Text variant="label" color={dark.textLo} style={styles.suggestionLabel}>
-            SUGGESTED
+            {t('repairs.suggested')}
           </Text>
           <View style={styles.suggestionsRow}>
             {suggestions.slice(0, 3).map((s) => (
@@ -124,7 +133,7 @@ export function MealSectionCard({
                 style={styles.suggestionPill}
               >
                 <Ionicons name="add" size={12} color={dark.apricot} />
-                <Text variant="bodyS" color={dark.textHi} numberOfLines={1}>
+                <Text variant="bodyS" color={dark.textHi}>
                   {s.food_name}
                 </Text>
               </Pressable>
@@ -150,8 +159,8 @@ export function MealSectionCard({
               }}
               style={({ pressed }) => [styles.entryRow, pressed && styles.entryRowPressed]}
             >
-              <View style={{ flex: 1 }}>
-                <Text variant="bodyS" color={dark.textHi} numberOfLines={1}>
+              <View style={styles.entryName}>
+                <Text variant="bodyS" color={dark.textHi}>
                   {entry.food_name}
                 </Text>
                 <Text variant="micro" color={dark.textLo}>
@@ -166,6 +175,9 @@ export function MealSectionCard({
                 </Text>
                 <Pressable
                   testID={`btn-delete-${entry.id}`}
+                  style={styles.deleteButton}
+                  accessibilityRole="button"
+                  accessibilityLabel={t('repairs.deleteFood', { name: entry.food_name })}
                   onPress={(e) => {
                     e.stopPropagation();
                     onDeleteEntry(entry.id);
@@ -180,7 +192,7 @@ export function MealSectionCard({
 
           {hasMore && (
             <Text variant="bodyS" color={dark.apricot} style={styles.viewMoreText}>
-              +{summary.entries.length - 3} more items · tap to view all
+              {t('repairs.moreItems', { count: summary.entries.length - 3 })}
             </Text>
           )}
         </View>
@@ -190,6 +202,18 @@ export function MealSectionCard({
 }
 
 const styles = StyleSheet.create({
+  sectionTitle: { flex: 1, minWidth: 0 },
+  metrics: { flexDirection: 'row', flexWrap: 'wrap', gap: space[3] },
+  metric: { flexGrow: 1, flexBasis: captureLayout.mealMetricBasis, minWidth: 0, gap: space[1] },
+  metricValue: { fontVariant: ['tabular-nums'] },
+  entryName: { flexGrow: 1, flexBasis: captureLayout.nutrientMinWidth, minWidth: 0 },
+  deleteButton: {
+    minWidth: captureLayout.touch,
+    minHeight: captureLayout.touch,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+
   card: {
     backgroundColor: dark.s1,
     borderRadius: radius.card,
@@ -207,6 +231,8 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   headerLeft: {
+    flex: 1,
+    minWidth: 0,
     flexDirection: 'row',
     alignItems: 'center',
     gap: space[3],
@@ -228,8 +254,8 @@ const styles = StyleSheet.create({
     gap: space[3],
   },
   addPlusButton: {
-    width: 32,
-    height: 32,
+    width: captureLayout.touch,
+    height: captureLayout.touch,
     borderRadius: radius.full,
     backgroundColor: dark.s2,
     borderWidth: 1,
@@ -253,6 +279,8 @@ const styles = StyleSheet.create({
     gap: space[2],
   },
   suggestionPill: {
+    maxWidth: '100%',
+    minHeight: captureLayout.touch,
     flexDirection: 'row',
     alignItems: 'center',
     gap: space[1],
@@ -270,6 +298,8 @@ const styles = StyleSheet.create({
     paddingTop: space[2],
   },
   entryRow: {
+    flexWrap: 'wrap',
+    gap: space[2],
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',

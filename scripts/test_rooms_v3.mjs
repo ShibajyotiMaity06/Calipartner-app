@@ -33,6 +33,8 @@ try {
   await runFoodCaptureTests(db);
   const { runPushDeliveryTests } = await import('./push_delivery_cases.mjs');
   await runPushDeliveryTests(db);
+  const { runScanRepairTests } = await import('./scan_repair_cases.mjs');
+  await runScanRepairTests(db);
 } finally {
   await db.close();
 }

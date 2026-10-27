@@ -31,6 +31,7 @@ function createTestDb(): SyncDb {
     );
 
     CREATE TABLE local_food_entries (
+      nutrition_details TEXT,
       id TEXT PRIMARY KEY NOT NULL,
       user_id TEXT NOT NULL,
       food_id TEXT,
@@ -71,6 +72,7 @@ function createTestDb(): SyncDb {
     );
 
     CREATE TABLE local_foods (
+      nutrition_details TEXT,
       id TEXT PRIMARY KEY NOT NULL,
       source TEXT NOT NULL,
       name TEXT NOT NULL,
@@ -305,6 +307,7 @@ describe('Offline-First Sync Layer', () => {
         fiber: 2,
         sugar: 1,
         sodium_mg: 50,
+        nutrition_details: { saturated_fat: 3, cholesterol_mg: 10 },
         food_name: 'Rice',
         logged_at: '2026-10-08T12:00:00Z',
         local_date: '2026-10-08',
@@ -332,6 +335,13 @@ describe('Offline-First Sync Layer', () => {
       calories: number;
       updated_at: string;
     }>(`SELECT quantity, calories, updated_at FROM local_food_entries WHERE id = 'entry-lww'`);
+    const metadata = await db.getFirstAsync<{ nutrition_details: string }>(
+      "SELECT nutrition_details FROM local_food_entries WHERE id = 'entry-lww'",
+    );
+    expect(JSON.parse(metadata!.nutrition_details)).toEqual({
+      saturated_fat: 3,
+      cholesterol_mg: 10,
+    });
     expect(updatedLocal?.quantity).toBe(2);
     expect(updatedLocal?.calories).toBe(600);
     expect(updatedLocal?.updated_at).toBe('2026-10-08T12:30:00Z');

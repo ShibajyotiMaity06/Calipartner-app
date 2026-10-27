@@ -28,3 +28,5 @@ export * from './friends';
 export * from './dodoBilling';
 export * from './localDay';
 export * from './barcodes';
+
+export * from './advancedNutrition';

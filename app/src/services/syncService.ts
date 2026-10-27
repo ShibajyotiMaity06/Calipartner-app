@@ -421,8 +421,8 @@ export async function pullEntityDelta(
             id, user_id, food_id, meal_section, quantity, unit,
             calories, protein, carbs, fat, fiber, sugar, sodium_mg,
             food_name, brand_name, logged_at, local_date, source,
-            shared_meal_id, created_at, updated_at, deleted_at, sync_state
-          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'synced')
+            shared_meal_id, created_at, updated_at, deleted_at, sync_state, nutrition_details
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'synced', ?)
           ON CONFLICT (id) DO UPDATE SET
             user_id = excluded.user_id,
             food_id = excluded.food_id,
@@ -444,7 +444,8 @@ export async function pullEntityDelta(
             shared_meal_id = excluded.shared_meal_id,
             updated_at = excluded.updated_at,
             deleted_at = excluded.deleted_at,
-            sync_state = 'synced'`,
+            nutrition_details = excluded.nutrition_details,
+          sync_state = 'synced'`,
           [
             row.id,
             row.user_id,
@@ -468,6 +469,9 @@ export async function pullEntityDelta(
             row.created_at ?? row.logged_at,
             row.updated_at,
             row.deleted_at ?? null,
+            typeof row.nutrition_details === 'string'
+              ? row.nutrition_details
+              : JSON.stringify(row.nutrition_details ?? null),
           ],
         );
       }
@@ -515,8 +519,8 @@ export async function pullEntityDelta(
           id, source, name, brand, barcode, serving_units,
           calories_per_100g, protein_per_100g, carbs_per_100g, fat_per_100g,
           fiber_per_100g, sugar_per_100g, sodium_mg_per_100g,
-          owner_id, attribution, created_at, updated_at, deleted_at, sync_state
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'synced')
+          owner_id, attribution, created_at, updated_at, deleted_at, sync_state, nutrition_details
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'synced', ?)
         ON CONFLICT (id) DO UPDATE SET
           name = excluded.name,
           brand = excluded.brand,
@@ -532,6 +536,7 @@ export async function pullEntityDelta(
           attribution = excluded.attribution,
           updated_at = excluded.updated_at,
           deleted_at = excluded.deleted_at,
+          nutrition_details = excluded.nutrition_details,
           sync_state = 'synced'`,
         [
           row.id,
@@ -552,6 +557,9 @@ export async function pullEntityDelta(
           row.created_at ?? new Date().toISOString(),
           row.updated_at,
           row.deleted_at ?? null,
+          typeof row.nutrition_details === 'string'
+            ? row.nutrition_details
+            : JSON.stringify(row.nutrition_details ?? null),
         ],
       );
     } else if (entity === 'water_logs') {

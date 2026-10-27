@@ -38,7 +38,7 @@ export function FloatingAiCoachButton({
 
         {/* Inner Content */}
         <View style={styles.innerContent}>
-          <Ionicons name="sparkles" size={20} color={dark.apricot} />
+          <Ionicons name="information-circle-outline" size={20} color={dark.apricot} />
           <Text variant="micro" color={dark.textHi} style={styles.label}>
             AI Coach
           </Text>

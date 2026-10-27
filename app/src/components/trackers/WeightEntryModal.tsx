@@ -217,7 +217,7 @@ export function WeightEntryModal({
               {/* Plain words change vs last entry */}
               {plainWordsChange && (
                 <View style={styles.plainWordsPill} testID="plain-words-change">
-                  <Ionicons name="sparkles-outline" size={14} color={dark.teal} />
+                  <Ionicons name="information-circle-outline" size={14} color={dark.teal} />
                   <Text style={styles.plainWordsText}>{plainWordsChange}</Text>
                 </View>
               )}

@@ -12,6 +12,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import {
   scaleNutrients,
+  sumNutrientSnapshots,
   type Food,
   type FoodCandidateItem,
   type MealSection,
@@ -22,6 +23,7 @@ import { t } from '@/i18n';
 import { swapCandidateFood, updateCandidateQuantity } from '@/services/aiFoodPhotoService';
 import { generateClientUuid, searchLocalFoods } from '@/services/foodService';
 import { fontSize, radius, spacing } from '@/theme/tokens';
+import { AdvancedNutrition } from '../diary/AdvancedNutrition';
 import { useTheme } from '@/theme/useTheme';
 
 export interface FoodPhotoResultsEditorProps {
@@ -178,15 +180,7 @@ export function FoodPhotoResultsEditor({
 
   // Live Totals
   const activeCandidates = candidates.filter((c) => c.quantity > 0);
-  const totals = activeCandidates.reduce(
-    (acc, c) => ({
-      calories: Math.round(acc.calories + (c.nutrients?.calories || 0)),
-      protein: Math.round((acc.protein + (c.nutrients?.protein || 0)) * 10) / 10,
-      carbs: Math.round((acc.carbs + (c.nutrients?.carbs || 0)) * 10) / 10,
-      fat: Math.round((acc.fat + (c.nutrients?.fat || 0)) * 10) / 10,
-    }),
-    { calories: 0, protein: 0, carbs: 0, fat: 0 },
-  );
+  const totals = sumNutrientSnapshots(activeCandidates.map((candidate) => candidate.nutrients));
 
   const handleSave = async () => {
     if (isSaving || activeCandidates.length === 0) return;
@@ -259,7 +253,7 @@ export function FoodPhotoResultsEditor({
                   { backgroundColor: colors.surfaceAlt, borderColor: colors.border },
                 ]}
               >
-                <Ionicons name="sparkles" size={12} color={colors.accent} />
+                <Ionicons name="information-circle-outline" size={12} color={colors.accent} />
                 <Text style={[styles.estimatePillText, { color: colors.accent }]}>
                   {t('foodLog.photo.badge')}
                 </Text>
@@ -567,6 +561,7 @@ export function FoodPhotoResultsEditor({
               </Pressable>
             </View>
           )}
+          <AdvancedNutrition nutrients={totals} />
         </ScrollView>
 
         {/* Bottom Save Action Bar */}

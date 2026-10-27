@@ -9,3 +9,6 @@ package-lock.json
 docs
 AGENTS.md
 .agents
+
+# Generated verification artifacts
+.cache

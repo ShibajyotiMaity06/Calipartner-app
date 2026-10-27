@@ -37,7 +37,7 @@ export function CoachMessageBubble({
           style={[styles.avatar, { backgroundColor: colors.cardHighlight }]}
           testID={`avatar-coach-${message.id}`}
         >
-          <Ionicons name="sparkles" size={16} color={colors.accent} />
+          <Ionicons name="information-circle-outline" size={16} color={colors.accent} />
         </View>
       )}
 

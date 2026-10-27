@@ -66,7 +66,7 @@ export function RoomFullNotice({ memberCount, memberCap, isHost, onUpgrade }: Ro
             accessibilityLabel="See plans"
             testID="btn-room-full-upgrade"
           >
-            <Ionicons name="sparkles" size={14} color={colors.onAccent} />
+            <Ionicons name="information-circle-outline" size={14} color={colors.onAccent} />
             <Text style={[styles.upgradeBtnText, { color: colors.onAccent }]}>See plans</Text>
           </Pressable>
         )}

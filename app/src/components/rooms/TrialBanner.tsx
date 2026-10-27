@@ -45,7 +45,7 @@ export function TrialBanner({
     >
       <View style={styles.contentRow}>
         <View style={[styles.iconCircle, { backgroundColor: colors.surface }]}>
-          <Ionicons name="sparkles" size={18} color={colors.accent} />
+          <Ionicons name="information-circle-outline" size={18} color={colors.accent} />
         </View>
 
         <View style={styles.textContainer}>

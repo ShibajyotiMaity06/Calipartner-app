@@ -8,12 +8,27 @@ export async function decodeBarcodeImage(base64: string): Promise<string | null>
     gray[i] = (image.data[i * 4]! + 2 * image.data[i * 4 + 1]! + image.data[i * 4 + 2]!) / 4;
   const reader = new zxing.MultiFormatReader();
   reader.setHints(new Map([[zxing.DecodeHintType.TRY_HARDER, true]]));
-  try {
-    const source = new zxing.RGBLuminanceSource(gray, image.width, image.height);
-    return reader.decode(new zxing.BinaryBitmap(new zxing.HybridBinarizer(source))).getText();
-  } catch {
-    return null;
-  } finally {
-    reader.reset();
+  // Try both orientations. A portrait label should not need manual rotation.
+  for (const rotated of [false, true]) {
+    let pixels = gray;
+    let width = image.width,
+      height = image.height;
+    if (rotated) {
+      pixels = new Uint8ClampedArray(gray.length);
+      for (let y = 0; y < image.height; y++)
+        for (let x = 0; x < image.width; x++)
+          pixels[x * image.height + (image.height - 1 - y)] = gray[y * image.width + x]!;
+      width = image.height;
+      height = image.width;
+    }
+    try {
+      const source = new zxing.RGBLuminanceSource(pixels, width, height);
+      return reader.decode(new zxing.BinaryBitmap(new zxing.HybridBinarizer(source))).getText();
+    } catch {
+      /* Try the next orientation. */
+    } finally {
+      reader.reset();
+    }
   }
+  return null;
 }

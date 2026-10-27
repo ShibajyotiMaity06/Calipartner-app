@@ -224,7 +224,15 @@ export interface ServingUnit {
   description?: string; // e.g. "1 medium katori (~150g)"
 }
 
+export interface NutritionDetails {
+  saturated_fat?: number | null;
+  cholesterol_mg?: number | null;
+  /** Paid scan display is unavailable for this response. */
+  locked?: boolean;
+}
+
 export interface NutrientSnapshot {
+  nutrition_details?: NutritionDetails | null;
   calories: number;
   protein: number;
   carbs: number;
@@ -235,6 +243,7 @@ export interface NutrientSnapshot {
 }
 
 export interface Food {
+  nutrition_details?: NutritionDetails | null;
   id: string;
   source: FoodSource;
   name: string;
@@ -256,6 +265,7 @@ export interface Food {
 }
 
 export interface CreateFoodInput {
+  nutrition_details?: NutritionDetails | null;
   id?: string;
   source?: FoodSource;
   name: string;
@@ -274,6 +284,7 @@ export interface CreateFoodInput {
 }
 
 export interface UpdateFoodInput {
+  nutrition_details?: NutritionDetails | null;
   name?: string;
   brand?: string | null;
   barcode?: string | null;
@@ -288,6 +299,7 @@ export interface UpdateFoodInput {
 }
 
 export interface FoodEntry {
+  nutrition_details?: NutritionDetails | null;
   id: string; // client-generated UUID
   user_id: string;
   food_id: string | null;
@@ -314,6 +326,7 @@ export interface FoodEntry {
 }
 
 export interface CreateFoodEntryInput {
+  nutrition_details?: NutritionDetails | null;
   id?: string;
   user_id: string;
   food_id?: string | null;
@@ -336,6 +349,7 @@ export interface CreateFoodEntryInput {
 }
 
 export interface UpdateFoodEntryInput {
+  nutrition_details?: NutritionDetails | null;
   meal_section?: MealSection;
   quantity?: number;
   unit?: string;
@@ -1661,6 +1675,10 @@ export interface VisionModelDetectedItem {
     carbs: number;
     fat: number;
     fiber?: number;
+    sugar?: number;
+    sodium_mg?: number;
+    saturated_fat?: number | null;
+    cholesterol_mg?: number | null;
   };
 }
 

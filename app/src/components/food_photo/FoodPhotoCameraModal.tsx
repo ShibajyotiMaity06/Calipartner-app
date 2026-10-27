@@ -268,7 +268,7 @@ export function FoodPhotoCameraModal({
                 onPress={handleConfirmPhoto}
                 style={[styles.primaryBtn, { backgroundColor: colors.accent }]}
               >
-                <Ionicons name="sparkles" size={18} color={colors.onAccent} />
+                <Ionicons name="information-circle-outline" size={18} color={colors.onAccent} />
                 <Text style={[styles.primaryBtnText, { color: colors.onAccent, marginLeft: 6 }]}>
                   {t('foodLog.photo.usePhoto')}
                 </Text>

@@ -47,7 +47,7 @@ export function FoodPhotoAnalyzingOverlay({ visible, onCancel }: FoodPhotoAnalyz
         >
           {/* Pulsing Visual / Sparkles Wrap */}
           <View style={[styles.sparkleWrap, { backgroundColor: colors.cardHighlight }]}>
-            <Ionicons name="sparkles" size={36} color={colors.accent} />
+            <Ionicons name="information-circle-outline" size={36} color={colors.accent} />
           </View>
 
           <ActivityIndicator

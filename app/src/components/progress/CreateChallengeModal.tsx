@@ -103,7 +103,7 @@ const ACTIVITIES: ActivityTileConfig[] = [
   {
     id: 'custom',
     label: 'Custom',
-    icon: 'sparkles-outline',
+    icon: 'information-circle-outline',
     defaultGoal: 1,
     step: 1,
     min: 1,

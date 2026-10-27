@@ -40,7 +40,7 @@ export function ChatMessageBubble({
     let iconName: keyof typeof Ionicons.glyphMap = 'information-circle-outline';
     if (message.system_event_type === 'member_joined') iconName = 'person-add-outline';
     if (message.system_event_type === 'member_left') iconName = 'person-remove-outline';
-    if (message.system_event_type === 'room_created') iconName = 'sparkles-outline';
+    if (message.system_event_type === 'room_created') iconName = 'information-circle-outline';
     if (message.system_event_type === 'streak_milestone') iconName = 'flame-outline';
 
     return (

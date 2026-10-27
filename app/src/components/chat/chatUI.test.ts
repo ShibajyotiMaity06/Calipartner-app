@@ -93,7 +93,7 @@ describe('Phase 8 — Chat View Layer & UI Logic Tests', () => {
           case 'member_left':
             return 'person-remove-outline';
           case 'room_created':
-            return 'sparkles-outline';
+            return 'information-circle-outline';
           case 'streak_milestone':
             return 'flame-outline';
           default:
@@ -103,7 +103,7 @@ describe('Phase 8 — Chat View Layer & UI Logic Tests', () => {
 
       expect(getSystemIcon('member_joined')).toBe('person-add-outline');
       expect(getSystemIcon('member_left')).toBe('person-remove-outline');
-      expect(getSystemIcon('room_created')).toBe('sparkles-outline');
+      expect(getSystemIcon('room_created')).toBe('information-circle-outline');
       expect(getSystemIcon('streak_milestone')).toBe('flame-outline');
       expect(getSystemIcon(null)).toBe('information-circle-outline');
     });

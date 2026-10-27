@@ -839,7 +839,7 @@ export function PaywallModal({
             <View style={styles.modalBackdrop}>
               <Card elevation="s1" style={styles.successModalCard} testID="modal-purchase-success">
                 <Ionicons
-                  name="sparkles"
+                  name="information-circle-outline"
                   size={36}
                   color={dark.apricot}
                   style={styles.successIcon}

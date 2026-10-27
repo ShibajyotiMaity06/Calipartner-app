@@ -5,3 +5,4 @@ export * from './radius';
 export * from './motion';
 export * from './type';
 export * from './onboarding';
+export * from './capture';

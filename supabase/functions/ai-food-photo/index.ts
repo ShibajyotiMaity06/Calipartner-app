@@ -1,4 +1,6 @@
 import { createClient, type SupabaseClient } from 'jsr:@supabase/supabase-js@2';
+import { canSeeAdvancedNutrition } from '../_shared/nutritionAccess.ts';
+import { restrictFoodNutrition, restrictNutritionSnapshot } from '@calipartner/core';
 import {
   buildVisionModelSystemPrompt,
   parseAndValidateVisionModelOutput,
@@ -420,6 +422,7 @@ export async function handleAiFoodPhoto(
         },
       );
     const candidates: FoodCandidateItem[] = [];
+    const advanced = await canSeeAdvancedNutrition(req, adminClient);
 
     for (let i = 0; i < parsedModelResponse.items.length; i++) {
       const detectedItem: VisionModelDetectedItem = parsedModelResponse.items[i];
@@ -431,7 +434,7 @@ export async function handleAiFoodPhoto(
       const { data: dbFoods } = await adminClient
         .from('foods')
         .select(
-          'id, name, brand, barcode, serving_units, calories_per_100g, protein_per_100g, carbs_per_100g, fat_per_100g, fiber_per_100g, sugar_per_100g, sodium_mg_per_100g, source, attribution',
+          'id, name, brand, barcode, serving_units, calories_per_100g, protein_per_100g, carbs_per_100g, fat_per_100g, fiber_per_100g, sugar_per_100g, sodium_mg_per_100g, nutrition_details, source, attribution',
         )
         .is('deleted_at', null)
         .or(`owner_id.is.null,owner_id.eq.${userId}`)
@@ -451,7 +454,11 @@ export async function handleAiFoodPhoto(
           { status: 422, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
         );
       }
-      candidates.push(candidate);
+      candidates.push({
+        ...candidate,
+        matched_food: restrictFoodNutrition(candidate.matched_food, advanced),
+        nutrients: restrictNutritionSnapshot(candidate.nutrients, advanced),
+      });
     }
 
     // -------------------------------------------------------------------------

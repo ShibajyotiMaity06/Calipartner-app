@@ -13,12 +13,12 @@ import Svg, { Circle } from 'react-native-svg';
 import {
   getMealSectionForTime,
   getLocalDateString,
-  type Food,
+  foodFromEntrySnapshot,
   type FoodEntry,
   type MealSection,
   type UserStreak,
 } from '@calipartner/core';
-import { Avatar, dark, radius, space, Text } from '@calipartner/ui';
+import { dark, radius, space, Text } from '@calipartner/ui';
 import { MonthlyPlanCheckIn } from '@/components/profile/MonthlyPlanCheckIn';
 import { CaloriesDetailSheet } from '@/components/diary/CaloriesDetailSheet';
 import { CopyMealModal } from '@/components/diary/CopyMealModal';
@@ -142,7 +142,7 @@ export default function TodayScreen() {
     error: targetsError,
     refresh: refreshTargets,
   } = useTargets();
-  const { rooms } = useRooms();
+  const { rooms, loading: roomsLoading, error: roomsError, refresh: refreshRooms } = useRooms();
 
   // Current selected date in ISO format YYYY-MM-DD
   const todayDate = getLocalDateString(
@@ -500,65 +500,35 @@ export default function TodayScreen() {
               <View style={styles.squadTitleLeft}>
                 <Ionicons name="people" size={16} color={dark.apricot} />
                 <Text variant="bodyS" color={dark.textHi} style={{ fontWeight: '700' }}>
-                  {currentRoom?.name ? currentRoom.name : 'Your Squad'}
+                  {currentRoom?.name ?? t('repairs.squadTitle')}
                 </Text>
-                <Text style={{ fontSize: 13 }}>👑</Text>
               </View>
             </View>
 
-            <View style={styles.squadContentRow}>
-              {/* Overlapping member avatars */}
-              <View style={styles.squadAvatarsRow}>
-                <Avatar
-                  size="sm"
-                  uri={profile?.avatar_url}
-                  name={userName}
-                  identityHue="iris"
-                  style={styles.avatarFirst}
-                />
-                <Avatar
-                  size="sm"
-                  name={currentRoom?.name ? 'Partner' : 'Squad'}
-                  identityHue="teal"
-                  style={styles.avatarSecond}
-                />
-                {currentRoom && currentRoom.member_count > 2 && (
-                  <Avatar size="sm" name="Member" identityHue="peach" style={styles.avatarThird} />
-                )}
-              </View>
-
-              {/* Motivational message & subtle progress line */}
-              <View style={styles.squadMessageCol}>
-                <Text variant="bodyS" color={dark.textHi} style={{ fontWeight: '600' }}>
-                  You both are doing great! 💪
-                </Text>
-                <View style={styles.squadProgressTrack}>
-                  <View
-                    style={[
-                      styles.squadProgressFill,
-                      { width: `${Math.min(100, Math.max(30, currentStreak * 25))}%` },
-                    ]}
-                  />
-                </View>
-              </View>
-
-              {/* Streak Pill */}
-              <Pressable
-                testID="btn-squad-streak"
-                onPress={() => setShowStreakDetail(true)}
-                style={styles.squadStreakPill}
-                accessibilityLabel={`${currentStreak} day streak`}
-              >
-                <Ionicons name="flame" size={16} color={dark.apricot} />
-                <View>
-                  <Text variant="micro" color={dark.textHi} style={{ fontWeight: '700' }}>
-                    {currentStreak} Day
-                  </Text>
-                  <Text variant="micro" color={dark.textLo} style={{ fontSize: 9 }}>
-                    Streak ›
-                  </Text>
-                </View>
-              </Pressable>
+            <View style={styles.squadMessageCol}>
+              <Text variant="bodyS" color={dark.textMid} testID="home-squad-status">
+                {roomsLoading
+                  ? t('common.loading')
+                  : roomsError
+                    ? t('repairs.squadError')
+                    : currentRoom
+                      ? t('repairs.squadMembers', { count: currentRoom.member_count })
+                      : t('repairs.squadEmpty')}
+              </Text>
+              {roomsError ? (
+                <Pressable
+                  onPress={(event) => {
+                    event.stopPropagation();
+                    void refreshRooms();
+                  }}
+                  style={{ minHeight: space[8], justifyContent: 'center' }}
+                  accessibilityRole="button"
+                  accessibilityLabel={t('common.retry')}
+                  testID="home-squad-retry"
+                >
+                  <Text>{t('common.retry')}</Text>
+                </Pressable>
+              ) : null}
             </View>
           </Pressable>
         </View>
@@ -697,6 +667,10 @@ export default function TodayScreen() {
           proteinGrams={daySummary.totals.protein}
           carbGrams={daySummary.totals.carbs}
           fatGrams={daySummary.totals.fat}
+          fiberGrams={daySummary.totals.fiber}
+          sugarGrams={daySummary.totals.sugar}
+          sodiumMg={daySummary.totals.sodium_mg}
+          entries={Object.values(daySummary.sections).flatMap((section) => section.entries)}
           targetProtein={targetProtein}
           targetCarbs={currentGoalProfile?.carb_grams ?? null}
           targetFat={currentGoalProfile?.fat_grams ?? null}
@@ -731,23 +705,7 @@ export default function TodayScreen() {
         {editingEntry && (
           <QuantityModal
             visible={Boolean(editingEntry)}
-            food={{
-              id: editingEntry.food_id ?? editingEntry.id,
-              source: 'user',
-              name: editingEntry.food_name,
-              brand: null,
-              barcode: null,
-              serving_units: [{ unit: editingEntry.unit, grams: 100 }],
-              calories_per_100g: editingEntry.calories,
-              protein_per_100g: editingEntry.protein,
-              carbs_per_100g: editingEntry.carbs,
-              fat_per_100g: editingEntry.fat,
-              fiber_per_100g: 0,
-              sugar_per_100g: 0,
-              sodium_mg_per_100g: 0,
-              owner_id: null,
-              attribution: null,
-            }}
+            food={foodFromEntrySnapshot(editingEntry)}
             initialEntry={editingEntry}
             defaultSection={editingEntry.meal_section}
             onClose={() => setEditingEntry(null)}

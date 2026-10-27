@@ -4,6 +4,8 @@ import {
   DEV_100_FOOD_SEED,
   getMealSectionForTime,
   scaleNutrients,
+  parseNutritionDetails,
+  resizeNutrientSnapshot,
   type CreateFoodInput,
   type DiaryDaySummary,
   type EntrySource,
@@ -116,6 +118,7 @@ export interface RawFoodRow {
   fiber_per_100g: number;
   sugar_per_100g: number;
   sodium_mg_per_100g: number;
+  nutrition_details?: unknown;
   owner_id: string | null;
   attribution: string | null;
   created_at?: string;
@@ -151,6 +154,9 @@ export function mapRowToFood(row: RawFoodRow): Food {
     fiber_per_100g: Number(row.fiber_per_100g) || 0,
     sugar_per_100g: Number(row.sugar_per_100g) || 0,
     sodium_mg_per_100g: Number(row.sodium_mg_per_100g) || 0,
+    ...(parseNutritionDetails(row.nutrition_details)
+      ? { nutrition_details: parseNutritionDetails(row.nutrition_details) }
+      : {}),
     owner_id: row.owner_id ?? null,
     attribution: row.attribution ?? null,
     created_at: row.created_at,
@@ -286,6 +292,9 @@ export async function saveCustomFood(
     fiber_per_100g: input.fiber_per_100g ?? 0,
     sugar_per_100g: input.sugar_per_100g ?? 0,
     sodium_mg_per_100g: input.sodium_mg_per_100g ?? 0,
+    ...(parseNutritionDetails(input.nutrition_details)
+      ? { nutrition_details: parseNutritionDetails(input.nutrition_details) }
+      : {}),
     owner_id: userId,
     attribution: 'User custom food',
     created_at: now,
@@ -298,8 +307,8 @@ export async function saveCustomFood(
       id, source, name, brand, barcode, serving_units,
       calories_per_100g, protein_per_100g, carbs_per_100g, fat_per_100g,
       fiber_per_100g, sugar_per_100g, sodium_mg_per_100g,
-      owner_id, attribution, created_at, updated_at, deleted_at, sync_state
-    ) VALUES (?, 'user', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NULL, 'pending')
+      owner_id, attribution, created_at, updated_at, deleted_at, sync_state, nutrition_details
+    ) VALUES (?, 'user', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NULL, 'pending', ?)
     ON CONFLICT (id) DO UPDATE SET
       name = excluded.name,
       brand = excluded.brand,
@@ -312,6 +321,7 @@ export async function saveCustomFood(
       fiber_per_100g = excluded.fiber_per_100g,
       sugar_per_100g = excluded.sugar_per_100g,
       sodium_mg_per_100g = excluded.sodium_mg_per_100g,
+      nutrition_details = excluded.nutrition_details,
       updated_at = excluded.updated_at,
       sync_state = 'pending'`,
     [
@@ -331,6 +341,7 @@ export async function saveCustomFood(
       food.attribution,
       now,
       now,
+      JSON.stringify(food.nutrition_details ?? null),
     ],
   );
 
@@ -353,6 +364,9 @@ export async function saveCustomFood(
       fiber_per_100g: food.fiber_per_100g,
       sugar_per_100g: food.sugar_per_100g,
       sodium_mg_per_100g: food.sodium_mg_per_100g,
+      ...(parseNutritionDetails(food.nutrition_details)
+        ? { nutrition_details: parseNutritionDetails(food.nutrition_details) }
+        : {}),
       owner_id: userId,
       attribution: food.attribution,
       created_at: now,
@@ -415,6 +429,7 @@ export async function logFoodEntry(
     fiber: nutrients.fiber,
     sugar: nutrients.sugar,
     sodium_mg: nutrients.sodium_mg,
+    ...(nutrients.nutrition_details ? { nutrition_details: nutrients.nutrition_details } : {}),
     food_name: input.food.name,
     brand_name: input.food.brand ?? null,
     logged_at: now,
@@ -432,8 +447,8 @@ export async function logFoodEntry(
       id, user_id, food_id, meal_section, quantity, unit,
       calories, protein, carbs, fat, fiber, sugar, sodium_mg,
       food_name, brand_name, logged_at, local_date, source,
-      shared_meal_id, created_at, updated_at, deleted_at, sync_state
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NULL, 'pending')`,
+      shared_meal_id, created_at, updated_at, deleted_at, sync_state, nutrition_details
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NULL, 'pending', ?)`,
     [
       entry.id,
       entry.user_id,
@@ -456,6 +471,7 @@ export async function logFoodEntry(
       entry.shared_meal_id,
       entry.created_at,
       entry.updated_at,
+      JSON.stringify(entry.nutrition_details ?? null),
     ],
   );
 
@@ -531,6 +547,7 @@ export async function logFoodEntry(
       fiber: entry.fiber,
       sugar: entry.sugar,
       sodium_mg: entry.sodium_mg,
+      ...(entry.nutrition_details ? { nutrition_details: entry.nutrition_details } : {}),
       food_name: entry.food_name,
       brand_name: entry.brand_name,
       logged_at: entry.logged_at,
@@ -561,6 +578,8 @@ export async function editFoodEntry(
   );
   if (!current) return null;
 
+  current.nutrition_details = parseNutritionDetails(current.nutrition_details);
+  let nutritionDetails = current.nutrition_details;
   const now = new Date().toISOString();
   const quantity = updates.quantity ?? current.quantity;
   const unit = updates.unit ?? current.unit;
@@ -585,13 +604,17 @@ export async function editFoodEntry(
     fiber = scaled.fiber;
     sugar = scaled.sugar;
     sodiumMg = scaled.sodium_mg;
+    nutritionDetails = scaled.nutrition_details ?? null;
   } else if (updates.quantity !== undefined && current.quantity > 0) {
-    // Proportional scaling
-    const factor = updates.quantity / current.quantity;
-    calories = Math.round(current.calories * factor * 10) / 10;
-    protein = Math.round(current.protein * factor * 10) / 10;
-    carbs = Math.round(current.carbs * factor * 10) / 10;
-    fat = Math.round(current.fat * factor * 10) / 10;
+    const scaled = resizeNutrientSnapshot(current, current.quantity, quantity);
+    calories = scaled.calories;
+    protein = scaled.protein;
+    carbs = scaled.carbs;
+    fat = scaled.fat;
+    fiber = scaled.fiber;
+    sugar = scaled.sugar;
+    sodiumMg = scaled.sodium_mg;
+    nutritionDetails = scaled.nutrition_details ?? null;
   }
 
   await db.runAsync(
@@ -607,6 +630,7 @@ export async function editFoodEntry(
       fiber = ?,
       sugar = ?,
       sodium_mg = ?,
+      nutrition_details = ?,
       updated_at = ?,
       sync_state = 'pending'
      WHERE id = ?`,
@@ -622,6 +646,7 @@ export async function editFoodEntry(
       fiber,
       sugar,
       sodiumMg,
+      JSON.stringify(nutritionDetails ?? null),
       now,
       entryId,
     ],
@@ -640,6 +665,7 @@ export async function editFoodEntry(
     fiber,
     sugar,
     sodium_mg: sodiumMg,
+    nutrition_details: nutritionDetails,
     updated_at: now,
   };
 
@@ -661,6 +687,9 @@ export async function editFoodEntry(
       fiber: updatedEntry.fiber,
       sugar: updatedEntry.sugar,
       sodium_mg: updatedEntry.sodium_mg,
+      ...(updatedEntry.nutrition_details
+        ? { nutrition_details: updatedEntry.nutrition_details }
+        : {}),
       food_name: updatedEntry.food_name,
       brand_name: updatedEntry.brand_name,
       logged_at: updatedEntry.logged_at,
@@ -734,6 +763,9 @@ export async function getEntriesForDate(
     fiber: Number(r.fiber) || 0,
     sugar: Number(r.sugar) || 0,
     sodium_mg: Number(r.sodium_mg) || 0,
+    ...(parseNutritionDetails(r.nutrition_details)
+      ? { nutrition_details: parseNutritionDetails(r.nutrition_details) }
+      : {}),
     food_name: r.food_name,
     brand_name: r.brand_name ?? null,
     logged_at: r.logged_at,
@@ -781,6 +813,7 @@ interface HistoryJoinedRow {
   f_fib: number;
   f_sug: number;
   f_sod: number;
+  f_details?: unknown;
   f_owner: string | null;
   f_attr: string | null;
   f_created?: string;
@@ -799,7 +832,7 @@ export async function getPreviouslyLoggedItems(
     `SELECT s.*, f.id as f_id, f.source as f_source, f.name as f_name, f.brand as f_brand,
             f.barcode as f_barcode, f.serving_units as f_units, f.calories_per_100g as f_cal,
             f.protein_per_100g as f_pro, f.carbs_per_100g as f_carb, f.fat_per_100g as f_fat,
-            f.fiber_per_100g as f_fib, f.sugar_per_100g as f_sug, f.sodium_mg_per_100g as f_sod,
+            f.fiber_per_100g as f_fib, f.sugar_per_100g as f_sug, f.sodium_mg_per_100g as f_sod, f.nutrition_details as f_details,
             f.owner_id as f_owner, f.attribution as f_attr, f.created_at as f_created,
             f.updated_at as f_updated, f.deleted_at as f_deleted
      FROM local_user_food_stats s
@@ -831,6 +864,7 @@ export async function getPreviouslyLoggedItems(
       fiber_per_100g: Number(r.f_fib) || 0,
       sugar_per_100g: Number(r.f_sug) || 0,
       sodium_mg_per_100g: Number(r.f_sod) || 0,
+      nutrition_details: parseNutritionDetails(r.f_details),
       owner_id: r.f_owner ?? null,
       attribution: r.f_attr ?? null,
       created_at: r.f_created,
@@ -909,8 +943,8 @@ export async function copyMealSection(
         id, user_id, food_id, meal_section, quantity, unit,
         calories, protein, carbs, fat, fiber, sugar, sodium_mg,
         food_name, brand_name, logged_at, local_date, source,
-        shared_meal_id, created_at, updated_at, deleted_at, sync_state
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'copy', NULL, ?, ?, NULL, 'pending')`,
+        shared_meal_id, created_at, updated_at, deleted_at, sync_state, nutrition_details
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'copy', NULL, ?, ?, NULL, 'pending', ?)`,
       [
         entry.id,
         entry.user_id,
@@ -931,6 +965,7 @@ export async function copyMealSection(
         entry.local_date,
         entry.created_at,
         entry.updated_at,
+        JSON.stringify(entry.nutrition_details ?? null),
       ],
     );
 
@@ -952,6 +987,7 @@ export async function copyMealSection(
         fiber: entry.fiber,
         sugar: entry.sugar,
         sodium_mg: entry.sodium_mg,
+        ...(entry.nutrition_details ? { nutrition_details: entry.nutrition_details } : {}),
         food_name: entry.food_name,
         brand_name: entry.brand_name,
         logged_at: entry.logged_at,
@@ -990,8 +1026,8 @@ export async function copyEntireDay(
         id, user_id, food_id, meal_section, quantity, unit,
         calories, protein, carbs, fat, fiber, sugar, sodium_mg,
         food_name, brand_name, logged_at, local_date, source,
-        shared_meal_id, created_at, updated_at, deleted_at, sync_state
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'copy', NULL, ?, ?, NULL, 'pending')`,
+        shared_meal_id, created_at, updated_at, deleted_at, sync_state, nutrition_details
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'copy', NULL, ?, ?, NULL, 'pending', ?)`,
       [
         entry.id,
         entry.user_id,
@@ -1012,6 +1048,7 @@ export async function copyEntireDay(
         entry.local_date,
         entry.created_at,
         entry.updated_at,
+        JSON.stringify(entry.nutrition_details ?? null),
       ],
     );
 
@@ -1033,6 +1070,7 @@ export async function copyEntireDay(
         fiber: entry.fiber,
         sugar: entry.sugar,
         sodium_mg: entry.sodium_mg,
+        ...(entry.nutrition_details ? { nutrition_details: entry.nutrition_details } : {}),
         food_name: entry.food_name,
         brand_name: entry.brand_name,
         logged_at: entry.logged_at,

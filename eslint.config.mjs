@@ -110,6 +110,7 @@ const uiTokensPlugin = {
 export default tseslint.config(
   {
     ignores: [
+      '.cache/**',
       '**/node_modules/**',
       '**/.expo/**',
       '**/dist/**',

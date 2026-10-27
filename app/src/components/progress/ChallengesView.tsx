@@ -70,7 +70,7 @@ const SEASONAL_CHALLENGES = [
     subtitle: '30 days of consistent nutrition tracking with your partner.',
     days: '30 days',
     participants: '3,890 joined',
-    icon: 'sparkles-outline' as const,
+    icon: 'information-circle-outline' as const,
     gradient: 'apricot' as const,
   },
   {
@@ -131,7 +131,7 @@ export function ChallengesView({ testID = 'challenges-view' }: ChallengesViewPro
                 ? 'barbell-outline'
                 : payload.activity === 'cycling'
                   ? 'bicycle-outline'
-                  : 'sparkles-outline',
+                  : 'information-circle-outline',
       currentDay: 1,
       totalDays: payload.durationDays,
       startDate: 'Today',

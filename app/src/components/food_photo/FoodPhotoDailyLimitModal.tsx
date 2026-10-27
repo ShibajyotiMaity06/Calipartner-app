@@ -61,7 +61,7 @@ export function FoodPhotoDailyLimitModal({
         >
           {/* Top Status Icon */}
           <View style={[styles.iconWrap, { backgroundColor: colors.cardHighlight }]}>
-            <Ionicons name="sparkles-outline" size={36} color={colors.accent} />
+            <Ionicons name="information-circle-outline" size={36} color={colors.accent} />
           </View>
 
           <Text testID="text-limit-title" style={[styles.title, { color: colors.text }]}>
@@ -103,7 +103,11 @@ export function FoodPhotoDailyLimitModal({
               ]}
             >
               <View style={styles.upsellHeader}>
-                <Ionicons name="star" size={18} color={colors.macroCalories} />
+                <Ionicons
+                  name="information-circle-outline"
+                  size={18}
+                  color={colors.macroCalories}
+                />
                 <Text style={[styles.upsellHeaderTitle, { color: colors.text }]}>
                   Room Plan Perks
                 </Text>
@@ -124,7 +128,7 @@ export function FoodPhotoDailyLimitModal({
                 onPress={onUpgrade}
                 style={[styles.primaryBtn, { backgroundColor: colors.accent }]}
               >
-                <Ionicons name="sparkles" size={18} color={colors.onAccent} />
+                <Ionicons name="information-circle-outline" size={18} color={colors.onAccent} />
                 <Text style={[styles.primaryBtnText, { color: colors.onAccent }]}>
                   {t('foodLog.photo.upgradeButton')}
                 </Text>

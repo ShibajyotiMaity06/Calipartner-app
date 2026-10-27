@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import { View, StyleSheet, ScrollView, Pressable } from 'react-native';
-import type { FoodEntry } from '@calipartner/core';
+import { sumNutrientSnapshots, type FoodEntry } from '@calipartner/core';
 import { Sheet, Text, CalorieRing, dark, space, radius, type IdentityHue } from '@calipartner/ui';
 import { t } from '@/i18n';
+import { AdvancedNutrition } from './AdvancedNutrition';
 
 export interface CaloriesDetailSheetProps {
   visible: boolean;
@@ -259,36 +260,18 @@ export function CaloriesDetailSheet({
           </View>
         )}
 
-        {/* Additional Micronutrients Section (LOG-16) */}
-        <View style={styles.microSection}>
-          <Text variant="label" color={dark.textLo} style={styles.sectionTitle}>
-            MICRONUTRIENTS (LOG-16)
-          </Text>
-          <View style={styles.microRow}>
-            <Text variant="bodyS" color={dark.textMid}>
-              Fibre
-            </Text>
-            <Text variant="numeralM" color={dark.textHi}>
-              {fiberGrams}g
-            </Text>
-          </View>
-          <View style={styles.microRow}>
-            <Text variant="bodyS" color={dark.textMid}>
-              Sugar
-            </Text>
-            <Text variant="numeralM" color={dark.textHi}>
-              {sugarGrams}g
-            </Text>
-          </View>
-          <View style={styles.microRow}>
-            <Text variant="bodyS" color={dark.textMid}>
-              Sodium
-            </Text>
-            <Text variant="numeralM" color={dark.textHi}>
-              {sodiumMg} mg
-            </Text>
-          </View>
-        </View>
+        <AdvancedNutrition
+          nutrients={{
+            calories: eatenCalories,
+            protein: proteinGrams,
+            carbs: carbGrams,
+            fat: fatGrams,
+            fiber: fiberGrams,
+            sugar: sugarGrams,
+            sodium_mg: sodiumMg,
+            nutrition_details: sumNutrientSnapshots(entries).nutrition_details,
+          }}
+        />
       </ScrollView>
     </Sheet>
   );

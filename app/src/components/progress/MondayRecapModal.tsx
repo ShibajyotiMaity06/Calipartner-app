@@ -82,7 +82,7 @@ export function MondayRecapModal({
 
           {/* Highlights Row */}
           <View style={styles.highlightCard}>
-            <Ionicons name="sparkles-outline" size={20} color={dark.apricot} />
+            <Ionicons name="information-circle-outline" size={20} color={dark.apricot} />
             <View style={styles.highlightContent}>
               <Text style={styles.highlightText}>{t('progress.recap.highlight')}</Text>
               <Text style={styles.statsDetail}>

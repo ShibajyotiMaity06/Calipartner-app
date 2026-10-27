@@ -376,7 +376,7 @@ export function RecipeDetailModal({
                   {recipe.tips.map((tip, idx) => (
                     <View key={`tip-${idx}`} style={styles.tipRow}>
                       <Ionicons
-                        name="sparkles"
+                        name="information-circle-outline"
                         size={14}
                         color={colors.accent}
                         style={{ marginTop: 3 }}

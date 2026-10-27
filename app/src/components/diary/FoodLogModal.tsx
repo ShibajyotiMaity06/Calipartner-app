@@ -483,7 +483,7 @@ export function FoodLogModal({
                   justifyContent: 'center',
                 }}
               >
-                <Ionicons name="sparkles" size={40} color={colors.accent} />
+                <Ionicons name="information-circle-outline" size={40} color={colors.accent} />
               </View>
 
               <View

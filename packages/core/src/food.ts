@@ -91,6 +91,21 @@ export function scaleNutrients(food: Food, quantity: number, unit: string): Nutr
   const factor = totalGrams / 100;
 
   return {
+    ...(food.nutrition_details
+      ? {
+          nutrition_details: {
+            ...(food.nutrition_details.locked ? { locked: true } : {}),
+            saturated_fat:
+              food.nutrition_details.saturated_fat == null
+                ? null
+                : roundOneDecimal(food.nutrition_details.saturated_fat * factor),
+            cholesterol_mg:
+              food.nutrition_details.cholesterol_mg == null
+                ? null
+                : roundOneDecimal(food.nutrition_details.cholesterol_mg * factor),
+          },
+        }
+      : {}),
     calories: roundOneDecimal(food.calories_per_100g * factor),
     protein: roundOneDecimal(food.protein_per_100g * factor),
     carbs: roundOneDecimal(food.carbs_per_100g * factor),
@@ -98,6 +113,45 @@ export function scaleNutrients(food: Food, quantity: number, unit: string): Nutr
     fiber: roundOneDecimal((food.fiber_per_100g || 0) * factor),
     sugar: roundOneDecimal((food.sugar_per_100g || 0) * factor),
     sodium_mg: roundOneDecimal((food.sodium_mg_per_100g || 0) * factor),
+  };
+}
+
+/** Reconstruct an editable portion from its durable snapshot, without multiplying it twice. */
+export function foodFromEntrySnapshot(entry: FoodEntry): Food {
+  const gramsPerUnit = resolveUnitGrams(null, entry.unit);
+  const factor = entry.quantity > 0 ? 100 / (entry.quantity * gramsPerUnit) : 0;
+  const per100 = (amount: number) => amount * factor;
+  return {
+    id: entry.food_id ?? entry.id,
+    source: 'user',
+    name: entry.food_name,
+    brand: entry.brand_name,
+    barcode: null,
+    owner_id: entry.user_id,
+    attribution: null,
+    serving_units: [{ unit: entry.unit, grams: gramsPerUnit }],
+    calories_per_100g: per100(entry.calories),
+    protein_per_100g: per100(entry.protein),
+    carbs_per_100g: per100(entry.carbs),
+    fat_per_100g: per100(entry.fat),
+    fiber_per_100g: per100(entry.fiber),
+    sugar_per_100g: per100(entry.sugar),
+    sodium_mg_per_100g: per100(entry.sodium_mg),
+    ...(entry.nutrition_details
+      ? {
+          nutrition_details: {
+            ...entry.nutrition_details,
+            saturated_fat:
+              entry.nutrition_details.saturated_fat == null
+                ? null
+                : per100(entry.nutrition_details.saturated_fat),
+            cholesterol_mg:
+              entry.nutrition_details.cholesterol_mg == null
+                ? null
+                : per100(entry.nutrition_details.cholesterol_mg),
+          },
+        }
+      : {}),
   };
 }
 
@@ -391,6 +445,7 @@ export function copyEntries(
       fiber: e.fiber,
       sugar: e.sugar,
       sodium_mg: e.sodium_mg,
+      nutrition_details: e.nutrition_details,
       food_name: e.food_name,
       brand_name: e.brand_name,
       logged_at: now,

@@ -29,7 +29,7 @@ export function AiCoachLockedCard({ onUnlock }: LockedFeatureCardProps) {
     >
       <View style={styles.topRow}>
         <View style={[styles.iconCircle, { backgroundColor: colors.cardHighlight }]}>
-          <Ionicons name="sparkles" size={22} color={colors.macroCalories} />
+          <Ionicons name="information-circle-outline" size={22} color={colors.macroCalories} />
         </View>
 
         <View style={styles.titleGroup}>
@@ -81,7 +81,7 @@ export function AiCoachLockedCard({ onUnlock }: LockedFeatureCardProps) {
         accessibilityLabel={t('rooms.lockedPreview.aiCoach.unlockBtn')}
         testID="btn-unlock-ai-coach"
       >
-        <Ionicons name="sparkles" size={14} color="#FFFFFF" />
+        <Ionicons name="information-circle-outline" size={14} color="#FFFFFF" />
         <Text style={styles.unlockButtonText}>{t('rooms.lockedPreview.aiCoach.unlockBtn')}</Text>
       </Pressable>
     </View>
@@ -160,7 +160,7 @@ export function PartnerFinderLockedCard({ onUnlock }: LockedFeatureCardProps) {
         accessibilityLabel={t('rooms.lockedPreview.partnerFinder.unlockBtn')}
         testID="btn-unlock-partner-finder"
       >
-        <Ionicons name="sparkles" size={14} color="#FFFFFF" />
+        <Ionicons name="information-circle-outline" size={14} color="#FFFFFF" />
         <Text style={styles.unlockButtonText}>
           {t('rooms.lockedPreview.partnerFinder.unlockBtn')}
         </Text>

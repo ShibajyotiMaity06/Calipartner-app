@@ -34,7 +34,7 @@ export function ProgressHubSummary({
       {/* M01 / PRG-11: One-sentence summary of the week in plain words */}
       <View style={styles.weekSummaryCard} testID={`${testID}-week-summary`}>
         <View style={styles.weekSummaryHeader}>
-          <Ionicons name="sparkles-outline" size={18} color={dark.apricot} />
+          <Ionicons name="information-circle-outline" size={18} color={dark.apricot} />
           <Text style={styles.weekSummaryTag}>Week in words</Text>
         </View>
         <Text style={styles.weekSummaryText}>

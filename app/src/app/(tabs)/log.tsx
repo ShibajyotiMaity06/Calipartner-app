@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import { View, StyleSheet, Modal } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useFocusEffect, useRouter } from 'expo-router';
 import { getMealSectionForTime, type MealSection } from '@calipartner/core';
 import {
   Sheet,
@@ -47,6 +47,14 @@ export default function LogScreen() {
   const [currentSection, setCurrentSection] = useState<MealSection>(initialSection);
   const [sheetVisible, setSheetVisible] = useState(true);
   const [activeFlow, setActiveFlow] = useState<ActiveFlowState>('picker');
+  useFocusEffect(
+    useCallback(() => {
+      setCurrentSection(getMealSectionForTime(new Date()));
+      setActiveFlow('picker');
+      setSheetVisible(true);
+      return () => setSheetVisible(false);
+    }, []),
+  );
 
   // Tracker hooks for Water and Weight
   const { addWater } = useWater(todayDate);

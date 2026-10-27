@@ -37,7 +37,7 @@ export function AiConsentSheet({
         >
           {/* Header Icon */}
           <View style={[styles.iconWrap, { backgroundColor: colors.cardHighlight }]}>
-            <Ionicons name="sparkles" size={32} color={colors.accent} />
+            <Ionicons name="information-circle-outline" size={32} color={colors.accent} />
           </View>
 
           <Text style={[styles.title, { color: colors.text }]}>

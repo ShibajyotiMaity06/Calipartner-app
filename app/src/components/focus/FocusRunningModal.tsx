@@ -206,7 +206,7 @@ export function FocusRunningModal({
             ]}
           >
             <Ionicons
-              name={isPaused ? 'pause-circle-outline' : 'sparkles-outline'}
+              name={isPaused ? 'pause-circle-outline' : 'information-circle-outline'}
               size={16}
               color={isPaused ? colors.textMuted : colors.accent}
             />

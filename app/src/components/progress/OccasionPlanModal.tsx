@@ -16,7 +16,7 @@ const EVENTS = [
   { id: 'wedding', label: 'Wedding', icon: 'heart-outline' as const },
   { id: 'vacation', label: 'Trip', icon: 'airplane-outline' as const },
   { id: 'birthday', label: 'Birthday', icon: 'gift-outline' as const },
-  { id: 'newYear', label: 'New Year', icon: 'sparkles-outline' as const },
+  { id: 'newYear', label: 'New Year', icon: 'information-circle-outline' as const },
 ];
 
 export function OccasionPlanModal({

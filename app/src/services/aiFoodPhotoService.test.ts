@@ -32,6 +32,7 @@ function createTestDb(): SyncDb {
     );
 
     CREATE TABLE local_foods (
+      nutrition_details TEXT,
       id TEXT PRIMARY KEY NOT NULL,
       source TEXT NOT NULL,
       name TEXT NOT NULL,
@@ -54,6 +55,7 @@ function createTestDb(): SyncDb {
     );
 
     CREATE TABLE local_food_entries (
+      nutrition_details TEXT,
       id TEXT PRIMARY KEY NOT NULL,
       user_id TEXT NOT NULL,
       food_id TEXT,

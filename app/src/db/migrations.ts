@@ -562,4 +562,12 @@ export const migrations: readonly LocalMigration[] = [
       CREATE INDEX local_social_outbox_owner ON local_social_outbox(owner_id,created_at);
     `,
   },
+  {
+    version: 14,
+    name: 'preserve_additional_scan_nutrition',
+    sql: `
+      ALTER TABLE local_foods ADD COLUMN nutrition_details TEXT;
+      ALTER TABLE local_food_entries ADD COLUMN nutrition_details TEXT;
+    `,
+  },
 ];

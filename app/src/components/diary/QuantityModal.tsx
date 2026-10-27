@@ -12,6 +12,7 @@ import {
 import { scaleNutrients, type Food, type FoodEntry, type MealSection } from '@calipartner/core';
 import { Sheet, Text, Button, Chip, SwitchRow, dark, space, radius } from '@calipartner/ui';
 import { t } from '@/i18n';
+import { AdvancedNutrition } from './AdvancedNutrition';
 
 export interface QuantityModalProps {
   visible: boolean;
@@ -82,7 +83,7 @@ export function QuantityModal({
   // Live Scaled Nutrients Preview
   const preview = useMemo(() => {
     if (!food || parsedQty <= 0) {
-      return { calories: 0, protein: 0, carbs: 0, fat: 0, fiber: 0 };
+      return { calories: 0, protein: 0, carbs: 0, fat: 0, fiber: 0, sugar: 0, sodium_mg: 0 };
     }
     return scaleNutrients(food, parsedQty, selectedUnit);
   }, [food, parsedQty, selectedUnit]);
@@ -295,6 +296,8 @@ export function QuantityModal({
               </View>
             </View>
           </View>
+
+          <AdvancedNutrition nutrients={preview} />
 
           {/* Meal Section Selector */}
           <View style={styles.sectionPickerWrap}>

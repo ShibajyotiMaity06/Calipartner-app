@@ -1,5 +1,11 @@
 import { createClient, type SupabaseClient } from 'jsr:@supabase/supabase-js@2';
-import { normalizeProductBarcode } from '@calipartner/core';
+import {
+  normalizeProductBarcode,
+  restrictFoodNutrition,
+  type Food,
+  type NutritionDetails,
+} from '@calipartner/core';
+import { canSeeAdvancedNutrition } from '../_shared/nutritionAccess.ts';
 
 export const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -35,6 +41,7 @@ export interface ServingUnitInput {
 }
 
 export interface FoodLookupResult {
+  nutrition_details?: NutritionDetails;
   id?: string;
   source: 'ifct' | 'off' | 'usda' | 'user';
   name: string;
@@ -113,6 +120,16 @@ export function mapOpenFoodFactsProduct(
     fiber_per_100g: Math.round(fiber * 10) / 10,
     sugar_per_100g: Math.round(sugar * 10) / 10,
     sodium_mg_per_100g: Math.round(sodiumMg * 10) / 10,
+    nutrition_details: {
+      saturated_fat:
+        nutriments['saturated-fat_100g'] == null
+          ? null
+          : Math.max(0, Number(nutriments['saturated-fat_100g']) || 0),
+      cholesterol_mg:
+        nutriments['cholesterol_100g'] == null
+          ? null
+          : Math.max(0, Number(nutriments['cholesterol_100g']) * 1000 || 0),
+    },
     attribution: 'Open Food Facts (ODbL)',
   };
 }
@@ -164,6 +181,10 @@ export function mapUsdaFoodItem(item: Record<string, any>): FoodLookupResult {
     fiber_per_100g: Math.round(fiber * 10) / 10,
     sugar_per_100g: Math.round(sugar * 10) / 10,
     sodium_mg_per_100g: Math.round(sodium * 10) / 10,
+    nutrition_details: {
+      saturated_fat: nutrients.some((n) => n.nutrientId === 1258) ? getNutrient(1258) : null,
+      cholesterol_mg: nutrients.some((n) => n.nutrientId === 1253) ? getNutrient(1253) : null,
+    },
     attribution: 'USDA FoodData Central',
   };
 }
@@ -237,6 +258,8 @@ export async function handleFoodLookup(
     (supabaseUrl && supabaseServiceKey ? createClient(supabaseUrl, supabaseServiceKey) : null);
 
   try {
+    const advanced = await canSeeAdvancedNutrition(req, adminClient);
+    const visibleFood = (food: unknown) => restrictFoodNutrition(food as Food, advanced);
     // -------------------------------------------------------------------------
     // 1. BARCODE LOOKUP
     // -------------------------------------------------------------------------
@@ -259,10 +282,13 @@ export async function handleFoodLookup(
           .limit(1);
 
         if (cached && cached.length > 0) {
-          return new Response(JSON.stringify({ found: true, source: 'cache', food: cached[0] }), {
-            status: 200,
-            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-          });
+          return new Response(
+            JSON.stringify({ found: true, source: 'cache', food: visibleFood(cached[0]) }),
+            {
+              status: 200,
+              headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+            },
+          );
         }
       }
 
@@ -328,10 +354,13 @@ export async function handleFoodLookup(
         }
       }
 
-      return new Response(JSON.stringify({ found: true, source: 'off', food: savedFood }), {
-        status: 200,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
+      return new Response(
+        JSON.stringify({ found: true, source: 'off', food: visibleFood(savedFood) }),
+        {
+          status: 200,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        },
+      );
     }
 
     // -------------------------------------------------------------------------
@@ -357,10 +386,13 @@ export async function handleFoodLookup(
       }
 
       if (cachedFoods.length >= 5) {
-        return new Response(JSON.stringify({ source: 'cache', foods: cachedFoods }), {
-          status: 200,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        });
+        return new Response(
+          JSON.stringify({ source: 'cache', foods: cachedFoods.map(visibleFood) }),
+          {
+            status: 200,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          },
+        );
       }
 
       // Query USDA FoodData Central
@@ -370,10 +402,13 @@ export async function handleFoodLookup(
       const usdaRes = await fetch(usdaUrl);
       if (!usdaRes.ok) {
         // Return whatever cached foods we found
-        return new Response(JSON.stringify({ source: 'cache', foods: cachedFoods }), {
-          status: 200,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        });
+        return new Response(
+          JSON.stringify({ source: 'cache', foods: cachedFoods.map(visibleFood) }),
+          {
+            status: 200,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          },
+        );
       }
 
       const usdaData = await usdaRes.json();
@@ -404,7 +439,7 @@ export async function handleFoodLookup(
         results.push(...mappedList);
       }
 
-      return new Response(JSON.stringify({ source: 'usda', foods: results }), {
+      return new Response(JSON.stringify({ source: 'usda', foods: results.map(visibleFood) }), {
         status: 200,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
