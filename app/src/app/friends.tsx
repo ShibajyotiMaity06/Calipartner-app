@@ -8,6 +8,7 @@ import { PlanTextField, planStyles } from '@/components/onboarding/PlanPrimitive
 import { SocialProfileEditor } from '@/components/friends/SocialProfileEditor';
 import { PublicSocialProfile } from '@/components/friends/PublicSocialProfile';
 import { PaywallModal } from '@/components/rooms/PaywallModal';
+import { FriendDiscovery } from '@/components/friends/FriendDiscovery';
 import { useFriends } from '@/hooks/useFriends';
 import { useAuth } from '@/contexts/AuthContext';
 import { t } from '@/i18n';
@@ -22,8 +23,6 @@ function FriendsView() {
   const { colors } = useTheme();
   const router = useRouter();
   const params = useLocalSearchParams<{ edit?: string }>();
-  const [query, setQuery] = useState('');
-  const [searched, setSearched] = useState(false);
   const [editing, setEditing] = useState(false);
   const [paywall, setPaywall] = useState(false);
   const [reportTarget, setReportTarget] = useState<string | null>(null);
@@ -112,6 +111,12 @@ function FriendsView() {
           <>
             <Text>{t('friends.intro')}</Text>
             <Button
+              variant="tertiary"
+              label={t('notifications.title')}
+              onPress={() => router.push('/notifications/settings' as never)}
+              testID="friend-notification-settings"
+            />
+            <Button
               variant="secondary"
               label={t('friends.editProfile')}
               disabled={!friends.ownProfile}
@@ -172,30 +177,17 @@ function FriendsView() {
                   ? t('friends.quota', { remaining: friends.inbox.quota.remaining ?? 0 })
                   : t('friends.quotaUnknown')}
             </Text>
-            <PlanTextField
-              label={t('friends.searchLabel')}
-              placeholder={t('friends.searchPlaceholder')}
-              value={query}
-              onChangeText={setQuery}
-              autoCapitalize="none"
-              autoCorrect={false}
-              maxLength={21}
-              onSubmitEditing={() => {
-                setSearched(true);
-                void friends.search(query);
-              }}
-              testID="friend-username-search"
+            <FriendDiscovery
+              onOpen={(person) => void friends.openProfile(person)}
+              onSend={friends.send}
+              busy={friends.busy}
+              remaining={friends.inbox?.quota.remaining}
+              queuedIds={pending
+                .filter((item) => item.rpc_name === 'send_friend_request')
+                .map(
+                  (item) => (JSON.parse(item.payload) as { p_recipient_id: string }).p_recipient_id,
+                )}
             />
-            <Button
-              label={friends.searching ? t('common.loading') : t('friends.search')}
-              disabled={friends.searching}
-              onPress={() => {
-                setSearched(true);
-                void friends.search(query);
-              }}
-              testID="search-friends"
-            />
-            {list(friends.results, t(searched ? 'friends.searchEmpty' : 'friends.searchHint'))}
             <Text variant="heading" accessibilityRole="header">
               {t('friends.incoming')}
             </Text>

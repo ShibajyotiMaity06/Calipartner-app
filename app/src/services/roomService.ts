@@ -154,14 +154,18 @@ export async function createRoom(
   name: string,
   deviceHash?: string,
   clientId = generateClientUuid(),
+  friendIds?: string[],
 ): Promise<{ room_id: string; name: string; code: string; role: string; state: string }> {
   const hash = deviceHash ?? (await getOrGenerateDeviceHash());
   try {
-    const { data, error } = await client.rpc('create_room_v3', {
-      p_client_id: clientId,
-      p_name: name,
-      p_device_hash: hash,
-    });
+    const { data, error } = await client.rpc(
+      friendIds ? 'create_squad_with_friends' : 'create_room_v3',
+      {
+        p_client_id: clientId,
+        p_name: name,
+        ...(friendIds ? { p_friend_ids: friendIds } : { p_device_hash: hash }),
+      },
+    );
     if (error) throw parseRoomError(error);
 
     return data;

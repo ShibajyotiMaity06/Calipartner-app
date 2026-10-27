@@ -108,7 +108,10 @@ export function useFriends({ profileOnly = false }: { profileOnly?: boolean } = 
   useFocusEffect(
     useCallback(() => {
       void refresh();
-    }, [refresh]),
+      if (profileOnly) return;
+      const timer = setInterval(() => void refresh(), 15000);
+      return () => clearInterval(timer);
+    }, [refresh, profileOnly]),
   );
 
   const search = async (query: string) => {

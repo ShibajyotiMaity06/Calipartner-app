@@ -15,6 +15,8 @@ vi.mock('expo-notifications', () => ({
 
 describe('deepLinks & Notification Routing', () => {
   it('resolves explicit URL routes accurately', () => {
+    expect(resolveNotificationRoute({ url: '/friends', kind: 'friend_request' })).toBe('/friends');
+    expect(resolveNotificationRoute({ url: '/friends', kind: 'friend_accepted' })).toBe('/friends');
     expect(resolveNotificationRoute({ url: '/room' })).toBe('/(tabs)/room');
     expect(resolveNotificationRoute({ url: '/today' })).toBe('/(tabs)/today');
     expect(resolveNotificationRoute({ url: '/progress' })).toBe('/(tabs)/progress');

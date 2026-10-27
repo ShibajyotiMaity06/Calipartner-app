@@ -387,7 +387,7 @@ export default function TodayScreen() {
                     { backgroundColor: 'rgba(244, 182, 125, 0.15)' },
                   ]}
                 >
-                  <Ionicons name="restaurant" size={20} color={dark.apricot} />
+                  <Ionicons name="restaurant" size={20} color={dark.mint} />
                 </View>
                 <Ionicons name="chevron-forward" size={16} color={dark.textLo} />
               </View>

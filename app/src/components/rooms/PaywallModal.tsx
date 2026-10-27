@@ -677,13 +677,6 @@ export function PaywallModal({
                         </Text>
                       </View>
                     </View>
-
-                    <View style={styles.aiBadge}>
-                      <Ionicons name="flash" size={12} color={dark.teal} />
-                      <Text variant="micro" color={dark.teal} style={{ fontWeight: '700' }}>
-                        AI COACH & SCANS
-                      </Text>
-                    </View>
                   </View>
 
                   <Text variant="bodyS" color={dark.textMid} style={styles.planSummaryText}>

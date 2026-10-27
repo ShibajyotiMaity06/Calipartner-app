@@ -61,3 +61,18 @@ yarn-error.log*
 .turbo/
 web-build/
 
+
+# Local documentation and reference material (tracked sources remain versioned)
+/docs/
+# Local recordings and generated release/install artifacts
+*.mp4
+*.mov
+*.webm
+*.apk
+*.aab
+*.ipa
+*.zip
+*.tar
+*.gz
+/playwright-report/
+/test-results/

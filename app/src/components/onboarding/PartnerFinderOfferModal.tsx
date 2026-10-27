@@ -1,18 +1,13 @@
 import React, { useState } from 'react';
-import { View, StyleSheet, Modal, SafeAreaView, TouchableOpacity } from 'react-native';
+import { Modal, ScrollView } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import {
-  Text,
-  Button,
-  SwitchRow,
-  space,
-  dark,
-  radius,
-  Avatar,
-  useReducedMotion,
-} from '@calipartner/ui';
+import { Button, SwitchRow, Text, useTheme, useReducedMotion } from '@calipartner/ui';
+import { FriendDiscovery } from '@/components/friends/FriendDiscovery';
+import { PublicSocialProfile } from '@/components/friends/PublicSocialProfile';
+import { planStyles } from './PlanPrimitives';
+import { useFriends } from '@/hooks/useFriends';
 import { t } from '@/i18n';
-import { playClickSound, playToggleSound, playSuccessSound } from '@/lib/sound';
 
 export interface PartnerFinderOfferModalProps {
   visible: boolean;
@@ -21,266 +16,109 @@ export interface PartnerFinderOfferModalProps {
   onSetPreferences?: () => void;
   testID?: string;
 }
-
 export function PartnerFinderOfferModal({
   visible,
   onClose,
   onAccept,
-  onSetPreferences,
   testID = 'partner-finder-offer-modal',
 }: PartnerFinderOfferModalProps) {
   const router = useRouter();
+  const friends = useFriends();
+  const { colors } = useTheme();
   const reduceMotion = useReducedMotion();
-  const [openToPartner, setOpenToPartner] = useState(false);
-
-  const handleToggle = (val: boolean) => {
-    playToggleSound();
-    setOpenToPartner(val);
-  };
-
-  const handlePartnerCardPress = () => {
-    playClickSound();
+  const [open, setOpen] = useState(false);
+  const browse = () => {
     onClose();
-    router.push('/paywall' as never);
+    router.push('/friends' as never);
   };
-
-  const handleConfirm = () => {
-    playSuccessSound();
-    if (openToPartner && onAccept) {
-      onAccept();
-    }
-    onClose();
-  };
-
-  const handleSetPreferences = () => {
-    playClickSound();
-    onSetPreferences?.();
-    onClose();
-  };
-
-  const handleMaybeLater = () => {
-    playClickSound();
-    onClose();
-  };
-
+  const pending = friends.outbox.filter((item) => item.status === 'pending');
+  const selected = friends.selected;
   return (
     <Modal
       visible={visible}
       animationType={reduceMotion ? 'none' : 'slide'}
-      transparent={false}
       onRequestClose={onClose}
       testID={testID}
     >
-      <SafeAreaView style={styles.safeArea}>
-        <View style={styles.container}>
-          {/* Header */}
-          <View style={styles.header}>
-            <Text
-              variant="title1"
-              color={dark.textHi}
-              style={styles.title}
-              testID="partner-offer-title"
-            >
-              Want a workout partner?
-            </Text>
-            <Text variant="body" color={dark.textMid} style={styles.subtitle}>
-              We can suggest people with similar goals. You choose who to say hi to.
-            </Text>
-          </View>
-
-          {/* Demo Partner Preview Card (Tappable to Paywall) */}
-          <View style={styles.cardPreviewWrapper}>
-            <TouchableOpacity
-              onPress={handlePartnerCardPress}
-              activeOpacity={0.85}
-              style={styles.matchCard}
-              accessibilityRole="button"
-              accessibilityLabel="Demo partner card. Tap to view room plan."
-              testID="demo-partner-card"
-            >
-              <View style={styles.matchCardTop}>
-                <Avatar
-                  name="Partner"
-                  identityHue="teal"
-                  size="md"
-                  testID="partner-preview-avatar"
-                />
-                <View style={styles.matchBadgeRow}>
-                  <Text variant="bodyS" color={dark.textHi}>
-                    {t('onboarding.goal.cutTitle')}
-                  </Text>
-                  <View style={styles.adherenceBadge}>
-                    <Text variant="label" color={dark.teal} style={styles.adherenceText}>
-                      88% adherence
-                    </Text>
-                  </View>
-                </View>
-              </View>
-
-              <View style={styles.bandedFields}>
-                <Text variant="body" color={dark.textHi} style={styles.bandedTitle}>
-                  25–34 · Strength & walks · Bangalore
+      <SafeAreaView style={{ flex: 1, backgroundColor: colors.bg0 }}>
+        <ScrollView contentContainerStyle={planStyles.reviewContent}>
+          <Text variant="title1">{t('socialUpdate.offerTitle')}</Text>
+          <Text>{t('socialUpdate.offerIntro')}</Text>
+          <SwitchRow
+            title={t('socialUpdate.openToPartner')}
+            value={open}
+            onValueChange={setOpen}
+            testID="toggle-open-to-partner"
+          />
+          {open ? (
+            <>
+              {friends.loading ? <Text>{t('common.loading')}</Text> : null}
+              {friends.error ? (
+                <Text accessibilityRole="alert">{t('friends.genericError')}</Text>
+              ) : null}
+              {friends.outbox.some((item) => item.status === 'failed') ? (
+                <Text accessibilityRole="alert">
+                  {t(
+                    friends.outbox.some((item) => item.last_error?.includes('FRIEND_WEEKLY_LIMIT'))
+                      ? 'friends.weeklyLimit'
+                      : 'friends.failedChanges',
+                  )}
                 </Text>
-                <Text variant="bodyS" color={dark.textMid} style={styles.bioLine}>
-                  &ldquo;Working towards consistency and looking for a daily accountability
-                  partner.&rdquo;
-                </Text>
-              </View>
-
-              {/* Gentle indication to upgrade/view room plan */}
-              <View style={styles.privacyPill}>
-                <Text variant="label" color={dark.apricot}>
-                  Demo Partner · Tap to explore Room Plan ›
-                </Text>
-              </View>
-            </TouchableOpacity>
-          </View>
-
-          {/* SwitchRow for Open to Partner (off by default) */}
-          <View style={styles.switchSection}>
-            <SwitchRow
-              title="Open to a partner"
-              consequence="You can change this or turn it off anytime in settings."
-              value={openToPartner}
-              onValueChange={handleToggle}
-              testID="toggle-open-to-partner"
-              style={styles.switchCard}
-            />
-
-            <Text variant="label" color={dark.textLo} style={styles.smallDisclaimer}>
-              Browsing and sending needs a room plan. Anyone can accept.
-            </Text>
-          </View>
-
-          {/* Action Buttons */}
-          <View style={styles.actions}>
-            {openToPartner ? (
-              <>
-                <Button
-                  variant="primary"
-                  size="lg"
-                  label="Enable & Continue"
-                  onPress={handleConfirm}
-                  testID="btn-enable-partner-continue"
-                />
-                <Button
-                  variant="secondary"
-                  size="md"
-                  label="Set preferences"
-                  onPress={handleSetPreferences}
-                  testID="btn-set-partner-preferences"
-                />
-              </>
-            ) : (
-              <Button
-                variant="primary"
-                size="lg"
-                label="Continue to CaliPartner"
-                onPress={handleConfirm}
-                testID="btn-continue-partner"
+              ) : null}
+              <FriendDiscovery
+                random
+                onOpen={(person) => void friends.openProfile(person)}
+                onSend={friends.send}
+                busy={friends.busy}
+                remaining={friends.inbox?.quota.remaining}
+                queuedIds={pending
+                  .filter((item) => item.rpc_name === 'send_friend_request')
+                  .map(
+                    (item) =>
+                      (JSON.parse(item.payload) as { p_recipient_id: string }).p_recipient_id,
+                  )}
               />
-            )}
-
-            <Button
-              variant="secondary"
-              size="md"
-              label="Maybe later"
-              onPress={handleMaybeLater}
-              testID="btn-maybe-later-partner"
-            />
-          </View>
-        </View>
+              <Button
+                variant="secondary"
+                label={t('socialUpdate.more')}
+                onPress={browse}
+                testID="browse-more-friends"
+              />
+            </>
+          ) : null}
+          <Button
+            label={t('socialUpdate.continue')}
+            onPress={() => {
+              if (open) onAccept?.();
+              onClose();
+            }}
+            testID="btn-continue-partner"
+          />
+        </ScrollView>
+        {selected ? (
+          <PublicSocialProfile
+            profile={selected}
+            busy={friends.busy}
+            queued={pending.some((item) => {
+              const payload = JSON.parse(item.payload);
+              return (
+                payload.p_recipient_id === selected.id ||
+                payload.p_request_id === selected.request_id
+              );
+            })}
+            limitReached={friends.inbox?.quota.remaining === 0}
+            onClose={friends.closeProfile}
+            onSend={() => void friends.send(selected.id)}
+            onRespond={(action) => {
+              if (selected.request_id)
+                void friends.respond(selected.request_id, action, selected.id);
+            }}
+            onUpgrade={browse}
+            onBlock={() => void friends.block(selected.id)}
+            onReport={browse}
+          />
+        ) : null}
       </SafeAreaView>
     </Modal>
   );
 }
-
-const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
-    backgroundColor: dark.bg0,
-  },
-  container: {
-    flex: 1,
-    paddingHorizontal: space[4],
-    paddingTop: space[4],
-    paddingBottom: space[4],
-    justifyContent: 'space-between',
-  },
-  header: {
-    gap: space[2],
-  },
-  title: {
-    letterSpacing: -0.4,
-  },
-  subtitle: {
-    lineHeight: 22,
-  },
-  cardPreviewWrapper: {
-    marginVertical: space[4],
-  },
-  matchCard: {
-    backgroundColor: dark.s1,
-    borderRadius: radius.card,
-    borderWidth: 1,
-    borderColor: dark.hairlineLit,
-    padding: space[4],
-    gap: space[3],
-  },
-  matchCardTop: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  matchBadgeRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: space[2],
-  },
-  adherenceBadge: {
-    backgroundColor: dark.s2,
-    borderWidth: 1,
-    borderColor: dark.hairline,
-    borderRadius: radius.full,
-    paddingHorizontal: space[2],
-    paddingVertical: 2,
-  },
-  adherenceText: {
-    fontWeight: '600',
-  },
-  bandedFields: {
-    gap: space[1],
-  },
-  bandedTitle: {
-    fontWeight: '600',
-  },
-  bioLine: {
-    lineHeight: 20,
-    fontStyle: 'italic',
-  },
-  privacyPill: {
-    backgroundColor: dark.s2,
-    borderRadius: radius.control,
-    padding: space[2],
-    marginTop: space[1],
-  },
-  switchSection: {
-    gap: space[2],
-  },
-  switchCard: {
-    backgroundColor: dark.s1,
-    borderWidth: 1,
-    borderColor: dark.hairline,
-    borderRadius: radius.card,
-    padding: space[4],
-  },
-  smallDisclaimer: {
-    textAlign: 'center',
-    lineHeight: 18,
-    paddingHorizontal: space[2],
-  },
-  actions: {
-    gap: space[3],
-    paddingTop: space[2],
-  },
-});

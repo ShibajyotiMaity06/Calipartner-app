@@ -34,13 +34,19 @@ export function useRooms() {
 
   const createRequest = useRef<{ name: string; id: string } | null>(null);
   const createRoom = useCallback(
-    async (name: string) => {
+    async (name: string, friendIds?: string[]) => {
       setError(null);
       try {
         const supabase = getSupabase();
         if (createRequest.current?.name !== name)
           createRequest.current = { name, id: generateClientUuid() };
-        const result = await apiCreateRoom(supabase, name, undefined, createRequest.current.id);
+        const result = await apiCreateRoom(
+          supabase,
+          name,
+          undefined,
+          createRequest.current.id,
+          friendIds,
+        );
         createRequest.current = null;
         await refresh();
         return result;

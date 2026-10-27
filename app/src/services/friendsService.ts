@@ -350,3 +350,25 @@ export async function searchSocialProfiles(
     online,
   );
 }
+
+export function browseSocialProfiles(
+  db: SocialDb,
+  client: SocialClient,
+  owner: string,
+  online: boolean,
+  goal: 'bulk' | 'cut' | 'maintain' | null,
+  query = '',
+  after = '',
+  random = false,
+) {
+  const normalized = normalizeSocialQuery(query);
+  return remoteOrCache<SocialProfile[]>(
+    db,
+    client,
+    owner,
+    `search:browse:${goal ?? 'all'}:${normalized}:${after}:${random}`,
+    'browse_social_profiles',
+    { p_goal: goal, p_query: normalized, p_after: after, p_random: random },
+    online,
+  );
+}

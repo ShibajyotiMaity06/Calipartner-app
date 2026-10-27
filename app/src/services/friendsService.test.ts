@@ -5,6 +5,7 @@ vi.mock('expo-sqlite', () => ({}));
 import { createWebDb } from '@/db';
 import { migrations } from '@/db/migrations';
 import {
+  browseSocialProfiles,
   dismissSocialFailure,
   flushSocialOutbox,
   loadFriendInbox,
@@ -98,6 +99,39 @@ afterEach(() => {
 
 describe.each(['native SQLite', 'browser persistence'])('friends offline: %s', (platform) => {
   const open = (): SocialDb => (platform === 'native SQLite' ? nativeDb() : createWebDb());
+  it('caches each discovery filter and page separately, keeps offline actions queued and binds reads to the account', async () => {
+    const db = open();
+    const { client, rpc } = remote(self.id, [friend]);
+    const first = await browseSocialProfiles(db, client, self.id, true, 'bulk', '@BEA', '', false);
+    expect(first.data).toEqual([friend]);
+    expect(rpc).toHaveBeenLastCalledWith('browse_social_profiles', {
+      p_actor_id: self.id,
+      p_goal: 'bulk',
+      p_query: 'bea',
+      p_after: '',
+      p_random: false,
+    });
+    expect((await browseSocialProfiles(db, client, self.id, false, 'bulk', 'bea')).cached).toBe(
+      true,
+    );
+    await expect(browseSocialProfiles(db, client, self.id, false, 'cut', 'bea')).rejects.toThrow(
+      'OFFLINE_NO_CACHE',
+    );
+    await expect(
+      browseSocialProfiles(db, client, self.id, false, 'bulk', 'bea', 'bea'),
+    ).rejects.toThrow('OFFLINE_NO_CACHE');
+    await queueFriendRequest(db, self.id, friend.id);
+    expect(await socialOutbox(db, self.id)).toHaveLength(1);
+    await queueSocialBlock(db, self.id, friend.id);
+    expect((await browseSocialProfiles(db, client, self.id, false, 'bulk', 'bea')).data).toEqual(
+      [],
+    );
+    const other = remote(friend.id, [friend]);
+    await expect(
+      browseSocialProfiles(db, other.client, self.id, true, 'bulk', 'bea'),
+    ).rejects.toThrow('NOT_AUTHORIZED');
+    expect(other.rpc).not.toHaveBeenCalled();
+  });
   it('persists the profile and only the latest edit before network access, scoped to its owner', async () => {
     let db = open();
     await saveSocialProfile(db, self.id, self, {

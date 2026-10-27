@@ -25,6 +25,8 @@ try {
   await runRoomTests(db);
   const { runFriendTests } = await import('./friends_cases.mjs');
   await runFriendTests(db);
+  const { runSocialDiscoveryTests } = await import('./social_discovery_cases.mjs');
+  await runSocialDiscoveryTests(db);
   const { runBillingGoalTests } = await import('./billing_goal_cases.mjs');
   await runBillingGoalTests(db);
   const { runFoodCaptureTests } = await import('./food_capture_cases.mjs');

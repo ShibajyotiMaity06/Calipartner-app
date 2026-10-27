@@ -2,12 +2,14 @@ import React, { useState } from 'react';
 import {
   ActivityIndicator,
   FlatList,
+  ScrollView,
   Modal,
   Pressable,
   StyleSheet,
   Text,
   View,
 } from 'react-native';
+import { FriendRequests } from '@/components/friends/FriendRequests';
 import { Ionicons } from '@expo/vector-icons';
 import { t } from '@/i18n';
 import { fontSize, radius, spacing } from '@/theme/tokens';
@@ -131,7 +133,7 @@ export function RequestsInboxModal({
                   activeTab === 'incoming' && styles.tabTextActive,
                 ]}
               >
-                {t('rooms.inboxModal.incomingTab')} ({incoming.length})
+                {t('rooms.inboxModal.incomingTab')}
               </Text>
             </Pressable>
 
@@ -152,20 +154,22 @@ export function RequestsInboxModal({
                   activeTab === 'outgoing' && styles.tabTextActive,
                 ]}
               >
-                {t('rooms.inboxModal.outgoingTab')} ({outgoing.length})
+                {t('rooms.inboxModal.outgoingTab')}
               </Text>
             </Pressable>
           </View>
 
-          {/* 20 pending requests limit note (Spec K01) */}
-          <View style={styles.limitNoticeRow}>
-            <Text style={[styles.limitNoticeText, { color: colors.textMuted }]}>
-              {t('rooms.inboxModal.pendingLimitNotice')}
-            </Text>
-          </View>
-
           {/* List Content */}
-          <View style={styles.listContainer}>
+          <ScrollView style={styles.listContainer} keyboardShouldPersistTaps="handled">
+            {visible ? <FriendRequests tab={activeTab} /> : null}
+            <Text style={[styles.title, { color: colors.text }]}>{t('socialUpdate.rooms')}</Text>
+            {/* 20 pending requests limit note (Spec K01) */}
+            <View style={styles.limitNoticeRow}>
+              <Text style={[styles.limitNoticeText, { color: colors.textMuted }]}>
+                {t('rooms.inboxModal.pendingLimitNotice')}
+              </Text>
+            </View>
+
             {activeTab === 'incoming' ? (
               incoming.length === 0 ? (
                 <View style={styles.emptyContainer}>
@@ -176,6 +180,7 @@ export function RequestsInboxModal({
                 </View>
               ) : (
                 <FlatList
+                  scrollEnabled={false}
                   data={incoming}
                   keyExtractor={(item) => item.id}
                   renderItem={({ item }) => {
@@ -393,7 +398,7 @@ export function RequestsInboxModal({
                 }}
               />
             )}
-          </View>
+          </ScrollView>
         </View>
       </View>
     </Modal>

@@ -232,11 +232,17 @@ export async function handleSendPush(req: Request): Promise<Response> {
     return new Response('ok', { headers: corsHeaders });
   }
 
+  if (req.method !== 'POST') {
+    return new Response(JSON.stringify({ error: 'METHOD_NOT_ALLOWED' }), { status: 405 });
+  }
+  const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+  if (!serviceKey || req.headers.get('authorization') !== `Bearer ${serviceKey}`) {
+    return new Response(JSON.stringify({ error: 'NOT_AUTHORIZED' }), { status: 401 });
+  }
+
   try {
     const supabaseUrl = Deno.env.get('SUPABASE_URL') || '';
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || '';
-    const adminClient = createClient(supabaseUrl, supabaseServiceKey);
-
     const serviceAccountJson = Deno.env.get('FIREBASE_SERVICE_ACCOUNT');
     let serviceAccount: ServiceAccount | null = null;
     if (serviceAccountJson) {
@@ -247,8 +253,20 @@ export async function handleSendPush(req: Request): Promise<Response> {
       }
     }
 
+    if (
+      !serviceAccount?.private_key ||
+      !serviceAccount.project_id ||
+      !serviceAccount.client_email
+    ) {
+      return new Response(JSON.stringify({ error: 'FIREBASE_NOT_CONFIGURED' }), { status: 503 });
+    }
+    const adminClient = createClient(supabaseUrl, supabaseServiceKey);
+
     const body = req.method === 'POST' ? await req.json().catch(() => ({})) : {};
-    const { action = 'process_queue', limit = 50, notification_id } = body;
+    const { limit = 50, notification_id } = body;
+    if (!Number.isInteger(limit) || limit < 1 || limit > 100) {
+      return new Response(JSON.stringify({ error: 'INVALID_LIMIT' }), { status: 400 });
+    }
 
     // 1. Fetch pending notifications from queue
     let query = adminClient
@@ -259,7 +277,7 @@ export async function handleSendPush(req: Request): Promise<Response> {
       .limit(limit);
 
     if (notification_id) {
-      query = adminClient.from('push_notification_queue').select('*').eq('id', notification_id);
+      query = query.eq('id', notification_id);
     }
 
     const { data: queueItems, error: queueErr } = await query;
@@ -273,27 +291,6 @@ export async function handleSendPush(req: Request): Promise<Response> {
     if (!queueItems || queueItems.length === 0) {
       return new Response(
         JSON.stringify({ message: 'No pending push notifications to process', processed: 0 }),
-        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
-      );
-    }
-
-    // If Firebase credentials are not configured (e.g. dev environment), simulate mock delivery
-    if (!serviceAccount || !serviceAccount.private_key) {
-      console.warn('FIREBASE_SERVICE_ACCOUNT not configured. Simulating mock push delivery.');
-      const ids = queueItems.map((item) => item.id);
-      await adminClient
-        .from('push_notification_queue')
-        .update({ status: 'sent', sent_at: new Date().toISOString() })
-        .in('id', ids);
-
-      return new Response(
-        JSON.stringify({
-          success: true,
-          mock: true,
-          message:
-            'Simulated push delivery in dev environment (FIREBASE_SERVICE_ACCOUNT secret not set)',
-          processed_count: queueItems.length,
-        }),
         { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
       );
     }
@@ -402,6 +399,6 @@ export async function handleSendPush(req: Request): Promise<Response> {
   }
 }
 
-if (typeof Deno !== 'undefined') {
+if (import.meta.main) {
   Deno.serve(handleSendPush);
 }

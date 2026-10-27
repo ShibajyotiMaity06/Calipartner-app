@@ -70,7 +70,6 @@ export function WorkoutHubModal({
       lower: 'legs',
       core: 'core',
       full: 'full_body',
-      cardio: 'cardio',
     };
     setPickerMuscle(categoryMap[typeId] ?? 'All');
     setShowExercisePicker(true);
@@ -97,7 +96,6 @@ export function WorkoutHubModal({
     { id: 'lower', name: 'Lower Body', icon: 'walk' as const },
     { id: 'core', name: 'Core', icon: 'fitness' as const },
     { id: 'full', name: 'Full Body', icon: 'man' as const },
-    { id: 'cardio', name: 'Cardio', icon: 'bicycle' as const },
   ];
 
   return (

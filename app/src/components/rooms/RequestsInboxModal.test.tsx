@@ -6,6 +6,7 @@ import type { RoomRequestWithDetails } from '@/types/rooms';
 vi.mock('react-native', () => ({
   ActivityIndicator: 'ActivityIndicator',
   Modal: 'Modal',
+  ScrollView: 'ScrollView',
   Pressable: 'Pressable',
   Text: 'Text',
   View: 'View',
@@ -22,6 +23,7 @@ vi.mock('react-native', () => ({
     ),
   StyleSheet: { create: (value: unknown) => value },
 }));
+vi.mock('@/components/friends/FriendRequests', () => ({ FriendRequests: 'FriendRequests' }));
 vi.mock('@expo/vector-icons', () => ({ Ionicons: 'Ionicons' }));
 vi.mock('@/theme/tokens', () => ({ fontSize: {}, radius: {}, spacing: {} }));
 vi.mock('@/theme/useTheme', () => ({ useTheme: () => ({ colors: {} }) }));

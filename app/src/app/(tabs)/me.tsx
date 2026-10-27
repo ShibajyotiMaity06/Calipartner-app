@@ -39,6 +39,7 @@ import {
   UnitsLanguageModal,
 } from '@/components/profile';
 import { useAuth } from '@/contexts/AuthContext';
+import { useFriends } from '@/hooks/useFriends';
 import { useRooms } from '@/hooks/useRooms';
 import { useRoomRequests } from '@/hooks/useRoomRequests';
 import { useTargets } from '@/hooks/useTargets';
@@ -74,7 +75,8 @@ export default function MeScreen() {
   const [showAboutLegal, setShowAboutLegal] = useState(false);
   const [showSignOutSheet, setShowSignOutSheet] = useState(false);
 
-  const pendingRequestsCount = incoming.length;
+  const friends = useFriends();
+  const pendingRequestsCount = incoming.length + (friends.inbox?.incoming.length ?? 0);
 
   const handleRateApp = () => {
     playClickSound();
@@ -684,7 +686,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: 6,
     right: 6,
-    backgroundColor: dark.apricot,
+    backgroundColor: dark.danger,
     borderRadius: radius.full,
     minWidth: 18,
     height: 18,

@@ -83,7 +83,7 @@ Nutrition goals are not static. As members lose fat or gain muscle, their Total 
 | **Pair Challenges** (1, 7, 30 days) | — | **✔** | **✔** | Custom accountability challenges with partner |
 | **Seasonal Challenges** (Winter Arc, etc.) | — | **✔** | **✔** | Platform-wide quarterly motivational events |
 | **Username Search & Friendships** | 3 requests / 7d | **Unlimited** | **Unlimited** | Find friends by @username without limits |
-| **Partner Finder** | Receive & Accept | **Browse & Send** | **Browse & Send** | Deterministic match engine (gender, goal, age band) |
+| **Friend discovery** | Browse & Send (3 requests / 7d) | **Browse & Send** | **Browse & Send** | Goal filter and universal username search; discoverable profiles only |
 
 ---
 

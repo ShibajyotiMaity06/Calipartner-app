@@ -1,5 +1,8 @@
 # CaliPartner: Product Requirements Document (PRD)
 
+> Owner-requested corrections, 26 October 2026: all signed-in users can browse discoverable profiles with one goal filter (bulk, cut or maintain) and universal username search; Free remains limited to three friend requests per rolling seven days. Onboarding shows a random real profile. Squad creation replaces the separate pair entry point, inviting accepted friends under the existing host quotas (Free one friend, Plus four, Pro nineteen). Friendship still requires explicit room invitation acceptance before sharing. Friend sends and acceptance use the existing request push channel and inbox badges. Remove the workout hub Cardio shortcut and floating Pro AI badge; use a green food icon and neutral browser chrome. These changes supersede conflicting phase, paid-discovery and UI-only restrictions for this request.
+
+
 > Owner-requested repair, 26 October 2026: [device steps, dates and food capture](DEVICE_AND_CAMERA_SETUP.md) clarifies native versus installed-web step support and authorizes the corresponding repairs.
 
 > Latest owner-requested corrections, 25 October 2026: [Payment, profile and goal corrections](PAYMENT_PROFILE_GOAL_CORRECTIONS.md) supersede conflicting restrictions for this task.
