@@ -31,6 +31,8 @@ try {
   await runBillingGoalTests(db);
   const { runFoodCaptureTests } = await import('./food_capture_cases.mjs');
   await runFoodCaptureTests(db);
+  const { runPushDeliveryTests } = await import('./push_delivery_cases.mjs');
+  await runPushDeliveryTests(db);
 } finally {
   await db.close();
 }

@@ -227,6 +227,31 @@ async function sendFcmMessage(
   };
 }
 
+async function validWorkerSignature(req: Request, body: string, secret: string): Promise<boolean> {
+  const timestamp = req.headers.get('x-push-worker-timestamp') ?? '';
+  const signature = req.headers.get('x-push-worker-signature') ?? '';
+  if (
+    !/^\d{10}$/.test(timestamp) ||
+    !/^[a-f0-9]{64}$/.test(signature) ||
+    Math.abs(Date.now() / 1000 - Number(timestamp)) > 90
+  )
+    return false;
+  const encoder = new TextEncoder();
+  const key = await crypto.subtle.importKey(
+    'raw',
+    encoder.encode(secret),
+    { name: 'HMAC', hash: 'SHA-256' },
+    false,
+    ['verify'],
+  );
+  return crypto.subtle.verify(
+    'HMAC',
+    key,
+    new Uint8Array(signature.match(/../g)!.map((value) => parseInt(value, 16))),
+    encoder.encode(`${timestamp}.${body}`),
+  );
+}
+
 export async function handleSendPush(req: Request): Promise<Response> {
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders });
@@ -235,8 +260,18 @@ export async function handleSendPush(req: Request): Promise<Response> {
   if (req.method !== 'POST') {
     return new Response(JSON.stringify({ error: 'METHOD_NOT_ALLOWED' }), { status: 405 });
   }
+  const rawBody = await req.text();
+  if (rawBody.length > 4096) return new Response('Request too large', { status: 413 });
   const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
-  if (!serviceKey || req.headers.get('authorization') !== `Bearer ${serviceKey}`) {
+  const workerSecret = Deno.env.get('PUSH_WORKER_SECRET');
+  // Hosted runtimes can inject an internal database key that differs from the
+  // project's external service-role JWT. A scoped worker credential also keeps
+  // database administrator credentials out of scheduled HTTP requests.
+  const authorized = workerSecret
+    ? req.headers.get('x-push-worker-secret') === workerSecret ||
+      (await validWorkerSignature(req, rawBody, workerSecret))
+    : Boolean(serviceKey && req.headers.get('authorization') === `Bearer ${serviceKey}`);
+  if (!authorized) {
     return new Response(JSON.stringify({ error: 'NOT_AUTHORIZED' }), { status: 401 });
   }
 
@@ -262,7 +297,7 @@ export async function handleSendPush(req: Request): Promise<Response> {
     }
     const adminClient = createClient(supabaseUrl, supabaseServiceKey);
 
-    const body = req.method === 'POST' ? await req.json().catch(() => ({})) : {};
+    const body = rawBody ? JSON.parse(rawBody) : {};
     const { limit = 50, notification_id } = body;
     if (!Number.isInteger(limit) || limit < 1 || limit > 100) {
       return new Response(JSON.stringify({ error: 'INVALID_LIMIT' }), { status: 400 });
