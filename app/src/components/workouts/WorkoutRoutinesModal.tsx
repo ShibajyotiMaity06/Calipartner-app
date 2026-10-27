@@ -1,3 +1,4 @@
+import { PremiumFeatureModal } from '@/components/subscription/PremiumFeatureModal';
 import React, { useState } from 'react';
 import { Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
@@ -37,7 +38,7 @@ const SAMPLE_ROUTINES: RoutineItem[] = [
   },
 ];
 
-export function WorkoutRoutinesModal({
+function WorkoutRoutinesModalContent({
   visible,
   onClose,
   onStartRoutine,
@@ -309,3 +310,11 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
 });
+
+export function WorkoutRoutinesModal(props: WorkoutRoutinesModalProps) {
+  return (
+    <PremiumFeatureModal feature="workout_routines" visible={props.visible} onClose={props.onClose}>
+      <WorkoutRoutinesModalContent {...props} />
+    </PremiumFeatureModal>
+  );
+}

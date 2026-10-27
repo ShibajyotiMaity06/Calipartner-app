@@ -15,6 +15,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   userInterfaceStyle: 'automatic',
   ios: {
     supportsTablet: false,
+    icon: './assets/ios-icon.png',
     bundleIdentifier: 'app.calipartner.mobile',
     infoPlist: {
       NSMotionUsageDescription:
@@ -23,6 +24,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
         'CaliPartner uses your location to track your running distance, pace, and route.',
     },
   },
+  web: { favicon: './assets/favicon.png' },
   android: {
     package: 'app.calipartner.mobile',
     permissions: [
@@ -104,6 +106,5 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     supabaseAnonKey: process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY ?? '',
     revenueCatAppleKey: process.env.EXPO_PUBLIC_REVENUECAT_APPLE_KEY ?? '',
     revenueCatGoogleKey: process.env.EXPO_PUBLIC_REVENUECAT_GOOGLE_KEY ?? '',
-    geminiApiKey: process.env.EXPO_PUBLIC_GEMINI_API_KEY ?? '',
   },
 });

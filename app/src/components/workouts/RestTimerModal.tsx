@@ -1,3 +1,4 @@
+import { PremiumFeatureModal } from '@/components/subscription/PremiumFeatureModal';
 import React, { useEffect, useRef, useState } from 'react';
 import { Modal, Pressable, StyleSheet, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
@@ -14,7 +15,7 @@ export interface RestTimerModalProps {
 
 const PRESET_INTERVALS = [30, 60, 90, 120, 180];
 
-export function RestTimerModal({
+function RestTimerModalContent({
   visible,
   initialSeconds = 90,
   onClose,
@@ -293,3 +294,11 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
 });
+
+export function RestTimerModal(props: RestTimerModalProps) {
+  return (
+    <PremiumFeatureModal feature="rest_timer_prs" visible={props.visible} onClose={props.onClose}>
+      <RestTimerModalContent {...props} />
+    </PremiumFeatureModal>
+  );
+}

@@ -106,7 +106,8 @@ describe('Phase 11 Prompt B — AI Food Photo UI Screens & State Tests', () => {
       expect(photoStrings.limitTitle).toBe('Daily Photo Limit Reached');
       expect(photoStrings.limitBodyTrial).toContain('Plus and its trial do not include');
       expect(photoStrings.limitBodyPaid).toContain('5 AI photo scans');
-      expect(photoStrings.upgradeUpsell).toContain('Room Plan');
+      expect(photoStrings.upgradeUpsell).toContain('Pro');
+      expect(photoStrings.upgradeUpsell).toContain('5 photo scans');
     });
 
     it('resolves parameterized strings properly via t() helper', () => {

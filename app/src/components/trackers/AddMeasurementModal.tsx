@@ -1,3 +1,4 @@
+import { PremiumFeatureModal } from '@/components/subscription/PremiumFeatureModal';
 import React, { useState } from 'react';
 import { Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
@@ -26,7 +27,7 @@ const LOCATIONS: Array<{
   { key: 'neck', label: 'Neck', icon: 'ellipse-outline' },
 ];
 
-export function AddMeasurementModal({
+function AddMeasurementModalContent({
   visible,
   onClose,
   onSave,
@@ -470,3 +471,15 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
 });
+
+export function AddMeasurementModal(props: AddMeasurementModalProps) {
+  return (
+    <PremiumFeatureModal
+      feature="body_measurements"
+      visible={props.visible}
+      onClose={props.onClose}
+    >
+      <AddMeasurementModalContent {...props} />
+    </PremiumFeatureModal>
+  );
+}

@@ -1,3 +1,4 @@
+import { PremiumFeatureModal } from '@/components/subscription/PremiumFeatureModal';
 import React, { useState } from 'react';
 import { Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
@@ -25,7 +26,7 @@ const SAMPLE_PHOTOS: ProgressPhotoItem[] = [
   { id: 'p3', date: '2026-09-15', weightKg: 77.1 },
 ];
 
-export function ProgressPhotosModal({
+function ProgressPhotosModalContent({
   visible,
   onClose,
   onAddPhoto,
@@ -479,3 +480,11 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
 });
+
+export function ProgressPhotosModal(props: ProgressPhotosModalProps) {
+  return (
+    <PremiumFeatureModal feature="progress_photos" visible={props.visible} onClose={props.onClose}>
+      <ProgressPhotosModalContent {...props} />
+    </PremiumFeatureModal>
+  );
+}

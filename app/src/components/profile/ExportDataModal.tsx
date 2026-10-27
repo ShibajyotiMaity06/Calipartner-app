@@ -1,3 +1,4 @@
+import { PremiumFeatureModal } from '@/components/subscription/PremiumFeatureModal';
 import React, { useState } from 'react';
 import { View, StyleSheet, Modal, SafeAreaView, TouchableOpacity, Share } from 'react-native';
 import { Text, Button, ChevronLeftIcon, space, dark, radius } from '@calipartner/ui';
@@ -9,7 +10,7 @@ export interface ExportDataModalProps {
   testID?: string;
 }
 
-export function ExportDataModal({
+function ExportDataModalContent({
   visible,
   onClose,
   testID = 'export-data-modal',
@@ -258,3 +259,11 @@ const styles = StyleSheet.create({
     paddingTop: space[2],
   },
 });
+
+export function ExportDataModal(props: ExportDataModalProps) {
+  return (
+    <PremiumFeatureModal feature="export_data" visible={props.visible} onClose={props.onClose}>
+      <ExportDataModalContent {...props} />
+    </PremiumFeatureModal>
+  );
+}

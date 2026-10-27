@@ -1,3 +1,4 @@
+import { PremiumFeatureModal } from '@/components/subscription/PremiumFeatureModal';
 import React, { useState } from 'react';
 import { Modal, SafeAreaView, ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
@@ -17,7 +18,7 @@ export interface WeeklyPlanModalProps {
   testID?: string;
 }
 
-export function WeeklyPlanModal({
+function WeeklyPlanModalContent({
   visible,
   onClose,
   onSavePlan,
@@ -438,3 +439,11 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
 });
+
+export function WeeklyPlanModal(props: WeeklyPlanModalProps) {
+  return (
+    <PremiumFeatureModal feature="workout_routines" visible={props.visible} onClose={props.onClose}>
+      <WeeklyPlanModalContent {...props} />
+    </PremiumFeatureModal>
+  );
+}

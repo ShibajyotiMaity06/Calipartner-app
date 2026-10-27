@@ -26,7 +26,7 @@ export function MeRoomPlanCard({
   onChangePlan,
   onRestorePurchases,
 }: MeRoomPlanCardProps) {
-  const { entitlement, hasPlan, isTrial, isLapsed, isUnattached, loading, restore } =
+  const { entitlement, hasActiveAccess, isTrial, isLapsed, isUnattached, loading, restore } =
     useSubscription();
   const [restoring, setRestoring] = useState(false);
   const [restoreMessage, setRestoreMessage] = useState<string | null>(null);
@@ -86,7 +86,7 @@ export function MeRoomPlanCard({
   }
 
   const tier = entitlement?.tier ?? (isTrial ? 'trial' : 'free');
-  const isPaidOrTrial = hasPlan || isTrial;
+  const isPaidOrTrial = hasActiveAccess;
 
   const tierName =
     tier === 'pro'
@@ -116,11 +116,7 @@ export function MeRoomPlanCard({
     : null;
 
   const planDefaultCap = tier === 'pro' ? 20 : tier === 'plus' ? 5 : 2;
-  const roomCap = attachedRoom ? planDefaultCap : planDefaultCap;
-  const memberCount = attachedRoom?.member_count ?? 1;
-  const capacityText = attachedRoom?.name
-    ? `${memberCount} of ${roomCap} people`
-    : `Up to ${planDefaultCap} people`;
+  const capacityText = t('brandRepair.capacityValue', { count: planDefaultCap });
 
   // 1. FREE STATE: "Free Plan. Personal tracking is 100% free forever." with a quiet "See plans" (Spec N01, O01)
   if (!isPaidOrTrial) {
@@ -190,7 +186,7 @@ export function MeRoomPlanCard({
       <View style={styles.detailsSection}>
         <View style={styles.detailRow}>
           <Text variant="micro" color={dark.textMid}>
-            Capacity
+            {t('brandRepair.capacity')}
           </Text>
           <Text variant="bodyS" color={dark.textHi} style={styles.tabularNum}>
             {capacityText}
@@ -208,6 +204,13 @@ export function MeRoomPlanCard({
           </View>
         )}
       </View>
+
+      <Text variant="bodyS" color={dark.textMid} testID="plan-management-note">
+        {t('brandRepair.managementNote')}
+      </Text>
+      <Text variant="bodyS" color={dark.textMid} testID="hosted-room-quota">
+        {t('brandRepair.hostedValue', { count: tier === 'pro' ? 5 : tier === 'plus' ? 3 : 1 })}
+      </Text>
 
       {/* Unattached Subscription Note (PRD 6.18 SUB-14) */}
       {isUnattached && (
@@ -229,7 +232,7 @@ export function MeRoomPlanCard({
         <Button
           variant="secondary"
           label={t('me.roomPlan.changePlanBtn')}
-          onPress={onChangePlan}
+          onPress={hasActiveAccess ? handleManageInStore : onChangePlan}
           testID="btn-me-change-plan"
           style={styles.actionBtn}
         />

@@ -8,12 +8,19 @@ import { useTheme } from '@/theme/useTheme';
 
 export interface RecipeCardProps {
   recipe: Recipe;
+  locked?: boolean;
   onPress: (recipe: Recipe) => void;
   onToggleFavorite?: (recipe: Recipe) => void;
   testID?: string;
 }
 
-export function RecipeCard({ recipe, onPress, onToggleFavorite, testID }: RecipeCardProps) {
+export function RecipeCard({
+  recipe,
+  locked = false,
+  onPress,
+  onToggleFavorite,
+  testID,
+}: RecipeCardProps) {
   const { colors } = useTheme();
 
   const totalMinutes = (recipe.prep_minutes || 0) + (recipe.cook_minutes || 0);
@@ -85,6 +92,14 @@ export function RecipeCard({ recipe, onPress, onToggleFavorite, testID }: Recipe
 
       {/* Recipe Info */}
       <View style={styles.infoWrap}>
+        {locked && (
+          <Text
+            style={{ color: colors.textMuted, fontSize: fontSize.sm }}
+            testID={`recipe-lock-${recipe.id}`}
+          >
+            {t('brandRepair.plusRequired')}
+          </Text>
+        )}
         <View style={styles.metaHeader}>
           <Text style={[styles.cuisineText, { color: colors.accent }]} numberOfLines={1}>
             {recipe.cuisine.toUpperCase()}

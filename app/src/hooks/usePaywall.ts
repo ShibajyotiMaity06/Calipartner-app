@@ -15,7 +15,7 @@ export interface PaywallState {
 }
 
 export function usePaywall() {
-  const { hasPlan, isTrial, entitlement } = useSubscription();
+  const { hasPlan, hasActiveAccess, entitlement } = useSubscription();
 
   const [paywallState, setPaywallState] = useState<PaywallState>({
     isOpen: false,
@@ -56,9 +56,7 @@ export function usePaywall() {
       }
 
       if (trigger === 'open_partner_finder') {
-        const hasAccess =
-          hasPlan ||
-          (isTrial && (!entitlement?.period_end || new Date(entitlement.period_end) > new Date()));
+        const hasAccess = hasActiveAccess;
         if (!hasAccess) {
           const data = getPaywallTriggerData(trigger, options?.currentTier ?? 'plus');
           setPaywallState({
@@ -97,9 +95,7 @@ export function usePaywall() {
         trigger === 'recipe_library' ||
         trigger === 'extra_nutrients'
       ) {
-        const hasAccess =
-          hasPlan ||
-          (isTrial && (!entitlement?.period_end || new Date(entitlement.period_end) > new Date()));
+        const hasAccess = hasActiveAccess;
         if (!hasAccess) {
           const data = getPaywallTriggerData(trigger, 'plus');
           setPaywallState({
@@ -129,7 +125,7 @@ export function usePaywall() {
 
       return false;
     },
-    [hasPlan, isTrial, entitlement],
+    [hasPlan, hasActiveAccess, entitlement],
   );
 
   const closePaywall = useCallback(() => {

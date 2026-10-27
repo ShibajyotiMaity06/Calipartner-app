@@ -1,3 +1,7 @@
+import { useSubscription } from '@/hooks/useSubscription';
+import { Button } from '@calipartner/ui';
+import { PaywallModal } from '@/components/rooms/PaywallModal';
+import { STARTER_RECIPE_IDS } from '@/services/recipeService';
 import React, { useCallback, useEffect, useState } from 'react';
 import {
   ActivityIndicator,
@@ -52,6 +56,8 @@ export function RecipeBrowseView({
 }: RecipeBrowseViewProps) {
   const { colors } = useTheme();
   const { user } = useAuth();
+  const { hasActiveAccess, loading: planLoading } = useSubscription();
+  const [showPlans, setShowPlans] = useState(false);
 
   const [activeTab, setActiveTab] = useState<BrowseTab>('all');
   const [query, setQuery] = useState('');
@@ -114,6 +120,11 @@ export function RecipeBrowseView({
   };
 
   const handleSelectRecipe = async (recipe: Recipe) => {
+    if (planLoading) return;
+    if (!hasActiveAccess && !STARTER_RECIPE_IDS.has(recipe.id)) {
+      setShowPlans(true);
+      return;
+    }
     try {
       const db = await getDb();
       const supabase = getSupabase();
@@ -130,6 +141,10 @@ export function RecipeBrowseView({
     if (!user?.id) return;
     const nextFavorite = !recipe.is_favorite;
 
+    if (!hasActiveAccess && !STARTER_RECIPE_IDS.has(recipe.id)) {
+      setShowPlans(true);
+      return;
+    }
     // Optimistically update list
     setRecipes((prev) =>
       prev.map((r) => (r.id === recipe.id ? { ...r, is_favorite: nextFavorite } : r)),
@@ -153,6 +168,23 @@ export function RecipeBrowseView({
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
+      {!planLoading && !hasActiveAccess && (
+        <View style={{ padding: spacing.md }} testID="starter-recipe-notice">
+          <Text style={{ color: colors.text }}>{t('brandRepair.starterRecipes')}</Text>
+          <Button
+            variant="secondary"
+            label={t('brandRepair.seePlans')}
+            onPress={() => setShowPlans(true)}
+            testID="recipe-see-plans"
+          />
+        </View>
+      )}
+      <PaywallModal
+        visible={showPlans}
+        onClose={() => setShowPlans(false)}
+        preselectedTier="plus"
+      />
+
       {/* Optional Header */}
       {(headerTitle || showBackOrClose) && (
         <View
@@ -337,6 +369,7 @@ export function RecipeBrowseView({
           renderItem={({ item }) => (
             <RecipeCard
               recipe={item}
+              locked={!hasActiveAccess && !STARTER_RECIPE_IDS.has(item.id)}
               onPress={handleSelectRecipe}
               onToggleFavorite={handleToggleFavorite}
             />
@@ -354,15 +387,19 @@ export function RecipeBrowseView({
       )}
 
       {/* Detail Modal */}
-      <RecipeDetailModal
-        visible={detailModalVisible}
-        recipe={selectedRecipe}
-        defaultMealSection={initialMealSection}
-        localDate={localDate}
-        onClose={() => setDetailModalVisible(false)}
-        onToggleFavorite={handleToggleFavorite}
-        onRecipeLogged={onRecipeLogged}
-      />
+      {selectedRecipe &&
+        !planLoading &&
+        (hasActiveAccess || STARTER_RECIPE_IDS.has(selectedRecipe.id)) && (
+          <RecipeDetailModal
+            visible={detailModalVisible}
+            recipe={selectedRecipe}
+            defaultMealSection={initialMealSection}
+            localDate={localDate}
+            onClose={() => setDetailModalVisible(false)}
+            onToggleFavorite={handleToggleFavorite}
+            onRecipeLogged={onRecipeLogged}
+          />
+        )}
     </View>
   );
 }

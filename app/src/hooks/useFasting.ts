@@ -1,3 +1,4 @@
+import { useSubscription } from './useSubscription';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   calculateScheduledWindow,
@@ -38,6 +39,7 @@ export interface UseFastingOptions {
 }
 
 export function useFasting(options: UseFastingOptions) {
+  const { hasActiveAccess } = useSubscription();
   const {
     userId,
     age = 25,
@@ -145,6 +147,7 @@ export function useFasting(options: UseFastingOptions) {
   // 6. Action handlers
   const startFast = useCallback(
     async (plannedMinutes?: number, startAt?: string) => {
+      if (!hasActiveAccess) throw new Error('PLUS_REQUIRED');
       if (!gating.canAccess) {
         throw new Error(
           gating.reason === 'low_intake_paused'
@@ -179,7 +182,7 @@ export function useFasting(options: UseFastingOptions) {
         throw parsed;
       }
     },
-    [userId, settings, gating, timezone, refresh],
+    [userId, settings, gating, timezone, refresh, hasActiveAccess],
   );
 
   const endFast = useCallback(
@@ -238,6 +241,7 @@ export function useFasting(options: UseFastingOptions) {
 
   const updateSettings = useCallback(
     async (updates: Partial<UpdateFastingSettingsInput>) => {
+      if (!hasActiveAccess && updates.enabled !== false) throw new Error('PLUS_REQUIRED');
       try {
         setError(null);
         const db = await getDb();
@@ -257,7 +261,7 @@ export function useFasting(options: UseFastingOptions) {
         throw parsed;
       }
     },
-    [settings],
+    [settings, hasActiveAccess],
   );
 
   return {

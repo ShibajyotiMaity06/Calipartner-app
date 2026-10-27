@@ -299,7 +299,11 @@ export function isFeatureAllowed(
   const required = getRequiredTierForFeature(feature);
   if (required === 'free') return true;
 
-  if (feature === 'ai_photo_logging' && (options?.freeScansRemaining ?? 0) > 0) {
+  if (
+    feature === 'ai_photo_logging' &&
+    (userTier === 'free' || userTier === 'basic') &&
+    (options?.freeScansRemaining ?? 0) > 0
+  ) {
     return true; // 3 free starter scans
   }
 
@@ -435,7 +439,8 @@ export const PAYWALL_TRIGGER_METADATA: Record<
   },
   create_room: {
     title: 'Host an Accountability Room',
-    subtitle: 'Room hosting requires Plus (up to 10 members) or Pro (up to 20 members).',
+    subtitle:
+      'Free hosts 1 room of 2 people. Plus hosts 3 rooms of 5 people each; Pro hosts 5 rooms of 20 people each.',
     suggestedTier: 'plus',
     allowsTrial: true,
   },
@@ -454,7 +459,7 @@ export const PAYWALL_TRIGGER_METADATA: Record<
   },
   add_member_beyond_cap: {
     title: 'Need room for more friends?',
-    subtitle: 'Plus covers up to 10 members. Upgrade to Pro for up to 20 members.',
+    subtitle: 'Plus supports up to 5 people per room. Pro supports up to 20 people per room.',
     suggestedTier: 'pro',
     allowsTrial: false,
   },

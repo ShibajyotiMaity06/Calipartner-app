@@ -577,6 +577,7 @@ export type AppFeature =
   | 'rest_timer_prs'
   | 'shared_workouts'
   | 'body_measurements'
+  | 'progress_photos'
   | 'full_recipe_library'
   | 'export_data'
   // Pro features:

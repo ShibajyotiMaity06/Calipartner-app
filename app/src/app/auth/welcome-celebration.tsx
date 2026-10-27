@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { Platform, SafeAreaView, StyleSheet, View } from 'react-native';
+import { SafeAreaView, StyleSheet, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Button, Text, dark, space } from '@calipartner/ui';
 import { CaliPartnerLogo } from '@/components/brand/CaliPartnerLogo';
@@ -49,51 +49,9 @@ export default function WelcomeCelebrationScreen() {
   return (
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.contentContainer}>
-        {/* Animated Brand Hero Video */}
+        {/* Static official logo */}
         <View style={styles.logoWrapper}>
-          {Platform.OS === 'web' ? (
-            // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-            // @ts-ignore
-            <div
-              style={{
-                width: 280,
-                height: 280,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                position: 'relative',
-                backgroundColor: 'transparent',
-              }}
-            >
-              <video
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                ref={(el: any) => {
-                  if (el) {
-                    try {
-                      el.muted = true;
-                      el.play?.();
-                    } catch {}
-                  }
-                }}
-                src="/gemini_generated_video_3915c37c_gwr_video_mvp.mp4"
-                autoPlay
-                loop
-                muted
-                playsInline
-                preload="auto"
-                style={{
-                  width: '100%',
-                  height: '100%',
-                  objectFit: 'contain',
-                  display: 'block',
-                  mixBlendMode: 'screen',
-                  filter: 'contrast(1.1) brightness(1.05)',
-                }}
-              />
-            </div>
-          ) : (
-            <CaliPartnerLogo size={200} animate={true} testID="welcome-celebration-logo" />
-          )}
+          <CaliPartnerLogo size={200} testID="welcome-celebration-logo" />
         </View>
 
         {/* Title & Tagline */}

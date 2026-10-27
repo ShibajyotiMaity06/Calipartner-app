@@ -1,3 +1,4 @@
+import { PremiumFeatureModal } from '@/components/subscription/PremiumFeatureModal';
 import React, { useState } from 'react';
 import { Modal, SafeAreaView, ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
@@ -19,7 +20,7 @@ export interface WorkoutProgressModalProps {
   testID?: string;
 }
 
-export function WorkoutProgressModal({
+function WorkoutProgressModalContent({
   visible,
   onClose,
   initialTab = 'Overview',
@@ -787,3 +788,11 @@ const styles = StyleSheet.create({
     backgroundColor: dark.s2,
   },
 });
+
+export function WorkoutProgressModal(props: WorkoutProgressModalProps) {
+  return (
+    <PremiumFeatureModal feature="rest_timer_prs" visible={props.visible} onClose={props.onClose}>
+      <WorkoutProgressModalContent {...props} />
+    </PremiumFeatureModal>
+  );
+}

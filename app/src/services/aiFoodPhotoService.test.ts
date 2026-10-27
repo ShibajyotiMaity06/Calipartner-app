@@ -543,3 +543,11 @@ describe('Phase 11: aiFoodPhotoService (Client Service & Diary Integration)', ()
     });
   });
 });
+
+it('fails closed when the scan allowance RPC is not available', async () => {
+  expect(await getAiFoodPhotoUsageStatus({}, 'owner')).toMatchObject({
+    allowed: false,
+    dailyCap: 0,
+    code: 'ERROR',
+  });
+});

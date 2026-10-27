@@ -70,6 +70,13 @@ export default function RootLayout() {
         doc.head.appendChild(link);
       }
 
+      if (!doc.getElementById('brand-touch-icon')) {
+        const touch = doc.createElement('link');
+        touch.id = 'brand-touch-icon';
+        touch.rel = 'apple-touch-icon';
+        touch.href = '/icon.png';
+        doc.head.appendChild(touch);
+      }
       const existingManifest = doc.getElementById('pwa-manifest');
       if (!existingManifest) {
         const manifestLink = doc.createElement('link');

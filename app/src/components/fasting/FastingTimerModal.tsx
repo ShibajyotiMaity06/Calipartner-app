@@ -1,3 +1,5 @@
+import { useSubscription } from '@/hooks/useSubscription';
+import { PremiumFeatureModal } from '@/components/subscription/PremiumFeatureModal';
 import React, { useState } from 'react';
 import { Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
@@ -26,6 +28,7 @@ export function FastingTimerModal({
   testID = 'fasting-timer-modal',
 }: FastingTimerModalProps) {
   const { user } = useAuth();
+  const { hasActiveAccess, loading: planLoading } = useSubscription();
   const userId = propUserId ?? user?.id ?? '';
 
   const {
@@ -65,6 +68,12 @@ export function FastingTimerModal({
   }, [visible, computedState.strongEndFastPrompt, computedState.checkInPrompt]);
 
   if (!visible) return null;
+  if ((planLoading || !hasActiveAccess) && !activeSession)
+    return (
+      <PremiumFeatureModal feature="fasting_tracker" visible={visible} onClose={onClose}>
+        {null}
+      </PremiumFeatureModal>
+    );
 
   const isFasting = Boolean(activeSession && computedState.isActive);
   const plannedHours = Math.round((computedState.session?.planned_minutes || 960) / 60);

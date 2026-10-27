@@ -6,6 +6,9 @@ const billing = vi.hoisted(() => ({
   create: vi.fn(),
   navigate: vi.fn(),
   refresh: vi.fn(),
+  portal: vi.fn(),
+  active: false,
+  entitlement: null as Record<string, unknown> | null,
 }));
 vi.mock('react-native', () => ({
   Alert: { alert: vi.fn() },
@@ -29,10 +32,10 @@ vi.mock('@calipartner/ui', async () => ({
 vi.mock('@/hooks/useSubscription', () => ({
   useSubscription: () => ({
     offerings: null,
-    entitlement: null,
+    entitlement: billing.entitlement,
     loading: false,
     error: null,
-    hasActiveAccess: false,
+    hasActiveAccess: billing.active,
     refresh: billing.refresh,
   }),
 }));
@@ -40,11 +43,13 @@ vi.mock('@/services/dodoService', () => ({
   fetchDodoCatalog: billing.catalog,
   createDodoCheckout: billing.create,
   navigateToCheckout: billing.navigate,
-  openDodoPortal: vi.fn(),
+  openDodoPortal: billing.portal,
 }));
 vi.mock('@/services/foodService', () => ({ generateClientUuid: () => 'request-id' }));
 vi.mock('@/lib/sound', () => ({ playClickSound: vi.fn(), playSuccessSound: vi.fn() }));
+import { Platform, Linking } from 'react-native';
 import { PaywallModal } from './PaywallModal';
+import { MeRoomPlanCard } from './MeRoomPlanCard';
 let renderer: ReactTestRenderer | undefined;
 const products = [
   { key: 'plus_monthly', currency: 'INR', amount: 249, trialDays: 7 },
@@ -55,6 +60,10 @@ const products = [
 beforeEach(() => {
   (globalThis as unknown as { IS_REACT_ACT_ENVIRONMENT: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
   vi.clearAllMocks();
+  Platform.OS = 'web';
+  billing.active = false;
+  billing.entitlement = null;
+  billing.portal.mockResolvedValue(undefined);
   vi.useFakeTimers();
   billing.catalog.mockResolvedValue(products);
   billing.refresh.mockResolvedValue(null);
@@ -65,7 +74,7 @@ afterEach(async () => {
   renderer = undefined;
   vi.useRealTimers();
 });
-async function render(returning = false, cancelled = false) {
+async function render(returning = false, cancelled = false, tier: 'plus' | 'pro' = 'plus') {
   await act(async () => {
     renderer = create(
       <PaywallModal
@@ -73,7 +82,7 @@ async function render(returning = false, cancelled = false) {
         onClose={vi.fn()}
         checkoutCancelled={cancelled}
         checkoutReturn={
-          returning ? { tier: 'plus', duration: 'annual', requestId: 'request-id' } : undefined
+          returning ? { tier, duration: 'annual', requestId: 'request-id' } : undefined
         }
       />,
     );
@@ -143,3 +152,84 @@ describe('Chrome payment UI', () => {
     expect(billing.create).not.toHaveBeenCalled();
   });
 });
+
+it('annual Pro change-plan opens the existing subscription manager without creating another checkout', async () => {
+  billing.active = true;
+  billing.entitlement = {
+    tier: 'pro',
+    period: 'annual',
+    source: 'dodo',
+    status: 'paid',
+    period_end: '2099-01-01',
+  };
+  const change = vi.fn();
+  await act(async () => {
+    renderer = create(<MeRoomPlanCard onChangePlan={change} />);
+  });
+  const text = JSON.stringify(renderer!.toJSON());
+  expect(text).toContain('Capacity per room');
+  expect(text).toContain('20 people per room');
+  expect(text).toContain('Up to 5 rooms');
+  await act(async () =>
+    renderer!.root.findByProps({ testID: 'btn-me-change-plan' }).props.onPress(),
+  );
+  expect(billing.portal).toHaveBeenCalledOnce();
+  expect(change).not.toHaveBeenCalled();
+  expect(billing.create).not.toHaveBeenCalled();
+});
+it('an active Pro paywall offers management and never starts a new subscription checkout', async () => {
+  billing.active = true;
+  billing.entitlement = {
+    tier: 'pro',
+    period: 'annual',
+    source: 'dodo',
+    status: 'paid',
+    period_end: '2099-01-01',
+  };
+  await render();
+  const cta = renderer!.root.findByProps({ testID: 'btn-paywall-cta' });
+  expect(cta.props.label).toBe('Manage current plan');
+  await act(async () => cta.props.onPress());
+  expect(billing.portal).toHaveBeenCalledOnce();
+  expect(billing.create).not.toHaveBeenCalled();
+});
+it('confirmed Pro success has only its unlocked title and Done action', async () => {
+  billing.refresh.mockResolvedValue({
+    tier: 'pro',
+    period: 'annual',
+    source: 'dodo',
+    status: 'paid',
+    period_end: '2099-01-01',
+  });
+  await render(true, false, 'pro');
+  const success = renderer!.root.findByProps({ testID: 'modal-purchase-success' });
+  const texts = success.findAll((node) => String(node.type) === 'Text');
+  expect(texts).toHaveLength(1);
+  expect(texts[0]!.props.children).toBe('CaliPartner Pro unlocked');
+});
+
+it.each(['ios', 'android'] as const)(
+  'active native %s subscriptions open management without another purchase',
+  async (platform) => {
+    Platform.OS = platform;
+    billing.active = true;
+    billing.entitlement = {
+      tier: 'pro',
+      period: 'annual',
+      source: platform === 'ios' ? 'apple' : 'google',
+      status: 'paid',
+      period_end: '2099-01-01',
+    };
+    vi.mocked(Linking.openURL).mockResolvedValue(true);
+    await render();
+    await act(async () =>
+      renderer!.root.findByProps({ testID: 'btn-paywall-cta' }).props.onPress(),
+    );
+    expect(Linking.openURL).toHaveBeenCalledWith(
+      platform === 'ios'
+        ? 'https://apps.apple.com/account/subscriptions'
+        : 'https://play.google.com/store/account/subscriptions',
+    );
+    expect(billing.create).not.toHaveBeenCalled();
+  },
+);

@@ -153,7 +153,6 @@ export function PaywallModal({
   onClose,
   context = 'general',
   roomPartnerName,
-  roomName = 'Morning Crew',
   preselectedTier,
   sponsorRoomId,
   isUpgrade,
@@ -359,14 +358,21 @@ export function PaywallModal({
         }
       }
 
+      if (hasActiveAccess) {
+        if (entitlement?.source === 'dodo') await openDodoPortal();
+        else if (Platform.OS === 'web') setStatusMessage(t('fixes.nativeManagement'));
+        else
+          await Linking.openURL(
+            entitlement?.source === 'apple'
+              ? 'https://apps.apple.com/account/subscriptions'
+              : 'https://play.google.com/store/account/subscriptions',
+          );
+        return;
+      }
+
       if (Platform.OS === 'web') {
         if (!catalog.length) {
           await loadCatalog();
-          return;
-        }
-        if (hasActiveAccess) {
-          if (entitlement?.source === 'dodo') await openDodoPortal();
-          else setStatusMessage(t('fixes.nativeManagement'));
           return;
         }
         const tier = selectedTier === 'pro' ? 'pro' : 'plus';
@@ -451,6 +457,7 @@ export function PaywallModal({
   const primaryCtaLabel = useMemo(() => {
     if (awaitingEntitlement) return t('fixes.checkPayment');
     if (actionLoading) return t('fixes.connectingPayment');
+    if (hasActiveAccess && !sponsorRoomId) return t('brandRepair.manage');
     if (catalogError) return t('fixes.retryPrices');
     if (sponsorRoomId || context === 'keep_going') {
       return `Keep room going with ${activeTierConfig.label}`;
@@ -471,6 +478,7 @@ export function PaywallModal({
     activeTierConfig.label,
     selectedTier,
     catalogError,
+    hasActiveAccess,
   ]);
 
   return (
@@ -838,19 +846,8 @@ export function PaywallModal({
           >
             <View style={styles.modalBackdrop}>
               <Card elevation="s1" style={styles.successModalCard} testID="modal-purchase-success">
-                <Ionicons
-                  name="information-circle-outline"
-                  size={36}
-                  color={dark.apricot}
-                  style={styles.successIcon}
-                />
                 <Text variant="title1" color={dark.textHi} style={styles.successTitle}>
-                  {activeTierConfig.title} Unlocked
-                </Text>
-                <Text variant="body" color={dark.textMid} style={styles.successSubtitle}>
-                  {selectedTier === 'pro'
-                    ? 'AI Coach, 5 daily photo scans, and 5 rooms unlocked.'
-                    : `${roomName} now fits up to ${activeTierConfig.cap} members.`}
+                  {t('brandRepair.unlocked', { plan: activeTierConfig.label })}
                 </Text>
 
                 <Button

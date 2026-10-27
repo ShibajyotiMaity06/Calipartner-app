@@ -65,7 +65,11 @@ export function FoodPhotoDailyLimitModal({
           </View>
 
           <Text testID="text-limit-title" style={[styles.title, { color: colors.text }]}>
-            {t('foodLog.photo.limitTitle')}
+            {t(
+              userState === 'paid' || userState === 'paid_pro'
+                ? 'foodLog.photo.limitTitle'
+                : 'brandRepair.photoLimitTitle',
+            )}
           </Text>
 
           <Text testID="text-limit-body" style={[styles.body, { color: colors.textMuted }]}>

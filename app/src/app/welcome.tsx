@@ -18,7 +18,7 @@ export default function WelcomeScreen() {
             accessibilityElementsHidden
             importantForAccessibility="no-hide-descendants"
           >
-            <CaliPartnerLogo size={layout.logo} animate={false} testID="welcome-logo" />
+            <CaliPartnerLogo size={layout.logo} testID="welcome-logo" />
             <Text fontSet="onboarding" variant="title1" color={colors.textHi}>
               {t('app.name')}
             </Text>

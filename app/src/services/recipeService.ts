@@ -13,6 +13,13 @@ import { createLogger } from '@/lib/logger';
 import { enqueueOutbox, type SyncDb } from './syncService';
 import bundledRecipesData from '../../assets/bundled_recipes.json';
 
+export const STARTER_RECIPE_IDS = new Set(
+  (bundledRecipesData as unknown as Recipe[])
+    .filter((r) => r.status === 'published')
+    .slice(0, 10)
+    .map((r) => r.id),
+);
+
 const log = createLogger('recipeService');
 
 /** Deterministic/standard client-side UUID generator for offline idempotency */

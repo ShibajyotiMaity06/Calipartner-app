@@ -1,4 +1,4 @@
-import { createClient } from 'jsr:@supabase/supabase-js@2';
+import { createClient, type SupabaseClient } from 'jsr:@supabase/supabase-js@2';
 
 declare const Deno: {
   serve: (handler: (req: Request) => Promise<Response> | Response) => void;
@@ -146,7 +146,13 @@ async function callClaudeChat(
   }
 }
 
-export async function handleAiCoach(req: Request): Promise<Response> {
+export async function handleAiCoach(
+  req: Request,
+  dependencies: {
+    admin?: SupabaseClient;
+    reply?: () => Promise<{ text: string; tokens: number }>;
+  } = {},
+): Promise<Response> {
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders });
   }
@@ -170,7 +176,7 @@ export async function handleAiCoach(req: Request): Promise<Response> {
     const supabaseUrl = Deno.env.get('SUPABASE_URL') || '';
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || '';
 
-    if (!supabaseUrl || !supabaseServiceKey) {
+    if (!dependencies.admin && (!supabaseUrl || !supabaseServiceKey)) {
       console.error('Server configuration error: SUPABASE_URL or SERVICE_ROLE_KEY missing');
       return new Response(
         JSON.stringify({ error: 'Server misconfiguration', code: 'CONFIG_ERROR' }),
@@ -178,7 +184,7 @@ export async function handleAiCoach(req: Request): Promise<Response> {
       );
     }
 
-    const adminClient = createClient(supabaseUrl, supabaseServiceKey);
+    const adminClient = dependencies.admin ?? createClient(supabaseUrl, supabaseServiceKey);
     const token = authHeader.replace(/^Bearer\s+/i, '');
 
     // 1. Authenticate user
@@ -196,19 +202,30 @@ export async function handleAiCoach(req: Request): Promise<Response> {
 
     const userId = user.id;
 
-    // 2. Check entitlement access (Pro plan or active trial required)
+    // 2. Check the current Pro entitlement and daily quota before calling any provider.
     const { data: coachAccess, error: accessErr } = await adminClient.rpc('check_ai_coach_access', {
       p_user_id: userId,
     });
 
     if (accessErr || !coachAccess?.allowed) {
+      const code = coachAccess?.code ?? 'UPGRADE_REQUIRED';
       return new Response(
         JSON.stringify({
           error:
-            'AI Coach is included with CaliPartner Pro. Upgrade to access personalized dietitian guidance.',
-          code: 'UPGRADE_REQUIRED',
+            code === 'DAILY_LIMIT_REACHED'
+              ? 'Your daily AI Coach limit has been reached.'
+              : 'AI Coach requires an active Pro plan.',
+          code,
         }),
-        { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
+        {
+          status:
+            code === 'DAILY_LIMIT_REACHED'
+              ? 429
+              : code === 'FEATURE_DISABLED' || code === 'BUDGET_EXCEEDED'
+                ? 503
+                : 403,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        },
       );
     }
 
@@ -303,8 +320,16 @@ USER METRICS & CONTEXT:
     let costUsd = DEFAULT_ESTIMATED_COST_USD;
     let modelUsed = groqModel;
 
+    if (dependencies.reply) {
+      const result = await dependencies.reply();
+      assistantResponseText = result.text;
+      tokensUsed = result.tokens;
+      modelUsed = 'test-provider';
+      costUsd = 0;
+    }
+
     // 1. Primary: Groq with primary key (qwen/qwen3.8-27b or openai/gpt-oss-120b)
-    if (groqKey && groqKey.trim().length > 0) {
+    if (!assistantResponseText && groqKey && groqKey.trim().length > 0) {
       const groqRes = await callGroqChat(groqKey.trim(), groqModel, systemPrompt, incomingMessages);
       if (groqRes) {
         assistantResponseText = groqRes.text;
@@ -393,74 +418,14 @@ USER METRICS & CONTEXT:
       }
     }
 
-    // 6. Built-in rule-based heuristic fallback if all AI APIs are exhausted
-    if (!assistantResponseText) {
-      const latestUserMessage =
-        incomingMessages[incomingMessages.length - 1]?.content?.toLowerCase() || '';
-
-      // Workouts / Calisthenics / Training
-      if (
-        latestUserMessage.includes('workout') ||
-        latestUserMessage.includes('calisthenic') ||
-        latestUserMessage.includes('push up') ||
-        latestUserMessage.includes('pull up') ||
-        latestUserMessage.includes('routine') ||
-        latestUserMessage.includes('exercise') ||
-        latestUserMessage.includes('chest') ||
-        latestUserMessage.includes('legs') ||
-        latestUserMessage.includes('arms') ||
-        latestUserMessage.includes('bench')
-      ) {
-        assistantResponseText = `For optimal strength and physique development, prioritize compound movements with progressive overload:
-• Push: Push-ups, diamond push-ups, dips, and overhead pressing.
-• Pull: Pull-ups, chin-ups, and Australian horizontal rows.
-• Legs: Deep bodyweight squats, lunges, Bulgarian split squats, and calf raises.
-• Core: Hanging knee raises, planks, and hollow body holds.
-
-Aim for 3 to 4 challenging sets per exercise within 1 to 2 reps in reserve. Rest 90-120 seconds between sets to maximize motor unit recruitment.`;
-      }
-      // Fasting
-      else if (
-        /\b(fasting|fast|16:8|intermittent fasting|eating window)\b/i.test(latestUserMessage) &&
-        !latestUserMessage.includes('faster')
-      ) {
-        assistantResponseText = `Intermittent fasting (such as 16:8 or 14:10) is a meal-timing schedule where you consume your daily calories within an 8 to 10 hour window. 
-
-Key points to know:
-• Fasting helps with appetite regulation and managing calorie intake.
-• If your goal is weight gain or bulking, fasting is generally NOT recommended because eating sufficient surplus calories in a short window is difficult.
-• During the fasting window, drink plenty of water, black coffee, or plain green tea without added sugar or milk.`;
-      }
-      // Protein
-      else if (
-        latestUserMessage.includes('protein') ||
-        latestUserMessage.includes('shake') ||
-        latestUserMessage.includes('creatine')
-      ) {
-        assistantResponseText = `Your daily protein target is ${targetProtein}g. Distributing this across 3 to 4 meals (roughly 30-40g per meal) maximizes muscle protein synthesis throughout the day.
-Great protein sources:
-• Non-veg: Chicken breast (31g/100g), eggs (6g each), fish, turkey.
-• Dairy/Veg: Paneer (18g/100g), Greek yogurt / curd, whey protein.
-• Plant-based: Soya chunks (52g/100g dry), tofu, lentils, chickpeas.`;
-      }
-      // Explicit meal / recipe request
-      else if (
-        latestUserMessage.includes('recipe') ||
-        latestUserMessage.includes('meal idea') ||
-        latestUserMessage.includes('what should i eat') ||
-        latestUserMessage.includes('what to eat') ||
-        latestUserMessage.includes('what to cook')
-      ) {
-        assistantResponseText = `Here are nutritious, balanced meal ideas tailored to fit your daily ${targetCalories} kcal allowance and ${targetProtein}g protein target:
-1. High-Protein Masala Paneer / Tofu Scramble with whole-wheat toast (420 kcal, 32g protein).
-2. Herb Grilled Chicken Breast with steamed broccoli and brown rice (480 kcal, 44g protein).
-3. Mass-Builder Banana Oat Smoothie with peanut butter, milk, and protein powder (550 kcal, 36g protein).`;
-      }
-      // General conversation
-      else {
-        assistantResponseText = `I am here to support you freely with whatever you need, including workouts, calisthenics routines, nutrition guidance, bulking, fat loss, or daily habit tracking. With your targets set to ${targetCalories} kcal and ${targetProtein}g protein daily, steady consistency will get you the best results. What would you like to explore today?`;
-      }
-    }
+    if (!assistantResponseText)
+      return new Response(
+        JSON.stringify({
+          code: 'PROVIDER_UNAVAILABLE',
+          error: 'AI Coach is temporarily unavailable. Please try again.',
+        }),
+        { status: 503, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
+      );
 
     const cleanResponseText = assistantResponseText
       .replace(/^#{1,6}\s+/gm, '')
@@ -474,17 +439,21 @@ Great protein sources:
       .replace(/\s*--\s*/g, ', ')
       .trim();
 
-    // 7. Record AI Usage via atomic RPC
-    try {
-      await adminClient.rpc('record_ai_usage', {
-        p_user_id: userId,
-        p_feature: 'coach',
-        p_tokens: tokensUsed,
-        p_cost: costUsd,
-      });
-    } catch (usageErr) {
-      console.warn('Failed to record AI coach usage:', usageErr);
-    }
+    // Atomic recheck prevents concurrent successful replies exceeding the daily cap.
+    const { error: usageError } = await adminClient.rpc('record_ai_usage', {
+      p_user_id: userId,
+      p_feature: 'coach',
+      p_tokens: tokensUsed,
+      p_cost: costUsd,
+    });
+    if (usageError)
+      return new Response(
+        JSON.stringify({
+          code: 'DAILY_LIMIT_REACHED',
+          error: 'AI Coach access could not be confirmed. Try again later.',
+        }),
+        { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
+      );
 
     return new Response(
       JSON.stringify({
@@ -512,5 +481,5 @@ Great protein sources:
 }
 
 if (typeof Deno !== 'undefined' && typeof Deno.serve === 'function') {
-  Deno.serve(handleAiCoach);
+  if (import.meta.main) Deno.serve(handleAiCoach);
 }

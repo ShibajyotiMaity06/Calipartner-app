@@ -111,3 +111,7 @@ verify_jwt = false
 [functions.food-lookup]
 # Public catalog only. The service-role cache must exclude every private custom food.
 verify_jwt = false
+
+[functions.ai-coach]
+# Validate every bearer token with Supabase Auth inside the handler, including current signing keys.
+verify_jwt = false

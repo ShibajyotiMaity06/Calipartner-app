@@ -351,3 +351,11 @@ describe('Phase 10 Core: Paywall Triggers & Trial Banners (CaliPartner Pricing P
     expect(isFeatureAllowed('ai_photo_logging', 'free', { freeScansRemaining: 0 })).toBe(false);
   });
 });
+
+it('Plus and Plus trials cannot borrow the Free photo taste allowance', () => {
+  expect(
+    isFeatureAllowed('ai_photo_logging', 'plus', { freeScansRemaining: 3, hasActiveTrial: true }),
+  ).toBe(false);
+  expect(isFeatureAllowed('ai_coach', 'plus', { hasActiveTrial: true })).toBe(false);
+  expect(isFeatureAllowed('fasting_tracker', 'plus', { hasActiveTrial: true })).toBe(true);
+});

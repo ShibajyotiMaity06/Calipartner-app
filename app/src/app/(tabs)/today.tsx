@@ -19,6 +19,7 @@ import {
   type UserStreak,
 } from '@calipartner/core';
 import { dark, radius, space, Text } from '@calipartner/ui';
+import { CaliPartnerLogo } from '@/components/brand/CaliPartnerLogo';
 import { MonthlyPlanCheckIn } from '@/components/profile/MonthlyPlanCheckIn';
 import { CaloriesDetailSheet } from '@/components/diary/CaloriesDetailSheet';
 import { CopyMealModal } from '@/components/diary/CopyMealModal';
@@ -275,6 +276,7 @@ export default function TodayScreen() {
         {/* 1. Header (Brand: CaliPartner 🌿 - Centered) */}
         <View style={styles.topBrandBar} testID="today-brand-header">
           <View style={styles.brandTitleRow}>
+            <CaliPartnerLogo size={space[7]} testID="home-logo" />
             <Text variant="heading" color={dark.textHi} style={styles.brandName}>
               CaliPartner
             </Text>

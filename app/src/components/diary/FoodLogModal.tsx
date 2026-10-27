@@ -1,3 +1,4 @@
+import { PaywallModal } from '@/components/rooms/PaywallModal';
 import React, { useState } from 'react';
 import {
   ActivityIndicator,
@@ -65,6 +66,7 @@ export function FoodLogModal({
   const { colors } = useTheme();
   const { user } = useAuth();
 
+  const [showPhotoPlans, setShowPhotoPlans] = useState(false);
   const [activeTab, setActiveTab] = useState<TabType>(initialTab);
   const [selectedFoodForQuantity, setSelectedFoodForQuantity] = useState<Food | null>(null);
   const [showBarcodeScanner, setShowBarcodeScanner] = useState(initialTab === 'scan');
@@ -125,6 +127,21 @@ export function FoodLogModal({
   const handleStartPhotoScan = async () => {
     setPhotoError(null);
     try {
+      const status = await getAiFoodPhotoUsageStatus(
+        getSupabase() as unknown as SupabaseFunctionsClient,
+        user?.id ?? '',
+      );
+      setLimitUsage({ usedToday: status.usedToday, dailyCap: status.dailyCap });
+      setLimitState(status.userState);
+      if (!status.allowed && status.code !== 'CONSENT_REQUIRED') {
+        if (status.code === 'UPGRADE_REQUIRED' || status.code === 'DAILY_LIMIT_REACHED') {
+          setLimitState(status.userState);
+          setShowDailyLimitModal(true);
+        } else {
+          setPhotoError(t('brandRepair.unavailable'));
+        }
+        return;
+      }
       const hasConsent = await checkAiProcessingConsent(
         getSupabase() as unknown as SupabaseFunctionsClient,
         user?.id ?? '',
@@ -135,7 +152,7 @@ export function FoodLogModal({
         setShowPhotoCamera(true);
       }
     } catch {
-      setShowPhotoConsent(true);
+      setPhotoError(t('brandRepair.unavailable'));
     }
   };
 
@@ -144,7 +161,7 @@ export function FoodLogModal({
       setConsentLoading(true);
       await acceptAiProcessingConsent(getSupabase() as unknown as SupabaseFunctionsClient);
       setShowPhotoConsent(false);
-      setShowPhotoCamera(true);
+      await handleStartPhotoScan();
     } catch {
       setPhotoError(t('capture.photoUnavailable'));
     } finally {
@@ -473,6 +490,16 @@ export function FoodLogModal({
                 gap: spacing.md,
               }}
             >
+              <Text
+                style={{ fontSize: fontSize.sm, color: colors.textMuted }}
+                testID="photo-access-copy"
+              >
+                {limitUsage && limitState === 'free_taste'
+                  ? t('brandRepair.starterScans', {
+                      remaining: Math.max(0, limitUsage.dailyCap - limitUsage.usedToday),
+                    })
+                  : t('brandRepair.photoPro')}
+              </Text>
               <View
                 style={{
                   width: 80,
@@ -860,6 +887,10 @@ export function FoodLogModal({
               usedToday={limitUsage?.usedToday}
               dailyCap={limitUsage?.dailyCap}
               onClose={() => setShowDailyLimitModal(false)}
+              onUpgrade={() => {
+                setShowDailyLimitModal(false);
+                setShowPhotoPlans(true);
+              }}
               onLogManually={() => {
                 setShowDailyLimitModal(false);
                 setActiveTab('search');
@@ -867,6 +898,14 @@ export function FoodLogModal({
             />
           )}
 
+          {showPhotoPlans && (
+            <PaywallModal
+              visible
+              preselectedTier="pro"
+              context="general"
+              onClose={() => setShowPhotoPlans(false)}
+            />
+          )}
           {showResultsEditor && photoResults && (
             <FoodPhotoResultsEditor
               visible={showResultsEditor}
@@ -880,7 +919,7 @@ export function FoodLogModal({
               onRetakePhoto={() => {
                 setShowResultsEditor(false);
                 setPhotoResults(null);
-                setShowPhotoCamera(true);
+                void handleStartPhotoScan();
               }}
               onSaveMeal={handleSavePhotoMeal}
             />

@@ -35,6 +35,8 @@ try {
   await runPushDeliveryTests(db);
   const { runScanRepairTests } = await import('./scan_repair_cases.mjs');
   await runScanRepairTests(db);
+  const { runPaidFeatureTests } = await import('./paid_feature_cases.mjs');
+  await runPaidFeatureTests(db);
 } finally {
   await db.close();
 }

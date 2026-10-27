@@ -1,7 +1,7 @@
 import React from 'react';
 import { act, create, type ReactTestRenderer } from 'react-test-renderer';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-const flow = vi.hoisted(() => ({ analyze: vi.fn(), add: vi.fn() }));
+const flow = vi.hoisted(() => ({ analyze: vi.fn(), add: vi.fn(), access: vi.fn() }));
 vi.mock('@calipartner/ui', async () => ({
   ...(await import('../../../../packages/ui/src/tokens')),
   Text: 'Text',
@@ -31,9 +31,10 @@ vi.mock('@/services/aiFoodPhotoService', () => ({
   checkAiProcessingConsent: async () => true,
   analyzeFoodPhoto: flow.analyze,
   acceptAiProcessingConsent: vi.fn(),
-  getAiFoodPhotoUsageStatus: vi.fn(),
+  getAiFoodPhotoUsageStatus: flow.access,
   savePhotoCandidatesToDiary: vi.fn(),
 }));
+vi.mock('@/components/rooms/PaywallModal', () => ({ PaywallModal: 'Paywall' }));
 vi.mock('@/theme/useTheme', () => ({ useTheme: () => ({ colors: {} }) }));
 vi.mock('./BarcodeScannerModal', () => ({ BarcodeScannerModal: 'BarcodeScanner' }));
 vi.mock('./CustomFoodModal', () => ({ CustomFoodModal: 'CustomFood' }));
@@ -51,6 +52,13 @@ let renderer: ReactTestRenderer;
 beforeEach(() => {
   (globalThis as unknown as { IS_REACT_ACT_ENVIRONMENT: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
   vi.clearAllMocks();
+  flow.access.mockResolvedValue({
+    allowed: true,
+    userState: 'free_taste',
+    usedToday: 0,
+    dailyCap: 3,
+    remainingToday: 3,
+  });
   flow.add.mockResolvedValue({ id: 'saved' });
 });
 afterEach(async () => {
@@ -119,4 +127,58 @@ describe('food capture paths', () => {
     });
     expect(closed).toHaveBeenCalledOnce();
   });
+});
+
+it.each(['paid_plus', 'free_taste'])(
+  'blocks the camera upfront for denied %s access and offers Pro',
+  async (userState) => {
+    flow.access.mockResolvedValue({
+      allowed: false,
+      userState,
+      usedToday: 3,
+      dailyCap: userState === 'paid_plus' ? 0 : 3,
+      remainingToday: 0,
+      code: userState === 'paid_plus' ? 'UPGRADE_REQUIRED' : 'DAILY_LIMIT_REACHED',
+    });
+    await act(async () => {
+      renderer = create(
+        <FoodLogModal
+          visible
+          initialTab="photo"
+          defaultSection="lunch"
+          localDate="2026-10-27"
+          onClose={vi.fn()}
+        />,
+      );
+    });
+    await act(async () =>
+      renderer.root.findByProps({ testID: 'btn-start-photo-scan' }).props.onPress(),
+    );
+    expect(renderer.root.findAllByType('Camera' as React.ElementType)).toHaveLength(0);
+    const limit = renderer.root.findByType('Limit' as React.ElementType);
+    await act(async () => limit.props.onUpgrade());
+    expect(renderer.root.findByType('Paywall' as React.ElementType).props.preselectedTier).toBe(
+      'pro',
+    );
+    expect(flow.analyze).not.toHaveBeenCalled();
+  },
+);
+it('does not request camera access when the allowance check fails', async () => {
+  flow.access.mockRejectedValue(new Error('Offline'));
+  await act(async () => {
+    renderer = create(
+      <FoodLogModal
+        visible
+        initialTab="photo"
+        defaultSection="lunch"
+        localDate="2026-10-27"
+        onClose={vi.fn()}
+      />,
+    );
+  });
+  await act(async () =>
+    renderer.root.findByProps({ testID: 'btn-start-photo-scan' }).props.onPress(),
+  );
+  expect(renderer.root.findAllByType('Camera' as React.ElementType)).toHaveLength(0);
+  expect(renderer.root.findByProps({ testID: 'food-photo-error' })).toBeDefined();
 });

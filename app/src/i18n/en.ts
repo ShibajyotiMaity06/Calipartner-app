@@ -1,4 +1,28 @@
 export const en = {
+  brandRepair: {
+    logoLabel: 'CaliPartner logo',
+    unlocked: 'CaliPartner {plan} unlocked',
+    capacity: 'Capacity per room',
+    capacityValue: 'Up to {count} people per room',
+    membersHere: '{count} of {cap} people in this room',
+    hostedRooms: 'Hosted rooms',
+    hostedValue: 'Up to {count} rooms',
+    manage: 'Manage current plan',
+    managementNote:
+      'Your current plan stays active. Review changes with your billing provider before confirming.',
+    plusRequired: 'Available with Plus or Pro',
+    proRequired: 'Available with Pro',
+    paidBody: 'Choose a plan to use this feature. Your personal tracking stays free.',
+    seePlans: 'See plans',
+    unavailable: 'We could not check access. Connect and try again.',
+    starterScans: '{remaining} of 3 lifetime starter scans remaining',
+    photoPro:
+      'Free includes 3 lifetime starter scans. Pro includes 5 photo scans each day. Plus does not include photo scans.',
+    starterRecipes: 'Free includes 10 starter recipes. Plus or Pro unlocks the full library.',
+    coachUnavailable: 'AI Coach is temporarily unavailable. Please try again.',
+    photoLimitTitle: 'Photo scan access',
+    coachLimit: 'You have used your 10 AI Coach messages for today.',
+  },
   repairs: {
     squadTitle: 'Your squad',
     squadMembers: '{count} members in your squad',
@@ -871,9 +895,8 @@ export const en = {
         'AI photo logging is included with Pro. Plus and its trial do not include AI photo scans.',
       limitBodyFree: 'You’ve used your 3 starter scans. Pro includes 5 AI photo scans each day.',
       limitBodyPaid: 'You’ve reached your daily allowance of 5 AI photo scans for today.',
-      upgradeUpsell:
-        'Upgrade to a Room Plan to get 15 scans per day, shared partner rooms, and an AI coach.',
-      upgradeButton: 'View Room Plans',
+      upgradeUpsell: 'CaliPartner Pro includes 5 photo scans and 10 AI Coach messages each day.',
+      upgradeButton: 'View Pro plan',
       logManuallyButton: 'Log Manually',
       swapModalTitle: 'Swap Food Item',
       searchPlaceholder: 'Search database for replacement…',
