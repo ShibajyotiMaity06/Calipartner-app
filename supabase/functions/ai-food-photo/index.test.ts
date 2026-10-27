@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { callVisionModel, handleAiFoodPhoto } from './index.ts';
 import type { SupabaseClient } from 'jsr:@supabase/supabase-js@2';
 
-function setup(allowed = true, advanced = false) {
+function setup(allowed = true, advanced = false, denialCode = 'CONSENT_REQUIRED') {
   let usage = 0;
   const admin = {
     auth: { getUser: async () => ({ data: { user: { id: 'caller' } }, error: null }) },
@@ -10,7 +10,13 @@ function setup(allowed = true, advanced = false) {
       if (name === 'can_view_advanced_nutrition') return { data: advanced, error: null };
       if (name === 'check_ai_food_photo_access')
         return {
-          data: { allowed, code: 'CONSENT_REQUIRED', used: 0, cap: 3, user_state: 'free_taste' },
+          data: {
+            allowed,
+            code: allowed ? null : denialCode,
+            used: 0,
+            cap: allowed ? 5 : 0,
+            user_state: allowed ? 'paid_pro' : 'free_after_trial',
+          },
           error: null,
         };
       usage++;
@@ -120,7 +126,7 @@ Deno.test('Unauthenticated photos cannot reach a model', async () => {
 
 for (const advanced of [false, true])
   Deno.test(
-    `AI photo advanced nutrition is ${advanced ? 'included for paid access' : 'redacted for Free'}`,
+    `AI photo advanced nutrition is ${advanced ? 'included for paid access' : 'redacted if the secondary entitlement check fails'}`,
     async () => {
       const state = setup(true, advanced);
       const response = await handleAiFoodPhoto(request(), {
@@ -157,3 +163,19 @@ for (const advanced of [false, true])
       assert.equal(item.nutrients.nutrition_details.locked, advanced ? undefined : true);
     },
   );
+
+Deno.test('An unpaid account cannot call the AI model or consume a free scan', async () => {
+  const state = setup(false, false, 'UPGRADE_REQUIRED');
+  let called = false;
+  const response = await handleAiFoodPhoto(request(), {
+    admin: state.admin,
+    model: async () => {
+      called = true;
+      return { rawText: '{}', tokens: 0, cost: 0 };
+    },
+  });
+  assert.equal(response.status, 403);
+  assert.equal((await response.json()).code, 'UPGRADE_REQUIRED');
+  assert.equal(called, false);
+  assert.equal(state.usage(), 0);
+});

@@ -77,7 +77,7 @@ export function FoodPhotoDailyLimitModal({
           </Text>
 
           {/* Scans Today Pill */}
-          {typeof usedToday === 'number' && typeof dailyCap === 'number' && (
+          {!showUpsell && typeof usedToday === 'number' && typeof dailyCap === 'number' && (
             <View
               testID="pill-scan-usage"
               style={[
@@ -86,12 +86,8 @@ export function FoodPhotoDailyLimitModal({
               ]}
             >
               <Text style={[styles.usageText, { color: colors.textMuted }]}>
-                {t(
-                  userState === 'free_taste' || userState === 'free_after_trial'
-                    ? 'capture.starterScans'
-                    : 'capture.todayScans',
-                )}
-                : <Text style={{ color: colors.text, fontWeight: '700' }}>{usedToday}</Text> /{' '}
+                {t('capture.todayScans')}:{' '}
+                <Text style={{ color: colors.text, fontWeight: '700' }}>{usedToday}</Text> /{' '}
                 {dailyCap}
               </Text>
             </View>

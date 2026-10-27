@@ -21,19 +21,20 @@ describe('Phase 11: AI Food-Photo Core Logic (PRD 6.3 LOG-3, 7.7, 8.2)', () => {
       const paidEntitlement: Entitlement = {
         user_id: 'user-paid',
         plan: 'monthly',
+        tier: 'pro',
         source: 'google',
         status: 'paid',
         period_end: '2026-11-01T00:00:00Z',
         created_at: '2026-10-01T00:00:00Z',
         updated_at: '2026-10-01T00:00:00Z',
       };
-      expect(resolveAiUserState(paidEntitlement, sampleNow)).toBe('paid');
+      expect(resolveAiUserState(paidEntitlement, sampleNow)).toBe('paid_pro');
 
       const graceEntitlement: Entitlement = {
         ...paidEntitlement,
         status: 'grace',
       };
-      expect(resolveAiUserState(graceEntitlement, sampleNow)).toBe('paid');
+      expect(resolveAiUserState(graceEntitlement, sampleNow)).toBe('paid_pro');
     });
 
     it('resolves trial user state for active unexpired trial', () => {
@@ -74,21 +75,30 @@ describe('Phase 11: AI Food-Photo Core Logic (PRD 6.3 LOG-3, 7.7, 8.2)', () => {
       expect(resolveAiUserState(null, sampleNow)).toBe('free_after_trial');
     });
 
-    it('returns exact daily caps per state: trial 5/day, paid 5/day, free-after-trial 0', () => {
-      expect(getDailyFoodPhotoCap('trial')).toBe(5);
-      expect(getDailyFoodPhotoCap('paid')).toBe(5);
-      expect(getDailyFoodPhotoCap('free_after_trial')).toBe(0);
-    });
-
-    it('supports custom caps from remote configuration', () => {
+    it('allows only paid Pro scans and ignores legacy free/trial configuration', () => {
       const customConfig: AiDailyCapsConfig = {
-        trial: 5,
-        paid: 20,
-        free_after_trial: 1,
+        trial: 999,
+        paid: 999,
+        free_after_trial: 999,
+        free_taste: 999,
+        paid_plus: 999,
+        paid_pro: 999,
       };
-      expect(getDailyFoodPhotoCap('trial', customConfig)).toBe(5);
-      expect(getDailyFoodPhotoCap('paid', customConfig)).toBe(20);
-      expect(getDailyFoodPhotoCap('free_after_trial', customConfig)).toBe(1);
+      for (const state of [
+        'trial',
+        'paid',
+        'paid_plus',
+        'free_taste',
+        'free_after_trial',
+      ] as const) {
+        expect(getDailyFoodPhotoCap(state, customConfig)).toBe(0);
+      }
+      expect(getDailyFoodPhotoCap('paid_pro')).toBe(5);
+      expect(getDailyFoodPhotoCap('paid_pro', customConfig)).toBe(5);
+      expect(getDailyFoodPhotoCap('paid', customConfig, 'pro')).toBe(5);
+      expect(getDailyFoodPhotoCap('paid_pro', customConfig, 'plus')).toBe(0);
+      expect(getDailyFoodPhotoCap('paid_pro', { paid_pro: 2 })).toBe(2);
+      expect(getDailyFoodPhotoCap('paid_pro', { paid_pro: NaN })).toBe(0);
     });
 
     it('correctly evaluates when daily limit is reached', () => {

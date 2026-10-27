@@ -88,7 +88,7 @@ export const PRICING_PLANS = Object.freeze({
     roomCap: 2,
     hostedRoomsMax: 1,
     aiScansPerDay: 0,
-    aiFreeTasteScans: 3,
+    aiFreeTasteScans: 0,
     aiCoachMessagesPerDay: 0,
   },
   plus: {
@@ -113,7 +113,7 @@ export const PRICING_PLANS = Object.freeze({
     rawMonthly: 249,
     rawAnnual: 1499,
     aiScansPerDay: 0,
-    aiFreeTasteScans: 3,
+    aiFreeTasteScans: 0,
     aiCoachMessagesPerDay: 0,
   },
   pro: {
@@ -138,7 +138,7 @@ export const PRICING_PLANS = Object.freeze({
     rawMonthly: 499,
     rawAnnual: 2499,
     aiScansPerDay: 5,
-    aiFreeTasteScans: 3,
+    aiFreeTasteScans: 0,
     aiCoachMessagesPerDay: 10,
   },
 });
@@ -299,16 +299,8 @@ export function isFeatureAllowed(
   const required = getRequiredTierForFeature(feature);
   if (required === 'free') return true;
 
-  if (
-    feature === 'ai_photo_logging' &&
-    (userTier === 'free' || userTier === 'basic') &&
-    (options?.freeScansRemaining ?? 0) > 0
-  ) {
-    return true; // 3 free starter scans
-  }
-
-  if (options?.hasActiveTrial && required === 'plus') {
-    return true; // Trial grants access
+  if (options?.hasActiveTrial) {
+    return required === 'plus'; // A Plus trial never unlocks Pro features.
   }
 
   const userRank = TIER_RANKS[userTier] ?? 0;

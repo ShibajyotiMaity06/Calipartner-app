@@ -80,7 +80,7 @@ export function FoodLogModal({
   const [photoResults, setPhotoResults] = useState<FoodCandidateItem[] | null>(null);
   const [showResultsEditor, setShowResultsEditor] = useState(false);
   const [showDailyLimitModal, setShowDailyLimitModal] = useState(false);
-  const [limitState, setLimitState] = useState<string>('free_taste');
+  const [limitState, setLimitState] = useState<string>('free_after_trial');
   const [limitUsage, setLimitUsage] = useState<{ usedToday: number; dailyCap: number } | null>(
     null,
   );
@@ -494,11 +494,7 @@ export function FoodLogModal({
                 style={{ fontSize: fontSize.sm, color: colors.textMuted }}
                 testID="photo-access-copy"
               >
-                {limitUsage && limitState === 'free_taste'
-                  ? t('brandRepair.starterScans', {
-                      remaining: Math.max(0, limitUsage.dailyCap - limitUsage.usedToday),
-                    })
-                  : t('brandRepair.photoPro')}
+                {t('brandRepair.photoPro')}
               </Text>
               <View
                 style={{

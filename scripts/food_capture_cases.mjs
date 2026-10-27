@@ -24,17 +24,11 @@ export async function runFoodCaptureTests(db) {
       .result;
   const record = () => db.query("select public.record_ai_usage($1,'food_photo',10,0.0001)", [uid]);
   await asOwner();
-  assert.equal((await access()).code, 'CONSENT_REQUIRED');
+  assert.equal((await access()).code, 'UPGRADE_REQUIRED');
   await db.query("select public.accept_ai_processing_consent('1.0')");
-  assert.deepEqual(await access(), {
-    allowed: true,
-    code: null,
-    user_state: 'free_taste',
-    used: 0,
-    cap: 3,
-    remaining: 3,
-  });
-  console.log('PASS Free photo scans require consent and provide three lifetime starter scans');
+  assert.equal((await access()).cap, 0);
+  assert.equal((await access()).allowed, false);
+  console.log('PASS Free accounts have no AI allowance even after consent');
   await assert.rejects(
     () =>
       db.query("select public.check_ai_food_photo_access('fc000000-0000-4000-8000-000000000099')"),
@@ -43,12 +37,12 @@ export async function runFoodCaptureTests(db) {
   await assert.rejects(record, /permission denied/);
   console.log('PASS App clients cannot inspect another account or write AI usage');
   await asService();
-  await record();
-  await record();
-  await record();
-  assert.equal((await access()).allowed, false);
+  await db.exec(
+    `update public.remote_config set value='{"paid_pro":5,"free_taste":999,"trial":999,"free_after_trial":999}' where key='ai_food_photo_caps'`,
+  );
+  assert.equal((await access()).cap, 0);
   await assert.rejects(record, /AI_PHOTO_ACCESS_DENIED/);
-  console.log('PASS Starter scan consumption cannot exceed its server lifetime cap');
+  console.log('PASS Legacy starter and trial configuration cannot grant or record Free scans');
   await db.query(
     "insert into public.entitlements(user_id,tier,period,source,status,period_end) values($1,'plus','annual','apple','paid',now()+interval '1 year')",
     [uid],
@@ -58,9 +52,12 @@ export async function runFoodCaptureTests(db) {
   assert.equal((await access()).allowed, false);
   console.log('PASS Plus paid and Plus trial do not receive Pro photo scans');
   await db.query("update public.entitlements set tier='pro',status='paid' where user_id=$1", [uid]);
+  await db.query("update public.entitlements set status='trial' where user_id=$1", [uid]);
+  assert.equal((await access()).code, 'UPGRADE_REQUIRED');
+  await assert.rejects(record, /AI_PHOTO_ACCESS_DENIED/);
+  await db.query("update public.entitlements set status='paid' where user_id=$1", [uid]);
   assert.equal((await access()).cap, 5);
-  await record();
-  await record();
+  for (let i = 0; i < 5; i++) await record();
   await assert.rejects(record, /AI_PHOTO_ACCESS_DENIED/);
   const total = (
     await db.query(

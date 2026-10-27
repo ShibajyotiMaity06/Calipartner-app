@@ -1,5 +1,7 @@
 # CaliPartner — Plans, Features and Pricing Specification
 
+> Latest owner instruction, 27 October 2026: all AI scans, AI coach/chat and other AI features require a purchased, active Pro plan. No Free starter scans, no AI taste allowance, no AI trial for any tier. Only Plus monthly and annual have a seven-day free trial. Restore validated live Dodo configuration and live webhooks. This supersedes all earlier AI starter-scan references and authorizes the necessary app/core/backend/configuration repairs.
+
 **October 2026 · Official Tier and Pricing Reference**  
 *Supersedes earlier pricing tables in `CaliPartner_Pricing_Plan.md` and aligns with latest room revisions (`ROOMS_V3.md`, `FRIENDS_AND_ROOM_LIMITS.md`).*
 
@@ -107,7 +109,7 @@ Nutrition goals are not static. As members lose fat or gain muscle, their Total 
 | Feature | Free | Plus | Pro | Notes |
 | :--- | :---: | :---: | :---: | :--- |
 | **Personal AI Nutrition & Fitness Coach** | Locked preview | — | **✔ (10 msgs/day)** | Claude Haiku 5.5; context-aware AI coach |
-| **AI Photo Food Logging** | 3 one-time trial | — | **✔ (5 scans/day)** | Camera food scan; multi-item macro detection |
+| **AI Photo Food Logging** | Not included | — | **✔ (5 scans/day)** | Camera food scan; multi-item macro detection |
 | **Chat-to-Log** (*"I ate 2 eggs and toast"*) | — | — | **✔** | Natural language logging parsed by AI |
 | **Macro Growth Recalculation** | Manual | **Monthly (30d)** | **Weekly (7d)** | Proactive target updates to prevent plateaus |
 | **Weekly AI Progress Summary** | — | — | **✔** | Deep-dive adherence and metabolic analysis |

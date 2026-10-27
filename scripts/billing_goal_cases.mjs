@@ -72,5 +72,74 @@ export async function runBillingGoalTests(db) {
   console.log(
     'PASS Email-based automatic plan grants are disabled and cannot be called by app users',
   );
-  console.log('Billing and goal database tests: 5 passed, 0 failed');
+  await db.exec('reset role; set role service_role');
+  await db.query("select set_config('request.jwt.claims',$1,false)", [
+    JSON.stringify({ role: 'service_role' }),
+  ]);
+  const start = Date.now();
+  for (const [i, period] of ['monthly', 'annual'].entries()) {
+    const payload = { event: { period_type: 'TRIAL', purchased_at_ms: start } };
+    await db.query(
+      "select public.apply_revenuecat_event($1,'INITIAL_PURCHASE',$2,$3,'APP_STORE',$4,$5,$6)",
+      [
+        `plus-trial-${period}`,
+        uid,
+        `plus_${period}`,
+        new Date(start + 30 * 86400000).toISOString(),
+        new Date(start + (i + 1) * 1000).toISOString(),
+        JSON.stringify(payload),
+      ],
+    );
+    const ent = (
+      await db.query(
+        'select tier,status,period,extract(epoch from (period_end-to_timestamp($2/1000.0)))::integer as seconds from public.entitlements where user_id=$1',
+        [uid, start],
+      )
+    ).rows[0];
+    assert.deepEqual(ent, { tier: 'plus', status: 'trial', period, seconds: 7 * 86400 });
+    const photo = (await db.query('select public.check_ai_food_photo_access($1) as value', [uid]))
+      .rows[0].value;
+    const coach = (await db.query('select public.check_ai_coach_access($1) as value', [uid]))
+      .rows[0].value;
+    assert.equal(photo.allowed, false);
+    assert.equal(coach.allowed, false);
+  }
+  console.log(
+    'PASS Plus monthly and annual store trials are capped at exactly seven days without AI',
+  );
+  await db.query(
+    "select public.apply_revenuecat_event('pro-trial-denied','INITIAL_PURCHASE',$1,'pro_annual','APP_STORE',$2,$3,$4)",
+    [
+      uid,
+      new Date(start + 7 * 86400000).toISOString(),
+      new Date(start + 3000).toISOString(),
+      JSON.stringify({ event: { period_type: 'TRIAL', purchased_at_ms: start } }),
+    ],
+  );
+  const proTrial = (
+    await db.query('select tier,status from public.entitlements where user_id=$1', [uid])
+  ).rows[0];
+  assert.deepEqual(proTrial, { tier: 'pro', status: 'lapsed' });
+  assert.equal(
+    (await db.query('select public.check_ai_coach_access($1) as value', [uid])).rows[0].value
+      .allowed,
+    false,
+  );
+  console.log('PASS A Pro trial receipt cannot be misclassified as a paid Pro purchase');
+  await db.query('delete from public.entitlements where user_id=$1', [uid]);
+  await db.exec("update public.remote_config set value='30'::jsonb where key='trial_length_days'");
+  await db.query('select public.start_trial_if_eligible($1)', [uid]);
+  const directTrial = (
+    await db.query(
+      'select tier,status,extract(epoch from(period_end-trial_started_at))::integer as seconds from public.entitlements where user_id=$1',
+      [uid],
+    )
+  ).rows[0];
+  assert.deepEqual(directTrial, { tier: 'plus', status: 'trial', seconds: 7 * 86400 });
+  await db.exec("update public.remote_config set value='7'::jsonb where key='trial_length_days'");
+  console.log(
+    'PASS Legacy trial RPC grants only seven days of Plus even with extended remote configuration',
+  );
+  await db.exec('reset role');
+  console.log('Billing and goal database tests: 8 passed, 0 failed');
 }

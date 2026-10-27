@@ -346,8 +346,8 @@ describe('Phase 10 Core: Paywall Triggers & Trial Banners (CaliPartner Pricing P
     expect(isFeatureAllowed('chat_to_log', 'plus')).toBe(false);
     expect(isFeatureAllowed('chat_to_log', 'pro')).toBe(true);
 
-    // Free AI photo scans taste (3 scans)
-    expect(isFeatureAllowed('ai_photo_logging', 'free', { freeScansRemaining: 3 })).toBe(true);
+    // Legacy starter balances cannot unlock AI.
+    expect(isFeatureAllowed('ai_photo_logging', 'free', { freeScansRemaining: 3 })).toBe(false);
     expect(isFeatureAllowed('ai_photo_logging', 'free', { freeScansRemaining: 0 })).toBe(false);
   });
 });
@@ -358,4 +358,14 @@ it('Plus and Plus trials cannot borrow the Free photo taste allowance', () => {
   ).toBe(false);
   expect(isFeatureAllowed('ai_coach', 'plus', { hasActiveTrial: true })).toBe(false);
   expect(isFeatureAllowed('fasting_tracker', 'plus', { hasActiveTrial: true })).toBe(true);
+});
+
+it('never unlocks any Pro AI feature through a trial flag or legacy scan balance', () => {
+  for (const feature of ['ai_photo_logging', 'ai_coach', 'chat_to_log'] as const) {
+    for (const tier of ['free', 'plus', 'pro'] as const) {
+      expect(
+        isFeatureAllowed(feature, tier, { hasActiveTrial: true, freeScansRemaining: 999 }),
+      ).toBe(false);
+    }
+  }
 });

@@ -54,10 +54,10 @@ beforeEach(() => {
   vi.clearAllMocks();
   flow.access.mockResolvedValue({
     allowed: true,
-    userState: 'free_taste',
+    userState: 'paid_pro',
     usedToday: 0,
-    dailyCap: 3,
-    remainingToday: 3,
+    dailyCap: 5,
+    remainingToday: 5,
   });
   flow.add.mockResolvedValue({ id: 'saved' });
 });
@@ -129,16 +129,16 @@ describe('food capture paths', () => {
   });
 });
 
-it.each(['paid_plus', 'free_taste'])(
+it.each(['paid_plus', 'free_taste', 'free_after_trial', 'trial'])(
   'blocks the camera upfront for denied %s access and offers Pro',
   async (userState) => {
     flow.access.mockResolvedValue({
       allowed: false,
       userState,
-      usedToday: 3,
-      dailyCap: userState === 'paid_plus' ? 0 : 3,
+      usedToday: 0,
+      dailyCap: 0,
       remainingToday: 0,
-      code: userState === 'paid_plus' ? 'UPGRADE_REQUIRED' : 'DAILY_LIMIT_REACHED',
+      code: 'UPGRADE_REQUIRED',
     });
     await act(async () => {
       renderer = create(

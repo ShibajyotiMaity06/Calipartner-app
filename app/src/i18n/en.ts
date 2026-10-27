@@ -15,9 +15,8 @@ export const en = {
     paidBody: 'Choose a plan to use this feature. Your personal tracking stays free.',
     seePlans: 'See plans',
     unavailable: 'We could not check access. Connect and try again.',
-    starterScans: '{remaining} of 3 lifetime starter scans remaining',
     photoPro:
-      'Free includes 3 lifetime starter scans. Pro includes 5 photo scans each day. Plus does not include photo scans.',
+      'AI photo scans require a paid Pro plan. Free, Plus and Plus trials do not include AI access.',
     starterRecipes: 'Free includes 10 starter recipes. Plus or Pro unlocks the full library.',
     coachUnavailable: 'AI Coach is temporarily unavailable. Please try again.',
     photoLimitTitle: 'Photo scan access',
@@ -81,7 +80,6 @@ export const en = {
     selectedFilter: 'Selected goal: {goal}',
   },
   capture: {
-    starterScans: 'Starter scans',
     todayScans: 'Scans today',
     healthPermissionHelp:
       'Allow steps and walking distance in your phone’s health settings, then open CaliPartner again.',
@@ -893,7 +891,8 @@ export const en = {
       limitTitle: 'Daily Photo Limit Reached',
       limitBodyTrial:
         'AI photo logging is included with Pro. Plus and its trial do not include AI photo scans.',
-      limitBodyFree: 'You’ve used your 3 starter scans. Pro includes 5 AI photo scans each day.',
+      limitBodyFree:
+        'AI photo logging requires a paid Pro plan. There are no free or trial AI scans.',
       limitBodyPaid: 'You’ve reached your daily allowance of 5 AI photo scans for today.',
       upgradeUpsell: 'CaliPartner Pro includes 5 photo scans and 10 AI Coach messages each day.',
       upgradeButton: 'View Pro plan',

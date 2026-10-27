@@ -426,7 +426,7 @@ export async function getAiFoodPhotoUsageStatus(
     const res = data as Record<string, unknown>;
     return {
       allowed: Boolean(res.allowed),
-      userState: (res.user_state as AiUserState) || 'free_taste',
+      userState: (res.user_state as AiUserState) || 'free_after_trial',
       usedToday: Number(res.used || 0),
       dailyCap: Number(res.cap || 0),
       remainingToday: Number(res.remaining || 0),

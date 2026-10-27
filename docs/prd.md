@@ -1,6 +1,8 @@
 # CaliPartner: Product Requirements Document (PRD)
 
-> Owner-requested brand and access repairs, 27 October 2026: use the supplied static SVG across logos/icons; audit and enforce the existing paid feature matrix, preserving three lifetime Free photo scans; simplify purchase success to the plan-unlocked title; clarify room capacity per room and existing-subscription management. Necessary UI, service, core and backend repairs are in scope; unrelated features remain excluded.
+> Latest owner instruction, 27 October 2026: all AI scans, AI coach/chat and other AI features require a purchased, active Pro plan. No Free starter scans, no AI taste allowance, no AI trial for any tier. Only Plus monthly and annual have a seven-day free trial. Restore validated live Dodo configuration and live webhooks. This supersedes all earlier AI starter-scan references and authorizes the necessary app/core/backend/configuration repairs.
+
+> Owner-requested brand and access repairs, 27 October 2026: use the supplied static SVG across logos/icons; audit and enforce the existing paid feature matrix, with AI now restricted to paid Pro under the later owner instruction; simplify purchase success to the plan-unlocked title; clarify room capacity per room and existing-subscription management. Necessary UI, service, core and backend repairs are in scope; unrelated features remain excluded.
 
 > Owner-requested repairs, 27 October 2026: repair barcode focus/capture and narrow-screen layouts, reset the Log hub on every opening, remove decorative stars, repair room invitation notifications against the current host schema, preserve scan nutrition including fibre/sugar/sodium/saturated fat/cholesterol, and restrict advanced scan displays to active Plus/Pro with a locked upgrade preview for Free. Replace fabricated home squad content with actual room state. This scope authorizes the necessary view, core, sync, database and Edge Function repairs only; unrelated phases remain excluded.
 
@@ -972,7 +974,7 @@ A goal day is a logged day where calories fall inside the goal range for the use
 
 ### 7.7 AI photo logging limits
 
-- Trial users: up to 3 AI scans per day. Plan holders: up to 15 per day (both proposed and tunable by remote config).
+- AI is available only with an active purchased Pro plan: five photo scans and ten coach messages per day. Free, Plus and every trial have zero AI allowance. Only Plus monthly and annual offer a seven-day free trial.
 - Free users after trial: manual, search, barcode and previously-logged foods only, or a small daily allowance if costs allow.
 - AI calls go through the backend, never directly from the app. Food photos are deleted after processing unless the user chooses to share the photo to a room or chat.
 

@@ -22,19 +22,14 @@ describe('Phase 11: Attack & Security Tests (Caps, Consent, Injection, Budget, K
       expect(isDailyFoodPhotoLimitReached(1, freeCap)).toBe(true);
     });
 
-    it('strictly cuts off trial users after exactly 5 scans', () => {
-      const trialCap = getDailyFoodPhotoCap('trial');
-      expect(trialCap).toBe(5);
-
-      expect(isDailyFoodPhotoLimitReached(0, trialCap)).toBe(false);
-      expect(isDailyFoodPhotoLimitReached(1, trialCap)).toBe(false);
-      expect(isDailyFoodPhotoLimitReached(4, trialCap)).toBe(false);
-      expect(isDailyFoodPhotoLimitReached(5, trialCap)).toBe(true);
-      expect(isDailyFoodPhotoLimitReached(6, trialCap)).toBe(true);
+    it('denies every trial before the first scan even with forged generous config', () => {
+      const trialCap = getDailyFoodPhotoCap('trial', { trial: 999, paid: 999 });
+      expect(trialCap).toBe(0);
+      expect(isDailyFoodPhotoLimitReached(0, trialCap)).toBe(true);
     });
 
     it('strictly cuts off paid users after 5 scans', () => {
-      const paidCap = getDailyFoodPhotoCap('paid');
+      const paidCap = getDailyFoodPhotoCap('paid_pro');
       expect(paidCap).toBe(5);
 
       expect(isDailyFoodPhotoLimitReached(4, paidCap)).toBe(false);

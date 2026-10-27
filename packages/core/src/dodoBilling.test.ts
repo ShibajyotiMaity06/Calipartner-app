@@ -63,6 +63,31 @@ describe('Dodo subscription verification', () => {
     ).toThrow();
     expect(() => verifiedDodoProduct('plus_annual', null)).toThrow();
   });
+  it.each(['monthly', 'annual'] as const)(
+    'requires exactly seven free Plus trial days for %s',
+    (duration) => {
+      const key = `plus_${duration}` as const;
+      const plus = {
+        is_recurring: true,
+        price: {
+          type: 'recurring_price',
+          currency: 'INR',
+          price: duration === 'monthly' ? 24900 : 149900,
+          payment_frequency_count: 1,
+          payment_frequency_interval: duration === 'monthly' ? 'Month' : 'Year',
+          trial_period_days: 7,
+          trial_type: 'free',
+          trial_amount: 0,
+        },
+      };
+      expect(verifiedDodoProduct(key, plus).trialDays).toBe(7);
+      for (const days of [0, 3, 8, 30]) {
+        expect(() =>
+          verifiedDodoProduct(key, { ...plus, price: { ...plus.price, trial_period_days: days } }),
+        ).toThrow('DODO_PRODUCT_MISMATCH');
+      }
+    },
+  );
   it('accepts only supported tier and duration combinations', () => {
     expect(dodoProductKey('pro', 'annual')).toBe('pro_annual');
     expect(dodoProductKey('plus', 'monthly')).toBe('plus_monthly');

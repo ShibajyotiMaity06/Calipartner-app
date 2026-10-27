@@ -17,16 +17,16 @@ import { scaleNutrients } from './food';
 // -----------------------------------------------------------------------------
 
 export const DEFAULT_AI_FOOD_PHOTO_CAPS: Readonly<AiDailyCapsConfig> = Object.freeze({
-  trial: 5,
+  trial: 0,
   paid: 5,
   free_after_trial: 0,
-  free_taste: 3,
+  free_taste: 0,
   paid_pro: 5,
   paid_plus: 0,
 });
 
 export const DEFAULT_AI_COACH_DAILY_LIMIT = 10;
-export const DEFAULT_AI_FREE_TASTE_SCANS = 3;
+export const DEFAULT_AI_FREE_TASTE_SCANS = 0;
 
 export const DEFAULT_AI_BUDGET_CONFIG: Readonly<AiMonthlyBudgetConfig> = Object.freeze({
   monthly_budget_usd: 100.0,
@@ -51,7 +51,8 @@ export const MAX_FOOD_PHOTO_SIZE_BYTES = 10 * 1024 * 1024; // 10 MB
 
 /**
  * Resolves user AI tier state based on their entitlement:
- * - 'paid': User has active Paid or Grace entitlement
+ * - 'paid_pro': User has an active paid/grace Pro purchase
+ * - 'paid_plus': User has active Plus access (no AI allowance)
  * - 'trial': User has active trial with valid period_end
  * - 'free_after_trial': Free or expired trial users
  */
@@ -63,10 +64,11 @@ export function resolveAiUserState(
     return 'free_after_trial';
   }
 
-  // 1. Paid or Grace
+  // Only a current Pro purchase unlocks AI. Plus and every trial stay locked.
   if (entitlement.status === 'paid' || entitlement.status === 'grace') {
     if (!entitlement.period_end || new Date(entitlement.period_end) > now) {
-      return 'paid';
+      if (entitlement.tier === 'pro') return 'paid_pro';
+      if (entitlement.tier === 'plus') return 'paid_plus';
     }
   }
 
@@ -82,36 +84,18 @@ export function resolveAiUserState(
 }
 
 /**
- * Returns the daily scan cap for a given user state according to remote config.
+ * Returns a paid Pro cap of at most five; configuration cannot grant trials or starter scans.
  */
 export function getDailyFoodPhotoCap(
   userState: AiUserState,
   capsConfig?: Partial<AiDailyCapsConfig> | null,
   tier?: string,
 ): number {
-  if (tier === 'plus') {
-    return capsConfig?.paid_plus ?? DEFAULT_AI_FOOD_PHOTO_CAPS.paid_plus ?? 0;
-  }
-  switch (userState) {
-    case 'paid_pro':
-      return capsConfig?.paid_pro ?? DEFAULT_AI_FOOD_PHOTO_CAPS.paid_pro ?? 5;
-    case 'paid_plus':
-      return 0;
-    case 'free_taste':
-      return capsConfig?.free_taste ?? DEFAULT_AI_FOOD_PHOTO_CAPS.free_taste ?? 3;
-    case 'paid':
-      if (capsConfig?.paid !== undefined) return Math.max(0, capsConfig.paid);
-      if (capsConfig?.paid_pro !== undefined) return Math.max(0, capsConfig.paid_pro);
-      return Math.max(0, DEFAULT_AI_FOOD_PHOTO_CAPS.paid_pro ?? DEFAULT_AI_FOOD_PHOTO_CAPS.paid);
-    case 'trial':
-      if (capsConfig?.trial !== undefined) return Math.max(0, capsConfig.trial);
-      return Math.max(0, DEFAULT_AI_FOOD_PHOTO_CAPS.trial);
-    case 'free_after_trial':
-    default:
-      if (capsConfig?.free_after_trial !== undefined)
-        return Math.max(0, capsConfig.free_after_trial);
-      return Math.max(0, DEFAULT_AI_FOOD_PHOTO_CAPS.free_after_trial);
-  }
+  if (tier && tier !== 'pro') return 0;
+  if (userState !== 'paid_pro' && !(userState === 'paid' && tier === 'pro')) return 0;
+  const requested =
+    capsConfig?.paid_pro ?? capsConfig?.paid ?? DEFAULT_AI_FOOD_PHOTO_CAPS.paid_pro ?? 5;
+  return Number.isFinite(requested) ? Math.min(5, Math.max(0, requested)) : 0;
 }
 
 /**
