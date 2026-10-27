@@ -17,6 +17,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     supportsTablet: false,
     icon: './assets/ios-icon.png',
     bundleIdentifier: 'app.calipartner.mobile',
+    googleServicesFile: process.env.GOOGLE_SERVICES_INFO_PLIST ?? './GoogleService-Info.plist',
     infoPlist: {
       NSMotionUsageDescription:
         'CaliPartner uses your motion sensors to count your steps during walking and running workouts.',
@@ -27,7 +28,9 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   web: { favicon: './assets/favicon.png' },
   android: {
     package: 'app.calipartner.mobile',
+    googleServicesFile: process.env.GOOGLE_SERVICES_JSON ?? './google-services.json',
     permissions: [
+      'android.permission.POST_NOTIFICATIONS',
       'android.permission.ACTIVITY_RECOGNITION',
       'android.permission.ACCESS_FINE_LOCATION',
       'android.permission.ACCESS_COARSE_LOCATION',
@@ -41,6 +44,13 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     },
   },
   plugins: [
+    [
+      'expo-notifications',
+      {
+        icon: './assets/android-icon-monochrome.png',
+        color: '#F48C46',
+      },
+    ],
     'expo-router',
     'expo-video',
     [

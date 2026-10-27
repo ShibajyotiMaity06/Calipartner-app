@@ -21,6 +21,8 @@ app/android/
 *.key
 *.pem
 *.mobileprovision
+google-services.json
+GoogleService-Info.plist
 *.exe
 *.dll
 *.dmg
