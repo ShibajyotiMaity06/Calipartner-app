@@ -32,6 +32,9 @@
     "../../../packages/core/src/dodoBilling": "../../../packages/core/src/dodoBilling.ts",
     "../../../packages/core/src/localDay": "../../../packages/core/src/localDay.ts",
     "../../../packages/core/src/barcodes": "../../../packages/core/src/barcodes.ts",
-    "../../../packages/core/src/advancedNutrition": "../../../packages/core/src/advancedNutrition.ts"
+    "../../../packages/core/src/advancedNutrition": "../../../packages/core/src/advancedNutrition.ts",
+    "../../../packages/core/src/challengeEngine": "../../../packages/core/src/challengeEngine.ts",
+    "../../../packages/core/src/challengeTypes": "../../../packages/core/src/challengeTypes.ts",
+    "../../../packages/core/src/challengeViewModel": "../../../packages/core/src/challengeViewModel.ts"
   }
 }

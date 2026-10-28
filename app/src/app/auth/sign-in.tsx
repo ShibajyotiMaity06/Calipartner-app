@@ -1,3 +1,4 @@
+import { afterSetupDestination } from '@/services/pairOnboardingService';
 import React, { useState, useEffect } from 'react';
 import {
   KeyboardAvoidingView,
@@ -41,7 +42,7 @@ export default function SignInScreen() {
           const onboarded = await isUserOnboarded(user.id);
           if (!mounted) return;
           if (onboarded) {
-            router.replace('/today' as never);
+            router.replace((await afterSetupDestination(user.id)) as never);
           } else {
             router.replace('/onboarding' as never);
           }

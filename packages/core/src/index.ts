@@ -30,3 +30,7 @@ export * from './localDay';
 export * from './barcodes';
 
 export * from './advancedNutrition';
+
+export * from './challengeEngine';
+export * from './challengeTypes';
+export * from './challengeViewModel';

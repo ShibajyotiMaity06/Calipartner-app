@@ -157,7 +157,9 @@ export function createWebDb(): SQLite.SQLiteDatabase {
             if (
               table === 'outbox' ||
               table === 'local_social_cache' ||
-              table === 'local_social_outbox'
+              table === 'local_social_outbox' ||
+              table === 'local_challenge_cache' ||
+              table === 'local_challenge_outbox'
             ) {
               const existingIdx = list.findIndex((ex) => ex.id === row.id);
               if (existingIdx >= 0) {
@@ -182,7 +184,7 @@ export function createWebDb(): SQLite.SQLiteDatabase {
         return { lastInsertRowId: 0, changes };
       }
       const targetMutation = sql.match(
-        /^(update|delete from)\s+(local_goal_profiles|local_health_screening|local_onboarding_drafts|outbox|local_social_cache|local_social_outbox)\b/i,
+        /^(update|delete from)\s+(local_goal_profiles|local_health_screening|local_onboarding_drafts|outbox|local_social_cache|local_social_outbox|local_challenge_cache|local_challenge_outbox)\b/i,
       );
       if (targetMutation) {
         const table = targetMutation[2]!;
@@ -298,6 +300,20 @@ export function createWebDb(): SQLite.SQLiteDatabase {
     async getAllAsync<T>(sql: string, ...args: unknown[]): Promise<T[]> {
       const params = (Array.isArray(args[0]) ? args[0] : args) as unknown[];
       const lower = sql.toLowerCase();
+
+      if (
+        lower.includes('from local_challenge_cache') ||
+        lower.includes('from local_challenge_outbox')
+      ) {
+        const table = lower.includes('from local_challenge_cache')
+          ? 'local_challenge_cache'
+          : 'local_challenge_outbox';
+        return (memory[table] || [])
+          .filter((row) => row.owner_id === params[0])
+          .sort((a, b) =>
+            String(a.created_at ?? '').localeCompare(String(b.created_at ?? '')),
+          ) as T[];
+      }
 
       if (lower.includes('from local_social_cache') || lower.includes('from local_social_outbox')) {
         const table = lower.includes('from local_social_cache')
@@ -609,6 +625,8 @@ export async function clearAllLocalData(): Promise<void> {
     'local_onboarding_drafts',
     'local_social_cache',
     'local_social_outbox',
+    'local_challenge_cache',
+    'local_challenge_outbox',
     'local_health_screening',
     'local_foods',
     'local_food_entries',

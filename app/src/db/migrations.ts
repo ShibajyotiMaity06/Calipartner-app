@@ -570,4 +570,11 @@ export const migrations: readonly LocalMigration[] = [
       ALTER TABLE local_food_entries ADD COLUMN nutrition_details TEXT;
     `,
   },
+  {
+    version: 15,
+    name: 'challenge_cache_and_outbox',
+    sql: `CREATE TABLE local_challenge_cache (id TEXT PRIMARY KEY NOT NULL, owner_id TEXT NOT NULL, payload TEXT NOT NULL, updated_at TEXT NOT NULL);
+      CREATE TABLE local_challenge_outbox (id TEXT PRIMARY KEY NOT NULL, owner_id TEXT NOT NULL, payload TEXT NOT NULL, status TEXT NOT NULL, last_error TEXT, created_at TEXT NOT NULL);
+      CREATE INDEX local_challenge_pending ON local_challenge_outbox(owner_id,created_at);`,
+  },
 ];

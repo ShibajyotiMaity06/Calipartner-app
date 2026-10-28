@@ -1,0 +1,120 @@
+{
+  "plans": {
+    "free": {
+      "solo_limit": 1,
+      "pair_limit": 1,
+      "season_limit": 1,
+      "room_limit": 0,
+      "duration_max": 7,
+      "custom": false,
+      "forfeits": false,
+      "shield_max": 1,
+      "pause_max": 3,
+      "cover_max": 0
+    },
+    "plus": {
+      "solo_limit": 5,
+      "pair_limit": 5,
+      "season_limit": 3,
+      "room_limit": 3,
+      "duration_max": 75,
+      "custom": true,
+      "forfeits": true,
+      "shield_max": 2,
+      "pause_max": 3,
+      "cover_max": 1
+    },
+    "pro": {
+      "solo_limit": 5,
+      "pair_limit": 5,
+      "season_limit": 3,
+      "room_limit": 5,
+      "duration_max": 75,
+      "custom": true,
+      "forfeits": true,
+      "shield_max": 2,
+      "pause_max": 3,
+      "cover_max": 1
+    }
+  },
+  "rules": {
+    "daily_cap_pct": 100,
+    "finalize_delay_hours": 12,
+    "minimum_meals": 3,
+    "protein_min_pct": 80,
+    "protein_max_pct": 150,
+    "shield_every": 7,
+    "rest_weekdays": [],
+    "stretch_pct": 10,
+    "min_history_days": 7,
+    "target_adjust_pct": 10,
+    "metrics": {
+      "steps": {
+        "min": 1000,
+        "max": 20000,
+        "plausible_max": 100000,
+        "fallback": {
+          "default": 5000,
+          "sedentary": 3000,
+          "light": 5000,
+          "moderate": 7000,
+          "active": 9000,
+          "very_active": 10000
+        }
+      },
+      "distance": {
+        "min": 500,
+        "max": 20000,
+        "plausible_max": 100000,
+        "fallback": { "default": 3000 }
+      },
+      "workouts_count": { "min": 1, "max": 1, "plausible_max": 4, "fallback": { "default": 1 } },
+      "workout_minutes": {
+        "min": 10,
+        "max": 90,
+        "plausible_max": 240,
+        "fallback": { "default": 30 }
+      },
+      "food_log_days": { "min": 1, "max": 1, "plausible_max": 1, "fallback": { "default": 1 } },
+      "protein_in_range": { "min": 1, "max": 1, "plausible_max": 1, "fallback": { "default": 1 } },
+      "water_ml": {
+        "min": 1000,
+        "max": 3500,
+        "plausible_max": 6000,
+        "fallback": { "default": 2000 }
+      },
+      "focus_minutes": {
+        "min": 15,
+        "max": 120,
+        "plausible_max": 720,
+        "fallback": { "default": 60 }
+      },
+      "weigh_in_days": { "min": 1, "max": 1, "plausible_max": 1, "fallback": { "default": 1 } },
+      "partner_actions": { "min": 1, "max": 3, "plausible_max": 50, "fallback": { "default": 1 } }
+    }
+  },
+  "history_days": 14,
+  "invite_expiry_hours": 48,
+  "max_start_delay_days": 14,
+  "min_public_count": 10,
+  "creation_hourly_limit": 10,
+  "action_hourly_limit": 100,
+  "nudge_daily_limit": 1,
+  "adjust_first_days": 3,
+  "board_bands": 4,
+  "board_limit": 50,
+  "worker_batch": 100,
+  "poll_seconds": 15,
+  "occasion_max_days": 365,
+  "occasion_event_types": ["wedding", "birthday", "vacation", "new_year"],
+  "event_week_days": 7,
+  "event_week_factor": 0.75,
+  "recovery_days": 3,
+  "checklist_min": 3,
+  "checklist_max": 5,
+  "title_max_length": 120,
+  "reminder_hour": 9,
+  "evening_hour": 19,
+  "recap_pro_only": true,
+  "rest_weekday_options": ["0", "1", "2", "3", "4", "5", "6"]
+}

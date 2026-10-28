@@ -1,3 +1,4 @@
+import { afterSetupDestination } from '@/services/pairOnboardingService';
 import React, { useEffect } from 'react';
 import { SafeAreaView, StyleSheet, View } from 'react-native';
 import { useRouter } from 'expo-router';
@@ -16,9 +17,9 @@ export default function WelcomeCelebrationScreen() {
     let mounted = true;
     if (user?.id) {
       isUserOnboarded(user.id)
-        .then((onboarded) => {
+        .then(async (onboarded) => {
           if (mounted && onboarded) {
-            router.replace('/today' as never);
+            router.replace((await afterSetupDestination(user.id)) as never);
           }
         })
         .catch(() => {
@@ -36,7 +37,7 @@ export default function WelcomeCelebrationScreen() {
       if (user?.id) {
         const onboarded = await isUserOnboarded(user.id);
         if (onboarded) {
-          router.replace('/today' as never);
+          router.replace((await afterSetupDestination(user.id)) as never);
           return;
         }
       }

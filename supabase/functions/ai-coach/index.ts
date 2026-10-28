@@ -1,4 +1,4 @@
-import { createClient, type SupabaseClient } from 'jsr:@supabase/supabase-js@2';
+import { createClient, type SupabaseClient } from 'npm:@supabase/supabase-js@2.117.3';
 
 declare const Deno: {
   serve: (handler: (req: Request) => Promise<Response> | Response) => void;
@@ -265,20 +265,27 @@ export async function handleAiCoach(
       );
     }
 
-    // 5. Gather personalized context safely from database
-    const { data: goalProfile } = await adminClient
-      .from('goal_profiles')
-      .select('goal, daily_calorie_target, protein_grams, carbs_grams, fat_grams, weekly_rate_kg')
-      .eq('user_id', userId)
-      .maybeSingle();
+    // Challenge recaps send only the expressly selected summary, without extra health context.
+    const summaryOnly = body.context_mode === 'challenge_summary';
+    const { data: goalProfile } = summaryOnly
+      ? { data: null }
+      : await adminClient
+          .from('goal_profiles')
+          .select(
+            'goal, daily_calorie_target, protein_grams, carbs_grams, fat_grams, weekly_rate_kg',
+          )
+          .eq('user_id', userId)
+          .maybeSingle();
 
     const todayUtc = new Date().toISOString().split('T')[0];
-    const { data: todaySummary } = await adminClient
-      .from('daily_summaries')
-      .select('total_calories, total_protein, total_carbs, total_fat, water_ml')
-      .eq('user_id', userId)
-      .eq('day', todayUtc)
-      .maybeSingle();
+    const { data: todaySummary } = summaryOnly
+      ? { data: null }
+      : await adminClient
+          .from('daily_summaries')
+          .select('total_calories, total_protein, total_carbs, total_fat, water_ml')
+          .eq('user_id', userId)
+          .eq('day', todayUtc)
+          .maybeSingle();
 
     // 6. Build System Prompt with full conversational freedom & evidence-based fitness guidance
     const targetCalories = goalProfile?.daily_calorie_target ?? 2000;
@@ -288,7 +295,9 @@ export async function handleAiCoach(
     const consumedProtein = todaySummary?.total_protein ?? 0;
     const waterMl = todaySummary?.water_ml ?? 0;
 
-    const systemPrompt = `You are the CaliPartner AI Coach, an expert fitness, calisthenics, and nutrition coach.
+    const systemPrompt = summaryOnly
+      ? 'You are the CaliPartner habit coach. Briefly recap only the supplied challenge summary. Use neutral, kind language. Never invent totals, partner data or health details. Avoid weight, calorie or medical advice, ranking and guilt. Suggest one small next habit. Use plain sentences.'
+      : `You are the CaliPartner AI Coach, an expert fitness, calisthenics, and nutrition coach.
 
 CRITICAL DIRECTIVES:
 1. STRAIGHT TO THE POINT: Never beat around the bush. Start directly with the answer on the very first word. Never use greetings, filler, preambles, or pleasantries (e.g. no "Hello", "Sure", "Great question", "Certainly", "I would be happy to help").

@@ -4,7 +4,7 @@ import Svg, { Circle } from 'react-native-svg';
 import { dark, type IdentityHue, getIdentityColor } from '../tokens/colors';
 import { motion } from '../tokens/motion';
 import { useReducedMotion } from '../theme/useReducedMotion';
-import { Text } from './Text';
+import { Text, type TextProps } from './Text';
 
 export type PairRingSize = 184 | 120 | 64;
 
@@ -27,6 +27,9 @@ export interface PairRingProps extends AccessibilityProps {
   remainingAmount?: string | number;
   /** Calories over target when > 100% (e.g. "320") */
   overAmount?: string | number;
+  /** Localized label for non-calorie uses such as habit challenges. */
+  centerLabel?: string;
+  fontSet?: TextProps['fontSet'];
   /** Custom test ID */
   testID?: string;
 }
@@ -48,6 +51,8 @@ export function PairRing({
   hasPartner = true,
   remainingAmount,
   overAmount,
+  centerLabel,
+  fontSet,
   testID = 'pair-ring',
   accessibilityLabel,
   ...rest
@@ -294,7 +299,7 @@ export function PairRing({
             },
           ]}
         >
-          <Text variant="micro" color={partnerColor} style={styles.pillText}>
+          <Text fontSet={fontSet} variant="micro" color={partnerColor} style={styles.pillText}>
             {`${Math.round(clampedPartner)}%`}
           </Text>
         </View>
@@ -304,20 +309,20 @@ export function PairRing({
       <View style={styles.centerContainer} pointerEvents="none">
         {size === 184 && (
           <>
-            <Text variant="numeralXL" color={dark.textHi}>
+            <Text fontSet={fontSet} variant="numeralXL" color={dark.textHi}>
               {`${Math.round(renderedUserPct)}%`}
             </Text>
             {clampedUser > 100 ? (
-              <Text variant="label" color={dark.textMid}>
+              <Text fontSet={fontSet} variant="label" color={dark.textMid}>
                 {overAmount ? `${overAmount} over` : 'over goal'}
               </Text>
             ) : remainingAmount != null ? (
-              <Text variant="label" color={dark.textMid}>
+              <Text fontSet={fontSet} variant="label" color={dark.textMid}>
                 {`${remainingAmount} left`}
               </Text>
             ) : (
-              <Text variant="label" color={dark.textMid}>
-                of goal
+              <Text fontSet={fontSet} variant="label" color={dark.textMid}>
+                {centerLabel ?? 'of goal'}
               </Text>
             )}
           </>
@@ -325,15 +330,15 @@ export function PairRing({
 
         {size === 120 && (
           <>
-            <Text variant="numeralM" color={dark.textHi}>
+            <Text fontSet={fontSet} variant="numeralM" color={dark.textHi}>
               {`${Math.round(renderedUserPct)}%`}
             </Text>
             {clampedUser > 100 ? (
-              <Text variant="micro" color={dark.textMid}>
+              <Text fontSet={fontSet} variant="micro" color={dark.textMid}>
                 {overAmount ? `${overAmount} over` : 'over'}
               </Text>
             ) : remainingAmount != null ? (
-              <Text variant="micro" color={dark.textMid}>
+              <Text fontSet={fontSet} variant="micro" color={dark.textMid}>
                 {`${remainingAmount} left`}
               </Text>
             ) : null}
@@ -341,7 +346,7 @@ export function PairRing({
         )}
 
         {size === 64 && (
-          <Text variant="heading" color={dark.textHi}>
+          <Text fontSet={fontSet} variant="heading" color={dark.textHi}>
             {`${Math.round(renderedUserPct)}%`}
           </Text>
         )}

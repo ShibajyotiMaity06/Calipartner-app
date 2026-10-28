@@ -1,0 +1,21 @@
+/** Shared challenge geometry, including accessible touch and exported share-card sizes. */
+export const challengeLayout = {
+  shareFrameInset: 48,
+  shareFrameStroke: 2,
+  shareChapterY: 800,
+  shareReleaseDelayMs: 1000,
+  touch: 44,
+  icon: 24,
+  stroke: 1,
+  contentMax: 640,
+  shareWidth: 1080,
+  shareHeight: 1080,
+  shareInset: 96,
+  shareTitleY: 220,
+  shareScoreY: 510,
+  shareSummaryY: 640,
+  shareBrandY: 920,
+  shareTitleSize: 52,
+  shareScoreSize: 112,
+  shareBodySize: 36,
+} as const;

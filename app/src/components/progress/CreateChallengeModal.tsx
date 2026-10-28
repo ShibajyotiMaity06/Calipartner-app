@@ -1,595 +1,384 @@
-import React, { useState } from 'react';
-import {
-  Modal,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Switch,
-  Text,
-  TextInput,
-  View,
-} from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import { Avatar, dark, radius, space, type } from '@calipartner/ui';
-import { t } from '@/i18n';
-
-export type ChallengeActivityType =
-  'walking' | 'running' | 'studying' | 'gym' | 'cycling' | 'custom';
-
-export type ChallengeDuration = '1d' | '7d' | '30d';
-
-export interface ChallengeCreatedPayload {
-  activity: ChallengeActivityType;
-  customName?: string;
-  goalValue: number;
-  unit: string;
-  durationDays: number;
-  partnerNickname?: string;
-  isWholeRoom: boolean;
-}
-
-interface CreateChallengeModalProps {
-  visible: boolean;
-  onClose: () => void;
-  onSubmit: (payload: ChallengeCreatedPayload) => void;
-  partnerNickname?: string;
-  partnerAvatarUrl?: string;
-  testID?: string;
-}
-
-interface ActivityTileConfig {
-  id: ChallengeActivityType;
-  label: string;
-  icon: keyof typeof Ionicons.glyphMap;
-  defaultGoal: number;
-  step: number;
-  min: number;
-  max: number;
-  unit: string;
-}
-
-// M15 specification: 3x2 grid of tiles. STRICT GUARDRAIL: No calorie or weight-loss tile.
-const ACTIVITIES: ActivityTileConfig[] = [
-  {
-    id: 'walking',
-    label: 'Walking',
-    icon: 'footsteps-outline',
-    defaultGoal: 8000,
-    step: 500,
-    min: 1000,
-    max: 30000,
-    unit: 'steps a day',
-  },
-  {
-    id: 'running',
-    label: 'Running',
-    icon: 'walk-outline',
-    defaultGoal: 3,
-    step: 1,
-    min: 1,
-    max: 42,
-    unit: 'km a day',
-  },
-  {
-    id: 'studying',
-    label: 'Studying',
-    icon: 'book-outline',
-    defaultGoal: 60,
-    step: 15,
-    min: 15,
-    max: 480,
-    unit: 'minutes a day',
-  },
-  {
-    id: 'gym',
-    label: 'Gym',
-    icon: 'barbell-outline',
-    defaultGoal: 3,
-    step: 1,
-    min: 1,
-    max: 7,
-    unit: 'workouts a week',
-  },
-  {
-    id: 'cycling',
-    label: 'Cycling',
-    icon: 'bicycle-outline',
-    defaultGoal: 10,
-    step: 2,
-    min: 2,
-    max: 100,
-    unit: 'km a day',
-  },
-  {
-    id: 'custom',
-    label: 'Custom',
-    icon: 'information-circle-outline',
-    defaultGoal: 1,
-    step: 1,
-    min: 1,
-    max: 10,
-    unit: 'times a day',
-  },
-];
+import React, { useEffect, useState } from 'react';
+import { Text, View } from 'react-native';
+import { useRouter } from 'expo-router';
+import type {
+  ChallengeCatalog,
+  ChallengeTemplate,
+  ChallengeCreateRequest,
+  ChallengeMetric,
+  ChallengeMutation,
+} from '@calipartner/core';
+import { CHALLENGE_METRICS } from '@calipartner/core';
+import { ct, challengeError, challengeText } from '@/i18n/challenges';
+import { challengeRequest } from '@/services/challengeService';
+import { getSupabase } from '@/lib/supabase';
+import { generateClientUuid } from '@/services/foodService';
+import { createLogger } from '@/lib/logger';
+import { cs, CButton, CInput, CSheet } from './ChallengeUI';
 
 export function CreateChallengeModal({
-  visible,
+  catalog,
+  template,
   onClose,
-  onSubmit,
-  partnerNickname = 'Priya',
-  partnerAvatarUrl,
-  testID = 'create-challenge-modal',
-}: CreateChallengeModalProps) {
-  const [selectedActivity, setSelectedActivity] = useState<ChallengeActivityType>('walking');
-  const [customName, setCustomName] = useState('');
-  const [duration, setDuration] = useState<ChallengeDuration>('7d');
-  const [isWholeRoom, setIsWholeRoom] = useState(false);
-
-  // Goal state keyed by activity
-  const [goals, setGoals] = useState<Record<ChallengeActivityType, number>>({
-    walking: 8000,
-    running: 3,
-    studying: 60,
-    gym: 3,
-    cycling: 10,
-    custom: 1,
-  });
-
-  if (!visible) return null;
-
-  const currentConfig = ACTIVITIES.find((a) => a.id === selectedActivity) ?? ACTIVITIES[0]!;
-  const currentGoal = goals[selectedActivity] ?? currentConfig.defaultGoal;
-
-  const handleAdjustGoal = (delta: number) => {
-    const next = Math.max(currentConfig.min, Math.min(currentConfig.max, currentGoal + delta));
-    setGoals((prev) => ({ ...prev, [selectedActivity]: next }));
+  mutate,
+  userId,
+  isOnline,
+}: {
+  catalog: ChallengeCatalog;
+  template: ChallengeTemplate;
+  onClose: () => void;
+  mutate: (m: ChallengeMutation) => Promise<string>;
+  userId: string;
+  isOnline: boolean;
+}) {
+  const router = useRouter();
+  const [scope, setScope] = useState(
+    template.season_id ? 'season' : (template.scope_options[0] ?? 'solo'),
+  );
+  const [duration, setDuration] = useState(template.duration_options[0]!);
+  const [partners, setPartners] = useState<string[]>([]);
+  const [room, setRoom] = useState<string>();
+  const [tasks, setTasks] = useState<ChallengeMetric[]>(template.tasks);
+  const [targets, setTargets] = useState<Partial<Record<ChallengeMetric, number>>>({});
+  const [recommended, setRecommended] = useState(false);
+  const [title, setTitle] = useState('');
+  const [forfeit, setForfeit] = useState<string>();
+  const [error, setError] = useState<string>();
+  const [busy, setBusy] = useState(false);
+  const [request, setRequest] = useState<ChallengeCreateRequest | null>(null);
+  const [saved, setSaved] = useState<string>();
+  const [sameTarget, setSameTarget] = useState(false);
+  const [startDate, setStartDate] = useState('');
+  const [rest, setRest] = useState<number[] | undefined>();
+  const [manual, setManual] = useState<boolean | undefined>();
+  useEffect(() => {
+    let live = true;
+    setRecommended(false);
+    if (isOnline)
+      void challengeRequest<{ targets: Partial<Record<ChallengeMetric, number>> }>(
+        getSupabase(),
+        userId,
+        { action: 'recommend', template_id: template.id, tasks },
+      )
+        .then((data) => {
+          if (live) {
+            setTargets(data.targets);
+            setRecommended(true);
+          }
+        })
+        .catch(() => {
+          if (live) setError(ct('error'));
+        });
+    return () => {
+      live = false;
+    };
+  }, [template.id, tasks, userId, isOnline]);
+  const paid = catalog.limits.custom;
+  const max = catalog.limits.duration_max;
+  const send = async () => {
+    setBusy(true);
+    setError(undefined);
+    try {
+      const next: ChallengeCreateRequest = request ?? {
+        action: 'create',
+        id: generateClientUuid(),
+        template_id: template.id,
+        scope,
+        duration,
+        partners: scope === 'pair' || scope === 'room' ? partners : [],
+        room_id: scope === 'room' ? room : undefined,
+        title: title.trim() || undefined,
+        forfeit_id: forfeit,
+        tasks,
+        same_target: sameTarget,
+        start_date: startDate || undefined,
+        rest_weekdays: rest,
+        allow_manual: manual,
+        ...(recommended ? { targets } : {}),
+      };
+      setRequest(next);
+      const state = await mutate(next);
+      setSaved(ct(state === 'pending' ? 'queuedCreate' : 'created'));
+    } catch (e) {
+      createLogger('challenge-create').warn(
+        e instanceof Error ? e.message : 'CHALLENGE_UNAVAILABLE',
+      );
+      setError(challengeError(e instanceof Error ? e.message : ''));
+      setRequest(null);
+    } finally {
+      setBusy(false);
+    }
   };
-
-  const durationDays = duration === '1d' ? 1 : duration === '7d' ? 7 : 30;
-  const durationLabel = duration === '1d' ? '1 day' : duration === '7d' ? '7 days' : '30 days';
-  const partnerLabel = isWholeRoom ? 'Whole room' : `You and ${partnerNickname}`;
-
-  const summarySentence = `${partnerLabel} · ${currentGoal.toLocaleString()} ${currentConfig.unit} · ${durationLabel} · starts today.`;
-
-  const handleSubmit = () => {
-    onSubmit({
-      activity: selectedActivity,
-      customName: selectedActivity === 'custom' ? customName || 'Custom habit' : undefined,
-      goalValue: currentGoal,
-      unit: currentConfig.unit,
-      durationDays,
-      partnerNickname: isWholeRoom ? undefined : partnerNickname,
-      isWholeRoom,
-    });
-    onClose();
-  };
-
   return (
-    <Modal
-      visible={visible}
-      transparent
-      animationType="slide"
-      onRequestClose={onClose}
-      testID={testID}
+    <CSheet
+      visible
+      title={challengeText(catalog, template.title_key)}
+      onClose={onClose}
+      testID="create-challenge-modal"
     >
-      <View style={styles.overlay}>
-        <Pressable style={styles.backdrop} onPress={onClose} accessibilityLabel="Close creator" />
-
-        <View style={styles.sheet}>
-          <View style={styles.handle} />
-
-          {/* Header */}
-          <View style={styles.header}>
-            <Text style={styles.title}>{t('progress.challenges.create.title')}</Text>
-            <Pressable
-              style={styles.closeBtn}
-              onPress={onClose}
-              accessibilityRole="button"
-              accessibilityLabel="Close"
-              testID={`${testID}-close`}
-            >
-              <Ionicons name="close" size={20} color={dark.textMid} />
-            </Pressable>
+      <Text style={cs.body}>{challengeText(catalog, template.desc_key)}</Text>
+      {saved ? (
+        <Text accessibilityLiveRegion="polite" style={cs.heading}>
+          {saved}
+        </Text>
+      ) : (
+        <>
+          <View style={cs.row}>
+            {template.scope_options.map((s) => (
+              <CButton
+                key={s}
+                label={ct(
+                  s === 'season'
+                    ? 'season'
+                    : s === 'room'
+                      ? 'room'
+                      : s === 'pair'
+                        ? 'pair'
+                        : 'solo',
+                )}
+                selected={scope === s}
+                onPress={() => {
+                  setScope(s);
+                  setPartners([]);
+                  setRoom(undefined);
+                }}
+                disabled={busy || (s === 'room' && !paid)}
+                testID={`challenge-scope-${s}`}
+              />
+            ))}
           </View>
-
-          <ScrollView
-            showsVerticalScrollIndicator={false}
-            contentContainerStyle={styles.scrollContent}
-          >
-            {/* 1. Activity Section: 3x2 Grid */}
-            <View style={styles.section}>
-              <Text style={styles.sectionLabel}>
-                {t('progress.challenges.create.activityLabel')}
+          <Text style={cs.heading}>{ct('duration')}</Text>
+          <View style={cs.row}>
+            {template.duration_options.map((days) => (
+              <CButton
+                key={days}
+                label={ct('days', { count: days })}
+                selected={duration === days}
+                disabled={busy || (scope !== 'season' && days > max)}
+                onPress={() => setDuration(days)}
+                testID={`challenge-duration-${days}`}
+              />
+            ))}
+          </View>
+          {(scope === 'pair' || scope === 'room') && (
+            <>
+              <Text style={cs.heading}>
+                {ct(scope === 'room' ? 'chooseRoom' : 'choosePartner')}
               </Text>
-              <View style={styles.tilesGrid} accessibilityRole="radiogroup">
-                {ACTIVITIES.map((act) => {
-                  const isSelected = selectedActivity === act.id;
-                  return (
-                    <Pressable
-                      key={act.id}
-                      style={[styles.activityTile, isSelected && styles.activityTileSelected]}
-                      onPress={() => setSelectedActivity(act.id)}
-                      accessibilityRole="radio"
-                      accessibilityLabel={act.label}
-                      accessibilityState={{ selected: isSelected }}
-                      testID={`${testID}-tile-${act.id}`}
-                    >
-                      <Ionicons
-                        name={act.icon}
-                        size={28}
-                        color={isSelected ? dark.apricot : dark.textMid}
+              {scope === 'room'
+                ? catalog.rooms
+                    .filter((r) => r.host && r.count > 2)
+                    .map((r) => (
+                      <CButton
+                        key={r.id}
+                        label={r.name}
+                        selected={room === r.id}
+                        onPress={() => {
+                          setRoom(r.id);
+                          setPartners([]);
+                        }}
+                        testID={`challenge-room-${r.id}`}
                       />
-                      <Text style={[styles.tileLabel, isSelected && styles.tileLabelSelected]}>
-                        {act.label}
-                      </Text>
-                    </Pressable>
-                  );
-                })}
+                    ))
+                : null}
+              {catalog.partners
+                .filter(
+                  (p) =>
+                    scope !== 'room' ||
+                    catalog.rooms.find((r) => r.id === room)?.member_ids?.includes(p.id),
+                )
+                .map((p) => (
+                  <CButton
+                    key={p.id}
+                    label={p.nickname}
+                    selected={partners.includes(p.id)}
+                    onPress={() =>
+                      setPartners(
+                        scope === 'pair'
+                          ? [p.id]
+                          : partners.includes(p.id)
+                            ? partners.filter((id) => id !== p.id)
+                            : [...partners, p.id],
+                      )
+                    }
+                    testID={`challenge-partner-${p.id}`}
+                  />
+                ))}
+              {!catalog.partners.length && (
+                <>
+                  <Text style={cs.body}>{ct('noPartner')}</Text>
+                  <CButton
+                    label={ct('community')}
+                    onPress={() => {
+                      onClose();
+                      router.push('/friends' as never);
+                    }}
+                    testID="challenge-community"
+                  />
+                </>
+              )}
+            </>
+          )}
+          {template.format === 'checklist' && (
+            <>
+              <Text style={cs.heading}>{ct('tasks')}</Text>
+              <View style={cs.row}>
+                {CHALLENGE_METRICS.map((metric) => (
+                  <CButton
+                    key={metric}
+                    label={ct(metric)}
+                    disabled={!paid}
+                    selected={tasks.includes(metric)}
+                    onPress={() =>
+                      setTasks(
+                        tasks.includes(metric)
+                          ? tasks.filter((t) => t !== metric)
+                          : [...tasks, metric],
+                      )
+                    }
+                    testID={`challenge-task-${metric}`}
+                  />
+                ))}
               </View>
-            </View>
-
-            {/* Custom activity name if custom selected */}
-            {selectedActivity === 'custom' && (
-              <View style={styles.customNameField}>
-                <Text style={styles.fieldLabel}>Custom activity name</Text>
-                <TextInput
-                  style={styles.customInput}
-                  placeholder={t('progress.challenges.create.customNamePlaceholder')}
-                  placeholderTextColor={dark.textLo}
-                  value={customName}
-                  onChangeText={setCustomName}
-                  testID={`${testID}-input-custom-name`}
+            </>
+          )}
+          {scope === 'pair' && (
+            <CButton
+              label={ct(sameTarget ? 'personalTarget' : 'sameTarget')}
+              selected={sameTarget}
+              onPress={() => setSameTarget(!sameTarget)}
+              testID="challenge-same-target"
+            />
+          )}
+          <CInput
+            label={ct('startDate')}
+            value={startDate}
+            onChangeText={setStartDate}
+            testID="challenge-start-date"
+          />
+          {paid && (
+            <>
+              <Text style={cs.heading}>{ct('restDays')}</Text>
+              <View style={cs.row}>
+                {catalog.config.rest_weekday_options.map((day) => (
+                  <CButton
+                    key={day}
+                    label={ct(
+                      (
+                        [
+                          'sunday',
+                          'monday',
+                          'tuesday',
+                          'wednesday',
+                          'thursday',
+                          'friday',
+                          'saturday',
+                        ] as const
+                      )[Number(day)]!,
+                    )}
+                    selected={(rest ?? template.rule_overrides.rest_weekdays ?? []).includes(
+                      Number(day),
+                    )}
+                    onPress={() => {
+                      const days = rest ?? template.rule_overrides.rest_weekdays ?? [];
+                      setRest(
+                        days.includes(Number(day))
+                          ? days.filter((d) => d !== Number(day))
+                          : [...days, Number(day)],
+                      );
+                    }}
+                    testID={`challenge-rest-${day}`}
+                  />
+                ))}
+              </View>
+              <CButton
+                label={ct((manual ?? template.allow_manual) ? 'disallowManual' : 'allowManual')}
+                selected={manual ?? template.allow_manual}
+                onPress={() => setManual(!(manual ?? template.allow_manual))}
+                testID="challenge-manual"
+              />
+            </>
+          )}
+          <Text style={cs.heading}>{ct('personalTargets')}</Text>
+          <Text style={cs.small}>{ct('baseline')}</Text>
+          {recommended ? (
+            tasks.map((metric) => (
+              <CInput
+                key={metric}
+                label={`${ct(metric)} · ${ct('range', { min: catalog.config.rules.metrics[metric].min, max: catalog.config.rules.metrics[metric].max })}`}
+                keyboardType="numeric"
+                value={String(targets[metric] ?? '')}
+                onChangeText={(value) => setTargets({ ...targets, [metric]: Number(value) })}
+                testID={`challenge-target-${metric}`}
+              />
+            ))
+          ) : (
+            <Text style={cs.small}>{ct(isOnline ? 'loading' : 'queuedCreate')}</Text>
+          )}
+          {paid && (
+            <CInput
+              label={ct('customTitle')}
+              value={title}
+              onChangeText={setTitle}
+              maxLength={catalog.config.title_max_length}
+              testID="challenge-custom-title"
+            />
+          )}
+          {template.format === 'duel' && catalog.limits.forfeits && (
+            <>
+              <Text style={cs.heading}>{ct('forfeit')}</Text>
+              <CButton
+                label={ct('noForfeit')}
+                selected={!forfeit}
+                onPress={() => setForfeit(undefined)}
+                testID="challenge-no-forfeit"
+              />
+              {catalog.forfeits.map((card) => (
+                <CButton
+                  key={card.id}
+                  label={challengeText(catalog, card.text_key)}
+                  selected={forfeit === card.id}
+                  onPress={() => setForfeit(card.id)}
+                  testID={`challenge-forfeit-${card.id}`}
                 />
-              </View>
-            )}
-
-            {/* 2. Goal Section with Stepper ± (48x48) & Unit Chip */}
-            <View style={styles.section}>
-              <Text style={styles.sectionLabel}>{t('progress.challenges.create.goalLabel')}</Text>
-              <View style={styles.goalRow}>
-                <Pressable
-                  style={styles.stepperBtn}
-                  onPress={() => handleAdjustGoal(-currentConfig.step)}
-                  accessibilityRole="button"
-                  accessibilityLabel="Decrease goal"
-                  testID={`${testID}-btn-decrease`}
-                >
-                  <Ionicons name="remove" size={22} color={dark.textHi} />
-                </Pressable>
-
-                <View style={styles.goalDisplay}>
-                  <Text style={styles.goalNumeral} testID={`${testID}-goal-value`}>
-                    {currentGoal.toLocaleString()}
-                  </Text>
-                  <View style={styles.unitChip}>
-                    <Text style={styles.unitChipText}>{currentConfig.unit}</Text>
-                  </View>
-                </View>
-
-                <Pressable
-                  style={styles.stepperBtn}
-                  onPress={() => handleAdjustGoal(currentConfig.step)}
-                  accessibilityRole="button"
-                  accessibilityLabel="Increase goal"
-                  testID={`${testID}-btn-increase`}
-                >
-                  <Ionicons name="add" size={22} color={dark.textHi} />
-                </Pressable>
-              </View>
+              ))}
+            </>
+          )}
+          <Text style={cs.small}>{ct('privacy')}</Text>
+          {!paid && (
+            <View style={cs.card}>
+              <Text style={cs.body}>{ct('upgrade')}</Text>
+              <CButton
+                label={ct('plans')}
+                onPress={() => {
+                  onClose();
+                  router.push('/paywall');
+                }}
+                testID="challenge-upgrade-options"
+              />
             </View>
-
-            {/* 3. Duration Section: 1d · 7d · 30d */}
-            <View style={styles.section}>
-              <Text style={styles.sectionLabel}>
-                {t('progress.challenges.create.durationLabel')}
-              </Text>
-              <View style={styles.chipsRow}>
-                {(['1d', '7d', '30d'] as ChallengeDuration[]).map((dur) => {
-                  const isSelected = duration === dur;
-                  const label = dur === '1d' ? '1 day' : dur === '7d' ? '7 days' : '30 days';
-                  return (
-                    <Pressable
-                      key={dur}
-                      style={[styles.durationChip, isSelected && styles.durationChipSelected]}
-                      onPress={() => setDuration(dur)}
-                      accessibilityRole="button"
-                      accessibilityLabel={label}
-                      accessibilityState={{ selected: isSelected }}
-                      testID={`${testID}-chip-dur-${dur}`}
-                    >
-                      <Text
-                        style={[styles.durationText, isSelected && styles.durationTextSelected]}
-                      >
-                        {label}
-                      </Text>
-                    </Pressable>
-                  );
-                })}
-              </View>
-            </View>
-
-            {/* 4. Partner Section */}
-            <View style={styles.section}>
-              <Text style={styles.sectionLabel}>
-                {t('progress.challenges.create.partnerLabel')}
-              </Text>
-              <View style={styles.partnerRow}>
-                <View style={styles.partnerAvatarCol}>
-                  <Avatar
-                    name={partnerNickname}
-                    uri={partnerAvatarUrl}
-                    size="md"
-                    identityHue="iris"
-                  />
-                  <Text style={styles.partnerNameText}>{partnerNickname}</Text>
-                </View>
-
-                <View style={styles.wholeRoomCol}>
-                  <Text style={styles.wholeRoomLabel}>
-                    {t('progress.challenges.create.wholeRoom')}
-                  </Text>
-                  <Switch
-                    value={isWholeRoom}
-                    onValueChange={setIsWholeRoom}
-                    trackColor={{ false: dark.s3, true: dark.apricot }}
-                    thumbColor={dark.onBrand}
-                    testID={`${testID}-switch-whole-room`}
-                  />
-                </View>
-              </View>
-            </View>
-
-            {/* 5. Summary Line */}
-            <View style={styles.summaryCard}>
-              <Text style={styles.summaryText} testID={`${testID}-summary-text`}>
-                {summarySentence}
-              </Text>
-            </View>
-          </ScrollView>
-
-          {/* 6. Pinned 56px Primary Button */}
-          <Pressable
-            style={styles.submitBtn}
-            onPress={handleSubmit}
-            accessibilityRole="button"
-            accessibilityLabel={t('progress.challenges.create.submit')}
-            testID={`${testID}-submit-btn`}
-          >
-            <Text style={styles.submitBtnText}>{t('progress.challenges.create.submit')}</Text>
-          </Pressable>
-        </View>
-      </View>
-    </Modal>
+          )}
+          <CButton
+            brand
+            label={ct(scope === 'pair' || scope === 'room' ? 'start' : 'startSolo')}
+            disabled={
+              busy ||
+              (scope === 'pair' && partners.length !== 1) ||
+              (scope === 'room' && (!room || partners.length < 2)) ||
+              (template.format === 'checklist' &&
+                (tasks.length < catalog.config.checklist_min ||
+                  tasks.length > catalog.config.checklist_max))
+            }
+            onPress={() => void send()}
+            testID="challenge-create-submit"
+          />
+        </>
+      )}
+      {error && (
+        <Text accessibilityRole="alert" style={cs.error}>
+          {error}
+        </Text>
+      )}
+    </CSheet>
   );
 }
-
-const styles = StyleSheet.create({
-  overlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.65)',
-    justifyContent: 'flex-end',
-  },
-  backdrop: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-  },
-  sheet: {
-    maxHeight: '90%',
-    backgroundColor: dark.s1,
-    borderTopLeftRadius: radius.sheet,
-    borderTopRightRadius: radius.sheet,
-    paddingHorizontal: space[4],
-    paddingTop: space[3],
-    paddingBottom: space[6],
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: dark.hairline,
-  },
-  handle: {
-    width: 36,
-    height: 4,
-    borderRadius: radius.full,
-    backgroundColor: dark.hairlineLit,
-    alignSelf: 'center',
-    marginBottom: space[3],
-  },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: space[3],
-  },
-  title: {
-    ...type.title1,
-    color: dark.textHi,
-  },
-  closeBtn: {
-    width: 44,
-    height: 44,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderRadius: radius.control,
-    backgroundColor: dark.s2,
-  },
-  scrollContent: {
-    paddingBottom: space[4],
-  },
-  section: {
-    marginBottom: space[4],
-  },
-  sectionLabel: {
-    ...type.label,
-    color: dark.textLo,
-    marginBottom: space[2],
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-  },
-  tilesGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: space[2],
-    justifyContent: 'space-between',
-  },
-  activityTile: {
-    width: '31%',
-    height: 88,
-    borderRadius: 16,
-    backgroundColor: dark.s1,
-    borderWidth: 1,
-    borderColor: dark.hairline,
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: space[1],
-  },
-  activityTileSelected: {
-    backgroundColor: 'rgba(244, 182, 125, 0.16)',
-    borderColor: dark.apricot,
-  },
-  tileLabel: {
-    ...type.label,
-    color: dark.textMid,
-  },
-  tileLabelSelected: {
-    color: dark.apricot,
-    fontWeight: '700',
-  },
-  customNameField: {
-    marginBottom: space[3],
-  },
-  fieldLabel: {
-    ...type.label,
-    color: dark.textLo,
-    marginBottom: space[1],
-  },
-  customInput: {
-    height: 48,
-    backgroundColor: dark.s2,
-    borderRadius: radius.control,
-    paddingHorizontal: space[3],
-    color: dark.textHi,
-    borderWidth: 1,
-    borderColor: dark.hairline,
-  },
-  goalRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    backgroundColor: dark.s2,
-    borderRadius: radius.card,
-    padding: space[2],
-    borderWidth: 1,
-    borderColor: dark.hairline,
-  },
-  stepperBtn: {
-    width: 48,
-    height: 48,
-    borderRadius: radius.control,
-    backgroundColor: dark.s3,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  goalDisplay: {
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  goalNumeral: {
-    ...type.numeralL,
-    fontVariant: ['tabular-nums'] as any,
-    color: dark.textHi,
-  },
-  unitChip: {
-    backgroundColor: dark.s3,
-    paddingHorizontal: space[2],
-    paddingVertical: 2,
-    borderRadius: radius.full,
-    marginTop: 2,
-  },
-  unitChipText: {
-    ...type.label,
-    color: dark.textLo,
-    fontSize: 11,
-  },
-  chipsRow: {
-    flexDirection: 'row',
-    gap: space[2],
-  },
-  durationChip: {
-    flex: 1,
-    height: 44,
-    borderRadius: radius.button,
-    backgroundColor: dark.s2,
-    borderWidth: 1,
-    borderColor: dark.hairline,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  durationChipSelected: {
-    backgroundColor: 'rgba(244, 182, 125, 0.16)',
-    borderColor: dark.apricot,
-  },
-  durationText: {
-    ...type.bodyS,
-    color: dark.textMid,
-  },
-  durationTextSelected: {
-    color: dark.apricot,
-    fontWeight: '700',
-  },
-  partnerRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    backgroundColor: dark.s2,
-    borderRadius: radius.card,
-    padding: space[3],
-    borderWidth: 1,
-    borderColor: dark.hairline,
-  },
-  partnerAvatarCol: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: space[2],
-  },
-  partnerNameText: {
-    ...type.body,
-    color: dark.textHi,
-    fontWeight: '600',
-  },
-  wholeRoomCol: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: space[2],
-  },
-  wholeRoomLabel: {
-    ...type.label,
-    color: dark.textLo,
-  },
-  summaryCard: {
-    backgroundColor: dark.s2,
-    borderRadius: radius.control,
-    padding: space[3],
-    marginBottom: space[3],
-    borderWidth: 1,
-    borderColor: dark.hairlineLit,
-  },
-  summaryText: {
-    ...type.bodyS,
-    color: dark.textHi,
-    textAlign: 'center',
-    lineHeight: 20,
-  },
-  submitBtn: {
-    height: 56,
-    borderRadius: radius.button,
-    backgroundColor: dark.apricot,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  submitBtnText: {
-    ...type.heading,
-    color: dark.onBrand,
-    fontWeight: '700',
-  },
-});

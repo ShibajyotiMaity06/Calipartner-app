@@ -1,724 +1,466 @@
-import React, { useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import React, { useEffect, useRef, useState } from 'react';
+import { Avatar, PairRing, challengeLayout, dark } from '@calipartner/ui';
 import { Ionicons } from '@expo/vector-icons';
-import { Avatar, PairRing, dark, radius, space, type } from '@calipartner/ui';
-import { t } from '@/i18n';
-import { type ChallengeDetailData, ChallengeDetailModal } from './ChallengeDetailModal';
-import { type ChallengeCreatedPayload, CreateChallengeModal } from './CreateChallengeModal';
+import { Text, View } from 'react-native';
+import { useLocalSearchParams, useRouter } from 'expo-router';
+import {
+  challengeLogRoute,
+  type ChallengeTemplate,
+  type ChallengeSnapshot,
+} from '@calipartner/core';
+import { useChallenges } from '@/hooks/useChallenges';
+import { ct, challengeError, challengeText, type ChallengeCopy } from '@/i18n/challenges';
+import { challengeRequest } from '@/services/challengeService';
+import { getSupabase } from '@/lib/supabase';
+import { cs, CButton, CSheet } from './ChallengeUI';
+import { CreateChallengeModal } from './CreateChallengeModal';
+import { ChallengeDetailModal } from './ChallengeDetailModal';
 import { OccasionPlanModal } from './OccasionPlanModal';
-import { ChallengeResultModal } from './ChallengeResultModal';
 
-type ChallengeSegment = 'all' | 'active' | 'seasonal' | 'occasion' | 'completed';
-
-interface ChallengesViewProps {
-  testID?: string;
-}
-
-const DEFAULT_ACTIVE_CHALLENGES: ChallengeDetailData[] = [
-  {
-    id: 'ch-active-1',
-    title: 'Daily Steps Sprint',
-    activity: 'Walking',
-    icon: 'footsteps-outline',
-    currentDay: 4,
-    totalDays: 7,
-    startDate: 'Oct 16',
-    endDate: 'Oct 22',
-    todaysTask: '8,000 steps today',
-    userProgressPct: 75,
-    partnerProgressPct: 60,
-    partnerNickname: 'Priya',
-    feed: [
-      { id: 'f1', user: 'Priya', text: 'Reached 8,240 steps!', timeAgo: '2h ago' },
-      { id: 'f2', user: 'You', text: 'Logged 6,500 steps so far', timeAgo: '4h ago' },
-      { id: 'f3', user: 'Priya', text: 'Completed day 3', timeAgo: '1d ago' },
-    ],
-  },
-  {
-    id: 'ch-active-2',
-    title: 'Deep Study 60',
-    activity: 'Studying',
-    icon: 'book-outline',
-    currentDay: 2,
-    totalDays: 7,
-    startDate: 'Oct 18',
-    endDate: 'Oct 24',
-    todaysTask: '60 minutes focus session',
-    userProgressPct: 50,
-    partnerProgressPct: 80,
-    partnerNickname: 'Rahul',
-    feed: [
-      { id: 'f4', user: 'Rahul', text: 'Completed 90m deep study', timeAgo: '1h ago' },
-      { id: 'f5', user: 'You', text: 'Finished 45m session', timeAgo: '3h ago' },
-    ],
-  },
-];
-
-const SEASONAL_CHALLENGES = [
-  {
-    id: 'seasonal-1',
-    title: 'Winter Arc Discipline',
-    subtitle: '75 days of non-negotiable movement and daily hydration.',
-    days: '75 days',
-    participants: '1,420 joined',
-    icon: 'snow-outline' as const,
-    gradient: 'iris' as const,
-  },
-  {
-    id: 'seasonal-2',
-    title: 'New Year Habit Reset',
-    subtitle: '30 days of consistent nutrition tracking with your partner.',
-    days: '30 days',
-    participants: '3,890 joined',
-    icon: 'information-circle-outline' as const,
-    gradient: 'apricot' as const,
-  },
-  {
-    id: 'seasonal-3',
-    title: 'Summer Consistency',
-    subtitle: 'Hit your step and workout goals 5 days a week.',
-    days: '60 days',
-    participants: '850 joined',
-    icon: 'sunny-outline' as const,
-    gradient: 'teal' as const,
-  },
-];
-
-const COMPLETED_CHALLENGES = [
-  {
-    id: 'comp-1',
-    title: 'Hydration Kickstart',
-    daysCompleted: 7,
-    totalDays: 7,
-    partner: 'Priya',
-    completedDate: 'Last week',
-  },
-  {
-    id: 'comp-2',
-    title: 'Weekend Warrior',
-    daysCompleted: 2,
-    totalDays: 2,
-    partner: 'Rahul',
-    completedDate: '2 weeks ago',
-  },
-];
-
-export function ChallengesView({ testID = 'challenges-view' }: ChallengesViewProps) {
-  const [activeSegment, setActiveSegment] = useState<ChallengeSegment>('all');
-  const [activeChallenges, setActiveChallenges] =
-    useState<ChallengeDetailData[]>(DEFAULT_ACTIVE_CHALLENGES);
-  const [selectedChallenge, setSelectedChallenge] = useState<ChallengeDetailData | null>(null);
-  const [showCreateModal, setShowCreateModal] = useState(false);
-  const [showOccasionModal, setShowOccasionModal] = useState(false);
-  const [showResultModal, setShowResultModal] = useState(false);
-  const [completedResultTitle, setCompletedResultTitle] = useState('Hydration Kickstart');
-
-  const handleCreateSubmit = (payload: ChallengeCreatedPayload) => {
-    const newChallenge: ChallengeDetailData = {
-      id: `ch-user-${Date.now()}`,
-      title:
-        payload.customName ||
-        `${payload.activity.charAt(0).toUpperCase() + payload.activity.slice(1)} Challenge`,
-      activity: payload.activity,
-      icon:
-        payload.activity === 'walking'
-          ? 'footsteps-outline'
-          : payload.activity === 'running'
-            ? 'walk-outline'
-            : payload.activity === 'studying'
-              ? 'book-outline'
-              : payload.activity === 'gym'
-                ? 'barbell-outline'
-                : payload.activity === 'cycling'
-                  ? 'bicycle-outline'
-                  : 'information-circle-outline',
-      currentDay: 1,
-      totalDays: payload.durationDays,
-      startDate: 'Today',
-      endDate: `${payload.durationDays} days`,
-      todaysTask: `${payload.goalValue.toLocaleString()} ${payload.unit} today`,
-      userProgressPct: 0,
-      partnerProgressPct: 0,
-      partnerNickname: payload.partnerNickname ?? 'Partner',
-      feed: [{ id: 'f-init', user: 'You', text: 'Started this challenge', timeAgo: 'Just now' }],
-    };
-
-    setActiveChallenges((prev) => [newChallenge, ...prev]);
-  };
-
-  const handleLeaveChallenge = (id: string) => {
-    setActiveChallenges((prev) => prev.filter((c) => c.id !== id));
-  };
-
-  return (
-    <View style={styles.container} testID={testID}>
-      {/* Top Header Row with Create Challenge CTA */}
-      <View style={styles.topHeader}>
-        <View>
-          <Text style={styles.headerTitle}>{t('progress.challenges.title')}</Text>
-          <Text style={styles.headerSub}>Streaks, seasons and partner plans</Text>
-        </View>
-
-        <Pressable
-          style={styles.createBtn}
-          onPress={() => setShowCreateModal(true)}
-          accessibilityRole="button"
-          accessibilityLabel={t('progress.challenges.createChallenge')}
-          testID={`${testID}-create-btn`}
-        >
-          <Ionicons name="add" size={18} color={dark.onBrand} />
-          <Text style={styles.createBtnText}>{t('progress.challenges.createChallenge')}</Text>
-        </Pressable>
+export function ChallengesView({ testID = 'challenges-view' }: { testID?: string }) {
+  const state = useChallenges();
+  const { home, userId, track } = state;
+  const router = useRouter();
+  const params = useLocalSearchParams<{ challenge?: string; trophies?: string }>();
+  const [filter, setFilter] = useState<ChallengeCopy>('all');
+  const [create, setCreate] = useState(false);
+  const [template, setTemplate] = useState<ChallengeTemplate | null>(null);
+  const [selected, setSelected] = useState<ChallengeSnapshot | null>(null);
+  const [occasion, setOccasion] = useState(false);
+  const [trophies, setTrophies] = useState(params.trophies === '1');
+  const [board, setBoard] = useState<Array<{ name: string; percent: number; band: number }> | null>(
+    null,
+  );
+  const [boardLoading, setBoardLoading] = useState(false);
+  const [boardError, setBoardError] = useState(false);
+  useEffect(() => {
+    if (userId) track('challenge_viewed');
+  }, [userId, track]);
+  const opened = useRef<string | null>(null);
+  useEffect(() => {
+    if (params.challenge && home && opened.current !== params.challenge) {
+      const item = home.items.find((i) => i.challenge.id === params.challenge);
+      if (item) {
+        opened.current = params.challenge;
+        setSelected(item);
+      }
+    }
+  }, [params.challenge, home]);
+  if (!home)
+    return (
+      <View style={cs.home} testID={testID}>
+        <Text style={cs.title}>{ct('title')}</Text>
+        <Text style={cs.body}>
+          {ct(state.loading ? 'loading' : !state.isOnline ? 'offlineEmpty' : 'error')}
+        </Text>
+        {!state.loading && (
+          <CButton
+            label={ct('retry')}
+            onPress={() => void state.refresh()}
+            testID="challenges-retry"
+          />
+        )}
       </View>
-
-      {/* Segment Filter Chips */}
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={styles.filterRow}
-      >
-        {(
-          [
-            { id: 'all', label: 'All' },
-            { id: 'active', label: 'Active' },
-            { id: 'seasonal', label: 'Seasonal' },
-            { id: 'occasion', label: 'Occasion' },
-            { id: 'completed', label: 'Completed' },
-          ] as { id: ChallengeSegment; label: string }[]
-        ).map((seg) => {
-          const isSelected = activeSegment === seg.id;
-          return (
-            <Pressable
-              key={seg.id}
-              style={[styles.filterChip, isSelected && styles.filterChipSelected]}
-              onPress={() => setActiveSegment(seg.id)}
-              accessibilityRole="tab"
-              accessibilityLabel={`Filter by ${seg.label}`}
-              accessibilityState={{ selected: isSelected }}
-              testID={`${testID}-tab-${seg.id}`}
-            >
-              <Text style={[styles.filterChipText, isSelected && styles.filterChipTextSelected]}>
-                {seg.label}
-              </Text>
-            </Pressable>
-          );
-        })}
-      </ScrollView>
-
-      {/* 1. Active Challenges Section */}
-      {(activeSegment === 'all' || activeSegment === 'active') && (
-        <View style={styles.section} testID={`${testID}-active-section`}>
-          <Text style={styles.sectionHeader}>Active Challenges</Text>
-
-          {activeChallenges.length === 0 ? (
-            <View style={styles.emptyCard}>
-              <Ionicons name="ribbon-outline" size={32} color={dark.textLo} />
-              <Text style={styles.emptyText}>{t('progress.challenges.noActive')}</Text>
-            </View>
-          ) : (
-            <View style={styles.challengesGrid}>
-              {activeChallenges.map((item) => (
-                <Pressable
-                  key={item.id}
-                  style={styles.challengeCard}
-                  onPress={() => setSelectedChallenge(item)}
-                  accessibilityRole="button"
-                  accessibilityLabel={`${item.title}, Day ${item.currentDay} of ${item.totalDays}`}
-                  testID={`${testID}-card-${item.id}`}
-                >
-                  <View style={styles.cardTop}>
-                    <View style={styles.cardIconBox}>
-                      <Ionicons name={item.icon} size={20} color={dark.apricot} />
-                    </View>
-                    <View style={styles.dayPill}>
-                      <Text style={styles.dayPillText}>
-                        Day {item.currentDay} of {item.totalDays}
-                      </Text>
-                    </View>
-                  </View>
-
-                  <Text style={styles.cardTitle}>{item.title}</Text>
-                  <Text style={styles.cardTask}>{item.todaysTask}</Text>
-
-                  {/* Paired progress display */}
-                  <View style={styles.cardProgressRow}>
-                    <PairRing
-                      userPercent={item.userProgressPct}
-                      partnerPercent={item.partnerProgressPct}
-                      size={64}
-                      userHue="iris"
-                      partnerHue="teal"
-                    />
-                    <View style={styles.progressTextCol}>
-                      <Text style={styles.progressLabel}>
-                        You: {Math.round(item.userProgressPct)}%
-                      </Text>
-                      <Text style={styles.progressLabel}>
-                        {item.partnerNickname}: {Math.round(item.partnerProgressPct)}%
-                      </Text>
-                    </View>
-                  </View>
-                </Pressable>
-              ))}
-            </View>
+    );
+  const catalog = home.catalog;
+  const isFinished = (item: ChallengeSnapshot) =>
+    ['completed', 'finished'].includes(item.self.status) || item.challenge.status === 'cancelled';
+  const current = home.items.filter((i) => !isFinished(i));
+  const finished = home.items.filter(isFinished);
+  const byFilter = (i: ChallengeSnapshot) =>
+    filter === 'all' ||
+    (filter === 'active' && !isFinished(i)) ||
+    (filter === 'completed' && isFinished(i)) ||
+    (filter === 'occasion' && i.challenge.scope === 'occasion') ||
+    (filter === 'seasonal' && i.challenge.scope === 'season');
+  const loadBoard = async (season: string) => {
+    setBoard([]);
+    setBoardLoading(true);
+    setBoardError(false);
+    try {
+      setBoard(
+        await challengeRequest(getSupabase(), userId!, { action: 'board', season_id: season }),
+      );
+    } catch {
+      setBoardError(true);
+    } finally {
+      setBoardLoading(false);
+    }
+  };
+  return (
+    <View style={cs.home} testID={testID}>
+      <View style={cs.between}>
+        <View>
+          <Text accessibilityRole="header" style={cs.title}>
+            {ct('title')}
+          </Text>
+          <Text style={cs.small}>{ct('subtitle')}</Text>
+        </View>
+        <CButton
+          brand
+          label={ct('create')}
+          onPress={() => {
+            state.track('create_started');
+            setCreate(true);
+          }}
+          testID={`${testID}-create-btn`}
+        />
+      </View>
+      <View style={cs.row}>
+        {(['all', 'active', 'seasonal', 'occasion', 'completed'] as ChallengeCopy[]).map((f) => (
+          <CButton
+            key={f}
+            label={ct(f)}
+            selected={filter === f}
+            onPress={() => setFilter(f)}
+            testID={`${testID}-tab-${f}`}
+          />
+        ))}
+      </View>
+      {(state.cached || !state.isOnline) && (
+        <Text style={cs.small} accessibilityLiveRegion="polite">
+          {ct('offline')}
+        </Text>
+      )}
+      {state.error && (
+        <>
+          <Text accessibilityRole="alert" style={cs.error}>
+            {challengeError(state.error)}
+          </Text>
+          <CButton
+            label={ct('retry')}
+            onPress={() => void state.refresh()}
+            testID="challenges-retry"
+          />
+        </>
+      )}
+      {state.pending.map((item) => (
+        <View key={item.id} style={cs.card}>
+          <Text style={cs.body}>
+            {item.status === 'failed' ? challengeError(item.last_error ?? '') : ct('queued')}
+          </Text>
+          {item.status === 'failed' && (
+            <CButton
+              label={ct('dismiss')}
+              onPress={() => void state.dismiss(item.id)}
+              testID={`challenge-dismiss-${item.id}`}
+            />
           )}
         </View>
-      )}
-
-      {/* 2. Seasonal Challenges Section (M13) */}
-      {(activeSegment === 'all' || activeSegment === 'seasonal') && (
-        <View style={styles.section} testID={`${testID}-seasonal-section`}>
-          <Text style={styles.sectionHeader}>Seasonal Challenges</Text>
-          <View style={styles.seasonalStack}>
-            {SEASONAL_CHALLENGES.map((season) => (
-              <View
-                key={season.id}
-                style={styles.seasonalCard}
-                testID={`${testID}-seasonal-${season.id}`}
-              >
-                <View style={styles.seasonalHeader}>
-                  <View style={styles.seasonalIconBox}>
-                    <Ionicons name={season.icon} size={22} color={dark.apricot} />
-                  </View>
-                  <View style={styles.seasonalMetaPill}>
-                    <Text style={styles.seasonalMetaText}>{season.days}</Text>
-                  </View>
-                </View>
-
-                <Text style={styles.seasonalTitle}>{season.title}</Text>
-                <Text style={styles.seasonalSub}>{season.subtitle}</Text>
-
-                <View style={styles.seasonalFooter}>
-                  <Text style={styles.participantText}>{season.participants}</Text>
-                  <Pressable
-                    style={styles.joinBtn}
-                    onPress={() => {
-                      handleCreateSubmit({
-                        activity: 'walking',
-                        goalValue: 8000,
-                        unit: 'steps a day',
-                        durationDays: 30,
-                        isWholeRoom: true,
-                      });
-                    }}
-                    accessibilityRole="button"
-                    accessibilityLabel={`Join ${season.title}`}
-                  >
-                    <Text style={styles.joinBtnText}>Join challenge</Text>
-                  </Pressable>
-                </View>
-              </View>
-            ))}
-          </View>
-        </View>
-      )}
-
-      {/* 3. Occasion Plans Section (M16) */}
-      {(activeSegment === 'all' || activeSegment === 'occasion') && (
-        <View style={styles.section} testID={`${testID}-occasion-section`}>
-          <Text style={styles.sectionHeader}>Occasion Plans</Text>
-          <Pressable
-            style={styles.occasionBanner}
-            onPress={() => setShowOccasionModal(true)}
-            accessibilityRole="button"
-            accessibilityLabel="Plan for an event"
-            testID={`${testID}-open-occasion-btn`}
-          >
-            <View style={styles.occasionContent}>
-              <View style={styles.occasionTagRow}>
-                <Ionicons name="calendar-outline" size={16} color={dark.apricot} />
-                <Text style={styles.occasionTag}>Partner Event Planning</Text>
-              </View>
-              <Text style={styles.occasionTitle}>Plan for an event</Text>
-              <Text style={styles.occasionSub}>
-                Build a safe, realistic timeline with your partner before a wedding, birthday, or
-                vacation.
+      ))}
+      {(filter === 'all' || filter === 'active') && home.due?.length ? (
+        <View style={cs.card}>
+          <Text style={cs.heading}>{ct('today')}</Text>
+          {home.due.map((task) => (
+            <View key={`${task.id}:${task.metric}`} style={cs.between}>
+              <Text style={cs.body}>
+                {ct('taskProgress', {
+                  metric: ct(task.metric),
+                  value: task.value.toFixed(0),
+                  target: task.target,
+                })}
               </Text>
+              <CButton
+                label={ct('log')}
+                onPress={() => router.push(challengeLogRoute(task.metric) as never)}
+                testID={`challenge-today-${task.id}-${task.metric}`}
+              />
             </View>
-            <View style={styles.occasionAction}>
-              <Text style={styles.occasionActionText}>Start plan →</Text>
-            </View>
-          </Pressable>
+          ))}
         </View>
-      )}
-
-      {/* 4. Completed Challenges Section (M17) */}
-      {(activeSegment === 'all' || activeSegment === 'completed') && (
-        <View style={styles.section} testID={`${testID}-completed-section`}>
-          <Text style={styles.sectionHeader}>Completed Challenges</Text>
-          <View style={styles.completedList}>
-            {COMPLETED_CHALLENGES.map((comp) => (
-              <Pressable
-                key={comp.id}
-                style={styles.completedRow}
-                onPress={() => {
-                  setCompletedResultTitle(comp.title);
-                  setShowResultModal(true);
-                }}
-                accessibilityRole="button"
-                accessibilityLabel={`${comp.title}, completed`}
-                testID={`${testID}-comp-${comp.id}`}
-              >
-                <View style={styles.checkIconBox}>
-                  <Ionicons name="checkmark" size={16} color={dark.cream} />
-                </View>
-                <View style={styles.completedInfo}>
-                  <Text style={styles.completedTitle}>{comp.title}</Text>
-                  <Text style={styles.completedSub}>
-                    {comp.daysCompleted} of {comp.totalDays} days with {comp.partner} •{' '}
-                    {comp.completedDate}
-                  </Text>
-                </View>
-                <Ionicons name="chevron-forward" size={16} color={dark.textLo} />
-              </Pressable>
+      ) : null}
+      {!home.items.filter(byFilter).length && <Text style={cs.body}>{ct('empty')}</Text>}
+      {[...current, ...finished].filter(byFilter).map((item) => {
+        const me = item.participants.find((p) => p.self);
+        const peer = item.participants.find((p) => !p.self && p.id);
+        const ownPercent = isFinished(item) ? me?.overall_percent : me?.percent;
+        const peerPercent = isFinished(item) ? peer?.overall_percent : peer?.percent;
+        const icon = item.challenge.rules_snapshot.icon_key as keyof typeof Ionicons.glyphMap;
+        return (
+          <View
+            key={item.challenge.id}
+            style={cs.card}
+            testID={`challenge-card-${item.challenge.id}`}
+          >
+            <Ionicons
+              name={Object.hasOwn(Ionicons.glyphMap, icon) ? icon : 'ribbon-outline'}
+              size={challengeLayout.icon}
+              color={dark.iris}
+            />
+            {typeof ownPercent === 'number' && typeof peerPercent === 'number' && (
+              <PairRing
+                userPercent={ownPercent}
+                partnerPercent={peerPercent}
+                partnerName={peer?.name ?? ct('partner')}
+                centerLabel={ct('ofGoal')}
+                fontSet="onboarding"
+                userHue="iris"
+                partnerHue="teal"
+                accessibilityLabel={`${ct('progress', { percent: ownPercent.toFixed(0) })}. ${ct('partnerProgress', { name: peer?.name ?? ct('partner'), percent: peerPercent.toFixed(0) })}`}
+              />
+            )}
+            <Text style={cs.heading}>
+              {item.challenge.custom_title ??
+                challengeText(catalog, item.challenge.rules_snapshot.title_key)}
+            </Text>
+            <View style={cs.row}>
+              {item.participants
+                .filter((p) => p.id)
+                .map((p) => (
+                  <View key={p.id} style={cs.row}>
+                    <Avatar size="sm" uri={p.avatar_url} name={p.name ?? undefined} />
+                    <Text style={cs.small}>{p.self ? ct('you') : p.name}</Text>
+                  </View>
+                ))}
+            </View>
+            {item.day > 0 ? (
+              <Text style={cs.small}>
+                {ct('day', { day: item.day, total: item.challenge.duration_days })}
+              </Text>
+            ) : item.self.start_date ? (
+              <Text style={cs.small}>{ct('starts', { date: item.self.start_date })}</Text>
+            ) : null}
+            <Text style={cs.body}>
+              {item.self.status === 'invited'
+                ? ct('invitedBy', { name: peer?.name ?? ct('partner') })
+                : item.challenge.status === 'invited'
+                  ? ct('waiting')
+                  : ct('progress', {
+                      percent:
+                        me?.overall_percent === 'locked'
+                          ? ct('hidden')
+                          : typeof me?.overall_percent === 'number'
+                            ? me.overall_percent.toFixed(0)
+                            : 0,
+                    })}
+            </Text>
+            {me?.summary?.today_tasks?.map((task) => (
+              <Text style={cs.small} key={task.metric}>
+                {ct('taskProgress', {
+                  metric: ct(task.metric),
+                  value: task.value.toFixed(0),
+                  target: task.target,
+                })}
+              </Text>
             ))}
+            <CButton
+              label={ct(item.self.status === 'invited' ? 'accept' : 'view')}
+              onPress={() => setSelected(item)}
+              testID={`challenge-open-${item.challenge.id}`}
+            />
           </View>
+        );
+      })}
+      {(filter === 'all' || filter === 'active' || filter === 'seasonal') && (
+        <>
+          <Text style={cs.heading}>{ct('discover')}</Text>
+          {catalog.templates
+            .filter((t) => filter !== 'seasonal' || !!t.season_id)
+            .filter((t) => !t.season_id || catalog.seasons.some((s) => s.id === t.season_id))
+            .map((t) => {
+              const season = catalog.seasons.find((s) => s.id === t.season_id);
+              const upcoming = !!season && season.starts_at > catalog.now;
+              const ended = !!season && season.ends_at <= catalog.now;
+              const hasCount = t.joined_count >= catalog.config.min_public_count;
+              const joinedSeason = t.season_id
+                ? home.items.find(
+                    (item) =>
+                      item.challenge.template_id === t.id && item.challenge.status !== 'cancelled',
+                  )
+                : null;
+              return (
+                <View style={cs.card} key={t.id} testID={`challenge-template-${t.slug}`}>
+                  <Text style={cs.heading}>{challengeText(catalog, t.title_key)}</Text>
+                  <Text style={cs.body}>{challengeText(catalog, t.desc_key)}</Text>
+                  <Text style={cs.small}>
+                    {ct(
+                      hasCount ? 'joined' : 'first',
+                      hasCount ? { count: t.joined_count } : undefined,
+                    )}
+                  </Text>
+                  {joinedSeason ? (
+                    <CButton
+                      label={ct('view')}
+                      onPress={() => setSelected(joinedSeason)}
+                      testID={`challenge-season-joined-${t.slug}`}
+                    />
+                  ) : upcoming ? (
+                    <>
+                      <Text style={cs.small}>
+                        {ct('upcoming', { date: season!.starts_at.slice(0, 10) })}
+                      </Text>
+                      <CButton
+                        label={ct(home.reminders.includes(t.id) ? 'reminderSet' : 'reminder')}
+                        selected={home.reminders.includes(t.id)}
+                        disabled={state.busy}
+                        onPress={() =>
+                          void state
+                            .mutate({
+                              action: 'remind',
+                              template_id: t.id,
+                              enabled: !home.reminders.includes(t.id),
+                            })
+                            .catch(() => {})
+                        }
+                        testID={`challenge-remind-${t.slug}`}
+                      />
+                    </>
+                  ) : ended ? (
+                    <Text style={cs.small}>{ct('ended')}</Text>
+                  ) : (
+                    <CButton
+                      label={ct('create')}
+                      onPress={() => {
+                        state.track('join_tapped');
+                        setTemplate(t);
+                      }}
+                      testID={`challenge-choose-${t.slug}`}
+                    />
+                  )}
+                  {season && (
+                    <CButton
+                      label={ct('board')}
+                      onPress={() => void loadBoard(season.id)}
+                      testID={`challenge-board-${t.slug}`}
+                    />
+                  )}
+                </View>
+              );
+            })}
+        </>
+      )}
+      {(filter === 'all' || filter === 'occasion') && !catalog.screened && (
+        <View style={cs.card}>
+          <Text style={cs.heading}>{ct('occasionTitle')}</Text>
+          <Text style={cs.body}>{ct('recovery')}</Text>
+          <CButton
+            label={ct(catalog.limits.custom ? 'planOccasion' : 'plans')}
+            onPress={() =>
+              catalog.limits.custom
+                ? setOccasion(true)
+                : (state.track('lock_tapped'), router.push('/paywall' as never))
+            }
+            testID="challenge-occasion"
+          />
         </View>
       )}
-
-      {/* Modals */}
-      <CreateChallengeModal
-        visible={showCreateModal}
-        onClose={() => setShowCreateModal(false)}
-        onSubmit={handleCreateSubmit}
-        partnerNickname="Priya"
-        testID={`${testID}-create-modal`}
+      <CButton
+        label={ct('trophies')}
+        onPress={() => setTrophies(true)}
+        testID="challenge-trophies"
       />
-
-      <ChallengeDetailModal
-        visible={Boolean(selectedChallenge)}
-        challenge={selectedChallenge}
-        onClose={() => setSelectedChallenge(null)}
-        onLeave={handleLeaveChallenge}
-        testID={`${testID}-detail-modal`}
-      />
-
-      <OccasionPlanModal
-        visible={showOccasionModal}
-        onClose={() => setShowOccasionModal(false)}
-        onMakeRoomChallenge={(plan) => {
-          handleCreateSubmit({
-            activity: 'walking',
-            customName: `${plan.event.toUpperCase()} Target Sprint`,
-            goalValue: 8000,
-            unit: 'steps a day',
-            durationDays: 30,
-            isWholeRoom: true,
-          });
-        }}
-        testID={`${testID}-occasion-modal`}
-      />
-
-      <ChallengeResultModal
-        visible={showResultModal}
-        challengeTitle={completedResultTitle}
-        completedDays={7}
-        totalDays={7}
-        onClose={() => setShowResultModal(false)}
-        onShareToChat={() => setShowResultModal(false)}
-        onStartAnother={() => {
-          setShowResultModal(false);
-          setShowCreateModal(true);
-        }}
-        testID={`${testID}-result-modal`}
-      />
+      {create && (
+        <CSheet
+          visible
+          title={ct('chooseTemplate')}
+          onClose={() => setCreate(false)}
+          testID="choose-challenge-template"
+        >
+          {catalog.templates
+            .filter(
+              (t) =>
+                !t.season_id ||
+                catalog.seasons.some(
+                  (s) =>
+                    s.id === t.season_id && s.starts_at <= catalog.now && s.ends_at > catalog.now,
+                ),
+            )
+            .map((t) => (
+              <CButton
+                key={t.id}
+                label={challengeText(catalog, t.title_key)}
+                onPress={() => {
+                  setCreate(false);
+                  setTemplate(t);
+                }}
+                testID={`create-template-${t.slug}`}
+              />
+            ))}
+        </CSheet>
+      )}
+      {template && userId && (
+        <CreateChallengeModal
+          key={template.id}
+          catalog={catalog}
+          template={template}
+          userId={userId}
+          isOnline={state.isOnline}
+          mutate={state.mutate}
+          onClose={() => setTemplate(null)}
+        />
+      )}
+      {selected && userId && (
+        <ChallengeDetailModal
+          snapshot={home.items.find((i) => i.challenge.id === selected.challenge.id) ?? selected}
+          catalog={catalog}
+          userId={userId}
+          isOnline={state.isOnline}
+          mutate={state.mutate}
+          refresh={state.refresh}
+          onClose={() => setSelected(null)}
+          onRematch={() => {
+            state.track('rematch_tapped', selected.challenge.id);
+            const t = catalog.templates.find((t) => t.id === selected.challenge.template_id);
+            setSelected(null);
+            if (t) setTemplate(t);
+          }}
+        />
+      )}
+      {occasion && (
+        <OccasionPlanModal
+          catalog={catalog}
+          onClose={() => setOccasion(false)}
+          mutate={state.mutate}
+        />
+      )}
+      {trophies && (
+        <CSheet
+          visible
+          title={ct('trophies')}
+          onClose={() => setTrophies(false)}
+          testID="challenge-trophy-shelf"
+        >
+          {!catalog.badges.some((b) => b.earned > 0) && (
+            <Text style={cs.body}>{ct('noBadges')}</Text>
+          )}
+          {catalog.badges
+            .filter((b) => b.earned > 0)
+            .map((b) => (
+              <View key={b.id} style={cs.card}>
+                <Text style={cs.heading}>{challengeText(catalog, b.text_key)}</Text>
+                <Text style={cs.small}>{ct('earned', { count: b.earned })}</Text>
+              </View>
+            ))}
+        </CSheet>
+      )}
+      {board !== null && (
+        <CSheet
+          visible
+          title={ct('board')}
+          onClose={() => setBoard(null)}
+          testID="challenge-board-modal"
+        >
+          <Text style={cs.small}>{ct('publicBoard')}</Text>
+          {boardLoading ? (
+            <Text style={cs.body}>{ct('loading')}</Text>
+          ) : boardError ? (
+            <Text accessibilityRole="alert" style={cs.error}>
+              {ct('error')}
+            </Text>
+          ) : !board.length ? (
+            <Text style={cs.body}>{ct('boardEmpty')}</Text>
+          ) : (
+            board.map((row, index) => (
+              <View key={index} style={cs.card}>
+                <Text style={cs.heading}>{row.name}</Text>
+                <Text style={cs.small}>
+                  {ct('band', { band: row.band })} · {row.percent.toFixed(0)}%
+                </Text>
+              </View>
+            ))
+          )}
+        </CSheet>
+      )}
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    paddingBottom: space[8],
-  },
-  topHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: space[4],
-    paddingTop: space[3],
-    paddingBottom: space[2],
-  },
-  headerTitle: {
-    ...type.title1,
-    color: dark.textHi,
-  },
-  headerSub: {
-    ...type.bodyS,
-    color: dark.textLo,
-    marginTop: 2,
-  },
-  createBtn: {
-    height: 44,
-    paddingHorizontal: space[3],
-    borderRadius: radius.button,
-    backgroundColor: dark.apricot,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-  },
-  createBtnText: {
-    ...type.label,
-    color: dark.onBrand,
-    fontWeight: '700',
-  },
-  filterRow: {
-    flexDirection: 'row',
-    gap: space[2],
-    paddingHorizontal: space[4],
-    marginVertical: space[2],
-  },
-  filterChip: {
-    paddingHorizontal: space[3],
-    paddingVertical: space[1],
-    borderRadius: radius.full,
-    backgroundColor: dark.s2,
-    borderWidth: 1,
-    borderColor: dark.hairline,
-    minHeight: 36,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  filterChipSelected: {
-    backgroundColor: 'rgba(244, 182, 125, 0.16)',
-    borderColor: dark.apricot,
-  },
-  filterChipText: {
-    ...type.label,
-    color: dark.textMid,
-  },
-  filterChipTextSelected: {
-    color: dark.apricot,
-    fontWeight: '700',
-  },
-  section: {
-    marginTop: space[3],
-    paddingHorizontal: space[4],
-  },
-  sectionHeader: {
-    ...type.label,
-    color: dark.textLo,
-    marginBottom: space[2],
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-  },
-  challengesGrid: {
-    gap: space[3],
-  },
-  challengeCard: {
-    backgroundColor: dark.s1,
-    borderRadius: radius.card,
-    padding: space[4],
-    borderWidth: 1,
-    borderColor: dark.hairline,
-  },
-  cardTop: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: space[2],
-  },
-  cardIconBox: {
-    width: 36,
-    height: 36,
-    borderRadius: radius.control,
-    backgroundColor: dark.s2,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  dayPill: {
-    backgroundColor: dark.s2,
-    paddingHorizontal: space[2],
-    paddingVertical: 2,
-    borderRadius: radius.full,
-  },
-  dayPillText: {
-    ...type.label,
-    color: dark.textMid,
-    fontSize: 11,
-  },
-  cardTitle: {
-    ...type.heading,
-    color: dark.textHi,
-  },
-  cardTask: {
-    ...type.bodyS,
-    color: dark.apricot,
-    marginTop: 2,
-    fontWeight: '600',
-  },
-  cardProgressRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: space[3],
-    marginTop: space[3],
-  },
-  progressTextCol: {
-    flex: 1,
-    gap: 4,
-  },
-  progressLabel: {
-    ...type.label,
-    color: dark.textMid,
-  },
-  emptyCard: {
-    backgroundColor: dark.s1,
-    borderRadius: radius.card,
-    padding: space[5],
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: space[2],
-    borderWidth: 1,
-    borderColor: dark.hairline,
-  },
-  emptyText: {
-    ...type.bodyS,
-    color: dark.textLo,
-    textAlign: 'center',
-    lineHeight: 20,
-  },
-  seasonalStack: {
-    gap: space[3],
-  },
-  seasonalCard: {
-    backgroundColor: dark.s2,
-    borderRadius: radius.card,
-    padding: space[4],
-    borderWidth: 1,
-    borderColor: dark.hairlineLit,
-  },
-  seasonalHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: space[2],
-  },
-  seasonalIconBox: {
-    width: 40,
-    height: 40,
-    borderRadius: radius.control,
-    backgroundColor: dark.s3,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  seasonalMetaPill: {
-    backgroundColor: dark.s3,
-    paddingHorizontal: space[2],
-    paddingVertical: 2,
-    borderRadius: radius.full,
-  },
-  seasonalMetaText: {
-    ...type.label,
-    color: dark.textMid,
-  },
-  seasonalTitle: {
-    ...type.title2,
-    color: dark.textHi,
-  },
-  seasonalSub: {
-    ...type.bodyS,
-    color: dark.textMid,
-    marginTop: 4,
-    lineHeight: 20,
-  },
-  seasonalFooter: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginTop: space[3],
-    paddingTop: space[3],
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: dark.hairline,
-  },
-  participantText: {
-    ...type.label,
-    color: dark.textLo,
-  },
-  joinBtn: {
-    height: 38,
-    paddingHorizontal: space[3],
-    borderRadius: radius.button,
-    backgroundColor: dark.apricot,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  joinBtnText: {
-    ...type.label,
-    color: dark.onBrand,
-    fontWeight: '700',
-  },
-  occasionBanner: {
-    backgroundColor: dark.s2,
-    borderRadius: radius.card,
-    padding: space[4],
-    borderWidth: 1,
-    borderColor: dark.hairlineLit,
-  },
-  occasionContent: {
-    marginBottom: space[3],
-  },
-  occasionTagRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: space[1],
-    marginBottom: 4,
-  },
-  occasionTag: {
-    ...type.label,
-    color: dark.apricot,
-    fontWeight: '600',
-  },
-  occasionTitle: {
-    ...type.title2,
-    color: dark.textHi,
-  },
-  occasionSub: {
-    ...type.bodyS,
-    color: dark.textMid,
-    marginTop: 4,
-    lineHeight: 20,
-  },
-  occasionAction: {
-    alignSelf: 'flex-start',
-  },
-  occasionActionText: {
-    ...type.heading,
-    color: dark.apricot,
-  },
-  completedList: {
-    backgroundColor: dark.s1,
-    borderRadius: radius.card,
-    paddingHorizontal: space[3],
-    borderWidth: 1,
-    borderColor: dark.hairline,
-  },
-  completedRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: space[3],
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: dark.hairline,
-    gap: space[3],
-  },
-  checkIconBox: {
-    width: 28,
-    height: 28,
-    borderRadius: radius.full,
-    backgroundColor: dark.s3,
-    borderWidth: 1,
-    borderColor: dark.cream,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  completedInfo: {
-    flex: 1,
-  },
-  completedTitle: {
-    ...type.heading,
-    color: dark.textHi,
-  },
-  completedSub: {
-    ...type.label,
-    color: dark.textLo,
-    marginTop: 2,
-  },
-});

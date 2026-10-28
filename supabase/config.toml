@@ -115,3 +115,7 @@ verify_jwt = false
 [functions.ai-coach]
 # Validate every bearer token with Supabase Auth inside the handler, including current signing keys.
 verify_jwt = false
+
+[functions.challenges-api]
+# Validates bearer tokens and the dedicated cron secret inside the handler.
+verify_jwt = false

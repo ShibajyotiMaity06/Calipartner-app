@@ -12,7 +12,8 @@ export function SessionNavigationGuard() {
   const first = segments[0] as string | undefined;
   useEffect(() => {
     if (isLoading || user || isGuest) return;
-    if (!first || ['index', 'auth', 'welcome', 'onboarding', 'dev'].includes(first)) return;
+    if (!first || ['index', 'auth', 'welcome', 'onboarding', 'invite', 'dev'].includes(first))
+      return;
     router.replace('/auth/sign-in?mode=signin' as never);
   }, [first, isGuest, isLoading, router, user]);
   useEffect(() => {

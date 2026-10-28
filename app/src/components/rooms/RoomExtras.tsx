@@ -1,10 +1,10 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { useRouter } from 'expo-router';
 import { View } from 'react-native';
 import { Button, Card, HiddenMetric, Text } from '@calipartner/ui';
 import {
   loadRoomExtras,
   shareRoomWorkout,
-  createPairChallenge,
   respondPairChallenge,
 } from '@/services/roomExtrasService';
 import { generateClientUuid } from '@/services/foodService';
@@ -15,7 +15,6 @@ import { t } from '@/i18n';
 export function RoomExtras({
   roomId,
   userId,
-  partnerId,
   canSend,
   refreshToken,
 }: {
@@ -25,6 +24,7 @@ export function RoomExtras({
   canSend: boolean;
   refreshToken?: unknown;
 }) {
+  const router = useRouter();
   const [data, setData] = useState<Awaited<ReturnType<typeof loadRoomExtras>> | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -142,26 +142,12 @@ export function RoomExtras({
           </View>
         </Card>
       ))}
-      <Text variant="heading">{t('setup.pairChallenge')}</Text>
-      <Text variant="bodyS">{t('setup.pairChallengeBody')}</Text>
-      {canSend && partnerId ? (
-        <Button
-          variant="secondary"
-          label={t('setup.inviteChallenge')}
-          disabled={disabled}
-          onPress={() =>
-            void act(async () => {
-              await createPairChallenge(
-                requestId(`${roomId}:challenge:${partnerId}`),
-                roomId,
-                partnerId,
-              );
-              requestIds.current.delete(`${roomId}:challenge:${partnerId}`);
-            })
-          }
-          testID="invite-pair-challenge"
-        />
-      ) : null}
+      <Button
+        variant="secondary"
+        label={t('challengeHub.title')}
+        onPress={() => router.push('/progress?tab=challenges' as never)}
+        testID="room-open-challenges"
+      />
       {data?.challenges.length === 0 ? (
         <Text variant="bodyS">{t('setup.noChallenges')}</Text>
       ) : null}

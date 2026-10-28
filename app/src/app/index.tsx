@@ -1,3 +1,4 @@
+import { afterSetupDestination } from '@/services/pairOnboardingService';
 import React, { useEffect, useState } from 'react';
 import { View, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
@@ -24,7 +25,7 @@ export default function LaunchScreen() {
         if (user) {
           const onboarded = await isUserOnboarded(user.id);
           if (onboarded) {
-            router.replace('/today' as never);
+            router.replace((await afterSetupDestination(user.id)) as never);
           } else {
             router.replace('/onboarding' as never);
           }

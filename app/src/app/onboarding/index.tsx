@@ -43,7 +43,7 @@ import {
   planStyles,
 } from '@/components/onboarding/PlanPrimitives';
 import { PaywallModal } from '@/components/rooms/PaywallModal';
-import { PartnerFinderOfferModal } from '@/components/onboarding/PartnerFinderOfferModal';
+import { requirePairPrompt, afterSetupDestination } from '@/services/pairOnboardingService';
 
 export const ACTIVE_ONBOARDING_STEPS = ONBOARDING_STEPS_ORDER;
 
@@ -63,7 +63,6 @@ export default function OnboardingScreen() {
   const [saveError, setSaveError] = useState<string | null>(null);
   const [draftError, setDraftError] = useState(false);
   const [sheet, setSheet] = useState<'calculation' | 'health' | null>(null);
-  const [showPartnerOffer, setShowPartnerOffer] = useState(false);
   const savingRef = useRef(false);
   const completedRef = useRef(false);
   const draftWrites = useRef(Promise.resolve());
@@ -154,7 +153,7 @@ export default function OnboardingScreen() {
   useEffect(() => {
     if (Platform.OS !== 'android') return;
     const listener = BackHandler.addEventListener('hardwareBackPress', () => {
-      if (!snapshot || sheet || showPartnerOffer) return false;
+      if (!snapshot || sheet) return false;
       back();
       return true;
     });
@@ -195,13 +194,14 @@ export default function OnboardingScreen() {
       await saveOnboardingDraft(await getDb(), user.id, machine.getState());
       const screening = await saveScreening(machine.buildHealthScreening(user.id));
       if (!screening.success) throw new Error(screening.error ?? t('common.errorBody'));
+      await requirePairPrompt(user.id);
       const saved = await saveGoalProfile(goal);
       if (!saved.success) throw new Error(saved.error ?? t('common.errorBody'));
       if (owner.current !== user.id) return;
       completedRef.current = true;
       await draftWrites.current;
       await clearOnboardingDraft(await getDb(), user.id).catch(() => {});
-      setShowPartnerOffer(true);
+      router.replace((await afterSetupDestination(user.id)) as never);
     } catch {
       setSaveError(t('common.errorBody'));
     } finally {
@@ -578,14 +578,6 @@ export default function OnboardingScreen() {
           </ScrollView>
         </SafeAreaView>
       </Modal>
-      {showPartnerOffer ? (
-        <PartnerFinderOfferModal
-          visible
-          onClose={() => router.replace('/today')}
-          onAccept={() => router.replace('/today')}
-          testID="modal-partner-finder-offer"
-        />
-      ) : null}
     </SafeAreaView>
   );
 }

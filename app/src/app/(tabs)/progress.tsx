@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Pressable,
   RefreshControl,
@@ -8,6 +8,7 @@ import {
   Text,
   View,
 } from 'react-native';
+import { useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import type { ProgressDateRange } from '@calipartner/core';
 import {
@@ -34,7 +35,13 @@ const RANGE_OPTIONS: ProgressDateRange[] = ['7d', '30d', '90d', '6m', '1y', 'all
 
 export default function ProgressScreen() {
   const { colors } = useTheme();
-  const [activeSegment, setActiveSegment] = useState<ProgressTabSegment>('my_progress');
+  const params = useLocalSearchParams<{ tab?: string; challenge?: string }>();
+  const [activeSegment, setActiveSegment] = useState<ProgressTabSegment>(
+    params.tab === 'challenges' || params.challenge ? 'challenges' : 'my_progress',
+  );
+  useEffect(() => {
+    if (params.tab === 'challenges' || params.challenge) setActiveSegment('challenges');
+  }, [params.tab, params.challenge]);
   const [selectedDay, setSelectedDay] = useState<DayDetailData | null>(null);
   const [showWeeklySummary, setShowWeeklySummary] = useState(false);
   const [showMondayRecap, setShowMondayRecap] = useState(false);

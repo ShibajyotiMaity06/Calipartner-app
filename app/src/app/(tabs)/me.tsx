@@ -197,6 +197,14 @@ export default function MeScreen() {
                   variant="secondary"
                   size="md"
                   fontSet="onboarding"
+                  label={t('challengeHub.trophies')}
+                  onPress={() => router.push('/progress?tab=challenges&trophies=1' as never)}
+                  testID="me-challenge-trophies"
+                />
+                <Button
+                  variant="secondary"
+                  size="md"
+                  fontSet="onboarding"
                   label={t('friends.editProfile')}
                   onPress={() => router.push('/profile/social' as never)}
                   testID="me-social-profile"

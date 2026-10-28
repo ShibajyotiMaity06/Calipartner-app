@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import type { SupabaseClient } from 'jsr:@supabase/supabase-js@2';
+import type { SupabaseClient } from 'npm:@supabase/supabase-js@2.117.3';
 import { handleAiCoach } from './index.ts';
 const request = () =>
   new Request('https://example/ai-coach', {
@@ -7,8 +7,29 @@ const request = () =>
     headers: { Authorization: 'Bearer caller' },
     body: JSON.stringify({ messages: [{ role: 'user', content: 'How do I train?' }] }),
   });
+Deno.test(
+  'Challenge recaps do not load additional private goals or daily health summaries',
+  async () => {
+    const state = setup();
+    const response = await handleAiCoach(
+      new Request('https://example/ai-coach', {
+        method: 'POST',
+        headers: { Authorization: 'Bearer caller' },
+        body: JSON.stringify({
+          context_mode: 'challenge_summary',
+          messages: [{ role: 'user', content: 'My challenge: 5 of 7 habit days.' }],
+        }),
+      }),
+      state,
+    );
+    assert.equal(response.status, 200);
+    assert.deepEqual(state.tables(), ['consent_records']);
+    assert.equal(state.calls(), 1);
+  },
+);
 function setup(allowed = true, code: string | null = null, consent = true, usageError = false) {
   let calls = 0;
+  const tables: string[] = [];
   const admin = {
     auth: { getUser: async () => ({ data: { user: { id: 'owner' } }, error: null }) },
     rpc: async (name: string) => {
@@ -17,6 +38,7 @@ function setup(allowed = true, code: string | null = null, consent = true, usage
     },
     from: (table: string) => ({
       select() {
+        tables.push(table);
         return this;
       },
       eq() {
@@ -38,6 +60,7 @@ function setup(allowed = true, code: string | null = null, consent = true, usage
       return { text: 'Train consistently.', tokens: 30 };
     },
     calls: () => calls,
+    tables: () => tables,
   };
 }
 for (const code of [

@@ -6,3 +6,4 @@ export * from './motion';
 export * from './type';
 export * from './onboarding';
 export * from './capture';
+export * from './challenges';

@@ -8,6 +8,8 @@ const state = vi.hoisted(() => ({
   replace: vi.fn(),
   decode: vi.fn(),
   stop: vi.fn(),
+  flow: undefined as string | undefined,
+  setParams: vi.fn(),
 }));
 vi.mock('react-native', () => ({
   ActivityIndicator: 'ActivityIndicator',
@@ -58,7 +60,14 @@ vi.mock('@/hooks/useSectionSuggestions', () => ({
   useSectionSuggestions: () => ({ suggestions: [] }),
 }));
 vi.mock('expo-router', async () => ({
-  useRouter: () => ({ replace: state.replace }),
+  useRouter: () => ({
+    replace: state.replace,
+    setParams: (params: { flow?: string }) => {
+      state.setParams(params);
+      state.flow = params.flow;
+    },
+  }),
+  useLocalSearchParams: () => ({ flow: state.flow }),
   useFocusEffect: (callback: () => void | (() => void)) => {
     const focused = state.focused;
     React.useEffect(() => (focused ? callback() : undefined), [callback, focused]);
@@ -100,6 +109,7 @@ beforeEach(() => {
   vi.clearAllMocks();
   state.paid = false;
   state.focused = true;
+  state.flow = undefined;
   Platform.OS = 'ios';
   state.decode.mockResolvedValue({ stop: state.stop });
 });
@@ -206,6 +216,21 @@ it('reopens the cached Log tab with its picker after a previous food flow closes
   expect(renderer.root.findByProps({ testID: 'log-sheet-modal' }).props.visible).toBe(true);
   expect(renderer.root.findAllByType('LogHub' as React.ElementType)).toHaveLength(1);
   expect(renderer.root.findAllByType('FoodLog' as React.ElementType)).toHaveLength(0);
+});
+it.each([
+  ['food', 'FoodLog'],
+  ['workout', 'Workout'],
+  ['water', 'Water'],
+  ['weight', 'Weight'],
+])('opens the %s logging shortcut and clears it on close', async (flow, component) => {
+  state.flow = flow;
+  await act(async () => {
+    renderer = create(<LogScreen />);
+  });
+  expect(renderer.root.findAllByType(component as React.ElementType)).toHaveLength(1);
+  await act(async () => renderer.root.findByType(component as React.ElementType).props.onClose());
+  expect(state.setParams).toHaveBeenCalledWith({ flow: undefined });
+  expect(state.replace).toHaveBeenCalledWith('/today');
 });
 it('shows separate meal metrics and preserves add, edit and delete actions for logged food', async () => {
   const add = vi.fn(),

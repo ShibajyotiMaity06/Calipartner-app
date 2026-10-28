@@ -45,6 +45,8 @@ try {
   await runChatAccessTests(db);
   const { runSnapshotRepairTests } = await import('./room_snapshot_repair_cases.mjs');
   await runSnapshotRepairTests(db);
+  const { runChallengeTests } = await import('./challenges_cases.mjs');
+  await runChallengeTests(db);
 } finally {
   await db.close();
 }

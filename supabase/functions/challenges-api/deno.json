@@ -1,0 +1,11 @@
+{
+  "imports": {
+    "../../../packages/core/src/age": "../../../packages/core/src/age.ts",
+    "../../../packages/core/src/targets": "../../../packages/core/src/targets.ts",
+    "../../../packages/core/src/types": "../../../packages/core/src/types.ts",
+    "../../../packages/core/src/units": "../../../packages/core/src/units.ts",
+    "../../../packages/core/src/challengeEngine": "../../../packages/core/src/challengeEngine.ts",
+    "../../../packages/core/src/challengeTypes": "../../../packages/core/src/challengeTypes.ts",
+    "../../../packages/core/src/challengeViewModel": "../../../packages/core/src/challengeViewModel.ts"
+  }
+}

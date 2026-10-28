@@ -1,6 +1,6 @@
 import React, { useCallback, useState } from 'react';
 import { View, StyleSheet, Modal } from 'react-native';
-import { useFocusEffect, useRouter } from 'expo-router';
+import { useFocusEffect, useRouter, useLocalSearchParams } from 'expo-router';
 import { getMealSectionForTime, type MealSection } from '@calipartner/core';
 import {
   Sheet,
@@ -38,6 +38,7 @@ type ActiveFlowState =
 
 export default function LogScreen() {
   const router = useRouter();
+  const params = useLocalSearchParams<{ flow?: string }>();
   const { colors } = useTheme();
   const { user } = useAuth();
 
@@ -50,10 +51,14 @@ export default function LogScreen() {
   useFocusEffect(
     useCallback(() => {
       setCurrentSection(getMealSectionForTime(new Date()));
-      setActiveFlow('picker');
+      setActiveFlow(
+        ['food', 'workout', 'water', 'weight'].includes(params.flow ?? '')
+          ? (params.flow as ActiveFlowState)
+          : 'picker',
+      );
       setSheetVisible(true);
       return () => setSheetVisible(false);
-    }, []),
+    }, [params.flow]),
   );
 
   // Tracker hooks for Water and Weight
@@ -62,6 +67,7 @@ export default function LogScreen() {
   const { addEntry } = useAddEntry();
 
   const handleCloseAll = () => {
+    router.setParams({ flow: undefined });
     setSheetVisible(false);
     router.replace('/today');
   };
