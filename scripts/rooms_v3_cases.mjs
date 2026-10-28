@@ -102,7 +102,7 @@ export async function runRoomTests(db) {
     await join(9, plus.code);
     assert.equal(await scalar('select public.room_cap($1)', [rid(4)]), 20);
   });
-  await test('Plus can chat; a free member can read but cannot impersonate the sender', async () => {
+  await test('Plus can chat; a free member cannot read or impersonate the sender', async () => {
     await plan(1, 'plus');
     await user(1);
     await scalar('select public.send_chat_message($1,$2,$3)', [rid(1), 'plus-chat', 'Hello']);
@@ -110,9 +110,9 @@ export async function runRoomTests(db) {
     await db.query('select public.accept_chat_terms()');
     assert.equal(
       await scalar('select count(*)::int from public.chat_messages where room_id=$1', [rid(1)]),
-      1,
+      0,
     );
-    await fails('select public.send_chat_message($1,$2,$3)', /NOT_AUTHORIZED/, [
+    await fails('select public.send_chat_message($1,$2,$3)', /PLUS_REQUIRED/, [
       rid(1),
       'plus-chat',
       'stolen',

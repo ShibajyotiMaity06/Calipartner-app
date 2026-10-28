@@ -10,7 +10,10 @@ export const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-export async function handleChatSignedUrl(req: Request): Promise<Response> {
+export async function handleChatSignedUrl(
+  req: Request,
+  makeClient = createClient,
+): Promise<Response> {
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders });
   }
@@ -27,7 +30,7 @@ export async function handleChatSignedUrl(req: Request): Promise<Response> {
     const supabaseUrl = Deno.env.get('SUPABASE_URL') || '';
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || '';
 
-    const adminClient = createClient(supabaseUrl, supabaseServiceKey);
+    const adminClient = makeClient(supabaseUrl, supabaseServiceKey);
     const token = authHeader.replace(/^Bearer\s+/i, '');
 
     const {
@@ -97,6 +100,14 @@ export async function handleChatSignedUrl(req: Request): Promise<Response> {
       });
     }
 
+    const access = await adminClient.rpc('active_room_tier', { p_user_id: user.id });
+    if (access.error || !['plus', 'pro'].includes(access.data)) {
+      return new Response(JSON.stringify({ error: 'PLUS_REQUIRED' }), {
+        status: 403,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
     // 4. Generate short-lived signed GET URL (expires in 15 minutes = 900 seconds)
     const r2AccountId = Deno.env.get('R2_ACCOUNT_ID');
     const r2Bucket = Deno.env.get('R2_CHAT_BUCKET') || 'calipartner-chat-private';
@@ -129,6 +140,6 @@ export async function handleChatSignedUrl(req: Request): Promise<Response> {
   }
 }
 
-if (typeof Deno !== 'undefined') {
-  Deno.serve(handleChatSignedUrl);
+if (import.meta.main) {
+  Deno.serve((req) => handleChatSignedUrl(req));
 }

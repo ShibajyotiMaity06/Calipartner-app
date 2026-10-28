@@ -41,6 +41,10 @@ try {
   await runLiveBillingTransitionTests(db);
   const { runRoomRepairTests } = await import('./room_repair_cases.mjs');
   await runRoomRepairTests(db);
+  const { runChatAccessTests } = await import('./chat_access_cases.mjs');
+  await runChatAccessTests(db);
+  const { runSnapshotRepairTests } = await import('./room_snapshot_repair_cases.mjs');
+  await runSnapshotRepairTests(db);
 } finally {
   await db.close();
 }

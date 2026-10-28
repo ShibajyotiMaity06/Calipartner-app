@@ -15,6 +15,8 @@ interface RoomHeaderProps {
   streakDays: number;
   activeSegment: RoomSegment;
   chatUnreadCount?: number;
+  showMembers?: boolean;
+  isWaiting?: boolean;
   onSelectSegment: (segment: RoomSegment) => void;
   onOpenInbox: () => void;
   onOpenSettings: () => void;
@@ -30,6 +32,8 @@ export function RoomHeader({
   streakDays,
   activeSegment,
   chatUnreadCount,
+  showMembers = false,
+  isWaiting = false,
   onSelectSegment,
   onOpenInbox,
   onOpenSettings,
@@ -101,7 +105,7 @@ export function RoomHeader({
             <Text style={[styles.roomTitle, { color: colors.text }]}>{t('rooms.title')}</Text>
           )}
 
-          {currentRoom && (
+          {currentRoom && !isWaiting && (
             <View style={styles.badgeRow}>
               {/* Tap-to-copy room code badge */}
               <Pressable
@@ -264,50 +268,52 @@ export function RoomHeader({
           style={styles.segmentedScroll}
           contentContainerStyle={[styles.segmentedRow, { backgroundColor: colors.surfaceAlt }]}
         >
-          {segments.map((seg) => {
-            const isActive = activeSegment === seg.key;
-            return (
-              <Pressable
-                key={seg.key}
-                onPress={() => onSelectSegment(seg.key)}
-                style={[
-                  styles.segmentButton,
-                  isActive && [styles.segmentActive, { backgroundColor: colors.surface }],
-                ]}
-                accessibilityRole="tab"
-                accessibilityState={{ selected: isActive }}
-                accessibilityLabel={seg.label}
-                testID={`room-tab-${seg.key}`}
-              >
-                <Ionicons
-                  name={seg.icon}
-                  size={15}
-                  color={isActive ? colors.accent : colors.textMuted}
-                />
-                <Text
+          {segments
+            .filter((seg) => seg.key !== 'members' || showMembers)
+            .map((seg) => {
+              const isActive = activeSegment === seg.key;
+              return (
+                <Pressable
+                  key={seg.key}
+                  onPress={() => onSelectSegment(seg.key)}
                   style={[
-                    styles.segmentText,
-                    { color: isActive ? colors.text : colors.textMuted },
-                    isActive && styles.segmentTextActive,
+                    styles.segmentButton,
+                    isActive && [styles.segmentActive, { backgroundColor: colors.surface }],
                   ]}
+                  accessibilityRole="tab"
+                  accessibilityState={{ selected: isActive }}
+                  accessibilityLabel={seg.label}
+                  testID={`room-tab-${seg.key}`}
                 >
-                  {seg.label}
-                </Text>
-                {seg.key === 'chat' &&
-                  typeof chatUnreadCount === 'number' &&
-                  chatUnreadCount > 0 && (
-                    <View
-                      style={[styles.segmentBadge, { backgroundColor: colors.accent }]}
-                      testID="badge-chat-unread"
-                    >
-                      <Text style={styles.segmentBadgeText}>
-                        {chatUnreadCount > 99 ? '99+' : chatUnreadCount}
-                      </Text>
-                    </View>
-                  )}
-              </Pressable>
-            );
-          })}
+                  <Ionicons
+                    name={seg.icon}
+                    size={15}
+                    color={isActive ? colors.accent : colors.textMuted}
+                  />
+                  <Text
+                    style={[
+                      styles.segmentText,
+                      { color: isActive ? colors.text : colors.textMuted },
+                      isActive && styles.segmentTextActive,
+                    ]}
+                  >
+                    {seg.label}
+                  </Text>
+                  {seg.key === 'chat' &&
+                    typeof chatUnreadCount === 'number' &&
+                    chatUnreadCount > 0 && (
+                      <View
+                        style={[styles.segmentBadge, { backgroundColor: colors.accent }]}
+                        testID="badge-chat-unread"
+                      >
+                        <Text style={styles.segmentBadgeText}>
+                          {chatUnreadCount > 99 ? '99+' : chatUnreadCount}
+                        </Text>
+                      </View>
+                    )}
+                </Pressable>
+              );
+            })}
         </ScrollView>
       )}
     </View>

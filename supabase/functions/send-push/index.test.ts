@@ -1,4 +1,25 @@
-import { handleSendPush } from './index.ts';
+import { handleSendPush, canDeliverChatPush } from './index.ts';
+
+Deno.test(
+  'chat previews require a fresh Plus/Pro entitlement at dispatch, failing closed on lookup errors',
+  async () => {
+    for (const [tier, error, expected] of [
+      ['free', null, false],
+      ['plus', null, true],
+      ['pro', null, true],
+      [null, 'unavailable', false],
+    ]) {
+      const admin = {
+        rpc: (name: string, args: { p_user_id: string }) => {
+          equal(name, 'active_room_tier');
+          equal(args.p_user_id, 'verified-recipient');
+          return Promise.resolve({ data: tier, error });
+        },
+      } as unknown as Parameters<typeof canDeliverChatPush>[0];
+      equal(await canDeliverChatPush(admin, 'verified-recipient'), expected);
+    }
+  },
+);
 
 async function withTestEnvironment(work: () => Promise<void>) {
   const originalKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');

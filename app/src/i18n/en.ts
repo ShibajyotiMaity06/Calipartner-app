@@ -325,7 +325,7 @@ export const en = {
       'Has your weight or routine changed? Review your details and confirm your updated macros.',
     reviewMonthlyAction: 'Review my plan',
     reviewMonthlyLater: 'Later',
-    chatPlus: 'Plus lets you send messages and share workouts. You can still read your room here.',
+    chatPlus: 'Plus or Pro lets you chat and share workouts.',
     mediaPro: 'Photo and video sharing requires Pro.',
     frozenRoom:
       'Renew or take over with an eligible plan within 30 days. After that, this room is deleted. Your personal logs stay yours.',
@@ -1236,13 +1236,21 @@ export const en = {
       reactBtn: 'React',
       logSharedBtn: 'Tag Shared Meal',
     },
+    access: {
+      chatUpgrade: 'Get Plus or Pro to open room chat.',
+      chatWaiting: 'Chat opens when your friend accepts the invitation.',
+      progressWaiting: 'Progress opens when your friend accepts the invitation.',
+      upgrade: 'See plans',
+    },
     dormant: {
       badge: 'Waiting for Partner',
-      title: 'Your Room is Waiting for a Partner',
-      subtitle:
-        'Share your room code with a friend or invite them by username so you can track your goals side by side.',
-      shareBtn: 'Share Room Code',
-      copyBtn: 'Copy Code',
+      title: 'Waiting for your friend to accept',
+      subtitle: 'You can also share the room code.',
+      copied: 'Copied',
+      shareMessage: 'Join my room on CaliPartner. Room code: {code}',
+      actionError: 'Could not copy or share the code. Try again.',
+      shareBtn: 'Share room code',
+      copyBtn: 'Copy code',
     },
     paused: {
       title: 'This room is paused',

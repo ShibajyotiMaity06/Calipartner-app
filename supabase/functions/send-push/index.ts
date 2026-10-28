@@ -2,12 +2,17 @@
 // FCM HTTP v1 push notification dispatcher with Google OAuth2, batching, and stale token cleanup.
 // Complies with PRD 6.12, 7.1 and AGENT_RULES.md.
 
-import { createClient } from 'jsr:@supabase/supabase-js@2';
+import { createClient, type SupabaseClient } from 'jsr:@supabase/supabase-js@2';
 
 export const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
+
+export async function canDeliverChatPush(admin: SupabaseClient, userId: string) {
+  const { data, error } = await admin.rpc('active_room_tier', { p_user_id: userId });
+  return !error && (data === 'plus' || data === 'pro');
+}
 
 interface ServiceAccount {
   project_id: string;
@@ -338,6 +343,16 @@ export async function handleSendPush(req: Request): Promise<Response> {
     let failedCount = 0;
 
     for (const item of queueItems) {
+      if (
+        item.notification_type === 'chat_message' &&
+        !(await canDeliverChatPush(adminClient, item.user_id))
+      ) {
+        await adminClient
+          .from('push_notification_queue')
+          .update({ status: 'skipped', skip_reason: 'PLUS_REQUIRED' })
+          .eq('id', item.id);
+        continue;
+      }
       // Find devices for the recipient user
       const { data: devices } = await adminClient
         .from('devices')

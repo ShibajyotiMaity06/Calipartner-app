@@ -42,6 +42,7 @@ import {
 
 import { BasicRoomCard } from '@/components/rooms/BasicRoomCard';
 import { RoomExtras } from '@/components/rooms/RoomExtras';
+import { RoomAccessNotice } from '@/components/rooms/RoomAccessNotice';
 import { ChatView } from '@/components/chat';
 import { useRoomActions } from '@/hooks/useRoomActions';
 import { useRoomChat } from '@/hooks/useRoomChat';
@@ -87,7 +88,13 @@ export default function RoomScreen() {
     cancelRequest,
     searchUsers,
   } = useRoomRequests();
-  const { isTrial, trialBanner, currentTier, hasActiveAccess } = useSubscription();
+  const {
+    isTrial,
+    trialBanner,
+    currentTier,
+    hasActiveAccess,
+    loading: subscriptionLoading,
+  } = useSubscription();
   const isPlusOrPro = hasActiveAccess;
   const friends = useFriends();
 
@@ -180,22 +187,38 @@ export default function RoomScreen() {
     roomState === 'locked';
 
   // Room dormant check (fewer than 2 active members)
-  const isRoomDormant = roomState === 'dormant' || members.length < 2;
+  const currentMembers =
+    snapshot?.room.id === activeRoomId
+      ? members.filter((member) => ['active', 'paused', 'locked'].includes(member.status)).length
+      : (currentRoom?.member_count ?? 0);
+  const isRoomDormant = roomState === 'dormant' || currentMembers < 2;
+  const showMembers = hasActiveAccess && currentMembers > 2;
+  const displaySegment = activeSegment === 'members' && !showMembers ? 'today' : activeSegment;
+  const canOpenChat = hasActiveAccess && !isRoomDormant && !isRoomLocked;
+
+  React.useEffect(() => {
+    if (!activeRoomId || !isVisible || !isRoomDormant || isRoomLocked) return;
+    // Keep acceptance visible even when the realtime connection misses an event.
+    const timer = setInterval(() => void refreshSnapshot(), 5000);
+    return () => clearInterval(timer);
+  }, [activeRoomId, isVisible, isRoomDormant, isRoomLocked, refreshSnapshot]);
 
   // Hook Room Chat for unread badge and realtime chat notifications
   const navigation = useNavigation();
-  const { unreadCount } = useRoomChat(activeRoomId, isVisible, {
-    userId: callerId || undefined,
+  const watchUnread = canOpenChat && displaySegment !== 'chat';
+  const { unreadCount } = useRoomChat(watchUnread ? activeRoomId : null, isVisible && watchUnread, {
+    userId: watchUnread ? callerId || undefined : undefined,
   });
+  const chatUnreadCount = watchUnread ? unreadCount : 0;
 
   React.useEffect(() => {
     const nav = navigation as unknown as {
       setOptions?: (options: { tabBarBadge?: number }) => void;
     };
     nav.setOptions?.({
-      tabBarBadge: unreadCount > 0 ? unreadCount : undefined,
+      tabBarBadge: chatUnreadCount > 0 ? chatUnreadCount : undefined,
     });
-  }, [navigation, unreadCount]);
+  }, [navigation, chatUnreadCount]);
 
   return (
     <SafeAreaView
@@ -204,12 +227,14 @@ export default function RoomScreen() {
     >
       {/* Room Header */}
       <RoomHeader
-        currentRoom={currentRoom}
+        currentRoom={currentRoom ? { ...currentRoom, member_count: currentMembers } : null}
         allRooms={rooms}
         pendingRequestsCount={incoming.length + (friends.inbox?.incoming.length ?? 0)}
         streakDays={streakDays}
-        activeSegment={activeSegment}
-        chatUnreadCount={unreadCount}
+        activeSegment={displaySegment}
+        showMembers={showMembers}
+        isWaiting={isRoomDormant}
+        chatUnreadCount={chatUnreadCount}
         onSelectSegment={setActiveSegment}
         onOpenInbox={() => setShowInboxModal(true)}
         onOpenSettings={() => setShowSettingsModal(true)}
@@ -319,20 +344,31 @@ export default function RoomScreen() {
             await refreshRooms();
           }}
         />
-      ) : activeSegment === 'chat' && currentRoom ? (
+      ) : displaySegment === 'chat' && currentRoom ? (
         /* Segment: Chat (Phase 8 View) */
         <View style={styles.chatWrapper}>
-          <ChatView
-            roomId={currentRoom.id}
-            isVisible={isVisible && activeSegment === 'chat'}
-            options={{
-              userId: callerId || undefined,
-              userNickname: meMember?.nickname,
-              avatarUrl: meMember?.avatar_url ?? undefined,
-            }}
-            isLocked={isRoomLocked}
-            testID="room-chat-segment"
-          />
+          {subscriptionLoading ? (
+            <Text>{t('common.loading')}</Text>
+          ) : !hasActiveAccess ? (
+            <RoomAccessNotice
+              message={t('rooms.access.chatUpgrade')}
+              onUpgrade={() => setShowPaywallModal(true)}
+            />
+          ) : isRoomDormant ? (
+            <RoomAccessNotice message={t('rooms.access.chatWaiting')} />
+          ) : (
+            <ChatView
+              roomId={currentRoom.id}
+              isVisible={isVisible && activeSegment === 'chat'}
+              options={{
+                userId: callerId || undefined,
+                userNickname: meMember?.nickname,
+                avatarUrl: meMember?.avatar_url ?? undefined,
+              }}
+              isLocked={isRoomLocked}
+              testID="room-chat-segment"
+            />
+          )}
         </View>
       ) : (
         <ScrollView
@@ -357,23 +393,14 @@ export default function RoomScreen() {
                 }
               }}
             />
+          ) : isRoomDormant && currentRoom ? (
+            displaySegment === 'progress' ? (
+              <RoomAccessNotice message={t('rooms.access.progressWaiting')} />
+            ) : (
+              <DormantWaitingState key={currentRoom.id} roomCode={currentRoom.code} />
+            )
           ) : (
-            /* Active Room View */
             <>
-              {/* Dormant state / Waiting for Partner banner */}
-              {isRoomDormant && currentRoom && (
-                <DormantWaitingState
-                  roomName={currentRoom.name}
-                  roomCode={currentRoom.code}
-                  onInviteByUsername={() => setShowInviteModal(true)}
-                  onLeaveRoom={async () => {
-                    await leaveRoom(currentRoom.id);
-                    setSelectedRoomId(null);
-                    await refreshRooms();
-                  }}
-                />
-              )}
-
               {/* Trial Banner for Host (PRD 6.18 SUB-9) */}
               {currentRoom && currentRoom.role === 'host' && (isTrial || trialBanner !== null) && (
                 <TrialBanner
@@ -406,7 +433,7 @@ export default function RoomScreen() {
                 )}
 
               {/* Segment: Today (Side by side comparison) */}
-              {activeSegment === 'today' && (
+              {displaySegment === 'today' && (
                 <>
                   {/* Pending Shared Meal Card (if any) */}
                   {pendingSharedMeal && (
@@ -467,7 +494,7 @@ export default function RoomScreen() {
               )}
 
               {/* Segment: Progress */}
-              {activeSegment === 'progress' &&
+              {displaySegment === 'progress' &&
                 currentRoom &&
                 (hasActiveAccess ? (
                   <RoomProgressView roomId={currentRoom.id} testID="room-progress-segment" />
@@ -476,7 +503,7 @@ export default function RoomScreen() {
                 ))}
 
               {/* Segment: Members Roster */}
-              {activeSegment === 'members' && currentRoom && (
+              {displaySegment === 'members' && showMembers && currentRoom && (
                 <MembersTab
                   room={currentRoom}
                   members={members}
