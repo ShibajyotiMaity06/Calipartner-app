@@ -107,6 +107,7 @@ export async function handleDodoCheckout(req: Request, getConfig = dodoConfig) {
         product_cart: [{ product_id: productId, quantity: 1 }],
         customer: { email: user.email },
         billing_currency: verified.currency,
+        minimal_address: true,
         feature_flags: { allow_currency_selection: false, redirect_immediately: true },
         metadata: { checkout_id: requestId },
         return_url: `${origin}/paywall?checkout=${requestId}&tier=${body.tier}&duration=${body.duration}`,

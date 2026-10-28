@@ -81,31 +81,9 @@ export function useRooms() {
       setError(null);
       try {
         const supabase = getSupabase();
-        try {
-          await apiLeaveRoom(supabase, roomId);
-        } catch {
-          // non-fatal, proceed with direct membership removal
-        }
-        const {
-          data: { user },
-        } = await supabase.auth.getUser();
-        if (user) {
-          try {
-            await supabase
-              .from('room_members')
-              .delete()
-              .eq('room_id', roomId)
-              .eq('user_id', user.id);
-          } catch {
-            await supabase
-              .from('room_members')
-              .update({ status: 'left' })
-              .eq('room_id', roomId)
-              .eq('user_id', user.id);
-          }
-        }
+        const result = await apiLeaveRoom(supabase, roomId);
         await refresh();
-        return { status: 'left' as const, room_id: roomId };
+        return result;
       } catch (err: unknown) {
         const serviceErr = err instanceof RoomServiceError ? err : parseRoomError(err);
         setError(serviceErr);

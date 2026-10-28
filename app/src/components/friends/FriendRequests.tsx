@@ -5,12 +5,17 @@ import { planStyles } from '@/components/onboarding/PlanPrimitives';
 import { useFriends } from '@/hooks/useFriends';
 import { t } from '@/i18n';
 
-export function FriendRequests({ tab }: { tab: 'incoming' | 'outgoing' }) {
+export function FriendRequests({
+  tab,
+  hideEmpty = false,
+}: {
+  tab: 'incoming' | 'outgoing';
+  hideEmpty?: boolean;
+}) {
   const friends = useFriends();
   const people = friends.inbox?.[tab] ?? [];
   return (
     <View style={planStyles.section}>
-      <Text variant="heading">{t('socialUpdate.requests')}</Text>
       {friends.loading ? <Text>{t('common.loading')}</Text> : null}
       {friends.error ? (
         <>
@@ -24,8 +29,14 @@ export function FriendRequests({ tab }: { tab: 'incoming' | 'outgoing' }) {
         </>
       ) : null}
       {friends.cached ? <Text>{t('friends.cached')}</Text> : null}
-      {!friends.loading && !people.length ? (
-        <Text>{t(tab === 'incoming' ? 'friends.incomingEmpty' : 'friends.outgoingEmpty')}</Text>
+      {!hideEmpty && !friends.loading && !friends.error && !people.length ? (
+        <Text>
+          {t(
+            tab === 'incoming'
+              ? 'rooms.inboxModal.emptyIncoming'
+              : 'rooms.inboxModal.emptyOutgoing',
+          )}
+        </Text>
       ) : null}
       {friends.outbox.some((item) => item.status === 'failed') ? (
         <Text accessibilityRole="alert">{t('friends.failedChanges')}</Text>

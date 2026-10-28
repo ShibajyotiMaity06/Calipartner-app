@@ -1,5 +1,7 @@
 # CaliPartner — Master Build Plan (copy-paste prompts)
 
+> Owner-requested repairs, 27 October 2026: repair shared-workout availability, room invitation acceptance and hosted-slot release after leaving, recover abandoned rooms, explain test-versus-live subscription access, simplify incoming/outgoing request copy, minimize Dodo checkout address collection, and restyle the friends screen as Community using the supplied reference. Necessary targeted view/service/hook/database/Edge Function repairs are authorized; preserve existing quotas, privacy, consent and paid access.
+
 > Latest owner instruction, 27 October 2026: all AI scans, AI coach/chat and other AI features require a purchased, active Pro plan. No Free starter scans, no AI taste allowance, no AI trial for any tier. Only Plus monthly and annual have a seven-day free trial. Restore validated live Dodo configuration and live webhooks. This supersedes all earlier AI starter-scan references and authorizes the necessary app/core/backend/configuration repairs.
 
 > Owner-requested brand and access repairs, 27 October 2026: use the supplied static SVG across logos/icons; audit and enforce the existing paid feature matrix, preserving three lifetime Free photo scans; simplify purchase success to the plan-unlocked title; clarify room capacity per room and existing-subscription management. Necessary UI, service, core and backend repairs are in scope; unrelated features remain excluded.

@@ -39,6 +39,8 @@ try {
   await runPaidFeatureTests(db);
   const { runLiveBillingTransitionTests } = await import('./live_billing_transition_cases.mjs');
   await runLiveBillingTransitionTests(db);
+  const { runRoomRepairTests } = await import('./room_repair_cases.mjs');
+  await runRoomRepairTests(db);
 } finally {
   await db.close();
 }

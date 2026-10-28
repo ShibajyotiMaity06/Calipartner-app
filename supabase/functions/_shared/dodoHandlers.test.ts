@@ -210,6 +210,7 @@ Deno.test(
     assert.equal(r.status, 200);
     assert.equal(state.creates(), 1);
     assert.equal(state.sessionInput()?.billing_currency, 'INR');
+    assert.equal(state.sessionInput()?.minimal_address, true);
     assert.deepEqual(state.sessionInput()?.feature_flags, {
       allow_currency_selection: false,
       redirect_immediately: true,

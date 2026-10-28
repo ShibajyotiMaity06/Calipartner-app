@@ -2,13 +2,12 @@ import React, { useEffect, useRef, useState } from 'react';
 import { Modal, ScrollView, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { Avatar, Button, Card, Text, useTheme } from '@calipartner/ui';
-import type { SocialProfile } from '@calipartner/core';
+import { Button, Card, Text, useTheme } from '@calipartner/ui';
 import { PlanTextField, planStyles } from '@/components/onboarding/PlanPrimitives';
 import { SocialProfileEditor } from '@/components/friends/SocialProfileEditor';
 import { PublicSocialProfile } from '@/components/friends/PublicSocialProfile';
 import { PaywallModal } from '@/components/rooms/PaywallModal';
-import { FriendDiscovery } from '@/components/friends/FriendDiscovery';
+import { CommunityPanel } from '@/components/friends/CommunityPanel';
 import { useFriends } from '@/hooks/useFriends';
 import { useAuth } from '@/contexts/AuthContext';
 import { t } from '@/i18n';
@@ -58,33 +57,6 @@ function FriendsView() {
     friends.closeProfile();
     setPaywall(true);
   };
-  const list = (people: SocialProfile[], empty: string) => (
-    <View style={planStyles.section}>
-      {people.length ? (
-        people.map((person) => (
-          <Card key={person.id}>
-            <View style={planStyles.gap}>
-              <View style={planStyles.row}>
-                <Avatar name={person.nickname} uri={person.avatar_url} />
-                <View style={planStyles.flex}>
-                  <Text variant="heading">{person.nickname}</Text>
-                  <Text variant="bodyS">@{person.username}</Text>
-                </View>
-              </View>
-              <Button
-                variant="secondary"
-                label={t('friends.viewProfile')}
-                onPress={() => void friends.openProfile(person)}
-                testID={`view-profile-${person.id}`}
-              />
-            </View>
-          </Card>
-        ))
-      ) : (
-        <Text variant="bodyS">{empty}</Text>
-      )}
-    </View>
-  );
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: colors.bg0 }}>
       <ScrollView
@@ -92,15 +64,6 @@ function FriendsView() {
         keyboardShouldPersistTaps="handled"
         testID="friends-screen"
       >
-        <Button
-          variant="tertiary"
-          label={t('friends.back')}
-          onPress={() => (router.canGoBack() ? router.back() : router.replace('/today'))}
-          testID="back-from-friends"
-        />
-        <Text variant="title2" accessibilityRole="header">
-          {t('friends.title')}
-        </Text>
         {!friends.signedIn ? (
           <Button
             label={t('friends.signIn')}
@@ -109,19 +72,11 @@ function FriendsView() {
           />
         ) : (
           <>
-            <Text>{t('friends.intro')}</Text>
-            <Button
-              variant="tertiary"
-              label={t('notifications.title')}
-              onPress={() => router.push('/notifications/settings' as never)}
-              testID="friend-notification-settings"
-            />
-            <Button
-              variant="secondary"
-              label={t('friends.editProfile')}
-              disabled={!friends.ownProfile}
-              onPress={() => setEditing(true)}
-              testID="edit-social-profile"
+            <CommunityPanel
+              friends={friends}
+              onBack={() => (router.canGoBack() ? router.back() : router.replace('/today'))}
+              onEdit={() => setEditing(true)}
+              onNotifications={() => router.push('/notifications/settings' as never)}
             />
             {friends.loading ? (
               <Text accessibilityLiveRegion="polite">{t('common.loading')}</Text>
@@ -132,12 +87,14 @@ function FriendsView() {
                 {errorLabel}
               </Text>
             ) : null}
-            <Button
-              variant="tertiary"
-              label={t('friends.retry')}
-              onPress={() => void friends.refresh()}
-              testID="refresh-friends"
-            />
+            {friends.error ? (
+              <Button
+                variant="tertiary"
+                label={t('friends.retry')}
+                onPress={() => void friends.refresh()}
+                testID="refresh-friends"
+              />
+            ) : null}
             {pending.length ? (
               <Text accessibilityLiveRegion="polite">
                 {t('friends.pendingChanges', { count: pending.length })}
@@ -170,36 +127,6 @@ function FriendsView() {
                   </View>
                 </Card>
               ))}
-            <Text variant="bodyS" tabular>
-              {friends.inbox?.quota.premium
-                ? t('friends.premiumQuota')
-                : friends.inbox
-                  ? t('friends.quota', { remaining: friends.inbox.quota.remaining ?? 0 })
-                  : t('friends.quotaUnknown')}
-            </Text>
-            <FriendDiscovery
-              onOpen={(person) => void friends.openProfile(person)}
-              onSend={friends.send}
-              busy={friends.busy}
-              remaining={friends.inbox?.quota.remaining}
-              queuedIds={pending
-                .filter((item) => item.rpc_name === 'send_friend_request')
-                .map(
-                  (item) => (JSON.parse(item.payload) as { p_recipient_id: string }).p_recipient_id,
-                )}
-            />
-            <Text variant="heading" accessibilityRole="header">
-              {t('friends.incoming')}
-            </Text>
-            {list(friends.inbox?.incoming ?? [], t('friends.incomingEmpty'))}
-            <Text variant="heading" accessibilityRole="header">
-              {t('friends.outgoing')}
-            </Text>
-            {list(friends.inbox?.outgoing ?? [], t('friends.outgoingEmpty'))}
-            <Text variant="heading" accessibilityRole="header">
-              {t('friends.title')}
-            </Text>
-            {list(friends.inbox?.friends ?? [], t('friends.friendsEmpty'))}
           </>
         )}
       </ScrollView>

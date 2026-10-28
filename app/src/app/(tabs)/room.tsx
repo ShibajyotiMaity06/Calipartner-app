@@ -260,7 +260,9 @@ export default function RoomScreen() {
             <Text style={[styles.emptySubtitle, { color: colors.textMuted }]}>
               {roomsError.code === 'UNAUTHENTICATED'
                 ? 'Sign in to view your rooms, track goals, and chat with partners.'
-                : roomsError.message || t('common.errorBody')}
+                : roomsError.code === 'HOSTED_ROOM_LIMIT'
+                  ? t('setup.hostRoomLimit')
+                  : roomsError.message || t('common.errorBody')}
             </Text>
 
             <View style={styles.emptyButtonsRow}>

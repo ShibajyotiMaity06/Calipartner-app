@@ -71,6 +71,19 @@ function createMockSupabase(overrides: {
 }
 
 describe('roomService unit tests with mocked Supabase', () => {
+  it('keeps leave failures visible without bypassing the transactional RPC', async () => {
+    const client = createMockSupabase({
+      rpcHandler: async () => ({ data: null, error: { message: 'ROOM_LOCKED' } }),
+    });
+    await expect(leaveRoom(client, 'room-1')).rejects.toMatchObject({ code: 'ROOM_LOCKED' });
+    expect(client.from).not.toHaveBeenCalled();
+  });
+
+  it('does not claim a successful leave when the server returns no result', async () => {
+    const client = createMockSupabase({});
+    await expect(leaveRoom(client, 'room-1')).rejects.toThrow('ROOM_LEAVE_UNCONFIRMED');
+    expect(client.from).not.toHaveBeenCalled();
+  });
   it('1. parseRoomError parses known SQL error codes into typed RoomServiceError', () => {
     const err1 = parseRoomError(new Error('P0001: PLAN_REQUIRED'));
     expect(err1.code).toBe('PLAN_REQUIRED');
@@ -334,7 +347,11 @@ describe('roomService unit tests with mocked Supabase', () => {
     const mockClient = createMockSupabase({
       rpcHandler: async (fn, args) => {
         if (fn === 'respond_to_request') {
-          return { data: { status: args.p_accept ? 'accepted' : 'declined' }, error: null };
+          expect(args).toEqual({ p_request_id: 'req-1', p_action: 'accept' });
+          return {
+            data: { status: args.p_action === 'accept' ? 'accepted' : 'declined' },
+            error: null,
+          };
         }
         if (fn === 'cancel_request') {
           return { data: { status: 'cancelled' }, error: null };

@@ -161,24 +161,15 @@ export function RequestsInboxModal({
 
           {/* List Content */}
           <ScrollView style={styles.listContainer} keyboardShouldPersistTaps="handled">
-            {visible ? <FriendRequests tab={activeTab} /> : null}
-            <Text style={[styles.title, { color: colors.text }]}>{t('socialUpdate.rooms')}</Text>
-            {/* 20 pending requests limit note (Spec K01) */}
-            <View style={styles.limitNoticeRow}>
-              <Text style={[styles.limitNoticeText, { color: colors.textMuted }]}>
-                {t('rooms.inboxModal.pendingLimitNotice')}
-              </Text>
-            </View>
+            {visible ? (
+              <FriendRequests
+                tab={activeTab}
+                hideEmpty={(activeTab === 'incoming' ? incoming : outgoing).length > 0}
+              />
+            ) : null}
 
             {activeTab === 'incoming' ? (
-              incoming.length === 0 ? (
-                <View style={styles.emptyContainer}>
-                  <Ionicons name="mail-open-outline" size={40} color={colors.textMuted} />
-                  <Text style={[styles.emptyText, { color: colors.textMuted }]}>
-                    {t('rooms.inboxModal.emptyIncoming')}
-                  </Text>
-                </View>
-              ) : (
+              incoming.length === 0 ? null : (
                 <FlatList
                   scrollEnabled={false}
                   data={incoming}
@@ -306,14 +297,7 @@ export function RequestsInboxModal({
                   }}
                 />
               )
-            ) : outgoing.length === 0 ? (
-              <View style={styles.emptyContainer}>
-                <Ionicons name="paper-plane-outline" size={40} color={colors.textMuted} />
-                <Text style={[styles.emptyText, { color: colors.textMuted }]}>
-                  {t('rooms.inboxModal.emptyOutgoing')}
-                </Text>
-              </View>
-            ) : (
+            ) : outgoing.length === 0 ? null : (
               <FlatList
                 data={outgoing}
                 keyExtractor={(item) => item.id}

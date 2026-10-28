@@ -383,14 +383,12 @@ export async function respondToRoomRequest(
   client: SupabaseClient,
   requestId: string,
   accept: boolean,
-  deviceHash?: string,
+  _deviceHash?: string,
 ): Promise<{ status: 'accepted' | 'declined'; room_id?: string; user_id?: string }> {
   try {
-    const hash = deviceHash ?? (await getOrGenerateDeviceHash());
     const { data, error } = await client.rpc('respond_to_request', {
       p_request_id: requestId,
-      p_accept: accept,
-      p_device_hash: hash,
+      p_action: accept ? 'accept' : 'decline',
     });
 
     if (error) {
@@ -691,25 +689,9 @@ export async function leaveRoom(
       p_room_id: roomId,
     });
 
-    if (!error && data) {
-      return data;
-    }
-  } catch {
-    // Proceed to fallback
-  }
-
-  try {
-    const {
-      data: { user },
-    } = await client.auth.getUser();
-    if (user) {
-      await client
-        .from('room_members')
-        .update({ status: 'left' })
-        .eq('room_id', roomId)
-        .eq('user_id', user.id);
-    }
-    return { status: 'left', room_id: roomId };
+    if (error) throw parseRoomError(error);
+    if (!data) throw new Error('ROOM_LEAVE_UNCONFIRMED');
+    return data;
   } catch (err) {
     throw parseRoomError(err);
   }
