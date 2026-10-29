@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Modal, Platform, View } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
+import * as ImageManipulator from 'expo-image-manipulator';
 import { File } from 'expo-file-system';
 import { Button, Text } from '@calipartner/ui';
 import { MAX_CHAT_ATTACHMENT_SIZE_BYTES } from '@calipartner/core';
@@ -50,16 +51,31 @@ export function ChatMediaPickerModal({
       const items: SelectedMediaItem[] = [];
       for (const asset of result.assets.slice(0, maxCount - currentCount)) {
         if ((asset.fileSize ?? 0) > MAX_CHAT_ATTACHMENT_SIZE_BYTES) throw new Error('size');
-        const mime = asset.mimeType ?? (asset.type === 'video' ? 'video/mp4' : 'image/jpeg');
+        const photo = asset.type !== 'video';
+        const prepared = photo
+          ? await ImageManipulator.manipulateAsync(
+              asset.uri,
+              [
+                {
+                  resize:
+                    asset.width > asset.height
+                      ? { width: Math.min(asset.width, 1600) }
+                      : { height: Math.min(asset.height, 1600) },
+                },
+              ],
+              { compress: 0.8, format: ImageManipulator.SaveFormat.JPEG },
+            )
+          : asset;
+        const mime = photo ? 'image/jpeg' : (asset.mimeType ?? 'video/mp4');
         const bytes =
           Platform.OS === 'web'
-            ? new Uint8Array(await (await fetch(asset.uri)).arrayBuffer())
-            : await new File(asset.uri).bytes();
+            ? new Uint8Array(await (await fetch(prepared.uri)).arrayBuffer())
+            : await new File(prepared.uri).bytes();
         if (bytes.length > MAX_CHAT_ATTACHMENT_SIZE_BYTES) throw new Error('size');
         const processed = processImageOnDevice(bytes, mime, asset.width, asset.height);
         items.push({
-          uri: asset.uri,
-          name: asset.fileName ?? `media.${mime.split('/')[1]}`,
+          uri: prepared.uri,
+          name: photo ? 'photo.jpg' : (asset.fileName ?? `video.${mime.split('/')[1]}`),
           size: processed.size,
           mimeType: mime,
           width: asset.width,

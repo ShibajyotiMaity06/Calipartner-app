@@ -115,62 +115,20 @@ describe('roomService unit tests with mocked Supabase', () => {
     expect(err7.message).toContain('Database migration not applied');
   });
 
-  it('2. listUserRooms aggregates rooms and member counts', async () => {
+  it('2. listUserRooms uses the safe server projection for counts', async () => {
     const mockClient = createMockSupabase({
-      user: { id: 'user-alex', email: 'alex@example.com' },
-      fromHandler: (table: string) => {
-        if (table === 'room_members') {
-          return {
-            select: vi.fn().mockImplementation((query: string) => {
-              if (query.includes('rooms (')) {
-                return {
-                  eq: vi.fn().mockReturnValue({
-                    in: vi.fn().mockResolvedValue({
-                      data: [
-                        {
-                          role: 'host',
-                          status: 'active',
-                          room_id: 'room-1',
-                          rooms: {
-                            id: 'room-1',
-                            name: 'Alpha Room',
-                            code: 'CP1234',
-                            state: 'active',
-                            who_can_invite: 'host_only',
-                            plan_holder_id: 'user-alex',
-                            member_cap: 5,
-                            created_at: '2026-10-10T00:00:00Z',
-                          },
-                        },
-                      ],
-                      error: null,
-                    }),
-                  }),
-                };
-              }
-              // Member count query
-              return {
-                in: vi.fn().mockReturnValue({
-                  in: vi.fn().mockResolvedValue({
-                    data: [{ room_id: 'room-1' }, { room_id: 'room-1' }],
-                    error: null,
-                  }),
-                }),
-              };
-            }),
-          };
-        }
-        return {};
+      rpcHandler: async (fn) => {
+        expect(fn).toBe('get_my_rooms');
+        return {
+          data: [
+            { id: 'room-1', name: 'Alpha Room', role: 'host', member_count: 2, member_cap: 5 },
+          ],
+          error: null,
+        };
       },
     });
-
     const rooms = await listUserRooms(mockClient);
-    expect(rooms).toHaveLength(1);
-    expect(rooms[0]!.id).toBe('room-1');
-    expect(rooms[0]!.name).toBe('Alpha Room');
-    expect(rooms[0]!.role).toBe('host');
-    expect(rooms[0]!.member_count).toBe(2);
-    expect(rooms[0]!.member_cap).toBe(5);
+    expect(rooms[0]).toMatchObject({ id: 'room-1', role: 'host', member_count: 2, member_cap: 5 });
   });
 
   it('3. createRoom calls RPC create_room with name and device hash', async () => {
@@ -472,13 +430,13 @@ describe('roomService unit tests with mocked Supabase', () => {
   it('11. Nudge, reaction, shared meal and member operations', async () => {
     const mockClient = createMockSupabase({
       rpcHandler: async (fn, args) => {
-        if (fn === 'nudge') {
+        if (fn === 'send_room_nudge_v2') {
           return { data: { status: 'sent', nudge_id: 'n-1' }, error: null };
         }
         if (fn === 'react') {
           return { data: { status: 'reacted', reaction: args.p_reaction }, error: null };
         }
-        if (fn === 'tag_shared_meal') {
+        if (fn === 'share_room_meal') {
           return { data: { status: 'created', shared_meal_id: 'sm-1' }, error: null };
         }
         if (fn === 'respond_shared_meal') {
@@ -535,14 +493,8 @@ describe('roomService unit tests with mocked Supabase', () => {
 
     const mealRes = await tagSharedMeal(mockClient, {
       roomId: 'r-1',
-      foodName: 'Grilled Chicken',
-      mealSection: 'lunch',
-      quantity: 1,
-      unit: 'plate',
-      calories: 350,
-      protein: 40,
-      carbs: 5,
-      fat: 10,
+      foodEntryId: 'entry-1',
+      clientId: 'client-meal',
       participantIds: ['u-2'],
     });
     expect(mealRes.status).toBe('created');
@@ -559,6 +511,10 @@ describe('roomService unit tests with mocked Supabase', () => {
 
     const transRes = await transferHost(mockClient, 'r-1', 'u-new-host');
     expect(transRes.status).toBe('transferred');
+    expect(mockClient.rpc).toHaveBeenCalledWith('transfer_host', {
+      p_room_id: 'r-1',
+      p_target_user_id: 'u-new-host',
+    });
 
     const blockRes = await blockUser(mockClient, 'u-spam');
     expect(blockRes.status).toBe('blocked');

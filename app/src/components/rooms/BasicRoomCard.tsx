@@ -14,12 +14,16 @@ export function BasicRoomCard({ members }: { members: RoomMemberSnapshot[] }) {
           <Card key={person.user_id}>
             <View style={planStyles.gap}>
               <Text variant="heading">{person.nickname}</Text>
-              {typeof metrics.calories === 'number' ? (
+              {person.is_self && typeof metrics.calories === 'number' ? (
                 <Text tabular>{t('setup.kcalDay', { kcal: metrics.calories })}</Text>
+              ) : typeof metrics.goal_completion === 'number' ? (
+                <Text tabular>
+                  {t('roomAudit.goalPercent', { percent: metrics.goal_completion })}
+                </Text>
               ) : (
                 <HiddenMetric label={t('setup.nutritionPrivate')} />
               )}
-              {metrics.macros === 'locked' ? (
+              {!person.is_self || metrics.macros === 'locked' ? (
                 <HiddenMetric label={t('setup.nutritionPrivate')} />
               ) : (
                 <Text tabular>

@@ -429,66 +429,29 @@ export function validateChatStorageKey(storageKey: string, expectedRoomId: strin
   return storageKey.startsWith(prefix);
 }
 
-export interface BuildSignedUrlParams {
-  method: 'GET' | 'PUT';
-  bucket: string;
-  key: string;
-  expiresInSeconds?: number;
-  now?: number;
-  r2AccountId?: string;
-  accessKeyId?: string;
-  secretAccessKey?: string;
-}
-
-/**
- * Builds a signed URL for Cloudflare R2 / S3-compatible private bucket.
- * Deterministic and securely verifiable.
- */
-export function buildSignedR2Url(params: BuildSignedUrlParams): string {
-  const {
-    method,
-    bucket,
-    key,
-    expiresInSeconds = CHAT_SIGNED_URL_EXPIRY_SECONDS,
-    now = Date.now(),
-    r2AccountId,
-    accessKeyId,
-    secretAccessKey,
-  } = params;
-
-  const expiresTimestamp = Math.floor(now / 1000) + expiresInSeconds;
-  const host = r2AccountId ? `${r2AccountId}.r2.cloudflarestorage.com` : 'r2.cloudflarestorage.com';
-
-  // Compute a secure deterministic signature token
-  const sigPayload = `${method}:${bucket}:${key}:${expiresTimestamp}:${accessKeyId ?? 'mock_key'}`;
-  const signature = simpleHmacSha256(secretAccessKey ?? 'mock_secret', sigPayload);
-
-  return `https://${host}/${bucket}/${key}?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Expires=${expiresInSeconds}&X-Amz-Date=${Math.floor(
-    now / 1000,
-  )}&expires=${expiresTimestamp}&signature=${signature}`;
-}
-
 export function isSignedUrlExpired(url: string, now = Date.now()): boolean {
   try {
     const parsed = new URL(url);
     const expiresParam = parsed.searchParams.get('expires');
-    if (!expiresParam) return false;
+    if (!expiresParam) {
+      const date = parsed.searchParams.get('X-Amz-Date'),
+        duration = Number(parsed.searchParams.get('X-Amz-Expires'));
+      if (!date || !/^\d{8}T\d{6}Z$/.test(date) || !Number.isFinite(duration)) return true;
+      const stamp = Date.UTC(
+        Number(date.slice(0, 4)),
+        Number(date.slice(4, 6)) - 1,
+        Number(date.slice(6, 8)),
+        Number(date.slice(9, 11)),
+        Number(date.slice(11, 13)),
+        Number(date.slice(13, 15)),
+      );
+      return now >= stamp + duration * 1000;
+    }
     const expiresTimestamp = parseInt(expiresParam, 10);
     return Math.floor(now / 1000) >= expiresTimestamp;
   } catch {
     return false;
   }
-}
-
-function simpleHmacSha256(secret: string, message: string): string {
-  let hash = 0;
-  const combined = `${secret}:${message}`;
-  for (let i = 0; i < combined.length; i++) {
-    const char = combined.charCodeAt(i);
-    hash = (hash << 5) - hash + char;
-    hash = hash & hash; // Convert to 32bit integer
-  }
-  return Math.abs(hash).toString(16).padStart(16, '0');
 }
 
 // -----------------------------------------------------------------------------
@@ -610,7 +573,11 @@ export function mergeMessagesDeduplicated(
   }
 
   const merged = Array.from(map.values());
-  merged.sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
+  merged.sort(
+    (a, b) =>
+      new Date(a.created_at).getTime() - new Date(b.created_at).getTime() ||
+      a.id.localeCompare(b.id),
+  );
   return merged;
 }
 

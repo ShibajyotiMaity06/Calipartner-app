@@ -37,6 +37,7 @@ vi.mock('@/services/roomService', () => ({
   setWhoCanInvite: vi.fn(),
   sendNudge: vi.fn(),
   sendReaction: vi.fn(),
+  sendMemberReaction: vi.fn(),
   tagSharedMeal: vi.fn(),
   respondSharedMeal: vi.fn(),
   removeMember: vi.fn(),

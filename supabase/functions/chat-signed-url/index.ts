@@ -1,9 +1,6 @@
+import { signR2Url } from '../_shared/r2.ts';
 import { createClient } from 'jsr:@supabase/supabase-js@2';
-import {
-  buildSignedR2Url,
-  CHAT_SIGNED_URL_EXPIRY_SECONDS,
-  validateChatStorageKey,
-} from '@calipartner/core';
+import { CHAT_SIGNED_URL_EXPIRY_SECONDS, validateChatStorageKey } from '@calipartner/core';
 
 export const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -109,19 +106,17 @@ export async function handleChatSignedUrl(
     }
 
     // 4. Generate short-lived signed GET URL (expires in 15 minutes = 900 seconds)
-    const r2AccountId = Deno.env.get('R2_ACCOUNT_ID');
-    const r2Bucket = Deno.env.get('R2_CHAT_BUCKET') || 'calipartner-chat-private';
-    const accessKeyId = Deno.env.get('R2_ACCESS_KEY_ID');
-    const secretAccessKey = Deno.env.get('R2_SECRET_ACCESS_KEY');
-
-    const signedUrl = buildSignedR2Url({
+    const allowed = await adminClient.rpc('can_read_chat_media', {
+      p_room_id: room_id,
+      p_storage_key: storage_key,
+      p_user_id: user.id,
+    });
+    if (allowed.error || !allowed.data)
+      return Response.json({ error: 'MEDIA_UNAVAILABLE' }, { status: 403, headers: corsHeaders });
+    const signedUrl = await signR2Url({
       method: 'GET',
-      bucket: r2Bucket,
       key: storage_key,
       expiresInSeconds: CHAT_SIGNED_URL_EXPIRY_SECONDS,
-      r2AccountId,
-      accessKeyId,
-      secretAccessKey,
     });
 
     return new Response(

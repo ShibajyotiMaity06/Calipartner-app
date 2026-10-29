@@ -48,6 +48,24 @@ Deno.serve(async (req: Request) => {
 
     const userId = user.id;
 
+    const media = await adminClient
+      .from('chat_media_uploads')
+      .select('storage_key')
+      .eq('user_id', userId)
+      .limit(1);
+    if (media.error) throw new Error('CHAT_MEDIA_LOOKUP_FAILED');
+    if (media.data?.length) {
+      const response = await fetch(`${supabaseUrl}/functions/v1/chat-image-moderation`, {
+        method: 'POST',
+        headers: {
+          Authorization: authHeader,
+          'Content-Type': 'application/json',
+          apikey: Deno.env.get('SUPABASE_ANON_KEY') ?? '',
+        },
+        body: JSON.stringify({ action: 'cleanup' }),
+      });
+      if (!response.ok) throw new Error('CHAT_MEDIA_DELETE_FAILED');
+    }
     // 1. Room Preservation & Ownership Transfer (Finding H21)
     // Avoid cascading rooms and destroying other members' room history
     const { data: hostedRooms } = await adminClient
@@ -95,7 +113,19 @@ Deno.serve(async (req: Request) => {
     await adminClient.from('room_members').delete().eq('user_id', userId);
 
     // 3. Delete attachments & chat metadata owned by user
-    await adminClient.from('chat_attachments').delete().eq('owner_id', userId);
+    const ownMessages = await adminClient
+      .from('chat_messages')
+      .select('id')
+      .eq('sender_id', userId);
+    if (ownMessages.error) throw new Error('CHAT_METADATA_DELETE_FAILED');
+    if (ownMessages.data?.length)
+      await adminClient
+        .from('chat_attachments')
+        .delete()
+        .in(
+          'message_id',
+          ownMessages.data.map((message) => message.id),
+        );
 
     // 4. Delete user profile and all cascade-linked user records
     const { error: profileError } = await adminClient.from('profiles').delete().eq('id', userId);

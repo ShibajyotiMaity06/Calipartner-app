@@ -366,7 +366,7 @@ export function browseSocialProfiles(
     db,
     client,
     owner,
-    `search:browse:${goal ?? 'all'}:${normalized}:${after}:${random}`,
+    `search:browse:v2:${goal ?? 'all'}:${normalized}:${after}:${random}`,
     'browse_social_profiles',
     { p_goal: goal, p_query: normalized, p_after: after, p_random: random },
     online,

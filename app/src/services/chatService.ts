@@ -30,6 +30,9 @@ export interface GetMessagesOptions {
   limit?: number;
   beforeCreatedAt?: string | null;
   afterCreatedAt?: string | null;
+  ownerId?: string;
+  beforeId?: string | null;
+  afterId?: string | null;
 }
 
 /**
@@ -50,15 +53,27 @@ export async function getLocalChatMessages(
   const params: unknown[] = [roomId];
 
   if (options.beforeCreatedAt) {
-    query += ` AND created_at < ?`;
-    params.push(options.beforeCreatedAt);
+    query += options.beforeId
+      ? ' AND (created_at < ? OR (created_at = ? AND id < ?))'
+      : ' AND created_at < ?';
+    params.push(
+      ...(options.beforeId
+        ? [options.beforeCreatedAt, options.beforeCreatedAt, options.beforeId]
+        : [options.beforeCreatedAt]),
+    );
   }
   if (options.afterCreatedAt) {
-    query += ` AND created_at > ?`;
-    params.push(options.afterCreatedAt);
+    query += options.afterId
+      ? ' AND (created_at > ? OR (created_at = ? AND id > ?))'
+      : ' AND created_at > ?';
+    params.push(
+      ...(options.afterId
+        ? [options.afterCreatedAt, options.afterCreatedAt, options.afterId]
+        : [options.afterCreatedAt]),
+    );
   }
 
-  query += ` ORDER BY created_at DESC LIMIT ?`;
+  query += ` ORDER BY created_at DESC, id DESC LIMIT ?`;
   params.push(limit);
 
   const rows = await db.getAllAsync<{
@@ -152,11 +167,13 @@ export async function getChatMessages(
 
   try {
     // 2. Fetch remote messages via RPC
-    const { data: remoteData, error } = await supabase.rpc('get_chat_messages', {
+    const { data: remoteData, error } = await supabase.rpc('get_chat_messages_v2', {
       p_room_id: roomId,
       p_limit: options.limit ?? 50,
       p_before_created_at: options.beforeCreatedAt ?? null,
       p_after_created_at: options.afterCreatedAt ?? null,
+      p_before_id: options.beforeId ?? null,
+      p_after_id: options.afterId ?? null,
     });
 
     if (error) {
@@ -172,12 +189,18 @@ export async function getChatMessages(
 
     // 3. Upsert remote messages into local SQLite
     for (const msg of remoteMessages) {
+      if (Array.isArray(msg.attachments))
+        await db.runAsync(
+          'DELETE FROM local_chat_attachments WHERE message_id IN (SELECT id FROM local_chat_messages WHERE client_id = ?) OR message_id = ?',
+          [msg.client_id, msg.id],
+        );
       await db.runAsync(
         `INSERT INTO local_chat_messages (
           id, client_id, room_id, sender_id, sender_nickname, sender_username, sender_avatar_url,
           message_type, system_event_type, text, created_at, deleted_at, delivery_status, sync_state
         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'sent', 'synced')
-        ON CONFLICT (id) DO UPDATE SET
+        ON CONFLICT (client_id) DO UPDATE SET
+          id = excluded.id,
           text = excluded.text,
           deleted_at = excluded.deleted_at,
           delivery_status = 'sent',
@@ -194,7 +217,7 @@ export async function getChatMessages(
           msg.system_event_type ?? null,
           msg.text,
           msg.created_at,
-          msg.deleted_at,
+          msg.deleted_at ?? null,
         ],
       );
 
@@ -211,8 +234,8 @@ export async function getChatMessages(
               att.id,
               msg.id,
               att.storage_key,
-              att.width,
-              att.height,
+              att.width ?? null,
+              att.height ?? null,
               att.size,
               att.mime_type,
               att.moderation_status,
@@ -223,14 +246,31 @@ export async function getChatMessages(
       }
     }
 
-    return mergeMessagesDeduplicated(localMessages, remoteMessages);
+    return mergeMessagesDeduplicated(
+      localMessages.filter(
+        (message) =>
+          message.sync_state !== 'synced' &&
+          (!options.ownerId || message.sender_id === options.ownerId),
+      ),
+      remoteMessages,
+    );
   } catch (err: unknown) {
     // If offline or network error, return local cache
     const chatErr = parseChatError(err);
-    if (chatErr.code === 'ROOM_LOCKED' || chatErr.code === 'NOT_ROOM_MEMBER') {
+    if (
+      !/network|fetch failed|failed to fetch|offline|load failed/i.test(
+        String(
+          err instanceof Error ? err.message : ((err as { message?: string })?.message ?? err),
+        ),
+      )
+    )
       throw chatErr;
-    }
-    return localMessages;
+    return localMessages.filter(
+      (message) =>
+        !options.ownerId ||
+        message.sync_state === 'synced' ||
+        message.sender_id === options.ownerId,
+    );
   }
 }
 
@@ -291,7 +331,7 @@ export async function sendChatMessage(
       await db.runAsync(
         `INSERT INTO local_chat_attachments (
           id, message_id, storage_key, local_uri, width, height, size, mime_type, moderation_status, upload_status, created_at
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'pending', 'pending', ?)`,
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'pending', 'pending', ?) ON CONFLICT(id) DO UPDATE SET storage_key=excluded.storage_key,local_uri=excluded.local_uri`,
         [
           attId,
           msgId,
@@ -350,6 +390,14 @@ export async function sendChatMessage(
       message_type: 'user',
       text: options.text ?? null,
       created_at: now,
+      attachments:
+        options.attachments?.map(({ storage_key, size, mime_type, width, height }) => ({
+          storage_key,
+          size,
+          mime_type,
+          width,
+          height,
+        })) ?? [],
     },
   });
 
@@ -375,6 +423,10 @@ export async function sendChatMessage(
 
     // Success: update local message with confirmed server ID and state
     const confirmedId = serverMsg?.id || msgId;
+    await db.runAsync('UPDATE local_chat_attachments SET message_id = ? WHERE message_id = ?', [
+      confirmedId,
+      msgId,
+    ]);
     await db.runAsync(
       `UPDATE local_chat_messages
        SET id = ?, delivery_status = 'sent', sync_state = 'synced'
@@ -453,18 +505,19 @@ export async function deleteChatMessage(
 ): Promise<void> {
   const now = new Date().toISOString();
 
+  // Confirm the server action before showing a successful deletion.
+  if ('functions' in supabase) {
+    const result = await supabase.functions.invoke('chat-image-moderation', {
+      body: { action: 'delete_message', message_id: messageId },
+    });
+    if (result.error) throw parseChatError(result.error);
+  } else {
+    const result = await supabase.rpc('delete_own_chat_message', { p_message_id: messageId });
+    if (result.error) throw parseChatError(result.error);
+  }
   // 1. Soft-delete locally
   await db.runAsync(`UPDATE local_chat_messages SET deleted_at = ? WHERE id = ?`, [now, messageId]);
   await db.runAsync(`DELETE FROM local_chat_attachments WHERE message_id = ?`, [messageId]);
-
-  // 2. Call Supabase RPC
-  const { error } = await supabase.rpc('delete_own_chat_message', {
-    p_message_id: messageId,
-  });
-
-  if (error) {
-    throw parseChatError(error);
-  }
 }
 
 /**

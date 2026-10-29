@@ -1,6 +1,7 @@
 ﻿import { PGlite } from '@electric-sql/pglite';
 import { citext } from '@electric-sql/pglite/contrib/citext';
 import { readFile, readdir } from 'node:fs/promises';
+import { runPairInvitePreviewTests } from './pair_invite_preview_cases.mjs';
 const db = new PGlite({ extensions: { citext } });
 await db.exec(`create role anon; create role authenticated; create role service_role bypassrls;
 create schema auth; create table auth.users(id uuid primary key,email text, raw_user_meta_data jsonb default '{}'::jsonb,created_at timestamptz default now());
@@ -22,6 +23,13 @@ for (const f of (await readdir('supabase/migrations')).filter((f) => f.endsWith(
 console.log(`Database migrations: ${migrations} passed`);
 const { runRoomTests } = await import('./rooms_v3_cases.mjs');
 try {
+  const { runCommunityLimitTests } = await import('./community_limit_cases.mjs');
+  await runCommunityLimitTests(db);
+  const { runRoomMatrixTests } = await import('./room_matrix_cases.mjs');
+  await runRoomMatrixTests(db);
+  const { runChatConcurrencyTests } = await import('./chat_concurrency_cases.mjs');
+  await runChatConcurrencyTests(db);
+  await runPairInvitePreviewTests(db);
   await runRoomTests(db);
   const { runFriendTests } = await import('./friends_cases.mjs');
   await runFriendTests(db);

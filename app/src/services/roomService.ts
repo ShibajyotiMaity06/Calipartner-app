@@ -20,130 +20,9 @@ import { getOrGenerateDeviceHash } from './deviceService';
  * List all active rooms the authenticated user belongs to.
  */
 export async function listUserRooms(client: SupabaseClient): Promise<RoomSummary[]> {
-  try {
-    const { data: userData, error: userError } = await client.auth.getUser();
-    if (userError || !userData?.user) {
-      throw parseRoomError('UNAUTHENTICATED');
-    }
-    const userId = userData.user.id;
-
-    // Fetch rooms and caller's membership
-    let data: unknown[] | null = null;
-    const primaryAttempt = await client
-      .from('room_members')
-      .select(
-        `role, status, room_id,
-         rooms ( id, name, code, state, who_can_invite, plan_holder_id, member_cap, created_at )`,
-      )
-      .eq('user_id', userId)
-      .in('status', ['active', 'paused', 'locked']);
-
-    if (primaryAttempt.error) {
-      // Graceful fallback if migration 20261008000006 is not applied yet on remote DB
-      const fallbackAttempt = await client
-        .from('room_members')
-        .select(
-          `role, status, room_id,
-           rooms ( id, name, code, state, who_can_invite, created_at )`,
-        )
-        .eq('user_id', userId)
-        .in('status', ['active', 'paused', 'locked']);
-
-      if (fallbackAttempt.error) {
-        throw parseRoomError(fallbackAttempt.error);
-      }
-      data = fallbackAttempt.data;
-    } else {
-      data = primaryAttempt.data;
-    }
-
-    interface RoomMembershipRow {
-      room_id: string;
-      role: 'host' | 'member';
-      status: 'active' | 'paused' | 'locked';
-      rooms:
-        | {
-            id: string;
-            name: string;
-            code: string;
-            state: 'active' | 'dormant' | 'locked' | 'over_capacity' | 'archived';
-            created_at: string;
-            who_can_invite?: 'host_only' | 'any_member';
-            plan_holder_id?: string | null;
-            member_cap?: number;
-          }
-        | {
-            id: string;
-            name: string;
-            code: string;
-            state: 'active' | 'dormant' | 'locked' | 'over_capacity' | 'archived';
-            created_at: string;
-            who_can_invite?: 'host_only' | 'any_member';
-            plan_holder_id?: string | null;
-            member_cap?: number;
-          }[]
-        | null;
-    }
-
-    const rows = (data ?? []) as unknown as RoomMembershipRow[];
-    if (rows.length === 0) {
-      return [];
-    }
-
-    const roomIds = rows.map((item) => item.room_id);
-
-    // Count members in each room (resilient fallback)
-    const countsMap = new Map<string, number>();
-    try {
-      const { data: memberCounts, error: countError } = await client
-        .from('room_members')
-        .select('room_id')
-        .in('room_id', roomIds)
-        .in('status', ['active', 'paused', 'locked']);
-
-      if (!countError && memberCounts) {
-        for (const m of memberCounts) {
-          countsMap.set(m.room_id, (countsMap.get(m.room_id) ?? 0) + 1);
-        }
-      }
-    } catch {
-      // Non-fatal: default to 1 if member count query fails
-    }
-
-    const result: RoomSummary[] = [];
-    for (const row of rows) {
-      const rawRoom = row.rooms;
-      const room = (Array.isArray(rawRoom) ? rawRoom[0] : rawRoom) as {
-        id: string;
-        name: string;
-        code: string;
-        state: 'active' | 'dormant' | 'locked' | 'over_capacity' | 'archived';
-        created_at: string;
-        who_can_invite?: 'host_only' | 'any_member';
-        plan_holder_id?: string | null;
-        member_cap?: number;
-      } | null;
-
-      if (room && room.state !== 'archived') {
-        result.push({
-          id: room.id,
-          name: room.name,
-          code: room.code,
-          state: row.status === 'locked' ? 'locked' : room.state,
-          role: row.role,
-          member_count: countsMap.get(room.id) ?? 1,
-          created_at: room.created_at,
-          who_can_invite: room.who_can_invite ?? 'host_only',
-          plan_holder_id: room.plan_holder_id,
-          member_cap: room.member_cap ?? 5,
-        });
-      }
-    }
-
-    return result;
-  } catch (err) {
-    throw parseRoomError(err);
-  }
+  const { data, error } = await client.rpc('get_my_rooms');
+  if (error) throw parseRoomError(error);
+  return (data ?? []) as RoomSummary[];
 }
 
 /**
@@ -565,12 +444,14 @@ export async function sendNudge(
   roomId: string,
   recipientId: string,
   messageTemplate: string,
+  clientId = generateClientUuid(),
 ): Promise<{ status: 'sent'; nudge_id: string }> {
   try {
-    const { data, error } = await client.rpc('nudge', {
+    const { data, error } = await client.rpc('send_room_nudge_v2', {
+      p_client_id: clientId,
       p_room_id: roomId,
       p_recipient_id: recipientId,
-      p_message_template: messageTemplate,
+      p_message: messageTemplate,
     });
 
     if (error) {
@@ -609,6 +490,21 @@ export async function sendReaction(
   }
 }
 
+export async function sendMemberReaction(
+  client: SupabaseClient,
+  roomId: string,
+  targetId: string,
+  reaction: RoomReactionType,
+) {
+  const { data, error } = await client.rpc('react_to_room_member', {
+    p_room_id: roomId,
+    p_target_user_id: targetId,
+    p_reaction: reaction,
+  });
+  if (error) throw parseRoomError(error);
+  return data;
+}
+
 /**
  * Tag room members in a shared meal.
  */
@@ -617,21 +513,11 @@ export async function tagSharedMeal(
   payload: TagSharedMealInput,
 ): Promise<{ status: 'created'; shared_meal_id: string }> {
   try {
-    const { data, error } = await client.rpc('tag_shared_meal', {
+    const { data, error } = await client.rpc('share_room_meal', {
       p_room_id: payload.roomId,
-      p_food_id: payload.foodId ?? null,
-      p_food_name: payload.foodName,
-      p_meal_section: payload.mealSection,
-      p_quantity: payload.quantity,
-      p_unit: payload.unit,
-      p_calories: payload.calories,
-      p_protein: payload.protein,
-      p_carbs: payload.carbs,
-      p_fat: payload.fat,
-      p_fiber: payload.fiber ?? 0,
-      p_sugar: payload.sugar ?? 0,
-      p_sodium_mg: payload.sodiumMg ?? 0,
-      p_participant_ids: payload.participantIds,
+      p_food_entry_id: payload.foodEntryId,
+      p_client_id: payload.clientId,
+      p_participant_user_ids: payload.participantIds,
     });
 
     if (error) {
@@ -732,7 +618,7 @@ export async function transferHost(
   try {
     const { data, error } = await client.rpc('transfer_host', {
       p_room_id: roomId,
-      p_new_host_id: newHostId,
+      p_target_user_id: newHostId,
     });
 
     if (error) {

@@ -52,7 +52,7 @@ export function useFriendDiscovery(goal: FriendGoal, query: string, random = fal
               ]
             : result.data,
         );
-        setHasMore(!random && result.data.length === 30);
+        setHasMore(!random && Boolean(query.trim().replace(/^@/, '')) && result.data.length === 30);
         setCached(result.cached);
       } catch {
         if (current === version.current) setError(true);

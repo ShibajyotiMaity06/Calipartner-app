@@ -40,10 +40,20 @@ export async function preparePairInvite(userId: string, roomName: string) {
     requestId = generateClientUuid();
     await secureStoreAdapter.setItem(key, requestId);
   }
-  const { data, error } = await client.rpc('prepare_onboarding_pair_invite', {
+  let { data, error } = await client.rpc('prepare_onboarding_pair_invite', {
     p_client_id: requestId,
     p_room_name: roomName,
   });
+  if (error?.message.includes('INVITE_ALREADY_USED')) {
+    requestId = generateClientUuid();
+    await secureStoreAdapter.setItem(key, requestId);
+    const retry = await client.rpc('prepare_onboarding_pair_invite', {
+      p_client_id: requestId,
+      p_room_name: roomName,
+    });
+    data = retry.data;
+    error = retry.error;
+  }
   if (error) throw error;
   if (!isPairToken(data?.token)) throw new Error('INVALID_INVITE');
   return { token: data.token as string, expiresAt: data.expires_at as string };
@@ -59,4 +69,22 @@ export async function acceptPairInvite(token: string) {
   const auth = await getSupabase().auth.getUser();
   if (auth.data.user) await finishPairPrompt(auth.data.user.id);
   return data.room_id as string;
+}
+
+export interface PairInvitePreview {
+  state: 'sender' | 'member' | 'joinable' | 'unavailable';
+  room_id?: string;
+  is_sender?: boolean;
+  can_share?: boolean;
+  reason?: 'expired' | 'host_limit';
+}
+export async function previewPairInvite(token: string): Promise<PairInvitePreview> {
+  if (!isPairToken(token)) throw new Error('INVALID_INVITE');
+  const { data, error } = await getSupabase().rpc('preview_onboarding_pair_invite', {
+    p_token: token,
+  });
+  if (error) throw error;
+  if (!data || !['sender', 'member', 'joinable', 'unavailable'].includes(data.state))
+    throw new Error('INVALID_INVITE');
+  return data as PairInvitePreview;
 }

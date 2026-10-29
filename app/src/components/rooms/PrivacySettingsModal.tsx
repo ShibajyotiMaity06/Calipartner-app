@@ -1,36 +1,37 @@
 import React, { useEffect, useState } from 'react';
-import {
-  ActivityIndicator,
-  Modal,
-  SafeAreaView,
-  ScrollView,
-  StyleSheet,
-  TouchableOpacity,
-  View,
-} from 'react-native';
-import {
-  Card,
-  ChevronLeftIcon,
-  dark,
-  ListRow,
-  radius,
-  space,
-  SwitchRow,
-  Text,
-} from '@calipartner/ui';
+import { Modal, SafeAreaView, ScrollView, StyleSheet, View } from 'react-native';
+import { Button, Card, dark, space, SwitchRow, Text } from '@calipartner/ui';
 import type { RoomPrivacySettings } from '@calipartner/core';
 import { t } from '@/i18n';
-import { PerRoomVisibilityModal, PreviewAsPartnerModal } from '@/components/profile';
-
+import { useAuth } from '@/contexts/AuthContext';
+import { useNetworkStatus } from '@/hooks/useNetworkStatus';
+import { getSupabase } from '@/lib/supabase';
+import { fetchLeaderboardOptOutStatus, setLeaderboardOptOut } from '@/services/leaderboardService';
+import { PerRoomVisibilityModal } from '@/components/profile/PerRoomVisibilityModal';
+import { PreviewAsPartnerModal } from '@/components/profile/PreviewAsPartnerModal';
+import type { RoomSummary } from '@/types/rooms';
 export interface PrivacySettingsModalProps {
   visible: boolean;
   onClose: () => void;
+  roomId?: string;
+  rooms?: RoomSummary[];
   onGetPrivacy: () => Promise<RoomPrivacySettings>;
   onUpdatePrivacy: (settings: Partial<RoomPrivacySettings>) => Promise<RoomPrivacySettings>;
   onOpenPerRoom?: () => void;
   onOpenPreviewPartner?: () => void;
 }
-
+const fields = [
+  ['share_goal_completion', 'roomAudit.goal'],
+  ['share_steps', 'roomAudit.steps'],
+  ['share_water', 'roomAudit.water'],
+  ['share_streak', 'roomAudit.logging'],
+  ['share_weight_number', 'rooms.privacyModal.weight'],
+  ['share_weight_progress', 'roomAudit.weightProgress'],
+  ['share_workouts', 'rooms.privacyModal.workouts'],
+  ['share_focus_status', 'rooms.privacyModal.focusing'],
+  ['share_focus_label', 'rooms.privacyModal.focusLabels'],
+  ['share_fasting', 'rooms.privacyModal.fasting'],
+] as const;
 export function PrivacySettingsModal({
   visible,
   onClose,
@@ -38,299 +39,166 @@ export function PrivacySettingsModal({
   onUpdatePrivacy,
   onOpenPerRoom,
   onOpenPreviewPartner,
+  roomId,
+  rooms = [],
 }: PrivacySettingsModalProps) {
+  const { profile, updateProfile } = useAuth();
+  const { isOnline } = useNetworkStatus();
   const [settings, setSettings] = useState<RoomPrivacySettings | null>(null);
+  const [optedOut, setOptedOut] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [showInternalPerRoom, setShowInternalPerRoom] = useState(false);
-  const [showInternalPreview, setShowInternalPreview] = useState(false);
-
-  // Discoverability and leaderboard switches
-  const [discoverable, setDiscoverable] = useState(true);
-  const [appearOnLeaderboards, setAppearOnLeaderboards] = useState(true);
-
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState(false);
+  const [retry, setRetry] = useState(0);
+  const [subModal, setSubModal] = useState<'rooms' | 'preview' | null>(null);
   useEffect(() => {
-    if (visible) {
-      setLoading(true);
-      onGetPrivacy()
-        .then((s) => setSettings(s))
-        .catch(() => {})
-        .finally(() => setLoading(false));
-    }
-  }, [visible, onGetPrivacy]);
-
-  const toggleField = async (key: keyof RoomPrivacySettings) => {
-    if (!settings) return;
-    const updatedVal = !settings[key];
-    const newSettings = { ...settings, [key]: updatedVal };
-    setSettings(newSettings);
+    let current = true;
+    if (!visible) return;
+    setSettings(null);
+    setLoading(true);
+    setError(false);
+    void Promise.all([onGetPrivacy(), fetchLeaderboardOptOutStatus(getSupabase())])
+      .then(([privacy, optOut]) => {
+        if (current) {
+          setSettings(privacy);
+          setOptedOut(optOut);
+        }
+      })
+      .catch(() => {
+        if (current) setError(true);
+      })
+      .finally(() => {
+        if (current) setLoading(false);
+      });
+    return () => {
+      current = false;
+    };
+  }, [visible, onGetPrivacy, retry]);
+  const change = async (operation: () => Promise<void>) => {
+    if (saving || isOnline === false) return;
+    setSaving(true);
+    setError(false);
     try {
-      await onUpdatePrivacy({ [key]: updatedVal });
+      await operation();
     } catch {
-      // Revert if error
-      setSettings(settings);
+      setError(true);
+    } finally {
+      setSaving(false);
     }
   };
-
-  const handleOpenPerRoom = () => {
-    if (onOpenPerRoom) {
-      onOpenPerRoom();
-    } else {
-      setShowInternalPerRoom(true);
-    }
-  };
-
-  const handleOpenPreview = () => {
-    if (onOpenPreviewPartner) {
-      onOpenPreviewPartner();
-    } else {
-      setShowInternalPreview(true);
-    }
-  };
-
-  const isMealsShared =
-    settings?.share_meals !== 'never' && Boolean(settings?.share_calories_macros);
-  const isWeightShared = Boolean(settings?.share_weight_number);
-  const isWorkoutsShared = Boolean(settings?.share_workouts);
-  const isFocusStatusShared = Boolean(
-    settings?.share_focus_status ?? settings?.focus_status ?? true,
-  );
-  const isFocusLabelsShared = Boolean(
-    settings?.share_focus_label ?? settings?.focus_label ?? false,
-  );
-  const isFastingShared = Boolean(settings?.share_fasting ?? false);
-
+  const patch = (value: Partial<RoomPrivacySettings>) =>
+    void change(async () => {
+      setSettings(await onUpdatePrivacy(value));
+    });
+  const disabled = saving || isOnline === false;
   return (
-    <Modal visible={visible} animationType="slide" transparent={false} onRequestClose={onClose}>
-      <SafeAreaView style={styles.safeArea}>
-        <View style={styles.container} testID="modal-privacy-settings">
-          {/* Top Bar with 44x44 Close Button */}
-          <View style={styles.topBar}>
-            <TouchableOpacity
-              onPress={onClose}
-              accessibilityRole="button"
-              accessibilityLabel="Back"
-              style={styles.backButton}
-              testID="btn-close-privacy-modal"
-            >
-              <ChevronLeftIcon color={dark.textHi} size={24} />
-            </TouchableOpacity>
-            <Text variant="heading" color={dark.textHi}>
-              {t('rooms.privacyModal.title')}
-            </Text>
-            <View style={styles.backButtonPlaceholder} />
-          </View>
-
-          {loading ? (
-            <View style={styles.loadingContainer}>
-              <ActivityIndicator size="large" color={dark.apricot} />
-            </View>
-          ) : (
-            <ScrollView
-              showsVerticalScrollIndicator={false}
-              contentContainerStyle={styles.scrollContent}
-            >
-              {/* Intro Line */}
-              <Text variant="body" color={dark.textHi} style={styles.introHeading}>
-                {t('rooms.privacyModal.intro')}
+    <Modal visible={visible} onRequestClose={onClose} animationType="slide">
+      <SafeAreaView style={styles.screen}>
+        <ScrollView contentContainerStyle={styles.content} testID="modal-privacy-settings">
+          <Button
+            variant="tertiary"
+            label={t('rooms.paywall.close')}
+            onPress={onClose}
+            testID="btn-close-privacy-modal"
+          />
+          <Text variant="title2">{t('rooms.privacyModal.title')}</Text>
+          <Text>{t('rooms.privacyModal.intro')}</Text>
+          <Text color={dark.textMid}>{t('rooms.privacyModal.immediateNote')}</Text>
+          {isOnline === false ? (
+            <Text accessibilityLiveRegion="polite">{t('roomAudit.onlinePrivacy')}</Text>
+          ) : null}
+          {loading ? <Text>{t('common.loading')}</Text> : null}
+          {error ? (
+            <View>
+              <Text accessibilityRole="alert" color={dark.danger}>
+                {t('roomAudit.privacyError')}
               </Text>
-
-              {/* Immediate effect notice (Rule PRV-2) */}
-              <Card elevation="s2" style={styles.noticeCard}>
-                <Text variant="bodyS" color={dark.textMid}>
-                  {t('rooms.privacyModal.immediateNote')}
-                </Text>
-              </Card>
-
-              {/* Group 1: Diary and Body */}
-              <View style={styles.sectionWrap}>
-                <Text variant="label" color={dark.textHi} style={styles.sectionHeader}>
-                  Diary and physical metrics
-                </Text>
-                <Card elevation="s1" style={styles.groupCard}>
-                  <SwitchRow
-                    title={t('rooms.privacyModal.mealItems')}
-                    consequence={t('rooms.privacyModal.mealItemsConsequence')}
-                    value={isMealsShared}
-                    onValueChange={() => toggleField('share_calories_macros')}
-                    testID="switch-share-meal-items"
-                  />
-                  <SwitchRow
-                    title={t('rooms.privacyModal.weight')}
-                    consequence={t('rooms.privacyModal.weightConsequence')}
-                    value={isWeightShared}
-                    onValueChange={() => toggleField('share_weight_number')}
-                    testID="switch-share-weight-number"
-                  />
-                  <SwitchRow
-                    title={t('rooms.privacyModal.workouts')}
-                    consequence={t('rooms.privacyModal.workoutsConsequence')}
-                    value={isWorkoutsShared}
-                    onValueChange={() => toggleField('share_workouts')}
-                    testID="switch-share-workouts"
-                  />
-                  <SwitchRow
-                    title={t('rooms.privacyModal.fasting')}
-                    consequence={t('rooms.privacyModal.fastingConsequence')}
-                    value={isFastingShared}
-                    onValueChange={() => toggleField('share_fasting')}
-                    testID="switch-share-fasting"
-                  />
-                </Card>
-              </View>
-
-              {/* Group 2: Focus */}
-              <View style={styles.sectionWrap}>
-                <Text variant="label" color={dark.textHi} style={styles.sectionHeader}>
-                  Focus sessions
-                </Text>
-                <Card elevation="s1" style={styles.groupCard}>
-                  <SwitchRow
-                    title={t('rooms.privacyModal.focusing')}
-                    consequence={t('rooms.privacyModal.focusingConsequence')}
-                    value={isFocusStatusShared}
-                    onValueChange={() => toggleField('share_focus_status')}
-                    testID="switch-share-focus-status"
-                  />
-                  <SwitchRow
-                    title={t('rooms.privacyModal.focusLabels')}
-                    consequence={t('rooms.privacyModal.focusLabelsConsequence')}
-                    value={isFocusLabelsShared}
-                    onValueChange={() => toggleField('share_focus_label')}
-                    testID="switch-share-focus-label"
-                  />
-                </Card>
-              </View>
-
-              {/* Group 3: Community & Discoverability */}
-              <View style={styles.sectionWrap}>
-                <Text variant="label" color={dark.textHi} style={styles.sectionHeader}>
-                  Community and discoverability
-                </Text>
-                <Card elevation="s1" style={styles.groupCard}>
-                  <SwitchRow
-                    title={t('rooms.privacyModal.discoverable')}
-                    consequence={t('rooms.privacyModal.discoverableConsequence')}
-                    value={discoverable}
-                    onValueChange={setDiscoverable}
-                    testID="switch-discoverable"
-                  />
-                  <SwitchRow
-                    title={t('rooms.privacyModal.leaderboard')}
-                    consequence={t('rooms.privacyModal.leaderboardConsequence')}
-                    value={appearOnLeaderboards}
-                    onValueChange={setAppearOnLeaderboards}
-                    testID="switch-appear-leaderboard"
-                  />
-                </Card>
-              </View>
-
-              {/* Group 4: Per-Room & Partner Preview Links */}
-              <View style={styles.sectionWrap}>
-                <Text variant="label" color={dark.textHi} style={styles.sectionHeader}>
-                  Room controls and preview
-                </Text>
-                <Card elevation="s1" style={styles.groupCard}>
-                  <ListRow
-                    title={t('rooms.privacyModal.perRoomLink')}
-                    subtitle={t('rooms.privacyModal.perRoomLinkSubtitle')}
-                    onPress={handleOpenPerRoom}
-                    testID="btn-per-room-visibility"
-                  />
-                  <ListRow
-                    title={t('rooms.privacyModal.previewPartnerLink')}
-                    subtitle={t('rooms.privacyModal.previewPartnerLinkSubtitle')}
-                    onPress={handleOpenPreview}
-                    testID="btn-preview-partner"
-                  />
-                </Card>
-              </View>
-
-              {/* Hidden legacy / test compatibility elements */}
-              <View style={styles.hiddenCompat} pointerEvents="none">
-                <View testID="switch-share_workouts" />
-                <View testID="switch-share_weight_number" />
-                <View testID="switch-share_calories_macros" />
-                <View testID="switch-share_streak" />
-                <View testID="switch-share_steps" />
-                <View testID="switch-share_water" />
-              </View>
-            </ScrollView>
-          )}
-
-          {/* Internal sub-modals for per-room and preview */}
-          <PerRoomVisibilityModal
-            visible={showInternalPerRoom}
-            onClose={() => setShowInternalPerRoom(false)}
+              {!settings ? (
+                <Button
+                  variant="secondary"
+                  label={t('common.retry')}
+                  onPress={() => setRetry((v) => v + 1)}
+                  testID="retry-room-privacy"
+                />
+              ) : null}
+            </View>
+          ) : null}
+          {settings ? (
+            <Card>
+              <SwitchRow
+                title={t('rooms.privacyModal.mealItems')}
+                consequence={t('rooms.privacyModal.mealItemsConsequence')}
+                value={settings.share_meals !== 'never' && settings.share_calories_macros}
+                disabled={disabled}
+                onValueChange={(value) =>
+                  patch({ share_meals: value ? 'always' : 'never', share_calories_macros: value })
+                }
+                testID="switch-share-meal-items"
+              />
+              {fields.map(([key, label]) => (
+                <SwitchRow
+                  key={key}
+                  title={t(label)}
+                  value={Boolean(settings[key])}
+                  disabled={disabled}
+                  onValueChange={(value) => patch({ [key]: value })}
+                  testID={`switch-${key.replaceAll('_', '-')}`}
+                />
+              ))}
+            </Card>
+          ) : null}
+          <Card>
+            <SwitchRow
+              title={t('rooms.privacyModal.discoverable')}
+              consequence={t('rooms.privacyModal.discoverableConsequence')}
+              value={profile?.discoverable ?? false}
+              disabled={disabled || !profile}
+              onValueChange={(discoverable) =>
+                void change(async () => {
+                  const result = await updateProfile({ discoverable });
+                  if (result.error) throw result.error;
+                })
+              }
+              testID="switch-discoverable"
+            />
+            <SwitchRow
+              title={t('rooms.privacyModal.leaderboard')}
+              consequence={t('rooms.privacyModal.leaderboardConsequence')}
+              value={!optedOut}
+              disabled={disabled || loading}
+              onValueChange={(enabled) =>
+                void change(async () => {
+                  await setLeaderboardOptOut(getSupabase(), !enabled);
+                  setOptedOut(!enabled);
+                })
+              }
+              testID="switch-appear-leaderboard"
+            />
+          </Card>
+          <Button
+            variant="secondary"
+            label={t('rooms.privacyModal.perRoomLink')}
+            onPress={onOpenPerRoom ?? (() => setSubModal('rooms'))}
+            testID="btn-per-room-visibility"
           />
-
-          <PreviewAsPartnerModal
-            visible={showInternalPreview}
-            onClose={() => setShowInternalPreview(false)}
-            userPercent={isMealsShared ? 78 : 0}
-            isPartnerDataHidden={!isMealsShared}
+          <Button
+            variant="secondary"
+            label={t('rooms.privacyModal.previewPartnerLink')}
+            onPress={onOpenPreviewPartner ?? (() => setSubModal('preview'))}
+            testID="btn-preview-partner"
           />
-        </View>
+        </ScrollView>
+        {subModal === 'rooms' ? (
+          <PerRoomVisibilityModal visible rooms={rooms} onClose={() => setSubModal(null)} />
+        ) : null}
+        {subModal === 'preview' ? (
+          <PreviewAsPartnerModal visible roomId={roomId} onClose={() => setSubModal(null)} />
+        ) : null}
       </SafeAreaView>
     </Modal>
   );
 }
-
 const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
-    backgroundColor: dark.bg0,
-  },
-  container: {
-    flex: 1,
-    backgroundColor: dark.bg0,
-  },
-  topBar: {
-    height: 56,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: space[4],
-    borderBottomWidth: 1,
-    borderBottomColor: dark.hairline,
-  },
-  backButton: {
-    width: 44,
-    height: 44,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  backButtonPlaceholder: {
-    width: 44,
-  },
-  loadingContainer: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  scrollContent: {
-    padding: space[4],
-    paddingBottom: space[8],
-  },
-  introHeading: {
-    marginBottom: space[2],
-  },
-  noticeCard: {
-    padding: space[3],
-    marginBottom: space[5],
-  },
-  sectionWrap: {
-    marginBottom: space[5],
-  },
-  sectionHeader: {
-    marginBottom: space[2],
-    paddingHorizontal: space[1],
-  },
-  groupCard: {
-    paddingVertical: space[1],
-    borderRadius: radius.card,
-  },
-  hiddenCompat: {
-    opacity: 0,
-    height: 0,
-  },
+  screen: { flex: 1, backgroundColor: dark.bg0 },
+  content: { padding: space[4], gap: space[3], paddingBottom: space[8] },
 });

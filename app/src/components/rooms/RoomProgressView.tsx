@@ -11,6 +11,7 @@ import {
   View,
 } from 'react-native';
 import Svg, { Line, Path, Text as SvgText } from 'react-native-svg';
+import { dark, space, onboardingLayout as layout } from '@calipartner/ui';
 import { Ionicons } from '@expo/vector-icons';
 import type {
   ProgressMetric,
@@ -30,13 +31,13 @@ interface RoomProgressViewProps {
 }
 
 const NEUTRAL_PALETTE = [
-  '#3b82f6', // blue
-  '#8b5cf6', // purple
-  '#06b6d4', // cyan
-  '#f59e0b', // amber
-  '#ec4899', // pink
-  '#10b981', // emerald
-  '#64748b', // slate
+  dark.iris,
+  dark.teal,
+  dark.sky,
+  dark.orchid,
+  dark.rose,
+  dark.copper,
+  dark.cream,
 ];
 
 export type ProgressMetricWithFocus = ProgressMetric | 'focus';
@@ -100,7 +101,7 @@ export function RoomProgressView({ roomId, testID = 'room-progress-view' }: Room
   const memberColorMap = useMemo(() => {
     const map = new Map<string, string>();
     memberSeriesList.forEach((m, i) => {
-      map.set(m.user_id, NEUTRAL_PALETTE[i % NEUTRAL_PALETTE.length] ?? '#3b82f6');
+      map.set(m.user_id, NEUTRAL_PALETTE[i % NEUTRAL_PALETTE.length] ?? dark.iris);
     });
     return map;
   }, [memberSeriesList]);
@@ -136,7 +137,7 @@ export function RoomProgressView({ roomId, testID = 'room-progress-view' }: Room
   }, [data?.summary_table, sortByConsistency]);
 
   // Chart coordinate calculations
-  const width = 340;
+  const width = space[9] * 5 + space[5];
   const height = 180;
   const padTop = 15;
   const padBottom = 25;
@@ -490,7 +491,7 @@ export function RoomProgressView({ roomId, testID = 'room-progress-view' }: Room
           </View>
         ) : (
           <View style={styles.svgWrapper}>
-            <Svg width={width} height={height}>
+            <Svg width="100%" height={height} viewBox={`0 0 ${width} ${height}`}>
               {/* Y Axis Grid lines */}
               <Line
                 x1={padLeft}
@@ -656,9 +657,9 @@ export function RoomProgressView({ roomId, testID = 'room-progress-view' }: Room
                 <View style={styles.detailItem}>
                   <Text style={[styles.detailKey, { color: colors.textMuted }]}>Weight</Text>
                   <Text style={[styles.detailVal, { color: colors.text }]}>
-                    {typeof row.weight_change_kg === 'number'
-                      ? `${row.weight_change_kg > 0 ? '+' : ''}${row.weight_change_kg.toFixed(1)} kg`
-                      : row.weight_change_kg === 'locked'
+                    {typeof row.weight_change_pct === 'number'
+                      ? `${row.weight_change_pct > 0 ? '+' : ''}${row.weight_change_pct.toFixed(1)}%`
+                      : row.weight_change_pct === 'locked'
                         ? '🔒 Private'
                         : '--'}
                   </Text>
@@ -753,6 +754,10 @@ export function RoomProgressView({ roomId, testID = 'room-progress-view' }: Room
                   <Pressable
                     style={[styles.searchResultRow, { borderBottomColor: colors.border }]}
                     onPress={() => toggleMemberSelection(item.user_id)}
+                    accessibilityRole="checkbox"
+                    accessibilityLabel={item.nickname}
+                    accessibilityState={{ checked: isSelected }}
+                    testID={`progress-member-option-${item.user_id}`}
                   >
                     <View>
                       <Text style={[styles.resultNickname, { color: colors.text }]}>
@@ -775,6 +780,9 @@ export function RoomProgressView({ roomId, testID = 'room-progress-view' }: Room
             <Pressable
               style={[styles.modalDoneBtn, { backgroundColor: colors.accent }]}
               onPress={() => setShowMemberPicker(false)}
+              testID="close-progress-member-picker"
+              accessibilityRole="button"
+              accessibilityLabel={t('rooms.paywall.close')}
             >
               <Text style={styles.modalDoneText}>Done</Text>
             </Pressable>
@@ -1045,6 +1053,7 @@ const styles = StyleSheet.create({
     marginBottom: spacing.sm,
   },
   searchResultRow: {
+    minHeight: layout.touch,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',

@@ -15,6 +15,8 @@ export interface PairRingProps extends AccessibilityProps {
   userPercent: number;
   /** Partner's goal completion percentage (e.g. 64) */
   partnerPercent?: number;
+  isPartnerDataHidden?: boolean;
+  privateLabel?: string;
   /** Name of the partner (for accessibility and pill). Default "Partner" */
   partnerName?: string;
   /** User's identity color hue (default 'iris') */
@@ -45,6 +47,8 @@ export function PairRing({
   size = 184,
   userPercent,
   partnerPercent = 0,
+  isPartnerDataHidden = false,
+  privateLabel = 'Not shared',
   partnerName = 'Partner',
   userHue = 'iris',
   partnerHue = 'teal',
@@ -143,7 +147,7 @@ export function PairRing({
   const userOffset2 = circOuter * (1 - userLap2Pct / 100);
 
   // Partner arc calculations
-  const clampedPartner = Math.max(0, renderedPartnerPct);
+  const clampedPartner = isPartnerDataHidden ? 0 : Math.max(0, renderedPartnerPct);
   const partnerLap1Pct = Math.min(100, clampedPartner);
   const partnerLap2Pct = Math.min(100, Math.max(0, clampedPartner - 100));
 
@@ -163,7 +167,7 @@ export function PairRing({
 
   // Spec a11y label
   const defaultA11y = hasPartner
-    ? `Your goal, ${Math.round(userPercent)} percent complete. ${partnerName}'s goal, ${Math.round(partnerPercent)} percent complete.`
+    ? `Your goal, ${Math.round(userPercent)} percent complete. ${partnerName}'s goal, ${isPartnerDataHidden ? privateLabel : `${Math.round(partnerPercent)} percent complete`}.`
     : `Your goal, ${Math.round(userPercent)} percent complete. No partner connected.`;
 
   return (

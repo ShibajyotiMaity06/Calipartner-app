@@ -23,6 +23,11 @@ export function useRoomSnapshot(
   const [loading, setLoading] = useState<boolean>(Boolean(roomId && isVisible));
   const [error, setError] = useState<RoomServiceError | null>(null);
   const channelRef = useRef<RealtimeChannel | null>(null);
+  const requestVersion = useRef(0);
+  const snapshotRoom = useRef(roomId);
+  const invalidate = useCallback(() => {
+    requestVersion.current++;
+  }, []);
 
   const selectedUserId = options?.selectedUserId;
   const search = options?.search;
@@ -30,6 +35,7 @@ export function useRoomSnapshot(
   const pageSize = options?.pageSize;
 
   const refresh = useCallback(async () => {
+    const version = ++requestVersion.current;
     if (!roomId) {
       setSnapshot(null);
       setLoading(false);
@@ -46,16 +52,21 @@ export function useRoomSnapshot(
         page,
         pageSize,
       });
-      setSnapshot(data);
+      if (version === requestVersion.current) setSnapshot(data);
     } catch (err: unknown) {
       const serviceErr = err instanceof RoomServiceError ? err : parseRoomError(err);
-      setError(serviceErr);
+      if (version === requestVersion.current) setError(serviceErr);
     } finally {
-      setLoading(false);
+      if (version === requestVersion.current) setLoading(false);
     }
   }, [roomId, selectedUserId, search, page, pageSize]);
 
   useEffect(() => {
+    if (snapshotRoom.current !== roomId) {
+      snapshotRoom.current = roomId;
+      setSnapshot(null);
+    }
+    setError(null);
     // If room is not visible or no roomId is specified, do not fetch or subscribe
     if (!roomId || !isVisible) {
       if (channelRef.current) {
@@ -115,15 +126,16 @@ export function useRoomSnapshot(
     channelRef.current = channel;
 
     return () => {
+      invalidate();
       if (channelRef.current) {
         supabase.removeChannel(channelRef.current);
         channelRef.current = null;
       }
     };
-  }, [roomId, isVisible, refresh]);
+  }, [roomId, isVisible, refresh, invalidate]);
 
   return {
-    snapshot,
+    snapshot: snapshot?.room.id === roomId ? snapshot : null,
     loading,
     error,
     refresh,

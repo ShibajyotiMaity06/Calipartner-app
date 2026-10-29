@@ -33,6 +33,9 @@ export interface PersonColumnProps extends AccessibilityProps {
   meals?: Record<MealType, MealStatus>;
   /** Whether this person's diary data is hidden by privacy settings (Spec CMP-25) */
   isDataHidden?: boolean;
+  isStepsHidden?: boolean;
+  isMealsHidden?: boolean;
+  privateLabel?: string;
   /** Whether this person has paused participation (Spec ROOM-10) */
   isPaused?: boolean;
   /** Date until which participation is paused (e.g. "24 Oct") */
@@ -71,6 +74,9 @@ export function PersonColumn({
   stepsGoal = 10000,
   meals = DEFAULT_MEALS,
   isDataHidden = false,
+  isStepsHidden = false,
+  isMealsHidden = false,
+  privateLabel = 'Not shared',
   isPaused = false,
   pauseUntilDate,
   avatarUrl,
@@ -89,9 +95,7 @@ export function PersonColumn({
   // Four fixed meal rows in order: Breakfast, Lunch, Dinner, Snacks
   const mealKeys: MealType[] = ['breakfast', 'lunch', 'dinner', 'snacks'];
 
-  const a11ySummary = `${name}: ${Math.round(percent)}% of goal, ${steps.toLocaleString()} steps. ${
-    isDataHidden ? 'Data is not shared.' : ''
-  }`;
+  const a11ySummary = `${name}: ${isDataHidden ? privateLabel : `${Math.round(percent)}%`}. ${isDataHidden || isStepsHidden ? privateLabel : `${steps.toLocaleString()} steps`}.`;
 
   return (
     <View
@@ -105,7 +109,7 @@ export function PersonColumn({
       <View style={[styles.headerRow, isLeft ? styles.headerRowLeft : styles.headerRowRight]}>
         <Avatar size="sm" name={name} uri={avatarUrl} identityHue={identityHue} />
         <View style={[styles.nameBlock, isLeft ? styles.nameBlockLeft : styles.nameBlockRight]}>
-          <Text variant="label" color={dark.textHi} numberOfLines={1}>
+          <Text variant="label" color={dark.textHi}>
             {name}
           </Text>
           {isPaused ? (
@@ -135,11 +139,11 @@ export function PersonColumn({
       <View style={styles.stepsSection}>
         <View style={styles.stepsTextRow}>
           <Text variant="micro" color={dark.textMid}>
-            {isDataHidden ? 'Steps: Not shared' : `${steps.toLocaleString()} steps`}
+            {isDataHidden || isStepsHidden ? privateLabel : `${steps.toLocaleString()} steps`}
           </Text>
         </View>
         <View style={styles.stepsTrack}>
-          {!isDataHidden && (
+          {!isDataHidden && !isStepsHidden && (
             <View
               style={[
                 styles.stepsFill,
@@ -155,66 +159,70 @@ export function PersonColumn({
 
       {/* 3. Four Meal Rows (Mirrored facing the seam) */}
       <View style={styles.mealsContainer}>
-        {mealKeys.map((mealKey) => {
-          const meal = meals[mealKey] || { logged: false };
-          const isLogged = meal.logged;
-          const label = MEAL_LABELS[mealKey];
+        {isDataHidden || isMealsHidden ? (
+          <HiddenMetric label={privateLabel} />
+        ) : (
+          mealKeys.map((mealKey) => {
+            const meal = meals[mealKey] || { logged: false };
+            const isLogged = meal.logged;
+            const label = MEAL_LABELS[mealKey];
 
-          // Status Glyph: facing the seam!
-          // If isLeft (You), glyph is at the right edge facing center seam.
-          // If isRight (Partner), glyph is at the left edge facing center seam.
-          const statusGlyph = (
-            <TouchableOpacity
-              activeOpacity={0.7}
-              onPress={() => onReactMeal?.(mealKey)}
-              onLongPress={() => onLongPressMeal?.(mealKey)}
-              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-              accessibilityLabel={`${label}: ${isLogged ? 'logged' : 'not logged'}`}
-              accessibilityRole="button"
-              style={styles.glyphTouchArea}
-            >
-              {isLogged ? (
-                <View style={[styles.loggedDot, { backgroundColor: personColor }]} />
-              ) : (
-                <View style={styles.unloggedCircle} />
-              )}
-            </TouchableOpacity>
-          );
+            // Status Glyph: facing the seam!
+            // If isLeft (You), glyph is at the right edge facing center seam.
+            // If isRight (Partner), glyph is at the left edge facing center seam.
+            const statusGlyph = (
+              <TouchableOpacity
+                activeOpacity={0.7}
+                onPress={() => onReactMeal?.(mealKey)}
+                onLongPress={() => onLongPressMeal?.(mealKey)}
+                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                accessibilityLabel={`${label}: ${isLogged ? 'logged' : 'not logged'}`}
+                accessibilityRole="button"
+                style={styles.glyphTouchArea}
+              >
+                {isLogged ? (
+                  <View style={[styles.loggedDot, { backgroundColor: personColor }]} />
+                ) : (
+                  <View style={styles.unloggedCircle} />
+                )}
+              </TouchableOpacity>
+            );
 
-          return (
-            <TouchableOpacity
-              key={mealKey}
-              activeOpacity={0.8}
-              onLongPress={() => onLongPressMeal?.(mealKey)}
-              disabled={!onLongPressMeal}
-              style={[styles.mealRow, isLeft ? styles.mealRowLeft : styles.mealRowRight]}
-            >
-              {isLeft ? (
-                <>
-                  <Text
-                    variant="bodyS"
-                    color={isLogged ? dark.textHi : dark.textMid}
-                    numberOfLines={1}
-                  >
-                    {label}
-                  </Text>
-                  {statusGlyph}
-                </>
-              ) : (
-                <>
-                  {statusGlyph}
-                  <Text
-                    variant="bodyS"
-                    color={isLogged ? dark.textHi : dark.textMid}
-                    numberOfLines={1}
-                  >
-                    {label}
-                  </Text>
-                </>
-              )}
-            </TouchableOpacity>
-          );
-        })}
+            return (
+              <TouchableOpacity
+                key={mealKey}
+                activeOpacity={0.8}
+                onLongPress={() => onLongPressMeal?.(mealKey)}
+                disabled={!onLongPressMeal}
+                style={[styles.mealRow, isLeft ? styles.mealRowLeft : styles.mealRowRight]}
+              >
+                {isLeft ? (
+                  <>
+                    <Text
+                      variant="bodyS"
+                      color={isLogged ? dark.textHi : dark.textMid}
+                      numberOfLines={1}
+                    >
+                      {label}
+                    </Text>
+                    {statusGlyph}
+                  </>
+                ) : (
+                  <>
+                    {statusGlyph}
+                    <Text
+                      variant="bodyS"
+                      color={isLogged ? dark.textHi : dark.textMid}
+                      numberOfLines={1}
+                    >
+                      {label}
+                    </Text>
+                  </>
+                )}
+              </TouchableOpacity>
+            );
+          })
+        )}
       </View>
     </View>
   );

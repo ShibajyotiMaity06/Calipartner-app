@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { FlatList, Modal, SafeAreaView, StyleSheet, TouchableOpacity, View } from 'react-native';
 import {
   Button,
@@ -9,6 +9,7 @@ import {
   space,
   Text,
 } from '@calipartner/ui';
+import { getSupabase } from '@/lib/supabase';
 import { t } from '@/i18n';
 import { playClickSound } from '@/lib/sound';
 
@@ -33,27 +34,69 @@ export function DiscoverabilityModal({
   onClose,
   discoverable = true,
   onUpdateDiscoverable,
-  blockedUsers = [],
+  blockedUsers,
   onUnblockUser,
   testID = 'modal-discoverability',
 }: DiscoverabilityModalProps) {
   const [isDiscoverable, setIsDiscoverable] = useState<boolean>(discoverable);
-  const [users, setUsers] = useState<BlockedUser[]>(blockedUsers);
+  const [users, setUsers] = useState<BlockedUser[]>(blockedUsers ?? []);
+  const [error, setError] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [busy, setBusy] = useState(false);
+  useEffect(() => {
+    let current = true;
+    if (!visible) return;
+    setIsDiscoverable(discoverable);
+    setError(false);
+    if (blockedUsers) {
+      setUsers(blockedUsers);
+      return;
+    }
+    setLoading(true);
+    void getSupabase()
+      .rpc('get_blocked_room_profiles')
+      .then(({ data, error }) => {
+        if (!current) return;
+        if (error) setError(true);
+        else setUsers(data ?? []);
+        setLoading(false);
+      });
+    return () => {
+      current = false;
+    };
+  }, [visible, discoverable, blockedUsers]);
 
   const handleToggle = async (id: string) => {
+    if (!onUpdateDiscoverable || busy) return;
     const nextVal = id === 'everyone';
-    setIsDiscoverable(nextVal);
+    setBusy(true);
+    setError(false);
     playClickSound();
-    if (onUpdateDiscoverable) {
+    try {
       await onUpdateDiscoverable(nextVal);
+      setIsDiscoverable(nextVal);
+    } catch {
+      setError(true);
+    } finally {
+      setBusy(false);
     }
   };
-
   const handleUnblock = async (userId: string) => {
+    if (busy) return;
+    setBusy(true);
+    setError(false);
     playClickSound();
-    setUsers((prev) => prev.filter((u) => u.id !== userId));
-    if (onUnblockUser) {
-      await onUnblockUser(userId);
+    try {
+      if (onUnblockUser) await onUnblockUser(userId);
+      else {
+        const result = await getSupabase().rpc('unblock_user', { p_target_user_id: userId });
+        if (result.error) throw result.error;
+      }
+      setUsers((previous) => previous.filter((user) => user.id !== userId));
+    } catch {
+      setError(true);
+    } finally {
+      setBusy(false);
     }
   };
 
@@ -79,6 +122,12 @@ export function DiscoverabilityModal({
           </View>
 
           <View style={styles.content}>
+            {error ? (
+              <Text accessibilityRole="alert" color={dark.danger}>
+                {t('roomAudit.privacyError')}
+              </Text>
+            ) : null}
+            {loading ? <Text>{t('common.loading')}</Text> : null}
             <Text variant="bodyS" color={dark.textMid} style={styles.introSubtitle}>
               {t('me.discoverability.subtitle')}
             </Text>
@@ -134,7 +183,8 @@ export function DiscoverabilityModal({
                         variant="secondary"
                         size="sm"
                         label={t('me.discoverability.unblockBtn')}
-                        onPress={() => handleUnblock(item.id)}
+                        disabled={busy}
+                        onPress={() => void handleUnblock(item.id)}
                         testID={`btn-unblock-${item.id}`}
                       />
                     </Card>

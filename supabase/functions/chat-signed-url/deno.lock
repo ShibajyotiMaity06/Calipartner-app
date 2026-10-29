@@ -6,7 +6,8 @@
     "npm:@supabase/functions-js@2.118.0": "2.118.0",
     "npm:@supabase/postgrest-js@2.118.0": "2.118.0",
     "npm:@supabase/realtime-js@2.118.0": "2.118.0",
-    "npm:@supabase/storage-js@2.118.0": "2.118.0"
+    "npm:@supabase/storage-js@2.118.0": "2.118.0",
+    "npm:aws4fetch@1.0.20": "1.0.20"
   },
   "jsr": {
     "@supabase/supabase-js@2.118.0": {
@@ -55,6 +56,9 @@
         "iceberg-js",
         "tslib"
       ]
+    },
+    "aws4fetch@1.0.20": {
+      "integrity": "sha512-/djoAN709iY65ETD6LKCtyyEI04XIBP5xVvfmNxsEP0uJB5tyaGBztSryRr4HqMStr9R06PisQE7m9zDTXKu6g=="
     },
     "iceberg-js@0.8.1": {
       "integrity": "sha512-1dhVQZXhcHje7798IVM+xoo/1ZdVfzOMIc8/rgVSijRK38EDqOJoGula9N/8ZI5RD8QTxNQtK/Gozpr+qUqRRA=="

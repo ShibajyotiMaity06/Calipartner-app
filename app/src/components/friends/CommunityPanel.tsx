@@ -12,7 +12,7 @@ import {
   useTheme,
 } from '@calipartner/ui';
 import type { SocialProfile } from '@calipartner/core';
-import { useFriendDiscovery, type FriendGoal } from '@/hooks/useFriendDiscovery';
+import { useFriendDiscovery } from '@/hooks/useFriendDiscovery';
 import type { useFriends } from '@/hooks/useFriends';
 import { t } from '@/i18n';
 
@@ -34,9 +34,8 @@ export function CommunityPanel({
   const [tab, setTab] = useState<Tab>('discover');
   const [requestTab, setRequestTab] = useState<'incoming' | 'outgoing'>('incoming');
   const [query, setQuery] = useState('');
-  const [goal, setGoal] = useState<FriendGoal>(null);
   const [shareError, setShareError] = useState(false);
-  const discovery = useFriendDiscovery(goal, query);
+  const discovery = useFriendDiscovery(null, query);
   const incoming = friends.inbox?.incoming ?? [];
   const outgoing = friends.inbox?.outgoing ?? [];
   const connected = friends.inbox?.friends ?? [];
@@ -196,37 +195,9 @@ export function CommunityPanel({
         ))}
       </View>
       {tab === 'discover' ? (
-        <View style={styles.filters} accessibilityRole="radiogroup">
-          {([null, 'bulk', 'cut', 'maintain'] as const).map((value) => (
-            <Pressable
-              key={value ?? 'all'}
-              accessibilityRole="radio"
-              accessibilityState={{ checked: goal === value }}
-              testID={`community-goal-${value ?? 'all'}`}
-              onPress={() => setGoal(value)}
-              style={({ pressed }) => [
-                styles.filter,
-                {
-                  backgroundColor: goal === value || pressed ? colors.s2 : colors.bg0,
-                  borderColor: goal === value ? colors.hairlineLit : colors.hairline,
-                },
-              ]}
-            >
-              <Text variant="bodyS" fontSet="onboarding" color={colors.textMid}>
-                {t(
-                  value === 'bulk'
-                    ? 'socialUpdate.bulk'
-                    : value === 'cut'
-                      ? 'socialUpdate.cut'
-                      : value === 'maintain'
-                        ? 'socialUpdate.maintain'
-                        : 'socialUpdate.all',
-                )}
-                {goal === value ? ' \u2713' : ''}
-              </Text>
-            </Pressable>
-          ))}
-        </View>
+        <Text variant="bodyS" color={colors.textMid} testID="community-suggestions-hint">
+          {t('compactProfile.suggestions')}
+        </Text>
       ) : null}
       {tab === 'requests' ? (
         <View style={styles.filters}>
@@ -262,7 +233,9 @@ export function CommunityPanel({
         >
           {t(
             tab === 'discover'
-              ? 'community.suggested'
+              ? query.trim()
+                ? 'compactProfile.searchResults'
+                : 'community.suggested'
               : tab === 'friends'
                 ? 'community.friendsCount'
                 : 'community.requestsCount',

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import type { RoomProgressData, RoomProgressDateRange } from '@calipartner/core';
 import { getSupabase } from '@/lib/supabase';
 import {
@@ -12,6 +12,10 @@ export function useRoomProgress(
   roomId: string | null,
   initialRange: RoomProgressDateRange = '30d',
 ) {
+  const requestVersion = useRef(0);
+  const invalidate = useCallback(() => {
+    requestVersion.current++;
+  }, []);
   const [range, setRange] = useState<RoomProgressDateRange>(initialRange);
   const [selectedMemberIds, setSelectedMemberIds] = useState<string[]>([]);
   const [data, setData] = useState<RoomProgressData | null>(null);
@@ -19,6 +23,7 @@ export function useRoomProgress(
   const [error, setError] = useState<ProgressServiceError | null>(null);
 
   const refresh = useCallback(async () => {
+    const version = ++requestVersion.current;
     if (!roomId) {
       setData(null);
       return;
@@ -33,18 +38,26 @@ export function useRoomProgress(
         range,
         selectedMemberIds.length > 0 ? selectedMemberIds : undefined,
       );
+      if (version !== requestVersion.current) return;
       setData(result);
+      if (result.is_large_room)
+        setSelectedMemberIds((previous) =>
+          previous.length ? previous : result.selected_member_ids,
+        );
     } catch (err: unknown) {
       const parsed = err instanceof ProgressServiceError ? err : parseProgressError(err);
-      setError(parsed);
+      if (version === requestVersion.current) setError(parsed);
     } finally {
-      setLoading(false);
+      if (version === requestVersion.current) setLoading(false);
     }
   }, [roomId, range, selectedMemberIds]);
 
   useEffect(() => {
     refresh();
-  }, [refresh]);
+    return () => {
+      invalidate();
+    };
+  }, [refresh, invalidate]);
 
   const searchMembers = useCallback(
     async (query: string) => {

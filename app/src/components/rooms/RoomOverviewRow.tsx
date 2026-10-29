@@ -1,5 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import { Image, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { onboardingLayout as layout, space } from '@calipartner/ui';
 import { Ionicons } from '@expo/vector-icons';
 import type { RoomMemberSnapshot } from '@calipartner/core';
 import { t } from '@/i18n';
@@ -134,7 +135,9 @@ export function RoomOverviewRow({
             <Text style={[styles.statusText, { color: colors.textMuted }]}>Paused</Text>
           ) : (
             <Text style={[styles.mealsCountText, { color: colors.textMuted }]}>
-              {mealsCount}/4 meals
+              {m.metrics.meal_checklist === 'locked'
+                ? t('roomAudit.privateMeals')
+                : t('roomAudit.mealCount', { count: mealsCount })}
             </Text>
           )}
         </View>
@@ -377,7 +380,11 @@ const styles = StyleSheet.create({
     gap: spacing.xs + 2,
   },
   memberCard: {
-    width: 82,
+    minWidth: space[9] + space[5],
+    minHeight: layout.touch,
+    flexGrow: 1,
+    flexShrink: 0,
+    flexBasis: '20%',
     borderRadius: radius.md,
     borderWidth: 1,
     padding: spacing.xs + 2,
@@ -449,6 +456,8 @@ const styles = StyleSheet.create({
     paddingTop: 4,
   },
   pageBtn: {
+    minHeight: layout.touch,
+    minWidth: layout.touch,
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: spacing.sm,

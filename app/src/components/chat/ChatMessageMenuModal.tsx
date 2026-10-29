@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
-import { Modal, Pressable, Share, StyleSheet, Text, View } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { Modal, Pressable, StyleSheet, Text, View } from 'react-native';
+import * as Clipboard from 'expo-clipboard';
 import { Ionicons } from '@expo/vector-icons';
 import type { ChatMessage } from '@/types/chat';
 import { t } from '@/i18n';
@@ -34,57 +35,65 @@ export function ChatMessageMenuModal({
   const [showBlockConfirm, setShowBlockConfirm] = useState(false);
   const [loading, setLoading] = useState(false);
 
+  const [actionError, setActionError] = useState(false);
+  useEffect(() => {
+    setShowDeleteConfirm(false);
+    setShowBlockConfirm(false);
+    setActionError(false);
+  }, [message?.id, visible]);
   if (!message) return null;
 
   const handleCopy = async () => {
     if (!message.text) return;
     try {
-      const nav =
-        typeof navigator !== 'undefined'
-          ? (navigator as unknown as { clipboard?: { writeText: (text: string) => Promise<void> } })
-          : undefined;
-      if (nav?.clipboard?.writeText) {
-        await nav.clipboard.writeText(message.text);
-      } else {
-        await Share.share({ message: message.text });
-      }
+      await Clipboard.setStringAsync(message.text);
     } catch {
-      // Ignore
+      setActionError(true);
+      return;
     }
     onClose();
   };
 
   const handleConfirmDelete = async () => {
     setLoading(true);
+    setActionError(false);
     try {
       await onDeleteMessage(message.id);
-    } finally {
-      setLoading(false);
       setShowDeleteConfirm(false);
       onClose();
+    } catch {
+      setActionError(true);
+    } finally {
+      setLoading(false);
     }
   };
 
   const handleConfirmBlock = async () => {
     if (!message.sender_id || !onBlockMember) return;
     setLoading(true);
+    setActionError(false);
     try {
       await onBlockMember(message.sender_id);
-    } finally {
-      setLoading(false);
       setShowBlockConfirm(false);
       onClose();
+    } catch {
+      setActionError(true);
+    } finally {
+      setLoading(false);
     }
   };
 
   const handleMute = async () => {
     if (!message.sender_id) return;
     setLoading(true);
+    setActionError(false);
     try {
       await onMuteMember(message.sender_id);
+      onClose();
+    } catch {
+      setActionError(true);
     } finally {
       setLoading(false);
-      onClose();
     }
   };
 
@@ -97,7 +106,15 @@ export function ChatMessageMenuModal({
       testID={testID}
     >
       <Pressable style={styles.backdrop} onPress={onClose}>
-        <View style={[styles.sheetContainer, { backgroundColor: colors.surface }]}>
+        <Pressable
+          onPress={(e) => e.stopPropagation()}
+          style={[styles.sheetContainer, { backgroundColor: colors.surface }]}
+        >
+          {actionError ? (
+            <Text accessibilityRole="alert" style={{ color: colors.danger }}>
+              {t('chatAudit.actionError')}
+            </Text>
+          ) : null}
           <View style={[styles.handleIndicator, { backgroundColor: colors.border }]} />
 
           <Text style={[styles.title, { color: colors.text }]}>{t('chat.longPressTitle')}</Text>
@@ -292,7 +309,7 @@ export function ChatMessageMenuModal({
               </Pressable>
             </>
           )}
-        </View>
+        </Pressable>
       </Pressable>
     </Modal>
   );

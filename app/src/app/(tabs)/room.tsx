@@ -10,8 +10,9 @@ import {
   Text,
   View,
 } from 'react-native';
-import { useFocusEffect, useNavigation, useRouter } from 'expo-router';
+import { useLocalSearchParams, useFocusEffect, useNavigation, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import { Button } from '@calipartner/ui';
 import type { RoomMemberSnapshot } from '@calipartner/core';
 import {
   BlockUserModal,
@@ -41,6 +42,8 @@ import {
 } from '@/components/rooms';
 
 import { BasicRoomCard } from '@/components/rooms/BasicRoomCard';
+import { ShareLoggedMealModal } from '@/components/rooms/ShareLoggedMealModal';
+import { getSupabase } from '@/lib/supabase';
 import { RoomExtras } from '@/components/rooms/RoomExtras';
 import { RoomAccessNotice } from '@/components/rooms/RoomAccessNotice';
 import { ChatView } from '@/components/chat';
@@ -100,6 +103,11 @@ export default function RoomScreen() {
 
   // Selected Room
   const [selectedRoomId, setSelectedRoomId] = useState<string | null>(null);
+  const roomParams = useLocalSearchParams<{ room?: string }>();
+  React.useEffect(() => {
+    if (roomParams.room && rooms.some((r) => r.id === roomParams.room))
+      setSelectedRoomId(roomParams.room);
+  }, [roomParams.room, rooms]);
   const currentRoom: RoomSummary | null = useMemo(() => {
     if (rooms.length === 0) return null;
     return rooms.find((r) => r.id === selectedRoomId) ?? rooms[0] ?? null;
@@ -107,13 +115,15 @@ export default function RoomScreen() {
 
   const activeRoomId = currentRoom?.id ?? null;
 
+  const [selectedPartnerId, setSelectedPartnerId] = useState<string | null>(null);
+
   // Realtime Snapshot Hook (Subscribes ONLY while room screen is visible)
   const {
     snapshot,
     loading: snapshotLoading,
     error: snapshotError,
     refresh: refreshSnapshot,
-  } = useRoomSnapshot(activeRoomId, isVisible);
+  } = useRoomSnapshot(activeRoomId, isVisible, { selectedUserId: selectedPartnerId ?? undefined });
 
   // Room Actions Hook
   const {
@@ -131,7 +141,6 @@ export default function RoomScreen() {
 
   // UI Navigation Segments
   const [activeSegment, setActiveSegment] = useState<RoomSegment>('today');
-  const [selectedPartnerId, setSelectedPartnerId] = useState<string | null>(null);
 
   // Modals visibility states
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -150,13 +159,16 @@ export default function RoomScreen() {
 
   // Shared meals state (sample pending item if present)
   const [pendingSharedMeal, setPendingSharedMeal] = useState<PendingSharedMeal | null>(null);
+  const [showShareMeal, setShowShareMeal] = useState(false);
+  const [mealRefresh, setMealRefresh] = useState(0);
+  const [mealError, setMealError] = useState(false);
 
   // Current User & Partner in snapshot
   const members = useMemo(() => snapshot?.members ?? [], [snapshot?.members]);
   const callerId = snapshot?.caller_id ?? '';
 
   const meMember: RoomMemberSnapshot | null = useMemo(() => {
-    return members.find((m) => m.user_id === callerId) ?? members[0] ?? null;
+    return members.find((m) => m.user_id === callerId) ?? null;
   }, [members, callerId]);
 
   const partnerMember: RoomMemberSnapshot | null = useMemo(() => {
@@ -164,6 +176,15 @@ export default function RoomScreen() {
     if (otherMembers.length === 0) return null;
     return otherMembers.find((m) => m.user_id === selectedPartnerId) ?? otherMembers[0] ?? null;
   }, [members, meMember, selectedPartnerId]);
+
+  React.useEffect(() => {
+    if (!members.length) return;
+    if (
+      !members.some((member) => member.user_id === selectedPartnerId && member.user_id !== callerId)
+    ) {
+      setSelectedPartnerId(members.find((member) => member.user_id !== callerId)?.user_id ?? null);
+    }
+  }, [members, callerId, selectedPartnerId]);
 
   // Streak days (active when all active members logged today)
   const streakDays = useMemo(() => {
@@ -197,6 +218,23 @@ export default function RoomScreen() {
   const canOpenChat = hasActiveAccess && !isRoomDormant && !isRoomLocked;
 
   React.useEffect(() => {
+    let current = true;
+    setPendingSharedMeal(null);
+    setMealError(false);
+    if (!activeRoomId || isRoomDormant || isRoomLocked) return;
+    void getSupabase()
+      .rpc('get_pending_room_meals', { p_room_id: activeRoomId })
+      .then(({ data, error }) => {
+        if (!current) return;
+        if (error) setMealError(true);
+        else setPendingSharedMeal((data as PendingSharedMeal[] | null)?.[0] ?? null);
+      });
+    return () => {
+      current = false;
+    };
+  }, [activeRoomId, isRoomDormant, isRoomLocked, snapshot, mealRefresh]);
+
+  React.useEffect(() => {
     if (!activeRoomId || !isVisible || !isRoomDormant || isRoomLocked) return;
     // Keep acceptance visible even when the realtime connection misses an event.
     const timer = setInterval(() => void refreshSnapshot(), 5000);
@@ -208,6 +246,7 @@ export default function RoomScreen() {
   const watchUnread = canOpenChat && displaySegment !== 'chat';
   const { unreadCount } = useRoomChat(watchUnread ? activeRoomId : null, isVisible && watchUnread, {
     userId: watchUnread ? callerId || undefined : undefined,
+    markRead: false,
   });
   const chatUnreadCount = watchUnread ? unreadCount : 0;
 
@@ -239,7 +278,11 @@ export default function RoomScreen() {
         onOpenInbox={() => setShowInboxModal(true)}
         onOpenSettings={() => setShowSettingsModal(true)}
         onOpenPrivacy={() => setShowPrivacyModal(true)}
-        onSwitchRoom={(r) => setSelectedRoomId(r.id)}
+        onSwitchRoom={(r) => {
+          setSelectedRoomId(r.id);
+          setSelectedPartnerId(null);
+          setActiveSegment('today');
+        }}
         onCreateOrJoin={() => setShowCreateModal(true)}
       />
 
@@ -423,9 +466,9 @@ export default function RoomScreen() {
               {/* Room full notice (Host upgrade sheet & Member notice) (PRD 6.8 ROOM-12, SUB-6) */}
               {currentRoom &&
                 currentRoom.state !== 'over_capacity' &&
-                currentRoom.member_count >= (currentRoom.member_cap ?? 5) && (
+                currentMembers >= (currentRoom.member_cap ?? 5) && (
                   <RoomFullNotice
-                    memberCount={currentRoom.member_count}
+                    memberCount={currentMembers}
                     memberCap={currentRoom.member_cap ?? 5}
                     isHost={currentRoom.role === 'host'}
                     onUpgrade={() => setShowPaywallModal(true)}
@@ -436,16 +479,26 @@ export default function RoomScreen() {
               {displaySegment === 'today' && (
                 <>
                   {/* Pending Shared Meal Card (if any) */}
+                  {mealError ? (
+                    <Button
+                      variant="secondary"
+                      label={t('common.retry')}
+                      onPress={() => setMealRefresh((v) => v + 1)}
+                      testID="retry-pending-room-meals"
+                    />
+                  ) : null}
                   {pendingSharedMeal && (
                     <SharedMealCard
                       meal={pendingSharedMeal}
                       onAccept={async (id, qty, sec) => {
                         await respondSharedMeal(id, true, qty, sec);
                         setPendingSharedMeal(null);
+                        setMealRefresh((v) => v + 1);
                       }}
                       onDecline={async (id) => {
                         await respondSharedMeal(id, false);
                         setPendingSharedMeal(null);
+                        setMealRefresh((v) => v + 1);
                       }}
                     />
                   )}
@@ -475,11 +528,17 @@ export default function RoomScreen() {
                       onOpenPrivacy={() => setShowPrivacyModal(true)}
                       onInviteFriend={() => setShowInviteModal(true)}
                       onFindPartner={() => router.push('/friends' as never)}
-                      onLogSharedMeal={() => router.push('/diary' as any)}
+                      onLogSharedMeal={() => setShowShareMeal(true)}
                       onSendPhoto={() => setActiveSegment('chat')}
                     />
                   )}
-                  <BasicRoomCard members={members} />
+                  {!hasActiveAccess ? (
+                    <BasicRoomCard
+                      members={[meMember, partnerMember].filter(
+                        (member): member is RoomMemberSnapshot => Boolean(member),
+                      )}
+                    />
+                  ) : null}
                   {currentRoom ? (
                     <RoomExtras
                       key={currentRoom.id}
@@ -497,9 +556,17 @@ export default function RoomScreen() {
               {displaySegment === 'progress' &&
                 currentRoom &&
                 (hasActiveAccess ? (
-                  <RoomProgressView roomId={currentRoom.id} testID="room-progress-segment" />
+                  <RoomProgressView
+                    key={currentRoom.id}
+                    roomId={currentRoom.id}
+                    testID="room-progress-segment"
+                  />
                 ) : (
-                  <Text>{t('setup.progressPlus')}</Text>
+                  <RoomAccessNotice
+                    message={t('setup.progressPlus')}
+                    onUpgrade={() => setShowPaywallModal(true)}
+                    actionTestID="upgrade-room-progress"
+                  />
                 ))}
 
               {/* Segment: Members Roster */}
@@ -522,6 +589,23 @@ export default function RoomScreen() {
       )}
 
       {/* MODALS */}
+      {showShareMeal && currentRoom && hasActiveAccess ? (
+        <ShareLoggedMealModal
+          onPrivacy={() => {
+            setShowShareMeal(false);
+            setShowPrivacyModal(true);
+          }}
+          key={currentRoom.id}
+          roomId={currentRoom.id}
+          userId={callerId}
+          members={members}
+          onClose={() => setShowShareMeal(false)}
+          onShared={() => {
+            setMealRefresh((v) => v + 1);
+            void refreshSnapshot();
+          }}
+        />
+      ) : null}
 
       {/* Create Room Modal */}
       {showCreateModal ? (
@@ -608,6 +692,7 @@ export default function RoomScreen() {
       {/* Room Settings Modal */}
       {currentRoom && (
         <RoomSettingsModal
+          key={currentRoom.id}
           visible={showSettingsModal}
           room={currentRoom}
           members={members}
@@ -616,7 +701,7 @@ export default function RoomScreen() {
           onSetWhoCanInvite={setWhoCanInvite}
           onRemoveMember={async (uid) => {
             await removeMember(uid);
-            await refreshSnapshot();
+            await Promise.all([refreshRooms(), refreshSnapshot()]);
           }}
           onTransferHost={async (newHostId) => {
             await transferHost(newHostId);
@@ -640,6 +725,8 @@ export default function RoomScreen() {
 
       {/* Privacy Settings Modal */}
       <PrivacySettingsModal
+        roomId={currentRoom?.id}
+        rooms={rooms}
         visible={showPrivacyModal}
         onClose={() => setShowPrivacyModal(false)}
         onGetPrivacy={getPrivacy}
@@ -677,7 +764,7 @@ export default function RoomScreen() {
         targetMember={reactionTarget}
         onClose={() => setReactionTarget(null)}
         onSendReaction={async (reaction) => {
-          await sendReaction('room-event-latest', reaction);
+          if (reactionTarget) await sendReaction(reactionTarget.user_id, reaction);
         }}
       />
 

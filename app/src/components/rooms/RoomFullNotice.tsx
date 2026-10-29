@@ -1,6 +1,7 @@
 import React from 'react';
 import { Modal, Pressable, StyleSheet, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { onboardingLayout as layout } from '@calipartner/ui';
 import { t } from '@/i18n';
 import { fontSize, radius, spacing } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
@@ -24,8 +25,9 @@ export interface RoomFullSheetProps extends RoomFullNoticeProps {
 export function RoomFullNotice({ memberCount, memberCap, isHost, onUpgrade }: RoomFullNoticeProps) {
   const { colors } = useTheme();
 
-  const nextTier = memberCap <= 5 ? 'Plus' : 'Pro';
-  const nextCap = memberCap <= 5 ? 20 : 50;
+  const atMaximum = memberCap >= 20;
+  const nextTier = memberCap < 5 ? 'Plus' : 'Pro';
+  const nextCap = memberCap < 5 ? 5 : 20;
 
   if (isHost) {
     return (
@@ -48,26 +50,30 @@ export function RoomFullNotice({ memberCount, memberCap, isHost, onUpgrade }: Ro
               {t('rooms.roomFull.sheetTitle')}
             </Text>
             <Text style={[styles.subtitle, { color: colors.textMuted }]}>
-              {t('rooms.roomFull.hostNotice', {
-                count: memberCount,
-                cap: memberCap,
-                nextTier,
-                nextCap,
-              })}
+              {atMaximum
+                ? t('roomAudit.maximumCapacity')
+                : t('roomAudit.nextCapacity', {
+                    count: memberCount,
+                    cap: memberCap,
+                    nextTier,
+                    nextCap,
+                  })}
             </Text>
           </View>
         </View>
 
-        {onUpgrade && (
+        {onUpgrade && !atMaximum && (
           <Pressable
             onPress={onUpgrade}
             style={[styles.upgradeBtn, { backgroundColor: colors.accent }]}
             accessibilityRole="button"
-            accessibilityLabel="See plans"
+            accessibilityLabel={t('me.roomPlan.seePlansBtn')}
             testID="btn-room-full-upgrade"
           >
             <Ionicons name="information-circle-outline" size={14} color={colors.onAccent} />
-            <Text style={[styles.upgradeBtnText, { color: colors.onAccent }]}>See plans</Text>
+            <Text style={[styles.upgradeBtnText, { color: colors.onAccent }]}>
+              {t('me.roomPlan.seePlansBtn')}
+            </Text>
           </Pressable>
         )}
       </View>
@@ -193,6 +199,7 @@ const styles = StyleSheet.create({
     lineHeight: 18,
   },
   upgradeBtn: {
+    minHeight: layout.touch,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',

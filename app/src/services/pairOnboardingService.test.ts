@@ -51,3 +51,17 @@ it('reuses request IDs, validates bearer tokens and binds sharing to the signed-
   await expect(preparePairInvite('b', 'Room')).rejects.toThrow('NOT_AUTHORIZED');
   await expect(rememberPairInvite('not-a-token')).rejects.toThrow('INVALID_INVITE');
 });
+
+it('creates a fresh invitation request after the earlier one was accepted, then keeps retries stable', async () => {
+  fake.rpc.mockResolvedValueOnce({ data: { token, expires_at: 'tomorrow' }, error: null });
+  await preparePairInvite('a', 'Room');
+  const previous = fake.rpc.mock.calls[0]![1].p_client_id;
+  fake.rpc
+    .mockResolvedValueOnce({ data: null, error: { message: 'INVITE_ALREADY_USED' } })
+    .mockResolvedValue({ data: { token, expires_at: 'tomorrow' }, error: null });
+  await preparePairInvite('a', 'Room');
+  const next = fake.rpc.mock.calls[2]![1].p_client_id;
+  expect(next).not.toBe(previous);
+  await preparePairInvite('a', 'Room');
+  expect(fake.rpc.mock.calls[3]![1].p_client_id).toBe(next);
+});

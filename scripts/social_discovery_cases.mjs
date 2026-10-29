@@ -40,14 +40,15 @@ export async function runSocialDiscoveryTests(db) {
       random,
       actor,
     ]);
-  await test('Free discovery filters current goals, while username search spans categories', async () => {
+  await test('Five suggestions follow the viewer goal, while username search spans categories', async () => {
     await user(1);
     const bulk = await browse('bulk', 'browse_');
     // Username takes precedence over goal, including maintain profiles.
     assert(bulk.some((p) => p.id === uid(3)));
     const filtered = await browse('bulk');
-    assert(filtered.some((p) => p.id === uid(2)));
-    assert(!filtered.some((p) => p.id === uid(3)));
+    assert.equal(filtered.length, 5);
+    assert(filtered.every((p) => Number(p.username.slice(-2)) % 2 === 1));
+    assert.equal((await browse(null, '', filtered.at(-1).username)).length, 0);
     assert(!filtered.some((p) => p.id === uid(1)));
     assert.equal((await browse('cut', '@BROWSE_03'))[0].id, uid(3));
     assert.equal((await browse(null, '_03'))[0].id, uid(3));

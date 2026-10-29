@@ -49,6 +49,7 @@ export function RoomSettingsModal({
   const [whoCanInvite, setWhoCanInvite] = useState<'host_only' | 'any_member'>(
     room.who_can_invite ?? 'host_only',
   );
+  const [actionError, setActionError] = useState(false);
   const [loadingAction, setLoadingAction] = useState<string | null>(null);
 
   const handleToggleWhoCanInvite = async (val: 'host_only' | 'any_member') => {
@@ -57,53 +58,54 @@ export function RoomSettingsModal({
     try {
       await onSetWhoCanInvite(val);
     } catch {
+      setActionError(true);
       // Revert if failed
       setWhoCanInvite(room.who_can_invite ?? 'host_only');
     }
   };
 
-  const handleRemove = (member: RoomMemberSnapshot) => {
-    Alert.alert(
+  const confirmAction = (title: string, message: string, operation: () => Promise<void>) => {
+    if (Platform.OS === 'web') {
+      const confirm = (globalThis as unknown as { confirm?: (message: string) => boolean }).confirm;
+      if (confirm?.(message)) void operation();
+    } else
+      Alert.alert(title, message, [
+        { text: t('common.cancel'), style: 'cancel' },
+        { text: t('common.confirm'), onPress: () => void operation() },
+      ]);
+  };
+  const handleRemove = (member: RoomMemberSnapshot) =>
+    confirmAction(
       t('rooms.settingsModal.removeBtn'),
       t('rooms.settingsModal.removeConfirm', { name: member.nickname }),
-      [
-        { text: t('common.cancel'), style: 'cancel' },
-        {
-          text: t('common.confirm'),
-          style: 'destructive',
-          onPress: async () => {
-            setLoadingAction(`remove-${member.user_id}`);
-            try {
-              await onRemoveMember(member.user_id);
-            } finally {
-              setLoadingAction(null);
-            }
-          },
-        },
-      ],
+      async () => {
+        setActionError(false);
+        setLoadingAction(`remove-${member.user_id}`);
+        try {
+          await onRemoveMember(member.user_id);
+        } catch {
+          setActionError(true);
+        } finally {
+          setLoadingAction(null);
+        }
+      },
     );
-  };
-
-  const handleTransfer = (member: RoomMemberSnapshot) => {
-    Alert.alert(
+  const handleTransfer = (member: RoomMemberSnapshot) =>
+    confirmAction(
       t('rooms.settingsModal.transferHostBtn'),
       t('rooms.settingsModal.transferConfirm', { name: member.nickname }),
-      [
-        { text: t('common.cancel'), style: 'cancel' },
-        {
-          text: t('common.confirm'),
-          onPress: async () => {
-            setLoadingAction(`transfer-${member.user_id}`);
-            try {
-              await onTransferHost(member.user_id);
-            } finally {
-              setLoadingAction(null);
-            }
-          },
-        },
-      ],
+      async () => {
+        setActionError(false);
+        setLoadingAction(`transfer-${member.user_id}`);
+        try {
+          await onTransferHost(member.user_id);
+        } catch {
+          setActionError(true);
+        } finally {
+          setLoadingAction(null);
+        }
+      },
     );
-  };
 
   const handleLeave = () => {
     const doLeave = async () => {
@@ -111,8 +113,8 @@ export function RoomSettingsModal({
       try {
         await onLeaveRoom();
         onClose();
-      } catch (err) {
-        console.error('Failed to leave room:', err);
+      } catch {
+        setActionError(true);
       } finally {
         setLoadingAction(null);
       }
@@ -147,6 +149,11 @@ export function RoomSettingsModal({
     <Modal visible={visible} animationType="slide" transparent onRequestClose={onClose}>
       <View style={styles.modalOverlay}>
         <View style={[styles.modalSheet, { backgroundColor: colors.surface }]}>
+          {actionError ? (
+            <Text accessibilityRole="alert" style={{ color: colors.danger }}>
+              {t('roomAudit.actionError')}
+            </Text>
+          ) : null}
           {/* Header */}
           <View style={styles.headerRow}>
             <Text style={[styles.title, { color: colors.text }]}>

@@ -1,5 +1,6 @@
 import React from 'react';
 import { Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { onboardingLayout as layout } from '@calipartner/ui';
 import { Ionicons } from '@expo/vector-icons';
 import type { RoomMemberSnapshot } from '@calipartner/core';
 import { t } from '@/i18n';
@@ -54,8 +55,10 @@ export function MembersTab({
             accessibilityLabel="Invite member"
             testID="btn-members-tab-invite"
           >
-            <Ionicons name="person-add" size={14} color="#FFFFFF" />
-            <Text style={styles.inviteBtnText}>{t('rooms.inviteModal.sendInviteBtn')}</Text>
+            <Ionicons name="person-add" size={14} color={colors.onAccent} />
+            <Text style={[styles.inviteBtnText, { color: colors.onAccent }]}>
+              {t('rooms.inviteModal.sendInviteBtn')}
+            </Text>
           </Pressable>
         ) : (
           <View
@@ -63,7 +66,7 @@ export function MembersTab({
             testID="badge-members-room-full"
           >
             <Text style={[styles.fullBadgeText, { color: colors.textMuted }]}>
-              {isHost ? t('rooms.roomFull.upgradeBtn') : t('rooms.roomFull.memberNotice')}
+              {t('roomAudit.full')}
             </Text>
           </View>
         )}
@@ -80,7 +83,7 @@ export function MembersTab({
         >
           <Ionicons name="alert-circle-outline" size={18} color={colors.accent} />
           <Text style={[styles.fullNoticeText, { color: colors.text }]}>
-            {t('rooms.roomFull.hostNotice')}
+            {t(memberCap >= 20 ? 'roomAudit.maximumCapacity' : 'roomAudit.fullManage')}
           </Text>
         </View>
       )}
@@ -188,6 +191,7 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   inviteBtn: {
+    minHeight: layout.touch,
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: spacing.md,
@@ -205,6 +209,7 @@ const styles = StyleSheet.create({
     marginBottom: spacing.lg,
   },
   memberRow: {
+    minHeight: layout.touch,
     flexDirection: 'row',
     alignItems: 'center',
     borderRadius: radius.md,
@@ -232,11 +237,13 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   nameRow: {
+    flexWrap: 'wrap',
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
   },
   nickname: {
+    flexShrink: 1,
     fontSize: fontSize.sm,
     fontWeight: '700',
   },
@@ -254,6 +261,7 @@ const styles = StyleSheet.create({
     marginTop: 1,
   },
   manageButton: {
+    minHeight: layout.touch,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',

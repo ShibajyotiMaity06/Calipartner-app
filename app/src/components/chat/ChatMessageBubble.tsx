@@ -1,5 +1,6 @@
 import React from 'react';
 import { ActivityIndicator, Image, Pressable, StyleSheet, Text, View } from 'react-native';
+import { onboardingLayout as layout } from '@calipartner/ui';
 import { Ionicons } from '@expo/vector-icons';
 import type { ChatAttachment, ChatMessage } from '@/types/chat';
 import { t } from '@/i18n';
@@ -109,7 +110,7 @@ export function ChatMessageBubble({
           style={[
             styles.bubbleBox,
             isMine
-              ? [styles.bubbleBoxMine, { backgroundColor: colors.accent }]
+              ? [styles.bubbleBoxMine, { backgroundColor: colors.surface }]
               : [styles.bubbleBoxOther, { backgroundColor: colors.surfaceAlt }],
             isFailed && { borderColor: colors.danger, borderWidth: 1 },
           ]}
@@ -121,16 +122,12 @@ export function ChatMessageBubble({
         >
           {/* Message Text */}
           {isDeleted ? (
-            <Text
-              style={[styles.deletedText, { color: isMine ? colors.onAccent : colors.textMuted }]}
-            >
+            <Text style={[styles.deletedText, { color: isMine ? colors.text : colors.textMuted }]}>
               {t('chat.deletedMessage')}
             </Text>
           ) : (
             Boolean(message.text) && (
-              <Text style={[styles.messageText, { color: isMine ? colors.onAccent : colors.text }]}>
-                {message.text}
-              </Text>
+              <Text style={[styles.messageText, { color: colors.text }]}>{message.text}</Text>
             )
           )}
 
@@ -139,6 +136,24 @@ export function ChatMessageBubble({
             <View style={styles.attachmentsContainer}>
               {message.attachments.map((att, idx) => {
                 const isBlocked = att.moderation_status === 'blocked';
+                if (att.moderation_status === 'pending')
+                  return (
+                    <View key={att.id || idx} style={styles.blockedImageContainer}>
+                      <Ionicons name="time-outline" size={16} color={colors.textMuted} />
+                      <Text style={{ color: colors.textMuted }}>{t('chatAudit.checking')}</Text>
+                      {isMine ? (
+                        <Pressable
+                          accessibilityRole="button"
+                          accessibilityLabel={t('chatAudit.retryCheck')}
+                          onPress={() => onRetry?.(message)}
+                          style={styles.mediaRetry}
+                          testID={`retry-media-${att.id}`}
+                        >
+                          <Text style={{ color: colors.text }}>{t('chatAudit.retryCheck')}</Text>
+                        </Pressable>
+                      ) : null}
+                    </View>
+                  );
                 const imageUri = att.signed_url || att.local_uri;
 
                 if (isBlocked) {
@@ -179,13 +194,13 @@ export function ChatMessageBubble({
                       />
                     ) : (
                       <View style={[styles.attachmentThumbnail, styles.attachmentFallback]}>
-                        <ActivityIndicator size="small" color={colors.accent} />
+                        <Ionicons name="image-outline" size={32} color={colors.textMuted} />
                       </View>
                     )}
 
                     {att.upload_status === 'uploading' && (
                       <View style={styles.uploadOverlay}>
-                        <ActivityIndicator size="small" color="#FFFFFF" />
+                        <ActivityIndicator size="small" color={colors.textMuted} />
                       </View>
                     )}
                   </Pressable>
@@ -196,22 +211,19 @@ export function ChatMessageBubble({
 
           {/* Footer inside bubble: timestamp & delivery status */}
           <View style={styles.footerRow}>
-            <Text
-              style={[
-                styles.timeText,
-                { color: isMine ? 'rgba(255,255,255,0.75)' : colors.textMuted },
-              ]}
-            >
-              {timeFormatted}
-            </Text>
+            <Text style={[styles.timeText, { color: colors.textMuted }]}>{timeFormatted}</Text>
 
             {isMine && (
               <View style={styles.statusIconWrap}>
                 {isSending && (
-                  <ActivityIndicator size={10} color="#FFFFFF" style={styles.sendingSpinner} />
+                  <ActivityIndicator
+                    size={10}
+                    color={colors.textMuted}
+                    style={styles.sendingSpinner}
+                  />
                 )}
-                {isSent && <Ionicons name="checkmark" size={12} color="#FFFFFF" />}
-                {isFailed && <Ionicons name="alert-circle" size={14} color="#FCA5A5" />}
+                {isSent && <Ionicons name="checkmark" size={12} color={colors.textMuted} />}
+                {isFailed && <Ionicons name="alert-circle" size={14} color={colors.danger} />}
               </View>
             )}
           </View>
@@ -309,6 +321,8 @@ const styles = StyleSheet.create({
 
   // Bubble Box
   bubbleBox: {
+    minHeight: layout.touch,
+    minWidth: layout.touch,
     paddingHorizontal: spacing.sm + 4,
     paddingVertical: spacing.xs + 2,
     borderRadius: radius.lg,
@@ -336,6 +350,10 @@ const styles = StyleSheet.create({
     marginTop: spacing.xs,
   },
   attachmentPressable: {
+    minHeight: layout.touch,
+    minWidth: layout.touch,
+    alignItems: 'center',
+    justifyContent: 'center',
     borderRadius: radius.md,
     overflow: 'hidden',
     position: 'relative',
@@ -360,7 +378,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  mediaRetry: { minHeight: layout.touch, minWidth: layout.touch, justifyContent: 'center' },
   blockedImageContainer: {
+    flexWrap: 'wrap',
+    maxWidth: '100%',
     flexDirection: 'row',
     alignItems: 'center',
     padding: spacing.xs,

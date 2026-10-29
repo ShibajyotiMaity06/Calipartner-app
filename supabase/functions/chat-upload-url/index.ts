@@ -1,7 +1,7 @@
+import { signR2Url } from '../_shared/r2.ts';
 import { createClient } from 'jsr:@supabase/supabase-js@2';
 import {
   ALLOWED_CHAT_MIME_TYPES,
-  buildSignedR2Url,
   generateChatAttachmentStorageKey,
   MAX_CHAT_ATTACHMENT_SIZE_BYTES,
   validateChatStorageKey,
@@ -12,11 +12,16 @@ export const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-export async function handleChatUploadUrl(req: Request): Promise<Response> {
+export async function handleChatUploadUrl(
+  req: Request,
+  makeClient = createClient,
+): Promise<Response> {
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders });
   }
 
+  if (req.method !== 'POST')
+    return Response.json({ error: 'METHOD_NOT_ALLOWED' }, { status: 405, headers: corsHeaders });
   try {
     const authHeader = req.headers.get('Authorization');
     if (!authHeader) {
@@ -29,7 +34,7 @@ export async function handleChatUploadUrl(req: Request): Promise<Response> {
     const supabaseUrl = Deno.env.get('SUPABASE_URL') || '';
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || '';
 
-    const adminClient = createClient(supabaseUrl, supabaseServiceKey);
+    const adminClient = makeClient(supabaseUrl, supabaseServiceKey);
     const token = authHeader.replace(/^Bearer\s+/i, '');
 
     const {
@@ -45,7 +50,7 @@ export async function handleChatUploadUrl(req: Request): Promise<Response> {
     }
 
     const body = await req.json();
-    const { room_id, client_id, filename, mime_type, size, width, height, attachment_index } = body;
+    const { room_id, client_id, mime_type, size, attachment_index } = body;
 
     if (!room_id || !client_id || !mime_type || typeof size !== 'number') {
       return new Response(
@@ -108,9 +113,9 @@ export async function handleChatUploadUrl(req: Request): Promise<Response> {
     }
 
     // 4. File size check
-    if (size > MAX_CHAT_ATTACHMENT_SIZE_BYTES) {
+    if (!Number.isSafeInteger(size) || size <= 0 || size > MAX_CHAT_ATTACHMENT_SIZE_BYTES) {
       return new Response(
-        JSON.stringify({ error: 'FILE_TOO_LARGE: Maximum image size is 10 MB' }),
+        JSON.stringify({ error: 'FILE_TOO_LARGE: Maximum media size is 10 MB' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
       );
     }
@@ -149,24 +154,42 @@ export async function handleChatUploadUrl(req: Request): Promise<Response> {
     }
 
     // 8. Generate storage key
-    const extension = filename?.split('.').pop() || normalizedMime.split('/')[1] || 'jpg';
-    const index = typeof attachment_index === 'number' ? attachment_index : 0;
+    const extensions: Record<string, string> = {
+      'image/jpeg': 'jpg',
+      'image/png': 'png',
+      'image/heic': 'heic',
+      'image/webp': 'webp',
+      'video/mp4': 'mp4',
+      'video/quicktime': 'mov',
+      'video/webm': 'webm',
+    };
+    const extension = extensions[normalizedMime];
+    const index = attachment_index ?? 0;
+    if (
+      !Number.isInteger(index) ||
+      index < 0 ||
+      index > 4 ||
+      typeof client_id !== 'string' ||
+      !/^[-a-zA-Z0-9]{1,80}$/.test(client_id)
+    )
+      return Response.json({ error: 'INVALID_STORAGE_KEY' }, { status: 400, headers: corsHeaders });
     const storageKey = generateChatAttachmentStorageKey(room_id, client_id, index, extension);
 
     // 9. Presign Cloudflare R2 PUT URL
-    const r2AccountId = Deno.env.get('R2_ACCOUNT_ID');
-    const r2Bucket = Deno.env.get('R2_CHAT_BUCKET') || 'calipartner-chat-private';
-    const accessKeyId = Deno.env.get('R2_ACCESS_KEY_ID');
-    const secretAccessKey = Deno.env.get('R2_SECRET_ACCESS_KEY');
-
-    const uploadUrl = buildSignedR2Url({
+    const claim = await adminClient.rpc('claim_chat_media_upload', {
+      p_room_id: room_id,
+      p_user_id: user.id,
+      p_storage_key: storageKey,
+      p_mime_type: normalizedMime,
+      p_size: size,
+    });
+    if (claim.error || !claim.data)
+      return Response.json({ error: 'MEDIA_UPLOAD_DENIED' }, { status: 403, headers: corsHeaders });
+    const uploadUrl = await signR2Url({
       method: 'PUT',
-      bucket: r2Bucket,
-      key: storageKey,
+      key: claim.data,
+      contentType: normalizedMime,
       expiresInSeconds: 300,
-      r2AccountId,
-      accessKeyId,
-      secretAccessKey,
     });
 
     return new Response(
@@ -189,6 +212,6 @@ export async function handleChatUploadUrl(req: Request): Promise<Response> {
   }
 }
 
-if (typeof Deno !== 'undefined') {
-  Deno.serve(handleChatUploadUrl);
+if (import.meta.main) {
+  Deno.serve((req) => handleChatUploadUrl(req));
 }

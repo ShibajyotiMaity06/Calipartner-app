@@ -19,17 +19,20 @@ export interface MeRoomPlanCardProps {
   attachedRoom?: RoomSummary | null;
   onChangePlan: () => void;
   onRestorePurchases?: () => Promise<void> | void;
+  compact?: boolean;
 }
 
 export function MeRoomPlanCard({
   attachedRoom,
   onChangePlan,
   onRestorePurchases,
+  compact = false,
 }: MeRoomPlanCardProps) {
   const { entitlement, hasActiveAccess, isTrial, isLapsed, isUnattached, loading, restore } =
     useSubscription();
   const [restoring, setRestoring] = useState(false);
   const [restoreMessage, setRestoreMessage] = useState<string | null>(null);
+  const [expanded, setExpanded] = useState(false);
 
   const handleManageInStore = async () => {
     playClickSound();
@@ -117,6 +120,81 @@ export function MeRoomPlanCard({
 
   const planDefaultCap = tier === 'pro' ? 20 : tier === 'plus' ? 5 : 2;
   const capacityText = t('brandRepair.capacityValue', { count: planDefaultCap });
+  const hasStorePlan = isPaidOrTrial && entitlement?.source !== 'none';
+
+  if (compact) {
+    return (
+      <Card elevation="s1" style={styles.compactCard} testID="card-me-room-plan">
+        <View style={styles.compactHeader}>
+          <View style={styles.freeTextGroup}>
+            <Text variant="heading">{isPaidOrTrial ? tierName : t('compactProfile.freePlan')}</Text>
+            <Text variant="micro" color={dark.textMid} tabular>
+              {isPaidOrTrial
+                ? t('compactProfile.planSummary', {
+                    people: planDefaultCap,
+                    rooms: tier === 'pro' ? 5 : 3,
+                  })
+                : t('compactProfile.freeNotice')}
+            </Text>
+          </View>
+          <Button
+            variant="secondary"
+            fullWidth={false}
+            size="md"
+            fontSet="onboarding"
+            label={t(hasStorePlan ? 'me.roomPlan.manageStoreBtn' : 'me.roomPlan.seePlansBtn')}
+            onPress={hasStorePlan ? handleManageInStore : onChangePlan}
+            testID="btn-me-change-plan"
+          />
+        </View>
+        <TouchableOpacity
+          accessibilityRole="button"
+          accessibilityState={{ expanded }}
+          accessibilityLabel={t('compactProfile.planDetails')}
+          onPress={() => setExpanded((value) => !value)}
+          style={styles.compactDisclosure}
+          testID="toggle-plan-details"
+        >
+          <Text variant="micro" color={dark.textMid}>
+            {t('compactProfile.planDetails')}
+          </Text>
+          <Ionicons
+            name={expanded ? 'chevron-up' : 'chevron-down'}
+            size={space[4]}
+            color={dark.textMid}
+          />
+        </TouchableOpacity>
+        {expanded ? (
+          <View style={styles.compactDetails}>
+            {renewalText ? (
+              <Text variant="bodyS" color={dark.textMid}>
+                {!hasStorePlan && formattedPeriodEnd && isPaidOrTrial
+                  ? t('compactProfile.accessUntil', { date: formattedPeriodEnd })
+                  : renewalText}
+              </Text>
+            ) : null}
+            {hasStorePlan ? (
+              <Text variant="bodyS" color={dark.textMid} testID="plan-management-note">
+                {t('brandRepair.managementNote')}
+              </Text>
+            ) : null}
+            <Button
+              variant="tertiary"
+              label={restoring ? t('common.loading') : t('me.roomPlan.restoreBtn')}
+              onPress={() => void handleRestore()}
+              disabled={restoring}
+              testID="btn-me-restore"
+            />
+          </View>
+        ) : null}
+        {restoreMessage ? (
+          <Text variant="bodyS" accessibilityLiveRegion="polite">
+            {restoreMessage}
+          </Text>
+        ) : null}
+      </Card>
+    );
+  }
 
   // 1. FREE STATE: "Free Plan. Personal tracking is 100% free forever." with a quiet "See plans" (Spec N01, O01)
   if (!isPaidOrTrial) {
@@ -262,6 +340,16 @@ export function MeRoomPlanCard({
 }
 
 const styles = StyleSheet.create({
+  compactCard: { padding: space[3] },
+  compactHeader: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: space[2] },
+  compactDisclosure: {
+    minHeight: space[8],
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: space[2],
+  },
+  compactDetails: { gap: space[2] },
   card: {
     padding: space[4],
     marginBottom: space[4],

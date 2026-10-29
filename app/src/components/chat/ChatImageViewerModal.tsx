@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
-  ActivityIndicator,
   Image,
+  Linking,
   Modal,
   Pressable,
   SafeAreaView,
@@ -10,6 +10,7 @@ import {
   Text,
   View,
 } from 'react-native';
+import { dark, onboardingLayout as layout } from '@calipartner/ui';
 import { ChatVideo } from './ChatVideo';
 import { Ionicons } from '@expo/vector-icons';
 import type { ChatAttachment } from '@/types/chat';
@@ -30,9 +31,12 @@ export function ChatImageViewerModal({
   testID = 'chat-image-viewer-modal',
 }: ChatImageViewerModalProps) {
   const [scale, setScale] = useState(1);
-  const [saving, setSaving] = useState(false);
-  const [savedToast, setSavedToast] = useState(false);
+  const [openError, setOpenError] = useState(false);
 
+  useEffect(() => {
+    setScale(1);
+    setOpenError(false);
+  }, [attachment?.id]);
   if (!attachment) return null;
 
   const imageUri = attachment.signed_url || attachment.local_uri || '';
@@ -46,12 +50,12 @@ export function ChatImageViewerModal({
   };
 
   const handleSaveToGallery = async () => {
-    setSaving(true);
-    // Simulate save to device photo album
-    await new Promise((res) => setTimeout(res, 800));
-    setSaving(false);
-    setSavedToast(true);
-    setTimeout(() => setSavedToast(false), 2500);
+    setOpenError(false);
+    try {
+      await Linking.openURL(imageUri);
+    } catch {
+      setOpenError(true);
+    }
   };
 
   return (
@@ -73,60 +77,53 @@ export function ChatImageViewerModal({
               accessibilityLabel={t('chat.closeViewer')}
               testID="btn-close-viewer"
             >
-              <Ionicons name="close" size={24} color="#FFFFFF" />
+              <Ionicons name="close" size={24} color={dark.textHi} />
             </Pressable>
 
             {/* Zoom Controls */}
-            <View style={styles.zoomControlsRow}>
-              <Pressable
-                onPress={handleZoomOut}
-                disabled={scale <= 1}
-                style={[styles.zoomBtn, scale <= 1 && styles.btnDisabled]}
-                accessibilityRole="button"
-                accessibilityLabel="Zoom out"
-                testID="btn-zoom-out"
-              >
-                <Ionicons name="remove" size={18} color="#FFFFFF" />
-              </Pressable>
+            {!attachment.mime_type.startsWith('video/') ? (
+              <View style={styles.zoomControlsRow}>
+                <Pressable
+                  onPress={handleZoomOut}
+                  disabled={scale <= 1}
+                  style={[styles.zoomBtn, scale <= 1 && styles.btnDisabled]}
+                  accessibilityRole="button"
+                  accessibilityLabel="Zoom out"
+                  testID="btn-zoom-out"
+                >
+                  <Ionicons name="remove" size={18} color={dark.textHi} />
+                </Pressable>
 
-              <Text style={styles.scaleText}>{Math.round(scale * 100)}%</Text>
+                <Text style={styles.scaleText}>{Math.round(scale * 100)}%</Text>
 
-              <Pressable
-                onPress={handleZoomIn}
-                disabled={scale >= 3}
-                style={[styles.zoomBtn, scale >= 3 && styles.btnDisabled]}
-                accessibilityRole="button"
-                accessibilityLabel="Zoom in"
-                testID="btn-zoom-in"
-              >
-                <Ionicons name="add" size={18} color="#FFFFFF" />
-              </Pressable>
-            </View>
+                <Pressable
+                  onPress={handleZoomIn}
+                  disabled={scale >= 3}
+                  style={[styles.zoomBtn, scale >= 3 && styles.btnDisabled]}
+                  accessibilityRole="button"
+                  accessibilityLabel="Zoom in"
+                  testID="btn-zoom-in"
+                >
+                  <Ionicons name="add" size={18} color={dark.textHi} />
+                </Pressable>
+              </View>
+            ) : null}
 
             {/* Save to Gallery Button */}
             <Pressable
               onPress={handleSaveToGallery}
-              disabled={saving}
               style={styles.circleBtn}
               accessibilityRole="button"
-              accessibilityLabel={t('chat.saveImageBtn')}
+              accessibilityLabel={t('chatAudit.openMedia')}
               testID="btn-save-image"
             >
-              {saving ? (
-                <ActivityIndicator size="small" color="#FFFFFF" />
-              ) : (
-                <Ionicons name="download-outline" size={22} color="#FFFFFF" />
-              )}
+              <Ionicons name="open-outline" size={22} color={dark.textHi} />
             </Pressable>
           </View>
 
-          {/* Toast Notice */}
-          {savedToast && (
-            <View style={styles.toastNotice} testID="toast-image-saved">
-              <Ionicons name="checkmark-circle" size={18} color="#10B981" />
-              <Text style={styles.toastText}>{t('chat.savedImageToast')}</Text>
-            </View>
-          )}
+          {openError ? (
+            <Text accessibilityRole="alert">{t('chatAudit.mediaUnavailable')}</Text>
+          ) : null}
 
           {/* Image Canvas with Scroll Zoom */}
           <ScrollView
@@ -152,7 +149,7 @@ export function ChatImageViewerModal({
               />
             ) : (
               <View style={styles.noImageWrap}>
-                <Ionicons name="image-outline" size={64} color="#94A3B8" />
+                <Ionicons name="image-outline" size={64} color={dark.textLo} />
               </View>
             )}
           </ScrollView>
@@ -175,7 +172,7 @@ export function ChatImageViewerModal({
 const styles = StyleSheet.create({
   darkBackdrop: {
     flex: 1,
-    backgroundColor: '#000000F5',
+    backgroundColor: dark.bg0,
   },
   safeArea: {
     flex: 1,
@@ -189,25 +186,25 @@ const styles = StyleSheet.create({
     zIndex: 10,
   },
   circleBtn: {
-    width: 40,
-    height: 40,
+    width: layout.touch,
+    height: layout.touch,
     borderRadius: radius.pill,
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    backgroundColor: dark.s2,
     alignItems: 'center',
     justifyContent: 'center',
   },
   zoomControlsRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    backgroundColor: dark.s2,
     borderRadius: radius.pill,
     paddingHorizontal: spacing.xs,
     paddingVertical: 2,
     gap: 8,
   },
   zoomBtn: {
-    width: 32,
-    height: 32,
+    width: layout.touch,
+    height: layout.touch,
     borderRadius: radius.pill,
     alignItems: 'center',
     justifyContent: 'center',
@@ -216,7 +213,7 @@ const styles = StyleSheet.create({
     opacity: 0.4,
   },
   scaleText: {
-    color: '#FFFFFF',
+    color: dark.textHi,
     fontSize: fontSize.xs,
     fontWeight: '700',
     minWidth: 36,
@@ -240,7 +237,7 @@ const styles = StyleSheet.create({
     elevation: 4,
   },
   toastText: {
-    color: '#FFFFFF',
+    color: dark.textHi,
     fontSize: fontSize.xs,
     fontWeight: '600',
   },
@@ -262,7 +259,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   footerText: {
-    color: 'rgba(255, 255, 255, 0.65)',
+    color: dark.textMid,
     fontSize: fontSize.xs,
   },
 });

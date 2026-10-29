@@ -164,20 +164,12 @@ export async function uploadImageToR2(
 /**
  * Fetches short-lived signed GET URL for reading an attachment from Cloudflare R2.
  */
-const signedUrlCache = new Map<string, { url: string; expiresAt: number }>();
 
 export async function getSignedImageUrl(
   supabase: SupabaseFunctionsClient,
   roomId: string,
   storageKey: string,
 ): Promise<string> {
-  const cached = signedUrlCache.get(storageKey);
-  const now = Date.now();
-  // Return cached URL if valid for at least another 60 seconds
-  if (cached && cached.expiresAt > now + 60000) {
-    return cached.url;
-  }
-
   const { data, error } = await supabase.functions.invoke('chat-signed-url', {
     body: {
       room_id: roomId,
@@ -197,11 +189,6 @@ export async function getSignedImageUrl(
   }
 
   const signedUrl = data.signed_url as string;
-  const expiresInSeconds = (data.expires_in_seconds as number) || 900;
-  signedUrlCache.set(storageKey, {
-    url: signedUrl,
-    expiresAt: now + expiresInSeconds * 1000,
-  });
 
   return signedUrl;
 }

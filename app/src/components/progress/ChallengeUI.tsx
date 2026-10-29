@@ -15,7 +15,12 @@ import { ct } from '@/i18n/challenges';
 export const cs = StyleSheet.create({
   root: { gap: space[5] },
   sharePreview: { width: '100%', aspectRatio: 1 },
-  home: { gap: space[5], paddingBottom: space[9] },
+  home: {
+    gap: space[5],
+    paddingHorizontal: space[5],
+    paddingTop: space[5],
+    paddingBottom: space[9],
+  },
   row: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: space[3] },
   between: {
     flexDirection: 'row',

@@ -1,6 +1,5 @@
 import { describe, expect, it } from 'vitest';
 import {
-  buildSignedR2Url,
   calculateCompressedDimensions,
   calculateThumbnailDimensions,
   formatChatSystemMessage,
@@ -285,31 +284,10 @@ describe('Phase 8: Chat Core Logic Tests', () => {
   });
 
   describe('Signed R2 URLs and expiration', () => {
-    it('generates signed URLs with expiration parameters', () => {
-      const now = 1700000000000;
-      const url = buildSignedR2Url({
-        method: 'GET',
-        bucket: 'calipartner-chat',
-        key: 'rooms/r1/messages/m1/0.jpg',
-        expiresInSeconds: 900,
-        now,
-      });
-
-      expect(url).toContain('https://');
-      expect(url).toContain('AWS4-HMAC-SHA256');
-      expect(url).toContain('expires=1700000900');
-      expect(url).toContain('signature=');
-    });
-
     it('correctly identifies expired signed URLs', () => {
       const now = 1700000000000;
-      const url = buildSignedR2Url({
-        method: 'GET',
-        bucket: 'calipartner-chat',
-        key: 'rooms/r1/messages/m1/0.jpg',
-        expiresInSeconds: 900,
-        now,
-      });
+      const url =
+        'https://test.r2.cloudflarestorage.com/chat/rooms/r1/file.jpg?X-Amz-Date=20231114T221320Z&X-Amz-Expires=900';
 
       // 5 minutes later: not expired
       expect(isSignedUrlExpired(url, now + 300 * 1000)).toBe(false);

@@ -124,7 +124,7 @@ describe('chatImageService', () => {
   });
 
   describe('getSignedImageUrl', () => {
-    it('invokes chat-signed-url Edge Function and caches URL', async () => {
+    it('rechecks authorization for every media open', async () => {
       const mockSupabase = {
         functions: {
           invoke: vi.fn().mockResolvedValue({
@@ -141,10 +141,10 @@ describe('chatImageService', () => {
       expect(url1).toBe('https://r2.example.com/read-get-url');
       expect(mockSupabase.functions.invoke).toHaveBeenCalledTimes(1);
 
-      // Second call uses memory cache
+      // Every open rechecks membership and entitlement
       const url2 = await getSignedImageUrl(mockSupabase, 'r1', 'rooms/r1/messages/c1/0.jpg');
       expect(url2).toBe('https://r2.example.com/read-get-url');
-      expect(mockSupabase.functions.invoke).toHaveBeenCalledTimes(1);
+      expect(mockSupabase.functions.invoke).toHaveBeenCalledTimes(2);
     });
   });
 });

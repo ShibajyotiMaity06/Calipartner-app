@@ -21,11 +21,15 @@ export function ChatTermsModal({
   const { colors } = useTheme();
   const [loading, setLoading] = useState(false);
 
+  const [error, setError] = useState(false);
   const handleAgree = async () => {
     setLoading(true);
+    setError(false);
     try {
       await onAccept();
       onClose();
+    } catch {
+      setError(true);
     } finally {
       setLoading(false);
     }
@@ -55,6 +59,11 @@ export function ChatTermsModal({
             {t('chat.termsSubtitle')}
           </Text>
 
+          {error ? (
+            <Text accessibilityRole="alert" style={{ color: colors.danger }}>
+              {t('chatAudit.actionError')}
+            </Text>
+          ) : null}
           {/* Guideline Bullet 1 */}
           <View style={styles.guidelineRow}>
             <Ionicons
@@ -88,6 +97,9 @@ export function ChatTermsModal({
             <Text style={[styles.bulletText, { color: colors.text }]}>{t('chat.term3')}</Text>
           </View>
 
+          <Text style={[styles.bulletText, { color: colors.text }]}>
+            {t('chatAudit.moderationNotice')}
+          </Text>
           {/* Accept button */}
           <Pressable
             onPress={handleAgree}

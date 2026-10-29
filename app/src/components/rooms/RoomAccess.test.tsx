@@ -24,7 +24,11 @@ vi.mock('react-native', () => ({
   StyleSheet: { create: (v: unknown) => v },
 }));
 vi.mock('expo-clipboard', () => ({ setStringAsync: state.copy }));
+vi.mock('@/lib/supabase', () => ({
+  getSupabase: () => ({ rpc: vi.fn().mockResolvedValue({ data: [], error: null }) }),
+}));
 vi.mock('expo-router', () => ({
+  useLocalSearchParams: () => ({}),
   useFocusEffect: () => {},
   useNavigation: () => ({ setOptions: vi.fn() }),
   useRouter: () => ({ push: vi.fn() }),
@@ -90,6 +94,9 @@ vi.mock('@/hooks/useRoomChat', () => ({
 }));
 vi.mock('@/components/chat', () => ({ ChatView: 'ChatView' }));
 vi.mock('@/components/rooms/BasicRoomCard', () => ({ BasicRoomCard: 'BasicRoomCard' }));
+vi.mock('@/components/rooms/ShareLoggedMealModal', () => ({
+  ShareLoggedMealModal: 'ShareLoggedMealModal',
+}));
 vi.mock('@/components/rooms/RoomExtras', () => ({ RoomExtras: 'RoomExtras' }));
 vi.mock('@/components/rooms', () =>
   Object.fromEntries(
@@ -196,6 +203,8 @@ describe('room invitation and viewer access', () => {
     [false, 3, false],
     [true, 2, false],
     [true, 3, true],
+    [false, 20, false],
+    [true, 20, true],
   ])('Members visibility for paid=%s and count=%s is %s', async (paid, count, shown) => {
     state.paid = paid;
     state.count = count;
@@ -246,6 +255,31 @@ describe('room invitation and viewer access', () => {
     expect(tree.root.findAllByProps({ testID: 'btn-copy-room-code' })).toHaveLength(0);
     await act(async () => tree.update(<RoomHeader {...props} showMembers />));
     expect(tree.root.findAllByProps({ testID: 'room-tab-members' })).toHaveLength(1);
+    await act(async () => tree.unmount());
+  });
+  it('four joined rooms retain create/join and copy succeeds only after the native clipboard succeeds', async () => {
+    const props = {
+      currentRoom: { id: 'r', name: 'Room', code: 'CP1234', member_count: 2 },
+      allRooms: [1, 2, 3, 4].map((id) => ({ id: String(id), name: 'Room' })),
+      activeSegment: 'today',
+      pendingRequestsCount: 0,
+      streakDays: 0,
+      onCreateOrJoin: vi.fn(),
+    } as unknown as React.ComponentProps<typeof RoomHeader>;
+    let tree!: ReactTestRenderer;
+    await act(async () => {
+      tree = create(<RoomHeader {...props} />);
+    });
+    await act(async () =>
+      tree.root.findByProps({ testID: 'btn-room-title-switcher' }).props.onPress(),
+    );
+    expect(tree.root.findAllByProps({ testID: 'btn-switcher-create-room' })).toHaveLength(1);
+    state.copy.mockRejectedValueOnce(new Error('clipboard unavailable'));
+    await act(async () => tree.root.findByProps({ testID: 'btn-copy-room-code' }).props.onPress());
+    expect(tree.root.findAllByProps({ accessibilityRole: 'alert' })).toHaveLength(1);
+    await act(async () => tree.root.findByProps({ testID: 'btn-copy-room-code' }).props.onPress());
+    expect(state.copy).toHaveBeenCalledWith('CP1234');
+    expect(tree.root.findAllByProps({ accessibilityRole: 'alert' })).toHaveLength(0);
     await act(async () => tree.unmount());
   });
 });

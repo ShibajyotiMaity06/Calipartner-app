@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import type { MealSection, RoomPrivacySettings, RoomReactionType } from '@calipartner/core';
 import { getSupabase } from '@/lib/supabase';
 import {
@@ -9,13 +9,14 @@ import {
   reportTarget as apiReport,
   respondSharedMeal as apiRespondSharedMeal,
   sendNudge as apiSendNudge,
-  sendReaction as apiSendReaction,
+  sendMemberReaction as apiSendReaction,
   setWhoCanInvite as apiSetWhoCanInvite,
   tagSharedMeal as apiTagSharedMeal,
   transferHost as apiTransferHost,
   updatePrivacySettings as apiUpdatePrivacy,
 } from '@/services/roomService';
 import { parseRoomError, RoomServiceError, type TagSharedMealInput } from '@/types/rooms';
+import { generateClientUuid } from '@/services/foodService';
 
 function handleError(err: unknown): RoomServiceError {
   return err instanceof RoomServiceError ? err : parseRoomError(err);
@@ -24,6 +25,7 @@ function handleError(err: unknown): RoomServiceError {
 export function useRoomActions(roomId?: string | null) {
   const [actionLoading, setActionLoading] = useState(false);
   const [actionError, setActionError] = useState<RoomServiceError | null>(null);
+  const nudgeRequests = useRef(new Map<string, string>());
 
   const sendNudge = useCallback(
     async (recipientId: string, messageTemplate: string) => {
@@ -32,7 +34,17 @@ export function useRoomActions(roomId?: string | null) {
       setActionError(null);
       try {
         const supabase = getSupabase();
-        return await apiSendNudge(supabase, roomId, recipientId, messageTemplate);
+        const key = `${roomId}:${recipientId}:${messageTemplate}`;
+        if (!nudgeRequests.current.has(key)) nudgeRequests.current.set(key, generateClientUuid());
+        const result = await apiSendNudge(
+          supabase,
+          roomId,
+          recipientId,
+          messageTemplate,
+          nudgeRequests.current.get(key),
+        );
+        nudgeRequests.current.delete(key);
+        return result;
       } catch (err: unknown) {
         const serviceErr = handleError(err);
         setActionError(serviceErr);

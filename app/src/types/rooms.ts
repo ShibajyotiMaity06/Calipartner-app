@@ -1,5 +1,4 @@
 import type {
-  MealSection,
   Room,
   RoomMember,
   RoomMemberSnapshot,
@@ -148,19 +147,9 @@ export interface RoomRequestWithDetails extends RoomRequest {
 
 export interface TagSharedMealInput {
   roomId: string;
-  foodId?: string | null;
-  foodName: string;
-  mealSection: MealSection;
-  quantity: number;
-  unit: string;
-  calories: number;
-  protein: number;
-  carbs: number;
-  fat: number;
-  fiber?: number;
-  sugar?: number;
-  sodiumMg?: number;
+  foodEntryId: string;
   participantIds: string[];
+  clientId: string;
 }
 
 export type {

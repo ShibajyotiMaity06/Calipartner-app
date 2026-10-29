@@ -52,6 +52,9 @@ export interface PairedCardProps {
   partnerMeals?: Record<MealType, MealStatus>;
   /** Whether partner hides data (Spec CMP-25) */
   isPartnerDataHidden?: boolean;
+  isPartnerStepsHidden?: boolean;
+  isPartnerMealsHidden?: boolean;
+  privateLabel?: string;
   /** Whether partner is paused */
   isPartnerPaused?: boolean;
   /** Partner paused until date */
@@ -114,6 +117,9 @@ export function PairedCard({
   partnerSteps = 0,
   partnerMeals,
   isPartnerDataHidden = false,
+  isPartnerStepsHidden = false,
+  isPartnerMealsHidden = false,
+  privateLabel,
   isPartnerPaused = false,
   partnerPauseUntilDate,
   seamState = 'broken',
@@ -135,13 +141,13 @@ export function PairedCard({
   accessibilityLabel,
   testID = 'paired-card',
 }: PairedCardProps): React.JSX.Element {
-  const { width } = useWindowDimensions();
+  const { width, fontScale } = useWindowDimensions();
 
   // Reflow to stacked columns when screen is narrower than 340dp or forced (Spec 5.4)
-  const isReflow = forceReflow || width < 340;
+  const isReflow = forceReflow || width < 340 || fontScale > 1.3;
 
   const a11ySummary = hasPartner
-    ? `Paired room summary with ${partnerName}. Your goal: ${Math.round(userPercent)}% complete. ${partnerName}'s goal: ${Math.round(partnerPercent)}% complete.`
+    ? `Paired room summary with ${partnerName}. Your goal: ${Math.round(userPercent)}% complete. ${partnerName}'s goal: ${isPartnerDataHidden ? (privateLabel ?? 'Not shared') : `${Math.round(partnerPercent)}% complete`}.`
     : `Room summary. Your goal: ${Math.round(userPercent)}% complete. Partner slot is open.`;
 
   return (
@@ -199,6 +205,8 @@ export function PairedCard({
               size={isReflow ? 120 : 184}
               userPercent={userPercent}
               partnerPercent={partnerPercent}
+              isPartnerDataHidden={isPartnerDataHidden}
+              privateLabel={privateLabel}
               partnerName={partnerName}
               userHue={userHue}
               partnerHue={partnerHue}
@@ -212,6 +220,8 @@ export function PairedCard({
             size={isReflow ? 120 : 184}
             userPercent={userPercent}
             partnerPercent={partnerPercent}
+            isPartnerDataHidden={isPartnerDataHidden}
+            privateLabel={privateLabel}
             partnerName={partnerName}
             userHue={userHue}
             partnerHue={partnerHue}
@@ -263,6 +273,9 @@ export function PairedCard({
               steps={partnerSteps}
               meals={partnerMeals}
               isDataHidden={isPartnerDataHidden}
+              isStepsHidden={isPartnerStepsHidden}
+              isMealsHidden={isPartnerMealsHidden}
+              privateLabel={privateLabel}
               isPaused={isPartnerPaused}
               pauseUntilDate={partnerPauseUntilDate}
               onReactMeal={onReactMeal}
@@ -346,6 +359,9 @@ export function PairedCard({
                 steps={partnerSteps}
                 meals={partnerMeals}
                 isDataHidden={isPartnerDataHidden}
+                isStepsHidden={isPartnerStepsHidden}
+                isMealsHidden={isPartnerMealsHidden}
+                privateLabel={privateLabel}
                 isPaused={isPartnerPaused}
                 pauseUntilDate={partnerPauseUntilDate}
                 onReactMeal={onReactMeal}

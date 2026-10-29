@@ -21,19 +21,25 @@ export function ReactionModal({
 }: ReactionModalProps) {
   const { colors } = useTheme();
 
-  const reactionOptions: { type: RoomReactionType; emoji: string; label: string }[] = [
-    { type: 'clap', emoji: '👏', label: t('rooms.reactionModal.clap') },
-    { type: 'fire', emoji: '🔥', label: t('rooms.reactionModal.fire') },
-    { type: 'muscle', emoji: '💪', label: t('rooms.reactionModal.muscle') },
-    { type: 'heart', emoji: '❤️', label: t('rooms.reactionModal.heart') },
-    { type: 'party', emoji: '🎉', label: t('rooms.reactionModal.party') },
+  const reactionOptions: {
+    type: RoomReactionType;
+    icon: keyof typeof Ionicons.glyphMap;
+    label: string;
+  }[] = [
+    { type: 'clap', icon: 'hand-left-outline', label: t('rooms.reactionModal.clap') },
+    { type: 'fire', icon: 'flame-outline', label: t('rooms.reactionModal.fire') },
+    { type: 'muscle', icon: 'barbell-outline', label: t('rooms.reactionModal.muscle') },
+    { type: 'heart', icon: 'heart-outline', label: t('rooms.reactionModal.heart') },
+    { type: 'party', icon: 'balloon-outline', label: t('rooms.reactionModal.party') },
   ];
 
   const [selectedReaction, setSelectedReaction] = useState<RoomReactionType>('fire');
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [successToast, setSuccessToast] = useState(false);
 
   const handleSend = async () => {
+    setError(null);
     setLoading(true);
     try {
       await onSendReaction(selectedReaction);
@@ -42,6 +48,14 @@ export function ReactionModal({
         setSuccessToast(false);
         onClose();
       }, 1000);
+    } catch (error) {
+      setError(
+        t(
+          String(error).includes('NO_SHARED_ACTIVITY')
+            ? 'roomAudit.noActivity'
+            : 'roomAudit.actionError',
+        ),
+      );
     } finally {
       setLoading(false);
     }
@@ -101,13 +115,18 @@ export function ReactionModal({
                   accessibilityLabel={opt.label}
                   testID={`reaction-btn-${opt.type}`}
                 >
-                  <Text style={styles.reactionEmoji}>{opt.emoji}</Text>
+                  <Ionicons name={opt.icon} size={24} color={colors.text} accessible={false} />
                   <Text style={[styles.reactionLabel, { color: colors.text }]}>{opt.label}</Text>
                 </Pressable>
               );
             })}
           </View>
 
+          {error ? (
+            <Text accessibilityRole="alert" style={{ color: colors.danger }}>
+              {error}
+            </Text>
+          ) : null}
           {/* Send Button */}
           <Pressable
             onPress={handleSend}

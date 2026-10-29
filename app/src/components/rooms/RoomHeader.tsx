@@ -1,5 +1,6 @@
 import React from 'react';
-import { Pressable, ScrollView, Share, StyleSheet, Text, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { setStringAsync } from 'expo-clipboard';
 import { Ionicons } from '@expo/vector-icons';
 import { t } from '@/i18n';
 import { fontSize, radius, spacing } from '@/theme/tokens';
@@ -45,23 +46,27 @@ export function RoomHeader({
   const [copiedToast, setCopiedToast] = React.useState(false);
   const [showRoomSwitcher, setShowRoomSwitcher] = React.useState(false);
 
+  const [copyError, setCopyError] = React.useState(false);
+  const copiedTimer = React.useRef<ReturnType<typeof setTimeout> | null>(null);
+  React.useEffect(() => {
+    setCopiedToast(false);
+    setCopyError(false);
+    return () => {
+      if (copiedTimer.current) clearTimeout(copiedTimer.current);
+    };
+  }, [currentRoom?.id]);
   const handleCopyCode = async () => {
     if (!currentRoom?.code) return;
     try {
-      const nav =
-        typeof navigator !== 'undefined'
-          ? (navigator as unknown as { clipboard?: { writeText: (text: string) => Promise<void> } })
-          : undefined;
-      if (nav?.clipboard?.writeText) {
-        await nav.clipboard.writeText(currentRoom.code);
-      } else {
-        await Share.share({ message: currentRoom.code });
-      }
+      setCopyError(false);
+      await setStringAsync(currentRoom.code);
+      setCopiedToast(true);
+      if (copiedTimer.current) clearTimeout(copiedTimer.current);
+      copiedTimer.current = setTimeout(() => setCopiedToast(false), 2000);
     } catch {
-      // Ignore
+      setCopyError(true);
+      setCopiedToast(false);
     }
-    setCopiedToast(true);
-    setTimeout(() => setCopiedToast(false), 2000);
   };
 
   const segments: { key: RoomSegment; label: string; icon: keyof typeof Ionicons.glyphMap }[] = [
@@ -127,7 +132,7 @@ export function RoomHeader({
               {/* Room Streak badge */}
               {streakDays > 0 && (
                 <View style={[styles.streakBadge, { backgroundColor: colors.cardHighlight }]}>
-                  <Text style={styles.streakFire}>🔥</Text>
+                  <Ionicons name="flame-outline" size={14} color={colors.textMuted} />
                   <Text style={[styles.streakText, { color: colors.accent }]}>
                     {t('rooms.streakDays', { count: streakDays })}
                   </Text>
@@ -241,7 +246,7 @@ export function RoomHeader({
               </Pressable>
             );
           })}
-          {onCreateOrJoin && allRooms.length < 3 && (
+          {onCreateOrJoin && (
             <Pressable
               onPress={() => {
                 setShowRoomSwitcher(false);
@@ -260,6 +265,11 @@ export function RoomHeader({
         </View>
       )}
 
+      {copyError ? (
+        <Text accessibilityRole="alert" style={{ color: colors.danger }}>
+          {t('roomAudit.actionError')}
+        </Text>
+      ) : null}
       {/* Segmented control navigation */}
       {currentRoom && (
         <ScrollView

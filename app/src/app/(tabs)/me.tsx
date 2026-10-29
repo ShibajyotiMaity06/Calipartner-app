@@ -6,21 +6,14 @@ import {
   Avatar,
   Button,
   Card,
-  Chip,
   dark,
-  ListRow,
+  onboardingLayout as layout,
   radius,
   space,
-  SyncPill,
   Text,
 } from '@calipartner/ui';
 
-import {
-  MeRoomPlanCard,
-  PaywallModal,
-  PrivacySettingsModal,
-  RequestsInboxModal,
-} from '@/components/rooms';
+import { MeRoomPlanCard, PaywallModal, RequestsInboxModal } from '@/components/rooms';
 import {
   AboutLegalModal,
   AppearanceModal,
@@ -38,6 +31,7 @@ import {
   StorageCacheModal,
   UnitsLanguageModal,
 } from '@/components/profile';
+import { ProfileRow, ProfileShortcut, SettingsGroup } from '@/components/profile/CompactSettings';
 import { useAuth } from '@/contexts/AuthContext';
 import { useFriends } from '@/hooks/useFriends';
 import { useRooms } from '@/hooks/useRooms';
@@ -49,8 +43,23 @@ import { playClickSound } from '@/lib/sound';
 
 export default function MeScreen() {
   const router = useRouter();
-  const { user, profile, isGuest, signOut, updateProfile } = useAuth();
-  const { currentGoalProfile, updateDailyGoals, saveGoalProfile } = useTargets();
+  const {
+    user,
+    profile,
+    isGuest,
+    signOut,
+    updateProfile,
+    isLoading,
+    profileError,
+    refreshProfile,
+  } = useAuth();
+  const {
+    currentGoalProfile,
+    updateDailyGoals,
+    saveGoalProfile,
+    loading: targetsLoading,
+    error: targetsError,
+  } = useTargets();
   const { rooms } = useRooms();
   const { incoming, outgoing, respondToRequest, cancelRequest } = useRoomRequests();
 
@@ -60,7 +69,6 @@ export default function MeScreen() {
   const [showAvatarPicker, setShowAvatarPicker] = useState(false);
   const [showGoalsBody, setShowGoalsBody] = useState(false);
   const [showDailyGoals, setShowDailyGoals] = useState(false);
-  const [showPrivacy, setShowPrivacy] = useState(false);
   const [showPerRoomVisibility, setShowPerRoomVisibility] = useState(false);
   const [showPreviewPartner, setShowPreviewPartner] = useState(false);
   const [showDiscoverability, setShowDiscoverability] = useState(false);
@@ -80,14 +88,9 @@ export default function MeScreen() {
 
   const handleRateApp = () => {
     playClickSound();
-    Alert.alert(
-      'Rate CaliPartner',
-      'Enjoying your accountability partner journey? Your review helps more people reach their health goals.',
-      [
-        { text: 'Not now', style: 'cancel' },
-        { text: '5 Stars', onPress: () => {} },
-      ],
-    );
+    Alert.alert(t('compactProfile.rate'), t('compactProfile.rateMessage'), [
+      { text: t('common.cancel'), style: 'cancel' },
+    ]);
   };
 
   const performSignOut = async () => {
@@ -99,419 +102,311 @@ export default function MeScreen() {
   return (
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.container} testID="screen-me">
-        {/* Header with Title and Requests Bell (Spec N01) */}
         <View style={styles.header}>
-          <Text variant="title1" color={dark.textHi}>
-            {t('tabs.me')}
+          <Text variant="title2" color={dark.textHi}>
+            {t('compactProfile.account')}
           </Text>
-
           <TouchableOpacity
             onPress={() => {
               playClickSound();
               setShowRequestsInbox(true);
             }}
             accessibilityRole="button"
-            accessibilityLabel={`Requests inbox with ${pendingRequestsCount} pending`}
+            accessibilityLabel={t('compactProfile.requests', { count: pendingRequestsCount })}
             style={styles.bellButton}
             testID="btn-me-requests-bell"
           >
-            <Ionicons name="notifications-outline" size={22} color={dark.textHi} />
-            {pendingRequestsCount > 0 && (
-              <View style={styles.bellBadge} testID="badge-requests-count">
-                <Text variant="micro" color={dark.onBrand} style={styles.bellBadgeText}>
+            <Ionicons name="notifications-outline" size={layout.icon} color={dark.textHi} />
+            {pendingRequestsCount > 0 ? (
+              <View style={styles.bellBadge}>
+                <Text variant="micro" color={dark.onBrand} tabular>
                   {pendingRequestsCount}
                 </Text>
               </View>
-            )}
+            ) : null}
           </TouchableOpacity>
         </View>
-
         <ScrollView
           contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
+          testID="profile-scroll"
         >
-          {/* Guest Mode Banner (Spec N01) */}
-          {isGuest && (
-            <Card elevation="s2" style={styles.guestCard} testID="guest-mode-banner">
-              <Text variant="heading" color={dark.textHi}>
-                Guest Mode
-              </Text>
-              <Text variant="bodyS" color={dark.textMid} style={styles.guestDesc}>
-                Create an account to keep your data, join accountability rooms, and match with
-                partners.
+          {isGuest ? (
+            <Card elevation="s2" style={styles.profileCard} testID="guest-mode-banner">
+              <Text variant="heading">{t('compactProfile.guest')}</Text>
+              <Text variant="bodyS" color={dark.textMid}>
+                {t('compactProfile.guestSubtitle')}
               </Text>
               <Button
-                variant="primary"
                 label={t('auth.title')}
                 onPress={() =>
                   router.push({ pathname: '/auth/sign-in', params: { mode: 'signup' } })
                 }
                 testID="btn-me-signin"
-                style={styles.guestSignInBtn}
               />
             </Card>
-          )}
-
-          {/* Authenticated Profile Header (Avatar 72, nickname, @username, edit) (Spec N01) */}
-          {!isGuest && (
+          ) : (
             <Card elevation="s1" style={styles.profileCard}>
+              {isLoading ? (
+                <Text accessibilityLiveRegion="polite">{t('common.loading')}</Text>
+              ) : null}
+              {profileError ? (
+                <>
+                  <Text accessibilityRole="alert" color={dark.danger}>
+                    {t('compactProfile.profileError')}
+                  </Text>
+                  <Button
+                    variant="tertiary"
+                    label={t('friends.retry')}
+                    onPress={() => void refreshProfile()}
+                    testID="retry-me-profile"
+                  />
+                </>
+              ) : null}
               <View style={styles.profileHeaderRow}>
                 <TouchableOpacity
-                  onPress={() => {
-                    playClickSound();
-                    setShowAvatarPicker(true);
-                  }}
+                  onPress={() => setShowAvatarPicker(true)}
                   accessibilityRole="button"
-                  accessibilityLabel="Change avatar"
+                  accessibilityLabel={t('compactProfile.avatar')}
                   testID="btn-me-avatar"
-                  style={styles.avatarWrap}
+                  style={styles.bellButton}
                 >
                   <Avatar
-                    size="lg"
+                    size="md"
                     uri={profile?.avatar_url}
-                    name={profile?.nickname ?? 'User'}
+                    name={profile?.nickname ?? t('compactProfile.account')}
                     identityHue="teal"
                   />
-                  <View style={styles.avatarEditBadge}>
-                    <Ionicons name="camera" size={14} color={dark.onBrand} />
-                  </View>
                 </TouchableOpacity>
-
                 <View style={styles.profileTextWrap}>
-                  <Text variant="title2" color={dark.textHi} style={styles.nicknameText}>
-                    {profile?.nickname ?? 'CaliPartner'}
+                  <Text variant="heading">{profile?.nickname ?? t('compactProfile.account')}</Text>
+                  <Text variant="micro" color={dark.textMid}>
+                    {profile ? `@${profile.username}` : t('profileSetup.title')}
                   </Text>
-                  <Text variant="bodyS" color={dark.textMid}>
-                    @{profile?.username ?? 'user'}
-                  </Text>
-                  {user?.email ? (
-                    <Text variant="micro" color={dark.textLo} style={styles.emailText}>
-                      {user.email}
-                    </Text>
-                  ) : null}
                 </View>
-              </View>
-
-              <View style={styles.profileActions}>
-                <Button
-                  variant="secondary"
-                  size="md"
-                  fontSet="onboarding"
-                  label={t('challengeHub.trophies')}
-                  onPress={() => router.push('/progress?tab=challenges&trophies=1' as never)}
-                  testID="me-challenge-trophies"
-                />
-                <Button
-                  variant="secondary"
-                  size="md"
-                  fontSet="onboarding"
-                  label={t('friends.editProfile')}
-                  onPress={() => router.push('/profile/social' as never)}
-                  testID="me-social-profile"
-                />
-                <Button
-                  variant="secondary"
-                  size="md"
-                  fontSet="onboarding"
-                  label={t('friends.title')}
-                  onPress={() => router.push('/friends' as never)}
-                  testID="me-friends"
-                />
-                <Button
-                  variant="secondary"
-                  size="md"
-                  fontSet="onboarding"
-                  label={profile ? t('profileEdit.title') : t('profileSetup.title')}
-                  onPress={() => {
-                    playClickSound();
-                    if (!profile) {
-                      router.push('/auth/profile-setup');
-                    } else {
-                      router.push('/profile/edit');
-                    }
-                  }}
+                <TouchableOpacity
+                  accessibilityRole="button"
+                  accessibilityLabel={t('profileEdit.title')}
+                  onPress={() => router.push(profile ? '/profile/edit' : '/auth/profile-setup')}
                   testID="btn-me-edit-profile"
-                />
+                  style={styles.bellButton}
+                >
+                  <Ionicons name="create-outline" size={layout.icon} color={dark.textMid} />
+                </TouchableOpacity>
+              </View>
+              <View style={styles.shortcuts}>
+                <View style={styles.shortcut}>
+                  <ProfileShortcut
+                    title={t('compactProfile.trophies')}
+                    icon="trophy-outline"
+                    onPress={() => router.push('/progress?tab=challenges&trophies=1' as never)}
+                    testID="me-challenge-trophies"
+                  />
+                </View>
+                <View style={styles.shortcut}>
+                  <ProfileShortcut
+                    title={t('community.title')}
+                    icon="people-outline"
+                    onPress={() => router.push('/friends' as never)}
+                    testID="me-friends"
+                  />
+                </View>
               </View>
             </Card>
           )}
-
-          {/* Room Plan Card (Spec N01, O01) */}
           <MeRoomPlanCard
             attachedRoom={rooms[0] ?? null}
             onChangePlan={() => setShowPaywall(true)}
+            compact
           />
-
-          {/* Group 1: My Goals (Spec N01, N03, N04) */}
-          <View style={styles.groupSection}>
-            <Text variant="label" color={dark.textHi} style={styles.groupHeader}>
-              {t('me.sections.myGoals')}
+          <Text variant="label" color={dark.textMid}>
+            {t('me.sections.myGoals')}
+          </Text>
+          <Card elevation="s1" style={styles.groupCard}>
+            <ProfileRow
+              title={t('me.goalsAndBody.title')}
+              subtitle={
+                currentGoalProfile
+                  ? t(`socialUpdate.${currentGoalProfile.goal}`)
+                  : t(targetsLoading ? 'common.loading' : 'compactProfile.noGoals')
+              }
+              icon="body-outline"
+              onPress={() => setShowGoalsBody(true)}
+              disabled={!currentGoalProfile || !profile}
+              testID="row-goals-body"
+            />
+            <ProfileRow
+              title={t('me.dailyGoals.title')}
+              subtitle={
+                currentGoalProfile
+                  ? t('fixes.dailyGoalsSummary', {
+                      steps: currentGoalProfile.step_goal.toLocaleString(),
+                    })
+                  : t(targetsLoading ? 'common.loading' : 'compactProfile.noGoals')
+              }
+              icon="footsteps-outline"
+              onPress={() => setShowDailyGoals(true)}
+              disabled={!currentGoalProfile}
+              testID="row-daily-goals"
+            />
+          </Card>
+          {targetsError ? (
+            <Text accessibilityRole="alert" color={dark.danger}>
+              {t('compactProfile.goalsError')}
             </Text>
-            <Card elevation="s1" style={styles.groupCard}>
-              <ListRow
-                title={t('me.goalsAndBody.title')}
-                subtitle="Primary goal, deficit pace, body measurements"
-                onPress={() => {
-                  playClickSound();
-                  setShowGoalsBody(true);
-                }}
-                testID="row-goals-body"
-              />
-              <ListRow
-                title={t('me.dailyGoals.title')}
-                subtitle={
-                  currentGoalProfile
-                    ? t('fixes.dailyGoalsSummary', {
-                        steps: currentGoalProfile.step_goal.toLocaleString(),
-                      })
-                    : t('common.loading')
-                }
-                onPress={() => {
-                  playClickSound();
-                  setShowDailyGoals(true);
-                }}
-                showDivider={false}
-                testID="row-daily-goals"
-              />
-            </Card>
-          </View>
-
-          {/* Group 2: Privacy & Visibility (Spec N01, N05, N06, N07, N08) */}
-          <View style={styles.groupSection}>
-            <Text variant="label" color={dark.textHi} style={styles.groupHeader}>
-              {t('me.sections.privacy')}
-            </Text>
-            <Card elevation="s1" style={styles.groupCard}>
-              <ListRow
-                title="Privacy"
-                subtitle="You decide what people in your room see"
-                onPress={() => {
-                  playClickSound();
-                  setShowPrivacy(true);
-                }}
-                testID="row-privacy"
-              />
-              <ListRow
-                title={t('me.perRoomVisibility.title')}
-                subtitle="Customise visibility for individual rooms"
-                onPress={() => {
-                  playClickSound();
-                  setShowPerRoomVisibility(true);
-                }}
-                testID="row-per-room-visibility"
-              />
-              <ListRow
-                title={t('me.previewPartner.title')}
-                subtitle="Read-only preview of your card as seen by partners"
-                onPress={() => {
-                  playClickSound();
-                  setShowPreviewPartner(true);
-                }}
-                testID="row-preview-partner"
-              />
-              <ListRow
-                title={t('me.discoverability.title')}
-                subtitle="Searchability by username and blocked accounts"
-                onPress={() => {
-                  playClickSound();
-                  setShowDiscoverability(true);
-                }}
-                showDivider={false}
-                testID="row-discoverability"
-              />
-            </Card>
-          </View>
-
-          {/* Group 3: Features (Spec N01) */}
-          <View style={styles.groupSection}>
-            <Text variant="label" color={dark.textHi} style={styles.groupHeader}>
-              {t('me.sections.features')}
-            </Text>
-            <Card elevation="s1" style={styles.groupCard}>
-              <ListRow
-                title="Find a partner"
-                subtitle="Matching status and preferences"
-                trailing={<Chip label="Open" />}
-                onPress={() => {
-                  playClickSound();
-                  setShowDiscoverability(true);
-                }}
-                testID="row-find-partner"
-              />
-              <ListRow
-                title="Fasting"
-                subtitle="Active fasting timer and protocols"
-                onPress={() => {
-                  playClickSound();
-                  router.push('/(tabs)/log');
-                }}
-                testID="row-fasting"
-              />
-
-              <ListRow
-                title="AI coach history"
-                subtitle="Personal fitness and meal check-in logs"
-                onPress={() => {
-                  playClickSound();
-                  router.push('/coach' as never);
-                }}
-                showDivider={false}
-                testID="row-coach-history"
-              />
-            </Card>
-          </View>
-
-          {/* Group 4: Preferences (Spec N01, N09, N10, N11, N12) */}
-          <View style={styles.groupSection}>
-            <Text variant="label" color={dark.textHi} style={styles.groupHeader}>
-              {t('me.sections.preferences')}
-            </Text>
-            <Card elevation="s1" style={styles.groupCard}>
-              <ListRow
-                title={t('notifications.title')}
-                subtitle="Push alerts, quiet hours, local reminders"
-                onPress={() => {
-                  playClickSound();
-                  router.push('/notifications/settings' as never);
-                }}
-                testID="row-notifications"
-              />
-              <ListRow
-                title={t('me.healthSync.title')}
-                subtitle="Apple Health, Health Connect, pedometer"
-                onPress={() => {
-                  playClickSound();
-                  setShowHealthSync(true);
-                }}
-                testID="row-health-sync"
-              />
-              <ListRow
-                title={t('me.unitsLanguage.title')}
-                subtitle="Metric/imperial, English/Hindi, timezone"
-                onPress={() => {
-                  playClickSound();
-                  setShowUnitsLanguage(true);
-                }}
-                testID="row-units-language"
-              />
-              <ListRow
-                title={t('me.appearance.title')}
-                subtitle="Theme, reduce motion, haptics, text scaling"
-                onPress={() => {
-                  playClickSound();
-                  setShowAppearance(true);
-                }}
-                showDivider={false}
-                testID="row-appearance"
-              />
-            </Card>
-          </View>
-
-          {/* Group 5: Data & Storage (Spec N01, P01, B09) */}
-          <View style={styles.groupSection}>
-            <Text variant="label" color={dark.textHi} style={styles.groupHeader}>
-              {t('me.sections.syncStorage')}
-            </Text>
-            <Card elevation="s1" style={styles.groupCard}>
-              <ListRow
-                title="Sync status"
-                subtitle="Saved on this phone • Offline first"
-                trailing={<SyncPill status="synced" />}
-                testID="row-sync-status"
-              />
-              <ListRow
-                title={t('me.storageCache.title')}
-                subtitle="SQLite database, food cache"
-                onPress={() => {
-                  playClickSound();
-                  setShowStorageCache(true);
-                }}
-                testID="row-storage-cache"
-              />
-              <ListRow
-                title="Export my data"
-                subtitle="Download your logs as CSV or JSON"
-                onPress={() => {
-                  playClickSound();
-                  setShowExportData(true);
-                }}
-                showDivider={false}
-                testID="row-export-data"
-              />
-            </Card>
-          </View>
-
-          {/* Group 6: Help and Feedback (Spec N01, N13, N14, RAT-6) */}
-          <View style={styles.groupSection}>
-            <Text variant="label" color={dark.textHi} style={styles.groupHeader}>
-              {t('me.sections.helpFeedback')}
-            </Text>
-            <Card elevation="s1" style={styles.groupCard}>
-              <ListRow
-                title={t('me.helpCentre.title')}
-                subtitle="Guides, FAQs, and support"
-                onPress={() => {
-                  playClickSound();
-                  setShowHelpCentre(true);
-                }}
-                testID="row-help-centre"
-              />
-              <ListRow
-                title={t('me.reportFeedback.title')}
-                subtitle="Report a problem, wrong food entry, or feedback"
-                onPress={() => {
-                  playClickSound();
-                  setShowReportFeedback(true);
-                }}
-                testID="row-report-feedback"
-              />
-              <ListRow
-                title="Rate CaliPartner"
-                subtitle="Share your feedback on the app store"
-                onPress={handleRateApp}
-                showDivider={false}
-                testID="row-rate-app"
-              />
-            </Card>
-          </View>
-
-          {/* Group 7: About and Legal (Spec N01, N15) */}
-          <View style={styles.groupSection}>
-            <Text variant="label" color={dark.textHi} style={styles.groupHeader}>
-              {t('me.sections.aboutLegal')}
-            </Text>
-            <Card elevation="s1" style={styles.groupCard}>
-              <ListRow
-                title={t('me.aboutLegal.title')}
-                subtitle="Terms, privacy, health disclaimer, IFCT"
-                onPress={() => {
-                  playClickSound();
-                  setShowAboutLegal(true);
-                }}
-                showDivider={false}
-                testID="row-about-legal"
-              />
-            </Card>
-          </View>
-
-          {/* Group 8: Account & Sign Out (Spec N01, N16) */}
-          <View style={styles.groupSection}>
-            <Card elevation="s1" style={styles.groupCard}>
-              <ListRow
-                title={t('auth.signOut')}
-                subtitle="Pause notifications and safely disconnect"
-                onPress={() => {
-                  playClickSound();
-                  setShowSignOutSheet(true);
-                }}
-                showDivider={false}
-                testID="row-sign-out"
-              />
-            </Card>
-          </View>
+          ) : null}
+          <Text variant="label" color={dark.textMid}>
+            {t('me.sections.features')}
+          </Text>
+          <Card elevation="s1" style={styles.groupCard}>
+            <ProfileRow
+              title={t('compactProfile.findPartner')}
+              icon="people-outline"
+              onPress={() => router.push('/friends' as never)}
+              testID="row-find-partner"
+            />
+            <ProfileRow
+              title={t('compactProfile.fasting')}
+              icon="timer-outline"
+              onPress={() => router.push('/(tabs)/log')}
+              testID="row-fasting"
+            />
+            <ProfileRow
+              title={t('compactProfile.coach')}
+              icon="chatbubbles-outline"
+              onPress={() => router.push('/coach' as never)}
+              testID="row-coach-history"
+            />
+          </Card>
+          <SettingsGroup
+            title={t('me.sections.preferences')}
+            summary={t('compactProfile.preferences')}
+            icon="options-outline"
+            testID="section-preferences"
+          >
+            <ProfileRow
+              title={t('notifications.title')}
+              icon="notifications-outline"
+              onPress={() => router.push('/notifications/settings' as never)}
+              testID="row-notifications"
+            />
+            <ProfileRow
+              title={t('me.healthSync.title')}
+              icon="heart-outline"
+              onPress={() => setShowHealthSync(true)}
+              testID="row-health-sync"
+            />
+            <ProfileRow
+              title={t('me.unitsLanguage.title')}
+              icon="globe-outline"
+              onPress={() => setShowUnitsLanguage(true)}
+              testID="row-units-language"
+            />
+            <ProfileRow
+              title={t('me.appearance.title')}
+              icon="color-palette-outline"
+              onPress={() => setShowAppearance(true)}
+              testID="row-appearance"
+            />
+          </SettingsGroup>
+          <SettingsGroup
+            title={t('me.sections.privacy')}
+            summary={t('compactProfile.privacy')}
+            icon="lock-closed-outline"
+            testID="section-privacy"
+          >
+            <ProfileRow
+              title={t('compactProfile.privacyTitle')}
+              icon="lock-closed-outline"
+              onPress={() => setShowPerRoomVisibility(true)}
+              testID="row-privacy"
+            />
+            <ProfileRow
+              title={t('me.perRoomVisibility.title')}
+              icon="eye-outline"
+              onPress={() => setShowPerRoomVisibility(true)}
+              testID="row-per-room-visibility"
+            />
+            <ProfileRow
+              title={t('me.previewPartner.title')}
+              icon="person-outline"
+              onPress={() => setShowPreviewPartner(true)}
+              testID="row-preview-partner"
+            />
+            <ProfileRow
+              title={t('me.discoverability.title')}
+              icon="shield-outline"
+              onPress={() => setShowDiscoverability(true)}
+              testID="row-discoverability"
+            />
+            <ProfileRow
+              title={t('friends.editProfile')}
+              icon="create-outline"
+              onPress={() => router.push('/profile/social' as never)}
+              testID="me-social-profile"
+            />
+          </SettingsGroup>
+          <SettingsGroup
+            title={t('me.sections.syncStorage')}
+            summary={t('compactProfile.storage')}
+            icon="server-outline"
+            testID="section-storage"
+          >
+            <ProfileRow
+              title={t('me.storageCache.title')}
+              icon="server-outline"
+              onPress={() => setShowStorageCache(true)}
+              testID="row-storage-cache"
+            />
+            <ProfileRow
+              title={t('compactProfile.export')}
+              icon="download-outline"
+              onPress={() => setShowExportData(true)}
+              testID="row-export-data"
+            />
+          </SettingsGroup>
+          <SettingsGroup
+            title={t('compactProfile.helpLegal')}
+            summary={t('compactProfile.help')}
+            icon="help-circle-outline"
+            testID="section-help"
+          >
+            <ProfileRow
+              title={t('me.helpCentre.title')}
+              icon="help-circle-outline"
+              onPress={() => setShowHelpCentre(true)}
+              testID="row-help-centre"
+            />
+            <ProfileRow
+              title={t('me.reportFeedback.title')}
+              icon="warning-outline"
+              onPress={() => setShowReportFeedback(true)}
+              testID="row-report-feedback"
+            />
+            <ProfileRow
+              title={t('compactProfile.rate')}
+              icon="thumbs-up-outline"
+              onPress={handleRateApp}
+              testID="row-rate-app"
+            />
+            <ProfileRow
+              title={t('me.aboutLegal.title')}
+              icon="document-text-outline"
+              onPress={() => setShowAboutLegal(true)}
+              testID="row-about-legal"
+            />
+          </SettingsGroup>
+          <Card elevation="s1" style={styles.groupCard}>
+            <ProfileRow
+              title={t('compactProfile.signOut')}
+              icon="log-out-outline"
+              onPress={() => setShowSignOutSheet(true)}
+              testID="row-signout"
+              danger
+            />
+          </Card>
         </ScrollView>
 
-        {/* All Modals Wired (N02 - N16, O02) */}
         <PaywallModal
           visible={showPaywall}
           onClose={() => setShowPaywall(false)}
@@ -592,29 +487,6 @@ export default function MeScreen() {
           />
         )}
 
-        <PrivacySettingsModal
-          visible={showPrivacy}
-          onClose={() => setShowPrivacy(false)}
-          onGetPrivacy={async () => ({
-            share_streak: true,
-            share_goal_completion: true,
-            share_steps: true,
-            share_water: true,
-            share_workouts: true,
-            share_workout_details: false,
-            share_calories_macros: true,
-            share_meals: 'always',
-            share_weight_number: false,
-            share_weight_progress: true,
-            share_fasting: false,
-            share_focus_status: true,
-            share_focus_label: false,
-          })}
-          onUpdatePrivacy={async (settings) => settings as never}
-          onOpenPerRoom={() => setShowPerRoomVisibility(true)}
-          onOpenPreviewPartner={() => setShowPreviewPartner(true)}
-        />
-
         <PerRoomVisibilityModal
           visible={showPerRoomVisibility}
           onClose={() => setShowPerRoomVisibility(false)}
@@ -622,6 +494,7 @@ export default function MeScreen() {
         />
 
         <PreviewAsPartnerModal
+          roomId={rooms[0]?.id}
           visible={showPreviewPartner}
           onClose={() => setShowPreviewPartner(false)}
         />
@@ -630,6 +503,10 @@ export default function MeScreen() {
           visible={showDiscoverability}
           onClose={() => setShowDiscoverability(false)}
           discoverable={profile?.discoverable ?? true}
+          onUpdateDiscoverable={async (discoverable) => {
+            const result = await updateProfile({ discoverable });
+            if (result.error) throw result.error;
+          }}
         />
 
         <HealthSyncModal visible={showHealthSync} onClose={() => setShowHealthSync(false)} />
@@ -666,115 +543,48 @@ export default function MeScreen() {
 }
 
 const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
-    backgroundColor: dark.bg0,
-  },
-  container: {
-    flex: 1,
-    backgroundColor: dark.bg0,
-  },
+  safeArea: { flex: 1, backgroundColor: dark.bg0 },
+  container: { flex: 1, backgroundColor: dark.bg0 },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: space[4],
-    paddingTop: space[2],
-    paddingBottom: space[3],
-    borderBottomWidth: 1,
-    borderBottomColor: dark.hairline,
+    paddingVertical: space[1],
   },
   bellButton: {
-    width: 44,
-    height: 44,
+    minWidth: layout.touch,
+    minHeight: layout.touch,
     alignItems: 'center',
     justifyContent: 'center',
   },
   bellBadge: {
     position: 'absolute',
-    top: 6,
-    right: 6,
-    backgroundColor: dark.danger,
-    borderRadius: radius.full,
-    minWidth: 18,
-    height: 18,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: 4,
-  },
-  bellBadgeText: {
-    fontWeight: '700',
-    fontSize: 10,
-  },
-  scrollContent: {
-    padding: space[4],
-    paddingBottom: 80,
-  },
-  guestCard: {
-    padding: space[4],
-    marginBottom: space[4],
-  },
-  guestDesc: {
-    marginTop: space[1],
-    marginBottom: space[3],
-    lineHeight: 20,
-  },
-  guestSignInBtn: {
-    width: '100%',
-  },
-  profileActions: {
-    gap: space[3],
-    marginTop: space[3],
-  },
-  profileCard: {
-    padding: space[4],
-    marginBottom: space[4],
-  },
-  profileHeaderRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: space[4],
-    marginBottom: space[3],
-  },
-  avatarWrap: {
-    position: 'relative',
-    width: 72,
-    height: 72,
-  },
-  avatarEditBadge: {
-    position: 'absolute',
-    bottom: -2,
-    right: -2,
+    top: space[0],
+    right: space[0],
     backgroundColor: dark.apricot,
     borderRadius: radius.full,
-    width: 24,
-    height: 24,
+    minWidth: space[5],
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 2,
-    borderColor: dark.bg0,
-  },
-  profileTextWrap: {
-    flex: 1,
-  },
-  nicknameText: {
-    marginBottom: 2,
-  },
-  emailText: {
-    marginTop: 2,
-  },
-  editProfileBtn: {
-    width: '100%',
-  },
-  groupSection: {
-    marginBottom: space[4],
-  },
-  groupHeader: {
-    marginBottom: space[2],
     paddingHorizontal: space[1],
   },
-  groupCard: {
-    borderRadius: radius.card,
-    overflow: 'hidden',
+  scrollContent: {
+    paddingHorizontal: space[4],
+    paddingTop: space[1],
+    paddingBottom: space[9] + space[6],
+    gap: space[2],
   },
+  profileCard: { padding: space[3], gap: space[2] },
+  profileHeaderRow: { flexDirection: 'row', alignItems: 'center', gap: space[2] },
+  profileTextWrap: { flex: 1, minWidth: 0 },
+  shortcuts: { flexDirection: 'row', flexWrap: 'wrap', gap: space[2] },
+  shortcut: {
+    flexGrow: 1,
+    flexShrink: 0,
+    flexBasis: 'auto',
+    maxWidth: '100%',
+    minWidth: layout.touch,
+  },
+  groupCard: { padding: space[0], borderRadius: radius.card, overflow: 'hidden' },
 });

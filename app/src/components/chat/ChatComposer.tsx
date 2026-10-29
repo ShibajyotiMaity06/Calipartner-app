@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
   Image,
@@ -9,6 +9,7 @@ import {
   TextInput,
   View,
 } from 'react-native';
+import { onboardingLayout as layout } from '@calipartner/ui';
 import { Ionicons } from '@expo/vector-icons';
 import { t } from '@/i18n';
 import { fontSize, radius, spacing } from '@/theme/tokens';
@@ -16,6 +17,7 @@ import { useTheme } from '@/theme/useTheme';
 import { ChatMediaPickerModal, type SelectedMediaItem } from './ChatMediaPickerModal';
 
 export interface ChatComposerProps {
+  onTyping?: (typing: boolean) => void;
   onSend: (text?: string | null, attachments?: SelectedMediaItem[]) => Promise<void>;
   disabled?: boolean;
   allowMedia?: boolean;
@@ -27,6 +29,7 @@ export interface ChatComposerProps {
 
 export function ChatComposer({
   onSend,
+  onTyping,
   disabled = false,
   allowMedia = true,
   disabledReason,
@@ -41,6 +44,9 @@ export function ChatComposer({
   const [showPickerModal, setShowPickerModal] = useState(false);
   const [sendError, setSendError] = useState(false);
 
+  useEffect(() => {
+    if (!allowMedia) setSelectedMedia([]);
+  }, [allowMedia]);
   const canSend = !disabled && !isSending && (text.trim().length > 0 || selectedMedia.length > 0);
   const remainingChars = 2000 - text.length;
   const isNearLimit = text.length > 1800;
@@ -71,6 +77,7 @@ export function ChatComposer({
     setIsSending(true);
     try {
       await onSend(trimmedText || null, mediaToSend.length > 0 ? mediaToSend : undefined);
+      onTyping?.(false);
       setText('');
       setSelectedMedia([]);
     } catch {
@@ -121,7 +128,13 @@ export function ChatComposer({
         >
           {selectedMedia.map((item, idx) => (
             <View key={idx} style={styles.previewCard} testID={`composer-preview-${idx}`}>
-              <Image source={{ uri: item.uri }} style={styles.previewImage} resizeMode="cover" />
+              {item.mimeType.startsWith('video/') ? (
+                <View style={styles.previewImage}>
+                  <Ionicons name="play-circle-outline" size={32} color={colors.text} />
+                </View>
+              ) : (
+                <Image source={{ uri: item.uri }} style={styles.previewImage} resizeMode="cover" />
+              )}
               <Pressable
                 onPress={() => handleRemoveMedia(idx)}
                 style={styles.removeMediaBtn}
@@ -158,7 +171,7 @@ export function ChatComposer({
         {/* Camera / Photo Button */}
         <Pressable
           onPress={handlePressAttach}
-          disabled={disabled || selectedMedia.length >= 5}
+          disabled={disabled || !allowMedia || selectedMedia.length >= 5}
           style={[styles.iconBtn, (disabled || selectedMedia.length >= 5) && styles.btnDisabled]}
           accessibilityRole="button"
           accessibilityLabel={t('chat.attachPhoto')}
@@ -175,7 +188,11 @@ export function ChatComposer({
         <View style={[styles.inputWrapper, { backgroundColor: colors.surfaceAlt }]}>
           <TextInput
             value={text}
-            onChangeText={setText}
+            onChangeText={(value) => {
+              setText(value);
+              onTyping?.(Boolean(value.trim()));
+            }}
+            onBlur={() => onTyping?.(false)}
             placeholder={t('chat.placeholder')}
             placeholderTextColor={colors.textMuted}
             editable={!disabled}
@@ -310,8 +327,8 @@ const styles = StyleSheet.create({
     gap: spacing.xs,
   },
   iconBtn: {
-    width: 40,
-    height: 40,
+    width: layout.touch,
+    height: layout.touch,
     alignItems: 'center',
     justifyContent: 'center',
     borderRadius: radius.pill,
@@ -342,8 +359,8 @@ const styles = StyleSheet.create({
     marginLeft: 4,
   },
   sendBtn: {
-    width: 40,
-    height: 40,
+    width: layout.touch,
+    height: layout.touch,
     borderRadius: radius.pill,
     alignItems: 'center',
     justifyContent: 'center',

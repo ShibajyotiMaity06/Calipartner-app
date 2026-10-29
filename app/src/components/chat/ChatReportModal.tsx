@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Modal,
@@ -34,6 +34,16 @@ export function ChatReportModal({
   const [submitting, setSubmitting] = useState(false);
   const [submittedToast, setSubmittedToast] = useState(false);
 
+  const [error, setError] = useState(false);
+  const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => {
+    setError(false);
+    setSubmittedToast(false);
+    setDetails('');
+    return () => {
+      if (timer.current) clearTimeout(timer.current);
+    };
+  }, [messageId, visible]);
   if (!messageId) return null;
 
   const reasons = [
@@ -45,14 +55,17 @@ export function ChatReportModal({
 
   const handleSubmit = async () => {
     setSubmitting(true);
+    setError(false);
     try {
       await onSubmitReport(messageId, reason, details.trim() || undefined);
       setSubmittedToast(true);
-      setTimeout(() => {
+      timer.current = setTimeout(() => {
         setSubmittedToast(false);
         onClose();
         setDetails('');
       }, 1500);
+    } catch {
+      setError(true);
     } finally {
       setSubmitting(false);
     }
@@ -78,6 +91,11 @@ export function ChatReportModal({
             {t('rooms.reportModal.subtitle')}
           </Text>
 
+          {error ? (
+            <Text accessibilityRole="alert" style={{ color: colors.danger }}>
+              {t('chatAudit.actionError')}
+            </Text>
+          ) : null}
           {submittedToast ? (
             <View style={styles.toastWrap} testID="toast-report-submitted">
               <Ionicons name="checkmark-circle" size={40} color="#10B981" />

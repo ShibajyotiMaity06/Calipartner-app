@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from 'react';
-import { ScrollView, StyleSheet } from 'react-native';
+﻿import React, { useEffect, useState } from 'react';
+import { ScrollView, Share, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Button, Text, space, useTheme } from '@calipartner/ui';
@@ -10,40 +10,71 @@ import {
   acceptPairInvite,
   clearPendingPairInvite,
   isPairToken,
+  previewPairInvite,
   rememberPairInvite,
+  type PairInvitePreview,
 } from '@/services/pairOnboardingService';
 import { t } from '@/i18n';
 
 export default function PairInviteScreen() {
   const { token } = useLocalSearchParams<{ token: string }>();
   const { user, isLoading } = useAuth();
+  const userId = user?.id;
   const { colors } = useTheme();
   const { isOnline } = useNetworkStatus();
   const router = useRouter();
   const [busy, setBusy] = useState(false);
   const [ready, setReady] = useState(false);
+  const [preview, setPreview] = useState<PairInvitePreview | null>(null);
+  const [refresh, setRefresh] = useState(0);
   const [error, setError] = useState<string | null>(null);
   useEffect(() => {
     let active = true;
     setReady(false);
     setError(null);
+    setPreview(null);
+    if (isLoading) return;
     if (!isPairToken(token)) {
       setError(t('pairStart.unavailable'));
       return;
     }
-    void rememberPairInvite(token)
-      .then(() => {
+    if (!isOnline) {
+      setError(t('pairStart.offline'));
+      return;
+    }
+    void (async () => {
+      if (!userId) {
+        await rememberPairInvite(token);
         if (active) setReady(true);
-      })
-      .catch(() => {
-        if (active) setError(t('pairStart.error'));
-      });
+        return;
+      }
+      const result = await previewPairInvite(token);
+      if (!active) return;
+      if (result.state === 'joinable') await rememberPairInvite(token);
+      else await clearPendingPairInvite();
+      if (active) {
+        setPreview(result);
+        setReady(true);
+      }
+    })().catch(() => {
+      if (active) setError(t('pairStart.error'));
+    });
     return () => {
       active = false;
     };
-  }, [token]);
+  }, [token, userId, isLoading, isOnline, refresh]);
+  const openRoom = (roomId?: string) =>
+    router.replace((roomId ? `/room?room=${roomId}` : '/room') as never);
   const join = async () => {
-    if (busy || !ready || !isOnline) return;
+    if (
+      busy ||
+      !ready ||
+      !isOnline ||
+      preview?.state === 'sender' ||
+      preview?.state === 'member' ||
+      preview?.state === 'unavailable'
+    )
+      return;
     setBusy(true);
     setError(null);
     try {
@@ -55,8 +86,7 @@ export default function PairInviteScreen() {
         router.replace('/onboarding');
         return;
       }
-      await acceptPairInvite(token);
-      router.replace('/room' as never);
+      openRoom(await acceptPairInvite(token));
     } catch (e) {
       const message = String((e as { message?: string }).message ?? e);
       setError(
@@ -74,6 +104,46 @@ export default function PairInviteScreen() {
       setBusy(false);
     }
   };
+  const share = async () => {
+    setError(null);
+    setBusy(true);
+    try {
+      await Share.share({
+        message: t('pairStart.shareMessage', {
+          link: `https://app.calipartner.site/invite/${token}`,
+        }),
+      });
+    } catch {
+      setError(t('pairStart.error'));
+    } finally {
+      setBusy(false);
+    }
+  };
+  const sender = preview?.state === 'sender',
+    member = preview?.state === 'member',
+    unavailable = preview?.state === 'unavailable';
+  const title = member
+    ? 'pairStart.memberTitle'
+    : sender
+      ? 'pairStart.ownTitle'
+      : unavailable
+        ? 'pairStart.unavailableTitle'
+        : ready
+          ? 'pairStart.joinTitle'
+          : 'common.loading';
+  const body = member
+    ? 'pairStart.memberBody'
+    : sender
+      ? preview.reason === 'host_limit'
+        ? 'pairStart.limit'
+        : preview.reason === 'expired'
+          ? 'pairStart.unavailable'
+          : 'pairStart.ownBody'
+      : unavailable
+        ? preview.reason === 'host_limit'
+          ? 'pairStart.hostLimit'
+          : 'pairStart.unavailable'
+        : 'pairStart.joinBody';
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: colors.bg0 }}>
       <ScrollView contentContainerStyle={styles.content} testID="accept-pair-invite-screen">
@@ -83,32 +153,70 @@ export default function PairInviteScreen() {
           color={colors.textHi}
           accessibilityRole="header"
         >
-          {t('pairStart.joinTitle')}
+          {t(title)}
         </Text>
-        <Text fontSet="onboarding" color={colors.textMid}>
-          {t('pairStart.joinBody')}
-        </Text>
-        <Text variant="heading" fontSet="onboarding" color={colors.textHi}>
-          {t('pairStart.free')}
-        </Text>
-        {isOnline === false ? <Text>{t('pairStart.offline')}</Text> : null}
+        {ready ? (
+          <Text fontSet="onboarding" color={colors.textMid}>
+            {t(body)}
+          </Text>
+        ) : null}
+        {ready && !sender && !member && !unavailable ? (
+          <Text variant="heading" fontSet="onboarding" color={colors.textHi}>
+            {t('pairStart.free')}
+          </Text>
+        ) : null}
         {error ? (
           <Text accessibilityRole="alert" color={colors.danger}>
             {error}
           </Text>
         ) : null}
-        <Button
-          label={t(busy ? 'pairStart.joining' : user ? 'pairStart.accept' : 'pairStart.signIn')}
-          disabled={busy || isLoading || !ready || !isOnline}
-          onPress={() => void join()}
-          testID="accept-onboarding-pair"
-        />
+        {ready && member ? (
+          <Button
+            label={t('pairStart.openRoom')}
+            onPress={() => openRoom(preview.room_id)}
+            testID="open-invited-room"
+          />
+        ) : ready && sender ? (
+          <Button
+            label={t(
+              preview.can_share
+                ? 'pairStart.share'
+                : preview.reason === 'expired'
+                  ? 'pairStart.newInvite'
+                  : 'pairStart.openRooms',
+            )}
+            disabled={busy}
+            onPress={() => {
+              if (preview.can_share) void share();
+              else if (preview.reason === 'expired') router.replace('/pair-start' as never);
+              else openRoom();
+            }}
+            testID="share-own-pair-invite"
+          />
+        ) : ready && !unavailable ? (
+          <Button
+            label={t(busy ? 'pairStart.joining' : user ? 'pairStart.accept' : 'pairStart.signIn')}
+            disabled={busy || !isOnline}
+            onPress={() => void join()}
+            testID="accept-onboarding-pair"
+          />
+        ) : !ready && error ? (
+          <Button
+            variant="secondary"
+            label={t('common.retry')}
+            disabled={!isOnline}
+            onPress={() => setRefresh((v) => v + 1)}
+            testID="retry-pair-invite"
+          />
+        ) : null}
         <Button
           variant="tertiary"
-          label={t('pairStart.notNow')}
+          label={t(sender || member ? 'pairStart.continue' : 'pairStart.notNow')}
           disabled={busy}
           onPress={() =>
-            void clearPendingPairInvite().then(() => router.replace(user ? '/today' : '/welcome'))
+            void clearPendingPairInvite()
+              .then(() => router.replace(user ? '/today' : '/welcome'))
+              .catch(() => setError(t('pairStart.error')))
           }
           testID="decline-onboarding-pair"
         />

@@ -27,6 +27,17 @@ export interface SyncDb {
 }
 
 export interface SupabaseSyncClient {
+  rpc?(
+    name: string,
+    args: Record<string, unknown>,
+  ): PromiseLike<{ data?: unknown; error: Error | null }>;
+  functions?: {
+    invoke(
+      name: string,
+      options: { body: Record<string, unknown> },
+    ): Promise<{ data: unknown; error: unknown }>;
+  };
+  auth?: { getUser(): Promise<{ data: { user: { id: string } | null }; error?: unknown }> };
   from(table: string): {
     upsert(
       values: Record<string, unknown> | Array<Record<string, unknown>>,
@@ -221,7 +232,44 @@ export async function flushOutbox(
 
     try {
       // 2. Perform operation on Supabase
-      if (item.operation === 'delete') {
+      if (item.entity === 'chat_messages' && item.operation === 'upsert') {
+        const actor = await supabase.auth?.getUser();
+        if (!actor?.data.user || actor.data.user.id !== item.payload.sender_id)
+          throw new Error('CHAT_OWNER_MISMATCH');
+        if (!supabase.rpc) throw new Error('CHAT_SYNC_API_REQUIRED');
+        const result = await supabase.rpc('send_chat_message', {
+          p_room_id: item.payload.room_id,
+          p_client_id: item.payload.client_id,
+          p_text: item.payload.text ?? null,
+          p_attachments: item.payload.attachments ?? [],
+        });
+        if (result.error) throw result.error;
+        for (const attachment of (item.payload.attachments ?? []) as { storage_key: string }[]) {
+          if (!supabase.functions) throw new Error('CHAT_MEDIA_API_REQUIRED');
+          const finalized = await supabase.functions.invoke('chat-image-moderation', {
+            body: { action: 'finalize', storage_key: attachment.storage_key },
+          });
+          if (
+            finalized.error ||
+            !['ok', 'blocked'].includes(
+              (finalized.data as { status?: string } | null)?.status ?? '',
+            )
+          ) {
+            throw new Error('CHAT_MEDIA_PENDING');
+          }
+        }
+        const confirmed = (result.data as { id?: string } | null)?.id;
+        if (confirmed) {
+          await db.runAsync('UPDATE local_chat_attachments SET message_id=? WHERE message_id=?', [
+            confirmed,
+            item.id,
+          ]);
+          await db.runAsync('UPDATE local_chat_messages SET id=? WHERE client_id=?', [
+            confirmed,
+            item.payload.client_id,
+          ]);
+        }
+      } else if (item.operation === 'delete') {
         const { error } = await supabase
           .from(item.entity)
           .update({ deleted_at: flightTime })
@@ -269,8 +317,8 @@ export async function flushOutbox(
       if (localTable) {
         if (item.entity === 'chat_messages') {
           await db.runAsync(
-            `UPDATE ${localTable} SET sync_state = 'synced', delivery_status = 'sent' WHERE id = ?`,
-            [item.id],
+            `UPDATE ${localTable} SET sync_state = 'synced', delivery_status = 'sent' WHERE client_id = ?`,
+            [item.payload.client_id],
           );
         } else if (item.entity === 'user_food_stats') {
           await db.runAsync(

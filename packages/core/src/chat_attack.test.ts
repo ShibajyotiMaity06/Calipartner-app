@@ -1,6 +1,5 @@
 import { describe, expect, it } from 'vitest';
 import {
-  buildSignedR2Url,
   CHAT_IMAGE_RATE_LIMIT_COUNT,
   CHAT_MESSAGE_RATE_LIMIT_COUNT,
   isSignedUrlExpired,
@@ -290,13 +289,7 @@ class InMemoryPhase8ChatDb {
       return { success: false, error: 'INVALID_STORAGE_KEY: Path traversal or invalid key' };
     }
 
-    const url = buildSignedR2Url({
-      method: 'GET',
-      bucket: 'calipartner-chat',
-      key: storageKey,
-      expiresInSeconds: 900,
-      now,
-    });
+    const url = `https://example.invalid/${storageKey}?expires=${Math.floor(now / 1000) + 900}`;
 
     return { success: true, signedUrl: url };
   }

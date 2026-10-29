@@ -23,6 +23,7 @@ import { getSupabase } from '@/lib/supabase';
 import { t } from '@/i18n';
 import { fontSize, radius, spacing } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
+import { useChatTyping } from '@/hooks/useChatTyping';
 import { ChatComposer } from './ChatComposer';
 import { ChatEmptyState } from './ChatEmptyState';
 import { ChatImageViewerModal } from './ChatImageViewerModal';
@@ -62,6 +63,7 @@ export function ChatView({
     isDormant,
     termsAccepted,
     error,
+    refresh,
     loadMore,
     sendMessage,
     deleteMessage,
@@ -71,6 +73,11 @@ export function ChatView({
     acceptTerms,
   } = useRoomChat(roomId, isVisible, options);
 
+  const { typingPeople, notifyTyping } = useChatTyping(
+    roomId,
+    options.userId,
+    isVisible && hasActiveAccess && termsAccepted,
+  );
   const effectiveIsLocked = Boolean(isLockedProp || isLockedFromHook);
 
   const [mediaReadError, setMediaReadError] = useState(false);
@@ -109,21 +116,39 @@ export function ChatView({
         local_uri: m.uri,
       });
     }
+    notifyTyping(false);
     await sendMessage(text, attachments.length ? attachments : undefined, clientId);
+    for (const attachment of attachments) {
+      const result = await getSupabase().functions.invoke('chat-image-moderation', {
+        body: { action: 'finalize', storage_key: attachment.storage_key },
+      });
+      if (result.error || result.data?.status !== 'ok') setMediaReadError(true);
+    }
+    await refresh();
     pending.current = null;
   };
 
   // Handle retry
   const handleRetry = async (failedMessage: ChatMessage) => {
-    const retryAttachments = failedMessage.attachments?.map((att) => ({
-      storage_key: att.storage_key,
-      size: att.size,
-      mime_type: att.mime_type,
-      width: att.width ?? undefined,
-      height: att.height ?? undefined,
-      local_uri: att.local_uri ?? undefined,
-    }));
-    await sendMessage(failedMessage.text, retryAttachments, failedMessage.client_id);
+    setMediaReadError(false);
+    try {
+      const retryAttachments = failedMessage.attachments?.map((att) => ({
+        storage_key: att.storage_key,
+        size: att.size,
+        mime_type: att.mime_type,
+        width: att.width ?? undefined,
+        height: att.height ?? undefined,
+        local_uri: att.local_uri ?? undefined,
+      }));
+      await sendMessage(failedMessage.text, retryAttachments, failedMessage.client_id);
+      for (const attachment of retryAttachments ?? [])
+        await getSupabase().functions.invoke('chat-image-moderation', {
+          body: { action: 'finalize', storage_key: attachment.storage_key },
+        });
+      await refresh();
+    } catch {
+      setMediaReadError(true);
+    }
   };
 
   const isCurrentUserId = (senderId: string | null | undefined) => {
@@ -138,7 +163,11 @@ export function ChatView({
       style={[styles.container, { backgroundColor: colors.background }]}
       testID={testID}
     >
-      {mediaReadError ? <Text accessibilityRole="alert">{t('common.errorBody')}</Text> : null}
+      {mediaReadError ? (
+        <Text accessibilityRole="alert" style={{ color: colors.danger, padding: spacing.sm }}>
+          {t('chatAudit.actionError')}
+        </Text>
+      ) : null}
       {/* 1. Offline Banner */}
       {isOnline === false && (
         <View
@@ -196,7 +225,7 @@ export function ChatView({
         </View>
       ) : (
         <FlatList
-          data={messages}
+          data={[...messages].reverse()}
           keyExtractor={(item) => item.client_id || item.id}
           inverted
           onEndReached={() => {
@@ -262,9 +291,34 @@ export function ChatView({
         />
       )}
 
+      {typingPeople.length ? (
+        <Text
+          accessibilityLiveRegion="polite"
+          style={{ color: colors.textMuted, padding: spacing.sm }}
+          testID="chat-typing-indicator"
+        >
+          {t(
+            typingPeople.length === 1
+              ? 'chatAudit.typingOne'
+              : typingPeople.length <= 3
+                ? 'chatAudit.typingMany'
+                : typingPeople.length === 4
+                  ? 'chatAudit.typingOneMore'
+                  : 'chatAudit.typingMore',
+            {
+              names: typingPeople
+                .slice(0, 3)
+                .map((person) => person.nickname)
+                .join(', '),
+              count: typingPeople.length - 3,
+            },
+          )}
+        </Text>
+      ) : null}
       {/* 5. Message Composer */}
       <ChatComposer
         onSend={handleSend}
+        onTyping={notifyTyping}
         disabled={effectiveIsLocked || isDormant || !hasActiveAccess}
         disabledReason={
           !hasActiveAccess

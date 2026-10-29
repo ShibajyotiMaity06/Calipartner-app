@@ -23,6 +23,7 @@ export interface UseRoomChatOptions {
   userNickname?: string;
   username?: string;
   avatarUrl?: string;
+  markRead?: boolean;
 }
 
 export function useRoomChat(
@@ -41,157 +42,175 @@ export function useRoomChat(
   const [error, setError] = useState<ChatServiceError | null>(null);
 
   const channelRef = useRef<RealtimeChannel | null>(null);
-  const lastFetchedTimeRef = useRef<string | null>(null);
+  const messagesRef = useRef(messages);
+  messagesRef.current = messages;
 
   const userId = options.userId;
 
-  // Check consent terms
-  const checkTerms = useCallback(async () => {
-    if (!userId) return;
-    try {
-      const supabase = getSupabase();
-      const db = await getDb();
-      const accepted = await hasAcceptedChatTerms(supabase, db, userId);
-      setTermsAccepted(accepted);
-    } catch {
-      // Ignore error
-    }
-  }, [userId]);
-
-  // Initial fetch and unread count
+  const scopeKey = JSON.stringify([roomId, userId, isVisible, options.markRead !== false]);
+  const activeScope = useRef(scopeKey);
+  activeScope.current = scopeKey;
+  const cursor = useRef<{ created_at: string; id: string } | null>(null);
+  const fetchingGap = useRef<string | null>(null),
+    fetchingOlder = useRef<string | null>(null);
+  const initialVersion = useRef(0);
+  const shouldMarkRead = options.markRead !== false;
+  const updateRead = useCallback(
+    async (newest: ChatMessage | undefined) => {
+      if (!roomId || !userId) return;
+      const client = getSupabase(),
+        db = await getDb();
+      if (shouldMarkRead && isVisible && newest) {
+        await markChatRead(client, db, roomId, userId, newest.id);
+        if (activeScope.current === scopeKey) setUnreadCount(0);
+      } else {
+        const count = await getChatUnreadCount(client, roomId);
+        if (activeScope.current === scopeKey) setUnreadCount(count);
+      }
+    },
+    [roomId, userId, shouldMarkRead, isVisible, scopeKey],
+  );
   const loadInitialMessages = useCallback(async () => {
-    if (!roomId) {
+    if (!roomId || !userId) {
       setMessages([]);
       setLoading(false);
       return;
     }
-
+    const requestVersion = ++initialVersion.current;
     setLoading(true);
     setError(null);
-    setIsLocked(false);
-    setIsDormant(false);
-
     try {
-      const supabase = getSupabase();
-      const db = await getDb();
-
-      // Check room state
-      const { data: roomData } = await supabase
-        .from('rooms')
-        .select('state')
-        .eq('id', roomId)
-        .single();
-
-      if (roomData?.state === 'locked') {
-        setIsLocked(true);
-      } else if (roomData?.state === 'dormant') {
-        setIsDormant(true);
+      const client = getSupabase(),
+        db = await getDb();
+      const state = await client.from('rooms').select('state').eq('id', roomId).single();
+      const fetched = await getChatMessages(client, db, roomId, { limit: 50, ownerId: userId });
+      if (activeScope.current !== scopeKey) return;
+      setIsLocked(state.data?.state === 'locked');
+      setIsDormant(state.data?.state === 'dormant');
+      const hidden = await client.rpc('get_chat_hidden_senders', { p_room_id: roomId });
+      if (hidden.error && !/fetch|network|offline|timeout/i.test(JSON.stringify(hidden.error)))
+        throw hidden.error;
+      for (const sender of (hidden.data ?? []) as string[]) {
+        await db.runAsync(
+          'DELETE FROM local_chat_attachments WHERE message_id IN (SELECT id FROM local_chat_messages WHERE room_id=? AND sender_id=?)',
+          [roomId, sender],
+        );
+        await db.runAsync('DELETE FROM local_chat_messages WHERE room_id=? AND sender_id=?', [
+          roomId,
+          sender,
+        ]);
       }
-
-      // Fetch messages
-      const fetched = await getChatMessages(supabase, db, roomId, { limit: 50 });
-      setMessages(fetched);
-      setHasMore(fetched.length >= 50);
-
-      const lastFetchedMsg = fetched[fetched.length - 1];
-      if (lastFetchedMsg) {
-        lastFetchedTimeRef.current = lastFetchedMsg.created_at;
+      if (activeScope.current !== scopeKey || initialVersion.current !== requestVersion) return;
+      setMessages((previous) =>
+        mergeMessagesDeduplicated(
+          previous.filter((m) => !((hidden.data ?? []) as string[]).includes(m.sender_id ?? '')),
+          fetched,
+        ),
+      );
+      const remote = fetched.filter((m) => m.sync_state === 'synced');
+      setHasMore(remote.length >= 50);
+      const newest = remote.at(-1);
+      if (newest) cursor.current = { created_at: newest.created_at, id: newest.id };
+      await updateRead(newest);
+    } catch (error) {
+      if (activeScope.current === scopeKey) {
+        const parsed = parseChatError(error);
+        setError(parsed);
+        if (parsed.code === 'ROOM_LOCKED') setIsLocked(true);
+        if (
+          ['PLUS_REQUIRED', 'NOT_ROOM_MEMBER', 'ROOM_LOCKED', 'NOT_AUTHORIZED'].includes(
+            parsed.code,
+          )
+        )
+          setMessages([]);
       }
-
-      // Mark read if visible
-      if (userId && isVisible && fetched.length > 0 && lastFetchedMsg) {
-        await markChatRead(supabase, db, roomId, userId, lastFetchedMsg.id);
-        setUnreadCount(0);
-      } else if (roomId) {
-        const unread = await getChatUnreadCount(supabase, roomId);
-        setUnreadCount(unread);
-      }
-    } catch (err: unknown) {
-      const chatErr = parseChatError(err);
-      if (chatErr.code === 'ROOM_LOCKED') {
-        setIsLocked(true);
-      }
-      setError(chatErr);
     } finally {
-      setLoading(false);
+      if (activeScope.current === scopeKey) setLoading(false);
     }
-  }, [roomId, userId, isVisible]);
-
-  // Load older messages (pagination)
+  }, [roomId, userId, scopeKey, updateRead]);
   const loadMore = useCallback(async () => {
-    if (!roomId || loadingMore || !hasMore || messages.length === 0) return;
-
+    if (!roomId || !userId || fetchingOlder.current === scopeKey || !hasMore) return;
+    const oldest = messages.find((m) => m.sync_state === 'synced');
+    if (!oldest) return;
+    fetchingOlder.current = scopeKey;
     setLoadingMore(true);
     try {
-      const supabase = getSupabase();
-      const db = await getDb();
-      const oldestMsg = messages[0];
-      if (!oldestMsg) return;
-      const oldestCreatedAt = oldestMsg.created_at;
-
-      const olderMessages = await getChatMessages(supabase, db, roomId, {
+      const fetched = await getChatMessages(getSupabase(), await getDb(), roomId, {
         limit: 50,
-        beforeCreatedAt: oldestCreatedAt,
+        beforeCreatedAt: oldest.created_at,
+        beforeId: oldest.id,
+        ownerId: userId,
       });
-
-      if (olderMessages.length < 50) {
-        setHasMore(false);
-      }
-
-      setMessages((prev) => mergeMessagesDeduplicated(olderMessages, prev));
-    } catch (err: unknown) {
-      setError(parseChatError(err));
+      if (activeScope.current !== scopeKey) return;
+      setMessages((previous) => mergeMessagesDeduplicated(fetched, previous));
+      setHasMore(fetched.filter((m) => m.sync_state === 'synced').length >= 50);
+    } catch (error) {
+      if (activeScope.current === scopeKey) setError(parseChatError(error));
     } finally {
-      setLoadingMore(false);
+      if (fetchingOlder.current === scopeKey) fetchingOlder.current = null;
+      if (activeScope.current === scopeKey) setLoadingMore(false);
     }
-  }, [roomId, loadingMore, hasMore, messages]);
-
-  // Gap-fill on reconnect
+  }, [roomId, userId, hasMore, messages, scopeKey]);
   const gapFillReconnect = useCallback(async () => {
-    if (!roomId || !lastFetchedTimeRef.current) return;
-
-    try {
-      const supabase = getSupabase();
-      const db = await getDb();
-      const newMessages = await getChatMessages(supabase, db, roomId, {
-        limit: 50,
-        afterCreatedAt: lastFetchedTimeRef.current,
-      });
-
-      if (newMessages.length > 0) {
-        const newestMsg = newMessages[newMessages.length - 1];
-        if (newestMsg) {
-          lastFetchedTimeRef.current = newestMsg.created_at;
-          setMessages((prev) => mergeMessagesDeduplicated(prev, newMessages));
-
-          if (userId && isVisible) {
-            await markChatRead(supabase, db, roomId, userId, newestMsg.id);
-          }
-        }
-      }
-    } catch {
-      // Reconnect gap fill failed; will retry on next poll or reconnect
-    }
-  }, [roomId, userId, isVisible]);
-
-  // Realtime subscription: one channel per room, subscribed ONLY while chat is visible
-  useEffect(() => {
-    if (!roomId || !isVisible || isLocked) {
-      if (channelRef.current) {
-        const supabase = getSupabase();
-        supabase.removeChannel(channelRef.current);
-        channelRef.current = null;
-      }
+    if (!roomId || !userId || fetchingGap.current === scopeKey) return;
+    if (!cursor.current) {
+      await loadInitialMessages();
       return;
     }
-
-    checkTerms();
-    loadInitialMessages();
-
-    const supabase = getSupabase();
-    const channelName = `chat:${roomId}:${Date.now()}`;
-    const channel = supabase
-      .channel(channelName)
+    fetchingGap.current = scopeKey;
+    try {
+      const client = getSupabase(),
+        db = await getDb();
+      for (let page = 0; page < 20; page++) {
+        const after: { created_at: string; id: string } | null = cursor.current;
+        if (!after) break;
+        const fetched = await getChatMessages(client, db, roomId, {
+          limit: 50,
+          afterCreatedAt: after.created_at,
+          afterId: after.id,
+          ownerId: userId,
+        });
+        if (activeScope.current !== scopeKey) return;
+        const remote = fetched.filter((m) => m.sync_state === 'synced'),
+          newest = remote.at(-1);
+        if (!newest) break;
+        if (newest.created_at === after.created_at && newest.id === after.id) break;
+        cursor.current = { created_at: newest.created_at, id: newest.id };
+        setMessages((previous) => mergeMessagesDeduplicated(previous, fetched));
+        await updateRead(newest);
+        if (remote.length < 50) break;
+      }
+    } catch (error) {
+      if (activeScope.current === scopeKey) setError(parseChatError(error));
+    } finally {
+      if (fetchingGap.current === scopeKey) fetchingGap.current = null;
+    }
+  }, [roomId, userId, scopeKey, loadInitialMessages, updateRead]);
+  useEffect(() => {
+    activeScope.current = scopeKey;
+    let current = true;
+    setMessages([]);
+    setUnreadCount(0);
+    setTermsAccepted(false);
+    setIsLocked(false);
+    setIsDormant(false);
+    cursor.current = null;
+    if (!roomId || !userId || !isVisible) {
+      setLoading(false);
+      return;
+    }
+    const client = getSupabase();
+    void getDb()
+      .then((db) => hasAcceptedChatTerms(client, db, userId))
+      .then(
+        (accepted) => {
+          if (current) setTermsAccepted(accepted);
+        },
+        () => {},
+      );
+    void loadInitialMessages();
+    const channel = client
+      .channel(`chat:${roomId}:${userId}`)
       .on(
         'postgres_changes',
         {
@@ -200,17 +219,7 @@ export function useRoomChat(
           table: 'chat_messages',
           filter: `room_id=eq.${roomId}`,
         },
-        async (payload: { new: ChatMessage }) => {
-          const newMsg = payload.new;
-          lastFetchedTimeRef.current = newMsg.created_at;
-
-          setMessages((prev) => mergeMessagesDeduplicated(prev, [newMsg]));
-
-          if (userId && isVisible) {
-            const db = await getDb();
-            await markChatRead(supabase, db, roomId, userId, newMsg.id);
-          }
-        },
+        () => void gapFillReconnect(),
       )
       .on(
         'postgres_changes',
@@ -221,37 +230,49 @@ export function useRoomChat(
           filter: `room_id=eq.${roomId}`,
         },
         (payload: { new: ChatMessage }) => {
-          const updated = payload.new;
-          setMessages((prev) =>
-            prev.map((m) =>
-              m.id === updated.id
-                ? {
-                    ...m,
-                    ...updated,
-                    text: updated.deleted_at ? '[Message deleted]' : updated.text,
-                    attachments: updated.deleted_at ? [] : m.attachments,
-                  }
-                : m,
-            ),
-          );
+          if (!current) return;
+          const row = payload.new;
+          if (row.deleted_at)
+            setMessages((previous) =>
+              previous.map((m) =>
+                m.id === row.id
+                  ? { ...m, deleted_at: row.deleted_at, text: null, attachments: [] }
+                  : m,
+              ),
+            );
+          void loadInitialMessages();
         },
       )
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'chat_attachments' },
+        () => void loadInitialMessages(),
+      )
+      .on(
+        'postgres_changes',
+        { event: 'UPDATE', schema: 'public', table: 'rooms', filter: `id=eq.${roomId}` },
+        () => void loadInitialMessages(),
+      )
       .subscribe((status) => {
-        if (status === 'SUBSCRIBED') {
-          // Perform reconnect gap fill to catch any missed messages
-          gapFillReconnect();
-        }
+        if (status === 'SUBSCRIBED') void gapFillReconnect();
       });
-
     channelRef.current = channel;
-
+    const timer = setInterval(() => {
+      void gapFillReconnect();
+      if (
+        messagesRef.current.some((m) =>
+          m.attachments?.some((a) => a.moderation_status === 'pending'),
+        )
+      )
+        void loadInitialMessages();
+    }, 4000);
     return () => {
-      if (channelRef.current) {
-        supabase.removeChannel(channelRef.current);
-        channelRef.current = null;
-      }
+      current = false;
+      clearInterval(timer);
+      activeScope.current = '';
+      void client.removeChannel(channel);
     };
-  }, [roomId, isVisible, isLocked, checkTerms, loadInitialMessages, gapFillReconnect, userId]);
+  }, [roomId, userId, isVisible, scopeKey, loadInitialMessages, gapFillReconnect]);
 
   // Send message action
   const sendMessage = useCallback(
@@ -267,7 +288,7 @@ export function useRoomChat(
       }>,
       clientId?: string,
     ) => {
-      if (!roomId || !userId) return;
+      if (!roomId || !userId) throw new Error('UNAUTHENTICATED');
 
       const supabase = getSupabase();
       const db = await getDb();
@@ -283,15 +304,25 @@ export function useRoomChat(
         });
 
         // Add to local state
-        setMessages((prev) => mergeMessagesDeduplicated(prev, [sent]));
-        lastFetchedTimeRef.current = sent.created_at;
+        if (activeScope.current === scopeKey)
+          setMessages((prev) => mergeMessagesDeduplicated(prev, [sent]));
+        void gapFillReconnect();
+        return sent;
       } catch (err: unknown) {
         const chatErr = parseChatError(err);
         setError(chatErr);
         throw chatErr;
       }
     },
-    [roomId, userId, options.userNickname, options.username, options.avatarUrl],
+    [
+      roomId,
+      userId,
+      options.userNickname,
+      options.username,
+      options.avatarUrl,
+      gapFillReconnect,
+      scopeKey,
+    ],
   );
 
   // Delete message action
@@ -341,8 +372,14 @@ export function useRoomChat(
     const supabase = getSupabase();
     try {
       await muteChatMember(supabase, targetUserId);
-      // Hide their messages from state immediately
+      // Purge hidden messages from the offline cache as well as this screen.
       setMessages((prev) => prev.filter((m) => m.sender_id !== targetUserId));
+      const db = await getDb();
+      await db.runAsync(
+        'DELETE FROM local_chat_attachments WHERE message_id IN (SELECT id FROM local_chat_messages WHERE sender_id=?)',
+        [targetUserId],
+      );
+      await db.runAsync('DELETE FROM local_chat_messages WHERE sender_id=?', [targetUserId]);
     } catch (err: unknown) {
       const chatErr = parseChatError(err);
       setError(chatErr);
@@ -359,7 +396,11 @@ export function useRoomChat(
       setMessages((prev) => prev.filter((m) => m.sender_id !== targetUserId));
       try {
         const db = await getDb();
-        await db.runAsync(`DELETE FROM local_chat_messages WHERE sender_id = ?`, [targetUserId]);
+        await db.runAsync(
+          'DELETE FROM local_chat_attachments WHERE message_id IN (SELECT id FROM local_chat_messages WHERE sender_id=?)',
+          [targetUserId],
+        );
+        await db.runAsync('DELETE FROM local_chat_messages WHERE sender_id = ?', [targetUserId]);
       } catch {
         // ignore local delete error
       }

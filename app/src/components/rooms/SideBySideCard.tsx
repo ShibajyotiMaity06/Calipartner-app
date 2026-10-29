@@ -13,11 +13,11 @@ import {
   type IdentityHue,
   type MealStatus,
   type MealType,
-  type RoomMemberSummary,
   type SeamState,
   type FinishedPerson,
 } from '@calipartner/ui';
 import { WhatTheyCanSeeSheet } from './WhatTheyCanSeeSheet';
+import { t } from '@/i18n';
 import { PartnerMealSheet } from './PartnerMealSheet';
 
 export interface FeedEvent {
@@ -56,9 +56,6 @@ export interface SideBySideCardProps {
 export function SideBySideCard({
   me,
   partner,
-  allMembers,
-  selectedPartnerId,
-  onSelectPartner,
   onNudge,
   onReact,
   onOpenChat,
@@ -113,10 +110,7 @@ export function SideBySideCard({
       : 0;
 
   // Over goal calculation for user column (Spec 5.2: cream second lap and "320 over")
-  const userOverAmount =
-    userPercent > 100 && typeof me.metrics.calories === 'number' && me.metrics.calories > 2000
-      ? `${me.metrics.calories - 2000}`
-      : undefined;
+  const userOverAmount = userPercent > 100 ? `${Math.round(userPercent - 100)}%` : undefined;
 
   // Steps
   const userSteps = typeof me.metrics.steps === 'number' ? me.metrics.steps : 0;
@@ -157,18 +151,6 @@ export function SideBySideCard({
     return 'Neither of you has finished logging today.';
   }, [partner, isMeLogged, isPartnerLogged]);
 
-  // Member summaries for 3+ member rooms (Spec J02)
-  const memberSummaries: RoomMemberSummary[] = useMemo(() => {
-    return allMembers.map((m, idx) => ({
-      id: m.user_id,
-      name: m.nickname,
-      avatarUrl: m.avatar_url ?? undefined,
-      identityHue: idx % 2 === 0 ? 'iris' : 'teal',
-      percent: typeof m.metrics.goal_completion === 'number' ? m.metrics.goal_completion : 0,
-      hasLoggedToday: m.metrics.logged_today === true,
-    }));
-  }, [allMembers]);
-
   // Feed items for plain feed rows (Spec J01 #6)
   const feedItems: FeedEvent[] = useMemo(() => {
     const items: FeedEvent[] = [];
@@ -179,8 +161,8 @@ export function SideBySideCard({
           userName: partner.nickname,
           avatarUrl: partner.avatar_url,
           identityHue: 'teal',
-          actionText: `${partner.nickname} completed today's target`,
-          timeAgo: 'Just now',
+          actionText: `${partner.nickname} logged food today`,
+          timeAgo: t('roomAudit.today'),
           isShared: true,
           itemType: 'meal',
         });
@@ -192,7 +174,7 @@ export function SideBySideCard({
           avatarUrl: partner.avatar_url,
           identityHue: 'teal',
           actionText: `${partner.nickname} logged lunch`,
-          timeAgo: '2h ago',
+          timeAgo: t('roomAudit.today'),
           isShared: true,
           itemType: 'meal',
         });
@@ -205,7 +187,7 @@ export function SideBySideCard({
         avatarUrl: me.avatar_url,
         identityHue: 'iris',
         actionText: 'You logged breakfast',
-        timeAgo: '4h ago',
+        timeAgo: t('roomAudit.today'),
         isShared: true,
         itemType: 'meal',
       });
@@ -237,6 +219,9 @@ export function SideBySideCard({
         partnerSteps={partnerSteps}
         partnerMeals={partnerMeals}
         isPartnerDataHidden={partner?.metrics.goal_completion === 'locked'}
+        isPartnerStepsHidden={partner?.metrics.steps === 'locked'}
+        isPartnerMealsHidden={partner?.metrics.meal_checklist === 'locked'}
+        privateLabel={t('rooms.today.lockedItem')}
         isPartnerPaused={partner?.status === 'paused'}
         seamState={seamState}
         finishedPerson={finishedPerson}
@@ -250,9 +235,6 @@ export function SideBySideCard({
           setActiveMealSection(meal);
           setPartnerMealSheetVisible(true);
         }}
-        members={memberSummaries}
-        selectedMemberId={selectedPartnerId ?? undefined}
-        onSelectMember={onSelectPartner}
         testID="hero-paired-card"
       />
 
@@ -390,12 +372,16 @@ const styles = StyleSheet.create({
   quickActionsRow: {
     flexDirection: 'row',
     gap: space[2],
+    flexWrap: 'wrap',
     alignItems: 'center',
     justifyContent: 'space-between',
     marginTop: space[1],
   },
   quickActionPill: {
-    flex: 1,
+    flexGrow: 1,
+    flexShrink: 0,
+    flexBasis: 'auto',
+    maxWidth: '100%',
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
