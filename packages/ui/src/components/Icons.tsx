@@ -455,32 +455,6 @@ export function FastIcon({
   );
 }
 
-export function FocusIcon({
-  size = 24,
-  color = dark.orchid,
-  strokeWidth = 1.75,
-}: IconProps): React.JSX.Element {
-  return (
-    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
-      <Circle
-        cx={12}
-        cy={12}
-        r={9}
-        stroke={color}
-        strokeWidth={strokeWidth}
-        strokeLinecap="round"
-      />
-      <Polyline
-        points="12 7 12 12 15 15"
-        stroke={color}
-        strokeWidth={strokeWidth}
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </Svg>
-  );
-}
-
 export function ScanIcon({
   size = 24,
   color = dark.textMid,

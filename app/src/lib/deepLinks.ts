@@ -21,6 +21,9 @@ export interface NotificationDeepLinkData {
  */
 export function resolveNotificationRoute(data?: NotificationDeepLinkData): string {
   if (!data) return '/(tabs)/today';
+  // Old delivered notifications must not reopen the retired feature.
+  if (data.type === 'focus_session' || /^\/(?:\(tabs\)\/)?focus(?:[/?#]|$)/.test(data.url ?? ''))
+    return '/(tabs)/today';
 
   // Explicit URL provided in payload
   if (data.url && typeof data.url === 'string') {
@@ -43,7 +46,6 @@ export function resolveNotificationRoute(data?: NotificationDeepLinkData): strin
     case 'room_join_request':
     case 'room_request_accepted':
     case 'room_state_change':
-    case 'focus_session':
       return '/(tabs)/room';
 
     case 'meal':

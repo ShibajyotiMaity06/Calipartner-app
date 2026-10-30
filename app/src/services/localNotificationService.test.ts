@@ -6,6 +6,7 @@ import {
   cancelFastingReminder,
   scheduleFastingReminder,
   syncAllLocalReminders,
+  cancelRetiredActivityReminders,
 } from './localNotificationService';
 
 vi.mock('expo-notifications', () => ({
@@ -13,6 +14,9 @@ vi.mock('expo-notifications', () => ({
   cancelScheduledNotificationAsync: vi.fn().mockResolvedValue(undefined),
   cancelAllScheduledNotificationsAsync: vi.fn().mockResolvedValue(undefined),
   setNotificationHandler: vi.fn(),
+  getAllScheduledNotificationsAsync: vi.fn().mockResolvedValue([]),
+  getPresentedNotificationsAsync: vi.fn().mockResolvedValue([]),
+  dismissNotificationAsync: vi.fn(),
   SchedulableTriggerInputTypes: {
     DAILY: 'daily',
     WEEKLY: 'weekly',
@@ -34,6 +38,24 @@ describe('localNotificationService', () => {
     expect(Notifications.scheduleNotificationAsync).toHaveBeenCalled();
     expect(result.scheduled).toBeGreaterThan(0);
     expect(result.cancelled).toBe(true);
+  });
+
+  it('cancels only retired scheduled and delivered reminders, preserving fasting and meals', async () => {
+    vi.mocked(Notifications.getAllScheduledNotificationsAsync).mockResolvedValueOnce([
+      { identifier: 'focus_timer_end_old', content: { data: {} } },
+      { identifier: 'meal', content: { data: { type: 'meal' } } },
+    ] as unknown as Awaited<ReturnType<typeof Notifications.getAllScheduledNotificationsAsync>>);
+    vi.mocked(Notifications.getPresentedNotificationsAsync).mockResolvedValueOnce([
+      { request: { identifier: 'old-delivered', content: { data: { type: 'focus_session' } } } },
+      { request: { identifier: 'fast', content: { data: { type: 'fasting' } } } },
+    ] as unknown as Awaited<ReturnType<typeof Notifications.getPresentedNotificationsAsync>>);
+    await cancelRetiredActivityReminders();
+    expect(Notifications.cancelScheduledNotificationAsync).toHaveBeenCalledWith(
+      'focus_timer_end_old',
+    );
+    expect(Notifications.cancelScheduledNotificationAsync).not.toHaveBeenCalledWith('meal');
+    expect(Notifications.dismissNotificationAsync).toHaveBeenCalledWith('old-delivered');
+    expect(Notifications.dismissNotificationAsync).not.toHaveBeenCalledWith('fast');
   });
 
   it('cancels all reminders and schedules none when pause_all is true', async () => {

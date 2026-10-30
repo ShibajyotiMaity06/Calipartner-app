@@ -17,14 +17,13 @@ import {
   WaterIcon,
   WeightIcon,
   FastIcon,
-  FocusIcon,
   ScanIcon,
   PhotoIcon,
   RecipesIcon,
   CloseIcon,
 } from './Icons';
 
-export type LogTileId = 'food' | 'workout' | 'water' | 'weight' | 'fast' | 'focus';
+export type LogTileId = 'food' | 'workout' | 'water' | 'weight' | 'fast';
 export type QuickAddId = 'scan' | 'photo' | 'recipes';
 export type MealSectionType = 'breakfast' | 'lunch' | 'dinner' | 'snack';
 
@@ -33,7 +32,7 @@ export interface LogHubViewProps {
   mealSection?: MealSectionType;
   /** Callback when meal section chip is pressed */
   onCycleMealSection?: () => void;
-  /** Callback when one of the 6 main tiles is pressed */
+  /** Callback when one of the main logging tiles is pressed */
   onSelectTile: (tile: LogTileId) => void;
   /** Callback when a quick action is pressed */
   onSelectQuickAdd?: (action: QuickAddId) => void;
@@ -179,21 +178,6 @@ export function LogHubView({
           ) : (
             <View style={[styles.tile, styles.emptyTile]} />
           )}
-
-          {/* 6. Focus */}
-          <TouchableOpacity
-            testID="btn-log-tile-focus"
-            accessibilityRole="button"
-            accessibilityLabel="Log Focus"
-            style={styles.tile}
-            activeOpacity={0.75}
-            onPress={() => onSelectTile('focus')}
-          >
-            <View style={[styles.iconCircle, { backgroundColor: 'rgba(228, 138, 221, 0.16)' }]}>
-              <FocusIcon size={28} color={dark.orchid} />
-            </View>
-            <Text style={styles.tileLabel}>Focus</Text>
-          </TouchableOpacity>
         </View>
 
         {/* Quick Add Row */}

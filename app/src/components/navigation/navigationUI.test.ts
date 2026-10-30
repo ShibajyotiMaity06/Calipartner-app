@@ -74,9 +74,9 @@ describe('UI-4 Navigation Shell Logic & Integration Tests', () => {
       expect(getMealSectionForTime(dinnerTime)).toBe('dinner');
     });
 
-    it('defines 6 primary log tiles with 96x96 dimensions and card radius', () => {
-      const tiles = ['food', 'workout', 'water', 'weight', 'fast', 'focus'] as const;
-      expect(tiles.length).toBe(6);
+    it('defines five primary log tiles with card radius', () => {
+      const tiles = ['food', 'workout', 'water', 'weight', 'fast'] as const;
+      expect(tiles.length).toBe(5);
       expect(radius.card).toBe(20);
     });
 

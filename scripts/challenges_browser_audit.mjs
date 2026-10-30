@@ -192,7 +192,7 @@ try {
   await context.setOffline(true);
   await page.getByText('Offline · showing saved progress', { exact: true }).first().waitFor();
   await page.getByTestId('progress-challenges-view-create-btn').click();
-  await page.getByTestId('create-template-focus-streak').click();
+  await page.getByTestId('create-template-hydration').click();
   await page.getByTestId('challenge-create-submit').click();
   await page
     .getByText('Saved on this device. Your invitation will send when you reconnect.', {

@@ -290,12 +290,6 @@ export function formatNotificationCopy(
         body: params.customMessage || 'Your room status has changed.',
       };
 
-    case 'focus_session':
-      return {
-        title: 'Focus Session',
-        body: `${sender} started a shared focus session in ${room}. Join in!`,
-      };
-
     default:
       return {
         title: 'CaliPartner',

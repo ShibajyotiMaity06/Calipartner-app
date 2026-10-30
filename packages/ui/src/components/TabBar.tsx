@@ -38,7 +38,7 @@ export interface TabBarProps {
   onActiveTabPress?: (tab: TabId) => void;
   /** Whether the Room/Squad tab shows the 8px apricot badge dot */
   hasRoomBadge?: boolean;
-  /** Controls visibility (hide on full-screen flows like scan, focus running) */
+  /** Controls visibility (hide on full-screen flows like scan) */
   visible?: boolean;
   /** Bottom safe area inset */
   bottomInset?: number;

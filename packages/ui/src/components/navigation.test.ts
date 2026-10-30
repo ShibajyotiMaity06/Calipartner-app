@@ -62,7 +62,7 @@ describe('UI-4 Navigation Shell Components Specification & Tokens', () => {
       expect(dark.teal).toBe('#1FBDB6'); // Water
       expect(dark.iris).toBe('#B49AFC'); // Weight
       expect(dark.copper).toBe('#BB8661'); // Fast
-      expect(dark.orchid).toBe('#E48ADD'); // Focus
+      expect(dark.orchid).toBe('#E48ADD');
     });
   });
 

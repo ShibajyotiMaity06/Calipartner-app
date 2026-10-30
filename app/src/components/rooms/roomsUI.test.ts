@@ -193,19 +193,15 @@ describe('Phase 5C — Room UI Presentation & Logic Tests', () => {
   });
 
   describe('8. Phase 5 v0.4 Room View Presentation (PRD 6.8, 6.9, 7.6)', () => {
-    it('defines the 5 segments in the exact order: Today, Focus, Chat, Progress, Members (RV-1)', () => {
+    it('defines the remaining room sections', () => {
       const segments = [
         { key: 'today', label: t('rooms.segments.today') },
-        { key: 'focus', label: t('rooms.segments.focus') },
         { key: 'chat', label: t('rooms.segments.chat') },
         { key: 'progress', label: t('rooms.segments.progress') },
         { key: 'members', label: t('rooms.segments.members') },
       ];
 
-      expect(segments.map((s) => s.key)).toEqual(['today', 'focus', 'chat', 'progress', 'members']);
-      expect(segments[1]?.label).toBe('Focus');
-      expect(t('rooms.placeholders.focusTitle')).toBe('Focus Time');
-      expect(t('rooms.placeholders.focusSubtitle')).toContain('Shared focus sessions');
+      expect(segments.map((s) => s.key)).toEqual(['today', 'chat', 'progress', 'members']);
     });
 
     it('formats capacity indicator as "3 of 5 people"', () => {
@@ -384,8 +380,8 @@ describe('Phase 5C — Room UI Presentation & Logic Tests', () => {
       });
     });
 
-    describe('J12 Room Progress CMP-14 & Focus Metric Specs', () => {
-      it('includes Focus in the 7 room progress metrics', () => {
+    describe('J12 Room Progress CMP-14 Metric Specs', () => {
+      it('keeps the six fitness progress metrics', () => {
         const metrics = [
           'consistency',
           'weight_change',
@@ -393,10 +389,9 @@ describe('Phase 5C — Room UI Presentation & Logic Tests', () => {
           'steps',
           'water',
           'workouts',
-          'focus',
         ];
-        expect(metrics).toHaveLength(7);
-        expect(metrics).toContain('focus');
+        expect(metrics).toHaveLength(6);
+        expect(metrics).not.toContain('focus');
       });
 
       it('provides accessible toggle between Chart and Table modes (CMP-14)', () => {

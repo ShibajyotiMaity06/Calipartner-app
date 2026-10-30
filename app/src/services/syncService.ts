@@ -187,10 +187,6 @@ function getLocalTableName(entity: string): string | null {
       return 'local_workout_sets';
     case 'chat_messages':
       return 'local_chat_messages';
-    case 'focus_sessions':
-      return 'local_focus_sessions';
-    case 'focus_settings':
-      return 'local_focus_settings';
     case 'recipe_favorites':
       return 'local_recipe_favorites';
     case 'recipe_reports':
@@ -223,6 +219,10 @@ export async function flushOutbox(
   let failed = 0;
 
   for (const item of items) {
+    if (item.entity === 'focus_sessions' || item.entity === 'focus_settings') {
+      await db.runAsync('DELETE FROM outbox WHERE id = ?', [item.id]);
+      continue;
+    }
     // 1. Mark as in_flight
     const flightTime = new Date().toISOString();
     await db.runAsync(`UPDATE outbox SET status = 'in_flight', updated_at = ? WHERE id = ?`, [
@@ -296,7 +296,7 @@ export async function flushOutbox(
               ? 'user_id,local_date'
               : item.entity === 'chat_messages'
                 ? 'client_id'
-                : item.entity === 'fasting_settings' || item.entity === 'focus_settings'
+                : item.entity === 'fasting_settings'
                   ? 'user_id'
                   : 'id';
         const { error } = await supabase.from(item.entity).upsert(item.payload, { onConflict });
@@ -330,7 +330,7 @@ export async function flushOutbox(
             `UPDATE ${localTable} SET sync_state = 'synced' WHERE user_id = ? AND local_date = ?`,
             [item.payload.user_id, item.payload.local_date],
           );
-        } else if (item.entity === 'fasting_settings' || item.entity === 'focus_settings') {
+        } else if (item.entity === 'fasting_settings') {
           await db.runAsync(`UPDATE ${localTable} SET sync_state = 'synced' WHERE user_id = ?`, [
             item.payload.user_id,
           ]);
@@ -383,7 +383,7 @@ export async function flushOutbox(
             `UPDATE ${localTable} SET sync_state = 'failed' WHERE user_id = ? AND food_id = ?`,
             [item.payload.user_id, item.payload.food_id],
           );
-        } else if (item.entity === 'fasting_settings' || item.entity === 'focus_settings') {
+        } else if (item.entity === 'fasting_settings') {
           await db.runAsync(`UPDATE ${localTable} SET sync_state = 'failed' WHERE user_id = ?`, [
             item.payload.user_id,
           ]);

@@ -345,18 +345,6 @@ try {
             logged_at: `${local}T10:00:00Z`,
           }),
         );
-      await query(
-        admin.from('focus_sessions').upsert({
-          id: crypto.randomUUID(),
-          user_id: account.id,
-          mode: 'stopwatch',
-          started_at: `${local}T09:00:00Z`,
-          ended_at: `${local}T11:00:00Z`,
-          paused_seconds: 0,
-          status: 'ended',
-          source: 'personal',
-        }),
-      );
     }
   }
   let index = 0;

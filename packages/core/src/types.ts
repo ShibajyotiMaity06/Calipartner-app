@@ -608,10 +608,6 @@ export interface RoomPrivacySettings {
   share_weight_number: boolean;
   share_weight_progress: boolean;
   share_fasting: boolean;
-  share_focus_status?: boolean;
-  share_focus_label?: boolean;
-  focus_status?: boolean;
-  focus_label?: boolean;
 }
 
 export type RoomRequestType = 'invitation' | 'join_request';
@@ -1448,8 +1444,7 @@ export type NotificationType =
   | 'weekly_summary'
   | 'trial_ending'
   | 'subscription_lapse'
-  | 'room_state_change'
-  | 'focus_session';
+  | 'room_state_change';
 
 export type NotificationDeliveryStatus = 'pending' | 'processing' | 'sent' | 'failed' | 'skipped';
 
@@ -1496,133 +1491,6 @@ export interface LocalReminderSchedule {
   };
   data?: Record<string, unknown>;
 }
-
-// =============================================================================
-// Phase 9B: Focus Time (Personal & Room Sessions) — PRD 6.25, 7.13, 6.13, 6.15
-// =============================================================================
-
-export type FocusSessionMode = 'stopwatch' | 'timer';
-export type FocusSessionStatus = 'active' | 'paused' | 'ended' | 'auto_ended';
-export type FocusParticipantStatus = 'focusing' | 'break' | 'left';
-
-export interface FocusSession {
-  id: string; // client-generated UUID
-  user_id: string;
-  room_session_id?: string | null;
-  mode: FocusSessionMode;
-  label?: string | null; // <= 20 chars
-  planned_seconds?: number | null;
-  started_at: string;
-  ended_at?: string | null;
-  paused_seconds: number;
-  last_paused_at?: string | null;
-  status: FocusSessionStatus;
-  source: 'personal' | 'room';
-  created_at: string;
-  updated_at: string;
-}
-
-export interface RoomFocusSession {
-  id: string;
-  room_id: string;
-  started_by: string;
-  mode: FocusSessionMode;
-  label?: string | null;
-  planned_seconds?: number | null;
-  started_at: string; // Set by server
-  ends_at?: string | null; // For timers
-  ended_at?: string | null;
-  status: 'active' | 'ended' | 'auto_ended';
-  created_at: string;
-  updated_at: string;
-}
-
-export interface RoomFocusParticipant {
-  id: string;
-  session_id: string;
-  user_id: string;
-  joined_at: string;
-  left_at?: string | null;
-  paused_seconds: number;
-  last_paused_at?: string | null;
-  status: FocusParticipantStatus;
-  created_at: string;
-  updated_at: string;
-  nickname?: string;
-  username?: string;
-  avatar_url?: string | null;
-}
-
-export interface FocusSettings {
-  user_id: string;
-  weekly_goal_minutes: number;
-  streak_minimum_minutes: number;
-  break_reminders: boolean;
-  default_label?: string | null;
-  created_at: string;
-  updated_at: string;
-}
-
-export interface FocusStatsDay {
-  local_date: string;
-  focus_minutes: number;
-  session_count: number;
-}
-
-export interface PersonalFocusStats {
-  total_focus_minutes: number;
-  weekly_goal_minutes: number;
-  goal_completion_percent: number;
-  daily_breakdown: FocusStatsDay[];
-  label_breakdown: Array<{ label: string; minutes: number }>;
-  longest_session_minutes: number;
-  current_streak: number;
-}
-
-export interface RoomMemberWeeklyFocus {
-  user_id: string;
-  nickname: string;
-  username: string;
-  avatar_url?: string | null;
-  is_me: boolean;
-  is_hidden: boolean;
-  weekly_focus_minutes: number | null;
-}
-
-export interface RoomWeeklyFocusStats {
-  room_id: string;
-  room_total_minutes: number;
-  members: RoomMemberWeeklyFocus[];
-}
-
-export interface RoomFocusState {
-  active_session: {
-    session: RoomFocusSession;
-    participants: Array<RoomFocusParticipant & { elapsed_seconds: number }>;
-    remaining_seconds?: number | null;
-    is_starter: boolean;
-    is_participating: boolean;
-    my_participant?: RoomFocusParticipant | null;
-  } | null;
-  recent_sessions: Array<{
-    id: string;
-    mode: FocusSessionMode;
-    label: string | null;
-    started_at: string;
-    ended_at: string | null;
-    duration_minutes: number;
-    participant_count: number;
-  }>;
-}
-
-export type FocusErrorCode =
-  | 'ROOM_LOCKED'
-  | 'NOT_A_MEMBER'
-  | 'SESSION_ENDED'
-  | 'RATE_LIMITED'
-  | 'SESSION_ALREADY_ACTIVE'
-  | 'UNAUTHENTICATED'
-  | 'INVALID_ARGUMENT';
 
 // -----------------------------------------------------------------------------
 // PHASE 11: AI FOOD-PHOTO LOGGING & USAGE (PRD 6.3 LOG-3, 7.7, 8.2)

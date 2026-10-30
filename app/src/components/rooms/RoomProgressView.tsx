@@ -19,7 +19,6 @@ import type {
   RoomProgressMemberSeries,
 } from '@calipartner/core';
 import { RangeSelector } from '@/components/progress/RangeSelector';
-import { RoomProgressFocusView } from '@/components/focus';
 import { useRoomProgress } from '@/hooks/useRoomProgress';
 import { t } from '@/i18n';
 import { fontSize, radius, spacing } from '@/theme/tokens';
@@ -40,16 +39,13 @@ const NEUTRAL_PALETTE = [
   dark.cream,
 ];
 
-export type ProgressMetricWithFocus = ProgressMetric | 'focus';
-
-const METRICS: ProgressMetricWithFocus[] = [
+const METRICS: ProgressMetric[] = [
   'consistency',
   'weight_change',
   'calories_vs_target',
   'steps',
   'water',
   'workouts',
-  'focus',
 ];
 
 export function RoomProgressView({ roomId, testID = 'room-progress-view' }: RoomProgressViewProps) {
@@ -67,7 +63,7 @@ export function RoomProgressView({ roomId, testID = 'room-progress-view' }: Room
     searchMembers,
   } = useRoomProgress(roomId);
 
-  const [selectedMetric, setSelectedMetric] = useState<ProgressMetricWithFocus>('consistency');
+  const [selectedMetric, setSelectedMetric] = useState<ProgressMetric>('consistency');
   const [hiddenMemberIds, setHiddenMemberIds] = useState<string[]>([]);
   const [sortByConsistency, setSortByConsistency] = useState(false);
   const [viewMode, setViewMode] = useState<'chart' | 'table'>('chart');
@@ -88,12 +84,10 @@ export function RoomProgressView({ roomId, testID = 'room-progress-view' }: Room
 
   // Metric series
   const memberSeriesList: RoomProgressMemberSeries[] = useMemo(() => {
-    if (selectedMetric === 'focus') return [];
     return data?.members_series?.[selectedMetric] ?? [];
   }, [data?.members_series, selectedMetric]);
 
   const roomAvgSeries = useMemo(() => {
-    if (selectedMetric === 'focus') return [];
     return data?.room_average_series?.[selectedMetric] ?? [];
   }, [data?.room_average_series, selectedMetric]);
 
@@ -304,9 +298,7 @@ export function RoomProgressView({ roomId, testID = 'room-progress-view' }: Room
                     ? t('progress.room.metrics.steps')
                     : metric === 'water'
                       ? t('progress.room.metrics.water')
-                      : metric === 'workouts'
-                        ? t('progress.room.metrics.workouts')
-                        : 'Focus';
+                      : t('progress.room.metrics.workouts');
 
           return (
             <Pressable
@@ -702,9 +694,6 @@ export function RoomProgressView({ roomId, testID = 'room-progress-view' }: Room
           );
         })}
       </View>
-
-      {/* Room Weekly Focus Totals (PRD RPG-8) */}
-      <RoomProgressFocusView roomId={roomId} testID={`${testID}-focus`} />
 
       {/* Searchable Member Picker Modal for Large Rooms (PRD RPG-7) */}
       <Modal

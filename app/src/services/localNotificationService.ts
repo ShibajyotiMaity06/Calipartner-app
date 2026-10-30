@@ -12,6 +12,30 @@ import {
 
 const log = createLogger('localNotificationService');
 
+/** Cancel scheduled timers left by versions that still had the retired feature. */
+export async function cancelRetiredActivityReminders(): Promise<void> {
+  if (typeof Notifications.getAllScheduledNotificationsAsync !== 'function') return;
+  try {
+    for (const request of await Notifications.getAllScheduledNotificationsAsync()) {
+      if (
+        request.identifier.startsWith('focus_timer_end_') ||
+        request.content.data?.type === 'focus_session'
+      ) {
+        await Notifications.cancelScheduledNotificationAsync(request.identifier);
+      }
+    }
+    if (typeof Notifications.getPresentedNotificationsAsync === 'function') {
+      for (const notification of await Notifications.getPresentedNotificationsAsync()) {
+        if (notification.request.content.data?.type === 'focus_session') {
+          await Notifications.dismissNotificationAsync(notification.request.identifier);
+        }
+      }
+    }
+  } catch {
+    log.warn('Could not clear retired activity reminders');
+  }
+}
+
 // Configure global notification presentation behavior
 try {
   if (typeof Notifications.setNotificationHandler === 'function') {
@@ -295,54 +319,5 @@ export async function cancelAllLocalReminders(): Promise<void> {
     log.info('Cancelled all scheduled local notifications');
   } catch (err) {
     log.warn(`Error cancelling local notifications: ${err}`);
-  }
-}
-
-/**
- * Schedules a local notification at timer end (PRD FOC-3).
- */
-export async function scheduleFocusTimerEndReminder(params: {
-  sessionId: string;
-  seconds: number;
-  label?: string | null;
-}): Promise<string | null> {
-  if (!isLocalNotificationSupported() || params.seconds <= 0) return null;
-  const targetDate = new Date(Date.now() + params.seconds * 1000);
-  const notifId = `focus_timer_end_${params.sessionId}`;
-  try {
-    return await Notifications.scheduleNotificationAsync({
-      identifier: notifId,
-      content: {
-        title: 'Focus Timer Ended',
-        body: params.label
-          ? `Great work! Your "${params.label}" focus session has finished.`
-          : 'Great work! Your focus session has finished.',
-        data: {
-          type: 'focus_session',
-          sessionId: params.sessionId,
-          url: '/(tabs)/room',
-        },
-        sound: 'default',
-      },
-      trigger: {
-        type: Notifications.SchedulableTriggerInputTypes.DATE,
-        date: targetDate,
-      },
-    });
-  } catch (err) {
-    log.warn(`Failed to schedule focus timer end notification: ${err}`);
-    return null;
-  }
-}
-
-/**
- * Cancels focus timer local notification when session is ended, left, or paused.
- */
-export async function cancelFocusTimerEndReminder(sessionId: string): Promise<void> {
-  if (!isLocalNotificationSupported()) return;
-  try {
-    await Notifications.cancelScheduledNotificationAsync(`focus_timer_end_${sessionId}`);
-  } catch (err) {
-    log.warn(`Error cancelling focus timer reminder: ${err}`);
   }
 }

@@ -2,6 +2,10 @@
 import { citext } from '@electric-sql/pglite/contrib/citext';
 import { readFile, readdir } from 'node:fs/promises';
 import { runPairInvitePreviewTests } from './pair_invite_preview_cases.mjs';
+import {
+  seedActivityRetirementHistory,
+  runActivityRetirementTests,
+} from './activity_retirement_cases.mjs';
 const db = new PGlite({ extensions: { citext } });
 await db.exec(`create role anon; create role authenticated; create role service_role bypassrls;
 create schema auth; create table auth.users(id uuid primary key,email text, raw_user_meta_data jsonb default '{}'::jsonb,created_at timestamptz default now());
@@ -14,6 +18,7 @@ alter default privileges in schema public grant all on sequences to authenticate
 let migrations = 0;
 for (const f of (await readdir('supabase/migrations')).filter((f) => f.endsWith('.sql')).sort()) {
   try {
+    if (f === '20261029000031_retire_focus_time.sql') await seedActivityRetirementHistory(db);
     await db.exec(await readFile(`supabase/migrations/${f}`, 'utf8'));
     migrations++;
   } catch (error) {
@@ -23,6 +28,7 @@ for (const f of (await readdir('supabase/migrations')).filter((f) => f.endsWith(
 console.log(`Database migrations: ${migrations} passed`);
 const { runRoomTests } = await import('./rooms_v3_cases.mjs');
 try {
+  await runActivityRetirementTests(db);
   const { runCommunityLimitTests } = await import('./community_limit_cases.mjs');
   await runCommunityLimitTests(db);
   const { runRoomMatrixTests } = await import('./room_matrix_cases.mjs');

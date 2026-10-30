@@ -62,7 +62,6 @@ Nutrition goals are not static. As members lose fat or gain muscle, their Total 
 | **Workout Logging** | ✔ | ✔ | ✔ | Exercise catalog, sets, reps, weight, history |
 | **Weight Tracking & Trends** | ✔ | ✔ | ✔ | Log weight, BMI, moving average trend line |
 | **Personal Progress Graphs** | ✔ | ✔ | ✔ | Nutrition adherence, calorie intake, weight graph |
-| **Personal Focus Timer & Stopwatch** | ✔ | ✔ | ✔ | Study/work focus sessions with personal log |
 | **Habit Streaks & Consistency Score** | ✔ | ✔ | ✔ | Daily streaks, weekly composite consistency score |
 | **Weekly Community Leaderboard** | ✔ | ✔ | ✔ | Top 10 leaderboard and your cohort position |
 | **Offline-First SQLite Logging** | ✔ | ✔ | ✔ | Logging never blocks or requires internet |
@@ -80,7 +79,6 @@ Nutrition goals are not static. As members lose fat or gain muscle, their Total 
 | **Room Text Chat** | Read-only | **Send & Read** | **Send & Read** | Plus/Pro required to post text messages |
 | **Room Media Sharing** (Photos & Videos) | — | — | **✔** | Pro exclusive; Cloudflare R2 signed uploads |
 | **Shared Workouts** | Read-only | **Share & Read** | **Share & Read** | Share full routines/exercises to room feed |
-| **Live Shared Focus Sessions** | — | **✔** | **✔** | Live synchronized focus rooms with room peers |
 | **Room-Only Leaderboard** | — | **✔** | **✔** | Filtered leaderboard for just your room |
 | **Pair Challenges** (1, 7, 30 days) | — | **✔** | **✔** | Custom accountability challenges with partner |
 | **Seasonal Challenges** (Winter Arc, etc.) | — | **✔** | **✔** | Platform-wide quarterly motivational events |

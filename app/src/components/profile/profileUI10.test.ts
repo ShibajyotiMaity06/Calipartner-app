@@ -41,13 +41,11 @@ describe('UI-10 · Me, Privacy, Plans, and Paywall (Screens N01–N16, O01–O10
   });
 
   describe('4. N04: Daily Goals with Steppers', () => {
-    it('defines daily goals for steps (default 8,000), water, and focus', () => {
+    it('defines daily goals for steps (default 8,000), and water', () => {
       expect(en.me.dailyGoals.stepGoal).toBe('Daily Step Goal');
       expect(en.me.dailyGoals.waterGoal).toBe('Daily Water Goal');
-      expect(en.me.dailyGoals.focusGoal).toBe('Daily Focus Goal');
       expect(en.me.dailyGoals.stepUnit).toBe('steps');
       expect(en.me.dailyGoals.waterUnit).toBe('ml');
-      expect(en.me.dailyGoals.focusUnit).toBe('minutes');
     });
   });
 
@@ -72,16 +70,6 @@ describe('UI-10 · Me, Privacy, Plans, and Paywall (Screens N01–N16, O01–O10
       expect(p.workouts).toBe('Partners can see my workouts');
       expect(p.workoutsConsequence).toBe(
         'Partners see when you complete a workout and exercise types.',
-      );
-
-      // Focusing
-      expect(p.focusing).toBe("Show that I'm focusing");
-      expect(p.focusingConsequence).toBe('Shows the live focus beacon when your timer is running.');
-
-      // Focus labels
-      expect(p.focusLabels).toBe('Show my focus labels');
-      expect(p.focusLabelsConsequence).toBe(
-        'Partners see the specific task or tag you are focusing on.',
       );
 
       // Fasting
@@ -213,7 +201,7 @@ describe('UI-10 · Me, Privacy, Plans, and Paywall (Screens N01–N16, O01–O10
 
     it('includes the three what-you-get inclusions and free tracking guarantee', () => {
       const pw = en.rooms.paywall;
-      expect(pw.whatYouGetRow1).toBe('Room, chat, progress and focus for everyone');
+      expect(pw.whatYouGetRow1).toBe('Room, chat and progress for everyone');
       expect(pw.whatYouGetRow2).toBe('AI coach and Partner Finder for you');
       expect(pw.whatYouGetRow3).toBe('Bigger photo allowance');
       expect(pw.freeSentence).toBe('Logging, your diary and your streak stay free.');

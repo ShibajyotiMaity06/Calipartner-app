@@ -122,6 +122,20 @@ function createTestDb(): SyncDb {
 }
 
 describe('Offline-First Sync Layer', () => {
+  it('discards retired session writes without calling the network', async () => {
+    const db = createTestDb();
+    for (const entity of ['focus_sessions', 'focus_settings'])
+      await enqueueOutbox(db, {
+        id: entity,
+        entity,
+        operation: 'upsert',
+        payload: { user_id: 'u1' },
+      });
+    const from = vi.fn();
+    await flushOutbox(db, { from } as unknown as SupabaseSyncClient);
+    expect(from).not.toHaveBeenCalled();
+    expect(await getPendingOutboxItems(db)).toEqual([]);
+  });
   it('syncs a gym plan only after its profile measurement succeeds, then marks the local plan synced', async () => {
     const db = createTestDb();
     await db.runAsync('CREATE TABLE local_goal_profiles (id TEXT PRIMARY KEY, is_synced INTEGER)');

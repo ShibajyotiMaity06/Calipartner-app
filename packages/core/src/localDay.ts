@@ -1,5 +1,18 @@
-import { getLocalDateString } from './focus';
 import { addDaysToDateString } from './trackers';
+
+/** YYYY-MM-DD in a stored IANA time zone. Shared by all daily trackers. */
+export function getLocalDateString(date: Date, timeZone: string): string {
+  try {
+    return new Intl.DateTimeFormat('en-CA', {
+      timeZone,
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+    }).format(date);
+  } catch {
+    return date.toISOString().slice(0, 10);
+  }
+}
 
 /** UTC instants delimiting a calendar day in the stored user time zone (DST safe). */
 export function getLocalDayBounds(localDate: string, timeZone: string): { start: Date; end: Date } {

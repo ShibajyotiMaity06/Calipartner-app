@@ -8,7 +8,6 @@
     "../../../packages/core/src/exercise_dataset": "../../../packages/core/src/exercise_dataset.ts",
     "../../../packages/core/src/exercise_importer": "../../../packages/core/src/exercise_importer.ts",
     "../../../packages/core/src/fasting": "../../../packages/core/src/fasting.ts",
-    "../../../packages/core/src/focus": "../../../packages/core/src/focus.ts",
     "../../../packages/core/src/food": "../../../packages/core/src/food.ts",
     "../../../packages/core/src/food_dataset": "../../../packages/core/src/food_dataset.ts",
     "../../../packages/core/src/food_lookup": "../../../packages/core/src/food_lookup.ts",

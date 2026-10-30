@@ -17,7 +17,6 @@ export const CHALLENGE_METRICS = [
   'food_log_days',
   'protein_in_range',
   'water_ml',
-  'focus_minutes',
   'weigh_in_days',
   'partner_actions',
 ] as const;

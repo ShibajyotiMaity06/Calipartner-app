@@ -18,7 +18,6 @@ export * from './workouts';
 export * from './progress';
 export * from './chat';
 export * from './notifications';
-export * from './focus';
 export * from './subscriptions';
 export * from './ai_food_photo';
 export * from './recipes';

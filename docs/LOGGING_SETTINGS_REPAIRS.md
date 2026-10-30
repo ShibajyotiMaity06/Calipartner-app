@@ -1,5 +1,7 @@
 # Logging and settings repairs — 29 October 2026
 
+The later [Focus removal](FOCUS_REMOVAL.md) supersedes this report's instruction to keep Focus in Log. The feature has now been retired throughout the app and backend.
+
 ## What changed
 
 - Fixed the Log menu passing weight notes and date in the wrong order. Weight logging uses the authenticated owner before goals hydrate, uses the stored time zone, rejects invalid dates/weights and prevents repeated submission. Recoverable local rows affected by the swapped fields are repaired and requeued under their existing UUID. Browser weight editing/deletion now handles multiline SQL and UUID lookups correctly.

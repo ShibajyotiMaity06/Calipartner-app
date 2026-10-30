@@ -16,7 +16,7 @@ export interface TimerDisplayProps extends AccessibilityProps {
    */
   targetEndAtUtc?: string | number;
   durationMinutes?: number;
-  /** Mode: 'countdown' (e.g. Focus session) or 'elapsed' (e.g. Fasting) */
+  /** Mode: 'countdown' (e.g. workout rest) or 'elapsed' (e.g. Fasting) */
   mode?: 'countdown' | 'elapsed';
   /** Whether the session is currently paused */
   isPaused?: boolean;
@@ -28,7 +28,7 @@ export interface TimerDisplayProps extends AccessibilityProps {
   strokeWidth?: number;
   /** Accent color for the progress ring. Default dark.apricot */
   accentColor?: string;
-  /** Title label above or below (e.g. "Focus Session" or "Fasting") */
+  /** Title label above or below (e.g. "Rest timer" or "Fasting") */
   title?: string;
   /** Subtitle (e.g. "Target: 45 min") */
   subtitle?: string;

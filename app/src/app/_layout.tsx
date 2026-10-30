@@ -17,6 +17,7 @@ import { createLogger } from '@/lib/logger';
 import { useTheme } from '@/theme/useTheme';
 import { setupNotificationListeners } from '@/lib/deepLinks';
 import { loadAppFonts, hideSplashScreen } from '@/theme/fontLoader';
+import { cancelRetiredActivityReminders } from '@/services/localNotificationService';
 
 const log = createLogger('root');
 
@@ -205,6 +206,7 @@ export default function RootLayout() {
       }
     }
     const cleanup = setupNotificationListeners();
+    void cancelRetiredActivityReminders();
     return cleanup;
   }, []);
 

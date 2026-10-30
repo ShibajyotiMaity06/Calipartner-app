@@ -145,7 +145,7 @@ export function TermsOfServiceModal({
                 <Text variant="body" color={dark.textMid} style={styles.paragraph}>
                   We collect account credentials (email or Apple/Google sign-in identifiers),
                   fitness profile data (height, weight, date of birth, goal preferences), and logged
-                  diary entries (food, water, workouts, focus time).
+                  diary entries (food, water and workouts).
                 </Text>
 
                 <Text variant="heading" color={dark.textHi} style={styles.sectionHeading}>

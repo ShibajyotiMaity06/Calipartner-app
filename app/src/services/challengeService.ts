@@ -1,4 +1,5 @@
 import type { ChallengeHome, ChallengeMutation } from '@calipartner/core';
+import { buildChallengeHome } from '@calipartner/core';
 import type { SyncDb } from './syncService';
 import { generateClientUuid } from './foodService';
 import { beforeTrackingSync } from './accountSyncGate';
@@ -46,7 +47,38 @@ export async function cachedChallenges(db: SyncDb, owner: string): Promise<Chall
     'SELECT payload FROM local_challenge_cache WHERE owner_id = ?',
     [owner],
   );
-  return rows[0] ? (JSON.parse(rows[0].payload) as ChallengeHome) : null;
+  if (!rows[0]) return null;
+  const home = JSON.parse(rows[0].payload) as ChallengeHome;
+  const retiredTemplates = new Set(
+    home.catalog.templates
+      .filter((template) => template.tasks.some((task) => String(task) === 'focus_minutes'))
+      .map((template) => template.id),
+  );
+  const retiredInstances = new Set(
+    home.items
+      .filter((item) =>
+        item.challenge.rules_snapshot.tasks.some((task) => String(task) === 'focus_minutes'),
+      )
+      .map((item) => item.challenge.id),
+  );
+  for (const item of await challengeOutbox(db, owner)) {
+    const mutation = JSON.parse(item.payload) as {
+      template_id?: string;
+      id?: string;
+      tasks?: string[];
+    };
+    if (
+      retiredTemplates.has(mutation.template_id ?? '') ||
+      retiredInstances.has(mutation.id ?? '') ||
+      mutation.tasks?.includes('focus_minutes')
+    ) {
+      await db.runAsync('DELETE FROM local_challenge_outbox WHERE id = ? AND owner_id = ?', [
+        item.id,
+        owner,
+      ]);
+    }
+  }
+  return buildChallengeHome(home);
 }
 export async function loadChallenges(
   db: SyncDb,
@@ -54,9 +86,10 @@ export async function loadChallenges(
   owner: string,
   rescore = true,
 ) {
-  const data = await challengeRequest<ChallengeHome>(client, owner, {
+  const response = await challengeRequest<ChallengeHome>(client, owner, {
     action: rescore ? 'home' : 'read',
   });
+  const data = buildChallengeHome(response);
   await db.runAsync(
     'INSERT INTO local_challenge_cache (id,owner_id,payload,updated_at) VALUES (?,?,?,?) ON CONFLICT(id) DO UPDATE SET payload=excluded.payload,updated_at=excluded.updated_at',
     [owner, owner, JSON.stringify(data), new Date().toISOString()],

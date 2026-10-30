@@ -582,4 +582,9 @@ export const migrations: readonly LocalMigration[] = [
     name: 'custom_macro_goals',
     sql: 'ALTER TABLE local_goal_profiles ADD COLUMN custom_macros INTEGER NOT NULL DEFAULT 0;',
   },
+  {
+    version: 17,
+    name: 'retire_activity_timer_uploads',
+    sql: "DELETE FROM outbox WHERE entity IN ('focus_sessions','focus_settings');",
+  },
 ];

@@ -23,10 +23,6 @@ export const DEFAULT_PRIVACY_SETTINGS: RoomPrivacySettings = Object.freeze({
   share_weight_number: false,
   share_weight_progress: false,
   share_fasting: false,
-  share_focus_status: true,
-  share_focus_label: false,
-  focus_status: true,
-  focus_label: false,
 });
 
 export function getDefaultPrivacySettings(): RoomPrivacySettings {
@@ -49,28 +45,6 @@ export function sanitizePrivacySettings(
     meals = input.share_meals;
   }
 
-  let focusStatus: boolean;
-  if (input.share_focus_status !== undefined && input.focus_status !== undefined) {
-    focusStatus = Boolean(input.share_focus_status && input.focus_status);
-  } else if (input.share_focus_status !== undefined) {
-    focusStatus = Boolean(input.share_focus_status);
-  } else if (input.focus_status !== undefined) {
-    focusStatus = Boolean(input.focus_status);
-  } else {
-    focusStatus = DEFAULT_PRIVACY_SETTINGS.share_focus_status ?? true;
-  }
-
-  let focusLabel: boolean;
-  if (input.share_focus_label !== undefined && input.focus_label !== undefined) {
-    focusLabel = Boolean(input.share_focus_label || input.focus_label);
-  } else if (input.share_focus_label !== undefined) {
-    focusLabel = Boolean(input.share_focus_label);
-  } else if (input.focus_label !== undefined) {
-    focusLabel = Boolean(input.focus_label);
-  } else {
-    focusLabel = DEFAULT_PRIVACY_SETTINGS.share_focus_label ?? false;
-  }
-
   return {
     share_streak: input.share_streak ?? DEFAULT_PRIVACY_SETTINGS.share_streak,
     share_goal_completion:
@@ -87,10 +61,6 @@ export function sanitizePrivacySettings(
     share_weight_progress:
       input.share_weight_progress ?? DEFAULT_PRIVACY_SETTINGS.share_weight_progress,
     share_fasting: input.share_fasting ?? DEFAULT_PRIVACY_SETTINGS.share_fasting,
-    share_focus_status: focusStatus,
-    share_focus_label: focusLabel,
-    focus_status: focusStatus,
-    focus_label: focusLabel,
   };
 }
 

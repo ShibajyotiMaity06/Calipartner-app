@@ -14,6 +14,11 @@ vi.mock('expo-notifications', () => ({
 }));
 
 describe('deepLinks & Notification Routing', () => {
+  it('routes retired activity notifications to Today instead of reopening deleted screens', () => {
+    expect(resolveNotificationRoute({ type: 'focus_session', url: '/room' })).toBe('/(tabs)/today');
+    expect(resolveNotificationRoute({ url: '/focus' })).toBe('/(tabs)/today');
+    expect(resolveNotificationRoute({ url: '/(tabs)/focus?room=old' })).toBe('/(tabs)/today');
+  });
   it('resolves explicit URL routes accurately', () => {
     expect(resolveNotificationRoute({ url: '/friends', kind: 'friend_request' })).toBe('/friends');
     expect(resolveNotificationRoute({ url: '/friends', kind: 'friend_accepted' })).toBe('/friends');

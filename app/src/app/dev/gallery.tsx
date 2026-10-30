@@ -857,16 +857,6 @@ export default function ComponentGalleryScreen(): React.JSX.Element | null {
             <View style={styles.timerRow}>
               <View style={styles.ringItem}>
                 <TimerDisplay
-                  startedAtUtc={Date.now() - 15 * 60 * 1000}
-                  durationMinutes={25}
-                  mode="countdown"
-                  title="Focus Session"
-                  subtitle="Pomodoro (25 min)"
-                />
-              </View>
-
-              <View style={styles.ringItem}>
-                <TimerDisplay
                   startedAtUtc={Date.now() - 14 * 3600 * 1000 - 22 * 60 * 1000}
                   durationMinutes={16 * 60}
                   mode="elapsed"

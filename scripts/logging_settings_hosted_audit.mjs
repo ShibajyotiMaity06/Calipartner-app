@@ -65,7 +65,7 @@ async function cleanup() {
   console.log('PASS Hosted audit cleanup: disposable accounts, rooms and challenges removed');
 }
 if (accounts.length) await cleanup();
-process.env.ROOM_AUDIT_EXPORT = '.cache/repair-web-export';
+process.env.ROOM_AUDIT_EXPORT ??= '.cache/repair-web-export';
 try {
   for (let i = 0; i < 2; i++) {
     const email = `logging-${Date.now()}-${i}@example.com`,
@@ -121,6 +121,15 @@ try {
   }
   const [a, b] = accounts;
   const home = await api(a.c, { action: 'home' });
+  assert.equal(
+    home.catalog.templates.some((item) => item.tasks.includes('focus_minutes')),
+    false,
+  );
+  assert.equal(home.catalog.config.rules.metrics.focus_minutes, undefined);
+  await assert.rejects(
+    () => rpc(a.c, 'start_personal_focus', { p_id: crypto.randomUUID(), p_mode: 'stopwatch' }),
+    /permission denied|Could not find/i,
+  );
   const template = home.catalog.templates.find((t) => t.slug === 'log-it');
   const id = crypto.randomUUID();
   challenges.push(id);
@@ -149,6 +158,11 @@ try {
     assert.equal(weights[0].local_date, '2026-10-29');
     assert.equal(weights[0].notes, 'Morning check-in');
     console.log('PASS Browser weight: entered date and notes persist in the correct fields');
+    await page.goto('http://127.0.0.1:8096/log');
+    await page.getByTestId('btn-log-tile-food').waitFor();
+    assert.equal(await page.getByTestId('btn-log-tile-focus').count(), 0);
+    await page.screenshot({ path: '.cache/log-without-focus.png', fullPage: true });
+    console.log('PASS Browser Log: current logging actions remain and Focus is absent');
     await page.goto('http://127.0.0.1:8096/friends');
     await page.getByTestId('friend-username-search').fill(b.username);
     await page.getByText(`@${b.username}`, { exact: true }).first().click();
@@ -164,6 +178,10 @@ try {
     console.log('PASS Browser friends: search and send reach recipient inbox');
     await page.goto('http://127.0.0.1:8096/progress?tab=challenges');
     await page.getByTestId('progress-challenges-view-create-btn').waitFor();
+    await page.getByTestId('progress-challenges-view-create-btn').click();
+    await page.getByTestId('choose-challenge-template').waitFor();
+    assert.equal(await page.getByTestId('create-template-focus-streak').count(), 0);
+    assert.ok(!/\bfocus\b/i.test(await page.getByTestId('choose-challenge-template').innerText()));
     console.log('PASS Browser challenges: real active challenge screen loads');
     await page.goto('http://127.0.0.1:8096/me');
     await page.getByTestId('row-goals-body').click();
@@ -254,6 +272,22 @@ try {
     await recipient.getByTestId('btn-me-requests-bell').click();
     await recipient.getByText('From Logging audit 0', { exact: true }).waitFor();
     console.log('PASS Browser invitation inbox: recipient sees the actual sender name');
+    await rpc(b.c, 'respond_to_request', {
+      p_request_id: invitation.request_id,
+      p_action: 'accept',
+    });
+    await page.goto(`http://127.0.0.1:8096/room?room=${roomId}`);
+    await page.getByTestId('room-tab-progress').waitFor();
+    assert.equal(await page.getByTestId('room-tab-focus').count(), 0);
+    await page.getByTestId('room-tab-progress').click();
+    await page.getByTestId('room-progress-segment').waitFor();
+    assert.ok(!/\bfocus\b/i.test(await page.getByTestId('room-progress-segment').innerText()));
+    await page.goto('http://127.0.0.1:8096/notifications/settings');
+    await page.getByTestId('switch-pause-all').waitFor();
+    assert.ok(!/\bfocus\b/i.test(await page.locator('body').innerText()));
+    console.log(
+      'PASS Browser retirement: room tabs/progress, challenge chooser and notifications have no Focus feature',
+    );
   });
 } finally {
   await cleanup();

@@ -9,12 +9,7 @@ export interface DailyGoalsModalProps {
   onClose: () => void;
   currentStepGoal?: number;
   currentWaterGoalMl?: number;
-  currentFocusGoalMins?: number;
-  onSave?: (goals: {
-    stepGoal: number;
-    waterGoalMl: number;
-    focusGoalMins?: number;
-  }) => Promise<void> | void;
+  onSave?: (goals: { stepGoal: number; waterGoalMl: number }) => Promise<void> | void;
   testID?: string;
 }
 
@@ -36,7 +31,7 @@ export function DailyGoalsModal({
     setSaving(true);
     try {
       if (onSave) {
-        await onSave({ stepGoal, waterGoalMl, focusGoalMins: 0 });
+        await onSave({ stepGoal, waterGoalMl });
       }
       setSuccess(true);
       setTimeout(() => {

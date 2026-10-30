@@ -2,6 +2,16 @@ import type { ChallengeHome, ChallengeSnapshot } from './challengeTypes';
 import type { ChallengeMetric } from './challengeEngine';
 /** Server-derived navigation and presentation data; no device clock is trusted. */
 export function buildChallengeHome(home: ChallengeHome) {
+  // Older caches and server snapshots may still include the retired activity.
+  const retired = (tasks: readonly string[]) => tasks.includes('focus_minutes');
+  home = {
+    ...home,
+    items: home.items.filter((item) => !retired(item.challenge.rules_snapshot.tasks)),
+    catalog: {
+      ...home.catalog,
+      templates: home.catalog.templates.filter((template) => !retired(template.tasks)),
+    },
+  };
   const due = home.items.flatMap((item) =>
     item.self.status === 'joined' && item.challenge.status === 'active'
       ? (item.participants.find((p) => p.self)?.summary?.today_tasks ?? [])
@@ -52,15 +62,13 @@ export function challengeDuelOutcome(snapshot: ChallengeSnapshot): {
     : { kind: 'tie' };
 }
 export function challengeLogRoute(metric: ChallengeMetric): string {
-  return metric === 'focus_minutes'
-    ? '/focus'
-    : metric === 'workouts_count' || metric === 'workout_minutes'
-      ? '/log?flow=workout'
-      : metric === 'food_log_days' || metric === 'protein_in_range'
-        ? '/log?flow=food'
-        : metric === 'water_ml'
-          ? '/log?flow=water'
-          : metric === 'weigh_in_days'
-            ? '/log?flow=weight'
-            : '/today';
+  return metric === 'workouts_count' || metric === 'workout_minutes'
+    ? '/log?flow=workout'
+    : metric === 'food_log_days' || metric === 'protein_in_range'
+      ? '/log?flow=food'
+      : metric === 'water_ml'
+        ? '/log?flow=water'
+        : metric === 'weigh_in_days'
+          ? '/log?flow=weight'
+          : '/today';
 }

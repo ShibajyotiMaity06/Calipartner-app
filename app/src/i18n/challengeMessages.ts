@@ -201,7 +201,6 @@ export const challengeMessages = {
   food_log_days: 'Food logging day',
   protein_in_range: 'Protein in your range',
   water_ml: 'Water (ml)',
-  focus_minutes: 'Focus minutes',
   weigh_in_days: 'Check-in day',
   partner_actions: 'Partner encouragement',
   wedding: 'Wedding',

@@ -58,12 +58,44 @@ for (const [name, makeDb] of [
   ['web storage', createWebDb],
 ] as const)
   describe(name, () => {
+    it('removes retired offline challenge writes without affecting current or other-account writes', async () => {
+      const db = makeDb();
+      await queueChallenge(db, 'owner', { ...mutation, template_id: 'retired-template' });
+      await queueChallenge(db, 'owner', {
+        ...mutation,
+        id: 'current',
+        template_id: 'current-template',
+      });
+      await queueChallenge(db, 'other', { ...mutation, id: 'other-request' });
+      const home = {
+        catalog: {
+          templates: [
+            { id: 'retired-template', tasks: ['focus_minutes'] },
+            { id: 'current-template', tasks: ['water_ml'] },
+          ],
+          seasons: [],
+        },
+        items: [],
+      };
+      await db.runAsync(
+        'INSERT INTO local_challenge_cache (id,owner_id,payload,updated_at) VALUES (?,?,?,?)',
+        ['owner', 'owner', JSON.stringify(home), new Date().toISOString()],
+      );
+      expect(
+        (await cachedChallenges(db, 'owner'))?.catalog.templates.map((template) => template.id),
+      ).toEqual(['current-template']);
+      expect((await challengeOutbox(db, 'owner')).map((item) => item.id)).toEqual(['current']);
+      expect(await challengeOutbox(db, 'other')).toHaveLength(1);
+    });
     it('keeps cache and outbox isolated between accounts', async () => {
       const db = makeDb();
       const client: ChallengeClient = {
         auth: { getUser: async () => ({ data: { user: { id: 'owner' } } }) },
         functions: {
-          invoke: async () => ({ data: { catalog: {}, items: [], reminders: [] }, error: null }),
+          invoke: async () => ({
+            data: { catalog: { templates: [], seasons: [] }, items: [], reminders: [] },
+            error: null,
+          }),
         },
       };
       await loadChallenges(db, client, 'owner');
@@ -138,7 +170,20 @@ for (const [name, makeDb] of [
       const client: ChallengeClient = {
         auth: { getUser: async () => ({ data: { user: { id: 'owner' } } }) },
         functions: {
-          invoke: async () => ({ data: { items: [{ private: 'peer data' }] }, error: null }),
+          invoke: async () => ({
+            data: {
+              catalog: { templates: [], seasons: [] },
+              items: [
+                {
+                  private: 'peer data',
+                  challenge: { rules_snapshot: { tasks: ['steps'] } },
+                  self: { status: 'completed' },
+                  participants: [],
+                },
+              ],
+            },
+            error: null,
+          }),
         },
       };
       await loadChallenges(db, client, 'owner');

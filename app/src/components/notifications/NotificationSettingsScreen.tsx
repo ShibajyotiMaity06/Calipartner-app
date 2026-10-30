@@ -483,7 +483,7 @@ export function NotificationSettingsScreen({
           />
           <View style={[styles.divider, { backgroundColor: colors.border }]} />
 
-          {/* Fasting & Focus */}
+          {/* Fasting */}
           <SettingToggleRow
             testID="switch-fasting-reminders"
             title={t('notifications.localReminders.fasting')}

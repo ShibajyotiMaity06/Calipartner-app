@@ -87,9 +87,6 @@ verify_jwt = false
 # Push notification delivery worker
 verify_jwt = false
 
-[functions.cron-focus-maintenance]
-# Focus maintenance cron worker
-verify_jwt = false
 
 
 
