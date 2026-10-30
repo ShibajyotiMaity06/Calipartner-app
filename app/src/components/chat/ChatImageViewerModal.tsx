@@ -1,3 +1,4 @@
+import { useBrowserModalBack } from '@/hooks/useBrowserModalBack';
 import React, { useEffect, useState } from 'react';
 import {
   Image,
@@ -7,9 +8,9 @@ import {
   SafeAreaView,
   ScrollView,
   StyleSheet,
-  Text,
   View,
 } from 'react-native';
+import { Text } from '@calipartner/ui';
 import { dark, onboardingLayout as layout } from '@calipartner/ui';
 import { ChatVideo } from './ChatVideo';
 import { Ionicons } from '@expo/vector-icons';
@@ -30,6 +31,7 @@ export function ChatImageViewerModal({
   onClose,
   testID = 'chat-image-viewer-modal',
 }: ChatImageViewerModalProps) {
+  useBrowserModalBack(visible, onClose);
   const [scale, setScale] = useState(1);
   const [openError, setOpenError] = useState(false);
 

@@ -1,166 +1,214 @@
+import { useBrowserModalBack } from '@/hooks/useBrowserModalBack';
 import React, { useEffect, useRef, useState } from 'react';
-import { Modal, SafeAreaView, ScrollView, StyleSheet } from 'react-native';
-import { Button, Card, dark, space, SwitchRow, Text } from '@calipartner/ui';
-import type { RoomMemberSnapshot } from '@calipartner/core';
-import { getSupabase } from '@/lib/supabase';
+
+import { Modal, SafeAreaView, ScrollView, StyleSheet, View } from 'react-native';
+
+import { Button, Card, dark, space, Text } from '@calipartner/ui';
+
+import type { MealSection, RoomMemberSnapshot } from '@calipartner/core';
+
 import { generateClientUuid } from '@/services/foodService';
+
+import { copyRoomMeal, getRoomMeals, type RoomMeal } from '@/services/roomMealService';
+
 import { useNetworkStatus } from '@/hooks/useNetworkStatus';
+
 import { t } from '@/i18n';
 
+import { RoomMemberPicker } from './RoomMemberPicker';
+
 export function ShareLoggedMealModal({
+  visible = true,
   roomId,
   userId,
   members,
   onClose,
   onShared,
-  onPrivacy,
 }: {
+  visible?: boolean;
   roomId: string;
   userId: string;
   members: RoomMemberSnapshot[];
   onClose: () => void;
   onShared: () => void;
-  onPrivacy: () => void;
+  onPrivacy?: () => void;
 }) {
+  useBrowserModalBack(visible, onClose);
   const { isOnline } = useNetworkStatus();
-  const [meals, setMeals] = useState<Array<{ id: string; food_name: string; local_date: string }>>(
-    [],
+
+  const partners = members.filter(
+    (member) => member.user_id !== userId && member.status === 'active',
   );
-  const [selected, setSelected] = useState<string | null>(null);
-  const [recipients, setRecipients] = useState<string[]>([]);
-  const [loading, setLoading] = useState(true),
+
+  const [partner, setPartner] = useState(partners[0]?.user_id ?? '');
+
+  const [meals, setMeals] = useState<RoomMeal[]>([]);
+
+  const [selected, setSelected] = useState<RoomMeal | null>(null);
+
+  const [section, setSection] = useState<MealSection>('lunch');
+
+  const [loading, setLoading] = useState(false),
     [busy, setBusy] = useState(false),
     [error, setError] = useState(false),
     [retry, setRetry] = useState(0);
-  const [privacyBlocked, setPrivacyBlocked] = useState(false);
+
   const request = useRef<{ key: string; id: string } | null>(null);
+
+  const sending = useRef(false);
+
   useEffect(() => {
     let current = true;
+
+    setMeals([]);
+    setSelected(null);
     setError(false);
-    setLoading(true);
-    if (isOnline === false) {
+
+    if (!visible || !partner || isOnline === false) {
       setLoading(false);
       return;
     }
-    void getSupabase()
-      .from('food_entries')
-      .select('id,food_name,local_date')
-      .eq('user_id', userId)
-      .is('deleted_at', null)
-      .order('logged_at', { ascending: false })
-      .limit(20)
-      .then((result) => {
-        if (!current) return;
-        if (result.error) setError(true);
-        else setMeals(result.data ?? []);
-        setLoading(false);
+
+    setLoading(true);
+
+    void getRoomMeals(roomId, partner)
+      .then((items) => {
+        if (current) setMeals(items);
+      })
+
+      .catch(() => {
+        if (current) setError(true);
+      })
+
+      .finally(() => {
+        if (current) setLoading(false);
       });
+
     return () => {
       current = false;
     };
-  }, [userId, isOnline, retry]);
-  const send = async () => {
-    if (!selected || !recipients.length || busy || isOnline === false) return;
+  }, [visible, roomId, partner, isOnline, retry]);
+
+  const add = async () => {
+    if (!selected?.can_copy || sending.current || isOnline === false) return;
+
+    sending.current = true;
     setBusy(true);
     setError(false);
-    const key = JSON.stringify([roomId, selected, [...recipients].sort()]);
+
+    const key = JSON.stringify([roomId, partner, selected.id, section]);
+
     if (request.current?.key !== key) request.current = { key, id: generateClientUuid() };
+
     try {
-      const result = await getSupabase().rpc('share_room_meal', {
-        p_client_id: request.current.id,
-        p_room_id: roomId,
-        p_food_entry_id: selected,
-        p_participant_user_ids: recipients,
-      });
-      if (result.error) throw result.error;
+      await copyRoomMeal(request.current.id, roomId, partner, selected.id, section);
       onShared();
       onClose();
-    } catch (error) {
-      setPrivacyBlocked(
-        String((error as { message?: string }).message).includes('PRIVACY_REQUIRED'),
-      );
+    } catch {
       setError(true);
     } finally {
+      sending.current = false;
       setBusy(false);
     }
   };
+
   return (
-    <Modal visible onRequestClose={onClose} animationType="slide">
+    <Modal visible={visible} onRequestClose={onClose} animationType="slide">
       <SafeAreaView style={styles.screen}>
-        <ScrollView contentContainerStyle={styles.content} testID="share-logged-meal">
-          <Button
-            variant="tertiary"
-            label={t('rooms.paywall.close')}
-            onPress={onClose}
-            testID="close-share-logged-meal"
+        <Button
+          variant="tertiary"
+          label={t('repairs.close')}
+          onPress={onClose}
+          testID="close-share-logged-meal"
+        />
+
+        <ScrollView
+          contentContainerStyle={styles.content}
+          keyboardShouldPersistTaps="handled"
+          testID="share-logged-meal"
+        >
+          <Text variant="title2">{t('repairs.mealTitle')}</Text>
+
+          <Text>{t('repairs.mealHint')}</Text>
+
+          <RoomMemberPicker
+            members={partners}
+            selectedId={partner}
+            onSelect={setPartner}
+            disabled={busy}
           />
-          <Text variant="title2">{t('roomAudit.shareMeal')}</Text>
-          <Text>{t('roomAudit.chooseMeal')}</Text>
+
           {isOnline === false ? <Text>{t('setup.roomOnline')}</Text> : null}
+
           {loading ? <Text>{t('common.loading')}</Text> : null}
+
           {error ? (
-            <>
-              <Text accessibilityRole="alert">
-                {t(privacyBlocked ? 'roomAudit.mealPrivacyRequired' : 'roomAudit.actionError')}
-              </Text>
-              {privacyBlocked ? (
-                <Button
-                  variant="secondary"
-                  label={t('rooms.privacyModal.title')}
-                  onPress={onPrivacy}
-                />
-              ) : null}
+            <View>
+              <Text accessibilityRole="alert">{t('repairs.actionError')}</Text>
+
               <Button
                 variant="secondary"
                 label={t('common.retry')}
                 onPress={() => setRetry((v) => v + 1)}
               />
-            </>
+            </View>
           ) : null}
-          {!loading && !meals.length ? <Text>{t('roomAudit.noMeals')}</Text> : null}
-          <Card>
-            {meals.map((meal) => (
-              <SwitchRow
-                key={meal.id}
-                title={`${meal.food_name} · ${meal.local_date}`}
-                value={selected === meal.id}
+
+          {!loading && !error && !meals.length ? <Text>{t('repairs.mealEmpty')}</Text> : null}
+
+          {meals.map((meal) => (
+            <Card key={meal.id}>
+              <Button
+                variant="secondary"
+                label={`${meal.food_name} · ${meal.quantity} ${meal.unit} · ${t(`diary.sections.${meal.meal_section}`)}`}
+
                 disabled={busy}
-                onValueChange={() => setSelected(meal.id)}
+                onPress={() => {
+                  setSelected(meal);
+                  setSection(meal.meal_section);
+                }}
                 testID={`share-meal-choice-${meal.id}`}
               />
-            ))}
-          </Card>
-          <Card>
-            {members
-              .filter((member) => member.user_id !== userId && member.status === 'active')
-              .map((member) => (
-                <SwitchRow
-                  key={member.user_id}
-                  title={member.nickname}
-                  value={recipients.includes(member.user_id)}
+
+              {selected?.id === meal.id ? <Text>{t('repairs.selected', { count: 1 })}</Text> : null}
+            </Card>
+          ))}
+
+          {selected ? (
+            <>
+              <Text>{t('repairs.mealSection')}</Text>
+
+              {(['breakfast', 'lunch', 'dinner', 'snacks', 'extra'] as const).map((value) => (
+                <Button
+                  key={value}
+                  variant={section === value ? 'secondary' : 'tertiary'}
+
+                  label={t(`diary.sections.${value}`)}
+                  onPress={() => setSection(value)}
                   disabled={busy}
-                  onValueChange={(value) =>
-                    setRecipients((previous) =>
-                      value
-                        ? [...previous, member.user_id]
-                        : previous.filter((id) => id !== member.user_id),
-                    )
-                  }
-                  testID={`share-meal-recipient-${member.user_id}`}
+                  testID={`copy-meal-section-${value}`}
                 />
               ))}
-          </Card>
-          <Button
-            label={t('roomAudit.sendMeal')}
-            disabled={busy || isOnline === false || !selected || !recipients.length}
-            onPress={() => void send()}
-            testID="send-logged-meal"
-          />
+
+              {!selected.can_copy ? <Text>{t('repairs.mealNutritionPrivate')}</Text> : null}
+
+              <Button
+                label={t('repairs.addMeal', {
+                  section: t(`diary.sections.${section}`).toLowerCase(),
+                })}
+                disabled={busy || !selected.can_copy || isOnline === false}
+
+                onPress={() => void add()}
+                testID="send-logged-meal"
+              />
+            </>
+          ) : null}
         </ScrollView>
       </SafeAreaView>
     </Modal>
   );
 }
+
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: dark.bg0 },
   content: { padding: space[4], gap: space[3], paddingBottom: space[8] },

@@ -1,3 +1,4 @@
+import { useBrowserModalBack } from '@/hooks/useBrowserModalBack';
 import React, { useState } from 'react';
 import { Modal, Platform, View } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
@@ -34,6 +35,7 @@ export function ChatMediaPickerModal({
   maxCount = 5,
   testID = 'chat-media-picker-modal',
 }: ChatMediaPickerModalProps) {
+  useBrowserModalBack(visible, onClose);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const pick = async () => {

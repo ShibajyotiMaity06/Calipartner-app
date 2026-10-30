@@ -1,3 +1,4 @@
+import { type as typography } from '@calipartner/ui';
 import React, { useState } from 'react';
 import {
   Modal,
@@ -387,6 +388,7 @@ const styles = StyleSheet.create({
     color: dark.textHi,
     paddingHorizontal: space[3],
     paddingVertical: 10,
+    fontFamily: typography.body.fontFamily,
     fontSize: 16,
     textAlign: 'center',
     fontWeight: '600',
@@ -419,6 +421,7 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     minHeight: 80,
     textAlignVertical: 'top',
+    fontFamily: typography.body.fontFamily,
     fontSize: 14,
     lineHeight: 20,
   },
@@ -442,6 +445,7 @@ const styles = StyleSheet.create({
   },
   saveButtonText: {
     fontWeight: '800',
+    fontFamily: typography.body.fontFamily,
     fontSize: 16,
   },
 });

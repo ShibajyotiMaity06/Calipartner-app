@@ -9,6 +9,7 @@ const state = vi.hoisted(() => ({
   save: vi.fn(),
 }));
 vi.mock('react-native', () => ({
+  Platform: { OS: 'android' },
   Modal: 'Modal',
   SafeAreaView: 'SafeAreaView',
   ScrollView: 'ScrollView',

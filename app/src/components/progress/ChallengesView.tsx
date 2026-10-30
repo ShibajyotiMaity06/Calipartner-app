@@ -8,6 +8,7 @@ import {
   type ChallengeTemplate,
   type ChallengeSnapshot,
 } from '@calipartner/core';
+import { t } from '@/i18n';
 import { useChallenges } from '@/hooks/useChallenges';
 import { ct, challengeError, challengeText, type ChallengeCopy } from '@/i18n/challenges';
 import { challengeRequest } from '@/services/challengeService';
@@ -120,6 +121,11 @@ export function ChallengesView({ testID = 'challenges-view' }: { testID?: string
           />
         ))}
       </View>
+      {home.scores_pending ? (
+        <Text style={cs.small} accessibilityLiveRegion="polite">
+          {t('repairs.challengeUpdating')}
+        </Text>
+      ) : null}
       {(state.cached || !state.isOnline) && (
         <Text style={cs.small} accessibilityLiveRegion="polite">
           {ct('offline')}

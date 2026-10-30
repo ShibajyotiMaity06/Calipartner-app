@@ -142,3 +142,11 @@ export const typeHindi: Record<TypeVariant, TextStyleToken> = {
 export function getTypeStyle(variant: TypeVariant, isHindi = false): TextStyleToken {
   return isHindi ? typeHindi[variant] : type[variant];
 }
+
+export const latinFonts = {
+  regular: 'PlusJakartaSans_400',
+  medium: 'PlusJakartaSans_500',
+  semibold: 'PlusJakartaSans_600',
+  bold: 'PlusJakartaSans_700',
+  extrabold: 'PlusJakartaSans_800',
+} as const;

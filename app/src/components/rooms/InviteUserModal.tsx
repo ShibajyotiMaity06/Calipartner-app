@@ -6,10 +6,10 @@ import {
   Modal,
   Pressable,
   StyleSheet,
-  Text,
   TextInput,
   View,
 } from 'react-native';
+import { Text, type as typography } from '@calipartner/ui';
 import { Ionicons } from '@expo/vector-icons';
 import type { PublicUserProfile } from '@calipartner/core';
 import { t } from '@/i18n';
@@ -107,7 +107,7 @@ export function InviteUserModal({
             </Pressable>
           </View>
 
-          {/* Search Input */}
+          {/* Search TextInput */}
           <View
             style={[
               styles.searchBox,
@@ -245,11 +245,13 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   title: {
+    fontFamily: typography.body.fontFamily,
     fontSize: fontSize.md + 2,
     fontWeight: '700',
     letterSpacing: -0.2,
   },
   subtitle: {
+    fontFamily: typography.body.fontFamily,
     fontSize: fontSize.xs,
     marginTop: 2,
   },
@@ -273,6 +275,7 @@ const styles = StyleSheet.create({
   },
   searchInput: {
     flex: 1,
+    fontFamily: typography.body.fontFamily,
     fontSize: fontSize.sm,
     padding: 0,
   },
@@ -283,6 +286,7 @@ const styles = StyleSheet.create({
     marginBottom: spacing.xs,
   },
   errorText: {
+    fontFamily: typography.body.fontFamily,
     fontSize: fontSize.xs,
   },
   listContainer: {
@@ -295,6 +299,7 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.xl,
   },
   hintText: {
+    fontFamily: typography.body.fontFamily,
     fontSize: fontSize.xs + 1,
     textAlign: 'center',
   },
@@ -318,6 +323,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   avatarInitial: {
+    fontFamily: typography.body.fontFamily,
     fontSize: fontSize.sm,
     fontWeight: '700',
   },
@@ -325,10 +331,12 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   nickname: {
+    fontFamily: typography.body.fontFamily,
     fontSize: fontSize.sm,
     fontWeight: '700',
   },
   username: {
+    fontFamily: typography.body.fontFamily,
     fontSize: fontSize.xs,
     marginTop: 1,
   },
@@ -341,6 +349,7 @@ const styles = StyleSheet.create({
     minWidth: 80,
   },
   inviteButtonText: {
+    fontFamily: typography.body.fontFamily,
     fontSize: fontSize.xs,
     fontWeight: '700',
   },

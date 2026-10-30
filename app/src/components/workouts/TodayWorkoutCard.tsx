@@ -4,10 +4,10 @@ import {
   Pressable,
   ScrollView,
   StyleSheet,
-  Text,
   TouchableOpacity,
   View,
 } from 'react-native';
+import { Text } from '@calipartner/ui';
 import { Ionicons } from '@expo/vector-icons';
 import type { WorkoutWithDetails } from '@calipartner/core';
 import { dark, radius, space, type as typeTokens } from '@calipartner/ui';

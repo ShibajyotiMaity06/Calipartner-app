@@ -1,3 +1,4 @@
+import { type as typography } from '@calipartner/ui';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   Alert,
@@ -1096,6 +1097,7 @@ const styles = StyleSheet.create({
   },
   planNameText: {
     fontWeight: '800',
+    fontFamily: typography.body.fontFamily,
     fontSize: 18,
   },
   trialBadge: {
@@ -1289,6 +1291,7 @@ const styles = StyleSheet.create({
     height: 48,
     paddingHorizontal: space[3],
     color: dark.textHi,
+    fontFamily: typography.body.fontFamily,
     fontSize: 16,
     marginBottom: space[3],
   },

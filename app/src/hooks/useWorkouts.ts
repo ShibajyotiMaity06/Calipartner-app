@@ -10,6 +10,10 @@ import {
   type WorkoutWithDetails,
 } from '@calipartner/core';
 import { getDb } from '@/db';
+import { useAuth } from '@/contexts/AuthContext';
+import { useNetworkStatus } from './useNetworkStatus';
+import { getSupabase } from '@/lib/supabase';
+import { flushOutbox } from '@/services/syncService';
 import {
   addExerciseToWorkout,
   addSetToExercise,
@@ -63,7 +67,9 @@ export function useWorkouts(date?: string): UseWorkoutsResult {
   const { localDate: today } = useCurrentLocalDate();
   const localDate = date ?? today;
   const { currentGoalProfile } = useTargets();
-  const userId = currentGoalProfile?.user_id ?? 'guest-user';
+  const { user } = useAuth();
+  const { isOnline } = useNetworkStatus();
+  const userId = user?.id ?? 'guest-user';
   const userWeightKg = currentGoalProfile?.current_weight_kg ?? 70;
 
   const [workouts, setWorkouts] = useState<WorkoutWithDetails[]>([]);
@@ -87,6 +93,12 @@ export function useWorkouts(date?: string): UseWorkoutsResult {
   useEffect(() => {
     void loadData();
   }, [loadData]);
+  useEffect(() => {
+    if (isOnline && user?.id)
+      void getDb()
+        .then((db) => flushOutbox(db, getSupabase()))
+        .catch(() => {});
+  }, [isOnline, user?.id]);
 
   const create = useCallback(
     async (input: Omit<CreateWorkoutInput, 'userId' | 'localDate'> & { localDate?: string }) => {

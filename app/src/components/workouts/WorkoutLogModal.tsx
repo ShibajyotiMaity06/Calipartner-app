@@ -1,498 +1,425 @@
-import React, { useEffect, useState } from 'react';
-import { Modal, SafeAreaView, ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import { ChevronLeftIcon, dark, radius, space, Text } from '@calipartner/ui';
-import { playClickSound, playSuccessSound } from '@/lib/sound';
+import { useBrowserModalBack } from '@/hooks/useBrowserModalBack';
+import React, { useEffect, useRef, useState } from 'react';
+import { Modal, SafeAreaView, ScrollView, StyleSheet, TextInput, View } from 'react-native';
 import {
-  addExerciseToDate,
-  getPlannedExercisesForDate,
-  getWeeklyPlan,
-  toggleExerciseCompletion,
-  type PlannedExercise,
-} from '@/services/workoutPlanService';
-import { ExerciseDetailModal } from './ExerciseDetailModal';
-import { AddExercisePickerModal } from './AddExercisePickerModal';
-import { addDaysToDateString, formatCalendarDate, getCalendarWeek } from '@calipartner/core';
+  Button,
+  Card,
+  dark,
+  onboardingLayout as layout,
+  radius,
+  space,
+  Text,
+  type as typography,
+} from '@calipartner/ui';
+import {
+  addDaysToDateString,
+  formatCalendarDate,
+  validWorkoutLog,
+  type WorkoutWithDetails,
+} from '@calipartner/core';
 import { useCurrentLocalDate } from '@/hooks/useCurrentLocalDate';
+import { useWorkouts } from '@/hooks/useWorkouts';
+import { useRooms } from '@/hooks/useRooms';
+import { useSubscription } from '@/hooks/useSubscription';
+import { useNetworkStatus } from '@/hooks/useNetworkStatus';
+import { useAuth } from '@/contexts/AuthContext';
+import { getDb } from '@/db';
+import { getSupabase } from '@/lib/supabase';
+import { logWorkoutExercise } from '@/services/workoutLogService';
+import { shareRoomWorkout } from '@/services/roomExtrasService';
+import { flushOutbox } from '@/services/syncService';
+import { generateClientUuid } from '@/services/foodService';
 import { t } from '@/i18n';
+import exercises from '@/data/exercises_seed.json';
 
+type Category = 'upper' | 'lower' | 'core' | 'full';
+const groups: Record<Category, string[]> = {
+  upper: ['chest', 'back', 'shoulders', 'arms'],
+  lower: ['legs'],
+  core: ['core'],
+  full: ['full_body'],
+};
 export interface WorkoutLogModalProps {
   visible: boolean;
   onClose: () => void;
   onOpenProgress?: () => void;
   testID?: string;
+  initialCategory?: Category;
 }
-
 export function WorkoutLogModal({
   visible,
   onClose,
-  onOpenProgress,
   testID = 'workout-log-modal',
+  initialCategory,
 }: WorkoutLogModalProps) {
   const { localDate: today } = useCurrentLocalDate();
-  const [selectedDate, setSelectedDate] = useState<string | null>(null);
-  const currentDateStr = selectedDate ?? today;
-  const plan = getWeeklyPlan();
-
-  const [exercises, setExercises] = useState<PlannedExercise[]>(() =>
-    getPlannedExercisesForDate(currentDateStr),
-  );
-  const [selectedExerciseForDetail, setSelectedExerciseForDetail] =
-    useState<PlannedExercise | null>(null);
-  const [showAddExercisePicker, setShowAddExercisePicker] = useState<boolean>(false);
+  const { user } = useAuth();
+  const { isOnline } = useNetworkStatus();
+  const { hasActiveAccess } = useSubscription();
+  const [date, setDate] = useState(today);
+  const { workouts, loading, error: loadError, refresh } = useWorkouts(date);
+  const { rooms, loading: roomsLoading, error: roomsError, refresh: refreshRooms } = useRooms();
+  const [stage, setStage] = useState<'diary' | 'category' | 'exercise' | 'sets'>('diary');
+  const [category, setCategory] = useState<Category>('upper');
+  const [query, setQuery] = useState('');
+  const [exercise, setExercise] = useState('');
+  const [sets, setSets] = useState([{ reps: '', weight: '' }]);
+  const [minutes, setMinutes] = useState('');
+  const [busy, setBusy] = useState(false),
+    [error, setError] = useState<string | null>(null);
+  const [saved, setSaved] = useState<WorkoutWithDetails | null>(null);
+  const [sharing, setSharing] = useState(false),
+    [shared, setShared] = useState(false);
+  const lock = useRef(false);
+  const shareIds = useRef(new Map<string, string>());
   useEffect(() => {
-    if (visible) setExercises([...getPlannedExercisesForDate(currentDateStr)]);
-  }, [visible, currentDateStr]);
-
-  const completedCount = exercises.filter((e) => e.completed).length;
-  const progressRatio = exercises.length > 0 ? completedCount / exercises.length : 0;
-
-  const handleToggleCheck = (id: string) => {
-    playClickSound();
-    const updated = toggleExerciseCompletion(currentDateStr, id);
-    setExercises([...updated]);
+    if (!visible) return;
+    setDate(today);
+    setStage(initialCategory ? 'exercise' : 'diary');
+    if (initialCategory) setCategory(initialCategory);
+    setQuery('');
+    setSaved(null);
+    setSharing(false);
+    setShared(false);
+    setError(null);
+  }, [visible, today, initialCategory]);
+  const closeStep = () => {
+    if (busy) return;
+    if (sharing) setSharing(false);
+    else if (stage === 'sets') setStage('exercise');
+    else if (stage === 'exercise') setStage('category');
+    else if (stage === 'category') setStage('diary');
+    else onClose();
   };
-
-  const handleOpenDetail = (ex: PlannedExercise) => {
-    playClickSound();
-    setSelectedExerciseForDetail(ex);
-  };
-
-  const handleAddQuickExercise = () => {
-    playClickSound();
-    setShowAddExercisePicker(true);
-  };
-
-  const handleConfirmAddExercise = (chosen: {
-    name: string;
-    muscleGroup: string;
-    plannedSets: number;
-  }) => {
-    const newEx = addExerciseToDate(currentDateStr, {
-      name: chosen.name,
-      muscleGroup: chosen.muscleGroup,
-      plannedSets: chosen.plannedSets,
-    });
-    setExercises((prev) => [...prev, newEx]);
-  };
-
-  const weekDays = getCalendarWeek(currentDateStr).map((date) => {
-    const name = new Date(`${date}T12:00:00Z`).toLocaleDateString('en', {
-      timeZone: 'UTC',
-      weekday: 'short',
-    });
-    return {
-      date,
-      name,
-      dateNum: Number(date.slice(-2)),
-      isRest: !plan.workoutDays.includes(name),
-      isToday: date === today,
-    };
+  useBrowserModalBack(visible, onClose, {
+    depth: ['diary', 'category', 'exercise', 'sets'].indexOf(stage),
+    onDepthChange: (depth) =>
+      setStage((['diary', 'category', 'exercise', 'sets'] as const)[depth] ?? 'diary'),
   });
-
+  const save = async () => {
+    if (lock.current) return;
+    const values = sets.map((set) => ({ reps: Number(set.reps), weightKg: Number(set.weight) }));
+    if (!validWorkoutLog(values, Number(minutes))) {
+      setError(t('repairs.workoutInvalid'));
+      return;
+    }
+    lock.current = true;
+    setBusy(true);
+    setError(null);
+    try {
+      const logged = await logWorkoutExercise(await getDb(), {
+        userId: user?.id ?? 'guest-user',
+        localDate: date,
+        exerciseName: exercise,
+        durationMinutes: Number(minutes),
+        sets: values,
+      });
+      setSaved(logged);
+      setStage('diary');
+      setSharing(false);
+      setShared(false);
+      await refresh();
+      if (isOnline && user) void flushOutbox(await getDb(), getSupabase()).catch(() => {});
+    } catch {
+      setError(t('repairs.actionError'));
+    } finally {
+      lock.current = false;
+      setBusy(false);
+    }
+  };
+  const share = async (roomId: string) => {
+    if (!saved || lock.current) return;
+    lock.current = true;
+    setBusy(true);
+    setError(null);
+    try {
+      const db = await getDb();
+      if (!isOnline) throw new Error('SYNC_PENDING');
+      await flushOutbox(db, getSupabase());
+      const rows = (
+        await Promise.all(
+          ['local_workouts', 'local_workout_exercises', 'local_workout_sets'].map((table) =>
+            db.getAllAsync<{ sync_state: string }>(
+              `SELECT sync_state FROM ${table} WHERE ${table === 'local_workouts' ? 'id' : 'workout_id'} = ?`,
+              [saved.id],
+            ),
+          ),
+        )
+      ).flat();
+      if (rows.some((row) => row.sync_state !== 'synced')) throw new Error('SYNC_PENDING');
+      const key = `${saved.id}:${roomId}`;
+      if (!shareIds.current.has(key)) shareIds.current.set(key, generateClientUuid());
+      await shareRoomWorkout(shareIds.current.get(key)!, roomId, saved.id);
+      setShared(true);
+      setSharing(false);
+    } catch (failure) {
+      const message = String((failure as Error).message);
+      setError(t(message.includes('PRIVACY') ? 'repairs.sharePrivacy' : 'repairs.sharePending'));
+    } finally {
+      lock.current = false;
+      setBusy(false);
+    }
+  };
+  const filtered = exercises.filter(
+    (item) =>
+      groups[category].includes(item.muscle_group) &&
+      item.name.toLowerCase().includes(query.trim().toLowerCase()),
+  );
   return (
-    <Modal
-      visible={visible}
-      animationType="slide"
-      transparent={false}
-      onRequestClose={onClose}
-      testID={testID}
-    >
-      <SafeAreaView style={styles.safeArea}>
-        <View style={styles.container}>
-          {/* Top Bar */}
-          <View style={styles.topBar}>
-            <TouchableOpacity
-              onPress={onClose}
-              accessibilityRole="button"
-              accessibilityLabel="Back"
-              style={styles.backButton}
-              testID="btn-workout-log-back"
-            >
-              <ChevronLeftIcon size={22} color={dark.textHi} />
-            </TouchableOpacity>
-
-            <Text variant="title2" color={dark.textHi} style={styles.topTitle}>
-              Workout Log
+    <Modal visible={visible} animationType="slide" onRequestClose={closeStep} testID={testID}>
+      <SafeAreaView style={styles.screen}>
+        <Button
+          variant="tertiary"
+          label={t('repairs.back')}
+          onPress={closeStep}
+          disabled={busy}
+          testID="btn-workout-log-back"
+        />
+        <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
+          <Text variant="title2">{t('repairs.workoutLog')}</Text>
+          <View style={styles.date}>
+            <Button
+              variant="tertiary"
+              fullWidth={false}
+              label={t('capture.previousDay')}
+              disabled={busy}
+              onPress={() => setDate(addDaysToDateString(date, -1))}
+              testID="workout-previous-day"
+            />
+            <Text tabular>{formatCalendarDate(date)}</Text>
+            <Button
+              variant="tertiary"
+              fullWidth={false}
+              label={t('capture.nextDay')}
+              disabled={busy}
+              onPress={() => setDate(addDaysToDateString(date, 1))}
+              testID="workout-next-day"
+            />
+          </View>
+          {error ? (
+            <Text color={dark.danger} accessibilityRole="alert">
+              {error}
             </Text>
-
-            <TouchableOpacity
-              onPress={onOpenProgress}
-              accessibilityRole="button"
-              accessibilityLabel="Open workout progress"
-              style={styles.calendarIconBtn}
-              testID="btn-open-progress-from-log"
-            >
-              <Ionicons name="bar-chart-outline" size={22} color={dark.apricot} />
-            </TouchableOpacity>
-          </View>
-
-          <ScrollView
-            contentContainerStyle={styles.scrollContent}
-            showsVerticalScrollIndicator={false}
-          >
-            {/* Date Navigator Header */}
-            <View style={styles.dateNavigatorRow}>
-              <TouchableOpacity
-                onPress={() => setSelectedDate(addDaysToDateString(currentDateStr, -1))}
-                style={styles.arrowBtn}
-                accessibilityLabel={t('capture.previousDay')}
-                testID="workout-previous-day"
-              >
-                <Ionicons name="chevron-back" size={18} color={dark.textMid} />
-              </TouchableOpacity>
-
-              <View style={styles.dateBadgeBox}>
-                <Ionicons name="calendar-outline" size={16} color={dark.apricot} />
-                <Text variant="body" color={dark.textHi} style={{ fontWeight: '700' }}>
-                  {formatCalendarDate(currentDateStr)}
-                </Text>
-                <Ionicons name="chevron-down" size={14} color={dark.textLo} />
-              </View>
-
-              <TouchableOpacity
-                onPress={() => setSelectedDate(addDaysToDateString(currentDateStr, 1))}
-                style={styles.arrowBtn}
-                accessibilityLabel={t('capture.nextDay')}
-                testID="workout-next-day"
-              >
-                <Ionicons name="chevron-forward" size={18} color={dark.textMid} />
-              </TouchableOpacity>
-            </View>
-
-            {/* Weekday Strip */}
-            <View style={styles.weekStripRow}>
-              {weekDays.map((item) => (
-                <TouchableOpacity
-                  key={item.name}
-                  onPress={() => setSelectedDate(item.date)}
-                  accessibilityLabel={formatCalendarDate(item.date)}
-                  accessibilityRole="button"
-                  style={[styles.dayStripCell, item.isToday && styles.dayStripCellToday]}
-                  testID={`strip-day-${item.name}`}
-                >
-                  <Text
-                    variant="micro"
-                    color={item.isToday ? dark.apricot : dark.textLo}
-                    style={{ fontWeight: item.isToday ? '700' : '500' }}
-                  >
-                    {item.name}
-                  </Text>
-                  <Text
-                    variant="body"
-                    color={item.isToday ? dark.apricot : dark.textHi}
-                    style={{ fontWeight: '700', marginVertical: 2 }}
-                  >
-                    {item.dateNum}
-                  </Text>
-                  <Text
-                    variant="micro"
-                    color={item.isToday ? dark.apricot : dark.textOff}
-                    style={{ fontSize: 9 }}
-                  >
-                    {item.isToday ? t('diary.today') : item.isRest ? t('capture.restDay') : '•'}
-                  </Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-
-            {/* Status Banner Card */}
-            <View style={styles.statusBannerCard}>
-              <View style={styles.statusBannerTop}>
-                <View style={styles.dumbbellIconCircle}>
-                  <Ionicons name="barbell" size={20} color={dark.mint} />
-                </View>
-                <View style={styles.statusBannerTextCol}>
-                  <Text variant="body" color={dark.textHi} style={{ fontWeight: '700' }}>
-                    Workout Day
-                  </Text>
-                  <Text variant="micro" color={dark.textMid}>
-                    Complete your planned exercises
-                  </Text>
-                </View>
-                <Text variant="micro" color={dark.apricot} style={{ fontWeight: '700' }}>
-                  {completedCount}/{exercises.length} exercises
-                </Text>
-              </View>
-
-              {/* Progress Bar */}
-              <View style={styles.progressBarTrack}>
-                <View
-                  style={[styles.progressBarFill, { width: `${Math.round(progressRatio * 100)}%` }]}
+          ) : null}
+          {stage === 'diary' ? (
+            <>
+              <Button
+                label={t('repairs.logWorkout')}
+                onPress={() => {
+                  setStage('category');
+                  setError(null);
+                }}
+                testID="btn-log-workout"
+              />
+              {loading ? (
+                <Text>{t('common.loading')}</Text>
+              ) : loadError ? (
+                <Button
+                  variant="secondary"
+                  label={t('common.retry')}
+                  onPress={() => void refresh()}
                 />
-              </View>
-            </View>
-
-            {/* Planned Exercises List */}
-            <View style={styles.exercisesList}>
-              {exercises.map((ex) => (
-                <TouchableOpacity
-                  key={ex.id}
-                  onPress={() => handleOpenDetail(ex)}
-                  style={[styles.exerciseRowCard, ex.completed && styles.exerciseRowCardCompleted]}
-                  accessibilityRole="button"
-                  accessibilityLabel={`${ex.name}, ${ex.muscleGroup}, ${ex.plannedSets} sets`}
-                  testID={`exercise-item-${ex.id}`}
-                >
-                  <View style={styles.exerciseIconCircle}>
-                    <Ionicons name="barbell-outline" size={22} color={dark.apricot} />
-                  </View>
-
-                  <View style={styles.exerciseNameCol}>
-                    <Text variant="body" color={dark.textHi} style={{ fontWeight: '700' }}>
-                      {ex.name}
-                    </Text>
-                    <Text variant="micro" color={dark.textLo}>
-                      {ex.muscleGroup}
-                    </Text>
-                  </View>
-
-                  <Text variant="bodyS" color={dark.textMid} style={styles.setsCountText}>
-                    {ex.plannedSets} sets
-                  </Text>
-
-                  {/* Completion Checkmark */}
-                  <TouchableOpacity
-                    onPress={() => handleToggleCheck(ex.id)}
-                    style={[styles.checkCircle, ex.completed && styles.checkCircleActive]}
-                    accessibilityRole="checkbox"
-                    accessibilityState={{ checked: ex.completed }}
-                    testID={`checkbox-${ex.id}`}
-                  >
-                    {ex.completed ? (
-                      <Ionicons name="checkmark" size={16} color={dark.onBrand} />
-                    ) : null}
-                  </TouchableOpacity>
-                </TouchableOpacity>
+              ) : !workouts.length ? (
+                <Text>{t('repairs.workoutEmpty')}</Text>
+              ) : null}
+              {workouts.map((workout) => (
+                <Card key={workout.id} testID={`logged-workout-${workout.id}`}>
+                  <Text variant="heading">{workout.name}</Text>
+                  {workout.exercises.map((item) => (
+                    <View key={item.id} style={styles.gap}>
+                      <Text>{item.exercise_name}</Text>
+                      {(item.sets ?? []).map((set) => (
+                        <Text tabular key={set.id}>
+                          {t('repairs.setLabel', {
+                            number: set.set_number,
+                            weight: set.weight_kg ?? 0,
+                            reps: set.reps ?? 0,
+                          })}
+                        </Text>
+                      ))}
+                    </View>
+                  ))}
+                  {hasActiveAccess ? (
+                    <Button
+                      variant="secondary"
+                      label={t('repairs.shareWorkout')}
+                      onPress={() => {
+                        setSaved(workout);
+                        setSharing(true);
+                        setShared(false);
+                      }}
+                      testID={`share-saved-workout-${workout.id}`}
+                    />
+                  ) : null}
+                </Card>
               ))}
-            </View>
-          </ScrollView>
-
-          {/* Bottom Add Exercise Button */}
-          <View style={styles.bottomBar}>
-            <TouchableOpacity
-              onPress={handleAddQuickExercise}
-              style={styles.addExerciseBtn}
-              accessibilityRole="button"
-              accessibilityLabel="Add Exercise"
-              testID="btn-add-exercise-log"
-            >
-              <Ionicons name="add" size={20} color={dark.onBrand} />
-              <Text variant="heading" color={dark.onBrand} style={styles.addExerciseBtnText}>
-                Add Exercise
-              </Text>
-            </TouchableOpacity>
-          </View>
-
-          {/* Exercise Detail Modal */}
-          {selectedExerciseForDetail && (
-            <ExerciseDetailModal
-              visible={Boolean(selectedExerciseForDetail)}
-              exercise={selectedExerciseForDetail}
-              dateStr={currentDateStr}
-              onClose={() => setSelectedExerciseForDetail(null)}
-              onSaved={(updated) => {
-                setExercises((prev) => prev.map((e) => (e.id === updated.id ? updated : e)));
-              }}
-            />
+              {saved ? (
+                <Text accessibilityLiveRegion="polite">
+                  {t(shared ? 'repairs.sharedWorkout' : 'repairs.savedWorkout')}
+                </Text>
+              ) : null}
+              {sharing ? (
+                <View style={styles.gap}>
+                  <Text variant="heading">{t('repairs.chooseRoom')}</Text>
+                  {roomsLoading ? (
+                    <Text>{t('common.loading')}</Text>
+                  ) : roomsError ? (
+                    <Button
+                      variant="secondary"
+                      label={t('common.retry')}
+                      onPress={() => void refreshRooms()}
+                    />
+                  ) : !rooms.length ? (
+                    <Text>{t('roomAudit.noRooms')}</Text>
+                  ) : null}
+                  {rooms.map((room) => (
+                    <Button
+                      key={room.id}
+                      variant="secondary"
+                      label={room.name}
+                      disabled={busy || !isOnline || room.state !== 'active'}
+                      onPress={() => void share(room.id)}
+                      testID={`share-workout-room-${room.id}`}
+                    />
+                  ))}
+                  {!isOnline ? <Text>{t('repairs.sharePending')}</Text> : null}
+                </View>
+              ) : null}
+            </>
+          ) : stage === 'category' ? (
+            <>
+              <Text variant="heading">{t('repairs.categories')}</Text>
+              {(Object.keys(groups) as Category[]).map((value) => (
+                <Button
+                  key={value}
+                  variant="secondary"
+                  label={t(`repairs.${value}`)}
+                  onPress={() => {
+                    setCategory(value);
+                    setQuery('');
+                    setStage('exercise');
+                  }}
+                  testID={`workout-category-${value}`}
+                />
+              ))}
+            </>
+          ) : stage === 'exercise' ? (
+            <>
+              <Text variant="heading">{t('repairs.exercises')}</Text>
+              <TextInput
+                value={query}
+                onChangeText={setQuery}
+                placeholder={t('repairs.searchExercises')}
+                accessibilityLabel={t('repairs.searchExercises')}
+                placeholderTextColor={dark.textLo}
+                style={styles.input}
+                testID="workout-exercise-search"
+              />
+              {!filtered.length ? <Text>{t('repairs.noExercises')}</Text> : null}
+              {filtered.map((item) => (
+                <Button
+                  key={item.id}
+                  variant="secondary"
+                  label={item.name}
+                  onPress={() => {
+                    setExercise(item.name);
+                    setSets([{ reps: '', weight: '' }]);
+                    setMinutes('');
+                    setStage('sets');
+                    setError(null);
+                  }}
+                  testID={`workout-exercise-${item.id}`}
+                />
+              ))}
+            </>
+          ) : (
+            <>
+              <Text variant="heading">{exercise}</Text>
+              <Text>{t('repairs.minutes')}</Text>
+              <TextInput
+                value={minutes}
+                onChangeText={setMinutes}
+                keyboardType="number-pad"
+                editable={!busy}
+                style={styles.input}
+                accessibilityLabel={t('repairs.minutes')}
+                testID="workout-duration"
+              />
+              {sets.map((set, index) => (
+                <Card key={index}>
+                  <Text tabular>
+                    {t('repairs.sets')} {index + 1}
+                  </Text>
+                  <Text>{t('repairs.reps')}</Text>
+                  <TextInput
+                    value={set.reps}
+                    onChangeText={(reps) =>
+                      setSets((all) =>
+                        all.map((item, i) => (i === index ? { ...item, reps } : item)),
+                      )
+                    }
+                    keyboardType="number-pad"
+                    editable={!busy}
+                    style={styles.input}
+                    accessibilityLabel={`${t('repairs.reps')} ${index + 1}`}
+                    testID={`workout-reps-${index}`}
+                  />
+                  <Text>{t('repairs.weight')}</Text>
+                  <TextInput
+                    value={set.weight}
+                    onChangeText={(weight) =>
+                      setSets((all) =>
+                        all.map((item, i) => (i === index ? { ...item, weight } : item)),
+                      )
+                    }
+                    keyboardType="decimal-pad"
+                    editable={!busy}
+                    style={styles.input}
+                    accessibilityLabel={`${t('repairs.weight')} ${index + 1}`}
+                    testID={`workout-weight-${index}`}
+                  />
+                  {sets.length > 1 ? (
+                    <Button
+                      variant="tertiary"
+                      label={t('repairs.removeSet', { number: index + 1 })}
+                      onPress={() => setSets((all) => all.filter((_, i) => i !== index))}
+                      disabled={busy}
+                      testID={`workout-remove-set-${index}`}
+                    />
+                  ) : null}
+                </Card>
+              ))}
+              <Button
+                variant="secondary"
+                label={t('repairs.addSet')}
+                disabled={busy || sets.length >= 50}
+                onPress={() => setSets((all) => [...all, { reps: '', weight: '' }])}
+                testID="workout-add-set"
+              />
+              <Button
+                label={t('repairs.saveWorkout')}
+                disabled={busy}
+                onPress={() => void save()}
+                testID="workout-save"
+              />
+            </>
           )}
-
-          {/* Exercise Selection Picker Modal */}
-          {showAddExercisePicker && (
-            <AddExercisePickerModal
-              visible={showAddExercisePicker}
-              onClose={() => setShowAddExercisePicker(false)}
-              onSelectExercise={handleConfirmAddExercise}
-            />
-          )}
-        </View>
+        </ScrollView>
       </SafeAreaView>
     </Modal>
   );
 }
-
 const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
-    backgroundColor: dark.bg0,
-  },
-  container: {
-    flex: 1,
-    backgroundColor: dark.bg0,
-  },
-  topBar: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: space[4],
-    paddingTop: space[2],
-    paddingBottom: space[2],
-  },
-  backButton: {
-    width: 44,
-    height: 44,
-    borderRadius: radius.full,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  topTitle: {
-    fontWeight: '700',
-  },
-  calendarIconBtn: {
-    width: 44,
-    height: 44,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  scrollContent: {
-    paddingHorizontal: space[4],
-    paddingBottom: 120,
-    gap: space[4],
-  },
-  dateNavigatorRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  arrowBtn: {
-    width: 36,
-    height: 36,
-    borderRadius: radius.full,
-    backgroundColor: dark.s1,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  dateBadgeBox: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: space[2],
-    backgroundColor: dark.s1,
-    borderWidth: 1,
-    borderColor: dark.hairlineLit,
-    borderRadius: radius.control,
-    paddingHorizontal: space[3],
-    paddingVertical: 8,
-  },
-  weekStripRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-  },
-  dayStripCell: {
-    flex: 1,
-    alignItems: 'center',
-    paddingVertical: space[2],
+  screen: { flex: 1, backgroundColor: dark.bg0 },
+  content: { padding: space[4], paddingBottom: space[8], gap: space[3] },
+  date: { gap: space[2], alignItems: 'center' },
+  gap: { gap: space[2] },
+  input: {
+    ...typography.body,
+    color: dark.textHi,
+    minHeight: layout.touch,
+    padding: space[3],
     borderRadius: radius.control,
     backgroundColor: dark.s1,
-    marginHorizontal: 2,
-    borderWidth: 1,
-    borderColor: dark.hairline,
-  },
-  dayStripCellToday: {
-    borderColor: dark.apricot,
-    backgroundColor: dark.s2,
-  },
-  statusBannerCard: {
-    backgroundColor: dark.s1,
-    borderWidth: 1,
-    borderColor: dark.hairlineLit,
-    borderRadius: radius.card,
-    padding: space[4],
-    gap: space[3],
-  },
-  statusBannerTop: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: space[3],
-  },
-  dumbbellIconCircle: {
-    width: 36,
-    height: 36,
-    borderRadius: radius.full,
-    backgroundColor: 'rgba(46, 192, 131, 0.15)',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  statusBannerTextCol: {
-    flex: 1,
-  },
-  progressBarTrack: {
-    height: 6,
-    borderRadius: radius.full,
-    backgroundColor: dark.s3,
-    overflow: 'hidden',
-  },
-  progressBarFill: {
-    height: '100%',
-    backgroundColor: dark.apricot,
-    borderRadius: radius.full,
-  },
-  exercisesList: {
-    gap: space[3],
-  },
-  exerciseRowCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: dark.s1,
-    borderWidth: 1,
-    borderColor: dark.hairline,
-    borderRadius: radius.card,
-    padding: space[3] + 2,
-    gap: space[3],
-  },
-  exerciseRowCardCompleted: {
-    borderColor: dark.hairlineLit,
-    backgroundColor: dark.s2,
-  },
-  exerciseIconCircle: {
-    width: 44,
-    height: 44,
-    borderRadius: radius.control,
-    backgroundColor: dark.s3,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  exerciseNameCol: {
-    flex: 1,
-  },
-  setsCountText: {
-    fontWeight: '600',
-    marginRight: space[2],
-  },
-  checkCircle: {
-    width: 28,
-    height: 28,
-    borderRadius: radius.full,
-    borderWidth: 2,
-    borderColor: dark.hairlineLit,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  checkCircleActive: {
-    backgroundColor: dark.apricot,
-    borderColor: dark.apricot,
-  },
-  bottomBar: {
-    position: 'absolute',
-    bottom: 24,
-    left: space[4],
-    right: space[4],
-  },
-  addExerciseBtn: {
-    flexDirection: 'row',
-    backgroundColor: dark.apricot,
-    paddingVertical: 16,
-    borderRadius: radius.full,
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: space[1],
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.25,
-    shadowRadius: 8,
-    elevation: 4,
-  },
-  addExerciseBtnText: {
-    fontWeight: '800',
-    fontSize: 16,
   },
 });

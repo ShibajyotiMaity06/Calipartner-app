@@ -3,6 +3,8 @@ import * as SQLite from 'expo-sqlite';
 import { migrations } from '@/db/migrations';
 import { runMigrations } from '@/db/runner';
 import { createLogger } from '@/lib/logger';
+import { openWebStorage, type WebTables } from './webStorage';
+import { mirroredTable, mutateRows, selectRows } from './webQueries';
 
 const log = createLogger('db');
 const DB_NAME = 'calipartner.db';
@@ -15,7 +17,8 @@ export function getDb(): Promise<SQLite.SQLiteDatabase> {
     opening = (async () => {
       if (Platform.OS === 'web') {
         log.info('Running on web; using reactive web database');
-        return createWebDb();
+        const storage = await openWebStorage();
+        return createWebDb(storage);
       }
 
       const db = await SQLite.openDatabaseAsync(DB_NAME);
@@ -31,7 +34,10 @@ export function getDb(): Promise<SQLite.SQLiteDatabase> {
   return opening;
 }
 
-export function createWebDb(): SQLite.SQLiteDatabase {
+export function createWebDb(storage?: {
+  initial: WebTables;
+  save: (tables: WebTables) => Promise<void>;
+}): SQLite.SQLiteDatabase {
   const STORAGE_KEY = 'calipartner_web_db';
   let memory: Record<string, Record<string, unknown>[]> = {
     local_water_logs: [],
@@ -51,8 +57,9 @@ export function createWebDb(): SQLite.SQLiteDatabase {
     health_screenings: [],
   };
 
+  if (storage) memory = { ...memory, ...storage.initial };
   try {
-    if (typeof localStorage !== 'undefined') {
+    if (!storage && typeof localStorage !== 'undefined') {
       const saved = localStorage.getItem(STORAGE_KEY);
       if (saved) {
         memory = { ...memory, ...JSON.parse(saved) };
@@ -64,14 +71,27 @@ export function createWebDb(): SQLite.SQLiteDatabase {
   } catch {
     // fallback to in-memory
   }
+  if (memory.goal_profiles?.length && !memory.local_goal_profiles?.length) {
+    memory.local_goal_profiles = [...memory.goal_profiles];
+  }
 
   let inTransaction = false;
   let transactionTail: Promise<void> = Promise.resolve();
-  const persist = () => {
+  let lastSaved = JSON.stringify(memory);
+  const persist = async () => {
     if (inTransaction) return;
-    // A failed durable save must be reported rather than silently pretending it was saved.
-    if (typeof localStorage === 'undefined') throw new Error('Browser storage unavailable');
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(memory));
+    const snapshot = JSON.stringify(memory);
+    try {
+      if (storage) await storage.save(memory);
+      else {
+        if (typeof localStorage === 'undefined') throw new Error('Browser storage unavailable');
+        localStorage.setItem(STORAGE_KEY, snapshot);
+      }
+      lastSaved = snapshot;
+    } catch (error) {
+      memory = JSON.parse(lastSaved);
+      throw error;
+    }
   };
 
   return {
@@ -90,7 +110,7 @@ export function createWebDb(): SQLite.SQLiteDatabase {
       try {
         const result = await action();
         inTransaction = false;
-        persist();
+        await persist();
         return result;
       } catch (error) {
         memory = JSON.parse(snapshot);
@@ -167,11 +187,24 @@ export function createWebDb(): SQLite.SQLiteDatabase {
                 continue;
               }
             }
-            list.push(row);
+            const conflict = sql
+              .match(/on conflict\s*\(([^)]+)\)/i)?.[1]
+              ?.split(',')
+              .map((key) => key.trim());
+            const existing =
+              conflict && list.find((item) => conflict.every((key) => item[key] === row[key]));
+            if (existing) Object.assign(existing, row);
+            else list.push(row);
           }
-          persist();
+          await persist();
           return { lastInsertRowId: list.length, changes: rowCount };
         }
+      }
+
+      if (/^(update|delete from)/i.test(lower) && mirroredTable.test(lower.split(/where/i)[0]!)) {
+        const changes = mutateRows(memory, sql.trim(), params);
+        await persist();
+        return { lastInsertRowId: 0, changes };
       }
 
       // Target persistence and its outbox must behave the same on web and native SQLite.
@@ -180,7 +213,7 @@ export function createWebDb(): SQLite.SQLiteDatabase {
         const table = clearTable[1]!;
         const changes = memory[table]?.length ?? 0;
         memory[table] = [];
-        persist();
+        await persist();
         return { lastInsertRowId: 0, changes };
       }
       const targetMutation = sql.match(
@@ -224,7 +257,7 @@ export function createWebDb(): SQLite.SQLiteDatabase {
               row[column] = Number(row[increment.source] ?? 0) + increment.amount;
             }
           }
-        persist();
+        await persist();
         return { lastInsertRowId: 0, changes };
       }
 
@@ -302,7 +335,7 @@ export function createWebDb(): SQLite.SQLiteDatabase {
             }
           }
 
-          persist();
+          await persist();
           return { lastInsertRowId: 1, changes };
         }
       }
@@ -312,6 +345,9 @@ export function createWebDb(): SQLite.SQLiteDatabase {
     async getAllAsync<T>(sql: string, ...args: unknown[]): Promise<T[]> {
       const params = (Array.isArray(args[0]) ? args[0] : args) as unknown[];
       const lower = sql.toLowerCase();
+
+      if (mirroredTable.test(lower.match(/from\s+(\w+)/i)?.[1] ?? ''))
+        return selectRows(memory, sql, params) as T[];
 
       if (
         lower.includes('from local_challenge_cache') ||
@@ -391,7 +427,7 @@ export function createWebDb(): SQLite.SQLiteDatabase {
               serving_units: JSON.stringify(b.serving_units || [{ unit: 'g', grams: 1 }]),
               deleted_at: null,
             }));
-            persist();
+            await persist();
           } catch {}
         }
 
@@ -451,7 +487,7 @@ export function createWebDb(): SQLite.SQLiteDatabase {
                   ? JSON.stringify(r.nutrition_per_serving)
                   : String(r.nutrition_per_serving || '{}'),
             }));
-            persist();
+            await persist();
           } catch {}
         }
         return list as unknown as T[];
@@ -485,6 +521,9 @@ export function createWebDb(): SQLite.SQLiteDatabase {
     async getFirstAsync<T>(sql: string, ...args: unknown[]): Promise<T | null> {
       const params = (Array.isArray(args[0]) ? args[0] : args) as unknown[];
       const lower = sql.toLowerCase();
+
+      if (mirroredTable.test(lower.match(/from\s+(\w+)/i)?.[1] ?? ''))
+        return (selectRows(memory, sql, params)[0] ?? null) as T | null;
 
       if (lower.includes('pragma user_version')) {
         return { user_version: 5 } as unknown as T;

@@ -1,5 +1,6 @@
 import React from 'react';
-import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { StyleSheet, TouchableOpacity, View } from 'react-native';
+import { Text } from '@calipartner/ui';
 import { Ionicons } from '@expo/vector-icons';
 import { useWorkoutTimer } from '@/hooks/useWorkouts';
 import { t } from '@/i18n';

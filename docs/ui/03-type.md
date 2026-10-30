@@ -1,3 +1,5 @@
+> Owner correction, 30 October 2026: use bundled static Plus Jakarta Sans 400/500/600/700/800 for all English UI, titles and numerals. Keep Anek Devanagari for Hindi. This supersedes the older Bricolage/Figtree pairing below. Legacy aliases must resolve to Plus Jakarta Sans on every platform.
+
 ## Part 3 — Typography
 
 ### 3.1 Recommendation

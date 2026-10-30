@@ -1,5 +1,6 @@
 import React from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { Text } from '@calipartner/ui';
 import { setStringAsync } from 'expo-clipboard';
 import { Ionicons } from '@expo/vector-icons';
 import { t } from '@/i18n';

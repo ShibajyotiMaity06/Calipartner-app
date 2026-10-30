@@ -6,9 +6,9 @@ import {
   Modal,
   Pressable,
   StyleSheet,
-  Text,
   View,
 } from 'react-native';
+import { Text } from '@calipartner/ui';
 import { FriendRequests } from '@/components/friends/FriendRequests';
 import { Ionicons } from '@expo/vector-icons';
 import { t } from '@/i18n';

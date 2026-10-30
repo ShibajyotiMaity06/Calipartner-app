@@ -1,17 +1,23 @@
 import React, { useCallback, useMemo, useState } from 'react';
 import {
+  BackHandler,
   Modal,
   Pressable,
   RefreshControl,
   SafeAreaView,
   ScrollView,
   StyleSheet,
-  Text,
   View,
 } from 'react-native';
+import { Text } from '@calipartner/ui';
 import { useLocalSearchParams, useFocusEffect, useNavigation, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { Button } from '@calipartner/ui';
+import { Button, Text as AppText } from '@calipartner/ui';
+import { withLocalRoomDiary } from '@calipartner/core';
+import { MemberComparison } from '@/components/rooms/MemberComparison';
+import { useDiary } from '@/hooks/useDiary';
+import { useTargets } from '@/hooks/useTargets';
+import { useCurrentLocalDate } from '@/hooks/useCurrentLocalDate';
 import { LoadingState } from '@/components/LoadingState';
 import type { RoomMemberSnapshot } from '@calipartner/core';
 import {
@@ -57,6 +63,7 @@ import { useSubscription } from '@/hooks/useSubscription';
 import { t } from '@/i18n';
 import { fontSize, radius, spacing } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
+import { useBrowserModalBack } from '@/hooks/useBrowserModalBack';
 import type { RoomSummary } from '@/types/rooms';
 
 export default function RoomScreen() {
@@ -116,6 +123,14 @@ export default function RoomScreen() {
   const activeRoomId = currentRoom?.id ?? null;
 
   const [selectedPartnerId, setSelectedPartnerId] = useState<string | null>(null);
+  const [comparisonIds, setComparisonIds] = useState<string[] | null>(null);
+  React.useEffect(() => {
+    setComparisonIds(null);
+    setSelectedPartnerId(null);
+  }, [activeRoomId]);
+  const { localDate } = useCurrentLocalDate();
+  const diary = useDiary(localDate);
+  const { currentGoalProfile } = useTargets();
 
   // Realtime Snapshot Hook (Subscribes ONLY while room screen is visible)
   const {
@@ -141,6 +156,44 @@ export default function RoomScreen() {
 
   // UI Navigation Segments
   const [activeSegment, setActiveSegment] = useState<RoomSegment>('today');
+  const segmentHistory = React.useRef<RoomSegment[]>([]);
+  const selectSegment = (segment: RoomSegment) => {
+    if (segment === activeSegment) return;
+    segmentHistory.current.push(activeSegment);
+    setActiveSegment(segment);
+  };
+  React.useEffect(() => {
+    segmentHistory.current = [];
+    setActiveSegment('today');
+  }, [activeRoomId]);
+  useBrowserModalBack(
+    isVisible && segmentHistory.current.length > 0,
+    () => {
+      const first = segmentHistory.current[0] ?? 'today';
+      segmentHistory.current = [];
+      setActiveSegment(first);
+    },
+    {
+      depth: Math.max(0, segmentHistory.current.length - 1),
+      onDepthChange: (depth) => {
+        let previous = activeSegment;
+        while (segmentHistory.current.length > depth + 1)
+          previous = segmentHistory.current.pop() ?? 'today';
+        setActiveSegment(previous);
+      },
+    },
+  );
+  useFocusEffect(
+    useCallback(() => {
+      const subscription = BackHandler.addEventListener('hardwareBackPress', () => {
+        const previous = segmentHistory.current.pop();
+        if (!previous) return false;
+        setActiveSegment(previous);
+        return true;
+      });
+      return () => subscription.remove();
+    }, []),
+  );
 
   // Modals visibility states
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -168,8 +221,28 @@ export default function RoomScreen() {
   const callerId = snapshot?.caller_id ?? '';
 
   const meMember: RoomMemberSnapshot | null = useMemo(() => {
-    return members.find((m) => m.user_id === callerId) ?? null;
-  }, [members, callerId]);
+    const member = members.find((m) => m.user_id === callerId);
+    if (!member) return null;
+    return !diary.loading &&
+      !diary.error &&
+      diary.daySummary.local_date === localDate &&
+      currentGoalProfile?.user_id === callerId
+      ? withLocalRoomDiary(
+          member,
+          callerId,
+          diary.daySummary,
+          currentGoalProfile.daily_calorie_target,
+        )
+      : member;
+  }, [
+    members,
+    callerId,
+    diary.loading,
+    diary.error,
+    diary.daySummary,
+    currentGoalProfile,
+    localDate,
+  ]);
 
   const partnerMember: RoomMemberSnapshot | null = useMemo(() => {
     const otherMembers = members.filter((m) => m.user_id !== meMember?.user_id);
@@ -186,6 +259,21 @@ export default function RoomScreen() {
     }
   }, [members, callerId, selectedPartnerId]);
 
+  const effectiveComparisonIds = comparisonIds ?? (partnerMember ? [partnerMember.user_id] : []);
+  const comparisonMembers = members
+    .map((member) => (member.user_id === callerId && meMember ? meMember : member))
+    .filter(
+      (member) => member.user_id === callerId || effectiveComparisonIds.includes(member.user_id),
+    );
+  const selectComparison = (uid: string) => {
+    if (uid === callerId) return;
+    const next = effectiveComparisonIds.includes(uid)
+      ? effectiveComparisonIds.filter((id) => id !== uid)
+      : [...effectiveComparisonIds, uid];
+    setComparisonIds(next);
+    setSelectedPartnerId(next[0] ?? null);
+  };
+
   // Streak days (active when all active members logged today)
   const streakDays = useMemo(() => {
     const activeMembers = members.filter((m) => m.status === 'active');
@@ -197,7 +285,7 @@ export default function RoomScreen() {
 
   // Refresh all data
   const handleRefresh = async () => {
-    await Promise.all([refreshRooms(), refreshRequests(), refreshSnapshot()]);
+    await Promise.all([refreshRooms(), refreshRequests(), refreshSnapshot(), diary.refresh()]);
   };
 
   // Paywall / Access check (PRD 6.8 ROOM-7: Locked room shows "This room is paused" screen)
@@ -274,7 +362,7 @@ export default function RoomScreen() {
         showMembers={showMembers}
         isWaiting={isRoomDormant}
         chatUnreadCount={chatUnreadCount}
-        onSelectSegment={setActiveSegment}
+        onSelectSegment={selectSegment}
         onOpenInbox={() => setShowInboxModal(true)}
         onOpenSettings={() => setShowSettingsModal(true)}
         onOpenPrivacy={() => setShowPrivacyModal(true)}
@@ -501,32 +589,80 @@ export default function RoomScreen() {
                   )}
 
                   {/* Overview Row for 3+ Members (paged & searchable above 12 members) */}
-                  {members.length >= 3 && (
+                  {members.length >= 3 && hasActiveAccess ? (
+                    <View style={styles.comparisonControls}>
+                      <AppText variant="heading">{t('repairs.compare')}</AppText>
+                      <AppText variant="bodyS">{t('repairs.compareHint')}</AppText>
+                      <AppText tabular>
+                        {t('repairs.selected', { count: effectiveComparisonIds.length })}
+                      </AppText>
+                      <Button
+                        variant="secondary"
+                        label={t('repairs.selectAll')}
+                        onPress={() =>
+                          setComparisonIds(
+                            members
+                              .filter((member) => member.user_id !== callerId)
+                              .map((member) => member.user_id),
+                          )
+                        }
+                        testID="compare-select-all"
+                      />
+                      <Button
+                        variant="tertiary"
+                        label={t('repairs.clear')}
+                        onPress={() => setComparisonIds([])}
+                        testID="compare-clear"
+                      />
+                    </View>
+                  ) : null}
+                  {members.length >= 3 && hasActiveAccess && (
                     <RoomOverviewRow
-                      members={members}
+                      members={members.map((member) =>
+                        member.user_id === callerId && meMember ? meMember : member,
+                      )}
+                      selectedMemberIds={effectiveComparisonIds}
                       selectedMemberId={partnerMember?.user_id}
                       currentUserId={callerId}
-                      onSelectMember={(uid) => setSelectedPartnerId(uid)}
+                      onSelectMember={selectComparison}
                     />
                   )}
 
                   {/* Core Side-by-Side Card */}
-                  {meMember && hasActiveAccess && (
+                  {meMember && hasActiveAccess && effectiveComparisonIds.length > 1 ? (
+                    <>
+                      <MemberComparison
+                        members={comparisonMembers}
+                        callerId={callerId}
+                        onNudge={setNudgeTarget}
+                      />
+                      <Button
+                        variant="secondary"
+                        label={t('repairs.mealTitle')}
+                        onPress={() => setShowShareMeal(true)}
+                        testID="btn-multi-shared-meal"
+                      />
+                    </>
+                  ) : null}
+                  {hasActiveAccess && effectiveComparisonIds.length === 0 ? (
+                    <AppText>{t('repairs.noSelection')}</AppText>
+                  ) : null}
+                  {meMember && hasActiveAccess && effectiveComparisonIds.length <= 1 && (
                     <SideBySideCard
                       me={meMember}
-                      partner={partnerMember}
+                      partner={effectiveComparisonIds.length ? partnerMember : null}
                       allMembers={members}
                       selectedPartnerId={partnerMember?.user_id ?? null}
                       onSelectPartner={(uid) => setSelectedPartnerId(uid)}
                       onNudge={(target) => setNudgeTarget(target)}
                       onReact={(target) => setReactionTarget(target)}
-                      onOpenChat={() => setActiveSegment('chat')}
-                      onOpenProgress={() => setActiveSegment('progress')}
+                      onOpenChat={() => selectSegment('chat')}
+                      onOpenProgress={() => selectSegment('progress')}
                       onOpenPrivacy={() => setShowPrivacyModal(true)}
                       onInviteFriend={() => setShowInviteModal(true)}
                       onFindPartner={() => router.push('/friends' as never)}
                       onLogSharedMeal={() => setShowShareMeal(true)}
-                      onSendPhoto={() => setActiveSegment('chat')}
+                      onSendPhoto={() => selectSegment('chat')}
                     />
                   )}
                   {!hasActiveAccess ? (
@@ -586,8 +722,9 @@ export default function RoomScreen() {
       )}
 
       {/* MODALS */}
-      {showShareMeal && currentRoom && hasActiveAccess ? (
+      {currentRoom && hasActiveAccess ? (
         <ShareLoggedMealModal
+          visible={showShareMeal}
           onPrivacy={() => {
             setShowShareMeal(false);
             setShowPrivacyModal(true);
@@ -751,6 +888,9 @@ export default function RoomScreen() {
       <NudgeModal
         visible={nudgeTarget !== null}
         targetMember={nudgeTarget}
+        members={members.filter(
+          (member) => member.user_id !== callerId && member.status === 'active',
+        )}
         onClose={() => setNudgeTarget(null)}
         onSendNudge={sendNudge}
       />
@@ -790,6 +930,7 @@ export default function RoomScreen() {
 }
 
 const styles = StyleSheet.create({
+  comparisonControls: { paddingHorizontal: spacing.md, gap: spacing.sm },
   safeArea: {
     flex: 1,
   },

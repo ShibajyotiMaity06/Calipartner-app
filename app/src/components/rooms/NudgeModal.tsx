@@ -1,249 +1,152 @@
-import React, { useState } from 'react';
-import { ActivityIndicator, Modal, Pressable, StyleSheet, Text, View } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { useBrowserModalBack } from '@/hooks/useBrowserModalBack';
+import React, { useEffect, useRef, useState } from 'react';
+
+import { Modal, SafeAreaView, ScrollView, StyleSheet, TextInput } from 'react-native';
+
+import { Button, dark, radius, space, Text, type as typography } from '@calipartner/ui';
+
 import type { RoomMemberSnapshot } from '@calipartner/core';
+
 import { t } from '@/i18n';
-import { fontSize, radius, spacing } from '@/theme/tokens';
-import { useTheme } from '@/theme/useTheme';
+
+import { useNetworkStatus } from '@/hooks/useNetworkStatus';
+
+import { RoomMemberPicker } from './RoomMemberPicker';
 
 interface NudgeModalProps {
   visible: boolean;
+
   targetMember: RoomMemberSnapshot | null;
+
+  members?: RoomMemberSnapshot[];
+
   onClose: () => void;
+
   onSendNudge: (targetUserId: string, message: string) => Promise<unknown>;
 }
 
-export function NudgeModal({ visible, targetMember, onClose, onSendNudge }: NudgeModalProps) {
-  const { colors } = useTheme();
+export function NudgeModal({
+  visible,
+  targetMember,
+  members,
+  onClose,
+  onSendNudge,
+}: NudgeModalProps) {
+  useBrowserModalBack(visible, onClose);
+  const { isOnline } = useNetworkStatus();
 
-  const options = [
-    { id: 'lunch', text: t('rooms.nudgeModal.optionLunch') },
-    { id: 'water', text: t('rooms.nudgeModal.optionWater') },
-    { id: 'workout', text: t('rooms.nudgeModal.optionWorkout') },
-    { id: 'checkin', text: t('rooms.nudgeModal.optionCheckin') },
-  ];
+  const [recipient, setRecipient] = useState('');
 
-  const [selectedOption, setSelectedOption] = useState<string>(options[0]!.text);
-  const [loading, setLoading] = useState(false);
-  const [errorMsg, setErrorMsg] = useState<string | null>(null);
-  const [successToast, setSuccessToast] = useState(false);
+  const [message, setMessage] = useState('');
 
-  const handleSend = async () => {
-    if (!targetMember) return;
-    setLoading(true);
-    setErrorMsg(null);
+  const [busy, setBusy] = useState(false);
+
+  const [error, setError] = useState(false);
+
+  const sending = useRef(false);
+
+  useEffect(() => {
+    if (visible) {
+      setRecipient(targetMember?.user_id ?? '');
+      setMessage('');
+      setError(false);
+    }
+  }, [visible, targetMember?.user_id]);
+
+  const send = async () => {
+    if (sending.current || !recipient || !message.trim() || isOnline === false) return;
+
+    sending.current = true;
+    setBusy(true);
+    setError(false);
+
     try {
-      await onSendNudge(targetMember.user_id, selectedOption);
-      setSuccessToast(true);
-      setTimeout(() => {
-        setSuccessToast(false);
-        onClose();
-      }, 1200);
-    } catch (err: unknown) {
-      const msg =
-        err && typeof err === 'object' && 'message' in err ? String(err.message) : String(err);
-      setErrorMsg(msg);
+      await onSendNudge(recipient, message.trim());
+      onClose();
+    } catch {
+      setError(true);
     } finally {
-      setLoading(false);
+      sending.current = false;
+      setBusy(false);
     }
   };
 
   return (
-    <Modal visible={visible} animationType="slide" transparent onRequestClose={onClose}>
-      <View style={styles.modalOverlay}>
-        <View style={[styles.modalSheet, { backgroundColor: colors.surface }]}>
-          {/* Header */}
-          <View style={styles.headerRow}>
-            <View style={styles.titleContainer}>
-              <Text style={[styles.title, { color: colors.text }]}>
-                {t('rooms.nudgeModal.title')}
-              </Text>
-              <Text style={[styles.subtitle, { color: colors.textMuted }]}>
-                {t('rooms.nudgeModal.subtitle')}
-              </Text>
-            </View>
-            <Pressable
-              onPress={onClose}
-              style={[styles.closeButton, { backgroundColor: colors.surfaceAlt }]}
-              accessibilityRole="button"
-              accessibilityLabel="Close nudge modal"
-              testID="btn-close-nudge-modal"
-            >
-              <Ionicons name="close" size={18} color={colors.text} />
-            </Pressable>
-          </View>
+    <Modal visible={visible} animationType="slide" onRequestClose={onClose}>
+      <SafeAreaView style={styles.screen}>
+        <Button
+          variant="tertiary"
+          label={t('repairs.close')}
+          onPress={onClose}
+          testID="btn-close-nudge-modal"
+        />
 
-          {/* Recipient info pill */}
-          {targetMember && (
-            <View style={[styles.targetPill, { backgroundColor: colors.surfaceAlt }]}>
-              <Text style={[styles.targetLabel, { color: colors.textMuted }]}>To:</Text>
-              <Text style={[styles.targetName, { color: colors.text }]}>
-                {targetMember.nickname} (@{targetMember.username})
-              </Text>
-            </View>
-          )}
+        <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
+          <Text variant="title2">{t('repairs.nudge')}</Text>
 
-          {/* Options List */}
-          <View style={styles.optionsList}>
-            {options.map((opt) => {
-              const isSelected = selectedOption === opt.text;
-              return (
-                <Pressable
-                  key={opt.id}
-                  onPress={() => setSelectedOption(opt.text)}
-                  style={[
-                    styles.optionCard,
-                    {
-                      backgroundColor: isSelected ? colors.cardHighlight : colors.surfaceAlt,
-                      borderColor: isSelected ? colors.accent : colors.border,
-                    },
-                  ]}
-                  accessibilityRole="radio"
-                  accessibilityState={{ checked: isSelected }}
-                  testID={`nudge-option-${opt.id}`}
-                >
-                  <Text style={[styles.optionText, { color: colors.text }]}>{opt.text}</Text>
-                  <Ionicons
-                    name={isSelected ? 'radio-button-on' : 'radio-button-off'}
-                    size={18}
-                    color={isSelected ? colors.accent : colors.textMuted}
-                  />
-                </Pressable>
-              );
-            })}
-          </View>
+          <RoomMemberPicker
+            members={members ?? (targetMember ? [targetMember] : [])}
+            selectedId={recipient}
+            onSelect={setRecipient}
+            disabled={busy}
+          />
 
-          <Text style={[styles.limitHint, { color: colors.textMuted }]}>
-            {t('rooms.nudgeModal.limitNotice')}
+          <Text>{t('repairs.message')}</Text>
+
+          <TextInput
+            value={message}
+            onChangeText={setMessage}
+            multiline
+            maxLength={160}
+
+            editable={!busy}
+            accessibilityLabel={t('repairs.message')}
+            placeholder={t('repairs.messagePlaceholder')}
+
+            placeholderTextColor={dark.textLo}
+            style={styles.input}
+            testID="nudge-message"
+          />
+
+          <Text tabular variant="label">
+            {t('repairs.characters', { count: message.length })}
           </Text>
 
-          {errorMsg && (
-            <View style={styles.errorRow}>
-              <Ionicons name="alert-circle" size={14} color={colors.danger} />
-              <Text style={[styles.errorText, { color: colors.danger }]}>{errorMsg}</Text>
-            </View>
-          )}
+          <Text variant="bodyS">{t('rooms.nudgeModal.limitNotice')}</Text>
 
-          {/* Send Button */}
-          <Pressable
-            onPress={handleSend}
-            disabled={loading}
-            style={[styles.sendButton, { backgroundColor: colors.accent }]}
-            accessibilityRole="button"
-            accessibilityLabel="Send nudge"
+          {isOnline === false ? <Text>{t('setup.roomOnline')}</Text> : null}
+
+          {error ? (
+            <Text color={dark.danger} accessibilityRole="alert">
+              {t('repairs.actionError')}
+            </Text>
+          ) : null}
+
+          <Button
+            label={t('rooms.nudgeModal.sendBtn')}
+            disabled={busy || !recipient || !message.trim() || isOnline === false}
+
+            onPress={() => void send()}
             testID="btn-send-nudge-submit"
-          >
-            {loading ? (
-              <ActivityIndicator size="small" color="#FFFFFF" />
-            ) : (
-              <Text style={styles.sendButtonText}>
-                {successToast ? t('rooms.nudgeModal.sentToast') : t('rooms.nudgeModal.sendBtn')}
-              </Text>
-            )}
-          </Pressable>
-        </View>
-      </View>
+          />
+        </ScrollView>
+      </SafeAreaView>
     </Modal>
   );
 }
 
 const styles = StyleSheet.create({
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.5)',
-    justifyContent: 'flex-end',
-  },
-  modalSheet: {
-    borderTopLeftRadius: radius.lg,
-    borderTopRightRadius: radius.lg,
-    padding: spacing.md,
-    paddingBottom: spacing.xl,
-  },
-  headerRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    marginBottom: spacing.sm,
-  },
-  titleContainer: {
-    flex: 1,
-  },
-  title: {
-    fontSize: fontSize.md + 2,
-    fontWeight: '700',
-    letterSpacing: -0.2,
-  },
-  subtitle: {
-    fontSize: fontSize.xs,
-    marginTop: 2,
-  },
-  closeButton: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginLeft: spacing.sm,
-  },
-  targetPill: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: spacing.sm,
-    paddingVertical: 6,
-    borderRadius: radius.pill,
-    marginBottom: spacing.md,
-    gap: 6,
-  },
-  targetLabel: {
-    fontSize: fontSize.xs,
-    fontWeight: '600',
-  },
-  targetName: {
-    fontSize: fontSize.xs,
-    fontWeight: '700',
-  },
-  optionsList: {
-    gap: spacing.xs + 2,
-    marginBottom: spacing.sm,
-  },
-  optionCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: spacing.md,
-    paddingVertical: 12,
-    borderRadius: radius.md,
-    borderWidth: 1.5,
-  },
-  optionText: {
-    fontSize: fontSize.sm,
-    fontWeight: '600',
-  },
-  limitHint: {
-    fontSize: 10,
-    textAlign: 'center',
-    marginBottom: spacing.sm,
-    fontStyle: 'italic',
-  },
-  errorRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    marginBottom: spacing.sm,
-    justifyContent: 'center',
-  },
-  errorText: {
-    fontSize: fontSize.xs,
-  },
-  sendButton: {
-    paddingVertical: 14,
-    borderRadius: radius.pill,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  sendButtonText: {
-    color: '#FFFFFF',
-    fontSize: fontSize.sm,
-    fontWeight: '700',
+  screen: { flex: 1, backgroundColor: dark.bg0 },
+
+  content: { padding: space[4], gap: space[3] },
+
+  input: {
+    ...typography.body,
+    color: dark.textHi,
+    minHeight: space[9],
+    padding: space[3],
+    borderRadius: radius.control,
+    backgroundColor: dark.s1,
+    textAlignVertical: 'top',
   },
 });

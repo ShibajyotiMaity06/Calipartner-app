@@ -5,10 +5,10 @@ import {
   Pressable,
   ScrollView,
   StyleSheet,
-  Text,
   TextInput,
   View,
 } from 'react-native';
+import { Text, type as typography } from '@calipartner/ui';
 import { onboardingLayout as layout } from '@calipartner/ui';
 import { Ionicons } from '@expo/vector-icons';
 import { t } from '@/i18n';
@@ -166,7 +166,7 @@ export function ChatComposer({
         </ScrollView>
       )}
 
-      {/* Input bar row */}
+      {/* TextInput bar row */}
       <View style={styles.inputBarRow}>
         {/* Camera / Photo Button */}
         <Pressable
@@ -174,17 +174,17 @@ export function ChatComposer({
           disabled={disabled || !allowMedia || selectedMedia.length >= 5}
           style={[styles.iconBtn, (disabled || selectedMedia.length >= 5) && styles.btnDisabled]}
           accessibilityRole="button"
-          accessibilityLabel={t('chat.attachPhoto')}
+          accessibilityLabel={t('repairs.chooseMedia')}
           testID="btn-chat-attach-photo"
         >
           <Ionicons
-            name="camera-outline"
+            name="attach-outline"
             size={24}
             color={selectedMedia.length >= 5 ? colors.textMuted : colors.accent}
           />
         </Pressable>
 
-        {/* Text Input */}
+        {/* Text TextInput */}
         <View style={[styles.inputWrapper, { backgroundColor: colors.surfaceAlt }]}>
           <TextInput
             value={text}
@@ -272,6 +272,7 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   disabledNoticeText: {
+    fontFamily: typography.body.fontFamily,
     fontSize: fontSize.xs,
     fontWeight: '500',
   },
@@ -317,6 +318,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   addMoreText: {
+    fontFamily: typography.body.fontFamily,
     fontSize: 10,
     fontWeight: '600',
     marginTop: 2,
@@ -348,12 +350,14 @@ const styles = StyleSheet.create({
   },
   textInput: {
     flex: 1,
+    fontFamily: typography.body.fontFamily,
     fontSize: fontSize.sm,
     lineHeight: 20,
     paddingTop: 6,
     paddingBottom: 6,
   },
   charLimitText: {
+    fontFamily: typography.body.fontFamily,
     fontSize: 10,
     fontWeight: '700',
     marginLeft: 4,

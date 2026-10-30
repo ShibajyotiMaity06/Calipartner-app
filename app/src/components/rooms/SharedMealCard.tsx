@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
+import { Text } from '@calipartner/ui';
 import { Ionicons } from '@expo/vector-icons';
 import type { MealSection } from '@calipartner/core';
 import { t } from '@/i18n';

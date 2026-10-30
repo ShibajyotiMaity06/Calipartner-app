@@ -1,4 +1,5 @@
-﻿import React from 'react';
+vi.mock('@calipartner/ui', () => ({ Text: 'Text', type: { body: {} } }));
+import React from 'react';
 import { act, create, type ReactTestRenderer } from 'react-test-renderer';
 import { beforeEach, afterEach, describe, it, expect, vi } from 'vitest';
 const mocks = vi.hoisted(() => ({ copy: vi.fn() }));

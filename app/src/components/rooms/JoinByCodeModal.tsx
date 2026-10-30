@@ -1,13 +1,6 @@
 import React, { useState } from 'react';
-import {
-  ActivityIndicator,
-  Modal,
-  Pressable,
-  StyleSheet,
-  Text,
-  TextInput,
-  View,
-} from 'react-native';
+import { ActivityIndicator, Modal, Pressable, StyleSheet, TextInput, View } from 'react-native';
+import { Text, type as typography } from '@calipartner/ui';
 import { Ionicons } from '@expo/vector-icons';
 import { t } from '@/i18n';
 import { fontSize, radius, spacing } from '@/theme/tokens';
@@ -164,11 +157,13 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   title: {
+    fontFamily: typography.body.fontFamily,
     fontSize: fontSize.md + 2,
     fontWeight: '700',
     letterSpacing: -0.2,
   },
   subtitle: {
+    fontFamily: typography.body.fontFamily,
     fontSize: fontSize.xs,
     marginTop: 2,
     lineHeight: 16,
@@ -185,6 +180,7 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
   },
   label: {
+    fontFamily: typography.body.fontFamily,
     fontSize: fontSize.xs,
     fontWeight: '600',
     textTransform: 'uppercase',
@@ -195,6 +191,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     paddingHorizontal: spacing.md,
     paddingVertical: 12,
+    fontFamily: typography.body.fontFamily,
     fontSize: fontSize.lg,
     fontWeight: '700',
     letterSpacing: 2,
@@ -206,6 +203,7 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   errorText: {
+    fontFamily: typography.body.fontFamily,
     fontSize: fontSize.xs,
   },
   submitButton: {
@@ -217,6 +215,7 @@ const styles = StyleSheet.create({
   },
   submitButtonText: {
     color: '#FFFFFF',
+    fontFamily: typography.body.fontFamily,
     fontSize: fontSize.sm,
     fontWeight: '700',
   },

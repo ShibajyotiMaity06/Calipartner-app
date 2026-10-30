@@ -209,3 +209,44 @@ it('surfaces structured Edge errors and denies changed account reads', async () 
   await expect(challengeRequest(client, 'a', {})).rejects.toThrow('PLUS_REQUIRED');
   await expect(challengeRequest(client, 'b', {})).rejects.toThrow('ACCOUNT_CHANGED');
 });
+
+it('keeps the authorized catalogue visible when Edge scoring is unavailable and cache writes fail', async () => {
+  const home = { catalog: { templates: [], seasons: [] }, items: [] };
+  const client: ChallengeClient = {
+    auth: { getUser: async () => ({ data: { user: { id: 'owner' } } }) },
+    functions: {
+      invoke: async () => ({
+        data: null,
+        error: { context: new Response(JSON.stringify({ error: 'CHALLENGE_UNAVAILABLE' })) },
+      }),
+    },
+    rpc: vi.fn().mockResolvedValue({ data: home, error: null }),
+  };
+  const data = await loadChallenges(
+    {
+      runAsync: async () => {
+        throw new Error('quota');
+      },
+    } as unknown as SyncDb,
+    client,
+    'owner',
+  );
+  expect(data.catalog.templates).toEqual([]);
+  expect(data.scores_pending).toBe(true);
+  expect(client.rpc).toHaveBeenCalledWith('challenge_home');
+});
+
+it('does not fall back after an access denial', async () => {
+  const client: ChallengeClient = {
+    auth: { getUser: async () => ({ data: { user: { id: 'owner' } } }) },
+    functions: {
+      invoke: async () => ({
+        data: null,
+        error: { context: new Response(JSON.stringify({ error: 'PLUS_REQUIRED' })) },
+      }),
+    },
+    rpc: vi.fn(),
+  };
+  await expect(loadChallenges({} as SyncDb, client, 'owner')).rejects.toThrow('PLUS_REQUIRED');
+  expect(client.rpc).not.toHaveBeenCalled();
+});

@@ -5,11 +5,17 @@ import { useVideoPlayer, VideoView } from 'expo-video';
 import { Button, Text, dark, onboardingLayout as layout } from '@calipartner/ui';
 import { t } from '@/i18n';
 
-export function ChatVideo({ uri }: { uri: string }) {
+export function ChatVideo({ uri, compact = false }: { uri: string; compact?: boolean }) {
   const player = useVideoPlayer(uri);
   const { status } = useEvent(player, 'statusChange', { status: player.status });
   return (
-    <View style={{ width: layout.contentWidth, maxWidth: '100%', height: layout.ring }}>
+    <View
+      style={{
+        width: compact ? layout.ring : layout.contentWidth,
+        maxWidth: '100%',
+        height: layout.ring,
+      }}
+    >
       {status === 'error' ? (
         <>
           <Text style={{ color: dark.textHi }} accessibilityRole="alert">

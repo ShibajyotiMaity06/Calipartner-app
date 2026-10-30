@@ -1,5 +1,6 @@
 import React, { useMemo, useState } from 'react';
-import { Image, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Image, Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
+import { Text, type as typography } from '@calipartner/ui';
 import { onboardingLayout as layout, space } from '@calipartner/ui';
 import { Ionicons } from '@expo/vector-icons';
 import type { RoomMemberSnapshot } from '@calipartner/core';
@@ -14,6 +15,7 @@ interface RoomOverviewRowProps {
   members: RoomMemberSnapshot[];
   onSelectMember: (memberId: string) => void;
   selectedMemberId?: string | null;
+  selectedMemberIds?: string[];
   currentUserId?: string;
   roomAverageGoal?: number | null;
 }
@@ -22,6 +24,7 @@ export function RoomOverviewRow({
   members,
   onSelectMember,
   selectedMemberId,
+  selectedMemberIds,
   currentUserId,
   roomAverageGoal,
 }: RoomOverviewRowProps) {
@@ -77,7 +80,9 @@ export function RoomOverviewRow({
 
   // Render a single member card
   const renderMemberCard = (m: RoomMemberSnapshot) => {
-    const isSelected = selectedMemberId === m.user_id;
+    const isSelected = selectedMemberIds
+      ? selectedMemberIds.includes(m.user_id) || m.user_id === currentUserId
+      : selectedMemberId === m.user_id;
     const isLocked = m.metrics.goal_completion === 'locked';
     const goalPct =
       typeof m.metrics.goal_completion === 'number' ? m.metrics.goal_completion : null;
@@ -90,18 +95,20 @@ export function RoomOverviewRow({
     return (
       <Pressable
         key={m.user_id}
-        onPress={() => onSelectMember(m.user_id)}
+        onPress={() => m.user_id !== currentUserId && onSelectMember(m.user_id)}
         style={[
           styles.memberCard,
           {
             backgroundColor: isSelected ? colors.cardHighlight : colors.surface,
-            borderColor: isSelected ? colors.accent : colors.border,
+            borderColor: isSelected ? colors.textMuted : colors.border,
           },
         ]}
-        accessibilityRole="button"
+        accessibilityRole="checkbox"
+        accessibilityState={{ checked: isSelected, disabled: m.user_id === currentUserId }}
         accessibilityLabel={`${m.nickname}: ${goalPct !== null ? `${goalPct}% goal` : 'private'}`}
         testID={`overview-card-${m.user_id}`}
       >
+        {isSelected ? <Ionicons name="checkmark-circle" size={18} color={colors.text} /> : null}
         {/* Avatar */}
         {m.avatar_url ? (
           <Image source={{ uri: m.avatar_url }} style={styles.avatar} />
@@ -326,12 +333,14 @@ const styles = StyleSheet.create({
     marginBottom: spacing.xs,
   },
   sectionTitle: {
+    fontFamily: typography.body.fontFamily,
     fontSize: fontSize.xs,
     fontWeight: '600',
     textTransform: 'uppercase',
     letterSpacing: 0.5,
   },
   countBadge: {
+    fontFamily: typography.body.fontFamily,
     fontSize: 10,
     fontWeight: '500',
   },
@@ -353,6 +362,7 @@ const styles = StyleSheet.create({
   },
   searchInput: {
     flex: 1,
+    fontFamily: typography.body.fontFamily,
     fontSize: fontSize.xs,
     paddingVertical: 0,
   },
@@ -371,6 +381,7 @@ const styles = StyleSheet.create({
     gap: spacing.xs,
   },
   averageLabel: {
+    fontFamily: typography.body.fontFamily,
     fontSize: fontSize.xs,
     fontWeight: '600',
   },
@@ -405,10 +416,12 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   avatarInitial: {
+    fontFamily: typography.body.fontFamily,
     fontSize: 12,
     fontWeight: '700',
   },
   nickname: {
+    fontFamily: typography.body.fontFamily,
     fontSize: 11,
     fontWeight: '600',
     textAlign: 'center',
@@ -424,6 +437,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   goalText: {
+    fontFamily: typography.body.fontFamily,
     fontSize: 10,
     fontWeight: '700',
   },
@@ -432,10 +446,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   mealsCountText: {
+    fontFamily: typography.body.fontFamily,
     fontSize: 9,
     fontWeight: '500',
   },
   statusText: {
+    fontFamily: typography.body.fontFamily,
     fontSize: 8,
     fontStyle: 'italic',
   },
@@ -445,6 +461,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   emptyText: {
+    fontFamily: typography.body.fontFamily,
     fontSize: fontSize.xs,
     fontStyle: 'italic',
   },
@@ -469,10 +486,12 @@ const styles = StyleSheet.create({
     opacity: 0.4,
   },
   pageBtnText: {
+    fontFamily: typography.body.fontFamily,
     fontSize: fontSize.xs - 1,
     fontWeight: '600',
   },
   pageIndicatorText: {
+    fontFamily: typography.body.fontFamily,
     fontSize: fontSize.xs - 1,
     fontWeight: '500',
   },

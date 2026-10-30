@@ -1,13 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
-import {
-  ActivityIndicator,
-  Modal,
-  Pressable,
-  StyleSheet,
-  Text,
-  TextInput,
-  View,
-} from 'react-native';
+import { ActivityIndicator, Modal, Pressable, StyleSheet, TextInput, View } from 'react-native';
+import { Text, type as typography } from '@calipartner/ui';
 import { Ionicons } from '@expo/vector-icons';
 import { t } from '@/i18n';
 import { fontSize, radius, spacing } from '@/theme/tokens';
@@ -219,11 +212,13 @@ const styles = StyleSheet.create({
     marginBottom: spacing.md,
   },
   title: {
+    fontFamily: typography.body.fontFamily,
     fontSize: fontSize.md + 1,
     fontWeight: '700',
     marginBottom: 2,
   },
   subtitle: {
+    fontFamily: typography.body.fontFamily,
     fontSize: fontSize.xs,
     lineHeight: 18,
     marginBottom: spacing.md,
@@ -244,6 +239,7 @@ const styles = StyleSheet.create({
     marginRight: spacing.sm,
   },
   reasonLabel: {
+    fontFamily: typography.body.fontFamily,
     fontSize: fontSize.sm,
   },
   reasonLabelSelected: {
@@ -254,6 +250,7 @@ const styles = StyleSheet.create({
     borderRadius: radius.md,
     padding: spacing.sm,
     height: 72,
+    fontFamily: typography.body.fontFamily,
     fontSize: fontSize.xs,
     textAlignVertical: 'top',
     marginBottom: spacing.md,
@@ -270,6 +267,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   cancelBtnText: {
+    fontFamily: typography.body.fontFamily,
     fontSize: fontSize.sm,
     fontWeight: '600',
   },
@@ -282,6 +280,7 @@ const styles = StyleSheet.create({
   },
   submitBtnText: {
     color: '#FFFFFF',
+    fontFamily: typography.body.fontFamily,
     fontSize: fontSize.sm,
     fontWeight: '700',
   },
@@ -291,6 +290,7 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
   },
   toastText: {
+    fontFamily: typography.body.fontFamily,
     fontSize: fontSize.sm,
     fontWeight: '600',
   },

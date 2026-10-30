@@ -194,6 +194,7 @@ export interface ChallengeSnapshot {
   };
 }
 export interface ChallengeHome {
+  scores_pending?: boolean;
   due?: Array<{
     id: string;
     metric: ChallengeMetric;

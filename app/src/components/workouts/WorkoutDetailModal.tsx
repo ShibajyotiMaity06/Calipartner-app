@@ -6,10 +6,10 @@ import {
   Modal,
   ScrollView,
   StyleSheet,
-  Text,
   TouchableOpacity,
   View,
 } from 'react-native';
+import { Text } from '@calipartner/ui';
 import { Ionicons } from '@expo/vector-icons';
 import type { WorkoutWithDetails } from '@calipartner/core';
 import { useWorkouts } from '@/hooks/useWorkouts';

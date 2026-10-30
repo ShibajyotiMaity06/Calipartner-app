@@ -25,7 +25,6 @@ import {
   HealthSyncModal,
   HelpCentreModal,
   PerRoomVisibilityModal,
-  PreviewAsPartnerModal,
   ReportFeedbackModal,
   SignOutSheet,
   StorageCacheModal,
@@ -73,7 +72,6 @@ export default function MeScreen() {
   const [showDailyGoals, setShowDailyGoals] = useState(false);
   const [showCustomMacros, setShowCustomMacros] = useState(false);
   const [showPerRoomVisibility, setShowPerRoomVisibility] = useState(false);
-  const [showPreviewPartner, setShowPreviewPartner] = useState(false);
   const [showDiscoverability, setShowDiscoverability] = useState(false);
 
   const [showHealthSync, setShowHealthSync] = useState(false);
@@ -336,12 +334,7 @@ export default function MeScreen() {
               onPress={() => setShowPerRoomVisibility(true)}
               testID="row-per-room-visibility"
             />
-            <ProfileRow
-              title={t('me.previewPartner.title')}
-              icon="person-outline"
-              onPress={() => setShowPreviewPartner(true)}
-              testID="row-preview-partner"
-            />
+
             <ProfileRow
               title={t('me.discoverability.title')}
               icon="shield-outline"
@@ -507,12 +500,6 @@ export default function MeScreen() {
           visible={showPerRoomVisibility}
           onClose={() => setShowPerRoomVisibility(false)}
           rooms={rooms}
-        />
-
-        <PreviewAsPartnerModal
-          roomId={rooms[0]?.id}
-          visible={showPreviewPartner}
-          onClose={() => setShowPreviewPartner(false)}
         />
 
         <DiscoverabilityModal

@@ -1,4 +1,4 @@
-import { useCurrentLocalDate } from '@/hooks/useCurrentLocalDate';
+import { useBrowserModalBack } from '@/hooks/useBrowserModalBack';
 import React, { useState } from 'react';
 import {
   Image,
@@ -16,9 +16,6 @@ import { WeeklyPlanModal } from './WeeklyPlanModal';
 import { WorkoutLogModal } from './WorkoutLogModal';
 import { WorkoutProgressModal } from './WorkoutProgressModal';
 import { WorkoutHistoryCalendarModal } from './WorkoutHistoryCalendarModal';
-import { AddExercisePickerModal } from './AddExercisePickerModal';
-import { ExerciseDetailModal } from './ExerciseDetailModal';
-import { addExerciseToDate, type PlannedExercise } from '@/services/workoutPlanService';
 
 export interface WorkoutHubModalProps {
   visible: boolean;
@@ -31,18 +28,16 @@ export function WorkoutHubModal({
   onClose,
   testID = 'workout-hub-modal',
 }: WorkoutHubModalProps) {
-  const { localDate } = useCurrentLocalDate();
+  useBrowserModalBack(visible, onClose);
   const [showLogModal, setShowLogModal] = useState(false);
   const [showPlanModal, setShowPlanModal] = useState(false);
   const [showProgressModal, setShowProgressModal] = useState(false);
   const [showHistoryModal, setShowHistoryModal] = useState(false);
-  const [showExercisePicker, setShowExercisePicker] = useState(false);
-  const [pickerMuscle, setPickerMuscle] = useState<string>('All');
-  const [selectedExerciseForDetail, setSelectedExerciseForDetail] =
-    useState<PlannedExercise | null>(null);
+  const [logCategory, setLogCategory] = useState<'upper' | 'lower' | 'core' | 'full' | undefined>();
 
   const handleOpenLog = () => {
     playClickSound();
+    setLogCategory(undefined);
     setShowLogModal(true);
   };
 
@@ -62,32 +57,8 @@ export function WorkoutHubModal({
   };
 
   const handleOpenPopularType = (typeId: string) => {
-    playClickSound();
-    // Map popular types to muscle/category filters in the 413 exercises database
-    const categoryMap: Record<string, string> = {
-      strength: 'chest',
-      upper: 'chest',
-      lower: 'legs',
-      core: 'core',
-      full: 'full_body',
-    };
-    setPickerMuscle(categoryMap[typeId] ?? 'All');
-    setShowExercisePicker(true);
-  };
-
-  const handleExerciseChosen = (chosen: {
-    name: string;
-    muscleGroup: string;
-    plannedSets: number;
-  }) => {
-    const todayStr = localDate;
-    const newEx = addExerciseToDate(todayStr, {
-      name: chosen.name,
-      muscleGroup: chosen.muscleGroup,
-      plannedSets: chosen.plannedSets,
-    });
-    setShowExercisePicker(false);
-    setSelectedExerciseForDetail(newEx);
+    setLogCategory(typeId === 'lower' || typeId === 'core' || typeId === 'full' ? typeId : 'upper');
+    setShowLogModal(true);
   };
 
   const workoutTypes = [
@@ -246,8 +217,8 @@ export function WorkoutHubModal({
                 <TouchableOpacity
                   onPress={() => {
                     playClickSound();
-                    setPickerMuscle('All');
-                    setShowExercisePicker(true);
+                    setLogCategory(undefined);
+                    setShowLogModal(true);
                   }}
                 >
                   <Text variant="bodyS" color={dark.apricot} style={{ fontWeight: '600' }}>
@@ -282,6 +253,7 @@ export function WorkoutHubModal({
           {/* Sub-modals */}
           <WorkoutLogModal
             visible={showLogModal}
+            initialCategory={logCategory}
             onClose={() => setShowLogModal(false)}
             onOpenProgress={() => {
               setShowLogModal(false);
@@ -307,26 +279,6 @@ export function WorkoutHubModal({
           <WorkoutHistoryCalendarModal
             visible={showHistoryModal}
             onClose={() => setShowHistoryModal(false)}
-          />
-
-          {/* 413 Exercise Picker filtered by Popular Workout Type */}
-          <AddExercisePickerModal
-            visible={showExercisePicker}
-            initialMuscle={pickerMuscle}
-            onClose={() => setShowExercisePicker(false)}
-            onSelectExercise={handleExerciseChosen}
-          />
-
-          {/* Log Workout Part for Selected Exercise (Sets, Reps, Weight) */}
-          <ExerciseDetailModal
-            visible={!!selectedExerciseForDetail}
-            exercise={selectedExerciseForDetail}
-            dateStr={localDate}
-            onClose={() => setSelectedExerciseForDetail(null)}
-            onSaved={() => {
-              setSelectedExerciseForDetail(null);
-              setShowLogModal(true);
-            }}
           />
         </View>
       </SafeAreaView>

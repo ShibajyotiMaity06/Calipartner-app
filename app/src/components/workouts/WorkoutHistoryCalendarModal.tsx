@@ -4,10 +4,10 @@ import {
   FlatList,
   Modal,
   StyleSheet,
-  Text,
   TouchableOpacity,
   View,
 } from 'react-native';
+import { Text } from '@calipartner/ui';
 import { Ionicons } from '@expo/vector-icons';
 import type { Workout, WorkoutWithDetails } from '@calipartner/core';
 import { useAuth } from '@/contexts/AuthContext';

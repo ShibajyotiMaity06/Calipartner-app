@@ -1,4 +1,5 @@
 import { challengeMessages } from './challengeMessages';
+import { repairMessages } from './repairs';
 export const en = {
   repairUnits: { cm: 'cm', ftIn: 'ft / inch', ft: 'ft', inch: 'inch' },
   customMacros: {
@@ -158,6 +159,7 @@ export const en = {
     coachLimit: 'You have used your 10 AI Coach messages for today.',
   },
   repairs: {
+    ...repairMessages,
     squadTitle: 'Your squad',
     squadMembers: '{count} members in your squad',
     squadEmpty: 'Create or join a squad to share your progress.',

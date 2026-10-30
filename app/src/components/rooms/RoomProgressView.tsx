@@ -6,10 +6,10 @@ import {
   Pressable,
   ScrollView,
   StyleSheet,
-  Text,
   TextInput,
   View,
 } from 'react-native';
+import { Text, type as typography } from '@calipartner/ui';
 import Svg, { Line, Path, Text as SvgText } from 'react-native-svg';
 import { dark, space, onboardingLayout as layout } from '@calipartner/ui';
 import { Ionicons } from '@expo/vector-icons';
@@ -800,6 +800,7 @@ const styles = StyleSheet.create({
     borderRadius: radius.pill,
   },
   metricChipText: {
+    fontFamily: typography.body.fontFamily,
     fontSize: fontSize.xs,
     fontWeight: '600',
   },
@@ -828,6 +829,7 @@ const styles = StyleSheet.create({
     borderRadius: 4,
   },
   memberChipText: {
+    fontFamily: typography.body.fontFamily,
     fontSize: fontSize.xs,
     fontWeight: '500',
   },
@@ -845,6 +847,7 @@ const styles = StyleSheet.create({
     marginBottom: spacing.xs,
   },
   chartTitle: {
+    fontFamily: typography.body.fontFamily,
     fontSize: fontSize.xs,
     fontWeight: '700',
     letterSpacing: 0.5,
@@ -863,6 +866,7 @@ const styles = StyleSheet.create({
     borderRadius: radius.pill,
   },
   viewTableBtnText: {
+    fontFamily: typography.body.fontFamily,
     fontSize: 10,
     fontWeight: '700',
   },
@@ -878,6 +882,7 @@ const styles = StyleSheet.create({
     borderStyle: 'dashed',
   },
   avgLegendText: {
+    fontFamily: typography.body.fontFamily,
     fontSize: 10,
   },
   tableDataWrapper: {
@@ -890,6 +895,7 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
   },
   tableDataColHeader: {
+    fontFamily: typography.body.fontFamily,
     fontSize: 10,
     fontWeight: '700',
     textTransform: 'uppercase',
@@ -900,6 +906,7 @@ const styles = StyleSheet.create({
     borderBottomWidth: 0.5,
   },
   tableDataCell: {
+    fontFamily: typography.body.fontFamily,
     fontSize: 11,
     fontWeight: '500',
   },
@@ -919,6 +926,7 @@ const styles = StyleSheet.create({
     gap: spacing.xs,
   },
   emptyText: {
+    fontFamily: typography.body.fontFamily,
     fontSize: fontSize.xs,
     textAlign: 'center',
   },
@@ -935,6 +943,7 @@ const styles = StyleSheet.create({
     marginBottom: spacing.sm,
   },
   tableTitle: {
+    fontFamily: typography.body.fontFamily,
     fontSize: fontSize.sm,
     fontWeight: '700',
   },
@@ -947,6 +956,7 @@ const styles = StyleSheet.create({
     borderRadius: radius.sm,
   },
   sortBtnText: {
+    fontFamily: typography.body.fontFamily,
     fontSize: 10,
     fontWeight: '600',
   },
@@ -970,6 +980,7 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   nameText: {
+    fontFamily: typography.body.fontFamily,
     fontSize: fontSize.sm,
     fontWeight: '600',
   },
@@ -979,6 +990,7 @@ const styles = StyleSheet.create({
     gap: 2,
   },
   lockText: {
+    fontFamily: typography.body.fontFamily,
     fontSize: 10,
   },
   consistencyPill: {
@@ -987,9 +999,11 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   consistencyLabel: {
+    fontFamily: typography.body.fontFamily,
     fontSize: fontSize.xs,
   },
   consistencyValue: {
+    fontFamily: typography.body.fontFamily,
     fontSize: fontSize.sm,
     fontWeight: '700',
   },
@@ -1001,9 +1015,11 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
   },
   detailKey: {
+    fontFamily: typography.body.fontFamily,
     fontSize: 10,
   },
   detailVal: {
+    fontFamily: typography.body.fontFamily,
     fontSize: fontSize.xs,
     fontWeight: '500',
     marginTop: 1,
@@ -1028,6 +1044,7 @@ const styles = StyleSheet.create({
     marginBottom: spacing.sm,
   },
   modalTitle: {
+    fontFamily: typography.body.fontFamily,
     fontSize: fontSize.md,
     fontWeight: '700',
   },
@@ -1038,6 +1055,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.xs + 2,
     borderRadius: radius.sm,
+    fontFamily: typography.body.fontFamily,
     fontSize: fontSize.sm,
     marginBottom: spacing.sm,
   },
@@ -1050,10 +1068,12 @@ const styles = StyleSheet.create({
     borderBottomWidth: StyleSheet.hairlineWidth,
   },
   resultNickname: {
+    fontFamily: typography.body.fontFamily,
     fontSize: fontSize.sm,
     fontWeight: '600',
   },
   resultUsername: {
+    fontFamily: typography.body.fontFamily,
     fontSize: fontSize.xs,
   },
   modalDoneBtn: {
@@ -1064,6 +1084,7 @@ const styles = StyleSheet.create({
   },
   modalDoneText: {
     color: '#ffffff',
+    fontFamily: typography.body.fontFamily,
     fontSize: fontSize.sm,
     fontWeight: '600',
   },
@@ -1079,6 +1100,7 @@ const styles = StyleSheet.create({
   },
   errorBannerText: {
     flex: 1,
+    fontFamily: typography.body.fontFamily,
     fontSize: fontSize.xs,
   },
   retryBtn: {
@@ -1088,6 +1110,7 @@ const styles = StyleSheet.create({
   },
   retryBtnText: {
     color: '#ffffff',
+    fontFamily: typography.body.fontFamily,
     fontSize: fontSize.xs,
     fontWeight: '600',
   },

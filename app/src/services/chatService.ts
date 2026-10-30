@@ -188,14 +188,15 @@ export async function getChatMessages(
     }));
 
     // 3. Upsert remote messages into local SQLite
-    for (const msg of remoteMessages) {
-      if (Array.isArray(msg.attachments))
+    const cacheMessages = async () => {
+      for (const msg of remoteMessages) {
+        if (Array.isArray(msg.attachments))
+          await db.runAsync(
+            'DELETE FROM local_chat_attachments WHERE message_id IN (SELECT id FROM local_chat_messages WHERE client_id = ?) OR message_id = ?',
+            [msg.client_id, msg.id],
+          );
         await db.runAsync(
-          'DELETE FROM local_chat_attachments WHERE message_id IN (SELECT id FROM local_chat_messages WHERE client_id = ?) OR message_id = ?',
-          [msg.client_id, msg.id],
-        );
-      await db.runAsync(
-        `INSERT INTO local_chat_messages (
+          `INSERT INTO local_chat_messages (
           id, client_id, room_id, sender_id, sender_nickname, sender_username, sender_avatar_url,
           message_type, system_event_type, text, created_at, deleted_at, delivery_status, sync_state
         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'sent', 'synced')
@@ -205,46 +206,49 @@ export async function getChatMessages(
           deleted_at = excluded.deleted_at,
           delivery_status = 'sent',
           sync_state = 'synced'`,
-        [
-          msg.id,
-          msg.client_id,
-          msg.room_id,
-          msg.sender_id,
-          msg.sender_nickname ?? null,
-          msg.sender_username ?? null,
-          msg.sender_avatar_url ?? null,
-          msg.message_type,
-          msg.system_event_type ?? null,
-          msg.text,
-          msg.created_at,
-          msg.deleted_at ?? null,
-        ],
-      );
+          [
+            msg.id,
+            msg.client_id,
+            msg.room_id,
+            msg.sender_id,
+            msg.sender_nickname ?? null,
+            msg.sender_username ?? null,
+            msg.sender_avatar_url ?? null,
+            msg.message_type,
+            msg.system_event_type ?? null,
+            msg.text,
+            msg.created_at,
+            msg.deleted_at ?? null,
+          ],
+        );
 
-      // Upsert attachments
-      if (msg.attachments && msg.attachments.length > 0) {
-        for (const att of msg.attachments) {
-          await db.runAsync(
-            `INSERT INTO local_chat_attachments (
+        // Upsert attachments
+        if (msg.attachments && msg.attachments.length > 0) {
+          for (const att of msg.attachments) {
+            await db.runAsync(
+              `INSERT INTO local_chat_attachments (
               id, message_id, storage_key, width, height, size, mime_type, moderation_status, upload_status, created_at
             ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'uploaded', ?)
             ON CONFLICT (id) DO UPDATE SET
               moderation_status = excluded.moderation_status`,
-            [
-              att.id,
-              msg.id,
-              att.storage_key,
-              att.width ?? null,
-              att.height ?? null,
-              att.size,
-              att.mime_type,
-              att.moderation_status,
-              att.created_at,
-            ],
-          );
+              [
+                att.id,
+                msg.id,
+                att.storage_key,
+                att.width ?? null,
+                att.height ?? null,
+                att.size,
+                att.mime_type,
+                att.moderation_status,
+                att.created_at,
+              ],
+            );
+          }
         }
       }
-    }
+    };
+    if (db.withTransactionAsync) await db.withTransactionAsync(cacheMessages);
+    else await cacheMessages();
 
     return mergeMessagesDeduplicated(
       localMessages.filter(

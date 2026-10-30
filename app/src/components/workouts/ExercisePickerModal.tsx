@@ -4,11 +4,11 @@ import {
   FlatList,
   Modal,
   StyleSheet,
-  Text,
   TextInput,
   TouchableOpacity,
   View,
 } from 'react-native';
+import { Text, type as typography } from '@calipartner/ui';
 import { Ionicons } from '@expo/vector-icons';
 import type { Equipment, Exercise, ExerciseType, MuscleGroup } from '@calipartner/core';
 import { useAuth } from '@/contexts/AuthContext';
@@ -395,6 +395,7 @@ export function ExercisePickerModal({
                     >
                       <Text
                         style={{
+                          fontFamily: typography.body.fontFamily,
                           fontSize: fontSize.xs,
                           color: customMuscle === m ? colors.onAccent : colors.text,
                           fontWeight: '600',
@@ -430,6 +431,7 @@ export function ExercisePickerModal({
                     >
                       <Text
                         style={{
+                          fontFamily: typography.body.fontFamily,
                           fontSize: fontSize.xs,
                           color: customEquipment === eq ? colors.onAccent : colors.text,
                           fontWeight: '600',
@@ -462,6 +464,7 @@ export function ExercisePickerModal({
                     >
                       <Text
                         style={{
+                          fontFamily: typography.body.fontFamily,
                           fontSize: fontSize.xs,
                           color: customType === tp ? colors.onAccent : colors.text,
                           fontWeight: '600',
@@ -537,6 +540,7 @@ const styles = StyleSheet.create({
     padding: 6,
   },
   modalTitle: {
+    fontFamily: typography.body.fontFamily,
     fontSize: fontSize.md,
     fontWeight: '700',
   },
@@ -560,6 +564,7 @@ const styles = StyleSheet.create({
   searchInput: {
     flex: 1,
     height: '100%',
+    fontFamily: typography.body.fontFamily,
     fontSize: fontSize.sm,
   },
   chipsRow: {
@@ -572,6 +577,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
   },
   chipText: {
+    fontFamily: typography.body.fontFamily,
     fontSize: fontSize.xs,
     fontWeight: '600',
   },
@@ -592,6 +598,7 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   exerciseName: {
+    fontFamily: typography.body.fontFamily,
     fontSize: fontSize.sm,
     fontWeight: '700',
   },
@@ -607,6 +614,7 @@ const styles = StyleSheet.create({
     borderWidth: 0.5,
   },
   badgeText: {
+    fontFamily: typography.body.fontFamily,
     fontSize: 10,
     fontWeight: '600',
     textTransform: 'capitalize',
@@ -619,10 +627,12 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
   },
   stateText: {
+    fontFamily: typography.body.fontFamily,
     fontSize: fontSize.sm,
     fontWeight: '500',
   },
   emptyTitle: {
+    fontFamily: typography.body.fontFamily,
     fontSize: fontSize.md,
     fontWeight: '600',
     textAlign: 'center',
@@ -643,6 +653,7 @@ const styles = StyleSheet.create({
     marginTop: spacing.sm,
   },
   createCustomPromptText: {
+    fontFamily: typography.body.fontFamily,
     fontSize: fontSize.sm,
     fontWeight: '700',
   },
@@ -659,6 +670,7 @@ const styles = StyleSheet.create({
     gap: spacing.md,
   },
   dialogTitle: {
+    fontFamily: typography.body.fontFamily,
     fontSize: fontSize.md,
     fontWeight: '700',
   },
@@ -666,6 +678,7 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   formLabel: {
+    fontFamily: typography.body.fontFamily,
     fontSize: fontSize.xs,
     fontWeight: '600',
   },
@@ -674,6 +687,7 @@ const styles = StyleSheet.create({
     borderRadius: radius.sm,
     borderWidth: 1,
     paddingHorizontal: spacing.sm,
+    fontFamily: typography.body.fontFamily,
     fontSize: fontSize.sm,
   },
   pillWrap: {

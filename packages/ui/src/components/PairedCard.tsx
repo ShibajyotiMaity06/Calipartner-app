@@ -66,6 +66,7 @@ export interface PairedCardProps {
   finishedPerson?: FinishedPerson;
   /** Streak days for fused caption */
   streakDays?: number;
+  activityCaption?: string;
 
   /** Nudge count sent today */
   nudgesSentToday?: number;
@@ -125,6 +126,7 @@ export function PairedCard({
   seamState = 'broken',
   finishedPerson = 'user',
   streakDays = 1,
+  activityCaption,
   nudgesSentToday = 0,
   onNudge,
   onNudgeLimit,
@@ -395,12 +397,18 @@ export function PairedCard({
       )}
 
       {/* Seam Caption under Card (Spec 5.3) */}
-      <SeamCaption
-        state={seamState}
-        finishedPerson={finishedPerson}
-        partnerName={partnerName}
-        streakDays={streakDays}
-      />
+      {activityCaption ? (
+        <Text variant="bodyS" color={dark.textMid}>
+          {activityCaption}
+        </Text>
+      ) : (
+        <SeamCaption
+          state={seamState}
+          finishedPerson={finishedPerson}
+          partnerName={partnerName}
+          streakDays={streakDays}
+        />
+      )}
     </Card>
   );
 }

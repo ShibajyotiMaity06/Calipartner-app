@@ -28,7 +28,8 @@ function AppInitializationGate({ children }: { children: React.ReactNode }) {
   const init = useCallback(() => {
     setState('loading');
     Promise.all([getDb(), loadAppFonts()])
-      .then(() => {
+      .then(([, fontsReady]) => {
+        if (!fontsReady) throw new Error('Font loading failed');
         setState('ready');
         hideSplashScreen().catch(() => {});
       })
@@ -61,16 +62,6 @@ export default function RootLayout() {
       }
     ).document;
     if (doc) {
-      const existing = doc.getElementById('plus-jakarta-sans-font');
-      if (!existing) {
-        const link = doc.createElement('link');
-        link.id = 'plus-jakarta-sans-font';
-        link.rel = 'stylesheet';
-        link.href =
-          'https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400;1,600&display=swap';
-        doc.head.appendChild(link);
-      }
-
       if (!doc.getElementById('brand-touch-icon')) {
         const touch = doc.createElement('link');
         touch.id = 'brand-touch-icon';
@@ -132,58 +123,6 @@ export default function RootLayout() {
           @font-face {
             font-family: 'Ionicons';
             src: url('https://cdn.jsdelivr.net/npm/@expo/vector-icons@14.0.0/build/vendor/react-native-vector-icons/Fonts/Ionicons.ttf') format('truetype');
-          }
-
-          /* Ensure Plus Jakarta Sans is mapped to all token font aliases on web */
-          @font-face {
-            font-family: 'PlusJakartaSans_400';
-            src: local('Plus Jakarta Sans'), local('PlusJakartaSans-Regular');
-            font-weight: 400;
-          }
-          @font-face {
-            font-family: 'PlusJakartaSans_500';
-            src: local('Plus Jakarta Sans'), local('PlusJakartaSans-Medium');
-            font-weight: 500;
-          }
-          @font-face {
-            font-family: 'PlusJakartaSans_600';
-            src: local('Plus Jakarta Sans'), local('PlusJakartaSans-SemiBold');
-            font-weight: 600;
-          }
-          @font-face {
-            font-family: 'PlusJakartaSans_700';
-            src: local('Plus Jakarta Sans'), local('PlusJakartaSans-Bold');
-            font-weight: 700;
-          }
-          @font-face {
-            font-family: 'PlusJakartaSans_800';
-            src: local('Plus Jakarta Sans'), local('PlusJakartaSans-ExtraBold');
-            font-weight: 800;
-          }
-          @font-face {
-            font-family: 'Bricolage_600';
-            src: local('Plus Jakarta Sans'), local('PlusJakartaSans-SemiBold');
-            font-weight: 600;
-          }
-          @font-face {
-            font-family: 'Bricolage_700';
-            src: local('Plus Jakarta Sans'), local('PlusJakartaSans-Bold');
-            font-weight: 700;
-          }
-          @font-face {
-            font-family: 'Figtree_400';
-            src: local('Plus Jakarta Sans'), local('PlusJakartaSans-Regular');
-            font-weight: 400;
-          }
-          @font-face {
-            font-family: 'Figtree_500';
-            src: local('Plus Jakarta Sans'), local('PlusJakartaSans-Medium');
-            font-weight: 500;
-          }
-          @font-face {
-            font-family: 'Figtree_600';
-            src: local('Plus Jakarta Sans'), local('PlusJakartaSans-SemiBold');
-            font-weight: 600;
           }
 
           /* Remove white browser focus ring and box-shadow from all inputs */

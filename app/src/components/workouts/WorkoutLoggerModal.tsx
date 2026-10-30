@@ -5,11 +5,11 @@ import {
   Modal,
   ScrollView,
   StyleSheet,
-  Text,
   TextInput,
   TouchableOpacity,
   View,
 } from 'react-native';
+import { Text, type as typography } from '@calipartner/ui';
 import { Ionicons } from '@expo/vector-icons';
 import type { Exercise, WorkoutSummary, WorkoutType, WorkoutWithDetails } from '@calipartner/core';
 import { useWorkouts } from '@/hooks/useWorkouts';
@@ -913,7 +913,7 @@ export function WorkoutLoggerModal({
                       </Text>
                     </TouchableOpacity>
 
-                    {/* Fast Weight Stepper & Input */}
+                    {/* Fast Weight Stepper & TextInput */}
                     <View style={[styles.weightSteppers, { flex: 2.2 }]}>
                       <TouchableOpacity
                         testID={`btn-weight-minus-${exIdx}-${setIdx}`}
@@ -947,7 +947,7 @@ export function WorkoutLoggerModal({
                       </TouchableOpacity>
                     </View>
 
-                    {/* Fast Reps Stepper & Input */}
+                    {/* Fast Reps Stepper & TextInput */}
                     <View style={[styles.weightSteppers, { flex: 1.8 }]}>
                       <TouchableOpacity
                         testID={`btn-reps-minus-${exIdx}-${setIdx}`}
@@ -1085,6 +1085,7 @@ const styles = StyleSheet.create({
     padding: 6,
   },
   headerTitle: {
+    fontFamily: typography.body.fontFamily,
     fontSize: fontSize.md,
     fontWeight: '700',
   },
@@ -1094,6 +1095,7 @@ const styles = StyleSheet.create({
     borderRadius: radius.sm,
   },
   saveBtnText: {
+    fontFamily: typography.body.fontFamily,
     fontSize: fontSize.sm,
     fontWeight: '700',
   },
@@ -1111,6 +1113,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
   },
   errorText: {
+    fontFamily: typography.body.fontFamily,
     fontSize: fontSize.xs,
     fontWeight: '600',
   },
@@ -1118,6 +1121,7 @@ const styles = StyleSheet.create({
     gap: spacing.xs,
   },
   sectionHeading: {
+    fontFamily: typography.body.fontFamily,
     fontSize: fontSize.xs,
     fontWeight: '700',
     textTransform: 'uppercase',
@@ -1143,6 +1147,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
   },
   typeChipText: {
+    fontFamily: typography.body.fontFamily,
     fontSize: fontSize.xs,
     fontWeight: '700',
   },
@@ -1156,6 +1161,7 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   fieldLabel: {
+    fontFamily: typography.body.fontFamily,
     fontSize: fontSize.xs,
     fontWeight: '600',
   },
@@ -1164,6 +1170,7 @@ const styles = StyleSheet.create({
     borderRadius: radius.sm,
     borderWidth: 1,
     paddingHorizontal: spacing.sm,
+    fontFamily: typography.body.fontFamily,
     fontSize: fontSize.sm,
   },
   textArea: {
@@ -1172,6 +1179,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     paddingHorizontal: spacing.sm,
     paddingVertical: 8,
+    fontFamily: typography.body.fontFamily,
     fontSize: fontSize.sm,
     textAlignVertical: 'top',
   },
@@ -1188,6 +1196,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   stepperBtnText: {
+    fontFamily: typography.body.fontFamily,
     fontSize: fontSize.sm,
     fontWeight: '700',
   },
@@ -1197,6 +1206,7 @@ const styles = StyleSheet.create({
     borderRadius: radius.sm,
     borderWidth: 1,
     textAlign: 'center',
+    fontFamily: typography.body.fontFamily,
     fontSize: fontSize.md,
     fontWeight: '700',
     fontVariant: ['tabular-nums'],
@@ -1213,6 +1223,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   effortPillText: {
+    fontFamily: typography.body.fontFamily,
     fontSize: fontSize.xs,
   },
   addExerciseBtn: {
@@ -1224,6 +1235,7 @@ const styles = StyleSheet.create({
     borderRadius: radius.pill,
   },
   addExerciseBtnText: {
+    fontFamily: typography.body.fontFamily,
     fontSize: fontSize.xs,
     fontWeight: '700',
   },
@@ -1238,6 +1250,7 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   exTitle: {
+    fontFamily: typography.body.fontFamily,
     fontSize: fontSize.sm,
     fontWeight: '700',
   },
@@ -1247,6 +1260,7 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   hintText: {
+    fontFamily: typography.body.fontFamily,
     fontSize: fontSize.xs,
     fontWeight: '600',
   },
@@ -1265,6 +1279,7 @@ const styles = StyleSheet.create({
     borderBottomWidth: 0.5,
   },
   colHeader: {
+    fontFamily: typography.body.fontFamily,
     fontSize: 10,
     fontWeight: '700',
     textTransform: 'uppercase',
@@ -1277,6 +1292,7 @@ const styles = StyleSheet.create({
     borderRadius: radius.sm,
   },
   setNumText: {
+    fontFamily: typography.body.fontFamily,
     fontSize: fontSize.xs,
     fontWeight: '700',
     textAlign: 'center',
@@ -1291,6 +1307,7 @@ const styles = StyleSheet.create({
     marginRight: 4,
   },
   warmupChipText: {
+    fontFamily: typography.body.fontFamily,
     fontSize: 10,
     fontWeight: '800',
   },
@@ -1308,6 +1325,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   fastStepText: {
+    fontFamily: typography.body.fontFamily,
     fontSize: fontSize.sm,
     fontWeight: '700',
   },
@@ -1317,6 +1335,7 @@ const styles = StyleSheet.create({
     borderRadius: radius.sm,
     borderWidth: 1,
     textAlign: 'center',
+    fontFamily: typography.body.fontFamily,
     fontSize: fontSize.xs,
     fontWeight: '700',
     fontVariant: ['tabular-nums'],
@@ -1344,6 +1363,7 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
   addSetRowText: {
+    fontFamily: typography.body.fontFamily,
     fontSize: fontSize.xs,
     fontWeight: '700',
   },

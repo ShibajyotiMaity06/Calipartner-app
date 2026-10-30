@@ -134,22 +134,21 @@ export function SideBySideCard({
   // Streak days
   const streakDays = isMeLogged && isPartnerLogged ? 1 : 0;
 
+  const meStarted = Object.values(userMeals).some((meal) => meal.logged) || userPercent > 0;
+  const partnerStarted =
+    (partnerMeals && Object.values(partnerMeals).some((meal) => meal.logged)) || partnerPercent > 0;
   // State sentence above the paired card (Spec J01 #2)
   const stateSentence = useMemo(() => {
     if (!partner) {
       return 'Find a partner or invite a friend to log together.';
     }
-    if (isMeLogged && isPartnerLogged) {
-      return "You've both finished logging today.";
-    }
-    if (isMeLogged && !isPartnerLogged) {
-      return `${partner.nickname} hasn't logged yet today.`;
-    }
-    if (!isMeLogged && isPartnerLogged) {
-      return 'You haven’t finished logging today.';
-    }
-    return 'Neither of you has finished logging today.';
-  }, [partner, isMeLogged, isPartnerLogged]);
+    if (meStarted && partnerStarted) return t('repairs.bothLogging');
+    if (meStarted) return t('repairs.youLogging');
+    if (partnerStarted) return t('repairs.partnerLogging', { name: partner.nickname });
+    if (partner.metrics.meal_checklist === 'locked' && partner.metrics.goal_completion === 'locked')
+      return t('repairs.private');
+    return t('repairs.neitherLogging');
+  }, [partner, meStarted, partnerStarted]);
 
   // Feed items for plain feed rows (Spec J01 #6)
   const feedItems: FeedEvent[] = useMemo(() => {
@@ -226,6 +225,7 @@ export function SideBySideCard({
         seamState={seamState}
         finishedPerson={finishedPerson}
         streakDays={streakDays}
+        activityCaption={stateSentence}
         onNudge={() => partner && onNudge(partner)}
         onInviteFriend={onInviteFriend}
         onFindPartner={onFindPartner}
@@ -259,26 +259,12 @@ export function SideBySideCard({
           onPress={onSendPhoto || onOpenChat}
           style={styles.quickActionPill}
           accessibilityRole="button"
-          accessibilityLabel="Send a photo"
+          accessibilityLabel={t('repairs.chooseMedia')}
           testID="btn-quick-send-photo"
         >
-          <Ionicons name="camera-outline" size={14} color={dark.textHi} />
+          <Ionicons name="attach-outline" size={14} color={dark.textHi} />
           <Text variant="label" color={dark.textHi}>
-            Send a photo
-          </Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          activeOpacity={0.7}
-          onPress={onOpenChat}
-          style={styles.quickActionPill}
-          accessibilityRole="button"
-          accessibilityLabel="Open chat"
-          testID="btn-quick-open-chat"
-        >
-          <Ionicons name="chatbubble-outline" size={14} color={dark.textHi} />
-          <Text variant="label" color={dark.textHi}>
-            Open chat
+            {t('repairs.chooseMedia')}
           </Text>
         </TouchableOpacity>
       </View>

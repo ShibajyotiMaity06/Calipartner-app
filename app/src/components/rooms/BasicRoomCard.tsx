@@ -38,7 +38,7 @@ export function BasicRoomCard({ members }: { members: RoomMemberSnapshot[] }) {
                 <HiddenMetric label={t('setup.logPrivate')} />
               ) : (
                 <Text>
-                  {t(metrics.logged_today ? 'setup.loggedToday' : 'setup.notLoggedToday')}
+                  {t(metrics.logged_today ? 'setup.loggedToday' : 'repairs.loggingIncomplete')}
                 </Text>
               )}
               {metrics.workout_status === 'locked' ? (

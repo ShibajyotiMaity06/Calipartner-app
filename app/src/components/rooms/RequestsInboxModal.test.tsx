@@ -1,3 +1,4 @@
+vi.mock('@calipartner/ui', () => ({ Text: 'Text', type: { body: {} } }));
 import React from 'react';
 import { act, create, type ReactTestRenderer } from 'react-test-renderer';
 import { describe, expect, it, vi } from 'vitest';

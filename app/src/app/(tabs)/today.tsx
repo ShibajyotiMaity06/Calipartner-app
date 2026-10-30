@@ -202,7 +202,7 @@ export default function TodayScreen() {
   };
 
   const isToday = selectedDate === todayDate;
-  const currentSuggestedMeal = getMealSectionForTime(new Date());
+  const currentSuggestedMeal = getMealSectionForTime(new Date(), profile?.timezone);
 
   const [guestName, setGuestName] = useState<string | null>(null);
 
@@ -235,19 +235,8 @@ export default function TodayScreen() {
   const eatenProtein = daySummary.totals.protein;
   const currentStreak = streakData?.current_streak ?? 0;
 
-  // Dynamic question based on user local time
-  const getContextualQuestion = () => {
-    const hour = new Date().getHours();
-    if (hour >= 5 && hour < 11.5) {
-      return 'Did you log your breakfast?';
-    } else if (hour >= 11.5 && hour < 16.5) {
-      return 'Did you log your lunch?';
-    } else if (hour >= 16.5 && hour < 21.5) {
-      return 'Did you log your dinner?';
-    } else {
-      return 'Did you log your meals and water today?';
-    }
-  };
+  const getContextualQuestion = () =>
+    t('repairs.mealQuestion', { meal: t(`diary.sections.${currentSuggestedMeal}`) });
 
   const currentRoom = rooms[0];
   const userName = profile?.nickname || guestName || profile?.username || 'Friend';

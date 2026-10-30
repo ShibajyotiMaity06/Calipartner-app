@@ -5,9 +5,9 @@ import {
   KeyboardAvoidingView,
   Platform,
   StyleSheet,
-  Text,
   View,
 } from 'react-native';
+import { Text } from '@calipartner/ui';
 import { Ionicons } from '@expo/vector-icons';
 import type { ChatAttachment, ChatMessage } from '@/types/chat';
 import { useRoomChat, type UseRoomChatOptions } from '@/hooks/useRoomChat';
@@ -251,6 +251,10 @@ export function ChatView({
                   isMine={isMine}
                   onRetry={handleRetry}
                   onPressImage={(att) => {
+                    if (att.signed_url) {
+                      setActiveImageAttachment(att);
+                      return;
+                    }
                     if (roomId)
                       void getSignedImageUrl(getSupabase(), roomId, att.storage_key)
                         .then((signed_url) => setActiveImageAttachment({ ...att, signed_url }))

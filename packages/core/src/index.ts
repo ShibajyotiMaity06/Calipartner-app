@@ -12,6 +12,8 @@ export * from './food_dataset';
 export * from './food_lookup';
 export * from './trackers';
 export * from './rooms';
+export * from './roomDiary';
+export * from './workoutLog';
 export * from './exercise_dataset';
 export * from './exercise_importer';
 export * from './workouts';

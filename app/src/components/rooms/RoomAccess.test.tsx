@@ -1,3 +1,11 @@
+vi.mock('@/hooks/useDiary', () => ({
+  useDiary: () => ({ daySummary: { totals: { entryCount: 0 } }, loading: true, refresh: vi.fn() }),
+}));
+vi.mock('@/hooks/useTargets', () => ({ useTargets: () => ({ currentGoalProfile: null }) }));
+vi.mock('@/hooks/useCurrentLocalDate', () => ({
+  useCurrentLocalDate: () => ({ localDate: '2026-10-30' }),
+}));
+vi.mock('@/components/rooms/MemberComparison', () => ({ MemberComparison: 'MemberComparison' }));
 import React from 'react';
 import { act, create, type ReactTestRenderer } from 'react-test-renderer';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -12,6 +20,7 @@ const state = vi.hoisted(() => ({
   share: vi.fn().mockResolvedValue({ action: 'sharedAction' }),
 }));
 vi.mock('react-native', () => ({
+  Platform: { OS: 'android' },
   ActivityIndicator: 'ActivityIndicator',
   Modal: 'Modal',
   Pressable: 'Pressable',

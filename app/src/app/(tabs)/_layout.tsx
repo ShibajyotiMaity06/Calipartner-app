@@ -13,6 +13,7 @@ export default function TabsLayout() {
 
   return (
     <Tabs
+      backBehavior="history"
       tabBar={({ state, navigation }) => {
         const currentRoute = state.routes[state.index];
         const routeName = currentRoute?.name ?? 'today';

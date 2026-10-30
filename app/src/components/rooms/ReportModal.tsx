@@ -1,13 +1,6 @@
 import React, { useState } from 'react';
-import {
-  ActivityIndicator,
-  Modal,
-  Pressable,
-  StyleSheet,
-  Text,
-  TextInput,
-  View,
-} from 'react-native';
+import { ActivityIndicator, Modal, Pressable, StyleSheet, TextInput, View } from 'react-native';
+import { Text, type as typography } from '@calipartner/ui';
 import { Ionicons } from '@expo/vector-icons';
 import { t } from '@/i18n';
 import { fontSize, radius, spacing } from '@/theme/tokens';
@@ -199,10 +192,12 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   title: {
+    fontFamily: typography.body.fontFamily,
     fontSize: fontSize.md + 2,
     fontWeight: '700',
   },
   subtitle: {
+    fontFamily: typography.body.fontFamily,
     fontSize: fontSize.xs,
     marginTop: 2,
   },
@@ -220,10 +215,12 @@ const styles = StyleSheet.create({
     marginBottom: spacing.sm,
   },
   targetText: {
+    fontFamily: typography.body.fontFamily,
     fontSize: fontSize.xs + 1,
     fontWeight: '600',
   },
   label: {
+    fontFamily: typography.body.fontFamily,
     fontSize: fontSize.xs,
     fontWeight: '600',
     textTransform: 'uppercase',
@@ -244,6 +241,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
   },
   reasonText: {
+    fontFamily: typography.body.fontFamily,
     fontSize: fontSize.xs + 1,
     fontWeight: '500',
   },
@@ -253,6 +251,7 @@ const styles = StyleSheet.create({
     padding: spacing.sm,
     height: 70,
     textAlignVertical: 'top',
+    fontFamily: typography.body.fontFamily,
     fontSize: fontSize.xs + 1,
     marginBottom: spacing.md,
   },
@@ -264,6 +263,7 @@ const styles = StyleSheet.create({
   },
   submitButtonText: {
     color: '#FFFFFF',
+    fontFamily: typography.body.fontFamily,
     fontSize: fontSize.sm,
     fontWeight: '700',
   },

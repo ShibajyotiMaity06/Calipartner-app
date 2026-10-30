@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { Modal, ScrollView, StyleSheet, Switch, Text, TouchableOpacity, View } from 'react-native';
+import { Modal, ScrollView, StyleSheet, Switch, TouchableOpacity, View } from 'react-native';
+import { Text } from '@calipartner/ui';
 import { Ionicons } from '@expo/vector-icons';
 import type { WorkoutSummary, WorkoutWithDetails } from '@calipartner/core';
 import { dark, radius, space, type as typeTokens } from '@calipartner/ui';

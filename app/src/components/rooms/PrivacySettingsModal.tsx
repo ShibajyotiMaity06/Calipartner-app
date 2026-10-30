@@ -1,3 +1,4 @@
+import { useBrowserModalBack } from '@/hooks/useBrowserModalBack';
 import React, { useEffect, useState } from 'react';
 import { Modal, SafeAreaView, ScrollView, StyleSheet, View } from 'react-native';
 import { Button, Card, dark, space, SwitchRow, Text } from '@calipartner/ui';
@@ -8,7 +9,6 @@ import { useNetworkStatus } from '@/hooks/useNetworkStatus';
 import { getSupabase } from '@/lib/supabase';
 import { fetchLeaderboardOptOutStatus, setLeaderboardOptOut } from '@/services/leaderboardService';
 import { PerRoomVisibilityModal } from '@/components/profile/PerRoomVisibilityModal';
-import { PreviewAsPartnerModal } from '@/components/profile/PreviewAsPartnerModal';
 import type { RoomSummary } from '@/types/rooms';
 export interface PrivacySettingsModalProps {
   visible: boolean;
@@ -18,7 +18,6 @@ export interface PrivacySettingsModalProps {
   onGetPrivacy: () => Promise<RoomPrivacySettings>;
   onUpdatePrivacy: (settings: Partial<RoomPrivacySettings>) => Promise<RoomPrivacySettings>;
   onOpenPerRoom?: () => void;
-  onOpenPreviewPartner?: () => void;
 }
 const fields = [
   ['share_goal_completion', 'roomAudit.goal'],
@@ -36,10 +35,9 @@ export function PrivacySettingsModal({
   onGetPrivacy,
   onUpdatePrivacy,
   onOpenPerRoom,
-  onOpenPreviewPartner,
-  roomId,
   rooms = [],
 }: PrivacySettingsModalProps) {
+  useBrowserModalBack(visible, onClose);
   const { profile, updateProfile } = useAuth();
   const { isOnline } = useNetworkStatus();
   const [settings, setSettings] = useState<RoomPrivacySettings | null>(null);
@@ -48,7 +46,7 @@ export function PrivacySettingsModal({
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState(false);
   const [retry, setRetry] = useState(0);
-  const [subModal, setSubModal] = useState<'rooms' | 'preview' | null>(null);
+  const [subModal, setSubModal] = useState<'rooms' | null>(null);
   useEffect(() => {
     let current = true;
     if (!visible) return;
@@ -126,12 +124,17 @@ export function PrivacySettingsModal({
               <SwitchRow
                 title={t('rooms.privacyModal.mealItems')}
                 consequence={t('rooms.privacyModal.mealItemsConsequence')}
-                value={settings.share_meals !== 'never' && settings.share_calories_macros}
+                value={settings.share_meals !== 'never'}
                 disabled={disabled}
-                onValueChange={(value) =>
-                  patch({ share_meals: value ? 'always' : 'never', share_calories_macros: value })
-                }
+                onValueChange={(value) => patch({ share_meals: value ? 'always' : 'never' })}
                 testID="switch-share-meal-items"
+              />
+              <SwitchRow
+                title={t('repairs.mealNutrition')}
+                value={settings.share_calories_macros}
+                disabled={disabled}
+                onValueChange={(value) => patch({ share_calories_macros: value })}
+                testID="switch-share-calories-macros"
               />
               {fields.map(([key, label]) => (
                 <SwitchRow
@@ -179,18 +182,9 @@ export function PrivacySettingsModal({
             onPress={onOpenPerRoom ?? (() => setSubModal('rooms'))}
             testID="btn-per-room-visibility"
           />
-          <Button
-            variant="secondary"
-            label={t('rooms.privacyModal.previewPartnerLink')}
-            onPress={onOpenPreviewPartner ?? (() => setSubModal('preview'))}
-            testID="btn-preview-partner"
-          />
         </ScrollView>
         {subModal === 'rooms' ? (
           <PerRoomVisibilityModal visible rooms={rooms} onClose={() => setSubModal(null)} />
-        ) : null}
-        {subModal === 'preview' ? (
-          <PreviewAsPartnerModal visible roomId={roomId} onClose={() => setSubModal(null)} />
         ) : null}
       </SafeAreaView>
     </Modal>

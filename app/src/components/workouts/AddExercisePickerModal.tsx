@@ -1,3 +1,4 @@
+import { type as typography } from '@calipartner/ui';
 import React, { useState, useMemo } from 'react';
 import {
   Modal,
@@ -453,6 +454,7 @@ const styles = StyleSheet.create({
   searchInput: {
     flex: 1,
     color: dark.textHi,
+    fontFamily: typography.body.fontFamily,
     fontSize: 15,
   },
   dropdownContainer: {
@@ -552,6 +554,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: space[3],
     height: 42,
     color: dark.textHi,
+    fontFamily: typography.body.fontFamily,
     fontSize: 14,
   },
   setsPickerRow: {
@@ -639,6 +642,7 @@ const styles = StyleSheet.create({
   },
   addConfirmBtnText: {
     fontWeight: '700',
+    fontFamily: typography.body.fontFamily,
     fontSize: 16,
   },
 });

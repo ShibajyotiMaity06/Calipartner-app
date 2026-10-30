@@ -1,5 +1,6 @@
 import React, { useMemo } from 'react';
-import { StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { StyleSheet, TextInput, TouchableOpacity, View } from 'react-native';
+import { Text, type as typography } from '@calipartner/ui';
 import { Ionicons } from '@expo/vector-icons';
 import { calculateCardioPaceAndSpeed } from '@calipartner/core';
 import { t } from '@/i18n';
@@ -233,6 +234,7 @@ const styles = StyleSheet.create({
     gap: spacing.xs,
   },
   title: {
+    fontFamily: typography.body.fontFamily,
     fontSize: fontSize.md,
     fontWeight: '700',
   },
@@ -240,6 +242,7 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   label: {
+    fontFamily: typography.body.fontFamily,
     fontSize: fontSize.xs,
     fontWeight: '600',
   },
@@ -257,6 +260,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   stepBtnText: {
+    fontFamily: typography.body.fontFamily,
     fontSize: fontSize.sm,
     fontWeight: '700',
   },
@@ -266,6 +270,7 @@ const styles = StyleSheet.create({
     borderRadius: radius.sm,
     borderWidth: 1,
     textAlign: 'center',
+    fontFamily: typography.body.fontFamily,
     fontSize: fontSize.md,
     fontWeight: '700',
     fontVariant: ['tabular-nums'],
@@ -283,11 +288,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   metricLabel: {
+    fontFamily: typography.body.fontFamily,
     fontSize: fontSize.xs,
     fontWeight: '600',
     marginBottom: 2,
   },
   metricValue: {
+    fontFamily: typography.body.fontFamily,
     fontSize: fontSize.md,
     fontWeight: '700',
     fontVariant: ['tabular-nums'],

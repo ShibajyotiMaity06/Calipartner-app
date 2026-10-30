@@ -37,7 +37,7 @@ export function useChallenges() {
     lock.current = id;
     try {
       const db = await getDb();
-      const local = await cachedChallenges(db, id);
+      const local = await cachedChallenges(db, id).catch(() => null);
       if (owner.current !== id) return;
       if (local) {
         setHome(local);

@@ -1,6 +1,6 @@
 import React from 'react';
 import {
-  Platform,
+  StyleSheet,
   Text as RNText,
   type TextProps as RNTextProps,
   type TextStyle,
@@ -9,6 +9,7 @@ import { dark } from '../tokens/colors';
 import { onboardingType } from '../tokens/onboarding';
 import {
   type as typeTokens,
+  latinFonts,
   typeHindi,
   type TypeVariant,
   type TextStyleToken,
@@ -86,11 +87,19 @@ export function Text({
           ? 1.3
           : 2.0;
 
+  const weight = StyleSheet.flatten(style)?.fontWeight;
+  const weightedFont =
+    weight === 'bold' || Number(weight) >= 700
+      ? Number(weight) >= 800
+        ? latinFonts.extrabold
+        : latinFonts.bold
+      : Number(weight) >= 600
+        ? latinFonts.semibold
+        : Number(weight) >= 500
+          ? latinFonts.medium
+          : undefined;
   const fontStyle: TextStyle = {
-    fontFamily:
-      Platform.OS === 'web'
-        ? `${tokenSpec.fontFamily}, 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif`
-        : tokenSpec.fontFamily,
+    fontFamily: !isHindi && weightedFont ? weightedFont : tokenSpec.fontFamily,
     fontSize: tokenSpec.fontSize,
     lineHeight: tokenSpec.lineHeight,
     color: resolvedColor,
@@ -101,7 +110,7 @@ export function Text({
     <RNText
       allowFontScaling={allowFontScaling}
       maxFontSizeMultiplier={effectiveMaxMultiplier}
-      style={[fontStyle, style]}
+      style={[fontStyle, style, !isHindi && weightedFont ? { fontFamily: weightedFont } : null]}
       {...rest}
     >
       {children}

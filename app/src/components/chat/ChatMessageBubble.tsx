@@ -1,11 +1,13 @@
 import React from 'react';
-import { ActivityIndicator, Image, Pressable, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Image, Pressable, StyleSheet, View } from 'react-native';
+import { Text } from '@calipartner/ui';
 import { onboardingLayout as layout } from '@calipartner/ui';
 import { Ionicons } from '@expo/vector-icons';
 import type { ChatAttachment, ChatMessage } from '@/types/chat';
 import { t } from '@/i18n';
 import { fontSize, radius, spacing } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
+import { ChatAttachmentPreview } from './ChatAttachmentPreview';
 
 export interface ChatMessageBubbleProps {
   message: ChatMessage;
@@ -154,7 +156,6 @@ export function ChatMessageBubble({
                       ) : null}
                     </View>
                   );
-                const imageUri = att.signed_url || att.local_uri;
 
                 if (isBlocked) {
                   return (
@@ -171,39 +172,12 @@ export function ChatMessageBubble({
                 }
 
                 return (
-                  <Pressable
+                  <ChatAttachmentPreview
                     key={att.id || idx}
-                    onPress={() => onPressImage?.(att)}
-                    style={styles.attachmentPressable}
-                    accessibilityRole="image"
-                    accessibilityLabel="Chat photo attachment. Tap to view full screen."
-                    testID={`att-image-${att.id || idx}`}
-                  >
-                    {att.mime_type.startsWith('video/') ? (
-                      <Ionicons
-                        name="play-circle-outline"
-                        size={32}
-                        color={colors.text}
-                        accessibilityLabel={t('setup.playVideo')}
-                      />
-                    ) : imageUri ? (
-                      <Image
-                        source={{ uri: imageUri }}
-                        style={styles.attachmentThumbnail}
-                        resizeMode="cover"
-                      />
-                    ) : (
-                      <View style={[styles.attachmentThumbnail, styles.attachmentFallback]}>
-                        <Ionicons name="image-outline" size={32} color={colors.textMuted} />
-                      </View>
-                    )}
-
-                    {att.upload_status === 'uploading' && (
-                      <View style={styles.uploadOverlay}>
-                        <ActivityIndicator size="small" color={colors.textMuted} />
-                      </View>
-                    )}
-                  </Pressable>
+                    roomId={message.room_id}
+                    attachment={att}
+                    onOpen={onPressImage}
+                  />
                 );
               })}
             </View>
