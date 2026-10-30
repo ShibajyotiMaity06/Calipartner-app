@@ -5,6 +5,7 @@ import type {
   CalculateTargetsInput,
   CalculateTargetsResult,
   Goal,
+  GoalProfile,
   MacroTargets,
   PresetRateAdvisory,
   PresetRateOption,
@@ -29,6 +30,42 @@ export const CALORIE_FLOORS: Record<Sex, number> = {
   male: 1500,
   other: 1350,
 };
+
+export interface CustomMacros {
+  protein: number;
+  carbs: number;
+  fat: number;
+}
+
+/** Custom grams determine calories; preserve the plan's direction and safety limits. */
+export function customMacroTargets(macros: CustomMacros, goal: GoalProfile, sex: Sex) {
+  const grams = [macros.protein, macros.carbs, macros.fat];
+  if (grams.some((value) => !Number.isInteger(value) || value < 0 || value > 2500))
+    throw new Error('INVALID_MACROS');
+  const calories = macros.protein * 4 + macros.carbs * 4 + macros.fat * 9;
+  const change = calories - goal.tdee;
+  const weeklyRate = Math.round((Math.abs(change) / 1100) * 100) / 100;
+  if (
+    calories < getCalorieFloor(sex) ||
+    calories > 10000 ||
+    Math.abs(change) / 1100 > goal.current_weight_kg * 0.01 ||
+    (goal.goal === 'cut' &&
+      goal.input_height_cm != null &&
+      goal.current_weight_kg / (goal.input_height_cm / 100) ** 2 < 18.5) ||
+    (goal.goal === 'cut' && change > 0) ||
+    (goal.goal === 'bulk' && change < 0) ||
+    (goal.goal === 'maintain' && change !== 0)
+  )
+    throw new Error('UNSAFE_MACROS');
+  return {
+    daily_calorie_target: calories,
+    protein_grams: macros.protein,
+    carb_grams: macros.carbs,
+    fat_grams: macros.fat,
+    weekly_rate_kg: weeklyRate,
+    custom_macros: true,
+  };
+}
 
 // Preset rates for goals
 export const PRESET_CUT_RATES_KG = [0.25, 0.5, 0.75, 1.0];

@@ -177,7 +177,11 @@ export function RequestsInboxModal({
                   renderItem={({ item }) => {
                     const days = calculateDaysRemaining(item.expires_at);
                     const isActing = actingId === item.id;
-                    const fromUsername = item.sender_profile?.username ?? 'user';
+                    const fromName =
+                      item.sender_profile?.nickname?.trim() ||
+                      (item.sender_profile?.username
+                        ? `@${item.sender_profile.username}`
+                        : t('requestIdentity.unavailable'));
                     const typeLabel =
                       item.type === 'invitation'
                         ? t('rooms.inboxModal.typeRoomInvitation')
@@ -211,7 +215,7 @@ export function RequestsInboxModal({
                                   })}
                             </Text>
                             <Text style={[styles.cardSubtitle, { color: colors.textMuted }]}>
-                              {t('rooms.inboxModal.fromUser', { username: fromUsername })}
+                              {t('requestIdentity.from', { name: fromName })}
                             </Text>
                           </View>
                           <Text style={[styles.expiryText, { color: colors.textMuted }]}>
@@ -229,7 +233,7 @@ export function RequestsInboxModal({
                               { backgroundColor: colors.surface },
                             ]}
                             accessibilityRole="button"
-                            accessibilityLabel={`Decline request from @${fromUsername}`}
+                            accessibilityLabel={t('requestIdentity.decline', { name: fromName })}
                             testID={`btn-decline-req-${item.id}`}
                           >
                             <Text style={[styles.actionBtnText, { color: colors.textMuted }]}>
@@ -246,7 +250,7 @@ export function RequestsInboxModal({
                               { backgroundColor: colors.accent },
                             ]}
                             accessibilityRole="button"
-                            accessibilityLabel={`Accept request from @${fromUsername}`}
+                            accessibilityLabel={t('requestIdentity.accept', { name: fromName })}
                             testID={`btn-accept-req-${item.id}`}
                           >
                             {isActing ? (
@@ -303,8 +307,11 @@ export function RequestsInboxModal({
                 keyExtractor={(item) => item.id}
                 renderItem={({ item }) => {
                   const isActing = actingId === item.id;
-                  const toUsername =
-                    item.recipient_profile?.username ?? item.room_name ?? 'partner';
+                  const toName =
+                    item.recipient_profile?.nickname?.trim() ||
+                    (item.recipient_profile?.username
+                      ? `@${item.recipient_profile.username}`
+                      : (item.room_name ?? t('requestIdentity.unavailable')));
                   const typeLabel =
                     item.type === 'invitation'
                       ? t('rooms.inboxModal.typeRoomInvitation')
@@ -349,7 +356,7 @@ export function RequestsInboxModal({
                                 })}
                           </Text>
                           <Text style={[styles.cardSubtitle, { color: colors.textMuted }]}>
-                            {t('rooms.inboxModal.toUser', { username: toUsername })}
+                            {t('requestIdentity.to', { name: toName })}
                           </Text>
                         </View>
                         <View style={[styles.statusPill, { backgroundColor: colors.surface }]}>

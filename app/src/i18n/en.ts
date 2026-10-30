@@ -1,5 +1,30 @@
 import { challengeMessages } from './challengeMessages';
 export const en = {
+  repairUnits: { cm: 'cm', ftIn: 'ft / inch', ft: 'ft', inch: 'inch' },
+  customMacros: {
+    title: 'Custom macros',
+    locked: 'Available with Plus and Pro',
+    description:
+      'Enter your daily grams. Calories come from these macros. Override to use them from today, or keep your current goals.',
+    current: 'Current: {calories} kcal · {protein} g protein · {carbs} g carbs · {fat} g fat',
+    protein: 'Protein (g)',
+    carbs: 'Carbs (g)',
+    fat: 'Fat (g)',
+    total: 'New daily goal: {calories} kcal',
+    override: 'Override current goals',
+    keep: 'Keep current goals',
+    saving: 'Saving goals',
+    invalid:
+      'Use whole grams. Keep calories above your safety minimum, within 1% weekly weight change, and consistent with your current goal. Maintenance calories must match your current maintenance target.',
+    error: 'Your goals could not be saved. Try again.',
+  },
+  requestIdentity: {
+    unavailable: 'A member',
+    from: 'From {name}',
+    to: 'To {name}',
+    accept: 'Accept request from {name}',
+    decline: 'Decline request from {name}',
+  },
   chatAudit: {
     actionError: 'Could not complete that action. Check your connection and try again.',
     typingOne: '{names} is typing',

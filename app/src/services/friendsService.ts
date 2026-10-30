@@ -117,7 +117,13 @@ export async function saveSocialProfile(
   if (db.withTransactionAsync) await db.withTransactionAsync(write);
   else await write();
 }
-export function queueFriendRequest(db: SocialDb, owner: string, target: string) {
+export async function queueFriendRequest(db: SocialDb, owner: string, target: string) {
+  const existing = (await socialOutbox(db, owner)).find(
+    (item) =>
+      item.rpc_name === 'send_friend_request' &&
+      (JSON.parse(item.payload) as { p_recipient_id?: string }).p_recipient_id === target,
+  );
+  if (existing) return existing.id;
   const id = generateClientUuid();
   return enqueue(
     db,

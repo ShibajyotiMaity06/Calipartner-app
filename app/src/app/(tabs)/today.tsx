@@ -1,12 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import {
-  ActivityIndicator,
-  Pressable,
-  RefreshControl,
-  ScrollView,
-  StyleSheet,
-  View,
-} from 'react-native';
+import { Pressable, RefreshControl, ScrollView, StyleSheet, View } from 'react-native';
 import { useRouter, type Href } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import Svg, { Circle } from 'react-native-svg';
@@ -20,6 +13,7 @@ import {
 } from '@calipartner/core';
 import { dark, radius, space, Text } from '@calipartner/ui';
 import { CaliPartnerLogo } from '@/components/brand/CaliPartnerLogo';
+import { LoadingState } from '@/components/LoadingState';
 import { MonthlyPlanCheckIn } from '@/components/profile/MonthlyPlanCheckIn';
 import { CaloriesDetailSheet } from '@/components/diary/CaloriesDetailSheet';
 import { CopyMealModal } from '@/components/diary/CopyMealModal';
@@ -571,10 +565,7 @@ export default function TodayScreen() {
 
           {diaryLoading ? (
             <View style={styles.loadingBox}>
-              <ActivityIndicator color={dark.apricot} size="small" />
-              <Text variant="micro" color={dark.textLo} style={{ marginTop: 6 }}>
-                {t('common.loading')}
-              </Text>
+              <LoadingState />
             </View>
           ) : (
             <View style={styles.mealsContainer} testID="meals-section">

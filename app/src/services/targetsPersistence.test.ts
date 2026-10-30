@@ -21,6 +21,7 @@ function nativeDb(): TargetsDb {
   const sql = new DatabaseSync(':memory:');
   sql.exec(migrations.find((migration) => migration.version === 3)!.sql);
   sql.exec(migrations.find((migration) => migration.version === 12)!.sql);
+  sql.exec(migrations.find((migration) => migration.version === 16)!.sql);
   sql.exec(
     `CREATE TABLE outbox (id TEXT PRIMARY KEY, entity TEXT, operation TEXT, payload TEXT, created_at TEXT, attempts INTEGER, last_error TEXT)`,
   );
@@ -99,6 +100,15 @@ afterEach(() => vi.unstubAllGlobals());
 
 describe.each(['native SQLite', 'browser persistence'])('saved targets: %s', (platform) => {
   const open = () => (platform === 'native SQLite' ? nativeDb() : createWebDb());
+
+  it('retains custom macro provenance and exact goals after an offline restart', async () => {
+    let db = open();
+    const custom = { ...goal, custom_macros: true };
+    await saveGoalProfileWithSync(db, null, custom, false);
+    if (platform === 'browser persistence') db = createWebDb();
+    expect(await getCurrentLocalGoalProfile(db, custom.user_id)).toMatchObject(custom);
+    expect(await db.getAllAsync('SELECT * FROM outbox')).toHaveLength(1);
+  });
 
   it('recovers account-scoped drafts without uploading them or retaining stale calculations', async () => {
     let db = open();

@@ -16,6 +16,7 @@ import { cs, CButton, CSheet } from './ChallengeUI';
 import { CreateChallengeModal } from './CreateChallengeModal';
 import { ChallengeDetailModal } from './ChallengeDetailModal';
 import { OccasionPlanModal } from './OccasionPlanModal';
+import { LoadingState } from '@/components/LoadingState';
 
 export function ChallengesView({ testID = 'challenges-view' }: { testID?: string }) {
   const state = useChallenges();
@@ -50,9 +51,11 @@ export function ChallengesView({ testID = 'challenges-view' }: { testID?: string
     return (
       <View style={cs.home} testID={testID}>
         <Text style={cs.title}>{ct('title')}</Text>
-        <Text style={cs.body}>
-          {ct(state.loading ? 'loading' : !state.isOnline ? 'offlineEmpty' : 'error')}
-        </Text>
+        {state.loading ? (
+          <LoadingState />
+        ) : (
+          <Text style={cs.body}>{ct(!state.isOnline ? 'offlineEmpty' : 'error')}</Text>
+        )}
         {!state.loading && (
           <CButton
             label={ct('retry')}
@@ -442,7 +445,7 @@ export function ChallengesView({ testID = 'challenges-view' }: { testID?: string
         >
           <Text style={cs.small}>{ct('publicBoard')}</Text>
           {boardLoading ? (
-            <Text style={cs.body}>{ct('loading')}</Text>
+            <LoadingState />
           ) : boardError ? (
             <Text accessibilityRole="alert" style={cs.error}>
               {ct('error')}

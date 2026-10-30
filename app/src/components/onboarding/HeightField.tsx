@@ -63,7 +63,7 @@ export function HeightField({
               variant="bodyS"
               color={unit === next ? colors.onBrand : colors.textHi}
             >
-              {t(next === 'cm' ? 'setup.heightCm' : 'setup.heightFeet')}
+              {t(next === 'cm' ? 'repairUnits.cm' : 'repairUnits.ftIn')}
             </Text>
           </Pressable>
         ))}
@@ -79,7 +79,7 @@ export function HeightField({
         <View style={planStyles.row}>
           <View style={planStyles.flex}>
             <NumberField
-              label={t('setup.feet')}
+              label={t('repairUnits.ft')}
               value={feet}
               onChange={(next) => updateImperial(next, inches)}
               testID="input-height-ft"
@@ -87,7 +87,7 @@ export function HeightField({
           </View>
           <View style={planStyles.flex}>
             <NumberField
-              label={t('setup.inches')}
+              label={t('repairUnits.inch')}
               value={inches}
               onChange={(next) => updateImperial(feet, next)}
               testID="input-height-in"

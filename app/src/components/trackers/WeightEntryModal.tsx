@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import type { WeightLog } from '@calipartner/core';
@@ -38,6 +38,7 @@ export function WeightEntryModal({
   const [notesText, setNotesText] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const savingRef = useRef(false);
 
   const kgToLb = (kg: number) => Math.round(kg * 2.20462 * 10) / 10;
   const lbToKg = (lb: number) => Math.round((lb / 2.20462) * 10) / 10;
@@ -53,6 +54,7 @@ export function WeightEntryModal({
       setNotesText('');
     }
     setError(null);
+    setUnit('kg');
   }, [initialEntry, defaultDate, currentWeight, visible]);
 
   const handleUnitToggle = (newUnit: 'kg' | 'lb') => {
@@ -69,8 +71,9 @@ export function WeightEntryModal({
   };
 
   const handleSubmit = async () => {
+    if (savingRef.current) return;
     const rawVal = parseFloat(weightText.trim());
-    if (isNaN(rawVal)) {
+    if (!Number.isFinite(rawVal)) {
       setError(t('trackers.weight.invalidWeight'));
       return;
     }
@@ -82,12 +85,17 @@ export function WeightEntryModal({
     }
 
     const trimmedDate = dateText.trim();
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(trimmedDate)) {
+    if (
+      !/^\d{4}-\d{2}-\d{2}$/.test(trimmedDate) ||
+      !Number.isFinite(Date.parse(trimmedDate)) ||
+      new Date(trimmedDate).toISOString().slice(0, 10) !== trimmedDate
+    ) {
       setError(t('trackers.weight.invalidDate'));
       return;
     }
 
     try {
+      savingRef.current = true;
       setSaving(true);
       setError(null);
       await onSave(weightKg, notesText.trim() || undefined, trimmedDate);
@@ -95,6 +103,7 @@ export function WeightEntryModal({
     } catch {
       setError(t('common.errorBody'));
     } finally {
+      savingRef.current = false;
       setSaving(false);
     }
   };

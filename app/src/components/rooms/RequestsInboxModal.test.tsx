@@ -45,6 +45,12 @@ describe('free room invitations', () => {
       status: 'pending',
       expires_at: '2099-01-01',
       created_at: '2026-10-24',
+      sender_profile: {
+        id: 'host',
+        username: 'host_handle',
+        nickname: 'Host name',
+        avatar_url: null,
+      },
     };
     await act(async () => {
       renderer = create(
@@ -63,6 +69,9 @@ describe('free room invitations', () => {
       await renderer.root.findByProps({ testID: 'btn-accept-req-invite' }).props.onPress();
     });
     expect(respond).toHaveBeenCalledWith('invite', true);
+    expect(
+      renderer.root.findByProps({ testID: 'btn-accept-req-invite' }).props.accessibilityLabel,
+    ).toBe('Accept request from Host name');
     expect(paywall).not.toHaveBeenCalled();
     await act(async () => renderer.unmount());
   });

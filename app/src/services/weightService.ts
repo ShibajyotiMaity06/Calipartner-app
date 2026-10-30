@@ -14,6 +14,22 @@ import { enqueueOutbox, type SyncDb } from './syncService';
 
 const log = createLogger('weightService');
 
+function validWeightDate(date: string): boolean {
+  return (
+    /^\d{4}-\d{2}-\d{2}$/.test(date) &&
+    Number.isFinite(Date.parse(date)) &&
+    new Date(date).toISOString().slice(0, 10) === date
+  );
+}
+
+async function persistWeightMutation(db: SyncDb, work: () => Promise<void>) {
+  const transactional = db as SyncDb & {
+    withTransactionAsync?: (work: () => Promise<void>) => Promise<void>;
+  };
+  if (transactional.withTransactionAsync) await transactional.withTransactionAsync(work);
+  else await work();
+}
+
 export interface RawWeightRow {
   id: string;
   user_id: string;
@@ -51,35 +67,41 @@ export async function logWeight(
   loggedAt?: string,
   notes?: string | null,
 ): Promise<WeightLog> {
+  if (!Number.isFinite(weightKg) || weightKg < 20 || weightKg > 500)
+    throw new Error('INVALID_WEIGHT');
   const now = new Date().toISOString();
   const id = generateClientUuid();
   const date = localDate ?? now.split('T')[0]!;
+  if (!validWeightDate(date)) throw new Error('INVALID_DATE');
   const time = loggedAt ?? now;
 
-  await db.runAsync(
-    `INSERT INTO local_weight_logs (
+  const persist = async () => {
+    await db.runAsync(
+      `INSERT INTO local_weight_logs (
       id, user_id, weight_kg, logged_at, local_date, notes, created_at, updated_at, deleted_at, sync_state
     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, NULL, 'pending')`,
-    [id, userId, weightKg, time, date, notes ?? null, now, now],
-  );
+      [id, userId, weightKg, time, date, notes ?? null, now, now],
+    );
 
-  await enqueueOutbox(db, {
-    id,
-    entity: 'weight_logs',
-    operation: 'upsert',
-    payload: {
+    await enqueueOutbox(db, {
       id,
-      user_id: userId,
-      weight_kg: weightKg,
-      logged_at: time,
-      local_date: date,
-      notes: notes ?? null,
-      created_at: now,
-      updated_at: now,
-    },
-  });
+      entity: 'weight_logs',
+      operation: 'upsert',
+      payload: {
+        id,
+        user_id: userId,
+        weight_kg: weightKg,
+        logged_at: time,
+        local_date: date,
+        notes: notes ?? null,
+        created_at: now,
+        updated_at: now,
+      },
+    });
+  };
+  await persistWeightMutation(db, persist);
 
-  log.info(`Logged weight ${weightKg} kg for ${userId} on ${date}`);
+  log.info('Weight entry saved locally');
   return {
     id,
     user_id: userId,
@@ -103,6 +125,38 @@ export async function getWeightLogs(db: SyncDb, userId: string, limit = 100): Pr
      ORDER BY local_date DESC, logged_at DESC
      LIMIT ?`,
     [userId, limit],
+  );
+  // Earlier Log-menu saves interchanged notes and date. Recover the original date and reuse
+  // the existing UUID so failed offline uploads can retry without creating another weigh-in.
+  for (const row of rows) {
+    if (validWeightDate(row.local_date) || !row.notes || !validWeightDate(row.notes)) continue;
+    const repaired = {
+      ...row,
+      local_date: row.notes,
+      notes: row.local_date,
+      updated_at: new Date().toISOString(),
+    };
+    await persistWeightMutation(db, async () => {
+      await db.runAsync(
+        "UPDATE local_weight_logs SET local_date = ?, notes = ?, updated_at = ?, sync_state = 'pending' WHERE id = ? AND user_id = ?",
+        [repaired.local_date, repaired.notes, repaired.updated_at, row.id, userId],
+      );
+      await enqueueOutbox(db, {
+        id: row.id,
+        entity: 'weight_logs',
+        operation: 'upsert',
+        payload: { ...mapRowToWeightLog(repaired) },
+      });
+      await db.runAsync('UPDATE outbox SET attempts = ?, last_error = ? WHERE id = ?', [
+        0,
+        null,
+        row.id,
+      ]);
+    });
+    Object.assign(row, repaired);
+  }
+  rows.sort(
+    (a, b) => b.local_date.localeCompare(a.local_date) || b.logged_at.localeCompare(a.logged_at),
   );
   return rows.map(mapRowToWeightLog);
 }

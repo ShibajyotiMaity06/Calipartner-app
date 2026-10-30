@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import type { WeightLog, WeightTrendPoint } from '@calipartner/core';
+import { challengeLocalDate, type WeightLog, type WeightTrendPoint } from '@calipartner/core';
 import { getDb } from '@/db';
 import {
   deleteWeightLog,
@@ -9,6 +9,7 @@ import {
   logWeight as logWeightService,
 } from '@/services/weightService';
 import { useTargets } from './useTargets';
+import { useAuth } from '@/contexts/AuthContext';
 
 export interface UseWeightResult {
   logs: WeightLog[];
@@ -27,6 +28,8 @@ export interface UseWeightResult {
 }
 
 export function useWeight(): UseWeightResult {
+  const { user, profile } = useAuth();
+  const userId = user?.id ?? 'guest-user';
   const { currentGoalProfile } = useTargets();
 
   const [logs, setLogs] = useState<WeightLog[]>([]);
@@ -45,7 +48,6 @@ export function useWeight(): UseWeightResult {
     try {
       setLoading(true);
       const db = await getDb();
-      const userId = currentGoalProfile?.user_id ?? 'guest-user';
 
       const [fetchedLogs, summary] = await Promise.all([
         getWeightLogs(db, userId, 100),
@@ -68,11 +70,7 @@ export function useWeight(): UseWeightResult {
     } finally {
       setLoading(false);
     }
-  }, [
-    currentGoalProfile?.user_id,
-    currentGoalProfile?.current_weight_kg,
-    currentGoalProfile?.target_weight_kg,
-  ]);
+  }, [userId, currentGoalProfile?.current_weight_kg, currentGoalProfile?.target_weight_kg]);
 
   useEffect(() => {
     void loadData();
@@ -80,8 +78,14 @@ export function useWeight(): UseWeightResult {
 
   const logWeight = async (weightKg: number, date?: string, notes?: string): Promise<WeightLog> => {
     const db = await getDb();
-    const userId = currentGoalProfile?.user_id ?? 'guest-user';
-    const created = await logWeightService(db, userId, weightKg, date, undefined, notes);
+    const created = await logWeightService(
+      db,
+      userId,
+      weightKg,
+      date ?? challengeLocalDate(new Date(), profile?.timezone ?? 'UTC'),
+      undefined,
+      notes,
+    );
     await loadData();
     return created;
   };
@@ -92,7 +96,6 @@ export function useWeight(): UseWeightResult {
     notes?: string,
   ): Promise<WeightLog | null> => {
     const db = await getDb();
-    const userId = currentGoalProfile?.user_id ?? 'guest-user';
     const edited = await editWeightLog(db, userId, id, weightKg, notes);
     await loadData();
     return edited;
@@ -100,7 +103,6 @@ export function useWeight(): UseWeightResult {
 
   const deleteWeight = async (id: string): Promise<WeightLog | null> => {
     const db = await getDb();
-    const userId = currentGoalProfile?.user_id ?? 'guest-user';
     const deleted = await deleteWeightLog(db, userId, id);
     await loadData();
     return deleted;

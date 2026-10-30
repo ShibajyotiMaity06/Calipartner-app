@@ -49,7 +49,8 @@ export function useChallenges() {
         setLoading(!!isOnline);
       }
       if (isOnline) {
-        await flushChallenges(db, getSupabase(), id);
+        // Reading is independent of an unavailable queued upload/reset check.
+        await flushChallenges(db, getSupabase(), id).catch(() => undefined);
         const fresh = await loadChallenges(db, getSupabase(), id);
         if (owner.current !== id) return;
         setHome(fresh);

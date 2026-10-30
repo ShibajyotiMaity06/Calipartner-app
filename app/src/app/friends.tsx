@@ -11,6 +11,7 @@ import { CommunityPanel } from '@/components/friends/CommunityPanel';
 import { useFriends } from '@/hooks/useFriends';
 import { useAuth } from '@/contexts/AuthContext';
 import { t } from '@/i18n';
+import { LoadingState } from '@/components/LoadingState';
 
 export default function FriendsScreen() {
   const { user } = useAuth();
@@ -78,9 +79,7 @@ function FriendsView() {
               onEdit={() => setEditing(true)}
               onNotifications={() => router.push('/notifications/settings' as never)}
             />
-            {friends.loading ? (
-              <Text accessibilityLiveRegion="polite">{t('common.loading')}</Text>
-            ) : null}
+            {friends.loading ? <LoadingState /> : null}
             {friends.cached ? <Text variant="bodyS">{t('friends.cached')}</Text> : null}
             {friends.error ? (
               <Text accessibilityRole="alert" color={colors.danger}>

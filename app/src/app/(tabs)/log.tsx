@@ -192,8 +192,7 @@ export default function LogScreen() {
           hasEnoughTrend={false}
           onClose={handleCloseAll}
           onSave={async (weightKg, notes, date) => {
-            await logWeight(weightKg, notes, date);
-            handleCloseAll();
+            await logWeight(weightKg, date, notes);
           }}
         />
       )}

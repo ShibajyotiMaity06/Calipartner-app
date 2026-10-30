@@ -229,7 +229,7 @@ export function createWebDb(): SQLite.SQLiteDatabase {
       }
 
       if (lower.startsWith('update')) {
-        const match = sql.match(/update\s+([a-zA-Z0-9_]+)\s+set\s+(.+?)\s+where\s+(.+)$/i);
+        const match = sql.match(/update\s+([a-zA-Z0-9_]+)\s+set\s+(.+?)\s+where\s+(.+)$/is);
         if (match) {
           const table = match[1]!;
           const list = memory[table] || [];
@@ -256,7 +256,19 @@ export function createWebDb(): SQLite.SQLiteDatabase {
           }
 
           if (table === 'local_weight_logs') {
-            if (lower.includes('deleted_at = ?')) {
+            if (lower.includes('local_date = ?')) {
+              const [localDate, notes, updatedAt, id, userId] = params;
+              const item = list.find((r) => r.id === id && r.user_id === userId);
+              if (item) {
+                Object.assign(item, {
+                  local_date: localDate,
+                  notes,
+                  updated_at: updatedAt,
+                  sync_state: 'pending',
+                });
+                changes++;
+              }
+            } else if (lower.includes('deleted_at = ?')) {
               const [deletedAt, updatedAt, id, userId] = params;
               const item = list.find((r) => r.id === id && r.user_id === userId);
               if (item) {
@@ -581,8 +593,10 @@ export function createWebDb(): SQLite.SQLiteDatabase {
       if (lower.includes('from local_weight_logs')) {
         const [userId, localDate] = params as [string, string];
         const list = memory.local_weight_logs || [];
-        const found = list.find(
-          (r) => r.user_id === userId && r.local_date === localDate && !r.deleted_at,
+        const found = list.find((r) =>
+          lower.includes('where id = ?')
+            ? r.id === params[0] && r.user_id === params[1]
+            : r.user_id === userId && r.local_date === localDate && !r.deleted_at,
         );
         return (found as unknown as T) || null;
       }

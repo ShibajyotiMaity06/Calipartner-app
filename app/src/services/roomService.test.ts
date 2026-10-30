@@ -203,6 +203,16 @@ describe('roomService unit tests with mocked Supabase', () => {
 
   it('6. getRequestsInbox maps incoming and outgoing requests with profiles', async () => {
     const mockClient = createMockSupabase({
+      rpcHandler: async (name) => {
+        expect(name).toBe('get_request_identities');
+        return {
+          data: [
+            { id: 'u-friend', username: 'friend_user', nickname: 'Friend', avatar_url: null },
+            { id: 'u-other', username: 'other_user', nickname: 'Other', avatar_url: null },
+          ],
+          error: null,
+        };
+      },
       user: { id: 'u-me', email: 'me@example.com' },
       fromHandler: (table: string) => {
         if (table === 'room_requests') {
@@ -240,19 +250,7 @@ describe('roomService unit tests with mocked Supabase', () => {
             }),
           };
         }
-        if (table === 'profiles') {
-          return {
-            select: vi.fn().mockReturnValue({
-              in: vi.fn().mockResolvedValue({
-                data: [
-                  { id: 'u-friend', username: 'friend_user', nickname: 'Friend', avatar_url: null },
-                  { id: 'u-other', username: 'other_user', nickname: 'Other', avatar_url: null },
-                ],
-                error: null,
-              }),
-            }),
-          };
-        }
+        if (table === 'profiles') throw new Error('Peer base table must not be read');
         return {};
       },
     });

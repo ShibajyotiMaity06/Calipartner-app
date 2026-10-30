@@ -255,6 +255,33 @@ describe('Phase 4 Trackers - Water Service & Offline Sync', () => {
 });
 
 describe('Phase 4 Trackers - Weight Service & Derived Trends', () => {
+  it('rejects notes passed in the date position and impossible calendar dates before persisting', async () => {
+    const db = createTestDb();
+    for (const date of ['Morning check-in', '2026-02-30', '2026-13-01']) {
+      await expect(logWeight(db, 'user-1', 80, date)).rejects.toThrow('INVALID_DATE');
+    }
+    expect(await getWeightLogs(db, 'user-1')).toHaveLength(0);
+  });
+  it('recovers the previous swapped date/notes bug using the original UUID and retries the outbox', async () => {
+    const db = createTestDb();
+    const entry = await logWeight(db, 'user-1', 80, '2026-10-05', undefined, 'Morning check-in');
+    await db.runAsync('UPDATE local_weight_logs SET local_date = ?, notes = ? WHERE id = ?', [
+      'Morning check-in',
+      '2026-10-05',
+      entry.id,
+    ]);
+    const recovered = await getWeightLogs(db, 'user-1');
+    expect(recovered[0]).toMatchObject({
+      id: entry.id,
+      local_date: '2026-10-05',
+      notes: 'Morning check-in',
+    });
+    expect(await getPendingOutboxItems(db)).toHaveLength(1);
+    expect((await getPendingOutboxItems(db))[0]?.payload).toMatchObject({
+      local_date: '2026-10-05',
+      notes: 'Morning check-in',
+    });
+  });
   it('logs weights and computes 7-day moving average and weekly pace', async () => {
     const db = createTestDb();
 

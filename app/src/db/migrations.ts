@@ -577,4 +577,9 @@ export const migrations: readonly LocalMigration[] = [
       CREATE TABLE local_challenge_outbox (id TEXT PRIMARY KEY NOT NULL, owner_id TEXT NOT NULL, payload TEXT NOT NULL, status TEXT NOT NULL, last_error TEXT, created_at TEXT NOT NULL);
       CREATE INDEX local_challenge_pending ON local_challenge_outbox(owner_id,created_at);`,
   },
+  {
+    version: 16,
+    name: 'custom_macro_goals',
+    sql: 'ALTER TABLE local_goal_profiles ADD COLUMN custom_macros INTEGER NOT NULL DEFAULT 0;',
+  },
 ];

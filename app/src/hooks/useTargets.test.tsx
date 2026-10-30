@@ -8,6 +8,7 @@ const stored = vi.hoisted(() => ({
   remote: null as GoalProfile | null,
   failRestore: false,
   restore: vi.fn(),
+  flush: vi.fn(),
 }));
 vi.mock('react-native', () => ({ AppState: { addEventListener: () => ({ remove: vi.fn() }) } }));
 vi.mock('@/contexts/AuthContext', () => ({ useAuth: () => ({ user: { id: stored.userId } }) }));
@@ -16,7 +17,7 @@ vi.mock('@/db', () => ({ getDb: async () => ({}) }));
 vi.mock('@/lib/supabase', () => ({ getSupabase: () => ({}) }));
 vi.mock('@/services/targetsService', () => ({
   repairLegacyGoalProfile: vi.fn(),
-  flushTargetsOutbox: vi.fn(),
+  flushTargetsOutbox: stored.flush,
   getLocalHealthScreening: async () => null,
   getCurrentLocalGoalProfile: async (_db: unknown, userId: string) =>
     stored.profiles.get(userId) ?? null,
@@ -64,6 +65,7 @@ beforeEach(() => {
   stored.userId = 'user-a';
   stored.failRestore = false;
   vi.clearAllMocks();
+  stored.flush.mockResolvedValue({ flushedCount: 0 });
   (globalThis as unknown as { IS_REACT_ACT_ENVIRONMENT: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 });
 afterEach(async () => {
@@ -100,6 +102,16 @@ describe('shared persisted targets', () => {
     });
     expect(today.currentGoalProfile).toEqual(saved);
     expect(today.error).toBe('Offline');
+  });
+
+  it('restores saved server goals when the queued upload check is unavailable', async () => {
+    stored.remote = saved;
+    stored.flush.mockRejectedValueOnce(new Error('RESET_CHECK_UNAVAILABLE'));
+    await act(async () => {
+      renderer = create(tree());
+    });
+    expect(today.currentGoalProfile).toEqual(saved);
+    expect(today.error).toBeNull();
   });
 
   it('changing daily step/water goals preserves custom macro targets', async () => {

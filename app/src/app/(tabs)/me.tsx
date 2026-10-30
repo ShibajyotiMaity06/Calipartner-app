@@ -32,6 +32,8 @@ import {
   UnitsLanguageModal,
 } from '@/components/profile';
 import { ProfileRow, ProfileShortcut, SettingsGroup } from '@/components/profile/CompactSettings';
+import { CustomMacrosModal } from '@/components/profile/CustomMacrosModal';
+import { LoadingState } from '@/components/LoadingState';
 import { useAuth } from '@/contexts/AuthContext';
 import { useFriends } from '@/hooks/useFriends';
 import { useRooms } from '@/hooks/useRooms';
@@ -69,6 +71,7 @@ export default function MeScreen() {
   const [showAvatarPicker, setShowAvatarPicker] = useState(false);
   const [showGoalsBody, setShowGoalsBody] = useState(false);
   const [showDailyGoals, setShowDailyGoals] = useState(false);
+  const [showCustomMacros, setShowCustomMacros] = useState(false);
   const [showPerRoomVisibility, setShowPerRoomVisibility] = useState(false);
   const [showPreviewPartner, setShowPreviewPartner] = useState(false);
   const [showDiscoverability, setShowDiscoverability] = useState(false);
@@ -147,9 +150,7 @@ export default function MeScreen() {
             </Card>
           ) : (
             <Card elevation="s1" style={styles.profileCard}>
-              {isLoading ? (
-                <Text accessibilityLiveRegion="polite">{t('common.loading')}</Text>
-              ) : null}
+              {isLoading ? <LoadingState /> : null}
               {profileError ? (
                 <>
                   <Text accessibilityRole="alert" color={dark.danger}>
@@ -249,8 +250,16 @@ export default function MeScreen() {
               disabled={!currentGoalProfile}
               testID="row-daily-goals"
             />
+            <ProfileRow
+              title={t('customMacros.title')}
+              subtitle={t('customMacros.locked')}
+              icon="nutrition-outline"
+              onPress={() => setShowCustomMacros(true)}
+              disabled={!currentGoalProfile || !profile}
+              testID="row-custom-macros"
+            />
           </Card>
-          {targetsError ? (
+          {targetsError && !currentGoalProfile ? (
             <Text accessibilityRole="alert" color={dark.danger}>
               {t('compactProfile.goalsError')}
             </Text>
@@ -440,6 +449,13 @@ export default function MeScreen() {
           }}
         />
 
+        {showCustomMacros && currentGoalProfile && profile && (
+          <CustomMacrosModal
+            goal={currentGoalProfile}
+            sex={profile.sex}
+            onClose={() => setShowCustomMacros(false)}
+          />
+        )}
         {showGoalsBody && currentGoalProfile && profile && (
           <GoalsAndBodyModal
             visible={showGoalsBody}

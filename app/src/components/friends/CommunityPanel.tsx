@@ -15,6 +15,7 @@ import type { SocialProfile } from '@calipartner/core';
 import { useFriendDiscovery } from '@/hooks/useFriendDiscovery';
 import type { useFriends } from '@/hooks/useFriends';
 import { t } from '@/i18n';
+import { LoadingState } from '@/components/LoadingState';
 
 type FriendsState = ReturnType<typeof useFriends>;
 type Tab = 'discover' | 'requests' | 'friends';
@@ -246,9 +247,7 @@ export function CommunityPanel({
           {t('community.tapProfile')}
         </Text>
       </View>
-      {tab === 'discover' && discovery.loading ? (
-        <Text accessibilityLiveRegion="polite">{t('common.loading')}</Text>
-      ) : null}
+      {tab === 'discover' && discovery.loading ? <LoadingState /> : null}
       {tab === 'discover' && discovery.cached ? <Text>{t('friends.cached')}</Text> : null}
       {tab === 'discover' && discovery.error ? (
         <>

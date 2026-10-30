@@ -11,6 +11,9 @@ import {
 import { AppState } from 'react-native';
 import {
   calculateTargets,
+  customMacroTargets,
+  type CustomMacros,
+  type Sex,
   shouldRecomputeTargets,
   type ActivityLevel,
   type CalculateTargetsInput,
@@ -77,7 +80,8 @@ function useTargetsState() {
       // If online, logged in and supabase configured, flush outbox queue in background
       if (online && user?.id) {
         const supabase = getSupabase();
-        await flushTargetsOutbox(db, supabase, user.id);
+        // A temporarily unavailable upload/reset check must not prevent reading saved goals.
+        await flushTargetsOutbox(db, supabase, user.id).catch(() => undefined);
         const restored = await restoreGoalProfile(db, supabase, user.id);
         if (ownerRef.current === effectiveUserId) {
           setState((prev) => ({
@@ -209,6 +213,28 @@ function useTargetsState() {
     [effectiveUserId, saveGoalProfile, state.currentGoalProfile],
   );
 
+  const updateCustomMacros = useCallback(
+    async (macros: CustomMacros, sex: Sex) => {
+      const current = state.currentGoalProfile;
+      if (!current || current.user_id !== effectiveUserId)
+        throw new Error('Saved targets unavailable');
+      const next = customMacroTargets(macros, current, sex);
+      const now = new Date().toISOString();
+      const result = await saveGoalProfile({
+        ...current,
+        ...next,
+        id: generateClientUuid(),
+        effective_from: now,
+        confirmed_at: now,
+        created_at: now,
+        recompute_reason: 'manual_edit',
+      });
+      if (!result.success) throw new Error(result.error);
+      return result;
+    },
+    [effectiveUserId, saveGoalProfile, state.currentGoalProfile],
+  );
+
   /**
    * Checks if recalculation triggers are met based on PRD 7.2:
    * Weight change >= 2 kg or manual edit to goal, rate, or activity level.
@@ -244,6 +270,7 @@ function useTargetsState() {
     calculate,
     saveGoalProfile,
     updateDailyGoals,
+    updateCustomMacros,
     saveScreening,
     checkRecompute,
     refresh: loadLocalData,

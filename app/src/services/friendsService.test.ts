@@ -206,6 +206,12 @@ describe.each(['native SQLite', 'browser persistence'])('friends offline: %s', (
     expect(rpc).not.toHaveBeenCalled();
     expect((await socialOutbox(db, self.id))[0]?.status).toBe('pending');
   });
+  it('reuses a pending request when sending to the same friend again', async () => {
+    const db = open();
+    const first = await queueFriendRequest(db, self.id, friend.id);
+    expect(await queueFriendRequest(db, self.id, friend.id)).toBe(first);
+    expect(await socialOutbox(db, self.id)).toHaveLength(1);
+  });
   it('keeps server quota failures visible without retrying or letting another owner dismiss them', async () => {
     const db = open();
     const id = await queueFriendRequest(db, self.id, friend.id);

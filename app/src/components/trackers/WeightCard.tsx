@@ -1,19 +1,12 @@
 import React, { useState } from 'react';
-import {
-  ActivityIndicator,
-  Modal,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
+import { Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import type { WeightLog } from '@calipartner/core';
 import { dark, radius, space, type as typeTokens } from '@calipartner/ui';
 import { useTargets } from '@/hooks/useTargets';
 import { useWeight } from '@/hooks/useWeight';
 import { t } from '@/i18n';
+import { LoadingState } from '@/components/LoadingState';
 import { AddMeasurementModal } from './AddMeasurementModal';
 import { ProgressPhotosModal } from './ProgressPhotosModal';
 import { TargetWeightEditorModal } from './TargetWeightEditorModal';
@@ -130,8 +123,7 @@ export function WeightCard({ selectedDate, testID = 'weight-card' }: WeightCardP
       {/* Loading state */}
       {loading ? (
         <View style={styles.loadingContainer} testID="weight-loading-state">
-          <ActivityIndicator size="small" color={dark.apricot} />
-          <Text style={styles.loadingText}>{t('common.loading')}</Text>
+          <LoadingState />
         </View>
       ) : (
         <>

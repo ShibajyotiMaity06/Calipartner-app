@@ -145,6 +145,7 @@ export type RecomputeReason =
   'initial_onboarding' | 'manual_edit' | 'weight_change' | 'recalibration';
 
 export interface GoalProfile {
+  custom_macros?: boolean;
   /** Null/absent retains the original calculator for historical plans. */
   gym_days?: number | null;
   input_height_cm?: number | null;

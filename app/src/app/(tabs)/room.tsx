@@ -1,6 +1,5 @@
 import React, { useCallback, useMemo, useState } from 'react';
 import {
-  ActivityIndicator,
   Modal,
   Pressable,
   RefreshControl,
@@ -13,6 +12,7 @@ import {
 import { useLocalSearchParams, useFocusEffect, useNavigation, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { Button } from '@calipartner/ui';
+import { LoadingState } from '@/components/LoadingState';
 import type { RoomMemberSnapshot } from '@calipartner/core';
 import {
   BlockUserModal,
@@ -289,10 +289,7 @@ export default function RoomScreen() {
       {/* Content Area */}
       {roomsLoading && rooms.length === 0 ? (
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={colors.accent} />
-          <Text style={[styles.loadingText, { color: colors.textMuted }]}>
-            {t('common.loading')}
-          </Text>
+          <LoadingState />
         </View>
       ) : roomsError && roomsError.code !== 'PLAN_REQUIRED' && rooms.length === 0 ? (
         /* Error State (Network, Auth, or DB Error) */
@@ -391,7 +388,7 @@ export default function RoomScreen() {
         /* Segment: Chat (Phase 8 View) */
         <View style={styles.chatWrapper}>
           {subscriptionLoading ? (
-            <Text>{t('common.loading')}</Text>
+            <LoadingState />
           ) : !hasActiveAccess ? (
             <RoomAccessNotice
               message={t('rooms.access.chatUpgrade')}

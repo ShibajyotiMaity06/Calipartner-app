@@ -123,19 +123,12 @@ export async function getRequestsInbox(client: SupabaseClient): Promise<{
     }
 
     const allRequests = (data ?? []) as unknown as RequestRow[];
-    const userIdsToFetch = new Set<string>();
-    for (const r of allRequests) {
-      if (r.sender_id) userIdsToFetch.add(r.sender_id);
-      if (r.recipient_id) userIdsToFetch.add(r.recipient_id);
-    }
-
-    // Fetch profile info for senders and recipients
     const profilesMap = new Map<string, UserSummary>();
-    if (userIdsToFetch.size > 0) {
-      const { data: profs } = await client
-        .from('profiles')
-        .select('id, username, nickname, avatar_url')
-        .in('id', Array.from(userIdsToFetch));
+    if (allRequests.length > 0) {
+      const { data: profs, error: identityError } = await client.rpc('get_request_identities', {
+        p_request_ids: allRequests.map((request) => request.id),
+      });
+      if (identityError) throw parseRoomError(identityError);
 
       for (const p of profs ?? []) {
         profilesMap.set(p.id, {

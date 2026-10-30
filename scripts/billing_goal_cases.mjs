@@ -13,7 +13,7 @@ export async function runBillingGoalTests(db) {
   ]);
   const insert = (rate, target) =>
     db.query(
-      `insert into public.goal_profiles(user_id,goal,activity_level,gym_days,input_height_cm,current_weight_kg,weekly_rate_kg,daily_calorie_target,protein_grams,fat_grams,carb_grams,bmr,tdee,effective_from,confirmed_at) values($1,'bulk','moderate',3,175,70,$2,$3,154,84,500,1700,2500,now(),now())`,
+      `insert into public.goal_profiles(user_id,goal,activity_level,gym_days,input_height_cm,current_weight_kg,weekly_rate_kg,daily_calorie_target,protein_grams,fat_grams,carb_grams,bmr,tdee,effective_from,confirmed_at) values($1,'bulk','moderate',3,175,70,$2,$3,154,84,round(($3-1372)/4.0),1700,2500,now(),now())`,
       [uid, rate, target],
     );
   await insert(2, 4700);

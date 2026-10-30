@@ -28,8 +28,6 @@ const fields = [
   ['share_weight_number', 'rooms.privacyModal.weight'],
   ['share_weight_progress', 'roomAudit.weightProgress'],
   ['share_workouts', 'rooms.privacyModal.workouts'],
-  ['share_focus_status', 'rooms.privacyModal.focusing'],
-  ['share_focus_label', 'rooms.privacyModal.focusLabels'],
   ['share_fasting', 'rooms.privacyModal.fasting'],
 ] as const;
 export function PrivacySettingsModal({

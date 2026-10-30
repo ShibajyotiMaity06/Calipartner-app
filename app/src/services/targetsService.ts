@@ -57,6 +57,7 @@ async function persistPendingGoalProfile(db: TargetsDb, profile: GoalProfile): P
 }
 
 export interface LocalGoalProfileRow {
+  custom_macros?: number;
   gym_days?: number | null;
   input_height_cm?: number | null;
   id: string;
@@ -106,8 +107,8 @@ export async function saveLocalGoalProfile(
       id, user_id, goal, activity_level, current_weight_kg, body_fat_percentage,
       weekly_rate_kg, target_weight_kg, target_date, daily_calorie_target,
       protein_grams, fat_grams, carb_grams, bmr, tdee, step_goal, water_ml_goal,
-      effective_from, confirmed_at, recompute_reason, created_at, is_synced, gym_days, input_height_cm
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      effective_from, confirmed_at, recompute_reason, created_at, is_synced, gym_days, input_height_cm, custom_macros
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     ON CONFLICT (id) DO UPDATE SET
       goal = excluded.goal,
       activity_level = excluded.activity_level,
@@ -129,7 +130,8 @@ export async function saveLocalGoalProfile(
       recompute_reason = excluded.recompute_reason,
       is_synced = excluded.is_synced,
       gym_days = excluded.gym_days,
-      input_height_cm = excluded.input_height_cm`,
+      input_height_cm = excluded.input_height_cm,
+      custom_macros = excluded.custom_macros`,
     [
       profile.id,
       profile.user_id,
@@ -155,6 +157,7 @@ export async function saveLocalGoalProfile(
       isSynced ? 1 : 0,
       profile.gym_days ?? null,
       profile.input_height_cm ?? null,
+      profile.custom_macros ? 1 : 0,
     ],
   );
 }
@@ -174,6 +177,7 @@ export async function getCurrentLocalGoalProfile(
   if (!row) return null;
 
   return {
+    ...(row.custom_macros ? { custom_macros: true } : {}),
     id: row.id,
     user_id: row.user_id,
     goal: row.goal as GoalProfile['goal'],
