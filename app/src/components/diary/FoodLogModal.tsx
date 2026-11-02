@@ -1,5 +1,5 @@
 import { PaywallModal } from '@/components/rooms/PaywallModal';
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Modal,
@@ -11,6 +11,8 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import type { Food, FoodCandidateItem, MealSection } from '@calipartner/core';
+import { scaleNutrients, sumNutrientSnapshots } from '@calipartner/core';
+import { Button, homeLayout } from '@calipartner/ui';
 import { useAuth } from '@/contexts/AuthContext';
 import { getDb } from '@/db';
 import { useFoodSearch } from '@/hooks/useFoodSearch';
@@ -43,6 +45,7 @@ import {
   FoodPhotoResultsEditor,
 } from '@/components/food_photo';
 import { RecipeBrowseView } from '@/components/recipes';
+import { DescribeMealModal } from './DescribeMealModal';
 
 export interface FoodLogModalProps {
   visible: boolean;
@@ -67,6 +70,26 @@ export function FoodLogModal({
   const { user } = useAuth();
 
   const [showPhotoPlans, setShowPhotoPlans] = useState(false);
+  const [showDescription, setShowDescription] = useState(false);
+  const [selectedFoods, setSelectedFoods] = useState<
+    Record<string, { food: Food; quantity: number; unit: string; source: 'search' | 'history' }>
+  >({});
+  const [batchSaving, setBatchSaving] = useState(false);
+  const [batchError, setBatchError] = useState(false);
+  const batchInFlight = useRef(false);
+  const toggleSelection = (
+    food: Food,
+    quantity = !food.serving_units[0] || ['g', 'ml'].includes(food.serving_units[0].unit) ? 100 : 1,
+    unit = food.serving_units[0]?.unit ?? 'g',
+    source: 'search' | 'history' = 'search',
+  ) => {
+    setSelectedFoods((current) => {
+      const next = { ...current };
+      if (next[food.id]) delete next[food.id];
+      else next[food.id] = { food, quantity, unit, source };
+      return next;
+    });
+  };
   const [activeTab, setActiveTab] = useState<TabType>(initialTab);
   const [selectedFoodForQuantity, setSelectedFoodForQuantity] = useState<Food | null>(null);
   const [showBarcodeScanner, setShowBarcodeScanner] = useState(initialTab === 'scan');
@@ -87,6 +110,43 @@ export function FoodLogModal({
   const [consentLoading, setConsentLoading] = useState(false);
   const [photoError, setPhotoError] = useState<string | null>(null);
   const { addEntry, error: saveError } = useAddEntry();
+  const selection = Object.values(selectedFoods);
+  const selectionTotals = sumNutrientSnapshots(
+    selection.map((item) => scaleNutrients(item.food, item.quantity, item.unit)),
+  );
+  const saveSelection = async () => {
+    if (batchInFlight.current || !selection.length) return;
+    batchInFlight.current = true;
+    setBatchSaving(true);
+    setBatchError(false);
+    try {
+      for (const item of selection) {
+        const saved = await addEntry({
+          ...item,
+          mealSection: defaultSection,
+          localDate,
+          source: item.source,
+        });
+        if (!saved) {
+          setBatchError(true);
+          return;
+        }
+        // Completed items leave the selection immediately; retry only the unsaved remainder.
+        setSelectedFoods((current) => {
+          const next = { ...current };
+          delete next[item.food.id];
+          return next;
+        });
+      }
+      onLogged?.();
+      onClose();
+    } catch {
+      setBatchError(true);
+    } finally {
+      batchInFlight.current = false;
+      setBatchSaving(false);
+    }
+  };
 
   // Search tab hook
   const { query, setQuery, results: searchResults, loading: searchLoading } = useFoodSearch();
@@ -114,6 +174,19 @@ export function FoodLogModal({
   };
 
   const handleLogFromQuantity = async (data: Parameters<typeof addEntry>[0]) => {
+    if (selectedFoods[data.food.id]) {
+      setSelectedFoods((current) => ({
+        ...current,
+        [data.food.id]: {
+          ...current[data.food.id]!,
+          food: data.food,
+          quantity: data.quantity,
+          unit: data.unit,
+        },
+      }));
+      setSelectedFoodForQuantity(null);
+      return;
+    }
     const saved = await addEntry({
       ...data,
       localDate,
@@ -289,8 +362,11 @@ export function FoodLogModal({
             </Text>
           )}
           {/* 5 Tab Navigation Bar */}
-          <View
-            style={{
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            style={{ flexGrow: 0 }}
+            contentContainerStyle={{
               flexDirection: 'row',
               borderBottomWidth: 1,
               borderBottomColor: colors.border,
@@ -312,7 +388,9 @@ export function FoodLogModal({
                       }
                     }}
                     style={{
-                      flex: 1,
+                      minWidth: homeLayout.touchSize,
+                      minHeight: homeLayout.touchSize,
+                      paddingHorizontal: spacing.sm,
                       alignItems: 'center',
                       paddingVertical: 10,
                       borderBottomWidth: isActive ? 2.5 : 0,
@@ -332,8 +410,30 @@ export function FoodLogModal({
                 );
               },
             )}
-          </View>
+          </ScrollView>
 
+          <Pressable
+            onPress={() => setShowDescription(true)}
+            accessibilityRole="button"
+            accessibilityLabel={t('homeRefresh.describe')}
+            testID="food-log-describe"
+            style={{
+              minHeight: homeLayout.touchSize,
+              justifyContent: 'center',
+              paddingHorizontal: spacing.md,
+            }}
+          >
+            <Text style={{ color: colors.accent }}>{t('homeRefresh.describe')} · Pro</Text>
+          </Pressable>
+          {showDescription && (
+            <DescribeMealModal
+              visible
+              section={defaultSection}
+              localDate={localDate}
+              onClose={() => setShowDescription(false)}
+              onLogged={onLogged}
+            />
+          )}
           {/* TAB 1: Search */}
           {activeTab === 'search' && (
             <View style={{ flex: 1, paddingHorizontal: spacing.md, gap: spacing.sm }}>
@@ -446,6 +546,28 @@ export function FoodLogModal({
                         </Text>
                       </View>
 
+                      <Pressable
+                        testID={`select-food-${f.id}`}
+                        onPress={(event) => {
+                          event.stopPropagation();
+                          toggleSelection(f);
+                        }}
+                        accessibilityRole="checkbox"
+                        accessibilityState={{ checked: Boolean(selectedFoods[f.id]) }}
+                        accessibilityLabel={t('homeRefresh.selectFood', { name: f.name })}
+                        style={{
+                          minWidth: homeLayout.touchSize,
+                          minHeight: homeLayout.touchSize,
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                        }}
+                      >
+                        <Ionicons
+                          name={selectedFoods[f.id] ? 'checkmark-circle' : 'add-circle-outline'}
+                          size={homeLayout.iconSize}
+                          color={colors.accent}
+                        />
+                      </Pressable>
                       <View style={{ alignItems: 'flex-end', gap: 2 }}>
                         <Text
                           style={{
@@ -732,6 +854,35 @@ export function FoodLogModal({
                       </Pressable>
 
                       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                        <Pressable
+                          testID={`select-history-${item.food.id}`}
+                          onPress={() =>
+                            toggleSelection(
+                              item.food,
+                              item.stats.last_quantity,
+                              item.stats.last_unit,
+                              'history',
+                            )
+                          }
+                          disabled={batchSaving}
+                          accessibilityRole="checkbox"
+                          accessibilityState={{ checked: Boolean(selectedFoods[item.food.id]) }}
+                          accessibilityLabel={t('homeRefresh.selectFood', { name: item.food.name })}
+                          style={{
+                            minWidth: homeLayout.touchSize,
+                            minHeight: homeLayout.touchSize,
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                          }}
+                        >
+                          <Ionicons
+                            name={
+                              selectedFoods[item.food.id] ? 'checkmark-circle' : 'ellipse-outline'
+                            }
+                            size={homeLayout.iconSize}
+                            color={colors.accent}
+                          />
+                        </Pressable>
                         {/* 1-tap quick add button (PRD 6.3 LOG-13) */}
                         <Pressable
                           testID={`btn-quick-add-${item.food.id}`}
@@ -812,6 +963,36 @@ export function FoodLogModal({
           )}
 
           {/* Sub-modals */}
+          {selection.length > 0 && (
+            <View
+              style={{ padding: spacing.md, gap: spacing.sm, backgroundColor: colors.surface }}
+              testID="food-selection-footer"
+            >
+              <Text style={{ color: colors.text }}>
+                {t('homeRefresh.selectedFoods', {
+                  count: selection.length,
+                  calories: Math.round(selectionTotals.calories),
+                  protein: Math.round(selectionTotals.protein),
+                })}
+              </Text>
+              {batchError && (
+                <Text style={{ color: colors.danger }} accessibilityRole="alert">
+                  {t('common.errorBody')}
+                </Text>
+              )}
+              <Button
+                variant="primary"
+                label={
+                  batchSaving
+                    ? t('common.saving')
+                    : t('homeRefresh.addSelection', { meal: t(`diary.sections.${defaultSection}`) })
+                }
+                onPress={() => void saveSelection()}
+                disabled={batchSaving}
+                testID="save-food-selection"
+              />
+            </View>
+          )}
           {selectedFoodForQuantity && (
             <QuantityModal
               visible={Boolean(selectedFoodForQuantity)}

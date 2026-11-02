@@ -1,4 +1,5 @@
 import React from 'react';
+import { homeLayout } from '@calipartner/ui';
 import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import type { RecipeFilterCriteria, RecipeMealType } from '@calipartner/core';
@@ -11,6 +12,7 @@ export interface RecipeFilterBarProps {
   onQueryChange: (q: string) => void;
   criteria: RecipeFilterCriteria;
   onCriteriaChange: (next: RecipeFilterCriteria) => void;
+  cuisines?: string[];
 }
 
 const MEAL_TYPES: { key: RecipeMealType | 'all'; labelKey: string }[] = [
@@ -33,6 +35,7 @@ export function RecipeFilterBar({
   onQueryChange,
   criteria,
   onCriteriaChange,
+  cuisines = [],
 }: RecipeFilterBarProps) {
   const { colors } = useTheme();
 
@@ -44,6 +47,8 @@ export function RecipeFilterBar({
     query.trim().length > 0 ||
     Boolean(criteria.meal_type) ||
     Boolean(criteria.diet) ||
+    Boolean(criteria.cuisine) ||
+    Boolean(criteria.nutrition_focus) ||
     isHighProtein ||
     isQuick ||
     isUnder400;
@@ -117,13 +122,89 @@ export function RecipeFilterBar({
             onPress={() => onQueryChange('')}
             hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
             accessibilityRole="button"
-            accessibilityLabel="Clear recipe search"
+            accessibilityLabel={t('homeRefresh.clearSearch')}
           >
             <Ionicons name="close-circle" size={18} color={colors.textMuted} />
           </Pressable>
         )}
       </View>
 
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={styles.chipsScroll}
+        testID="recipe-region-filters"
+      >
+        {[undefined, ...cuisines].map((cuisine) => (
+          <Pressable
+            key={cuisine ?? 'all'}
+            onPress={() => onCriteriaChange({ ...criteria, cuisine })}
+            accessibilityRole="button"
+            accessibilityState={{ selected: criteria.cuisine === cuisine }}
+            testID={`recipe-region-${cuisine ?? 'all'}`}
+            style={[
+              styles.chip,
+              {
+                backgroundColor: criteria.cuisine === cuisine ? colors.accent : colors.surface,
+                borderColor: colors.border,
+              },
+            ]}
+          >
+            <Text
+              style={[
+                styles.chipText,
+                { color: criteria.cuisine === cuisine ? colors.onAccent : colors.text },
+              ]}
+            >
+              {cuisine ?? t('homeRefresh.allRegions')}
+            </Text>
+          </Pressable>
+        ))}
+      </ScrollView>
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={styles.chipsScroll}
+        testID="recipe-focus-filters"
+      >
+        {(
+          [
+            ['high-protein', 'highProtein'],
+            ['high-carb', 'highCarb'],
+            ['high-fiber', 'highFiber'],
+          ] as const
+        ).map(([focus, label]) => (
+          <Pressable
+            key={focus}
+            onPress={() =>
+              onCriteriaChange({
+                ...criteria,
+                nutrition_focus: criteria.nutrition_focus === focus ? undefined : focus,
+              })
+            }
+            accessibilityRole="button"
+            accessibilityState={{ selected: criteria.nutrition_focus === focus }}
+            testID={`recipe-focus-${focus}`}
+            style={[
+              styles.chip,
+              {
+                backgroundColor:
+                  criteria.nutrition_focus === focus ? colors.accent : colors.surface,
+                borderColor: colors.border,
+              },
+            ]}
+          >
+            <Text
+              style={[
+                styles.chipText,
+                { color: criteria.nutrition_focus === focus ? colors.onAccent : colors.text },
+              ]}
+            >
+              {t(`homeRefresh.${label}`)}
+            </Text>
+          </Pressable>
+        ))}
+      </ScrollView>
       {/* Horizontal Scroll of Filter Chips */}
       <ScrollView
         horizontal
@@ -339,6 +420,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   chip: {
+    minHeight: homeLayout.touchSize,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,

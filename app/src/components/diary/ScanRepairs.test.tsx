@@ -1,3 +1,5 @@
+vi.mock('./DescribeMealModal', () => ({ DescribeMealModal: 'DescribeMeal' }));
+vi.mock('./LogSomethingView', () => ({ LogSomethingView: 'LogHub' }));
 import React from 'react';
 import { act, create, type ReactTestRenderer } from 'react-test-renderer';
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
@@ -205,7 +207,7 @@ it('reopens the cached Log tab with its picker after a previous food flow closes
     renderer = create(<LogScreen />);
   });
   await act(async () =>
-    renderer.root.findByType('LogHub' as React.ElementType).props.onSelectTile('food'),
+    renderer.root.findByType('LogHub' as React.ElementType).props.onFlow('food'),
   );
   await act(async () => renderer.root.findByType('FoodLog' as React.ElementType).props.onClose());
   expect(state.replace).toHaveBeenCalledWith('/today');

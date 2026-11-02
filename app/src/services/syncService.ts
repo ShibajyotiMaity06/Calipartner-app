@@ -164,6 +164,8 @@ export async function getPendingOutboxItems(db: SyncDb, limit = 50): Promise<Out
  */
 function getLocalTableName(entity: string): string | null {
   switch (entity) {
+    case 'squad_check_ins':
+      return 'local_squad_check_ins';
     case 'food_entries':
       return 'local_food_entries';
     case 'user_food_stats':
@@ -270,6 +272,15 @@ export async function flushOutbox(
             item.payload.client_id,
           ]);
         }
+      } else if (item.entity === 'recipe_favorites') {
+        const actor = await supabase.auth?.getUser();
+        if (!actor?.data.user || actor.data.user.id !== item.payload.user_id || !supabase.rpc)
+          throw new Error('FAVORITE_OWNER_MISMATCH');
+        const result = await supabase.rpc('set_recipe_favorite', {
+          p_recipe_id: item.payload.recipe_id,
+          p_favorite: item.operation === 'upsert',
+        });
+        if (result.error) throw result.error;
       } else if (item.operation === 'delete') {
         const { error } = await supabase
           .from(item.entity)
@@ -291,15 +302,17 @@ export async function flushOutbox(
         }
         // Upsert by primary key (id, user_id+food_id, user_id+local_date, user_id, or client_id)
         const onConflict =
-          item.entity === 'user_food_stats'
-            ? 'user_id,food_id'
-            : item.entity === 'activity_days'
-              ? 'user_id,local_date'
-              : item.entity === 'chat_messages'
-                ? 'client_id'
-                : item.entity === 'fasting_settings'
-                  ? 'user_id'
-                  : 'id';
+          item.entity === 'squad_check_ins'
+            ? 'user_id,room_id,local_date'
+            : item.entity === 'user_food_stats'
+              ? 'user_id,food_id'
+              : item.entity === 'activity_days'
+                ? 'user_id,local_date'
+                : item.entity === 'chat_messages'
+                  ? 'client_id'
+                  : item.entity === 'fasting_settings'
+                    ? 'user_id'
+                    : 'id';
         const { error } = await supabase.from(item.entity).upsert(item.payload, { onConflict });
         if (error) throw error;
       }
@@ -320,6 +333,11 @@ export async function flushOutbox(
           await db.runAsync(
             `UPDATE ${localTable} SET sync_state = 'synced', delivery_status = 'sent' WHERE client_id = ?`,
             [item.payload.client_id],
+          );
+        } else if (item.entity === 'recipe_favorites') {
+          await db.runAsync(
+            `UPDATE ${localTable} SET sync_state='synced' WHERE user_id=? AND recipe_id=?`,
+            [item.payload.user_id, item.payload.recipe_id],
           );
         } else if (item.entity === 'user_food_stats') {
           await db.runAsync(
@@ -379,7 +397,12 @@ export async function flushOutbox(
 
       const localTable = getLocalTableName(item.entity);
       if (localTable && isPermanentlyFailed) {
-        if (item.entity === 'user_food_stats') {
+        if (item.entity === 'recipe_favorites') {
+          await db.runAsync(
+            `UPDATE ${localTable} SET sync_state='failed' WHERE user_id=? AND recipe_id=?`,
+            [item.payload.user_id, item.payload.recipe_id],
+          );
+        } else if (item.entity === 'user_food_stats') {
           await db.runAsync(
             `UPDATE ${localTable} SET sync_state = 'failed' WHERE user_id = ? AND food_id = ?`,
             [item.payload.user_id, item.payload.food_id],

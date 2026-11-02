@@ -1,8 +1,14 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { Pressable, RefreshControl, ScrollView, StyleSheet, View } from 'react-native';
+import {
+  Pressable,
+  RefreshControl,
+  ScrollView,
+  StyleSheet,
+  useWindowDimensions,
+  View,
+} from 'react-native';
 import { useRouter, type Href } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import Svg, { Circle } from 'react-native-svg';
 import {
   getMealSectionForTime,
   getLocalDateString,
@@ -11,8 +17,9 @@ import {
   type MealSection,
   type UserStreak,
 } from '@calipartner/core';
-import { dark, radius, space, Text } from '@calipartner/ui';
-import { CaliPartnerLogo } from '@/components/brand/CaliPartnerLogo';
+import { dark, radius, space, Text, homeLayout } from '@calipartner/ui';
+import { HomeSquads } from '@/components/rooms/HomeSquads';
+import { useFocusEffect } from 'expo-router';
 import { LoadingState } from '@/components/LoadingState';
 import { MonthlyPlanCheckIn } from '@/components/profile/MonthlyPlanCheckIn';
 import { CaloriesDetailSheet } from '@/components/diary/CaloriesDetailSheet';
@@ -27,7 +34,6 @@ import { SyncStatusBanner } from '@/components/diary/SyncStatusBanner';
 import { WaterAlarmModal } from '@/components/trackers/WaterAlarmModal';
 import { WorkoutHubModal } from '@/components/workouts';
 import { CardioTrackerModal } from '@/components/cardio/CardioTrackerModal';
-import { FloatingAiCoachButton } from '@/components/coach';
 import { useAuth } from '@/contexts/AuthContext';
 import { useDiary } from '@/hooks/useDiary';
 import { useAddEntry, useDeleteEntry, useEditEntry } from '@/hooks/useFoodEntries';
@@ -63,65 +69,57 @@ function MiniRing({
   testID,
   onPress,
 }: MiniRingProps) {
-  const size = 70;
-  const strokeWidth = 5;
-  const ringRadius = (size - strokeWidth) / 2;
-  const circumference = 2 * Math.PI * ringRadius;
-  const clampedRatio = Math.min(1, Math.max(0, progressRatio));
-  const strokeDashoffset = circumference * (1 - clampedRatio);
-
+  const { fontScale } = useWindowDimensions();
+  const ratio = Math.max(0, Math.min(progressRatio, 1));
   return (
     <Pressable
       testID={testID}
       onPress={onPress}
-      style={styles.ringTileContainer}
+      style={[styles.ringTileContainer, { flexBasis: fontScale >= 1.5 ? '45%' : '20%' }]}
       accessibilityRole="button"
-      accessibilityLabel={`${label}: ${value} of ${target}`}
+      accessibilityLabel={t('homeRefresh.metricLabel', { label, value, target })}
     >
-      <View style={{ width: size, height: size, alignItems: 'center', justifyContent: 'center' }}>
-        <Svg width={size} height={size}>
-          <Circle
-            cx={size / 2}
-            cy={size / 2}
-            r={ringRadius}
-            stroke={dark.s2}
-            strokeWidth={strokeWidth}
-            fill="none"
+      <Ionicons name={icon} size={homeLayout.iconSize} color={color} />
+      <Text variant="bodyS" tabular>
+        {value}
+      </Text>
+      <Text variant="micro" color={dark.textMid} tabular>
+        /{target}
+      </Text>
+      <View
+        style={{
+          width: '100%',
+          height: space[1],
+          backgroundColor: dark.s3,
+          borderRadius: radius.full,
+        }}
+      >
+        <View
+          style={{
+            width: `${ratio * 100}%`,
+            height: '100%',
+            backgroundColor: color,
+            borderRadius: radius.full,
+          }}
+        />
+        {progressRatio > 1 && (
+          <View
+            style={{
+              position: 'absolute',
+              width: `${Math.min(1, progressRatio - 1) * 100}%`,
+              height: '100%',
+              backgroundColor: dark.cream,
+              borderRadius: radius.full,
+            }}
           />
-          <Circle
-            cx={size / 2}
-            cy={size / 2}
-            r={ringRadius}
-            stroke={color}
-            strokeWidth={strokeWidth}
-            strokeDasharray={`${circumference} ${circumference}`}
-            strokeDashoffset={strokeDashoffset}
-            strokeLinecap="round"
-            transform={`rotate(-90 ${size / 2} ${size / 2})`}
-            fill="none"
-          />
-        </Svg>
-        <View style={styles.ringCenterContent}>
-          <Ionicons name={icon} size={14} color={color} style={{ marginBottom: 1 }} />
-          <Text
-            variant="micro"
-            color={dark.textHi}
-            style={{ fontWeight: '700', fontSize: 11, lineHeight: 13 }}
-            numberOfLines={1}
-          >
-            {value}
-          </Text>
-          <Text
-            variant="micro"
-            color={dark.textLo}
-            style={{ fontSize: 9, lineHeight: 11 }}
-            numberOfLines={1}
-          >
-            /{target}
-          </Text>
-        </View>
+        )}
       </View>
-      <Text variant="micro" color={dark.textMid} style={styles.ringLabel} numberOfLines={1}>
+      {progressRatio > 1 && (
+        <Text variant="micro" color={dark.cream}>
+          {t('homeRefresh.over')}
+        </Text>
+      )}
+      <Text variant="micro" color={dark.textMid}>
         {label}
       </Text>
     </Pressable>
@@ -160,8 +158,8 @@ export default function TodayScreen() {
   const { totalMl, goalMl, refresh: refreshWater } = useWater(selectedDate);
 
   const handlePullRefresh = useCallback(async () => {
-    await Promise.all([refresh(), refreshSteps(), refreshWater()]);
-  }, [refresh, refreshSteps, refreshWater]);
+    await Promise.all([refresh(), refreshSteps(), refreshWater(), refreshRooms()]);
+  }, [refresh, refreshSteps, refreshWater, refreshRooms]);
 
   // Sheet & modal states
   const [activeLogSection, setActiveLogSection] = useState<MealSection | null>(null);
@@ -238,8 +236,15 @@ export default function TodayScreen() {
   const getContextualQuestion = () =>
     t('repairs.mealQuestion', { meal: t(`diary.sections.${currentSuggestedMeal}`) });
 
-  const currentRoom = rooms[0];
-  const userName = profile?.nickname || guestName || profile?.username || 'Friend';
+  const [homeVisible, setHomeVisible] = useState(false);
+  useFocusEffect(
+    useCallback(() => {
+      setHomeVisible(true);
+      void refreshRooms();
+      return () => setHomeVisible(false);
+    }, [refreshRooms]),
+  );
+  const userName = profile?.nickname || guestName || profile?.username || t('homeRefresh.friend');
 
   return (
     <View style={{ flex: 1, backgroundColor: dark.bg0 }}>
@@ -256,32 +261,55 @@ export default function TodayScreen() {
           />
         }
       >
-        {/* 1. Header (Brand: CaliPartner 🌿 - Centered) */}
-        <View style={styles.topBrandBar} testID="today-brand-header">
-          <View style={styles.brandTitleRow}>
-            <CaliPartnerLogo size={space[7]} testID="home-logo" />
-            <Text variant="heading" color={dark.textHi} style={styles.brandName}>
-              CaliPartner
-            </Text>
-          </View>
-        </View>
-
         <MonthlyPlanCheckIn />
+        <SyncStatusBanner />
 
         {/* 2. Greeting & Dynamic Timezone Question */}
         <View style={styles.greetingSection}>
           <Text variant="heading" color={dark.textHi} style={styles.greetingTitle}>
-            Hi, {userName} 👋
+            {t('homeRefresh.hello', { name: userName })}
           </Text>
+          {streakData && currentStreak > 0 && (
+            <Pressable
+              onPress={() => setShowStreakDetail(true)}
+              style={{ minHeight: homeLayout.touchSize, justifyContent: 'center' }}
+              accessibilityRole="button"
+              accessibilityLabel={t('homeRefresh.personalStreak', { count: currentStreak })}
+              testID="home-personal-streak"
+            >
+              <Text variant="bodyS" color={dark.textMid}>
+                {t('homeRefresh.personalStreak', { count: currentStreak })}
+              </Text>
+            </Pressable>
+          )}
           <Text variant="body" color={dark.textMid} style={styles.greetingQuestion}>
             {getContextualQuestion()}
           </Text>
         </View>
 
-        {/* 3. Choose Your Activity (2x2 Grid: Cardio, Workout, Water, Food Logging) */}
+        <HomeSquads
+          rooms={rooms}
+          loading={roomsLoading}
+          error={roomsError}
+          onRetry={() => void refreshRooms()}
+          visible={homeVisible}
+        />
+        <Pressable
+          style={styles.squadCard}
+          onPress={() => router.push('/coach')}
+          accessibilityRole="button"
+          accessibilityLabel={t('homeRefresh.coach')}
+          testID="home-coach-card"
+        >
+          <Text variant="heading">{t('homeRefresh.coach')} · Pro</Text>
+          <Text variant="bodyS" color={dark.textMid}>
+            {t('homeRefresh.coachHint')}
+          </Text>
+        </Pressable>
+        {/* 3. {t('homeRefresh.activity')} (2x2 Grid: Cardio, Workout, Water, Food Logging) */}
         <View style={styles.sectionBlock}>
           <Text variant="heading" color={dark.textHi} style={styles.sectionHeaderTitle}>
-            Choose Your Activity
+            {t('homeRefresh.activity')}
           </Text>
 
           <View style={styles.activityGrid}>
@@ -294,18 +322,13 @@ export default function TodayScreen() {
               accessibilityLabel="Cardio activity"
             >
               <View style={styles.activityTileTop}>
-                <View
-                  style={[
-                    styles.activityIconCircle,
-                    { backgroundColor: 'rgba(244, 182, 125, 0.15)' },
-                  ]}
-                >
+                <View style={[styles.activityIconCircle, { backgroundColor: dark.s2 }]}>
                   <Ionicons name="walk" size={20} color={dark.apricot} />
                 </View>
                 <Ionicons name="chevron-forward" size={16} color={dark.textLo} />
               </View>
               <Text variant="body" color={dark.textHi} style={styles.activityLabel}>
-                Cardio
+                {t('homeRefresh.cardio')}
               </Text>
             </Pressable>
 
@@ -318,18 +341,13 @@ export default function TodayScreen() {
               accessibilityLabel="Workout activity"
             >
               <View style={styles.activityTileTop}>
-                <View
-                  style={[
-                    styles.activityIconCircle,
-                    { backgroundColor: 'rgba(235, 122, 107, 0.15)' },
-                  ]}
-                >
-                  <Ionicons name="barbell" size={20} color={dark.danger} />
+                <View style={[styles.activityIconCircle, { backgroundColor: dark.s2 }]}>
+                  <Ionicons name="barbell" size={20} color={dark.iris} />
                 </View>
                 <Ionicons name="chevron-forward" size={16} color={dark.textLo} />
               </View>
               <Text variant="body" color={dark.textHi} style={styles.activityLabel}>
-                Workout
+                {t('homeRefresh.workout')}
               </Text>
             </Pressable>
 
@@ -342,18 +360,13 @@ export default function TodayScreen() {
               accessibilityLabel="Water activity and phone alarms"
             >
               <View style={styles.activityTileTop}>
-                <View
-                  style={[
-                    styles.activityIconCircle,
-                    { backgroundColor: 'rgba(56, 178, 172, 0.15)' },
-                  ]}
-                >
+                <View style={[styles.activityIconCircle, { backgroundColor: dark.s2 }]}>
                   <Ionicons name="water" size={20} color={dark.teal} />
                 </View>
                 <Ionicons name="chevron-forward" size={16} color={dark.textLo} />
               </View>
               <Text variant="body" color={dark.textHi} style={styles.activityLabel}>
-                Water
+                {t('homeRefresh.water')}
               </Text>
             </Pressable>
 
@@ -366,28 +379,23 @@ export default function TodayScreen() {
               accessibilityLabel="Food logging"
             >
               <View style={styles.activityTileTop}>
-                <View
-                  style={[
-                    styles.activityIconCircle,
-                    { backgroundColor: 'rgba(244, 182, 125, 0.15)' },
-                  ]}
-                >
+                <View style={[styles.activityIconCircle, { backgroundColor: dark.s2 }]}>
                   <Ionicons name="restaurant" size={20} color={dark.mint} />
                 </View>
                 <Ionicons name="chevron-forward" size={16} color={dark.textLo} />
               </View>
               <Text variant="body" color={dark.textHi} style={styles.activityLabel}>
-                Food Logging
+                {t('homeRefresh.food')}
               </Text>
             </Pressable>
           </View>
         </View>
 
-        {/* 4. Today's Progress (Steps, Calories, Water, Protein - with View Details >) */}
+        {/* 4. {t('homeRefresh.yourDay')} (Steps, Calories, Water, Protein - with View Details >) */}
         <View style={styles.sectionBlock}>
           <View style={styles.sectionHeaderRow}>
             <Text variant="heading" color={dark.textHi} style={styles.sectionHeaderTitle}>
-              Today's Progress
+              {t('homeRefresh.yourDay')}
             </Text>
             <Pressable
               onPress={() => setShowCaloriesDetail(true)}
@@ -423,7 +431,7 @@ export default function TodayScreen() {
               icon="footsteps"
               value={steps.toLocaleString()}
               target={effectiveGoalSteps.toLocaleString()}
-              label="Steps"
+              label={t('homeRefresh.steps')}
               progressRatio={effectiveGoalSteps > 0 ? steps / effectiveGoalSteps : 0}
               color={dark.apricot}
               testID="ring-steps"
@@ -435,11 +443,11 @@ export default function TodayScreen() {
               icon="flame"
               value={eatenCalories}
               target={targetCalories ?? t('common.unavailable')}
-              label="Calories"
+              label={t('homeRefresh.caloriesMetric')}
               progressRatio={
                 targetCalories != null && targetCalories > 0 ? eatenCalories / targetCalories : 0
               }
-              color="#EB7A6B"
+              color={dark.copper}
               testID="ring-calories"
               onPress={() => setShowCaloriesDetail(true)}
             />
@@ -449,7 +457,7 @@ export default function TodayScreen() {
               icon="water"
               value={(totalMl / 1000).toFixed(1)}
               target={`${(effectiveGoalMl / 1000).toFixed(0)} L`}
-              label="Water"
+              label={t('homeRefresh.water')}
               progressRatio={effectiveGoalMl > 0 ? totalMl / effectiveGoalMl : 0}
               color={dark.teal}
               testID="ring-water"
@@ -461,61 +469,15 @@ export default function TodayScreen() {
               icon="barbell"
               value={`${eatenProtein}g`}
               target={targetProtein == null ? t('common.unavailable') : `${targetProtein}g`}
-              label="Protein"
+              label={t('homeRefresh.protein')}
               progressRatio={
                 targetProtein != null && targetProtein > 0 ? eatenProtein / targetProtein : 0
               }
-              color="#48BB78"
+              color={dark.iris}
               testID="ring-protein"
               onPress={() => setShowCaloriesDetail(true)}
             />
           </View>
-        </View>
-
-        {/* 5. Your Squad (replaces partner, shows 2-3 avatars, streak card, no bottom scenic image) */}
-        <View style={styles.sectionBlock}>
-          <Pressable
-            testID="card-your-squad"
-            style={styles.squadCard}
-            onPress={() => router.push('/(tabs)/room' as Href)}
-            accessibilityRole="button"
-            accessibilityLabel="Your squad"
-          >
-            <View style={styles.squadHeaderRow}>
-              <View style={styles.squadTitleLeft}>
-                <Ionicons name="people" size={16} color={dark.apricot} />
-                <Text variant="bodyS" color={dark.textHi} style={{ fontWeight: '700' }}>
-                  {currentRoom?.name ?? t('repairs.squadTitle')}
-                </Text>
-              </View>
-            </View>
-
-            <View style={styles.squadMessageCol}>
-              <Text variant="bodyS" color={dark.textMid} testID="home-squad-status">
-                {roomsLoading
-                  ? t('common.loading')
-                  : roomsError
-                    ? t('repairs.squadError')
-                    : currentRoom
-                      ? t('repairs.squadMembers', { count: currentRoom.member_count })
-                      : t('repairs.squadEmpty')}
-              </Text>
-              {roomsError ? (
-                <Pressable
-                  onPress={(event) => {
-                    event.stopPropagation();
-                    void refreshRooms();
-                  }}
-                  style={{ minHeight: space[8], justifyContent: 'center' }}
-                  accessibilityRole="button"
-                  accessibilityLabel={t('common.retry')}
-                  testID="home-squad-retry"
-                >
-                  <Text>{t('common.retry')}</Text>
-                </Pressable>
-              ) : null}
-            </View>
-          </Pressable>
         </View>
 
         {/* 6. Date Selector & Meal Logging Diary Sections */}
@@ -749,7 +711,6 @@ export default function TodayScreen() {
           selectedDate={selectedDate}
         />
       </ScrollView>
-      <FloatingAiCoachButton />
     </View>
   );
 }
@@ -848,6 +809,8 @@ const styles = StyleSheet.create({
   },
   progressRingsRow: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: space[3],
     justifyContent: 'space-between',
     alignItems: 'center',
     backgroundColor: dark.s1,
@@ -858,7 +821,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: space[2],
   },
   ringTileContainer: {
-    flex: 1,
+    flexGrow: 1,
+    minWidth: space[9],
+    minHeight: homeLayout.touchSize,
+    gap: space[1],
     alignItems: 'center',
     justifyContent: 'center',
   },

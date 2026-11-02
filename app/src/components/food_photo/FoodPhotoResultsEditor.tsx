@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Modal,
@@ -27,6 +27,7 @@ import { AdvancedNutrition } from '../diary/AdvancedNutrition';
 import { useTheme } from '@/theme/useTheme';
 
 export interface FoodPhotoResultsEditorProps {
+  mealDescription?: string;
   visible: boolean;
   initialCandidates: FoodCandidateItem[];
   defaultSection?: MealSection;
@@ -39,6 +40,7 @@ export interface FoodPhotoResultsEditorProps {
 const SECTIONS: MealSection[] = ['breakfast', 'lunch', 'dinner', 'snacks'];
 
 export function FoodPhotoResultsEditor({
+  mealDescription,
   visible,
   initialCandidates,
   defaultSection = 'lunch',
@@ -53,6 +55,7 @@ export function FoodPhotoResultsEditor({
   const [candidates, setCandidates] = useState<FoodCandidateItem[]>(initialCandidates);
   const [selectedSection, setSelectedSection] = useState<MealSection>(defaultSection);
   const [isSaving, setIsSaving] = useState(false);
+  const savingRef = useRef(false);
   const [saveError, setSaveError] = useState<string | null>(null);
 
   // Search dialog for Swap or Add item
@@ -183,7 +186,8 @@ export function FoodPhotoResultsEditor({
   const totals = sumNutrientSnapshots(activeCandidates.map((candidate) => candidate.nutrients));
 
   const handleSave = async () => {
-    if (isSaving || activeCandidates.length === 0) return;
+    if (savingRef.current || isSaving || activeCandidates.length === 0) return;
+    savingRef.current = true;
     try {
       setIsSaving(true);
       setSaveError(null);
@@ -192,6 +196,7 @@ export function FoodPhotoResultsEditor({
       const msg = err instanceof Error ? err.message : 'Failed to save food entries';
       setSaveError(msg);
     } finally {
+      savingRef.current = false;
       setIsSaving(false);
     }
   };
@@ -214,7 +219,7 @@ export function FoodPhotoResultsEditor({
         >
           <View style={{ flex: 1 }}>
             <Text style={[styles.headerTitle, { color: colors.text }]}>
-              {t('foodLog.photo.resultsTitle')}
+              {mealDescription ? t('homeRefresh.describe') : t('foodLog.photo.resultsTitle')}
             </Text>
             <Text style={[styles.headerSubtitle, { color: colors.textMuted }]}>
               {localDate ? `${localDate} • ` : ''}
@@ -238,6 +243,24 @@ export function FoodPhotoResultsEditor({
           contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
         >
+          {mealDescription && (
+            <View
+              style={[
+                styles.estimateBanner,
+                { backgroundColor: colors.surfaceAlt, borderColor: colors.border },
+              ]}
+            >
+              <Text style={{ color: colors.text }}>{mealDescription}</Text>
+              <Pressable
+                onPress={onClose}
+                accessibilityRole="button"
+                accessibilityLabel={t('homeRefresh.fix')}
+                testID="edit-meal-description"
+              >
+                <Text style={{ color: colors.accent }}>{t('homeRefresh.fix')}</Text>
+              </Pressable>
+            </View>
+          )}
           {/* Prominent AI Estimate Notice Banner (PRD LOG-3) */}
           <View
             testID="banner-estimate-notice"

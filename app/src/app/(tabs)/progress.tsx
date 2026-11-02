@@ -1,3 +1,5 @@
+import { ProgressOverview } from '@/components/progress/ProgressOverview';
+import { LoadingState } from '@/components/LoadingState';
 import React, { useEffect, useState } from 'react';
 import {
   Pressable,
@@ -15,14 +17,11 @@ import {
   ChallengesView,
   type DayDetailData,
   DayDetailModal,
-  GoalProgressRing,
   LeaderboardView,
   MondayRecapModal,
-  ProgressHubSummary,
   RangeSelector,
   WeeklySummaryModal,
 } from '@/components/progress';
-import { FloatingAiCoachButton } from '@/components/coach';
 
 import { useIndividualProgress } from '@/hooks/useIndividualProgress';
 import { t } from '@/i18n';
@@ -31,7 +30,7 @@ import { useTheme } from '@/theme/useTheme';
 
 type ProgressTabSegment = 'my_progress' | 'leaderboard' | 'challenges';
 
-const RANGE_OPTIONS: ProgressDateRange[] = ['7d', '30d', '90d', '6m', '1y', 'all'];
+const RANGE_OPTIONS: ProgressDateRange[] = ['7d', '30d', '90d'];
 
 export default function ProgressScreen() {
   const { colors } = useTheme();
@@ -47,22 +46,17 @@ export default function ProgressScreen() {
   const [showMondayRecap, setShowMondayRecap] = useState(false);
 
   // Hook for Individual Progress
-  const { range, setRange, data, loading, error, refresh } = useIndividualProgress('30d');
+  const { range, setRange, data, loading, error, refresh } = useIndividualProgress('7d');
 
-  const loggedDays = data?.calories?.daily.filter((d) => d.is_logged_day).length ?? 6;
-  const goalDays = data?.calories?.daily.filter((d) => d.is_goal_day).length ?? 5;
-  const weightChangeKg = data?.weight?.total_change_kg ?? -0.3;
-  const workoutCount = data?.workouts?.total_workouts ?? 3;
-  const avgSteps = data?.steps?.average_steps ?? 8420;
+  const loggedDays = data?.calories?.daily.filter((d) => d.is_logged_day).length ?? 0;
+  const goalDays = data?.calories?.daily.filter((d) => d.is_goal_day).length ?? 0;
+  const weightChangeKg = data?.weight?.total_change_kg ?? null;
+  const workoutCount = data?.workouts?.total_workouts ?? 0;
+  const avgSteps = data?.steps?.average_steps ?? 0;
   const consistencyScore =
     data?.consistency?.weekly_scores && data.consistency.weekly_scores.length > 0
       ? data.consistency.weekly_scores[data.consistency.weekly_scores.length - 1]!.consistency_score
-      : 84;
-
-  const handleSelectMetric = (_metric: string) => {
-    // Open full weekly breakdown summary
-    setShowWeeklySummary(true);
-  };
+      : 0;
 
   return (
     <SafeAreaView
@@ -169,14 +163,9 @@ export default function ProgressScreen() {
         {/* SEGMENT 1: MY PROGRESS */}
         {activeSegment === 'my_progress' && (
           <View testID="my-progress-content">
-            {/* Goal Progress Ring */}
-            <GoalProgressRing
-              progressPct={data?.goal_progress_pct ?? null}
-              targetWeightKg={data?.weight.target_weight_kg ?? null}
-              currentTrendKg={data?.weight.current_trend_kg ?? null}
-              testID="progress-goal-ring"
-            />
-
+            <Text style={{ color: colors.text, fontSize: fontSize.xl }}>
+              {t('homeRefresh.progress')}
+            </Text>
             {/* Shared Range Selector */}
             <RangeSelector
               options={RANGE_OPTIONS}
@@ -208,13 +197,16 @@ export default function ProgressScreen() {
               </View>
             )}
 
-            {/* Hub Summary View */}
-            <ProgressHubSummary
-              data={data}
-              onSelectMetric={handleSelectMetric}
-              onOpenWeeklySummary={() => setShowWeeklySummary(true)}
-              testID="progress-hub-summary"
-            />
+            {loading && !data ? (
+              <LoadingState />
+            ) : error ? null : (
+              <ProgressOverview
+                data={data}
+                range={range}
+                loading={loading}
+                onSelectDay={setSelectedDay}
+              />
+            )}
           </View>
         )}
 
@@ -239,7 +231,7 @@ export default function ProgressScreen() {
         onClose={() => setShowWeeklySummary(false)}
         loggedDays={loggedDays}
         goalDays={goalDays}
-        totalDays={data?.calories?.daily.length || 7}
+        totalDays={data?.calories?.daily.length ?? 0}
         weightChangeKg={weightChangeKg}
         workoutCount={workoutCount}
         avgSteps={avgSteps}
@@ -260,7 +252,6 @@ export default function ProgressScreen() {
         }}
         testID="progress-monday-recap-modal"
       />
-      <FloatingAiCoachButton />
     </SafeAreaView>
   );
 }

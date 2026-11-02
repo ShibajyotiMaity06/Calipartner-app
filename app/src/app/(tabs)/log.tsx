@@ -1,14 +1,10 @@
+import { LogSomethingView } from '@/components/diary/LogSomethingView';
+import { DescribeMealModal } from '@/components/diary/DescribeMealModal';
 import React, { useCallback, useState } from 'react';
 import { View, StyleSheet, Modal } from 'react-native';
 import { useFocusEffect, useRouter, useLocalSearchParams } from 'expo-router';
 import { getMealSectionForTime, type MealSection } from '@calipartner/core';
-import {
-  Sheet,
-  LogHubView,
-  type LogTileId,
-  type QuickAddId,
-  type MealSectionType,
-} from '@calipartner/ui';
+import { Sheet } from '@calipartner/ui';
 import { FoodLogModal } from '@/components/diary/FoodLogModal';
 import { WorkoutLoggerModal } from '@/components/workouts/WorkoutLoggerModal';
 import { CustomWaterModal, WeightEntryModal } from '@/components/trackers';
@@ -25,6 +21,7 @@ import { useTheme } from '@/theme/useTheme';
 import { useCurrentLocalDate } from '@/hooks/useCurrentLocalDate';
 
 type ActiveFlowState =
+  | 'describe'
   | 'picker'
   | 'food'
   | 'workout'
@@ -40,17 +37,17 @@ export default function LogScreen() {
   const router = useRouter();
   const params = useLocalSearchParams<{ flow?: string }>();
   const { colors } = useTheme();
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
 
   const { localDate: todayDate } = useCurrentLocalDate();
-  const initialSection: MealSection = getMealSectionForTime(new Date());
+  const initialSection: MealSection = getMealSectionForTime(new Date(), profile?.timezone);
 
   const [currentSection, setCurrentSection] = useState<MealSection>(initialSection);
   const [sheetVisible, setSheetVisible] = useState(true);
   const [activeFlow, setActiveFlow] = useState<ActiveFlowState>('picker');
   useFocusEffect(
     useCallback(() => {
-      setCurrentSection(getMealSectionForTime(new Date()));
+      setCurrentSection(getMealSectionForTime(new Date(), profile?.timezone));
       setActiveFlow(
         ['food', 'workout', 'water', 'weight'].includes(params.flow ?? '')
           ? (params.flow as ActiveFlowState)
@@ -58,7 +55,7 @@ export default function LogScreen() {
       );
       setSheetVisible(true);
       return () => setSheetVisible(false);
-    }, [params.flow]),
+    }, [params.flow, profile?.timezone]),
   );
 
   // Tracker hooks for Water and Weight
@@ -72,57 +69,6 @@ export default function LogScreen() {
     router.replace('/today');
   };
 
-  const handleCycleMealSection = () => {
-    const cycle: MealSection[] = ['breakfast', 'lunch', 'dinner', 'snacks'];
-    const idx = cycle.indexOf(currentSection);
-    const nextIdx = (idx + 1) % cycle.length;
-    setCurrentSection(cycle[nextIdx] ?? 'lunch');
-  };
-
-  const handleTileSelect = (tile: LogTileId) => {
-    switch (tile) {
-      case 'food':
-        setActiveFlow('food');
-        break;
-      case 'workout':
-        setActiveFlow('workout');
-        break;
-      case 'water':
-        setActiveFlow('water');
-        break;
-      case 'weight':
-        setActiveFlow('weight');
-        break;
-      case 'fast':
-        setActiveFlow('fast');
-        break;
-    }
-  };
-
-  const handleQuickAddSelect = (action: QuickAddId) => {
-    switch (action) {
-      case 'scan':
-        setActiveFlow('scan');
-        break;
-      case 'photo':
-        setActiveFlow('photo');
-        break;
-      case 'recipes':
-        setActiveFlow('recipe');
-        break;
-    }
-  };
-
-  // Map meal section to MealSectionType for UI
-  const uiMealSection: MealSectionType =
-    currentSection === 'breakfast'
-      ? 'breakfast'
-      : currentSection === 'dinner'
-        ? 'dinner'
-        : currentSection === 'snacks'
-          ? 'snack'
-          : 'lunch';
-
   return (
     <View style={[styles.rootContainer, { backgroundColor: colors.background }]}>
       {/* 1. D01: Log Hub Tall Glass Sheet */}
@@ -135,17 +81,19 @@ export default function LogScreen() {
           isGlass={true}
           accessibilityLabel="Log Hub"
         >
-          <LogHubView
-            mealSection={uiMealSection}
-            onCycleMealSection={handleCycleMealSection}
-            onSelectTile={handleTileSelect}
-            onSelectQuickAdd={handleQuickAddSelect}
-            onClose={handleCloseAll}
-            showFastTile={true}
-          />
+          <LogSomethingView onFlow={setActiveFlow} onClose={handleCloseAll} />
         </Sheet>
       )}
 
+      {activeFlow === 'describe' && (
+        <DescribeMealModal
+          visible={sheetVisible}
+          section={currentSection}
+          localDate={todayDate}
+          onClose={handleCloseAll}
+          onLogged={handleCloseAll}
+        />
+      )}
       {/* 2. Food Log Modal */}
       {activeFlow === 'food' && (
         <FoodLogModal

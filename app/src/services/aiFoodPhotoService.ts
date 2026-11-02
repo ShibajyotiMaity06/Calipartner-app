@@ -204,7 +204,8 @@ export function preparePhotoForAiAnalysis(params: {
 export async function analyzeFoodPhoto(
   supabase: SupabaseFunctionsClient,
   options: {
-    imageBase64: string;
+    imageBase64?: string;
+    description?: string;
     mimeType?: string;
   },
 ): Promise<FoodPhotoAnalysisResponse> {
@@ -213,10 +214,13 @@ export async function analyzeFoodPhoto(
   }
 
   const { data, error } = await supabase.functions.invoke('ai-food-photo', {
-    body: {
-      image: options.imageBase64,
-      mime_type: options.mimeType || 'image/jpeg',
-    },
+    body:
+      options.description !== undefined
+        ? { description: options.description }
+        : {
+            image: options.imageBase64,
+            mime_type: options.mimeType || 'image/jpeg',
+          },
   });
 
   if (error || !data) {
@@ -340,44 +344,49 @@ export async function savePhotoCandidatesToDiary(
   params: {
     userId: string;
     candidates: FoodCandidateItem[];
+    source?: 'photo' | 'description';
     mealSection?: MealSection;
     localDate?: string;
   },
 ): Promise<FoodEntry[]> {
   const savedEntries: FoodEntry[] = [];
 
-  for (const candidate of params.candidates) {
-    if (candidate.quantity <= 0) {
-      continue;
+  const saveAll = async () => {
+    for (const candidate of params.candidates) {
+      if (candidate.quantity <= 0) {
+        continue;
+      }
+
+      // Ensure food attribution reflects estimate
+      let foodToLog: Food = {
+        ...candidate.matched_food,
+        attribution: candidate.matched_food.attribution || 'AI Estimate',
+      };
+      if (
+        foodToLog.source === 'user' &&
+        foodToLog.attribution === 'AI Estimate' &&
+        !foodToLog.owner_id
+      ) {
+        foodToLog = await saveCustomFood(db, params.userId, { ...foodToLog, id: foodToLog.id });
+      }
+
+      const entry = await logFoodEntry(db, {
+        userId: params.userId,
+        food: foodToLog,
+        mealSection: params.mealSection,
+        quantity: candidate.quantity,
+        unit: candidate.unit,
+        localDate: params.localDate,
+        source: params.source ?? 'photo',
+      });
+
+      savedEntries.push(entry);
     }
 
-    // Ensure food attribution reflects estimate
-    let foodToLog: Food = {
-      ...candidate.matched_food,
-      attribution: candidate.matched_food.attribution || 'AI Estimate',
-    };
-    if (
-      foodToLog.source === 'user' &&
-      foodToLog.attribution === 'AI Estimate' &&
-      !foodToLog.owner_id
-    ) {
-      foodToLog = await saveCustomFood(db, params.userId, { ...foodToLog, id: foodToLog.id });
-    }
-
-    const entry = await logFoodEntry(db, {
-      userId: params.userId,
-      food: foodToLog,
-      mealSection: params.mealSection,
-      quantity: candidate.quantity,
-      unit: candidate.unit,
-      localDate: params.localDate,
-      source: 'photo', // PRD LOG-3: source = photo
-    });
-
-    savedEntries.push(entry);
-  }
-
-  log.info(`Saved ${savedEntries.length} photo entries with source=photo to diary`);
+    log.info(`Saved ${savedEntries.length} photo entries with source=photo to diary`);
+  };
+  if (db.withTransactionAsync) await db.withTransactionAsync(saveAll);
+  else await saveAll();
   if (savedEntries.length) diaryEvents.emitChange();
   return savedEntries;
 }

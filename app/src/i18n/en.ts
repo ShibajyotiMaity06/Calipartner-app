@@ -1,6 +1,8 @@
 import { challengeMessages } from './challengeMessages';
+import { homeRefresh } from './homeRefresh';
 import { repairMessages } from './repairs';
 export const en = {
+  homeRefresh,
   repairUnits: { cm: 'cm', ftIn: 'ft / inch', ft: 'ft', inch: 'inch' },
   customMacros: {
     title: 'Custom macros',
@@ -2534,6 +2536,10 @@ export const en = {
       cancel: 'Cancel',
     },
     dietTags: {
+      high_protein: 'High protein',
+      high_carb: 'High carb',
+      high_fiber: 'High fibre',
+      low_calorie: 'Lower calorie',
       vegetarian: 'Vegetarian',
       eggetarian: 'Eggetarian',
       vegan: 'Vegan',

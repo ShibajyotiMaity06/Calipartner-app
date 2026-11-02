@@ -1,7 +1,7 @@
 import React from 'react';
 import { act, create, type ReactTestRenderer } from 'react-test-renderer';
 import { it, expect, vi, beforeEach, afterEach } from 'vitest';
-const state = vi.hoisted(() => ({ paid: false, list: vi.fn(), detail: vi.fn() }));
+const state = vi.hoisted(() => ({ paid: false, loading: false, list: vi.fn(), detail: vi.fn() }));
 vi.mock('react-native', () => ({
   ActivityIndicator: 'Loading',
   Pressable: 'Pressable',
@@ -22,7 +22,7 @@ vi.mock('@calipartner/ui', async () => ({
   Button: 'Button',
 }));
 vi.mock('@/hooks/useSubscription', () => ({
-  useSubscription: () => ({ hasActiveAccess: state.paid, loading: false }),
+  useSubscription: () => ({ hasActiveAccess: state.paid, loading: state.loading }),
 }));
 vi.mock('@/contexts/AuthContext', () => ({ useAuth: () => ({ user: { id: 'owner' } }) }));
 vi.mock('@/db', () => ({ getDb: async () => ({}) }));
@@ -47,6 +47,7 @@ beforeEach(() => {
   (globalThis as unknown as { IS_REACT_ACT_ENVIRONMENT: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
   vi.clearAllMocks();
   state.paid = false;
+  state.loading = false;
   state.list.mockResolvedValue([starter, paid]);
   state.detail.mockImplementation(async (_db, id) => (id === starter.id ? starter : paid));
 });
@@ -88,4 +89,18 @@ it('active Plus/Pro can open the full library and expiry removes an open paid de
   state.paid = false;
   await act(async () => renderer.update(<RecipeBrowseView />));
   expect(renderer.root.findAllByType('Detail' as React.ElementType)).toHaveLength(0);
+});
+it('opens a recipe with known paid access while product offerings are refreshing', async () => {
+  state.paid = true;
+  state.loading = true;
+  await act(async () => {
+    renderer = create(<RecipeBrowseView />);
+  });
+  await act(async () =>
+    renderer.root
+      .findAllByType('RecipeCard' as React.ElementType)
+      .find((card) => card.props.recipe.id === paid.id)!
+      .props.onPress(paid),
+  );
+  expect(renderer.root.findByType('Detail' as React.ElementType).props.visible).toBe(true);
 });

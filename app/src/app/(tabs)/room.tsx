@@ -47,6 +47,7 @@ import {
   type RoomSegment,
 } from '@/components/rooms';
 
+import { SquadDayPanel } from '@/components/rooms/SquadDayPanel';
 import { BasicRoomCard } from '@/components/rooms/BasicRoomCard';
 import { ShareLoggedMealModal } from '@/components/rooms/ShareLoggedMealModal';
 import { getSupabase } from '@/lib/supabase';
@@ -110,7 +111,7 @@ export default function RoomScreen() {
 
   // Selected Room
   const [selectedRoomId, setSelectedRoomId] = useState<string | null>(null);
-  const roomParams = useLocalSearchParams<{ room?: string }>();
+  const roomParams = useLocalSearchParams<{ room?: string; action?: string }>();
   React.useEffect(() => {
     if (roomParams.room && rooms.some((r) => r.id === roomParams.room))
       setSelectedRoomId(roomParams.room);
@@ -216,9 +217,21 @@ export default function RoomScreen() {
   const [mealRefresh, setMealRefresh] = useState(0);
   const [mealError, setMealError] = useState(false);
 
+  React.useEffect(() => {
+    if (roomParams.action === 'create') {
+      setShowCreateModal(true);
+      router.setParams({ action: undefined });
+    }
+  }, [roomParams.action, router]);
   // Current User & Partner in snapshot
   const members = useMemo(() => snapshot?.members ?? [], [snapshot?.members]);
   const callerId = snapshot?.caller_id ?? '';
+  React.useEffect(() => {
+    if (roomParams.action === 'nudge' && hasActiveAccess && members.length > 1) {
+      setNudgeTarget(members.find((member) => member.user_id !== callerId) ?? null);
+      router.setParams({ action: undefined });
+    }
+  }, [roomParams.action, hasActiveAccess, members, callerId, router]);
 
   const meMember: RoomMemberSnapshot | null = useMemo(() => {
     const member = members.find((m) => m.user_id === callerId);
@@ -563,6 +576,19 @@ export default function RoomScreen() {
               {/* Segment: Today (Side by side comparison) */}
               {displaySegment === 'today' && (
                 <>
+                  {currentRoom && currentRoom.state === 'active' && (
+                    <SquadDayPanel
+                      roomId={currentRoom.id}
+                      name={currentRoom.name}
+                      memberCount={currentRoom.member_count}
+                      visible={isVisible}
+                      onNudge={() =>
+                        setNudgeTarget(
+                          members.find((member) => member.user_id !== callerId) ?? null,
+                        )
+                      }
+                    />
+                  )}
                   {/* Pending Shared Meal Card (if any) */}
                   {mealError ? (
                     <Button

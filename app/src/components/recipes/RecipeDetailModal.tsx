@@ -107,7 +107,7 @@ export function RecipeDetailModal({
                 <Ionicons
                   name={recipe.is_favorite ? 'heart' : 'heart-outline'}
                   size={24}
-                  color={recipe.is_favorite ? '#EF4444' : colors.text}
+                  color={colors.text}
                 />
               </Pressable>
             )}
@@ -118,22 +118,16 @@ export function RecipeDetailModal({
             contentContainerStyle={styles.scrollContent}
             showsVerticalScrollIndicator={false}
           >
-            {/* Hero Image */}
-            <View style={[styles.heroWrap, { backgroundColor: colors.surfaceAlt }]}>
-              {heroImage ? (
+            {heroImage && (
+              <View style={[styles.heroWrap, { backgroundColor: colors.surfaceAlt }]}>
                 <Image
                   source={{ uri: heroImage }}
                   style={styles.heroImage}
                   resizeMode="cover"
                   accessibilityIgnoresInvertColors
                 />
-              ) : (
-                <View style={styles.heroPlaceholder}>
-                  <Ionicons name="restaurant-outline" size={54} color={colors.textMuted} />
-                </View>
-              )}
-            </View>
-
+              </View>
+            )}
             {/* Meta Title & Tags */}
             <View
               style={[
@@ -154,16 +148,18 @@ export function RecipeDetailModal({
                     style={[styles.tagBadge, { backgroundColor: colors.cardHighlight }]}
                   >
                     <Text style={[styles.tagBadgeText, { color: colors.accent }]}>
-                      {t(`recipes.dietTags.${tag}` as Parameters<typeof t>[0])}
+                      {t(`recipes.dietTags.${tag.replaceAll('-', '_')}` as Parameters<typeof t>[0])}
                     </Text>
                   </View>
                 ))}
 
-                <View style={[styles.tagBadge, { backgroundColor: colors.surfaceAlt }]}>
-                  <Text style={[styles.tagBadgeText, { color: colors.textMuted }]}>
-                    {t(`recipes.difficulties.${recipe.difficulty}` as Parameters<typeof t>[0])}
-                  </Text>
-                </View>
+                {recipe.difficulty !== 'unspecified' && (
+                  <View style={[styles.tagBadge, { backgroundColor: colors.surfaceAlt }]}>
+                    <Text style={[styles.tagBadgeText, { color: colors.textMuted }]}>
+                      {t(`recipes.difficulties.${recipe.difficulty}` as Parameters<typeof t>[0])}
+                    </Text>
+                  </View>
+                )}
               </View>
 
               <Text style={[styles.recipeTitle, { color: colors.text }]}>{recipe.title}</Text>
@@ -183,7 +179,7 @@ export function RecipeDetailModal({
                   </Text>
                 </View>
 
-                {recipe.prep_minutes > 0 && (
+                {!recipe.source_portion && recipe.prep_minutes > 0 && (
                   <View style={styles.timeItem}>
                     <Ionicons name="cut-outline" size={16} color={colors.textMuted} />
                     <Text style={[styles.timeItemText, { color: colors.textMuted }]}>
@@ -192,7 +188,7 @@ export function RecipeDetailModal({
                   </View>
                 )}
 
-                {recipe.cook_minutes > 0 && (
+                {!recipe.source_portion && recipe.cook_minutes > 0 && (
                   <View style={styles.timeItem}>
                     <Ionicons name="flame-outline" size={16} color={colors.textMuted} />
                     <Text style={[styles.timeItemText, { color: colors.textMuted }]}>
@@ -217,6 +213,12 @@ export function RecipeDetailModal({
                 </Text>
               </View>
 
+              {recipe.source_portion && (
+                <Text style={{ color: colors.textMuted }}>
+                  {t('homeRefresh.nutritionSource')} ·{' '}
+                  {t('homeRefresh.sourcePortion', { portion: recipe.source_portion })}
+                </Text>
+              )}
               <View style={styles.nutritionGrid}>
                 <View style={[styles.macroCard, { backgroundColor: colors.surfaceAlt }]}>
                   <Text style={[styles.macroValue, { color: colors.macroCalories }]}>
@@ -322,7 +324,11 @@ export function RecipeDetailModal({
                         </Text>
                       </View>
                       <Text style={[styles.ingredientQuantity, { color: colors.accent }]}>
-                        {formatQuantity(item.scaled_quantity)} {item.unit}
+                        {item.quantity === 0
+                          ? item.source_quantity
+                          : currentServings === recipe.servings && item.source_quantity
+                            ? item.source_quantity
+                            : `${formatQuantity(item.scaled_quantity)} ${item.unit}`}
                       </Text>
                     </View>
                   ))

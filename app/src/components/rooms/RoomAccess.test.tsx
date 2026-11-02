@@ -1,3 +1,4 @@
+vi.mock('@/components/rooms/SquadDayPanel', () => ({ SquadDayPanel: 'SquadDayPanel' }));
 vi.mock('@/hooks/useDiary', () => ({
   useDiary: () => ({ daySummary: { totals: { entryCount: 0 } }, loading: true, refresh: vi.fn() }),
 }));

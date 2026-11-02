@@ -202,6 +202,8 @@ export function filterRecipes(
   const normCuisine = criteria.cuisine?.trim().toLowerCase();
 
   return recipes.filter((recipe) => {
+    if (criteria.nutrition_focus && !recipe.nutrition_focus?.includes(criteria.nutrition_focus))
+      return false;
     // 1. Text Query (name, description, cuisine, diet tags, ingredient names)
     if (normQuery) {
       const matchTitle = recipe.title.toLowerCase().includes(normQuery);
@@ -225,7 +227,7 @@ export function filterRecipes(
     // 3. Diet Filter (tag match)
     if (normDiet) {
       const hasTag = recipe.diet_tags.some(
-        (t) => t.toLowerCase() === normDiet || t.toLowerCase().includes(normDiet),
+        (t) => t.toLowerCase().replaceAll('-', '_') === normDiet.replaceAll('-', '_'),
       );
       if (!hasTag) return false;
     }

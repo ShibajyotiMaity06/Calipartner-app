@@ -35,3 +35,4 @@ export * from './advancedNutrition';
 export * from './challengeEngine';
 export * from './challengeTypes';
 export * from './challengeViewModel';
+export * from './ownerRecipes';

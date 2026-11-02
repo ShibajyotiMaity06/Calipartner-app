@@ -217,7 +217,8 @@ export type FoodSource = 'ifct' | 'off' | 'usda' | 'user';
 
 export type MealSection = 'breakfast' | 'lunch' | 'dinner' | 'snacks' | 'extra';
 
-export type EntrySource = 'search' | 'scan' | 'photo' | 'history' | 'copy' | 'recipe';
+export type EntrySource =
+  'search' | 'scan' | 'photo' | 'description' | 'history' | 'copy' | 'recipe';
 
 export interface ServingUnit {
   unit: string; // e.g. 'g', 'ml', 'piece', 'bowl', 'katori', 'cup', 'tbsp', 'slice'
@@ -1598,9 +1599,10 @@ export type AiFoodPhotoErrorCode =
 // Phase 12: Recipe Library
 // -----------------------------------------------------------------------------
 
-export type RecipeMealType = 'breakfast' | 'lunch' | 'dinner' | 'snack' | 'dessert' | 'beverage';
+export type RecipeMealType =
+  'breakfast' | 'lunch' | 'dinner' | 'snack' | 'dessert' | 'beverage' | 'unspecified';
 
-export type RecipeDifficulty = 'easy' | 'medium' | 'hard';
+export type RecipeDifficulty = 'easy' | 'medium' | 'hard' | 'unspecified';
 
 export type RecipeStatus = 'draft' | 'published';
 
@@ -1615,6 +1617,7 @@ export interface RecipeNutritionSnapshot {
 }
 
 export interface RecipeIngredient {
+  source_quantity?: string;
   id?: string;
   recipe_id?: string;
   food_id: string;
@@ -1626,6 +1629,8 @@ export interface RecipeIngredient {
 }
 
 export interface Recipe {
+  source_portion?: string;
+  nutrition_focus?: string[];
   id: string;
   title: string;
   description?: string | null;
@@ -1700,6 +1705,7 @@ export interface RecipeImportInput {
 }
 
 export interface RecipeFilterCriteria {
+  nutrition_focus?: string;
   query?: string;
   meal_type?: RecipeMealType;
   diet?: string;

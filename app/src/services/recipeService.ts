@@ -1,5 +1,10 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
-import { filterRecipes, scaleLoggedRecipeNutrients, scaleRecipeServings } from '@calipartner/core';
+import {
+  filterRecipes,
+  scaleLoggedRecipeNutrients,
+  scaleRecipeServings,
+  ownerRecipeToRecipe,
+} from '@calipartner/core';
 import type {
   FoodEntry,
   MealSection,
@@ -12,6 +17,13 @@ import type {
 import { createLogger } from '@/lib/logger';
 import { enqueueOutbox, type SyncDb } from './syncService';
 import bundledRecipesData from '../../assets/bundled_recipes.json';
+import { diaryEvents } from './diaryEvents';
+import ownerRecipesData from '../../../datasets/owner_recipes.json';
+
+export const OWNER_RECIPES = ownerRecipesData.map((recipe) =>
+  ownerRecipeToRecipe(recipe, recipe.id),
+);
+const allBundledRecipes = [...(bundledRecipesData as unknown as Recipe[]), ...OWNER_RECIPES];
 
 export const STARTER_RECIPE_IDS = new Set(
   (bundledRecipesData as unknown as Recipe[])
@@ -35,6 +47,7 @@ export function generateClientUuid(): string {
 }
 
 export interface RecipeDb {
+  withTransactionAsync?(action: () => Promise<void>): Promise<void>;
   runAsync(sql: string, ...params: unknown[]): Promise<unknown>;
   getAllAsync<T>(sql: string, ...params: unknown[]): Promise<T[]>;
   getFirstAsync<T>(sql: string, ...params: unknown[]): Promise<T | null>;
@@ -97,6 +110,8 @@ export interface ReportRecipeInput {
  * Parses a SQLite row into a strongly typed Recipe object.
  */
 export function parseLocalRecipeRow(row: LocalRecipeRow): Recipe {
+  const supplied = OWNER_RECIPES.find((recipe) => recipe.id === row.id);
+  if (supplied) return supplied;
   const safeJson = <T>(val: unknown, fallback: T): T => {
     if (!val) return fallback;
     if (typeof val !== 'string') return val as T;
@@ -283,8 +298,11 @@ export async function getRecipes(
 
       if (!res.error && res.data && res.data.length > 0) {
         allRecipes = (res.data as Record<string, unknown>[]).map((r) => ({
+          ...OWNER_RECIPES.find((recipe) => recipe.id === r.id),
           ...(r as unknown as Recipe),
-          diet_tags: Array.isArray(r.diet_tags) ? (r.diet_tags as string[]) : [],
+          diet_tags:
+            OWNER_RECIPES.find((recipe) => recipe.id === r.id)?.diet_tags ??
+            (Array.isArray(r.diet_tags) ? (r.diet_tags as string[]) : []),
           steps: Array.isArray(r.steps) ? (r.steps as string[]) : [],
           tips: Array.isArray(r.tips) ? (r.tips as string[]) : [],
           image_urls: Array.isArray(r.image_urls) ? (r.image_urls as string[]) : [],
@@ -292,6 +310,14 @@ export async function getRecipes(
 
         // Cache fetched recipes locally
         for (const recipe of allRecipes) {
+          // The supplied catalogue is already available offline; avoid thousands of redundant
+          // full-store browser writes before the first browse result can be shown.
+          if (
+            OWNER_RECIPES.some(
+              (bundled) => bundled.id === recipe.id && bundled.version === recipe.version,
+            )
+          )
+            continue;
           await cacheRecipeLocally(db, recipe);
         }
       }
@@ -308,9 +334,7 @@ export async function getRecipes(
   const recipeMap = new Map<string, Recipe>();
 
   // 1. Seed bundled Indian recipes (93 complete items from reciepes.csv)
-  const bundled = (bundledRecipesData as unknown as Recipe[]).filter(
-    (r) => r.status === 'published',
-  );
+  const bundled = allBundledRecipes.filter((r) => r.status === 'published');
   for (const b of bundled) {
     recipeMap.set(b.id, b);
   }
@@ -430,7 +454,7 @@ export async function getRecipeDetail(
 
   // 3. Fallback to bundled dataset
   if (!recipe) {
-    const bundled = (bundledRecipesData as unknown as Recipe[]).find((r) => r.id === recipeId);
+    const bundled = allBundledRecipes.find((r) => r.id === recipeId);
     if (bundled) {
       recipe = bundled;
       await cacheRecipeLocally(db, recipe);
@@ -438,6 +462,9 @@ export async function getRecipeDetail(
   }
 
   if (!recipe) return null;
+  // Source ingredient text and portion metadata stay available after a cache round trip.
+  const ownerRecipe = OWNER_RECIPES.find((r) => r.id === recipeId);
+  if (ownerRecipe) recipe = { ...recipe, ...ownerRecipe };
 
   // Track recently viewed and favorite state if user is logged in (RCP-7)
   if (userId) {
@@ -526,73 +553,78 @@ export async function logRecipe(db: RecipeDb, input: LogRecipeInput): Promise<Fo
     deleted_at: null,
   };
 
-  // 1. Insert into local SQLite
-  await db.runAsync(
-    `INSERT INTO local_food_entries (
+  const persist = async () => {
+    // 1. Insert into local SQLite
+    await db.runAsync(
+      `INSERT INTO local_food_entries (
       id, user_id, food_id, meal_section, quantity, unit,
       calories, protein, carbs, fat, fiber, sugar, sodium_mg,
       food_name, brand_name, logged_at, local_date, source,
       shared_meal_id, created_at, updated_at, deleted_at, sync_state
     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NULL, 'pending')`,
-    [
-      entry.id,
-      entry.user_id,
-      entry.food_id,
-      entry.meal_section,
-      entry.quantity,
-      entry.unit,
-      entry.calories,
-      entry.protein,
-      entry.carbs,
-      entry.fat,
-      entry.fiber,
-      entry.sugar,
-      entry.sodium_mg,
-      entry.food_name,
-      entry.brand_name,
-      entry.logged_at,
-      entry.local_date,
-      entry.source,
-      entry.shared_meal_id,
-      entry.created_at,
-      entry.updated_at,
-    ],
-  );
+      [
+        entry.id,
+        entry.user_id,
+        entry.food_id,
+        entry.meal_section,
+        entry.quantity,
+        entry.unit,
+        entry.calories,
+        entry.protein,
+        entry.carbs,
+        entry.fat,
+        entry.fiber,
+        entry.sugar,
+        entry.sodium_mg,
+        entry.food_name,
+        entry.brand_name,
+        entry.logged_at,
+        entry.local_date,
+        entry.source,
+        entry.shared_meal_id,
+        entry.created_at,
+        entry.updated_at,
+      ],
+    );
 
-  // 2. Enqueue in outbox for background remote sync
-  await enqueueOutbox(db as unknown as SyncDb, {
-    id: entry.id,
-    entity: 'food_entries',
-    operation: 'upsert',
-    payload: {
+    // 2. Enqueue in outbox for background remote sync
+    await enqueueOutbox(db as unknown as SyncDb, {
       id: entry.id,
-      user_id: entry.user_id,
-      food_id: entry.food_id,
-      meal_section: entry.meal_section,
-      quantity: entry.quantity,
-      unit: entry.unit,
-      calories: entry.calories,
-      protein: entry.protein,
-      carbs: entry.carbs,
-      fat: entry.fat,
-      fiber: entry.fiber,
-      sugar: entry.sugar,
-      sodium_mg: entry.sodium_mg,
-      food_name: entry.food_name,
-      brand_name: entry.brand_name,
-      logged_at: entry.logged_at,
-      local_date: entry.local_date,
-      source: entry.source,
-      shared_meal_id: entry.shared_meal_id,
-      created_at: entry.created_at,
-      updated_at: entry.updated_at,
-      deleted_at: null,
-    },
-  });
+      entity: 'food_entries',
+      operation: 'upsert',
+      payload: {
+        id: entry.id,
+        user_id: entry.user_id,
+        food_id: entry.food_id,
+        meal_section: entry.meal_section,
+        quantity: entry.quantity,
+        unit: entry.unit,
+        calories: entry.calories,
+        protein: entry.protein,
+        carbs: entry.carbs,
+        fat: entry.fat,
+        fiber: entry.fiber,
+        sugar: entry.sugar,
+        sodium_mg: entry.sodium_mg,
+        food_name: entry.food_name,
+        brand_name: entry.brand_name,
+        logged_at: entry.logged_at,
+        local_date: entry.local_date,
+        source: entry.source,
+        shared_meal_id: entry.shared_meal_id,
+        created_at: entry.created_at,
+        updated_at: entry.updated_at,
+        deleted_at: null,
+      },
+    });
+  };
+  if (db.withTransactionAsync) await db.withTransactionAsync(persist);
+  else await persist();
 
   log.info(
     `Logged recipe "${recipe.title}" (${input.servings} servings) in section "${input.mealSection}"`,
   );
+  diaryEvents.emitChange();
   return entry;
 }
 
@@ -605,12 +637,13 @@ export async function toggleRecipeFavorite(
   userId: string,
   recipeId: string,
   isFavorite: boolean,
-  _supabase?: SupabaseRecipeClient,
+  supabase?: SupabaseRecipeClient,
 ): Promise<void> {
   const now = new Date().toISOString();
   const outboxId = `recipe_fav:${userId}:${recipeId}`;
 
   if (isFavorite) {
+    await getRecipeDetail(db, recipeId, userId, supabase);
     await db.runAsync(
       `INSERT INTO local_recipe_favorites (user_id, recipe_id, created_at, sync_state, deleted_at)
        VALUES (?, ?, ?, 'pending', NULL)
@@ -645,6 +678,7 @@ export async function toggleRecipeFavorite(
       },
     });
   }
+  diaryEvents.emitChange();
 }
 
 /**

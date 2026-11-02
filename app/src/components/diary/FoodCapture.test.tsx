@@ -1,10 +1,17 @@
+vi.mock('./DescribeMealModal', () => ({ DescribeMealModal: 'DescribeMeal' }));
 import React from 'react';
 import { act, create, type ReactTestRenderer } from 'react-test-renderer';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-const flow = vi.hoisted(() => ({ analyze: vi.fn(), add: vi.fn(), access: vi.fn() }));
+const flow = vi.hoisted(() => ({
+  analyze: vi.fn(),
+  add: vi.fn(),
+  access: vi.fn(),
+  history: [] as unknown[],
+}));
 vi.mock('@calipartner/ui', async () => ({
   ...(await import('../../../../packages/ui/src/tokens')),
   Text: 'Text',
+  Button: 'Button',
 }));
 vi.mock('react-native', () => ({
   ActivityIndicator: 'ActivityIndicator',
@@ -22,7 +29,7 @@ vi.mock('@/hooks/useFoodSearch', () => ({
   useFoodSearch: () => ({ results: [], query: '', setQuery: vi.fn(), loading: false }),
 }));
 vi.mock('@/hooks/usePreviouslyLogged', () => ({
-  usePreviouslyLogged: () => ({ items: [], loading: false }),
+  usePreviouslyLogged: () => ({ items: flow.history, loading: false }),
 }));
 vi.mock('@/hooks/useFoodEntries', () => ({
   useAddEntry: () => ({ addEntry: flow.add, error: null }),
@@ -52,6 +59,7 @@ let renderer: ReactTestRenderer;
 beforeEach(() => {
   (globalThis as unknown as { IS_REACT_ACT_ENVIRONMENT: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
   vi.clearAllMocks();
+  flow.history = [];
   flow.access.mockResolvedValue({
     allowed: true,
     userState: 'paid_pro',
@@ -181,4 +189,48 @@ it('does not request camera access when the allowance check fails', async () => 
   );
   expect(renderer.root.findAllByType('Camera' as React.ElementType)).toHaveLength(0);
   expect(renderer.root.findByProps({ testID: 'food-photo-error' })).toBeDefined();
+});
+
+it('multi-food selection retries only unsaved foods after a partial storage failure', async () => {
+  const food = (id: string) => ({
+    id,
+    name: id,
+    source: 'ifct',
+    brand: null,
+    owner_id: null,
+    serving_units: [{ unit: 'g', grams: 1 }],
+    calories_per_100g: 100,
+    protein_per_100g: 10,
+    carbs_per_100g: 10,
+    fat_per_100g: 2,
+    fiber_per_100g: 1,
+  });
+  flow.history = ['first', 'second'].map((id) => ({
+    food: food(id),
+    stats: { last_quantity: 100, last_unit: 'g', use_count: 1 },
+  }));
+  flow.add
+    .mockResolvedValueOnce({ id: 'first' })
+    .mockResolvedValueOnce(null)
+    .mockResolvedValue({ id: 'second' });
+  const closed = vi.fn();
+  await act(async () => {
+    renderer = create(
+      <FoodLogModal visible defaultSection="lunch" localDate="2026-11-01" onClose={closed} />,
+    );
+  });
+  await act(async () => {
+    renderer.root.findByProps({ testID: 'select-history-first' }).props.onPress();
+    renderer.root.findByProps({ testID: 'select-history-second' }).props.onPress();
+  });
+  await act(async () =>
+    renderer.root.findByProps({ testID: 'save-food-selection' }).props.onPress(),
+  );
+  expect(closed).not.toHaveBeenCalled();
+  expect(flow.add.mock.calls.map((call) => call[0].food.id)).toEqual(['first', 'second']);
+  await act(async () =>
+    renderer.root.findByProps({ testID: 'save-food-selection' }).props.onPress(),
+  );
+  expect(flow.add.mock.calls.map((call) => call[0].food.id)).toEqual(['first', 'second', 'second']);
+  expect(closed).toHaveBeenCalledOnce();
 });

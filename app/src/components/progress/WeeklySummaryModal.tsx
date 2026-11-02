@@ -20,13 +20,13 @@ interface WeeklySummaryModalProps {
 export function WeeklySummaryModal({
   visible,
   onClose,
-  loggedDays = 6,
-  goalDays = 5,
-  totalDays = 7,
-  weightChangeKg = -0.3,
-  workoutCount = 3,
-  avgSteps = 8420,
-  consistencyScore = 82,
+  loggedDays = 0,
+  goalDays = 0,
+  totalDays = 0,
+  weightChangeKg = null,
+  workoutCount = 0,
+  avgSteps = 0,
+  consistencyScore = 0,
   testID = 'weekly-summary-modal',
 }: WeeklySummaryModalProps) {
   const [includeWeight, setIncludeWeight] = useState(false);

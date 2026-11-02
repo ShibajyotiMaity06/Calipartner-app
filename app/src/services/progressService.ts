@@ -138,19 +138,11 @@ export async function fetchIndividualProgress(
     });
 
     if (error) {
-      const errStr = JSON.stringify(error);
-      if (errStr.includes('target_calories') || errStr.includes('does not exist')) {
-        return getDefaultIndividualProgress(range);
-      }
       throw parseProgressError(error);
     }
 
     return (data as IndividualProgressData) ?? getDefaultIndividualProgress(range);
   } catch (err) {
-    const errStr = err instanceof Error ? err.message : String(err);
-    if (errStr.includes('target_calories') || errStr.includes('does not exist')) {
-      return getDefaultIndividualProgress(range);
-    }
     throw parseProgressError(err);
   }
 }

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Modal,
@@ -9,7 +9,13 @@ import {
   View,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { scaleLoggedRecipeNutrients, type MealSection, type Recipe } from '@calipartner/core';
+import {
+  getLocalDateString,
+  getMealSectionForTime,
+  scaleLoggedRecipeNutrients,
+  type MealSection,
+  type Recipe,
+} from '@calipartner/core';
 import { useAuth } from '@/contexts/AuthContext';
 import { getDb } from '@/db';
 import { t } from '@/i18n';
@@ -33,12 +39,13 @@ export function LogRecipeModal({
   visible,
   recipe,
   defaultMealSection,
-  localDate = new Date().toISOString().slice(0, 10),
+  localDate,
   onClose,
   onLogged,
 }: LogRecipeModalProps) {
   const { colors } = useTheme();
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
+  const inFlight = useRef(false);
 
   const [servings, setServings] = useState<number>(1);
   const [mealSection, setMealSection] = useState<MealSection>(() => {
@@ -47,7 +54,7 @@ export function LogRecipeModal({
     if (recipe?.meal_type && SECTIONS.includes(recipe.meal_type as MealSection)) {
       return recipe.meal_type as MealSection;
     }
-    return 'lunch';
+    return getMealSectionForTime(new Date(), profile?.timezone);
   });
   const [submitting, setSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
@@ -66,23 +73,32 @@ export function LogRecipeModal({
   };
 
   const handleLog = async () => {
+    if (inFlight.current) return;
     if (!user?.id) {
       setErrorMsg('Please sign in to log recipes to your diary.');
       return;
     }
 
+    inFlight.current = true;
     setSubmitting(true);
     setErrorMsg(null);
 
     try {
       const db = await getDb();
 
+      const occurred = new Date();
       await logRecipe(db, {
         userId: user.id,
         recipeId: recipe.id,
         servings,
         mealSection,
-        localDate,
+        localDate:
+          localDate ??
+          getLocalDateString(
+            occurred,
+            profile?.timezone ?? Intl.DateTimeFormat().resolvedOptions().timeZone,
+          ),
+        loggedAt: occurred.toISOString(),
       });
 
       onLogged?.();
@@ -90,6 +106,7 @@ export function LogRecipeModal({
     } catch (err: unknown) {
       setErrorMsg(err instanceof Error ? err.message : 'Failed to log recipe.');
     } finally {
+      inFlight.current = false;
       setSubmitting(false);
     }
   };
@@ -115,6 +132,11 @@ export function LogRecipeModal({
               <Text style={[styles.subtitle, { color: colors.textMuted }]} numberOfLines={1}>
                 {recipe.title}
               </Text>
+              {recipe.source_portion && (
+                <Text style={{ color: colors.textMuted }}>
+                  {t('homeRefresh.sourcePortion', { portion: recipe.source_portion })}
+                </Text>
+              )}
             </View>
             <Pressable
               testID="btn-close-log-recipe"

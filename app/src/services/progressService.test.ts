@@ -73,6 +73,15 @@ describe('progressService', () => {
 
     await expect(fetchIndividualProgress(client, '7d')).rejects.toThrowError(ProgressServiceError);
   });
+  it('reports a missing progress migration as an error rather than displaying fabricated empty statistics', async () => {
+    const client = createMockSupabase({
+      rpcHandler: async () => ({
+        data: null,
+        error: new Error('column target_calories does not exist'),
+      }),
+    });
+    await expect(fetchIndividualProgress(client, '7d')).rejects.toThrow();
+  });
 
   it('fetchRoomProgress calls get_room_progress with room_id and range', async () => {
     const mockRoomData = {
