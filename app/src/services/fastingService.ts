@@ -1,3 +1,4 @@
+import { afterOnlineSave, withOnlineSave } from './accountDataService';
 import {
   calculateFastingProgress,
   calculateFastingStats,
@@ -17,7 +18,7 @@ import {
   rescheduleAllFastingReminders,
   scheduleFastingReminder,
 } from './localNotificationService';
-import { enqueueOutbox, type SupabaseSyncClient, type SyncDb } from './syncService';
+import { saveRemote, type DataClient, type LocalDb } from './accountDataService';
 
 const log = createLogger('fastingService');
 
@@ -83,7 +84,7 @@ export function parseFastingError(err: unknown): FastingError {
  * Loads local fasting settings for user, or returns defaults if none exist.
  */
 export async function getLocalFastingSettings(
-  db: SyncDb,
+  db: LocalDb,
   userId: string,
 ): Promise<FastingSettings> {
   const row = await db.getFirstAsync<{
@@ -117,24 +118,25 @@ export async function getLocalFastingSettings(
 }
 
 /**
- * Saves fasting settings locally, enqueues to outbox, and reschedules reminders.
+ * Saves directly with server acknowledgement.
  */
 export async function saveFastingSettings(
-  db: SyncDb,
-  supabase: SupabaseSyncClient | null,
+  db: LocalDb,
+  supabase: DataClient | null,
   settings: FastingSettings,
   quietHoursSettings?: { enabled: boolean; start: string; end: string },
 ): Promise<FastingSettings> {
-  const now = new Date().toISOString();
-  const updatedSettings: FastingSettings = {
-    ...settings,
-    updated_at: now,
-  };
+  return withOnlineSave(db, async (db) => {
+    const now = new Date().toISOString();
+    const updatedSettings: FastingSettings = {
+      ...settings,
+      updated_at: now,
+    };
 
-  await db.runAsync(
-    `INSERT INTO local_fasting_settings (
+    await db.runAsync(
+      `INSERT INTO local_fasting_settings (
        user_id, enabled, protocol, eating_window_start, eating_window_end, custom_fasting_hours, created_at, updated_at, sync_state
-     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'pending')
+     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'synced')
      ON CONFLICT (user_id) DO UPDATE SET
        enabled = excluded.enabled,
        protocol = excluded.protocol,
@@ -142,53 +144,56 @@ export async function saveFastingSettings(
        eating_window_end = excluded.eating_window_end,
        custom_fasting_hours = excluded.custom_fasting_hours,
        updated_at = excluded.updated_at,
-       sync_state = 'pending'`,
-    [
-      updatedSettings.user_id,
-      updatedSettings.enabled ? 1 : 0,
-      updatedSettings.protocol,
-      updatedSettings.eating_window_start,
-      updatedSettings.eating_window_end,
-      updatedSettings.custom_fasting_hours ?? null,
-      updatedSettings.created_at,
-      updatedSettings.updated_at,
-    ],
-  );
+       sync_state = 'synced'`,
+      [
+        updatedSettings.user_id,
+        updatedSettings.enabled ? 1 : 0,
+        updatedSettings.protocol,
+        updatedSettings.eating_window_start,
+        updatedSettings.eating_window_end,
+        updatedSettings.custom_fasting_hours ?? null,
+        updatedSettings.created_at,
+        updatedSettings.updated_at,
+      ],
+    );
 
-  // Enqueue outbox item
-  await enqueueOutbox(db, {
-    id: `fasting_settings_${updatedSettings.user_id}`,
-    entity: 'fasting_settings',
-    operation: 'upsert',
-    payload: {
-      user_id: updatedSettings.user_id,
-      enabled: updatedSettings.enabled,
-      protocol: updatedSettings.protocol,
-      eating_window_start: updatedSettings.eating_window_start,
-      eating_window_end: updatedSettings.eating_window_end,
-      custom_fasting_hours: updatedSettings.custom_fasting_hours ?? null,
-      created_at: updatedSettings.created_at,
-      updated_at: updatedSettings.updated_at,
-    },
+    // Save directly and require server acknowledgement.
+    await saveRemote(db, {
+      id: `fasting_settings_${updatedSettings.user_id}`,
+      entity: 'fasting_settings',
+      operation: 'upsert',
+      payload: {
+        user_id: updatedSettings.user_id,
+        enabled: updatedSettings.enabled,
+        protocol: updatedSettings.protocol,
+        eating_window_start: updatedSettings.eating_window_start,
+        eating_window_end: updatedSettings.eating_window_end,
+        custom_fasting_hours: updatedSettings.custom_fasting_hours ?? null,
+        created_at: updatedSettings.created_at,
+        updated_at: updatedSettings.updated_at,
+      },
+    });
+
+    // Reschedule local reminders using Phase 9 notification service
+    const activeSession = await getActiveFastingSession(db, updatedSettings.user_id);
+    await afterOnlineSave(db, () =>
+      rescheduleAllFastingReminders({
+        settings: updatedSettings,
+        activeSession,
+        quietHoursSettings,
+      }),
+    );
+
+    log.info(`Saved fasting settings for ${updatedSettings.user_id}`);
+    return updatedSettings;
   });
-
-  // Reschedule local reminders using Phase 9 notification service
-  const activeSession = await getActiveFastingSession(db, updatedSettings.user_id);
-  await rescheduleAllFastingReminders({
-    settings: updatedSettings,
-    activeSession,
-    quietHoursSettings,
-  });
-
-  log.info(`Saved fasting settings for ${updatedSettings.user_id}`);
-  return updatedSettings;
 }
 
 /**
  * Retrieves the currently active fasting session for the user, if one exists.
  */
 export async function getActiveFastingSession(
-  db: SyncDb,
+  db: LocalDb,
   userId: string,
 ): Promise<FastingSession | null> {
   const row = await db.getFirstAsync<{
@@ -226,8 +231,8 @@ export async function getActiveFastingSession(
  * Idempotent, client-generated UUID, stored UTC timestamps.
  */
 export async function startFast(
-  db: SyncDb,
-  supabase: SupabaseSyncClient | null,
+  db: LocalDb,
+  supabase: DataClient | null,
   params: {
     userId: string;
     plannedMinutes: number;
@@ -236,87 +241,91 @@ export async function startFast(
     timezone?: string;
   },
 ): Promise<FastingSession> {
-  const { userId, plannedMinutes, timezone = 'UTC' } = params;
+  return withOnlineSave(db, async (db) => {
+    const { userId, plannedMinutes, timezone = 'UTC' } = params;
 
-  const validation = validatePlannedMinutes(plannedMinutes);
-  if (!validation.valid) {
-    throw new FastingError('INVALID_PLANNED_MINUTES', validation.error);
-  }
+    const validation = validatePlannedMinutes(plannedMinutes);
+    if (!validation.valid) {
+      throw new FastingError('INVALID_PLANNED_MINUTES', validation.error);
+    }
 
-  // Check if active session already exists
-  const existingActive = await getActiveFastingSession(db, userId);
-  if (existingActive) {
-    throw new FastingError('ACTIVE_SESSION_EXISTS', 'An active fast is already running');
-  }
+    // Check if active session already exists
+    const existingActive = await getActiveFastingSession(db, userId);
+    if (existingActive) {
+      throw new FastingError('ACTIVE_SESSION_EXISTS', 'An active fast is already running');
+    }
 
-  const now = new Date();
-  const startAt = params.startAt ?? now.toISOString();
-  const localDate =
-    params.localDate ??
-    new Intl.DateTimeFormat('en-CA', { timeZone: timezone }).format(new Date(startAt));
+    const now = new Date();
+    const startAt = params.startAt ?? now.toISOString();
+    const localDate =
+      params.localDate ??
+      new Intl.DateTimeFormat('en-CA', { timeZone: timezone }).format(new Date(startAt));
 
-  const sessionId = crypto.randomUUID
-    ? crypto.randomUUID()
-    : `fast_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+    const sessionId = crypto.randomUUID
+      ? crypto.randomUUID()
+      : `fast_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
 
-  const session: FastingSession = {
-    id: sessionId,
-    user_id: userId,
-    start_at: startAt,
-    planned_minutes: plannedMinutes,
-    end_at: null,
-    status: 'active',
-    local_date: localDate,
-    created_at: now.toISOString(),
-    updated_at: now.toISOString(),
-  };
+    const session: FastingSession = {
+      id: sessionId,
+      user_id: userId,
+      start_at: startAt,
+      planned_minutes: plannedMinutes,
+      end_at: null,
+      status: 'active',
+      local_date: localDate,
+      created_at: now.toISOString(),
+      updated_at: now.toISOString(),
+    };
 
-  // 1. Save to local SQLite
-  await db.runAsync(
-    `INSERT INTO local_fasting_sessions (
+    // 1. Save to local SQLite
+    await db.runAsync(
+      `INSERT INTO local_fasting_sessions (
        id, user_id, start_at, planned_minutes, end_at, status, local_date, created_at, updated_at, sync_state
-     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending')`,
-    [
-      session.id,
-      session.user_id,
-      session.start_at,
-      session.planned_minutes,
-      session.end_at,
-      session.status,
-      session.local_date,
-      session.created_at,
-      session.updated_at,
-    ],
-  );
+     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'synced')`,
+      [
+        session.id,
+        session.user_id,
+        session.start_at,
+        session.planned_minutes,
+        session.end_at,
+        session.status,
+        session.local_date,
+        session.created_at,
+        session.updated_at,
+      ],
+    );
 
-  // 2. Enqueue outbox for offline-first sync
-  await enqueueOutbox(db, {
-    id: session.id,
-    entity: 'fasting_sessions',
-    operation: 'upsert',
-    payload: {
+    // Save directly and require server acknowledgement.
+    await saveRemote(db, {
       id: session.id,
-      user_id: session.user_id,
-      start_at: session.start_at,
-      planned_minutes: session.planned_minutes,
-      end_at: session.end_at,
-      status: session.status,
-      local_date: session.local_date,
-      created_at: session.created_at,
-      updated_at: session.updated_at,
-    },
-  });
+      entity: 'fasting_sessions',
+      operation: 'upsert',
+      payload: {
+        id: session.id,
+        user_id: session.user_id,
+        start_at: session.start_at,
+        planned_minutes: session.planned_minutes,
+        end_at: session.end_at,
+        status: session.status,
+        local_date: session.local_date,
+        created_at: session.created_at,
+        updated_at: session.updated_at,
+      },
+    });
 
-  // 3. Schedule fast end reminder
-  const targetEndDate = new Date(new Date(startAt).getTime() + plannedMinutes * 60000);
-  await scheduleFastingReminder({
-    id: `fasting_end_${session.id}`,
-    type: 'fast_end',
-    targetDate: targetEndDate,
-  });
+    // 3. Schedule fast end reminder
+    const targetEndDate = new Date(new Date(startAt).getTime() + plannedMinutes * 60000);
+    await afterOnlineSave(db, () =>
+      scheduleFastingReminder({
+        id: `fasting_end_${session.id}`,
+        type: 'fast_end',
+        targetDate: targetEndDate,
+      }),
+    );
 
-  log.info(`Started fast ${session.id} for user ${userId} (${plannedMinutes} mins)`);
-  return session;
+    log.info(`Started fast ${session.id} for user ${userId} (${plannedMinutes} mins)`);
+    return session;
+  });
 }
 
 /**
@@ -324,90 +333,92 @@ export async function startFast(
  * Marks completed or ended_early neutrally, without penalties or shaming.
  */
 export async function endFast(
-  db: SyncDb,
-  supabase: SupabaseSyncClient | null,
+  db: LocalDb,
+  supabase: DataClient | null,
   params: {
     sessionId: string;
     userId: string;
     endAt?: string;
   },
 ): Promise<FastingSession> {
-  const { sessionId, userId } = params;
-  const now = new Date();
-  const endAt = params.endAt ?? now.toISOString();
+  return withOnlineSave(db, async (db) => {
+    const { sessionId, userId } = params;
+    const now = new Date();
+    const endAt = params.endAt ?? now.toISOString();
 
-  const row = await db.getFirstAsync<{
-    id: string;
-    user_id: string;
-    start_at: string;
-    planned_minutes: number;
-    end_at: string | null;
-    status: string;
-    local_date: string;
-    created_at: string;
-    updated_at: string;
-  }>(`SELECT * FROM local_fasting_sessions WHERE id = ? AND user_id = ?`, [sessionId, userId]);
+    const row = await db.getFirstAsync<{
+      id: string;
+      user_id: string;
+      start_at: string;
+      planned_minutes: number;
+      end_at: string | null;
+      status: string;
+      local_date: string;
+      created_at: string;
+      updated_at: string;
+    }>(`SELECT * FROM local_fasting_sessions WHERE id = ? AND user_id = ?`, [sessionId, userId]);
 
-  if (!row) {
-    throw new FastingError('SESSION_NOT_FOUND', 'Fasting session not found');
-  }
+    if (!row) {
+      throw new FastingError('SESSION_NOT_FOUND', 'Fasting session not found');
+    }
 
-  const startMs = new Date(row.start_at).getTime();
-  const endMs = new Date(endAt).getTime();
-  const elapsedMinutes = Math.max(0, Math.round((endMs - startMs) / 60000));
-  const newStatus = elapsedMinutes >= row.planned_minutes ? 'completed' : 'ended_early';
+    const startMs = new Date(row.start_at).getTime();
+    const endMs = new Date(endAt).getTime();
+    const elapsedMinutes = Math.max(0, Math.round((endMs - startMs) / 60000));
+    const newStatus = elapsedMinutes >= row.planned_minutes ? 'completed' : 'ended_early';
 
-  const updatedSession: FastingSession = {
-    id: row.id,
-    user_id: row.user_id,
-    start_at: row.start_at,
-    planned_minutes: row.planned_minutes,
-    end_at: endAt,
-    status: newStatus,
-    local_date: row.local_date,
-    created_at: row.created_at,
-    updated_at: now.toISOString(),
-  };
+    const updatedSession: FastingSession = {
+      id: row.id,
+      user_id: row.user_id,
+      start_at: row.start_at,
+      planned_minutes: row.planned_minutes,
+      end_at: endAt,
+      status: newStatus,
+      local_date: row.local_date,
+      created_at: row.created_at,
+      updated_at: now.toISOString(),
+    };
 
-  // 1. Update SQLite
-  await db.runAsync(
-    `UPDATE local_fasting_sessions
-     SET end_at = ?, status = ?, updated_at = ?, sync_state = 'pending'
+    // 1. Update SQLite
+    await db.runAsync(
+      `UPDATE local_fasting_sessions
+     SET end_at = ?, status = ?, updated_at = ?, sync_state = 'synced'
      WHERE id = ? AND user_id = ?`,
-    [updatedSession.end_at, updatedSession.status, updatedSession.updated_at, sessionId, userId],
-  );
+      [updatedSession.end_at, updatedSession.status, updatedSession.updated_at, sessionId, userId],
+    );
 
-  // 2. Enqueue outbox
-  await enqueueOutbox(db, {
-    id: updatedSession.id,
-    entity: 'fasting_sessions',
-    operation: 'upsert',
-    payload: {
+    // Save directly and require server acknowledgement.
+    await saveRemote(db, {
       id: updatedSession.id,
-      user_id: updatedSession.user_id,
-      start_at: updatedSession.start_at,
-      planned_minutes: updatedSession.planned_minutes,
-      end_at: updatedSession.end_at,
-      status: updatedSession.status,
-      local_date: updatedSession.local_date,
-      created_at: updatedSession.created_at,
-      updated_at: updatedSession.updated_at,
-    },
+      entity: 'fasting_sessions',
+      operation: 'upsert',
+      payload: {
+        id: updatedSession.id,
+        user_id: updatedSession.user_id,
+        start_at: updatedSession.start_at,
+        planned_minutes: updatedSession.planned_minutes,
+        end_at: updatedSession.end_at,
+        status: updatedSession.status,
+        local_date: updatedSession.local_date,
+        created_at: updatedSession.created_at,
+        updated_at: updatedSession.updated_at,
+      },
+    });
+
+    // 3. Cancel fast end reminder
+    await afterOnlineSave(db, () => cancelFastingReminder(`fasting_end_${sessionId}`));
+
+    log.info(`Ended fast ${sessionId}: ${newStatus} (${elapsedMinutes} mins)`);
+    return updatedSession;
   });
-
-  // 3. Cancel fast end reminder
-  await cancelFastingReminder(`fasting_end_${sessionId}`);
-
-  log.info(`Ended fast ${sessionId}: ${newStatus} (${elapsedMinutes} mins)`);
-  return updatedSession;
 }
 
 /**
  * Edits an existing session afterwards (PRD 6.20 FST-3).
  */
 export async function editFastingSession(
-  db: SyncDb,
-  supabase: SupabaseSyncClient | null,
+  db: LocalDb,
+  supabase: DataClient | null,
   params: {
     sessionId: string;
     userId: string;
@@ -417,114 +428,118 @@ export async function editFastingSession(
     localDate?: string;
   },
 ): Promise<FastingSession> {
-  const { sessionId, userId } = params;
+  return withOnlineSave(db, async (db) => {
+    const { sessionId, userId } = params;
 
-  const row = await db.getFirstAsync<{
-    id: string;
-    user_id: string;
-    start_at: string;
-    planned_minutes: number;
-    end_at: string | null;
-    status: string;
-    local_date: string;
-    created_at: string;
-    updated_at: string;
-  }>(`SELECT * FROM local_fasting_sessions WHERE id = ? AND user_id = ?`, [sessionId, userId]);
+    const row = await db.getFirstAsync<{
+      id: string;
+      user_id: string;
+      start_at: string;
+      planned_minutes: number;
+      end_at: string | null;
+      status: string;
+      local_date: string;
+      created_at: string;
+      updated_at: string;
+    }>(`SELECT * FROM local_fasting_sessions WHERE id = ? AND user_id = ?`, [sessionId, userId]);
 
-  if (!row) {
-    throw new FastingError('SESSION_NOT_FOUND', 'Fasting session not found');
-  }
+    if (!row) {
+      throw new FastingError('SESSION_NOT_FOUND', 'Fasting session not found');
+    }
 
-  const startAt = params.startAt ?? row.start_at;
-  const endAt = params.endAt !== undefined ? params.endAt : row.end_at;
-  const plannedMinutes = params.plannedMinutes ?? row.planned_minutes;
-  const localDate = params.localDate ?? row.local_date;
+    const startAt = params.startAt ?? row.start_at;
+    const endAt = params.endAt !== undefined ? params.endAt : row.end_at;
+    const plannedMinutes = params.plannedMinutes ?? row.planned_minutes;
+    const localDate = params.localDate ?? row.local_date;
 
-  const validation = validatePlannedMinutes(plannedMinutes);
-  if (!validation.valid) {
-    throw new FastingError('INVALID_PLANNED_MINUTES', validation.error);
-  }
+    const validation = validatePlannedMinutes(plannedMinutes);
+    if (!validation.valid) {
+      throw new FastingError('INVALID_PLANNED_MINUTES', validation.error);
+    }
 
-  let status = row.status;
-  if (endAt) {
-    const elapsedMinutes = Math.max(
-      0,
-      Math.round((new Date(endAt).getTime() - new Date(startAt).getTime()) / 60000),
-    );
-    status = elapsedMinutes >= plannedMinutes ? 'completed' : 'ended_early';
-  } else {
-    status = 'active';
-  }
+    let status = row.status;
+    if (endAt) {
+      const elapsedMinutes = Math.max(
+        0,
+        Math.round((new Date(endAt).getTime() - new Date(startAt).getTime()) / 60000),
+      );
+      status = elapsedMinutes >= plannedMinutes ? 'completed' : 'ended_early';
+    } else {
+      status = 'active';
+    }
 
-  const now = new Date().toISOString();
-  const updatedSession: FastingSession = {
-    id: row.id,
-    user_id: row.user_id,
-    start_at: startAt,
-    planned_minutes: plannedMinutes,
-    end_at: endAt,
-    status: status as FastingSession['status'],
-    local_date: localDate,
-    created_at: row.created_at,
-    updated_at: now,
-  };
+    const now = new Date().toISOString();
+    const updatedSession: FastingSession = {
+      id: row.id,
+      user_id: row.user_id,
+      start_at: startAt,
+      planned_minutes: plannedMinutes,
+      end_at: endAt,
+      status: status as FastingSession['status'],
+      local_date: localDate,
+      created_at: row.created_at,
+      updated_at: now,
+    };
 
-  await db.runAsync(
-    `UPDATE local_fasting_sessions
-     SET start_at = ?, end_at = ?, planned_minutes = ?, status = ?, local_date = ?, updated_at = ?, sync_state = 'pending'
+    await db.runAsync(
+      `UPDATE local_fasting_sessions
+     SET start_at = ?, end_at = ?, planned_minutes = ?, status = ?, local_date = ?, updated_at = ?, sync_state = 'synced'
      WHERE id = ? AND user_id = ?`,
-    [
-      updatedSession.start_at,
-      updatedSession.end_at,
-      updatedSession.planned_minutes,
-      updatedSession.status,
-      updatedSession.local_date,
-      updatedSession.updated_at,
-      sessionId,
-      userId,
-    ],
-  );
-
-  await enqueueOutbox(db, {
-    id: updatedSession.id,
-    entity: 'fasting_sessions',
-    operation: 'upsert',
-    payload: {
-      id: updatedSession.id,
-      user_id: updatedSession.user_id,
-      start_at: updatedSession.start_at,
-      planned_minutes: updatedSession.planned_minutes,
-      end_at: updatedSession.end_at,
-      status: updatedSession.status,
-      local_date: updatedSession.local_date,
-      created_at: updatedSession.created_at,
-      updated_at: updatedSession.updated_at,
-    },
-  });
-
-  // Reschedule reminder if still active
-  if (updatedSession.status === 'active' && !updatedSession.end_at) {
-    const targetEndDate = new Date(
-      new Date(updatedSession.start_at).getTime() + updatedSession.planned_minutes * 60000,
+      [
+        updatedSession.start_at,
+        updatedSession.end_at,
+        updatedSession.planned_minutes,
+        updatedSession.status,
+        updatedSession.local_date,
+        updatedSession.updated_at,
+        sessionId,
+        userId,
+      ],
     );
-    await scheduleFastingReminder({
-      id: `fasting_end_${updatedSession.id}`,
-      type: 'fast_end',
-      targetDate: targetEndDate,
-    });
-  } else {
-    await cancelFastingReminder(`fasting_end_${sessionId}`);
-  }
 
-  log.info(`Edited fasting session ${sessionId}`);
-  return updatedSession;
+    await saveRemote(db, {
+      id: updatedSession.id,
+      entity: 'fasting_sessions',
+      operation: 'upsert',
+      payload: {
+        id: updatedSession.id,
+        user_id: updatedSession.user_id,
+        start_at: updatedSession.start_at,
+        planned_minutes: updatedSession.planned_minutes,
+        end_at: updatedSession.end_at,
+        status: updatedSession.status,
+        local_date: updatedSession.local_date,
+        created_at: updatedSession.created_at,
+        updated_at: updatedSession.updated_at,
+      },
+    });
+
+    // Reschedule reminder if still active
+    if (updatedSession.status === 'active' && !updatedSession.end_at) {
+      const targetEndDate = new Date(
+        new Date(updatedSession.start_at).getTime() + updatedSession.planned_minutes * 60000,
+      );
+      await afterOnlineSave(db, () =>
+        scheduleFastingReminder({
+          id: `fasting_end_${updatedSession.id}`,
+          type: 'fast_end',
+          targetDate: targetEndDate,
+        }),
+      );
+    } else {
+      await afterOnlineSave(db, () => cancelFastingReminder(`fasting_end_${sessionId}`));
+    }
+
+    log.info(`Edited fasting session ${sessionId}`);
+    return updatedSession;
+  });
 }
 
 /**
  * Retrieves all fasting history for user.
  */
 export async function getFastingHistory(
-  db: SyncDb,
+  db: LocalDb,
   userId: string,
   limit = 50,
 ): Promise<FastingSession[]> {
@@ -559,7 +574,7 @@ export async function getFastingHistory(
 /**
  * Computes overall fasting stats for user.
  */
-export async function getFastingStats(db: SyncDb, userId: string): Promise<FastingStats> {
+export async function getFastingStats(db: LocalDb, userId: string): Promise<FastingStats> {
   const history = await getFastingHistory(db, userId, 200);
   return calculateFastingStats(history);
 }
@@ -568,7 +583,7 @@ export async function getFastingStats(db: SyncDb, userId: string): Promise<Fasti
  * Computes personal fasting streak for user.
  */
 export async function getFastingStreak(
-  db: SyncDb,
+  db: LocalDb,
   userId: string,
   timezone = 'UTC',
 ): Promise<FastingStreak> {
@@ -580,7 +595,7 @@ export async function getFastingStreak(
  * Computes weekly/range fasting progress for Progress tab (fasting hours/week).
  */
 export async function getFastingProgressWeekly(
-  db: SyncDb,
+  db: LocalDb,
   userId: string,
   startDate: string,
   endDate: string,

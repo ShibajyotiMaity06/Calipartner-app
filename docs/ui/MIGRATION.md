@@ -35,9 +35,6 @@ All legacy constants in `app/src/theme/tokens.ts` are marked `@deprecated` and m
 | `macroCarbs` | `#FBBF24` | `dark.teal` | `#1FBDB6` | Identity hue B (7.8:1 on s1). |
 | `macroFat` | `#F472B6` | `dark.rose` | `#F885B5` | Identity hue (7.8:1 on s1). |
 | `macroFiber` | `#34D399` | `dark.mint` | `#2EC083` | Identity hue (7.8:1 on s1). |
-| `syncSynced` | `#34D399` | `dark.mint` | `#2EC083` | Offline sync success indicator. |
-| `syncPending` | `#FBBF24` | `dark.apricot` | `#F4B67D` | Outbox syncing in-flight indicator. |
-| `syncFailed` | `#F87171` | `dark.danger` | `#F65C58` | Outbox failure indicator. |
 | `cardHighlight` | `#1E2945` | `dark.s2` | `#241E18` | Raised card highlight surface. |
 
 ### 2.2 New Modern Tokens Available on `useTheme().colors`

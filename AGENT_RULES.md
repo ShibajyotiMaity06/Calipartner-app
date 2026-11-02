@@ -10,7 +10,7 @@ Keep this file in the repo root. Every agent session reads it first.
 ## Stack (fixed. Do not swap any of it)
 
 - Mobile: React Native + Expo (TypeScript strict, Expo Router), EAS development builds (not Expo Go), Android + iOS.
-- On-device: SQLite (expo-sqlite) with an outbox queue. Offline-first from the first feature.
+- On-device: SQLite (expo-sqlite) for read caches and guest setup. Signed-in logging requires an acknowledged online save.
 - Backend: Supabase (Postgres, Auth, Realtime, Storage, Edge Functions). No separate Node/Express/Mongo server.
 - Shared logic: `/packages/core` (pure TypeScript, no React, no Supabase imports) with unit tests. Used by the app AND by Edge Functions.
 - Auth: email 6-digit code, Google, Apple. NO phone/SMS login.
@@ -35,12 +35,12 @@ AGENT_RULES.md
 2. **Never expose another user's data except through a SQL function/view that applies their privacy settings.** Room members must never read each other's base tables directly.
 3. **Entitlements are checked server-side** (RLS/functions/Edge Functions) for rooms, chat, room progress and the AI coach.
 4. **No secrets in the app or in git.** Only `EXPO_PUBLIC_*` values for non-secret config. Provide `.env.example` only.
-5. **All writes from the app must be idempotent** (client-generated UUIDs, upserts) so retries and offline sync never duplicate data.
+5. **All writes from the app must be idempotent** (client-generated UUIDs, upserts) so explicit retries never duplicate data.
 6. **All timestamps in UTC.** Per-user "day" boundaries use the user's stored time zone.
 7. **Calculations live in `/packages/core`** and are covered by unit tests (including the PRD 7.2 worked example). Never re-implement a formula in a screen.
 8. **Safety rules are product rules:** calorie floors, rate caps, no ranking by weight loss or lowest calories, no health claims in fasting copy. Do not weaken them.
 9. **Migrations only.** Never edit the database by hand; every schema change is a new migration file. Never edit an old migration after it has been committed.
-10. **Tests are part of "done".** Logic, RLS policies and sync behaviour need automated tests. Run lint, typecheck and all tests before saying you are finished.
+10. **Tests are part of "done".** Logic, RLS policies and online save behaviour need automated tests. Run lint, typecheck and all tests before saying you are finished.
 11. **Don't touch what you weren't asked to.** Don't refactor working code, rename things or change files outside the phase scope unless required (explain why).
 12. **Ask only if truly blocked.** Otherwise make the simplest reasonable assumption and list it in your report.
 
@@ -74,7 +74,7 @@ U7. Glass only on the tab bar and the Log sheet, with opaque fallback for Reduce
 U8. One orchestrated motion moment: the seam fuse. All other motion answers an action. Respect Reduce Motion.
 U9. Every tappable element is at least 44x44. Every icon button has an accessibility label. Text scales to 200% without clipping.
 U10. Copy: plain, warm, second person, sentence case, no emoji, no exclamation marks, no guilt. Verb names the object ("Add to lunch").
-U11. Logging never blocks and works offline. Show status, not spinners.
+U11. Logging requires an internet connection. Confirm saves only after server acknowledgement and show actionable request errors.
 U12. UI work never changes logic, schema, RLS, packages/core or entitlement checks.
 
 ## Git delivery (owner instruction, 24 October 2026)

@@ -1,3 +1,4 @@
+import { loadAccountTable } from '@/services/accountDataService';
 import { useCallback, useEffect, useState } from 'react';
 import { challengeLocalDate, type WeightLog, type WeightTrendPoint } from '@calipartner/core';
 import { getDb } from '@/db';
@@ -49,6 +50,7 @@ export function useWeight(): UseWeightResult {
       setLoading(true);
       const db = await getDb();
 
+      await loadAccountTable(db, 'weight_logs', userId);
       const [fetchedLogs, summary] = await Promise.all([
         getWeightLogs(db, userId, 100),
         getWeightSummary(db, userId, {

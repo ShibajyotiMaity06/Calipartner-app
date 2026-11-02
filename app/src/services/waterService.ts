@@ -1,7 +1,8 @@
+import { withOnlineSave } from './accountDataService';
 import { calculateDefaultWaterGoalMl, type WaterLog } from '@calipartner/core';
 import { createLogger } from '@/lib/logger';
 import { generateClientUuid } from './foodService';
-import { enqueueOutbox, type SyncDb } from './syncService';
+import { saveRemote, type LocalDb } from './accountDataService';
 
 const log = createLogger('waterService');
 
@@ -30,32 +31,45 @@ function mapRowToWaterLog(row: RawWaterRow): WaterLog {
 }
 
 /**
- * Logs a water intake entry with idempotent client UUID and sync outbox queue.
+ * Saves directly with server acknowledgement.
  */
 export async function logWater(
-  db: SyncDb,
+  db: LocalDb,
   userId: string,
   amountMl: number,
   localDate?: string,
   loggedAt?: string,
 ): Promise<WaterLog> {
-  const now = new Date().toISOString();
-  const id = generateClientUuid();
-  const date = localDate ?? now.split('T')[0]!;
-  const time = loggedAt ?? now;
+  return withOnlineSave(db, async (db) => {
+    const now = new Date().toISOString();
+    const id = generateClientUuid();
+    const date = localDate ?? now.split('T')[0]!;
+    const time = loggedAt ?? now;
 
-  await db.runAsync(
-    `INSERT INTO local_water_logs (
+    await db.runAsync(
+      `INSERT INTO local_water_logs (
       id, user_id, amount_ml, logged_at, local_date, created_at, updated_at, deleted_at, sync_state
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, NULL, 'pending')`,
-    [id, userId, amountMl, time, date, now, now],
-  );
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, NULL, 'synced')`,
+      [id, userId, amountMl, time, date, now, now],
+    );
 
-  await enqueueOutbox(db, {
-    id,
-    entity: 'water_logs',
-    operation: 'upsert',
-    payload: {
+    await saveRemote(db, {
+      id,
+      entity: 'water_logs',
+      operation: 'upsert',
+      payload: {
+        id,
+        user_id: userId,
+        amount_ml: amountMl,
+        logged_at: time,
+        local_date: date,
+        created_at: now,
+        updated_at: now,
+      },
+    });
+
+    log.info(`Logged ${amountMl} ml water for ${userId} on ${date}`);
+    return {
       id,
       user_id: userId,
       amount_ml: amountMl,
@@ -63,27 +77,16 @@ export async function logWater(
       local_date: date,
       created_at: now,
       updated_at: now,
-    },
+      deleted_at: null,
+    };
   });
-
-  log.info(`Logged ${amountMl} ml water for ${userId} on ${date}`);
-  return {
-    id,
-    user_id: userId,
-    amount_ml: amountMl,
-    logged_at: time,
-    local_date: date,
-    created_at: now,
-    updated_at: now,
-    deleted_at: null,
-  };
 }
 
 /**
  * Returns all active water entries for a user and date.
  */
 export async function getWaterLogsForDate(
-  db: SyncDb,
+  db: LocalDb,
   userId: string,
   localDate: string,
 ): Promise<WaterLog[]> {
@@ -100,7 +103,7 @@ export async function getWaterLogsForDate(
  * Returns total water consumed in ml for a date.
  */
 export async function getWaterTotalForDate(
-  db: SyncDb,
+  db: LocalDb,
   userId: string,
   localDate: string,
 ): Promise<number> {
@@ -116,102 +119,108 @@ export async function getWaterTotalForDate(
  * Undoes the last active water log for a date.
  */
 export async function undoLastWaterLog(
-  db: SyncDb,
+  db: LocalDb,
   userId: string,
   localDate: string,
 ): Promise<WaterLog | null> {
-  const last = await db.getFirstAsync<RawWaterRow>(
-    `SELECT * FROM local_water_logs
+  return withOnlineSave(db, async (db) => {
+    const last = await db.getFirstAsync<RawWaterRow>(
+      `SELECT * FROM local_water_logs
      WHERE user_id = ? AND local_date = ? AND deleted_at IS NULL
      ORDER BY logged_at DESC, rowid DESC
      LIMIT 1`,
-    [userId, localDate],
-  );
+      [userId, localDate],
+    );
 
-  if (!last) return null;
+    if (!last) return null;
 
-  return deleteWaterLog(db, userId, last.id);
+    return deleteWaterLog(db, userId, last.id);
+  });
 }
 
 /**
  * Edits an existing water log entry.
  */
 export async function editWaterLog(
-  db: SyncDb,
+  db: LocalDb,
   userId: string,
   id: string,
   amountMl: number,
 ): Promise<WaterLog | null> {
-  const now = new Date().toISOString();
+  return withOnlineSave(db, async (db) => {
+    const now = new Date().toISOString();
 
-  await db.runAsync(
-    `UPDATE local_water_logs SET
+    await db.runAsync(
+      `UPDATE local_water_logs SET
        amount_ml = ?,
        updated_at = ?,
-       sync_state = 'pending'
+       sync_state = 'synced'
      WHERE id = ? AND user_id = ?`,
-    [amountMl, now, id, userId],
-  );
+      [amountMl, now, id, userId],
+    );
 
-  const row = await db.getFirstAsync<RawWaterRow>(
-    `SELECT * FROM local_water_logs WHERE id = ? AND user_id = ?`,
-    [id, userId],
-  );
+    const row = await db.getFirstAsync<RawWaterRow>(
+      `SELECT * FROM local_water_logs WHERE id = ? AND user_id = ?`,
+      [id, userId],
+    );
 
-  if (!row) return null;
+    if (!row) return null;
 
-  await enqueueOutbox(db, {
-    id,
-    entity: 'water_logs',
-    operation: 'upsert',
-    payload: {
+    await saveRemote(db, {
       id,
-      user_id: userId,
-      amount_ml: amountMl,
-      logged_at: row.logged_at,
-      local_date: row.local_date,
-      created_at: row.created_at,
-      updated_at: now,
-    },
-  });
+      entity: 'water_logs',
+      operation: 'upsert',
+      payload: {
+        id,
+        user_id: userId,
+        amount_ml: amountMl,
+        logged_at: row.logged_at,
+        local_date: row.local_date,
+        created_at: row.created_at,
+        updated_at: now,
+      },
+    });
 
-  return mapRowToWaterLog(row);
+    return mapRowToWaterLog(row);
+  });
 }
 
 /**
  * Soft deletes a water log entry.
  */
 export async function deleteWaterLog(
-  db: SyncDb,
+  db: LocalDb,
   userId: string,
   id: string,
 ): Promise<WaterLog | null> {
-  const now = new Date().toISOString();
+  return withOnlineSave(db, async (db) => {
+    const now = new Date().toISOString();
 
-  await db.runAsync(
-    `UPDATE local_water_logs SET
+    await db.runAsync(
+      `UPDATE local_water_logs SET
        deleted_at = ?,
        updated_at = ?,
-       sync_state = 'pending'
+       sync_state = 'synced'
      WHERE id = ? AND user_id = ?`,
-    [now, now, id, userId],
-  );
+      [now, now, id, userId],
+    );
 
-  const row = await db.getFirstAsync<RawWaterRow>(
-    `SELECT * FROM local_water_logs WHERE id = ? AND user_id = ?`,
-    [id, userId],
-  );
+    const row = await db.getFirstAsync<RawWaterRow>(
+      `SELECT * FROM local_water_logs WHERE id = ? AND user_id = ?`,
+      [id, userId],
+    );
 
-  if (!row) return null;
+    if (!row) return null;
 
-  await enqueueOutbox(db, {
-    id,
-    entity: 'water_logs',
-    operation: 'delete',
-    payload: { id, user_id: userId, deleted_at: now, updated_at: now },
+    await saveRemote(db, {
+      id,
+      entity: 'water_logs',
+      operation: 'delete',
+      payload: { id, user_id: userId, deleted_at: now, updated_at: now },
+    });
+
+    return mapRowToWaterLog(row);
   });
-
-  return mapRowToWaterLog(row);
 }
 
 /**

@@ -52,18 +52,6 @@ export function CommunityPanel({
     (person) =>
       !query || person.username.toLowerCase().includes(query.replace(/^@/, '').toLowerCase()),
   );
-  const queuedFor = (person: SocialProfile) =>
-    friends.outbox.some((item) => {
-      const payload = JSON.parse(item.payload) as {
-        p_recipient_id?: string;
-        p_request_id?: string;
-      };
-      return (
-        item.status === 'pending' &&
-        (payload.p_recipient_id === person.id ||
-          Boolean(person.request_id && payload.p_request_id === person.request_id))
-      );
-    });
   const iconButton = (
     icon: React.ComponentProps<typeof Ionicons>['name'],
     label: string,
@@ -281,7 +269,6 @@ export function CommunityPanel({
         </Text>
       ) : null}
       {people.map((person) => {
-        const queued = queuedFor(person);
         const request = (action: 'accept' | 'decline' | 'cancel') => {
           if (person.request_id) void friends.respond(person.request_id, action, person.id);
         };
@@ -317,14 +304,8 @@ export function CommunityPanel({
                 <>
                   <Button
                     variant="secondary"
-                    label={t(
-                      queued
-                        ? 'community.queued'
-                        : requestTab === 'incoming'
-                          ? 'community.accept'
-                          : 'community.cancel',
-                    )}
-                    disabled={friends.busy || queued}
+                    label={t(requestTab === 'incoming' ? 'community.accept' : 'community.cancel')}
+                    disabled={friends.busy}
                     onPress={() => request(requestTab === 'incoming' ? 'accept' : 'cancel')}
                     testID={`${requestTab === 'incoming' ? 'accept' : 'cancel'}-friend-${person.id}`}
                   />
@@ -332,7 +313,7 @@ export function CommunityPanel({
                     <Button
                       variant="tertiary"
                       label={t('community.decline')}
-                      disabled={friends.busy || queued}
+                      disabled={friends.busy}
                       onPress={() => request('decline')}
                       testID={`decline-friend-${person.id}`}
                     />
@@ -342,15 +323,10 @@ export function CommunityPanel({
                 <Button
                   variant="secondary"
                   label={t(
-                    queued
-                      ? 'community.queued'
-                      : outgoing.some((p) => p.id === person.id)
-                        ? 'community.sent'
-                        : 'community.add',
+                    outgoing.some((p) => p.id === person.id) ? 'community.sent' : 'community.add',
                   )}
                   disabled={
                     friends.busy ||
-                    queued ||
                     outgoing.some((p) => p.id === person.id) ||
                     friends.inbox?.quota.remaining === 0
                   }

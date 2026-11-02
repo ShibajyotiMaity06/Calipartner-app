@@ -68,6 +68,7 @@ export function SquadDayPanel({
   onOpen,
   onNudge,
   showFeed = true,
+  embedded = false,
 }: {
   roomId: string;
   name: string;
@@ -76,6 +77,7 @@ export function SquadDayPanel({
   onOpen?: () => void;
   onNudge?: () => void;
   showFeed?: boolean;
+  embedded?: boolean;
 }) {
   const { members, loading, error, refresh } = useSquadDay(roomId, visible);
   const { hasActiveAccess } = useSubscription();
@@ -87,7 +89,7 @@ export function SquadDayPanel({
   const privateCount = members.filter((member) => member.checked_in === null).length;
   return (
     <View style={styles.stack} testID={`squad-day-${roomId}`}>
-      <View style={styles.card}>
+      <View style={[styles.card, embedded && styles.embedded]}>
         <View style={styles.summary}>
           {!error && members.length > 0 ? (
             <CheckInRing count={checked} total={memberCount} />
@@ -452,6 +454,7 @@ export function CheckInModal({
 const styles = StyleSheet.create({
   avatarRow: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: space[2] },
   stack: { gap: space[3] },
+  embedded: { padding: 0, borderWidth: 0, flex: 1 },
   card: {
     backgroundColor: dark.s1,
     borderRadius: radius.card,

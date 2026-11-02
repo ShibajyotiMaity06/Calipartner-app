@@ -77,7 +77,7 @@ U7. Glass only on the tab bar and the Log sheet, with opaque fallback for Reduce
 U8. One orchestrated motion moment: the seam fuse. All other motion answers an action. Respect Reduce Motion.
 U9. Every tappable element is at least 44x44. Every icon button has an accessibility label. Text scales to 200% without clipping.
 U10. Copy: plain, warm, second person, sentence case, no emoji, no exclamation marks, no guilt. Verb names the object ("Add to lunch").
-U11. Logging never blocks and works offline. Show status, not spinners.
+U11. Logging requires an internet connection. Confirm saves only after server acknowledgement and show actionable request errors.
 U12. UI work never changes logic, schema, RLS, packages/core or entitlement checks.
 ```
 
@@ -183,7 +183,6 @@ Task: UI-2 core components. Read docs/ui/05-components.md (CMP-01 to CMP-08, CMP
 
 1. Build in packages/ui: Button (primary, secondary, tertiary, destructive, sizes, loading), Chip and SegmentedControl,
    Card, Sheet (half, tall, full; drag to dismiss; grabber; inset on iOS), Field (text, numeric, stepper, error state),
-   ListRow (with swipe actions), Avatar (with identity ring and presence dot), Toast (with Undo), Banner, SyncPill,
    SwitchRow (with consequence text), EmptyState, Skeleton, VisibilityEye, HiddenMetric, PermissionPrimer.
 2. Follow the spec exactly for sizes, radius, colours, pressed/disabled/focus states, and accessibility.
 3. Add a dev-only route /dev/gallery that shows every component in all states, in dark theme, with a toggle for

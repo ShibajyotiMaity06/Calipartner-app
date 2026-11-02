@@ -592,4 +592,12 @@ export const migrations: readonly LocalMigration[] = [
     name: 'squad_check_ins',
     sql: `CREATE TABLE local_squad_check_ins (id TEXT PRIMARY KEY NOT NULL,user_id TEXT NOT NULL,room_id TEXT NOT NULL,local_date TEXT NOT NULL,activities TEXT NOT NULL,note TEXT NOT NULL,share_with_squad INTEGER NOT NULL,occurred_at TEXT NOT NULL,updated_at TEXT NOT NULL,sync_state TEXT NOT NULL,UNIQUE(user_id,room_id,local_date));`,
   },
+  {
+    version: 19,
+    name: 'online_only_storage',
+    sql: `ALTER TABLE outbox RENAME TO retired_local_writes;
+      ALTER TABLE local_social_outbox RENAME TO retired_social_writes;
+      ALTER TABLE local_challenge_outbox RENAME TO retired_challenge_writes;
+      DROP TABLE IF EXISTS sync_cursors;`,
+  },
 ];

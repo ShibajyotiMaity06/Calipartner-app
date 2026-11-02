@@ -126,7 +126,7 @@ export function RoomHeader({
                 <Ionicons
                   name={copiedToast ? 'checkmark-circle' : 'copy-outline'}
                   size={12}
-                  color={copiedToast ? colors.syncSynced : colors.textMuted}
+                  color={copiedToast ? colors.mint : colors.textMuted}
                 />
               </Pressable>
 

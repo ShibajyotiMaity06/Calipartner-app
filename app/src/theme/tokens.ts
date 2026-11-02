@@ -38,12 +38,6 @@ export interface ThemeColors {
   macroFat: string;
   /** @deprecated Use colors.mint */
   macroFiber: string;
-  /** @deprecated Use colors.mint */
-  syncSynced: string;
-  /** @deprecated Use colors.apricot */
-  syncPending: string;
-  /** @deprecated Use colors.danger */
-  syncFailed: string;
   /** @deprecated Use colors.s2 instead */
   cardHighlight: string;
 
@@ -88,9 +82,6 @@ const modernDarkColors: ThemeColors = {
   macroCarbs: dark.teal,
   macroFat: dark.rose,
   macroFiber: dark.mint,
-  syncSynced: dark.mint,
-  syncPending: dark.apricot,
-  syncFailed: dark.danger,
   cardHighlight: dark.s2,
 
   // New design system tokens:

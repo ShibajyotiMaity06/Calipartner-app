@@ -41,7 +41,7 @@ Recipes are free for everyone (RCP-10). The library is original text and photos 
 | H02 | Search and filters | Search by name or ingredient; filter chips: meal, diet, calories, minimum protein, time, cuisine; results grid | Active filters shown as removable chips | RCP-4 |
 | H04 | Cook mode | Full-screen step text 24 sp, next / previous, ingredients drawer, timer chips | Keeps screen awake; P1 | NEW |
 | H05 | Log recipe (sheet) | Servings stepper (0.5 steps), meal chip, "Someone else ate this too", primary "Add to dinner" | Writes a nutrient snapshot | RCP-6 |
-| H06 | Favourites and recent | Two segments, same cards, works offline | Saved recipes cached | RCP-7 |
+| H06 | Favourites and recent | Two segments, same cards, requires an internet connection | Saved recipes cached | RCP-7 |
 
 ### 7.I AI coach (plan holders only)
 

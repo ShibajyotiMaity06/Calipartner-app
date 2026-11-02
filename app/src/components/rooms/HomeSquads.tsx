@@ -3,7 +3,7 @@ import { Pressable, ScrollView, StyleSheet, useWindowDimensions, View } from 're
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { dark, homeLayout, radius, space, Text } from '@calipartner/ui';
-import { SquadDayPanel, SquadCheckInFeed } from './SquadDayPanel';
+import { SquadDayPanel } from './SquadDayPanel';
 import type { RoomSummary } from '@/types/rooms';
 import { t } from '@/i18n';
 
@@ -93,6 +93,7 @@ export function HomeSquads({
                 memberCount={room.member_count}
                 visible={visible && selected === index}
                 showFeed={false}
+                embedded
                 onOpen={() => router.push({ pathname: '/(tabs)/room', params: { room: room.id } })}
                 onNudge={() =>
                   router.push({
@@ -131,21 +132,11 @@ export function HomeSquads({
           </Text>
         </Pressable>
       </ScrollView>
-      {rooms[selected]?.state === 'active' && (
-        <SquadCheckInFeed
-          roomId={rooms[selected]!.id}
-          name={rooms[selected]!.name}
-          visible={visible}
-          onOpen={() =>
-            router.push({ pathname: '/(tabs)/room', params: { room: rooms[selected]!.id } })
-          }
-        />
-      )}
     </View>
   );
 }
 const styles = StyleSheet.create({
-  stack: { gap: space[2] },
+  stack: { gap: space[2], marginBottom: space[5] },
   header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   smallAction: {
     minWidth: homeLayout.touchSize,
@@ -153,8 +144,15 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  cards: { gap: space[3], alignItems: 'flex-start' },
-  room: { gap: space[2] },
+  cards: { gap: space[3], alignItems: 'stretch' },
+  room: {
+    gap: space[2],
+    padding: space[4],
+    backgroundColor: dark.s1,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: dark.hairline,
+    borderRadius: radius.card,
+  },
   createCard: {
     padding: space[5],
     gap: space[3],
@@ -163,6 +161,7 @@ const styles = StyleSheet.create({
     borderColor: dark.hairlineLit,
     borderRadius: radius.card,
     minHeight: homeLayout.ringSize * 2,
+    alignSelf: 'stretch',
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: dark.s1,

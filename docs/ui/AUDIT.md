@@ -97,7 +97,7 @@ The Master Spec defines **180 screen entries** (38 hero screens + 142 compact sh
 | `app/auth/profile-setup.tsx` | Profile Setup | `B04`, `A03` | Username, Nickname, Age Gate | Matches | Debounced username check, 18+ age validation, sex, height, units. |
 | `app/recipes/index.tsx` | Recipe Browse | `H01` | Recipe Browse / Search | Matches | Category filter, search, recipe cards, servings scaler, diary logger. |
 | `app/coach/index.tsx` | AI Coach | `I01` | AI Coach Chat | Matches | Plan-gated chat view, consent modal, history, quick prompt suggestions. |
-| `app/profile/edit.tsx` | Edit Profile | `N03` | Edit Profile | Matches | Nickname, height, units, privacy toggle, save outbox sync. |
+| `app/profile/edit.tsx` | Edit Profile | `N03` | Edit Profile | Matches | Nickname, height, units, privacy toggle, acknowledged online saves. |
 | `app/notifications/settings.tsx`| Notification Settings | `N06` | Notification Settings | Matches | Granular switches: meal reminders, water reminders, weigh-in, room chats. |
 
 ---
@@ -115,7 +115,6 @@ The Master Spec defines **180 screen entries** (38 hero screens + 142 compact sh
 | `components/food_photo/FoodPhotoDailyLimitModal.tsx` | `D07` | AI Photo Daily Limit | Matches | Tier limit reached notice. |
 | `components/diary/CustomFoodModal.tsx` | `D08`, `D09` | Custom Food Create & Edit | Matches | Custom food entry form with serving size & macros. |
 | `components/diary/CopyMealModal.tsx` | `D11`, `D12` | Copy Meal / Day | Matches | Date picker to copy meals from previous days. |
-| `components/diary/SyncStatusBanner.tsx` | `P01`, `P04` | Offline Sync Pill & Banner | Matches | Outbox count, pending/synced/failed states. |
 | `components/trackers/WaterCard.tsx` | `E01`, `E02` | Water Tracker & Quick Add | Matches | 250ml quick-add buttons + custom amount trigger. |
 | `components/trackers/CustomWaterModal.tsx` | `E02` | Custom Water Entry | Matches | Numeric water logger. |
 | `components/trackers/WaterHistoryModal.tsx` | `E03` | Water History | Matches | Hourly water consumption log. |

@@ -1,3 +1,4 @@
+import { loadAccountTable } from '@/services/accountDataService';
 import { useCallback, useEffect, useState } from 'react';
 import { calculateSectionSuggestions, type FoodEntry, type MealSection } from '@calipartner/core';
 import { useAuth } from '@/contexts/AuthContext';
@@ -38,16 +39,22 @@ interface LocalEntryRow {
   deleted_at: string | null;
 }
 
-export function useSectionSuggestions(section: MealSection) {
+export function useSectionSuggestions(section: MealSection, enabled = true) {
   const { user } = useAuth();
   const userId = user?.id || 'guest-user';
   const [suggestions, setSuggestions] = useState<SectionSuggestion[]>([]);
   const [loading, setLoading] = useState(true);
 
   const loadSuggestions = useCallback(async () => {
+    if (!enabled) {
+      setLoading(false);
+      return;
+    }
     try {
       setLoading(true);
       const db = await getDb();
+      await loadAccountTable(db, 'user_food_stats', userId);
+      await loadAccountTable(db, 'foods', userId);
       // Fetch entries from last 30 days
       const cutoff = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
       const rows = await db.getAllAsync<LocalEntryRow>(
@@ -89,7 +96,7 @@ export function useSectionSuggestions(section: MealSection) {
     } finally {
       setLoading(false);
     }
-  }, [userId, section]);
+  }, [userId, section, enabled]);
 
   useEffect(() => {
     void loadSuggestions();

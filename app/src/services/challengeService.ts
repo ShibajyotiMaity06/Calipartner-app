@@ -1,8 +1,7 @@
 import type { ChallengeHome, ChallengeMutation } from '@calipartner/core';
 import { buildChallengeHome } from '@calipartner/core';
-import type { SyncDb } from './syncService';
-import { generateClientUuid } from './foodService';
-import { beforeTrackingSync } from './accountSyncGate';
+import type { LocalDb } from './accountDataService';
+import { beforeAccountWrite } from './accountDataGate';
 
 export interface ChallengeClient {
   rpc?(name: string): PromiseLike<{ data: unknown; error: unknown }>;
@@ -13,14 +12,6 @@ export interface ChallengeClient {
       options: { body: Record<string, unknown> },
     ): Promise<{ data: unknown; error: unknown }>;
   };
-}
-export interface ChallengePending {
-  id: string;
-  owner_id: string;
-  payload: string;
-  status: 'pending' | 'failed';
-  last_error: string | null;
-  created_at: string;
 }
 export async function challengeRequest<T>(
   client: ChallengeClient,
@@ -43,46 +34,8 @@ export async function challengeRequest<T>(
   if ((data as { error?: string })?.error) throw new Error((data as { error: string }).error);
   return data as T;
 }
-export async function cachedChallenges(db: SyncDb, owner: string): Promise<ChallengeHome | null> {
-  const rows = await db.getAllAsync<{ payload: string }>(
-    'SELECT payload FROM local_challenge_cache WHERE owner_id = ?',
-    [owner],
-  );
-  if (!rows[0]) return null;
-  const home = JSON.parse(rows[0].payload) as ChallengeHome;
-  const retiredTemplates = new Set(
-    home.catalog.templates
-      .filter((template) => template.tasks.some((task) => String(task) === 'focus_minutes'))
-      .map((template) => template.id),
-  );
-  const retiredInstances = new Set(
-    home.items
-      .filter((item) =>
-        item.challenge.rules_snapshot.tasks.some((task) => String(task) === 'focus_minutes'),
-      )
-      .map((item) => item.challenge.id),
-  );
-  for (const item of await challengeOutbox(db, owner)) {
-    const mutation = JSON.parse(item.payload) as {
-      template_id?: string;
-      id?: string;
-      tasks?: string[];
-    };
-    if (
-      retiredTemplates.has(mutation.template_id ?? '') ||
-      retiredInstances.has(mutation.id ?? '') ||
-      mutation.tasks?.includes('focus_minutes')
-    ) {
-      await db.runAsync('DELETE FROM local_challenge_outbox WHERE id = ? AND owner_id = ?', [
-        item.id,
-        owner,
-      ]);
-    }
-  }
-  return buildChallengeHome(home);
-}
 export async function loadChallenges(
-  db: SyncDb,
+  db: LocalDb,
   client: ChallengeClient,
   owner: string,
   rescore = true,
@@ -115,65 +68,12 @@ export async function loadChallenges(
     .catch(() => undefined); // A replaceable cache cannot prevent displaying a successful server read.
   return data;
 }
-export function challengeOutbox(db: SyncDb, owner: string) {
-  return db.getAllAsync<ChallengePending>(
-    'SELECT * FROM local_challenge_outbox WHERE owner_id = ? ORDER BY created_at ASC',
-    [owner],
-  );
-}
-export async function queueChallenge(db: SyncDb, owner: string, mutation: ChallengeMutation) {
-  const id =
-    mutation.action === 'create' || mutation.action === 'occasion'
-      ? mutation.id
-      : mutation.action === 'social' || mutation.action === 'track'
-        ? mutation.request_id
-        : generateClientUuid();
-  const existing = (await challengeOutbox(db, owner)).find((item) => item.id === id);
-  if (existing && existing.payload !== JSON.stringify(mutation))
-    throw new Error('IDEMPOTENCY_CONFLICT');
-  await db.runAsync(
-    'INSERT INTO local_challenge_outbox (id,owner_id,payload,status,last_error,created_at) VALUES (?,?,?,?,?,?) ON CONFLICT(id) DO UPDATE SET status=excluded.status,last_error=excluded.last_error',
-    [id, owner, JSON.stringify(mutation), 'pending', null, new Date().toISOString()],
-  );
-  // Destructive/visibility changes must also remove stale cached peer data immediately.
-  if (
-    mutation.action === 'social' &&
-    ['leave', 'comparison', 'report', 'block'].includes(mutation.kind)
-  )
-    await db.runAsync('DELETE FROM local_challenge_cache WHERE owner_id = ?', [owner]);
-  return id;
-}
-const flushing = new Map<string, Promise<void>>();
-export function flushChallenges(db: SyncDb, client: ChallengeClient, owner: string): Promise<void> {
-  const active = flushing.get(owner);
-  if (active) return active;
-  const work = (async () => {
-    await beforeTrackingSync();
-    for (const item of await challengeOutbox(db, owner)) {
-      if (item.status === 'failed') continue;
-      try {
-        await challengeRequest(client, owner, JSON.parse(item.payload));
-        await db.runAsync('DELETE FROM local_challenge_outbox WHERE id = ? AND owner_id = ?', [
-          item.id,
-          owner,
-        ]);
-      } catch (error) {
-        const message = error instanceof Error ? error.message : 'NETWORK_UNAVAILABLE';
-        if (message === 'ACCOUNT_CHANGED' || message === 'NETWORK_UNAVAILABLE') break;
-        await db.runAsync(
-          'UPDATE local_challenge_outbox SET status = ?, last_error = ? WHERE id = ? AND owner_id = ?',
-          ['failed', message, item.id, owner],
-        );
-        break;
-      }
-    }
-  })().finally(() => flushing.delete(owner));
-  flushing.set(owner, work);
-  return work;
-}
-export async function dismissChallengeWrite(db: SyncDb, owner: string, id: string) {
-  await db.runAsync('DELETE FROM local_challenge_outbox WHERE id = ? AND owner_id = ?', [
-    id,
-    owner,
-  ]);
+export async function saveChallenge(
+  client: ChallengeClient,
+  owner: string,
+  mutation: ChallengeMutation,
+) {
+  if (await beforeAccountWrite()) throw new Error('ACCOUNT_DATA_RESET');
+  await challengeRequest(client, owner, mutation);
+  return 'saved';
 }

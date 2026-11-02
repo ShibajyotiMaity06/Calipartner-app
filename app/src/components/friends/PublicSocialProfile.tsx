@@ -9,7 +9,6 @@ import { t } from '@/i18n';
 export function PublicSocialProfile({
   profile,
   busy,
-  queued,
   limitReached,
   onClose,
   onSend,
@@ -20,7 +19,6 @@ export function PublicSocialProfile({
 }: {
   profile: SocialProfile;
   busy: boolean;
-  queued: boolean;
   limitReached: boolean;
   onClose: () => void;
   onSend: () => void;
@@ -55,7 +53,6 @@ export function PublicSocialProfile({
               ) : null}
             </>
           )}
-          {queued ? <Text accessibilityLiveRegion="polite">{t('friends.queued')}</Text> : null}
           {profile.relationship === 'none' ? (
             limitReached ? (
               <>
@@ -69,7 +66,7 @@ export function PublicSocialProfile({
             ) : (
               <Button
                 label={t('friends.send')}
-                disabled={busy || queued}
+                disabled={busy}
                 onPress={onSend}
                 testID="send-friend-request"
               />
@@ -79,14 +76,14 @@ export function PublicSocialProfile({
             <>
               <Button
                 label={t('friends.accept')}
-                disabled={busy || queued}
+                disabled={busy}
                 onPress={() => onRespond('accept')}
                 testID="accept-friend-request"
               />
               <Button
                 variant="secondary"
                 label={t('friends.decline')}
-                disabled={busy || queued}
+                disabled={busy}
                 onPress={() => onRespond('decline')}
                 testID="decline-friend-request"
               />
@@ -98,7 +95,7 @@ export function PublicSocialProfile({
               <Button
                 variant="secondary"
                 label={t('friends.cancel')}
-                disabled={busy || queued}
+                disabled={busy}
                 onPress={() => onRespond('cancel')}
                 testID="cancel-friend-request"
               />
@@ -111,7 +108,7 @@ export function PublicSocialProfile({
               <Button
                 variant="destructive"
                 label={t('friends.remove')}
-                disabled={busy || queued}
+                disabled={busy}
                 onPress={() => onRespond('remove')}
                 testID="remove-friend"
               />

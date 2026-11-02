@@ -2,7 +2,7 @@ import React from 'react';
 import { act, create, type ReactTestRenderer } from 'react-test-renderer';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 vi.mock('react-native', () => ({ Platform: { OS: 'web' } }));
-import { useBrowserModalBack } from './useBrowserModalBack';
+import { closeBrowserModalsThen, useBrowserModalBack } from './useBrowserModalBack';
 let tree: ReactTestRenderer;
 let entries: Record<string, unknown>[];
 let listeners: Set<() => void>;
@@ -107,6 +107,43 @@ describe('installed web Back navigation', () => {
       act(() => move(-1));
       expect(child).toHaveBeenCalledOnce();
       expect(parent).not.toHaveBeenCalled();
+    } finally {
+      spy.mockRestore();
+    }
+  });
+  it('does not rewind Home after leaving a squad section', async () => {
+    const browser = (globalThis as unknown as { window: { location: { pathname: string } } })
+      .window;
+    browser.location = { pathname: '/room' };
+    await act(async () => {
+      tree = create(<Probe onParent={vi.fn()} onChild={vi.fn()} />);
+    });
+    history.pushState({ ...history.state, router: 'today' });
+    browser.location.pathname = '/today';
+    await act(async () => {
+      tree.update(<Probe parent={false} onParent={vi.fn()} onChild={vi.fn()} />);
+    });
+    expect(history.state.router).toBe('today');
+  });
+  it('finishes section history before a tab navigation, including asynchronous browser Back', async () => {
+    const close = vi.fn();
+    await act(async () => {
+      tree = create(<Probe onParent={close} onChild={vi.fn()} />);
+    });
+    const move = history.go.bind(history);
+    const queued: Array<() => void> = [];
+    const spy = vi.spyOn(history, 'go').mockImplementation((delta) => {
+      queued.push(() => move(delta));
+    });
+    try {
+      const navigate = vi.fn(() => history.pushState({ router: 'today' }));
+      await act(async () => closeBrowserModalsThen(navigate));
+      expect(navigate).not.toHaveBeenCalled();
+      await act(async () => queued.shift()!());
+      expect(close).toHaveBeenCalledOnce();
+      expect(navigate).toHaveBeenCalledOnce();
+      expect(history.state.router).toBe('today');
+      expect(position).toBe(1);
     } finally {
       spy.mockRestore();
     }

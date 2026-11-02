@@ -7,6 +7,7 @@ import { useSectionSuggestions, type SectionSuggestion } from '@/hooks/useSectio
 import { t } from '@/i18n';
 
 export interface MealSectionCardProps {
+  compact?: boolean;
   section: MealSection;
   summary: DiarySectionSummary;
   isCurrentMealSuggestion?: boolean;
@@ -19,15 +20,8 @@ export interface MealSectionCardProps {
   testID?: string;
 }
 
-const SECTION_ICONS: Record<MealSection, keyof typeof Ionicons.glyphMap> = {
-  breakfast: 'sunny-outline',
-  lunch: 'restaurant-outline',
-  dinner: 'moon-outline',
-  snacks: 'cafe-outline',
-  extra: 'flash-outline',
-};
-
 export function MealSectionCard({
+  compact = false,
   section,
   summary,
   isCurrentMealSuggestion = false,
@@ -39,9 +33,8 @@ export function MealSectionCard({
   onSelectSuggestion,
   testID,
 }: MealSectionCardProps) {
-  const { suggestions } = useSectionSuggestions(section);
+  const { suggestions } = useSectionSuggestions(section, !compact);
   const sectionName = t(`diary.sections.${section}` as Parameters<typeof t>[0]);
-  const iconName = SECTION_ICONS[section] ?? 'fast-food-outline';
 
   const visibleEntries = summary.entries.slice(0, 3);
   const hasMore = summary.entries.length > 3;
@@ -49,8 +42,13 @@ export function MealSectionCard({
   return (
     <Pressable
       testID={testID ?? `card-section-${section}`}
+      accessibilityRole="button"
       onPress={() => onOpenDetail?.(section)}
-      style={({ pressed }) => [styles.card, pressed && styles.cardPressed]}
+      style={({ pressed }) => [
+        styles.card,
+        compact && styles.compact,
+        pressed && styles.cardPressed,
+      ]}
       accessibilityLabel={t('repairs.mealSummary', {
         section: sectionName,
         calories: summary.calories,
@@ -60,15 +58,6 @@ export function MealSectionCard({
       {/* Header Row */}
       <View style={styles.headerRow}>
         <View style={styles.headerLeft}>
-          <View
-            style={[styles.iconWrapper, isCurrentMealSuggestion && styles.iconWrapperSuggested]}
-          >
-            <Ionicons
-              name={iconName}
-              size={18}
-              color={isCurrentMealSuggestion ? dark.onBrand : dark.textMid}
-            />
-          </View>
           <Text variant="heading" color={dark.textHi} style={styles.sectionTitle}>
             {sectionName}
           </Text>
@@ -95,28 +84,30 @@ export function MealSectionCard({
         </View>
       </View>
 
-      <View style={styles.metrics} testID={`meal-metrics-${section}`}>
-        {(
-          [
-            ['calories', 'kcal', t('repairs.calories')],
-            ['protein', 'g', t('repairs.protein')],
-            ['carbs', 'g', t('repairs.carbs')],
-            ['fat', 'g', t('repairs.fat')],
-          ] as const
-        ).map(([key, unit, label]) => (
-          <View key={key} style={styles.metric}>
-            <Text variant="bodyS" color={dark.textMid}>
-              {label}
-            </Text>
-            <Text variant="body" color={dark.textHi} style={styles.metricValue}>
-              {summary[key]} {unit}
-            </Text>
-          </View>
-        ))}
-      </View>
+      {summary.entries.length > 0 && (
+        <View style={styles.metrics} testID={`meal-metrics-${section}`}>
+          {(
+            [
+              ['calories', 'kcal', t('repairs.calories')],
+              ['protein', 'g', t('repairs.protein')],
+              ['carbs', 'g', t('repairs.carbs')],
+              ['fat', 'g', t('repairs.fat')],
+            ] as const
+          ).map(([key, unit, label]) => (
+            <View key={key} style={styles.metric}>
+              <Text variant="bodyS" color={dark.textMid}>
+                {label}
+              </Text>
+              <Text variant="body" color={dark.textHi} style={styles.metricValue} tabular>
+                {summary[key]} {unit}
+              </Text>
+            </View>
+          ))}
+        </View>
+      )}
 
       {/* Smart Section Suggestions Bar for non-empty meals (LOG-14) */}
-      {summary.entries.length > 0 && suggestions.length > 0 && (
+      {!compact && summary.entries.length > 0 && suggestions.length > 0 && (
         <View style={styles.suggestionsContainer}>
           <Text variant="label" color={dark.textLo} style={styles.suggestionLabel}>
             {t('repairs.suggested')}
@@ -143,7 +134,7 @@ export function MealSectionCard({
       )}
 
       {/* Entries preview (up to 3 items) */}
-      {visibleEntries.length > 0 ? (
+      {!compact && visibleEntries.length > 0 ? (
         <View style={styles.entriesList}>
           {visibleEntries.map((entry) => (
             <Pressable
@@ -202,9 +193,17 @@ export function MealSectionCard({
 }
 
 const styles = StyleSheet.create({
+  compact: {
+    backgroundColor: dark.bg0,
+    borderWidth: 0,
+    borderRadius: radius.none,
+    paddingHorizontal: 0,
+    paddingVertical: space[2],
+    borderBottomWidth: StyleSheet.hairlineWidth,
+  },
   sectionTitle: { flex: 1, minWidth: 0 },
-  metrics: { flexDirection: 'row', flexWrap: 'wrap', gap: space[3] },
-  metric: { flexGrow: 1, flexBasis: captureLayout.mealMetricBasis, minWidth: 0, gap: space[1] },
+  metrics: { flexDirection: 'row', gap: space[2] },
+  metric: { flex: 1, minWidth: 0, gap: space[1] },
   metricValue: { fontVariant: ['tabular-nums'] },
   entryName: { flexGrow: 1, flexBasis: captureLayout.nutrientMinWidth, minWidth: 0 },
   deleteButton: {

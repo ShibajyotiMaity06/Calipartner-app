@@ -79,3 +79,24 @@ it('shows empty, loading and retry states without inventing a squad', async () =
   renderer.root.findByProps({ testID: 'home-squad-retry' }).props.onPress();
   expect(retry).toHaveBeenCalledOnce();
 });
+
+it('aligns squad and create cards at the same height and width without a separate Home feed', async () => {
+  await act(async () => {
+    renderer = create(
+      <HomeSquads rooms={rooms} loading={false} error={null} onRetry={vi.fn()} visible />,
+    );
+  });
+  const carousel = renderer.root.findByProps({ testID: 'home-squad-carousel' });
+  expect(carousel.props.contentContainerStyle.alignItems).toBe('stretch');
+  const first = renderer.root.findByProps({ testID: 'home-squad-card-pair' }).props.style;
+  const second = renderer.root.findByProps({ testID: 'home-squad-card-large' }).props.style;
+  const createCard = renderer.root.findByProps({ testID: 'home-create-squad-end' }).props.style;
+  expect(first[1].width).toBe(second[1].width);
+  expect(first[1].width).toBe(createCard[1].width);
+  expect(
+    renderer.root
+      .findAllByType('SquadDayPanel' as React.ElementType)
+      .every((panel) => panel.props.embedded),
+  ).toBe(true);
+  expect(renderer.root.findAllByType('SquadCheckInFeed' as React.ElementType)).toHaveLength(0);
+});

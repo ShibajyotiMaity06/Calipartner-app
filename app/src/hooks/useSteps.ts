@@ -1,3 +1,4 @@
+import { loadAccountTable } from '@/services/accountDataService';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { AppState } from 'react-native';
 import {
@@ -73,6 +74,7 @@ export function useSteps(date?: string): UseStepsResult {
       setLoading(true);
       const db = await getDb();
 
+      await loadAccountTable(db, 'activity_days', effectiveUserId);
       const [act, perm, history] = await Promise.all([
         getActivityDay(db, effectiveUserId, localDate),
         getStepPermissionStatus(),

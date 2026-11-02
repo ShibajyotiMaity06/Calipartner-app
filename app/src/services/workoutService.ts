@@ -1,3 +1,4 @@
+import { withOnlineSave } from './accountDataService';
 import {
   summarizeWorkout,
   type Equipment,
@@ -13,7 +14,7 @@ import {
   type WorkoutType,
   type WorkoutWithDetails,
 } from '@calipartner/core';
-import { enqueueOutbox, type SyncDb } from './syncService';
+import { saveRemote, type LocalDb } from './accountDataService';
 
 export interface CreateWorkoutInput {
   userId: string;
@@ -65,159 +66,165 @@ export interface UpdateSetInput {
 // 1. WORKOUT CRUD
 // -----------------------------------------------------------------------------
 
-export async function createWorkout(db: SyncDb, input: CreateWorkoutInput): Promise<Workout> {
-  const id = crypto.randomUUID();
-  const now = new Date().toISOString();
-  const duration = input.durationMinutes ?? 0;
+export async function createWorkout(db: LocalDb, input: CreateWorkoutInput): Promise<Workout> {
+  return withOnlineSave(db, async (db) => {
+    const id = crypto.randomUUID();
+    const now = new Date().toISOString();
+    const duration = input.durationMinutes ?? 0;
 
-  const workout: Workout = {
-    id,
-    user_id: input.userId,
-    type: input.type,
-    name: input.name ?? null,
-    start_time: input.startTime ?? null,
-    duration_minutes: duration,
-    local_date: input.localDate,
-    notes: input.notes ?? null,
-    effort_rating: input.effortRating ?? null,
-    created_at: now,
-    updated_at: now,
-    deleted_at: null,
-  };
-
-  await db.runAsync(
-    `INSERT INTO local_workouts (
-      id, user_id, type, name, start_time, duration_minutes, local_date, notes, effort_rating, created_at, updated_at, deleted_at, sync_state
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NULL, 'pending')`,
-    [
-      workout.id,
-      workout.user_id,
-      workout.type,
-      workout.name,
-      workout.start_time,
-      workout.duration_minutes,
-      workout.local_date,
-      workout.notes,
-      workout.effort_rating,
-      workout.created_at,
-      workout.updated_at,
-    ],
-  );
-
-  await enqueueOutbox(db, {
-    id: workout.id,
-    entity: 'workouts',
-    operation: 'upsert',
-    payload: {
-      id: workout.id,
-      user_id: workout.user_id,
-      type: workout.type,
-      name: workout.name,
-      start_time: workout.start_time,
-      duration_minutes: workout.duration_minutes,
-      local_date: workout.local_date,
-      notes: workout.notes,
-      effort_rating: workout.effort_rating,
-      created_at: workout.created_at,
-      updated_at: workout.updated_at,
+    const workout: Workout = {
+      id,
+      user_id: input.userId,
+      type: input.type,
+      name: input.name ?? null,
+      start_time: input.startTime ?? null,
+      duration_minutes: duration,
+      local_date: input.localDate,
+      notes: input.notes ?? null,
+      effort_rating: input.effortRating ?? null,
+      created_at: now,
+      updated_at: now,
       deleted_at: null,
-    },
-  });
+    };
 
-  return workout;
+    await db.runAsync(
+      `INSERT INTO local_workouts (
+      id, user_id, type, name, start_time, duration_minutes, local_date, notes, effort_rating, created_at, updated_at, deleted_at, sync_state
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NULL, 'synced')`,
+      [
+        workout.id,
+        workout.user_id,
+        workout.type,
+        workout.name,
+        workout.start_time,
+        workout.duration_minutes,
+        workout.local_date,
+        workout.notes,
+        workout.effort_rating,
+        workout.created_at,
+        workout.updated_at,
+      ],
+    );
+
+    await saveRemote(db, {
+      id: workout.id,
+      entity: 'workouts',
+      operation: 'upsert',
+      payload: {
+        id: workout.id,
+        user_id: workout.user_id,
+        type: workout.type,
+        name: workout.name,
+        start_time: workout.start_time,
+        duration_minutes: workout.duration_minutes,
+        local_date: workout.local_date,
+        notes: workout.notes,
+        effort_rating: workout.effort_rating,
+        created_at: workout.created_at,
+        updated_at: workout.updated_at,
+        deleted_at: null,
+      },
+    });
+
+    return workout;
+  });
 }
 
 export async function updateWorkout(
-  db: SyncDb,
+  db: LocalDb,
   workoutId: string,
   updates: UpdateWorkoutInput,
 ): Promise<Workout> {
-  const existing = await db.getFirstAsync<Workout>(
-    `SELECT * FROM local_workouts WHERE id = ? AND deleted_at IS NULL`,
-    [workoutId],
-  );
-  if (!existing) {
-    throw new Error(`Workout not found: ${workoutId}`);
-  }
+  return withOnlineSave(db, async (db) => {
+    const existing = await db.getFirstAsync<Workout>(
+      `SELECT * FROM local_workouts WHERE id = ? AND deleted_at IS NULL`,
+      [workoutId],
+    );
+    if (!existing) {
+      throw new Error(`Workout not found: ${workoutId}`);
+    }
 
-  const now = new Date().toISOString();
-  const updated: Workout = {
-    ...existing,
-    type: updates.type ?? existing.type,
-    name: updates.name !== undefined ? updates.name : existing.name,
-    start_time: updates.startTime !== undefined ? updates.startTime : existing.start_time,
-    duration_minutes:
-      updates.durationMinutes !== undefined ? updates.durationMinutes : existing.duration_minutes,
-    local_date: updates.localDate ?? existing.local_date,
-    notes: updates.notes !== undefined ? updates.notes : existing.notes,
-    effort_rating:
-      updates.effortRating !== undefined ? updates.effortRating : existing.effort_rating,
-    updated_at: now,
-  };
+    const now = new Date().toISOString();
+    const updated: Workout = {
+      ...existing,
+      type: updates.type ?? existing.type,
+      name: updates.name !== undefined ? updates.name : existing.name,
+      start_time: updates.startTime !== undefined ? updates.startTime : existing.start_time,
+      duration_minutes:
+        updates.durationMinutes !== undefined ? updates.durationMinutes : existing.duration_minutes,
+      local_date: updates.localDate ?? existing.local_date,
+      notes: updates.notes !== undefined ? updates.notes : existing.notes,
+      effort_rating:
+        updates.effortRating !== undefined ? updates.effortRating : existing.effort_rating,
+      updated_at: now,
+    };
 
-  await db.runAsync(
-    `UPDATE local_workouts SET
-       type = ?, name = ?, start_time = ?, duration_minutes = ?, local_date = ?, notes = ?, effort_rating = ?, updated_at = ?, sync_state = 'pending'
+    await db.runAsync(
+      `UPDATE local_workouts SET
+       type = ?, name = ?, start_time = ?, duration_minutes = ?, local_date = ?, notes = ?, effort_rating = ?, updated_at = ?, sync_state = 'synced'
      WHERE id = ?`,
-    [
-      updated.type,
-      updated.name,
-      updated.start_time,
-      updated.duration_minutes,
-      updated.local_date,
-      updated.notes,
-      updated.effort_rating,
-      updated.updated_at,
-      workoutId,
-    ],
-  );
+      [
+        updated.type,
+        updated.name,
+        updated.start_time,
+        updated.duration_minutes,
+        updated.local_date,
+        updated.notes,
+        updated.effort_rating,
+        updated.updated_at,
+        workoutId,
+      ],
+    );
 
-  await enqueueOutbox(db, {
-    id: updated.id,
-    entity: 'workouts',
-    operation: 'upsert',
-    payload: {
+    await saveRemote(db, {
       id: updated.id,
-      user_id: updated.user_id,
-      type: updated.type,
-      name: updated.name,
-      start_time: updated.start_time,
-      duration_minutes: updated.duration_minutes,
-      local_date: updated.local_date,
-      notes: updated.notes,
-      effort_rating: updated.effort_rating,
-      created_at: updated.created_at,
-      updated_at: updated.updated_at,
-      deleted_at: null,
-    },
-  });
+      entity: 'workouts',
+      operation: 'upsert',
+      payload: {
+        id: updated.id,
+        user_id: updated.user_id,
+        type: updated.type,
+        name: updated.name,
+        start_time: updated.start_time,
+        duration_minutes: updated.duration_minutes,
+        local_date: updated.local_date,
+        notes: updated.notes,
+        effort_rating: updated.effort_rating,
+        created_at: updated.created_at,
+        updated_at: updated.updated_at,
+        deleted_at: null,
+      },
+    });
 
-  return updated;
+    return updated;
+  });
 }
 
-export async function deleteWorkout(db: SyncDb, workoutId: string): Promise<void> {
-  const now = new Date().toISOString();
+export async function deleteWorkout(db: LocalDb, workoutId: string): Promise<void> {
+  return withOnlineSave(db, async (db) => {
+    const now = new Date().toISOString();
 
-  await db.runAsync(
-    `UPDATE local_workouts SET deleted_at = ?, updated_at = ?, sync_state = 'pending' WHERE id = ?`,
-    [now, now, workoutId],
-  );
+    await db.runAsync(
+      `UPDATE local_workouts SET deleted_at = ?, updated_at = ?, sync_state = 'synced' WHERE id = ?`,
+      [now, now, workoutId],
+    );
 
-  // Soft delete child exercises and sets
-  await db.runAsync(
-    `UPDATE local_workout_exercises SET deleted_at = ?, updated_at = ?, sync_state = 'pending' WHERE workout_id = ?`,
-    [now, now, workoutId],
-  );
-  await db.runAsync(
-    `UPDATE local_workout_sets SET deleted_at = ?, updated_at = ?, sync_state = 'pending' WHERE workout_id = ?`,
-    [now, now, workoutId],
-  );
+    // Soft delete child exercises and sets
+    await db.runAsync(
+      `UPDATE local_workout_exercises SET deleted_at = ?, updated_at = ?, sync_state = 'synced' WHERE workout_id = ?`,
+      [now, now, workoutId],
+    );
+    await db.runAsync(
+      `UPDATE local_workout_sets SET deleted_at = ?, updated_at = ?, sync_state = 'synced' WHERE workout_id = ?`,
+      [now, now, workoutId],
+    );
 
-  await enqueueOutbox(db, {
-    id: workoutId,
-    entity: 'workouts',
-    operation: 'delete',
-    payload: { id: workoutId, deleted_at: now },
+    await saveRemote(db, {
+      id: workoutId,
+      entity: 'workouts',
+      operation: 'delete',
+      payload: { id: workoutId, deleted_at: now },
+    });
   });
 }
 
@@ -226,332 +233,344 @@ export async function deleteWorkout(db: SyncDb, workoutId: string): Promise<void
 // -----------------------------------------------------------------------------
 
 export async function addExerciseToWorkout(
-  db: SyncDb,
+  db: LocalDb,
   workoutId: string,
   input: AddExerciseInput,
 ): Promise<WorkoutExercise> {
-  const workout = await db.getFirstAsync<Workout>(
-    `SELECT * FROM local_workouts WHERE id = ? AND deleted_at IS NULL`,
-    [workoutId],
-  );
-  if (!workout) {
-    throw new Error(`Workout not found: ${workoutId}`);
-  }
-
-  let order = input.orderInWorkout;
-  if (order === undefined) {
-    const maxOrderRow = await db.getFirstAsync<{ max_order: number | null }>(
-      `SELECT MAX(order_in_workout) as max_order FROM local_workout_exercises WHERE workout_id = ? AND deleted_at IS NULL`,
+  return withOnlineSave(db, async (db) => {
+    const workout = await db.getFirstAsync<Workout>(
+      `SELECT * FROM local_workouts WHERE id = ? AND deleted_at IS NULL`,
       [workoutId],
     );
-    order = (maxOrderRow?.max_order ?? 0) + 1;
-  }
+    if (!workout) {
+      throw new Error(`Workout not found: ${workoutId}`);
+    }
 
-  const id = crypto.randomUUID();
-  const now = new Date().toISOString();
+    let order = input.orderInWorkout;
+    if (order === undefined) {
+      const maxOrderRow = await db.getFirstAsync<{ max_order: number | null }>(
+        `SELECT MAX(order_in_workout) as max_order FROM local_workout_exercises WHERE workout_id = ? AND deleted_at IS NULL`,
+        [workoutId],
+      );
+      order = (maxOrderRow?.max_order ?? 0) + 1;
+    }
 
-  const we: WorkoutExercise = {
-    id,
-    workout_id: workoutId,
-    user_id: workout.user_id,
-    exercise_id: input.exerciseId ?? null,
-    exercise_name: input.exerciseName.trim(),
-    order_in_workout: order,
-    notes: input.notes ?? null,
-    created_at: now,
-    updated_at: now,
-    deleted_at: null,
-    sets: [],
-  };
+    const id = crypto.randomUUID();
+    const now = new Date().toISOString();
 
-  await db.runAsync(
-    `INSERT INTO local_workout_exercises (
-      id, workout_id, user_id, exercise_id, exercise_name, order_in_workout, notes, created_at, updated_at, deleted_at, sync_state
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NULL, 'pending')`,
-    [
-      we.id,
-      we.workout_id,
-      we.user_id,
-      we.exercise_id,
-      we.exercise_name,
-      we.order_in_workout,
-      we.notes,
-      we.created_at,
-      we.updated_at,
-    ],
-  );
-
-  await enqueueOutbox(db, {
-    id: we.id,
-    entity: 'workout_exercises',
-    operation: 'upsert',
-    payload: {
-      id: we.id,
-      workout_id: we.workout_id,
-      user_id: we.user_id,
-      exercise_id: we.exercise_id,
-      exercise_name: we.exercise_name,
-      order_in_workout: we.order_in_workout,
-      notes: we.notes,
-      created_at: we.created_at,
-      updated_at: we.updated_at,
+    const we: WorkoutExercise = {
+      id,
+      workout_id: workoutId,
+      user_id: workout.user_id,
+      exercise_id: input.exerciseId ?? null,
+      exercise_name: input.exerciseName.trim(),
+      order_in_workout: order,
+      notes: input.notes ?? null,
+      created_at: now,
+      updated_at: now,
       deleted_at: null,
-    },
-  });
+      sets: [],
+    };
 
-  return we;
+    await db.runAsync(
+      `INSERT INTO local_workout_exercises (
+      id, workout_id, user_id, exercise_id, exercise_name, order_in_workout, notes, created_at, updated_at, deleted_at, sync_state
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NULL, 'synced')`,
+      [
+        we.id,
+        we.workout_id,
+        we.user_id,
+        we.exercise_id,
+        we.exercise_name,
+        we.order_in_workout,
+        we.notes,
+        we.created_at,
+        we.updated_at,
+      ],
+    );
+
+    await saveRemote(db, {
+      id: we.id,
+      entity: 'workout_exercises',
+      operation: 'upsert',
+      payload: {
+        id: we.id,
+        workout_id: we.workout_id,
+        user_id: we.user_id,
+        exercise_id: we.exercise_id,
+        exercise_name: we.exercise_name,
+        order_in_workout: we.order_in_workout,
+        notes: we.notes,
+        created_at: we.created_at,
+        updated_at: we.updated_at,
+        deleted_at: null,
+      },
+    });
+
+    return we;
+  });
 }
 
 export async function removeExerciseFromWorkout(
-  db: SyncDb,
+  db: LocalDb,
   workoutExerciseId: string,
 ): Promise<void> {
-  const now = new Date().toISOString();
+  return withOnlineSave(db, async (db) => {
+    const now = new Date().toISOString();
 
-  await db.runAsync(
-    `UPDATE local_workout_exercises SET deleted_at = ?, updated_at = ?, sync_state = 'pending' WHERE id = ?`,
-    [now, now, workoutExerciseId],
-  );
+    await db.runAsync(
+      `UPDATE local_workout_exercises SET deleted_at = ?, updated_at = ?, sync_state = 'synced' WHERE id = ?`,
+      [now, now, workoutExerciseId],
+    );
 
-  await db.runAsync(
-    `UPDATE local_workout_sets SET deleted_at = ?, updated_at = ?, sync_state = 'pending' WHERE workout_exercise_id = ?`,
-    [now, now, workoutExerciseId],
-  );
+    await db.runAsync(
+      `UPDATE local_workout_sets SET deleted_at = ?, updated_at = ?, sync_state = 'synced' WHERE workout_exercise_id = ?`,
+      [now, now, workoutExerciseId],
+    );
 
-  await enqueueOutbox(db, {
-    id: workoutExerciseId,
-    entity: 'workout_exercises',
-    operation: 'delete',
-    payload: { id: workoutExerciseId, deleted_at: now },
+    await saveRemote(db, {
+      id: workoutExerciseId,
+      entity: 'workout_exercises',
+      operation: 'delete',
+      payload: { id: workoutExerciseId, deleted_at: now },
+    });
   });
 }
 
 export async function reorderWorkoutExercises(
-  db: SyncDb,
+  db: LocalDb,
   workoutId: string,
   orderedExerciseIds: string[],
 ): Promise<void> {
-  const now = new Date().toISOString();
+  return withOnlineSave(db, async (db) => {
+    const now = new Date().toISOString();
 
-  for (let i = 0; i < orderedExerciseIds.length; i++) {
-    const exId = orderedExerciseIds[i];
-    const order = i + 1;
+    for (let i = 0; i < orderedExerciseIds.length; i++) {
+      const exId = orderedExerciseIds[i];
+      const order = i + 1;
 
-    await db.runAsync(
-      `UPDATE local_workout_exercises SET order_in_workout = ?, updated_at = ?, sync_state = 'pending' WHERE id = ? AND workout_id = ?`,
-      [order, now, exId, workoutId],
-    );
+      await db.runAsync(
+        `UPDATE local_workout_exercises SET order_in_workout = ?, updated_at = ?, sync_state = 'synced' WHERE id = ? AND workout_id = ?`,
+        [order, now, exId, workoutId],
+      );
 
-    const we = await db.getFirstAsync<WorkoutExercise>(
-      `SELECT * FROM local_workout_exercises WHERE id = ?`,
-      [exId],
-    );
-    if (we) {
-      await enqueueOutbox(db, {
-        id: we.id,
-        entity: 'workout_exercises',
-        operation: 'upsert',
-        payload: {
+      const we = await db.getFirstAsync<WorkoutExercise>(
+        `SELECT * FROM local_workout_exercises WHERE id = ?`,
+        [exId],
+      );
+      if (we) {
+        await saveRemote(db, {
           id: we.id,
-          workout_id: we.workout_id,
-          user_id: we.user_id,
-          exercise_id: we.exercise_id,
-          exercise_name: we.exercise_name,
-          order_in_workout: order,
-          notes: we.notes,
-          created_at: we.created_at,
-          updated_at: now,
-          deleted_at: null,
-        },
-      });
+          entity: 'workout_exercises',
+          operation: 'upsert',
+          payload: {
+            id: we.id,
+            workout_id: we.workout_id,
+            user_id: we.user_id,
+            exercise_id: we.exercise_id,
+            exercise_name: we.exercise_name,
+            order_in_workout: order,
+            notes: we.notes,
+            created_at: we.created_at,
+            updated_at: now,
+            deleted_at: null,
+          },
+        });
+      }
     }
-  }
+  });
 }
 
 export async function addSetToExercise(
-  db: SyncDb,
+  db: LocalDb,
   workoutExerciseId: string,
   input: AddSetInput,
 ): Promise<WorkoutSet> {
-  const we = await db.getFirstAsync<WorkoutExercise>(
-    `SELECT * FROM local_workout_exercises WHERE id = ? AND deleted_at IS NULL`,
-    [workoutExerciseId],
-  );
-  if (!we) {
-    throw new Error(`Workout exercise not found: ${workoutExerciseId}`);
-  }
+  return withOnlineSave(db, async (db) => {
+    const we = await db.getFirstAsync<WorkoutExercise>(
+      `SELECT * FROM local_workout_exercises WHERE id = ? AND deleted_at IS NULL`,
+      [workoutExerciseId],
+    );
+    if (!we) {
+      throw new Error(`Workout exercise not found: ${workoutExerciseId}`);
+    }
 
-  const maxSetRow = await db.getFirstAsync<{ max_set: number | null }>(
-    `SELECT MAX(set_number) as max_set FROM local_workout_sets WHERE workout_exercise_id = ? AND deleted_at IS NULL`,
-    [workoutExerciseId],
-  );
-  const setNumber = (maxSetRow?.max_set ?? 0) + 1;
+    const maxSetRow = await db.getFirstAsync<{ max_set: number | null }>(
+      `SELECT MAX(set_number) as max_set FROM local_workout_sets WHERE workout_exercise_id = ? AND deleted_at IS NULL`,
+      [workoutExerciseId],
+    );
+    const setNumber = (maxSetRow?.max_set ?? 0) + 1;
 
-  const id = crypto.randomUUID();
-  const now = new Date().toISOString();
+    const id = crypto.randomUUID();
+    const now = new Date().toISOString();
 
-  const ws: WorkoutSet = {
-    id,
-    workout_exercise_id: workoutExerciseId,
-    workout_id: we.workout_id,
-    user_id: we.user_id,
-    set_number: setNumber,
-    reps: input.reps !== undefined ? input.reps : null,
-    weight_kg: input.weightKg !== undefined ? input.weightKg : null,
-    duration_seconds: input.durationSeconds !== undefined ? input.durationSeconds : null,
-    distance_meters: input.distanceMeters !== undefined ? input.distanceMeters : null,
-    is_warmup: input.isWarmup ?? false,
-    completed: input.completed ?? true,
-    created_at: now,
-    updated_at: now,
-    deleted_at: null,
-  };
-
-  await db.runAsync(
-    `INSERT INTO local_workout_sets (
-      id, workout_exercise_id, workout_id, user_id, set_number, reps, weight_kg, duration_seconds, distance_meters, is_warmup, completed, created_at, updated_at, deleted_at, sync_state
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NULL, 'pending')`,
-    [
-      ws.id,
-      ws.workout_exercise_id,
-      ws.workout_id,
-      ws.user_id,
-      ws.set_number,
-      ws.reps,
-      ws.weight_kg,
-      ws.duration_seconds,
-      ws.distance_meters,
-      ws.is_warmup ? 1 : 0,
-      ws.completed ? 1 : 0,
-      ws.created_at,
-      ws.updated_at,
-    ],
-  );
-
-  await enqueueOutbox(db, {
-    id: ws.id,
-    entity: 'workout_sets',
-    operation: 'upsert',
-    payload: {
-      id: ws.id,
-      workout_exercise_id: ws.workout_exercise_id,
-      workout_id: ws.workout_id,
-      user_id: ws.user_id,
-      set_number: ws.set_number,
-      reps: ws.reps,
-      weight_kg: ws.weight_kg,
-      duration_seconds: ws.duration_seconds,
-      distance_meters: ws.distance_meters,
-      is_warmup: ws.is_warmup,
-      completed: ws.completed,
-      created_at: ws.created_at,
-      updated_at: ws.updated_at,
+    const ws: WorkoutSet = {
+      id,
+      workout_exercise_id: workoutExerciseId,
+      workout_id: we.workout_id,
+      user_id: we.user_id,
+      set_number: setNumber,
+      reps: input.reps !== undefined ? input.reps : null,
+      weight_kg: input.weightKg !== undefined ? input.weightKg : null,
+      duration_seconds: input.durationSeconds !== undefined ? input.durationSeconds : null,
+      distance_meters: input.distanceMeters !== undefined ? input.distanceMeters : null,
+      is_warmup: input.isWarmup ?? false,
+      completed: input.completed ?? true,
+      created_at: now,
+      updated_at: now,
       deleted_at: null,
-    },
-  });
+    };
 
-  return ws;
+    await db.runAsync(
+      `INSERT INTO local_workout_sets (
+      id, workout_exercise_id, workout_id, user_id, set_number, reps, weight_kg, duration_seconds, distance_meters, is_warmup, completed, created_at, updated_at, deleted_at, sync_state
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NULL, 'synced')`,
+      [
+        ws.id,
+        ws.workout_exercise_id,
+        ws.workout_id,
+        ws.user_id,
+        ws.set_number,
+        ws.reps,
+        ws.weight_kg,
+        ws.duration_seconds,
+        ws.distance_meters,
+        ws.is_warmup ? 1 : 0,
+        ws.completed ? 1 : 0,
+        ws.created_at,
+        ws.updated_at,
+      ],
+    );
+
+    await saveRemote(db, {
+      id: ws.id,
+      entity: 'workout_sets',
+      operation: 'upsert',
+      payload: {
+        id: ws.id,
+        workout_exercise_id: ws.workout_exercise_id,
+        workout_id: ws.workout_id,
+        user_id: ws.user_id,
+        set_number: ws.set_number,
+        reps: ws.reps,
+        weight_kg: ws.weight_kg,
+        duration_seconds: ws.duration_seconds,
+        distance_meters: ws.distance_meters,
+        is_warmup: ws.is_warmup,
+        completed: ws.completed,
+        created_at: ws.created_at,
+        updated_at: ws.updated_at,
+        deleted_at: null,
+      },
+    });
+
+    return ws;
+  });
 }
 
 export async function updateWorkoutSet(
-  db: SyncDb,
+  db: LocalDb,
   setId: string,
   updates: UpdateSetInput,
 ): Promise<WorkoutSet> {
-  const existing = await db.getFirstAsync<{
-    id: string;
-    workout_exercise_id: string;
-    workout_id: string;
-    user_id: string;
-    set_number: number;
-    reps: number | null;
-    weight_kg: number | null;
-    duration_seconds: number | null;
-    distance_meters: number | null;
-    is_warmup: number;
-    completed: number;
-    created_at: string;
-    updated_at: string;
-  }>(`SELECT * FROM local_workout_sets WHERE id = ? AND deleted_at IS NULL`, [setId]);
+  return withOnlineSave(db, async (db) => {
+    const existing = await db.getFirstAsync<{
+      id: string;
+      workout_exercise_id: string;
+      workout_id: string;
+      user_id: string;
+      set_number: number;
+      reps: number | null;
+      weight_kg: number | null;
+      duration_seconds: number | null;
+      distance_meters: number | null;
+      is_warmup: number;
+      completed: number;
+      created_at: string;
+      updated_at: string;
+    }>(`SELECT * FROM local_workout_sets WHERE id = ? AND deleted_at IS NULL`, [setId]);
 
-  if (!existing) {
-    throw new Error(`Workout set not found: ${setId}`);
-  }
+    if (!existing) {
+      throw new Error(`Workout set not found: ${setId}`);
+    }
 
-  const now = new Date().toISOString();
-  const updated: WorkoutSet = {
-    id: existing.id,
-    workout_exercise_id: existing.workout_exercise_id,
-    workout_id: existing.workout_id,
-    user_id: existing.user_id,
-    set_number: existing.set_number,
-    reps: updates.reps !== undefined ? updates.reps : existing.reps,
-    weight_kg: updates.weightKg !== undefined ? updates.weightKg : existing.weight_kg,
-    duration_seconds:
-      updates.durationSeconds !== undefined ? updates.durationSeconds : existing.duration_seconds,
-    distance_meters:
-      updates.distanceMeters !== undefined ? updates.distanceMeters : existing.distance_meters,
-    is_warmup: updates.isWarmup !== undefined ? updates.isWarmup : existing.is_warmup === 1,
-    completed: updates.completed !== undefined ? updates.completed : existing.completed === 1,
-    created_at: existing.created_at,
-    updated_at: now,
-    deleted_at: null,
-  };
-
-  await db.runAsync(
-    `UPDATE local_workout_sets SET
-       reps = ?, weight_kg = ?, duration_seconds = ?, distance_meters = ?, is_warmup = ?, completed = ?, updated_at = ?, sync_state = 'pending'
-     WHERE id = ?`,
-    [
-      updated.reps,
-      updated.weight_kg,
-      updated.duration_seconds,
-      updated.distance_meters,
-      updated.is_warmup ? 1 : 0,
-      updated.completed ? 1 : 0,
-      updated.updated_at,
-      setId,
-    ],
-  );
-
-  await enqueueOutbox(db, {
-    id: updated.id,
-    entity: 'workout_sets',
-    operation: 'upsert',
-    payload: {
-      id: updated.id,
-      workout_exercise_id: updated.workout_exercise_id,
-      workout_id: updated.workout_id,
-      user_id: updated.user_id,
-      set_number: updated.set_number,
-      reps: updated.reps,
-      weight_kg: updated.weight_kg,
-      duration_seconds: updated.duration_seconds,
-      distance_meters: updated.distance_meters,
-      is_warmup: updated.is_warmup,
-      completed: updated.completed,
-      created_at: updated.created_at,
-      updated_at: updated.updated_at,
+    const now = new Date().toISOString();
+    const updated: WorkoutSet = {
+      id: existing.id,
+      workout_exercise_id: existing.workout_exercise_id,
+      workout_id: existing.workout_id,
+      user_id: existing.user_id,
+      set_number: existing.set_number,
+      reps: updates.reps !== undefined ? updates.reps : existing.reps,
+      weight_kg: updates.weightKg !== undefined ? updates.weightKg : existing.weight_kg,
+      duration_seconds:
+        updates.durationSeconds !== undefined ? updates.durationSeconds : existing.duration_seconds,
+      distance_meters:
+        updates.distanceMeters !== undefined ? updates.distanceMeters : existing.distance_meters,
+      is_warmup: updates.isWarmup !== undefined ? updates.isWarmup : existing.is_warmup === 1,
+      completed: updates.completed !== undefined ? updates.completed : existing.completed === 1,
+      created_at: existing.created_at,
+      updated_at: now,
       deleted_at: null,
-    },
-  });
+    };
 
-  return updated;
+    await db.runAsync(
+      `UPDATE local_workout_sets SET
+       reps = ?, weight_kg = ?, duration_seconds = ?, distance_meters = ?, is_warmup = ?, completed = ?, updated_at = ?, sync_state = 'synced'
+     WHERE id = ?`,
+      [
+        updated.reps,
+        updated.weight_kg,
+        updated.duration_seconds,
+        updated.distance_meters,
+        updated.is_warmup ? 1 : 0,
+        updated.completed ? 1 : 0,
+        updated.updated_at,
+        setId,
+      ],
+    );
+
+    await saveRemote(db, {
+      id: updated.id,
+      entity: 'workout_sets',
+      operation: 'upsert',
+      payload: {
+        id: updated.id,
+        workout_exercise_id: updated.workout_exercise_id,
+        workout_id: updated.workout_id,
+        user_id: updated.user_id,
+        set_number: updated.set_number,
+        reps: updated.reps,
+        weight_kg: updated.weight_kg,
+        duration_seconds: updated.duration_seconds,
+        distance_meters: updated.distance_meters,
+        is_warmup: updated.is_warmup,
+        completed: updated.completed,
+        created_at: updated.created_at,
+        updated_at: updated.updated_at,
+        deleted_at: null,
+      },
+    });
+
+    return updated;
+  });
 }
 
-export async function deleteWorkoutSet(db: SyncDb, setId: string): Promise<void> {
-  const now = new Date().toISOString();
+export async function deleteWorkoutSet(db: LocalDb, setId: string): Promise<void> {
+  return withOnlineSave(db, async (db) => {
+    const now = new Date().toISOString();
 
-  await db.runAsync(
-    `UPDATE local_workout_sets SET deleted_at = ?, updated_at = ?, sync_state = 'pending' WHERE id = ?`,
-    [now, now, setId],
-  );
+    await db.runAsync(
+      `UPDATE local_workout_sets SET deleted_at = ?, updated_at = ?, sync_state = 'synced' WHERE id = ?`,
+      [now, now, setId],
+    );
 
-  await enqueueOutbox(db, {
-    id: setId,
-    entity: 'workout_sets',
-    operation: 'delete',
-    payload: { id: setId, deleted_at: now },
+    await saveRemote(db, {
+      id: setId,
+      entity: 'workout_sets',
+      operation: 'delete',
+      payload: { id: setId, deleted_at: now },
+    });
   });
 }
 
@@ -560,7 +579,7 @@ export async function deleteWorkoutSet(db: SyncDb, setId: string): Promise<void>
 // -----------------------------------------------------------------------------
 
 export async function getWorkoutById(
-  db: SyncDb,
+  db: LocalDb,
   workoutId: string,
 ): Promise<WorkoutWithDetails | null> {
   const workout = await db.getFirstAsync<Workout>(
@@ -616,7 +635,7 @@ export async function getWorkoutById(
 }
 
 export async function getWorkoutsForDate(
-  db: SyncDb,
+  db: LocalDb,
   userId: string,
   localDate: string,
 ): Promise<WorkoutWithDetails[]> {
@@ -634,7 +653,7 @@ export async function getWorkoutsForDate(
 }
 
 export async function getWorkoutsHistory(
-  db: SyncDb,
+  db: LocalDb,
   userId: string,
   limit = 50,
   offset = 0,
@@ -649,7 +668,7 @@ export async function getWorkoutsHistory(
 }
 
 export async function getWorkoutsCalendarData(
-  db: SyncDb,
+  db: LocalDb,
   userId: string,
   startDate: string,
   endDate: string,
@@ -678,61 +697,63 @@ export function getWorkoutSummary(workout: WorkoutWithDetails, userWeightKg = 70
 // -----------------------------------------------------------------------------
 
 export async function copyPreviousWorkoutToToday(
-  db: SyncDb,
+  db: LocalDb,
   previousWorkoutId: string,
   targetDate: string,
   userId: string,
 ): Promise<WorkoutWithDetails> {
-  const prev = await getWorkoutById(db, previousWorkoutId);
-  if (!prev) {
-    throw new Error(`Previous workout not found: ${previousWorkoutId}`);
-  }
-
-  // 1. Create new workout
-  const newWorkout = await createWorkout(db, {
-    userId,
-    type: prev.type,
-    name: prev.name,
-    durationMinutes: prev.duration_minutes,
-    localDate: targetDate,
-    notes: prev.notes,
-    effortRating: prev.effort_rating,
-  });
-
-  const clonedExercises: WorkoutExercise[] = [];
-
-  // 2. Clone exercises & sets
-  for (const ex of prev.exercises) {
-    const newEx = await addExerciseToWorkout(db, newWorkout.id, {
-      exerciseId: ex.exercise_id,
-      exerciseName: ex.exercise_name,
-      orderInWorkout: ex.order_in_workout,
-      notes: ex.notes,
-    });
-
-    const clonedSets: WorkoutSet[] = [];
-    for (const set of ex.sets || []) {
-      const newSet = await addSetToExercise(db, newEx.id, {
-        reps: set.reps,
-        weightKg: set.weight_kg,
-        durationSeconds: set.duration_seconds,
-        distanceMeters: set.distance_meters,
-        isWarmup: set.is_warmup,
-        completed: set.completed,
-      });
-      clonedSets.push(newSet);
+  return withOnlineSave(db, async (db) => {
+    const prev = await getWorkoutById(db, previousWorkoutId);
+    if (!prev) {
+      throw new Error(`Previous workout not found: ${previousWorkoutId}`);
     }
 
-    clonedExercises.push({
-      ...newEx,
-      sets: clonedSets,
+    // 1. Create new workout
+    const newWorkout = await createWorkout(db, {
+      userId,
+      type: prev.type,
+      name: prev.name,
+      durationMinutes: prev.duration_minutes,
+      localDate: targetDate,
+      notes: prev.notes,
+      effortRating: prev.effort_rating,
     });
-  }
 
-  return {
-    ...newWorkout,
-    exercises: clonedExercises,
-  };
+    const clonedExercises: WorkoutExercise[] = [];
+
+    // 2. Clone exercises & sets
+    for (const ex of prev.exercises) {
+      const newEx = await addExerciseToWorkout(db, newWorkout.id, {
+        exerciseId: ex.exercise_id,
+        exerciseName: ex.exercise_name,
+        orderInWorkout: ex.order_in_workout,
+        notes: ex.notes,
+      });
+
+      const clonedSets: WorkoutSet[] = [];
+      for (const set of ex.sets || []) {
+        const newSet = await addSetToExercise(db, newEx.id, {
+          reps: set.reps,
+          weightKg: set.weight_kg,
+          durationSeconds: set.duration_seconds,
+          distanceMeters: set.distance_meters,
+          isWarmup: set.is_warmup,
+          completed: set.completed,
+        });
+        clonedSets.push(newSet);
+      }
+
+      clonedExercises.push({
+        ...newEx,
+        sets: clonedSets,
+      });
+    }
+
+    return {
+      ...newWorkout,
+      exercises: clonedExercises,
+    };
+  });
 }
 
 // -----------------------------------------------------------------------------
@@ -740,7 +761,7 @@ export async function copyPreviousWorkoutToToday(
 // -----------------------------------------------------------------------------
 
 export async function getPreviousPerformanceForExercise(
-  db: SyncDb,
+  db: LocalDb,
   userId: string,
   exerciseIdOrName: string,
   beforeDate?: string,
@@ -850,7 +871,7 @@ export function calculateElapsedSeconds(timer: WorkoutTimerState, now: Date = ne
 }
 
 export async function startWorkoutTimer(
-  db: SyncDb,
+  db: LocalDb,
   workoutId?: string | null,
   startTime?: Date,
 ): Promise<WorkoutTimerState> {
@@ -880,7 +901,7 @@ export async function startWorkoutTimer(
 }
 
 export async function pauseWorkoutTimer(
-  db: SyncDb,
+  db: LocalDb,
   timerId: string,
   pauseTime?: Date,
 ): Promise<WorkoutTimerState> {
@@ -924,7 +945,7 @@ export async function pauseWorkoutTimer(
 }
 
 export async function resumeWorkoutTimer(
-  db: SyncDb,
+  db: LocalDb,
   timerId: string,
   resumeTime?: Date,
 ): Promise<WorkoutTimerState> {
@@ -972,7 +993,7 @@ export async function resumeWorkoutTimer(
 }
 
 export async function stopWorkoutTimer(
-  db: SyncDb,
+  db: LocalDb,
   timerId: string,
 ): Promise<{ totalDurationSeconds: number }> {
   const row = await db.getFirstAsync<{
@@ -1001,7 +1022,7 @@ export async function stopWorkoutTimer(
 }
 
 export async function getRunningWorkoutTimer(
-  db: SyncDb,
+  db: LocalDb,
   workoutId?: string | null,
 ): Promise<WorkoutTimerState | null> {
   let query = `SELECT * FROM local_workout_timers`;
@@ -1040,7 +1061,7 @@ export async function getRunningWorkoutTimer(
 // -----------------------------------------------------------------------------
 
 export async function getExercises(
-  db: SyncDb,
+  db: LocalDb,
   options?: {
     muscleGroup?: MuscleGroup;
     searchQuery?: string;
@@ -1073,7 +1094,7 @@ export async function getExercises(
 }
 
 export async function createCustomExercise(
-  db: SyncDb,
+  db: LocalDb,
   input: {
     name: string;
     muscleGroup: MuscleGroup;
@@ -1083,56 +1104,58 @@ export async function createCustomExercise(
   },
   userId: string,
 ): Promise<Exercise> {
-  const id = crypto.randomUUID();
-  const now = new Date().toISOString();
+  return withOnlineSave(db, async (db) => {
+    const id = crypto.randomUUID();
+    const now = new Date().toISOString();
 
-  const ex: Exercise = {
-    id,
-    name: input.name.trim(),
-    muscle_group: input.muscleGroup,
-    equipment: input.equipment,
-    type: input.type,
-    owner_id: userId,
-    attribution: input.attribution ?? null,
-    created_at: now,
-    updated_at: now,
-    deleted_at: null,
-  };
-
-  await db.runAsync(
-    `INSERT INTO local_exercises (
-      id, name, muscle_group, equipment, type, owner_id, attribution, created_at, updated_at, deleted_at, sync_state
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NULL, 'pending')`,
-    [
-      ex.id,
-      ex.name,
-      ex.muscle_group,
-      ex.equipment,
-      ex.type,
-      ex.owner_id,
-      ex.attribution,
-      ex.created_at,
-      ex.updated_at,
-    ],
-  );
-
-  await enqueueOutbox(db, {
-    id: ex.id,
-    entity: 'exercises',
-    operation: 'upsert',
-    payload: {
-      id: ex.id,
-      name: ex.name,
-      muscle_group: ex.muscle_group,
-      equipment: ex.equipment,
-      type: ex.type,
-      owner_id: ex.owner_id,
-      attribution: ex.attribution,
-      created_at: ex.created_at,
-      updated_at: ex.updated_at,
+    const ex: Exercise = {
+      id,
+      name: input.name.trim(),
+      muscle_group: input.muscleGroup,
+      equipment: input.equipment,
+      type: input.type,
+      owner_id: userId,
+      attribution: input.attribution ?? null,
+      created_at: now,
+      updated_at: now,
       deleted_at: null,
-    },
-  });
+    };
 
-  return ex;
+    await db.runAsync(
+      `INSERT INTO local_exercises (
+      id, name, muscle_group, equipment, type, owner_id, attribution, created_at, updated_at, deleted_at, sync_state
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NULL, 'synced')`,
+      [
+        ex.id,
+        ex.name,
+        ex.muscle_group,
+        ex.equipment,
+        ex.type,
+        ex.owner_id,
+        ex.attribution,
+        ex.created_at,
+        ex.updated_at,
+      ],
+    );
+
+    await saveRemote(db, {
+      id: ex.id,
+      entity: 'exercises',
+      operation: 'upsert',
+      payload: {
+        id: ex.id,
+        name: ex.name,
+        muscle_group: ex.muscle_group,
+        equipment: ex.equipment,
+        type: ex.type,
+        owner_id: ex.owner_id,
+        attribution: ex.attribution,
+        created_at: ex.created_at,
+        updated_at: ex.updated_at,
+        deleted_at: null,
+      },
+    });
+
+    return ex;
+  });
 }

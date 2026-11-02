@@ -20,7 +20,7 @@ Build these once, in `/packages/ui` (tokens first). No hard-coded hex or spacing
 | CMP-12 | **NudgeButton** | 44 pill centred on the seam (see 5.5). |
 | CMP-13 | **CalorieRing + MacroBar** | Single-person ring (apricot is not used: ring takes the owner's identity hue). Centre = remaining or eaten in `numeral-l`. Macro bar = three segments in 100/55/28% identity steps with gram values under. |
 | CMP-14 | **Charts** | Line 1.5 px, owner's identity hue; 7-day moving average as a thicker 2.5 px line over faint raw dots; goal as a dashed `hairlineLit` line; no area fill; no 3-D; dots only on tap; tooltip card `s2`; axis labels `textLo` `label`. Bar charts for steps, water, workouts; today's bar highlighted with an outline. Maximum 4 series. Always provide "View as table" for accessibility. |
-| CMP-15 | **Toast, undo, banner, sync pill** | Toast: `s3`, 48 high, above tab bar, 4 s, undo action in apricot. Banner: inline card with icon + one action. Sync pill: 28 high at the top: "Saved on this phone. Will sync." |
+| CMP-15 | **Toast, undo and banner** | Toast: `s3`, 48 high, above tab bar, 4 s, undo action in apricot. Banner: inline card with icon + one action.
 | CMP-16 | **Switch row** | Title + one line of consequence text beneath ("Partners can see your meal items."). Switch is 52×32; label is also tappable. |
 | CMP-17 | **Empty state** | One line of what this is, one line of why, the action. No illustration of people. A small line-art glyph (48) is allowed. |
 | CMP-18 | **Skeleton** | Same geometry as the final layout in `s2`, no shimmer sweep. Rings show the track without the arc. |

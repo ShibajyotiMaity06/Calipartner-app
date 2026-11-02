@@ -152,11 +152,11 @@ export function WorkoutDetailModal({
                 testID={`${testID}-banner-repeat-success`}
                 style={[
                   styles.successBanner,
-                  { backgroundColor: colors.cardHighlight, borderColor: colors.syncSynced },
+                  { backgroundColor: colors.cardHighlight, borderColor: colors.mint },
                 ]}
               >
-                <Ionicons name="checkmark-circle" size={18} color={colors.syncSynced} />
-                <Text style={[styles.successBannerText, { color: colors.syncSynced }]}>
+                <Ionicons name="checkmark-circle" size={18} color={colors.mint} />
+                <Text style={[styles.successBannerText, { color: colors.mint }]}>
                   {repeatSuccessMessage}
                 </Text>
               </View>
@@ -322,9 +322,7 @@ export function WorkoutDetailModal({
                             Set {s.set_number}
                           </Text>
                           {s.is_warmup && (
-                            <View
-                              style={[styles.warmupTag, { backgroundColor: colors.syncPending }]}
-                            >
+                            <View style={[styles.warmupTag, { backgroundColor: colors.accent }]}>
                               <Text style={styles.warmupTagText}>Warmup</Text>
                             </View>
                           )}
@@ -338,7 +336,7 @@ export function WorkoutDetailModal({
                         <Ionicons
                           name={s.completed ? 'checkmark-circle' : 'checkmark-circle-outline'}
                           size={18}
-                          color={s.completed ? colors.syncSynced : colors.textMuted}
+                          color={s.completed ? colors.mint : colors.textMuted}
                         />
                       </View>
                     ))}

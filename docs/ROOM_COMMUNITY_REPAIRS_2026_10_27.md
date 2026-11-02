@@ -32,7 +32,7 @@ Total automated tests: 1,310 passed, 0 failed
 Android/iOS/web export: passed
 ```
 
-Added regression coverage for restoring the actual missing hosted APIs, abandoned Free quotas, legacy and current invitation acceptance, unauthorized acceptance, repeated leaving, host ownership transfer, cancelling archived-room invitations, occupied-room preservation, anonymous/outsider denial, client leave failures, minimal checkout addresses, Community navigation/actions and concise inbox states. Existing offline friendship/outbox and shared-workout privacy suites also pass.
+Authenticated saves use direct server requests with client UUIDs, privacy checks and an error on failure. Only acknowledged values enter local read caches.
 
 The first full run timed out in the existing real-JPEG barcode test while Metro exported all platforms concurrently. The full suite passed on rerun without that competing build; no unrelated test or barcode implementation was changed.
 

@@ -44,7 +44,7 @@ vi.mock('@/services/accountDataReset', () => ({
 vi.mock('./ErrorState', () => ({ ErrorState: () => <div>Error</div> }));
 vi.mock('./LoadingState', () => ({ LoadingState: () => <div>Loading</div> }));
 import { AccountDataResetGate } from './AccountDataResetGate';
-import { beforeTrackingSync } from '@/services/accountSyncGate';
+import { beforeAccountWrite } from '@/services/accountDataGate';
 let renderer: ReactTestRenderer;
 function Child() {
   useEffect(() => {
@@ -92,7 +92,7 @@ describe('safe reset before sync', () => {
       renderer = create(tree());
     });
     expect(state.mounts).toBe(1);
-    await expect(beforeTrackingSync()).rejects.toThrow('Offline');
+    await expect(beforeAccountWrite()).rejects.toThrow('Offline');
     expect(state.clear).not.toHaveBeenCalled();
   });
   it('does not unmount an active walking screen during normal foreground checks', async () => {
@@ -114,7 +114,7 @@ describe('safe reset before sync', () => {
     state.reset = true;
     let changed = false;
     await act(async () => {
-      changed = await beforeTrackingSync();
+      changed = await beforeAccountWrite();
     });
     expect(changed).toBe(true);
     expect(state.clear).toHaveBeenCalledOnce();

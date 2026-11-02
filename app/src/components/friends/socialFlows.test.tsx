@@ -146,21 +146,13 @@ describe('real friend interface flows', () => {
     expect(mocks.discovery).toHaveBeenLastCalledWith('cut', '@friend_2', false);
     await act(async () => tree.unmount());
   });
-  it('uses real request actions and disables sends for queued requests and exhausted quota', async () => {
+  it('uses real request actions and disables sends while saving and with exhausted quota', async () => {
     const send = vi.fn().mockResolvedValue(true);
     let tree!: ReactTestRenderer;
     await act(async () => {
-      tree = create(
-        <FriendDiscovery
-          busy={false}
-          onOpen={vi.fn()}
-          onSend={send}
-          queuedIds={['1']}
-          remaining={2}
-        />,
-      );
+      tree = create(<FriendDiscovery busy={false} onOpen={vi.fn()} onSend={send} remaining={2} />);
     });
-    expect(tree.root.findByProps({ testID: 'send-friend-1' }).props.disabled).toBe(true);
+    expect(tree.root.findByProps({ testID: 'send-friend-1' }).props.disabled).toBe(false);
     await act(async () => tree.root.findByProps({ testID: 'send-friend-2' }).props.onPress());
     expect(send).toHaveBeenCalledWith('2');
     await act(async () =>

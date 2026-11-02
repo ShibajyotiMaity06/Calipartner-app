@@ -893,7 +893,7 @@ export function WorkoutLoggerModal({
                       style={[
                         styles.warmupChip,
                         {
-                          backgroundColor: set.isWarmup ? colors.syncPending : colors.surfaceAlt,
+                          backgroundColor: set.isWarmup ? colors.accent : colors.surfaceAlt,
                           borderColor: colors.border,
                         },
                       ]}
@@ -988,7 +988,7 @@ export function WorkoutLoggerModal({
                         styles.checkCircle,
                         { flex: 0.9 },
                         set.completed
-                          ? { backgroundColor: colors.syncSynced }
+                          ? { backgroundColor: colors.mint }
                           : { backgroundColor: colors.surfaceAlt, borderColor: colors.border },
                       ]}
                       onPress={() => handleToggleCompleted(exIdx, setIdx)}

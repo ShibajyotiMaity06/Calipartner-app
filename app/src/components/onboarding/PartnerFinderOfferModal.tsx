@@ -31,7 +31,6 @@ export function PartnerFinderOfferModal({
     onClose();
     router.push('/friends' as never);
   };
-  const pending = friends.outbox.filter((item) => item.status === 'pending');
   const selected = friends.selected;
   return (
     <Modal
@@ -56,27 +55,12 @@ export function PartnerFinderOfferModal({
               {friends.error ? (
                 <Text accessibilityRole="alert">{t('friends.genericError')}</Text>
               ) : null}
-              {friends.outbox.some((item) => item.status === 'failed') ? (
-                <Text accessibilityRole="alert">
-                  {t(
-                    friends.outbox.some((item) => item.last_error?.includes('FRIEND_WEEKLY_LIMIT'))
-                      ? 'friends.weeklyLimit'
-                      : 'friends.failedChanges',
-                  )}
-                </Text>
-              ) : null}
               <FriendDiscovery
                 random
                 onOpen={(person) => void friends.openProfile(person)}
                 onSend={friends.send}
                 busy={friends.busy}
                 remaining={friends.inbox?.quota.remaining}
-                queuedIds={pending
-                  .filter((item) => item.rpc_name === 'send_friend_request')
-                  .map(
-                    (item) =>
-                      (JSON.parse(item.payload) as { p_recipient_id: string }).p_recipient_id,
-                  )}
               />
               <Button
                 variant="secondary"
@@ -99,13 +83,7 @@ export function PartnerFinderOfferModal({
           <PublicSocialProfile
             profile={selected}
             busy={friends.busy}
-            queued={pending.some((item) => {
-              const payload = JSON.parse(item.payload);
-              return (
-                payload.p_recipient_id === selected.id ||
-                payload.p_request_id === selected.request_id
-              );
-            })}
+
             limitReached={friends.inbox?.quota.remaining === 0}
             onClose={friends.closeProfile}
             onSend={() => void friends.send(selected.id)}

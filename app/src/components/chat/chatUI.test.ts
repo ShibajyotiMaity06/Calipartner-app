@@ -344,15 +344,6 @@ describe('Phase 8 — Chat View Layer & UI Logic Tests', () => {
   });
 
   describe('6. Room State Banners & Offline Handling', () => {
-    it('displays offline banner when network is unavailable', () => {
-      const isOnline = false;
-      const showOfflineBanner = isOnline === false;
-      expect(showOfflineBanner).toBe(true);
-      expect(en.chat.offlineBanner).toBe(
-        "You're offline. Messages will send automatically once reconnected.",
-      );
-    });
-
     it('enforces paused state for locked rooms (banner + composer disabled)', () => {
       const isLocked = true;
       const bannerVisible = isLocked;
@@ -396,9 +387,7 @@ describe('Phase 8 — Chat View Layer & UI Logic Tests', () => {
       expect(t('chat.muteMember', { username: 'partner' })).toBe('Mute @partner');
       expect(t('chat.savedImageToast')).toBe('Photo saved to your gallery!');
       expect(t('chat.newMessagesDivider')).toBe('New Messages');
-      expect(t('chat.offlineBanner')).toBe(
-        "You're offline. Messages will send automatically once reconnected.",
-      );
+      expect(t('chat.failed')).toBe('Failed to send');
     });
   });
 });

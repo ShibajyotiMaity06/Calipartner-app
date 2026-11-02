@@ -1,3 +1,4 @@
+import { withOnlineSave } from './accountDataService';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import {
   filterRecipes,
@@ -15,9 +16,8 @@ import type {
   ScaledRecipeIngredient,
 } from '@calipartner/core';
 import { createLogger } from '@/lib/logger';
-import { enqueueOutbox, type SyncDb } from './syncService';
+import { saveRemote, type LocalDb } from './accountDataService';
 import bundledRecipesData from '../../assets/bundled_recipes.json';
-import { diaryEvents } from './diaryEvents';
 import ownerRecipesData from '../../../datasets/owner_recipes.json';
 
 export const OWNER_RECIPES = ownerRecipesData.map((recipe) =>
@@ -510,127 +510,131 @@ export function scaleRecipe(
 /**
  * Logs a recipe into the user's food diary (PRD 6.21 RCP-6).
  * Creates a food_entries row with nutrient snapshot and source='recipe'.
- * Syncs seamlessly via the offline outbox queue.
+ * Saves directly with server acknowledgement.
  */
 export async function logRecipe(db: RecipeDb, input: LogRecipeInput): Promise<FoodEntry> {
-  if (input.servings <= 0) {
-    throw new Error('Servings must be greater than zero');
-  }
+  return withOnlineSave(db, async (db) => {
+    if (input.servings <= 0) {
+      throw new Error('Servings must be greater than zero');
+    }
 
-  const recipe = await getRecipeDetail(db, input.recipeId, input.userId);
-  if (!recipe) {
-    throw new Error(`Recipe with ID "${input.recipeId}" not found`);
-  }
+    const recipe = await getRecipeDetail(db, input.recipeId, input.userId);
+    if (!recipe) {
+      throw new Error(`Recipe with ID "${input.recipeId}" not found`);
+    }
 
-  const scaledNutrients = scaleLoggedRecipeNutrients(recipe.nutrition_per_serving, input.servings);
+    const scaledNutrients = scaleLoggedRecipeNutrients(
+      recipe.nutrition_per_serving,
+      input.servings,
+    );
 
-  const entryId = generateClientUuid();
-  const now = input.loggedAt || new Date().toISOString();
-  const unitLabel = input.servings === 1 ? 'serving' : 'servings';
+    const entryId = generateClientUuid();
+    const now = input.loggedAt || new Date().toISOString();
+    const unitLabel = input.servings === 1 ? 'serving' : 'servings';
 
-  const entry: FoodEntry = {
-    id: entryId,
-    user_id: input.userId,
-    food_id: null,
-    meal_section: input.mealSection,
-    quantity: input.servings,
-    unit: unitLabel,
-    calories: scaledNutrients.calories,
-    protein: scaledNutrients.protein,
-    carbs: scaledNutrients.carbs,
-    fat: scaledNutrients.fat,
-    fiber: scaledNutrients.fiber ?? 0,
-    sugar: scaledNutrients.sugar ?? 0,
-    sodium_mg: scaledNutrients.sodium_mg ?? 0,
-    food_name: recipe.title,
-    brand_name: recipe.cuisine,
-    logged_at: now,
-    local_date: input.localDate,
-    source: 'recipe',
-    shared_meal_id: input.sharedMealId ?? null,
-    created_at: now,
-    updated_at: now,
-    deleted_at: null,
-  };
+    const entry: FoodEntry = {
+      id: entryId,
+      user_id: input.userId,
+      food_id: null,
+      meal_section: input.mealSection,
+      quantity: input.servings,
+      unit: unitLabel,
+      calories: scaledNutrients.calories,
+      protein: scaledNutrients.protein,
+      carbs: scaledNutrients.carbs,
+      fat: scaledNutrients.fat,
+      fiber: scaledNutrients.fiber ?? 0,
+      sugar: scaledNutrients.sugar ?? 0,
+      sodium_mg: scaledNutrients.sodium_mg ?? 0,
+      food_name: recipe.title,
+      brand_name: recipe.cuisine,
+      logged_at: now,
+      local_date: input.localDate,
+      source: 'recipe',
+      shared_meal_id: input.sharedMealId ?? null,
+      created_at: now,
+      updated_at: now,
+      deleted_at: null,
+    };
 
-  const persist = async () => {
-    // 1. Insert into local SQLite
-    await db.runAsync(
-      `INSERT INTO local_food_entries (
+    const persist = async () => {
+      // 1. Insert into local SQLite
+      await db.runAsync(
+        `INSERT INTO local_food_entries (
       id, user_id, food_id, meal_section, quantity, unit,
       calories, protein, carbs, fat, fiber, sugar, sodium_mg,
       food_name, brand_name, logged_at, local_date, source,
       shared_meal_id, created_at, updated_at, deleted_at, sync_state
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NULL, 'pending')`,
-      [
-        entry.id,
-        entry.user_id,
-        entry.food_id,
-        entry.meal_section,
-        entry.quantity,
-        entry.unit,
-        entry.calories,
-        entry.protein,
-        entry.carbs,
-        entry.fat,
-        entry.fiber,
-        entry.sugar,
-        entry.sodium_mg,
-        entry.food_name,
-        entry.brand_name,
-        entry.logged_at,
-        entry.local_date,
-        entry.source,
-        entry.shared_meal_id,
-        entry.created_at,
-        entry.updated_at,
-      ],
-    );
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NULL, 'synced')`,
+        [
+          entry.id,
+          entry.user_id,
+          entry.food_id,
+          entry.meal_section,
+          entry.quantity,
+          entry.unit,
+          entry.calories,
+          entry.protein,
+          entry.carbs,
+          entry.fat,
+          entry.fiber,
+          entry.sugar,
+          entry.sodium_mg,
+          entry.food_name,
+          entry.brand_name,
+          entry.logged_at,
+          entry.local_date,
+          entry.source,
+          entry.shared_meal_id,
+          entry.created_at,
+          entry.updated_at,
+        ],
+      );
 
-    // 2. Enqueue in outbox for background remote sync
-    await enqueueOutbox(db as unknown as SyncDb, {
-      id: entry.id,
-      entity: 'food_entries',
-      operation: 'upsert',
-      payload: {
+      // Save directly and require server acknowledgement.
+      await saveRemote(db as unknown as LocalDb, {
         id: entry.id,
-        user_id: entry.user_id,
-        food_id: entry.food_id,
-        meal_section: entry.meal_section,
-        quantity: entry.quantity,
-        unit: entry.unit,
-        calories: entry.calories,
-        protein: entry.protein,
-        carbs: entry.carbs,
-        fat: entry.fat,
-        fiber: entry.fiber,
-        sugar: entry.sugar,
-        sodium_mg: entry.sodium_mg,
-        food_name: entry.food_name,
-        brand_name: entry.brand_name,
-        logged_at: entry.logged_at,
-        local_date: entry.local_date,
-        source: entry.source,
-        shared_meal_id: entry.shared_meal_id,
-        created_at: entry.created_at,
-        updated_at: entry.updated_at,
-        deleted_at: null,
-      },
-    });
-  };
-  if (db.withTransactionAsync) await db.withTransactionAsync(persist);
-  else await persist();
+        entity: 'food_entries',
+        operation: 'upsert',
+        payload: {
+          id: entry.id,
+          user_id: entry.user_id,
+          food_id: entry.food_id,
+          meal_section: entry.meal_section,
+          quantity: entry.quantity,
+          unit: entry.unit,
+          calories: entry.calories,
+          protein: entry.protein,
+          carbs: entry.carbs,
+          fat: entry.fat,
+          fiber: entry.fiber,
+          sugar: entry.sugar,
+          sodium_mg: entry.sodium_mg,
+          food_name: entry.food_name,
+          brand_name: entry.brand_name,
+          logged_at: entry.logged_at,
+          local_date: entry.local_date,
+          source: entry.source,
+          shared_meal_id: entry.shared_meal_id,
+          created_at: entry.created_at,
+          updated_at: entry.updated_at,
+          deleted_at: null,
+        },
+      });
+    };
+    if (db.withTransactionAsync) await db.withTransactionAsync(persist);
+    else await persist();
 
-  log.info(
-    `Logged recipe "${recipe.title}" (${input.servings} servings) in section "${input.mealSection}"`,
-  );
-  diaryEvents.emitChange();
-  return entry;
+    log.info(
+      `Logged recipe "${recipe.title}" (${input.servings} servings) in section "${input.mealSection}"`,
+    );
+    return entry;
+  });
 }
 
 /**
  * Toggles favorite state of a recipe for the user.
- * Writes to local SQLite and enqueues to outbox for sync (RCP-7).
+ * Saves directly with server acknowledgement.
  */
 export async function toggleRecipeFavorite(
   db: RecipeDb,
@@ -639,46 +643,47 @@ export async function toggleRecipeFavorite(
   isFavorite: boolean,
   supabase?: SupabaseRecipeClient,
 ): Promise<void> {
-  const now = new Date().toISOString();
-  const outboxId = `recipe_fav:${userId}:${recipeId}`;
+  return withOnlineSave(db, async (db) => {
+    const now = new Date().toISOString();
+    const outboxId = `recipe_fav:${userId}:${recipeId}`;
 
-  if (isFavorite) {
-    await getRecipeDetail(db, recipeId, userId, supabase);
-    await db.runAsync(
-      `INSERT INTO local_recipe_favorites (user_id, recipe_id, created_at, sync_state, deleted_at)
-       VALUES (?, ?, ?, 'pending', NULL)
-       ON CONFLICT(user_id, recipe_id) DO UPDATE SET sync_state = 'pending', deleted_at = NULL`,
-      [userId, recipeId, now],
-    );
+    if (isFavorite) {
+      await getRecipeDetail(db, recipeId, userId, supabase);
+      await db.runAsync(
+        `INSERT INTO local_recipe_favorites (user_id, recipe_id, created_at, sync_state, deleted_at)
+       VALUES (?, ?, ?, 'synced', NULL)
+       ON CONFLICT(user_id, recipe_id) DO UPDATE SET sync_state = 'synced', deleted_at = NULL`,
+        [userId, recipeId, now],
+      );
 
-    await enqueueOutbox(db as unknown as SyncDb, {
-      id: outboxId,
-      entity: 'recipe_favorites',
-      operation: 'upsert',
-      payload: {
-        user_id: userId,
-        recipe_id: recipeId,
-        created_at: now,
-      },
-    });
-  } else {
-    await db.runAsync(
-      `UPDATE local_recipe_favorites SET deleted_at = ?, sync_state = 'pending'
+      await saveRemote(db as unknown as LocalDb, {
+        id: outboxId,
+        entity: 'recipe_favorites',
+        operation: 'upsert',
+        payload: {
+          user_id: userId,
+          recipe_id: recipeId,
+          created_at: now,
+        },
+      });
+    } else {
+      await db.runAsync(
+        `UPDATE local_recipe_favorites SET deleted_at = ?, sync_state = 'synced'
        WHERE user_id = ? AND recipe_id = ?`,
-      [now, userId, recipeId],
-    );
+        [now, userId, recipeId],
+      );
 
-    await enqueueOutbox(db as unknown as SyncDb, {
-      id: outboxId,
-      entity: 'recipe_favorites',
-      operation: 'delete',
-      payload: {
-        user_id: userId,
-        recipe_id: recipeId,
-      },
-    });
-  }
-  diaryEvents.emitChange();
+      await saveRemote(db as unknown as LocalDb, {
+        id: outboxId,
+        entity: 'recipe_favorites',
+        operation: 'delete',
+        payload: {
+          user_id: userId,
+          recipe_id: recipeId,
+        },
+      });
+    }
+  });
 }
 
 /**
@@ -721,56 +726,58 @@ export async function getRecentlyViewedRecipes(
 
 /**
  * Reports an error or issue in a recipe (RCP-9).
- * Inserts into local_recipe_reports and enqueues to outbox.
+ * Saves directly with server acknowledgement.
  */
 export async function reportRecipe(db: RecipeDb, input: ReportRecipeInput): Promise<RecipeReport> {
-  const reasonTrimmed = input.reason.trim();
-  if (reasonTrimmed.length < 3) {
-    throw new Error('Report reason must be at least 3 characters');
-  }
+  return withOnlineSave(db, async (db) => {
+    const reasonTrimmed = input.reason.trim();
+    if (reasonTrimmed.length < 3) {
+      throw new Error('Report reason must be at least 3 characters');
+    }
 
-  const id = generateClientUuid();
-  const now = new Date().toISOString();
+    const id = generateClientUuid();
+    const now = new Date().toISOString();
 
-  const report: RecipeReport = {
-    id,
-    recipe_id: input.recipeId,
-    user_id: input.userId,
-    reason: reasonTrimmed,
-    details: input.details?.trim() || null,
-    status: 'open',
-    created_at: now,
-  };
+    const report: RecipeReport = {
+      id,
+      recipe_id: input.recipeId,
+      user_id: input.userId,
+      reason: reasonTrimmed,
+      details: input.details?.trim() || null,
+      status: 'open',
+      created_at: now,
+    };
 
-  await db.runAsync(
-    `INSERT INTO local_recipe_reports (
+    await db.runAsync(
+      `INSERT INTO local_recipe_reports (
       id, recipe_id, user_id, reason, details, status, created_at, sync_state
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, 'pending')`,
-    [
-      report.id,
-      report.recipe_id,
-      report.user_id,
-      report.reason,
-      report.details,
-      report.status,
-      report.created_at,
-    ],
-  );
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, 'synced')`,
+      [
+        report.id,
+        report.recipe_id,
+        report.user_id,
+        report.reason,
+        report.details,
+        report.status,
+        report.created_at,
+      ],
+    );
 
-  await enqueueOutbox(db as unknown as SyncDb, {
-    id: report.id,
-    entity: 'recipe_reports',
-    operation: 'upsert',
-    payload: {
+    await saveRemote(db as unknown as LocalDb, {
       id: report.id,
-      recipe_id: report.recipe_id,
-      user_id: report.user_id,
-      reason: report.reason,
-      details: report.details,
-      status: report.status,
-      created_at: report.created_at,
-    },
-  });
+      entity: 'recipe_reports',
+      operation: 'upsert',
+      payload: {
+        id: report.id,
+        recipe_id: report.recipe_id,
+        user_id: report.user_id,
+        reason: report.reason,
+        details: report.details,
+        status: report.status,
+        created_at: report.created_at,
+      },
+    });
 
-  return report;
+    return report;
+  });
 }

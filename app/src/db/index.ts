@@ -1,3 +1,4 @@
+import { withOnlineSave } from '@/services/accountDataService';
 import { Platform } from 'react-native';
 import * as SQLite from 'expo-sqlite';
 import { migrations } from '@/db/migrations';
@@ -50,7 +51,6 @@ export function createWebDb(storage?: {
     local_recipe_favorites: [],
     local_recipe_recently_viewed: [],
     local_recipe_reports: [],
-    outbox: [],
     local_goal_profiles: [],
     local_health_screening: [],
     goal_profiles: [],
@@ -74,6 +74,17 @@ export function createWebDb(storage?: {
   if (memory.goal_profiles?.length && !memory.local_goal_profiles?.length) {
     memory.local_goal_profiles = [...memory.goal_profiles];
   }
+
+  for (const [oldTable, archive] of [
+    ['outbox', 'retired_local_writes'],
+    ['local_social_outbox', 'retired_social_writes'],
+    ['local_challenge_outbox', 'retired_challenge_writes'],
+  ] as const) {
+    if (memory[oldTable]?.length)
+      memory[archive] = [...(memory[archive] ?? []), ...memory[oldTable]];
+    delete memory[oldTable];
+  }
+  delete memory.sync_cursors;
 
   let inTransaction = false;
   let transactionTail: Promise<void> = Promise.resolve();
@@ -175,11 +186,9 @@ export function createWebDb(storage?: {
               }
             }
             if (
-              table === 'outbox' ||
               table === 'local_social_cache' ||
-              table === 'local_social_outbox' ||
               table === 'local_challenge_cache' ||
-              table === 'local_challenge_outbox'
+              table === 'retired_local_writes'
             ) {
               const existingIdx = list.findIndex((ex) => ex.id === row.id);
               if (existingIdx >= 0) {
@@ -217,7 +226,7 @@ export function createWebDb(storage?: {
         return { lastInsertRowId: 0, changes };
       }
       const targetMutation = sql.match(
-        /^(update|delete from)\s+(local_goal_profiles|local_health_screening|local_onboarding_drafts|outbox|local_social_cache|local_social_outbox|local_challenge_cache|local_challenge_outbox)\b/i,
+        /^(update|delete from)\s+(local_goal_profiles|local_health_screening|local_onboarding_drafts|local_social_cache|local_challenge_cache)\b/i,
       );
       if (targetMutation) {
         const table = targetMutation[2]!;
@@ -297,7 +306,7 @@ export function createWebDb(storage?: {
                   local_date: localDate,
                   notes,
                   updated_at: updatedAt,
-                  sync_state: 'pending',
+                  sync_state: 'synced',
                 });
                 changes++;
               }
@@ -498,14 +507,6 @@ export function createWebDb(storage?: {
         return list.filter((row) => !params[0] || row.user_id === params[0]) as unknown as T[];
       }
 
-      if (lower.includes('from outbox')) {
-        return (memory.outbox || []).filter(
-          (row) =>
-            !lower.includes("'goal_profiles'") ||
-            ['goal_profiles', 'health_screening'].includes(String(row.entity)),
-        ) as unknown as T[];
-      }
-
       if (lower.includes('from local_food_entries')) {
         const list = memory.local_food_entries || [];
         let filtered = list.filter((r) => !r.deleted_at);
@@ -655,15 +656,20 @@ export async function clearTrackingDataForReset(customDb?: SQLite.SQLiteDatabase
     for (const { name } of tables) {
       if (
         /^local_[a-z_]+$/.test(name) ||
-        ['outbox', 'guest_entries', 'sync_cursors', 'goal_profiles', 'health_screenings'].includes(
-          name,
-        )
+        [
+          'retired_local_writes',
+          'retired_social_writes',
+          'retired_challenge_writes',
+          'guest_entries',
+          'goal_profiles',
+          'health_screenings',
+        ].includes(name)
       ) {
         await db.runAsync(`DELETE FROM ${name}`);
       }
     }
   };
-  await db.withTransactionAsync(reset);
+  await withOnlineSave(db, reset, false);
 }
 
 /**
@@ -672,14 +678,14 @@ export async function clearTrackingDataForReset(customDb?: SQLite.SQLiteDatabase
 export async function clearAllLocalData(): Promise<void> {
   const db = await getDb();
   const tables = [
-    'outbox',
+    'retired_local_writes',
+    'retired_social_writes',
+    'retired_challenge_writes',
     'guest_entries',
     'local_goal_profiles',
     'local_onboarding_drafts',
     'local_social_cache',
-    'local_social_outbox',
     'local_challenge_cache',
-    'local_challenge_outbox',
     'local_health_screening',
     'local_foods',
     'local_food_entries',

@@ -1,6 +1,12 @@
+vi.mock('./accountDataService', async (original) => ({
+  ...(await original<object>()),
+  withOnlineSave: async <T>(db: LocalDb, action: (db: LocalDb) => Promise<T>) => action(db),
+  saveRemote: (await import('../test/remoteWrites')).recordRemoteWrite,
+}));
+import { recordedWrites } from '../test/remoteWrites';
 import { DatabaseSync } from 'node:sqlite';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import type { SyncDb } from './syncService';
+import type { LocalDb } from './accountDataService';
 import {
   editFastingSession,
   endFast,
@@ -28,7 +34,7 @@ vi.mock('expo-notifications', () => ({
   },
 }));
 
-function createTestDb(): SyncDb {
+function createTestDb(): LocalDb {
   const sqlite = new DatabaseSync(':memory:');
 
   sqlite.exec(`
@@ -93,7 +99,7 @@ function createTestDb(): SyncDb {
 }
 
 describe('Phase 13: Fasting Service & Offline SQLite Sync', () => {
-  let db: SyncDb;
+  let db: LocalDb;
   const userId = 'user-fasting-1';
 
   beforeEach(() => {
@@ -130,12 +136,12 @@ describe('Phase 13: Fasting Service & Offline SQLite Sync', () => {
     expect(retrieved.enabled).toBe(true);
     expect(retrieved.protocol).toBe('18:6');
 
-    // Verify queued in outbox
-    const outboxItems = await db.getAllAsync<{ entity: string; payload: string }>(
-      `SELECT * FROM outbox WHERE entity = 'fasting_settings'`,
+    // Save directly and require server acknowledgement.
+    const outboxItems = (await recordedWrites(db)).filter(
+      (item) => item.entity === 'fasting_settings',
     );
     expect(outboxItems.length).toBe(1);
-    const payload = JSON.parse(outboxItems[0]!.payload);
+    const payload = outboxItems[0]!.payload;
     expect(payload.protocol).toBe('18:6');
     expect(payload.enabled).toBe(true);
   });
@@ -157,9 +163,9 @@ describe('Phase 13: Fasting Service & Offline SQLite Sync', () => {
     expect(active?.id).toBe(session.id);
     expect(active?.status).toBe('active');
 
-    // Outbox item was enqueued
-    const outboxItems = await db.getAllAsync<{ entity: string }>(
-      `SELECT * FROM outbox WHERE entity = 'fasting_sessions'`,
+    // Save directly and require server acknowledgement.
+    const outboxItems = (await recordedWrites(db)).filter(
+      (item) => item.entity === 'fasting_sessions',
     );
     expect(outboxItems.length).toBe(1);
   });

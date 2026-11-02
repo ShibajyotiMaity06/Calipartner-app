@@ -38,28 +38,18 @@ export function FriendRequests({
           )}
         </Text>
       ) : null}
-      {friends.outbox.some((item) => item.status === 'failed') ? (
-        <Text accessibilityRole="alert">{t('friends.failedChanges')}</Text>
-      ) : null}
       {people.map((person) => {
-        const queued = friends.outbox.some(
-          (item) =>
-            item.status === 'pending' &&
-            (JSON.parse(item.payload) as { p_request_id?: string }).p_request_id ===
-              person.request_id,
-        );
         return (
           <Card key={person.id}>
             <View style={planStyles.gap}>
               <Text>{person.nickname}</Text>
               <Text variant="bodyS">@{person.username}</Text>
-              {queued ? <Text accessibilityLiveRegion="polite">{t('friends.queued')}</Text> : null}
               {tab === 'incoming' ? (
                 <>
                   <Button
                     variant="secondary"
                     label={t('friends.accept')}
-                    disabled={friends.busy || queued}
+                    disabled={friends.busy}
                     onPress={() => {
                       if (person.request_id)
                         void friends.respond(person.request_id, 'accept', person.id);
@@ -69,7 +59,7 @@ export function FriendRequests({
                   <Button
                     variant="tertiary"
                     label={t('friends.decline')}
-                    disabled={friends.busy || queued}
+                    disabled={friends.busy}
                     onPress={() => {
                       if (person.request_id)
                         void friends.respond(person.request_id, 'decline', person.id);
@@ -81,7 +71,7 @@ export function FriendRequests({
                 <Button
                   variant="secondary"
                   label={t('friends.cancel')}
-                  disabled={friends.busy || queued}
+                  disabled={friends.busy}
                   onPress={() => {
                     if (person.request_id)
                       void friends.respond(person.request_id, 'cancel', person.id);

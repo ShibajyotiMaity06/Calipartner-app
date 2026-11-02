@@ -201,7 +201,7 @@ export function InviteUserModal({
                         {isInviting ? (
                           <ActivityIndicator size="small" color="#FFFFFF" />
                         ) : isInvited ? (
-                          <Text style={[styles.inviteButtonText, { color: colors.syncSynced }]}>
+                          <Text style={[styles.inviteButtonText, { color: colors.mint }]}>
                             {t('rooms.inviteModal.invited')}
                           </Text>
                         ) : (

@@ -1,4 +1,3 @@
-import { FriendsSyncGate } from '@/components/FriendsSyncGate';
 import { useCallback, useEffect, useState } from 'react';
 import { BackHandler, Platform, View } from 'react-native';
 import { Stack, useRouter } from 'expo-router';
@@ -11,7 +10,6 @@ import { AccountDataResetGate } from '@/components/AccountDataResetGate';
 import { ErrorState } from '@/components/ErrorState';
 import { LoadingState } from '@/components/LoadingState';
 import { AuthProvider } from '@/contexts/AuthContext';
-import { useSyncStatus } from '@/hooks/useSyncStatus';
 import { TargetsProvider } from '@/hooks/useTargets';
 import { getDb } from '@/db';
 import { createLogger } from '@/lib/logger';
@@ -159,8 +157,6 @@ export default function RootLayout() {
             <AuthProvider>
               <AccountDataResetGate>
                 <TargetsProvider>
-                  <FriendsSyncGate />
-                  <TrackingSyncGate />
                   <HardwareBackHandler />
                   <SessionNavigationGuard />
                   <Stack screenOptions={{ headerShown: false }} />
@@ -172,11 +168,6 @@ export default function RootLayout() {
       </ThemeProvider>
     </ErrorBoundary>
   );
-}
-
-function TrackingSyncGate() {
-  useSyncStatus();
-  return null;
 }
 
 function HardwareBackHandler() {

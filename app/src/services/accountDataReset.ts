@@ -7,7 +7,7 @@ export class ResetCheckUnavailableError extends Error {
   readonly code = 'RESET_CHECK_UNAVAILABLE';
 }
 
-/** Check before mounting any hooks that can flush an old offline queue. Never touches auth storage. */
+/** Check before mounting account tracking hooks. Never touches auth storage. */
 export async function applyAccountDataReset(
   supabase: SupabaseClient,
   clearData: () => Promise<void>,
@@ -37,7 +37,7 @@ export async function applyAccountDataReset(
   }
   if ((await storage.getItem(ACCOUNT_RESET_RECEIPT)) === value.epoch) return false;
   await clearData();
-  // Persist only after clearing every table successfully; interrupted resets retry before syncing.
+  // Persist only after clearing every table successfully; interrupted resets retry before saving.
   await storage.setItem(ACCOUNT_RESET_RECEIPT, value.epoch);
   return true;
 }

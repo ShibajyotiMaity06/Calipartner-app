@@ -1,4 +1,8 @@
-import { describe, expect, it } from 'vitest';
+const server = vi.hoisted(() => ({ upsert: vi.fn().mockResolvedValue({ error: null }) }));
+vi.mock('@/lib/supabase', () => ({
+  getSupabase: () => ({ from: () => ({ upsert: server.upsert }) }),
+}));
+import { describe, expect, it, vi } from 'vitest';
 import {
   getPendingGuestEntries,
   migrateGuestData,
@@ -61,7 +65,7 @@ describe('guestMigrationService', () => {
   });
 
   it('migrates local guest entries to user account via outbox queue', async () => {
-    const { db, guestRows, outboxRows } = createFakeDb();
+    const { db, guestRows } = createFakeDb();
 
     await recordGuestEntry(db, {
       id: 'entry-1',
@@ -78,12 +82,10 @@ describe('guestMigrationService', () => {
     expect(result.migratedCount).toBe(2);
     expect(result.entryIds).toEqual(['entry-1', 'entry-2']);
 
-    // Check that outbox has both entries with userId attached
-    expect(outboxRows).toHaveLength(2);
-    const firstOutbox = JSON.parse(outboxRows[0]!.payload as string);
-    expect(firstOutbox.userId).toBe('user-123');
-    expect(firstOutbox.food).toBe('Apple');
-
+    expect(server.upsert).toHaveBeenCalledTimes(2);
+    expect(server.upsert).toHaveBeenCalledWith(
+      expect.objectContaining({ user_id: 'user-123', food: 'Apple' }),
+    );
     // Check that guest entries are marked migrated locally
     expect(guestRows.every((r) => r.migrated_at !== null)).toBe(true);
 

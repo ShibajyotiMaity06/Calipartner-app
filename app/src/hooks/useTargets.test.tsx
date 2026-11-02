@@ -26,11 +26,11 @@ vi.mock('@/services/targetsService', () => ({
     if (stored.failRestore) throw new Error('Offline');
     return stored.profiles.get(userId) ?? stored.remote;
   },
-  saveGoalProfileWithSync: async (_db: unknown, _client: unknown, profile: GoalProfile) => {
+  saveGoalProfileOnline: async (_db: unknown, _client: unknown, profile: GoalProfile) => {
     stored.profiles.set(profile.user_id, profile);
-    return { synced: false };
+    return { saved: true };
   },
-  saveHealthScreeningWithSync: vi.fn(),
+  saveHealthScreeningOnline: vi.fn(),
 }));
 import { TargetsProvider, useTargets } from './useTargets';
 

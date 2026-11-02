@@ -345,6 +345,14 @@ export function FoodLogModal({
 
             <Pressable
               testID="btn-close-food-log"
+              accessibilityRole="button"
+              accessibilityLabel={t('homeRefresh.close')}
+              style={{
+                minWidth: homeLayout.touchSize,
+                minHeight: homeLayout.touchSize,
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
               onPress={onClose}
               hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
             >
@@ -362,55 +370,63 @@ export function FoodLogModal({
             </Text>
           )}
           {/* 5 Tab Navigation Bar */}
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            style={{ flexGrow: 0 }}
-            contentContainerStyle={{
-              flexDirection: 'row',
-              borderBottomWidth: 1,
-              borderBottomColor: colors.border,
-              paddingHorizontal: spacing.sm,
-            }}
+          <View
+            accessibilityRole="tablist"
+            testID="food-log-methods"
+            style={{ flexDirection: 'row', flexWrap: 'wrap', gap: spacing.xs, padding: spacing.md }}
           >
-            {(['history', 'search', 'scan', 'photo', 'recipes', 'myFoods'] as TabType[]).map(
-              (tab) => {
-                const isActive = activeTab === tab;
-                return (
-                  <Pressable
-                    key={tab}
-                    testID={`tab-log-${tab}`}
-                    onPress={() => {
-                      if (tab === 'scan') {
-                        setShowBarcodeScanner(true);
-                      } else {
-                        setActiveTab(tab);
-                      }
-                    }}
+            {(
+              [
+                ['history', 'time-outline'],
+                ['search', 'search-outline'],
+                ['scan', 'barcode-outline'],
+                ['photo', 'camera-outline'],
+                ['recipes', 'book-outline'],
+                ['myFoods', 'restaurant-outline'],
+              ] as const
+            ).map(([tab, icon]) => {
+              const isActive = activeTab === tab;
+              return (
+                <Pressable
+                  key={tab}
+                  testID={`tab-log-${tab}`}
+                  accessibilityRole={tab === 'scan' ? 'button' : 'tab'}
+                  accessibilityLabel={t(`foodLog.tabs.${tab}`)}
+                  accessibilityState={{ selected: isActive }}
+                  onPress={() => (tab === 'scan' ? setShowBarcodeScanner(true) : setActiveTab(tab))}
+                  style={({ pressed }) => ({
+                    flexBasis: '30%',
+                    flexGrow: 1,
+                    minWidth: homeLayout.touchSize,
+                    minHeight: homeLayout.touchSize,
+                    padding: spacing.sm,
+                    gap: spacing.xs,
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    borderRadius: radius.md,
+                    borderWidth: 1,
+                    borderColor: isActive ? colors.accent : colors.border,
+                    backgroundColor: pressed || isActive ? colors.surfaceAlt : colors.surface,
+                  })}
+                >
+                  <Ionicons
+                    name={icon}
+                    size={homeLayout.iconSize}
+                    color={isActive ? colors.accent : colors.textMuted}
+                  />
+                  <Text
                     style={{
-                      minWidth: homeLayout.touchSize,
-                      minHeight: homeLayout.touchSize,
-                      paddingHorizontal: spacing.sm,
-                      alignItems: 'center',
-                      paddingVertical: 10,
-                      borderBottomWidth: isActive ? 2.5 : 0,
-                      borderBottomColor: colors.accent,
+                      fontSize: fontSize.xs,
+                      textAlign: 'center',
+                      color: isActive ? colors.accent : colors.textMuted,
                     }}
                   >
-                    <Text
-                      style={{
-                        fontSize: fontSize.xs,
-                        fontWeight: isActive ? '700' : '500',
-                        color: isActive ? colors.accent : colors.textMuted,
-                      }}
-                    >
-                      {t(`foodLog.tabs.${tab}` as Parameters<typeof t>[0])}
-                    </Text>
-                  </Pressable>
-                );
-              },
-            )}
-          </ScrollView>
+                    {t(`foodLog.tabs.${tab}`)}
+                  </Text>
+                </Pressable>
+              );
+            })}
+          </View>
 
           <Pressable
             onPress={() => setShowDescription(true)}

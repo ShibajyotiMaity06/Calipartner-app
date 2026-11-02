@@ -1,15 +1,13 @@
 import { IDBFactory } from 'fake-indexeddb';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 vi.mock('expo-sqlite', () => ({}));
-vi.mock('@/services/accountSyncGate', () => ({ beforeTrackingSync: async () => {} }));
+vi.mock('@/services/accountDataGate', () => ({ beforeAccountWrite: async () => {} }));
 import { createWebDb } from './index';
 import { openWebStorage, LEGACY_WEB_KEY } from './webStorage';
-import {
-  enqueueOutbox,
-  flushOutbox,
-  getPendingOutboxItems,
-  type SupabaseSyncClient,
-} from '@/services/syncService';
+vi.mock('@/services/accountDataService', async (original) => ({
+  ...(await original<object>()),
+  saveRemote: (await import('../test/remoteWrites')).recordRemoteWrite,
+}));
 import { getChatMessages } from '@/services/chatService';
 import { logWorkoutExercise } from '@/services/workoutLogService';
 import { getWorkoutsForDate } from '@/services/workoutService';
@@ -58,7 +56,7 @@ describe('durable browser database repairs', () => {
     expect(
       await reopened.getAllAsync('SELECT * FROM local_food_entries WHERE user_id = ?', ['owner']),
     ).toHaveLength(1);
-    expect(second.initial.outbox?.[0]?.payload).toBe('keep');
+    expect(second.initial.retired_local_writes?.[0]?.payload).toBe('keep');
     second.close();
   });
   it('rolls back a failed durable workout write including every outbox row', async () => {
@@ -139,38 +137,12 @@ describe('durable browser database repairs', () => {
       ],
     });
     expect(logged.exercises[0]?.sets?.map((set) => set.reps)).toEqual([12, 10]);
-    const upsert = vi.fn().mockResolvedValue({ error: null });
-    const result = await flushOutbox(db, {
-      from: () => ({ upsert }),
-    } as unknown as SupabaseSyncClient);
-    expect(result).toEqual({ processed: 4, succeeded: 4, failed: 0 });
-    expect(await getPendingOutboxItems(db)).toEqual([]);
-    await flushOutbox(db, { from: () => ({ upsert }) } as unknown as SupabaseSyncClient);
-    expect(upsert).toHaveBeenCalledTimes(4);
     storage.close();
     const next = await openWebStorage();
     expect(
       (await getWorkoutsForDate(createWebDb(next), 'owner', '2026-10-30'))[0]?.exercises[0]?.sets,
     ).toHaveLength(2);
     next.close();
-  });
-  it('keeps failed queue writes retryable and filters unrelated owners/dates', async () => {
-    const storage = await openWebStorage(),
-      db = createWebDb(storage);
-    await enqueueOutbox(db, {
-      id: 'food',
-      entity: 'food_entries',
-      operation: 'upsert',
-      payload: { id: 'food' },
-    });
-    const result = await flushOutbox(db, {
-      from: () => ({ upsert: async () => ({ error: new Error('offline') }) }),
-    } as unknown as SupabaseSyncClient);
-    expect(result.failed).toBe(1);
-    const rows = await db.getAllAsync<{ attempts: number; status: string }>('SELECT * FROM outbox');
-    expect(rows[0]).toMatchObject({ attempts: 1, status: 'pending' });
-    expect(await getPendingOutboxItems(db)).toEqual([]); // backoff is respected
-    storage.close();
   });
   it('orders chat ties lexically like SQLite/Postgres rather than using natural number order', async () => {
     const storage = await openWebStorage(),

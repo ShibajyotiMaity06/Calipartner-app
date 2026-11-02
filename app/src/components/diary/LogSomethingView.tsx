@@ -7,7 +7,6 @@ import { useSquadDay } from '@/hooks/useSquadDay';
 import { CheckInModal } from '@/components/rooms/SquadDayPanel';
 import { t } from '@/i18n';
 import type { homeRefresh } from '@/i18n/homeRefresh';
-import { SyncStatusBanner } from './SyncStatusBanner';
 
 export type LogFlow =
   'food' | 'scan' | 'workout' | 'water' | 'weight' | 'fast' | 'photo' | 'recipe' | 'describe';
@@ -54,7 +53,6 @@ export function LogSomethingView({
       <Text variant="bodyS" color={dark.textMid}>
         {t('homeRefresh.activityHint')}
       </Text>
-      <SyncStatusBanner />
       {loading && <Text variant="bodyS">{t('common.loading')}</Text>}
       {error && (
         <Pressable

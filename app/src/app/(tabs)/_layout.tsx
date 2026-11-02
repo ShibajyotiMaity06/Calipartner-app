@@ -1,3 +1,4 @@
+import { closeBrowserModalsThen } from '@/hooks/useBrowserModalBack';
 import { Tabs, usePathname, useRouter } from 'expo-router';
 import { TabBar, type TabId } from '@calipartner/ui';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -21,7 +22,7 @@ export default function TabsLayout() {
 
         const handleTabPress = (tab: TabId) => {
           if (tab === 'log') {
-            router.push('/(tabs)/log');
+            closeBrowserModalsThen(() => router.push('/(tabs)/log'));
             return;
           }
 
@@ -35,7 +36,7 @@ export default function TabsLayout() {
               });
             }
           } else {
-            navigation.navigate(tab);
+            closeBrowserModalsThen(() => router.navigate(`/(tabs)/${tab}`));
           }
         };
 

@@ -319,7 +319,6 @@ export const en = {
     add: 'Add',
     sent: 'Sent',
     received: 'Request received',
-    queued: 'Queued',
     connected: 'Friends',
     accept: 'Accept',
     decline: 'Decline',
@@ -373,11 +372,8 @@ export const en = {
     noBio: 'No social details added yet.',
     profileRules: 'Keep your bio within 240 characters.',
     save: 'Save social profile',
-    savedLocally: 'Your changes save on this device first and sync when you are connected.',
+    savedLocally: 'Your changes save to your account when you are connected.',
     cached: 'Showing saved information. Refresh when you are connected.',
-    queued: 'Queued. The server checks your allowance before sending.',
-    pendingChanges: '{count} updates waiting to sync',
-    failedChanges: 'An update needs your attention',
     dismiss: 'Dismiss failed update',
     block: 'Block this profile',
     report: 'Report this profile',
@@ -391,7 +387,7 @@ export const en = {
     plusFriendRequests: 'No weekly friend-request limit',
     hostRoomLimit: 'Your plan has reached its hosted room limit. Free: 1, Plus: 3, Pro: 5.',
     subscriptionPending:
-      'Your purchase is confirmed. Waiting for your plan to sync. Try again in a moment.',
+      'Your purchase is confirmed. Waiting for your plan to update. Try again in a moment.',
     takeoverCheck:
       'Check your plan capacity and available hosted rooms, then try taking over again.',
     progressPlus:
@@ -406,11 +402,12 @@ export const en = {
     trainedToday: 'Trained today',
     notTrainedToday: 'No workout today yet',
     workoutsTogether: 'Shared workouts',
-    roomOnline: 'Connect to load or share with your room. Your personal logs work offline.',
+    roomOnline:
+      'Connect to load or share with your room. An internet connection is required to save logs.',
     shareWorkout: 'Share a workout',
     shareWorkoutConsent:
       'Share this workout and its sets with your room. Personal notes stay private.',
-    noWorkoutsToShare: 'Log and sync a workout to share it here.',
+    noWorkoutsToShare: 'Log a workout to share it here.',
     noSharedWorkouts: 'No workouts shared yet.',
     workout: 'Workout',
     workoutMinutes: '{minutes} minutes',
@@ -591,9 +588,7 @@ export const en = {
     close: 'Close',
     preparing: 'Preparing your plan',
     retry: 'Try again',
-    savedOffline: 'Saved on this device. Your plan will sync when you are online.',
-    offlineDraft:
-      'You are offline. Your changes stay on this device, and your saved plan will sync when you reconnect.',
+    offlineDraft: 'Connect to the internet to save your plan.',
     leanGainNotice:
       'This pace is above 0.5% of your body weight per week. Faster gain can include more body fat. Our recommendation uses a more gradual pace.',
     deficitNotice:
@@ -696,7 +691,7 @@ export const en = {
     appleSignIn: 'Continue with Apple',
     guestSignIn: 'Continue as Guest',
     guestNotice:
-      'You can explore local logging now. Sign in later to join rooms and sync across devices.',
+      'You can explore local logging now. Sign in to save to your account and join squads.',
     disposableEmailError:
       'Disposable or temporary email addresses are not accepted. Please use a regular email address.',
     invalidEmailError: 'Please enter a valid email address.',
@@ -973,14 +968,6 @@ export const en = {
     subtotal: '{kcal} kcal',
     copyMeal: 'Copy Meal',
     copyDay: 'Copy Day',
-    offlineBanner: 'Offline Mode • Logs saved locally and will sync when connected',
-    sync: {
-      synced: 'All changes synced',
-      pending: '{count} change(s) pending sync',
-      syncing: 'Syncing…',
-      failed: 'Sync failed • Tap to retry',
-      retry: 'Retry Sync',
-    },
   },
   foodLog: {
     title: 'Log Food',
@@ -997,7 +984,7 @@ export const en = {
     noResultsTitle: 'No foods found',
     noResultsSub: 'Try a different search or create a custom food item.',
     createCustomFood: '+ Create Custom Food',
-    offlineInstantBadge: 'Bundled Offline',
+    offlineInstantBadge: 'Food catalog',
     scan: {
       title: 'Barcode Scanner',
       instruction: 'Align the barcode inside the camera frame',
@@ -1509,7 +1496,7 @@ export const en = {
       haveCodePrompt: 'Have a partner promo code?',
       haveCodeBtn: 'Enter Code',
       featuresHeader: 'What your plan includes:',
-      featureRooms: 'Accountability rooms with real-time partner sync',
+      featureRooms: 'Accountability rooms with live partner updates',
       featureChat: 'Room chat with photo sharing and reaction support',
       featureProgress: 'Room progress graphs, streaks and consistency score',
       featureCoach: 'Personal 1-on-1 AI Coach (10 messages a day, Pro only)',
@@ -1760,7 +1747,6 @@ export const en = {
     sent: 'Sent',
     failed: 'Failed to send',
     retryBtn: 'Retry',
-    offlineBanner: "You're offline. Messages will send automatically once reconnected.",
     pausedTitle: 'This room is paused',
     pausedSubtitle:
       'Chat is disabled while the room is locked. Any member can sponsor a plan to keep this room going.',
@@ -2385,7 +2371,7 @@ export const en = {
       title: 'Storage & Offline Cache',
       subtitle: 'Manage local database size and cached food entries.',
       dbSizeLabel: 'Local SQLite Database',
-      dbSizeValue: '~14.2 MB (offline ready)',
+      dbSizeValue: 'Local read cache',
       foodCacheLabel: 'Indian Food & IFCT Cache',
       foodCacheValue: '2,351 foods indexed locally',
       clearCacheBtn: 'Clear Offline Image Cache',
@@ -2465,7 +2451,7 @@ export const en = {
       emptyAllTitle: 'No recipes found',
       emptyAllDesc: 'Try adjusting your search terms or clearing active filters.',
       emptyFavTitle: 'No favourite recipes yet',
-      emptyFavDesc: 'Tap the heart icon on any recipe to save it here for instant offline access.',
+      emptyFavDesc: 'Tap the heart icon on any recipe to save it here for quick access.',
       clearFilters: 'Clear Filters',
       loadingTitle: 'Loading delicious recipes…',
       errorTitle: 'Could not load recipes',
@@ -2478,7 +2464,7 @@ export const en = {
       protein: '{p}g protein',
       servings: '{servings} serv',
       favoriteLabel: 'Toggle favourite for {title}',
-      offlineBadge: 'Offline Ready',
+      offlineBadge: 'Saved recipe',
     },
     detail: {
       title: 'Recipe Details',

@@ -2,6 +2,7 @@ import { useEffect, useRef } from 'react';
 import { Platform } from 'react-native';
 
 interface BrowserWindow {
+  location?: { pathname: string };
   history: {
     state: Record<string, unknown> | null;
     pushState(state: unknown, title: string): void;
@@ -37,6 +38,30 @@ function pushDepth(browser: BrowserWindow, key: string, depth: number) {
     '',
   );
 }
+/** Finish the active sheet/section history before switching tabs. */
+export function closeBrowserModalsThen(navigate: () => void): void {
+  if (Platform.OS !== 'web') {
+    navigate();
+    return;
+  }
+  const browser = (globalThis as unknown as { window?: BrowserWindow }).window;
+  if (!browser) {
+    navigate();
+    return;
+  }
+  afterNavigation(browser, () => {
+    const stack = browser.history.state?.calipartnerModalStack;
+    if (Array.isArray(stack) && stack.length) {
+      const count = (stack as string[]).reduce(
+        (total, key) => total + (depths(browser)[key] ?? 0) + 1,
+        0,
+      );
+      go(browser, -count);
+      afterNavigation(browser, navigate);
+    } else navigate();
+  });
+}
+
 /** Preserve native-style Back for sheets and their steps in installed web apps. */
 export function useBrowserModalBack(
   visible: boolean,
@@ -53,6 +78,7 @@ export function useBrowserModalBack(
     if (Platform.OS !== 'web' || !visible) return;
     const browser = (globalThis as unknown as { window?: BrowserWindow }).window;
     if (!browser) return;
+    const routePath = browser.location?.pathname;
     let current = true;
     const key = `modal-${Date.now()}-${Math.random()}`;
     const pop = () => {
@@ -88,6 +114,8 @@ export function useBrowserModalBack(
       afterNavigation(browser, () => {
         const active = browser.history.state?.calipartnerModalStack;
         if (!Array.isArray(active) || !active.includes(key)) return;
+        // A tab change has already navigated. Rewinding here would undo that navigation.
+        if (browser.location?.pathname !== routePath) return;
         const removed = active.slice(active.indexOf(key)) as string[];
         const count = removed.reduce((total, id) => total + (depths(browser)[id] ?? 0) + 1, 0);
         go(browser, -count);

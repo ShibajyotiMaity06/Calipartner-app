@@ -111,7 +111,7 @@ export function HealthPermissionModal({
                     : isDenied
                       ? colors.surfaceAlt
                       : colors.surfaceAlt,
-                  borderColor: isGranted ? colors.syncSynced : colors.border,
+                  borderColor: isGranted ? colors.mint : colors.border,
                 },
               ]}
             >
@@ -126,7 +126,7 @@ export function HealthPermissionModal({
                         : 'information-circle-outline'
                 }
                 size={22}
-                color={isGranted ? colors.syncSynced : isDenied ? colors.danger : colors.accent}
+                color={isGranted ? colors.mint : isDenied ? colors.danger : colors.accent}
               />
               <View style={styles.statusBannerText}>
                 <Text style={[styles.statusBannerTitle, { color: colors.text }]}>

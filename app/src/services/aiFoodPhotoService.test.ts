@@ -1,4 +1,10 @@
-import { describe, expect, it } from 'vitest';
+vi.mock('./accountDataService', async (original) => ({
+  ...(await original<object>()),
+  withOnlineSave: async <T>(db: LocalDb, action: (db: LocalDb) => Promise<T>) => action(db),
+  saveRemote: (await import('../test/remoteWrites')).recordRemoteWrite,
+}));
+import { recordedWrites } from '../test/remoteWrites';
+import { describe, expect, it, vi } from 'vitest';
 import { DatabaseSync } from 'node:sqlite';
 import {
   acceptAiProcessingConsent,
@@ -11,10 +17,10 @@ import {
   swapCandidateFood,
   updateCandidateQuantity,
 } from './aiFoodPhotoService';
-import { getPendingOutboxItems, type SyncDb } from './syncService';
+import { type LocalDb } from './accountDataService';
 import type { Food, FoodCandidateItem } from '@calipartner/core';
 
-function createTestDb(): SyncDb {
+function createTestDb(): LocalDb {
   const sqlite = new DatabaseSync(':memory:');
 
   sqlite.exec(`
@@ -498,8 +504,8 @@ describe('Phase 11: aiFoodPhotoService (Client Service & Diary Integration)', ()
       expect(row).not.toBeNull();
       expect(row?.source).toBe('photo');
 
-      // Verify outbox queue mutation was created for sync
-      const outbox = await getPendingOutboxItems(db);
+      // Save directly and require server acknowledgement.
+      const outbox = await recordedWrites(db);
       expect(
         outbox.some(
           (item) =>

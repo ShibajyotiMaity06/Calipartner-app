@@ -15,7 +15,7 @@ This change records the owner-approved override to the onboarding flow, calculat
 9. Existing pricing page. Basic is free; Plus has a 7-day trial (subject to store eligibility); Pro has no trial. Its close and purchase-complete actions continue to the plan review. Only a real store purchase can produce success.
 10. Personal plan: calorie target, BMR, maintenance, estimated monthly change, macro chart with text summary, editable body weight/training days/daily surplus or deficit, recommendation, and separate buttons for the recommendation and the user's safe plan. A quiet text action opens the actual calculation. The optional private health check remains available here. After saving, the existing optional Partner Finder offer precedes Today.
 
-Drafts stay on the device, keyed to the authenticated account. Each draft retains its client-generated goal UUID for idempotent retries. Actual measurements and gym days persist in SQLite and the outbox; syncing updates profile height before its dependent goal. No account's draft is migrated to another account or uploaded as guest data.
+Drafts stay on the device, keyed to the authenticated account. Each draft retains its client-generated goal UUID for idempotent retries. Actual measurements and gym days save to the server; profile height updates before its dependent goal. Only acknowledged values enter the local read cache. No account's draft is migrated to another account or uploaded as guest data.
 
 ## Formula version 2
 

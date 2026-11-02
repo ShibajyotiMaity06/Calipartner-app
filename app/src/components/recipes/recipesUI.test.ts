@@ -99,7 +99,7 @@ describe('Phase 12 Prompt B — Recipe Library View Layer Tests', () => {
       expect(en.recipes.browse.tabFavorites).toBe('Favourites');
       expect(en.recipes.browse.emptyAllTitle).toBe('No recipes found');
       expect(en.recipes.browse.emptyFavTitle).toBe('No favourite recipes yet');
-      expect(en.recipes.card.offlineBadge).toBe('Offline Ready');
+      expect(en.recipes.card.offlineBadge).toBe('Saved recipe');
       expect(en.recipes.card.time).toContain('{mins}');
       expect(en.recipes.card.calories).toContain('{cal}');
       expect(en.recipes.card.protein).toContain('{p}');

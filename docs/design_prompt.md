@@ -239,7 +239,7 @@ A persistent single-line note sits above the table: **Ranked on consistency and 
 
 Weight chart first — a thin 1.5px line in `voltA` on a `slate900` card, 7/30/90-day chips, dots only on tapped points, no area fill. Then measurements, then goal settings showing the target with an edit affordance and the formula used in plain words.
 
-Privacy controls get real estate, not a buried row: a grouped list of switches with plain-language labels like "Partners can see my meal items" and "Partners can see my weight", each with one line of consequence text under it. Then subscription, then Health Connect / Apple Health sync with a last-synced timestamp, then notifications, then account.
+Privacy controls get real estate, not a buried row: a grouped list of switches with plain-language labels like "Partners can see my meal items" and "Partners can see my weight", each with one line of consequence text under it. Then subscription, then Health Connect / Apple Health connection with a last-synced timestamp, then notifications, then account.
 
 ### Onboarding
 
@@ -267,7 +267,7 @@ Localize currency by store region. Never show a countdown timer or a fake discou
 
 **Partner's plan lapsed** — the room enters an inactive state. Both halves desaturate to `textLo`, the seam goes fully dashed, and a card appears explaining what happened in the lapsed person's own terms. For the paying partner: "Priya's plan ended, so your room is paused. Your streak is saved for 30 days." For the lapsed person, a dedicated rejoin screen, not the generic paywall: their room, their streak number, their partner waiting, and one button **Rejoin your room**.
 
-**Offline** — logging works offline and queues. A 28px pill at the top of Today reads "Saved on this phone. Will sync." Never block a log on connectivity.
+**Connection errors** ? saves require an internet connection. Keep entered values available for an explicit retry and confirm success only after server acknowledgement.
 
 **Loading** — skeletons that match the final layout's geometry in `slate800`, with no shimmer sweep. Rings render their track with no arc rather than spinning.
 

@@ -1,4 +1,10 @@
-import { describe, expect, it } from 'vitest';
+vi.mock('./accountDataService', async (original) => ({
+  ...(await original<object>()),
+  withOnlineSave: async <T>(db: LocalDb, action: (db: LocalDb) => Promise<T>) => action(db),
+  saveRemote: (await import('../test/remoteWrites')).recordRemoteWrite,
+}));
+import { recordedWrites } from '../test/remoteWrites';
+import { describe, expect, it, vi } from 'vitest';
 import { DatabaseSync } from 'node:sqlite';
 import {
   deleteWaterLog,
@@ -21,15 +27,9 @@ import {
   getActivityMetrics,
   upsertActivityDay,
 } from './activityService';
-import {
-  flushOutbox,
-  getPendingOutboxItems,
-  pullEntityDelta,
-  type SupabaseSyncClient,
-  type SyncDb,
-} from './syncService';
+import { type LocalDb } from './accountDataService';
 
-function createTestDb(): SyncDb {
+function createTestDb(): LocalDb {
   const sqlite = new DatabaseSync(':memory:');
 
   sqlite.exec(`
@@ -135,77 +135,8 @@ interface MockRemoteStores {
   [key: string]: Array<Record<string, unknown>>;
 }
 
-function createMockSupabase(): {
-  client: SupabaseSyncClient;
-  remoteStores: MockRemoteStores;
-} {
-  const remoteStores: MockRemoteStores = {
-    water_logs: [],
-    weight_logs: [],
-    activity_days: [],
-  };
-
-  const client: SupabaseSyncClient = {
-    from(table: string) {
-      if (!remoteStores[table]) {
-        remoteStores[table] = [];
-      }
-      const store = remoteStores[table]!;
-
-      return {
-        async upsert(values: Record<string, unknown> | Array<Record<string, unknown>>) {
-          const list = Array.isArray(values) ? values : [values];
-          for (const item of list) {
-            let idx = -1;
-            if (table === 'activity_days') {
-              idx = store.findIndex(
-                (r) => r.user_id === item.user_id && r.local_date === item.local_date,
-              );
-            } else {
-              idx = store.findIndex((r) => r.id === item.id);
-            }
-            if (idx >= 0) {
-              store[idx] = { ...store[idx], ...item };
-            } else {
-              store.push({ ...item });
-            }
-          }
-          return { error: null, data: values };
-        },
-        update(values: Record<string, unknown>) {
-          return {
-            async eq(col: string, val: unknown) {
-              const item = store.find((r) => r[col] === val);
-              if (item) {
-                Object.assign(item, values);
-              }
-              return { error: null };
-            },
-          };
-        },
-        select() {
-          return {
-            gt() {
-              return {
-                async order() {
-                  return { error: null, data: [...store] };
-                },
-              };
-            },
-            async order() {
-              return { error: null, data: [...store] };
-            },
-          };
-        },
-      };
-    },
-  };
-
-  return { client, remoteStores };
-}
-
-describe('Phase 4 Trackers - Water Service & Offline Sync', () => {
-  it('logs water, calculates daily totals, and queues outbox', async () => {
+describe('Phase 4 Trackers - Water Service & Online saves', () => {
+  it('logs water, calculates daily totals, and saves to the server', async () => {
     const db = createTestDb();
 
     // Log 250ml glass and 500ml bottle
@@ -218,7 +149,7 @@ describe('Phase 4 Trackers - Water Service & Offline Sync', () => {
     const logs = await getWaterLogsForDate(db, 'user-1', '2026-10-10');
     expect(logs).toHaveLength(2);
 
-    const outbox = await getPendingOutboxItems(db);
+    const outbox = await recordedWrites(db);
     expect(outbox).toHaveLength(2);
     expect(outbox[0]!.entity).toBe('water_logs');
   });
@@ -276,8 +207,8 @@ describe('Phase 4 Trackers - Weight Service & Derived Trends', () => {
       local_date: '2026-10-05',
       notes: 'Morning check-in',
     });
-    expect(await getPendingOutboxItems(db)).toHaveLength(1);
-    expect((await getPendingOutboxItems(db))[0]?.payload).toMatchObject({
+    expect(await recordedWrites(db)).toHaveLength(1);
+    expect((await recordedWrites(db))[0]?.payload).toMatchObject({
       local_date: '2026-10-05',
       notes: 'Morning check-in',
     });
@@ -415,111 +346,5 @@ describe('Phase 4 Trackers - Activity Days & Source Priority Deduplication', () 
 
     expect(oct10?.steps).toBe(9000);
     expect(oct11?.steps).toBe(2500);
-  });
-});
-
-describe('Phase 4 Trackers - Offline Sync Across All Three Trackers', () => {
-  it('flushes water, weight, and activity logs from outbox to remote Supabase', async () => {
-    const db = createTestDb();
-    const { client, remoteStores } = createMockSupabase();
-
-    // 1. Create offline entries across all 3 trackers
-    await logWater(db, 'user-1', 500, '2026-10-10');
-    await logWeight(db, 'user-1', 78.5, '2026-10-10');
-    await upsertActivityDay(db, 'user-1', {
-      localDate: '2026-10-10',
-      steps: 10500,
-      distanceM: 7800,
-      source: 'health_platform',
-    });
-
-    const pending = await getPendingOutboxItems(db);
-    expect(pending).toHaveLength(3);
-
-    // 2. Flush outbox
-    const flushRes = await flushOutbox(db, client);
-    expect(flushRes.processed).toBe(3);
-    expect(flushRes.succeeded).toBe(3);
-    expect(flushRes.failed).toBe(0);
-
-    // 3. Verify remote stores received the rows
-    expect(remoteStores.water_logs).toHaveLength(1);
-    expect(remoteStores.water_logs[0]!.amount_ml).toBe(500);
-
-    expect(remoteStores.weight_logs).toHaveLength(1);
-    expect(remoteStores.weight_logs[0]!.weight_kg).toBe(78.5);
-
-    expect(remoteStores.activity_days).toHaveLength(1);
-    expect(remoteStores.activity_days[0]!.steps).toBe(10500);
-
-    // 4. Outbox is now empty
-    const remainingOutbox = await getPendingOutboxItems(db);
-    expect(remainingOutbox).toHaveLength(0);
-  });
-
-  it('pulls remote deltas into local SQLite mirror tables', async () => {
-    const db = createTestDb();
-    const { client, remoteStores } = createMockSupabase();
-
-    // Seed remote Supabase with entries created on another device
-    const now = new Date().toISOString();
-    remoteStores.water_logs.push({
-      id: 'remote-w-1',
-      user_id: 'user-1',
-      amount_ml: 750,
-      logged_at: now,
-      local_date: '2026-10-10',
-      created_at: now,
-      updated_at: now,
-      deleted_at: null,
-    });
-
-    remoteStores.weight_logs.push({
-      id: 'remote-wt-1',
-      user_id: 'user-1',
-      weight_kg: 77.9,
-      logged_at: now,
-      local_date: '2026-10-10',
-      notes: 'Pulled from remote',
-      created_at: now,
-      updated_at: now,
-      deleted_at: null,
-    });
-
-    remoteStores.activity_days.push({
-      id: 'remote-act-1',
-      user_id: 'user-1',
-      local_date: '2026-10-10',
-      steps: 12000,
-      distance_m: 9000,
-      source: 'health_platform',
-      active_calories: 320,
-      created_at: now,
-      updated_at: now,
-      deleted_at: null,
-    });
-
-    // Pull deltas
-    const pullWater = await pullEntityDelta(db, client, 'water_logs');
-    expect(pullWater.pulledCount).toBe(1);
-
-    const pullWeight = await pullEntityDelta(db, client, 'weight_logs');
-    expect(pullWeight.pulledCount).toBe(1);
-
-    const pullActivity = await pullEntityDelta(db, client, 'activity_days');
-    expect(pullActivity.pulledCount).toBe(1);
-
-    // Verify local SQLite mirror tables received the pulled rows
-    const localWater = await getWaterLogsForDate(db, 'user-1', '2026-10-10');
-    expect(localWater).toHaveLength(1);
-    expect(localWater[0]!.amount_ml).toBe(750);
-
-    const localWeight = await getWeightLogs(db, 'user-1');
-    expect(localWeight).toHaveLength(1);
-    expect(localWeight[0]!.weight_kg).toBe(77.9);
-
-    const localAct = await getActivityDay(db, 'user-1', '2026-10-10');
-    expect(localAct?.steps).toBe(12000);
-    expect(localAct?.source).toBe('health_platform');
   });
 });

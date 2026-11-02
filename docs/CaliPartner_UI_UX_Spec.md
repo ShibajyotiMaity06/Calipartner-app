@@ -53,7 +53,7 @@ Hero screens use this block. Compact tables use the same columns in short form.
 ### 1.1 Five principles for this product
 1. **Quiet everywhere, bold in one place.** The paired view (Room) gets the boldness. Everything else is calm.
 2. **Two people, not a scoreboard.** Identity colour, never score colour. Percent of your own goal, never raw calories side by side.
-3. **Never block a log.** Logging is the core loop. It works offline, opens on what you eat most, and takes the fewest taps possible.
+3. **Never block a log.** Logging is the core loop. It requires an internet connection, opens on what you eat most, and takes the fewest taps possible.
 4. **Honest and gentle.** Estimates are labelled, rates have safety limits, no guilt copy, no streak-loss shame, no fake urgency.
 5. **Premium means restraint and craft.** Few colours, one accent, precise spacing, tabular numbers, motion that explains.
 
@@ -71,7 +71,6 @@ Hero screens use this block. Compact tables use the same columns in short form.
 | **Progressive disclosure** | Show the number first, the formula one tap away, never both at once. | A11, C02 |
 | **Recognition over recall** | Recent and frequent foods first; last-used quantity beside each row. | D02 |
 | **Postel / error prevention** | Accept "2 roti", "200g", "1.5"; block unsafe rates with the reason and the nearest safe option. | D03, A09 |
-| **Nielsen #1 visibility of status** | Sync pill, "Saved on this phone", server-time countdowns, "last synced" for steps. | P01 |
 | **Nielsen #3 user control** | Undo on every destructive log (5 s), swipe to delete, back always works. | Global |
 | **Nielsen #5 error prevention** | Confirm only the irreversible (delete room, delete account). Never confirm a log. | N16, B07 |
 | **Aesthetic–usability effect** | Beautiful numerals, even spacing and soft motion make people trust the numbers. | Type scale, Part 3 |
@@ -353,7 +352,7 @@ Build these once, in `/packages/ui` (tokens first). No hard-coded hex or spacing
 | CMP-12 | **NudgeButton** | 44 pill centred on the seam (see 5.5). |
 | CMP-13 | **CalorieRing + MacroBar** | Single-person ring (apricot is not used: ring takes the owner's identity hue). Centre = remaining or eaten in `numeral-l`. Macro bar = three segments in 100/55/28% identity steps with gram values under. |
 | CMP-14 | **Charts** | Line 1.5 px, owner's identity hue; 7-day moving average as a thicker 2.5 px line over faint raw dots; goal as a dashed `hairlineLit` line; no area fill; no 3-D; dots only on tap; tooltip card `s2`; axis labels `textLo` `label`. Bar charts for steps, water, workouts; today's bar highlighted with an outline. Maximum 4 series. Always provide "View as table" for accessibility. |
-| CMP-15 | **Toast, undo, banner, sync pill** | Toast: `s3`, 48 high, above tab bar, 4 s, undo action in apricot. Banner: inline card with icon + one action. Sync pill: 28 high at the top: "Saved on this phone. Will sync." |
+| CMP-15 | **Toast, undo and banner** | Toast: `s3`, 48 high, above tab bar, 4 s, undo action in apricot. Banner: inline card with icon + one action.
 | CMP-16 | **Switch row** | Title + one line of consequence text beneath ("Partners can see your meal items."). Switch is 52×32; label is also tappable. |
 | CMP-17 | **Empty state** | One line of what this is, one line of why, the action. No illustration of people. A small line-art glyph (48) is allowed. |
 | CMP-18 | **Skeleton** | Same geometry as the final layout in `s2`, no shimmer sweep. Rings show the track without the arc. |
@@ -441,7 +440,6 @@ Entry points that are not tabs: Recipes and Ask Coach (from Today, the Log sheet
 |---|---|
 | **Loading** | Skeleton matching final geometry (`CMP-18`), no spinners except inside buttons. |
 | **Empty** | `CMP-17`: one line what, one line why, the action. |
-| **Offline** | Top sync pill "Saved on this phone. Will sync."; logging, workouts, focus and water keep working; chat shows "Sending…" then "Failed, tap to retry". Rooms and Partner Finder show last cached data with "Updated 2 h ago". |
 | **Error (recoverable)** | Inline message that says what happened and the next step, plus Retry. |
 | **Permission denied** | Explains what stops working and a button to open system settings (P02). |
 | **Locked room (plan ended)** | "This room is paused" screen, no blame (J20). |
@@ -714,7 +712,7 @@ Recipes are free for everyone (RCP-10). The library is original text and photos 
 | H02 | Search and filters | Search by name or ingredient; filter chips: meal, diet, calories, minimum protein, time, cuisine; results grid | Active filters shown as removable chips | RCP-4 |
 | H04 | Cook mode | Full-screen step text 24 sp, next / previous, ingredients drawer, timer chips | Keeps screen awake; P1 | NEW |
 | H05 | Log recipe (sheet) | Servings stepper (0.5 steps), meal chip, "Someone else ate this too", primary "Add to dinner" | Writes a nutrient snapshot | RCP-6 |
-| H06 | Favourites and recent | Two segments, same cards, works offline | Saved recipes cached | RCP-7 |
+| H06 | Favourites and recent | Two segments, same cards, requires an internet connection | Saved recipes cached | RCP-7 |
 
 ### 7.I AI coach (plan holders only)
 
@@ -916,7 +914,7 @@ The Progress tab has three segments: **My progress · Leaderboard · Challenges*
 7. **Primary button (pinned, 56):** **Create challenge**.
 **Interactions:** tile tap = light haptic; Create sends invites to the chosen people (they accept in K01) and opens M14.
 **Guardrails:** goals have sane limits per activity (for example steps 1,000 to 30,000, Focus up to 8 hours); **there is no calorie or weight-loss activity tile**; copy says "Counts days you reach your goal" and scores consistency, never "most" or "fastest" (PRD healthy-use rules).
-**Data note:** Running and Cycling use distance from Health Connect / HealthKit or manual entry in v1; in-app GPS is a later feature (STP-6, P2). If Health is not connected, the tile shows a small "Needs Health sync" hint, not an error.
+**Data note:** Running and Cycling use distance from Health Connect / HealthKit or manual entry in v1; in-app GPS is a later feature (STP-6, P2). If Health is not connected, the tile shows a small "Needs Health connection" hint, not an error.
 **States:** missing partner and "Whole room" off = solo; room locked → partner row disabled with "Room is paused".
 **A11y:** tile grid is a radio group; the unit chip is part of the field label.
 
@@ -929,7 +927,7 @@ The Progress tab has three segments: **My progress · Leaderboard · Challenges*
 
 #### N01 · Me · SET-1, SUB-14, FND-3 · P0
 **Purpose:** profile, goals and everything you can change.
-**Layout:** profile header (avatar 72, nickname, @username, edit) · **Plan card** ("Basic room plan, 3 of 5 people" or "No plan. Free tracking is yours forever." with a quiet "See plans") · grouped lists, each in a card: **My goals** (goal, rate, step and water goals, health answers) · **Privacy** (N05) · **Find a partner** (status "Open" / "Off") · **Fasting** · **Focus** · **AI coach history** · **Notifications** · **Health sync** · **Units and language** · **Appearance** · **Help and feedback** (including "Rate CaliPartner") · **About and legal** · **Sign out**.
+**Layout:** profile header (avatar 72, nickname, @username, edit) · **Plan card** ("Basic room plan, 3 of 5 people" or "No plan. Free tracking is yours forever." with a quiet "See plans") · grouped lists, each in a card: **My goals** (goal, rate, step and water goals, health answers) · **Privacy** (N05) · **Find a partner** (status "Open" / "Off") · **Fasting** · **Focus** · **AI coach history** · **Notifications** · **Health connection** · **Units and language** · **Appearance** · **Help and feedback** (including "Rate CaliPartner") · **About and legal** · **Sign out**.
 **Interactions:** each row opens its own screen; the requests inbox has a bell in the header with a count.
 **States:** guest → banner "Create an account to keep your data and join rooms".
 
@@ -949,7 +947,7 @@ The Progress tab has three segments: **My progress · Leaderboard · Challenges*
 | N09 | Notifications | Per-type switches (meal, water, fasting, partner logged, workout finished, nudge, chat, invitation, focus, partner finder), per-room chat mute, quiet hours, "Pause all" | Hide message previews option | NTF-1 to NTF-3 |
 | N10 | Units, language, region | Metric / imperial, English / Hindi, time zone | Language switches instantly | SET-1 |
 | N11 | Appearance and accessibility | Theme (Dark, Light when shipped, System), Reduce motion override, Haptics, Text size preview | Mirrors system settings by default | 4.5, 8.4 |
-| N12 | Health sync | Status (connected, last synced), what we read, Disconnect, Fix step counting (E04) | — | SET-1, STP-1 |
+| N12 | Health connection | Status (connected, last synced), what we read, Disconnect, Fix step counting (E04) | — | SET-1, STP-1 |
 | N13 | Help centre | Search, topics, contact support | Opens web view or in-app articles | SET-2 |
 | N14 | Report / feedback | One form with a type (Report a problem, Wrong food entry, Send feedback), text, optional log attachment | Feedback is separate from the rating prompt | SET-2, RAT-6 |
 | N15 | About and legal | Terms, privacy policy, health disclaimer, community guidelines, data attributions (Open Food Facts, IFCT), version | — | SET-3 |
@@ -989,7 +987,6 @@ The paywall is a **room plan** (PRD 6.18). The room is billed; the host or a spo
 
 | ID | Screen | Layout | Key content and actions | Notes |
 |---|---|---|---|---|
-| P01 | Offline and sync | Pill at the top "Saved on this phone. Will sync."; a "Sync status" row in Me with queue length | Never blocks logging | LOG-9 |
 | P02 | Permission denied | Sheet: what stops working, what still works, **Open settings** | Used for camera, notifications, Health | ONB-7 |
 | P03 | Full-screen error / maintenance / update | Calm centred message, retry, "Update the app" for forced updates | Voice rules apply | — |
 | P04 | Universal report sheet | Reason list, note, confirm; used for message, user, recipe, food entry | One component everywhere | CHT-8, USR-9 |
@@ -1128,7 +1125,7 @@ scaling to 200% with the paired card reflowing at 150%; screen-reader labels for
 Reduce Motion and Reduce Transparency respected; tabular numerals on every changing number;
 static font weights only (Bricolage Grotesque, Figtree, Anek Devanagari); glass only on the tab
 bar and Log sheet; one orchestrated motion moment (the seam fuse); sentence case; no emoji or
-exclamation marks in system copy; no guilt copy; logging never blocks and works offline.
+exclamation marks in system copy; no guilt copy; logging never blocks and requires an internet connection.
 
 Build order: tokens and fonts, components, onboarding, Today and logging, trackers, Room,
 Progress, Me, plans, then Focus, recipes, coach, Partner Finder, challenges.

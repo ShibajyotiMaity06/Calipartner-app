@@ -1,6 +1,9 @@
 # CaliPartner — Master Build Plan (copy-paste prompts)
 
-> Owner request, 1 November 2026: implement the supplied Home, Log, Squad, Progress, Check-in, Food and Pro meal-description references with real data, horizontal squad browsing and trailing/top create-or-invite actions. Support two-person squads through the existing Pro limit of 20, preserving quotas, privacy and paid gates. The owner explicitly authorized the backend/hooks needed for quick check-ins and AI meal-description logging. Import all 267 supplied reci.txt recipes with their original fields, field-based filters and no image placeholders. Necessary targeted core, hook, sync, migration and Edge Function changes are authorized for this scope. Keep Focus retired and the latest Plus Jakarta Sans font decision. No fabricated activity, statistics, AI answers or food-catalog mappings. Unspecified recipe meal types/difficulty stay unspecified; nutrition retains its supplied portion label. This supersedes conflicting UI-only and phase restrictions for this request.
+> Owner request, 2 November 2026: use online-only signed-in reads and saves. Retire automatic background upload, local retry queues, conflict merging, manual sync actions and all sync status UI. Failed network saves must report failure and remain unsaved; retries use client-generated IDs. Keep local read caches and guest setup only where required, without promising offline logging. Preserve database privacy, entitlements, safety, existing records and immutable migration history. Simplify Home to greeting and time-based meal prompt, a top-right AI coach icon, aligned equal-size squad cards, Your part today, and compact meal rows (four nutrition values in one row only when logged). Remove the personal streak subtitle, Today with squad feed, coach card and Log something tiles. Present food-log methods clearly and repair Home and device Back navigation. Necessary targeted hooks, services, local database, backend retirement and documentation changes supersede earlier offline-first, UI-only and phase restrictions for this request.
+
+
+> Owner request, 1 November 2026: implement the supplied Home, Log, Squad, Progress, Check-in, Food and Pro meal-description references with real data, horizontal squad browsing and trailing/top create-or-invite actions. Support two-person squads through the existing Pro limit of 20, preserving quotas, privacy and paid gates. The owner explicitly authorized the backend/hooks needed for quick check-ins and AI meal-description logging. Import all 267 supplied reci.txt recipes with their original fields, field-based filters and no image placeholders. Necessary targeted core, hook, service, migration and Edge Function changes are authorized for this scope. Keep Focus retired and the latest Plus Jakarta Sans font decision. No fabricated activity, statistics, AI answers or food-catalog mappings. Unspecified recipe meal types/difficulty stay unspecified; nutrition retains its supplied portion label. This supersedes conflicting UI-only and phase restrictions for this request.
 
 
 > Owner correction, 29 October 2026: retire Focus Time throughout the product, including UI, sessions, settings, notifications, progress and challenge tasks. Necessary targeted core/backend removal is authorized; retain private historical records and do not build replacements. Earlier Focus build prompts are superseded.
@@ -15,7 +18,7 @@
 
 > Owner-requested brand and access repairs, 27 October 2026: use the supplied static SVG across logos/icons; audit and enforce the existing paid feature matrix, preserving three lifetime Free photo scans; simplify purchase success to the plan-unlocked title; clarify room capacity per room and existing-subscription management. Necessary UI, service, core and backend repairs are in scope; unrelated features remain excluded.
 
-> Owner-requested repairs, 27 October 2026: repair barcode focus/capture and narrow-screen layouts, reset the Log hub on every opening, remove decorative stars, repair room invitation notifications against the current host schema, preserve scan nutrition including fibre/sugar/sodium/saturated fat/cholesterol, and restrict advanced scan displays to active Plus/Pro with a locked upgrade preview for Free. Replace fabricated home squad content with actual room state. This scope authorizes the necessary view, core, sync, database and Edge Function repairs only; unrelated phases remain excluded.
+> Owner-requested repairs, 27 October 2026: repair barcode focus/capture and narrow-screen layouts, reset the Log hub on every opening, remove decorative stars, repair room invitation notifications against the current host schema, preserve scan nutrition including fibre/sugar/sodium/saturated fat/cholesterol, and restrict advanced scan displays to active Plus/Pro with a locked upgrade preview for Free. Replace fabricated home squad content with actual room state. This scope authorizes the necessary view, core, service, database and Edge Function repairs only; unrelated phases remain excluded.
 
 
 > Owner-requested corrections, 26 October 2026: all signed-in users can browse discoverable profiles with one goal filter (bulk, cut or maintain) and universal username search; Free remains limited to three friend requests per rolling seven days. Onboarding shows a random real profile. Squad creation replaces the separate pair entry point, inviting accepted friends under the existing host quotas (Free one friend, Plus four, Pro nineteen). Friendship still requires explicit room invitation acceptance before sharing. Friend sends and acceptance use the existing request push channel and inbox badges. Remove the workout hub Cardio shortcut and floating Pro AI badge; use a green food icon and neutral browser chrome. These changes supersede conflicting phase, paid-discovery and UI-only restrictions for this request.
@@ -37,7 +40,7 @@ Put this file at `/docs/BUILD_PLAN.md`, the PRD at `/docs/PRD.md`, and `AGENT_RU
 For every phase:
 
 1. **New chat/session per phase.** Paste only that phase's prompt. Never paste the whole plan.
-2. **Sonnet 5.5 (Medium) builds** the logic: database, RLS, Edge Functions, sync, calculations, tests, integrations. Prompt "A".
+2. **Sonnet 5.5 (Medium) builds** the logic: database, RLS, Edge Functions, data services, calculations, tests, integrations. Prompt "A".
 3. **Gemini 3.8 Flash builds the screens** (only where a Prompt "B" exists), using the hooks and types Sonnet created. It must not change logic.
 4. **You run it on a real phone** and go through the test checklist.
 5. **GPT reviews** with the review prompt (Section 5) plus the phase's "review focus". It finds problems; it does not rewrite.
@@ -48,7 +51,7 @@ For every phase:
 
 | Work | Model |
 |---|---|
-| Database schema, RLS, SQL functions, Edge Functions, sync, formulas, integrations, tests, security fixes | Sonnet 5.5 Medium |
+| Database schema, RLS, SQL functions, Edge Functions, data services, formulas, integrations, tests, security fixes | Sonnet 5.5 Medium |
 | Screens, components, styling, charts layout, empty/loading/error states, animations, accessibility pass | Gemini 3.8 Flash |
 | Independent review, attack testing (privacy, entitlement bypass), test ideas | GPT |
 
@@ -66,7 +69,6 @@ For every phase:
 |---|---|---|
 | Node + Express + MongoDB | **Supabase (Postgres)** | Rooms, requests, privacy and leaderboards are relational; RLS enforces privacy in the database; free to start. |
 | Socket.IO for chat | **Supabase Realtime** | No extra server to run. |
-| Offline mode in Phase 14 | **Offline-first from Phase 3** | Retrofitting sync later is painful and causes duplicate/lost data. |
 | Progress before Rooms | **Rooms right after tracking (Phase 5)** | Rooms are your USP. Test the partner effect with friends early. |
 | Subscriptions at the end | **Entitlement logic in Phase 5, real purchases in Phase 10** | Server-side gating must exist before features that depend on it. |
 | "Terra" reviewer | **GPT** | The model you have access to. |
@@ -112,7 +114,7 @@ BUILD:
 1. Monorepo layout from AGENT_RULES.md: /app (Expo + React Native, TypeScript strict, Expo Router, expo-dev-client, EAS config with development/preview/production profiles), /supabase (supabase init, config, empty migrations folder, functions folder, seed, tests folder), /packages/core (pure TypeScript with Vitest or Jest), /docs.
 2. Tooling: ESLint, Prettier, strict tsconfig, path aliases, Vitest/Jest, GitHub Actions CI running lint + typecheck + tests for app and core.
 3. App foundation: Supabase client singleton, environment config via app.config.ts (only EXPO_PUBLIC_* non-secret values) plus .env.example, global error boundary, loading/error components, logger, network-status hook, i18n scaffold (English; no hard-coded strings), theme tokens (neutral palette, light/dark), navigation skeleton with 5 placeholder tabs: Today, Room, Log (+ center button), Progress, Me.
-4. Local database: expo-sqlite setup with a simple versioned migration runner and an empty "outbox" table (id, entity, operation, payload JSON, created_at, attempts, last_error).
+4. Local database: expo-sqlite setup with a versioned migration runner for read caches and guest setup.
 5. Supabase: local dev via CLI, one sample migration, one `health` Edge Function. The app calls it on the Today placeholder and shows "Connected".
 6. README with exact setup commands (install, run Supabase locally, run app, run tests, build a dev client).
 
@@ -174,7 +176,7 @@ BUILD:
    - function that returns all preset rates with `available` + `reason` + `target_kcal` for each
    GOLDEN TESTS must reproduce the PRD worked example exactly: male, 25y, 175cm, 70kg, moderate -> BMR 1674, TDEE 2594; cut 0.25/0.5/0.75 -> 2319/2044/1769; cut 1.0 unavailable (floor); bulk 0.25/0.5 -> 2869/3144; bulk 0.75 unavailable (cap 0.70); cut 0.5 macros 140g / 57g / 243g. Add edge cases (lb inputs, other-sex, body-fat input, very light/heavy users, target-date too aggressive).
 2. Supabase: `goal_profiles` table (history rows with effective_from; current = latest), `health_screening` table (private; pregnancy/breastfeeding, diabetes/medication, eating-disorder history; never readable by anyone but the owner), Edge Function `calculate-targets` that calls the SAME core module. Recompute trigger rules from 7.2 (weight change >= 2 kg or goal/rate/activity edit) with user confirmation recorded.
-3. App: onboarding state machine and a `useTargets()` hook + services. Works offline (uses core directly) and syncs the result to the server.
+3. App: onboarding state machine and a `useTargets()` hook + services. Calculations use core directly; save the result with an acknowledged server request.
 4. RLS + tests for the new tables (owner-only).
 
 DO NOT BUILD: food logging, Today content, rating prompt, adaptive recalibration.
@@ -195,10 +197,10 @@ Finish with a list of files changed.
 
 ---
 
-### PHASE 3 — Food, logging and the offline-first layer
+### PHASE 3 — Food, logging and the online save services
 **Models:** Sonnet (build) · Gemini (screens) · **Size:** L · **PRD:** 6.3, 6.4, 7.8, NFR
 
-**Prompt A (Sonnet) — data and sync**
+**Prompt A (Sonnet) — data and online saves**
 ```
 Read /AGENT_RULES.md first. Read /docs/PRD.md sections 6.3 (LOG-1..LOG-16), 6.4 and 9. Inspect existing code. Build ONLY Phase 3 data/logic (screens come in the next prompt).
 
@@ -206,13 +208,13 @@ BUILD:
 1. Tables + RLS: `foods` (source: ifct/off/usda/user, name, brand, barcode, serving units incl. household units, nutrients per 100 g, owner_id for custom foods, attribution), `food_entries` (client-generated UUID, user_id, food_id, meal_section in breakfast|lunch|dinner|snacks|extra, quantity, unit, nutrient snapshot columns, logged_at UTC, local_date, source search|scan|photo|history|copy|recipe, shared_meal_id nullable, updated_at, deleted_at), `user_food_stats` (use_count, last_used_at, last_quantity, last_unit, last_meal_section), `saved_meals`. Owner-only RLS; custom foods private to owner.
 2. Food import tooling: a script to import IFCT/popular foods from a CSV (I will supply; also generate a 100-food dev seed) and to export a compact bundled SQLite food index for instant OFFLINE search shipped inside the app.
 3. Edge Function `food-lookup`: barcode via Open Food Facts, text fallback via USDA FoodData Central; cache results into `foods`; store attribution; rate limit; never load the full public databases.
-4. OFFLINE-FIRST SYNC LAYER (generic, reusable by later phases): local SQLite mirror of entries with `sync_state`; outbox queue; idempotent upserts by client UUID; exponential-backoff retry; last-write-wins using updated_at; soft deletes; network detection; background sync trigger; pull of changes since last sync; failed-sync recovery; survives app kill mid-sync.
+4. ONLINE SAVES: submit one atomic Supabase request for each logging action, with client UUIDs and database privacy checks. Cache only acknowledged records. Report a failed request immediately; do not queue or automatically retry writes.
 5. Hooks/services: useDiary(date) with daily totals and per-section subtotals, useAddEntry/useEditEntry/useDeleteEntry, useFoodSearch (local first, then remote), usePreviouslyLogged (sort Recent/Frequent/A-Z, filter by section, search, remove from history without deleting entries, last-used quantity, one-tap add), useSectionSuggestions (top foods per section over the last 30 days by frequency), custom food create/edit (edits never change past entries), copy meal/day, barcode scan service (expo-camera).
-6. Tests: unit tests for quantity scaling and totals; sync tests simulating offline->online, online->offline, app killed mid-sync, duplicate requests, same entry edited twice; RLS tests (user A cannot read B's entries or custom foods).
+6. Tests: quantity scaling and totals; online save acknowledgement and rollback, duplicate request IDs, failed network requests, and RLS (user A cannot read B's entries or custom foods).
 
 DO NOT BUILD: UI polish, recipes, AI photo, rooms, shared meals (field only), water/steps/weight.
 
-DONE WHEN: with airplane mode on I can search bundled foods, log into all 5 sections, edit/delete, restart the app, then reconnect and see everything sync exactly once.
+DONE WHEN: connected users can log, edit and delete in all five meal sections; saves are acknowledged by the server and failed requests leave no unsaved entries in the read cache.
 Finish with the end-of-session report.
 ```
 **Prompt B (Gemini Flash) — screens**
@@ -220,12 +222,12 @@ Finish with the end-of-session report.
 Read /AGENT_RULES.md (UI rules) and /docs/PRD.md sections 6.3 and 6.4. VIEW LAYER ONLY: do not edit hooks, /packages/core or /supabase.
 
 Build, using the existing hooks: the Today screen (calorie ring, macro bars, five meal sections Breakfast/Lunch/Dinner/Snacks/Extra with subtotals and add buttons, date navigation), the Log bottom sheet with tabs Search | Scan | Photo (placeholder) | Previously logged | My Foods, the quantity screen (units incl. bowl/katori, live nutrient preview, meal section picker), the Previously logged list with a one-tap "+" that adds with the last-used quantity (tap row to change quantity), section suggestions at the top of each section, the barcode scan screen, custom food form, edit/delete entry, copy meal/day sheet.
-Design: fast and uncluttered; big touch targets; skeleton loaders; empty states that explain what to do; offline banner; sync status icon (synced/pending/failed with retry). Accessibility labels and testIDs. No hard-coded strings.
+Design: fast and uncluttered; big touch targets; skeleton loaders; empty states that explain what to do; actionable network save errors. Accessibility labels and testIDs. No hard-coded strings.
 Finish with a list of files changed.
 ```
 **Manual (you):** supply the IFCT/popular foods CSV; add USDA key to Supabase secrets.
-**Test checklist:** airplane-mode logging for a day; barcode scan a real packet; log the same food 3 times and check it shows in Previously logged with last quantity; kill the app during sync; use two phones on one account and edit the same entry.
-**Review focus (GPT):** duplicate/lost entries, time zone and local_date errors around midnight, RLS on custom foods, sync conflict behaviour, food cache poisoning.
+**Test checklist:** log a day online; fail an HTTP request and verify no success indication; retry the same client UUID; verify privacy and current data after reopening.
+**Review focus (GPT):** duplicate/lost entries, time zone and local_date errors around midnight, RLS on custom foods, atomic save behavior, food cache poisoning.
 
 ---
 
@@ -234,18 +236,18 @@ Finish with a list of files changed.
 
 **Prompt A (Sonnet)**
 ```
-Read /AGENT_RULES.md first. Read /docs/PRD.md sections 6.5 (WAT-1..WAT-5, STP-1..STP-5, TRK-1, TRK-2) and 7.8. Inspect existing code. Build ONLY Phase 4 logic. Reuse the Phase 3 sync layer.
+Read /AGENT_RULES.md first. Read /docs/PRD.md sections 6.5 (WAT-1..WAT-5, STP-1..STP-5, TRK-1, TRK-2) and 7.8. Inspect existing code. Build ONLY Phase 4 logic. Reuse the Phase 3 online save services.
 
 BUILD:
-1. Tables + RLS + sync: `water_logs`, `weight_logs`, `activity_days` (steps, distance_m, source, one row per user per local date, merge-safe).
+1. Tables + RLS: `water_logs`, `weight_logs`, `activity_days` (steps, distance_m, source, one row per user per local date, merge-safe).
 2. /packages/core (with tests): default water goal (35 ml x kg, rounded to 250, min 1500, max 4000); stride length (height x 0.415 male / 0.413 female / 0.414 other); distance from steps; informational walking calories (0.5 x kg x km); weight trend (7-day moving average, raw if fewer than 3 entries); weekly pace; projected date to target (only if pace points to target and >= 0.05 kg/week); goal progress %.
-3. Steps: Health Connect (Android) and HealthKit (iOS) integration through well-maintained libraries, with source priority: health platform > phone step sensor/pedometer > manual entry; de-duplicate sources; platform-measured distance beats calculated distance; permission request flow and denied-state handling; background-safe sync.
+3. Steps: Health Connect (Android) and HealthKit (iOS) integration through well-maintained libraries, with source priority: health platform > phone step sensor/pedometer > manual entry; de-duplicate sources; platform-measured distance beats calculated distance; permission request flow and denied-state handling; permission-checked device imports.
 4. Hooks/services: useWater(date), useWeight(), useSteps(date), derived metrics.
-5. Tests: dedupe of overlapping sources, time zone/date-boundary cases, weight trend math, offline sync of all three.
+5. Tests: dedupe of overlapping sources, time zone/date-boundary cases, weight trend math, online save reliability of all three.
 
 DO NOT BUILD: charts (Phase 7), notifications/reminders (Phase 9), room sharing.
 
-DONE WHEN: water/weight/steps work offline, steps appear from the phone, no double counting, metrics match the formulas.
+DONE WHEN: water/weight/steps require an internet connection, steps appear from the phone, no double counting, metrics match the formulas.
 Finish with the end-of-session report.
 ```
 **Prompt B (Gemini Flash)**
@@ -306,15 +308,15 @@ Rules: neutral colours (never red/green winning/losing between people), supporti
 
 **Prompt A (Sonnet)**
 ```
-Read /AGENT_RULES.md first. Read /docs/PRD.md section 6.6 (WRK-1..WRK-10) and 7.8. Inspect existing code. Build ONLY Phase 6 logic (P1 items WRK-11..15 are out of scope). Reuse the Phase 3 sync layer.
+Read /AGENT_RULES.md first. Read /docs/PRD.md section 6.6 (WRK-1..WRK-10) and 7.8. Inspect existing code. Build ONLY Phase 6 logic (P1 items WRK-11..15 are out of scope). Reuse the Phase 3 online save services.
 
 BUILD:
-1. Tables + RLS + sync: `exercises` (library + custom, muscle group, equipment, type), `workouts`, `workout_exercises`, `workout_sets` (reps, weight, duration, distance). Owner-only RLS.
+1. Tables + RLS: `exercises` (library + custom, muscle group, equipment, type), `workouts`, `workout_exercises`, `workout_sets` (reps, weight, duration, distance). Owner-only RLS.
 2. Exercise library importer from a CSV/JSON I supply (generate a 40-exercise dev seed); licence/attribution field.
 3. /packages/core with tests: workout volume (sum reps x weight), estimated 1RM (Epley, sets <= 12 reps), MET-based calorie estimate (informational only, never added to targets), cardio pace/speed.
 4. Hooks/services: create/edit/delete workout for any date, add exercises and sets, copy previous workout to today, previous performance per exercise ("Last time: 3 x 8 at 40 kg"), history list/calendar data, per-workout summary, running session timer (timestamps, survives app kill).
 5. Room integration: "worked out today" (type + duration) flows into `daily_summaries` and `room_events` according to privacy settings; workout details (sets/weights) stay hidden unless shared.
-6. Tests: formulas, offline logging and sync, RLS (others can't read workouts; room members only see what privacy allows).
+6. Tests: formulas, online save and request-failure behavior, RLS (others can't read workouts; room members only see what privacy allows).
 
 DO NOT BUILD: routines/templates, rest timer, PR detection, shared workouts, Health Connect workout import (all P1).
 Finish with the end-of-session report.
@@ -324,7 +326,7 @@ Finish with the end-of-session report.
 Read /AGENT_RULES.md (UI rules) and /docs/PRD.md section 6.6. VIEW LAYER ONLY.
 Build with existing hooks: "Add workout" flow from Today and the Log sheet; workout logger (type picker, exercise picker with search and muscle-group filter, set rows with fast numeric entry for reps/weight, "last time" hint, add/remove/reorder sets), cardio form, running timer bar, finish summary (duration, volume, estimated calories labelled "estimate"), workout history list and calendar, workout detail with edit/delete, Today workout card. Fast one-handed entry is the priority. Loading/empty/error states, accessibility, testIDs, i18n.
 ```
-**Test checklist:** log a full leg day offline; copy it to tomorrow; check the room shows "worked out today" and hides weights by default.
+**Test checklist:** log a full leg day while connected; copy it to tomorrow; check the room shows "worked out today" and hides weights by default.
 **Review focus (GPT):** data privacy of workout details, timer drift after app kill, volume math with units.
 
 ---
@@ -369,7 +371,7 @@ BUILD:
 1. Tables + RLS: `chat_messages` (client_id for idempotency, room_id, sender_id, text <= 2000, created_at, deleted_at), `chat_attachments` (storage key, width, height, size, moderation_status), `chat_read_state`. Access ONLY for current members with room access; nothing readable after leaving/removal/lock.
 2. Realtime: one Supabase Realtime channel per room, subscribed only while the chat screen is visible; message history pagination (50/page); unread counts; system messages (member joined/left, room created, streak milestones) that can be muted.
 3. Images: client compression (longest side ~1600 px, JPEG/WebP), thumbnail generation, EXIF/location stripping on the device AND verified/stripped again server-side; upload through an Edge Function that checks membership and returns a presigned PUT to the private Cloudflare R2 bucket; reads through an Edge Function that checks membership and returns short-lived signed GET URLs; max 5 images/message, 10 MB each, allowed types JPEG/PNG/HEIC/WebP; deleting a message deletes the stored objects.
-4. Offline queue with retry using the existing outbox (idempotent by client_id), delivery states sending/sent/failed, dedupe, reconnect handling.
+4. Explicit online sends with delivery states sending/sent/failed, stable client IDs, deduplication and a user-operated Retry action.
 5. Safety: report message, mute/block member (hides their messages for the muter), delete own message, rate limits (20 messages/min, 30 images/hour), automated image moderation hook (provider adapter + stub; mark `pending|ok|blocked`), moderation queue table, terms-accepted record (`consent_records`) required before first message.
 6. Dormant rooms are read-only.
 7. Tests/attack tests: non-member can't fetch messages or image URLs; expired/removed member loses access immediately; signed URLs expire; duplicate sends create one message; rate limits; pagination correctness; reconnect gap-fill; oversized/invalid file rejection.
@@ -380,7 +382,7 @@ Finish with the end-of-session report.
 **Prompt B (Gemini Flash)**
 ```
 Read /AGENT_RULES.md (UI rules) and /docs/PRD.md section 6.10. VIEW LAYER ONLY.
-Build the Chat segment in Room: message list (inverted, paginated), bubbles with nickname/avatar/time, system-message style, composer with text + camera/gallery picker (up to 5 images, previews, remove), upload progress per image, failed state with "Retry", full-screen image viewer (pinch to zoom, save to gallery), long-press menu (delete own, report), terms acceptance sheet before first message, unread badge on the Room tab and a "new messages" divider, offline banner, read-only state for dormant rooms, empty state ("Say hi to your partner"). Smooth keyboard handling on both platforms. Accessibility labels, testIDs, i18n.
+Build the Chat segment in Room: message list (inverted, paginated), bubbles with nickname/avatar/time, system-message style, composer with text + camera/gallery picker (up to 5 images, previews, remove), upload progress per image, failed state with "Retry", full-screen image viewer (pinch to zoom, save to gallery), long-press menu (delete own, report), terms acceptance sheet before first message, unread badge on the Room tab and a "new messages" divider, connection error, read-only state for dormant rooms, empty state ("Say hi to your partner"). Smooth keyboard handling on both platforms. Accessibility labels, testIDs, i18n.
 ```
 **Manual (you):** R2 buckets/keys in Supabase secrets.
 **Test checklist:** send text and 3 photos between two phones; airplane-mode send then reconnect; remove a member and confirm they can't open old image links; report a message.
@@ -456,7 +458,7 @@ BUILD:
 1. Edge Function `ai-food-photo`: authenticated; consent check (`consent_records` type ai_processing); daily caps by state (trial 3/day, paid 15/day, free-after-trial 0) read from a config table; image size/type limits; call the vision model with a strict JSON schema output (items, estimated grams, confidence); map items to our `foods` (search + fallback to estimate); return candidates for user confirmation. The AI API key is a server secret and is never sent to the app.
 2. Images are processed and deleted; stored only if the user explicitly shares to a room/chat.
 3. `ai_usage` table (user_id, day, feature, count, tokens, estimated cost) + a global monthly budget switch that disables the feature gracefully; structured logging.
-4. Client service: capture/compress, send, show candidates, user edits quantities or swaps items, save as `food_entries` with source=photo through the normal sync layer. Results labelled "estimate".
+4. Client service: capture/compress, send, show candidates, user edits quantities or swaps items, save as `food_entries` with source=photo through the normal online save service. Results labelled "estimate".
 5. Tests with a mocked model: caps per state, consent required, malformed model output handled, prompt-injection text inside images/food names can't change behaviour, budget switch works, no key leakage.
 
 DO NOT BUILD: AI coach, voice, multi-photo meals.
@@ -479,7 +481,7 @@ Read /AGENT_RULES.md first. Read /docs/PRD.md section 6.21 (RCP-1..RCP-11). Insp
 BUILD:
 1. Tables + RLS: `recipes` (title, description, cuisine, diet tags, meal type, prep/cook minutes, difficulty, servings, steps, tips, image URLs, status draft|published, nutrition per serving snapshot, version), `recipe_ingredients` (recipe_id, food_id, quantity, unit, note), `recipe_favorites`, `recipe_reports`. Published recipes readable by any signed-in user; drafts/writes only via the service role (scripts). Users can write only their own favorites/reports.
 2. AUTHORING PIPELINE: define `docs/RECIPE_TEMPLATE.json` (with 5 sample Indian recipes) and a CLI script `npm run recipes:import` that validates and imports recipes: every ingredient must map to a food id (fuzzy-match suggestions on failure), units convertible to grams, image present, servings > 0; it CALCULATES nutrition per serving from ingredients (calories, protein, carbs, fat, fibre; manual override only with a written reason field), uploads images to the public R2 recipe bucket, and writes draft or published. Re-import creates a new version. Produces a readable error report.
-3. Read functions: search/browse by name, ingredient and tags; filters (meal type, diet, calorie range, minimum protein, time, cuisine); recipe detail; servings scaler (core function with tests); `log_recipe(recipe_id, servings, meal_section)` creating a food_entries row with a nutrient snapshot (source=recipe) via the normal sync layer; favorites; recently viewed (local).
+3. Read functions: search/browse by name, ingredient and tags; filters (meal type, diet, calorie range, minimum protein, time, cuisine); recipe detail; servings scaler (core function with tests); `log_recipe(recipe_id, servings, meal_section)` creating a food_entries row with a nutrient snapshot (source=recipe) via the normal online save service; favorites; recently viewed (local).
 4. Offline: cache viewed/favourite recipe text and images.
 5. Tests: nutrition calculation accuracy against hand-computed fixtures, scaling, import validation failures, RLS (drafts invisible, users can't edit recipes), logging 1.5 servings = 1.5x nutrients.
 
@@ -488,7 +490,7 @@ Finish with the end-of-session report.
 ```
 **Prompt B (Gemini Flash):** recipe browse (search, filter chips, grid with photo/time/calories/protein), detail screen (hero image, servings scaler, ingredients, steps, nutrition per serving, favourite, "Log this recipe" sheet with servings + meal section), favourites tab, Log sheet "Recipes" tab, Today entry point. VIEW LAYER ONLY.
 **Your content task:** write recipes to the template, test the importer on 10, then batch the rest.
-**Test checklist:** import the 5 samples, check calories against a manual sum, log 1.5 servings, use offline.
+**Test checklist:** import the 5 samples, check calories against a manual sum, log 1.5 servings, verify network failures.
 **Review focus (GPT):** recompute nutrition for 5 recipes by hand, importer edge cases, image path handling.
 
 ---
@@ -501,7 +503,7 @@ Finish with the end-of-session report.
 Read /AGENT_RULES.md first. Read /docs/PRD.md sections 6.20 (FST-1..FST-12), 7.9, 6.2 (ONB-11) and 8.1. Inspect existing code. Build ONLY Phase 13 logic.
 
 BUILD:
-1. Tables + RLS + sync: `fasting_settings` (enabled, protocol, eating window start/end), `fasting_sessions` (start_at UTC, planned_minutes, end_at, status active|completed|ended_early). Owner-only. Hidden from rooms unless the user opts in to share "fasting now / completed today" via the existing privacy settings.
+1. Tables + RLS: `fasting_settings` (enabled, protocol, eating window start/end), `fasting_sessions` (start_at UTC, planned_minutes, end_at, status active|completed|ended_early). Owner-only. Hidden from rooms unless the user opts in to share "fasting now / completed today" via the existing privacy settings.
 2. /packages/core with tests: protocols 12:12, 14:10, 16:8, 18:6, 20:4 and custom window (max planned 20 h; no OMAD, no multi-day); fast state computed from timestamps (elapsed/remaining/completed/ended early); scheduled-window mode; stats (average duration, completion rate); fasting streak (personal); DST and time-zone safe.
 3. Gating: feature hidden if screening (ONB-11) says pregnant/breastfeeding, diabetes/medication affecting food, or eating-disorder history; paused while the low-intake check-in flag is active; 18+ only.
 4. Safety behaviour: check-in prompt when a fast runs 2 h past plan or past 20 h; strong end-fast prompt at 24 h; logging food during a fast shows a non-blocking prompt ("Log this and end your fast?"). Fasting never alters calorie targets or the consistency score and is excluded from leaderboards/challenges.
@@ -583,7 +585,7 @@ Polish in this order, one area per commit: onboarding, Today, Log sheet, quantit
 ```
 You are an independent senior reviewer. Review the complete CaliPartner repository as a production release candidate. Read /AGENT_RULES.md and /docs/PRD.md first. Do NOT rewrite working code. Produce a prioritised issue list (Critical / High / Medium / Low) with file, line, exact reproduction or exploit steps, and a suggested fix. Where possible write a failing test that proves the issue.
 
-Focus on: (1) Row Level Security and SQL functions (SECURITY DEFINER misuse, search_path, privilege escalation, missing policies, realtime channel leaks); (2) room privacy: can any user read another user's food, weight, workouts, fasting, chat or images beyond what they chose to share (including through aggregates and room progress); (3) entitlement bypass for rooms, chat, room progress, AI photo and AI coach; (4) webhook forgery/replay; (5) AI cost abuse and prompt injection; (6) offline sync: duplicates, lost writes, conflicts, app kill mid-sync, time-zone/DST bugs; (7) calculation correctness against PRD 7.2/7.3 with independent recomputation; (8) safety rules: calorie floors, rate caps, no ranking by weight/calories, fasting gating, coach refusals; (9) performance (missing indexes, N+1, large payloads, startup time); (10) mobile crashes, loading/empty/error states, accessibility; (11) secrets in the repo or app bundle; (12) store-policy risks (health data, user-generated content, subscriptions, ratings, account deletion).
+Focus on: (1) Row Level Security and SQL functions (SECURITY DEFINER misuse, search_path, privilege escalation, missing policies, realtime channel leaks); (2) room privacy: can any user read another user's food, weight, workouts, fasting, chat or images beyond what they chose to share (including through aggregates and room progress); (3) entitlement bypass for rooms, chat, room progress, AI photo and AI coach; (4) webhook forgery/replay; (5) AI cost abuse and prompt injection; (6) online save reliability: duplicates, lost writes, conflicts, lost HTTP responses, time-zone/DST bugs; (7) calculation correctness against PRD 7.2/7.3 with independent recomputation; (8) safety rules: calorie floors, rate caps, no ranking by weight/calories, fasting gating, coach refusals; (9) performance (missing indexes, N+1, large payloads, startup time); (10) mobile crashes, loading/empty/error states, accessibility; (11) secrets in the repo or app bundle; (12) store-policy risks (health data, user-generated content, subscriptions, ratings, account deletion).
 ```
 
 **Prompt (Sonnet) — fixes** (see Section 5)

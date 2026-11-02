@@ -4,7 +4,7 @@ import { createLogger } from '@/lib/logger';
 import { getDb } from '@/db';
 import { getSupabase } from '@/lib/supabase';
 import { findLocalFoodByBarcode, lookupRemoteFood } from './foodService';
-import type { SyncDb } from './syncService';
+import type { LocalDb } from './accountDataService';
 
 const log = createLogger('barcodeScanService');
 
@@ -22,7 +22,7 @@ export interface BarcodeLookupResult {
  */
 export async function lookupBarcode(
   barcode: string,
-  customDb?: SyncDb,
+  customDb?: LocalDb,
   isOnline = true,
   userId?: string,
 ): Promise<BarcodeLookupResult> {

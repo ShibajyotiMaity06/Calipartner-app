@@ -7,15 +7,7 @@ import { useNetworkStatus } from './useNetworkStatus';
 import { getDb } from '@/db';
 import { getSupabase } from '@/lib/supabase';
 import { generateClientUuid } from '@/services/foodService';
-import {
-  cachedChallenges,
-  loadChallenges,
-  queueChallenge,
-  challengeOutbox,
-  flushChallenges,
-  dismissChallengeWrite,
-  type ChallengePending,
-} from '@/services/challengeService';
+import { loadChallenges, saveChallenge } from '@/services/challengeService';
 
 export function useChallenges() {
   const { user } = useAuth();
@@ -25,7 +17,6 @@ export function useChallenges() {
   owner.current = id;
   const [home, setHome] = useState<ChallengeHome | null>(null);
   const [dataOwner, setDataOwner] = useState<string>();
-  const [pending, setPending] = useState<ChallengePending[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [cached, setCached] = useState(false);
@@ -37,29 +28,13 @@ export function useChallenges() {
     lock.current = id;
     try {
       const db = await getDb();
-      const local = await cachedChallenges(db, id).catch(() => null);
+      if (!isOnline) throw new Error('NETWORK_UNAVAILABLE');
+      const fresh = await loadChallenges(db, getSupabase(), id);
       if (owner.current !== id) return;
-      if (local) {
-        setHome(local);
-        setDataOwner(id);
-        setCached(true);
-      } else {
-        setHome(null);
-        setDataOwner(id);
-        setLoading(!!isOnline);
-      }
-      if (isOnline) {
-        // Reading is independent of an unavailable queued upload/reset check.
-        await flushChallenges(db, getSupabase(), id).catch(() => undefined);
-        const fresh = await loadChallenges(db, getSupabase(), id);
-        if (owner.current !== id) return;
-        setHome(fresh);
-        setDataOwner(id);
-        setCached(false);
-        setError(null);
-      }
-      const outbox = await challengeOutbox(db, id);
-      if (owner.current === id) setPending(outbox);
+      setHome(fresh);
+      setDataOwner(id);
+      setCached(false);
+      setError(null);
     } catch (e) {
       if (owner.current === id) setError(e instanceof Error ? e.message : 'CHALLENGE_UNAVAILABLE');
     } finally {
@@ -69,7 +44,6 @@ export function useChallenges() {
   }, [id, isOnline]);
   useEffect(() => {
     setHome(null);
-    setPending([]);
     setDataOwner(undefined);
     setLoading(!!id);
     if (!id) setLoading(false);
@@ -129,15 +103,10 @@ export function useChallenges() {
           if (owner.current !== id) throw new Error('ACCOUNT_CHANGED');
           setBusy(true);
           try {
-            const db = await getDb();
-            const request = await queueChallenge(db, id, mutation);
-            if (isOnline) await flushChallenges(db, getSupabase(), id);
-            const queued = await challengeOutbox(db, id);
-            if (owner.current === id) setPending(queued);
-            const failed = queued.find((item) => item.id === request && item.status === 'failed');
-            if (failed) throw new Error(failed.last_error ?? 'CHALLENGE_UNAVAILABLE');
+            if (!isOnline) throw new Error('NETWORK_UNAVAILABLE');
+            await saveChallenge(getSupabase(), id, mutation);
             await refresh();
-            return queued.some((item) => item.id === request) ? 'pending' : 'synced';
+            return 'saved';
           } finally {
             if (owner.current === id) setBusy(false);
           }
@@ -151,35 +120,21 @@ export function useChallenges() {
     },
     [id, isOnline, refresh],
   );
-  const dismiss = useCallback(
-    async (request: string) => {
-      if (id) {
-        await dismissChallengeWrite(await getDb(), id, request);
-        await refresh();
-      }
-    },
-    [id, refresh],
-  );
   const track = useCallback(
     (event: string, challenge?: string) => {
       if (!id) return;
-      void getDb()
-        .then(async (db) => {
-          await queueChallenge(db, id, {
-            action: 'track',
-            request_id: generateClientUuid(),
-            event,
-            id: challenge,
-          });
-          if (isOnline) await flushChallenges(db, getSupabase(), id);
-        })
-        .catch(() => {});
+      if (!isOnline) return;
+      void saveChallenge(getSupabase(), id, {
+        action: 'track',
+        request_id: generateClientUuid(),
+        event,
+        id: challenge,
+      }).catch(() => {});
     },
     [id, isOnline],
   );
   return {
     home: dataOwner === id ? home : null,
-    pending: dataOwner === id ? pending : [],
     loading,
     error,
     cached,
@@ -187,7 +142,6 @@ export function useChallenges() {
     isOnline: !!isOnline,
     refresh,
     mutate,
-    dismiss,
     userId: id,
     track,
   };

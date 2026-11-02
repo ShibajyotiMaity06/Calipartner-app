@@ -1,3 +1,4 @@
+import { loadAccountTable } from '@/services/accountDataService';
 import { useCallback, useEffect, useState } from 'react';
 import type { DiaryDaySummary } from '@calipartner/core';
 import { useAuth } from '@/contexts/AuthContext';
@@ -100,6 +101,7 @@ export function useDiary(localDate?: string): UseDiaryResult {
       setLoading(true);
       setError(null);
       const db = await getDb();
+      await loadAccountTable(db, 'food_entries', userId);
       await ensureBundledFoodsSeeded(db);
       const summary = await getDiaryDaySummary(db, userId, targetDate);
       setDaySummary(summary);

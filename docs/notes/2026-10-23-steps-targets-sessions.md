@@ -9,7 +9,7 @@ Historical session snapshot. See [the deployment follow-up](2026-10-24-fresh-sta
 - Removed timer-generated walking steps and manual increment buttons from the hardware walking tracker. Counts now come from sensor events; unavailable sensors do not manufacture activity. Pausing, closing, and finishing remove the sensor subscription. Session saves use the pedometer source and avoid adding a session to an iOS daily total twice.
 - Replaced fabricated seven-day step history and fixed sync timestamps with owner-scoped recorded data and actual update times. Missing historical readings remain unknown. Step goal edits now persist without replacing macro targets.
 - Replaced fallback calorie and macro targets in Today, the detail sheet, progress defaults, and coach requests. Missing targets show an unavailable state. Account settings receive saved goals and body values.
-- Fixed onboarding IDs to use UUIDs accepted by Postgres. Existing cached targets with invalid IDs are repaired once, preserving their exact values. Target/outbox writes are transactional and precede network requests. Failed syncs remain queued. Restore reads account-specific server targets without overwriting unsynced local edits.
+Authenticated saves use direct server requests with client UUIDs, privacy checks and an error on failure. Only acknowledged values enter local read caches.
 - Shared target state across screens and prevented account/guest fallback from selecting another user's goals. Repaired browser persistence for SQL literals, target history, sync status updates, and queue deletions.
 - Persisted large native auth sessions using encrypted SecureStore chunks, retained compatibility with existing sessions, and removed silent memory-only persistence. Serialized chunk access prevents concurrent rotation/read races.
 - Made auth listeners synchronous to avoid blocking refresh, connected native refresh to foreground/background state, and restored cached identity/profile for temporary offline failures. Server-rejected sessions are not restored.
@@ -31,7 +31,7 @@ Typecheck: passed for app, core, and UI
 npm run build:web: Exported: dist; exit 0
 ```
 
-Regressions cover stationary/unsupported/denied sensors, pause/resume, historical steps, large persisted sessions and interrupted storage writes, offline/revoked auth, the exact 30-day boundary, continuing daily activity for 60 days, login versus signup, account switching, UUID repair, offline outbox retries/rollback, target restoration, and preserving macros when changing daily goals. The existing PRD worked-example tests also pass.
+Authenticated saves use direct server requests with client UUIDs, privacy checks and an error on failure. Only acknowledged values enter local read caches.
 
 Native device acceptance testing and live hosted settings could not be verified in this session.
 

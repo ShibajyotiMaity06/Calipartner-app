@@ -1,5 +1,8 @@
 # CaliPartner — UI Specification Index
 
+> Owner request, 2 November 2026: use online-only signed-in reads and saves. Retire automatic background upload, local retry queues, conflict merging, manual sync actions and all sync status UI. Failed network saves must report failure and remain unsaved; retries use client-generated IDs. Keep local read caches and guest setup only where required, without promising offline logging. Preserve database privacy, entitlements, safety, existing records and immutable migration history. Simplify Home to greeting and time-based meal prompt, a top-right AI coach icon, aligned equal-size squad cards, Your part today, and compact meal rows (four nutrition values in one row only when logged). Remove the personal streak subtitle, Today with squad feed, coach card and Log something tiles. Present food-log methods clearly and repair Home and device Back navigation. Necessary targeted hooks, services, local database, backend retirement and documentation changes supersede earlier offline-first, UI-only and phase restrictions for this request.
+
+
 This directory contains the split parts of the **CaliPartner UI/UX Master Spec** (v1.0 draft, aligned to PRD v0.4) for React Native + Expo.
 
 Keeping the spec split into targeted modules keeps context small, token-efficient, and fast for coding agents during each implementation phase.
@@ -34,11 +37,11 @@ Keeping the spec split into targeted modules keeps context small, token-efficien
 |---|---|---|
 | [`screens-A-B.md`](file:///c:/Users/shibajyoti%20maity/Downloads/projects/calipartner-app/docs/ui/screens-A-B.md) | **7.0, 7.A, 7.B:** Launch, Onboarding questions (A01–A15), Target Reveal, Invite Preview, Account setup & Auth (B01–B09). | **UI-5** (Onboarding and Account). |
 | [`screens-C-D.md`](file:///c:/Users/shibajyoti%20maity/Downloads/projects/calipartner-app/docs/ui/screens-C-D.md) | **7.C, 7.D:** Today view (C01–C07), Logging Hub (D01), Food search & recent (D02), Portion stepper & quick add (D03), Barcode/AI photo scanner (D04–D06), Custom food (D08). | **UI-6** (Today and Logging). |
-| [`screens-E-F.md`](file:///c:/Users/shibajyoti%20maity/Downloads/projects/calipartner-app/docs/ui/screens-E-F.md) | **7.E, 7.F:** Water tracker (E01–E04), Steps tracker & sync (E05–E08), Weight log (E09–E12), Workouts (E13–E17), Fasting tracker & timers (F01–F06). | **UI-7** (Trackers, Workouts, Fasting). |
+| [`screens-E-F.md`](file:///c:/Users/shibajyoti%20maity/Downloads/projects/calipartner-app/docs/ui/screens-E-F.md) | **7.E, 7.F:** Water tracker (E01–E04), Steps tracker and device imports (E05–E08), Weight log (E09–E12), Workouts (E13–E17), Fasting tracker & timers (F01–F06). | **UI-7** (Trackers, Workouts, Fasting). |
 | [`screens-G-H-I.md`](file:///c:/Users/shibajyoti%20maity/Downloads/projects/calipartner-app/docs/ui/screens-G-H-I.md) | **7.G, 7.H, 7.I:** Focus Time timer & ambient running (G01–G08), Indian Recipe Browse & Cook Mode (H01–H06), AI Coach chat & suggestions (I01–I05). | **UI-11** (Focus, Recipes, Coach). |
 | [`screens-J-K-L.md`](file:///c:/Users/shibajyoti%20maity/Downloads/projects/calipartner-app/docs/ui/screens-J-K-L.md) | **7.J, 7.K, 7.L:** Room paired view (J01 hero), 3–12 member room carousel (J02–J03), Chat (J08), Nudge (J09), Requests inbox (K01–K08), Partner Finder cards & safety rules (L01–L12). | **UI-8** (Room, Chat, Requests), **UI-11** (Partner Finder). |
 | [`screens-M.md`](file:///c:/Users/shibajyoti%20maity/Downloads/projects/calipartner-app/docs/ui/screens-M.md) | **7.M:** Progress charts (M01–M10), Room leaderboard (M11), Monday recap (M12), Friend & room challenges (M13–M17). | **UI-9** (Progress, Leaderboard, Challenges). |
-| [`screens-N-O-P.md`](file:///c:/Users/shibajyoti%20maity/Downloads/projects/calipartner-app/docs/ui/screens-N-O-P.md) | **7.N, 7.O, 7.P:** Me settings & privacy switches (N01–N16), RevenueCat Subscription Paywall & room plans (O01–O10), Offline sync pill, Error & Maintenance sheets (P01–P08). | **UI-10** (Me, Privacy, Paywall). |
+| [`screens-N-O-P.md`](file:///c:/Users/shibajyoti%20maity/Downloads/projects/calipartner-app/docs/ui/screens-N-O-P.md) | **7.N, 7.O, 7.P:** Me settings & privacy switches (N01–N16), RevenueCat Subscription Paywall & room plans (O01–O10), Error and maintenance sheets (P01–P08). | **UI-10** (Me, Privacy, Paywall). |
 
 ---
 

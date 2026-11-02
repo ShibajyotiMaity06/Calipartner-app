@@ -53,14 +53,14 @@ export function AiCoachLockedCard({ onUnlock }: LockedFeatureCardProps) {
       {/* Feature Bullet Points */}
       <View style={[styles.bulletsBox, { backgroundColor: colors.surfaceAlt }]}>
         <View style={styles.bulletItem}>
-          <Ionicons name="checkmark-circle" size={16} color={colors.syncSynced} />
+          <Ionicons name="checkmark-circle" size={16} color={colors.mint} />
           <Text style={[styles.bulletText, { color: colors.text }]}>
             {t('rooms.lockedPreview.aiCoach.feature1')}
           </Text>
         </View>
 
         <View style={styles.bulletItem}>
-          <Ionicons name="checkmark-circle" size={16} color={colors.syncSynced} />
+          <Ionicons name="checkmark-circle" size={16} color={colors.mint} />
           <Text style={[styles.bulletText, { color: colors.text }]}>
             {t('rooms.lockedPreview.aiCoach.feature2')}
           </Text>
@@ -132,14 +132,14 @@ export function PartnerFinderLockedCard({ onUnlock }: LockedFeatureCardProps) {
       {/* Feature Bullet Points */}
       <View style={[styles.bulletsBox, { backgroundColor: colors.surfaceAlt }]}>
         <View style={styles.bulletItem}>
-          <Ionicons name="checkmark-circle" size={16} color={colors.syncSynced} />
+          <Ionicons name="checkmark-circle" size={16} color={colors.mint} />
           <Text style={[styles.bulletText, { color: colors.text }]}>
             {t('rooms.lockedPreview.partnerFinder.feature1')}
           </Text>
         </View>
 
         <View style={styles.bulletItem}>
-          <Ionicons name="checkmark-circle" size={16} color={colors.syncSynced} />
+          <Ionicons name="checkmark-circle" size={16} color={colors.mint} />
           <Text style={[styles.bulletText, { color: colors.text }]}>
             {t('rooms.lockedPreview.partnerFinder.feature2')}
           </Text>

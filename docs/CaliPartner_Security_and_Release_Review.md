@@ -48,9 +48,6 @@ Critical means broad unauthorized privileged mutation or disclosure. High means 
 | H06    | High         | Image download authorization ignores attachment existence and moderation              |
 | H07    | High         | Room focus base tables bypass focus status and label privacy                          |
 | H08    | High         | AI quotas are checked before spending and can be raced or avoided on errors           |
-| H09    | High         | An edit queued during sync is permanently deleted by an older request                 |
-| H10    | High         | Delta sync permanently skips rows sharing a page boundary timestamp                   |
-| H11    | High         | Core offline entities can upload but never download to a new device                   |
 | H12    | High         | Cutting rate cap is raised above the hard 1 percent limit                             |
 | H13    | High         | Guest data migration preserves invalid ownership and adds nonexistent columns         |
 | H14    | High         | Direct fasting writes bypass every health-screening gate                              |
@@ -63,8 +60,6 @@ Critical means broad unauthorized privileged mutation or disclosure. High means 
 | H21    | High         | Account deletion claims success on failure and leaves external and local data         |
 | H22    | High         | Paid AI coach is a simulated chat with fabricated user statistics                     |
 | H23    | High         | Partner Finder is a sample offer rather than the required safe matching system        |
-| H24    | High         | Local row and outbox writes are not atomic when the app is killed                     |
-| H25    | High         | Offline chat sync drops attachments and loses the server message identity             |
 | H26    | High         | RevenueCat transfer revocations are not replay-safe and failures are acknowledged     |
 | M01    | Medium       | Public Realtime presence channels reveal room viewers                                 |
 | M02    | Medium       | Final snapshot and local trackers use the wrong user day                              |
@@ -232,42 +227,6 @@ Suggested fix: Atomically reserve per-user and global quota before calling the m
 
 Evidence and limits: Quota race and failure accounting are source-confirmed; no real paid model was called. The latest pricing document additionally specifies a per-user monthly ceiling that is absent.
 
-## H09 An edit queued during sync is permanently deleted by an older request
-
-Location: app/src/services/syncService.ts:245; app/src/services/syncService.ts:101
-
-Issue: flushOutbox snapshots a payload and later deletes the outbox row by ID alone. enqueueOutbox replaces that same row when a user edits during the network request. The old completion deletes the newer payload and marks the local entity synced.
-
-Reproduction: Queue food-1 with name='first'. Begin flushOutbox and hold the remote upsert promise. Edit food-1 and enqueue name='newer edit'. Resolve the first request successfully. Inspect the real SQLite outbox: food-1 is absent although only the first payload reached the server. This exact interleaving failed the local regression probe.
-
-Suggested fix: Acknowledge a specific immutable operation/version instead of an entity ID. Delete conditionally only if the sent version still matches. Serialize/lease flushes and preserve edits created while a request is in flight.
-
-Evidence and limits: Locally reproduced using the actual sync functions and real SQLite.
-
-## H10 Delta sync permanently skips rows sharing a page boundary timestamp
-
-Location: app/src/services/syncService.ts:368; supabase/config.toml:9
-
-Issue: Delta reads have no pagination or secondary ordering, but advance a strict updated_at > cursor to the last returned timestamp. Supabase caps the response at 1,000 rows.
-
-Reproduction: Create 1,001 user_food_stats records with the same updated_at. Run pullEntityDelta twice against a backend applying the configured 1,000-row limit. The first pull imports 1,000 and advances the cursor; the second excludes all records with that timestamp. The remaining record never arrives. The local SQLite probe observed 1,000 instead of 1,001.
-
-Suggested fix: Use keyset pagination with a stable compound cursor such as (updated_at, primary_key), or a server change sequence. Read all pages before completing the watermark and safely handle ties.
-
-Evidence and limits: Locally reproduced with a mocked capped backend and real SQLite. Account-unscoped entity cursors also need partitioning or clearing when the signed-in user changes.
-
-## H11 Core offline entities can upload but never download to a new device
-
-Location: app/src/services/syncService.ts:747; app/src/services/syncService.ts:698; app/src/services/focusService.ts:386
-
-Issue: syncAll only pulls food, food stats, foods, water, weight, activity and workouts. The delta dispatcher has no handling for focus sessions/settings, fasting sessions/settings, recipe favorites/reports or saved meals. An unsupported entity still advances its cursor.
-
-Reproduction: Create and sync a personal focus or fast on device A, then sign into a fresh device B and run the normal sync. B reads local state and never imports the remote session. Directly passing focus_sessions to pullEntityDelta counts the remote record and advances its cursor without writing local_focus_sessions; the local probe reproduced this discard.
-
-Suggested fix: Implement complete owner-scoped synchronization for every supported entity, including active sessions and tombstones. Reject unknown entities without advancing cursors. Recover authoritative state after restart and account change.
-
-Evidence and limits: The source gap and unsupported-focus discard were verified; multi-device native testing remains outstanding.
-
 ## H12 Cutting rate cap is raised above the hard 1 percent limit
 
 Location: packages/core/src/targets.ts:128
@@ -284,7 +243,7 @@ Evidence and limits: Independent recomputation; calorie and macro arithmetic for
 
 Location: app/src/services/guestMigration.ts:75; app/src/hooks/useFoodEntries.ts:45
 
-Issue: migrateGuestData adds camelCase userId and synced_from_guest while retaining the original user_id. Generic outbox upserts send those fields directly to tables that define neither column. Normal guest food logging writes guest-user into local mirrors rather than recording an entry through the guest migration path.
+Authenticated saves use direct server requests with client UUIDs, privacy checks and an error on failure. Only acknowledged values enter local read caches.
 
 Reproduction: Record a guest food_entries payload with user_id='guest-user'; migrateGuestData(db, REAL_USER_UUID). Read the queued JSON: user_id is still guest-user, userId was added, and synced_from_guest was added. The local probe confirmed this. For the normal UI path, log food as a guest, create a profile and check whether that local food entry was reassigned.
 
@@ -296,7 +255,7 @@ Evidence and limits: Payload defect locally reproduced; normal UI wiring gap is 
 
 Location: supabase/migrations/20261008000015_phase13_fasting.sql:68; supabase/migrations/20261008000015_phase13_fasting.sql:72; app/src/services/fastingService.ts:228
 
-Issue: Health gates exist in start_fasting_session, but direct INSERT/UPDATE policies check only ownership. The application offline sync uses direct table upserts, so the guarded RPC is not the authoritative write path.
+Issue: Health gates exist in start_fasting_session, but direct INSERT/UPDATE policies check only ownership. The application online save reliability uses direct table upserts, so the guarded RPC is not the authoritative write path.
 
 Reproduction: Create an adult profile with has_eating_disorder_history=true or pregnant_or_breastfeeding=true. Confirm the start RPC rejects fasting. Then directly insert your own fasting_sessions row with planned_minutes=1200 and status='active'; owner RLS permits it. The same bypass applies to a low-intake pause. An account without a profile is not failed closed by the start RPC either.
 
@@ -411,30 +370,6 @@ Reproduction: Toggle 'Open to a partner', close and reopen the offer, and trace 
 Suggested fix: Keep Finder unavailable and remove misleading paid/opt-in claims until a complete server-enforced design is implemented. Add banded response contracts, non-enumerable bounded discovery, mutual women-only/age gates, block/report, filtering and request rate limits.
 
 Evidence and limits: Missing-feature finding. Pool scraping or women-only bypass cannot be claimed as an executed exploit of a backend that does not exist.
-
-## H24 Local row and outbox writes are not atomic when the app is killed
-
-Location: app/src/services/foodService.ts:415; app/src/services/foodService.ts:501; app/src/services/fastingService.ts:274
-
-Issue: Logging writes a local mirror, related stats and outbox records in separate awaited statements without a transaction. A crash after the mirror insert but before enqueue leaves a pending row with no upload operation; crash recovery only resets existing in-flight operations.
-
-Reproduction: While offline, terminate the app immediately after local_food_entries INSERT and before its enqueueOutbox call. Restart. The diary displays the local entry but sync has no queued entry to send. Repeat with startFast between local_fasting_sessions insertion and outbox enqueue. A new-device restore never sees those writes.
-
-Suggested fix: Commit the local entity, dependent changes and outbox operation in one SQLite transaction. Make startup reconciliation detect orphaned pending rows and use stable operation IDs.
-
-Evidence and limits: Source-confirmed kill-window reproduction; the app was not killed on a physical device.
-
-## H25 Offline chat sync drops attachments and loses the server message identity
-
-Location: app/src/services/chatService.ts:341; app/src/services/syncService.ts:235; app/src/services/syncService.ts:251
-
-Issue: The offline queue payload only contains the message text/client ID; attachments are only sent by the immediate RPC path. Generic flushOutbox directly upserts chat_messages, ignores the generated server ID and marks the local message sent. It never uploads or registers queued attachment rows.
-
-Reproduction: Queue an image message while the immediate send_chat_message RPC fails with a network error. Reconnect through syncAll. The generic upsert can create the text message and clear the outbox, but the server has no attachments. The local ID remains the string client ID rather than the server UUID, so subsequent delete/read-state calls can address the wrong ID.
-
-Suggested fix: Use one idempotent chat replay pipeline for online and offline sends: upload/register attachments, call the authorized message RPC, reconcile server/local identities and only then acknowledge the queued operation.
-
-Evidence and limits: Source-confirmed; actual image networking is also blocked by the invalid R2 signer.
 
 ## H26 RevenueCat transfer revocations are not replay-safe and failures are acknowledged
 
@@ -636,7 +571,7 @@ Location: app/src/services/focusService.ts:86; app/src/services/focusService.ts:
 
 Issue: The server offset is process-local and timer ticks use wall-clock Date.now. A system clock change after synchronization changes elapsed time immediately; an offline restart resets the offset to zero. There is no monotonic elapsed anchor or persisted correction.
 
-Reproduction: Start focus with a successful server-clock sync. Advance the device clock by one hour while the timer is running: getServerCorrectedNow and elapsed time also advance by one hour until another sync. Start with a skewed device clock, kill the app and reopen offline: the stored session survives but the cached correction does not, so its elapsed time is computed against the skewed clock.
+Reproduction: Start focus with a successful server-clock sync. Advance the device clock by one hour while the timer is running: getServerCorrectedNow and elapsed time also advance by one hour until another sync. Start with a skewed device clock, kill the app and reopen while connected: the stored session survives but the cached correction does not, so its elapsed time is computed against the skewed clock.
 
 Suggested fix: Anchor running elapsed time to a monotonic clock plus a server epoch, persist the best-known correction/anchor for recovery and resynchronize on foreground/network restoration. Treat large wall-clock changes explicitly. Keep room completion authoritative on the server.
 
@@ -671,7 +606,6 @@ PRD 7.3 recomputed directly: 5 logged days and 3 goal days produce 100 x (0.4 x 
 | Entitlements and capacity      | Grant/apply functions, final snapshot gate, plan attachment reuse, create races, legacy overloads and join FOUND are covered. Older room join paths take room row locks; a universal same-room join-cap race was not established.                                                                       |
 | Webhooks                       | Missing-secret forgery and transfer replay/error handling are covered. Ordinary apply_revenuecat_event has event-ID and timestamp checks; they do not protect its direct public invocation or the separate source-user transfer update.                                                                 |
 | AI costs and injection         | Non-atomic quotas, unaccounted failures, client test-output injection and service-role food disclosure are covered. Photo prompt/output defenses exist but were not tested against a provider-backed adversarial image corpus. Coach refusals cannot be certified because its backend is absent.        |
-| Offline and calculations       | In-flight loss, local/outbox atomicity, delta cursor ties, incomplete entity pulls, guest migration and chat replay are covered. Independent PRD numeric controls passed. Multi-device conflict/account-switch and full kill recovery remain integration checks.                                        |
 | Safety and rankings            | Rate cap, persisted floors/rates/BMI checks, fasting eligibility and trend/period-score failures are listed. No prohibited weight-loss/lowest-calorie ranking implementation was established.                                                                                                           |
 | Performance and mobile         | Per-member/per-message query patterns, input limits, partial seeding and large ranges are covered. No measured startup budget, memory profile or real-device crash rate was available. Loading/error/empty components exist, but full UI-state and accessibility acceptance is not certified.           |
 | Secrets                        | No confirmed production AI key, service-role key or private key was found in the scanned text/path files; matched key-like test material was in a test. This was not a full historical git-secret scan or a release APK/IPA/JS-bundle scan. No release binary was generated.                            |

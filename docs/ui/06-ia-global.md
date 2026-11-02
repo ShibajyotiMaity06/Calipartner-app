@@ -48,7 +48,6 @@ Entry points that are not tabs: Recipes and Ask Coach (from Today, the Log sheet
 |---|---|
 | **Loading** | Skeleton matching final geometry (`CMP-18`), no spinners except inside buttons. |
 | **Empty** | `CMP-17`: one line what, one line why, the action. |
-| **Offline** | Top sync pill "Saved on this phone. Will sync."; logging, workouts, focus and water keep working; chat shows "Sending…" then "Failed, tap to retry". Rooms and Partner Finder show last cached data with "Updated 2 h ago". |
 | **Error (recoverable)** | Inline message that says what happened and the next step, plus Retry. |
 | **Permission denied** | Explains what stops working and a button to open system settings (P02). |
 | **Locked room (plan ended)** | "This room is paused" screen, no blame (J20). |

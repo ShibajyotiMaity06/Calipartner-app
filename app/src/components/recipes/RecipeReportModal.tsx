@@ -120,7 +120,7 @@ export function RecipeReportModal({
 
           {submitted ? (
             <View style={styles.successWrap}>
-              <Ionicons name="checkmark-circle" size={48} color={colors.syncSynced} />
+              <Ionicons name="checkmark-circle" size={48} color={colors.mint} />
               <Text style={[styles.successText, { color: colors.text }]}>
                 {t('recipes.report.success')}
               </Text>

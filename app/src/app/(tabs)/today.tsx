@@ -15,7 +15,6 @@ import {
   foodFromEntrySnapshot,
   type FoodEntry,
   type MealSection,
-  type UserStreak,
 } from '@calipartner/core';
 import { dark, radius, space, Text, homeLayout } from '@calipartner/ui';
 import { HomeSquads } from '@/components/rooms/HomeSquads';
@@ -29,22 +28,16 @@ import { FoodLogModal } from '@/components/diary/FoodLogModal';
 import { MealDetailSheet } from '@/components/diary/MealDetailSheet';
 import { MealSectionCard } from '@/components/diary/MealSectionCard';
 import { QuantityModal } from '@/components/diary/QuantityModal';
-import { StreakDetailSheet } from '@/components/diary/StreakDetailSheet';
-import { SyncStatusBanner } from '@/components/diary/SyncStatusBanner';
 import { WaterAlarmModal } from '@/components/trackers/WaterAlarmModal';
-import { WorkoutHubModal } from '@/components/workouts';
-import { CardioTrackerModal } from '@/components/cardio/CardioTrackerModal';
 import { useAuth } from '@/contexts/AuthContext';
 import { useDiary } from '@/hooks/useDiary';
-import { useAddEntry, useDeleteEntry, useEditEntry } from '@/hooks/useFoodEntries';
+import { useDeleteEntry, useEditEntry } from '@/hooks/useFoodEntries';
 import { useRooms } from '@/hooks/useRooms';
 import { useSteps } from '@/hooks/useSteps';
 import { useTargets } from '@/hooks/useTargets';
 import { useWater } from '@/hooks/useWater';
 import { t } from '@/i18n';
 import { getDb } from '@/db';
-import { getSupabase } from '@/lib/supabase';
-import { fetchUserStreaks } from '@/services/progressService';
 
 const MEAL_SECTIONS: MealSection[] = ['breakfast', 'lunch', 'dinner', 'snacks', 'extra'];
 
@@ -128,7 +121,7 @@ function MiniRing({
 
 export default function TodayScreen() {
   const router = useRouter();
-  const { user, profile } = useAuth();
+  const { profile } = useAuth();
   const {
     currentGoalProfile,
     loading: targetsLoading,
@@ -144,12 +137,8 @@ export default function TodayScreen() {
   );
   const [selectedDate, setSelectedDate] = useState(todayDate);
 
-  // User streak state
-  const [streakData, setStreakData] = useState<UserStreak | null>(null);
-
   // Diary hook for selected date
   const { daySummary, loading: diaryLoading, refresh } = useDiary(selectedDate);
-  const { addEntry } = useAddEntry();
   const { editEntry } = useEditEntry();
   const { deleteEntry } = useDeleteEntry();
 
@@ -166,31 +155,13 @@ export default function TodayScreen() {
   const [inspectingSection, setInspectingSection] = useState<MealSection | null>(null);
   const [showCaloriesDetail, setShowCaloriesDetail] = useState(false);
   const [showDatePicker, setShowDatePicker] = useState(false);
-  const [showStreakDetail, setShowStreakDetail] = useState(false);
   const [showWaterAlarmModal, setShowWaterAlarmModal] = useState(false);
-  const [showWorkoutModal, setShowWorkoutModal] = useState(false);
-  const [showCardioModal, setShowCardioModal] = useState(false);
   const [editingEntry, setEditingEntry] = useState<FoodEntry | null>(null);
   const [copyModalState, setCopyModalState] = useState<{
     visible: boolean;
     mode: 'meal' | 'day';
     section?: MealSection;
   }>({ visible: false, mode: 'day' });
-  const [toastMessage, setToastMessage] = useState<string | null>(null);
-
-  // Fetch streak
-  const loadStreak = useCallback(async () => {
-    try {
-      const data = await fetchUserStreaks(getSupabase());
-      setStreakData(data);
-    } catch {
-      // Offline fallback
-    }
-  }, []);
-
-  useEffect(() => {
-    loadStreak();
-  }, [loadStreak]);
 
   // Date navigation handlers
   const handleShiftDate = (days: number) => {
@@ -231,7 +202,6 @@ export default function TodayScreen() {
 
   const eatenCalories = daySummary.totals.calories;
   const eatenProtein = daySummary.totals.protein;
-  const currentStreak = streakData?.current_streak ?? 0;
 
   const getContextualQuestion = () =>
     t('repairs.mealQuestion', { meal: t(`diary.sections.${currentSuggestedMeal}`) });
@@ -262,26 +232,26 @@ export default function TodayScreen() {
         }
       >
         <MonthlyPlanCheckIn />
-        <SyncStatusBanner />
 
         {/* 2. Greeting & Dynamic Timezone Question */}
         <View style={styles.greetingSection}>
-          <Text variant="heading" color={dark.textHi} style={styles.greetingTitle}>
-            {t('homeRefresh.hello', { name: userName })}
-          </Text>
-          {streakData && currentStreak > 0 && (
+          <View style={styles.greetingRow}>
+            <Text variant="heading" color={dark.textHi} style={styles.greetingTitle}>
+              {t('homeRefresh.hello', { name: userName })}
+            </Text>
             <Pressable
-              onPress={() => setShowStreakDetail(true)}
-              style={{ minHeight: homeLayout.touchSize, justifyContent: 'center' }}
+              onPress={() => router.push('/coach')}
               accessibilityRole="button"
-              accessibilityLabel={t('homeRefresh.personalStreak', { count: currentStreak })}
-              testID="home-personal-streak"
+              accessibilityLabel={t('homeRefresh.coach')}
+              testID="home-coach-icon"
+              style={({ pressed }) => [styles.coachButton, pressed && { opacity: 0.7 }]}
             >
-              <Text variant="bodyS" color={dark.textMid}>
-                {t('homeRefresh.personalStreak', { count: currentStreak })}
+              <Ionicons name="medkit-outline" size={homeLayout.iconSize} color={dark.textHi} />
+              <Text variant="micro" color={dark.textMid}>
+                {t('homeRefresh.ai')}
               </Text>
             </Pressable>
-          )}
+          </View>
           <Text variant="body" color={dark.textMid} style={styles.greetingQuestion}>
             {getContextualQuestion()}
           </Text>
@@ -294,103 +264,6 @@ export default function TodayScreen() {
           onRetry={() => void refreshRooms()}
           visible={homeVisible}
         />
-        <Pressable
-          style={styles.squadCard}
-          onPress={() => router.push('/coach')}
-          accessibilityRole="button"
-          accessibilityLabel={t('homeRefresh.coach')}
-          testID="home-coach-card"
-        >
-          <Text variant="heading">{t('homeRefresh.coach')} · Pro</Text>
-          <Text variant="bodyS" color={dark.textMid}>
-            {t('homeRefresh.coachHint')}
-          </Text>
-        </Pressable>
-        {/* 3. {t('homeRefresh.activity')} (2x2 Grid: Cardio, Workout, Water, Food Logging) */}
-        <View style={styles.sectionBlock}>
-          <Text variant="heading" color={dark.textHi} style={styles.sectionHeaderTitle}>
-            {t('homeRefresh.activity')}
-          </Text>
-
-          <View style={styles.activityGrid}>
-            {/* Cardio */}
-            <Pressable
-              testID="activity-card-cardio"
-              style={({ pressed }) => [styles.activityTile, pressed && styles.tilePressed]}
-              onPress={() => setShowCardioModal(true)}
-              accessibilityRole="button"
-              accessibilityLabel="Cardio activity"
-            >
-              <View style={styles.activityTileTop}>
-                <View style={[styles.activityIconCircle, { backgroundColor: dark.s2 }]}>
-                  <Ionicons name="walk" size={20} color={dark.apricot} />
-                </View>
-                <Ionicons name="chevron-forward" size={16} color={dark.textLo} />
-              </View>
-              <Text variant="body" color={dark.textHi} style={styles.activityLabel}>
-                {t('homeRefresh.cardio')}
-              </Text>
-            </Pressable>
-
-            {/* Workout */}
-            <Pressable
-              testID="activity-card-workout"
-              style={({ pressed }) => [styles.activityTile, pressed && styles.tilePressed]}
-              onPress={() => setShowWorkoutModal(true)}
-              accessibilityRole="button"
-              accessibilityLabel="Workout activity"
-            >
-              <View style={styles.activityTileTop}>
-                <View style={[styles.activityIconCircle, { backgroundColor: dark.s2 }]}>
-                  <Ionicons name="barbell" size={20} color={dark.iris} />
-                </View>
-                <Ionicons name="chevron-forward" size={16} color={dark.textLo} />
-              </View>
-              <Text variant="body" color={dark.textHi} style={styles.activityLabel}>
-                {t('homeRefresh.workout')}
-              </Text>
-            </Pressable>
-
-            {/* Water */}
-            <Pressable
-              testID="activity-card-water"
-              style={({ pressed }) => [styles.activityTile, pressed && styles.tilePressed]}
-              onPress={() => setShowWaterAlarmModal(true)}
-              accessibilityRole="button"
-              accessibilityLabel="Water activity and phone alarms"
-            >
-              <View style={styles.activityTileTop}>
-                <View style={[styles.activityIconCircle, { backgroundColor: dark.s2 }]}>
-                  <Ionicons name="water" size={20} color={dark.teal} />
-                </View>
-                <Ionicons name="chevron-forward" size={16} color={dark.textLo} />
-              </View>
-              <Text variant="body" color={dark.textHi} style={styles.activityLabel}>
-                {t('homeRefresh.water')}
-              </Text>
-            </Pressable>
-
-            {/* Food Logging */}
-            <Pressable
-              testID="activity-card-food-logging"
-              style={({ pressed }) => [styles.activityTile, pressed && styles.tilePressed]}
-              onPress={() => setActiveLogSection(currentSuggestedMeal)}
-              accessibilityRole="button"
-              accessibilityLabel="Food logging"
-            >
-              <View style={styles.activityTileTop}>
-                <View style={[styles.activityIconCircle, { backgroundColor: dark.s2 }]}>
-                  <Ionicons name="restaurant" size={20} color={dark.mint} />
-                </View>
-                <Ionicons name="chevron-forward" size={16} color={dark.textLo} />
-              </View>
-              <Text variant="body" color={dark.textHi} style={styles.activityLabel}>
-                {t('homeRefresh.food')}
-              </Text>
-            </Pressable>
-          </View>
-        </View>
-
         {/* 4. {t('homeRefresh.yourDay')} (Steps, Calories, Water, Protein - with View Details >) */}
         <View style={styles.sectionBlock}>
           <View style={styles.sectionHeaderRow}>
@@ -523,6 +396,7 @@ export default function TodayScreen() {
               {MEAL_SECTIONS.map((sec) => (
                 <MealSectionCard
                   key={sec}
+                  compact
                   section={sec}
                   summary={daySummary.sections[sec]}
                   isCurrentMealSuggestion={currentSuggestedMeal === sec}
@@ -537,8 +411,7 @@ export default function TodayScreen() {
           )}
         </View>
 
-        {/* Floating Bottom Spacer for Navigation Bar */}
-        <View style={{ height: 32 }} />
+        <View style={{ height: space[8] }} />
 
         {/* MODALS */}
         {/* 1. Food Log Modal */}
@@ -565,25 +438,6 @@ export default function TodayScreen() {
           selectedDate={selectedDate}
         />
 
-        {/* 3. Workout Suite Hub Modal */}
-        <WorkoutHubModal
-          visible={showWorkoutModal}
-          onClose={() => {
-            setShowWorkoutModal(false);
-            void refresh();
-          }}
-        />
-
-        {/* 3.5 Dedicated Cardio Tracker Modal (Walking & Running GPS) */}
-        <CardioTrackerModal
-          visible={showCardioModal}
-          onClose={() => {
-            setShowCardioModal(false);
-            void refresh();
-          }}
-          selectedDate={selectedDate}
-        />
-
         {/* 4. Date Picker Sheet */}
         <DatePickerSheet
           visible={showDatePicker}
@@ -593,14 +447,6 @@ export default function TodayScreen() {
             setShowDatePicker(false);
           }}
           onClose={() => setShowDatePicker(false)}
-        />
-
-        {/* 5. Streak Detail Sheet */}
-        <StreakDetailSheet
-          visible={showStreakDetail}
-          currentStreak={currentStreak}
-          longestStreak={streakData?.longest_streak ?? currentStreak}
-          onClose={() => setShowStreakDetail(false)}
         />
 
         {/* 6. Calories & Macros Detail Sheet */}
@@ -681,35 +527,6 @@ export default function TodayScreen() {
             void refresh();
           }}
         />
-
-        {/* 10. Water Alarm & Logging Modal */}
-        <WaterAlarmModal
-          visible={showWaterAlarmModal}
-          onClose={() => {
-            setShowWaterAlarmModal(false);
-            void refreshWater();
-          }}
-          selectedDate={selectedDate}
-        />
-
-        {/* 11. Workout Hub Modal */}
-        <WorkoutHubModal
-          visible={showWorkoutModal}
-          onClose={() => {
-            setShowWorkoutModal(false);
-            void refresh();
-          }}
-        />
-
-        {/* 12. Cardio Tracker Modal */}
-        <CardioTrackerModal
-          visible={showCardioModal}
-          onClose={() => {
-            setShowCardioModal(false);
-            void refreshSteps();
-          }}
-          selectedDate={selectedDate}
-        />
       </ScrollView>
     </View>
   );
@@ -725,29 +542,19 @@ const styles = StyleSheet.create({
     paddingTop: space[5],
     paddingBottom: 80,
   },
-  topBrandBar: {
-    flexDirection: 'row',
+  greetingRow: { flexDirection: 'row', alignItems: 'center', gap: space[3] },
+  coachButton: {
+    minWidth: homeLayout.touchSize,
+    minHeight: homeLayout.touchSize,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: space[3],
-  },
-  brandTitleRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-  },
-  brandName: {
-    fontSize: 22,
-    fontWeight: '800',
-    letterSpacing: -0.5,
-  },
-  brandLeaf: {
-    fontSize: 18,
+    gap: space[1],
   },
   greetingSection: {
     marginBottom: space[4],
   },
   greetingTitle: {
+    flex: 1,
     fontSize: 26,
     fontWeight: '800',
     letterSpacing: -0.5,
@@ -771,42 +578,6 @@ const styles = StyleSheet.create({
     letterSpacing: -0.3,
     marginBottom: space[3],
   },
-  activityGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: space[3],
-  },
-  activityTile: {
-    width: '48%',
-    backgroundColor: dark.s1,
-    borderRadius: radius.card,
-    borderWidth: 1,
-    borderColor: dark.hairline,
-    padding: space[3],
-    justifyContent: 'space-between',
-    minHeight: 90,
-  },
-  tilePressed: {
-    opacity: 0.8,
-    transform: [{ scale: 0.98 }],
-  },
-  activityTileTop: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: space[3],
-  },
-  activityIconCircle: {
-    width: 38,
-    height: 38,
-    borderRadius: 19,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  activityLabel: {
-    fontSize: 15,
-    fontWeight: '700',
-  },
   progressRingsRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',
@@ -827,82 +598,6 @@ const styles = StyleSheet.create({
     gap: space[1],
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  ringCenterContent: {
-    position: 'absolute',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  ringLabel: {
-    marginTop: 6,
-    fontWeight: '600',
-    fontSize: 12,
-  },
-  squadCard: {
-    backgroundColor: dark.s1,
-    borderRadius: radius.card,
-    borderWidth: 1,
-    borderColor: dark.hairline,
-    padding: space[4],
-  },
-  squadHeaderRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: space[3],
-  },
-  squadTitleLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-  },
-  squadContentRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  squadAvatarsRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    width: 60,
-  },
-  avatarFirst: {
-    zIndex: 3,
-  },
-  avatarSecond: {
-    marginLeft: -12,
-    zIndex: 2,
-  },
-  avatarThird: {
-    marginLeft: -12,
-    zIndex: 1,
-  },
-  squadMessageCol: {
-    flex: 1,
-    marginHorizontal: space[2],
-  },
-  squadProgressTrack: {
-    height: 6,
-    backgroundColor: dark.s2,
-    borderRadius: radius.full,
-    marginTop: 6,
-    overflow: 'hidden',
-  },
-  squadProgressFill: {
-    height: '100%',
-    backgroundColor: dark.apricot,
-    borderRadius: radius.full,
-  },
-  squadStreakPill: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    backgroundColor: dark.s2,
-    paddingHorizontal: space[3],
-    paddingVertical: space[2],
-    borderRadius: radius.control,
-    borderWidth: 1,
-    borderColor: dark.hairline,
   },
   dateSelectorRow: {
     flexDirection: 'row',

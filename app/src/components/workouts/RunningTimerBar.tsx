@@ -62,7 +62,7 @@ export function RunningTimerBar({
         <View
           style={[
             styles.statusDot,
-            { backgroundColor: isRunning ? colors.syncSynced : colors.syncPending },
+            { backgroundColor: isRunning ? colors.textMuted : colors.accent },
           ]}
         />
         <View style={styles.textWrap}>

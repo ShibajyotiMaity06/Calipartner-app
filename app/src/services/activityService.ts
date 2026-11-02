@@ -9,11 +9,11 @@ import {
 } from '@calipartner/core';
 import { createLogger } from '@/lib/logger';
 import { generateClientUuid } from './foodService';
-import { enqueueOutbox, type SyncDb } from './syncService';
+import { withOnlineSave, saveRemote, type LocalDb } from './accountDataService';
 
 const log = createLogger('activityService');
 
-export async function getActivityWeek(db: SyncDb, userId: string, endDate: string) {
+export async function getActivityWeek(db: LocalDb, userId: string, endDate: string) {
   return Promise.all(
     Array.from({ length: 7 }, async (_, index) => {
       const localDate = addDaysToDateString(endDate, index - 6);
@@ -55,7 +55,7 @@ function mapRowToActivityDay(row: RawActivityRow): ActivityDay {
  * Fetches the activity record for a specific user and local date.
  */
 export async function getActivityDay(
-  db: SyncDb,
+  db: LocalDb,
   userId: string,
   localDate: string,
 ): Promise<ActivityDay | null> {
@@ -74,7 +74,7 @@ export async function getActivityDay(
  * Platform-measured distance beats calculated distance.
  * Merge-safe: one row per user per local date.
  */
-const activityWrites = new WeakMap<SyncDb, Map<string, Promise<ActivityDay>>>();
+const activityWrites = new WeakMap<LocalDb, Map<string, Promise<ActivityDay>>>();
 
 export function upsertActivityDay(
   ...args: Parameters<typeof saveActivityDay>
@@ -88,7 +88,7 @@ export function upsertActivityDay(
   const key = `${userId}/${input.localDate}`;
   const task = (queue.get(key) ?? Promise.resolve())
     .catch(() => {})
-    .then(() => saveActivityDay(...args));
+    .then(() => withOnlineSave(db, (transaction) => saveActivityDay(transaction, userId, input)));
   queue.set(key, task);
   void task
     .finally(() => {
@@ -99,7 +99,7 @@ export function upsertActivityDay(
 }
 
 async function saveActivityDay(
-  db: SyncDb,
+  db: LocalDb,
   userId: string,
   input: {
     localDate: string;
@@ -132,13 +132,13 @@ async function saveActivityDay(
   await db.runAsync(
     `INSERT INTO local_activity_days (
       id, user_id, local_date, steps, distance_m, source, active_calories, created_at, updated_at, deleted_at, sync_state
-    ) VALUES (?, ?, ?, ?, ?, ?, 0, ?, ?, NULL, 'pending')
+    ) VALUES (?, ?, ?, ?, ?, ?, 0, ?, ?, NULL, 'synced')
     ON CONFLICT (user_id, local_date) DO UPDATE SET
       steps = excluded.steps,
       distance_m = excluded.distance_m,
       source = excluded.source,
       updated_at = excluded.updated_at,
-      sync_state = 'pending'`,
+      sync_state = 'synced'`,
     [
       recordId,
       userId,
@@ -151,7 +151,7 @@ async function saveActivityDay(
     ],
   );
 
-  await enqueueOutbox(db, {
+  await saveRemote(db, {
     id: recordId,
     entity: 'activity_days',
     operation: 'upsert',

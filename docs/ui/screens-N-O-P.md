@@ -2,7 +2,7 @@
 
 #### N01 · Me · SET-1, SUB-14, FND-3 · P0
 **Purpose:** profile, goals and everything you can change.
-**Layout:** profile header (avatar 72, nickname, @username, edit) · **Plan card** ("Basic room plan, 3 of 5 people" or "No plan. Free tracking is yours forever." with a quiet "See plans") · grouped lists, each in a card: **My goals** (goal, rate, step and water goals, health answers) · **Privacy** (N05) · **Find a partner** (status "Open" / "Off") · **Fasting** · **Focus** · **AI coach history** · **Notifications** · **Health sync** · **Units and language** · **Appearance** · **Help and feedback** (including "Rate CaliPartner") · **About and legal** · **Sign out**.
+**Layout:** profile header (avatar 72, nickname, @username, edit) · **Plan card** ("Basic room plan, 3 of 5 people" or "No plan. Free tracking is yours forever." with a quiet "See plans") · grouped lists, each in a card: **My goals** (goal, rate, step and water goals, health answers) · **Privacy** (N05) · **Find a partner** (status "Open" / "Off") · **Fasting** · **Focus** · **AI coach history** · **Notifications** · **Health connection** · **Units and language** · **Appearance** · **Help and feedback** (including "Rate CaliPartner") · **About and legal** · **Sign out**.
 **Interactions:** each row opens its own screen; the requests inbox has a bell in the header with a count.
 **States:** guest → banner "Create an account to keep your data and join rooms".
 
@@ -22,7 +22,7 @@
 | N09 | Notifications | Per-type switches (meal, water, fasting, partner logged, workout finished, nudge, chat, invitation, focus, partner finder), per-room chat mute, quiet hours, "Pause all" | Hide message previews option | NTF-1 to NTF-3 |
 | N10 | Units, language, region | Metric / imperial, English / Hindi, time zone | Language switches instantly | SET-1 |
 | N11 | Appearance and accessibility | Theme (Dark, Light when shipped, System), Reduce motion override, Haptics, Text size preview | Mirrors system settings by default | 4.5, 8.4 |
-| N12 | Health sync | Status (connected, last synced), what we read, Disconnect, Fix step counting (E04) | — | SET-1, STP-1 |
+| N12 | Health connection | Status (connected, last synced), what we read, Disconnect, Fix step counting (E04) | — | SET-1, STP-1 |
 | N13 | Help centre | Search, topics, contact support | Opens web view or in-app articles | SET-2 |
 | N14 | Report / feedback | One form with a type (Report a problem, Wrong food entry, Send feedback), text, optional log attachment | Feedback is separate from the rating prompt | SET-2, RAT-6 |
 | N15 | About and legal | Terms, privacy policy, health disclaimer, community guidelines, data attributions (Open Food Facts, IFCT), version | — | SET-3 |
@@ -62,7 +62,6 @@ The paywall is a **room plan** (PRD 6.18). The room is billed; the host or a spo
 
 | ID | Screen | Layout | Key content and actions | Notes |
 |---|---|---|---|---|
-| P01 | Offline and sync | Pill at the top "Saved on this phone. Will sync."; a "Sync status" row in Me with queue length | Never blocks logging | LOG-9 |
 | P02 | Permission denied | Sheet: what stops working, what still works, **Open settings** | Used for camera, notifications, Health | ONB-7 |
 | P03 | Full-screen error / maintenance / update | Calm centred message, retry, "Update the app" for forced updates | Voice rules apply | — |
 | P04 | Universal report sheet | Reason list, note, confirm; used for message, user, recipe, food entry | One component everywhere | CHT-8, USR-9 |

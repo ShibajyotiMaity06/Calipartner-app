@@ -51,10 +51,10 @@ Final owner-approved scope, 24 October 2026. This report covers the room, onboar
 
 ## Offline use and account safety
 
-- Social-profile edits, friend requests, responses, blocks and reports are saved in an account-scoped outbox before syncing.
+- Social-profile edits, friend requests, responses, blocks and reports are saved in an directly to the server before confirming success.
 - Retries keep the same request/report identifiers. The server checks the live plan and quota when syncing.
 - Cached views are labelled; pending and failed actions have visible status.
-- Queued blocks hide the person locally while waiting to sync. Authorization failures never fall back to an old cached profile.
+- Blocks take effect after server acknowledgement. Authorization failures never fall back to an old cached profile.
 - Account changes close social modals and clear screen drafts. Queued actions remain bound to the account that created them.
 - Later profile edits supersede stale offline retries. Personal tracking continues to use the existing offline flow.
 

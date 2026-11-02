@@ -5,11 +5,11 @@ import { useNetworkStatus } from '@/hooks/useNetworkStatus';
 import { getSupabase } from '@/lib/supabase';
 import { clearTrackingDataForReset } from '@/db';
 import { applyAccountDataReset } from '@/services/accountDataReset';
-import { registerAccountSyncCheck } from '@/services/accountSyncGate';
+import { registerAccountWriteCheck } from '@/services/accountDataGate';
 import { ErrorState } from './ErrorState';
 import { LoadingState } from './LoadingState';
 
-/** Keep stale targets/outboxes unmounted until the server's reset generation has been checked. */
+/** Keep stale targets unmounted until the server's reset generation has been checked. */
 export function AccountDataResetGate({ children }: { children: ReactNode }) {
   const { user, isLoading } = useAuth();
   const { isOnline } = useNetworkStatus();
@@ -47,7 +47,7 @@ export function AccountDataResetGate({ children }: { children: ReactNode }) {
       })
       .catch((failure: unknown) => {
         if (mounted.current) {
-          // Cached offline use remains available; queued writes still await a successful check.
+          // Preserve navigation during an outage; saves still require a successful account check.
           const unavailable =
             failure instanceof Error &&
             'code' in failure &&
@@ -65,7 +65,7 @@ export function AccountDataResetGate({ children }: { children: ReactNode }) {
     return request;
   }, [isOnline, userId]);
 
-  useEffect(() => registerAccountSyncCheck(verify), [verify]);
+  useEffect(() => registerAccountWriteCheck(verify), [verify]);
 
   useEffect(() => {
     const listener = AppState.addEventListener('change', (status) => {

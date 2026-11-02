@@ -1,13 +1,16 @@
 # CaliPartner: Product Requirements Document (PRD)
 
-> Owner request, 1 November 2026: implement the supplied Home, Log, Squad, Progress, Check-in, Food and Pro meal-description references with real data, horizontal squad browsing and trailing/top create-or-invite actions. Support two-person squads through the existing Pro limit of 20, preserving quotas, privacy and paid gates. The owner explicitly authorized the backend/hooks needed for quick check-ins and AI meal-description logging. Import all 267 supplied reci.txt recipes with their original fields, field-based filters and no image placeholders. Necessary targeted core, hook, sync, migration and Edge Function changes are authorized for this scope. Keep Focus retired and the latest Plus Jakarta Sans font decision. No fabricated activity, statistics, AI answers or food-catalog mappings. Unspecified recipe meal types/difficulty stay unspecified; nutrition retains its supplied portion label. This supersedes conflicting UI-only and phase restrictions for this request.
+> Owner request, 2 November 2026: use online-only signed-in reads and saves. Retire automatic background upload, local retry queues, conflict merging, manual sync actions and all sync status UI. Failed network saves must report failure and remain unsaved; retries use client-generated IDs. Keep local read caches and guest setup only where required, without promising offline logging. Preserve database privacy, entitlements, safety, existing records and immutable migration history. Simplify Home to greeting and time-based meal prompt, a top-right AI coach icon, aligned equal-size squad cards, Your part today, and compact meal rows (four nutrition values in one row only when logged). Remove the personal streak subtitle, Today with squad feed, coach card and Log something tiles. Present food-log methods clearly and repair Home and device Back navigation. Necessary targeted hooks, services, local database, backend retirement and documentation changes supersede earlier offline-first, UI-only and phase restrictions for this request.
 
 
-> Owner repairs, 30 October 2026: fix browser database quota/reopen failures; room self-data, independent privacy switches, custom recipient-selected nudges, privacy-checked browsing and copying of a partner's meals today, chat photo/video display, challenge loading, and back navigation. Add simultaneous comparison of multiple selected room members (including five or ten) using percent of each person's own goal. Use Plus Jakarta Sans consistently for English, including legacy room text. Remove the partner-preview entry points and redundant Open chat quick action. Replace the demo workout log with category → exercise → entered sets logging through the existing offline database/outbox and optional room-selected sharing after saving. Keep the home meal prompt and highlighted meal consistent. Necessary targeted view, hook, service, database migration and regression-test repairs are authorized; preserve privacy, entitlements, safety and product quotas. This supersedes conflicting legacy UI-only, font, nudge-template, single-comparison and phase restrictions for these repairs.
+> Owner request, 1 November 2026: implement the supplied Home, Log, Squad, Progress, Check-in, Food and Pro meal-description references with real data, horizontal squad browsing and trailing/top create-or-invite actions. Support two-person squads through the existing Pro limit of 20, preserving quotas, privacy and paid gates. The owner explicitly authorized the backend/hooks needed for quick check-ins and AI meal-description logging. Import all 267 supplied reci.txt recipes with their original fields, field-based filters and no image placeholders. Necessary targeted core, hook, service, migration and Edge Function changes are authorized for this scope. Keep Focus retired and the latest Plus Jakarta Sans font decision. No fabricated activity, statistics, AI answers or food-catalog mappings. Unspecified recipe meal types/difficulty stay unspecified; nutrition retains its supplied portion label. This supersedes conflicting UI-only and phase restrictions for this request.
+
+
+> Owner repairs, 30 October 2026: fix browser database quota/reopen failures; room self-data, independent privacy switches, custom recipient-selected nudges, privacy-checked browsing and copying of a partner's meals today, chat photo/video display, challenge loading, and back navigation. Add simultaneous comparison of multiple selected room members (including five or ten) using percent of each person's own goal. Use Plus Jakarta Sans consistently for English, including legacy room text. Remove the partner-preview entry points and redundant Open chat quick action. Replace the demo workout log with category → exercise → entered sets logging through the online save services and optional room-selected sharing after saving. Keep the home meal prompt and highlighted meal consistent. Necessary targeted view, hook, service, database migration and regression-test repairs are authorized; preserve privacy, entitlements, safety and product quotas. This supersedes conflicting legacy UI-only, font, nudge-template, single-comparison and phase restrictions for these repairs.
 
 > Owner correction, 29 October 2026: remove the Focus Time feature everywhere. Remove personal and shared timers, routes, controls, progress, goals, privacy options, notification scheduling, plan promises and Focus-based challenges. Targeted app/core/backend changes and new retirement migrations are authorized. Preserve historical records privately, disable retired client APIs and stop scheduled work; do not erase unrelated data or change other features. This supersedes every earlier Focus requirement and the earlier instruction to keep it in Log.
 
-> Owner repairs, 29 October 2026: repair weight logging, friend requests, invitation sender names, challenge loading and saved-goal refresh. Use skeleton loading states, abbreviate measurement units, keep Focus in the Log menu and remove its duplicate privacy section. Add settings for active Plus/Pro users to enter custom macro grams and explicitly override current goals or keep the saved goals unchanged. Necessary targeted view, hook, service, core validation and migration repairs are authorized; retain offline queues, database privacy, entitlements and safety rules.
+> Owner repairs, 29 October 2026: repair weight logging, friend requests, invitation sender names, challenge loading and saved-goal refresh. Use skeleton loading states, abbreviate measurement units, keep Focus in the Log menu and remove its duplicate privacy section. Add settings for active Plus/Pro users to enter custom macro grams and explicitly override current goals or keep the saved goals unchanged. Necessary targeted view, hook, service, core validation and migration repairs are authorized; retain database privacy, entitlements and safety rules.
 
 > Owner correction, 29 October 2026: add outer spacing to Challenges and repair invitation links so senders and existing members see their own invitation or room, while recipients explicitly accept before joining. Test both identities, retries and exact-room navigation. A read-only invitation-state projection and focused route/service/database repairs are authorized; preserve membership, privacy and hosting quotas.
 
@@ -27,7 +30,7 @@
 
 > Owner-requested brand and access repairs, 27 October 2026: use the supplied static SVG across logos/icons; audit and enforce the existing paid feature matrix, with AI now restricted to paid Pro under the later owner instruction; simplify purchase success to the plan-unlocked title; clarify room capacity per room and existing-subscription management. Necessary UI, service, core and backend repairs are in scope; unrelated features remain excluded.
 
-> Owner-requested repairs, 27 October 2026: repair barcode focus/capture and narrow-screen layouts, reset the Log hub on every opening, remove decorative stars, repair room invitation notifications against the current host schema, preserve scan nutrition including fibre/sugar/sodium/saturated fat/cholesterol, and restrict advanced scan displays to active Plus/Pro with a locked upgrade preview for Free. Replace fabricated home squad content with actual room state. This scope authorizes the necessary view, core, sync, database and Edge Function repairs only; unrelated phases remain excluded.
+> Owner-requested repairs, 27 October 2026: repair barcode focus/capture and narrow-screen layouts, reset the Log hub on every opening, remove decorative stars, repair room invitation notifications against the current host schema, preserve scan nutrition including fibre/sugar/sodium/saturated fat/cholesterol, and restrict advanced scan displays to active Plus/Pro with a locked upgrade preview for Free. Replace fabricated home squad content with actual room state. This scope authorizes the necessary view, core, service, database and Edge Function repairs only; unrelated phases remain excluded.
 
 > Owner-requested corrections, 26 October 2026: all signed-in users can browse discoverable profiles with one goal filter (bulk, cut or maintain) and universal username search; Free remains limited to three friend requests per rolling seven days. Onboarding shows a random real profile. Squad creation replaces the separate pair entry point, inviting accepted friends under the existing host quotas (Free one friend, Plus four, Pro nineteen). Friendship still requires explicit room invitation acceptance before sharing. Friend sends and acceptance use the existing request push channel and inbox badges. Remove the workout hub Cardio shortcut and floating Pro AI badge; use a green food icon and neutral browser chrome. These changes supersede conflicting phase, paid-discovery and UI-only restrictions for this request.
 
@@ -238,7 +241,7 @@ Primary audience at launch: adults 18+, gym-going and fitness-motivated, India f
 
 | ID | Requirement | Priority |
 |---|---|---|
-| LOG-1 | Search foods. Result order: Previously logged, My Foods, then database results. Previously logged items and My Foods must work offline. | P0 |
+| LOG-1 | Search foods. Result order: Previously logged, My Foods, then database results. Previously logged items and My Foods load from your account. | P0 |
 | LOG-2 | Barcode scan using Open Food Facts and other configured sources. If a barcode is not found, offer to create a custom food and attach the barcode to it. | P0 |
 | LOG-3 | AI photo logging: user takes a photo, the app suggests foods and portions, and the user reviews and edits before saving. Results are labelled as estimates. Daily caps apply (Section 7.7). | P0 |
 | LOG-4 | Custom foods: name, serving size and unit, calories, protein, carbs, fat (fibre optional). Saved to My Foods and reusable later with a changed quantity. | P0 |
@@ -246,7 +249,7 @@ Primary audience at launch: adults 18+, gym-going and fitness-motivated, India f
 | LOG-6 | Five meal sections: Breakfast, Lunch, Dinner, Snacks and Extra. Extra is for anything outside the main mealtimes (pre or post-workout shake, supplements, late-night items). The default section is chosen from the time of day. | P0 |
 | LOG-7 | Edit or delete any entry. Copy a meal or an entire day to another meal or date. | P0 |
 | LOG-8 | My meals: combine several foods into one reusable personal item. (Our own recipe library is covered in 6.21.) | P0 |
-| LOG-9 | Logging works offline and syncs when the connection returns. | P0 |
+| LOG-9 | Logging requires an internet connection; a failed request is not shown as saved. Explicit retries retain client IDs. | P0 |
 | LOG-10 | Each entry stores a snapshot of its nutrient values so later database corrections or custom-food edits do not change history. | P0 |
 | LOG-11 | Indian and regional foods are included via IFCT and curated additions, with common household portions. | P0 |
 | LOG-12 | Previously logged foods: a dedicated tab in the Log sheet listing every food the user has logged before (custom foods and database foods). Sort by Recent, Frequent or A to Z, filter by meal section, and search within it. | P0 |
@@ -325,7 +328,7 @@ Users log what they trained today, inside the same app. The tracker covers stren
 | WRK-7 | Workout history as a list and a calendar, with edit and delete. | P0 |
 | WRK-8 | Per-workout summary: duration, total volume (7.8) and an informational calorie estimate (MET-based, 7.8). The estimate is never added to the calorie target. | P0 |
 | WRK-9 | Workout status appears in the room: "Worked out today" with type and duration, plus a feed event, according to privacy settings (6.13). | P0 |
-| WRK-10 | Workout works offline and syncs later. A simple running timer is available during a session. | P0 |
+| WRK-10 | Workout logging saves online. A simple running timer is available during a session. | P0 |
 | WRK-11 | Saved routines (templates) and starting a workout from a routine. | P1 |
 | WRK-12 | Rest timer between sets with a notification. | P1 |
 | WRK-13 | Automatic personal-record detection (heaviest weight, best estimated 1RM, most reps) with a celebration in the room feed. | P1 |
@@ -404,7 +407,7 @@ Chat exists only inside a room and only room members can read or send. There is 
 | CHT-2 | Members can send images from the camera or gallery. Up to 5 images per message, each up to 10 MB original (JPEG, PNG, HEIC, WebP). Images are compressed on the device before upload (longest side about 1,600 px) and show upload progress with retry. | P0 |
 | CHT-3 | Location data (EXIF) is stripped from every uploaded image on the device and again on the server. | P0 |
 | CHT-4 | Full-screen image viewer with pinch to zoom and save to gallery. | P0 |
-| CHT-5 | Messages show sender nickname and avatar, timestamp, and delivery status (sending, sent, failed with retry). Messages are queued offline and sent when the connection returns. | P0 |
+| CHT-5 | Messages show sender nickname and avatar, timestamp, and delivery status (sending, sent, failed with retry). Failed sends require an explicit retry using the same client ID. | P0 |
 | CHT-6 | Real-time delivery to online members; push notifications to offline members, with a per-room mute and an unread badge on the Room tab. | P0 |
 | CHT-7 | A user can delete their own messages. A deleted message shows "Message deleted" to others and the stored image is removed. | P0 |
 | CHT-8 | Report a message, and block or mute a member. Reported content goes to a moderation queue. Terms of use are accepted before the first message. | P0 |
@@ -635,7 +638,7 @@ India figures assume the price includes 18% GST and the store keeps 15%. Interna
 
 | ID | Requirement | Priority |
 |---|---|---|
-| SET-1 | Units (metric or imperial), language, time zone, notification settings, health sync status, username and discoverability. | P0 |
+| SET-1 | Units (metric or imperial), language, time zone, notification settings, health connection status, username and discoverability. | P0 |
 | SET-2 | Help centre, contact support, report a problem (with log attachment), and report a wrong food entry. | P0 |
 | SET-3 | Privacy policy, terms, health disclaimer, community guidelines, and data-source attributions (e.g., Open Food Facts). | P0 |
 
@@ -674,7 +677,7 @@ A library of original recipes written by the CaliPartner team. It is not user-ge
 | RCP-4 | Browse and search by name, ingredient and tag. Filters: meal type, diet, calorie range, minimum protein, time and cuisine. | P0 |
 | RCP-5 | Servings scaler: changing servings scales the ingredient amounts; nutrition per serving stays the same. | P0 |
 | RCP-6 | "Log this recipe": choose servings (for example 1.5) and a meal section, creating a diary entry with a nutrient snapshot. Shared-meal tagging works as for any food. | P0 |
-| RCP-7 | Favourites and recently viewed. Saved recipes work offline (text cached locally, images cached after first view). | P0 |
+| RCP-7 | Favourites and recently viewed. Saved recipes load while connected. | P0 |
 | RCP-8 | Authoring workflow: the team writes recipes in a structured file (JSON or CSV) or admin tool. A validation script checks that every ingredient maps to a food, units are valid, nutrition computes and an image exists. Recipes have draft and published status and appear without an app update. | P0 |
 | RCP-9 | Report an error in a recipe. | P0 |
 | RCP-10 | All recipes are free for every user (proposed). The AI coach can recommend them. | P0 |
@@ -777,7 +780,7 @@ A focus timer for anyone who studies or works. It is a personal tool that anyone
 - **Stopwatch:** open-ended. It counts up until the person (or the session starter) ends it.
 - **Timer:** counts down from a chosen length (for example 25, 50 or 90 minutes, or a custom value) and ends for everyone at the same moment.
 
-**Personal focus:** free for everyone, works offline, with an optional label such as Study, Work, Reading or Coding.
+**Personal focus:** free for everyone, requires an internet connection, with an optional label such as Study, Work, Reading or Coding.
 
 **Room focus:** a member starts a session in the room (mode, length for timer mode, optional label). Other members get a notification and a banner on the Room tab ("Rahul started a 50-minute focus session. Join?"). Anyone can join or leave at any time. Each person's tracked time is the time between their join and their leave or the session end. Room members see who is focusing now, their elapsed time and whether they are on a break.
 
@@ -786,7 +789,7 @@ A focus timer for anyone who studies or works. It is a personal tool that anyone
 | FOC-1 | Start a personal focus session from the Today screen, the + Log sheet or the Room > Focus segment. Choose Stopwatch or Timer, set the length for a timer, and pick or type an optional label (up to 20 characters). | P0 |
 | FOC-2 | While running the screen shows elapsed or remaining time, a Pause or Break button and an End button. Paused time is not counted as focused time. | P0 |
 | FOC-3 | Time is computed from stored UTC timestamps, never from a counter, so it stays correct when the app is backgrounded, killed or the phone restarts. A timer sets a local notification for its end. | P0 |
-| FOC-4 | Personal sessions work offline and sync later with idempotent IDs. Sessions can be edited or deleted afterwards. | P0 |
+| FOC-4 | Personal sessions require an acknowledged online save with idempotent IDs. Sessions can be edited or deleted afterwards. | P0 |
 | FOC-5 | Room focus: any room member can start a shared session. The start time is set by the server. Timer sessions end for everyone at the same server-time moment. | P0 |
 | FOC-6 | Any number of room members, up to the room's cap, can join or leave while the session runs. Late joiners see the correct remaining time. A participant's tracked time starts when they join. | P0 |
 | FOC-7 | The Room > Focus segment shows the active session (starter, mode, label if shared, participants with status Focusing or On break and elapsed time), the Join and Leave actions, and recent sessions. | P0 |
@@ -824,7 +827,7 @@ Five tabs remain. Recipes and the AI coach are reached from Today, the Log sheet
 - **Side-by-side: **when one member logs a meal and shares it, the other member's room view updates within 5 seconds when both are online.
 - **Chat: **a text or image message sent by one member appears for an online member within 2 seconds; a non-member can never fetch the message or the image URL.
 - **Privacy: **a hidden data type never appears in any API response to other room members, including in room progress charts, not just in the UI.
-- **Workout: **logging a strength workout with sets works offline, shows last-time performance for each exercise, and appears as "worked out today" in the room once online.
+- **Workout: **logging a strength workout with sets saves online, shows last-time performance for each exercise, and appears as "worked out today" in the room after saving.
 - **Shared meal: **tagging a partner creates a pending card for them; accepting with a different quantity creates a separate entry with correctly scaled nutrients.
 - **Entitlement: **when a room's plan ends and nobody sponsors it, the room becomes Locked for every member on the server (chat, room view, progress, focus and realtime channels), personal tracking continues, and each member sees the "This room is paused" screen. When any member buys a plan, the room returns to Active with all data intact.
 - **AI coach: **a user in the 3-day trial or on the free plan cannot get a coach reply (the server rejects it) and sees the locked preview; a Premium user gets a streamed answer built only from their own data; asked for an 800 kcal day, the coach declines and offers a safe alternative.
@@ -834,7 +837,7 @@ Five tabs remain. Recipes and the AI coach are reached from Today, the Log sheet
 - **Plans: **the paywall shows Basic, Plus and Pro with monthly, 3-month and annual prices (localised) and a size picker; buying Plus lifts the cap from 5 to 20 immediately; the sixth person joining a Basic room is refused with ROOM_FULL and the host is offered the upgrade; restore purchases works; a downgrade that leaves the room over its cap puts it in Over capacity with a 7-day notice.
 - **Joining is free: **a user with no plan and no trial can accept an invitation, join by link or code, chat, focus and track inside a paid room, but gets a locked preview for the AI coach and the Partner Finder.
 - **Partner Finder: **a user who switches on "Open to a partner" appears only as banded card fields to eligible plan holders; weight, exact age, exact location and food logs never appear in any response; a plan holder sends a request, the other user accepts without a plan, and both land on "Start your room" with photos and @usernames revealed only then; switching the setting off removes the user from every suggestion list at once; with fewer than 3 matches the app shows the honest empty state.
-- **Focus: **member A starts a 50-minute room timer, member B joins 10 minutes later and sees 40 minutes left, member C joins and leaves at will; the timer ends for all at the same server moment even if their apps were killed; each person's tracked time is their own join-to-leave time; a stopwatch session left running is stopped automatically after 12 hours; a personal session logged offline syncs later without duplicates.
+- **Focus: **member A starts a 50-minute room timer, member B joins 10 minutes later and sees 40 minutes left, member C joins and leaves at will; the timer ends for all at the same server moment even if their apps were killed; each person's tracked time is their own join-to-leave time; a stopwatch session left running is stopped automatically after 12 hours; a personal session logged online save reliabilitys later without duplicates.
 
 ## 7. Business Rules and Logic
 
@@ -1166,8 +1169,7 @@ Labels: Great match (75 or more), Good match (55 to 74), Possible match (40 to 5
 | Focus accuracy | A timer ends within 1 second of the server end time on every device; a participant's tracked time is within 2 seconds of the true join and leave times; sessions survive app kill and phone restart. |
 | Partner matching | Suggestions are computed in under 1 second per request and cached for the week; the matching function is covered by golden tests. |
 | AI coach latency | First streamed token typically under 3 seconds; a full answer within about 15 seconds; clear states when offline or rate limited. |
-| Offline | Diary, previously logged foods, custom foods, water, workouts and logging work offline; sync with last-write-wins per entry and conflict-safe merges. Chat messages queue offline. |
-| Reliability | API availability of 99.5% or better. Daily backups. Idempotent sync endpoints. |
+| Reliability | API availability of 99.5% or better. Daily backups. Idempotent save endpoints. |
 | Security | TLS everywhere, encryption at rest, token-based auth with refresh, rate limiting on all endpoints (especially invites, searches, chat, nudges and AI), secrets never in the app binary, regular dependency scans. |
 | Media storage | Chat images in private object storage with signed URLs and a CDN, lifecycle rules for deletion, and storage cost monitoring. |
 | Scalability | Design for 100,000 users at launch scale; scheduled jobs for weekly scores and notifications must run in batches; chat tables designed for pagination (50 messages per page). |
@@ -1230,7 +1232,7 @@ Labels: Great match (75 or more), Good match (55 to 74), Possible match (40 to 5
 | Area | Decision |
 |---|---|
 | Mobile app | React Native with Expo (TypeScript, Expo Router) using EAS development builds for Android and iOS. Health and sensor libraries need development builds, not Expo Go. |
-| On-device data | SQLite with an outbox queue so logging is offline-first from the first feature, with idempotent client-generated IDs. |
+| On-device data | SQLite read caches and guest setup; authenticated saves go directly to Supabase with idempotent client-generated IDs. |
 | Backend and database | Supabase: Postgres, Auth, Realtime, Storage and Edge Functions. Create the project in the Mumbai region if most users are in India. Upgrade to Pro before charging real users (backups, no pausing). |
 | Security model | Row Level Security on every table. Privacy toggles, room membership and entitlement checks are enforced in the database and server functions, never only in the app. Automated RLS tests are mandatory. |
 | Login | Supabase Auth with email code, Google and Apple. No phone OTP. Custom SMTP through a transactional email provider (Resend or Brevo) with a verified domain, because the built-in sender is development-only. |
@@ -1306,7 +1308,7 @@ The product will be built phase by phase with AI coding agents, with one indepen
 | 0 | Foundation: monorepo, Expo app, Supabase project, tooling, CI, SQLite and navigation skeleton. | S |
 | 1 | Login (email code, Google, Apple), profile, unique username, age gate, account deletion, RLS test harness. | M |
 | 2 | Onboarding and the deterministic calorie, macro and weekly-rate calculator with golden tests. | M |
-| 3 | Food database, food logging in 5 sections, previously logged, barcode, custom foods, offline-first sync layer. | L |
+| 3 | Food database, food logging in 5 sections, previously logged, barcode, custom foods, online save services. | L |
 | 4 | Water, weight, steps and distance, with Health Connect and HealthKit. | M |
 | 5 | Rooms: usernames, invitations and join requests, privacy controls, side-by-side view, shared meals, nudges and reactions, room plan capacity and trial logic (host pays, members free), Locked and Over capacity states. Milestone: friends alpha. | L |
 | 6 | Workout tracker and exercise library. | M |

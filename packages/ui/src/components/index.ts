@@ -10,7 +10,6 @@ export * from './ListRow';
 export * from './Avatar';
 export * from './Toast';
 export * from './Banner';
-export * from './SyncPill';
 export * from './SwitchRow';
 export * from './EmptyState';
 export * from './Skeleton';

@@ -10,8 +10,6 @@ import type {
 } from '@calipartner/core';
 import { useAuth } from '@/contexts/AuthContext';
 import { getDb } from '@/db';
-import { useNetworkStatus } from '@/hooks/useNetworkStatus';
-import { getSupabase } from '@/lib/supabase';
 import { diaryEvents } from '@/services/diaryEvents';
 import {
   copyEntireDay,
@@ -21,11 +19,9 @@ import {
   logFoodEntry,
   saveCustomFood,
 } from '@/services/foodService';
-import { flushOutbox } from '@/services/syncService';
 
 export function useAddEntry() {
   const { user } = useAuth();
-  const { isOnline } = useNetworkStatus();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -57,11 +53,6 @@ export function useAddEntry() {
 
       diaryEvents.emitChange();
 
-      // Trigger sync if online
-      if (isOnline && user?.id) {
-        void flushOutbox(db, getSupabase()).catch(() => {});
-      }
-
       return entry;
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Failed to add entry';
@@ -76,8 +67,6 @@ export function useAddEntry() {
 }
 
 export function useEditEntry() {
-  const { user } = useAuth();
-  const { isOnline } = useNetworkStatus();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -94,10 +83,6 @@ export function useEditEntry() {
 
       diaryEvents.emitChange();
 
-      if (isOnline && user?.id) {
-        void flushOutbox(db, getSupabase()).catch(() => {});
-      }
-
       return entry;
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Failed to edit entry';
@@ -112,8 +97,6 @@ export function useEditEntry() {
 }
 
 export function useDeleteEntry() {
-  const { user } = useAuth();
-  const { isOnline } = useNetworkStatus();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -125,10 +108,6 @@ export function useDeleteEntry() {
       const success = await deleteFoodEntry(db, entryId);
 
       diaryEvents.emitChange();
-
-      if (isOnline && user?.id) {
-        void flushOutbox(db, getSupabase()).catch(() => {});
-      }
 
       return success;
     } catch (err) {
@@ -145,7 +124,6 @@ export function useDeleteEntry() {
 
 export function useCopyMeal() {
   const { user } = useAuth();
-  const { isOnline } = useNetworkStatus();
   const [loading, setLoading] = useState(false);
 
   const copyMeal = async (
@@ -168,9 +146,6 @@ export function useCopyMeal() {
       );
       diaryEvents.emitChange();
 
-      if (isOnline && user?.id) {
-        void flushOutbox(db, getSupabase()).catch(() => {});
-      }
       return copied;
     } finally {
       setLoading(false);
@@ -185,9 +160,6 @@ export function useCopyMeal() {
       const copied = await copyEntireDay(db, userId, sourceDate, targetDate);
       diaryEvents.emitChange();
 
-      if (isOnline && user?.id) {
-        void flushOutbox(db, getSupabase()).catch(() => {});
-      }
       return copied;
     } finally {
       setLoading(false);
@@ -199,7 +171,6 @@ export function useCopyMeal() {
 
 export function useCustomFood() {
   const { user } = useAuth();
-  const { isOnline } = useNetworkStatus();
   const [loading, setLoading] = useState(false);
 
   const createFood = async (
@@ -212,9 +183,6 @@ export function useCustomFood() {
       const food = await saveCustomFood(db, userId, input);
       diaryEvents.emitChange();
 
-      if (isOnline && user?.id) {
-        void flushOutbox(db, getSupabase()).catch(() => {});
-      }
       return food;
     } finally {
       setLoading(false);

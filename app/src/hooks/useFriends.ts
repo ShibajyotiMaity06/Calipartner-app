@@ -11,18 +11,14 @@ import { useNetworkStatus } from './useNetworkStatus';
 import { getDb } from '@/db';
 import { getSupabase } from '@/lib/supabase';
 import {
-  flushSocialOutbox,
   loadFriendInbox,
   loadSocialProfile,
   searchSocialProfiles,
   saveSocialProfile,
-  queueFriendRequest,
-  queueFriendAction,
-  queueSocialBlock,
-  queueSocialReport,
-  dismissSocialFailure,
-  socialOutbox,
-  type SocialOutboxItem,
+  sendFriendRequest,
+  respondFriendRequest,
+  blockSocialProfile,
+  reportSocialProfile,
   type SocialDb,
 } from '@/services/friendsService';
 
@@ -37,7 +33,6 @@ export function useFriends({ profileOnly = false }: { profileOnly?: boolean } = 
   const [ownProfile, setOwnProfile] = useState<SocialProfile | null>(null);
   const [results, setResults] = useState<SocialProfile[]>([]);
   const [selected, setSelected] = useState<SocialProfile | null>(null);
-  const [outbox, setOutbox] = useState<SocialOutboxItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [searching, setSearching] = useState(false);
   const [cached, setCached] = useState(false);
@@ -53,16 +48,13 @@ export function useFriends({ profileOnly = false }: { profileOnly?: boolean } = 
     try {
       const db = await getDb();
       const client = getSupabase();
-      if (isOnline) await flushSocialOutbox(db, client, id);
       const [friends, me] = await Promise.allSettled([
         profileOnly ? Promise.resolve(null) : loadFriendInbox(db, client, id, Boolean(isOnline)),
         loadSocialProfile(db, client, id, id, Boolean(isOnline)),
       ]);
       if (owner.current !== id) return;
-      const pending = await socialOutbox(db, id);
       if (owner.current !== id) return;
       setDataOwner(id);
-      setOutbox(pending);
       if (friends.status === 'fulfilled' && friends.value) {
         setInbox(friends.value.data);
         setCached(friends.value.cached);
@@ -99,7 +91,6 @@ export function useFriends({ profileOnly = false }: { profileOnly?: boolean } = 
     setOwnProfile(null);
     setResults([]);
     setSelected(null);
-    setOutbox([]);
     setError(null);
     setLoading(true);
     setBusy(false);
@@ -177,7 +168,6 @@ export function useFriends({ profileOnly = false }: { profileOnly?: boolean } = 
     try {
       const db = await getDb();
       await operation(db, id);
-      if (isOnline) await flushSocialOutbox(db, getSupabase(), id);
       if (owner.current !== id) return false;
       await refresh();
       if (target && isOnline) {
@@ -204,7 +194,6 @@ export function useFriends({ profileOnly = false }: { profileOnly?: boolean } = 
     ownProfile: dataOwner === id ? ownProfile : null,
     results: dataOwner === id ? results : [],
     selected: dataOwner === id ? selected : null,
-    outbox: dataOwner === id ? outbox : [],
     loading: loading || Boolean(id && dataOwner !== id),
     searching,
     busy,
@@ -215,15 +204,15 @@ export function useFriends({ profileOnly = false }: { profileOnly?: boolean } = 
     search,
     openProfile,
     closeProfile: () => setSelected(null),
-    send: (target: string) => perform((db, actor) => queueFriendRequest(db, actor, target), target),
+    send: (target: string) => perform((db, actor) => sendFriendRequest(db, actor, target), target),
     respond: (request: string, action: FriendAction, target: string) =>
-      perform((db, actor) => queueFriendAction(db, actor, request, action), target),
+      perform((db, actor) => respondFriendRequest(db, actor, request, action), target),
     save: (draft: SocialProfileDraft) =>
       ownProfile
         ? perform((db, actor) => saveSocialProfile(db, actor, ownProfile, draft))
         : Promise.resolve(false),
     block: async (target: string) => {
-      const result = await perform((db, actor) => queueSocialBlock(db, actor, target), target);
+      const result = await perform((db, actor) => blockSocialProfile(db, actor, target), target);
       if (owner.current === id) {
         setSelected(null);
         setResults((current) => current.filter((person) => person.id !== target));
@@ -231,8 +220,6 @@ export function useFriends({ profileOnly = false }: { profileOnly?: boolean } = 
       return result;
     },
     report: (target: string, reason: string, details?: string) =>
-      perform((db, actor) => queueSocialReport(db, actor, target, reason, details)),
-    dismiss: (operationId: string) =>
-      perform((db, actor) => dismissSocialFailure(db, actor, operationId)),
+      perform((db, actor) => reportSocialProfile(db, actor, target, reason, details)),
   };
 }

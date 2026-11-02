@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import * as fastingService from '@/services/fastingService';
-import type { SyncDb } from '@/services/syncService';
+import type { LocalDb } from '@/services/accountDataService';
 import { type HealthScreening, evaluateFastingGating } from '@calipartner/core';
 
 vi.mock('@/db', () => ({
@@ -108,7 +108,7 @@ describe('Phase 13: Fasting Hooks & Integration Tests', () => {
 
     vi.mocked(fastingService.getFastingProgressWeekly).mockResolvedValue(mockProgress);
 
-    const mockDb: SyncDb = {
+    const mockDb: LocalDb = {
       runAsync: vi.fn(),
       getAllAsync: vi.fn(),
       getFirstAsync: vi.fn(),

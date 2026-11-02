@@ -38,7 +38,7 @@ Android/iOS/web export: passed
 Android native autolinking: expo-clipboard resolved
 ```
 
-Added seven interface tests for the pending view, acceptance refresh, Progress message, Free chat not mounting/fetching, paid chat, Members visibility, clipboard and sharing. Five new database cases exercise Free/paid/trial/expired/lapsed access, direct tables, RPCs, media metadata, unread counts, previews, stale-send replay, outsiders and anonymous access. Two Edge tests cover authenticated media access and the fresh entitlement check before chat preview delivery. Existing offline sync and all unrelated test suites pass.
+Added seven interface tests for the pending view, acceptance refresh, Progress message, Free chat not mounting/fetching, paid chat, Members visibility, clipboard and sharing. Five new database cases exercise Free/paid/trial/expired/lapsed access, direct tables, RPCs, media metadata, unread counts, previews, stale-send replay, outsiders and anonymous access. Two Edge tests cover authenticated media access and the fresh entitlement check before chat preview delivery. Existing online save reliability and all unrelated test suites pass.
 
 Live browser checks with disposable accounts verify the minimal waiting view, actual clipboard contents, 320/390/430 px widths and 200% text, the Progress waiting message, zero chat loads for Free, acceptance clearing the waiting view, Free RPC/media denial, paid Chat opening, pair-versus-three-person Members visibility, and hiding Chat/Members after a downgrade. Disposable users and rooms were removed. Screenshots/logs remain ignored under `.cache/room-waiting-*`.
 

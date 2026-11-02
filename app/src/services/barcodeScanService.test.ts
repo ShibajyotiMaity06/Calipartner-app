@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import type { SyncDb } from './syncService';
+import type { LocalDb } from './accountDataService';
 const invoke = vi.hoisted(() => vi.fn());
 vi.mock('@/lib/supabase', () => ({ getSupabase: () => ({ functions: { invoke } }) }));
 vi.mock('@/db', () => ({ getDb: vi.fn() }));
@@ -18,7 +18,7 @@ const product = {
 const db = {
   getFirstAsync: vi.fn(async () => null),
   runAsync: vi.fn(async () => ({})),
-} as unknown as SyncDb;
+} as unknown as LocalDb;
 beforeEach(() => {
   vi.clearAllMocks();
 });

@@ -1,8 +1,14 @@
+vi.mock('./accountDataService', async (original) => ({
+  ...(await original<object>()),
+  withOnlineSave: async <T>(db: LocalDb, action: (db: LocalDb) => Promise<T>) => action(db),
+  saveRemote: (await import('../test/remoteWrites')).recordRemoteWrite,
+}));
+import { recordedWrites } from '../test/remoteWrites';
 import { DatabaseSync } from 'node:sqlite';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { getActivityDay, upsertActivityDay } from './activityService';
-import { getPendingOutboxItems, type SyncDb } from './syncService';
-function database(): SyncDb {
+import { type LocalDb } from './accountDataService';
+function database(): LocalDb {
   const sql = new DatabaseSync(':memory:');
   sql.exec(`CREATE TABLE local_activity_days(id TEXT PRIMARY KEY, user_id TEXT, local_date TEXT, steps INTEGER, distance_m REAL, source TEXT, active_calories REAL, created_at TEXT, updated_at TEXT, deleted_at TEXT, sync_state TEXT, UNIQUE(user_id,local_date));
     CREATE TABLE outbox(id TEXT PRIMARY KEY, entity TEXT, operation TEXT, payload TEXT, created_at TEXT, attempts INTEGER DEFAULT 0, last_error TEXT, status TEXT DEFAULT 'pending', next_retry_at TEXT, updated_at TEXT);`);
@@ -16,8 +22,8 @@ function database(): SyncDb {
       sql.prepare(query).all(...(values.flat() as (string | number | null)[])) as T[],
   };
 }
-describe('daily steps remain idempotent offline', () => {
-  it('concurrent screen refreshes preserve one activity UUID and one outbox entry', async () => {
+describe('daily steps remain idempotent online', () => {
+  it('concurrent screen refreshes preserve one activity UUID and one acknowledged request', async () => {
     const db = database();
     const input = {
       localDate: '2026-10-26',
@@ -31,7 +37,7 @@ describe('daily steps remain idempotent offline', () => {
     ]);
     expect(first.id).toBe(second.id);
     expect((await getActivityDay(db, 'owner', input.localDate))?.steps).toBe(6099);
-    const pending = await getPendingOutboxItems(db);
+    const pending = await recordedWrites(db);
     expect(pending).toHaveLength(1);
     expect(pending[0]!.payload.id).toBe(first.id);
   });

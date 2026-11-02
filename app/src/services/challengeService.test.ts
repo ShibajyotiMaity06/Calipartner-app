@@ -5,18 +5,14 @@ vi.mock('expo-sqlite', () => ({}));
 import { createWebDb } from '@/db';
 import { migrations } from '@/db/migrations';
 import {
-  cachedChallenges,
-  challengeOutbox,
   challengeRequest,
-  dismissChallengeWrite,
-  flushChallenges,
+  saveChallenge,
   loadChallenges,
-  queueChallenge,
   type ChallengeClient,
 } from './challengeService';
-import type { SyncDb } from './syncService';
+import type { LocalDb } from './accountDataService';
 const connections: DatabaseSync[] = [];
-function nativeDb(): SyncDb {
+function nativeDb(): LocalDb {
   const sql = new DatabaseSync(':memory:');
   connections.push(sql);
   sql.exec(migrations.find((m) => m.version === 15)!.sql);
@@ -53,149 +49,6 @@ afterEach(() => {
   connections.splice(0).forEach((db) => db.close());
   vi.unstubAllGlobals();
 });
-for (const [name, makeDb] of [
-  ['native SQLite', nativeDb],
-  ['web storage', createWebDb],
-] as const)
-  describe(name, () => {
-    it('removes retired offline challenge writes without affecting current or other-account writes', async () => {
-      const db = makeDb();
-      await queueChallenge(db, 'owner', { ...mutation, template_id: 'retired-template' });
-      await queueChallenge(db, 'owner', {
-        ...mutation,
-        id: 'current',
-        template_id: 'current-template',
-      });
-      await queueChallenge(db, 'other', { ...mutation, id: 'other-request' });
-      const home = {
-        catalog: {
-          templates: [
-            { id: 'retired-template', tasks: ['focus_minutes'] },
-            { id: 'current-template', tasks: ['water_ml'] },
-          ],
-          seasons: [],
-        },
-        items: [],
-      };
-      await db.runAsync(
-        'INSERT INTO local_challenge_cache (id,owner_id,payload,updated_at) VALUES (?,?,?,?)',
-        ['owner', 'owner', JSON.stringify(home), new Date().toISOString()],
-      );
-      expect(
-        (await cachedChallenges(db, 'owner'))?.catalog.templates.map((template) => template.id),
-      ).toEqual(['current-template']);
-      expect((await challengeOutbox(db, 'owner')).map((item) => item.id)).toEqual(['current']);
-      expect(await challengeOutbox(db, 'other')).toHaveLength(1);
-    });
-    it('keeps cache and outbox isolated between accounts', async () => {
-      const db = makeDb();
-      const client: ChallengeClient = {
-        auth: { getUser: async () => ({ data: { user: { id: 'owner' } } }) },
-        functions: {
-          invoke: async () => ({
-            data: { catalog: { templates: [], seasons: [] }, items: [], reminders: [] },
-            error: null,
-          }),
-        },
-      };
-      await loadChallenges(db, client, 'owner');
-      expect(await cachedChallenges(db, 'other')).toBeNull();
-      await queueChallenge(db, 'owner', mutation);
-      expect(await challengeOutbox(db, 'other')).toEqual([]);
-      expect(await challengeOutbox(db, 'owner')).toHaveLength(1);
-    });
-    it('preserves the same UUID through lost-response retries and serializes concurrent flushes', async () => {
-      const db = makeDb();
-      const calls: unknown[] = [];
-      let lost = true;
-      const client: ChallengeClient = {
-        auth: { getUser: async () => ({ data: { user: { id: 'owner' } } }) },
-        functions: {
-          invoke: async (_, { body }) => {
-            calls.push(body);
-            if (lost) {
-              lost = false;
-              throw new Error('NETWORK_UNAVAILABLE');
-            }
-            return { data: { id: mutation.id }, error: null };
-          },
-        },
-      };
-      await queueChallenge(db, 'owner', mutation);
-      await flushChallenges(db, client, 'owner');
-      expect((await challengeOutbox(db, 'owner'))[0]?.status).toBe('pending');
-      await Promise.all([
-        flushChallenges(db, client, 'owner'),
-        flushChallenges(db, client, 'owner'),
-      ]);
-      expect(calls).toEqual([mutation, mutation]);
-      expect(await challengeOutbox(db, 'owner')).toEqual([]);
-    });
-    it('never sends a queued action with another signed-in account', async () => {
-      const db = makeDb();
-      const invoke = vi.fn();
-      const client: ChallengeClient = {
-        auth: { getUser: async () => ({ data: { user: { id: 'other' } } }) },
-        functions: { invoke },
-      };
-      await queueChallenge(db, 'owner', mutation);
-      await flushChallenges(db, client, 'owner');
-      expect(invoke).not.toHaveBeenCalled();
-      expect(await challengeOutbox(db, 'owner')).toHaveLength(1);
-    });
-    it('records an actionable terminal error without retry loops', async () => {
-      const db = makeDb();
-      const invoke = vi.fn(async () => ({ data: { error: 'CHALLENGE_LIMIT' }, error: null }));
-      const client: ChallengeClient = {
-        auth: { getUser: async () => ({ data: { user: { id: 'owner' } } }) },
-        functions: { invoke },
-      };
-      await queueChallenge(db, 'owner', mutation);
-      await flushChallenges(db, client, 'owner');
-      await flushChallenges(db, client, 'owner');
-      expect(invoke).toHaveBeenCalledTimes(1);
-      expect((await challengeOutbox(db, 'owner'))[0]?.last_error).toBe('CHALLENGE_LIMIT');
-      await dismissChallengeWrite(db, 'owner', mutation.id);
-      expect(await challengeOutbox(db, 'owner')).toEqual([]);
-    });
-    it('rejects changed payloads sharing a creation UUID', async () => {
-      const db = makeDb();
-      await queueChallenge(db, 'owner', mutation);
-      await expect(queueChallenge(db, 'owner', { ...mutation, duration: 14 })).rejects.toThrow(
-        'IDEMPOTENCY_CONFLICT',
-      );
-    });
-    it('clears stale peer cache immediately when leaving or hiding comparison', async () => {
-      const db = makeDb();
-      const client: ChallengeClient = {
-        auth: { getUser: async () => ({ data: { user: { id: 'owner' } } }) },
-        functions: {
-          invoke: async () => ({
-            data: {
-              catalog: { templates: [], seasons: [] },
-              items: [
-                {
-                  private: 'peer data',
-                  challenge: { rules_snapshot: { tasks: ['steps'] } },
-                  self: { status: 'completed' },
-                  participants: [],
-                },
-              ],
-            },
-            error: null,
-          }),
-        },
-      };
-      await loadChallenges(db, client, 'owner');
-      await queueChallenge(db, 'owner', {
-        action: 'social',
-        id: mutation.id,
-        request_id: 'leave',
-        kind: 'leave',
-      });
-      expect(await cachedChallenges(db, 'owner')).toBeNull();
-    });
-  });
 it('surfaces structured Edge errors and denies changed account reads', async () => {
   const client: ChallengeClient = {
     auth: { getUser: async () => ({ data: { user: { id: 'a' } } }) },
@@ -227,7 +80,7 @@ it('keeps the authorized catalogue visible when Edge scoring is unavailable and 
       runAsync: async () => {
         throw new Error('quota');
       },
-    } as unknown as SyncDb,
+    } as unknown as LocalDb,
     client,
     'owner',
   );
@@ -247,6 +100,20 @@ it('does not fall back after an access denial', async () => {
     },
     rpc: vi.fn(),
   };
-  await expect(loadChallenges({} as SyncDb, client, 'owner')).rejects.toThrow('PLUS_REQUIRED');
+  await expect(loadChallenges({} as LocalDb, client, 'owner')).rejects.toThrow('PLUS_REQUIRED');
   expect(client.rpc).not.toHaveBeenCalled();
+});
+
+it('sends a challenge mutation once and surfaces network failures without a retry queue', async () => {
+  const invoke = vi.fn().mockResolvedValue({ data: {}, error: null });
+  const client = {
+    auth: { getUser: async () => ({ data: { user: { id: 'owner' } } }) },
+    functions: { invoke },
+  };
+  expect(await saveChallenge(client, 'owner', mutation)).toBe('saved');
+  invoke.mockResolvedValueOnce({ data: null, error: new Error('offline') });
+  await expect(saveChallenge(client, 'owner', mutation)).rejects.toThrow('NETWORK_UNAVAILABLE');
+  expect(invoke).toHaveBeenCalledTimes(2);
+  await expect(saveChallenge(client, 'other', mutation)).rejects.toThrow('ACCOUNT_CHANGED');
+  expect(invoke).toHaveBeenCalledTimes(2);
 });

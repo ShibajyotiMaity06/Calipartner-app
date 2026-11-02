@@ -188,12 +188,15 @@ export default function RoomScreen() {
     useCallback(() => {
       const subscription = BackHandler.addEventListener('hardwareBackPress', () => {
         const previous = segmentHistory.current.pop();
-        if (!previous) return false;
+        if (!previous) {
+          router.navigate('/(tabs)/today');
+          return true;
+        }
         setActiveSegment(previous);
         return true;
       });
       return () => subscription.remove();
-    }, []),
+    }, [router]),
   );
 
   // Modals visibility states

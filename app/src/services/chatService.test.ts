@@ -8,10 +8,10 @@ import {
   reportChatMessage,
   sendChatMessage,
 } from './chatService';
-import type { SyncDb } from './syncService';
+import type { LocalDb } from './accountDataService';
 import { ChatServiceError } from '@/types/chat';
 
-class MockSyncDb implements SyncDb {
+class MockLocalDb implements LocalDb {
   tables = new Map<string, Array<Record<string, unknown>>>();
 
   constructor() {
@@ -152,10 +152,10 @@ class MockSyncDb implements SyncDb {
 }
 
 describe('chatService', () => {
-  let db: MockSyncDb;
+  let db: MockLocalDb;
 
   beforeEach(() => {
-    db = new MockSyncDb();
+    db = new MockLocalDb();
   });
 
   describe('sendChatMessage', () => {
@@ -180,7 +180,7 @@ describe('chatService', () => {
       expect(result.sync_state).toBe('synced');
       expect(result.id).toBe('server-msg-1');
 
-      // Outbox item deleted after successful sync
+      // Save directly and require server acknowledgement.
       expect(db.tables.get('outbox')?.length).toBe(0);
 
       // Local message marked sent
@@ -188,21 +188,16 @@ describe('chatService', () => {
       expect(local?.delivery_status).toBe('sent');
     });
 
-    it('retains in outbox with sending state when server is unreachable (offline mode)', async () => {
-      const mockSupabase = {
-        rpc: vi.fn().mockRejectedValue(new Error('Network request failed')),
-      };
-
-      const result = await sendChatMessage(mockSupabase, db, 'room-1', 'user-1', {
-        text: 'Offline message',
-        clientId: 'client-offline',
-      });
-
-      expect(result.delivery_status).toBe('sending');
-      expect(result.sync_state).toBe('pending');
-
-      // Outbox item retained for syncService flush
-      expect(db.tables.get('outbox')?.length).toBe(1);
+    it('reports a network send failure without scheduling a retry', async () => {
+      const api = { rpc: vi.fn().mockRejectedValue(new Error('Network request failed')) };
+      await expect(
+        sendChatMessage(api, db, 'room-1', 'user-1', {
+          text: 'Message',
+          clientId: 'same-client-id',
+        }),
+      ).rejects.toThrow('Network request failed');
+      expect(api.rpc).toHaveBeenCalledOnce();
+      expect(db.tables.get('outbox')?.length).toBe(0);
     });
 
     it('rejects message with permanent error if room is locked', async () => {

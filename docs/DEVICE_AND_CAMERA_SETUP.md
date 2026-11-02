@@ -12,7 +12,7 @@ Owner-requested repair scope, 26 October 2026: correct workout dates, add Androi
 
 Installing from Chrome creates a web app. It does not turn the website into a native Android/iPhone binary or grant health permissions. You can distribute the native Android APK by download without using the Play Store; that is a different installation from Chrome's website-install menu.
 
-The native integration reads the operating system's cumulative daily totals. Phone and watch records are aggregated by the health platform rather than added together by CaliPartner. The app refreshes on launch, on return to the foreground and periodically while active, and backfills the last seven days. Health platforms keep recording while our app process is stopped; our JavaScript does not need to keep running. Uploads to Supabase happen through the existing offline outbox, rather than requiring a permanent background network connection.
+The native integration reads the operating system's cumulative daily totals. Phone and watch records are aggregated by the health platform rather than added together by CaliPartner. The app refreshes on launch, on return to the foreground and periodically while active, and backfills the last seven days. Health platforms keep recording while our app process is stopped; our JavaScript does not need to keep running. An online save to Supabase records imported values; no writes wait for later delivery.
 
 Daily queries use your stored time zone and handle daylight-saving transitions. Totals may update in batches. Calories and step-derived distance remain estimates; a measured platform distance takes priority.
 
@@ -29,7 +29,7 @@ No separate health API key or backend health account is required. Existing AI pr
 
 ## What each user does
 
-1. Open **Me → Health sync** in the native app and enable the connection. Alternatively, use the steps card's permission action.
+1. Open **Me → Health connection** in the native app and enable the connection. Alternatively, use the steps card's permission action.
 2. On Android, allow reading Steps and Distance in Health Connect. On iPhone, allow the requested Apple Health read types. Phone motion access may also be needed for the fallback pedometer or a walking session.
 3. Walk with the phone or a connected watch, close CaliPartner, walk again, then reopen it. The steps card should refresh from the health platform's daily aggregate and show its source. Compare the same date and time zone in the phone's health app.
 4. Normally you do this **once**, not every time you open CaliPartner. Reinstallation, revoked permissions, clearing app data, changing the phone or a system permission reset can require setup again. Use **Open health settings** if access was previously denied. Disconnect stops health-platform reads in CaliPartner.
@@ -41,7 +41,7 @@ On supported Android 14+ devices with SDK extension 20+, Health Connect can reco
 - Allow camera access when taking a photo or scanning a live barcode. Allow photo-library access when choosing an existing image. In Chrome, camera access requires HTTPS or localhost; a plain HTTP LAN address is not a secure camera origin.
 - Gallery photos are resized and encoded as real JPEG data before analysis. Upload preview works even if camera permission was denied. The image is sent for AI processing only after consent and server access/usage checks.
 - Food-photo results show **estimated** macros for review. A photo without food returns: “This does not look like a food photo. Please take or choose a clear photo of your food.” A provider/network failure is an error, rather than sample food or invented macros.
-- Barcodes can be read by the native camera, a browser camera, an uploaded photo or manual numeric entry. Local catalog lookup works offline. An unknown product offers a custom-food path; an upstream connection failure offers retry. Confirm the portion and meal before saving.
+- Barcodes can be read by the native camera, a browser camera, an uploaded photo or manual numeric entry. Local catalog lookup requires an internet connection. An unknown product offers a custom-food path; an upstream connection failure offers retry. Confirm the portion and meal before saving.
 - Taking photos does not grant Pro access. The server retains the configured plan gates, explicit AI consent, scan limits and budget checks.
 
 The deployed access repair follows the approved feature matrix: Free has three starter scans over the account's lifetime; active Pro has five scans per stored local day; Plus and its trial do not include AI photo scans. Usage recording is restricted to server functions. Invalid/non-food images that reach the model count as a scan attempt, since provider processing has occurred.
@@ -83,7 +83,7 @@ Live API: food, non-food and barcode checks passed.
 Chrome: four UI checks passed against the production web export and live backend.
 ```
 
-Assumptions: keep the approved pricing/AI limits and existing offline outbox; use the stored user time zone; prefer platform aggregates to separate phone/watch totals. Background counting means platform recording with refresh on reopen, rather than keeping browser JavaScript alive. Physical Android/iPhone sensor and permission behavior requires the manual checks above; no physical-device or signed native-binary test was performed here.
+Assumptions: keep the approved pricing/AI limits and online save requirements; use the stored user time zone; prefer platform aggregates to separate phone/watch totals. Background counting means platform recording with refresh on reopen, rather than keeping browser JavaScript alive. Physical Android/iPhone sensor and permission behavior requires the manual checks above; no physical-device or signed native-binary test was performed here.
 
 Files changed include app native dependencies/configuration and lockfile; workout date screens/hooks; `useCurrentLocalDate`, `useSteps`, native health, activity, barcode and food-photo services and tests; camera/scanner/food-log/health/steps views; English strings; shared local-day/barcode/AI/step logic and tests; the photo/food lookup Edge Functions, tests, import maps and gateway config; the new photo migration and database regression harness; and this setup document plus the PRD/build-plan pointers.
 

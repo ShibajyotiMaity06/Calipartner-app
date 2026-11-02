@@ -14,7 +14,6 @@ import {
   Avatar,
   Toast,
   Banner,
-  SyncPill,
   SwitchRow,
   EmptyState,
   Skeleton,
@@ -366,7 +365,7 @@ export default function ComponentGalleryScreen(): React.JSX.Element | null {
           </Card>
         </View>
 
-        {/* 8. Toast, Banner & SyncPill (CMP-15) */}
+        {/* 8. Toast and banner (CMP-15) */}
         <View style={styles.section}>
           <Text variant="heading" color={dark.apricot} style={styles.sectionTitle}>
             8. Toast, Banner & Sync Pill (CMP-15)
@@ -375,11 +374,7 @@ export default function ComponentGalleryScreen(): React.JSX.Element | null {
             <Text variant="label" color={dark.textMid}>
               Sync Pills (Header status)
             </Text>
-            <View style={styles.rowWrap}>
-              <SyncPill status="offline" />
-              <SyncPill status="syncing" />
-              <SyncPill status="synced" />
-            </View>
+            <View style={styles.rowWrap}></View>
 
             <Text variant="label" color={dark.textMid} style={styles.subLabel}>
               Inline Banners

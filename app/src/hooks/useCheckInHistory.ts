@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import { getDb } from '@/db';
 import { getSupabase } from '@/lib/supabase';
 import { diaryEvents } from '@/services/diaryEvents';
 
@@ -24,12 +23,6 @@ export function useCheckInHistory(startDate: string, endDate: string) {
     setError(false);
     const dates = new Set<string>();
     try {
-      const db = await getDb();
-      const local = await db.getAllAsync<{ local_date: string }>(
-        'SELECT local_date FROM local_squad_check_ins WHERE user_id=? AND local_date>=? AND local_date<=?',
-        [user.id, startDate, endDate],
-      );
-      local.forEach((row) => dates.add(row.local_date));
       const result = await getSupabase()
         .from('squad_check_ins')
         .select('local_date')

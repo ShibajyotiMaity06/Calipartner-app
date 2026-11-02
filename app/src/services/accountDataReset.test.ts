@@ -107,9 +107,12 @@ describe('discarding stale offline queues', () => {
   it('clears native tracking tables transactionally, retaining unrelated metadata', async () => {
     const sql = new DatabaseSync(':memory:');
     sql.exec(
-      "CREATE TABLE local_goal_profiles(id TEXT); INSERT INTO local_goal_profiles VALUES ('old'); CREATE TABLE outbox(id TEXT); INSERT INTO outbox VALUES ('queued'); CREATE TABLE sync_cursors(id TEXT); INSERT INTO sync_cursors VALUES ('cursor'); CREATE TABLE schema_metadata(version INTEGER); INSERT INTO schema_metadata VALUES (17)",
+      "CREATE TABLE local_goal_profiles(id TEXT); INSERT INTO local_goal_profiles VALUES ('old'); CREATE TABLE retired_local_writes(id TEXT); INSERT INTO retired_local_writes VALUES ('queued'); CREATE TABLE retired_social_writes(id TEXT); INSERT INTO retired_social_writes VALUES ('old-action'); CREATE TABLE schema_metadata(version INTEGER); INSERT INTO schema_metadata VALUES (17)",
     );
     const db = {
+      async getFirstAsync(query: string) {
+        return sql.prepare(query).get() ?? null;
+      },
       async getAllAsync(query: string) {
         return sql.prepare(query).all();
       },
@@ -129,8 +132,8 @@ describe('discarding stale offline queues', () => {
     } as unknown as SQLiteDatabase;
     await clearTrackingDataForReset(db);
     expect(sql.prepare('SELECT * FROM local_goal_profiles').all()).toEqual([]);
-    expect(sql.prepare('SELECT * FROM outbox').all()).toEqual([]);
-    expect(sql.prepare('SELECT * FROM sync_cursors').all()).toEqual([]);
+    expect(sql.prepare('SELECT * FROM retired_local_writes').all()).toEqual([]);
+    expect(sql.prepare('SELECT * FROM retired_social_writes').all()).toEqual([]);
     expect(sql.prepare('SELECT version FROM schema_metadata').get()?.version).toBe(17);
     sql.close();
   });

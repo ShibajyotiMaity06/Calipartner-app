@@ -29,13 +29,11 @@ import { useNetworkStatus } from '@/hooks/useNetworkStatus';
 import { getSupabase } from '@/lib/supabase';
 import { generateClientUuid } from '@/services/foodService';
 import {
-  flushTargetsOutbox,
   getCurrentLocalGoalProfile,
   getLocalHealthScreening,
-  saveGoalProfileWithSync,
-  saveHealthScreeningWithSync,
+  saveGoalProfileOnline,
+  saveHealthScreeningOnline,
   restoreGoalProfile,
-  repairLegacyGoalProfile,
 } from '@/services/targetsService';
 
 export interface UseTargetsState {
@@ -63,7 +61,6 @@ function useTargetsState() {
   const loadLocalData = useCallback(async () => {
     try {
       const db = await getDb();
-      await repairLegacyGoalProfile(db, effectiveUserId);
       const [profile, screening] = await Promise.all([
         getCurrentLocalGoalProfile(db, effectiveUserId),
         getLocalHealthScreening(db, effectiveUserId),
@@ -77,11 +74,9 @@ function useTargetsState() {
         error: null,
       });
 
-      // If online, logged in and supabase configured, flush outbox queue in background
-      if (online && user?.id) {
+      if (user?.id) {
+        if (!online) throw new Error('NETWORK_UNAVAILABLE');
         const supabase = getSupabase();
-        // A temporarily unavailable upload/reset check must not prevent reading saved goals.
-        await flushTargetsOutbox(db, supabase, user.id).catch(() => undefined);
         const restored = await restoreGoalProfile(db, supabase, user.id);
         if (ownerRef.current === effectiveUserId) {
           setState((prev) => ({
@@ -118,17 +113,15 @@ function useTargetsState() {
 
   /**
    * Saves a new or updated GoalProfile.
-   * Persists to local SQLite and syncs to Supabase when online.
+   * Waits for the server before showing saved targets.
    */
   const saveGoalProfile = useCallback(
-    async (
-      profile: GoalProfile,
-    ): Promise<{ success: boolean; synced: boolean; error?: string }> => {
+    async (profile: GoalProfile): Promise<{ success: boolean; saved: boolean; error?: string }> => {
       try {
         if (profile.user_id !== effectiveUserId) throw new Error('Goal profile owner mismatch');
         const db = await getDb();
         const supabase = online && user?.id ? getSupabase() : null;
-        const saving = saveGoalProfileWithSync(db, supabase, profile, Boolean(online && user?.id));
+        const saving = saveGoalProfileOnline(db, supabase, profile, Boolean(online && user?.id));
 
         const res = await saving;
         if (ownerRef.current === effectiveUserId)
@@ -138,10 +131,10 @@ function useTargetsState() {
             error: null,
           }));
 
-        return { success: true, synced: res.synced, error: res.error };
+        return { success: true, saved: res.saved };
       } catch (e: unknown) {
         const message = e instanceof Error ? e.message : String(e);
-        return { success: false, synced: false, error: message };
+        return { success: false, saved: false, error: message };
       }
     },
     [effectiveUserId, online, user?.id],
@@ -153,13 +146,13 @@ function useTargetsState() {
   const saveScreening = useCallback(
     async (
       screening: HealthScreening,
-    ): Promise<{ success: boolean; synced: boolean; error?: string }> => {
+    ): Promise<{ success: boolean; saved: boolean; error?: string }> => {
       try {
         if (screening.user_id !== effectiveUserId)
           throw new Error('Health screening owner mismatch');
         const db = await getDb();
         const supabase = online && user?.id ? getSupabase() : null;
-        const res = await saveHealthScreeningWithSync(
+        const res = await saveHealthScreeningOnline(
           db,
           supabase,
           screening,
@@ -173,10 +166,10 @@ function useTargetsState() {
             error: null,
           }));
 
-        return { success: true, synced: res.synced, error: res.error };
+        return { success: true, saved: res.saved };
       } catch (e: unknown) {
         const message = e instanceof Error ? e.message : String(e);
-        return { success: false, synced: false, error: message };
+        return { success: false, saved: false, error: message };
       }
     },
     [effectiveUserId, online, user?.id],

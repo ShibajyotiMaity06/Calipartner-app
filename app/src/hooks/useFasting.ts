@@ -1,3 +1,4 @@
+import { loadAccountTable } from '@/services/accountDataService';
 import { useSubscription } from './useSubscription';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
@@ -94,6 +95,8 @@ export function useFasting(options: UseFastingOptions) {
     try {
       setError(null);
       const db = await getDb();
+      await loadAccountTable(db, 'fasting_settings', userId);
+      await loadAccountTable(db, 'fasting_sessions', userId);
       const localSettings = await getLocalFastingSettings(db, userId);
       const active = await getActiveFastingSession(db, userId);
       const pastSessions = await getFastingHistory(db, userId, 50);

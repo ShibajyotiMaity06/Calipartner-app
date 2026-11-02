@@ -168,17 +168,6 @@ export function ChatView({
           {t('chatAudit.actionError')}
         </Text>
       ) : null}
-      {/* 1. Offline Banner */}
-      {isOnline === false && (
-        <View
-          style={[styles.bannerStrip, { backgroundColor: colors.syncPending }]}
-          testID="banner-chat-offline"
-          accessibilityLabel="Offline banner"
-        >
-          <Ionicons name="cloud-offline-outline" size={16} color="#FFFFFF" />
-          <Text style={styles.bannerStripText}>{t('chat.offlineBanner')}</Text>
-        </View>
-      )}
 
       {/* 2. Locked Room Notice ("This room is paused") */}
       {effectiveIsLocked && (

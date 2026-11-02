@@ -1,3 +1,4 @@
+import { loadAccountTable } from '@/services/accountDataService';
 import { useCallback, useEffect, useState } from 'react';
 import type { WaterLog } from '@calipartner/core';
 import { useAuth } from '@/contexts/AuthContext';
@@ -43,6 +44,7 @@ export function useWater(date?: string): UseWaterResult {
     try {
       setLoading(true);
       const db = await getDb();
+      await loadAccountTable(db, 'water_logs', effectiveUserId);
       let [fetchedLogs, sum] = await Promise.all([
         getWaterLogsForDate(db, effectiveUserId, localDate),
         getWaterTotalForDate(db, effectiveUserId, localDate),

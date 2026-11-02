@@ -11,7 +11,6 @@ This audit is the review checkpoint explicitly required by the supplied plan: **
 | File | Current behavior / problem |
 | --- | --- |
 | `app/src/app/(tabs)/progress.tsx` | My progress / Leaderboard / Challenges navigation; mounts `ChallengesView` for the Challenges segment. |
-| `app/src/components/progress/ChallengesView.tsx` | All / Active / Seasonal / Occasion / Completed filters exist. `DEFAULT_ACTIVE_CHALLENGES`, `SEASONAL_CHALLENGES` and `COMPLETED_CHALLENGES` supply invented people, dates, percentages, counts and feed items. Creation uses `Date.now()` and local state, not UUIDs/outbox/server validation. |
 | `app/src/components/progress/CreateChallengeModal.tsx` | Local activity tiles and numeric caps/defaults; default partner is a sample person; no accepted participant IDs, persistence, privacy or server plan validation. |
 | `app/src/components/progress/ChallengeDetailModal.tsx` | Displays the supplied mock object; leave is a callback changing local state. No server progress, daily results or translated event catalogue. |
 | `app/src/components/progress/ChallengeResultModal.tsx` | Default title and completed-day values imply an earned result without data. Share and next-challenge actions are callbacks. |
@@ -23,10 +22,10 @@ This audit is the review checkpoint explicitly required by the supplied plan: **
 ## Existing backend and reusable code
 
 - `pair_challenges` is the only relevant existing challenge table. It has IDs, room, creator/partner, pending/active/declined state and timestamps. RLS denies direct app access; the RPCs enforce membership, usable rooms, blocking and both participants' Plus access. `get_pair_challenges` derives logging days from daily summaries, respecting streak privacy. Existing automated tests cover that older feature. These rules conflict with the new plan's Free seven-day pair allowance and must be explicitly migrated; silently keeping two different products would be misleading.
-- There are no general challenge templates, seasons, rules snapshots, participant day results, configuration, challenge event feed, counters, badge awards, forfeits or occasion-plan/milestone tables. There is no general challenge engine, service, offline outbox, finalization job or challenge reminder job.
+Authenticated saves use direct server requests with client UUIDs, privacy checks and an error on failure. Only acknowledged values enter local read caches.
 - Reuse the authenticated profile projection, friendships/room membership, `active_room_tier`, room capacities/host limits and `create_room_v3` idempotency conventions.
 - Reuse `food_entries`, `daily_summaries`, `water_logs`, activity/step records, workouts, focus sessions and weight-log **occurrence** data as metric sources. Challenges must never expose the source rows of another participant. Sensor/manual source eligibility and reliable distance availability need explicit validation against the current source fields.
-- Reuse account-scoped SQLite/outbox patterns from `friendsService`, the existing sync/network hooks, i18n, shared UI tokens, quiet-hours notification pipeline, report/block flows and server-safe goal calculation functions. The new engine must not modify existing calorie, macro, streak or safety formulas.
+Authenticated saves use direct server requests with client UUIDs, privacy checks and an error on failure. Only acknowledged values enter local read caches.
 
 ## Confirmed hardcoded/fake content
 
@@ -41,7 +40,7 @@ This audit is the review checkpoint explicitly required by the supplied plan: **
 1. **CH-1:** Add a new migration for templates, seasons, versioned instances, participants, day results, events, public aggregate counters, config, forfeits, badges/awards and occasion timelines. Enable RLS on every table. Publish data through membership/consent-aware RPCs. Add catalogue translations and seed real template/config rows, never participant/result fixtures in production.
 2. **CH-2:** Implement six deterministic rule formats in `packages/core`; take every threshold from config/rules. Capture rules snapshots, personal baselines, timezone/date rules, source eligibility, finalization delay, daily caps, eligible-day outcomes, shields/pause/cover and screening limits. Add recomputation/finalization jobs and real log-source integrations.
 3. **CH-3:** Replace the demo with account-scoped server view models, cached/offline states, real Today due tasks, invites, filtered active/seasonal/completed sections and accessible progress summaries.
-4. **CH-4:** Wire template/custom creation, target/duration validation, explicit invite acceptance, expiry, neutral outcomes and completion/recap to the server/outbox. Remove all mock defaults, invented feeds and fake completed cards.
+Authenticated saves use direct server requests with client UUIDs, privacy checks and an error on failure. Only acknowledged values enter local read caches.
 5. **CH-5:** Add live updates/poll fallback, configured social actions, shields/cover, duel rematch/forfeits, comparison opt-out, report/block behavior and quiet-hours/mute notifications.
 6. **CH-6:** Add the personal-clock seasonal calendar, chapters/reminders, verified opt-in community board and health-screened, safe-rate occasion milestones/event-week mode.
 7. **CH-7:** Complete room co-op daily caps/host rules, badge/trophy awards, real-stat share images and purchased-Pro-only optional AI recap. No new paid/free AI exceptions.

@@ -101,7 +101,7 @@ npx supabase secrets set SUPABASE_SERVICE_ROLE_KEY=<service-role-secret>
 ### E. Returning-user sessions
 
 The app persists encrypted native sessions (including large OAuth sessions), refreshes tokens when
-the app is active, and retains cached targets during offline use. After 30 consecutive days without
+the app is active, and retains a local read cache of acknowledged targets. After 30 consecutive days without
 a successful sign-in or token refresh, it requests **sign in**, preserving saved targets and logs.
 
 For the hosted project, check **Authentication > Settings > Sessions**:
@@ -115,7 +115,7 @@ For the hosted project, check **Authentication > Settings > Sessions**:
 project automatically. Hosted session limits require Supabase Pro or above. See
 [Supabase session settings](https://supabase.com/docs/guides/auth/sessions).
 
-Verify on a development build: sign in, record custom targets, restart, then reopen offline and
+Verify on a development build: sign in, record custom targets, restart, then reopen while connected and
 confirm the targets remain. Test walking with the phone stationary and with sensor access denied;
 the count must stay unchanged without hardware events. Android historical step queries are not
 supported by Expo Pedometer; live walking sessions record measured steps, with manual entry

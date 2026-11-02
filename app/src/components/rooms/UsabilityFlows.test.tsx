@@ -62,7 +62,7 @@ vi.mock('@/services/roomMealService', () => ({
 }));
 vi.mock('@/services/workoutLogService', () => ({ logWorkoutExercise: state.log }));
 vi.mock('@/services/roomExtrasService', () => ({ shareRoomWorkout: state.share }));
-vi.mock('@/services/syncService', () => ({ flushOutbox: state.flush }));
+vi.mock('@/services/accountDataService', () => ({ flushOutbox: state.flush }));
 vi.mock('@/services/foodService', () => ({ generateClientUuid: () => 'retry-id' }));
 vi.mock('@/lib/supabase', () => ({ getSupabase: () => ({}) }));
 vi.mock('@/db', () => ({

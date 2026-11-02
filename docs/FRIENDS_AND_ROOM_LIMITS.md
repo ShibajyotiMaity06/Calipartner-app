@@ -24,7 +24,7 @@ Users can set a short bio, training style, optional Instagram handle and HTTPS w
 
 ## Offline behaviour
 
-Profile edits and friend actions are saved to an account-scoped SQLite outbox. Requests are shown as queued until the server checks the live entitlement and weekly allowance. Cached profile and inbox data are labelled when offline. Failed requests do not silently become sent.
+Profile edits and friend actions require an online request. The server checks entitlement and weekly allowance before the app shows success. Failed requests remain unsaved and display an error.
 
 ## Validation and release
 

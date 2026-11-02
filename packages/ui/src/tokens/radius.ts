@@ -4,6 +4,7 @@
  */
 
 export const radius = {
+  none: 0,
   control: 12,
   button: 16,
   card: 20,

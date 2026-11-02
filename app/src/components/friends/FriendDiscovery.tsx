@@ -20,14 +20,12 @@ export function FriendDiscovery({
   onOpen,
   onSend,
   busy,
-  queuedIds = [],
   remaining,
 }: {
   random?: boolean;
   onOpen: (person: SocialProfile) => void;
   onSend: (id: string) => Promise<unknown>;
   busy: boolean;
-  queuedIds?: string[];
   remaining?: number | null;
 }) {
   const [goal, setGoal] = useState<FriendGoal>(null);
@@ -109,8 +107,8 @@ export function FriendDiscovery({
             {person.relationship === 'none' ? (
               <Button
                 variant="secondary"
-                label={t(queuedIds.includes(person.id) ? 'friends.queued' : 'friends.send')}
-                disabled={busy || queuedIds.includes(person.id) || remaining === 0}
+                label={t('friends.send')}
+                disabled={busy || remaining === 0}
                 onPress={() => void onSend(person.id).then(() => discovery.load())}
                 testID={`send-friend-${person.id}`}
               />

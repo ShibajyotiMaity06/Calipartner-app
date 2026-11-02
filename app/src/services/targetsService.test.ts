@@ -1,12 +1,11 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import type { GoalProfile, HealthScreening } from '@calipartner/core';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import {
-  flushTargetsOutbox,
   getCurrentLocalGoalProfile,
   getLocalHealthScreening,
-  saveGoalProfileWithSync,
-  saveHealthScreeningWithSync,
+  saveGoalProfileOnline,
+  saveHealthScreeningOnline,
   type LocalGoalProfileRow,
   type LocalHealthScreeningRow,
   type TargetsDb,
@@ -184,66 +183,35 @@ describe('TargetsService', () => {
     created_at: '2026-01-01T00:00:00Z',
   };
 
-  it('saves goal profile locally and queues in outbox when offline', async () => {
+  it('does not persist a signed-in goal or screening while disconnected', async () => {
     const db = new MockTargetsDb();
-    const result = await saveGoalProfileWithSync(db, null, sampleGoal, false);
-
-    expect(result.synced).toBe(false);
-
-    // Profile is queryable locally immediately
-    const saved = await getCurrentLocalGoalProfile(db, userId);
-    expect(saved).not.toBeNull();
-    expect(saved?.daily_calorie_target).toBe(2044);
-
-    // Outbox contains pending item
-    expect(db.tables.outbox).toHaveLength(1);
-    expect(db.tables.outbox[0]?.entity).toBe('goal_profiles');
+    await expect(saveGoalProfileOnline(db, null, sampleGoal, false)).rejects.toThrow(
+      'NETWORK_UNAVAILABLE',
+    );
+    await expect(saveHealthScreeningOnline(db, null, sampleScreening, false)).rejects.toThrow(
+      'NETWORK_UNAVAILABLE',
+    );
+    expect(await getCurrentLocalGoalProfile(db, userId)).toBeNull();
+    expect(await getLocalHealthScreening(db, userId)).toBeNull();
   });
-
-  it('saves health screening locally and queues in outbox when offline', async () => {
+  it('persists exact goals and screening only after the server acknowledges them', async () => {
     const db = new MockTargetsDb();
-    const result = await saveHealthScreeningWithSync(db, null, sampleScreening, false);
-
-    expect(result.synced).toBe(false);
-
-    const saved = await getLocalHealthScreening(db, userId);
-    expect(saved).not.toBeNull();
-    expect(saved?.has_diabetes_or_medication).toBe(true);
-
-    expect(db.tables.outbox).toHaveLength(1);
-    expect(db.tables.outbox[0]?.entity).toBe('health_screening');
+    const upsert = vi.fn().mockResolvedValue({ error: null });
+    const client = { from: () => ({ upsert }) } as unknown as SupabaseClient;
+    expect(await saveGoalProfileOnline(db, client, sampleGoal, true)).toEqual({ saved: true });
+    expect(await getCurrentLocalGoalProfile(db, userId)).toEqual(sampleGoal);
+    await saveHealthScreeningOnline(db, client, sampleScreening, true);
+    expect(await getLocalHealthScreening(db, userId)).toEqual(sampleScreening);
+    expect(upsert).toHaveBeenCalledTimes(2);
   });
-
-  it('flushes outbox successfully when network becomes available', async () => {
+  it('reports a server rejection without caching an unsaved plan', async () => {
     const db = new MockTargetsDb();
-    await saveGoalProfileWithSync(db, null, sampleGoal, false);
-    await saveHealthScreeningWithSync(db, null, sampleScreening, false);
-
-    expect(db.tables.outbox).toHaveLength(2);
-
-    // Mock Supabase client
-    const remoteUpserts: Record<string, Record<string, unknown>[]> = {
-      goal_profiles: [],
-      health_screening: [],
-    };
-
-    const mockSupabase = {
-      from(entity: string) {
-        return {
-          upsert: async (payload: Record<string, unknown>) => {
-            const list = remoteUpserts[entity] ?? [];
-            list.push(payload);
-            remoteUpserts[entity] = list;
-            return { error: null };
-          },
-        };
-      },
+    const client = {
+      from: () => ({ upsert: async () => ({ error: { message: 'Network request failed' } }) }),
     } as unknown as SupabaseClient;
-
-    const flushResult = await flushTargetsOutbox(db, mockSupabase, userId);
-    expect(flushResult.flushedCount).toBe(2);
-    expect(db.tables.outbox).toHaveLength(0);
-    expect(remoteUpserts.goal_profiles).toHaveLength(1);
-    expect(remoteUpserts.health_screening).toHaveLength(1);
+    await expect(saveGoalProfileOnline(db, client, sampleGoal, true)).rejects.toThrow(
+      'Network request failed',
+    );
+    expect(await getCurrentLocalGoalProfile(db, userId)).toBeNull();
   });
 });

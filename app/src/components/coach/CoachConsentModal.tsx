@@ -76,7 +76,7 @@ export function CoachConsentModal({
                 <Ionicons
                   name="lock-closed-outline"
                   size={20}
-                  color={colors.syncSynced}
+                  color={colors.mint}
                   style={styles.bulletIcon}
                 />
                 <Text style={[styles.bulletText, { color: colors.text }]}>
@@ -88,7 +88,7 @@ export function CoachConsentModal({
                 <Ionicons
                   name="eye-off-outline"
                   size={20}
-                  color={colors.syncSynced}
+                  color={colors.mint}
                   style={styles.bulletIcon}
                 />
                 <Text style={[styles.bulletText, { color: colors.text }]}>
@@ -100,7 +100,7 @@ export function CoachConsentModal({
                 <Ionicons
                   name="trash-outline"
                   size={20}
-                  color={colors.textMuted}
+                  color={colors.mint}
                   style={styles.bulletIcon}
                 />
                 <View style={{ flex: 1 }}>

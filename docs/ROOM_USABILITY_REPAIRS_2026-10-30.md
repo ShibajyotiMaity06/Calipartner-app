@@ -2,11 +2,11 @@
 
 ## Built
 
-- Durable IndexedDB browser storage, legacy diary/outbox migration, rollback on failed saves, deduplicated chat caching and stable message ordering.
+Authenticated saves use direct server requests with client UUIDs, privacy checks and an error on failure. Only acknowledged values enter local read caches.
 - Multi-member room comparison, immediate own-diary projection, accurate food-activity wording, static Plus Jakarta Sans in room/chat/workout views, typed recipient-selected nudges, and partner-selected shared-meal copying.
 - Signed image/video previews with renewal/retry and an attachment icon; removed the redundant Open chat action.
 - Independent privacy patches/switches; removed partner-preview entry points. Challenge reads survive unavailable scoring or replaceable cache failures with a delayed-results notice.
-- Real offline workout logs: category -> exercise -> entered sets, atomic outbox persistence, and optional selection of a room for sharing after sync.
+Authenticated saves use direct server requests with client UUIDs, privacy checks and an error on failure. Only acknowledged values enter local read caches.
 - Tab/section/sheet Back navigation, explicit shared-meal modal visibility for Close, and consistent home meal prompt/highlight.
 
 ## Tests and checks

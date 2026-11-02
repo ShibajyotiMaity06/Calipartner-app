@@ -111,7 +111,7 @@ export function ChallengeDetailModal({
     setError(undefined);
     setNotice(undefined);
     try {
-      const state = await mutate(mutation);
+      await mutate(mutation);
       if (
         (mutation.action === 'social' && ['leave', 'block'].includes(mutation.kind)) ||
         (mutation.action === 'respond' && !mutation.accept)
@@ -119,7 +119,7 @@ export function ChallengeDetailModal({
         onClose();
         return;
       }
-      setNotice(ct(state === 'pending' ? 'queued' : 'socialDone'));
+      setNotice(ct('socialDone'));
       if (isOnline) {
         const data = await challengeRequest<ChallengeSnapshot>(getSupabase(), userId, {
           action: 'detail',

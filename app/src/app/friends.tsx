@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { Modal, ScrollView, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { Button, Card, Text, useTheme } from '@calipartner/ui';
+import { Button, Text, useTheme } from '@calipartner/ui';
 import { PlanTextField, planStyles } from '@/components/onboarding/PlanPrimitives';
 import { SocialProfileEditor } from '@/components/friends/SocialProfileEditor';
 import { PublicSocialProfile } from '@/components/friends/PublicSocialProfile';
@@ -42,18 +42,7 @@ function FriendsView() {
       : friends.error?.includes('PROFILE_UNAVAILABLE')
         ? t('friends.unavailable')
         : t('friends.genericError');
-  const pending = friends.outbox.filter((item) => item.status === 'pending');
   const selected = friends.selected;
-  const queued = Boolean(
-    selected &&
-    pending.some((item) => {
-      const payload = JSON.parse(item.payload) as Record<string, unknown>;
-      return (
-        payload.p_recipient_id === selected.id ||
-        (selected.request_id && payload.p_request_id === selected.request_id)
-      );
-    }),
-  );
   const showUpgrade = () => {
     friends.closeProfile();
     setPaywall(true);
@@ -94,38 +83,6 @@ function FriendsView() {
                 testID="refresh-friends"
               />
             ) : null}
-            {pending.length ? (
-              <Text accessibilityLiveRegion="polite">
-                {t('friends.pendingChanges', { count: pending.length })}
-              </Text>
-            ) : null}
-            {friends.outbox
-              .filter((item) => item.status === 'failed')
-              .map((item) => (
-                <Card key={item.id}>
-                  <View style={planStyles.gap}>
-                    <Text accessibilityRole="alert">
-                      {item.last_error?.includes('FRIEND_WEEKLY_LIMIT')
-                        ? t('friends.weeklyLimit')
-                        : t('friends.failedChanges')}
-                    </Text>
-                    {item.last_error?.includes('FRIEND_WEEKLY_LIMIT') ? (
-                      <Button
-                        variant="secondary"
-                        label={t('friends.upgrade')}
-                        onPress={showUpgrade}
-                        testID="upgrade-queued-friend-request"
-                      />
-                    ) : null}
-                    <Button
-                      variant="tertiary"
-                      label={t('friends.dismiss')}
-                      onPress={() => void friends.dismiss(item.id)}
-                      testID={`dismiss-social-${item.id}`}
-                    />
-                  </View>
-                </Card>
-              ))}
           </>
         )}
       </ScrollView>
@@ -142,7 +99,6 @@ function FriendsView() {
           key={selected.id}
           profile={selected}
           busy={friends.busy}
-          queued={queued}
           limitReached={friends.inbox?.quota.remaining === 0 && !friends.inbox.quota.premium}
           onClose={friends.closeProfile}
           onSend={() => void friends.send(selected.id)}

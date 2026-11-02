@@ -1,3 +1,10 @@
+import type { LocalDb } from './accountDataService';
+vi.mock('./accountDataService', async (original) => ({
+  ...(await original<object>()),
+  withOnlineSave: async <T>(db: LocalDb, action: (db: LocalDb) => Promise<T>) => action(db),
+  saveRemote: (await import('../test/remoteWrites')).recordRemoteWrite,
+}));
+import { recordedWrites } from '../test/remoteWrites';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 vi.mock('expo-sqlite', () => ({}));
 import { createWebDb } from '@/db';
@@ -39,9 +46,9 @@ describe('browser weight persistence', () => {
       local_date: '2026-10-29',
       notes: 'Morning',
     });
-    const outbox = await db.getAllAsync<{ payload: string }>('SELECT * FROM outbox');
+    const outbox = await recordedWrites(db);
     expect(outbox).toHaveLength(1);
-    const payload = JSON.parse(outbox[0]!.payload);
+    const payload = outbox[0]!.payload;
     expect(payload).toMatchObject({ local_date: '2026-10-29', notes: 'Morning' });
     expect(payload).not.toHaveProperty('sync_state');
   });

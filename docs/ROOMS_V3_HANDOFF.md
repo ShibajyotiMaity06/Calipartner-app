@@ -6,7 +6,7 @@ Built the owner-requested free pair model, individual chat/workout/media permiss
 
 Existing subscription amounts and AI allowances are retained. Assumptions: Free hosts one two-person room, Plus hosts two five-person rooms, and Pro hosts five 20-person rooms. A normal free pair stays available when a member's paid features lapse. Sharing nutrition remains opt-in. The removed weekly-limit wording does not remove calculator or database safety caps.
 
-The obsolete room-billing simulations were replaced with shared-helper tests and actual PostgreSQL integration tests replaying the entire migration chain. Two new compatibility migrations repair historical fresh-install failures without editing committed migrations. Metadata notifications refresh private room summaries without exposing base health tables. Height edits in Me now save a new validated plan through the existing offline outbox.
+Authenticated saves use direct server requests with client UUIDs, privacy checks and an error on failure. Only acknowledged values enter local read caches.
 
 ## Validation
 

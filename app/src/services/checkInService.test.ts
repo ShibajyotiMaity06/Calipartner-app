@@ -1,14 +1,22 @@
+const remote = vi.hoisted(() => ({ save: vi.fn() }));
+vi.mock('./accountDataService', async (original) => ({
+  ...(await original<object>()),
+  saveRemote: remote.save,
+}));
+beforeEach(() => {
+  remote.save.mockReset().mockResolvedValue(undefined);
+});
 import { DatabaseSync } from 'node:sqlite';
-import { describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { migrations } from '@/db/migrations';
 import { saveCheckIn } from './checkInService';
 import { OWNER_RECIPES, getRecipeDetail, logRecipe } from './recipeService';
-import { flushOutbox, type SyncDb, type SupabaseSyncClient } from './syncService';
+import { type LocalDb } from './accountDataService';
 
 function database() {
   const sqlite = new DatabaseSync(':memory:');
   for (const migration of migrations) sqlite.exec(migration.sql);
-  const db: SyncDb = {
+  const db: LocalDb = {
     async runAsync(sql, ...args) {
       return sqlite.prepare(sql).run(...(args[0] as []));
     },
@@ -52,43 +60,20 @@ describe('offline daily check-ins', () => {
       local_date: '2026-11-01',
       note: 'Updated note',
       share_with_squad: 0,
-      sync_state: 'pending',
+      sync_state: 'synced',
     });
-    const queue = sqlite.prepare('select * from outbox').all();
-    expect(queue).toHaveLength(1);
-    expect(JSON.parse(queue[0]!.payload as string)).toMatchObject({
+    expect(remote.save.mock.calls[1]?.[1].payload).toMatchObject({
       id: rows[0]!.id,
       local_date: '2026-11-01',
-      occurred_at: '2026-11-02T02:00:00Z',
       share_with_squad: false,
     });
     sqlite.close();
   });
   it('rolls back the check-in if its durable outbox write fails', async () => {
     const { db, sqlite } = database();
-    sqlite.exec('drop table outbox');
+    remote.save.mockRejectedValueOnce(new Error('Network request failed'));
     await expect(saveCheckIn(db, input)).rejects.toThrow();
     expect(sqlite.prepare('select * from local_squad_check_ins').all()).toEqual([]);
-    sqlite.close();
-  });
-  it('syncs by the composite day key and marks the local check-in synced', async () => {
-    const { db, sqlite } = database();
-    await saveCheckIn(db, input);
-    let options: unknown;
-    const client = {
-      from: () => ({
-        upsert: async (_value: unknown, next: unknown) => {
-          options = next;
-          return { error: null };
-        },
-      }),
-    } as unknown as SupabaseSyncClient;
-    expect(await flushOutbox(db, client)).toMatchObject({ succeeded: 1, failed: 0 });
-    expect(options).toEqual({ onConflict: 'user_id,room_id,local_date' });
-    expect(sqlite.prepare('select sync_state from local_squad_check_ins').get()).toEqual({
-      sync_state: 'synced',
-    });
-    expect(sqlite.prepare('select * from outbox').all()).toEqual([]);
     sqlite.close();
   });
 });
@@ -108,7 +93,7 @@ it('logs supplied recipe nutrition into the real native schema and rolls back a 
   expect(sqlite.prepare('select count(*) as count from local_food_entries').get()).toMatchObject({
     count: 1,
   });
-  sqlite.exec('drop table outbox');
+  remote.save.mockRejectedValueOnce(new Error('Network request failed'));
   await expect(
     logRecipe(db, {
       userId: 'owner',

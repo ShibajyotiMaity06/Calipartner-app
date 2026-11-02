@@ -58,7 +58,7 @@ The Progress tab has three segments: **My progress · Leaderboard · Challenges*
 7. **Primary button (pinned, 56):** **Create challenge**.
 **Interactions:** tile tap = light haptic; Create sends invites to the chosen people (they accept in K01) and opens M14.
 **Guardrails:** goals have sane limits per activity (for example steps 1,000 to 30,000, Focus up to 8 hours); **there is no calorie or weight-loss activity tile**; copy says "Counts days you reach your goal" and scores consistency, never "most" or "fastest" (PRD healthy-use rules).
-**Data note:** Running and Cycling use distance from Health Connect / HealthKit or manual entry in v1; in-app GPS is a later feature (STP-6, P2). If Health is not connected, the tile shows a small "Needs Health sync" hint, not an error.
+**Data note:** Running and Cycling use distance from Health Connect / HealthKit or manual entry in v1; in-app GPS is a later feature (STP-6, P2). If Health is not connected, the tile shows a small "Needs Health connection" hint, not an error.
 **States:** missing partner and "Whole room" off = solo; room locked → partner row disabled with "Room is paused".
 **A11y:** tile grid is a radio group; the unit chip is part of the field label.
 

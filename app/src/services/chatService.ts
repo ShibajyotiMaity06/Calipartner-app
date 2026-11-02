@@ -2,7 +2,7 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 import { mergeMessagesDeduplicated, validateChatMessageInput } from '@calipartner/core';
 import type { ChatAttachment, ChatMessage } from '@/types/chat';
 import { ChatServiceError, parseChatError } from '@/types/chat';
-import { enqueueOutbox, type SyncDb } from './syncService';
+import { withOnlineSave, type LocalDb } from './accountDataService';
 
 export interface SupabaseRpcClient {
   rpc: (fn: string, args?: Record<string, unknown>) => Promise<{ data: unknown; error: unknown }>;
@@ -39,7 +39,7 @@ export interface GetMessagesOptions {
  * Reads local messages from SQLite for instant offline rendering.
  */
 export async function getLocalChatMessages(
-  db: SyncDb,
+  db: LocalDb,
   roomId: string,
   options: GetMessagesOptions = {},
 ): Promise<ChatMessage[]> {
@@ -153,12 +153,12 @@ export async function getLocalChatMessages(
 }
 
 /**
- * Fetches chat messages from Supabase (or local SQLite when offline).
+ * Fetches chat messages through the privacy checked Supabase RPC.
  * Merges and saves remote messages into local SQLite.
  */
 export async function getChatMessages(
   supabase: ChatSupabaseClient,
-  db: SyncDb,
+  db: LocalDb,
   roomId: string,
   options: GetMessagesOptions = {},
 ): Promise<ChatMessage[]> {
@@ -247,8 +247,7 @@ export async function getChatMessages(
         }
       }
     };
-    if (db.withTransactionAsync) await db.withTransactionAsync(cacheMessages);
-    else await cacheMessages();
+    await withOnlineSave(db, cacheMessages, false);
 
     return mergeMessagesDeduplicated(
       localMessages.filter(
@@ -259,31 +258,16 @@ export async function getChatMessages(
       remoteMessages,
     );
   } catch (err: unknown) {
-    // If offline or network error, return local cache
-    const chatErr = parseChatError(err);
-    if (
-      !/network|fetch failed|failed to fetch|offline|load failed/i.test(
-        String(
-          err instanceof Error ? err.message : ((err as { message?: string })?.message ?? err),
-        ),
-      )
-    )
-      throw chatErr;
-    return localMessages.filter(
-      (message) =>
-        !options.ownerId ||
-        message.sync_state === 'synced' ||
-        message.sender_id === options.ownerId,
-    );
+    throw parseChatError(err);
   }
 }
 
 /**
- * Sends a message with offline queueing and idempotent retry.
+ * Sends a message and waits for the server. A failed send requires an explicit retry.
  */
 export async function sendChatMessage(
   supabase: ChatSupabaseClient,
-  db: SyncDb,
+  db: LocalDb,
   roomId: string,
   senderId: string,
   options: SendMessageOptions,
@@ -382,29 +366,6 @@ export async function sendChatMessage(
     sync_state: 'pending',
   };
 
-  // 3. Queue in SQLite outbox
-  await enqueueOutbox(db, {
-    id: msgId,
-    entity: 'chat_messages',
-    operation: 'upsert',
-    payload: {
-      client_id: clientId,
-      room_id: roomId,
-      sender_id: senderId,
-      message_type: 'user',
-      text: options.text ?? null,
-      created_at: now,
-      attachments:
-        options.attachments?.map(({ storage_key, size, mime_type, width, height }) => ({
-          storage_key,
-          size,
-          mime_type,
-          width,
-          height,
-        })) ?? [],
-    },
-  });
-
   // 4. Try sending to Supabase immediately
   try {
     const { data: serverMsg, error } = await supabase.rpc('send_chat_message', {
@@ -438,9 +399,6 @@ export async function sendChatMessage(
       [confirmedId, clientId],
     );
 
-    // Remove from outbox
-    await db.runAsync(`DELETE FROM outbox WHERE id = ?`, [msgId]);
-
     return {
       ...localMessage,
       id: confirmedId,
@@ -450,30 +408,11 @@ export async function sendChatMessage(
   } catch (err: unknown) {
     const chatErr = parseChatError(err);
 
-    // Hard errors (permanent): fail immediately and remove from outbox
-    if (
-      chatErr.code === 'PLUS_REQUIRED' ||
-      chatErr.code === 'PRO_REQUIRED' ||
-      chatErr.code === 'ROOM_LOCKED' ||
-      chatErr.code === 'NOT_ROOM_MEMBER' ||
-      chatErr.code === 'ROOM_DORMANT_READ_ONLY' ||
-      chatErr.code === 'RATE_LIMIT_EXCEEDED' ||
-      chatErr.code === 'TERMS_REQUIRED' ||
-      chatErr.code === 'ATTACHMENT_LIMIT_EXCEEDED' ||
-      chatErr.code === 'FILE_TOO_LARGE'
-    ) {
-      await db.runAsync(
-        `UPDATE local_chat_messages
-         SET delivery_status = 'failed', sync_state = 'failed', last_error = ?
-         WHERE client_id = ?`,
-        [chatErr.message, clientId],
-      );
-      await db.runAsync(`DELETE FROM outbox WHERE id = ?`, [msgId]);
-      throw chatErr;
-    }
-
-    // Transient network error: leave in outbox for automatic reconnect sync
-    return localMessage;
+    await db.runAsync(
+      `UPDATE local_chat_messages SET delivery_status = 'failed', sync_state = 'failed', last_error = ? WHERE client_id = ?`,
+      [chatErr.message, clientId],
+    );
+    throw chatErr;
   }
 }
 
@@ -482,7 +421,7 @@ export async function sendChatMessage(
  */
 export async function retryFailedChatMessage(
   supabase: ChatSupabaseClient,
-  db: SyncDb,
+  db: LocalDb,
   message: ChatMessage,
 ): Promise<ChatMessage> {
   return sendChatMessage(supabase, db, message.room_id, message.sender_id || '', {
@@ -504,7 +443,7 @@ export async function retryFailedChatMessage(
  */
 export async function deleteChatMessage(
   supabase: ChatSupabaseClient,
-  db: SyncDb,
+  db: LocalDb,
   messageId: string,
 ): Promise<void> {
   const now = new Date().toISOString();
@@ -600,7 +539,7 @@ export async function unmuteChatMember(
  */
 export async function setRoomChatSettings(
   supabase: ChatSupabaseClient,
-  db: SyncDb,
+  db: LocalDb,
   roomId: string,
   userId: string,
   muteSystemMessages: boolean,
@@ -624,7 +563,7 @@ export async function setRoomChatSettings(
  */
 export async function markChatRead(
   supabase: ChatSupabaseClient,
-  db: SyncDb,
+  db: LocalDb,
   roomId: string,
   userId: string,
   messageId?: string,
@@ -669,7 +608,7 @@ export async function getChatUnreadCount(
  */
 export async function hasAcceptedChatTerms(
   supabase: ChatSupabaseClient,
-  db: SyncDb,
+  db: LocalDb,
   userId: string,
 ): Promise<boolean> {
   // Check local database first
@@ -704,7 +643,7 @@ export async function hasAcceptedChatTerms(
  */
 export async function acceptChatTerms(
   supabase: ChatSupabaseClient,
-  db: SyncDb,
+  db: LocalDb,
   userId: string,
   version = '1.0',
 ): Promise<void> {

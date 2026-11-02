@@ -55,7 +55,7 @@ scaling to 200% with the paired card reflowing at 150%; screen-reader labels for
 Reduce Motion and Reduce Transparency respected; tabular numerals on every changing number;
 static font weights only (Bricolage Grotesque, Figtree, Anek Devanagari); glass only on the tab
 bar and Log sheet; one orchestrated motion moment (the seam fuse); sentence case; no emoji or
-exclamation marks in system copy; no guilt copy; logging never blocks and works offline.
+exclamation marks in system copy; no guilt copy; logging never blocks and requires an internet connection.
 
 Build order: tokens and fonts, components, onboarding, Today and logging, trackers, Room,
 Progress, Me, plans, then Focus, recipes, coach, Partner Finder, challenges.

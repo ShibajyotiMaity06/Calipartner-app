@@ -1,6 +1,12 @@
+vi.mock('./accountDataService', async (original) => ({
+  ...(await original<object>()),
+  withOnlineSave: async <T>(db: LocalDb, action: (db: LocalDb) => Promise<T>) => action(db),
+  saveRemote: (await import('../test/remoteWrites')).recordRemoteWrite,
+}));
+import { recordedWrites } from '../test/remoteWrites';
 import { DatabaseSync } from 'node:sqlite';
-import { beforeEach, describe, expect, it } from 'vitest';
-import type { SyncDb } from './syncService';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import type { LocalDb } from './accountDataService';
 import {
   cacheRecipeLocally,
   getFavoriteRecipes,
@@ -14,7 +20,7 @@ import {
 } from './recipeService';
 import type { Recipe } from '@calipartner/core';
 
-function createTestDb(): SyncDb {
+function createTestDb(): LocalDb {
   const sqlite = new DatabaseSync(':memory:');
 
   sqlite.exec(`
@@ -141,8 +147,8 @@ function createTestDb(): SyncDb {
   };
 }
 
-describe('Phase 12: Recipe Service & Offline Sync', () => {
-  let db: SyncDb;
+describe('Phase 12: Recipe Service & Online saves', () => {
+  let db: LocalDb;
   const user1 = 'user-test-1';
 
   beforeEach(() => {
@@ -272,14 +278,11 @@ describe('Phase 12: Recipe Service & Offline Sync', () => {
     expect(saved).not.toBeNull();
     expect(saved!.calories).toBe(652.7);
 
-    // 3. Check outbox queue insertion
-    const outboxItems = await db.getAllAsync<{ entity: string; payload: string }>(
-      `SELECT entity, payload FROM outbox WHERE id = ?`,
-      [entry.id],
-    );
+    // Save directly and require server acknowledgement.
+    const outboxItems = (await recordedWrites(db)).filter((item) => item.id === entry.id);
     expect(outboxItems).toHaveLength(1);
     expect(outboxItems[0]!.entity).toBe('food_entries');
-    const parsedPayload = JSON.parse(outboxItems[0]!.payload);
+    const parsedPayload = outboxItems[0]!.payload;
     expect(parsedPayload.calories).toBe(652.7);
     expect(parsedPayload.source).toBe('recipe');
   });
@@ -295,11 +298,8 @@ describe('Phase 12: Recipe Service & Offline Sync', () => {
     expect(favs[0]!.id).toBe(sampleRecipe.id);
     expect(favs[0]!.is_favorite).toBe(true);
 
-    // Verify outbox queued favorite
-    const outboxFav = await db.getFirstAsync<{ entity: string; operation: string }>(
-      `SELECT entity, operation FROM outbox WHERE id = ?`,
-      [`recipe_fav:${user1}:${sampleRecipe.id}`],
-    );
+    // Save directly and require server acknowledgement.
+    const outboxFav = (await recordedWrites(db)).at(-1)!;
     expect(outboxFav).not.toBeNull();
     expect(outboxFav!.entity).toBe('recipe_favorites');
     expect(outboxFav!.operation).toBe('upsert');
@@ -310,10 +310,7 @@ describe('Phase 12: Recipe Service & Offline Sync', () => {
     const remaining = await getFavoriteRecipes(db, user1);
     expect(remaining).toHaveLength(0);
 
-    const outboxUnfav = await db.getFirstAsync<{ entity: string; operation: string }>(
-      `SELECT entity, operation FROM outbox WHERE id = ?`,
-      [`recipe_fav:${user1}:${sampleRecipe.id}`],
-    );
+    const outboxUnfav = (await recordedWrites(db)).at(-1)!;
     expect(outboxUnfav!.operation).toBe('delete');
   });
 
@@ -336,11 +333,8 @@ describe('Phase 12: Recipe Service & Offline Sync', () => {
     expect(row).not.toBeNull();
     expect(row!.reason).toBe('Missing salt quantity in ingredients');
 
-    // Verify outbox
-    const outboxRow = await db.getFirstAsync<{ entity: string }>(
-      `SELECT entity FROM outbox WHERE id = ?`,
-      [report.id],
-    );
+    // Save directly and require server acknowledgement.
+    const outboxRow = (await recordedWrites(db)).at(-1)!;
     expect(outboxRow).not.toBeNull();
     expect(outboxRow!.entity).toBe('recipe_reports');
   });

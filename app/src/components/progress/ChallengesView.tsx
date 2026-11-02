@@ -143,20 +143,6 @@ export function ChallengesView({ testID = 'challenges-view' }: { testID?: string
           />
         </>
       )}
-      {state.pending.map((item) => (
-        <View key={item.id} style={cs.card}>
-          <Text style={cs.body}>
-            {item.status === 'failed' ? challengeError(item.last_error ?? '') : ct('queued')}
-          </Text>
-          {item.status === 'failed' && (
-            <CButton
-              label={ct('dismiss')}
-              onPress={() => void state.dismiss(item.id)}
-              testID={`challenge-dismiss-${item.id}`}
-            />
-          )}
-        </View>
-      ))}
       {(filter === 'all' || filter === 'active') && home.due?.length ? (
         <View style={cs.card}>
           <Text style={cs.heading}>{ct('today')}</Text>

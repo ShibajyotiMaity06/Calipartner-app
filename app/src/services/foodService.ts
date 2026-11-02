@@ -1,3 +1,4 @@
+import { withOnlineSave } from './accountDataService';
 import {
   calculateDiaryTotals,
   copyEntries,
@@ -19,7 +20,7 @@ import {
   type UserFoodStats,
 } from '@calipartner/core';
 import { createLogger } from '@/lib/logger';
-import { enqueueOutbox, type SyncDb } from './syncService';
+import { saveRemote, type LocalDb } from './accountDataService';
 import bundledFoodsJson from '../../assets/bundled_foods.json';
 
 const log = createLogger('foodService');
@@ -41,7 +42,7 @@ export function generateClientUuid(): string {
  * Populates from bundled_foods.json (2,351 Indian foods & barcodes) shipped inside the app bundle,
  * with DEV_100_FOOD_SEED fallback.
  */
-export async function ensureBundledFoodsSeeded(db: SyncDb): Promise<number> {
+export async function ensureBundledFoodsSeeded(db: LocalDb): Promise<number> {
   const countRow = await db.getFirstAsync<{ count: number }>(
     `SELECT COUNT(*) as count FROM local_foods WHERE source != 'user'`,
   );
@@ -170,7 +171,7 @@ export function mapRowToFood(row: RawFoodRow): Food {
  * PRD LOG-1 order: custom foods first, then database foods.
  */
 export async function searchLocalFoods(
-  db: SyncDb,
+  db: LocalDb,
   query: string,
   userId?: string,
   limit = 40,
@@ -199,7 +200,7 @@ export async function searchLocalFoods(
  * Looks up food by barcode in local database.
  */
 export async function findLocalFoodByBarcode(
-  db: SyncDb,
+  db: LocalDb,
   barcode: string,
   userId?: string,
 ): Promise<Food | null> {
@@ -263,52 +264,53 @@ export async function lookupRemoteFood(
 
 /**
  * Saves or updates a custom food.
- * Custom foods have source='user', owner_id=userId, and are enqueued into outbox.
+ * Saves directly with server acknowledgement.
  */
 export async function saveCustomFood(
-  db: SyncDb,
+  db: LocalDb,
   userId: string,
   input: CreateFoodInput | (UpdateFoodInput & { id: string }),
 ): Promise<Food> {
-  const now = new Date().toISOString();
-  const id = 'id' in input && input.id ? input.id : generateClientUuid();
-  const servingUnits = input.serving_units ?? [
-    { unit: 'serving', grams: 100 },
-    { unit: 'g', grams: 1 },
-  ];
-  const unitsJson = JSON.stringify(servingUnits);
+  return withOnlineSave(db, async (db) => {
+    const now = new Date().toISOString();
+    const id = 'id' in input && input.id ? input.id : generateClientUuid();
+    const servingUnits = input.serving_units ?? [
+      { unit: 'serving', grams: 100 },
+      { unit: 'g', grams: 1 },
+    ];
+    const unitsJson = JSON.stringify(servingUnits);
 
-  const food: Food = {
-    id,
-    source: 'user',
-    name: input.name ?? 'Custom Food',
-    brand: input.brand ?? null,
-    barcode: input.barcode ?? null,
-    serving_units: servingUnits,
-    calories_per_100g: input.calories_per_100g ?? 0,
-    protein_per_100g: input.protein_per_100g ?? 0,
-    carbs_per_100g: input.carbs_per_100g ?? 0,
-    fat_per_100g: input.fat_per_100g ?? 0,
-    fiber_per_100g: input.fiber_per_100g ?? 0,
-    sugar_per_100g: input.sugar_per_100g ?? 0,
-    sodium_mg_per_100g: input.sodium_mg_per_100g ?? 0,
-    ...(parseNutritionDetails(input.nutrition_details)
-      ? { nutrition_details: parseNutritionDetails(input.nutrition_details) }
-      : {}),
-    owner_id: userId,
-    attribution: 'User custom food',
-    created_at: now,
-    updated_at: now,
-    deleted_at: null,
-  };
+    const food: Food = {
+      id,
+      source: 'user',
+      name: input.name ?? 'Custom Food',
+      brand: input.brand ?? null,
+      barcode: input.barcode ?? null,
+      serving_units: servingUnits,
+      calories_per_100g: input.calories_per_100g ?? 0,
+      protein_per_100g: input.protein_per_100g ?? 0,
+      carbs_per_100g: input.carbs_per_100g ?? 0,
+      fat_per_100g: input.fat_per_100g ?? 0,
+      fiber_per_100g: input.fiber_per_100g ?? 0,
+      sugar_per_100g: input.sugar_per_100g ?? 0,
+      sodium_mg_per_100g: input.sodium_mg_per_100g ?? 0,
+      ...(parseNutritionDetails(input.nutrition_details)
+        ? { nutrition_details: parseNutritionDetails(input.nutrition_details) }
+        : {}),
+      owner_id: userId,
+      attribution: 'User custom food',
+      created_at: now,
+      updated_at: now,
+      deleted_at: null,
+    };
 
-  await db.runAsync(
-    `INSERT INTO local_foods (
+    await db.runAsync(
+      `INSERT INTO local_foods (
       id, source, name, brand, barcode, serving_units,
       calories_per_100g, protein_per_100g, carbs_per_100g, fat_per_100g,
       fiber_per_100g, sugar_per_100g, sodium_mg_per_100g,
       owner_id, attribution, created_at, updated_at, deleted_at, sync_state, nutrition_details
-    ) VALUES (?, 'user', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NULL, 'pending', ?)
+    ) VALUES (?, 'user', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NULL, 'synced', ?)
     ON CONFLICT (id) DO UPDATE SET
       name = excluded.name,
       brand = excluded.brand,
@@ -323,65 +325,66 @@ export async function saveCustomFood(
       sodium_mg_per_100g = excluded.sodium_mg_per_100g,
       nutrition_details = excluded.nutrition_details,
       updated_at = excluded.updated_at,
-      sync_state = 'pending'`,
-    [
-      food.id,
-      food.name,
-      food.brand,
-      food.barcode,
-      unitsJson,
-      food.calories_per_100g,
-      food.protein_per_100g,
-      food.carbs_per_100g,
-      food.fat_per_100g,
-      food.fiber_per_100g,
-      food.sugar_per_100g,
-      food.sodium_mg_per_100g,
-      userId,
-      food.attribution,
-      now,
-      now,
-      JSON.stringify(food.nutrition_details ?? null),
-    ],
-  );
+      sync_state = 'synced'`,
+      [
+        food.id,
+        food.name,
+        food.brand,
+        food.barcode,
+        unitsJson,
+        food.calories_per_100g,
+        food.protein_per_100g,
+        food.carbs_per_100g,
+        food.fat_per_100g,
+        food.fiber_per_100g,
+        food.sugar_per_100g,
+        food.sodium_mg_per_100g,
+        userId,
+        food.attribution,
+        now,
+        now,
+        JSON.stringify(food.nutrition_details ?? null),
+      ],
+    );
 
-  // Enqueue to outbox for sync
-  await enqueueOutbox(db, {
-    id: food.id,
-    entity: 'foods',
-    operation: 'upsert',
-    payload: {
+    // Save directly and require server acknowledgement.
+    await saveRemote(db, {
       id: food.id,
-      source: 'user',
-      name: food.name,
-      brand: food.brand,
-      barcode: food.barcode,
-      serving_units: food.serving_units,
-      calories_per_100g: food.calories_per_100g,
-      protein_per_100g: food.protein_per_100g,
-      carbs_per_100g: food.carbs_per_100g,
-      fat_per_100g: food.fat_per_100g,
-      fiber_per_100g: food.fiber_per_100g,
-      sugar_per_100g: food.sugar_per_100g,
-      sodium_mg_per_100g: food.sodium_mg_per_100g,
-      ...(parseNutritionDetails(food.nutrition_details)
-        ? { nutrition_details: parseNutritionDetails(food.nutrition_details) }
-        : {}),
-      owner_id: userId,
-      attribution: food.attribution,
-      created_at: now,
-      updated_at: now,
-      deleted_at: null,
-    },
-  });
+      entity: 'foods',
+      operation: 'upsert',
+      payload: {
+        id: food.id,
+        source: 'user',
+        name: food.name,
+        brand: food.brand,
+        barcode: food.barcode,
+        serving_units: food.serving_units,
+        calories_per_100g: food.calories_per_100g,
+        protein_per_100g: food.protein_per_100g,
+        carbs_per_100g: food.carbs_per_100g,
+        fat_per_100g: food.fat_per_100g,
+        fiber_per_100g: food.fiber_per_100g,
+        sugar_per_100g: food.sugar_per_100g,
+        sodium_mg_per_100g: food.sodium_mg_per_100g,
+        ...(parseNutritionDetails(food.nutrition_details)
+          ? { nutrition_details: parseNutritionDetails(food.nutrition_details) }
+          : {}),
+        owner_id: userId,
+        attribution: food.attribution,
+        created_at: now,
+        updated_at: now,
+        deleted_at: null,
+      },
+    });
 
-  return food;
+    return food;
+  });
 }
 
 /**
  * Fetches all custom foods created by user.
  */
-export async function getCustomFoods(db: SyncDb, userId: string): Promise<Food[]> {
+export async function getCustomFoods(db: LocalDb, userId: string): Promise<Food[]> {
   const rows = await db.getAllAsync<RawFoodRow>(
     `SELECT * FROM local_foods WHERE owner_id = ? AND deleted_at IS NULL ORDER BY updated_at DESC`,
     [userId],
@@ -391,10 +394,10 @@ export async function getCustomFoods(db: SyncDb, userId: string): Promise<Food[]
 
 /**
  * Adds a food entry to the local diary, computes nutrient snapshot,
- * updates user food stats, and enqueues sync.
+ * Saves directly with server acknowledgement.
  */
 export async function logFoodEntry(
-  db: SyncDb,
+  db: LocalDb,
   input: {
     userId: string;
     food: Food;
@@ -406,81 +409,82 @@ export async function logFoodEntry(
     sharedMealId?: string | null;
   },
 ): Promise<FoodEntry> {
-  const id = generateClientUuid();
-  const now = new Date().toISOString();
-  const localDate = input.localDate ?? now.slice(0, 10);
-  const section = input.mealSection ?? getMealSectionForTime(now);
-  const source = input.source ?? 'search';
+  return withOnlineSave(db, async (db) => {
+    const id = generateClientUuid();
+    const now = new Date().toISOString();
+    const localDate = input.localDate ?? now.slice(0, 10);
+    const section = input.mealSection ?? getMealSectionForTime(now);
+    const source = input.source ?? 'search';
 
-  // Compute live nutrient snapshot via core formula
-  const nutrients = scaleNutrients(input.food, input.quantity, input.unit);
+    // Compute live nutrient snapshot via core formula
+    const nutrients = scaleNutrients(input.food, input.quantity, input.unit);
 
-  const entry: FoodEntry = {
-    id,
-    user_id: input.userId,
-    food_id: input.food.id,
-    meal_section: section,
-    quantity: input.quantity,
-    unit: input.unit,
-    calories: nutrients.calories,
-    protein: nutrients.protein,
-    carbs: nutrients.carbs,
-    fat: nutrients.fat,
-    fiber: nutrients.fiber,
-    sugar: nutrients.sugar,
-    sodium_mg: nutrients.sodium_mg,
-    ...(nutrients.nutrition_details ? { nutrition_details: nutrients.nutrition_details } : {}),
-    food_name: input.food.name,
-    brand_name: input.food.brand ?? null,
-    logged_at: now,
-    local_date: localDate,
-    source,
-    shared_meal_id: input.sharedMealId ?? null,
-    created_at: now,
-    updated_at: now,
-    deleted_at: null,
-  };
+    const entry: FoodEntry = {
+      id,
+      user_id: input.userId,
+      food_id: input.food.id,
+      meal_section: section,
+      quantity: input.quantity,
+      unit: input.unit,
+      calories: nutrients.calories,
+      protein: nutrients.protein,
+      carbs: nutrients.carbs,
+      fat: nutrients.fat,
+      fiber: nutrients.fiber,
+      sugar: nutrients.sugar,
+      sodium_mg: nutrients.sodium_mg,
+      ...(nutrients.nutrition_details ? { nutrition_details: nutrients.nutrition_details } : {}),
+      food_name: input.food.name,
+      brand_name: input.food.brand ?? null,
+      logged_at: now,
+      local_date: localDate,
+      source,
+      shared_meal_id: input.sharedMealId ?? null,
+      created_at: now,
+      updated_at: now,
+      deleted_at: null,
+    };
 
-  // 1. Insert local entry
-  await db.runAsync(
-    `INSERT INTO local_food_entries (
+    // 1. Insert local entry
+    await db.runAsync(
+      `INSERT INTO local_food_entries (
       id, user_id, food_id, meal_section, quantity, unit,
       calories, protein, carbs, fat, fiber, sugar, sodium_mg,
       food_name, brand_name, logged_at, local_date, source,
       shared_meal_id, created_at, updated_at, deleted_at, sync_state, nutrition_details
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NULL, 'pending', ?)`,
-    [
-      entry.id,
-      entry.user_id,
-      entry.food_id,
-      entry.meal_section,
-      entry.quantity,
-      entry.unit,
-      entry.calories,
-      entry.protein,
-      entry.carbs,
-      entry.fat,
-      entry.fiber,
-      entry.sugar,
-      entry.sodium_mg,
-      entry.food_name,
-      entry.brand_name,
-      entry.logged_at,
-      entry.local_date,
-      entry.source,
-      entry.shared_meal_id,
-      entry.created_at,
-      entry.updated_at,
-      JSON.stringify(entry.nutrition_details ?? null),
-    ],
-  );
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NULL, 'synced', ?)`,
+      [
+        entry.id,
+        entry.user_id,
+        entry.food_id,
+        entry.meal_section,
+        entry.quantity,
+        entry.unit,
+        entry.calories,
+        entry.protein,
+        entry.carbs,
+        entry.fat,
+        entry.fiber,
+        entry.sugar,
+        entry.sodium_mg,
+        entry.food_name,
+        entry.brand_name,
+        entry.logged_at,
+        entry.local_date,
+        entry.source,
+        entry.shared_meal_id,
+        entry.created_at,
+        entry.updated_at,
+        JSON.stringify(entry.nutrition_details ?? null),
+      ],
+    );
 
-  // 2. Update user food stats (for smart suggestions & previously logged)
-  if (input.food.id) {
-    await db.runAsync(
-      `INSERT INTO local_user_food_stats (
+    // 2. Update user food stats (for smart suggestions & previously logged)
+    if (input.food.id) {
+      await db.runAsync(
+        `INSERT INTO local_user_food_stats (
         user_id, food_id, use_count, last_used_at, last_quantity, last_unit, last_meal_section, hidden, updated_at, sync_state
-      ) VALUES (?, ?, 1, ?, ?, ?, ?, 0, ?, 'pending')
+      ) VALUES (?, ?, 1, ?, ?, ?, ?, 0, ?, 'synced')
       ON CONFLICT (user_id, food_id) DO UPDATE SET
         use_count = local_user_food_stats.use_count + 1,
         last_used_at = excluded.last_used_at,
@@ -489,77 +493,78 @@ export async function logFoodEntry(
         last_meal_section = excluded.last_meal_section,
         hidden = 0,
         updated_at = excluded.updated_at,
-        sync_state = 'pending'`,
-      [input.userId, input.food.id, now, input.quantity, input.unit, section, now],
-    );
+        sync_state = 'synced'`,
+        [input.userId, input.food.id, now, input.quantity, input.unit, section, now],
+      );
 
-    // Enqueue stats to outbox
-    const statsRow = await db.getFirstAsync<{
-      user_id: string;
-      food_id: string;
-      use_count: number;
-      last_used_at: string;
-      last_quantity: number;
-      last_unit: string;
-      last_meal_section: MealSection;
-      hidden: number;
-      updated_at: string;
-    }>(`SELECT * FROM local_user_food_stats WHERE user_id = ? AND food_id = ?`, [
-      input.userId,
-      input.food.id,
-    ]);
-    if (statsRow) {
-      await enqueueOutbox(db, {
-        id: `stats-${input.userId}-${input.food.id}`,
-        entity: 'user_food_stats',
-        operation: 'upsert',
-        payload: {
-          user_id: input.userId,
-          food_id: input.food.id,
-          use_count: statsRow.use_count,
-          last_used_at: statsRow.last_used_at,
-          last_quantity: statsRow.last_quantity,
-          last_unit: statsRow.last_unit,
-          last_meal_section: statsRow.last_meal_section,
-          hidden: Boolean(statsRow.hidden),
-          updated_at: statsRow.updated_at,
-        },
-      });
+      // Save directly and require server acknowledgement.
+      const statsRow = await db.getFirstAsync<{
+        user_id: string;
+        food_id: string;
+        use_count: number;
+        last_used_at: string;
+        last_quantity: number;
+        last_unit: string;
+        last_meal_section: MealSection;
+        hidden: number;
+        updated_at: string;
+      }>(`SELECT * FROM local_user_food_stats WHERE user_id = ? AND food_id = ?`, [
+        input.userId,
+        input.food.id,
+      ]);
+      if (statsRow) {
+        await saveRemote(db, {
+          id: `stats-${input.userId}-${input.food.id}`,
+          entity: 'user_food_stats',
+          operation: 'upsert',
+          payload: {
+            user_id: input.userId,
+            food_id: input.food.id,
+            use_count: statsRow.use_count,
+            last_used_at: statsRow.last_used_at,
+            last_quantity: statsRow.last_quantity,
+            last_unit: statsRow.last_unit,
+            last_meal_section: statsRow.last_meal_section,
+            hidden: Boolean(statsRow.hidden),
+            updated_at: statsRow.updated_at,
+          },
+        });
+      }
     }
-  }
 
-  // 3. Enqueue entry to outbox
-  await enqueueOutbox(db, {
-    id: entry.id,
-    entity: 'food_entries',
-    operation: 'upsert',
-    payload: {
+    // Save directly and require server acknowledgement.
+    await saveRemote(db, {
       id: entry.id,
-      user_id: entry.user_id,
-      food_id: entry.food_id,
-      meal_section: entry.meal_section,
-      quantity: entry.quantity,
-      unit: entry.unit,
-      calories: entry.calories,
-      protein: entry.protein,
-      carbs: entry.carbs,
-      fat: entry.fat,
-      fiber: entry.fiber,
-      sugar: entry.sugar,
-      sodium_mg: entry.sodium_mg,
-      ...(entry.nutrition_details ? { nutrition_details: entry.nutrition_details } : {}),
-      food_name: entry.food_name,
-      brand_name: entry.brand_name,
-      logged_at: entry.logged_at,
-      local_date: entry.local_date,
-      source: entry.source,
-      shared_meal_id: entry.shared_meal_id,
-      updated_at: entry.updated_at,
-      deleted_at: null,
-    },
-  });
+      entity: 'food_entries',
+      operation: 'upsert',
+      payload: {
+        id: entry.id,
+        user_id: entry.user_id,
+        food_id: entry.food_id,
+        meal_section: entry.meal_section,
+        quantity: entry.quantity,
+        unit: entry.unit,
+        calories: entry.calories,
+        protein: entry.protein,
+        carbs: entry.carbs,
+        fat: entry.fat,
+        fiber: entry.fiber,
+        sugar: entry.sugar,
+        sodium_mg: entry.sodium_mg,
+        ...(entry.nutrition_details ? { nutrition_details: entry.nutrition_details } : {}),
+        food_name: entry.food_name,
+        brand_name: entry.brand_name,
+        logged_at: entry.logged_at,
+        local_date: entry.local_date,
+        source: entry.source,
+        shared_meal_id: entry.shared_meal_id,
+        updated_at: entry.updated_at,
+        deleted_at: null,
+      },
+    });
 
-  return entry;
+    return entry;
+  });
 }
 
 /**
@@ -567,58 +572,59 @@ export async function logFoodEntry(
  * Recalculates nutrient snapshot if quantity, unit or food changed.
  */
 export async function editFoodEntry(
-  db: SyncDb,
+  db: LocalDb,
   entryId: string,
   updates: UpdateFoodEntryInput,
   food?: Food | null,
 ): Promise<FoodEntry | null> {
-  const current = await db.getFirstAsync<FoodEntry>(
-    `SELECT * FROM local_food_entries WHERE id = ? AND deleted_at IS NULL`,
-    [entryId],
-  );
-  if (!current) return null;
+  return withOnlineSave(db, async (db) => {
+    const current = await db.getFirstAsync<FoodEntry>(
+      `SELECT * FROM local_food_entries WHERE id = ? AND deleted_at IS NULL`,
+      [entryId],
+    );
+    if (!current) return null;
 
-  current.nutrition_details = parseNutritionDetails(current.nutrition_details);
-  let nutritionDetails = current.nutrition_details;
-  const now = new Date().toISOString();
-  const quantity = updates.quantity ?? current.quantity;
-  const unit = updates.unit ?? current.unit;
-  const mealSection = updates.meal_section ?? current.meal_section;
-  const localDate = updates.local_date ?? current.local_date;
+    current.nutrition_details = parseNutritionDetails(current.nutrition_details);
+    let nutritionDetails = current.nutrition_details;
+    const now = new Date().toISOString();
+    const quantity = updates.quantity ?? current.quantity;
+    const unit = updates.unit ?? current.unit;
+    const mealSection = updates.meal_section ?? current.meal_section;
+    const localDate = updates.local_date ?? current.local_date;
 
-  let calories = current.calories;
-  let protein = current.protein;
-  let carbs = current.carbs;
-  let fat = current.fat;
-  let fiber = current.fiber;
-  let sugar = current.sugar;
-  let sodiumMg = current.sodium_mg;
+    let calories = current.calories;
+    let protein = current.protein;
+    let carbs = current.carbs;
+    let fat = current.fat;
+    let fiber = current.fiber;
+    let sugar = current.sugar;
+    let sodiumMg = current.sodium_mg;
 
-  // Recalculate nutrients if food provided or if quantity changed
-  if (food) {
-    const scaled = scaleNutrients(food, quantity, unit);
-    calories = scaled.calories;
-    protein = scaled.protein;
-    carbs = scaled.carbs;
-    fat = scaled.fat;
-    fiber = scaled.fiber;
-    sugar = scaled.sugar;
-    sodiumMg = scaled.sodium_mg;
-    nutritionDetails = scaled.nutrition_details ?? null;
-  } else if (updates.quantity !== undefined && current.quantity > 0) {
-    const scaled = resizeNutrientSnapshot(current, current.quantity, quantity);
-    calories = scaled.calories;
-    protein = scaled.protein;
-    carbs = scaled.carbs;
-    fat = scaled.fat;
-    fiber = scaled.fiber;
-    sugar = scaled.sugar;
-    sodiumMg = scaled.sodium_mg;
-    nutritionDetails = scaled.nutrition_details ?? null;
-  }
+    // Recalculate nutrients if food provided or if quantity changed
+    if (food) {
+      const scaled = scaleNutrients(food, quantity, unit);
+      calories = scaled.calories;
+      protein = scaled.protein;
+      carbs = scaled.carbs;
+      fat = scaled.fat;
+      fiber = scaled.fiber;
+      sugar = scaled.sugar;
+      sodiumMg = scaled.sodium_mg;
+      nutritionDetails = scaled.nutrition_details ?? null;
+    } else if (updates.quantity !== undefined && current.quantity > 0) {
+      const scaled = resizeNutrientSnapshot(current, current.quantity, quantity);
+      calories = scaled.calories;
+      protein = scaled.protein;
+      carbs = scaled.carbs;
+      fat = scaled.fat;
+      fiber = scaled.fiber;
+      sugar = scaled.sugar;
+      sodiumMg = scaled.sodium_mg;
+      nutritionDetails = scaled.nutrition_details ?? null;
+    }
 
-  await db.runAsync(
-    `UPDATE local_food_entries SET
+    await db.runAsync(
+      `UPDATE local_food_entries SET
       quantity = ?,
       unit = ?,
       meal_section = ?,
@@ -632,113 +638,116 @@ export async function editFoodEntry(
       sodium_mg = ?,
       nutrition_details = ?,
       updated_at = ?,
-      sync_state = 'pending'
+      sync_state = 'synced'
      WHERE id = ?`,
-    [
+      [
+        quantity,
+        unit,
+        mealSection,
+        localDate,
+        calories,
+        protein,
+        carbs,
+        fat,
+        fiber,
+        sugar,
+        sodiumMg,
+        JSON.stringify(nutritionDetails ?? null),
+        now,
+        entryId,
+      ],
+    );
+
+    const updatedEntry: FoodEntry = {
+      ...current,
       quantity,
       unit,
-      mealSection,
-      localDate,
+      meal_section: mealSection,
+      local_date: localDate,
       calories,
       protein,
       carbs,
       fat,
       fiber,
       sugar,
-      sodiumMg,
-      JSON.stringify(nutritionDetails ?? null),
-      now,
-      entryId,
-    ],
-  );
+      sodium_mg: sodiumMg,
+      nutrition_details: nutritionDetails,
+      updated_at: now,
+    };
 
-  const updatedEntry: FoodEntry = {
-    ...current,
-    quantity,
-    unit,
-    meal_section: mealSection,
-    local_date: localDate,
-    calories,
-    protein,
-    carbs,
-    fat,
-    fiber,
-    sugar,
-    sodium_mg: sodiumMg,
-    nutrition_details: nutritionDetails,
-    updated_at: now,
-  };
+    await saveRemote(db, {
+      id: entryId,
+      entity: 'food_entries',
+      operation: 'upsert',
+      payload: {
+        id: updatedEntry.id,
+        user_id: updatedEntry.user_id,
+        food_id: updatedEntry.food_id,
+        meal_section: updatedEntry.meal_section,
+        quantity: updatedEntry.quantity,
+        unit: updatedEntry.unit,
+        calories: updatedEntry.calories,
+        protein: updatedEntry.protein,
+        carbs: updatedEntry.carbs,
+        fat: updatedEntry.fat,
+        fiber: updatedEntry.fiber,
+        sugar: updatedEntry.sugar,
+        sodium_mg: updatedEntry.sodium_mg,
+        ...(updatedEntry.nutrition_details
+          ? { nutrition_details: updatedEntry.nutrition_details }
+          : {}),
+        food_name: updatedEntry.food_name,
+        brand_name: updatedEntry.brand_name,
+        logged_at: updatedEntry.logged_at,
+        local_date: updatedEntry.local_date,
+        source: updatedEntry.source,
+        shared_meal_id: updatedEntry.shared_meal_id,
+        updated_at: updatedEntry.updated_at,
+        deleted_at: null,
+      },
+    });
 
-  await enqueueOutbox(db, {
-    id: entryId,
-    entity: 'food_entries',
-    operation: 'upsert',
-    payload: {
-      id: updatedEntry.id,
-      user_id: updatedEntry.user_id,
-      food_id: updatedEntry.food_id,
-      meal_section: updatedEntry.meal_section,
-      quantity: updatedEntry.quantity,
-      unit: updatedEntry.unit,
-      calories: updatedEntry.calories,
-      protein: updatedEntry.protein,
-      carbs: updatedEntry.carbs,
-      fat: updatedEntry.fat,
-      fiber: updatedEntry.fiber,
-      sugar: updatedEntry.sugar,
-      sodium_mg: updatedEntry.sodium_mg,
-      ...(updatedEntry.nutrition_details
-        ? { nutrition_details: updatedEntry.nutrition_details }
-        : {}),
-      food_name: updatedEntry.food_name,
-      brand_name: updatedEntry.brand_name,
-      logged_at: updatedEntry.logged_at,
-      local_date: updatedEntry.local_date,
-      source: updatedEntry.source,
-      shared_meal_id: updatedEntry.shared_meal_id,
-      updated_at: updatedEntry.updated_at,
-      deleted_at: null,
-    },
+    return updatedEntry;
   });
-
-  return updatedEntry;
 }
 
 /**
- * Soft deletes a food entry (sets deleted_at = now() and enqueues sync).
+ * Saves directly with server acknowledgement.
  */
-export async function deleteFoodEntry(db: SyncDb, entryId: string): Promise<boolean> {
-  const current = await db.getFirstAsync<FoodEntry>(
-    `SELECT * FROM local_food_entries WHERE id = ?`,
-    [entryId],
-  );
-  if (!current) return false;
+export async function deleteFoodEntry(db: LocalDb, entryId: string): Promise<boolean> {
+  return withOnlineSave(db, async (db) => {
+    const current = await db.getFirstAsync<FoodEntry>(
+      `SELECT * FROM local_food_entries WHERE id = ?`,
+      [entryId],
+    );
+    if (!current) return false;
 
-  const now = new Date().toISOString();
-  await db.runAsync(
-    `UPDATE local_food_entries SET deleted_at = ?, updated_at = ?, sync_state = 'pending' WHERE id = ?`,
-    [now, now, entryId],
-  );
+    const now = new Date().toISOString();
+    await db.runAsync(
+      `UPDATE local_food_entries SET deleted_at = ?, updated_at = ?, sync_state = 'synced' WHERE id = ?`,
+      [now, now, entryId],
+    );
 
-  await enqueueOutbox(db, {
-    id: entryId,
-    entity: 'food_entries',
-    operation: 'delete',
-    payload: {
+    await saveRemote(db, {
       id: entryId,
-      deleted_at: now,
-      updated_at: now,
-    },
-  });
+      entity: 'food_entries',
+      operation: 'delete',
+      payload: {
+        id: entryId,
+        deleted_at: now,
+        updated_at: now,
+      },
+    });
 
-  return true;
+    return true;
+  });
 }
 
 /**
  * Loads all active food entries for a specific user and local date.
  */
 export async function getEntriesForDate(
-  db: SyncDb,
+  db: LocalDb,
   userId: string,
   localDate: string,
 ): Promise<FoodEntry[]> {
@@ -782,7 +791,7 @@ export async function getEntriesForDate(
  * Returns complete diary summary (sections & totals) for a date.
  */
 export async function getDiaryDaySummary(
-  db: SyncDb,
+  db: LocalDb,
   userId: string,
   localDate: string,
 ): Promise<DiaryDaySummary> {
@@ -825,7 +834,7 @@ interface HistoryJoinedRow {
  * Fetches previously logged foods with usage stats.
  */
 export async function getPreviouslyLoggedItems(
-  db: SyncDb,
+  db: LocalDb,
   userId: string,
 ): Promise<Array<{ stats: UserFoodStats; food: Food }>> {
   const rows = await db.getAllAsync<HistoryJoinedRow>(
@@ -892,26 +901,28 @@ export async function getPreviouslyLoggedItems(
  * Removes a food from history by setting hidden = 1 in stats without deleting entries (PRD LOG-15).
  */
 export async function hideFoodFromHistory(
-  db: SyncDb,
+  db: LocalDb,
   userId: string,
   foodId: string,
 ): Promise<void> {
-  const now = new Date().toISOString();
-  await db.runAsync(
-    `UPDATE local_user_food_stats SET hidden = 1, updated_at = ?, sync_state = 'pending' WHERE user_id = ? AND food_id = ?`,
-    [now, userId, foodId],
-  );
+  return withOnlineSave(db, async (db) => {
+    const now = new Date().toISOString();
+    await db.runAsync(
+      `UPDATE local_user_food_stats SET hidden = 1, updated_at = ?, sync_state = 'synced' WHERE user_id = ? AND food_id = ?`,
+      [now, userId, foodId],
+    );
 
-  await enqueueOutbox(db, {
-    id: `stats-${userId}-${foodId}`,
-    entity: 'user_food_stats',
-    operation: 'upsert',
-    payload: {
-      user_id: userId,
-      food_id: foodId,
-      hidden: true,
-      updated_at: now,
-    },
+    await saveRemote(db, {
+      id: `stats-${userId}-${foodId}`,
+      entity: 'user_food_stats',
+      operation: 'upsert',
+      payload: {
+        user_id: userId,
+        food_id: foodId,
+        hidden: true,
+        updated_at: now,
+      },
+    });
   });
 }
 
@@ -919,251 +930,257 @@ export async function hideFoodFromHistory(
  * Copies a single meal section from one date to another date/section (PRD LOG-7).
  */
 export async function copyMealSection(
-  db: SyncDb,
+  db: LocalDb,
   userId: string,
   sourceDate: string,
   sourceSection: MealSection,
   targetDate: string,
   targetSection?: MealSection,
 ): Promise<FoodEntry[]> {
-  const sourceEntries = (await getEntriesForDate(db, userId, sourceDate)).filter(
-    (e) => e.meal_section === sourceSection,
-  );
+  return withOnlineSave(db, async (db) => {
+    const sourceEntries = (await getEntriesForDate(db, userId, sourceDate)).filter(
+      (e) => e.meal_section === sourceSection,
+    );
 
-  const copied = copyEntries(sourceEntries, {
-    local_date: targetDate,
-    meal_section: targetSection ?? sourceSection,
-    user_id: userId,
-    newIdGenerator: generateClientUuid,
-  });
+    const copied = copyEntries(sourceEntries, {
+      local_date: targetDate,
+      meal_section: targetSection ?? sourceSection,
+      user_id: userId,
+      newIdGenerator: generateClientUuid,
+    });
 
-  for (const entry of copied) {
-    await db.runAsync(
-      `INSERT INTO local_food_entries (
+    for (const entry of copied) {
+      await db.runAsync(
+        `INSERT INTO local_food_entries (
         id, user_id, food_id, meal_section, quantity, unit,
         calories, protein, carbs, fat, fiber, sugar, sodium_mg,
         food_name, brand_name, logged_at, local_date, source,
         shared_meal_id, created_at, updated_at, deleted_at, sync_state, nutrition_details
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'copy', NULL, ?, ?, NULL, 'pending', ?)`,
-      [
-        entry.id,
-        entry.user_id,
-        entry.food_id,
-        entry.meal_section,
-        entry.quantity,
-        entry.unit,
-        entry.calories,
-        entry.protein,
-        entry.carbs,
-        entry.fat,
-        entry.fiber,
-        entry.sugar,
-        entry.sodium_mg,
-        entry.food_name,
-        entry.brand_name,
-        entry.logged_at,
-        entry.local_date,
-        entry.created_at,
-        entry.updated_at,
-        JSON.stringify(entry.nutrition_details ?? null),
-      ],
-    );
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'copy', NULL, ?, ?, NULL, 'synced', ?)`,
+        [
+          entry.id,
+          entry.user_id,
+          entry.food_id,
+          entry.meal_section,
+          entry.quantity,
+          entry.unit,
+          entry.calories,
+          entry.protein,
+          entry.carbs,
+          entry.fat,
+          entry.fiber,
+          entry.sugar,
+          entry.sodium_mg,
+          entry.food_name,
+          entry.brand_name,
+          entry.logged_at,
+          entry.local_date,
+          entry.created_at,
+          entry.updated_at,
+          JSON.stringify(entry.nutrition_details ?? null),
+        ],
+      );
 
-    await enqueueOutbox(db, {
-      id: entry.id,
-      entity: 'food_entries',
-      operation: 'upsert',
-      payload: {
+      await saveRemote(db, {
         id: entry.id,
-        user_id: entry.user_id,
-        food_id: entry.food_id,
-        meal_section: entry.meal_section,
-        quantity: entry.quantity,
-        unit: entry.unit,
-        calories: entry.calories,
-        protein: entry.protein,
-        carbs: entry.carbs,
-        fat: entry.fat,
-        fiber: entry.fiber,
-        sugar: entry.sugar,
-        sodium_mg: entry.sodium_mg,
-        ...(entry.nutrition_details ? { nutrition_details: entry.nutrition_details } : {}),
-        food_name: entry.food_name,
-        brand_name: entry.brand_name,
-        logged_at: entry.logged_at,
-        local_date: entry.local_date,
-        source: 'copy',
-        shared_meal_id: null,
-        updated_at: entry.updated_at,
-        deleted_at: null,
-      },
-    });
-  }
+        entity: 'food_entries',
+        operation: 'upsert',
+        payload: {
+          id: entry.id,
+          user_id: entry.user_id,
+          food_id: entry.food_id,
+          meal_section: entry.meal_section,
+          quantity: entry.quantity,
+          unit: entry.unit,
+          calories: entry.calories,
+          protein: entry.protein,
+          carbs: entry.carbs,
+          fat: entry.fat,
+          fiber: entry.fiber,
+          sugar: entry.sugar,
+          sodium_mg: entry.sodium_mg,
+          ...(entry.nutrition_details ? { nutrition_details: entry.nutrition_details } : {}),
+          food_name: entry.food_name,
+          brand_name: entry.brand_name,
+          logged_at: entry.logged_at,
+          local_date: entry.local_date,
+          source: 'copy',
+          shared_meal_id: null,
+          updated_at: entry.updated_at,
+          deleted_at: null,
+        },
+      });
+    }
 
-  return copied;
+    return copied;
+  });
 }
 
 /**
  * Copies an entire day's meals to another date (PRD LOG-7).
  */
 export async function copyEntireDay(
-  db: SyncDb,
+  db: LocalDb,
   userId: string,
   sourceDate: string,
   targetDate: string,
 ): Promise<FoodEntry[]> {
-  const sourceEntries = await getEntriesForDate(db, userId, sourceDate);
+  return withOnlineSave(db, async (db) => {
+    const sourceEntries = await getEntriesForDate(db, userId, sourceDate);
 
-  const copied = copyEntries(sourceEntries, {
-    local_date: targetDate,
-    user_id: userId,
-    newIdGenerator: generateClientUuid,
-  });
+    const copied = copyEntries(sourceEntries, {
+      local_date: targetDate,
+      user_id: userId,
+      newIdGenerator: generateClientUuid,
+    });
 
-  for (const entry of copied) {
-    await db.runAsync(
-      `INSERT INTO local_food_entries (
+    for (const entry of copied) {
+      await db.runAsync(
+        `INSERT INTO local_food_entries (
         id, user_id, food_id, meal_section, quantity, unit,
         calories, protein, carbs, fat, fiber, sugar, sodium_mg,
         food_name, brand_name, logged_at, local_date, source,
         shared_meal_id, created_at, updated_at, deleted_at, sync_state, nutrition_details
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'copy', NULL, ?, ?, NULL, 'pending', ?)`,
-      [
-        entry.id,
-        entry.user_id,
-        entry.food_id,
-        entry.meal_section,
-        entry.quantity,
-        entry.unit,
-        entry.calories,
-        entry.protein,
-        entry.carbs,
-        entry.fat,
-        entry.fiber,
-        entry.sugar,
-        entry.sodium_mg,
-        entry.food_name,
-        entry.brand_name,
-        entry.logged_at,
-        entry.local_date,
-        entry.created_at,
-        entry.updated_at,
-        JSON.stringify(entry.nutrition_details ?? null),
-      ],
-    );
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'copy', NULL, ?, ?, NULL, 'synced', ?)`,
+        [
+          entry.id,
+          entry.user_id,
+          entry.food_id,
+          entry.meal_section,
+          entry.quantity,
+          entry.unit,
+          entry.calories,
+          entry.protein,
+          entry.carbs,
+          entry.fat,
+          entry.fiber,
+          entry.sugar,
+          entry.sodium_mg,
+          entry.food_name,
+          entry.brand_name,
+          entry.logged_at,
+          entry.local_date,
+          entry.created_at,
+          entry.updated_at,
+          JSON.stringify(entry.nutrition_details ?? null),
+        ],
+      );
 
-    await enqueueOutbox(db, {
-      id: entry.id,
-      entity: 'food_entries',
-      operation: 'upsert',
-      payload: {
+      await saveRemote(db, {
         id: entry.id,
-        user_id: entry.user_id,
-        food_id: entry.food_id,
-        meal_section: entry.meal_section,
-        quantity: entry.quantity,
-        unit: entry.unit,
-        calories: entry.calories,
-        protein: entry.protein,
-        carbs: entry.carbs,
-        fat: entry.fat,
-        fiber: entry.fiber,
-        sugar: entry.sugar,
-        sodium_mg: entry.sodium_mg,
-        ...(entry.nutrition_details ? { nutrition_details: entry.nutrition_details } : {}),
-        food_name: entry.food_name,
-        brand_name: entry.brand_name,
-        logged_at: entry.logged_at,
-        local_date: entry.local_date,
-        source: 'copy',
-        shared_meal_id: null,
-        updated_at: entry.updated_at,
-        deleted_at: null,
-      },
-    });
-  }
+        entity: 'food_entries',
+        operation: 'upsert',
+        payload: {
+          id: entry.id,
+          user_id: entry.user_id,
+          food_id: entry.food_id,
+          meal_section: entry.meal_section,
+          quantity: entry.quantity,
+          unit: entry.unit,
+          calories: entry.calories,
+          protein: entry.protein,
+          carbs: entry.carbs,
+          fat: entry.fat,
+          fiber: entry.fiber,
+          sugar: entry.sugar,
+          sodium_mg: entry.sodium_mg,
+          ...(entry.nutrition_details ? { nutrition_details: entry.nutrition_details } : {}),
+          food_name: entry.food_name,
+          brand_name: entry.brand_name,
+          logged_at: entry.logged_at,
+          local_date: entry.local_date,
+          source: 'copy',
+          shared_meal_id: null,
+          updated_at: entry.updated_at,
+          deleted_at: null,
+        },
+      });
+    }
 
-  return copied;
+    return copied;
+  });
 }
 
 /**
  * Creates and saves a reusable meal (PRD LOG-8).
  */
 export async function saveMeal(
-  db: SyncDb,
+  db: LocalDb,
   userId: string,
   name: string,
   entries: FoodEntry[],
 ): Promise<SavedMeal> {
-  const id = generateClientUuid();
-  const now = new Date().toISOString();
+  return withOnlineSave(db, async (db) => {
+    const id = generateClientUuid();
+    const now = new Date().toISOString();
 
-  let total_calories = 0;
-  let total_protein = 0;
-  let total_carbs = 0;
-  let total_fat = 0;
+    let total_calories = 0;
+    let total_protein = 0;
+    let total_carbs = 0;
+    let total_fat = 0;
 
-  const items = entries.map((e) => {
-    total_calories += e.calories;
-    total_protein += e.protein;
-    total_carbs += e.carbs;
-    total_fat += e.fat;
-    return {
-      food_id: e.food_id ?? '',
-      food_name: e.food_name,
-      brand_name: e.brand_name,
-      quantity: e.quantity,
-      unit: e.unit,
-      calories: e.calories,
-      protein: e.protein,
-      carbs: e.carbs,
-      fat: e.fat,
-      fiber: e.fiber,
+    const items = entries.map((e) => {
+      total_calories += e.calories;
+      total_protein += e.protein;
+      total_carbs += e.carbs;
+      total_fat += e.fat;
+      return {
+        food_id: e.food_id ?? '',
+        food_name: e.food_name,
+        brand_name: e.brand_name,
+        quantity: e.quantity,
+        unit: e.unit,
+        calories: e.calories,
+        protein: e.protein,
+        carbs: e.carbs,
+        fat: e.fat,
+        fiber: e.fiber,
+      };
+    });
+
+    const savedMeal: SavedMeal = {
+      id,
+      user_id: userId,
+      name,
+      items,
+      total_calories: Math.round(total_calories * 10) / 10,
+      total_protein: Math.round(total_protein * 10) / 10,
+      total_carbs: Math.round(total_carbs * 10) / 10,
+      total_fat: Math.round(total_fat * 10) / 10,
+      created_at: now,
+      updated_at: now,
+      deleted_at: null,
     };
-  });
 
-  const savedMeal: SavedMeal = {
-    id,
-    user_id: userId,
-    name,
-    items,
-    total_calories: Math.round(total_calories * 10) / 10,
-    total_protein: Math.round(total_protein * 10) / 10,
-    total_carbs: Math.round(total_carbs * 10) / 10,
-    total_fat: Math.round(total_fat * 10) / 10,
-    created_at: now,
-    updated_at: now,
-    deleted_at: null,
-  };
-
-  await db.runAsync(
-    `INSERT INTO local_saved_meals (
+    await db.runAsync(
+      `INSERT INTO local_saved_meals (
       id, user_id, name, items, total_calories, total_protein, total_carbs, total_fat, created_at, updated_at, deleted_at, sync_state
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NULL, 'pending')`,
-    [
-      savedMeal.id,
-      savedMeal.user_id,
-      savedMeal.name,
-      JSON.stringify(savedMeal.items),
-      savedMeal.total_calories,
-      savedMeal.total_protein,
-      savedMeal.total_carbs,
-      savedMeal.total_fat,
-      now,
-      now,
-    ],
-  );
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NULL, 'synced')`,
+      [
+        savedMeal.id,
+        savedMeal.user_id,
+        savedMeal.name,
+        JSON.stringify(savedMeal.items),
+        savedMeal.total_calories,
+        savedMeal.total_protein,
+        savedMeal.total_carbs,
+        savedMeal.total_fat,
+        now,
+        now,
+      ],
+    );
 
-  await enqueueOutbox(db, {
-    id: savedMeal.id,
-    entity: 'saved_meals',
-    operation: 'upsert',
-    payload: {
-      ...savedMeal,
-    },
+    await saveRemote(db, {
+      id: savedMeal.id,
+      entity: 'saved_meals',
+      operation: 'upsert',
+      payload: {
+        ...savedMeal,
+      },
+    });
+
+    return savedMeal;
   });
-
-  return savedMeal;
 }
 
 export interface RawSavedMealRow {
@@ -1183,7 +1200,7 @@ export interface RawSavedMealRow {
 /**
  * Gets all saved meals for user.
  */
-export async function getSavedMeals(db: SyncDb, userId: string): Promise<SavedMeal[]> {
+export async function getSavedMeals(db: LocalDb, userId: string): Promise<SavedMeal[]> {
   const rows = await db.getAllAsync<RawSavedMealRow>(
     `SELECT * FROM local_saved_meals WHERE user_id = ? AND deleted_at IS NULL ORDER BY created_at DESC`,
     [userId],

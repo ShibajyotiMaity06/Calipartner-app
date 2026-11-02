@@ -3,7 +3,7 @@
 ### 1.1 Five principles for this product
 1. **Quiet everywhere, bold in one place.** The paired view (Room) gets the boldness. Everything else is calm.
 2. **Two people, not a scoreboard.** Identity colour, never score colour. Percent of your own goal, never raw calories side by side.
-3. **Never block a log.** Logging is the core loop. It works offline, opens on what you eat most, and takes the fewest taps possible.
+3. **Never block a log.** Logging is the core loop. It requires an internet connection, opens on what you eat most, and takes the fewest taps possible.
 4. **Honest and gentle.** Estimates are labelled, rates have safety limits, no guilt copy, no streak-loss shame, no fake urgency.
 5. **Premium means restraint and craft.** Few colours, one accent, precise spacing, tabular numbers, motion that explains.
 
@@ -21,7 +21,6 @@
 | **Progressive disclosure** | Show the number first, the formula one tap away, never both at once. | A11, C02 |
 | **Recognition over recall** | Recent and frequent foods first; last-used quantity beside each row. | D02 |
 | **Postel / error prevention** | Accept "2 roti", "200g", "1.5"; block unsafe rates with the reason and the nearest safe option. | D03, A09 |
-| **Nielsen #1 visibility of status** | Sync pill, "Saved on this phone", server-time countdowns, "last synced" for steps. | P01 |
 | **Nielsen #3 user control** | Undo on every destructive log (5 s), swipe to delete, back always works. | Global |
 | **Nielsen #5 error prevention** | Confirm only the irreversible (delete room, delete account). Never confirm a log. | N16, B07 |
 | **Aesthetic–usability effect** | Beautiful numerals, even spacing and soft motion make people trust the numbers. | Type scale, Part 3 |

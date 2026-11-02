@@ -55,7 +55,7 @@ Logging/settings database tests: 3 passed, 0 failed
 
 All 18 database suites passed (105 cases total). Edge suites: billing `9 passed | 0 failed`, food/photo `17 passed | 0 failed`, push/media `16 passed | 0 failed`, coach `9 passed | 0 failed`, challenges `7 passed | 0 failed`.
 
-New regressions cover invalid and swapped weight dates, UUID-based browser edit/delete and ownership, recovered outbox payloads, authenticated logging without cached goals, local-day boundaries, duplicate friend retries, challenge/goal reads during upload-check failure, custom-target persistence, macro safety, Free/expired and marker-bypass rejection, Plus/Pro/trial access, retaining saved overrides after expiry, and private invitation identity projections.
+Authenticated saves use direct server requests with client UUIDs, privacy checks and an error on failure. Only acknowledged values enter local read caches.
 
 `npx expo export --platform all --output-dir ../.cache/repair-web-export` passed for web, iOS and Android. These are bundle/export checks, not signed store builds or physical-device tests.
 

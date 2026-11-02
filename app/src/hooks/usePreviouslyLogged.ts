@@ -1,3 +1,4 @@
+import { loadAccountTable } from '@/services/accountDataService';
 import { useCallback, useEffect, useState } from 'react';
 import {
   filterAndSortHistory,
@@ -33,6 +34,8 @@ export function usePreviouslyLogged(initialSection?: MealSection) {
     try {
       setLoading(true);
       const db = await getDb();
+      await loadAccountTable(db, 'user_food_stats', userId);
+      await loadAccountTable(db, 'foods', userId);
       const items = await getPreviouslyLoggedItems(db, userId);
       setAllItems(items);
     } catch {

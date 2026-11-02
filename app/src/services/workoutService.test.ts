@@ -1,4 +1,10 @@
-import { describe, expect, it } from 'vitest';
+vi.mock('./accountDataService', async (original) => ({
+  ...(await original<object>()),
+  withOnlineSave: async <T>(db: LocalDb, action: (db: LocalDb) => Promise<T>) => action(db),
+  saveRemote: (await import('../test/remoteWrites')).recordRemoteWrite,
+}));
+import { recordedWrites } from '../test/remoteWrites';
+import { describe, expect, it, vi } from 'vitest';
 import { DatabaseSync } from 'node:sqlite';
 import {
   addExerciseToWorkout,
@@ -23,14 +29,9 @@ import {
   updateWorkout,
   updateWorkoutSet,
 } from './workoutService';
-import {
-  flushOutbox,
-  getPendingOutboxItems,
-  type SupabaseSyncClient,
-  type SyncDb,
-} from './syncService';
+import { type LocalDb } from './accountDataService';
 
-function createTestDb(): SyncDb {
+function createTestDb(): LocalDb {
   const sqlite = new DatabaseSync(':memory:');
 
   sqlite.exec(`
@@ -146,7 +147,7 @@ function createTestDb(): SyncDb {
   };
 }
 
-describe('WorkoutService — CRUD, Exercises, Sets & Offline Sync', () => {
+describe('WorkoutService — CRUD, Exercises, Sets & Online saves', () => {
   it('creates, edits, and deletes a workout for any date with outbox queueing', async () => {
     const db = createTestDb();
     const userId = 'user-test-1';
@@ -166,8 +167,8 @@ describe('WorkoutService — CRUD, Exercises, Sets & Offline Sync', () => {
     expect(workout.name).toBe('Push Day');
     expect(workout.local_date).toBe('2026-10-10');
 
-    // Verify outbox queued
-    const pendingOutbox = await getPendingOutboxItems(db);
+    // Save directly and require server acknowledgement.
+    const pendingOutbox = await recordedWrites(db);
     expect(pendingOutbox).toHaveLength(1);
     expect(pendingOutbox[0]!.entity).toBe('workouts');
     expect(pendingOutbox[0]!.operation).toBe('upsert');
@@ -401,52 +402,5 @@ describe('Workout Running Session Timer (survives app kill, PRD 6.6 WRK-10)', ()
 
     const activeAfterStop = await getRunningWorkoutTimer(db, 'w-timer-test');
     expect(activeAfterStop).toBeNull();
-  });
-});
-
-describe('Workout Offline Sync Layer Integration', () => {
-  it('pushes local workouts and sets to Supabase outbox', async () => {
-    const db = createTestDb();
-    const userId = 'user-sync-test';
-
-    const workout = await createWorkout(db, {
-      userId,
-      type: 'cardio',
-      durationMinutes: 30,
-      localDate: '2026-10-10',
-    });
-
-    const upsertCalls: Record<string, Array<Record<string, unknown>>> = {};
-    const mockSupabase: SupabaseSyncClient = {
-      from: (table: string) => ({
-        upsert: async (values: Record<string, unknown> | Array<Record<string, unknown>>) => {
-          upsertCalls[table] = upsertCalls[table] || [];
-          if (Array.isArray(values)) {
-            upsertCalls[table]!.push(...values);
-          } else {
-            upsertCalls[table]!.push(values);
-          }
-          return { error: null };
-        },
-        update: () => ({
-          eq: async () => ({ error: null }),
-        }),
-        select: () => ({
-          gt: () => ({
-            order: async () => ({ error: null, data: [] }),
-          }),
-          order: async () => ({ error: null, data: [] }),
-        }),
-      }),
-    };
-
-    const flushResult = await flushOutbox(db, mockSupabase);
-    expect(flushResult.succeeded).toBe(1);
-    expect(upsertCalls['workouts']).toHaveLength(1);
-    expect(upsertCalls['workouts']?.[0]?.['id']).toBe(workout.id);
-
-    // Local outbox is now empty
-    const remaining = await getPendingOutboxItems(db);
-    expect(remaining).toHaveLength(0);
   });
 });

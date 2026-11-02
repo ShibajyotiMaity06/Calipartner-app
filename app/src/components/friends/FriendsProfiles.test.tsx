@@ -51,7 +51,6 @@ describe('social profile controls', () => {
         <PublicSocialProfile
           profile={person}
           busy={false}
-          queued={false}
           limitReached
           onClose={vi.fn()}
           onSend={send}
@@ -75,7 +74,7 @@ describe('social profile controls', () => {
     expect(send).not.toHaveBeenCalled();
     await act(async () => renderer.unmount());
   });
-  it('shows incoming consent controls even with an exhausted sender allowance and disables queued responses', async () => {
+  it('shows incoming consent controls even with an exhausted sender allowance and disables responses while a request is in progress', async () => {
     const respond = vi.fn();
     const props = {
       profile: {
@@ -104,7 +103,7 @@ describe('social profile controls', () => {
       renderer.root.findByProps({ testID: 'accept-friend-request' }).props.onPress(),
     );
     expect(respond).toHaveBeenCalledWith('accept');
-    await act(async () => renderer.update(<PublicSocialProfile {...props} queued />));
+    await act(async () => renderer.update(<PublicSocialProfile {...props} busy />));
     expect(renderer.root.findByProps({ testID: 'accept-friend-request' }).props.disabled).toBe(
       true,
     );

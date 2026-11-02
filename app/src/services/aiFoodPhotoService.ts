@@ -1,3 +1,4 @@
+import { withOnlineSave } from './accountDataService';
 import {
   calculateCompressedDimensions,
   DEFAULT_AI_FOOD_PHOTO_CAPS,
@@ -15,8 +16,7 @@ import {
 } from '@calipartner/core';
 import { createLogger } from '@/lib/logger';
 import { logFoodEntry, saveCustomFood } from './foodService';
-import type { SyncDb } from './syncService';
-import { diaryEvents } from './diaryEvents';
+import type { LocalDb } from './accountDataService';
 
 const log = createLogger('aiFoodPhotoService');
 
@@ -337,10 +337,10 @@ export function swapCandidateFood(candidate: FoodCandidateItem, newFood: Food): 
 
 /**
  * Saves accepted photo candidates into the local diary as FoodEntry items
- * with source = 'photo', marked as estimates, and enqueued into the offline sync outbox.
+ * Saves directly with server acknowledgement.
  */
 export async function savePhotoCandidatesToDiary(
-  db: SyncDb,
+  db: LocalDb,
   params: {
     userId: string;
     candidates: FoodCandidateItem[];
@@ -349,46 +349,47 @@ export async function savePhotoCandidatesToDiary(
     localDate?: string;
   },
 ): Promise<FoodEntry[]> {
-  const savedEntries: FoodEntry[] = [];
+  return withOnlineSave(db, async (db) => {
+    const savedEntries: FoodEntry[] = [];
 
-  const saveAll = async () => {
-    for (const candidate of params.candidates) {
-      if (candidate.quantity <= 0) {
-        continue;
+    const saveAll = async () => {
+      for (const candidate of params.candidates) {
+        if (candidate.quantity <= 0) {
+          continue;
+        }
+
+        // Ensure food attribution reflects estimate
+        let foodToLog: Food = {
+          ...candidate.matched_food,
+          attribution: candidate.matched_food.attribution || 'AI Estimate',
+        };
+        if (
+          foodToLog.source === 'user' &&
+          foodToLog.attribution === 'AI Estimate' &&
+          !foodToLog.owner_id
+        ) {
+          foodToLog = await saveCustomFood(db, params.userId, { ...foodToLog, id: foodToLog.id });
+        }
+
+        const entry = await logFoodEntry(db, {
+          userId: params.userId,
+          food: foodToLog,
+          mealSection: params.mealSection,
+          quantity: candidate.quantity,
+          unit: candidate.unit,
+          localDate: params.localDate,
+          source: params.source ?? 'photo',
+        });
+
+        savedEntries.push(entry);
       }
 
-      // Ensure food attribution reflects estimate
-      let foodToLog: Food = {
-        ...candidate.matched_food,
-        attribution: candidate.matched_food.attribution || 'AI Estimate',
-      };
-      if (
-        foodToLog.source === 'user' &&
-        foodToLog.attribution === 'AI Estimate' &&
-        !foodToLog.owner_id
-      ) {
-        foodToLog = await saveCustomFood(db, params.userId, { ...foodToLog, id: foodToLog.id });
-      }
-
-      const entry = await logFoodEntry(db, {
-        userId: params.userId,
-        food: foodToLog,
-        mealSection: params.mealSection,
-        quantity: candidate.quantity,
-        unit: candidate.unit,
-        localDate: params.localDate,
-        source: params.source ?? 'photo',
-      });
-
-      savedEntries.push(entry);
-    }
-
-    log.info(`Saved ${savedEntries.length} photo entries with source=photo to diary`);
-  };
-  if (db.withTransactionAsync) await db.withTransactionAsync(saveAll);
-  else await saveAll();
-  if (savedEntries.length) diaryEvents.emitChange();
-  return savedEntries;
+      log.info(`Saved ${savedEntries.length} photo entries with source=photo to diary`);
+    };
+    if (db.withTransactionAsync) await db.withTransactionAsync(saveAll);
+    else await saveAll();
+    return savedEntries;
+  });
 }
 
 /**

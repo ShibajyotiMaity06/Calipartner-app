@@ -1,4 +1,10 @@
-import { describe, expect, it } from 'vitest';
+vi.mock('./accountDataService', async (original) => ({
+  ...(await original<object>()),
+  withOnlineSave: async <T>(db: LocalDb, action: (db: LocalDb) => Promise<T>) => action(db),
+  saveRemote: (await import('../test/remoteWrites')).recordRemoteWrite,
+}));
+import { recordedWrites } from '../test/remoteWrites';
+import { describe, expect, it, vi } from 'vitest';
 import { DatabaseSync } from 'node:sqlite';
 import {
   copyEntireDay,
@@ -15,9 +21,9 @@ import {
   saveCustomFood,
   searchLocalFoods,
 } from './foodService';
-import { getPendingOutboxItems, type SyncDb } from './syncService';
+import { type LocalDb } from './accountDataService';
 
-function createTestDb(): SyncDb {
+function createTestDb(): LocalDb {
   const sqlite = new DatabaseSync(':memory:');
 
   sqlite.exec(`
@@ -141,7 +147,7 @@ function createTestDb(): SyncDb {
 }
 
 describe('Food Service & Local Database', () => {
-  it('preserves scan nutrition through offline logging, editing, copying and queued sync', async () => {
+  it('preserves scan nutrition through offline logging, editing, copying and online saves', async () => {
     const db = createTestDb();
     const food = await saveCustomFood(db, 'u1', {
       name: 'Scanned cereal',
@@ -180,7 +186,7 @@ describe('Food Service & Local Database', () => {
     expect((await getEntriesForDate(db, 'u1', '2026-10-28'))[0]?.nutrition_details).toEqual(
       food.nutrition_details,
     );
-    const queued = await getPendingOutboxItems(db);
+    const queued = await recordedWrites(db);
     const payload = queued.find((item) => item.id === entry.id)!.payload;
     expect(payload).toMatchObject({ nutrition_details: food.nutrition_details });
   });
@@ -274,8 +280,8 @@ describe('Food Service & Local Database', () => {
     expect(stats[0]!.stats.last_unit).toBe('piece');
     expect(stats[0]!.stats.last_meal_section).toBe('breakfast');
 
-    // Verify outbox queued entry & stats
-    const outbox = await getPendingOutboxItems(db);
+    // Save directly and require server acknowledgement.
+    const outbox = await recordedWrites(db);
     expect(outbox.some((o) => o.entity === 'food_entries' && o.id === entry.id)).toBe(true);
     expect(outbox.some((o) => o.entity === 'user_food_stats')).toBe(true);
   });

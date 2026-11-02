@@ -1,3 +1,4 @@
+import { getSupabase } from '@/lib/supabase';
 export interface GuestEntry {
   id: string;
   entity: string;
@@ -59,8 +60,7 @@ export async function getPendingGuestEntries(
 
 /**
  * Migrates local guest data to the authenticated user account.
- * Moves pending guest records into the SQLite outbox queue for idempotent sync to Supabase,
- * and marks them as migrated locally.
+ * Imports guest setup into the server and marks each acknowledged record complete.
  */
 export async function migrateGuestData(db: GuestDb, userId: string): Promise<GuestMigrationResult> {
   const pending = await getPendingGuestEntries(db);
@@ -72,18 +72,10 @@ export async function migrateGuestData(db: GuestDb, userId: string): Promise<Gue
   const migratedIds: string[] = [];
 
   for (const item of pending) {
-    const updatedPayload = {
-      ...item.payload,
-      userId,
-      synced_from_guest: true,
-    };
-
-    await db.runAsync(
-      `INSERT INTO outbox (id, entity, operation, payload, created_at, attempts, last_error)
-       VALUES (?, ?, 'upsert', ?, ?, 0, NULL)
-       ON CONFLICT (id) DO UPDATE SET payload = excluded.payload`,
-      [item.id, item.entity, JSON.stringify(updatedPayload), migratedAt],
-    );
+    if (item.entity === 'guest_profile') continue;
+    const payload = { ...item.payload, user_id: userId };
+    const result = await getSupabase().from(item.entity).upsert(payload);
+    if (result.error) throw result.error;
 
     await db.runAsync(`UPDATE guest_entries SET migrated_at = ? WHERE id = ?`, [
       migratedAt,

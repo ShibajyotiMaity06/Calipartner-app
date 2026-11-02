@@ -24,10 +24,8 @@ import { useSubscription } from '@/hooks/useSubscription';
 import { useNetworkStatus } from '@/hooks/useNetworkStatus';
 import { useAuth } from '@/contexts/AuthContext';
 import { getDb } from '@/db';
-import { getSupabase } from '@/lib/supabase';
 import { logWorkoutExercise } from '@/services/workoutLogService';
 import { shareRoomWorkout } from '@/services/roomExtrasService';
-import { flushOutbox } from '@/services/syncService';
 import { generateClientUuid } from '@/services/foodService';
 import { t } from '@/i18n';
 import exercises from '@/data/exercises_seed.json';
@@ -119,7 +117,6 @@ export function WorkoutLogModal({
       setSharing(false);
       setShared(false);
       await refresh();
-      if (isOnline && user) void flushOutbox(await getDb(), getSupabase()).catch(() => {});
     } catch {
       setError(t('repairs.actionError'));
     } finally {
@@ -133,20 +130,7 @@ export function WorkoutLogModal({
     setBusy(true);
     setError(null);
     try {
-      const db = await getDb();
-      if (!isOnline) throw new Error('SYNC_PENDING');
-      await flushOutbox(db, getSupabase());
-      const rows = (
-        await Promise.all(
-          ['local_workouts', 'local_workout_exercises', 'local_workout_sets'].map((table) =>
-            db.getAllAsync<{ sync_state: string }>(
-              `SELECT sync_state FROM ${table} WHERE ${table === 'local_workouts' ? 'id' : 'workout_id'} = ?`,
-              [saved.id],
-            ),
-          ),
-        )
-      ).flat();
-      if (rows.some((row) => row.sync_state !== 'synced')) throw new Error('SYNC_PENDING');
+      if (!isOnline) throw new Error('NETWORK_UNAVAILABLE');
       const key = `${saved.id}:${roomId}`;
       if (!shareIds.current.has(key)) shareIds.current.set(key, generateClientUuid());
       await shareRoomWorkout(shareIds.current.get(key)!, roomId, saved.id);
