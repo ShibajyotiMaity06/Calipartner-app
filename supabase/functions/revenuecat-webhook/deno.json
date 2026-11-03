@@ -37,6 +37,7 @@
     "../../../packages/core/src/challengeViewModel": "../../../packages/core/src/challengeViewModel.ts",
     "../../../packages/core/src/roomDiary": "../../../packages/core/src/roomDiary.ts",
     "../../../packages/core/src/workoutLog": "../../../packages/core/src/workoutLog.ts",
-    "../../../packages/core/src/ownerRecipes": "../../../packages/core/src/ownerRecipes.ts"
+    "../../../packages/core/src/ownerRecipes": "../../../packages/core/src/ownerRecipes.ts",
+    "../../../packages/core/src/squad": "../../../packages/core/src/squad.ts"
   }
 }

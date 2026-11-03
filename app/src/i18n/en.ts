@@ -211,7 +211,8 @@ export const en = {
     selected: 'Selected: {name}',
     capacity: 'You can invite up to {count} friends with your plan.',
     upgrade: 'Add more people with Plus or Pro',
-    invitationNote: 'Your friends receive a squad invitation. Sharing starts after they accept.',
+    invitationNote:
+      'Your friends receive an invitation. After they accept, macros and steps are shared. Members with Plus can also see meals and workouts. Height and weight stay private unless you share them.',
     createError: 'Could not create your squad. Check your connection and try again.',
     requests: 'Friend requests',
     rooms: 'Squad invitations',
@@ -1562,9 +1563,10 @@ export const en = {
       errorPlanAttached: 'Your plan has reached its hosted room limit. Free: 1, Plus: 3, Pro: 5.',
     },
     joinModal: {
-      title: 'Join Room by Code',
-      subtitle: 'Enter the 6-character room code shared by your partner.',
-      codeLabel: 'Room Code',
+      title: 'Join a squad',
+      subtitle:
+        'Join with a squad code. Macros and steps are shared; members with Plus can see meals and workouts. Height and weight stay private unless you share them.',
+      codeLabel: 'Squad code',
       codePlaceholder: 'e.g. CP1234',
       submitBtn: 'Join Room',
       joining: 'Joining room…',

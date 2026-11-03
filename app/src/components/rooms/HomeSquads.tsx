@@ -3,7 +3,7 @@ import { Pressable, ScrollView, StyleSheet, useWindowDimensions, View } from 're
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { dark, homeLayout, radius, space, Text } from '@calipartner/ui';
-import { SquadDayPanel } from './SquadDayPanel';
+import { HomeSquadLeaderboard } from './HomeSquadLeaderboard';
 import type { RoomSummary } from '@/types/rooms';
 import { t } from '@/i18n';
 
@@ -24,7 +24,8 @@ export function HomeSquads({
   const { width, fontScale } = useWindowDimensions();
   const cardWidth = Math.min(homeLayout.cardWidth * Math.min(fontScale, 1.5), width - space[7]);
   const [selected, setSelected] = useState(0);
-  const create = () => router.push({ pathname: '/(tabs)/room', params: { action: 'create' } });
+  const create = () =>
+    router.push({ pathname: '/(tabs)/room', params: { action: 'create', returnTo: 'home' } });
   return (
     <View style={styles.stack} testID="home-squads">
       <View style={styles.header}>
@@ -87,20 +88,10 @@ export function HomeSquads({
                 : t('repairs.squadMembers', { count: room.member_count })}
             </Text>
             {room.state === 'active' && room.member_count >= 2 ? (
-              <SquadDayPanel
+              <HomeSquadLeaderboard
                 roomId={room.id}
-                name={room.name}
                 memberCount={room.member_count}
                 visible={visible && selected === index}
-                showFeed={false}
-                embedded
-                onOpen={() => router.push({ pathname: '/(tabs)/room', params: { room: room.id } })}
-                onNudge={() =>
-                  router.push({
-                    pathname: '/(tabs)/room',
-                    params: { room: room.id, action: 'nudge' },
-                  })
-                }
               />
             ) : (
               <Pressable

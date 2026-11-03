@@ -5,6 +5,7 @@ import {
   StyleSheet,
   AccessibilityInfo,
   Platform,
+  useWindowDimensions,
   type ViewStyle,
   type StyleProp,
 } from 'react-native';
@@ -54,6 +55,9 @@ export interface TabBarProps {
 
 export const TAB_BAR_HEIGHT = 64;
 export const TAB_BAR_INSET = 12;
+export function getTabBarHeight(fontScale = 1): number {
+  return TAB_BAR_HEIGHT + Math.max(0, Math.min(2, fontScale) - 1) * space[7];
+}
 
 export function TabBar({
   activeTab,
@@ -67,6 +71,7 @@ export function TabBar({
   testID = 'floating-tab-bar',
   labels,
 }: TabBarProps): React.JSX.Element | null {
+  const { fontScale } = useWindowDimensions();
   const [reduceTransparency, setReduceTransparency] = useState<boolean>(
     forcedReduceTransparency ?? false,
   );
@@ -140,7 +145,7 @@ export function TabBar({
           ) : null}
         </View>
         <Text
-          numberOfLines={1}
+          numberOfLines={2}
           style={[styles.tabLabel, { color }, isActive && styles.activeTabLabel]}
         >
           {label}
@@ -160,6 +165,7 @@ export function TabBar({
       style={[
         styles.floatingContainer,
         { bottom: dynamicBottom },
+        { height: getTabBarHeight(fontScale) },
         isGlass ? styles.glassSurface : styles.opaqueSurface,
         style,
       ]}

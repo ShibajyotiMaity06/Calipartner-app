@@ -19,12 +19,16 @@ export function DayProgressTrack({ value, target }: { value: number; target: num
 }
 
 export function PersonalDayCard({
+  score,
+  goal,
   metrics,
   loading,
   error,
   onRetry,
   onPress,
 }: {
+  score?: number | null;
+  goal?: string;
   metrics: { label: string; value: number; target: number | null; unit: string }[];
   loading: boolean;
   error: boolean;
@@ -33,7 +37,17 @@ export function PersonalDayCard({
 }) {
   return (
     <View style={styles.card} testID="personal-day-card">
-      <Text variant="heading">{t('homeRefresh.yourDay')}</Text>
+      <View style={styles.row}>
+        <View style={styles.metric}>
+          <Text variant="heading">{t('homeRefresh.yourDay')}</Text>
+          {goal && <Text variant="bodyS">{goal}</Text>}
+        </View>
+        {!loading && !error && score != null && (
+          <Text variant="numeralL" tabular>
+            {t('squadDesign.percent', { value: score })}
+          </Text>
+        )}
+      </View>
       {loading ? (
         <Text accessibilityLiveRegion="polite">{t('common.loading')}</Text>
       ) : error ? (

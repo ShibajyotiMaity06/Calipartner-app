@@ -16,10 +16,7 @@ vi.mock('@calipartner/ui', async () => ({
   ...(await import('../../../../packages/ui/src/tokens')),
   Text: 'Text',
 }));
-vi.mock('./SquadDayPanel', () => ({
-  SquadDayPanel: 'SquadDayPanel',
-  SquadCheckInFeed: 'SquadCheckInFeed',
-}));
+vi.mock('./HomeSquadLeaderboard', () => ({ HomeSquadLeaderboard: 'HomeSquadLeaderboard' }));
 import { HomeSquads } from './HomeSquads';
 let renderer: ReactTestRenderer;
 afterEach(async () => {
@@ -36,7 +33,7 @@ it('uses actual pair and 20-person counts, opens the selected squad and scrolls 
       <HomeSquads rooms={rooms} loading={false} error={null} onRetry={vi.fn()} visible />,
     );
   });
-  const panels = () => renderer.root.findAllByType('SquadDayPanel' as React.ElementType);
+  const panels = () => renderer.root.findAllByType('HomeSquadLeaderboard' as React.ElementType);
   expect(panels().map((panel) => panel.props.memberCount)).toEqual([2, 20]);
   expect(panels().map((panel) => panel.props.visible)).toEqual([true, false]);
   await act(async () =>
@@ -45,7 +42,7 @@ it('uses actual pair and 20-person counts, opens the selected squad and scrolls 
       .props.onScroll({ nativeEvent: { contentOffset: { x: 332 } } }),
   );
   expect(panels().map((panel) => panel.props.visible)).toEqual([false, true]);
-  panels()[1]!.props.onOpen();
+  renderer.root.findByProps({ testID: 'home-open-title-large' }).props.onPress();
   expect(state.push).toHaveBeenLastCalledWith({
     pathname: '/(tabs)/room',
     params: { room: 'large' },
@@ -53,7 +50,7 @@ it('uses actual pair and 20-person counts, opens the selected squad and scrolls 
   renderer.root.findByProps({ testID: 'home-create-squad-end' }).props.onPress();
   expect(state.push).toHaveBeenLastCalledWith({
     pathname: '/(tabs)/room',
-    params: { action: 'create' },
+    params: { action: 'create', returnTo: 'home' },
   });
   renderer.root.findByProps({ testID: 'home-create-squad-top' }).props.onPress();
   expect(state.push).toHaveBeenCalledTimes(3);
@@ -63,7 +60,7 @@ it('shows empty, loading and retry states without inventing a squad', async () =
   await act(async () => {
     renderer = create(<HomeSquads rooms={[]} loading error={null} onRetry={retry} visible />);
   });
-  expect(renderer.root.findAllByType('SquadDayPanel' as React.ElementType)).toHaveLength(0);
+  expect(renderer.root.findAllByType('HomeSquadLeaderboard' as React.ElementType)).toHaveLength(0);
   expect(renderer.root.findByProps({ testID: 'home-create-squad-end' })).toBeDefined();
   await act(async () =>
     renderer.update(
@@ -95,8 +92,8 @@ it('aligns squad and create cards at the same height and width without a separat
   expect(first[1].width).toBe(createCard[1].width);
   expect(
     renderer.root
-      .findAllByType('SquadDayPanel' as React.ElementType)
-      .every((panel) => panel.props.embedded),
-  ).toBe(true);
+      .findAllByType('HomeSquadLeaderboard' as React.ElementType)
+      .map((panel) => panel.props.visible),
+  ).toEqual([true, false]);
   expect(renderer.root.findAllByType('SquadCheckInFeed' as React.ElementType)).toHaveLength(0);
 });

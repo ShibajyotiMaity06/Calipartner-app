@@ -1,9 +1,7 @@
-import React, { useCallback, useState } from 'react';
+import React, { useState } from 'react';
 import { Modal, Pressable, SafeAreaView, ScrollView, StyleSheet } from 'react-native';
 import { Button, dark, onboardingLayout as layout, space, Text } from '@calipartner/ui';
-import { PrivacySettingsModal } from '@/components/rooms/PrivacySettingsModal';
-import { getPrivacySettings, updatePrivacySettings } from '@/services/roomService';
-import { getSupabase } from '@/lib/supabase';
+import { SquadVisibilityModal } from '@/components/rooms/SquadVisibilityModal';
 import { t } from '@/i18n';
 import type { RoomSummary } from '@/types/rooms';
 
@@ -21,12 +19,6 @@ export function PerRoomVisibilityModal({
 }: PerRoomVisibilityModalProps) {
   const [selected, setSelected] = useState<string | null>(null);
   const roomId = rooms.some((room) => room.id === selected) ? selected : null;
-  const getPrivacy = useCallback(() => getPrivacySettings(getSupabase(), roomId!), [roomId]);
-  const updatePrivacy = useCallback(
-    (settings: Parameters<typeof updatePrivacySettings>[2]) =>
-      updatePrivacySettings(getSupabase(), roomId!, settings),
-    [roomId],
-  );
   return (
     <Modal visible={visible} onRequestClose={onClose} animationType="slide">
       <SafeAreaView style={styles.screen}>
@@ -58,14 +50,10 @@ export function PerRoomVisibilityModal({
           ))}
         </ScrollView>
         {roomId ? (
-          <PrivacySettingsModal
+          <SquadVisibilityModal
             visible={visible}
             roomId={roomId}
-            rooms={rooms}
             onClose={() => setSelected(null)}
-            onGetPrivacy={getPrivacy}
-            onUpdatePrivacy={updatePrivacy}
-            onOpenPerRoom={() => setSelected(null)}
           />
         ) : null}
       </SafeAreaView>

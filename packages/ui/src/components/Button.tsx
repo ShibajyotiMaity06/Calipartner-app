@@ -101,9 +101,8 @@ export function Button({
       style={({ pressed }) => {
         const h = getHeight();
         const baseStyle: ViewStyle = {
-          height: fontSet === 'onboarding' ? undefined : h,
-          minHeight: fontSet === 'onboarding' ? h : 44,
-          paddingVertical: fontSet === 'onboarding' ? space[3] : undefined,
+          minHeight: Math.max(44, h),
+          paddingVertical: space[3],
           minWidth: 44,
           paddingHorizontal: getPaddingHorizontal(),
           borderRadius: radius.button,
@@ -170,12 +169,7 @@ export function Button({
         }
       }}
     >
-      <View
-        style={[
-          styles.contentRow,
-          fontSet === 'onboarding' ? { width: '100%', flexShrink: 1 } : undefined,
-        ]}
-      >
+      <View style={[styles.contentRow, { width: '100%', flexShrink: 1 }]}>
         {loading ? (
           <ActivityIndicator
             size="small"
@@ -208,7 +202,7 @@ export function Button({
                       ? dark.danger
                       : dark.textHi
           }
-          style={[styles.label, fontSet === 'onboarding' ? { flexShrink: 1 } : undefined]}
+          style={[styles.label, { flexShrink: 1 }]}
         >
           {label}
         </Text>

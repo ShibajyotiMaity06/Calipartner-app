@@ -51,6 +51,22 @@ export function Sheet({
   reduceTransparency: forcedReduceTransparency,
 }: SheetProps): React.JSX.Element | null {
   const currentDepth = useSheetDepth();
+  const [reduceMotion, setReduceMotion] = useState(true);
+  useEffect(() => {
+    let current = true;
+    if (typeof AccessibilityInfo.isReduceMotionEnabled === 'function') {
+      void AccessibilityInfo.isReduceMotionEnabled()
+        .then((enabled) => {
+          if (current) setReduceMotion(enabled);
+        })
+        .catch(() => {});
+    }
+    const listener = AccessibilityInfo.addEventListener?.('reduceMotionChanged', setReduceMotion);
+    return () => {
+      current = false;
+      listener?.remove?.();
+    };
+  }, []);
   const [reduceTransparency, setReduceTransparency] = useState<boolean>(
     forcedReduceTransparency ?? false,
   );
@@ -94,7 +110,7 @@ export function Sheet({
     <Modal
       visible={visible}
       transparent
-      animationType="slide"
+      animationType={reduceMotion ? 'none' : 'slide'}
       onRequestClose={onClose}
       testID={testID}
       accessibilityViewIsModal

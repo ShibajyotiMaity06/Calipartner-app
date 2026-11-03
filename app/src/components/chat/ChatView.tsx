@@ -1,13 +1,15 @@
-import React, { useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   FlatList,
   KeyboardAvoidingView,
   Platform,
+  Pressable,
+  ScrollView,
   StyleSheet,
   View,
 } from 'react-native';
-import { Text } from '@calipartner/ui';
+import { Text, homeLayout } from '@calipartner/ui';
 import { Ionicons } from '@expo/vector-icons';
 import type { ChatAttachment, ChatMessage } from '@/types/chat';
 import { useRoomChat, type UseRoomChatOptions } from '@/hooks/useRoomChat';
@@ -25,15 +27,17 @@ import { fontSize, radius, spacing } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
 import { useChatTyping } from '@/hooks/useChatTyping';
 import { ChatComposer } from './ChatComposer';
-import { ChatEmptyState } from './ChatEmptyState';
 import { ChatImageViewerModal } from './ChatImageViewerModal';
 import { type SelectedMediaItem } from './ChatMediaPickerModal';
 import { ChatMessageBubble } from './ChatMessageBubble';
 import { ChatMessageMenuModal } from './ChatMessageMenuModal';
 import { ChatReportModal } from './ChatReportModal';
 import { ChatTermsModal } from './ChatTermsModal';
+import { markSquadMentionSeen } from '@/services/squadService';
 
 export interface ChatViewProps {
+  focusedMentionId?: string;
+  mentionMembers?: { user_id: string; username: string; nickname: string }[];
   roomId: string | null;
   isVisible?: boolean;
   options?: UseRoomChatOptions;
@@ -42,6 +46,8 @@ export interface ChatViewProps {
 }
 
 export function ChatView({
+  focusedMentionId,
+  mentionMembers = [],
   roomId,
   isVisible = true,
   options = {},
@@ -79,6 +85,9 @@ export function ChatView({
     isVisible && hasActiveAccess && termsAccepted,
   );
   const effectiveIsLocked = Boolean(isLockedProp || isLockedFromHook);
+  const mentionAccessDenied =
+    effectiveIsLocked ||
+    ['PLUS_REQUIRED', 'NOT_ROOM_MEMBER', 'NOT_AUTHORIZED'].includes(error?.code ?? '');
 
   const [mediaReadError, setMediaReadError] = useState(false);
   // Active interaction modals state
@@ -86,6 +95,48 @@ export function ChatView({
   const [activeMenuMessage, setActiveMenuMessage] = useState<ChatMessage | null>(null);
   const [reportTargetMessageId, setReportTargetMessageId] = useState<string | null>(null);
   const [showTermsModal, setShowTermsModal] = useState(false);
+  const [focusedMention, setFocusedMention] = useState<ChatMessage | null>(null);
+  const [mentionError, setMentionError] = useState(false);
+  const [mentionRetry, setMentionRetry] = useState(0);
+  useEffect(() => {
+    let current = true;
+    setFocusedMention(null);
+    setMentionError(false);
+    if (!roomId || !isVisible || !hasActiveAccess || !focusedMentionId || mentionAccessDenied)
+      return;
+    void (async () => {
+      try {
+        const result = await getSupabase().rpc('get_squad_mention_context', {
+          p_room_id: roomId,
+          p_message_id: focusedMentionId,
+        });
+        if (result.error) throw result.error;
+        const message = (result.data as ChatMessage[] | null)?.find(
+          (item) => item.id === focusedMentionId,
+        );
+        if (!message) throw new Error('MESSAGE_NOT_FOUND');
+        if (!current) return;
+        setFocusedMention({ ...message, delivery_status: 'sent', sync_state: 'synced' });
+        await markSquadMentionSeen(roomId, focusedMentionId);
+      } catch {
+        if (current) setMentionError(true);
+      }
+    })();
+    return () => {
+      current = false;
+    };
+  }, [roomId, isVisible, hasActiveAccess, focusedMentionId, mentionRetry, mentionAccessDenied]);
+
+  const openAttachment = (att: ChatAttachment) => {
+    if (att.signed_url) {
+      setActiveImageAttachment(att);
+      return;
+    }
+    if (roomId)
+      void getSignedImageUrl(getSupabase(), roomId, att.storage_key)
+        .then((signed_url) => setActiveImageAttachment({ ...att, signed_url }))
+        .catch(() => setMediaReadError(true));
+  };
 
   const pending = useRef<{ signature: string; id: string } | null>(null);
   const handleSend = async (text?: string | null, selectedMedia?: SelectedMediaItem[]) => {
@@ -197,6 +248,39 @@ export function ChatView({
         </View>
       )}
 
+      {hasActiveAccess && !mentionAccessDenied && focusedMentionId && (
+        <View style={{ padding: spacing.sm }} testID="focused-chat-mention">
+          <Text>{t('squadDesign.selectedMention')}</Text>
+          {mentionError && (
+            <Pressable
+              onPress={() => setMentionRetry((value) => value + 1)}
+              accessibilityRole="button"
+              accessibilityLabel={t('common.retry')}
+              testID="retry-focused-mention"
+            >
+              <Text accessibilityRole="alert">
+                {t(
+                  focusedMention
+                    ? 'squadDesign.mentionReadError'
+                    : 'squadDesign.mentionUnavailable',
+                )}{' '}
+                · {t('common.retry')}
+              </Text>
+            </Pressable>
+          )}
+          {focusedMention && (
+            <ScrollView style={{ maxHeight: homeLayout.touchSize * 4 }}>
+              <ChatMessageBubble
+                message={focusedMention}
+                isMine={false}
+                onLongPress={setActiveMenuMessage}
+                onPressImage={openAttachment}
+                testID={`focused-mention-${focusedMention.id}`}
+              />
+            </ScrollView>
+          )}
+        </View>
+      )}
       {/* 4. Messages Area */}
       {loading && messages.length === 0 ? (
         <View style={styles.centeredLoading}>
@@ -214,7 +298,7 @@ export function ChatView({
         </View>
       ) : (
         <FlatList
-          data={[...messages].reverse()}
+          data={[...messages].filter((message) => message.id !== focusedMention?.id).reverse()}
           keyExtractor={(item) => item.client_id || item.id}
           inverted
           onEndReached={() => {
@@ -239,16 +323,7 @@ export function ChatView({
                   message={item}
                   isMine={isMine}
                   onRetry={handleRetry}
-                  onPressImage={(att) => {
-                    if (att.signed_url) {
-                      setActiveImageAttachment(att);
-                      return;
-                    }
-                    if (roomId)
-                      void getSignedImageUrl(getSupabase(), roomId, att.storage_key)
-                        .then((signed_url) => setActiveImageAttachment({ ...att, signed_url }))
-                        .catch(() => setMediaReadError(true));
-                  }}
+                  onPressImage={openAttachment}
                   onLongPress={(msg) => setActiveMenuMessage(msg)}
                   testID={`bubble-${item.id}`}
                 />
@@ -268,10 +343,11 @@ export function ChatView({
             );
           }}
           ListEmptyComponent={
-            <ChatEmptyState
-              disabled={effectiveIsLocked || isDormant || !hasActiveAccess}
-              onSelectStarter={(prompt) => handleSend(prompt)}
-            />
+            focusedMention ? null : (
+              <View style={{ padding: spacing.md }}>
+                <Text>{t('squadDesign.noChat')}</Text>
+              </View>
+            )
           }
           ListFooterComponent={
             loadingMore ? (
@@ -310,6 +386,7 @@ export function ChatView({
       ) : null}
       {/* 5. Message Composer */}
       <ChatComposer
+        mentionMembers={mentionMembers.filter((member) => member.user_id !== options.userId)}
         onSend={handleSend}
         onTyping={notifyTyping}
         disabled={effectiveIsLocked || isDormant || !hasActiveAccess}

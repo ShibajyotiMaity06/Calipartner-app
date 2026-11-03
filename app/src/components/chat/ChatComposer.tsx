@@ -17,6 +17,7 @@ import { useTheme } from '@/theme/useTheme';
 import { ChatMediaPickerModal, type SelectedMediaItem } from './ChatMediaPickerModal';
 
 export interface ChatComposerProps {
+  mentionMembers?: { user_id: string; username: string; nickname: string }[];
   onTyping?: (typing: boolean) => void;
   onSend: (text?: string | null, attachments?: SelectedMediaItem[]) => Promise<void>;
   disabled?: boolean;
@@ -28,6 +29,7 @@ export interface ChatComposerProps {
 }
 
 export function ChatComposer({
+  mentionMembers = [],
   onSend,
   onTyping,
   disabled = false,
@@ -43,6 +45,13 @@ export function ChatComposer({
   const [isSending, setIsSending] = useState(false);
   const [showPickerModal, setShowPickerModal] = useState(false);
   const [sendError, setSendError] = useState(false);
+  const [tagOpen, setTagOpen] = useState(false);
+  const tagQuery = /(?:^|\s)@([a-zA-Z0-9_.]*)$/.exec(text)?.[1] ?? '';
+  const tagMembers = mentionMembers.filter((member) =>
+    (member.username + ' ' + member.nickname)
+      .toLocaleLowerCase()
+      .includes(tagQuery.toLocaleLowerCase()),
+  );
 
   useEffect(() => {
     if (!allowMedia) setSelectedMedia([]);
@@ -95,6 +104,41 @@ export function ChatComposer({
       ]}
       testID={testID}
     >
+      {tagOpen && !disabled && (
+        <View testID="chat-tag-picker">
+          <Text>{t('squadDesign.tag')}</Text>
+          <ScrollView horizontal>
+            {tagMembers.map((member) => (
+              <Pressable
+                key={member.user_id}
+                onPress={() => {
+                  setText((previous) =>
+                    /(?:^|\s)@[a-zA-Z0-9_.]*$/.test(previous)
+                      ? previous.replace(/(^|\s)@[a-zA-Z0-9_.]*$/, '$1@' + member.username + ' ')
+                      : previous +
+                        (previous && !/\s$/.test(previous) ? ' ' : '') +
+                        '@' +
+                        member.username +
+                        ' ',
+                  );
+                  setTagOpen(false);
+                  onTyping?.(true);
+                }}
+                accessibilityRole="button"
+                accessibilityLabel={t('squadDesign.tag') + ': ' + member.nickname}
+                style={{
+                  minHeight: layout.touch,
+                  justifyContent: 'center',
+                  paddingHorizontal: spacing.sm,
+                }}
+                testID={`tag-member-${member.user_id}`}
+              >
+                <Text>{member.nickname}</Text>
+              </Pressable>
+            ))}
+          </ScrollView>
+        </View>
+      )}
       {sendError ? (
         <Text
           accessibilityRole="alert"
@@ -168,6 +212,20 @@ export function ChatComposer({
 
       {/* TextInput bar row */}
       <View style={styles.inputBarRow}>
+        {mentionMembers.length > 0 && (
+          <Pressable
+            onPress={() => setTagOpen((value) => !value)}
+            disabled={disabled || isSending}
+            accessibilityRole="button"
+            accessibilityLabel={t('squadDesign.tag')}
+            accessibilityState={{ expanded: tagOpen }}
+            aria-expanded={tagOpen}
+            style={styles.iconBtn}
+            testID="chat-tag-member"
+          >
+            <Ionicons name="at-outline" size={layout.icon} color={colors.textMuted} />
+          </Pressable>
+        )}
         {/* Camera / Photo Button */}
         <Pressable
           onPress={handlePressAttach}
@@ -190,6 +248,7 @@ export function ChatComposer({
             value={text}
             onChangeText={(value) => {
               setText(value);
+              setTagOpen(/(?:^|\s)@[a-zA-Z0-9_.]*$/.test(value));
               onTyping?.(Boolean(value.trim()));
             }}
             onBlur={() => onTyping?.(false)}

@@ -1,20 +1,18 @@
-import React from 'react';
-import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
-import { Text } from '@calipartner/ui';
-import { setStringAsync } from 'expo-clipboard';
+import React, { useEffect, useState } from 'react';
+import { Pressable, ScrollView, View } from 'react-native';
+import { Avatar, Button, dark, homeLayout, radius, space, Sheet, Text } from '@calipartner/ui';
 import { Ionicons } from '@expo/vector-icons';
+import { setStringAsync } from 'expo-clipboard';
+import { useBrowserModalBack } from '@/hooks/useBrowserModalBack';
 import { t } from '@/i18n';
-import { fontSize, radius, spacing } from '@/theme/tokens';
-import { useTheme } from '@/theme/useTheme';
 import type { RoomSummary } from '@/types/rooms';
-
+import { squadStyles as styles } from './SquadViews';
 export type RoomSegment = 'today' | 'chat' | 'progress' | 'members';
-
-interface RoomHeaderProps {
+export interface RoomHeaderProps {
   currentRoom: RoomSummary | null;
   allRooms: RoomSummary[];
   pendingRequestsCount: number;
-  streakDays: number;
+  streakDays?: number;
   activeSegment: RoomSegment;
   chatUnreadCount?: number;
   showMembers?: boolean;
@@ -26,16 +24,12 @@ interface RoomHeaderProps {
   onSwitchRoom?: (room: RoomSummary) => void;
   onCreateOrJoin?: () => void;
 }
-
 export function RoomHeader({
   currentRoom,
   allRooms,
   pendingRequestsCount,
-  streakDays,
   activeSegment,
-  chatUnreadCount,
-  showMembers = false,
-  isWaiting = false,
+  chatUnreadCount = 0,
   onSelectSegment,
   onOpenInbox,
   onOpenSettings,
@@ -43,474 +37,185 @@ export function RoomHeader({
   onSwitchRoom,
   onCreateOrJoin,
 }: RoomHeaderProps) {
-  const { colors } = useTheme();
-  const [copiedToast, setCopiedToast] = React.useState(false);
-  const [showRoomSwitcher, setShowRoomSwitcher] = React.useState(false);
-
-  const [copyError, setCopyError] = React.useState(false);
-  const copiedTimer = React.useRef<ReturnType<typeof setTimeout> | null>(null);
-  React.useEffect(() => {
-    setCopiedToast(false);
-    setCopyError(false);
-    return () => {
-      if (copiedTimer.current) clearTimeout(copiedTimer.current);
-    };
+  const [panel, setPanel] = useState<'rooms' | 'actions' | null>(null),
+    [copied, setCopied] = useState(false),
+    [error, setError] = useState(false);
+  useBrowserModalBack(panel !== null, () => setPanel(null));
+  useEffect(() => {
+    setCopied(false);
+    setError(false);
+    setPanel(null);
   }, [currentRoom?.id]);
-  const handleCopyCode = async () => {
-    if (!currentRoom?.code) return;
+  const closeThen = (action: () => void) => {
+    setPanel(null);
+    action();
+  };
+  const copy = async () => {
+    if (!currentRoom) return;
     try {
-      setCopyError(false);
-      await setStringAsync(currentRoom.code);
-      setCopiedToast(true);
-      if (copiedTimer.current) clearTimeout(copiedTimer.current);
-      copiedTimer.current = setTimeout(() => setCopiedToast(false), 2000);
+      setError(false);
+      if (!(await setStringAsync(currentRoom.code))) throw new Error();
+      setCopied(true);
     } catch {
-      setCopyError(true);
-      setCopiedToast(false);
+      setError(true);
     }
   };
-
-  const segments: { key: RoomSegment; label: string; icon: keyof typeof Ionicons.glyphMap }[] = [
-    { key: 'today', label: t('rooms.segments.today'), icon: 'calendar-outline' },
-    { key: 'chat', label: t('rooms.segments.chat'), icon: 'chatbubbles-outline' },
-    { key: 'progress', label: t('rooms.segments.progress'), icon: 'trending-up-outline' },
-    { key: 'members', label: t('rooms.segments.members'), icon: 'people-outline' },
-  ];
-
   return (
-    <View
-      style={[
-        styles.container,
-        { backgroundColor: colors.surface, borderBottomColor: colors.border },
-      ]}
-    >
-      {/* Top Bar: Room Title & Action Buttons */}
-      <View style={styles.topRow}>
-        <View style={styles.titleContainer}>
-          {currentRoom ? (
-            <Pressable
-              onPress={() => allRooms.length > 1 && setShowRoomSwitcher(!showRoomSwitcher)}
-              style={styles.titlePressable}
-              accessibilityRole="button"
-              accessibilityLabel={`Current room: ${currentRoom.name}`}
-              testID="btn-room-title-switcher"
-            >
-              <Text style={[styles.roomTitle, { color: colors.text }]} numberOfLines={1}>
-                {currentRoom.name}
-              </Text>
-              {allRooms.length > 1 && (
-                <Ionicons
-                  name={showRoomSwitcher ? 'chevron-up' : 'chevron-down'}
-                  size={18}
-                  color={colors.textMuted}
-                  style={styles.dropdownIcon}
-                />
-              )}
-            </Pressable>
-          ) : (
-            <Text style={[styles.roomTitle, { color: colors.text }]}>{t('rooms.title')}</Text>
-          )}
-
-          {currentRoom && !isWaiting && (
-            <View style={styles.badgeRow}>
-              {/* Tap-to-copy room code badge */}
-              <Pressable
-                onPress={handleCopyCode}
-                style={[styles.codeBadge, { backgroundColor: colors.surfaceAlt }]}
-                accessibilityRole="button"
-                accessibilityLabel={`Room code: ${currentRoom.code}. Tap to copy.`}
-                testID="btn-copy-room-code"
-              >
-                <Ionicons name="key-outline" size={12} color={colors.textMuted} />
-                <Text style={[styles.codeText, { color: colors.text }]}>{currentRoom.code}</Text>
-                <Ionicons
-                  name={copiedToast ? 'checkmark-circle' : 'copy-outline'}
-                  size={12}
-                  color={copiedToast ? colors.mint : colors.textMuted}
-                />
-              </Pressable>
-
-              {/* Room Streak badge */}
-              {streakDays > 0 && (
-                <View style={[styles.streakBadge, { backgroundColor: colors.cardHighlight }]}>
-                  <Ionicons name="flame-outline" size={14} color={colors.textMuted} />
-                  <Text style={[styles.streakText, { color: colors.accent }]}>
-                    {t('rooms.streakDays', { count: streakDays })}
-                  </Text>
-                </View>
-              )}
-
-              {/* Capacity indicator ("3 of 5 people") */}
-              <View
-                style={[styles.capacityBadge, { backgroundColor: colors.surfaceAlt }]}
-                accessibilityLabel={`Capacity: ${t('rooms.capacityIndicator', {
-                  count: currentRoom.member_count,
-                  cap: currentRoom.member_cap ?? 5,
-                })}`}
-                testID="badge-room-capacity"
-              >
-                <Ionicons name="people-outline" size={12} color={colors.textMuted} />
-                <Text style={[styles.capacityText, { color: colors.text }]}>
-                  {t('rooms.capacityIndicator', {
-                    count: currentRoom.member_count,
-                    cap: currentRoom.member_cap ?? 5,
-                  })}
-                </Text>
-              </View>
-            </View>
-          )}
-        </View>
-
-        {/* Right side icons */}
-        <View style={styles.actionButtonsRow}>
-          {/* Requests Inbox button with badge */}
-          <Pressable
-            onPress={onOpenInbox}
-            style={[styles.iconButton, { backgroundColor: colors.surfaceAlt }]}
-            accessibilityRole="button"
-            accessibilityLabel={`Requests inbox. ${pendingRequestsCount} pending requests.`}
-            testID="btn-room-inbox"
-          >
-            <Ionicons name="mail-outline" size={20} color={colors.text} />
-            {pendingRequestsCount > 0 && (
-              <View style={[styles.inboxBadge, { backgroundColor: colors.danger }]}>
-                <Text style={styles.inboxBadgeText}>{pendingRequestsCount}</Text>
-              </View>
-            )}
-          </Pressable>
-
-          {/* Privacy settings */}
-          {currentRoom && (
-            <Pressable
-              onPress={onOpenPrivacy}
-              style={[styles.iconButton, { backgroundColor: colors.surfaceAlt }]}
-              accessibilityRole="button"
-              accessibilityLabel="Room privacy settings"
-              testID="btn-room-privacy"
-            >
-              <Ionicons name="eye-outline" size={20} color={colors.text} />
-            </Pressable>
-          )}
-
-          {/* Room Settings */}
-          {currentRoom && (
-            <Pressable
-              onPress={onOpenSettings}
-              style={[styles.iconButton, { backgroundColor: colors.surfaceAlt }]}
-              accessibilityRole="button"
-              accessibilityLabel="Room settings"
-              testID="btn-room-settings"
-            >
-              <Ionicons name="settings-outline" size={20} color={colors.text} />
-            </Pressable>
-          )}
-        </View>
-      </View>
-
-      {/* Multiple Rooms Switcher Dropdown */}
-      {showRoomSwitcher && allRooms.length > 1 && (
-        <View
-          style={[
-            styles.switcherDropdown,
-            { backgroundColor: colors.surfaceAlt, borderColor: colors.border },
-          ]}
+    <View style={[styles.stack, { padding: homeLayout.iconSize }]}>
+      <View style={styles.spread}>
+        <Pressable
+          onPress={() => setPanel('rooms')}
+          accessibilityRole="button"
+          accessibilityLabel={currentRoom?.name ?? t('tabs.room')}
+          testID="btn-room-title-switcher"
+          style={[styles.flex, styles.touch]}
         >
-          <Text style={[styles.switcherHeader, { color: colors.textMuted }]}>
-            {t('rooms.manageRooms')}
+          <Text variant="title1">
+            {currentRoom?.name ?? t('tabs.room')}{' '}
+            <Ionicons name="chevron-down" size={homeLayout.iconSize} color={dark.textMid} />
           </Text>
-          {allRooms.map((r) => {
-            const isSelected = r.id === currentRoom?.id;
-            return (
-              <Pressable
-                key={r.id}
-                onPress={() => {
-                  setShowRoomSwitcher(false);
-                  onSwitchRoom?.(r);
-                }}
-                style={[
-                  styles.switcherRow,
-                  isSelected && { backgroundColor: colors.cardHighlight },
-                ]}
-                accessibilityRole="button"
-                testID={`btn-switch-room-${r.id}`}
-              >
-                <View style={styles.switcherRowContent}>
-                  <Text style={[styles.switcherRowName, { color: colors.text }]}>{r.name}</Text>
-                  <Text style={[styles.switcherRowRole, { color: colors.textMuted }]}>
-                    {r.role === 'host'
-                      ? t('rooms.settingsModal.hostBadge')
-                      : t('rooms.settingsModal.memberBadge')}{' '}
-                    • {r.member_count} members
-                  </Text>
-                </View>
-                {isSelected && <Ionicons name="checkmark-circle" size={18} color={colors.accent} />}
-              </Pressable>
-            );
-          })}
-          {onCreateOrJoin && (
-            <Pressable
-              onPress={() => {
-                setShowRoomSwitcher(false);
-                onCreateOrJoin();
-              }}
-              style={[styles.switcherRow, { borderTopWidth: 0.5, borderTopColor: colors.border }]}
-              accessibilityRole="button"
-              testID="btn-switcher-create-room"
-            >
-              <Ionicons name="add-circle-outline" size={16} color={colors.accent} />
-              <Text style={[styles.switcherRowName, { color: colors.accent, marginLeft: 6 }]}>
-                {t('rooms.createRoomBtn')}
-              </Text>
-            </Pressable>
+        </Pressable>
+        <Pressable
+          onPress={() => setPanel('actions')}
+          accessibilityRole="button"
+          accessibilityLabel={t('squadDesign.actions')}
+          style={styles.back}
+          testID="btn-room-options"
+        >
+          <Ionicons name="options-outline" size={homeLayout.iconSize} color={dark.textHi} />
+          {pendingRequestsCount > 0 && (
+            <Text variant="micro" tabular>
+              {pendingRequestsCount}
+            </Text>
           )}
+        </Pressable>
+      </View>
+      {currentRoom && (
+        <View style={styles.row}>
+          <Text variant="bodyS">
+            {t('squadDesign.members', { count: currentRoom.member_count })}
+          </Text>
+          <Pressable
+            onPress={() => void copy()}
+            accessibilityRole="button"
+            accessibilityLabel={t('squadDesign.code', { code: currentRoom.code })}
+            style={styles.touch}
+            testID="btn-copy-room-code"
+          >
+            <Text variant="bodyS">
+              {t('squadDesign.code', { code: currentRoom.code })}
+              {copied ? ' \u2713' : ''}
+            </Text>
+          </Pressable>
         </View>
       )}
-
-      {copyError ? (
-        <Text accessibilityRole="alert" style={{ color: colors.danger }}>
-          {t('roomAudit.actionError')}
-        </Text>
-      ) : null}
-      {/* Segmented control navigation */}
+      {error && <Text accessibilityRole="alert">{t('roomAudit.actionError')}</Text>}
       {currentRoom && (
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          style={styles.segmentedScroll}
-          contentContainerStyle={[styles.segmentedRow, { backgroundColor: colors.surfaceAlt }]}
-        >
-          {segments
-            .filter((seg) => seg.key !== 'members' || showMembers)
-            .map((seg) => {
-              const isActive = activeSegment === seg.key;
-              return (
-                <Pressable
-                  key={seg.key}
-                  onPress={() => onSelectSegment(seg.key)}
-                  style={[
-                    styles.segmentButton,
-                    isActive && [styles.segmentActive, { backgroundColor: colors.surface }],
-                  ]}
-                  accessibilityRole="tab"
-                  accessibilityState={{ selected: isActive }}
-                  accessibilityLabel={seg.label}
-                  testID={`room-tab-${seg.key}`}
-                >
-                  <Ionicons
-                    name={seg.icon}
-                    size={15}
-                    color={isActive ? colors.accent : colors.textMuted}
-                  />
-                  <Text
-                    style={[
-                      styles.segmentText,
-                      { color: isActive ? colors.text : colors.textMuted },
-                      isActive && styles.segmentTextActive,
-                    ]}
-                  >
-                    {seg.label}
-                  </Text>
-                  {seg.key === 'chat' &&
-                    typeof chatUnreadCount === 'number' &&
-                    chatUnreadCount > 0 && (
-                      <View
-                        style={[styles.segmentBadge, { backgroundColor: colors.accent }]}
-                        testID="badge-chat-unread"
-                      >
-                        <Text style={styles.segmentBadgeText}>
-                          {chatUnreadCount > 99 ? '99+' : chatUnreadCount}
-                        </Text>
-                      </View>
-                    )}
-                </Pressable>
-              );
-            })}
-        </ScrollView>
+        <View style={[styles.row, styles.card]} accessibilityRole="tablist">
+          {(
+            [
+              ['today', 'squadDesign.overview'],
+              ['progress', 'squadDesign.leaderboard'],
+              ['chat', 'squadDesign.chat'],
+            ] as const
+          ).map(([segment, label]) => (
+            <Pressable
+              key={segment}
+              onPress={() => onSelectSegment(segment)}
+              accessibilityRole="tab"
+              accessibilityState={{ selected: activeSegment === segment }}
+              aria-selected={activeSegment === segment}
+              testID={'room-tab-' + segment}
+              style={{
+                flex: 1,
+                minHeight: homeLayout.touchSize,
+                borderRadius: radius.full,
+                padding: space[2],
+                justifyContent: 'center',
+                alignItems: 'center',
+                backgroundColor: activeSegment === segment ? dark.apricot : dark.s1,
+              }}
+            >
+              <Text variant="bodyS" color={activeSegment === segment ? dark.onBrand : dark.textMid}>
+                {t(label) +
+                  (segment === 'chat' && chatUnreadCount > 0 ? ' (' + chatUnreadCount + ')' : '')}
+              </Text>
+            </Pressable>
+          ))}
+        </View>
       )}
+      <Sheet
+        visible={panel !== null}
+        onClose={() => setPanel(null)}
+        snapPoint="tall"
+        accessibilityLabel={t('squadDesign.actions')}
+        testID="room-options-sheet"
+      >
+        <ScrollView contentContainerStyle={styles.content}>
+          <Button
+            variant="tertiary"
+            label={t('squadDesign.close')}
+            onPress={() => setPanel(null)}
+          />
+          {panel === 'rooms' ? (
+            <>
+              {allRooms.map((room) => (
+                <Pressable
+                  key={room.id}
+                  onPress={() => closeThen(() => onSwitchRoom?.(room))}
+                  style={styles.leader}
+                  accessibilityRole="button"
+                  accessibilityLabel={room.name}
+                  testID={'btn-switch-room-' + room.id}
+                >
+                  <Avatar name={room.name} size="sm" />
+                  <View style={styles.flex}>
+                    <Text variant="heading">{room.name}</Text>
+                    <Text>{t('squadDesign.members', { count: room.member_count })}</Text>
+                  </View>
+                </Pressable>
+              ))}
+              <Button
+                variant="secondary"
+                label={t('homeRefresh.create')}
+                onPress={() => closeThen(() => onCreateOrJoin?.())}
+                testID="btn-switcher-create-room"
+              />
+            </>
+          ) : (
+            <>
+              <Button
+                variant="secondary"
+                label={t('rooms.inboxModal.title') + ' (' + pendingRequestsCount + ')'}
+                onPress={() => closeThen(onOpenInbox)}
+                testID="btn-room-inbox"
+              />
+              {currentRoom && (
+                <>
+                  <Button
+                    variant="secondary"
+                    label={t('rooms.settingsModal.title')}
+                    onPress={() => closeThen(onOpenSettings)}
+                    testID="btn-room-settings"
+                  />
+                  <Button
+                    variant="secondary"
+                    label={t('rooms.privacyModal.title')}
+                    onPress={() => closeThen(onOpenPrivacy)}
+                    testID="btn-room-privacy"
+                  />
+                </>
+              )}
+              <Button
+                variant="secondary"
+                label={t('homeRefresh.create')}
+                onPress={() => closeThen(() => onCreateOrJoin?.())}
+                testID="btn-room-create"
+              />
+            </>
+          )}
+        </ScrollView>
+      </Sheet>
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    paddingHorizontal: spacing.md,
-    paddingTop: spacing.sm,
-    paddingBottom: spacing.sm,
-    borderBottomWidth: 1,
-  },
-  topRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    minHeight: 48,
-  },
-  titleContainer: {
-    flex: 1,
-    marginRight: spacing.sm,
-  },
-  titlePressable: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  roomTitle: {
-    fontSize: fontSize.lg,
-    fontWeight: '700',
-    letterSpacing: -0.3,
-  },
-  dropdownIcon: {
-    marginLeft: spacing.xs,
-  },
-  badgeRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginTop: spacing.xs,
-    gap: spacing.xs,
-  },
-  codeBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: spacing.sm,
-    paddingVertical: 3,
-    borderRadius: radius.pill,
-    gap: 4,
-  },
-  codeText: {
-    fontSize: fontSize.xs,
-    fontWeight: '600',
-    letterSpacing: 0.5,
-  },
-  streakBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: spacing.sm,
-    paddingVertical: 3,
-    borderRadius: radius.pill,
-    gap: 4,
-  },
-  streakFire: {
-    fontSize: 12,
-  },
-  streakText: {
-    fontSize: fontSize.xs,
-    fontWeight: '600',
-  },
-  actionButtonsRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.xs,
-  },
-  iconButton: {
-    width: 38,
-    height: 38,
-    borderRadius: radius.pill,
-    alignItems: 'center',
-    justifyContent: 'center',
-    position: 'relative',
-  },
-  inboxBadge: {
-    position: 'absolute',
-    top: -2,
-    right: -2,
-    minWidth: 18,
-    height: 18,
-    borderRadius: 9,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: 4,
-  },
-  inboxBadgeText: {
-    color: '#FFFFFF',
-    fontSize: 10,
-    fontWeight: '700',
-  },
-  switcherDropdown: {
-    marginTop: spacing.sm,
-    marginBottom: spacing.xs,
-    borderRadius: radius.md,
-    borderWidth: 1,
-    padding: spacing.xs,
-  },
-  switcherHeader: {
-    fontSize: fontSize.xs,
-    fontWeight: '600',
-    paddingHorizontal: spacing.sm,
-    paddingVertical: spacing.xs,
-  },
-  switcherRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: spacing.sm,
-    paddingVertical: spacing.sm,
-    borderRadius: radius.sm,
-  },
-  switcherRowContent: {
-    flex: 1,
-  },
-  switcherRowName: {
-    fontSize: fontSize.sm,
-    fontWeight: '600',
-  },
-  switcherRowRole: {
-    fontSize: fontSize.xs,
-    marginTop: 2,
-  },
-  capacityBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: spacing.sm,
-    paddingVertical: 3,
-    borderRadius: radius.pill,
-    gap: 4,
-  },
-  capacityText: {
-    fontSize: fontSize.xs,
-    fontWeight: '600',
-  },
-  segmentedScroll: {
-    marginTop: spacing.sm,
-  },
-  segmentedRow: {
-    flexDirection: 'row',
-    borderRadius: radius.pill,
-    padding: 3,
-    gap: 2,
-  },
-  segmentButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: spacing.xs + 2,
-    paddingHorizontal: spacing.sm + 4,
-    borderRadius: radius.pill,
-    gap: 4,
-  },
-  segmentActive: {
-    shadowColor: '#000000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.08,
-    shadowRadius: 2,
-    elevation: 2,
-  },
-  segmentText: {
-    fontSize: fontSize.xs,
-    fontWeight: '500',
-  },
-  segmentTextActive: {
-    fontWeight: '700',
-  },
-  segmentBadge: {
-    paddingHorizontal: 5,
-    paddingVertical: 1,
-    borderRadius: radius.pill,
-    minWidth: 16,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginLeft: 2,
-  },
-  segmentBadgeText: {
-    color: '#FFFFFF',
-    fontSize: 9,
-    fontWeight: '800',
-  },
-});

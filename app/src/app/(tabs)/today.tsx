@@ -6,6 +6,7 @@ import {
   getMealSectionForTime,
   getLocalDateString,
   foodFromEntrySnapshot,
+  squadGoalCompletion,
   type FoodEntry,
   type MealSection,
 } from '@calipartner/core';
@@ -175,6 +176,28 @@ export default function TodayScreen() {
           visible={homeVisible}
         />
         <PersonalDayCard
+          score={squadGoalCompletion(
+            daySummary.totals,
+            currentGoalProfile
+              ? {
+                  calories: currentGoalProfile.daily_calorie_target,
+                  protein: currentGoalProfile.protein_grams,
+                  carbs: currentGoalProfile.carb_grams,
+                  fat: currentGoalProfile.fat_grams,
+                }
+              : null,
+          )}
+          goal={
+            currentGoalProfile
+              ? t(
+                  currentGoalProfile.goal === 'bulk'
+                    ? 'squadDesign.goalBulk'
+                    : currentGoalProfile.goal === 'cut'
+                      ? 'squadDesign.goalCut'
+                      : 'squadDesign.goalMaintain',
+                )
+              : undefined
+          }
           loading={diaryLoading || targetsLoading}
           error={Boolean(diaryError || targetsError)}
           onRetry={() => {
@@ -188,31 +211,31 @@ export default function TodayScreen() {
               label: t('squadDesign.calories'),
               value: daySummary.totals.calories,
               target: targetCalories,
-              unit: 'kcal',
+              unit: t('squadDesign.kcal'),
             },
             {
               label: t('squadDesign.protein'),
               value: daySummary.totals.protein,
               target: targetProtein,
-              unit: 'g',
+              unit: t('squadDesign.grams'),
             },
             {
               label: t('squadDesign.carbs'),
               value: daySummary.totals.carbs,
               target: currentGoalProfile?.carb_grams ?? null,
-              unit: 'g',
+              unit: t('squadDesign.grams'),
             },
             {
               label: t('squadDesign.fat'),
               value: daySummary.totals.fat,
               target: currentGoalProfile?.fat_grams ?? null,
-              unit: 'g',
+              unit: t('squadDesign.grams'),
             },
             {
               label: t('squadDesign.steps'),
               value: steps,
               target: effectiveGoalSteps,
-              unit: t('squadDesign.steps'),
+              unit: t('squadDesign.stepUnit'),
             },
           ]}
         />

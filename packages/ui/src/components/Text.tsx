@@ -27,19 +27,10 @@ export interface TextProps extends RNTextProps {
   tabular?: boolean;
 }
 
-const CAPPED_VARIANTS: ReadonlySet<TypeVariant> = new Set([
-  'numeralXL',
-  'numeralL',
-  'numeralM',
-  'label',
-  'micro',
-  'button',
-]);
-
 /**
  * CaliPartner Text component.
  * Applies strict token typography, tabular figures on numeral variants,
- * respects allowFontScaling with capped maxFontSizeMultiplier to prevent clipping.
+ * supports system text scaling to 200%, with tabular figures where requested.
  */
 export function Text({
   fontSet = 'app',
@@ -77,15 +68,7 @@ export function Text({
   const hasTabular =
     tabular !== undefined ? tabular : Boolean(tokenSpec.fontVariant?.includes('tabular-nums'));
 
-  // Cap font multiplier: 1.3 for numerals/labels/chips/buttons, 2.0 for body/titles
-  const effectiveMaxMultiplier =
-    maxFontSizeMultiplier !== undefined
-      ? maxFontSizeMultiplier
-      : fontSet === 'onboarding'
-        ? 2
-        : CAPPED_VARIANTS.has(variant)
-          ? 1.3
-          : 2.0;
+  const effectiveMaxMultiplier = maxFontSizeMultiplier ?? 2;
 
   const weight = StyleSheet.flatten(style)?.fontWeight;
   const weightedFont =
@@ -110,7 +93,11 @@ export function Text({
     <RNText
       allowFontScaling={allowFontScaling}
       maxFontSizeMultiplier={effectiveMaxMultiplier}
-      style={[fontStyle, style, !isHindi && weightedFont ? { fontFamily: weightedFont } : null]}
+      style={[
+        fontStyle,
+        style,
+        !isHindi ? { fontFamily: fontStyle.fontFamily, fontWeight: 'normal' } : null,
+      ]}
       {...rest}
     >
       {children}

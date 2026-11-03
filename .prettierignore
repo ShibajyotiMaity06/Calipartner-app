@@ -12,3 +12,4 @@ AGENTS.md
 
 # Generated verification artifacts
 .cache
+/.artifacts/

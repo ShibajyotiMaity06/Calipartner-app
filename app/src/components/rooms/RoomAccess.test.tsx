@@ -1,95 +1,92 @@
-vi.mock('@/components/rooms/SquadConnectModal', () => ({ SquadConnectModal: 'SquadConnectModal' }));
-vi.mock('@/components/rooms/SquadDayPanel', () => ({ SquadDayPanel: 'SquadDayPanel' }));
-vi.mock('@/hooks/useDiary', () => ({
-  useDiary: () => ({ daySummary: { totals: { entryCount: 0 } }, loading: true, refresh: vi.fn() }),
-}));
-vi.mock('@/hooks/useTargets', () => ({ useTargets: () => ({ currentGoalProfile: null }) }));
-vi.mock('@/hooks/useCurrentLocalDate', () => ({
-  useCurrentLocalDate: () => ({ localDate: '2026-10-30' }),
-}));
-vi.mock('@/components/rooms/MemberComparison', () => ({ MemberComparison: 'MemberComparison' }));
 import React from 'react';
 import { act, create, type ReactTestRenderer } from 'react-test-renderer';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 const state = vi.hoisted(() => ({
   paid: false,
-  count: 1,
-  roomState: 'dormant',
-  roomId: 'room',
+  count: 2,
+  roomState: 'active',
+  params: {} as Record<string, string>,
+  push: vi.fn(),
+  navigate: vi.fn(),
+  setParams: vi.fn(),
+  refresh: vi.fn().mockResolvedValue(undefined),
   chat: vi.fn(),
-  refresh: vi.fn(),
-  copy: vi.fn().mockResolvedValue(true),
-  share: vi.fn().mockResolvedValue({ action: 'sharedAction' }),
+  back: undefined as (() => boolean) | undefined,
 }));
 vi.mock('react-native', () => ({
-  Platform: { OS: 'android' },
-  ActivityIndicator: 'ActivityIndicator',
-  Modal: 'Modal',
-  Pressable: 'Pressable',
-  RefreshControl: 'RefreshControl',
-  SafeAreaView: 'SafeAreaView',
-  ScrollView: 'ScrollView',
-  Text: 'Text',
   View: 'View',
-  Share: { share: state.share },
-  StyleSheet: { create: (v: unknown) => v },
+  Pressable: 'Pressable',
+  ScrollView: 'ScrollView',
+  SafeAreaView: 'SafeAreaView',
+  RefreshControl: 'RefreshControl',
+  useWindowDimensions: () => ({ fontScale: 1 }),
+  StyleSheet: { create: (s: unknown) => s, hairlineWidth: 1 },
+  BackHandler: {
+    addEventListener: (_event: string, fn: () => boolean) => {
+      state.back = fn;
+      return { remove: vi.fn() };
+    },
+  },
 }));
-vi.mock('expo-clipboard', () => ({ setStringAsync: state.copy }));
-vi.mock('@/lib/supabase', () => ({
-  getSupabase: () => ({ rpc: vi.fn().mockResolvedValue({ data: [], error: null }) }),
-}));
-vi.mock('expo-router', () => ({
-  useLocalSearchParams: () => ({}),
-  useFocusEffect: () => {},
-  useNavigation: () => ({ setOptions: vi.fn() }),
-  useRouter: () => ({ push: vi.fn() }),
-}));
-vi.mock('@expo/vector-icons', () => ({ Ionicons: 'Ionicons' }));
-vi.mock('@calipartner/ui', () => ({
+vi.mock('expo-router', async () => {
+  const React = await import('react');
+  const router = { push: state.push, navigate: state.navigate, setParams: state.setParams };
+  return {
+    useRouter: () => router,
+    useLocalSearchParams: () => state.params,
+    useFocusEffect: (callback: () => void) => React.useEffect(callback, [callback]),
+  };
+});
+vi.mock('@expo/vector-icons', () => ({ Ionicons: 'Icon' }));
+vi.mock('expo-clipboard', () => ({ setStringAsync: vi.fn().mockResolvedValue(true) }));
+vi.mock('@calipartner/ui', async () => ({
+  ...(await import('../../../../packages/ui/src/tokens')),
   Text: 'Text',
   Button: 'Button',
-  dark: {},
-  onboardingLayout: { touch: 48 },
-  radius: {},
-  space: [],
-  useTheme: () => ({ colors: {} }),
+  Avatar: 'Avatar',
+  Sheet: 'Sheet',
+  getTabBarHeight: () => 64,
 }));
-vi.mock('@/theme/useTheme', () => ({ useTheme: () => ({ colors: {} }) }));
-vi.mock('@/theme/tokens', () => ({ fontSize: {}, radius: {}, spacing: {} }));
+vi.mock('@/contexts/AuthContext', () => ({
+  useAuth: () => ({ user: { id: 'self' }, profile: { nickname: 'You', username: 'self' } }),
+}));
+vi.mock('@/hooks/useBrowserModalBack', () => ({
+  useBrowserModalBack: vi.fn(),
+  closeBrowserModalsThen: (callback: () => void) => callback(),
+}));
 vi.mock('@/hooks/useRooms', () => ({
   useRooms: () => ({
-    rooms: [
-      {
-        id: state.roomId,
-        code: 'CP1234',
-        name: 'Our room',
-        state: state.roomState,
-        member_count: state.count,
-      },
-    ],
+    rooms: state.count
+      ? [
+          {
+            id: 'room',
+            code: 'TEST01',
+            name: 'Our squad',
+            member_count: state.count,
+            member_cap: 20,
+            role: 'host',
+            state: state.roomState,
+          },
+        ]
+      : [],
     loading: false,
-    refresh: vi.fn(),
+    error: null,
+    refresh: state.refresh,
+    createRoom: vi.fn(),
+    joinByCode: vi.fn(),
+    leaveRoom: vi.fn(),
   }),
 }));
 vi.mock('@/hooks/useRoomSnapshot', () => ({
-  useRoomSnapshot: () => ({
-    refresh: state.refresh,
-    snapshot: {
-      room: { id: state.roomId, state: state.roomState },
-      caller_id: 'self',
-      members: Array.from({ length: state.count }, (_, i) => ({
-        user_id: i ? `friend${i}` : 'self',
-        status: 'active',
-      })),
-    },
-    loading: false,
-  }),
-}));
-vi.mock('@/hooks/useRoomRequests', () => ({
-  useRoomRequests: () => ({ incoming: [], outgoing: [] }),
+  useRoomSnapshot: () => ({ snapshot: { members: [] }, refresh: state.refresh }),
 }));
 vi.mock('@/hooks/useRoomActions', () => ({ useRoomActions: () => ({}) }));
-vi.mock('@/hooks/useFriends', () => ({ useFriends: () => ({ inbox: { incoming: [] } }) }));
+vi.mock('@/hooks/useRoomRequests', () => ({
+  useRoomRequests: () => ({ incoming: [], outgoing: [], refresh: state.refresh }),
+}));
+vi.mock('@/hooks/useFriends', () => ({
+  useFriends: () => ({ inbox: { incoming: [], friends: [] }, refresh: state.refresh }),
+}));
 vi.mock('@/hooks/useSubscription', () => ({
   useSubscription: () => ({
     hasActiveAccess: state.paid,
@@ -100,197 +97,180 @@ vi.mock('@/hooks/useSubscription', () => ({
 vi.mock('@/hooks/useRoomChat', () => ({
   useRoomChat: (...args: unknown[]) => {
     state.chat(...args);
-    return { unreadCount: 5 };
+    return { messages: [], unreadCount: 4 };
   },
 }));
-vi.mock('@/components/chat', () => ({ ChatView: 'ChatView' }));
-vi.mock('@/components/rooms/BasicRoomCard', () => ({ BasicRoomCard: 'BasicRoomCard' }));
-vi.mock('@/components/rooms/ShareLoggedMealModal', () => ({
-  ShareLoggedMealModal: 'ShareLoggedMealModal',
+vi.mock('@/hooks/useSquad', () => ({
+  useSquadToday: () => ({
+    data: {
+      room_id: 'room',
+      members: Array.from({ length: state.count }, (_, index) => ({
+        user_id: index ? 'peer' + index : 'self',
+        username: 'user' + index,
+        nickname: index ? 'Person ' + index : 'You',
+        is_self: !index,
+        calories: 1200,
+        protein: 75,
+        carbs: 150,
+        fat: 35,
+        steps: 4000,
+        targets: { calories: 2400, protein: 150, carbs: 300, fat: 70, steps: 8000 },
+        score: 50,
+        rank: 1,
+      })),
+    },
+    loading: false,
+    error: false,
+    refresh: state.refresh,
+  }),
 }));
-vi.mock('@/components/rooms/RoomExtras', () => ({ RoomExtras: 'RoomExtras' }));
+vi.mock('@/components/chat', () => ({ ChatView: 'ChatView' }));
+vi.mock('@/components/rooms/SquadConnectModal', () => ({ SquadConnectModal: 'SquadConnectModal' }));
+vi.mock('@/components/rooms/SquadMemberPicker', () => ({ SquadMemberPicker: 'SquadMemberPicker' }));
+vi.mock('@/components/rooms/SquadVisibilityModal', () => ({
+  SquadVisibilityModal: 'SquadVisibilityModal',
+}));
 vi.mock('@/components/rooms', () =>
   Object.fromEntries(
     [
-      'BlockUserModal',
       'DormantWaitingState',
       'InviteUserModal',
       'JoinByCodeModal',
       'LockedRoomPausedState',
-      'MembersTab',
-      'NudgeModal',
-      'OverCapacityBanner',
       'PaywallModal',
-      'PrivacySettingsModal',
-      'ReactionModal',
-      'ReportModal',
       'RequestsInboxModal',
-      'RoomFullNotice',
       'RoomHeader',
-      'RoomOverviewRow',
-      'RoomProgressView',
       'RoomSettingsModal',
-      'SharedMealCard',
-      'SideBySideCard',
-      'SquadConnectFlow',
-      'TrialBanner',
+      'BlockUserModal',
+      'ReportModal',
     ].map((name) => [name, name]),
   ),
 );
 import RoomScreen from '@/app/(tabs)/room';
-import { DormantWaitingState } from './DormantWaitingState';
 import { RoomHeader } from './RoomHeader';
-
+let tree: ReactTestRenderer;
 beforeEach(() => {
-  (globalThis as unknown as { IS_REACT_ACT_ENVIRONMENT: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
   state.paid = false;
-  state.count = 1;
-  state.roomState = 'dormant';
+  state.count = 2;
+  state.roomState = 'active';
+  state.params = {};
   vi.clearAllMocks();
 });
-const node = (tree: ReactTestRenderer, type: string) =>
-  tree.root.findByType(type as React.ElementType);
-describe('room invitation and viewer access', () => {
-  it('refreshes a pending room if realtime misses acceptance and stops once joined', async () => {
-    vi.useFakeTimers();
-    let tree!: ReactTestRenderer;
-    try {
-      await act(async () => {
-        tree = create(<RoomScreen />);
-      });
-      await act(async () => {
-        vi.advanceTimersByTime(5000);
-      });
-      expect(state.refresh).toHaveBeenCalledTimes(1);
-      state.count = 2;
-      state.roomState = 'active';
-      await act(async () => {
-        tree.update(<RoomScreen />);
-      });
-      await act(async () => {
-        vi.advanceTimersByTime(5000);
-      });
-      expect(state.refresh).toHaveBeenCalledTimes(1);
-      await act(async () => tree.unmount());
-    } finally {
-      vi.useRealTimers();
-    }
+afterEach(async () => {
+  if (tree) await act(async () => tree.unmount());
+  vi.useRealTimers();
+});
+const rows = () =>
+  tree.root.findAll(
+    (node) =>
+      typeof node.props.testID === 'string' && node.props.testID.startsWith('squad-member-'),
+  );
+it('shows both people for a Free pair, removes check-ins and nudges, and keeps Free chat behind Plus', async () => {
+  await act(async () => {
+    tree = create(<RoomScreen />);
   });
-  it('shows only waiting content while pending; progress explains acceptance and Free chat never mounts or fetches', async () => {
-    let tree!: ReactTestRenderer;
-    await act(async () => {
-      tree = create(<RoomScreen />);
-    });
-    expect(node(tree, 'DormantWaitingState').props.roomCode).toBe('CP1234');
-    for (const type of [
-      'RoomExtras',
-      'SideBySideCard',
-      'BasicRoomCard',
-      'RoomProgressView',
-      'MembersTab',
-      'ChatView',
-    ])
-      expect(tree.root.findAllByType(type as React.ElementType)).toHaveLength(0);
-    expect(state.chat.mock.lastCall?.[0]).toBe(null);
-    expect(node(tree, 'RoomHeader').props.chatUnreadCount).toBe(0);
-    await act(async () => node(tree, 'RoomHeader').props.onSelectSegment('progress'));
-    expect(
-      tree.root
-        .findAllByType('Text' as React.ElementType)
-        .map((n) => n.children.join(''))
-        .join(' '),
-    ).toContain('Progress opens when your friend accepts');
-    await act(async () => node(tree, 'RoomHeader').props.onSelectSegment('chat'));
-    expect(
-      tree.root
-        .findAllByType('Text' as React.ElementType)
-        .map((n) => n.children.join(''))
-        .join(' '),
-    ).toContain('Get Plus or Pro to open room chat.');
-    expect(tree.root.findAllByType('ChatView' as React.ElementType)).toHaveLength(0);
-    await act(async () => tree.unmount());
+  expect(rows()).toHaveLength(2);
+  expect(
+    tree.root.findAll((node) => /check-in|nudge|select-all/.test(node.props.testID ?? '')),
+  ).toHaveLength(0);
+  await act(async () =>
+    tree.root.findByType('RoomHeader' as React.ElementType).props.onSelectSegment('chat'),
+  );
+  expect(tree.root.findAllByType('ChatView' as React.ElementType)).toHaveLength(0);
+  expect(state.chat.mock.lastCall?.[0]).toBeNull();
+});
+it('shows only the top three on Overview and all 20 on Leaderboard without a paid gate', async () => {
+  state.count = 20;
+  await act(async () => {
+    tree = create(<RoomScreen />);
   });
-  it.each([
-    [false, 3, false],
-    [true, 2, false],
-    [true, 3, true],
-    [false, 20, false],
-    [true, 20, true],
-  ])('Members visibility for paid=%s and count=%s is %s', async (paid, count, shown) => {
-    state.paid = paid;
-    state.count = count;
-    state.roomState = 'active';
-    let tree!: ReactTestRenderer;
-    await act(async () => {
-      tree = create(<RoomScreen />);
-    });
-    expect(node(tree, 'RoomHeader').props.showMembers).toBe(shown);
-    await act(async () => node(tree, 'RoomHeader').props.onSelectSegment('members'));
-    expect(tree.root.findAllByType('MembersTab' as React.ElementType)).toHaveLength(shown ? 1 : 0);
-    await act(async () => node(tree, 'RoomHeader').props.onSelectSegment('chat'));
-    expect(tree.root.findAllByType('ChatView' as React.ElementType)).toHaveLength(paid ? 1 : 0);
-    expect(state.chat.mock.lastCall?.[0]).toBe(null);
-    await act(async () => tree.unmount());
+  expect(rows()).toHaveLength(3);
+  await act(async () => tree.root.findByProps({ testID: 'open-full-leaderboard' }).props.onPress());
+  expect(rows()).toHaveLength(20);
+  await act(async () => rows()[19]!.props.onPress());
+  expect(state.push).toHaveBeenLastCalledWith('/squad/person?room=room&member=peer19');
+});
+it('allows either of exactly two comparison slots to select another member', async () => {
+  state.count = 3;
+  await act(async () => {
+    tree = create(<RoomScreen />);
   });
-  it('waiting code has only Copy/Share actions and uses the real clipboard', async () => {
-    let tree!: ReactTestRenderer;
-    await act(async () => {
-      tree = create(<DormantWaitingState roomCode="CP1234" />);
-    });
-    expect(tree.root.findAllByType('Pressable' as React.ElementType)).toHaveLength(2);
-    await act(async () =>
-      tree.root.findByProps({ testID: 'btn-dormant-copy-code' }).props.onPress(),
+  await act(async () => tree.root.findByProps({ testID: 'compare-choose-left' }).props.onPress());
+  const picker = tree.root.findByType('SquadMemberPicker' as React.ElementType);
+  expect(picker.props.excludedId).toBe('peer1');
+  await act(async () => {
+    picker.props.onSelect('peer2');
+    picker.props.onClose();
+  });
+  await act(async () =>
+    tree.root.findByProps({ testID: 'open-two-person-compare' }).props.onPress(),
+  );
+  expect(state.push).toHaveBeenLastCalledWith('/squad/compare?room=room&left=peer2&right=peer1');
+});
+it('opens the tagged room directly in paid chat and passes its exact message ID', async () => {
+  state.paid = true;
+  state.params = { room: 'room', tab: 'chat', mention: 'old-message' };
+  await act(async () => {
+    tree = create(<RoomScreen />);
+  });
+  const chat = tree.root.findByType('ChatView' as React.ElementType);
+  expect(chat.props.roomId).toBe('room');
+  expect(chat.props.focusedMentionId).toBe('old-message');
+});
+it('keeps pending rooms in the acceptance state and polls until another person joins', async () => {
+  vi.useFakeTimers();
+  state.count = 1;
+  state.roomState = 'dormant';
+  await act(async () => {
+    tree = create(<RoomScreen />);
+  });
+  expect(tree.root.findByType('DormantWaitingState' as React.ElementType).props.roomCode).toBe(
+    'TEST01',
+  );
+  expect(rows()).toHaveLength(0);
+  state.refresh.mockClear();
+  await act(async () => {
+    vi.advanceTimersByTime(5000);
+  });
+  expect(state.refresh).toHaveBeenCalled();
+  state.count = 2;
+  state.roomState = 'active';
+  await act(async () => tree.update(<RoomScreen />));
+  state.refresh.mockClear();
+  await act(async () => {
+    vi.advanceTimersByTime(5000);
+  });
+  expect(state.refresh).not.toHaveBeenCalled();
+});
+it('keeps just Overview, Leaderboard and Chat in the squad header for every room size', async () => {
+  await act(async () => {
+    tree = create(
+      <RoomHeader
+        currentRoom={{ id: 'room', name: 'Our squad', code: 'TEST01', member_count: 20 } as never}
+        allRooms={[]}
+        pendingRequestsCount={0}
+        activeSegment="today"
+        onSelectSegment={vi.fn()}
+        onOpenInbox={vi.fn()}
+        onOpenSettings={vi.fn()}
+        onOpenPrivacy={vi.fn()}
+      />,
     );
-    expect(state.copy).toHaveBeenCalledWith('CP1234');
-    await act(async () =>
-      tree.root.findByProps({ testID: 'btn-dormant-share-code' }).props.onPress(),
-    );
-    expect(state.share).toHaveBeenCalledWith({
-      message: 'Join my room on CaliPartner. Room code: CP1234',
-    });
-    await act(async () => tree.unmount());
   });
-  it('RoomHeader physically removes the Members tab for a pair', async () => {
-    let tree!: ReactTestRenderer;
-    const props = {
-      currentRoom: { id: 'r', name: 'Pair', code: 'CP1234', member_count: 2 },
-      allRooms: [],
-      activeSegment: 'today',
-      pendingRequestsCount: 0,
-      streakDays: 0,
-    } as unknown as React.ComponentProps<typeof RoomHeader>;
-    await act(async () => {
-      tree = create(<RoomHeader {...props} showMembers={false} isWaiting />);
-    });
-    expect(tree.root.findAllByProps({ testID: 'room-tab-members' })).toHaveLength(0);
-    expect(tree.root.findAllByProps({ testID: 'btn-copy-room-code' })).toHaveLength(0);
-    await act(async () => tree.update(<RoomHeader {...props} showMembers />));
-    expect(tree.root.findAllByProps({ testID: 'room-tab-members' })).toHaveLength(1);
-    await act(async () => tree.unmount());
+  expect(
+    tree.root
+      .findAll((node) => node.props.accessibilityRole === 'tab')
+      .map((node) => node.props.testID),
+  ).toEqual(['room-tab-today', 'room-tab-progress', 'room-tab-chat']);
+});
+
+it('cancels a Home create/join sheet back to Home instead of leaving you on the Squad screen', async () => {
+  state.params = { action: 'create', returnTo: 'home' };
+  await act(async () => {
+    tree = create(<RoomScreen />);
   });
-  it('four joined rooms retain create/join and copy succeeds only after the native clipboard succeeds', async () => {
-    const props = {
-      currentRoom: { id: 'r', name: 'Room', code: 'CP1234', member_count: 2 },
-      allRooms: [1, 2, 3, 4].map((id) => ({ id: String(id), name: 'Room' })),
-      activeSegment: 'today',
-      pendingRequestsCount: 0,
-      streakDays: 0,
-      onCreateOrJoin: vi.fn(),
-    } as unknown as React.ComponentProps<typeof RoomHeader>;
-    let tree!: ReactTestRenderer;
-    await act(async () => {
-      tree = create(<RoomHeader {...props} />);
-    });
-    await act(async () =>
-      tree.root.findByProps({ testID: 'btn-room-title-switcher' }).props.onPress(),
-    );
-    expect(tree.root.findAllByProps({ testID: 'btn-switcher-create-room' })).toHaveLength(1);
-    state.copy.mockRejectedValueOnce(new Error('clipboard unavailable'));
-    await act(async () => tree.root.findByProps({ testID: 'btn-copy-room-code' }).props.onPress());
-    expect(tree.root.findAllByProps({ accessibilityRole: 'alert' })).toHaveLength(1);
-    await act(async () => tree.root.findByProps({ testID: 'btn-copy-room-code' }).props.onPress());
-    expect(state.copy).toHaveBeenCalledWith('CP1234');
-    expect(tree.root.findAllByProps({ accessibilityRole: 'alert' })).toHaveLength(0);
-    await act(async () => tree.unmount());
-  });
+  await act(async () =>
+    tree.root.findByType('SquadConnectModal' as React.ElementType).props.onClose(),
+  );
+  expect(state.navigate).toHaveBeenLastCalledWith('/(tabs)/today');
 });

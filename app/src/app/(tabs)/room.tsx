@@ -1,1047 +1,522 @@
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   BackHandler,
-  Pressable,
   RefreshControl,
   SafeAreaView,
   ScrollView,
-  StyleSheet,
+  useWindowDimensions,
   View,
 } from 'react-native';
-import { Text } from '@calipartner/ui';
-import { useLocalSearchParams, useFocusEffect, useNavigation, useRouter } from 'expo-router';
-import { Ionicons } from '@expo/vector-icons';
-import { Button, Text as AppText } from '@calipartner/ui';
-import { withLocalRoomDiary } from '@calipartner/core';
-import { MemberComparison } from '@/components/rooms/MemberComparison';
-import { useDiary } from '@/hooks/useDiary';
-import { useTargets } from '@/hooks/useTargets';
-import { useCurrentLocalDate } from '@/hooks/useCurrentLocalDate';
-import { LoadingState } from '@/components/LoadingState';
+import { useFocusEffect, useLocalSearchParams, useRouter, type Href } from 'expo-router';
+import { Button, getTabBarHeight, space, Text } from '@calipartner/ui';
 import type { RoomMemberSnapshot } from '@calipartner/core';
+import { useAuth } from '@/contexts/AuthContext';
+import { useRooms } from '@/hooks/useRooms';
+import { useRoomSnapshot } from '@/hooks/useRoomSnapshot';
+import { useRoomActions } from '@/hooks/useRoomActions';
+import { useRoomRequests } from '@/hooks/useRoomRequests';
+import { useFriends } from '@/hooks/useFriends';
+import { useSubscription } from '@/hooks/useSubscription';
+import { useRoomChat } from '@/hooks/useRoomChat';
+import { useSquadToday } from '@/hooks/useSquad';
+import { closeBrowserModalsThen, useBrowserModalBack } from '@/hooks/useBrowserModalBack';
+import { ChatView } from '@/components/chat';
 import {
-  BlockUserModal,
   DormantWaitingState,
   InviteUserModal,
   JoinByCodeModal,
   LockedRoomPausedState,
-  MembersTab,
-  NudgeModal,
-  OverCapacityBanner,
   PaywallModal,
-  PrivacySettingsModal,
-  ReactionModal,
-  ReportModal,
   RequestsInboxModal,
-  RoomFullNotice,
   RoomHeader,
-  RoomOverviewRow,
-  RoomProgressView,
   RoomSettingsModal,
-  SharedMealCard,
-  SideBySideCard,
-  TrialBanner,
-  type PendingSharedMeal,
+  BlockUserModal,
+  ReportModal,
   type RoomSegment,
 } from '@/components/rooms';
-
 import { SquadConnectModal } from '@/components/rooms/SquadConnectModal';
-import { SquadDayPanel } from '@/components/rooms/SquadDayPanel';
-import { BasicRoomCard } from '@/components/rooms/BasicRoomCard';
-import { ShareLoggedMealModal } from '@/components/rooms/ShareLoggedMealModal';
-import { getSupabase } from '@/lib/supabase';
-import { RoomExtras } from '@/components/rooms/RoomExtras';
-import { RoomAccessNotice } from '@/components/rooms/RoomAccessNotice';
-import { ChatView } from '@/components/chat';
-import { useRoomActions } from '@/hooks/useRoomActions';
-import { useRoomChat } from '@/hooks/useRoomChat';
-import { useRoomRequests } from '@/hooks/useRoomRequests';
-import { useRoomSnapshot } from '@/hooks/useRoomSnapshot';
-import { useFriends } from '@/hooks/useFriends';
-import { useRooms } from '@/hooks/useRooms';
-import { useSubscription } from '@/hooks/useSubscription';
+import { SquadMemberPicker } from '@/components/rooms/SquadMemberPicker';
+import { SquadVisibilityModal } from '@/components/rooms/SquadVisibilityModal';
+import {
+  PeopleSelector,
+  SquadLeaderboard,
+  memberName,
+  squadStyles as styles,
+} from '@/components/rooms/SquadViews';
 import { t } from '@/i18n';
-import { fontSize, radius, spacing } from '@/theme/tokens';
-import { useTheme } from '@/theme/useTheme';
-import { useBrowserModalBack } from '@/hooks/useBrowserModalBack';
-import type { RoomSummary } from '@/types/rooms';
 
+type ModalName =
+  'connect' | 'join' | 'settings' | 'privacy' | 'invite' | 'inbox' | 'paywall' | null;
 export default function RoomScreen() {
-  const { colors } = useTheme();
+  const { fontScale } = useWindowDimensions();
   const router = useRouter();
-
-  // Screen focus tracking for visibility-aware realtime subscription
-  const [isVisible, setIsVisible] = useState(true);
+  const { user, profile } = useAuth();
+  const roomsHook = useRooms(),
+    requests = useRoomRequests(),
+    friends = useFriends();
+  const { hasActiveAccess, currentTier, loading: subscriptionLoading } = useSubscription();
+  const params = useLocalSearchParams<{
+    room?: string;
+    action?: string;
+    tab?: string;
+    mention?: string;
+    returnTo?: string;
+  }>();
+  const [visible, setVisible] = useState(false);
   useFocusEffect(
     useCallback(() => {
-      setIsVisible(true);
-      return () => setIsVisible(false);
+      setVisible(true);
+      return () => setVisible(false);
     }, []),
   );
-
-  // Core Room Hooks
-  const {
-    rooms,
-    loading: roomsLoading,
-    error: roomsError,
-    refresh: refreshRooms,
-    createRoom,
-    joinByCode,
-    leaveRoom,
-  } = useRooms();
-  const {
-    incoming,
-    outgoing,
-    refresh: refreshRequests,
-    sendInvitation,
-    respondToRequest,
-    cancelRequest,
-    searchUsers,
-  } = useRoomRequests();
-  const {
-    isTrial,
-    trialBanner,
-    currentTier,
-    hasActiveAccess,
-    loading: subscriptionLoading,
-  } = useSubscription();
-  const isPlusOrPro = hasActiveAccess;
-  const friends = useFriends();
-
-  // Selected Room
-  const [selectedRoomId, setSelectedRoomId] = useState<string | null>(null);
-  const roomParams = useLocalSearchParams<{ room?: string; action?: string }>();
-  React.useEffect(() => {
-    if (roomParams.room && rooms.some((r) => r.id === roomParams.room))
-      setSelectedRoomId(roomParams.room);
-  }, [roomParams.room, rooms]);
-  const currentRoom: RoomSummary | null = useMemo(() => {
-    if (rooms.length === 0) return null;
-    return rooms.find((r) => r.id === selectedRoomId) ?? rooms[0] ?? null;
-  }, [rooms, selectedRoomId]);
-
-  const activeRoomId = currentRoom?.id ?? null;
-
-  const [selectedPartnerId, setSelectedPartnerId] = useState<string | null>(null);
-  const [comparisonIds, setComparisonIds] = useState<string[] | null>(null);
-  React.useEffect(() => {
-    setComparisonIds(null);
-    setSelectedPartnerId(null);
-  }, [activeRoomId]);
-  const { localDate } = useCurrentLocalDate();
-  const diary = useDiary(localDate);
-  const { currentGoalProfile } = useTargets();
-
-  // Realtime Snapshot Hook (Subscribes ONLY while room screen is visible)
+  const room = params.room
+    ? (roomsHook.rooms.find((item) => item.id === params.room) ?? null)
+    : (roomsHook.rooms[0] ?? null);
+  const roomId = room?.id ?? null;
   const {
     snapshot,
-    loading: snapshotLoading,
     error: snapshotError,
     refresh: refreshSnapshot,
-  } = useRoomSnapshot(activeRoomId, isVisible, { selectedUserId: selectedPartnerId ?? undefined });
-
-  // Room Actions Hook
-  const {
-    sendNudge,
-    sendReaction,
-    respondSharedMeal,
-    getPrivacy,
-    updatePrivacy,
-    setWhoCanInvite,
-    removeMember,
-    transferHost,
-    blockUser,
-    reportTarget,
-  } = useRoomActions(activeRoomId);
-
-  // UI Navigation Segments
-  const [activeSegment, setActiveSegment] = useState<RoomSegment>('today');
-  const segmentHistory = React.useRef<RoomSegment[]>([]);
-  const selectSegment = (segment: RoomSegment) => {
-    if (segment === activeSegment) return;
-    segmentHistory.current.push(activeSegment);
-    setActiveSegment(segment);
+  } = useRoomSnapshot(roomId, visible, { pageSize: 20 });
+  const squad = useSquadToday(roomId, visible);
+  const actions = useRoomActions(roomId);
+  const [segment, setSegment] = useState<RoomSegment>('today'),
+    [modal, setModal] = useState<ModalName>(null);
+  const [picker, setPicker] = useState<'left' | 'right' | null>(null),
+    [leftId, setLeftId] = useState<string | null>(null),
+    [rightId, setRightId] = useState<string | null>(null);
+  const [report, setReport] = useState<RoomMemberSnapshot | null>(null),
+    [block, setBlock] = useState<RoomMemberSnapshot | null>(null);
+  const segments = useRef<RoomSegment[]>([]);
+  const entryFromHome = useRef(false);
+  const closeEntry = () => {
+    const returnHome = entryFromHome.current;
+    entryFromHome.current = false;
+    setModal(null);
+    router.setParams({ returnTo: undefined });
+    if (returnHome) closeBrowserModalsThen(() => router.navigate('/(tabs)/today'));
   };
-  React.useEffect(() => {
-    segmentHistory.current = [];
-    setActiveSegment('today');
-  }, [activeRoomId]);
+  const selectSegment = (next: RoomSegment) => {
+    if (next === segment) return;
+    segments.current.push(segment);
+    setSegment(next);
+  };
+  useEffect(() => {
+    setSegment('today');
+    segments.current = [];
+    setLeftId(null);
+    setRightId(null);
+    setPicker(null);
+  }, [roomId]);
+  useEffect(() => {
+    if (params.action === 'create') {
+      entryFromHome.current = params.returnTo === 'home';
+      setModal('connect');
+      router.setParams({ action: undefined });
+    }
+  }, [params.action, params.returnTo, router]);
+  useEffect(() => {
+    if (params.room && params.room !== roomId) return;
+    if (params.tab === 'chat' || params.tab === 'progress' || params.tab === 'today') {
+      setSegment(params.tab);
+      router.setParams({ tab: undefined });
+    }
+  }, [params.tab, params.room, roomId, router]);
   useBrowserModalBack(
-    isVisible && segmentHistory.current.length > 0,
+    modal === 'join' ||
+      modal === 'settings' ||
+      modal === 'inbox' ||
+      modal === 'invite' ||
+      Boolean(report || block),
     () => {
-      const first = segmentHistory.current[0] ?? 'today';
-      segmentHistory.current = [];
-      setActiveSegment(first);
-    },
-    {
-      depth: Math.max(0, segmentHistory.current.length - 1),
-      onDepthChange: (depth) => {
-        let previous = activeSegment;
-        while (segmentHistory.current.length > depth + 1)
-          previous = segmentHistory.current.pop() ?? 'today';
-        setActiveSegment(previous);
-      },
+      if (modal === 'join') closeEntry();
+      else setModal(null);
+      setReport(null);
+      setBlock(null);
     },
   );
+  useBrowserModalBack(visible && segments.current.length > 0, () => {
+    segments.current = [];
+    setSegment('today');
+  });
   useFocusEffect(
     useCallback(() => {
-      const subscription = BackHandler.addEventListener('hardwareBackPress', () => {
-        const previous = segmentHistory.current.pop();
-        if (!previous) {
-          router.navigate('/(tabs)/today');
+      const listener = BackHandler.addEventListener('hardwareBackPress', () => {
+        const previous = segments.current.pop();
+        if (previous) {
+          setSegment(previous);
           return true;
         }
-        setActiveSegment(previous);
+        router.navigate('/(tabs)/today');
         return true;
       });
-      return () => subscription.remove();
+      return () => listener.remove();
     }, [router]),
   );
-
-  // Modals visibility states
-  const [showCreateModal, setShowCreateModal] = useState(false);
-  const [showJoinModal, setShowJoinModal] = useState(false);
-  const [showInviteModal, setShowInviteModal] = useState(false);
-  const [showInboxModal, setShowInboxModal] = useState(false);
-  const [showSettingsModal, setShowSettingsModal] = useState(false);
-  const [showPrivacyModal, setShowPrivacyModal] = useState(false);
-  const [showPaywallModal, setShowPaywallModal] = useState(false);
-
-  // Target member action modals
-  const [nudgeTarget, setNudgeTarget] = useState<RoomMemberSnapshot | null>(null);
-  const [reactionTarget, setReactionTarget] = useState<RoomMemberSnapshot | null>(null);
-  const [reportTargetUser, setReportTargetUser] = useState<RoomMemberSnapshot | null>(null);
-  const [blockTargetUser, setBlockTargetUser] = useState<RoomMemberSnapshot | null>(null);
-
-  // Shared meals state (sample pending item if present)
-  const [pendingSharedMeal, setPendingSharedMeal] = useState<PendingSharedMeal | null>(null);
-  const [showShareMeal, setShowShareMeal] = useState(false);
-  const [mealRefresh, setMealRefresh] = useState(0);
-  const [mealError, setMealError] = useState(false);
-
-  React.useEffect(() => {
-    if (roomParams.action === 'create') {
-      setShowCreateModal(true);
-      router.setParams({ action: undefined });
-    }
-  }, [roomParams.action, router]);
-  // Current User & Partner in snapshot
-  const members = useMemo(() => snapshot?.members ?? [], [snapshot?.members]);
-  const callerId = snapshot?.caller_id ?? '';
-  React.useEffect(() => {
-    if (roomParams.action === 'nudge' && hasActiveAccess && members.length > 1) {
-      setNudgeTarget(members.find((member) => member.user_id !== callerId) ?? null);
-      router.setParams({ action: undefined });
-    }
-  }, [roomParams.action, hasActiveAccess, members, callerId, router]);
-
-  const meMember: RoomMemberSnapshot | null = useMemo(() => {
-    const member = members.find((m) => m.user_id === callerId);
-    if (!member) return null;
-    return !diary.loading &&
-      !diary.error &&
-      diary.daySummary.local_date === localDate &&
-      currentGoalProfile?.user_id === callerId
-      ? withLocalRoomDiary(
-          member,
-          callerId,
-          diary.daySummary,
-          currentGoalProfile.daily_calorie_target,
-        )
-      : member;
-  }, [
-    members,
-    callerId,
-    diary.loading,
-    diary.error,
-    diary.daySummary,
-    currentGoalProfile,
-    localDate,
-  ]);
-
-  const partnerMember: RoomMemberSnapshot | null = useMemo(() => {
-    const otherMembers = members.filter((m) => m.user_id !== meMember?.user_id);
-    if (otherMembers.length === 0) return null;
-    return otherMembers.find((m) => m.user_id === selectedPartnerId) ?? otherMembers[0] ?? null;
-  }, [members, meMember, selectedPartnerId]);
-
-  React.useEffect(() => {
-    if (!members.length) return;
-    if (
-      !members.some((member) => member.user_id === selectedPartnerId && member.user_id !== callerId)
-    ) {
-      setSelectedPartnerId(members.find((member) => member.user_id !== callerId)?.user_id ?? null);
-    }
-  }, [members, callerId, selectedPartnerId]);
-
-  const effectiveComparisonIds = comparisonIds ?? (partnerMember ? [partnerMember.user_id] : []);
-  const comparisonMembers = members
-    .map((member) => (member.user_id === callerId && meMember ? meMember : member))
-    .filter(
-      (member) => member.user_id === callerId || effectiveComparisonIds.includes(member.user_id),
-    );
-  const selectComparison = (uid: string) => {
-    if (uid === callerId) return;
-    const next = effectiveComparisonIds.includes(uid)
-      ? effectiveComparisonIds.filter((id) => id !== uid)
-      : [...effectiveComparisonIds, uid];
-    setComparisonIds(next);
-    setSelectedPartnerId(next[0] ?? null);
-  };
-
-  // Streak days (active when all active members logged today)
-  const streakDays = useMemo(() => {
-    const activeMembers = members.filter((m) => m.status === 'active');
-    if (activeMembers.length >= 2 && activeMembers.every((m) => m.metrics?.logged_today === true)) {
-      return 1;
-    }
-    return 0;
-  }, [members]);
-
-  // Refresh all data
-  const handleRefresh = async () => {
-    await Promise.all([refreshRooms(), refreshRequests(), refreshSnapshot(), diary.refresh()]);
-  };
-
-  // Paywall / Access check (PRD 6.8 ROOM-7: Locked room shows "This room is paused" screen)
-  const roomState = snapshot?.room.id === activeRoomId ? snapshot.room.state : currentRoom?.state;
-  const isRoomLocked =
-    roomsError?.code === 'PLAN_REQUIRED' ||
-    snapshotError?.code === 'ROOM_LOCKED' ||
-    roomState === 'locked';
-
-  // Room dormant check (fewer than 2 active members)
-  const currentMembers =
-    snapshot?.room.id === activeRoomId
-      ? members.filter((member) => ['active', 'paused', 'locked'].includes(member.status)).length
-      : (currentRoom?.member_count ?? 0);
-  const isRoomDormant = roomState === 'dormant' || currentMembers < 2;
-  const showMembers = hasActiveAccess && currentMembers > 2;
-  const displaySegment = activeSegment === 'members' && !showMembers ? 'today' : activeSegment;
-  const canOpenChat = hasActiveAccess && !isRoomDormant && !isRoomLocked;
-
-  React.useEffect(() => {
-    let current = true;
-    setPendingSharedMeal(null);
-    setMealError(false);
-    if (!activeRoomId || isRoomDormant || isRoomLocked) return;
-    void getSupabase()
-      .rpc('get_pending_room_meals', { p_room_id: activeRoomId })
-      .then(({ data, error }) => {
-        if (!current) return;
-        if (error) setMealError(true);
-        else setPendingSharedMeal((data as PendingSharedMeal[] | null)?.[0] ?? null);
-      });
-    return () => {
-      current = false;
-    };
-  }, [activeRoomId, isRoomDormant, isRoomLocked, snapshot, mealRefresh]);
-
-  React.useEffect(() => {
-    if (!activeRoomId || !isVisible || !isRoomDormant || isRoomLocked) return;
-    // Keep acceptance visible even when the realtime connection misses an event.
-    const timer = setInterval(() => void refreshSnapshot(), 5000);
+  const refreshRooms = roomsHook.refresh,
+    refreshSquad = squad.refresh,
+    refreshRequests = requests.refresh;
+  const refresh = useCallback(async () => {
+    await Promise.all([refreshRooms(), refreshSnapshot(), refreshSquad(), refreshRequests()]);
+  }, [refreshRooms, refreshSnapshot, refreshSquad, refreshRequests]);
+  const waiting = Boolean(room && (room.state === 'dormant' || room.member_count < 2));
+  useEffect(() => {
+    void refreshSquad();
+  }, [room?.member_count, refreshSquad]);
+  const locked =
+    room?.state === 'locked' || room?.state === 'archived' || snapshotError?.code === 'ROOM_LOCKED';
+  useEffect(() => {
+    if (!visible || !waiting || !roomId) return;
+    const timer = setInterval(() => {
+      void refreshSnapshot();
+      void refreshRooms();
+    }, 5000);
     return () => clearInterval(timer);
-  }, [activeRoomId, isVisible, isRoomDormant, isRoomLocked, refreshSnapshot]);
-
-  // Hook Room Chat for unread badge and realtime chat notifications
-  const navigation = useNavigation();
-  const watchUnread = canOpenChat && displaySegment !== 'chat';
-  const { unreadCount } = useRoomChat(watchUnread ? activeRoomId : null, isVisible && watchUnread, {
-    userId: watchUnread ? callerId || undefined : undefined,
-    markRead: false,
-  });
-  const chatUnreadCount = watchUnread ? unreadCount : 0;
-
-  React.useEffect(() => {
-    const nav = navigation as unknown as {
-      setOptions?: (options: { tabBarBadge?: number }) => void;
-    };
-    nav.setOptions?.({
-      tabBarBadge: chatUnreadCount > 0 ? chatUnreadCount : undefined,
-    });
-  }, [navigation, chatUnreadCount]);
-
+  }, [visible, waiting, roomId, refreshSnapshot, refreshRooms]);
+  const canChat = hasActiveAccess && !waiting && !locked;
+  const preview = useRoomChat(
+    canChat && segment !== 'chat' ? roomId : null,
+    visible && canChat && segment !== 'chat',
+    { userId: user?.id, markRead: false },
+  );
+  const members = squad.data?.members ?? [];
+  const left =
+    members.find((member) => member.user_id === leftId) ??
+    members.find((member) => member.is_self) ??
+    members[0];
+  const right =
+    members.find((member) => member.user_id === rightId && member.user_id !== left?.user_id) ??
+    members.find((member) => member.user_id !== left?.user_id);
+  const managementMembers = useMemo(() => snapshot?.members ?? [], [snapshot?.members]);
+  const openPerson = (memberId: string) => {
+    if (roomId)
+      router.push(
+        ('/squad/person?room=' +
+          encodeURIComponent(roomId) +
+          '&member=' +
+          encodeURIComponent(memberId)) as Href,
+      );
+  };
+  const chatPreview = preview.messages?.at(-1);
   return (
-    <SafeAreaView
-      style={[styles.safeArea, { backgroundColor: colors.background }]}
-      testID="screen-room"
-    >
-      {/* Room Header */}
+    <SafeAreaView style={styles.screen} testID="screen-room">
       <RoomHeader
-        currentRoom={currentRoom ? { ...currentRoom, member_count: currentMembers } : null}
-        allRooms={rooms}
-        pendingRequestsCount={incoming.length + (friends.inbox?.incoming.length ?? 0)}
-        streakDays={streakDays}
-        activeSegment={displaySegment}
-        showMembers={showMembers}
-        isWaiting={isRoomDormant}
-        chatUnreadCount={chatUnreadCount}
+        currentRoom={room}
+        allRooms={roomsHook.rooms}
+        pendingRequestsCount={requests.incoming.length + (friends.inbox?.incoming.length ?? 0)}
+        activeSegment={segment}
+        chatUnreadCount={canChat ? preview.unreadCount : 0}
+        isWaiting={waiting}
         onSelectSegment={selectSegment}
-        onOpenInbox={() => setShowInboxModal(true)}
-        onOpenSettings={() => setShowSettingsModal(true)}
-        onOpenPrivacy={() => setShowPrivacyModal(true)}
-        onSwitchRoom={(r) => {
-          setSelectedRoomId(r.id);
-          setSelectedPartnerId(null);
-          setActiveSegment('today');
+        onOpenInbox={() => setModal('inbox')}
+        onOpenSettings={() => setModal('settings')}
+        onOpenPrivacy={() => setModal('privacy')}
+        onSwitchRoom={(item) => {
+          router.setParams({ room: item.id, mention: undefined });
         }}
-        onCreateOrJoin={() => setShowCreateModal(true)}
+        onCreateOrJoin={() => setModal('connect')}
       />
-
-      {/* Content Area */}
-      {roomsLoading && rooms.length === 0 ? (
-        <View style={styles.loadingContainer}>
-          <LoadingState />
-        </View>
-      ) : roomsError && roomsError.code !== 'PLAN_REQUIRED' && rooms.length === 0 ? (
-        /* Error State (Network, Auth, or DB Error) */
-        <ScrollView
-          showsVerticalScrollIndicator={false}
-          refreshControl={
-            <RefreshControl
-              refreshing={roomsLoading}
-              onRefresh={handleRefresh}
-              tintColor={colors.accent}
-            />
-          }
-          contentContainerStyle={styles.scrollContainer}
+      {segment === 'chat' && room ? (
+        <View
+          style={[styles.flex, { paddingBottom: getTabBarHeight(fontScale) + space[6] + space[4] }]}
         >
-          <View
-            style={[
-              styles.emptyContainer,
-              { backgroundColor: colors.surface, borderColor: colors.border },
-            ]}
-          >
-            <View style={[styles.emptyIconCircle, { backgroundColor: colors.cardHighlight }]}>
-              <Ionicons
-                name={
-                  roomsError.code === 'UNAUTHENTICATED' ? 'log-in-outline' : 'alert-circle-outline'
-                }
-                size={44}
-                color={colors.accent}
-              />
-            </View>
-            <Text style={[styles.emptyTitle, { color: colors.text }]}>
-              {roomsError.code === 'UNAUTHENTICATED' ? t('auth.title') : t('common.errorTitle')}
-            </Text>
-            <Text style={[styles.emptySubtitle, { color: colors.textMuted }]}>
-              {roomsError.code === 'UNAUTHENTICATED'
-                ? 'Sign in to view your rooms, track goals, and chat with partners.'
-                : roomsError.code === 'HOSTED_ROOM_LIMIT'
-                  ? t('setup.hostRoomLimit')
-                  : roomsError.message || t('common.errorBody')}
-            </Text>
-
-            <View style={styles.emptyButtonsRow}>
-              {roomsError.code === 'UNAUTHENTICATED' ? (
-                <Pressable
-                  onPress={() => router.push('/auth/sign-in')}
-                  style={[styles.primaryButton, { backgroundColor: colors.accent }]}
-                  accessibilityRole="button"
-                  testID="btn-error-signin"
-                >
-                  <Ionicons name="log-in-outline" size={18} color={colors.onAccent} />
-                  <Text style={[styles.primaryButtonText, { color: colors.onAccent }]}>
-                    {t('auth.title')}
-                  </Text>
-                </Pressable>
-              ) : (
-                <Pressable
-                  onPress={handleRefresh}
-                  style={[styles.primaryButton, { backgroundColor: colors.accent }]}
-                  accessibilityRole="button"
-                  testID="btn-error-retry"
-                >
-                  <Ionicons name="refresh-outline" size={18} color={colors.onAccent} />
-                  <Text style={[styles.primaryButtonText, { color: colors.onAccent }]}>
-                    {t('common.retry')}
-                  </Text>
-                </Pressable>
+          {subscriptionLoading ? (
+            <Text>{t('common.loading')}</Text>
+          ) : !canChat ? (
+            <View style={styles.content}>
+              <Text>{t(waiting ? 'rooms.dormant.subtitle' : 'setup.chatPlus')}</Text>
+              {!waiting && (
+                <Button label={t('squadDesign.unlock')} onPress={() => setModal('paywall')} />
               )}
             </View>
-          </View>
-        </ScrollView>
-      ) : rooms.length === 0 ? (
-        /* Find a Partner / Squad Connect Flow (Screenshot 1: 1-on-1, Squad, Join) */
-        <View style={styles.emptyContainer}>
-          <AppText variant="title1">{t('socialUpdate.connect')}</AppText>
-          <AppText>{t('socialUpdate.choose')}</AppText>
-          <Button
-            label={t('homeRefresh.create')}
-            onPress={() => setShowCreateModal(true)}
-            testID="open-squad-connect-modal"
-          />
-        </View>
-      ) : displaySegment === 'chat' && currentRoom ? (
-        /* Segment: Chat (Phase 8 View) */
-        <View style={styles.chatWrapper}>
-          {subscriptionLoading ? (
-            <LoadingState />
-          ) : !hasActiveAccess ? (
-            <RoomAccessNotice
-              message={t('rooms.access.chatUpgrade')}
-              onUpgrade={() => setShowPaywallModal(true)}
-            />
-          ) : isRoomDormant ? (
-            <RoomAccessNotice message={t('rooms.access.chatWaiting')} />
           ) : (
             <ChatView
-              roomId={currentRoom.id}
-              isVisible={isVisible && activeSegment === 'chat'}
+              key={room.id}
+              roomId={room.id}
+              isVisible={visible}
               options={{
-                userId: callerId || undefined,
-                userNickname: meMember?.nickname,
-                avatarUrl: meMember?.avatar_url ?? undefined,
+                userId: user?.id,
+                userNickname: profile?.nickname,
+                username: profile?.username,
               }}
-              isLocked={isRoomLocked}
-              testID="room-chat-segment"
+              focusedMentionId={params.mention}
+              mentionMembers={members.map((member) => ({
+                user_id: member.user_id,
+                username: member.username,
+                nickname: member.nickname,
+              }))}
             />
           )}
         </View>
       ) : (
         <ScrollView
-          showsVerticalScrollIndicator={false}
+          contentContainerStyle={styles.content}
           refreshControl={
             <RefreshControl
-              refreshing={roomsLoading || snapshotLoading}
-              onRefresh={handleRefresh}
-              tintColor={colors.accent}
+              refreshing={roomsHook.loading || squad.loading}
+              onRefresh={() => void refresh()}
             />
           }
-          contentContainerStyle={styles.scrollContainer}
         >
-          {isRoomLocked ? (
-            /* Locked Room Paused State (PRD 6.8 ROOM-7, 7.6) */
-            <LockedRoomPausedState
-              onKeepRoomGoing={() => setShowPaywallModal(true)}
-              onLeaveRoom={async () => {
-                if (currentRoom) {
-                  await leaveRoom(currentRoom.id);
-                  await refreshRooms();
-                }
-              }}
-            />
-          ) : isRoomDormant && currentRoom ? (
-            displaySegment === 'progress' ? (
-              <RoomAccessNotice message={t('rooms.access.progressWaiting')} />
-            ) : (
-              <DormantWaitingState key={currentRoom.id} roomCode={currentRoom.code} />
-            )
+          {roomsHook.loading && !room ? (
+            <Text>{t('common.loading')}</Text>
+          ) : roomsHook.error && !room ? (
+            <View style={styles.card}>
+              <Text accessibilityRole="alert">{t('common.errorBody')}</Text>
+              <Button
+                variant="secondary"
+                label={t('common.retry')}
+                onPress={() => void refresh()}
+                testID="retry-room-list"
+              />
+            </View>
+          ) : !room ? (
+            <View style={styles.card}>
+              <Text variant="title1">{t('socialUpdate.connect')}</Text>
+              <Text>{t('socialUpdate.choose')}</Text>
+              <Button
+                label={t('homeRefresh.create')}
+                onPress={() => setModal('connect')}
+                testID="open-squad-connect-modal"
+              />
+            </View>
+          ) : locked ? (
+            <LockedRoomPausedState onKeepRoomGoing={() => setModal('paywall')} />
+          ) : waiting ? (
+            <DormantWaitingState roomCode={room.code} />
           ) : (
             <>
-              {/* Trial Banner for Host (PRD 6.18 SUB-9) */}
-              {currentRoom && currentRoom.role === 'host' && (isTrial || trialBanner !== null) && (
-                <TrialBanner
-                  daysLeft={trialBanner?.daysRemaining}
-                  dayNumber={trialBanner ? Math.max(1, 4 - trialBanner.daysRemaining) : 1}
-                  isHost={true}
-                  onViewPlans={() => setShowPaywallModal(true)}
-                />
-              )}
-
-              {/* Over capacity banner for the host (PRD 7.6) */}
-              {currentRoom && currentRoom.state === 'over_capacity' && (
-                <OverCapacityBanner
-                  room={currentRoom}
-                  onUpgrade={() => setShowPaywallModal(true)}
-                  onManageMembers={() => setShowSettingsModal(true)}
-                />
-              )}
-
-              {/* Room full notice (Host upgrade sheet & Member notice) (PRD 6.8 ROOM-12, SUB-6) */}
-              {currentRoom &&
-                currentRoom.state !== 'over_capacity' &&
-                currentMembers >= (currentRoom.member_cap ?? 5) && (
-                  <RoomFullNotice
-                    memberCount={currentMembers}
-                    memberCap={currentRoom.member_cap ?? 5}
-                    isHost={currentRoom.role === 'host'}
-                    onUpgrade={() => setShowPaywallModal(true)}
+              {squad.error ? (
+                <View style={styles.card}>
+                  <Text accessibilityRole="alert">{t('common.errorBody')}</Text>
+                  <Button
+                    variant="secondary"
+                    label={t('common.retry')}
+                    onPress={() => void squad.refresh()}
+                    testID="retry-squad-today"
                   />
-                )}
-
-              {/* Segment: Today (Side by side comparison) */}
-              {displaySegment === 'today' && (
+                </View>
+              ) : squad.loading && !squad.data ? (
+                <Text>{t('common.loading')}</Text>
+              ) : (
                 <>
-                  {currentRoom && currentRoom.state === 'active' && (
-                    <SquadDayPanel
-                      roomId={currentRoom.id}
-                      name={currentRoom.name}
-                      memberCount={currentRoom.member_count}
-                      visible={isVisible}
-                      onNudge={() =>
-                        setNudgeTarget(
-                          members.find((member) => member.user_id !== callerId) ?? null,
-                        )
-                      }
+                  <View style={styles.stack}>
+                    <View style={styles.spread}>
+                      <Text variant="heading">
+                        {t(segment === 'progress' ? 'squadDesign.today' : 'squadDesign.leaders')}
+                      </Text>
+                      {segment === 'today' && (
+                        <Button
+                          variant="tertiary"
+                          size="sm"
+                          fullWidth={false}
+                          label={t('squadDesign.full')}
+                          onPress={() => selectSegment('progress')}
+                          testID="open-full-leaderboard"
+                        />
+                      )}
+                    </View>
+                    <Text variant="bodyS">{t('squadDesign.ownGoals')}</Text>
+                    <SquadLeaderboard
+                      members={members}
+                      limit={segment === 'progress' ? undefined : members.length === 2 ? 2 : 3}
+                      onMember={(member) => openPerson(member.user_id)}
                     />
-                  )}
-                  {/* Pending Shared Meal Card (if any) */}
-                  {mealError ? (
-                    <Button
-                      variant="secondary"
-                      label={t('common.retry')}
-                      onPress={() => setMealRefresh((v) => v + 1)}
-                      testID="retry-pending-room-meals"
-                    />
-                  ) : null}
-                  {pendingSharedMeal && (
-                    <SharedMealCard
-                      meal={pendingSharedMeal}
-                      onAccept={async (id, qty, sec) => {
-                        await respondSharedMeal(id, true, qty, sec);
-                        setPendingSharedMeal(null);
-                        setMealRefresh((v) => v + 1);
-                      }}
-                      onDecline={async (id) => {
-                        await respondSharedMeal(id, false);
-                        setPendingSharedMeal(null);
-                        setMealRefresh((v) => v + 1);
-                      }}
-                    />
-                  )}
-
-                  {/* Overview Row for 3+ Members (paged & searchable above 12 members) */}
-                  {members.length >= 3 && hasActiveAccess ? (
-                    <View style={styles.comparisonControls}>
-                      <AppText variant="heading">{t('repairs.compare')}</AppText>
-                      <AppText variant="bodyS">{t('repairs.compareHint')}</AppText>
-                      <AppText tabular>
-                        {t('repairs.selected', { count: effectiveComparisonIds.length })}
-                      </AppText>
+                  </View>
+                  {segment === 'today' && left && right && (
+                    <View style={styles.card}>
+                      <Text variant="heading">{t('squadDesign.compareTwo')}</Text>
+                      <Text variant="bodyS">{t('squadDesign.compareHint')}</Text>
+                      <PeopleSelector
+                        left={left}
+                        right={right}
+                        onChoose={(side) => {
+                          setLeftId(left.user_id);
+                          setRightId(right.user_id);
+                          setPicker(side);
+                        }}
+                      />
                       <Button
-                        variant="secondary"
-                        label={t('repairs.selectAll')}
+                        label={t('squadDesign.compareNames', {
+                          left: memberName(left),
+                          right: memberName(right),
+                        })}
                         onPress={() =>
-                          setComparisonIds(
-                            members
-                              .filter((member) => member.user_id !== callerId)
-                              .map((member) => member.user_id),
+                          router.push(
+                            ('/squad/compare?room=' +
+                              encodeURIComponent(room.id) +
+                              '&left=' +
+                              encodeURIComponent(left.user_id) +
+                              '&right=' +
+                              encodeURIComponent(right.user_id)) as Href,
                           )
                         }
-                        testID="compare-select-all"
-                      />
-                      <Button
-                        variant="tertiary"
-                        label={t('repairs.clear')}
-                        onPress={() => setComparisonIds([])}
-                        testID="compare-clear"
+                        testID="open-two-person-compare"
                       />
                     </View>
-                  ) : null}
-                  {members.length >= 3 && hasActiveAccess && (
-                    <RoomOverviewRow
-                      members={members.map((member) =>
-                        member.user_id === callerId && meMember ? meMember : member,
-                      )}
-                      selectedMemberIds={effectiveComparisonIds}
-                      selectedMemberId={partnerMember?.user_id}
-                      currentUserId={callerId}
-                      onSelectMember={selectComparison}
-                    />
                   )}
-
-                  {/* Core Side-by-Side Card */}
-                  {meMember && hasActiveAccess && effectiveComparisonIds.length > 1 ? (
-                    <>
-                      <MemberComparison
-                        members={comparisonMembers}
-                        callerId={callerId}
-                        onNudge={setNudgeTarget}
-                      />
+                  {segment === 'today' && (
+                    <View style={styles.card}>
+                      <Text variant="heading">{t('squadDesign.chat')}</Text>
+                      <Text>
+                        {!hasActiveAccess
+                          ? t('setup.chatPlus')
+                          : (chatPreview?.text ?? t('squadDesign.noChat'))}
+                      </Text>
                       <Button
                         variant="secondary"
-                        label={t('repairs.mealTitle')}
-                        onPress={() => setShowShareMeal(true)}
-                        testID="btn-multi-shared-meal"
+                        label={t('squadDesign.openChat')}
+                        onPress={() => selectSegment('chat')}
+                        testID="overview-open-chat"
                       />
-                    </>
-                  ) : null}
-                  {hasActiveAccess && effectiveComparisonIds.length === 0 ? (
-                    <AppText>{t('repairs.noSelection')}</AppText>
-                  ) : null}
-                  {meMember && hasActiveAccess && effectiveComparisonIds.length <= 1 && (
-                    <SideBySideCard
-                      me={meMember}
-                      partner={effectiveComparisonIds.length ? partnerMember : null}
-                      allMembers={members}
-                      selectedPartnerId={partnerMember?.user_id ?? null}
-                      onSelectPartner={(uid) => setSelectedPartnerId(uid)}
-                      onNudge={(target) => setNudgeTarget(target)}
-                      onReact={(target) => setReactionTarget(target)}
-                      onOpenChat={() => selectSegment('chat')}
-                      onOpenProgress={() => selectSegment('progress')}
-                      onOpenPrivacy={() => setShowPrivacyModal(true)}
-                      onInviteFriend={() => setShowInviteModal(true)}
-                      onFindPartner={() => router.push('/friends' as never)}
-                      onLogSharedMeal={() => setShowShareMeal(true)}
-                      onSendPhoto={() => selectSegment('chat')}
-                    />
+                    </View>
                   )}
-                  {!hasActiveAccess ? (
-                    <BasicRoomCard
-                      members={[meMember, partnerMember].filter(
-                        (member): member is RoomMemberSnapshot => Boolean(member),
-                      )}
-                    />
-                  ) : null}
-                  {currentRoom ? (
-                    <RoomExtras
-                      key={currentRoom.id}
-                      roomId={currentRoom.id}
-                      userId={callerId ?? ''}
-                      partnerId={partnerMember?.user_id ?? null}
-                      refreshToken={snapshot}
-                      canSend={hasActiveAccess}
-                    />
-                  ) : null}
                 </>
-              )}
-
-              {/* Segment: Progress */}
-              {displaySegment === 'progress' &&
-                currentRoom &&
-                (hasActiveAccess ? (
-                  <RoomProgressView
-                    key={currentRoom.id}
-                    roomId={currentRoom.id}
-                    testID="room-progress-segment"
-                  />
-                ) : (
-                  <RoomAccessNotice
-                    message={t('setup.progressPlus')}
-                    onUpgrade={() => setShowPaywallModal(true)}
-                    actionTestID="upgrade-room-progress"
-                  />
-                ))}
-
-              {/* Segment: Members Roster */}
-              {displaySegment === 'members' && showMembers && currentRoom && (
-                <MembersTab
-                  room={currentRoom}
-                  members={members}
-                  currentUserId={callerId}
-                  onInvite={() => setShowInviteModal(true)}
-                  onOpenSettings={() => setShowSettingsModal(true)}
-                  onSelectMember={(uid) => {
-                    setSelectedPartnerId(uid);
-                    setActiveSegment('today');
-                  }}
-                />
               )}
             </>
           )}
         </ScrollView>
       )}
-
-      {/* MODALS */}
-      {currentRoom && hasActiveAccess ? (
-        <ShareLoggedMealModal
-          visible={showShareMeal}
-          onPrivacy={() => {
-            setShowShareMeal(false);
-            setShowPrivacyModal(true);
-          }}
-          key={currentRoom.id}
-          roomId={currentRoom.id}
-          userId={callerId}
-          members={members}
-          onClose={() => setShowShareMeal(false)}
-          onShared={() => {
-            setMealRefresh((v) => v + 1);
-            void refreshSnapshot();
-          }}
-        />
-      ) : null}
-
-      {/* Create Room Modal */}
-      {showCreateModal ? (
+      {modal === 'connect' && (
         <SquadConnectModal
-          visible={showCreateModal}
-          onClose={() => setShowCreateModal(false)}
-          isPlusOrPro={isPlusOrPro}
-          memberCap={currentTier === 'pro' && hasActiveAccess ? 20 : isPlusOrPro ? 5 : 2}
+          visible
+          onClose={closeEntry}
+          isPlusOrPro={hasActiveAccess}
+          memberCap={hasActiveAccess ? (currentTier === 'pro' ? 20 : 5) : 2}
           friends={friends.inbox?.friends ?? []}
           loading={friends.loading}
           error={Boolean(friends.error)}
           onRetry={() => void friends.refresh()}
           onFindFriend={() => {
-            setShowCreateModal(false);
-            router.push('/friends' as never);
+            entryFromHome.current = false;
+            router.setParams({ returnTo: undefined });
+            setModal(null);
+            router.push('/friends' as Href);
           }}
-          onOpenPaywall={() => setShowPaywallModal(true)}
+          onOpenPaywall={() => setModal('paywall')}
           onCreateSquad={async (name, ids) => {
-            const result = await createRoom(name, ids);
-            setSelectedRoomId(result.room_id);
-            setShowCreateModal(false);
+            const result = await roomsHook.createRoom(name, ids);
+            entryFromHome.current = false;
+            router.setParams({ room: result.room_id, mention: undefined, returnTo: undefined });
+            setModal(null);
             return result;
           }}
-          onJoinSquad={() => {
-            setShowCreateModal(false);
-            setShowJoinModal(true);
-          }}
-        />
-      ) : null}
-
-      {/* Join by Code Modal */}
-      <JoinByCodeModal
-        visible={showJoinModal}
-        onClose={() => setShowJoinModal(false)}
-        onJoinByCode={async (code) => {
-          const res = await joinByCode(code);
-          if (res?.room_id) setSelectedRoomId(res.room_id);
-          await refreshRooms();
-        }}
-      />
-
-      {/* Invite User by Username Modal */}
-      {currentRoom && (
-        <InviteUserModal
-          visible={showInviteModal}
-          roomId={currentRoom.id}
-          onClose={() => setShowInviteModal(false)}
-          onSearchUsers={searchUsers}
-          onSendInvitation={sendInvitation}
+          onJoinSquad={() => setModal('join')}
         />
       )}
-
-      {/* Requests Inbox Modal */}
-      <RequestsInboxModal
-        visible={showInboxModal}
-        incoming={incoming}
-        outgoing={outgoing}
-        onClose={() => setShowInboxModal(false)}
-        onRespond={async (reqId, accept) => {
-          await respondToRequest(reqId, accept);
-          await Promise.all([refreshRequests(), refreshRooms()]);
-        }}
-        onCancel={async (reqId) => {
-          await cancelRequest(reqId);
-          await refreshRequests();
-        }}
-        onOpenPaywall={() => {
-          setShowInboxModal(false);
-          setShowPaywallModal(true);
-        }}
-      />
-
-      {/* Room Settings Modal */}
-      {currentRoom && (
-        <RoomSettingsModal
-          key={currentRoom.id}
-          visible={showSettingsModal}
-          room={currentRoom}
-          members={members}
-          currentUserId={callerId}
-          onClose={() => setShowSettingsModal(false)}
-          onSetWhoCanInvite={setWhoCanInvite}
-          onRemoveMember={async (uid) => {
-            await removeMember(uid);
-            await Promise.all([refreshRooms(), refreshSnapshot()]);
+      {modal === 'join' && (
+        <JoinByCodeModal
+          visible
+          onClose={closeEntry}
+          onJoinByCode={async (code) => {
+            const result = await roomsHook.joinByCode(code);
+            if (result?.room_id) {
+              entryFromHome.current = false;
+              router.setParams({ room: result.room_id, mention: undefined, returnTo: undefined });
+            }
           }}
-          onTransferHost={async (newHostId) => {
-            await transferHost(newHostId);
-            await Promise.all([refreshRooms(), refreshSnapshot()]);
+        />
+      )}
+      {modal === 'inbox' && (
+        <RequestsInboxModal
+          visible
+          incoming={requests.incoming}
+          outgoing={requests.outgoing}
+          onClose={() => setModal(null)}
+          onRespond={async (id, accept) => {
+            await requests.respondToRequest(id, accept);
+            await refresh();
+          }}
+          onCancel={requests.cancelRequest}
+          onOpenPaywall={() => setModal('paywall')}
+        />
+      )}
+      {modal === 'privacy' && roomId && (
+        <SquadVisibilityModal visible roomId={roomId} onClose={() => setModal(null)} />
+      )}
+      {modal === 'settings' && room && (
+        <RoomSettingsModal
+          visible
+          room={room}
+          members={managementMembers}
+          currentUserId={user?.id ?? ''}
+          onClose={() => setModal(null)}
+          onSetWhoCanInvite={actions.setWhoCanInvite}
+          onRemoveMember={async (id) => {
+            await actions.removeMember(id);
+            await refresh();
+          }}
+          onTransferHost={async (id) => {
+            await actions.transferHost(id);
+            await refresh();
           }}
           onLeaveRoom={async () => {
-            await leaveRoom(currentRoom.id);
-            setSelectedRoomId(null);
-            await refreshRooms();
+            await roomsHook.leaveRoom(room.id);
+            setModal(null);
+            router.setParams({ room: undefined, mention: undefined });
           }}
-          onReportUser={(m) => {
-            setShowSettingsModal(false);
-            setReportTargetUser(m);
+          onReportUser={(member) => {
+            setModal(null);
+            setReport(member);
           }}
-          onBlockUser={(m) => {
-            setShowSettingsModal(false);
-            setBlockTargetUser(m);
+          onBlockUser={(member) => {
+            setModal(null);
+            setBlock(member);
           }}
         />
       )}
-
-      {/* Privacy Settings Modal */}
-      <PrivacySettingsModal
-        roomId={currentRoom?.id}
-        rooms={rooms}
-        visible={showPrivacyModal}
-        onClose={() => setShowPrivacyModal(false)}
-        onGetPrivacy={getPrivacy}
-        onUpdatePrivacy={async (settings) => {
-          const res = await updatePrivacy(settings);
-          await refreshSnapshot();
-          return res;
-        }}
-      />
-
-      {/* Paywall Modal */}
-      <PaywallModal
-        visible={showPaywallModal}
-        onClose={() => setShowPaywallModal(false)}
-        context={isRoomLocked ? 'keep_going' : 'room'}
-        sponsorRoomId={isRoomLocked ? currentRoom?.id : undefined}
-        onSuccess={() => {
-          setShowPaywallModal(false);
-          void handleRefresh();
-        }}
-        roomName={currentRoom?.name ?? 'Accountability Squad'}
-      />
-
-      {/* Nudge Modal */}
-      <NudgeModal
-        visible={nudgeTarget !== null}
-        targetMember={nudgeTarget}
-        members={members.filter(
-          (member) => member.user_id !== callerId && member.status === 'active',
-        )}
-        onClose={() => setNudgeTarget(null)}
-        onSendNudge={sendNudge}
-      />
-
-      {/* Reaction Modal */}
-      <ReactionModal
-        visible={reactionTarget !== null}
-        targetMember={reactionTarget}
-        onClose={() => setReactionTarget(null)}
-        onSendReaction={async (reaction) => {
-          if (reactionTarget) await sendReaction(reactionTarget.user_id, reaction);
-        }}
-      />
-
-      {/* Report Modal */}
-      <ReportModal
-        visible={reportTargetUser !== null}
-        targetType="user"
-        targetId={reportTargetUser?.user_id ?? ''}
-        targetName={reportTargetUser?.nickname}
-        onClose={() => setReportTargetUser(null)}
-        onSubmitReport={reportTarget}
-      />
-
-      {/* Block User Modal */}
-      <BlockUserModal
-        visible={blockTargetUser !== null}
-        targetMember={blockTargetUser}
-        onClose={() => setBlockTargetUser(null)}
-        onConfirmBlock={async (uid) => {
-          await blockUser(uid);
-          await refreshSnapshot();
-        }}
-      />
+      {modal === 'invite' && room && (
+        <InviteUserModal
+          visible
+          roomId={room.id}
+          onClose={() => setModal(null)}
+          onSearchUsers={requests.searchUsers}
+          onSendInvitation={requests.sendInvitation}
+        />
+      )}
+      {modal === 'paywall' && (
+        <PaywallModal
+          visible
+          context={locked ? 'keep_going' : 'room'}
+          sponsorRoomId={locked ? (roomId ?? undefined) : undefined}
+          onClose={() => setModal(null)}
+          onSuccess={() => {
+            setModal(null);
+            void refresh();
+          }}
+        />
+      )}
+      {report && (
+        <ReportModal
+          visible
+          targetType="user"
+          targetId={report.user_id}
+          targetName={report.nickname}
+          onClose={() => setReport(null)}
+          onSubmitReport={actions.reportTarget}
+        />
+      )}
+      {block && (
+        <BlockUserModal
+          visible
+          targetMember={block}
+          onClose={() => setBlock(null)}
+          onConfirmBlock={async (id) => {
+            await actions.blockUser(id);
+            await refresh();
+          }}
+        />
+      )}
+      {picker && left && right && (
+        <SquadMemberPicker
+          visible
+          members={members}
+          excludedId={picker === 'left' ? right.user_id : left.user_id}
+          selectedId={picker === 'left' ? left.user_id : right.user_id}
+          onSelect={(id) => (picker === 'left' ? setLeftId(id) : setRightId(id))}
+          onClose={() => setPicker(null)}
+        />
+      )}
     </SafeAreaView>
   );
 }
-
-const styles = StyleSheet.create({
-  comparisonControls: { paddingHorizontal: spacing.md, gap: spacing.sm },
-  safeArea: {
-    flex: 1,
-  },
-  chatWrapper: {
-    flex: 1,
-    paddingBottom: 78,
-  },
-  scrollContainer: {
-    paddingBottom: 80,
-  },
-  loadingContainer: {
-    paddingVertical: spacing.xl * 2,
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: spacing.sm,
-  },
-  loadingText: {
-    fontSize: fontSize.sm,
-  },
-  emptyContainer: {
-    margin: spacing.md,
-    borderRadius: radius.md,
-    borderWidth: 1,
-    padding: spacing.xl,
-    alignItems: 'center',
-    textAlign: 'center',
-  },
-  emptyIconCircle: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: spacing.md,
-  },
-  emptyTitle: {
-    fontSize: fontSize.md + 2,
-    fontWeight: '700',
-    textAlign: 'center',
-    marginBottom: spacing.xs,
-  },
-  emptySubtitle: {
-    fontSize: fontSize.xs + 1,
-    textAlign: 'center',
-    lineHeight: 20,
-    marginBottom: spacing.lg,
-  },
-  emptyButtonsRow: {
-    width: '100%',
-    gap: spacing.sm,
-  },
-  primaryButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 14,
-    borderRadius: radius.pill,
-    gap: 8,
-  },
-  primaryButtonText: {
-    fontSize: fontSize.sm,
-    fontWeight: '700',
-  },
-  secondaryButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 14,
-    borderRadius: radius.pill,
-    gap: 8,
-  },
-  secondaryButtonText: {
-    fontSize: fontSize.sm,
-    fontWeight: '700',
-  },
-  inboxNoticeLink: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    marginTop: spacing.md,
-    paddingVertical: spacing.xs,
-  },
-  inboxNoticeText: {
-    fontSize: fontSize.xs,
-    fontWeight: '600',
-  },
-  fullHostBanner: {
-    marginHorizontal: spacing.md,
-    marginBottom: spacing.md,
-    borderRadius: radius.md,
-    borderWidth: 1,
-    padding: spacing.md,
-    gap: spacing.sm,
-  },
-  bannerHeaderRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.xs,
-  },
-  bannerTitleText: {
-    fontSize: fontSize.xs + 1,
-    fontWeight: '600',
-    flex: 1,
-  },
-  bannerUpgradeBtn: {
-    alignSelf: 'flex-start',
-    paddingHorizontal: spacing.md,
-    paddingVertical: 7,
-    borderRadius: radius.pill,
-  },
-});
