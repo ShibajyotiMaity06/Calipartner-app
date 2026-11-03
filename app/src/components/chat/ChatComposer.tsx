@@ -98,10 +98,7 @@ export function ChatComposer({
 
   return (
     <View
-      style={[
-        styles.composerContainer,
-        { backgroundColor: colors.surface, borderTopColor: colors.border },
-      ]}
+      style={[styles.composerContainer, { backgroundColor: colors.background }]}
       testID={testID}
     >
       {tagOpen && !disabled && (
@@ -157,11 +154,6 @@ export function ChatComposer({
         </View>
       )}
 
-      {!allowMedia && !disabled ? (
-        <Text style={[styles.disabledNoticeText, { color: colors.textMuted }]}>
-          {t('setup.mediaPro')}
-        </Text>
-      ) : null}
       {/* Selected media preview strip */}
       {selectedMedia.length > 0 && (
         <ScrollView
@@ -212,27 +204,16 @@ export function ChatComposer({
 
       {/* TextInput bar row */}
       <View style={styles.inputBarRow}>
-        {mentionMembers.length > 0 && (
-          <Pressable
-            onPress={() => setTagOpen((value) => !value)}
-            disabled={disabled || isSending}
-            accessibilityRole="button"
-            accessibilityLabel={t('squadDesign.tag')}
-            accessibilityState={{ expanded: tagOpen }}
-            aria-expanded={tagOpen}
-            style={styles.iconBtn}
-            testID="chat-tag-member"
-          >
-            <Ionicons name="at-outline" size={layout.icon} color={colors.textMuted} />
-          </Pressable>
-        )}
         {/* Camera / Photo Button */}
         <Pressable
           onPress={handlePressAttach}
           disabled={disabled || !allowMedia || selectedMedia.length >= 5}
-          style={[styles.iconBtn, (disabled || selectedMedia.length >= 5) && styles.btnDisabled]}
+          style={[
+            styles.iconBtn,
+            (disabled || !allowMedia || selectedMedia.length >= 5) && styles.btnDisabled,
+          ]}
           accessibilityRole="button"
-          accessibilityLabel={t('repairs.chooseMedia')}
+          accessibilityLabel={t(allowMedia ? 'repairs.chooseMedia' : 'setup.mediaPro')}
           testID="btn-chat-attach-photo"
         >
           <Ionicons
@@ -254,7 +235,7 @@ export function ChatComposer({
             onBlur={() => onTyping?.(false)}
             placeholder={t('chat.placeholder')}
             placeholderTextColor={colors.textMuted}
-            editable={!disabled}
+            editable={!disabled && !isSending}
             multiline
             maxLength={2050}
             style={[styles.textInput, { color: colors.text }]}
@@ -316,7 +297,6 @@ export function ChatComposer({
 
 const styles = StyleSheet.create({
   composerContainer: {
-    borderTopWidth: 1,
     paddingHorizontal: spacing.sm,
     paddingTop: spacing.xs,
     paddingBottom: spacing.sm,
@@ -402,8 +382,7 @@ const styles = StyleSheet.create({
     borderRadius: radius.lg,
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.xs,
-    minHeight: 40,
-    maxHeight: 110,
+    minHeight: layout.touch,
     flexDirection: 'row',
     alignItems: 'center',
   },

@@ -1,6 +1,6 @@
 import { closeBrowserModalsThen } from '@/hooks/useBrowserModalBack';
 import { Tabs, usePathname, useRouter } from 'expo-router';
-import { TabBar, type TabId } from '@calipartner/ui';
+import { dark, TabBar, type TabId } from '@calipartner/ui';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { t } from '@/i18n';
 
@@ -70,6 +70,7 @@ export default function TabsLayout() {
       }}
       screenOptions={{
         headerShown: false,
+        sceneStyle: { backgroundColor: dark.bg0 },
       }}
     >
       <Tabs.Screen

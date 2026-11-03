@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, useWindowDimensions, View } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useRouter, type Href } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { dark, homeLayout, radius, space, Text } from '@calipartner/ui';
 import { HomeSquadLeaderboard } from './HomeSquadLeaderboard';
@@ -24,6 +24,12 @@ export function HomeSquads({
   const { width, fontScale } = useWindowDimensions();
   const cardWidth = Math.min(homeLayout.cardWidth * Math.min(fontScale, 1.5), width - space[7]);
   const [selected, setSelected] = useState(0);
+  const [cardHeight, setCardHeight] = useState<number>(homeLayout.ringSize * 2);
+  useEffect(() => setCardHeight(homeLayout.ringSize * 2), [width, fontScale]);
+  const measureCard = (event: { nativeEvent: { layout: { height: number } } }) => {
+    const height = Math.ceil(event.nativeEvent.layout.height);
+    setCardHeight((previous) => Math.max(previous, height));
+  };
   const create = () =>
     router.push({ pathname: '/(tabs)/room', params: { action: 'create', returnTo: 'home' } });
   return (
@@ -33,11 +39,11 @@ export function HomeSquads({
           {t('homeRefresh.squads')}
         </Text>
         <Pressable
-          onPress={create}
+          onPress={() => router.push('/friends' as Href)}
           style={styles.smallAction}
           accessibilityRole="button"
-          accessibilityLabel={t('homeRefresh.create')}
-          testID="home-create-squad-top"
+          accessibilityLabel={t('socialUpdate.addFriends')}
+          testID="home-open-friends"
         >
           <Ionicons name="person-add-outline" size={homeLayout.iconSize} color={dark.textMid} />
         </Pressable>
@@ -70,23 +76,26 @@ export function HomeSquads({
         {rooms.map((room, index) => (
           <View
             key={room.id}
-            style={[styles.room, { width: cardWidth }]}
+            style={[styles.room, { width: cardWidth, minHeight: cardHeight }]}
+            onLayout={measureCard}
             testID={`home-squad-card-${room.id}`}
           >
-            <Pressable
-              onPress={() => router.push({ pathname: '/(tabs)/room', params: { room: room.id } })}
-              accessibilityRole="button"
-              accessibilityLabel={t('homeRefresh.openSquad', { name: room.name })}
-              testID={`home-open-title-${room.id}`}
-              style={styles.retry}
-            >
-              <Text variant="title1">{room.name}</Text>
-            </Pressable>
-            <Text variant="micro" color={dark.textMid}>
-              {room.member_cap
-                ? t('homeRefresh.members', { count: room.member_count, cap: room.member_cap })
-                : t('repairs.squadMembers', { count: room.member_count })}
-            </Text>
+            <View style={styles.header}>
+              <Pressable
+                onPress={() => router.push({ pathname: '/(tabs)/room', params: { room: room.id } })}
+                accessibilityRole="button"
+                accessibilityLabel={t('homeRefresh.openSquad', { name: room.name })}
+                testID={`home-open-title-${room.id}`}
+                style={[styles.retry, styles.title]}
+              >
+                <Text variant="title2">{room.name}</Text>
+              </Pressable>
+              <Text variant="micro" color={dark.textMid} style={styles.count} tabular>
+                {room.member_cap
+                  ? t('homeRefresh.members', { count: room.member_count, cap: room.member_cap })
+                  : t('repairs.squadMembers', { count: room.member_count })}
+              </Text>
+            </View>
             {room.state === 'active' && room.member_count >= 2 ? (
               <HomeSquadLeaderboard
                 roomId={room.id}
@@ -111,7 +120,8 @@ export function HomeSquads({
         ))}
         <Pressable
           onPress={create}
-          style={[styles.createCard, { width: cardWidth }]}
+          style={[styles.createCard, { width: cardWidth, minHeight: cardHeight }]}
+          onLayout={measureCard}
           accessibilityRole="button"
           accessibilityLabel={t('homeRefresh.create')}
           testID="home-create-squad-end"
@@ -129,6 +139,8 @@ export function HomeSquads({
 const styles = StyleSheet.create({
   stack: { gap: space[2], marginBottom: space[5] },
   header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  title: { flex: 1, marginRight: space[2] },
+  count: { flexShrink: 1, textAlign: 'right' },
   smallAction: {
     minWidth: homeLayout.touchSize,
     minHeight: homeLayout.touchSize,

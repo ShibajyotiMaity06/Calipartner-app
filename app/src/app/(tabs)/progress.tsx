@@ -1,7 +1,10 @@
-import React, { useState } from 'react';
+import React, { useCallback, useState } from 'react';
+import { useFocusEffect } from 'expo-router';
 import { RefreshControl, SafeAreaView, ScrollView, StyleSheet, View } from 'react-native';
 import { Button, homeLayout, space, Text } from '@calipartner/ui';
 import { ProgressOverview } from '@/components/progress/ProgressOverview';
+import { WorkoutHistoryCalendarModal } from '@/components/workouts/WorkoutHistoryCalendarModal';
+import { PersonalSquads } from '@/components/rooms/PersonalSquads';
 import { DayDetailModal, RangeSelector, type DayDetailData } from '@/components/progress';
 import { LoadingState } from '@/components/LoadingState';
 import { useIndividualProgress } from '@/hooks/useIndividualProgress';
@@ -13,6 +16,12 @@ const ranges: ProgressDateRange[] = ['7d', '30d', '90d'];
 export default function ProgressScreen() {
   const { colors } = useTheme();
   const { range, setRange, data, loading, error, refresh } = useIndividualProgress('7d');
+  useFocusEffect(
+    useCallback(() => {
+      void refresh();
+    }, [refresh]),
+  );
+  const [showWorkouts, setShowWorkouts] = useState(false);
   const [selectedDay, setSelectedDay] = useState<DayDetailData | null>(null);
   return (
     <SafeAreaView
@@ -55,7 +64,17 @@ export default function ProgressScreen() {
             onSelectDay={setSelectedDay}
           />
         )}
+        <Button
+          variant="secondary"
+          label={t('homeRefresh.workoutHistory')}
+          onPress={() => setShowWorkouts(true)}
+          testID="personal-workout-history"
+        />
+        <PersonalSquads />
       </ScrollView>
+      {showWorkouts && (
+        <WorkoutHistoryCalendarModal visible onClose={() => setShowWorkouts(false)} />
+      )}
       <DayDetailModal
         visible={!!selectedDay}
         data={selectedDay}

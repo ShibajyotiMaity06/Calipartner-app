@@ -21,7 +21,9 @@ export function SquadConnectModal({
     >
       <View style={styles.close}>
         <Button
-          variant="tertiary"
+          variant="secondary"
+          size="sm"
+          fullWidth={false}
           label={t('squadDesign.close')}
           onPress={onClose}
           testID="close-create-squad"

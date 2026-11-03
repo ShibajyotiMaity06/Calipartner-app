@@ -1,3 +1,9 @@
+import {
+  coachMealInstructions,
+  getLocalDateString,
+  parseCoachMealReply,
+  type CoachMealDraft,
+} from '@calipartner/core';
 import { createClient, type SupabaseClient } from 'npm:@supabase/supabase-js@2.117.3';
 
 declare const Deno: {
@@ -42,7 +48,7 @@ async function callGroqChat(
         model,
         messages: [{ role: 'system', content: systemPrompt }, ...messages.slice(-8)],
         temperature: 0.5,
-        max_tokens: 500,
+        max_tokens: 2200,
       }),
     });
 
@@ -80,7 +86,7 @@ async function callGeminiChat(
       body: JSON.stringify({
         systemInstruction: { parts: [{ text: systemPrompt }] },
         contents,
-        generationConfig: { temperature: 0.5, maxOutputTokens: 500 },
+        generationConfig: { temperature: 0.5, maxOutputTokens: 2200 },
       }),
     });
 
@@ -122,7 +128,7 @@ async function callClaudeChat(
       },
       body: JSON.stringify({
         model: model || 'claude-haiku-5-5',
-        max_tokens: 500,
+        max_tokens: 2200,
         system: systemPrompt,
         messages: anthropicMessages,
       }),
@@ -252,7 +258,14 @@ export async function handleAiCoach(
     let incomingMessages: CoachMessageInput[] = [];
 
     if (Array.isArray(body?.messages)) {
-      incomingMessages = body.messages;
+      incomingMessages = body.messages
+        .filter(
+          (message: CoachMessageInput) =>
+            (message?.role === 'user' || message?.role === 'assistant') &&
+            typeof message.content === 'string' &&
+            message.content.trim(),
+        )
+        .slice(-8);
     } else if (typeof body?.message === 'string') {
       const history = Array.isArray(body?.history) ? body.history : [];
       incomingMessages = [...history, { role: 'user', content: body.message }];
@@ -267,35 +280,41 @@ export async function handleAiCoach(
 
     // Challenge recaps send only the expressly selected summary, without extra health context.
     const summaryOnly = body.context_mode === 'challenge_summary';
+    const mealLogging = body.meal_logging === true && !summaryOnly;
+    const { data: callerProfile } = !summaryOnly
+      ? await adminClient.from('profiles').select('timezone').eq('id', userId).maybeSingle()
+      : { data: null };
+    const localDate = getLocalDateString(new Date(), callerProfile?.timezone ?? 'UTC');
     const { data: goalProfile } = summaryOnly
       ? { data: null }
       : await adminClient
           .from('goal_profiles')
           .select(
-            'goal, daily_calorie_target, protein_grams, carbs_grams, fat_grams, weekly_rate_kg',
+            'goal, daily_calorie_target, protein_grams, carb_grams, fat_grams, weekly_rate_kg',
           )
           .eq('user_id', userId)
+          .order('effective_from', { ascending: false })
+          .limit(1)
           .maybeSingle();
 
-    const todayUtc = new Date().toISOString().split('T')[0];
     const { data: todaySummary } = summaryOnly
       ? { data: null }
       : await adminClient
           .from('daily_summaries')
-          .select('total_calories, total_protein, total_carbs, total_fat, water_ml')
+          .select('calories, protein, carbs, fat, water_ml')
           .eq('user_id', userId)
-          .eq('day', todayUtc)
+          .eq('local_date', localDate)
           .maybeSingle();
 
     // 6. Build System Prompt with full conversational freedom & evidence-based fitness guidance
     const targetCalories = goalProfile?.daily_calorie_target ?? 2000;
     const targetProtein = goalProfile?.protein_grams ?? 140;
     const goalType = goalProfile?.goal ?? 'maintain';
-    const consumedCalories = todaySummary?.total_calories ?? 0;
-    const consumedProtein = todaySummary?.total_protein ?? 0;
+    const consumedCalories = todaySummary?.calories ?? 0;
+    const consumedProtein = todaySummary?.protein ?? 0;
     const waterMl = todaySummary?.water_ml ?? 0;
 
-    const systemPrompt = summaryOnly
+    let systemPrompt = summaryOnly
       ? 'You are the CaliPartner habit coach. Briefly recap only the supplied challenge summary. Use neutral, kind language. Never invent totals, partner data or health details. Avoid weight, calorie or medical advice, ranking and guilt. Suggest one small next habit. Use plain sentences.'
       : `You are the CaliPartner AI Coach, an expert fitness, calisthenics, and nutrition coach.
 
@@ -315,6 +334,7 @@ USER METRICS & CONTEXT:
 - Today's Consumed Protein: ${consumedProtein} g (Remaining: ${Math.max(0, targetProtein - consumedProtein)} g)
 - Today's Hydration: ${waterMl} ml`;
 
+    if (mealLogging) systemPrompt += '\n' + coachMealInstructions;
     const groqKey = Deno.env.get('GROQ_API_KEY');
     const groqFallbackKey = Deno.env.get('GROQ_API_KEY_FALLBACK');
     const groqModel = Deno.env.get('GROQ_MODEL') || 'qwen/qwen3.8-27b';
@@ -436,18 +456,6 @@ USER METRICS & CONTEXT:
         { status: 503, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
       );
 
-    const cleanResponseText = assistantResponseText
-      .replace(/^#{1,6}\s+/gm, '')
-      .replace(/\*\*(.*?)\*\*/g, '$1')
-      .replace(/\*(.*?)\*/g, '$1')
-      .replace(/\*\*/g, '')
-      .replace(/\s*—\s*/g, ', ')
-      .replace(/\s*–\s*/g, ' - ')
-      .replace(/—/g, ', ')
-      .replace(/–/g, '-')
-      .replace(/\s*--\s*/g, ', ')
-      .trim();
-
     // Atomic recheck prevents concurrent successful replies exceeding the daily cap.
     const { error: usageError } = await adminClient.rpc('record_ai_usage', {
       p_user_id: userId,
@@ -464,6 +472,34 @@ USER METRICS & CONTEXT:
         { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
       );
 
+    let mealDraft: CoachMealDraft | null = null;
+    if (mealLogging) {
+      try {
+        const parsed = parseCoachMealReply(assistantResponseText, localDate);
+        assistantResponseText = parsed.content;
+        mealDraft = parsed.mealDraft;
+      } catch {
+        return new Response(
+          JSON.stringify({
+            code: 'INVALID_COACH_MEAL',
+            error: 'The meal estimate was incomplete. Try again with the foods and portions.',
+          }),
+          { status: 422, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
+        );
+      }
+    }
+    const cleanResponseText = assistantResponseText
+      .replace(/^#{1,6}\s+/gm, '')
+      .replace(/\*\*(.*?)\*\*/g, '$1')
+      .replace(/\*(.*?)\*/g, '$1')
+      .replace(/\*\*/g, '')
+      .replace(/\s*—\s*/g, ', ')
+      .replace(/\s*–\s*/g, ' - ')
+      .replace(/—/g, ', ')
+      .replace(/–/g, '-')
+      .replace(/\s*--\s*/g, ', ')
+      .trim();
+
     return new Response(
       JSON.stringify({
         success: true,
@@ -471,6 +507,7 @@ USER METRICS & CONTEXT:
           role: 'assistant',
           content: cleanResponseText,
         },
+        meal_draft: mealDraft,
         model: modelUsed,
       }),
       { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },

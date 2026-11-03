@@ -49,7 +49,7 @@ export interface ButtonProps {
 export function Button({
   fontSet = 'app',
   variant = 'primary',
-  size = 'lg',
+  size = 'md',
   label,
   icon,
   trailingIcon,
@@ -102,7 +102,7 @@ export function Button({
         const h = getHeight();
         const baseStyle: ViewStyle = {
           minHeight: Math.max(44, h),
-          paddingVertical: space[3],
+          paddingVertical: size === 'lg' ? space[3] : space[2],
           minWidth: 44,
           paddingHorizontal: getPaddingHorizontal(),
           borderRadius: radius.button,

@@ -3,7 +3,7 @@ import { BackHandler, Platform, View } from 'react-native';
 import { Stack, useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
-import { ThemeProvider } from '@calipartner/ui';
+import { dark, ThemeProvider } from '@calipartner/ui';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { SessionNavigationGuard } from '@/components/SessionNavigationGuard';
 import { AccountDataResetGate } from '@/components/AccountDataResetGate';
@@ -124,6 +124,7 @@ export default function RootLayout() {
             src: url('https://cdn.jsdelivr.net/npm/@expo/vector-icons@14.0.0/build/vendor/react-native-vector-icons/Fonts/Ionicons.ttf') format('truetype');
           }
 
+          html, body, #root { background-color: ${dark.bg0}; }
           /* Remove white browser focus ring and box-shadow from all inputs */
           input, textarea, select {
             outline: none !important;
@@ -159,7 +160,12 @@ export default function RootLayout() {
                 <TargetsProvider>
                   <HardwareBackHandler />
                   <SessionNavigationGuard />
-                  <Stack screenOptions={{ headerShown: false }} />
+                  <Stack
+                    screenOptions={{
+                      headerShown: false,
+                      contentStyle: { backgroundColor: dark.bg0 },
+                    }}
+                  />
                 </TargetsProvider>
               </AccountDataResetGate>
             </AuthProvider>

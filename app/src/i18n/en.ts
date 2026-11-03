@@ -632,7 +632,7 @@ export const en = {
     room: 'Squad',
     log: 'Log',
     progress: 'You',
-    me: 'Profile',
+    me: 'Settings',
   },
   placeholder: {
     comingSoon: 'Coming soon',
@@ -2548,6 +2548,20 @@ export const en = {
     },
   },
   coach: {
+    meal: {
+      welcome:
+        'Tell me what you ate, including portions. I can help estimate it and prepare a meal to log.',
+      log: 'Log meal',
+      logged: 'Meal logged',
+      estimate: 'AI estimate. Correct any food, portion or meal section in chat before logging.',
+      macros: '{calories} kcal ? {protein} g protein ? {carbs} g carbs ? {fat} g fat',
+      saveError:
+        'Your meal was not confirmed saved. Check your connection and tap Log meal to retry safely.',
+      proRequired: 'An active purchased Pro plan is required. Open Settings to check your plan.',
+      consentRequired: 'AI processing consent is required. Send your meal again to review consent.',
+      consentError: 'Consent could not be saved. Try again.',
+      prompt: 'Help me log what I ate',
+    },
     title: 'AI Coach',
     subtitle: 'Personal Nutrition & Fitness Guidance',
     badge: 'PREMIUM',

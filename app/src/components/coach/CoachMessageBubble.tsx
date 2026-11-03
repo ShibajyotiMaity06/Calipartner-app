@@ -1,5 +1,7 @@
 import React from 'react';
-import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
+import { Text } from '@calipartner/ui';
+import { CoachMealDraftCard } from './CoachMealDraftCard';
 import { Ionicons } from '@expo/vector-icons';
 import { t } from '@/i18n';
 import { fontSize, radius, spacing } from '@/theme/tokens';
@@ -14,6 +16,8 @@ export interface CoachMessageBubbleProps {
   onThumbsDown?: (messageId: string) => void;
   onReport?: (messageId: string) => void;
   onLogSuggestion?: (suggestion: CoachSuggestion) => void;
+  onMealLogged?: () => void;
+  mealDisabled?: boolean;
 }
 
 export function CoachMessageBubble({
@@ -22,6 +26,8 @@ export function CoachMessageBubble({
   onThumbsDown,
   onReport,
   onLogSuggestion,
+  onMealLogged,
+  mealDisabled,
 }: CoachMessageBubbleProps) {
   const { colors } = useTheme();
   const isUser = message.role === 'user';
@@ -55,7 +61,7 @@ export function CoachMessageBubble({
           ]}
         >
           <Text
-            style={[styles.messageText, { color: isUser ? '#FFFFFF' : colors.text }]}
+            style={[styles.messageText, { color: isUser ? colors.onAccent : colors.text }]}
             testID={`text-msg-content-${message.id}`}
           >
             {isUser ? message.content : cleanCoachResponse(message.content)}
@@ -69,6 +75,13 @@ export function CoachMessageBubble({
             </View>
           )}
         </View>
+        {!isUser && !message.isStreaming && message.mealDraft && (
+          <CoachMealDraftCard
+            draft={message.mealDraft}
+            onLogged={onMealLogged}
+            disabled={mealDisabled}
+          />
+        )}
 
         {/* Suggestion Cards */}
         {!isUser && message.suggestions && message.suggestions.length > 0 && onLogSuggestion && (

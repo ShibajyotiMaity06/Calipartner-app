@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
   Alert,
   KeyboardAvoidingView,
@@ -10,7 +10,7 @@ import {
   View,
 } from 'react-native';
 import { scaleNutrients, type Food, type FoodEntry, type MealSection } from '@calipartner/core';
-import { Sheet, Text, Button, Chip, SwitchRow, dark, space, radius } from '@calipartner/ui';
+import { Sheet, Text, Button, Chip, dark, space, radius } from '@calipartner/ui';
 import { t } from '@/i18n';
 import { AdvancedNutrition } from './AdvancedNutrition';
 
@@ -27,7 +27,7 @@ export interface QuantityModalProps {
     mealSection: MealSection;
     sharedWithRoom?: boolean;
     taggedPartner?: boolean;
-  }) => void;
+  }) => void | Promise<void>;
   onDelete?: (entryId: string) => void;
 }
 
@@ -57,11 +57,12 @@ export function QuantityModal({
   onSave,
   onDelete,
 }: QuantityModalProps) {
+  const [saving, setSaving] = useState(false);
+  const [saveFailed, setSaveFailed] = useState(false);
+  const inFlight = useRef(false);
   const [quantityStr, setQuantityStr] = useState('1');
   const [selectedUnit, setSelectedUnit] = useState('g');
   const [selectedSection, setSelectedSection] = useState<MealSection>(defaultSection);
-  const [shareWithRoom, setShareWithRoom] = useState(true);
-  const [someoneElseAte, setSomeoneElseAte] = useState(false);
 
   useEffect(() => {
     if (initialEntry) {
@@ -73,8 +74,6 @@ export function QuantityModal({
       const firstUnit = food.serving_units?.[0]?.unit || 'g';
       setSelectedUnit(firstUnit);
       setSelectedSection(defaultSection);
-      setShareWithRoom(true);
-      setSomeoneElseAte(false);
     }
   }, [initialEntry, food, defaultSection, visible]);
 
@@ -107,41 +106,44 @@ export function QuantityModal({
   const sectionName = t(`diary.sections.${selectedSection}` as Parameters<typeof t>[0]);
   const actionVerb = initialEntry
     ? t('quantity.saveChanges')
-    : `Add to ${sectionName.toLowerCase()}`;
+    : t('homeRefresh.addSelection', { meal: sectionName.toLowerCase() });
 
+  const submit = async () => {
+    if (inFlight.current || parsedQty <= 0) return;
+    inFlight.current = true;
+    setSaving(true);
+    setSaveFailed(false);
+    try {
+      await onSave({
+        food,
+        quantity: parsedQty,
+        unit: selectedUnit,
+        mealSection: selectedSection,
+        sharedWithRoom: true,
+        taggedPartner: false,
+      });
+      onClose();
+    } catch {
+      setSaveFailed(true);
+    } finally {
+      inFlight.current = false;
+      setSaving(false);
+    }
+  };
   const handleSave = () => {
-    if (parsedQty <= 0) return;
-
+    if (inFlight.current || parsedQty <= 0) return;
     if (preview.calories > 3200) {
-      Alert.alert('Confirm Portion', `That is ${preview.calories} kcal. Is that right?`, [
-        { text: 'Edit portion', style: 'cancel' },
-        {
-          text: 'Yes, save',
-          onPress: () => {
-            onSave({
-              food,
-              quantity: parsedQty,
-              unit: selectedUnit,
-              mealSection: selectedSection,
-              sharedWithRoom: shareWithRoom,
-              taggedPartner: someoneElseAte,
-            });
-            onClose();
-          },
-        },
-      ]);
+      Alert.alert(
+        t('homeRefresh.confirmPortion'),
+        t('homeRefresh.portionQuestion', { calories: preview.calories }),
+        [
+          { text: t('homeRefresh.editPortion'), style: 'cancel' },
+          { text: t('common.save'), onPress: () => void submit() },
+        ],
+      );
       return;
     }
-
-    onSave({
-      food,
-      quantity: parsedQty,
-      unit: selectedUnit,
-      mealSection: selectedSection,
-      sharedWithRoom: shareWithRoom,
-      taggedPartner: someoneElseAte,
-    });
-    onClose();
+    void submit();
   };
 
   const handleDelete = () => {
@@ -162,7 +164,9 @@ export function QuantityModal({
   return (
     <Sheet
       visible={visible}
-      onClose={onClose}
+      onClose={() => {
+        if (!inFlight.current) onClose();
+      }}
       snapPoint="tall"
       testID="modal-quantity"
       accessibilityLabel={`Log ${food.name}`}
@@ -317,31 +321,19 @@ export function QuantityModal({
             </View>
           </View>
 
-          {/* Switch Rows (D03, SHR-1) */}
-          <View style={styles.switchRowsContainer}>
-            <SwitchRow
-              title="Share with my room"
-              consequence="Partners can see this meal in the room feed."
-              value={shareWithRoom}
-              onValueChange={setShareWithRoom}
-              testID="switch-share-room"
-            />
-            <SwitchRow
-              title="Someone else ate this too"
-              consequence="Send a pending meal suggestion to your partner."
-              value={someoneElseAte}
-              onValueChange={setSomeoneElseAte}
-              testID="switch-someone-else-ate"
-            />
-          </View>
-
+          {saveFailed && (
+            <Text color={dark.danger} accessibilityRole="alert" testID="quantity-save-error">
+              {t('common.errorBody')}
+            </Text>
+          )}
           {/* Primary Action Button */}
           <View style={styles.footerButtons}>
             <Button
               testID="btn-submit-quantity"
               variant="primary"
               label={actionVerb}
-              disabled={parsedQty <= 0}
+              disabled={parsedQty <= 0 || saving}
+              loading={saving}
               onPress={handleSave}
             />
 

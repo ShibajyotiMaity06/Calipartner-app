@@ -86,7 +86,12 @@ export default function TodayScreen() {
   };
 
   const isToday = selectedDate === todayDate;
-  const currentSuggestedMeal = getMealSectionForTime(new Date(), profile?.timezone);
+  const [now, setNow] = useState(() => new Date());
+  const currentSuggestedMeal = getMealSectionForTime(now, profile?.timezone);
+  useEffect(() => {
+    const timer = setInterval(() => setNow(new Date()), 60_000);
+    return () => clearInterval(timer);
+  }, []);
 
   const [guestName, setGuestName] = useState<string | null>(null);
 
@@ -121,6 +126,7 @@ export default function TodayScreen() {
   useFocusEffect(
     useCallback(() => {
       setHomeVisible(true);
+      setNow(new Date());
       void refreshRooms();
       return () => setHomeVisible(false);
     }, [refreshRooms]),
@@ -187,17 +193,6 @@ export default function TodayScreen() {
                 }
               : null,
           )}
-          goal={
-            currentGoalProfile
-              ? t(
-                  currentGoalProfile.goal === 'bulk'
-                    ? 'squadDesign.goalBulk'
-                    : currentGoalProfile.goal === 'cut'
-                      ? 'squadDesign.goalCut'
-                      : 'squadDesign.goalMaintain',
-                )
-              : undefined
-          }
           loading={diaryLoading || targetsLoading}
           error={Boolean(diaryError || targetsError)}
           onRetry={() => {
@@ -387,7 +382,7 @@ export default function TodayScreen() {
             defaultSection={editingEntry.meal_section}
             onClose={() => setEditingEntry(null)}
             onSave={async (data) => {
-              await editEntry(
+              const saved = await editEntry(
                 editingEntry.id,
                 {
                   quantity: data.quantity,
@@ -396,6 +391,7 @@ export default function TodayScreen() {
                 },
                 data.food,
               );
+              if (!saved) throw new Error(t('common.errorBody'));
               setEditingEntry(null);
               void refresh();
             }}

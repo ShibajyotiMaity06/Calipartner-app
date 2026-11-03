@@ -1,3 +1,4 @@
+vi.mock('@/hooks/useSteps', () => ({ useSteps: () => ({ logManualSteps: vi.fn() }) }));
 vi.mock('./DescribeMealModal', () => ({ DescribeMealModal: 'DescribeMeal' }));
 vi.mock('./LogSomethingView', () => ({ LogSomethingView: 'LogHub' }));
 import React from 'react';

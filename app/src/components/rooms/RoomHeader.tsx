@@ -75,6 +75,16 @@ export function RoomHeader({
             <Ionicons name="chevron-down" size={homeLayout.iconSize} color={dark.textMid} />
           </Text>
         </Pressable>
+        {currentRoom && (
+          <Text variant="micro" tabular style={{ flexShrink: 1, textAlign: 'right' }}>
+            {currentRoom.member_cap
+              ? t('homeRefresh.members', {
+                  count: currentRoom.member_count,
+                  cap: currentRoom.member_cap,
+                })
+              : t('squadDesign.members', { count: currentRoom.member_count })}
+          </Text>
+        )}
         <Pressable
           onPress={() => setPanel('actions')}
           accessibilityRole="button"
@@ -92,9 +102,6 @@ export function RoomHeader({
       </View>
       {currentRoom && (
         <View style={styles.row}>
-          <Text variant="bodyS">
-            {t('squadDesign.members', { count: currentRoom.member_count })}
-          </Text>
           <Pressable
             onPress={() => void copy()}
             accessibilityRole="button"
@@ -111,7 +118,13 @@ export function RoomHeader({
       )}
       {error && <Text accessibilityRole="alert">{t('roomAudit.actionError')}</Text>}
       {currentRoom && (
-        <View style={[styles.row, styles.card]} accessibilityRole="tablist">
+        <View
+          style={[
+            styles.row,
+            { backgroundColor: dark.s2, borderRadius: radius.control, padding: space[1] },
+          ]}
+          accessibilityRole="tablist"
+        >
           {(
             [
               ['today', 'squadDesign.overview'],
@@ -133,10 +146,10 @@ export function RoomHeader({
                 padding: space[2],
                 justifyContent: 'center',
                 alignItems: 'center',
-                backgroundColor: activeSegment === segment ? dark.apricot : dark.s1,
+                backgroundColor: activeSegment === segment ? dark.s3 : 'transparent',
               }}
             >
-              <Text variant="bodyS" color={activeSegment === segment ? dark.onBrand : dark.textMid}>
+              <Text variant="bodyS" color={activeSegment === segment ? dark.textHi : dark.textMid}>
                 {t(label) +
                   (segment === 'chat' && chatUnreadCount > 0 ? ' (' + chatUnreadCount + ')' : '')}
               </Text>
@@ -153,7 +166,9 @@ export function RoomHeader({
       >
         <ScrollView contentContainerStyle={styles.content}>
           <Button
-            variant="tertiary"
+            variant="secondary"
+            size="sm"
+            fullWidth={false}
             label={t('squadDesign.close')}
             onPress={() => setPanel(null)}
           />

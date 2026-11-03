@@ -197,7 +197,6 @@ export default function RoomScreen() {
           encodeURIComponent(memberId)) as Href,
       );
   };
-  const chatPreview = preview.messages?.at(-1);
   return (
     <SafeAreaView style={styles.screen} testID="screen-room">
       <RoomHeader
@@ -217,9 +216,7 @@ export default function RoomScreen() {
         onCreateOrJoin={() => setModal('connect')}
       />
       {segment === 'chat' && room ? (
-        <View
-          style={[styles.flex, { paddingBottom: getTabBarHeight(fontScale) + space[6] + space[4] }]}
-        >
+        <View style={[styles.flex, { paddingBottom: getTabBarHeight(fontScale) + space[4] }]}>
           {subscriptionLoading ? (
             <Text>{t('common.loading')}</Text>
           ) : !canChat ? (
@@ -352,22 +349,6 @@ export default function RoomScreen() {
                           )
                         }
                         testID="open-two-person-compare"
-                      />
-                    </View>
-                  )}
-                  {segment === 'today' && (
-                    <View style={styles.card}>
-                      <Text variant="heading">{t('squadDesign.chat')}</Text>
-                      <Text>
-                        {!hasActiveAccess
-                          ? t('setup.chatPlus')
-                          : (chatPreview?.text ?? t('squadDesign.noChat'))}
-                      </Text>
-                      <Button
-                        variant="secondary"
-                        label={t('squadDesign.openChat')}
-                        onPress={() => selectSegment('chat')}
-                        testID="overview-open-chat"
                       />
                     </View>
                   )}

@@ -18,6 +18,13 @@ export function CoachSuggestedPrompts({
 
   const prompts = [
     {
+      id: 'meal',
+      text: t('coach.meal.prompt'),
+      icon: 'restaurant-outline' as const,
+      testID: 'chip-prompt-meal',
+    },
+
+    {
       id: 'week',
       text: t('coach.prompts.week'),
       icon: 'trending-up-outline' as const,

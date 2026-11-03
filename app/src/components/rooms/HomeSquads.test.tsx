@@ -52,7 +52,8 @@ it('uses actual pair and 20-person counts, opens the selected squad and scrolls 
     pathname: '/(tabs)/room',
     params: { action: 'create', returnTo: 'home' },
   });
-  renderer.root.findByProps({ testID: 'home-create-squad-top' }).props.onPress();
+  renderer.root.findByProps({ testID: 'home-open-friends' }).props.onPress();
+  expect(state.push).toHaveBeenLastCalledWith('/friends');
   expect(state.push).toHaveBeenCalledTimes(3);
 });
 it('shows empty, loading and retry states without inventing a squad', async () => {
@@ -88,6 +89,14 @@ it('aligns squad and create cards at the same height and width without a separat
   const first = renderer.root.findByProps({ testID: 'home-squad-card-pair' }).props.style;
   const second = renderer.root.findByProps({ testID: 'home-squad-card-large' }).props.style;
   const createCard = renderer.root.findByProps({ testID: 'home-create-squad-end' }).props.style;
+  await act(async () =>
+    renderer.root
+      .findByProps({ testID: 'home-squad-card-large' })
+      .props.onLayout({ nativeEvent: { layout: { height: 440 } } }),
+  );
+  for (const id of ['home-squad-card-pair', 'home-squad-card-large', 'home-create-squad-end']) {
+    expect(renderer.root.findByProps({ testID: id }).props.style[1].minHeight).toBe(440);
+  }
   expect(first[1].width).toBe(second[1].width);
   expect(first[1].width).toBe(createCard[1].width);
   expect(

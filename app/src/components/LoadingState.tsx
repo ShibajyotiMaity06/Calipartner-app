@@ -1,5 +1,5 @@
 import { StyleSheet, View } from 'react-native';
-import { Skeleton, space } from '@calipartner/ui';
+import { dark, Skeleton, space } from '@calipartner/ui';
 import { t } from '@/i18n';
 
 export function LoadingState({ label }: { label?: string }) {
@@ -29,6 +29,7 @@ export function LoadingState({ label }: { label?: string }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: dark.bg0,
     alignItems: 'center',
     justifyContent: 'center',
     padding: space[4],

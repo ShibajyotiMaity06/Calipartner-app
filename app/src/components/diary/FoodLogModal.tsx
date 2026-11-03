@@ -1,18 +1,10 @@
 import { PaywallModal } from '@/components/rooms/PaywallModal';
 import React, { useRef, useState } from 'react';
-import {
-  ActivityIndicator,
-  Modal,
-  Pressable,
-  ScrollView,
-  Text,
-  TextInput,
-  View,
-} from 'react-native';
+import { ActivityIndicator, Modal, Pressable, ScrollView, TextInput, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import type { Food, FoodCandidateItem, MealSection } from '@calipartner/core';
 import { scaleNutrients, sumNutrientSnapshots } from '@calipartner/core';
-import { Button, homeLayout } from '@calipartner/ui';
+import { Button, homeLayout, Text } from '@calipartner/ui';
 import { useAuth } from '@/contexts/AuthContext';
 import { getDb } from '@/db';
 import { useFoodSearch } from '@/hooks/useFoodSearch';
@@ -192,7 +184,7 @@ export function FoodLogModal({
       localDate,
       source: data.food.barcode ? 'scan' : 'search',
     });
-    if (!saved) return;
+    if (!saved) throw new Error(t('common.errorBody'));
     if (onLogged) onLogged();
     onClose();
   };

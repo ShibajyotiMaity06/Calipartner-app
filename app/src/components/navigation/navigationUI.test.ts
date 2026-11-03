@@ -37,7 +37,7 @@ describe('UI-4 Navigation Shell Logic & Integration Tests', () => {
       expect(t('tabs.room')).toBe('Squad');
       expect(t('tabs.log')).toBe('Log');
       expect(t('tabs.progress')).toBe('You');
-      expect(t('tabs.me')).toBe('Profile');
+      expect(t('tabs.me')).toBe('Settings');
     });
 
     it('verifies center raised plus button geometry: 56 diameter and rises 8 above bar', () => {

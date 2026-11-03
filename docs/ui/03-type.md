@@ -1,3 +1,5 @@
+> Owner correction, 3 November 2026: restore upright Plus Jakarta Sans static weights: 400 body, 500 labels, 600 headings/buttons and 700 titles/numerals (800 for explicit extra-bold text). Keep Anek Devanagari for Hindi. Legacy English font aliases load the corresponding upright Jakarta files. This supersedes the light italic treatment below.
+
 > Owner request, 2 November 2026: use a light italic treatment throughout the English interface, based on the supplied leaderboard, squad and compare PDF. Bundle static Plus Jakarta Sans 300 Light Italic; keep Anek Devanagari for Hindi, tabular changing numbers, font scaling and accessible contrast. This supersedes the previous upright English weight decision below.
 
 > Owner correction, 30 October 2026: use bundled static Plus Jakarta Sans 400/500/600/700/800 for all English UI, titles and numerals. Keep Anek Devanagari for Hindi. This supersedes the older Bricolage/Figtree pairing below. Legacy aliases must resolve to Plus Jakarta Sans on every platform.

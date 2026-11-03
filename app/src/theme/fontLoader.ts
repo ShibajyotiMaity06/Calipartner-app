@@ -21,18 +21,17 @@ export async function loadAppFonts(): Promise<boolean> {
     if (!baseFontsLoaded) {
       await Font.loadAsync({
         ...Ionicons.font,
-        PlusJakartaSans_300Italic: require('../../assets/fonts/PlusJakartaSans_300Light_Italic.ttf'),
         Ionicons: require('@expo/vector-icons/build/vendor/react-native-vector-icons/Fonts/Ionicons.ttf'),
-        PlusJakartaSans_400: require('../../assets/fonts/PlusJakartaSans_300Light_Italic.ttf'),
-        PlusJakartaSans_500: require('../../assets/fonts/PlusJakartaSans_300Light_Italic.ttf'),
-        PlusJakartaSans_600: require('../../assets/fonts/PlusJakartaSans_300Light_Italic.ttf'),
-        PlusJakartaSans_700: require('../../assets/fonts/PlusJakartaSans_300Light_Italic.ttf'),
-        PlusJakartaSans_800: require('../../assets/fonts/PlusJakartaSans_300Light_Italic.ttf'),
-        Bricolage_600: require('../../assets/fonts/PlusJakartaSans_300Light_Italic.ttf'),
-        Bricolage_700: require('../../assets/fonts/PlusJakartaSans_300Light_Italic.ttf'),
-        Figtree_400: require('../../assets/fonts/PlusJakartaSans_300Light_Italic.ttf'),
-        Figtree_500: require('../../assets/fonts/PlusJakartaSans_300Light_Italic.ttf'),
-        Figtree_600: require('../../assets/fonts/PlusJakartaSans_300Light_Italic.ttf'),
+        PlusJakartaSans_400: require('../../assets/fonts/PlusJakartaSans_400Regular.ttf'),
+        PlusJakartaSans_500: require('../../assets/fonts/PlusJakartaSans_500Medium.ttf'),
+        PlusJakartaSans_600: require('../../assets/fonts/PlusJakartaSans_600SemiBold.ttf'),
+        PlusJakartaSans_700: require('../../assets/fonts/PlusJakartaSans_700Bold.ttf'),
+        PlusJakartaSans_800: require('../../assets/fonts/PlusJakartaSans_800ExtraBold.ttf'),
+        Bricolage_600: require('../../assets/fonts/PlusJakartaSans_600SemiBold.ttf'),
+        Bricolage_700: require('../../assets/fonts/PlusJakartaSans_700Bold.ttf'),
+        Figtree_400: require('../../assets/fonts/PlusJakartaSans_400Regular.ttf'),
+        Figtree_500: require('../../assets/fonts/PlusJakartaSans_500Medium.ttf'),
+        Figtree_600: require('../../assets/fonts/PlusJakartaSans_600SemiBold.ttf'),
       });
       baseFontsLoaded = true;
     }

@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   KeyboardAvoidingView,
@@ -6,12 +6,17 @@ import {
   Pressable,
   ScrollView,
   StyleSheet,
-  Text,
   TextInput,
   View,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { LogRecipeModal } from '@/components/recipes';
+import { Text, homeLayout, type as typography } from '@calipartner/ui';
+import {
+  acceptAiProcessingConsent,
+  type SupabaseFunctionsClient,
+} from '@/services/aiFoodPhotoService';
+import { generateClientUuid } from '@/services/foodService';
+import { getSupabase } from '@/lib/supabase';
 import { FoodLogModal } from '@/components/diary/FoodLogModal';
 import { AiCoachLockedCard, PaywallModal } from '@/components/rooms';
 import { useNetworkStatus } from '@/hooks/useNetworkStatus';
@@ -27,10 +32,9 @@ import { CoachMessageBubble } from './CoachMessageBubble';
 import { CoachReportModal } from './CoachReportModal';
 import { CoachSuggestedPrompts } from './CoachSuggestedPrompts';
 import { useTargets } from '@/hooks/useTargets';
-import { generateCoachResponse } from '@/services/aiCoachEngine';
 import { createLogger } from '@/lib/logger';
 import type { CoachConversation, CoachMessage, CoachReportReason, CoachSuggestion } from './types';
-import type { Recipe } from '@calipartner/core';
+import type { CoachMealDraft } from '@calipartner/core';
 
 const log = createLogger('CoachChatView');
 
@@ -40,13 +44,12 @@ export interface CoachChatViewProps {
 }
 
 const MAX_CHAR_COUNT = 1000;
-const DAILY_MESSAGE_LIMIT = 10;
 
 export function CoachChatView({ onBack, initialConversationId }: CoachChatViewProps) {
   const { colors } = useTheme();
   const { currentGoalProfile } = useTargets();
-  const { hasPlan, entitlement, loading: subLoading } = useSubscription();
-  const isPro = entitlement?.tier === 'pro' && hasPlan;
+  const { currentTier, hasActiveAccess, isTrial, loading: subLoading } = useSubscription();
+  const isPro = currentTier === 'pro' && hasActiveAccess && !isTrial;
   const { isOnline } = useNetworkStatus();
   const { checkAndTrigger, paywallState } = usePaywall();
 
@@ -60,48 +63,33 @@ export function CoachChatView({ onBack, initialConversationId }: CoachChatViewPr
   const [showPaywallModal, setShowPaywallModal] = useState<boolean>(false);
 
   // Logging flow states for Suggestion Cards
-  const [selectedRecipeForLog, setSelectedRecipeForLog] = useState<Recipe | null>(null);
   const [showFoodLogModal, setShowFoodLogModal] = useState<boolean>(false);
 
   // Chat message state
   const [inputText, setInputText] = useState<string>('');
   const [isSending, setIsSending] = useState<boolean>(false);
-  const [dailyMessagesUsed, setDailyMessagesUsed] = useState<number>(4); // default sample
+  const [isDailyLimitReached, setDailyLimitReached] = useState(false);
+  const [requestError, setRequestError] = useState<string | null>(null);
+  const sendingRef = useRef(false);
   const [currentConversationId, setCurrentConversationId] = useState<string>(
     initialConversationId || 'conv-default',
   );
 
-  const [conversations, setConversations] = useState<CoachConversation[]>([
-    {
-      id: 'conv-default',
-      title: 'Nutrition & Protein Target Review',
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-      messageCount: 2,
-      lastMessageSnippet: 'Here are a few high-protein meal suggestions for dinner.',
-    },
-  ]);
+  const [conversations, setConversations] = useState<CoachConversation[]>([]);
 
   const [messages, setMessages] = useState<CoachMessage[]>([
     {
       id: 'msg-welcome',
       role: 'assistant',
-      content:
-        'Hello! I’m your personal CaliPartner Coach. How can I help you reach your goals today?',
+      content: t('coach.meal.welcome'),
       timestamp: new Date().toISOString(),
     },
   ]);
 
   const scrollViewRef = useRef<ScrollView>(null);
 
-  const isDailyLimitReached = dailyMessagesUsed >= DAILY_MESSAGE_LIMIT;
   const isOffline = isOnline === false;
   const inputDisabled = isSending || isDailyLimitReached || isOffline;
-
-  // Auto-scroll on new message
-  useEffect(() => {
-    scrollViewRef.current?.scrollToEnd({ animated: true });
-  }, [messages]);
 
   // Handle plan unlock attempt
   const handleUnlockPress = useCallback(() => {
@@ -110,9 +98,15 @@ export function CoachChatView({ onBack, initialConversationId }: CoachChatViewPr
   }, [checkAndTrigger]);
 
   // Consent agreement
-  const handleAgreeConsent = useCallback(() => {
-    setHasConsent(true);
-    setShowConsentModal(false);
+  const handleAgreeConsent = useCallback(async () => {
+    try {
+      await acceptAiProcessingConsent(getSupabase() as unknown as SupabaseFunctionsClient);
+      setHasConsent(true);
+      setShowConsentModal(false);
+      setRequestError(null);
+    } catch {
+      setRequestError(t('coach.meal.consentError'));
+    }
   }, []);
 
   const handleDeclineConsent = useCallback(() => {
@@ -126,19 +120,20 @@ export function CoachChatView({ onBack, initialConversationId }: CoachChatViewPr
   const handleSendMessage = useCallback(
     async (textToSend: string) => {
       const trimmed = textToSend.trim();
-      if (!trimmed || inputDisabled) return;
+      if (!trimmed || inputDisabled || sendingRef.current) return;
 
       if (!hasConsent) {
         setShowConsentModal(true);
         return;
       }
 
+      sendingRef.current = true;
       setInputText('');
       setIsSending(true);
-      setDailyMessagesUsed((prev) => prev + 1);
+      setRequestError(null);
 
-      const userMsgId = `msg-user-${Date.now()}`;
-      const assistantMsgId = `msg-asst-${Date.now()}`;
+      const userMsgId = generateClientUuid();
+      const assistantMsgId = generateClientUuid();
 
       const userMessage: CoachMessage = {
         id: userMsgId,
@@ -163,13 +158,17 @@ export function CoachChatView({ onBack, initialConversationId }: CoachChatViewPr
       // Determine response from live AI coach (Edge Function or direct Gemini 2.5 Flash)
       let finalContent = '';
       let suggestions: CoachSuggestion[] | undefined;
+      let mealDraft: CoachMealDraft | null | undefined;
 
       try {
         if (!currentGoalProfile) throw new Error(t('common.targetUnavailable'));
         const { queryAiCoach } = await import('@/services/aiCoachClient');
 
         const historyPayload = [
-          ...messages.map((m) => ({ role: m.role, content: m.content })),
+          ...messages.map((m) => ({
+            role: m.role,
+            content: m.content + (m.mealLogged ? '\n' + t('coach.meal.logged') : ''),
+          })),
           { role: 'user' as const, content: trimmed },
         ];
 
@@ -181,69 +180,41 @@ export function CoachChatView({ onBack, initialConversationId }: CoachChatViewPr
             goal: currentGoalProfile.goal,
           },
           currentConversationId,
+          { mealLogging: true },
         );
 
         finalContent = aiResult.content;
         suggestions = aiResult.suggestions;
-      } catch (coachErr: any) {
-        if (coachErr?.code === 'CONSENT_REQUIRED' || coachErr?.message?.includes('CONSENT')) {
+        mealDraft = aiResult.mealDraft;
+      } catch (coachErr: unknown) {
+        const code = (coachErr as { code?: string })?.code;
+        if (code === 'CONSENT_REQUIRED') {
+          setHasConsent(false);
           setShowConsentModal(true);
-          setMessages((prev) => prev.filter((m) => m.id !== assistantMsgId));
-          setIsSending(false);
-          return;
-        }
-        if (coachErr?.code === 'UPGRADE_REQUIRED' || coachErr?.message?.includes('UPGRADE')) {
-          setShowPaywallModal(true);
-          setMessages((prev) => prev.filter((m) => m.id !== assistantMsgId));
-          setIsSending(false);
-          return;
-        }
-
-        log.error('AI Coach call failed:', coachErr);
-        // Show real failure message instead of deceptive hardcoded text
-        const errorText =
-          coachErr?.message ||
-          'Could not connect to AI Coach. Please check your network and try again.';
-        setMessages((prev) =>
-          prev.map((msg) =>
-            msg.id === assistantMsgId
-              ? { ...msg, content: `⚠️ ${errorText}`, isStreaming: false }
-              : msg,
-          ),
+        } else if (code === 'UPGRADE_REQUIRED') setShowPaywallModal(true);
+        else if (code === 'DAILY_LIMIT_REACHED') setDailyLimitReached(true);
+        log.error('AI Coach call failed', code ?? 'unavailable');
+        setRequestError(t('brandRepair.coachUnavailable'));
+        setInputText(trimmed);
+        setMessages((previous) =>
+          previous.filter((message) => message.id !== assistantMsgId && message.id !== userMsgId),
         );
+        sendingRef.current = false;
         setIsSending(false);
         return;
       }
 
-      // Stream character by character / token chunks
-      let currentLength = 0;
-      const chunkSize = 16;
-      const interval = setInterval(() => {
-        currentLength += chunkSize;
-        const streamedSlice = finalContent.slice(0, currentLength);
-
-        if (currentLength >= finalContent.length) {
-          clearInterval(interval);
-          setMessages((prev) =>
-            prev.map((msg) =>
-              msg.id === assistantMsgId
-                ? { ...msg, content: finalContent, isStreaming: false, suggestions }
-                : msg,
-            ),
-          );
-          setIsSending(false);
-        } else {
-          setMessages((prev) =>
-            prev.map((msg) =>
-              msg.id === assistantMsgId
-                ? { ...msg, content: streamedSlice, isStreaming: true }
-                : msg,
-            ),
-          );
-        }
-      }, 35);
+      setMessages((previous) =>
+        previous.map((message) =>
+          message.id === assistantMsgId
+            ? { ...message, content: finalContent, isStreaming: false, suggestions, mealDraft }
+            : message,
+        ),
+      );
+      sendingRef.current = false;
+      setIsSending(false);
     },
-    [inputDisabled, hasConsent, currentConversationId, messages],
+    [inputDisabled, hasConsent, currentConversationId, messages, currentGoalProfile],
   );
 
   // Thumbs feedback
@@ -268,42 +239,7 @@ export function CoachChatView({ onBack, initialConversationId }: CoachChatViewPr
   };
 
   // Suggestion card "Log it" trigger
-  const handleLogSuggestion = (suggestion: CoachSuggestion) => {
-    if (suggestion.type === 'recipe') {
-      const mockRecipe: Recipe = {
-        id: suggestion.recipeId || 'rec-1',
-        title: suggestion.title,
-        description: 'Suggested by AI Coach',
-        cuisine: 'Healthy',
-        diet_tags: ['vegetarian'],
-        meal_type: 'dinner',
-        prep_minutes: 15,
-        cook_minutes: 20,
-        difficulty: 'easy',
-        servings: 1,
-        steps: ['Combine ingredients', 'Cook thoroughly', 'Serve warm'],
-        tips: ['Pairs well with a side of greens'],
-        image_urls: [],
-        status: 'published',
-        nutrition_per_serving: {
-          calories: suggestion.calories,
-          protein: suggestion.protein,
-          carbs: suggestion.carbs,
-          fat: suggestion.fat,
-          fiber: 6,
-          sugar: 4,
-          sodium_mg: 380,
-        },
-        nutrition_override_reason: null,
-        version: 1,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-      };
-      setSelectedRecipeForLog(mockRecipe);
-    } else {
-      setShowFoodLogModal(true);
-    }
-  };
+  const handleLogSuggestion = (_suggestion: CoachSuggestion) => setShowFoodLogModal(true);
 
   // Conversation history handling
   const handleDeleteConversation = (convId: string) => {
@@ -452,6 +388,7 @@ export function CoachChatView({ onBack, initialConversationId }: CoachChatViewPr
       {/* Chat Messages */}
       <ScrollView
         ref={scrollViewRef}
+        onContentSizeChange={() => scrollViewRef.current?.scrollToEnd({ animated: false })}
         style={styles.messageList}
         contentContainerStyle={styles.messageListContent}
         showsVerticalScrollIndicator={false}
@@ -464,6 +401,16 @@ export function CoachChatView({ onBack, initialConversationId }: CoachChatViewPr
             onThumbsDown={handleThumbsDown}
             onReport={(id) => setReportTargetId(id)}
             onLogSuggestion={handleLogSuggestion}
+            mealDisabled={
+              isSending || isOffline || messages.at(-1)?.id !== msg.id || msg.mealLogged
+            }
+            onMealLogged={() =>
+              setMessages((previous) =>
+                previous.map((message) =>
+                  message.id === msg.id ? { ...message, mealLogged: true } : message,
+                ),
+              )
+            }
           />
         ))}
       </ScrollView>
@@ -471,6 +418,11 @@ export function CoachChatView({ onBack, initialConversationId }: CoachChatViewPr
       {/* Suggested Prompts Strip */}
       <CoachSuggestedPrompts onSelectPrompt={handleSendMessage} disabled={inputDisabled} />
 
+      {requestError && (
+        <Text accessibilityRole="alert" style={{ color: colors.danger }}>
+          {requestError}
+        </Text>
+      )}
       {/* Bottom Input Bar */}
       <View
         style={[
@@ -513,9 +465,9 @@ export function CoachChatView({ onBack, initialConversationId }: CoachChatViewPr
           testID="btn-coach-send"
         >
           {isSending ? (
-            <ActivityIndicator size="small" color="#FFFFFF" />
+            <ActivityIndicator size="small" color={colors.onAccent} />
           ) : (
-            <Ionicons name="arrow-up" size={18} color="#FFFFFF" />
+            <Ionicons name="arrow-up" size={18} color={colors.onAccent} />
           )}
         </Pressable>
       </View>
@@ -557,16 +509,6 @@ export function CoachChatView({ onBack, initialConversationId }: CoachChatViewPr
         onClose={() => setReportTargetId(null)}
         onSubmit={handleReportSubmit}
       />
-
-      {/* 7. Recipe Logging Modal (Normal Logging Flow) */}
-      {selectedRecipeForLog && (
-        <LogRecipeModal
-          visible={Boolean(selectedRecipeForLog)}
-          recipe={selectedRecipeForLog}
-          onClose={() => setSelectedRecipeForLog(null)}
-          onLogged={() => setSelectedRecipeForLog(null)}
-        />
-      )}
 
       {/* 8. Food Log Modal (Normal Logging Flow) */}
       {showFoodLogModal && (
@@ -678,11 +620,12 @@ const styles = StyleSheet.create({
     paddingTop: Platform.OS === 'ios' ? 10 : 8,
     paddingBottom: Platform.OS === 'ios' ? 10 : 8,
     fontSize: fontSize.sm + 1,
+    fontFamily: typography.body.fontFamily,
   },
   sendButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: homeLayout.touchSize,
+    height: homeLayout.touchSize,
+    borderRadius: radius.pill,
     alignItems: 'center',
     justifyContent: 'center',
   },

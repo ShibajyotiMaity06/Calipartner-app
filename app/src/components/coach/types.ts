@@ -1,3 +1,4 @@
+import type { CoachMealDraft } from '@calipartner/core';
 export type CoachRole = 'user' | 'assistant';
 
 export interface CoachSuggestion {
@@ -14,6 +15,8 @@ export interface CoachSuggestion {
 }
 
 export interface CoachMessage {
+  mealDraft?: CoachMealDraft | null;
+  mealLogged?: boolean;
   id: string;
   role: CoachRole;
   content: string;

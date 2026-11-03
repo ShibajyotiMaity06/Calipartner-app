@@ -9,6 +9,10 @@ import {
 import { useCurrentLocalDate } from '@/hooks/useCurrentLocalDate';
 import { WeightChart } from './WeightChart';
 import { CaloriesChart } from './CaloriesChart';
+import { MacrosChart } from './MacrosChart';
+import { StepsChart } from './StepsChart';
+import { WaterChart } from './WaterChart';
+import { WorkoutsChart } from './WorkoutsChart';
 import { t, getLocale } from '@/i18n';
 import type { DayDetailData } from './DayDetailModal';
 
@@ -82,6 +86,10 @@ export function ProgressOverview({
       {Boolean(data?.calories.daily.length) && (
         <CaloriesChart data={data?.calories} loading={loading} onSelectDay={onSelectDay} />
       )}
+      <MacrosChart data={data?.macros} loading={loading} />
+      <WorkoutsChart data={data?.workouts} loading={loading} />
+      <StepsChart data={data?.steps} loading={loading} onSelectDay={onSelectDay} />
+      <WaterChart data={data?.water} loading={loading} onSelectDay={onSelectDay} />
     </View>
   );
 }

@@ -1,5 +1,6 @@
+import { Text } from '@calipartner/ui';
 import React, { useMemo } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import type { IndividualWorkoutsProgress } from '@calipartner/core';
 import { t } from '@/i18n';
 import { fontSize, radius, spacing } from '@/theme/tokens';

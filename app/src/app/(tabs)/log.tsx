@@ -7,7 +7,7 @@ import { getMealSectionForTime, type MealSection } from '@calipartner/core';
 import { Sheet } from '@calipartner/ui';
 import { FoodLogModal } from '@/components/diary/FoodLogModal';
 import { WorkoutLoggerModal } from '@/components/workouts/WorkoutLoggerModal';
-import { CustomWaterModal, WeightEntryModal } from '@/components/trackers';
+import { CustomWaterModal, ManualStepsModal, WeightEntryModal } from '@/components/trackers';
 
 import { RecipeBrowseView } from '@/components/recipes';
 import { QuickAddCaloriesModal } from '@/components/diary/QuickAddCaloriesModal';
@@ -17,6 +17,7 @@ import { useAddEntry } from '@/hooks/useFoodEntries';
 
 import { useWater } from '@/hooks/useWater';
 import { useWeight } from '@/hooks/useWeight';
+import { useSteps } from '@/hooks/useSteps';
 import { useTheme } from '@/theme/useTheme';
 import { useCurrentLocalDate } from '@/hooks/useCurrentLocalDate';
 
@@ -26,6 +27,7 @@ type ActiveFlowState =
   | 'food'
   | 'workout'
   | 'water'
+  | 'steps'
   | 'weight'
   | 'fast'
   | 'scan'
@@ -49,7 +51,7 @@ export default function LogScreen() {
     useCallback(() => {
       setCurrentSection(getMealSectionForTime(new Date(), profile?.timezone));
       setActiveFlow(
-        ['food', 'workout', 'water', 'weight'].includes(params.flow ?? '')
+        ['food', 'workout', 'water', 'steps', 'weight'].includes(params.flow ?? '')
           ? (params.flow as ActiveFlowState)
           : 'picker',
       );
@@ -61,6 +63,7 @@ export default function LogScreen() {
   // Tracker hooks for Water and Weight
   const { addWater } = useWater(todayDate);
   const { logWeight, latestLog } = useWeight();
+  const { logManualSteps } = useSteps(todayDate);
   const { addEntry } = useAddEntry();
 
   const handleCloseAll = () => {
@@ -128,6 +131,9 @@ export default function LogScreen() {
       )}
 
       {/* 5. Weight Entry Modal */}
+      {activeFlow === 'steps' && (
+        <ManualStepsModal visible={sheetVisible} onClose={handleCloseAll} onSave={logManualSteps} />
+      )}
       {activeFlow === 'weight' && (
         <WeightEntryModal
           visible={sheetVisible}

@@ -44,7 +44,14 @@ function setup(allowed = true, code: string | null = null, consent = true, usage
       eq() {
         return this;
       },
-      limit: async () => ({ data: consent ? [{ id: 'consent' }] : [] }),
+      order() {
+        return this;
+      },
+      limit() {
+        return table === 'consent_records'
+          ? Promise.resolve({ data: consent ? [{ id: 'consent' }] : [] })
+          : this;
+      },
       maybeSingle: async () => ({
         data:
           table === 'goal_profiles'
@@ -108,4 +115,77 @@ Deno.test('Unauthenticated coach calls never reach a provider', async () => {
   );
   assert.equal(result.status, 401);
   assert.equal(state.calls(), 0);
+});
+
+const mealItem = {
+  name: 'Boiled eggs',
+  quantity: 2,
+  unit: 'eggs',
+  calories: 156,
+  protein: 13,
+  carbs: 1,
+  fat: 11,
+  fiber: 0,
+  sugar: 0,
+  sodium_mg: 124,
+};
+const mealRequest = () =>
+  new Request('https://example/ai-coach', {
+    method: 'POST',
+    headers: { Authorization: 'Bearer caller' },
+    body: JSON.stringify({
+      meal_logging: true,
+      messages: [{ role: 'user', content: '2 boiled eggs for lunch' }],
+    }),
+  });
+for (const status of ['needs_details', 'needs_section', 'ready']) {
+  Deno.test('Coach meal ' + status + ' returns only a proposal and never logs food', async () => {
+    const state = setup();
+    const response = await handleAiCoach(mealRequest(), {
+      ...state,
+      reply: async () => ({
+        text: JSON.stringify({
+          content:
+            status === 'ready'
+              ? 'Estimated meal. Review before logging.'
+              : 'Which portion or meal section?',
+          meal: {
+            status,
+            description: '2 boiled eggs',
+            detailsConfirmed: true,
+            sectionConfirmed: true,
+            mealSection: 'lunch',
+            items: [mealItem],
+          },
+        }),
+        tokens: 120,
+      }),
+    });
+    assert.equal(response.status, 200);
+    const result = await response.json();
+    assert.equal(Boolean(result.meal_draft), status === 'ready');
+    assert.equal(state.tables().includes('food_entries'), false);
+    assert.equal(state.tables().includes('profiles'), true);
+  });
+}
+Deno.test('Malformed model nutrition never enables a meal action', async () => {
+  const response = await handleAiCoach(mealRequest(), {
+    ...setup(),
+    reply: async () => ({
+      text: JSON.stringify({
+        content: 'Estimate',
+        meal: {
+          status: 'ready',
+          description: 'Food',
+          detailsConfirmed: true,
+          sectionConfirmed: true,
+          mealSection: 'lunch',
+          items: [{ ...mealItem, calories: -5 }],
+        },
+      }),
+      tokens: 120,
+    }),
+  });
+  assert.equal(response.status, 422);
+  assert.equal((await response.json()).code, 'INVALID_COACH_MEAL');
 });

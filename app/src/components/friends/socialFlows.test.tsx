@@ -13,6 +13,7 @@ vi.mock('react-native', () => ({
 }));
 vi.mock('@expo/vector-icons', () => ({ Ionicons: 'Ionicons' }));
 vi.mock('@calipartner/ui', () => ({
+  dark: {},
   Avatar: 'Avatar',
   Button: 'Button',
   Card: 'Card',

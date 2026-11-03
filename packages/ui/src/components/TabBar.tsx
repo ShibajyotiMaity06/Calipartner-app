@@ -13,7 +13,8 @@ import { Text } from './Text';
 import { dark } from '../tokens/colors';
 import { radius } from '../tokens/radius';
 import { space } from '../tokens/space';
-import { HomeIcon, TodayIcon, RoomIcon, ProgressIcon, MeIcon, PlusIcon } from './Icons';
+import { SettingsIcon } from './SettingsIcon';
+import { HomeIcon, RoomIcon, MeIcon, PlusIcon } from './Icons';
 
 export type TabId = 'today' | 'room' | 'log' | 'progress' | 'me';
 
@@ -175,7 +176,7 @@ export function TabBar({
       {renderNormalTab('today', labels?.today ?? 'Home', HomeIcon, 'tab-today')}
 
       {/* 2. Progress */}
-      {renderNormalTab('progress', labels?.progress ?? 'You', ProgressIcon, 'tab-progress')}
+      {renderNormalTab('progress', labels?.progress ?? 'You', MeIcon, 'tab-progress')}
 
       {/* 3. Center Raised Plus Button */}
       <View style={styles.centerSlot}>
@@ -195,7 +196,7 @@ export function TabBar({
       {renderNormalTab('room', labels?.room ?? 'Squad', RoomIcon, 'tab-room', hasRoomBadge)}
 
       {/* 5. Account */}
-      {renderNormalTab('me', labels?.me ?? 'Profile', MeIcon, 'tab-me')}
+      {renderNormalTab('me', labels?.me ?? 'Settings', SettingsIcon, 'tab-me')}
     </View>
   );
 }

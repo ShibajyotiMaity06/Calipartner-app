@@ -80,7 +80,7 @@ export function SquadConnectFlow({
             testID="option-join-squad"
           />
           <Button
-            variant="tertiary"
+            variant="secondary"
             label={t('socialUpdate.addFriends')}
             onPress={onFindFriend}
             testID="squad-add-friends"
@@ -89,7 +89,7 @@ export function SquadConnectFlow({
       ) : (
         <>
           <Button
-            variant="tertiary"
+            variant="secondary"
             label={t('friends.back')}
             disabled={busy}
             onPress={() => setCreating(false)}
@@ -117,7 +117,7 @@ export function SquadConnectFlow({
             <>
               <Text accessibilityRole="alert">{t('friends.genericError')}</Text>
               <Button
-                variant="tertiary"
+                variant="secondary"
                 label={t('friends.retry')}
                 onPress={onRetry}
                 testID="squad-retry-friends"

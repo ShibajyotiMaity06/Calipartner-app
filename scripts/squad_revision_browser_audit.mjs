@@ -156,6 +156,9 @@ const detail = {
     },
   ],
 };
+let pro = false;
+const savedMeals = new Map();
+let saveAttempts = 0;
 let paid = false,
   seen = false;
 const requests = [],
@@ -201,7 +204,16 @@ try {
         body = request.postDataJSON() ?? {};
       requests.push(name);
       if (name === 'get_my_rooms') data = rooms;
-      else if (name === 'get_squad_today')
+      else if (name === 'get_individual_progress') data = null;
+      else if (name === 'log_coach_meal') {
+        saveAttempts++;
+        for (const entry of body.p_entries)
+          savedMeals.set(entry.id, { ...entry, user_id: user.id });
+        if (saveAttempts === 1) {
+          status = 503;
+          data = { message: 'Connection lost after save' };
+        } else data = [...savedMeals.values()];
+      } else if (name === 'get_squad_today')
         data = {
           room_id: body.p_room_id,
           members: body.p_room_id === rid(0) ? all.slice(0, 2) : all,
@@ -271,14 +283,44 @@ try {
         data = { share_weight: false, share_height: false };
       else if (name === 'set_squad_visibility')
         data = { share_weight: body.p_share_weight, share_height: body.p_share_height };
-    } else if (url.pathname.endsWith('/profiles')) data = [profile];
+    } else if (url.pathname.endsWith('/ai-coach')) {
+      const body = request.postDataJSON();
+      const latest = body.messages.at(-1).content;
+      const item = {
+        name: 'Boiled eggs',
+        quantity: 2,
+        unit: 'eggs',
+        calories: 156,
+        protein: 13,
+        carbs: 1,
+        fat: 11,
+        fiber: 0,
+        sugar: 0,
+        sodium_mg: 124,
+      };
+      data = {
+        message: {
+          content:
+            latest === 'I ate eggs'
+              ? 'How many eggs, and how were they prepared?'
+              : latest === '2 boiled eggs'
+                ? 'Was this breakfast, lunch or dinner?'
+                : 'Estimated meal. Check the portions before logging.',
+        },
+        meal_draft:
+          latest === 'Lunch'
+            ? { description: '2 boiled eggs', mealSection: 'lunch', localDate: day, items: [item] }
+            : null,
+      };
+    } else if (url.pathname.endsWith('/food_entries')) data = [...savedMeals.values()];
+    else if (url.pathname.endsWith('/profiles')) data = [profile];
     else if (url.pathname.endsWith('/goal_profiles')) data = [goal];
     else if (url.pathname.endsWith('/entitlements'))
       data = paid
         ? [
             {
               user_id: user.id,
-              tier: 'plus',
+              tier: pro ? 'pro' : 'plus',
               status: 'paid',
               period_start: now,
               period_end: '2099-11-02T00:00:00Z',
@@ -303,7 +345,7 @@ try {
             sub: user.id,
             aud: 'authenticated',
             role: 'authenticated',
-            exp: Math.floor(Date.now() / 1000) + 3600,
+            exp: Math.floor(new Date('2099-01-01T00:00:00Z').getTime() / 1000),
           }) +
           '.fixture';
       globalThis.localStorage.setItem(
@@ -313,7 +355,7 @@ try {
           refresh_token: 'fixture',
           token_type: 'bearer',
           expires_in: 3600,
-          expires_at: Math.floor(Date.now() / 1000) + 3600,
+          expires_at: Math.floor(new Date('2099-01-01T00:00:00Z').getTime() / 1000),
           user,
         }),
       );
@@ -349,12 +391,26 @@ try {
     2,
   );
   await snap('home-pair');
-  await page.getByTestId('home-create-squad-top').click();
+  await page.getByTestId('home-open-friends').click();
+  await page.waitForURL('**/friends');
+  await home();
+  await page.getByTestId('tab-log').click();
+  await page.getByTestId('log-hub-view').waitFor();
+  assert.equal(await page.getByTestId('log-quick-check-in').count(), 0);
+  for (const flow of ['food', 'workout', 'water', 'steps', 'weight'])
+    await page.getByTestId('log-tile-' + flow).waitFor();
+  assert.equal(await page.getByTestId('log-tile-fast').count(), 0);
+  await snap('compact-log');
+  await page.getByTestId('log-hub-close').click();
+  await home();
+  await page.getByTestId('home-create-squad-end').scrollIntoViewIfNeeded();
+  await page.getByTestId('home-create-squad-end').click();
   await page.getByTestId('squad-connect-modal').waitFor();
   await snap('create-join-sheet');
   await page.getByTestId('close-create-squad').click();
   await page.waitForURL('**/today');
-  await page.getByTestId('home-create-squad-top').click();
+  await page.getByTestId('home-create-squad-end').scrollIntoViewIfNeeded();
+  await page.getByTestId('home-create-squad-end').click();
   await page.getByTestId('option-join-squad').click();
   await page.getByTestId('btn-close-join-modal').click();
   await page.waitForURL('**/today');
@@ -368,6 +424,21 @@ try {
     3,
   );
   await snap('home-top-three');
+  const cardHeights = await Promise.all(
+    [
+      page.getByTestId('home-squad-card-' + rid(0)),
+      page.getByTestId('home-squad-card-' + rid(1)),
+      page.getByTestId('home-create-squad-end'),
+    ].map(async (card) => (await card.boundingBox()).height),
+  );
+  assert.ok(
+    Math.max(...cardHeights) - Math.min(...cardHeights) < 2,
+    'Squad and create card heights must match',
+  );
+  const font = await page
+    .getByTestId('personal-day-card')
+    .evaluate((card) => globalThis.getComputedStyle(card.querySelector('[dir="auto"]')).fontFamily);
+  assert.ok(font.includes('PlusJakartaSans_600'), 'Upright Jakarta headings must be restored');
   await page
     .getByTestId(`home-squad-card-${rid(1)}`)
     .getByTestId(`squad-member-${uid(1)}`)
@@ -419,11 +490,12 @@ try {
   await page.getByTestId(`open-mention-${messageId}`).click();
   await page.getByTestId(`focused-mention-${messageId}`).waitFor();
   await page.waitForFunction(() =>
-    Boolean(globalThis.document.querySelector('[data-testid="chat-tag-member"]')),
+    Boolean(globalThis.document.querySelector('[data-testid="input-chat-message"]')),
   );
   await snap('chat-open-mention');
   assert.equal(seen, true);
-  await page.getByTestId('chat-tag-member').click();
+  assert.equal(await page.getByTestId('chat-tag-member').count(), 0);
+  await page.getByTestId('input-chat-message').fill('@');
   await page.getByTestId(`tag-member-${uid(2)}`).click();
   await page.getByTestId('btn-chat-send').click();
   await page.waitForFunction(
@@ -478,9 +550,51 @@ try {
     false,
   );
   await snap('compare-text-200');
+  await page.goto('http://127.0.0.1:8098/progress');
+  await page.getByTestId('personal-squads').waitFor();
+  await page.getByTestId('personal-leave-squad-' + rid(1)).waitFor();
+  await page.getByTestId('macros-chart').waitFor();
+  await page.getByTestId('steps-chart').waitFor();
+  await page.getByTestId('workouts-chart').waitFor();
+  await snap('you-personal-details');
+  pro = true;
+  await page.goto('http://127.0.0.1:8098/coach');
+  await page.getByTestId('screen-coach-chat').waitFor();
+  const sendMeal = async (text) => {
+    await page.getByTestId('input-coach-message').fill(text);
+    await page.getByTestId('btn-coach-send').click();
+  };
+  await sendMeal('I ate eggs');
+  await page.getByText('How many eggs, and how were they prepared?', { exact: true }).waitFor();
+  assert.equal(await page.getByTestId('coach-meal-draft').count(), 0);
+  await sendMeal('2 boiled eggs');
+  await page.getByText('Was this breakfast, lunch or dinner?', { exact: true }).waitFor();
+  assert.equal(await page.getByTestId('coach-meal-draft').count(), 0);
+  await sendMeal('Lunch');
+  await page.getByTestId('coach-meal-macros').waitFor();
+  assert.equal(saveAttempts, 0);
+  await snap('coach-meal-confirm');
+  await page.getByTestId('coach-meal-log').click();
+  await page
+    .getByText(
+      'Your meal was not confirmed saved. Check your connection and tap Log meal to retry safely.',
+      { exact: true },
+    )
+    .waitFor();
+  await page.getByTestId('coach-meal-log').click();
+  await page.getByText('Meal logged', { exact: true }).waitFor();
+  assert.equal(saveAttempts, 2);
+  assert.equal(savedMeals.size, 1);
+  await snap('coach-meal-saved');
+  await page.clock.install({ time: new Date('2026-11-03T22:29:00Z') });
+  await home();
+  await page.getByText('Did you log your Snacks?', { exact: true }).waitFor();
+  await page.clock.fastForward(62 * 60 * 1000);
+  await page.getByText('Did you log your Dinner?', { exact: true }).waitFor();
+  await snap('time-based-dinner-prompt');
   assert.deepEqual(errors, []);
   console.log(
-    'Squad browser audit: pair/top-three/full-20 boards, Free/Plus member and comparison details, any-two selection, exact old mention, tag send, seen dropdown three viewport widths and 200% text passed',
+    'UI browser audit: stable squad/create cards, Friends, five Log flows, personal You charts, compact chat, typed mentions, confirmed AI meal with lost-ack retry, 5:29 pm prompt and clock rollover, three widths and 200% text passed',
   );
 } catch (error) {
   for (const page of browser?.contexts().flatMap((context) => context.pages()) ?? []) {

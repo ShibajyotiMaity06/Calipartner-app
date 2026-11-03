@@ -1,6 +1,7 @@
 import { getSupabase } from '@/lib/supabase';
 import { t } from '@/i18n';
 import type { CoachSuggestion } from '@/components/coach/types';
+import { validateCoachMealDraft, type CoachMealDraft } from '@calipartner/core';
 
 export interface CoachContextMetrics {
   calorieTarget: number;
@@ -14,6 +15,7 @@ export interface CoachContextMetrics {
 export interface AiCoachCallResult {
   content: string;
   suggestions?: CoachSuggestion[];
+  mealDraft?: CoachMealDraft | null;
   source: 'edge_function';
 }
 
@@ -49,9 +51,14 @@ export async function queryAiCoach(
   messages: Array<{ role: 'user' | 'assistant' | 'system'; content: string }>,
   _context: CoachContextMetrics,
   conversationId?: string,
+  options?: { mealLogging?: boolean },
 ): Promise<AiCoachCallResult> {
   const { data, error } = await getSupabase().functions.invoke('ai-coach', {
-    body: { messages, conversation_id: conversationId },
+    body: {
+      messages,
+      conversation_id: conversationId,
+      ...(options?.mealLogging ? { meal_logging: true } : {}),
+    },
   });
   if (error) {
     let body: Record<string, unknown> = {};
@@ -69,6 +76,7 @@ export async function queryAiCoach(
   return {
     content: cleanCoachResponse(data.message.content),
     suggestions: data.suggestions,
+    mealDraft: data.meal_draft ? validateCoachMealDraft(data.meal_draft) : null,
     source: 'edge_function',
   };
 }

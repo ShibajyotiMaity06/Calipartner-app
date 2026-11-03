@@ -23,7 +23,7 @@ afterEach(async () => {
   if (tree) await act(async () => tree.unmount());
 });
 const members = [{ user_id: 'peer', username: 'pav.one', nickname: 'Pav' }];
-it('offers a tag action, inserts the real username, and waits for server acknowledgement before clearing', async () => {
+it('offers typed mentions, inserts the real username, and waits for server acknowledgement before clearing', async () => {
   let acknowledge!: () => void;
   const send = vi.fn(
     () =>
@@ -42,9 +42,9 @@ it('offers a tag action, inserts the real username, and waits for server acknowl
     );
   });
   await act(async () =>
-    tree.root.findByProps({ testID: 'input-chat-message' }).props.onChangeText('Leg day?'),
+    tree.root.findByProps({ testID: 'input-chat-message' }).props.onChangeText('Leg day? @'),
   );
-  await act(async () => tree.root.findByProps({ testID: 'chat-tag-member' }).props.onPress());
+  expect(tree.root.findAllByProps({ testID: 'chat-tag-member' })).toHaveLength(0);
   await act(async () => tree.root.findByProps({ testID: 'tag-member-peer' }).props.onPress());
   expect(tree.root.findByProps({ testID: 'input-chat-message' }).props.value).toBe(
     'Leg day? @pav.one ',
