@@ -88,6 +88,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
       'expo-font',
       {
         fonts: [
+          './assets/fonts/PlusJakartaSans_300Light_Italic.ttf',
           './assets/fonts/PlusJakartaSans_400Regular.ttf',
           './assets/fonts/PlusJakartaSans_500Medium.ttf',
           './assets/fonts/PlusJakartaSans_600SemiBold.ttf',

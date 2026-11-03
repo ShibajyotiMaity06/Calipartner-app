@@ -7,7 +7,6 @@ import {
   type ProgressDateRange,
 } from '@calipartner/core';
 import { useCurrentLocalDate } from '@/hooks/useCurrentLocalDate';
-import { useCheckInHistory } from '@/hooks/useCheckInHistory';
 import { WeightChart } from './WeightChart';
 import { CaloriesChart } from './CaloriesChart';
 import { t, getLocale } from '@/i18n';
@@ -27,11 +26,9 @@ export function ProgressOverview({
   const { localDate } = useCurrentLocalDate();
   const count = range === '7d' ? 7 : range === '30d' ? 30 : 90;
   const start = getPreviousDateString(localDate, count - 1);
-  const history = useCheckInHistory(start, localDate);
   const present = new Set(
     [
       ...(data?.calories.daily.filter((day) => day.is_logged_day).map((day) => day.date) ?? []),
-      ...history.days,
     ].filter((date) => date >= start && date <= localDate),
   );
   const latest = Array.from({ length: count }, (_, index) =>
@@ -43,38 +40,34 @@ export function ProgressOverview({
       <View style={styles.card}>
         <Text variant="heading">{t('homeRefresh.showingUp')}</Text>
         <Text variant="numeralM" tabular>
-          {loading || history.loading
+          {loading
             ? t('common.loading')
-            : history.error
-              ? t('common.unavailable')
-              : t('homeRefresh.loggedDays', { logged: present.size, total: count })}
+            : t('homeRefresh.loggedDays', { logged: present.size, total: count })}
         </Text>
-        {!history.error && (
-          <View style={styles.days}>
-            {latest.map((date) => (
-              <View
-                key={date}
-                style={styles.day}
-                accessible
-                accessibilityLabel={`${date}: ${present.has(date) ? t('homeRefresh.checkedLabel') : t('homeRefresh.pending')}`}
-              >
-                <View style={[styles.dot, present.has(date) && styles.present]}>
-                  <Text color={present.has(date) ? dark.onBrand : dark.textMid}>
-                    {present.has(date) ? '✓' : '·'}
-                  </Text>
-                </View>
-                <Text variant="micro" color={dark.textMid}>
-                  {new Date(`${date}T12:00:00Z`).toLocaleDateString(getLocale(), {
-                    weekday: 'narrow',
-                    timeZone: 'UTC',
-                  })}
+        <View style={styles.days}>
+          {latest.map((date) => (
+            <View
+              key={date}
+              style={styles.day}
+              accessible
+              accessibilityLabel={`${date}: ${present.has(date) ? t('repairs.logged') : t('squadDesign.noLogs')}`}
+            >
+              <View style={[styles.dot, present.has(date) && styles.present]}>
+                <Text color={present.has(date) ? dark.onBrand : dark.textMid}>
+                  {present.has(date) ? '✓' : '·'}
                 </Text>
               </View>
-            ))}
-          </View>
-        )}
+              <Text variant="micro" color={dark.textMid}>
+                {new Date(`${date}T12:00:00Z`).toLocaleDateString(getLocale(), {
+                  weekday: 'narrow',
+                  timeZone: 'UTC',
+                })}
+              </Text>
+            </View>
+          ))}
+        </View>
         <Text variant="bodyS" color={dark.textMid}>
-          {t('homeRefresh.checkInHint')}
+          {t('squadDesign.personal')}
         </Text>
       </View>
       <WeightChart data={data?.weight} loading={loading} onSelectDay={onSelectDay} />

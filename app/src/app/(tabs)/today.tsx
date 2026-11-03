@@ -1,12 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import {
-  Pressable,
-  RefreshControl,
-  ScrollView,
-  StyleSheet,
-  useWindowDimensions,
-  View,
-} from 'react-native';
+import { Pressable, RefreshControl, ScrollView, StyleSheet, View } from 'react-native';
 import { useRouter, type Href } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import {
@@ -17,6 +10,7 @@ import {
   type MealSection,
 } from '@calipartner/core';
 import { dark, radius, space, Text, homeLayout } from '@calipartner/ui';
+import { PersonalDayCard } from '@/components/rooms/PersonalDayCard';
 import { HomeSquads } from '@/components/rooms/HomeSquads';
 import { useFocusEffect } from 'expo-router';
 import { LoadingState } from '@/components/LoadingState';
@@ -35,89 +29,10 @@ import { useDeleteEntry, useEditEntry } from '@/hooks/useFoodEntries';
 import { useRooms } from '@/hooks/useRooms';
 import { useSteps } from '@/hooks/useSteps';
 import { useTargets } from '@/hooks/useTargets';
-import { useWater } from '@/hooks/useWater';
 import { t } from '@/i18n';
 import { getDb } from '@/db';
 
 const MEAL_SECTIONS: MealSection[] = ['breakfast', 'lunch', 'dinner', 'snacks', 'extra'];
-
-interface MiniRingProps {
-  icon: keyof typeof Ionicons.glyphMap;
-  value: string | number;
-  target: string | number;
-  label: string;
-  progressRatio: number;
-  color: string;
-  testID?: string;
-  onPress?: () => void;
-}
-
-function MiniRing({
-  icon,
-  value,
-  target,
-  label,
-  progressRatio,
-  color,
-  testID,
-  onPress,
-}: MiniRingProps) {
-  const { fontScale } = useWindowDimensions();
-  const ratio = Math.max(0, Math.min(progressRatio, 1));
-  return (
-    <Pressable
-      testID={testID}
-      onPress={onPress}
-      style={[styles.ringTileContainer, { flexBasis: fontScale >= 1.5 ? '45%' : '20%' }]}
-      accessibilityRole="button"
-      accessibilityLabel={t('homeRefresh.metricLabel', { label, value, target })}
-    >
-      <Ionicons name={icon} size={homeLayout.iconSize} color={color} />
-      <Text variant="bodyS" tabular>
-        {value}
-      </Text>
-      <Text variant="micro" color={dark.textMid} tabular>
-        /{target}
-      </Text>
-      <View
-        style={{
-          width: '100%',
-          height: space[1],
-          backgroundColor: dark.s3,
-          borderRadius: radius.full,
-        }}
-      >
-        <View
-          style={{
-            width: `${ratio * 100}%`,
-            height: '100%',
-            backgroundColor: color,
-            borderRadius: radius.full,
-          }}
-        />
-        {progressRatio > 1 && (
-          <View
-            style={{
-              position: 'absolute',
-              width: `${Math.min(1, progressRatio - 1) * 100}%`,
-              height: '100%',
-              backgroundColor: dark.cream,
-              borderRadius: radius.full,
-            }}
-          />
-        )}
-      </View>
-      {progressRatio > 1 && (
-        <Text variant="micro" color={dark.cream}>
-          {t('homeRefresh.over')}
-        </Text>
-      )}
-      <Text variant="micro" color={dark.textMid}>
-        {label}
-      </Text>
-    </Pressable>
-  );
-}
 
 export default function TodayScreen() {
   const router = useRouter();
@@ -138,17 +53,16 @@ export default function TodayScreen() {
   const [selectedDate, setSelectedDate] = useState(todayDate);
 
   // Diary hook for selected date
-  const { daySummary, loading: diaryLoading, refresh } = useDiary(selectedDate);
+  const { daySummary, loading: diaryLoading, error: diaryError, refresh } = useDiary(selectedDate);
   const { editEntry } = useEditEntry();
   const { deleteEntry } = useDeleteEntry();
 
   // Steps & Water hooks
   const { steps, goalSteps, refresh: refreshSteps } = useSteps(selectedDate);
-  const { totalMl, goalMl, refresh: refreshWater } = useWater(selectedDate);
 
   const handlePullRefresh = useCallback(async () => {
-    await Promise.all([refresh(), refreshSteps(), refreshWater(), refreshRooms()]);
-  }, [refresh, refreshSteps, refreshWater, refreshRooms]);
+    await Promise.all([refresh(), refreshSteps(), refreshRooms()]);
+  }, [refresh, refreshSteps, refreshRooms]);
 
   // Sheet & modal states
   const [activeLogSection, setActiveLogSection] = useState<MealSection | null>(null);
@@ -198,10 +112,6 @@ export default function TodayScreen() {
   const targetCalories = currentGoalProfile?.daily_calorie_target ?? null;
   const targetProtein = currentGoalProfile?.protein_grams ?? null;
   const effectiveGoalSteps = currentGoalProfile?.step_goal ?? goalSteps;
-  const effectiveGoalMl = currentGoalProfile?.water_ml_goal ?? goalMl;
-
-  const eatenCalories = daySummary.totals.calories;
-  const eatenProtein = daySummary.totals.protein;
 
   const getContextualQuestion = () =>
     t('repairs.mealQuestion', { meal: t(`diary.sections.${currentSuggestedMeal}`) });
@@ -264,94 +174,48 @@ export default function TodayScreen() {
           onRetry={() => void refreshRooms()}
           visible={homeVisible}
         />
-        {/* 4. {t('homeRefresh.yourDay')} (Steps, Calories, Water, Protein - with View Details >) */}
-        <View style={styles.sectionBlock}>
-          <View style={styles.sectionHeaderRow}>
-            <Text variant="heading" color={dark.textHi} style={styles.sectionHeaderTitle}>
-              {t('homeRefresh.yourDay')}
-            </Text>
-            <Pressable
-              onPress={() => setShowCaloriesDetail(true)}
-              hitSlop={8}
-              accessibilityRole="button"
-              accessibilityLabel="View progress details"
-            >
-              <Text variant="bodyS" color={dark.apricot} style={{ fontWeight: '600' }}>
-                View Details ›
-              </Text>
-            </Pressable>
-          </View>
-
-          {!currentGoalProfile && (
-            <Pressable
-              onPress={() => void refreshTargets()}
-              accessibilityRole="button"
-              accessibilityLabel={t('common.retry')}
-              testID="btn-retry-targets"
-            >
-              <Text variant="bodyS" color={dark.textMid} accessibilityLiveRegion="polite">
-                {targetsLoading
-                  ? t('common.targetsLoading')
-                  : targetsError
-                    ? t('common.errorBody')
-                    : t('common.targetUnavailable')}
-              </Text>
-            </Pressable>
-          )}
-          <View style={styles.progressRingsRow}>
-            {/* Steps */}
-            <MiniRing
-              icon="footsteps"
-              value={steps.toLocaleString()}
-              target={effectiveGoalSteps.toLocaleString()}
-              label={t('homeRefresh.steps')}
-              progressRatio={effectiveGoalSteps > 0 ? steps / effectiveGoalSteps : 0}
-              color={dark.apricot}
-              testID="ring-steps"
-              onPress={() => router.push('/(tabs)/progress' as Href)}
-            />
-
-            {/* Calories */}
-            <MiniRing
-              icon="flame"
-              value={eatenCalories}
-              target={targetCalories ?? t('common.unavailable')}
-              label={t('homeRefresh.caloriesMetric')}
-              progressRatio={
-                targetCalories != null && targetCalories > 0 ? eatenCalories / targetCalories : 0
-              }
-              color={dark.copper}
-              testID="ring-calories"
-              onPress={() => setShowCaloriesDetail(true)}
-            />
-
-            {/* Water */}
-            <MiniRing
-              icon="water"
-              value={(totalMl / 1000).toFixed(1)}
-              target={`${(effectiveGoalMl / 1000).toFixed(0)} L`}
-              label={t('homeRefresh.water')}
-              progressRatio={effectiveGoalMl > 0 ? totalMl / effectiveGoalMl : 0}
-              color={dark.teal}
-              testID="ring-water"
-              onPress={() => setShowWaterAlarmModal(true)}
-            />
-
-            {/* Protein (instead of workout session) */}
-            <MiniRing
-              icon="barbell"
-              value={`${eatenProtein}g`}
-              target={targetProtein == null ? t('common.unavailable') : `${targetProtein}g`}
-              label={t('homeRefresh.protein')}
-              progressRatio={
-                targetProtein != null && targetProtein > 0 ? eatenProtein / targetProtein : 0
-              }
-              color={dark.iris}
-              testID="ring-protein"
-              onPress={() => setShowCaloriesDetail(true)}
-            />
-          </View>
-        </View>
+        <PersonalDayCard
+          loading={diaryLoading || targetsLoading}
+          error={Boolean(diaryError || targetsError)}
+          onRetry={() => {
+            void refresh();
+            void refreshTargets();
+            void refreshSteps();
+          }}
+          onPress={() => router.push('/(tabs)/progress' as Href)}
+          metrics={[
+            {
+              label: t('squadDesign.calories'),
+              value: daySummary.totals.calories,
+              target: targetCalories,
+              unit: 'kcal',
+            },
+            {
+              label: t('squadDesign.protein'),
+              value: daySummary.totals.protein,
+              target: targetProtein,
+              unit: 'g',
+            },
+            {
+              label: t('squadDesign.carbs'),
+              value: daySummary.totals.carbs,
+              target: currentGoalProfile?.carb_grams ?? null,
+              unit: 'g',
+            },
+            {
+              label: t('squadDesign.fat'),
+              value: daySummary.totals.fat,
+              target: currentGoalProfile?.fat_grams ?? null,
+              unit: 'g',
+            },
+            {
+              label: t('squadDesign.steps'),
+              value: steps,
+              target: effectiveGoalSteps,
+              unit: t('squadDesign.steps'),
+            },
+          ]}
+        />
 
         {/* 6. Date Selector & Meal Logging Diary Sections */}
         <View style={styles.sectionBlock}>
@@ -452,7 +316,7 @@ export default function TodayScreen() {
         {/* 6. Calories & Macros Detail Sheet */}
         <CaloriesDetailSheet
           visible={showCaloriesDetail}
-          eatenCalories={eatenCalories}
+          eatenCalories={daySummary.totals.calories}
           targetCalories={targetCalories}
           proteinGrams={daySummary.totals.protein}
           carbGrams={daySummary.totals.carbs}

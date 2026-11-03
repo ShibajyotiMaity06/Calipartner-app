@@ -1,7 +1,9 @@
 import { challengeMessages } from './challengeMessages';
 import { homeRefresh } from './homeRefresh';
+import { squadDesign } from './squadDesign';
 import { repairMessages } from './repairs';
 export const en = {
+  squadDesign,
   homeRefresh,
   repairUnits: { cm: 'cm', ftIn: 'ft / inch', ft: 'ft', inch: 'inch' },
   customMacros: {
@@ -628,8 +630,8 @@ export const en = {
     today: 'Home',
     room: 'Squad',
     log: 'Log',
-    progress: 'Progress',
-    me: 'Account',
+    progress: 'You',
+    me: 'Profile',
   },
   placeholder: {
     comingSoon: 'Coming soon',

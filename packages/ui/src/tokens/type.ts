@@ -12,60 +12,60 @@ export interface TextStyleToken {
 
 export const type = {
   numeralXL: {
-    fontFamily: 'PlusJakartaSans_700',
+    fontFamily: 'PlusJakartaSans_300Italic',
     fontSize: 42,
     lineHeight: 48,
     fontVariant: ['tabular-nums'] as const,
   },
   numeralL: {
-    fontFamily: 'PlusJakartaSans_700',
+    fontFamily: 'PlusJakartaSans_300Italic',
     fontSize: 30,
     lineHeight: 36,
     fontVariant: ['tabular-nums'] as const,
   },
   numeralM: {
-    fontFamily: 'PlusJakartaSans_600',
+    fontFamily: 'PlusJakartaSans_300Italic',
     fontSize: 19,
     lineHeight: 24,
     fontVariant: ['tabular-nums'] as const,
   },
   title1: {
-    fontFamily: 'PlusJakartaSans_700',
+    fontFamily: 'PlusJakartaSans_300Italic',
     fontSize: 24,
     lineHeight: 30,
   },
   title2: {
-    fontFamily: 'PlusJakartaSans_600',
+    fontFamily: 'PlusJakartaSans_300Italic',
     fontSize: 19,
     lineHeight: 26,
   },
   heading: {
-    fontFamily: 'PlusJakartaSans_600',
+    fontFamily: 'PlusJakartaSans_300Italic',
     fontSize: 16,
     lineHeight: 24,
   },
   body: {
-    fontFamily: 'PlusJakartaSans_400',
+    fontFamily: 'PlusJakartaSans_300Italic',
     fontSize: 15,
     lineHeight: 24,
   },
   bodyS: {
-    fontFamily: 'PlusJakartaSans_400',
+    fontFamily: 'PlusJakartaSans_300Italic',
     fontSize: 14,
     lineHeight: 20,
   },
   label: {
-    fontFamily: 'PlusJakartaSans_500',
+    fontFamily: 'PlusJakartaSans_300Italic',
     fontSize: 13,
     lineHeight: 18,
   },
   micro: {
-    fontFamily: 'PlusJakartaSans_500',
+    fontFamily: 'PlusJakartaSans_300Italic',
     fontSize: 11,
     lineHeight: 14,
   },
   button: {
-    fontFamily: 'PlusJakartaSans_600',
+    fontFamily: 'PlusJakartaSans_300Italic',
     fontSize: 15,
     lineHeight: 20,
   },
@@ -80,19 +80,19 @@ export type TypeVariant = keyof typeof type;
  */
 export const typeHindi: Record<TypeVariant, TextStyleToken> = {
   numeralXL: {
-    fontFamily: 'PlusJakartaSans_700',
+    fontFamily: 'PlusJakartaSans_300Italic',
     fontSize: 42,
     lineHeight: Math.round(48 * 1.15),
     fontVariant: ['tabular-nums'],
   },
   numeralL: {
-    fontFamily: 'PlusJakartaSans_700',
+    fontFamily: 'PlusJakartaSans_300Italic',
     fontSize: 30,
     lineHeight: Math.round(36 * 1.15),
     fontVariant: ['tabular-nums'],
   },
   numeralM: {
-    fontFamily: 'PlusJakartaSans_600',
+    fontFamily: 'PlusJakartaSans_300Italic',
     fontSize: 19,
     lineHeight: Math.round(24 * 1.15),
     fontVariant: ['tabular-nums'],
@@ -144,9 +144,9 @@ export function getTypeStyle(variant: TypeVariant, isHindi = false): TextStyleTo
 }
 
 export const latinFonts = {
-  regular: 'PlusJakartaSans_400',
-  medium: 'PlusJakartaSans_500',
-  semibold: 'PlusJakartaSans_600',
-  bold: 'PlusJakartaSans_700',
-  extrabold: 'PlusJakartaSans_800',
+  regular: 'PlusJakartaSans_300Italic',
+  medium: 'PlusJakartaSans_300Italic',
+  semibold: 'PlusJakartaSans_300Italic',
+  bold: 'PlusJakartaSans_300Italic',
+  extrabold: 'PlusJakartaSans_300Italic',
 } as const;

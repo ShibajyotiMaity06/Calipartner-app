@@ -1,7 +1,6 @@
 import React, { useCallback, useMemo, useState } from 'react';
 import {
   BackHandler,
-  Modal,
   Pressable,
   RefreshControl,
   SafeAreaView,
@@ -41,12 +40,12 @@ import {
   RoomSettingsModal,
   SharedMealCard,
   SideBySideCard,
-  SquadConnectFlow,
   TrialBanner,
   type PendingSharedMeal,
   type RoomSegment,
 } from '@/components/rooms';
 
+import { SquadConnectModal } from '@/components/rooms/SquadConnectModal';
 import { SquadDayPanel } from '@/components/rooms/SquadDayPanel';
 import { BasicRoomCard } from '@/components/rooms/BasicRoomCard';
 import { ShareLoggedMealModal } from '@/components/rooms/ShareLoggedMealModal';
@@ -465,29 +464,15 @@ export default function RoomScreen() {
         </ScrollView>
       ) : rooms.length === 0 ? (
         /* Find a Partner / Squad Connect Flow (Screenshot 1: 1-on-1, Squad, Join) */
-        <SquadConnectFlow
-          isPlusOrPro={isPlusOrPro}
-          memberCap={currentTier === 'pro' && hasActiveAccess ? 20 : isPlusOrPro ? 5 : 2}
-          friends={friends.inbox?.friends ?? []}
-          loading={friends.loading}
-          error={Boolean(friends.error)}
-          onRetry={() => void friends.refresh()}
-          onFindFriend={() => router.push('/friends' as never)}
-          onOpenPaywall={() => setShowPaywallModal(true)}
-          onCreateSquad={async (name, ids) => {
-            const res = await createRoom(name, ids);
-            if (res && typeof res === 'object' && 'room_id' in res && res.room_id) {
-              setSelectedRoomId(String(res.room_id));
-            }
-            await refreshRooms();
-            return res as any;
-          }}
-          onJoinSquad={() => setShowJoinModal(true)}
-          onSquadCreatedAndReady={async (roomId) => {
-            setSelectedRoomId(roomId);
-            await refreshRooms();
-          }}
-        />
+        <View style={styles.emptyContainer}>
+          <AppText variant="title1">{t('socialUpdate.connect')}</AppText>
+          <AppText>{t('socialUpdate.choose')}</AppText>
+          <Button
+            label={t('homeRefresh.create')}
+            onPress={() => setShowCreateModal(true)}
+            testID="open-squad-connect-modal"
+          />
+        </View>
       ) : displaySegment === 'chat' && currentRoom ? (
         /* Segment: Chat (Phase 8 View) */
         <View style={styles.chatWrapper}>
@@ -772,42 +757,31 @@ export default function RoomScreen() {
 
       {/* Create Room Modal */}
       {showCreateModal ? (
-        <Modal visible animationType="slide" onRequestClose={() => setShowCreateModal(false)}>
-          <SafeAreaView style={[styles.safeArea, { backgroundColor: colors.background }]}>
-            <Pressable
-              onPress={() => setShowCreateModal(false)}
-              accessibilityRole="button"
-              accessibilityLabel={t('friends.close')}
-              style={styles.primaryButton}
-              testID="close-create-squad"
-            >
-              <Text style={{ color: colors.text }}>{t('friends.close')}</Text>
-            </Pressable>
-            <SquadConnectFlow
-              isPlusOrPro={isPlusOrPro}
-              memberCap={currentTier === 'pro' && hasActiveAccess ? 20 : isPlusOrPro ? 5 : 2}
-              friends={friends.inbox?.friends ?? []}
-              loading={friends.loading}
-              error={Boolean(friends.error)}
-              onRetry={() => void friends.refresh()}
-              onFindFriend={() => {
-                setShowCreateModal(false);
-                router.push('/friends' as never);
-              }}
-              onOpenPaywall={() => setShowPaywallModal(true)}
-              onCreateSquad={async (name, ids) => {
-                const result = await createRoom(name, ids);
-                setSelectedRoomId(result.room_id);
-                setShowCreateModal(false);
-                return result;
-              }}
-              onJoinSquad={() => {
-                setShowCreateModal(false);
-                setShowJoinModal(true);
-              }}
-            />
-          </SafeAreaView>
-        </Modal>
+        <SquadConnectModal
+          visible={showCreateModal}
+          onClose={() => setShowCreateModal(false)}
+          isPlusOrPro={isPlusOrPro}
+          memberCap={currentTier === 'pro' && hasActiveAccess ? 20 : isPlusOrPro ? 5 : 2}
+          friends={friends.inbox?.friends ?? []}
+          loading={friends.loading}
+          error={Boolean(friends.error)}
+          onRetry={() => void friends.refresh()}
+          onFindFriend={() => {
+            setShowCreateModal(false);
+            router.push('/friends' as never);
+          }}
+          onOpenPaywall={() => setShowPaywallModal(true)}
+          onCreateSquad={async (name, ids) => {
+            const result = await createRoom(name, ids);
+            setSelectedRoomId(result.room_id);
+            setShowCreateModal(false);
+            return result;
+          }}
+          onJoinSquad={() => {
+            setShowCreateModal(false);
+            setShowJoinModal(true);
+          }}
+        />
       ) : null}
 
       {/* Join by Code Modal */}

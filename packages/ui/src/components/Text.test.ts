@@ -12,7 +12,7 @@ describe('Onboarding typography contract', () => {
     expect(onboardingType.body.fontFamily).toBe('Figtree_400');
     expect(onboardingType.label.fontFamily).toBe('Figtree_500');
     expect(onboardingType.heading.fontFamily).toBe('Figtree_600');
-    expect(type.body.fontFamily).toBe('PlusJakartaSans_400');
+    expect(type.body.fontFamily).toBe('PlusJakartaSans_300Italic');
   });
 });
 
@@ -47,20 +47,20 @@ describe('Typography Scale (Plus Jakarta Sans & Apple Design)', () => {
   });
 
   it('uses Plus Jakarta Sans for titles and numerals', () => {
-    expect(type.numeralXL.fontFamily).toBe('PlusJakartaSans_700');
-    expect(type.numeralL.fontFamily).toBe('PlusJakartaSans_700');
-    expect(type.numeralM.fontFamily).toBe('PlusJakartaSans_600');
-    expect(type.title1.fontFamily).toBe('PlusJakartaSans_700');
-    expect(type.title2.fontFamily).toBe('PlusJakartaSans_600');
+    expect(type.numeralXL.fontFamily).toBe('PlusJakartaSans_300Italic');
+    expect(type.numeralL.fontFamily).toBe('PlusJakartaSans_300Italic');
+    expect(type.numeralM.fontFamily).toBe('PlusJakartaSans_300Italic');
+    expect(type.title1.fontFamily).toBe('PlusJakartaSans_300Italic');
+    expect(type.title2.fontFamily).toBe('PlusJakartaSans_300Italic');
   });
 
   it('uses Plus Jakarta Sans for interface text', () => {
-    expect(type.heading.fontFamily).toBe('PlusJakartaSans_600');
-    expect(type.body.fontFamily).toBe('PlusJakartaSans_400');
-    expect(type.bodyS.fontFamily).toBe('PlusJakartaSans_400');
-    expect(type.label.fontFamily).toBe('PlusJakartaSans_500');
-    expect(type.micro.fontFamily).toBe('PlusJakartaSans_500');
-    expect(type.button.fontFamily).toBe('PlusJakartaSans_600');
+    expect(type.heading.fontFamily).toBe('PlusJakartaSans_300Italic');
+    expect(type.body.fontFamily).toBe('PlusJakartaSans_300Italic');
+    expect(type.bodyS.fontFamily).toBe('PlusJakartaSans_300Italic');
+    expect(type.label.fontFamily).toBe('PlusJakartaSans_300Italic');
+    expect(type.micro.fontFamily).toBe('PlusJakartaSans_300Italic');
+    expect(type.button.fontFamily).toBe('PlusJakartaSans_300Italic');
   });
 
   it('scales Hindi line height by 1.15 to avoid clipping matras', () => {
@@ -69,11 +69,11 @@ describe('Typography Scale (Plus Jakarta Sans & Apple Design)', () => {
     expect(typeHindi.body.fontFamily).toBe('AnekDevanagari_400');
     expect(typeHindi.heading.fontFamily).toBe('AnekDevanagari_600');
     // Numerals stay Plus Jakarta Sans
-    expect(typeHindi.numeralXL.fontFamily).toBe('PlusJakartaSans_700');
+    expect(typeHindi.numeralXL.fontFamily).toBe('PlusJakartaSans_300Italic');
   });
 
   it('getTypeStyle correctly switches for Hindi', () => {
-    expect(getTypeStyle('body', false).fontFamily).toBe('PlusJakartaSans_400');
+    expect(getTypeStyle('body', false).fontFamily).toBe('PlusJakartaSans_300Italic');
     expect(getTypeStyle('body', true).fontFamily).toBe('AnekDevanagari_400');
   });
 });
