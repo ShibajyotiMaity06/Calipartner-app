@@ -82,7 +82,7 @@ export function ChatView({
   const { typingPeople, notifyTyping } = useChatTyping(
     roomId,
     options.userId,
-    isVisible && hasActiveAccess && termsAccepted,
+    isVisible && termsAccepted,
   );
   const effectiveIsLocked = Boolean(isLockedProp || isLockedFromHook);
   const mentionAccessDenied =
@@ -102,8 +102,7 @@ export function ChatView({
     let current = true;
     setFocusedMention(null);
     setMentionError(false);
-    if (!roomId || !isVisible || !hasActiveAccess || !focusedMentionId || mentionAccessDenied)
-      return;
+    if (!roomId || !isVisible || !focusedMentionId || mentionAccessDenied) return;
     void (async () => {
       try {
         const result = await getSupabase().rpc('get_squad_mention_context', {
@@ -125,7 +124,7 @@ export function ChatView({
     return () => {
       current = false;
     };
-  }, [roomId, isVisible, hasActiveAccess, focusedMentionId, mentionRetry, mentionAccessDenied]);
+  }, [roomId, isVisible, focusedMentionId, mentionRetry, mentionAccessDenied]);
 
   const openAttachment = (att: ChatAttachment) => {
     if (att.signed_url) {
@@ -248,7 +247,7 @@ export function ChatView({
         </View>
       )}
 
-      {hasActiveAccess && !mentionAccessDenied && focusedMentionId && (
+      {!mentionAccessDenied && focusedMentionId && (
         <View style={{ padding: spacing.sm }} testID="focused-chat-mention">
           <Text>{t('squadDesign.selectedMention')}</Text>
           {mentionError && (
@@ -389,15 +388,13 @@ export function ChatView({
         mentionMembers={mentionMembers.filter((member) => member.user_id !== options.userId)}
         onSend={handleSend}
         onTyping={notifyTyping}
-        disabled={effectiveIsLocked || isDormant || !hasActiveAccess}
+        disabled={effectiveIsLocked || isDormant}
         disabledReason={
-          !hasActiveAccess
-            ? t('setup.chatPlus')
-            : effectiveIsLocked
-              ? t('chat.pausedTitle')
-              : isDormant
-                ? t('chat.dormantBanner')
-                : undefined
+          effectiveIsLocked
+            ? t('chat.pausedTitle')
+            : isDormant
+              ? t('chat.dormantBanner')
+              : undefined
         }
         allowMedia={hasActiveAccess && currentTier === 'pro'}
         termsAccepted={termsAccepted}

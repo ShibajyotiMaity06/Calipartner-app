@@ -9,9 +9,19 @@ export const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-export async function canDeliverChatPush(admin: SupabaseClient, userId: string) {
-  const { data, error } = await admin.rpc('active_room_tier', { p_user_id: userId });
-  return !error && (data === 'plus' || data === 'pro');
+export async function canDeliverChatPush(
+  admin: SupabaseClient,
+  userId: string,
+  roomId: string,
+  messageId: string,
+) {
+  if (!userId || !roomId || !messageId) return false;
+  const { data, error } = await admin.rpc('can_deliver_squad_chat_push', {
+    p_user_id: userId,
+    p_room_id: roomId,
+    p_message_id: messageId,
+  });
+  return !error && data === true;
 }
 
 interface ServiceAccount {
@@ -345,11 +355,16 @@ export async function handleSendPush(req: Request): Promise<Response> {
     for (const item of queueItems) {
       if (
         item.notification_type === 'chat_message' &&
-        !(await canDeliverChatPush(adminClient, item.user_id))
+        !(await canDeliverChatPush(
+          adminClient,
+          item.user_id,
+          item.room_id ?? item.data?.roomId,
+          item.data?.messageId,
+        ))
       ) {
         await adminClient
           .from('push_notification_queue')
-          .update({ status: 'skipped', skip_reason: 'PLUS_REQUIRED' })
+          .update({ status: 'skipped', skip_reason: 'CHAT_ACCESS_REVOKED' })
           .eq('id', item.id);
         continue;
       }

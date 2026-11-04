@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
+import { validatePlanPreferences, validateWeeklyPlan } from '@calipartner/core';
 import type { SupabaseClient } from 'npm:@supabase/supabase-js@2.117.3';
-import { handleWeeklyPlan } from './index.ts';
+import { generateWeeklyPlan, handleWeeklyPlan } from './index.ts';
 const preferences = {
   workout_days: [0],
   location: 'home',
@@ -173,3 +174,155 @@ Deno.test('Provider or database failures cannot confirm a saved plan', async () 
     assert.equal(state.writes.at(-1)?.p_content, null);
   }
 });
+
+Deno.test('A retired configured Groq model falls back to the supported model', async () => {
+  const models: string[] = [];
+  const fetcher: typeof fetch = async (_url, init) => {
+    const body = JSON.parse(String(init?.body));
+    models.push(body.model);
+    assert.equal(body.response_format.type, models.length === 1 ? 'json_object' : 'json_schema');
+    if (models.length === 2) {
+      assert.equal(body.response_format.json_schema.strict, true);
+      assert.equal(body.response_format.json_schema.schema.additionalProperties, false);
+    }
+    assert.equal(body.messages[0].content, 'synthetic preferences');
+    return models.length === 1
+      ? new Response('{}', { status: 400 })
+      : Response.json({ choices: [{ message: { content: JSON.stringify(content()) } }] });
+  };
+  const result = await generateWeeklyPlan(
+    'synthetic preferences',
+    fetcher,
+    (key) => ({ GROQ_API_KEY: 'fixture', GROQ_MODEL: 'retired-model' })[key],
+  );
+  assert.deepEqual(models, ['retired-model', 'openai/gpt-oss-120b']);
+  assert.deepEqual(result, content());
+});
+
+Deno.test(
+  'Unavailable OpenRouter models and malformed responses use the free router fallback',
+  async () => {
+    for (const status of [200, 404]) {
+      const models: string[] = [];
+      const fetcher: typeof fetch = async (_url, init) => {
+        models.push(JSON.parse(String(init?.body)).model);
+        return models.length === 1
+          ? new Response('malformed provider output', { status })
+          : Response.json({ choices: [{ message: { content: JSON.stringify(content()) } }] });
+      };
+      assert.deepEqual(
+        await generateWeeklyPlan(
+          'synthetic preferences',
+          fetcher,
+          (key) => ({ OPENROUTER_API_KEY: 'fixture', OPENROUTER_MODEL: 'retired-model' })[key],
+        ),
+        content(),
+      );
+      assert.deepEqual(models, ['retired-model', 'openrouter/free']);
+    }
+  },
+);
+
+Deno.test('Provider failures never fabricate a plan or retry duplicate defaults', async () => {
+  let calls = 0;
+  await assert.rejects(
+    () =>
+      generateWeeklyPlan(
+        'synthetic preferences',
+        async () => {
+          calls++;
+          return new Response('{}', { status: 503 });
+        },
+        (key) => ({ GROQ_API_KEY: 'fixture', OPENROUTER_API_KEY: 'fixture' })[key],
+      ),
+    /PLAN_UNAVAILABLE/,
+  );
+  assert.equal(calls, 2);
+});
+
+Deno.test(
+  'The existing configured backup Groq credential handles primary rate limits',
+  async () => {
+    let calls = 0;
+    assert.deepEqual(
+      await generateWeeklyPlan(
+        'synthetic preferences',
+        async (_url, init) => {
+          calls++;
+          assert.equal(
+            new Headers(init?.headers).get('Authorization'),
+            calls === 1 ? 'Bearer primary-fixture' : 'Bearer backup-fixture',
+          );
+          return calls === 1
+            ? Response.json({ error: { code: 'rate_limit_exceeded' } }, { status: 429 })
+            : Response.json({ choices: [{ message: { content: JSON.stringify(content()) } }] });
+        },
+        (key) =>
+          ({ GROQ_API_KEY: 'primary-fixture', GROQ_API_KEY_FALLBACK: 'backup-fixture' })[key],
+      ),
+      content(),
+    );
+    assert.equal(calls, 2);
+  },
+);
+
+Deno.test(
+  'Invalid numeric exercise prescriptions get one validated repair or fail closed',
+  async () => {
+    for (const repaired of [true, false]) {
+      let calls = 0;
+      const run = () =>
+        generateWeeklyPlan(
+          'synthetic preferences',
+          async (_url, init) => {
+            calls++;
+            const draft = content();
+            if (calls === 1 || !repaired) draft.days[0].workout.exercises[0].reps = 90;
+            if (calls === 2) assert.match(String(init?.body), /exercise_reps/);
+            return Response.json({ choices: [{ message: { content: JSON.stringify(draft) } }] });
+          },
+          (key) => ({ GROQ_API_KEY: 'fixture' })[key],
+          (draft) =>
+            validateWeeklyPlan(draft, validatePlanPreferences(preferences), {
+              calories: 2100,
+              protein: 120,
+              carbs: 270,
+              fat: 60,
+              calorie_floor: 1500,
+            }),
+        );
+      if (repaired) assert.deepEqual(await run(), content());
+      else await assert.rejects(run, /PLAN_UNAVAILABLE/);
+      assert.equal(calls, 2);
+    }
+  },
+);
+
+Deno.test(
+  'A provider JSON-mode error gets one parseable text retry without using failed output',
+  async () => {
+    const requests: Array<Record<string, unknown>> = [];
+    const result = await generateWeeklyPlan(
+      'synthetic preferences',
+      async (_url, init) => {
+        requests.push(JSON.parse(String(init?.body)));
+        return requests.length === 1
+          ? Response.json(
+              { error: { code: 'json_validate_failed', failed_generation: 'untrusted partial' } },
+              { status: 400 },
+            )
+          : Response.json({
+              choices: [
+                { message: { content: '```json\n' + JSON.stringify(content()) + '\n```' } },
+              ],
+            });
+      },
+      (key) => ({ GROQ_API_KEY: 'fixture' })[key],
+    );
+    assert.deepEqual(result, content());
+    assert.equal(requests.length, 2);
+    assert.equal(requests[0].model, requests[1].model);
+    assert.ok(requests[0].response_format);
+    assert.equal(requests[1].response_format, undefined);
+  },
+);

@@ -120,3 +120,7 @@ verify_jwt = false
 [functions.weekly-plan]
 # The handler verifies the bearer token with Supabase Auth before reading owner context.
 verify_jwt = false
+
+[functions.chat-signed-url]
+# Authenticate with Supabase Auth and recheck message membership/privacy in the handler.
+verify_jwt = false

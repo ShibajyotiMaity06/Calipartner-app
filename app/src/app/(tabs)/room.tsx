@@ -47,7 +47,7 @@ export default function RoomScreen() {
   const roomsHook = useRooms(),
     requests = useRoomRequests(),
     friends = useFriends();
-  const { hasActiveAccess, currentTier, loading: subscriptionLoading } = useSubscription();
+  const { hasActiveAccess, currentTier } = useSubscription();
   const params = useLocalSearchParams<{
     room?: string;
     action?: string;
@@ -171,7 +171,7 @@ export default function RoomScreen() {
     }, 5000);
     return () => clearInterval(timer);
   }, [visible, waiting, roomId, refreshSnapshot, refreshRooms]);
-  const canChat = hasActiveAccess && !waiting && !locked;
+  const canChat = !waiting && !locked;
   const preview = useRoomChat(
     canChat && segment !== 'chat' ? roomId : null,
     visible && canChat && segment !== 'chat',
@@ -228,14 +228,9 @@ export default function RoomScreen() {
       />
       {segment === 'chat' && room ? (
         <View style={styles.flex}>
-          {subscriptionLoading ? (
-            <Text>{t('common.loading')}</Text>
-          ) : !canChat ? (
+          {!canChat ? (
             <View style={styles.content}>
-              <Text>{t(waiting ? 'rooms.dormant.subtitle' : 'setup.chatPlus')}</Text>
-              {!waiting && (
-                <Button label={t('squadDesign.unlock')} onPress={() => setModal('paywall')} />
-              )}
+              <Text>{t(waiting ? 'rooms.dormant.subtitle' : 'chat.pausedTitle')}</Text>
             </View>
           ) : (
             <ChatView

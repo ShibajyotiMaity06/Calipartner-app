@@ -168,7 +168,7 @@ const rows = () =>
     (node) =>
       typeof node.props.testID === 'string' && node.props.testID.startsWith('squad-member-'),
   );
-it('shows both people for a Free pair, removes check-ins and nudges, and keeps Free chat behind Plus', async () => {
+it('shows both people for a Free pair and opens Squad chat without a subscription', async () => {
   await act(async () => {
     tree = create(<RoomScreen />);
   });
@@ -179,8 +179,8 @@ it('shows both people for a Free pair, removes check-ins and nudges, and keeps F
   await act(async () =>
     tree.root.findByType('RoomHeader' as React.ElementType).props.onSelectSegment('chat'),
   );
-  expect(tree.root.findAllByType('ChatView' as React.ElementType)).toHaveLength(0);
-  expect(state.chat.mock.lastCall?.[0]).toBeNull();
+  expect(tree.root.findAllByType('ChatView' as React.ElementType)).toHaveLength(1);
+  expect(tree.root.findByType('ChatView' as React.ElementType).props.roomId).toBe('room');
 });
 it('shows only the top three on Overview and all 20 on Leaderboard without a paid gate', async () => {
   state.count = 20;

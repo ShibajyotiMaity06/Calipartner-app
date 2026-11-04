@@ -210,12 +210,11 @@ export async function runSquadRevisionTests(db) {
       await user(1);
       const free = await rpc('get_squad_mentions($1)', [room]);
       assert.equal(free.count, 1);
-      assert.equal(free.locked, true);
-      assert.deepEqual(free.mentions, []);
-      await reject(
-        'select public.get_squad_mention_context($1,$2)',
-        [room, tagged.id],
-        /PLUS_REQUIRED/,
+      assert.equal(free.locked, false);
+      assert.equal(free.mentions[0].message_id, tagged.id);
+      assert.equal(
+        (await rpc('get_squad_mention_context($1,$2)', [room, tagged.id]))[0].id,
+        tagged.id,
       );
     });
     await test('Opening an old mention fetches that exact message and acknowledges only that recipient after success', async () => {

@@ -50,33 +50,92 @@ export async function runChatAccessTests(db) {
     ]),
   ]);
   await user(1);
-  await assert.rejects(
-    () => scalar('select public.get_chat_messages($1)', [room]),
-    /PLUS_REQUIRED/,
-  );
-  await assert.rejects(() => scalar('select public.mark_chat_read($1)', [room]), /PLUS_REQUIRED/);
+  const freeMessages = await scalar('select public.get_chat_messages($1)', [room]);
+  assert.ok(freeMessages.some((message) => message.text === 'Private paid chat'));
+  await scalar('select public.mark_chat_read($1)', [room]);
   assert.equal(await scalar('select public.get_chat_unread_count($1)', [room]), 0);
-  for (const table of ['chat_messages', 'chat_attachments', 'chat_read_state'])
-    assert.equal(await scalar(`select count(*)::int from public.${table}`), 0);
-  await admin();
+  assert.ok(await scalar('select count(*)::int from public.chat_messages'));
+  await scalar('select public.accept_chat_terms()');
+  const freeSend = await scalar('select public.send_chat_message($1,$2,$3)', [
+    room,
+    'free-access-message',
+    'Free member reply',
+  ]);
   assert.equal(
+    (
+      await scalar('select public.send_chat_message($1,$2,$3)', [
+        room,
+        'free-access-message',
+        'retry',
+      ])
+    ).id,
+    freeSend.id,
+  );
+  await admin();
+  assert.ok(
     await scalar(
       "select count(*)::int from public.push_notification_queue where user_id=$1 and notification_type='chat_message'",
       [ids[1]],
     ),
-    0,
   );
   console.log(
-    'PASS Free members cannot read chat RPCs, tables, media metadata, read-state or previews',
+    'PASS Free members read, send, acknowledge and receive chat notifications with idempotent retries',
+  );
+  await user(1);
+  assert.deepEqual(await scalar('select public.get_chat_hidden_senders($1)', [room]), []);
+  await scalar('select public.set_chat_typing($1,true)', [room]);
+  const reportTarget = freeMessages.find((message) => message.text === 'Private paid chat').id;
+  const report = await scalar('select public.report_chat_message($1,$2)', [reportTarget, 'spam']);
+  assert.equal(
+    await scalar('select public.report_chat_message($1,$2)', [reportTarget, 'spam']),
+    report,
+  );
+  await user(0);
+  assert.ok(
+    (await scalar('select public.get_chat_typing($1)', [room])).some(
+      (person) => person.user_id === ids[1],
+    ),
+  );
+  await admin();
+  await db.exec('set role service_role');
+  assert.equal(
+    await scalar('select public.can_deliver_squad_chat_push($1,$2,$3)', [
+      ids[1],
+      room,
+      reportTarget,
+    ]),
+    true,
+  );
+  await admin();
+  await db.query('insert into public.blocks(blocker_id,blocked_id) values($1,$2)', [
+    ids[1],
+    ids[0],
+  ]);
+  await db.exec('set role service_role');
+  assert.equal(
+    await scalar('select public.can_deliver_squad_chat_push($1,$2,$3)', [
+      ids[1],
+      room,
+      reportTarget,
+    ]),
+    false,
+  );
+  await admin();
+  await db.query('delete from public.blocks where blocker_id=$1 and blocked_id=$2', [
+    ids[1],
+    ids[0],
+  ]);
+  console.log(
+    'PASS Free typing, reports and dispatch-time push membership/block checks remain enforced',
   );
   for (const [tier, status, end, allowed] of [
     ['plus', 'paid', '2099-01-01', true],
     ['plus', 'trial', '2099-01-01', true],
     ['pro', 'paid', '2099-01-01', true],
     ['pro', 'grace', '2099-01-01', true],
-    ['pro', 'trial', '2099-01-01', false],
-    ['pro', 'paid', '2000-01-01', false],
-    ['plus', 'lapsed', '2099-01-01', false],
+    ['pro', 'trial', '2099-01-01', true],
+    ['pro', 'paid', '2000-01-01', true],
+    ['plus', 'lapsed', '2099-01-01', true],
   ]) {
     await plan(1, tier, status, end);
     await user(1);
@@ -94,21 +153,16 @@ export async function runChatAccessTests(db) {
       assert.equal(await scalar('select public.get_chat_unread_count($1)', [room]), 0);
     }
   }
-  console.log(
-    'PASS Plus/Pro and eligible Plus trials read chat; expired, lapsed and Pro trials do not',
-  );
+  console.log('PASS Text chat is available independent of Plus/Pro, trial, expiry and lapse');
   await plan(0, 'pro', 'lapsed');
   await user(0);
-  await assert.rejects(
-    () =>
-      scalar('select public.send_chat_message($1,$2,$3)', [
-        room,
-        'paid-access-message',
-        'Private paid chat',
-      ]),
-    /PLUS_REQUIRED/,
-  );
-  console.log('PASS A lapsed sender cannot recover chat by replaying a previously successful send');
+  const replay = await scalar('select public.send_chat_message($1,$2,$3)', [
+    room,
+    'paid-access-message',
+    'Private paid chat',
+  ]);
+  assert.ok(replay.id);
+  console.log('PASS A lapsed member keeps text chat while the room remains usable');
   await plan(2, 'pro');
   await user(2);
   await assert.rejects(

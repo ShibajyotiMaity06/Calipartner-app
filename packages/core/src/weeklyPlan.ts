@@ -84,16 +84,49 @@ export interface PlanGoals {
   fat: number;
   calorie_floor: number;
 }
+export class WeeklyPlanValidationError extends Error {
+  constructor(
+    readonly reason:
+      | 'shape'
+      | 'text_limits'
+      | 'numeric_limits'
+      | 'unsupported_choice'
+      | 'list_limits'
+      | 'week_days'
+      | 'training_schedule'
+      | 'meal_count'
+      | 'excluded_ingredient'
+      | 'unsafe_copy'
+      | 'meal_energy'
+      | 'daily_energy'
+      | 'daily_macro'
+      | 'exercise_sets'
+      | 'exercise_reps'
+      | 'exercise_rest'
+      | 'workout_minutes'
+      | 'meal_calories'
+      | 'meal_macro',
+  ) {
+    super('INVALID_PLAN');
+  }
+}
 const object = (value: unknown): Record<string, unknown> => {
-  if (!value || typeof value !== 'object' || Array.isArray(value)) throw new Error('INVALID_PLAN');
+  if (!value || typeof value !== 'object' || Array.isArray(value))
+    throw new WeeklyPlanValidationError('shape');
   return value as Record<string, unknown>;
 };
 const text = (value: unknown, max = 250, empty = false): string => {
   if (typeof value !== 'string' || value.length > max || (!empty && !value.trim()))
-    throw new Error('INVALID_PLAN');
+    throw new WeeklyPlanValidationError('text_limits');
   return value.trim();
 };
-const number = (value: unknown, min: number, max: number, integer = true): number => {
+const number = (
+  value: unknown,
+  min: number,
+  max: number,
+  integer = true,
+  reason: WeeklyPlanValidationError['reason'] = 'numeric_limits',
+): number => {
   if (
     typeof value !== 'number' ||
     !Number.isFinite(value) ||
@@ -101,16 +134,16 @@ const number = (value: unknown, min: number, max: number, integer = true): numbe
     value > max ||
     (integer && !Number.isInteger(value))
   )
-    throw new Error('INVALID_PLAN');
+    throw new WeeklyPlanValidationError(reason);
   return value;
 };
 function choice<T extends string>(value: unknown, choices: readonly T[]): T {
-  if (!choices.includes(value as T)) throw new Error('INVALID_PLAN');
+  if (!choices.includes(value as T)) throw new WeeklyPlanValidationError('unsupported_choice');
   return value as T;
 }
 const strings = (value: unknown, min: number, max: number, length = 250) => {
   if (!Array.isArray(value) || value.length < min || value.length > max)
-    throw new Error('INVALID_PLAN');
+    throw new WeeklyPlanValidationError('list_limits');
   return value.map((item) => text(item, length));
 };
 export function validatePlanPreferences(input: unknown): PlanPreferences {
@@ -156,9 +189,9 @@ export function validatePlanExercises(
     return {
       name: text(e.name, 100),
       equipment,
-      sets: number(e.sets, 1, 5),
-      reps: number(e.reps, 5, 30),
-      rest_seconds: number(e.rest_seconds, 30, 180),
+      sets: number(e.sets, 1, 5, true, 'exercise_sets'),
+      reps: number(e.reps, 5, 30, true, 'exercise_reps'),
+      rest_seconds: number(e.rest_seconds, 30, 180, true, 'exercise_rest'),
     };
   });
 }
@@ -169,7 +202,8 @@ export function validateWeeklyPlan(
   goals: PlanGoals,
 ): WeeklyPlanContent {
   const plan = object(input);
-  if (!Array.isArray(plan.days) || plan.days.length !== 7) throw new Error('INVALID_PLAN');
+  if (!Array.isArray(plan.days) || plan.days.length !== 7)
+    throw new WeeklyPlanValidationError('week_days');
   const forbidden = [...preferences.allergies, ...preferences.exclusions].filter(
     (value) => !/^none$/i.test(value),
   );
@@ -210,37 +244,39 @@ export function validateWeeklyPlan(
         ).test(lower),
       )
     )
-      throw new Error('INVALID_PLAN');
+      throw new WeeklyPlanValidationError('excluded_ingredient');
     if (/detox|cure|crash diet|skip meals|starv|ignore pain|no pain no gain/i.test(lower))
-      throw new Error('INVALID_PLAN');
+      throw new WeeklyPlanValidationError('unsafe_copy');
     return value;
   };
   const days = plan.days.map((value, index): PlanDay => {
     const d = object(value),
       workout = object(d.workout);
-    if (d.day !== index) throw new Error('INVALID_PLAN');
+    if (d.day !== index) throw new WeeklyPlanValidationError('week_days');
     const exercises = validatePlanExercises(workout.exercises, preferences);
     const training = preferences.workout_days.includes(index);
-    if (training !== exercises.length > 0) throw new Error('INVALID_PLAN');
+    if (training !== exercises.length > 0) throw new WeeklyPlanValidationError('training_schedule');
     const minutes = number(
       workout.minutes,
       training ? 15 : 0,
       training ? preferences.session_minutes : 0,
+      true,
+      'workout_minutes',
     );
     if (!Array.isArray(d.meals) || d.meals.length !== preferences.meals_per_day)
-      throw new Error('INVALID_PLAN');
+      throw new WeeklyPlanValidationError('meal_count');
     const meals = d.meals.map((value): PlanMeal => {
       const m = object(value);
       const name = safeText(text(m.name, 120)),
         ingredients = strings(m.ingredients, 1, 20, 150).map(safeText),
         portion = safeText(text(m.portion, 250));
-      const calories = number(m.calories, 50, 3000, false),
-        protein = number(m.protein, 0, 200, false),
-        carbs = number(m.carbs, 0, 400, false),
-        fat = number(m.fat, 0, 150, false);
+      const calories = number(m.calories, 50, 3000, false, 'meal_calories'),
+        protein = number(m.protein, 0, 200, false, 'meal_macro'),
+        carbs = number(m.carbs, 0, 400, false, 'meal_macro'),
+        fat = number(m.fat, 0, 150, false, 'meal_macro');
       const macroCalories = 4 * (protein + carbs) + 9 * fat;
       if (Math.abs(macroCalories - calories) > Math.max(30, calories * 0.2))
-        throw new Error('INVALID_PLAN');
+        throw new WeeklyPlanValidationError('meal_energy');
       return { name, ingredients, portion, calories, protein, carbs, fat };
     });
     const total = meals.reduce((sum, meal) => sum + meal.calories, 0);
@@ -248,11 +284,11 @@ export function validateWeeklyPlan(
       total < Math.max(goals.calorie_floor, goals.calories * 0.9) ||
       total > goals.calories * 1.15
     )
-      throw new Error('INVALID_PLAN');
+      throw new WeeklyPlanValidationError('daily_energy');
     for (const macro of ['protein', 'carbs', 'fat'] as const) {
       const totalMacro = meals.reduce((sum, meal) => sum + meal[macro], 0);
       if (Math.abs(totalMacro - goals[macro]) > Math.max(10, goals[macro] * 0.3))
-        throw new Error('INVALID_PLAN');
+        throw new WeeklyPlanValidationError('daily_macro');
     }
     return {
       day: index,

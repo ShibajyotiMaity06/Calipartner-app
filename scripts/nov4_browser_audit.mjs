@@ -266,9 +266,9 @@ try {
       else if (name === 'get_squad_mentions')
         data = {
           count: body.p_room_id === rid(1) && !seen ? 1 : 0,
-          locked: !paid,
+          locked: false,
           mentions:
-            paid && body.p_room_id === rid(1) && !seen
+            body.p_room_id === rid(1) && !seen
               ? [
                   {
                     message_id: messageId,
@@ -697,6 +697,15 @@ try {
     );
   }
   await snap('weekly-paid-plan');
+  paid = false;
+  pro = false;
+  await page.goto('http://127.0.0.1:8098/room?room=' + rid(0) + '&tab=chat');
+  await page.getByTestId('room-chat-view').waitFor();
+  const composer = page.getByTestId('chat-composer');
+  await composer.getByRole('textbox').fill('Free squad chat check');
+  await composer.getByTestId('btn-chat-send').click();
+  await page.getByText('Free squad chat check', { exact: true }).waitFor();
+  await snap('free-squad-chat');
   assert.deepEqual(errors, []);
   console.log(
     'November 4 browser audit: previous food/polish coverage, chronological nested/tab/Log Back, inline member selection, stable idle Compare, acknowledged peer-food copying, Monday-only Free/trial, full paid week/tips and persisted routine editing passed at 375/390/844px',

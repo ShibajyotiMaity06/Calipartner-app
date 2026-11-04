@@ -97,14 +97,6 @@ export async function handleChatSignedUrl(
       });
     }
 
-    const access = await adminClient.rpc('active_room_tier', { p_user_id: user.id });
-    if (access.error || !['plus', 'pro'].includes(access.data)) {
-      return new Response(JSON.stringify({ error: 'PLUS_REQUIRED' }), {
-        status: 403,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
-    }
-
     // 4. Generate short-lived signed GET URL (expires in 15 minutes = 900 seconds)
     const allowed = await adminClient.rpc('can_read_chat_media', {
       p_room_id: room_id,

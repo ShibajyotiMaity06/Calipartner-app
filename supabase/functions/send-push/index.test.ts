@@ -1,22 +1,26 @@
 import { handleSendPush, canDeliverChatPush } from './index.ts';
 
 Deno.test(
-  'chat previews require a fresh Plus/Pro entitlement at dispatch, failing closed on lookup errors',
+  'chat previews recheck recipient membership and message privacy without a paid entitlement',
   async () => {
-    for (const [tier, error, expected] of [
-      ['free', null, false],
-      ['plus', null, true],
-      ['pro', null, true],
+    for (const [allowed, error, expected] of [
+      [false, null, false],
+      [true, null, true],
       [null, 'unavailable', false],
     ]) {
       const admin = {
-        rpc: (name: string, args: { p_user_id: string }) => {
-          equal(name, 'active_room_tier');
+        rpc: (
+          name: string,
+          args: { p_user_id: string; p_room_id: string; p_message_id: string },
+        ) => {
+          equal(name, 'can_deliver_squad_chat_push');
           equal(args.p_user_id, 'verified-recipient');
-          return Promise.resolve({ data: tier, error });
+          equal(args.p_room_id, 'room');
+          equal(args.p_message_id, 'message');
+          return Promise.resolve({ data: allowed, error });
         },
       } as unknown as Parameters<typeof canDeliverChatPush>[0];
-      equal(await canDeliverChatPush(admin, 'verified-recipient'), expected);
+      equal(await canDeliverChatPush(admin, 'verified-recipient', 'room', 'message'), expected);
     }
   },
 );

@@ -129,7 +129,7 @@ export async function runChatConcurrencyTests(db) {
       await rpc('mark_chat_read($1,$2)', [rid, all[0].id]);
       assert.equal(await rpc('get_chat_unread_count($1)', [rid]), 0);
     });
-    await test('Typing shows multiple paid members, excludes self/Free/expired, stops and expires safely', async () => {
+    await test('Typing includes Free and expired members, excludes self, stops and expires safely', async () => {
       for (const i of [0, 1, 2, 3, 6]) {
         await user(i);
         await rpc('set_chat_typing($1,true)', [rid]);
@@ -138,13 +138,14 @@ export async function runChatConcurrencyTests(db) {
       assert.equal((await rpc('get_chat_typing($1)', [rid])).length, 4);
       for (const i of [4, 5]) {
         await user(i);
-        await reject('set_chat_typing($1,true)', [rid], /PLUS_REQUIRED/);
-        await reject('get_chat_typing($1)', [rid], /PLUS_REQUIRED/);
+        await rpc('accept_chat_terms()');
+        await rpc('set_chat_typing($1,true)', [rid]);
+        assert.ok((await rpc('get_chat_typing($1)', [rid])).length);
       }
       await user(1);
       await rpc('set_chat_typing($1,false)', [rid]);
       await user(0);
-      assert.equal((await rpc('get_chat_typing($1)', [rid])).length, 3);
+      assert.equal((await rpc('get_chat_typing($1)', [rid])).length, 5);
       await admin();
       await db.exec("update public.chat_typing set expires_at=now()-interval '1 second'");
       await user(0);
@@ -186,8 +187,8 @@ export async function runChatConcurrencyTests(db) {
         [0, true],
         [2, true],
         [3, true],
-        [4, false],
-        [5, false],
+        [4, true],
+        [5, true],
         [20, false],
       ])
         assert.equal(await rpc('can_read_chat_media($1,$2,$3)', [rid, key, uid(i)]), allowed);
@@ -219,7 +220,7 @@ export async function runChatConcurrencyTests(db) {
       await service();
       assert.equal(await rpc('can_read_chat_media($1,$2,$3)', [rid, key, uid(0)]), false);
     });
-    await test('Reports reject outsiders and Free viewers and deduplicate moderation work', async () => {
+    await test('Reports reject outsiders, include Free viewers and deduplicate moderation work', async () => {
       await user(2);
       const target = (await rpc('get_chat_messages_v2($1)', [rid])).find(
         (m) => m.sender_id === uid(1),
@@ -233,7 +234,7 @@ export async function runChatConcurrencyTests(db) {
       await user(20);
       await reject('report_chat_message($1,$2)', [target.id, 'spam'], /NOT_ROOM_MEMBER/);
       await user(4);
-      await reject('report_chat_message($1,$2)', [target.id, 'spam'], /PLUS_REQUIRED/);
+      assert.ok(await rpc('report_chat_message($1,$2)', [target.id, 'spam']));
       await admin();
       assert.equal(
         (

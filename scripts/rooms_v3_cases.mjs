@@ -71,17 +71,15 @@ export async function runRoomTests(db) {
     await user(3);
     await fails('select public.join_by_code($1,$2)', /ROOM_FULL/, [free.code, null]);
   });
-  await test('Free cannot send chat through either RPC or table write', async () => {
+  await test('Free sends chat through the RPC and owner-scoped table policy', async () => {
     await user(1);
-    await db.query(`select public.accept_chat_terms()`);
-    await fails('select public.send_chat_message($1,$2,$3)', /PLUS_REQUIRED/, [
-      rid(1),
-      'free-chat',
-      'Hello',
-    ]);
-    await fails(
-      `insert into public.chat_messages(client_id,room_id,sender_id,text) values('direct-free',$1,$2,'Hello')`,
-      /PLUS_REQUIRED/,
+    await db.query('select public.accept_chat_terms()');
+    assert.ok(
+      (await scalar('select public.send_chat_message($1,$2,$3)', [rid(1), 'free-chat', 'Hello']))
+        .id,
+    );
+    await db.query(
+      "insert into public.chat_messages(client_id,room_id,sender_id,text) values('direct-free',$1,$2,'Hello')",
       [rid(1), uid(1)],
     );
   });
@@ -102,7 +100,7 @@ export async function runRoomTests(db) {
     await join(9, plus.code);
     assert.equal(await scalar('select public.room_cap($1)', [rid(4)]), 20);
   });
-  await test('Plus can chat; a free member cannot read or impersonate the sender', async () => {
+  await test('Plus and Free members can chat, but nobody may impersonate a sender', async () => {
     await plan(1, 'plus');
     await user(1);
     await scalar('select public.send_chat_message($1,$2,$3)', [rid(1), 'plus-chat', 'Hello']);
@@ -110,9 +108,9 @@ export async function runRoomTests(db) {
     await db.query('select public.accept_chat_terms()');
     assert.equal(
       await scalar('select count(*)::int from public.chat_messages where room_id=$1', [rid(1)]),
-      0,
+      3,
     );
-    await fails('select public.send_chat_message($1,$2,$3)', /PLUS_REQUIRED/, [
+    await fails('select public.send_chat_message($1,$2,$3)', /NOT_AUTHORIZED/, [
       rid(1),
       'plus-chat',
       'stolen',

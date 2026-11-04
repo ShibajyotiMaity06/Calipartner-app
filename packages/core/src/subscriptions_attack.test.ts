@@ -9,8 +9,8 @@ import {
 
 // Real membership, RPC, RLS, webhook replay and lifecycle tests live in test:db.
 describe('Individual subscription security boundaries', () => {
-  it('requires the sender to pay for text or workout sharing', () => {
-    expect(isFeatureAllowed('room_chat', 'free')).toBe(false);
+  it('keeps text chat free while detailed workout sharing requires Plus', () => {
+    expect(isFeatureAllowed('room_chat', 'free')).toBe(true);
     expect(isFeatureAllowed('shared_workouts', 'free')).toBe(false);
     expect(isFeatureAllowed('room_chat', 'plus')).toBe(true);
     expect(isFeatureAllowed('shared_workouts', 'plus')).toBe(true);

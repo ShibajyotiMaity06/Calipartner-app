@@ -443,7 +443,7 @@ export const en = {
     roomChoices: 'Two people free. Up to five with a Plus host, or 20 with Pro.',
     roomPaidFeatures: 'Text and workouts with Plus. Photos and videos with Pro.',
     plusRoomFeature: 'Host 3 rooms, up to 5 people each. Friends join free.',
-    plusChatFeature: 'Send text chat and share exact workouts',
+    plusChatFeature: 'Share detailed workouts with your squad',
     pairChallengeFeature: 'Pair challenges when both people have Plus',
     proRoomFeature: 'Host 5 rooms, up to 20 people each',
     proMediaFeature: 'Share photos and videos in room chat',
@@ -468,7 +468,7 @@ export const en = {
       'Has your weight or routine changed? Review your details and confirm your updated macros.',
     reviewMonthlyAction: 'Review my plan',
     reviewMonthlyLater: 'Later',
-    chatPlus: 'Plus or Pro lets you chat and share workouts.',
+    chatPlus: 'Squad text chat is free. Sharing detailed workouts requires Plus or Pro.',
     mediaPro: 'Photo and video sharing requires Pro.',
     frozenRoom:
       'Renew or take over with an eligible plan within 30 days. After that, this room is deleted. Your personal logs stay yours.',

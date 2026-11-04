@@ -322,6 +322,9 @@ describe('Phase 10 Core: Paywall Triggers & Trial Banners (CaliPartner Pricing P
   });
 
   it('enforces feature permissions matrix across Free, Plus, and Pro', () => {
+    for (const tier of ['free', 'basic', 'plus', 'pro'] as const)
+      expect(isFeatureAllowed('room_chat', tier)).toBe(true);
+    expect(getRequiredTierForFeature('room_chat')).toBe('free');
     // Free features
     expect(isFeatureAllowed('food_search', 'free')).toBe(true);
     expect(isFeatureAllowed('gps_tracking', 'free')).toBe(true);

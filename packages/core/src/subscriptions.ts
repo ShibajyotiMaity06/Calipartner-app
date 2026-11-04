@@ -269,6 +269,7 @@ export function getRequiredTierForFeature(feature: AppFeature): 'free' | 'plus' 
     'receive_room_invite',
     'create_room',
     'join_room',
+    'room_chat',
   ];
   if (freeFeatures.includes(feature)) return 'free';
 

@@ -106,12 +106,15 @@ it('retains an actionable error when marking seen fails and retries without chan
   expect(state.seen).toHaveBeenCalledTimes(2);
   expect(tree.root.findAllByProps({ testID: 'retry-focused-mention' })).toHaveLength(0);
 });
-it('never requests or displays paid chat context for a Free viewer', async () => {
+it('opens chat mentions and enables text sending for a Free member without unlocking media uploads', async () => {
   state.paid = false;
   await act(async () => {
     tree = create(<ChatView roomId="room" focusedMentionId="old" options={{ userId: 'viewer' }} />);
   });
-  expect(state.rpc).not.toHaveBeenCalled();
-  expect(state.seen).not.toHaveBeenCalled();
-  expect(tree.root.findAllByProps({ testID: 'focused-mention-old' })).toHaveLength(0);
+  expect(state.rpc).toHaveBeenCalled();
+  expect(state.seen).toHaveBeenCalledWith('room', 'old');
+  expect(tree.root.findAllByProps({ testID: 'focused-mention-old' })).toHaveLength(1);
+  const composer = tree.root.findByType('ChatComposer' as React.ElementType);
+  expect(composer.props.disabled).toBe(false);
+  expect(composer.props.allowMedia).toBe(false);
 });

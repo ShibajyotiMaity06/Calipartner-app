@@ -644,7 +644,7 @@ export function PaywallModal({
                   </View>
 
                   <Text variant="bodyS" color={dark.textMid} style={styles.planSummaryText}>
-                    Rooms, chat, side-by-side, Partner Finder, fasting & workouts.
+                    {t('setup.plusFeatureOne')}
                   </Text>
 
                   <View style={styles.priceDivider} />
