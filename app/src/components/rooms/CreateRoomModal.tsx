@@ -1,3 +1,4 @@
+import { type as inputTypography } from '@calipartner/ui';
 import React, { useState } from 'react';
 import { ActivityIndicator, Modal, Pressable, StyleSheet, TextInput, View } from 'react-native';
 import { Text, type as typography } from '@calipartner/ui';
@@ -87,12 +88,15 @@ export function CreateRoomModal({ visible, onClose, onCreateRoom }: CreateRoomMo
               placeholder={t('rooms.createModal.namePlaceholder')}
               placeholderTextColor={colors.textMuted}
               style={[
-                styles.input,
-                {
-                  backgroundColor: colors.surfaceAlt,
-                  color: colors.text,
-                  borderColor: errorMsg ? colors.danger : colors.border,
-                },
+                [
+                  styles.input,
+                  {
+                    backgroundColor: colors.surfaceAlt,
+                    color: colors.text,
+                    borderColor: errorMsg ? colors.danger : colors.border,
+                  },
+                ],
+                { fontFamily: inputTypography.body.fontFamily },
               ]}
               maxLength={30}
               autoFocus

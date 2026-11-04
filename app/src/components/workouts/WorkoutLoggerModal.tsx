@@ -1,3 +1,4 @@
+import { type as inputTypography } from '@calipartner/ui';
 import { useCurrentLocalDate } from '@/hooks/useCurrentLocalDate';
 import React, { useEffect, useState } from 'react';
 import {
@@ -621,12 +622,15 @@ export function WorkoutLoggerModal({
               <TextInput
                 testID={`${testID}-input-name`}
                 style={[
-                  styles.textInput,
-                  {
-                    color: colors.text,
-                    backgroundColor: colors.background,
-                    borderColor: colors.border,
-                  },
+                  [
+                    styles.textInput,
+                    {
+                      color: colors.text,
+                      backgroundColor: colors.background,
+                      borderColor: colors.border,
+                    },
+                  ],
+                  { fontFamily: inputTypography.body.fontFamily },
                 ]}
                 value={workoutName}
                 onChangeText={setWorkoutName}
@@ -654,12 +658,15 @@ export function WorkoutLoggerModal({
                 <TextInput
                   testID={`${testID}-input-duration`}
                   style={[
-                    styles.durationInput,
-                    {
-                      color: colors.text,
-                      backgroundColor: colors.background,
-                      borderColor: colors.border,
-                    },
+                    [
+                      styles.durationInput,
+                      {
+                        color: colors.text,
+                        backgroundColor: colors.background,
+                        borderColor: colors.border,
+                      },
+                    ],
+                    { fontFamily: inputTypography.body.fontFamily },
                   ]}
                   keyboardType="number-pad"
                   value={String(durationMinutes)}
@@ -728,12 +735,15 @@ export function WorkoutLoggerModal({
               <TextInput
                 testID={`${testID}-input-notes`}
                 style={[
-                  styles.textArea,
-                  {
-                    color: colors.text,
-                    backgroundColor: colors.background,
-                    borderColor: colors.border,
-                  },
+                  [
+                    styles.textArea,
+                    {
+                      color: colors.text,
+                      backgroundColor: colors.background,
+                      borderColor: colors.border,
+                    },
+                  ],
+                  { fontFamily: inputTypography.body.fontFamily },
                 ]}
                 value={notes}
                 onChangeText={setNotes}
@@ -925,12 +935,15 @@ export function WorkoutLoggerModal({
                       <TextInput
                         testID={`input-weight-${exIdx}-${setIdx}`}
                         style={[
-                          styles.setNumericInput,
-                          {
-                            color: colors.text,
-                            backgroundColor: colors.background,
-                            borderColor: colors.border,
-                          },
+                          [
+                            styles.setNumericInput,
+                            {
+                              color: colors.text,
+                              backgroundColor: colors.background,
+                              borderColor: colors.border,
+                            },
+                          ],
+                          { fontFamily: inputTypography.body.fontFamily },
                         ]}
                         keyboardType="decimal-pad"
                         value={set.weightKg > 0 ? String(set.weightKg) : ''}
@@ -959,12 +972,15 @@ export function WorkoutLoggerModal({
                       <TextInput
                         testID={`input-reps-${exIdx}-${setIdx}`}
                         style={[
-                          styles.setNumericInput,
-                          {
-                            color: colors.text,
-                            backgroundColor: colors.background,
-                            borderColor: colors.border,
-                          },
+                          [
+                            styles.setNumericInput,
+                            {
+                              color: colors.text,
+                              backgroundColor: colors.background,
+                              borderColor: colors.border,
+                            },
+                          ],
+                          { fontFamily: inputTypography.body.fontFamily },
                         ]}
                         keyboardType="number-pad"
                         value={set.reps > 0 ? String(set.reps) : ''}

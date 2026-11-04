@@ -3,15 +3,15 @@ import { type, typeHindi, getTypeStyle } from '../tokens/type';
 import { onboardingType } from '../tokens/onboarding';
 
 describe('Onboarding typography contract', () => {
-  it('uses static Bricolage titles and numerals with tabular figures', () => {
-    expect(onboardingType.title1.fontFamily).toBe('Bricolage_700');
-    expect(onboardingType.numeralXL.fontFamily).toBe('Bricolage_700');
+  it('uses the same static Plus Jakarta Sans titles and numerals with tabular figures', () => {
+    expect(onboardingType.title1.fontFamily).toBe('PlusJakartaSans_700');
+    expect(onboardingType.numeralXL.fontFamily).toBe('PlusJakartaSans_700');
     expect(onboardingType.numeralXL.fontVariant).toContain('tabular-nums');
   });
-  it('uses static Figtree UI weights without altering the existing app font set', () => {
-    expect(onboardingType.body.fontFamily).toBe('Figtree_400');
-    expect(onboardingType.label.fontFamily).toBe('Figtree_500');
-    expect(onboardingType.heading.fontFamily).toBe('Figtree_600');
+  it('uses one static font family for onboarding and the app', () => {
+    expect(onboardingType.body.fontFamily).toBe('PlusJakartaSans_400');
+    expect(onboardingType.label.fontFamily).toBe('PlusJakartaSans_500');
+    expect(onboardingType.heading.fontFamily).toBe('PlusJakartaSans_600');
     expect(type.body.fontFamily).toBe('PlusJakartaSans_400');
   });
 });

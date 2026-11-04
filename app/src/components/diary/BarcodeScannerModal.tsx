@@ -1,3 +1,4 @@
+import { type as inputTypography } from '@calipartner/ui';
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
   ActivityIndicator,
@@ -412,7 +413,7 @@ export function BarcodeScannerModal({
             </View>
           )}
 
-          {/* Bottom "{t('capture.typeBarcode')}" link & Manual Input */}
+          {/* Bottom "{t('capture.typeBarcode')}" link & Manual TextInput */}
           <View style={styles.bottomBar}>
             {!showManualInput ? (
               <Pressable
@@ -433,7 +434,7 @@ export function BarcodeScannerModal({
                   keyboardType="number-pad"
                   placeholder={t('foodLog.scan.manualPlaceholder')}
                   placeholderTextColor={dark.textLo}
-                  style={styles.manualTextInput}
+                  style={[styles.manualTextInput, { fontFamily: inputTypography.body.fontFamily }]}
                   autoFocus
                   accessibilityLabel={t('foodLog.scan.manualPlaceholder')}
                 />

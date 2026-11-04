@@ -1,3 +1,4 @@
+import { type as inputTypography } from '@calipartner/ui';
 import { type as typography } from '@calipartner/ui';
 import React, { useState } from 'react';
 import {
@@ -192,7 +193,7 @@ export function ExerciseDetailModal({
                       keyboardType="numeric"
                       placeholder="0"
                       placeholderTextColor={dark.textOff}
-                      style={styles.cellInput}
+                      style={[styles.cellInput, { fontFamily: inputTypography.body.fontFamily }]}
                       testID={`input-set-weight-${idx}`}
                     />
                   </View>
@@ -203,7 +204,7 @@ export function ExerciseDetailModal({
                       keyboardType="numeric"
                       placeholder="0"
                       placeholderTextColor={dark.textOff}
-                      style={styles.cellInput}
+                      style={[styles.cellInput, { fontFamily: inputTypography.body.fontFamily }]}
                       testID={`input-set-reps-${idx}`}
                     />
                   </View>
@@ -244,7 +245,7 @@ export function ExerciseDetailModal({
                 placeholderTextColor={dark.textOff}
                 multiline
                 numberOfLines={3}
-                style={styles.notesInput}
+                style={[styles.notesInput, { fontFamily: inputTypography.body.fontFamily }]}
                 testID="input-exercise-notes"
               />
             </View>

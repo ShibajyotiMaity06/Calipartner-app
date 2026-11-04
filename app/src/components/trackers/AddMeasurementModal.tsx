@@ -1,8 +1,9 @@
+import { type as inputTypography } from '@calipartner/ui';
 import { PremiumFeatureModal } from '@/components/subscription/PremiumFeatureModal';
 import React, { useState } from 'react';
-import { Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Modal, Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { dark, radius, space, type as typeTokens } from '@calipartner/ui';
+import { Text, dark, radius, space, type as typeTokens } from '@calipartner/ui';
 import { t } from '@/i18n';
 
 export interface AddMeasurementModalProps {
@@ -170,7 +171,7 @@ function AddMeasurementModalContent({
               <View style={styles.inputWrap}>
                 <TextInput
                   testID="input-measurement-val"
-                  style={styles.input}
+                  style={[styles.input, { fontFamily: inputTypography.body.fontFamily }]}
                   value={valueText}
                   onChangeText={(val) => {
                     setValueText(val);
@@ -190,7 +191,7 @@ function AddMeasurementModalContent({
               <Text style={styles.sectionTitle}>Date (YYYY-MM-DD)</Text>
               <TextInput
                 testID="input-measurement-date"
-                style={styles.dateInput}
+                style={[styles.dateInput, { fontFamily: inputTypography.body.fontFamily }]}
                 value={date}
                 onChangeText={setDate}
                 placeholder="YYYY-MM-DD"

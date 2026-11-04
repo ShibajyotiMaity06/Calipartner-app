@@ -1,3 +1,5 @@
+import { type as inputTypography } from '@calipartner/ui';
+import { Text } from '@calipartner/ui';
 import React, { useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
@@ -5,7 +7,6 @@ import {
   Pressable,
   ScrollView,
   StyleSheet,
-  Text,
   TextInput,
   View,
 } from 'react-native';
@@ -673,7 +674,7 @@ export function FoodPhotoResultsEditor({
                 </Pressable>
               </View>
 
-              {/* Search Input Bar */}
+              {/* Search TextInput Bar */}
               <View
                 style={[
                   styles.searchInputWrap,
@@ -688,7 +689,10 @@ export function FoodPhotoResultsEditor({
                   value={searchQuery}
                   onChangeText={setSearchQuery}
                   autoFocus
-                  style={[styles.searchInput, { color: colors.text }]}
+                  style={[
+                    [styles.searchInput, { color: colors.text }],
+                    { fontFamily: inputTypography.body.fontFamily },
+                  ]}
                 />
                 {searchQuery.length > 0 && (
                   <Pressable onPress={() => setSearchQuery('')}>

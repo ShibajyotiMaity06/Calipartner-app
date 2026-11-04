@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { dark, radius, space, type as typeTokens } from '@calipartner/ui';
+import { Text, dark, radius, space, type as typeTokens } from '@calipartner/ui';
 import { useAuth } from '@/contexts/AuthContext';
 import { useFasting } from '@/hooks/useFasting';
 import { t } from '@/i18n';

@@ -1,3 +1,4 @@
+import { type as inputTypography } from '@calipartner/ui';
 import React, { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
@@ -207,7 +208,7 @@ export function WaterAlarmModal({
                 </Pressable>
               </View>
 
-              {/* Custom Quantity Input */}
+              {/* Custom Quantity TextInput */}
               <View style={styles.customWaterRow}>
                 <TextInput
                   value={customAmountText}
@@ -215,7 +216,7 @@ export function WaterAlarmModal({
                   placeholder="Or enter custom ml (e.g. 350)"
                   placeholderTextColor={dark.textLo}
                   keyboardType="numeric"
-                  style={styles.customWaterInput}
+                  style={[styles.customWaterInput, { fontFamily: inputTypography.body.fontFamily }]}
                 />
                 <TouchableOpacity
                   onPress={handleCustomAdd}

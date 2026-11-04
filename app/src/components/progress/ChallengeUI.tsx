@@ -1,16 +1,16 @@
+import { type as inputTypography } from '@calipartner/ui';
 import React from 'react';
 import {
   Modal,
   Pressable,
   ScrollView,
   StyleSheet,
-  Text,
   View,
   TextInput,
   type TextInputProps,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { dark, radius, space, type, challengeLayout, onboardingType } from '@calipartner/ui';
+import { Text, dark, radius, space, type, challengeLayout, onboardingType } from '@calipartner/ui';
 import { ct } from '@/i18n/challenges';
 export const cs = StyleSheet.create({
   root: { gap: space[5] },
@@ -142,7 +142,7 @@ export function CInput({
       <Text style={cs.small}>{label}</Text>
       <TextInput
         {...props}
-        style={cs.input}
+        style={[cs.input, { fontFamily: inputTypography.body.fontFamily }]}
         accessibilityLabel={label}
         testID={testID}
         placeholderTextColor={dark.textLo}

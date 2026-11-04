@@ -1,3 +1,4 @@
+import { Text } from '@calipartner/ui';
 import React, { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
@@ -6,7 +7,6 @@ import {
   Platform,
   Pressable,
   StyleSheet,
-  Text,
   View,
 } from 'react-native';
 import * as Notifications from 'expo-notifications';

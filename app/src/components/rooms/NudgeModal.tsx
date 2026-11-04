@@ -1,3 +1,4 @@
+import { type as inputTypography } from '@calipartner/ui';
 import { useBrowserModalBack } from '@/hooks/useBrowserModalBack';
 import React, { useEffect, useRef, useState } from 'react';
 
@@ -104,7 +105,7 @@ export function NudgeModal({
             placeholder={t('repairs.messagePlaceholder')}
 
             placeholderTextColor={dark.textLo}
-            style={styles.input}
+            style={[styles.input, { fontFamily: inputTypography.body.fontFamily }]}
             testID="nudge-message"
           />
 

@@ -44,13 +44,24 @@ function setup(allowed = true, code: string | null = null, consent = true, usage
       eq() {
         return this;
       },
+      gte() {
+        return this;
+      },
+      lte() {
+        return this;
+      },
+      is() {
+        return this;
+      },
       order() {
         return this;
       },
       limit() {
         return table === 'consent_records'
           ? Promise.resolve({ data: consent ? [{ id: 'consent' }] : [] })
-          : this;
+          : ['profiles', 'goal_profiles'].includes(table)
+            ? this
+            : Promise.resolve({ data: [], error: null });
       },
       maybeSingle: async () => ({
         data:
@@ -164,7 +175,7 @@ for (const status of ['needs_details', 'needs_section', 'ready']) {
     assert.equal(response.status, 200);
     const result = await response.json();
     assert.equal(Boolean(result.meal_draft), status === 'ready');
-    assert.equal(state.tables().includes('food_entries'), false);
+    assert.equal(state.tables().includes('food_entries'), true);
     assert.equal(state.tables().includes('profiles'), true);
   });
 }
@@ -189,3 +200,129 @@ Deno.test('Malformed model nutrition never enables a meal action', async () => {
   assert.equal(response.status, 422);
   assert.equal((await response.json()).code, 'INVALID_COACH_MEAL');
 });
+
+Deno.test(
+  'Coach supplies owner-scoped dated foods, steps, all macros and workout sets to the provider',
+  async () => {
+    const calls: Array<{ table: string; filters: Array<[string, unknown]> }> = [];
+    const rows: Record<string, unknown[]> = {
+      profiles: [{ timezone: 'America/New_York', nickname: 'Owner' }],
+      goal_profiles: [{ goal: 'maintain', daily_calorie_target: 2200, protein_grams: 140 }],
+      daily_summaries: [
+        {
+          local_date: '2026-10-15',
+          calories: 1900,
+          protein: 125,
+          carbs: 210,
+          fat: 65,
+          steps: 8000,
+          water_ml: 1800,
+        },
+      ],
+      food_entries: [
+        {
+          local_date: '2026-10-15',
+          meal_section: 'breakfast',
+          food_name: 'Oats',
+          quantity: 60,
+          unit: 'g',
+        },
+      ],
+      workouts: [
+        { id: 'workout', local_date: '2026-10-15', name: 'Strength', duration_minutes: 45 },
+      ],
+      workout_exercises: [{ id: 'exercise', workout_id: 'workout', exercise_name: 'Squat' }],
+      workout_sets: [
+        { workout_id: 'workout', workout_exercise_id: 'exercise', reps: 8, weight_kg: 60 },
+      ],
+    };
+    const base = setup();
+    const admin = {
+      auth: base.admin.auth,
+      rpc: base.admin.rpc,
+      from(table: string) {
+        const call = { table, filters: [] as Array<[string, unknown]> };
+        calls.push(call);
+        return {
+          select() {
+            return this;
+          },
+          eq(key: string, value: unknown) {
+            call.filters.push([key, value]);
+            return this;
+          },
+          gte(key: string, value: unknown) {
+            call.filters.push(['gte:' + key, value]);
+            return this;
+          },
+          lte(key: string, value: unknown) {
+            call.filters.push(['lte:' + key, value]);
+            return this;
+          },
+          is(key: string, value: unknown) {
+            call.filters.push(['is:' + key, value]);
+            return this;
+          },
+          in(key: string, value: unknown) {
+            call.filters.push(['in:' + key, value]);
+            return this;
+          },
+          order() {
+            return this;
+          },
+          limit() {
+            return ['profiles', 'goal_profiles'].includes(table)
+              ? this
+              : Promise.resolve({
+                  data: table === 'consent_records' ? [{ id: 'yes' }] : (rows[table] ?? []),
+                  error: null,
+                });
+          },
+          maybeSingle: async () => ({ data: rows[table]?.[0] ?? null, error: null }),
+        };
+      },
+    } as unknown as SupabaseClient;
+    let prompt = '';
+    const result = await handleAiCoach(
+      new Request('https://example/ai-coach', {
+        method: 'POST',
+        headers: { Authorization: 'Bearer owner' },
+        body: JSON.stringify({
+          user_id: 'victim',
+          messages: [{ role: 'user', content: 'What did I eat and train on 2026-10-15?' }],
+        }),
+      }),
+      {
+        admin,
+        reply: async (text) => {
+          prompt = text;
+          return { text: 'Your logged breakfast was oats.', tokens: 80 };
+        },
+      },
+    );
+    assert.equal(result.status, 200);
+    for (const table of [
+      'daily_summaries',
+      'food_entries',
+      'workouts',
+      'workout_exercises',
+      'workout_sets',
+    ]) {
+      const call = calls.find((entry) => entry.table === table)!;
+      assert.ok(call.filters.some(([key, value]) => key === 'user_id' && value === 'owner'));
+      assert.ok(!call.filters.some(([, value]) => value === 'victim'));
+    }
+    assert.ok(
+      prompt.includes('Oats') &&
+        prompt.includes('8000') &&
+        prompt.includes('210') &&
+        prompt.includes('Squat') &&
+        prompt.includes('60'),
+    );
+    const foods = calls.find((call) => call.table === 'food_entries')!;
+    assert.ok(
+      foods.filters.some(([key, value]) => key === 'gte:local_date' && value === '2026-10-15'),
+    );
+    assert.ok(foods.filters.some(([key, value]) => key === 'is:deleted_at' && value === null));
+  },
+);

@@ -1,3 +1,4 @@
+import { Text } from '@calipartner/ui';
 import React, { useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
@@ -6,7 +7,6 @@ import {
   Platform,
   Pressable,
   StyleSheet,
-  Text,
   View,
 } from 'react-native';
 import { CameraView, useCameraPermissions } from 'expo-camera';

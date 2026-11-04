@@ -70,7 +70,7 @@ export function PersonalSquads() {
                 testID={'personal-open-squad-' + room.id}
               />
               <Button
-                variant="secondary"
+                variant="destructive"
                 fullWidth={false}
                 size="sm"
                 label={t('homeRefresh.leaveSquad')}

@@ -1,3 +1,4 @@
+import { type as inputTypography } from '@calipartner/ui';
 import React, { useRef, useState } from 'react';
 import { StyleSheet, TextInput, View } from 'react-native';
 import { calculateAge, isAtLeast18 } from '@calipartner/core';
@@ -56,12 +57,15 @@ export function InteractiveDobPicker({
               placeholderTextColor={colors.textLo}
               testID={`input-dob-${part}`}
               style={[
-                styles.input,
-                {
-                  backgroundColor: colors.s2,
-                  borderColor: colors.hairlineLit,
-                  color: colors.textHi,
-                },
+                [
+                  styles.input,
+                  {
+                    backgroundColor: colors.s2,
+                    borderColor: colors.hairlineLit,
+                    color: colors.textHi,
+                  },
+                ],
+                { fontFamily: inputTypography.body.fontFamily },
               ]}
               onChangeText={(text) => {
                 const clean = text.replace(/[^0-9]/g, '');

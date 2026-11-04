@@ -1,5 +1,6 @@
+import { Text } from '@calipartner/ui';
 import React, { useMemo } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import type { IndividualConsistencyProgress } from '@calipartner/core';
 import { t } from '@/i18n';

@@ -1,4 +1,5 @@
-import { Text, View } from 'react-native';
+import { Text } from '@calipartner/ui';
+import { View } from 'react-native';
 import { t } from '@/i18n';
 import { fontSize, radius, spacing } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';

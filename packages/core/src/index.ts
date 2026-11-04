@@ -38,3 +38,5 @@ export * from './challengeViewModel';
 export * from './ownerRecipes';
 export * from './squad';
 export * from './coachMeal';
+
+export { coachHistoryWindow } from './coachHistory';

@@ -6,16 +6,7 @@ import { t, type TranslationKey } from '@/i18n';
 import type { homeRefresh } from '@/i18n/homeRefresh';
 
 export type LogFlow =
-  | 'food'
-  | 'scan'
-  | 'workout'
-  | 'water'
-  | 'steps'
-  | 'weight'
-  | 'fast'
-  | 'photo'
-  | 'recipe'
-  | 'describe';
+  'food' | 'scan' | 'workout' | 'water' | 'steps' | 'weight' | 'fast' | 'photo' | 'recipe';
 const entries: {
   flow: LogFlow;
   label: keyof typeof homeRefresh;
@@ -59,7 +50,19 @@ export function LogSomethingView({
             accessibilityLabel={t(('homeRefresh.' + label) as TranslationKey)}
             testID={'log-tile-' + flow}
           >
-            <Ionicons name={icon} size={homeLayout.iconSize} color={dark.copper} />
+            <Ionicons
+              name={icon}
+              size={homeLayout.iconSize}
+              color={
+                {
+                  food: dark.mint,
+                  workout: dark.iris,
+                  water: dark.teal,
+                  steps: dark.sky,
+                  weight: dark.orchid,
+                }[flow as 'food' | 'workout' | 'water' | 'steps' | 'weight']
+              }
+            />
             <Text variant="label">{t(('homeRefresh.' + label) as TranslationKey)}</Text>
           </Pressable>
         ))}
@@ -83,10 +86,10 @@ const styles = StyleSheet.create({
     backgroundColor: dark.s2,
     borderRadius: radius.control,
   },
-  grid: { flexDirection: 'row', flexWrap: 'wrap', gap: space[2] },
+  grid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', gap: space[2] },
   tile: {
-    flexGrow: 1,
-    flexBasis: '45%',
+    flexGrow: 0,
+    flexBasis: '48%',
     minHeight: homeLayout.touchSize,
     flexDirection: 'row',
     alignItems: 'center',

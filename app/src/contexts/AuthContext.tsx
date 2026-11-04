@@ -71,6 +71,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return;
       }
       if (activeUserId.current !== userId) return;
+      const deviceTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+      if (data?.timezone && deviceTimezone && data.timezone !== deviceTimezone) {
+        const result = await supabase
+          .from('profiles')
+          .update({ timezone: deviceTimezone })
+          .eq('id', userId);
+        if (activeUserId.current !== userId) return;
+        if (!result.error) data.timezone = deviceTimezone;
+      }
       setProfile((data as Profile) ?? null);
       setProfileCheckedUserId(userId);
       if (data) await secureStoreAdapter.setItem(cacheKey, JSON.stringify(data));
@@ -130,6 +139,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (state === 'active') {
         // Checking storage also enforces the inactivity window after a long background period.
         void restoreSession();
+        if (activeUserId.current && isOnline !== false) void fetchProfile(activeUserId.current);
         if (isOnline !== false) supabase.auth.startAutoRefresh();
       } else {
         supabase.auth.stopAutoRefresh();
@@ -147,7 +157,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       appStateListener?.remove();
       if (Platform.OS !== 'web') supabase.auth.stopAutoRefresh();
     };
-  }, [isOnline]);
+  }, [isOnline, fetchProfile]);
 
   useEffect(() => {
     setProfile(null);

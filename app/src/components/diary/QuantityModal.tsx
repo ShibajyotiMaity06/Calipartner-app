@@ -1,3 +1,4 @@
+import { type as inputTypography } from '@calipartner/ui';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
   Alert,
@@ -223,7 +224,7 @@ export function QuantityModal({
                 keyboardType="decimal-pad"
                 placeholder="1"
                 placeholderTextColor={dark.textLo}
-                style={styles.bigNumberInput}
+                style={[styles.bigNumberInput, { fontFamily: inputTypography.body.fontFamily }]}
               />
               <Text variant="heading" color={dark.textMid} style={styles.unitSuffix}>
                 {selectedUnit}

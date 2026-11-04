@@ -1,3 +1,4 @@
+import { type as inputTypography } from '@calipartner/ui';
 import React, { useMemo, useState } from 'react';
 import { Image, Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
 import { Text, type as typography } from '@calipartner/ui';
@@ -184,7 +185,10 @@ export function RoomOverviewRow({
               }}
               placeholder={t('rooms.today.overviewSearchPlaceholder')}
               placeholderTextColor={colors.textMuted}
-              style={[styles.searchInput, { color: colors.text }]}
+              style={[
+                [styles.searchInput, { color: colors.text }],
+                { fontFamily: inputTypography.body.fontFamily },
+              ]}
               autoCapitalize="none"
               autoCorrect={false}
               testID="input-search-overview"

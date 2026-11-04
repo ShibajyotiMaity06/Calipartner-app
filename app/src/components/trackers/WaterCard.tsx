@@ -6,11 +6,10 @@ import {
   Pressable,
   StyleSheet,
   Switch,
-  Text,
   View,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { dark, radius, space, type as typeTokens } from '@calipartner/ui';
+import { Text, dark, radius, space, type as typeTokens } from '@calipartner/ui';
 import { useWater } from '@/hooks/useWater';
 import { t } from '@/i18n';
 import { CustomWaterModal } from './CustomWaterModal';

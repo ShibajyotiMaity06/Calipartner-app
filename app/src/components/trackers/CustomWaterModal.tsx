@@ -1,5 +1,7 @@
+import { type as inputTypography } from '@calipartner/ui';
+import { Text } from '@calipartner/ui';
 import { useState } from 'react';
-import { Modal, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Modal, Pressable, StyleSheet, TextInput, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { t } from '@/i18n';
 import { fontSize, radius, spacing } from '@/theme/tokens';
@@ -110,7 +112,7 @@ export function CustomWaterModal({ visible, onClose, onSave }: CustomWaterModalP
             ))}
           </View>
 
-          {/* Amount Input */}
+          {/* Amount TextInput */}
           <View style={styles.inputContainer}>
             <Text style={[styles.inputLabel, { color: colors.textMuted }]}>
               {t('trackers.water.amountLabel')}
@@ -134,7 +136,10 @@ export function CustomWaterModal({ visible, onClose, onSave }: CustomWaterModalP
                 keyboardType="numeric"
                 placeholder={t('trackers.water.amountPlaceholder')}
                 placeholderTextColor={colors.textMuted}
-                style={[styles.input, { color: colors.text }]}
+                style={[
+                  [styles.input, { color: colors.text }],
+                  { fontFamily: inputTypography.body.fontFamily },
+                ]}
                 accessibilityLabel={t('trackers.water.amountLabel')}
               />
               <Text style={[styles.unitBadge, { color: colors.textMuted }]}>ml</Text>

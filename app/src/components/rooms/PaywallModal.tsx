@@ -1,3 +1,4 @@
+import { type as inputTypography } from '@calipartner/ui';
 import { type as typography } from '@calipartner/ui';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
@@ -922,7 +923,7 @@ export function PaywallModal({
                   placeholder="e.g. PARTNER50"
                   placeholderTextColor={dark.textLo}
                   autoCapitalize="characters"
-                  style={styles.promoInput}
+                  style={[styles.promoInput, { fontFamily: inputTypography.body.fontFamily }]}
                   testID="input-promo-code"
                 />
 

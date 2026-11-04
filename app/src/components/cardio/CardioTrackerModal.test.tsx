@@ -19,7 +19,8 @@ vi.mock('react-native', () => ({
   ScrollView: 'ScrollView',
   TextInput: 'TextInput',
 }));
-vi.mock('@calipartner/ui', () => ({
+vi.mock('@calipartner/ui', async () => ({
+  ...(await import('../../../../packages/ui/src/tokens')),
   Text: 'Text',
   Button: 'Button',
   Card: 'Card',

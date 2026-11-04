@@ -1,3 +1,4 @@
+import { type as inputTypography } from '@calipartner/ui';
 import React, { useState } from 'react';
 import {
   Linking,
@@ -88,7 +89,7 @@ export function HelpCentreModal({
               onChangeText={setQuery}
               placeholder={t('me.helpCentre.searchPlaceholder')}
               placeholderTextColor={dark.textOff}
-              style={styles.searchInput}
+              style={[styles.searchInput, { fontFamily: inputTypography.body.fontFamily }]}
               testID="input-help-search"
               accessibilityLabel="Search help articles"
             />

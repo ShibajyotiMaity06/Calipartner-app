@@ -1,3 +1,4 @@
+import { type as inputTypography } from '@calipartner/ui';
 import { useBrowserModalBack } from '@/hooks/useBrowserModalBack';
 import React, { useEffect, useRef, useState } from 'react';
 import { Modal, SafeAreaView, ScrollView, StyleSheet, TextInput, View } from 'react-native';
@@ -296,7 +297,7 @@ export function WorkoutLogModal({
                 placeholder={t('repairs.searchExercises')}
                 accessibilityLabel={t('repairs.searchExercises')}
                 placeholderTextColor={dark.textLo}
-                style={styles.input}
+                style={[styles.input, { fontFamily: inputTypography.body.fontFamily }]}
                 testID="workout-exercise-search"
               />
               {!filtered.length ? <Text>{t('repairs.noExercises')}</Text> : null}
@@ -325,7 +326,7 @@ export function WorkoutLogModal({
                 onChangeText={setMinutes}
                 keyboardType="number-pad"
                 editable={!busy}
-                style={styles.input}
+                style={[styles.input, { fontFamily: inputTypography.body.fontFamily }]}
                 accessibilityLabel={t('repairs.minutes')}
                 testID="workout-duration"
               />
@@ -344,7 +345,7 @@ export function WorkoutLogModal({
                     }
                     keyboardType="number-pad"
                     editable={!busy}
-                    style={styles.input}
+                    style={[styles.input, { fontFamily: inputTypography.body.fontFamily }]}
                     accessibilityLabel={`${t('repairs.reps')} ${index + 1}`}
                     testID={`workout-reps-${index}`}
                   />
@@ -358,7 +359,7 @@ export function WorkoutLogModal({
                     }
                     keyboardType="decimal-pad"
                     editable={!busy}
-                    style={styles.input}
+                    style={[styles.input, { fontFamily: inputTypography.body.fontFamily }]}
                     accessibilityLabel={`${t('repairs.weight')} ${index + 1}`}
                     testID={`workout-weight-${index}`}
                   />

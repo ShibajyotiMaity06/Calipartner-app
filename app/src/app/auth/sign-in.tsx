@@ -1,3 +1,4 @@
+import { type as inputTypography } from '@calipartner/ui';
 import { afterSetupDestination } from '@/services/pairOnboardingService';
 import React, { useState, useEffect } from 'react';
 import {
@@ -349,7 +350,7 @@ export default function SignInScreen() {
 
               <TextInput
                 testID="input-otp"
-                style={styles.otpInput}
+                style={[styles.otpInput, { fontFamily: inputTypography.body.fontFamily }]}
                 placeholder="123456"
                 placeholderTextColor={dark.textOff}
                 keyboardType="number-pad"

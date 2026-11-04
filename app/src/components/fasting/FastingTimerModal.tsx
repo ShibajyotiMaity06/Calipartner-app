@@ -1,10 +1,10 @@
 import { useSubscription } from '@/hooks/useSubscription';
 import { PremiumFeatureModal } from '@/components/subscription/PremiumFeatureModal';
 import React, { useState } from 'react';
-import { Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Modal, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import type { FastingProtocol } from '@calipartner/core';
-import { dark, radius, space, type as typeTokens } from '@calipartner/ui';
+import { Text, dark, radius, space, type as typeTokens } from '@calipartner/ui';
 import { useAuth } from '@/contexts/AuthContext';
 import { useFasting } from '@/hooks/useFasting';
 import { t } from '@/i18n';

@@ -1,3 +1,5 @@
+import { type as inputTypography } from '@calipartner/ui';
+import { Text } from '@calipartner/ui';
 import React, { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
@@ -7,7 +9,6 @@ import {
   ScrollView,
   StyleSheet,
   Switch,
-  Text,
   TextInput,
   View,
 } from 'react-native';
@@ -534,12 +535,15 @@ export function NotificationSettingsScreen({
                     testID="input-quiet-hours-start"
                     accessibilityLabel={t('notifications.quietHours.startLabel')}
                     style={[
-                      styles.timeInput,
-                      {
-                        backgroundColor: colors.surfaceAlt,
-                        borderColor: colors.border,
-                        color: colors.text,
-                      },
+                      [
+                        styles.timeInput,
+                        {
+                          backgroundColor: colors.surfaceAlt,
+                          borderColor: colors.border,
+                          color: colors.text,
+                        },
+                      ],
+                      { fontFamily: inputTypography.body.fontFamily },
                     ]}
                     value={quietStartInput}
                     onChangeText={setQuietStartInput}
@@ -559,12 +563,15 @@ export function NotificationSettingsScreen({
                     testID="input-quiet-hours-end"
                     accessibilityLabel={t('notifications.quietHours.endLabel')}
                     style={[
-                      styles.timeInput,
-                      {
-                        backgroundColor: colors.surfaceAlt,
-                        borderColor: colors.border,
-                        color: colors.text,
-                      },
+                      [
+                        styles.timeInput,
+                        {
+                          backgroundColor: colors.surfaceAlt,
+                          borderColor: colors.border,
+                          color: colors.text,
+                        },
+                      ],
+                      { fontFamily: inputTypography.body.fontFamily },
                     ]}
                     value={quietEndInput}
                     onChangeText={setQuietEndInput}

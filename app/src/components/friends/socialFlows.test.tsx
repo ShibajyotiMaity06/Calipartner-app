@@ -12,7 +12,8 @@ vi.mock('react-native', () => ({
   StyleSheet: { create: (value: unknown) => value },
 }));
 vi.mock('@expo/vector-icons', () => ({ Ionicons: 'Ionicons' }));
-vi.mock('@calipartner/ui', () => ({
+vi.mock('@calipartner/ui', async () => ({
+  ...(await import('../../../../packages/ui/src/tokens')),
   dark: {},
   Avatar: 'Avatar',
   Button: 'Button',

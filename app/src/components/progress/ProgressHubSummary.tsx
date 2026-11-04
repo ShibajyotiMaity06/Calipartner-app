@@ -1,8 +1,8 @@
 import React from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import type { IndividualProgressData } from '@calipartner/core';
-import { dark, radius, space, type } from '@calipartner/ui';
+import { Text, dark, radius, space, type } from '@calipartner/ui';
 import { t } from '@/i18n';
 
 interface ProgressHubSummaryProps {

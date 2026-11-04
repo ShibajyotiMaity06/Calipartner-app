@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Avatar, PairRing, challengeLayout, dark } from '@calipartner/ui';
+import { Text, Avatar, PairRing, challengeLayout, dark } from '@calipartner/ui';
 import { Ionicons } from '@expo/vector-icons';
-import { Text, View } from 'react-native';
+import { View } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import {
   challengeLogRoute,

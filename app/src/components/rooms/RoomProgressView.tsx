@@ -1,3 +1,4 @@
+import { type as inputTypography } from '@calipartner/ui';
 import React, { useCallback, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
@@ -236,15 +237,7 @@ export function RoomProgressView({ roomId, testID = 'room-progress-view' }: Room
     }
   };
 
-  const rangeOptions: RoomProgressDateRange[] = [
-    '7d',
-    '30d',
-    '90d',
-    '6m',
-    '1y',
-    'all',
-    'since_start',
-  ];
+  const rangeOptions: RoomProgressDateRange[] = ['30d', '90d'];
 
   return (
     <ScrollView
@@ -715,8 +708,8 @@ export function RoomProgressView({ roomId, testID = 'room-progress-view' }: Room
 
             <TextInput
               style={[
-                styles.searchInput,
-                { backgroundColor: colors.surfaceAlt, color: colors.text },
+                [styles.searchInput, { backgroundColor: colors.surfaceAlt, color: colors.text }],
+                { fontFamily: inputTypography.body.fontFamily },
               ]}
               placeholder={t('progress.room.searchMembers')}
               placeholderTextColor={colors.textMuted}

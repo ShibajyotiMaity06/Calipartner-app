@@ -16,6 +16,7 @@ vi.mock('react-native', () => ({
 vi.mock('@expo/vector-icons', () => ({ Ionicons: 'Icon' }));
 vi.mock('@calipartner/ui', async () => ({
   ...(await import('../../../../packages/ui/src/tokens')),
+  Text: 'Text',
 }));
 vi.mock('@/contexts/AuthContext', () => ({
   useAuth: () => ({ user: { id: 'owner' }, profile: { timezone: 'America/New_York' } }),

@@ -1,9 +1,9 @@
 import React, { useRef, useState } from 'react';
-import { Platform, Share, Text, View } from 'react-native';
+import { Platform, Share, View } from 'react-native';
 import Svg, { Rect, Text as SvgText } from 'react-native-svg';
 import { File, Paths } from 'expo-file-system';
 import type { ChallengeCatalog, ChallengeSnapshot } from '@calipartner/core';
-import { challengeLayout as layout, dark, onboardingType } from '@calipartner/ui';
+import { Text, challengeLayout as layout, dark, onboardingType } from '@calipartner/ui';
 import { ct, challengeText } from '@/i18n/challenges';
 import { CButton, cs } from './ChallengeUI';
 import { shareChallengeImage } from '@/services/challengeShare';

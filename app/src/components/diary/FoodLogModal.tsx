@@ -1,3 +1,4 @@
+import { type as inputTypography } from '@calipartner/ui';
 import { PaywallModal } from '@/components/rooms/PaywallModal';
 import React, { useRef, useState } from 'react';
 import { ActivityIndicator, Modal, Pressable, ScrollView, TextInput, View } from 'react-native';
@@ -9,11 +10,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { getDb } from '@/db';
 import { useFoodSearch } from '@/hooks/useFoodSearch';
 import { useAddEntry } from '@/hooks/useFoodEntries';
-import {
-  usePreviouslyLogged,
-  type HistorySortOption,
-  type PreviouslyLoggedItem,
-} from '@/hooks/usePreviouslyLogged';
+import { usePreviouslyLogged, type PreviouslyLoggedItem } from '@/hooks/usePreviouslyLogged';
 import { t } from '@/i18n';
 import { getSupabase } from '@/lib/supabase';
 import {
@@ -37,7 +34,6 @@ import {
   FoodPhotoResultsEditor,
 } from '@/components/food_photo';
 import { RecipeBrowseView } from '@/components/recipes';
-import { DescribeMealModal } from './DescribeMealModal';
 
 export interface FoodLogModalProps {
   visible: boolean;
@@ -48,7 +44,7 @@ export interface FoodLogModalProps {
   initialTab?: TabType;
 }
 
-type TabType = 'search' | 'scan' | 'photo' | 'recipes' | 'history' | 'myFoods';
+type TabType = 'search' | 'scan' | 'photo' | 'recipes';
 
 export function FoodLogModal({
   visible,
@@ -56,13 +52,12 @@ export function FoodLogModal({
   localDate,
   onClose,
   onLogged,
-  initialTab = 'history',
+  initialTab = 'search',
 }: FoodLogModalProps) {
   const { colors } = useTheme();
   const { user } = useAuth();
 
   const [showPhotoPlans, setShowPhotoPlans] = useState(false);
-  const [showDescription, setShowDescription] = useState(false);
   const [selectedFoods, setSelectedFoods] = useState<
     Record<string, { food: Food; quantity: number; unit: string; source: 'search' | 'history' }>
   >({});
@@ -82,7 +77,9 @@ export function FoodLogModal({
       return next;
     });
   };
-  const [activeTab, setActiveTab] = useState<TabType>(initialTab);
+  const [activeTab, setActiveTab] = useState<TabType>(
+    initialTab === 'scan' ? 'search' : initialTab,
+  );
   const [selectedFoodForQuantity, setSelectedFoodForQuantity] = useState<Food | null>(null);
   const [showBarcodeScanner, setShowBarcodeScanner] = useState(initialTab === 'scan');
   const [showCustomFoodModal, setShowCustomFoodModal] = useState(false);
@@ -146,21 +143,21 @@ export function FoodLogModal({
   // History tab hook
   const {
     items: historyItems,
-    sort: historySort,
-    setSort: setHistorySort,
-    searchQuery: historySearchQuery,
-    setSearchQuery: setHistorySearchQuery,
     oneTapAdd,
-    removeFromHistory,
     loading: historyLoading,
-  } = usePreviouslyLogged(defaultSection);
+    error: historyError,
+    saveError: historySaveError,
+    saving: historySaving,
+    refresh: refreshHistory,
+  } = usePreviouslyLogged();
 
   const handleSelectFood = (food: Food) => {
     setSelectedFoodForQuantity(food);
   };
 
   const handleOneTapAdd = async (item: PreviouslyLoggedItem) => {
-    await oneTapAdd(item, defaultSection, localDate);
+    const saved = await oneTapAdd(item, defaultSection, localDate);
+    if (!saved) return;
     if (onLogged) onLogged();
     onClose();
   };
@@ -352,13 +349,13 @@ export function FoodLogModal({
             </Pressable>
           </View>
 
-          {saveError && (
+          {(saveError || historySaveError) && (
             <Text
               accessibilityRole="alert"
               testID="food-log-save-error"
               style={{ color: colors.text }}
             >
-              {saveError}
+              {saveError || historySaveError}
             </Text>
           )}
           {/* 5 Tab Navigation Bar */}
@@ -369,12 +366,10 @@ export function FoodLogModal({
           >
             {(
               [
-                ['history', 'time-outline'],
                 ['search', 'search-outline'],
-                ['scan', 'barcode-outline'],
-                ['photo', 'camera-outline'],
                 ['recipes', 'book-outline'],
-                ['myFoods', 'restaurant-outline'],
+                ['photo', 'camera-outline'],
+                ['scan', 'barcode-outline'],
               ] as const
             ).map(([tab, icon]) => {
               const isActive = activeTab === tab;
@@ -387,7 +382,7 @@ export function FoodLogModal({
                   accessibilityState={{ selected: isActive }}
                   onPress={() => (tab === 'scan' ? setShowBarcodeScanner(true) : setActiveTab(tab))}
                   style={({ pressed }) => ({
-                    flexBasis: '30%',
+                    flexBasis: '20%',
                     flexGrow: 1,
                     minWidth: homeLayout.touchSize,
                     minHeight: homeLayout.touchSize,
@@ -420,31 +415,15 @@ export function FoodLogModal({
             })}
           </View>
 
-          <Pressable
-            onPress={() => setShowDescription(true)}
-            accessibilityRole="button"
-            accessibilityLabel={t('homeRefresh.describe')}
-            testID="food-log-describe"
-            style={{
-              minHeight: homeLayout.touchSize,
-              justifyContent: 'center',
-              paddingHorizontal: spacing.md,
-            }}
-          >
-            <Text style={{ color: colors.accent }}>{t('homeRefresh.describe')} · Pro</Text>
-          </Pressable>
-          {showDescription && (
-            <DescribeMealModal
-              visible
-              section={defaultSection}
-              localDate={localDate}
-              onClose={() => setShowDescription(false)}
-              onLogged={onLogged}
-            />
-          )}
           {/* TAB 1: Search */}
           {activeTab === 'search' && (
-            <View style={{ flex: 1, paddingHorizontal: spacing.md, gap: spacing.sm }}>
+            <View
+              style={{
+                flex: query.trim() ? 1 : undefined,
+                paddingHorizontal: spacing.md,
+                gap: spacing.sm,
+              }}
+            >
               {/* Search input bar */}
               <View
                 style={{
@@ -464,14 +443,17 @@ export function FoodLogModal({
                   onChangeText={setQuery}
                   placeholder={t('foodLog.searchPlaceholder')}
                   placeholderTextColor={colors.textMuted}
-                  autoFocus={true}
-                  style={{
-                    flex: 1,
-                    paddingVertical: 10,
-                    paddingHorizontal: 8,
-                    fontSize: fontSize.md,
-                    color: colors.text,
-                  }}
+                  autoFocus={false}
+                  style={[
+                    {
+                      flex: 1,
+                      paddingVertical: 10,
+                      paddingHorizontal: 8,
+                      fontSize: fontSize.md,
+                      color: colors.text,
+                    },
+                    { fontFamily: inputTypography.body.fontFamily },
+                  ]}
                 />
                 {query.length > 0 && (
                   <Pressable onPress={() => setQuery('')}>
@@ -536,8 +518,7 @@ export function FoodLogModal({
                         paddingVertical: 10,
                         paddingHorizontal: 12,
                         backgroundColor: pressed ? colors.surfaceAlt : colors.surface,
-                        borderRadius: radius.sm,
-                        borderWidth: 1,
+                        borderBottomWidth: 1,
                         borderColor: colors.border,
                       })}
                     >
@@ -751,67 +732,21 @@ export function FoodLogModal({
             </View>
           )}
 
-          {/* TAB 4: Previously Logged (History) */}
-          {activeTab === 'history' && (
-            <View style={{ flex: 1, paddingHorizontal: spacing.md, gap: spacing.xs }}>
-              {/* Filter and Sort Bar */}
-              <View style={{ flexDirection: 'row', gap: 6, alignItems: 'center' }}>
-                {(['recent', 'frequent', 'alpha'] as HistorySortOption[]).map((sortOpt) => {
-                  const isSelected = historySort === sortOpt;
-                  return (
-                    <Pressable
-                      key={sortOpt}
-                      testID={`btn-history-sort-${sortOpt}`}
-                      onPress={() => setHistorySort(sortOpt)}
-                      style={{
-                        paddingHorizontal: 10,
-                        paddingVertical: 5,
-                        borderRadius: radius.pill,
-                        backgroundColor: isSelected ? colors.accent : colors.surfaceAlt,
-                        borderWidth: 1,
-                        borderColor: isSelected ? colors.accent : colors.border,
-                      }}
-                    >
-                      <Text
-                        style={{
-                          fontSize: fontSize.xs,
-                          fontWeight: '600',
-                          color: isSelected ? colors.onAccent : colors.text,
-                        }}
-                      >
-                        {sortOpt === 'recent'
-                          ? t('foodLog.history.sortRecent')
-                          : sortOpt === 'frequent'
-                            ? t('foodLog.history.sortFrequent')
-                            : t('foodLog.history.sortAlpha')}
-                      </Text>
-                    </Pressable>
-                  );
-                })}
-              </View>
-
-              {/* History Search within */}
-              <TextInput
-                testID="input-history-search"
-                value={historySearchQuery}
-                onChangeText={setHistorySearchQuery}
-                placeholder={t('foodLog.history.searchPlaceholder')}
-                placeholderTextColor={colors.textMuted}
-                style={{
-                  backgroundColor: colors.surfaceAlt,
-                  borderRadius: radius.sm,
-                  paddingHorizontal: 10,
-                  paddingVertical: 6,
-                  fontSize: fontSize.sm,
-                  color: colors.text,
-                  borderWidth: 1,
-                  borderColor: colors.border,
-                  marginTop: 2,
-                }}
-              />
-
+          {activeTab === 'search' && !query.trim() && (
+            <View style={{ flex: 1, paddingHorizontal: spacing.md, gap: spacing.sm }}>
+              <Text variant="heading">{t('homeRefresh.recentFoods')}</Text>
               {/* History Items List */}
-              {historyLoading ? (
+              {historyError ? (
+                <View>
+                  <Text accessibilityRole="alert">{t('common.errorBody')}</Text>
+                  <Button
+                    variant="secondary"
+                    label={t('common.retry')}
+                    onPress={() => void refreshHistory()}
+                    testID="retry-recent-foods"
+                  />
+                </View>
+              ) : historyLoading ? (
                 <ActivityIndicator color={colors.accent} style={{ marginTop: spacing.md }} />
               ) : historyItems.length === 0 ? (
                 <View style={{ paddingVertical: spacing.xl, alignItems: 'center', gap: 6 }}>
@@ -840,8 +775,7 @@ export function FoodLogModal({
                         paddingVertical: 8,
                         paddingHorizontal: 10,
                         backgroundColor: colors.surface,
-                        borderRadius: radius.sm,
-                        borderWidth: 1,
+                        borderBottomWidth: 1,
                         borderColor: colors.border,
                       }}
                     >
@@ -856,8 +790,11 @@ export function FoodLogModal({
                           {item.food.name}
                         </Text>
                         <Text style={{ fontSize: fontSize.xs, color: colors.textMuted }}>
-                          {item.stats.last_quantity} {item.stats.last_unit} • {item.stats.use_count}
-                          x logged
+                          {t('homeRefresh.recentQuantity', {
+                            quantity: item.stats.last_quantity,
+                            unit: item.stats.last_unit,
+                            count: item.stats.use_count,
+                          })}
                         </Text>
                       </Pressable>
 
@@ -894,13 +831,19 @@ export function FoodLogModal({
                         {/* 1-tap quick add button (PRD 6.3 LOG-13) */}
                         <Pressable
                           testID={`btn-quick-add-${item.food.id}`}
-                          onPress={() => handleOneTapAdd(item)}
+                          onPress={() => void handleOneTapAdd(item)}
+                          disabled={historySaving || batchSaving}
+                          accessibilityRole="button"
+                          accessibilityLabel={t('repairs.addFood', {
+                            section: t(`diary.sections.${defaultSection}`),
+                          })}
                           style={{
                             flexDirection: 'row',
                             alignItems: 'center',
                             backgroundColor: colors.surfaceAlt,
                             paddingHorizontal: 8,
-                            paddingVertical: 6,
+                            paddingVertical: spacing.sm,
+                            minHeight: homeLayout.touchSize,
                             borderRadius: radius.pill,
                             borderWidth: 1,
                             borderColor: colors.accent,
@@ -915,58 +858,14 @@ export function FoodLogModal({
                               color: colors.accent,
                             }}
                           >
-                            + Quick
+                            {t('foodLog.history.oneTapAdd')}
                           </Text>
-                        </Pressable>
-
-                        {/* Remove from history button (PRD 6.3 LOG-15) */}
-                        <Pressable
-                          testID={`btn-hide-history-${item.food.id}`}
-                          onPress={() => removeFromHistory(item.food.id)}
-                          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-                        >
-                          <Ionicons name="trash-outline" size={15} color={colors.textMuted} />
                         </Pressable>
                       </View>
                     </View>
                   ))}
                 </ScrollView>
               )}
-            </View>
-          )}
-
-          {/* TAB 5: My Foods (Custom Foods) */}
-          {activeTab === 'myFoods' && (
-            <View style={{ flex: 1, paddingHorizontal: spacing.md, gap: spacing.sm }}>
-              <Pressable
-                testID="btn-create-custom-food"
-                onPress={() => setShowCustomFoodModal(true)}
-                style={{
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  backgroundColor: colors.accent,
-                  borderRadius: radius.sm,
-                  paddingVertical: 12,
-                  gap: 6,
-                }}
-              >
-                <Ionicons name="add-circle" size={18} color={colors.onAccent} />
-                <Text style={{ fontSize: fontSize.sm, fontWeight: '700', color: colors.onAccent }}>
-                  {t('foodLog.myFoods.createButton')}
-                </Text>
-              </Pressable>
-
-              <Text
-                style={{
-                  fontSize: fontSize.xs,
-                  color: colors.textMuted,
-                  fontStyle: 'italic',
-                  marginTop: 4,
-                }}
-              >
-                {t('foodLog.myFoods.emptySub')}
-              </Text>
             </View>
           )}
 

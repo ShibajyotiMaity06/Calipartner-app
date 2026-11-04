@@ -1,5 +1,5 @@
 import { useSubscription } from '@/hooks/useSubscription';
-import { Button } from '@calipartner/ui';
+import { Text, Button } from '@calipartner/ui';
 import { PaywallModal } from '@/components/rooms/PaywallModal';
 import { STARTER_RECIPE_IDS } from '@/services/recipeService';
 import React, { useCallback, useEffect, useState } from 'react';
@@ -9,7 +9,6 @@ import {
   Pressable,
   RefreshControl,
   StyleSheet,
-  Text,
   View,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';

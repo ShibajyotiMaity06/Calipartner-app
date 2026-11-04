@@ -1,5 +1,6 @@
+import { homeLayout, Text } from '@calipartner/ui';
 import React from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { t } from '@/i18n';
 import { fontSize, radius, spacing } from '@/theme/tokens';
@@ -63,15 +64,13 @@ export function CoachSuggestedPrompts({
               styles.chip,
               {
                 backgroundColor: colors.surface,
-                borderColor: colors.border,
+                borderColor: colors.copper,
                 opacity: disabled ? 0.5 : pressed ? 0.75 : 1,
               },
             ]}
           >
             <Ionicons name={item.icon} size={14} color={colors.accent} />
-            <Text style={[styles.chipText, { color: colors.text }]} numberOfLines={1}>
-              {item.text}
-            </Text>
+            <Text style={[styles.chipText, { color: colors.text }]}>{item.text}</Text>
           </Pressable>
         ))}
       </ScrollView>
@@ -88,6 +87,7 @@ const styles = StyleSheet.create({
     gap: spacing.xs + 2,
   },
   chip: {
+    minHeight: homeLayout.touchSize,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,

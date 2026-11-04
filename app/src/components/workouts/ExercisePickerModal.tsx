@@ -1,3 +1,4 @@
+import { type as inputTypography } from '@calipartner/ui';
 import React, { useCallback, useEffect, useState } from 'react';
 import {
   ActivityIndicator,
@@ -218,7 +219,10 @@ export function ExercisePickerModal({
             <Ionicons name="search" size={18} color={colors.textMuted} />
             <TextInput
               testID={`${testID}-input-search`}
-              style={[styles.searchInput, { color: colors.text }]}
+              style={[
+                [styles.searchInput, { color: colors.text }],
+                { fontFamily: inputTypography.body.fontFamily },
+              ]}
               value={searchQuery}
               onChangeText={setSearchQuery}
               placeholder={t('workouts.exercises.searchPlaceholder')}
@@ -352,12 +356,15 @@ export function ExercisePickerModal({
                 <TextInput
                   testID="input-custom-exercise-name"
                   style={[
-                    styles.formInput,
-                    {
-                      color: colors.text,
-                      backgroundColor: colors.background,
-                      borderColor: colors.border,
-                    },
+                    [
+                      styles.formInput,
+                      {
+                        color: colors.text,
+                        backgroundColor: colors.background,
+                        borderColor: colors.border,
+                      },
+                    ],
+                    { fontFamily: inputTypography.body.fontFamily },
                   ]}
                   value={customName}
                   onChangeText={setCustomName}

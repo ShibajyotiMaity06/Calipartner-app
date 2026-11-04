@@ -1,3 +1,4 @@
+import { type as inputTypography } from '@calipartner/ui';
 import React, { useState } from 'react';
 import { Pressable, Share, StyleSheet, TextInput, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
@@ -151,7 +152,10 @@ export function CommunityPanel({
           autoCorrect={false}
           maxLength={21}
           testID="friend-username-search"
-          style={[styles.input, { color: colors.textHi }]}
+          style={[
+            [styles.input, { color: colors.textHi }],
+            { fontFamily: inputTypography.body.fontFamily },
+          ]}
         />
       </View>
       <View
@@ -183,11 +187,6 @@ export function CommunityPanel({
           </Pressable>
         ))}
       </View>
-      {tab === 'discover' ? (
-        <Text variant="bodyS" color={colors.textMid} testID="community-suggestions-hint">
-          {t('compactProfile.suggestions')}
-        </Text>
-      ) : null}
       {tab === 'requests' ? (
         <View style={styles.filters}>
           {(['incoming', 'outgoing'] as const).map((value) => (
@@ -224,7 +223,7 @@ export function CommunityPanel({
             tab === 'discover'
               ? query.trim()
                 ? 'compactProfile.searchResults'
-                : 'community.suggested'
+                : 'compactProfile.searchResults'
               : tab === 'friends'
                 ? 'community.friendsCount'
                 : 'community.requestsCount',
@@ -259,7 +258,7 @@ export function CommunityPanel({
             query
               ? 'friends.searchEmpty'
               : tab === 'discover'
-                ? 'community.empty'
+                ? 'homeRefresh.searchUsername'
                 : tab === 'friends'
                   ? 'friends.friendsEmpty'
                   : requestTab === 'incoming'

@@ -8,7 +8,8 @@ vi.mock('react-native', () => ({
   TextInput: 'TextInput',
   StyleSheet: { create: (value: unknown) => value },
 }));
-vi.mock('@calipartner/ui', () => ({
+vi.mock('@calipartner/ui', async () => ({
+  ...(await import('../../../../packages/ui/src/tokens')),
   SegmentedControl: 'SegmentedControl',
   Text: 'Text',
   CheckIcon: 'CheckIcon',

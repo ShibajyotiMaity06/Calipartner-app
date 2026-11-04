@@ -1,3 +1,4 @@
+import suppliedFoods from '../../assets/supplied_foods.json';
 vi.mock('./accountDataService', async (original) => ({
   ...(await original<object>()),
   withOnlineSave: async <T>(db: LocalDb, action: (db: LocalDb) => Promise<T>) => action(db),
@@ -408,5 +409,70 @@ describe('Food Service & Local Database', () => {
     expect(copiedDay).toHaveLength(1);
     expect(copiedDay[0]!.local_date).toBe('2026-10-10');
     expect(copiedDay[0]!.id).not.toBe(copiedMeal[0]!.id);
+  });
+});
+
+describe('Supplied individual foods and recovered diary history', () => {
+  it('installs all 247 foods on an existing catalog and preserves servings and advanced nutrients', async () => {
+    const db = createTestDb();
+    await ensureBundledFoodsSeeded(db);
+    await db.runAsync('DELETE FROM local_foods WHERE id = ?', [suppliedFoods[0]!.id]);
+    expect(await ensureBundledFoodsSeeded(db)).toBe(1);
+    expect(suppliedFoods).toHaveLength(247);
+    expect(new Set(suppliedFoods.map((food) => food.id)).size).toBe(247);
+    const paneer = (await searchLocalFoods(db, 'Paneer (full-fat)')).find(
+      (food) => food.id === suppliedFoods[0]!.id,
+    )!;
+    expect(paneer.calories_per_100g).toBe(296);
+    expect(paneer.serving_units[0]).toEqual({ unit: '1 small cube (~15 g)', grams: 15 });
+    expect(paneer.nutrition_details?.saturated_fat).toBe(14);
+    const gouda = (await searchLocalFoods(db, 'Gouda Cheese')).find(
+      (food) => food.id === suppliedFoods.at(-1)!.id,
+    )!;
+    expect(gouda.nutrition_details?.cholesterol_mg).toBe(114);
+    expect(await ensureBundledFoodsSeeded(db)).toBe(0);
+  });
+  it('recovers food snapshots without stats or catalog rows and keeps other accounts and deleted logs out', async () => {
+    const db = createTestDb();
+    await ensureBundledFoodsSeeded(db);
+    const food = (await searchLocalFoods(db, 'banana'))[0]!;
+    const entry = await logFoodEntry(db, {
+      userId: 'owner',
+      food,
+      quantity: 80,
+      unit: 'g',
+      mealSection: 'breakfast',
+      localDate: '2026-11-03',
+    });
+    await logFoodEntry(db, {
+      userId: 'someone-else',
+      food,
+      quantity: 100,
+      unit: 'g',
+      mealSection: 'dinner',
+      localDate: '2026-11-03',
+    });
+    await db.runAsync('DELETE FROM local_user_food_stats WHERE user_id = ?', ['owner']);
+    await db.runAsync('UPDATE local_food_entries SET food_id = NULL WHERE id = ?', [entry.id]);
+    const history = await getPreviouslyLoggedItems(db, 'owner');
+    expect(history).toHaveLength(1);
+    expect(history[0]!.stats.last_meal_section).toBe('breakfast');
+    expect(history[0]!.stats.last_quantity).toBe(80);
+    expect(history[0]!.food.name).toBe(entry.food_name);
+    const relogged = await logFoodEntry(db, {
+      userId: 'owner',
+      food: history[0]!.food,
+      quantity: 80,
+      unit: 'g',
+      mealSection: 'lunch',
+      localDate: '2026-11-03',
+    });
+    expect(relogged.calories).toBe(entry.calories);
+    const writes = await recordedWrites(db);
+    expect(writes.some((write) => write.entity === 'foods' && write.id === entry.id)).toBe(true);
+    await deleteFoodEntry(db, entry.id);
+    await deleteFoodEntry(db, relogged.id);
+    await db.runAsync('DELETE FROM local_user_food_stats WHERE user_id = ?', ['owner']);
+    expect(await getPreviouslyLoggedItems(db, 'owner')).toHaveLength(0);
   });
 });

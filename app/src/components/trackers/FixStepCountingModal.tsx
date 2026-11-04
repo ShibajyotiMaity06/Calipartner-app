@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
-import { Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Modal, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import type { ActivitySource } from '@calipartner/core';
-import { dark, radius, space, type as typeTokens } from '@calipartner/ui';
+import { Text, dark, radius, space, type as typeTokens } from '@calipartner/ui';
 import { t } from '@/i18n';
 
 export interface FixStepCountingModalProps {

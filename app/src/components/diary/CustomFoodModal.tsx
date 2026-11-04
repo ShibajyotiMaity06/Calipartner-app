@@ -1,5 +1,7 @@
+import { type as inputTypography } from '@calipartner/ui';
+import { Text } from '@calipartner/ui';
 import { useState } from 'react';
-import { Modal, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
+import { Modal, Pressable, ScrollView, TextInput, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import type { Food } from '@calipartner/core';
 import { useCustomFood } from '@/hooks/useFoodEntries';
@@ -162,16 +164,19 @@ export function CustomFoodModal({
                 onChangeText={setName}
                 placeholder={t('customFood.namePlaceholder')}
                 placeholderTextColor={colors.textMuted}
-                style={{
-                  backgroundColor: colors.surfaceAlt,
-                  borderWidth: 1,
-                  borderColor: colors.border,
-                  borderRadius: radius.sm,
-                  paddingHorizontal: 12,
-                  paddingVertical: 10,
-                  fontSize: fontSize.md,
-                  color: colors.text,
-                }}
+                style={[
+                  {
+                    backgroundColor: colors.surfaceAlt,
+                    borderWidth: 1,
+                    borderColor: colors.border,
+                    borderRadius: radius.sm,
+                    paddingHorizontal: 12,
+                    paddingVertical: 10,
+                    fontSize: fontSize.md,
+                    color: colors.text,
+                  },
+                  { fontFamily: inputTypography.body.fontFamily },
+                ]}
               />
             </View>
 
@@ -186,16 +191,19 @@ export function CustomFoodModal({
                 onChangeText={setBrand}
                 placeholder={t('customFood.brandPlaceholder')}
                 placeholderTextColor={colors.textMuted}
-                style={{
-                  backgroundColor: colors.surfaceAlt,
-                  borderWidth: 1,
-                  borderColor: colors.border,
-                  borderRadius: radius.sm,
-                  paddingHorizontal: 12,
-                  paddingVertical: 10,
-                  fontSize: fontSize.md,
-                  color: colors.text,
-                }}
+                style={[
+                  {
+                    backgroundColor: colors.surfaceAlt,
+                    borderWidth: 1,
+                    borderColor: colors.border,
+                    borderRadius: radius.sm,
+                    paddingHorizontal: 12,
+                    paddingVertical: 10,
+                    fontSize: fontSize.md,
+                    color: colors.text,
+                  },
+                  { fontFamily: inputTypography.body.fontFamily },
+                ]}
               />
             </View>
 
@@ -212,16 +220,19 @@ export function CustomFoodModal({
                   keyboardType="numeric"
                   placeholder="100"
                   placeholderTextColor={colors.textMuted}
-                  style={{
-                    backgroundColor: colors.surfaceAlt,
-                    borderWidth: 1,
-                    borderColor: colors.border,
-                    borderRadius: radius.sm,
-                    paddingHorizontal: 12,
-                    paddingVertical: 10,
-                    fontSize: fontSize.md,
-                    color: colors.text,
-                  }}
+                  style={[
+                    {
+                      backgroundColor: colors.surfaceAlt,
+                      borderWidth: 1,
+                      borderColor: colors.border,
+                      borderRadius: radius.sm,
+                      paddingHorizontal: 12,
+                      paddingVertical: 10,
+                      fontSize: fontSize.md,
+                      color: colors.text,
+                    },
+                    { fontFamily: inputTypography.body.fontFamily },
+                  ]}
                 />
               </View>
 
@@ -235,16 +246,19 @@ export function CustomFoodModal({
                   onChangeText={setServingUnit}
                   placeholder="g / piece / katori"
                   placeholderTextColor={colors.textMuted}
-                  style={{
-                    backgroundColor: colors.surfaceAlt,
-                    borderWidth: 1,
-                    borderColor: colors.border,
-                    borderRadius: radius.sm,
-                    paddingHorizontal: 12,
-                    paddingVertical: 10,
-                    fontSize: fontSize.md,
-                    color: colors.text,
-                  }}
+                  style={[
+                    {
+                      backgroundColor: colors.surfaceAlt,
+                      borderWidth: 1,
+                      borderColor: colors.border,
+                      borderRadius: radius.sm,
+                      paddingHorizontal: 12,
+                      paddingVertical: 10,
+                      fontSize: fontSize.md,
+                      color: colors.text,
+                    },
+                    { fontFamily: inputTypography.body.fontFamily },
+                  ]}
                 />
               </View>
             </View>
@@ -276,17 +290,20 @@ export function CustomFoodModal({
                   keyboardType="numeric"
                   placeholder="0"
                   placeholderTextColor={colors.textMuted}
-                  style={{
-                    backgroundColor: colors.surfaceAlt,
-                    borderWidth: 1,
-                    borderColor: colors.border,
-                    borderRadius: radius.sm,
-                    paddingHorizontal: 12,
-                    paddingVertical: 10,
-                    fontSize: fontSize.md,
-                    fontWeight: '700',
-                    color: colors.text,
-                  }}
+                  style={[
+                    {
+                      backgroundColor: colors.surfaceAlt,
+                      borderWidth: 1,
+                      borderColor: colors.border,
+                      borderRadius: radius.sm,
+                      paddingHorizontal: 12,
+                      paddingVertical: 10,
+                      fontSize: fontSize.md,
+                      fontWeight: '700',
+                      color: colors.text,
+                    },
+                    { fontFamily: inputTypography.body.fontFamily },
+                  ]}
                 />
               </View>
 
@@ -303,16 +320,19 @@ export function CustomFoodModal({
                   keyboardType="numeric"
                   placeholder="0"
                   placeholderTextColor={colors.textMuted}
-                  style={{
-                    backgroundColor: colors.surfaceAlt,
-                    borderWidth: 1,
-                    borderColor: colors.border,
-                    borderRadius: radius.sm,
-                    paddingHorizontal: 12,
-                    paddingVertical: 10,
-                    fontSize: fontSize.md,
-                    color: colors.text,
-                  }}
+                  style={[
+                    {
+                      backgroundColor: colors.surfaceAlt,
+                      borderWidth: 1,
+                      borderColor: colors.border,
+                      borderRadius: radius.sm,
+                      paddingHorizontal: 12,
+                      paddingVertical: 10,
+                      fontSize: fontSize.md,
+                      color: colors.text,
+                    },
+                    { fontFamily: inputTypography.body.fontFamily },
+                  ]}
                 />
               </View>
             </View>
@@ -331,16 +351,19 @@ export function CustomFoodModal({
                   keyboardType="numeric"
                   placeholder="0"
                   placeholderTextColor={colors.textMuted}
-                  style={{
-                    backgroundColor: colors.surfaceAlt,
-                    borderWidth: 1,
-                    borderColor: colors.border,
-                    borderRadius: radius.sm,
-                    paddingHorizontal: 12,
-                    paddingVertical: 10,
-                    fontSize: fontSize.md,
-                    color: colors.text,
-                  }}
+                  style={[
+                    {
+                      backgroundColor: colors.surfaceAlt,
+                      borderWidth: 1,
+                      borderColor: colors.border,
+                      borderRadius: radius.sm,
+                      paddingHorizontal: 12,
+                      paddingVertical: 10,
+                      fontSize: fontSize.md,
+                      color: colors.text,
+                    },
+                    { fontFamily: inputTypography.body.fontFamily },
+                  ]}
                 />
               </View>
 
@@ -355,16 +378,19 @@ export function CustomFoodModal({
                   keyboardType="numeric"
                   placeholder="0"
                   placeholderTextColor={colors.textMuted}
-                  style={{
-                    backgroundColor: colors.surfaceAlt,
-                    borderWidth: 1,
-                    borderColor: colors.border,
-                    borderRadius: radius.sm,
-                    paddingHorizontal: 12,
-                    paddingVertical: 10,
-                    fontSize: fontSize.md,
-                    color: colors.text,
-                  }}
+                  style={[
+                    {
+                      backgroundColor: colors.surfaceAlt,
+                      borderWidth: 1,
+                      borderColor: colors.border,
+                      borderRadius: radius.sm,
+                      paddingHorizontal: 12,
+                      paddingVertical: 10,
+                      fontSize: fontSize.md,
+                      color: colors.text,
+                    },
+                    { fontFamily: inputTypography.body.fontFamily },
+                  ]}
                 />
               </View>
             </View>

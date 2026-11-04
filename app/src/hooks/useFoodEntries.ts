@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import type {
   CreateFoodInput,
   EntrySource,
@@ -17,11 +17,13 @@ import {
   deleteFoodEntry,
   editFoodEntry,
   logFoodEntry,
+  generateClientUuid,
   saveCustomFood,
 } from '@/services/foodService';
 
 export function useAddEntry() {
   const { user } = useAuth();
+  const pending = useRef(new Map<string, string>());
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -40,8 +42,12 @@ export function useAddEntry() {
       const db = await getDb();
       const userId = user?.id || 'guest-user';
 
+      const key = JSON.stringify([userId, params]);
+      const id = pending.current.get(key) ?? generateClientUuid();
+      pending.current.set(key, id);
       const entry = await logFoodEntry(db, {
         userId,
+        id,
         food: params.food,
         quantity: params.quantity,
         unit: params.unit,
@@ -51,6 +57,7 @@ export function useAddEntry() {
         sharedMealId: params.sharedMealId,
       });
 
+      pending.current.delete(key);
       diaryEvents.emitChange();
 
       return entry;

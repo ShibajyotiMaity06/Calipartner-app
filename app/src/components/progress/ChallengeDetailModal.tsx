@@ -1,5 +1,6 @@
+import { Text } from '@calipartner/ui';
 import React, { useEffect, useState } from 'react';
-import { Text, View } from 'react-native';
+import { View } from 'react-native';
 import { useRouter } from 'expo-router';
 import {
   gentlerChallengeTargets,

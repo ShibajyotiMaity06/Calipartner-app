@@ -1062,7 +1062,7 @@ export const en = {
       allSections: 'All Sections',
       emptyTitle: 'No logged history',
       emptySub: 'Foods you log will appear here with one-tap quick add.',
-      oneTapAdd: '+ Quick Add',
+      oneTapAdd: 'Add food',
       removeFromHistory: 'Remove from history',
       lastPortion: 'Last: {qty} {unit} • {kcal} kcal',
     },
@@ -2554,7 +2554,8 @@ export const en = {
       log: 'Log meal',
       logged: 'Meal logged',
       estimate: 'AI estimate. Correct any food, portion or meal section in chat before logging.',
-      macros: '{calories} kcal ? {protein} g protein ? {carbs} g carbs ? {fat} g fat',
+      macros:
+        '{calories} kcal \u00b7 {protein} g protein \u00b7 {carbs} g carbs \u00b7 {fat} g fat',
       saveError:
         'Your meal was not confirmed saved. Check your connection and tap Log meal to retry safely.',
       proRequired: 'An active purchased Pro plan is required. Open Settings to check your plan.',

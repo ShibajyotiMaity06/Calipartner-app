@@ -1,3 +1,4 @@
+import { type as inputTypography } from '@calipartner/ui';
 import React, { useCallback, useRef, useState } from 'react';
 import {
   ActivityIndicator,
@@ -423,7 +424,7 @@ export function CoachChatView({ onBack, initialConversationId }: CoachChatViewPr
           {requestError}
         </Text>
       )}
-      {/* Bottom Input Bar */}
+      {/* Bottom TextInput Bar */}
       <View
         style={[
           styles.inputContainer,
@@ -439,13 +440,16 @@ export function CoachChatView({ onBack, initialConversationId }: CoachChatViewPr
           maxLength={MAX_CHAR_COUNT}
           multiline
           style={[
-            styles.textInput,
-            {
-              backgroundColor: colors.surfaceAlt,
-              borderColor: colors.border,
-              color: colors.text,
-              opacity: inputDisabled ? 0.6 : 1,
-            },
+            [
+              styles.textInput,
+              {
+                backgroundColor: colors.surfaceAlt,
+                borderColor: colors.border,
+                color: colors.text,
+                opacity: inputDisabled ? 0.6 : 1,
+              },
+            ],
+            { fontFamily: inputTypography.body.fontFamily },
           ]}
           testID="input-coach-message"
         />

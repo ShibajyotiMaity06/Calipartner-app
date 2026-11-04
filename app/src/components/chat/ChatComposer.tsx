@@ -1,3 +1,4 @@
+import { type as inputTypography } from '@calipartner/ui';
 import React, { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
@@ -103,8 +104,7 @@ export function ChatComposer({
     >
       {tagOpen && !disabled && (
         <View testID="chat-tag-picker">
-          <Text>{t('squadDesign.tag')}</Text>
-          <ScrollView horizontal>
+          <ScrollView keyboardShouldPersistTaps="handled" style={{ maxHeight: layout.touch * 4 }}>
             {tagMembers.map((member) => (
               <Pressable
                 key={member.user_id}
@@ -238,7 +238,10 @@ export function ChatComposer({
             editable={!disabled && !isSending}
             multiline
             maxLength={2050}
-            style={[styles.textInput, { color: colors.text }]}
+            style={[
+              [styles.textInput, { color: colors.text }],
+              { fontFamily: inputTypography.body.fontFamily },
+            ]}
             accessibilityLabel="Chat message input"
             testID="input-chat-message"
           />

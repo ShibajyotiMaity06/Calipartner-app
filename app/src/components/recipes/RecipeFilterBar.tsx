@@ -1,6 +1,7 @@
+import { type as inputTypography } from '@calipartner/ui';
 import React from 'react';
-import { homeLayout } from '@calipartner/ui';
-import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Text, homeLayout } from '@calipartner/ui';
+import { Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import type { RecipeFilterCriteria, RecipeMealType } from '@calipartner/core';
 import { t } from '@/i18n';
@@ -95,7 +96,7 @@ export function RecipeFilterBar({
 
   return (
     <View style={styles.container}>
-      {/* Search Input Box */}
+      {/* Search TextInput Box */}
       <View
         style={[
           styles.searchBox,
@@ -114,7 +115,10 @@ export function RecipeFilterBar({
           placeholderTextColor={colors.textMuted}
           returnKeyType="search"
           accessibilityLabel={t('recipes.browse.searchPlaceholder')}
-          style={[styles.searchInput, { color: colors.text }]}
+          style={[
+            [styles.searchInput, { color: colors.text }],
+            { fontFamily: inputTypography.body.fontFamily },
+          ]}
         />
         {query.length > 0 && (
           <Pressable

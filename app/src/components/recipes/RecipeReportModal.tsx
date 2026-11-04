@@ -1,3 +1,5 @@
+import { type as inputTypography } from '@calipartner/ui';
+import { Text } from '@calipartner/ui';
 import React, { useState } from 'react';
 import {
   ActivityIndicator,
@@ -5,7 +7,6 @@ import {
   Pressable,
   ScrollView,
   StyleSheet,
-  Text,
   TextInput,
   View,
 } from 'react-native';
@@ -182,7 +183,7 @@ export function RecipeReportModal({
                 })}
               </View>
 
-              {/* Details Input */}
+              {/* Details TextInput */}
               <View style={styles.inputGroup}>
                 <Text style={[styles.sectionLabel, { color: colors.text }]}>
                   {t('recipes.report.detailsLabel')}
@@ -196,12 +197,15 @@ export function RecipeReportModal({
                   multiline
                   numberOfLines={3}
                   style={[
-                    styles.textArea,
-                    {
-                      backgroundColor: colors.surfaceAlt,
-                      borderColor: colors.border,
-                      color: colors.text,
-                    },
+                    [
+                      styles.textArea,
+                      {
+                        backgroundColor: colors.surfaceAlt,
+                        borderColor: colors.border,
+                        color: colors.text,
+                      },
+                    ],
+                    { fontFamily: inputTypography.body.fontFamily },
                   ]}
                 />
               </View>

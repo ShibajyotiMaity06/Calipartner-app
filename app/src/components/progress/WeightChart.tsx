@@ -1,6 +1,7 @@
+import { Text } from '@calipartner/ui';
 import React, { useCallback, useMemo, useState } from 'react';
 import type { LayoutChangeEvent } from 'react-native';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import Svg, { Circle, Line, Path, Text as SvgText } from 'react-native-svg';
 import type { IndividualWeightProgress } from '@calipartner/core';
 import { t } from '@/i18n';

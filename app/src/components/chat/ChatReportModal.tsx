@@ -1,3 +1,4 @@
+import { type as inputTypography } from '@calipartner/ui';
 import React, { useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, Modal, Pressable, StyleSheet, TextInput, View } from 'react-native';
 import { Text, type as typography } from '@calipartner/ui';
@@ -144,12 +145,15 @@ export function ChatReportModal({
                 multiline
                 numberOfLines={3}
                 style={[
-                  styles.detailsInput,
-                  {
-                    backgroundColor: colors.surfaceAlt,
-                    color: colors.text,
-                    borderColor: colors.border,
-                  },
+                  [
+                    styles.detailsInput,
+                    {
+                      backgroundColor: colors.surfaceAlt,
+                      color: colors.text,
+                      borderColor: colors.border,
+                    },
+                  ],
+                  { fontFamily: inputTypography.body.fontFamily },
                 ]}
                 accessibilityLabel="Report details input"
                 testID="input-report-details"

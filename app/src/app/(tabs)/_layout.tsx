@@ -1,5 +1,6 @@
+import React from 'react';
 import { closeBrowserModalsThen } from '@/hooks/useBrowserModalBack';
-import { Tabs, usePathname, useRouter } from 'expo-router';
+import { Tabs, usePathname, useRouter, useGlobalSearchParams } from 'expo-router';
 import { dark, TabBar, type TabId } from '@calipartner/ui';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { t } from '@/i18n';
@@ -8,9 +9,13 @@ export default function TabsLayout() {
   const insets = useSafeAreaInsets();
   const pathname = usePathname();
   const router = useRouter();
+  const { chat } = useGlobalSearchParams<{ chat?: string }>();
 
   // Hide tab bar on full-screen flows (e.g. full-screen barcode scan, onboarding)
-  const isFullScreenFlow = pathname.includes('/scan') || pathname.includes('/onboarding');
+  const isFullScreenFlow =
+    pathname.includes('/scan') ||
+    pathname.includes('/onboarding') ||
+    (pathname.endsWith('/room') && chat === 'open');
 
   return (
     <Tabs

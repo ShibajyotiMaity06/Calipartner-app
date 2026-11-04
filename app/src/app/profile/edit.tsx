@@ -1,3 +1,5 @@
+import { type as inputTypography } from '@calipartner/ui';
+import { Text } from '@calipartner/ui';
 import { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
@@ -7,7 +9,6 @@ import {
   ScrollView,
   StyleSheet,
   Switch,
-  Text,
   TextInput,
   View,
 } from 'react-native';
@@ -150,8 +151,11 @@ export default function ProfileEditScreen() {
           <TextInput
             testID="input-edit-nickname"
             style={[
-              styles.input,
-              { color: colors.text, borderColor: colors.border, backgroundColor: colors.surface },
+              [
+                styles.input,
+                { color: colors.text, borderColor: colors.border, backgroundColor: colors.surface },
+              ],
+              { fontFamily: inputTypography.body.fontFamily },
             ]}
             value={nickname}
             onChangeText={setNickname}
@@ -161,8 +165,11 @@ export default function ProfileEditScreen() {
           <TextInput
             testID="input-edit-height"
             style={[
-              styles.input,
-              { color: colors.text, borderColor: colors.border, backgroundColor: colors.surface },
+              [
+                styles.input,
+                { color: colors.text, borderColor: colors.border, backgroundColor: colors.surface },
+              ],
+              { fontFamily: inputTypography.body.fontFamily },
             ]}
             keyboardType="decimal-pad"
             value={heightCm}
@@ -255,13 +262,16 @@ export default function ProfileEditScreen() {
           <TextInput
             testID="input-change-username"
             style={[
-              styles.input,
-              {
-                color: colors.text,
-                borderColor: colors.border,
-                backgroundColor: colors.surface,
-                marginTop: spacing.sm,
-              },
+              [
+                styles.input,
+                {
+                  color: colors.text,
+                  borderColor: colors.border,
+                  backgroundColor: colors.surface,
+                  marginTop: spacing.sm,
+                },
+              ],
+              { fontFamily: inputTypography.body.fontFamily },
             ]}
             placeholder="new_username"
             placeholderTextColor={colors.textMuted}

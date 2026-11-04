@@ -1,3 +1,4 @@
+import { type as inputTypography } from '@calipartner/ui';
 import React, { useMemo } from 'react';
 import { StyleSheet, TextInput, TouchableOpacity, View } from 'react-native';
 import { Text, type as typography } from '@calipartner/ui';
@@ -78,12 +79,15 @@ export function CardioForm({
           <TextInput
             testID={`${testID}-input-duration`}
             style={[
-              styles.input,
-              {
-                color: colors.text,
-                borderColor: colors.border,
-                backgroundColor: colors.background,
-              },
+              [
+                styles.input,
+                {
+                  color: colors.text,
+                  borderColor: colors.border,
+                  backgroundColor: colors.background,
+                },
+              ],
+              { fontFamily: inputTypography.body.fontFamily },
             ]}
             keyboardType="number-pad"
             value={durationMinutes > 0 ? String(durationMinutes) : ''}
@@ -145,12 +149,15 @@ export function CardioForm({
           <TextInput
             testID={`${testID}-input-distance`}
             style={[
-              styles.input,
-              {
-                color: colors.text,
-                borderColor: colors.border,
-                backgroundColor: colors.background,
-              },
+              [
+                styles.input,
+                {
+                  color: colors.text,
+                  borderColor: colors.border,
+                  backgroundColor: colors.background,
+                },
+              ],
+              { fontFamily: inputTypography.body.fontFamily },
             ]}
             keyboardType="decimal-pad"
             value={distanceKm > 0 ? String(distanceKm) : ''}

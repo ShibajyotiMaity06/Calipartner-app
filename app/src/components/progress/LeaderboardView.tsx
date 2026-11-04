@@ -6,11 +6,10 @@ import {
   ScrollView,
   StyleSheet,
   Switch,
-  Text,
   View,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { Avatar, dark, radius, space, type } from '@calipartner/ui';
+import { Text, Avatar, dark, radius, space, type } from '@calipartner/ui';
 import { useLeaderboard } from '@/hooks/useLeaderboard';
 import { t } from '@/i18n';
 import { MondayRecapModal } from './MondayRecapModal';

@@ -1,6 +1,7 @@
 import { withOnlineSave } from './accountDataService';
 import {
   calculateDiaryTotals,
+  foodFromEntrySnapshot,
   copyEntries,
   DEV_100_FOOD_SEED,
   getMealSectionForTime,
@@ -22,6 +23,7 @@ import {
 import { createLogger } from '@/lib/logger';
 import { saveRemote, type LocalDb } from './accountDataService';
 import bundledFoodsJson from '../../assets/bundled_foods.json';
+import suppliedFoodsJson from '../../assets/supplied_foods.json';
 
 const log = createLogger('foodService');
 
@@ -43,18 +45,17 @@ export function generateClientUuid(): string {
  * with DEV_100_FOOD_SEED fallback.
  */
 export async function ensureBundledFoodsSeeded(db: LocalDb): Promise<number> {
-  const countRow = await db.getFirstAsync<{ count: number }>(
-    `SELECT COUNT(*) as count FROM local_foods WHERE source != 'user'`,
+  const existing = new Set(
+    (await db.getAllAsync<{ id: string }>('SELECT id FROM local_foods')).map((food) => food.id),
   );
-
-  if (countRow && countRow.count > 0) {
-    return 0; // Already seeded
-  }
-
-  const foodsToSeed =
-    Array.isArray(bundledFoodsJson) && bundledFoodsJson.length > 0
-      ? (bundledFoodsJson as unknown as CreateFoodInput[])
+  const bundled =
+    Array.isArray(bundledFoodsJson) && bundledFoodsJson.length
+      ? bundledFoodsJson
       : DEV_100_FOOD_SEED;
+  const foodsToSeed = ([...bundled, ...suppliedFoodsJson] as CreateFoodInput[]).filter(
+    (food) => !existing.has(food.id!),
+  );
+  if (!foodsToSeed.length) return 0;
 
   const now = new Date().toISOString();
   let inserted = 0;
@@ -68,7 +69,9 @@ export async function ensureBundledFoodsSeeded(db: LocalDb): Promise<number> {
     for (const f of chunk) {
       const foodId = f.id || `f-bundled-${inserted + 1}`;
       const unitsJson = JSON.stringify(f.serving_units ?? [{ unit: 'g', grams: 1 }]);
-      placeholders.push("(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NULL, ?, ?, ?, NULL, 'synced')");
+      placeholders.push(
+        "(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NULL, ?, ?, ?, NULL, 'synced', ?)",
+      );
       values.push(
         foodId,
         f.source ?? 'ifct',
@@ -86,6 +89,7 @@ export async function ensureBundledFoodsSeeded(db: LocalDb): Promise<number> {
         f.attribution ?? null,
         now,
         now,
+        f.nutrition_details ? JSON.stringify(f.nutrition_details) : null,
       );
       inserted += 1;
     }
@@ -94,7 +98,7 @@ export async function ensureBundledFoodsSeeded(db: LocalDb): Promise<number> {
       id, source, name, brand, barcode, serving_units,
       calories_per_100g, protein_per_100g, carbs_per_100g, fat_per_100g,
       fiber_per_100g, sugar_per_100g, sodium_mg_per_100g,
-      owner_id, attribution, created_at, updated_at, deleted_at, sync_state
+      owner_id, attribution, created_at, updated_at, deleted_at, sync_state, nutrition_details
     ) VALUES ${placeholders.join(', ')}
     ON CONFLICT (id) DO NOTHING`;
 
@@ -400,6 +404,7 @@ export async function logFoodEntry(
   db: LocalDb,
   input: {
     userId: string;
+    id?: string;
     food: Food;
     mealSection?: MealSection;
     quantity: number;
@@ -410,8 +415,11 @@ export async function logFoodEntry(
   },
 ): Promise<FoodEntry> {
   return withOnlineSave(db, async (db) => {
-    const id = generateClientUuid();
+    const id = input.id ?? generateClientUuid();
     const now = new Date().toISOString();
+    if (input.food.source === 'user' && input.food.owner_id === input.userId) {
+      await saveCustomFood(db, input.userId, input.food);
+    }
     const localDate = input.localDate ?? now.slice(0, 10);
     const section = input.mealSection ?? getMealSectionForTime(now);
     const source = input.source ?? 'search';
@@ -799,102 +807,71 @@ export async function getDiaryDaySummary(
   return calculateDiaryTotals(entries, localDate);
 }
 
-interface HistoryJoinedRow {
-  user_id: string;
-  food_id: string;
-  use_count: number;
-  last_used_at: string;
-  last_quantity: number;
-  last_unit: string;
-  last_meal_section: string;
-  hidden: number;
-  updated_at: string;
-  f_id: string;
-  f_source: string;
-  f_name: string;
-  f_brand: string | null;
-  f_barcode: string | null;
-  f_units: string;
-  f_cal: number;
-  f_pro: number;
-  f_carb: number;
-  f_fat: number;
-  f_fib: number;
-  f_sug: number;
-  f_sod: number;
-  f_details?: unknown;
-  f_owner: string | null;
-  f_attr: string | null;
-  f_created?: string;
-  f_updated?: string;
-  f_deleted?: string | null;
-}
-
-/**
- * Fetches previously logged foods with usage stats.
- */
+/** Recent foods are reconstructed from durable diary snapshots when catalog/stats rows are absent. */
 export async function getPreviouslyLoggedItems(
   db: LocalDb,
   userId: string,
 ): Promise<Array<{ stats: UserFoodStats; food: Food }>> {
-  const rows = await db.getAllAsync<HistoryJoinedRow>(
-    `SELECT s.*, f.id as f_id, f.source as f_source, f.name as f_name, f.brand as f_brand,
-            f.barcode as f_barcode, f.serving_units as f_units, f.calories_per_100g as f_cal,
-            f.protein_per_100g as f_pro, f.carbs_per_100g as f_carb, f.fat_per_100g as f_fat,
-            f.fiber_per_100g as f_fib, f.sugar_per_100g as f_sug, f.sodium_mg_per_100g as f_sod, f.nutrition_details as f_details,
-            f.owner_id as f_owner, f.attribution as f_attr, f.created_at as f_created,
-            f.updated_at as f_updated, f.deleted_at as f_deleted
-     FROM local_user_food_stats s
-     JOIN local_foods f ON s.food_id = f.id
-     WHERE s.user_id = ? AND s.hidden = 0 AND f.deleted_at IS NULL
-     ORDER BY s.last_used_at DESC`,
-    [userId],
+  const [statsRows, foods, entries] = await Promise.all([
+    db.getAllAsync<UserFoodStats>('SELECT * FROM local_user_food_stats WHERE user_id = ?', [
+      userId,
+    ]),
+    db.getAllAsync<RawFoodRow>('SELECT * FROM local_foods'),
+    db.getAllAsync<FoodEntry>(
+      'SELECT * FROM local_food_entries WHERE user_id = ? AND deleted_at IS NULL ORDER BY logged_at DESC',
+      [userId],
+    ),
+  ]);
+  const catalog = new Map(
+    foods
+      .filter((food) => !food.deleted_at && (!food.owner_id || food.owner_id === userId))
+      .map((food) => [food.id, mapRowToFood(food)]),
   );
-
-  return rows.map((r) => {
-    let units: Food['serving_units'] = [];
-    try {
-      units = typeof r.f_units === 'string' ? JSON.parse(r.f_units) : r.f_units || [];
-    } catch {
-      units = [{ unit: 'g', grams: 1 }];
+  const stats = new Map(
+    statsRows.filter((row) => row.user_id === userId).map((row) => [row.food_id, row]),
+  );
+  const recent = new Map<string, { stats: UserFoodStats; food: Food }>();
+  const ordered = entries
+    .filter((entry) => entry.user_id === userId && !entry.deleted_at)
+    .sort((a, b) => b.logged_at.localeCompare(a.logged_at));
+  for (const entry of ordered) {
+    const key = entry.food_id ?? entry.food_name.trim().toLocaleLowerCase();
+    if (stats.get(entry.food_id ?? '')?.hidden) continue;
+    const previous = recent.get(key);
+    if (previous) {
+      previous.stats.use_count++;
+      continue;
     }
-
-    const food: Food = {
-      id: r.f_id,
-      source: (r.f_source as FoodSource) || 'ifct',
-      name: r.f_name,
-      brand: r.f_brand ?? null,
-      barcode: r.f_barcode ?? null,
-      serving_units: units,
-      calories_per_100g: Number(r.f_cal) || 0,
-      protein_per_100g: Number(r.f_pro) || 0,
-      carbs_per_100g: Number(r.f_carb) || 0,
-      fat_per_100g: Number(r.f_fat) || 0,
-      fiber_per_100g: Number(r.f_fib) || 0,
-      sugar_per_100g: Number(r.f_sug) || 0,
-      sodium_mg_per_100g: Number(r.f_sod) || 0,
-      nutrition_details: parseNutritionDetails(r.f_details),
-      owner_id: r.f_owner ?? null,
-      attribution: r.f_attr ?? null,
-      created_at: r.f_created,
-      updated_at: r.f_updated,
-      deleted_at: r.f_deleted ?? null,
+    const snapshot = {
+      ...entry,
+      nutrition_details: parseNutritionDetails(entry.nutrition_details),
     };
-
-    const stats: UserFoodStats = {
-      user_id: r.user_id,
-      food_id: r.food_id,
-      use_count: r.use_count,
-      last_used_at: r.last_used_at,
-      last_quantity: Number(r.last_quantity),
-      last_unit: r.last_unit,
-      last_meal_section: r.last_meal_section as MealSection,
-      hidden: Boolean(r.hidden),
-      updated_at: r.updated_at,
-    };
-
-    return { stats, food };
-  });
+    recent.set(key, {
+      food: catalog.get(entry.food_id ?? '') ?? {
+        ...foodFromEntrySnapshot(snapshot),
+        id: entry.id,
+      },
+      stats: {
+        user_id: userId,
+        food_id: entry.food_id ?? entry.id,
+        use_count: 1,
+        last_used_at: entry.logged_at,
+        last_quantity: Number(entry.quantity),
+        last_unit: entry.unit,
+        last_meal_section: entry.meal_section,
+        hidden: false,
+        updated_at: entry.updated_at ?? entry.logged_at,
+      },
+    });
+  }
+  for (const row of stats.values()) {
+    const food = catalog.get(row.food_id);
+    if (!row.hidden && food && !recent.has(row.food_id))
+      recent.set(row.food_id, { food, stats: row });
+  }
+  return [...recent.values()].sort((a, b) =>
+    b.stats.last_used_at.localeCompare(a.stats.last_used_at),
+  );
 }
 
 /**

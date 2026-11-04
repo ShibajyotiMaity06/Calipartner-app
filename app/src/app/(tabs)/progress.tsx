@@ -1,7 +1,8 @@
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useRef, useState } from 'react';
 import { useFocusEffect } from 'expo-router';
 import { RefreshControl, SafeAreaView, ScrollView, StyleSheet, View } from 'react-native';
-import { Button, homeLayout, space, Text } from '@calipartner/ui';
+import { Button, homeLayout, space, Text, SegmentedControl } from '@calipartner/ui';
+import { PersonalDiaryView } from '@/components/progress/PersonalDiaryView';
 import { ProgressOverview } from '@/components/progress/ProgressOverview';
 import { WorkoutHistoryCalendarModal } from '@/components/workouts/WorkoutHistoryCalendarModal';
 import { PersonalSquads } from '@/components/rooms/PersonalSquads';
@@ -12,15 +13,30 @@ import { useTheme } from '@/theme/useTheme';
 import { t } from '@/i18n';
 import type { ProgressDateRange } from '@calipartner/core';
 
-const ranges: ProgressDateRange[] = ['7d', '30d', '90d'];
+const ranges: ProgressDateRange[] = ['30d', '90d'];
 export default function ProgressScreen() {
   const { colors } = useTheme();
-  const { range, setRange, data, loading, error, refresh } = useIndividualProgress('7d');
+  const { range, setRange, data, loading, error, refresh } = useIndividualProgress('30d');
   useFocusEffect(
     useCallback(() => {
       void refresh();
     }, [refresh]),
   );
+  const [tab, setTab] = useState<'diary' | 'progress'>('diary');
+  const diaryRefresh = useRef<(() => Promise<void>) | null>(null);
+  const registerDiaryRefresh = useCallback((refreshDiary: () => Promise<void>) => {
+    diaryRefresh.current = refreshDiary;
+  }, []);
+  const [refreshing, setRefreshing] = useState(false);
+  const refreshVisible = async () => {
+    setRefreshing(true);
+    try {
+      if (tab === 'diary') await diaryRefresh.current?.();
+      else await refresh();
+    } finally {
+      setRefreshing(false);
+    }
+  };
   const [showWorkouts, setShowWorkouts] = useState(false);
   const [selectedDay, setSelectedDay] = useState<DayDetailData | null>(null);
   return (
@@ -31,46 +47,67 @@ export default function ProgressScreen() {
       <ScrollView
         contentContainerStyle={styles.content}
         refreshControl={
-          <RefreshControl refreshing={loading} onRefresh={refresh} tintColor={colors.accent} />
+          <RefreshControl
+            refreshing={refreshing || (tab === 'progress' && loading)}
+            onRefresh={() => void refreshVisible()}
+            tintColor={colors.accent}
+          />
         }
       >
         <View style={styles.heading}>
           <Text variant="title1">{t('tabs.progress')}</Text>
-          <Text>{t('squadDesign.personal')}</Text>
+          <Text>{t(tab === 'diary' ? 'homeRefresh.diaryHint' : 'squadDesign.personal')}</Text>
         </View>
-        <RangeSelector
-          options={ranges}
-          selected={range}
-          onSelect={setRange}
-          testID="progress-range-selector"
+        <SegmentedControl
+          options={[
+            { value: 'diary', label: t('homeRefresh.diary') },
+            { value: 'progress', label: t('homeRefresh.progress') },
+          ]}
+          value={tab}
+          onChange={setTab}
+          testID="you-tabs"
         />
-        {error ? (
-          <View style={styles.heading}>
-            <Text accessibilityRole="alert">{t('common.errorBody')}</Text>
+        {tab === 'diary' ? (
+          <>
+            <PersonalDiaryView onRefreshReady={registerDiaryRefresh} />
+            <PersonalSquads />
+          </>
+        ) : (
+          <>
+            <RangeSelector
+              options={ranges}
+              selected={range}
+              onSelect={setRange}
+              testID="progress-range-selector"
+            />
+            {error ? (
+              <View style={styles.heading}>
+                <Text accessibilityRole="alert">{t('common.errorBody')}</Text>
+                <Button
+                  variant="secondary"
+                  label={t('common.retry')}
+                  onPress={() => void refresh()}
+                  testID="personal-progress-retry"
+                />
+              </View>
+            ) : loading && !data ? (
+              <LoadingState />
+            ) : (
+              <ProgressOverview
+                data={data}
+                range={range}
+                loading={loading}
+                onSelectDay={setSelectedDay}
+              />
+            )}
             <Button
               variant="secondary"
-              label={t('common.retry')}
-              onPress={() => void refresh()}
-              testID="personal-progress-retry"
+              label={t('homeRefresh.workoutHistory')}
+              onPress={() => setShowWorkouts(true)}
+              testID="personal-workout-history"
             />
-          </View>
-        ) : loading && !data ? (
-          <LoadingState />
-        ) : (
-          <ProgressOverview
-            data={data}
-            range={range}
-            loading={loading}
-            onSelectDay={setSelectedDay}
-          />
+          </>
         )}
-        <Button
-          variant="secondary"
-          label={t('homeRefresh.workoutHistory')}
-          onPress={() => setShowWorkouts(true)}
-          testID="personal-workout-history"
-        />
-        <PersonalSquads />
       </ScrollView>
       {showWorkouts && (
         <WorkoutHistoryCalendarModal visible onClose={() => setShowWorkouts(false)} />

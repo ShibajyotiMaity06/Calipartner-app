@@ -1,3 +1,4 @@
+import { type as inputTypography } from '@calipartner/ui';
 import { Text } from '@calipartner/ui';
 import { useState } from 'react';
 import { Modal, Pressable, StyleSheet, TextInput, View } from 'react-native';
@@ -87,7 +88,7 @@ export function ManualStepsModal({ visible, onClose, onSave }: ManualStepsModalP
             </Pressable>
           </View>
 
-          {/* Steps Input */}
+          {/* Steps TextInput */}
           <View style={styles.inputGroup}>
             <Text style={[styles.label, { color: colors.textMuted }]}>
               {t('trackers.steps.manualStepsLabel')}
@@ -111,14 +112,17 @@ export function ManualStepsModal({ visible, onClose, onSave }: ManualStepsModalP
                 keyboardType="numeric"
                 placeholder={t('trackers.steps.manualStepsPlaceholder')}
                 placeholderTextColor={colors.textMuted}
-                style={[styles.input, { color: colors.text }]}
+                style={[
+                  [styles.input, { color: colors.text }],
+                  { fontFamily: inputTypography.body.fontFamily },
+                ]}
                 accessibilityLabel={t('trackers.steps.manualStepsLabel')}
               />
               <Text style={[styles.unitBadge, { color: colors.textMuted }]}>steps</Text>
             </View>
           </View>
 
-          {/* Distance Input (Optional) */}
+          {/* Distance TextInput (Optional) */}
           <View style={styles.inputGroup}>
             <Text style={[styles.label, { color: colors.textMuted }]}>
               {t('trackers.steps.manualDistanceLabel')}
@@ -139,7 +143,10 @@ export function ManualStepsModal({ visible, onClose, onSave }: ManualStepsModalP
                 keyboardType="numeric"
                 placeholder={t('trackers.steps.manualDistancePlaceholder')}
                 placeholderTextColor={colors.textMuted}
-                style={[styles.input, { color: colors.text }]}
+                style={[
+                  [styles.input, { color: colors.text }],
+                  { fontFamily: inputTypography.body.fontFamily },
+                ]}
                 accessibilityLabel={t('trackers.steps.manualDistanceLabel')}
               />
               <Text style={[styles.unitBadge, { color: colors.textMuted }]}>m</Text>

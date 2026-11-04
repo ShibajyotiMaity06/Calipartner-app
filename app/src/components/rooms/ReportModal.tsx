@@ -1,3 +1,4 @@
+import { type as inputTypography } from '@calipartner/ui';
 import React, { useState } from 'react';
 import { ActivityIndicator, Modal, Pressable, StyleSheet, TextInput, View } from 'react-native';
 import { Text, type as typography } from '@calipartner/ui';
@@ -133,12 +134,15 @@ export function ReportModal({
             placeholder={t('rooms.reportModal.detailsPlaceholder')}
             placeholderTextColor={colors.textMuted}
             style={[
-              styles.textInput,
-              {
-                backgroundColor: colors.surfaceAlt,
-                color: colors.text,
-                borderColor: colors.border,
-              },
+              [
+                styles.textInput,
+                {
+                  backgroundColor: colors.surfaceAlt,
+                  color: colors.text,
+                  borderColor: colors.border,
+                },
+              ],
+              { fontFamily: inputTypography.body.fontFamily },
             ]}
             multiline
             numberOfLines={3}

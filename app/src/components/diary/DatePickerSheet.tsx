@@ -1,3 +1,4 @@
+import { useCurrentLocalDate } from '@/hooks/useCurrentLocalDate';
 import React, { useState } from 'react';
 import { View, StyleSheet, Pressable } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
@@ -16,8 +17,10 @@ export function DatePickerSheet({
   onSelectDate,
   onClose,
 }: DatePickerSheetProps) {
-  const todayStr = new Date().toISOString().slice(0, 10);
-  const [currentMonthDate, setCurrentMonthDate] = useState(() => new Date(selectedDate));
+  const { localDate: todayStr } = useCurrentLocalDate();
+  const [currentMonthDate, setCurrentMonthDate] = useState(
+    () => new Date(selectedDate + 'T12:00:00'),
+  );
 
   const year = currentMonthDate.getFullYear();
   const month = currentMonthDate.getMonth(); // 0-indexed

@@ -1,3 +1,4 @@
+import { type as inputTypography } from '@calipartner/ui';
 import React, { useEffect, useState } from 'react';
 import { Pressable, StyleSheet, TextInput, View, type TextInputProps } from 'react-native';
 import {
@@ -35,8 +36,11 @@ export function PlanTextField({ label, ...props }: TextInputProps & { label: str
         placeholderTextColor={colors.textLo}
         selectionColor={colors.apricot}
         style={[
-          planStyles.input,
-          { color: colors.textHi, backgroundColor: colors.s2, borderColor: colors.hairlineLit },
+          [
+            planStyles.input,
+            { color: colors.textHi, backgroundColor: colors.s2, borderColor: colors.hairlineLit },
+          ],
+          { fontFamily: inputTypography.body.fontFamily },
         ]}
       />
     </View>
@@ -77,8 +81,11 @@ export function NumberField({
         placeholderTextColor={colors.textLo}
         selectionColor={colors.apricot}
         style={[
-          planStyles.input,
-          { color: colors.textHi, backgroundColor: colors.s2, borderColor: colors.hairlineLit },
+          [
+            planStyles.input,
+            { color: colors.textHi, backgroundColor: colors.s2, borderColor: colors.hairlineLit },
+          ],
+          { fontFamily: inputTypography.body.fontFamily },
         ]}
         onChangeText={(next) => {
           setText(next);

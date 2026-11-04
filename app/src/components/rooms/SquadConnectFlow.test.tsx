@@ -20,7 +20,8 @@ vi.mock('react-native-svg', () => ({ default: 'Svg', Path: 'Path', Rect: 'Rect' 
 vi.mock('react-native-safe-area-context', () => ({
   useSafeAreaInsets: () => ({ top: 0, bottom: 0, left: 0, right: 0 }),
 }));
-vi.mock('@calipartner/ui', () => ({
+vi.mock('@calipartner/ui', async () => ({
+  ...(await import('../../../../packages/ui/src/tokens')),
   Avatar: 'Avatar',
   Button: 'Button',
   Chip: 'Chip',
@@ -38,7 +39,7 @@ vi.mock('@/lib/sound', () => ({ playClickSound: vi.fn(), playSuccessSound: vi.fn
 import { SquadConnectFlow } from './SquadConnectFlow';
 
 describe('squad connection controls', () => {
-  it('opens real username search for free users without starting a room or an upgrade', async () => {
+  it('keeps Add friends out of both squad choice and creation without changing friend selection', async () => {
     (globalThis as unknown as { IS_REACT_ACT_ENVIRONMENT: boolean }).IS_REACT_ACT_ENVIRONMENT =
       true;
     const findFriend = vi.fn();
@@ -56,10 +57,12 @@ describe('squad connection controls', () => {
         />,
       );
     });
+    expect(renderer.root.findAllByProps({ testID: 'squad-add-friends' })).toHaveLength(0);
     await act(async () =>
-      renderer.root.findByProps({ testID: 'squad-add-friends' }).props.onPress(),
+      renderer.root.findByProps({ testID: 'option-create-squad' }).props.onPress(),
     );
-    expect(findFriend).toHaveBeenCalledOnce();
+    expect(renderer.root.findAllByProps({ testID: 'squad-add-friends' })).toHaveLength(0);
+    expect(findFriend).not.toHaveBeenCalled();
     expect(createRoom).not.toHaveBeenCalled();
     expect(paywall).not.toHaveBeenCalled();
     expect(renderer.root.findAllByProps({ testID: 'modal-plus-required' })).toHaveLength(0);

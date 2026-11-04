@@ -1,5 +1,6 @@
+import { Text } from '@calipartner/ui';
 import React from 'react';
-import { Text } from 'react-native';
+import {} from 'react-native';
 import type { ChallengeSnapshot } from '@calipartner/core';
 import { ct } from '@/i18n/challenges';
 import { cs } from './ChallengeUI';

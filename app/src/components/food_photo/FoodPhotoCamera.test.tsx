@@ -12,6 +12,10 @@ vi.mock('react-native', () => ({
   View: 'View',
   StyleSheet: { create: (s: unknown) => s, absoluteFill: {} },
 }));
+vi.mock('@calipartner/ui', async () => ({
+  ...(await import('../../../../packages/ui/src/tokens')),
+  Text: 'Text',
+}));
 vi.mock('expo-camera', () => ({
   CameraView: 'CameraView',
   useCameraPermissions: () => [{ granted: false, status: 'denied' }, camera.request],

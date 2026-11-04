@@ -101,6 +101,7 @@ export function parseCoachMealReply(
 export const coachMealInstructions = [
   'Return ONLY a JSON object {"content":"plain text answer","meal":null} for normal coaching.',
   'When the user says they ate/drank food or asks to log a meal, prepare a meal draft.',
+  'Read all user messages in this conversation before asking anything. A meal section already supplied by the user remains confirmed while portions are clarified. If the first message provides foods, clear portions and a meal section, return the ready draft immediately.',
   'First ask which foods, their amounts/portions, and relevant preparation/oil/sauce details if unclear.',
   'Never assume missing portions or replace unknown food with an invented catalog match.',
   'Use meal {"status":"needs_details"} while clarification is needed; ask a concise specific question in content.',
@@ -110,6 +111,7 @@ export const coachMealInstructions = [
   'Use the actual amounts/nutrition estimates for the whole stated portion of EACH item, not per 100g.',
   'Values must be finite and nonnegative. Include every nutrient field and at most 20 foods.',
   'Food estimates are uncertain: label them estimates, do not claim exact measurements or medical benefits.',
+  'When the user asks to log or says yes after a complete meal discussion, return the ready draft. Do not just describe a button or say you cannot log; the app supplies that action.',
   'The app shows a Log button after this reply. Never say a meal was saved or logged.',
   'Your output cannot write to the diary. Only the user pressing the button can save it.',
   'When the user corrects food/portions/section, revise the draft; do not repeat a previously logged meal unless explicitly asked.',

@@ -1,14 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import {
-  BackHandler,
-  RefreshControl,
-  SafeAreaView,
-  ScrollView,
-  useWindowDimensions,
-  View,
-} from 'react-native';
+import { BackHandler, RefreshControl, SafeAreaView, ScrollView, View } from 'react-native';
 import { useFocusEffect, useLocalSearchParams, useRouter, type Href } from 'expo-router';
-import { Button, getTabBarHeight, space, Text } from '@calipartner/ui';
+import { Button, Text } from '@calipartner/ui';
 import type { RoomMemberSnapshot } from '@calipartner/core';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRooms } from '@/hooks/useRooms';
@@ -48,7 +41,6 @@ import { t } from '@/i18n';
 type ModalName =
   'connect' | 'join' | 'settings' | 'privacy' | 'invite' | 'inbox' | 'paywall' | null;
 export default function RoomScreen() {
-  const { fontScale } = useWindowDimensions();
   const router = useRouter();
   const { user, profile } = useAuth();
   const roomsHook = useRooms(),
@@ -96,6 +88,9 @@ export default function RoomScreen() {
     router.setParams({ returnTo: undefined });
     if (returnHome) closeBrowserModalsThen(() => router.navigate('/(tabs)/today'));
   };
+  useEffect(() => {
+    router.setParams({ chat: visible && segment === 'chat' ? 'open' : undefined });
+  }, [router, visible, segment]);
   const selectSegment = (next: RoomSegment) => {
     if (next === segment) return;
     segments.current.push(segment);
@@ -118,10 +113,11 @@ export default function RoomScreen() {
   useEffect(() => {
     if (params.room && params.room !== roomId) return;
     if (params.tab === 'chat' || params.tab === 'progress' || params.tab === 'today') {
+      if (params.tab !== segment) segments.current.push(segment);
       setSegment(params.tab);
       router.setParams({ tab: undefined });
     }
-  }, [params.tab, params.room, roomId, router]);
+  }, [params.tab, params.room, roomId, router, segment]);
   useBrowserModalBack(
     modal === 'join' ||
       modal === 'settings' ||
@@ -136,8 +132,7 @@ export default function RoomScreen() {
     },
   );
   useBrowserModalBack(visible && segments.current.length > 0, () => {
-    segments.current = [];
-    setSegment('today');
+    setSegment(segments.current.pop() ?? 'today');
   });
   useFocusEffect(
     useCallback(() => {
@@ -199,6 +194,15 @@ export default function RoomScreen() {
   };
   return (
     <SafeAreaView style={styles.screen} testID="screen-room">
+      {segment === 'chat' && (
+        <Button
+          variant="tertiary"
+          fullWidth={false}
+          label={t('friends.back')}
+          onPress={() => setSegment(segments.current.pop() ?? 'today')}
+          testID="squad-chat-back"
+        />
+      )}
       <RoomHeader
         currentRoom={room}
         allRooms={roomsHook.rooms}
@@ -216,7 +220,7 @@ export default function RoomScreen() {
         onCreateOrJoin={() => setModal('connect')}
       />
       {segment === 'chat' && room ? (
-        <View style={[styles.flex, { paddingBottom: getTabBarHeight(fontScale) + space[4] }]}>
+        <View style={styles.flex}>
           {subscriptionLoading ? (
             <Text>{t('common.loading')}</Text>
           ) : !canChat ? (

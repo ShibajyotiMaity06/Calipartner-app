@@ -1,3 +1,4 @@
+import { type as inputTypography } from '@calipartner/ui';
 import React, { useState } from 'react';
 import {
   Modal,
@@ -193,7 +194,7 @@ export function GoalsAndBodyModal({
                     value={weightKg}
                     onChangeText={setWeightKg}
                     keyboardType="numeric"
-                    style={styles.textInput}
+                    style={[styles.textInput, { fontFamily: inputTypography.body.fontFamily }]}
                     placeholderTextColor={dark.textOff}
                     testID="input-weight-kg"
                     accessibilityLabel="Weight in kilograms"

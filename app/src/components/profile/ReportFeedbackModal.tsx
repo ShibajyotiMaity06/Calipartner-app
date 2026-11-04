@@ -1,3 +1,4 @@
+import { type as inputTypography } from '@calipartner/ui';
 import React, { useState } from 'react';
 import {
   Modal,
@@ -109,7 +110,7 @@ export function ReportFeedbackModal({
                 numberOfLines={6}
                 placeholder={t('me.reportFeedback.messagePlaceholder')}
                 placeholderTextColor={dark.textOff}
-                style={styles.textArea}
+                style={[styles.textArea, { fontFamily: inputTypography.body.fontFamily }]}
                 testID="input-feedback-message"
                 accessibilityLabel="Feedback message"
               />

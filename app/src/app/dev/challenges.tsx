@@ -1,5 +1,6 @@
+import { Text } from '@calipartner/ui';
 import React, { useEffect, useState } from 'react';
-import { Text } from 'react-native';
+import {} from 'react-native';
 import { useRouter } from 'expo-router';
 import { useAuth } from '@/contexts/AuthContext';
 import { challengeRequest } from '@/services/challengeService';

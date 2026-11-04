@@ -1,8 +1,9 @@
+import { type as inputTypography } from '@calipartner/ui';
 import React, { useEffect, useRef, useState } from 'react';
-import { Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Modal, Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import type { WeightLog } from '@calipartner/core';
-import { dark, radius, space, type as typeTokens } from '@calipartner/ui';
+import { Text, dark, radius, space, type as typeTokens } from '@calipartner/ui';
 import { t } from '@/i18n';
 
 export interface WeightEntryModalProps {
@@ -217,7 +218,7 @@ export function WeightEntryModal({
                   keyboardType="decimal-pad"
                   placeholder={unit === 'lb' ? '165.0' : '75.0'}
                   placeholderTextColor={dark.textLo}
-                  style={styles.bigInput}
+                  style={[styles.bigInput, { fontFamily: inputTypography.body.fontFamily }]}
                   accessibilityLabel={t('trackers.weight.weightLabel')}
                 />
                 <Text style={styles.bigUnitSuffix}>{unit}</Text>
@@ -232,7 +233,7 @@ export function WeightEntryModal({
               )}
             </View>
 
-            {/* Date Input (defaults today, back-datable) */}
+            {/* Date TextInput (defaults today, back-datable) */}
             <View style={styles.inputGroup}>
               <Text style={styles.fieldLabel}>{t('trackers.weight.dateLabel')}</Text>
               <View style={styles.inputWrapper}>
@@ -246,13 +247,13 @@ export function WeightEntryModal({
                   }}
                   placeholder="YYYY-MM-DD"
                   placeholderTextColor={dark.textLo}
-                  style={styles.input}
+                  style={[styles.input, { fontFamily: inputTypography.body.fontFamily }]}
                   accessibilityLabel={t('trackers.weight.dateLabel')}
                 />
               </View>
             </View>
 
-            {/* Notes Input */}
+            {/* Notes TextInput */}
             <View style={styles.inputGroup}>
               <Text style={styles.fieldLabel}>{t('trackers.weight.notesLabel')}</Text>
               <View style={styles.inputWrapper}>
@@ -262,7 +263,7 @@ export function WeightEntryModal({
                   onChangeText={setNotesText}
                   placeholder={t('trackers.weight.notesPlaceholder')}
                   placeholderTextColor={dark.textLo}
-                  style={styles.input}
+                  style={[styles.input, { fontFamily: inputTypography.body.fontFamily }]}
                   accessibilityLabel={t('trackers.weight.notesLabel')}
                 />
               </View>

@@ -1,5 +1,5 @@
 import { loadAccountTable } from '@/services/accountDataService';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   filterAndSortHistory,
   type Food,
@@ -9,7 +9,11 @@ import {
 import { useAuth } from '@/contexts/AuthContext';
 import { getDb } from '@/db';
 import { diaryEvents } from '@/services/diaryEvents';
-import { getPreviouslyLoggedItems, hideFoodFromHistory } from '@/services/foodService';
+import {
+  ensureBundledFoodsSeeded,
+  getPreviouslyLoggedItems,
+  hideFoodFromHistory,
+} from '@/services/foodService';
 import { useAddEntry } from './useFoodEntries';
 
 export type HistorySortOption = 'recent' | 'frequent' | 'alpha';
@@ -22,10 +26,14 @@ export interface PreviouslyLoggedItem {
 export function usePreviouslyLogged(initialSection?: MealSection) {
   const { user } = useAuth();
   const userId = user?.id || 'guest-user';
-  const { addEntry } = useAddEntry();
+  const { addEntry, error: saveError, loading: saving } = useAddEntry();
+  const adding = useRef(false);
+  const owner = useRef(userId);
+  owner.current = userId;
 
   const [allItems, setAllItems] = useState<PreviouslyLoggedItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
   const [sort, setSort] = useState<HistorySortOption>('recent');
   const [sectionFilter, setSectionFilter] = useState<MealSection | undefined>(initialSection);
   const [searchQuery, setSearchQuery] = useState('');
@@ -33,15 +41,21 @@ export function usePreviouslyLogged(initialSection?: MealSection) {
   const loadHistory = useCallback(async () => {
     try {
       setLoading(true);
+      setError(false);
       const db = await getDb();
+      await ensureBundledFoodsSeeded(db);
+      await loadAccountTable(db, 'food_entries', userId);
       await loadAccountTable(db, 'user_food_stats', userId);
       await loadAccountTable(db, 'foods', userId);
       const items = await getPreviouslyLoggedItems(db, userId);
-      setAllItems(items);
+      if (owner.current === userId) setAllItems(items);
     } catch {
-      // Fallback
+      if (owner.current === userId) {
+        setAllItems([]);
+        setError(true);
+      }
     } finally {
-      setLoading(false);
+      if (owner.current === userId) setLoading(false);
     }
   }, [userId]);
 
@@ -64,14 +78,20 @@ export function usePreviouslyLogged(initialSection?: MealSection) {
     targetSection?: MealSection,
     localDate?: string,
   ) => {
-    return addEntry({
-      food: item.food,
-      quantity: item.stats.last_quantity,
-      unit: item.stats.last_unit,
-      mealSection: targetSection ?? item.stats.last_meal_section,
-      localDate,
-      source: 'history',
-    });
+    if (adding.current) return null;
+    adding.current = true;
+    try {
+      return await addEntry({
+        food: item.food,
+        quantity: item.stats.last_quantity,
+        unit: item.stats.last_unit,
+        mealSection: targetSection ?? item.stats.last_meal_section,
+        localDate,
+        source: 'history',
+      });
+    } finally {
+      adding.current = false;
+    }
   };
 
   const removeFromHistory = async (foodId: string) => {
@@ -84,6 +104,9 @@ export function usePreviouslyLogged(initialSection?: MealSection) {
     items: filteredItems,
     allItemsCount: allItems.length,
     loading,
+    error,
+    saveError,
+    saving,
     sort,
     setSort,
     sectionFilter,

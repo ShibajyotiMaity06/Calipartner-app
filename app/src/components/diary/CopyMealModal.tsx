@@ -1,5 +1,7 @@
+import { type as inputTypography } from '@calipartner/ui';
+import { Text } from '@calipartner/ui';
 import { useState } from 'react';
-import { Modal, Pressable, Text, TextInput, View } from 'react-native';
+import { Modal, Pressable, TextInput, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import type { MealSection } from '@calipartner/core';
 import { useCopyMeal } from '@/hooks/useFoodEntries';
@@ -104,17 +106,20 @@ export function CopyMealModal({
               onChangeText={setTargetDate}
               placeholder="YYYY-MM-DD"
               placeholderTextColor={colors.textMuted}
-              style={{
-                backgroundColor: colors.surfaceAlt,
-                borderWidth: 1,
-                borderColor: colors.border,
-                borderRadius: radius.sm,
-                paddingHorizontal: 12,
-                paddingVertical: 10,
-                fontSize: fontSize.md,
-                fontWeight: '600',
-                color: colors.text,
-              }}
+              style={[
+                {
+                  backgroundColor: colors.surfaceAlt,
+                  borderWidth: 1,
+                  borderColor: colors.border,
+                  borderRadius: radius.sm,
+                  paddingHorizontal: 12,
+                  paddingVertical: 10,
+                  fontSize: fontSize.md,
+                  fontWeight: '600',
+                  color: colors.text,
+                },
+                { fontFamily: inputTypography.body.fontFamily },
+              ]}
             />
           </View>
 

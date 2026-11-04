@@ -1,8 +1,9 @@
+import { type as inputTypography } from '@calipartner/ui';
 import React, { useState } from 'react';
-import { Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Modal, Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import type { FastingSession } from '@calipartner/core';
-import { dark, radius, space, type as typeTokens } from '@calipartner/ui';
+import { Text, dark, radius, space, type as typeTokens } from '@calipartner/ui';
 import { t } from '@/i18n';
 
 export interface FastingEditTimesModalProps {
@@ -166,7 +167,7 @@ export function FastingEditTimesModal({
               <Text style={styles.fieldLabel}>Date (YYYY-MM-DD)</Text>
               <TextInput
                 testID="input-fast-date"
-                style={styles.input}
+                style={[styles.input, { fontFamily: inputTypography.body.fontFamily }]}
                 value={dateStr}
                 onChangeText={setDateStr}
                 placeholder="2026-10-19"
@@ -181,7 +182,7 @@ export function FastingEditTimesModal({
               <View style={styles.timeInputsRow}>
                 <TextInput
                   testID="input-start-hour"
-                  style={styles.timeInput}
+                  style={[styles.timeInput, { fontFamily: inputTypography.body.fontFamily }]}
                   value={startHour}
                   onChangeText={setStartHour}
                   placeholder="20"
@@ -192,7 +193,7 @@ export function FastingEditTimesModal({
                 <Text style={styles.timeColon}>:</Text>
                 <TextInput
                   testID="input-start-minute"
-                  style={styles.timeInput}
+                  style={[styles.timeInput, { fontFamily: inputTypography.body.fontFamily }]}
                   value={startMinute}
                   onChangeText={setStartMinute}
                   placeholder="00"
@@ -225,7 +226,7 @@ export function FastingEditTimesModal({
                 <View style={styles.timeInputsRow}>
                   <TextInput
                     testID="input-end-hour"
-                    style={styles.timeInput}
+                    style={[styles.timeInput, { fontFamily: inputTypography.body.fontFamily }]}
                     value={endHour}
                     onChangeText={setEndHour}
                     placeholder="12"
@@ -236,7 +237,7 @@ export function FastingEditTimesModal({
                   <Text style={styles.timeColon}>:</Text>
                   <TextInput
                     testID="input-end-minute"
-                    style={styles.timeInput}
+                    style={[styles.timeInput, { fontFamily: inputTypography.body.fontFamily }]}
                     value={endMinute}
                     onChangeText={setEndMinute}
                     placeholder="00"

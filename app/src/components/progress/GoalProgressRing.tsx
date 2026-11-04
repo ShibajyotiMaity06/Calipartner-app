@@ -1,5 +1,6 @@
+import { Text } from '@calipartner/ui';
 import React from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import Svg, { Circle } from 'react-native-svg';
 import { t } from '@/i18n';
 import { fontSize, radius, spacing } from '@/theme/tokens';

@@ -1,3 +1,4 @@
+import { type as inputTypography } from '@calipartner/ui';
 import React, { useMemo, useState } from 'react';
 import { StyleSheet, TextInput, View, TouchableOpacity } from 'react-native';
 import {
@@ -170,12 +171,15 @@ export function BodyStatsStep({
         </Text>
         <TextInput
           style={[
-            styles.input,
-            {
-              backgroundColor: dark.s1,
-              borderColor: dark.hairline,
-              color: dark.textHi,
-            },
+            [
+              styles.input,
+              {
+                backgroundColor: dark.s1,
+                borderColor: dark.hairline,
+                color: dark.textHi,
+              },
+            ],
+            { fontFamily: inputTypography.body.fontFamily },
           ]}
           value={nickname}
           onChangeText={onChangeNickname}
@@ -285,7 +289,7 @@ export function BodyStatsStep({
         />
       </View>
 
-      {/* Height Input (cm vs ft/in) */}
+      {/* Height TextInput (cm vs ft/in) */}
       <View style={styles.section}>
         <Text variant="label" color={dark.textLo} style={styles.sectionLabel}>
           {t('onboarding.bodyStats.heightLabel')} ({units === 'metric' ? 'cm' : 'ft & in'})
@@ -300,12 +304,15 @@ export function BodyStatsStep({
             keyboardType="numeric"
             accessibilityLabel={`${t('onboarding.bodyStats.heightLabel')} in centimeters`}
             style={[
-              styles.input,
-              {
-                backgroundColor: dark.s2,
-                borderColor: errorHeight ? dark.danger : dark.hairline,
-                color: dark.textHi,
-              },
+              [
+                styles.input,
+                {
+                  backgroundColor: dark.s2,
+                  borderColor: errorHeight ? dark.danger : dark.hairline,
+                  color: dark.textHi,
+                },
+              ],
+              { fontFamily: inputTypography.body.fontFamily },
             ]}
           />
         ) : (
@@ -320,12 +327,15 @@ export function BodyStatsStep({
                 keyboardType="numeric"
                 accessibilityLabel="Height in feet"
                 style={[
-                  styles.input,
-                  {
-                    backgroundColor: dark.s2,
-                    borderColor: errorHeight ? dark.danger : dark.hairline,
-                    color: dark.textHi,
-                  },
+                  [
+                    styles.input,
+                    {
+                      backgroundColor: dark.s2,
+                      borderColor: errorHeight ? dark.danger : dark.hairline,
+                      color: dark.textHi,
+                    },
+                  ],
+                  { fontFamily: inputTypography.body.fontFamily },
                 ]}
               />
               <Text variant="bodyS" color={dark.textMid} style={styles.unitSuffix}>
@@ -342,12 +352,15 @@ export function BodyStatsStep({
                 keyboardType="numeric"
                 accessibilityLabel="Height in inches"
                 style={[
-                  styles.input,
-                  {
-                    backgroundColor: dark.s2,
-                    borderColor: errorHeight ? dark.danger : dark.hairline,
-                    color: dark.textHi,
-                  },
+                  [
+                    styles.input,
+                    {
+                      backgroundColor: dark.s2,
+                      borderColor: errorHeight ? dark.danger : dark.hairline,
+                      color: dark.textHi,
+                    },
+                  ],
+                  { fontFamily: inputTypography.body.fontFamily },
                 ]}
               />
               <Text variant="bodyS" color={dark.textMid} style={styles.unitSuffix}>
@@ -363,7 +376,7 @@ export function BodyStatsStep({
         ) : null}
       </View>
 
-      {/* Weight Input (kg vs lb) */}
+      {/* Weight TextInput (kg vs lb) */}
       <View style={styles.section}>
         <Text variant="label" color={dark.textLo} style={styles.sectionLabel}>
           {t('onboarding.bodyStats.weightLabel')} ({units === 'metric' ? 'kg' : 'lb'})
@@ -377,12 +390,15 @@ export function BodyStatsStep({
           keyboardType="numeric"
           accessibilityLabel={`${t('onboarding.bodyStats.weightLabel')} in ${units === 'metric' ? 'kilograms' : 'pounds'}`}
           style={[
-            styles.input,
-            {
-              backgroundColor: dark.s2,
-              borderColor: errorWeight ? dark.danger : dark.hairline,
-              color: dark.textHi,
-            },
+            [
+              styles.input,
+              {
+                backgroundColor: dark.s2,
+                borderColor: errorWeight ? dark.danger : dark.hairline,
+                color: dark.textHi,
+              },
+            ],
+            { fontFamily: inputTypography.body.fontFamily },
           ]}
         />
         {errorWeight ? (
@@ -406,12 +422,15 @@ export function BodyStatsStep({
           keyboardType="numeric"
           accessibilityLabel={t('onboarding.bodyStats.bodyFatLabel')}
           style={[
-            styles.input,
-            {
-              backgroundColor: dark.s2,
-              borderColor: errorBodyFat ? dark.danger : dark.hairline,
-              color: dark.textHi,
-            },
+            [
+              styles.input,
+              {
+                backgroundColor: dark.s2,
+                borderColor: errorBodyFat ? dark.danger : dark.hairline,
+                color: dark.textHi,
+              },
+            ],
+            { fontFamily: inputTypography.body.fontFamily },
           ]}
         />
         {errorBodyFat ? (

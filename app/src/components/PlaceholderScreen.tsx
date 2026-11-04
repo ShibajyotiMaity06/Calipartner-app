@@ -1,5 +1,6 @@
+import { Text } from '@calipartner/ui';
 import type { ReactNode } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '@/theme/useTheme';
 import { fontSize, spacing } from '@/theme/tokens';

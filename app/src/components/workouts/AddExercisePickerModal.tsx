@@ -1,3 +1,4 @@
+import { type as inputTypography } from '@calipartner/ui';
 import { type as typography } from '@calipartner/ui';
 import React, { useState, useMemo } from 'react';
 import {
@@ -155,7 +156,7 @@ export function AddExercisePickerModal({
               onChangeText={setSearchQuery}
               placeholder="Search 400+ exercises..."
               placeholderTextColor={dark.textLo}
-              style={styles.searchInput}
+              style={[styles.searchInput, { fontFamily: inputTypography.body.fontFamily }]}
               testID="input-search-exercise"
             />
             {searchQuery.length > 0 && (
@@ -218,7 +219,7 @@ export function AddExercisePickerModal({
               }}
               placeholder="e.g. Bulgarian Split Squat, Dragon Flags..."
               placeholderTextColor={dark.textLo}
-              style={styles.customInput}
+              style={[styles.customInput, { fontFamily: inputTypography.body.fontFamily }]}
               testID="input-custom-exercise-name"
             />
           </View>

@@ -1,3 +1,4 @@
+import { type as inputTypography } from '@calipartner/ui';
 import React, { useState, useEffect, useRef } from 'react';
 import {
   Modal,
@@ -496,7 +497,7 @@ export function CardioTrackerModal({
                         ))}
                       </View>
 
-                      {/* Custom Step Input */}
+                      {/* Custom Step TextInput */}
                       <View style={styles.customInputRow}>
                         <TextInput
                           value={customStepText}
@@ -510,7 +511,10 @@ export function CardioTrackerModal({
                           placeholder="Or custom step goal..."
                           placeholderTextColor={dark.textLo}
                           keyboardType="numeric"
-                          style={styles.customStepInput}
+                          style={[
+                            styles.customStepInput,
+                            { fontFamily: inputTypography.body.fontFamily },
+                          ]}
                         />
                       </View>
                     </Card>

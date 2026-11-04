@@ -152,7 +152,7 @@ const styles = StyleSheet.create({
     gap: space[2],
     padding: space[4],
     backgroundColor: dark.s1,
-    borderWidth: StyleSheet.hairlineWidth,
+    borderWidth: 1,
     borderColor: dark.hairline,
     borderRadius: radius.card,
   },

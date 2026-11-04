@@ -70,7 +70,8 @@ export function Text({
 
   const effectiveMaxMultiplier = maxFontSizeMultiplier ?? 2;
 
-  const weight = StyleSheet.flatten(style)?.fontWeight;
+  const customStyle = StyleSheet.flatten(style);
+  const weight = customStyle?.fontWeight;
   const weightedFont =
     weight === 'bold' || Number(weight) >= 700
       ? Number(weight) >= 800
@@ -84,7 +85,10 @@ export function Text({
   const fontStyle: TextStyle = {
     fontFamily: !isHindi && weightedFont ? weightedFont : tokenSpec.fontFamily,
     fontSize: tokenSpec.fontSize,
-    lineHeight: tokenSpec.lineHeight,
+    lineHeight:
+      customStyle?.fontSize && customStyle.lineHeight == null
+        ? Math.ceil((customStyle.fontSize * tokenSpec.lineHeight) / tokenSpec.fontSize)
+        : tokenSpec.lineHeight,
     color: resolvedColor,
     ...(hasTabular ? { fontVariant: ['tabular-nums'] } : {}),
   };

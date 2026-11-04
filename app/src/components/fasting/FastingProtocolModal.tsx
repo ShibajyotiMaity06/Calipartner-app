@@ -1,8 +1,9 @@
+import { type as inputTypography } from '@calipartner/ui';
 import React, { useState } from 'react';
-import { Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Modal, Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { FASTING_PROTOCOLS, type FastingProtocol } from '@calipartner/core';
-import { dark, radius, space, type as typeTokens } from '@calipartner/ui';
+import { Text, dark, radius, space, type as typeTokens } from '@calipartner/ui';
 import { t } from '@/i18n';
 
 export interface FastingProtocolModalProps {
@@ -211,7 +212,7 @@ export function FastingProtocolModal({
                   <Text style={styles.inputLabel}>{t('fasting.startTime')}</Text>
                   <TextInput
                     testID="input-window-start"
-                    style={styles.windowInput}
+                    style={[styles.windowInput, { fontFamily: inputTypography.body.fontFamily }]}
                     value={windowStart}
                     onChangeText={setWindowStart}
                     placeholder="12:00"
@@ -228,7 +229,7 @@ export function FastingProtocolModal({
                   <Text style={styles.inputLabel}>{t('fasting.endTime')}</Text>
                   <TextInput
                     testID="input-window-end"
-                    style={styles.windowInput}
+                    style={[styles.windowInput, { fontFamily: inputTypography.body.fontFamily }]}
                     value={windowEnd}
                     onChangeText={setWindowEnd}
                     placeholder="20:00"

@@ -1,3 +1,4 @@
+import { type as inputTypography } from '@calipartner/ui';
 import React, { useState } from 'react';
 import { View, StyleSheet, Modal, SafeAreaView, TextInput, TouchableOpacity } from 'react-native';
 import { Text, Button, ChevronLeftIcon, space, dark, radius } from '@calipartner/ui';
@@ -131,14 +132,14 @@ export function DeleteAccountModal({
                 </View>
               </View>
 
-              {/* Type DELETE Input */}
+              {/* Type DELETE TextInput */}
               <View style={styles.inputSection}>
                 <Text variant="label" color={dark.textLo} style={styles.inputLabel}>
                   Type DELETE to confirm:
                 </Text>
                 <TextInput
                   testID="input-confirm-delete"
-                  style={styles.textInput}
+                  style={[styles.textInput, { fontFamily: inputTypography.body.fontFamily }]}
                   placeholder="DELETE"
                   placeholderTextColor={dark.textOff}
                   autoCapitalize="characters"

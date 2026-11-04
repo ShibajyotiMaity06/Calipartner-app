@@ -12,6 +12,8 @@ const state = vi.hoisted(() => ({
   appState: null as ((status: string) => void) | null,
   storage: new Map<string, string>(),
   profileError: false,
+  timezone: undefined as string | undefined,
+  updateTimezone: vi.fn(),
   startRefresh: vi.fn(),
   stopRefresh: vi.fn(),
   otp: vi.fn(async () => ({ error: null })),
@@ -55,12 +57,23 @@ vi.mock('@/lib/supabase', () => ({
       signInWithOtp: state.otp,
     },
     from: () => ({
+      update: (values: unknown) => ({
+        eq: async (_key: string, id: string) => {
+          state.updateTimezone(values, id);
+          return { error: null };
+        },
+      }),
       select: () => ({
         eq: () => ({
           maybeSingle: async () => ({
             data: state.profileError
               ? null
-              : { id: state.session?.user.id, nickname: 'Saved user', username: 'saved' },
+              : {
+                  id: state.session?.user.id,
+                  nickname: 'Saved user',
+                  username: 'saved',
+                  timezone: state.timezone,
+                },
             error: state.profileError ? { message: 'Network unavailable' } : null,
           }),
         }),
@@ -185,4 +198,27 @@ describe('returning user sessions', () => {
       options: { shouldCreateUser: true },
     });
   });
+});
+
+it('repairs a stale stored time zone using an owner-scoped acknowledged update', async () => {
+  state.session = session;
+  state.timezone = 'UTC';
+  const options = new Intl.DateTimeFormat().resolvedOptions();
+  const spy = vi
+    .spyOn(Intl.DateTimeFormat.prototype, 'resolvedOptions')
+    .mockReturnValue({ ...options, timeZone: 'America/New_York' });
+  try {
+    await mount();
+    expect(state.updateTimezone).toHaveBeenCalledWith(
+      { timezone: 'America/New_York' },
+      session.user.id,
+    );
+    expect(auth.profile?.timezone).toBe('America/New_York');
+    expect(JSON.parse(state.storage.get('calipartner.profile.' + session.user.id)!).timezone).toBe(
+      'America/New_York',
+    );
+  } finally {
+    spy.mockRestore();
+    state.timezone = undefined;
+  }
 });

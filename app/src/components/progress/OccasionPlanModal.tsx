@@ -1,5 +1,6 @@
+import { Text } from '@calipartner/ui';
 import React, { useState } from 'react';
-import { Text, View } from 'react-native';
+import { View } from 'react-native';
 import type { ChallengeCatalog, ChallengeMutation, ChallengeMetric } from '@calipartner/core';
 import { ct, challengeError } from '@/i18n/challenges';
 import { generateClientUuid } from '@/services/foodService';

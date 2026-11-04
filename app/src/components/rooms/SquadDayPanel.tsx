@@ -1,3 +1,4 @@
+import { type as inputTypography } from '@calipartner/ui';
 import React, { useRef, useState } from 'react';
 import { Modal, Pressable, ScrollView, StyleSheet, Switch, TextInput, View } from 'react-native';
 import Svg, { Circle } from 'react-native-svg';
@@ -416,7 +417,7 @@ export function CheckInModal({
             placeholder={t('homeRefresh.note')}
             placeholderTextColor={dark.textLo}
             accessibilityLabel={t('homeRefresh.note')}
-            style={styles.input}
+            style={[styles.input, { fontFamily: inputTypography.body.fontFamily }]}
             testID="check-in-note"
           />
           <View style={styles.summary}>

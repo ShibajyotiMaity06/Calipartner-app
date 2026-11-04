@@ -1,3 +1,4 @@
+import { type as inputTypography } from '@calipartner/ui';
 import React, { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
@@ -123,7 +124,10 @@ export function InviteUserModal({
               }}
               placeholder={t('rooms.inviteModal.searchPlaceholder')}
               placeholderTextColor={colors.textMuted}
-              style={[styles.searchInput, { color: colors.text }]}
+              style={[
+                [styles.searchInput, { color: colors.text }],
+                { fontFamily: inputTypography.body.fontFamily },
+              ]}
               autoCapitalize="none"
               autoCorrect={false}
               autoFocus

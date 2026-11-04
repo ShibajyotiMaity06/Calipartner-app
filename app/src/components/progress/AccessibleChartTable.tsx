@@ -1,6 +1,6 @@
 import React from 'react';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
-import { dark, radius, space, type } from '@calipartner/ui';
+import { ScrollView, StyleSheet, View } from 'react-native';
+import { Text, dark, radius, space, type } from '@calipartner/ui';
 
 export interface TableColumn {
   key: string;

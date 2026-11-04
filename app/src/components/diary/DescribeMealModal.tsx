@@ -1,3 +1,4 @@
+import { type as inputTypography } from '@calipartner/ui';
 import React, { useRef, useState } from 'react';
 import { Modal, ScrollView, StyleSheet, TextInput, View } from 'react-native';
 import { Button, dark, homeLayout, radius, space, Text, type as typography } from '@calipartner/ui';
@@ -104,7 +105,7 @@ export function DescribeMealModal({
             value={description}
             onChangeText={setDescription}
             maxLength={1000}
-            style={styles.input}
+            style={[styles.input, { fontFamily: inputTypography.body.fontFamily }]}
             accessibilityLabel={t('homeRefresh.describe')}
             placeholder={t('homeRefresh.description')}
             placeholderTextColor={dark.textLo}

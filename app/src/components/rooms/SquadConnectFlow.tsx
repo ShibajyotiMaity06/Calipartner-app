@@ -30,7 +30,6 @@ export function SquadConnectFlow({
   loading,
   error,
   onRetry,
-  onFindFriend,
   onOpenPaywall,
   onCreateSquad,
   onJoinSquad,
@@ -79,12 +78,6 @@ export function SquadConnectFlow({
             onPress={onJoinSquad}
             testID="option-join-squad"
           />
-          <Button
-            variant="secondary"
-            label={t('socialUpdate.addFriends')}
-            onPress={onFindFriend}
-            testID="squad-add-friends"
-          />
         </>
       ) : (
         <>
@@ -94,13 +87,6 @@ export function SquadConnectFlow({
             disabled={busy}
             onPress={() => setCreating(false)}
             testID="squad-back"
-          />
-          <Button
-            variant="secondary"
-            label={t('socialUpdate.addFriends')}
-            disabled={busy}
-            onPress={onFindFriend}
-            testID="squad-add-friends"
           />
           <PlanTextField
             label={t('rooms.createModal.title')}

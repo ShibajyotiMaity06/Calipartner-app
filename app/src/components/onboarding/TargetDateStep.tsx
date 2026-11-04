@@ -1,3 +1,4 @@
+import { type as inputTypography } from '@calipartner/ui';
 import React, { useState } from 'react';
 import { StyleSheet, TextInput, View } from 'react-native';
 import { kgToLb, lbToKg, type CalculateTargetsResult, type Units } from '@calipartner/core';
@@ -76,7 +77,7 @@ export function TargetDateStep({
         </Text>
       </View>
 
-      {/* Target Weight Input */}
+      {/* Target Weight TextInput */}
       <View style={styles.section}>
         <Text variant="label" color={dark.textLo} style={styles.sectionLabel}>
           {t('onboarding.targetDate.targetWeightLabel')} ({units === 'metric' ? 'kg' : 'lb'})
@@ -90,12 +91,15 @@ export function TargetDateStep({
           keyboardType="numeric"
           accessibilityLabel={t('onboarding.targetDate.targetWeightLabel')}
           style={[
-            styles.input,
-            {
-              backgroundColor: dark.s2,
-              borderColor: errorTargetWeight ? dark.danger : dark.hairline,
-              color: dark.textHi,
-            },
+            [
+              styles.input,
+              {
+                backgroundColor: dark.s2,
+                borderColor: errorTargetWeight ? dark.danger : dark.hairline,
+                color: dark.textHi,
+              },
+            ],
+            { fontFamily: inputTypography.body.fontFamily },
           ]}
         />
         {errorTargetWeight ? (
@@ -105,7 +109,7 @@ export function TargetDateStep({
         ) : null}
       </View>
 
-      {/* Target Date Input */}
+      {/* Target Date TextInput */}
       <View style={styles.section}>
         <Text variant="label" color={dark.textLo} style={styles.sectionLabel}>
           {t('onboarding.targetDate.targetDateLabel')}
@@ -121,12 +125,15 @@ export function TargetDateStep({
           autoCorrect={false}
           accessibilityLabel={t('onboarding.targetDate.targetDateLabel')}
           style={[
-            styles.input,
-            {
-              backgroundColor: dark.s2,
-              borderColor: errorTargetDate ? dark.danger : dark.hairline,
-              color: dark.textHi,
-            },
+            [
+              styles.input,
+              {
+                backgroundColor: dark.s2,
+                borderColor: errorTargetDate ? dark.danger : dark.hairline,
+                color: dark.textHi,
+              },
+            ],
+            { fontFamily: inputTypography.body.fontFamily },
           ]}
         />
         {errorTargetDate ? (

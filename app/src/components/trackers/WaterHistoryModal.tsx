@@ -1,14 +1,7 @@
+import { type as inputTypography } from '@calipartner/ui';
+import { Text } from '@calipartner/ui';
 import { useState } from 'react';
-import {
-  Alert,
-  Modal,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  View,
-} from 'react-native';
+import { Alert, Modal, Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import type { WaterLog } from '@calipartner/core';
 import { t } from '@/i18n';
@@ -165,12 +158,15 @@ export function WaterHistoryModal({
                           onChangeText={setEditAmountText}
                           keyboardType="numeric"
                           style={[
-                            styles.editInput,
-                            {
-                              color: colors.text,
-                              backgroundColor: colors.surface,
-                              borderColor: colors.border,
-                            },
+                            [
+                              styles.editInput,
+                              {
+                                color: colors.text,
+                                backgroundColor: colors.surface,
+                                borderColor: colors.border,
+                              },
+                            ],
+                            { fontFamily: inputTypography.body.fontFamily },
                           ]}
                           accessibilityLabel={t('trackers.water.amountLabel')}
                         />

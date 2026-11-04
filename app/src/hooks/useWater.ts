@@ -21,6 +21,7 @@ export interface UseWaterResult {
   progressPercent: number;
   remainingMl: number;
   loading: boolean;
+  error: boolean;
   addWater: (amountMl: number) => Promise<WaterLog>;
   undoLast: () => Promise<WaterLog | null>;
   deleteLog: (id: string) => Promise<WaterLog | null>;
@@ -36,6 +37,7 @@ export function useWater(date?: string): UseWaterResult {
   const [logs, setLogs] = useState<WaterLog[]>([]);
   const [totalMl, setTotalMl] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
 
   const goalMl = currentGoalProfile?.water_ml_goal ?? 2000;
   const effectiveUserId = user?.id ?? currentGoalProfile?.user_id ?? 'guest-user';
@@ -43,6 +45,7 @@ export function useWater(date?: string): UseWaterResult {
   const loadData = useCallback(async () => {
     try {
       setLoading(true);
+      setError(false);
       const db = await getDb();
       await loadAccountTable(db, 'water_logs', effectiveUserId);
       let [fetchedLogs, sum] = await Promise.all([
@@ -64,7 +67,7 @@ export function useWater(date?: string): UseWaterResult {
       setLogs(fetchedLogs);
       setTotalMl(sum);
     } catch {
-      // Graceful fallback
+      setError(true);
     } finally {
       setLoading(false);
     }
@@ -111,6 +114,7 @@ export function useWater(date?: string): UseWaterResult {
     progressPercent,
     remainingMl,
     loading,
+    error,
     addWater,
     undoLast,
     deleteLog,

@@ -95,7 +95,14 @@ export function ProgressOverview({
 }
 const styles = StyleSheet.create({
   stack: { gap: space[4], paddingVertical: space[3] },
-  card: { backgroundColor: dark.s1, borderRadius: radius.card, padding: space[4], gap: space[3] },
+  card: {
+    borderColor: dark.hairline,
+    borderWidth: 1,
+    backgroundColor: dark.s1,
+    borderRadius: radius.card,
+    padding: space[4],
+    gap: space[3],
+  },
   days: { flexDirection: 'row', justifyContent: 'space-between', flexWrap: 'wrap', gap: space[2] },
   day: { alignItems: 'center', gap: space[1] },
   dot: {

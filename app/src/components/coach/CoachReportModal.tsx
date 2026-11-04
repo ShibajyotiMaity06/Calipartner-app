@@ -1,5 +1,7 @@
+import { type as inputTypography } from '@calipartner/ui';
+import { Text } from '@calipartner/ui';
 import React, { useState } from 'react';
-import { Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Modal, Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { t } from '@/i18n';
 import { fontSize, radius, spacing } from '@/theme/tokens';
@@ -129,12 +131,15 @@ export function CoachReportModal({ visible, messageId, onClose, onSubmit }: Coac
                 multiline
                 numberOfLines={3}
                 style={[
-                  styles.textInput,
-                  {
-                    backgroundColor: colors.surfaceAlt,
-                    borderColor: colors.border,
-                    color: colors.text,
-                  },
+                  [
+                    styles.textInput,
+                    {
+                      backgroundColor: colors.surfaceAlt,
+                      borderColor: colors.border,
+                      color: colors.text,
+                    },
+                  ],
+                  { fontFamily: inputTypography.body.fontFamily },
                 ]}
                 testID="input-coach-report-notes"
               />

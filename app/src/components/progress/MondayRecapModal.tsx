@@ -1,7 +1,7 @@
 import React from 'react';
-import { Modal, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Modal, Pressable, StyleSheet, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { dark, radius, space, type } from '@calipartner/ui';
+import { Text, dark, radius, space, type } from '@calipartner/ui';
 import { t } from '@/i18n';
 
 interface MondayRecapModalProps {

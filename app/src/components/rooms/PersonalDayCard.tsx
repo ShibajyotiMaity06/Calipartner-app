@@ -4,12 +4,25 @@ import { dark, homeLayout, radius, space, Text } from '@calipartner/ui';
 import { t } from '@/i18n';
 
 /** A visual progress track. Goal and nutrition calculations remain in core. */
-export function DayProgressTrack({ value, target }: { value: number; target: number | null }) {
+export function DayProgressTrack({
+  value,
+  target,
+  color,
+}: {
+  value: number;
+  target: number | null;
+  color: string;
+}) {
   const ratio = target != null && target > 0 ? value / target : null;
   return (
     <View style={styles.track} accessible={false}>
       {ratio !== null && (
-        <View style={[styles.fill, { width: `${Math.min(100, Math.max(0, ratio * 100))}%` }]} />
+        <View
+          style={[
+            styles.fill,
+            { width: `${Math.min(100, Math.max(0, ratio * 100))}%`, backgroundColor: color },
+          ]}
+        />
       )}
       {ratio !== null && ratio > 1 && (
         <View style={[styles.over, { width: `${Math.min(100, (ratio - 1) * 100)}%` }]} />
@@ -70,7 +83,7 @@ export function PersonalDayCard({
           testID="personal-day-open"
           style={styles.list}
         >
-          {metrics.map(({ label, value, target, unit }) => (
+          {metrics.map(({ label, value, target, unit }, index) => (
             <View
               key={label}
               style={styles.metric}
@@ -91,7 +104,11 @@ export function PersonalDayCard({
                     : t('squadDesign.amount', { value, target, unit })}
                 </Text>
               </View>
-              <DayProgressTrack value={value} target={target} />
+              <DayProgressTrack
+                value={value}
+                target={target}
+                color={[dark.copper, dark.iris, dark.sky][index % 3]!}
+              />
               {target != null && value > target && (
                 <Text variant="bodyS">{t('homeRefresh.over')}</Text>
               )}
@@ -105,8 +122,8 @@ export function PersonalDayCard({
 const styles = StyleSheet.create({
   card: {
     backgroundColor: dark.s1,
-    borderColor: dark.hairline,
-    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: dark.copper,
+    borderWidth: 1,
     borderRadius: radius.card,
     padding: space[4],
     gap: space[4],

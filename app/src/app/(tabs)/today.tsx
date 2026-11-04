@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { Pressable, RefreshControl, ScrollView, StyleSheet, View } from 'react-native';
+import { AppState, Pressable, RefreshControl, ScrollView, StyleSheet, View } from 'react-native';
 import { useRouter, type Href } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import {
@@ -90,7 +90,13 @@ export default function TodayScreen() {
   const currentSuggestedMeal = getMealSectionForTime(now, profile?.timezone);
   useEffect(() => {
     const timer = setInterval(() => setNow(new Date()), 60_000);
-    return () => clearInterval(timer);
+    const listener = AppState.addEventListener('change', (state) => {
+      if (state === 'active') setNow(new Date());
+    });
+    return () => {
+      clearInterval(timer);
+      listener.remove();
+    };
   }, []);
 
   const [guestName, setGuestName] = useState<string | null>(null);

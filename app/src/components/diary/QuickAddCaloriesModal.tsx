@@ -1,3 +1,4 @@
+import { type as inputTypography } from '@calipartner/ui';
 import React, { useState } from 'react';
 import { View, StyleSheet, TextInput, ScrollView } from 'react-native';
 import type { Food, MealSection } from '@calipartner/core';
@@ -100,7 +101,7 @@ export function QuickAddCaloriesModal({
           </ScrollView>
         </View>
 
-        {/* Calories Input */}
+        {/* Calories TextInput */}
         <View style={styles.fieldBox}>
           <Text variant="label" color={dark.textMid}>
             CALORIES (KCAL) *
@@ -112,7 +113,7 @@ export function QuickAddCaloriesModal({
             placeholder="e.g. 350"
             placeholderTextColor={dark.textLo}
             keyboardType="number-pad"
-            style={styles.numericInput}
+            style={[styles.numericInput, { fontFamily: inputTypography.body.fontFamily }]}
           />
         </View>
 
@@ -133,7 +134,7 @@ export function QuickAddCaloriesModal({
                 placeholder="0"
                 placeholderTextColor={dark.textLo}
                 keyboardType="decimal-pad"
-                style={styles.macroInput}
+                style={[styles.macroInput, { fontFamily: inputTypography.body.fontFamily }]}
               />
             </View>
 
@@ -148,7 +149,7 @@ export function QuickAddCaloriesModal({
                 placeholder="0"
                 placeholderTextColor={dark.textLo}
                 keyboardType="decimal-pad"
-                style={styles.macroInput}
+                style={[styles.macroInput, { fontFamily: inputTypography.body.fontFamily }]}
               />
             </View>
 
@@ -163,7 +164,7 @@ export function QuickAddCaloriesModal({
                 placeholder="0"
                 placeholderTextColor={dark.textLo}
                 keyboardType="decimal-pad"
-                style={styles.macroInput}
+                style={[styles.macroInput, { fontFamily: inputTypography.body.fontFamily }]}
               />
             </View>
           </View>

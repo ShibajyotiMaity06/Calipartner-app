@@ -1,5 +1,4 @@
 import { LogSomethingView } from '@/components/diary/LogSomethingView';
-import { DescribeMealModal } from '@/components/diary/DescribeMealModal';
 import React, { useCallback, useState } from 'react';
 import { View, StyleSheet, Modal } from 'react-native';
 import { useFocusEffect, useRouter, useLocalSearchParams } from 'expo-router';
@@ -22,7 +21,6 @@ import { useTheme } from '@/theme/useTheme';
 import { useCurrentLocalDate } from '@/hooks/useCurrentLocalDate';
 
 type ActiveFlowState =
-  | 'describe'
   | 'picker'
   | 'food'
   | 'workout'
@@ -88,15 +86,6 @@ export default function LogScreen() {
         </Sheet>
       )}
 
-      {activeFlow === 'describe' && (
-        <DescribeMealModal
-          visible={sheetVisible}
-          section={currentSection}
-          localDate={todayDate}
-          onClose={handleCloseAll}
-          onLogged={handleCloseAll}
-        />
-      )}
       {/* 2. Food Log Modal */}
       {activeFlow === 'food' && (
         <FoodLogModal
