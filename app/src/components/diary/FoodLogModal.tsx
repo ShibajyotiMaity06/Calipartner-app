@@ -181,7 +181,7 @@ export function FoodLogModal({
       localDate,
       source: data.food.barcode ? 'scan' : 'search',
     });
-    if (!saved) throw new Error(t('common.errorBody'));
+    if (!saved) throw new Error(t('fixNovember.saveFailed'));
     if (onLogged) onLogged();
     onClose();
   };
@@ -355,7 +355,7 @@ export function FoodLogModal({
               testID="food-log-save-error"
               style={{ color: colors.text }}
             >
-              {saveError || historySaveError}
+              {t('fixNovember.saveFailed')}
             </Text>
           )}
           {/* 5 Tab Navigation Bar */}
@@ -884,7 +884,7 @@ export function FoodLogModal({
               </Text>
               {batchError && (
                 <Text style={{ color: colors.danger }} accessibilityRole="alert">
-                  {t('common.errorBody')}
+                  {t('fixNovember.saveFailed')}
                 </Text>
               )}
               <Button

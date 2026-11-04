@@ -47,11 +47,9 @@ function useSquadRead<T>(
   useEffect(() => {
     if (!roomId || !user?.id || !visible) return;
     void refresh();
-    const timer = setInterval(() => void refresh(), 30000);
     const unsubscribe = diaryEvents.subscribe(() => void refresh());
     return () => {
       invalidate();
-      clearInterval(timer);
       unsubscribe();
     };
   }, [roomId, user?.id, visible, refresh, invalidate]);

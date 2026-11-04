@@ -116,3 +116,7 @@ verify_jwt = false
 [functions.challenges-api]
 # Validates bearer tokens and the dedicated cron secret inside the handler.
 verify_jwt = false
+
+[functions.weekly-plan]
+# The handler verifies the bearer token with Supabase Auth before reading owner context.
+verify_jwt = false

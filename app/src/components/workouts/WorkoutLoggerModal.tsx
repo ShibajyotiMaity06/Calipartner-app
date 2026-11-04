@@ -10,9 +10,17 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import { Text, type as typography } from '@calipartner/ui';
+import { Button, Text, type as typography } from '@calipartner/ui';
 import { Ionicons } from '@expo/vector-icons';
-import type { Exercise, WorkoutSummary, WorkoutType, WorkoutWithDetails } from '@calipartner/core';
+import {
+  weeklyPlanDayIndex,
+  type Exercise,
+  type WorkoutSummary,
+  type WorkoutType,
+  type WorkoutWithDetails,
+} from '@calipartner/core';
+import { useAuth } from '@/contexts/AuthContext';
+import { getPersonalWeeklyPlan } from '@/services/weeklyPlanService';
 import { useWorkouts } from '@/hooks/useWorkouts';
 import { t } from '@/i18n';
 import { fontSize, radius, spacing } from '@/theme/tokens';
@@ -22,6 +30,7 @@ import { ExercisePickerModal } from './ExercisePickerModal';
 import { RunningTimerBar } from './RunningTimerBar';
 import { WorkoutFinishSummaryModal } from './WorkoutFinishSummaryModal';
 import { RestTimerModal } from './RestTimerModal';
+import { WeeklyPlanScreenModal } from './WeeklyPlanScreenModal';
 
 interface LocalSetState {
   id?: string;
@@ -74,6 +83,9 @@ export function WorkoutLoggerModal({
   onSaved,
   testID = 'workout-logger-modal',
 }: WorkoutLoggerModalProps) {
+  const [weeklyPlanVisible, setWeeklyPlanVisible] = useState(false);
+  const { user } = useAuth();
+  const planOwnerId = user?.id;
   const { colors } = useTheme();
   const { localDate: today } = useCurrentLocalDate();
   const localDate = defaultDate ?? today;
@@ -164,6 +176,39 @@ export function WorkoutLoggerModal({
     }
     setErrorMessage(null);
   }, [visible, initialWorkout, getPreviousPerformance]);
+
+  useEffect(() => {
+    if (!visible || initialWorkout || !planOwnerId) return;
+    let active = true;
+    void getPersonalWeeklyPlan(planOwnerId)
+      .then((plan) => {
+        if (!active || !plan) return;
+        const day = plan.days.find((day) => day.day === weeklyPlanDayIndex(localDate));
+        if (!day?.workout.exercises.length) return;
+        setExercises((current) =>
+          current.length
+            ? current
+            : day.workout.exercises.map((exercise, index) => ({
+                exerciseName: exercise.name,
+                orderInWorkout: index + 1,
+                sets: Array.from({ length: exercise.sets }, (_, set) => ({
+                  setNumber: set + 1,
+                  reps: exercise.reps,
+                  weightKg: 0,
+                  isWarmup: false,
+                  completed: false,
+                })),
+              })),
+        );
+        setWorkoutName((current) => current || day.workout.title);
+      })
+      .catch(() => {
+        /* Logging stays available if a preferred plan cannot be loaded. */
+      });
+    return () => {
+      active = false;
+    };
+  }, [visible, initialWorkout, planOwnerId, localDate]);
 
   // Handle adding an exercise from picker
   const handleSelectExercise = async (selected: Exercise) => {
@@ -544,6 +589,12 @@ export function WorkoutLoggerModal({
           contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
         >
+          <Button
+            label={t('fixNovember.open')}
+            variant="secondary"
+            onPress={() => setWeeklyPlanVisible(true)}
+            testID="workout-preferred-plan"
+          />
           {/* Running Timer Bar */}
           <RunningTimerBar
             testID={`${testID}-running-timer-bar`}
@@ -1079,6 +1130,7 @@ export function WorkoutLoggerModal({
 
         {/* E17 Rest Timer Modal */}
         <RestTimerModal visible={restTimerVisible} onClose={() => setRestTimerVisible(false)} />
+        {weeklyPlanVisible && <WeeklyPlanScreenModal onClose={() => setWeeklyPlanVisible(false)} />}
       </View>
     </Modal>
   );

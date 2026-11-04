@@ -90,7 +90,13 @@ export function PersonalDiaryView({
       </View>
       {diary.error ? (
         <View style={styles.stack}>
-          <Text accessibilityRole="alert">{t('common.errorBody')}</Text>
+          <Text accessibilityRole="alert">
+            {t(
+              diary.error === 'FOOD_ENERGY_UNAVAILABLE'
+                ? 'fixNovember.energyMissing'
+                : 'common.errorBody',
+            )}
+          </Text>
           <Button
             variant="secondary"
             label={t('common.retry')}

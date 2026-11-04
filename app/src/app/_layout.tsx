@@ -1,10 +1,11 @@
 import { useCallback, useEffect, useState } from 'react';
-import { BackHandler, Platform, View } from 'react-native';
-import { Stack, useRouter } from 'expo-router';
+import { View } from 'react-native';
+import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { dark, ThemeProvider } from '@calipartner/ui';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
+import { HardwareBackHandler } from '@/components/navigation/HardwareBackHandler';
 import { SessionNavigationGuard } from '@/components/SessionNavigationGuard';
 import { AccountDataResetGate } from '@/components/AccountDataResetGate';
 import { ErrorState } from '@/components/ErrorState';
@@ -174,24 +175,4 @@ export default function RootLayout() {
       </ThemeProvider>
     </ErrorBoundary>
   );
-}
-
-function HardwareBackHandler() {
-  const router = useRouter();
-
-  useEffect(() => {
-    if (Platform.OS === 'web') return;
-    const onBackPress = () => {
-      if (router.canGoBack()) {
-        router.back();
-        return true;
-      }
-      return false;
-    };
-
-    const sub = BackHandler.addEventListener('hardwareBackPress', onBackPress);
-    return () => sub.remove();
-  }, [router]);
-
-  return null;
 }

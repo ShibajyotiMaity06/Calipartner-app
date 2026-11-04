@@ -40,7 +40,7 @@ function pushDepth(browser: BrowserWindow, key: string, depth: number) {
 }
 /** Finish the active sheet/section history before switching tabs. */
 export function closeBrowserModalsThen(navigate: () => void): void {
-  if (Platform.OS !== 'web') {
+  if (Platform?.OS !== 'web') {
     navigate();
     return;
   }
@@ -75,7 +75,7 @@ export function useBrowserModalBack(
   const ownKey = useRef<string | undefined>(undefined);
   const depth = options?.depth ?? 0;
   useEffect(() => {
-    if (Platform.OS !== 'web' || !visible) return;
+    if (Platform?.OS !== 'web' || !visible) return;
     const browser = (globalThis as unknown as { window?: BrowserWindow }).window;
     if (!browser) return;
     const routePath = browser.location?.pathname;
@@ -123,7 +123,7 @@ export function useBrowserModalBack(
     };
   }, [visible]);
   useEffect(() => {
-    if (!visible || Platform.OS !== 'web' || !ownKey.current) return;
+    if (!visible || Platform?.OS !== 'web' || !ownKey.current) return;
     const browser = (globalThis as unknown as { window?: BrowserWindow }).window;
     if (!browser) return;
     const key = ownKey.current;

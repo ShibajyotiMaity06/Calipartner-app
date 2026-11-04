@@ -42,7 +42,7 @@ export type RoomSizeBracket = '2-5' | '6-20' | '21-50' | 'plus' | 'pro' | 'basic
 export type PlanDuration = 'monthly' | 'quarterly' | 'annual';
 export type PlanTier = 'basic' | 'plus' | 'pro';
 export type PaywallContext =
-  'room' | 'add_people' | 'coach' | 'partner_finder' | 'keep_going' | 'general';
+  'room' | 'add_people' | 'coach' | 'partner_finder' | 'keep_going' | 'general' | 'weekly_plan';
 
 export interface PaywallModalProps {
   visible: boolean;
@@ -269,6 +269,8 @@ export function PaywallModal({
   // Contextual Title (CaliPartner pricing, not room plan)
   const contextualTitle = useMemo(() => {
     switch (context) {
+      case 'weekly_plan':
+        return t('fixNovember.lockedTitle');
       case 'room':
         return roomPartnerName ? `Keep your room with ${roomPartnerName}` : 'Keep your room going';
       case 'add_people':
@@ -526,6 +528,11 @@ export function PaywallModal({
               {context === 'keep_going' && (
                 <Text variant="body" color={dark.apricot} style={styles.keepGoingSubtitle}>
                   {"You'll become the plan holder."}
+                </Text>
+              )}
+              {context === 'weekly_plan' && (
+                <Text variant="bodyS" color={dark.textHi}>
+                  {t('fixNovember.lockedBody')}
                 </Text>
               )}
               <Text variant="bodyS" color={dark.textMid} style={styles.subtitleText}>

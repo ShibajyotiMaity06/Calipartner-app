@@ -135,6 +135,13 @@ export interface RawFoodRow {
  * Parses raw local_foods row into typed Food object.
  */
 export function mapRowToFood(row: RawFoodRow): Food {
+  // Upgrade old public read-cache rows whose energy field was absent when imported.
+  if (!row.owner_id && !Number(row.calories_per_100g)) {
+    const canonical = [...bundledFoodsJson, ...suppliedFoodsJson].find(
+      (food) => food.id === row.id,
+    );
+    if (canonical) row = { ...row, calories_per_100g: canonical.calories_per_100g };
+  }
   let servingUnits: Food['serving_units'] = [];
   try {
     servingUnits =
@@ -417,6 +424,11 @@ export async function logFoodEntry(
   return withOnlineSave(db, async (db) => {
     const id = input.id ?? generateClientUuid();
     const now = new Date().toISOString();
+    if (
+      !input.food.calories_per_100g &&
+      input.food.protein_per_100g + input.food.carbs_per_100g + input.food.fat_per_100g > 0
+    )
+      throw new Error('FOOD_ENERGY_UNAVAILABLE');
     if (input.food.source === 'user' && input.food.owner_id === input.userId) {
       await saveCustomFood(db, input.userId, input.food);
     }

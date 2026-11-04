@@ -1,9 +1,11 @@
 import { fastingRefresh } from './fastingRefresh';
+import { fixNovember } from './fixNovember';
 import { challengeMessages } from './challengeMessages';
 import { homeRefresh } from './homeRefresh';
 import { squadDesign } from './squadDesign';
 import { repairMessages } from './repairs';
 export const en = {
+  fixNovember,
   fastingRefresh,
   squadDesign,
   homeRefresh,

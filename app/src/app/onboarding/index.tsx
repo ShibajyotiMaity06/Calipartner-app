@@ -43,7 +43,7 @@ import {
   planStyles,
 } from '@/components/onboarding/PlanPrimitives';
 import { PaywallModal } from '@/components/rooms/PaywallModal';
-import { requirePairPrompt, afterSetupDestination } from '@/services/pairOnboardingService';
+import { requirePairPrompt } from '@/services/pairOnboardingService';
 
 export const ACTIVE_ONBOARDING_STEPS = ONBOARDING_STEPS_ORDER;
 
@@ -201,7 +201,7 @@ export default function OnboardingScreen() {
       completedRef.current = true;
       await draftWrites.current;
       await clearOnboardingDraft(await getDb(), user.id).catch(() => {});
-      router.replace((await afterSetupDestination(user.id)) as never);
+      router.push('/weekly-plan?setup=1' as never);
     } catch {
       setSaveError(t('common.errorBody'));
     } finally {

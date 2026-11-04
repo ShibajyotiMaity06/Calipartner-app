@@ -37,6 +37,7 @@ export function PersonalDayCard({
   metrics,
   loading,
   error,
+  errorMessage,
   onRetry,
   onPress,
 }: {
@@ -45,6 +46,7 @@ export function PersonalDayCard({
   metrics: { label: string; value: number; target: number | null; unit: string }[];
   loading: boolean;
   error: boolean;
+  errorMessage?: string;
   onRetry: () => void;
   onPress: () => void;
 }) {
@@ -72,7 +74,7 @@ export function PersonalDayCard({
           testID="personal-day-retry"
         >
           <Text accessibilityRole="alert">
-            {t('common.errorBody')} · {t('common.retry')}
+            {errorMessage ?? t('common.errorBody')} · {t('common.retry')}
           </Text>
         </Pressable>
       ) : (

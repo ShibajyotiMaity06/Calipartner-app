@@ -40,6 +40,7 @@
     "../../../packages/core/src/ownerRecipes": "../../../packages/core/src/ownerRecipes.ts",
     "../../../packages/core/src/squad": "../../../packages/core/src/squad.ts",
     "../../../packages/core/src/coachMeal": "../../../packages/core/src/coachMeal.ts",
-    "../../../packages/core/src/coachHistory": "../../../packages/core/src/coachHistory.ts"
+    "../../../packages/core/src/coachHistory": "../../../packages/core/src/coachHistory.ts",
+    "../../../packages/core/src/weeklyPlan": "../../../packages/core/src/weeklyPlan.ts"
   }
 }

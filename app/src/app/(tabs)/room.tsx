@@ -29,6 +29,7 @@ import {
 } from '@/components/rooms';
 import { SquadConnectModal } from '@/components/rooms/SquadConnectModal';
 import { SquadMemberPicker } from '@/components/rooms/SquadMemberPicker';
+import { SquadPersonPanel } from '@/components/rooms/SquadPersonPanel';
 import { SquadVisibilityModal } from '@/components/rooms/SquadVisibilityModal';
 import {
   PeopleSelector,
@@ -74,7 +75,8 @@ export default function RoomScreen() {
   const actions = useRoomActions(roomId);
   const [segment, setSegment] = useState<RoomSegment>('today'),
     [modal, setModal] = useState<ModalName>(null);
-  const [picker, setPicker] = useState<'left' | 'right' | null>(null),
+  const [personId, setPersonId] = useState<string | null>(null);
+  const [picker, setPicker] = useState<'left' | 'right' | 'person' | null>(null),
     [leftId, setLeftId] = useState<string | null>(null),
     [rightId, setRightId] = useState<string | null>(null);
   const [report, setReport] = useState<RoomMemberSnapshot | null>(null),
@@ -102,6 +104,7 @@ export default function RoomScreen() {
     setLeftId(null);
     setRightId(null);
     setPicker(null);
+    setPersonId(null);
   }, [roomId]);
   useEffect(() => {
     if (params.action === 'create') {
@@ -142,11 +145,11 @@ export default function RoomScreen() {
           setSegment(previous);
           return true;
         }
-        router.navigate('/(tabs)/today');
-        return true;
+        // Let the navigator return to the actual previous route or visited tab.
+        return false;
       });
       return () => listener.remove();
-    }, [router]),
+    }, []),
   );
   const refreshRooms = roomsHook.refresh,
     refreshSquad = squad.refresh,
@@ -175,6 +178,10 @@ export default function RoomScreen() {
     { userId: user?.id, markRead: false },
   );
   const members = squad.data?.members ?? [];
+  const selectedPerson =
+    members.find((member) => member.user_id === personId) ??
+    members.find((member) => !member.is_self) ??
+    members[0];
   const left =
     members.find((member) => member.user_id === leftId) ??
     members.find((member) => member.is_self) ??
@@ -356,6 +363,24 @@ export default function RoomScreen() {
                       />
                     </View>
                   )}
+                  {segment === 'today' && selectedPerson && roomId && (
+                    <View style={styles.stack} testID="squad-person-inline">
+                      <Text variant="heading">{t('fixNovember.person')}</Text>
+                      <Text variant="bodyS">{t('fixNovember.personHint')}</Text>
+                      <Button
+                        variant="secondary"
+                        label={memberName(selectedPerson)}
+                        onPress={() => setPicker('person')}
+                        testID="squad-choose-person"
+                      />
+                      <SquadPersonPanel
+                        roomId={roomId}
+                        person={selectedPerson}
+                        members={members}
+                        visible={visible}
+                      />
+                    </View>
+                  )}
                 </>
               )}
             </>
@@ -496,9 +521,21 @@ export default function RoomScreen() {
         <SquadMemberPicker
           visible
           members={members}
-          excludedId={picker === 'left' ? right.user_id : left.user_id}
-          selectedId={picker === 'left' ? left.user_id : right.user_id}
-          onSelect={(id) => (picker === 'left' ? setLeftId(id) : setRightId(id))}
+          excludedId={picker === 'person' ? '' : picker === 'left' ? right.user_id : left.user_id}
+          selectedId={
+            picker === 'person'
+              ? (selectedPerson?.user_id ?? '')
+              : picker === 'left'
+                ? left.user_id
+                : right.user_id
+          }
+          onSelect={(id) =>
+            picker === 'person'
+              ? setPersonId(id)
+              : picker === 'left'
+                ? setLeftId(id)
+                : setRightId(id)
+          }
           onClose={() => setPicker(null)}
         />
       )}

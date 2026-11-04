@@ -177,7 +177,7 @@ export default function SquadCompareScreen() {
                   testID="compare-details-retry"
                 />
               </View>
-            ) : first.loading || second.loading ? (
+            ) : (first.loading && !first.data) || (second.loading && !second.data) ? (
               <Text>{t('common.loading')}</Text>
             ) : first.data && second.data ? (
               <>
@@ -190,12 +190,16 @@ export default function SquadCompareScreen() {
                         <View style={styles.column}>
                           <Text variant="label">{memberName(left)}</Text>
                           <MealContent
+                            roomId={params.room}
+                            memberId={left.is_self ? undefined : left.user_id}
                             meal={first.data!.meals.find((meal) => meal.section === section)}
                           />
                         </View>
                         <View style={styles.column}>
                           <Text variant="label">{memberName(right)}</Text>
                           <MealContent
+                            roomId={params.room}
+                            memberId={right.is_self ? undefined : right.user_id}
                             meal={second.data!.meals.find((meal) => meal.section === section)}
                           />
                         </View>

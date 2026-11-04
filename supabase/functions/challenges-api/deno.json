@@ -6,6 +6,7 @@
     "../../../packages/core/src/units": "../../../packages/core/src/units.ts",
     "../../../packages/core/src/challengeEngine": "../../../packages/core/src/challengeEngine.ts",
     "../../../packages/core/src/challengeTypes": "../../../packages/core/src/challengeTypes.ts",
-    "../../../packages/core/src/challengeViewModel": "../../../packages/core/src/challengeViewModel.ts"
+    "../../../packages/core/src/challengeViewModel": "../../../packages/core/src/challengeViewModel.ts",
+    "../../../packages/core/src/weeklyPlan": "../../../packages/core/src/weeklyPlan.ts"
   }
 }

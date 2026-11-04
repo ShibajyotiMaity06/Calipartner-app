@@ -19,6 +19,7 @@ import { useWeight } from '@/hooks/useWeight';
 import { useSteps } from '@/hooks/useSteps';
 import { useTheme } from '@/theme/useTheme';
 import { useCurrentLocalDate } from '@/hooks/useCurrentLocalDate';
+import { closeBrowserModalsThen, useBrowserModalBack } from '@/hooks/useBrowserModalBack';
 
 type ActiveFlowState =
   | 'picker'
@@ -67,8 +68,19 @@ export default function LogScreen() {
   const handleCloseAll = () => {
     router.setParams({ flow: undefined });
     setSheetVisible(false);
-    router.replace('/today');
+    closeBrowserModalsThen(() => {
+      if (router.canGoBack()) router.back();
+      else router.replace('/today');
+    });
   };
+
+  const closeFlow = () => {
+    if (params.flow) handleCloseAll();
+    else setActiveFlow('picker');
+  };
+  useBrowserModalBack(sheetVisible && activeFlow !== 'picker' && !params.flow, () =>
+    setActiveFlow('picker'),
+  );
 
   return (
     <View style={[styles.rootContainer, { backgroundColor: colors.background }]}>
@@ -92,7 +104,7 @@ export default function LogScreen() {
           visible={sheetVisible}
           defaultSection={currentSection}
           localDate={todayDate}
-          onClose={handleCloseAll}
+          onClose={closeFlow}
           onLogged={handleCloseAll}
         />
       )}
@@ -102,7 +114,7 @@ export default function LogScreen() {
         <WorkoutLoggerModal
           visible={sheetVisible}
           defaultDate={todayDate}
-          onClose={handleCloseAll}
+          onClose={closeFlow}
           onSaved={handleCloseAll}
         />
       )}
@@ -111,7 +123,7 @@ export default function LogScreen() {
       {activeFlow === 'water' && (
         <CustomWaterModal
           visible={sheetVisible}
-          onClose={handleCloseAll}
+          onClose={closeFlow}
           onSave={async (amountMl) => {
             await addWater(amountMl);
             handleCloseAll();
@@ -121,7 +133,7 @@ export default function LogScreen() {
 
       {/* 5. Weight Entry Modal */}
       {activeFlow === 'steps' && (
-        <ManualStepsModal visible={sheetVisible} onClose={handleCloseAll} onSave={logManualSteps} />
+        <ManualStepsModal visible={sheetVisible} onClose={closeFlow} onSave={logManualSteps} />
       )}
       {activeFlow === 'weight' && (
         <WeightEntryModal
@@ -133,7 +145,7 @@ export default function LogScreen() {
           weeklyPace={null}
           projectedDate={null}
           hasEnoughTrend={false}
-          onClose={handleCloseAll}
+          onClose={closeFlow}
           onSave={async (weightKg, notes, date) => {
             await logWeight(weightKg, date, notes);
           }}
@@ -142,7 +154,7 @@ export default function LogScreen() {
 
       {/* 5.5 Fasting Timer Modal */}
       {activeFlow === 'fast' && (
-        <FastingTimerModal visible={sheetVisible} onClose={handleCloseAll} userId={user?.id} />
+        <FastingTimerModal visible={sheetVisible} onClose={closeFlow} userId={user?.id} />
       )}
 
       {/* 7. Quick Scan: Barcode Scanner */}
@@ -152,7 +164,7 @@ export default function LogScreen() {
           defaultSection={currentSection}
           localDate={todayDate}
           initialTab="scan"
-          onClose={handleCloseAll}
+          onClose={closeFlow}
           onLogged={handleCloseAll}
         />
       )}
@@ -164,7 +176,7 @@ export default function LogScreen() {
           defaultSection={currentSection}
           localDate={todayDate}
           initialTab="photo"
-          onClose={handleCloseAll}
+          onClose={closeFlow}
           onLogged={handleCloseAll}
         />
       )}
@@ -175,12 +187,12 @@ export default function LogScreen() {
           visible={sheetVisible}
           animationType="slide"
           presentationStyle="pageSheet"
-          onRequestClose={handleCloseAll}
+          onRequestClose={closeFlow}
         >
           <View style={[styles.recipeContainer, { backgroundColor: colors.background }]}>
             <RecipeBrowseView
               showBackOrClose={true}
-              onBackOrClose={handleCloseAll}
+              onBackOrClose={closeFlow}
               initialMealSection={currentSection}
               localDate={todayDate}
               onRecipeLogged={handleCloseAll}
@@ -194,7 +206,7 @@ export default function LogScreen() {
         <QuickAddCaloriesModal
           visible={sheetVisible}
           defaultSection={currentSection}
-          onClose={handleCloseAll}
+          onClose={closeFlow}
           onSave={async (food, qty, unit, sec) => {
             await addEntry({
               food,

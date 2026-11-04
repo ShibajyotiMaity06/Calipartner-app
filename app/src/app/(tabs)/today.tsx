@@ -201,6 +201,9 @@ export default function TodayScreen() {
           )}
           loading={diaryLoading || targetsLoading}
           error={Boolean(diaryError || targetsError)}
+          errorMessage={
+            diaryError === 'FOOD_ENERGY_UNAVAILABLE' ? t('fixNovember.energyMissing') : undefined
+          }
           onRetry={() => {
             void refresh();
             void refreshTargets();

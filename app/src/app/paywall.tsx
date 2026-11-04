@@ -9,6 +9,7 @@ export default function PaywallScreen() {
     tier?: string;
     duration?: string;
     cancelled?: string;
+    feature?: string;
   }>();
   const checkoutReturn:
     { tier: 'plus' | 'pro'; duration: 'monthly' | 'annual'; requestId: string } | undefined =
@@ -32,7 +33,7 @@ export default function PaywallScreen() {
       checkoutReturn={checkoutReturn}
       checkoutCancelled={params.cancelled === '1'}
       onClose={handleClose}
-      context="partner_finder"
+      context={params.feature === 'weekly_plan' ? 'weekly_plan' : 'partner_finder'}
       onSuccess={handleClose}
     />
   );

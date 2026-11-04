@@ -28,6 +28,8 @@ for (const f of (await readdir('supabase/migrations')).filter((f) => f.endsWith(
 console.log(`Database migrations: ${migrations} passed`);
 const { runRoomTests } = await import('./rooms_v3_cases.mjs');
 try {
+  const { runWeeklyPlanTests } = await import('./weekly_plan_cases.mjs');
+  await runWeeklyPlanTests(db);
   const { runFastingAccessTests } = await import('./fasting_access_cases.mjs');
   await runFastingAccessTests(db);
   const { runSuppliedFoodTests } = await import('./supplied_food_cases.mjs');

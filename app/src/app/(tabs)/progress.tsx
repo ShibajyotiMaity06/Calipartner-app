@@ -6,6 +6,7 @@ import { PersonalDiaryView } from '@/components/progress/PersonalDiaryView';
 import { ProgressOverview } from '@/components/progress/ProgressOverview';
 import { WorkoutHistoryCalendarModal } from '@/components/workouts/WorkoutHistoryCalendarModal';
 import { PersonalSquads } from '@/components/rooms/PersonalSquads';
+import { WeeklyPlanEntry } from '@/components/workouts/WeeklyPlanEntry';
 import { DayDetailModal, RangeSelector, type DayDetailData } from '@/components/progress';
 import { LoadingState } from '@/components/LoadingState';
 import { useIndividualProgress } from '@/hooks/useIndividualProgress';
@@ -70,6 +71,7 @@ export default function ProgressScreen() {
         {tab === 'diary' ? (
           <>
             <PersonalDiaryView onRefreshReady={registerDiaryRefresh} />
+            <WeeklyPlanEntry />
             <PersonalSquads />
           </>
         ) : (

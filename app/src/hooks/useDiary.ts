@@ -5,6 +5,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { getDb } from '@/db';
 import { diaryEvents } from '@/services/diaryEvents';
 import { ensureBundledFoodsSeeded, getDiaryDaySummary } from '@/services/foodService';
+import { getSupabase } from '@/lib/supabase';
 
 export interface UseDiaryResult {
   daySummary: DiaryDaySummary;
@@ -103,7 +104,33 @@ export function useDiary(localDate?: string): UseDiaryResult {
       const db = await getDb();
       await loadAccountTable(db, 'food_entries', userId);
       await ensureBundledFoodsSeeded(db);
-      const summary = await getDiaryDaySummary(db, userId, targetDate);
+      let summary = await getDiaryDaySummary(db, userId, targetDate);
+      const missing = Object.values(summary.sections)
+        .flatMap((section) => section.entries)
+        .filter((entry) => entry.calories === 0 && entry.protein + entry.carbs + entry.fat > 0);
+      if (missing.length) {
+        const ids = [
+          ...new Set(
+            missing.map((entry) => entry.food_id).filter((id): id is string => Boolean(id)),
+          ),
+        ].slice(0, 5);
+        for (const id of ids) {
+          const { error } = await getSupabase().functions.invoke('food-lookup', {
+            body: { repair_food_id: id },
+          });
+          if (error) throw new Error('FOOD_ENERGY_UNAVAILABLE');
+        }
+        await loadAccountTable(db, 'food_entries', userId);
+        summary = await getDiaryDaySummary(db, userId, targetDate);
+        if (
+          Object.values(summary.sections).some((section) =>
+            section.entries.some(
+              (entry) => entry.calories === 0 && entry.protein + entry.carbs + entry.fat > 0,
+            ),
+          )
+        )
+          throw new Error('FOOD_ENERGY_UNAVAILABLE');
+      }
       setDaySummary(summary);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load diary');

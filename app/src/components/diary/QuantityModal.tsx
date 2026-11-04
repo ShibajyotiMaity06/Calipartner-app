@@ -14,6 +14,7 @@ import { scaleNutrients, type Food, type FoodEntry, type MealSection } from '@ca
 import { Sheet, Text, Button, Chip, dark, space, radius } from '@calipartner/ui';
 import { t } from '@/i18n';
 import { AdvancedNutrition } from './AdvancedNutrition';
+import { useBrowserModalBack } from '@/hooks/useBrowserModalBack';
 
 export interface QuantityModalProps {
   visible: boolean;
@@ -58,6 +59,7 @@ export function QuantityModal({
   onSave,
   onDelete,
 }: QuantityModalProps) {
+  useBrowserModalBack(visible, onClose);
   const [saving, setSaving] = useState(false);
   const [saveFailed, setSaveFailed] = useState(false);
   const inFlight = useRef(false);
@@ -85,7 +87,16 @@ export function QuantityModal({
     if (!food || parsedQty <= 0) {
       return { calories: 0, protein: 0, carbs: 0, fat: 0, fiber: 0, sugar: 0, sodium_mg: 0 };
     }
-    return scaleNutrients(food, parsedQty, selectedUnit);
+    try {
+      if (
+        food.calories_per_100g === 0 &&
+        food.protein_per_100g + food.carbs_per_100g + food.fat_per_100g > 0
+      )
+        return null;
+      return scaleNutrients(food, parsedQty, selectedUnit);
+    } catch {
+      return null;
+    }
   }, [food, parsedQty, selectedUnit]);
 
   // Available units for this food (custom serving units + standard)
@@ -110,7 +121,7 @@ export function QuantityModal({
     : t('homeRefresh.addSelection', { meal: sectionName.toLowerCase() });
 
   const submit = async () => {
-    if (inFlight.current || parsedQty <= 0) return;
+    if (inFlight.current || parsedQty <= 0 || !preview) return;
     inFlight.current = true;
     setSaving(true);
     setSaveFailed(false);
@@ -132,7 +143,7 @@ export function QuantityModal({
     }
   };
   const handleSave = () => {
-    if (inFlight.current || parsedQty <= 0) return;
+    if (inFlight.current || parsedQty <= 0 || !preview) return;
     if (preview.calories > 3200) {
       Alert.alert(
         t('homeRefresh.confirmPortion'),
@@ -255,54 +266,58 @@ export function QuantityModal({
           </View>
 
           {/* Live Macro Preview Box with CMP-13 Identity Steps */}
-          <View style={styles.previewBox} testID="preview-nutrients">
-            <View style={styles.previewHeader}>
-              <Text variant="label" color={dark.textLo} style={styles.previewLabel}>
-                NUTRITION PREVIEW
-              </Text>
-              <Text variant="numeralM" color={dark.textHi}>
-                {preview.calories}{' '}
-                <Text variant="bodyS" color={dark.textMid}>
-                  kcal
+          {preview ? (
+            <View style={styles.previewBox} testID="preview-nutrients">
+              <View style={styles.previewHeader}>
+                <Text variant="label" color={dark.textLo} style={styles.previewLabel}>
+                  NUTRITION PREVIEW
                 </Text>
-              </Text>
+                <Text variant="numeralM" color={dark.textHi}>
+                  {preview.calories}{' '}
+                  <Text variant="bodyS" color={dark.textMid}>
+                    kcal
+                  </Text>
+                </Text>
+              </View>
+
+              {/* Three macro segment bars in identity steps */}
+              <View style={styles.macroValuesRow}>
+                <View style={styles.macroPill}>
+                  <View style={[styles.macroDot, { backgroundColor: dark.iris }]} />
+                  <Text variant="label" color={dark.textMid}>
+                    P:{' '}
+                    <Text variant="bodyS" color={dark.textHi}>
+                      {preview.protein}g
+                    </Text>
+                  </Text>
+                </View>
+
+                <View style={styles.macroPill}>
+                  <View style={[styles.macroDot, { backgroundColor: dark.teal }]} />
+                  <Text variant="label" color={dark.textMid}>
+                    C:{' '}
+                    <Text variant="bodyS" color={dark.textHi}>
+                      {preview.carbs}g
+                    </Text>
+                  </Text>
+                </View>
+
+                <View style={styles.macroPill}>
+                  <View style={[styles.macroDot, { backgroundColor: dark.rose }]} />
+                  <Text variant="label" color={dark.textMid}>
+                    F:{' '}
+                    <Text variant="bodyS" color={dark.textHi}>
+                      {preview.fat}g
+                    </Text>
+                  </Text>
+                </View>
+              </View>
             </View>
+          ) : (
+            <Text accessibilityRole="alert">{t('fixNovember.energyMissing')}</Text>
+          )}
 
-            {/* Three macro segment bars in identity steps */}
-            <View style={styles.macroValuesRow}>
-              <View style={styles.macroPill}>
-                <View style={[styles.macroDot, { backgroundColor: dark.iris }]} />
-                <Text variant="label" color={dark.textMid}>
-                  P:{' '}
-                  <Text variant="bodyS" color={dark.textHi}>
-                    {preview.protein}g
-                  </Text>
-                </Text>
-              </View>
-
-              <View style={styles.macroPill}>
-                <View style={[styles.macroDot, { backgroundColor: dark.teal }]} />
-                <Text variant="label" color={dark.textMid}>
-                  C:{' '}
-                  <Text variant="bodyS" color={dark.textHi}>
-                    {preview.carbs}g
-                  </Text>
-                </Text>
-              </View>
-
-              <View style={styles.macroPill}>
-                <View style={[styles.macroDot, { backgroundColor: dark.rose }]} />
-                <Text variant="label" color={dark.textMid}>
-                  F:{' '}
-                  <Text variant="bodyS" color={dark.textHi}>
-                    {preview.fat}g
-                  </Text>
-                </Text>
-              </View>
-            </View>
-          </View>
-
-          <AdvancedNutrition nutrients={preview} />
+          {preview && <AdvancedNutrition nutrients={preview} />}
 
           {/* Meal Section Selector */}
           <View style={styles.sectionPickerWrap}>
@@ -324,7 +339,7 @@ export function QuantityModal({
 
           {saveFailed && (
             <Text color={dark.danger} accessibilityRole="alert" testID="quantity-save-error">
-              {t('common.errorBody')}
+              {t('fixNovember.saveFailed')}
             </Text>
           )}
           {/* Primary Action Button */}
@@ -333,7 +348,7 @@ export function QuantityModal({
               testID="btn-submit-quantity"
               variant="primary"
               label={actionVerb}
-              disabled={parsedQty <= 0 || saving}
+              disabled={parsedQty <= 0 || saving || !preview}
               loading={saving}
               onPress={handleSave}
             />

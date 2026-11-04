@@ -40,3 +40,4 @@ export * from './squad';
 export * from './coachMeal';
 
 export { coachHistoryWindow } from './coachHistory';
+export * from './weeklyPlan';

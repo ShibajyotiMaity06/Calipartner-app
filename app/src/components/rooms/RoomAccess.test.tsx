@@ -101,6 +101,7 @@ vi.mock('@/hooks/useRoomChat', () => ({
   },
 }));
 vi.mock('@/hooks/useSquad', () => ({
+  useSquadDetails: () => ({ data: null, loading: false, error: false, refresh: state.refresh }),
   useSquadToday: () => ({
     data: {
       room_id: 'room',
@@ -124,6 +125,8 @@ vi.mock('@/hooks/useSquad', () => ({
     refresh: state.refresh,
   }),
 }));
+vi.mock('@/services/roomMealService', () => ({ copyRoomMeal: vi.fn() }));
+vi.mock('@/services/foodService', () => ({ generateClientUuid: vi.fn() }));
 vi.mock('@/components/chat', () => ({ ChatView: 'ChatView' }));
 vi.mock('@/components/rooms/SquadConnectModal', () => ({ SquadConnectModal: 'SquadConnectModal' }));
 vi.mock('@/components/rooms/SquadMemberPicker', () => ({ SquadMemberPicker: 'SquadMemberPicker' }));
@@ -206,6 +209,23 @@ it('allows either of exactly two comparison slots to select another member', asy
     tree.root.findByProps({ testID: 'open-two-person-compare' }).props.onPress(),
   );
   expect(state.push).toHaveBeenLastCalledWith('/squad/compare?room=room&left=peer2&right=peer1');
+});
+it('views one selected person inline without opening Compare and returns Back to the navigator', async () => {
+  state.count = 3;
+  await act(async () => {
+    tree = create(<RoomScreen />);
+  });
+  await act(async () => tree.root.findByProps({ testID: 'squad-choose-person' }).props.onPress());
+  const picker = tree.root.findByType('SquadMemberPicker' as React.ElementType);
+  expect(picker.props.excludedId).toBe('');
+  await act(async () => {
+    picker.props.onSelect('peer2');
+    picker.props.onClose();
+  });
+  expect(tree.root.findByProps({ testID: 'squad-choose-person' }).props.label).toBe('Person 2');
+  expect(state.push).not.toHaveBeenCalled();
+  expect(state.back?.()).toBe(false);
+  expect(state.navigate).not.toHaveBeenCalled();
 });
 it('opens the tagged room directly in paid chat and passes its exact message ID', async () => {
   state.paid = true;

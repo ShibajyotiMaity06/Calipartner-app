@@ -1,11 +1,13 @@
 import { createClient, type SupabaseClient } from 'jsr:@supabase/supabase-js@2';
 import {
   normalizeProductBarcode,
+  usdaEnergyKcal,
   restrictFoodNutrition,
   type Food,
   type NutritionDetails,
 } from '@calipartner/core';
 import { canSeeAdvancedNutrition } from '../_shared/nutritionAccess.ts';
+import { recoverFoodEnergy } from './recoverEnergy.ts';
 
 export const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -149,7 +151,7 @@ export function mapUsdaFoodItem(item: Record<string, any>): FoodLookupResult {
     return found?.value && !isNaN(found.value) && found.value >= 0 ? found.value : 0;
   };
 
-  const calories = getNutrient(1008); // Energy (kcal)
+  const calories = usdaEnergyKcal(nutrients);
   const protein = getNutrient(1003); // Protein (g)
   const fat = getNutrient(1004); // Total lipid (fat) (g)
   const carbs = getNutrient(1005); // Carbohydrate, by difference (g)
@@ -221,6 +223,7 @@ export async function handleFoodLookup(
   let barcode: string | null = null;
   let query: string | null = null;
   let pageSize = 10;
+  let repairFoodId: string | null = null;
 
   if (req.method === 'GET') {
     const url = new URL(req.url);
@@ -233,13 +236,14 @@ export async function handleFoodLookup(
       const body = await req.json();
       barcode = body.barcode || null;
       query = body.query || null;
+      repairFoodId = typeof body.repair_food_id === 'string' ? body.repair_food_id : null;
       if (body.pageSize) pageSize = Math.min(Math.max(Number(body.pageSize), 1), 25);
     } catch {
       // empty or non-JSON body
     }
   }
 
-  if (!barcode && !query) {
+  if (!barcode && !query && !repairFoodId) {
     return new Response(
       JSON.stringify({ error: 'Either "barcode" or "query" parameter is required.' }),
       {
@@ -258,6 +262,17 @@ export async function handleFoodLookup(
     (supabaseUrl && supabaseServiceKey ? createClient(supabaseUrl, supabaseServiceKey) : null);
 
   try {
+    if (repairFoodId) {
+      if (!adminClient) throw new Error('FOOD_UNAVAILABLE');
+      const repaired = await recoverFoodEnergy(req, adminClient, repairFoodId, remoteFetch);
+      return new Response(JSON.stringify({ repaired }), {
+        headers: {
+          ...corsHeaders,
+          'Content-Type': 'application/json',
+          'Cache-Control': 'no-store',
+        },
+      });
+    }
     const advanced = await canSeeAdvancedNutrition(req, adminClient);
     const visibleFood = (food: unknown) => restrictFoodNutrition(food as Food, advanced);
     // -------------------------------------------------------------------------
@@ -381,7 +396,14 @@ export async function handleFoodLookup(
           .limit(pageSize);
 
         if (data) {
-          cachedFoods = data;
+          cachedFoods = data.filter(
+            (food) =>
+              Number(food.calories_per_100g) > 0 ||
+              Number(food.protein_per_100g ?? 0) +
+                Number(food.carbs_per_100g ?? 0) +
+                Number(food.fat_per_100g ?? 0) ===
+                0,
+          );
         }
       }
 
@@ -399,7 +421,7 @@ export async function handleFoodLookup(
       const usdaApiKey = Deno.env.get('USDA_API_KEY') || 'DEMO_KEY';
       const usdaUrl = `https://api.nal.usda.gov/fdc/v1/foods/search?query=${encodeURIComponent(cleanQuery)}&pageSize=${pageSize}&api_key=${encodeURIComponent(usdaApiKey)}`;
 
-      const usdaRes = await fetch(usdaUrl);
+      const usdaRes = await remoteFetch(usdaUrl, { signal: AbortSignal.timeout(15000) });
       if (!usdaRes.ok) {
         // Return whatever cached foods we found
         return new Response(
@@ -414,7 +436,13 @@ export async function handleFoodLookup(
       const usdaData = await usdaRes.json();
       const usdaItems = (usdaData.foods || []) as Array<Record<string, any>>;
 
-      const mappedList = usdaItems.map(mapUsdaFoodItem);
+      const mappedList = usdaItems.flatMap((item) => {
+        try {
+          return [mapUsdaFoodItem(item)];
+        } catch {
+          return [];
+        } // Incomplete nutrition must not become a zero-calorie food.
+      });
 
       // Cache newly fetched foods into Supabase
       const results = [...cachedFoods];
@@ -431,8 +459,6 @@ export async function handleFoodLookup(
 
           if (!error && saved) {
             results.push(saved);
-          } else {
-            results.push(item);
           }
         }
       } else {
@@ -451,8 +477,11 @@ export async function handleFoodLookup(
     });
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : String(err);
-    return new Response(JSON.stringify({ error: 'Food lookup failed', details: message }), {
-      status: 500,
+    const code = ['UNAUTHENTICATED', 'NOT_AUTHORIZED', 'FOOD_UNAVAILABLE'].includes(message)
+      ? message
+      : 'FOOD_UNAVAILABLE';
+    return new Response(JSON.stringify({ error: 'Food lookup failed. Please retry.', code }), {
+      status: code === 'UNAUTHENTICATED' ? 401 : code === 'NOT_AUTHORIZED' ? 403 : 503,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   }

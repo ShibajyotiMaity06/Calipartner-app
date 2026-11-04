@@ -1,5 +1,18 @@
 import type { CreateFoodInput, ServingUnit } from './types';
 
+/** USDA Foundation foods use Atwater energy IDs; never mistake missing energy for zero. */
+export function usdaEnergyKcal(
+  nutrients: readonly { nutrientId?: number; value?: number }[],
+): number {
+  for (const id of [1008, 2048, 2047, 1062]) {
+    const value = Number(nutrients.find((n) => n.nutrientId === id)?.value);
+    if (Number.isFinite(value) && value > 0) return id === 1062 ? value / 4.184 : value;
+  }
+  if (nutrients.some((n) => [1003, 1004, 1005].includes(n.nutrientId ?? 0) && Number(n.value) > 0))
+    throw new Error('FOOD_ENERGY_UNAVAILABLE');
+  return 0;
+}
+
 // In-memory sliding-window rate limiter (60 requests per minute per IP / token)
 const RATE_LIMIT_WINDOW_MS = 60_000;
 const MAX_REQUESTS_PER_WINDOW = 60;
@@ -111,7 +124,7 @@ export function mapUsdaFoodItem(item: Record<string, unknown>): CreateFoodInput 
     return found?.value && !isNaN(found.value) && found.value >= 0 ? found.value : 0;
   };
 
-  const calories = getNutrient(1008); // Energy (kcal)
+  const calories = usdaEnergyKcal(nutrients);
   const protein = getNutrient(1003); // Protein (g)
   const fat = getNutrient(1004); // Total lipid (fat) (g)
   const carbs = getNutrient(1005); // Carbohydrate, by difference (g)

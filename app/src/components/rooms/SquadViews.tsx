@@ -9,6 +9,7 @@ import type {
   SquadWorkout,
 } from '@calipartner/core';
 import { t, getLocale } from '@/i18n';
+import { SquadFoodItem } from './SquadFoodItem';
 
 export const squadStyles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: dark.bg0 },
@@ -340,7 +341,15 @@ export function PlusDetailsCard({ onUpgrade }: { onUpgrade: () => void }) {
     </View>
   );
 }
-export function MealContent({ meal }: { meal: SquadMeal | undefined }) {
+export function MealContent({
+  meal,
+  roomId,
+  memberId,
+}: {
+  meal: SquadMeal | undefined;
+  roomId?: string;
+  memberId?: string;
+}) {
   if (!meal) return <Text variant="bodyS">{t('squadDesign.noLogs')}</Text>;
   return (
     <View style={squadStyles.stack}>
@@ -348,9 +357,13 @@ export function MealContent({ meal }: { meal: SquadMeal | undefined }) {
         {numberText(meal.calories)} {t('squadDesign.kcal')}
       </Text>
       {meal.items.map((item) => (
-        <Text key={item.id} variant="bodyS">
-          {item.name} · {numberText(item.quantity)} {item.unit}
-        </Text>
+        <SquadFoodItem
+          key={item.id}
+          item={item}
+          roomId={roomId}
+          memberId={memberId}
+          section={meal.section}
+        />
       ))}
       <Text variant="bodyS" tabular>
         {t('squadDesign.protein')} {numberText(meal.protein)} {t('squadDesign.grams')} ·{' '}
@@ -397,7 +410,15 @@ export function WorkoutContent({ workouts }: { workouts: SquadWorkout[] }) {
   );
 }
 export const mealSections = ['breakfast', 'lunch', 'dinner', 'snacks', 'extra'] as const;
-export function MemberDetailsContent({ details }: { details: SquadMemberDetails }) {
+export function MemberDetailsContent({
+  details,
+  roomId,
+  memberId,
+}: {
+  details: SquadMemberDetails;
+  roomId?: string;
+  memberId?: string;
+}) {
   return (
     <View style={squadStyles.stack}>
       <View style={squadStyles.card}>
@@ -405,7 +426,11 @@ export function MemberDetailsContent({ details }: { details: SquadMemberDetails 
         {mealSections.map((section) => (
           <View key={section} style={[squadStyles.stack, squadStyles.divider]}>
             <Text>{t(`diary.sections.${section}`)}</Text>
-            <MealContent meal={details.meals.find((meal) => meal.section === section)} />
+            <MealContent
+              meal={details.meals.find((meal) => meal.section === section)}
+              roomId={roomId}
+              memberId={memberId}
+            />
           </View>
         ))}
       </View>

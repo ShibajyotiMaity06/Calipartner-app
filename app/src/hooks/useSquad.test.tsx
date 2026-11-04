@@ -36,7 +36,7 @@ afterEach(async () => {
   if (tree) await act(async () => tree.unmount());
   vi.useRealTimers();
 });
-it('loads real data only while visible and polls for peers’ acknowledged updates', async () => {
+it('loads while visible without polling or replacing idle content', async () => {
   await act(async () => {
     tree = create(<Probe />);
   });
@@ -45,13 +45,13 @@ it('loads real data only while visible and polls for peers’ acknowledged updat
   await act(async () => {
     vi.advanceTimersByTime(30000);
   });
-  expect(state.read).toHaveBeenCalledTimes(2);
+  expect(state.read).toHaveBeenCalledTimes(1);
   await act(async () => tree.update(<Probe visible={false} />));
   expect(current.data).toBeNull();
   await act(async () => {
     vi.advanceTimersByTime(60000);
   });
-  expect(state.read).toHaveBeenCalledTimes(2);
+  expect(state.read).toHaveBeenCalledTimes(1);
 });
 it('cannot publish an earlier room response after switching squads', async () => {
   let resolve!: (value: unknown) => void;

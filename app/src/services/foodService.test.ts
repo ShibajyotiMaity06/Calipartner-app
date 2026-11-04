@@ -148,6 +148,22 @@ function createTestDb(): LocalDb {
 }
 
 describe('Food Service & Local Database', () => {
+  it('rejects missing food energy before saving a misleading zero-calorie snapshot', async () => {
+    const db = createTestDb();
+    await ensureBundledFoodsSeeded(db);
+    const food = (await searchLocalFoods(db, 'Chicken breast, roasted'))[0]!;
+    await expect(
+      logFoodEntry(db, {
+        userId: 'owner',
+        food: { ...food, calories_per_100g: 0 },
+        quantity: 100,
+        unit: 'g',
+        localDate: '2026-11-04',
+        mealSection: 'lunch',
+      }),
+    ).rejects.toThrow('FOOD_ENERGY_UNAVAILABLE');
+    expect(await getEntriesForDate(db, 'owner', '2026-11-04')).toHaveLength(0);
+  });
   it('preserves scan nutrition through offline logging, editing, copying and online saves', async () => {
     const db = createTestDb();
     const food = await saveCustomFood(db, 'u1', {

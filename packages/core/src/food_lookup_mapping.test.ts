@@ -7,6 +7,29 @@ import {
 } from './food_lookup';
 
 describe('food-lookup Mapping and Rate Limiting', () => {
+  it.each([2048, 2047])(
+    'uses USDA Atwater energy %s for chicken instead of zero calories',
+    (id) => {
+      const food = mapUsdaFoodItem({
+        description: 'Chicken breast',
+        foodNutrients: [
+          { nutrientId: id, value: 165 },
+          { nutrientId: 1003, value: 31 },
+          { nutrientId: 1004, value: 3.6 },
+        ],
+      });
+      expect(food.calories_per_100g).toBe(165);
+      expect(food.protein_per_100g).toBe(31);
+    },
+  );
+  it('converts USDA energy in kJ and rejects absent energy with positive macros', () => {
+    expect(
+      mapUsdaFoodItem({ foodNutrients: [{ nutrientId: 1062, value: 418.4 }] }).calories_per_100g,
+    ).toBe(100);
+    expect(() => mapUsdaFoodItem({ foodNutrients: [{ nutrientId: 1003, value: 31 }] })).toThrow(
+      'FOOD_ENERGY_UNAVAILABLE',
+    );
+  });
   it('correctly maps Open Food Facts product structure with nutriments and serving size', () => {
     const rawOffProduct = {
       product_name: 'Greek Yogurt Plain',

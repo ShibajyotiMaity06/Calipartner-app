@@ -9,6 +9,8 @@ const state = vi.hoisted(() => ({
   focused: true,
   lookup: vi.fn(),
   replace: vi.fn(),
+  back: vi.fn(),
+  canGoBack: true,
   decode: vi.fn(),
   stop: vi.fn(),
   flow: undefined as string | undefined,
@@ -65,6 +67,8 @@ vi.mock('@/hooks/useSectionSuggestions', () => ({
 vi.mock('expo-router', async () => ({
   useRouter: () => ({
     replace: state.replace,
+    canGoBack: () => state.canGoBack,
+    back: state.back,
     setParams: (params: { flow?: string }) => {
       state.setParams(params);
       state.flow = params.flow;
@@ -211,7 +215,8 @@ it('reopens the cached Log tab with its picker after a previous food flow closes
     renderer.root.findByType('LogHub' as React.ElementType).props.onFlow('food'),
   );
   await act(async () => renderer.root.findByType('FoodLog' as React.ElementType).props.onClose());
-  expect(state.replace).toHaveBeenCalledWith('/today');
+  expect(state.replace).not.toHaveBeenCalled();
+  expect(renderer.root.findAllByType('LogHub' as React.ElementType)).toHaveLength(1);
   state.focused = false;
   await act(async () => renderer.update(<LogScreen />));
   state.focused = true;
@@ -233,7 +238,8 @@ it.each([
   expect(renderer.root.findAllByType(component as React.ElementType)).toHaveLength(1);
   await act(async () => renderer.root.findByType(component as React.ElementType).props.onClose());
   expect(state.setParams).toHaveBeenCalledWith({ flow: undefined });
-  expect(state.replace).toHaveBeenCalledWith('/today');
+  expect(state.back).toHaveBeenCalledOnce();
+  expect(state.replace).not.toHaveBeenCalled();
 });
 it('shows separate meal metrics and preserves add, edit and delete actions for logged food', async () => {
   const add = vi.fn(),

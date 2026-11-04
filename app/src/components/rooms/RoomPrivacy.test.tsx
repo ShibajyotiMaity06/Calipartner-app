@@ -16,6 +16,8 @@ vi.mock('@calipartner/ui', async () => ({
 }));
 vi.mock('@expo/vector-icons', () => ({ Ionicons: 'Icon' }));
 vi.mock('@/hooks/useBrowserModalBack', () => ({ useBrowserModalBack: vi.fn() }));
+vi.mock('@/services/roomMealService', () => ({ copyRoomMeal: vi.fn() }));
+vi.mock('@/services/foodService', () => ({ generateClientUuid: vi.fn() }));
 vi.mock('@/services/squadService', () => ({
   getSquadVisibility: state.get,
   setSquadVisibility: state.set,

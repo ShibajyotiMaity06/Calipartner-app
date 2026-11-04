@@ -26,14 +26,18 @@ export async function copyRoomMeal(
   memberId: string,
   entryId: string,
   section: MealSection,
+  squadProjection = false,
 ) {
-  const { data, error } = await getSupabase().rpc('copy_room_meal', {
-    p_client_id: clientId,
-    p_room_id: roomId,
-    p_member_id: memberId,
-    p_entry_id: entryId,
-    p_meal_section: section,
-  });
+  const { data, error } = await getSupabase().rpc(
+    squadProjection ? 'copy_squad_food' : 'copy_room_meal',
+    {
+      p_client_id: clientId,
+      p_room_id: roomId,
+      p_member_id: memberId,
+      p_entry_id: entryId,
+      p_meal_section: section,
+    },
+  );
   if (error) throw error;
   const entry = data as FoodEntry;
   const db = await getDb();
