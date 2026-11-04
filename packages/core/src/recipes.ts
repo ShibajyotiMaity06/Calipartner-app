@@ -202,7 +202,19 @@ export function filterRecipes(
   const normCuisine = criteria.cuisine?.trim().toLowerCase();
 
   return recipes.filter((recipe) => {
-    if (criteria.nutrition_focus && !recipe.nutrition_focus?.includes(criteria.nutrition_focus))
+    if (
+      criteria.nutrition_focus &&
+      ![...(recipe.nutrition_focus ?? []), ...recipe.diet_tags].some(
+        (tag) => tag.toLowerCase().replaceAll('_', '-') === criteria.nutrition_focus,
+      )
+    )
+      return false;
+    if (
+      criteria.cuisine_group === 'indian' &&
+      !/^(?:(?:north|south|east|west)(?: indian)?|indian|andhra|hyderabadi|gujarati)$/i.test(
+        recipe.cuisine.trim(),
+      )
+    )
       return false;
     // 1. Text Query (name, description, cuisine, diet tags, ingredient names)
     if (normQuery) {

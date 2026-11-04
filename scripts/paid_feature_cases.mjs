@@ -41,6 +41,11 @@ export async function runPaidFeatureTests(db) {
       [uid(i), `paidrepair_${i}`],
     );
   }
+  for (let i = 1; i <= 5; i++)
+    await db.query(
+      'insert into public.health_screening(user_id,pregnant_or_breastfeeding,has_diabetes_or_medication,has_eating_disorder_history) values($1,false,false,false) on conflict(user_id) do nothing',
+      [uid(i)],
+    );
   for (const [i, tier, status, end] of [
     [2, 'plus', 'paid', "now()+interval '1 day'"],
     [3, 'plus', 'trial', "now()+interval '1 day'"],

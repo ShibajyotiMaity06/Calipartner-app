@@ -1,9 +1,8 @@
-import { type as inputTypography } from '@calipartner/ui';
 import React from 'react';
-import { Text, homeLayout } from '@calipartner/ui';
 import { Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import type { RecipeFilterCriteria, RecipeMealType } from '@calipartner/core';
+import { Text, homeLayout, type as inputTypography } from '@calipartner/ui';
+import type { RecipeFilterCriteria } from '@calipartner/core';
 import { t } from '@/i18n';
 import { fontSize, radius, spacing } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
@@ -13,383 +12,97 @@ export interface RecipeFilterBarProps {
   onQueryChange: (q: string) => void;
   criteria: RecipeFilterCriteria;
   onCriteriaChange: (next: RecipeFilterCriteria) => void;
-  cuisines?: string[];
 }
-
-const MEAL_TYPES: { key: RecipeMealType | 'all'; labelKey: string }[] = [
-  { key: 'all', labelKey: 'recipes.browse.filterAll' },
-  { key: 'breakfast', labelKey: 'recipes.mealTypes.breakfast' },
-  { key: 'lunch', labelKey: 'recipes.mealTypes.lunch' },
-  { key: 'dinner', labelKey: 'recipes.mealTypes.dinner' },
-  { key: 'snack', labelKey: 'recipes.mealTypes.snack' },
-];
-
-const DIET_TAGS: { key: string; labelKey: string }[] = [
-  { key: 'vegetarian', labelKey: 'recipes.dietTags.vegetarian' },
-  { key: 'eggetarian', labelKey: 'recipes.dietTags.eggetarian' },
-  { key: 'vegan', labelKey: 'recipes.dietTags.vegan' },
-  { key: 'non_vegetarian', labelKey: 'recipes.dietTags.non_vegetarian' },
-];
-
 export function RecipeFilterBar({
   query,
   onQueryChange,
   criteria,
   onCriteriaChange,
-  cuisines = [],
 }: RecipeFilterBarProps) {
   const { colors } = useTheme();
-
-  const isHighProtein = (criteria.min_protein ?? 0) >= 25;
-  const isQuick = (criteria.max_time_minutes ?? 999) <= 30;
-  const isUnder400 = (criteria.max_calories ?? 9999) <= 400;
-
-  const hasActiveFilters =
-    query.trim().length > 0 ||
-    Boolean(criteria.meal_type) ||
-    Boolean(criteria.diet) ||
-    Boolean(criteria.cuisine) ||
-    Boolean(criteria.nutrition_focus) ||
-    isHighProtein ||
-    isQuick ||
-    isUnder400;
-
-  const handleClearFilters = () => {
-    onQueryChange('');
-    onCriteriaChange({});
-  };
-
-  const handleMealTypeSelect = (mt: RecipeMealType | 'all') => {
-    onCriteriaChange({
-      ...criteria,
-      meal_type: mt === 'all' ? undefined : mt,
-    });
-  };
-
-  const handleDietTagToggle = (tag: string) => {
-    onCriteriaChange({
-      ...criteria,
-      diet: criteria.diet === tag ? undefined : tag,
-    });
-  };
-
-  const handleToggleHighProtein = () => {
-    onCriteriaChange({
-      ...criteria,
-      min_protein: isHighProtein ? undefined : 25,
-    });
-  };
-
-  const handleToggleQuick = () => {
-    onCriteriaChange({
-      ...criteria,
-      max_time_minutes: isQuick ? undefined : 30,
-    });
-  };
-
-  const handleToggleUnder400 = () => {
-    onCriteriaChange({
-      ...criteria,
-      max_calories: isUnder400 ? undefined : 400,
-    });
-  };
-
   return (
     <View style={styles.container}>
-      {/* Search TextInput Box */}
       <View
         style={[
           styles.searchBox,
-          {
-            backgroundColor: colors.surfaceAlt,
-            borderColor: colors.border,
-          },
+          { backgroundColor: colors.surfaceAlt, borderColor: colors.border },
         ]}
       >
-        <Ionicons name="search" size={18} color={colors.textMuted} />
+        <Ionicons name="search" size={homeLayout.iconSize} color={colors.textMuted} />
         <TextInput
           testID="input-recipe-search"
           value={query}
           onChangeText={onQueryChange}
           placeholder={t('recipes.browse.searchPlaceholder')}
+          accessibilityLabel={t('recipes.browse.searchPlaceholder')}
           placeholderTextColor={colors.textMuted}
           returnKeyType="search"
-          accessibilityLabel={t('recipes.browse.searchPlaceholder')}
           style={[
-            [styles.searchInput, { color: colors.text }],
-            { fontFamily: inputTypography.body.fontFamily },
+            styles.searchInput,
+            { color: colors.text, fontFamily: inputTypography.body.fontFamily },
           ]}
         />
         {query.length > 0 && (
           <Pressable
             testID="btn-clear-recipe-search"
             onPress={() => onQueryChange('')}
-            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
             accessibilityRole="button"
             accessibilityLabel={t('homeRefresh.clearSearch')}
+            style={{
+              minWidth: homeLayout.touchSize,
+              minHeight: homeLayout.touchSize,
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
           >
-            <Ionicons name="close-circle" size={18} color={colors.textMuted} />
+            <Ionicons name="close" size={homeLayout.iconSize} color={colors.textMuted} />
           </Pressable>
         )}
       </View>
-
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={styles.chipsScroll}
-        testID="recipe-region-filters"
-      >
-        {[undefined, ...cuisines].map((cuisine) => (
-          <Pressable
-            key={cuisine ?? 'all'}
-            onPress={() => onCriteriaChange({ ...criteria, cuisine })}
-            accessibilityRole="button"
-            accessibilityState={{ selected: criteria.cuisine === cuisine }}
-            testID={`recipe-region-${cuisine ?? 'all'}`}
-            style={[
-              styles.chip,
-              {
-                backgroundColor: criteria.cuisine === cuisine ? colors.accent : colors.surface,
-                borderColor: colors.border,
-              },
-            ]}
-          >
-            <Text
-              style={[
-                styles.chipText,
-                { color: criteria.cuisine === cuisine ? colors.onAccent : colors.text },
-              ]}
-            >
-              {cuisine ?? t('homeRefresh.allRegions')}
-            </Text>
-          </Pressable>
-        ))}
-      </ScrollView>
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={styles.chipsScroll}
-        testID="recipe-focus-filters"
-      >
-        {(
-          [
-            ['high-protein', 'highProtein'],
-            ['high-carb', 'highCarb'],
-            ['high-fiber', 'highFiber'],
-          ] as const
-        ).map(([focus, label]) => (
-          <Pressable
-            key={focus}
-            onPress={() =>
-              onCriteriaChange({
-                ...criteria,
-                nutrition_focus: criteria.nutrition_focus === focus ? undefined : focus,
-              })
-            }
-            accessibilityRole="button"
-            accessibilityState={{ selected: criteria.nutrition_focus === focus }}
-            testID={`recipe-focus-${focus}`}
-            style={[
-              styles.chip,
-              {
-                backgroundColor:
-                  criteria.nutrition_focus === focus ? colors.accent : colors.surface,
-                borderColor: colors.border,
-              },
-            ]}
-          >
-            <Text
-              style={[
-                styles.chipText,
-                { color: criteria.nutrition_focus === focus ? colors.onAccent : colors.text },
-              ]}
-            >
-              {t(`homeRefresh.${label}`)}
-            </Text>
-          </Pressable>
-        ))}
-      </ScrollView>
-      {/* Horizontal Scroll of Filter Chips */}
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={styles.chipsScroll}
       >
-        {/* Clear Filters Button if active */}
-        {hasActiveFilters && (
-          <Pressable
-            testID="btn-clear-filters"
-            onPress={handleClearFilters}
-            accessibilityRole="button"
-            accessibilityLabel={t('recipes.browse.clearFilters')}
-            style={[
-              styles.chip,
-              {
-                backgroundColor: colors.surfaceAlt,
-                borderColor: colors.danger,
-              },
-            ]}
-          >
-            <Ionicons name="close" size={12} color={colors.danger} />
-            <Text style={[styles.chipText, { color: colors.danger, fontWeight: '700' }]}>
-              {t('recipes.browse.clearFilters')}
-            </Text>
-          </Pressable>
-        )}
-
-        {/* Meal Type Chips */}
-        {MEAL_TYPES.map(({ key, labelKey }) => {
-          const isActive = key === 'all' ? !criteria.meal_type : criteria.meal_type === key;
+        {(['high-protein', 'high-carb', 'indian'] as const).map((filter) => {
+          const selected =
+            filter === 'indian'
+              ? criteria.cuisine_group === 'indian'
+              : criteria.nutrition_focus === filter;
           return (
             <Pressable
-              key={`meal-${key}`}
-              testID={`filter-chip-meal-${key}`}
-              onPress={() => handleMealTypeSelect(key)}
+              key={filter}
+              testID={'recipe-filter-' + filter}
               accessibilityRole="button"
-              accessibilityState={{ selected: isActive }}
+              accessibilityState={{ selected }}
+              onPress={() =>
+                onCriteriaChange({
+                  nutrition_focus:
+                    filter === 'indian' ? criteria.nutrition_focus : selected ? undefined : filter,
+                  cuisine_group:
+                    filter === 'indian'
+                      ? selected
+                        ? undefined
+                        : 'indian'
+                      : criteria.cuisine_group,
+                })
+              }
               style={[
                 styles.chip,
                 {
-                  backgroundColor: isActive ? colors.accent : colors.surface,
-                  borderColor: isActive ? colors.accent : colors.border,
+                  backgroundColor: selected ? colors.surfaceAlt : colors.surface,
+                  borderColor: selected ? colors.copper : colors.border,
                 },
               ]}
             >
-              <Text
-                style={[
-                  styles.chipText,
-                  {
-                    color: isActive ? colors.onAccent : colors.text,
-                    fontWeight: isActive ? '700' : '500',
-                  },
-                ]}
-              >
-                {t(labelKey as Parameters<typeof t>[0])}
-              </Text>
-            </Pressable>
-          );
-        })}
-
-        {/* Quick High Protein Filter */}
-        <Pressable
-          testID="filter-chip-high-protein"
-          onPress={handleToggleHighProtein}
-          accessibilityRole="button"
-          accessibilityState={{ selected: isHighProtein }}
-          style={[
-            styles.chip,
-            {
-              backgroundColor: isHighProtein ? colors.accent : colors.surface,
-              borderColor: isHighProtein ? colors.accent : colors.border,
-            },
-          ]}
-        >
-          <Ionicons
-            name="barbell-outline"
-            size={12}
-            color={isHighProtein ? colors.onAccent : colors.text}
-          />
-          <Text
-            style={[
-              styles.chipText,
-              {
-                color: isHighProtein ? colors.onAccent : colors.text,
-                fontWeight: isHighProtein ? '700' : '500',
-              },
-            ]}
-          >
-            {t('recipes.browse.filterHighProtein')}
-          </Text>
-        </Pressable>
-
-        {/* Quick (<30m) Filter */}
-        <Pressable
-          testID="filter-chip-quick"
-          onPress={handleToggleQuick}
-          accessibilityRole="button"
-          accessibilityState={{ selected: isQuick }}
-          style={[
-            styles.chip,
-            {
-              backgroundColor: isQuick ? colors.accent : colors.surface,
-              borderColor: isQuick ? colors.accent : colors.border,
-            },
-          ]}
-        >
-          <Ionicons name="time-outline" size={12} color={isQuick ? colors.onAccent : colors.text} />
-          <Text
-            style={[
-              styles.chipText,
-              {
-                color: isQuick ? colors.onAccent : colors.text,
-                fontWeight: isQuick ? '700' : '500',
-              },
-            ]}
-          >
-            {t('recipes.browse.filterQuick')}
-          </Text>
-        </Pressable>
-
-        {/* Under 400 kcal Filter */}
-        <Pressable
-          testID="filter-chip-under-400"
-          onPress={handleToggleUnder400}
-          accessibilityRole="button"
-          accessibilityState={{ selected: isUnder400 }}
-          style={[
-            styles.chip,
-            {
-              backgroundColor: isUnder400 ? colors.accent : colors.surface,
-              borderColor: isUnder400 ? colors.accent : colors.border,
-            },
-          ]}
-        >
-          <Ionicons
-            name="flame-outline"
-            size={12}
-            color={isUnder400 ? colors.onAccent : colors.text}
-          />
-          <Text
-            style={[
-              styles.chipText,
-              {
-                color: isUnder400 ? colors.onAccent : colors.text,
-                fontWeight: isUnder400 ? '700' : '500',
-              },
-            ]}
-          >
-            {t('recipes.browse.filterUnder400')}
-          </Text>
-        </Pressable>
-
-        {/* Diet Tag Chips */}
-        {DIET_TAGS.map(({ key, labelKey }) => {
-          const isActive = criteria.diet === key;
-          return (
-            <Pressable
-              key={`diet-${key}`}
-              testID={`filter-chip-diet-${key}`}
-              onPress={() => handleDietTagToggle(key)}
-              accessibilityRole="button"
-              accessibilityState={{ selected: isActive }}
-              style={[
-                styles.chip,
-                {
-                  backgroundColor: isActive ? colors.accent : colors.surface,
-                  borderColor: isActive ? colors.accent : colors.border,
-                },
-              ]}
-            >
-              <Text
-                style={[
-                  styles.chipText,
-                  {
-                    color: isActive ? colors.onAccent : colors.text,
-                    fontWeight: isActive ? '700' : '500',
-                  },
-                ]}
-              >
-                {t(labelKey as Parameters<typeof t>[0])}
+              <Text variant="label" color={selected ? colors.accent : colors.text}>
+                {t(
+                  filter === 'high-protein'
+                    ? 'homeRefresh.highProtein'
+                    : filter === 'high-carb'
+                      ? 'homeRefresh.highCarb'
+                      : 'fastingRefresh.indian',
+                )}
               </Text>
             </Pressable>
           );

@@ -182,6 +182,7 @@ export async function scheduleFastingReminder(options: {
   type: 'fast_start' | 'fast_end' | 'window_closing';
   targetDate: Date;
   protocolName?: string;
+  timezone?: string;
   quietHoursSettings?: {
     enabled: boolean;
     start: string;
@@ -201,9 +202,13 @@ export async function scheduleFastingReminder(options: {
 
   // Check quiet hours
   if (quietHoursSettings?.enabled) {
-    const hours = String(targetDate.getHours()).padStart(2, '0');
-    const minutes = String(targetDate.getMinutes()).padStart(2, '0');
-    if (isQuietHours(`${hours}:${minutes}`, quietHoursSettings.start, quietHoursSettings.end)) {
+    const clock = new Intl.DateTimeFormat('en-GB', {
+      timeZone: options.timezone,
+      hour: '2-digit',
+      minute: '2-digit',
+      hourCycle: 'h23',
+    }).format(targetDate);
+    if (isQuietHours(clock, quietHoursSettings.start, quietHoursSettings.end)) {
       log.info(`Fasting reminder ${id} suppressed due to quiet hours`);
       return null;
     }
@@ -218,7 +223,7 @@ export async function scheduleFastingReminder(options: {
       ? `Your ${protocolName} fast is beginning. Stay hydrated!`
       : 'Your fast is starting. Drink plenty of water!';
   } else if (type === 'fast_end') {
-    title = 'Fast completed!';
+    title = 'Planned fast ended';
     body = 'You’ve reached your fasting target. Break your fast gently.';
   } else if (type === 'window_closing') {
     title = 'Eating window closing soon';
@@ -234,7 +239,7 @@ export async function scheduleFastingReminder(options: {
         data: {
           type: 'fasting',
           fastingType: type,
-          url: '/today',
+          url: '/fasting',
         },
         sound: 'default',
       },
@@ -274,13 +279,15 @@ export async function rescheduleAllFastingReminders(params: {
     end: string;
   };
   referenceTime?: Date;
+  timezone?: string;
 }): Promise<number> {
   if (!isLocalNotificationSupported()) return 0;
-  const { settings, activeSession, quietHoursSettings, referenceTime } = params;
+  const { settings, activeSession, quietHoursSettings, referenceTime, timezone } = params;
 
   try {
     // 1. Cancel previous fasting reminders
     await cancelFastingReminder('fasting_eating_window_closing');
+    await cancelFastingReminder('fasting_start');
     if (activeSession) {
       await cancelFastingReminder(`fasting_end_${activeSession.id}`);
     }
@@ -293,6 +300,7 @@ export async function rescheduleAllFastingReminders(params: {
       activeSession,
       quietHoursSettings,
       referenceTime,
+      timezone,
     });
 
     let scheduledCount = 0;

@@ -46,6 +46,7 @@ export function BarcodeScannerModal({
   const [scanned, setScanned] = useState(false);
   const [torchEnabled, setTorchEnabled] = useState(false);
   const [showManualInput, setShowManualInput] = useState(false);
+  const [showMore, setShowMore] = useState(false);
   const [manualCode, setManualCode] = useState('');
   const [searching, setSearching] = useState(false);
   const [foundFood, setFoundFood] = useState<Food | null>(null);
@@ -292,7 +293,7 @@ export function BarcodeScannerModal({
               <View style={styles.permissionBox}>
                 <Ionicons name="camera-outline" size={54} color={dark.apricot} />
                 <Text variant="body" color={dark.textHi} style={{ textAlign: 'center' }}>
-                  {t('foodLog.scan.cameraPermission')}
+                  {t('fastingRefresh.cameraHint')}
                 </Text>
                 <View style={{ gap: 10, width: '100%', maxWidth: 280, marginTop: 12 }}>
                   <Button
@@ -300,12 +301,6 @@ export function BarcodeScannerModal({
                     variant="primary"
                     label={t('capture.openScanner')}
                     onPress={handleRequestCamera}
-                  />
-                  <Button
-                    testID="btn-barcode-photo-fallback"
-                    variant="secondary"
-                    label={t('capture.barcodePhoto')}
-                    onPress={() => void handleTriggerBarcodePhoto()}
                   />
                 </View>
               </View>
@@ -363,7 +358,7 @@ export function BarcodeScannerModal({
           </View>
 
           <Text variant="bodyS" color={dark.textHi} style={styles.cutoutHint}>
-            {t('repairs.barcodeHelp')}
+            {t('fastingRefresh.scanHint')}
           </Text>
           {scanError && (
             <View style={styles.foundFoodCard} testID="barcode-error">
@@ -413,7 +408,7 @@ export function BarcodeScannerModal({
             </View>
           )}
 
-          {/* Bottom "{t('capture.typeBarcode')}" link & Manual TextInput */}
+          {/* Bottom "{t('fastingRefresh.enterBarcode')}" link & Manual TextInput */}
           <View style={styles.bottomBar}>
             {!showManualInput ? (
               <Pressable
@@ -422,7 +417,7 @@ export function BarcodeScannerModal({
                 hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
               >
                 <Text variant="bodyS" color={dark.apricot} style={styles.typeNumberLink}>
-                  {t('capture.typeBarcode')}
+                  {t('fastingRefresh.enterBarcode')}
                 </Text>
               </Pressable>
             ) : (
@@ -448,20 +443,35 @@ export function BarcodeScannerModal({
               </View>
             )}
           </View>
-          <View style={styles.fallbackActions}>
-            <Button
-              testID="barcode-take-photo"
-              variant="secondary"
-              label={t('repairs.takeBarcodePhoto')}
-              onPress={() => void handleTriggerBarcodePhoto(true)}
-            />
-            <Button
-              testID="barcode-choose-photo"
-              variant="secondary"
-              label={t('capture.barcodePhoto')}
-              onPress={() => void handleTriggerBarcodePhoto()}
-            />
-          </View>
+          <Pressable
+            testID="barcode-more-options"
+            onPress={() => setShowMore((current) => !current)}
+            accessibilityRole="button"
+            accessibilityState={{ expanded: showMore }}
+            style={{
+              minHeight: captureLayout.touch,
+              justifyContent: 'center',
+              alignItems: 'center',
+            }}
+          >
+            <Text variant="label">{t('fastingRefresh.moreOptions')}</Text>
+          </Pressable>
+          {showMore && (
+            <View style={styles.fallbackActions}>
+              <Button
+                testID="barcode-take-photo"
+                variant="secondary"
+                label={t('fastingRefresh.takePhoto')}
+                onPress={() => void handleTriggerBarcodePhoto(true)}
+              />
+              <Button
+                testID="barcode-choose-photo"
+                variant="secondary"
+                label={t('fastingRefresh.choosePhoto')}
+                onPress={() => void handleTriggerBarcodePhoto()}
+              />
+            </View>
+          )}
         </ScrollView>
       </KeyboardAvoidingView>
     </Modal>

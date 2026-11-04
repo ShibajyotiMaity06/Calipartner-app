@@ -1705,6 +1705,7 @@ export interface RecipeImportInput {
 }
 
 export interface RecipeFilterCriteria {
+  cuisine_group?: 'indian';
   nutrition_focus?: string;
   query?: string;
   meal_type?: RecipeMealType;

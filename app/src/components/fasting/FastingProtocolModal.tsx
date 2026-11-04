@@ -2,7 +2,12 @@ import { type as inputTypography } from '@calipartner/ui';
 import React, { useState } from 'react';
 import { Modal, Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { FASTING_PROTOCOLS, type FastingProtocol } from '@calipartner/core';
+import {
+  FASTING_PROTOCOLS,
+  fastingWindowForProtocol,
+  validateFastingSettings,
+  type FastingProtocol,
+} from '@calipartner/core';
 import { Text, dark, radius, space, type as typeTokens } from '@calipartner/ui';
 import { t } from '@/i18n';
 
@@ -60,12 +65,23 @@ export function FastingProtocolModal({
 
       if (selectedProtocol === 'custom') {
         if (customHours < 1 || customHours > 20) {
-          setErrorMsg('Custom fasts must be between 1 and 20 hours.');
+          setErrorMsg(t('fastingRefresh.customRange'));
           setSaving(false);
           return;
         }
       }
 
+      if (
+        !validateFastingSettings({
+          protocol: selectedProtocol,
+          custom_fasting_hours: customHours,
+          eating_window_start: windowStart,
+          eating_window_end: windowEnd,
+        })
+      ) {
+        setErrorMsg(t('fastingRefresh.invalidWindow'));
+        return;
+      }
       await onSelectProtocol(
         selectedProtocol,
         selectedProtocol === 'custom' ? customHours : undefined,
@@ -75,7 +91,7 @@ export function FastingProtocolModal({
 
       onClose();
     } catch (err: any) {
-      setErrorMsg(err?.message ?? 'Failed to update protocol.');
+      setErrorMsg(t('fastingRefresh.saveError'));
     } finally {
       setSaving(false);
     }
@@ -97,16 +113,14 @@ export function FastingProtocolModal({
               <Text style={styles.title} testID="protocol-modal-title">
                 {t('fasting.chooseProtocol')}
               </Text>
-              <Text style={styles.subtitle}>
-                Choose a sustainable daily eating and fasting schedule.
-              </Text>
+              <Text style={styles.subtitle}>{t('fastingRefresh.protocolHint')}</Text>
             </View>
             <Pressable
               testID="button-close-protocol-modal"
               onPress={onClose}
               style={styles.closeButton}
               accessibilityRole="button"
-              accessibilityLabel="Close"
+              accessibilityLabel={t('common.cancel')}
             >
               <Ionicons name="close" size={20} color={dark.textMid} />
             </Pressable>
@@ -134,7 +148,12 @@ export function FastingProtocolModal({
                     isSelected && styles.protocolCardSelected,
                     pressed && styles.protocolCardPressed,
                   ]}
-                  onPress={() => setSelectedProtocol(protoKey)}
+                  onPress={() => {
+                    setSelectedProtocol(protoKey);
+                    setWindowStart(
+                      fastingWindowForProtocol(protoKey, customHours, windowEnd).start,
+                    );
+                  }}
                   accessibilityRole="radio"
                   accessibilityState={{ selected: isSelected }}
                 >
@@ -170,7 +189,13 @@ export function FastingProtocolModal({
                         <Pressable
                           testID="button-custom-hours-minus"
                           style={styles.stepperBtn}
-                          onPress={() => setCustomHours(Math.max(1, customHours - 1))}
+                          onPress={() => {
+                            const hours = Math.max(1, customHours - 1);
+                            setCustomHours(hours);
+                            setWindowStart(
+                              fastingWindowForProtocol('custom', hours, windowEnd).start,
+                            );
+                          }}
                           accessibilityRole="button"
                           accessibilityLabel="Decrease custom hours"
                         >
@@ -184,7 +209,13 @@ export function FastingProtocolModal({
                         <Pressable
                           testID="button-custom-hours-plus"
                           style={styles.stepperBtn}
-                          onPress={() => setCustomHours(Math.min(20, customHours + 1))}
+                          onPress={() => {
+                            const hours = Math.min(20, customHours + 1);
+                            setCustomHours(hours);
+                            setWindowStart(
+                              fastingWindowForProtocol('custom', hours, windowEnd).start,
+                            );
+                          }}
                           accessibilityRole="button"
                           accessibilityLabel="Increase custom hours"
                         >

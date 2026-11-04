@@ -62,7 +62,6 @@ export function RecipeBrowseView({
   const [query, setQuery] = useState('');
   const [criteria, setCriteria] = useState<RecipeFilterCriteria>({});
   const [recipes, setRecipes] = useState<Recipe[]>([]);
-  const [cuisines, setCuisines] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
@@ -100,9 +99,6 @@ export function RecipeBrowseView({
         };
         const list = await getRecipes(db, fullCriteria, user?.id, supabase);
         setRecipes(list);
-        setCuisines((previous) =>
-          Array.from(new Set([...previous, ...list.map((recipe) => recipe.cuisine)])).sort(),
-        );
       }
     } catch (err: unknown) {
       setErrorMsg(err instanceof Error ? err.message : 'Failed to load recipes.');
@@ -297,7 +293,6 @@ export function RecipeBrowseView({
           onQueryChange={setQuery}
           criteria={criteria}
           onCriteriaChange={setCriteria}
-          cuisines={cuisines}
         />
       </View>
 

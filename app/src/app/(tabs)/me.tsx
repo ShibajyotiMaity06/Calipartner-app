@@ -274,8 +274,9 @@ export default function MeScreen() {
             />
             <ProfileRow
               title={t('compactProfile.fasting')}
+              subtitle={t('fastingRefresh.plus')}
               icon="timer-outline"
-              onPress={() => router.push('/(tabs)/log')}
+              onPress={() => router.push('/fasting' as never)}
               testID="row-fasting"
             />
             <ProfileRow

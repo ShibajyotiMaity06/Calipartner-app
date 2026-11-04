@@ -1,26 +1,24 @@
-import { useSubscription } from '@/hooks/useSubscription';
-import { PremiumFeatureModal } from '@/components/subscription/PremiumFeatureModal';
-import React, { useState } from 'react';
-import { Modal, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import type { FastingProtocol } from '@calipartner/core';
-import { Text, dark, radius, space, type as typeTokens } from '@calipartner/ui';
+import { Button, Sheet, Text, dark, homeLayout, radius, space } from '@calipartner/ui';
+import { getProtocolPlannedMinutes, type FastingProtocol } from '@calipartner/core';
 import { useAuth } from '@/contexts/AuthContext';
 import { useFasting } from '@/hooks/useFasting';
+import { PremiumFeatureModal } from '@/components/subscription/PremiumFeatureModal';
+import { LoadingState } from '@/components/LoadingState';
 import { t } from '@/i18n';
+import { FastingProtocolModal } from './FastingProtocolModal';
 import { FastingEditTimesModal } from './FastingEditTimesModal';
 import { FastingHistoryModal } from './FastingHistoryModal';
 import { FastingIntroModal } from './FastingIntroModal';
-import { FastingProtocolModal } from './FastingProtocolModal';
 import { FastingSafetyCheckInModal } from './FastingSafetyCheckInModal';
-
 export interface FastingTimerModalProps {
   visible: boolean;
   onClose: () => void;
   userId?: string;
   testID?: string;
 }
-
 export function FastingTimerModal({
   visible,
   onClose,
@@ -28,533 +26,376 @@ export function FastingTimerModal({
   testID = 'fasting-timer-modal',
 }: FastingTimerModalProps) {
   const { user } = useAuth();
-  const { hasActiveAccess, loading: planLoading } = useSubscription();
-  const userId = propUserId ?? user?.id ?? '';
-
+  const fasting = useFasting({ userId: propUserId ?? user?.id ?? '' });
   const {
     settings,
     activeSession,
     computedState,
     scheduledState,
+    history,
     stats,
     streak,
     gating,
-    history,
-    startFast,
-    endFast,
-    editSession,
-    updateSettings,
-  } = useFasting({
-    userId,
-    age: 25,
-    healthScreening: null,
+    loading,
+    error,
+    hasPaidAccess,
+    planLoading,
+    screeningReady,
+  } = fasting;
+  const [panel, setPanel] = useState<'protocol' | 'times' | 'history' | 'settings' | null>(null);
+  const [safety, setSafety] = useState<'checkIn20' | 'checkIn24' | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [answers, setAnswers] = useState<Record<string, boolean | null>>({
+    pregnant_or_breastfeeding: null,
+    has_diabetes_or_medication: null,
+    has_eating_disorder_history: null,
   });
-
-  const [showIntro, setShowIntro] = useState(false);
-  const [showProtocol, setShowProtocol] = useState(false);
-  const [showEditTimes, setShowEditTimes] = useState(false);
-  const [showHistory, setShowHistory] = useState(false);
-  const [safetyCheckInVariant, setSafetyCheckInVariant] = useState<
-    'checkIn20' | 'checkIn24' | 'unwell' | null
-  >(null);
-  const [actionBusy, setActionBusy] = useState(false);
-
-  React.useEffect(() => {
-    if (visible && computedState.strongEndFastPrompt) {
-      setSafetyCheckInVariant('checkIn24');
-    } else if (visible && computedState.checkInPrompt && !safetyCheckInVariant) {
-      setSafetyCheckInVariant('checkIn20');
-    }
+  useEffect(() => {
+    if (visible && computedState.strongEndFastPrompt) setSafety('checkIn24');
+    else if (visible && computedState.checkInPrompt) setSafety('checkIn20');
   }, [visible, computedState.strongEndFastPrompt, computedState.checkInPrompt]);
-
   if (!visible) return null;
-  if ((planLoading || !hasActiveAccess) && !activeSession)
+  if (!loading && !planLoading && !hasPaidAccess && !activeSession)
     return (
-      <PremiumFeatureModal feature="fasting_tracker" visible={visible} onClose={onClose}>
+      <PremiumFeatureModal feature="fasting_tracker" visible onClose={onClose}>
         {null}
       </PremiumFeatureModal>
     );
-
-  const isFasting = Boolean(activeSession && computedState.isActive);
-  const plannedHours = Math.round((computedState.session?.planned_minutes || 960) / 60);
-  const elapsedHours = Math.floor(computedState.elapsedMinutes / 60);
-  const elapsedMinutes = computedState.elapsedMinutes % 60;
-  const elapsedStr = `${elapsedHours.toString().padStart(2, '0')}:${elapsedMinutes.toString().padStart(2, '0')}`;
-
-  const remainingHours = Math.floor(computedState.remainingMinutes / 60);
-  const remainingMinutes = computedState.remainingMinutes % 60;
-
-  const getNextChangeText = () => {
-    if (isFasting) {
-      if (computedState.isCompleted) {
-        return 'Target fasting goal reached. End fast whenever you are ready.';
-      }
-      return `${remainingHours}h ${remainingMinutes}m remaining until target`;
-    }
-
-    if (scheduledState.isEatingWindow) {
-      const windowEnd = settings.eating_window_end || '20:00';
-      return t('fasting.fastStartsAt', { time: windowEnd });
-    }
-    const windowStart = settings.eating_window_start || '12:00';
-    return t('fasting.eatingWindowOpensAt', { time: windowStart });
-  };
-
-  const handleStartFast = async () => {
+  const active = Boolean(activeSession && computedState.isActive);
+  const eligible = hasPaidAccess && gating.canAccess && screeningReady;
+  const duration =
+    activeSession?.planned_minutes ??
+    getProtocolPlannedMinutes(settings.protocol, settings.custom_fasting_hours);
+  const elapsed = `${String(Math.floor(computedState.elapsedMinutes / 60)).padStart(2, '0')}:${String(computedState.elapsedMinutes % 60).padStart(2, '0')}`;
+  const message =
+    error === 'PLUS_REQUIRED'
+      ? 'fastingRefresh.plus'
+      : error === 'SCREENING_REQUIRED'
+        ? 'fastingRefresh.screeningRequired'
+        : error === 'INVALID_FASTING_SETTINGS'
+          ? 'fastingRefresh.invalidWindow'
+          : error === 'INVALID_FASTING_TIMES'
+            ? 'fastingRefresh.invalidTimes'
+            : error === 'LOW_INTAKE_PAUSED'
+              ? 'fastingRefresh.paused'
+              : error === 'SCREENING_INELIGIBLE' || error === 'UNDER_18_BLOCKED'
+                ? 'fastingRefresh.blocked'
+                : 'fastingRefresh.saveError';
+  const perform = async (action: () => Promise<unknown>) => {
+    if (busy) return;
+    setBusy(true);
     try {
-      setActionBusy(true);
-      await startFast();
+      await action();
     } catch {
-      // error handled in hook
+      /* Hook exposes actionable error. */
     } finally {
-      setActionBusy(false);
+      setBusy(false);
     }
   };
-
-  const handleEndFast = async () => {
-    try {
-      setActionBusy(true);
-      await endFast();
-      setSafetyCheckInVariant(null);
-    } catch {
-      // error handled in hook
-    } finally {
-      setActionBusy(false);
-    }
+  const end = async () => {
+    await fasting.endFast();
+    setSafety(null);
   };
-
-  const handleSaveTimes = async ({
-    startAt,
-    endAt,
-  }: {
-    startAt: string;
-    endAt?: string | null;
-  }) => {
-    if (activeSession) {
-      await editSession({
-        sessionId: activeSession.id,
-        startAt,
-        endAt,
-      });
-    }
-  };
-
-  const handleSaveProtocol = async (
-    proto: FastingProtocol,
-    customH?: number,
-    startW?: string,
-    endW?: string,
+  const saveProtocol = async (
+    protocol: FastingProtocol,
+    customHours?: number,
+    start?: string,
+    end?: string,
   ) => {
-    await updateSettings({
-      protocol: proto,
-      custom_fasting_hours: customH,
-      eating_window_start: startW,
-      eating_window_end: endW,
+    await fasting.updateSettings({
+      protocol,
+      custom_fasting_hours: customHours,
+      eating_window_start: start,
+      eating_window_end: end,
     });
   };
-
   return (
-    <Modal
-      visible={visible}
-      transparent
-      animationType="slide"
-      onRequestClose={onClose}
+    <Sheet
+      visible
+      onClose={onClose}
+      snapPoint="tall"
       testID={testID}
+      accessibilityLabel={t('fastingRefresh.title')}
     >
-      <View style={styles.backdrop}>
-        <View style={styles.sheet} testID={`${testID}-content`}>
-          {/* Top Bar */}
-          <View style={styles.topBar}>
-            <Pressable
-              testID="button-fasting-settings"
-              onPress={() => setShowIntro(true)}
-              style={styles.iconBtn}
-              accessibilityRole="button"
-              accessibilityLabel="Fasting Settings"
-            >
-              <Ionicons name="settings-outline" size={20} color={dark.textMid} />
-            </Pressable>
-
-            <View style={styles.statePill}>
-              <View
-                style={[styles.stateDot, { backgroundColor: isFasting ? dark.iris : dark.teal }]}
-              />
-              <Text style={styles.statePillText}>
-                {isFasting ? t('fasting.fastingState') : t('fasting.eatingWindowState')}
-              </Text>
-            </View>
-
-            <Pressable
-              testID="button-close-timer-modal"
-              onPress={onClose}
-              style={styles.iconBtn}
-              accessibilityRole="button"
-              accessibilityLabel="Close"
-            >
-              <Ionicons name="close" size={20} color={dark.textMid} />
-            </Pressable>
-          </View>
-
-          <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scroll}>
-            {/* Big Circular Progress Hero */}
-            <View style={styles.heroCircleContainer}>
-              <View style={styles.heroOuterCircle}>
-                <View style={styles.heroInnerCircle}>
-                  <Text style={styles.heroElapsedNumeral} testID="fasting-elapsed-time">
-                    {isFasting ? elapsedStr : '00:00'}
-                  </Text>
-                  <Text style={styles.heroOfHours} testID="fasting-of-hours">
-                    {t('fasting.ofHours', { hours: plannedHours })}
-                  </Text>
-                </View>
-              </View>
-
-              <Text style={styles.nextChangeLabel} testID="fasting-next-change-text">
-                {getNextChangeText()}
-              </Text>
-            </View>
-
-            {/* Protocol & Times Quick Cards */}
-            <View style={styles.cardsRow}>
-              {/* Protocol Chip */}
-              <Pressable
-                testID="button-protocol-chip"
-                style={styles.metaCard}
-                onPress={() => setShowProtocol(true)}
-                accessibilityRole="button"
-                accessibilityLabel="Choose protocol"
-              >
-                <Ionicons name="repeat-outline" size={16} color={dark.apricot} />
-                <View>
-                  <Text style={styles.metaCardLabel}>{t('fasting.protocol')}</Text>
-                  <Text style={styles.metaCardValue}>{settings.protocol.toUpperCase()}</Text>
-                </View>
-              </Pressable>
-
-              {/* Start & End Times Chip */}
-              <Pressable
-                testID="button-edit-times-chip"
-                style={styles.metaCard}
-                onPress={() => setShowEditTimes(true)}
-                accessibilityRole="button"
-                accessibilityLabel={t('fasting.editTimes')}
-              >
-                <Ionicons name="calendar-outline" size={16} color={dark.iris} />
-                <View>
-                  <Text style={styles.metaCardLabel}>Schedule</Text>
-                  <Text style={styles.metaCardValue}>
-                    {activeSession
-                      ? new Date(activeSession.start_at).toLocaleTimeString([], {
-                          hour: '2-digit',
-                          minute: '2-digit',
-                        })
-                      : `${settings.eating_window_start} - ${settings.eating_window_end}`}
-                  </Text>
-                </View>
-              </Pressable>
-            </View>
-
-            {/* Primary Action Button (Apricot Action) */}
-            <Pressable
-              testID={isFasting ? 'button-end-fast' : 'button-start-fast'}
-              style={({ pressed }) => [
-                styles.primaryActionBtn,
-                pressed && styles.buttonPressed,
-                actionBusy && styles.buttonDisabled,
-              ]}
-              onPress={isFasting ? handleEndFast : handleStartFast}
-              disabled={actionBusy}
-              accessibilityRole="button"
-              accessibilityLabel={isFasting ? t('fasting.endFast') : t('fasting.startFast')}
-            >
-              <Text style={styles.primaryActionText}>
-                {actionBusy ? 'Saving…' : isFasting ? t('fasting.endFast') : t('fasting.startFast')}
-              </Text>
-            </Pressable>
-
-            {/* Safety Check-in Row (if 20h reached) */}
-            {computedState.checkInPrompt && isFasting && (
-              <Pressable
-                testID="button-open-safety-checkin"
-                style={styles.safetyCheckInBanner}
-                onPress={() => setSafetyCheckInVariant('checkIn20')}
-                accessibilityRole="button"
-              >
-                <Ionicons name="shield-checkmark-outline" size={18} color={dark.apricot} />
-                <View style={{ flex: 1 }}>
-                  <Text style={styles.safetyBannerTitle}>{t('fasting.checkIn20Title')}</Text>
-                  <Text style={styles.safetyBannerSub}>{t('fasting.checkIn20Subtitle')}</Text>
-                </View>
-                <Ionicons name="chevron-forward" size={16} color={dark.textMid} />
-              </Pressable>
-            )}
-
-            {/* History and Stats Entry Row */}
-            <Pressable
-              testID="button-open-fasting-history"
-              style={styles.historyEntryRow}
-              onPress={() => setShowHistory(true)}
-              accessibilityRole="button"
-              accessibilityLabel={t('fasting.history')}
-            >
-              <View style={styles.historyEntryLeft}>
-                <Ionicons name="time-outline" size={18} color={dark.textMid} />
-                <Text style={styles.historyEntryTitle}>{t('fasting.history')}</Text>
-              </View>
-              <View style={styles.historyEntryRight}>
-                <Text style={styles.historyStreakText}>
-                  {streak.current_streak > 0 ? `${streak.current_streak}d streak` : ''}
-                </Text>
-                <Ionicons name="chevron-forward" size={16} color={dark.textLo} />
-              </View>
-            </Pressable>
-          </ScrollView>
-
-          {/* Sub Modals */}
-          <FastingIntroModal
-            visible={showIntro}
-            enabled={settings.enabled}
-            gating={gating}
-            onToggleEnabled={async (val) => {
-              await updateSettings({ enabled: val });
-            }}
-            onClose={() => setShowIntro(false)}
-          />
-
-          <FastingProtocolModal
-            visible={showProtocol}
-            currentProtocol={settings.protocol}
-            currentCustomHours={settings.custom_fasting_hours}
-            eatingWindowStart={settings.eating_window_start}
-            eatingWindowEnd={settings.eating_window_end}
-            onSelectProtocol={handleSaveProtocol}
-            onClose={() => setShowProtocol(false)}
-          />
-
-          <FastingEditTimesModal
-            visible={showEditTimes}
-            session={activeSession}
-            onSave={handleSaveTimes}
-            onClose={() => setShowEditTimes(false)}
-          />
-
-          <FastingHistoryModal
-            visible={showHistory}
-            history={history}
-            stats={stats}
-            streak={streak}
-            onClose={() => setShowHistory(false)}
-          />
-
-          {safetyCheckInVariant && (
-            <FastingSafetyCheckInModal
-              visible={Boolean(safetyCheckInVariant)}
-              variant={safetyCheckInVariant}
-              onEndFast={handleEndFast}
-              onKeepGoing={() => setSafetyCheckInVariant(null)}
-              onClose={() => setSafetyCheckInVariant(null)}
-            />
-          )}
+      <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
+        <View style={styles.row}>
+          <Text variant="title1" style={styles.flex}>
+            {t('fastingRefresh.title')}
+          </Text>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={t('common.cancel')}
+            style={styles.touch}
+            onPress={onClose}
+            testID="button-close-timer-modal"
+          >
+            <Ionicons name="close" color={dark.textHi} size={homeLayout.iconSize} />
+          </Pressable>
         </View>
-      </View>
-    </Modal>
+        {loading || planLoading ? (
+          <LoadingState />
+        ) : (
+          <>
+            {error && (
+              <View style={styles.stack}>
+                <Text color={dark.danger} accessibilityRole="alert" testID="fasting-error">
+                  {t(message)}
+                </Text>
+                <Button
+                  variant="secondary"
+                  label={t('common.retry')}
+                  onPress={() => void fasting.refresh()}
+                  testID="fasting-retry"
+                />
+              </View>
+            )}
+            {!hasPaidAccess && active && <Text>{t('fastingRefresh.recovery')}</Text>}
+            {!eligible && !active ? (
+              <View style={styles.stack}>
+                <Text testID="fasting-safety-blocked">
+                  {t(
+                    !screeningReady
+                      ? 'fastingRefresh.screeningRequired'
+                      : gating.isPaused
+                        ? 'fastingRefresh.paused'
+                        : 'fastingRefresh.blocked',
+                  )}
+                </Text>
+                {!screeningReady && gating.reason !== 'under_18' && (
+                  <View style={styles.card} testID="fasting-screening-form">
+                    {(
+                      [
+                        ['pregnant_or_breastfeeding', 'onboarding.healthScreening.pregnantLabel'],
+                        ['has_diabetes_or_medication', 'onboarding.healthScreening.diabetesLabel'],
+                        ['has_eating_disorder_history', 'onboarding.healthScreening.edLabel'],
+                      ] as const
+                    ).map(([key, label]) => (
+                      <View key={key} style={styles.stack}>
+                        <Text>{t(label)}</Text>
+                        <View style={styles.row}>
+                          {([true, false] as const).map((value) => (
+                            <Button
+                              key={String(value)}
+                              variant="secondary"
+                              fullWidth={false}
+                              size="sm"
+                              label={t(value ? 'fastingRefresh.yes' : 'fastingRefresh.no')}
+                              accessibilityLabel={
+                                t(label) +
+                                ': ' +
+                                t(value ? 'fastingRefresh.yes' : 'fastingRefresh.no')
+                              }
+                              style={{
+                                borderColor: answers[key] === value ? dark.copper : dark.hairline,
+                              }}
+                              onPress={() =>
+                                setAnswers((current) => ({ ...current, [key]: value }))
+                              }
+                              testID={'fasting-screening-' + key + '-' + String(value)}
+                            />
+                          ))}
+                        </View>
+                      </View>
+                    ))}
+                    <Button
+                      label={t('fastingRefresh.saveScreening')}
+                      disabled={busy || Object.values(answers).some((answer) => answer === null)}
+                      loading={busy}
+                      onPress={() =>
+                        void perform(() =>
+                          fasting.completeScreening({
+                            pregnant_or_breastfeeding: answers.pregnant_or_breastfeeding === true,
+                            has_diabetes_or_medication: answers.has_diabetes_or_medication === true,
+                            has_eating_disorder_history:
+                              answers.has_eating_disorder_history === true,
+                          }),
+                        )
+                      }
+                      testID="fasting-save-screening"
+                    />
+                  </View>
+                )}
+              </View>
+            ) : (
+              <>
+                <View style={styles.hero}>
+                  <Text variant="label" color={dark.iris}>
+                    {active
+                      ? t('fasting.fastingState')
+                      : settings.enabled
+                        ? t('fastingRefresh.ready')
+                        : t('fastingRefresh.disabled')}
+                  </Text>
+                  <Text variant="numeralXL" tabular testID="fasting-elapsed-time">
+                    {active ? elapsed : '00:00'}
+                  </Text>
+                  <Text tabular testID="fasting-of-hours">
+                    {t('fastingRefresh.planned', { hours: duration / 60 })}
+                  </Text>
+                  <Text variant="bodyS" testID="fasting-next-change-text">
+                    {active
+                      ? computedState.isPastPlanned
+                        ? t('fastingRefresh.targetReached')
+                        : t('fastingRefresh.remaining', {
+                            hours: Math.floor(computedState.remainingMinutes / 60),
+                            minutes: computedState.remainingMinutes % 60,
+                          })
+                      : t(
+                          scheduledState.isEatingWindow
+                            ? 'fasting.fastStartsAt'
+                            : 'fasting.eatingWindowOpensAt',
+                          {
+                            time: scheduledState.isEatingWindow
+                              ? settings.eating_window_end
+                              : settings.eating_window_start,
+                          },
+                        )}
+                  </Text>
+                </View>
+                <Button
+                  label={t(
+                    active
+                      ? 'fasting.endFast'
+                      : settings.enabled
+                        ? 'fasting.startFast'
+                        : 'fastingRefresh.enable',
+                  )}
+                  loading={busy}
+                  disabled={busy || (!active && !eligible)}
+                  onPress={() =>
+                    void perform(
+                      active
+                        ? end
+                        : settings.enabled
+                          ? () => fasting.startFast()
+                          : () => fasting.updateSettings({ enabled: true }),
+                    )
+                  }
+                  testID={
+                    active
+                      ? 'button-end-fast'
+                      : settings.enabled
+                        ? 'button-start-fast'
+                        : 'button-enable-fasting'
+                  }
+                />
+              </>
+            )}
+            {hasPaidAccess && (
+              <>
+                <View style={styles.card}>
+                  <Button
+                    variant="secondary"
+                    label={t('fasting.protocol') + ': ' + settings.protocol}
+                    disabled={!eligible || busy}
+                    onPress={() => setPanel('protocol')}
+                    testID="button-protocol-chip"
+                  />
+                  <Text variant="label">{t('fastingRefresh.schedule')}</Text>
+                  <Text tabular>
+                    {settings.eating_window_start} - {settings.eating_window_end}
+                  </Text>
+                  {active && (
+                    <Button
+                      variant="tertiary"
+                      label={t('fasting.editTimes')}
+                      disabled={busy}
+                      onPress={() => setPanel('times')}
+                      testID="button-edit-times-chip"
+                    />
+                  )}
+                  <Button
+                    variant="tertiary"
+                    label={t('fastingRefresh.configure')}
+                    disabled={busy}
+                    onPress={() => setPanel('settings')}
+                    testID="button-fasting-settings"
+                  />
+                </View>
+                <Button
+                  variant="secondary"
+                  label={t('fasting.history')}
+                  onPress={() => setPanel('history')}
+                  testID="button-open-fasting-history"
+                />
+                <Text variant="bodyS">{t('fasting.safeFastingNotice')}</Text>
+              </>
+            )}
+          </>
+        )}
+      </ScrollView>
+      {panel === 'protocol' && (
+        <FastingProtocolModal
+          visible
+          currentProtocol={settings.protocol}
+          currentCustomHours={settings.custom_fasting_hours}
+          eatingWindowStart={settings.eating_window_start}
+          eatingWindowEnd={settings.eating_window_end}
+          onSelectProtocol={saveProtocol}
+          onClose={() => setPanel(null)}
+        />
+      )}
+      {panel === 'times' && (
+        <FastingEditTimesModal
+          visible
+          session={activeSession}
+          onSave={async (values) => {
+            if (activeSession)
+              await fasting.editSession({ sessionId: activeSession.id, ...values });
+          }}
+          onClose={() => setPanel(null)}
+        />
+      )}
+      {panel === 'history' && (
+        <FastingHistoryModal
+          visible
+          history={history.filter((session) => session.status !== 'active')}
+          stats={stats}
+          streak={streak}
+          onClose={() => setPanel(null)}
+        />
+      )}
+      {panel === 'settings' && (
+        <FastingIntroModal
+          visible
+          enabled={settings.enabled}
+          gating={{ ...gating, canAccess: eligible }}
+          onToggleEnabled={async (enabled) => {
+            await fasting.updateSettings({ enabled });
+          }}
+          onClose={() => setPanel(null)}
+        />
+      )}
+      {safety && active && (
+        <FastingSafetyCheckInModal
+          visible
+          variant={safety}
+          onEndFast={() => perform(end)}
+          onKeepGoing={() => setSafety(null)}
+          onClose={() => setSafety(null)}
+        />
+      )}
+    </Sheet>
   );
 }
-
 const styles = StyleSheet.create({
-  backdrop: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.75)',
-    justifyContent: 'flex-end',
+  content: { padding: space[3], gap: space[4], paddingBottom: space[7] },
+  row: { flexDirection: 'row', alignItems: 'center', gap: space[2] },
+  flex: { flex: 1 },
+  touch: {
+    minWidth: homeLayout.touchSize,
+    minHeight: homeLayout.touchSize,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  sheet: {
-    backgroundColor: dark.s2,
-    borderTopLeftRadius: radius.sheet,
-    borderTopRightRadius: radius.sheet,
+  stack: { gap: space[2] },
+  hero: { alignItems: 'center', gap: space[3], paddingVertical: space[6] },
+  card: {
     padding: space[4],
-    maxHeight: '90%',
-    borderWidth: 1,
-    borderColor: dark.hairline,
-  },
-  topBar: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: space[3],
-  },
-  iconBtn: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: dark.s1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  statePill: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: space[1],
-    paddingHorizontal: space[3],
-    paddingVertical: space[1],
-    backgroundColor: dark.s1,
-    borderRadius: radius.full,
-    borderWidth: 1,
-    borderColor: dark.hairline,
-  },
-  stateDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-  },
-  statePillText: {
-    fontSize: typeTokens.bodyS.fontSize,
-    fontFamily: typeTokens.bodyS.fontFamily,
-    fontWeight: '600',
-    color: dark.textHi,
-  },
-  scroll: {
-    gap: space[4],
-    alignItems: 'center',
-    paddingBottom: space[4],
-  },
-  heroCircleContainer: {
-    alignItems: 'center',
-    marginTop: space[2],
-  },
-  heroOuterCircle: {
-    width: 200,
-    height: 200,
-    borderRadius: 100,
-    borderWidth: 8,
-    borderColor: dark.s1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: space[3],
-  },
-  heroInnerCircle: {
-    alignItems: 'center',
-  },
-  heroElapsedNumeral: {
-    fontSize: 40,
-    fontFamily: typeTokens.numeralL.fontFamily,
-    fontWeight: '700',
-    color: dark.textHi,
-    fontVariant: ['tabular-nums'],
-  },
-  heroOfHours: {
-    fontSize: typeTokens.body.fontSize,
-    fontFamily: typeTokens.body.fontFamily,
-    color: dark.textLo,
-    marginTop: 2,
-  },
-  nextChangeLabel: {
-    fontSize: typeTokens.bodyS.fontSize,
-    fontFamily: typeTokens.bodyS.fontFamily,
-    color: dark.textMid,
-    textAlign: 'center',
-    paddingHorizontal: space[4],
-  },
-  cardsRow: {
-    flexDirection: 'row',
     gap: space[3],
-    width: '100%',
-  },
-  metaCard: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: space[2],
     backgroundColor: dark.s1,
     borderRadius: radius.card,
-    padding: space[3],
     borderWidth: 1,
     borderColor: dark.hairline,
-  },
-  metaCardLabel: {
-    fontSize: 11,
-    fontFamily: typeTokens.label.fontFamily,
-    color: dark.textLo,
-  },
-  metaCardValue: {
-    fontSize: typeTokens.body.fontSize,
-    fontFamily: typeTokens.body.fontFamily,
-    fontWeight: '700',
-    color: dark.textHi,
-    marginTop: 2,
-  },
-  primaryActionBtn: {
-    width: '100%',
-    height: 52,
-    backgroundColor: dark.apricot,
-    borderRadius: radius.button,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  primaryActionText: {
-    fontSize: typeTokens.body.fontSize,
-    fontFamily: typeTokens.body.fontFamily,
-    fontWeight: '700',
-    color: dark.onBrand,
-  },
-  safetyCheckInBanner: {
-    width: '100%',
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: 'rgba(255, 179, 138, 0.08)',
-    borderRadius: radius.card,
-    padding: space[3],
-    borderWidth: 1,
-    borderColor: 'rgba(255, 179, 138, 0.25)',
-    gap: space[2],
-  },
-  safetyBannerTitle: {
-    fontSize: typeTokens.body.fontSize,
-    fontFamily: typeTokens.body.fontFamily,
-    fontWeight: '700',
-    color: dark.textHi,
-  },
-  safetyBannerSub: {
-    fontSize: 11,
-    fontFamily: typeTokens.bodyS.fontFamily,
-    color: dark.textMid,
-  },
-  historyEntryRow: {
-    width: '100%',
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    backgroundColor: dark.s1,
-    borderRadius: radius.card,
-    padding: space[3],
-    borderWidth: 1,
-    borderColor: dark.hairline,
-    minHeight: 48,
-  },
-  historyEntryLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: space[2],
-  },
-  historyEntryTitle: {
-    fontSize: typeTokens.body.fontSize,
-    fontFamily: typeTokens.body.fontFamily,
-    fontWeight: '600',
-    color: dark.textHi,
-  },
-  historyEntryRight: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: space[1],
-  },
-  historyStreakText: {
-    fontSize: typeTokens.bodyS.fontSize,
-    fontFamily: typeTokens.bodyS.fontFamily,
-    color: dark.textMid,
-  },
-  buttonPressed: {
-    opacity: 0.8,
-  },
-  buttonDisabled: {
-    opacity: 0.5,
   },
 });

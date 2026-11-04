@@ -26,8 +26,6 @@ export function FastingCard({ testID = 'fasting-card' }: FastingCardProps) {
     endFast,
   } = useFasting({
     userId,
-    age: 25,
-    healthScreening: null,
   });
 
   const [timerModalVisible, setTimerModalVisible] = useState(false);

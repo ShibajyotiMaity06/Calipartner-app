@@ -1,30 +1,30 @@
-import { loadAccountTable } from '@/services/accountDataService';
-import { useSubscription } from './useSubscription';
+import { saveHealthScreeningOnline } from '@/services/targetsService';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { AppState } from 'react-native';
 import {
+  calculateAge,
   calculateScheduledWindow,
   computeFastingState,
   DEFAULT_FASTING_SETTINGS,
   evaluateFastingGating,
-  type FastingComputedState,
-  type FastingGatingResult,
+  getProtocolPlannedMinutes,
   type FastingSession,
   type FastingSettings,
-  type FastingStats,
-  type FastingStreak,
   type HealthScreening,
-  type ScheduledWindowModeState,
   type UpdateFastingSettingsInput,
 } from '@calipartner/core';
+import { useAuth } from '@/contexts/AuthContext';
+import { useSubscription } from './useSubscription';
 import { getDb } from '@/db';
 import { getSupabase } from '@/lib/supabase';
+import { loadAccountTable } from '@/services/accountDataService';
+import { generateClientUuid } from '@/services/foodService';
+import { calculateFastingStats, calculateFastingStreak } from '@calipartner/core';
 import {
   editFastingSession,
   endFast as serviceEndFast,
   getActiveFastingSession,
   getFastingHistory,
-  getFastingStats,
-  getFastingStreak,
   getLocalFastingSettings,
   parseFastingError,
   saveFastingSettings,
@@ -38,236 +38,288 @@ export interface UseFastingOptions {
   lowIntakeFlagActive?: boolean;
   timezone?: string;
 }
-
-export function useFasting(options: UseFastingOptions) {
-  const { hasActiveAccess } = useSubscription();
-  const {
-    userId,
-    age = 25,
-    healthScreening = null,
-    lowIntakeFlagActive = false,
-    timezone = 'UTC',
-  } = options;
-
+export function useFasting({ userId }: UseFastingOptions) {
+  const { profile } = useAuth();
+  const { hasActiveAccess, currentTier, loading: planLoading } = useSubscription();
+  const hasPaidAccess = hasActiveAccess && (currentTier === 'plus' || currentTier === 'pro');
+  const timezone = profile?.timezone ?? Intl.DateTimeFormat().resolvedOptions().timeZone;
   const [settings, setSettings] = useState<FastingSettings>({
     ...DEFAULT_FASTING_SETTINGS,
     user_id: userId,
   });
   const [activeSession, setActiveSession] = useState<FastingSession | null>(null);
   const [history, setHistory] = useState<FastingSession[]>([]);
-  const [stats, setStats] = useState<FastingStats>({
-    total_fasts: 0,
-    completed_fasts: 0,
-    ended_early_fasts: 0,
-    completion_rate_pct: 0,
-    average_duration_minutes: 0,
-    average_duration_hours: 0,
-    total_fasting_hours: 0,
-    longest_fast_minutes: 0,
+  const [screening, setScreening] = useState<HealthScreening | null>(null);
+  const [lowIntake, setLowIntake] = useState(false);
+  const [reminders, setReminders] = useState({
+    enabled: false,
+    quiet: { enabled: false, start: '22:00', end: '07:00' },
   });
-  const [streak, setStreak] = useState<FastingStreak>({
-    current_streak: 0,
-    longest_streak: 0,
-    last_completed_date: null,
-  });
-  const [loading, setLoading] = useState<boolean>(true);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [currentTime, setCurrentTime] = useState<Date>(new Date());
-
-  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
-
-  // 1. Evaluate gating
-  const gating: FastingGatingResult = useMemo(() => {
-    return evaluateFastingGating({
-      age,
-      healthScreening,
-      lowIntakeFlagActive,
-    });
-  }, [age, healthScreening, lowIntakeFlagActive]);
-
-  // 2. Refresh fasting data from SQLite
+  const [currentTime, setCurrentTime] = useState(new Date());
+  const owner = useRef(userId);
+  owner.current = userId;
+  const generation = useRef(0);
+  const pendingStart = useRef<string | null>(null);
+  const pendingEnd = useRef<string | null>(null);
+  const inFlight = useRef(false);
+  useEffect(() => {
+    setSettings({ ...DEFAULT_FASTING_SETTINGS, user_id: userId });
+    setActiveSession(null);
+    setHistory([]);
+    setScreening(null);
+    setLowIntake(false);
+    pendingStart.current = null;
+    pendingEnd.current = null;
+  }, [userId]);
   const refresh = useCallback(async () => {
+    const request = ++generation.current;
     if (!userId) {
       setLoading(false);
       return;
     }
-
+    setLoading(true);
+    setError(null);
     try {
-      setError(null);
       const db = await getDb();
       await loadAccountTable(db, 'fasting_settings', userId);
       await loadAccountTable(db, 'fasting_sessions', userId);
-      const localSettings = await getLocalFastingSettings(db, userId);
-      const active = await getActiveFastingSession(db, userId);
-      const pastSessions = await getFastingHistory(db, userId, 50);
-      const computedStats = await getFastingStats(db, userId);
-      const computedStreak = await getFastingStreak(db, userId, timezone);
-
+      const client = getSupabase();
+      const [localSettings, active, past, health, daily, notifications] = await Promise.all([
+        getLocalFastingSettings(db, userId),
+        getActiveFastingSession(db, userId),
+        getFastingHistory(db, userId, 10000),
+        client.from('health_screening').select('*').eq('user_id', userId).maybeSingle(),
+        client
+          .from('daily_summaries')
+          .select('low_intake_flag')
+          .eq('user_id', userId)
+          .order('local_date', { ascending: false })
+          .limit(1)
+          .maybeSingle(),
+        client
+          .from('notification_settings')
+          .select(
+            'fasting_reminders_enabled,pause_all,quiet_hours_enabled,quiet_hours_start,quiet_hours_end',
+          )
+          .eq('user_id', userId)
+          .maybeSingle(),
+      ]);
+      if (health.error || daily.error) throw new Error('FASTING_READ_FAILED');
+      if (owner.current !== userId || request !== generation.current) return;
+      if (past.some((session) => session.id === pendingStart.current)) pendingStart.current = null;
+      setReminders({
+        enabled:
+          notifications.data?.fasting_reminders_enabled === true &&
+          notifications.data?.pause_all !== true,
+        quiet: {
+          enabled: notifications.data?.quiet_hours_enabled === true,
+          start: notifications.data?.quiet_hours_start ?? '22:00',
+          end: notifications.data?.quiet_hours_end ?? '07:00',
+        },
+      });
       setSettings(localSettings);
       setActiveSession(active);
-      setHistory(pastSessions);
-      setStats(computedStats);
-      setStreak(computedStreak);
-    } catch (err) {
-      const parsed = parseFastingError(err);
-      setError(parsed.message);
-    } finally {
-      setLoading(false);
-    }
-  }, [userId, timezone]);
-
-  useEffect(() => {
-    refresh();
-  }, [refresh]);
-
-  // 3. Live timer tick (updates every 30 seconds for clock accuracy without battery drain)
-  useEffect(() => {
-    if (timerRef.current) clearInterval(timerRef.current);
-
-    timerRef.current = setInterval(() => {
+      setHistory(past);
+      setScreening(health.data as HealthScreening | null);
+      setLowIntake(daily.data?.low_intake_flag === true);
       setCurrentTime(new Date());
-    }, 15000);
-
+    } catch (reason) {
+      if (owner.current === userId && request === generation.current)
+        setError(parseFastingError(reason).code);
+    } finally {
+      if (owner.current === userId && request === generation.current) setLoading(false);
+    }
+  }, [userId]);
+  useEffect(() => {
+    void refresh();
     return () => {
-      if (timerRef.current) clearInterval(timerRef.current);
+      generation.current++;
     };
-  }, []);
-
-  // 4. Computed fast state
-  const computedState: FastingComputedState = useMemo(() => {
-    return computeFastingState(activeSession, currentTime);
-  }, [activeSession, currentTime]);
-
-  // 5. Scheduled window mode state
-  const scheduledState: ScheduledWindowModeState = useMemo(() => {
-    return calculateScheduledWindow({
-      eatingWindowStart: settings.eating_window_start,
-      eatingWindowEnd: settings.eating_window_end,
-      referenceTime: currentTime,
-    });
-  }, [settings.eating_window_start, settings.eating_window_end, currentTime]);
-
-  // 6. Action handlers
-  const startFast = useCallback(
-    async (plannedMinutes?: number, startAt?: string) => {
-      if (!hasActiveAccess) throw new Error('PLUS_REQUIRED');
-      if (!gating.canAccess) {
-        throw new Error(
-          gating.reason === 'low_intake_paused'
-            ? 'Fasting is currently paused while low-intake check-in is active.'
-            : 'Fasting is not available based on your health profile.',
-        );
+  }, [refresh]);
+  useEffect(() => {
+    const timer = setInterval(() => setCurrentTime(new Date()), 15000);
+    const listener = AppState.addEventListener('change', (state) => {
+      if (state === 'active') {
+        setCurrentTime(new Date());
+        void refresh();
       }
-
-      try {
-        setError(null);
-        const db = await getDb();
-        const supabase = getSupabase();
-        const duration =
-          plannedMinutes ??
-          (settings.protocol === 'custom'
-            ? (settings.custom_fasting_hours ?? 16) * 60
-            : DEFAULT_FASTING_SETTINGS.custom_fasting_hours! * 60);
-
-        const newSession = await serviceStartFast(db, supabase, {
+    });
+    return () => {
+      clearInterval(timer);
+      listener.remove();
+    };
+  }, [refresh]);
+  const gating = useMemo(
+    () =>
+      evaluateFastingGating({
+        age: profile?.date_of_birth ? calculateAge(profile.date_of_birth, currentTime) : -1,
+        healthScreening: screening,
+        lowIntakeFlagActive: lowIntake,
+      }),
+    [profile?.date_of_birth, currentTime, screening, lowIntake],
+  );
+  const screeningReady = Boolean(screening);
+  const computedState = useMemo(
+    () => computeFastingState(activeSession, currentTime),
+    [activeSession, currentTime],
+  );
+  const scheduledState = useMemo(
+    () =>
+      calculateScheduledWindow({
+        eatingWindowStart: settings.eating_window_start,
+        eatingWindowEnd: settings.eating_window_end,
+        referenceTime: currentTime,
+        timezone,
+      }),
+    [settings, currentTime, timezone],
+  );
+  const stats = useMemo(
+    () => calculateFastingStats(history.filter((session) => session.status !== 'active')),
+    [history],
+  );
+  const streak = useMemo(
+    () => calculateFastingStreak(history, timezone, currentTime),
+    [history, timezone, currentTime],
+  );
+  const run = useCallback(async <T>(action: () => Promise<T>): Promise<T> => {
+    if (inFlight.current) throw new Error('SAVE_IN_PROGRESS');
+    inFlight.current = true;
+    setError(null);
+    try {
+      return await action();
+    } catch (reason) {
+      const parsed = parseFastingError(reason);
+      setError(parsed.code);
+      throw parsed;
+    } finally {
+      inFlight.current = false;
+    }
+  }, []);
+  const startFast = useCallback(
+    (plannedMinutes?: number, startAt?: string) =>
+      run(async () => {
+        if (!hasPaidAccess) throw new Error('PLUS_REQUIRED');
+        if (loading || error) throw new Error('FASTING_READ_FAILED');
+        if (!screeningReady) throw new Error('SCREENING_REQUIRED');
+        if (!gating.canAccess)
+          throw new Error(gating.isPaused ? 'LOW_INTAKE_PAUSED' : 'SCREENING_INELIGIBLE');
+        pendingStart.current ??= generateClientUuid();
+        const session = await serviceStartFast(await getDb(), getSupabase(), {
           userId,
-          plannedMinutes: duration,
+          id: pendingStart.current,
+          plannedMinutes:
+            plannedMinutes ??
+            getProtocolPlannedMinutes(settings.protocol, settings.custom_fasting_hours),
           startAt,
           timezone,
+          reminders,
         });
-
-        setActiveSession(newSession);
+        pendingStart.current = null;
+        setActiveSession(session);
+        setCurrentTime(new Date());
         await refresh();
-        return newSession;
-      } catch (err) {
-        const parsed = parseFastingError(err);
-        setError(parsed.message);
-        throw parsed;
-      }
-    },
-    [userId, settings, gating, timezone, refresh, hasActiveAccess],
+        return session;
+      }),
+    [
+      run,
+      hasPaidAccess,
+      loading,
+      error,
+      screeningReady,
+      gating,
+      userId,
+      settings,
+      timezone,
+      refresh,
+      reminders,
+    ],
   );
-
   const endFast = useCallback(
-    async (endAt?: string) => {
-      if (!activeSession) return null;
-
-      try {
-        setError(null);
-        const db = await getDb();
-        const supabase = getSupabase();
-        const finished = await serviceEndFast(db, supabase, {
+    (endAt?: string) =>
+      run(async () => {
+        if (!activeSession) return null;
+        pendingEnd.current ??= endAt ?? new Date().toISOString();
+        const session = await serviceEndFast(await getDb(), getSupabase(), {
           sessionId: activeSession.id,
           userId,
-          endAt,
+          endAt: pendingEnd.current,
         });
-
+        pendingEnd.current = null;
         setActiveSession(null);
         await refresh();
-        return finished;
-      } catch (err) {
-        const parsed = parseFastingError(err);
-        setError(parsed.message);
-        throw parsed;
-      }
-    },
-    [activeSession, userId, refresh],
+        return session;
+      }),
+    [run, activeSession, userId, refresh],
   );
-
   const editSession = useCallback(
-    async (params: {
+    (params: {
       sessionId: string;
       startAt?: string;
       endAt?: string | null;
       plannedMinutes?: number;
       localDate?: string;
-    }) => {
-      try {
-        setError(null);
-        const db = await getDb();
-        const supabase = getSupabase();
-        const edited = await editFastingSession(db, supabase, {
+    }) =>
+      run(async () => {
+        if (!hasPaidAccess) throw new Error('PLUS_REQUIRED');
+        const result = await editFastingSession(await getDb(), getSupabase(), {
           ...params,
           userId,
+          reminders,
+          timezone,
         });
-
         await refresh();
-        return edited;
-      } catch (err) {
-        const parsed = parseFastingError(err);
-        setError(parsed.message);
-        throw parsed;
-      }
-    },
-    [userId, refresh],
+        return result;
+      }),
+    [run, hasPaidAccess, userId, refresh, reminders, timezone],
   );
-
   const updateSettings = useCallback(
-    async (updates: Partial<UpdateFastingSettingsInput>) => {
-      if (!hasActiveAccess && updates.enabled !== false) throw new Error('PLUS_REQUIRED');
-      try {
-        setError(null);
-        const db = await getDb();
-        const supabase = getSupabase();
-        const mergedSettings: FastingSettings = {
-          ...settings,
-          ...updates,
-          updated_at: new Date().toISOString(),
-        };
-
-        const saved = await saveFastingSettings(db, supabase, mergedSettings);
-        setSettings(saved);
-        return saved;
-      } catch (err) {
-        const parsed = parseFastingError(err);
-        setError(parsed.message);
-        throw parsed;
-      }
-    },
-    [settings, hasActiveAccess],
+    (updates: Partial<UpdateFastingSettingsInput>) =>
+      run(async () => {
+        if (!hasPaidAccess && updates.enabled !== false) throw new Error('PLUS_REQUIRED');
+        if (updates.enabled !== false && (!gating.canAccess || !screeningReady))
+          throw new Error(
+            !screeningReady
+              ? 'SCREENING_REQUIRED'
+              : gating.isPaused
+                ? 'LOW_INTAKE_PAUSED'
+                : 'SCREENING_INELIGIBLE',
+          );
+        const result = await saveFastingSettings(
+          await getDb(),
+          getSupabase(),
+          { ...settings, ...updates },
+          reminders.quiet,
+          timezone,
+          reminders.enabled,
+        );
+        setSettings(result);
+        return result;
+      }),
+    [run, hasPaidAccess, gating, screeningReady, settings, timezone, reminders],
   );
-
+  const completeScreening = useCallback(
+    (
+      answers: Pick<
+        HealthScreening,
+        'pregnant_or_breastfeeding' | 'has_diabetes_or_medication' | 'has_eating_disorder_history'
+      >,
+    ) =>
+      run(async () => {
+        const now = new Date().toISOString();
+        await saveHealthScreeningOnline(
+          await getDb(),
+          getSupabase(),
+          { ...answers, user_id: userId, created_at: now, updated_at: now },
+          true,
+        );
+        await refresh();
+      }),
+    [run, userId, refresh],
+  );
   return {
+    completeScreening,
     settings,
     activeSession,
     computedState,
@@ -275,6 +327,7 @@ export function useFasting(options: UseFastingOptions) {
     stats,
     streak,
     gating,
+    screeningReady,
     history,
     loading,
     error,
@@ -283,5 +336,7 @@ export function useFasting(options: UseFastingOptions) {
     editSession,
     updateSettings,
     refresh,
+    hasPaidAccess,
+    planLoading,
   };
 }

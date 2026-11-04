@@ -531,7 +531,7 @@ describe('Phase 13: Fasting Tracker Logic (PRD 6.20, 7.9, 8.1)', () => {
 
       const fastEndSchedule = schedules.find((s) => s.id === 'fasting_end_sess-remind');
       expect(fastEndSchedule).toBeDefined();
-      expect(fastEndSchedule?.title).toBe('Fast completed!');
+      expect(fastEndSchedule?.title).toBe('Planned fast ended');
       expect(fastEndSchedule?.body).toContain('Break your fast gently');
 
       const closingSchedule = schedules.find((s) => s.id === 'fasting_eating_window_closing');

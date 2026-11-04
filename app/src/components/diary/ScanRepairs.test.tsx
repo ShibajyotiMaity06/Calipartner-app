@@ -273,3 +273,18 @@ it('shows separate meal metrics and preserves add, edit and delete actions for l
   expect(edit).toHaveBeenCalledWith(entry);
   expect(remove).toHaveBeenCalledWith('logged');
 });
+
+it('keeps secondary barcode capture controls collapsed until requested', async () => {
+  await act(async () => {
+    renderer = create(scanner());
+  });
+  expect(renderer.root.findAllByProps({ testID: 'barcode-take-photo' })).toHaveLength(0);
+  expect(renderer.root.findAllByProps({ testID: 'barcode-choose-photo' })).toHaveLength(0);
+  await act(async () =>
+    renderer.root.findByProps({ testID: 'barcode-more-options' }).props.onPress(),
+  );
+  expect(renderer.root.findByProps({ testID: 'barcode-take-photo' })).toBeDefined();
+  expect(
+    renderer.root.findByProps({ testID: 'barcode-more-options' }).props.accessibilityState.expanded,
+  ).toBe(true);
+});

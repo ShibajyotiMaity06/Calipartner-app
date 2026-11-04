@@ -1,3 +1,4 @@
+import { generateClientUuid } from './foodService';
 import { afterOnlineSave, withOnlineSave } from './accountDataService';
 import {
   calculateFastingProgress,
@@ -5,6 +6,8 @@ import {
   calculateFastingStreak,
   DEFAULT_FASTING_SETTINGS,
   validatePlannedMinutes,
+  validateFastingSettings,
+  getLocalDateString,
   type FastingProtocol,
   type FastingSession,
   type FastingSettings,
@@ -23,6 +26,10 @@ import { saveRemote, type DataClient, type LocalDb } from './accountDataService'
 const log = createLogger('fastingService');
 
 export type FastingErrorCode =
+  | 'PLUS_REQUIRED'
+  | 'SCREENING_REQUIRED'
+  | 'INVALID_FASTING_SETTINGS'
+  | 'INVALID_FASTING_TIMES'
   | 'UNAUTHENTICATED'
   | 'INVALID_PLANNED_MINUTES'
   | 'UNDER_18_BLOCKED'
@@ -46,6 +53,13 @@ export function parseFastingError(err: unknown): FastingError {
   if (err instanceof FastingError) return err;
 
   const msg = err instanceof Error ? err.message : String(err);
+  for (const code of [
+    'PLUS_REQUIRED',
+    'SCREENING_REQUIRED',
+    'INVALID_FASTING_SETTINGS',
+    'INVALID_FASTING_TIMES',
+  ] as const)
+    if (msg.includes(code)) return new FastingError(code);
   if (msg.includes('UNAUTHENTICATED')) {
     return new FastingError('UNAUTHENTICATED', 'User is not signed in');
   }
@@ -125,9 +139,12 @@ export async function saveFastingSettings(
   supabase: DataClient | null,
   settings: FastingSettings,
   quietHoursSettings?: { enabled: boolean; start: string; end: string },
+  timezone = 'UTC',
+  remindersEnabled = true,
 ): Promise<FastingSettings> {
   return withOnlineSave(db, async (db) => {
     const now = new Date().toISOString();
+    if (!validateFastingSettings(settings)) throw new FastingError('INVALID_FASTING_SETTINGS');
     const updatedSettings: FastingSettings = {
       ...settings,
       updated_at: now,
@@ -178,9 +195,10 @@ export async function saveFastingSettings(
     const activeSession = await getActiveFastingSession(db, updatedSettings.user_id);
     await afterOnlineSave(db, () =>
       rescheduleAllFastingReminders({
-        settings: updatedSettings,
+        settings: { ...updatedSettings, enabled: updatedSettings.enabled && remindersEnabled },
         activeSession,
         quietHoursSettings,
+        timezone,
       }),
     );
 
@@ -235,10 +253,12 @@ export async function startFast(
   supabase: DataClient | null,
   params: {
     userId: string;
+    id?: string;
     plannedMinutes: number;
     startAt?: string;
     localDate?: string;
     timezone?: string;
+    reminders?: { enabled: boolean; quiet: { enabled: boolean; start: string; end: string } };
   },
 ): Promise<FastingSession> {
   return withOnlineSave(db, async (db) => {
@@ -257,13 +277,10 @@ export async function startFast(
 
     const now = new Date();
     const startAt = params.startAt ?? now.toISOString();
-    const localDate =
-      params.localDate ??
-      new Intl.DateTimeFormat('en-CA', { timeZone: timezone }).format(new Date(startAt));
-
-    const sessionId = crypto.randomUUID
-      ? crypto.randomUUID()
-      : `fast_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+    if (!Number.isFinite(Date.parse(startAt)) || Date.parse(startAt) > Date.now() + 60000)
+      throw new FastingError('INVALID_FASTING_TIMES');
+    const localDate = params.localDate ?? getLocalDateString(new Date(startAt), timezone);
+    const sessionId = params.id ?? generateClientUuid();
 
     const session: FastingSession = {
       id: sessionId,
@@ -315,13 +332,16 @@ export async function startFast(
 
     // 3. Schedule fast end reminder
     const targetEndDate = new Date(new Date(startAt).getTime() + plannedMinutes * 60000);
-    await afterOnlineSave(db, () =>
-      scheduleFastingReminder({
-        id: `fasting_end_${session.id}`,
-        type: 'fast_end',
-        targetDate: targetEndDate,
-      }),
-    );
+    if (params.reminders?.enabled !== false)
+      await afterOnlineSave(db, () =>
+        scheduleFastingReminder({
+          quietHoursSettings: params.reminders?.quiet,
+          timezone: params.timezone,
+          id: `fasting_end_${session.id}`,
+          type: 'fast_end',
+          targetDate: targetEndDate,
+        }),
+      );
 
     log.info(`Started fast ${session.id} for user ${userId} (${plannedMinutes} mins)`);
     return session;
@@ -362,6 +382,12 @@ export async function endFast(
       throw new FastingError('SESSION_NOT_FOUND', 'Fasting session not found');
     }
 
+    if (
+      !Number.isFinite(Date.parse(endAt)) ||
+      Date.parse(endAt) < Date.parse(row.start_at) ||
+      Date.parse(endAt) > Date.now() + 60000
+    )
+      throw new FastingError('INVALID_FASTING_TIMES');
     const startMs = new Date(row.start_at).getTime();
     const endMs = new Date(endAt).getTime();
     const elapsedMinutes = Math.max(0, Math.round((endMs - startMs) / 60000));
@@ -420,6 +446,8 @@ export async function editFastingSession(
   db: LocalDb,
   supabase: DataClient | null,
   params: {
+    reminders?: { enabled: boolean; quiet: { enabled: boolean; start: string; end: string } };
+    timezone?: string;
     sessionId: string;
     userId: string;
     startAt?: string;
@@ -449,6 +477,15 @@ export async function editFastingSession(
 
     const startAt = params.startAt ?? row.start_at;
     const endAt = params.endAt !== undefined ? params.endAt : row.end_at;
+    if (
+      !Number.isFinite(Date.parse(startAt)) ||
+      Date.parse(startAt) > Date.now() + 60000 ||
+      (endAt &&
+        (!Number.isFinite(Date.parse(endAt)) ||
+          Date.parse(endAt) < Date.parse(startAt) ||
+          Date.parse(endAt) > Date.now() + 60000))
+    )
+      throw new FastingError('INVALID_FASTING_TIMES');
     const plannedMinutes = params.plannedMinutes ?? row.planned_minutes;
     const localDate = params.localDate ?? row.local_date;
 
@@ -515,12 +552,18 @@ export async function editFastingSession(
     });
 
     // Reschedule reminder if still active
-    if (updatedSession.status === 'active' && !updatedSession.end_at) {
+    if (
+      params.reminders?.enabled !== false &&
+      updatedSession.status === 'active' &&
+      !updatedSession.end_at
+    ) {
       const targetEndDate = new Date(
         new Date(updatedSession.start_at).getTime() + updatedSession.planned_minutes * 60000,
       );
       await afterOnlineSave(db, () =>
         scheduleFastingReminder({
+          quietHoursSettings: params.reminders?.quiet,
+          timezone: params.timezone,
           id: `fasting_end_${updatedSession.id}`,
           type: 'fast_end',
           targetDate: targetEndDate,

@@ -1,3 +1,5 @@
+import { getLocalDateString } from './localDay';
+import { addDaysToDateString } from './trackers';
 import type {
   FastingComputedState,
   FastingGatingResult,
@@ -223,96 +225,119 @@ function parseHHMM(timeStr: string): { hour: number; minute: number } {
  * the user's scheduled daily eating window.
  * DST-safe and timezone-aware.
  */
+/** Convert a wall-clock date/time to UTC, using the zone's offset on that date. */
+export function fastingTimeToUtc(date: string, time: string, timezone: string): Date {
+  const nominal = Date.parse(date + 'T' + time + ':00Z');
+  if (
+    !Number.isFinite(nominal) ||
+    !/^([01]\d|2[0-3]):[0-5]\d$/.test(time) ||
+    new Date(nominal).toISOString().slice(0, 10) !== date
+  )
+    throw new Error('INVALID_FASTING_TIMES');
+  let guess = nominal;
+  const formatter = new Intl.DateTimeFormat('en-GB', {
+    timeZone: timezone,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    hourCycle: 'h23',
+  });
+  const seen = new Set<number>();
+  for (let index = 0; index < 5; index++) {
+    const parts = Object.fromEntries(
+      formatter.formatToParts(new Date(guess)).map((part) => [part.type, part.value]),
+    );
+    const wall = Date.parse(
+      `${parts.year}-${parts.month}-${parts.day}T${parts.hour}:${parts.minute}:${parts.second}Z`,
+    );
+    const next = guess + (nominal - wall);
+    if (next === guess) return new Date(guess);
+    // A skipped spring-forward wall time resolves forward to the next valid clock time.
+    if (seen.has(next)) return new Date(Math.max(next, guess));
+    seen.add(guess);
+    guess = next;
+  }
+  return new Date(guess);
+}
 export function calculateScheduledWindow(params: {
-  eatingWindowStart: string; // '12:00'
-  eatingWindowEnd: string; // '20:00'
+  eatingWindowStart: string;
+  eatingWindowEnd: string;
   referenceTime?: string | Date;
+  timezone?: string;
 }): ScheduledWindowModeState {
-  const { eatingWindowStart, eatingWindowEnd, referenceTime } = params;
-  const now = referenceTime ? new Date(referenceTime) : new Date();
-
-  const startParsed = parseHHMM(eatingWindowStart);
-  const endParsed = parseHHMM(eatingWindowEnd);
-
-  // Minutes from midnight
-  const startMins = startParsed.hour * 60 + startParsed.minute;
-  const endMins = endParsed.hour * 60 + endParsed.minute;
-
-  const currentMins = now.getUTCHours() * 60 + now.getUTCMinutes();
-
-  let isEatingWindow = false;
-  if (startMins < endMins) {
-    // Normal daytime eating window (e.g. 12:00 to 20:00 UTC)
-    isEatingWindow = currentMins >= startMins && currentMins < endMins;
-  } else {
-    // Overnight eating window (e.g. 20:00 to 04:00 UTC)
-    isEatingWindow = currentMins >= startMins || currentMins < endMins;
-  }
-
-  // Compute next eating window start
-  const nextEatStart = new Date(now);
-  nextEatStart.setUTCHours(startParsed.hour, startParsed.minute, 0, 0);
-  if (nextEatStart.getTime() <= now.getTime()) {
-    nextEatStart.setUTCDate(nextEatStart.getUTCDate() + 1);
-  }
-
-  // Compute next eating window end
-  const nextEatEnd = new Date(now);
-  nextEatEnd.setUTCHours(endParsed.hour, endParsed.minute, 0, 0);
-  if (nextEatEnd.getTime() <= now.getTime()) {
-    nextEatEnd.setUTCDate(nextEatEnd.getUTCDate() + 1);
-  }
-
-  // Compute next fasting start (eating window end)
-  const nextFastStart = new Date(nextEatEnd);
-
-  // Compute next fasting end (next eating window start)
-  const nextFastEnd = new Date(nextEatStart);
-  if (nextFastEnd.getTime() <= nextFastStart.getTime()) {
-    nextFastEnd.setUTCDate(nextFastEnd.getUTCDate() + 1);
-  }
-
-  const plannedFastingMinutes = Math.round(
-    (nextFastEnd.getTime() - nextFastStart.getTime()) / 60000,
-  );
-
-  // Current window start and end
-  let currentWindowStart: Date;
-  let currentWindowEnd: Date;
-
-  if (isEatingWindow) {
-    currentWindowEnd = new Date(now);
-    currentWindowEnd.setUTCHours(endParsed.hour, endParsed.minute, 0, 0);
-    if (currentWindowEnd.getTime() <= now.getTime()) {
-      currentWindowEnd.setUTCDate(currentWindowEnd.getUTCDate() + 1);
-    }
-    currentWindowStart = new Date(currentWindowEnd);
-    currentWindowStart.setUTCDate(currentWindowStart.getUTCDate() - 1);
-    currentWindowStart.setUTCHours(startParsed.hour, startParsed.minute, 0, 0);
-    if (startMins < endMins) {
-      currentWindowStart.setUTCDate(currentWindowEnd.getUTCDate());
-    }
-  } else {
-    currentWindowEnd = new Date(nextEatStart);
-    currentWindowStart = new Date(now);
-    currentWindowStart.setUTCHours(endParsed.hour, endParsed.minute, 0, 0);
-    if (currentWindowStart.getTime() > now.getTime()) {
-      currentWindowStart.setUTCDate(currentWindowStart.getUTCDate() - 1);
-    }
-  }
-
+  const { eatingWindowStart, eatingWindowEnd, timezone = 'UTC' } = params;
+  const now = params.referenceTime ? new Date(params.referenceTime) : new Date();
+  const localDate = getLocalDateString(now, timezone);
+  const events = Array.from({ length: 5 }, (_, index) => addDaysToDateString(localDate, index - 2))
+    .flatMap((date) => [
+      { kind: 'eating' as const, time: fastingTimeToUtc(date, eatingWindowStart, timezone) },
+      { kind: 'fasting' as const, time: fastingTimeToUtc(date, eatingWindowEnd, timezone) },
+    ])
+    .sort((a, b) => a.time.getTime() - b.time.getTime());
+  const previous = events.filter((event) => event.time <= now).at(-1)!;
+  const next = events.find((event) => event.time > now)!;
+  const nextEat = events.find((event) => event.kind === 'eating' && event.time > now)!;
+  const nextFast = events.find((event) => event.kind === 'fasting' && event.time > now)!;
+  const endAfterFast = events.find(
+    (event) => event.kind === 'eating' && event.time > nextFast.time,
+  )!;
+  const start = parseHHMM(eatingWindowStart),
+    end = parseHHMM(eatingWindowEnd);
+  const eatingMinutes = (end.hour * 60 + end.minute - start.hour * 60 - start.minute + 1440) % 1440;
   return {
-    isEatingWindow,
-    currentWindowStart: currentWindowStart.toISOString(),
-    currentWindowEnd: currentWindowEnd.toISOString(),
-    nextEatingWindowStart: nextEatStart.toISOString(),
-    nextEatingWindowEnd: nextEatEnd.toISOString(),
-    nextFastingWindowStart: nextFastStart.toISOString(),
-    nextFastingWindowEnd: nextFastEnd.toISOString(),
-    plannedFastingMinutes: Math.min(
-      MAX_PLANNED_FASTING_MINUTES,
-      Math.max(60, plannedFastingMinutes),
-    ),
+    isEatingWindow: previous.kind === 'eating',
+    currentWindowStart: previous.time.toISOString(),
+    currentWindowEnd: next.time.toISOString(),
+    nextEatingWindowStart: nextEat.time.toISOString(),
+    nextEatingWindowEnd: nextFast.time.toISOString(),
+    nextFastingWindowStart: nextFast.time.toISOString(),
+    nextFastingWindowEnd: endAfterFast.time.toISOString(),
+    plannedFastingMinutes: Math.min(1200, Math.max(60, 1440 - eatingMinutes)),
+  };
+}
+export function validateFastingSettings(
+  settings: Pick<
+    FastingSettings,
+    'protocol' | 'custom_fasting_hours' | 'eating_window_start' | 'eating_window_end'
+  >,
+): boolean {
+  if (!Object.hasOwn(FASTING_PROTOCOLS, settings.protocol)) return false;
+  if (
+    settings.protocol === 'custom' &&
+    (!Number.isInteger(settings.custom_fasting_hours) ||
+      settings.custom_fasting_hours! < 1 ||
+      settings.custom_fasting_hours! > 20)
+  )
+    return false;
+  if (
+    ![settings.eating_window_start, settings.eating_window_end].every((value) =>
+      /^([01]\d|2[0-3]):[0-5]\d$/.test(value),
+    )
+  )
+    return false;
+  const start = parseHHMM(settings.eating_window_start),
+    end = parseHHMM(settings.eating_window_end);
+  const minutes = (end.hour * 60 + end.minute - start.hour * 60 - start.minute + 1440) % 1440;
+  return minutes >= 240 && minutes <= 1380;
+}
+export function fastingWindowForProtocol(
+  protocol: FastingProtocol,
+  customHours?: number | null,
+  end = '20:00',
+) {
+  const parsed = parseHHMM(end);
+  const start =
+    (parsed.hour * 60 +
+      parsed.minute -
+      (1440 - getProtocolPlannedMinutes(protocol, customHours)) +
+      1440) %
+    1440;
+  return {
+    start: `${String(Math.floor(start / 60)).padStart(2, '0')}:${String(start % 60).padStart(2, '0')}`,
+    end,
   };
 }
 
@@ -665,8 +690,9 @@ export function buildFastingReminderSchedules(params: {
     end: string;
   };
   referenceTime?: Date;
+  timezone?: string;
 }): LocalReminderSchedule[] {
-  const { settings, activeSession, quietHoursSettings, referenceTime } = params;
+  const { settings, activeSession, quietHoursSettings, referenceTime, timezone = 'UTC' } = params;
   if (!settings.enabled) return [];
 
   const schedules: LocalReminderSchedule[] = [];
@@ -680,9 +706,12 @@ export function buildFastingReminderSchedules(params: {
 
     if (diffSecs > 0) {
       const targetDate = new Date(targetEndMs);
-      const timeStr = `${String(targetDate.getUTCHours()).padStart(2, '0')}:${String(
-        targetDate.getUTCMinutes(),
-      ).padStart(2, '0')}`;
+      const timeStr = new Intl.DateTimeFormat('en-GB', {
+        timeZone: timezone,
+        hour: '2-digit',
+        minute: '2-digit',
+        hourCycle: 'h23',
+      }).format(targetDate);
 
       const suppressedByQuietHours =
         quietHoursSettings?.enabled &&
@@ -692,7 +721,7 @@ export function buildFastingReminderSchedules(params: {
         schedules.push({
           id: `fasting_end_${activeSession.id}`,
           type: 'fasting',
-          title: 'Fast completed!',
+          title: 'Planned fast ended',
           body: 'You’ve reached your fasting target. Break your fast gently.',
           trigger: {
             seconds: diffSecs,
@@ -701,12 +730,26 @@ export function buildFastingReminderSchedules(params: {
           data: {
             fastingType: 'fast_end',
             sessionId: activeSession.id,
-            url: '/today',
+            url: '/fasting',
           },
         });
       }
     }
   }
+
+  const startClock = parseHHMM(settings.eating_window_end);
+  if (
+    !quietHoursSettings?.enabled ||
+    !isQuietHours(settings.eating_window_end, quietHoursSettings.start, quietHoursSettings.end)
+  )
+    schedules.push({
+      id: 'fasting_start',
+      type: 'fasting',
+      title: 'Fasting window starts',
+      body: 'Your scheduled eating window has ended.',
+      trigger: { hour: startClock.hour, minute: startClock.minute, repeats: true },
+      data: { fastingType: 'fast_start', url: '/fasting' },
+    });
 
   // 2. Eating window closing reminder (30 minutes before eating window end)
   if (settings.eating_window_end) {
@@ -736,7 +779,7 @@ export function buildFastingReminderSchedules(params: {
         },
         data: {
           fastingType: 'window_closing',
-          url: '/today',
+          url: '/fasting',
         },
       });
     }

@@ -1,8 +1,10 @@
+import { fastingRefresh } from './fastingRefresh';
 import { challengeMessages } from './challengeMessages';
 import { homeRefresh } from './homeRefresh';
 import { squadDesign } from './squadDesign';
 import { repairMessages } from './repairs';
 export const en = {
+  fastingRefresh,
   squadDesign,
   homeRefresh,
   repairUnits: { cm: 'cm', ftIn: 'ft / inch', ft: 'ft', inch: 'inch' },

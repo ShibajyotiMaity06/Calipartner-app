@@ -1,4 +1,6 @@
 import { type as inputTypography } from '@calipartner/ui';
+import { getLocalDateString, fastingTimeToUtc, addDaysToDateString } from '@calipartner/core';
+import { useCurrentLocalDate } from '@/hooks/useCurrentLocalDate';
 import React, { useState } from 'react';
 import { Modal, Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
@@ -21,23 +23,30 @@ export function FastingEditTimesModal({
   onClose,
   testID = 'fasting-edit-times-modal',
 }: FastingEditTimesModalProps) {
+  const { timeZone } = useCurrentLocalDate();
+  const clock = React.useCallback(
+    (date: Date, part: 'hour' | 'minute') =>
+      new Intl.DateTimeFormat('en-GB', {
+        timeZone,
+        hour: '2-digit',
+        minute: '2-digit',
+        hourCycle: 'h23',
+      })
+        .formatToParts(date)
+        .find((item) => item.type === part)?.value ?? '00',
+    [timeZone],
+  );
   const initialStartDate = session?.start_at ? new Date(session.start_at) : new Date();
   const initialEndDate = session?.end_at ? new Date(session.end_at) : null;
 
-  const [dateStr, setDateStr] = useState(initialStartDate.toISOString().slice(0, 10));
-  const [startHour, setStartHour] = useState(
-    initialStartDate.getHours().toString().padStart(2, '0'),
-  );
-  const [startMinute, setStartMinute] = useState(
-    initialStartDate.getMinutes().toString().padStart(2, '0'),
-  );
+  const [dateStr, setDateStr] = useState(getLocalDateString(initialStartDate, timeZone));
+  const [startHour, setStartHour] = useState(clock(initialStartDate, 'hour'));
+  const [startMinute, setStartMinute] = useState(clock(initialStartDate, 'minute'));
 
   const [hasEndTime, setHasEndTime] = useState(Boolean(initialEndDate));
-  const [endHour, setEndHour] = useState(
-    initialEndDate ? initialEndDate.getHours().toString().padStart(2, '0') : '12',
-  );
+  const [endHour, setEndHour] = useState(initialEndDate ? clock(initialEndDate, 'hour') : '12');
   const [endMinute, setEndMinute] = useState(
-    initialEndDate ? initialEndDate.getMinutes().toString().padStart(2, '0') : '00',
+    initialEndDate ? clock(initialEndDate, 'minute') : '00',
   );
 
   const [saving, setSaving] = useState(false);
@@ -46,21 +55,21 @@ export function FastingEditTimesModal({
   React.useEffect(() => {
     if (visible && session) {
       const sDate = new Date(session.start_at);
-      setDateStr(sDate.toISOString().slice(0, 10));
-      setStartHour(sDate.getHours().toString().padStart(2, '0'));
-      setStartMinute(sDate.getMinutes().toString().padStart(2, '0'));
+      setDateStr(getLocalDateString(sDate, timeZone));
+      setStartHour(clock(sDate, 'hour'));
+      setStartMinute(clock(sDate, 'minute'));
 
       if (session.end_at) {
         const eDate = new Date(session.end_at);
         setHasEndTime(true);
-        setEndHour(eDate.getHours().toString().padStart(2, '0'));
-        setEndMinute(eDate.getMinutes().toString().padStart(2, '0'));
+        setEndHour(clock(eDate, 'hour'));
+        setEndMinute(clock(eDate, 'minute'));
       } else {
         setHasEndTime(false);
       }
       setErrorMsg(null);
     }
-  }, [visible, session]);
+  }, [visible, session, timeZone, clock]);
 
   if (!visible) return null;
 
@@ -79,13 +88,16 @@ export function FastingEditTimesModal({
         parsedStartM < 0 ||
         parsedStartM > 59
       ) {
-        setErrorMsg('Please enter a valid start time (00:00 to 23:59).');
+        setErrorMsg(t('fastingRefresh.invalidTimes'));
         setSaving(false);
         return;
       }
 
-      const startDateTime = new Date(`${dateStr}T00:00:00.000Z`);
-      startDateTime.setUTCHours(parsedStartH, parsedStartM, 0, 0);
+      const startDateTime = fastingTimeToUtc(
+        dateStr,
+        `${String(parsedStartH).padStart(2, '0')}:${String(parsedStartM).padStart(2, '0')}`,
+        timeZone,
+      );
 
       let endIso: string | null = null;
       if (hasEndTime) {
@@ -99,15 +111,22 @@ export function FastingEditTimesModal({
           parsedEndM < 0 ||
           parsedEndM > 59
         ) {
-          setErrorMsg('Please enter a valid end time (00:00 to 23:59).');
+          setErrorMsg(t('fastingRefresh.invalidTimes'));
           setSaving(false);
           return;
         }
 
-        const endDateTime = new Date(`${dateStr}T00:00:00.000Z`);
-        endDateTime.setUTCHours(parsedEndH, parsedEndM, 0, 0);
+        let endDateTime = fastingTimeToUtc(
+          dateStr,
+          `${String(parsedEndH).padStart(2, '0')}:${String(parsedEndM).padStart(2, '0')}`,
+          timeZone,
+        );
         if (endDateTime.getTime() <= startDateTime.getTime()) {
-          endDateTime.setDate(endDateTime.getDate() + 1);
+          endDateTime = fastingTimeToUtc(
+            addDaysToDateString(dateStr, 1),
+            `${String(parsedEndH).padStart(2, '0')}:${String(parsedEndM).padStart(2, '0')}`,
+            timeZone,
+          );
         }
         endIso = endDateTime.toISOString();
       }
@@ -118,8 +137,8 @@ export function FastingEditTimesModal({
       });
 
       onClose();
-    } catch (err: any) {
-      setErrorMsg(err?.message ?? 'Failed to save fast times.');
+    } catch {
+      setErrorMsg(t('fastingRefresh.invalidTimes'));
     } finally {
       setSaving(false);
     }
@@ -141,14 +160,14 @@ export function FastingEditTimesModal({
               <Text style={styles.title} testID="edit-times-title">
                 {t('fasting.editTimes')}
               </Text>
-              <Text style={styles.subtitle}>Back-dating allowed. Timers use UTC.</Text>
+              <Text style={styles.subtitle}>{t('fastingRefresh.localTimes')}</Text>
             </View>
             <Pressable
               testID="button-close-edit-times"
               onPress={onClose}
               style={styles.closeButton}
               accessibilityRole="button"
-              accessibilityLabel="Close"
+              accessibilityLabel={t('common.cancel')}
             >
               <Ionicons name="close" size={20} color={dark.textMid} />
             </Pressable>
@@ -164,7 +183,7 @@ export function FastingEditTimesModal({
 
             {/* Date Row */}
             <View style={styles.fieldGroup}>
-              <Text style={styles.fieldLabel}>Date (YYYY-MM-DD)</Text>
+              <Text style={styles.fieldLabel}>{t('fastingRefresh.dateLabel')}</Text>
               <TextInput
                 testID="input-fast-date"
                 style={[styles.input, { fontFamily: inputTypography.body.fontFamily }]}
@@ -178,7 +197,9 @@ export function FastingEditTimesModal({
 
             {/* Start Time Group */}
             <View style={styles.fieldGroup}>
-              <Text style={styles.fieldLabel}>{t('fasting.startTime')} (24h format)</Text>
+              <Text style={styles.fieldLabel}>
+                {t('fasting.startTime')} {t('fastingRefresh.clockFormat')}
+              </Text>
               <View style={styles.timeInputsRow}>
                 <TextInput
                   testID="input-start-hour"
@@ -207,7 +228,9 @@ export function FastingEditTimesModal({
             {/* End Time Toggle & Group */}
             <View style={styles.fieldGroup}>
               <View style={styles.toggleRow}>
-                <Text style={styles.fieldLabel}>{t('fasting.endTime')} (24h format)</Text>
+                <Text style={styles.fieldLabel}>
+                  {t('fasting.endTime')} {t('fastingRefresh.clockFormat')}
+                </Text>
                 <Pressable
                   testID="toggle-end-time"
                   onPress={() => setHasEndTime(!hasEndTime)}
@@ -218,7 +241,7 @@ export function FastingEditTimesModal({
                     size={20}
                     color={hasEndTime ? dark.apricot : dark.textLo}
                   />
-                  <Text style={styles.checkboxLabel}>Fast is ended</Text>
+                  <Text style={styles.checkboxLabel}>{t('fastingRefresh.fastEnded')}</Text>
                 </Pressable>
               </View>
 
