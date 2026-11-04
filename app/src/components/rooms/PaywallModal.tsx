@@ -26,17 +26,20 @@ import {
   useReducedMotion,
 } from '@calipartner/ui';
 import { t } from '@/i18n';
+import { openDodoPortal } from '@/services/dodoService';
 import {
-  createDodoCheckout,
-  fetchDodoCatalog,
-  navigateToCheckout,
-  openDodoPortal,
-} from '@/services/dodoService';
+  fetchWebCatalog,
+  startWebCheckout,
+  fetchRazorpayManagement,
+  cancelRazorpayRenewal,
+  type WebPaymentProvider,
+} from '@/services/webBillingService';
 import { generateClientUuid } from '@/services/foodService';
 import { findSubscriptionPackage } from '@/services/subscriptionPackages';
 import { hasPlan, PRICING_PLANS, type DodoCatalogProduct } from '@calipartner/core';
 import { useSubscription } from '@/hooks/useSubscription';
 import { playClickSound, playSuccessSound } from '@/lib/sound';
+import { BillingCountrySelect } from './BillingCountrySelect';
 
 export type RoomSizeBracket = '2-5' | '6-20' | '21-50' | 'plus' | 'pro' | 'basic';
 export type PlanDuration = 'monthly' | 'quarterly' | 'annual';
@@ -200,16 +203,29 @@ export function PaywallModal({
     checkoutCancelled ? t('fixes.storeCancelled') : null,
   );
   const [catalog, setCatalog] = useState<DodoCatalogProduct[]>([]);
+  const [webProvider, setWebProvider] = useState<WebPaymentProvider>('dodo');
+  const [requiresWebManagement, setRequiresWebManagement] = useState(false);
+  const [management, setManagement] = useState<{ request_id: string; cancelled: boolean } | null>(
+    null,
+  );
+  const [confirmCancellation, setConfirmCancellation] = useState(false);
   const [catalogLoading, setCatalogLoading] = useState(Platform.OS === 'web');
   const [catalogError, setCatalogError] = useState<string | null>(null);
+  const [billingCountryBusy, setBillingCountryBusy] = useState(false);
+  const plusTrialAvailable =
+    Platform.OS !== 'web' ||
+    catalog.some((p) => p.key === `plus_${selectedDuration}` && p.trialDays === 7);
   const loadCatalog = useCallback(async () => {
     setCatalogLoading(true);
     setCatalogError(null);
     try {
-      setCatalog(await fetchDodoCatalog());
+      const result = await fetchWebCatalog();
+      setCatalog(result.products);
+      setWebProvider(result.provider);
+      setRequiresWebManagement(Boolean(result.managementRequired));
     } catch (err) {
       setCatalog([]);
-      setCatalogError(err instanceof Error ? err.message : t('fixes.dodoNotReady'));
+      setCatalogError(err instanceof Error ? err.message : t('webBilling.unavailable'));
     } finally {
       setCatalogLoading(false);
     }
@@ -227,7 +243,8 @@ export function PaywallModal({
   const [promoMessage, setPromoMessage] = useState<string | null>(null);
 
   // A redirect is only a cue to poll our server; it never proves that payment succeeded.
-  const returnedCheckoutId = checkoutReturn?.requestId;
+  const returnedCheckoutId = checkoutReturn?.requestId ?? webRequest.current?.id;
+  const expectedWebSource = checkoutReturn ? 'dodo' : webProvider;
   useEffect(() => {
     if (!visible || !returnedCheckoutId || !awaitingEntitlement) return;
     let cancelled = false;
@@ -245,7 +262,7 @@ export function PaywallModal({
         );
       if (
         active &&
-        latest?.source === 'dodo' &&
+        latest?.source === expectedWebSource &&
         latest.tier === selectedTier &&
         latest.period === selectedDuration
       ) {
@@ -264,7 +281,15 @@ export function PaywallModal({
       cancelled = true;
       if (timer) clearTimeout(timer);
     };
-  }, [visible, returnedCheckoutId, awaitingEntitlement, refresh, selectedTier, selectedDuration]);
+  }, [
+    visible,
+    returnedCheckoutId,
+    awaitingEntitlement,
+    refresh,
+    selectedTier,
+    selectedDuration,
+    expectedWebSource,
+  ]);
 
   // Contextual Title (CaliPartner pricing, not room plan)
   const contextualTitle = useMemo(() => {
@@ -335,7 +360,7 @@ export function PaywallModal({
         const matches =
           latest?.tier === selectedTier &&
           latest?.period === selectedDuration &&
-          (!checkoutReturn || latest?.source === 'dodo');
+          (Platform.OS !== 'web' || latest?.source === (checkoutReturn ? 'dodo' : webProvider));
         if (!active || !matches) {
           setStatusMessage(t('fixes.paymentPending'));
           return;
@@ -362,8 +387,13 @@ export function PaywallModal({
         }
       }
 
-      if (hasActiveAccess) {
-        if (entitlement?.source === 'dodo') await openDodoPortal();
+      if (hasActiveAccess || (Platform.OS === 'web' && requiresWebManagement)) {
+        if (entitlement?.source === 'razorpay') {
+          if (Platform.OS === 'web') {
+            setStatusMessage(null);
+            setManagement(await fetchRazorpayManagement());
+          } else setStatusMessage(t('webBilling.webManagement'));
+        } else if (entitlement?.source === 'dodo') await openDodoPortal();
         else if (Platform.OS === 'web') setStatusMessage(t('fixes.nativeManagement'));
         else
           await Linking.openURL(
@@ -383,8 +413,14 @@ export function PaywallModal({
         const duration = selectedDuration === 'monthly' ? 'monthly' : 'annual';
         const key = `${tier}_${duration}`;
         if (webRequest.current?.key !== key) webRequest.current = { key, id: generateClientUuid() };
-        const url = await createDodoCheckout(tier, duration, webRequest.current.id);
-        navigateToCheckout(url);
+        const result = await startWebCheckout(webProvider, tier, duration, webRequest.current.id);
+        if (result === 'pending') {
+          setAwaitingEntitlement(true);
+          setStatusMessage(t('fixes.paymentPending'));
+        } else if (result === 'cancelled') {
+          webRequest.current = null;
+          setStatusMessage(t('fixes.storeCancelled'));
+        }
         return;
       }
 
@@ -441,6 +477,25 @@ export function PaywallModal({
     }
   };
 
+  const handleCancelRenewal = async () => {
+    if (!management || actionInFlight.current) return;
+    actionInFlight.current = true;
+    setActionLoading(true);
+    try {
+      await cancelRazorpayRenewal(management.request_id);
+      setManagement({ ...management, cancelled: true });
+      setConfirmCancellation(false);
+      setStatusMessage(null);
+      await refresh();
+      await loadCatalog();
+    } catch (error) {
+      setStatusMessage(error instanceof Error ? error.message : t('webBilling.unavailable'));
+    } finally {
+      actionInFlight.current = false;
+      setActionLoading(false);
+    }
+  };
+
   const handleApplyPromoCode = () => {
     const clean = promoCode.trim().toUpperCase();
     if (!clean) return;
@@ -461,7 +516,8 @@ export function PaywallModal({
   const primaryCtaLabel = useMemo(() => {
     if (awaitingEntitlement) return t('fixes.checkPayment');
     if (actionLoading) return t('fixes.connectingPayment');
-    if (hasActiveAccess && !sponsorRoomId) return t('brandRepair.manage');
+    if ((hasActiveAccess || requiresWebManagement) && !sponsorRoomId)
+      return t('brandRepair.manage');
     if (catalogError) return t('fixes.retryPrices');
     if (sponsorRoomId || context === 'keep_going') {
       return `Keep room going with ${activeTierConfig.label}`;
@@ -483,6 +539,7 @@ export function PaywallModal({
     selectedTier,
     catalogError,
     hasActiveAccess,
+    requiresWebManagement,
   ]);
 
   return (
@@ -542,11 +599,61 @@ export function PaywallModal({
             </View>
 
             {/* Status / Error Banner if any */}
+            {Platform.OS === 'web' && !hasActiveAccess && (
+              <BillingCountrySelect
+                onSaving={setBillingCountryBusy}
+                disabled={actionLoading || awaitingEntitlement}
+                onSaved={() => {
+                  webRequest.current = null;
+                  void loadCatalog();
+                }}
+              />
+            )}
             {(statusMessage || subError || catalogError) && (
               <Card elevation="s2" style={styles.statusBanner} testID="banner-paywall-status">
-                <Text variant="bodyS" color={dark.apricot}>
+                <Text
+                  variant="bodyS"
+                  color={dark.textHi}
+                  accessibilityRole="alert"
+                  accessibilityLiveRegion="polite"
+                >
                   {statusMessage ?? subError ?? catalogError}
                 </Text>
+              </Card>
+            )}
+
+            {management && Platform.OS === 'web' && (
+              <Card elevation="s2" style={styles.statusBanner} testID="razorpay-management">
+                <Text variant="heading">{t('webBilling.manageTitle')}</Text>
+                <Text>
+                  {t(management.cancelled ? 'webBilling.cancelled' : 'webBilling.cancelBody')}
+                </Text>
+                {!management.cancelled &&
+                  (confirmCancellation ? (
+                    <>
+                      <Button
+                        label={t('webBilling.confirmCancel')}
+                        variant="destructive"
+                        disabled={actionLoading}
+                        onPress={handleCancelRenewal}
+                        testID="btn-confirm-razorpay-cancel"
+                      />
+                      <Button
+                        label={t('webBilling.keepRenewal')}
+                        variant="secondary"
+                        disabled={actionLoading}
+                        onPress={() => setConfirmCancellation(false)}
+                        testID="btn-keep-razorpay-renewal"
+                      />
+                    </>
+                  ) : (
+                    <Button
+                      label={t('webBilling.cancelRenewal')}
+                      variant="secondary"
+                      onPress={() => setConfirmCancellation(true)}
+                      testID="btn-razorpay-cancel"
+                    />
+                  ))}
               </Card>
             )}
 
@@ -656,7 +763,7 @@ export function PaywallModal({
                       </Text>
                     </View>
                     <Text variant="micro" color={dark.teal} style={styles.trialSubNote}>
-                      {t('fixes.plusTrialTerms')}
+                      {t(plusTrialAvailable ? 'fixes.plusTrialTerms' : 'fixes.proBillingTerms')}
                     </Text>
                   </View>
                 </TouchableOpacity>
@@ -722,14 +829,19 @@ export function PaywallModal({
                 <Text variant="label" color={dark.textHi} style={styles.whatYouGetHeader}>
                   {selectedTier === 'pro' ? 'What you get with Pro:' : 'What you get with Plus:'}
                 </Text>
-                {selectedTier === 'plus' && (
+                {selectedTier === 'plus' && plusTrialAvailable && (
                   <View style={styles.badgeQuiet}>
                     <Text variant="micro" color={dark.apricot} style={{ fontWeight: '600' }}>
-                      7 days free
+                      {t('webBilling.trialBadge')}
                     </Text>
                   </View>
                 )}
               </View>
+
+              {Platform.OS === 'web' &&
+                webProvider === 'razorpay' &&
+                selectedTier === 'plus' &&
+                plusTrialAvailable && <Text variant="bodyS">{t('webBilling.mandateNotice')}</Text>}
 
               {(selectedTier === 'pro' ? PRO_FEATURES : PLUS_FEATURES).map((feat, index) => (
                 <View key={index} style={styles.whatYouGetItem}>
@@ -776,7 +888,9 @@ export function PaywallModal({
               variant="primary"
               label={primaryCtaLabel}
               onPress={handlePurchase}
-              disabled={actionLoading || subscriptionLoading || catalogLoading}
+              disabled={
+                actionLoading || subscriptionLoading || catalogLoading || billingCountryBusy
+              }
               testID="btn-paywall-cta"
               style={styles.ctaButton}
             />

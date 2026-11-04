@@ -628,7 +628,7 @@ export interface RoomRequest {
 
 export type EntitlementStatus = 'trial' | 'paid' | 'grace' | 'lapsed';
 export type EntitlementPlan = 'monthly' | 'three_month' | 'annual' | 'free';
-export type EntitlementSource = 'apple' | 'google' | 'dodo' | 'none';
+export type EntitlementSource = 'apple' | 'google' | 'dodo' | 'razorpay' | 'none';
 
 export interface Entitlement {
   user_id: string;

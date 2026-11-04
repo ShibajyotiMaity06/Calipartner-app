@@ -41,3 +41,4 @@ export * from './coachMeal';
 
 export { coachHistoryWindow } from './coachHistory';
 export * from './weeklyPlan';
+export * from './webBilling';

@@ -262,6 +262,28 @@ export const en = {
     webSteps:
       'Automatic steps need the native Android or iPhone app. Installing from Chrome does not enable phone step access.',
   },
+  webBilling: {
+    trialBadge: '7 days free',
+    mandateNotice:
+      'Razorpay may request a refundable payment to verify your recurring payment mandate.',
+    unavailable: 'Checkout is unavailable right now. Please try again later.',
+    countryRequired: 'Choose your billing country to load your plans.',
+    countryLabel: 'Billing country',
+    chooseCountry: 'Choose your billing country',
+    countryLoadError: 'Could not load your billing country. Please retry.',
+    countrySaveError: 'Your billing country was not saved. Please retry.',
+    pendingCheckout:
+      'A checkout is already pending. Check your plan status before starting another payment.',
+    webManagement:
+      'Manage this existing web subscription from your CaliPartner account on the web.',
+    manageTitle: 'Your Razorpay subscription',
+    cancelRenewal: 'Stop subscription renewal',
+    cancelBody:
+      'Stop future charges? Your current access continues until the end of your paid or trial period.',
+    confirmCancel: 'Confirm stop renewal',
+    keepRenewal: 'Keep subscription renewal',
+    cancelled: 'Renewal stopped. Your current access continues until its expiry date.',
+  },
   fixes: {
     choosePlanAgain: 'Return to plan selection',
     checkoutPrice: 'See price at Dodo checkout',

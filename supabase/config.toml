@@ -124,3 +124,15 @@ verify_jwt = false
 [functions.chat-signed-url]
 # Authenticate with Supabase Auth and recheck message membership/privacy in the handler.
 verify_jwt = false
+
+[functions.web-billing]
+# Authenticates the caller and routes using the saved account country.
+verify_jwt = false
+
+[functions.razorpay-checkout]
+# Verifies the bearer token and account ownership; secrets stay server-side.
+verify_jwt = false
+
+[functions.razorpay-webhook]
+# Verifies HMAC SHA-256 over the untouched request body.
+verify_jwt = false

@@ -13,7 +13,7 @@ const subscription = {
   next_billing_date: '2099-01-01',
   metadata: { checkout_id: 'fa000000-0000-4000-8000-000000000002' },
 };
-function setup(existing = true, badCurrency = false, country = 'IN') {
+function setup(existing = true, badCurrency = false, country = 'US') {
   let writes = 0;
   let creates = 0;
   let sessionInput: Record<string, unknown> | null = null;
@@ -23,13 +23,18 @@ function setup(existing = true, badCurrency = false, country = 'IN') {
     products: { pro_annual: 'pdt_test' },
     globalProducts: country === 'US' ? { pro_annual: 'pdt_usd' } : null,
     dodo: {
+      customers: {
+        customerPortal: {
+          create: async () => ({ link: 'https://customer.dodopayments.com/fixture' }),
+        },
+      },
       products: {
         retrieve: async (id: string) => ({
           is_recurring: true,
           price: {
             type: 'recurring_price',
             currency: id === 'pdt_usd' || badCurrency ? 'USD' : 'INR',
-            price: id === 'pdt_usd' ? 4999 : 249900,
+            price: id === 'pdt_usd' && !badCurrency ? 4999 : 249900,
             payment_frequency_count: 1,
             payment_frequency_interval: 'Year',
             trial_period_days: 0,
@@ -62,7 +67,8 @@ function setup(existing = true, badCurrency = false, country = 'IN') {
         }),
       },
       rpc: async (name: string) => {
-        if (name === 'check_rate_limit') return { data: true };
+        if (name === 'check_rate_limit' || name === 'reserve_web_checkout')
+          return { data: true, error: null };
         writes++;
         return { error: null };
       },
@@ -71,6 +77,12 @@ function setup(existing = true, badCurrency = false, country = 'IN') {
           return this;
         },
         eq() {
+          return this;
+        },
+        order() {
+          return this;
+        },
+        limit() {
           return this;
         },
         insert: async () => ({ error: null }),
@@ -86,12 +98,14 @@ function setup(existing = true, badCurrency = false, country = 'IN') {
               ? {
                   user_id: 'user-a',
                   product_key: 'pro_annual',
-                  product_id: 'pdt_test',
+                  product_id: country === 'US' ? 'pdt_usd' : 'pdt_test',
                   checkout_url: 'https://checkout.dodopayments.com/existing',
                 }
               : table === 'profiles'
                 ? { country }
-                : null,
+                : table === 'dodo_subscriptions' && existing
+                  ? { customer_id: 'cus_fixture' }
+                  : null,
         }),
       }),
     },
@@ -209,7 +223,7 @@ Deno.test(
     const r = await handleDodoCheckout(checkoutRequest(), () => state.config);
     assert.equal(r.status, 200);
     assert.equal(state.creates(), 1);
-    assert.equal(state.sessionInput()?.billing_currency, 'INR');
+    assert.equal(state.sessionInput()?.billing_currency, 'USD');
     assert.equal(state.sessionInput()?.minimal_address, true);
     assert.deepEqual(state.sessionInput()?.feature_flags, {
       allow_currency_selection: false,
@@ -261,3 +275,27 @@ Deno.test(
     assert.equal(state.writes(), 1);
   },
 );
+
+Deno.test(
+  'Indian web requests cannot bypass the router to open a new Dodo subscription',
+  async () => {
+    const state = setup(false, false, 'IN');
+    assert.equal((await handleDodoCheckout(checkoutRequest(), () => state.config)).status, 403);
+    assert.equal(state.creates(), 0);
+    assert.equal(state.writes(), 0);
+  },
+);
+Deno.test('Existing Indian Dodo subscribers keep their customer portal', async () => {
+  const state = setup(true, false, 'IN');
+  const response = await handleDodoCheckout(
+    new Request('https://example/dodo-checkout', {
+      method: 'POST',
+      headers: { Authorization: 'Bearer fixture' },
+      body: '{"action":"portal"}',
+    }),
+    () => state.config,
+  );
+  assert.equal(response.status, 200);
+  assert.equal((await response.json()).portal_url, 'https://customer.dodopayments.com/fixture');
+  assert.equal(state.creates(), 0);
+});

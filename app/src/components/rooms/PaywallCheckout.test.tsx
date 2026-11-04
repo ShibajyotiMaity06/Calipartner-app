@@ -7,6 +7,10 @@ const billing = vi.hoisted(() => ({
   navigate: vi.fn(),
   refresh: vi.fn(),
   portal: vi.fn(),
+  start: vi.fn(),
+  manage: vi.fn(),
+  cancel: vi.fn(),
+  provider: 'dodo' as 'dodo' | 'razorpay',
   active: false,
   entitlement: null as Record<string, unknown> | null,
 }));
@@ -45,6 +49,18 @@ vi.mock('@/services/dodoService', () => ({
   navigateToCheckout: billing.navigate,
   openDodoPortal: billing.portal,
 }));
+vi.mock('@/services/webBillingService', () => ({
+  fetchBillingCountry: async () => 'US',
+  saveBillingCountry: async () => undefined,
+  fetchWebCatalog: async () => ({ provider: billing.provider, products: await billing.catalog() }),
+  startWebCheckout: async (provider: string, tier: string, duration: string, id: string) => {
+    if (provider === 'razorpay') return billing.start(provider, tier, duration, id);
+    billing.navigate(await billing.create(tier, duration, id));
+    return 'redirected';
+  },
+  fetchRazorpayManagement: billing.manage,
+  cancelRazorpayRenewal: billing.cancel,
+}));
 vi.mock('@/services/foodService', () => ({ generateClientUuid: () => 'request-id' }));
 vi.mock('@/lib/sound', () => ({ playClickSound: vi.fn(), playSuccessSound: vi.fn() }));
 import { Platform, Linking } from 'react-native';
@@ -62,6 +78,10 @@ beforeEach(() => {
   vi.clearAllMocks();
   Platform.OS = 'web';
   billing.active = false;
+  billing.provider = 'dodo';
+  billing.start.mockResolvedValue('pending');
+  billing.manage.mockResolvedValue({ request_id: 'request-id', cancelled: false });
+  billing.cancel.mockResolvedValue(undefined);
   billing.entitlement = null;
   billing.portal.mockResolvedValue(undefined);
   vi.useFakeTimers();
@@ -233,3 +253,53 @@ it.each(['ios', 'android'] as const)(
     expect(billing.create).not.toHaveBeenCalled();
   },
 );
+
+it('Indian web checkout stays pending until a matching Razorpay webhook entitlement exists', async () => {
+  billing.provider = 'razorpay';
+  await render();
+  await act(async () => renderer!.root.findByProps({ testID: 'btn-paywall-cta' }).props.onPress());
+  expect(billing.start).toHaveBeenCalledWith('razorpay', 'plus', 'annual', 'request-id');
+  expect(billing.create).not.toHaveBeenCalled();
+  expect(JSON.stringify(renderer!.toJSON())).toContain('Check plan status');
+  expect(
+    renderer!.root.findAll((node) => String(node.type) === 'Modal' && node.props.visible),
+  ).toHaveLength(1);
+  billing.refresh.mockResolvedValue({
+    source: 'razorpay',
+    tier: 'plus',
+    period: 'annual',
+    status: 'trial',
+    period_end: '2099-01-01',
+  });
+  await act(async () => {
+    await vi.advanceTimersByTimeAsync(2100);
+  });
+  expect(
+    renderer!.root.findAll((node) => String(node.type) === 'Modal' && node.props.visible),
+  ).toHaveLength(2);
+});
+it('Razorpay management requires explicit confirmation before stopping renewal', async () => {
+  billing.active = true;
+  billing.provider = 'razorpay';
+  billing.entitlement = {
+    source: 'razorpay',
+    tier: 'plus',
+    period: 'annual',
+    status: 'paid',
+    period_end: '2099-01-01',
+  };
+  await render();
+  await act(async () => renderer!.root.findByProps({ testID: 'btn-paywall-cta' }).props.onPress());
+  expect(billing.manage).toHaveBeenCalledOnce();
+  expect(billing.cancel).not.toHaveBeenCalled();
+  await act(async () =>
+    renderer!.root.findByProps({ testID: 'btn-razorpay-cancel' }).props.onPress(),
+  );
+  expect(billing.cancel).not.toHaveBeenCalled();
+  await act(async () =>
+    renderer!.root.findByProps({ testID: 'btn-confirm-razorpay-cancel' }).props.onPress(),
+  );
+  expect(billing.cancel).toHaveBeenCalledWith('request-id');
+  expect(JSON.stringify(renderer!.toJSON())).toContain('Renewal stopped.');
+  expect(billing.start).not.toHaveBeenCalled();
+});

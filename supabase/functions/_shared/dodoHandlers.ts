@@ -4,6 +4,7 @@ import {
   DODO_PRODUCT_KEYS,
   dodoSubscriptionEvent,
   verifiedDodoProduct,
+  webBillingProvider,
 } from '@calipartner/core';
 import { dodoConfig, dodoCors, dodoResponse } from './dodo.ts';
 
@@ -32,15 +33,19 @@ export async function handleDodoCheckout(req: Request, getConfig = dodoConfig) {
       .eq('id', user.id)
       .maybeSingle();
     if (profileError) throw profileError;
-    const products =
-      globalProducts && profile?.country && profile.country.toUpperCase() !== 'IN'
-        ? globalProducts
-        : defaultProducts;
+    // Existing customers retain their management portal even after a country change.
+    if (body.action !== 'portal' && webBillingProvider('web', profile?.country) !== 'dodo')
+      return dodoResponse({ error: 'WRONG_BILLING_PROVIDER' }, 403);
+    const products = globalProducts ?? defaultProducts;
+    if (body.action !== 'portal' && !globalProducts)
+      return dodoResponse({ error: 'DODO_NOT_CONFIGURED' }, 503);
     if (body.action === 'catalog') {
       const catalog = await Promise.all(
-        DODO_PRODUCT_KEYS.map(async (key) =>
-          verifiedDodoProduct(key, await dodo.products.retrieve(products[key])),
-        ),
+        DODO_PRODUCT_KEYS.map(async (key) => {
+          const product = verifiedDodoProduct(key, await dodo.products.retrieve(products[key]));
+          if (product.currency !== 'USD') throw new Error('DODO_PRODUCT_MISMATCH');
+          return product;
+        }),
       );
       return dodoResponse({ products: catalog });
     }
@@ -97,6 +102,15 @@ export async function handleDodoCheckout(req: Request, getConfig = dodoConfig) {
     }
     // Verify currency, price, recurring cadence and trial before reserving a checkout.
     const verified = verifiedDodoProduct(key, await dodo.products.retrieve(productId));
+    if (verified.currency !== 'USD') throw new Error('DODO_PRODUCT_MISMATCH');
+    const reservation = await admin.rpc('reserve_web_checkout', {
+      p_user_id: user.id,
+      p_id: requestId,
+      p_provider: 'dodo',
+      p_product_key: key,
+      p_product_id: productId,
+    });
+    if (reservation.error) return dodoResponse({ error: 'CHECKOUT_PENDING' }, 409);
     const { error: reservationError } = await admin
       .from('dodo_checkouts')
       .insert({ id: requestId, user_id: user.id, product_key: key, product_id: productId });

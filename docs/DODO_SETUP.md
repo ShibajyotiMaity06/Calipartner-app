@@ -1,5 +1,7 @@
 # Connect Dodo Payments for Chrome
 
+> 4 November 2026: new Indian web subscriptions now route to Razorpay; new international web subscriptions use the Dodo USD registry. Keep the INR registry for historical Dodo webhook events and existing subscribers' management. Android/iOS remain RevenueCat. See [Razorpay setup](RAZORPAY_SETUP.md).
+
 Chrome uses Dodo directly. Android and iOS retain RevenueCat store billing. The browser requires no RevenueCat web key or Stripe account.
 
 1. Create or open your [Dodo account](https://app.dodopayments.com), finish the business/account verification and enable live payments. Test mode is for an isolated test backend.

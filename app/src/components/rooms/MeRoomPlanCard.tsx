@@ -36,6 +36,11 @@ export function MeRoomPlanCard({
 
   const handleManageInStore = async () => {
     playClickSound();
+    if (entitlement?.source === 'razorpay') {
+      if (Platform.OS === 'web') onChangePlan();
+      else setRestoreMessage(t('webBilling.webManagement'));
+      return;
+    }
     if (entitlement?.source === 'dodo') {
       await openDodoPortal().catch(() => setRestoreMessage(t('fixes.storeNotReady')));
       return;

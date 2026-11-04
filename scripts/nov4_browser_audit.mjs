@@ -156,6 +156,11 @@ const detail = {
     },
   ],
 };
+let billingCountry = 'IN',
+  razorpayConfirmed = false,
+  cancelRenewal = false,
+  checkoutRequestId = null;
+const billingRequests = [];
 let pro = false;
 let trial = false,
   weeklyPlan = null;
@@ -210,6 +215,11 @@ try {
       url = new URL(request.url());
     if (url.hostname === '127.0.0.1' || url.hostname.endsWith('jsdelivr.net'))
       return route.continue();
+    if (url.hostname === 'checkout.dodopayments.com')
+      return route.fulfill({
+        contentType: 'text/html',
+        body: '<p>International Dodo checkout fixture</p>',
+      });
     if (url.host !== apiHost) return route.abort();
     let data = [];
     let status = 200;
@@ -398,6 +408,61 @@ try {
             ? { description: '2 boiled eggs', mealSection: 'lunch', localDate: day, items: [item] }
             : null,
       };
+    } else if (url.pathname.endsWith('/web-billing')) {
+      const body = request.postDataJSON() ?? {};
+      billingRequests.push(body);
+      if (body.action === 'country') billingCountry = body.country;
+      const provider = billingCountry === 'IN' ? 'razorpay' : 'dodo';
+      if (body.action === 'routing' || body.action === 'country')
+        data = { country: billingCountry };
+      else if (body.action === 'catalog')
+        data = {
+          provider,
+          products: ['plus_monthly', 'plus_annual', 'pro_monthly', 'pro_annual'].map((key) => ({
+            key,
+            currency: provider === 'razorpay' ? 'INR' : 'USD',
+            amount:
+              key === 'plus_monthly'
+                ? provider === 'razorpay'
+                  ? 249
+                  : 4.99
+                : key === 'plus_annual'
+                  ? provider === 'razorpay'
+                    ? 1499
+                    : 29.99
+                  : key === 'pro_monthly'
+                    ? provider === 'razorpay'
+                      ? 499
+                      : 9.99
+                    : provider === 'razorpay'
+                      ? 2499
+                      : 49.99,
+            trialDays: key.startsWith('plus') ? 7 : 0,
+          })),
+        };
+      else {
+        checkoutRequestId = body.request_id;
+        data = {
+          provider: 'razorpay',
+          key_id: 'rzp_test_Fixture',
+          subscription_id: 'sub_Fixture',
+          request_id: body.request_id,
+          email: user.email,
+        };
+      }
+    } else if (url.pathname.endsWith('/razorpay-checkout')) {
+      const body = request.postDataJSON() ?? {};
+      billingRequests.push(body);
+      if (body.action === 'manage')
+        data = { request_id: checkoutRequestId, cancelled: cancelRenewal };
+      else if (body.action === 'cancel') {
+        cancelRenewal = true;
+        data = { status: 'renewal_cancelled' };
+      } else if (body.action === 'dismiss') data = { status: 'checkout_cancelled' };
+      else data = { status: 'awaiting_webhook' };
+    } else if (url.pathname.endsWith('/dodo-checkout')) {
+      billingRequests.push(request.postDataJSON() ?? {});
+      data = { checkout_url: 'https://checkout.dodopayments.com/fixture' };
     } else if (url.pathname.endsWith('/food_entries')) data = [...savedMeals.values()];
     else if (url.pathname.endsWith('/profiles')) data = [profile];
     else if (url.pathname.endsWith('/goal_profiles')) data = [goal];
@@ -409,6 +474,8 @@ try {
               tier: pro ? 'pro' : 'plus',
               status: trial ? 'trial' : 'paid',
               period_start: now,
+              source: razorpayConfirmed ? 'razorpay' : 'dodo',
+              period: 'annual',
               period_end: '2099-11-02T00:00:00Z',
             },
           ]
@@ -421,6 +488,21 @@ try {
   if (context.routeWebSocket) await context.routeWebSocket('**', (socket) => socket.close());
   await context.addInitScript(
     ({ user, ref }) => {
+      globalThis.Razorpay = class {
+        constructor(options) {
+          this.options = options;
+        }
+        open() {
+          globalThis.__razorpayOpened = true;
+          if (globalThis.__razorpayDismiss) this.options.modal.ondismiss();
+          else
+            this.options.handler({
+              razorpay_payment_id: 'pay_Fixture',
+              razorpay_subscription_id: 'sub_Fixture',
+              razorpay_signature: 'fixture-signature',
+            });
+        }
+      };
       const encode = (value) =>
         btoa(JSON.stringify(value)).replaceAll('=', '').replaceAll('+', '-').replaceAll('/', '_');
       const key = `sb-${ref}-auth-token`,
@@ -706,9 +788,55 @@ try {
   await composer.getByTestId('btn-chat-send').click();
   await page.getByText('Free squad chat check', { exact: true }).waitFor();
   await snap('free-squad-chat');
+  paid = false;
+  pro = false;
+  trial = false;
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto('http://127.0.0.1:8098/paywall');
+  await page.getByTestId('billing-country-select').waitFor();
+  await page.getByText('\u20b91,499.00 / year', { exact: true }).waitFor();
+  await page.evaluate(() => {
+    globalThis.__razorpayDismiss = true;
+  });
+  await page.getByTestId('btn-paywall-cta').click();
+  await page
+    .getByText('Checkout was cancelled. Your plan has not changed.', { exact: true })
+    .waitFor();
+  await page.evaluate(() => {
+    globalThis.__razorpayDismiss = false;
+  });
+  await page.getByTestId('btn-paywall-cta').click();
+  await page.getByText('Check plan status', { exact: true }).waitFor();
+  assert.ok(billingRequests.some((body) => body.action === 'verify'));
+  await snap('razorpay-pending');
+  razorpayConfirmed = true;
+  paid = true;
+  await page.getByTestId('modal-purchase-success').waitFor();
+  await page.goto('http://127.0.0.1:8098/paywall');
+  await page.getByTestId('btn-paywall-cta').click();
+  await page.getByTestId('btn-razorpay-cancel').click();
+  assert.equal(cancelRenewal, false);
+  await page.getByTestId('btn-confirm-razorpay-cancel').click();
+  await page
+    .getByText('Renewal stopped. Your current access continues until its expiry date.', {
+      exact: true,
+    })
+    .first()
+    .waitFor();
+  assert.equal(cancelRenewal, true);
+  await snap('razorpay-management');
+  paid = false;
+  razorpayConfirmed = false;
+  await page.setViewportSize({ width: 375, height: 844 });
+  await page.goto('http://127.0.0.1:8098/paywall');
+  await page.getByTestId('billing-country-select').selectOption('US');
+  await page.getByText('$29.99 / year', { exact: true }).waitFor();
+  await snap('international-web-prices');
+  await page.getByTestId('btn-paywall-cta').click();
+  await page.waitForURL('https://checkout.dodopayments.com/fixture');
   assert.deepEqual(errors, []);
   console.log(
-    'November 4 browser audit: previous food/polish coverage, chronological nested/tab/Log Back, inline member selection, stable idle Compare, acknowledged peer-food copying, Monday-only Free/trial, full paid week/tips and persisted routine editing passed at 375/390/844px',
+    'November 4 browser audit: previous food/polish coverage, chronological nested/tab/Log Back, inline member selection, stable idle Compare, acknowledged peer-food copying, Monday-only Free/trial, full paid week/tips and persisted routine editing, India Razorpay dismissal/pending/verified access/confirmed cancellation and international Dodo routing passed at 375/390/844px',
   );
 } catch (error) {
   for (const page of browser?.contexts().flatMap((context) => context.pages()) ?? []) {
