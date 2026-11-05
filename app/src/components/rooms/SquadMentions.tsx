@@ -76,7 +76,7 @@ export function SquadMentions({ roomId, visible }: { roomId: string; visible: bo
         accessibilityLabel={t('squadDesign.mentions', { count: data.count })}
         testID={`mentions-${roomId}`}
       >
-        <Text>
+        <Text variant="label">
           {t('squadDesign.mentions', { count: data.count })} {expanded ? '⌃' : '⌄'}
         </Text>
       </Pressable>
@@ -99,19 +99,25 @@ export function SquadMentions({ roomId, visible }: { roomId: string; visible: bo
                     params: { room: roomId, tab: 'chat', mention: item.message_id },
                   })
                 }
-                style={[styles.card, styles.touch]}
+                style={[styles.card, styles.touch, styles.mentionCard]}
                 accessibilityRole="button"
                 accessibilityLabel={t('squadDesign.openMention', { name: item.nickname })}
                 testID={`open-mention-${item.message_id}`}
               >
-                <Text variant="heading">{item.nickname}</Text>
-                <Text variant="bodyS">
-                  {new Date(item.created_at).toLocaleTimeString(getLocale(), {
-                    hour: 'numeric',
-                    minute: '2-digit',
-                  })}
-                </Text>
-                <Text>{item.text}</Text>
+                <View style={styles.mentionHeader}>
+                  <Text variant="label" style={styles.name}>
+                    {item.nickname}
+                  </Text>
+                  <Text variant="micro" tabular>
+                    {new Date(item.created_at).toLocaleString(getLocale(), {
+                      month: 'short',
+                      day: 'numeric',
+                      hour: 'numeric',
+                      minute: '2-digit',
+                    })}
+                  </Text>
+                </View>
+                <Text variant="label">{item.text}</Text>
               </Pressable>
             ))}
             {pageError && <Text accessibilityRole="alert">{t('common.errorBody')}</Text>}

@@ -47,7 +47,26 @@ async function request(name: string, body: Record<string, unknown>) {
   }
   return data;
 }
+const pendingCatalogs = new Map<string, Promise<WebCatalog>>();
 export async function fetchWebCatalog(): Promise<WebCatalog> {
+  webOnly();
+  const {
+    data: { session },
+  } = await getSupabase().auth.getSession();
+  if (!session) throw new Error(t('webBilling.unavailable'));
+  // The onboarding preview and paywall can mount together. Share only in-flight reads,
+  // never cached prices or country results across sessions.
+  const key = session.access_token;
+  let pending = pendingCatalogs.get(key);
+  if (!pending) {
+    pending = loadWebCatalog().finally(() => {
+      pendingCatalogs.delete(key);
+    });
+    pendingCatalogs.set(key, pending);
+  }
+  return pending;
+}
+async function loadWebCatalog(): Promise<WebCatalog> {
   // Detect and acknowledge the country before quoting any new web purchase.
   await fetchBillingCountry();
   const data = await request('web-billing', { action: 'catalog' });

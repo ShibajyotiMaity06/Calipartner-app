@@ -42,6 +42,14 @@ export const squadStyles = StyleSheet.create({
     gap: space[3],
   },
   touch: { minHeight: homeLayout.touchSize, justifyContent: 'center' },
+  mentionCard: { padding: space[2], gap: space[1] },
+  mentionHeader: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    justifyContent: 'space-between',
+    gap: space[2],
+    flexWrap: 'wrap',
+  },
   columns: { flexDirection: 'row', alignItems: 'flex-start', gap: space[3] },
   column: { flex: 1, minWidth: 0, gap: space[3] },
   track: {

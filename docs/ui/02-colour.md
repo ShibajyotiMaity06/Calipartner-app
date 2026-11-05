@@ -1,3 +1,5 @@
+> Owner correction, 5 November 2026 (colours, pricing and mentions): reserve yellow for fat only; calories use light red. Other former yellow text/numbers use the existing brown/apricot/biscuit palette, and onboarding total macro grams use the existing warm brown border colour (copper token). Repair pricing/IP detection reliability without guessing countries or weakening payment/entitlement checks. Emphasize chat @usernames in bold. Compact Home mention previews into name/date above message, with smaller type and accessible wrapping. Ignore local scratch documentation and logs. This supersedes earlier yellow selection/button and calorie/fat colour decisions and authorizes the targeted billing service/Edge repair and regression tests.
+
 ## Part 2 — Colour
 
 ### 2.1 Verdict on your theme

@@ -18,7 +18,7 @@ export const dark = {
   apricotPressed: '#E19A5C',
   copper: '#BB8661',
   chocolate: '#9A6746',
-  selection: '#F4D477',
+  selection: '#BB8661',
   onBrand: '#1C1109',
   iris: '#B49AFC',
   teal: '#1FBDB6',
@@ -45,7 +45,7 @@ export const light = {
   apricotPressed: '#E19A5C',
   brandInk: '#8F4A0C',
   chocolate: '#8A5638',
-  selection: '#806000',
+  selection: '#8A5638',
   onBrand: '#1C1109',
   iris: '#7B56C8',
   teal: '#217874',
@@ -60,10 +60,10 @@ export const light = {
 export type DarkColors = typeof dark;
 /** Fixed nutrient identities, never indicators of good/bad performance. */
 export const nutritionColors = {
-  calories: dark.selection,
+  calories: '#F69B96',
   protein: dark.mint,
   carbs: '#FFFFFF',
-  fat: dark.danger,
+  fat: '#F4D477',
 } as const;
 export type NutritionMetric = keyof typeof nutritionColors;
 export type LightColors = typeof light;

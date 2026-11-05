@@ -1,6 +1,13 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-const mocks = vi.hoisted(() => ({ invoke: vi.fn(), dodo: vi.fn(), navigate: vi.fn() }));
-vi.mock('@/lib/supabase', () => ({ getSupabase: () => ({ functions: { invoke: mocks.invoke } }) }));
+const mocks = vi.hoisted(() => ({
+  invoke: vi.fn(),
+  dodo: vi.fn(),
+  navigate: vi.fn(),
+  session: vi.fn(),
+}));
+vi.mock('@/lib/supabase', () => ({
+  getSupabase: () => ({ functions: { invoke: mocks.invoke }, auth: { getSession: mocks.session } }),
+}));
 vi.mock('./dodoService', () => ({
   createDodoCheckout: mocks.dodo,
   navigateToCheckout: mocks.navigate,
@@ -14,6 +21,7 @@ import {
 } from './webBillingService';
 beforeEach(() => {
   vi.clearAllMocks();
+  mocks.session.mockResolvedValue({ data: { session: { access_token: 'fixture-session' } } });
   Platform.OS = 'web';
 });
 afterEach(() => {
@@ -28,6 +36,43 @@ const checkout = {
   email: 'fixture@example.invalid',
 };
 describe('platform-separated web billing', () => {
+  it('does not share country or subscription management flags across signed-in sessions', async () => {
+    mocks.session
+      .mockResolvedValueOnce({ data: { session: { access_token: 'account-one' } } })
+      .mockResolvedValueOnce({ data: { session: { access_token: 'account-two' } } });
+    mocks.invoke.mockResolvedValue({ data: { error: 'BILLING_COUNTRY_REQUIRED' } });
+    const results = await Promise.allSettled([fetchWebCatalog(), fetchWebCatalog()]);
+    expect(results.every((result) => result.status === 'rejected')).toBe(true);
+    expect(mocks.invoke).toHaveBeenCalledTimes(2);
+  });
+  it('shares concurrent pricing loads without caching a failed country lookup', async () => {
+    let finish!: (value: unknown) => void;
+    mocks.invoke.mockImplementationOnce(
+      () =>
+        new Promise((resolve) => {
+          finish = resolve;
+        }),
+    );
+    const first = fetchWebCatalog();
+    const second = fetchWebCatalog();
+    await Promise.resolve();
+    expect(mocks.invoke).toHaveBeenCalledOnce();
+    finish({ data: { error: 'BILLING_COUNTRY_REQUIRED' } });
+    await expect(first).rejects.toThrow();
+    await expect(second).rejects.toThrow();
+    mocks.invoke.mockResolvedValueOnce({ data: { country: 'US' } }).mockResolvedValueOnce({
+      data: {
+        provider: 'dodo',
+        products: ['plus_monthly', 'plus_annual', 'pro_monthly', 'pro_annual'].map((key) => ({
+          key,
+          currency: 'USD',
+          amount: 4.99,
+        })),
+      },
+    });
+    expect((await fetchWebCatalog()).provider).toBe('dodo');
+    expect(mocks.invoke).toHaveBeenCalledTimes(3);
+  });
   it.each(['ios', 'android'] as const)(
     'never loads or calls web payments from %s',
     async (platform) => {

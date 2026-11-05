@@ -47,13 +47,15 @@ export async function handleWebBilling(
       } catch {
         return billingResponse({ error: 'BILLING_COUNTRY_REQUIRED' }, 503);
       }
-      const saved = await admin
-        .from('profiles')
-        .update({ country })
-        .eq('id', actor.data.user.id)
-        .select('country')
-        .single();
-      if (saved.error || saved.data?.country !== country) throw new Error('COUNTRY_NOT_SAVED');
+      if (profile.data?.country !== country) {
+        const saved = await admin
+          .from('profiles')
+          .update({ country })
+          .eq('id', actor.data.user.id)
+          .select('country')
+          .single();
+        if (saved.error || saved.data?.country !== country) throw new Error('COUNTRY_NOT_SAVED');
+      }
     }
     if (body.action === 'routing' || body.action === 'country')
       return billingResponse({ country, provider: webBillingProvider('web', country) });

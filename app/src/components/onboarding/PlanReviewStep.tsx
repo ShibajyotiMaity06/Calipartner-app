@@ -1,4 +1,4 @@
-import { nutritionColors } from '@calipartner/ui';
+import { dark, nutritionColors } from '@calipartner/ui';
 import React from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import Svg, { Circle } from 'react-native-svg';
@@ -366,8 +366,9 @@ function MacroSplit({ result }: { result: GymTargetsResult }) {
             <Text
               fontSet="onboarding"
               variant="numeralM"
-              color={colors.textHi}
+              color={dark.copper}
               maxFontSizeMultiplier={2}
+              testID="plan-total-macros"
             >
               {t('setup.grams', { grams: result.totalMacroGrams })}
             </Text>

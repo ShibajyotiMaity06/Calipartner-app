@@ -9,6 +9,15 @@ vi.mock('react-native', () => ({
 import { StyleSheet } from 'react-native';
 import { Text } from './Text';
 import { dark, nutritionColors } from '../tokens/colors';
+import { getContrastRatio } from '../contrast';
+it('reserves yellow for fat, uses light red calories and the existing border brown for selection', () => {
+  expect(nutritionColors.fat).toBe('#F4D477');
+  expect(nutritionColors.calories).toBe('#F69B96');
+  expect(dark.selection).toBe(dark.copper);
+  expect(getContrastRatio(dark.selection, dark.s2)).toBeGreaterThanOrEqual(4.5);
+  for (const color of Object.values(nutritionColors))
+    expect(getContrastRatio(color, dark.s2)).toBeGreaterThanOrEqual(4.5);
+});
 it.each(['calories', 'protein', 'carbs', 'fat'] as const)(
   'applies the fixed %s text identity over a legacy neutral colour',
   (nutrient) => {

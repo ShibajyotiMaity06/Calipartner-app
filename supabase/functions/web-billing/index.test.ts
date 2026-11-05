@@ -2,6 +2,61 @@ import assert from 'node:assert/strict';
 import { handleWebBilling } from './index.ts';
 import { detectBillingCountry } from './country.ts';
 Deno.test(
+  'Country lookup automatically recovers a transient failure without a manual retry',
+  async () => {
+    for (const failure of [429, 503, 'network']) {
+      let calls = 0;
+      const country = await detectBillingCountry(
+        new Request('https://example/web-billing', { headers: { 'x-forwarded-for': '8.8.8.8' } }),
+        (async () => {
+          calls++;
+          if (calls === 1) {
+            if (failure === 'network') throw new Error('network');
+            return new Response('', { status: failure as number });
+          }
+          return Response.json({ country: 'IN' });
+        }) as typeof fetch,
+      );
+      assert.equal(country, 'IN');
+      assert.equal(calls, 2);
+    }
+  },
+);
+Deno.test('Routing an unchanged detected country does not rewrite the profile', async () => {
+  const previous = Deno.env.get('DODO_APP_URL');
+  Deno.env.set('DODO_APP_URL', 'https://calipartner.app');
+  try {
+    const admin = {
+      auth: { getUser: async () => ({ data: { user: { id: 'owner' } }, error: null }) },
+      from: () => ({
+        select() {
+          return this;
+        },
+        eq() {
+          return this;
+        },
+        maybeSingle: async () => ({ data: { country: 'IN' }, error: null }),
+      }),
+    };
+    const response = await handleWebBilling(
+      new Request('https://example/web-billing', {
+        method: 'POST',
+        headers: { Authorization: 'Bearer fixture', Origin: 'https://calipartner.app' },
+        body: '{"action":"routing"}',
+      }),
+      {
+        admin: admin as unknown as NonNullable<Parameters<typeof handleWebBilling>[1]>['admin'],
+        detectCountry: async () => 'IN',
+      },
+    );
+    assert.equal(response.status, 200);
+    assert.equal((await response.json()).provider, 'razorpay');
+  } finally {
+    if (previous === undefined) Deno.env.delete('DODO_APP_URL');
+    else Deno.env.set('DODO_APP_URL', previous);
+  }
+});
+Deno.test(
   'The authenticated saved country selects the web provider; client country is ignored',
   async () => {
     for (const country of ['IN', 'US', 'GB']) {

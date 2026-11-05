@@ -8,6 +8,7 @@ import { t } from '@/i18n';
 import { fontSize, radius, spacing } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
 import { ChatAttachmentPreview } from './ChatAttachmentPreview';
+import { MentionText } from './MentionText';
 
 export interface ChatMessageBubbleProps {
   message: ChatMessage;
@@ -129,7 +130,9 @@ export function ChatMessageBubble({
             </Text>
           ) : (
             Boolean(message.text) && (
-              <Text style={[styles.messageText, { color: colors.text }]}>{message.text}</Text>
+              <Text style={[styles.messageText, { color: colors.text }]}>
+                <MentionText text={message.text!} />
+              </Text>
             )
           )}
 

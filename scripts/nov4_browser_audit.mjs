@@ -688,9 +688,35 @@ try {
     await seeAll
       .getByText(/See all/)
       .evaluate((element) => globalThis.getComputedStyle(element).color),
-    'rgb(244, 212, 119)',
+    'rgb(187, 134, 97)',
   );
   await snap('home-profile-card-colours');
+  await page.getByTestId('home-squad-carousel').evaluate((element) => {
+    const first = element.querySelector('[data-testid^="home-squad-card-"]');
+    element.scrollLeft = first.getBoundingClientRect().width + 12;
+    element.dispatchEvent(new Event('scroll', { bubbles: true }));
+  });
+  await page.clock.runFor(300);
+  await page.getByTestId('mentions-' + rid(1)).click();
+  const mentionPreview = page.getByTestId('open-mention-' + messageId);
+  const previewLayout = await mentionPreview.evaluate((element) => ({
+    rows: element.children.length,
+    headerDirection: globalThis.getComputedStyle(element.children[0]).flexDirection,
+    fontSize: globalThis.getComputedStyle(element.children[1]).fontSize,
+  }));
+  assert.deepEqual(previewLayout, { rows: 2, headerDirection: 'row', fontSize: '13px' });
+  await snap('home-compact-mention');
+  await mentionPreview.click();
+  await page.getByTestId('focused-mention-' + messageId).waitFor();
+  assert.match(
+    await page
+      .getByTestId('chat-mention-text')
+      .first()
+      .evaluate((element) => globalThis.getComputedStyle(element).fontFamily),
+    /PlusJakartaSans_700/,
+  );
+  await snap('chat-bold-mention');
+  await home();
   await page.getByText('Did you log your Breakfast?', { exact: true }).waitFor();
   await page.getByTestId('home-open-friends').click();
   await page.getByTestId('community-panel').waitFor();
@@ -755,7 +781,7 @@ try {
       .evaluate(
         (element) => globalThis.getComputedStyle(element.querySelector('[dir="auto"]')).color,
       ),
-    'rgb(244, 212, 119)',
+    'rgb(187, 134, 97)',
   );
   assert.notEqual(
     await page
@@ -763,7 +789,7 @@ try {
       .evaluate(
         (element) => globalThis.getComputedStyle(element.querySelector('[dir="auto"]')).color,
       ),
-    'rgb(244, 212, 119)',
+    'rgb(187, 134, 97)',
   );
   await page.getByTestId('room-tab-chat').click();
   await page.getByTestId('input-chat-message').waitFor();
@@ -1022,9 +1048,10 @@ try {
   await page.getByTestId('you-tabs-diary').click();
   await page.getByTestId('you-daily-macros').waitFor();
   for (const [label, color] of [
+    ['Energy', 'rgb(246, 155, 150)'],
     ['Protein', 'rgb(46, 192, 131)'],
     ['Carbs', 'rgb(255, 255, 255)'],
-    ['Fat', 'rgb(246, 92, 88)'],
+    ['Fat', 'rgb(244, 212, 119)'],
   ]) {
     assert.equal(
       await page
