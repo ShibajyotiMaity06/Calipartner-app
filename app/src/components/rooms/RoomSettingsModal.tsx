@@ -16,6 +16,7 @@ import { t } from '@/i18n';
 import { fontSize, radius, spacing } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
 import type { RoomSummary } from '@/types/rooms';
+import { EditSquadName } from './EditSquadName';
 
 interface RoomSettingsModalProps {
   visible: boolean;
@@ -176,7 +177,12 @@ export function RoomSettingsModal({
           >
             {/* Room Info Box */}
             <View style={[styles.infoBox, { backgroundColor: colors.surfaceAlt }]}>
-              <Text style={[styles.roomNameTitle, { color: colors.text }]}>{room.name}</Text>
+              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                <Text style={[styles.roomNameTitle, { color: colors.text, flex: 1 }]}>
+                  {room.name}
+                </Text>
+                <EditSquadName room={room} location="settings" />
+              </View>
               <Text style={[styles.roomCodeSub, { color: colors.textMuted }]}>
                 {t('rooms.roomCode', { code: room.code })}
               </Text>

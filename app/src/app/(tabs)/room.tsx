@@ -154,6 +154,11 @@ export default function RoomScreen() {
   const refreshRooms = roomsHook.refresh,
     refreshSquad = squad.refresh,
     refreshRequests = requests.refresh;
+  const snapshotName = snapshot?.room?.name;
+  useEffect(() => {
+    // The existing room subscription observes renames made on another device.
+    if (snapshotName && snapshotName !== room?.name) void refreshRooms();
+  }, [snapshotName, room?.name, refreshRooms]);
   const refresh = useCallback(async () => {
     await Promise.all([refreshRooms(), refreshSnapshot(), refreshSquad(), refreshRequests()]);
   }, [refreshRooms, refreshSnapshot, refreshSquad, refreshRequests]);

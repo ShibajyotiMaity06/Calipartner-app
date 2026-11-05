@@ -1,4 +1,12 @@
 export const squadDesign = {
+  editName: 'Edit squad name',
+  editNameFor: 'Edit name for {name}',
+  nameLabel: 'Squad name',
+  nameLength: 'Use 1 to 100 characters for your squad name.',
+  saveName: 'Save squad name',
+  savingName: 'Saving squad name',
+  nameSaveError:
+    'Your squad name could not be confirmed. Check your connection and that you are still the host, then try Save squad name again.',
   personal: 'Your progress, at your pace.',
   noLogs: 'Nothing logged yet',
   calories: 'Calories',

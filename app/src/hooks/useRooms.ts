@@ -8,25 +8,51 @@ import {
   listUserRooms,
 } from '@/services/roomService';
 import { parseRoomError, RoomServiceError, type RoomSummary } from '@/types/rooms';
+import { squadNameEvents } from '@/services/squadNameService';
 
 export function useRooms() {
   const [rooms, setRooms] = useState<RoomSummary[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<RoomServiceError | null>(null);
+  const revision = useRef(0);
+  const confirmedNames = useRef(new Map<string, { name: string }>());
 
   const refresh = useCallback(async () => {
+    const request = ++revision.current;
+    const namesAtStart = new Map(confirmedNames.current);
     setLoading(true);
     setError(null);
     try {
       const supabase = getSupabase();
-      setRooms(await listUserRooms(supabase));
+      const data = await listUserRooms(supabase);
+      if (request === revision.current)
+        setRooms(
+          data.map((room) => {
+            const confirmed = confirmedNames.current.get(room.id);
+            return confirmed && confirmed !== namesAtStart.get(room.id)
+              ? { ...room, name: confirmed.name }
+              : room;
+          }),
+        );
     } catch (err: unknown) {
       const serviceErr = err instanceof RoomServiceError ? err : parseRoomError(err);
-      setError(serviceErr);
+      if (request === revision.current) setError(serviceErr);
     } finally {
-      setLoading(false);
+      if (request === revision.current) setLoading(false);
     }
   }, []);
+
+  useEffect(
+    () =>
+      squadNameEvents.subscribe(({ room_id, name }) => {
+        confirmedNames.current.set(room_id, { name });
+        setRooms((previous) =>
+          previous.map((room) => (room.id === room_id ? { ...room, name } : room)),
+        );
+        setError(null);
+      }),
+    [],
+  );
 
   useEffect(() => {
     refresh();

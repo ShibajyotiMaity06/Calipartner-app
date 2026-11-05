@@ -6,6 +6,7 @@ import { dark, homeLayout, radius, space, Text } from '@calipartner/ui';
 import { HomeSquadLeaderboard } from './HomeSquadLeaderboard';
 import type { RoomSummary } from '@/types/rooms';
 import { t } from '@/i18n';
+import { EditSquadName } from './EditSquadName';
 
 export function HomeSquads({
   rooms,
@@ -95,6 +96,7 @@ export function HomeSquads({
               >
                 <Text variant="title2">{room.name}</Text>
               </Pressable>
+              <EditSquadName room={room} location="home" />
               <Text variant="micro" color={dark.textMid} style={styles.count} tabular>
                 {room.member_cap
                   ? t('homeRefresh.members', { count: room.member_count, cap: room.member_cap })

@@ -17,6 +17,7 @@ vi.mock('@calipartner/ui', async () => ({
   Text: 'Text',
 }));
 vi.mock('./HomeSquadLeaderboard', () => ({ HomeSquadLeaderboard: 'HomeSquadLeaderboard' }));
+vi.mock('./EditSquadName', () => ({ EditSquadName: 'EditSquadName' }));
 import { HomeSquads } from './HomeSquads';
 let renderer: ReactTestRenderer;
 afterEach(async () => {

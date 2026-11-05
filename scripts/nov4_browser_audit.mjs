@@ -183,6 +183,9 @@ const foodLibrary = { foods: [], searches: [], recent_foods_cleared_at: null };
 const recentClears = new Map(),
   recipeFavorites = new Map();
 const trackingRequests = [];
+const renameRequests = [],
+  renamedRequests = new Map();
+let failRenameResponse = true;
 let saveAttempts = 0;
 let paid = false,
   seen = false;
@@ -234,7 +237,20 @@ try {
       const name = url.pathname.split('/').at(-1),
         body = request.postDataJSON() ?? {};
       requests.push(name);
-      if (name === 'get_food_library') data = foodLibrary;
+      if (name === 'rename_room') {
+        renameRequests.push(body);
+        const target = rooms.find((room) => room.id === body.p_room_id);
+        if (!renamedRequests.has(body.p_client_id)) {
+          target.name = body.p_name.trim();
+          renamedRequests.set(body.p_client_id, body);
+        }
+        data = { request_id: body.p_client_id, room_id: target.id, name: target.name };
+        if (failRenameResponse) {
+          failRenameResponse = false;
+          status = 503;
+          data = { message: 'Connection lost after saving squad name' };
+        }
+      } else if (name === 'get_food_library') data = foodLibrary;
       else if (name === 'set_food_favorite') {
         foodLibrary.foods = foodLibrary.foods.filter((food) => food.id !== body.p_food.id);
         if (body.p_favorite) foodLibrary.foods.push(body.p_food);
@@ -659,6 +675,38 @@ try {
     deleted_at: null,
   });
   await page.clock.install({ time: new Date(now) });
+  await home();
+  await page.getByTestId('home-edit-squad-name-' + rid(0)).click();
+  assert.equal(await page.getByTestId('input-squad-name').inputValue(), 'Pav and you');
+  await page.getByTestId('input-squad-name').fill('Morning pair');
+  await page.getByTestId('save-squad-name').click();
+  await page.getByTestId('squad-name-error').waitFor();
+  assert.equal(await page.getByTestId('home-open-title-' + rid(0)).innerText(), 'Pav and you');
+  assert.equal(await page.getByTestId('input-squad-name').inputValue(), 'Morning pair');
+  await page.getByTestId('save-squad-name').click();
+  await page.getByTestId('edit-squad-name-sheet').waitFor({ state: 'hidden' });
+  assert.equal(renameRequests[0].p_client_id, renameRequests[1].p_client_id);
+  await page
+    .getByTestId('home-open-title-' + rid(0))
+    .getByText('Morning pair', { exact: true })
+    .waitFor();
+  await snap('home-renamed-squad');
+  await page.getByTestId('home-open-title-' + rid(0)).click();
+  await page.getByTestId('squad-edit-squad-name-' + rid(0)).click();
+  assert.equal(await page.getByTestId('input-squad-name').inputValue(), 'Morning pair');
+  await page.getByTestId('input-squad-name').fill('Evening pair');
+  await page.getByTestId('save-squad-name').click();
+  await page.getByTestId('edit-squad-name-sheet').waitFor({ state: 'hidden' });
+  await page.getByRole('button', { name: 'Evening pair', exact: true }).waitFor();
+  await snap('squad-renamed-header');
+  await page.getByTestId('btn-room-options').click();
+  await page.getByTestId('btn-room-settings').click();
+  await page.getByTestId('settings-edit-squad-name-' + rid(0)).click();
+  assert.equal(await page.getByTestId('input-squad-name').inputValue(), 'Evening pair');
+  await page.getByTestId('input-squad-name').fill('Pav and you');
+  await page.getByTestId('save-squad-name').click();
+  await page.getByTestId('edit-squad-name-sheet').waitFor({ state: 'hidden' });
+  await page.getByTestId('btn-close-room-settings').click();
   await home();
   const homeCard = page.getByTestId('home-squad-card-' + rid(0));
   assert.deepEqual(

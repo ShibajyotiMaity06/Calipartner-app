@@ -7,6 +7,7 @@ import { useBrowserModalBack } from '@/hooks/useBrowserModalBack';
 import { t } from '@/i18n';
 import type { RoomSummary } from '@/types/rooms';
 import { squadStyles as styles } from './SquadViews';
+import { EditSquadName } from './EditSquadName';
 export type RoomSegment = 'today' | 'chat' | 'progress' | 'members';
 export interface RoomHeaderProps {
   currentRoom: RoomSummary | null;
@@ -75,6 +76,7 @@ export function RoomHeader({
             <Ionicons name="chevron-down" size={homeLayout.iconSize} color={dark.textMid} />
           </Text>
         </Pressable>
+        {currentRoom && <EditSquadName room={currentRoom} location="squad" />}
         {currentRoom && (
           <Text variant="micro" tabular style={{ flexShrink: 1, textAlign: 'right' }}>
             {currentRoom.member_cap
