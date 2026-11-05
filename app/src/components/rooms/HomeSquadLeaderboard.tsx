@@ -47,8 +47,7 @@ export function HomeSquadLeaderboard({
       )}
       <Button
         variant="secondary"
-        style={{ borderColor: dark.mint, backgroundColor: dark.mint }}
-        labelColor={dark.onBrand}
+        labelColor={dark.selection}
         label={t(memberCount === 2 ? 'squadDesign.open' : 'squadDesign.seeAll', {
           count: memberCount,
         })}

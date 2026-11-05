@@ -25,7 +25,7 @@ export const foodPolish = {
   nameRequired: 'Enter a food name.',
   suggestions: 'Up to five people with the same goal as you',
   suggestionsEmpty: 'No suggestions for your current goal yet. You can still search by username.',
-  complete: '{percent}% completed',
+  complete: '{percent}%',
   challenges: 'Challenges',
   challengeHint: 'Your challenges, invitations and results',
 } as const;

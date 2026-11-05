@@ -635,6 +635,37 @@ try {
   });
   await page.clock.install({ time: new Date(now) });
   await home();
+  const homeCard = page.getByTestId('home-squad-card-' + rid(0));
+  assert.deepEqual(
+    await homeCard.evaluate((element) => {
+      const style = globalThis.getComputedStyle(element);
+      return [style.borderTopWidth, style.borderTopColor];
+    }),
+    ['2px', 'rgb(187, 134, 97)'],
+  );
+  for (const person of [uid(0), uid(1)]) {
+    const card = homeCard.getByTestId('squad-member-' + person);
+    assert.doesNotMatch(await card.innerText(), /completed/i);
+    assert.equal(await card.getByText(/^\d+(?:\.\d+)?%$/).count(), 1);
+    assert.equal(
+      await card
+        .getByRole('img')
+        .evaluate((element) => globalThis.getComputedStyle(element).borderTopColor),
+      'rgb(154, 103, 70)',
+    );
+  }
+  const seeAll = page.getByTestId('home-leaderboard-' + rid(1));
+  assert.equal(
+    await seeAll.evaluate((element) => globalThis.getComputedStyle(element).backgroundColor),
+    'rgba(0, 0, 0, 0)',
+  );
+  assert.equal(
+    await seeAll
+      .getByText(/See all/)
+      .evaluate((element) => globalThis.getComputedStyle(element).color),
+    'rgb(244, 212, 119)',
+  );
+  await snap('home-profile-card-colours');
   await page.getByText('Did you log your Breakfast?', { exact: true }).waitFor();
   await page.getByTestId('home-open-friends').click();
   await page.getByTestId('community-panel').waitFor();

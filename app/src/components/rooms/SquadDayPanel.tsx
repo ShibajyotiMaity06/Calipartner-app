@@ -112,9 +112,7 @@ export function SquadDayPanel({
             {memberCount <= 3 &&
               members.map((member) => (
                 <View key={member.user_id} style={styles.memberLine}>
-                  <View
-                    style={[styles.avatar, { borderColor: member.is_self ? dark.iris : dark.teal }]}
-                  >
+                  <View style={styles.avatar}>
                     <Text variant="micro">{member.nickname.slice(0, 2).toUpperCase()}</Text>
                   </View>
                   <View style={styles.details}>
@@ -146,7 +144,7 @@ export function SquadDayPanel({
             {waiting.slice(0, 5).map((member) => (
               <View
                 key={member.user_id}
-                style={[styles.avatar, { borderColor: member.is_self ? dark.iris : dark.teal }]}
+                style={styles.avatar}
                 accessible
                 accessibilityLabel={member.nickname}
               >
@@ -256,7 +254,7 @@ function SquadFeedContent({
       ) : (
         checked.slice(0, limit).map((member) => (
           <View style={styles.feedRow} key={member.user_id}>
-            <View style={[styles.avatar, { borderColor: member.is_self ? dark.iris : dark.teal }]}>
+            <View style={styles.avatar}>
               <Text variant="micro">{member.nickname.slice(0, 2).toUpperCase()}</Text>
             </View>
             <View style={styles.details}>
@@ -483,7 +481,8 @@ const styles = StyleSheet.create({
     width: homeLayout.avatarSize,
     height: homeLayout.avatarSize,
     borderRadius: radius.full,
-    borderWidth: 1,
+    borderWidth: 2,
+    borderColor: dark.chocolate,
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: dark.s2,

@@ -13,7 +13,7 @@ export interface AvatarProps {
   uri?: string | null;
   /** Name or nickname to derive fallback initials from */
   name?: string;
-  /** Identity ring hue key (e.g. 'iris', 'teal', 'rose') or color string */
+  /** Initials/presence hue key or colour string. The outer ring is always chocolate. */
   identityHue?: keyof typeof dark | string;
   /** Whether to show active presence dot (rendered in identity hue, never green) */
   presence?: boolean;
@@ -69,15 +69,9 @@ export function Avatar({
           width: dim,
           height: dim,
           borderRadius: radius.full,
-          ...(resolvedIdentityColor
-            ? {
-                borderWidth: 2,
-                borderColor: resolvedIdentityColor,
-                padding: 1,
-              }
-            : {}),
         },
         style,
+        { borderWidth: 2, borderColor: dark.chocolate, padding: 1 },
       ]}
       accessibilityRole="image"
       accessibilityLabel={accessibilityLabel ?? name ?? 'Avatar'}
