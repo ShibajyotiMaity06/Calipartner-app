@@ -183,6 +183,22 @@ const foodLibrary = { foods: [], searches: [], recent_foods_cleared_at: null };
 const recentClears = new Map(),
   recipeFavorites = new Map();
 const trackingRequests = [];
+let acceptedFriends = [30, 31].map((index) => ({
+  id: uid(index),
+  username: `friend_${index}`,
+  nickname: index === 30 ? 'Maya' : 'Liam',
+  avatar_url: null,
+  relationship: 'friends',
+  request_id: rid(index + 100),
+  bio: '',
+  training_style: '',
+  instagram_handle: '',
+  website_url: '',
+  is_public: false,
+}));
+const friendActionRequests = [];
+const blockedFriends = new Set();
+let failFriendAction = true;
 const renameRequests = [],
   renamedRequests = new Map();
 let failRenameResponse = true;
@@ -269,15 +285,7 @@ try {
       } else if (name === 'clear_food_search_history') {
         foodLibrary.searches = [];
         data = { cleared: true };
-      } else if (name === 'get_social_profile')
-        data = {
-          ...profile,
-          id: user.id,
-          relationship: 'self',
-          is_public: false,
-          request_id: null,
-        };
-      else if (name === 'browse_social_profiles')
+      } else if (name === 'browse_social_profiles')
         data = Array.from({ length: 5 }, (_, i) => ({
           id: uid(i + 1),
           nickname: 'Goal peer ' + (i + 1),
@@ -396,8 +404,48 @@ try {
           })),
         };
       else if (name === 'get_friend_inbox')
-        data = { incoming: [], outgoing: [], friends: [], quota: { remaining: 3, premium: paid } };
-      else if (name === 'get_chat_messages_v2') data = recent;
+        data = {
+          incoming: [],
+          outgoing: [],
+          friends: acceptedFriends,
+          quota: { remaining: 3, premium: paid },
+        };
+      else if (name === 'respond_friend_request' && body.p_action === 'remove') {
+        friendActionRequests.push({ name, ...body });
+        if (failFriendAction) {
+          failFriendAction = false;
+          status = 503;
+          data = { message: 'Connection failed' };
+        } else {
+          acceptedFriends = acceptedFriends.filter(
+            (person) => person.request_id !== body.p_request_id,
+          );
+          data = { status: 'removed' };
+        }
+      } else if (name === 'block_social_profile') {
+        friendActionRequests.push({ name, ...body });
+        acceptedFriends = acceptedFriends.filter((person) => person.id !== body.p_target_id);
+        blockedFriends.add(body.p_target_id);
+        data = { status: 'blocked' };
+      } else if (name === 'get_social_profile') {
+        if (blockedFriends.has(body.p_user_id)) {
+          status = 400;
+          data = { message: 'PROFILE_UNAVAILABLE' };
+        } else
+          data = acceptedFriends.find((person) => person.id === body.p_user_id) ?? {
+            id: body.p_user_id,
+            username: body.p_user_id === user.id ? profile.username : 'former_friend',
+            nickname: 'Member',
+            avatar_url: null,
+            relationship: body.p_user_id === user.id ? 'self' : 'none',
+            request_id: null,
+            bio: '',
+            training_style: '',
+            instagram_handle: '',
+            website_url: '',
+            is_public: false,
+          };
+      } else if (name === 'get_chat_messages_v2') data = recent;
       else if (name === 'get_chat_unread_count') data = 0;
       else if (name === 'has_accepted_chat_terms') data = true;
       else if (name === 'get_chat_typing' || name === 'get_chat_hidden_senders') data = [];
@@ -726,6 +774,38 @@ try {
   await snap('squad-switch-persists');
   await home();
   const homeCard = page.getByTestId('home-squad-card-' + rid(0));
+  const savedSquadMetrics = all.slice(0, 2).map((member) => ({ ...member }));
+  for (const metric of ['calories', 'protein', 'carbs', 'fat']) {
+    all[0][metric] = 0;
+    all[1][metric] = all[1].targets[metric];
+  }
+  await home();
+  await homeCard.getByText('0%', { exact: true }).waitFor();
+  await homeCard.getByText('100%', { exact: true }).waitFor();
+  const checkEqualTracks = async () => {
+    const boxes = await Promise.all(
+      [uid(0), uid(1)].map((id) => homeCard.getByTestId('squad-score-track-' + id).boundingBox()),
+    );
+    assert.ok(Math.abs(boxes[0].width - boxes[1].width) < 1);
+    assert.ok(Math.abs(boxes[0].x - boxes[1].x) < 1);
+    const personal = await Promise.all(
+      ['calories', 'protein', 'carbs', 'fat', 'steps'].map((metric) =>
+        page.getByTestId('personal-day-track-' + metric).boundingBox(),
+      ),
+    );
+    assert.ok(personal.every((box) => Math.abs(box.width - personal[0].width) < 1));
+  };
+  await checkEqualTracks();
+  await snap('home-equal-zero-and-full-tracks');
+  const largeText = await page.addStyleTag({
+    content:
+      '[data-testid^="squad-member-"] [dir="auto"] { font-size: 200% !important; line-height: normal !important; }',
+  });
+  await checkEqualTracks();
+  await snap('home-equal-tracks-large-text');
+  await largeText.evaluate((element) => element.remove());
+  savedSquadMetrics.forEach((member, index) => Object.assign(all[index], member));
+  await home();
   const titleBox = await homeCard.getByTestId('home-open-title-' + rid(0)).boundingBox();
   const pencilBox = await homeCard.getByTestId('home-edit-squad-name-' + rid(0)).boundingBox();
   assert.ok(pencilBox.x - titleBox.x - titleBox.width <= 4);
@@ -791,6 +871,35 @@ try {
   await page.getByTestId('community-panel').waitFor();
   await page.getByTestId('community-person-' + uid(1)).waitFor();
   assert.equal(await page.locator('[data-testid^="community-person-"]').count(), 5);
+  await page.getByTestId('community-tab-friends').click();
+  await page.getByTestId('remove-friend-' + uid(30)).waitFor();
+  await page.getByTestId('block-friend-' + uid(31)).waitFor();
+  for (const friend of [uid(30), uid(31)]) {
+    const remove = await page.getByTestId('remove-friend-' + friend).boundingBox();
+    const block = await page.getByTestId('block-friend-' + friend).boundingBox();
+    assert.ok(remove.width >= 44 && remove.height >= 44 && block.width >= 44 && block.height >= 44);
+    assert.ok(remove.x + remove.width <= block.x || remove.y + remove.height <= block.y);
+  }
+  await snap('friend-card-direct-actions');
+  await page.getByTestId('remove-friend-' + uid(30)).click();
+  assert.equal(friendActionRequests.length, 0);
+  await page.getByTestId('cancel-friend-action').click();
+  await page.getByTestId('friend-action-confirmation').waitFor({ state: 'hidden' });
+  assert.equal(friendActionRequests.length, 0);
+  await page.getByTestId('remove-friend-' + uid(30)).click();
+  await page.getByTestId('confirm-friend-action').click();
+  await page.getByTestId('friend-action-error').waitFor();
+  assert.equal(await page.getByTestId('community-person-' + uid(30)).count(), 1);
+  await snap('friend-remove-failed-preserved');
+  await page.getByTestId('confirm-friend-action').click();
+  await page.getByTestId('community-person-' + uid(30)).waitFor({ state: 'hidden' });
+  assert.equal(friendActionRequests[0].p_request_id, friendActionRequests[1].p_request_id);
+  await page.getByTestId('block-friend-' + uid(31)).click();
+  await page.getByTestId('confirm-friend-action').click();
+  await page.getByTestId('community-person-' + uid(31)).waitFor({ state: 'hidden' });
+  assert.equal(friendActionRequests[2].p_target_id, uid(31));
+  assert.equal(acceptedFriends.length, 0);
+  await snap('friends-actions-acknowledged');
 
   await home();
   await page.getByTestId('tab-log').click();

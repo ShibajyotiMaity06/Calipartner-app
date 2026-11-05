@@ -53,6 +53,7 @@ export const squadStyles = StyleSheet.create({
   columns: { flexDirection: 'row', alignItems: 'flex-start', gap: space[3] },
   column: { flex: 1, minWidth: 0, gap: space[3] },
   track: {
+    width: '100%',
     height: space[2],
     borderRadius: radius.full,
     backgroundColor: dark.s3,
@@ -123,12 +124,14 @@ export function goalName(member: RankedSquadMember) {
 export function ProgressTrack({
   percent,
   color = dark.copper,
+  testID,
 }: {
   percent: number | null;
   color?: string;
+  testID?: string;
 }) {
   return (
-    <View style={squadStyles.track} accessible={false}>
+    <View style={squadStyles.track} accessible={false} testID={testID}>
       {percent !== null && (
         <View
           style={[
@@ -183,12 +186,12 @@ export function SquadLeaderboard({
               <Text variant="heading" style={squadStyles.name}>
                 {memberName(member)}
               </Text>
+              <Text variant="numeralM" tabular>
+                {member.score == null ? '—' : t('foodPolish.complete', { percent: member.score })}
+              </Text>
             </View>
-            <ProgressTrack percent={member.score} />
+            <ProgressTrack percent={member.score} testID={`squad-score-track-${member.user_id}`} />
           </View>
-          <Text variant="numeralM" tabular>
-            {member.score == null ? '—' : t('foodPolish.complete', { percent: member.score })}
-          </Text>
         </Pressable>
       ))}
     </View>

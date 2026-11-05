@@ -4,6 +4,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 const mocks = vi.hoisted(() => ({ discovery: vi.fn(), friends: vi.fn() }));
 const share = vi.hoisted(() => vi.fn().mockResolvedValue({ action: 'sharedAction' }));
 vi.mock('react-native', () => ({
+  Platform: { OS: 'web' },
   Share: { share },
   View: 'View',
   Pressable: 'Pressable',
@@ -19,6 +20,7 @@ vi.mock('@calipartner/ui', async () => ({
   Button: 'Button',
   Card: 'Card',
   Text: 'Text',
+  Sheet: 'Sheet',
   CheckIcon: 'CheckIcon',
   useTheme: () => ({ colors: {} }),
   space: [],
@@ -57,6 +59,78 @@ beforeEach(() => {
   });
 });
 describe('real friend interface flows', () => {
+  it.each(['remove', 'block'] as const)(
+    'offers %s directly on friend cards and keeps failed or pending actions visible until acknowledgement',
+    async (action) => {
+      const operation = vi.fn().mockResolvedValueOnce(false);
+      const friends = {
+        ownProfile: { username: 'me' },
+        inbox: {
+          incoming: [],
+          outgoing: [],
+          friends: [{ ...people[0], relationship: 'friends' }],
+          quota: { remaining: 3, premium: false },
+        },
+        busy: false,
+        loading: false,
+        error: null,
+        respond: action === 'remove' ? operation : vi.fn(),
+        block: action === 'block' ? operation : vi.fn(),
+      } as unknown as React.ComponentProps<typeof CommunityPanel>['friends'];
+      let tree!: ReactTestRenderer;
+      await act(async () => {
+        tree = create(
+          <CommunityPanel
+            friends={friends}
+            onBack={vi.fn()}
+            onEdit={vi.fn()}
+            onNotifications={vi.fn()}
+          />,
+        );
+      });
+      await act(async () =>
+        tree.root.findByProps({ testID: 'community-tab-friends' }).props.onPress(),
+      );
+      await act(async () =>
+        tree.root.findByProps({ testID: `${action}-friend-1` }).props.onPress(),
+      );
+      expect(operation).not.toHaveBeenCalled();
+      await act(async () =>
+        tree.root.findByProps({ testID: 'cancel-friend-action' }).props.onPress(),
+      );
+      expect(operation).not.toHaveBeenCalled();
+      await act(async () =>
+        tree.root.findByProps({ testID: `${action}-friend-1` }).props.onPress(),
+      );
+      await act(async () =>
+        tree.root.findByProps({ testID: 'confirm-friend-action' }).props.onPress(),
+      );
+      expect(tree.root.findByProps({ testID: 'friend-action-error' })).toBeDefined();
+      expect(tree.root.findByProps({ testID: 'community-person-1' })).toBeDefined();
+      let acknowledge!: (saved: boolean) => void;
+      operation.mockImplementationOnce(
+        () =>
+          new Promise((resolve) => {
+            acknowledge = resolve;
+          }),
+      );
+      let saving!: Promise<void>;
+      await act(async () => {
+        saving = tree.root.findByProps({ testID: 'confirm-friend-action' }).props.onPress();
+      });
+      expect(tree.root.findByProps({ testID: 'confirm-friend-action' }).props.disabled).toBe(true);
+      expect(tree.root.findByProps({ testID: 'community-person-1' })).toBeDefined();
+      await act(async () => {
+        acknowledge(true);
+        await saving;
+      });
+      expect(tree.root.findAllByProps({ testID: 'community-person-1' })).toHaveLength(0);
+      expect(operation.mock.calls).toEqual(
+        action === 'remove' ? Array(2).fill(['request_1', 'remove', '1']) : Array(2).fill(['1']),
+      );
+      await act(async () => tree.unmount());
+    },
+  );
   it('shows one short empty inbox message, suppressing it when room requests exist', async () => {
     mocks.friends.mockReturnValue({
       inbox: { incoming: [], outgoing: [] },

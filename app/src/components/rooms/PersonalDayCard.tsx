@@ -8,14 +8,16 @@ export function DayProgressTrack({
   value,
   target,
   color,
+  testID,
 }: {
   value: number;
   target: number | null;
   color: string;
+  testID?: string;
 }) {
   const ratio = target != null && target > 0 ? value / target : null;
   return (
-    <View style={styles.track} accessible={false}>
+    <View style={styles.track} accessible={false} testID={testID}>
       {ratio !== null && (
         <View
           style={[
@@ -118,6 +120,7 @@ export function PersonalDayCard({
                 value={value}
                 target={target}
                 color={[dark.copper, dark.iris, dark.sky][index % 3]!}
+                testID={`personal-day-track-${nutrient ?? 'steps'}`}
               />
               {target != null && value > target && (
                 <Text variant="bodyS">{t('homeRefresh.over')}</Text>
@@ -144,6 +147,7 @@ const styles = StyleSheet.create({
   row: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', gap: space[2] },
   amount: { flexShrink: 1 },
   track: {
+    width: '100%',
     height: space[2],
     backgroundColor: dark.s3,
     borderRadius: radius.full,

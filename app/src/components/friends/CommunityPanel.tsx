@@ -17,6 +17,7 @@ import { useFriendDiscovery } from '@/hooks/useFriendDiscovery';
 import type { useFriends } from '@/hooks/useFriends';
 import { t } from '@/i18n';
 import { LoadingState } from '@/components/LoadingState';
+import { FriendActions } from './FriendActions';
 
 type FriendsState = ReturnType<typeof useFriends>;
 type Tab = 'discover' | 'requests' | 'friends';
@@ -37,10 +38,15 @@ export function CommunityPanel({
   const [requestTab, setRequestTab] = useState<'incoming' | 'outgoing'>('incoming');
   const [query, setQuery] = useState('');
   const [shareError, setShareError] = useState(false);
+  const [resolved, setResolved] = useState(new Set<string>());
+  const [actionStatus, setActionStatus] = useState('');
+  const friendshipKey = (person: SocialProfile) => `${person.id}:${person.request_id ?? ''}`;
   const discovery = useFriendDiscovery(null, query);
   const incoming = friends.inbox?.incoming ?? [];
   const outgoing = friends.inbox?.outgoing ?? [];
-  const connected = friends.inbox?.friends ?? [];
+  const connected = (friends.inbox?.friends ?? []).filter(
+    (person) => !resolved.has(friendshipKey(person)),
+  );
   const people = (
     tab === 'discover'
       ? discovery.people
@@ -51,7 +57,8 @@ export function CommunityPanel({
           : outgoing
   ).filter(
     (person) =>
-      !query || person.username.toLowerCase().includes(query.replace(/^@/, '').toLowerCase()),
+      !resolved.has(friendshipKey(person)) &&
+      (!query || person.username.toLowerCase().includes(query.replace(/^@/, '').toLowerCase())),
   );
   const iconButton = (
     icon: React.ComponentProps<typeof Ionicons>['name'],
@@ -301,8 +308,29 @@ export function CommunityPanel({
               </View>
               <Ionicons name="chevron-forward" size={layout.icon} color={colors.textLo} />
             </Pressable>
-            <View style={styles.actions}>
-              {tab === 'requests' ? (
+            <View style={[styles.actions, tab === 'friends' && { width: '100%' }]}>
+              {tab === 'friends' ? (
+                <FriendActions
+                  person={person}
+                  busy={friends.busy}
+                  onConfirm={(action) =>
+                    action === 'block'
+                      ? friends.block(person.id)
+                      : person.request_id
+                        ? friends.respond(person.request_id, 'remove', person.id)
+                        : Promise.resolve(false)
+                  }
+                  onResolved={(action) => {
+                    setResolved((previous) => new Set(previous).add(friendshipKey(person)));
+                    setActionStatus(
+                      t(action === 'remove' ? 'friends.removedNamed' : 'friends.blockedNamed', {
+                        name: person.nickname,
+                      }),
+                    );
+                    void discovery.load();
+                  }}
+                />
+              ) : tab === 'requests' ? (
                 <>
                   <Button
                     variant="secondary"
@@ -350,6 +378,11 @@ export function CommunityPanel({
           </View>
         );
       })}
+      {actionStatus && (
+        <Text variant="bodyS" accessibilityLiveRegion="polite" testID="friend-action-status">
+          {actionStatus}
+        </Text>
+      )}
       {tab === 'discover' && discovery.hasMore ? (
         <Button
           variant="tertiary"
