@@ -76,7 +76,9 @@ export function ProgressOverview({
       </View>
       <WeightChart data={data?.weight} loading={loading} onSelectDay={onSelectDay} />
       <View style={styles.card}>
-        <Text variant="heading">{t('homeRefresh.calories')}</Text>
+        <Text nutrient="calories" variant="heading">
+          {t('homeRefresh.calories')}
+        </Text>
         <Text variant="bodyS" color={dark.textMid}>
           {goals === undefined || !data?.calories.daily.length
             ? t('homeRefresh.noProgress')

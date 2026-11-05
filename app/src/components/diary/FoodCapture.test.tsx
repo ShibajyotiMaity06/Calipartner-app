@@ -28,6 +28,21 @@ vi.mock('@/lib/supabase', () => ({ getSupabase: () => ({}) }));
 vi.mock('@/hooks/useFoodSearch', () => ({
   useFoodSearch: () => ({ results: [], query: '', setQuery: vi.fn(), loading: false }),
 }));
+vi.mock('@/hooks/useFoodLibrary', () => ({
+  useFoodLibrary: () => ({
+    foods: [],
+    searches: [],
+    loading: false,
+    busy: false,
+    error: false,
+    isFavorite: () => false,
+    favorite: vi.fn(),
+    remember: vi.fn(),
+    clearHistory: vi.fn(),
+    refresh: vi.fn(),
+  }),
+}));
+vi.mock('./FoodFavoritesView', () => ({ FoodFavoritesView: 'FoodFavorites' }));
 vi.mock('@/hooks/usePreviouslyLogged', () => ({
   usePreviouslyLogged: () => ({ items: flow.history, loading: false }),
 }));

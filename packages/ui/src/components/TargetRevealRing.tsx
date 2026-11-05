@@ -117,6 +117,7 @@ export function TargetRevealRing({
       {/* Center Target Numerals */}
       <View style={styles.centerContent} pointerEvents="none">
         <Text
+          nutrient="calories"
           variant="numeralXL"
           color={dark.textHi}
           style={styles.kcalText}

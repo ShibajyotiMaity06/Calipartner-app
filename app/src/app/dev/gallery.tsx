@@ -150,7 +150,7 @@ export default function ComponentGalleryScreen(): React.JSX.Element | null {
             1. Typography Scale (Text.tsx)
           </Text>
           <Card elevation="s1" style={styles.sectionCard}>
-            <Text variant="numeralXL" maxFontSizeMultiplier={multiplier}>
+            <Text nutrient="calories" variant="numeralXL" maxFontSizeMultiplier={multiplier}>
               2,450 kcal
             </Text>
             <Text variant="numeralL" maxFontSizeMultiplier={multiplier}>
@@ -432,7 +432,7 @@ export default function ComponentGalleryScreen(): React.JSX.Element | null {
           <Card elevation="s1" style={styles.sectionCard}>
             <View style={styles.rowBetween}>
               <View>
-                <Text variant="heading" color={dark.textHi}>
+                <Text nutrient="calories" variant="heading" color={dark.textHi}>
                   Oatmeal with berries (420 kcal)
                 </Text>
                 <Text variant="bodyS" color={dark.textMid}>
@@ -801,7 +801,12 @@ export default function ComponentGalleryScreen(): React.JSX.Element | null {
 
         {/* 17. CalorieRing & MacroBar (CMP-13) */}
         <View style={styles.section}>
-          <Text variant="heading" color={dark.apricot} style={styles.sectionTitle}>
+          <Text
+            nutrient="calories"
+            variant="heading"
+            color={dark.apricot}
+            style={styles.sectionTitle}
+          >
             17. CalorieRing & MacroBar (CMP-13)
           </Text>
           <Text variant="bodyS" color={dark.textMid} style={styles.sectionDesc}>

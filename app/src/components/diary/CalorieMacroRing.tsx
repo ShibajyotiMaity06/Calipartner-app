@@ -109,6 +109,7 @@ export function CalorieMacroRing({
             }}
           />
           <Text
+            nutrient="calories"
             style={{
               fontSize: fontSize.xl,
               fontWeight: '800',
@@ -119,6 +120,7 @@ export function CalorieMacroRing({
             {isOver ? eatenCalories - targetCalories : remainingCalories}
           </Text>
           <Text
+            nutrient="calories"
             style={{
               fontSize: fontSize.xs,
               fontWeight: '600',
@@ -144,12 +146,20 @@ export function CalorieMacroRing({
               borderRadius: radius.sm,
             }}
           >
-            <Text style={{ fontSize: fontSize.sm, color: colors.textMuted, fontWeight: '500' }}>
+            <Text
+              nutrient="calories"
+              style={{ fontSize: fontSize.sm, color: colors.textMuted, fontWeight: '500' }}
+            >
               {t('diary.caloriesEaten')}
             </Text>
-            <Text style={{ fontSize: fontSize.md, fontWeight: '700', color: colors.macroCalories }}>
+            <Text
+              nutrient="calories"
+              style={{ fontSize: fontSize.md, fontWeight: '700', color: colors.macroCalories }}
+            >
               {eatenCalories}{' '}
-              <Text style={{ fontSize: fontSize.xs, color: colors.textMuted }}>kcal</Text>
+              <Text nutrient="calories" style={{ fontSize: fontSize.xs, color: colors.textMuted }}>
+                kcal
+              </Text>
             </Text>
           </View>
 
@@ -164,12 +174,20 @@ export function CalorieMacroRing({
               borderRadius: radius.sm,
             }}
           >
-            <Text style={{ fontSize: fontSize.sm, color: colors.textMuted, fontWeight: '500' }}>
+            <Text
+              nutrient="calories"
+              style={{ fontSize: fontSize.sm, color: colors.textMuted, fontWeight: '500' }}
+            >
               {t('diary.caloriesTarget')}
             </Text>
-            <Text style={{ fontSize: fontSize.md, fontWeight: '700', color: colors.text }}>
+            <Text
+              nutrient="calories"
+              style={{ fontSize: fontSize.md, fontWeight: '700', color: colors.text }}
+            >
               {targetCalories}{' '}
-              <Text style={{ fontSize: fontSize.xs, color: colors.textMuted }}>kcal</Text>
+              <Text nutrient="calories" style={{ fontSize: fontSize.xs, color: colors.textMuted }}>
+                kcal
+              </Text>
             </Text>
           </View>
         </View>
@@ -180,10 +198,16 @@ export function CalorieMacroRing({
         {/* Protein */}
         <View style={{ gap: 4 }}>
           <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-            <Text style={{ fontSize: fontSize.sm, fontWeight: '600', color: colors.text }}>
+            <Text
+              nutrient="protein"
+              style={{ fontSize: fontSize.sm, fontWeight: '600', color: colors.text }}
+            >
               {t('diary.macroProtein')}
             </Text>
-            <Text style={{ fontSize: fontSize.sm, color: colors.textMuted, fontWeight: '500' }}>
+            <Text
+              nutrient="protein"
+              style={{ fontSize: fontSize.sm, color: colors.textMuted, fontWeight: '500' }}
+            >
               {targetProtein > 0
                 ? t('diary.macroGrams', { current: proteinGrams, target: targetProtein })
                 : t('diary.macroGramsSimple', { grams: proteinGrams })}
@@ -211,10 +235,16 @@ export function CalorieMacroRing({
         {/* Carbs */}
         <View style={{ gap: 4 }}>
           <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-            <Text style={{ fontSize: fontSize.sm, fontWeight: '600', color: colors.text }}>
+            <Text
+              nutrient="carbs"
+              style={{ fontSize: fontSize.sm, fontWeight: '600', color: colors.text }}
+            >
               {t('diary.macroCarbs')}
             </Text>
-            <Text style={{ fontSize: fontSize.sm, color: colors.textMuted, fontWeight: '500' }}>
+            <Text
+              nutrient="carbs"
+              style={{ fontSize: fontSize.sm, color: colors.textMuted, fontWeight: '500' }}
+            >
               {targetCarbs > 0
                 ? t('diary.macroGrams', { current: carbGrams, target: targetCarbs })
                 : t('diary.macroGramsSimple', { grams: carbGrams })}
@@ -242,10 +272,16 @@ export function CalorieMacroRing({
         {/* Fat */}
         <View style={{ gap: 4 }}>
           <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-            <Text style={{ fontSize: fontSize.sm, fontWeight: '600', color: colors.text }}>
+            <Text
+              nutrient="fat"
+              style={{ fontSize: fontSize.sm, fontWeight: '600', color: colors.text }}
+            >
               {t('diary.macroFat')}
             </Text>
-            <Text style={{ fontSize: fontSize.sm, color: colors.textMuted, fontWeight: '500' }}>
+            <Text
+              nutrient="fat"
+              style={{ fontSize: fontSize.sm, color: colors.textMuted, fontWeight: '500' }}
+            >
               {targetFat > 0
                 ? t('diary.macroGrams', { current: fatGrams, target: targetFat })
                 : t('diary.macroGramsSimple', { grams: fatGrams })}

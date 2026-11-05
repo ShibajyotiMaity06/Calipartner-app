@@ -12,16 +12,19 @@ interface BrowserWindow {
   removeEventListener(type: 'popstate', listener: () => void): void;
 }
 const moving = new WeakMap<BrowserWindow, Promise<void>>();
+const closingSyntheticEntry = new WeakSet<BrowserWindow>();
 function afterNavigation(browser: BrowserWindow, action: () => void) {
   const pending = moving.get(browser);
   if (pending) void pending.then(action);
   else action();
 }
-function go(browser: BrowserWindow, delta: number) {
+function go(browser: BrowserWindow, delta: number, syntheticClose = false) {
+  if (syntheticClose) closingSyntheticEntry.add(browser);
   const pending = new Promise<void>((resolve) => {
     const done = () => {
       browser.removeEventListener('popstate', done);
       moving.delete(browser);
+      closingSyntheticEntry.delete(browser);
       resolve();
     };
     browser.addEventListener('popstate', done);
@@ -82,6 +85,9 @@ export function useBrowserModalBack(
     let current = true;
     const key = `modal-${Date.now()}-${Math.random()}`;
     const pop = () => {
+      // Closing a child sheet rewinds its synthetic entry. That programmatic pop
+      // must not act as Back on a parent's section when Router replaced its state.
+      if (closingSyntheticEntry.has(browser)) return;
       const active = browser.history.state?.calipartnerModalStack;
       if (!Array.isArray(active) || !active.includes(key)) close.current();
       else if (active.at(-1) === key) {
@@ -118,7 +124,7 @@ export function useBrowserModalBack(
         if (browser.location?.pathname !== routePath) return;
         const removed = active.slice(active.indexOf(key)) as string[];
         const count = removed.reduce((total, id) => total + (depths(browser)[id] ?? 0) + 1, 0);
-        go(browser, -count);
+        go(browser, -count, true);
       });
     };
   }, [visible]);

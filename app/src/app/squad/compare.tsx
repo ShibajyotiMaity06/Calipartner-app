@@ -81,7 +81,7 @@ export default function SquadCompareScreen() {
           </Pressable>
           <View style={styles.flex}>
             <Text variant="bodyS">{t('tabs.room')}</Text>
-            <Text variant="title1">{t('squadDesign.compare')}</Text>
+            <Text variant="title2">{t('squadDesign.compare')}</Text>
           </View>
         </View>
         {squad.error ? (
@@ -126,7 +126,7 @@ export default function SquadCompareScreen() {
                   }
                 >
                   <Text>{memberName(member)}</Text>
-                  <Text variant="numeralL" tabular>
+                  <Text variant="numeralM" tabular>
                     {member.score == null ? '—' : t('squadDesign.percent', { value: member.score })}
                   </Text>
                   <ProgressTrack
@@ -140,7 +140,9 @@ export default function SquadCompareScreen() {
               <Text variant="heading">{t('squadDesign.macros')}</Text>
               {(['calories', 'protein', 'carbs', 'fat'] as const).map((metric) => (
                 <View key={metric} style={styles.metricGroup}>
-                  <Text>{t(`squadDesign.${metric}`)}</Text>
+                  <Text variant="bodyS" nutrient={metric}>
+                    {t(`squadDesign.${metric}`)}
+                  </Text>
                   <View style={styles.columns}>
                     <View style={styles.column}>
                       <MetricValue member={left} metric={metric} color={dark.iris} />

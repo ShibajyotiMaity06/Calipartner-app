@@ -1,3 +1,4 @@
+import { NutrientSummary } from '../diary/NutrientSummary';
 import React, { useCallback, useEffect, useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { useFocusEffect } from 'expo-router';
@@ -113,10 +114,10 @@ export function PersonalDiaryView({
             <View style={styles.macros}>
               {(['calories', 'protein', 'carbs', 'fat'] as const).map((key, index) => (
                 <View key={key} style={styles.macro}>
-                  <Text variant="label" color={macroColors[index]}>
+                  <Text variant="label" nutrient={key} color={macroColors[index]}>
                     {t(('repairs.' + key) as Parameters<typeof t>[0])}
                   </Text>
-                  <Text variant="numeralM" tabular>
+                  <Text nutrient={key} variant="numeralM" tabular>
                     {diary.daySummary.totals[key]}{' '}
                     {key === 'calories' ? t('homeRefresh.kcalUnit') : t('homeRefresh.gramUnit')}
                   </Text>
@@ -151,14 +152,7 @@ export function PersonalDiaryView({
                     <Text variant="bodyS" tabular>
                       {entry.quantity} {entry.unit}
                     </Text>
-                    <Text variant="bodyS" tabular>
-                      {t('coach.meal.macros', {
-                        calories: entry.calories,
-                        protein: entry.protein,
-                        carbs: entry.carbs,
-                        fat: entry.fat,
-                      })}
-                    </Text>
+                    <NutrientSummary values={entry} />
                   </View>
                 ))
               )}

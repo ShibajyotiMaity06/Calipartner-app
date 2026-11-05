@@ -4,6 +4,7 @@ import {
   DEFAULT_AI_FOOD_PHOTO_CAPS,
   resolveUnitGrams,
   scaleNutrients,
+  resizeNutrientSnapshot,
   stripImageExif,
   validateFoodPhotoImage,
   type AiFoodPhotoErrorCode,
@@ -305,7 +306,14 @@ export function updateCandidateQuantity(
   const unitGrams = resolveUnitGrams(candidate.matched_food, unit);
   const estimatedGrams = Math.round(safeQty * unitGrams * 10) / 10;
 
-  const nutrients = scaleNutrients(candidate.matched_food, safeQty, unit);
+  const nutrients = candidate.corrected_nutrients
+    ? resizeNutrientSnapshot(
+        candidate.corrected_nutrients.nutrients,
+        candidate.corrected_nutrients.quantity *
+          resolveUnitGrams(candidate.matched_food, candidate.corrected_nutrients.unit),
+        safeQty * unitGrams,
+      )
+    : scaleNutrients(candidate.matched_food, safeQty, unit);
 
   return {
     ...candidate,
@@ -329,6 +337,7 @@ export function swapCandidateFood(candidate: FoodCandidateItem, newFood: Food): 
   return {
     ...candidate,
     matched_food: newFood,
+    corrected_nutrients: undefined,
     estimated_grams: estimatedGrams,
     nutrients,
     is_estimate: true,
@@ -372,6 +381,7 @@ export async function savePhotoCandidatesToDiary(
         }
 
         const entry = await logFoodEntry(db, {
+          id: candidate.id,
           userId: params.userId,
           food: foodToLog,
           mealSection: params.mealSection,
@@ -379,6 +389,7 @@ export async function savePhotoCandidatesToDiary(
           unit: candidate.unit,
           localDate: params.localDate,
           source: params.source ?? 'photo',
+          nutrientOverrides: candidate.corrected_nutrients ? candidate.nutrients : undefined,
         });
 
         savedEntries.push(entry);

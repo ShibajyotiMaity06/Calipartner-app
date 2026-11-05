@@ -690,18 +690,19 @@ export async function toggleRecipeFavorite(
  * Gets user's favorite recipes.
  */
 export async function getFavoriteRecipes(db: RecipeDb, userId: string): Promise<Recipe[]> {
-  const rows = await db.getAllAsync<LocalRecipeRow>(
-    `SELECT r.* FROM local_recipes r
-     JOIN local_recipe_favorites f ON f.recipe_id = r.id
-     WHERE f.user_id = ? AND f.deleted_at IS NULL AND r.status = 'published'
-     ORDER BY f.created_at DESC`,
+  const rows = await db.getAllAsync<{ recipe_id: string }>(
+    `SELECT recipe_id FROM local_recipe_favorites WHERE user_id = ? AND deleted_at IS NULL ORDER BY created_at DESC`,
     [userId],
   );
-
-  return rows.map((r) => ({
-    ...parseLocalRecipeRow(r),
-    is_favorite: true,
-  }));
+  // Bundled recipes need not have cache rows on a fresh device. Resolve favourite
+  // IDs against the same merged catalogue used by browsing, preserving save order.
+  const catalog = new Map(
+    (await getRecipes(db, {}, undefined, null)).map((recipe) => [recipe.id, recipe]),
+  );
+  return rows.flatMap((row) => {
+    const recipe = catalog.get(row.recipe_id);
+    return recipe ? [{ ...recipe, is_favorite: true }] : [];
+  });
 }
 
 /**

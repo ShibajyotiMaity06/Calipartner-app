@@ -95,7 +95,17 @@ export function RecipeFilterBar({
                 },
               ]}
             >
-              <Text variant="label" color={selected ? colors.accent : colors.text}>
+              <Text
+                nutrient={
+                  filter === 'high-protein'
+                    ? 'protein'
+                    : filter === 'high-carb'
+                      ? 'carbs'
+                      : undefined
+                }
+                variant="label"
+                color={selected ? colors.accent : colors.text}
+              >
                 {t(
                   filter === 'high-protein'
                     ? 'homeRefresh.highProtein'

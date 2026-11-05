@@ -1,6 +1,6 @@
 import React from 'react';
 import { Pressable, ScrollView, View } from 'react-native';
-import { Avatar, Button, Sheet, Text } from '@calipartner/ui';
+import { Button, Sheet, Text } from '@calipartner/ui';
 import type { RankedSquadMember } from '@calipartner/core';
 import { useBrowserModalBack } from '@/hooks/useBrowserModalBack';
 import { t } from '@/i18n';
@@ -57,9 +57,8 @@ export function SquadMemberPicker({
               accessibilityLabel={memberName(member)}
               testID={`choose-member-${member.user_id}`}
             >
-              <Avatar name={memberName(member)} uri={member.avatar_url ?? undefined} size="sm" />
               <View style={styles.flex}>
-                <Text variant="heading">{memberName(member)}</Text>
+                <Text variant="bodyS">{memberName(member)}</Text>
                 <Text variant="bodyS" tabular>
                   {member.score == null
                     ? t('squadDesign.noGoals')

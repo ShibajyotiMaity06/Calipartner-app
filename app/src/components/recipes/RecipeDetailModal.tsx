@@ -222,41 +222,49 @@ export function RecipeDetailModal({
               )}
               <View style={styles.nutritionGrid}>
                 <View style={[styles.macroCard, { backgroundColor: colors.surfaceAlt }]}>
-                  <Text style={[styles.macroValue, { color: colors.macroCalories }]}>
+                  <Text
+                    nutrient="calories"
+                    style={[styles.macroValue, { color: colors.macroCalories }]}
+                  >
                     {Math.round(nutrition.calories)}
                   </Text>
-                  <Text style={[styles.macroUnit, { color: colors.textMuted }]}>kcal</Text>
-                  <Text style={[styles.macroName, { color: colors.text }]}>
+                  <Text nutrient="calories" style={[styles.macroUnit, { color: colors.textMuted }]}>
+                    kcal
+                  </Text>
+                  <Text nutrient="calories" style={[styles.macroName, { color: colors.text }]}>
                     {t('recipes.detail.caloriesLabel')}
                   </Text>
                 </View>
 
                 <View style={[styles.macroCard, { backgroundColor: colors.cardHighlight }]}>
-                  <Text style={[styles.macroValue, { color: colors.macroProtein }]}>
+                  <Text
+                    nutrient="protein"
+                    style={[styles.macroValue, { color: colors.macroProtein }]}
+                  >
                     {Math.round(nutrition.protein)}
                   </Text>
                   <Text style={[styles.macroUnit, { color: colors.textMuted }]}>g</Text>
-                  <Text style={[styles.macroName, { color: colors.text }]}>
+                  <Text nutrient="protein" style={[styles.macroName, { color: colors.text }]}>
                     {t('recipes.detail.proteinLabel')}
                   </Text>
                 </View>
 
                 <View style={[styles.macroCard, { backgroundColor: colors.surfaceAlt }]}>
-                  <Text style={[styles.macroValue, { color: colors.macroCarbs }]}>
+                  <Text nutrient="carbs" style={[styles.macroValue, { color: colors.macroCarbs }]}>
                     {Math.round(nutrition.carbs)}
                   </Text>
                   <Text style={[styles.macroUnit, { color: colors.textMuted }]}>g</Text>
-                  <Text style={[styles.macroName, { color: colors.text }]}>
+                  <Text nutrient="carbs" style={[styles.macroName, { color: colors.text }]}>
                     {t('recipes.detail.carbsLabel')}
                   </Text>
                 </View>
 
                 <View style={[styles.macroCard, { backgroundColor: colors.surfaceAlt }]}>
-                  <Text style={[styles.macroValue, { color: colors.macroFat }]}>
+                  <Text nutrient="fat" style={[styles.macroValue, { color: colors.macroFat }]}>
                     {Math.round(nutrition.fat)}
                   </Text>
                   <Text style={[styles.macroUnit, { color: colors.textMuted }]}>g</Text>
-                  <Text style={[styles.macroName, { color: colors.text }]}>
+                  <Text nutrient="fat" style={[styles.macroName, { color: colors.text }]}>
                     {t('recipes.detail.fatLabel')}
                   </Text>
                 </View>

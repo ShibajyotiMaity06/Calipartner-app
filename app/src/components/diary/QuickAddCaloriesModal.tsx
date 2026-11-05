@@ -77,7 +77,7 @@ export function QuickAddCaloriesModal({
           <Text variant="heading" color={dark.textHi}>
             Quick Add
           </Text>
-          <Text variant="bodyS" color={dark.textMid}>
+          <Text nutrient="calories" variant="bodyS" color={dark.textMid}>
             {"Log calories directly when you don't know the exact food"}
           </Text>
         </View>
@@ -103,7 +103,7 @@ export function QuickAddCaloriesModal({
 
         {/* Calories TextInput */}
         <View style={styles.fieldBox}>
-          <Text variant="label" color={dark.textMid}>
+          <Text nutrient="calories" variant="label" color={dark.textMid}>
             CALORIES (KCAL) *
           </Text>
           <TextInput
@@ -124,7 +124,7 @@ export function QuickAddCaloriesModal({
           </Text>
           <View style={styles.macroInputsRow}>
             <View style={styles.macroField}>
-              <Text variant="bodyS" color={dark.textLo}>
+              <Text nutrient="protein" variant="bodyS" color={dark.textLo}>
                 Protein (g)
               </Text>
               <TextInput
@@ -139,7 +139,7 @@ export function QuickAddCaloriesModal({
             </View>
 
             <View style={styles.macroField}>
-              <Text variant="bodyS" color={dark.textLo}>
+              <Text nutrient="carbs" variant="bodyS" color={dark.textLo}>
                 Carbs (g)
               </Text>
               <TextInput
@@ -154,7 +154,7 @@ export function QuickAddCaloriesModal({
             </View>
 
             <View style={styles.macroField}>
-              <Text variant="bodyS" color={dark.textLo}>
+              <Text nutrient="fat" variant="bodyS" color={dark.textLo}>
                 Fat (g)
               </Text>
               <TextInput

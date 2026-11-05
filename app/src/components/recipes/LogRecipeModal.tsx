@@ -303,37 +303,52 @@ export function LogRecipeModal({
 
               <View style={styles.nutrientsGrid}>
                 <View style={styles.nutrientBox}>
-                  <Text style={[styles.nutrientVal, { color: colors.macroCalories }]}>
+                  <Text
+                    nutrient="calories"
+                    style={[styles.nutrientVal, { color: colors.macroCalories }]}
+                  >
                     {Math.round(scaledNutrients.calories)}
                   </Text>
-                  <Text style={[styles.nutrientLabel, { color: colors.textMuted }]}>
+                  <Text
+                    nutrient="calories"
+                    style={[styles.nutrientLabel, { color: colors.textMuted }]}
+                  >
                     {t('recipes.detail.caloriesLabel')}
                   </Text>
                 </View>
 
                 <View style={styles.nutrientBox}>
-                  <Text style={[styles.nutrientVal, { color: colors.macroProtein }]}>
+                  <Text
+                    nutrient="protein"
+                    style={[styles.nutrientVal, { color: colors.macroProtein }]}
+                  >
                     {Math.round(scaledNutrients.protein)}g
                   </Text>
-                  <Text style={[styles.nutrientLabel, { color: colors.textMuted }]}>
+                  <Text
+                    nutrient="protein"
+                    style={[styles.nutrientLabel, { color: colors.textMuted }]}
+                  >
                     {t('recipes.detail.proteinLabel')}
                   </Text>
                 </View>
 
                 <View style={styles.nutrientBox}>
-                  <Text style={[styles.nutrientVal, { color: colors.macroCarbs }]}>
+                  <Text nutrient="carbs" style={[styles.nutrientVal, { color: colors.macroCarbs }]}>
                     {Math.round(scaledNutrients.carbs)}g
                   </Text>
-                  <Text style={[styles.nutrientLabel, { color: colors.textMuted }]}>
+                  <Text
+                    nutrient="carbs"
+                    style={[styles.nutrientLabel, { color: colors.textMuted }]}
+                  >
                     {t('recipes.detail.carbsLabel')}
                   </Text>
                 </View>
 
                 <View style={styles.nutrientBox}>
-                  <Text style={[styles.nutrientVal, { color: colors.macroFat }]}>
+                  <Text nutrient="fat" style={[styles.nutrientVal, { color: colors.macroFat }]}>
                     {Math.round(scaledNutrients.fat)}g
                   </Text>
-                  <Text style={[styles.nutrientLabel, { color: colors.textMuted }]}>
+                  <Text nutrient="fat" style={[styles.nutrientLabel, { color: colors.textMuted }]}>
                     {t('recipes.detail.fatLabel')}
                   </Text>
                 </View>
@@ -372,7 +387,10 @@ export function LogRecipeModal({
                   </Text>
                 </View>
               ) : (
-                <Text style={[styles.submitBtnText, { color: colors.onAccent }]}>
+                <Text
+                  nutrient="calories"
+                  style={[styles.submitBtnText, { color: colors.onAccent }]}
+                >
                   {t('recipes.logSheet.submitButton', {
                     servings,
                     calories: Math.round(scaledNutrients.calories),

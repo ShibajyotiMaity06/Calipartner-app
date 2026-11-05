@@ -1,3 +1,4 @@
+import type { NutrientCorrection } from '@calipartner/core';
 import { withOnlineSave } from './accountDataService';
 import {
   calculateDiaryTotals,
@@ -6,6 +7,7 @@ import {
   DEV_100_FOOD_SEED,
   getMealSectionForTime,
   scaleNutrients,
+  applyNutrientCorrection,
   parseNutritionDetails,
   resizeNutrientSnapshot,
   type CreateFoodInput,
@@ -419,6 +421,7 @@ export async function logFoodEntry(
     localDate?: string;
     source?: EntrySource;
     sharedMealId?: string | null;
+    nutrientOverrides?: NutrientCorrection;
   },
 ): Promise<FoodEntry> {
   return withOnlineSave(db, async (db) => {
@@ -437,7 +440,10 @@ export async function logFoodEntry(
     const source = input.source ?? 'search';
 
     // Compute live nutrient snapshot via core formula
-    const nutrients = scaleNutrients(input.food, input.quantity, input.unit);
+    const nutrients = applyNutrientCorrection(
+      scaleNutrients(input.food, input.quantity, input.unit),
+      input.nutrientOverrides,
+    );
 
     const entry: FoodEntry = {
       id,
@@ -643,6 +649,20 @@ export async function editFoodEntry(
       nutritionDetails = scaled.nutrition_details ?? null;
     }
 
+    const corrected = applyNutrientCorrection(
+      {
+        calories,
+        protein,
+        carbs,
+        fat,
+        fiber,
+        sugar,
+        sodium_mg: sodiumMg,
+        nutrition_details: nutritionDetails,
+      },
+      updates,
+    );
+    ({ calories, protein, carbs, fat } = corrected);
     await db.runAsync(
       `UPDATE local_food_entries SET
       quantity = ?,

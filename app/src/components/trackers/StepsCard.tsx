@@ -222,7 +222,7 @@ export function StepsCard({ selectedDate, testID = 'steps-card' }: StepsCardProp
             <View style={styles.statTile}>
               <Ionicons name="flame-outline" size={16} color={dark.apricot} />
               <Text style={styles.tileLabel}>Active estimate</Text>
-              <Text testID="steps-calories-text" style={styles.tileValue}>
+              <Text nutrient="calories" testID="steps-calories-text" style={styles.tileValue}>
                 {t('trackers.steps.calories', { calories: walkingCalories })}
               </Text>
               <Text style={styles.tileSubNote}>estimate, not added</Text>
@@ -325,7 +325,9 @@ export function StepsCard({ selectedDate, testID = 'steps-card' }: StepsCardProp
 
           {/* Non-negotiable product copy note */}
           <View style={styles.copyNoteBox}>
-            <Text style={styles.copyNoteText}>{t('trackers.steps.exerciseCaloriesNote')}</Text>
+            <Text nutrient="calories" style={styles.copyNoteText}>
+              {t('trackers.steps.exerciseCaloriesNote')}
+            </Text>
           </View>
 
           {/* Empty State Notice */}

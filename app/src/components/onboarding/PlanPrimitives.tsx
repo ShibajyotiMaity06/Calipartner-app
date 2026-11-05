@@ -9,6 +9,8 @@ import {
   space,
   onboardingType as typography,
   useTheme,
+  nutritionColors,
+  type NutritionMetric,
 } from '@calipartner/ui';
 
 export function PlanCard({ children, testID }: { children: React.ReactNode; testID?: string }) {
@@ -53,12 +55,14 @@ export function NumberField({
   onChange,
   testID,
   optional = false,
+  nutrient,
 }: {
   label: string;
   value: number | null;
   onChange: (value: number | null) => void;
   testID: string;
   optional?: boolean;
+  nutrient?: NutritionMetric;
 }) {
   const { colors } = useTheme();
   const [text, setText] = useState(value !== null && Number.isFinite(value) ? String(value) : '');
@@ -69,7 +73,13 @@ export function NumberField({
   }, [value]);
   return (
     <View style={planStyles.gap}>
-      <Text fontSet="onboarding" variant="bodyS" color={colors.textMid} maxFontSizeMultiplier={2}>
+      <Text
+        nutrient={nutrient}
+        fontSet="onboarding"
+        variant="bodyS"
+        color={colors.textMid}
+        maxFontSizeMultiplier={2}
+      >
         {label}
       </Text>
       <TextInput
@@ -86,6 +96,7 @@ export function NumberField({
             { color: colors.textHi, backgroundColor: colors.s2, borderColor: colors.hairlineLit },
           ],
           { fontFamily: inputTypography.body.fontFamily },
+          nutrient ? { color: nutritionColors[nutrient] } : {},
         ]}
         onChangeText={(next) => {
           setText(next);

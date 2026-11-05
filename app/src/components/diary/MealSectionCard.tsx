@@ -95,10 +95,16 @@ export function MealSectionCard({
             ] as const
           ).map(([key, unit, label]) => (
             <View key={key} style={styles.metric}>
-              <Text variant="bodyS" color={dark.textMid}>
+              <Text nutrient={key} variant="bodyS" color={dark.textMid}>
                 {label}
               </Text>
-              <Text variant="body" color={dark.textHi} style={styles.metricValue} tabular>
+              <Text
+                nutrient={key}
+                variant="body"
+                color={dark.textHi}
+                style={styles.metricValue}
+                tabular
+              >
                 {summary[key]} {unit}
               </Text>
             </View>
@@ -161,7 +167,7 @@ export function MealSectionCard({
               </View>
 
               <View style={styles.entryRowRight}>
-                <Text variant="numeralM" color={dark.textHi}>
+                <Text nutrient="calories" variant="numeralM" color={dark.textHi}>
                   {entry.calories}
                 </Text>
                 <Pressable

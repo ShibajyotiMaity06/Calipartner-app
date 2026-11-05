@@ -212,24 +212,28 @@ export default function TodayScreen() {
           onPress={() => router.push('/(tabs)/progress' as Href)}
           metrics={[
             {
+              nutrient: 'calories',
               label: t('squadDesign.calories'),
               value: daySummary.totals.calories,
               target: targetCalories,
               unit: t('squadDesign.kcal'),
             },
             {
+              nutrient: 'protein',
               label: t('squadDesign.protein'),
               value: daySummary.totals.protein,
               target: targetProtein,
               unit: t('squadDesign.grams'),
             },
             {
+              nutrient: 'carbs',
               label: t('squadDesign.carbs'),
               value: daySummary.totals.carbs,
               target: currentGoalProfile?.carb_grams ?? null,
               unit: t('squadDesign.grams'),
             },
             {
+              nutrient: 'fat',
               label: t('squadDesign.fat'),
               value: daySummary.totals.fat,
               target: currentGoalProfile?.fat_grams ?? null,
@@ -397,6 +401,7 @@ export default function TodayScreen() {
                   quantity: data.quantity,
                   unit: data.unit,
                   meal_section: data.mealSection,
+                  ...data.nutrientOverrides,
                 },
                 data.food,
               );

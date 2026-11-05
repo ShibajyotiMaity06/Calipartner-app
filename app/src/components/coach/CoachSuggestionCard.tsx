@@ -71,25 +71,28 @@ export function CoachSuggestionCard({ suggestion, onLog }: CoachSuggestionCardPr
       {/* Nutrient breakdown pill row */}
       <View style={styles.macroRow}>
         <View style={[styles.macroPill, { backgroundColor: colors.surfaceAlt }]}>
-          <Text style={[styles.macroText, { color: colors.macroCalories, fontWeight: '700' }]}>
+          <Text
+            nutrient="calories"
+            style={[styles.macroText, { color: colors.macroCalories, fontWeight: '700' }]}
+          >
             {t('coach.suggestion.cal', { cal: Math.round(suggestion.calories) })}
           </Text>
         </View>
 
         <View style={[styles.macroPill, { backgroundColor: colors.surfaceAlt }]}>
-          <Text style={[styles.macroText, { color: colors.macroProtein }]}>
+          <Text nutrient="protein" style={[styles.macroText, { color: colors.macroProtein }]}>
             {t('coach.suggestion.p', { val: Math.round(suggestion.protein) })}
           </Text>
         </View>
 
         <View style={[styles.macroPill, { backgroundColor: colors.surfaceAlt }]}>
-          <Text style={[styles.macroText, { color: colors.macroCarbs }]}>
+          <Text nutrient="carbs" style={[styles.macroText, { color: colors.macroCarbs }]}>
             {t('coach.suggestion.c', { val: Math.round(suggestion.carbs) })}
           </Text>
         </View>
 
         <View style={[styles.macroPill, { backgroundColor: colors.surfaceAlt }]}>
-          <Text style={[styles.macroText, { color: colors.macroFat }]}>
+          <Text nutrient="fat" style={[styles.macroText, { color: colors.macroFat }]}>
             {t('coach.suggestion.f', { val: Math.round(suggestion.fat) })}
           </Text>
         </View>

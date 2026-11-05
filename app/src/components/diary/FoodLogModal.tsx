@@ -1,14 +1,19 @@
+import type { NutrientCorrection } from '@calipartner/core';
 import { type as inputTypography } from '@calipartner/ui';
 import { PaywallModal } from '@/components/rooms/PaywallModal';
 import React, { useRef, useState } from 'react';
 import { ActivityIndicator, Modal, Pressable, ScrollView, TextInput, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import type { Food, FoodCandidateItem, MealSection } from '@calipartner/core';
-import { scaleNutrients, sumNutrientSnapshots } from '@calipartner/core';
+import { applyNutrientCorrection, scaleNutrients, sumNutrientSnapshots } from '@calipartner/core';
 import { Button, homeLayout, Text } from '@calipartner/ui';
 import { useAuth } from '@/contexts/AuthContext';
 import { getDb } from '@/db';
 import { useFoodSearch } from '@/hooks/useFoodSearch';
+import { useFoodLibrary } from '@/hooks/useFoodLibrary';
+import { FoodFavoriteButton } from './FoodFavoriteButton';
+import { FoodFavoritesView } from './FoodFavoritesView';
+import { NutrientSummary } from './NutrientSummary';
 import { useAddEntry } from '@/hooks/useFoodEntries';
 import { usePreviouslyLogged, type PreviouslyLoggedItem } from '@/hooks/usePreviouslyLogged';
 import { t } from '@/i18n';
@@ -44,7 +49,7 @@ export interface FoodLogModalProps {
   initialTab?: TabType;
 }
 
-type TabType = 'search' | 'scan' | 'photo' | 'recipes';
+type TabType = 'search' | 'scan' | 'photo' | 'recipes' | 'favorites';
 
 export function FoodLogModal({
   visible,
@@ -56,10 +61,20 @@ export function FoodLogModal({
 }: FoodLogModalProps) {
   const { colors } = useTheme();
   const { user } = useAuth();
+  const library = useFoodLibrary();
 
   const [showPhotoPlans, setShowPhotoPlans] = useState(false);
   const [selectedFoods, setSelectedFoods] = useState<
-    Record<string, { food: Food; quantity: number; unit: string; source: 'search' | 'history' }>
+    Record<
+      string,
+      {
+        food: Food;
+        quantity: number;
+        unit: string;
+        source: 'search' | 'history';
+        nutrientOverrides?: NutrientCorrection;
+      }
+    >
   >({});
   const [batchSaving, setBatchSaving] = useState(false);
   const [batchError, setBatchError] = useState(false);
@@ -101,7 +116,14 @@ export function FoodLogModal({
   const { addEntry, error: saveError } = useAddEntry();
   const selection = Object.values(selectedFoods);
   const selectionTotals = sumNutrientSnapshots(
-    selection.map((item) => scaleNutrients(item.food, item.quantity, item.unit)),
+    selection.map((item) =>
+      item.nutrientOverrides
+        ? applyNutrientCorrection(
+            scaleNutrients(item.food, item.quantity, item.unit),
+            item.nutrientOverrides,
+          )
+        : scaleNutrients(item.food, item.quantity, item.unit),
+    ),
   );
   const saveSelection = async () => {
     if (batchInFlight.current || !selection.length) return;
@@ -152,6 +174,7 @@ export function FoodLogModal({
   } = usePreviouslyLogged();
 
   const handleSelectFood = (food: Food) => {
+    if (query.trim()) void library.remember(query);
     setSelectedFoodForQuantity(food);
   };
 
@@ -171,6 +194,7 @@ export function FoodLogModal({
           food: data.food,
           quantity: data.quantity,
           unit: data.unit,
+          nutrientOverrides: data.nutrientOverrides,
         },
       }));
       setSelectedFoodForQuantity(null);
@@ -368,6 +392,7 @@ export function FoodLogModal({
               [
                 ['search', 'search-outline'],
                 ['recipes', 'book-outline'],
+                ['favorites', 'heart-outline'],
                 ['photo', 'camera-outline'],
                 ['scan', 'barcode-outline'],
               ] as const
@@ -378,15 +403,18 @@ export function FoodLogModal({
                   key={tab}
                   testID={`tab-log-${tab}`}
                   accessibilityRole={tab === 'scan' ? 'button' : 'tab'}
-                  accessibilityLabel={t(`foodLog.tabs.${tab}`)}
+                  accessibilityLabel={
+                    tab === 'favorites' ? t('foodPolish.favorites') : t(`foodLog.tabs.${tab}`)
+                  }
                   accessibilityState={{ selected: isActive }}
                   onPress={() => (tab === 'scan' ? setShowBarcodeScanner(true) : setActiveTab(tab))}
                   style={({ pressed }) => ({
-                    flexBasis: '20%',
+                    flexBasis: 0,
                     flexGrow: 1,
                     minWidth: homeLayout.touchSize,
                     minHeight: homeLayout.touchSize,
-                    padding: spacing.sm,
+                    paddingVertical: spacing.sm,
+                    paddingHorizontal: spacing.xs,
                     gap: spacing.xs,
                     alignItems: 'center',
                     justifyContent: 'center',
@@ -408,13 +436,33 @@ export function FoodLogModal({
                       color: isActive ? colors.accent : colors.textMuted,
                     }}
                   >
-                    {t(`foodLog.tabs.${tab}`)}
+                    {tab === 'favorites' ? t('foodPolish.favorites') : t(`foodLog.tabs.${tab}`)}
                   </Text>
                 </Pressable>
               );
             })}
           </View>
 
+          {library.error && (
+            <View style={{ paddingHorizontal: spacing.md, gap: spacing.xs }}>
+              <Text accessibilityRole="alert">{t('foodPolish.libraryError')}</Text>
+              <Button
+                variant="secondary"
+                label={t('common.retry')}
+                onPress={() => void library.refresh()}
+                testID="retry-food-library"
+              />
+            </View>
+          )}
+          {activeTab === 'favorites' && (
+            <FoodFavoritesView
+              library={library}
+              onFood={handleSelectFood}
+              defaultSection={defaultSection}
+              localDate={localDate}
+              onLogged={onLogged}
+            />
+          )}
           {/* TAB 1: Search */}
           {activeTab === 'search' && (
             <View
@@ -441,6 +489,9 @@ export function FoodLogModal({
                   testID="input-food-search"
                   value={query}
                   onChangeText={setQuery}
+                  onSubmitEditing={() => {
+                    if (query.trim()) void library.remember(query);
+                  }}
                   placeholder={t('foodLog.searchPlaceholder')}
                   placeholderTextColor={colors.textMuted}
                   autoFocus={false}
@@ -462,6 +513,43 @@ export function FoodLogModal({
                 )}
               </View>
 
+              <Button
+                variant="secondary"
+                label={t('foodPolish.customFood')}
+                onPress={() => setShowCustomFoodModal(true)}
+                testID="btn-create-custom-food"
+              />
+              <View style={{ gap: spacing.xs }}>
+                <View
+                  style={{
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    flexWrap: 'wrap',
+                  }}
+                >
+                  <Text variant="label">{t('foodPolish.searchHistory')}</Text>
+                  <Button
+                    variant="tertiary"
+                    fullWidth={false}
+                    label={t('foodPolish.clearHistory')}
+                    disabled={library.busy || !library.searches.length}
+                    onPress={() => void library.clearHistory()}
+                    testID="clear-food-search-history"
+                  />
+                </View>
+                {!query.trim() &&
+                  library.searches.map((search) => (
+                    <Button
+                      key={search}
+                      variant="secondary"
+                      label={search}
+                      accessibilityLabel={t('foodPolish.searchAgain', { query: search })}
+                      onPress={() => setQuery(search)}
+                      testID={`food-search-history-${search}`}
+                    />
+                  ))}
+              </View>
               {/* Search status & results */}
               {searchLoading ? (
                 <View style={{ paddingVertical: spacing.lg, alignItems: 'center' }}>
@@ -529,12 +617,20 @@ export function FoodLogModal({
                         >
                           {f.name}
                         </Text>
-                        <Text style={{ fontSize: fontSize.xs, color: colors.textMuted }}>
-                          {f.brand ? `${f.brand} • ` : ''}P {f.protein_per_100g}g • C{' '}
-                          {f.carbs_per_100g}g • F {f.fat_per_100g}g (per 100g)
-                        </Text>
+                        {f.brand && <Text variant="micro">{f.brand}</Text>}
+                        <NutrientSummary
+                          variant="micro"
+                          values={{
+                            calories: f.calories_per_100g,
+                            protein: f.protein_per_100g,
+                            carbs: f.carbs_per_100g,
+                            fat: f.fat_per_100g,
+                          }}
+                        />
+                        <Text variant="micro">{t('foodPolish.portion')}</Text>
                       </View>
 
+                      <FoodFavoriteButton food={f} library={library} />
                       <Pressable
                         testID={`select-food-${f.id}`}
                         onPress={(event) => {
@@ -559,6 +655,7 @@ export function FoodLogModal({
                       </Pressable>
                       <View style={{ alignItems: 'flex-end', gap: 2 }}>
                         <Text
+                          nutrient="calories"
                           style={{
                             fontSize: fontSize.sm,
                             fontWeight: '700',
@@ -799,6 +896,7 @@ export function FoodLogModal({
                       </Pressable>
 
                       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                        <FoodFavoriteButton food={item.food} library={library} />
                         <Pressable
                           testID={`select-history-${item.food.id}`}
                           onPress={() =>
@@ -875,13 +973,8 @@ export function FoodLogModal({
               style={{ padding: spacing.md, gap: spacing.sm, backgroundColor: colors.surface }}
               testID="food-selection-footer"
             >
-              <Text style={{ color: colors.text }}>
-                {t('homeRefresh.selectedFoods', {
-                  count: selection.length,
-                  calories: Math.round(selectionTotals.calories),
-                  protein: Math.round(selectionTotals.protein),
-                })}
-              </Text>
+              <Text>{t('foodPolish.selected', { count: selection.length })}</Text>
+              <NutrientSummary values={selectionTotals} />
               {batchError && (
                 <Text style={{ color: colors.danger }} accessibilityRole="alert">
                   {t('fixNovember.saveFailed')}

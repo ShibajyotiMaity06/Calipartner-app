@@ -97,15 +97,15 @@ export function MacroBar({
         <View style={styles.macroColumn}>
           <View style={styles.indicatorRow}>
             <View style={[styles.colorDot, { backgroundColor: baseColor }]} />
-            <Text variant="label" color={dark.textMid}>
+            <Text nutrient="protein" variant="label" color={dark.textMid}>
               Protein
             </Text>
           </View>
-          <Text variant="heading" color={dark.textHi}>
+          <Text nutrient="protein" variant="heading" color={dark.textHi}>
             {`${Math.round(proteinGrams)}g`}
           </Text>
           {proteinTargetGrams != null && (
-            <Text variant="micro" color={dark.textLo}>
+            <Text nutrient="protein" variant="micro" color={dark.textLo}>
               {`/ ${Math.round(proteinTargetGrams)}g`}
             </Text>
           )}
@@ -115,15 +115,15 @@ export function MacroBar({
         <View style={styles.macroColumn}>
           <View style={styles.indicatorRow}>
             <View style={[styles.colorDot, { backgroundColor: baseColor, opacity: 0.55 }]} />
-            <Text variant="label" color={dark.textMid}>
+            <Text nutrient="carbs" variant="label" color={dark.textMid}>
               Carbs
             </Text>
           </View>
-          <Text variant="heading" color={dark.textHi}>
+          <Text nutrient="carbs" variant="heading" color={dark.textHi}>
             {`${Math.round(carbsGrams)}g`}
           </Text>
           {carbsTargetGrams != null && (
-            <Text variant="micro" color={dark.textLo}>
+            <Text nutrient="carbs" variant="micro" color={dark.textLo}>
               {`/ ${Math.round(carbsTargetGrams)}g`}
             </Text>
           )}
@@ -133,15 +133,15 @@ export function MacroBar({
         <View style={styles.macroColumn}>
           <View style={styles.indicatorRow}>
             <View style={[styles.colorDot, { backgroundColor: baseColor, opacity: 0.28 }]} />
-            <Text variant="label" color={dark.textMid}>
+            <Text nutrient="fat" variant="label" color={dark.textMid}>
               Fat
             </Text>
           </View>
-          <Text variant="heading" color={dark.textHi}>
+          <Text nutrient="fat" variant="heading" color={dark.textHi}>
             {`${Math.round(fatGrams)}g`}
           </Text>
           {fatTargetGrams != null && (
-            <Text variant="micro" color={dark.textLo}>
+            <Text nutrient="fat" variant="micro" color={dark.textLo}>
               {`/ ${Math.round(fatTargetGrams)}g`}
             </Text>
           )}

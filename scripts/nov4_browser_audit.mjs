@@ -11,7 +11,7 @@ const installed = fs
 if (!installed) throw new Error('Playwright is required for the browser audit.');
 const { chromium } = await import(`file:///${installed.replaceAll('\\', '/')}`);
 const root = path.resolve('app/dist'),
-  out = path.resolve('.artifacts/nov4-repairs');
+  out = path.resolve('.artifacts/food-polish/browser');
 fs.mkdirSync(out, { recursive: true });
 const bundles = path.join(root, '_expo/static/js/web');
 const compiled = fs
@@ -177,6 +177,9 @@ const projectedPlan = () =>
         diet_tips: paid && !trial ? weeklyPlan.diet_tips : [],
       };
 const savedMeals = new Map();
+let emptySquads = false;
+const foodLibrary = { foods: [], searches: [] };
+const trackingRequests = [];
 let saveAttempts = 0;
 let paid = false,
   seen = false;
@@ -228,7 +231,42 @@ try {
       const name = url.pathname.split('/').at(-1),
         body = request.postDataJSON() ?? {};
       requests.push(name);
-      if (name === 'get_personal_weekly_plan') data = projectedPlan();
+      if (name === 'get_food_library') data = foodLibrary;
+      else if (name === 'set_food_favorite') {
+        foodLibrary.foods = foodLibrary.foods.filter((food) => food.id !== body.p_food.id);
+        if (body.p_favorite) foodLibrary.foods.push(body.p_food);
+        data = { food_key: body.p_food_key, favorite: body.p_favorite };
+      } else if (name === 'record_food_search') {
+        const query = body.p_query.trim().toLowerCase();
+        foodLibrary.searches = [query, ...foodLibrary.searches.filter((q) => q !== query)];
+        data = { query };
+      } else if (name === 'clear_food_search_history') {
+        foodLibrary.searches = [];
+        data = { cleared: true };
+      } else if (name === 'get_social_profile')
+        data = {
+          ...profile,
+          id: user.id,
+          relationship: 'self',
+          is_public: false,
+          request_id: null,
+        };
+      else if (name === 'browse_social_profiles')
+        data = Array.from({ length: 5 }, (_, i) => ({
+          id: uid(i + 1),
+          nickname: 'Goal peer ' + (i + 1),
+          username: 'goalpeer' + (i + 1),
+          avatar_url: null,
+          is_public: false,
+          relationship: 'none',
+          request_id: null,
+        }));
+      else if (name === 'save_tracking_changes') {
+        trackingRequests.push(body);
+        for (const change of body.p_changes ?? [])
+          if (change.entity === 'food_entries') savedMeals.set(change.payload.id, change.payload);
+        data = { saved: true };
+      } else if (name === 'get_personal_weekly_plan') data = projectedPlan();
       else if (name === 'edit_weekly_routine') {
         weeklyPlan.days[body.p_day].workout.exercises = body.p_exercises;
         weeklyPlan.revision++;
@@ -258,7 +296,7 @@ try {
           deleted_at: null,
         };
         savedMeals.set(data.id, data);
-      } else if (name === 'get_my_rooms') data = rooms;
+      } else if (name === 'get_my_rooms') data = emptySquads ? [] : rooms;
       else if (name === 'get_individual_progress') data = null;
       else if (name === 'log_coach_meal') {
         saveAttempts++;
@@ -575,8 +613,9 @@ try {
   await page.getByText('Did you log your Breakfast?', { exact: true }).waitFor();
   await page.getByTestId('home-open-friends').click();
   await page.getByTestId('community-panel').waitFor();
-  assert.equal(await page.locator('[data-testid^="community-person-"]').count(), 0);
-  await page.getByText('Search by username to find someone.', { exact: true }).first().waitFor();
+  await page.getByTestId('community-person-' + uid(1)).waitFor();
+  assert.equal(await page.locator('[data-testid^="community-person-"]').count(), 5);
+
   await home();
   await page.getByTestId('tab-log').click();
   const boxes = await Promise.all(
@@ -628,16 +667,21 @@ try {
   await snap('you-progress');
   await page.goto('http://127.0.0.1:8098/room?room=' + rid(1));
   await page.getByTestId('room-tab-progress').click();
+  assert(!(await page.getByTestId('squad-leaderboard-list').innerText()).includes('kcal'));
   assert.equal(
     await page
       .getByTestId('room-tab-progress')
-      .evaluate((element) => globalThis.getComputedStyle(element).borderTopColor),
+      .evaluate(
+        (element) => globalThis.getComputedStyle(element.querySelector('[dir="auto"]')).color,
+      ),
     'rgb(244, 212, 119)',
   );
   assert.notEqual(
     await page
       .getByTestId('room-tab-today')
-      .evaluate((element) => globalThis.getComputedStyle(element).borderTopColor),
+      .evaluate(
+        (element) => globalThis.getComputedStyle(element.querySelector('[dir="auto"]')).color,
+      ),
     'rgb(244, 212, 119)',
   );
   await page.getByTestId('room-tab-chat').click();
@@ -653,6 +697,13 @@ try {
   await page.getByTestId('squad-chat-back').click();
   await page.getByTestId('floating-tab-bar').waitFor();
   assert.equal(await page.getByTestId('room-tab-progress').getAttribute('aria-selected'), 'true');
+  await page.goto('http://127.0.0.1:8098/room?room=' + rid(1) + '&tab=progress');
+  await page.getByTestId('room-tab-progress').waitFor();
+  await page.getByTestId('room-tab-today').click();
+  await page.getByTestId('squad-choose-person').click();
+  await page.getByTestId('choose-member-' + uid(2)).click();
+  await page.waitForTimeout(200);
+  assert.equal(await page.getByTestId('room-tab-today').getAttribute('aria-selected'), 'true');
   await page.goto('http://127.0.0.1:8098/coach');
   await page.getByTestId('screen-coach-chat').waitFor();
   const promptFont = await page
@@ -699,8 +750,11 @@ try {
   await page.getByTestId('squad-choose-person').click();
   await page.getByTestId('choose-member-' + uid(0)).click();
   await page.getByTestId('squad-person-inline').getByText('You', { exact: true }).first().waitFor();
+  await page.waitForTimeout(200);
+  assert.equal(await page.getByTestId('room-tab-today').getAttribute('aria-selected'), 'true');
   await page.getByTestId('open-two-person-compare').click();
   await page.getByTestId('screen-squad-compare').waitFor();
+  assert.equal(await page.getByTestId('compare-choose-left').locator('img').count(), 0);
   await page.getByTestId('log-peer-food-' + rid(51)).waitFor();
   assert.equal(await page.locator('[data-testid^="log-peer-food-"]').count(), 1);
   const idleReads = requests.filter(
@@ -799,6 +853,87 @@ try {
   await composer.getByTestId('btn-chat-send').click();
   await page.getByText('Free squad chat check', { exact: true }).waitFor();
   await snap('free-squad-chat');
+
+  await page.setViewportSize({ width: 375, height: 844 });
+  // Owner follow-up: empty-Squad widths, discovery, challenges and food library/editor.
+  emptySquads = true;
+  await page.goto('http://127.0.0.1:8098/today');
+  await page.getByTestId('personal-day-card').waitFor();
+  const emptyCard = await page.getByTestId('home-create-squad-end').boundingBox();
+  const personalCard = await page.getByTestId('personal-day-card').boundingBox();
+  assert(Math.abs(emptyCard.width - personalCard.width) <= 1);
+  await snap('empty-squad-width');
+  emptySquads = false;
+  await page.goto('http://127.0.0.1:8098/friends');
+  await page.getByTestId('community-person-' + uid(1)).waitFor();
+  assert.equal(await page.locator('[data-testid^="community-person-"]').count(), 5);
+  await snap('five-goal-suggestions');
+  await page.goto('http://127.0.0.1:8098/progress');
+  await page.getByTestId('you-tabs-challenges').click();
+  await page.getByTestId('challenges-view').waitFor();
+  await snap('you-challenges');
+  await page.getByTestId('you-tabs-diary').click();
+  await page.getByTestId('you-daily-macros').waitFor();
+  for (const [label, color] of [
+    ['Protein', 'rgb(46, 192, 131)'],
+    ['Carbs', 'rgb(255, 255, 255)'],
+    ['Fat', 'rgb(246, 92, 88)'],
+  ]) {
+    assert.equal(
+      await page
+        .getByTestId('you-daily-macros')
+        .getByText(label, { exact: true })
+        .evaluate((node) => globalThis.getComputedStyle(node).color),
+      color,
+    );
+  }
+  await page.goto('http://127.0.0.1:8098/today');
+  await page.getByTestId('btn-add-food-lunch').click();
+  await page.getByTestId('input-food-search').fill('chicken');
+  const searchRow = page.locator('[data-testid^="search-result-"]').first();
+  await searchRow.waitFor();
+  await searchRow.locator('[data-testid^="favorite-food-"]').click();
+  await page.waitForFunction(
+    () =>
+      !globalThis.document.querySelector('[data-testid^="favorite-food-"][aria-disabled="true"]'),
+  );
+  await page.getByTestId('tab-log-favorites').click();
+  await page.locator('[data-testid^="favorite-result-"]').first().waitFor();
+  assert.equal(foodLibrary.foods.length, 1);
+  await snap('food-and-recipe-favorites');
+  await page.getByTestId('tab-log-search').click();
+  await page.locator('[data-testid^="search-result-"]').first().click();
+  await page.getByTestId('unit-pill-g').click();
+  await page.getByTestId('input-quantity-amount').fill('100');
+  await page.getByTestId('edit-nutrition').click();
+  await page.getByTestId('edit-nutrient-protein').fill('50');
+  await snap('edited-food-macros');
+  await page.getByTestId('btn-submit-quantity').click();
+  await page.getByTestId('input-food-search').waitFor({ state: 'hidden' });
+  assert(
+    trackingRequests.some((request) =>
+      request.p_changes.some(
+        (change) => change.entity === 'food_entries' && change.payload.protein === 50,
+      ),
+    ),
+  );
+  await page.getByTestId('btn-add-food-lunch').click();
+  await page.getByTestId('clear-food-search-history').click();
+  await page.waitForTimeout(100);
+  assert.deepEqual(foodLibrary.searches, []);
+  assert.equal(foodLibrary.foods.length, 1);
+  await page.getByTestId('btn-create-custom-food').click();
+  await page.getByTestId('input-custom-food-name').fill('My custom food');
+  await page.getByTestId('input-custom-food-calories').fill('450');
+  await page.getByTestId('input-custom-food-protein').fill('50');
+  await page.getByTestId('input-custom-food-carbs').fill('30');
+  await page.getByTestId('input-custom-food-fat').fill('10');
+  await page.getByTestId('btn-submit-custom-food').click();
+  await page.getByTestId('btn-submit-quantity').waitFor();
+  await snap('custom-food-portion');
+  await page.getByTestId('btn-submit-quantity').click();
+  await page.getByTestId('input-food-search').waitFor({ state: 'hidden' });
+
   paid = false;
   pro = false;
   trial = false;
@@ -848,7 +983,7 @@ try {
   await page.waitForURL('https://checkout.dodopayments.com/fixture');
   assert.deepEqual(errors, []);
   console.log(
-    'November 4 browser audit: previous food/polish coverage, chronological nested/tab/Log Back, inline member selection, stable idle Compare, acknowledged peer-food copying, Monday-only Free/trial, full paid week/tips and persisted routine editing, India Razorpay dismissal/pending/verified access/confirmed cancellation and international Dodo routing passed at 375/390/844px',
+    'November 4 browser audit: nutrient text colours, full-width empty Home, five goal suggestions, restored Challenges, food favourites/search clearing, custom food and acknowledged 50g protein correction, plus previous food/polish coverage, chronological nested/tab/Log Back, inline member selection, stable idle Compare, acknowledged peer-food copying, Monday-only Free/trial, full paid week/tips and persisted routine editing, India Razorpay dismissal/pending/verified access/confirmed cancellation and international Dodo routing passed at 375/390/844px',
   );
 } catch (error) {
   for (const page of browser?.contexts().flatMap((context) => context.pages()) ?? []) {

@@ -1,3 +1,4 @@
+import { NutrientSummary } from '../diary/NutrientSummary';
 import React from 'react';
 import { View } from 'react-native';
 import type { RoomMemberSnapshot } from '@calipartner/core';
@@ -14,9 +15,7 @@ export function BasicRoomCard({ members }: { members: RoomMemberSnapshot[] }) {
           <Card key={person.user_id}>
             <View style={planStyles.gap}>
               <Text variant="heading">{person.nickname}</Text>
-              {person.is_self && typeof metrics.calories === 'number' ? (
-                <Text tabular>{t('setup.kcalDay', { kcal: metrics.calories })}</Text>
-              ) : typeof metrics.goal_completion === 'number' ? (
+              {typeof metrics.goal_completion === 'number' ? (
                 <Text tabular>
                   {t('roomAudit.goalPercent', { percent: metrics.goal_completion })}
                 </Text>
@@ -26,13 +25,9 @@ export function BasicRoomCard({ members }: { members: RoomMemberSnapshot[] }) {
               {!person.is_self || metrics.macros === 'locked' ? (
                 <HiddenMetric label={t('setup.nutritionPrivate')} />
               ) : (
-                <Text tabular>
-                  {t('setup.sharedMacros', {
-                    protein: metrics.macros.protein,
-                    carbs: metrics.macros.carbs,
-                    fiber: metrics.macros.fiber ?? 0,
-                  })}
-                </Text>
+                <NutrientSummary
+                  values={{ protein: metrics.macros.protein, carbs: metrics.macros.carbs }}
+                />
               )}
               {metrics.logged_today === 'locked' ? (
                 <HiddenMetric label={t('setup.logPrivate')} />

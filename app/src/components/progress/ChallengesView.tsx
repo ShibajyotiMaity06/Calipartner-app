@@ -19,8 +19,17 @@ import { ChallengeDetailModal } from './ChallengeDetailModal';
 import { OccasionPlanModal } from './OccasionPlanModal';
 import { LoadingState } from '@/components/LoadingState';
 
-export function ChallengesView({ testID = 'challenges-view' }: { testID?: string }) {
+export function ChallengesView({
+  testID = 'challenges-view',
+  onRefreshReady,
+}: {
+  testID?: string;
+  onRefreshReady?: (refresh: () => Promise<void>) => void;
+}) {
   const state = useChallenges();
+  useEffect(() => {
+    onRefreshReady?.(state.refresh);
+  }, [onRefreshReady, state.refresh]);
   const { home, userId, track } = state;
   const router = useRouter();
   const params = useLocalSearchParams<{ challenge?: string; trophies?: string }>();

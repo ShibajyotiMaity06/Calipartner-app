@@ -75,10 +75,10 @@ export function DayDetailModal({
             {/* Calories vs Target */}
             {data.calories != null && (
               <View style={[styles.detailRow, { borderBottomColor: colors.border }]}>
-                <Text style={[styles.detailLabel, { color: colors.textMuted }]}>
+                <Text nutrient="calories" style={[styles.detailLabel, { color: colors.textMuted }]}>
                   {t('progress.dayDetailModal.calories')}
                 </Text>
-                <Text style={[styles.detailValue, { color: colors.text }]}>
+                <Text nutrient="calories" style={[styles.detailValue, { color: colors.text }]}>
                   {Math.round(data.calories)} kcal
                   {data.targetCalories != null ? ` / ${Math.round(data.targetCalories)} kcal` : ''}
                 </Text>

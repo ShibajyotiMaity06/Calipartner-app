@@ -1,3 +1,4 @@
+import { NutrientSummary } from '../diary/NutrientSummary';
 import React, { useRef, useState } from 'react';
 import { Modal, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -82,34 +83,37 @@ export function CustomMacrosModal({
           ) : (
             <>
               <Text>{t('customMacros.description')}</Text>
-              <Text tabular>
-                {t('customMacros.current', {
+              <NutrientSummary
+                values={{
                   calories: goal.daily_calorie_target,
                   protein: goal.protein_grams,
                   carbs: goal.carb_grams,
                   fat: goal.fat_grams,
-                })}
-              </Text>
+                }}
+              />
               <NumberField
+                nutrient="protein"
                 label={t('customMacros.protein')}
                 value={protein}
                 onChange={setProtein}
                 testID="custom-macros-protein"
               />
               <NumberField
+                nutrient="carbs"
                 label={t('customMacros.carbs')}
                 value={carbs}
                 onChange={setCarbs}
                 testID="custom-macros-carbs"
               />
               <NumberField
+                nutrient="fat"
                 label={t('customMacros.fat')}
                 value={fat}
                 onChange={setFat}
                 testID="custom-macros-fat"
               />
               {preview ? (
-                <Text tabular testID="custom-macros-preview">
+                <Text nutrient="calories" tabular testID="custom-macros-preview">
                   {t('customMacros.total', { calories: preview.daily_calorie_target })}
                 </Text>
               ) : (

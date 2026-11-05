@@ -43,7 +43,13 @@ export function PersonalDayCard({
 }: {
   score?: number | null;
   goal?: string;
-  metrics: { label: string; value: number; target: number | null; unit: string }[];
+  metrics: {
+    nutrient?: 'calories' | 'protein' | 'carbs' | 'fat';
+    label: string;
+    value: number;
+    target: number | null;
+    unit: string;
+  }[];
   loading: boolean;
   error: boolean;
   errorMessage?: string;
@@ -85,7 +91,7 @@ export function PersonalDayCard({
           testID="personal-day-open"
           style={styles.list}
         >
-          {metrics.map(({ label, value, target, unit }, index) => (
+          {metrics.map(({ label, value, target, unit, nutrient }, index) => (
             <View
               key={label}
               style={styles.metric}
@@ -99,8 +105,10 @@ export function PersonalDayCard({
               }
             >
               <View style={styles.row}>
-                <Text variant="bodyS">{label}</Text>
-                <Text variant="bodyS" tabular style={styles.amount}>
+                <Text variant="bodyS" nutrient={nutrient}>
+                  {label}
+                </Text>
+                <Text variant="bodyS" nutrient={nutrient} tabular style={styles.amount}>
                   {target == null
                     ? t('common.targetUnavailable')
                     : t('squadDesign.amount', { value, target, unit })}

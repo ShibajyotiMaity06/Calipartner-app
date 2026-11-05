@@ -5,7 +5,13 @@
  *
  * @deprecated Prefer importing tokens directly from `@calipartner/ui` or `@calipartner/ui/tokens`.
  */
-import { dark, space, radius as radiusTokens, type as typeTokens } from '@calipartner/ui';
+import {
+  dark,
+  nutritionColors,
+  space,
+  radius as radiusTokens,
+  type as typeTokens,
+} from '@calipartner/ui';
 
 export interface ThemeColors {
   /** @deprecated Use colors.bg0 instead */
@@ -77,10 +83,10 @@ const modernDarkColors: ThemeColors = {
   onAccent: dark.onBrand, // #1C1109 - dark text on apricot
   danger: dark.danger,
   primary: dark.apricot,
-  macroCalories: dark.apricot,
-  macroProtein: dark.iris,
-  macroCarbs: dark.teal,
-  macroFat: dark.rose,
+  macroCalories: nutritionColors.calories,
+  macroProtein: nutritionColors.protein,
+  macroCarbs: nutritionColors.carbs,
+  macroFat: nutritionColors.fat,
   macroFiber: dark.mint,
   cardHighlight: dark.s2,
 

@@ -1,5 +1,6 @@
+import { NutrientSummary } from '../diary/NutrientSummary';
 import { type as inputTypography } from '@calipartner/ui';
-import { Text } from '@calipartner/ui';
+import { Text, Button } from '@calipartner/ui';
 import React, { useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
@@ -13,6 +14,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import {
   scaleNutrients,
+  applyNutrientCorrection,
   sumNutrientSnapshots,
   type Food,
   type FoodCandidateItem,
@@ -25,6 +27,7 @@ import { swapCandidateFood, updateCandidateQuantity } from '@/services/aiFoodPho
 import { generateClientUuid, searchLocalFoods } from '@/services/foodService';
 import { fontSize, radius, spacing } from '@/theme/tokens';
 import { AdvancedNutrition } from '../diary/AdvancedNutrition';
+import { QuantityModal } from '../diary/QuantityModal';
 import { useTheme } from '@/theme/useTheme';
 
 export interface FoodPhotoResultsEditorProps {
@@ -58,6 +61,7 @@ export function FoodPhotoResultsEditor({
   const [isSaving, setIsSaving] = useState(false);
   const savingRef = useRef(false);
   const [saveError, setSaveError] = useState<string | null>(null);
+  const [editing, setEditing] = useState<number | null>(null);
 
   // Search dialog for Swap or Add item
   const [searchModalVisible, setSearchModalVisible] = useState(false);
@@ -337,29 +341,40 @@ export function FoodPhotoResultsEditor({
               <Text style={[styles.totalsLabel, { color: colors.textMuted }]}>
                 {t('foodLog.photo.totalLabel')}
               </Text>
-              <Text style={[styles.caloriesValue, { color: colors.macroCalories }]}>
-                {totals.calories} <Text style={{ fontSize: fontSize.sm }}>kcal</Text>
+              <Text
+                nutrient="calories"
+                style={[styles.caloriesValue, { color: colors.macroCalories }]}
+              >
+                {totals.calories}{' '}
+                <Text nutrient="calories" style={{ fontSize: fontSize.sm }}>
+                  kcal
+                </Text>
               </Text>
             </View>
 
             <View style={styles.macroPillRow}>
               <View style={[styles.macroPill, { backgroundColor: colors.surfaceAlt }]}>
                 <Text style={[styles.macroPillLabel, { color: colors.textMuted }]}>P</Text>
-                <Text style={[styles.macroPillVal, { color: colors.macroProtein }]}>
+                <Text
+                  nutrient="protein"
+                  style={[styles.macroPillVal, { color: colors.macroProtein }]}
+                >
                   {totals.protein}g
                 </Text>
               </View>
 
               <View style={[styles.macroPill, { backgroundColor: colors.surfaceAlt }]}>
                 <Text style={[styles.macroPillLabel, { color: colors.textMuted }]}>C</Text>
-                <Text style={[styles.macroPillVal, { color: colors.macroCarbs }]}>
+                <Text nutrient="carbs" style={[styles.macroPillVal, { color: colors.macroCarbs }]}>
                   {totals.carbs}g
                 </Text>
               </View>
 
               <View style={[styles.macroPill, { backgroundColor: colors.surfaceAlt }]}>
                 <Text style={[styles.macroPillLabel, { color: colors.textMuted }]}>F</Text>
-                <Text style={[styles.macroPillVal, { color: colors.macroFat }]}>{totals.fat}g</Text>
+                <Text nutrient="fat" style={[styles.macroPillVal, { color: colors.macroFat }]}>
+                  {totals.fat}g
+                </Text>
               </View>
             </View>
 
@@ -374,7 +389,10 @@ export function FoodPhotoResultsEditor({
                 gap: 2,
               }}
             >
-              <Text style={{ fontSize: fontSize.sm, fontWeight: '700', color: colors.text }}>
+              <Text
+                nutrient="calories"
+                style={{ fontSize: fontSize.sm, fontWeight: '700', color: colors.text }}
+              >
                 {`About ${totals.calories} kcal (${Math.round(totals.calories * 0.85)} to ${Math.round(totals.calories * 1.15)})`}
               </Text>
               <Text style={{ fontSize: fontSize.xs, color: colors.textMuted }}>
@@ -488,12 +506,21 @@ export function FoodPhotoResultsEditor({
                         </Text>
                       </View>
 
-                      <Text style={[styles.candidateKcal, { color: colors.macroCalories }]}>
+                      <Text
+                        nutrient="calories"
+                        style={[styles.candidateKcal, { color: colors.macroCalories }]}
+                      >
                         {kcal} kcal
                       </Text>
                     </View>
 
                     {/* Middle Row: Stepper Controls & Portion */}
+                    <Button
+                      variant="secondary"
+                      label={t('foodPolish.editNutrition')}
+                      onPress={() => setEditing(idx)}
+                      testID={`edit-candidate-nutrition-${idx}`}
+                    />
                     <View style={styles.stepperRow}>
                       <View style={styles.stepperControls}>
                         <Pressable
@@ -644,6 +671,38 @@ export function FoodPhotoResultsEditor({
           </Pressable>
         </View>
 
+        {editing !== null && candidates[editing] && (
+          <QuantityModal
+            visible
+            food={candidates[editing]!.matched_food}
+            initialNutrients={candidates[editing]!.nutrients}
+            initialQuantity={candidates[editing]!.quantity}
+            initialUnit={candidates[editing]!.unit}
+            defaultSection={selectedSection}
+            onClose={() => setEditing(null)}
+            onSave={(data) => {
+              const candidate = candidates[editing];
+              if (!candidate) return;
+              const updated = updateCandidateQuantity(candidate, data.quantity, data.unit);
+              const nutrients = applyNutrientCorrection(updated.nutrients, data.nutrientOverrides);
+              setCandidates((current) =>
+                current.map((item, index) =>
+                  index === editing
+                    ? {
+                        ...updated,
+                        nutrients,
+                        corrected_nutrients: {
+                          quantity: data.quantity,
+                          unit: data.unit,
+                          nutrients,
+                        },
+                      }
+                    : item,
+                ),
+              );
+            }}
+          />
+        )}
         {/* Submodal: Swap / Add Food Search */}
         <Modal
           testID="modal-swap-food"
@@ -734,13 +793,21 @@ export function FoodPhotoResultsEditor({
                         >
                           {f.name}
                         </Text>
-                        <Text style={[styles.searchResultMacros, { color: colors.textMuted }]}>
-                          P {f.protein_per_100g}g • C {f.carbs_per_100g}g • F {f.fat_per_100g}g (per
-                          100g)
-                        </Text>
+                        <NutrientSummary
+                          variant="micro"
+                          values={{
+                            calories: f.calories_per_100g,
+                            protein: f.protein_per_100g,
+                            carbs: f.carbs_per_100g,
+                            fat: f.fat_per_100g,
+                          }}
+                        />
                       </View>
 
-                      <Text style={[styles.searchResultKcal, { color: colors.macroCalories }]}>
+                      <Text
+                        nutrient="calories"
+                        style={[styles.searchResultKcal, { color: colors.macroCalories }]}
+                      >
                         {f.calories_per_100g} kcal
                       </Text>
                     </Pressable>

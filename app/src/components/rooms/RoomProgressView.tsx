@@ -652,7 +652,7 @@ export function RoomProgressView({ roomId, testID = 'room-progress-view' }: Room
 
                 <View style={styles.detailItem}>
                   <Text style={[styles.detailKey, { color: colors.textMuted }]}>Cal vs Target</Text>
-                  <Text style={[styles.detailVal, { color: colors.text }]}>
+                  <Text nutrient="calories" style={[styles.detailVal, { color: colors.text }]}>
                     {typeof row.average_calories_vs_target_pct === 'number'
                       ? `${Math.round(row.average_calories_vs_target_pct)}%`
                       : row.average_calories_vs_target_pct === 'locked'

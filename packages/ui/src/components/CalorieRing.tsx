@@ -152,28 +152,28 @@ export function CalorieRing({
       <View style={styles.centerText} pointerEvents="none">
         {isOver ? (
           <>
-            <Text variant="numeralL" color={dark.cream}>
+            <Text nutrient="calories" variant="numeralL" color={dark.cream}>
               {`${Math.round(overAmount)}`}
             </Text>
-            <Text variant="label" color={dark.textMid}>
+            <Text nutrient="calories" variant="label" color={dark.textMid}>
               kcal over
             </Text>
           </>
         ) : mode === 'remaining' ? (
           <>
-            <Text variant="numeralL" color={dark.textHi}>
+            <Text nutrient="calories" variant="numeralL" color={dark.textHi}>
               {`${Math.round(remaining)}`}
             </Text>
-            <Text variant="label" color={dark.textMid}>
+            <Text nutrient="calories" variant="label" color={dark.textMid}>
               kcal left
             </Text>
           </>
         ) : (
           <>
-            <Text variant="numeralL" color={dark.textHi}>
+            <Text nutrient="calories" variant="numeralL" color={dark.textHi}>
               {`${Math.round(eaten)}`}
             </Text>
-            <Text variant="label" color={dark.textMid}>
+            <Text nutrient="calories" variant="label" color={dark.textMid}>
               {`/ ${validTarget} kcal`}
             </Text>
           </>

@@ -86,7 +86,7 @@ const styles = StyleSheet.create({
   innerRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    height: 40,
+    minHeight: 44,
     backgroundColor: dark.s2,
     borderRadius: radius.control, // 12
     padding: space[1], // 4
@@ -97,7 +97,7 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   segment: {
-    minHeight: 32,
+    minHeight: 44,
     minWidth: 44,
     paddingHorizontal: space[3], // 12
     borderRadius: radius.control - 3, // 9
@@ -120,6 +120,7 @@ const styles = StyleSheet.create({
   },
   label: {
     textAlign: 'center',
+    flexShrink: 1,
   },
   badge: {
     backgroundColor: dark.apricot,

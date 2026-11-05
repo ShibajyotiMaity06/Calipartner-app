@@ -1,3 +1,4 @@
+import type { NutrientCorrection } from '@calipartner/core';
 import { useRef, useState } from 'react';
 import type {
   CreateFoodInput,
@@ -35,6 +36,7 @@ export function useAddEntry() {
     localDate?: string;
     source?: EntrySource;
     sharedMealId?: string | null;
+    nutrientOverrides?: NutrientCorrection;
   }): Promise<FoodEntry | null> => {
     try {
       setLoading(true);
@@ -55,6 +57,7 @@ export function useAddEntry() {
         localDate: params.localDate,
         source: params.source,
         sharedMealId: params.sharedMealId,
+        nutrientOverrides: params.nutrientOverrides,
       });
 
       pending.current.delete(key);

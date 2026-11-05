@@ -84,7 +84,12 @@ export function PartnerMealSheet({
             {isDataHidden ? (
               <View style={styles.hiddenStateBox}>
                 <HiddenMetric label="Meal details are private" />
-                <Text variant="bodyS" color={dark.textMid} style={styles.hiddenSubtext}>
+                <Text
+                  nutrient="calories"
+                  variant="bodyS"
+                  color={dark.textMid}
+                  style={styles.hiddenSubtext}
+                >
                   {`${partnerName} has kept food names and calories private.`}
                 </Text>
               </View>
@@ -119,7 +124,7 @@ export function PartnerMealSheet({
                       </Text>
                     </View>
                     {it.calories != null && (
-                      <Text variant="label" color={dark.textMid}>
+                      <Text nutrient="calories" variant="label" color={dark.textMid}>
                         {`${it.calories} kcal`}
                       </Text>
                     )}

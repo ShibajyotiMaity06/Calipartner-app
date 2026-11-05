@@ -46,7 +46,7 @@ export function HowCalculatedStep({
               : t('onboarding.howCalculated.bmrFormulaMifflin')}
           </Text>
         </View>
-        <Text variant="body" color={dark.textHi} style={styles.resultText}>
+        <Text nutrient="calories" variant="body" color={dark.textHi} style={styles.resultText}>
           {t('onboarding.howCalculated.bmrResult', { kcal: bmr.toLocaleString() })}
         </Text>
       </View>
@@ -61,7 +61,7 @@ export function HowCalculatedStep({
             {t('onboarding.howCalculated.tdeeFormula', { multiplier: activityMultiplier })}
           </Text>
         </View>
-        <Text variant="body" color={dark.textHi} style={styles.resultText}>
+        <Text nutrient="calories" variant="body" color={dark.textHi} style={styles.resultText}>
           {t('onboarding.howCalculated.tdeeResult', { kcal: tdee.toLocaleString() })}
         </Text>
       </View>
@@ -76,12 +76,17 @@ export function HowCalculatedStep({
             {t('onboarding.howCalculated.adjustmentFormula', { rate: weeklyRateKg })}
           </Text>
         </View>
-        <Text variant="body" color={dark.textHi} style={styles.resultText}>
+        <Text nutrient="calories" variant="body" color={dark.textHi} style={styles.resultText}>
           {t('onboarding.howCalculated.adjustmentResult', {
             diff: dailyChangeKcal < 0 ? `-${Math.abs(dailyChangeKcal)}` : `+${dailyChangeKcal}`,
           })}
           {' → '}
-          <Text variant="body" color={dark.apricot} style={{ fontWeight: '700' }}>
+          <Text
+            nutrient="calories"
+            variant="body"
+            color={dark.apricot}
+            style={{ fontWeight: '700' }}
+          >
             {targetKcal.toLocaleString()} kcal / day
           </Text>
         </Text>

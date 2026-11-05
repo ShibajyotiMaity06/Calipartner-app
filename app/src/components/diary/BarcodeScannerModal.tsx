@@ -394,7 +394,7 @@ export function BarcodeScannerModal({
                 >
                   {foundFood.name}
                 </Text>
-                <Text variant="bodyS" color={dark.textMid}>
+                <Text nutrient="calories" variant="bodyS" color={dark.textMid}>
                   {foundFood.serving_units?.[0]?.unit ?? '100g'} · {foundFood.calories_per_100g}{' '}
                   kcal
                 </Text>

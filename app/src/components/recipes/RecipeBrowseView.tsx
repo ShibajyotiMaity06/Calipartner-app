@@ -1,6 +1,7 @@
 import { useSubscription } from '@/hooks/useSubscription';
 import { Text, Button } from '@calipartner/ui';
 import { PaywallModal } from '@/components/rooms/PaywallModal';
+import { loadAccountTable } from '@/services/accountDataService';
 import { STARTER_RECIPE_IDS } from '@/services/recipeService';
 import React, { useCallback, useEffect, useState } from 'react';
 import {
@@ -82,6 +83,7 @@ export function RecipeBrowseView({
           setRecipes([]);
           return;
         }
+        await loadAccountTable(db, 'recipe_favorites', user.id);
         const favs = await getFavoriteRecipes(db, user.id);
         const fullCriteria: RecipeFilterCriteria = {
           ...criteria,
@@ -144,24 +146,22 @@ export function RecipeBrowseView({
       setShowPlans(true);
       return;
     }
-    // Optimistically update list
-    setRecipes((prev) =>
-      prev.map((r) => (r.id === recipe.id ? { ...r, is_favorite: nextFavorite } : r)),
-    );
-
-    if (selectedRecipe && selectedRecipe.id === recipe.id) {
-      setSelectedRecipe({ ...selectedRecipe, is_favorite: nextFavorite });
-    }
-
     try {
-      const db = await getDb();
-      const supabase = getSupabase();
-      await toggleRecipeFavorite(db, user.id, recipe.id, nextFavorite, supabase);
-    } catch {
-      // Revert on error
-      setRecipes((prev) =>
-        prev.map((r) => (r.id === recipe.id ? { ...r, is_favorite: !nextFavorite } : r)),
+      await toggleRecipeFavorite(await getDb(), user.id, recipe.id, nextFavorite, getSupabase());
+      setRecipes((current) =>
+        current.flatMap((item) =>
+          item.id !== recipe.id
+            ? [item]
+            : activeTab === 'favorites' && !nextFavorite
+              ? []
+              : [{ ...item, is_favorite: nextFavorite }],
+        ),
       );
+      setSelectedRecipe((current) =>
+        current?.id === recipe.id ? { ...current, is_favorite: nextFavorite } : current,
+      );
+    } catch {
+      setErrorMsg(t('foodPolish.actionError'));
     }
   };
 

@@ -80,7 +80,7 @@ export function CaloriesDetailSheet({
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.content}>
         {/* Title */}
         <View style={styles.header}>
-          <Text variant="heading" color={dark.textHi}>
+          <Text nutrient="calories" variant="heading" color={dark.textHi}>
             {t('diary.today')} · Calories & Macros
           </Text>
           <Text variant="bodyS" color={dark.textMid}>
@@ -109,28 +109,28 @@ export function CaloriesDetailSheet({
         {/* Summary Pill */}
         <View style={styles.calorieStatRow}>
           <View style={styles.statBox}>
-            <Text variant="label" color={dark.textMid}>
+            <Text nutrient="calories" variant="label" color={dark.textMid}>
               {t('diary.caloriesEaten')}
             </Text>
-            <Text variant="numeralM" color={dark.textHi}>
+            <Text nutrient="calories" variant="numeralM" color={dark.textHi}>
               {eatenCalories}
             </Text>
           </View>
           <View style={styles.statDivider} />
           <View style={styles.statBox}>
-            <Text variant="label" color={dark.textMid}>
+            <Text nutrient="calories" variant="label" color={dark.textMid}>
               {t('diary.caloriesTarget')}
             </Text>
-            <Text variant="numeralM" color={dark.textHi}>
+            <Text nutrient="calories" variant="numeralM" color={dark.textHi}>
               {targetCalories ?? t('common.unavailable')}
             </Text>
           </View>
           <View style={styles.statDivider} />
           <View style={styles.statBox}>
-            <Text variant="label" color={dark.textMid}>
+            <Text nutrient="calories" variant="label" color={dark.textMid}>
               {isOver ? t('diary.caloriesOver') : t('diary.caloriesRemaining')}
             </Text>
-            <Text variant="numeralM" color={isOver ? dark.cream : dark.textHi}>
+            <Text nutrient="calories" variant="numeralM" color={isOver ? dark.cream : dark.textHi}>
               {isOver ? `${overAmount} over` : (remainingCalories ?? t('common.unavailable'))}
             </Text>
           </View>
@@ -151,19 +151,19 @@ export function CaloriesDetailSheet({
             <View style={styles.macroLeft}>
               <View style={[styles.macroDot, { backgroundColor: dark.iris }]} />
               <View>
-                <Text variant="body" color={dark.textHi}>
+                <Text nutrient="protein" variant="body" color={dark.textHi}>
                   Protein
                 </Text>
-                <Text variant="bodyS" color={dark.textLo}>
+                <Text nutrient="protein" variant="bodyS" color={dark.textLo}>
                   {targetProtein == null ? t('common.unavailable') : `Target: ${targetProtein}g`}
                 </Text>
               </View>
             </View>
             <View style={styles.macroRight}>
-              <Text variant="numeralM" color={dark.textHi}>
+              <Text nutrient="protein" variant="numeralM" color={dark.textHi}>
                 {proteinGrams}g
               </Text>
-              <Text variant="bodyS" color={dark.textMid}>
+              <Text nutrient="protein" variant="bodyS" color={dark.textMid}>
                 {targetProtein == null
                   ? t('common.unavailable')
                   : `${Math.max(0, targetProtein - proteinGrams)}g left`}
@@ -180,19 +180,19 @@ export function CaloriesDetailSheet({
             <View style={styles.macroLeft}>
               <View style={[styles.macroDot, { backgroundColor: dark.teal }]} />
               <View>
-                <Text variant="body" color={dark.textHi}>
+                <Text nutrient="carbs" variant="body" color={dark.textHi}>
                   Carbohydrates
                 </Text>
-                <Text variant="bodyS" color={dark.textLo}>
+                <Text nutrient="carbs" variant="bodyS" color={dark.textLo}>
                   {targetCarbs == null ? t('common.unavailable') : `Target: ${targetCarbs}g`}
                 </Text>
               </View>
             </View>
             <View style={styles.macroRight}>
-              <Text variant="numeralM" color={dark.textHi}>
+              <Text nutrient="carbs" variant="numeralM" color={dark.textHi}>
                 {carbGrams}g
               </Text>
-              <Text variant="bodyS" color={dark.textMid}>
+              <Text nutrient="carbs" variant="bodyS" color={dark.textMid}>
                 {targetCarbs == null
                   ? t('common.unavailable')
                   : `${Math.max(0, targetCarbs - carbGrams)}g left`}
@@ -209,19 +209,19 @@ export function CaloriesDetailSheet({
             <View style={styles.macroLeft}>
               <View style={[styles.macroDot, { backgroundColor: dark.rose }]} />
               <View>
-                <Text variant="body" color={dark.textHi}>
+                <Text nutrient="fat" variant="body" color={dark.textHi}>
                   Fat
                 </Text>
-                <Text variant="bodyS" color={dark.textLo}>
+                <Text nutrient="fat" variant="bodyS" color={dark.textLo}>
                   {targetFat == null ? t('common.unavailable') : `Target: ${targetFat}g`}
                 </Text>
               </View>
             </View>
             <View style={styles.macroRight}>
-              <Text variant="numeralM" color={dark.textHi}>
+              <Text nutrient="fat" variant="numeralM" color={dark.textHi}>
                 {fatGrams}g
               </Text>
-              <Text variant="bodyS" color={dark.textMid}>
+              <Text nutrient="fat" variant="bodyS" color={dark.textMid}>
                 {targetFat == null
                   ? t('common.unavailable')
                   : `${Math.max(0, targetFat - fatGrams)}g left`}

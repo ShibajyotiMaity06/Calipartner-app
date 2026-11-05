@@ -235,6 +235,7 @@ export function WorkoutDetailModal({
                 >
                   <Ionicons name="flame-outline" size={16} color={colors.macroCalories} />
                   <Text
+                    nutrient="calories"
                     testID={`${testID}-stat-calories`}
                     style={[styles.statPillText, { color: colors.text }]}
                   >
@@ -246,7 +247,10 @@ export function WorkoutDetailModal({
                       { backgroundColor: colors.cardHighlight, borderColor: colors.accent },
                     ]}
                   >
-                    <Text style={[styles.microBadgeText, { color: colors.accent }]}>
+                    <Text
+                      nutrient="calories"
+                      style={[styles.microBadgeText, { color: colors.accent }]}
+                    >
                       {t('workouts.calorieEstimateBadge')}
                     </Text>
                   </View>

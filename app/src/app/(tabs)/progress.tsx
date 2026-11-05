@@ -1,9 +1,10 @@
-import React, { useCallback, useRef, useState } from 'react';
-import { useFocusEffect } from 'expo-router';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { RefreshControl, SafeAreaView, ScrollView, StyleSheet, View } from 'react-native';
 import { Button, homeLayout, space, Text, SegmentedControl } from '@calipartner/ui';
 import { PersonalDiaryView } from '@/components/progress/PersonalDiaryView';
 import { ProgressOverview } from '@/components/progress/ProgressOverview';
+import { ChallengesView } from '@/components/progress/ChallengesView';
 import { WorkoutHistoryCalendarModal } from '@/components/workouts/WorkoutHistoryCalendarModal';
 import { PersonalSquads } from '@/components/rooms/PersonalSquads';
 import { WeeklyPlanEntry } from '@/components/workouts/WeeklyPlanEntry';
@@ -23,8 +24,16 @@ export default function ProgressScreen() {
       void refresh();
     }, [refresh]),
   );
-  const [tab, setTab] = useState<'diary' | 'progress'>('diary');
+  const [tab, setTab] = useState<'diary' | 'progress' | 'challenges'>('diary');
+  const params = useLocalSearchParams<{ challenge?: string; trophies?: string }>();
+  useEffect(() => {
+    if (params.challenge || params.trophies) setTab('challenges');
+  }, [params.challenge, params.trophies]);
   const diaryRefresh = useRef<(() => Promise<void>) | null>(null);
+  const challengeRefresh = useRef<(() => Promise<void>) | null>(null);
+  const registerChallengeRefresh = useCallback((refreshChallenges: () => Promise<void>) => {
+    challengeRefresh.current = refreshChallenges;
+  }, []);
   const registerDiaryRefresh = useCallback((refreshDiary: () => Promise<void>) => {
     diaryRefresh.current = refreshDiary;
   }, []);
@@ -33,6 +42,7 @@ export default function ProgressScreen() {
     setRefreshing(true);
     try {
       if (tab === 'diary') await diaryRefresh.current?.();
+      else if (tab === 'challenges') await challengeRefresh.current?.();
       else await refresh();
     } finally {
       setRefreshing(false);
@@ -63,6 +73,7 @@ export default function ProgressScreen() {
           options={[
             { value: 'diary', label: t('homeRefresh.diary') },
             { value: 'progress', label: t('homeRefresh.progress') },
+            { value: 'challenges', label: t('foodPolish.challenges') },
           ]}
           value={tab}
           onChange={setTab}
@@ -74,6 +85,8 @@ export default function ProgressScreen() {
             <WeeklyPlanEntry />
             <PersonalSquads />
           </>
+        ) : tab === 'challenges' ? (
+          <ChallengesView onRefreshReady={registerChallengeRefresh} />
         ) : (
           <>
             <RangeSelector

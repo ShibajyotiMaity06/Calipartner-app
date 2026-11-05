@@ -1,9 +1,11 @@
 import { type as inputTypography } from '@calipartner/ui';
 import { Text } from '@calipartner/ui';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { Modal, Pressable, ScrollView, TextInput, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import type { Food } from '@calipartner/core';
+import { customFoodNutritionForPortion } from '@calipartner/core';
+import { generateClientUuid } from '@/services/foodService';
 import { useCustomFood } from '@/hooks/useFoodEntries';
 import { t } from '@/i18n';
 import { fontSize, radius, spacing } from '@/theme/tokens';
@@ -36,6 +38,8 @@ export function CustomFoodModal({
   const [fiber, setFiber] = useState('0');
   const [sodium, setSodium] = useState('0');
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const clientId = useRef(generateClientUuid());
+  const savingRef = useRef(false);
 
   const resetForm = () => {
     setName('');
@@ -49,47 +53,57 @@ export function CustomFoodModal({
     setFiber('0');
     setSodium('0');
     setErrorMsg(null);
+    clientId.current = generateClientUuid();
   };
 
   const handleSave = async () => {
+    if (savingRef.current) return;
     if (!name.trim()) {
-      setErrorMsg('Please enter a food name');
+      setErrorMsg(t('foodPolish.nameRequired'));
       return;
     }
-    const cal = parseFloat(calories);
-    const pro = parseFloat(protein);
-    const carb = parseFloat(carbs);
-    const f = parseFloat(fat);
-
-    if (isNaN(cal) || cal < 0) {
-      setErrorMsg('Please enter valid calories');
+    if (!calories.trim()) {
+      setErrorMsg(t('foodPolish.invalidNutrition'));
       return;
     }
-
-    const sSize = parseFloat(servingSize) || 100;
-    const factorTo100g = sSize > 0 ? 100 / sSize : 1;
-
-    const newFood = await createFood({
-      name: name.trim(),
-      brand: brand.trim() || null,
-      source: 'user',
-      barcode: initialBarcode ?? null,
-      calories_per_100g: Math.round(cal * factorTo100g * 10) / 10,
-      protein_per_100g: Math.round((isNaN(pro) ? 0 : pro) * factorTo100g * 10) / 10,
-      carbs_per_100g: Math.round((isNaN(carb) ? 0 : carb) * factorTo100g * 10) / 10,
-      fat_per_100g: Math.round((isNaN(f) ? 0 : f) * factorTo100g * 10) / 10,
-      fiber_per_100g: Math.round((parseFloat(fiber) || 0) * factorTo100g * 10) / 10,
-      sodium_mg_per_100g: Math.round((parseFloat(sodium) || 0) * factorTo100g * 10) / 10,
-      serving_units: [
-        { unit: servingUnit || 'serving', grams: sSize },
-        { unit: 'g', grams: 1 },
-      ],
-    });
-
-    if (newFood) {
+    let nutrition;
+    try {
+      nutrition = customFoodNutritionForPortion(
+        {
+          calories: Number(calories),
+          protein: Number(protein),
+          carbs: Number(carbs),
+          fat: Number(fat),
+          fiber: Number(fiber),
+          sugar: 0,
+          sodium_mg: Number(sodium),
+        },
+        Number(servingSize),
+        servingUnit,
+      );
+    } catch {
+      setErrorMsg(t('foodPolish.invalidNutrition'));
+      return;
+    }
+    savingRef.current = true;
+    setErrorMsg(null);
+    try {
+      const newFood = await createFood({
+        id: clientId.current,
+        name: name.trim(),
+        brand: brand.trim() || null,
+        source: 'user',
+        barcode: initialBarcode ?? null,
+        ...nutrition,
+      });
+      if (!newFood) throw new Error('SAVE_UNCONFIRMED');
       resetForm();
       onCreated(newFood);
       onClose();
+    } catch {
+      setErrorMsg(t('foodPolish.actionError'));
+    } finally {
+      savingRef.current = false;
     }
   };
 
@@ -279,6 +293,7 @@ export function CustomFoodModal({
             <View style={{ flexDirection: 'row', gap: spacing.sm }}>
               <View style={{ flex: 1, gap: 4 }}>
                 <Text
+                  nutrient="calories"
                   style={{ fontSize: fontSize.xs, fontWeight: '600', color: colors.macroCalories }}
                 >
                   {t('customFood.caloriesLabel')}
@@ -300,7 +315,7 @@ export function CustomFoodModal({
                       paddingVertical: 10,
                       fontSize: fontSize.md,
                       fontWeight: '700',
-                      color: colors.text,
+                      color: colors.macroCalories,
                     },
                     { fontFamily: inputTypography.body.fontFamily },
                   ]}
@@ -309,6 +324,7 @@ export function CustomFoodModal({
 
               <View style={{ flex: 1, gap: 4 }}>
                 <Text
+                  nutrient="protein"
                   style={{ fontSize: fontSize.xs, fontWeight: '600', color: colors.macroProtein }}
                 >
                   {t('customFood.proteinLabel')}
@@ -329,7 +345,7 @@ export function CustomFoodModal({
                       paddingHorizontal: 12,
                       paddingVertical: 10,
                       fontSize: fontSize.md,
-                      color: colors.text,
+                      color: colors.macroProtein,
                     },
                     { fontFamily: inputTypography.body.fontFamily },
                   ]}
@@ -340,6 +356,7 @@ export function CustomFoodModal({
             <View style={{ flexDirection: 'row', gap: spacing.sm }}>
               <View style={{ flex: 1, gap: 4 }}>
                 <Text
+                  nutrient="carbs"
                   style={{ fontSize: fontSize.xs, fontWeight: '600', color: colors.macroCarbs }}
                 >
                   {t('customFood.carbsLabel')}
@@ -360,7 +377,7 @@ export function CustomFoodModal({
                       paddingHorizontal: 12,
                       paddingVertical: 10,
                       fontSize: fontSize.md,
-                      color: colors.text,
+                      color: colors.macroCarbs,
                     },
                     { fontFamily: inputTypography.body.fontFamily },
                   ]}
@@ -368,7 +385,10 @@ export function CustomFoodModal({
               </View>
 
               <View style={{ flex: 1, gap: 4 }}>
-                <Text style={{ fontSize: fontSize.xs, fontWeight: '600', color: colors.macroFat }}>
+                <Text
+                  nutrient="fat"
+                  style={{ fontSize: fontSize.xs, fontWeight: '600', color: colors.macroFat }}
+                >
                   {t('customFood.fatLabel')}
                 </Text>
                 <TextInput
@@ -387,7 +407,7 @@ export function CustomFoodModal({
                       paddingHorizontal: 12,
                       paddingVertical: 10,
                       fontSize: fontSize.md,
-                      color: colors.text,
+                      color: colors.macroFat,
                     },
                     { fontFamily: inputTypography.body.fontFamily },
                   ]}

@@ -130,7 +130,7 @@ export function SummaryStep({
       {/* Protein Preference Selector */}
       <View style={styles.card} testID="summary-protein-selector-card">
         <View style={styles.proteinHeaderRow}>
-          <Text variant="heading" color={dark.textHi}>
+          <Text nutrient="protein" variant="heading" color={dark.textHi}>
             Daily Protein Goal
           </Text>
           <View style={styles.recommendedBadge}>
@@ -139,7 +139,12 @@ export function SummaryStep({
             </Text>
           </View>
         </View>
-        <Text variant="bodyS" color={dark.textMid} style={styles.proteinSubtitle}>
+        <Text
+          nutrient="protein"
+          variant="bodyS"
+          color={dark.textMid}
+          style={styles.proteinSubtitle}
+        >
           Choose your preferred daily protein intake based on your training:
         </Text>
 
@@ -202,28 +207,28 @@ export function SummaryStep({
         {/* 3 Macro Metrics */}
         <View style={styles.macrosRow}>
           <View style={styles.macroMetric} testID="summary-macro-protein">
-            <Text variant="label" color={dark.textLo}>
+            <Text nutrient="protein" variant="label" color={dark.textLo}>
               {t('onboarding.summary.proteinLabel')}
             </Text>
-            <Text variant="body" color={dark.textHi} style={styles.macroValue}>
+            <Text nutrient="protein" variant="body" color={dark.textHi} style={styles.macroValue}>
               {proteinGrams}g
             </Text>
           </View>
 
           <View style={styles.macroMetric} testID="summary-macro-carbs">
-            <Text variant="label" color={dark.textLo}>
+            <Text nutrient="carbs" variant="label" color={dark.textLo}>
               {t('onboarding.summary.carbsLabel')}
             </Text>
-            <Text variant="body" color={dark.textHi} style={styles.macroValue}>
+            <Text nutrient="carbs" variant="body" color={dark.textHi} style={styles.macroValue}>
               {carbGrams}g
             </Text>
           </View>
 
           <View style={styles.macroMetric} testID="summary-macro-fat">
-            <Text variant="label" color={dark.textLo}>
+            <Text nutrient="fat" variant="label" color={dark.textLo}>
               {t('onboarding.summary.fatLabel')}
             </Text>
-            <Text variant="body" color={dark.textHi} style={styles.macroValue}>
+            <Text nutrient="fat" variant="body" color={dark.textHi} style={styles.macroValue}>
               {fatGrams}g
             </Text>
           </View>

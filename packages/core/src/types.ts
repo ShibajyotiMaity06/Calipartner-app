@@ -1560,6 +1560,7 @@ export interface VisionModelResponse {
 }
 
 export interface FoodCandidateItem {
+  corrected_nutrients?: { quantity: number; unit: string; nutrients: NutrientSnapshot };
   id: string;
   detected_name: string;
   matched_food: Food;

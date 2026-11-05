@@ -22,7 +22,10 @@ export function HomeSquads({
 }) {
   const router = useRouter();
   const { width, fontScale } = useWindowDimensions();
-  const cardWidth = Math.min(homeLayout.cardWidth * Math.min(fontScale, 1.5), width - space[7]);
+  const cardWidth =
+    rooms.length === 0
+      ? undefined
+      : Math.min(homeLayout.cardWidth * Math.min(fontScale, 1.5), width - space[7]);
   const [selected, setSelected] = useState(0);
   const [cardHeight, setCardHeight] = useState<number>(homeLayout.ringSize * 2);
   useEffect(() => setCardHeight(homeLayout.ringSize * 2), [width, fontScale]);
@@ -62,12 +65,14 @@ export function HomeSquads({
         </Pressable>
       ) : null}
       <ScrollView
-        horizontal
+        horizontal={rooms.length > 0}
         showsHorizontalScrollIndicator={false}
-        snapToInterval={cardWidth + space[3]}
+        snapToInterval={cardWidth ? cardWidth + space[3] : undefined}
         decelerationRate="fast"
         onScroll={(event) =>
-          setSelected(Math.round(event.nativeEvent.contentOffset.x / (cardWidth + space[3])))
+          setSelected(
+            cardWidth ? Math.round(event.nativeEvent.contentOffset.x / (cardWidth + space[3])) : 0,
+          )
         }
         scrollEventThrottle={100}
         contentContainerStyle={styles.cards}
@@ -120,7 +125,7 @@ export function HomeSquads({
         ))}
         <Pressable
           onPress={create}
-          style={[styles.createCard, { width: cardWidth, minHeight: cardHeight }]}
+          style={[styles.createCard, { width: cardWidth ?? '100%', minHeight: cardHeight }]}
           onLayout={measureCard}
           accessibilityRole="button"
           accessibilityLabel={t('homeRefresh.create')}

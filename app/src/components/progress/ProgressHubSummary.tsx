@@ -104,18 +104,20 @@ export function ProgressHubSummary({
           <View style={styles.cardHeader}>
             <View style={styles.cardTitleRow}>
               <Ionicons name="flame-outline" size={18} color={dark.apricot} />
-              <Text style={styles.cardTitle}>Calories</Text>
+              <Text nutrient="calories" style={styles.cardTitle}>
+                Calories
+              </Text>
             </View>
             <Text style={styles.cardDetailHint}>Tap for detail →</Text>
           </View>
           <View style={styles.cardBody}>
             <View>
-              <Text style={styles.headlineNumber}>
+              <Text nutrient="calories" style={styles.headlineNumber}>
                 {calories?.average_calories != null
                   ? `${Math.round(calories.average_calories)} kcal`
                   : '0 kcal'}
               </Text>
-              <Text style={styles.headlineCaption}>
+              <Text nutrient="calories" style={styles.headlineCaption}>
                 Target:{' '}
                 {calories?.average_target != null ? Math.round(calories.average_target) : 2000}{' '}
                 kcal/day
@@ -144,22 +146,28 @@ export function ProgressHubSummary({
           </View>
           <View style={styles.macrosMiniRow}>
             <View style={styles.macroMiniBox}>
-              <Text style={styles.macroMiniVal}>
+              <Text nutrient="protein" style={styles.macroMiniVal}>
                 {macros?.protein_avg_g != null ? `${Math.round(macros.protein_avg_g)}g` : '0g'}
               </Text>
-              <Text style={styles.macroMiniLabel}>Protein</Text>
+              <Text nutrient="protein" style={styles.macroMiniLabel}>
+                Protein
+              </Text>
             </View>
             <View style={styles.macroMiniBox}>
-              <Text style={styles.macroMiniVal}>
+              <Text nutrient="carbs" style={styles.macroMiniVal}>
                 {macros?.carbs_avg_g != null ? `${Math.round(macros.carbs_avg_g)}g` : '0g'}
               </Text>
-              <Text style={styles.macroMiniLabel}>Carbs</Text>
+              <Text nutrient="carbs" style={styles.macroMiniLabel}>
+                Carbs
+              </Text>
             </View>
             <View style={styles.macroMiniBox}>
-              <Text style={styles.macroMiniVal}>
+              <Text nutrient="fat" style={styles.macroMiniVal}>
                 {macros?.fat_avg_g != null ? `${Math.round(macros.fat_avg_g)}g` : '0g'}
               </Text>
-              <Text style={styles.macroMiniLabel}>Fat</Text>
+              <Text nutrient="fat" style={styles.macroMiniLabel}>
+                Fat
+              </Text>
             </View>
           </View>
         </Pressable>

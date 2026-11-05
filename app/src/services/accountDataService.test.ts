@@ -123,7 +123,7 @@ describe('online saves without a delivery queue', () => {
     };
     const entries = await savePhotoCandidatesToDiary(db, {
       userId: 'owner',
-      candidates: [candidate, candidate],
+      candidates: [candidate, { ...candidate, id: 'second-estimate' }],
       mealSection: 'lunch',
       localDate: '2026-11-02',
     });

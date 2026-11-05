@@ -77,6 +77,17 @@ it('shows empty, loading and retry states without inventing a squad', async () =
   renderer.root.findByProps({ testID: 'home-squad-retry' }).props.onPress();
   expect(retry).toHaveBeenCalledOnce();
 });
+it('uses the full available width for the empty-Squad create card', async () => {
+  await act(async () => {
+    renderer = create(
+      <HomeSquads rooms={[]} loading={false} error={null} onRetry={vi.fn()} visible />,
+    );
+  });
+  expect(
+    renderer.root.findByProps({ testID: 'home-create-squad-end' }).props.style.at(-1).width,
+  ).toBe('100%');
+  expect(renderer.root.findByProps({ testID: 'home-squad-carousel' }).props.horizontal).toBe(false);
+});
 
 it('aligns squad and create cards at the same height and width without a separate Home feed', async () => {
   await act(async () => {

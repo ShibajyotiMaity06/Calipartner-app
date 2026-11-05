@@ -179,12 +179,18 @@ export function TodayWorkoutCard({
 
             <View style={styles.aggItem}>
               <View style={styles.estLabelRow}>
-                <Text style={styles.aggLabel}>{t('workouts.estimatedCalories')}</Text>
+                <Text nutrient="calories" style={styles.aggLabel}>
+                  {t('workouts.estimatedCalories')}
+                </Text>
                 <View style={styles.microBadge}>
                   <Text style={styles.microBadgeText}>EST</Text>
                 </View>
               </View>
-              <Text testID="today-workout-total-calories" style={styles.aggValue}>
+              <Text
+                nutrient="calories"
+                testID="today-workout-total-calories"
+                style={styles.aggValue}
+              >
                 {`${totalCalories} kcal`}
               </Text>
             </View>

@@ -1,4 +1,5 @@
-﻿import React from 'react';
+import { NutrientSummary } from '../diary/NutrientSummary';
+import React from 'react';
 import { Image, Pressable, StyleSheet, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { homeLayout, radius, space, Text } from '@calipartner/ui';
@@ -56,10 +57,7 @@ export function RecipeCard({
           <Text variant="heading" color={colors.text}>
             {recipe.title}
           </Text>
-          <Text variant="bodyS" color={colors.textMuted} tabular>
-            {t('recipes.card.calories', { cal: Math.round(nutrition.calories) })} ·{' '}
-            {t('recipes.card.protein', { p: Math.round(nutrition.protein) })}
-          </Text>
+          <NutrientSummary values={nutrition} />
           {recipe.source_portion && (
             <Text variant="micro" color={colors.textMuted}>
               {t('homeRefresh.sourcePortion', { portion: recipe.source_portion })}

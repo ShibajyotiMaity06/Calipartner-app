@@ -56,6 +56,24 @@ function Probe({
   return null;
 }
 describe('installed web Back navigation', () => {
+  it('closing a member picker does not replay parent Back after Router replaced its history state', async () => {
+    const parent = vi.fn(),
+      child = vi.fn();
+    await act(async () => {
+      tree = create(<Probe onParent={parent} onChild={child} />);
+    });
+    // Router may replace an earlier entry while applying search parameters.
+    entries[position] = { router: 'room' };
+    await act(async () => {
+      tree.update(<Probe child onParent={parent} onChild={child} />);
+    });
+    await act(async () => {
+      tree.update(<Probe child={false} onParent={parent} onChild={child} />);
+    });
+    expect(parent).not.toHaveBeenCalled();
+    expect(child).not.toHaveBeenCalled();
+    expect(history.state.router).toBe('room');
+  });
   it('closes the child sheet without closing the parent or going home', async () => {
     const parent = vi.fn(),
       child = vi.fn();

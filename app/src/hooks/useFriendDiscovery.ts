@@ -24,16 +24,6 @@ export function useFriendDiscovery(goal: FriendGoal, query: string, random = fal
   const load = useCallback(
     async (more = false) => {
       if (!id || (more && loadingRef.current)) return;
-      if (!random && !query.trim().replace(/^@/, '')) {
-        version.current++;
-        setPeople([]);
-        setDataKey(key);
-        setLoading(false);
-        setError(false);
-        setCached(false);
-        setHasMore(false);
-        return;
-      }
       const current = ++version.current;
       loadingRef.current = true;
       setLoading(true);
@@ -60,7 +50,9 @@ export function useFriendDiscovery(goal: FriendGoal, query: string, random = fal
                   (person) => !previous.some((existing) => existing.id === person.id),
                 ),
               ]
-            : result.data,
+            : !random && !query.trim().replace(/^@/, '')
+              ? result.data.slice(0, 5)
+              : result.data,
         );
         setHasMore(!random && Boolean(query.trim().replace(/^@/, '')) && result.data.length === 30);
         setCached(result.cached);

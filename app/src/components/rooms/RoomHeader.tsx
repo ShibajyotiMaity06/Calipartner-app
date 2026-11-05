@@ -147,11 +147,12 @@ export function RoomHeader({
                 justifyContent: 'center',
                 alignItems: 'center',
                 backgroundColor: activeSegment === segment ? dark.s3 : 'transparent',
-                borderTopWidth: space[1],
-                borderTopColor: activeSegment === segment ? dark.selection : 'transparent',
               }}
             >
-              <Text variant="bodyS" color={activeSegment === segment ? dark.textHi : dark.textMid}>
+              <Text
+                variant="bodyS"
+                color={activeSegment === segment ? dark.selection : dark.textMid}
+              >
                 {t(label) +
                   (segment === 'chat' && chatUnreadCount > 0 ? ' (' + chatUnreadCount + ')' : '')}
               </Text>

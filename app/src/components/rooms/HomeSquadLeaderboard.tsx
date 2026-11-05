@@ -1,6 +1,6 @@
 import React from 'react';
 import { View } from 'react-native';
-import { Button, Text } from '@calipartner/ui';
+import { Button, Text, dark } from '@calipartner/ui';
 import { useRouter, type Href } from 'expo-router';
 import { useSquadToday } from '@/hooks/useSquad';
 import { t } from '@/i18n';
@@ -47,6 +47,8 @@ export function HomeSquadLeaderboard({
       )}
       <Button
         variant="secondary"
+        style={{ borderColor: dark.mint, backgroundColor: dark.mint }}
+        labelColor={dark.onBrand}
         label={t(memberCount === 2 ? 'squadDesign.open' : 'squadDesign.seeAll', {
           count: memberCount,
         })}

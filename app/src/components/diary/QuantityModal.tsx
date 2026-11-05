@@ -10,7 +10,16 @@ import {
   TextInput,
   View,
 } from 'react-native';
-import { scaleNutrients, type Food, type FoodEntry, type MealSection } from '@calipartner/core';
+import {
+  applyNutrientCorrection,
+  scaleNutrients,
+  type NutrientCorrection,
+  type NutrientSnapshot,
+  type Food,
+  type FoodEntry,
+  type MealSection,
+} from '@calipartner/core';
+import { NutrientEditor, type NutrientDraft } from './NutrientEditor';
 import { Sheet, Text, Button, Chip, dark, space, radius } from '@calipartner/ui';
 import { t } from '@/i18n';
 import { AdvancedNutrition } from './AdvancedNutrition';
@@ -20,6 +29,9 @@ export interface QuantityModalProps {
   visible: boolean;
   food: Food | null;
   initialEntry?: FoodEntry | null;
+  initialNutrients?: NutrientSnapshot;
+  initialQuantity?: number;
+  initialUnit?: string;
   defaultSection?: MealSection;
   onClose: () => void;
   onSave: (data: {
@@ -27,6 +39,7 @@ export interface QuantityModalProps {
     quantity: number;
     unit: string;
     mealSection: MealSection;
+    nutrientOverrides?: NutrientCorrection;
     sharedWithRoom?: boolean;
     taggedPartner?: boolean;
   }) => void | Promise<void>;
@@ -54,6 +67,9 @@ export function QuantityModal({
   visible,
   food,
   initialEntry,
+  initialNutrients,
+  initialQuantity,
+  initialUnit,
   defaultSection = 'lunch',
   onClose,
   onSave,
@@ -66,19 +82,42 @@ export function QuantityModal({
   const [quantityStr, setQuantityStr] = useState('1');
   const [selectedUnit, setSelectedUnit] = useState('g');
   const [selectedSection, setSelectedSection] = useState<MealSection>(defaultSection);
+  const [nutritionDraft, setNutritionDraft] = useState<NutrientDraft | null>(null);
 
   useEffect(() => {
+    setNutritionDraft(
+      initialNutrients
+        ? {
+            calories: String(initialNutrients.calories),
+            protein: String(initialNutrients.protein),
+            carbs: String(initialNutrients.carbs),
+            fat: String(initialNutrients.fat),
+          }
+        : null,
+    );
     if (initialEntry) {
       setQuantityStr(String(initialEntry.quantity));
       setSelectedUnit(initialEntry.unit);
       setSelectedSection(initialEntry.meal_section);
     } else if (food) {
-      setQuantityStr('1');
+      setQuantityStr(String(initialQuantity ?? 1));
       const firstUnit = food.serving_units?.[0]?.unit || 'g';
-      setSelectedUnit(firstUnit);
+      setSelectedUnit(initialUnit ?? firstUnit);
       setSelectedSection(defaultSection);
     }
-  }, [initialEntry, food, defaultSection, visible]);
+  }, [initialEntry, food, defaultSection, visible, initialNutrients, initialQuantity, initialUnit]);
+  const overrides = useMemo(
+    () =>
+      nutritionDraft
+        ? (Object.fromEntries(
+            Object.entries(nutritionDraft).map(([key, value]) => [
+              key,
+              value.trim() ? Number(value) : NaN,
+            ]),
+          ) as NutrientCorrection)
+        : undefined,
+    [nutritionDraft],
+  );
 
   const parsedQty = parseFloat(quantityStr) || 0;
 
@@ -93,11 +132,11 @@ export function QuantityModal({
         food.protein_per_100g + food.carbs_per_100g + food.fat_per_100g > 0
       )
         return null;
-      return scaleNutrients(food, parsedQty, selectedUnit);
+      return applyNutrientCorrection(scaleNutrients(food, parsedQty, selectedUnit), overrides);
     } catch {
       return null;
     }
-  }, [food, parsedQty, selectedUnit]);
+  }, [food, parsedQty, selectedUnit, overrides]);
 
   // Available units for this food (custom serving units + standard)
   const availableUnits = useMemo(() => {
@@ -131,6 +170,7 @@ export function QuantityModal({
         quantity: parsedQty,
         unit: selectedUnit,
         mealSection: selectedSection,
+        ...(overrides ? { nutrientOverrides: overrides } : {}),
         sharedWithRoom: true,
         taggedPartner: false,
       });
@@ -145,6 +185,12 @@ export function QuantityModal({
   const handleSave = () => {
     if (inFlight.current || parsedQty <= 0 || !preview) return;
     if (preview.calories > 3200) {
+      if (Platform.OS === 'web') {
+        const browser = globalThis as unknown as { confirm?: (message: string) => boolean };
+        if (browser.confirm?.(t('homeRefresh.portionQuestion', { calories: preview.calories })))
+          void submit();
+        return;
+      }
       Alert.alert(
         t('homeRefresh.confirmPortion'),
         t('homeRefresh.portionQuestion', { calories: preview.calories }),
@@ -265,16 +311,59 @@ export function QuantityModal({
             </ScrollView>
           </View>
 
-          {/* Live Macro Preview Box with CMP-13 Identity Steps */}
+          <View style={{ gap: space[3] }}>
+            <Text variant="heading">{t('foodPolish.nutritionTitle')}</Text>
+            <Text variant="bodyS">{t('foodPolish.nutritionHint')}</Text>
+            {nutritionDraft ? (
+              <>
+                <NutrientEditor
+                  draft={nutritionDraft}
+                  disabled={saving}
+                  onChange={(metric, value) =>
+                    setNutritionDraft((current) =>
+                      current ? { ...current, [metric]: value } : current,
+                    )
+                  }
+                />
+                <Button
+                  variant="tertiary"
+                  label={t('foodPolish.resetNutrition')}
+                  onPress={() => setNutritionDraft(null)}
+                  testID="reset-nutrition"
+                />
+                {!preview && (
+                  <Text color={dark.danger} accessibilityRole="alert">
+                    {t('foodPolish.invalidNutrition')}
+                  </Text>
+                )}
+              </>
+            ) : (
+              <Button
+                variant="secondary"
+                label={t('foodPolish.editNutrition')}
+                onPress={() => {
+                  if (preview)
+                    setNutritionDraft({
+                      calories: String(preview.calories),
+                      protein: String(preview.protein),
+                      carbs: String(preview.carbs),
+                      fat: String(preview.fat),
+                    });
+                }}
+                testID="edit-nutrition"
+              />
+            )}
+          </View>
+          {/* Live Macro Preview */}
           {preview ? (
             <View style={styles.previewBox} testID="preview-nutrients">
               <View style={styles.previewHeader}>
                 <Text variant="label" color={dark.textLo} style={styles.previewLabel}>
                   NUTRITION PREVIEW
                 </Text>
-                <Text variant="numeralM" color={dark.textHi}>
+                <Text nutrient="calories" variant="numeralM" color={dark.textHi}>
                   {preview.calories}{' '}
-                  <Text variant="bodyS" color={dark.textMid}>
+                  <Text nutrient="calories" variant="bodyS" color={dark.textMid}>
                     kcal
                   </Text>
                 </Text>
@@ -284,9 +373,9 @@ export function QuantityModal({
               <View style={styles.macroValuesRow}>
                 <View style={styles.macroPill}>
                   <View style={[styles.macroDot, { backgroundColor: dark.iris }]} />
-                  <Text variant="label" color={dark.textMid}>
+                  <Text nutrient="protein" variant="label" color={dark.textMid}>
                     P:{' '}
-                    <Text variant="bodyS" color={dark.textHi}>
+                    <Text nutrient="protein" variant="bodyS" color={dark.textHi}>
                       {preview.protein}g
                     </Text>
                   </Text>
@@ -294,9 +383,9 @@ export function QuantityModal({
 
                 <View style={styles.macroPill}>
                   <View style={[styles.macroDot, { backgroundColor: dark.teal }]} />
-                  <Text variant="label" color={dark.textMid}>
+                  <Text nutrient="carbs" variant="label" color={dark.textMid}>
                     C:{' '}
-                    <Text variant="bodyS" color={dark.textHi}>
+                    <Text nutrient="carbs" variant="bodyS" color={dark.textHi}>
                       {preview.carbs}g
                     </Text>
                   </Text>
@@ -304,9 +393,9 @@ export function QuantityModal({
 
                 <View style={styles.macroPill}>
                   <View style={[styles.macroDot, { backgroundColor: dark.rose }]} />
-                  <Text variant="label" color={dark.textMid}>
+                  <Text nutrient="fat" variant="label" color={dark.textMid}>
                     F:{' '}
-                    <Text variant="bodyS" color={dark.textHi}>
+                    <Text nutrient="fat" variant="bodyS" color={dark.textHi}>
                       {preview.fat}g
                     </Text>
                   </Text>

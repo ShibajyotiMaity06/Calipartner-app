@@ -264,32 +264,32 @@ export function CaloriesChart({
       {/* Summary Row */}
       <View style={styles.statsRow}>
         <View style={styles.statBox}>
-          <Text style={[styles.statLabel, { color: colors.textMuted }]}>
+          <Text nutrient="calories" style={[styles.statLabel, { color: colors.textMuted }]}>
             {t('progress.calories.average')}
           </Text>
-          <Text style={[styles.statValue, { color: colors.text }]}>
+          <Text nutrient="calories" style={[styles.statValue, { color: colors.text }]}>
             {data?.average_calories != null ? Math.round(data.average_calories) : '--'} kcal
           </Text>
         </View>
 
         <View style={styles.statBox}>
-          <Text style={[styles.statLabel, { color: colors.textMuted }]}>
+          <Text nutrient="calories" style={[styles.statLabel, { color: colors.textMuted }]}>
             {t('progress.calories.target')}
           </Text>
-          <Text style={[styles.statValue, { color: colors.text }]}>
+          <Text nutrient="calories" style={[styles.statValue, { color: colors.text }]}>
             {data?.average_target != null ? Math.round(data.average_target) : '--'} kcal
           </Text>
         </View>
 
         <View style={styles.statBox}>
-          <Text style={[styles.statLabel, { color: colors.textMuted }]}>
+          <Text nutrient="calories" style={[styles.statLabel, { color: colors.textMuted }]}>
             {t('progress.calories.adherence')}
           </Text>
           <Text style={[styles.statValue, { color: colors.text }]}>
             {data?.adherence_pct != null ? `${Math.round(data.adherence_pct)}%` : '--%'}
           </Text>
           {data?.logged_days_count != null && (
-            <Text style={[styles.subStatText, { color: colors.textMuted }]}>
+            <Text nutrient="calories" style={[styles.subStatText, { color: colors.textMuted }]}>
               {t('progress.calories.adherenceSubtitle', {
                 goalDays: data.goal_days_count,
                 loggedDays: data.logged_days_count,

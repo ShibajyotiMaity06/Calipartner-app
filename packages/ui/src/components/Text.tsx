@@ -5,7 +5,7 @@ import {
   type TextProps as RNTextProps,
   type TextStyle,
 } from 'react-native';
-import { dark } from '../tokens/colors';
+import { dark, nutritionColors, type NutritionMetric } from '../tokens/colors';
 import { onboardingType } from '../tokens/onboarding';
 import {
   type as typeTokens,
@@ -21,6 +21,7 @@ export interface TextProps extends RNTextProps {
   variant?: TypeVariant;
   /** Color token key (e.g. 'textHi', 'textMid', 'apricot', 'onBrand') or color hex string */
   color?: keyof typeof dark | string;
+  nutrient?: NutritionMetric;
   /** When true, renders with Devanagari typography with 1.15x line height */
   isHindi?: boolean;
   /** Explicitly enforce or disable tabular numerals */
@@ -36,6 +37,7 @@ export function Text({
   fontSet = 'app',
   variant = 'body',
   color,
+  nutrient,
   isHindi = false,
   tabular,
   allowFontScaling = true,
@@ -100,6 +102,12 @@ export function Text({
       style={[
         fontStyle,
         style,
+        nutrient &&
+        resolvedColor !== dark.onBrand &&
+        customStyle?.color !== dark.onBrand &&
+        rest.accessibilityRole !== 'alert'
+          ? { color: nutritionColors[nutrient] }
+          : null,
         !isHindi ? { fontFamily: fontStyle.fontFamily, fontWeight: 'normal' } : null,
       ]}
       {...rest}

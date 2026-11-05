@@ -96,8 +96,8 @@ export function MacrosChart({ data, loading = false, testID = 'macros-chart' }: 
           return (
             <View key={item.label} style={styles.macroRow}>
               <View style={styles.macroHeader}>
-                <Text style={[styles.macroLabel, { color: colors.text }]}>{item.label}</Text>
-                <Text style={[styles.macroValue, { color: colors.textMuted }]}>
+                <Text style={[styles.macroLabel, { color: item.color }]}>{item.label}</Text>
+                <Text style={[styles.macroValue, { color: item.color }]}>
                   {Math.round(item.avg)}g / {Math.round(item.target)}g
                 </Text>
               </View>

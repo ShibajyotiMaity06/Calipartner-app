@@ -1,3 +1,4 @@
+import { NutrientSummary } from '../diary/NutrientSummary';
 import React from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
@@ -174,20 +175,11 @@ export function SquadLeaderboard({
               <Text variant="heading" style={squadStyles.name}>
                 {memberName(member)}
               </Text>
-              <Text variant="bodyS" tabular style={squadStyles.name}>
-                {member.targets
-                  ? t('squadDesign.amount', {
-                      value: numberText(member.calories),
-                      target: numberText(member.targets.calories),
-                      unit: t('squadDesign.kcal'),
-                    })
-                  : t('squadDesign.noGoals')}
-              </Text>
             </View>
             <ProgressTrack percent={member.score} />
           </View>
           <Text variant="numeralM" tabular>
-            {member.score == null ? '—' : t('squadDesign.percent', { value: member.score })}
+            {member.score == null ? '—' : t('foodPolish.complete', { percent: member.score })}
           </Text>
         </Pressable>
       ))}
@@ -208,56 +200,36 @@ export function MetricValue({
 }) {
   const value = member[metric],
     target = member.targets?.[metric] ?? null;
-  const unit = t(
-    metric === 'steps'
-      ? 'squadDesign.stepUnit'
-      : metric === 'calories'
-        ? 'squadDesign.kcal'
-        : 'squadDesign.grams',
-  );
   const percent =
     target == null ? null : target > 0 ? (value / target) * 100 : value === 0 ? 100 : 200;
+  const nutrient = metric === 'steps' ? undefined : metric;
   return (
     <View
       style={{ gap: space[1] }}
       accessible
+      testID={`member-metric-${member.user_id}-${metric}`}
       accessibilityLabel={
-        target == null
+        percent == null
           ? memberName(member) + ': ' + t('squadDesign.noGoals')
-          : t('squadDesign.metricSummary', {
+          : t('foodPolish.metricPercent', {
               name: memberName(member),
-              label: t(`squadDesign.${metric}`),
-              value: numberText(value),
-              target: numberText(target),
-              unit,
+              metric: t(`squadDesign.${metric}`),
+              percent: numberText(percent),
             })
       }
     >
-      {label ? (
-        <View style={squadStyles.spread}>
-          <Text variant="bodyS">{label}</Text>
-          <Text variant="bodyS" tabular style={squadStyles.name}>
-            {target == null
-              ? numberText(value) + ' · ' + t('squadDesign.noGoals')
-              : t('squadDesign.amount', {
-                  value: numberText(value),
-                  target: numberText(target),
-                  unit,
-                })}
+      <View style={squadStyles.spread}>
+        {label && (
+          <Text variant="bodyS" nutrient={nutrient}>
+            {label}
           </Text>
-        </View>
-      ) : (
-        <View style={squadStyles.spread}>
-          <Text variant="heading" tabular color={dark.textHi}>
-            {numberText(value)}
-          </Text>
-          <Text variant="micro" tabular style={{ maxWidth: '100%' }}>
-            {target == null
-              ? t('squadDesign.noGoals')
-              : t('squadDesign.of', { target: numberText(target), unit })}
-          </Text>
-        </View>
-      )}
+        )}
+        <Text variant="bodyS" tabular nutrient={nutrient}>
+          {percent == null
+            ? t('squadDesign.noGoals')
+            : t('squadDesign.percent', { value: numberText(percent) })}
+        </Text>
+      </View>
       <ProgressTrack percent={percent} color={color} />
       {percent !== null && percent > 100 && <Text variant="bodyS">{t('homeRefresh.over')}</Text>}
     </View>
@@ -312,13 +284,9 @@ export function PeopleSelector({
             style={squadStyles.selector}
             testID={`compare-choose-${side}`}
           >
-            <Avatar
-              name={memberName(member)}
-              uri={member.avatar_url ?? undefined}
-              size="sm"
-              identityHue={side === 'left' ? 'iris' : 'teal'}
-            />
-            <Text style={squadStyles.flex}>{memberName(member)}</Text>
+            <Text variant="label" style={squadStyles.flex}>
+              {memberName(member)}
+            </Text>
             <Ionicons name="chevron-down" size={homeLayout.iconSize} color={dark.textMid} />
           </Pressable>
         </React.Fragment>
@@ -353,7 +321,7 @@ export function MealContent({
   if (!meal) return <Text variant="bodyS">{t('squadDesign.noLogs')}</Text>;
   return (
     <View style={squadStyles.stack}>
-      <Text variant="heading" tabular>
+      <Text nutrient="calories" variant="heading" tabular>
         {numberText(meal.calories)} {t('squadDesign.kcal')}
       </Text>
       {meal.items.map((item) => (
@@ -365,11 +333,7 @@ export function MealContent({
           section={meal.section}
         />
       ))}
-      <Text variant="bodyS" tabular>
-        {t('squadDesign.protein')} {numberText(meal.protein)} {t('squadDesign.grams')} ·{' '}
-        {t('squadDesign.carbs')} {numberText(meal.carbs)} {t('squadDesign.grams')} ·{' '}
-        {t('squadDesign.fat')} {numberText(meal.fat)} {t('squadDesign.grams')}
-      </Text>
+      <NutrientSummary values={{ protein: meal.protein, carbs: meal.carbs, fat: meal.fat }} />
     </View>
   );
 }

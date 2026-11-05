@@ -1,3 +1,4 @@
+import { nutritionColors } from '@calipartner/ui';
 import React from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import Svg, { Circle } from 'react-native-svg';
@@ -103,6 +104,7 @@ export function PlanReviewStep({
               {t('setup.dailyTarget')}
             </Text>
             <Text
+              nutrient="calories"
               fontSet="onboarding"
               variant="numeralXL"
               color={colors.textHi}
@@ -111,7 +113,7 @@ export function PlanReviewStep({
             >
               {result.targetKcal.toLocaleString()}
             </Text>
-            <Text fontSet="onboarding" variant="bodyS" color={colors.textMid}>
+            <Text nutrient="calories" fontSet="onboarding" variant="bodyS" color={colors.textMid}>
               {t('setup.kcalDay', { kcal: result.targetKcal.toLocaleString() })}
             </Text>
             <View style={planStyles.row}>
@@ -179,7 +181,7 @@ export function PlanReviewStep({
           {t('setup.recommendedPlan')}
         </Text>
         {recommendation ? (
-          <Text fontSet="onboarding" color={colors.textMid} tabular>
+          <Text nutrient="calories" fontSet="onboarding" color={colors.textMid} tabular>
             {t(
               state.goal === 'maintain'
                 ? 'setup.recommendationMaintain'
@@ -191,7 +193,7 @@ export function PlanReviewStep({
             )}
           </Text>
         ) : null}
-        <Text fontSet="onboarding" variant="bodyS" color={colors.textMid}>
+        <Text nutrient="calories" fontSet="onboarding" variant="bodyS" color={colors.textMid}>
           {t('setup.guardrails', {
             floor: result?.safety.calorieFloor ?? '—',
             cap: result?.safety.rateCapKgPerWeek ?? '—',
@@ -285,25 +287,28 @@ function MacroSplit({ result }: { result: GymTargetsResult }) {
   const circumference = 2 * Math.PI * r;
   const segments = [
     {
+      nutrient: 'carbs' as const,
       label: t('setup.carbs'),
       grams: result.macros.carbGrams,
       kcal: result.macros.carbKcal,
       percent: result.macroShares.carbs,
-      color: colors.cream,
+      color: nutritionColors.carbs,
     },
     {
+      nutrient: 'fat' as const,
       label: t('setup.fat'),
       grams: result.macros.fatGrams,
       kcal: result.macros.fatKcal,
       percent: result.macroShares.fat,
-      color: colors.teal,
+      color: nutritionColors.fat,
     },
     {
+      nutrient: 'protein' as const,
       label: t('setup.protein'),
       grams: result.macros.proteinGrams,
       kcal: result.macros.proteinKcal,
       percent: result.macroShares.protein,
-      color: colors.iris,
+      color: nutritionColors.protein,
     },
   ];
   let offset = 0;
@@ -374,10 +379,21 @@ function MacroSplit({ result }: { result: GymTargetsResult }) {
       </View>
       {segments.map((segment) => (
         <View key={segment.label} style={planStyles.gap}>
-          <Text fontSet="onboarding" variant="heading" color={colors.textHi}>
+          <Text
+            nutrient={segment.nutrient}
+            fontSet="onboarding"
+            variant="heading"
+            color={colors.textHi}
+          >
             {segment.label}
           </Text>
-          <Text fontSet="onboarding" variant="bodyS" color={colors.textMid} tabular>
+          <Text
+            nutrient={segment.nutrient}
+            fontSet="onboarding"
+            variant="bodyS"
+            color={colors.textMid}
+            tabular
+          >
             {t('setup.macroDetail', {
               grams: segment.grams,
               kcal: segment.kcal.toLocaleString(),

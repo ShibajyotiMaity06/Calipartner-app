@@ -7,6 +7,63 @@ import type {
   NutrientSnapshot,
   UserFoodStats,
 } from './types';
+import { resizeNutrientSnapshot } from './advancedNutrition';
+
+export type NutrientCorrection = Partial<
+  Pick<NutrientSnapshot, 'calories' | 'protein' | 'carbs' | 'fat'>
+>;
+/** A correction belongs to one logged portion; it never mutates the shared catalog. */
+export function applyNutrientCorrection(
+  snapshot: NutrientSnapshot,
+  correction?: NutrientCorrection,
+): NutrientSnapshot {
+  const result = { ...snapshot };
+  for (const key of ['calories', 'protein', 'carbs', 'fat'] as const) {
+    const value = correction?.[key] === undefined ? snapshot[key] : correction[key]!;
+    if (!Number.isFinite(value) || value < 0 || value > 100000)
+      throw new Error('INVALID_NUTRIENT_CORRECTION');
+    result[key] = Math.round(value * 10) / 10;
+  }
+  if (result.calories === 0 && result.protein + result.carbs + result.fat > 0)
+    throw new Error('FOOD_ENERGY_UNAVAILABLE');
+  return result;
+}
+
+export function foodFavoriteKey(food: Food): string {
+  return food.source === 'user'
+    ? `user:${food.id}`
+    : food.barcode
+      ? `barcode:${food.barcode}`
+      : `${food.source}:${food.name.trim().toLowerCase()}:${food.brand?.trim().toLowerCase() ?? ''}`;
+}
+
+export function customFoodNutritionForPortion(
+  nutrients: NutrientSnapshot,
+  grams: number,
+  unit: string,
+) {
+  if (!Number.isFinite(grams) || grams <= 0 || grams > 100000) throw new Error('INVALID_PORTION');
+  const valid = applyNutrientCorrection(nutrients);
+  for (const key of ['fiber', 'sugar', 'sodium_mg'] as const)
+    if (!Number.isFinite(valid[key]) || valid[key] < 0 || valid[key] > 100000)
+      throw new Error('INVALID_NUTRIENT_CORRECTION');
+  const scaled = resizeNutrientSnapshot(valid, grams, 100);
+  const named = unit.trim().toLowerCase();
+  return {
+    calories_per_100g: scaled.calories,
+    protein_per_100g: scaled.protein,
+    carbs_per_100g: scaled.carbs,
+    fat_per_100g: scaled.fat,
+    fiber_per_100g: scaled.fiber,
+    sugar_per_100g: scaled.sugar,
+    sodium_mg_per_100g: scaled.sodium_mg,
+    serving_units: [
+      { unit: !named || ['g', 'ml'].includes(named) ? 'serving' : named, grams },
+      { unit: 'g', grams: 1 },
+      ...(named === 'ml' ? [{ unit: 'ml', grams: 1 }] : []),
+    ],
+  };
+}
 
 /** Standard conversion map in grams (or ml) for common household units */
 export const STANDARD_SERVING_GRAMS: Readonly<Record<string, number>> = {

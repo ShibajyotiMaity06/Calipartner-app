@@ -1,3 +1,4 @@
+import { NutrientSummary } from '../diary/NutrientSummary';
 import React, { useRef, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { Button, dark, radius, space, Text } from '@calipartner/ui';
@@ -61,14 +62,7 @@ export function CoachMealDraftCard({
           {item.quantity} {item.unit} · {item.name}
         </Text>
       ))}
-      <Text variant="bodyS" tabular testID="coach-meal-macros">
-        {t('coach.meal.macros', {
-          calories: Math.round(totals.calories),
-          protein: Math.round(totals.protein),
-          carbs: Math.round(totals.carbs),
-          fat: Math.round(totals.fat),
-        })}
-      </Text>
+      <NutrientSummary values={totals} testID="coach-meal-macros" />
       <Text variant="micro">{t('coach.meal.estimate')}</Text>
       {error && (
         <Text color={dark.danger} accessibilityRole="alert">

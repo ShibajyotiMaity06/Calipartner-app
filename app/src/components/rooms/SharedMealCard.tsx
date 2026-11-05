@@ -79,7 +79,7 @@ export function SharedMealCard({ meal, onAccept, onDecline }: SharedMealCardProp
       {/* Food Details */}
       <View style={[styles.foodInfoBox, { backgroundColor: colors.surfaceAlt }]}>
         <Text style={[styles.foodName, { color: colors.text }]}>{meal.food_name}</Text>
-        <Text style={[styles.caloriesText, { color: colors.macroCalories }]}>
+        <Text nutrient="calories" style={[styles.caloriesText, { color: colors.macroCalories }]}>
           {computedCalories} kcal • {computedQuantity} {meal.unit}
         </Text>
       </View>

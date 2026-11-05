@@ -560,7 +560,12 @@ export function CardioTrackerModal({
                       <Text variant="title1" color={dark.textHi} style={styles.heroTitle}>
                         Outdoor Running
                       </Text>
-                      <Text variant="bodyS" color={dark.textMid} style={styles.heroSubtitle}>
+                      <Text
+                        nutrient="calories"
+                        variant="bodyS"
+                        color={dark.textMid}
+                        style={styles.heroSubtitle}
+                      >
                         GPS tracks your live path, distance, pace, and calories burned like Nike Run
                         & Strava.
                       </Text>
@@ -718,10 +723,15 @@ export function CardioTrackerModal({
 
                       <Card elevation="s1" style={styles.statTile}>
                         <Ionicons name="flame-outline" size={20} color="#EB7A6B" />
-                        <Text variant="numeralM" color="#EB7A6B" style={styles.statNumber}>
+                        <Text
+                          nutrient="calories"
+                          variant="numeralM"
+                          color="#EB7A6B"
+                          style={styles.statNumber}
+                        >
                           {liveWalkingCalories}
                         </Text>
-                        <Text variant="micro" color={dark.textLo}>
+                        <Text nutrient="calories" variant="micro" color={dark.textLo}>
                           CALORIES (KCAL)
                         </Text>
                       </Card>
@@ -763,10 +773,15 @@ export function CardioTrackerModal({
 
                       <Card elevation="s1" style={styles.statTile}>
                         <Ionicons name="flame-outline" size={20} color="#EB7A6B" />
-                        <Text variant="numeralM" color="#EB7A6B" style={styles.statNumber}>
+                        <Text
+                          nutrient="calories"
+                          variant="numeralM"
+                          color="#EB7A6B"
+                          style={styles.statNumber}
+                        >
                           {liveRunningCalories}
                         </Text>
-                        <Text variant="micro" color={dark.textLo}>
+                        <Text nutrient="calories" variant="micro" color={dark.textLo}>
                           CALORIES (KCAL)
                         </Text>
                       </Card>
@@ -877,10 +892,10 @@ export function CardioTrackerModal({
                   </View>
 
                   <View style={styles.summaryRow}>
-                    <Text variant="bodyS" color={dark.textMid}>
+                    <Text nutrient="calories" variant="bodyS" color={dark.textMid}>
                       Calories Burned
                     </Text>
-                    <Text variant="heading" color="#EB7A6B">
+                    <Text nutrient="calories" variant="heading" color="#EB7A6B">
                       {summaryData.caloriesBurned} kcal
                     </Text>
                   </View>

@@ -24,6 +24,7 @@ export interface ButtonProps {
   size?: ButtonSize;
   /** Button text label (verb names the object: e.g. "Add to lunch") */
   label: string;
+  labelColor?: string;
   /** Optional icon component or render function */
   icon?: React.ReactNode;
   /** Optional trailing icon */
@@ -51,6 +52,7 @@ export function Button({
   variant = 'primary',
   size = 'md',
   label,
+  labelColor,
   icon,
   trailingIcon,
   fullWidth = true,
@@ -192,15 +194,16 @@ export function Button({
           color={
             isDisabled
               ? dark.textOff
-              : variant === 'primary'
-                ? dark.onBrand // Rule U2: On apricot always onBrand (#1C1109), never white
-                : variant === 'secondary'
-                  ? dark.textHi
-                  : variant === 'tertiary'
-                    ? dark.apricot
-                    : variant === 'destructive'
-                      ? dark.danger
-                      : dark.textHi
+              : (labelColor ??
+                (variant === 'primary'
+                  ? dark.onBrand // Rule U2: On apricot always onBrand (#1C1109), never white
+                  : variant === 'secondary'
+                    ? dark.textHi
+                    : variant === 'tertiary'
+                      ? dark.apricot
+                      : variant === 'destructive'
+                        ? dark.danger
+                        : dark.textHi))
           }
           style={[styles.label, { flexShrink: 1 }]}
         >

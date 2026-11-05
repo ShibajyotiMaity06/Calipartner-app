@@ -1,3 +1,4 @@
+import { NutrientSummary } from './NutrientSummary';
 import React from 'react';
 import { View, StyleSheet, ScrollView, Pressable } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
@@ -44,14 +45,14 @@ export function MealDetailSheet({
               <Text variant="heading" color={dark.textHi}>
                 {sectionName}
               </Text>
-              <Text variant="bodyS" color={dark.textLo}>
-                P {summary.protein}g · C {summary.carbs}g · F {summary.fat}g
-              </Text>
+              <NutrientSummary
+                values={{ protein: summary.protein, carbs: summary.carbs, fat: summary.fat }}
+              />
             </View>
             <View style={styles.headerRight}>
-              <Text variant="numeralM" color={dark.textHi}>
+              <Text nutrient="calories" variant="numeralM" color={dark.textHi}>
                 {summary.calories}{' '}
-                <Text variant="label" color={dark.textMid}>
+                <Text nutrient="calories" variant="label" color={dark.textMid}>
                   kcal
                 </Text>
               </Text>
@@ -91,15 +92,20 @@ export function MealDetailSheet({
                   <Text variant="body" color={dark.textHi} numberOfLines={1}>
                     {entry.food_name}
                   </Text>
-                  <Text variant="bodyS" color={dark.textLo}>
-                    {entry.quantity} {entry.unit}
-                    {entry.brand_name ? ` · ${entry.brand_name}` : ''}
-                    {' · '}P {entry.protein}g · C {entry.carbs}g · F {entry.fat}g
-                  </Text>
+                  <View>
+                    <Text variant="micro">
+                      {entry.quantity} {entry.unit}
+                      {entry.brand_name ? ` ? ${entry.brand_name}` : ''}
+                    </Text>
+                    <NutrientSummary
+                      values={{ protein: entry.protein, carbs: entry.carbs, fat: entry.fat }}
+                      variant="micro"
+                    />
+                  </View>
                 </View>
 
                 <View style={styles.entryRowRight}>
-                  <Text variant="numeralM" color={dark.textHi}>
+                  <Text nutrient="calories" variant="numeralM" color={dark.textHi}>
                     {entry.calories} kcal
                   </Text>
                   <Pressable

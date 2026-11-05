@@ -235,6 +235,9 @@ export function CommunityPanel({
         </Text>
       </View>
       {tab === 'discover' && discovery.loading ? <LoadingState /> : null}
+      {tab === 'discover' && !query.trim() && (
+        <Text variant="bodyS">{t('foodPolish.suggestions')}</Text>
+      )}
       {tab === 'discover' && discovery.cached ? <Text>{t('friends.cached')}</Text> : null}
       {tab === 'discover' && discovery.error ? (
         <>
@@ -258,7 +261,7 @@ export function CommunityPanel({
             query
               ? 'friends.searchEmpty'
               : tab === 'discover'
-                ? 'homeRefresh.searchUsername'
+                ? 'foodPolish.suggestionsEmpty'
                 : tab === 'friends'
                   ? 'friends.friendsEmpty'
                   : requestTab === 'incoming'

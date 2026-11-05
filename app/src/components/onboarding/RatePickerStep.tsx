@@ -56,7 +56,12 @@ export function RatePickerStep({
       {/* Maintain-Only Notice */}
       {goal === 'maintain' ? (
         <View style={styles.maintainNoticeCard} testID="maintain-notice-card">
-          <Text variant="heading" color={dark.textHi} style={styles.maintainNoticeTitle}>
+          <Text
+            nutrient="calories"
+            variant="heading"
+            color={dark.textHi}
+            style={styles.maintainNoticeTitle}
+          >
             {t('onboarding.rate.targetKcalText', { kcal: tdee })}
           </Text>
           <Text variant="body" color={dark.textMid}>
@@ -159,10 +164,20 @@ export function RatePickerStep({
 
                 {/* Daily Calorie Target numeral */}
                 <View style={styles.rateBottomRow}>
-                  <Text variant="numeralXL" color={dark.textHi} style={styles.targetKcalNumber}>
+                  <Text
+                    nutrient="calories"
+                    variant="numeralXL"
+                    color={dark.textHi}
+                    style={styles.targetKcalNumber}
+                  >
                     {preset.targetKcal.toLocaleString()}
                   </Text>
-                  <Text variant="bodyS" color={dark.textLo} style={styles.targetKcalUnit}>
+                  <Text
+                    nutrient="calories"
+                    variant="bodyS"
+                    color={dark.textLo}
+                    style={styles.targetKcalUnit}
+                  >
                     kcal / day
                   </Text>
                 </View>

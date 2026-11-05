@@ -17,6 +17,31 @@ import {
   swapCandidateFood,
   updateCandidateQuantity,
 } from './aiFoodPhotoService';
+
+it('keeps corrected AI nutrition when the portion changes and after a zero-quantity round trip', () => {
+  const nutrients = {
+    calories: 450,
+    protein: 50,
+    carbs: 30,
+    fat: 10,
+    fiber: 4,
+    sugar: 2,
+    sodium_mg: 30,
+  };
+  const candidate = {
+    id: 'candidate',
+    quantity: 100,
+    unit: 'g',
+    matched_food: { serving_units: [{ unit: 'g', grams: 1 }] },
+    nutrients,
+    corrected_nutrients: { quantity: 100, unit: 'g', nutrients },
+  } as FoodCandidateItem;
+  const resized = updateCandidateQuantity(candidate, 200);
+  expect(resized.nutrients.protein).toBe(100);
+  expect(
+    updateCandidateQuantity(updateCandidateQuantity(candidate, 0), 100).nutrients.protein,
+  ).toBe(50);
+});
 import { type LocalDb } from './accountDataService';
 import type { Food, FoodCandidateItem } from '@calipartner/core';
 
@@ -481,6 +506,12 @@ describe('Phase 11: aiFoodPhotoService (Client Service & Diary Integration)', ()
         },
       };
 
+      candidate.nutrients = { ...candidate.nutrients, protein: 50 };
+      candidate.corrected_nutrients = {
+        quantity: candidate.quantity,
+        unit: candidate.unit,
+        nutrients: candidate.nutrients,
+      };
       const entries = await savePhotoCandidatesToDiary(db, {
         userId: 'user-photo-tester',
         candidates: [candidate],
@@ -495,6 +526,9 @@ describe('Phase 11: aiFoodPhotoService (Client Service & Diary Integration)', ()
       expect(entry.quantity).toBe(1);
       expect(entry.unit).toBe('bowl');
       expect(entry.calories).toBe(180);
+      expect(entry.protein).toBe(50);
+      expect(entry.id).toBe(candidate.id);
+      expect(candidate.matched_food.protein_per_100g).toBe(6);
 
       // Verify insertion in local_food_entries
       const row = await db.getFirstAsync<{ id: string; source: string; food_name: string }>(

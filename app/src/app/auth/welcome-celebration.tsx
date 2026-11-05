@@ -68,7 +68,7 @@ export default function WelcomeCelebrationScreen() {
           >
             Grow stronger, together.
           </Text>
-          <Text variant="body" color={dark.textMid} style={styles.description}>
+          <Text nutrient="protein" variant="body" color={dark.textMid} style={styles.description}>
             Log meals, hit your protein goals, and stay consistent alongside real partners.
           </Text>
         </View>

@@ -374,7 +374,12 @@ export function PairedCard({
                 <Text variant="label" color={dark.apricot}>
                   Partner spot open
                 </Text>
-                <Text variant="micro" color={dark.textMid} style={styles.emptyDashedText}>
+                <Text
+                  nutrient="calories"
+                  variant="micro"
+                  color={dark.textMid}
+                  style={styles.emptyDashedText}
+                >
                   Hit your daily calorie targets together.
                 </Text>
                 <Button

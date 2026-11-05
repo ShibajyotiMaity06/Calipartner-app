@@ -16,7 +16,7 @@ function Harness({ query, random = false }: { query: string; random?: boolean })
   return null;
 }
 afterEach(() => vi.useRealTimers());
-it('performs no discovery read until a username is entered, clears results on empty input, and retains onboarding random lookup', async () => {
+it('loads at most five same-goal suggestions without a query, keeps username search and retains onboarding random lookup', async () => {
   vi.useFakeTimers();
   let tree!: ReturnType<typeof create>;
   await act(async () => {
@@ -25,24 +25,34 @@ it('performs no discovery read until a username is entered, clears results on em
   await act(async () => {
     await vi.advanceTimersByTimeAsync(250);
   });
-  expect(state.browse).not.toHaveBeenCalled();
-  expect(result.people).toEqual([]);
+  expect(state.browse).toHaveBeenCalledOnce();
+  expect(state.browse).toHaveBeenLastCalledWith(
+    expect.anything(),
+    expect.anything(),
+    'owner',
+    true,
+    null,
+    '',
+    '',
+    false,
+  );
+  expect(result.people).toHaveLength(1);
   await act(async () => tree.update(<Harness query="@friend" />));
   await act(async () => {
     await vi.advanceTimersByTimeAsync(250);
   });
-  expect(state.browse).toHaveBeenCalledOnce();
+  expect(state.browse).toHaveBeenCalledTimes(2);
   expect(result.people).toHaveLength(1);
   await act(async () => tree.update(<Harness query="" />));
   expect(result.people).toEqual([]);
   await act(async () => {
     await vi.advanceTimersByTimeAsync(250);
   });
-  expect(state.browse).toHaveBeenCalledOnce();
+  expect(state.browse).toHaveBeenCalledTimes(3);
   await act(async () => tree.update(<Harness query="" random />));
   await act(async () => {
     await vi.advanceTimersByTimeAsync(250);
   });
-  expect(state.browse).toHaveBeenCalledTimes(2);
+  expect(state.browse).toHaveBeenCalledTimes(4);
   await act(async () => tree.unmount());
 });

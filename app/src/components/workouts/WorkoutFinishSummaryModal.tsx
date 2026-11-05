@@ -121,7 +121,11 @@ export function WorkoutFinishSummaryModal({
                 </View>
               </View>
               <Text style={styles.metricLabel}>Active estimate</Text>
-              <Text testID={`${testID}-stat-calories`} style={styles.metricValue}>
+              <Text
+                nutrient="calories"
+                testID={`${testID}-stat-calories`}
+                style={styles.metricValue}
+              >
                 {`${summary.estimated_calories} kcal`}
               </Text>
             </View>
@@ -130,7 +134,9 @@ export function WorkoutFinishSummaryModal({
           {/* Calorie Disclaimer */}
           <View style={styles.disclaimerCard}>
             <Ionicons name="information-circle-outline" size={16} color={dark.textLo} />
-            <Text style={styles.disclaimerText}>{t('workouts.calorieEstimateDisclaimer')}</Text>
+            <Text nutrient="calories" style={styles.disclaimerText}>
+              {t('workouts.calorieEstimateDisclaimer')}
+            </Text>
           </View>
 
           {/* Room Share Toggle */}
