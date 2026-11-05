@@ -91,20 +91,29 @@ export function sendFriendRequest(
     client,
   );
 }
-export function respondFriendRequest(
+export async function respondFriendRequest(
   db: SocialDb,
   owner: string,
   request: string,
   action: FriendAction,
   client?: SocialClient,
 ) {
-  return writeSocial(
+  const result = await writeSocial(
     db,
     owner,
     'respond_friend_request',
     { p_request_id: request, p_action: action },
     client,
   );
+  const status = {
+    accept: 'accepted',
+    decline: 'declined',
+    cancel: 'cancelled',
+    remove: 'removed',
+  }[action];
+  if ((result.data as { status?: string } | null)?.status !== status)
+    throw new Error('REQUEST_RESPONSE_UNCONFIRMED');
+  return result;
 }
 export function blockSocialProfile(
   db: SocialDb,

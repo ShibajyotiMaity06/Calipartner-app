@@ -12,4 +12,12 @@ export const onboardingLayout = {
   ringStroke: 12,
   icon: 24,
   border: 1,
+  entryWidth: 420,
+  entryLogo: 64,
+  chartHeight: 132,
+  chartStroke: 2,
+  chartDot: 5,
+  chartActiveDot: 8,
+  previewBar: 6,
+  previewAvatar: 32,
 } as const;

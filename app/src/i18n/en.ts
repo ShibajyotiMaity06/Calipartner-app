@@ -1,10 +1,12 @@
 import { fastingRefresh } from './fastingRefresh';
+import { entryRefresh } from './entryRefresh';
 import { fixNovember } from './fixNovember';
 import { challengeMessages } from './challengeMessages';
 import { homeRefresh } from './homeRefresh';
 import { squadDesign } from './squadDesign';
 import { repairMessages } from './repairs';
 export const en = {
+  entryRefresh,
   fixNovember,
   fastingRefresh,
   squadDesign,

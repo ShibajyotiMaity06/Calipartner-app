@@ -1,3 +1,5 @@
+> Owner visual update, 4 November 2026: [Entry screens and Squad selection](entry-refresh-2026-11-04.md) replaces Welcome, Create account, Log in, Why it works and Plus/Pro layouts. Retain email-code authentication, the supplied CaliPartner logo and upright Jakarta typography.
+
 ## Part 7 — Screen inventory
 
 > Owner-approved update, 24 October 2026: the onboarding journey and new-plan calculator are superseded by [the onboarding redesign](../ONBOARDING_REDESIGN.md). Existing pricing is retained: free Basic, a 7-day Plus trial, and no Pro trial. Historical targets retain their previous calculator.

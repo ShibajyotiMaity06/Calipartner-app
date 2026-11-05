@@ -63,6 +63,7 @@ export default function OnboardingScreen() {
   const [saveError, setSaveError] = useState<string | null>(null);
   const [draftError, setDraftError] = useState(false);
   const [sheet, setSheet] = useState<'calculation' | 'health' | null>(null);
+  const [premiumTier, setPremiumTier] = useState<'plus' | 'pro'>('plus');
   const savingRef = useRef(false);
   const completedRef = useRef(false);
   const draftWrites = useRef(Promise.resolve());
@@ -320,209 +321,221 @@ export default function OnboardingScreen() {
               style={[
                 styles.track,
                 {
-                  backgroundColor: colors.textHi,
+                  backgroundColor: colors.apricot,
                   width: `${((index + 1) / ACTIVE_ONBOARDING_STEPS.length) * 100}%`,
                 },
               ]}
             />
           </View>
-          <ScrollView
-            ref={scroll}
-            contentContainerStyle={styles.content}
-            keyboardShouldPersistTaps="handled"
-          >
-            <Text
-              fontSet="onboarding"
-              variant="title1"
-              color={colors.textHi}
-              accessibilityRole="header"
-              testID="onboarding-title"
+          {current === 'premium' || current === 'paywall' ? (
+            <PremiumStep
+              onContinue={(tier) => {
+                setPremiumTier(tier);
+                next();
+              }}
+              onSkip={closePremium}
+            />
+          ) : (
+            <ScrollView
+              ref={scroll}
+              contentContainerStyle={styles.content}
+              keyboardShouldPersistTaps="handled"
             >
-              {titles[current]}
-            </Text>
-            {subtitle ? (
-              <Text fontSet="onboarding" color={colors.textMid}>
-                {subtitle}
-              </Text>
-            ) : null}
-            {isOnline === false ? (
-              <Text
-                fontSet="onboarding"
-                variant="bodyS"
-                color={colors.textMid}
-                accessibilityLiveRegion="polite"
-              >
-                {t('setup.offlineDraft')}
-              </Text>
-            ) : null}
-            {draftError ? (
-              <Pressable
-                onPress={update}
-                accessibilityRole="button"
-                style={planStyles.link}
-                testID="retry-draft"
-              >
-                <Text fontSet="onboarding" color={colors.danger}>
-                  {t('setup.draftError')}
-                </Text>
-              </Pressable>
-            ) : null}
-            {current === 'goal' ? (
-              <GoalStep
-                selectedGoal={snapshot.goal}
-                onSelectGoal={(goal) => {
-                  machine.setGoal(goal);
-                  update();
-                }}
-              />
-            ) : null}
-            {current === 'motivation' ? <MotivationStep goal={snapshot.goal} /> : null}
-            {current === 'activity_level' ? (
-              <ActivityStep
-                selectedActivityLevel={snapshot.activityLevel}
-                onSelectActivityLevel={(value) => {
-                  machine.setActivityLevel(value);
-                  update();
-                }}
-              />
-            ) : null}
-            {current === 'body_stats' ? (
-              <TrainingStep
-                state={snapshot}
-                onWeight={setWeight}
-                onHeight={(value) => {
-                  machine.setBodyStats({ heightCm: value });
-                  update();
-                }}
-                onDays={setDays}
-              />
-            ) : null}
-            {current === 'rate_selection' ? (
-              <View style={planStyles.section}>
-                {snapshot.goal !== 'maintain' ? (
-                  <PlanCard>
-                    <NumberField
-                      optional
-                      label={t('setup.targetWeight')}
-                      value={snapshot.targetWeightKg}
-                      onChange={(value) => {
-                        machine.setTargetWeightAndDate(value, null);
-                        update();
-                      }}
-                      testID="input-target-weight"
-                    />
-                    {snapshot.errors.targetWeight ? (
-                      <Text fontSet="onboarding" color={colors.danger} accessibilityRole="alert">
-                        {t('setup.targetDirectionError')}
-                      </Text>
-                    ) : null}
-                  </PlanCard>
-                ) : (
-                  <PlanCard>
-                    <Text fontSet="onboarding" variant="heading" color={colors.textHi}>
-                      {t('setup.maintainPace')}
-                    </Text>
-                    <Text fontSet="onboarding" color={colors.textMid}>
-                      {t('setup.maintainPaceBody')}
-                    </Text>
-                  </PlanCard>
-                )}
-                <View accessibilityRole="radiogroup" style={planStyles.section}>
-                  {snapshot.calculatedTargets?.presetRates.map((rate) => (
-                    <PlanChoice
-                      key={rate.rateKgPerWeek}
-                      testID={`rate-card-${rate.rateKgPerWeek}`}
-                      title={t('setup.rate', { rate: rate.rateKgPerWeek })}
-                      description={`${t('setup.kcalDay', { kcal: rate.targetKcal.toLocaleString() })}${rate.rateKgPerWeek === snapshot.calculatedTargets?.recommendedRateKg ? ` - ${t('setup.recommended')}` : ''}`}
-                      selected={snapshot.weeklyRateKg === rate.rateKgPerWeek}
-                      onPress={() => {
-                        machine.setWeeklyRate(rate.rateKgPerWeek);
-                        update();
-                      }}
-                    />
-                  ))}
-                </View>
-                {snapshot.goal !== 'maintain' ? (
-                  <NumberField
-                    label={t('fixes.customPace')}
-                    value={snapshot.weeklyRateKg}
-                    onChange={(value) => {
-                      machine.setWeeklyRate(value ?? NaN);
-                      update();
-                    }}
-                    testID="input-custom-pace"
-                  />
-                ) : null}
-                <PlanSafetyNotice result={snapshot.calculatedTargets} />
-                {snapshot.errors.rate ? (
-                  <Text fontSet="onboarding" accessibilityRole="alert" color={colors.danger}>
-                    {t('fixes.invalidPlan')}
-                  </Text>
-                ) : null}
-                <Pressable
-                  onPress={() => move('goal')}
-                  style={planStyles.link}
-                  accessibilityRole="button"
-                  testID="pace-change-goal"
+              {current !== 'motivation' ? (
+                <Text
+                  fontSet="onboarding"
+                  variant="title1"
+                  color={colors.textHi}
+                  accessibilityRole="header"
+                  testID="onboarding-title"
                 >
-                  <Text fontSet="onboarding" color={colors.textMid}>
-                    {t('setup.changeGoal')}
+                  {titles[current]}
+                </Text>
+              ) : null}
+              {subtitle ? (
+                <Text fontSet="onboarding" color={colors.textMid}>
+                  {subtitle}
+                </Text>
+              ) : null}
+              {isOnline === false ? (
+                <Text
+                  fontSet="onboarding"
+                  variant="bodyS"
+                  color={colors.textMid}
+                  accessibilityLiveRegion="polite"
+                >
+                  {t('setup.offlineDraft')}
+                </Text>
+              ) : null}
+              {draftError ? (
+                <Pressable
+                  onPress={update}
+                  accessibilityRole="button"
+                  style={planStyles.link}
+                  testID="retry-draft"
+                >
+                  <Text fontSet="onboarding" color={colors.danger}>
+                    {t('setup.draftError')}
                   </Text>
                 </Pressable>
-              </View>
-            ) : null}
-            {current === 'daily_goals' ? (
-              <PlanCard>
-                <NumberField
-                  label={t('setup.waterGoal')}
-                  value={snapshot.waterMlGoal}
-                  onChange={(value) => {
-                    machine.setStepAndWaterGoals(undefined, value ?? NaN);
+              ) : null}
+              {current === 'goal' ? (
+                <GoalStep
+                  selectedGoal={snapshot.goal}
+                  onSelectGoal={(goal) => {
+                    machine.setGoal(goal);
                     update();
                   }}
-                  testID="input-water-goal"
                 />
-                <NumberField
-                  label={t('setup.stepGoal')}
-                  value={snapshot.stepGoal}
-                  onChange={(value) => {
-                    machine.setStepAndWaterGoals(value ?? NaN);
+              ) : null}
+              {current === 'motivation' ? <MotivationStep goal={snapshot.goal} /> : null}
+              {current === 'activity_level' ? (
+                <ActivityStep
+                  selectedActivityLevel={snapshot.activityLevel}
+                  onSelectActivityLevel={(value) => {
+                    machine.setActivityLevel(value);
                     update();
                   }}
-                  testID="input-step-goal"
                 />
-                {Object.keys(snapshot.errors).length ? (
-                  <Text fontSet="onboarding" color={colors.danger} accessibilityRole="alert">
-                    {t('setup.dailyGoalsError')}
-                  </Text>
-                ) : null}
-              </PlanCard>
-            ) : null}
-            {current === 'premium' || current === 'paywall' ? <PremiumStep /> : null}
-            {current === 'completed' ? (
-              <PlanReviewStep
-                state={snapshot}
-                onWeight={setWeight}
-                onDays={setDays}
-                onAdjustment={(value) => {
-                  machine.setDailyAdjustment(value);
-                  update();
-                }}
-                onRecommended={() => void save(true)}
-                onPlanned={() => void save(false)}
-                onCalculation={() => setSheet('calculation')}
-                onHealth={() => setSheet('health')}
-                onChangeGoal={() => move('goal')}
-                saving={saving}
-                error={saveError}
-              />
-            ) : null}
-          </ScrollView>
-          {current !== 'completed' ? (
+              ) : null}
+              {current === 'body_stats' ? (
+                <TrainingStep
+                  state={snapshot}
+                  onWeight={setWeight}
+                  onHeight={(value) => {
+                    machine.setBodyStats({ heightCm: value });
+                    update();
+                  }}
+                  onDays={setDays}
+                />
+              ) : null}
+              {current === 'rate_selection' ? (
+                <View style={planStyles.section}>
+                  {snapshot.goal !== 'maintain' ? (
+                    <PlanCard>
+                      <NumberField
+                        optional
+                        label={t('setup.targetWeight')}
+                        value={snapshot.targetWeightKg}
+                        onChange={(value) => {
+                          machine.setTargetWeightAndDate(value, null);
+                          update();
+                        }}
+                        testID="input-target-weight"
+                      />
+                      {snapshot.errors.targetWeight ? (
+                        <Text fontSet="onboarding" color={colors.danger} accessibilityRole="alert">
+                          {t('setup.targetDirectionError')}
+                        </Text>
+                      ) : null}
+                    </PlanCard>
+                  ) : (
+                    <PlanCard>
+                      <Text fontSet="onboarding" variant="heading" color={colors.textHi}>
+                        {t('setup.maintainPace')}
+                      </Text>
+                      <Text fontSet="onboarding" color={colors.textMid}>
+                        {t('setup.maintainPaceBody')}
+                      </Text>
+                    </PlanCard>
+                  )}
+                  <View accessibilityRole="radiogroup" style={planStyles.section}>
+                    {snapshot.calculatedTargets?.presetRates.map((rate) => (
+                      <PlanChoice
+                        key={rate.rateKgPerWeek}
+                        testID={`rate-card-${rate.rateKgPerWeek}`}
+                        title={t('setup.rate', { rate: rate.rateKgPerWeek })}
+                        description={`${t('setup.kcalDay', { kcal: rate.targetKcal.toLocaleString() })}${rate.rateKgPerWeek === snapshot.calculatedTargets?.recommendedRateKg ? ` - ${t('setup.recommended')}` : ''}`}
+                        selected={snapshot.weeklyRateKg === rate.rateKgPerWeek}
+                        onPress={() => {
+                          machine.setWeeklyRate(rate.rateKgPerWeek);
+                          update();
+                        }}
+                      />
+                    ))}
+                  </View>
+                  {snapshot.goal !== 'maintain' ? (
+                    <NumberField
+                      label={t('fixes.customPace')}
+                      value={snapshot.weeklyRateKg}
+                      onChange={(value) => {
+                        machine.setWeeklyRate(value ?? NaN);
+                        update();
+                      }}
+                      testID="input-custom-pace"
+                    />
+                  ) : null}
+                  <PlanSafetyNotice result={snapshot.calculatedTargets} />
+                  {snapshot.errors.rate ? (
+                    <Text fontSet="onboarding" accessibilityRole="alert" color={colors.danger}>
+                      {t('fixes.invalidPlan')}
+                    </Text>
+                  ) : null}
+                  <Pressable
+                    onPress={() => move('goal')}
+                    style={planStyles.link}
+                    accessibilityRole="button"
+                    testID="pace-change-goal"
+                  >
+                    <Text fontSet="onboarding" color={colors.textMid}>
+                      {t('setup.changeGoal')}
+                    </Text>
+                  </Pressable>
+                </View>
+              ) : null}
+              {current === 'daily_goals' ? (
+                <PlanCard>
+                  <NumberField
+                    label={t('setup.waterGoal')}
+                    value={snapshot.waterMlGoal}
+                    onChange={(value) => {
+                      machine.setStepAndWaterGoals(undefined, value ?? NaN);
+                      update();
+                    }}
+                    testID="input-water-goal"
+                  />
+                  <NumberField
+                    label={t('setup.stepGoal')}
+                    value={snapshot.stepGoal}
+                    onChange={(value) => {
+                      machine.setStepAndWaterGoals(value ?? NaN);
+                      update();
+                    }}
+                    testID="input-step-goal"
+                  />
+                  {Object.keys(snapshot.errors).length ? (
+                    <Text fontSet="onboarding" color={colors.danger} accessibilityRole="alert">
+                      {t('setup.dailyGoalsError')}
+                    </Text>
+                  ) : null}
+                </PlanCard>
+              ) : null}
+
+              {current === 'completed' ? (
+                <PlanReviewStep
+                  state={snapshot}
+                  onWeight={setWeight}
+                  onDays={setDays}
+                  onAdjustment={(value) => {
+                    machine.setDailyAdjustment(value);
+                    update();
+                  }}
+                  onRecommended={() => void save(true)}
+                  onPlanned={() => void save(false)}
+                  onCalculation={() => setSheet('calculation')}
+                  onHealth={() => setSheet('health')}
+                  onChangeGoal={() => move('goal')}
+                  saving={saving}
+                  error={saveError}
+                />
+              ) : null}
+            </ScrollView>
+          )}
+          {current !== 'completed' && current !== 'premium' && current !== 'paywall' ? (
             <View style={[styles.footer, { borderTopColor: colors.hairline }]}>
               <Button
                 fontSet="onboarding"
-                label={t(current === 'premium' ? 'setup.tryNow' : 'setup.next')}
+                label={t('setup.next')}
                 onPress={next}
                 testID="btn-onboarding-next"
               />
@@ -531,7 +544,13 @@ export default function OnboardingScreen() {
         </View>
       </KeyboardAvoidingView>
       {current === 'paywall' ? (
-        <PaywallModal visible onClose={closePremium} context="general" onSuccess={closePremium} />
+        <PaywallModal
+          visible
+          onClose={closePremium}
+          context="general"
+          preselectedTier={premiumTier}
+          onSuccess={closePremium}
+        />
       ) : null}
       <Modal
         visible={sheet !== null}

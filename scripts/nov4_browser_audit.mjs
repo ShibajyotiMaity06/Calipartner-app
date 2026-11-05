@@ -411,7 +411,6 @@ try {
     } else if (url.pathname.endsWith('/web-billing')) {
       const body = request.postDataJSON() ?? {};
       billingRequests.push(body);
-      if (body.action === 'country') billingCountry = body.country;
       const provider = billingCountry === 'IN' ? 'razorpay' : 'dodo';
       if (body.action === 'routing' || body.action === 'country')
         data = { country: billingCountry };
@@ -629,6 +628,18 @@ try {
   await snap('you-progress');
   await page.goto('http://127.0.0.1:8098/room?room=' + rid(1));
   await page.getByTestId('room-tab-progress').click();
+  assert.equal(
+    await page
+      .getByTestId('room-tab-progress')
+      .evaluate((element) => globalThis.getComputedStyle(element).borderTopColor),
+    'rgb(244, 212, 119)',
+  );
+  assert.notEqual(
+    await page
+      .getByTestId('room-tab-today')
+      .evaluate((element) => globalThis.getComputedStyle(element).borderTopColor),
+    'rgb(244, 212, 119)',
+  );
   await page.getByTestId('room-tab-chat').click();
   await page.getByTestId('input-chat-message').waitFor();
   await page.waitForFunction(
@@ -793,7 +804,7 @@ try {
   trial = false;
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto('http://127.0.0.1:8098/paywall');
-  await page.getByTestId('billing-country-select').waitFor();
+  assert.equal(await page.locator('select').count(), 0);
   await page.getByText('\u20b91,499.00 / year', { exact: true }).waitFor();
   await page.evaluate(() => {
     globalThis.__razorpayDismiss = true;
@@ -827,9 +838,10 @@ try {
   await snap('razorpay-management');
   paid = false;
   razorpayConfirmed = false;
+  billingCountry = 'US';
   await page.setViewportSize({ width: 375, height: 844 });
   await page.goto('http://127.0.0.1:8098/paywall');
-  await page.getByTestId('billing-country-select').selectOption('US');
+
   await page.getByText('$29.99 / year', { exact: true }).waitFor();
   await snap('international-web-prices');
   await page.getByTestId('btn-paywall-cta').click();

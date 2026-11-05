@@ -10,6 +10,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useNetworkStatus } from './useNetworkStatus';
 import { getDb } from '@/db';
 import { getSupabase } from '@/lib/supabase';
+import { invalidateRequestInboxes, subscribeRequestInbox } from '@/services/requestInboxEvents';
 import {
   loadFriendInbox,
   loadSocialProfile,
@@ -40,7 +41,9 @@ export function useFriends({ profileOnly = false }: { profileOnly?: boolean } = 
   const [busy, setBusy] = useState(false);
   const acting = useRef(false);
   const searchVersion = useRef(0);
+  const inboxVersion = useRef(0);
   const refresh = useCallback(async () => {
+    const version = ++inboxVersion.current;
     if (!id) {
       setLoading(false);
       return;
@@ -52,11 +55,21 @@ export function useFriends({ profileOnly = false }: { profileOnly?: boolean } = 
         profileOnly ? Promise.resolve(null) : loadFriendInbox(db, client, id, Boolean(isOnline)),
         loadSocialProfile(db, client, id, id, Boolean(isOnline)),
       ]);
-      if (owner.current !== id) return;
-      if (owner.current !== id) return;
+      if (owner.current !== id || version !== inboxVersion.current) return;
       setDataOwner(id);
       if (friends.status === 'fulfilled' && friends.value) {
         setInbox(friends.value.data);
+        const people = [
+          ...friends.value.data.friends,
+          ...friends.value.data.incoming,
+          ...friends.value.data.outgoing,
+        ];
+        setResults((current) =>
+          current.map((person) => people.find((latest) => latest.id === person.id) ?? person),
+        );
+        setSelected((current) =>
+          current ? (people.find((latest) => latest.id === current.id) ?? current) : current,
+        );
         setCached(friends.value.cached);
         setError(null);
       } else if (friends.status === 'rejected') {
@@ -81,11 +94,19 @@ export function useFriends({ profileOnly = false }: { profileOnly?: boolean } = 
           request_id: null,
         });
     } catch (e) {
-      if (owner.current === id) setError(e instanceof Error ? e.message : String(e));
+      if (owner.current === id && version === inboxVersion.current)
+        setError(e instanceof Error ? e.message : String(e));
     } finally {
-      if (owner.current === id) setLoading(false);
+      if (owner.current === id && version === inboxVersion.current) setLoading(false);
     }
   }, [id, isOnline, profile, profileOnly]);
+  useEffect(
+    () =>
+      subscribeRequestInbox(() => {
+        if (!profileOnly) void refresh();
+      }),
+    [refresh, profileOnly],
+  );
   useEffect(() => {
     setInbox(null);
     setOwnProfile(null);
@@ -100,7 +121,7 @@ export function useFriends({ profileOnly = false }: { profileOnly?: boolean } = 
     useCallback(() => {
       void refresh();
       if (profileOnly) return;
-      const timer = setInterval(() => void refresh(), 15000);
+      const timer = setInterval(() => void refresh(), 5000);
       return () => clearInterval(timer);
     }, [refresh, profileOnly]),
   );
@@ -160,6 +181,7 @@ export function useFriends({ profileOnly = false }: { profileOnly?: boolean } = 
   const perform = async (
     operation: (db: SocialDb, actor: string) => Promise<unknown>,
     target?: string,
+    requestId?: string,
   ) => {
     if (!id || acting.current) return false;
     acting.current = true;
@@ -169,18 +191,40 @@ export function useFriends({ profileOnly = false }: { profileOnly?: boolean } = 
       const db = await getDb();
       await operation(db, id);
       if (owner.current !== id) return false;
+      if (requestId) {
+        inboxVersion.current++;
+        setInbox((current) =>
+          current
+            ? {
+                ...current,
+                incoming: current.incoming.filter((person) => person.request_id !== requestId),
+                outgoing: current.outgoing.filter((person) => person.request_id !== requestId),
+              }
+            : current,
+        );
+      }
+      invalidateRequestInboxes();
       await refresh();
       if (target && isOnline) {
         try {
           const latest = await loadSocialProfile(db, getSupabase(), id, target, true);
-          if (owner.current === id)
+          if (owner.current === id) {
             setSelected((current) => (current?.id === target ? latest.data : current));
+            setResults((current) =>
+              current.map((person) => (person.id === target && latest.data ? latest.data : person)),
+            );
+          }
         } catch {
           if (owner.current === id) setSelected(null);
         }
       }
       return true;
     } catch (e) {
+      if (requestId && e instanceof Error && /REQUEST_NOT_PENDING/.test(e.message)) {
+        invalidateRequestInboxes();
+        await refresh();
+        return false;
+      }
       if (owner.current === id) setError(e instanceof Error ? e.message : String(e));
       return false;
     } finally {
@@ -206,7 +250,7 @@ export function useFriends({ profileOnly = false }: { profileOnly?: boolean } = 
     closeProfile: () => setSelected(null),
     send: (target: string) => perform((db, actor) => sendFriendRequest(db, actor, target), target),
     respond: (request: string, action: FriendAction, target: string) =>
-      perform((db, actor) => respondFriendRequest(db, actor, request, action), target),
+      perform((db, actor) => respondFriendRequest(db, actor, request, action), target, request),
     save: (draft: SocialProfileDraft) =>
       ownProfile
         ? perform((db, actor) => saveSocialProfile(db, actor, ownProfile, draft))

@@ -39,7 +39,6 @@ import { findSubscriptionPackage } from '@/services/subscriptionPackages';
 import { hasPlan, PRICING_PLANS, type DodoCatalogProduct } from '@calipartner/core';
 import { useSubscription } from '@/hooks/useSubscription';
 import { playClickSound, playSuccessSound } from '@/lib/sound';
-import { BillingCountrySelect } from './BillingCountrySelect';
 
 export type RoomSizeBracket = '2-5' | '6-20' | '21-50' | 'plus' | 'pro' | 'basic';
 export type PlanDuration = 'monthly' | 'quarterly' | 'annual';
@@ -211,7 +210,6 @@ export function PaywallModal({
   const [confirmCancellation, setConfirmCancellation] = useState(false);
   const [catalogLoading, setCatalogLoading] = useState(Platform.OS === 'web');
   const [catalogError, setCatalogError] = useState<string | null>(null);
-  const [billingCountryBusy, setBillingCountryBusy] = useState(false);
   const plusTrialAvailable =
     Platform.OS !== 'web' ||
     catalog.some((p) => p.key === `plus_${selectedDuration}` && p.trialDays === 7);
@@ -599,16 +597,6 @@ export function PaywallModal({
             </View>
 
             {/* Status / Error Banner if any */}
-            {Platform.OS === 'web' && !hasActiveAccess && (
-              <BillingCountrySelect
-                onSaving={setBillingCountryBusy}
-                disabled={actionLoading || awaitingEntitlement}
-                onSaved={() => {
-                  webRequest.current = null;
-                  void loadCatalog();
-                }}
-              />
-            )}
             {(statusMessage || subError || catalogError) && (
               <Card elevation="s2" style={styles.statusBanner} testID="banner-paywall-status">
                 <Text
@@ -888,9 +876,7 @@ export function PaywallModal({
               variant="primary"
               label={primaryCtaLabel}
               onPress={handlePurchase}
-              disabled={
-                actionLoading || subscriptionLoading || catalogLoading || billingCountryBusy
-              }
+              disabled={actionLoading || subscriptionLoading || catalogLoading}
               testID="btn-paywall-cta"
               style={styles.ctaButton}
             />

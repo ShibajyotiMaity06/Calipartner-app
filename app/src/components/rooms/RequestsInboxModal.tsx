@@ -71,7 +71,7 @@ export function RequestsInboxModal({
       } else {
         setErrorState({
           requestId: item.id,
-          message: msg,
+          message: t('common.errorBody'),
           showUpgrade: false,
         });
       }
@@ -82,8 +82,11 @@ export function RequestsInboxModal({
 
   const handleCancel = async (requestId: string) => {
     setActingId(requestId);
+    setErrorState(null);
     try {
       await onCancel(requestId);
+    } catch {
+      setErrorState({ requestId, message: t('common.errorBody'), showUpgrade: false });
     } finally {
       setActingId(null);
     }
@@ -107,7 +110,7 @@ export function RequestsInboxModal({
               onPress={onClose}
               style={[styles.closeButton, { backgroundColor: colors.surfaceAlt }]}
               accessibilityRole="button"
-              accessibilityLabel="Close inbox modal"
+              accessibilityLabel={t('setup.close')}
               testID="btn-close-inbox-modal"
             >
               <Ionicons name="close" size={18} color={colors.text} />
@@ -226,7 +229,7 @@ export function RequestsInboxModal({
                         <View style={styles.actionRow}>
                           <Pressable
                             onPress={() => handleRespond(item, false)}
-                            disabled={isActing}
+                            disabled={actingId !== null}
                             style={[
                               styles.actionBtn,
                               styles.declineBtn,
@@ -243,7 +246,7 @@ export function RequestsInboxModal({
 
                           <Pressable
                             onPress={() => handleRespond(item, true)}
-                            disabled={isActing}
+                            disabled={actingId !== null}
                             style={[
                               styles.actionBtn,
                               styles.acceptBtn,
@@ -254,9 +257,9 @@ export function RequestsInboxModal({
                             testID={`btn-accept-req-${item.id}`}
                           >
                             {isActing ? (
-                              <ActivityIndicator size="small" color="#FFFFFF" />
+                              <ActivityIndicator size="small" color={colors.onAccent} />
                             ) : (
-                              <Text style={[styles.actionBtnText, { color: '#FFFFFF' }]}>
+                              <Text style={[styles.actionBtnText, { color: colors.onAccent }]}>
                                 {t('rooms.inboxModal.acceptBtn')}
                               </Text>
                             )}
@@ -369,10 +372,10 @@ export function RequestsInboxModal({
                       {item.status === 'pending' && (
                         <Pressable
                           onPress={() => handleCancel(item.id)}
-                          disabled={isActing}
+                          disabled={actingId !== null}
                           style={[styles.cancelBtn, { borderColor: colors.border }]}
                           accessibilityRole="button"
-                          accessibilityLabel="Cancel sent request"
+                          accessibilityLabel={t('rooms.inboxModal.cancelBtn')}
                           testID={`btn-cancel-req-${item.id}`}
                         >
                           {isActing ? (
@@ -383,6 +386,11 @@ export function RequestsInboxModal({
                             </Text>
                           )}
                         </Pressable>
+                      )}
+                      {errorState?.requestId === item.id && (
+                        <Text accessibilityRole="alert" color={colors.danger}>
+                          {errorState.message}
+                        </Text>
                       )}
                     </View>
                   );

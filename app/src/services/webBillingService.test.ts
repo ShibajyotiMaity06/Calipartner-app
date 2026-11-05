@@ -9,7 +9,7 @@ import { Platform } from 'react-native';
 import {
   fetchWebCatalog,
   startWebCheckout,
-  saveBillingCountry,
+  fetchBillingCountry,
   cancelRazorpayRenewal,
 } from './webBillingService';
 beforeEach(() => {
@@ -112,14 +112,15 @@ describe('platform-separated web billing', () => {
     await expect(startWebCheckout('razorpay', 'pro', 'annual', 'request-id')).rejects.toThrow();
     expect(open).not.toHaveBeenCalled();
   });
-  it('requires server acknowledgements for country changes and renewal cancellation', async () => {
+  it('requires acknowledged automatic country detection and renewal cancellation', async () => {
     mocks.invoke
       .mockResolvedValueOnce({ data: { country: 'IN' } })
       .mockResolvedValueOnce({ data: { status: 'renewal_cancelled' } })
-      .mockResolvedValueOnce({ data: { country: 'US' } });
-    await saveBillingCountry('IN');
+      .mockResolvedValueOnce({ data: { country: 'ZZ' } });
+    expect(await fetchBillingCountry()).toBe('IN');
+    expect(mocks.invoke).toHaveBeenNthCalledWith(1, 'web-billing', { body: { action: 'routing' } });
     await cancelRazorpayRenewal('request-id');
-    await expect(saveBillingCountry('IN')).rejects.toThrow();
+    await expect(fetchBillingCountry()).rejects.toThrow();
   });
   it('accepts only complete catalogs in the selected provider currency', async () => {
     const products = ['plus_monthly', 'plus_annual', 'pro_monthly', 'pro_annual'].map((key) => ({
@@ -129,9 +130,16 @@ describe('platform-separated web billing', () => {
       trialDays: key.startsWith('plus') ? 7 : 0,
     }));
     mocks.invoke
+      .mockResolvedValueOnce({ data: { country: 'IN' } })
       .mockResolvedValueOnce({ data: { provider: 'razorpay', products } })
+      .mockResolvedValueOnce({ data: { country: 'US' } })
       .mockResolvedValueOnce({ data: { provider: 'dodo', products } });
     expect((await fetchWebCatalog()).provider).toBe('razorpay');
     await expect(fetchWebCatalog()).rejects.toThrow();
+  });
+  it('does not request a catalog or default to dollars when country detection fails', async () => {
+    mocks.invoke.mockResolvedValueOnce({ data: { error: 'BILLING_COUNTRY_REQUIRED' } });
+    await expect(fetchWebCatalog()).rejects.toThrow('detect your country');
+    expect(mocks.invoke).toHaveBeenCalledOnce();
   });
 });

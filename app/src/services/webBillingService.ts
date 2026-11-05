@@ -1,5 +1,9 @@
 import { Platform } from 'react-native';
-import { DODO_PRODUCT_KEYS, type DodoCatalogProduct } from '@calipartner/core';
+import {
+  BILLING_COUNTRY_CODES,
+  DODO_PRODUCT_KEYS,
+  type DodoCatalogProduct,
+} from '@calipartner/core';
 import { getSupabase } from '@/lib/supabase';
 import { t } from '@/i18n';
 import { createDodoCheckout, navigateToCheckout } from './dodoService';
@@ -10,13 +14,11 @@ export interface WebCatalog {
   products: DodoCatalogProduct[];
   managementRequired?: boolean;
 }
-export async function fetchBillingCountry(): Promise<string | null> {
+export async function fetchBillingCountry(): Promise<string> {
   const data = await request('web-billing', { action: 'routing' });
-  return typeof data?.country === 'string' ? data.country : null;
-}
-export async function saveBillingCountry(country: string): Promise<void> {
-  const data = await request('web-billing', { action: 'country', country });
-  if (data?.country !== country) throw new Error(t('webBilling.unavailable'));
+  if (!BILLING_COUNTRY_CODES.includes(data?.country))
+    throw new Error(t('entryRefresh.countryError'));
+  return data.country;
 }
 function webOnly() {
   if (Platform.OS !== 'web') throw new Error(t('fixes.storeNotReady'));
@@ -36,7 +38,7 @@ async function request(name: string, body: Record<string, unknown>) {
     throw new Error(
       t(
         code === 'BILLING_COUNTRY_REQUIRED'
-          ? 'webBilling.countryRequired'
+          ? 'entryRefresh.countryError'
           : ['CHECKOUT_PENDING', 'CHECKOUT_CLOSED', 'MANAGE_EXISTING_SUBSCRIPTION'].includes(code)
             ? 'webBilling.pendingCheckout'
             : 'webBilling.unavailable',
@@ -46,6 +48,8 @@ async function request(name: string, body: Record<string, unknown>) {
   return data;
 }
 export async function fetchWebCatalog(): Promise<WebCatalog> {
+  // Detect and acknowledge the country before quoting any new web purchase.
+  await fetchBillingCountry();
   const data = await request('web-billing', { action: 'catalog' });
   if (
     !['dodo', 'razorpay'].includes(data?.provider) ||

@@ -19,6 +19,17 @@ function client() {
   };
 }
 describe('online social requests', () => {
+  it('requires the requested friend action to be acknowledged before removing a pending row', async () => {
+    const api = client();
+    api.rpc.mockResolvedValueOnce({ data: null, error: null });
+    await expect(respondFriendRequest(db, 'owner', 'request', 'accept', api)).rejects.toThrow(
+      'REQUEST_RESPONSE_UNCONFIRMED',
+    );
+    api.rpc.mockResolvedValueOnce({ data: { status: 'accepted' }, error: null });
+    await expect(
+      respondFriendRequest(db, 'owner', 'request', 'accept', api),
+    ).resolves.toMatchObject({ data: { status: 'accepted' } });
+  });
   it('sends requests directly with an actor and client UUID, without writing a queue', async () => {
     const api = client();
     await sendFriendRequest(db, 'owner', 'friend', api);

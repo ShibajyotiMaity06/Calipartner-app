@@ -99,6 +99,7 @@ export async function getRequestsInbox(client: SupabaseClient): Promise<{
          rooms ( id, name, code )`,
       )
       .or(`recipient_id.eq.${userId},sender_id.eq.${userId}`)
+      .eq('status', 'pending')
       .order('created_at', { ascending: false });
 
     if (error) {
@@ -122,7 +123,9 @@ export async function getRequestsInbox(client: SupabaseClient): Promise<{
       } | null;
     }
 
-    const allRequests = (data ?? []) as unknown as RequestRow[];
+    const allRequests = ((data ?? []) as unknown as RequestRow[]).filter(
+      (request) => request.status === 'pending' && Date.parse(request.expires_at) > Date.now(),
+    );
     const profilesMap = new Map<string, UserSummary>();
     if (allRequests.length > 0) {
       const { data: profs, error: identityError } = await client.rpc('get_request_identities', {
@@ -266,7 +269,8 @@ export async function respondToRoomRequest(
     if (error) {
       throw parseRoomError(error);
     }
-
+    if (data?.status !== (accept ? 'accepted' : 'declined'))
+      throw new Error('REQUEST_RESPONSE_UNCONFIRMED');
     return data;
   } catch (err) {
     throw parseRoomError(err);
@@ -288,7 +292,7 @@ export async function cancelRoomRequest(
     if (error) {
       throw parseRoomError(error);
     }
-
+    if (data?.status !== 'cancelled') throw new Error('REQUEST_RESPONSE_UNCONFIRMED');
     return data;
   } catch (err) {
     throw parseRoomError(err);

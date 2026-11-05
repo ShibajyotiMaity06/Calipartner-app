@@ -71,6 +71,55 @@ function createMockSupabase(overrides: {
 }
 
 describe('roomService unit tests with mocked Supabase', () => {
+  it('shows only pending unexpired incoming/outgoing requests and projects identities only for those', async () => {
+    const base = {
+      room_id: 'room',
+      sender_id: 'u-me',
+      recipient_id: 'friend',
+      type: 'invitation',
+      expires_at: '2099-01-01',
+      created_at: '2026-01-01',
+      rooms: null,
+    };
+    const query = {
+      select: vi.fn().mockReturnThis(),
+      or: vi.fn().mockReturnThis(),
+      eq: vi.fn().mockReturnThis(),
+      order: vi.fn().mockResolvedValue({
+        data: [
+          { ...base, id: 'live', status: 'pending' },
+          ...['accepted', 'declined', 'cancelled', 'expired'].map((status) => ({
+            ...base,
+            id: status,
+            status,
+          })),
+          { ...base, id: 'too-old', status: 'pending', expires_at: '2000-01-01' },
+        ],
+        error: null,
+      }),
+    };
+    const client = createMockSupabase({
+      user: { id: 'u-me', email: 'fixture@example.invalid' },
+      fromHandler: () => query,
+      rpcHandler: async (_fn, args) => {
+        expect(args.p_request_ids).toEqual(['live']);
+        return { data: [], error: null };
+      },
+    });
+    const inbox = await getRequestsInbox(client);
+    expect(query.eq).toHaveBeenCalledWith('status', 'pending');
+    expect(inbox.incoming).toEqual([]);
+    expect(inbox.outgoing.map((item) => item.id)).toEqual(['live']);
+  });
+  it('does not acknowledge an unconfirmed request response or cancellation', async () => {
+    const client = createMockSupabase({});
+    await expect(respondToRoomRequest(client, 'request', true)).rejects.toThrow(
+      'REQUEST_RESPONSE_UNCONFIRMED',
+    );
+    await expect(cancelRoomRequest(client, 'request')).rejects.toThrow(
+      'REQUEST_RESPONSE_UNCONFIRMED',
+    );
+  });
   it('keeps leave failures visible without bypassing the transactional RPC', async () => {
     const client = createMockSupabase({
       rpcHandler: async () => ({ data: null, error: { message: 'ROOM_LOCKED' } }),
@@ -219,6 +268,7 @@ describe('roomService unit tests with mocked Supabase', () => {
           return {
             select: vi.fn().mockReturnValue({
               or: vi.fn().mockReturnValue({
+                eq: vi.fn().mockReturnThis(),
                 order: vi.fn().mockResolvedValue({
                   data: [
                     {
@@ -228,7 +278,7 @@ describe('roomService unit tests with mocked Supabase', () => {
                       recipient_id: 'u-me',
                       type: 'invitation',
                       status: 'pending',
-                      expires_at: '2026-10-24T00:00:00Z',
+                      expires_at: '2099-10-24T00:00:00Z',
                       created_at: '2026-10-10T00:00:00Z',
                       rooms: { id: 'r-1', name: 'Friend Room', code: 'CP1111' },
                     },
@@ -239,7 +289,7 @@ describe('roomService unit tests with mocked Supabase', () => {
                       recipient_id: 'u-other',
                       type: 'join_request',
                       status: 'pending',
-                      expires_at: '2026-10-24T00:00:00Z',
+                      expires_at: '2099-10-24T00:00:00Z',
                       created_at: '2026-10-10T00:00:00Z',
                       rooms: { id: 'r-2', name: 'Other Room', code: 'CP2222' },
                     },

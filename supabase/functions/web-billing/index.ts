@@ -3,6 +3,7 @@ import { webBillingProvider, BILLING_COUNTRY_CODES } from '@calipartner/core';
 import { handleDodoCheckout } from '../_shared/dodoHandlers.ts';
 import { handleRazorpayCheckout } from '../_shared/razorpayHandlers.ts';
 import { billingHeaders, billingResponse } from '../_shared/razorpay.ts';
+import { detectBillingCountry } from './country.ts';
 
 export async function handleWebBilling(
   req: Request,
@@ -10,6 +11,7 @@ export async function handleWebBilling(
     admin?: SupabaseClient;
     dodo?: typeof handleDodoCheckout;
     razorpay?: typeof handleRazorpayCheckout;
+    detectCountry?: typeof detectBillingCountry;
   } = {},
 ) {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: billingHeaders });
@@ -25,13 +27,26 @@ export async function handleWebBilling(
     const raw = await req.clone().text();
     if (raw.length > 8000) return billingResponse({ error: 'INVALID_CHECKOUT' }, 400);
     const body = JSON.parse(raw);
-    if (body.action === 'country') {
+    const profile = await admin
+      .from('profiles')
+      .select('country')
+      .eq('id', actor.data.user.id)
+      .maybeSingle();
+    if (profile.error) throw profile.error;
+    let country = BILLING_COUNTRY_CODES.includes(profile.data?.country ?? '')
+      ? profile.data!.country
+      : null;
+    // Detect on the routing screen, or before first checkout if no country has been saved.
+    // Never accept a caller-selected country from the removed dropdown.
+    if (body.action === 'country' || body.action === 'routing' || !country) {
       const origin = Deno.env.get('RAZORPAY_APP_URL') ?? Deno.env.get('DODO_APP_URL');
       if (!origin || req.headers.get('origin') !== new URL(origin).origin)
         return billingResponse({ error: 'WEB_CHECKOUT_ONLY' }, 403);
-      const country = typeof body.country === 'string' ? body.country.trim().toUpperCase() : '';
-      if (!BILLING_COUNTRY_CODES.includes(country))
-        return billingResponse({ error: 'BILLING_COUNTRY_REQUIRED' }, 400);
+      try {
+        country = await (dependencies.detectCountry ?? detectBillingCountry)(req);
+      } catch {
+        return billingResponse({ error: 'BILLING_COUNTRY_REQUIRED' }, 503);
+      }
       const saved = await admin
         .from('profiles')
         .update({ country })
@@ -39,21 +54,10 @@ export async function handleWebBilling(
         .select('country')
         .single();
       if (saved.error || saved.data?.country !== country) throw new Error('COUNTRY_NOT_SAVED');
-      return billingResponse({ country, provider: webBillingProvider('web', country) });
     }
-    const profile = await admin
-      .from('profiles')
-      .select('country')
-      .eq('id', actor.data.user.id)
-      .maybeSingle();
-    if (profile.error) throw profile.error;
-    if (body.action === 'routing')
-      return billingResponse({
-        country: BILLING_COUNTRY_CODES.includes(profile.data?.country ?? '')
-          ? profile.data?.country
-          : null,
-      });
-    const provider = webBillingProvider('web', profile.data?.country);
+    if (body.action === 'routing' || body.action === 'country')
+      return billingResponse({ country, provider: webBillingProvider('web', country) });
+    const provider = webBillingProvider('web', country);
     const result = await (
       provider === 'razorpay'
         ? (dependencies.razorpay ?? handleRazorpayCheckout)

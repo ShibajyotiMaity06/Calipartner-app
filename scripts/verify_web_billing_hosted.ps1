@@ -46,6 +46,13 @@ try {
   Assert-BillingCheck ($international.status -eq 200 -and $international.data.provider -eq 'dodo' -and $international.data.products.Count -eq 4 -and @($international.data.products | Where-Object { $_.currency -ne 'USD' }).Count -eq 0) 'international catalog verifies all four Dodo USD products'
   $checkouts = Invoke-BillingCheck 'GET' ('/rest/v1/web_billing_checkouts?user_id=eq.' + $fixtureId + '&select=id') $null $token
   Assert-BillingCheck ($checkouts.status -eq 200 -and @($checkouts.data).Count -eq 0) 'catalog checks create no checkout or subscription'
+  $detected = Invoke-BillingCheck 'POST' '/functions/v1/web-billing' @{ action = 'routing' } $token
+  Assert-BillingCheck ($detected.status -eq 200 -and $detected.data.country -match '^[A-Z]{2}$') 'IP country detected without a dropdown'
+  $expectedProvider = if ($detected.data.country -eq 'IN') { 'razorpay' } else { 'dodo' }
+  Assert-BillingCheck ($detected.data.provider -eq $expectedProvider) 'automatic country selects the matching payment provider'
+  $savedCountry = Invoke-BillingCheck 'GET' ('/rest/v1/profiles?id=eq.' + $fixtureId + '&select=country') $null $token
+  Assert-BillingCheck ($savedCountry.status -eq 200 -and $savedCountry.data[0].country -eq $detected.data.country) 'detected country saved and acknowledged'
+  Write-Output ('Hosted IP country detection passed: ' + $detected.data.country + ' / ' + $detected.data.provider + ', with acknowledged profile persistence.')
   Write-Output ('Hosted web billing routing passed: Indian Razorpay route (HTTP ' + $india.status + '), direct Dodo denial, four actual international USD products, and no checkout/subscription creation.')
 } finally {
   if ($fixtureId) { Assert-BillingCheck ((Invoke-BillingCheck 'DELETE' ('/auth/v1/admin/users/' + $fixtureId) $null $serviceKey $serviceKey).status -eq 200) 'fixture cleanup' }
