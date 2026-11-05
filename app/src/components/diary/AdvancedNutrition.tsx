@@ -10,11 +10,35 @@ export function AdvancedNutrition({ nutrients }: { nutrients: NutrientSnapshot }
   const { hasActiveAccess, loading } = useSubscription();
   const visible = hasActiveAccess && !nutrients.nutrition_details?.locked && !loading;
   const values = [
-    [t('repairs.fiber'), nutrients.fiber, 'g'],
-    [t('repairs.sugar'), nutrients.sugar, 'g'],
-    [t('repairs.sodium'), nutrients.sodium_mg, 'mg'],
+    [
+      t('repairs.fiber'),
+      nutrients.nutrition_details?.not_provided?.includes('fiber') ? null : nutrients.fiber,
+      'g',
+    ],
+    [
+      t('repairs.sugar'),
+      nutrients.nutrition_details?.not_provided?.includes('sugar') ? null : nutrients.sugar,
+      'g',
+    ],
+    [
+      t('repairs.sodium'),
+      nutrients.nutrition_details?.not_provided?.includes('sodium_mg') ? null : nutrients.sodium_mg,
+      'mg',
+    ],
     [t('repairs.saturatedFat'), nutrients.nutrition_details?.saturated_fat, 'g'],
     [t('repairs.cholesterol'), nutrients.nutrition_details?.cholesterol_mg, 'mg'],
+    ...(nutrients.nutrition_details && 'bcaa_g' in nutrients.nutrition_details
+      ? ([[t('foodPolish.bcaa'), nutrients.nutrition_details.bcaa_g, 'g']] as const)
+      : []),
+    ...(nutrients.nutrition_details && 'label_protein_per_100g' in nutrients.nutrition_details
+      ? ([
+          [
+            t('foodPolish.labelProteinPer100'),
+            nutrients.nutrition_details.label_protein_per_100g,
+            'g',
+          ],
+        ] as const)
+      : []),
   ] as const;
   return (
     <View style={styles.container} testID="advanced-nutrition">
@@ -24,12 +48,23 @@ export function AdvancedNutrition({ nutrients }: { nutrients: NutrientSnapshot }
       <View style={styles.grid}>
         {values.map(([label, value, unit]) => (
           <View key={label} style={styles.tile}>
-            <Text variant="bodyS" color={dark.textMid}>
+            <Text
+              variant="bodyS"
+              color={dark.textMid}
+              nutrient={label === t('foodPolish.labelProteinPer100') ? 'protein' : undefined}
+            >
               {label}
             </Text>
             {visible ? (
-              <Text variant="body" color={dark.textHi} style={styles.value}>
-                {value == null ? t('repairs.unavailable') : `${value} ${unit}`}
+              <Text
+                variant="body"
+                color={dark.textHi}
+                style={styles.value}
+                nutrient={label === t('foodPolish.labelProteinPer100') ? 'protein' : undefined}
+              >
+                {value == null || !Number.isFinite(value)
+                  ? t('foodPolish.notProvided')
+                  : `${value.toLocaleString(undefined, { maximumFractionDigits: 1 })} ${unit}`}
               </Text>
             ) : (
               <View

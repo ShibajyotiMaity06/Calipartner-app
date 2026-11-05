@@ -26,6 +26,7 @@ import { createLogger } from '@/lib/logger';
 import { saveRemote, type LocalDb } from './accountDataService';
 import bundledFoodsJson from '../../assets/bundled_foods.json';
 import suppliedFoodsJson from '../../assets/supplied_foods.json';
+import suppliedProductsJson from '../../assets/supplied_food_products.json';
 
 const log = createLogger('foodService');
 
@@ -54,9 +55,9 @@ export async function ensureBundledFoodsSeeded(db: LocalDb): Promise<number> {
     Array.isArray(bundledFoodsJson) && bundledFoodsJson.length
       ? bundledFoodsJson
       : DEV_100_FOOD_SEED;
-  const foodsToSeed = ([...bundled, ...suppliedFoodsJson] as CreateFoodInput[]).filter(
-    (food) => !existing.has(food.id!),
-  );
+  const foodsToSeed = (
+    [...bundled, ...suppliedFoodsJson, ...suppliedProductsJson] as CreateFoodInput[]
+  ).filter((food) => !existing.has(food.id!));
   if (!foodsToSeed.length) return 0;
 
   const now = new Date().toISOString();

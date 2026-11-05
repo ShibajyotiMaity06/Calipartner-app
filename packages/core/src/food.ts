@@ -7,7 +7,7 @@ import type {
   NutrientSnapshot,
   UserFoodStats,
 } from './types';
-import { resizeNutrientSnapshot } from './advancedNutrition';
+import { resizeNutrientSnapshot, scaleNutritionDetails } from './advancedNutrition';
 
 export type NutrientCorrection = Partial<
   Pick<NutrientSnapshot, 'calories' | 'protein' | 'carbs' | 'fat'>
@@ -150,17 +150,7 @@ export function scaleNutrients(food: Food, quantity: number, unit: string): Nutr
   return {
     ...(food.nutrition_details
       ? {
-          nutrition_details: {
-            ...(food.nutrition_details.locked ? { locked: true } : {}),
-            saturated_fat:
-              food.nutrition_details.saturated_fat == null
-                ? null
-                : roundOneDecimal(food.nutrition_details.saturated_fat * factor),
-            cholesterol_mg:
-              food.nutrition_details.cholesterol_mg == null
-                ? null
-                : roundOneDecimal(food.nutrition_details.cholesterol_mg * factor),
-          },
+          nutrition_details: scaleNutritionDetails(food.nutrition_details, factor),
         }
       : {}),
     calories: roundOneDecimal(food.calories_per_100g * factor),
@@ -196,17 +186,7 @@ export function foodFromEntrySnapshot(entry: FoodEntry): Food {
     sodium_mg_per_100g: per100(entry.sodium_mg),
     ...(entry.nutrition_details
       ? {
-          nutrition_details: {
-            ...entry.nutrition_details,
-            saturated_fat:
-              entry.nutrition_details.saturated_fat == null
-                ? null
-                : per100(entry.nutrition_details.saturated_fat),
-            cholesterol_mg:
-              entry.nutrition_details.cholesterol_mg == null
-                ? null
-                : per100(entry.nutrition_details.cholesterol_mg),
-          },
+          nutrition_details: scaleNutritionDetails(entry.nutrition_details, factor, false),
         }
       : {}),
   };

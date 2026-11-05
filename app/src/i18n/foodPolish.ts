@@ -1,4 +1,11 @@
 export const foodPolish = {
+  notProvided: 'Not provided',
+  bcaa: 'BCAA',
+  labelProteinPer100: 'Protein per 100 g on the label',
+  suppliedApproximate:
+    'Approximate label values. Check your pack for flavour or batch differences.',
+  missingLabelProtein:
+    'Label protein per 100 g: Not provided. Portion nutrition uses the supplied serving values.',
   favorites: 'Favourites',
   favoriteFoods: 'Favourite foods',
   favoriteRecipes: 'Favourite recipes',

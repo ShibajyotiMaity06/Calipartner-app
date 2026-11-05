@@ -1067,7 +1067,10 @@ try {
   await snap('food-and-recipe-favorites');
   await page.getByTestId('tab-log-recipes').click();
   await page.getByTestId('input-recipe-search').fill('Eromba');
-  const recipeHeart = page.locator('[data-testid^="btn-recipe-fav-"]').first();
+  const recipeHeart = page
+    .getByText('Eromba (Manipur)', { exact: true })
+    .locator('../..')
+    .locator('[data-testid^="btn-recipe-fav-"]');
   await recipeHeart.waitFor();
   const recipeHeartId = await recipeHeart.getAttribute('data-testid');
   const recipeWrite = page.waitForResponse(
@@ -1128,6 +1131,71 @@ try {
   await page.getByTestId('btn-submit-quantity').click();
   await page.getByTestId('input-food-search').waitFor({ state: 'hidden' });
 
+  // Additional supplied foods retain known serving nutrition and explicit missing label values.
+  paid = true;
+  pro = true;
+  const products = JSON.parse(fs.readFileSync('app/assets/supplied_food_products.json', 'utf8'));
+  const whey = products.find(
+    (food) => food.brand === 'MuscleBlaze' && food.name === 'Whey Gold Protein',
+  );
+  const shake = products.find((food) => food.brand === 'Premier Protein');
+  await page.goto('http://127.0.0.1:8098/today');
+  await page.getByTestId('btn-add-food-lunch').click();
+  await page.getByTestId('input-food-search').fill(whey.name);
+  await page.getByTestId('search-result-' + whey.id).click();
+  const advanced = page.getByTestId('advanced-nutrition');
+  await advanced.getByText('5.5 g', { exact: true }).waitFor();
+  assert.match(await advanced.innerText(), /5\.5 g/);
+  assert.equal(await advanced.getByText('0 g', { exact: true }).count(), 1);
+  await page.getByTestId('input-quantity-amount').fill('2');
+  assert.match(await advanced.innerText(), /11 g/);
+  assert.match(await advanced.innerText(), /72\.7 g/);
+  await snap('supplied-whey-serving');
+  await advanced.scrollIntoViewIfNeeded();
+  await snap('supplied-whey-nutrition');
+  await page.getByTestId('section-picker-lunch').click();
+  await page.getByTestId('btn-submit-quantity').click();
+  await page.getByTestId('input-food-search').waitFor({ state: 'hidden' });
+  assert(
+    trackingRequests.some((request) =>
+      request.p_changes.some(
+        (change) =>
+          change.entity === 'food_entries' &&
+          change.payload.food_id === whey.id &&
+          change.payload.calories === 270 &&
+          change.payload.protein === 48 &&
+          change.payload.nutrition_details.bcaa_g === 11,
+      ),
+    ),
+  );
+  await page.getByTestId('btn-add-food-lunch').click();
+  await page.getByTestId('input-food-search').fill(shake.name);
+  await page.getByTestId('search-result-' + shake.id).click();
+  await page.getByTestId('missing-label-protein').waitFor();
+  await advanced.getByText('Not provided', { exact: true }).first().waitFor();
+  assert.match(await advanced.innerText(), /Not provided/);
+  assert.doesNotMatch(await advanced.innerText(), /\b(null|undefined|NaN)\b/);
+  await snap('supplied-missing-label-values');
+  const labelBox = await page.getByTestId('quantity-unit-label').boundingBox();
+  assert(labelBox.x >= 0 && labelBox.x + labelBox.width <= 375);
+  await advanced.scrollIntoViewIfNeeded();
+  await snap('supplied-missing-nutrition');
+  await page.getByTestId('section-picker-dinner').click();
+  await page.getByTestId('btn-submit-quantity').click();
+  await page.getByTestId('input-food-search').waitFor({ state: 'hidden' });
+  assert(
+    trackingRequests.some((request) =>
+      request.p_changes.some(
+        (change) =>
+          change.entity === 'food_entries' &&
+          change.payload.food_id === shake.id &&
+          change.payload.calories === 160 &&
+          change.payload.protein === 30 &&
+          change.payload.nutrition_details.bcaa_g === null &&
+          change.payload.nutrition_details.label_protein_per_100g === null,
+      ),
+    ),
+  );
   paid = false;
   pro = false;
   trial = false;
@@ -1177,7 +1245,7 @@ try {
   await page.waitForURL('https://checkout.dodopayments.com/fixture');
   assert.deepEqual(errors, []);
   console.log(
-    'November 4 browser audit: copied weekly nutrition hidden with retry-safe rebuild and failed-save preservation, nutrient text colours, full-width empty Home, five goal suggestions, restored Challenges, working recipe favourites, explicit meal choice, recent-food clearing, restored exercise Workout hub and onboarding-plan connection, reduced Challenges padding, custom food and acknowledged 50g protein correction, plus previous food/polish coverage, chronological nested/tab/Log Back, inline member selection, stable idle Compare, acknowledged peer-food copying, Monday-only Free/trial, full paid week/tips and persisted routine editing, India Razorpay dismissal/pending/verified access/confirmed cancellation and international Dodo routing passed at 375/390/844px',
+    'Browser audit: additional supplied branded foods, labelled serving scaling and Not provided states, plus copied weekly nutrition hidden with retry-safe rebuild and failed-save preservation, nutrient text colours, full-width empty Home, five goal suggestions, restored Challenges, working recipe favourites, explicit meal choice, recent-food clearing, restored exercise Workout hub and onboarding-plan connection, reduced Challenges padding, custom food and acknowledged 50g protein correction, plus previous food/polish coverage, chronological nested/tab/Log Back, inline member selection, stable idle Compare, acknowledged peer-food copying, Monday-only Free/trial, full paid week/tips and persisted routine editing, India Razorpay dismissal/pending/verified access/confirmed cancellation and international Dodo routing passed at 375/390/844px',
   );
 } catch (error) {
   for (const page of browser?.contexts().flatMap((context) => context.pages()) ?? []) {

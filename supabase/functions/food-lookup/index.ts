@@ -4,6 +4,7 @@ import {
   usdaEnergyKcal,
   restrictFoodNutrition,
   type Food,
+  type FoodSource,
   type NutritionDetails,
 } from '@calipartner/core';
 import { canSeeAdvancedNutrition } from '../_shared/nutritionAccess.ts';
@@ -45,7 +46,7 @@ export interface ServingUnitInput {
 export interface FoodLookupResult {
   nutrition_details?: NutritionDetails;
   id?: string;
-  source: 'ifct' | 'off' | 'usda' | 'user';
+  source: FoodSource;
   name: string;
   brand: string | null;
   barcode: string | null;

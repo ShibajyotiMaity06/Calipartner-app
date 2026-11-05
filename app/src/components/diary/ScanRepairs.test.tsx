@@ -148,6 +148,46 @@ it('keeps server-redacted nutrients locked even when the local paid state is sta
   expect(JSON.stringify(renderer.toJSON())).toContain('Connect and scan again');
   expect(JSON.stringify(renderer.toJSON())).not.toContain('349');
 });
+it('shows Not provided for unknown label nutrients while retaining real zeros and paid display gates', async () => {
+  state.paid = true;
+  const provided = {
+    ...nutrients,
+    fiber: 0,
+    sugar: 0,
+    sodium_mg: 0,
+    nutrition_details: {
+      bcaa_g: null,
+      label_protein_per_100g: null,
+      not_provided: ['sodium_mg'] as Array<'sodium_mg'>,
+    },
+  };
+  await act(async () => {
+    renderer = create(<AdvancedNutrition nutrients={provided} />);
+  });
+  const text = () =>
+    renderer.root
+      .findAllByType('Text' as React.ElementType)
+      .flatMap((node) => [node.props.children].flat())
+      .filter((value) => typeof value === 'string' || typeof value === 'number')
+      .join('|');
+  expect(text()).toContain('Not provided');
+  expect(text()).toContain('0 g');
+  expect(text()).not.toMatch(/\b(null|undefined|NaN)\b/);
+  expect(text()).toContain('BCAA');
+  await act(async () =>
+    renderer.update(
+      <AdvancedNutrition nutrients={{ ...provided, nutrition_details: { bcaa_g: 5.5 } }} />,
+    ),
+  );
+  expect(text()).toContain('5.5 g');
+  state.paid = false;
+  await act(async () =>
+    renderer.update(
+      <AdvancedNutrition nutrients={{ ...provided, nutrition_details: { bcaa_g: 5.5 } }} />,
+    ),
+  );
+  expect(text()).not.toContain('5.5 g');
+});
 const scanner = (visible = true) => (
   <BarcodeScannerModal
     visible={visible}

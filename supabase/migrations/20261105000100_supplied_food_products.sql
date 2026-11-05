@@ -1,0 +1,4246 @@
+-- Additional owner-supplied individual foods, not recipes. Existing rows remain unchanged.
+create or replace function public.valid_nutrition_details(p_value jsonb,p_portion boolean default false)
+returns boolean language plpgsql immutable set search_path=public,pg_temp as $$
+declare key text; maximum numeric; missing jsonb;
+begin
+ if p_value is null then return true; end if;
+ if jsonb_typeof(p_value)<>'object' then return false; end if;
+ if p_value-array['saturated_fat','cholesterol_mg','locked','bcaa_g','label_protein_per_100g','not_provided']<>'{}'::jsonb then return false; end if;
+ if p_value ? 'locked' and jsonb_typeof(p_value->'locked')<>'boolean' then return false; end if;
+ if p_value ? 'not_provided' then
+  if jsonb_typeof(p_value->'not_provided')<>'array' then return false; end if;
+  if jsonb_array_length(p_value->'not_provided')>3 then return false; end if;
+  for missing in select value from jsonb_array_elements(p_value->'not_provided') loop
+   if jsonb_typeof(missing)<>'string' or (missing#>>'{}') not in ('fiber','sugar','sodium_mg') then return false; end if;
+  end loop;
+ end if;
+ foreach key in array array['saturated_fat','cholesterol_mg','bcaa_g','label_protein_per_100g'] loop
+  if p_value->key is not null and p_value->key<>'null'::jsonb then
+   if jsonb_typeof(p_value->key)<>'number' then return false; end if;
+   maximum:=case when key='label_protein_per_100g' or (key in ('saturated_fat','bcaa_g') and not p_portion) then 100 else 100000 end;
+   if (p_value->>key)::numeric<0 or (p_value->>key)::numeric>maximum then return false; end if;
+  end if;
+ end loop;
+ return true;
+end; $$;
+alter table public.foods drop constraint foods_source_check;
+alter table public.foods add constraint foods_source_check check(source in ('ifct','off','usda','user','supplied'));
+insert into public.foods(id,source,name,brand,barcode,serving_units,calories_per_100g,protein_per_100g,carbs_per_100g,fat_per_100g,fiber_per_100g,sugar_per_100g,sodium_mg_per_100g,nutrition_details,attribution)
+select (item->>'id')::uuid,item->>'source',item->>'name',item->>'brand',null,item->'serving_units',
+ (item->>'calories_per_100g')::numeric,(item->>'protein_per_100g')::numeric,(item->>'carbs_per_100g')::numeric,(item->>'fat_per_100g')::numeric,
+ (item->>'fiber_per_100g')::numeric,(item->>'sugar_per_100g')::numeric,(item->>'sodium_mg_per_100g')::numeric,item->'nutrition_details',item->>'attribution'
+from jsonb_array_elements($products$[
+  {
+    "id": "5816cf47-055a-50c2-8fd4-eea2eaa95c96",
+    "source": "supplied",
+    "name": "Whey Gold Protein",
+    "brand": "MuscleBlaze",
+    "barcode": null,
+    "owner_id": null,
+    "serving_units": [
+      { "unit": "1 scoop", "grams": 33 },
+      { "unit": "g", "grams": 1 }
+    ],
+    "calories_per_100g": 409.09090909090907,
+    "protein_per_100g": 72.72727272727273,
+    "carbs_per_100g": 12.121212121212121,
+    "fat_per_100g": 6.0606060606060606,
+    "sugar_per_100g": 4.545454545454546,
+    "fiber_per_100g": 0,
+    "sodium_mg_per_100g": 0,
+    "nutrition_details": {
+      "bcaa_g": 16.666666666666668,
+      "label_protein_per_100g": 72.7,
+      "saturated_fat": null,
+      "cholesterol_mg": null,
+      "not_provided": ["sodium_mg"]
+    },
+    "attribution": "Owner-supplied food (1).txt; approximate per-serving label data; Whey blend (concentrate+isolate); India; verify flavour/batch against the pack"
+  },
+  {
+    "id": "eaf1967e-93f3-593f-9691-07cd2023b2a4",
+    "source": "supplied",
+    "name": "Biozyme Performance Whey",
+    "brand": "MuscleBlaze",
+    "barcode": null,
+    "owner_id": null,
+    "serving_units": [
+      { "unit": "1 scoop", "grams": 33.4 },
+      { "unit": "g", "grams": 1 }
+    ],
+    "calories_per_100g": 386.22754491017963,
+    "protein_per_100g": 74.8502994011976,
+    "carbs_per_100g": 8.682634730538922,
+    "fat_per_100g": 6.58682634730539,
+    "sugar_per_100g": 3.5928143712574854,
+    "fiber_per_100g": 0,
+    "sodium_mg_per_100g": 0,
+    "nutrition_details": {
+      "bcaa_g": 16.467065868263475,
+      "label_protein_per_100g": 74.9,
+      "saturated_fat": null,
+      "cholesterol_mg": null,
+      "not_provided": ["sodium_mg"]
+    },
+    "attribution": "Owner-supplied food (1).txt; approximate per-serving label data; Whey blend; India; verify flavour/batch against the pack"
+  },
+  {
+    "id": "0a1248bc-44c3-57b9-902d-b7246a33e6cc",
+    "source": "supplied",
+    "name": "Raw Whey Protein (Unflavoured)",
+    "brand": "MuscleBlaze",
+    "barcode": null,
+    "owner_id": null,
+    "serving_units": [
+      { "unit": "1 scoop", "grams": 30 },
+      { "unit": "g", "grams": 1 }
+    ],
+    "calories_per_100g": 400,
+    "protein_per_100g": 80,
+    "carbs_per_100g": 8,
+    "fat_per_100g": 6,
+    "sugar_per_100g": 5,
+    "fiber_per_100g": 0,
+    "sodium_mg_per_100g": 0,
+    "nutrition_details": {
+      "bcaa_g": 16.999999999999996,
+      "label_protein_per_100g": 80,
+      "saturated_fat": null,
+      "cholesterol_mg": null,
+      "not_provided": ["sodium_mg"]
+    },
+    "attribution": "Owner-supplied food (1).txt; approximate per-serving label data; Whey concentrate; India; verify flavour/batch against the pack"
+  },
+  {
+    "id": "3f70d723-83a8-5855-ae35-097d34ea04ba",
+    "source": "supplied",
+    "name": "Mass Gainer XXL",
+    "brand": "MuscleBlaze",
+    "barcode": null,
+    "owner_id": null,
+    "serving_units": [
+      { "unit": "100 g (approx 2 scoops)", "grams": 100 },
+      { "unit": "g", "grams": 1 }
+    ],
+    "calories_per_100g": 378,
+    "protein_per_100g": 15,
+    "carbs_per_100g": 74,
+    "fat_per_100g": 3.5,
+    "sugar_per_100g": 22,
+    "fiber_per_100g": 2,
+    "sodium_mg_per_100g": 0,
+    "nutrition_details": {
+      "bcaa_g": null,
+      "label_protein_per_100g": 15,
+      "saturated_fat": null,
+      "cholesterol_mg": null,
+      "not_provided": ["sodium_mg"]
+    },
+    "attribution": "Owner-supplied food (1).txt; approximate per-serving label data; Mass gainer; India; verify flavour/batch against the pack"
+  },
+  {
+    "id": "bfe1c6d0-04d1-5f68-8ac0-347387bf7a53",
+    "source": "supplied",
+    "name": "High Protein Peanut Butter",
+    "brand": "MuscleBlaze",
+    "barcode": null,
+    "owner_id": null,
+    "serving_units": [
+      { "unit": "2 tbsp", "grams": 32 },
+      { "unit": "g", "grams": 1 }
+    ],
+    "calories_per_100g": 609.375,
+    "protein_per_100g": 29.6875,
+    "carbs_per_100g": 20.3125,
+    "fat_per_100g": 46.25,
+    "sugar_per_100g": 4.6875,
+    "fiber_per_100g": 8.125,
+    "sodium_mg_per_100g": 0,
+    "nutrition_details": {
+      "bcaa_g": null,
+      "label_protein_per_100g": 29.7,
+      "saturated_fat": null,
+      "cholesterol_mg": null,
+      "not_provided": ["sodium_mg"]
+    },
+    "attribution": "Owner-supplied food (1).txt; approximate per-serving label data; Peanut butter (high protein); India; verify flavour/batch against the pack"
+  },
+  {
+    "id": "06333a4a-25f3-52e9-b5b1-816f4acb7b3c",
+    "source": "supplied",
+    "name": "Protein Bar (20 g protein)",
+    "brand": "MuscleBlaze",
+    "barcode": null,
+    "owner_id": null,
+    "serving_units": [
+      { "unit": "1 bar", "grams": 72 },
+      { "unit": "g", "grams": 1 }
+    ],
+    "calories_per_100g": 347.22222222222223,
+    "protein_per_100g": 27.77777777777778,
+    "carbs_per_100g": 34.72222222222222,
+    "fat_per_100g": 11.11111111111111,
+    "sugar_per_100g": 4.166666666666667,
+    "fiber_per_100g": 8.333333333333334,
+    "sodium_mg_per_100g": 0,
+    "nutrition_details": {
+      "bcaa_g": null,
+      "label_protein_per_100g": 27.8,
+      "saturated_fat": null,
+      "cholesterol_mg": null,
+      "not_provided": ["sodium_mg"]
+    },
+    "attribution": "Owner-supplied food (1).txt; approximate per-serving label data; Protein bar; India; verify flavour/batch against the pack"
+  },
+  {
+    "id": "12ab0230-5671-5505-802f-916ce081a4e4",
+    "source": "supplied",
+    "name": "Whey Protein Concentrate 80%",
+    "brand": "AS-IT-IS Nutrition",
+    "barcode": null,
+    "owner_id": null,
+    "serving_units": [
+      { "unit": "30 g (approx 1 scoop)", "grams": 30 },
+      { "unit": "g", "grams": 1 }
+    ],
+    "calories_per_100g": 400,
+    "protein_per_100g": 80,
+    "carbs_per_100g": 8,
+    "fat_per_100g": 6,
+    "sugar_per_100g": 6.666666666666667,
+    "fiber_per_100g": 0,
+    "sodium_mg_per_100g": 0,
+    "nutrition_details": {
+      "bcaa_g": 16.666666666666668,
+      "label_protein_per_100g": 80,
+      "saturated_fat": null,
+      "cholesterol_mg": null,
+      "not_provided": ["sodium_mg"]
+    },
+    "attribution": "Owner-supplied food (1).txt; approximate per-serving label data; Whey concentrate; India; verify flavour/batch against the pack"
+  },
+  {
+    "id": "300436c7-39ef-55b2-9efe-cdc5307c8baf",
+    "source": "supplied",
+    "name": "Whey Protein Isolate 90%",
+    "brand": "AS-IT-IS Nutrition",
+    "barcode": null,
+    "owner_id": null,
+    "serving_units": [
+      { "unit": "30 g", "grams": 30 },
+      { "unit": "g", "grams": 1 }
+    ],
+    "calories_per_100g": 376.6666666666667,
+    "protein_per_100g": 90,
+    "carbs_per_100g": 3,
+    "fat_per_100g": 2,
+    "sugar_per_100g": 1.6666666666666667,
+    "fiber_per_100g": 0,
+    "sodium_mg_per_100g": 0,
+    "nutrition_details": {
+      "bcaa_g": 20,
+      "label_protein_per_100g": 90,
+      "saturated_fat": null,
+      "cholesterol_mg": null,
+      "not_provided": ["sodium_mg"]
+    },
+    "attribution": "Owner-supplied food (1).txt; approximate per-serving label data; Whey isolate; India; verify flavour/batch against the pack"
+  },
+  {
+    "id": "972cf5b9-36c4-58a6-9c7b-b342318fe323",
+    "source": "supplied",
+    "name": "Pea Protein Isolate 80%",
+    "brand": "AS-IT-IS Nutrition",
+    "barcode": null,
+    "owner_id": null,
+    "serving_units": [
+      { "unit": "30 g", "grams": 30 },
+      { "unit": "g", "grams": 1 }
+    ],
+    "calories_per_100g": 400,
+    "protein_per_100g": 80,
+    "carbs_per_100g": 5,
+    "fat_per_100g": 8.333333333333334,
+    "sugar_per_100g": 1.6666666666666667,
+    "fiber_per_100g": 3.3333333333333335,
+    "sodium_mg_per_100g": 0,
+    "nutrition_details": {
+      "bcaa_g": 15,
+      "label_protein_per_100g": 80,
+      "saturated_fat": null,
+      "cholesterol_mg": null,
+      "not_provided": ["sodium_mg"]
+    },
+    "attribution": "Owner-supplied food (1).txt; approximate per-serving label data; Plant protein (pea); India; verify flavour/batch against the pack"
+  },
+  {
+    "id": "0fd824b7-e5f5-5f0d-b960-53d382d69571",
+    "source": "supplied",
+    "name": "Soy Protein Isolate 90%",
+    "brand": "AS-IT-IS Nutrition",
+    "barcode": null,
+    "owner_id": null,
+    "serving_units": [
+      { "unit": "30 g", "grams": 30 },
+      { "unit": "g", "grams": 1 }
+    ],
+    "calories_per_100g": 370,
+    "protein_per_100g": 90,
+    "carbs_per_100g": 2,
+    "fat_per_100g": 2,
+    "sugar_per_100g": 1,
+    "fiber_per_100g": 1.6666666666666667,
+    "sodium_mg_per_100g": 0,
+    "nutrition_details": {
+      "bcaa_g": 16,
+      "label_protein_per_100g": 90,
+      "saturated_fat": null,
+      "cholesterol_mg": null,
+      "not_provided": ["sodium_mg"]
+    },
+    "attribution": "Owner-supplied food (1).txt; approximate per-serving label data; Plant protein (soy); India; verify flavour/batch against the pack"
+  },
+  {
+    "id": "164f3ec3-9c68-5a40-a7e5-eb23b426a4e9",
+    "source": "supplied",
+    "name": "Whey Protein (Concentrate)",
+    "brand": "ATOM",
+    "barcode": null,
+    "owner_id": null,
+    "serving_units": [
+      { "unit": "1 scoop", "grams": 30 },
+      { "unit": "g", "grams": 1 }
+    ],
+    "calories_per_100g": 400,
+    "protein_per_100g": 80,
+    "carbs_per_100g": 8,
+    "fat_per_100g": 6,
+    "sugar_per_100g": 5,
+    "fiber_per_100g": 0,
+    "sodium_mg_per_100g": 0,
+    "nutrition_details": {
+      "bcaa_g": 16.666666666666668,
+      "label_protein_per_100g": 80,
+      "saturated_fat": null,
+      "cholesterol_mg": null,
+      "not_provided": ["sodium_mg"]
+    },
+    "attribution": "Owner-supplied food (1).txt; approximate per-serving label data; Whey concentrate; India; verify flavour/batch against the pack"
+  },
+  {
+    "id": "d6e0f076-4d2e-56de-8013-441b1b525e9b",
+    "source": "supplied",
+    "name": "Whey Protein Isolate",
+    "brand": "ATOM",
+    "barcode": null,
+    "owner_id": null,
+    "serving_units": [
+      { "unit": "1 scoop", "grams": 30 },
+      { "unit": "g", "grams": 1 }
+    ],
+    "calories_per_100g": 373.3333333333333,
+    "protein_per_100g": 83.33333333333333,
+    "carbs_per_100g": 5,
+    "fat_per_100g": 2.6666666666666665,
+    "sugar_per_100g": 2.6666666666666665,
+    "fiber_per_100g": 0,
+    "sodium_mg_per_100g": 0,
+    "nutrition_details": {
+      "bcaa_g": 18.666666666666668,
+      "label_protein_per_100g": 83.3,
+      "saturated_fat": null,
+      "cholesterol_mg": null,
+      "not_provided": ["sodium_mg"]
+    },
+    "attribution": "Owner-supplied food (1).txt; approximate per-serving label data; Whey isolate; India; verify flavour/batch against the pack"
+  },
+  {
+    "id": "0ae3d6ba-e93d-5614-b0bd-0713e5817c1b",
+    "source": "supplied",
+    "name": "High Protein Oats (Chocolate)",
+    "brand": "Pintola",
+    "barcode": null,
+    "owner_id": null,
+    "serving_units": [
+      { "unit": "40 g", "grams": 40 },
+      { "unit": "g", "grams": 1 }
+    ],
+    "calories_per_100g": 375,
+    "protein_per_100g": 24,
+    "carbs_per_100g": 57,
+    "fat_per_100g": 7,
+    "sugar_per_100g": 4,
+    "fiber_per_100g": 9,
+    "sodium_mg_per_100g": 0,
+    "nutrition_details": {
+      "bcaa_g": null,
+      "label_protein_per_100g": 24,
+      "saturated_fat": null,
+      "cholesterol_mg": null,
+      "not_provided": ["sodium_mg"]
+    },
+    "attribution": "Owner-supplied food (1).txt; approximate per-serving label data; Protein oats; India; verify flavour/batch against the pack"
+  },
+  {
+    "id": "29ad0560-967f-51e5-aa13-4d54910742d8",
+    "source": "supplied",
+    "name": "All Natural Peanut Butter (Creamy)",
+    "brand": "Pintola",
+    "barcode": null,
+    "owner_id": null,
+    "serving_units": [
+      { "unit": "2 tbsp", "grams": 32 },
+      { "unit": "g", "grams": 1 }
+    ],
+    "calories_per_100g": 593.75,
+    "protein_per_100g": 28.125,
+    "carbs_per_100g": 15.625,
+    "fat_per_100g": 48.4375,
+    "sugar_per_100g": 4.6875,
+    "fiber_per_100g": 7.8125,
+    "sodium_mg_per_100g": 0,
+    "nutrition_details": {
+      "bcaa_g": null,
+      "label_protein_per_100g": 28.1,
+      "saturated_fat": null,
+      "cholesterol_mg": null,
+      "not_provided": ["sodium_mg"]
+    },
+    "attribution": "Owner-supplied food (1).txt; approximate per-serving label data; Peanut butter; India; verify flavour/batch against the pack"
+  },
+  {
+    "id": "24678554-a512-5453-a026-9a53b723a93d",
+    "source": "supplied",
+    "name": "High Protein Peanut Butter",
+    "brand": "Pintola",
+    "barcode": null,
+    "owner_id": null,
+    "serving_units": [
+      { "unit": "2 tbsp", "grams": 32 },
+      { "unit": "g", "grams": 1 }
+    ],
+    "calories_per_100g": 587.5,
+    "protein_per_100g": 33.4375,
+    "carbs_per_100g": 17.1875,
+    "fat_per_100g": 43.75,
+    "sugar_per_100g": 4.6875,
+    "fiber_per_100g": 7.8125,
+    "sodium_mg_per_100g": 0,
+    "nutrition_details": {
+      "bcaa_g": null,
+      "label_protein_per_100g": 33.4,
+      "saturated_fat": null,
+      "cholesterol_mg": null,
+      "not_provided": ["sodium_mg"]
+    },
+    "attribution": "Owner-supplied food (1).txt; approximate per-serving label data; Peanut butter (high protein); India; verify flavour/batch against the pack"
+  },
+  {
+    "id": "d00f3ac3-4408-5d90-a844-5008660b9801",
+    "source": "supplied",
+    "name": "Performance Whey Protein",
+    "brand": "Pintola",
+    "barcode": null,
+    "owner_id": null,
+    "serving_units": [
+      { "unit": "1 scoop", "grams": 33 },
+      { "unit": "g", "grams": 1 }
+    ],
+    "calories_per_100g": 393.93939393939394,
+    "protein_per_100g": 72.72727272727273,
+    "carbs_per_100g": 10.606060606060606,
+    "fat_per_100g": 6.0606060606060606,
+    "sugar_per_100g": 4.545454545454546,
+    "fiber_per_100g": 0,
+    "sodium_mg_per_100g": 0,
+    "nutrition_details": {
+      "bcaa_g": 15.151515151515152,
+      "label_protein_per_100g": 72.7,
+      "saturated_fat": null,
+      "cholesterol_mg": null,
+      "not_provided": ["sodium_mg"]
+    },
+    "attribution": "Owner-supplied food (1).txt; approximate per-serving label data; Whey blend; India; verify flavour/batch against the pack"
+  },
+  {
+    "id": "c62c2e2d-db6f-5bd2-8222-913474b288bf",
+    "source": "supplied",
+    "name": "Pure Whey Protein Concentrate",
+    "brand": "Nutrabay",
+    "barcode": null,
+    "owner_id": null,
+    "serving_units": [
+      { "unit": "1 scoop", "grams": 30 },
+      { "unit": "g", "grams": 1 }
+    ],
+    "calories_per_100g": 400,
+    "protein_per_100g": 80,
+    "carbs_per_100g": 8,
+    "fat_per_100g": 6.333333333333333,
+    "sugar_per_100g": 5,
+    "fiber_per_100g": 0,
+    "sodium_mg_per_100g": 0,
+    "nutrition_details": {
+      "bcaa_g": 16.666666666666668,
+      "label_protein_per_100g": 80,
+      "saturated_fat": null,
+      "cholesterol_mg": null,
+      "not_provided": ["sodium_mg"]
+    },
+    "attribution": "Owner-supplied food (1).txt; approximate per-serving label data; Whey concentrate; India; verify flavour/batch against the pack"
+  },
+  {
+    "id": "02fbd69a-b205-5a18-b062-6bf0f08036aa",
+    "source": "supplied",
+    "name": "Pure Whey Protein Isolate",
+    "brand": "Nutrabay",
+    "barcode": null,
+    "owner_id": null,
+    "serving_units": [
+      { "unit": "1 scoop", "grams": 30 },
+      { "unit": "g", "grams": 1 }
+    ],
+    "calories_per_100g": 376.6666666666667,
+    "protein_per_100g": 86.66666666666667,
+    "carbs_per_100g": 4,
+    "fat_per_100g": 2.3333333333333335,
+    "sugar_per_100g": 2,
+    "fiber_per_100g": 0,
+    "sodium_mg_per_100g": 0,
+    "nutrition_details": {
+      "bcaa_g": 19.333333333333332,
+      "label_protein_per_100g": 86.7,
+      "saturated_fat": null,
+      "cholesterol_mg": null,
+      "not_provided": ["sodium_mg"]
+    },
+    "attribution": "Owner-supplied food (1).txt; approximate per-serving label data; Whey isolate; India; verify flavour/batch against the pack"
+  },
+  {
+    "id": "da1d14eb-abbc-536c-b1ec-cec1f2488a68",
+    "source": "supplied",
+    "name": "Pure Pea Protein Isolate",
+    "brand": "Nutrabay",
+    "barcode": null,
+    "owner_id": null,
+    "serving_units": [
+      { "unit": "1 scoop", "grams": 30 },
+      { "unit": "g", "grams": 1 }
+    ],
+    "calories_per_100g": 393.3333333333333,
+    "protein_per_100g": 80,
+    "carbs_per_100g": 5,
+    "fat_per_100g": 7.333333333333334,
+    "sugar_per_100g": 1.6666666666666667,
+    "fiber_per_100g": 3.3333333333333335,
+    "sodium_mg_per_100g": 0,
+    "nutrition_details": {
+      "bcaa_g": 15,
+      "label_protein_per_100g": 80,
+      "saturated_fat": null,
+      "cholesterol_mg": null,
+      "not_provided": ["sodium_mg"]
+    },
+    "attribution": "Owner-supplied food (1).txt; approximate per-serving label data; Plant protein (pea); India; verify flavour/batch against the pack"
+  },
+  {
+    "id": "db748e50-d149-5b06-9de2-46f1fe040ddc",
+    "source": "supplied",
+    "name": "Protein & Herbs (Whey)",
+    "brand": "OZiva",
+    "barcode": null,
+    "owner_id": null,
+    "serving_units": [
+      { "unit": "1 scoop", "grams": 33 },
+      { "unit": "g", "grams": 1 }
+    ],
+    "calories_per_100g": 378.7878787878788,
+    "protein_per_100g": 69.6969696969697,
+    "carbs_per_100g": 12.121212121212121,
+    "fat_per_100g": 6.0606060606060606,
+    "sugar_per_100g": 4.545454545454546,
+    "fiber_per_100g": 3.0303030303030303,
+    "sodium_mg_per_100g": 0,
+    "nutrition_details": {
+      "bcaa_g": null,
+      "label_protein_per_100g": 69.7,
+      "saturated_fat": null,
+      "cholesterol_mg": null,
+      "not_provided": ["sodium_mg"]
+    },
+    "attribution": "Owner-supplied food (1).txt; approximate per-serving label data; Whey blend + herbs; India; verify flavour/batch against the pack"
+  },
+  {
+    "id": "6f3f985d-3c4b-5857-9ea9-a7eca1f31763",
+    "source": "supplied",
+    "name": "Plant Protein & Herbs",
+    "brand": "OZiva",
+    "barcode": null,
+    "owner_id": null,
+    "serving_units": [
+      { "unit": "1 scoop", "grams": 30 },
+      { "unit": "g", "grams": 1 }
+    ],
+    "calories_per_100g": 383.3333333333333,
+    "protein_per_100g": 66.66666666666667,
+    "carbs_per_100g": 16.666666666666668,
+    "fat_per_100g": 8.333333333333334,
+    "sugar_per_100g": 3.3333333333333335,
+    "fiber_per_100g": 6.666666666666667,
+    "sodium_mg_per_100g": 0,
+    "nutrition_details": {
+      "bcaa_g": null,
+      "label_protein_per_100g": 66.7,
+      "saturated_fat": null,
+      "cholesterol_mg": null,
+      "not_provided": ["sodium_mg"]
+    },
+    "attribution": "Owner-supplied food (1).txt; approximate per-serving label data; Plant protein blend; India; verify flavour/batch against the pack"
+  },
+  {
+    "id": "4fb8a814-49b1-5ae2-848d-1ad1c09e9545",
+    "source": "supplied",
+    "name": "Plant Protein",
+    "brand": "Plix",
+    "barcode": null,
+    "owner_id": null,
+    "serving_units": [
+      { "unit": "1 scoop", "grams": 35 },
+      { "unit": "g", "grams": 1 }
+    ],
+    "calories_per_100g": 400,
+    "protein_per_100g": 68.57142857142857,
+    "carbs_per_100g": 14.285714285714286,
+    "fat_per_100g": 7.142857142857143,
+    "sugar_per_100g": 2.857142857142857,
+    "fiber_per_100g": 5.714285714285714,
+    "sodium_mg_per_100g": 0,
+    "nutrition_details": {
+      "bcaa_g": null,
+      "label_protein_per_100g": 68.6,
+      "saturated_fat": null,
+      "cholesterol_mg": null,
+      "not_provided": ["sodium_mg"]
+    },
+    "attribution": "Owner-supplied food (1).txt; approximate per-serving label data; Plant protein blend; India; verify flavour/batch against the pack"
+  },
+  {
+    "id": "fb2dacf3-7133-5d87-8dd8-b7eade34c8b6",
+    "source": "supplied",
+    "name": "Plant Protein",
+    "brand": "Fast&Up",
+    "barcode": null,
+    "owner_id": null,
+    "serving_units": [
+      { "unit": "1 scoop", "grams": 35 },
+      { "unit": "g", "grams": 1 }
+    ],
+    "calories_per_100g": 385.7142857142857,
+    "protein_per_100g": 68.57142857142857,
+    "carbs_per_100g": 14.285714285714286,
+    "fat_per_100g": 5.714285714285714,
+    "sugar_per_100g": 2.857142857142857,
+    "fiber_per_100g": 5.714285714285714,
+    "sodium_mg_per_100g": 0,
+    "nutrition_details": {
+      "bcaa_g": null,
+      "label_protein_per_100g": 68.6,
+      "saturated_fat": null,
+      "cholesterol_mg": null,
+      "not_provided": ["sodium_mg"]
+    },
+    "attribution": "Owner-supplied food (1).txt; approximate per-serving label data; Plant protein blend; India; verify flavour/batch against the pack"
+  },
+  {
+    "id": "11463de8-7800-5cbc-bfee-7c63bfa7a5bc",
+    "source": "supplied",
+    "name": "Whey Protein",
+    "brand": "Avvatar",
+    "barcode": null,
+    "owner_id": null,
+    "serving_units": [
+      { "unit": "1 scoop", "grams": 33 },
+      { "unit": "g", "grams": 1 }
+    ],
+    "calories_per_100g": 393.93939393939394,
+    "protein_per_100g": 72.72727272727273,
+    "carbs_per_100g": 10.606060606060606,
+    "fat_per_100g": 6.666666666666668,
+    "sugar_per_100g": 4.545454545454546,
+    "fiber_per_100g": 0,
+    "sodium_mg_per_100g": 0,
+    "nutrition_details": {
+      "bcaa_g": 15.757575757575758,
+      "label_protein_per_100g": 72.7,
+      "saturated_fat": null,
+      "cholesterol_mg": null,
+      "not_provided": ["sodium_mg"]
+    },
+    "attribution": "Owner-supplied food (1).txt; approximate per-serving label data; Whey blend; India; verify flavour/batch against the pack"
+  },
+  {
+    "id": "f026c01d-e514-5997-a372-d473a8c7fe90",
+    "source": "supplied",
+    "name": "Premium Gold Whey",
+    "brand": "BigMuscles Nutrition",
+    "barcode": null,
+    "owner_id": null,
+    "serving_units": [
+      { "unit": "1 scoop", "grams": 33 },
+      { "unit": "g", "grams": 1 }
+    ],
+    "calories_per_100g": 387.8787878787879,
+    "protein_per_100g": 72.72727272727273,
+    "carbs_per_100g": 9.090909090909092,
+    "fat_per_100g": 6.0606060606060606,
+    "sugar_per_100g": 4.545454545454546,
+    "fiber_per_100g": 0,
+    "sodium_mg_per_100g": 0,
+    "nutrition_details": {
+      "bcaa_g": 16.060606060606062,
+      "label_protein_per_100g": 72.7,
+      "saturated_fat": null,
+      "cholesterol_mg": null,
+      "not_provided": ["sodium_mg"]
+    },
+    "attribution": "Owner-supplied food (1).txt; approximate per-serving label data; Whey blend; India; verify flavour/batch against the pack"
+  },
+  {
+    "id": "3c60b9ed-4491-50ba-9e16-36324b7c2546",
+    "source": "supplied",
+    "name": "Whey Protein",
+    "brand": "Amul",
+    "barcode": null,
+    "owner_id": null,
+    "serving_units": [
+      { "unit": "1 scoop", "grams": 30 },
+      { "unit": "g", "grams": 1 }
+    ],
+    "calories_per_100g": 400,
+    "protein_per_100g": 80,
+    "carbs_per_100g": 8.333333333333334,
+    "fat_per_100g": 6.666666666666667,
+    "sugar_per_100g": 5,
+    "fiber_per_100g": 0,
+    "sodium_mg_per_100g": 0,
+    "nutrition_details": {
+      "bcaa_g": null,
+      "label_protein_per_100g": 80,
+      "saturated_fat": null,
+      "cholesterol_mg": null,
+      "not_provided": ["sodium_mg"]
+    },
+    "attribution": "Owner-supplied food (1).txt; approximate per-serving label data; Whey concentrate; India; verify flavour/batch against the pack"
+  },
+  {
+    "id": "942e2486-241f-5593-95e9-79d08ac92de1",
+    "source": "supplied",
+    "name": "HK Vitals Whey Protein",
+    "brand": "HealthKart",
+    "barcode": null,
+    "owner_id": null,
+    "serving_units": [
+      { "unit": "1 scoop", "grams": 33 },
+      { "unit": "g", "grams": 1 }
+    ],
+    "calories_per_100g": 387.8787878787879,
+    "protein_per_100g": 72.72727272727273,
+    "carbs_per_100g": 9.090909090909092,
+    "fat_per_100g": 6.0606060606060606,
+    "sugar_per_100g": 4.545454545454546,
+    "fiber_per_100g": 0,
+    "sodium_mg_per_100g": 0,
+    "nutrition_details": {
+      "bcaa_g": null,
+      "label_protein_per_100g": 72.7,
+      "saturated_fat": null,
+      "cholesterol_mg": null,
+      "not_provided": ["sodium_mg"]
+    },
+    "attribution": "Owner-supplied food (1).txt; approximate per-serving label data; Whey blend; India; verify flavour/batch against the pack"
+  },
+  {
+    "id": "2d6e01ca-cea6-5634-8e57-a79cecbe1e82",
+    "source": "supplied",
+    "name": "Max Protein Daily Choco Almond Bar",
+    "brand": "RiteBite",
+    "barcode": null,
+    "owner_id": null,
+    "serving_units": [
+      { "unit": "1 bar", "grams": 50 },
+      { "unit": "g", "grams": 1 }
+    ],
+    "calories_per_100g": 400,
+    "protein_per_100g": 20,
+    "carbs_per_100g": 48,
+    "fat_per_100g": 16,
+    "sugar_per_100g": 20,
+    "fiber_per_100g": 8,
+    "sodium_mg_per_100g": 0,
+    "nutrition_details": {
+      "bcaa_g": null,
+      "label_protein_per_100g": 20,
+      "saturated_fat": null,
+      "cholesterol_mg": null,
+      "not_provided": ["sodium_mg"]
+    },
+    "attribution": "Owner-supplied food (1).txt; approximate per-serving label data; Protein bar; India; verify flavour/batch against the pack"
+  },
+  {
+    "id": "7340e4e6-e699-5537-a54d-29ad1f7cb32f",
+    "source": "supplied",
+    "name": "Protein Bar (Choco Almond)",
+    "brand": "Yoga Bar",
+    "barcode": null,
+    "owner_id": null,
+    "serving_units": [
+      { "unit": "1 bar", "grams": 60 },
+      { "unit": "g", "grams": 1 }
+    ],
+    "calories_per_100g": 383.3333333333333,
+    "protein_per_100g": 33.333333333333336,
+    "carbs_per_100g": 36.666666666666664,
+    "fat_per_100g": 13.333333333333334,
+    "sugar_per_100g": 8.333333333333334,
+    "fiber_per_100g": 8.333333333333334,
+    "sodium_mg_per_100g": 0,
+    "nutrition_details": {
+      "bcaa_g": null,
+      "label_protein_per_100g": 33.3,
+      "saturated_fat": null,
+      "cholesterol_mg": null,
+      "not_provided": ["sodium_mg"]
+    },
+    "attribution": "Owner-supplied food (1).txt; approximate per-serving label data; Protein bar; India; verify flavour/batch against the pack"
+  },
+  {
+    "id": "14f03888-ca1e-571b-94af-0926e2d521ab",
+    "source": "supplied",
+    "name": "Pro Performance 100% Whey",
+    "brand": "GNC",
+    "barcode": null,
+    "owner_id": null,
+    "serving_units": [
+      { "unit": "1 scoop", "grams": 33 },
+      { "unit": "g", "grams": 1 }
+    ],
+    "calories_per_100g": 393.93939393939394,
+    "protein_per_100g": 72.72727272727273,
+    "carbs_per_100g": 9.090909090909092,
+    "fat_per_100g": 6.0606060606060606,
+    "sugar_per_100g": 6.0606060606060606,
+    "fiber_per_100g": 0,
+    "sodium_mg_per_100g": 0,
+    "nutrition_details": {
+      "bcaa_g": 16.363636363636363,
+      "label_protein_per_100g": 72.7,
+      "saturated_fat": null,
+      "cholesterol_mg": null,
+      "not_provided": ["sodium_mg"]
+    },
+    "attribution": "Owner-supplied food (1).txt; approximate per-serving label data; Whey blend; India; verify flavour/batch against the pack"
+  },
+  {
+    "id": "ed1f5497-b6ad-5254-b7c8-bce9af384329",
+    "source": "supplied",
+    "name": "Gold Standard 100% Whey",
+    "brand": "Optimum Nutrition (ON)",
+    "barcode": null,
+    "owner_id": null,
+    "serving_units": [
+      { "unit": "1 scoop", "grams": 30.4 },
+      { "unit": "g", "grams": 1 }
+    ],
+    "calories_per_100g": 394.7368421052632,
+    "protein_per_100g": 78.94736842105263,
+    "carbs_per_100g": 9.868421052631579,
+    "fat_per_100g": 3.2894736842105265,
+    "sugar_per_100g": 3.2894736842105265,
+    "fiber_per_100g": 0,
+    "sodium_mg_per_100g": 0,
+    "nutrition_details": {
+      "bcaa_g": 18.092105263157897,
+      "label_protein_per_100g": 78.9,
+      "saturated_fat": null,
+      "cholesterol_mg": null,
+      "not_provided": ["sodium_mg"]
+    },
+    "attribution": "Owner-supplied food (1).txt; approximate per-serving label data; Whey blend; International; verify flavour/batch against the pack"
+  },
+  {
+    "id": "76aa1458-e3a4-580e-b989-56ae8ca7128a",
+    "source": "supplied",
+    "name": "Platinum HydroWhey",
+    "brand": "Optimum Nutrition (ON)",
+    "barcode": null,
+    "owner_id": null,
+    "serving_units": [
+      { "unit": "1 scoop", "grams": 39 },
+      { "unit": "g", "grams": 1 }
+    ],
+    "calories_per_100g": 384.61538461538464,
+    "protein_per_100g": 76.92307692307692,
+    "carbs_per_100g": 10.256410256410257,
+    "fat_per_100g": 2.5641025641025643,
+    "sugar_per_100g": 2.5641025641025643,
+    "fiber_per_100g": 0,
+    "sodium_mg_per_100g": 0,
+    "nutrition_details": {
+      "bcaa_g": 16.923076923076923,
+      "label_protein_per_100g": 76.9,
+      "saturated_fat": null,
+      "cholesterol_mg": null,
+      "not_provided": ["sodium_mg"]
+    },
+    "attribution": "Owner-supplied food (1).txt; approximate per-serving label data; Hydrolysed whey; International; verify flavour/batch against the pack"
+  },
+  {
+    "id": "fa1a8011-791b-54f6-964a-e8a4cad24790",
+    "source": "supplied",
+    "name": "Serious Mass",
+    "brand": "Optimum Nutrition (ON)",
+    "barcode": null,
+    "owner_id": null,
+    "serving_units": [
+      { "unit": "2 scoops", "grams": 334 },
+      { "unit": "g", "grams": 1 }
+    ],
+    "calories_per_100g": 374.251497005988,
+    "protein_per_100g": 14.970059880239521,
+    "carbs_per_100g": 75.44910179640719,
+    "fat_per_100g": 1.347305389221557,
+    "sugar_per_100g": 5.9880239520958085,
+    "fiber_per_100g": 1.4970059880239521,
+    "sodium_mg_per_100g": 0,
+    "nutrition_details": {
+      "bcaa_g": null,
+      "label_protein_per_100g": 15,
+      "saturated_fat": null,
+      "cholesterol_mg": null,
+      "not_provided": ["sodium_mg"]
+    },
+    "attribution": "Owner-supplied food (1).txt; approximate per-serving label data; Mass gainer; International; verify flavour/batch against the pack"
+  },
+  {
+    "id": "d3926fe7-d1ef-5d85-be17-f86870b18896",
+    "source": "supplied",
+    "name": "Gold Standard 100% Casein",
+    "brand": "Optimum Nutrition (ON)",
+    "barcode": null,
+    "owner_id": null,
+    "serving_units": [
+      { "unit": "1 scoop", "grams": 34 },
+      { "unit": "g", "grams": 1 }
+    ],
+    "calories_per_100g": 352.94117647058823,
+    "protein_per_100g": 70.58823529411765,
+    "carbs_per_100g": 11.764705882352942,
+    "fat_per_100g": 2.9411764705882355,
+    "sugar_per_100g": 2.9411764705882355,
+    "fiber_per_100g": 2.9411764705882355,
+    "sodium_mg_per_100g": 0,
+    "nutrition_details": {
+      "bcaa_g": 14.705882352941176,
+      "label_protein_per_100g": 70.6,
+      "saturated_fat": null,
+      "cholesterol_mg": null,
+      "not_provided": ["sodium_mg"]
+    },
+    "attribution": "Owner-supplied food (1).txt; approximate per-serving label data; Micellar casein; International; verify flavour/batch against the pack"
+  },
+  {
+    "id": "3ee2857e-5caa-5e4c-ab4a-4b5a100589a8",
+    "source": "supplied",
+    "name": "Gold Standard Plant Protein",
+    "brand": "Optimum Nutrition (ON)",
+    "barcode": null,
+    "owner_id": null,
+    "serving_units": [
+      { "unit": "1 scoop", "grams": 37 },
+      { "unit": "g", "grams": 1 }
+    ],
+    "calories_per_100g": 405.4054054054054,
+    "protein_per_100g": 64.86486486486487,
+    "carbs_per_100g": 16.216216216216218,
+    "fat_per_100g": 6.756756756756757,
+    "sugar_per_100g": 2.7027027027027026,
+    "fiber_per_100g": 8.108108108108109,
+    "sodium_mg_per_100g": 0,
+    "nutrition_details": {
+      "bcaa_g": null,
+      "label_protein_per_100g": 64.9,
+      "saturated_fat": null,
+      "cholesterol_mg": null,
+      "not_provided": ["sodium_mg"]
+    },
+    "attribution": "Owner-supplied food (1).txt; approximate per-serving label data; Plant protein blend; International; verify flavour/batch against the pack"
+  },
+  {
+    "id": "c43a5775-4c0b-50fe-867d-ea13a9bbf66d",
+    "source": "supplied",
+    "name": "ISO100 Hydrolyzed",
+    "brand": "Dymatize",
+    "barcode": null,
+    "owner_id": null,
+    "serving_units": [
+      { "unit": "1 scoop", "grams": 31 },
+      { "unit": "g", "grams": 1 }
+    ],
+    "calories_per_100g": 354.83870967741933,
+    "protein_per_100g": 80.64516129032258,
+    "carbs_per_100g": 6.451612903225806,
+    "fat_per_100g": 0,
+    "sugar_per_100g": 3.225806451612903,
+    "fiber_per_100g": 0,
+    "sodium_mg_per_100g": 0,
+    "nutrition_details": {
+      "bcaa_g": 17.741935483870968,
+      "label_protein_per_100g": 80.6,
+      "saturated_fat": null,
+      "cholesterol_mg": null,
+      "not_provided": ["sodium_mg"]
+    },
+    "attribution": "Owner-supplied food (1).txt; approximate per-serving label data; Hydrolysed whey isolate; International; verify flavour/batch against the pack"
+  },
+  {
+    "id": "69681ce3-de2d-5bba-8fd4-8178cf52bb2a",
+    "source": "supplied",
+    "name": "Elite 100% Whey",
+    "brand": "Dymatize",
+    "barcode": null,
+    "owner_id": null,
+    "serving_units": [
+      { "unit": "1 scoop", "grams": 34 },
+      { "unit": "g", "grams": 1 }
+    ],
+    "calories_per_100g": 382.3529411764706,
+    "protein_per_100g": 73.52941176470588,
+    "carbs_per_100g": 8.823529411764707,
+    "fat_per_100g": 5.882352941176471,
+    "sugar_per_100g": 5.882352941176471,
+    "fiber_per_100g": 0,
+    "sodium_mg_per_100g": 0,
+    "nutrition_details": {
+      "bcaa_g": 16.176470588235293,
+      "label_protein_per_100g": 73.5,
+      "saturated_fat": null,
+      "cholesterol_mg": null,
+      "not_provided": ["sodium_mg"]
+    },
+    "attribution": "Owner-supplied food (1).txt; approximate per-serving label data; Whey blend; International; verify flavour/batch against the pack"
+  },
+  {
+    "id": "e3a722a0-be95-5cba-95b3-0c7d6d28bbf9",
+    "source": "supplied",
+    "name": "Impact Whey Protein",
+    "brand": "MyProtein",
+    "barcode": null,
+    "owner_id": null,
+    "serving_units": [
+      { "unit": "1 scoop", "grams": 25 },
+      { "unit": "g", "grams": 1 }
+    ],
+    "calories_per_100g": 412,
+    "protein_per_100g": 84,
+    "carbs_per_100g": 4,
+    "fat_per_100g": 7.6,
+    "sugar_per_100g": 4,
+    "fiber_per_100g": 0,
+    "sodium_mg_per_100g": 0,
+    "nutrition_details": {
+      "bcaa_g": 18,
+      "label_protein_per_100g": 84,
+      "saturated_fat": null,
+      "cholesterol_mg": null,
+      "not_provided": ["sodium_mg"]
+    },
+    "attribution": "Owner-supplied food (1).txt; approximate per-serving label data; Whey concentrate; International; verify flavour/batch against the pack"
+  },
+  {
+    "id": "e34c353f-6c1f-5297-9ca8-615a0698499a",
+    "source": "supplied",
+    "name": "Impact Whey Isolate",
+    "brand": "MyProtein",
+    "barcode": null,
+    "owner_id": null,
+    "serving_units": [
+      { "unit": "1 scoop", "grams": 25 },
+      { "unit": "g", "grams": 1 }
+    ],
+    "calories_per_100g": 372,
+    "protein_per_100g": 92,
+    "carbs_per_100g": 2,
+    "fat_per_100g": 0.8,
+    "sugar_per_100g": 1.2,
+    "fiber_per_100g": 0,
+    "sodium_mg_per_100g": 0,
+    "nutrition_details": {
+      "bcaa_g": 20.8,
+      "label_protein_per_100g": 92,
+      "saturated_fat": null,
+      "cholesterol_mg": null,
+      "not_provided": ["sodium_mg"]
+    },
+    "attribution": "Owner-supplied food (1).txt; approximate per-serving label data; Whey isolate; International; verify flavour/batch against the pack"
+  },
+  {
+    "id": "80148638-f8da-50d0-b71d-cfabddfbd9d4",
+    "source": "supplied",
+    "name": "Clear Whey Isolate",
+    "brand": "MyProtein",
+    "barcode": null,
+    "owner_id": null,
+    "serving_units": [
+      { "unit": "1 scoop", "grams": 20 },
+      { "unit": "g", "grams": 1 }
+    ],
+    "calories_per_100g": 360,
+    "protein_per_100g": 90,
+    "carbs_per_100g": 2.5,
+    "fat_per_100g": 0,
+    "sugar_per_100g": 1.5,
+    "fiber_per_100g": 0,
+    "sodium_mg_per_100g": 0,
+    "nutrition_details": {
+      "bcaa_g": 20,
+      "label_protein_per_100g": 90,
+      "saturated_fat": null,
+      "cholesterol_mg": null,
+      "not_provided": ["sodium_mg"]
+    },
+    "attribution": "Owner-supplied food (1).txt; approximate per-serving label data; Clear whey isolate; International; verify flavour/batch against the pack"
+  },
+  {
+    "id": "bc4eaad8-dc98-5c23-ba09-1fed79b4678b",
+    "source": "supplied",
+    "name": "Vegan Protein Blend",
+    "brand": "MyProtein",
+    "barcode": null,
+    "owner_id": null,
+    "serving_units": [
+      { "unit": "1 scoop", "grams": 30 },
+      { "unit": "g", "grams": 1 }
+    ],
+    "calories_per_100g": 380,
+    "protein_per_100g": 70,
+    "carbs_per_100g": 8.333333333333334,
+    "fat_per_100g": 7.333333333333334,
+    "sugar_per_100g": 1.6666666666666667,
+    "fiber_per_100g": 5,
+    "sodium_mg_per_100g": 0,
+    "nutrition_details": {
+      "bcaa_g": null,
+      "label_protein_per_100g": 70,
+      "saturated_fat": null,
+      "cholesterol_mg": null,
+      "not_provided": ["sodium_mg"]
+    },
+    "attribution": "Owner-supplied food (1).txt; approximate per-serving label data; Plant protein blend; International; verify flavour/batch against the pack"
+  },
+  {
+    "id": "1a6fce89-1d55-50d8-93aa-6d0d06c9aabd",
+    "source": "supplied",
+    "name": "Zero Carb Whey Isolate",
+    "brand": "Isopure",
+    "barcode": null,
+    "owner_id": null,
+    "serving_units": [
+      { "unit": "1 scoop", "grams": 31 },
+      { "unit": "g", "grams": 1 }
+    ],
+    "calories_per_100g": 322.5806451612903,
+    "protein_per_100g": 80.64516129032258,
+    "carbs_per_100g": 0,
+    "fat_per_100g": 0,
+    "sugar_per_100g": 0,
+    "fiber_per_100g": 0,
+    "sodium_mg_per_100g": 0,
+    "nutrition_details": {
+      "bcaa_g": 17.741935483870968,
+      "label_protein_per_100g": 80.6,
+      "saturated_fat": null,
+      "cholesterol_mg": null,
+      "not_provided": ["sodium_mg"]
+    },
+    "attribution": "Owner-supplied food (1).txt; approximate per-serving label data; Whey isolate; International; verify flavour/batch against the pack"
+  },
+  {
+    "id": "076c7f81-4994-5a4d-833b-9b8845bc6060",
+    "source": "supplied",
+    "name": "Nitro-Tech Whey Protein",
+    "brand": "MuscleTech",
+    "barcode": null,
+    "owner_id": null,
+    "serving_units": [
+      { "unit": "1 scoop", "grams": 46 },
+      { "unit": "g", "grams": 1 }
+    ],
+    "calories_per_100g": 347.82608695652175,
+    "protein_per_100g": 65.21739130434783,
+    "carbs_per_100g": 10.869565217391305,
+    "fat_per_100g": 6.521739130434782,
+    "sugar_per_100g": 2.1739130434782608,
+    "fiber_per_100g": 0,
+    "sodium_mg_per_100g": 0,
+    "nutrition_details": {
+      "bcaa_g": null,
+      "label_protein_per_100g": 65.2,
+      "saturated_fat": null,
+      "cholesterol_mg": null,
+      "not_provided": ["sodium_mg"]
+    },
+    "attribution": "Owner-supplied food (1).txt; approximate per-serving label data; Whey blend; International; verify flavour/batch against the pack"
+  },
+  {
+    "id": "8787d2bd-60a5-5c0a-832c-9612dcc8b987",
+    "source": "supplied",
+    "name": "Syntha-6",
+    "brand": "BSN",
+    "barcode": null,
+    "owner_id": null,
+    "serving_units": [
+      { "unit": "1 scoop", "grams": 47 },
+      { "unit": "g", "grams": 1 }
+    ],
+    "calories_per_100g": 425.531914893617,
+    "protein_per_100g": 46.808510638297875,
+    "carbs_per_100g": 29.78723404255319,
+    "fat_per_100g": 12.76595744680851,
+    "sugar_per_100g": 8.51063829787234,
+    "fiber_per_100g": 4.25531914893617,
+    "sodium_mg_per_100g": 0,
+    "nutrition_details": {
+      "bcaa_g": null,
+      "label_protein_per_100g": 46.8,
+      "saturated_fat": null,
+      "cholesterol_mg": null,
+      "not_provided": ["sodium_mg"]
+    },
+    "attribution": "Owner-supplied food (1).txt; approximate per-serving label data; Protein matrix blend; International; verify flavour/batch against the pack"
+  },
+  {
+    "id": "054e3748-c7ec-537a-824b-91d37153dee0",
+    "source": "supplied",
+    "name": "Cor-Performance Whey",
+    "brand": "Cellucor",
+    "barcode": null,
+    "owner_id": null,
+    "serving_units": [
+      { "unit": "1 scoop", "grams": 35 },
+      { "unit": "g", "grams": 1 }
+    ],
+    "calories_per_100g": 371.42857142857144,
+    "protein_per_100g": 68.57142857142857,
+    "carbs_per_100g": 8.571428571428571,
+    "fat_per_100g": 4.285714285714286,
+    "sugar_per_100g": 5.714285714285714,
+    "fiber_per_100g": 0,
+    "sodium_mg_per_100g": 0,
+    "nutrition_details": {
+      "bcaa_g": null,
+      "label_protein_per_100g": 68.6,
+      "saturated_fat": null,
+      "cholesterol_mg": null,
+      "not_provided": ["sodium_mg"]
+    },
+    "attribution": "Owner-supplied food (1).txt; approximate per-serving label data; Whey blend; International; verify flavour/batch against the pack"
+  },
+  {
+    "id": "ba509923-3e84-55b7-a4bc-5d028ec3c1b8",
+    "source": "supplied",
+    "name": "Whey Protein",
+    "brand": "Ghost",
+    "barcode": null,
+    "owner_id": null,
+    "serving_units": [
+      { "unit": "1 scoop", "grams": 31 },
+      { "unit": "g", "grams": 1 }
+    ],
+    "calories_per_100g": 419.35483870967744,
+    "protein_per_100g": 80.64516129032258,
+    "carbs_per_100g": 12.903225806451612,
+    "fat_per_100g": 6.451612903225806,
+    "sugar_per_100g": 6.451612903225806,
+    "fiber_per_100g": 0,
+    "sodium_mg_per_100g": 0,
+    "nutrition_details": {
+      "bcaa_g": null,
+      "label_protein_per_100g": 80.6,
+      "saturated_fat": null,
+      "cholesterol_mg": null,
+      "not_provided": ["sodium_mg"]
+    },
+    "attribution": "Owner-supplied food (1).txt; approximate per-serving label data; Whey blend; International; verify flavour/batch against the pack"
+  },
+  {
+    "id": "3b900f2c-c1fe-5030-abd7-9acb4f1a8458",
+    "source": "supplied",
+    "name": "R1 Protein (Whey Isolate/Hydrolysate)",
+    "brand": "Rule 1",
+    "barcode": null,
+    "owner_id": null,
+    "serving_units": [
+      { "unit": "1 scoop", "grams": 32 },
+      { "unit": "g", "grams": 1 }
+    ],
+    "calories_per_100g": 375,
+    "protein_per_100g": 78.125,
+    "carbs_per_100g": 6.25,
+    "fat_per_100g": 4.6875,
+    "sugar_per_100g": 3.125,
+    "fiber_per_100g": 0,
+    "sodium_mg_per_100g": 0,
+    "nutrition_details": {
+      "bcaa_g": 17.8125,
+      "label_protein_per_100g": 78.1,
+      "saturated_fat": null,
+      "cholesterol_mg": null,
+      "not_provided": ["sodium_mg"]
+    },
+    "attribution": "Owner-supplied food (1).txt; approximate per-serving label data; Whey isolate; International; verify flavour/batch against the pack"
+  },
+  {
+    "id": "853e432a-e736-5e81-802f-2ef5180527c2",
+    "source": "supplied",
+    "name": "100% Whey Protein Professional",
+    "brand": "Scitec Nutrition",
+    "barcode": null,
+    "owner_id": null,
+    "serving_units": [
+      { "unit": "1 scoop", "grams": 30 },
+      { "unit": "g", "grams": 1 }
+    ],
+    "calories_per_100g": 390,
+    "protein_per_100g": 73.33333333333333,
+    "carbs_per_100g": 10,
+    "fat_per_100g": 6.333333333333333,
+    "sugar_per_100g": 6.666666666666667,
+    "fiber_per_100g": 0,
+    "sodium_mg_per_100g": 0,
+    "nutrition_details": {
+      "bcaa_g": null,
+      "label_protein_per_100g": 73.3,
+      "saturated_fat": null,
+      "cholesterol_mg": null,
+      "not_provided": ["sodium_mg"]
+    },
+    "attribution": "Owner-supplied food (1).txt; approximate per-serving label data; Whey blend; International; verify flavour/batch against the pack"
+  },
+  {
+    "id": "a01267bc-5f49-5191-95d4-1cdb1aae5299",
+    "source": "supplied",
+    "name": "Select Protein",
+    "brand": "PEScience",
+    "barcode": null,
+    "owner_id": null,
+    "serving_units": [
+      { "unit": "1 scoop", "grams": 33 },
+      { "unit": "g", "grams": 1 }
+    ],
+    "calories_per_100g": 333.3333333333333,
+    "protein_per_100g": 75.75757575757575,
+    "carbs_per_100g": 9.090909090909092,
+    "fat_per_100g": 3.0303030303030303,
+    "sugar_per_100g": 3.0303030303030303,
+    "fiber_per_100g": 0,
+    "sodium_mg_per_100g": 0,
+    "nutrition_details": {
+      "bcaa_g": null,
+      "label_protein_per_100g": 75.8,
+      "saturated_fat": null,
+      "cholesterol_mg": null,
+      "not_provided": ["sodium_mg"]
+    },
+    "attribution": "Owner-supplied food (1).txt; approximate per-serving label data; Whey/casein blend; International; verify flavour/batch against the pack"
+  },
+  {
+    "id": "5791f0f1-71a8-5e64-b42d-1479a4ae6d5c",
+    "source": "supplied",
+    "name": "Grass-Fed Whey Isolate",
+    "brand": "Transparent Labs",
+    "barcode": null,
+    "owner_id": null,
+    "serving_units": [
+      { "unit": "1 scoop", "grams": 32 },
+      { "unit": "g", "grams": 1 }
+    ],
+    "calories_per_100g": 406.25,
+    "protein_per_100g": 87.5,
+    "carbs_per_100g": 6.25,
+    "fat_per_100g": 3.125,
+    "sugar_per_100g": 3.125,
+    "fiber_per_100g": 0,
+    "sodium_mg_per_100g": 0,
+    "nutrition_details": {
+      "bcaa_g": null,
+      "label_protein_per_100g": 87.5,
+      "saturated_fat": null,
+      "cholesterol_mg": null,
+      "not_provided": ["sodium_mg"]
+    },
+    "attribution": "Owner-supplied food (1).txt; approximate per-serving label data; Whey isolate; International; verify flavour/batch against the pack"
+  },
+  {
+    "id": "9584645d-d219-5f55-8ace-d55a53c3239b",
+    "source": "supplied",
+    "name": "Native Fuel Whey",
+    "brand": "Ascent",
+    "barcode": null,
+    "owner_id": null,
+    "serving_units": [
+      { "unit": "1 scoop", "grams": 31 },
+      { "unit": "g", "grams": 1 }
+    ],
+    "calories_per_100g": 387.0967741935484,
+    "protein_per_100g": 80.64516129032258,
+    "carbs_per_100g": 6.451612903225806,
+    "fat_per_100g": 4.838709677419355,
+    "sugar_per_100g": 3.225806451612903,
+    "fiber_per_100g": 0,
+    "sodium_mg_per_100g": 0,
+    "nutrition_details": {
+      "bcaa_g": 17.741935483870968,
+      "label_protein_per_100g": 80.6,
+      "saturated_fat": null,
+      "cholesterol_mg": null,
+      "not_provided": ["sodium_mg"]
+    },
+    "attribution": "Owner-supplied food (1).txt; approximate per-serving label data; Whey blend; International; verify flavour/batch against the pack"
+  },
+  {
+    "id": "275a3703-cb30-5d90-8db7-cc9329ba845c",
+    "source": "supplied",
+    "name": "Sport Premium Protein",
+    "brand": "Vega",
+    "barcode": null,
+    "owner_id": null,
+    "serving_units": [
+      { "unit": "1 scoop", "grams": 44 },
+      { "unit": "g", "grams": 1 }
+    ],
+    "calories_per_100g": 363.6363636363636,
+    "protein_per_100g": 68.18181818181819,
+    "carbs_per_100g": 11.363636363636363,
+    "fat_per_100g": 6.818181818181818,
+    "sugar_per_100g": 2.272727272727273,
+    "fiber_per_100g": 4.545454545454546,
+    "sodium_mg_per_100g": 0,
+    "nutrition_details": {
+      "bcaa_g": null,
+      "label_protein_per_100g": 68.2,
+      "saturated_fat": null,
+      "cholesterol_mg": null,
+      "not_provided": ["sodium_mg"]
+    },
+    "attribution": "Owner-supplied food (1).txt; approximate per-serving label data; Plant protein blend; International; verify flavour/batch against the pack"
+  },
+  {
+    "id": "bed878bd-bc54-5aa3-b5cb-6ba2e1ae4d8e",
+    "source": "supplied",
+    "name": "Sport Organic Plant-Based Protein",
+    "brand": "Garden of Life",
+    "barcode": null,
+    "owner_id": null,
+    "serving_units": [
+      { "unit": "1 scoop", "grams": 41 },
+      { "unit": "g", "grams": 1 }
+    ],
+    "calories_per_100g": 365.8536585365854,
+    "protein_per_100g": 73.17073170731707,
+    "carbs_per_100g": 12.195121951219512,
+    "fat_per_100g": 6.097560975609756,
+    "sugar_per_100g": 2.4390243902439024,
+    "fiber_per_100g": 4.878048780487805,
+    "sodium_mg_per_100g": 0,
+    "nutrition_details": {
+      "bcaa_g": null,
+      "label_protein_per_100g": 73.2,
+      "saturated_fat": null,
+      "cholesterol_mg": null,
+      "not_provided": ["sodium_mg"]
+    },
+    "attribution": "Owner-supplied food (1).txt; approximate per-serving label data; Plant protein blend; International; verify flavour/batch against the pack"
+  },
+  {
+    "id": "20e07ab9-c5f2-5d0e-9177-12f1f348c46b",
+    "source": "supplied",
+    "name": "Organic Protein Powder",
+    "brand": "Orgain",
+    "barcode": null,
+    "owner_id": null,
+    "serving_units": [
+      { "unit": "1 scoop", "grams": 46 },
+      { "unit": "g", "grams": 1 }
+    ],
+    "calories_per_100g": 326.0869565217391,
+    "protein_per_100g": 45.65217391304348,
+    "carbs_per_100g": 32.608695652173914,
+    "fat_per_100g": 6.521739130434782,
+    "sugar_per_100g": 4.3478260869565215,
+    "fiber_per_100g": 10.869565217391305,
+    "sodium_mg_per_100g": 0,
+    "nutrition_details": {
+      "bcaa_g": null,
+      "label_protein_per_100g": 45.7,
+      "saturated_fat": null,
+      "cholesterol_mg": null,
+      "not_provided": ["sodium_mg"]
+    },
+    "attribution": "Owner-supplied food (1).txt; approximate per-serving label data; Plant protein blend; International; verify flavour/batch against the pack"
+  },
+  {
+    "id": "c399f392-c21d-5328-ba9a-61e4c5149153",
+    "source": "supplied",
+    "name": "Naked Pea",
+    "brand": "Naked Nutrition",
+    "barcode": null,
+    "owner_id": null,
+    "serving_units": [
+      { "unit": "1 scoop", "grams": 30 },
+      { "unit": "g", "grams": 1 }
+    ],
+    "calories_per_100g": 400,
+    "protein_per_100g": 83.33333333333333,
+    "carbs_per_100g": 3.3333333333333335,
+    "fat_per_100g": 6.666666666666667,
+    "sugar_per_100g": 0,
+    "fiber_per_100g": 3.3333333333333335,
+    "sodium_mg_per_100g": 0,
+    "nutrition_details": {
+      "bcaa_g": null,
+      "label_protein_per_100g": 83.3,
+      "saturated_fat": null,
+      "cholesterol_mg": null,
+      "not_provided": ["sodium_mg"]
+    },
+    "attribution": "Owner-supplied food (1).txt; approximate per-serving label data; Plant protein (pea); International; verify flavour/batch against the pack"
+  },
+  {
+    "id": "3725ca78-eee0-531c-8a1f-03a2feb79582",
+    "source": "supplied",
+    "name": "Protein Powder (Chocolate Milkshake)",
+    "brand": "Quest Nutrition",
+    "barcode": null,
+    "owner_id": null,
+    "serving_units": [
+      { "unit": "1 scoop", "grams": 30 },
+      { "unit": "g", "grams": 1 }
+    ],
+    "calories_per_100g": 333.3333333333333,
+    "protein_per_100g": 66.66666666666667,
+    "carbs_per_100g": 13.333333333333334,
+    "fat_per_100g": 3.3333333333333335,
+    "sugar_per_100g": 3.3333333333333335,
+    "fiber_per_100g": 3.3333333333333335,
+    "sodium_mg_per_100g": 0,
+    "nutrition_details": {
+      "bcaa_g": null,
+      "label_protein_per_100g": 66.7,
+      "saturated_fat": null,
+      "cholesterol_mg": null,
+      "not_provided": ["sodium_mg"]
+    },
+    "attribution": "Owner-supplied food (1).txt; approximate per-serving label data; Whey/casein blend; International; verify flavour/batch against the pack"
+  },
+  {
+    "id": "33b40867-94fa-5c73-ad45-d0ce36ca0c58",
+    "source": "supplied",
+    "name": "Quest Protein Bar (Choc Chip Cookie Dough)",
+    "brand": "Quest Nutrition",
+    "barcode": null,
+    "owner_id": null,
+    "serving_units": [
+      { "unit": "1 bar", "grams": 60 },
+      { "unit": "g", "grams": 1 }
+    ],
+    "calories_per_100g": 316.6666666666667,
+    "protein_per_100g": 35,
+    "carbs_per_100g": 36.666666666666664,
+    "fat_per_100g": 13.333333333333334,
+    "sugar_per_100g": 1.6666666666666667,
+    "fiber_per_100g": 23.333333333333332,
+    "sodium_mg_per_100g": 0,
+    "nutrition_details": {
+      "bcaa_g": null,
+      "label_protein_per_100g": 35,
+      "saturated_fat": null,
+      "cholesterol_mg": null,
+      "not_provided": ["sodium_mg"]
+    },
+    "attribution": "Owner-supplied food (1).txt; approximate per-serving label data; Protein bar; International; verify flavour/batch against the pack"
+  },
+  {
+    "id": "e11488aa-0876-53c6-a1c4-95b4f40dbc41",
+    "source": "supplied",
+    "name": "Protein Shake (Chocolate)",
+    "brand": "Premier Protein",
+    "barcode": null,
+    "owner_id": null,
+    "serving_units": [
+      { "unit": "1 bottle (330 ml)", "grams": 330 },
+      { "unit": "g", "grams": 1 }
+    ],
+    "calories_per_100g": 48.484848484848484,
+    "protein_per_100g": 9.090909090909092,
+    "carbs_per_100g": 1.5151515151515151,
+    "fat_per_100g": 0.9090909090909091,
+    "sugar_per_100g": 0.30303030303030304,
+    "fiber_per_100g": 0.30303030303030304,
+    "sodium_mg_per_100g": 0,
+    "nutrition_details": {
+      "bcaa_g": null,
+      "label_protein_per_100g": null,
+      "saturated_fat": null,
+      "cholesterol_mg": null,
+      "not_provided": ["sodium_mg"]
+    },
+    "attribution": "Owner-supplied food (1).txt; approximate per-serving label data; Ready-to-drink shake; International; verify flavour/batch against the pack"
+  },
+  {
+    "id": "a36f672d-c1a6-588c-9235-5616c6598d27",
+    "source": "supplied",
+    "name": "Pro Series Protein Powder",
+    "brand": "Muscle Milk",
+    "barcode": null,
+    "owner_id": null,
+    "serving_units": [
+      { "unit": "1 scoop", "grams": 48 },
+      { "unit": "g", "grams": 1 }
+    ],
+    "calories_per_100g": 395.8333333333333,
+    "protein_per_100g": 66.66666666666667,
+    "carbs_per_100g": 14.583333333333334,
+    "fat_per_100g": 10.416666666666666,
+    "sugar_per_100g": 2.0833333333333335,
+    "fiber_per_100g": 4.166666666666667,
+    "sodium_mg_per_100g": 0,
+    "nutrition_details": {
+      "bcaa_g": null,
+      "label_protein_per_100g": 66.7,
+      "saturated_fat": null,
+      "cholesterol_mg": null,
+      "not_provided": ["sodium_mg"]
+    },
+    "attribution": "Owner-supplied food (1).txt; approximate per-serving label data; Protein blend; International; verify flavour/batch against the pack"
+  },
+  {
+    "id": "c5b2fc12-f7e1-58a4-ba13-f0a459a36bc7",
+    "source": "supplied",
+    "name": "Animal Whey Isolate Loaded",
+    "brand": "Universal Nutrition",
+    "barcode": null,
+    "owner_id": null,
+    "serving_units": [
+      { "unit": "1 scoop", "grams": 36 },
+      { "unit": "g", "grams": 1 }
+    ],
+    "calories_per_100g": 388.8888888888889,
+    "protein_per_100g": 75,
+    "carbs_per_100g": 11.11111111111111,
+    "fat_per_100g": 4.166666666666667,
+    "sugar_per_100g": 2.7777777777777777,
+    "fiber_per_100g": 0,
+    "sodium_mg_per_100g": 0,
+    "nutrition_details": {
+      "bcaa_g": null,
+      "label_protein_per_100g": 75,
+      "saturated_fat": null,
+      "cholesterol_mg": null,
+      "not_provided": ["sodium_mg"]
+    },
+    "attribution": "Owner-supplied food (1).txt; approximate per-serving label data; Whey isolate; International; verify flavour/batch against the pack"
+  },
+  {
+    "id": "c59979e7-c4b1-59e3-adb1-e405186eb2c8",
+    "source": "supplied",
+    "name": "Whey+ Isolate",
+    "brand": "Legion Athletics",
+    "barcode": null,
+    "owner_id": null,
+    "serving_units": [
+      { "unit": "1 scoop", "grams": 34 },
+      { "unit": "g", "grams": 1 }
+    ],
+    "calories_per_100g": 382.3529411764706,
+    "protein_per_100g": 64.70588235294117,
+    "carbs_per_100g": 8.823529411764707,
+    "fat_per_100g": 4.411764705882353,
+    "sugar_per_100g": 2.9411764705882355,
+    "fiber_per_100g": 0,
+    "sodium_mg_per_100g": 0,
+    "nutrition_details": {
+      "bcaa_g": 14.705882352941176,
+      "label_protein_per_100g": 64.7,
+      "saturated_fat": null,
+      "cholesterol_mg": null,
+      "not_provided": ["sodium_mg"]
+    },
+    "attribution": "Owner-supplied food (1).txt; approximate per-serving label data; Whey isolate; International; verify flavour/batch against the pack"
+  },
+  {
+    "id": "b7bfe163-0027-5be0-83a8-3840ff93e06f",
+    "source": "supplied",
+    "name": "Stacked Protein",
+    "brand": "Evlution Nutrition",
+    "barcode": null,
+    "owner_id": null,
+    "serving_units": [
+      { "unit": "1 scoop", "grams": 31 },
+      { "unit": "g", "grams": 1 }
+    ],
+    "calories_per_100g": 387.0967741935484,
+    "protein_per_100g": 77.41935483870968,
+    "carbs_per_100g": 9.67741935483871,
+    "fat_per_100g": 4.838709677419355,
+    "sugar_per_100g": 3.225806451612903,
+    "fiber_per_100g": 0,
+    "sodium_mg_per_100g": 0,
+    "nutrition_details": {
+      "bcaa_g": null,
+      "label_protein_per_100g": 77.4,
+      "saturated_fat": null,
+      "cholesterol_mg": null,
+      "not_provided": ["sodium_mg"]
+    },
+    "attribution": "Owner-supplied food (1).txt; approximate per-serving label data; Whey blend; International; verify flavour/batch against the pack"
+  },
+  {
+    "id": "37431f9e-236b-5049-8345-db475312d13e",
+    "source": "supplied",
+    "name": "Egg White Protein",
+    "brand": "NOW Sports",
+    "barcode": null,
+    "owner_id": null,
+    "serving_units": [
+      { "unit": "1 scoop", "grams": 35 },
+      { "unit": "g", "grams": 1 }
+    ],
+    "calories_per_100g": 285.7142857142857,
+    "protein_per_100g": 68.57142857142857,
+    "carbs_per_100g": 2.857142857142857,
+    "fat_per_100g": 0,
+    "sugar_per_100g": 0,
+    "fiber_per_100g": 0,
+    "sodium_mg_per_100g": 0,
+    "nutrition_details": {
+      "bcaa_g": null,
+      "label_protein_per_100g": 68.6,
+      "saturated_fat": null,
+      "cholesterol_mg": null,
+      "not_provided": ["sodium_mg"]
+    },
+    "attribution": "Owner-supplied food (1).txt; approximate per-serving label data; Egg white protein; International; verify flavour/batch against the pack"
+  },
+  {
+    "id": "e9845c89-a276-5614-a12a-009f2f9d4a07",
+    "source": "supplied",
+    "name": "Pea Protein",
+    "brand": "NOW Sports",
+    "barcode": null,
+    "owner_id": null,
+    "serving_units": [
+      { "unit": "1 scoop", "grams": 36 },
+      { "unit": "g", "grams": 1 }
+    ],
+    "calories_per_100g": 388.8888888888889,
+    "protein_per_100g": 66.66666666666667,
+    "carbs_per_100g": 5.555555555555555,
+    "fat_per_100g": 6.944444444444445,
+    "sugar_per_100g": 0,
+    "fiber_per_100g": 2.7777777777777777,
+    "sodium_mg_per_100g": 0,
+    "nutrition_details": {
+      "bcaa_g": null,
+      "label_protein_per_100g": 66.7,
+      "saturated_fat": null,
+      "cholesterol_mg": null,
+      "not_provided": ["sodium_mg"]
+    },
+    "attribution": "Owner-supplied food (1).txt; approximate per-serving label data; Plant protein (pea); International; verify flavour/batch against the pack"
+  },
+  {
+    "id": "fde73972-b78a-56ca-8cac-8d76aa3b34a2",
+    "source": "supplied",
+    "name": "Pure Whey Protein 80",
+    "brand": "Bulk",
+    "barcode": null,
+    "owner_id": null,
+    "serving_units": [
+      { "unit": "1 scoop", "grams": 25 },
+      { "unit": "g", "grams": 1 }
+    ],
+    "calories_per_100g": 412,
+    "protein_per_100g": 80,
+    "carbs_per_100g": 6,
+    "fat_per_100g": 6.4,
+    "sugar_per_100g": 4,
+    "fiber_per_100g": 0,
+    "sodium_mg_per_100g": 0,
+    "nutrition_details": {
+      "bcaa_g": null,
+      "label_protein_per_100g": 80,
+      "saturated_fat": null,
+      "cholesterol_mg": null,
+      "not_provided": ["sodium_mg"]
+    },
+    "attribution": "Owner-supplied food (1).txt; approximate per-serving label data; Whey concentrate; International; verify flavour/batch against the pack"
+  },
+  {
+    "id": "73575171-63e9-5bc7-922f-f2706459040e",
+    "source": "supplied",
+    "name": "Super Mass Gainer",
+    "brand": "Dymatize",
+    "barcode": null,
+    "owner_id": null,
+    "serving_units": [
+      { "unit": "2 scoops", "grams": 330 },
+      { "unit": "g", "grams": 1 }
+    ],
+    "calories_per_100g": 387.8787878787879,
+    "protein_per_100g": 15.757575757575758,
+    "carbs_per_100g": 76.96969696969697,
+    "fat_per_100g": 1.2121212121212122,
+    "sugar_per_100g": 6.0606060606060606,
+    "fiber_per_100g": 1.2121212121212122,
+    "sodium_mg_per_100g": 0,
+    "nutrition_details": {
+      "bcaa_g": null,
+      "label_protein_per_100g": 15.8,
+      "saturated_fat": null,
+      "cholesterol_mg": null,
+      "not_provided": ["sodium_mg"]
+    },
+    "attribution": "Owner-supplied food (1).txt; approximate per-serving label data; Mass gainer; International; verify flavour/batch against the pack"
+  },
+  {
+    "id": "a9d94650-8200-5975-b6d0-b34bd0b2cd9b",
+    "source": "supplied",
+    "name": "Muscle Mass Gainer",
+    "brand": "Labrada",
+    "barcode": null,
+    "owner_id": null,
+    "serving_units": [
+      { "unit": "approx 3 scoops", "grams": 250 },
+      { "unit": "g", "grams": 1 }
+    ],
+    "calories_per_100g": 352,
+    "protein_per_100g": 20,
+    "carbs_per_100g": 60,
+    "fat_per_100g": 2.4,
+    "sugar_per_100g": 4,
+    "fiber_per_100g": 1.2,
+    "sodium_mg_per_100g": 0,
+    "nutrition_details": {
+      "bcaa_g": null,
+      "label_protein_per_100g": 20,
+      "saturated_fat": null,
+      "cholesterol_mg": null,
+      "not_provided": ["sodium_mg"]
+    },
+    "attribution": "Owner-supplied food (1).txt; approximate per-serving label data; Mass gainer; International; verify flavour/batch against the pack"
+  },
+  {
+    "id": "256897ba-90f1-5dd3-b2d3-0cfdef3e9f6c",
+    "source": "supplied",
+    "name": "Perform Whey Protein",
+    "brand": "Nakpro",
+    "barcode": null,
+    "owner_id": null,
+    "serving_units": [
+      { "unit": "1 scoop", "grams": 30 },
+      { "unit": "g", "grams": 1 }
+    ],
+    "calories_per_100g": 400,
+    "protein_per_100g": 80,
+    "carbs_per_100g": 8.333333333333334,
+    "fat_per_100g": 6,
+    "sugar_per_100g": 5,
+    "fiber_per_100g": 0,
+    "sodium_mg_per_100g": 0,
+    "nutrition_details": {
+      "bcaa_g": 16.666666666666668,
+      "label_protein_per_100g": 80,
+      "saturated_fat": null,
+      "cholesterol_mg": null,
+      "not_provided": ["sodium_mg"]
+    },
+    "attribution": "Owner-supplied food (1).txt; approximate per-serving label data; Whey blend; India; verify flavour/batch against the pack"
+  },
+  {
+    "id": "a0d086d0-c14c-5a7e-8db8-eda717d0dbf6",
+    "source": "supplied",
+    "name": "Platinum Whey Isolate",
+    "brand": "Nakpro",
+    "barcode": null,
+    "owner_id": null,
+    "serving_units": [
+      { "unit": "1 scoop", "grams": 30 },
+      { "unit": "g", "grams": 1 }
+    ],
+    "calories_per_100g": 383.3333333333333,
+    "protein_per_100g": 90,
+    "carbs_per_100g": 3.3333333333333335,
+    "fat_per_100g": 1.6666666666666667,
+    "sugar_per_100g": 1.6666666666666667,
+    "fiber_per_100g": 0,
+    "sodium_mg_per_100g": 0,
+    "nutrition_details": {
+      "bcaa_g": 20,
+      "label_protein_per_100g": 90,
+      "saturated_fat": null,
+      "cholesterol_mg": null,
+      "not_provided": ["sodium_mg"]
+    },
+    "attribution": "Owner-supplied food (1).txt; approximate per-serving label data; Whey isolate; India; verify flavour/batch against the pack"
+  },
+  {
+    "id": "eb1bdbec-4a82-5430-b2b0-8aca0f6fbf1f",
+    "source": "supplied",
+    "name": "Gold Whey Protein",
+    "brand": "Nakpro",
+    "barcode": null,
+    "owner_id": null,
+    "serving_units": [
+      { "unit": "1 scoop", "grams": 30 },
+      { "unit": "g", "grams": 1 }
+    ],
+    "calories_per_100g": 400,
+    "protein_per_100g": 80,
+    "carbs_per_100g": 8.333333333333334,
+    "fat_per_100g": 6,
+    "sugar_per_100g": 5,
+    "fiber_per_100g": 0,
+    "sodium_mg_per_100g": 0,
+    "nutrition_details": {
+      "bcaa_g": 16.666666666666668,
+      "label_protein_per_100g": 80,
+      "saturated_fat": null,
+      "cholesterol_mg": null,
+      "not_provided": ["sodium_mg"]
+    },
+    "attribution": "Owner-supplied food (1).txt; approximate per-serving label data; Whey blend; India; verify flavour/batch against the pack"
+  },
+  {
+    "id": "6a3260c7-87db-5675-b100-d74bc270ce87",
+    "source": "supplied",
+    "name": "Impact Whey Protein",
+    "brand": "Nakpro",
+    "barcode": null,
+    "owner_id": null,
+    "serving_units": [
+      { "unit": "1 scoop", "grams": 30 },
+      { "unit": "g", "grams": 1 }
+    ],
+    "calories_per_100g": 400,
+    "protein_per_100g": 80,
+    "carbs_per_100g": 8.333333333333334,
+    "fat_per_100g": 6.666666666666667,
+    "sugar_per_100g": 5,
+    "fiber_per_100g": 0,
+    "sodium_mg_per_100g": 0,
+    "nutrition_details": {
+      "bcaa_g": 16.666666666666668,
+      "label_protein_per_100g": 80,
+      "saturated_fat": null,
+      "cholesterol_mg": null,
+      "not_provided": ["sodium_mg"]
+    },
+    "attribution": "Owner-supplied food (1).txt; approximate per-serving label data; Whey blend; India; verify flavour/batch against the pack"
+  },
+  {
+    "id": "5757b17f-f17a-594f-9ebe-2688338dda73",
+    "source": "supplied",
+    "name": "Gold Mass Gainer",
+    "brand": "Nakpro",
+    "barcode": null,
+    "owner_id": null,
+    "serving_units": [
+      { "unit": "100 g", "grams": 100 },
+      { "unit": "g", "grams": 1 }
+    ],
+    "calories_per_100g": 380,
+    "protein_per_100g": 15,
+    "carbs_per_100g": 75,
+    "fat_per_100g": 4,
+    "sugar_per_100g": 20,
+    "fiber_per_100g": 2,
+    "sodium_mg_per_100g": 0,
+    "nutrition_details": {
+      "bcaa_g": null,
+      "label_protein_per_100g": 15,
+      "saturated_fat": null,
+      "cholesterol_mg": null,
+      "not_provided": ["sodium_mg"]
+    },
+    "attribution": "Owner-supplied food (1).txt; approximate per-serving label data; Mass gainer; India; verify flavour/batch against the pack"
+  },
+  {
+    "id": "531e850d-ade5-58c2-ac14-8c35aa3261e1",
+    "source": "supplied",
+    "name": "Whey Protein Isolate (Unflavoured)",
+    "brand": "The Whole Truth",
+    "barcode": null,
+    "owner_id": null,
+    "serving_units": [
+      { "unit": "1 scoop", "grams": 30 },
+      { "unit": "g", "grams": 1 }
+    ],
+    "calories_per_100g": 366.6666666666667,
+    "protein_per_100g": 86.66666666666667,
+    "carbs_per_100g": 2,
+    "fat_per_100g": 2,
+    "sugar_per_100g": 0.6666666666666666,
+    "fiber_per_100g": 0,
+    "sodium_mg_per_100g": 0,
+    "nutrition_details": {
+      "bcaa_g": 19.333333333333332,
+      "label_protein_per_100g": 86.7,
+      "saturated_fat": null,
+      "cholesterol_mg": null,
+      "not_provided": ["sodium_mg"]
+    },
+    "attribution": "Owner-supplied food (1).txt; approximate per-serving label data; Whey isolate; India; verify flavour/batch against the pack"
+  },
+  {
+    "id": "b83d62dc-6ba4-5168-9e66-4ec8f0d88415",
+    "source": "supplied",
+    "name": "Whey Isolate + Concentrate (Light Cocoa)",
+    "brand": "The Whole Truth",
+    "barcode": null,
+    "owner_id": null,
+    "serving_units": [
+      { "unit": "1 scoop", "grams": 30 },
+      { "unit": "g", "grams": 1 }
+    ],
+    "calories_per_100g": 400,
+    "protein_per_100g": 71,
+    "carbs_per_100g": 18,
+    "fat_per_100g": 5,
+    "sugar_per_100g": 4,
+    "fiber_per_100g": 1.6666666666666667,
+    "sodium_mg_per_100g": 0,
+    "nutrition_details": {
+      "bcaa_g": 16,
+      "label_protein_per_100g": 71,
+      "saturated_fat": null,
+      "cholesterol_mg": null,
+      "not_provided": ["sodium_mg"]
+    },
+    "attribution": "Owner-supplied food (1).txt; approximate per-serving label data; Whey blend; India; verify flavour/batch against the pack"
+  },
+  {
+    "id": "47a06542-7a2a-59f5-b27c-85a73dcab423",
+    "source": "supplied",
+    "name": "Whey Protein Isolate",
+    "brand": "Naturaltein",
+    "barcode": null,
+    "owner_id": null,
+    "serving_units": [
+      { "unit": "1 scoop", "grams": 30 },
+      { "unit": "g", "grams": 1 }
+    ],
+    "calories_per_100g": 400,
+    "protein_per_100g": 80,
+    "carbs_per_100g": 5,
+    "fat_per_100g": 6,
+    "sugar_per_100g": 1.6666666666666667,
+    "fiber_per_100g": 0,
+    "sodium_mg_per_100g": 0,
+    "nutrition_details": {
+      "bcaa_g": 18.333333333333332,
+      "label_protein_per_100g": 80,
+      "saturated_fat": null,
+      "cholesterol_mg": null,
+      "not_provided": ["sodium_mg"]
+    },
+    "attribution": "Owner-supplied food (1).txt; approximate per-serving label data; Whey isolate; India; verify flavour/batch against the pack"
+  },
+  {
+    "id": "62b925a7-8597-599e-bc54-12d76426f097",
+    "source": "supplied",
+    "name": "Plant Pea Protein",
+    "brand": "Naturaltein",
+    "barcode": null,
+    "owner_id": null,
+    "serving_units": [
+      { "unit": "1 scoop", "grams": 30 },
+      { "unit": "g", "grams": 1 }
+    ],
+    "calories_per_100g": 400,
+    "protein_per_100g": 74,
+    "carbs_per_100g": 15,
+    "fat_per_100g": 8,
+    "sugar_per_100g": 1.6666666666666667,
+    "fiber_per_100g": 3.3333333333333335,
+    "sodium_mg_per_100g": 0,
+    "nutrition_details": {
+      "bcaa_g": 13.333333333333334,
+      "label_protein_per_100g": 74,
+      "saturated_fat": null,
+      "cholesterol_mg": null,
+      "not_provided": ["sodium_mg"]
+    },
+    "attribution": "Owner-supplied food (1).txt; approximate per-serving label data; Plant protein (pea); India; verify flavour/batch against the pack"
+  },
+  {
+    "id": "31413260-d1a1-51dc-ae5f-1f7a8892e95b",
+    "source": "supplied",
+    "name": "Fermented Yeast Vegan Protein",
+    "brand": "Naturaltein",
+    "barcode": null,
+    "owner_id": null,
+    "serving_units": [
+      { "unit": "1 scoop", "grams": 30 },
+      { "unit": "g", "grams": 1 }
+    ],
+    "calories_per_100g": 400,
+    "protein_per_100g": 71,
+    "carbs_per_100g": 14,
+    "fat_per_100g": 7,
+    "sugar_per_100g": 1.6666666666666667,
+    "fiber_per_100g": 3.3333333333333335,
+    "sodium_mg_per_100g": 0,
+    "nutrition_details": {
+      "bcaa_g": null,
+      "label_protein_per_100g": 71,
+      "saturated_fat": null,
+      "cholesterol_mg": null,
+      "not_provided": ["sodium_mg"]
+    },
+    "attribution": "Owner-supplied food (1).txt; approximate per-serving label data; Plant protein (yeast); India; verify flavour/batch against the pack"
+  },
+  {
+    "id": "c66f37bd-2992-53d0-94e4-c81246ebc663",
+    "source": "supplied",
+    "name": "No-Nonsense Plant Protein",
+    "brand": "Cosmix",
+    "barcode": null,
+    "owner_id": null,
+    "serving_units": [
+      { "unit": "1 scoop", "grams": 30 },
+      { "unit": "g", "grams": 1 }
+    ],
+    "calories_per_100g": 400,
+    "protein_per_100g": 78,
+    "carbs_per_100g": 10,
+    "fat_per_100g": 2,
+    "sugar_per_100g": 1.6666666666666667,
+    "fiber_per_100g": 5,
+    "sodium_mg_per_100g": 0,
+    "nutrition_details": {
+      "bcaa_g": null,
+      "label_protein_per_100g": 78,
+      "saturated_fat": null,
+      "cholesterol_mg": null,
+      "not_provided": ["sodium_mg"]
+    },
+    "attribution": "Owner-supplied food (1).txt; approximate per-serving label data; Plant protein blend; India; verify flavour/batch against the pack"
+  },
+  {
+    "id": "c3c01c47-2bc3-514d-bcd6-6373e445b503",
+    "source": "supplied",
+    "name": "No-Nonsense Fermented Yeast Protein",
+    "brand": "Cosmix",
+    "barcode": null,
+    "owner_id": null,
+    "serving_units": [
+      { "unit": "1 scoop", "grams": 30 },
+      { "unit": "g", "grams": 1 }
+    ],
+    "calories_per_100g": 400,
+    "protein_per_100g": 64,
+    "carbs_per_100g": 28.999999999999996,
+    "fat_per_100g": 2,
+    "sugar_per_100g": 3.3333333333333335,
+    "fiber_per_100g": 5,
+    "sodium_mg_per_100g": 0,
+    "nutrition_details": {
+      "bcaa_g": null,
+      "label_protein_per_100g": 64,
+      "saturated_fat": null,
+      "cholesterol_mg": null,
+      "not_provided": ["sodium_mg"]
+    },
+    "attribution": "Owner-supplied food (1).txt; approximate per-serving label data; Plant protein (yeast); India; verify flavour/batch against the pack"
+  },
+  {
+    "id": "b8846d83-e116-539e-829f-fe7737bf8acd",
+    "source": "supplied",
+    "name": "Vegan Protein",
+    "brand": "Wellbeing Nutrition",
+    "barcode": null,
+    "owner_id": null,
+    "serving_units": [
+      { "unit": "1 scoop", "grams": 30 },
+      { "unit": "g", "grams": 1 }
+    ],
+    "calories_per_100g": 400,
+    "protein_per_100g": 70,
+    "carbs_per_100g": 11,
+    "fat_per_100g": 8,
+    "sugar_per_100g": 1.6666666666666667,
+    "fiber_per_100g": 5,
+    "sodium_mg_per_100g": 0,
+    "nutrition_details": {
+      "bcaa_g": null,
+      "label_protein_per_100g": 70,
+      "saturated_fat": null,
+      "cholesterol_mg": null,
+      "not_provided": ["sodium_mg"]
+    },
+    "attribution": "Owner-supplied food (1).txt; approximate per-serving label data; Plant protein blend; India; verify flavour/batch against the pack"
+  },
+  {
+    "id": "641a7cb3-6219-5315-b860-ac1e7ed3e1b8",
+    "source": "supplied",
+    "name": "100% Whey Protein",
+    "brand": "MyFitFuel",
+    "barcode": null,
+    "owner_id": null,
+    "serving_units": [
+      { "unit": "1 scoop", "grams": 30 },
+      { "unit": "g", "grams": 1 }
+    ],
+    "calories_per_100g": 400,
+    "protein_per_100g": 80,
+    "carbs_per_100g": 8.333333333333334,
+    "fat_per_100g": 6,
+    "sugar_per_100g": 5,
+    "fiber_per_100g": 0,
+    "sodium_mg_per_100g": 0,
+    "nutrition_details": {
+      "bcaa_g": 16.666666666666668,
+      "label_protein_per_100g": 80,
+      "saturated_fat": null,
+      "cholesterol_mg": null,
+      "not_provided": ["sodium_mg"]
+    },
+    "attribution": "Owner-supplied food (1).txt; approximate per-serving label data; Whey blend; India; verify flavour/batch against the pack"
+  },
+  {
+    "id": "0ab96f42-c512-5025-a786-d81a502bd980",
+    "source": "supplied",
+    "name": "Whey Protein Powder",
+    "brand": "Foodstrong",
+    "barcode": null,
+    "owner_id": null,
+    "serving_units": [
+      { "unit": "1 scoop", "grams": 30 },
+      { "unit": "g", "grams": 1 }
+    ],
+    "calories_per_100g": 400,
+    "protein_per_100g": 76,
+    "carbs_per_100g": 8,
+    "fat_per_100g": 4,
+    "sugar_per_100g": 2,
+    "fiber_per_100g": 0,
+    "sodium_mg_per_100g": 0,
+    "nutrition_details": {
+      "bcaa_g": 16.666666666666668,
+      "label_protein_per_100g": 76,
+      "saturated_fat": null,
+      "cholesterol_mg": null,
+      "not_provided": ["sodium_mg"]
+    },
+    "attribution": "Owner-supplied food (1).txt; approximate per-serving label data; Whey blend; India; verify flavour/batch against the pack"
+  },
+  {
+    "id": "00c3f5f9-9c4f-5655-903a-61a6efc94ac9",
+    "source": "supplied",
+    "name": "Muscle Whey",
+    "brand": "HealthFarm",
+    "barcode": null,
+    "owner_id": null,
+    "serving_units": [
+      { "unit": "1 scoop", "grams": 30 },
+      { "unit": "g", "grams": 1 }
+    ],
+    "calories_per_100g": 400,
+    "protein_per_100g": 80,
+    "carbs_per_100g": 8.333333333333334,
+    "fat_per_100g": 6,
+    "sugar_per_100g": 5,
+    "fiber_per_100g": 0,
+    "sodium_mg_per_100g": 0,
+    "nutrition_details": {
+      "bcaa_g": 16.666666666666668,
+      "label_protein_per_100g": 80,
+      "saturated_fat": null,
+      "cholesterol_mg": null,
+      "not_provided": ["sodium_mg"]
+    },
+    "attribution": "Owner-supplied food (1).txt; approximate per-serving label data; Whey blend; India; verify flavour/batch against the pack"
+  },
+  {
+    "id": "e1805ecc-2c28-5781-8a18-b990921bfd73",
+    "source": "supplied",
+    "name": "Whey Protein",
+    "brand": "Fuel One",
+    "barcode": null,
+    "owner_id": null,
+    "serving_units": [
+      { "unit": "1 scoop", "grams": 33 },
+      { "unit": "g", "grams": 1 }
+    ],
+    "calories_per_100g": 393.93939393939394,
+    "protein_per_100g": 72.72727272727273,
+    "carbs_per_100g": 9.090909090909092,
+    "fat_per_100g": 6.0606060606060606,
+    "sugar_per_100g": 4.545454545454546,
+    "fiber_per_100g": 0,
+    "sodium_mg_per_100g": 0,
+    "nutrition_details": {
+      "bcaa_g": 15.151515151515152,
+      "label_protein_per_100g": 72.7,
+      "saturated_fat": null,
+      "cholesterol_mg": null,
+      "not_provided": ["sodium_mg"]
+    },
+    "attribution": "Owner-supplied food (1).txt; approximate per-serving label data; Whey blend; India; verify flavour/batch against the pack"
+  },
+  {
+    "id": "ea90651d-c3c8-5dbd-9989-b2a534bceef3",
+    "source": "supplied",
+    "name": "Pro Whey Protein Concentrate",
+    "brand": "BeastLife",
+    "barcode": null,
+    "owner_id": null,
+    "serving_units": [
+      { "unit": "1 scoop", "grams": 30 },
+      { "unit": "g", "grams": 1 }
+    ],
+    "calories_per_100g": 400,
+    "protein_per_100g": 69,
+    "carbs_per_100g": 15,
+    "fat_per_100g": 7,
+    "sugar_per_100g": 4,
+    "fiber_per_100g": 0,
+    "sodium_mg_per_100g": 0,
+    "nutrition_details": {
+      "bcaa_g": 16,
+      "label_protein_per_100g": 69,
+      "saturated_fat": null,
+      "cholesterol_mg": null,
+      "not_provided": ["sodium_mg"]
+    },
+    "attribution": "Owner-supplied food (1).txt; approximate per-serving label data; Whey concentrate; India; verify flavour/batch against the pack"
+  },
+  {
+    "id": "4a4f96b2-6262-53e0-bf07-a6c3ad8fe1ef",
+    "source": "supplied",
+    "name": "Whey Protein",
+    "brand": "Proathlix",
+    "barcode": null,
+    "owner_id": null,
+    "serving_units": [
+      { "unit": "1 scoop", "grams": 30 },
+      { "unit": "g", "grams": 1 }
+    ],
+    "calories_per_100g": 400,
+    "protein_per_100g": 80,
+    "carbs_per_100g": 8.333333333333334,
+    "fat_per_100g": 6.666666666666667,
+    "sugar_per_100g": 5,
+    "fiber_per_100g": 0,
+    "sodium_mg_per_100g": 0,
+    "nutrition_details": {
+      "bcaa_g": 16.666666666666668,
+      "label_protein_per_100g": 80,
+      "saturated_fat": null,
+      "cholesterol_mg": null,
+      "not_provided": ["sodium_mg"]
+    },
+    "attribution": "Owner-supplied food (1).txt; approximate per-serving label data; Whey blend; India; verify flavour/batch against the pack"
+  },
+  {
+    "id": "1888258a-a80f-58d4-a32a-79148fe71bcf",
+    "source": "supplied",
+    "name": "Fit Super Whey",
+    "brand": "Fitspire",
+    "barcode": null,
+    "owner_id": null,
+    "serving_units": [
+      { "unit": "1 scoop", "grams": 30 },
+      { "unit": "g", "grams": 1 }
+    ],
+    "calories_per_100g": 400,
+    "protein_per_100g": 80,
+    "carbs_per_100g": 8.333333333333334,
+    "fat_per_100g": 6.666666666666667,
+    "sugar_per_100g": 5,
+    "fiber_per_100g": 0,
+    "sodium_mg_per_100g": 0,
+    "nutrition_details": {
+      "bcaa_g": 16.666666666666668,
+      "label_protein_per_100g": 80,
+      "saturated_fat": null,
+      "cholesterol_mg": null,
+      "not_provided": ["sodium_mg"]
+    },
+    "attribution": "Owner-supplied food (1).txt; approximate per-serving label data; Whey blend; India; verify flavour/batch against the pack"
+  },
+  {
+    "id": "cd690af4-1b2e-58c7-84af-975d2e19aa91",
+    "source": "supplied",
+    "name": "Tekk Whey Isolate",
+    "brand": "TSA Nutrition",
+    "barcode": null,
+    "owner_id": null,
+    "serving_units": [
+      { "unit": "1 scoop", "grams": 30 },
+      { "unit": "g", "grams": 1 }
+    ],
+    "calories_per_100g": 383.3333333333333,
+    "protein_per_100g": 82,
+    "carbs_per_100g": 8,
+    "fat_per_100g": 2,
+    "sugar_per_100g": 2,
+    "fiber_per_100g": 0,
+    "sodium_mg_per_100g": 0,
+    "nutrition_details": {
+      "bcaa_g": 18.333333333333332,
+      "label_protein_per_100g": 82,
+      "saturated_fat": null,
+      "cholesterol_mg": null,
+      "not_provided": ["sodium_mg"]
+    },
+    "attribution": "Owner-supplied food (1).txt; approximate per-serving label data; Whey isolate; India; verify flavour/batch against the pack"
+  },
+  {
+    "id": "57a753b5-1b7c-5fec-97bb-f8a873397dcc",
+    "source": "supplied",
+    "name": "Peak Whey Protein Isolate",
+    "brand": "Weoliv",
+    "barcode": null,
+    "owner_id": null,
+    "serving_units": [
+      { "unit": "1 scoop", "grams": 30 },
+      { "unit": "g", "grams": 1 }
+    ],
+    "calories_per_100g": 400,
+    "protein_per_100g": 78,
+    "carbs_per_100g": 11,
+    "fat_per_100g": 5,
+    "sugar_per_100g": 2,
+    "fiber_per_100g": 0,
+    "sodium_mg_per_100g": 0,
+    "nutrition_details": {
+      "bcaa_g": 17.333333333333332,
+      "label_protein_per_100g": 78,
+      "saturated_fat": null,
+      "cholesterol_mg": null,
+      "not_provided": ["sodium_mg"]
+    },
+    "attribution": "Owner-supplied food (1).txt; approximate per-serving label data; Whey isolate; India; verify flavour/batch against the pack"
+  },
+  {
+    "id": "3f152dd9-aa3d-59b9-a743-7d93c10a6706",
+    "source": "supplied",
+    "name": "Ultimate ISO Whey Protein",
+    "brand": "OSOAA",
+    "barcode": null,
+    "owner_id": null,
+    "serving_units": [
+      { "unit": "1 scoop", "grams": 30 },
+      { "unit": "g", "grams": 1 }
+    ],
+    "calories_per_100g": 400,
+    "protein_per_100g": 73,
+    "carbs_per_100g": 10,
+    "fat_per_100g": 7,
+    "sugar_per_100g": 3,
+    "fiber_per_100g": 0,
+    "sodium_mg_per_100g": 0,
+    "nutrition_details": {
+      "bcaa_g": 16.666666666666668,
+      "label_protein_per_100g": 73,
+      "saturated_fat": null,
+      "cholesterol_mg": null,
+      "not_provided": ["sodium_mg"]
+    },
+    "attribution": "Owner-supplied food (1).txt; approximate per-serving label data; Whey isolate; India; verify flavour/batch against the pack"
+  },
+  {
+    "id": "5514043c-b4f9-53b5-90a6-9fb1ab2566e0",
+    "source": "supplied",
+    "name": "Super Isolate Whey",
+    "brand": "Neulife",
+    "barcode": null,
+    "owner_id": null,
+    "serving_units": [
+      { "unit": "1 scoop", "grams": 30 },
+      { "unit": "g", "grams": 1 }
+    ],
+    "calories_per_100g": 483.3333333333333,
+    "protein_per_100g": 56,
+    "carbs_per_100g": 8,
+    "fat_per_100g": 27,
+    "sugar_per_100g": 2,
+    "fiber_per_100g": 0,
+    "sodium_mg_per_100g": 0,
+    "nutrition_details": {
+      "bcaa_g": 12.666666666666666,
+      "label_protein_per_100g": 56,
+      "saturated_fat": null,
+      "cholesterol_mg": null,
+      "not_provided": ["sodium_mg"]
+    },
+    "attribution": "Owner-supplied food (1).txt; approximate per-serving label data; Whey isolate; India; verify flavour/batch against the pack"
+  },
+  {
+    "id": "933c640c-80fc-5050-b36d-ec0fc78c8dca",
+    "source": "supplied",
+    "name": "Pro Blend Whey Protein",
+    "brand": "Trunativ",
+    "barcode": null,
+    "owner_id": null,
+    "serving_units": [
+      { "unit": "1 scoop", "grams": 30 },
+      { "unit": "g", "grams": 1 }
+    ],
+    "calories_per_100g": 400,
+    "protein_per_100g": 73,
+    "carbs_per_100g": 12,
+    "fat_per_100g": 5,
+    "sugar_per_100g": 2,
+    "fiber_per_100g": 0,
+    "sodium_mg_per_100g": 0,
+    "nutrition_details": {
+      "bcaa_g": 16.666666666666668,
+      "label_protein_per_100g": 73,
+      "saturated_fat": null,
+      "cholesterol_mg": null,
+      "not_provided": ["sodium_mg"]
+    },
+    "attribution": "Owner-supplied food (1).txt; approximate per-serving label data; Whey blend; India; verify flavour/batch against the pack"
+  },
+  {
+    "id": "9cc37078-9905-51f4-8866-1bdff3eed9ee",
+    "source": "supplied",
+    "name": "100% Whey Protein",
+    "brand": "Muscle Nectar",
+    "barcode": null,
+    "owner_id": null,
+    "serving_units": [
+      { "unit": "1 scoop", "grams": 30 },
+      { "unit": "g", "grams": 1 }
+    ],
+    "calories_per_100g": 400,
+    "protein_per_100g": 73,
+    "carbs_per_100g": 12,
+    "fat_per_100g": 3,
+    "sugar_per_100g": 2,
+    "fiber_per_100g": 0,
+    "sodium_mg_per_100g": 0,
+    "nutrition_details": {
+      "bcaa_g": 16.666666666666668,
+      "label_protein_per_100g": 73,
+      "saturated_fat": null,
+      "cholesterol_mg": null,
+      "not_provided": ["sodium_mg"]
+    },
+    "attribution": "Owner-supplied food (1).txt; approximate per-serving label data; Whey blend; India; verify flavour/batch against the pack"
+  },
+  {
+    "id": "fdbab107-b0aa-506c-907b-044c6ee8c5d8",
+    "source": "supplied",
+    "name": "Personalized Protein Powder",
+    "brand": "Herbalife Nutrition",
+    "barcode": null,
+    "owner_id": null,
+    "serving_units": [
+      { "unit": "1 scoop / 6 g", "grams": 6 },
+      { "unit": "g", "grams": 1 }
+    ],
+    "calories_per_100g": 366.6666666666667,
+    "protein_per_100g": 83.33333333333333,
+    "carbs_per_100g": 5,
+    "fat_per_100g": 3.3333333333333335,
+    "sugar_per_100g": 1.6666666666666667,
+    "fiber_per_100g": 0,
+    "sodium_mg_per_100g": 0,
+    "nutrition_details": {
+      "bcaa_g": null,
+      "label_protein_per_100g": 83.3,
+      "saturated_fat": null,
+      "cholesterol_mg": null,
+      "not_provided": ["sodium_mg"]
+    },
+    "attribution": "Owner-supplied food (1).txt; approximate per-serving label data; Protein blend (soy + whey); India; verify flavour/batch against the pack"
+  },
+  {
+    "id": "f60d888e-f603-5e1f-a617-6c4a779910b4",
+    "source": "supplied",
+    "name": "Daily Plant Protein",
+    "brand": "Origin Nutrition",
+    "barcode": null,
+    "owner_id": null,
+    "serving_units": [
+      { "unit": "1 scoop", "grams": 30 },
+      { "unit": "g", "grams": 1 }
+    ],
+    "calories_per_100g": 400,
+    "protein_per_100g": 77,
+    "carbs_per_100g": 15,
+    "fat_per_100g": 0,
+    "sugar_per_100g": 1.6666666666666667,
+    "fiber_per_100g": 3.3333333333333335,
+    "sodium_mg_per_100g": 0,
+    "nutrition_details": {
+      "bcaa_g": null,
+      "label_protein_per_100g": 77,
+      "saturated_fat": null,
+      "cholesterol_mg": null,
+      "not_provided": ["sodium_mg"]
+    },
+    "attribution": "Owner-supplied food (1).txt; approximate per-serving label data; Plant protein blend; India; verify flavour/batch against the pack"
+  },
+  {
+    "id": "7de1610c-d414-5542-9ed8-67874db972dd",
+    "source": "supplied",
+    "name": "Pea Protein Isolate",
+    "brand": "Unived",
+    "barcode": null,
+    "owner_id": null,
+    "serving_units": [
+      { "unit": "1 scoop", "grams": 30 },
+      { "unit": "g", "grams": 1 }
+    ],
+    "calories_per_100g": 400,
+    "protein_per_100g": 67.99999999999999,
+    "carbs_per_100g": 9,
+    "fat_per_100g": 9,
+    "sugar_per_100g": 1.6666666666666667,
+    "fiber_per_100g": 3.3333333333333335,
+    "sodium_mg_per_100g": 0,
+    "nutrition_details": {
+      "bcaa_g": null,
+      "label_protein_per_100g": 68,
+      "saturated_fat": null,
+      "cholesterol_mg": null,
+      "not_provided": ["sodium_mg"]
+    },
+    "attribution": "Owner-supplied food (1).txt; approximate per-serving label data; Plant protein (pea); India; verify flavour/batch against the pack"
+  },
+  {
+    "id": "74d6c4cb-8c3c-52b5-925d-3887920a3165",
+    "source": "supplied",
+    "name": "Protein Powder for Women",
+    "brand": "Gytree",
+    "barcode": null,
+    "owner_id": null,
+    "serving_units": [
+      { "unit": "1 scoop", "grams": 30 },
+      { "unit": "g", "grams": 1 }
+    ],
+    "calories_per_100g": 400,
+    "protein_per_100g": 74,
+    "carbs_per_100g": 7,
+    "fat_per_100g": 7,
+    "sugar_per_100g": 1.6666666666666667,
+    "fiber_per_100g": 3.3333333333333335,
+    "sodium_mg_per_100g": 0,
+    "nutrition_details": {
+      "bcaa_g": null,
+      "label_protein_per_100g": 74,
+      "saturated_fat": null,
+      "cholesterol_mg": null,
+      "not_provided": ["sodium_mg"]
+    },
+    "attribution": "Owner-supplied food (1).txt; approximate per-serving label data; Plant protein blend; India; verify flavour/batch against the pack"
+  },
+  {
+    "id": "b7ddbf63-10b0-5004-8678-36d531f9bd21",
+    "source": "supplied",
+    "name": "Pure Plant Protein",
+    "brand": "Dame Health",
+    "barcode": null,
+    "owner_id": null,
+    "serving_units": [
+      { "unit": "1 scoop", "grams": 30 },
+      { "unit": "g", "grams": 1 }
+    ],
+    "calories_per_100g": 400,
+    "protein_per_100g": 73,
+    "carbs_per_100g": 30,
+    "fat_per_100g": 2,
+    "sugar_per_100g": 3.3333333333333335,
+    "fiber_per_100g": 3.3333333333333335,
+    "sodium_mg_per_100g": 0,
+    "nutrition_details": {
+      "bcaa_g": null,
+      "label_protein_per_100g": 73,
+      "saturated_fat": null,
+      "cholesterol_mg": null,
+      "not_provided": ["sodium_mg"]
+    },
+    "attribution": "Owner-supplied food (1).txt; approximate per-serving label data; Plant protein (pea); India; verify flavour/batch against the pack"
+  },
+  {
+    "id": "05f38e02-ba56-574f-acde-8f647cbccdda",
+    "source": "supplied",
+    "name": "Vegan Plant Protein",
+    "brand": "Sparkfusion",
+    "barcode": null,
+    "owner_id": null,
+    "serving_units": [
+      { "unit": "1 scoop", "grams": 30 },
+      { "unit": "g", "grams": 1 }
+    ],
+    "calories_per_100g": 400,
+    "protein_per_100g": 70,
+    "carbs_per_100g": 15,
+    "fat_per_100g": 3,
+    "sugar_per_100g": 1.6666666666666667,
+    "fiber_per_100g": 3.3333333333333335,
+    "sodium_mg_per_100g": 0,
+    "nutrition_details": {
+      "bcaa_g": null,
+      "label_protein_per_100g": 70,
+      "saturated_fat": null,
+      "cholesterol_mg": null,
+      "not_provided": ["sodium_mg"]
+    },
+    "attribution": "Owner-supplied food (1).txt; approximate per-serving label data; Plant protein blend; India; verify flavour/batch against the pack"
+  },
+  {
+    "id": "a5a5fdf5-b393-540a-bca9-7d3915f25595",
+    "source": "supplied",
+    "name": "Whey Protein Isolate",
+    "brand": "Gentle Beast",
+    "barcode": null,
+    "owner_id": null,
+    "serving_units": [
+      { "unit": "1 scoop", "grams": 30 },
+      { "unit": "g", "grams": 1 }
+    ],
+    "calories_per_100g": 366.6666666666667,
+    "protein_per_100g": 90,
+    "carbs_per_100g": 2,
+    "fat_per_100g": 1,
+    "sugar_per_100g": 0.6666666666666666,
+    "fiber_per_100g": 0,
+    "sodium_mg_per_100g": 0,
+    "nutrition_details": {
+      "bcaa_g": 20,
+      "label_protein_per_100g": 90,
+      "saturated_fat": null,
+      "cholesterol_mg": null,
+      "not_provided": ["sodium_mg"]
+    },
+    "attribution": "Owner-supplied food (1).txt; approximate per-serving label data; Whey isolate; India; verify flavour/batch against the pack"
+  },
+  {
+    "id": "076de1a1-9a7a-5cc0-8b82-fb26becc2688",
+    "source": "supplied",
+    "name": "Mega Protein Wafer",
+    "brand": "SuperYou",
+    "barcode": null,
+    "owner_id": null,
+    "serving_units": [
+      { "unit": "1 bar", "grams": 60 },
+      { "unit": "g", "grams": 1 }
+    ],
+    "calories_per_100g": 350,
+    "protein_per_100g": 33.333333333333336,
+    "carbs_per_100g": 41.666666666666664,
+    "fat_per_100g": 25,
+    "sugar_per_100g": 8.499999999999998,
+    "fiber_per_100g": 8,
+    "sodium_mg_per_100g": 0,
+    "nutrition_details": {
+      "bcaa_g": null,
+      "label_protein_per_100g": 33.3,
+      "saturated_fat": null,
+      "cholesterol_mg": null,
+      "not_provided": ["sodium_mg"]
+    },
+    "attribution": "Owner-supplied food (1).txt; approximate per-serving label data; Protein wafer bar; India; verify flavour/batch against the pack"
+  },
+  {
+    "id": "ffb79e1f-9d93-5dcb-af00-2559f659d760",
+    "source": "supplied",
+    "name": "20g Protein Bar",
+    "brand": "Chase Protein",
+    "barcode": null,
+    "owner_id": null,
+    "serving_units": [
+      { "unit": "1 bar", "grams": 60 },
+      { "unit": "g", "grams": 1 }
+    ],
+    "calories_per_100g": 291.6666666666667,
+    "protein_per_100g": 33.333333333333336,
+    "carbs_per_100g": 26.666666666666668,
+    "fat_per_100g": 8.333333333333334,
+    "sugar_per_100g": 8.333333333333334,
+    "fiber_per_100g": 8.333333333333334,
+    "sodium_mg_per_100g": 0,
+    "nutrition_details": {
+      "bcaa_g": null,
+      "label_protein_per_100g": 33.3,
+      "saturated_fat": null,
+      "cholesterol_mg": null,
+      "not_provided": ["sodium_mg"]
+    },
+    "attribution": "Owner-supplied food (1).txt; approximate per-serving label data; Protein bar; India; verify flavour/batch against the pack"
+  },
+  {
+    "id": "b001fb93-a155-5470-a3c0-8563b3f24531",
+    "source": "supplied",
+    "name": "Protein Munchies",
+    "brand": "Chase Protein",
+    "barcode": null,
+    "owner_id": null,
+    "serving_units": [
+      { "unit": "1 pack", "grams": 37 },
+      { "unit": "g", "grams": 1 }
+    ],
+    "calories_per_100g": 391.8918918918919,
+    "protein_per_100g": 54.054054054054056,
+    "carbs_per_100g": 21.62162162162162,
+    "fat_per_100g": 10.81081081081081,
+    "sugar_per_100g": 2.7027027027027026,
+    "fiber_per_100g": 10.81081081081081,
+    "sodium_mg_per_100g": 0,
+    "nutrition_details": {
+      "bcaa_g": null,
+      "label_protein_per_100g": 54.1,
+      "saturated_fat": null,
+      "cholesterol_mg": null,
+      "not_provided": ["sodium_mg"]
+    },
+    "attribution": "Owner-supplied food (1).txt; approximate per-serving label data; Protein snack; India; verify flavour/batch against the pack"
+  },
+  {
+    "id": "e8aa1d52-605b-5d37-a649-39eb4b961e1a",
+    "source": "supplied",
+    "name": "Variety Protein Bar",
+    "brand": "PHAB",
+    "barcode": null,
+    "owner_id": null,
+    "serving_units": [
+      { "unit": "1 bar", "grams": 40 },
+      { "unit": "g", "grams": 1 }
+    ],
+    "calories_per_100g": 332.5,
+    "protein_per_100g": 27.5,
+    "carbs_per_100g": 37.5,
+    "fat_per_100g": 10,
+    "sugar_per_100g": 12.5,
+    "fiber_per_100g": 7.5,
+    "sodium_mg_per_100g": 0,
+    "nutrition_details": {
+      "bcaa_g": null,
+      "label_protein_per_100g": 27.5,
+      "saturated_fat": null,
+      "cholesterol_mg": null,
+      "not_provided": ["sodium_mg"]
+    },
+    "attribution": "Owner-supplied food (1).txt; approximate per-serving label data; Protein bar; India; verify flavour/batch against the pack"
+  },
+  {
+    "id": "a46a0a52-b7a5-5c7b-a194-903bf404c73a",
+    "source": "supplied",
+    "name": "Mocha Nut Fudge Protein Bar",
+    "brand": "PHAB",
+    "barcode": null,
+    "owner_id": null,
+    "serving_units": [
+      { "unit": "1 bar", "grams": 60 },
+      { "unit": "g", "grams": 1 }
+    ],
+    "calories_per_100g": 405,
+    "protein_per_100g": 35,
+    "carbs_per_100g": 36.666666666666664,
+    "fat_per_100g": 15,
+    "sugar_per_100g": 13.333333333333334,
+    "fiber_per_100g": 8.333333333333334,
+    "sodium_mg_per_100g": 0,
+    "nutrition_details": {
+      "bcaa_g": null,
+      "label_protein_per_100g": 35,
+      "saturated_fat": null,
+      "cholesterol_mg": null,
+      "not_provided": ["sodium_mg"]
+    },
+    "attribution": "Owner-supplied food (1).txt; approximate per-serving label data; Protein bar; India; verify flavour/batch against the pack"
+  },
+  {
+    "id": "1b886bfc-8644-5252-8550-d0dda0677ba7",
+    "source": "supplied",
+    "name": "Cookies & Cream Millet Wafer",
+    "brand": "PHAB",
+    "barcode": null,
+    "owner_id": null,
+    "serving_units": [
+      { "unit": "1 bar", "grams": 40 },
+      { "unit": "g", "grams": 1 }
+    ],
+    "calories_per_100g": 422.5,
+    "protein_per_100g": 25,
+    "carbs_per_100g": 47.5,
+    "fat_per_100g": 20,
+    "sugar_per_100g": 12.5,
+    "fiber_per_100g": 5,
+    "sodium_mg_per_100g": 0,
+    "nutrition_details": {
+      "bcaa_g": null,
+      "label_protein_per_100g": 25,
+      "saturated_fat": null,
+      "cholesterol_mg": null,
+      "not_provided": ["sodium_mg"]
+    },
+    "attribution": "Owner-supplied food (1).txt; approximate per-serving label data; Protein wafer bar; India; verify flavour/batch against the pack"
+  },
+  {
+    "id": "5f78750b-ff38-53df-9333-09fb8705a081",
+    "source": "supplied",
+    "name": "Blueberry Cheesecake Cheat Bar",
+    "brand": "PHAB",
+    "barcode": null,
+    "owner_id": null,
+    "serving_units": [
+      { "unit": "1 bar", "grams": 50 },
+      { "unit": "g", "grams": 1 }
+    ],
+    "calories_per_100g": 318,
+    "protein_per_100g": 30,
+    "carbs_per_100g": 34,
+    "fat_per_100g": 10,
+    "sugar_per_100g": 12,
+    "fiber_per_100g": 8,
+    "sodium_mg_per_100g": 0,
+    "nutrition_details": {
+      "bcaa_g": null,
+      "label_protein_per_100g": 30,
+      "saturated_fat": null,
+      "cholesterol_mg": null,
+      "not_provided": ["sodium_mg"]
+    },
+    "attribution": "Owner-supplied food (1).txt; approximate per-serving label data; Protein bar; India; verify flavour/batch against the pack"
+  },
+  {
+    "id": "f9c2e9dc-5d63-5c20-8064-c429b3aa2f4a",
+    "source": "supplied",
+    "name": "Protein Bar",
+    "brand": "Rize Bar",
+    "barcode": null,
+    "owner_id": null,
+    "serving_units": [
+      { "unit": "1 bar", "grams": 50 },
+      { "unit": "g", "grams": 1 }
+    ],
+    "calories_per_100g": 380,
+    "protein_per_100g": 30,
+    "carbs_per_100g": 40,
+    "fat_per_100g": 14,
+    "sugar_per_100g": 12,
+    "fiber_per_100g": 8,
+    "sodium_mg_per_100g": 0,
+    "nutrition_details": {
+      "bcaa_g": null,
+      "label_protein_per_100g": 30,
+      "saturated_fat": null,
+      "cholesterol_mg": null,
+      "not_provided": ["sodium_mg"]
+    },
+    "attribution": "Owner-supplied food (1).txt; approximate per-serving label data; Protein bar; India; verify flavour/batch against the pack"
+  },
+  {
+    "id": "aefc0f27-1605-5979-84f2-427e367c075c",
+    "source": "supplied",
+    "name": "Protein Snack Mix",
+    "brand": "Open Secret",
+    "barcode": null,
+    "owner_id": null,
+    "serving_units": [
+      { "unit": "1 pack", "grams": 30 },
+      { "unit": "g", "grams": 1 }
+    ],
+    "calories_per_100g": 466.6666666666667,
+    "protein_per_100g": 20,
+    "carbs_per_100g": 40,
+    "fat_per_100g": 26.666666666666668,
+    "sugar_per_100g": 10,
+    "fiber_per_100g": 10,
+    "sodium_mg_per_100g": 0,
+    "nutrition_details": {
+      "bcaa_g": null,
+      "label_protein_per_100g": 20,
+      "saturated_fat": null,
+      "cholesterol_mg": null,
+      "not_provided": ["sodium_mg"]
+    },
+    "attribution": "Owner-supplied food (1).txt; approximate per-serving label data; Protein snack; India; verify flavour/batch against the pack"
+  },
+  {
+    "id": "405b957a-91a5-5897-9204-911d9f7ac0b8",
+    "source": "supplied",
+    "name": "Protein Bar",
+    "brand": "Whey91",
+    "barcode": null,
+    "owner_id": null,
+    "serving_units": [
+      { "unit": "1 bar", "grams": 60 },
+      { "unit": "g", "grams": 1 }
+    ],
+    "calories_per_100g": 366.6666666666667,
+    "protein_per_100g": 33.333333333333336,
+    "carbs_per_100g": 36.666666666666664,
+    "fat_per_100g": 11.666666666666666,
+    "sugar_per_100g": 8.333333333333334,
+    "fiber_per_100g": 6.666666666666667,
+    "sodium_mg_per_100g": 0,
+    "nutrition_details": {
+      "bcaa_g": null,
+      "label_protein_per_100g": 33.3,
+      "saturated_fat": null,
+      "cholesterol_mg": null,
+      "not_provided": ["sodium_mg"]
+    },
+    "attribution": "Owner-supplied food (1).txt; approximate per-serving label data; Protein bar; India; verify flavour/batch against the pack"
+  },
+  {
+    "id": "f6848af8-e7df-5ff0-8819-0ff09296c88e",
+    "source": "supplied",
+    "name": "Protein Bar",
+    "brand": "Decathlon",
+    "barcode": null,
+    "owner_id": null,
+    "serving_units": [
+      { "unit": "1 bar", "grams": 40 },
+      { "unit": "g", "grams": 1 }
+    ],
+    "calories_per_100g": 375,
+    "protein_per_100g": 37.5,
+    "carbs_per_100g": 37.5,
+    "fat_per_100g": 12.5,
+    "sugar_per_100g": 15,
+    "fiber_per_100g": 7.5,
+    "sodium_mg_per_100g": 0,
+    "nutrition_details": {
+      "bcaa_g": null,
+      "label_protein_per_100g": 37.5,
+      "saturated_fat": null,
+      "cholesterol_mg": null,
+      "not_provided": ["sodium_mg"]
+    },
+    "attribution": "Owner-supplied food (1).txt; approximate per-serving label data; Protein bar; International; verify flavour/batch against the pack"
+  },
+  {
+    "id": "534cf485-92e5-5fae-bd07-235045a3cb10",
+    "source": "supplied",
+    "name": "Fruit and Nut Snack Bar",
+    "brand": "Unibic",
+    "barcode": null,
+    "owner_id": null,
+    "serving_units": [
+      { "unit": "1 bar", "grams": 30 },
+      { "unit": "g", "grams": 1 }
+    ],
+    "calories_per_100g": 400,
+    "protein_per_100g": 7.333333333333334,
+    "carbs_per_100g": 56.666666666666664,
+    "fat_per_100g": 14,
+    "sugar_per_100g": 25.333333333333332,
+    "fiber_per_100g": 5.333333333333333,
+    "sodium_mg_per_100g": 0,
+    "nutrition_details": {
+      "bcaa_g": null,
+      "label_protein_per_100g": 7.3,
+      "saturated_fat": null,
+      "cholesterol_mg": null,
+      "not_provided": ["sodium_mg"]
+    },
+    "attribution": "Owner-supplied food (1).txt; approximate per-serving label data; Energy bar; India; verify flavour/batch against the pack"
+  },
+  {
+    "id": "c07f1f2e-e4f5-52af-83d2-e7fd41fe2ebe",
+    "source": "supplied",
+    "name": "High Protein Ice Cream",
+    "brand": "Get-A-Whey",
+    "barcode": null,
+    "owner_id": null,
+    "serving_units": [
+      { "unit": "100 g", "grams": 100 },
+      { "unit": "g", "grams": 1 }
+    ],
+    "calories_per_100g": 140,
+    "protein_per_100g": 8,
+    "carbs_per_100g": 16,
+    "fat_per_100g": 5,
+    "sugar_per_100g": 8,
+    "fiber_per_100g": 1,
+    "sodium_mg_per_100g": 0,
+    "nutrition_details": {
+      "bcaa_g": null,
+      "label_protein_per_100g": 8,
+      "saturated_fat": null,
+      "cholesterol_mg": null,
+      "not_provided": ["sodium_mg"]
+    },
+    "attribution": "Owner-supplied food (1).txt; approximate per-serving label data; High-protein frozen dessert; India; verify flavour/batch against the pack"
+  },
+  {
+    "id": "9fb71d9f-d6a7-582b-9364-33f4e776b4a6",
+    "source": "supplied",
+    "name": "Protein Water",
+    "brand": "Aquatein",
+    "barcode": null,
+    "owner_id": null,
+    "serving_units": [
+      { "unit": "1 bottle", "grams": 300 },
+      { "unit": "g", "grams": 1 }
+    ],
+    "calories_per_100g": 20,
+    "protein_per_100g": 5,
+    "carbs_per_100g": 0,
+    "fat_per_100g": 0,
+    "sugar_per_100g": 0,
+    "fiber_per_100g": 0,
+    "sodium_mg_per_100g": 0,
+    "nutrition_details": {
+      "bcaa_g": null,
+      "label_protein_per_100g": 5,
+      "saturated_fat": null,
+      "cholesterol_mg": null,
+      "not_provided": ["sodium_mg"]
+    },
+    "attribution": "Owner-supplied food (1).txt; approximate per-serving label data; Ready-to-drink protein beverage; India; verify flavour/batch against the pack"
+  },
+  {
+    "id": "f69d86e5-2db0-5c43-8c4a-e429fa62682a",
+    "source": "supplied",
+    "name": "Protein Super Oats (Chocolate)",
+    "brand": "Alpino",
+    "barcode": null,
+    "owner_id": null,
+    "serving_units": [
+      { "unit": "40 g", "grams": 40 },
+      { "unit": "g", "grams": 1 }
+    ],
+    "calories_per_100g": 400,
+    "protein_per_100g": 25,
+    "carbs_per_100g": 56,
+    "fat_per_100g": 16.5,
+    "sugar_per_100g": 6.25,
+    "fiber_per_100g": 11.000000000000002,
+    "sodium_mg_per_100g": 0,
+    "nutrition_details": {
+      "bcaa_g": null,
+      "label_protein_per_100g": 25,
+      "saturated_fat": null,
+      "cholesterol_mg": null,
+      "not_provided": ["sodium_mg"]
+    },
+    "attribution": "Owner-supplied food (1).txt; approximate per-serving label data; Protein oats; India; verify flavour/batch against the pack"
+  },
+  {
+    "id": "b9889909-72fe-520d-b7fd-eee0433b2ae7",
+    "source": "supplied",
+    "name": "High Protein Oats (Dark Chocolate)",
+    "brand": "Bagrry's",
+    "barcode": null,
+    "owner_id": null,
+    "serving_units": [
+      { "unit": "40 g", "grams": 40 },
+      { "unit": "g", "grams": 1 }
+    ],
+    "calories_per_100g": 387.5,
+    "protein_per_100g": 25,
+    "carbs_per_100g": 55,
+    "fat_per_100g": 7.5,
+    "sugar_per_100g": 7.5,
+    "fiber_per_100g": 10,
+    "sodium_mg_per_100g": 0,
+    "nutrition_details": {
+      "bcaa_g": null,
+      "label_protein_per_100g": 25,
+      "saturated_fat": null,
+      "cholesterol_mg": null,
+      "not_provided": ["sodium_mg"]
+    },
+    "attribution": "Owner-supplied food (1).txt; approximate per-serving label data; Protein oats; India; verify flavour/batch against the pack"
+  },
+  {
+    "id": "88bbeb83-61db-5671-9936-4508dcf25766",
+    "source": "supplied",
+    "name": "28g High Protein Oats",
+    "brand": "True Elements",
+    "barcode": null,
+    "owner_id": null,
+    "serving_units": [
+      { "unit": "50 g", "grams": 50 },
+      { "unit": "g", "grams": 1 }
+    ],
+    "calories_per_100g": 380,
+    "protein_per_100g": 28,
+    "carbs_per_100g": 55,
+    "fat_per_100g": 10,
+    "sugar_per_100g": 10,
+    "fiber_per_100g": 9,
+    "sodium_mg_per_100g": 0,
+    "nutrition_details": {
+      "bcaa_g": null,
+      "label_protein_per_100g": 28,
+      "saturated_fat": null,
+      "cholesterol_mg": null,
+      "not_provided": ["sodium_mg"]
+    },
+    "attribution": "Owner-supplied food (1).txt; approximate per-serving label data; Protein oats; India; verify flavour/batch against the pack"
+  },
+  {
+    "id": "b10623a2-c4e2-59f3-ae08-a22ed35b9233",
+    "source": "supplied",
+    "name": "Protein Oats (Dark Choco Berry)",
+    "brand": "Doctor's Choice",
+    "barcode": null,
+    "owner_id": null,
+    "serving_units": [
+      { "unit": "40 g", "grams": 40 },
+      { "unit": "g", "grams": 1 }
+    ],
+    "calories_per_100g": 400,
+    "protein_per_100g": 27.75,
+    "carbs_per_100g": 55,
+    "fat_per_100g": 8.25,
+    "sugar_per_100g": 14.5,
+    "fiber_per_100g": 9.75,
+    "sodium_mg_per_100g": 0,
+    "nutrition_details": {
+      "bcaa_g": null,
+      "label_protein_per_100g": 27.8,
+      "saturated_fat": null,
+      "cholesterol_mg": null,
+      "not_provided": ["sodium_mg"]
+    },
+    "attribution": "Owner-supplied food (1).txt; approximate per-serving label data; Protein oats; India; verify flavour/batch against the pack"
+  },
+  {
+    "id": "1d3b613a-6c7e-53ab-9731-14c9a921e117",
+    "source": "supplied",
+    "name": "Overnight Protein Oats (Choco Hazelnut)",
+    "brand": "GOAT Life",
+    "barcode": null,
+    "owner_id": null,
+    "serving_units": [
+      { "unit": "60 g", "grams": 60 },
+      { "unit": "g", "grams": 1 }
+    ],
+    "calories_per_100g": 366.6666666666667,
+    "protein_per_100g": 16.666666666666668,
+    "carbs_per_100g": 73.33333333333333,
+    "fat_per_100g": 5,
+    "sugar_per_100g": 8.333333333333334,
+    "fiber_per_100g": 8.333333333333334,
+    "sodium_mg_per_100g": 0,
+    "nutrition_details": {
+      "bcaa_g": null,
+      "label_protein_per_100g": 16.7,
+      "saturated_fat": null,
+      "cholesterol_mg": null,
+      "not_provided": ["sodium_mg"]
+    },
+    "attribution": "Owner-supplied food (1).txt; approximate per-serving label data; Overnight protein oats; India; verify flavour/batch against the pack"
+  },
+  {
+    "id": "45418325-6a14-5fba-91a4-115f9ae943f8",
+    "source": "supplied",
+    "name": "Millet Protein Breakfast Cereal",
+    "brand": "Tata Soulfull",
+    "barcode": null,
+    "owner_id": null,
+    "serving_units": [
+      { "unit": "40 g", "grams": 40 },
+      { "unit": "g", "grams": 1 }
+    ],
+    "calories_per_100g": 375,
+    "protein_per_100g": 15,
+    "carbs_per_100g": 65,
+    "fat_per_100g": 7.5,
+    "sugar_per_100g": 12.5,
+    "fiber_per_100g": 7.5,
+    "sodium_mg_per_100g": 0,
+    "nutrition_details": {
+      "bcaa_g": null,
+      "label_protein_per_100g": 15,
+      "saturated_fat": null,
+      "cholesterol_mg": null,
+      "not_provided": ["sodium_mg"]
+    },
+    "attribution": "Owner-supplied food (1).txt; approximate per-serving label data; Protein cereal; India; verify flavour/batch against the pack"
+  },
+  {
+    "id": "43dcc674-8a09-513d-a24d-9a12f72ffd28",
+    "source": "supplied",
+    "name": "Peak Protein Oatmeal",
+    "brand": "Kodiak Cakes",
+    "barcode": null,
+    "owner_id": null,
+    "serving_units": [
+      { "unit": "1 packet", "grams": 75 },
+      { "unit": "g", "grams": 1 }
+    ],
+    "calories_per_100g": 386.6666666666667,
+    "protein_per_100g": 26.666666666666668,
+    "carbs_per_100g": 57.333333333333336,
+    "fat_per_100g": 6.666666666666667,
+    "sugar_per_100g": 12,
+    "fiber_per_100g": 6.666666666666667,
+    "sodium_mg_per_100g": 0,
+    "nutrition_details": {
+      "bcaa_g": null,
+      "label_protein_per_100g": 26.7,
+      "saturated_fat": null,
+      "cholesterol_mg": null,
+      "not_provided": ["sodium_mg"]
+    },
+    "attribution": "Owner-supplied food (1).txt; approximate per-serving label data; Protein oatmeal; International; verify flavour/batch against the pack"
+  },
+  {
+    "id": "f2ed4407-5e09-548c-9d0a-a612c11257c5",
+    "source": "supplied",
+    "name": "Protein Granola (Oats & Honey)",
+    "brand": "Nature Valley",
+    "barcode": null,
+    "owner_id": null,
+    "serving_units": [
+      { "unit": "2/3 cup", "grams": 60 },
+      { "unit": "g", "grams": 1 }
+    ],
+    "calories_per_100g": 466.6666666666667,
+    "protein_per_100g": 21.666666666666668,
+    "carbs_per_100g": 68.33333333333333,
+    "fat_per_100g": 11.666666666666666,
+    "sugar_per_100g": 26.666666666666668,
+    "fiber_per_100g": 6.666666666666667,
+    "sodium_mg_per_100g": 0,
+    "nutrition_details": {
+      "bcaa_g": null,
+      "label_protein_per_100g": 21.7,
+      "saturated_fat": null,
+      "cholesterol_mg": null,
+      "not_provided": ["sodium_mg"]
+    },
+    "attribution": "Owner-supplied food (1).txt; approximate per-serving label data; Protein granola; International; verify flavour/batch against the pack"
+  },
+  {
+    "id": "7131d209-99b4-5587-857d-53323b75a9d7",
+    "source": "supplied",
+    "name": "Cinnamon Toast Protein Cereal",
+    "brand": "Catalina Crunch",
+    "barcode": null,
+    "owner_id": null,
+    "serving_units": [
+      { "unit": "1/2 cup", "grams": 36 },
+      { "unit": "g", "grams": 1 }
+    ],
+    "calories_per_100g": 416.6666666666667,
+    "protein_per_100g": 30.555555555555557,
+    "carbs_per_100g": 41.666666666666664,
+    "fat_per_100g": 16.666666666666668,
+    "sugar_per_100g": 0,
+    "fiber_per_100g": 16.666666666666668,
+    "sodium_mg_per_100g": 0,
+    "nutrition_details": {
+      "bcaa_g": null,
+      "label_protein_per_100g": 30.6,
+      "saturated_fat": null,
+      "cholesterol_mg": null,
+      "not_provided": ["sodium_mg"]
+    },
+    "attribution": "Owner-supplied food (1).txt; approximate per-serving label data; Protein cereal; International; verify flavour/batch against the pack"
+  },
+  {
+    "id": "38619040-7303-5fa2-aefb-4a879ea94b44",
+    "source": "supplied",
+    "name": "Cereal (variety flavours)",
+    "brand": "Magic Spoon",
+    "barcode": null,
+    "owner_id": null,
+    "serving_units": [
+      { "unit": "1 serving", "grams": 37 },
+      { "unit": "g", "grams": 1 }
+    ],
+    "calories_per_100g": 378.3783783783784,
+    "protein_per_100g": 35.13513513513514,
+    "carbs_per_100g": 10.81081081081081,
+    "fat_per_100g": 21.62162162162162,
+    "sugar_per_100g": 0,
+    "fiber_per_100g": 2.7027027027027026,
+    "sodium_mg_per_100g": 0,
+    "nutrition_details": {
+      "bcaa_g": null,
+      "label_protein_per_100g": 35.1,
+      "saturated_fat": null,
+      "cholesterol_mg": null,
+      "not_provided": ["sodium_mg"]
+    },
+    "attribution": "Owner-supplied food (1).txt; approximate per-serving label data; Protein cereal; International; verify flavour/batch against the pack"
+  },
+  {
+    "id": "4569bf37-92fe-5b95-a59b-f9e28e33b1b8",
+    "source": "supplied",
+    "name": "GO Protein Cereal",
+    "brand": "Kashi",
+    "barcode": null,
+    "owner_id": null,
+    "serving_units": [
+      { "unit": "1 serving", "grams": 60 },
+      { "unit": "g", "grams": 1 }
+    ],
+    "calories_per_100g": 350,
+    "protein_per_100g": 20,
+    "carbs_per_100g": 58.333333333333336,
+    "fat_per_100g": 6.666666666666667,
+    "sugar_per_100g": 15,
+    "fiber_per_100g": 13.333333333333334,
+    "sodium_mg_per_100g": 0,
+    "nutrition_details": {
+      "bcaa_g": null,
+      "label_protein_per_100g": 20,
+      "saturated_fat": null,
+      "cholesterol_mg": null,
+      "not_provided": ["sodium_mg"]
+    },
+    "attribution": "Owner-supplied food (1).txt; approximate per-serving label data; Protein cereal; International; verify flavour/batch against the pack"
+  },
+  {
+    "id": "94cf8e36-4878-598d-817f-63165655b98b",
+    "source": "supplied",
+    "name": "Protein Muesli",
+    "brand": "Alpen",
+    "barcode": null,
+    "owner_id": null,
+    "serving_units": [
+      { "unit": "45 g", "grams": 45 },
+      { "unit": "g", "grams": 1 }
+    ],
+    "calories_per_100g": 377.77777777777777,
+    "protein_per_100g": 17.77777777777778,
+    "carbs_per_100g": 57.77777777777778,
+    "fat_per_100g": 8.88888888888889,
+    "sugar_per_100g": 15.555555555555555,
+    "fiber_per_100g": 8.88888888888889,
+    "sodium_mg_per_100g": 0,
+    "nutrition_details": {
+      "bcaa_g": null,
+      "label_protein_per_100g": 17.8,
+      "saturated_fat": null,
+      "cholesterol_mg": null,
+      "not_provided": ["sodium_mg"]
+    },
+    "attribution": "Owner-supplied food (1).txt; approximate per-serving label data; Protein muesli; International; verify flavour/batch against the pack"
+  },
+  {
+    "id": "feadab17-44e2-5ca0-ad6c-f16daf076d0c",
+    "source": "supplied",
+    "name": "Protein Oatmeal",
+    "brand": "Seven Sundays",
+    "barcode": null,
+    "owner_id": null,
+    "serving_units": [
+      { "unit": "50 g", "grams": 50 },
+      { "unit": "g", "grams": 1 }
+    ],
+    "calories_per_100g": 380,
+    "protein_per_100g": 20,
+    "carbs_per_100g": 56,
+    "fat_per_100g": 10,
+    "sugar_per_100g": 12,
+    "fiber_per_100g": 8,
+    "sodium_mg_per_100g": 0,
+    "nutrition_details": {
+      "bcaa_g": null,
+      "label_protein_per_100g": 20,
+      "saturated_fat": null,
+      "cholesterol_mg": null,
+      "not_provided": ["sodium_mg"]
+    },
+    "attribution": "Owner-supplied food (1).txt; approximate per-serving label data; Protein oatmeal; International; verify flavour/batch against the pack"
+  },
+  {
+    "id": "3e908deb-d287-5d89-a464-476e68752eba",
+    "source": "supplied",
+    "name": "Protein Overnight Oats",
+    "brand": "MUSH",
+    "barcode": null,
+    "owner_id": null,
+    "serving_units": [
+      { "unit": "1 cup", "grams": 170 },
+      { "unit": "g", "grams": 1 }
+    ],
+    "calories_per_100g": 129.41176470588235,
+    "protein_per_100g": 7.0588235294117645,
+    "carbs_per_100g": 17.647058823529413,
+    "fat_per_100g": 3.5294117647058822,
+    "sugar_per_100g": 4.705882352941177,
+    "fiber_per_100g": 2.9411764705882355,
+    "sodium_mg_per_100g": 0,
+    "nutrition_details": {
+      "bcaa_g": null,
+      "label_protein_per_100g": 7.1,
+      "saturated_fat": null,
+      "cholesterol_mg": null,
+      "not_provided": ["sodium_mg"]
+    },
+    "attribution": "Owner-supplied food (1).txt; approximate per-serving label data; Ready-to-eat protein oats; International; verify flavour/batch against the pack"
+  },
+  {
+    "id": "4e057b70-129f-5287-869d-d1e8ffb60566",
+    "source": "supplied",
+    "name": "Protein Cereal",
+    "brand": "Premier Protein",
+    "barcode": null,
+    "owner_id": null,
+    "serving_units": [
+      { "unit": "1 serving", "grams": 40 },
+      { "unit": "g", "grams": 1 }
+    ],
+    "calories_per_100g": 400,
+    "protein_per_100g": 50,
+    "carbs_per_100g": 30,
+    "fat_per_100g": 7.5,
+    "sugar_per_100g": 5,
+    "fiber_per_100g": 5,
+    "sodium_mg_per_100g": 0,
+    "nutrition_details": {
+      "bcaa_g": null,
+      "label_protein_per_100g": 50,
+      "saturated_fat": null,
+      "cholesterol_mg": null,
+      "not_provided": ["sodium_mg"]
+    },
+    "attribution": "Owner-supplied food (1).txt; approximate per-serving label data; Protein cereal; International; verify flavour/batch against the pack"
+  },
+  {
+    "id": "62ec5b66-1f71-574a-9073-b5d79010fd11",
+    "source": "supplied",
+    "name": "Protein Instant Oatmeal",
+    "brand": "Quaker",
+    "barcode": null,
+    "owner_id": null,
+    "serving_units": [
+      { "unit": "1 packet", "grams": 50 },
+      { "unit": "g", "grams": 1 }
+    ],
+    "calories_per_100g": 380,
+    "protein_per_100g": 20,
+    "carbs_per_100g": 60,
+    "fat_per_100g": 8,
+    "sugar_per_100g": 14,
+    "fiber_per_100g": 8,
+    "sodium_mg_per_100g": 0,
+    "nutrition_details": {
+      "bcaa_g": null,
+      "label_protein_per_100g": 20,
+      "saturated_fat": null,
+      "cholesterol_mg": null,
+      "not_provided": ["sodium_mg"]
+    },
+    "attribution": "Owner-supplied food (1).txt; approximate per-serving label data; Protein oatmeal; International; verify flavour/batch against the pack"
+  },
+  {
+    "id": "2d5bbbfe-9b32-5158-87b3-9a4238f66728",
+    "source": "supplied",
+    "name": "Whey Protein Isolate",
+    "brand": "Kaged",
+    "barcode": null,
+    "owner_id": null,
+    "serving_units": [
+      { "unit": "1 scoop", "grams": 31 },
+      { "unit": "g", "grams": 1 }
+    ],
+    "calories_per_100g": 354.83870967741933,
+    "protein_per_100g": 80.64516129032258,
+    "carbs_per_100g": 6.451612903225806,
+    "fat_per_100g": 0,
+    "sugar_per_100g": 0,
+    "fiber_per_100g": 0,
+    "sodium_mg_per_100g": 0,
+    "nutrition_details": {
+      "bcaa_g": 18.387096774193548,
+      "label_protein_per_100g": 80.6,
+      "saturated_fat": null,
+      "cholesterol_mg": null,
+      "not_provided": ["sodium_mg"]
+    },
+    "attribution": "Owner-supplied food (1).txt; approximate per-serving label data; Whey isolate; International; verify flavour/batch against the pack"
+  },
+  {
+    "id": "7e514161-ad35-58a4-80df-25196c41fb0c",
+    "source": "supplied",
+    "name": "ISO-XP Whey Protein Isolate",
+    "brand": "Applied Nutrition",
+    "barcode": null,
+    "owner_id": null,
+    "serving_units": [
+      { "unit": "1 serving", "grams": 25 },
+      { "unit": "g", "grams": 1 }
+    ],
+    "calories_per_100g": 376,
+    "protein_per_100g": 88,
+    "carbs_per_100g": 3.2,
+    "fat_per_100g": 0.8,
+    "sugar_per_100g": 0.8,
+    "fiber_per_100g": 0,
+    "sodium_mg_per_100g": 0,
+    "nutrition_details": {
+      "bcaa_g": 20,
+      "label_protein_per_100g": 88,
+      "saturated_fat": null,
+      "cholesterol_mg": null,
+      "not_provided": ["sodium_mg"]
+    },
+    "attribution": "Owner-supplied food (1).txt; approximate per-serving label data; Whey isolate; International; verify flavour/batch against the pack"
+  },
+  {
+    "id": "5aef1357-7547-5e71-9758-4f4a27511590",
+    "source": "supplied",
+    "name": "Critical Whey",
+    "brand": "Applied Nutrition",
+    "barcode": null,
+    "owner_id": null,
+    "serving_units": [
+      { "unit": "1 scoop", "grams": 30 },
+      { "unit": "g", "grams": 1 }
+    ],
+    "calories_per_100g": 393.3333333333333,
+    "protein_per_100g": 80,
+    "carbs_per_100g": 6.666666666666667,
+    "fat_per_100g": 5,
+    "sugar_per_100g": 3.3333333333333335,
+    "fiber_per_100g": 0,
+    "sodium_mg_per_100g": 0,
+    "nutrition_details": {
+      "bcaa_g": 17.333333333333332,
+      "label_protein_per_100g": 80,
+      "saturated_fat": null,
+      "cholesterol_mg": null,
+      "not_provided": ["sodium_mg"]
+    },
+    "attribution": "Owner-supplied food (1).txt; approximate per-serving label data; Whey blend; International; verify flavour/batch against the pack"
+  },
+  {
+    "id": "a6904abf-fa7e-5ef6-8e4d-8ca517f8578d",
+    "source": "supplied",
+    "name": "Isotope Whey Isolate",
+    "brand": "Redcon1",
+    "barcode": null,
+    "owner_id": null,
+    "serving_units": [
+      { "unit": "1 scoop", "grams": 32 },
+      { "unit": "g", "grams": 1 }
+    ],
+    "calories_per_100g": 375,
+    "protein_per_100g": 78.125,
+    "carbs_per_100g": 3.125,
+    "fat_per_100g": 0,
+    "sugar_per_100g": 0,
+    "fiber_per_100g": 0,
+    "sodium_mg_per_100g": 0,
+    "nutrition_details": {
+      "bcaa_g": 17.1875,
+      "label_protein_per_100g": 78.1,
+      "saturated_fat": null,
+      "cholesterol_mg": null,
+      "not_provided": ["sodium_mg"]
+    },
+    "attribution": "Owner-supplied food (1).txt; approximate per-serving label data; Whey isolate; International; verify flavour/batch against the pack"
+  },
+  {
+    "id": "efe53bdf-7f37-515c-8d61-6eab7016e18e",
+    "source": "supplied",
+    "name": "MRE Lite",
+    "brand": "Redcon1",
+    "barcode": null,
+    "owner_id": null,
+    "serving_units": [
+      { "unit": "1 scoop", "grams": 46 },
+      { "unit": "g", "grams": 1 }
+    ],
+    "calories_per_100g": 391.30434782608694,
+    "protein_per_100g": 52.17391304347826,
+    "carbs_per_100g": 23.91304347826087,
+    "fat_per_100g": 10.869565217391305,
+    "sugar_per_100g": 4.3478260869565215,
+    "fiber_per_100g": 4.3478260869565215,
+    "sodium_mg_per_100g": 0,
+    "nutrition_details": {
+      "bcaa_g": null,
+      "label_protein_per_100g": 52.2,
+      "saturated_fat": null,
+      "cholesterol_mg": null,
+      "not_provided": ["sodium_mg"]
+    },
+    "attribution": "Owner-supplied food (1).txt; approximate per-serving label data; Protein meal replacement; International; verify flavour/batch against the pack"
+  },
+  {
+    "id": "238dbfa5-1a9b-5720-9475-bde01ada81a7",
+    "source": "supplied",
+    "name": "Pro JYM",
+    "brand": "JYM Supplement Science",
+    "barcode": null,
+    "owner_id": null,
+    "serving_units": [
+      { "unit": "1 scoop", "grams": 40 },
+      { "unit": "g", "grams": 1 }
+    ],
+    "calories_per_100g": 375,
+    "protein_per_100g": 60,
+    "carbs_per_100g": 17.5,
+    "fat_per_100g": 5,
+    "sugar_per_100g": 5,
+    "fiber_per_100g": 0,
+    "sodium_mg_per_100g": 0,
+    "nutrition_details": {
+      "bcaa_g": 12.5,
+      "label_protein_per_100g": 60,
+      "saturated_fat": null,
+      "cholesterol_mg": null,
+      "not_provided": ["sodium_mg"]
+    },
+    "attribution": "Owner-supplied food (1).txt; approximate per-serving label data; Protein blend; International; verify flavour/batch against the pack"
+  },
+  {
+    "id": "53e23cfd-e3bd-53e3-8930-420513a59791",
+    "source": "supplied",
+    "name": "BlueLab 100% Whey",
+    "brand": "USN",
+    "barcode": null,
+    "owner_id": null,
+    "serving_units": [
+      { "unit": "1 scoop", "grams": 30 },
+      { "unit": "g", "grams": 1 }
+    ],
+    "calories_per_100g": 400,
+    "protein_per_100g": 80,
+    "carbs_per_100g": 6.666666666666667,
+    "fat_per_100g": 5,
+    "sugar_per_100g": 3.3333333333333335,
+    "fiber_per_100g": 0,
+    "sodium_mg_per_100g": 0,
+    "nutrition_details": {
+      "bcaa_g": 16.666666666666668,
+      "label_protein_per_100g": 80,
+      "saturated_fat": null,
+      "cholesterol_mg": null,
+      "not_provided": ["sodium_mg"]
+    },
+    "attribution": "Owner-supplied food (1).txt; approximate per-serving label data; Whey blend; International; verify flavour/batch against the pack"
+  },
+  {
+    "id": "fe059057-16e6-580c-8a40-2a0bf42307aa",
+    "source": "supplied",
+    "name": "Hyperbolic Mass",
+    "brand": "USN",
+    "barcode": null,
+    "owner_id": null,
+    "serving_units": [
+      { "unit": "1 serving", "grams": 150 },
+      { "unit": "g", "grams": 1 }
+    ],
+    "calories_per_100g": 380,
+    "protein_per_100g": 20,
+    "carbs_per_100g": 66.66666666666667,
+    "fat_per_100g": 3.3333333333333335,
+    "sugar_per_100g": 13.333333333333334,
+    "fiber_per_100g": 2,
+    "sodium_mg_per_100g": 0,
+    "nutrition_details": {
+      "bcaa_g": null,
+      "label_protein_per_100g": 20,
+      "saturated_fat": null,
+      "cholesterol_mg": null,
+      "not_provided": ["sodium_mg"]
+    },
+    "attribution": "Owner-supplied food (1).txt; approximate per-serving label data; Mass gainer; International; verify flavour/batch against the pack"
+  },
+  {
+    "id": "97c13713-25d8-5c5d-b1f2-64bebac05ce2",
+    "source": "supplied",
+    "name": "Mutant Whey",
+    "brand": "Mutant",
+    "barcode": null,
+    "owner_id": null,
+    "serving_units": [
+      { "unit": "1 scoop", "grams": 37 },
+      { "unit": "g", "grams": 1 }
+    ],
+    "calories_per_100g": 378.3783783783784,
+    "protein_per_100g": 59.45945945945946,
+    "carbs_per_100g": 21.62162162162162,
+    "fat_per_100g": 5.405405405405405,
+    "sugar_per_100g": 5.405405405405405,
+    "fiber_per_100g": 2.7027027027027026,
+    "sodium_mg_per_100g": 0,
+    "nutrition_details": {
+      "bcaa_g": 12.972972972972974,
+      "label_protein_per_100g": 59.5,
+      "saturated_fat": null,
+      "cholesterol_mg": null,
+      "not_provided": ["sodium_mg"]
+    },
+    "attribution": "Owner-supplied food (1).txt; approximate per-serving label data; Whey blend; International; verify flavour/batch against the pack"
+  },
+  {
+    "id": "85cae915-9473-5776-bcc9-3dd820068c0e",
+    "source": "supplied",
+    "name": "Mutant Mass",
+    "brand": "Mutant",
+    "barcode": null,
+    "owner_id": null,
+    "serving_units": [
+      { "unit": "1 serving", "grams": 140 },
+      { "unit": "g", "grams": 1 }
+    ],
+    "calories_per_100g": 385.7142857142857,
+    "protein_per_100g": 20,
+    "carbs_per_100g": 71.42857142857143,
+    "fat_per_100g": 3.5714285714285716,
+    "sugar_per_100g": 10.714285714285714,
+    "fiber_per_100g": 2.857142857142857,
+    "sodium_mg_per_100g": 0,
+    "nutrition_details": {
+      "bcaa_g": null,
+      "label_protein_per_100g": 20,
+      "saturated_fat": null,
+      "cholesterol_mg": null,
+      "not_provided": ["sodium_mg"]
+    },
+    "attribution": "Owner-supplied food (1).txt; approximate per-serving label data; Mass gainer; International; verify flavour/batch against the pack"
+  },
+  {
+    "id": "53f26a16-8ccf-51c2-9deb-d17aaa406f97",
+    "source": "supplied",
+    "name": "Up Your Mass",
+    "brand": "MHP",
+    "barcode": null,
+    "owner_id": null,
+    "serving_units": [
+      { "unit": "1 serving", "grams": 145 },
+      { "unit": "g", "grams": 1 }
+    ],
+    "calories_per_100g": 365.51724137931035,
+    "protein_per_100g": 31.03448275862069,
+    "carbs_per_100g": 51.724137931034484,
+    "fat_per_100g": 4.137931034482759,
+    "sugar_per_100g": 5.517241379310345,
+    "fiber_per_100g": 3.4482758620689653,
+    "sodium_mg_per_100g": 0,
+    "nutrition_details": {
+      "bcaa_g": null,
+      "label_protein_per_100g": 31,
+      "saturated_fat": null,
+      "cholesterol_mg": null,
+      "not_provided": ["sodium_mg"]
+    },
+    "attribution": "Owner-supplied food (1).txt; approximate per-serving label data; Mass gainer; International; verify flavour/batch against the pack"
+  },
+  {
+    "id": "1b77b7a6-cb72-5a45-9020-27fc043cfc33",
+    "source": "supplied",
+    "name": "IsoFlex",
+    "brand": "AllMax Nutrition",
+    "barcode": null,
+    "owner_id": null,
+    "serving_units": [
+      { "unit": "1 scoop", "grams": 30 },
+      { "unit": "g", "grams": 1 }
+    ],
+    "calories_per_100g": 366.6666666666667,
+    "protein_per_100g": 90,
+    "carbs_per_100g": 3.3333333333333335,
+    "fat_per_100g": 1.6666666666666667,
+    "sugar_per_100g": 0,
+    "fiber_per_100g": 0,
+    "sodium_mg_per_100g": 0,
+    "nutrition_details": {
+      "bcaa_g": 20,
+      "label_protein_per_100g": 90,
+      "saturated_fat": null,
+      "cholesterol_mg": null,
+      "not_provided": ["sodium_mg"]
+    },
+    "attribution": "Owner-supplied food (1).txt; approximate per-serving label data; Whey isolate; International; verify flavour/batch against the pack"
+  },
+  {
+    "id": "f64ef0d7-e719-5ff0-9064-8916d1b08334",
+    "source": "supplied",
+    "name": "Combat Protein Powder",
+    "brand": "MusclePharm",
+    "barcode": null,
+    "owner_id": null,
+    "serving_units": [
+      { "unit": "1 scoop", "grams": 33 },
+      { "unit": "g", "grams": 1 }
+    ],
+    "calories_per_100g": 393.93939393939394,
+    "protein_per_100g": 75.75757575757575,
+    "carbs_per_100g": 9.090909090909092,
+    "fat_per_100g": 4.545454545454546,
+    "sugar_per_100g": 3.0303030303030303,
+    "fiber_per_100g": 3.0303030303030303,
+    "sodium_mg_per_100g": 0,
+    "nutrition_details": {
+      "bcaa_g": 16.666666666666668,
+      "label_protein_per_100g": 75.8,
+      "saturated_fat": null,
+      "cholesterol_mg": null,
+      "not_provided": ["sodium_mg"]
+    },
+    "attribution": "Owner-supplied food (1).txt; approximate per-serving label data; Protein blend; International; verify flavour/batch against the pack"
+  },
+  {
+    "id": "dcaf85aa-f35c-5624-b4cd-2974a3ca9f54",
+    "source": "supplied",
+    "name": "Whey Protein Isolate",
+    "brand": "BulkSupplements",
+    "barcode": null,
+    "owner_id": null,
+    "serving_units": [
+      { "unit": "30 g", "grams": 30 },
+      { "unit": "g", "grams": 1 }
+    ],
+    "calories_per_100g": 366.6666666666667,
+    "protein_per_100g": 90,
+    "carbs_per_100g": 3.3333333333333335,
+    "fat_per_100g": 1.6666666666666667,
+    "sugar_per_100g": 1.6666666666666667,
+    "fiber_per_100g": 0,
+    "sodium_mg_per_100g": 0,
+    "nutrition_details": {
+      "bcaa_g": 20,
+      "label_protein_per_100g": 90,
+      "saturated_fat": null,
+      "cholesterol_mg": null,
+      "not_provided": ["sodium_mg"]
+    },
+    "attribution": "Owner-supplied food (1).txt; approximate per-serving label data; Whey isolate; International; verify flavour/batch against the pack"
+  },
+  {
+    "id": "1392d346-7128-5a01-a877-1a69bd971483",
+    "source": "supplied",
+    "name": "Grass-Fed Whey Protein",
+    "brand": "Promix Nutrition",
+    "barcode": null,
+    "owner_id": null,
+    "serving_units": [
+      { "unit": "1 scoop", "grams": 30 },
+      { "unit": "g", "grams": 1 }
+    ],
+    "calories_per_100g": 400,
+    "protein_per_100g": 83.33333333333333,
+    "carbs_per_100g": 3.3333333333333335,
+    "fat_per_100g": 6.666666666666667,
+    "sugar_per_100g": 0,
+    "fiber_per_100g": 0,
+    "sodium_mg_per_100g": 0,
+    "nutrition_details": {
+      "bcaa_g": 18.333333333333332,
+      "label_protein_per_100g": 83.3,
+      "saturated_fat": null,
+      "cholesterol_mg": null,
+      "not_provided": ["sodium_mg"]
+    },
+    "attribution": "Owner-supplied food (1).txt; approximate per-serving label data; Whey concentrate; International; verify flavour/batch against the pack"
+  },
+  {
+    "id": "782cf98f-9c8d-5962-962d-6d79b4b0a3d9",
+    "source": "supplied",
+    "name": "100% Whey Protein Isolate",
+    "brand": "NutraBio",
+    "barcode": null,
+    "owner_id": null,
+    "serving_units": [
+      { "unit": "1 scoop", "grams": 30 },
+      { "unit": "g", "grams": 1 }
+    ],
+    "calories_per_100g": 366.6666666666667,
+    "protein_per_100g": 83.33333333333333,
+    "carbs_per_100g": 3.3333333333333335,
+    "fat_per_100g": 1.6666666666666667,
+    "sugar_per_100g": 0,
+    "fiber_per_100g": 0,
+    "sodium_mg_per_100g": 0,
+    "nutrition_details": {
+      "bcaa_g": 18.333333333333332,
+      "label_protein_per_100g": 83.3,
+      "saturated_fat": null,
+      "cholesterol_mg": null,
+      "not_provided": ["sodium_mg"]
+    },
+    "attribution": "Owner-supplied food (1).txt; approximate per-serving label data; Whey isolate; International; verify flavour/batch against the pack"
+  },
+  {
+    "id": "65b1727a-cbe1-500a-bea4-a7560fd6b187",
+    "source": "supplied",
+    "name": "Mass Gainer",
+    "brand": "GAT Sport",
+    "barcode": null,
+    "owner_id": null,
+    "serving_units": [
+      { "unit": "1 serving", "grams": 150 },
+      { "unit": "g", "grams": 1 }
+    ],
+    "calories_per_100g": 400,
+    "protein_per_100g": 20,
+    "carbs_per_100g": 73.33333333333333,
+    "fat_per_100g": 3.3333333333333335,
+    "sugar_per_100g": 13.333333333333334,
+    "fiber_per_100g": 2,
+    "sodium_mg_per_100g": 0,
+    "nutrition_details": {
+      "bcaa_g": null,
+      "label_protein_per_100g": 20,
+      "saturated_fat": null,
+      "cholesterol_mg": null,
+      "not_provided": ["sodium_mg"]
+    },
+    "attribution": "Owner-supplied food (1).txt; approximate per-serving label data; Mass gainer; International; verify flavour/batch against the pack"
+  },
+  {
+    "id": "439f1bb8-5db0-56d5-a12b-91db0d25c20e",
+    "source": "supplied",
+    "name": "King Mass XL",
+    "brand": "Ronnie Coleman Signature Series",
+    "barcode": null,
+    "owner_id": null,
+    "serving_units": [
+      { "unit": "1 serving", "grams": 150 },
+      { "unit": "g", "grams": 1 }
+    ],
+    "calories_per_100g": 400,
+    "protein_per_100g": 20,
+    "carbs_per_100g": 73.33333333333333,
+    "fat_per_100g": 3.3333333333333335,
+    "sugar_per_100g": 10,
+    "fiber_per_100g": 2,
+    "sodium_mg_per_100g": 0,
+    "nutrition_details": {
+      "bcaa_g": null,
+      "label_protein_per_100g": 20,
+      "saturated_fat": null,
+      "cholesterol_mg": null,
+      "not_provided": ["sodium_mg"]
+    },
+    "attribution": "Owner-supplied food (1).txt; approximate per-serving label data; Mass gainer; International; verify flavour/batch against the pack"
+  },
+  {
+    "id": "1541ea14-00de-50b8-ad27-a672bd86003a",
+    "source": "supplied",
+    "name": "Mass Effect Revolution",
+    "brand": "SAN Nutrition",
+    "barcode": null,
+    "owner_id": null,
+    "serving_units": [
+      { "unit": "1 serving", "grams": 150 },
+      { "unit": "g", "grams": 1 }
+    ],
+    "calories_per_100g": 386.6666666666667,
+    "protein_per_100g": 20,
+    "carbs_per_100g": 70,
+    "fat_per_100g": 3.3333333333333335,
+    "sugar_per_100g": 10,
+    "fiber_per_100g": 2,
+    "sodium_mg_per_100g": 0,
+    "nutrition_details": {
+      "bcaa_g": null,
+      "label_protein_per_100g": 20,
+      "saturated_fat": null,
+      "cholesterol_mg": null,
+      "not_provided": ["sodium_mg"]
+    },
+    "attribution": "Owner-supplied food (1).txt; approximate per-serving label data; Mass gainer; International; verify flavour/batch against the pack"
+  },
+  {
+    "id": "72df4e22-80de-5ea8-b1a9-9ce40d72e91b",
+    "source": "supplied",
+    "name": "R1 Mass Gainer",
+    "brand": "Rule 1",
+    "barcode": null,
+    "owner_id": null,
+    "serving_units": [
+      { "unit": "1 serving", "grams": 150 },
+      { "unit": "g", "grams": 1 }
+    ],
+    "calories_per_100g": 386.6666666666667,
+    "protein_per_100g": 20,
+    "carbs_per_100g": 70,
+    "fat_per_100g": 3.3333333333333335,
+    "sugar_per_100g": 10,
+    "fiber_per_100g": 2,
+    "sodium_mg_per_100g": 0,
+    "nutrition_details": {
+      "bcaa_g": null,
+      "label_protein_per_100g": 20,
+      "saturated_fat": null,
+      "cholesterol_mg": null,
+      "not_provided": ["sodium_mg"]
+    },
+    "attribution": "Owner-supplied food (1).txt; approximate per-serving label data; Mass gainer; International; verify flavour/batch against the pack"
+  },
+  {
+    "id": "125c2775-66d3-56f3-a5dc-c59ed0ea3502",
+    "source": "supplied",
+    "name": "Soft Protein Bar",
+    "brand": "Barebells",
+    "barcode": null,
+    "owner_id": null,
+    "serving_units": [
+      { "unit": "1 bar", "grams": 55 },
+      { "unit": "g", "grams": 1 }
+    ],
+    "calories_per_100g": 363.6363636363636,
+    "protein_per_100g": 29.09090909090909,
+    "carbs_per_100g": 36.36363636363637,
+    "fat_per_100g": 14.545454545454545,
+    "sugar_per_100g": 3.6363636363636362,
+    "fiber_per_100g": 7.2727272727272725,
+    "sodium_mg_per_100g": 0,
+    "nutrition_details": {
+      "bcaa_g": null,
+      "label_protein_per_100g": 29.1,
+      "saturated_fat": null,
+      "cholesterol_mg": null,
+      "not_provided": ["sodium_mg"]
+    },
+    "attribution": "Owner-supplied food (1).txt; approximate per-serving label data; Protein bar; International; verify flavour/batch against the pack"
+  },
+  {
+    "id": "cbe222a9-94c7-5a7a-a391-a065a5a12f25",
+    "source": "supplied",
+    "name": "Carb Killa Protein Bar",
+    "brand": "Grenade",
+    "barcode": null,
+    "owner_id": null,
+    "serving_units": [
+      { "unit": "1 bar", "grams": 60 },
+      { "unit": "g", "grams": 1 }
+    ],
+    "calories_per_100g": 366.6666666666667,
+    "protein_per_100g": 33.333333333333336,
+    "carbs_per_100g": 31.666666666666668,
+    "fat_per_100g": 13.333333333333334,
+    "sugar_per_100g": 3.3333333333333335,
+    "fiber_per_100g": 10,
+    "sodium_mg_per_100g": 0,
+    "nutrition_details": {
+      "bcaa_g": null,
+      "label_protein_per_100g": 33.3,
+      "saturated_fat": null,
+      "cholesterol_mg": null,
+      "not_provided": ["sodium_mg"]
+    },
+    "attribution": "Owner-supplied food (1).txt; approximate per-serving label data; Protein bar; International; verify flavour/batch against the pack"
+  },
+  {
+    "id": "18173933-d9f1-5b81-a4e7-fd9131297fd3",
+    "source": "supplied",
+    "name": "Vitamin Protein Bar",
+    "brand": "Fulfil",
+    "barcode": null,
+    "owner_id": null,
+    "serving_units": [
+      { "unit": "1 bar", "grams": 55 },
+      { "unit": "g", "grams": 1 }
+    ],
+    "calories_per_100g": 363.6363636363636,
+    "protein_per_100g": 36.36363636363637,
+    "carbs_per_100g": 30.90909090909091,
+    "fat_per_100g": 12.727272727272727,
+    "sugar_per_100g": 3.6363636363636362,
+    "fiber_per_100g": 10.909090909090908,
+    "sodium_mg_per_100g": 0,
+    "nutrition_details": {
+      "bcaa_g": null,
+      "label_protein_per_100g": 36.4,
+      "saturated_fat": null,
+      "cholesterol_mg": null,
+      "not_provided": ["sodium_mg"]
+    },
+    "attribution": "Owner-supplied food (1).txt; approximate per-serving label data; Protein bar; International; verify flavour/batch against the pack"
+  },
+  {
+    "id": "23cf062d-601a-5562-b87a-bd4145bff1a8",
+    "source": "supplied",
+    "name": "Builder's Protein Bar",
+    "brand": "Clif",
+    "barcode": null,
+    "owner_id": null,
+    "serving_units": [
+      { "unit": "1 bar", "grams": 68 },
+      { "unit": "g", "grams": 1 }
+    ],
+    "calories_per_100g": 411.7647058823529,
+    "protein_per_100g": 13.235294117647058,
+    "carbs_per_100g": 44.11764705882353,
+    "fat_per_100g": 13.235294117647058,
+    "sugar_per_100g": 25,
+    "fiber_per_100g": 4.411764705882353,
+    "sodium_mg_per_100g": 0,
+    "nutrition_details": {
+      "bcaa_g": null,
+      "label_protein_per_100g": 13.2,
+      "saturated_fat": null,
+      "cholesterol_mg": null,
+      "not_provided": ["sodium_mg"]
+    },
+    "attribution": "Owner-supplied food (1).txt; approximate per-serving label data; Protein bar; International; verify flavour/batch against the pack"
+  },
+  {
+    "id": "6dbb6b62-0b0d-5419-96e7-5ffefa503505",
+    "source": "supplied",
+    "name": "ONE Protein Bar",
+    "brand": "ONE Brands",
+    "barcode": null,
+    "owner_id": null,
+    "serving_units": [
+      { "unit": "1 bar", "grams": 60 },
+      { "unit": "g", "grams": 1 }
+    ],
+    "calories_per_100g": 366.6666666666667,
+    "protein_per_100g": 33.333333333333336,
+    "carbs_per_100g": 38.333333333333336,
+    "fat_per_100g": 13.333333333333334,
+    "sugar_per_100g": 1.6666666666666667,
+    "fiber_per_100g": 15,
+    "sodium_mg_per_100g": 0,
+    "nutrition_details": {
+      "bcaa_g": null,
+      "label_protein_per_100g": 33.3,
+      "saturated_fat": null,
+      "cholesterol_mg": null,
+      "not_provided": ["sodium_mg"]
+    },
+    "attribution": "Owner-supplied food (1).txt; approximate per-serving label data; Protein bar; International; verify flavour/batch against the pack"
+  },
+  {
+    "id": "3a49a667-c4eb-5418-bc2b-5a31691b1b08",
+    "source": "supplied",
+    "name": "Big 100 Colossal Bar",
+    "brand": "MET-Rx",
+    "barcode": null,
+    "owner_id": null,
+    "serving_units": [
+      { "unit": "1 bar", "grams": 100 },
+      { "unit": "g", "grams": 1 }
+    ],
+    "calories_per_100g": 380,
+    "protein_per_100g": 32,
+    "carbs_per_100g": 44,
+    "fat_per_100g": 13,
+    "sugar_per_100g": 20,
+    "fiber_per_100g": 3,
+    "sodium_mg_per_100g": 0,
+    "nutrition_details": {
+      "bcaa_g": null,
+      "label_protein_per_100g": 32,
+      "saturated_fat": null,
+      "cholesterol_mg": null,
+      "not_provided": ["sodium_mg"]
+    },
+    "attribution": "Owner-supplied food (1).txt; approximate per-serving label data; Protein bar; International; verify flavour/batch against the pack"
+  }
+]$products$::jsonb) item
+on conflict(id) do nothing;

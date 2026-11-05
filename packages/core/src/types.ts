@@ -213,7 +213,7 @@ export interface UpdateHealthScreeningInput {
 // Phase 3: Food, Logging, Diary & Offline Sync Types
 // -----------------------------------------------------------------------------
 
-export type FoodSource = 'ifct' | 'off' | 'usda' | 'user';
+export type FoodSource = 'ifct' | 'off' | 'usda' | 'user' | 'supplied';
 
 export type MealSection = 'breakfast' | 'lunch' | 'dinner' | 'snacks' | 'extra';
 
@@ -229,6 +229,11 @@ export interface ServingUnit {
 export interface NutritionDetails {
   saturated_fat?: number | null;
   cholesterol_mg?: number | null;
+  bcaa_g?: number | null;
+  /** Original label field, always per 100 g; never scaled with the logged portion. */
+  label_protein_per_100g?: number | null;
+  /** Unknown source values stored separately from the legacy numeric accounting fields. */
+  not_provided?: Array<'fiber' | 'sugar' | 'sodium_mg'>;
   /** Paid scan display is unavailable for this response. */
   locked?: boolean;
 }

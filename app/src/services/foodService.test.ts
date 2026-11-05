@@ -1,4 +1,5 @@
 import suppliedFoods from '../../assets/supplied_foods.json';
+import suppliedProducts from '../../assets/supplied_food_products.json';
 vi.mock('./accountDataService', async (original) => ({
   ...(await original<object>()),
   withOnlineSave: async <T>(db: LocalDb, action: (db: LocalDb) => Promise<T>) => action(db),
@@ -463,6 +464,41 @@ describe('Food Service & Local Database', () => {
 });
 
 describe('Supplied individual foods and recovered diary history', () => {
+  it('adds all 156 branded products alongside existing foods, retaining nulls and correct serving macros', async () => {
+    const db = createTestDb();
+    await ensureBundledFoodsSeeded(db);
+    const products = await db.getAllAsync<{ id: string }>(
+      'SELECT id FROM local_foods WHERE source = ?',
+      ['supplied'],
+    );
+    expect(products).toHaveLength(156);
+    const shake = (await searchLocalFoods(db, 'Protein Shake (Chocolate)')).find(
+      (food) => food.brand === 'Premier Protein',
+    )!;
+    expect(shake.nutrition_details).toMatchObject({
+      bcaa_g: null,
+      label_protein_per_100g: null,
+      not_provided: ['sodium_mg'],
+    });
+    const saved = await logFoodEntry(db, {
+      userId: 'owner',
+      food: shake,
+      quantity: 1,
+      unit: shake.serving_units[0]!.unit,
+      mealSection: 'lunch',
+      localDate: '2026-11-05',
+    });
+    expect(saved).toMatchObject({
+      calories: 160,
+      protein: 30,
+      nutrition_details: { bcaa_g: null, label_protein_per_100g: null },
+    });
+    expect((await getEntriesForDate(db, 'owner', '2026-11-05'))[0]!.nutrition_details).toEqual(
+      saved.nutrition_details,
+    );
+    expect(await ensureBundledFoodsSeeded(db)).toBe(0);
+    expect(new Set(suppliedProducts.map((food) => food.id)).size).toBe(156);
+  });
   it('installs all 247 foods on an existing catalog and preserves servings and advanced nutrients', async () => {
     const db = createTestDb();
     await ensureBundledFoodsSeeded(db);

@@ -260,6 +260,16 @@ export function QuantityModal({
             <Text variant="heading" color={dark.textHi}>
               {food.name}
             </Text>
+            {food.source === 'supplied' && (
+              <Text variant="bodyS" color={dark.textMid} testID="supplied-food-note">
+                {t('foodPolish.suppliedApproximate')}
+              </Text>
+            )}
+            {food.nutrition_details?.label_protein_per_100g === null && (
+              <Text variant="bodyS" color={dark.textMid} testID="missing-label-protein">
+                {t('foodPolish.missingLabelProtein')}
+              </Text>
+            )}
             {food.brand ? (
               <Text variant="bodyS" color={dark.textMid}>
                 {food.brand}
@@ -308,7 +318,12 @@ export function QuantityModal({
               ))}
             </View>
 
-            <View style={styles.bigNumberInputRow}>
+            <View
+              style={[
+                styles.bigNumberInputRow,
+                food.source === 'supplied' && styles.labelledServingInputRow,
+              ]}
+            >
               <TextInput
                 testID="input-quantity-amount"
                 value={quantityStr}
@@ -318,7 +333,12 @@ export function QuantityModal({
                 placeholderTextColor={dark.textLo}
                 style={[styles.bigNumberInput, { fontFamily: inputTypography.body.fontFamily }]}
               />
-              <Text variant="heading" color={dark.textMid} style={styles.unitSuffix}>
+              <Text
+                variant="heading"
+                color={dark.textMid}
+                style={styles.unitSuffix}
+                testID="quantity-unit-label"
+              >
                 {selectedUnit}
               </Text>
             </View>
@@ -520,11 +540,15 @@ const styles = StyleSheet.create({
     color: dark.textHi,
     textAlign: 'center',
     minWidth: 100,
+    maxWidth: '100%',
     paddingVertical: space[1],
   },
   unitSuffix: {
     paddingBottom: space[2],
+    textAlign: 'center',
+    flexShrink: 1,
   },
+  labelledServingInputRow: { flexDirection: 'column', alignItems: 'center', alignSelf: 'stretch' },
   unitScrollWrap: {
     flexDirection: 'row',
   },

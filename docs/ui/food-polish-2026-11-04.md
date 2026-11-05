@@ -1,5 +1,7 @@
 # Nutrition, Squad and food logging follow-up — 4 November 2026
 
+Owner addition, 5 November: the 156 complete products in `food (1).txt` are individual branded foods, separate from recipes. Their supplied labelled serving is the default portion. Keep known zero values visible; unknown nutrients read “Not provided” with no invented unit or numeric value. Preserve the original protein-per-100-g label separately from the calculated serving nutrition, including its missing value. Supplied foods show a concise approximate-label reminder. Existing paid nutrient visibility and acknowledged diary saves remain enforced.
+
 This owner follow-up supersedes the older empty-discovery, two-section You, food-method and Squad selected-border decisions within this scope.
 
 - Nutrition labels and amounts use shared `nutritionColors`: protein green, carbs white, calories yellow and fat red. These are nutrient identities and never performance judgements. Keep explicit labels, on-brand button contrast and error styling. Person identity hues retain their existing meanings.

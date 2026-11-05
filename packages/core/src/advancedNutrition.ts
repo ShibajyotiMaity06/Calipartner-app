@@ -1,5 +1,25 @@
 import type { Food, NutrientSnapshot, NutritionDetails } from './types';
 
+/** Extra gram/mg amounts scale with the portion; label reference values and unknowns do not. */
+export function scaleNutritionDetails(
+  value: NutritionDetails,
+  factor: number,
+  roundPortion = true,
+): NutritionDetails {
+  const scaled = (amount: number | null | undefined) =>
+    amount == null ? null : roundPortion ? Math.round(amount * factor * 10) / 10 : amount * factor;
+  return {
+    ...(value.locked ? { locked: true } : {}),
+    saturated_fat: scaled(value.saturated_fat),
+    cholesterol_mg: scaled(value.cholesterol_mg),
+    ...('bcaa_g' in value ? { bcaa_g: scaled(value.bcaa_g) } : {}),
+    ...('label_protein_per_100g' in value
+      ? { label_protein_per_100g: value.label_protein_per_100g }
+      : {}),
+    ...(value.not_provided ? { not_provided: [...value.not_provided] } : {}),
+  };
+}
+
 export function restrictFoodNutrition(food: Food, allowed: boolean): Food {
   return allowed
     ? food
@@ -42,17 +62,7 @@ export function resizeNutrientSnapshot(
     sodium_mg: scaled(value.sodium_mg),
     ...(value.nutrition_details
       ? {
-          nutrition_details: {
-            ...value.nutrition_details,
-            saturated_fat:
-              value.nutrition_details.saturated_fat == null
-                ? null
-                : scaled(value.nutrition_details.saturated_fat),
-            cholesterol_mg:
-              value.nutrition_details.cholesterol_mg == null
-                ? null
-                : scaled(value.nutrition_details.cholesterol_mg),
-          },
+          nutrition_details: scaleNutritionDetails(value.nutrition_details, factor),
         }
       : {}),
   };
@@ -62,7 +72,7 @@ export function sumNutrientSnapshots(values: readonly NutrientSnapshot[]): Nutri
   const round = (value: number) => Math.round(value * 10) / 10;
   const sum = (key: 'calories' | 'protein' | 'carbs' | 'fat' | 'fiber' | 'sugar' | 'sodium_mg') =>
     round(values.reduce((total, item) => total + item[key], 0));
-  const extra = (key: 'saturated_fat' | 'cholesterol_mg') =>
+  const extra = (key: 'saturated_fat' | 'cholesterol_mg' | 'bcaa_g') =>
     values.some((item) => item.nutrition_details?.[key] == null)
       ? null
       : round(values.reduce((total, item) => total + (item.nutrition_details?.[key] ?? 0), 0));
@@ -77,6 +87,16 @@ export function sumNutrientSnapshots(values: readonly NutrientSnapshot[]): Nutri
     nutrition_details: {
       saturated_fat: extra('saturated_fat'),
       cholesterol_mg: extra('cholesterol_mg'),
+      ...(values.some((item) => item.nutrition_details && 'bcaa_g' in item.nutrition_details)
+        ? { bcaa_g: extra('bcaa_g') }
+        : {}),
+      ...(values.some((item) => item.nutrition_details?.not_provided?.length)
+        ? {
+            not_provided: [
+              ...new Set(values.flatMap((item) => item.nutrition_details?.not_provided ?? [])),
+            ],
+          }
+        : {}),
       locked: values.some((item) => item.nutrition_details?.locked),
     },
   };
@@ -88,12 +108,28 @@ export function parseNutritionDetails(raw: unknown): NutritionDetails | null {
     const value = typeof raw === 'string' ? JSON.parse(raw) : raw;
     if (!value || typeof value !== 'object' || Array.isArray(value)) return null;
     const result: NutritionDetails = {};
-    for (const key of ['saturated_fat', 'cholesterol_mg'] as const) {
+    for (const key of [
+      'saturated_fat',
+      'cholesterol_mg',
+      'bcaa_g',
+      'label_protein_per_100g',
+    ] as const) {
       const amount = value[key];
       if (amount === null || (typeof amount === 'number' && Number.isFinite(amount) && amount >= 0))
         result[key] = amount;
     }
     if (value.locked === true) result.locked = true;
+    if (Array.isArray(value.not_provided)) {
+      const fields: unknown[] = value.not_provided;
+      result.not_provided = [
+        ...new Set(
+          fields.filter(
+            (key: unknown): key is 'fiber' | 'sugar' | 'sodium_mg' =>
+              typeof key === 'string' && ['fiber', 'sugar', 'sodium_mg'].includes(key),
+          ),
+        ),
+      ];
+    }
     return result;
   } catch {
     return null;
