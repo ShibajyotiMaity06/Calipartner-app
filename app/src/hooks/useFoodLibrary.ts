@@ -3,14 +3,18 @@ import { foodFavoriteKey, type Food } from '@calipartner/core';
 import { useAuth } from '@/contexts/AuthContext';
 import {
   clearFoodSearchHistory,
+  clearRecentFoods,
   loadFoodLibrary,
   recordFoodSearch,
   setFoodFavorite,
   type FoodLibrary,
 } from '@/services/foodLibraryService';
+import { generateClientUuid } from '@/services/foodService';
+import { diaryEvents } from '@/services/diaryEvents';
 export function useFoodLibrary() {
   const { user } = useAuth();
   const id = user?.id;
+  const recentClear = useRef<{ owner: string; id: string } | null>(null);
   const owner = useRef(id);
   owner.current = id;
   const version = useRef(0),
@@ -112,5 +116,23 @@ export function useFoodLibrary() {
           ),
     clearHistory: () =>
       perform(clearFoodSearchHistory, (current) => ({ ...current, searches: [] })),
+    clearRecentFoods: async () => {
+      if (!id) return false;
+      if (recentClear.current?.owner !== id)
+        recentClear.current = { owner: id, id: generateClientUuid() };
+      const requestId = recentClear.current.id;
+      let clearedAt: string | undefined;
+      const saved = await perform(
+        async (actor) => {
+          clearedAt = await clearRecentFoods(actor, requestId);
+        },
+        (current) => ({ ...current, recentFoodsClearedAt: clearedAt }),
+      );
+      if (saved) {
+        recentClear.current = null;
+        diaryEvents.emitChange();
+      }
+      return saved;
+    },
   };
 }

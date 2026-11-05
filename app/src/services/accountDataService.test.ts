@@ -23,7 +23,11 @@ vi.mock('@/lib/supabase', () => ({
           filters[key] = value;
           return query;
         },
-        order: () => query,
+        order: (column: string) => {
+          if (table === 'recipe_favorites' && column !== 'created_at')
+            throw new Error('column does not exist');
+          return query;
+        },
         range: async (start: number, end: number) => ({
           error: server.error,
           data: (server.tables[table] ?? [])
@@ -71,6 +75,20 @@ beforeEach(() => {
 });
 afterEach(() => connections.splice(0).forEach((connection) => connection.close()));
 describe('online saves without a delivery queue', () => {
+  it('loads favourite composite keys using the real server timestamp and removes stale local favourites', async () => {
+    const { db, sql } = database();
+    server.tables.recipe_favorites = [
+      { user_id: 'owner', recipe_id: 'recipe', created_at: '2026-11-05T00:00:00Z' },
+      { user_id: 'other', recipe_id: 'private', created_at: '2026-11-05T00:00:00Z' },
+    ];
+    await loadAccountTable(db, 'recipe_favorites', 'owner');
+    expect(sql.prepare('select recipe_id from local_recipe_favorites').all()).toEqual([
+      { recipe_id: 'recipe' },
+    ]);
+    server.tables.recipe_favorites = [];
+    await loadAccountTable(db, 'recipe_favorites', 'owner');
+    expect(sql.prepare('select * from local_recipe_favorites').all()).toEqual([]);
+  });
   it('acknowledges a complete workout and its sets with exactly one server request', async () => {
     const { db, sql } = database();
     const workout = await logWorkoutExercise(db, {

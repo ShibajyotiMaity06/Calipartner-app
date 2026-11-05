@@ -3,6 +3,46 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 vi.mock('expo-sqlite', () => ({}));
 vi.mock('@/services/accountDataGate', () => ({ beforeAccountWrite: async () => {} }));
 import { createWebDb } from './index';
+it('reads and removes only the current account recipe favourites from the web cache', async () => {
+  const db = createWebDb({
+    initial: {
+      local_recipe_favorites: [
+        {
+          user_id: 'owner',
+          recipe_id: 'one',
+          created_at: '2026-11-05T00:00:00Z',
+          deleted_at: null,
+        },
+        {
+          user_id: 'other',
+          recipe_id: 'private',
+          created_at: '2026-11-05T00:00:00Z',
+          deleted_at: null,
+        },
+      ],
+    },
+    save: async () => {},
+  });
+  expect(
+    await db.getAllAsync(
+      'SELECT recipe_id FROM local_recipe_favorites WHERE user_id = ? AND deleted_at IS NULL',
+      ['owner'],
+    ),
+  ).toMatchObject([{ recipe_id: 'one' }]);
+  await db.runAsync(
+    'UPDATE local_recipe_favorites SET deleted_at = ? WHERE user_id = ? AND recipe_id = ?',
+    ['2026-11-05T01:00:00Z', 'owner', 'one'],
+  );
+  expect(
+    await db.getAllAsync(
+      'SELECT * FROM local_recipe_favorites WHERE user_id = ? AND deleted_at IS NULL',
+      ['owner'],
+    ),
+  ).toEqual([]);
+  expect(
+    await db.getAllAsync('SELECT * FROM local_recipe_favorites WHERE user_id = ?', ['other']),
+  ).toHaveLength(1);
+});
 import { openWebStorage, LEGACY_WEB_KEY } from './webStorage';
 vi.mock('@/services/accountDataService', async (original) => ({
   ...(await original<object>()),

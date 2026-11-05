@@ -22,6 +22,18 @@ vi.mock('@calipartner/ui', async () => ({
 vi.mock('./AdvancedNutrition', () => ({ AdvancedNutrition: 'AdvancedNutrition' }));
 vi.mock('@/hooks/useBrowserModalBack', () => ({ useBrowserModalBack: vi.fn() }));
 import { QuantityModal } from './QuantityModal';
+it('requires a deliberate meal selection before a food can be saved', async () => {
+  const save = vi.fn();
+  await act(async () => {
+    tree = create(
+      <QuantityModal visible food={food} requireMealChoice onClose={vi.fn()} onSave={save} />,
+    );
+  });
+  expect(tree.root.findByProps({ testID: 'btn-submit-quantity' }).props.disabled).toBe(true);
+  await act(async () => tree.root.findByProps({ testID: 'section-picker-dinner' }).props.onPress());
+  await act(async () => tree.root.findByProps({ testID: 'btn-submit-quantity' }).props.onPress());
+  expect(save).toHaveBeenCalledWith(expect.objectContaining({ mealSection: 'dinner' }));
+});
 let tree: ReactTestRenderer;
 const food = {
   id: 'food',

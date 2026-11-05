@@ -6,7 +6,7 @@ import { ActivityIndicator, Modal, Pressable, ScrollView, TextInput, View } from
 import { Ionicons } from '@expo/vector-icons';
 import type { Food, FoodCandidateItem, MealSection } from '@calipartner/core';
 import { applyNutrientCorrection, scaleNutrients, sumNutrientSnapshots } from '@calipartner/core';
-import { Button, homeLayout, Text } from '@calipartner/ui';
+import { Button, Chip, homeLayout, Text } from '@calipartner/ui';
 import { useAuth } from '@/contexts/AuthContext';
 import { getDb } from '@/db';
 import { useFoodSearch } from '@/hooks/useFoodSearch';
@@ -76,6 +76,7 @@ export function FoodLogModal({
       }
     >
   >({});
+  const [batchMeal, setBatchMeal] = useState<MealSection | null>(null);
   const [batchSaving, setBatchSaving] = useState(false);
   const [batchError, setBatchError] = useState(false);
   const batchInFlight = useRef(false);
@@ -95,6 +96,7 @@ export function FoodLogModal({
   const [activeTab, setActiveTab] = useState<TabType>(
     initialTab === 'scan' ? 'search' : initialTab,
   );
+  const [portionDefaults, setPortionDefaults] = useState<{ quantity: number; unit: string }>();
   const [selectedFoodForQuantity, setSelectedFoodForQuantity] = useState<Food | null>(null);
   const [showBarcodeScanner, setShowBarcodeScanner] = useState(initialTab === 'scan');
   const [showCustomFoodModal, setShowCustomFoodModal] = useState(false);
@@ -126,7 +128,7 @@ export function FoodLogModal({
     ),
   );
   const saveSelection = async () => {
-    if (batchInFlight.current || !selection.length) return;
+    if (batchInFlight.current || !selection.length || !batchMeal) return;
     batchInFlight.current = true;
     setBatchSaving(true);
     setBatchError(false);
@@ -134,7 +136,7 @@ export function FoodLogModal({
       for (const item of selection) {
         const saved = await addEntry({
           ...item,
-          mealSection: defaultSection,
+          mealSection: batchMeal,
           localDate,
           source: item.source,
         });
@@ -165,7 +167,6 @@ export function FoodLogModal({
   // History tab hook
   const {
     items: historyItems,
-    oneTapAdd,
     loading: historyLoading,
     error: historyError,
     saveError: historySaveError,
@@ -174,15 +175,13 @@ export function FoodLogModal({
   } = usePreviouslyLogged();
 
   const handleSelectFood = (food: Food) => {
-    if (query.trim()) void library.remember(query);
+    setPortionDefaults(undefined);
     setSelectedFoodForQuantity(food);
   };
 
-  const handleOneTapAdd = async (item: PreviouslyLoggedItem) => {
-    const saved = await oneTapAdd(item, defaultSection, localDate);
-    if (!saved) return;
-    if (onLogged) onLogged();
-    onClose();
+  const handleOneTapAdd = (item: PreviouslyLoggedItem) => {
+    setPortionDefaults({ quantity: item.stats.last_quantity, unit: item.stats.last_unit });
+    setSelectedFoodForQuantity(item.food);
   };
 
   const handleLogFromQuantity = async (data: Parameters<typeof addEntry>[0]) => {
@@ -203,7 +202,7 @@ export function FoodLogModal({
     const saved = await addEntry({
       ...data,
       localDate,
-      source: data.food.barcode ? 'scan' : 'search',
+      source: portionDefaults ? 'history' : data.food.barcode ? 'scan' : 'search',
     });
     if (!saved) throw new Error(t('fixNovember.saveFailed'));
     if (onLogged) onLogged();
@@ -489,9 +488,6 @@ export function FoodLogModal({
                   testID="input-food-search"
                   value={query}
                   onChangeText={setQuery}
-                  onSubmitEditing={() => {
-                    if (query.trim()) void library.remember(query);
-                  }}
                   placeholder={t('foodLog.searchPlaceholder')}
                   placeholderTextColor={colors.textMuted}
                   autoFocus={false}
@@ -519,37 +515,6 @@ export function FoodLogModal({
                 onPress={() => setShowCustomFoodModal(true)}
                 testID="btn-create-custom-food"
               />
-              <View style={{ gap: spacing.xs }}>
-                <View
-                  style={{
-                    flexDirection: 'row',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    flexWrap: 'wrap',
-                  }}
-                >
-                  <Text variant="label">{t('foodPolish.searchHistory')}</Text>
-                  <Button
-                    variant="tertiary"
-                    fullWidth={false}
-                    label={t('foodPolish.clearHistory')}
-                    disabled={library.busy || !library.searches.length}
-                    onPress={() => void library.clearHistory()}
-                    testID="clear-food-search-history"
-                  />
-                </View>
-                {!query.trim() &&
-                  library.searches.map((search) => (
-                    <Button
-                      key={search}
-                      variant="secondary"
-                      label={search}
-                      accessibilityLabel={t('foodPolish.searchAgain', { query: search })}
-                      onPress={() => setQuery(search)}
-                      testID={`food-search-history-${search}`}
-                    />
-                  ))}
-              </View>
               {/* Search status & results */}
               {searchLoading ? (
                 <View style={{ paddingVertical: spacing.lg, alignItems: 'center' }}>
@@ -831,7 +796,24 @@ export function FoodLogModal({
 
           {activeTab === 'search' && !query.trim() && (
             <View style={{ flex: 1, paddingHorizontal: spacing.md, gap: spacing.sm }}>
-              <Text variant="heading">{t('homeRefresh.recentFoods')}</Text>
+              <View
+                style={{
+                  flexDirection: 'row',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  flexWrap: 'wrap',
+                }}
+              >
+                <Text variant="heading">{t('homeRefresh.recentFoods')}</Text>
+                <Button
+                  variant="tertiary"
+                  fullWidth={false}
+                  label={t('foodPolish.clearRecentFoods')}
+                  disabled={library.busy || historyLoading || !historyItems.length}
+                  onPress={() => void library.clearRecentFoods()}
+                  testID="clear-recent-foods"
+                />
+              </View>
               {/* History Items List */}
               {historyError ? (
                 <View>
@@ -932,8 +914,8 @@ export function FoodLogModal({
                           onPress={() => void handleOneTapAdd(item)}
                           disabled={historySaving || batchSaving}
                           accessibilityRole="button"
-                          accessibilityLabel={t('repairs.addFood', {
-                            section: t(`diary.sections.${defaultSection}`),
+                          accessibilityLabel={t('foodPolish.chooseMealFor', {
+                            name: item.food.name,
                           })}
                           style={{
                             flexDirection: 'row',
@@ -956,7 +938,7 @@ export function FoodLogModal({
                               color: colors.accent,
                             }}
                           >
-                            {t('foodLog.history.oneTapAdd')}
+                            {t('foodPolish.addFood')}
                           </Text>
                         </Pressable>
                       </View>
@@ -974,6 +956,20 @@ export function FoodLogModal({
               testID="food-selection-footer"
             >
               <Text>{t('foodPolish.selected', { count: selection.length })}</Text>
+              <Text>{t('foodPolish.chooseMeal')}</Text>
+              <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: spacing.xs }}>
+                {(['breakfast', 'lunch', 'dinner', 'snacks', 'extra'] as MealSection[]).map(
+                  (meal) => (
+                    <Chip
+                      key={meal}
+                      label={t(`diary.sections.${meal}`)}
+                      selected={batchMeal === meal}
+                      onPress={() => setBatchMeal(meal)}
+                      testID={`batch-meal-${meal}`}
+                    />
+                  ),
+                )}
+              </View>
               <NutrientSummary values={selectionTotals} />
               {batchError && (
                 <Text style={{ color: colors.danger }} accessibilityRole="alert">
@@ -985,10 +981,12 @@ export function FoodLogModal({
                 label={
                   batchSaving
                     ? t('common.saving')
-                    : t('homeRefresh.addSelection', { meal: t(`diary.sections.${defaultSection}`) })
+                    : batchMeal
+                      ? t('homeRefresh.addSelection', { meal: t(`diary.sections.${batchMeal}`) })
+                      : t('foodPolish.chooseMeal')
                 }
                 onPress={() => void saveSelection()}
-                disabled={batchSaving}
+                disabled={batchSaving || !batchMeal}
                 testID="save-food-selection"
               />
             </View>
@@ -998,7 +996,13 @@ export function FoodLogModal({
               visible={Boolean(selectedFoodForQuantity)}
               food={selectedFoodForQuantity}
               defaultSection={defaultSection}
-              onClose={() => setSelectedFoodForQuantity(null)}
+              initialQuantity={portionDefaults?.quantity}
+              initialUnit={portionDefaults?.unit}
+              requireMealChoice={!selectedFoods[selectedFoodForQuantity.id]}
+              onClose={() => {
+                setSelectedFoodForQuantity(null);
+                setPortionDefaults(undefined);
+              }}
               onSave={handleLogFromQuantity}
             />
           )}

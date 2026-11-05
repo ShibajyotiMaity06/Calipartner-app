@@ -26,6 +26,9 @@ vi.mock('@/hooks/useSubscription', () => ({
   useSubscription: () => ({ hasActiveAccess: state.paid, loading: state.loading }),
 }));
 vi.mock('@/contexts/AuthContext', () => ({ useAuth: () => ({ user: { id: 'owner' } }) }));
+vi.mock('@/services/accountDataService', () => ({
+  loadAccountTable: vi.fn().mockResolvedValue(undefined),
+}));
 vi.mock('@/db', () => ({ getDb: async () => ({}) }));
 vi.mock('@/lib/supabase', () => ({ getSupabase: () => ({}) }));
 vi.mock('@/theme/useTheme', () => ({ useTheme: () => ({ colors: {} }) }));

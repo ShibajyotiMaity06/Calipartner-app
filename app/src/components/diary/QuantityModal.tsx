@@ -33,6 +33,7 @@ export interface QuantityModalProps {
   initialQuantity?: number;
   initialUnit?: string;
   defaultSection?: MealSection;
+  requireMealChoice?: boolean;
   onClose: () => void;
   onSave: (data: {
     food: Food;
@@ -71,6 +72,7 @@ export function QuantityModal({
   initialQuantity,
   initialUnit,
   defaultSection = 'lunch',
+  requireMealChoice = false,
   onClose,
   onSave,
   onDelete,
@@ -81,7 +83,9 @@ export function QuantityModal({
   const inFlight = useRef(false);
   const [quantityStr, setQuantityStr] = useState('1');
   const [selectedUnit, setSelectedUnit] = useState('g');
-  const [selectedSection, setSelectedSection] = useState<MealSection>(defaultSection);
+  const [selectedSection, setSelectedSection] = useState<MealSection | null>(
+    requireMealChoice ? null : defaultSection,
+  );
   const [nutritionDraft, setNutritionDraft] = useState<NutrientDraft | null>(null);
 
   useEffect(() => {
@@ -103,9 +107,18 @@ export function QuantityModal({
       setQuantityStr(String(initialQuantity ?? 1));
       const firstUnit = food.serving_units?.[0]?.unit || 'g';
       setSelectedUnit(initialUnit ?? firstUnit);
-      setSelectedSection(defaultSection);
+      setSelectedSection(requireMealChoice ? null : defaultSection);
     }
-  }, [initialEntry, food, defaultSection, visible, initialNutrients, initialQuantity, initialUnit]);
+  }, [
+    initialEntry,
+    food,
+    defaultSection,
+    visible,
+    initialNutrients,
+    initialQuantity,
+    initialUnit,
+    requireMealChoice,
+  ]);
   const overrides = useMemo(
     () =>
       nutritionDraft
@@ -154,13 +167,17 @@ export function QuantityModal({
 
   if (!food) return null;
 
-  const sectionName = t(`diary.sections.${selectedSection}` as Parameters<typeof t>[0]);
+  const sectionName = selectedSection
+    ? t(`diary.sections.${selectedSection}` as Parameters<typeof t>[0])
+    : '';
   const actionVerb = initialEntry
     ? t('quantity.saveChanges')
-    : t('homeRefresh.addSelection', { meal: sectionName.toLowerCase() });
+    : selectedSection
+      ? t('homeRefresh.addSelection', { meal: sectionName.toLowerCase() })
+      : t('foodPolish.chooseMeal');
 
   const submit = async () => {
-    if (inFlight.current || parsedQty <= 0 || !preview) return;
+    if (inFlight.current || parsedQty <= 0 || !preview || !selectedSection) return;
     inFlight.current = true;
     setSaving(true);
     setSaveFailed(false);
@@ -183,7 +200,7 @@ export function QuantityModal({
     }
   };
   const handleSave = () => {
-    if (inFlight.current || parsedQty <= 0 || !preview) return;
+    if (inFlight.current || parsedQty <= 0 || !preview || !selectedSection) return;
     if (preview.calories > 3200) {
       if (Platform.OS === 'web') {
         const browser = globalThis as unknown as { confirm?: (message: string) => boolean };
@@ -248,6 +265,24 @@ export function QuantityModal({
                 {food.brand}
               </Text>
             ) : null}
+          </View>
+
+          {/* Meal Section Selector */}
+          <View style={styles.sectionPickerWrap}>
+            <Text variant="label" color={dark.textLo} style={styles.previewLabel}>
+              {t('foodPolish.chooseMeal')}
+            </Text>
+            <View style={styles.sectionChipsRow}>
+              {SECTIONS.map((sec) => (
+                <Chip
+                  key={sec}
+                  label={t(`diary.sections.${sec}` as Parameters<typeof t>[0])}
+                  selected={selectedSection === sec}
+                  onPress={() => setSelectedSection(sec)}
+                  testID={`section-picker-${sec}`}
+                />
+              ))}
+            </View>
           </View>
 
           {/* Big Editable Number (numeralXL) with Preset Multipliers above */}
@@ -408,24 +443,6 @@ export function QuantityModal({
 
           {preview && <AdvancedNutrition nutrients={preview} />}
 
-          {/* Meal Section Selector */}
-          <View style={styles.sectionPickerWrap}>
-            <Text variant="label" color={dark.textLo} style={styles.previewLabel}>
-              MEAL SECTION
-            </Text>
-            <View style={styles.sectionChipsRow}>
-              {SECTIONS.map((sec) => (
-                <Chip
-                  key={sec}
-                  label={t(`diary.sections.${sec}` as Parameters<typeof t>[0])}
-                  selected={selectedSection === sec}
-                  onPress={() => setSelectedSection(sec)}
-                  testID={`section-picker-${sec}`}
-                />
-              ))}
-            </View>
-          </View>
-
           {saveFailed && (
             <Text color={dark.danger} accessibilityRole="alert" testID="quantity-save-error">
               {t('fixNovember.saveFailed')}
@@ -437,7 +454,7 @@ export function QuantityModal({
               testID="btn-submit-quantity"
               variant="primary"
               label={actionVerb}
-              disabled={parsedQty <= 0 || saving || !preview}
+              disabled={parsedQty <= 0 || saving || !preview || !selectedSection}
               loading={saving}
               onPress={handleSave}
             />

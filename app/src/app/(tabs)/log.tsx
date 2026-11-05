@@ -5,7 +5,7 @@ import { useFocusEffect, useRouter, useLocalSearchParams } from 'expo-router';
 import { getMealSectionForTime, type MealSection } from '@calipartner/core';
 import { Sheet } from '@calipartner/ui';
 import { FoodLogModal } from '@/components/diary/FoodLogModal';
-import { WorkoutLoggerModal } from '@/components/workouts/WorkoutLoggerModal';
+import { WorkoutHubModal } from '@/components/workouts/WorkoutHubModal';
 import { CustomWaterModal, ManualStepsModal, WeightEntryModal } from '@/components/trackers';
 
 import { RecipeBrowseView } from '@/components/recipes';
@@ -111,7 +111,7 @@ export default function LogScreen() {
 
       {/* 3. Workout Logger Modal */}
       {activeFlow === 'workout' && (
-        <WorkoutLoggerModal
+        <WorkoutHubModal
           visible={sheetVisible}
           defaultDate={todayDate}
           onClose={closeFlow}

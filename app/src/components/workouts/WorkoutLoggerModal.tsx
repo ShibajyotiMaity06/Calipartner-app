@@ -1,4 +1,5 @@
 import { type as inputTypography } from '@calipartner/ui';
+import { useBrowserModalBack } from '@/hooks/useBrowserModalBack';
 import { useCurrentLocalDate } from '@/hooks/useCurrentLocalDate';
 import React, { useEffect, useState } from 'react';
 import {
@@ -62,19 +63,6 @@ interface WorkoutLoggerModalProps {
   testID?: string;
 }
 
-const WORKOUT_TYPES: Array<{
-  key: WorkoutType;
-  label: string;
-  icon: keyof typeof Ionicons.glyphMap;
-}> = [
-  { key: 'strength', label: 'Strength', icon: 'barbell-outline' },
-  { key: 'cardio', label: 'Cardio', icon: 'speedometer-outline' },
-  { key: 'walk_run', label: 'Walk / Run', icon: 'walk-outline' },
-  { key: 'sports', label: 'Sports', icon: 'football-outline' },
-  { key: 'yoga_mobility', label: 'Yoga & Mobility', icon: 'body-outline' },
-  { key: 'other', label: 'Other', icon: 'fitness-outline' },
-];
-
 export function WorkoutLoggerModal({
   visible,
   initialWorkout,
@@ -83,6 +71,8 @@ export function WorkoutLoggerModal({
   onSaved,
   testID = 'workout-logger-modal',
 }: WorkoutLoggerModalProps) {
+  useBrowserModalBack(visible, onClose);
+  const [showDetails, setShowDetails] = useState(false);
   const [weeklyPlanVisible, setWeeklyPlanVisible] = useState(false);
   const { user } = useAuth();
   const planOwnerId = user?.id;
@@ -201,6 +191,7 @@ export function WorkoutLoggerModal({
               })),
         );
         setWorkoutName((current) => current || day.workout.title);
+        setDurationMinutes(day.workout.minutes);
       })
       .catch(() => {
         /* Logging stays available if a preferred plan cannot be loaded. */
@@ -595,12 +586,19 @@ export function WorkoutLoggerModal({
             onPress={() => setWeeklyPlanVisible(true)}
             testID="workout-preferred-plan"
           />
-          {/* Running Timer Bar */}
-          <RunningTimerBar
-            testID={`${testID}-running-timer-bar`}
-            workoutId={initialWorkout?.id}
-            onApplyDuration={(mins) => setDurationMinutes(mins)}
+          <Button
+            variant="tertiary"
+            label={t('foodPolish.workoutDetails')}
+            onPress={() => setShowDetails((current) => !current)}
+            testID="workout-show-details"
           />
+          {showDetails && (
+            <RunningTimerBar
+              testID={`${testID}-running-timer-bar`}
+              workoutId={initialWorkout?.id}
+              onApplyDuration={(mins) => setDurationMinutes(mins)}
+            />
+          )}
 
           {/* Error Banner */}
           {errorMessage && (
@@ -614,52 +612,6 @@ export function WorkoutLoggerModal({
               <Text style={[styles.errorText, { color: colors.danger }]}>{errorMessage}</Text>
             </View>
           )}
-
-          {/* Type Picker Chips */}
-          <View style={styles.sectionWrap}>
-            <Text style={[styles.sectionHeading, { color: colors.textMuted }]}>
-              {t('workouts.fields.type')}
-            </Text>
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              contentContainerStyle={styles.typesRow}
-            >
-              {WORKOUT_TYPES.map((item) => {
-                const isSelected = workoutType === item.key;
-                return (
-                  <TouchableOpacity
-                    key={item.key}
-                    testID={`chip-workout-type-${item.key}`}
-                    style={[
-                      styles.typeChip,
-                      {
-                        backgroundColor: isSelected ? colors.accent : colors.surface,
-                        borderColor: isSelected ? colors.accent : colors.border,
-                      },
-                    ]}
-                    onPress={() => setWorkoutType(item.key)}
-                    accessibilityRole="button"
-                    accessibilityLabel={item.label}
-                  >
-                    <Ionicons
-                      name={item.icon}
-                      size={18}
-                      color={isSelected ? colors.onAccent : colors.text}
-                    />
-                    <Text
-                      style={[
-                        styles.typeChipText,
-                        { color: isSelected ? colors.onAccent : colors.text },
-                      ]}
-                    >
-                      {item.label}
-                    </Text>
-                  </TouchableOpacity>
-                );
-              })}
-            </ScrollView>
-          </View>
 
           {/* General Fields */}
           <View
@@ -691,53 +643,54 @@ export function WorkoutLoggerModal({
               />
             </View>
 
-            {/* Duration Stepper */}
-            <View style={styles.fieldGroup}>
-              <Text style={[styles.fieldLabel, { color: colors.textMuted }]}>
-                {t('workouts.fields.duration')}
-              </Text>
-              <View style={styles.durationStepperRow}>
-                <TouchableOpacity
-                  testID={`${testID}-btn-dur-minus-5`}
-                  style={[styles.stepperBtn, { backgroundColor: colors.surfaceAlt }]}
-                  onPress={() => setDurationMinutes((m) => Math.max(5, m - 5))}
-                  accessibilityRole="button"
-                  accessibilityLabel="-5 min"
-                >
-                  <Text style={[styles.stepperBtnText, { color: colors.text }]}>-5</Text>
-                </TouchableOpacity>
-                <TextInput
-                  testID={`${testID}-input-duration`}
-                  style={[
-                    [
-                      styles.durationInput,
-                      {
-                        color: colors.text,
-                        backgroundColor: colors.background,
-                        borderColor: colors.border,
-                      },
-                    ],
-                    { fontFamily: inputTypography.body.fontFamily },
-                  ]}
-                  keyboardType="number-pad"
-                  value={String(durationMinutes)}
-                  onChangeText={(txt) => {
-                    const num = parseInt(txt.replace(/[^0-9]/g, ''), 10);
-                    setDurationMinutes(isNaN(num) ? 0 : num);
-                  }}
-                  accessibilityLabel={t('workouts.fields.duration')}
-                />
-                <TouchableOpacity
-                  testID={`${testID}-btn-dur-plus-5`}
-                  style={[styles.stepperBtn, { backgroundColor: colors.surfaceAlt }]}
-                  onPress={() => setDurationMinutes((m) => m + 5)}
-                  accessibilityRole="button"
-                  accessibilityLabel="+5 min"
-                >
-                  <Text style={[styles.stepperBtnText, { color: colors.text }]}>+5</Text>
-                </TouchableOpacity>
+            {showDetails && (
+              <View style={styles.fieldGroup}>
+                <Text style={[styles.fieldLabel, { color: colors.textMuted }]}>
+                  {t('workouts.fields.duration')}
+                </Text>
+                <View style={styles.durationStepperRow}>
+                  <TouchableOpacity
+                    testID={`${testID}-btn-dur-minus-5`}
+                    style={[styles.stepperBtn, { backgroundColor: colors.surfaceAlt }]}
+                    onPress={() => setDurationMinutes((m) => Math.max(5, m - 5))}
+                    accessibilityRole="button"
+                    accessibilityLabel="-5 min"
+                  >
+                    <Text style={[styles.stepperBtnText, { color: colors.text }]}>-5</Text>
+                  </TouchableOpacity>
+                  <TextInput
+                    testID={`${testID}-input-duration`}
+                    style={[
+                      [
+                        styles.durationInput,
+                        {
+                          color: colors.text,
+                          backgroundColor: colors.background,
+                          borderColor: colors.border,
+                        },
+                      ],
+                      { fontFamily: inputTypography.body.fontFamily },
+                    ]}
+                    keyboardType="number-pad"
+                    value={String(durationMinutes)}
+                    onChangeText={(txt) => {
+                      const num = parseInt(txt.replace(/[^0-9]/g, ''), 10);
+                      setDurationMinutes(isNaN(num) ? 0 : num);
+                    }}
+                    accessibilityLabel={t('workouts.fields.duration')}
+                  />
+                  <TouchableOpacity
+                    testID={`${testID}-btn-dur-plus-5`}
+                    style={[styles.stepperBtn, { backgroundColor: colors.surfaceAlt }]}
+                    onPress={() => setDurationMinutes((m) => m + 5)}
+                    accessibilityRole="button"
+                    accessibilityLabel="+5 min"
+                  >
+                    <Text style={[styles.stepperBtnText, { color: colors.text }]}>+5</Text>
+                  </TouchableOpacity>
+                </View>
               </View>
-            </View>
+            )}
 
             {/* Effort Rating (1 to 10) */}
             <View style={styles.fieldGroup}>

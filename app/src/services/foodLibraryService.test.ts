@@ -2,12 +2,23 @@ import { expect, it, vi } from 'vitest';
 import type { Food } from '@calipartner/core';
 import {
   clearFoodSearchHistory,
+  clearRecentFoods,
   loadFoodLibrary,
   recordFoodSearch,
   setFoodFavorite,
   type FoodLibraryClient,
 } from './foodLibraryService';
 const food = { id: 'food', source: 'usda', name: 'Lentils', brand: null, barcode: null } as Food;
+it('requires an acknowledged reset timestamp and reuses the supplied request UUID on retry', async () => {
+  const api = client();
+  api.rpc.mockResolvedValueOnce({ data: null, error: null }).mockResolvedValue({
+    data: { id: 'request', cleared_at: '2026-11-05T01:00:00Z' },
+    error: null,
+  });
+  await expect(clearRecentFoods('owner', 'request', api)).rejects.toThrow('SAVE_UNCONFIRMED');
+  expect(await clearRecentFoods('owner', 'request', api)).toBe('2026-11-05T01:00:00Z');
+  expect(api.rpc.mock.calls[0]).toEqual(api.rpc.mock.calls[1]);
+});
 function client() {
   return {
     auth: { getUser: async () => ({ data: { user: { id: 'owner' } } }) },

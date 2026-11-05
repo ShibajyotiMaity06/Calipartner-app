@@ -3,6 +3,7 @@ import { getSupabase } from '@/lib/supabase';
 export interface FoodLibrary {
   foods: Food[];
   searches: string[];
+  recentFoodsClearedAt?: string | null;
 }
 export interface FoodLibraryClient {
   auth: { getUser(): Promise<{ data: { user: { id: string } | null }; error?: unknown }> };
@@ -24,10 +25,25 @@ export async function loadFoodLibrary(
   owner: string,
   client?: FoodLibraryClient,
 ): Promise<FoodLibrary> {
-  const result = (await request(owner, 'get_food_library', undefined, client)) as FoodLibrary;
+  const result = (await request(owner, 'get_food_library', undefined, client)) as FoodLibrary & {
+    recent_foods_cleared_at?: string | null;
+  };
   if (!Array.isArray(result?.foods) || !Array.isArray(result?.searches))
     throw new Error('FOOD_LIBRARY_UNAVAILABLE');
-  return result;
+  return { ...result, recentFoodsClearedAt: result.recent_foods_cleared_at ?? null };
+}
+export async function clearRecentFoods(
+  owner: string,
+  id: string,
+  client?: FoodLibraryClient,
+): Promise<string> {
+  const result = (await request(owner, 'clear_recent_foods', { p_id: id }, client)) as {
+    id?: string;
+    cleared_at?: string;
+  };
+  if (result?.id !== id || !result.cleared_at || !Number.isFinite(Date.parse(result.cleared_at)))
+    throw new Error('SAVE_UNCONFIRMED');
+  return result.cleared_at;
 }
 export async function setFoodFavorite(
   owner: string,

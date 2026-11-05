@@ -25,10 +25,11 @@ export default function ProgressScreen() {
     }, [refresh]),
   );
   const [tab, setTab] = useState<'diary' | 'progress' | 'challenges'>('diary');
-  const params = useLocalSearchParams<{ challenge?: string; trophies?: string }>();
+  const params = useLocalSearchParams<{ challenge?: string; trophies?: string; tab?: string }>();
   useEffect(() => {
     if (params.challenge || params.trophies) setTab('challenges');
-  }, [params.challenge, params.trophies]);
+    else if (params.tab === 'progress') setTab('progress');
+  }, [params.challenge, params.trophies, params.tab]);
   const diaryRefresh = useRef<(() => Promise<void>) | null>(null);
   const challengeRefresh = useRef<(() => Promise<void>) | null>(null);
   const registerChallengeRefresh = useCallback((refreshChallenges: () => Promise<void>) => {
@@ -86,7 +87,7 @@ export default function ProgressScreen() {
             <PersonalSquads />
           </>
         ) : tab === 'challenges' ? (
-          <ChallengesView onRefreshReady={registerChallengeRefresh} />
+          <ChallengesView embedded onRefreshReady={registerChallengeRefresh} />
         ) : (
           <>
             <RangeSelector

@@ -1,4 +1,4 @@
-import { useBrowserModalBack } from '@/hooks/useBrowserModalBack';
+import { useBrowserModalBack, closeBrowserModalsThen } from '@/hooks/useBrowserModalBack';
 import React, { useState } from 'react';
 import {
   Image,
@@ -12,33 +12,40 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { ChevronLeftIcon, dark, radius, space, Text } from '@calipartner/ui';
 import { playClickSound } from '@/lib/sound';
-import { WeeklyPlanModal } from './WeeklyPlanModal';
+import { WeeklyPlanScreenModal } from './WeeklyPlanScreenModal';
+import { WorkoutLoggerModal } from './WorkoutLoggerModal';
+import { t } from '@/i18n';
+import type { WorkoutWithDetails } from '@calipartner/core';
 import { WorkoutLogModal } from './WorkoutLogModal';
-import { WorkoutProgressModal } from './WorkoutProgressModal';
+import { useRouter } from 'expo-router';
 import { WorkoutHistoryCalendarModal } from './WorkoutHistoryCalendarModal';
 
 export interface WorkoutHubModalProps {
   visible: boolean;
   onClose: () => void;
   testID?: string;
+  defaultDate?: string;
+  onSaved?: (workout: WorkoutWithDetails) => void;
 }
 
 export function WorkoutHubModal({
   visible,
   onClose,
   testID = 'workout-hub-modal',
+  defaultDate,
+  onSaved,
 }: WorkoutHubModalProps) {
   useBrowserModalBack(visible, onClose);
+  const [showLogger, setShowLogger] = useState(false);
   const [showLogModal, setShowLogModal] = useState(false);
   const [showPlanModal, setShowPlanModal] = useState(false);
-  const [showProgressModal, setShowProgressModal] = useState(false);
+  const router = useRouter();
   const [showHistoryModal, setShowHistoryModal] = useState(false);
   const [logCategory, setLogCategory] = useState<'upper' | 'lower' | 'core' | 'full' | undefined>();
 
   const handleOpenLog = () => {
     playClickSound();
-    setLogCategory(undefined);
-    setShowLogModal(true);
+    setShowLogger(true);
   };
 
   const handleOpenPlan = () => {
@@ -48,7 +55,10 @@ export function WorkoutHubModal({
 
   const handleOpenProgress = () => {
     playClickSound();
-    setShowProgressModal(true);
+    closeBrowserModalsThen(() => {
+      onClose();
+      router.push('/(tabs)/progress?tab=progress');
+    });
   };
 
   const handleOpenHistory = () => {
@@ -149,7 +159,8 @@ export function WorkoutHubModal({
                 onPress={handleOpenPlan}
                 style={styles.actionTile}
                 accessibilityRole="button"
-                accessibilityLabel="Set Goal. Plan your fitness journey"
+                accessibilityLabel={t('foodPolish.workoutWeek')}
+                accessibilityHint={t('foodPolish.workoutWeekHint')}
                 testID="btn-action-set-goal"
               >
                 <View style={styles.actionIconBox}>
@@ -157,10 +168,10 @@ export function WorkoutHubModal({
                 </View>
                 <View style={styles.actionTextCol}>
                   <Text variant="body" color={dark.textHi} style={styles.actionTitle}>
-                    Set Goal
+                    {t('foodPolish.workoutWeek')}
                   </Text>
                   <Text variant="micro" color={dark.textLo}>
-                    Plan your fitness journey
+                    {t('foodPolish.workoutWeekHint')}
                   </Text>
                 </View>
               </TouchableOpacity>
@@ -251,30 +262,25 @@ export function WorkoutHubModal({
           </ScrollView>
 
           {/* Sub-modals */}
+          {showLogger && (
+            <WorkoutLoggerModal
+              visible
+              defaultDate={defaultDate}
+              onClose={() => setShowLogger(false)}
+              onSaved={onSaved}
+            />
+          )}
           <WorkoutLogModal
             visible={showLogModal}
             initialCategory={logCategory}
             onClose={() => setShowLogModal(false)}
             onOpenProgress={() => {
               setShowLogModal(false);
-              setShowProgressModal(true);
+              handleOpenProgress();
             }}
           />
 
-          <WeeklyPlanModal
-            visible={showPlanModal}
-            onClose={() => setShowPlanModal(false)}
-            onSavePlan={() => {
-              setShowPlanModal(false);
-              setShowLogModal(true);
-            }}
-          />
-
-          <WorkoutProgressModal
-            visible={showProgressModal}
-            initialTab="Overview"
-            onClose={() => setShowProgressModal(false)}
-          />
+          {showPlanModal && <WeeklyPlanScreenModal onClose={() => setShowPlanModal(false)} />}
 
           <WorkoutHistoryCalendarModal
             visible={showHistoryModal}

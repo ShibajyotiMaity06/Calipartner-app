@@ -843,6 +843,7 @@ export async function getDiaryDaySummary(
 export async function getPreviouslyLoggedItems(
   db: LocalDb,
   userId: string,
+  clearedBefore?: string | null,
 ): Promise<Array<{ stats: UserFoodStats; food: Food }>> {
   const [statsRows, foods, entries] = await Promise.all([
     db.getAllAsync<UserFoodStats>('SELECT * FROM local_user_food_stats WHERE user_id = ?', [
@@ -863,8 +864,14 @@ export async function getPreviouslyLoggedItems(
     statsRows.filter((row) => row.user_id === userId).map((row) => [row.food_id, row]),
   );
   const recent = new Map<string, { stats: UserFoodStats; food: Food }>();
+  const cutoff = clearedBefore ? Date.parse(clearedBefore) : -Infinity;
   const ordered = entries
-    .filter((entry) => entry.user_id === userId && !entry.deleted_at)
+    .filter(
+      (entry) =>
+        entry.user_id === userId &&
+        !entry.deleted_at &&
+        (!clearedBefore || Date.parse(entry.updated_at ?? entry.logged_at) > cutoff),
+    )
     .sort((a, b) => b.logged_at.localeCompare(a.logged_at));
   for (const entry of ordered) {
     const key = entry.food_id ?? entry.food_name.trim().toLocaleLowerCase();
@@ -898,7 +905,12 @@ export async function getPreviouslyLoggedItems(
   }
   for (const row of stats.values()) {
     const food = catalog.get(row.food_id);
-    if (!row.hidden && food && !recent.has(row.food_id))
+    if (
+      !row.hidden &&
+      food &&
+      !recent.has(row.food_id) &&
+      (!clearedBefore || Date.parse(row.last_used_at) > cutoff)
+    )
       recent.set(row.food_id, { food, stats: row });
   }
   return [...recent.values()].sort((a, b) =>

@@ -147,6 +147,40 @@ function createTestDb(): LocalDb {
   };
 }
 
+it('clears only recent suggestions, preserves the diary and allows a newly logged backdated food to return', async () => {
+  const db = createTestDb();
+  await ensureBundledFoodsSeeded(db);
+  const food = (await searchLocalFoods(db, 'banana'))[0]!;
+  await logFoodEntry(db, {
+    userId: 'owner',
+    food,
+    quantity: 100,
+    unit: 'g',
+    mealSection: 'lunch',
+    localDate: '2026-11-03',
+  });
+  await db.runAsync("UPDATE local_food_entries SET updated_at = '2026-11-04T00:00:00Z'");
+  await db.runAsync("UPDATE local_user_food_stats SET last_used_at = '2026-11-04T00:00:00Z'");
+  const cutoff = '2026-11-05T00:00:00Z';
+  expect(await getPreviouslyLoggedItems(db, 'owner', cutoff)).toHaveLength(0);
+  expect(await getEntriesForDate(db, 'owner', '2026-11-03')).toHaveLength(1);
+  const added = await logFoodEntry(db, {
+    userId: 'owner',
+    food,
+    quantity: 50,
+    unit: 'g',
+    mealSection: 'dinner',
+    localDate: '2026-11-02',
+  });
+  await db.runAsync(
+    "UPDATE local_food_entries SET updated_at = '2026-11-05T01:00:00Z' WHERE id = ?",
+    [added.id],
+  );
+  await db.runAsync("UPDATE local_user_food_stats SET last_used_at = '2026-11-05T01:00:00Z'");
+  expect(await getPreviouslyLoggedItems(db, 'owner', cutoff)).toHaveLength(1);
+  expect(await getEntriesForDate(db, 'owner', '2026-11-02')).toHaveLength(1);
+});
+
 describe('Food Service & Local Database', () => {
   it('rejects missing food energy before saving a misleading zero-calorie snapshot', async () => {
     const db = createTestDb();

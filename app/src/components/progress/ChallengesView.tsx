@@ -22,9 +22,11 @@ import { LoadingState } from '@/components/LoadingState';
 export function ChallengesView({
   testID = 'challenges-view',
   onRefreshReady,
+  embedded = false,
 }: {
   testID?: string;
   onRefreshReady?: (refresh: () => Promise<void>) => void;
+  embedded?: boolean;
 }) {
   const state = useChallenges();
   useEffect(() => {
@@ -59,7 +61,7 @@ export function ChallengesView({
   }, [params.challenge, home]);
   if (!home)
     return (
-      <View style={cs.home} testID={testID}>
+      <View style={[cs.home, embedded && { paddingHorizontal: 0, paddingTop: 0 }]} testID={testID}>
         <Text style={cs.title}>{ct('title')}</Text>
         {state.loading ? (
           <LoadingState />
@@ -101,7 +103,7 @@ export function ChallengesView({
     }
   };
   return (
-    <View style={cs.home} testID={testID}>
+    <View style={[cs.home, embedded && { paddingHorizontal: 0, paddingTop: 0 }]} testID={testID}>
       <View style={cs.between}>
         <View>
           <Text accessibilityRole="header" style={cs.title}>

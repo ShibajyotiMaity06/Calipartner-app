@@ -176,7 +176,14 @@ async function readAccountTable(db: LocalDb, entity: string, userId: string): Pr
     let query = client.from(entity).select('*');
     if (entity !== 'foods' && entity !== 'exercises') query = query.eq('user_id', userId);
     const result = await query
-      .order(entity === 'fasting_settings' ? 'user_id' : 'updated_at', { ascending: true })
+      .order(
+        entity === 'fasting_settings'
+          ? 'user_id'
+          : entity === 'recipe_favorites'
+            ? 'created_at'
+            : 'updated_at',
+        { ascending: true },
+      )
       .range(offset, offset + 499);
     if (result.error) throw result.error;
     remoteRows.push(...(result.data ?? []));
@@ -306,6 +313,13 @@ async function readAccountTable(db: LocalDb, entity: string, userId: string): Pr
             ],
           );
         }
+      } else if (entity === 'recipe_favorites') {
+        await db.runAsync(
+          `INSERT INTO local_recipe_favorites (user_id,recipe_id,created_at,sync_state,deleted_at)
+           VALUES (?,?,?,'synced',NULL)
+           ON CONFLICT(user_id,recipe_id) DO UPDATE SET created_at=excluded.created_at,sync_state='synced',deleted_at=NULL`,
+          [userId, row.recipe_id, row.created_at],
+        );
       } else if (entity === 'foods') {
         // Catalog records visible to the current account
         const unitsJson =

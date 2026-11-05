@@ -47,6 +47,15 @@ export async function runFoodLibraryTests(db) {
         JSON.stringify(food),
       ]);
     assert.equal((await call('select public.get_food_library() as data')).foods.length, 1);
+    const clearId = 'fa040000-0000-4000-8000-000000000090';
+    const reset = await call('select public.clear_recent_foods($1) as data', [clearId]);
+    assert.deepEqual(await call('select public.clear_recent_foods($1) as data', [clearId]), reset);
+    assert.equal((await db.query('select * from public.food_recent_resets')).rows.length, 1);
+    assert.equal(
+      (await call('select public.get_food_library() as data')).recent_foods_cleared_at,
+      reset.cleared_at,
+    );
+    assert.equal((await call('select public.get_food_library() as data')).foods.length, 1);
     await denied('select public.set_food_favorite($1,$2,true)', [
       'private',
       JSON.stringify({ ...food, owner_id: second }),
@@ -60,9 +69,16 @@ export async function runFoodLibraryTests(db) {
     assert.deepEqual(await call('select public.get_food_library() as data'), {
       foods: [],
       searches: [],
+      recent_foods_cleared_at: null,
     });
     assert.equal((await db.query('select * from public.food_favorites')).rows.length, 0);
     assert.equal((await db.query('select * from public.food_search_history')).rows.length, 0);
+    assert.equal((await db.query('select * from public.food_recent_resets')).rows.length, 0);
+    await denied('select public.clear_recent_foods($1)', [clearId]);
+    await denied('insert into public.food_recent_resets(id,user_id) values($1,$2)', [
+      clearId,
+      first,
+    ]);
     await denied('insert into public.food_favorites(user_id,food_key,food) values($1,$2,$3)', [
       first,
       'spoof',
@@ -82,6 +98,7 @@ export async function runFoodLibraryTests(db) {
     assert.deepEqual((await call('select public.get_food_library() as data')).searches, ['rice']);
     await actor(null, 'anon');
     await denied('select public.get_food_library()');
+    await denied('select public.clear_recent_foods($1)', [clearId]);
     console.log(
       'Food library SQL/RLS tests: private favourites/searches, ownership, canonical retry keys, acknowledged removal and isolated history clearing passed',
     );

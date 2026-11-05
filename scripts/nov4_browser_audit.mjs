@@ -179,7 +179,9 @@ const projectedPlan = () =>
       };
 const savedMeals = new Map();
 let emptySquads = false;
-const foodLibrary = { foods: [], searches: [] };
+const foodLibrary = { foods: [], searches: [], recent_foods_cleared_at: null };
+const recentClears = new Map(),
+  recipeFavorites = new Map();
 const trackingRequests = [];
 let saveAttempts = 0;
 let paid = false,
@@ -237,6 +239,13 @@ try {
         foodLibrary.foods = foodLibrary.foods.filter((food) => food.id !== body.p_food.id);
         if (body.p_favorite) foodLibrary.foods.push(body.p_food);
         data = { food_key: body.p_food_key, favorite: body.p_favorite };
+      } else if (name === 'clear_recent_foods') {
+        const cutoff =
+          recentClears.get(body.p_id) ??
+          (await request.frame().evaluate(() => new Date().toISOString()));
+        recentClears.set(body.p_id, cutoff);
+        foodLibrary.recent_foods_cleared_at = cutoff;
+        data = { id: body.p_id, cleared_at: cutoff };
       } else if (name === 'record_food_search') {
         const query = body.p_query.trim().toLowerCase();
         foodLibrary.searches = [query, ...foodLibrary.searches.filter((q) => q !== query)];
@@ -266,6 +275,11 @@ try {
         trackingRequests.push(body);
         for (const change of body.p_changes ?? [])
           if (change.entity === 'food_entries') savedMeals.set(change.payload.id, change.payload);
+          else if (change.entity === 'recipe_favorites') {
+            if (change.operation === 'delete') recipeFavorites.delete(change.payload.recipe_id);
+            else
+              recipeFavorites.set(change.payload.recipe_id, { ...change.payload, created_at: now });
+          }
         data = { saved: true };
       } else if (name === 'get_personal_weekly_plan') data = projectedPlan();
       else if (name === 'edit_weekly_routine') {
@@ -302,7 +316,17 @@ try {
       else if (name === 'log_coach_meal') {
         saveAttempts++;
         for (const entry of body.p_entries)
-          savedMeals.set(entry.id, { ...entry, user_id: user.id });
+          savedMeals.set(entry.id, {
+            ...entry,
+            user_id: user.id,
+            food_id: null,
+            source: 'coach',
+            logged_at: now,
+            created_at: now,
+            updated_at: now,
+            local_date: day,
+            deleted_at: null,
+          });
         if (saveAttempts === 1) {
           status = 503;
           data = { message: 'Connection lost after save' };
@@ -525,7 +549,8 @@ try {
     } else if (url.pathname.endsWith('/dodo-checkout')) {
       billingRequests.push(request.postDataJSON() ?? {});
       data = { checkout_url: 'https://checkout.dodopayments.com/fixture' };
-    } else if (url.pathname.endsWith('/food_entries')) data = [...savedMeals.values()];
+    } else if (url.pathname.endsWith('/recipe_favorites')) data = [...recipeFavorites.values()];
+    else if (url.pathname.endsWith('/food_entries')) data = [...savedMeals.values()];
     else if (url.pathname.endsWith('/profiles')) data = [profile];
     else if (url.pathname.endsWith('/goal_profiles')) data = [goal];
     else if (url.pathname.endsWith('/entitlements'))
@@ -937,6 +962,37 @@ try {
   await snap('free-squad-chat');
 
   await page.setViewportSize({ width: 375, height: 844 });
+  // Workout entry restores the hub and uses the same saved onboarding plan for this local weekday.
+  paid = true;
+  weeklyPlan.days[1].workout = {
+    title: 'Preferred Tuesday routine',
+    minutes: 30,
+    exercises: [
+      { name: 'Preferred squat', equipment: 'bodyweight', sets: 3, reps: 8, rest_seconds: 60 },
+    ],
+  };
+  await page.goto('http://127.0.0.1:8098/log');
+  await page.getByTestId('log-tile-workout').click();
+  await page.getByTestId('workout-hub-modal').waitFor();
+  await snap('restored-workout-hub');
+  await page.getByTestId('btn-action-set-goal').click();
+  await page.getByTestId('screen-weekly-plan').waitFor();
+  await page.getByTestId('weekly-plan-back').click();
+  await page.getByTestId('btn-action-log-workout').click();
+  await page.getByTestId('workout-logger-modal-input-name').waitFor();
+  await page.waitForFunction(
+    () =>
+      globalThis.document.querySelector('[data-testid="workout-logger-modal-input-name"]')
+        ?.value === 'Preferred Tuesday routine',
+  );
+  assert.equal(await page.getByTestId('chip-workout-type-cardio').count(), 0);
+  assert.equal(await page.getByTestId('workout-logger-modal-input-duration').count(), 0);
+  assert.equal(await page.getByTestId('workout-logger-modal-running-timer-bar').count(), 0);
+  await page.getByText('Preferred squat', { exact: true }).waitFor();
+  await snap('restored-exercise-workout');
+  await page.getByTestId('workout-logger-modal-btn-close').click();
+  await page.getByTestId('btn-workout-hub-back').click();
+  paid = false;
   // Owner follow-up: empty-Squad widths, discovery, challenges and food library/editor.
   emptySquads = true;
   await page.goto('http://127.0.0.1:8098/today');
@@ -953,6 +1009,15 @@ try {
   await page.goto('http://127.0.0.1:8098/progress');
   await page.getByTestId('you-tabs-challenges').click();
   await page.getByTestId('challenges-view').waitFor();
+  const challengeBox = await page.getByTestId('challenges-view').boundingBox();
+  const tabsBox = await page.getByTestId('you-tabs').boundingBox();
+  assert(Math.abs(challengeBox.x - tabsBox.x) <= 1);
+  assert.equal(
+    await page
+      .getByTestId('challenges-view')
+      .evaluate((element) => globalThis.getComputedStyle(element).paddingLeft),
+    '0px',
+  );
   await snap('you-challenges');
   await page.getByTestId('you-tabs-diary').click();
   await page.getByTestId('you-daily-macros').waitFor();
@@ -971,6 +1036,23 @@ try {
   }
   await page.goto('http://127.0.0.1:8098/today');
   await page.getByTestId('btn-add-food-lunch').click();
+  const recentPlus = page.locator('[data-testid^="btn-quick-add-"]').first();
+  await recentPlus.waitFor();
+  const writesBeforeMeal = trackingRequests.length;
+  await recentPlus.click();
+  assert.equal(await page.getByTestId('btn-submit-quantity').getAttribute('aria-disabled'), 'true');
+  assert.equal(trackingRequests.length, writesBeforeMeal);
+  await page.getByTestId('section-picker-dinner').click();
+  await page.getByTestId('btn-submit-quantity').click();
+  await page.getByTestId('input-food-search').waitFor({ state: 'hidden' });
+  assert(
+    trackingRequests
+      .at(-1)
+      .p_changes.some(
+        (change) => change.entity === 'food_entries' && change.payload.meal_section === 'dinner',
+      ),
+  );
+  await page.getByTestId('btn-add-food-lunch').click();
   await page.getByTestId('input-food-search').fill('chicken');
   const searchRow = page.locator('[data-testid^="search-result-"]').first();
   await searchRow.waitFor();
@@ -983,6 +1065,30 @@ try {
   await page.locator('[data-testid^="favorite-result-"]').first().waitFor();
   assert.equal(foodLibrary.foods.length, 1);
   await snap('food-and-recipe-favorites');
+  await page.getByTestId('tab-log-recipes').click();
+  await page.getByTestId('input-recipe-search').fill('Eromba');
+  const recipeHeart = page.locator('[data-testid^="btn-recipe-fav-"]').first();
+  await recipeHeart.waitFor();
+  const recipeHeartId = await recipeHeart.getAttribute('data-testid');
+  const recipeWrite = page.waitForResponse(
+    (response) =>
+      response.url().includes('/rpc/save_tracking_changes') &&
+      (response.request().postDataJSON()?.p_changes ?? []).some(
+        (change) => change.entity === 'recipe_favorites',
+      ),
+  );
+  await recipeHeart.click();
+  await recipeWrite;
+  assert.equal(recipeFavorites.size, 1);
+  await page.getByTestId('tab-log-favorites').click();
+  await page.getByTestId(recipeHeartId).waitFor();
+  await snap('working-recipe-favorite');
+  await page.getByTestId(recipeHeartId).click();
+  await page.waitForFunction(
+    () => !globalThis.document.querySelector('[data-testid^="btn-recipe-fav-"]'),
+  );
+  assert.equal(recipeFavorites.size, 0);
+
   await page.getByTestId('tab-log-search').click();
   await page.locator('[data-testid^="search-result-"]').first().click();
   await page.getByTestId('unit-pill-g').click();
@@ -990,6 +1096,7 @@ try {
   await page.getByTestId('edit-nutrition').click();
   await page.getByTestId('edit-nutrient-protein').fill('50');
   await snap('edited-food-macros');
+  await page.getByTestId('section-picker-lunch').click();
   await page.getByTestId('btn-submit-quantity').click();
   await page.getByTestId('input-food-search').waitFor({ state: 'hidden' });
   assert(
@@ -1000,9 +1107,13 @@ try {
     ),
   );
   await page.getByTestId('btn-add-food-lunch').click();
-  await page.getByTestId('clear-food-search-history').click();
-  await page.waitForTimeout(100);
-  assert.deepEqual(foodLibrary.searches, []);
+  assert.equal(await page.getByTestId('clear-food-search-history').count(), 0);
+  await page.getByTestId('clear-recent-foods').click();
+  await page.waitForFunction(
+    () => !globalThis.document.querySelector('[data-testid^="history-item-"]'),
+  );
+  assert(savedMeals.size > 0);
+  await snap('cleared-recent-foods');
   assert.equal(foodLibrary.foods.length, 1);
   await page.getByTestId('btn-create-custom-food').click();
   await page.getByTestId('input-custom-food-name').fill('My custom food');
@@ -1013,6 +1124,7 @@ try {
   await page.getByTestId('btn-submit-custom-food').click();
   await page.getByTestId('btn-submit-quantity').waitFor();
   await snap('custom-food-portion');
+  await page.getByTestId('section-picker-lunch').click();
   await page.getByTestId('btn-submit-quantity').click();
   await page.getByTestId('input-food-search').waitFor({ state: 'hidden' });
 
@@ -1065,7 +1177,7 @@ try {
   await page.waitForURL('https://checkout.dodopayments.com/fixture');
   assert.deepEqual(errors, []);
   console.log(
-    'November 4 browser audit: copied weekly nutrition hidden with retry-safe rebuild and failed-save preservation, nutrient text colours, full-width empty Home, five goal suggestions, restored Challenges, food favourites/search clearing, custom food and acknowledged 50g protein correction, plus previous food/polish coverage, chronological nested/tab/Log Back, inline member selection, stable idle Compare, acknowledged peer-food copying, Monday-only Free/trial, full paid week/tips and persisted routine editing, India Razorpay dismissal/pending/verified access/confirmed cancellation and international Dodo routing passed at 375/390/844px',
+    'November 4 browser audit: copied weekly nutrition hidden with retry-safe rebuild and failed-save preservation, nutrient text colours, full-width empty Home, five goal suggestions, restored Challenges, working recipe favourites, explicit meal choice, recent-food clearing, restored exercise Workout hub and onboarding-plan connection, reduced Challenges padding, custom food and acknowledged 50g protein correction, plus previous food/polish coverage, chronological nested/tab/Log Back, inline member selection, stable idle Compare, acknowledged peer-food copying, Monday-only Free/trial, full paid week/tips and persisted routine editing, India Razorpay dismissal/pending/verified access/confirmed cancellation and international Dodo routing passed at 375/390/844px',
   );
 } catch (error) {
   for (const page of browser?.contexts().flatMap((context) => context.pages()) ?? []) {

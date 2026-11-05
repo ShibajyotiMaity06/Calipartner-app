@@ -6,6 +6,7 @@ const api = vi.hoisted(() => ({
   load: vi.fn(),
   favorite: vi.fn(),
   clear: vi.fn(),
+  resetRecent: vi.fn(),
   remember: vi.fn(),
   user: { id: 'owner' },
 }));
@@ -14,9 +15,29 @@ vi.mock('@/services/foodLibraryService', () => ({
   loadFoodLibrary: api.load,
   setFoodFavorite: api.favorite,
   clearFoodSearchHistory: api.clear,
+  clearRecentFoods: api.resetRecent,
   recordFoodSearch: api.remember,
 }));
 import { useFoodLibrary } from './useFoodLibrary';
+it('keeps the same clear-recent-foods UUID after a failed acknowledgement and preserves favourites', async () => {
+  api.load.mockResolvedValue({ foods: [food], searches: [], recentFoodsClearedAt: null });
+  await act(async () => {
+    tree = create(<Probe />);
+  });
+  api.resetRecent
+    .mockRejectedValueOnce(new Error('offline'))
+    .mockResolvedValue('2026-11-05T01:00:00Z');
+  await act(async () => {
+    expect(await state.clearRecentFoods()).toBe(false);
+  });
+  expect(state.recentFoodsClearedAt).toBeNull();
+  await act(async () => {
+    expect(await state.clearRecentFoods()).toBe(true);
+  });
+  expect(api.resetRecent.mock.calls[0]).toEqual(api.resetRecent.mock.calls[1]);
+  expect(state.foods).toHaveLength(1);
+  expect(state.recentFoodsClearedAt).toBe('2026-11-05T01:00:00Z');
+});
 const food = { id: 'food', source: 'usda', name: 'Lentils', brand: null, barcode: null } as Food;
 let state: ReturnType<typeof useFoodLibrary>, tree: ReactTestRenderer;
 function Probe() {

@@ -17,19 +17,19 @@ import type {
 } from '@calipartner/core';
 import { createLogger } from '@/lib/logger';
 import { saveRemote, type LocalDb } from './accountDataService';
-import bundledRecipesData from '../../assets/bundled_recipes.json';
 import ownerRecipesData from '../../../datasets/owner_recipes.json';
 
 export const OWNER_RECIPES = ownerRecipesData.map((recipe) =>
   ownerRecipeToRecipe(recipe, recipe.id),
 );
-const allBundledRecipes = [...(bundledRecipesData as unknown as Recipe[]), ...OWNER_RECIPES];
-
+// The old recipe-rNNNN offline templates have no server records/UUIDs and cannot be saved.
+// Use the supplied, already-hosted catalogue for both online and offline browsing.
+const allBundledRecipes = OWNER_RECIPES;
 export const STARTER_RECIPE_IDS = new Set(
-  (bundledRecipesData as unknown as Recipe[])
-    .filter((r) => r.status === 'published')
-    .slice(0, 10)
-    .map((r) => r.id),
+  OWNER_RECIPES.filter((recipe) => recipe.status === 'published')
+    .map((recipe) => recipe.id)
+    .sort()
+    .slice(0, 10),
 );
 
 const log = createLogger('recipeService');
@@ -344,6 +344,7 @@ export async function getRecipes(
   if (rows && rows.length > 0) {
     for (const r of rows) {
       try {
+        if (/^recipe-r\d+$/.test(r.id)) continue;
         const parsed = parseLocalRecipeRow(r);
         recipeMap.set(parsed.id, parsed);
         localParsed.push(parsed);
@@ -641,14 +642,13 @@ export async function toggleRecipeFavorite(
   userId: string,
   recipeId: string,
   isFavorite: boolean,
-  supabase?: SupabaseRecipeClient,
+  _supabase?: SupabaseRecipeClient,
 ): Promise<void> {
   return withOnlineSave(db, async (db) => {
     const now = new Date().toISOString();
     const outboxId = `recipe_fav:${userId}:${recipeId}`;
 
     if (isFavorite) {
-      await getRecipeDetail(db, recipeId, userId, supabase);
       await db.runAsync(
         `INSERT INTO local_recipe_favorites (user_id, recipe_id, created_at, sync_state, deleted_at)
        VALUES (?, ?, ?, 'synced', NULL)

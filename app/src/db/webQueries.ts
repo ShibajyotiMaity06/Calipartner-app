@@ -2,7 +2,7 @@ import type { WebTables } from './webStorage';
 type Row = Record<string, unknown>;
 // The web mirror handles these existing service statements without dropping writes or duplicating rows.
 export const mirroredTable =
-  /\b(?:local_squad_check_ins|local_chat_\w+|local_workout\w*|local_food_entries|local_user_food_stats|local_fasting_settings|local_fasting_sessions)\b/i;
+  /\b(?:local_squad_check_ins|local_chat_\w+|local_workout\w*|local_food_entries|local_user_food_stats|local_fasting_settings|local_fasting_sessions|local_recipe_favorites)\b/i;
 
 function literal(value: string, row: Row): unknown {
   const text = value.trim();

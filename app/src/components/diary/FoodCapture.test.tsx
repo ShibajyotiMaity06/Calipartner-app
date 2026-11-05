@@ -12,6 +12,7 @@ vi.mock('@calipartner/ui', async () => ({
   ...(await import('../../../../packages/ui/src/tokens')),
   Text: 'Text',
   Button: 'Button',
+  Chip: 'Chip',
 }));
 vi.mock('react-native', () => ({
   ActivityIndicator: 'ActivityIndicator',
@@ -238,6 +239,7 @@ it('multi-food selection retries only unsaved foods after a partial storage fail
     renderer.root.findByProps({ testID: 'select-history-first' }).props.onPress();
     renderer.root.findByProps({ testID: 'select-history-second' }).props.onPress();
   });
+  await act(async () => renderer.root.findByProps({ testID: 'batch-meal-lunch' }).props.onPress());
   await act(async () =>
     renderer.root.findByProps({ testID: 'save-food-selection' }).props.onPress(),
   );

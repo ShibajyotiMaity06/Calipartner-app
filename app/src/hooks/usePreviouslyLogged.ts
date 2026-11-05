@@ -15,6 +15,7 @@ import {
   hideFoodFromHistory,
 } from '@/services/foodService';
 import { useAddEntry } from './useFoodEntries';
+import { loadFoodLibrary } from '@/services/foodLibraryService';
 
 export type HistorySortOption = 'recent' | 'frequent' | 'alpha';
 
@@ -47,7 +48,8 @@ export function usePreviouslyLogged(initialSection?: MealSection) {
       await loadAccountTable(db, 'food_entries', userId);
       await loadAccountTable(db, 'user_food_stats', userId);
       await loadAccountTable(db, 'foods', userId);
-      const items = await getPreviouslyLoggedItems(db, userId);
+      const library = userId === 'guest-user' ? null : await loadFoodLibrary(userId);
+      const items = await getPreviouslyLoggedItems(db, userId, library?.recentFoodsClearedAt);
       if (owner.current === userId) setAllItems(items);
     } catch {
       if (owner.current === userId) {

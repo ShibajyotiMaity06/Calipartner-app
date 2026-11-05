@@ -3,7 +3,7 @@ import { Text, Button } from '@calipartner/ui';
 import { PaywallModal } from '@/components/rooms/PaywallModal';
 import { loadAccountTable } from '@/services/accountDataService';
 import { STARTER_RECIPE_IDS } from '@/services/recipeService';
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   FlatList,
@@ -67,6 +67,10 @@ export function RecipeBrowseView({
   const [refreshing, setRefreshing] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
+  const favoriteRequest = useRef(false);
+  const [favoriteError, setFavoriteError] = useState(false);
+  const [favoriteBusy, setFavoriteBusy] = useState(false);
+
   // Selected recipe detail
   const [selectedRecipe, setSelectedRecipe] = useState<Recipe | null>(null);
   const [detailModalVisible, setDetailModalVisible] = useState(false);
@@ -77,13 +81,13 @@ export function RecipeBrowseView({
     try {
       const db = await getDb();
       const supabase = getSupabase();
+      if (user?.id) await loadAccountTable(db, 'recipe_favorites', user.id);
 
       if (activeTab === 'favorites') {
         if (!user?.id) {
           setRecipes([]);
           return;
         }
-        await loadAccountTable(db, 'recipe_favorites', user.id);
         const favs = await getFavoriteRecipes(db, user.id);
         const fullCriteria: RecipeFilterCriteria = {
           ...criteria,
@@ -139,6 +143,7 @@ export function RecipeBrowseView({
   };
 
   const handleToggleFavorite = async (recipe: Recipe) => {
+    if (favoriteRequest.current) return;
     if (!user?.id) return;
     const nextFavorite = !recipe.is_favorite;
 
@@ -146,6 +151,9 @@ export function RecipeBrowseView({
       setShowPlans(true);
       return;
     }
+    favoriteRequest.current = true;
+    setFavoriteBusy(true);
+    setFavoriteError(false);
     try {
       await toggleRecipeFavorite(await getDb(), user.id, recipe.id, nextFavorite, getSupabase());
       setRecipes((current) =>
@@ -161,7 +169,10 @@ export function RecipeBrowseView({
         current?.id === recipe.id ? { ...current, is_favorite: nextFavorite } : current,
       );
     } catch {
-      setErrorMsg(t('foodPolish.actionError'));
+      setFavoriteError(true);
+    } finally {
+      favoriteRequest.current = false;
+      setFavoriteBusy(false);
     }
   };
 
@@ -296,6 +307,11 @@ export function RecipeBrowseView({
         />
       </View>
 
+      {favoriteError && (
+        <View style={styles.filterBarWrap} testID="recipe-favorite-error">
+          <Text accessibilityRole="alert">{t('foodPolish.actionError')}</Text>
+        </View>
+      )}
       {/* Recipe List / Grid Content */}
       {loading ? (
         <View testID="loading-recipes" style={styles.centerState}>
@@ -369,7 +385,10 @@ export function RecipeBrowseView({
             <RecipeCard
               recipe={item}
               locked={!hasActiveAccess && !STARTER_RECIPE_IDS.has(item.id)}
-              disabled={planLoading && !hasActiveAccess && !STARTER_RECIPE_IDS.has(item.id)}
+              disabled={
+                favoriteBusy ||
+                (planLoading && !hasActiveAccess && !STARTER_RECIPE_IDS.has(item.id))
+              }
               onPress={handleSelectRecipe}
               onToggleFavorite={handleToggleFavorite}
             />

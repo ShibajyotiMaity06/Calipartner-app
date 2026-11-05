@@ -81,7 +81,7 @@ vi.mock('expo-router', async () => ({
   },
 }));
 vi.mock('./FoodLogModal', () => ({ FoodLogModal: 'FoodLog' }));
-vi.mock('@/components/workouts/WorkoutLoggerModal', () => ({ WorkoutLoggerModal: 'Workout' }));
+vi.mock('@/components/workouts/WorkoutHubModal', () => ({ WorkoutHubModal: 'Workout' }));
 vi.mock('@/components/trackers', () => ({ CustomWaterModal: 'Water', WeightEntryModal: 'Weight' }));
 vi.mock('@/components/recipes', () => ({ RecipeBrowseView: 'Recipe' }));
 vi.mock('./QuickAddCaloriesModal', () => ({ QuickAddCaloriesModal: 'QuickCalories' }));
