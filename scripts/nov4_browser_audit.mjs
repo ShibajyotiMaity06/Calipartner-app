@@ -163,7 +163,8 @@ let billingCountry = 'IN',
 const billingRequests = [];
 let pro = false;
 let trial = false,
-  weeklyPlan = null;
+  weeklyPlan = null,
+  weeklyBuildFailure = false;
 const buildRequests = [],
   copyRequests = [];
 const projectedPlan = () =>
@@ -379,6 +380,12 @@ try {
     } else if (url.pathname.endsWith('/weekly-plan')) {
       const body = request.postDataJSON();
       buildRequests.push(body);
+      if (weeklyBuildFailure)
+        return route.fulfill({
+          status: 503,
+          contentType: 'application/json',
+          body: JSON.stringify({ saved: false, code: 'PLAN_UNAVAILABLE' }),
+        });
       weeklyPlan = {
         id: body.request_id,
         preferences: body.preferences,
@@ -410,6 +417,24 @@ try {
               protein: 53,
               carbs: 110,
               fat: 27,
+            },
+            {
+              name: 'Oats and yogurt',
+              ingredients: ['oats 80 g', 'yogurt 200 g'],
+              portion: 'One bowl',
+              calories: 650,
+              protein: 35,
+              carbs: 80,
+              fat: 22,
+            },
+            {
+              name: 'Chicken and potatoes',
+              ingredients: ['chicken 250 g', 'potatoes 300 g', 'oil 20 g'],
+              portion: 'One large plate',
+              calories: 1130,
+              protein: 72,
+              carbs: 140,
+              fat: 31,
             },
           ],
         })),
@@ -844,6 +869,32 @@ try {
     );
   }
   await snap('weekly-paid-plan');
+  // An already-saved broken plan must not keep presenting copied estimates as reliable.
+  await page.setViewportSize({ width: 375, height: 844 });
+  const previousPreferences = structuredClone(weeklyPlan.preferences);
+  weeklyPlan.days.forEach((day) =>
+    day.meals.forEach((meal) =>
+      Object.assign(meal, { calories: 890, protein: 53, carbs: 110, fat: 27 }),
+    ),
+  );
+  await page.reload();
+  await page.getByTestId('weekly-nutrition-warning').waitFor();
+  assert.equal(await page.getByTestId('weekly-daily-nutrition').count(), 0);
+  assert.equal(await page.getByTestId('weekly-meal-nutrition-0').count(), 0);
+  weeklyBuildFailure = true;
+  await page.getByTestId('rebuild-weekly-nutrition').click();
+  await page.getByTestId('weekly-nutrition-warning').waitFor();
+  await page.getByText('Comfortable squat', { exact: true }).waitFor();
+  const failedRebuildId = buildRequests.at(-1).request_id;
+  await snap('weekly-copied-nutrition-recovery');
+  weeklyBuildFailure = false;
+  await page.getByTestId('rebuild-weekly-nutrition').click();
+  await page.getByTestId('weekly-daily-nutrition').waitFor();
+  assert.equal(await page.getByTestId('weekly-nutrition-warning').count(), 0);
+  assert.deepEqual(buildRequests.at(-1).preferences, previousPreferences);
+  assert.equal(buildRequests.at(-1).request_id, failedRebuildId);
+  assert.match(await page.getByTestId('weekly-meal-nutrition-0').innerText(), /890/);
+  assert.match(await page.getByTestId('weekly-meal-nutrition-1').innerText(), /650/);
   paid = false;
   pro = false;
   await page.goto('http://127.0.0.1:8098/room?room=' + rid(0) + '&tab=chat');
@@ -983,7 +1034,7 @@ try {
   await page.waitForURL('https://checkout.dodopayments.com/fixture');
   assert.deepEqual(errors, []);
   console.log(
-    'November 4 browser audit: nutrient text colours, full-width empty Home, five goal suggestions, restored Challenges, food favourites/search clearing, custom food and acknowledged 50g protein correction, plus previous food/polish coverage, chronological nested/tab/Log Back, inline member selection, stable idle Compare, acknowledged peer-food copying, Monday-only Free/trial, full paid week/tips and persisted routine editing, India Razorpay dismissal/pending/verified access/confirmed cancellation and international Dodo routing passed at 375/390/844px',
+    'November 4 browser audit: copied weekly nutrition hidden with retry-safe rebuild and failed-save preservation, nutrient text colours, full-width empty Home, five goal suggestions, restored Challenges, food favourites/search clearing, custom food and acknowledged 50g protein correction, plus previous food/polish coverage, chronological nested/tab/Log Back, inline member selection, stable idle Compare, acknowledged peer-food copying, Monday-only Free/trial, full paid week/tips and persisted routine editing, India Razorpay dismissal/pending/verified access/confirmed cancellation and international Dodo routing passed at 375/390/844px',
   );
 } catch (error) {
   for (const page of browser?.contexts().flatMap((context) => context.pages()) ?? []) {

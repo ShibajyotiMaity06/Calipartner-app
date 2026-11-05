@@ -46,7 +46,7 @@ export async function buildPersonalWeeklyPlan(
   preferences: PlanPreferences,
 ): Promise<WeeklyPlanView> {
   const client = await actor(userId);
-  // Called only after the explicit consent checkbox and Build action.
+  // First builds require the consent checkbox; existing owners can explicitly rebuild their plan.
   await acceptAiProcessingConsent(
     { rpc: async (name, args) => await client.rpc(name, args) },
     '1.1-weekly-plan',

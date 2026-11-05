@@ -78,6 +78,11 @@ export const fixNovember = {
   weekly: 'Your weekly plan',
   workout: 'Workout',
   food: 'Food plan',
+  copiedNutrition:
+    'Different meals in this plan share copied nutrition estimates. Rebuild your plan before using these amounts.',
+  rebuild: 'Rebuild your week',
+  rebuildHint:
+    'This replaces your saved workouts and meals using your existing preferences. Your current plan stays saved until the new one is ready.',
   rest: 'Rest day',
   monday: 'Monday',
   tuesday: 'Tuesday',

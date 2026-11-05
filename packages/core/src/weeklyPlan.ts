@@ -98,6 +98,7 @@ export class WeeklyPlanValidationError extends Error {
       | 'excluded_ingredient'
       | 'unsafe_copy'
       | 'meal_energy'
+      | 'repeated_meal_nutrition'
       | 'daily_energy'
       | 'daily_macro'
       | 'exercise_sets'
@@ -106,6 +107,7 @@ export class WeeklyPlanValidationError extends Error {
       | 'workout_minutes'
       | 'meal_calories'
       | 'meal_macro',
+    readonly repair?: string,
   ) {
     super('INVALID_PLAN');
   }
@@ -195,6 +197,31 @@ export function validatePlanExercises(
     };
   });
 }
+/** Detect blanket nutrition copied onto different measured recipes, while allowing batch meals. */
+export function hasRepeatedMealNutrition(days: readonly Pick<PlanDay, 'meals'>[]): boolean {
+  const recipesByNutrition = new Map<string, Set<string>>();
+  const normalize = (value: string) => value.trim().toLowerCase().replace(/\s+/g, ' ');
+  for (const day of days) {
+    const dailyNutrition = new Set<string>(),
+      dailyRecipes = new Set<string>();
+    for (const meal of day.meals) {
+      const nutrition = JSON.stringify([meal.calories, meal.protein, meal.carbs, meal.fat]);
+      // Labels alone can change for the same food. Ingredient order is not a new recipe.
+      const recipe = JSON.stringify([
+        meal.ingredients.map(normalize).sort(),
+        normalize(meal.portion),
+      ]);
+      dailyNutrition.add(nutrition);
+      dailyRecipes.add(recipe);
+      const recipes = recipesByNutrition.get(nutrition) ?? new Set<string>();
+      recipes.add(recipe);
+      recipesByNutrition.set(nutrition, recipes);
+      if (recipes.size >= 3) return true;
+    }
+    if (day.meals.length >= 3 && dailyNutrition.size === 1 && dailyRecipes.size > 1) return true;
+  }
+  return false;
+}
 /** All model arithmetic and constraints are checked before private storage. */
 export function validateWeeklyPlan(
   input: unknown,
@@ -265,7 +292,7 @@ export function validateWeeklyPlan(
     );
     if (!Array.isArray(d.meals) || d.meals.length !== preferences.meals_per_day)
       throw new WeeklyPlanValidationError('meal_count');
-    const meals = d.meals.map((value): PlanMeal => {
+    const meals = d.meals.map((value, mealIndex): PlanMeal => {
       const m = object(value);
       const name = safeText(text(m.name, 120)),
         ingredients = strings(m.ingredients, 1, 20, 150).map(safeText),
@@ -276,7 +303,10 @@ export function validateWeeklyPlan(
         fat = number(m.fat, 0, 150, false, 'meal_macro');
       const macroCalories = 4 * (protein + carbs) + 9 * fat;
       if (Math.abs(macroCalories - calories) > Math.max(30, calories * 0.2))
-        throw new WeeklyPlanValidationError('meal_energy');
+        throw new WeeklyPlanValidationError(
+          'meal_energy',
+          `Day ${index}, meal ${mealIndex}: reported ${calories} kcal but 4*protein+4*carbs+9*fat is ${macroCalories} kcal. Re-estimate this meal from its measured ingredients and correct the inconsistent nutrition, then recheck the daily totals.`,
+        );
       return { name, ingredients, portion, calories, protein, carbs, fat };
     });
     const total = meals.reduce((sum, meal) => sum + meal.calories, 0);
@@ -284,11 +314,17 @@ export function validateWeeklyPlan(
       total < Math.max(goals.calorie_floor, goals.calories * 0.9) ||
       total > goals.calories * 1.15
     )
-      throw new WeeklyPlanValidationError('daily_energy');
+      throw new WeeklyPlanValidationError(
+        'daily_energy',
+        `Day ${index}: meal calories sum to ${total}; required range is ${Math.max(goals.calorie_floor, goals.calories * 0.9)} to ${goals.calories * 1.15} kcal. Adjust actual measured portions or ingredients and recalculate, without changing saved goals.`,
+      );
     for (const macro of ['protein', 'carbs', 'fat'] as const) {
       const totalMacro = meals.reduce((sum, meal) => sum + meal[macro], 0);
       if (Math.abs(totalMacro - goals[macro]) > Math.max(10, goals[macro] * 0.3))
-        throw new WeeklyPlanValidationError('daily_macro');
+        throw new WeeklyPlanValidationError(
+          'daily_macro',
+          `Day ${index}: ${macro} sums to ${totalMacro}g versus saved goal ${goals[macro]}g, outside the allowed difference of ${Math.max(10, goals[macro] * 0.3)}g. Adjust measured ingredients/portions and recheck all meal energy and daily totals.`,
+        );
     }
     return {
       day: index,
@@ -300,6 +336,8 @@ export function validateWeeklyPlan(
       meals,
     };
   });
+  if (hasRepeatedMealNutrition(days))
+    throw new WeeklyPlanValidationError('repeated_meal_nutrition');
   return {
     days,
     workout_tips: strings(plan.workout_tips, 1, 5, 400).map(safeText),

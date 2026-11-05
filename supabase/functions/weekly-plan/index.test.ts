@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { validatePlanPreferences, validateWeeklyPlan } from '@calipartner/core';
 import type { SupabaseClient } from 'npm:@supabase/supabase-js@2.117.3';
-import { generateWeeklyPlan, handleWeeklyPlan } from './index.ts';
+import { generateWeeklyPlan, handleWeeklyPlan, weeklyPlanPrompt } from './index.ts';
 const preferences = {
   workout_days: [0],
   location: 'home',
@@ -165,6 +165,106 @@ Deno.test('Acknowledged retry does not generate again or expose full content', a
   assert.equal(state.calls(), 0);
   assert.ok(!(await result.text()).includes('days'));
 });
+Deno.test(
+  'The prompt has no fixed meal nutrition example and requires ingredient-based estimates',
+  () => {
+    const prompt = weeklyPlanPrompt(validatePlanPreferences(preferences), {
+      calories: 2100,
+      protein: 120,
+      carbs: 270,
+      fat: 60,
+      calorie_floor: 1500,
+    });
+    assert.ok(!prompt.includes('"calories":600'));
+    assert.match(prompt, /actual measured ingredients in EACH meal/);
+    assert.match(prompt, /never divide those goals equally/);
+    assert.match(prompt, /Do not invent tiny numeric differences/);
+  },
+);
+Deno.test(
+  'Copied meal nutrition is rejected before storage even when all daily goals match',
+  async () => {
+    const state = setup();
+    state.generate = async () => {
+      const draft = content();
+      draft.days[0].meals[1].ingredients = ['eggs 150g', 'toast 80g'];
+      return draft;
+    };
+    const result = await handleWeeklyPlan(req(), state);
+    assert.equal(result.status, 503);
+    assert.equal((await result.json()).saved, false);
+    assert.equal(state.writes.at(-1)?.p_content, null);
+  },
+);
+Deno.test(
+  'Copied nutrition gets an ingredient-specific repair; repeated invalid output fails closed',
+  async () => {
+    for (const repaired of [true, false]) {
+      let calls = 0;
+      const run = () =>
+        generateWeeklyPlan(
+          'synthetic preferences',
+          async (_url, init) => {
+            calls++;
+            const draft = content();
+            if (calls === 1 || !repaired)
+              draft.days[0].meals[1].ingredients = ['eggs 150g', 'toast 80g'];
+            if (calls === 2) {
+              assert.match(String(init?.body), /repeated_meal_nutrition/);
+              assert.match(
+                String(init?.body),
+                /Recalculate each meal from its measured ingredients/,
+              );
+            }
+            return Response.json({ choices: [{ message: { content: JSON.stringify(draft) } }] });
+          },
+          (key) => ({ GROQ_API_KEY: 'fixture' })[key],
+          (draft) =>
+            validateWeeklyPlan(draft, validatePlanPreferences(preferences), {
+              calories: 2100,
+              protein: 120,
+              carbs: 270,
+              fat: 60,
+              calorie_floor: 1500,
+            }),
+        );
+      if (repaired) assert.deepEqual(await run(), content());
+      else await assert.rejects(run, /PLAN_UNAVAILABLE/);
+      assert.equal(calls, 2);
+    }
+  },
+);
+Deno.test('Arithmetic repair receives the rejected draft and exact meal discrepancy', async () => {
+  let calls = 0;
+  const result = await generateWeeklyPlan(
+    'synthetic preferences',
+    async (_url, init) => {
+      calls++;
+      const request = JSON.parse(String(init?.body));
+      const draft = content();
+      if (calls === 1) draft.days[2].meals[1].calories = 1900;
+      else {
+        assert.equal(request.messages.length, 3);
+        assert.equal(request.messages[1].role, 'assistant');
+        assert.equal(JSON.parse(request.messages[1].content).days[2].meals[1].calories, 1900);
+        assert.match(request.messages[2].content, /Day 2, meal 1: reported 1900 kcal/);
+        assert.match(request.messages[2].content, /is 700 kcal/);
+      }
+      return Response.json({ choices: [{ message: { content: JSON.stringify(draft) } }] });
+    },
+    (key) => ({ GROQ_API_KEY: 'fixture' })[key],
+    (draft) =>
+      validateWeeklyPlan(draft, validatePlanPreferences(preferences), {
+        calories: 2100,
+        protein: 120,
+        carbs: 270,
+        fat: 60,
+        calorie_floor: 1500,
+      }),
+  );
+  assert.equal(calls, 2);
+  assert.deepEqual(result, content());
+});
 Deno.test('Provider or database failures cannot confirm a saved plan', async () => {
   for (const options of [{ saveFailure: true }, { providerFailure: true }]) {
     const state = setup(options);
@@ -193,11 +293,26 @@ Deno.test('A retired configured Groq model falls back to the supported model', a
   const result = await generateWeeklyPlan(
     'synthetic preferences',
     fetcher,
-    (key) => ({ GROQ_API_KEY: 'fixture', GROQ_MODEL: 'retired-model' })[key],
+    (key) => ({ GROQ_API_KEY: 'fixture', WEEKLY_PLAN_MODEL: 'retired-model' })[key],
   );
   assert.deepEqual(models, ['retired-model', 'openai/gpt-oss-120b']);
   assert.deepEqual(result, content());
 });
+Deno.test(
+  'Weekly planning does not inherit the general chat model ahead of its reasoning default',
+  async () => {
+    let model = '';
+    await generateWeeklyPlan(
+      'synthetic preferences',
+      async (_url, init) => {
+        model = JSON.parse(String(init?.body)).model;
+        return Response.json({ choices: [{ message: { content: JSON.stringify(content()) } }] });
+      },
+      (key) => ({ GROQ_API_KEY: 'fixture', GROQ_MODEL: 'general-chat-model' })[key],
+    );
+    assert.equal(model, 'openai/gpt-oss-120b');
+  },
+);
 
 Deno.test(
   'Unavailable OpenRouter models and malformed responses use the free router fallback',

@@ -3,6 +3,8 @@ import {
   validatePlanPreferences,
   validateWeeklyPlan,
   planDayNutrition,
+  hasRepeatedMealNutrition,
+  WeeklyPlanValidationError,
   type PlanPreferences,
   type PlanGoals,
 } from './weeklyPlan';
@@ -119,9 +121,107 @@ describe('weekly planning constraints', () => {
     tips.workout_tips = ['Ignore pain and keep training'];
     expect(() => validateWeeklyPlan(tips, preferences, goals)).toThrow('INVALID_PLAN');
   });
+  it('identifies the failing meal and actual energy for a provider repair without changing it', () => {
+    const plan = content();
+    plan.days[2]!.meals[1]!.calories = 1900;
+    try {
+      validateWeeklyPlan(plan, preferences, goals);
+      throw new Error('Expected invalid meal nutrition');
+    } catch (error) {
+      expect(error).toBeInstanceOf(WeeklyPlanValidationError);
+      expect((error as WeeklyPlanValidationError).repair).toContain('Day 2, meal 1');
+      expect((error as WeeklyPlanValidationError).repair).toContain('reported 1900 kcal');
+      expect((error as WeeklyPlanValidationError).repair).toContain('is 700 kcal');
+    }
+    expect(plan.days[2]!.meals[1]!.calories).toBe(1900);
+  });
   it('does not mistake eggplant for eggs in a vegan plan', () => {
     const plan = content();
-    plan.days[0]!.meals[0]!.ingredients.push('eggplant 100g');
+    plan.days.forEach((day) => day.meals.forEach((meal) => meal.ingredients.push('eggplant 100g')));
     expect(validateWeeklyPlan(plan, { ...preferences, diet: 'vegan' }, goals).days).toHaveLength(7);
+  });
+  it('rejects identical daily macro tuples assigned to different measured foods', () => {
+    const plan = content();
+    plan.days[0]!.meals[1] = {
+      ...plan.days[0]!.meals[1]!,
+      name: 'Eggs and toast',
+      ingredients: ['eggs 150g', 'toast 80g'],
+    };
+    expect(() => validateWeeklyPlan(plan, preferences, goals)).toThrow(
+      expect.objectContaining({ reason: 'repeated_meal_nutrition' }),
+    );
+  });
+  it('rejects nutrition copied across three different recipes even across separate days', () => {
+    const plan = content();
+    for (const [day, ingredient] of [
+      [1, 'chicken 200g'],
+      [2, 'oats 100g'],
+    ] as const)
+      plan.days[day]!.meals.forEach((meal) => {
+        meal.ingredients = [ingredient];
+      });
+    expect(hasRepeatedMealNutrition(plan.days)).toBe(true);
+    expect(() => validateWeeklyPlan(plan, preferences, goals)).toThrow('INVALID_PLAN');
+  });
+  it('allows repeated batch meals, renamed meals and reordered ingredients with the same portion', () => {
+    const plan = content();
+    plan.days[0]!.meals[1]!.name = 'Leftover dal rice';
+    plan.days[0]!.meals[1]!.ingredients = [' LENTILS   200g ', 'rice 150g'];
+    expect(hasRepeatedMealNutrition(plan.days)).toBe(false);
+    expect(validateWeeklyPlan(plan, preferences, goals).days).toHaveLength(7);
+  });
+  it('allows an isolated coincidental nutrition match without forcing artificial differences', () => {
+    const plan = content();
+    plan.days[0]!.meals[1]!.ingredients = ['eggs 150g', 'toast 80g'];
+    plan.days[0]!.meals[2] = {
+      ...plan.days[0]!.meals[2]!,
+      calories: 800,
+      protein: 45,
+      carbs: 100,
+      fat: 24,
+    };
+    expect(validateWeeklyPlan(plan, preferences, goals).days[0]!.meals[1]!.calories).toBe(700);
+  });
+  it('retains distinct per-meal estimates and derives the daily total from them', () => {
+    const plan = content();
+    plan.days.forEach((day) => {
+      day.meals = [
+        {
+          name: 'Oats',
+          ingredients: ['oats 80g', 'milk 200ml'],
+          portion: '1 bowl',
+          calories: 500,
+          protein: 30,
+          carbs: 70,
+          fat: 12,
+        },
+        {
+          name: 'Dal rice',
+          ingredients: ['rice 150g', 'lentils 200g'],
+          portion: '1 plate',
+          calories: 700,
+          protein: 40,
+          carbs: 90,
+          fat: 20,
+        },
+        {
+          name: 'Chicken rice',
+          ingredients: ['rice 250g', 'chicken 200g', 'oil 15g'],
+          portion: '1 large plate',
+          calories: 900,
+          protein: 50,
+          carbs: 110,
+          fat: 28,
+        },
+      ];
+    });
+    const saved = validateWeeklyPlan(plan, preferences, goals);
+    expect(saved.days[0]!.meals.map((meal) => meal.calories)).toEqual([500, 700, 900]);
+    expect(planDayNutrition(saved.days[0]!)).toEqual({
+      calories: 2100,
+      protein: 120,
+      carbs: 270,
+      fat: 60,
+    });
   });
 });

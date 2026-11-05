@@ -7,6 +7,7 @@ import { Button, dark, homeLayout, radius, space, Text } from '@calipartner/ui';
 import {
   WEEK_DAYS,
   planDayNutrition,
+  hasRepeatedMealNutrition,
   type PlanPreferences,
   type WeeklyPlanView,
 } from '@calipartner/core';
@@ -20,6 +21,7 @@ import { PaywallModal } from '@/components/rooms/PaywallModal';
 import { useBrowserModalBack } from '@/hooks/useBrowserModalBack';
 import { squadStyles as styles } from '@/components/rooms/SquadViews';
 import { t } from '@/i18n';
+import { NutrientSummary } from '@/components/diary/NutrientSummary';
 
 export default function WeeklyPlanScreen({ onClose }: { onClose?: () => void } = {}) {
   const { user } = useAuth(),
@@ -113,6 +115,7 @@ export default function WeeklyPlanScreen({ onClose }: { onClose?: () => void } =
     }
   };
   const selected = plan?.days.find((d) => d.day === day);
+  const nutritionNeedsRebuild = !!plan && hasRepeatedMealNutrition(plan.days);
   const nutrition = selected ? planDayNutrition(selected) : null;
   const failure =
     error === 'PLAN_SAFETY'
@@ -253,30 +256,32 @@ export default function WeeklyPlanScreen({ onClose }: { onClose?: () => void } =
                     </View>
                     <View style={styles.card} testID="preferred-food-day">
                       <Text variant="heading">{t('fixNovember.food')}</Text>
-                      {nutrition && (
-                        <Text variant="bodyS" tabular>
-                          {t(
-                            'fixNovember.mealNutrition',
-                            Object.fromEntries(
-                              Object.entries(nutrition).map(([key, value]) => [
-                                key,
-                                Math.round(value),
-                              ]),
-                            ),
-                          )}
-                        </Text>
+                      {nutritionNeedsRebuild && (
+                        <View style={{ gap: space[3] }} testID="weekly-nutrition-warning">
+                          <Text accessibilityRole="alert">{t('fixNovember.copiedNutrition')}</Text>
+                          <Text variant="bodyS">{t('fixNovember.rebuildHint')}</Text>
+                          <Button
+                            variant="secondary"
+                            label={t('fixNovember.rebuild')}
+                            onPress={() => void build(plan.preferences)}
+                            testID="rebuild-weekly-nutrition"
+                          />
+                        </View>
+                      )}
+                      {nutrition && !nutritionNeedsRebuild && (
+                        <NutrientSummary values={nutrition} testID="weekly-daily-nutrition" />
                       )}
                       {selected.meals.map((meal, index) => (
                         <View style={styles.divider} key={index}>
                           <Text variant="heading">{meal.name}</Text>
                           <Text>{meal.portion}</Text>
                           <Text variant="bodyS">{meal.ingredients.join(' · ')}</Text>
-                          <Text variant="bodyS" tabular>
-                            {t(
-                              'fixNovember.mealNutrition',
-                              meal as unknown as Record<string, number>,
-                            )}
-                          </Text>
+                          {!nutritionNeedsRebuild && (
+                            <NutrientSummary
+                              values={meal}
+                              testID={`weekly-meal-nutrition-${index}`}
+                            />
+                          )}
                         </View>
                       ))}
                     </View>
