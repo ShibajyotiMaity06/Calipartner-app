@@ -3,7 +3,7 @@ import { Pressable, ScrollView, View } from 'react-native';
 import { Avatar, Button, dark, homeLayout, radius, space, Sheet, Text } from '@calipartner/ui';
 import { Ionicons } from '@expo/vector-icons';
 import { setStringAsync } from 'expo-clipboard';
-import { useBrowserModalBack } from '@/hooks/useBrowserModalBack';
+import { closeBrowserModalsThen, useBrowserModalBack } from '@/hooks/useBrowserModalBack';
 import { t } from '@/i18n';
 import type { RoomSummary } from '@/types/rooms';
 import { squadStyles as styles } from './SquadViews';
@@ -47,9 +47,10 @@ export function RoomHeader({
     setError(false);
     setPanel(null);
   }, [currentRoom?.id]);
-  const closeThen = (action: () => void) => {
+  const closeThen = (action: () => void, switchingRoom = false) => {
     setPanel(null);
-    action();
+    if (switchingRoom) closeBrowserModalsThen(action);
+    else action();
   };
   const copy = async () => {
     if (!currentRoom) return;
@@ -182,7 +183,7 @@ export function RoomHeader({
               {allRooms.map((room) => (
                 <Pressable
                   key={room.id}
-                  onPress={() => closeThen(() => onSwitchRoom?.(room))}
+                  onPress={() => closeThen(() => onSwitchRoom?.(room), true)}
                   style={styles.leader}
                   accessibilityRole="button"
                   accessibilityLabel={room.name}

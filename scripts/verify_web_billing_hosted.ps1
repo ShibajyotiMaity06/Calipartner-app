@@ -1,4 +1,4 @@
-param([string]$WebOrigin = 'https://calipartner.app')
+param([string]$WebOrigin = 'https://app.calipartner.site')
 $ErrorActionPreference = 'Stop'
 if (-not ('CaliSupabaseCredential' -as [type])) { Add-Type -Path (Join-Path $env:LOCALAPPDATA 'CaliPartner/SupabaseCredential.cs') }
 $repositoryRoot = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..'))
@@ -16,8 +16,12 @@ function Invoke-BillingCheck([string]$Method, [string]$Path, $Body, [string]$Tok
   catch {
     if (-not $_.Exception.Response) { throw }
     $response = $_.Exception.Response
-    $reader = New-Object IO.StreamReader($response.GetResponseStream())
-    try { $payload = $reader.ReadToEnd() | ConvertFrom-Json } finally { $reader.Dispose() }
+    $payload = $null
+    if ($_.ErrorDetails.Message) { try { $payload = $_.ErrorDetails.Message | ConvertFrom-Json } catch { $payload = $null } }
+    if (-not $payload) {
+      $reader = New-Object IO.StreamReader($response.GetResponseStream())
+      try { $payload = $reader.ReadToEnd() | ConvertFrom-Json } finally { $reader.Dispose() }
+    }
     return @{ status = [int]$response.StatusCode; data = $payload }
   }
 }
@@ -36,8 +40,8 @@ try {
   $token = $session.data.access_token
   Assert-BillingCheck ([bool]$token) 'fixture authenticated'
   $india = Invoke-BillingCheck 'POST' '/functions/v1/web-billing' @{ action = 'catalog' } $token
-  Assert-BillingCheck ($india.data.provider -eq 'razorpay' -and $india.status -in @(200, 403, 503)) 'India routes exclusively to Razorpay'
-  if ($india.status -eq 200) { Assert-BillingCheck ($india.data.products.Count -eq 4 -and @($india.data.products | Where-Object { $_.currency -ne 'INR' }).Count -eq 0) 'configured INR catalog verified' }
+  Assert-BillingCheck ($india.data.provider -eq 'razorpay' -and $india.status -eq 200) 'India serves its configured Razorpay catalog from the production origin'
+  Assert-BillingCheck ($india.data.products.Count -eq 4 -and @($india.data.products | Where-Object { $_.currency -ne 'INR' }).Count -eq 0) 'all four configured INR prices verified'
   $bypass = Invoke-BillingCheck 'POST' '/functions/v1/dodo-checkout' @{ action = 'catalog' } $token
   Assert-BillingCheck ($bypass.status -eq 403 -and $bypass.data.error -eq 'WRONG_BILLING_PROVIDER') 'India cannot bypass the router into Dodo'
   $profile.country = 'US'
@@ -47,11 +51,14 @@ try {
   $checkouts = Invoke-BillingCheck 'GET' ('/rest/v1/web_billing_checkouts?user_id=eq.' + $fixtureId + '&select=id') $null $token
   Assert-BillingCheck ($checkouts.status -eq 200 -and @($checkouts.data).Count -eq 0) 'catalog checks create no checkout or subscription'
   $detected = Invoke-BillingCheck 'POST' '/functions/v1/web-billing' @{ action = 'routing' } $token
+  if ($detected.status -ne 200) { Write-Output ('Hosted routing failed: HTTP ' + $detected.status + ', ' + $detected.data.error) }
   Assert-BillingCheck ($detected.status -eq 200 -and $detected.data.country -match '^[A-Z]{2}$') 'IP country detected without a dropdown'
   $expectedProvider = if ($detected.data.country -eq 'IN') { 'razorpay' } else { 'dodo' }
   Assert-BillingCheck ($detected.data.provider -eq $expectedProvider) 'automatic country selects the matching payment provider'
   $savedCountry = Invoke-BillingCheck 'GET' ('/rest/v1/profiles?id=eq.' + $fixtureId + '&select=country') $null $token
   Assert-BillingCheck ($savedCountry.status -eq 200 -and $savedCountry.data[0].country -eq $detected.data.country) 'detected country saved and acknowledged'
+  $detectedCatalog = Invoke-BillingCheck 'POST' '/functions/v1/web-billing' @{ action = 'catalog' } $token
+  Assert-BillingCheck ($detectedCatalog.status -eq 200 -and $detectedCatalog.data.provider -eq $expectedProvider -and $detectedCatalog.data.products.Count -eq 4) 'the exact routing-then-catalog sequence used by onboarding succeeds'
   Write-Output ('Hosted IP country detection passed: ' + $detected.data.country + ' / ' + $detected.data.provider + ', with acknowledged profile persistence.')
   Write-Output ('Hosted web billing routing passed: Indian Razorpay route (HTTP ' + $india.status + '), direct Dodo denial, four actual international USD products, and no checkout/subscription creation.')
 } finally {

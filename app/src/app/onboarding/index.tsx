@@ -33,6 +33,7 @@ import { ActivityStep } from '@/components/onboarding/ActivityStep';
 import { MotivationStep } from '@/components/onboarding/MotivationStep';
 import { TrainingStep } from '@/components/onboarding/TrainingStep';
 import { PremiumStep } from '@/components/onboarding/PremiumStep';
+import { fetchWebCatalog } from '@/services/webBillingService';
 import { PlanReviewStep, PlanSafetyNotice } from '@/components/onboarding/PlanReviewStep';
 import { GymCalculationStep } from '@/components/onboarding/GymCalculationStep';
 import { HealthScreeningStep } from '@/components/onboarding/HealthScreeningStep';
@@ -71,6 +72,13 @@ export default function OnboardingScreen() {
   const ownerId = user?.id ?? 'guest-user';
   const owner = useRef(ownerId);
   owner.current = ownerId;
+
+  useEffect(() => {
+    if (Platform.OS === 'web' && user && profile)
+      void fetchWebCatalog().catch(() => {
+        /* The pricing screen retains its actionable retry. */
+      });
+  }, [user, profile, snapshot?.currentStep]);
 
   useEffect(() => {
     if (isLoading) return;

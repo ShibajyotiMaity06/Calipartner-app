@@ -35,7 +35,10 @@ vi.mock('@/theme/useTheme', async () => {
   const { dark } = await import('../../../../packages/ui/src/tokens');
   return { useTheme: () => ({ colors: dark }) };
 });
-vi.mock('@/hooks/useBrowserModalBack', () => ({ useBrowserModalBack: vi.fn() }));
+vi.mock('@/hooks/useBrowserModalBack', () => ({
+  useBrowserModalBack: vi.fn(),
+  closeBrowserModalsThen: (action: () => void) => action(),
+}));
 vi.mock('@/lib/supabase', () => ({ getSupabase: () => ({ rpc: api.rpc }) }));
 vi.mock('@/services/foodService', () => ({ generateClientUuid: api.uuid }));
 vi.mock('@/services/roomService', () => ({

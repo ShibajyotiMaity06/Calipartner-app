@@ -87,16 +87,20 @@ export function HomeSquads({
             testID={`home-squad-card-${room.id}`}
           >
             <View style={styles.header}>
-              <Pressable
-                onPress={() => router.push({ pathname: '/(tabs)/room', params: { room: room.id } })}
-                accessibilityRole="button"
-                accessibilityLabel={t('homeRefresh.openSquad', { name: room.name })}
-                testID={`home-open-title-${room.id}`}
-                style={[styles.retry, styles.title]}
-              >
-                <Text variant="title2">{room.name}</Text>
-              </Pressable>
-              <EditSquadName room={room} location="home" />
+              <View style={styles.nameGroup}>
+                <Pressable
+                  onPress={() =>
+                    router.push({ pathname: '/(tabs)/room', params: { room: room.id } })
+                  }
+                  accessibilityRole="button"
+                  accessibilityLabel={t('homeRefresh.openSquad', { name: room.name })}
+                  testID={`home-open-title-${room.id}`}
+                  style={[styles.retry, styles.name]}
+                >
+                  <Text variant="title2">{room.name}</Text>
+                </Pressable>
+                <EditSquadName room={room} location="home" />
+              </View>
               <Text variant="micro" color={dark.textMid} style={styles.count} tabular>
                 {room.member_cap
                   ? t('homeRefresh.members', { count: room.member_count, cap: room.member_cap })
@@ -146,7 +150,14 @@ export function HomeSquads({
 const styles = StyleSheet.create({
   stack: { gap: space[2], marginBottom: space[5] },
   header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  title: { flex: 1, marginRight: space[2] },
+  nameGroup: {
+    flex: 1,
+    minWidth: 0,
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginRight: space[2],
+  },
+  name: { flexShrink: 1, minWidth: 0 },
   count: { flexShrink: 1, textAlign: 'right' },
   smallAction: {
     minWidth: homeLayout.touchSize,

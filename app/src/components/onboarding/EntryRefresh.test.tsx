@@ -8,6 +8,7 @@ const api = vi.hoisted(() => ({
   params: { mode: 'signup' },
   setParams: vi.fn(),
   refresh: vi.fn(),
+  cached: vi.fn(),
 }));
 vi.mock('react-native', () => ({
   Platform: { OS: 'web' },
@@ -31,6 +32,7 @@ vi.mock('@calipartner/ui', async () => {
     Button: 'Button',
     Field: 'Field',
     CheckIcon: 'CheckIcon',
+    Skeleton: 'Skeleton',
     useTheme: () => ({ colors: tokens.dark }),
   };
 });
@@ -40,7 +42,10 @@ vi.mock('@/hooks/useSubscription', () => ({
 vi.mock('@/contexts/AuthContext', () => ({
   useAuth: () => ({ user: null, signInWithOtp: api.otp, verifyOtp: api.verify }),
 }));
-vi.mock('@/services/webBillingService', () => ({ fetchWebCatalog: api.catalog }));
+vi.mock('@/services/webBillingService', () => ({
+  fetchWebCatalog: api.catalog,
+  getCachedWebCatalog: api.cached,
+}));
 vi.mock('@/services/pairOnboardingService', () => ({ afterSetupDestination: vi.fn() }));
 vi.mock('@/components/brand/CaliPartnerLogo', () => ({ CaliPartnerLogo: 'CaliPartnerLogo' }));
 vi.mock('@/components/brand/EntryTerms', () => ({ EntryTerms: 'EntryTerms' }));
@@ -54,6 +59,7 @@ let tree: ReactTestRenderer | undefined;
 beforeEach(() => {
   (globalThis as unknown as { IS_REACT_ACT_ENVIRONMENT: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
   vi.clearAllMocks();
+  api.cached.mockReturnValue(undefined);
   api.params.mode = 'signup';
   api.otp.mockResolvedValue({ error: null });
   api.verify.mockResolvedValue({ error: null });
@@ -69,6 +75,26 @@ const products = (currency: string) =>
     amount: currency === 'INR' ? 249 : 4.99,
     trialDays: key.startsWith('plus') ? 7 : 0,
   }));
+it('shows prepared onboarding prices immediately without a loading-prices message', async () => {
+  api.cached.mockReturnValue({ products: products('INR') });
+  api.catalog.mockResolvedValue({ products: products('INR') });
+  await act(async () => {
+    tree = create(<PremiumStep onContinue={vi.fn()} onSkip={vi.fn()} />);
+  });
+  expect(tree!.root.findAllByProps({ testID: 'onboarding-pricing-placeholder' })).toHaveLength(0);
+  expect(tree!.root.findByProps({ testID: 'onboarding-monthly-price' }).props.children).toContain(
+    '249',
+  );
+  expect(JSON.stringify(tree!.toJSON())).not.toContain('Loading prices');
+});
+it('uses a price placeholder while an unprepared request is still pending', async () => {
+  api.catalog.mockReturnValue(new Promise(() => {}));
+  await act(async () => {
+    tree = create(<PremiumStep onContinue={vi.fn()} onSkip={vi.fn()} />);
+  });
+  expect(tree!.root.findByProps({ testID: 'onboarding-pricing-placeholder' })).toBeDefined();
+  expect(JSON.stringify(tree!.toJSON())).not.toContain('Loading prices');
+});
 it.each(['INR', 'USD'])(
   'uses live %s prices and passes the selected Pro tier without offering a Pro trial',
   async (currency) => {

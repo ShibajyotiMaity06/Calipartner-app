@@ -22,13 +22,16 @@ import {
   radius,
   space,
   Text,
+  Skeleton,
   onboardingLayout,
   useReducedMotion,
 } from '@calipartner/ui';
 import { t } from '@/i18n';
+import { useAuth } from '@/contexts/AuthContext';
 import { openDodoPortal } from '@/services/dodoService';
 import {
   fetchWebCatalog,
+  getCachedWebCatalog,
   startWebCheckout,
   fetchRazorpayManagement,
   cancelRazorpayRenewal,
@@ -164,6 +167,9 @@ export function PaywallModal({
   checkoutReturn,
   checkoutCancelled = false,
 }: PaywallModalProps) {
+  const { session } = useAuth();
+  const preparedCatalog =
+    Platform.OS === 'web' ? getCachedWebCatalog(session?.access_token) : undefined;
   const reduceMotion = useReducedMotion();
   const {
     offerings,
@@ -201,20 +207,24 @@ export function PaywallModal({
   const [statusMessage, setStatusMessage] = useState<string | null>(
     checkoutCancelled ? t('fixes.storeCancelled') : null,
   );
-  const [catalog, setCatalog] = useState<DodoCatalogProduct[]>([]);
-  const [webProvider, setWebProvider] = useState<WebPaymentProvider>('dodo');
-  const [requiresWebManagement, setRequiresWebManagement] = useState(false);
+  const [catalog, setCatalog] = useState<DodoCatalogProduct[]>(preparedCatalog?.products ?? []);
+  const [webProvider, setWebProvider] = useState<WebPaymentProvider>(
+    preparedCatalog?.provider ?? 'dodo',
+  );
+  const [requiresWebManagement, setRequiresWebManagement] = useState(
+    Boolean(preparedCatalog?.managementRequired),
+  );
   const [management, setManagement] = useState<{ request_id: string; cancelled: boolean } | null>(
     null,
   );
   const [confirmCancellation, setConfirmCancellation] = useState(false);
-  const [catalogLoading, setCatalogLoading] = useState(Platform.OS === 'web');
+  const [catalogLoading, setCatalogLoading] = useState(Platform.OS === 'web' && !preparedCatalog);
   const [catalogError, setCatalogError] = useState<string | null>(null);
   const plusTrialAvailable =
     Platform.OS !== 'web' ||
     catalog.some((p) => p.key === `plus_${selectedDuration}` && p.trialDays === 7);
   const loadCatalog = useCallback(async () => {
-    setCatalogLoading(true);
+    setCatalogLoading(!preparedCatalog);
     setCatalogError(null);
     try {
       const result = await fetchWebCatalog();
@@ -227,7 +237,16 @@ export function PaywallModal({
     } finally {
       setCatalogLoading(false);
     }
-  }, []);
+  }, [preparedCatalog]);
+  useEffect(() => {
+    if (preparedCatalog) {
+      setCatalogError(null);
+      setCatalog(preparedCatalog.products);
+      setWebProvider(preparedCatalog.provider);
+      setRequiresWebManagement(Boolean(preparedCatalog.managementRequired));
+      setCatalogLoading(false);
+    }
+  }, [preparedCatalog]);
   useEffect(() => {
     if (visible && Platform.OS === 'web') void loadCatalog();
   }, [visible, loadCatalog]);
@@ -320,7 +339,7 @@ export function PaywallModal({
   const storePrice = (tier: PlanTier) => {
     if (Platform.OS === 'web') {
       const product = catalog.find((p) => p.key === `${tier}_${selectedDuration}`);
-      if (!product) return t(catalogLoading ? 'fixes.loadingPrices' : 'fixes.priceUnavailable');
+      if (!product) return catalogLoading ? '' : t('fixes.priceUnavailable');
       return t('fixes.storePrice', {
         price: new Intl.NumberFormat(product.currency === 'INR' ? 'en-IN' : 'en-US', {
           style: 'currency',
@@ -746,9 +765,17 @@ export function PaywallModal({
 
                   <View style={styles.priceContainer}>
                     <View style={styles.priceMainRow}>
-                      <Text variant="numeralM" color={dark.textHi} style={styles.priceHighlight}>
-                        {storePrice('plus')}
-                      </Text>
+                      {Platform.OS === 'web' && catalogLoading ? (
+                        <Skeleton
+                          variant="text"
+                          width="60%"
+                          testID="paywall-plus-price-placeholder"
+                        />
+                      ) : (
+                        <Text variant="numeralM" color={dark.textHi} style={styles.priceHighlight}>
+                          {storePrice('plus')}
+                        </Text>
+                      )}
                     </View>
                     <Text variant="micro" color={dark.teal} style={styles.trialSubNote}>
                       {t(plusTrialAvailable ? 'fixes.plusTrialTerms' : 'fixes.proBillingTerms')}
@@ -799,9 +826,17 @@ export function PaywallModal({
 
                   <View style={styles.priceContainer}>
                     <View style={styles.priceMainRow}>
-                      <Text variant="numeralM" color={dark.textHi} style={styles.priceHighlight}>
-                        {storePrice('pro')}
-                      </Text>
+                      {Platform.OS === 'web' && catalogLoading ? (
+                        <Skeleton
+                          variant="text"
+                          width="60%"
+                          testID="paywall-pro-price-placeholder"
+                        />
+                      ) : (
+                        <Text variant="numeralM" color={dark.textHi} style={styles.priceHighlight}>
+                          {storePrice('pro')}
+                        </Text>
+                      )}
                     </View>
                     <Text variant="micro" color={dark.textLo} style={styles.trialSubNote}>
                       {t('fixes.proBillingTerms')}

@@ -41,11 +41,16 @@ function SquadNameEditor({ room, location }: { room: RoomSummary; location: stri
         style={{
           minWidth: homeLayout.touchSize,
           minHeight: homeLayout.touchSize,
-          alignItems: 'center',
+          alignItems: location === 'home' ? 'flex-start' : 'center',
+          paddingLeft: location === 'home' ? space[1] : space[0],
           justifyContent: 'center',
         }}
       >
-        <Ionicons name="pencil-outline" size={homeLayout.iconSize} color={dark.copper} />
+        <Ionicons
+          name={location === 'home' ? 'pencil' : 'pencil-outline'}
+          size={location === 'home' ? space[4] : homeLayout.iconSize}
+          color={dark.copper}
+        />
       </Pressable>
       {open && (
         <Sheet

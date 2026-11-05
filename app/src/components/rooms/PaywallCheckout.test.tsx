@@ -3,6 +3,7 @@ import { act, create, type ReactTestRenderer } from 'react-test-renderer';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 const billing = vi.hoisted(() => ({
   catalog: vi.fn(),
+  prepared: vi.fn(),
   create: vi.fn(),
   navigate: vi.fn(),
   refresh: vi.fn(),
@@ -31,6 +32,7 @@ vi.mock('@calipartner/ui', async () => ({
   Button: 'Button',
   Card: 'Card',
   Text: 'Text',
+  Skeleton: 'Skeleton',
   useReducedMotion: () => true,
 }));
 vi.mock('@/hooks/useSubscription', () => ({
@@ -49,7 +51,11 @@ vi.mock('@/services/dodoService', () => ({
   navigateToCheckout: billing.navigate,
   openDodoPortal: billing.portal,
 }));
+vi.mock('@/contexts/AuthContext', () => ({
+  useAuth: () => ({ session: { access_token: 'fixture-session' } }),
+}));
 vi.mock('@/services/webBillingService', () => ({
+  getCachedWebCatalog: billing.prepared,
   fetchBillingCountry: async () => 'US',
   saveBillingCountry: async () => undefined,
   fetchWebCatalog: async () => ({ provider: billing.provider, products: await billing.catalog() }),
@@ -76,6 +82,7 @@ const products = [
 beforeEach(() => {
   (globalThis as unknown as { IS_REACT_ACT_ENVIRONMENT: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
   vi.clearAllMocks();
+  billing.prepared.mockReturnValue(undefined);
   Platform.OS = 'web';
   billing.active = false;
   billing.provider = 'dodo';
@@ -109,6 +116,27 @@ async function render(returning = false, cancelled = false, tier: 'plus' | 'pro'
   });
 }
 describe('Chrome payment UI', () => {
+  it('opens with prepared INR prices and the matching provider without a loading label', async () => {
+    billing.prepared.mockReturnValue({ provider: 'razorpay', products });
+    billing.catalog.mockReturnValue(new Promise(() => {}));
+    await render();
+    expect(JSON.stringify(renderer!.toJSON())).toContain('₹1,499.00');
+    expect(JSON.stringify(renderer!.toJSON())).not.toContain('Loading prices');
+    expect(
+      renderer!.root.findAllByProps({ testID: 'paywall-plus-price-placeholder' }),
+    ).toHaveLength(0);
+    await act(async () =>
+      renderer!.root.findByProps({ testID: 'btn-paywall-cta' }).props.onPress(),
+    );
+    expect(billing.start).toHaveBeenCalledWith('razorpay', 'plus', 'annual', 'request-id');
+  });
+  it('keeps purchase disabled with price placeholders while a fresh catalog is pending', async () => {
+    billing.catalog.mockReturnValue(new Promise(() => {}));
+    await render();
+    expect(renderer!.root.findByProps({ testID: 'paywall-plus-price-placeholder' })).toBeDefined();
+    expect(renderer!.root.findByProps({ testID: 'btn-paywall-cta' }).props.disabled).toBe(true);
+    expect(JSON.stringify(renderer!.toJSON())).not.toContain('Loading prices');
+  });
   it('returns a cancelled checkout to plan selection without polling or showing success', async () => {
     await render(true, true);
     expect(JSON.stringify(renderer!.toJSON())).toContain(

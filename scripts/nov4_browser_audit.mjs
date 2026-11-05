@@ -707,8 +707,29 @@ try {
   await page.getByTestId('save-squad-name').click();
   await page.getByTestId('edit-squad-name-sheet').waitFor({ state: 'hidden' });
   await page.getByTestId('btn-close-room-settings').click();
+  for (const [roomId, name] of [
+    [rid(1), 'Evening crew'],
+    [rid(0), 'Pav and you'],
+    [rid(1), 'Evening crew'],
+  ]) {
+    await page.getByTestId('room-tab-progress').click();
+    await page.getByTestId('btn-room-title-switcher').click();
+    await page.getByTestId('btn-switch-room-' + roomId).click();
+    await page.getByRole('button', { name, exact: true }).waitFor();
+    await page.clock.runFor(500);
+    assert.equal(
+      await page.getByTestId('btn-room-title-switcher').getAttribute('aria-label'),
+      name,
+    );
+    assert.equal(new URL(page.url()).searchParams.get('room'), roomId);
+  }
+  await snap('squad-switch-persists');
   await home();
   const homeCard = page.getByTestId('home-squad-card-' + rid(0));
+  const titleBox = await homeCard.getByTestId('home-open-title-' + rid(0)).boundingBox();
+  const pencilBox = await homeCard.getByTestId('home-edit-squad-name-' + rid(0)).boundingBox();
+  assert.ok(pencilBox.x - titleBox.x - titleBox.width <= 4);
+  assert.ok(pencilBox.width >= 44 && pencilBox.height >= 44);
   assert.deepEqual(
     await homeCard.evaluate((element) => {
       const style = globalThis.getComputedStyle(element);
@@ -1318,6 +1339,42 @@ try {
   await snap('international-web-prices');
   await page.getByTestId('btn-paywall-cta').click();
   await page.waitForURL('https://checkout.dodopayments.com/fixture');
+  billingCountry = 'IN';
+  billingRequests.length = 0;
+  const preparedPricing = page.waitForResponse(
+    (response) =>
+      response.url().endsWith('/web-billing') &&
+      response.request().postDataJSON()?.action === 'catalog',
+  );
+  await page.goto('http://127.0.0.1:8098/onboarding');
+  await page.getByTestId('goal-card-maintain').click();
+  await preparedPricing;
+  await page.getByTestId('btn-onboarding-next').click();
+  await page.getByTestId('btn-onboarding-next').click();
+  await page.getByTestId('activity-card-moderate').click();
+  await page.getByTestId('btn-onboarding-next').click();
+  await page.getByTestId('input-weight').fill('75');
+  await page.getByTestId('input-height').fill('175');
+  await page.getByTestId('gym-days-3').click();
+  await page.getByTestId('btn-onboarding-next').click();
+  await page.getByTestId('btn-onboarding-next').click();
+  await page.getByTestId('input-water-goal').fill('2500');
+  await page.getByTestId('input-step-goal').fill('6000');
+  await page.getByTestId('btn-onboarding-next').click();
+  await page.getByTestId('onboarding-monthly-price').waitFor();
+  assert.equal(await page.getByTestId('onboarding-pricing-placeholder').count(), 0);
+  assert.equal(billingRequests.filter((request) => request.action === 'routing').length, 1);
+  assert.equal(billingRequests.filter((request) => request.action === 'catalog').length, 1);
+  assert.match(await page.getByTestId('onboarding-monthly-price').innerText(), /249/);
+  assert.doesNotMatch(await page.locator('body').innerText(), /Loading prices|Prices unavailable/);
+  await snap('onboarding-prefetched-india-prices');
+  await page.getByTestId('btn-onboarding-next').click();
+  await page.getByTestId('btn-paywall-cta').waitFor();
+  assert.equal(await page.getByTestId('paywall-plus-price-placeholder').count(), 0);
+  assert.equal(await page.getByTestId('paywall-pro-price-placeholder').count(), 0);
+  assert.equal(billingRequests.filter((request) => request.action === 'catalog').length, 1);
+  assert.doesNotMatch(await page.locator('body').innerText(), /Loading prices|Prices unavailable/);
+  await snap('onboarding-prefetched-checkout-prices');
   assert.deepEqual(errors, []);
   console.log(
     'Browser audit: additional supplied branded foods, labelled serving scaling and Not provided states, plus copied weekly nutrition hidden with retry-safe rebuild and failed-save preservation, nutrient text colours, full-width empty Home, five goal suggestions, restored Challenges, working recipe favourites, explicit meal choice, recent-food clearing, restored exercise Workout hub and onboarding-plan connection, reduced Challenges padding, custom food and acknowledged 50g protein correction, plus previous food/polish coverage, chronological nested/tab/Log Back, inline member selection, stable idle Compare, acknowledged peer-food copying, Monday-only Free/trial, full paid week/tips and persisted routine editing, India Razorpay dismissal/pending/verified access/confirmed cancellation and international Dodo routing passed at 375/390/844px',

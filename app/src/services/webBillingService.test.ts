@@ -17,14 +17,19 @@ import {
   fetchWebCatalog,
   startWebCheckout,
   fetchBillingCountry,
+  getCachedWebCatalog,
   cancelRazorpayRenewal,
 } from './webBillingService';
+let sessionSequence = 0;
 beforeEach(() => {
   vi.clearAllMocks();
-  mocks.session.mockResolvedValue({ data: { session: { access_token: 'fixture-session' } } });
+  mocks.session.mockResolvedValue({
+    data: { session: { access_token: `fixture-session-${++sessionSequence}` } },
+  });
   Platform.OS = 'web';
 });
 afterEach(() => {
+  vi.restoreAllMocks();
   vi.unstubAllGlobals();
   Platform.OS = 'web';
 });
@@ -36,6 +41,29 @@ const checkout = {
   email: 'fixture@example.invalid',
 };
 describe('platform-separated web billing', () => {
+  it('reuses prepared prices only for the same session and refreshes expired quotes', async () => {
+    const products = (currency: string) =>
+      ['plus_monthly', 'plus_annual', 'pro_monthly', 'pro_annual'].map((key) => ({
+        key,
+        currency,
+        amount: 249,
+      }));
+    mocks.invoke
+      .mockResolvedValueOnce({ data: { country: 'IN' } })
+      .mockResolvedValueOnce({ data: { provider: 'razorpay', products: products('INR') } });
+    const first = await fetchWebCatalog();
+    expect(getCachedWebCatalog(`fixture-session-${sessionSequence}`)).toBe(first);
+    expect(getCachedWebCatalog('another-session')).toBeUndefined();
+    expect(await fetchWebCatalog()).toBe(first);
+    expect(mocks.invoke).toHaveBeenCalledTimes(2);
+    vi.spyOn(Date, 'now').mockReturnValue(Date.now() + 5 * 60 * 1000 + 1);
+    expect(getCachedWebCatalog(`fixture-session-${sessionSequence}`)).toBeUndefined();
+    mocks.invoke
+      .mockResolvedValueOnce({ data: { country: 'US' } })
+      .mockResolvedValueOnce({ data: { provider: 'dodo', products: products('USD') } });
+    expect((await fetchWebCatalog()).provider).toBe('dodo');
+    expect(mocks.invoke).toHaveBeenCalledTimes(4);
+  });
   it('does not share country or subscription management flags across signed-in sessions', async () => {
     mocks.session
       .mockResolvedValueOnce({ data: { session: { access_token: 'account-one' } } })
@@ -180,7 +208,7 @@ describe('platform-separated web billing', () => {
       .mockResolvedValueOnce({ data: { country: 'US' } })
       .mockResolvedValueOnce({ data: { provider: 'dodo', products } });
     expect((await fetchWebCatalog()).provider).toBe('razorpay');
-    await expect(fetchWebCatalog()).rejects.toThrow();
+    await expect(fetchWebCatalog({ force: true })).rejects.toThrow();
   });
   it('does not request a catalog or default to dollars when country detection fails', async () => {
     mocks.invoke.mockResolvedValueOnce({ data: { error: 'BILLING_COUNTRY_REQUIRED' } });

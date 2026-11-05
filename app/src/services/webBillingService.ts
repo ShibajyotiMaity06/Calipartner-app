@@ -48,20 +48,36 @@ async function request(name: string, body: Record<string, unknown>) {
   return data;
 }
 const pendingCatalogs = new Map<string, Promise<WebCatalog>>();
-export async function fetchWebCatalog(): Promise<WebCatalog> {
+const catalogCache = new Map<string, { catalog: WebCatalog; expiresAt: number }>();
+const catalogLifetimeMs = 5 * 60 * 1000;
+/** Memory-only, short-lived quotes prepared for this exact signed-in session. */
+export function getCachedWebCatalog(sessionKey?: string): WebCatalog | undefined {
+  for (const [key, value] of catalogCache)
+    if (value.expiresAt <= Date.now()) catalogCache.delete(key);
+  return sessionKey ? catalogCache.get(sessionKey)?.catalog : undefined;
+}
+export async function fetchWebCatalog({
+  force = false,
+}: { force?: boolean } = {}): Promise<WebCatalog> {
   webOnly();
   const {
     data: { session },
   } = await getSupabase().auth.getSession();
   if (!session) throw new Error(t('webBilling.unavailable'));
-  // The onboarding preview and paywall can mount together. Share only in-flight reads,
-  // never cached prices or country results across sessions.
   const key = session.access_token;
+  const cached = getCachedWebCatalog(key);
+  if (cached && !force) return cached;
+  if (force) catalogCache.delete(key);
   let pending = pendingCatalogs.get(key);
   if (!pending) {
-    pending = loadWebCatalog().finally(() => {
-      pendingCatalogs.delete(key);
-    });
+    pending = loadWebCatalog()
+      .then((catalog) => {
+        catalogCache.set(key, { catalog, expiresAt: Date.now() + catalogLifetimeMs });
+        return catalog;
+      })
+      .finally(() => {
+        pendingCatalogs.delete(key);
+      });
     pendingCatalogs.set(key, pending);
   }
   return pending;

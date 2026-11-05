@@ -7,11 +7,13 @@ import {
   onboardingLayout as layout,
   radius,
   space,
+  Skeleton,
   useTheme,
 } from '@calipartner/ui';
 import type { DodoCatalogProduct } from '@calipartner/core';
 import { useSubscription } from '@/hooks/useSubscription';
-import { fetchWebCatalog } from '@/services/webBillingService';
+import { fetchWebCatalog, getCachedWebCatalog } from '@/services/webBillingService';
+import { useAuth } from '@/contexts/AuthContext';
 import { findSubscriptionPackage } from '@/services/subscriptionPackages';
 import { t } from '@/i18n';
 import { PlanCard, planStyles } from './PlanPrimitives';
@@ -24,18 +26,20 @@ export function PremiumStep({
   onSkip: () => void;
 }) {
   const { colors } = useTheme();
+  const { session } = useAuth();
+  const prepared = Platform.OS === 'web' ? getCachedWebCatalog(session?.access_token) : undefined;
   const { offerings, loading: storeLoading, refresh } = useSubscription();
   const [tier, setTier] = useState<'plus' | 'pro'>('plus');
-  const [catalog, setCatalog] = useState<DodoCatalogProduct[]>([]);
-  const [loading, setLoading] = useState(Platform.OS === 'web');
+  const [catalog, setCatalog] = useState<DodoCatalogProduct[]>(prepared?.products ?? []);
+  const [loading, setLoading] = useState(Platform.OS === 'web' && !prepared);
   const [error, setError] = useState(false);
   const [retry, setRetry] = useState(0);
   useEffect(() => {
     if (Platform.OS !== 'web') return;
     let active = true;
-    setLoading(true);
+    setLoading(!getCachedWebCatalog(session?.access_token));
     setError(false);
-    void fetchWebCatalog()
+    void fetchWebCatalog({ force: retry > 0 })
       .then((result) => {
         if (active) setCatalog(result.products);
       })
@@ -51,7 +55,7 @@ export function PremiumStep({
     return () => {
       active = false;
     };
-  }, [retry]);
+  }, [retry, session?.access_token]);
   const price = useCallback(
     (duration: 'monthly' | 'annual') => {
       if (Platform.OS !== 'web')
@@ -151,7 +155,15 @@ export function PremiumStep({
       </ScrollView>
       <View style={[styles.purchase, { borderTopColor: colors.hairline }]}>
         {waiting ? (
-          <Text accessibilityLiveRegion="polite">{t('fixes.loadingPrices')}</Text>
+          <View
+            accessibilityLabel={t('common.loading')}
+            accessibilityState={{ busy: true }}
+            testID="onboarding-pricing-placeholder"
+            style={{ gap: space[2] }}
+          >
+            <Skeleton variant="text" width="60%" />
+            <Skeleton variant="text" width="40%" />
+          </View>
         ) : monthly && annual && !error ? (
           <>
             <View style={styles.priceRow}>
