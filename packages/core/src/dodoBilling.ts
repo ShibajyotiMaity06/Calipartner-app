@@ -41,8 +41,9 @@ export function verifiedDodoProduct(key: DodoProductKey, product: unknown): Dodo
     price.price !== Math.round(amount * 100) ||
     price.payment_frequency_count !== 1 ||
     price.payment_frequency_interval !== (annual ? 'Year' : 'Month') ||
-    (price.trial_period_days ?? 0) !== plan.trialDays ||
-    (plan.trialDays > 0 && (price.trial_type !== 'free' || (price.trial_amount ?? 0) !== 0))
+    ![0, plan.trialDays].includes(price.trial_period_days ?? 0) ||
+    ((price.trial_period_days ?? 0) > 0 &&
+      (price.trial_type !== 'free' || (price.trial_amount ?? 0) !== 0))
   )
     throw new Error('DODO_PRODUCT_MISMATCH');
   return { key, currency, amount, trialDays: plan.trialDays };

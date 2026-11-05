@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 vi.mock('@/contexts/AuthContext', () => ({ useAuth: () => ({ session: null }) }));
+vi.mock('@/hooks/usePlusTrial', () => ({ usePlusTrial: () => ({ offer: null, loading: false }) }));
 import { en } from '@/i18n/en';
 import { t } from '@/i18n';
 import { TIER_CONFIG } from '@/components/rooms/PaywallModal';

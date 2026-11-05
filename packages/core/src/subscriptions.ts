@@ -8,6 +8,43 @@ import type {
   RoomPeriod,
   RoomTier,
 } from './types';
+import { hasPlan as hasPaidPlan } from './rooms';
+
+export interface PlusTrialOffer {
+  eligible: boolean;
+  active: boolean;
+  expired: boolean;
+  started_at: string | null;
+  ends_at: string | null;
+  claim_id: string | null;
+  server_now: string;
+}
+export function isCardlessPlusTrial(entitlement?: Entitlement | null, now = new Date()): boolean {
+  return Boolean(
+    entitlement?.source === 'none' &&
+    entitlement.tier === 'plus' &&
+    entitlement.status === 'trial' &&
+    entitlement.period_end &&
+    new Date(entitlement.period_end) > now,
+  );
+}
+export function hasSubscriptionAccess(entitlement?: Entitlement | null, now = new Date()): boolean {
+  return Boolean(
+    entitlement &&
+    (entitlement.tier === 'plus' || entitlement.tier === 'pro') &&
+    (hasPaidPlan(entitlement, now) ||
+      (entitlement.tier === 'plus' &&
+        entitlement.status === 'trial' &&
+        entitlement.period_end &&
+        new Date(entitlement.period_end) > now)),
+  );
+}
+/** The server clock determines how long the presentation timer may run. */
+export function plusTrialRemainingMs(offer: PlusTrialOffer): number {
+  if (!offer.active || !offer.ends_at) return 0;
+  const remaining = Date.parse(offer.ends_at) - Date.parse(offer.server_now);
+  return Number.isFinite(remaining) ? Math.max(0, Math.min(7 * 24 * 60 * 60 * 1000, remaining)) : 0;
+}
 
 export {
   canCreateRoom,

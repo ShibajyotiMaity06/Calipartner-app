@@ -8,6 +8,10 @@ const sdk = vi.hoisted(() => ({
   entitlement: vi.fn<() => Promise<unknown>>(async () => null),
   restore: vi.fn(async () => ({})),
 }));
+vi.mock('react-native', () => ({
+  Platform: { OS: 'web' },
+  AppState: { addEventListener: vi.fn(() => ({ remove: vi.fn() })) },
+}));
 vi.mock('@/services/subscriptionService', () => ({
   initPurchases: sdk.init,
   purchasePackage: sdk.buy,
@@ -53,6 +57,29 @@ afterEach(async () => {
   vi.useRealTimers();
 });
 describe('checkout requires server verification', () => {
+  it('drops expired Plus access without requiring a webhook or reload', async () => {
+    const end = Date.now() + 1000;
+    sdk.entitlement.mockResolvedValue({
+      user_id: 'user-a',
+      tier: 'plus',
+      source: 'none',
+      status: 'trial',
+      period: 'monthly',
+      trial_started_at: new Date(end - 7 * 86400000).toISOString(),
+      period_end: new Date(end).toISOString(),
+    });
+    await act(async () => {
+      await state.refresh();
+    });
+    expect(state.hasActiveAccess).toBe(true);
+    expect(state.currentTier).toBe('plus');
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(1001);
+    });
+    expect(state.hasActiveAccess).toBe(false);
+    expect(state.currentTier).toBe('free');
+    expect(state.isLapsed).toBe(true);
+  });
   it('keeps a completed checkout pending when the database has no matching entitlement', async () => {
     let result: unknown;
     await act(async () => {

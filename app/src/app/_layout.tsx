@@ -7,6 +7,7 @@ import { dark, ThemeProvider } from '@calipartner/ui';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { HardwareBackHandler } from '@/components/navigation/HardwareBackHandler';
 import { SessionNavigationGuard } from '@/components/SessionNavigationGuard';
+import { PlusTrialExpiryGate } from '@/components/subscription/PlusTrialExpiryGate';
 import { AccountDataResetGate } from '@/components/AccountDataResetGate';
 import { ErrorState } from '@/components/ErrorState';
 import { LoadingState } from '@/components/LoadingState';
@@ -161,6 +162,7 @@ export default function RootLayout() {
                 <TargetsProvider>
                   <HardwareBackHandler />
                   <SessionNavigationGuard />
+                  <PlusTrialExpiryGate />
                   <Stack
                     screenOptions={{
                       headerShown: false,

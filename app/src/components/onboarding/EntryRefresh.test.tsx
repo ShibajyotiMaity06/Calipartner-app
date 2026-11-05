@@ -9,6 +9,8 @@ const api = vi.hoisted(() => ({
   setParams: vi.fn(),
   refresh: vi.fn(),
   cached: vi.fn(),
+  trial: vi.fn(),
+  eligible: true,
 }));
 vi.mock('react-native', () => ({
   Platform: { OS: 'web' },
@@ -36,6 +38,15 @@ vi.mock('@calipartner/ui', async () => {
     useTheme: () => ({ colors: tokens.dark }),
   };
 });
+vi.mock('@/hooks/usePlusTrial', () => ({
+  usePlusTrial: () => ({
+    offer: { eligible: api.eligible },
+    loading: false,
+    starting: false,
+    error: false,
+    start: api.trial,
+  }),
+}));
 vi.mock('@/hooks/useSubscription', () => ({
   useSubscription: () => ({ offerings: null, loading: false, refresh: api.refresh }),
 }));
@@ -60,6 +71,8 @@ beforeEach(() => {
   (globalThis as unknown as { IS_REACT_ACT_ENVIRONMENT: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
   vi.clearAllMocks();
   api.cached.mockReturnValue(undefined);
+  api.eligible = true;
+  api.trial.mockResolvedValue(true);
   api.params.mode = 'signup';
   api.otp.mockResolvedValue({ error: null });
   api.verify.mockResolvedValue({ error: null });
@@ -93,7 +106,7 @@ it('uses a price placeholder while an unprepared request is still pending', asyn
     tree = create(<PremiumStep onContinue={vi.fn()} onSkip={vi.fn()} />);
   });
   expect(tree!.root.findByProps({ testID: 'onboarding-pricing-placeholder' })).toBeDefined();
-  expect(JSON.stringify(tree!.toJSON())).not.toContain('Loading prices');
+  expect(JSON.stringify(tree!.toJSON())).toContain('Loading prices');
 });
 it.each(['INR', 'USD'])(
   'uses live %s prices and passes the selected Pro tier without offering a Pro trial',
@@ -125,6 +138,7 @@ it.each(['INR', 'USD'])(
   },
 );
 it('keeps Free and price retry usable after automatic country detection fails', async () => {
+  api.eligible = false;
   api.catalog
     .mockRejectedValueOnce(new Error('location unavailable'))
     .mockResolvedValueOnce({ products: products('USD') });
@@ -178,4 +192,20 @@ it('shows request errors and restores the email action for a retry', async () =>
   await act(async () => tree!.root.findByProps({ testID: 'btn-send-code' }).props.onPress());
   expect(tree!.root.findByProps({ testID: 'auth-error-banner' })).toBeTruthy();
   expect(tree!.root.findByProps({ testID: 'btn-send-code' }).props.loading).toBe(false);
+});
+
+it('starts Plus without waiting for pricing and advances only after acknowledgement', async () => {
+  api.catalog.mockReturnValue(new Promise(() => {}));
+  const skip = vi.fn(),
+    proceed = vi.fn();
+  await act(async () => {
+    tree = create(<PremiumStep onContinue={proceed} onSkip={skip} />);
+  });
+  expect(tree!.root.findByProps({ testID: 'btn-onboarding-next' }).props.disabled).toBe(false);
+  api.trial.mockResolvedValueOnce(false);
+  await act(async () => tree!.root.findByProps({ testID: 'btn-onboarding-next' }).props.onPress());
+  expect(skip).not.toHaveBeenCalled();
+  await act(async () => tree!.root.findByProps({ testID: 'btn-onboarding-next' }).props.onPress());
+  expect(skip).toHaveBeenCalledOnce();
+  expect(proceed).not.toHaveBeenCalled();
 });

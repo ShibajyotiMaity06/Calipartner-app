@@ -42,12 +42,14 @@ try {
   $india = Invoke-BillingCheck 'POST' '/functions/v1/web-billing' @{ action = 'catalog' } $token
   Assert-BillingCheck ($india.data.provider -eq 'razorpay' -and $india.status -eq 200) 'India serves its configured Razorpay catalog from the production origin'
   Assert-BillingCheck ($india.data.products.Count -eq 4 -and @($india.data.products | Where-Object { $_.currency -ne 'INR' }).Count -eq 0) 'all four configured INR prices verified'
+  Assert-BillingCheck (@($india.data.products | Where-Object { $_.trialDays -ne 0 }).Count -eq 0) 'new Indian paid plans add no provider trial'
   $bypass = Invoke-BillingCheck 'POST' '/functions/v1/dodo-checkout' @{ action = 'catalog' } $token
   Assert-BillingCheck ($bypass.status -eq 403 -and $bypass.data.error -eq 'WRONG_BILLING_PROVIDER') 'India cannot bypass the router into Dodo'
   $profile.country = 'US'
   Assert-BillingCheck ((Invoke-BillingCheck 'POST' '/rest/v1/profiles' $profile $serviceKey $serviceKey).status -eq 200) 'international fixture profile saved'
   $international = Invoke-BillingCheck 'POST' '/functions/v1/web-billing' @{ action = 'catalog' } $token
   Assert-BillingCheck ($international.status -eq 200 -and $international.data.provider -eq 'dodo' -and $international.data.products.Count -eq 4 -and @($international.data.products | Where-Object { $_.currency -ne 'USD' }).Count -eq 0) 'international catalog verifies all four Dodo USD products'
+  Assert-BillingCheck (@($international.data.products | Where-Object { $_.trialDays -ne 0 }).Count -eq 0) 'new international paid plans add no provider trial'
   $checkouts = Invoke-BillingCheck 'GET' ('/rest/v1/web_billing_checkouts?user_id=eq.' + $fixtureId + '&select=id') $null $token
   Assert-BillingCheck ($checkouts.status -eq 200 -and @($checkouts.data).Count -eq 0) 'catalog checks create no checkout or subscription'
   $detected = Invoke-BillingCheck 'POST' '/functions/v1/web-billing' @{ action = 'routing' } $token

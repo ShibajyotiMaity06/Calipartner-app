@@ -1,10 +1,11 @@
 import { useCallback, useEffect, useState } from 'react';
-import { Platform } from 'react-native';
+import { AppState, Platform } from 'react-native';
 import type { PurchasesOfferings, PurchasesPackage } from 'react-native-purchases';
 import {
   DEFAULT_REMOTE_CONFIG,
   getTrialBannerInfo,
   hasPlan as checkHasPlan,
+  hasSubscriptionAccess,
   type Entitlement,
   type RemoteConfigMap,
 } from '@calipartner/core';
@@ -29,6 +30,7 @@ export function useSubscription() {
   const [offerings, setOfferings] = useState<PurchasesOfferings | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [accessClock, setAccessClock] = useState(0);
 
   const loadData = useCallback(async () => {
     try {
@@ -104,9 +106,35 @@ export function useSubscription() {
   }, [loadData]);
 
   const hasPlan = checkHasPlan(entitlement);
-  const isTrial = entitlement?.status === 'trial';
+  useEffect(() => {
+    if (!entitlement?.period_end) return;
+    const delay = Date.parse(entitlement.period_end) - Date.now();
+    if (!Number.isFinite(delay) || delay <= 0) return;
+    const timer = setTimeout(
+      () => setAccessClock((value) => value + 1),
+      Math.min(delay + 1, 2147483647),
+    );
+    return () => clearTimeout(timer);
+  }, [entitlement?.period_end, accessClock]);
+  useEffect(() => {
+    const listener = AppState.addEventListener('change', (value) => {
+      if (value === 'active') {
+        setAccessClock((tick) => tick + 1);
+        void loadData();
+      }
+    });
+    return () => listener.remove();
+  }, [loadData]);
+  const hasActiveAccess = hasSubscriptionAccess(entitlement);
+  const isTrial = entitlement?.status === 'trial' && hasActiveAccess;
   const isGrace = entitlement?.status === 'grace';
-  const isLapsed = entitlement?.status === 'lapsed';
+  const isLapsed =
+    entitlement?.status === 'lapsed' ||
+    Boolean(
+      entitlement?.period_end &&
+      !hasActiveAccess &&
+      Date.parse(entitlement.period_end) <= Date.now(),
+    );
   const isUnattached = Boolean(entitlement?.is_unattached);
 
   const trialBanner = getTrialBannerInfo(entitlement?.trial_started_at);
@@ -196,12 +224,7 @@ export function useSubscription() {
     }
   };
 
-  const currentTier = entitlement?.tier ?? 'free';
-  const hasActiveAccess =
-    ((currentTier === 'plus' || currentTier === 'pro') && hasPlan) ||
-    (currentTier === 'plus' &&
-      isTrial &&
-      Boolean(entitlement?.period_end && new Date(entitlement.period_end) > new Date()));
+  const currentTier = hasActiveAccess ? (entitlement?.tier ?? 'free') : 'free';
 
   return {
     entitlement,

@@ -64,7 +64,7 @@ describe('Dodo subscription verification', () => {
     expect(() => verifiedDodoProduct('plus_annual', null)).toThrow();
   });
   it.each(['monthly', 'annual'] as const)(
-    'requires exactly seven free Plus trial days for %s',
+    'accepts zero provider trial days or the legacy free seven-day Plus product for %s',
     (duration) => {
       const key = `plus_${duration}` as const;
       const plus = {
@@ -81,7 +81,10 @@ describe('Dodo subscription verification', () => {
         },
       };
       expect(verifiedDodoProduct(key, plus).trialDays).toBe(7);
-      for (const days of [0, 3, 8, 30]) {
+      expect(
+        verifiedDodoProduct(key, { ...plus, price: { ...plus.price, trial_period_days: 0 } }),
+      ).toBeDefined();
+      for (const days of [3, 8, 30]) {
         expect(() =>
           verifiedDodoProduct(key, { ...plus, price: { ...plus.price, trial_period_days: days } }),
         ).toThrow('DODO_PRODUCT_MISMATCH');

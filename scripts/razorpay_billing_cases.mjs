@@ -76,7 +76,14 @@ export async function runRazorpayBillingTests(db) {
       /BILLING_COUNTRY_REQUIRED/,
     );
     const reserved = await reserve(1, 10);
-    assert.ok(reserved.trial_end);
+    assert.equal(reserved.trial_end, null);
+    // Simulate a mandate already reserved before cardless trials were introduced.
+    reserved.trial_end = (
+      await db.query(
+        "update public.web_billing_checkouts set trial_end=date_trunc('second',now())+interval '7 days' where id=$1 returning trial_end",
+        [reserved.id],
+      )
+    ).rows[0].trial_end;
     assert.equal((await reserve(1, 10)).cached, true);
     await rejects(
       'select public.reserve_web_checkout($1,$2,$3,$4,$5)',

@@ -7,6 +7,17 @@ import { homeRefresh } from './homeRefresh';
 import { squadDesign } from './squadDesign';
 import { repairMessages } from './repairs';
 export const en = {
+  cardlessTrial: {
+    checkError: 'Check your trial eligibility, then choose your plan again.',
+    noCard: '7 days of Plus. No card, no payment details and no automatic charge.',
+    error: 'Your trial could not be confirmed. Check your connection and try again.',
+    continue: 'Continue with Plus',
+    expiredTitle: 'Your Plus trial has ended',
+    expiredBody:
+      'Plus features are paused. Choose a paid plan to use them again, or continue with all Free features.',
+    continueFree: 'Continue on Free',
+    paidTerms: 'Your selected paid plan starts after checkout. No additional trial is added.',
+  },
   foodPolish,
   entryRefresh,
   fixNovember,

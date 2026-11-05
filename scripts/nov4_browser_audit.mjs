@@ -161,6 +161,21 @@ let billingCountry = 'IN',
   cancelRenewal = false,
   checkoutRequestId = null;
 const billingRequests = [];
+let trialEligible = false,
+  cardlessActive = false,
+  trialExpired = false,
+  cardlessEnd = null,
+  failTrialResponse = false;
+const trialClaims = [];
+const trialOffer = () => ({
+  eligible: trialEligible && !cardlessActive && !trialExpired,
+  active: cardlessActive,
+  expired: trialExpired,
+  claim_id: cardlessEnd ? 'cardless-claim' : null,
+  started_at: cardlessEnd ? now : null,
+  ends_at: cardlessEnd,
+  server_now: now,
+});
 let pro = false;
 let trial = false,
   weeklyPlan = null,
@@ -253,7 +268,19 @@ try {
       const name = url.pathname.split('/').at(-1),
         body = request.postDataJSON() ?? {};
       requests.push(name);
-      if (name === 'rename_room') {
+      if (name === 'get_plus_trial_offer') data = trialOffer();
+      else if (name === 'claim_plus_trial') {
+        trialClaims.push(body);
+        cardlessActive = true;
+        trialEligible = false;
+        cardlessEnd ??= '2026-11-10T14:00:00Z';
+        data = trialOffer();
+        if (failTrialResponse) {
+          failTrialResponse = false;
+          status = 503;
+          data = { message: 'Response lost after trial saved' };
+        }
+      } else if (name === 'rename_room') {
         renameRequests.push(body);
         const target = rooms.find((room) => room.id === body.p_room_id);
         if (!renamedRequests.has(body.p_client_id)) {
@@ -618,19 +645,31 @@ try {
     else if (url.pathname.endsWith('/profiles')) data = [profile];
     else if (url.pathname.endsWith('/goal_profiles')) data = [goal];
     else if (url.pathname.endsWith('/entitlements'))
-      data = paid
+      data = cardlessActive
         ? [
             {
               user_id: user.id,
-              tier: pro ? 'pro' : 'plus',
-              status: trial ? 'trial' : 'paid',
-              period_start: now,
-              source: razorpayConfirmed ? 'razorpay' : 'dodo',
-              period: 'annual',
-              period_end: '2099-11-02T00:00:00Z',
+              tier: 'plus',
+              status: 'trial',
+              source: 'none',
+              period: 'monthly',
+              trial_started_at: now,
+              period_end: cardlessEnd,
             },
           ]
-        : [];
+        : paid
+          ? [
+              {
+                user_id: user.id,
+                tier: pro ? 'pro' : 'plus',
+                status: trial ? 'trial' : 'paid',
+                period_start: now,
+                source: razorpayConfirmed ? 'razorpay' : 'dodo',
+                period: 'annual',
+                period_end: '2099-11-02T00:00:00Z',
+              },
+            ]
+          : [];
     else if (url.pathname.endsWith('/rooms')) data = rooms;
     if (request.headers().accept?.includes('vnd.pgrst.object') && Array.isArray(data))
       data = data[0] ?? null;
@@ -795,6 +834,14 @@ try {
     );
     assert.ok(personal.every((box) => Math.abs(box.width - personal[0].width) < 1));
   };
+  for (const metric of ['calories', 'protein', 'carbs', 'fat']) {
+    const colours = await page.getByTestId('personal-day-track-' + metric).evaluate((element) => ({
+      fill: globalThis.getComputedStyle(element.firstElementChild).backgroundColor,
+      text: globalThis.getComputedStyle(element.parentElement.firstElementChild.firstElementChild)
+        .color,
+    }));
+    assert.equal(colours.fill, colours.text, metric + ' fill matches nutrient text');
+  }
   await checkEqualTracks();
   await snap('home-equal-zero-and-full-tracks');
   const largeText = await page.addStyleTag({
@@ -1449,6 +1496,7 @@ try {
   await page.getByTestId('btn-paywall-cta').click();
   await page.waitForURL('https://checkout.dodopayments.com/fixture');
   billingCountry = 'IN';
+  trialEligible = true;
   billingRequests.length = 0;
   const preparedPricing = page.waitForResponse(
     (response) =>
@@ -1478,15 +1526,21 @@ try {
   assert.doesNotMatch(await page.locator('body').innerText(), /Loading prices|Prices unavailable/);
   await snap('onboarding-prefetched-india-prices');
   await page.getByTestId('btn-onboarding-next').click();
-  await page.getByTestId('btn-paywall-cta').waitFor();
-  assert.equal(await page.getByTestId('paywall-plus-price-placeholder').count(), 0);
-  assert.equal(await page.getByTestId('paywall-pro-price-placeholder').count(), 0);
-  assert.equal(billingRequests.filter((request) => request.action === 'catalog').length, 1);
-  assert.doesNotMatch(await page.locator('body').innerText(), /Loading prices|Prices unavailable/);
-  await snap('onboarding-prefetched-checkout-prices');
+  await page.getByTestId('plan-controls').waitFor();
+  assert.equal(trialClaims.length, 1);
+  assert.equal(billingRequests.filter((request) => request.action === 'checkout').length, 0);
+  await snap('cardless-trial-acknowledged-review');
+  cardlessActive = false;
+  trialExpired = true;
+  await page.goto('http://127.0.0.1:8098/');
+  await page.getByText('Your Plus trial has ended', { exact: true }).waitFor();
+  await page.getByTestId('continue-free-after-trial').click();
+  await page.getByTestId('personal-day-track-calories').waitFor();
+  assert.equal(await page.getByTestId('continue-free-after-trial').count(), 0);
+  await snap('expired-trial-continue-free');
   assert.deepEqual(errors, []);
   console.log(
-    'Browser audit: additional supplied branded foods, labelled serving scaling and Not provided states, plus copied weekly nutrition hidden with retry-safe rebuild and failed-save preservation, nutrient text colours, full-width empty Home, five goal suggestions, restored Challenges, working recipe favourites, explicit meal choice, recent-food clearing, restored exercise Workout hub and onboarding-plan connection, reduced Challenges padding, custom food and acknowledged 50g protein correction, plus previous food/polish coverage, chronological nested/tab/Log Back, inline member selection, stable idle Compare, acknowledged peer-food copying, Monday-only Free/trial, full paid week/tips and persisted routine editing, India Razorpay dismissal/pending/verified access/confirmed cancellation and international Dodo routing passed at 375/390/844px',
+    'Browser audit: cardless trial acknowledgement without checkout, expiry paywall and Free dismissal, nutrient progress colours; additional supplied branded foods, labelled serving scaling and Not provided states, plus copied weekly nutrition hidden with retry-safe rebuild and failed-save preservation, nutrient text colours, full-width empty Home, five goal suggestions, restored Challenges, working recipe favourites, explicit meal choice, recent-food clearing, restored exercise Workout hub and onboarding-plan connection, reduced Challenges padding, custom food and acknowledged 50g protein correction, plus previous food/polish coverage, chronological nested/tab/Log Back, inline member selection, stable idle Compare, acknowledged peer-food copying, Monday-only Free/trial, full paid week/tips and persisted routine editing, India Razorpay dismissal/pending/verified access/confirmed cancellation and international Dodo routing passed at 375/390/844px',
   );
 } catch (error) {
   for (const page of browser?.contexts().flatMap((context) => context.pages()) ?? []) {

@@ -13,6 +13,8 @@ const billing = vi.hoisted(() => ({
   cancel: vi.fn(),
   provider: 'dodo' as 'dodo' | 'razorpay',
   active: false,
+  trialEligible: false,
+  trial: vi.fn(),
   entitlement: null as Record<string, unknown> | null,
 }));
 vi.mock('react-native', () => ({
@@ -34,6 +36,15 @@ vi.mock('@calipartner/ui', async () => ({
   Text: 'Text',
   Skeleton: 'Skeleton',
   useReducedMotion: () => true,
+}));
+vi.mock('@/hooks/usePlusTrial', () => ({
+  usePlusTrial: () => ({
+    offer: { eligible: billing.trialEligible },
+    loading: false,
+    starting: false,
+    error: false,
+    start: billing.trial,
+  }),
 }));
 vi.mock('@/hooks/useSubscription', () => ({
   useSubscription: () => ({
@@ -85,6 +96,8 @@ beforeEach(() => {
   billing.prepared.mockReturnValue(undefined);
   Platform.OS = 'web';
   billing.active = false;
+  billing.trialEligible = false;
+  billing.trial.mockResolvedValue(true);
   billing.provider = 'dodo';
   billing.start.mockResolvedValue('pending');
   billing.manage.mockResolvedValue({ request_id: 'request-id', cancelled: false });
@@ -135,7 +148,7 @@ describe('Chrome payment UI', () => {
     await render();
     expect(renderer!.root.findByProps({ testID: 'paywall-plus-price-placeholder' })).toBeDefined();
     expect(renderer!.root.findByProps({ testID: 'btn-paywall-cta' }).props.disabled).toBe(true);
-    expect(JSON.stringify(renderer!.toJSON())).not.toContain('Loading prices');
+    expect(JSON.stringify(renderer!.toJSON())).toContain('Loading prices');
   });
   it('returns a cancelled checkout to plan selection without polling or showing success', async () => {
     await render(true, true);
@@ -330,4 +343,33 @@ it('Razorpay management requires explicit confirmation before stopping renewal',
   expect(billing.cancel).toHaveBeenCalledWith('request-id');
   expect(JSON.stringify(renderer!.toJSON())).toContain('Renewal stopped.');
   expect(billing.start).not.toHaveBeenCalled();
+});
+
+it('activates a cardless trial without a provider or a loaded catalogue', async () => {
+  billing.trialEligible = true;
+  billing.catalog.mockReturnValue(new Promise(() => {}));
+  await render();
+  expect(renderer!.root.findByProps({ testID: 'btn-paywall-cta' }).props.disabled).toBe(false);
+  billing.trial.mockResolvedValueOnce(false);
+  await act(async () => renderer!.root.findByProps({ testID: 'btn-paywall-cta' }).props.onPress());
+  expect(JSON.stringify(renderer!.toJSON())).toContain('Your trial could not be confirmed');
+  expect(billing.refresh).not.toHaveBeenCalled();
+  await act(async () => renderer!.root.findByProps({ testID: 'btn-paywall-cta' }).props.onPress());
+  expect(billing.refresh).toHaveBeenCalledOnce();
+  expect(billing.create).not.toHaveBeenCalled();
+  expect(billing.start).not.toHaveBeenCalled();
+  expect(billing.navigate).not.toHaveBeenCalled();
+});
+it('lets an expired trial continue on Free even when pricing fails', async () => {
+  billing.catalog.mockRejectedValue(new Error('offline'));
+  const close = vi.fn();
+  await act(async () => {
+    renderer = create(<PaywallModal visible trialExpired onClose={close} />);
+  });
+  expect(JSON.stringify(renderer!.toJSON())).toContain('Your Plus trial has ended');
+  await act(async () =>
+    renderer!.root.findByProps({ testID: 'continue-free-after-trial' }).props.onPress(),
+  );
+  expect(close).toHaveBeenCalledOnce();
+  expect(billing.create).not.toHaveBeenCalled();
 });

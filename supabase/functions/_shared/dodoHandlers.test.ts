@@ -223,6 +223,7 @@ Deno.test(
     const r = await handleDodoCheckout(checkoutRequest(), () => state.config);
     assert.equal(r.status, 200);
     assert.equal(state.creates(), 1);
+    assert.deepEqual(state.sessionInput()?.subscription_data, { trial_period_days: 0 });
     assert.equal(state.sessionInput()?.billing_currency, 'USD');
     assert.equal(state.sessionInput()?.minimal_address, true);
     assert.deepEqual(state.sessionInput()?.feature_flags, {
@@ -263,6 +264,7 @@ Deno.test(
     const state = setup(false, false, 'US');
     const r = await handleDodoCheckout(checkoutRequest(), () => state.config);
     assert.equal(r.status, 200);
+    assert.deepEqual(state.sessionInput()?.subscription_data, { trial_period_days: 0 });
     assert.equal(state.sessionInput()?.billing_currency, 'USD');
     assert.deepEqual(state.sessionInput()?.product_cart, [{ product_id: 'pdt_usd', quantity: 1 }]);
     Deno.env.set('DODO_PAYMENTS_WEBHOOK_KEY', secret);

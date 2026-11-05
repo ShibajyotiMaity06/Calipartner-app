@@ -1,6 +1,6 @@
 import React from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
-import { dark, homeLayout, radius, space, Text } from '@calipartner/ui';
+import { dark, homeLayout, radius, space, Text, nutritionColors } from '@calipartner/ui';
 import { t } from '@/i18n';
 
 /** A visual progress track. Goal and nutrition calculations remain in core. */
@@ -93,7 +93,7 @@ export function PersonalDayCard({
           testID="personal-day-open"
           style={styles.list}
         >
-          {metrics.map(({ label, value, target, unit, nutrient }, index) => (
+          {metrics.map(({ label, value, target, unit, nutrient }) => (
             <View
               key={label}
               style={styles.metric}
@@ -119,7 +119,7 @@ export function PersonalDayCard({
               <DayProgressTrack
                 value={value}
                 target={target}
-                color={[dark.copper, dark.iris, dark.sky][index % 3]!}
+                color={nutrient ? nutritionColors[nutrient] : dark.textMid}
                 testID={`personal-day-track-${nutrient ?? 'steps'}`}
               />
               {target != null && value > target && (

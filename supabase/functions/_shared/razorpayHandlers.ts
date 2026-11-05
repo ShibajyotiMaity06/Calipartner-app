@@ -138,12 +138,6 @@ export async function handleRazorpayCheckout(req: Request, getConfig = razorpayC
     if (webBillingProvider('web', profile.data?.country) !== 'razorpay')
       return billingResponse({ error: 'WRONG_BILLING_PROVIDER' }, 403);
     if (body.action === 'catalog') {
-      const entitlement = await admin
-        .from('entitlements')
-        .select('trial_started_at')
-        .eq('user_id', user.id)
-        .maybeSingle();
-      if (entitlement.error) throw entitlement.error;
       return billingResponse({
         provider: 'razorpay',
         products: await Promise.all(
@@ -151,7 +145,7 @@ export async function handleRazorpayCheckout(req: Request, getConfig = razorpayC
             const product = verifiedRazorpayPlan(key, await api('/plans/' + plans[key]));
             return {
               ...product,
-              trialDays: entitlement.data?.trial_started_at ? 0 : product.trialDays,
+              trialDays: 0,
             };
           }),
         ),

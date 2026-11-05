@@ -44,7 +44,7 @@ export async function handleDodoCheckout(req: Request, getConfig = dodoConfig) {
         DODO_PRODUCT_KEYS.map(async (key) => {
           const product = verifiedDodoProduct(key, await dodo.products.retrieve(products[key]));
           if (product.currency !== 'USD') throw new Error('DODO_PRODUCT_MISMATCH');
-          return product;
+          return { ...product, trialDays: 0 };
         }),
       );
       return dodoResponse({ products: catalog });
@@ -81,7 +81,9 @@ export async function handleDodoCheckout(req: Request, getConfig = dodoConfig) {
     if (entitlementError) throw entitlementError;
     if (
       hasPlan(entitlement) ||
-      (entitlement?.status === 'trial' && new Date(entitlement.period_end) > new Date())
+      (entitlement?.status === 'trial' &&
+        entitlement.source !== 'none' &&
+        new Date(entitlement.period_end) > new Date())
     )
       return dodoResponse({ error: 'MANAGE_EXISTING_SUBSCRIPTION' }, 409);
     const { data: existing } = await admin
@@ -119,6 +121,7 @@ export async function handleDodoCheckout(req: Request, getConfig = dodoConfig) {
     const session = await dodo.checkoutSessions.create(
       {
         product_cart: [{ product_id: productId, quantity: 1 }],
+        subscription_data: { trial_period_days: 0 },
         customer: { email: user.email },
         billing_currency: verified.currency,
         minimal_address: true,

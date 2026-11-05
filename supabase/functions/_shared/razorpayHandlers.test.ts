@@ -101,9 +101,7 @@ function setup(
           provider: 'razorpay',
           product_id: args.p_product_id,
           state: 'reserved',
-          trial_end: String(args.p_product_key).startsWith('plus_')
-            ? new Date((now + 7 * 86400) * 1000).toISOString()
-            : null,
+          trial_end: null,
         };
         rows.set(String(args.p_id), row);
         return { data: { ...row, cached: false }, error: null };
@@ -257,7 +255,7 @@ Deno.test(
   },
 );
 Deno.test(
-  'Account-bound reservations reuse one subscription, with Plus-only delayed billing and no entitlements',
+  'Account-bound reservations reuse one subscription, without a new provider trial or client-granted entitlements',
   async () => {
     for (const tier of ['plus', 'pro']) {
       const state = setup();
@@ -272,7 +270,7 @@ Deno.test(
       assert.equal((await handleRazorpayCheckout(request(body), () => state.config)).status, 200);
       const creates = state.calls.filter((call) => call.path === '/subscriptions');
       assert.equal(creates.length, 1);
-      assert.equal(Boolean((creates[0].body as Record<string, unknown>).start_at), tier === 'plus');
+      assert.equal(Boolean((creates[0].body as Record<string, unknown>).start_at), false);
       assert.equal(state.events.length, 0);
     }
   },

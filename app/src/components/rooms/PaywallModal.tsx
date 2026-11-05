@@ -22,7 +22,6 @@ import {
   radius,
   space,
   Text,
-  Skeleton,
   onboardingLayout,
   useReducedMotion,
 } from '@calipartner/ui';
@@ -39,7 +38,13 @@ import {
 } from '@/services/webBillingService';
 import { generateClientUuid } from '@/services/foodService';
 import { findSubscriptionPackage } from '@/services/subscriptionPackages';
-import { hasPlan, PRICING_PLANS, type DodoCatalogProduct } from '@calipartner/core';
+import {
+  hasPlan,
+  isCardlessPlusTrial,
+  PRICING_PLANS,
+  type DodoCatalogProduct,
+} from '@calipartner/core';
+import { usePlusTrial } from '@/hooks/usePlusTrial';
 import { useSubscription } from '@/hooks/useSubscription';
 import { playClickSound, playSuccessSound } from '@/lib/sound';
 
@@ -50,6 +55,7 @@ export type PaywallContext =
   'room' | 'add_people' | 'coach' | 'partner_finder' | 'keep_going' | 'general' | 'weekly_plan';
 
 export interface PaywallModalProps {
+  trialExpired?: boolean;
   visible: boolean;
   onClose: () => void;
   context?: PaywallContext;
@@ -166,11 +172,13 @@ export function PaywallModal({
   onSuccess,
   checkoutReturn,
   checkoutCancelled = false,
+  trialExpired = false,
 }: PaywallModalProps) {
   const { session } = useAuth();
   const preparedCatalog =
     Platform.OS === 'web' ? getCachedWebCatalog(session?.access_token) : undefined;
   const reduceMotion = useReducedMotion();
+  const plusTrial = usePlusTrial();
   const {
     offerings,
     entitlement,
@@ -220,9 +228,8 @@ export function PaywallModal({
   const [confirmCancellation, setConfirmCancellation] = useState(false);
   const [catalogLoading, setCatalogLoading] = useState(Platform.OS === 'web' && !preparedCatalog);
   const [catalogError, setCatalogError] = useState<string | null>(null);
-  const plusTrialAvailable =
-    Platform.OS !== 'web' ||
-    catalog.some((p) => p.key === `plus_${selectedDuration}` && p.trialDays === 7);
+  const plusTrialAvailable = plusTrial.offer?.eligible === true;
+  const cardlessActive = isCardlessPlusTrial(entitlement);
   const loadCatalog = useCallback(async () => {
     setCatalogLoading(!preparedCatalog);
     setCatalogError(null);
@@ -310,6 +317,7 @@ export function PaywallModal({
 
   // Contextual Title (CaliPartner pricing, not room plan)
   const contextualTitle = useMemo(() => {
+    if (trialExpired) return t('cardlessTrial.expiredTitle');
     switch (context) {
       case 'weekly_plan':
         return t('fixNovember.lockedTitle');
@@ -327,7 +335,7 @@ export function PaywallModal({
       default:
         return 'Choose your CaliPartner plan';
     }
-  }, [context, roomPartnerName]);
+  }, [context, roomPartnerName, trialExpired]);
 
   const activeTierConfig = TIER_CONFIG[selectedTier === 'basic' ? 'plus' : selectedTier];
 
@@ -339,7 +347,7 @@ export function PaywallModal({
   const storePrice = (tier: PlanTier) => {
     if (Platform.OS === 'web') {
       const product = catalog.find((p) => p.key === `${tier}_${selectedDuration}`);
-      if (!product) return catalogLoading ? '' : t('fixes.priceUnavailable');
+      if (!product) return t(catalogLoading ? 'fixes.loadingPrices' : 'fixes.priceUnavailable');
       return t('fixes.storePrice', {
         price: new Intl.NumberFormat(product.currency === 'INR' ? 'en-IN' : 'en-US', {
           style: 'currency',
@@ -365,6 +373,24 @@ export function PaywallModal({
     setStatusMessage(null);
 
     try {
+      if (selectedTier === 'plus' && !plusTrial.offer && !awaitingEntitlement) {
+        await plusTrial.refresh();
+        setStatusMessage(t('cardlessTrial.checkError'));
+        return;
+      }
+      if (selectedTier === 'plus' && plusTrialAvailable && !awaitingEntitlement) {
+        if (await plusTrial.start()) {
+          await refresh();
+          playSuccessSound();
+          setShowSuccessModal(true);
+        } else setStatusMessage(t('cardlessTrial.error'));
+        return;
+      }
+      if (selectedTier === 'plus' && cardlessActive && !awaitingEntitlement) {
+        onClose();
+        onSuccess?.();
+        return;
+      }
       if (awaitingEntitlement) {
         const latest = await refresh();
         const active =
@@ -404,7 +430,10 @@ export function PaywallModal({
         }
       }
 
-      if (hasActiveAccess || (Platform.OS === 'web' && requiresWebManagement)) {
+      if (
+        (hasActiveAccess && !cardlessActive) ||
+        (Platform.OS === 'web' && requiresWebManagement)
+      ) {
         if (entitlement?.source === 'razorpay') {
           if (Platform.OS === 'web') {
             setStatusMessage(null);
@@ -527,13 +556,23 @@ export function PaywallModal({
     });
   };
 
-  const renewalSentence = t('fixes.storeTerms');
+  const renewalSentence = t(
+    selectedTier === 'plus' && plusTrialAvailable ? 'cardlessTrial.noCard' : 'fixes.storeTerms',
+  );
 
-  // Trial eligibility and the final terms are confirmed by the store.
+  // Trial eligibility is account-owned; paid terms are confirmed at checkout.
   const primaryCtaLabel = useMemo(() => {
     if (awaitingEntitlement) return t('fixes.checkPayment');
-    if (actionLoading) return t('fixes.connectingPayment');
-    if ((hasActiveAccess || requiresWebManagement) && !sponsorRoomId)
+    if (actionLoading)
+      return t(
+        selectedTier === 'plus' && plusTrialAvailable
+          ? 'common.loading'
+          : 'fixes.connectingPayment',
+      );
+    if (selectedTier === 'plus' && !plusTrial.offer && plusTrial.error) return t('common.retry');
+    if (selectedTier === 'plus' && plusTrialAvailable) return t('entryRefresh.trialAction');
+    if (selectedTier === 'plus' && cardlessActive) return t('cardlessTrial.continue');
+    if (((hasActiveAccess && !cardlessActive) || requiresWebManagement) && !sponsorRoomId)
       return t('brandRepair.manage');
     if (catalogError) return t('fixes.retryPrices');
     if (sponsorRoomId || context === 'keep_going') {
@@ -557,6 +596,10 @@ export function PaywallModal({
     catalogError,
     hasActiveAccess,
     requiresWebManagement,
+    plusTrialAvailable,
+    cardlessActive,
+    plusTrial.offer,
+    plusTrial.error,
   ]);
 
   return (
@@ -766,11 +809,12 @@ export function PaywallModal({
                   <View style={styles.priceContainer}>
                     <View style={styles.priceMainRow}>
                       {Platform.OS === 'web' && catalogLoading ? (
-                        <Skeleton
-                          variant="text"
-                          width="60%"
+                        <Text
+                          accessibilityLiveRegion="polite"
                           testID="paywall-plus-price-placeholder"
-                        />
+                        >
+                          {t('fixes.loadingPrices')}
+                        </Text>
                       ) : (
                         <Text variant="numeralM" color={dark.textHi} style={styles.priceHighlight}>
                           {storePrice('plus')}
@@ -778,7 +822,7 @@ export function PaywallModal({
                       )}
                     </View>
                     <Text variant="micro" color={dark.teal} style={styles.trialSubNote}>
-                      {t(plusTrialAvailable ? 'fixes.plusTrialTerms' : 'fixes.proBillingTerms')}
+                      {t(plusTrialAvailable ? 'cardlessTrial.noCard' : 'cardlessTrial.paidTerms')}
                     </Text>
                   </View>
                 </TouchableOpacity>
@@ -827,11 +871,12 @@ export function PaywallModal({
                   <View style={styles.priceContainer}>
                     <View style={styles.priceMainRow}>
                       {Platform.OS === 'web' && catalogLoading ? (
-                        <Skeleton
-                          variant="text"
-                          width="60%"
+                        <Text
+                          accessibilityLiveRegion="polite"
                           testID="paywall-pro-price-placeholder"
-                        />
+                        >
+                          {t('fixes.loadingPrices')}
+                        </Text>
                       ) : (
                         <Text variant="numeralM" color={dark.textHi} style={styles.priceHighlight}>
                           {storePrice('pro')}
@@ -860,11 +905,6 @@ export function PaywallModal({
                   </View>
                 )}
               </View>
-
-              {Platform.OS === 'web' &&
-                webProvider === 'razorpay' &&
-                selectedTier === 'plus' &&
-                plusTrialAvailable && <Text variant="bodyS">{t('webBilling.mandateNotice')}</Text>}
 
               {(selectedTier === 'pro' ? PRO_FEATURES : PLUS_FEATURES).map((feat, index) => (
                 <View key={index} style={styles.whatYouGetItem}>
@@ -911,10 +951,26 @@ export function PaywallModal({
               variant="primary"
               label={primaryCtaLabel}
               onPress={handlePurchase}
-              disabled={actionLoading || subscriptionLoading || catalogLoading}
+              disabled={
+                actionLoading ||
+                plusTrial.starting ||
+                (!(selectedTier === 'plus' && plusTrialAvailable) &&
+                  (subscriptionLoading || catalogLoading || plusTrial.loading))
+              }
               testID="btn-paywall-cta"
               style={styles.ctaButton}
             />
+            {trialExpired && (
+              <>
+                <Text variant="bodyS">{t('cardlessTrial.expiredBody')}</Text>
+                <Button
+                  variant="secondary"
+                  label={t('cardlessTrial.continueFree')}
+                  onPress={onClose}
+                  testID="continue-free-after-trial"
+                />
+              </>
+            )}
 
             {awaitingEntitlement ? (
               <Button
