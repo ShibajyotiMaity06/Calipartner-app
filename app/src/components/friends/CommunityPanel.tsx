@@ -366,7 +366,7 @@ export function CommunityPanel({
               ) : (
                 <Text variant="bodyS" fontSet="onboarding" color={colors.textMid}>
                   {t(
-                    person.relationship === 'friends' || tab === 'friends'
+                    person.relationship === 'friends'
                       ? 'community.connected'
                       : person.relationship === 'incoming'
                         ? 'community.received'
