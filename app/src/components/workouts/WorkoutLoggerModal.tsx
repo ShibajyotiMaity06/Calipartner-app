@@ -1,7 +1,7 @@
 import { type as inputTypography } from '@calipartner/ui';
 import { useBrowserModalBack } from '@/hooks/useBrowserModalBack';
 import { useCurrentLocalDate } from '@/hooks/useCurrentLocalDate';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Modal,
@@ -11,7 +11,8 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import { Button, Text, type as typography } from '@calipartner/ui';
+import { Button, Text, homeLayout, useReducedMotion, type as typography } from '@calipartner/ui';
+import { newWorkoutSessionRequest, saveNewWorkoutSession } from '@/services/workoutSessionService';
 import { Ionicons } from '@expo/vector-icons';
 import {
   weeklyPlanDayIndex,
@@ -57,6 +58,7 @@ interface LocalExerciseState {
 interface WorkoutLoggerModalProps {
   visible: boolean;
   initialWorkout?: WorkoutWithDetails | null;
+  initialWorkoutType?: 'cardio' | 'walk_run';
   defaultDate?: string;
   onClose: () => void;
   onSaved?: (workout: WorkoutWithDetails) => void;
@@ -66,12 +68,14 @@ interface WorkoutLoggerModalProps {
 export function WorkoutLoggerModal({
   visible,
   initialWorkout,
+  initialWorkoutType,
   defaultDate,
   onClose,
   onSaved,
   testID = 'workout-logger-modal',
 }: WorkoutLoggerModalProps) {
   useBrowserModalBack(visible, onClose);
+  const reduceMotion = useReducedMotion();
   const [showDetails, setShowDetails] = useState(false);
   const [weeklyPlanVisible, setWeeklyPlanVisible] = useState(false);
   const { user } = useAuth();
@@ -80,8 +84,10 @@ export function WorkoutLoggerModal({
   const { localDate: today } = useCurrentLocalDate();
   const localDate = defaultDate ?? today;
 
-  const { create, update, addExercise, addSet, updateSet, getSummary, getPreviousPerformance } =
+  const { update, addExercise, addSet, updateSet, getSummary, getPreviousPerformance } =
     useWorkouts(localDate);
+  const sessionRequest = useRef(newWorkoutSessionRequest());
+  const saveLock = useRef(false);
 
   // Form State
   const [workoutType, setWorkoutType] = useState<WorkoutType>(initialWorkout?.type ?? 'strength');
@@ -156,8 +162,13 @@ export function WorkoutLoggerModal({
         }),
       );
     } else {
-      setWorkoutType('strength');
-      setWorkoutName('');
+      sessionRequest.current = newWorkoutSessionRequest();
+      setWorkoutType(initialWorkoutType ?? 'strength');
+      setWorkoutName(
+        initialWorkoutType
+          ? t(initialWorkoutType === 'cardio' ? 'homeRefresh.cycling' : 'homeRefresh.running')
+          : '',
+      );
       setDurationMinutes(45);
       setNotes('');
       setEffortRating(null);
@@ -165,21 +176,32 @@ export function WorkoutLoggerModal({
       setExercises([]);
     }
     setErrorMessage(null);
-  }, [visible, initialWorkout, getPreviousPerformance]);
+  }, [visible, initialWorkout, initialWorkoutType, getPreviousPerformance]);
 
   useEffect(() => {
-    if (!visible || initialWorkout || !planOwnerId) return;
+    if (!visible || initialWorkout || initialWorkoutType || !planOwnerId) return;
     let active = true;
     void getPersonalWeeklyPlan(planOwnerId)
-      .then((plan) => {
+      .then(async (plan) => {
         if (!active || !plan) return;
         const day = plan.days.find((day) => day.day === weeklyPlanDayIndex(localDate));
         if (!day?.workout.exercises.length) return;
+        const hints = await Promise.all(
+          day.workout.exercises.map(async (exercise) => {
+            try {
+              return (await getPreviousPerformance(exercise.name))?.formatted_summary ?? null;
+            } catch {
+              return null;
+            }
+          }),
+        );
+        if (!active) return;
         setExercises((current) =>
           current.length
             ? current
             : day.workout.exercises.map((exercise, index) => ({
                 exerciseName: exercise.name,
+                previousHint: hints[index],
                 orderInWorkout: index + 1,
                 sets: Array.from({ length: exercise.sets }, (_, set) => ({
                   setNumber: set + 1,
@@ -199,7 +221,7 @@ export function WorkoutLoggerModal({
     return () => {
       active = false;
     };
-  }, [visible, initialWorkout, planOwnerId, localDate]);
+  }, [visible, initialWorkout, initialWorkoutType, planOwnerId, localDate, getPreviousPerformance]);
 
   // Handle adding an exercise from picker
   const handleSelectExercise = async (selected: Exercise) => {
@@ -346,6 +368,8 @@ export function WorkoutLoggerModal({
   };
 
   const handleToggleCompleted = (exerciseIndex: number, setIndex: number) => {
+    const selected = exercises[exerciseIndex]?.sets[setIndex];
+    if (selected && !selected.completed && !selected.isWarmup) setRestTimerVisible(true);
     setExercises((prev) => {
       const copy = [...prev];
       const target = copy[exerciseIndex];
@@ -385,11 +409,14 @@ export function WorkoutLoggerModal({
 
   // Save Workout
   const handleSaveWorkout = async () => {
+    if (saveLock.current) return;
+    saveLock.current = true;
     try {
       setSaving(true);
       setErrorMessage(null);
 
       let savedWorkoutId: string;
+      let savedSession: WorkoutWithDetails | null = null;
 
       if (initialWorkout) {
         // Update existing workout
@@ -442,35 +469,18 @@ export function WorkoutLoggerModal({
           }
         }
       } else {
-        // Create new workout
-        const created = await create({
+        savedSession = await saveNewWorkoutSession(sessionRequest.current, {
+          userId: user?.id ?? 'guest-user',
           type: workoutType,
           name: workoutName.trim() || null,
           durationMinutes: Math.max(1, durationMinutes),
+          distanceKm: cardioDistanceKm,
           localDate,
           notes: notes.trim() || null,
           effortRating,
+          exercises,
         });
-        savedWorkoutId = created.id;
-
-        // Add exercises and sets
-        for (const ex of exercises) {
-          const createdEx = await addExercise(savedWorkoutId, {
-            exerciseId: ex.exerciseId,
-            exerciseName: ex.exerciseName,
-            orderInWorkout: ex.orderInWorkout,
-            notes: ex.notes,
-          });
-
-          for (const s of ex.sets) {
-            await addSet(createdEx.id, {
-              reps: s.reps,
-              weightKg: s.weightKg,
-              isWarmup: s.isWarmup,
-              completed: s.completed,
-            });
-          }
-        }
+        savedWorkoutId = savedSession.id;
       }
 
       // Reconstruct full WorkoutWithDetails for finish summary
@@ -506,17 +516,19 @@ export function WorkoutLoggerModal({
         })),
       };
 
-      const summary = getSummary(fullWorkout);
-      setFinishedWorkout(fullWorkout);
+      const confirmed = savedSession ?? fullWorkout;
+      const summary = getSummary(confirmed);
+      setFinishedWorkout(confirmed);
       setFinishSummary(summary);
       setShowSummaryModal(true);
 
       if (onSaved) {
-        onSaved(fullWorkout);
+        onSaved(confirmed);
       }
     } catch (e) {
       setErrorMessage(e instanceof Error ? e.message : String(e));
     } finally {
+      saveLock.current = false;
       setSaving(false);
     }
   };
@@ -532,7 +544,7 @@ export function WorkoutLoggerModal({
     <Modal
       testID={testID}
       visible={visible}
-      animationType="slide"
+      animationType={reduceMotion ? 'none' : 'slide'}
       transparent={false}
       onRequestClose={onClose}
     >
@@ -555,7 +567,11 @@ export function WorkoutLoggerModal({
           </TouchableOpacity>
 
           <Text style={[styles.headerTitle, { color: colors.text }]}>
-            {initialWorkout ? t('workouts.editWorkout') : t('workouts.logWorkout')}
+            {initialWorkout
+              ? t('workouts.editWorkout')
+              : initialWorkoutType
+                ? t(initialWorkoutType === 'cardio' ? 'homeRefresh.cycling' : 'homeRefresh.running')
+                : t('workouts.logWorkout')}
           </Text>
 
           <TouchableOpacity
@@ -580,12 +596,14 @@ export function WorkoutLoggerModal({
           contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
         >
-          <Button
-            label={t('fixNovember.open')}
-            variant="secondary"
-            onPress={() => setWeeklyPlanVisible(true)}
-            testID="workout-preferred-plan"
-          />
+          {!isCardioType && (
+            <Button
+              label={t('fixNovember.open')}
+              variant="secondary"
+              onPress={() => setWeeklyPlanVisible(true)}
+              testID="workout-preferred-plan"
+            />
+          )}
           <Button
             variant="tertiary"
             label={t('foodPolish.workoutDetails')}
@@ -771,299 +789,304 @@ export function WorkoutLoggerModal({
           )}
 
           {/* Strength Exercises Section */}
-          <View style={styles.sectionWrap}>
-            <View style={styles.sectionHeaderRow}>
-              <Text style={[styles.sectionHeading, { color: colors.textMuted }]}>
-                {t('workouts.exercises.title')}
-              </Text>
-              <TouchableOpacity
-                testID={`${testID}-btn-add-exercise`}
-                style={[styles.addExerciseBtn, { backgroundColor: colors.accent }]}
-                onPress={() => setPickerVisible(true)}
-                accessibilityRole="button"
-                accessibilityLabel={t('workouts.exercises.addExercise')}
-              >
-                <Ionicons name="add" size={16} color={colors.onAccent} />
-                <Text style={[styles.addExerciseBtnText, { color: colors.onAccent }]}>
-                  {t('workouts.exercises.addExercise')}
+          {!isCardioType && (
+            <View style={styles.sectionWrap}>
+              <View style={styles.sectionHeaderRow}>
+                <Text style={[styles.sectionHeading, { color: colors.textMuted }]}>
+                  {t('workouts.exercises.title')}
                 </Text>
-              </TouchableOpacity>
-            </View>
+                <TouchableOpacity
+                  testID={`${testID}-btn-add-exercise`}
+                  style={[styles.addExerciseBtn, { backgroundColor: colors.accent }]}
+                  onPress={() => setPickerVisible(true)}
+                  accessibilityRole="button"
+                  accessibilityLabel={t('workouts.exercises.addExercise')}
+                >
+                  <Ionicons name="add" size={16} color={colors.onAccent} />
+                  <Text style={[styles.addExerciseBtnText, { color: colors.onAccent }]}>
+                    {t('workouts.exercises.addExercise')}
+                  </Text>
+                </TouchableOpacity>
+              </View>
 
-            {/* Exercises List */}
-            {exercises.map((exercise, exIdx) => (
-              <View
-                key={exIdx}
-                testID={`workout-exercise-card-${exIdx}`}
-                style={[
-                  styles.card,
-                  { backgroundColor: colors.surface, borderColor: colors.border },
-                ]}
-              >
-                {/* Exercise Header */}
-                <View style={styles.exHeaderRow}>
-                  <View style={styles.exHeaderInfo}>
-                    <Text style={[styles.exTitle, { color: colors.text }]}>
-                      {exercise.exerciseName}
-                    </Text>
-                    {exercise.previousHint && (
-                      <View style={styles.hintWrap}>
-                        <Ionicons name="time-outline" size={13} color={colors.accent} />
-                        <Text
-                          testID={`exercise-hint-${exIdx}`}
-                          style={[styles.hintText, { color: colors.accent }]}
-                        >
-                          {exercise.previousHint}
-                        </Text>
-                      </View>
-                    )}
+              {/* Exercises List */}
+              {exercises.map((exercise, exIdx) => (
+                <View
+                  key={exIdx}
+                  testID={`workout-exercise-card-${exIdx}`}
+                  style={[
+                    styles.card,
+                    { backgroundColor: colors.surface, borderColor: colors.border },
+                  ]}
+                >
+                  {/* Exercise Header */}
+                  <View style={styles.exHeaderRow}>
+                    <View style={styles.exHeaderInfo}>
+                      <Text style={[styles.exTitle, { color: colors.text }]}>
+                        {exercise.exerciseName}
+                      </Text>
+                      {exercise.previousHint && (
+                        <View style={styles.hintWrap}>
+                          <Ionicons name="time-outline" size={13} color={colors.accent} />
+                          <Text
+                            testID={`exercise-hint-${exIdx}`}
+                            style={[styles.hintText, { color: colors.accent }]}
+                          >
+                            {exercise.previousHint}
+                          </Text>
+                        </View>
+                      )}
+                    </View>
+
+                    {/* Actions: Reorder & Remove */}
+                    <View style={styles.exActionsRow}>
+                      <TouchableOpacity
+                        testID={`btn-reorder-up-${exIdx}`}
+                        disabled={exIdx === 0}
+                        onPress={() => handleMoveExercise(exIdx, 'up')}
+                        style={[styles.iconActionBtn, { opacity: exIdx === 0 ? 0.3 : 1 }]}
+                        accessibilityRole="button"
+                        accessibilityLabel={t('workouts.exercises.reorderUp')}
+                      >
+                        <Ionicons name="chevron-up" size={18} color={colors.textMuted} />
+                      </TouchableOpacity>
+
+                      <TouchableOpacity
+                        testID={`btn-reorder-down-${exIdx}`}
+                        disabled={exIdx === exercises.length - 1}
+                        onPress={() => handleMoveExercise(exIdx, 'down')}
+                        style={[
+                          styles.iconActionBtn,
+                          { opacity: exIdx === exercises.length - 1 ? 0.3 : 1 },
+                        ]}
+                        accessibilityRole="button"
+                        accessibilityLabel={t('workouts.exercises.reorderDown')}
+                      >
+                        <Ionicons name="chevron-down" size={18} color={colors.textMuted} />
+                      </TouchableOpacity>
+
+                      <TouchableOpacity
+                        testID={`btn-remove-exercise-${exIdx}`}
+                        onPress={() => handleRemoveExercise(exIdx)}
+                        style={styles.iconActionBtn}
+                        accessibilityRole="button"
+                        accessibilityLabel={t('workouts.exercises.removeExercise')}
+                      >
+                        <Ionicons name="trash-outline" size={18} color={colors.danger} />
+                      </TouchableOpacity>
+                    </View>
                   </View>
 
-                  {/* Actions: Reorder & Remove */}
-                  <View style={styles.exActionsRow}>
-                    <TouchableOpacity
-                      testID={`btn-reorder-up-${exIdx}`}
-                      disabled={exIdx === 0}
-                      onPress={() => handleMoveExercise(exIdx, 'up')}
-                      style={[styles.iconActionBtn, { opacity: exIdx === 0 ? 0.3 : 1 }]}
-                      accessibilityRole="button"
-                      accessibilityLabel={t('workouts.exercises.reorderUp')}
-                    >
-                      <Ionicons name="chevron-up" size={18} color={colors.textMuted} />
-                    </TouchableOpacity>
-
-                    <TouchableOpacity
-                      testID={`btn-reorder-down-${exIdx}`}
-                      disabled={exIdx === exercises.length - 1}
-                      onPress={() => handleMoveExercise(exIdx, 'down')}
+                  {/* Table Header for Sets */}
+                  <View style={[styles.setsTableHeader, { borderBottomColor: colors.border }]}>
+                    <Text style={[styles.colHeader, { flex: 0.8, color: colors.textMuted }]}>
+                      {t('workouts.sets.headerSet')}
+                    </Text>
+                    <Text style={[styles.colHeader, { flex: 0.8, color: colors.textMuted }]}>
+                      {t('workouts.sets.headerWarmup')}
+                    </Text>
+                    <Text style={[styles.colHeader, { flex: 2.2, color: colors.textMuted }]}>
+                      {t('workouts.sets.headerWeight')}
+                    </Text>
+                    <Text style={[styles.colHeader, { flex: 1.8, color: colors.textMuted }]}>
+                      {t('workouts.sets.headerReps')}
+                    </Text>
+                    <Text
                       style={[
-                        styles.iconActionBtn,
-                        { opacity: exIdx === exercises.length - 1 ? 0.3 : 1 },
+                        styles.colHeader,
+                        { flex: 0.9, textAlign: 'center', color: colors.textMuted },
                       ]}
-                      accessibilityRole="button"
-                      accessibilityLabel={t('workouts.exercises.reorderDown')}
                     >
-                      <Ionicons name="chevron-down" size={18} color={colors.textMuted} />
-                    </TouchableOpacity>
-
-                    <TouchableOpacity
-                      testID={`btn-remove-exercise-${exIdx}`}
-                      onPress={() => handleRemoveExercise(exIdx)}
-                      style={styles.iconActionBtn}
-                      accessibilityRole="button"
-                      accessibilityLabel={t('workouts.exercises.removeExercise')}
-                    >
-                      <Ionicons name="trash-outline" size={18} color={colors.danger} />
-                    </TouchableOpacity>
-                  </View>
-                </View>
-
-                {/* Table Header for Sets */}
-                <View style={[styles.setsTableHeader, { borderBottomColor: colors.border }]}>
-                  <Text style={[styles.colHeader, { flex: 0.8, color: colors.textMuted }]}>
-                    {t('workouts.sets.headerSet')}
-                  </Text>
-                  <Text style={[styles.colHeader, { flex: 0.8, color: colors.textMuted }]}>
-                    {t('workouts.sets.headerWarmup')}
-                  </Text>
-                  <Text style={[styles.colHeader, { flex: 2.2, color: colors.textMuted }]}>
-                    {t('workouts.sets.headerWeight')}
-                  </Text>
-                  <Text style={[styles.colHeader, { flex: 1.8, color: colors.textMuted }]}>
-                    {t('workouts.sets.headerReps')}
-                  </Text>
-                  <Text
-                    style={[
-                      styles.colHeader,
-                      { flex: 0.9, textAlign: 'center', color: colors.textMuted },
-                    ]}
-                  >
-                    {t('workouts.sets.headerDone')}
-                  </Text>
-                  <Text style={[styles.colHeader, { flex: 0.6 }]} />
-                </View>
-
-                {/* Set Rows */}
-                {exercise.sets.map((set, setIdx) => (
-                  <View
-                    key={setIdx}
-                    testID={`set-row-${exIdx}-${setIdx}`}
-                    style={[
-                      styles.setRow,
-                      {
-                        backgroundColor: set.completed ? colors.surfaceAlt : colors.surface,
-                        borderBottomColor: colors.border,
-                      },
-                    ]}
-                  >
-                    {/* Set Number */}
-                    <Text style={[styles.setNumText, { flex: 0.8, color: colors.text }]}>
-                      {set.setNumber}
+                      {t('workouts.sets.headerDone')}
                     </Text>
+                    <Text style={[styles.colHeader, { flex: 0.6 }]} />
+                  </View>
 
-                    {/* Warmup Toggle Chip */}
-                    <TouchableOpacity
-                      testID={`btn-warmup-${exIdx}-${setIdx}`}
+                  {/* Set Rows */}
+                  {exercise.sets.map((set, setIdx) => (
+                    <View
+                      key={setIdx}
+                      testID={`set-row-${exIdx}-${setIdx}`}
                       style={[
-                        styles.warmupChip,
+                        styles.setRow,
                         {
-                          backgroundColor: set.isWarmup ? colors.accent : colors.surfaceAlt,
-                          borderColor: colors.border,
+                          backgroundColor: set.completed ? colors.surfaceAlt : colors.surface,
+                          borderBottomColor: colors.border,
                         },
                       ]}
-                      onPress={() => handleToggleWarmup(exIdx, setIdx)}
-                      accessibilityRole="button"
-                      accessibilityLabel={t('workouts.sets.warmupTooltip')}
                     >
-                      <Text
+                      {/* Set Number */}
+                      <Text style={[styles.setNumText, { flex: 0.8, color: colors.text }]}>
+                        {set.setNumber}
+                      </Text>
+
+                      {/* Warmup Toggle Chip */}
+                      <TouchableOpacity
+                        testID={`btn-warmup-${exIdx}-${setIdx}`}
                         style={[
-                          styles.warmupChipText,
+                          styles.warmupChip,
                           {
-                            color: set.isWarmup ? '#FFFFFF' : colors.textMuted,
+                            backgroundColor: set.isWarmup ? colors.accent : colors.surfaceAlt,
+                            borderColor: colors.border,
                           },
                         ]}
+                        onPress={() => handleToggleWarmup(exIdx, setIdx)}
+                        accessibilityRole="button"
+                        accessibilityLabel={t('workouts.sets.warmupTooltip')}
                       >
-                        W
+                        <Text
+                          style={[
+                            styles.warmupChipText,
+                            {
+                              color: set.isWarmup ? '#FFFFFF' : colors.textMuted,
+                            },
+                          ]}
+                        >
+                          W
+                        </Text>
+                      </TouchableOpacity>
+
+                      {/* Fast Weight Stepper & TextInput */}
+                      <View style={[styles.weightSteppers, { flex: 2.2 }]}>
+                        <TouchableOpacity
+                          testID={`btn-weight-minus-${exIdx}-${setIdx}`}
+                          style={[styles.fastStepBtn, { backgroundColor: colors.surfaceAlt }]}
+                          onPress={() => handleUpdateSetWeight(exIdx, setIdx, -2.5)}
+                        >
+                          <Text style={[styles.fastStepText, { color: colors.text }]}>-</Text>
+                        </TouchableOpacity>
+                        <TextInput
+                          testID={`input-weight-${exIdx}-${setIdx}`}
+                          style={[
+                            [
+                              styles.setNumericInput,
+                              {
+                                color: colors.text,
+                                backgroundColor: colors.background,
+                                borderColor: colors.border,
+                              },
+                            ],
+                            { fontFamily: inputTypography.body.fontFamily },
+                          ]}
+                          keyboardType="decimal-pad"
+                          value={set.weightKg > 0 ? String(set.weightKg) : ''}
+                          placeholder="0"
+                          placeholderTextColor={colors.textMuted}
+                          onChangeText={(txt) => handleSetWeightDirect(exIdx, setIdx, txt)}
+                        />
+                        <TouchableOpacity
+                          testID={`btn-weight-plus-${exIdx}-${setIdx}`}
+                          style={[styles.fastStepBtn, { backgroundColor: colors.surfaceAlt }]}
+                          onPress={() => handleUpdateSetWeight(exIdx, setIdx, 2.5)}
+                        >
+                          <Text style={[styles.fastStepText, { color: colors.text }]}>+</Text>
+                        </TouchableOpacity>
+                      </View>
+
+                      {/* Fast Reps Stepper & TextInput */}
+                      <View style={[styles.weightSteppers, { flex: 1.8 }]}>
+                        <TouchableOpacity
+                          testID={`btn-reps-minus-${exIdx}-${setIdx}`}
+                          style={[styles.fastStepBtn, { backgroundColor: colors.surfaceAlt }]}
+                          onPress={() => handleUpdateSetReps(exIdx, setIdx, -1)}
+                        >
+                          <Text style={[styles.fastStepText, { color: colors.text }]}>-</Text>
+                        </TouchableOpacity>
+                        <TextInput
+                          testID={`input-reps-${exIdx}-${setIdx}`}
+                          style={[
+                            [
+                              styles.setNumericInput,
+                              {
+                                color: colors.text,
+                                backgroundColor: colors.background,
+                                borderColor: colors.border,
+                              },
+                            ],
+                            { fontFamily: inputTypography.body.fontFamily },
+                          ]}
+                          keyboardType="number-pad"
+                          value={set.reps > 0 ? String(set.reps) : ''}
+                          placeholder="0"
+                          placeholderTextColor={colors.textMuted}
+                          onChangeText={(txt) => handleSetRepsDirect(exIdx, setIdx, txt)}
+                        />
+                        <TouchableOpacity
+                          testID={`btn-reps-plus-${exIdx}-${setIdx}`}
+                          style={[styles.fastStepBtn, { backgroundColor: colors.surfaceAlt }]}
+                          onPress={() => handleUpdateSetReps(exIdx, setIdx, 1)}
+                        >
+                          <Text style={[styles.fastStepText, { color: colors.text }]}>+</Text>
+                        </TouchableOpacity>
+                      </View>
+
+                      {/* Completed Checkmark Toggle */}
+                      <TouchableOpacity
+                        testID={`btn-completed-${exIdx}-${setIdx}`}
+                        style={[
+                          styles.checkCircle,
+                          { flex: 0.9 },
+                          set.completed
+                            ? { backgroundColor: colors.mint }
+                            : { backgroundColor: colors.surfaceAlt, borderColor: colors.border },
+                        ]}
+                        onPress={() => handleToggleCompleted(exIdx, setIdx)}
+                        accessibilityRole="button"
+                        accessibilityLabel={t('workouts.sets.completed')}
+                      >
+                        <Ionicons
+                          name="checkmark"
+                          size={16}
+                          color={set.completed ? '#FFFFFF' : colors.textMuted}
+                        />
+                      </TouchableOpacity>
+
+                      {/* Delete Set */}
+                      <TouchableOpacity
+                        testID={`btn-delete-set-${exIdx}-${setIdx}`}
+                        style={[styles.deleteSetBtn, { flex: 0.6 }]}
+                        onPress={() => handleDeleteSet(exIdx, setIdx)}
+                        accessibilityRole="button"
+                        accessibilityLabel={t('workouts.sets.removeSet')}
+                      >
+                        <Ionicons name="trash-outline" size={16} color={colors.textMuted} />
+                      </TouchableOpacity>
+                    </View>
+                  ))}
+
+                  {/* Add Set and Rest Timer Buttons */}
+                  <View style={{ flexDirection: 'row', gap: spacing.sm }}>
+                    <TouchableOpacity
+                      testID={`btn-add-set-${exIdx}`}
+                      style={[styles.addSetRowBtn, { backgroundColor: colors.surfaceAlt, flex: 1 }]}
+                      onPress={() => handleAddSet(exIdx)}
+                      accessibilityRole="button"
+                      accessibilityLabel={t('workouts.sets.addSet')}
+                    >
+                      <Ionicons name="add" size={16} color={colors.accent} />
+                      <Text style={[styles.addSetRowText, { color: colors.accent }]}>
+                        {t('workouts.sets.addSet')}
                       </Text>
                     </TouchableOpacity>
 
-                    {/* Fast Weight Stepper & TextInput */}
-                    <View style={[styles.weightSteppers, { flex: 2.2 }]}>
-                      <TouchableOpacity
-                        testID={`btn-weight-minus-${exIdx}-${setIdx}`}
-                        style={[styles.fastStepBtn, { backgroundColor: colors.surfaceAlt }]}
-                        onPress={() => handleUpdateSetWeight(exIdx, setIdx, -2.5)}
-                      >
-                        <Text style={[styles.fastStepText, { color: colors.text }]}>-</Text>
-                      </TouchableOpacity>
-                      <TextInput
-                        testID={`input-weight-${exIdx}-${setIdx}`}
-                        style={[
-                          [
-                            styles.setNumericInput,
-                            {
-                              color: colors.text,
-                              backgroundColor: colors.background,
-                              borderColor: colors.border,
-                            },
-                          ],
-                          { fontFamily: inputTypography.body.fontFamily },
-                        ]}
-                        keyboardType="decimal-pad"
-                        value={set.weightKg > 0 ? String(set.weightKg) : ''}
-                        placeholder="0"
-                        placeholderTextColor={colors.textMuted}
-                        onChangeText={(txt) => handleSetWeightDirect(exIdx, setIdx, txt)}
-                      />
-                      <TouchableOpacity
-                        testID={`btn-weight-plus-${exIdx}-${setIdx}`}
-                        style={[styles.fastStepBtn, { backgroundColor: colors.surfaceAlt }]}
-                        onPress={() => handleUpdateSetWeight(exIdx, setIdx, 2.5)}
-                      >
-                        <Text style={[styles.fastStepText, { color: colors.text }]}>+</Text>
-                      </TouchableOpacity>
-                    </View>
-
-                    {/* Fast Reps Stepper & TextInput */}
-                    <View style={[styles.weightSteppers, { flex: 1.8 }]}>
-                      <TouchableOpacity
-                        testID={`btn-reps-minus-${exIdx}-${setIdx}`}
-                        style={[styles.fastStepBtn, { backgroundColor: colors.surfaceAlt }]}
-                        onPress={() => handleUpdateSetReps(exIdx, setIdx, -1)}
-                      >
-                        <Text style={[styles.fastStepText, { color: colors.text }]}>-</Text>
-                      </TouchableOpacity>
-                      <TextInput
-                        testID={`input-reps-${exIdx}-${setIdx}`}
-                        style={[
-                          [
-                            styles.setNumericInput,
-                            {
-                              color: colors.text,
-                              backgroundColor: colors.background,
-                              borderColor: colors.border,
-                            },
-                          ],
-                          { fontFamily: inputTypography.body.fontFamily },
-                        ]}
-                        keyboardType="number-pad"
-                        value={set.reps > 0 ? String(set.reps) : ''}
-                        placeholder="0"
-                        placeholderTextColor={colors.textMuted}
-                        onChangeText={(txt) => handleSetRepsDirect(exIdx, setIdx, txt)}
-                      />
-                      <TouchableOpacity
-                        testID={`btn-reps-plus-${exIdx}-${setIdx}`}
-                        style={[styles.fastStepBtn, { backgroundColor: colors.surfaceAlt }]}
-                        onPress={() => handleUpdateSetReps(exIdx, setIdx, 1)}
-                      >
-                        <Text style={[styles.fastStepText, { color: colors.text }]}>+</Text>
-                      </TouchableOpacity>
-                    </View>
-
-                    {/* Completed Checkmark Toggle */}
                     <TouchableOpacity
-                      testID={`btn-completed-${exIdx}-${setIdx}`}
+                      testID={`btn-rest-timer-${exIdx}`}
                       style={[
-                        styles.checkCircle,
-                        { flex: 0.9 },
-                        set.completed
-                          ? { backgroundColor: colors.mint }
-                          : { backgroundColor: colors.surfaceAlt, borderColor: colors.border },
+                        styles.addSetRowBtn,
+                        { backgroundColor: colors.surfaceAlt, flex: 0.6 },
                       ]}
-                      onPress={() => handleToggleCompleted(exIdx, setIdx)}
+                      onPress={() => setRestTimerVisible(true)}
                       accessibilityRole="button"
-                      accessibilityLabel={t('workouts.sets.completed')}
+                      accessibilityLabel={t('workouts.restTimerTitle')}
                     >
-                      <Ionicons
-                        name="checkmark"
-                        size={16}
-                        color={set.completed ? '#FFFFFF' : colors.textMuted}
-                      />
-                    </TouchableOpacity>
-
-                    {/* Delete Set */}
-                    <TouchableOpacity
-                      testID={`btn-delete-set-${exIdx}-${setIdx}`}
-                      style={[styles.deleteSetBtn, { flex: 0.6 }]}
-                      onPress={() => handleDeleteSet(exIdx, setIdx)}
-                      accessibilityRole="button"
-                      accessibilityLabel={t('workouts.sets.removeSet')}
-                    >
-                      <Ionicons name="trash-outline" size={16} color={colors.textMuted} />
+                      <Ionicons name="timer-outline" size={16} color={colors.accent} />
+                      <Text style={[styles.addSetRowText, { color: colors.accent }]}>Rest</Text>
                     </TouchableOpacity>
                   </View>
-                ))}
-
-                {/* Add Set and Rest Timer Buttons */}
-                <View style={{ flexDirection: 'row', gap: spacing.sm }}>
-                  <TouchableOpacity
-                    testID={`btn-add-set-${exIdx}`}
-                    style={[styles.addSetRowBtn, { backgroundColor: colors.surfaceAlt, flex: 1 }]}
-                    onPress={() => handleAddSet(exIdx)}
-                    accessibilityRole="button"
-                    accessibilityLabel={t('workouts.sets.addSet')}
-                  >
-                    <Ionicons name="add" size={16} color={colors.accent} />
-                    <Text style={[styles.addSetRowText, { color: colors.accent }]}>
-                      {t('workouts.sets.addSet')}
-                    </Text>
-                  </TouchableOpacity>
-
-                  <TouchableOpacity
-                    testID={`btn-rest-timer-${exIdx}`}
-                    style={[styles.addSetRowBtn, { backgroundColor: colors.surfaceAlt, flex: 0.6 }]}
-                    onPress={() => setRestTimerVisible(true)}
-                    accessibilityRole="button"
-                    accessibilityLabel={t('workouts.restTimerTitle')}
-                  >
-                    <Ionicons name="timer-outline" size={16} color={colors.accent} />
-                    <Text style={[styles.addSetRowText, { color: colors.accent }]}>Rest</Text>
-                  </TouchableOpacity>
                 </View>
-              </View>
-            ))}
-          </View>
+              ))}
+            </View>
+          )}
         </ScrollView>
 
         {/* Exercise Picker Modal */}
@@ -1103,14 +1126,21 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
   },
   headerBtn: {
+    minHeight: homeLayout.touchSize,
+    minWidth: homeLayout.touchSize,
+    alignItems: 'center',
+    justifyContent: 'center',
     padding: 6,
   },
   headerTitle: {
+    flexShrink: 1,
     fontFamily: typography.body.fontFamily,
     fontSize: fontSize.md,
     fontWeight: '700',
   },
   saveBtn: {
+    minHeight: homeLayout.touchSize,
+    justifyContent: 'center',
     paddingHorizontal: spacing.md,
     paddingVertical: 8,
     borderRadius: radius.sm,
@@ -1234,11 +1264,14 @@ const styles = StyleSheet.create({
   },
   effortRow: {
     flexDirection: 'row',
-    gap: 4,
+    flexWrap: 'wrap',
+    gap: spacing.sm,
   },
   effortPill: {
-    flex: 1,
-    height: 36,
+    flexGrow: 1,
+    flexBasis: homeLayout.touchSize,
+    minWidth: homeLayout.touchSize,
+    minHeight: homeLayout.touchSize,
     borderRadius: radius.sm,
     alignItems: 'center',
     justifyContent: 'center',

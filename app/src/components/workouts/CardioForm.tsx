@@ -1,7 +1,7 @@
 import { type as inputTypography } from '@calipartner/ui';
 import React, { useMemo } from 'react';
 import { StyleSheet, TextInput, TouchableOpacity, View } from 'react-native';
-import { Text, type as typography } from '@calipartner/ui';
+import { Text, homeLayout, space, type as typography } from '@calipartner/ui';
 import { Ionicons } from '@expo/vector-icons';
 import { calculateCardioPaceAndSpeed } from '@calipartner/core';
 import { t } from '@/i18n';
@@ -255,13 +255,15 @@ const styles = StyleSheet.create({
   },
   stepperRow: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
     alignItems: 'center',
     justifyContent: 'space-between',
     gap: spacing.xs,
   },
   stepBtn: {
-    width: 40,
-    height: 40,
+    minWidth: homeLayout.touchSize,
+    minHeight: homeLayout.touchSize,
+    padding: space[1],
     borderRadius: radius.sm,
     alignItems: 'center',
     justifyContent: 'center',
@@ -273,7 +275,8 @@ const styles = StyleSheet.create({
   },
   input: {
     flex: 1,
-    height: 40,
+    minWidth: homeLayout.touchSize,
+    minHeight: homeLayout.touchSize,
     borderRadius: radius.sm,
     borderWidth: 1,
     textAlign: 'center',
@@ -284,6 +287,8 @@ const styles = StyleSheet.create({
   },
   metricsCard: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: space[2],
     alignItems: 'center',
     justifyContent: 'space-around',
     paddingVertical: spacing.sm,

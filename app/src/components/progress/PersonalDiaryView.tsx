@@ -14,6 +14,7 @@ import { FoodLogModal } from '@/components/diary/FoodLogModal';
 import { DatePickerSheet } from '@/components/diary/DatePickerSheet';
 import { LoadingState } from '@/components/LoadingState';
 import { t, getLocale } from '@/i18n';
+import { RepeatPreviousMeal } from '@/components/diary/RepeatPreviousMeal';
 
 const sections: MealSection[] = ['breakfast', 'lunch', 'dinner', 'snacks', 'extra'];
 const macroColors = [dark.copper, dark.iris, dark.teal, dark.rose];
@@ -26,6 +27,10 @@ export function PersonalDiaryView({
   const [date, setDate] = useState<string | null>(null);
   const selectedDate = date ?? today;
   const diary = useDiary(selectedDate);
+  const [loadedDiaryDate, setLoadedDiaryDate] = useState<string | null>(null);
+  useEffect(() => {
+    if (!diary.loading && !diary.error) setLoadedDiaryDate(selectedDate);
+  }, [diary.loading, diary.error, selectedDate]);
   const steps = useSteps(selectedDate);
   const water = useWater(selectedDate);
   const workouts = useWorkouts(selectedDate);
@@ -105,7 +110,7 @@ export function PersonalDiaryView({
             testID="you-diary-retry"
           />
         </View>
-      ) : diary.loading ? (
+      ) : diary.loading && loadedDiaryDate !== selectedDate ? (
         <LoadingState />
       ) : (
         <>
@@ -156,6 +161,11 @@ export function PersonalDiaryView({
                   </View>
                 ))
               )}
+              <RepeatPreviousMeal
+                key={`${selectedDate}-${meal}`}
+                localDate={selectedDate}
+                section={meal}
+              />
             </View>
           ))}
         </>

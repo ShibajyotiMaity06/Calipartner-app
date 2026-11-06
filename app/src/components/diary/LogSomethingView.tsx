@@ -6,7 +6,16 @@ import { t, type TranslationKey } from '@/i18n';
 import type { homeRefresh } from '@/i18n/homeRefresh';
 
 export type LogFlow =
-  'food' | 'scan' | 'workout' | 'water' | 'steps' | 'weight' | 'fast' | 'photo' | 'recipe';
+  | 'food'
+  | 'scan'
+  | 'workout'
+  | 'water'
+  | 'cardio'
+  | 'steps'
+  | 'weight'
+  | 'fast'
+  | 'photo'
+  | 'recipe';
 const entries: {
   flow: LogFlow;
   label: keyof typeof homeRefresh;
@@ -15,7 +24,7 @@ const entries: {
   { flow: 'food', label: 'food', icon: 'restaurant-outline' },
   { flow: 'workout', label: 'workout', icon: 'barbell-outline' },
   { flow: 'water', label: 'water', icon: 'water-outline' },
-  { flow: 'steps', label: 'steps', icon: 'footsteps-outline' },
+  { flow: 'cardio', label: 'cardio', icon: 'bicycle-outline' },
   { flow: 'weight', label: 'weight', icon: 'scale-outline' },
 ];
 export function LogSomethingView({
@@ -58,9 +67,9 @@ export function LogSomethingView({
                   food: dark.mint,
                   workout: dark.iris,
                   water: dark.teal,
-                  steps: dark.sky,
+                  cardio: dark.sky,
                   weight: dark.orchid,
-                }[flow as 'food' | 'workout' | 'water' | 'steps' | 'weight']
+                }[flow as 'food' | 'workout' | 'water' | 'cardio' | 'weight']
               }
             />
             <Text variant="label">{t(('homeRefresh.' + label) as TranslationKey)}</Text>

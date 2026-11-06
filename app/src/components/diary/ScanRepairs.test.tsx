@@ -1,5 +1,6 @@
 vi.mock('@/hooks/useSteps', () => ({ useSteps: () => ({ logManualSteps: vi.fn() }) }));
 vi.mock('./DescribeMealModal', () => ({ DescribeMealModal: 'DescribeMeal' }));
+vi.mock('./RepeatPreviousMeal', () => ({ RepeatPreviousMeal: 'RepeatPreviousMeal' }));
 vi.mock('./LogSomethingView', () => ({ LogSomethingView: 'LogHub' }));
 import React from 'react';
 import { act, create, type ReactTestRenderer } from 'react-test-renderer';
@@ -82,7 +83,15 @@ vi.mock('expo-router', async () => ({
 }));
 vi.mock('./FoodLogModal', () => ({ FoodLogModal: 'FoodLog' }));
 vi.mock('@/components/workouts/WorkoutHubModal', () => ({ WorkoutHubModal: 'Workout' }));
-vi.mock('@/components/trackers', () => ({ CustomWaterModal: 'Water', WeightEntryModal: 'Weight' }));
+vi.mock('@/components/workouts/WorkoutLoggerModal', () => ({
+  WorkoutLoggerModal: 'WorkoutLogger',
+}));
+vi.mock('@/components/trackers/StepsCard', () => ({ StepsCard: 'StepsCard' }));
+vi.mock('@/components/trackers', () => ({
+  CustomWaterModal: 'Water',
+  WeightEntryModal: 'Weight',
+  ManualStepsModal: 'ManualSteps',
+}));
 vi.mock('@/components/recipes', () => ({ RecipeBrowseView: 'Recipe' }));
 vi.mock('./QuickAddCaloriesModal', () => ({ QuickAddCaloriesModal: 'QuickCalories' }));
 vi.mock('@/components/fasting', () => ({ FastingTimerModal: 'Fasting' }));
@@ -270,13 +279,27 @@ it.each([
   ['workout', 'Workout'],
   ['water', 'Water'],
   ['weight', 'Weight'],
+  ['steps', 'StepsCard'],
+  ['cycling', 'WorkoutLogger'],
+  ['running', 'WorkoutLogger'],
 ])('opens the %s logging shortcut and clears it on close', async (flow, component) => {
   state.flow = flow;
   await act(async () => {
     renderer = create(<LogScreen />);
   });
   expect(renderer.root.findAllByType(component as React.ElementType)).toHaveLength(1);
-  await act(async () => renderer.root.findByType(component as React.ElementType).props.onClose());
+  if (flow === 'steps') {
+    expect(renderer.root.findAllByType('ManualSteps' as React.ElementType)).toHaveLength(0);
+    await act(async () =>
+      renderer.root.findByProps({ testID: 'cardio-steps-back' }).props.onPress(),
+    );
+  } else {
+    if (flow === 'cycling' || flow === 'running')
+      expect(
+        renderer.root.findByType(component as React.ElementType).props.initialWorkoutType,
+      ).toBe(flow === 'cycling' ? 'cardio' : 'walk_run');
+    await act(async () => renderer.root.findByType(component as React.ElementType).props.onClose());
+  }
   expect(state.setParams).toHaveBeenCalledWith({ flow: undefined });
   expect(state.back).toHaveBeenCalledOnce();
   expect(state.replace).not.toHaveBeenCalled();

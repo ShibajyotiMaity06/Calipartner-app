@@ -79,6 +79,8 @@ export const squadStyles = StyleSheet.create({
     paddingVertical: space[2],
   },
   rank: { minWidth: space[5] },
+  compactLeader: { gap: space[2], paddingVertical: space[1] },
+  compactRank: { minWidth: space[4] },
   name: { flexShrink: 1 },
   selector: {
     flex: 1,
@@ -151,11 +153,13 @@ export function SquadLeaderboard({
   limit,
   onMember,
   showSteps = false,
+  compact = false,
 }: {
   members: RankedSquadMember[];
   limit?: number;
   onMember: (member: RankedSquadMember) => void;
   showSteps?: boolean;
+  compact?: boolean;
 }) {
   if (!members.length) return <Text>{t('squadDesign.empty')}</Text>;
   return (
@@ -164,7 +168,7 @@ export function SquadLeaderboard({
         <Pressable
           key={member.user_id}
           onPress={() => onMember(member)}
-          style={squadStyles.leader}
+          style={[squadStyles.leader, compact && squadStyles.compactLeader]}
           accessibilityRole="button"
           accessibilityHint={t('squadDesign.scoreRule')}
           accessibilityLabel={[
@@ -177,7 +181,11 @@ export function SquadLeaderboard({
             .join(', ')}
           testID={`squad-member-${member.user_id}`}
         >
-          <Text variant="label" tabular style={squadStyles.rank}>
+          <Text
+            variant="label"
+            tabular
+            style={[squadStyles.rank, compact && squadStyles.compactRank]}
+          >
             {member.rank ?? '—'}
           </Text>
           <Avatar

@@ -1,4 +1,5 @@
 import { loadAccountTable } from '@/services/accountDataService';
+import { workoutEvents } from '@/services/workoutEvents';
 import { useCallback, useEffect, useState } from 'react';
 import {
   summarizeWorkout as coreGetWorkoutSummary,
@@ -93,6 +94,13 @@ export function useWorkouts(date?: string): UseWorkoutsResult {
   useEffect(() => {
     void loadData();
   }, [loadData]);
+  useEffect(
+    () =>
+      workoutEvents.subscribe(() => {
+        void loadData();
+      }),
+    [loadData],
+  );
 
   const create = useCallback(
     async (input: Omit<CreateWorkoutInput, 'userId' | 'localDate'> & { localDate?: string }) => {

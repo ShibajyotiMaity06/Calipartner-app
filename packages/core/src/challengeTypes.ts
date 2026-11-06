@@ -98,6 +98,7 @@ export interface ChallengeCatalog {
     icon_key: string;
     earned: number;
     plan_required: string;
+    rule?: { completed?: number; duration_min?: number; cover_used?: number; season?: boolean };
   }>;
   screened: boolean;
   partners: Array<{ id: string; nickname: string; username: string; avatar_url: string | null }>;

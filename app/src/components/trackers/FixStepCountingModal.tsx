@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Modal, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { Modal, Platform, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import type { ActivitySource } from '@calipartner/core';
 import { Text, dark, radius, space, type as typeTokens } from '@calipartner/ui';
@@ -189,28 +189,30 @@ export function FixStepCountingModal({
                 </Pressable>
 
                 {/* Manual */}
-                <Pressable
-                  testID="source-option-manual"
-                  style={[styles.sourceRow, currentSource === 'manual' && styles.sourceRowActive]}
-                  onPress={() => onSelectSource?.('manual')}
-                  accessibilityRole="button"
-                  accessibilityLabel="Manual step entry"
-                >
-                  <View style={styles.sourceRowLeft}>
-                    <Ionicons
-                      name="create-outline"
-                      size={18}
-                      color={currentSource === 'manual' ? dark.apricot : dark.textMid}
-                    />
-                    <View>
-                      <Text style={styles.sourceName}>Manual entry</Text>
-                      <Text style={styles.sourceDesc}>Log step counts directly each day</Text>
+                {Platform.OS === 'web' && (
+                  <Pressable
+                    testID="source-option-manual"
+                    style={[styles.sourceRow, currentSource === 'manual' && styles.sourceRowActive]}
+                    onPress={() => onSelectSource?.('manual')}
+                    accessibilityRole="button"
+                    accessibilityLabel="Manual step entry"
+                  >
+                    <View style={styles.sourceRowLeft}>
+                      <Ionicons
+                        name="create-outline"
+                        size={18}
+                        color={currentSource === 'manual' ? dark.apricot : dark.textMid}
+                      />
+                      <View>
+                        <Text style={styles.sourceName}>Manual entry</Text>
+                        <Text style={styles.sourceDesc}>Log step counts directly each day</Text>
+                      </View>
                     </View>
-                  </View>
-                  {currentSource === 'manual' && (
-                    <Ionicons name="checkmark-circle" size={18} color={dark.teal} />
-                  )}
-                </Pressable>
+                    {currentSource === 'manual' && (
+                      <Ionicons name="checkmark-circle" size={18} color={dark.teal} />
+                    )}
+                  </Pressable>
+                )}
               </View>
             </View>
 

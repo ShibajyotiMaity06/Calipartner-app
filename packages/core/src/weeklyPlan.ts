@@ -64,6 +64,36 @@ export interface PlanDay {
   workout: { title: string; minutes: number; exercises: PlanExercise[] };
   meals: PlanMeal[];
 }
+
+/** Explicit meal labels win; ambiguous dishes use the caller's stored-zone meal time. */
+export function plannedMealSection(
+  name: string,
+  fallback: 'breakfast' | 'lunch' | 'dinner' | 'snacks',
+): 'breakfast' | 'lunch' | 'dinner' | 'snacks' {
+  if (/\bbreakfast\b/i.test(name)) return 'breakfast';
+  if (/\blunch\b/i.test(name)) return 'lunch';
+  if (/\bdinner\b/i.test(name)) return 'dinner';
+  if (/\bsnacks?\b/i.test(name)) return 'snacks';
+  if (/\b(oats?|eggs?|smoothie)\b/i.test(name)) return 'breakfast';
+  if (/\b(salad|sandwich|wrap)\b/i.test(name)) return 'lunch';
+  if (/\b(steak|rice|curry|chicken)\b/i.test(name)) return 'dinner';
+  return fallback;
+}
+
+/** Uses only days already disclosed by the server's access-filtered plan response. */
+export function weeklyGroceryItems(days: readonly PlanDay[]): string[] {
+  const unique = new Map<string, string>();
+  for (const day of days) {
+    for (const meal of day.meals) {
+      for (const value of meal.ingredients) {
+        const item = value.trim().replace(/\s+/g, ' ');
+        const key = item.toLocaleLowerCase('en');
+        if (item && !unique.has(key)) unique.set(key, item);
+      }
+    }
+  }
+  return [...unique.values()].sort((a, b) => a.localeCompare(b, 'en'));
+}
 export interface WeeklyPlanContent {
   days: PlanDay[];
   workout_tips: string[];

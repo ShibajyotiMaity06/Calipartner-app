@@ -2,6 +2,7 @@ import React from 'react';
 import { act, create, type ReactTestRenderer } from 'react-test-renderer';
 import { afterEach, expect, it, vi } from 'vitest';
 import type { DiarySectionSummary } from '@calipartner/core';
+vi.mock('./RepeatPreviousMeal', () => ({ RepeatPreviousMeal: 'RepeatPreviousMeal' }));
 vi.mock('react-native', () => ({
   Pressable: 'Pressable',
   View: 'View',

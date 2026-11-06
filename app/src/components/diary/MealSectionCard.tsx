@@ -5,8 +5,10 @@ import type { DiarySectionSummary, FoodEntry, MealSection } from '@calipartner/c
 import { Text, dark, space, radius, captureLayout } from '@calipartner/ui';
 import { useSectionSuggestions, type SectionSuggestion } from '@/hooks/useSectionSuggestions';
 import { t } from '@/i18n';
+import { RepeatPreviousMeal } from './RepeatPreviousMeal';
 
 export interface MealSectionCardProps {
+  localDate?: string;
   compact?: boolean;
   section: MealSection;
   summary: DiarySectionSummary;
@@ -21,6 +23,7 @@ export interface MealSectionCardProps {
 }
 
 export function MealSectionCard({
+  localDate,
   compact = false,
   section,
   summary,
@@ -139,6 +142,13 @@ export function MealSectionCard({
         </View>
       )}
 
+      {localDate && (
+        <RepeatPreviousMeal
+          key={`${localDate}-${section}`}
+          localDate={localDate}
+          section={section}
+        />
+      )}
       {/* Entries preview (up to 3 items) */}
       {!compact && visibleEntries.length > 0 ? (
         <View style={styles.entriesList}>

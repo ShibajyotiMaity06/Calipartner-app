@@ -1,11 +1,20 @@
 import React, { useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import { Text, dark, radius, space, type as typeTokens } from '@calipartner/ui';
+import {
+  Button,
+  Sheet,
+  Text,
+  dark,
+  homeLayout,
+  radius,
+  space,
+  type as typeTokens,
+} from '@calipartner/ui';
 import { useAuth } from '@/contexts/AuthContext';
 import { useFasting } from '@/hooks/useFasting';
 import { t } from '@/i18n';
 import { FastingTimerModal } from './FastingTimerModal';
+import { FastingProgressRing } from './FastingProgressRing';
 
 export interface FastingCardProps {
   testID?: string;
@@ -21,7 +30,9 @@ export function FastingCard({ testID = 'fasting-card' }: FastingCardProps) {
     computedState,
     scheduledState,
     gating,
+    hasPaidAccess,
     loading,
+    error,
     startFast,
     endFast,
   } = useFasting({
@@ -30,8 +41,9 @@ export function FastingCard({ testID = 'fasting-card' }: FastingCardProps) {
 
   const [timerModalVisible, setTimerModalVisible] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [confirmEnd, setConfirmEnd] = useState(false);
 
-  if (loading || !settings.enabled || !gating.canAccess) {
+  if (loading || (!activeSession && (!settings.enabled || !gating.canAccess || !hasPaidAccess))) {
     return null;
   }
 
@@ -39,15 +51,18 @@ export function FastingCard({ testID = 'fasting-card' }: FastingCardProps) {
   const plannedHours = Math.round((computedState.session?.planned_minutes || 960) / 60);
   const elapsedHours = Math.floor(computedState.elapsedMinutes / 60);
   const elapsedMinutes = computedState.elapsedMinutes % 60;
-  const elapsedText = `${elapsedHours}h ${elapsedMinutes}m`;
+  const elapsedText = t('homeRefresh.fastingElapsed', {
+    hours: elapsedHours,
+    minutes: elapsedMinutes,
+  });
 
   const remainingHours = Math.floor(computedState.remainingMinutes / 60);
   const remainingMinutes = computedState.remainingMinutes % 60;
 
   const nextTransitionText = isFasting
     ? computedState.isCompleted
-      ? 'Target reached'
-      : `${remainingHours}h ${remainingMinutes}m remaining`
+      ? t('homeRefresh.fastingTargetReached')
+      : t('homeRefresh.fastingRemaining', { hours: remainingHours, minutes: remainingMinutes })
     : scheduledState.isEatingWindow
       ? t('fasting.fastStartsAt', { time: settings.eating_window_end || '20:00' })
       : t('fasting.eatingWindowOpensAt', { time: settings.eating_window_start || '12:00' });
@@ -61,10 +76,18 @@ export function FastingCard({ testID = 'fasting-card' }: FastingCardProps) {
         await startFast();
       }
     } catch {
-      // Handled in hook
+      // The hook exposes its request error beside the action.
     } finally {
       setBusy(false);
     }
+  };
+
+  const confirmToggle = () => {
+    if (!isFasting) {
+      void handleQuickToggle();
+      return;
+    }
+    setConfirmEnd(true);
   };
 
   return (
@@ -95,9 +118,10 @@ export function FastingCard({ testID = 'fasting-card' }: FastingCardProps) {
         </View>
 
         <View style={styles.cardBody}>
+          {isFasting && <FastingProgressRing percent={computedState.progressPercentage} />}
           <View style={styles.timeInfo}>
             <Text style={styles.elapsedText} testID="fasting-card-elapsed">
-              {isFasting ? elapsedText : 'Eating Window'}
+              {isFasting ? elapsedText : t('fasting.eatingWindowState')}
             </Text>
             <Text style={styles.targetSubtext} testID="fasting-card-target">
               {isFasting ? t('fasting.ofHours', { hours: plannedHours }) : nextTransitionText}
@@ -113,7 +137,7 @@ export function FastingCard({ testID = 'fasting-card' }: FastingCardProps) {
             ]}
             onPress={(e) => {
               e.stopPropagation();
-              handleQuickToggle();
+              confirmToggle();
             }}
             disabled={busy}
             accessibilityRole="button"
@@ -124,7 +148,48 @@ export function FastingCard({ testID = 'fasting-card' }: FastingCardProps) {
             </Text>
           </Pressable>
         </View>
+
+        {isFasting && (
+          <Text variant="micro" color={dark.textMid}>
+            {t(
+              computedState.isCompleted
+                ? 'homeRefresh.fastingPlannedCheckpoint'
+                : computedState.progressPercentage >= 50
+                  ? 'homeRefresh.fastingHalfCheckpoint'
+                  : 'homeRefresh.fastingStartedCheckpoint',
+            )}
+          </Text>
+        )}
+
+        {error && <Text accessibilityRole="alert">{t('homeRefresh.fastingSaveError')}</Text>}
       </Pressable>
+
+      <Sheet
+        visible={confirmEnd}
+        onClose={() => setConfirmEnd(false)}
+        snapPoint="half"
+        accessibilityLabel={t('fasting.endFast')}
+      >
+        <View style={{ padding: space[3], gap: space[3] }}>
+          <Text>{t('homeRefresh.endFastConfirm')}</Text>
+          <Button
+            variant="secondary"
+            label={t('fasting.endFast')}
+            disabled={busy}
+            onPress={() => {
+              setConfirmEnd(false);
+              void handleQuickToggle();
+            }}
+            testID="fasting-card-confirm-end"
+          />
+          <Button
+            variant="tertiary"
+            label={t('common.cancel')}
+            onPress={() => setConfirmEnd(false)}
+            testID="fasting-card-cancel-end"
+          />
+        </View>
+      </Sheet>
 
       <FastingTimerModal
         visible={timerModalVisible}
@@ -149,12 +214,15 @@ const styles = StyleSheet.create({
   },
   cardHeader: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: space[2],
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: space[2],
   },
   titleRow: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
     alignItems: 'center',
     gap: space[1],
   },
@@ -197,11 +265,14 @@ const styles = StyleSheet.create({
   },
   cardBody: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: space[2],
     justifyContent: 'space-between',
     alignItems: 'center',
   },
   timeInfo: {
     flex: 1,
+    minWidth: homeLayout.ringSize,
   },
   elapsedText: {
     fontSize: typeTokens.numeralM.fontSize,

@@ -38,7 +38,7 @@ it('opens exactly the five personal logging flows without requesting a squad', a
     'log-tile-food',
     'log-tile-workout',
     'log-tile-water',
-    'log-tile-steps',
+    'log-tile-cardio',
     'log-tile-weight',
   ]);
   for (const node of actions) await act(async () => node.props.onPress());
@@ -46,7 +46,7 @@ it('opens exactly the five personal logging flows without requesting a squad', a
     'food',
     'workout',
     'water',
-    'steps',
+    'cardio',
     'weight',
   ]);
   expect(tree.root.findAllByProps({ testID: 'log-quick-check-in' })).toHaveLength(0);

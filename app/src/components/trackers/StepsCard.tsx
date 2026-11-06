@@ -357,22 +357,24 @@ export function StepsCard({ selectedDate, testID = 'steps-card' }: StepsCardProp
               </Text>
             </Pressable>
 
-            <Pressable
-              testID="btn-steps-manual"
-              onPress={() => setManualModalVisible(true)}
-              style={[styles.actionBtn, styles.actionBtnAccent]}
-              accessibilityRole="button"
-              accessibilityLabel={t('trackers.steps.logManual')}
-            >
-              <Ionicons name="add" size={16} color={dark.onBrand} />
-              <Text style={styles.actionBtnTextAccent}>{t('trackers.steps.logManual')}</Text>
-            </Pressable>
+            {Platform.OS === 'web' && (
+              <Pressable
+                testID="btn-steps-manual"
+                onPress={() => setManualModalVisible(true)}
+                style={[styles.actionBtn, styles.actionBtnAccent]}
+                accessibilityRole="button"
+                accessibilityLabel={t('trackers.steps.logManual')}
+              >
+                <Ionicons name="add" size={16} color={dark.onBrand} />
+                <Text style={styles.actionBtnTextAccent}>{t('trackers.steps.logManual')}</Text>
+              </Pressable>
+            )}
           </View>
         </>
       )}
 
       {/* Manual Steps Modal */}
-      {manualModalVisible && (
+      {Platform.OS === 'web' && manualModalVisible && (
         <ManualStepsModal
           visible={manualModalVisible}
           onClose={() => setManualModalVisible(false)}

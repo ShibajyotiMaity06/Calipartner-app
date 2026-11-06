@@ -229,3 +229,17 @@ export function summarizeWorkout(
     exercise_summaries: exerciseSummaries,
   };
 }
+/** Canonical set units for an acknowledged cardio session. */
+export function cardioSessionMetrics(durationMinutes: number, distanceKm: number) {
+  if (
+    !Number.isFinite(durationMinutes) ||
+    durationMinutes <= 0 ||
+    !Number.isFinite(distanceKm) ||
+    distanceKm < 0
+  )
+    throw new Error('INVALID_CARDIO_SESSION');
+  return {
+    durationSeconds: Math.round(durationMinutes * 60),
+    distanceMeters: Math.round(distanceKm * 1000),
+  };
+}

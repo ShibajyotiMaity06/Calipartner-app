@@ -4,7 +4,7 @@ import { Button, Text, dark, homeLayout, radius, space } from '@calipartner/ui';
 import { useRouter, type Href } from 'expo-router';
 import { useSquadToday } from '@/hooks/useSquad';
 import { t } from '@/i18n';
-import { SquadLeaderboard, squadStyles as styles } from './SquadViews';
+import { SquadLeaderboard } from './SquadViews';
 import { SquadMentions } from './SquadMentions';
 
 export function HomeSquadLeaderboard({
@@ -34,7 +34,7 @@ export function HomeSquadLeaderboard({
     return () => browser.removeEventListener('keydown', dismiss);
   }, [showScoreHint]);
   return (
-    <View style={styles.stack}>
+    <View style={localStyles.content}>
       <SquadMentions roomId={roomId} visible={visible} />
       <View style={localStyles.header}>
         <Text variant="label" style={localStyles.heading}>
@@ -74,6 +74,7 @@ export function HomeSquadLeaderboard({
         />
       ) : (
         <SquadLeaderboard
+          compact
           showSteps
           members={data?.members ?? []}
           limit={memberCount === 2 ? 2 : 3}
@@ -106,6 +107,7 @@ export function HomeSquadLeaderboard({
 }
 
 const localStyles = StyleSheet.create({
+  content: { gap: space[2] },
   header: {
     zIndex: 1,
     flexDirection: 'row',

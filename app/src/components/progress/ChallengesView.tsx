@@ -18,6 +18,7 @@ import { CreateChallengeModal } from './CreateChallengeModal';
 import { ChallengeDetailModal } from './ChallengeDetailModal';
 import { OccasionPlanModal } from './OccasionPlanModal';
 import { LoadingState } from '@/components/LoadingState';
+import { BadgeShelf } from './BadgeShelf';
 
 export function ChallengesView({
   testID = 'challenges-view',
@@ -420,24 +421,7 @@ export function ChallengesView({
         />
       )}
       {trophies && (
-        <CSheet
-          visible
-          title={ct('trophies')}
-          onClose={() => setTrophies(false)}
-          testID="challenge-trophy-shelf"
-        >
-          {!catalog.badges.some((b) => b.earned > 0) && (
-            <Text style={cs.body}>{ct('noBadges')}</Text>
-          )}
-          {catalog.badges
-            .filter((b) => b.earned > 0)
-            .map((b) => (
-              <View key={b.id} style={cs.card}>
-                <Text style={cs.heading}>{challengeText(catalog, b.text_key)}</Text>
-                <Text style={cs.small}>{ct('earned', { count: b.earned })}</Text>
-              </View>
-            ))}
-        </CSheet>
+        <BadgeShelf catalog={catalog} userId={userId!} onClose={() => setTrophies(false)} />
       )}
       {board !== null && (
         <CSheet

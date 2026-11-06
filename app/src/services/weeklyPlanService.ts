@@ -1,4 +1,4 @@
-import type { PlanExercise, PlanPreferences, WeeklyPlanView } from '@calipartner/core';
+import type { MealSection, PlanExercise, PlanPreferences, WeeklyPlanView } from '@calipartner/core';
 import { getSupabase } from '@/lib/supabase';
 import { secureStoreAdapter } from '@/lib/secureStore';
 import { generateClientUuid } from './foodService';
@@ -89,4 +89,82 @@ export async function editPreferredRoutine(
   if (!data?.full_access) throw new Error('PURCHASED_PLUS_REQUIRED');
   await request.clear();
   return data as WeeklyPlanView;
+}
+
+export async function logPlannedMeal(
+  userId: string,
+  plan: WeeklyPlanView,
+  day: number,
+  meal: number,
+  section: 'breakfast' | 'lunch' | 'dinner' | 'snacks',
+): Promise<void> {
+  const client = await actor(userId);
+  const request = await stableRequest(userId, `log-meal.${plan.id}.${day}.${meal}`, [
+    plan.id,
+    plan.revision,
+    day,
+    meal,
+    section,
+  ]);
+  const { data, error } = await client.rpc('log_weekly_plan_meal', {
+    p_id: request.id,
+    p_plan_id: plan.id,
+    p_revision: plan.revision,
+    p_day: day,
+    p_meal: meal,
+    p_section: section,
+  });
+  if (error) throw error;
+  if (data !== request.id) throw new Error('MEAL_NOT_SAVED');
+  await request.clear();
+}
+
+export async function swapPlannedMeal(
+  userId: string,
+  plan: WeeklyPlanView,
+  day: number,
+  meal: number,
+  option: number,
+): Promise<WeeklyPlanView> {
+  const client = await actor(userId);
+  const request = await stableRequest(userId, `swap-meal.${plan.id}.${day}.${meal}`, [
+    plan.id,
+    plan.revision,
+    day,
+    meal,
+    option,
+  ]);
+  const { data, error } = await client.rpc('swap_weekly_plan_meal', {
+    p_id: request.id,
+    p_plan_id: plan.id,
+    p_revision: plan.revision,
+    p_day: day,
+    p_meal: meal,
+    p_option: option,
+  });
+  if (error) throw error;
+  if (!data?.full_access || data.id !== plan.id) throw new Error('PLAN_CHANGED');
+  await request.clear();
+  return data as WeeklyPlanView;
+}
+
+export async function repeatPreviousMeal(
+  userId: string,
+  localDate: string,
+  section: MealSection,
+): Promise<number> {
+  const client = await actor(userId);
+  const request = await stableRequest(userId, `repeat-meal.${localDate}.${section}`, [
+    localDate,
+    section,
+  ]);
+  const { data, error } = await client.rpc('repeat_previous_day_meal', {
+    p_id: request.id,
+    p_target_date: localDate,
+    p_section: section,
+  });
+  if (error) throw error;
+  if (!Number.isInteger(data) || data < 0) throw new Error('MEAL_NOT_SAVED');
+  // One repeat per section/date stays retry-safe across diary refreshes and navigation.
+  return data as number;
 }

@@ -1,6 +1,9 @@
 import React from 'react';
 import { act, create, type ReactTestRenderer } from 'react-test-renderer';
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
+vi.mock('@/components/diary/RepeatPreviousMeal', () => ({
+  RepeatPreviousMeal: 'RepeatPreviousMeal',
+}));
 const state = vi.hoisted(() => ({ date: '', error: false, refresh: vi.fn(), opened: vi.fn() }));
 vi.mock('react-native', () => ({
   View: 'View',

@@ -13,6 +13,9 @@ import {
 import { dark, radius, space, Text, homeLayout } from '@calipartner/ui';
 import { PersonalDayCard } from '@/components/rooms/PersonalDayCard';
 import { HomeSquads } from '@/components/rooms/HomeSquads';
+import { FastingCard } from '@/components/fasting/FastingCard';
+import { TodayScheduledWorkout } from '@/components/workouts/TodayScheduledWorkout';
+import { TodayChallengeCard } from '@/components/progress/TodayChallengeCard';
 import { useFocusEffect } from 'expo-router';
 import { LoadingState } from '@/components/LoadingState';
 import { MonthlyPlanCheckIn } from '@/components/profile/MonthlyPlanCheckIn';
@@ -57,6 +60,10 @@ export default function TodayScreen() {
 
   // Diary hook for selected date
   const { daySummary, loading: diaryLoading, error: diaryError, refresh } = useDiary(selectedDate);
+  const [loadedDiaryDate, setLoadedDiaryDate] = useState<string | null>(null);
+  useEffect(() => {
+    if (!diaryLoading && !diaryError) setLoadedDiaryDate(selectedDate);
+  }, [diaryLoading, diaryError, selectedDate]);
   const { editEntry } = useEditEntry();
   const { deleteEntry } = useDeleteEntry();
 
@@ -277,6 +284,8 @@ export default function TodayScreen() {
         />
 
         {/* 6. Date Selector & Meal Logging Diary Sections */}
+        <FastingCard />
+        <TodayChallengeCard />
         <View style={styles.sectionBlock}>
           <View style={styles.dateSelectorRow}>
             <Pressable
@@ -310,7 +319,7 @@ export default function TodayScreen() {
             </Pressable>
           </View>
 
-          {diaryLoading ? (
+          {diaryLoading && loadedDiaryDate !== selectedDate ? (
             <View style={styles.loadingBox}>
               <LoadingState />
             </View>
@@ -318,6 +327,7 @@ export default function TodayScreen() {
             <View style={styles.mealsContainer} testID="meals-section">
               {MEAL_SECTIONS.map((sec) => (
                 <MealSectionCard
+                  localDate={selectedDate}
                   key={sec}
                   compact
                   section={sec}
@@ -333,6 +343,14 @@ export default function TodayScreen() {
             </View>
           )}
         </View>
+
+        {isToday && !workouts.loading && !workouts.error && (
+          <TodayScheduledWorkout
+            localDate={todayDate}
+            hasWorkout={workouts.workouts.length > 0}
+            onSaved={() => void refreshWorkouts()}
+          />
+        )}
 
         <View style={{ height: space[8] }} />
 

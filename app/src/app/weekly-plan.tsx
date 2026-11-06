@@ -25,6 +25,8 @@ import { useBrowserModalBack } from '@/hooks/useBrowserModalBack';
 import { squadStyles as styles } from '@/components/rooms/SquadViews';
 import { t } from '@/i18n';
 import { NutrientSummary } from '@/components/diary/NutrientSummary';
+import { WeeklyMealActions } from '@/components/diary/WeeklyMealActions';
+import { WeeklyGroceryList } from '@/components/diary/WeeklyGroceryList';
 
 export default function WeeklyPlanScreen({ onClose }: { onClose?: () => void } = {}) {
   const { user, profile } = useAuth(),
@@ -320,6 +322,7 @@ export default function WeeklyPlanScreen({ onClose }: { onClose?: () => void } =
                     </View>
                     <View style={styles.card} testID="preferred-food-day">
                       <Text variant="heading">{t('fixNovember.food')}</Text>
+                      <WeeklyGroceryList key={plan.id} plan={plan} onUpgrade={openPaywall} />
                       {nutritionNeedsRebuild && (
                         <View style={{ gap: space[3] }} testID="weekly-nutrition-warning">
                           <Text accessibilityRole="alert">{t('fixNovember.copiedNutrition')}</Text>
@@ -344,6 +347,16 @@ export default function WeeklyPlanScreen({ onClose }: { onClose?: () => void } =
                             <NutrientSummary
                               values={meal}
                               testID={`weekly-meal-nutrition-${index}`}
+                            />
+                          )}
+                          {!nutritionNeedsRebuild && (
+                            <WeeklyMealActions
+                              key={`${plan.id}-${plan.revision}-${day}-${index}`}
+                              plan={plan}
+                              day={day}
+                              index={index}
+                              onChanged={setPlan}
+                              onUpgrade={openPaywall}
                             />
                           )}
                           {plan.full_access && meal.alternatives?.length ? (

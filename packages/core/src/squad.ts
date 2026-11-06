@@ -111,3 +111,18 @@ export function rankSquadMembers(members: SquadMember[]): RankedSquadMember[] {
     return { ...member, rank };
   });
 }
+
+/** Equal contribution of each member's own goal completion; missing goals stay unknown. */
+export function squadTogetherProgress(members: readonly { score: number | null }[]) {
+  const available = members.flatMap((member) => (member.score === null ? [] : [member.score]));
+  return {
+    percent: available.length
+      ? Math.round(
+          available.reduce((total, score) => total + Math.min(100, Math.max(0, score)), 0) /
+            available.length,
+        )
+      : null,
+    available: available.length,
+    total: members.length,
+  };
+}

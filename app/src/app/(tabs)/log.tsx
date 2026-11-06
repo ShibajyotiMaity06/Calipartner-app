@@ -1,11 +1,15 @@
 import { LogSomethingView } from '@/components/diary/LogSomethingView';
 import React, { useCallback, useState } from 'react';
-import { View, StyleSheet, Modal } from 'react-native';
+import { View, StyleSheet, Modal, Platform, ScrollView } from 'react-native';
 import { useFocusEffect, useRouter, useLocalSearchParams } from 'expo-router';
 import { getMealSectionForTime, type MealSection } from '@calipartner/core';
-import { Sheet } from '@calipartner/ui';
+import { Sheet, Button, space } from '@calipartner/ui';
+import { t } from '@/i18n';
 import { FoodLogModal } from '@/components/diary/FoodLogModal';
 import { WorkoutHubModal } from '@/components/workouts/WorkoutHubModal';
+import { CardioHub } from '@/components/workouts/CardioHub';
+import { WorkoutLoggerModal } from '@/components/workouts/WorkoutLoggerModal';
+import { StepsCard } from '@/components/trackers/StepsCard';
 import { CustomWaterModal, ManualStepsModal, WeightEntryModal } from '@/components/trackers';
 
 import { RecipeBrowseView } from '@/components/recipes';
@@ -27,6 +31,9 @@ type ActiveFlowState =
   | 'workout'
   | 'water'
   | 'steps'
+  | 'cardio'
+  | 'cycling'
+  | 'running'
   | 'weight'
   | 'fast'
   | 'scan'
@@ -50,7 +57,9 @@ export default function LogScreen() {
     useCallback(() => {
       setCurrentSection(getMealSectionForTime(new Date(), profile?.timezone));
       setActiveFlow(
-        ['food', 'workout', 'water', 'steps', 'weight'].includes(params.flow ?? '')
+        ['food', 'workout', 'water', 'steps', 'weight', 'cardio', 'cycling', 'running'].includes(
+          params.flow ?? '',
+        )
           ? (params.flow as ActiveFlowState)
           : 'picker',
       );
@@ -76,11 +85,10 @@ export default function LogScreen() {
 
   const closeFlow = () => {
     if (params.flow) handleCloseAll();
+    else if (['cycling', 'running', 'steps'].includes(activeFlow)) setActiveFlow('cardio');
     else setActiveFlow('picker');
   };
-  useBrowserModalBack(sheetVisible && activeFlow !== 'picker' && !params.flow, () =>
-    setActiveFlow('picker'),
-  );
+  useBrowserModalBack(sheetVisible && activeFlow !== 'picker' && !params.flow, closeFlow);
 
   return (
     <View style={[styles.rootContainer, { backgroundColor: colors.background }]}>
@@ -99,6 +107,25 @@ export default function LogScreen() {
       )}
 
       {/* 2. Food Log Modal */}
+      {activeFlow === 'cardio' && (
+        <Sheet
+          visible={sheetVisible}
+          onClose={closeFlow}
+          snapPoint="tall"
+          accessibilityLabel={t('homeRefresh.cardio')}
+        >
+          <CardioHub onSelect={setActiveFlow} onBack={closeFlow} />
+        </Sheet>
+      )}
+      {(activeFlow === 'cycling' || activeFlow === 'running') && (
+        <WorkoutLoggerModal
+          visible={sheetVisible}
+          initialWorkoutType={activeFlow === 'cycling' ? 'cardio' : 'walk_run'}
+          defaultDate={todayDate}
+          onClose={closeFlow}
+          onSaved={handleCloseAll}
+        />
+      )}
       {activeFlow === 'food' && (
         <FoodLogModal
           visible={sheetVisible}
@@ -132,8 +159,26 @@ export default function LogScreen() {
       )}
 
       {/* 5. Weight Entry Modal */}
-      {activeFlow === 'steps' && (
+      {activeFlow === 'steps' && Platform.OS === 'web' && (
         <ManualStepsModal visible={sheetVisible} onClose={closeFlow} onSave={logManualSteps} />
+      )}
+      {activeFlow === 'steps' && Platform.OS !== 'web' && (
+        <Sheet
+          visible={sheetVisible}
+          onClose={closeFlow}
+          snapPoint="tall"
+          accessibilityLabel={t('homeRefresh.steps')}
+        >
+          <ScrollView contentContainerStyle={{ padding: space[3], gap: space[3] }}>
+            <Button
+              variant="tertiary"
+              label={t('repairs.back')}
+              onPress={closeFlow}
+              testID="cardio-steps-back"
+            />
+            <StepsCard selectedDate={todayDate} />
+          </ScrollView>
+        </Sheet>
       )}
       {activeFlow === 'weight' && (
         <WeightEntryModal
