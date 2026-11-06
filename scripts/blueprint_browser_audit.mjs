@@ -83,6 +83,54 @@ const suffix = `
   await page.goto('http://127.0.0.1:8098/today');
   await page.getByTestId('personal-day-track-water').waitFor();
   await page.getByTestId('home-workout-summary').waitFor();
+  const homeCard=page.getByTestId('home-squad-card-'+rid(0));
+  const scoreHelp=homeCard.getByTestId('home-squad-score-help-'+rid(0));
+  const scoreHint=homeCard.getByTestId('home-squad-score-hint-'+rid(0));
+  assert.equal(await scoreHelp.innerText(),'Daily target %');
+  for(const [id,steps] of [[uid(0),'3,200 steps'],[uid(1),'7,400 steps']]) {
+    const row=homeCard.getByTestId('squad-member-'+id);
+    const stepLabel=row.getByTestId('home-squad-steps-'+id);
+    assert.equal(await stepLabel.innerText(),steps);
+    assert.ok((await row.getAttribute('aria-label')).includes(steps));
+  }
+  assert.equal(await scoreHint.count(),0);
+  const cardBefore=await homeCard.boundingBox();
+  await scoreHelp.click();
+  await scoreHint.waitFor();
+  assert.ok((await scoreHint.innerText()).includes('calorie, protein, carb and fat'));
+  assert.equal(await scoreHelp.getAttribute('aria-expanded'),'true');
+  const cardAfter=await homeCard.boundingBox();
+  assert.equal(cardBefore.height,cardAfter.height);
+  await page.screenshot({path:path.join(out,'home-squad-score-hint.png'),fullPage:true});
+  await page.keyboard.press('Escape');
+  await scoreHint.waitFor({state:'detached'});
+  await scoreHelp.click();
+  await scoreHelp.click();
+  await scoreHint.waitFor({state:'detached'});
+  const helpBounds=await scoreHelp.boundingBox();
+  assert.ok(helpBounds.width>=44 && helpBounds.height>=44);
+  for(const width of [375,390]) {
+    await page.setViewportSize({width,height:844});
+    const scaled=await page.addStyleTag({content:'[data-testid^="home-squad-card-"] [dir="auto"] {font-size:200% !important;line-height:normal !important;}'});
+    await scoreHelp.click();
+    await scoreHint.waitFor();
+    const bounds=await homeCard.boundingBox();
+    for(const item of [scoreHelp,scoreHint,homeCard.getByTestId('home-squad-steps-'+uid(0)),homeCard.getByTestId('home-squad-steps-'+uid(1))]) {
+      const box=await item.boundingBox();
+      assert.ok(box.x>=bounds.x && box.x+box.width<=bounds.x+bounds.width+1);
+      assert.ok(await item.evaluate(element=>element.scrollWidth<=element.clientWidth+1));
+    }
+    await page.screenshot({path:path.join(out,'home-squad-large-text-'+width+'.png'),fullPage:true});
+    await page.keyboard.press('Escape');
+    await scaled.evaluate(element=>element.remove());
+  }
+  const largerSquad=page.getByTestId('home-squad-card-'+rid(1));
+  await largerSquad.scrollIntoViewIfNeeded();
+  await largerSquad.getByTestId('home-squad-steps-'+uid(3)).waitFor();
+  assert.equal(await largerSquad.locator('[data-testid^="home-squad-steps-"]').count(),3);
+  assert.equal(await largerSquad.getByTestId('home-squad-steps-'+uid(4)).count(),0);
+  for(const id of [uid(1),uid(2),uid(3)]) assert.equal(await largerSquad.getByTestId('home-squad-steps-'+id).innerText(),'7,400 steps');
+  await page.screenshot({path:path.join(out,'home-squad-top-three-steps.png'),fullPage:true});
   await page.screenshot({path:path.join(out,'home-water-workout.png'),fullPage:true});
   await page.goto('http://127.0.0.1:8098/squad/compare?room='+rid(0));
   await page.getByTestId('member-metric-'+uid(1)+'-water').waitFor();
@@ -95,7 +143,7 @@ const suffix = `
   assert.equal(await page.getByTestId('choose-member-'+uid(0)).count(),0);
   assert.equal(await page.getByTestId('choose-member-'+uid(1)).count(),1);
   assert.deepEqual(errors,[]);
-  console.log('Blueprint browser audit: input → graph → interactive loader → locked preview → real-quote paywall, monthly/annual selection, Back, purchased alternatives, Home water/workouts, numeric Compare and peer-only selector passed at 375/844px with reduced motion.');
+  console.log('Blueprint browser audit passed: onboarding/plan/paywall, Home steps and tap-only score hint (toggle/Escape, stable card height, 44px target, 200% text at 375/390px), Home water/workouts, numeric Compare and peer-only selector.');
 } catch(error) {
   for(const page of browser?.contexts().flatMap(context=>context.pages())??[]){
     await page.screenshot({path:path.join(out,'failure.png'),fullPage:true}).catch(()=>{});

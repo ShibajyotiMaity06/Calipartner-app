@@ -22,6 +22,8 @@ export const squadDesign = {
   leaderboard: 'Leaderboard',
   chat: 'Chat',
   leaders: 'Today’s leaders',
+  dailyTargetPercent: 'Daily target %',
+  stepsToday: '{count} steps',
   full: 'Full leaderboard',
   today: 'Today',
   ownGoals: 'Progress toward each person’s own goals',

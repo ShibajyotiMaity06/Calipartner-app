@@ -150,10 +150,12 @@ export function SquadLeaderboard({
   members,
   limit,
   onMember,
+  showSteps = false,
 }: {
   members: RankedSquadMember[];
   limit?: number;
   onMember: (member: RankedSquadMember) => void;
+  showSteps?: boolean;
 }) {
   if (!members.length) return <Text>{t('squadDesign.empty')}</Text>;
   return (
@@ -165,11 +167,14 @@ export function SquadLeaderboard({
           style={squadStyles.leader}
           accessibilityRole="button"
           accessibilityHint={t('squadDesign.scoreRule')}
-          accessibilityLabel={
+          accessibilityLabel={[
             member.score == null
               ? memberName(member) + ', ' + t('squadDesign.noGoals')
-              : t('squadDesign.scoreSummary', { name: memberName(member), score: member.score })
-          }
+              : t('squadDesign.scoreSummary', { name: memberName(member), score: member.score }),
+            showSteps ? t('squadDesign.stepsToday', { count: numberText(member.steps) }) : null,
+          ]
+            .filter(Boolean)
+            .join(', ')}
           testID={`squad-member-${member.user_id}`}
         >
           <Text variant="label" tabular style={squadStyles.rank}>
@@ -183,9 +188,25 @@ export function SquadLeaderboard({
           />
           <View style={[squadStyles.flex, squadStyles.stack]}>
             <View style={squadStyles.spread}>
-              <Text variant="heading" style={squadStyles.name}>
-                {memberName(member)}
-              </Text>
+              {showSteps ? (
+                <View style={squadStyles.flex}>
+                  <Text variant="heading" style={squadStyles.name}>
+                    {memberName(member)}
+                  </Text>
+                  <Text
+                    variant="micro"
+                    color={dark.textMid}
+                    tabular
+                    testID={`home-squad-steps-${member.user_id}`}
+                  >
+                    {t('squadDesign.stepsToday', { count: numberText(member.steps) })}
+                  </Text>
+                </View>
+              ) : (
+                <Text variant="heading" style={squadStyles.name}>
+                  {memberName(member)}
+                </Text>
+              )}
               <Text variant="numeralM" tabular>
                 {member.score == null ? '—' : t('foodPolish.complete', { percent: member.score })}
               </Text>
