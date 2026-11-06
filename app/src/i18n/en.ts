@@ -1,4 +1,5 @@
 import { fastingRefresh } from './fastingRefresh';
+import { aha } from './aha';
 import { entryRefresh } from './entryRefresh';
 import { foodPolish } from './foodPolish';
 import { fixNovember } from './fixNovember';
@@ -7,6 +8,7 @@ import { homeRefresh } from './homeRefresh';
 import { squadDesign } from './squadDesign';
 import { repairMessages } from './repairs';
 export const en = {
+  aha,
   cardlessTrial: {
     checkError: 'Check your trial eligibility, then choose your plan again.',
     noCard: '7 days of Plus. No card, no payment details and no automatic charge.',

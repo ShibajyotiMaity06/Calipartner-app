@@ -31,7 +31,27 @@ const content = () => ({
           : [],
     },
     meals: Array.from({ length: 3 }, () => ({
-      name: 'Rice and dal',
+      name: day % 2 ? 'Lentil khichdi' : 'Rice and dal',
+      alternatives: [
+        {
+          name: 'Lentils with potato',
+          ingredients: ['lentils 250g', 'potato 180g'],
+          portion: '1 bowl',
+          calories: 700,
+          protein: 42,
+          carbs: 88,
+          fat: 20,
+        },
+        {
+          name: 'Chickpea rice',
+          ingredients: ['chickpeas 200g', 'rice 140g'],
+          portion: '1 bowl',
+          calories: 700,
+          protein: 38,
+          carbs: 92,
+          fat: 20,
+        },
+      ],
       ingredients: ['rice 150g', 'lentils 200g'],
       portion: '1 bowl',
       calories: 700,
@@ -314,26 +334,211 @@ Deno.test(
   },
 );
 
-Deno.test(
-  'Unavailable OpenRouter models and malformed responses use the free router fallback',
-  async () => {
-    for (const status of [200, 404]) {
-      const models: string[] = [];
-      const fetcher: typeof fetch = async (_url, init) => {
-        models.push(JSON.parse(String(init?.body)).model);
-        return models.length === 1
-          ? new Response('malformed provider output', { status })
-          : Response.json({ choices: [{ message: { content: JSON.stringify(content()) } }] });
-      };
-      assert.deepEqual(
-        await generateWeeklyPlan(
+Deno.test('OpenRouter configuration cannot enable any weekly-plan route', async () => {
+  for (const setting of ['OPENROUTER_MODEL', 'WEEKLY_PLAN_OPENROUTER_MODEL']) {
+    const models: string[] = [];
+    await assert.rejects(
+      () =>
+        generateWeeklyPlan(
           'synthetic preferences',
-          fetcher,
-          (key) => ({ OPENROUTER_API_KEY: 'fixture', OPENROUTER_MODEL: 'retired-model' })[key],
+          async (_url, init) => {
+            models.push(JSON.parse(String(init?.body)).model);
+            return new Response('{}', { status: 429 });
+          },
+          (key) => ({ OPENROUTER_API_KEY: 'fixture', [setting]: 'anthropic/paid-model' })[key],
         ),
-        content(),
+      /PLAN_UNAVAILABLE/,
+    );
+    assert.deepEqual(models, []);
+  }
+});
+
+Deno.test('Weekly plans use Groq, backup Groq, Gemini, then only Claude Haiku 5.5', async () => {
+  for (const successAt of [0, 1, 2, 3, -1]) {
+    const urls: string[] = [];
+    const run = () =>
+      generateWeeklyPlan(
+        'synthetic preferences',
+        async (url, init) => {
+          urls.push(String(url));
+          const index = urls.length - 1;
+          const body = JSON.parse(String(init?.body));
+          const headers = new Headers(init?.headers);
+          if (index < 2) {
+            assert.equal(new URL(String(url)).hostname, 'api.groq.com');
+            assert.equal(
+              headers.get('authorization'),
+              index === 0 ? 'Bearer primary' : 'Bearer backup',
+            );
+          } else if (index === 2) {
+            assert.match(String(url), /gemini-3\.5-flash-lite:generateContent$/);
+            assert.equal(headers.get('x-goog-api-key'), 'gemini');
+          } else {
+            assert.equal(String(url), 'https://api.anthropic.com/v1/messages');
+            assert.equal(headers.get('x-api-key'), 'claude');
+            assert.equal(headers.get('anthropic-version'), '2023-06-01');
+            assert.equal(headers.get('anthropic-workspace-id'), 'wrkspc_fixture');
+            assert.equal(body.model, 'claude-haiku-5-5');
+          }
+          if (index !== successAt) return Response.json({}, { status: 503 });
+          return Response.json(
+            index < 2
+              ? { choices: [{ message: { content: JSON.stringify(content()) } }] }
+              : index === 2
+                ? {
+                    candidates: [
+                      {
+                        finishReason: 'STOP',
+                        content: { parts: [{ text: JSON.stringify(content()) }] },
+                      },
+                    ],
+                  }
+                : {
+                    stop_reason: 'end_turn',
+                    content: [{ type: 'text', text: JSON.stringify(content()) }],
+                  },
+          );
+        },
+        (key) =>
+          ({
+            GROQ_API_KEY: 'primary',
+            GROQ_API_KEY_FALLBACK: 'backup',
+            GEMINI_API_KEY: 'gemini',
+            ANTHROPIC_API_KEY: 'claude',
+            ANTHROPIC_WORKSPACE_ID: 'wrkspc_fixture',
+            OPENROUTER_API_KEY: 'ignored',
+            CLAUDE_MODEL: 'must-not-override',
+          })[key],
       );
-      assert.deepEqual(models, ['retired-model', 'openrouter/free']);
+    if (successAt === -1) await assert.rejects(run, /PLAN_UNAVAILABLE/);
+    else assert.deepEqual(await run(), content());
+    assert.equal(urls.length, successAt === -1 ? 4 : successAt + 1);
+  }
+});
+
+Deno.test('Gemini 3.5 Flash-Lite fallback uses JSON output and excludes reasoning', async () => {
+  let calls = 0;
+  const result = await generateWeeklyPlan(
+    'synthetic preferences',
+    async (url, init) => {
+      calls++;
+      assert.equal(
+        String(url),
+        'https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash-lite:generateContent',
+      );
+      assert.equal(new Headers(init?.headers).get('x-goog-api-key'), 'gemini-fixture');
+      assert.equal(new Headers(init?.headers).get('authorization'), null);
+      const body = JSON.parse(String(init?.body));
+      assert.equal(body.contents[0].parts[0].text, 'synthetic preferences');
+      assert.equal(body.generationConfig.responseMimeType, 'application/json');
+      assert.equal(body.generationConfig.responseJsonSchema, undefined);
+      assert.ok(body.generationConfig.maxOutputTokens >= 16000);
+      return Response.json({
+        candidates: [
+          {
+            finishReason: 'STOP',
+            content: {
+              parts: [
+                { text: 'Internal reasoning', thought: true },
+                { text: JSON.stringify(content()).slice(0, 100) },
+                { text: JSON.stringify(content()).slice(100) },
+              ],
+            },
+          },
+        ],
+      });
+    },
+    (key) =>
+      ({
+        GEMINI_API_KEY: 'gemini-fixture',
+        OPENROUTER_API_KEY: 'router-fixture',
+      })[key],
+  );
+  assert.equal(calls, 1);
+  assert.deepEqual(result, content());
+});
+
+Deno.test('Invalid Gemini arithmetic receives a model-role draft and bounded repair', async () => {
+  let calls = 0;
+  const result = await generateWeeklyPlan(
+    'synthetic preferences',
+    async (_url, init) => {
+      const body = JSON.parse(String(init?.body));
+      const draft = content();
+      if (++calls === 1) draft.days[2].meals[1].calories = 1900;
+      else {
+        assert.equal(body.contents[1].role, 'model');
+        assert.equal(JSON.parse(body.contents[1].parts[0].text).days[2].meals[1].calories, 1900);
+        assert.match(body.contents[2].parts[0].text, /Day 2, meal 1: reported 1900 kcal/);
+      }
+      return Response.json({
+        candidates: [
+          { finishReason: 'STOP', content: { parts: [{ text: JSON.stringify(draft) }] } },
+        ],
+      });
+    },
+    (key) => ({ GEMINI_API_KEY: 'fixture' })[key],
+    (draft) =>
+      validateWeeklyPlan(draft, validatePlanPreferences(preferences), {
+        calories: 2100,
+        protein: 120,
+        carbs: 270,
+        fat: 60,
+        calorie_floor: 1500,
+      }),
+  );
+  assert.equal(calls, 2);
+  assert.deepEqual(result, content());
+});
+
+Deno.test('Truncated or refused Claude plans cannot be returned as complete weeks', async () => {
+  for (const stop_reason of ['max_tokens', 'refusal']) {
+    await assert.rejects(
+      () =>
+        generateWeeklyPlan(
+          'synthetic preferences',
+          async () =>
+            Response.json({
+              stop_reason,
+              content: [{ type: 'text', text: JSON.stringify(content()) }],
+            }),
+          (key) => ({ ANTHROPIC_API_KEY: 'fixture' })[key],
+        ),
+      /PLAN_UNAVAILABLE/,
+    );
+  }
+});
+
+Deno.test(
+  'Blocked, truncated, malformed or unavailable Gemini output never becomes a plan',
+  async () => {
+    for (const output of [
+      {
+        candidates: [
+          { finishReason: 'MAX_TOKENS', content: { parts: [{ text: JSON.stringify(content()) }] } },
+        ],
+      },
+      { candidates: [{ finishReason: 'SAFETY' }] },
+      { candidates: [{ content: { parts: [{ text: 'not json' }] } }] },
+      {
+        candidates: [{ content: { parts: [{ text: JSON.stringify(content()), thought: true }] } }],
+      },
+      null,
+    ]) {
+      let calls = 0;
+      await assert.rejects(
+        () =>
+          generateWeeklyPlan(
+            'synthetic preferences',
+            async () => {
+              calls++;
+              return output ? Response.json(output) : Response.json({}, { status: 503 });
+            },
+            (key) => ({ GEMINI_API_KEY: 'fixture' })[key],
+          ),
+        /PLAN_UNAVAILABLE/,
+      );
+      assert.equal(calls, 1);
     }
   },
 );
@@ -352,7 +557,7 @@ Deno.test('Provider failures never fabricate a plan or retry duplicate defaults'
       ),
     /PLAN_UNAVAILABLE/,
   );
-  assert.equal(calls, 2);
+  assert.equal(calls, 1);
 });
 
 Deno.test(
@@ -441,3 +646,19 @@ Deno.test(
     assert.equal(requests[1].response_format, undefined);
   },
 );
+
+Deno.test('One bounded provider Retry-After wait retries without fabricating a plan', async () => {
+  let calls = 0;
+  const fetcher: typeof fetch = async () =>
+    ++calls === 1
+      ? Response.json(
+          { error: { code: 'rate_limit_exceeded' } },
+          { status: 429, headers: { 'retry-after': '0.001' } },
+        )
+      : Response.json({ choices: [{ message: { content: JSON.stringify(content()) } }] });
+  const result = await generateWeeklyPlan('synthetic preferences', fetcher, (key) =>
+    key === 'GROQ_API_KEY' ? 'fixture' : undefined,
+  );
+  assert.equal(calls, 2);
+  assert.deepEqual(result, content());
+});

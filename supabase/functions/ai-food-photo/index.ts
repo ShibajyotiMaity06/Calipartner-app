@@ -1,5 +1,12 @@
 import { createClient, type SupabaseClient } from 'jsr:@supabase/supabase-js@2';
 import { canSeeAdvancedNutrition } from '../_shared/nutritionAccess.ts';
+import {
+  CLAUDE_MODEL,
+  GEMINI_ENDPOINT,
+  claudeHeaders,
+  claudeText,
+  geminiText,
+} from '../_shared/aiModels.ts';
 import { restrictFoodNutrition, restrictNutritionSnapshot } from '@calipartner/core';
 import {
   buildVisionModelSystemPrompt,
@@ -31,8 +38,7 @@ export interface AiFoodPhotoRequestBody {
 }
 
 /**
- * Calls Gemini Vision model (default for testing) or Claude Vision model (for production when toggled),
- * or processes standard fallback for environments without an API key.
+ * Uses Groq first, then Gemini, then Claude Haiku 5.5.
  */
 export async function callVisionModel(
   imageBase64: string,
@@ -89,8 +95,7 @@ export async function callVisionModel(
       });
 
       if (!response.ok) {
-        const errText = await response.text();
-        console.warn(`Groq Vision returned HTTP ${response.status}:`, errText);
+        console.warn('GROQ_VISION_HTTP', response.status);
         return null;
       }
 
@@ -103,17 +108,23 @@ export async function callVisionModel(
           1000000;
         return { rawText: rawCandidate, tokens, cost: Math.round(cost * 1000000) / 1000000 };
       }
-    } catch (groqErr) {
-      console.warn('Groq Vision network error:', groqErr);
+    } catch {
+      console.warn('GROQ_VISION_UNAVAILABLE');
     }
     return null;
   }
 
-  // 1. Primary: Gemini Vision API (gemini-2.5-flash)
+  // Primary: Groq Vision with the existing primary and backup credentials.
+  for (const key of new Set([groqApiKey?.trim(), groqFallbackKey?.trim()])) {
+    if (!key) continue;
+    const result = await callGroqVision(key);
+    if (result) return result;
+  }
+
+  // Fallback: Gemini for images and meal descriptions.
   if (geminiApiKey && geminiApiKey.trim().length > 0) {
     try {
-      const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent`;
-      const response = await fetch(geminiUrl, {
+      const response = await fetch(GEMINI_ENDPOINT, {
         method: 'POST',
         signal: AbortSignal.timeout(20000),
         headers: { 'Content-Type': 'application/json', 'x-goog-api-key': geminiApiKey },
@@ -136,14 +147,15 @@ export async function callVisionModel(
           ],
           generationConfig: {
             response_mime_type: 'application/json',
-            temperature: 0.1,
+            maxOutputTokens: 4000,
+            thinkingConfig: { thinkingLevel: 'minimal' },
           },
         }),
       });
 
       if (response.ok) {
         const json = await response.json();
-        const rawCandidate = json.candidates?.[0]?.content?.parts?.[0]?.text || '';
+        const rawCandidate = geminiText(json);
         if (rawCandidate) {
           const tokens = json.usageMetadata?.totalTokenCount || DEFAULT_ESTIMATED_TOKENS;
           const cost = (tokens / 1_000_000) * 0.35;
@@ -154,29 +166,10 @@ export async function callVisionModel(
           };
         }
       } else {
-        const errText = await response.text();
-        console.warn(`Gemini Vision API HTTP ${response.status}:`, errText);
+        console.warn('GEMINI_VISION_HTTP', response.status);
       }
-    } catch (geminiErr) {
-      console.warn('Gemini Vision network error:', geminiErr);
-    }
-  }
-
-  // 2. Fallback 1: Groq qwen/qwen3.8-27b Vision with primary key
-  if (groqApiKey && groqApiKey.trim().length > 0) {
-    console.warn('Gemini Vision unavailable or rate limited. Trying Groq primary key fallback...');
-    const groqRes = await callGroqVision(groqApiKey.trim());
-    if (groqRes) {
-      return groqRes;
-    }
-  }
-
-  // 3. Fallback 2: Groq qwen/qwen3.8-27b Vision with fallback key
-  if (groqFallbackKey && groqFallbackKey.trim().length > 0) {
-    console.warn('Groq primary key unavailable or rate limited. Trying Groq fallback key...');
-    const groqRes = await callGroqVision(groqFallbackKey.trim());
-    if (groqRes) {
-      return groqRes;
+    } catch {
+      console.warn('GEMINI_VISION_UNAVAILABLE');
     }
   }
 
@@ -185,16 +178,12 @@ export async function callVisionModel(
     console.warn('All previous vision models unavailable. Trying ultimate Claude fallback...');
     try {
       const claudeUrl = 'https://api.anthropic.com/v1/messages';
-      const claudeModel = Deno.env.get('CLAUDE_MODEL') || 'claude-haiku-5-5';
+      const claudeModel = CLAUDE_MODEL;
 
       const response = await fetch(claudeUrl, {
         method: 'POST',
         signal: AbortSignal.timeout(20000),
-        headers: {
-          'x-api-key': anthropicApiKey.trim(),
-          'anthropic-version': '2023-06-01',
-          'content-type': 'application/json',
-        },
+        headers: claudeHeaders(anthropicApiKey.trim(), Deno.env.get('ANTHROPIC_WORKSPACE_ID')),
         body: JSON.stringify({
           model: claudeModel,
           max_tokens: 1000,
@@ -225,7 +214,7 @@ export async function callVisionModel(
 
       if (response.ok) {
         const json = await response.json();
-        const rawCandidate = json.content?.[0]?.text || '';
+        const rawCandidate = claudeText(json);
         if (rawCandidate) {
           const tokens =
             (json.usage?.input_tokens || 0) + (json.usage?.output_tokens || 0) ||
@@ -241,11 +230,10 @@ export async function callVisionModel(
           };
         }
       } else {
-        const errText = await response.text();
-        console.warn(`Claude Vision API HTTP ${response.status}:`, errText);
+        console.warn('CLAUDE_VISION_HTTP', response.status);
       }
-    } catch (claudeErr) {
-      console.warn('Claude Vision network error:', claudeErr);
+    } catch {
+      console.warn('CLAUDE_VISION_UNAVAILABLE');
     }
   }
 

@@ -1276,6 +1276,14 @@ export interface ChatAttachment {
 }
 
 export interface ChatMessage {
+  reply_to_id?: string | null;
+  reply?: {
+    id: string;
+    sender_id: string;
+    name: string;
+    text: string | null;
+    has_attachment: boolean;
+  } | null;
   id: string;
   client_id: string;
   room_id: string;

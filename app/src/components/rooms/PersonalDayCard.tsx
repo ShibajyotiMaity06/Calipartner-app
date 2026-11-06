@@ -42,16 +42,21 @@ export function PersonalDayCard({
   errorMessage,
   onRetry,
   onPress,
+  activity,
 }: {
   score?: number | null;
   goal?: string;
   metrics: {
+    id?: string;
     nutrient?: 'calories' | 'protein' | 'carbs' | 'fat';
     label: string;
     value: number;
     target: number | null;
     unit: string;
+    loading?: boolean;
+    error?: boolean;
   }[];
+  activity?: { loading: boolean; error: boolean; names: string[] };
   loading: boolean;
   error: boolean;
   errorMessage?: string;
@@ -93,40 +98,66 @@ export function PersonalDayCard({
           testID="personal-day-open"
           style={styles.list}
         >
-          {metrics.map(({ label, value, target, unit, nutrient }) => (
-            <View
-              key={label}
-              style={styles.metric}
-              accessible
-              accessibilityLabel={
-                label +
-                ': ' +
-                (target == null
-                  ? t('common.targetUnavailable')
-                  : t('squadDesign.amount', { value, target, unit }))
-              }
-            >
-              <View style={styles.row}>
-                <Text variant="bodyS" nutrient={nutrient}>
-                  {label}
-                </Text>
-                <Text variant="bodyS" nutrient={nutrient} tabular style={styles.amount}>
-                  {target == null
-                    ? t('common.targetUnavailable')
-                    : t('squadDesign.amount', { value, target, unit })}
-                </Text>
+          {metrics.map(
+            ({ id, label, value, target, unit, nutrient, loading: pending, error: failed }) => (
+              <View
+                key={label}
+                style={styles.metric}
+                accessible
+                accessibilityLabel={
+                  label +
+                  ': ' +
+                  (pending
+                    ? t('common.loading')
+                    : failed
+                      ? t('common.errorBody')
+                      : target == null
+                        ? t('common.targetUnavailable')
+                        : t('squadDesign.amount', { value, target, unit }))
+                }
+              >
+                <View style={styles.row}>
+                  <Text variant="bodyS" nutrient={nutrient}>
+                    {label}
+                  </Text>
+                  <Text variant="bodyS" nutrient={nutrient} tabular style={styles.amount}>
+                    {pending
+                      ? t('common.loading')
+                      : failed
+                        ? t('common.errorBody')
+                        : target == null
+                          ? t('common.targetUnavailable')
+                          : t('squadDesign.amount', { value, target, unit })}
+                  </Text>
+                </View>
+                {!pending && !failed && (
+                  <DayProgressTrack
+                    value={value}
+                    target={target}
+                    color={nutrient ? nutritionColors[nutrient] : dark.textMid}
+                    testID={`personal-day-track-${id ?? nutrient ?? 'steps'}`}
+                  />
+                )}
+                {!pending && !failed && target != null && value > target && (
+                  <Text variant="bodyS">{t('homeRefresh.over')}</Text>
+                )}
               </View>
-              <DayProgressTrack
-                value={value}
-                target={target}
-                color={nutrient ? nutritionColors[nutrient] : dark.textMid}
-                testID={`personal-day-track-${nutrient ?? 'steps'}`}
-              />
-              {target != null && value > target && (
-                <Text variant="bodyS">{t('homeRefresh.over')}</Text>
-              )}
+            ),
+          )}
+          {activity && (
+            <View style={styles.metric} testID="home-workout-summary">
+              <Text variant="bodyS">{t('aha.workout')}</Text>
+              <Text variant="bodyS" accessibilityLiveRegion="polite">
+                {activity.loading
+                  ? t('common.loading')
+                  : activity.error
+                    ? t('common.errorBody')
+                    : activity.names.length
+                      ? activity.names.join(' · ')
+                      : t('aha.noWorkout')}
+              </Text>
             </View>
-          ))}
+          )}
         </Pressable>
       )}
     </View>

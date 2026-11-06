@@ -7,6 +7,115 @@ const request = () =>
     headers: { Authorization: 'Bearer caller' },
     body: JSON.stringify({ messages: [{ role: 'user', content: 'How do I train?' }] }),
   });
+
+Deno.test(
+  'Coach uses Gemini 3.5 Flash-Lite after Groq fails and excludes thoughts from replies',
+  async () => {
+    const previousFetch = globalThis.fetch;
+    const previousKey = Deno.env.get('GEMINI_API_KEY');
+    const previousGroq = Deno.env.get('GROQ_API_KEY');
+    Deno.env.set('GEMINI_API_KEY', 'gemini-fixture');
+    Deno.env.set('GROQ_API_KEY', 'groq-fixture');
+    let calls = 0;
+    globalThis.fetch = async (url, init) => {
+      calls++;
+      if (new URL(String(url)).hostname === 'api.groq.com')
+        return Response.json({}, { status: 429 });
+      assert.equal(
+        String(url),
+        'https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash-lite:generateContent',
+      );
+      assert.equal(new Headers(init?.headers).get('x-goog-api-key'), 'gemini-fixture');
+      const body = JSON.parse(String(init?.body));
+      assert.equal(body.contents.at(-1).parts[0].text, 'How do I train?');
+      assert.ok(body.systemInstruction.parts[0].text);
+      assert.ok(init?.signal);
+      return Response.json({
+        candidates: [
+          {
+            finishReason: 'STOP',
+            content: {
+              parts: [
+                { text: 'Private reasoning', thought: true },
+                { text: 'Train ' },
+                { text: 'consistently.' },
+              ],
+            },
+          },
+        ],
+        usageMetadata: { totalTokenCount: 35 },
+      });
+    };
+    try {
+      const result = await handleAiCoach(request(), { admin: setup().admin });
+      assert.equal(result.status, 200);
+      const body = await result.json();
+      assert.equal(body.message.content, 'Train consistently.');
+      assert.equal(body.model, 'gemini-3.5-flash-lite');
+      assert.equal(calls, 2);
+    } finally {
+      globalThis.fetch = previousFetch;
+      for (const [name, value] of [
+        ['GEMINI_API_KEY', previousKey],
+        ['GROQ_API_KEY', previousGroq],
+      ]) {
+        if (value === undefined) Deno.env.delete(name!);
+        else Deno.env.set(name!, value);
+      }
+    }
+  },
+);
+
+Deno.test('Coach uses only Groq credentials, Gemini, then Claude Haiku 5.5', async () => {
+  const configured = {
+    GROQ_API_KEY: 'primary',
+    GROQ_API_KEY_FALLBACK: 'backup',
+    GEMINI_API_KEY: 'gemini',
+    ANTHROPIC_API_KEY: 'claude',
+    ANTHROPIC_WORKSPACE_ID: 'wrkspc_fixture',
+    OPENROUTER_API_KEY: 'must-not-use',
+    CLAUDE_MODEL: 'must-not-override',
+  };
+  const prior = Object.keys(configured).map((name) => [name, Deno.env.get(name)] as const);
+  const previousFetch = globalThis.fetch;
+  for (const [name, value] of Object.entries(configured)) Deno.env.set(name, value);
+  try {
+    for (const succeed of [true, false]) {
+      const urls: string[] = [];
+      globalThis.fetch = async (url, init) => {
+        urls.push(String(url));
+        const headers = new Headers(init?.headers);
+        if (urls.length <= 2) {
+          assert.equal(new URL(String(url)).hostname, 'api.groq.com');
+          assert.equal(
+            headers.get('authorization'),
+            urls.length === 1 ? 'Bearer primary' : 'Bearer backup',
+          );
+        } else if (urls.length === 3)
+          assert.match(String(url), /gemini-3\.5-flash-lite:generateContent$/);
+        else {
+          assert.equal(String(url), 'https://api.anthropic.com/v1/messages');
+          assert.equal(JSON.parse(String(init?.body)).model, 'claude-haiku-5-5');
+          assert.equal(headers.get('x-api-key'), 'claude');
+          assert.equal(headers.get('anthropic-workspace-id'), 'wrkspc_fixture');
+          if (succeed)
+            return Response.json({ content: [{ type: 'text', text: 'Train consistently.' }] });
+        }
+        return Response.json({}, { status: 503 });
+      };
+      const result = await handleAiCoach(request(), { admin: setup().admin });
+      assert.equal(result.status, succeed ? 200 : 503);
+      if (succeed) assert.equal((await result.json()).model, 'claude:claude-haiku-5-5');
+      assert.equal(urls.length, 4);
+    }
+  } finally {
+    globalThis.fetch = previousFetch;
+    for (const [name, value] of prior) {
+      if (value === undefined) Deno.env.delete(name);
+      else Deno.env.set(name, value);
+    }
+  }
+});
 Deno.test(
   'Challenge recaps do not load additional private goals or daily health summaries',
   async () => {

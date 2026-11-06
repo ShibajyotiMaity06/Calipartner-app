@@ -17,6 +17,7 @@ export interface ChatMessageMenuModalProps {
   onReportMessage: (messageId: string) => void;
   onMuteMember: (userId: string) => Promise<void>;
   onBlockMember?: (userId: string) => Promise<void>;
+  onReply?: (message: ChatMessage) => void;
   testID?: string;
 }
 
@@ -29,6 +30,7 @@ export function ChatMessageMenuModal({
   onReportMessage,
   onMuteMember,
   onBlockMember,
+  onReply,
   testID = 'chat-message-menu-modal',
 }: ChatMessageMenuModalProps) {
   const { colors } = useTheme();
@@ -188,6 +190,26 @@ export function ChatMessageMenuModal({
             </View>
           ) : (
             <>
+              {onReply && !message.deleted_at && message.message_type === 'user' && (
+                <Pressable
+                  onPress={() => {
+                    onReply(message);
+                    onClose();
+                  }}
+                  style={styles.menuOptionRow}
+                  accessibilityRole="button"
+                  accessibilityLabel={t('aha.reply')}
+                  testID="btn-reply-message"
+                >
+                  <Ionicons
+                    name="arrow-undo-outline"
+                    size={20}
+                    color={colors.text}
+                    style={styles.optionIcon}
+                  />
+                  <Text style={{ color: colors.text }}>{t('aha.reply')}</Text>
+                </Pressable>
+              )}
               {/* Option: Copy Text */}
               {Boolean(message.text) && (
                 <Pressable

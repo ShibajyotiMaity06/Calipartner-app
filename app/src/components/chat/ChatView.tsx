@@ -98,6 +98,14 @@ export function ChatView({
   const [focusedMention, setFocusedMention] = useState<ChatMessage | null>(null);
   const [mentionError, setMentionError] = useState(false);
   const [mentionRetry, setMentionRetry] = useState(0);
+  const [replyTo, setReplyTo] = useState<ChatMessage | null>(null);
+  useEffect(() => {
+    setReplyTo(null);
+  }, [roomId, options.userId]);
+  useEffect(() => {
+    if (replyTo && messages.some((message) => message.id === replyTo.id && message.deleted_at))
+      setReplyTo(null);
+  }, [messages, replyTo]);
   useEffect(() => {
     let current = true;
     setFocusedMention(null);
@@ -140,7 +148,7 @@ export function ChatView({
   const pending = useRef<{ signature: string; id: string } | null>(null);
   const handleSend = async (text?: string | null, selectedMedia?: SelectedMediaItem[]) => {
     if (!roomId) return;
-    const signature = JSON.stringify([roomId, text, selectedMedia?.map((m) => m.uri)]);
+    const signature = JSON.stringify([roomId, text, selectedMedia?.map((m) => m.uri), replyTo?.id]);
     if (pending.current?.signature !== signature)
       pending.current = { signature, id: generateClientUuid() };
     const clientId = pending.current.id;
@@ -167,7 +175,7 @@ export function ChatView({
       });
     }
     notifyTyping(false);
-    await sendMessage(text, attachments.length ? attachments : undefined, clientId);
+    await sendMessage(text, attachments.length ? attachments : undefined, clientId, replyTo?.id);
     for (const attachment of attachments) {
       const result = await getSupabase().functions.invoke('chat-image-moderation', {
         body: { action: 'finalize', storage_key: attachment.storage_key },
@@ -175,6 +183,7 @@ export function ChatView({
       if (result.error || result.data?.status !== 'ok') setMediaReadError(true);
     }
     await refresh();
+    setReplyTo(null);
     pending.current = null;
   };
 
@@ -190,7 +199,12 @@ export function ChatView({
         height: att.height ?? undefined,
         local_uri: att.local_uri ?? undefined,
       }));
-      await sendMessage(failedMessage.text, retryAttachments, failedMessage.client_id);
+      await sendMessage(
+        failedMessage.text,
+        retryAttachments,
+        failedMessage.client_id,
+        failedMessage.reply_to_id,
+      );
       for (const attachment of retryAttachments ?? [])
         await getSupabase().functions.invoke('chat-image-moderation', {
           body: { action: 'finalize', storage_key: attachment.storage_key },
@@ -273,6 +287,7 @@ export function ChatView({
                 message={focusedMention}
                 isMine={false}
                 onLongPress={setActiveMenuMessage}
+                onReply={setReplyTo}
                 onPressImage={openAttachment}
                 testID={`focused-mention-${focusedMention.id}`}
               />
@@ -324,6 +339,7 @@ export function ChatView({
                   onRetry={handleRetry}
                   onPressImage={openAttachment}
                   onLongPress={(msg) => setActiveMenuMessage(msg)}
+                  onReply={setReplyTo}
                   testID={`bubble-${item.id}`}
                 />
 
@@ -385,6 +401,16 @@ export function ChatView({
       ) : null}
       {/* 5. Message Composer */}
       <ChatComposer
+        key={`${roomId}:${options.userId}`}
+        reply={
+          replyTo
+            ? {
+                name: replyTo.sender_nickname || replyTo.sender_username || t('repairs.you'),
+                text: replyTo.text,
+              }
+            : null
+        }
+        onCancelReply={() => setReplyTo(null)}
         mentionMembers={mentionMembers.filter((member) => member.user_id !== options.userId)}
         onSend={handleSend}
         onTyping={notifyTyping}
@@ -417,12 +443,16 @@ export function ChatView({
         isMine={isCurrentUserId(activeMenuMessage?.sender_id)}
         onClose={() => setActiveMenuMessage(null)}
         onDeleteMessage={deleteMessage}
+        onReply={setReplyTo}
         onReportMessage={(msgId) => {
           setActiveMenuMessage(null);
           setReportTargetMessageId(msgId);
         }}
         onMuteMember={muteMember}
-        onBlockMember={blockMember}
+        onBlockMember={async (id) => {
+          await blockMember(id);
+          if (replyTo?.sender_id === id) setReplyTo(null);
+        }}
       />
 
       {/* Report Modal */}

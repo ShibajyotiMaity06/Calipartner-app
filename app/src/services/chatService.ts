@@ -11,6 +11,7 @@ export interface SupabaseRpcClient {
 export type ChatSupabaseClient = SupabaseClient | SupabaseRpcClient;
 
 export interface SendMessageOptions {
+  replyToId?: string | null;
   text?: string | null;
   attachments?: Array<{
     storage_key: string;
@@ -46,7 +47,7 @@ export async function getLocalChatMessages(
   const limit = options.limit ?? 50;
   let query = `
     SELECT id, client_id, room_id, sender_id, sender_nickname, sender_username, sender_avatar_url,
-           message_type, system_event_type, text, created_at, deleted_at, delivery_status, sync_state
+           message_type, system_event_type, text, created_at, deleted_at, delivery_status, sync_state, reply_to_id, reply_json
     FROM local_chat_messages
     WHERE room_id = ?
   `;
@@ -91,6 +92,8 @@ export async function getLocalChatMessages(
     deleted_at: string | null;
     delivery_status: string;
     sync_state: string;
+    reply_to_id: string | null;
+    reply_json: string | null;
   }>(query, ...params);
 
   const messages: ChatMessage[] = [];
@@ -130,6 +133,8 @@ export async function getLocalChatMessages(
 
     messages.push({
       id: row.id,
+      reply_to_id: row.reply_to_id,
+      reply: row.deleted_at ? null : row.reply_json ? JSON.parse(row.reply_json) : null,
       client_id: row.client_id,
       room_id: row.room_id,
       sender_id: row.sender_id,
@@ -223,6 +228,10 @@ export async function getChatMessages(
         );
 
         // Upsert attachments
+        await db.runAsync(
+          'UPDATE local_chat_messages SET reply_to_id = ?, reply_json = ? WHERE id = ?',
+          [msg.reply_to_id ?? null, msg.reply ? JSON.stringify(msg.reply) : null, msg.id],
+        );
         if (msg.attachments && msg.attachments.length > 0) {
           for (const att of msg.attachments) {
             await db.runAsync(
@@ -349,6 +358,7 @@ export async function sendChatMessage(
   }
 
   const localMessage: ChatMessage = {
+    reply_to_id: options.replyToId,
     id: msgId,
     client_id: clientId,
     room_id: roomId,
@@ -367,20 +377,28 @@ export async function sendChatMessage(
   };
 
   // 4. Try sending to Supabase immediately
+  await db.runAsync('UPDATE local_chat_messages SET reply_to_id = ? WHERE client_id = ?', [
+    options.replyToId ?? null,
+    clientId,
+  ]);
   try {
-    const { data: serverMsg, error } = await supabase.rpc('send_chat_message', {
-      p_room_id: roomId,
-      p_client_id: clientId,
-      p_text: options.text ?? null,
-      p_attachments:
-        options.attachments?.map((a) => ({
-          storage_key: a.storage_key,
-          mime_type: a.mime_type,
-          size: a.size,
-          width: a.width,
-          height: a.height,
-        })) ?? [],
-    });
+    const { data: serverMsg, error } = await supabase.rpc(
+      options.replyToId ? 'send_chat_reply' : 'send_chat_message',
+      {
+        ...(options.replyToId ? { p_reply_to_id: options.replyToId } : {}),
+        p_room_id: roomId,
+        p_client_id: clientId,
+        p_text: options.text ?? null,
+        p_attachments:
+          options.attachments?.map((a) => ({
+            storage_key: a.storage_key,
+            mime_type: a.mime_type,
+            size: a.size,
+            width: a.width,
+            height: a.height,
+          })) ?? [],
+      },
+    );
 
     if (error) {
       throw parseChatError(error);
@@ -388,6 +406,14 @@ export async function sendChatMessage(
 
     // Success: update local message with confirmed server ID and state
     const confirmedId = serverMsg?.id || msgId;
+    await db.runAsync(
+      'UPDATE local_chat_messages SET reply_to_id = ?, reply_json = ? WHERE client_id = ?',
+      [
+        options.replyToId ?? null,
+        serverMsg?.reply ? JSON.stringify(serverMsg.reply) : null,
+        clientId,
+      ],
+    );
     await db.runAsync('UPDATE local_chat_attachments SET message_id = ? WHERE message_id = ?', [
       confirmedId,
       msgId,
@@ -402,6 +428,7 @@ export async function sendChatMessage(
     return {
       ...localMessage,
       id: confirmedId,
+      reply: serverMsg?.reply ?? null,
       delivery_status: 'sent',
       sync_state: 'synced',
     };
@@ -435,6 +462,7 @@ export async function retryFailedChatMessage(
       local_uri: a.local_uri ?? undefined,
     })),
     clientId: message.client_id,
+    replyToId: message.reply_to_id,
   });
 }
 

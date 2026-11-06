@@ -14,10 +14,11 @@ import { PlanReviewStep } from '@/components/onboarding/PlanReviewStep';
 import { GymCalculationStep } from '@/components/onboarding/GymCalculationStep';
 import { NumberField, planStyles } from '@/components/onboarding/PlanPrimitives';
 import { t } from '@/i18n';
+import { AdaptiveReview } from '@/components/profile/AdaptiveReview';
 
 export default function MonthlyPlanReviewScreen() {
   const { user, profile } = useAuth();
-  const { currentGoalProfile: goal, saveGoalProfile } = useTargets();
+  const { currentGoalProfile: goal, saveGoalProfile, refresh: refreshTargets } = useTargets();
   const subscription = useSubscription();
   const { colors } = useTheme();
   const router = useRouter();
@@ -111,6 +112,13 @@ export default function MonthlyPlanReviewScreen() {
           <Text>{t('onboarding.summary.emptyBody')}</Text>
         ) : (
           <>
+            <AdaptiveReview
+              key={user?.id}
+              onAccepted={async () => {
+                machine.current = null;
+                await refreshTargets();
+              }}
+            />
             <Text>{t('setup.reviewMonthlyBody')}</Text>
             <GoalStep
               selectedGoal={state.goal}

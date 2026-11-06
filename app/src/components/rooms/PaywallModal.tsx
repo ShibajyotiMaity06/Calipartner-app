@@ -62,6 +62,7 @@ export interface PaywallModalProps {
   roomPartnerName?: string;
   roomName?: string;
   preselectedTier?: PlanTier;
+  preselectedDuration?: 'monthly' | 'annual';
   sponsorRoomId?: string;
   isUpgrade?: boolean;
   onSuccess?: () => void;
@@ -167,6 +168,7 @@ export function PaywallModal({
   context = 'general',
   roomPartnerName,
   preselectedTier,
+  preselectedDuration,
   sponsorRoomId,
   isUpgrade,
   onSuccess,
@@ -200,7 +202,7 @@ export function PaywallModal({
 
   // Selected Duration (Monthly, Annual — default to Annual as per Pricing Plan section 1.1)
   const [selectedDuration, setSelectedDuration] = useState<PlanDuration>(
-    checkoutReturn?.duration ?? 'annual',
+    checkoutReturn?.duration ?? preselectedDuration ?? 'annual',
   );
   const actionInFlight = useRef(false);
   const webRequest = useRef<{ key: string; id: string } | null>(

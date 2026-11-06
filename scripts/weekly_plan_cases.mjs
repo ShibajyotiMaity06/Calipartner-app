@@ -52,6 +52,17 @@ export async function runWeeklyPlanTests(db) {
           fat: 60,
           ingredients: ['rice'],
           portion: 'one portion',
+          alternatives: [
+            {
+              name: 'Private meal alternative',
+              ingredients: ['private ingredient'],
+              portion: 'one measured portion',
+              calories: 2100,
+              protein: 120,
+              carbs: 270,
+              fat: 60,
+            },
+          ],
         },
       ],
     })),

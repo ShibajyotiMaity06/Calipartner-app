@@ -165,6 +165,17 @@ export default function SquadCompareScreen() {
                 </View>
               </View>
             </View>
+            <View style={styles.card}>
+              <Text variant="heading">{t('squadDesign.water')}</Text>
+              <View style={styles.columns}>
+                <View style={styles.column}>
+                  <MetricValue member={left} metric="water" color={dark.iris} />
+                </View>
+                <View style={styles.column}>
+                  <MetricValue member={right} metric="water" color={dark.teal} />
+                </View>
+              </View>
+            </View>
             {checkingPlan ? (
               <Text>{t('common.loading')}</Text>
             ) : !hasActiveAccess ? (

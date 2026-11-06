@@ -1,6 +1,14 @@
-import React from 'react';
-import { ActivityIndicator, Image, Pressable, StyleSheet, View } from 'react-native';
-import { Text } from '@calipartner/ui';
+import React, { useRef } from 'react';
+import {
+  ActivityIndicator,
+  Animated,
+  Image,
+  PanResponder,
+  Pressable,
+  StyleSheet,
+  View,
+} from 'react-native';
+import { Text, space } from '@calipartner/ui';
 import { onboardingLayout as layout } from '@calipartner/ui';
 import { Ionicons } from '@expo/vector-icons';
 import type { ChatAttachment, ChatMessage } from '@/types/chat';
@@ -16,6 +24,7 @@ export interface ChatMessageBubbleProps {
   onRetry?: (message: ChatMessage) => void;
   onPressImage?: (attachment: ChatAttachment) => void;
   onLongPress?: (message: ChatMessage) => void;
+  onReply?: (message: ChatMessage) => void;
   testID?: string;
 }
 
@@ -35,9 +44,33 @@ export function ChatMessageBubble({
   onRetry,
   onPressImage,
   onLongPress,
+  onReply,
   testID,
 }: ChatMessageBubbleProps) {
   const { colors } = useTheme();
+  const drag = useRef(new Animated.Value(0)).current;
+  const replyHandler = useRef(onReply);
+  const currentMessage = useRef(message);
+  replyHandler.current = onReply;
+  currentMessage.current = message;
+  const pan = useRef(
+    PanResponder.create({
+      onMoveShouldSetPanResponder: (_, gesture) =>
+        Boolean(replyHandler.current) &&
+        !currentMessage.current.deleted_at &&
+        currentMessage.current.message_type === 'user' &&
+        gesture.dx > layout.touch / 3 &&
+        Math.abs(gesture.dx) > Math.abs(gesture.dy) * 2,
+      onPanResponderMove: (_, gesture) =>
+        drag.setValue(Math.max(0, Math.min(layout.touch * 2, gesture.dx))),
+      onPanResponderRelease: (_, gesture) => {
+        drag.setValue(0);
+        if (gesture.dx >= layout.touch && Math.abs(gesture.dx) > Math.abs(gesture.dy) * 2)
+          replyHandler.current?.(currentMessage.current);
+      },
+      onPanResponderTerminate: () => drag.setValue(0),
+    }),
+  ).current;
 
   // 1. System Message Render
   if (message.message_type === 'system') {
@@ -73,7 +106,8 @@ export function ChatMessageBubble({
     .toUpperCase();
 
   return (
-    <View
+    <Animated.View
+      {...pan.panHandlers}
       style={[styles.rowContainer, isMine ? styles.rowMine : styles.rowOther]}
       testID={testID ?? `chat-message-${message.id}`}
     >
@@ -93,10 +127,11 @@ export function ChatMessageBubble({
       )}
 
       {/* Bubble Container */}
-      <View
+      <Animated.View
         style={[
           styles.bubbleWrapper,
           isMine ? styles.bubbleWrapperMine : styles.bubbleWrapperOther,
+          { transform: [{ translateX: drag }] },
         ]}
       >
         {/* Sender name for incoming messages */}
@@ -122,7 +157,37 @@ export function ChatMessageBubble({
             isDeleted ? t('chat.deletedMessage') : message.text || ''
           }. Sent at ${timeFormatted}`}
           testID={`bubble-content-${message.id}`}
+          accessibilityActions={
+            !isDeleted && onReply
+              ? [
+                  { name: 'reply', label: t('aha.reply') },
+                  { name: 'activate', label: t('chat.longPressTitle') },
+                ]
+              : undefined
+          }
+          onAccessibilityAction={(event) =>
+            event.nativeEvent.actionName === 'reply' ? onReply?.(message) : onLongPress?.(message)
+          }
         >
+          {!isDeleted && message.reply_to_id && (
+            <View
+              style={{
+                borderLeftWidth: space[1],
+                borderLeftColor: colors.accent,
+                padding: spacing.sm,
+              }}
+              testID={`reply-quote-${message.id}`}
+            >
+              <Text style={{ color: colors.textMuted }}>
+                {message.reply ? message.reply.name : t('aha.replyUnavailable')}
+              </Text>
+              {message.reply && (
+                <Text style={{ color: colors.text }} numberOfLines={3}>
+                  {message.reply.text || t('aha.attachment')}
+                </Text>
+              )}
+            </View>
+          )}
           {/* Message Text */}
           {isDeleted ? (
             <Text style={[styles.deletedText, { color: isMine ? colors.text : colors.textMuted }]}>
@@ -219,8 +284,8 @@ export function ChatMessageBubble({
             <Text style={[styles.retryText, { color: colors.danger }]}>{t('chat.retryBtn')}</Text>
           </Pressable>
         )}
-      </View>
-    </View>
+      </Animated.View>
+    </Animated.View>
   );
 }
 

@@ -50,6 +50,7 @@ export interface PlanExercise {
   rest_seconds: number;
 }
 export interface PlanMeal {
+  alternatives?: Omit<PlanMeal, 'alternatives'>[];
   name: string;
   ingredients: string[];
   portion: string;
@@ -107,6 +108,7 @@ export class WeeklyPlanValidationError extends Error {
       | 'workout_minutes'
       | 'meal_calories'
       | 'meal_macro',
+
     readonly repair?: string,
   ) {
     super('INVALID_PLAN');
@@ -227,6 +229,7 @@ export function validateWeeklyPlan(
   input: unknown,
   preferences: PlanPreferences,
   goals: PlanGoals,
+  options: { flexible?: boolean; normalizePortions?: boolean } = {},
 ): WeeklyPlanContent {
   const plan = object(input);
   if (!Array.isArray(plan.days) || plan.days.length !== 7)
@@ -276,6 +279,7 @@ export function validateWeeklyPlan(
       throw new WeeklyPlanValidationError('unsafe_copy');
     return value;
   };
+  const unscaledDays: Pick<PlanDay, 'meals'>[] = [];
   const days = plan.days.map((value, index): PlanDay => {
     const d = object(value),
       workout = object(d.workout);
@@ -292,7 +296,7 @@ export function validateWeeklyPlan(
     );
     if (!Array.isArray(d.meals) || d.meals.length !== preferences.meals_per_day)
       throw new WeeklyPlanValidationError('meal_count');
-    const meals = d.meals.map((value, mealIndex): PlanMeal => {
+    const parseMeal = (value: unknown, mealIndex: number): PlanMeal => {
       const m = object(value);
       const name = safeText(text(m.name, 120)),
         ingredients = strings(m.ingredients, 1, 20, 150).map(safeText),
@@ -308,8 +312,54 @@ export function validateWeeklyPlan(
           `Day ${index}, meal ${mealIndex}: reported ${calories} kcal but 4*protein+4*carbs+9*fat is ${macroCalories} kcal. Re-estimate this meal from its measured ingredients and correct the inconsistent nutrition, then recheck the daily totals.`,
         );
       return { name, ingredients, portion, calories, protein, carbs, fat };
+    };
+    let meals = d.meals.map((value, mealIndex): PlanMeal => {
+      const meal = parseMeal(value, mealIndex);
+      const alternatives = object(value).alternatives;
+      if (options.flexible && (!Array.isArray(alternatives) || alternatives.length !== 2))
+        throw new WeeklyPlanValidationError(
+          'list_limits',
+          'Every meal needs exactly two measured alternatives, each with its own ingredients, portion and nutrition.',
+        );
+      if (alternatives !== undefined) {
+        if (!Array.isArray(alternatives) || alternatives.length > 2)
+          throw new WeeklyPlanValidationError('list_limits');
+        meal.alternatives = alternatives.map((option) => parseMeal(option, mealIndex));
+        if (
+          new Set([meal, ...meal.alternatives].map((option) => option.name.trim().toLowerCase()))
+            .size !==
+          meal.alternatives.length + 1
+        )
+          throw new WeeklyPlanValidationError(
+            'list_limits',
+            'Use different dishes for each alternative.',
+          );
+        for (const option of meal.alternatives) {
+          if (
+            Math.abs(option.calories - meal.calories) > meal.calories * 0.1 ||
+            (['protein', 'carbs', 'fat'] as const).some(
+              (key) => Math.abs(option[key] - meal[key]) > Math.max(10, meal[key] * 0.25),
+            )
+          )
+            throw new WeeklyPlanValidationError(
+              'daily_macro',
+              'Adjust measured alternative portions to stay within 10% of the main meal calories and within 25% or 10g of each macro.',
+            );
+        }
+        if (hasRepeatedMealNutrition([{ meals: [meal, ...meal.alternatives] }]))
+          throw new WeeklyPlanValidationError(
+            'repeated_meal_nutrition',
+            'Calculate each replacement from its own ingredients; do not copy the main meal nutrition.',
+          );
+      }
+      return meal;
     });
-    const total = meals.reduce((sum, meal) => sum + meal.calories, 0);
+    unscaledDays.push({ meals });
+    let total = meals.reduce((sum, meal) => sum + meal.calories, 0);
+    if (options.normalizePortions) {
+      meals = fitPlanDayPortions(meals, goals);
+      total = meals.reduce((sum, meal) => sum + meal.calories, 0);
+    }
     if (
       total < Math.max(goals.calorie_floor, goals.calories * 0.9) ||
       total > goals.calories * 1.15
@@ -326,6 +376,27 @@ export function validateWeeklyPlan(
           `Day ${index}: ${macro} sums to ${totalMacro}g versus saved goal ${goals[macro]}g, outside the allowed difference of ${Math.max(10, goals[macro] * 0.3)}g. Adjust measured ingredients/portions and recheck all meal energy and daily totals.`,
         );
     }
+    if (options.flexible) {
+      const range = (key: 'calories' | 'protein' | 'carbs' | 'fat', select: typeof Math.min) =>
+        meals.reduce(
+          (sum, meal) =>
+            sum + select(...[meal, ...(meal.alternatives ?? [])].map((option) => option[key])),
+          0,
+        );
+      if (
+        range('calories', Math.min) < Math.max(goals.calorie_floor, goals.calories * 0.9) ||
+        range('calories', Math.max) > goals.calories * 1.15 ||
+        (['protein', 'carbs', 'fat'] as const).some(
+          (key) =>
+            range(key, Math.min) < goals[key] - Math.max(10, goals[key] * 0.3) ||
+            range(key, Math.max) > goals[key] + Math.max(10, goals[key] * 0.3),
+        )
+      )
+        throw new WeeklyPlanValidationError(
+          'daily_macro',
+          'Every combination of one option per meal must meet the daily calorie floor, daily energy range and macro limits. Rebalance actual portions of the alternatives.',
+        );
+    }
     return {
       day: index,
       workout: {
@@ -336,14 +407,241 @@ export function validateWeeklyPlan(
       meals,
     };
   });
-  if (hasRepeatedMealNutrition(days))
+  if (hasRepeatedMealNutrition(unscaledDays) || hasRepeatedMealNutrition(days))
     throw new WeeklyPlanValidationError('repeated_meal_nutrition');
+  if (options.flexible) {
+    for (let i = 1; i < days.length; i++) {
+      const previous = new Set(days[i - 1]!.meals.map((meal) => meal.name.toLowerCase().trim()));
+      if (days[i]!.meals.some((meal) => previous.has(meal.name.toLowerCase().trim())))
+        throw new WeeklyPlanValidationError(
+          'list_limits',
+          'Do not repeat a main dish from the previous day. Plan different meals across the week.',
+        );
+    }
+  }
   return {
     days,
     workout_tips: strings(plan.workout_tips, 1, 5, 400).map(safeText),
     diet_tips: strings(plan.diet_tips, 1, 5, 400).map(safeText),
   };
 }
+/** Scale actual measured ingredients and their existing estimates together; never synthesize nutrition. */
+export function scalePlanMeal(meal: PlanMeal, factor: number): Omit<PlanMeal, 'alternatives'> {
+  if (!Number.isFinite(factor) || factor < 0.1 || factor > 2)
+    throw new WeeklyPlanValidationError('numeric_limits');
+  const round = (value: number) => Math.round(value * 10) / 10;
+  const multiplier = Math.round(factor * 1000) / 1000;
+  const measured = (value: string) => {
+    let changed = false;
+    const result = value.replace(
+      /(\d+(?:\.\d+)?)\s*((?:(?:small|medium|large|whole|cooked|raw)\s+)?(?:kg|grams?|g|ml|litres?|liters?|l|tablespoons?|teaspoons?|tbsp|tsp|cups?|bowls?|servings?|pieces?|slices?|eggs?))\b/gi,
+      (_match, amount: string, unit: string) => {
+        changed = true;
+        return `${Math.round(Number(amount) * factor * 100) / 100} ${unit}`;
+      },
+    );
+    return changed ? result : `${multiplier} × (${value})`;
+  };
+  return {
+    name: meal.name,
+    ingredients: meal.ingredients.map(measured),
+    portion: factor === 1 ? meal.portion : `${multiplier} × (${meal.portion})`,
+    calories: round(meal.calories * factor),
+    protein: round(meal.protein * factor),
+    carbs: round(meal.carbs * factor),
+    fat: round(meal.fat * factor),
+  };
+}
+
+/** Bounded calorie transfers fit actual recipe portions; the final validator still enforces every target. */
+export function fitPlanDayPortions(meals: PlanMeal[], goals: PlanGoals): PlanMeal[] {
+  const sum = meals.reduce((total, meal) => total + meal.calories, 0),
+    factor = goals.calories / sum;
+  if (!Number.isFinite(factor) || factor < 0.5 || factor > 2)
+    throw new WeeklyPlanValidationError('daily_energy');
+  const keys = ['protein', 'carbs', 'fat'] as const;
+  const calories = meals.map((meal) => meal.calories * factor);
+  const density = meals.map((meal) =>
+    keys.map((key) => meal[key] / meal.calories / Math.max(10, goals[key])),
+  );
+  for (let iteration = 0; iteration < 64; iteration++) {
+    const error = keys.map(
+      (key, k) =>
+        calories.reduce((total, value, i) => total + value * density[i]![k]!, 0) -
+        goals[key] / Math.max(10, goals[key]),
+    );
+    let best: { from: number; to: number; amount: number; improvement: number } | null = null;
+    for (let from = 0; from < meals.length; from++)
+      for (let to = from + 1; to < meals.length; to++) {
+        const direction = keys.map((_, k) => density[to]![k]! - density[from]![k]!);
+        const square = direction.reduce((total, value) => total + value * value, 0);
+        if (square < 1e-12) continue;
+        const dot = error.reduce((total, value, k) => total + value * direction[k]!, 0);
+        const lower = -Math.min(
+          meals[from]!.calories * 2 - calories[from]!,
+          calories[to]! - meals[to]!.calories * 0.5,
+        );
+        const upper = Math.min(
+          calories[from]! - meals[from]!.calories * 0.5,
+          meals[to]!.calories * 2 - calories[to]!,
+        );
+        const amount = Math.max(lower, Math.min(upper, -dot / square));
+        const improvement = -(2 * amount * dot + amount * amount * square);
+        if (improvement > 1e-9 && (!best || improvement > best.improvement))
+          best = { from, to, amount, improvement };
+      }
+    if (!best) break;
+    calories[best.from]! -= best.amount;
+    calories[best.to]! += best.amount;
+  }
+  return meals.map((meal, i) => {
+    const scale = Math.max(0.5, Math.min(2, calories[i]! / meal.calories));
+    if (Math.abs(scale - 1) < 1e-8) return meal;
+    return {
+      ...scalePlanMeal(meal, scale),
+      ...(meal.alternatives
+        ? { alternatives: meal.alternatives.map((option) => scalePlanMeal(option, scale)) }
+        : {}),
+    };
+  });
+}
+
+/** Derive two replacements from the AI's validated varied week, without tripling provider output. */
+export function prepareFlexibleWeeklyPlan(
+  input: unknown,
+  preferences: PlanPreferences,
+  goals: PlanGoals,
+): WeeklyPlanContent {
+  const suppliedDays = object(input).days;
+  if (
+    Array.isArray(suppliedDays) &&
+    suppliedDays.length === 7 &&
+    suppliedDays.every((value) => {
+      const meals = object(value).meals;
+      return (
+        Array.isArray(meals) &&
+        meals.every((value) => {
+          const alternatives = object(value).alternatives;
+          return Array.isArray(alternatives) && alternatives.length === 2;
+        })
+      );
+    })
+  )
+    return validateWeeklyPlan(input, preferences, goals, { flexible: true });
+  const plan = validateWeeklyPlan(input, preferences, goals, { normalizePortions: true });
+  if (plan.days.every((day) => day.meals.every((meal) => meal.alternatives?.length === 2)))
+    return validateWeeklyPlan(plan, preferences, goals, { flexible: true });
+  const pool = plan.days.flatMap((day) => day.meals);
+  const macroKeys = ['protein', 'carbs', 'fat'] as const;
+  const fitsDay = (day: PlanDay) => {
+    const range = (key: 'calories' | (typeof macroKeys)[number], select: typeof Math.min) =>
+      day.meals.reduce(
+        (sum, meal) =>
+          sum + select(...[meal, ...(meal.alternatives ?? [])].map((option) => option[key])),
+        0,
+      );
+    return (
+      range('calories', Math.min) >= Math.max(goals.calorie_floor, goals.calories * 0.9) &&
+      range('calories', Math.max) <= goals.calories * 1.15 &&
+      macroKeys.every(
+        (key) =>
+          range(key, Math.min) >= goals[key] - Math.max(10, goals[key] * 0.3) &&
+          range(key, Math.max) <= goals[key] + Math.max(10, goals[key] * 0.3),
+      )
+    );
+  };
+  for (const day of plan.days) {
+    for (const [slot, meal] of day.meals.entries()) {
+      const names = new Set([meal.name.toLowerCase().trim()]);
+      const candidates = pool.flatMap((candidate) => {
+        const name = candidate.name.toLowerCase().trim();
+        if (names.has(name)) return [];
+        const factor = meal.calories / candidate.calories;
+        if (factor < 0.5 || factor > 2) return [];
+        const option = scalePlanMeal(candidate, factor);
+        if (
+          macroKeys.some(
+            (key) => Math.abs(option[key] - meal[key]) > Math.max(10, meal[key] * 0.25),
+          ) ||
+          macroKeys.every((key) => option[key] === meal[key])
+        )
+          return [];
+        names.add(name);
+        return [option];
+      });
+      // A replacement can combine two other validated dishes from the same meal slot.
+      // Each contributes at least a quarter of the meal; no token sprinkling of the original.
+      const sameSlot = plan.days
+        .map((other) => other.meals[slot]!)
+        .filter((other) => other.name.toLowerCase().trim() !== meal.name.toLowerCase().trim());
+      const pairOptions = new Map<string, Omit<PlanMeal, 'alternatives'>>();
+      const distance = (option: Omit<PlanMeal, 'alternatives'>) =>
+        macroKeys.reduce(
+          (sum, key) => sum + Math.abs(option[key] - meal[key]) / Math.max(10, meal[key]),
+          0,
+        );
+      for (let a = 0; a < sameSlot.length; a++)
+        for (let b = a + 1; b < sameSlot.length; b++)
+          for (const share of [0.25, 0.5, 0.75]) {
+            const first = sameSlot[a]!,
+              second = sameSlot[b]!;
+            if (first.name.toLowerCase().trim() === second.name.toLowerCase().trim()) continue;
+            const firstScale = (meal.calories * share) / first.calories,
+              secondScale = (meal.calories * (1 - share)) / second.calories;
+            if (firstScale < 0.1 || firstScale > 2 || secondScale < 0.1 || secondScale > 2)
+              continue;
+            const one = scalePlanMeal(first, firstScale),
+              two = scalePlanMeal(second, secondScale);
+            const option = {
+              name: first.name.slice(0, 55) + ' + ' + second.name.slice(0, 55),
+              portion: one.portion + ' + ' + two.portion,
+              ingredients: [...one.ingredients, ...two.ingredients],
+              calories: Math.round((one.calories + two.calories) * 10) / 10,
+              protein: Math.round((one.protein + two.protein) * 10) / 10,
+              carbs: Math.round((one.carbs + two.carbs) * 10) / 10,
+              fat: Math.round((one.fat + two.fat) * 10) / 10,
+            };
+            if (
+              option.ingredients.length > 20 ||
+              option.portion.length > 250 ||
+              macroKeys.some(
+                (key) => Math.abs(option[key] - meal[key]) > Math.max(10, meal[key] * 0.25),
+              ) ||
+              macroKeys.every((key) => option[key] === meal[key])
+            )
+              continue;
+            const key = option.name.toLowerCase().trim(),
+              existing = pairOptions.get(key);
+            if (!existing || distance(option) < distance(existing)) pairOptions.set(key, option);
+          }
+      candidates.push(...pairOptions.values());
+      candidates.sort(
+        (a, b) =>
+          macroKeys.reduce(
+            (sum, key) => sum + Math.abs(a[key] - meal[key]) / Math.max(5, meal[key]),
+            0,
+          ) -
+          macroKeys.reduce(
+            (sum, key) => sum + Math.abs(b[key] - meal[key]) / Math.max(5, meal[key]),
+            0,
+          ),
+      );
+      let found = false;
+      for (let first = 0; first < candidates.length && !found; first++)
+        for (let second = first + 1; second < candidates.length && !found; second++) {
+          meal.alternatives = [candidates[first]!, candidates[second]!];
+          if (fitsDay(day)) found = true;
+        }
+      if (!found)
+        throw new WeeklyPlanValidationError(
+          'daily_macro',
+          'Provide more varied dishes with nutritionally similar corresponding meal slots across days. Two different dishes must be substitutable for every meal after proportional portion scaling, within 25% or 10g of each macro. Do not copy nutrition tuples or generate alternatives separately.',
+        );
+    }
+  }
+  return validateWeeklyPlan(plan, preferences, goals, { flexible: true });
+}
+
 export function planDayNutrition(day: PlanDay) {
   return day.meals.reduce(
     (total, meal) => ({

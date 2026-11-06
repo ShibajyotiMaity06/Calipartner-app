@@ -42,6 +42,8 @@
     "../../../packages/core/src/coachMeal": "../../../packages/core/src/coachMeal.ts",
     "../../../packages/core/src/coachHistory": "../../../packages/core/src/coachHistory.ts",
     "../../../packages/core/src/weeklyPlan": "../../../packages/core/src/weeklyPlan.ts",
-    "../../../packages/core/src/webBilling": "../../../packages/core/src/webBilling.ts"
+    "../../../packages/core/src/webBilling": "../../../packages/core/src/webBilling.ts",
+    "../../../packages/core/src/adaptiveReview": "../../../packages/core/src/adaptiveReview.ts",
+    "../../../packages/core/src/weightProjection": "../../../packages/core/src/weightProjection.ts"
   }
 }

@@ -15,7 +15,8 @@ export interface SquadMember extends SquadNutrition {
   goal: 'cut' | 'bulk' | 'maintain' | null;
   local_date: string;
   steps: number;
-  targets: (SquadNutrition & { steps: number }) | null;
+  water?: number;
+  targets: (SquadNutrition & { steps: number; water?: number }) | null;
   height_cm: number | null;
   weight_kg: number | null;
 }

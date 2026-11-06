@@ -111,6 +111,7 @@ export default tseslint.config(
   {
     ignores: [
       '.cache/**',
+      '.artifacts/**',
       '**/node_modules/**',
       '**/.expo/**',
       '**/dist/**',
@@ -122,6 +123,8 @@ export default tseslint.config(
       'supabase/**',
       'docs/**',
       '.agents/**',
+      // Owner-local, untracked scratch audit; preserve it outside delivery checks.
+      'scripts/live_feature_audit.mjs',
     ],
   },
   js.configs.recommended,

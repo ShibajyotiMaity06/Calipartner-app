@@ -18,6 +18,8 @@ import { useTheme } from '@/theme/useTheme';
 import { ChatMediaPickerModal, type SelectedMediaItem } from './ChatMediaPickerModal';
 
 export interface ChatComposerProps {
+  reply?: { name: string; text: string | null } | null;
+  onCancelReply?: () => void;
   mentionMembers?: { user_id: string; username: string; nickname: string }[];
   onTyping?: (typing: boolean) => void;
   onSend: (text?: string | null, attachments?: SelectedMediaItem[]) => Promise<void>;
@@ -31,6 +33,8 @@ export interface ChatComposerProps {
 
 export function ChatComposer({
   mentionMembers = [],
+  reply,
+  onCancelReply,
   onSend,
   onTyping,
   disabled = false,
@@ -102,6 +106,37 @@ export function ChatComposer({
       style={[styles.composerContainer, { backgroundColor: colors.background }]}
       testID={testID}
     >
+      {reply && (
+        <View
+          style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+            padding: spacing.sm,
+            backgroundColor: colors.surfaceAlt,
+          }}
+          testID="chat-reply-draft"
+        >
+          <View style={{ flex: 1 }}>
+            <Text>{t('aha.replying', { name: reply.name })}</Text>
+            <Text numberOfLines={2}>{reply.text || t('aha.attachment')}</Text>
+          </View>
+          <Pressable
+            onPress={onCancelReply}
+            disabled={isSending}
+            accessibilityRole="button"
+            accessibilityLabel={t('aha.cancelReply')}
+            style={{
+              minHeight: layout.touch,
+              minWidth: layout.touch,
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+            testID="cancel-chat-reply"
+          >
+            <Ionicons name="close" size={layout.icon} color={colors.text} />
+          </Pressable>
+        </View>
+      )}
       {tagOpen && !disabled && (
         <View testID="chat-tag-picker">
           <ScrollView keyboardShouldPersistTaps="handled" style={{ maxHeight: layout.touch * 4 }}>

@@ -197,7 +197,7 @@ export function SquadLeaderboard({
     </View>
   );
 }
-export const metricKeys = ['calories', 'protein', 'carbs', 'fat', 'steps'] as const;
+export const metricKeys = ['calories', 'protein', 'carbs', 'fat', 'steps', 'water'] as const;
 export function MetricValue({
   member,
   metric,
@@ -209,25 +209,38 @@ export function MetricValue({
   label?: string;
   color?: string;
 }) {
-  const value = member[metric],
+  const value = member[metric] ?? null,
     target = member.targets?.[metric] ?? null;
   const percent =
-    target == null ? null : target > 0 ? (value / target) * 100 : value === 0 ? 100 : 200;
-  const nutrient = metric === 'steps' ? undefined : metric;
+    target == null || value == null
+      ? null
+      : target > 0
+        ? (value / target) * 100
+        : value === 0
+          ? 100
+          : 200;
+  const nutrient = metric === 'steps' || metric === 'water' ? undefined : metric;
+  const unit = t(
+    metric === 'calories'
+      ? 'squadDesign.kcal'
+      : metric === 'steps'
+        ? 'squadDesign.stepUnit'
+        : metric === 'water'
+          ? 'squadDesign.ml'
+          : 'squadDesign.grams',
+  );
+  const amount =
+    value == null
+      ? t('common.unavailable')
+      : target == null
+        ? `${numberText(value)} ${unit}`
+        : t('squadDesign.amount', { value: numberText(value), target: numberText(target), unit });
   return (
     <View
       style={{ gap: space[1] }}
       accessible
       testID={`member-metric-${member.user_id}-${metric}`}
-      accessibilityLabel={
-        percent == null
-          ? memberName(member) + ': ' + t('squadDesign.noGoals')
-          : t('foodPolish.metricPercent', {
-              name: memberName(member),
-              metric: t(`squadDesign.${metric}`),
-              percent: numberText(percent),
-            })
-      }
+      accessibilityLabel={memberName(member) + ', ' + t(`squadDesign.${metric}`) + ': ' + amount}
     >
       <View style={squadStyles.spread}>
         {label && (
@@ -236,9 +249,7 @@ export function MetricValue({
           </Text>
         )}
         <Text variant="bodyS" tabular nutrient={nutrient}>
-          {percent == null
-            ? t('squadDesign.noGoals')
-            : t('squadDesign.percent', { value: numberText(percent) })}
+          {amount}
         </Text>
       </View>
       <ProgressTrack percent={percent} color={color} />

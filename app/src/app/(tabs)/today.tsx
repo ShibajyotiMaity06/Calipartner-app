@@ -29,6 +29,8 @@ import { useDiary } from '@/hooks/useDiary';
 import { useDeleteEntry, useEditEntry } from '@/hooks/useFoodEntries';
 import { useRooms } from '@/hooks/useRooms';
 import { useSteps } from '@/hooks/useSteps';
+import { useWater } from '@/hooks/useWater';
+import { useWorkouts } from '@/hooks/useWorkouts';
 import { useTargets } from '@/hooks/useTargets';
 import { t } from '@/i18n';
 import { getDb } from '@/db';
@@ -60,10 +62,20 @@ export default function TodayScreen() {
 
   // Steps & Water hooks
   const { steps, goalSteps, refresh: refreshSteps } = useSteps(selectedDate);
+  const water = useWater(selectedDate);
+  const workouts = useWorkouts(selectedDate);
+  const refreshWater = water.refresh;
+  const refreshWorkouts = workouts.refresh;
 
   const handlePullRefresh = useCallback(async () => {
-    await Promise.all([refresh(), refreshSteps(), refreshRooms()]);
-  }, [refresh, refreshSteps, refreshRooms]);
+    await Promise.all([
+      refresh(),
+      refreshSteps(),
+      refreshRooms(),
+      refreshWater(),
+      refreshWorkouts(),
+    ]);
+  }, [refresh, refreshSteps, refreshRooms, refreshWater, refreshWorkouts]);
 
   // Sheet & modal states
   const [activeLogSection, setActiveLogSection] = useState<MealSection | null>(null);
@@ -208,6 +220,8 @@ export default function TodayScreen() {
             void refresh();
             void refreshTargets();
             void refreshSteps();
+            void refreshWater();
+            void refreshWorkouts();
           }}
           onPress={() => router.push('/(tabs)/progress' as Href)}
           metrics={[
@@ -245,7 +259,21 @@ export default function TodayScreen() {
               target: effectiveGoalSteps,
               unit: t('squadDesign.stepUnit'),
             },
+            {
+              id: 'water',
+              label: t('squadDesign.water'),
+              value: water.totalMl,
+              target: currentGoalProfile?.water_ml_goal ?? null,
+              unit: t('squadDesign.ml'),
+              loading: water.loading,
+              error: water.error,
+            },
           ]}
+          activity={{
+            loading: workouts.loading,
+            error: Boolean(workouts.error),
+            names: workouts.workouts.map((workout) => workout.name || t('aha.workout')),
+          }}
         />
 
         {/* 6. Date Selector & Meal Logging Diary Sections */}

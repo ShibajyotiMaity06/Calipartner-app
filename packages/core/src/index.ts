@@ -42,3 +42,5 @@ export * from './coachMeal';
 export { coachHistoryWindow } from './coachHistory';
 export * from './weeklyPlan';
 export * from './webBilling';
+export * from './adaptiveReview';
+export * from './weightProjection';

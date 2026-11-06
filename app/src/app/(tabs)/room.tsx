@@ -183,10 +183,9 @@ export default function RoomScreen() {
     { userId: user?.id, markRead: false },
   );
   const members = squad.data?.members ?? [];
+  const otherMembers = members.filter((member) => !member.is_self);
   const selectedPerson =
-    members.find((member) => member.user_id === personId) ??
-    members.find((member) => !member.is_self) ??
-    members[0];
+    otherMembers.find((member) => member.user_id === personId) ?? otherMembers[0];
   const left =
     members.find((member) => member.user_id === leftId) ??
     members.find((member) => member.is_self) ??
@@ -520,7 +519,7 @@ export default function RoomScreen() {
       {picker && left && right && (
         <SquadMemberPicker
           visible
-          members={members}
+          members={picker === 'person' ? otherMembers : members}
           excludedId={picker === 'person' ? '' : picker === 'left' ? right.user_id : left.user_id}
           selectedId={
             picker === 'person'

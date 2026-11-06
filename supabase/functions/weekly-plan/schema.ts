@@ -11,36 +11,47 @@ const object = (properties: Record<string, unknown>) => ({
   required: Object.keys(properties),
   additionalProperties: false,
 });
+const mealProperties = {
+  name: string,
+  ingredients: array(string),
+  portion: string,
+  protein: { ...number, minimum: 0, maximum: 200 },
+  carbs: { ...number, minimum: 0, maximum: 400 },
+  fat: { ...number, minimum: 0, maximum: 150 },
+  calories: { ...number, minimum: 50, maximum: 3000 },
+};
 export const weeklyPlanSchema = object({
-  days: array(
-    object({
-      day: integer,
-      workout: object({
-        title: string,
-        minutes: integer,
-        exercises: array(
-          object({
-            name: string,
-            equipment: { type: 'string', enum: [...PLAN_EQUIPMENT] },
-            sets: integer,
-            reps: integer,
-            rest_seconds: integer,
-          }),
-        ),
-      }),
-      meals: array(
-        object({
-          name: string,
-          ingredients: array(string),
-          portion: string,
-          calories: number,
-          protein: number,
-          carbs: number,
-          fat: number,
+  days: {
+    ...array(
+      object({
+        day: { ...integer, enum: [0, 1, 2, 3, 4, 5, 6] },
+        workout: object({
+          title: string,
+          minutes: integer,
+          exercises: array(
+            object({
+              name: string,
+              equipment: { type: 'string', enum: [...PLAN_EQUIPMENT] },
+              sets: { ...integer, minimum: 1, maximum: 5 },
+              reps: { ...integer, minimum: 5, maximum: 30 },
+              rest_seconds: { ...integer, minimum: 30, maximum: 180 },
+            }),
+          ),
         }),
-      ),
-    }),
-  ),
+        meals: {
+          ...array(
+            object({
+              ...mealProperties,
+            }),
+          ),
+          minItems: 3,
+          maxItems: 5,
+        },
+      }),
+    ),
+    minItems: 7,
+    maxItems: 7,
+  },
   workout_tips: array(string),
   diet_tips: array(string),
 });

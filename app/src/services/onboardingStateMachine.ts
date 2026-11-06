@@ -27,13 +27,10 @@ export type OnboardingStep =
 
 export const ONBOARDING_STEPS_ORDER: readonly OnboardingStep[] = [
   'goal',
-  'motivation',
   'activity_level',
   'body_stats',
   'rate_selection',
   'daily_goals',
-  'premium',
-  'paywall',
   'completed',
 ] as const;
 

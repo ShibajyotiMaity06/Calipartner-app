@@ -43,6 +43,28 @@ afterEach(async () => {
   if (tree) await act(async () => tree.unmount());
 });
 describe('chat actions keep failed requests visible', () => {
+  it('offers a tap/menu alternative to swipe-to-reply and keeps deletion limited to your own messages', async () => {
+    const reply = vi.fn(),
+      close = vi.fn();
+    await act(async () => {
+      tree = create(
+        <ChatMessageMenuModal
+          visible
+          message={message}
+          isMine={false}
+          onClose={close}
+          onDeleteMessage={vi.fn()}
+          onReportMessage={vi.fn()}
+          onMuteMember={vi.fn()}
+          onReply={reply}
+        />,
+      );
+    });
+    expect(tree.root.findAllByProps({ testID: 'btn-delete-message' })).toHaveLength(0);
+    await act(async () => tree.root.findByProps({ testID: 'btn-reply-message' }).props.onPress());
+    expect(reply).toHaveBeenCalledWith(message);
+    expect(close).toHaveBeenCalledOnce();
+  });
   it('failed deletion stays open and a successful retry closes it', async () => {
     const remove = vi.fn().mockRejectedValueOnce(new Error('offline')).mockResolvedValue(undefined),
       close = vi.fn();

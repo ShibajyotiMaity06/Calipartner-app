@@ -600,4 +600,9 @@ export const migrations: readonly LocalMigration[] = [
       ALTER TABLE local_challenge_outbox RENAME TO retired_challenge_writes;
       DROP TABLE IF EXISTS sync_cursors;`,
   },
+  {
+    version: 20,
+    name: 'chat_reply_references',
+    sql: 'ALTER TABLE local_chat_messages ADD COLUMN reply_to_id TEXT; ALTER TABLE local_chat_messages ADD COLUMN reply_json TEXT;',
+  },
 ];

@@ -13,3 +13,4 @@ AGENTS.md
 # Generated verification artifacts
 .cache
 /.artifacts/
+scripts/live_feature_audit.mjs

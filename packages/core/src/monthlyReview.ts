@@ -1,5 +1,6 @@
 import type { Entitlement } from './types';
 import { hasPlan } from './rooms';
+import { REVIEW_INTERVAL_DAYS } from './adaptiveReview';
 
 /** Monthly check-ins use the confirmation's UTC calendar date, clamped to month end. */
 export function nextMonthlyReviewAt(confirmedAt: string): Date | null {
@@ -18,7 +19,8 @@ export function isMonthlyReviewDue(
   entitlement: Entitlement | null,
   now = new Date(),
 ): boolean {
-  if (entitlement?.tier !== 'pro' || !hasPlan(entitlement, now)) return false;
-  const next = nextMonthlyReviewAt(confirmedAt);
-  return next !== null && now >= next;
+  if (entitlement?.tier !== 'pro' || entitlement.status !== 'paid' || !hasPlan(entitlement, now))
+    return false;
+  const confirmed = Date.parse(confirmedAt);
+  return Number.isFinite(confirmed) && now.getTime() >= confirmed + REVIEW_INTERVAL_DAYS * 86400000;
 }

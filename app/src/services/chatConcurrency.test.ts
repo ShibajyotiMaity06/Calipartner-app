@@ -2,11 +2,13 @@ import { DatabaseSync } from 'node:sqlite';
 import { describe, expect, it, vi } from 'vitest';
 import { getChatMessages, getLocalChatMessages, sendChatMessage } from './chatService';
 import { type LocalDb } from './accountDataService';
+import { migrations } from '@/db/migrations';
 function database() {
   const sql = new DatabaseSync(':memory:');
   sql.exec(`CREATE TABLE local_chat_messages(id TEXT PRIMARY KEY,client_id TEXT UNIQUE,room_id TEXT,sender_id TEXT,sender_nickname TEXT,sender_username TEXT,sender_avatar_url TEXT,message_type TEXT,system_event_type TEXT,text TEXT,created_at TEXT,deleted_at TEXT,delivery_status TEXT,sync_state TEXT,last_error TEXT);
     CREATE TABLE local_chat_attachments(id TEXT PRIMARY KEY,message_id TEXT,storage_key TEXT,local_uri TEXT,width INTEGER,height INTEGER,size INTEGER,mime_type TEXT,moderation_status TEXT,upload_status TEXT,created_at TEXT);
     CREATE TABLE outbox(id TEXT PRIMARY KEY,entity TEXT,operation TEXT,payload TEXT,created_at TEXT,attempts INTEGER DEFAULT 0,last_error TEXT,status TEXT DEFAULT 'pending',next_retry_at TEXT,updated_at TEXT);`);
+  sql.exec(migrations.find((migration) => migration.version === 20)!.sql);
   const params = (p: unknown[]) => (p.length === 1 && Array.isArray(p[0]) ? p[0] : p);
   const db: LocalDb = {
     runAsync: async (query, ...p) => sql.prepare(query).run(...(params(p) as never[])),
@@ -18,6 +20,51 @@ function database() {
   return { db, sql };
 }
 describe('real SQLite chat replay and cache isolation', () => {
+  it('retains a failed reply reference and retries the same client ID through the checked reply RPC', async () => {
+    const { db, sql } = database();
+    try {
+      await expect(
+        sendChatMessage(
+          {
+            rpc: async () => {
+              throw new Error('Network request failed');
+            },
+          },
+          db,
+          'room',
+          'owner',
+          { clientId: 'reply-client', replyToId: 'original', text: 'Reply' },
+        ),
+      ).rejects.toThrow('Network request failed');
+      expect((await getLocalChatMessages(db, 'room'))[0]?.reply_to_id).toBe('original');
+      const quote = {
+        id: 'original',
+        sender_id: 'peer',
+        name: 'Peer',
+        text: 'Original',
+        has_attachment: false,
+      };
+      const rpc = vi
+        .fn()
+        .mockResolvedValue({ data: { id: 'reply-server', reply: quote }, error: null });
+      const saved = await sendChatMessage({ rpc }, db, 'room', 'owner', {
+        clientId: 'reply-client',
+        replyToId: 'original',
+        text: 'Reply',
+      });
+      expect(rpc).toHaveBeenCalledWith(
+        'send_chat_reply',
+        expect.objectContaining({ p_client_id: 'reply-client', p_reply_to_id: 'original' }),
+      );
+      expect(saved.reply).toEqual(quote);
+      expect(sql.prepare('select count(*) as count from local_chat_messages').get()).toMatchObject({
+        count: 1,
+      });
+      expect((await getLocalChatMessages(db, 'room'))[0]?.reply).toEqual(quote);
+    } finally {
+      sql.close();
+    }
+  });
   it('offline media retains references, RPC replay rebinds IDs and server refresh leaves one attachment', async () => {
     const { db, sql } = database();
     try {

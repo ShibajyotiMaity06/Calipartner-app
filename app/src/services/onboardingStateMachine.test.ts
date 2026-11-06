@@ -18,13 +18,10 @@ describe('Onboarding redesign state machine', () => {
     expect(visited).toEqual(ONBOARDING_STEPS_ORDER);
     expect(visited).toEqual([
       'goal',
-      'motivation',
       'activity_level',
       'body_stats',
       'rate_selection',
       'daily_goals',
-      'premium',
-      'paywall',
       'completed',
     ]);
   });

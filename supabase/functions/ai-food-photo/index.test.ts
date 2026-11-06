@@ -2,6 +2,101 @@ import assert from 'node:assert/strict';
 import { callVisionModel, handleAiFoodPhoto } from './index.ts';
 import type { SupabaseClient } from 'jsr:@supabase/supabase-js@2';
 
+Deno.test(
+  'Photo analysis uses Groq then Gemini 3.5 Flash-Lite and preserves image bytes',
+  async () => {
+    const previous = globalThis.fetch;
+    let calls = 0;
+    globalThis.fetch = async (url, init) => {
+      calls++;
+      if (new URL(String(url)).hostname === 'api.groq.com')
+        return Response.json({}, { status: 429 });
+      assert.equal(
+        String(url),
+        'https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash-lite:generateContent',
+      );
+      assert.equal(new Headers(init?.headers).get('x-goog-api-key'), 'gemini-fixture');
+      const body = JSON.parse(String(init?.body));
+      assert.equal(body.contents[0].parts[1].inline_data.data, '/9j/AAAA');
+      assert.equal(body.contents[0].parts[1].inline_data.mime_type, 'image/jpeg');
+      assert.equal(body.generationConfig.response_mime_type, 'application/json');
+      return Response.json({
+        candidates: [
+          {
+            finishReason: 'STOP',
+            content: {
+              parts: [{ text: 'Reasoning', thought: true }, { text: '{"items":' }, { text: '[]}' }],
+            },
+          },
+        ],
+      });
+    };
+    try {
+      const result = await callVisionModel(
+        'data:image/jpeg;base64,/9j/AAAA',
+        'image/jpeg',
+        'gemini-fixture',
+        'groq-fixture',
+        'backup-fixture',
+        'claude-fixture',
+      );
+      assert.equal(result.rawText, '{"items":[]}');
+      assert.equal(calls, 3);
+    } finally {
+      globalThis.fetch = previous;
+    }
+  },
+);
+
+Deno.test('Photo analysis uses Claude Haiku 5.5 only after Groq and Gemini fail', async () => {
+  const previous = globalThis.fetch;
+  const urls: string[] = [];
+  globalThis.fetch = async (url, init) => {
+    urls.push(String(url));
+    if (urls.length < 4) return Response.json({}, { status: 503 });
+    assert.equal(String(url), 'https://api.anthropic.com/v1/messages');
+    const body = JSON.parse(String(init?.body));
+    assert.equal(body.model, 'claude-haiku-5-5');
+    assert.equal(body.messages[0].content[0].source.data, '/9j/AAAA');
+    return Response.json({ content: [{ type: 'text', text: '{"items":[]}' }] });
+  };
+  try {
+    const result = await callVisionModel(
+      '/9j/AAAA',
+      'image/jpeg',
+      'gemini',
+      'primary',
+      'backup',
+      'claude',
+    );
+    assert.deepEqual(
+      urls.map((url) => new URL(url).hostname),
+      ['api.groq.com', 'api.groq.com', 'generativelanguage.googleapis.com', 'api.anthropic.com'],
+    );
+    assert.equal(result.rawText, '{"items":[]}');
+  } finally {
+    globalThis.fetch = previous;
+  }
+});
+
+Deno.test('Incomplete and blocked Gemini photo outputs cannot become candidates', async () => {
+  const previous = globalThis.fetch;
+  try {
+    for (const reason of ['MAX_TOKENS', 'SAFETY']) {
+      globalThis.fetch = async () =>
+        Response.json({
+          candidates: [{ finishReason: reason, content: { parts: [{ text: '{"items":[]}' }] } }],
+        });
+      await assert.rejects(
+        () => callVisionModel('/9j/AAAA', 'image/jpeg', 'fixture', undefined, undefined, undefined),
+        /VISION_PROVIDER_UNAVAILABLE/,
+      );
+    }
+  } finally {
+    globalThis.fetch = previous;
+  }
+});
+
 const mealRequest = (description: unknown) =>
   new Request('https://example/ai-food-photo', {
     method: 'POST',

@@ -14,6 +14,8 @@ export const squadDesign = {
   carbs: 'Carbs',
   fat: 'Fat',
   steps: 'Steps',
+  water: 'Water',
+  ml: 'ml',
   amount: '{value} / {target} {unit}',
   close: 'Close',
   overview: 'Overview',

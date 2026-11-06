@@ -108,7 +108,8 @@ export default function OnboardingScreen() {
         ...draft,
       });
       // An interrupted store sheet returns to the reviewable feature preview.
-      if (next.getState().currentStep === 'paywall') next.goToStep('premium');
+      if (['premium', 'paywall'].includes(next.getState().currentStep)) next.goToStep('completed');
+      if (next.getState().currentStep === 'motivation') next.goToStep('activity_level');
       if (active) {
         setMachine(next);
         setSnapshot(next.getState());
@@ -154,7 +155,7 @@ export default function OnboardingScreen() {
       router.replace('/welcome');
       return;
     }
-    if (machine.getState().currentStep === 'completed') machine.goToStep('premium');
+    if (machine.getState().currentStep === 'completed') machine.goToStep('daily_goals');
     else machine.back();
     update();
     scroll.current?.scrollTo({ y: 0, animated: false });

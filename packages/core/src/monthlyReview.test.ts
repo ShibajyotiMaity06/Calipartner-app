@@ -16,7 +16,7 @@ describe('monthly plan check-ins', () => {
     expect(isMonthlyReviewDue('2027-01-31T12:30:00Z', pro, new Date('2027-02-28T12:29:59Z'))).toBe(
       false,
     );
-    expect(isMonthlyReviewDue('2027-01-31T12:30:00Z', pro, new Date('2027-02-28T12:30:00Z'))).toBe(
+    expect(isMonthlyReviewDue('2027-01-31T12:30:00Z', pro, new Date('2027-03-02T12:30:00Z'))).toBe(
       true,
     );
     expect(

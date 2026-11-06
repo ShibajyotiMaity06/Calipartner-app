@@ -8,3 +8,4 @@ export * from './onboarding';
 export * from './capture';
 export * from './challenges';
 export * from './home';
+export * from './blueprint';

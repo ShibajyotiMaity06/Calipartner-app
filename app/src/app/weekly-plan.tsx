@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { Pressable, ScrollView, View } from 'react-native';
+import { BackHandler, Platform, Pressable, ScrollView, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -16,6 +16,9 @@ import { getPersonalWeeklyPlan, buildPersonalWeeklyPlan } from '@/services/weekl
 import { afterSetupDestination } from '@/services/pairOnboardingService';
 import { WeeklyPlanForm } from '@/components/onboarding/WeeklyPlanForm';
 import { WeeklyPlanPreparing } from '@/components/onboarding/WeeklyPlanPreparing';
+import { BlueprintStep } from '@/components/onboarding/BlueprintStep';
+import { OnboardingPaywall } from '@/components/onboarding/OnboardingPaywall';
+import { useTargets } from '@/hooks/useTargets';
 import { WeeklyRoutineEditor } from '@/components/workouts/WeeklyRoutineEditor';
 import { PaywallModal } from '@/components/rooms/PaywallModal';
 import { useBrowserModalBack } from '@/hooks/useBrowserModalBack';
@@ -24,21 +27,48 @@ import { t } from '@/i18n';
 import { NutrientSummary } from '@/components/diary/NutrientSummary';
 
 export default function WeeklyPlanScreen({ onClose }: { onClose?: () => void } = {}) {
-  const { user } = useAuth(),
+  const { user, profile } = useAuth(),
     router = useRouter(),
     params = useLocalSearchParams<{ setup?: string }>();
   const userId = user?.id;
+  const scroll = useRef<ScrollView>(null);
+  const { currentGoalProfile: goal } = useTargets();
+  const [blueprint, setBlueprint] = useState(false),
+    [plans, setPlans] = useState(false);
+  const [checkoutTier, setCheckoutTier] = useState<'plus' | 'pro'>('plus');
+  const [checkoutDuration, setCheckoutDuration] = useState<'monthly' | 'annual'>('annual');
+  useFocusEffect(
+    useCallback(() => {
+      if (Platform.OS !== 'android' || (!blueprint && !plans)) return;
+      const listener = BackHandler.addEventListener('hardwareBackPress', () => {
+        if (plans) setPlans(false);
+        else setBlueprint(false);
+        return true;
+      });
+      return () => listener.remove();
+    }, [blueprint, plans]),
+  );
   const [plan, setPlan] = useState<WeeklyPlanView | null>(null),
     [loading, setLoading] = useState(true),
     [busy, setBusy] = useState(false),
     [error, setError] = useState<string | null>(null),
     [day, setDay] = useState(0),
     [editor, setEditor] = useState(false);
+  useEffect(() => {
+    scroll.current?.scrollTo({ y: 0, animated: false });
+  }, [blueprint, plans, busy, plan?.id]);
   const [nestedPaywall, setNestedPaywall] = useState(false);
-  useBrowserModalBack(nestedPaywall, () => setNestedPaywall(false));
+  useBrowserModalBack(
+    blueprint || plans || nestedPaywall,
+    () => {
+      if (nestedPaywall) setNestedPaywall(false);
+      else if (plans) setPlans(false);
+      else setBlueprint(false);
+    },
+    { depth: nestedPaywall ? 1 : 0, onDepthChange: () => setNestedPaywall(false) },
+  );
   const openPaywall = () => {
-    if (onClose) setNestedPaywall(true);
-    else router.push('/paywall?feature=weekly_plan');
+    setPlans(true);
   };
   const draft = useRef<PlanPreferences | undefined>(undefined),
     lock = useRef(false),
@@ -127,13 +157,19 @@ export default function WeeklyPlanScreen({ onClose }: { onClose?: () => void } =
           : 'fixNovember.unavailable';
   return (
     <SafeAreaView style={styles.screen} testID="screen-weekly-plan">
-      <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
+      <ScrollView
+        ref={scroll}
+        contentContainerStyle={styles.content}
+        keyboardShouldPersistTaps="handled"
+      >
         <Button
           variant="tertiary"
           fullWidth={false}
           label={t('fixNovember.back')}
           onPress={() => {
-            if (onClose) onClose();
+            if (plans) setPlans(false);
+            else if (blueprint) setBlueprint(false);
+            else if (onClose) onClose();
             else if (router.canGoBack()) router.back();
             else void exit();
           }}
@@ -143,6 +179,29 @@ export default function WeeklyPlanScreen({ onClose }: { onClose?: () => void } =
           <Text>{t('common.loading')}</Text>
         ) : busy ? (
           <WeeklyPlanPreparing />
+        ) : plans ? (
+          <OnboardingPaywall
+            onCheckout={(tier, duration) => {
+              setCheckoutTier(tier);
+              setCheckoutDuration(duration);
+              setNestedPaywall(true);
+            }}
+            onFree={() => {
+              setPlans(false);
+              if (params.setup === '1') void exit();
+            }}
+          />
+        ) : blueprint && goal && profile ? (
+          <BlueprintStep
+            goal={goal}
+            sex={profile.sex}
+            onMake={() => {
+              setBlueprint(false);
+              if (draft.current) void build(draft.current);
+            }}
+            onEdit={() => setBlueprint(false)}
+            onFree={() => void exit()}
+          />
         ) : (
           <>
             {error && (
@@ -161,16 +220,21 @@ export default function WeeklyPlanScreen({ onClose }: { onClose?: () => void } =
             {!plan ? (
               <WeeklyPlanForm
                 initial={draft.current}
-                onBuild={(p) => void build(p)}
+                onBuild={(p) => {
+                  draft.current = p;
+                  if (params.setup === '1' && goal && profile) setBlueprint(true);
+                  else void build(p);
+                }}
                 onLater={() => void exit()}
               />
             ) : (
               <>
-                <Text variant="bodyS">{t('fixNovember.preferred')}</Text>
+                <Text variant="bodyS">{t('aha.ready')}</Text>
                 <Text variant="title1">
                   {t(plan.full_access ? 'fixNovember.weekly' : 'fixNovember.mondayPreview')}
                 </Text>
                 <Text variant="bodyS">{t('fixNovember.planDisclaimer')}</Text>
+                <Text variant="bodyS">{t('aha.flexible')}</Text>
                 <ScrollView
                   horizontal
                   showsHorizontalScrollIndicator={false}
@@ -282,6 +346,19 @@ export default function WeeklyPlanScreen({ onClose }: { onClose?: () => void } =
                               testID={`weekly-meal-nutrition-${index}`}
                             />
                           )}
+                          {plan.full_access && meal.alternatives?.length ? (
+                            <View style={styles.stack} testID={`meal-alternatives-${index}`}>
+                              <Text variant="label">{t('aha.alternatives')}</Text>
+                              {meal.alternatives.map((option, optionIndex) => (
+                                <View style={styles.divider} key={optionIndex}>
+                                  <Text variant="heading">{option.name}</Text>
+                                  <Text>{option.portion}</Text>
+                                  <Text variant="bodyS">{option.ingredients.join(' · ')}</Text>
+                                  <NutrientSummary values={option} />
+                                </View>
+                              ))}
+                            </View>
+                          ) : null}
                         </View>
                       ))}
                     </View>
@@ -293,6 +370,13 @@ export default function WeeklyPlanScreen({ onClose }: { onClose?: () => void } =
                     {[...plan.workout_tips, ...plan.diet_tips].map((tip, index) => (
                       <Text key={index}>{tip}</Text>
                     ))}
+                    <Text variant="bodyS">{t('aha.rebuildHint')}</Text>
+                    <Button
+                      variant="secondary"
+                      label={t('aha.rebuildWeek')}
+                      onPress={() => void build(plan.preferences)}
+                      testID="rebuild-personal-week"
+                    />
                   </View>
                 ) : (
                   <View style={styles.card} testID="weekly-plan-paid-lock">
@@ -331,6 +415,13 @@ export default function WeeklyPlanScreen({ onClose }: { onClose?: () => void } =
                 )}
                 {params.setup === '1' && (
                   <Button
+                    label={t('aha.next')}
+                    onPress={() => setPlans(true)}
+                    testID="weekly-plan-choose-support"
+                  />
+                )}
+                {params.setup === '1' && (
+                  <Button
                     variant="secondary"
                     label={t('fixNovember.continue')}
                     onPress={() => void exit()}
@@ -354,7 +445,8 @@ export default function WeeklyPlanScreen({ onClose }: { onClose?: () => void } =
         <PaywallModal
           visible
           context="weekly_plan"
-          preselectedTier="plus"
+          preselectedTier={checkoutTier}
+          preselectedDuration={checkoutDuration}
           onClose={() => setNestedPaywall(false)}
           onSuccess={() => {
             setNestedPaywall(false);

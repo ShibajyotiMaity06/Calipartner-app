@@ -1,5 +1,13 @@
 import { loadCoachDiaryContext } from './context.ts';
 import {
+  CLAUDE_MODEL,
+  GEMINI_ENDPOINT,
+  GEMINI_MODEL,
+  claudeText,
+  claudeHeaders,
+  geminiText,
+} from '../_shared/aiModels.ts';
+import {
   coachMealInstructions,
   getLocalDateString,
   parseCoachMealReply,
@@ -17,7 +25,6 @@ export const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-const DEFAULT_COACH_MODEL = 'deepseek/deepseek-v4-flash:free';
 const DEFAULT_ESTIMATED_TOKENS = 350;
 const DEFAULT_ESTIMATED_COST_USD = 0.0005;
 
@@ -41,6 +48,7 @@ async function callGroqChat(
     const groqUrl = 'https://api.groq.com/openai/v1/chat/completions';
     const response = await fetch(groqUrl, {
       method: 'POST',
+      signal: AbortSignal.timeout(20000),
       headers: {
         Authorization: `Bearer ${apiKey}`,
         'Content-Type': 'application/json',
@@ -57,8 +65,7 @@ async function callGroqChat(
     });
 
     if (!response.ok) {
-      const errText = await response.text();
-      console.warn(`Groq (${model}) returned HTTP ${response.status}:`, errText);
+      console.warn('GROQ_COACH_HTTP', response.status);
       return null;
     }
 
@@ -66,8 +73,8 @@ async function callGroqChat(
     const text = json?.choices?.[0]?.message?.content || '';
     const tokens = json?.usage?.total_tokens || DEFAULT_ESTIMATED_TOKENS;
     return text ? { text, tokens } : null;
-  } catch (err: unknown) {
-    console.warn(`Groq (${model}) network error:`, err);
+  } catch {
+    console.warn('GROQ_COACH_UNAVAILABLE');
     return null;
   }
 }
@@ -78,21 +85,21 @@ async function callGeminiChat(
   messages: CoachMessageInput[],
 ): Promise<{ text: string; tokens: number } | null> {
   try {
-    const geminiEndpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
     const contents = messages.slice(-24).map((m) => ({
       role: m.role === 'assistant' ? 'model' : 'user',
       parts: [{ text: m.content }],
     }));
 
-    const res = await fetch(geminiEndpoint, {
+    const res = await fetch(GEMINI_ENDPOINT, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      signal: AbortSignal.timeout(30000),
+      headers: { 'Content-Type': 'application/json', 'x-goog-api-key': apiKey },
       body: JSON.stringify({
         systemInstruction: { parts: [{ text: systemPrompt }] },
         contents,
         generationConfig: {
-          temperature: 0.5,
           maxOutputTokens: 2200,
+          thinkingConfig: { thinkingLevel: 'minimal' },
           ...(systemPrompt.includes(coachMealInstructions)
             ? { responseMimeType: 'application/json' }
             : {}),
@@ -101,17 +108,16 @@ async function callGeminiChat(
     });
 
     if (!res.ok) {
-      const errText = await res.text();
-      console.warn(`Gemini returned HTTP ${res.status}:`, errText);
+      console.warn('GEMINI_COACH_HTTP', res.status);
       return null;
     }
 
     const resJson = await res.json();
-    const text = resJson?.candidates?.[0]?.content?.parts?.[0]?.text || '';
+    const text = geminiText(resJson);
     const tokens = resJson?.usageMetadata?.totalTokenCount || DEFAULT_ESTIMATED_TOKENS;
     return text ? { text, tokens } : null;
-  } catch (err: unknown) {
-    console.warn('Gemini chat network error:', err);
+  } catch {
+    console.warn('GEMINI_COACH_UNAVAILABLE');
     return null;
   }
 }
@@ -131,11 +137,8 @@ async function callClaudeChat(
 
     const res = await fetch(claudeUrl, {
       method: 'POST',
-      headers: {
-        'x-api-key': apiKey,
-        'anthropic-version': '2023-06-01',
-        'content-type': 'application/json',
-      },
+      signal: AbortSignal.timeout(30000),
+      headers: claudeHeaders(apiKey, Deno.env.get('ANTHROPIC_WORKSPACE_ID')),
       body: JSON.stringify({
         model: model || 'claude-haiku-5-5',
         max_tokens: 2200,
@@ -145,19 +148,18 @@ async function callClaudeChat(
     });
 
     if (!res.ok) {
-      const errText = await res.text();
-      console.warn(`Claude returned HTTP ${res.status}:`, errText);
+      console.warn('CLAUDE_COACH_HTTP', res.status);
       return null;
     }
 
     const resJson = await res.json();
-    const text = resJson?.content?.[0]?.text || '';
+    const text = claudeText(resJson);
     const tokens =
       (resJson?.usage?.input_tokens || 0) + (resJson?.usage?.output_tokens || 0) ||
       DEFAULT_ESTIMATED_TOKENS;
     return text ? { text, tokens } : null;
-  } catch (err: unknown) {
-    console.warn('Claude chat network error:', err);
+  } catch {
+    console.warn('CLAUDE_COACH_UNAVAILABLE');
     return null;
   }
 }
@@ -347,11 +349,9 @@ Use the verified profile, goals and diary context below. Missing values are unkn
     const groqKey = Deno.env.get('GROQ_API_KEY');
     const groqFallbackKey = Deno.env.get('GROQ_API_KEY_FALLBACK');
     const groqModel = Deno.env.get('GROQ_MODEL') || 'qwen/qwen3.8-27b';
-    const geminiKey = Deno.env.get('GEMINI_API_KEY');
-    const anthropicKey = Deno.env.get('ANTHROPIC_API_KEY');
-    const claudeModel = Deno.env.get('CLAUDE_MODEL') || 'claude-haiku-5-5';
-    const openRouterApiKey = Deno.env.get('OPENROUTER_API_KEY');
-    const openRouterModel = Deno.env.get('OPENROUTER_MODEL') || DEFAULT_COACH_MODEL;
+    const geminiKey = Deno.env.get('GEMINI_API_KEY') || Deno.env.get('AI_API_KEY');
+    const anthropicKey = Deno.env.get('ANTHROPIC_API_KEY') || Deno.env.get('CLAUDE_API_KEY');
+    const claudeModel = CLAUDE_MODEL;
 
     let assistantResponseText = '';
     let tokensUsed = DEFAULT_ESTIMATED_TOKENS;
@@ -366,7 +366,7 @@ Use the verified profile, goals and diary context below. Missing values are unkn
       costUsd = 0;
     }
 
-    // 1. Primary: Groq with primary key (qwen/qwen3.8-27b or openai/gpt-oss-120b)
+    // Owner-selected primary: Groq, including the existing backup credential.
     if (!assistantResponseText && groqKey && groqKey.trim().length > 0) {
       const groqRes = await callGroqChat(groqKey.trim(), groqModel, systemPrompt, incomingMessages);
       if (groqRes) {
@@ -394,48 +394,14 @@ Use the verified profile, goals and diary context below. Missing values are unkn
       }
     }
 
-    // 3. Fallback 2: Google Gemini (gemini-2.5-flash)
-    if (!assistantResponseText && geminiKey && geminiKey.trim().length > 0) {
-      console.warn('Groq unavailable or rate limited. Trying Gemini fallback...');
-      const geminiRes = await callGeminiChat(geminiKey.trim(), systemPrompt, incomingMessages);
-      if (geminiRes) {
-        assistantResponseText = geminiRes.text;
-        tokensUsed = geminiRes.tokens;
-        costUsd = 0;
-        modelUsed = 'gemini-2.5-flash';
-      }
-    }
-
-    // 4. Fallback 3: OpenRouter (if configured)
-    if (!assistantResponseText && openRouterApiKey && openRouterApiKey.trim().length > 0) {
-      console.warn('Trying OpenRouter fallback...');
-      try {
-        const openRouterUrl = 'https://openrouter.ai/api/v1/chat/completions';
-        const response = await fetch(openRouterUrl, {
-          method: 'POST',
-          headers: {
-            Authorization: `Bearer ${openRouterApiKey}`,
-            'Content-Type': 'application/json',
-            'HTTP-Referer': 'https://calipartner.app',
-            'X-Title': 'CaliPartner AI Dietitian',
-          },
-          body: JSON.stringify({
-            model: openRouterModel,
-            messages: [{ role: 'system', content: systemPrompt }, ...incomingMessages.slice(-24)],
-            temperature: 0.7,
-            max_tokens: 2500,
-          }),
-        });
-
-        if (response.ok) {
-          const responseData = await response.json();
-          assistantResponseText = responseData?.choices?.[0]?.message?.content || '';
-          tokensUsed = responseData?.usage?.total_tokens || DEFAULT_ESTIMATED_TOKENS;
-          costUsd = 0;
-          modelUsed = openRouterModel;
-        }
-      } catch (orErr) {
-        console.warn('OpenRouter fallback failed:', orErr);
+    // Fallback: Gemini after both Groq credentials fail.
+    if (!assistantResponseText && geminiKey?.trim()) {
+      const result = await callGeminiChat(geminiKey.trim(), systemPrompt, incomingMessages);
+      if (result) {
+        assistantResponseText = result.text;
+        tokensUsed = result.tokens;
+        costUsd = DEFAULT_ESTIMATED_COST_USD;
+        modelUsed = GEMINI_MODEL;
       }
     }
 

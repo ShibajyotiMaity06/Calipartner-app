@@ -91,6 +91,9 @@ export function useRoomChat(
       if (hidden.error && !/fetch|network|offline|timeout/i.test(JSON.stringify(hidden.error)))
         throw hidden.error;
       for (const sender of (hidden.data ?? []) as string[]) {
+        await db.runAsync('UPDATE local_chat_messages SET reply_json = NULL WHERE room_id = ?', [
+          roomId,
+        ]);
         await db.runAsync(
           'DELETE FROM local_chat_attachments WHERE message_id IN (SELECT id FROM local_chat_messages WHERE room_id=? AND sender_id=?)',
           [roomId, sender],
@@ -105,6 +108,10 @@ export function useRoomChat(
         mergeMessagesDeduplicated(
           previous.filter((m) => !((hidden.data ?? []) as string[]).includes(m.sender_id ?? '')),
           fetched,
+        ).map((message) =>
+          message.reply && ((hidden.data ?? []) as string[]).includes(message.reply.sender_id)
+            ? { ...message, reply: null }
+            : message,
         ),
       );
       const remote = fetched.filter((m) => m.sync_state === 'synced');
@@ -237,7 +244,9 @@ export function useRoomChat(
               previous.map((m) =>
                 m.id === row.id
                   ? { ...m, deleted_at: row.deleted_at, text: null, attachments: [] }
-                  : m,
+                  : m.reply_to_id === row.id
+                    ? { ...m, reply: null }
+                    : m,
               ),
             );
           void loadInitialMessages();
@@ -287,6 +296,7 @@ export function useRoomChat(
         local_uri?: string;
       }>,
       clientId?: string,
+      replyToId?: string | null,
     ) => {
       if (!roomId || !userId) throw new Error('UNAUTHENTICATED');
 
@@ -298,6 +308,7 @@ export function useRoomChat(
           text,
           attachments,
           clientId,
+          replyToId,
           nickname: options.userNickname,
           username: options.username,
           avatarUrl: options.avatarUrl,
