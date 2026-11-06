@@ -10,9 +10,11 @@ import { t } from '@/i18n';
 export function RepeatPreviousMeal({
   localDate,
   section,
+  labelMode = 'repeat',
 }: {
   localDate: string;
   section: MealSection;
+  labelMode?: 'repeat' | 'meal';
 }) {
   const { user } = useAuth();
   const [busy, setBusy] = useState(false);
@@ -42,9 +44,15 @@ export function RepeatPreviousMeal({
     <View style={{ gap: space[1] }}>
       <Button
         variant="tertiary"
-        label={t(saved ? 'homeRefresh.logged' : 'homeRefresh.repeatMeal', {
-          meal: t(`diary.sections.${section}`),
-        })}
+        label={
+          labelMode === 'meal'
+            ? saved
+              ? t('homeRefresh.repeatedMeal', { meal: t(`diary.sections.${section}`) })
+              : t(`diary.sections.${section}`)
+            : t(saved ? 'homeRefresh.logged' : 'homeRefresh.repeatMeal', {
+                meal: t(`diary.sections.${section}`),
+              })
+        }
         loading={busy}
         disabled={busy || saved || empty}
         onPress={(event) => {

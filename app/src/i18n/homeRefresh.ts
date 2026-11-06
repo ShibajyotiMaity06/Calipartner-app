@@ -64,6 +64,7 @@ export const homeRefresh = {
   startWorkout: 'Start workout',
   viewChallenge: 'View challenge',
   activeChallenge: 'Your active challenge',
+  challengesLoadError: 'Your challenges could not load. Try again.',
   fastingSaveError:
     'Your fasting change could not be confirmed. Check your connection and try again.',
   fastingTargetReached: 'Target reached',
@@ -74,6 +75,9 @@ export const homeRefresh = {
   challengeTeam: 'Together: {percent}% of your own goals',
   routineError: 'Your routine could not be loaded. Try again.',
   repeatMeal: 'Repeat yesterday’s {meal}',
+  repeatYesterday: 'Repeat yesterday',
+  choosePreviousMeal: 'Choose the meal you want to copy from yesterday.',
+  repeatedMeal: '{meal} added',
   noPreviousMeal: 'No food was logged in this section yesterday.',
   togetherToday: 'Together today',
   squadTogetherPercent: '{percent}% of your own daily goals, together',

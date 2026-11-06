@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useId, useRef, useState } from 'react';
 import { AppState } from 'react-native';
 import type { ChallengeHome, ChallengeMutation } from '@calipartner/core';
 import { useFocusEffect } from 'expo-router';
@@ -10,6 +10,8 @@ import { generateClientUuid } from '@/services/foodService';
 import { loadChallenges, saveChallenge } from '@/services/challengeService';
 
 export function useChallenges() {
+  const channelInstance = useId();
+  const channelAttempt = useRef(0);
   const { user } = useAuth();
   const { isOnline } = useNetworkStatus();
   const id = user?.id;
@@ -21,39 +23,69 @@ export function useChallenges() {
   const [error, setError] = useState<string | null>(null);
   const [cached, setCached] = useState(false);
   const [busy, setBusy] = useState(false);
-  const lock = useRef<string | null>(null);
+  const readGeneration = useRef(0);
+  const invalidateReads = useCallback(() => {
+    readGeneration.current++;
+  }, []);
+  const reads = useRef(new Map<string, { generation: number; promise: Promise<void> }>());
   const acting = useRef<Promise<string> | null>(null);
-  const refresh = useCallback(async () => {
-    if (!id || lock.current === id) return;
-    lock.current = id;
-    try {
-      const db = await getDb();
-      if (!isOnline) throw new Error('NETWORK_UNAVAILABLE');
-      const fresh = await loadChallenges(db, getSupabase(), id);
-      if (owner.current !== id) return;
-      setHome(fresh);
-      setDataOwner(id);
-      setCached(false);
-      setError(null);
-    } catch (e) {
-      if (owner.current === id) setError(e instanceof Error ? e.message : 'CHALLENGE_UNAVAILABLE');
-    } finally {
-      if (lock.current === id) lock.current = null;
-      if (owner.current === id) setLoading(false);
+  const refresh = useCallback(async (): Promise<void> => {
+    if (!id) return;
+    const generation = readGeneration.current;
+    const previous = reads.current.get(id);
+    if (previous) {
+      await previous.promise;
+      if (owner.current !== id || readGeneration.current !== generation) return;
+      // A reconnect must get a fresh request after the old connection's request finishes.
+      if (previous.generation !== generation) await refresh();
+      return;
     }
+    const request = (async () => {
+      try {
+        const db = await getDb();
+        if (isOnline === false) throw new Error('NETWORK_UNAVAILABLE');
+        const fresh = await loadChallenges(db, getSupabase(), id);
+        if (owner.current !== id || readGeneration.current !== generation) return;
+        setHome(fresh);
+        setDataOwner(id);
+        setCached(false);
+        setError(null);
+      } catch (e) {
+        if (owner.current === id && readGeneration.current === generation)
+          setError(e instanceof Error ? e.message : 'CHALLENGE_UNAVAILABLE');
+      } finally {
+        if (reads.current.get(id)?.generation === generation) reads.current.delete(id);
+        if (owner.current === id && readGeneration.current === generation) setLoading(false);
+      }
+    })();
+    reads.current.set(id, { generation, promise: request });
+    await request;
   }, [id, isOnline]);
   useEffect(() => {
+    invalidateReads();
     setHome(null);
     setDataOwner(undefined);
+    setError(null);
     setLoading(!!id);
     if (!id) setLoading(false);
     void refresh();
-  }, [id, refresh]);
+    return invalidateReads;
+  }, [id, refresh, invalidateReads]);
   useFocusEffect(
     useCallback(() => {
       void refresh();
     }, [refresh]),
   );
+  useEffect(() => {
+    const state = AppState.addEventListener('change', (value) => {
+      if (value !== 'active') return;
+      invalidateReads();
+      setError(null);
+      setLoading(!!id);
+      void refresh();
+    });
+    return () => state.remove();
+  }, [id, refresh, invalidateReads]);
   const poll = home?.catalog.config.poll_seconds;
   useEffect(() => {
     if (!id || !isOnline || !poll) return;
@@ -61,7 +93,7 @@ export function useChallenges() {
       if (AppState.currentState === 'active') void refresh();
     }, poll * 1000);
     const sub = getSupabase()
-      .channel(`challenges:${id}`)
+      .channel(`challenges:${id}:${channelInstance}:${++channelAttempt.current}`)
       .on(
         'postgres_changes',
         {
@@ -84,15 +116,11 @@ export function useChallenges() {
         },
       )
       .subscribe();
-    const state = AppState.addEventListener('change', (value) => {
-      if (value === 'active') void refresh();
-    });
     return () => {
       clearInterval(timer);
-      state.remove();
       void getSupabase().removeChannel(sub);
     };
-  }, [id, isOnline, poll, refresh]);
+  }, [id, isOnline, poll, refresh, channelInstance]);
   const mutate = useCallback(
     async (mutation: ChallengeMutation) => {
       if (!id) throw new Error('ACCOUNT_CHANGED');

@@ -15,7 +15,8 @@ export function TodayChallengeCard() {
   if (error)
     return (
       <View style={squadStyles.card}>
-        <Text accessibilityRole="alert">{t('common.errorBody')}</Text>
+        <Text variant="heading">{t('homeRefresh.activeChallenge')}</Text>
+        <Text accessibilityRole="alert">{t('homeRefresh.challengesLoadError')}</Text>
         <Button
           variant="secondary"
           label={t('common.retry')}

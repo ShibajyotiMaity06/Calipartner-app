@@ -81,8 +81,8 @@ const suffix = `
   await page.getByTestId('meal-alternatives-0').waitFor();
   await page.screenshot({path:path.join(out,'paid-alternatives.png'),fullPage:true});
   await page.goto('http://127.0.0.1:8098/today');
-  await page.getByTestId('personal-day-track-water').waitFor();
-  await page.getByTestId('home-workout-summary').waitFor();
+  assert.equal(await page.getByTestId('personal-day-track-water').count(),0);
+  assert.equal(await page.getByTestId('home-workout-summary').count(),0);
   const homeCard=page.getByTestId('home-squad-card-'+rid(0));
   const scoreHelp=homeCard.getByTestId('home-squad-score-help-'+rid(0));
   const scoreHint=homeCard.getByTestId('home-squad-score-hint-'+rid(0));

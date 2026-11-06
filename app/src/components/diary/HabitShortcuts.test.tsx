@@ -29,9 +29,11 @@ vi.mock('@/services/weeklyPlanService', () => ({
   repeatPreviousMeal: state.repeat,
 }));
 vi.mock('@/services/diaryEvents', () => ({ diaryEvents: { emitChange: state.changed } }));
+vi.mock('@/hooks/useBrowserModalBack', () => ({ useBrowserModalBack: vi.fn() }));
 import { WeeklyMealActions } from './WeeklyMealActions';
 import { WeeklyGroceryList } from './WeeklyGroceryList';
 import { RepeatPreviousMeal } from './RepeatPreviousMeal';
+import { RepeatYesterdayMeals } from './RepeatYesterdayMeals';
 import { t } from '@/i18n';
 const meal = {
   name: 'Breakfast oats',
@@ -52,6 +54,33 @@ let tree: ReactTestRenderer;
 beforeEach(() => vi.clearAllMocks());
 afterEach(async () => {
   if (tree) await act(async () => tree.unmount());
+});
+
+it('opens one repeat action with four meal choices and saves only the chosen section', async () => {
+  state.repeat.mockResolvedValue(2);
+  await act(async () => {
+    tree = create(<RepeatYesterdayMeals localDate="2026-11-06" />);
+  });
+  expect(tree.root.findByProps({ testID: 'repeat-yesterday-meals' }).props.visible).toBe(false);
+  expect(state.repeat).not.toHaveBeenCalled();
+  await act(async () => tree.root.findByProps({ testID: 'home-repeat-yesterday' }).props.onPress());
+  expect(tree.root.findByProps({ testID: 'repeat-yesterday-meals' }).props.visible).toBe(true);
+  for (const section of ['breakfast', 'lunch', 'dinner', 'snacks'] as const) {
+    expect(tree.root.findByProps({ testID: `repeat-previous-${section}` }).props.label).toBe(
+      t(`diary.sections.${section}`),
+    );
+  }
+  expect(tree.root.findAllByProps({ testID: 'repeat-previous-extra' })).toHaveLength(0);
+  await act(async () =>
+    tree.root
+      .findByProps({ testID: 'repeat-previous-lunch' })
+      .props.onPress({ stopPropagation: vi.fn() }),
+  );
+  expect(state.repeat).toHaveBeenCalledExactlyOnceWith('owner', '2026-11-06', 'lunch');
+  expect(tree.root.findByProps({ testID: 'repeat-previous-lunch' }).props.label).toBe(
+    t('homeRefresh.repeatedMeal', { meal: t('diary.sections.lunch') }),
+  );
+  expect(state.changed).toHaveBeenCalledOnce();
 });
 
 it('keeps failed meal saves actionable and shows success only after acknowledgement', async () => {

@@ -25,6 +25,7 @@ import { DatePickerSheet } from '@/components/diary/DatePickerSheet';
 import { FoodLogModal } from '@/components/diary/FoodLogModal';
 import { MealDetailSheet } from '@/components/diary/MealDetailSheet';
 import { MealSectionCard } from '@/components/diary/MealSectionCard';
+import { RepeatYesterdayMeals } from '@/components/diary/RepeatYesterdayMeals';
 import { QuantityModal } from '@/components/diary/QuantityModal';
 import { WaterAlarmModal } from '@/components/trackers/WaterAlarmModal';
 import { useAuth } from '@/contexts/AuthContext';
@@ -38,7 +39,7 @@ import { useTargets } from '@/hooks/useTargets';
 import { t } from '@/i18n';
 import { getDb } from '@/db';
 
-const MEAL_SECTIONS: MealSection[] = ['breakfast', 'lunch', 'dinner', 'snacks', 'extra'];
+const MEAL_SECTIONS: MealSection[] = ['breakfast', 'lunch', 'dinner', 'snacks'];
 
 export default function TodayScreen() {
   const router = useRouter();
@@ -266,21 +267,7 @@ export default function TodayScreen() {
               target: effectiveGoalSteps,
               unit: t('squadDesign.stepUnit'),
             },
-            {
-              id: 'water',
-              label: t('squadDesign.water'),
-              value: water.totalMl,
-              target: currentGoalProfile?.water_ml_goal ?? null,
-              unit: t('squadDesign.ml'),
-              loading: water.loading,
-              error: water.error,
-            },
           ]}
-          activity={{
-            loading: workouts.loading,
-            error: Boolean(workouts.error),
-            names: workouts.workouts.map((workout) => workout.name || t('aha.workout')),
-          }}
         />
 
         {/* 6. Date Selector & Meal Logging Diary Sections */}
@@ -327,7 +314,6 @@ export default function TodayScreen() {
             <View style={styles.mealsContainer} testID="meals-section">
               {MEAL_SECTIONS.map((sec) => (
                 <MealSectionCard
-                  localDate={selectedDate}
                   key={sec}
                   compact
                   section={sec}
@@ -340,6 +326,7 @@ export default function TodayScreen() {
                   onCopyMeal={(s) => setCopyModalState({ visible: true, mode: 'meal', section: s })}
                 />
               ))}
+              <RepeatYesterdayMeals key={selectedDate} localDate={selectedDate} />
             </View>
           )}
         </View>
