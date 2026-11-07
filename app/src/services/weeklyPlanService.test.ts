@@ -49,6 +49,17 @@ it('rejects an account change before any provider or database call', async () =>
   expect(state.invoke).not.toHaveBeenCalled();
   expect(state.rpc).not.toHaveBeenCalled();
 });
+it('requests one day explicitly and isolates retry IDs from independent weekly builds', async () => {
+  state.invoke.mockResolvedValue({ data: null, error: {} });
+  await expect(buildPersonalWeeklyPlan('owner', preferences, true)).rejects.toThrow();
+  const first = state.invoke.mock.lastCall![1].body;
+  expect(first.scope).toBe('day');
+  await expect(buildPersonalWeeklyPlan('owner', preferences, true)).rejects.toThrow();
+  expect(state.invoke.mock.lastCall![1].body.request_id).toBe(first.request_id);
+  await expect(buildPersonalWeeklyPlan('owner', preferences)).rejects.toThrow();
+  expect(state.invoke.mock.lastCall![1].body.request_id).not.toBe(first.request_id);
+  expect(state.invoke.mock.lastCall![1].body.scope).toBeUndefined();
+});
 it('keeps the generation request UUID across lost acknowledgements and verifies the gated read', async () => {
   state.invoke
     .mockResolvedValueOnce({ data: null, error: {} })

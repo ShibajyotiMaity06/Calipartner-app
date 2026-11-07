@@ -44,6 +44,8 @@
     "../../../packages/core/src/weeklyPlan": "../../../packages/core/src/weeklyPlan.ts",
     "../../../packages/core/src/webBilling": "../../../packages/core/src/webBilling.ts",
     "../../../packages/core/src/adaptiveReview": "../../../packages/core/src/adaptiveReview.ts",
-    "../../../packages/core/src/weightProjection": "../../../packages/core/src/weightProjection.ts"
+    "../../../packages/core/src/weightProjection": "../../../packages/core/src/weightProjection.ts",
+    "../../../packages/core/src/personalTracking": "../../../packages/core/src/personalTracking.ts",
+    "../../../packages/core/src/suppliedRegionalFoods": "../../../packages/core/src/suppliedRegionalFoods.ts"
   }
 }

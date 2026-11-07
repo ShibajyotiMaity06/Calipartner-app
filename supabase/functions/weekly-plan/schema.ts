@@ -5,7 +5,7 @@ const string = { type: 'string' };
 const integer = { type: 'integer' };
 const number = { type: 'number' };
 const array = (items: unknown) => ({ type: 'array', items });
-const object = (properties: Record<string, unknown>) => ({
+const object = <T extends Record<string, unknown>>(properties: T) => ({
   type: 'object',
   properties,
   required: Object.keys(properties),
@@ -56,7 +56,7 @@ export const weeklyPlanSchema = object({
   diet_tips: array(string),
 });
 
-export function weeklyPlanResponseFormat(provider: string, model: string) {
+export function weeklyPlanResponseFormat(provider: string, model: string, singleDay = false) {
   return provider === 'groq' &&
     [
       'openai/gpt-oss-120b',
@@ -66,7 +66,19 @@ export function weeklyPlanResponseFormat(provider: string, model: string) {
     ].includes(model)
     ? {
         type: 'json_schema',
-        json_schema: { name: 'weekly_plan', strict: true, schema: weeklyPlanSchema },
+        json_schema: {
+          name: 'weekly_plan',
+          strict: true,
+          schema: singleDay
+            ? {
+                ...weeklyPlanSchema,
+                properties: {
+                  ...weeklyPlanSchema.properties,
+                  days: { ...weeklyPlanSchema.properties.days, minItems: 1, maxItems: 1 },
+                },
+              }
+            : weeklyPlanSchema,
+        },
       }
     : { type: 'json_object' };
 }

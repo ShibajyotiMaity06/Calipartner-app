@@ -44,6 +44,7 @@ async function stableRequest(userId: string, operation: string, payload: unknown
 export async function buildPersonalWeeklyPlan(
   userId: string,
   preferences: PlanPreferences,
+  singleDay = false,
 ): Promise<WeeklyPlanView> {
   const client = await actor(userId);
   // First builds require the consent checkbox; existing owners can explicitly rebuild their plan.
@@ -51,9 +52,9 @@ export async function buildPersonalWeeklyPlan(
     { rpc: async (name, args) => await client.rpc(name, args) },
     '1.1-weekly-plan',
   );
-  const request = await stableRequest(userId, 'build', preferences);
+  const request = await stableRequest(userId, singleDay ? 'build-day' : 'build', preferences);
   const { data, error } = await client.functions.invoke('weekly-plan', {
-    body: { request_id: request.id, preferences },
+    body: { request_id: request.id, preferences, ...(singleDay ? { scope: 'day' } : {}) },
   });
   if (error) {
     let body: { code?: string } = {};

@@ -112,10 +112,12 @@ export function PlanField({
   );
 }
 export function WeeklyPlanForm({
+  singleDay = false,
   initial,
   onBuild,
   onLater,
 }: {
+  singleDay?: boolean;
   initial?: PlanPreferences;
   onBuild: (preferences: PlanPreferences) => void;
   onLater: () => void;
@@ -200,8 +202,8 @@ export function WeeklyPlanForm({
   };
   return (
     <View style={styles.stack} testID="weekly-plan-form">
-      <Text variant="title1">{t('fixNovember.planTitle')}</Text>
-      <Text>{t('fixNovember.planSubtitle')}</Text>
+      <Text variant="title1">{t(singleDay ? 'personalDay.title' : 'fixNovember.planTitle')}</Text>
+      <Text>{t(singleDay ? 'personalDay.subtitle' : 'fixNovember.planSubtitle')}</Text>
       <Text variant="title2">
         {t(step === 'workout' ? 'fixNovember.workoutTitle' : 'fixNovember.dietTitle')}
       </Text>
@@ -298,7 +300,7 @@ export function WeeklyPlanForm({
           </Pressable>
           <Text variant="bodyS">{t('fixNovember.consentHint')}</Text>
           <Button
-            label={t('fixNovember.build')}
+            label={t(singleDay ? 'personalDay.build' : 'fixNovember.build')}
             onPress={build}
             disabled={!consent}
             testID="build-weekly-plan"

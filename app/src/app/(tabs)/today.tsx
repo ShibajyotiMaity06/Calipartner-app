@@ -1,3 +1,5 @@
+import { useTrackingPreferences } from '@/hooks/useTrackingPreferences';
+import { TrackingPreferencesSheet } from '@/components/rooms/TrackingPreferencesSheet';
 import React, { useCallback, useEffect, useState } from 'react';
 import { AppState, Pressable, RefreshControl, ScrollView, StyleSheet, View } from 'react-native';
 import { useRouter, type Href } from 'expo-router';
@@ -6,7 +8,8 @@ import {
   getMealSectionForTime,
   getLocalDateString,
   foodFromEntrySnapshot,
-  squadGoalCompletion,
+  personalTrackingCompletion,
+  type TrackingMetric,
   type FoodEntry,
   type MealSection,
 } from '@calipartner/core';
@@ -43,6 +46,8 @@ const MEAL_SECTIONS: MealSection[] = ['breakfast', 'lunch', 'dinner', 'snacks'];
 
 export default function TodayScreen() {
   const router = useRouter();
+  const tracking = useTrackingPreferences();
+  const [editingTracking, setEditingTracking] = useState(false);
   const { profile } = useAuth();
   const {
     currentGoalProfile,
@@ -69,7 +74,13 @@ export default function TodayScreen() {
   const { deleteEntry } = useDeleteEntry();
 
   // Steps & Water hooks
-  const { steps, goalSteps, refresh: refreshSteps } = useSteps(selectedDate);
+  const {
+    steps,
+    goalSteps,
+    loading: stepsLoading,
+    error: stepsError,
+    refresh: refreshSteps,
+  } = useSteps(selectedDate);
   const water = useWater(selectedDate);
   const workouts = useWorkouts(selectedDate);
   const refreshWater = water.refresh;
@@ -161,6 +172,13 @@ export default function TodayScreen() {
 
   return (
     <View style={{ flex: 1, backgroundColor: dark.bg0 }}>
+      {editingTracking && (
+        <TrackingPreferencesSheet
+          enabled={tracking.enabled}
+          onClose={() => setEditingTracking(false)}
+          onSave={tracking.save}
+        />
+      )}
       <ScrollView
         testID="screen-today"
         style={styles.root}
@@ -208,25 +226,32 @@ export default function TodayScreen() {
           visible={homeVisible}
         />
         <PersonalDayCard
-          score={squadGoalCompletion(
-            daySummary.totals,
-            currentGoalProfile
-              ? {
-                  calories: currentGoalProfile.daily_calorie_target,
-                  protein: currentGoalProfile.protein_grams,
-                  carbs: currentGoalProfile.carb_grams,
-                  fat: currentGoalProfile.fat_grams,
-                }
-              : null,
+          score={personalTrackingCompletion(
+            {
+              ...daySummary.totals,
+              steps: stepsLoading || stepsError ? null : steps,
+              water: water.error || water.loading ? null : water.totalMl,
+            },
+            {
+              calories: targetCalories,
+              protein: targetProtein,
+              carbs: currentGoalProfile?.carb_grams ?? null,
+              fat: currentGoalProfile?.fat_grams ?? null,
+              steps: effectiveGoalSteps,
+              water: currentGoalProfile?.water_ml_goal ?? null,
+            },
+            tracking.enabled,
           )}
-          loading={diaryLoading || targetsLoading}
-          error={Boolean(diaryError || targetsError)}
+          onEdit={tracking.loading || tracking.error ? undefined : () => setEditingTracking(true)}
+          loading={diaryLoading || targetsLoading || tracking.loading}
+          error={Boolean(diaryError || targetsError || tracking.error)}
           errorMessage={
             diaryError === 'FOOD_ENERGY_UNAVAILABLE' ? t('fixNovember.energyMissing') : undefined
           }
           onRetry={() => {
             void refresh();
             void refreshTargets();
+            void tracking.refresh();
             void refreshSteps();
             void refreshWater();
             void refreshWorkouts();
@@ -234,40 +259,52 @@ export default function TodayScreen() {
           onPress={() => router.push('/(tabs)/progress' as Href)}
           metrics={[
             {
-              nutrient: 'calories',
+              nutrient: 'calories' as const,
               label: t('squadDesign.calories'),
               value: daySummary.totals.calories,
               target: targetCalories,
               unit: t('squadDesign.kcal'),
             },
             {
-              nutrient: 'protein',
+              nutrient: 'protein' as const,
               label: t('squadDesign.protein'),
               value: daySummary.totals.protein,
               target: targetProtein,
               unit: t('squadDesign.grams'),
             },
             {
-              nutrient: 'carbs',
+              nutrient: 'carbs' as const,
               label: t('squadDesign.carbs'),
               value: daySummary.totals.carbs,
               target: currentGoalProfile?.carb_grams ?? null,
               unit: t('squadDesign.grams'),
             },
             {
-              nutrient: 'fat',
+              nutrient: 'fat' as const,
               label: t('squadDesign.fat'),
               value: daySummary.totals.fat,
               target: currentGoalProfile?.fat_grams ?? null,
               unit: t('squadDesign.grams'),
             },
             {
+              id: 'steps',
+              loading: stepsLoading,
+              error: Boolean(stepsError),
               label: t('squadDesign.steps'),
               value: steps,
               target: effectiveGoalSteps,
               unit: t('squadDesign.stepUnit'),
             },
-          ]}
+            {
+              id: 'water',
+              label: t('squadDesign.water'),
+              value: water.totalMl,
+              target: currentGoalProfile?.water_ml_goal ?? null,
+              unit: t('squadDesign.ml'),
+              loading: water.loading,
+              error: water.error,
+            },
+          ].filter((metric) => tracking.enabled[(metric.nutrient ?? metric.id) as TrackingMetric])}
         />
 
         {/* 6. Date Selector & Meal Logging Diary Sections */}

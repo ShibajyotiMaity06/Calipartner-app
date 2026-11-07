@@ -11,6 +11,7 @@ import { CoachSuggestionCard } from './CoachSuggestionCard';
 import type { CoachMessage, CoachSuggestion } from './types';
 
 export interface CoachMessageBubbleProps {
+  demo?: boolean;
   message: CoachMessage;
   onThumbsUp?: (messageId: string) => void;
   onThumbsDown?: (messageId: string) => void;
@@ -21,6 +22,7 @@ export interface CoachMessageBubbleProps {
 }
 
 export function CoachMessageBubble({
+  demo = false,
   message,
   onThumbsUp,
   onThumbsDown,
@@ -93,7 +95,7 @@ export function CoachMessageBubble({
         )}
 
         {/* Footer for Coach Answers: Thumbs up/down, Report & Medical Disclaimer */}
-        {!isUser && !message.isStreaming && (
+        {!demo && !isUser && !message.isStreaming && (
           <View style={styles.coachFooter}>
             {/* Disclaimer Label */}
             <View style={styles.disclaimerRow}>

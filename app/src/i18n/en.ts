@@ -1,5 +1,6 @@
 import { fastingRefresh } from './fastingRefresh';
 import { aha } from './aha';
+import { personalDay } from './personalDay';
 import { entryRefresh } from './entryRefresh';
 import { foodPolish } from './foodPolish';
 import { fixNovember } from './fixNovember';
@@ -8,6 +9,7 @@ import { homeRefresh } from './homeRefresh';
 import { squadDesign } from './squadDesign';
 import { repairMessages } from './repairs';
 export const en = {
+  personalDay,
   aha,
   cardlessTrial: {
     checkError: 'Check your trial eligibility, then choose your plan again.',

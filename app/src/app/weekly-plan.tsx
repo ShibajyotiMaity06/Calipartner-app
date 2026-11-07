@@ -16,7 +16,7 @@ import { getPersonalWeeklyPlan, buildPersonalWeeklyPlan } from '@/services/weekl
 import { afterSetupDestination } from '@/services/pairOnboardingService';
 import { WeeklyPlanForm } from '@/components/onboarding/WeeklyPlanForm';
 import { WeeklyPlanPreparing } from '@/components/onboarding/WeeklyPlanPreparing';
-import { BlueprintStep } from '@/components/onboarding/BlueprintStep';
+import { PersonalisedDayPreview } from '@/components/onboarding/PersonalisedDayPreview';
 import { OnboardingPaywall } from '@/components/onboarding/OnboardingPaywall';
 import { useTargets } from '@/hooks/useTargets';
 import { WeeklyRoutineEditor } from '@/components/workouts/WeeklyRoutineEditor';
@@ -35,20 +35,20 @@ export default function WeeklyPlanScreen({ onClose }: { onClose?: () => void } =
   const userId = user?.id;
   const scroll = useRef<ScrollView>(null);
   const { currentGoalProfile: goal } = useTargets();
-  const [blueprint, setBlueprint] = useState(false),
+  const [previewStage, setPreviewStage] = useState(0),
     [plans, setPlans] = useState(false);
   const [checkoutTier, setCheckoutTier] = useState<'plus' | 'pro'>('plus');
   const [checkoutDuration, setCheckoutDuration] = useState<'monthly' | 'annual'>('annual');
   useFocusEffect(
     useCallback(() => {
-      if (Platform.OS !== 'android' || (!blueprint && !plans)) return;
+      if (Platform.OS !== 'android' || (previewStage === 0 && !plans)) return;
       const listener = BackHandler.addEventListener('hardwareBackPress', () => {
         if (plans) setPlans(false);
-        else setBlueprint(false);
+        else setPreviewStage((value) => Math.max(0, value - 1));
         return true;
       });
       return () => listener.remove();
-    }, [blueprint, plans]),
+    }, [previewStage, plans]),
   );
   const [plan, setPlan] = useState<WeeklyPlanView | null>(null),
     [loading, setLoading] = useState(true),
@@ -58,14 +58,14 @@ export default function WeeklyPlanScreen({ onClose }: { onClose?: () => void } =
     [editor, setEditor] = useState(false);
   useEffect(() => {
     scroll.current?.scrollTo({ y: 0, animated: false });
-  }, [blueprint, plans, busy, plan?.id]);
+  }, [previewStage, plans, busy, plan?.id]);
   const [nestedPaywall, setNestedPaywall] = useState(false);
   useBrowserModalBack(
-    blueprint || plans || nestedPaywall,
+    previewStage > 0 || plans || nestedPaywall,
     () => {
       if (nestedPaywall) setNestedPaywall(false);
       else if (plans) setPlans(false);
-      else setBlueprint(false);
+      else setPreviewStage((value) => Math.max(0, value - 1));
     },
     { depth: nestedPaywall ? 1 : 0, onDepthChange: () => setNestedPaywall(false) },
   );
@@ -133,7 +133,7 @@ export default function WeeklyPlanScreen({ onClose }: { onClose?: () => void } =
     setBusy(true);
     setError(null);
     try {
-      const next = await buildPersonalWeeklyPlan(id, preferences);
+      const next = await buildPersonalWeeklyPlan(id, preferences, params.setup === '1');
       if (mounted.current && owner.current === id) {
         setPlan(next);
         setDay(0);
@@ -170,7 +170,7 @@ export default function WeeklyPlanScreen({ onClose }: { onClose?: () => void } =
           label={t('fixNovember.back')}
           onPress={() => {
             if (plans) setPlans(false);
-            else if (blueprint) setBlueprint(false);
+            else if (previewStage > 0) setPreviewStage((value) => value - 1);
             else if (onClose) onClose();
             else if (router.canGoBack()) router.back();
             else void exit();
@@ -180,7 +180,7 @@ export default function WeeklyPlanScreen({ onClose }: { onClose?: () => void } =
         {loading ? (
           <Text>{t('common.loading')}</Text>
         ) : busy ? (
-          <WeeklyPlanPreparing />
+          <WeeklyPlanPreparing singleDay={params.setup === '1'} />
         ) : plans ? (
           <OnboardingPaywall
             onCheckout={(tier, duration) => {
@@ -193,16 +193,19 @@ export default function WeeklyPlanScreen({ onClose }: { onClose?: () => void } =
               if (params.setup === '1') void exit();
             }}
           />
-        ) : blueprint && goal && profile ? (
-          <BlueprintStep
-            goal={goal}
-            sex={profile.sex}
-            onMake={() => {
-              setBlueprint(false);
-              if (draft.current) void build(draft.current);
-            }}
-            onEdit={() => setBlueprint(false)}
-            onFree={() => void exit()}
+        ) : (params.setup === '1' || plan?.scope === 'day') && plan ? (
+          <PersonalisedDayPreview
+            plan={plan}
+            name={profile?.nickname || profile?.username || t('repairs.you')}
+            goal={goal?.goal ?? 'maintain'}
+            stage={params.setup === '1' ? previewStage : 0}
+            onNext={() =>
+              params.setup !== '1'
+                ? void exit()
+                : previewStage < 2
+                  ? setPreviewStage((value) => value + 1)
+                  : setPlans(true)
+            }
           />
         ) : (
           <>
@@ -221,11 +224,11 @@ export default function WeeklyPlanScreen({ onClose }: { onClose?: () => void } =
             )}
             {!plan ? (
               <WeeklyPlanForm
+                singleDay={params.setup === '1'}
                 initial={draft.current}
                 onBuild={(p) => {
                   draft.current = p;
-                  if (params.setup === '1' && goal && profile) setBlueprint(true);
-                  else void build(p);
+                  void build(p);
                 }}
                 onLater={() => void exit()}
               />

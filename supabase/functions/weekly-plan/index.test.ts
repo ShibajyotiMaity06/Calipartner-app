@@ -149,6 +149,47 @@ function req(auth = true) {
     body: JSON.stringify({ request_id: id, user_id: 'stranger', preferences }),
   });
 }
+Deno.test(
+  'One-day onboarding generates and saves exactly one validated day without week expansion',
+  async () => {
+    const state = setup();
+    const request = () =>
+      new Request('https://example/weekly-plan', {
+        method: 'POST',
+        headers: { Authorization: 'Bearer owner' },
+        body: JSON.stringify({
+          request_id: id,
+          preferences: { ...preferences, workout_days: [2, 4] },
+          scope: 'day',
+        }),
+      });
+    const day = content();
+    day.days = day.days.slice(0, 1);
+    day.days[0]!.meals.forEach((meal) => {
+      delete (meal as { alternatives?: unknown }).alternatives;
+    });
+    const result = await handleWeeklyPlan(request(), {
+      ...state,
+      generate: async (prompt) => {
+        assert.ok(prompt.includes('exactly ONE'));
+        assert.ok(!prompt.includes('0=Monday'));
+        return day;
+      },
+    });
+    assert.equal(result.status, 200);
+    const saved = state.writes.find(
+      (write) => write.name === 'finish_weekly_plan' && write.p_content,
+    );
+    assert.equal((saved!.p_content as { days: unknown[] }).days.length, 1);
+    const reservation = state.writes.find((write) => write.name === 'reserve_weekly_plan');
+    assert.equal((reservation!.p_preferences as { plan_scope: string }).plan_scope, 'day');
+    const invalid = setup();
+    assert.equal((await handleWeeklyPlan(request(), invalid)).status, 503);
+    assert.ok(
+      !invalid.writes.some((write) => write.name === 'finish_weekly_plan' && write.p_content),
+    );
+  },
+);
 Deno.test('Weekly planning authenticates before reading or generating', async () => {
   const state = setup();
   assert.equal((await handleWeeklyPlan(req(false), state)).status, 401);

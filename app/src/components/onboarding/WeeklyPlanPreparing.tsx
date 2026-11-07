@@ -6,7 +6,7 @@ import { t } from '@/i18n';
 import { squadStyles as styles } from '@/components/rooms/SquadViews';
 
 /** No fake percentage or simulated stages: the server is still building the complete plan. */
-export function WeeklyPlanPreparing() {
+export function WeeklyPlanPreparing({ singleDay = false }: { singleDay?: boolean }) {
   const [topic, setTopic] = useState<'workout' | 'food'>('workout'),
     [longWait, setLongWait] = useState(false);
   useEffect(() => {
@@ -15,13 +15,19 @@ export function WeeklyPlanPreparing() {
   }, []);
   return (
     <View style={styles.stack} testID="weekly-plan-preparing" accessibilityLiveRegion="polite">
-      <Text variant="bodyS">{t('fixNovember.weekly')}</Text>
+      <Text variant="bodyS">{t(singleDay ? 'personalDay.title' : 'fixNovember.weekly')}</Text>
       <Text variant="title1">{t('fixNovember.preparing')}</Text>
       <Text>{t('fixNovember.preparingHint')}</Text>
-      {longWait && <Text accessibilityLiveRegion="polite">{t('aha.waiting')}</Text>}
+      {longWait && (
+        <Text accessibilityLiveRegion="polite">
+          {t(singleDay ? 'personalDay.waitingPlan' : 'aha.waiting')}
+        </Text>
+      )}
       <View style={{ ...styles.card, padding: space[5], gap: space[5] }}>
         <View style={styles.spread}>
-          <Text variant="title2">{t('fixNovember.planTitle')}</Text>
+          <Text variant="title2">
+            {t(singleDay ? 'personalDay.title' : 'fixNovember.planTitle')}
+          </Text>
           <ActivityIndicator color={dark.copper} accessibilityLabel={t('common.loading')} />
         </View>
         {(

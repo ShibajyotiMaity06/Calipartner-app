@@ -1,4 +1,5 @@
 import React from 'react';
+import { Ionicons } from '@expo/vector-icons';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { dark, homeLayout, radius, space, Text, nutritionColors } from '@calipartner/ui';
 import { t } from '@/i18n';
@@ -43,6 +44,7 @@ export function PersonalDayCard({
   onRetry,
   onPress,
   activity,
+  onEdit,
 }: {
   score?: number | null;
   goal?: string;
@@ -62,6 +64,7 @@ export function PersonalDayCard({
   errorMessage?: string;
   onRetry: () => void;
   onPress: () => void;
+  onEdit?: () => void;
 }) {
   return (
     <View style={styles.card} testID="personal-day-card">
@@ -70,6 +73,22 @@ export function PersonalDayCard({
           <Text variant="heading">{t('homeRefresh.yourDay')}</Text>
           {goal && <Text variant="bodyS">{goal}</Text>}
         </View>
+        {onEdit && (
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={t('personalDay.editTracking')}
+            onPress={onEdit}
+            style={styles.edit}
+            testID="edit-daily-tracking"
+          >
+            <Ionicons
+              name="pencil-outline"
+              size={homeLayout.iconSize}
+              color={dark.textHi}
+              accessible={false}
+            />
+          </Pressable>
+        )}
         {!loading && !error && score != null && (
           <Text variant="numeralL" tabular>
             {t('squadDesign.percent', { value: score })}
@@ -98,6 +117,7 @@ export function PersonalDayCard({
           testID="personal-day-open"
           style={styles.list}
         >
+          {metrics.length === 0 && <Text>{t('personalDay.nothingTracked')}</Text>}
           {metrics.map(
             ({ id, label, value, target, unit, nutrient, loading: pending, error: failed }) => (
               <View
@@ -164,6 +184,12 @@ export function PersonalDayCard({
   );
 }
 const styles = StyleSheet.create({
+  edit: {
+    minHeight: homeLayout.touchSize,
+    minWidth: homeLayout.touchSize,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   card: {
     backgroundColor: dark.s1,
     borderColor: dark.copper,

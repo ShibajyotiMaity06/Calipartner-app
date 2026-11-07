@@ -1,9 +1,11 @@
-import { dark, nutritionColors } from '@calipartner/ui';
 import React from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
-import Svg, { Circle } from 'react-native-svg';
-import { calculateGymTargets, isGymPlanValid, type GymTargetsResult } from '@calipartner/core';
-import { Button, Text, onboardingLayout as layout, space, useTheme } from '@calipartner/ui';
+import { View, StyleSheet } from 'react-native';
+import {
+  isGymPlanValid,
+  type GymTargetsResult,
+  type OnboardingTargetOverrides,
+} from '@calipartner/core';
+import { Button, Text, useTheme, homeLayout, space } from '@calipartner/ui';
 import type { OnboardingState } from '@/services/onboardingStateMachine';
 import { t } from '@/i18n';
 import { NumberField, PlanCard, planStyles } from './PlanPrimitives';
@@ -62,14 +64,9 @@ export function PlanSafetyNotice({ result }: { result: GymTargetsResult | null }
 
 export function PlanReviewStep({
   state,
-  onWeight,
-  onDays,
-  onAdjustment,
-  onRecommended,
   onPlanned,
   onCalculation,
   onHealth,
-  onChangeGoal,
   saving,
   error,
 }: {
@@ -78,7 +75,7 @@ export function PlanReviewStep({
   onDays: (value: number) => void;
   onAdjustment: (value: number) => void;
   onRecommended: () => void;
-  onPlanned: () => void;
+  onPlanned: (overrides?: OnboardingTargetOverrides) => void;
   onCalculation?: () => void;
   onHealth?: () => void;
   onChangeGoal: () => void;
@@ -87,333 +84,109 @@ export function PlanReviewStep({
 }) {
   const { colors } = useTheme();
   const result = state.calculatedTargets;
-  const recommendation = result
-    ? calculateGymTargets({
-        ...result.inputs,
-        activityLevel: state.activityLevel,
-        goal: state.goal,
-        weeklyRateKg: result.recommendedRateKg,
-      })
-    : null;
+  const [editing, setEditing] = React.useState(false);
+  const [overrides, setOverrides] = React.useState<OnboardingTargetOverrides>({});
+  const fields = [
+    ['protein', result?.macros.proteinGrams, 'customMacros.protein'],
+    ['carbs', result?.macros.carbGrams, 'customMacros.carbs'],
+    ['fat', result?.macros.fatGrams, 'customMacros.fat'],
+    ['steps', state.stepGoal, 'setup.stepGoal'],
+    ['water', state.waterMlGoal, 'setup.waterGoal'],
+  ] as const;
   return (
     <View style={planStyles.section}>
       {result ? (
         <>
           <PlanCard testID="plan-target-card">
-            <Text fontSet="onboarding" variant="bodyS" color={colors.textMid}>
-              {t('setup.dailyTarget')}
-            </Text>
-            <Text
-              nutrient="calories"
-              fontSet="onboarding"
-              variant="numeralXL"
-              color={colors.textHi}
-              maxFontSizeMultiplier={2}
-              testID="plan-calorie-target"
-            >
+            <Text variant="bodyS">{t('setup.dailyTarget')}</Text>
+            <Text nutrient="calories" variant="numeralXL" tabular testID="plan-calorie-target">
               {result.targetKcal.toLocaleString()}
             </Text>
-            <Text nutrient="calories" fontSet="onboarding" variant="bodyS" color={colors.textMid}>
+            <Text variant="bodyS">
               {t('setup.kcalDay', { kcal: result.targetKcal.toLocaleString() })}
             </Text>
-            <View style={planStyles.row}>
-              <Metric title={t('setup.bmr')} value={result.bmr.toLocaleString()} />
-              <Metric title={t('setup.maintenance')} value={result.tdee.toLocaleString()} />
-              <Metric
-                title={t('setup.monthly')}
-                value={t('setup.monthlyValue', {
-                  change: `${result.monthlyChangeKg > 0 ? '+' : ''}${result.monthlyChangeKg.toFixed(2)}`,
-                })}
-              />
-            </View>
-            <Text fontSet="onboarding" variant="bodyS" color={colors.textMid}>
-              {t('setup.estimateNote')}
-            </Text>
+            <Text variant="bodyS">{t('setup.estimateNote')}</Text>
           </PlanCard>
-          {isGymPlanValid(result) ? <MacroSplit result={result} /> : null}
+          <PlanCard testID="plan-macro-split">
+            <Text variant="heading">{t('setup.macros')}</Text>
+            <View style={planStyles.row}>
+              {fields.map(([key, value, label]) => (
+                <View key={key} style={reviewStyles.metric}>
+                  <Text variant="bodyS">{t(label)}</Text>
+                  <Text variant="heading" tabular>
+                    {value}
+                  </Text>
+                </View>
+              ))}
+            </View>
+          </PlanCard>
         </>
       ) : (
-        <PlanCard>
-          <Text fontSet="onboarding" color={colors.textMid}>
-            {t('onboarding.summary.emptyBody')}
-          </Text>
+        <Text>{t('onboarding.summary.emptyBody')}</Text>
+      )}
+      <PlanSafetyNotice result={result} />
+      {onCalculation && (
+        <Button
+          variant="tertiary"
+          label={t('setup.howCalculated')}
+          onPress={onCalculation}
+          testID="btn-how-calculated"
+        />
+      )}
+      {onHealth && (
+        <Button
+          variant="tertiary"
+          label={t('setup.privateHealth')}
+          onPress={onHealth}
+          testID="btn-private-health"
+        />
+      )}
+      {editing && (
+        <PlanCard testID="onboarding-custom-targets">
+          <Text variant="heading">{t('personalDay.customTitle')}</Text>
+          <Text variant="bodyS">{t('personalDay.blankDefaults')}</Text>
+          {fields.map(([key, value, label]) => (
+            <View key={key} style={planStyles.gap}>
+              <NumberField
+                label={t(label)}
+                value={overrides[key] ?? null}
+                optional
+                onChange={(next) => setOverrides((previous) => ({ ...previous, [key]: next }))}
+                testID={`custom-target-${key}`}
+              />
+              <Text variant="bodyS" tabular>
+                {t('personalDay.defaultValue', { value: value ?? 0 })}
+              </Text>
+            </View>
+          ))}
         </PlanCard>
       )}
-      <PlanCard testID="plan-controls">
-        <Text fontSet="onboarding" variant="heading" color={colors.textHi}>
-          {t('setup.editPlan')}
-        </Text>
-        <NumberField
-          label={t('setup.weight')}
-          value={state.weightKg}
-          onChange={(value) => onWeight(value ?? NaN)}
-          testID="review-weight"
-        />
-        <NumberField
-          label={t('setup.gymDays')}
-          value={state.gymDays}
-          onChange={(value) => onDays(value ?? NaN)}
-          testID="review-gym-days"
-        />
-        {state.goal !== 'maintain' ? (
-          <NumberField
-            label={t(state.goal === 'bulk' ? 'setup.surplus' : 'setup.deficit')}
-            value={state.dailyAdjustmentKcal ?? (result ? Math.abs(result.dailyChangeKcal) : null)}
-            onChange={(value) => onAdjustment(value ?? NaN)}
-            testID="review-adjustment"
-          />
-        ) : null}
-        <PlanSafetyNotice result={result} />
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel={t('setup.changeGoal')}
-          testID="review-change-goal"
-          onPress={onChangeGoal}
-          style={planStyles.link}
-        >
-          <Text fontSet="onboarding" color={colors.textMid}>
-            {t('setup.changeGoal')}
-          </Text>
-        </Pressable>
-      </PlanCard>
-      <PlanCard testID="plan-recommendation">
-        <Text fontSet="onboarding" variant="heading" color={colors.textHi}>
-          {t('setup.recommendedPlan')}
-        </Text>
-        {recommendation ? (
-          <Text nutrient="calories" fontSet="onboarding" color={colors.textMid} tabular>
-            {t(
-              state.goal === 'maintain'
-                ? 'setup.recommendationMaintain'
-                : 'setup.recommendationDetail',
-              {
-                rate: result?.recommendedRateKg ?? 0,
-                kcal: recommendation.targetKcal.toLocaleString(),
-              },
-            )}
-          </Text>
-        ) : null}
-        <Text nutrient="calories" fontSet="onboarding" variant="bodyS" color={colors.textMid}>
-          {t('setup.guardrails', {
-            floor: result?.safety.calorieFloor ?? '—',
-            cap: result?.safety.rateCapKgPerWeek ?? '—',
-          })}
-        </Text>
-      </PlanCard>
-      {onCalculation ? (
-        <Pressable
-          onPress={onCalculation}
-          accessibilityRole="button"
-          accessibilityLabel={t('setup.howCalculated')}
-          testID="btn-how-calculated"
-          style={planStyles.link}
-        >
-          <Text fontSet="onboarding" variant="bodyS" color={colors.textMid}>
-            {t('setup.howCalculated')}
-          </Text>
-        </Pressable>
-      ) : null}
-      {onHealth ? (
-        <Pressable
-          onPress={onHealth}
-          accessibilityRole="button"
-          accessibilityLabel={t('setup.privateHealth')}
-          testID="btn-private-health"
-          style={planStyles.link}
-        >
-          <Text fontSet="onboarding" variant="bodyS" color={colors.textMid}>
-            {t('setup.privateHealth')}
-          </Text>
-        </Pressable>
-      ) : null}
-      {error ? (
-        <Text
-          fontSet="onboarding"
-          accessibilityRole="alert"
-          color={colors.danger}
-          testID="plan-save-error"
-        >
+      {error && (
+        <Text accessibilityRole="alert" color={colors.danger} testID="plan-save-error">
           {error}
         </Text>
-      ) : null}
-      {saving ? (
-        <Text fontSet="onboarding" accessibilityLiveRegion="polite" color={colors.textMid}>
-          {t('setup.statusSaving')}
-        </Text>
-      ) : null}
+      )}
       <Button
-        fontSet="onboarding"
-        label={t('setup.useRecommended')}
-        onPress={onRecommended}
-        disabled={saving || !recommendation || !isGymPlanValid(recommendation)}
-        testID="btn-use-recommended"
-      />
-      <Button
-        fontSet="onboarding"
-        variant="secondary"
-        label={t('setup.usePlanned')}
-        onPress={onPlanned}
+        label={t(
+          saving ? 'setup.statusSaving' : editing ? 'personalDay.useTargets' : 'personalDay.build',
+        )}
+        onPress={() => (editing ? onPlanned(overrides) : setEditing(true))}
         disabled={saving || !result || !isGymPlanValid(result)}
-        testID="btn-use-planned"
+        testID={editing ? 'btn-use-planned' : 'btn-build-your-plan'}
       />
+      {editing && (
+        <Button
+          variant="secondary"
+          label={t('personalDay.skipTargets')}
+          onPress={() => onPlanned({})}
+          disabled={saving}
+          testID="skip-custom-targets"
+        />
+      )}
     </View>
   );
 }
 
-function Metric({ title, value }: { title: string; value: string }) {
-  const { colors } = useTheme();
-  return (
-    <View style={styles.metric}>
-      <Text fontSet="onboarding" variant="bodyS" color={colors.textMid}>
-        {title}
-      </Text>
-      <Text
-        fontSet="onboarding"
-        variant="heading"
-        color={colors.textHi}
-        tabular
-        maxFontSizeMultiplier={2}
-      >
-        {value}
-      </Text>
-    </View>
-  );
-}
-
-function MacroSplit({ result }: { result: GymTargetsResult }) {
-  const { colors } = useTheme();
-  const size = layout.ring;
-  const r = (size - layout.ringStroke) / 2;
-  const circumference = 2 * Math.PI * r;
-  const segments = [
-    {
-      nutrient: 'carbs' as const,
-      label: t('setup.carbs'),
-      grams: result.macros.carbGrams,
-      kcal: result.macros.carbKcal,
-      percent: result.macroShares.carbs,
-      color: nutritionColors.carbs,
-    },
-    {
-      nutrient: 'fat' as const,
-      label: t('setup.fat'),
-      grams: result.macros.fatGrams,
-      kcal: result.macros.fatKcal,
-      percent: result.macroShares.fat,
-      color: nutritionColors.fat,
-    },
-    {
-      nutrient: 'protein' as const,
-      label: t('setup.protein'),
-      grams: result.macros.proteinGrams,
-      kcal: result.macros.proteinKcal,
-      percent: result.macroShares.protein,
-      color: nutritionColors.protein,
-    },
-  ];
-  let offset = 0;
-  return (
-    <PlanCard testID="plan-macro-split">
-      <Text fontSet="onboarding" variant="heading" color={colors.textHi}>
-        {t('setup.macros')}
-      </Text>
-      <View
-        style={planStyles.centered}
-        accessible
-        accessibilityLabel={t('setup.macroSummary', {
-          protein: result.macros.proteinGrams,
-          fat: result.macros.fatGrams,
-          carbs: result.macros.carbGrams,
-          total: result.totalMacroGrams,
-        })}
-      >
-        <View
-          style={{ width: size, height: size }}
-          accessibilityElementsHidden
-          importantForAccessibility="no-hide-descendants"
-        >
-          <Svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
-            <Circle
-              cx={size / 2}
-              cy={size / 2}
-              r={r}
-              fill="none"
-              stroke={colors.s3}
-              strokeWidth={layout.ringStroke}
-            />
-            {segments.map((segment) => {
-              const length = (segment.percent / 100) * circumference;
-              const start = offset;
-              offset += length;
-              return (
-                <Circle
-                  key={segment.label}
-                  cx={size / 2}
-                  cy={size / 2}
-                  r={r}
-                  fill="none"
-                  stroke={segment.color}
-                  strokeWidth={layout.ringStroke}
-                  strokeDasharray={`${Math.max(0, length - space[1])} ${circumference}`}
-                  strokeDashoffset={-start}
-                  transform={`rotate(-90 ${size / 2} ${size / 2})`}
-                  strokeLinecap="round"
-                />
-              );
-            })}
-          </Svg>
-          <View style={styles.ringCenter}>
-            <Text
-              fontSet="onboarding"
-              variant="numeralM"
-              color={dark.copper}
-              maxFontSizeMultiplier={2}
-              testID="plan-total-macros"
-            >
-              {t('setup.grams', { grams: result.totalMacroGrams })}
-            </Text>
-            <Text fontSet="onboarding" variant="bodyS" color={colors.textMid}>
-              {t('setup.totalMacros')}
-            </Text>
-          </View>
-        </View>
-      </View>
-      {segments.map((segment) => (
-        <View key={segment.label} style={planStyles.gap}>
-          <Text
-            nutrient={segment.nutrient}
-            fontSet="onboarding"
-            variant="heading"
-            color={colors.textHi}
-          >
-            {segment.label}
-          </Text>
-          <Text
-            nutrient={segment.nutrient}
-            fontSet="onboarding"
-            variant="bodyS"
-            color={colors.textMid}
-            tabular
-          >
-            {t('setup.macroDetail', {
-              grams: segment.grams,
-              kcal: segment.kcal.toLocaleString(),
-              percent: segment.percent,
-            })}
-          </Text>
-        </View>
-      ))}
-    </PlanCard>
-  );
-}
-
-const styles = StyleSheet.create({
-  metric: { flexGrow: 1, flexBasis: layout.logo, gap: space[1] },
-  ringCenter: {
-    position: 'absolute',
-    inset: space[0],
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: space[4],
-  },
+const reviewStyles = StyleSheet.create({
+  metric: { flexGrow: 1, flexBasis: homeLayout.touchSize * 2, gap: space[2] },
 });

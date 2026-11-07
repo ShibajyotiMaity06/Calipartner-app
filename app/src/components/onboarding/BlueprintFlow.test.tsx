@@ -50,11 +50,11 @@ vi.mock('@/components/workouts/WeeklyRoutineEditor', () => ({
 vi.mock('@/components/diary/NutrientSummary', () => ({ NutrientSummary: 'NutrientSummary' }));
 vi.mock('./WeeklyPlanForm', () => ({ WeeklyPlanForm: 'WeeklyPlanForm' }));
 vi.mock('./WeeklyPlanPreparing', () => ({ WeeklyPlanPreparing: 'WeeklyPlanPreparing' }));
-vi.mock('./BlueprintStep', () => ({ BlueprintStep: 'BlueprintStep' }));
+vi.mock('./PersonalisedDayPreview', () => ({ PersonalisedDayPreview: 'PersonalisedDayPreview' }));
 vi.mock('./OnboardingPaywall', () => ({ OnboardingPaywall: 'OnboardingPaywall' }));
 import WeeklyPlanScreen from '@/app/weekly-plan';
 import { WeeklyPlanForm } from './WeeklyPlanForm';
-import { BlueprintStep } from './BlueprintStep';
+import { PersonalisedDayPreview } from './PersonalisedDayPreview';
 import { WeeklyPlanPreparing } from './WeeklyPlanPreparing';
 import { OnboardingPaywall } from './OnboardingPaywall';
 import { PaywallModal } from '@/components/rooms/PaywallModal';
@@ -77,7 +77,7 @@ const monday = {
   workout_tips: [],
   diet_tips: [],
 };
-it('waits for all preferences, then shows the blueprint before any AI call; acknowledged plan precedes the paywall', async () => {
+it('builds one day after all preferences, then visits day, coach, compare and paywall in order', async () => {
   let finish: ((value: unknown) => void) | undefined;
   state.build.mockImplementation(
     () =>
@@ -89,16 +89,15 @@ it('waits for all preferences, then shows the blueprint before any AI call; ackn
     tree = create(<WeeklyPlanScreen />);
   });
   await act(async () => tree.root.findByType(WeeklyPlanForm).props.onBuild(preferences));
-  expect(state.build).not.toHaveBeenCalled();
-  expect(tree.root.findByType(BlueprintStep)).toBeDefined();
-  await act(async () => tree.root.findByType(BlueprintStep).props.onMake());
+  expect(state.build).toHaveBeenCalledWith('owner', preferences, true);
   expect(tree.root.findByType(WeeklyPlanPreparing)).toBeDefined();
   expect(tree.root.findAllByType(OnboardingPaywall)).toHaveLength(0);
   await act(async () => finish?.(monday));
-  expect(tree.root.findByProps({ testID: 'weekly-plan-paid-lock' })).toBeDefined();
-  await act(async () =>
-    tree.root.findByProps({ testID: 'weekly-plan-choose-support' }).props.onPress(),
-  );
+  for (const stage of [0, 1, 2]) {
+    expect(tree.root.findByType(PersonalisedDayPreview).props.stage).toBe(stage);
+    expect(tree.root.findAllByType(OnboardingPaywall)).toHaveLength(0);
+    await act(async () => tree.root.findByType(PersonalisedDayPreview).props.onNext());
+  }
   await act(async () => tree.root.findByType(OnboardingPaywall).props.onCheckout('pro', 'monthly'));
   expect(tree.root.findByType(PaywallModal).props).toMatchObject({
     preselectedTier: 'pro',
@@ -111,7 +110,6 @@ it('a failed request retains the preferences and shows an error instead of a fab
     tree = create(<WeeklyPlanScreen />);
   });
   await act(async () => tree.root.findByType(WeeklyPlanForm).props.onBuild(preferences));
-  await act(async () => tree.root.findByType(BlueprintStep).props.onMake());
   expect(tree.root.findAllByProps({ accessibilityRole: 'alert' })).toHaveLength(1);
   expect(tree.root.findAllByProps({ testID: 'weekly-plan-paid-lock' })).toHaveLength(0);
   expect(tree.root.findByType(WeeklyPlanForm).props.initial).toEqual(preferences);

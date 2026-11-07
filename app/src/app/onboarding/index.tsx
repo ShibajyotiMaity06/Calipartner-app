@@ -1,3 +1,4 @@
+import { applyOnboardingTargetOverrides, type OnboardingTargetOverrides } from '@calipartner/core';
 import React, { useEffect, useRef, useState } from 'react';
 import {
   BackHandler,
@@ -177,7 +178,7 @@ export default function OnboardingScreen() {
     scroll.current?.scrollTo({ y: 0, animated: false });
   };
 
-  const save = async (recommended: boolean) => {
+  const save = async (recommended: boolean, overrides: OnboardingTargetOverrides = {}) => {
     if (!machine || !user || !profile || savingRef.current) return;
     savingRef.current = true;
     setSaving(true);
@@ -198,7 +199,11 @@ export default function OnboardingScreen() {
         );
         return;
       }
-      const goal = machine.buildGoalProfile(user.id);
+      const goal = applyOnboardingTargetOverrides(
+        machine.buildGoalProfile(user.id),
+        profile.sex,
+        overrides,
+      );
       // Retried completion uses the same client UUID, including after app restart.
       await draftWrites.current;
       await saveOnboardingDraft(await getDb(), user.id, machine.getState());
@@ -212,8 +217,15 @@ export default function OnboardingScreen() {
       await draftWrites.current;
       await clearOnboardingDraft(await getDb(), user.id).catch(() => {});
       router.push('/weekly-plan?setup=1' as never);
-    } catch {
-      setSaveError(t('common.errorBody'));
+    } catch (error) {
+      setSaveError(
+        t(
+          error instanceof Error &&
+            ['UNSAFE_MACROS', 'INVALID_MACROS', 'INVALID_DAILY_TARGETS'].includes(error.message)
+            ? 'personalDay.invalidTargets'
+            : 'common.errorBody',
+        ),
+      );
     } finally {
       savingRef.current = false;
       setSaving(false);
@@ -530,7 +542,7 @@ export default function OnboardingScreen() {
                     update();
                   }}
                   onRecommended={() => void save(true)}
-                  onPlanned={() => void save(false)}
+                  onPlanned={(overrides) => void save(false, overrides)}
                   onCalculation={() => setSheet('calculation')}
                   onHealth={() => setSheet('health')}
                   onChangeGoal={() => move('goal')}

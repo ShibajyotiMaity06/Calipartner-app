@@ -100,6 +100,7 @@ export interface WeeklyPlanContent {
   diet_tips: string[];
 }
 export interface WeeklyPlanView {
+  scope?: 'day' | 'week';
   id: string;
   preferences: PlanPreferences;
   days: PlanDay[];
@@ -259,10 +260,10 @@ export function validateWeeklyPlan(
   input: unknown,
   preferences: PlanPreferences,
   goals: PlanGoals,
-  options: { flexible?: boolean; normalizePortions?: boolean } = {},
+  options: { flexible?: boolean; normalizePortions?: boolean; singleDay?: boolean } = {},
 ): WeeklyPlanContent {
   const plan = object(input);
-  if (!Array.isArray(plan.days) || plan.days.length !== 7)
+  if (!Array.isArray(plan.days) || plan.days.length !== (options.singleDay ? 1 : 7))
     throw new WeeklyPlanValidationError('week_days');
   const forbidden = [...preferences.allergies, ...preferences.exclusions].filter(
     (value) => !/^none$/i.test(value),
@@ -315,7 +316,9 @@ export function validateWeeklyPlan(
       workout = object(d.workout);
     if (d.day !== index) throw new WeeklyPlanValidationError('week_days');
     const exercises = validatePlanExercises(workout.exercises, preferences);
-    const training = preferences.workout_days.includes(index);
+    const training = options.singleDay
+      ? preferences.workout_days.length > 0
+      : preferences.workout_days.includes(index);
     if (training !== exercises.length > 0) throw new WeeklyPlanValidationError('training_schedule');
     const minutes = number(
       workout.minutes,

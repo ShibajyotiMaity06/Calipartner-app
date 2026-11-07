@@ -54,6 +54,21 @@ function content() {
   };
 }
 describe('weekly planning constraints', () => {
+  it('validates exactly one personalised training day regardless of weekday and retains safety checks', () => {
+    const input = content();
+    input.days = input.days.slice(0, 1);
+    const prefs = { ...preferences, workout_days: [2, 4] };
+    expect(validateWeeklyPlan(input, prefs, goals, { singleDay: true }).days).toHaveLength(1);
+    expect(() => validateWeeklyPlan(content(), prefs, goals, { singleDay: true })).toThrow();
+    expect(() => validateWeeklyPlan(input, prefs, goals)).toThrow();
+    input.days[0]!.meals[0]!.ingredients = ['peanut 100g'];
+    expect(() =>
+      validateWeeklyPlan(input, { ...prefs, allergies: ['nuts'] }, goals, { singleDay: true }),
+    ).toThrow();
+    input.days[0]!.meals[0]!.ingredients = ['rice 150g'];
+    input.days[0]!.meals[0]!.calories = 50;
+    expect(() => validateWeeklyPlan(input, prefs, goals, { singleDay: true })).toThrow();
+  });
   it('builds substantive two-dish replacements when no single other recipe fits the primary meal', () => {
     const input = content();
     const balancedGoals = { calories: 1740, protein: 90, carbs: 210, fat: 60, calorie_floor: 1500 };

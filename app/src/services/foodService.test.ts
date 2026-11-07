@@ -1,3 +1,4 @@
+import suppliedRegional from '../../assets/supplied_regional_foods.json';
 import suppliedFoods from '../../assets/supplied_foods.json';
 import suppliedProducts from '../../assets/supplied_food_products.json';
 vi.mock('./accountDataService', async (original) => ({
@@ -471,7 +472,9 @@ describe('Supplied individual foods and recovered diary history', () => {
       'SELECT id FROM local_foods WHERE source = ?',
       ['supplied'],
     );
-    expect(products).toHaveLength(156);
+    expect(
+      products.filter((product) => suppliedProducts.some((food) => food.id === product.id)),
+    ).toHaveLength(156);
     const shake = (await searchLocalFoods(db, 'Protein Shake (Chocolate)')).find(
       (food) => food.brand === 'Premier Protein',
     )!;
@@ -498,6 +501,21 @@ describe('Supplied individual foods and recovered diary history', () => {
     );
     expect(await ensureBundledFoodsSeeded(db)).toBe(0);
     expect(new Set(suppliedProducts.map((food) => food.id)).size).toBe(156);
+  });
+  it('adds all 650 supplied groceries and regional dishes to an existing read catalogue', async () => {
+    const db = createTestDb();
+    await ensureBundledFoodsSeeded(db);
+    const food = suppliedRegional.find((food) => food.name === 'Ragi sangati')!;
+    const rows = await searchLocalFoods(db, 'Ragi sangati');
+    expect(rows.find((row) => row.id === food.id)).toMatchObject({
+      calories_per_100g: 115,
+      serving_units: food.serving_units,
+      nutrition_details: { not_provided: ['sodium_mg', 'sugar'] },
+    });
+    await db.runAsync('DELETE FROM local_foods WHERE id = ?', [food.id]);
+    expect(await ensureBundledFoodsSeeded(db)).toBe(1);
+    expect(await ensureBundledFoodsSeeded(db)).toBe(0);
+    expect(new Set(suppliedRegional.map((food) => food.id)).size).toBe(650);
   });
   it('installs all 247 foods on an existing catalog and preserves servings and advanced nutrients', async () => {
     const db = createTestDb();

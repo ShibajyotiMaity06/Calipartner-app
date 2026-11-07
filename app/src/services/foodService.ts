@@ -27,6 +27,7 @@ import { saveRemote, type LocalDb } from './accountDataService';
 import bundledFoodsJson from '../../assets/bundled_foods.json';
 import suppliedFoodsJson from '../../assets/supplied_foods.json';
 import suppliedProductsJson from '../../assets/supplied_food_products.json';
+import suppliedRegionalJson from '../../assets/supplied_regional_foods.json';
 
 const log = createLogger('foodService');
 
@@ -56,7 +57,12 @@ export async function ensureBundledFoodsSeeded(db: LocalDb): Promise<number> {
       ? bundledFoodsJson
       : DEV_100_FOOD_SEED;
   const foodsToSeed = (
-    [...bundled, ...suppliedFoodsJson, ...suppliedProductsJson] as CreateFoodInput[]
+    [
+      ...bundled,
+      ...suppliedFoodsJson,
+      ...suppliedProductsJson,
+      ...suppliedRegionalJson,
+    ] as CreateFoodInput[]
   ).filter((food) => !existing.has(food.id!));
   if (!foodsToSeed.length) return 0;
 
