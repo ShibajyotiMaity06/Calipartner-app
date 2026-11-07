@@ -20,41 +20,49 @@ const mealProperties = {
   fat: { ...number, minimum: 0, maximum: 150 },
   calories: { ...number, minimum: 50, maximum: 3000 },
 };
-export const weeklyPlanSchema = object({
-  days: {
-    ...array(
-      object({
-        day: { ...integer, enum: [0, 1, 2, 3, 4, 5, 6] },
-        workout: object({
-          title: string,
-          minutes: integer,
-          exercises: array(
-            object({
-              name: string,
-              equipment: { type: 'string', enum: [...PLAN_EQUIPMENT] },
-              sets: { ...integer, minimum: 1, maximum: 5 },
-              reps: { ...integer, minimum: 5, maximum: 30 },
-              rest_seconds: { ...integer, minimum: 30, maximum: 180 },
-            }),
-          ),
+const planSchema = (singleDay: boolean) =>
+  object({
+    days: {
+      ...array(
+        object({
+          day: { ...integer, enum: singleDay ? [0] : [0, 1, 2, 3, 4, 5, 6] },
+          workout: object({
+            title: string,
+            minutes: integer,
+            exercises: array(
+              object({
+                name: string,
+                equipment: { type: 'string', enum: [...PLAN_EQUIPMENT] },
+                sets: { ...integer, minimum: 1, maximum: 5 },
+                reps: { ...integer, minimum: 5, maximum: 30 },
+                rest_seconds: { ...integer, minimum: 30, maximum: 180 },
+              }),
+            ),
+          }),
+          meals: {
+            ...array(
+              object({
+                ...mealProperties,
+                ...(singleDay
+                  ? {
+                      section: { type: 'string', enum: ['breakfast', 'lunch', 'dinner', 'snacks'] },
+                    }
+                  : {}),
+              }),
+            ),
+            minItems: singleDay ? 4 : 3,
+            maxItems: singleDay ? 4 : 5,
+          },
         }),
-        meals: {
-          ...array(
-            object({
-              ...mealProperties,
-            }),
-          ),
-          minItems: 3,
-          maxItems: 5,
-        },
-      }),
-    ),
-    minItems: 7,
-    maxItems: 7,
-  },
-  workout_tips: array(string),
-  diet_tips: array(string),
-});
+      ),
+      minItems: singleDay ? 1 : 7,
+      maxItems: singleDay ? 1 : 7,
+    },
+    workout_tips: array(string),
+    diet_tips: array(string),
+  });
+
+export const weeklyPlanSchema = planSchema(false);
 
 export function weeklyPlanResponseFormat(provider: string, model: string, singleDay = false) {
   return provider === 'groq' &&
@@ -69,15 +77,7 @@ export function weeklyPlanResponseFormat(provider: string, model: string, single
         json_schema: {
           name: 'weekly_plan',
           strict: true,
-          schema: singleDay
-            ? {
-                ...weeklyPlanSchema,
-                properties: {
-                  ...weeklyPlanSchema.properties,
-                  days: { ...weeklyPlanSchema.properties.days, minItems: 1, maxItems: 1 },
-                },
-              }
-            : weeklyPlanSchema,
+          schema: singleDay ? planSchema(true) : weeklyPlanSchema,
         },
       }
     : { type: 'json_object' };

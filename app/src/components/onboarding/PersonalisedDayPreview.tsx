@@ -1,8 +1,16 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Avatar, Button, Text, dark, homeLayout, radius, space } from '@calipartner/ui';
-import { planDayNutrition, type Goal, type WeeklyPlanView } from '@calipartner/core';
+import {
+  buildOnboardingDemo,
+  demoGoalPercent,
+  hasStructuredDayMeals,
+  planDayNutrition,
+  type Goal,
+  type GoalProfile,
+  type WeeklyPlanView,
+} from '@calipartner/core';
 import { t } from '@/i18n';
 import { CoachMessageBubble } from '@/components/coach/CoachMessageBubble';
 import { NutrientSummary } from '@/components/diary/NutrientSummary';
@@ -12,17 +20,59 @@ export function PersonalisedDayPreview({
   plan,
   name,
   goal,
+  targets = null,
   stage,
   onNext,
+  onRebuild,
 }: {
   plan: WeeklyPlanView;
   name: string;
   goal: Goal;
+  targets?: GoalProfile | null;
   stage: number;
   onNext: () => void;
+  onRebuild?: () => void;
 }) {
+  const [copiedWorkout, setCopiedWorkout] = useState(false),
+    [copiedMeals, setCopiedMeals] = useState(false);
   const day = plan.days[0];
   if (!day) return <Text accessibilityRole="alert">{t('fixNovember.unavailable')}</Text>;
+  if (!hasStructuredDayMeals(day))
+    return (
+      <View style={styles.card}>
+        <Text>{t('personalDay.refreshDay')}</Text>
+        {onRebuild && (
+          <Button
+            label={t('personalDay.refreshDayAction')}
+            onPress={onRebuild}
+            testID="refresh-personalised-day"
+          />
+        )}
+      </View>
+    );
+  const demo = buildOnboardingDemo(targets, day, plan.preferences);
+  const params = {
+    name,
+    calories: demo.targets.calories,
+    protein: demo.targets.protein,
+    carbs: demo.targets.carbs,
+    fat: demo.targets.fat,
+    yesterdayCalories: demo.yesterdayCalories,
+    yesterdayProtein: demo.yesterdayProtein,
+    exercise: demo.exercise?.name ?? t('personalDay.comfortableMovement'),
+    sets: demo.sets,
+    reps: demo.reps,
+    nextReps: demo.nextReps,
+    load:
+      demo.exampleLoad == null
+        ? t('personalDay.bodyweight')
+        : t('personalDay.exampleLoad', { value: demo.exampleLoad }),
+    minutes: demo.minutes,
+    cuisine: plan.preferences.cuisine,
+    meal: day.meals[0]!.name,
+    steps: demo.targets.steps,
+    water: demo.targets.water,
+  };
   return (
     <View style={styles.stack} testID={`personalised-preview-${stage}`}>
       <View style={styles.row}>
@@ -67,32 +117,25 @@ export function PersonalisedDayPreview({
             )}
           </View>
           <View style={styles.card}>
-            <View style={styles.spread}>
-              <Text variant="heading">{t('personalDay.diet')}</Text>
-              <Ionicons
-                name="restaurant-outline"
-                size={homeLayout.iconSize}
-                color={dark.copper}
-                accessible={false}
+            <Text variant="heading">{t('personalDay.diet')}</Text>
+            <NutrientSummary values={planDayNutrition(day)} />
+          </View>
+          {day.meals.map((meal) => (
+            <View key={meal.section} style={styles.card} testID={`preview-meal-${meal.section}`}>
+              <Text variant="bodyS" color={dark.copper}>
+                {t(`diary.sections.${meal.section!}`)}
+              </Text>
+              <Text variant="heading">{meal.name}</Text>
+              <NutrientSummary
+                values={{
+                  calories: meal.calories,
+                  protein: meal.protein,
+                  carbs: meal.carbs,
+                  fat: meal.fat,
+                }}
               />
             </View>
-            <NutrientSummary values={planDayNutrition(day)} />
-            {day.meals.map((meal, index) => (
-              <View key={index} style={styles.divider}>
-                <Text variant="heading">{meal.name}</Text>
-                <Text variant="bodyS">{meal.portion}</Text>
-                <Text variant="bodyS">{meal.ingredients.join(' · ')}</Text>
-                <NutrientSummary
-                  values={{
-                    calories: meal.calories,
-                    protein: meal.protein,
-                    carbs: meal.carbs,
-                    fat: meal.fat,
-                  }}
-                />
-              </View>
-            ))}
-          </View>
+          ))}
           <Text variant="bodyS">{t('personalDay.estimated')}</Text>
         </>
       ) : stage === 1 ? (
@@ -100,16 +143,7 @@ export function PersonalisedDayPreview({
           <Text variant="title1">{t('personalDay.assistant')}</Text>
           <Text>{t('personalDay.coachSubtitle')}</Text>
           <View style={styles.card} testID="onboarding-coach-demo">
-            <View style={styles.row}>
-              <Ionicons
-                name="medkit-outline"
-                size={homeLayout.iconSize}
-                color={dark.copper}
-                accessible={false}
-              />
-              <Text variant="heading">{t('personalDay.coach')}</Text>
-            </View>
-            <Text variant="bodyS">{t('personalDay.demo')}</Text>
+            <Text variant="heading">{t('personalDay.coach')}</Text>
             {(['ai1', 'human1', 'ai2', 'human2', 'ai3'] as const).map((key, index) => (
               <CoachMessageBubble
                 demo
@@ -117,7 +151,7 @@ export function PersonalisedDayPreview({
                 message={{
                   id: `demo-${key}`,
                   role: index % 2 ? 'user' : 'assistant',
-                  content: t(`personalDay.${goal}.${key}`),
+                  content: t(`personalDay.${goal}.${key}`, params),
                   timestamp: '',
                 }}
               />
@@ -125,7 +159,7 @@ export function PersonalisedDayPreview({
             <View
               style={[styles.row, local.composer]}
               accessible
-              accessibilityLabel={t('personalDay.demo')}
+              accessibilityLabel={t('personalDay.coachSubtitle')}
             >
               <Text color={dark.textLo}>{t('personalDay.composer')}</Text>
               <Ionicons
@@ -143,52 +177,118 @@ export function PersonalisedDayPreview({
           <Text>{t('personalDay.compareSubtitle')}</Text>
           <Text variant="bodyS">{t('personalDay.compareDemo')}</Text>
           <View style={styles.columns} testID="onboarding-compare-demo">
-            {[name, t('personalDay.partner')].map((person, index) => (
-              <View key={index} style={styles.column}>
-                <View style={styles.card}>
-                  <Avatar name={person} size="sm" identityHue={index ? 'teal' : 'iris'} />
-                  <Text variant="heading">{person}</Text>
-                  <Text variant="bodyS">{t('personalDay.pro')}</Text>
-                  <Text variant="bodyS">{t('personalDay.allShared')}</Text>
-                  {(['calories', 'protein', 'carbs', 'fat', 'steps', 'water'] as const).map(
-                    (metric, metricIndex) => {
-                      const percent = [96, 100, 94, 98, 100, 100][metricIndex]! - index * 2;
-                      return (
-                        <View
-                          key={metric}
-                          style={styles.metricGroup}
-                          accessible
-                          accessibilityLabel={`${t(`squadDesign.${metric}`)} ${percent}%`}
-                        >
+            {[name, t('personalDay.partner')].map((person, index) => {
+              const values = index ? demo.partnerValues : demo.values,
+                limits = index ? demo.partnerTargets : demo.targets;
+              return (
+                <View key={index} style={styles.column}>
+                  <View style={styles.card}>
+                    <Avatar name={person} size="sm" identityHue={index ? 'teal' : 'iris'} />
+                    <Text variant="heading">{person}</Text>
+                    <Text variant="bodyS">{t('personalDay.pro')}</Text>
+                    <Text variant="bodyS">{t('personalDay.allShared')}</Text>
+                    {(['calories', 'protein', 'carbs', 'fat', 'steps', 'water'] as const).map(
+                      (metric) => (
+                        <View key={metric} style={styles.metricGroup}>
                           <Text variant="bodyS">{t(`squadDesign.${metric}`)}</Text>
-                          <Text tabular>{t('squadDesign.percent', { value: percent })}</Text>
-                          <ProgressTrack percent={percent} color={index ? dark.teal : dark.iris} />
+                          <Text variant="bodyS" tabular>
+                            {t('squadDesign.amount', {
+                              value: values[metric],
+                              target: limits[metric],
+                              unit: t(
+                                metric === 'steps'
+                                  ? 'squadDesign.stepUnit'
+                                  : metric === 'water'
+                                    ? 'squadDesign.ml'
+                                    : metric === 'calories'
+                                      ? 'squadDesign.kcal'
+                                      : 'squadDesign.grams',
+                              ),
+                            })}
+                          </Text>
+                          <Text tabular>
+                            {t('squadDesign.percent', {
+                              value: demoGoalPercent(values[metric], limits[metric]),
+                            })}
+                          </Text>
+                          <ProgressTrack
+                            percent={demoGoalPercent(values[metric], limits[metric])}
+                            color={index ? dark.teal : dark.iris}
+                          />
                         </View>
-                      );
-                    },
-                  )}
+                      ),
+                    )}
+                  </View>
+                  <View style={styles.card}>
+                    <Text variant="heading">{t('personalDay.workouts')}</Text>
+                    <Text>{t('personalDay.workoutLogged')}</Text>
+                    <Text variant="bodyS" tabular>
+                      {t('personalDay.minutes', { value: demo.minutes })}
+                    </Text>
+                    {day.workout.exercises.map((exercise, exerciseIndex) => (
+                      <View key={exerciseIndex} style={styles.metricGroup}>
+                        <Text variant="bodyS">{exercise.name}</Text>
+                        <Text variant="bodyS" tabular>
+                          {t('personalDay.exercise', {
+                            sets: exercise.sets,
+                            reps: exercise.reps,
+                            rest: exercise.rest_seconds,
+                          })}
+                        </Text>
+                      </View>
+                    ))}
+                    {!day.workout.exercises.length && (
+                      <Text>{t('personalDay.comfortableMovement')}</Text>
+                    )}
+                    {!index && copiedWorkout && (
+                      <Text accessibilityLiveRegion="polite">{t('personalDay.addedPreview')}</Text>
+                    )}
+                    {index === 1 && (
+                      <Button
+                        variant="secondary"
+                        label={t(
+                          copiedWorkout ? 'personalDay.addedPreview' : 'personalDay.addMine',
+                        )}
+                        disabled={copiedWorkout}
+                        onPress={() => setCopiedWorkout(true)}
+                        testID="demo-copy-workout"
+                      />
+                    )}
+                  </View>
+                  <View style={styles.card}>
+                    <Text variant="heading">{t('personalDay.mealsLogged')}</Text>
+                    {day.meals.map((meal) => (
+                      <View style={styles.metricGroup} key={meal.section}>
+                        <Text variant="bodyS">{t(`diary.sections.${meal.section!}`)}</Text>
+                        <Text variant="bodyS">{meal.name}</Text>
+                        <NutrientSummary
+                          values={{
+                            calories: meal.calories,
+                            protein: meal.protein,
+                            carbs: meal.carbs,
+                            fat: meal.fat,
+                          }}
+                        />
+                      </View>
+                    ))}
+                    {!index && copiedMeals && (
+                      <Text accessibilityLiveRegion="polite">{t('personalDay.addedPreview')}</Text>
+                    )}
+                    {index === 1 && (
+                      <Button
+                        variant="secondary"
+                        label={t(copiedMeals ? 'personalDay.addedPreview' : 'personalDay.addMine')}
+                        disabled={copiedMeals}
+                        onPress={() => setCopiedMeals(true)}
+                        testID="demo-copy-meals"
+                      />
+                    )}
+                  </View>
                 </View>
-                <View style={styles.card}>
-                  <Text variant="heading">{t('personalDay.workouts')}</Text>
-                  <Ionicons
-                    name="checkmark-circle-outline"
-                    size={homeLayout.iconSize}
-                    color={index ? dark.teal : dark.iris}
-                    accessible={false}
-                  />
-                  <Text>{t('personalDay.workoutLogged')}</Text>
-                  <Text variant="bodyS">
-                    {t('personalDay.minutes', { value: index ? 35 : day.workout.minutes || 30 })}
-                  </Text>
-                </View>
-                <View style={styles.card}>
-                  <Text variant="heading">{t('personalDay.mealsLogged')}</Text>
-                  <Text variant="bodyS">{t('personalDay.sampleMeal')}</Text>
-                  <Text variant="bodyS">{t('personalDay.partnerMeal')}</Text>
-                </View>
-              </View>
-            ))}
+              );
+            })}
           </View>
+          <Text variant="bodyS">{t('personalDay.previewOnly')}</Text>
           <View style={styles.card}>
             <Text variant="title2">{t('personalDay.waiting')}</Text>
             <Text>{t('personalDay.waitingBody')}</Text>

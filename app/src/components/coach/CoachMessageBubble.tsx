@@ -1,6 +1,6 @@
 import React from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
-import { Text } from '@calipartner/ui';
+import { Text, space } from '@calipartner/ui';
 import { CoachMealDraftCard } from './CoachMealDraftCard';
 import { Ionicons } from '@expo/vector-icons';
 import { t } from '@/i18n';
@@ -36,11 +36,15 @@ export function CoachMessageBubble({
 
   return (
     <View
-      style={[styles.rowWrap, isUser ? styles.userRowWrap : styles.coachRowWrap]}
+      style={[
+        styles.rowWrap,
+        demo && styles.demoRow,
+        isUser ? styles.userRowWrap : styles.coachRowWrap,
+      ]}
       testID={`msg-bubble-${message.id}`}
     >
       {/* Coach Avatar */}
-      {!isUser && (
+      {!demo && !isUser && (
         <View
           style={[styles.avatar, { backgroundColor: colors.cardHighlight }]}
           testID={`avatar-coach-${message.id}`}
@@ -166,6 +170,7 @@ export function CoachMessageBubble({
 }
 
 const styles = StyleSheet.create({
+  demoRow: { paddingHorizontal: space[0] },
   rowWrap: {
     flexDirection: 'row',
     marginBottom: spacing.md,

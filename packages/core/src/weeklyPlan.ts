@@ -50,6 +50,7 @@ export interface PlanExercise {
   rest_seconds: number;
 }
 export interface PlanMeal {
+  section?: 'breakfast' | 'lunch' | 'dinner' | 'snacks';
   alternatives?: Omit<PlanMeal, 'alternatives'>[];
   name: string;
   ingredients: string[];
@@ -58,6 +59,13 @@ export interface PlanMeal {
   protein: number;
   carbs: number;
   fat: number;
+}
+export const ONE_DAY_MEAL_SECTIONS = ['breakfast', 'lunch', 'dinner', 'snacks'] as const;
+export function hasStructuredDayMeals(day: Pick<PlanDay, 'meals'>): boolean {
+  return (
+    day.meals.length === 4 &&
+    ONE_DAY_MEAL_SECTIONS.every((section, index) => day.meals[index]?.section === section)
+  );
 }
 export interface PlanDay {
   day: number;
@@ -327,10 +335,19 @@ export function validateWeeklyPlan(
       true,
       'workout_minutes',
     );
-    if (!Array.isArray(d.meals) || d.meals.length !== preferences.meals_per_day)
+    if (
+      !Array.isArray(d.meals) ||
+      d.meals.length !== (options.singleDay ? 4 : preferences.meals_per_day)
+    )
       throw new WeeklyPlanValidationError('meal_count');
     const parseMeal = (value: unknown, mealIndex: number): PlanMeal => {
       const m = object(value);
+      const section = options.singleDay ? ONE_DAY_MEAL_SECTIONS[mealIndex] : undefined;
+      if (options.singleDay && m.section !== section)
+        throw new WeeklyPlanValidationError(
+          'meal_count',
+          'Provide exactly four meals in this order, each with its section: breakfast, lunch, dinner, snacks. Choose dishes appropriate to each section and the saved dietary preferences.',
+        );
       const name = safeText(text(m.name, 120)),
         ingredients = strings(m.ingredients, 1, 20, 150).map(safeText),
         portion = safeText(text(m.portion, 250));
@@ -344,7 +361,16 @@ export function validateWeeklyPlan(
           'meal_energy',
           `Day ${index}, meal ${mealIndex}: reported ${calories} kcal but 4*protein+4*carbs+9*fat is ${macroCalories} kcal. Re-estimate this meal from its measured ingredients and correct the inconsistent nutrition, then recheck the daily totals.`,
         );
-      return { name, ingredients, portion, calories, protein, carbs, fat };
+      return {
+        ...(section ? { section } : {}),
+        name,
+        ingredients,
+        portion,
+        calories,
+        protein,
+        carbs,
+        fat,
+      };
     };
     let meals = d.meals.map((value, mealIndex): PlanMeal => {
       const meal = parseMeal(value, mealIndex);
@@ -476,6 +502,7 @@ export function scalePlanMeal(meal: PlanMeal, factor: number): Omit<PlanMeal, 'a
     return changed ? result : `${multiplier} × (${value})`;
   };
   return {
+    ...(meal.section ? { section: meal.section } : {}),
     name: meal.name,
     ingredients: meal.ingredients.map(measured),
     portion: factor === 1 ? meal.portion : `${multiplier} × (${meal.portion})`,

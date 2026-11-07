@@ -13,15 +13,14 @@ import {
 } from '@calipartner/core';
 import { useAuth } from '@/contexts/AuthContext';
 import { getPersonalWeeklyPlan, buildPersonalWeeklyPlan } from '@/services/weeklyPlanService';
-import { afterSetupDestination } from '@/services/pairOnboardingService';
+import { afterSetupDestination, finishPairPrompt } from '@/services/pairOnboardingService';
 import { WeeklyPlanForm } from '@/components/onboarding/WeeklyPlanForm';
 import { WeeklyPlanPreparing } from '@/components/onboarding/WeeklyPlanPreparing';
 import { PersonalisedDayPreview } from '@/components/onboarding/PersonalisedDayPreview';
-import { OnboardingPaywall } from '@/components/onboarding/OnboardingPaywall';
 import { useTargets } from '@/hooks/useTargets';
 import { WeeklyRoutineEditor } from '@/components/workouts/WeeklyRoutineEditor';
 import { PaywallModal } from '@/components/rooms/PaywallModal';
-import { useBrowserModalBack } from '@/hooks/useBrowserModalBack';
+import { useBrowserModalBack, closeBrowserModalsThen } from '@/hooks/useBrowserModalBack';
 import { squadStyles as styles } from '@/components/rooms/SquadViews';
 import { t } from '@/i18n';
 import { NutrientSummary } from '@/components/diary/NutrientSummary';
@@ -37,18 +36,29 @@ export default function WeeklyPlanScreen({ onClose }: { onClose?: () => void } =
   const { currentGoalProfile: goal } = useTargets();
   const [previewStage, setPreviewStage] = useState(0),
     [plans, setPlans] = useState(false);
-  const [checkoutTier, setCheckoutTier] = useState<'plus' | 'pro'>('plus');
-  const [checkoutDuration, setCheckoutDuration] = useState<'monthly' | 'annual'>('annual');
+  const finishingSetup = useRef(false);
+  const finishSetup = useCallback(async () => {
+    if (finishingSetup.current) return;
+    finishingSetup.current = true;
+    try {
+      if (user) await finishPairPrompt(user.id);
+    } catch {
+      /* Local pairing preferences cannot block completed setup from reaching Home. */
+    }
+    closeBrowserModalsThen(() => router.replace('/(tabs)/today'));
+  }, [user, router]);
   useFocusEffect(
     useCallback(() => {
       if (Platform.OS !== 'android' || (previewStage === 0 && !plans)) return;
       const listener = BackHandler.addEventListener('hardwareBackPress', () => {
-        if (plans) setPlans(false);
-        else setPreviewStage((value) => Math.max(0, value - 1));
+        if (plans) {
+          if (params.setup === '1') void finishSetup();
+          else setPlans(false);
+        } else setPreviewStage((value) => Math.max(0, value - 1));
         return true;
       });
       return () => listener.remove();
-    }, [previewStage, plans]),
+    }, [previewStage, plans, params.setup, finishSetup]),
   );
   const [plan, setPlan] = useState<WeeklyPlanView | null>(null),
     [loading, setLoading] = useState(true),
@@ -59,16 +69,12 @@ export default function WeeklyPlanScreen({ onClose }: { onClose?: () => void } =
   useEffect(() => {
     scroll.current?.scrollTo({ y: 0, animated: false });
   }, [previewStage, plans, busy, plan?.id]);
-  const [nestedPaywall, setNestedPaywall] = useState(false);
-  useBrowserModalBack(
-    previewStage > 0 || plans || nestedPaywall,
-    () => {
-      if (nestedPaywall) setNestedPaywall(false);
-      else if (plans) setPlans(false);
-      else setPreviewStage((value) => Math.max(0, value - 1));
-    },
-    { depth: nestedPaywall ? 1 : 0, onDepthChange: () => setNestedPaywall(false) },
-  );
+  useBrowserModalBack(previewStage > 0 || plans, () => {
+    if (plans) {
+      if (params.setup === '1') void finishSetup();
+      else setPlans(false);
+    } else setPreviewStage((value) => Math.max(0, value - 1));
+  });
   const openPaywall = () => {
     setPlans(true);
   };
@@ -133,7 +139,11 @@ export default function WeeklyPlanScreen({ onClose }: { onClose?: () => void } =
     setBusy(true);
     setError(null);
     try {
-      const next = await buildPersonalWeeklyPlan(id, preferences, params.setup === '1');
+      const next = await buildPersonalWeeklyPlan(
+        id,
+        preferences,
+        params.setup === '1' || plan?.scope === 'day',
+      );
       if (mounted.current && owner.current === id) {
         setPlan(next);
         setDay(0);
@@ -169,35 +179,37 @@ export default function WeeklyPlanScreen({ onClose }: { onClose?: () => void } =
           fullWidth={false}
           label={t('fixNovember.back')}
           onPress={() => {
-            if (plans) setPlans(false);
-            else if (previewStage > 0) setPreviewStage((value) => value - 1);
+            if (plans) {
+              if (params.setup === '1') void finishSetup();
+              else setPlans(false);
+            } else if (previewStage > 0) setPreviewStage((value) => value - 1);
             else if (onClose) onClose();
             else if (router.canGoBack()) router.back();
             else void exit();
           }}
           testID="weekly-plan-back"
         />
+        {error && plan && (params.setup === '1' || plan.scope === 'day') && (
+          <Text accessibilityRole="alert" color={dark.danger}>
+            {t(failure)}
+          </Text>
+        )}
         {loading ? (
           <Text>{t('common.loading')}</Text>
         ) : busy ? (
-          <WeeklyPlanPreparing singleDay={params.setup === '1'} />
-        ) : plans ? (
-          <OnboardingPaywall
-            onCheckout={(tier, duration) => {
-              setCheckoutTier(tier);
-              setCheckoutDuration(duration);
-              setNestedPaywall(true);
-            }}
-            onFree={() => {
-              setPlans(false);
-              if (params.setup === '1') void exit();
-            }}
+          <WeeklyPlanPreparing
+            singleDay={params.setup === '1'}
+            name={profile?.nickname ?? ''}
+            preferences={draft.current}
+            targets={goal}
           />
         ) : (params.setup === '1' || plan?.scope === 'day') && plan ? (
           <PersonalisedDayPreview
             plan={plan}
             name={profile?.nickname || profile?.username || t('repairs.you')}
             goal={goal?.goal ?? 'maintain'}
+            targets={goal}
+            onRebuild={() => void build(plan.preferences)}
             stage={params.setup === '1' ? previewStage : 0}
             onNext={() =>
               params.setup !== '1'
@@ -457,17 +469,15 @@ export default function WeeklyPlanScreen({ onClose }: { onClose?: () => void } =
           onSaved={setPlan}
         />
       )}
-      {nestedPaywall && (
+      {plans && (
         <PaywallModal
           visible
           context="weekly_plan"
-          preselectedTier={checkoutTier}
-          preselectedDuration={checkoutDuration}
-          onClose={() => setNestedPaywall(false)}
-          onSuccess={() => {
-            setNestedPaywall(false);
-            void load();
-          }}
+          onClose={() => (params.setup === '1' ? void finishSetup() : setPlans(false))}
+          onContinueFree={params.setup === '1' ? () => void finishSetup() : undefined}
+          onSuccess={() =>
+            params.setup === '1' ? void finishSetup() : (setPlans(false), void load())
+          }
         />
       )}
     </SafeAreaView>

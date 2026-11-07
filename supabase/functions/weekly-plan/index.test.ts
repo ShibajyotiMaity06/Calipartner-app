@@ -165,6 +165,19 @@ Deno.test(
       });
     const day = content();
     day.days = day.days.slice(0, 1);
+    day.days[0]!.meals = [
+      ...day.days[0]!.meals.slice(0, 2),
+      ...Array.from({ length: 2 }, () => ({
+        ...day.days[0]!.meals[2]!,
+        calories: 350,
+        protein: 20,
+        carbs: 45,
+        fat: 10,
+      })),
+    ].map((meal, index) => ({
+      ...meal,
+      section: ['breakfast', 'lunch', 'dinner', 'snacks'][index],
+    }));
     day.days[0]!.meals.forEach((meal) => {
       delete (meal as { alternatives?: unknown }).alternatives;
     });

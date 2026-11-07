@@ -40,6 +40,7 @@ try {
  Assert-PlanCheck ($saved.Count -eq 1 -and $saved[0].content.days.Count -eq 1) 'exactly one day stored privately'
  foreach ($day in $saved[0].content.days) {
   Assert-PlanCheck ($day.meals.Count -eq 4) 'four actual meals per day'
+  Assert-PlanCheck ((@($day.meals | ForEach-Object { $_.section }) -join ',') -eq 'breakfast,lunch,dinner,snacks') 'four correctly ordered meal sections'
   Assert-PlanCheck ($day.workout.exercises.Count -gt 0 -and $day.workout.minutes -le 30) 'workout matches a training preference without assigning a weekday'
   $signatures=@($day.meals|ForEach-Object { '{0}|{1}|{2}|{3}' -f $_.calories,$_.protein,$_.carbs,$_.fat }|Select-Object -Unique)
   Assert-PlanCheck ($signatures.Count -gt 1) 'day has independently estimated meal totals'
@@ -61,7 +62,7 @@ try {
  Assert-PlanCheck ($trackingRead.Count -eq 1 -and $trackingRead[0].request_id -eq $tracking.request_id -and -not $trackingRead[0].enabled.protein -and $trackingRead[0].enabled.water) 'acknowledged tracking preferences persist and retry without duplication'
  $catalog=Invoke-RestMethod -Method Post -Uri ('https://api.supabase.com/v1/projects/'+$project+'/database/query') -Headers $management -ContentType 'application/json' -Body (@{query="select count(*) as total from public.foods where attribution like 'Owner-supplied dmart_food_items.json;%' or attribution like 'Owner-supplied indian_states_top20_foods.json;%'"}|ConvertTo-Json -Compress)
  Assert-PlanCheck ($catalog[0].total -eq 650) 'all 650 supplied foods are in the hosted catalogue'
- Write-Output 'Hosted personalised day passed: exactly one day, four measured meals, training preferences, saved-goal constraints, acknowledged idempotent retry, free initial custom targets, private projection, persistent tracking switches and 650 catalogue foods.'
+ Write-Output 'Hosted personalised day passed: exactly one day, breakfast/lunch/dinner/snacks, training preferences, saved-goal constraints, acknowledged idempotent retry, free initial custom targets, private projection, persistent tracking switches and 650 catalogue foods.'
 
 } finally {
  if ($fixture) { $null=Invoke-PlanCheck 'DELETE' ('/auth/v1/admin/users/'+$fixture) $null $serviceKey $serviceKey; Write-Output 'Hosted personalised day fixture cleanup completed.' }

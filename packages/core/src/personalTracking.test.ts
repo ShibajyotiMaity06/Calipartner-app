@@ -45,6 +45,37 @@ it('enforces the calorie floor, whole grams, direction, weekly cap and habit bou
     applyOnboardingTargetOverrides({ ...goal, goal: 'maintain' }, 'male', { protein: 100 }),
   ).toThrow('UNSAFE_MACROS');
 });
+it('accepts calorie-only targets, derives missing grams and rejects inconsistent explicit inputs', () => {
+  const result = applyOnboardingTargetOverrides(goal, 'male', { calories: 2200 });
+  expect(result).toMatchObject({
+    daily_calorie_target: 2200,
+    protein_grams: 150,
+    carb_grams: 265,
+    fat_grams: 60,
+  });
+  expect(
+    applyOnboardingTargetOverrides(goal, 'male', { calories: 2201 }).daily_calorie_target,
+  ).toBe(2201);
+  expect(
+    applyOnboardingTargetOverrides(goal, 'male', {
+      calories: 2040,
+      protein: 150,
+      carbs: 225,
+      fat: 60,
+    }).daily_calorie_target,
+  ).toBe(2040);
+  expect(() =>
+    applyOnboardingTargetOverrides(goal, 'male', {
+      calories: 2100,
+      protein: 150,
+      carbs: 225,
+      fat: 60,
+    }),
+  ).toThrow('INCONSISTENT_TARGETS');
+  expect(() => applyOnboardingTargetOverrides(goal, 'male', { calories: 1000 })).toThrow(
+    'UNSAFE_MACROS',
+  );
+});
 it('uses only enabled own-goal percentages, caps excess and handles no targets or unavailable reads', () => {
   const values = { calories: 100, protein: 0, carbs: 100, fat: 200, steps: 50, water: 0 };
   const targets = { calories: 100, protein: 100, carbs: 100, fat: 100, steps: 100, water: 100 };

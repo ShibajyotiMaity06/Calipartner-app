@@ -46,6 +46,7 @@
     "../../../packages/core/src/adaptiveReview": "../../../packages/core/src/adaptiveReview.ts",
     "../../../packages/core/src/weightProjection": "../../../packages/core/src/weightProjection.ts",
     "../../../packages/core/src/personalTracking": "../../../packages/core/src/personalTracking.ts",
-    "../../../packages/core/src/suppliedRegionalFoods": "../../../packages/core/src/suppliedRegionalFoods.ts"
+    "../../../packages/core/src/suppliedRegionalFoods": "../../../packages/core/src/suppliedRegionalFoods.ts",
+    "../../../packages/core/src/onboardingDemo": "../../../packages/core/src/onboardingDemo.ts"
   }
 }

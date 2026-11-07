@@ -373,3 +373,17 @@ it('lets an expired trial continue on Free even when pricing fails', async () =>
   expect(close).toHaveBeenCalledOnce();
   expect(billing.create).not.toHaveBeenCalled();
 });
+it('offers the onboarding Free action on the standard paywall without starting checkout', async () => {
+  const home = vi.fn(),
+    close = vi.fn();
+  await act(async () => {
+    renderer = create(<PaywallModal visible onClose={close} onContinueFree={home} />);
+  });
+  await act(async () =>
+    renderer!.root.findByProps({ testID: 'continue-free-onboarding' }).props.onPress(),
+  );
+  expect(home).toHaveBeenCalledOnce();
+  expect(close).not.toHaveBeenCalled();
+  expect(billing.create).not.toHaveBeenCalled();
+  expect(billing.trial).not.toHaveBeenCalled();
+});

@@ -52,7 +52,11 @@ export async function buildPersonalWeeklyPlan(
     { rpc: async (name, args) => await client.rpc(name, args) },
     '1.1-weekly-plan',
   );
-  const request = await stableRequest(userId, singleDay ? 'build-day' : 'build', preferences);
+  const request = await stableRequest(
+    userId,
+    singleDay ? 'build-day-sections' : 'build',
+    preferences,
+  );
   const { data, error } = await client.functions.invoke('weekly-plan', {
     body: { request_id: request.id, preferences, ...(singleDay ? { scope: 'day' } : {}) },
   });

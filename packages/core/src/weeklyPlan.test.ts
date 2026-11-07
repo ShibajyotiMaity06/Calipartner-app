@@ -57,7 +57,20 @@ describe('weekly planning constraints', () => {
   it('validates exactly one personalised training day regardless of weekday and retains safety checks', () => {
     const input = content();
     input.days = input.days.slice(0, 1);
-    const prefs = { ...preferences, workout_days: [2, 4] };
+    input.days[0]!.meals = [
+      ...input.days[0]!.meals.slice(0, 2),
+      ...Array.from({ length: 2 }, () => ({
+        ...input.days[0]!.meals[2]!,
+        calories: 350,
+        protein: 20,
+        carbs: 45,
+        fat: 10,
+      })),
+    ].map((meal, index) => ({
+      ...meal,
+      section: ['breakfast', 'lunch', 'dinner', 'snacks'][index],
+    }));
+    const prefs = { ...preferences, workout_days: [2, 4], meals_per_day: 4 };
     expect(validateWeeklyPlan(input, prefs, goals, { singleDay: true }).days).toHaveLength(1);
     expect(() => validateWeeklyPlan(content(), prefs, goals, { singleDay: true })).toThrow();
     expect(() => validateWeeklyPlan(input, prefs, goals)).toThrow();

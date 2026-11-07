@@ -55,6 +55,7 @@ export type PaywallContext =
   'room' | 'add_people' | 'coach' | 'partner_finder' | 'keep_going' | 'general' | 'weekly_plan';
 
 export interface PaywallModalProps {
+  onContinueFree?: () => void;
   trialExpired?: boolean;
   visible: boolean;
   onClose: () => void;
@@ -163,6 +164,7 @@ const PRO_FEATURES = [
 ];
 
 export function PaywallModal({
+  onContinueFree,
   visible,
   onClose,
   context = 'general',
@@ -962,14 +964,14 @@ export function PaywallModal({
               testID="btn-paywall-cta"
               style={styles.ctaButton}
             />
-            {trialExpired && (
+            {(trialExpired || onContinueFree) && (
               <>
-                <Text variant="bodyS">{t('cardlessTrial.expiredBody')}</Text>
+                {trialExpired && <Text variant="bodyS">{t('cardlessTrial.expiredBody')}</Text>}
                 <Button
                   variant="secondary"
                   label={t('cardlessTrial.continueFree')}
-                  onPress={onClose}
-                  testID="continue-free-after-trial"
+                  onPress={onContinueFree ?? onClose}
+                  testID={onContinueFree ? 'continue-free-onboarding' : 'continue-free-after-trial'}
                 />
               </>
             )}

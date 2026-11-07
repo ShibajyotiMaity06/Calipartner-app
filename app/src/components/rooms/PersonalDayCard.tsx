@@ -69,26 +69,29 @@ export function PersonalDayCard({
   return (
     <View style={styles.card} testID="personal-day-card">
       <View style={styles.row}>
-        <View style={styles.metric}>
-          <Text variant="heading">{t('homeRefresh.yourDay')}</Text>
+        <View style={styles.titleGroup}>
+          <Text variant="heading" style={styles.title}>
+            {t('homeRefresh.yourDay')}
+          </Text>
+          {onEdit && (
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={t('personalDay.editTracking')}
+              onPress={onEdit}
+              style={styles.edit}
+              testID="edit-daily-tracking"
+            >
+              <Ionicons
+                name="pencil"
+                size={homeLayout.editIconSize}
+                color={dark.textHi}
+                style={styles.pencil}
+                accessible={false}
+              />
+            </Pressable>
+          )}
           {goal && <Text variant="bodyS">{goal}</Text>}
         </View>
-        {onEdit && (
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel={t('personalDay.editTracking')}
-            onPress={onEdit}
-            style={styles.edit}
-            testID="edit-daily-tracking"
-          >
-            <Ionicons
-              name="pencil-outline"
-              size={homeLayout.iconSize}
-              color={dark.textHi}
-              accessible={false}
-            />
-          </Pressable>
-        )}
         {!loading && !error && score != null && (
           <Text variant="numeralL" tabular>
             {t('squadDesign.percent', { value: score })}
@@ -184,7 +187,11 @@ export function PersonalDayCard({
   );
 }
 const styles = StyleSheet.create({
+  titleGroup: { flexDirection: 'row', alignItems: 'center', flexShrink: 1 },
+  title: { flexShrink: 1 },
+  pencil: { transform: [{ scaleX: homeLayout.editIconWidthScale }] },
   edit: {
+    marginLeft: -space[2],
     minHeight: homeLayout.touchSize,
     minWidth: homeLayout.touchSize,
     alignItems: 'center',

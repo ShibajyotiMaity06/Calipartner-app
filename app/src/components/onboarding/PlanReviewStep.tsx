@@ -66,7 +66,6 @@ export function PlanReviewStep({
   state,
   onPlanned,
   onCalculation,
-  onHealth,
   saving,
   error,
 }: {
@@ -77,7 +76,6 @@ export function PlanReviewStep({
   onRecommended: () => void;
   onPlanned: (overrides?: OnboardingTargetOverrides) => void;
   onCalculation?: () => void;
-  onHealth?: () => void;
   onChangeGoal: () => void;
   saving: boolean;
   error: string | null;
@@ -87,11 +85,10 @@ export function PlanReviewStep({
   const [editing, setEditing] = React.useState(false);
   const [overrides, setOverrides] = React.useState<OnboardingTargetOverrides>({});
   const fields = [
+    ['calories', result?.targetKcal, 'personalDay.caloriesInput'],
     ['protein', result?.macros.proteinGrams, 'customMacros.protein'],
     ['carbs', result?.macros.carbGrams, 'customMacros.carbs'],
     ['fat', result?.macros.fatGrams, 'customMacros.fat'],
-    ['steps', state.stepGoal, 'setup.stepGoal'],
-    ['water', state.waterMlGoal, 'setup.waterGoal'],
   ] as const;
   return (
     <View style={planStyles.section}>
@@ -133,14 +130,6 @@ export function PlanReviewStep({
           testID="btn-how-calculated"
         />
       )}
-      {onHealth && (
-        <Button
-          variant="tertiary"
-          label={t('setup.privateHealth')}
-          onPress={onHealth}
-          testID="btn-private-health"
-        />
-      )}
       {editing && (
         <PlanCard testID="onboarding-custom-targets">
           <Text variant="heading">{t('personalDay.customTitle')}</Text>
@@ -168,7 +157,11 @@ export function PlanReviewStep({
       )}
       <Button
         label={t(
-          saving ? 'setup.statusSaving' : editing ? 'personalDay.useTargets' : 'personalDay.build',
+          saving
+            ? 'setup.statusSaving'
+            : editing
+              ? 'personalDay.useTargets'
+              : 'personalDay.planMacros',
         )}
         onPress={() => (editing ? onPlanned(overrides) : setEditing(true))}
         disabled={saving || !result || !isGymPlanValid(result)}

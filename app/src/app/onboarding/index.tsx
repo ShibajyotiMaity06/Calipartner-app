@@ -37,7 +37,6 @@ import { PremiumStep } from '@/components/onboarding/PremiumStep';
 import { fetchWebCatalog } from '@/services/webBillingService';
 import { PlanReviewStep, PlanSafetyNotice } from '@/components/onboarding/PlanReviewStep';
 import { GymCalculationStep } from '@/components/onboarding/GymCalculationStep';
-import { HealthScreeningStep } from '@/components/onboarding/HealthScreeningStep';
 import {
   PlanChoice,
   NumberField,
@@ -64,7 +63,7 @@ export default function OnboardingScreen() {
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
   const [draftError, setDraftError] = useState(false);
-  const [sheet, setSheet] = useState<'calculation' | 'health' | null>(null);
+  const [sheet, setSheet] = useState<'calculation' | null>(null);
   const [premiumTier, setPremiumTier] = useState<'plus' | 'pro'>('plus');
   const savingRef = useRef(false);
   const completedRef = useRef(false);
@@ -221,7 +220,12 @@ export default function OnboardingScreen() {
       setSaveError(
         t(
           error instanceof Error &&
-            ['UNSAFE_MACROS', 'INVALID_MACROS', 'INVALID_DAILY_TARGETS'].includes(error.message)
+            [
+              'UNSAFE_MACROS',
+              'INVALID_MACROS',
+              'INVALID_DAILY_TARGETS',
+              'INCONSISTENT_TARGETS',
+            ].includes(error.message)
             ? 'personalDay.invalidTargets'
             : 'common.errorBody',
         ),
@@ -544,7 +548,6 @@ export default function OnboardingScreen() {
                   onRecommended={() => void save(true)}
                   onPlanned={(overrides) => void save(false, overrides)}
                   onCalculation={() => setSheet('calculation')}
-                  onHealth={() => setSheet('health')}
                   onChangeGoal={() => move('goal')}
                   saving={saving}
                   error={saveError}
@@ -577,7 +580,7 @@ export default function OnboardingScreen() {
         visible={sheet !== null}
         onRequestClose={() => setSheet(null)}
         animationType={reduceMotion ? 'none' : 'slide'}
-        accessibilityLabel={t(sheet === 'health' ? 'setup.privateHealth' : 'setup.howCalculated')}
+        accessibilityLabel={t('setup.howCalculated')}
         testID="onboarding-details-sheet"
       >
         <SafeAreaView style={[styles.safe, { backgroundColor: colors.bg0 }]}>
@@ -590,31 +593,9 @@ export default function OnboardingScreen() {
               testID="btn-close-details"
             />
             <Text fontSet="onboarding" variant="title2" color={colors.textHi}>
-              {t(sheet === 'health' ? 'setup.privateHealth' : 'setup.howCalculated')}
+              {t('setup.howCalculated')}
             </Text>
-            {sheet === 'calculation' ? (
-              <GymCalculationStep result={snapshot.calculatedTargets} />
-            ) : (
-              <HealthScreeningStep
-                sex={snapshot.sex}
-                pregnantOrBreastfeeding={snapshot.healthScreening.pregnantOrBreastfeeding}
-                hasDiabetesOrMedication={snapshot.healthScreening.hasDiabetesOrMedication}
-                hasEatingDisorderHistory={snapshot.healthScreening.hasEatingDisorderHistory}
-                onChangePregnant={(value) => {
-                  machine.setHealthScreening({ pregnantOrBreastfeeding: value });
-                  update();
-                }}
-                onChangeDiabetes={(value) => {
-                  machine.setHealthScreening({ hasDiabetesOrMedication: value });
-                  update();
-                }}
-                onChangeEatingDisorder={(value) => {
-                  machine.setHealthScreening({ hasEatingDisorderHistory: value });
-                  update();
-                }}
-                onSkip={() => setSheet(null)}
-              />
-            )}
+            <GymCalculationStep result={snapshot.calculatedTargets} />
           </ScrollView>
         </SafeAreaView>
       </Modal>

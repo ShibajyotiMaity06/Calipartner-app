@@ -52,7 +52,7 @@ export function CoachChatView({ onBack, initialConversationId }: CoachChatViewPr
   const { currentTier, hasActiveAccess, isTrial, loading: subLoading } = useSubscription();
   const isPro = currentTier === 'pro' && hasActiveAccess && !isTrial;
   const { isOnline } = useNetworkStatus();
-  const { checkAndTrigger, paywallState } = usePaywall();
+  const { checkAndTrigger, paywallState, closePaywall } = usePaywall();
 
   // Consent State
   const [hasConsent, setHasConsent] = useState<boolean>(true);
@@ -317,7 +317,10 @@ export function CoachChatView({ onBack, initialConversationId }: CoachChatViewPr
         <PaywallModal
           visible={showPaywallModal || paywallState.isOpen}
           preselectedTier="pro"
-          onClose={() => setShowPaywallModal(false)}
+          onClose={() => {
+            setShowPaywallModal(false);
+            closePaywall();
+          }}
         />
       </View>
     );

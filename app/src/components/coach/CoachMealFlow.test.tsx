@@ -1,7 +1,7 @@
 import React from 'react';
 import { act, create, type ReactTestRenderer } from 'react-test-renderer';
 import { afterEach, expect, it, vi } from 'vitest';
-const state = vi.hoisted(() => ({ query: vi.fn(), save: vi.fn() }));
+const state = vi.hoisted(() => ({ query: vi.fn(), save: vi.fn(), pro: true }));
 vi.mock('react-native', () => ({
   View: 'View',
   Pressable: 'Pressable',
@@ -26,15 +26,22 @@ vi.mock('@/hooks/useTargets', () => ({
 }));
 vi.mock('@/hooks/useSubscription', () => ({
   useSubscription: () => ({
-    currentTier: 'pro',
-    hasActiveAccess: true,
+    currentTier: state.pro ? 'pro' : 'basic',
+    hasActiveAccess: state.pro,
     isTrial: false,
     loading: false,
   }),
 }));
 vi.mock('@/hooks/useNetworkStatus', () => ({ useNetworkStatus: () => ({ isOnline: true }) }));
 vi.mock('@/hooks/usePaywall', () => ({
-  usePaywall: () => ({ checkAndTrigger: vi.fn(), paywallState: {} }),
+  usePaywall: () => {
+    const [isOpen, setIsOpen] = React.useState(false);
+    return {
+      checkAndTrigger: () => setIsOpen(true),
+      paywallState: { isOpen },
+      closePaywall: () => setIsOpen(false),
+    };
+  },
 }));
 vi.mock('@/services/aiCoachClient', () => ({
   queryAiCoach: state.query,
@@ -58,10 +65,12 @@ vi.mock('./CoachHistoryModal', () => ({ CoachHistoryModal: 'History' }));
 vi.mock('./CoachReportModal', () => ({ CoachReportModal: 'Report' }));
 vi.mock('./CoachSuggestedPrompts', () => ({ CoachSuggestedPrompts: 'Prompts' }));
 import { CoachChatView } from './CoachChatView';
+import { AiCoachLockedCard, PaywallModal } from '@/components/rooms';
 let tree: ReactTestRenderer;
 afterEach(async () => {
   if (tree) await act(async () => tree.unmount());
   vi.clearAllMocks();
+  state.pro = true;
 });
 const mealDraft = {
   description: '2 boiled eggs',
@@ -124,4 +133,16 @@ it('clarifies portions and meal section, then logs only on a tap and waits for a
     acknowledge();
   });
   expect(tree.root.findByProps({ testID: 'coach-meal-log' }).props.label).toBe('Meal logged');
+});
+
+it('closes both the local and triggered paywall states for a Free coach user', async () => {
+  (globalThis as unknown as { IS_REACT_ACT_ENVIRONMENT: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
+  state.pro = false;
+  await act(async () => {
+    tree = create(<CoachChatView />);
+  });
+  await act(async () => tree.root.findByType(AiCoachLockedCard).props.onUnlock());
+  expect(tree.root.findByType(PaywallModal).props.visible).toBe(true);
+  await act(async () => tree.root.findByType(PaywallModal).props.onClose());
+  expect(tree.root.findByType(PaywallModal).props.visible).toBe(false);
 });

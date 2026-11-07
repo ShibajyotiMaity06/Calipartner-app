@@ -192,6 +192,7 @@ export function WeeklyPlanForm({
       onBuild(
         validatePlanPreferences({
           ...preferences,
+          ...(singleDay ? { meals_per_day: 4 } : {}),
           allergies: list(allergies),
           exclusions: list(exclusions),
         }),
@@ -277,13 +278,17 @@ export function WeeklyPlanForm({
             hint={t('fixNovember.commaHint')}
             id="plan-exclusions"
           />
-          <Choice
-            label={t('fixNovember.meals')}
-            values={[3, 4, 5].map((value) => ({ value, label: String(value) }))}
-            selected={[preferences.meals_per_day]}
-            onSelect={(value) => update('meals_per_day', value)}
-            id="plan-meals"
-          />
+          {singleDay ? (
+            <Text>{t('personalDay.fourMeals')}</Text>
+          ) : (
+            <Choice
+              label={t('fixNovember.meals')}
+              values={[3, 4, 5].map((value) => ({ value, label: String(value) }))}
+              selected={[preferences.meals_per_day]}
+              onSelect={(value) => update('meals_per_day', value)}
+              id="plan-meals"
+            />
+          )}
           {field('cooking_minutes', true)}
           {choose('budget', ['economical', 'flexible'])}
           <Pressable

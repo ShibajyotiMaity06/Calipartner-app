@@ -34,13 +34,17 @@ vi.mock('@/contexts/AuthContext', () => ({
 vi.mock('@/hooks/useTargets', () => ({
   useTargets: () => ({ currentGoalProfile: { id: 'goal', current_weight_kg: 80 } }),
 }));
-vi.mock('@/hooks/useBrowserModalBack', () => ({ useBrowserModalBack: vi.fn() }));
+vi.mock('@/hooks/useBrowserModalBack', () => ({
+  useBrowserModalBack: vi.fn(),
+  closeBrowserModalsThen: (navigate: () => void) => navigate(),
+}));
 vi.mock('@/services/weeklyPlanService', () => ({
   getPersonalWeeklyPlan: state.load,
   buildPersonalWeeklyPlan: state.build,
 }));
 vi.mock('@/services/pairOnboardingService', () => ({
   afterSetupDestination: async () => '/pair-start',
+  finishPairPrompt: vi.fn(),
 }));
 vi.mock('@/components/rooms/SquadViews', () => ({ squadStyles: {} }));
 vi.mock('@/components/rooms/PaywallModal', () => ({ PaywallModal: 'PaywallModal' }));
@@ -98,11 +102,9 @@ it('builds one day after all preferences, then visits day, coach, compare and pa
     expect(tree.root.findAllByType(OnboardingPaywall)).toHaveLength(0);
     await act(async () => tree.root.findByType(PersonalisedDayPreview).props.onNext());
   }
-  await act(async () => tree.root.findByType(OnboardingPaywall).props.onCheckout('pro', 'monthly'));
-  expect(tree.root.findByType(PaywallModal).props).toMatchObject({
-    preselectedTier: 'pro',
-    preselectedDuration: 'monthly',
-  });
+  expect(tree.root.findByType(PaywallModal).props.context).toBe('weekly_plan');
+  await act(async () => tree.root.findByType(PaywallModal).props.onContinueFree());
+  expect(state.replace).toHaveBeenCalledWith('/(tabs)/today');
 });
 it('a failed request retains the preferences and shows an error instead of a fabricated plan', async () => {
   state.build.mockRejectedValue(new Error('PLAN_UNAVAILABLE'));
@@ -113,4 +115,14 @@ it('a failed request retains the preferences and shows an error instead of a fab
   expect(tree.root.findAllByProps({ accessibilityRole: 'alert' })).toHaveLength(1);
   expect(tree.root.findAllByProps({ testID: 'weekly-plan-paid-lock' })).toHaveLength(0);
   expect(tree.root.findByType(WeeklyPlanForm).props.initial).toEqual(preferences);
+});
+it('preserves an existing day and reports a failed meal-section update', async () => {
+  state.load.mockResolvedValue(monday);
+  state.build.mockRejectedValue(new Error('PLAN_UNAVAILABLE'));
+  await act(async () => {
+    tree = create(<WeeklyPlanScreen />);
+  });
+  await act(async () => tree.root.findByType(PersonalisedDayPreview).props.onRebuild());
+  expect(tree.root.findByType(PersonalisedDayPreview).props.plan).toEqual(monday);
+  expect(tree.root.findAllByProps({ accessibilityRole: 'alert' })).toHaveLength(1);
 });

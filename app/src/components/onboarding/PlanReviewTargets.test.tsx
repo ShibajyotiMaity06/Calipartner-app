@@ -51,11 +51,14 @@ it('opens optional target fields after Build your plan, preserves blanks and ski
   expect(tree.root.findAllByProps({ testID: 'onboarding-custom-targets' })).toHaveLength(0);
   await act(async () => tree.root.findByProps({ testID: 'btn-build-your-plan' }).props.onPress());
   expect(tree.root.findByProps({ testID: 'custom-target-protein' }).props.value).toBeNull();
+  expect(tree.root.findAllByProps({ testID: 'custom-target-steps' })).toHaveLength(0);
+  expect(tree.root.findAllByProps({ testID: 'custom-target-water' })).toHaveLength(0);
+  expect(tree.root.findAllByProps({ testID: 'btn-private-health' })).toHaveLength(0);
   await act(async () =>
-    tree.root.findByProps({ testID: 'custom-target-steps' }).props.onChange(10000),
+    tree.root.findByProps({ testID: 'custom-target-calories' }).props.onChange(2200),
   );
   await act(async () => tree.root.findByProps({ testID: 'btn-use-planned' }).props.onPress());
-  expect(onPlanned).toHaveBeenLastCalledWith({ steps: 10000 });
+  expect(onPlanned).toHaveBeenLastCalledWith({ calories: 2200 });
   await act(async () => tree.root.findByProps({ testID: 'skip-custom-targets' }).props.onPress());
   expect(onPlanned).toHaveBeenLastCalledWith({});
 });

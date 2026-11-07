@@ -1,4 +1,4 @@
-import { customMacroTargets } from './targets';
+import { customMacroTargets, getCalorieFloor } from './targets';
 import type { GoalProfile, Sex } from './types';
 
 export const TRACKING_METRICS = ['calories', 'protein', 'carbs', 'fat', 'steps', 'water'] as const;
@@ -48,6 +48,7 @@ export function personalTrackingCompletion(
   );
 }
 export interface OnboardingTargetOverrides {
+  calories?: number | null;
   protein?: number | null;
   carbs?: number | null;
   fat?: number | null;
@@ -63,17 +64,46 @@ export function applyOnboardingTargetOverrides(
   const hasMacros = ['protein', 'carbs', 'fat'].some(
     (key) => input[key as keyof OnboardingTargetOverrides] != null,
   );
-  const macros = hasMacros
-    ? customMacroTargets(
-        {
-          protein: input.protein ?? goal.protein_grams,
-          carbs: input.carbs ?? goal.carb_grams,
-          fat: input.fat ?? goal.fat_grams,
-        },
-        goal,
-        sex,
-      )
-    : {};
+  const grams = {
+    protein: input.protein ?? goal.protein_grams,
+    carbs: input.carbs ?? goal.carb_grams,
+    fat: input.fat ?? goal.fat_grams,
+  };
+  if (input.calories != null) {
+    if (!Number.isInteger(input.calories) || input.calories <= 0) throw new Error('INVALID_MACROS');
+    if (input.calories < getCalorieFloor(sex) || input.calories > 10000)
+      throw new Error('UNSAFE_MACROS');
+    if (input.carbs == null) {
+      // Whole-gram targets must still add up exactly to the requested calories.
+      if (input.fat == null) {
+        const compatibleFat = [
+          grams.fat,
+          grams.fat + 1,
+          grams.fat - 1,
+          grams.fat + 2,
+          grams.fat - 2,
+          grams.fat + 3,
+          grams.fat - 3,
+        ].find(
+          (fat) =>
+            fat >= 0 &&
+            input.calories! - 4 * grams.protein - 9 * fat >= 0 &&
+            (input.calories! - 4 * grams.protein - 9 * fat) % 4 === 0,
+        );
+        if (compatibleFat !== undefined) grams.fat = compatibleFat;
+      }
+      grams.carbs = (input.calories - 4 * grams.protein - 9 * grams.fat) / 4;
+    } else if (input.protein == null)
+      grams.protein = (input.calories - 4 * grams.carbs - 9 * grams.fat) / 4;
+    else if (input.fat == null)
+      grams.fat = (input.calories - 4 * grams.protein - 4 * grams.carbs) / 9;
+    if (
+      4 * grams.protein + 4 * grams.carbs + 9 * grams.fat !== input.calories ||
+      Object.values(grams).some((value) => !Number.isInteger(value))
+    )
+      throw new Error('INCONSISTENT_TARGETS');
+  }
+  const macros = hasMacros || input.calories != null ? customMacroTargets(grams, goal, sex) : {};
   const step_goal = input.steps ?? goal.step_goal;
   const water_ml_goal = input.water ?? goal.water_ml_goal;
   if (
