@@ -20,7 +20,7 @@ describe('Coach diary context windows', () => {
   });
   it('rejects invalid/future dates and supports week/month/90-day questions', () => {
     expect(coachHistoryWindow('2026-11-03', '2026-02-30 or 2027-01-01')).toEqual({
-      start: '2026-10-05',
+      start: '2026-10-28',
       end: '2026-11-03',
     });
     expect(coachHistoryWindow('2026-11-03', 'My week')).toEqual({

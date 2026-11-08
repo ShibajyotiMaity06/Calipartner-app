@@ -55,7 +55,7 @@ const suffix = `
   await page.getByTestId('weekly-plan-consent').click();
   await page.getByTestId('build-weekly-plan').click();
   await page.getByTestId('personal-plan-progress').waitFor();
-  await page.getByTestId('preparing-details-food').click();
+  assert.equal(await page.getByTestId('preparing-details-food').count(),0);
   await page.screenshot({path:path.join(out,'preparing-personalised.png'),fullPage:true});
   await page.getByTestId('personalised-preview-0').waitFor();
   assert.equal(buildRequests.length,1);assert.equal(buildRequests[0].scope,'day');assert.equal(weeklyPlan.days.length,1);

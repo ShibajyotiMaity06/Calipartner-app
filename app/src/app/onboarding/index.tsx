@@ -1,3 +1,4 @@
+import { macroErrorMessage } from '@/i18n/macroErrors';
 import { applyOnboardingTargetOverrides, type OnboardingTargetOverrides } from '@calipartner/core';
 import React, { useEffect, useRef, useState } from 'react';
 import {
@@ -217,19 +218,7 @@ export default function OnboardingScreen() {
       await clearOnboardingDraft(await getDb(), user.id).catch(() => {});
       router.push('/weekly-plan?setup=1' as never);
     } catch (error) {
-      setSaveError(
-        t(
-          error instanceof Error &&
-            [
-              'UNSAFE_MACROS',
-              'INVALID_MACROS',
-              'INVALID_DAILY_TARGETS',
-              'INCONSISTENT_TARGETS',
-            ].includes(error.message)
-            ? 'personalDay.invalidTargets'
-            : 'common.errorBody',
-        ),
-      );
+      setSaveError(macroErrorMessage(error));
     } finally {
       savingRef.current = false;
       setSaving(false);

@@ -1,15 +1,19 @@
+import { loadAccountTable } from '@/services/accountDataService';
+import { ExerciseSetsForm, type ExerciseSetInput } from './ExerciseSetsForm';
+import { useBrowserModalBack } from '@/hooks/useBrowserModalBack';
 import { type as inputTypography } from '@calipartner/ui';
 import React, { useCallback, useEffect, useState } from 'react';
 import {
   ActivityIndicator,
   FlatList,
+  ScrollView,
   Modal,
   StyleSheet,
   TextInput,
   TouchableOpacity,
   View,
 } from 'react-native';
-import { Text, type as typography } from '@calipartner/ui';
+import { Text, homeLayout, type as typography } from '@calipartner/ui';
 import { Ionicons } from '@expo/vector-icons';
 import type { Equipment, Exercise, ExerciseType, MuscleGroup } from '@calipartner/core';
 import { useAuth } from '@/contexts/AuthContext';
@@ -22,22 +26,19 @@ import { useTheme } from '@/theme/useTheme';
 interface ExercisePickerModalProps {
   visible: boolean;
   onClose: () => void;
-  onSelectExercise: (exercise: Exercise) => void;
+  onSelectExercise: (exercise: Exercise, sets: ExerciseSetInput[]) => void;
   testID?: string;
 }
 
-const MUSCLE_GROUPS: Array<{ key: MuscleGroup | 'all'; label: string }> = [
-  { key: 'all', label: 'All' },
-  { key: 'chest', label: 'Chest' },
-  { key: 'back', label: 'Back' },
-  { key: 'legs', label: 'Legs' },
-  { key: 'shoulders', label: 'Shoulders' },
-  { key: 'arms', label: 'Arms' },
-  { key: 'core', label: 'Core' },
-  { key: 'cardio', label: 'Cardio' },
-  { key: 'full_body', label: 'Full Body' },
-  { key: 'other', label: 'Other' },
-];
+const MUSCLE_GROUPS = ['all', 'upper', 'lower', 'core', 'full'] as const;
+type ExerciseFilter = (typeof MUSCLE_GROUPS)[number];
+const filterGroups: Record<ExerciseFilter, readonly string[]> = {
+  all: [],
+  upper: ['chest', 'back', 'shoulders', 'arms'],
+  lower: ['legs'],
+  core: ['core'],
+  full: ['full_body'],
+};
 
 export function ExercisePickerModal({
   visible,
@@ -50,7 +51,14 @@ export function ExercisePickerModal({
   const userId = user?.id ?? 'guest-user';
 
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedMuscle, setSelectedMuscle] = useState<MuscleGroup | 'all'>('all');
+  const [selectedMuscle, setSelectedMuscle] = useState<ExerciseFilter>('all');
+  const [configuring, setConfiguring] = useState<Exercise | null>(null);
+  useBrowserModalBack(visible, () => {
+    if (configuring) setConfiguring(null);
+    else onClose();
+  });
+  const requestVersion = React.useRef(0);
+  const loadedCatalog = React.useRef<string | null>(null);
   const [exercises, setExercises] = useState<Exercise[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -64,20 +72,29 @@ export function ExercisePickerModal({
   const [creatingCustom, setCreatingCustom] = useState(false);
 
   const fetchExercises = useCallback(async () => {
+    const version = ++requestVersion.current;
     try {
       setLoading(true);
       setError(null);
       const db = await getDb();
+      if (loadedCatalog.current !== userId) {
+        await loadAccountTable(db, 'exercises', userId);
+        loadedCatalog.current = userId;
+      }
       const list = await getExercises(db, {
-        muscleGroup: selectedMuscle === 'all' ? undefined : selectedMuscle,
         searchQuery: searchQuery.trim().length > 0 ? searchQuery : undefined,
         userId,
       });
-      setExercises(list);
+      const filtered =
+        selectedMuscle === 'all'
+          ? list
+          : list.filter((exercise) => filterGroups[selectedMuscle].includes(exercise.muscle_group));
+      if (version === requestVersion.current)
+        setExercises(searchQuery.trim() ? filtered : filtered.slice(0, 5));
     } catch (e) {
-      setError(e instanceof Error ? e.message : String(e));
+      if (version === requestVersion.current) setError(e instanceof Error ? e.message : String(e));
     } finally {
-      setLoading(false);
+      if (version === requestVersion.current) setLoading(false);
     }
   }, [selectedMuscle, searchQuery, userId]);
 
@@ -104,8 +121,7 @@ export function ExercisePickerModal({
       );
       setShowCustomModal(false);
       setCustomName('');
-      onSelectExercise(created);
-      onClose();
+      setConfiguring(created);
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
     } finally {
@@ -122,8 +138,7 @@ export function ExercisePickerModal({
           { backgroundColor: colors.surface, borderColor: colors.border },
         ]}
         onPress={() => {
-          onSelectExercise(item);
-          onClose();
+          setConfiguring(item);
         }}
         accessibilityRole="button"
         accessibilityLabel={`${item.name}, ${item.muscle_group}, ${item.equipment}`}
@@ -184,7 +199,10 @@ export function ExercisePickerModal({
         >
           <TouchableOpacity
             testID={`${testID}-btn-close`}
-            onPress={onClose}
+            onPress={() => {
+              setConfiguring(null);
+              onClose();
+            }}
             style={styles.closeBtn}
             accessibilityRole="button"
             accessibilityLabel={t('common.cancel')}
@@ -234,7 +252,8 @@ export function ExercisePickerModal({
                 testID={`${testID}-btn-clear-search`}
                 onPress={() => setSearchQuery('')}
                 accessibilityRole="button"
-                accessibilityLabel="Clear search"
+                accessibilityLabel={t('personalDay.clearSearch')}
+                style={styles.closeBtn}
               >
                 <Ionicons name="close-circle" size={18} color={colors.textMuted} />
               </TouchableOpacity>
@@ -242,91 +261,115 @@ export function ExercisePickerModal({
           </View>
         </View>
 
-        {/* Muscle Group Filter Chips */}
-        <View style={styles.chipsRow}>
-          <FlatList
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            data={MUSCLE_GROUPS}
-            keyExtractor={(item) => item.key}
-            contentContainerStyle={{ paddingHorizontal: spacing.md, gap: spacing.xs }}
-            renderItem={({ item }) => {
-              const active = selectedMuscle === item.key;
-              return (
+        {!configuring && (
+          <>
+            {/* Muscle Group Filter Chips */}
+            <View style={styles.chipsRow}>
+              <FlatList
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                data={MUSCLE_GROUPS}
+                keyExtractor={(item) => item}
+                contentContainerStyle={{ paddingHorizontal: spacing.md, gap: spacing.xs }}
+                renderItem={({ item }) => {
+                  const active = selectedMuscle === item;
+                  return (
+                    <TouchableOpacity
+                      testID={`chip-muscle-${item}`}
+                      style={[
+                        styles.chip,
+                        {
+                          backgroundColor: active ? colors.accent : colors.surface,
+                          borderColor: active ? colors.accent : colors.border,
+                        },
+                      ]}
+                      onPress={() => setSelectedMuscle(item)}
+                      accessibilityRole="button"
+                      accessibilityLabel={t(`personalDay.${item}`)}
+                      accessibilityState={{ selected: active }}
+                    >
+                      <Text
+                        style={[styles.chipText, { color: active ? colors.onAccent : colors.text }]}
+                      >
+                        {t(`personalDay.${item}`)}
+                      </Text>
+                    </TouchableOpacity>
+                  );
+                }}
+              />
+            </View>
+
+            {/* Exercise List / Loading / Error / Empty states */}
+            {loading ? (
+              <View style={styles.centerState}>
+                <ActivityIndicator size="large" color={colors.accent} />
+                <Text style={[styles.stateText, { color: colors.textMuted }]}>
+                  {t('common.loading')}
+                </Text>
+              </View>
+            ) : error ? (
+              <View style={styles.centerState}>
+                <Ionicons name="alert-circle-outline" size={36} color={colors.danger} />
+                <Text style={[styles.stateText, { color: colors.danger }]}>{error}</Text>
                 <TouchableOpacity
-                  testID={`chip-muscle-${item.key}`}
-                  style={[
-                    styles.chip,
-                    {
-                      backgroundColor: active ? colors.accent : colors.surface,
-                      borderColor: active ? colors.accent : colors.border,
-                    },
-                  ]}
-                  onPress={() => setSelectedMuscle(item.key)}
+                  testID={`${testID}-btn-retry`}
+                  style={[styles.retryBtn, { backgroundColor: colors.accent }]}
+                  onPress={fetchExercises}
                   accessibilityRole="button"
-                  accessibilityLabel={item.label}
+                  accessibilityLabel={t('common.retry')}
                 >
-                  <Text
-                    style={[styles.chipText, { color: active ? colors.onAccent : colors.text }]}
-                  >
-                    {item.label}
+                  <Text style={{ color: colors.onAccent, fontWeight: '700' }}>
+                    {t('common.retry')}
                   </Text>
                 </TouchableOpacity>
-              );
-            }}
-          />
-        </View>
-
-        {/* Exercise List / Loading / Error / Empty states */}
-        {loading ? (
-          <View style={styles.centerState}>
-            <ActivityIndicator size="large" color={colors.accent} />
-            <Text style={[styles.stateText, { color: colors.textMuted }]}>
-              {t('common.loading')}
-            </Text>
-          </View>
-        ) : error ? (
-          <View style={styles.centerState}>
-            <Ionicons name="alert-circle-outline" size={36} color={colors.danger} />
-            <Text style={[styles.stateText, { color: colors.danger }]}>{error}</Text>
-            <TouchableOpacity
-              testID={`${testID}-btn-retry`}
-              style={[styles.retryBtn, { backgroundColor: colors.accent }]}
-              onPress={fetchExercises}
-              accessibilityRole="button"
-              accessibilityLabel={t('common.retry')}
-            >
-              <Text style={{ color: colors.onAccent, fontWeight: '700' }}>{t('common.retry')}</Text>
-            </TouchableOpacity>
-          </View>
-        ) : exercises.length === 0 ? (
-          <View style={styles.centerState}>
-            <Ionicons name="barbell-outline" size={44} color={colors.textMuted} />
-            <Text style={[styles.emptyTitle, { color: colors.text }]}>
-              {t('workouts.exercises.noExercisesFound')}
-            </Text>
-            <TouchableOpacity
-              testID={`${testID}-btn-create-custom-empty`}
-              style={[styles.createCustomPromptBtn, { backgroundColor: colors.accent }]}
-              onPress={() => setShowCustomModal(true)}
-              accessibilityRole="button"
-              accessibilityLabel={t('workouts.exercises.createCustom')}
-            >
-              <Ionicons name="add-circle-outline" size={18} color={colors.onAccent} />
-              <Text style={[styles.createCustomPromptText, { color: colors.onAccent }]}>
-                {t('workouts.exercises.createCustom')}
-              </Text>
-            </TouchableOpacity>
-          </View>
-        ) : (
-          <FlatList
-            testID={`${testID}-list`}
-            data={exercises}
-            keyExtractor={(item) => item.id}
-            renderItem={renderExerciseItem}
+              </View>
+            ) : exercises.length === 0 ? (
+              <View style={styles.centerState}>
+                <Ionicons name="barbell-outline" size={44} color={colors.textMuted} />
+                <Text style={[styles.emptyTitle, { color: colors.text }]}>
+                  {t('workouts.exercises.noExercisesFound')}
+                </Text>
+                <TouchableOpacity
+                  testID={`${testID}-btn-create-custom-empty`}
+                  style={[styles.createCustomPromptBtn, { backgroundColor: colors.accent }]}
+                  onPress={() => setShowCustomModal(true)}
+                  accessibilityRole="button"
+                  accessibilityLabel={t('workouts.exercises.createCustom')}
+                >
+                  <Ionicons name="add-circle-outline" size={18} color={colors.onAccent} />
+                  <Text style={[styles.createCustomPromptText, { color: colors.onAccent }]}>
+                    {t('workouts.exercises.createCustom')}
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            ) : (
+              <FlatList
+                testID={`${testID}-list`}
+                data={exercises}
+                keyExtractor={(item) => item.id}
+                renderItem={renderExerciseItem}
+                contentContainerStyle={styles.listContent}
+                showsVerticalScrollIndicator={false}
+              />
+            )}
+          </>
+        )}
+        {configuring && (
+          <ScrollView
             contentContainerStyle={styles.listContent}
-            showsVerticalScrollIndicator={false}
-          />
+            keyboardShouldPersistTaps="handled"
+          >
+            <ExerciseSetsForm
+              key={configuring.id}
+              name={configuring.name}
+              onCancel={() => setConfiguring(null)}
+              onAdd={(sets) => {
+                onSelectExercise(configuring, sets);
+                setConfiguring(null);
+                onClose();
+              }}
+            />
+          </ScrollView>
         )}
 
         {/* Custom Exercise Modal */}
@@ -544,6 +587,10 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
   },
   closeBtn: {
+    minWidth: homeLayout.touchSize,
+    minHeight: homeLayout.touchSize,
+    alignItems: 'center',
+    justifyContent: 'center',
     padding: 6,
   },
   modalTitle: {
@@ -552,6 +599,10 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   customAddBtn: {
+    minWidth: homeLayout.touchSize,
+    minHeight: homeLayout.touchSize,
+    alignItems: 'center',
+    justifyContent: 'center',
     padding: 6,
   },
   searchContainer: {
@@ -564,13 +615,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: spacing.xs,
     paddingHorizontal: spacing.sm,
-    height: 42,
+    minHeight: homeLayout.touchSize,
     borderRadius: radius.md,
     borderWidth: 1,
   },
   searchInput: {
     flex: 1,
-    height: '100%',
+    minHeight: homeLayout.touchSize,
     fontFamily: typography.body.fontFamily,
     fontSize: fontSize.sm,
   },
@@ -578,6 +629,8 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.xs,
   },
   chip: {
+    minHeight: homeLayout.touchSize,
+    justifyContent: 'center',
     paddingHorizontal: spacing.sm,
     paddingVertical: 6,
     borderRadius: radius.pill,
@@ -690,7 +743,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   formInput: {
-    height: 42,
+    minHeight: homeLayout.touchSize,
     borderRadius: radius.sm,
     borderWidth: 1,
     paddingHorizontal: spacing.sm,

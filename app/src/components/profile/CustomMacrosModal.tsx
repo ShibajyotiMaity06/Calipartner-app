@@ -4,7 +4,8 @@ import { Modal, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Button, Text, useTheme } from '@calipartner/ui';
 import type { GoalProfile, Sex } from '@calipartner/core';
-import { customMacroTargets } from '@calipartner/core';
+import { applyOnboardingTargetOverrides } from '@calipartner/core';
+import { macroErrorMessage } from '@/i18n/macroErrors';
 import { useTargets } from '@/hooks/useTargets';
 import { useSubscription } from '@/hooks/useSubscription';
 import { NumberField, planStyles } from '@/components/onboarding/PlanPrimitives';
@@ -23,27 +24,35 @@ export function CustomMacrosModal({
   const { colors } = useTheme();
   const { updateCustomMacros } = useTargets();
   const subscription = useSubscription();
-  const [protein, setProtein] = useState<number | null>(goal.protein_grams);
-  const [carbs, setCarbs] = useState<number | null>(goal.carb_grams);
-  const [fat, setFat] = useState<number | null>(goal.fat_grams);
+  const [protein, setProtein] = useState<number | null>(null);
+  const [carbs, setCarbs] = useState<number | null>(null);
+  const [fat, setFat] = useState<number | null>(null);
+  const [calories, setCalories] = useState<number | null>(null);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState(false);
   const lock = useRef(false);
   const allowed = subscription.hasPlan && ['plus', 'pro'].includes(subscription.currentTier);
-  const macros = { protein: protein ?? NaN, carbs: carbs ?? NaN, fat: fat ?? NaN };
-  let preview: ReturnType<typeof customMacroTargets> | null = null;
+  let preview: GoalProfile | null = null;
+  let validationError: string | null = null;
   try {
-    preview = customMacroTargets(macros, goal, sex);
-  } catch {
-    /* Invalid drafts remain editable. */
+    preview = applyOnboardingTargetOverrides(goal, sex, { calories, protein, carbs, fat });
+  } catch (error) {
+    validationError = macroErrorMessage(error);
   }
   const save = async () => {
     if (!allowed || !preview || lock.current) return;
+    if ([calories, protein, carbs, fat].every((value) => value == null)) {
+      onClose();
+      return;
+    }
     lock.current = true;
     setSaving(true);
     setError(false);
     try {
-      const result = await updateCustomMacros(macros, sex);
+      const result = await updateCustomMacros(
+        { protein: preview.protein_grams, carbs: preview.carb_grams, fat: preview.fat_grams },
+        sex,
+      );
       if (result.success) onClose();
     } catch {
       setError(true);
@@ -82,7 +91,7 @@ export function CustomMacrosModal({
             <Text>{t('customMacros.locked')}</Text>
           ) : (
             <>
-              <Text>{t('customMacros.description')}</Text>
+              <Text>{t('personalDay.blankDefaults')}</Text>
               <NutrientSummary
                 values={{
                   calories: goal.daily_calorie_target,
@@ -92,6 +101,14 @@ export function CustomMacrosModal({
                 }}
               />
               <NumberField
+                optional
+                label={t('personalDay.caloriesInput')}
+                value={calories}
+                onChange={setCalories}
+                testID="custom-macros-calories"
+              />
+              <NumberField
+                optional
                 nutrient="protein"
                 label={t('customMacros.protein')}
                 value={protein}
@@ -99,6 +116,7 @@ export function CustomMacrosModal({
                 testID="custom-macros-protein"
               />
               <NumberField
+                optional
                 nutrient="carbs"
                 label={t('customMacros.carbs')}
                 value={carbs}
@@ -106,6 +124,7 @@ export function CustomMacrosModal({
                 testID="custom-macros-carbs"
               />
               <NumberField
+                optional
                 nutrient="fat"
                 label={t('customMacros.fat')}
                 value={fat}
@@ -117,7 +136,7 @@ export function CustomMacrosModal({
                   {t('customMacros.total', { calories: preview.daily_calorie_target })}
                 </Text>
               ) : (
-                <Text accessibilityRole="alert">{t('customMacros.invalid')}</Text>
+                <Text accessibilityRole="alert">{validationError}</Text>
               )}
               {error ? (
                 <Text accessibilityRole="alert" color={colors.danger}>

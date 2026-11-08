@@ -26,9 +26,9 @@ it('preserves every default for blank inputs and only changes supplied targets',
   });
   expect(applyOnboardingTargetOverrides(goal, 'male', { protein: 160 })).toMatchObject({
     protein_grams: 160,
-    carb_grams: 225,
+    carb_grams: 215,
     fat_grams: 60,
-    daily_calorie_target: 2080,
+    daily_calorie_target: 2040,
     custom_macros: true,
   });
 });
@@ -73,7 +73,7 @@ it('accepts calorie-only targets, derives missing grams and rejects inconsistent
     }),
   ).toThrow('INCONSISTENT_TARGETS');
   expect(() => applyOnboardingTargetOverrides(goal, 'male', { calories: 1000 })).toThrow(
-    'UNSAFE_MACROS',
+    'MACRO_RANGE_CALORIES',
   );
 });
 it('uses only enabled own-goal percentages, caps excess and handles no targets or unavailable reads', () => {
@@ -107,4 +107,14 @@ it('uses only enabled own-goal percentages, caps excess and handles no targets o
     }),
   ).toBeNull();
   expect(() => validateTrackingPreferences({ ...DEFAULT_TRACKING, water: 1 })).toThrow();
+});
+
+it('protein alone fills the remaining calories on maintenance without a calorie-matching error', () => {
+  const maintenance = { ...goal, goal: 'maintain' as const, tdee: 2040 };
+  expect(applyOnboardingTargetOverrides(maintenance, 'male', { protein: 160 })).toMatchObject({
+    daily_calorie_target: 2040,
+    protein_grams: 160,
+    carb_grams: 215,
+    fat_grams: 60,
+  });
 });

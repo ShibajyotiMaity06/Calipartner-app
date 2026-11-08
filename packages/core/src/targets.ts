@@ -31,6 +31,42 @@ export const CALORIE_FLOORS: Record<Sex, number> = {
   other: 1350,
 };
 
+/** Recommendation anchors depend on planning inputs, never the last custom override. */
+export function macroRecommendation(goal: GoalProfile, sex: Sex) {
+  const weight = goal.current_weight_kg;
+  const floor = sex === 'male' ? 1500 : sex === 'female' ? 1200 : 1350;
+  const gym = goal.gym_days != null;
+  const minimum = Math.max(floor, gym ? weight * 19.6 : floor);
+  const maxRate = Math.max(0, Math.min(weight * 0.01, (goal.tdee - minimum) / 1100));
+  const rate =
+    goal.goal === 'cut'
+      ? Math.floor(Math.min(0.5, maxRate) * 100) / 100
+      : goal.goal === 'bulk'
+        ? Math.floor(Math.min(weight * 0.005, weight * 0.01) * 100) / 100
+        : 0;
+  const calories = Math.round(goal.tdee + (goal.goal === 'cut' ? -1 : 1) * Math.round(rate * 1100));
+  const protein = Math.round(
+    weight * (gym ? 2.2 : goal.goal === 'cut' ? 2 : goal.goal === 'bulk' ? 1.8 : 1.6),
+  );
+  const fat = gym
+    ? Math.round(weight * 1.2)
+    : Math.max(Math.round((calories * 0.25) / 9), Math.round(weight * 0.6));
+  const carbs = Math.max(0, Math.round((calories - protein * 4 - fat * 9) / 4));
+  return { calories, protein, carbs, fat };
+}
+
+export function validateMacroBounds(
+  values: ReturnType<typeof macroRecommendation>,
+  goal: GoalProfile,
+  sex: Sex,
+) {
+  const baseline = macroRecommendation(goal, sex);
+  const limits = { calories: 500, protein: 50, carbs: 125, fat: 55 };
+  for (const key of ['calories', 'protein', 'carbs', 'fat'] as const)
+    if (Math.abs(values[key] - baseline[key]) > limits[key])
+      throw new Error(`MACRO_RANGE_${key.toUpperCase()}`);
+}
+
 export interface CustomMacros {
   protein: number;
   carbs: number;
@@ -57,6 +93,7 @@ export function customMacroTargets(macros: CustomMacros, goal: GoalProfile, sex:
     (goal.goal === 'maintain' && change !== 0)
   )
     throw new Error('UNSAFE_MACROS');
+  validateMacroBounds({ calories, ...macros }, goal, sex);
   return {
     daily_calorie_target: calories,
     protein_grams: macros.protein,

@@ -26,6 +26,8 @@ export function coachHistoryWindow(today: string, question: string) {
     ? 90
     : /\b(week|7 days)\b/i.test(question)
       ? 7
-      : 30;
+      : /\b(month|30 days)\b/i.test(question)
+        ? 30
+        : 7;
   return { start: getPreviousDateString(today, days - 1), end: today };
 }

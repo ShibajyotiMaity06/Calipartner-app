@@ -1,5 +1,6 @@
+import { CompactSelect } from '@/components/CompactSelect';
 import React from 'react';
-import { Pressable, View } from 'react-native';
+import { View } from 'react-native';
 import type { OnboardingState } from '@/services/onboardingStateMachine';
 import { Text, useTheme } from '@calipartner/ui';
 import { t } from '@/i18n';
@@ -40,35 +41,16 @@ export function TrainingStep({
               : 'setup.activeTraining',
           )}
         </Text>
-        <View style={planStyles.row} accessibilityRole="radiogroup">
-          {Array.from({ length: 8 }, (_, day) => (
-            <Pressable
-              key={day}
-              accessibilityRole="radio"
-              accessibilityState={{ selected: day === state.gymDays }}
-              accessibilityLabel={t('setup.daysLabel', { days: day })}
-              testID={`gym-days-${day}`}
-              onPress={() => onDays(day)}
-              style={({ pressed }) => [
-                planStyles.radio,
-                {
-                  borderColor: day === state.gymDays ? colors.cream : colors.hairlineLit,
-                  backgroundColor:
-                    day === state.gymDays ? colors.cream : pressed ? colors.s3 : colors.s2,
-                },
-              ]}
-            >
-              <Text
-                fontSet="onboarding"
-                tabular
-                color={day === state.gymDays ? colors.onBrand : colors.textHi}
-                maxFontSizeMultiplier={2}
-              >
-                {day}
-              </Text>
-            </Pressable>
-          ))}
-        </View>
+        <CompactSelect
+          label={t('setup.gymDays')}
+          selected={[state.gymDays]}
+          options={Array.from({ length: 8 }, (_, day) => ({
+            value: day,
+            label: t('setup.daysLabel', { days: day }),
+          }))}
+          onSelect={onDays}
+          testID="gym-days"
+        />
         <Text
           fontSet="onboarding"
           variant="bodyS"

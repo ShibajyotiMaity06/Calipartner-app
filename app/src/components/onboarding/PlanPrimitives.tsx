@@ -56,12 +56,14 @@ export function NumberField({
   testID,
   optional = false,
   nutrient,
+  placeholder,
 }: {
   label: string;
   value: number | null;
   onChange: (value: number | null) => void;
   testID: string;
   optional?: boolean;
+  placeholder?: string;
   nutrient?: NutritionMetric;
 }) {
   const { colors } = useTheme();
@@ -84,6 +86,7 @@ export function NumberField({
       </Text>
       <TextInput
         testID={testID}
+        placeholder={placeholder}
         accessibilityLabel={label}
         value={text}
         keyboardType="decimal-pad"

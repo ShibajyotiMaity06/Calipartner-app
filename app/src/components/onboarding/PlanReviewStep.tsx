@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, StyleSheet } from 'react-native';
+import { Pressable, View, StyleSheet } from 'react-native';
 import {
   isGymPlanValid,
   type GymTargetsResult,
@@ -92,7 +92,7 @@ export function PlanReviewStep({
   ] as const;
   return (
     <View style={planStyles.section}>
-      {result ? (
+      {result && !editing ? (
         <>
           <PlanCard testID="plan-target-card">
             <Text variant="bodyS">{t('setup.dailyTarget')}</Text>
@@ -107,27 +107,42 @@ export function PlanReviewStep({
           <PlanCard testID="plan-macro-split">
             <Text variant="heading">{t('setup.macros')}</Text>
             <View style={planStyles.row}>
-              {fields.map(([key, value, label]) => (
-                <View key={key} style={reviewStyles.metric}>
-                  <Text variant="bodyS">{t(label)}</Text>
-                  <Text variant="heading" tabular>
-                    {value}
-                  </Text>
-                </View>
-              ))}
+              {fields
+                .filter(([key]) => key !== 'calories')
+                .map(([key, value, label]) => (
+                  <View key={key} style={reviewStyles.metric}>
+                    <Text variant="bodyS">{t(label)}</Text>
+                    <Text variant="heading" tabular>
+                      {value}
+                    </Text>
+                  </View>
+                ))}
             </View>
           </PlanCard>
         </>
-      ) : (
+      ) : !result ? (
         <Text>{t('onboarding.summary.emptyBody')}</Text>
-      )}
+      ) : null}
       <PlanSafetyNotice result={result} />
       {onCalculation && (
-        <Button
-          variant="tertiary"
-          label={t('setup.howCalculated')}
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel={t('setup.howCalculated')}
+          style={planStyles.link}
           onPress={onCalculation}
           testID="btn-how-calculated"
+        >
+          <Text variant="bodyS" style={{ textDecorationLine: 'underline' }}>
+            {t('setup.howCalculated')}
+          </Text>
+        </Pressable>
+      )}
+      {!editing && (
+        <Button
+          label={t(saving ? 'setup.statusSaving' : 'personalDay.continuePlan')}
+          onPress={() => onPlanned({})}
+          disabled={saving || !result || !isGymPlanValid(result)}
+          testID="continue-calculated-plan"
         />
       )}
       {editing && (
@@ -140,12 +155,10 @@ export function PlanReviewStep({
                 label={t(label)}
                 value={overrides[key] ?? null}
                 optional
+                placeholder={String(value ?? '')}
                 onChange={(next) => setOverrides((previous) => ({ ...previous, [key]: next }))}
                 testID={`custom-target-${key}`}
               />
-              <Text variant="bodyS" tabular>
-                {t('personalDay.defaultValue', { value: value ?? 0 })}
-              </Text>
             </View>
           ))}
         </PlanCard>
@@ -156,6 +169,7 @@ export function PlanReviewStep({
         </Text>
       )}
       <Button
+        variant={editing ? 'primary' : 'secondary'}
         label={t(
           saving
             ? 'setup.statusSaving'

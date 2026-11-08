@@ -2,7 +2,7 @@ import type { WebTables } from './webStorage';
 type Row = Record<string, unknown>;
 // The web mirror handles these existing service statements without dropping writes or duplicating rows.
 export const mirroredTable =
-  /\b(?:local_squad_check_ins|local_chat_\w+|local_workout\w*|local_food_entries|local_user_food_stats|local_fasting_settings|local_fasting_sessions|local_recipe_favorites)\b/i;
+  /\b(?:local_exercises|local_squad_check_ins|local_chat_\w+|local_workout\w*|local_food_entries|local_user_food_stats|local_fasting_settings|local_fasting_sessions|local_recipe_favorites)\b/i;
 
 function literal(value: string, row: Row): unknown {
   const text = value.trim();
@@ -23,6 +23,12 @@ function predicate(
   type Eval = (row: Row) => unknown;
   const operand = (): Eval => {
     const token = tokens[position++] ?? '';
+    if (token.toLowerCase() === 'lower' && tokens[position] === '(') {
+      position++;
+      const inner = operand();
+      position++;
+      return (row) => (inner(row) == null ? null : String(inner(row)).toLowerCase());
+    }
     if (token === '?') {
       const value = parameters[index++];
       return () => value;
@@ -70,6 +76,20 @@ function predicate(
       const a = left(row),
         b = right(row);
       switch (op) {
+        case 'like':
+          return (
+            a != null &&
+            b != null &&
+            new RegExp(
+              '^' +
+                String(b)
+                  .replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+                  .replace(/%/g, '.*')
+                  .replace(/_/g, '.') +
+                '$',
+              's',
+            ).test(String(a))
+          );
         case '=':
           return a === b;
         case '!=':

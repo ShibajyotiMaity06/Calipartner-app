@@ -25,7 +25,7 @@ export async function runLoggingSettingsTests(db) {
   const custom = (n, goalId) =>
     db.query(
       `insert into public.goal_profiles(id,user_id,goal,activity_level,current_weight_kg,weekly_rate_kg,daily_calorie_target,protein_grams,carb_grams,fat_grams,bmr,tdee,gym_days,input_height_cm,custom_macros)
-    values($1,$2,'cut','moderate',80,0.42,2040,150,225,60,1700,2500,3,175,true)`,
+    values($1,$2,'cut','moderate',80,0.42,2040,155,220,60,1700,2500,3,175,true)`,
       [id(goalId), id(n)],
     );
   await asUser(1);
@@ -35,7 +35,7 @@ export async function runLoggingSettingsTests(db) {
     () =>
       db.query(
         `insert into public.goal_profiles(id,user_id,goal,activity_level,current_weight_kg,weekly_rate_kg,daily_calorie_target,protein_grams,carb_grams,fat_grams,bmr,tdee,gym_days,input_height_cm,custom_macros)
-    values($1,$2,'cut','moderate',80,0.42,2040,150,225,60,1700,2500,3,175,false)`,
+    values($1,$2,'cut','moderate',80,0.42,2040,155,220,60,1700,2500,3,175,false)`,
         [id(111), id(1)],
       ),
     /PLUS_REQUIRED/,
@@ -88,7 +88,7 @@ export async function runLoggingSettingsTests(db) {
   await assert.rejects(
     () =>
       db.query(
-        'update public.goal_profiles set carb_grams=226,daily_calorie_target=2044 where id=$1',
+        'update public.goal_profiles set carb_grams=221,daily_calorie_target=2044 where id=$1',
         [id(102)],
       ),
     /PLUS_REQUIRED/,

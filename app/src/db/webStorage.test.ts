@@ -200,3 +200,50 @@ describe('durable browser database repairs', () => {
     storage.close();
   });
 });
+
+it('searches the actual exercise cache case-insensitively while excluding other owners and deleted rows', async () => {
+  const { getExercises } = await import('@/services/workoutService');
+  const db = createWebDb({
+    initial: {
+      local_exercises: [
+        {
+          id: 'public',
+          name: 'Barbell Squat',
+          muscle_group: 'legs',
+          owner_id: null,
+          deleted_at: null,
+        },
+        { id: 'own', name: 'My SQUAT', muscle_group: 'legs', owner_id: 'owner', deleted_at: null },
+        {
+          id: 'other',
+          name: 'Private squat',
+          muscle_group: 'legs',
+          owner_id: 'other',
+          deleted_at: null,
+        },
+        {
+          id: 'deleted',
+          name: 'Deleted squat',
+          muscle_group: 'legs',
+          owner_id: null,
+          deleted_at: '2026-11-07',
+        },
+        {
+          id: 'upper',
+          name: 'Bench Press',
+          muscle_group: 'chest',
+          owner_id: null,
+          deleted_at: null,
+        },
+      ],
+    },
+    save: async () => {},
+  });
+  const rows = await getExercises(db, {
+    userId: 'owner',
+    searchQuery: 'sQuAt',
+    muscleGroup: 'legs',
+  });
+  expect(rows.map((row) => row.id)).toEqual(['public', 'own']);
+  expect((await getExercises(db)).map((row) => row.id)).toEqual(['public', 'upper']);
+});

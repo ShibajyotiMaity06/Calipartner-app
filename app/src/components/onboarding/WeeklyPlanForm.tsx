@@ -1,3 +1,4 @@
+import { CompactSelect } from '@/components/CompactSelect';
 import React, { useCallback, useState } from 'react';
 import { BackHandler, Platform, Pressable, TextInput, View } from 'react-native';
 import { useFocusEffect } from 'expo-router';
@@ -34,41 +35,24 @@ function Choice<T extends string | number>({
   selected,
   onSelect,
   id,
+  multiple = true,
 }: {
   label: string;
   values: { value: T; label: string }[];
   selected: T[];
   onSelect: (value: T) => void;
   id: string;
+  multiple?: boolean;
 }) {
   return (
-    <View style={styles.stack}>
-      <Text variant="label">{label}</Text>
-      <View style={styles.row}>
-        {values.map((option) => (
-          <Pressable
-            key={option.value}
-            style={({ pressed }) => [
-              {
-                minHeight: homeLayout.touchSize,
-                padding: space[3],
-                borderRadius: radius.control,
-                borderWidth: 1,
-                borderColor: selected.includes(option.value) ? dark.copper : dark.hairline,
-                backgroundColor: pressed ? dark.s3 : dark.s1,
-              },
-            ]}
-            accessibilityRole="checkbox"
-            accessibilityState={{ checked: selected.includes(option.value) }}
-            accessibilityLabel={option.label}
-            onPress={() => onSelect(option.value)}
-            testID={`${id}-${option.value}`}
-          >
-            <Text>{option.label}</Text>
-          </Pressable>
-        ))}
-      </View>
-    </View>
+    <CompactSelect
+      label={label}
+      options={values}
+      selected={selected}
+      onSelect={onSelect}
+      testID={id}
+      multiple={multiple}
+    />
   );
 }
 export function PlanField({
@@ -126,8 +110,8 @@ export function WeeklyPlanForm({
   const [step, setStep] = useState<'workout' | 'food'>('workout'),
     [consent, setConsent] = useState(false),
     [error, setError] = useState(false);
-  const [allergies, setAllergies] = useState(initial ? initial.allergies.join(', ') || 'none' : ''),
-    [exclusions, setExclusions] = useState(initial ? initial.exclusions.join(', ') || 'none' : '');
+  const [allergies, setAllergies] = useState(initial?.allergies.join(', ') ?? ''),
+    [exclusions, setExclusions] = useState(initial?.exclusions.join(', ') ?? '');
   useBrowserModalBack(step === 'food', () => setStep('workout'));
   useFocusEffect(
     useCallback(() => {
@@ -167,6 +151,7 @@ export function WeeklyPlanForm({
     values: PlanPreferences[K][],
   ) => (
     <Choice
+      multiple={false}
       label={label(key)}
       values={values.map((value) => ({ value, label: label(value) }))}
       selected={[preferences[key]]}
@@ -188,7 +173,7 @@ export function WeeklyPlanForm({
         .map((v) => v.trim())
         .filter((v) => v && !/^none$/i.test(v));
     try {
-      if (!consent || !allergies.trim() || !exclusions.trim()) throw new Error('INVALID_PLAN');
+      if (!consent) throw new Error('INVALID_PLAN');
       onBuild(
         validatePlanPreferences({
           ...preferences,
@@ -268,20 +253,21 @@ export function WeeklyPlanForm({
             label={t('fixNovember.allergies')}
             value={allergies}
             onChange={setAllergies}
-            hint={t('fixNovember.commaHint')}
+            hint={t('personalDay.optionalFoods')}
             id="plan-allergies"
           />
           <PlanField
             label={t('fixNovember.exclusions')}
             value={exclusions}
             onChange={setExclusions}
-            hint={t('fixNovember.commaHint')}
+            hint={t('personalDay.optionalFoods')}
             id="plan-exclusions"
           />
           {singleDay ? (
             <Text>{t('personalDay.fourMeals')}</Text>
           ) : (
             <Choice
+              multiple={false}
               label={t('fixNovember.meals')}
               values={[3, 4, 5].map((value) => ({ value, label: String(value) }))}
               selected={[preferences.meals_per_day]}

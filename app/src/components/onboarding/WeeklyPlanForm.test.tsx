@@ -6,6 +6,8 @@ vi.mock('react-native', () => ({
   View: 'View',
   Pressable: 'Pressable',
   TextInput: 'TextInput',
+  Modal: 'Modal',
+  ScrollView: 'ScrollView',
   Platform: { OS: 'android' },
   BackHandler: {
     addEventListener: (_name: string, fn: () => boolean) => {
@@ -15,6 +17,7 @@ vi.mock('react-native', () => ({
   },
   StyleSheet: { create: (s: unknown) => s, hairlineWidth: 1 },
 }));
+vi.mock('react-native-safe-area-context', () => ({ SafeAreaView: 'SafeAreaView' }));
 vi.mock('expo-router', () => ({
   useFocusEffect: (callback: () => void | (() => void)) => React.useEffect(callback, [callback]),
 }));
@@ -42,7 +45,7 @@ it('phone Back returns from food inputs to workout inputs and preserves both set
     tree.root.findByProps({ testID: 'plan-country' }).props.onChangeText('India'),
   );
   await act(async () => expect(state.back?.()).toBe(true));
-  expect(tree.root.findByProps({ testID: 'plan-location-home' })).toBeDefined();
+  expect(tree.root.findByProps({ testID: 'plan-location' })).toBeDefined();
   await act(async () => tree.root.findByProps({ testID: 'weekly-plan-next' }).props.onPress());
   expect(tree.root.findByProps({ testID: 'plan-country' }).props.value).toBe('India');
 });
@@ -52,8 +55,12 @@ it('requires explicit consent and supplies the actual training, equipment and fo
     tree = create(<WeeklyPlanForm onBuild={build} onLater={vi.fn()} />);
   });
   await act(async () =>
+    tree.root.findAllByProps({ testID: 'plan-equipment' }).at(-1)!.props.onPress(),
+  );
+  await act(async () =>
     tree.root.findByProps({ testID: 'plan-equipment-dumbbell' }).props.onPress(),
   );
+  await act(async () => tree.root.findByProps({ testID: 'plan-equipment-done' }).props.onPress());
   await act(async () => tree.root.findByProps({ testID: 'weekly-plan-next' }).props.onPress());
   expect(tree.root.findByProps({ testID: 'build-weekly-plan' }).props.disabled).toBe(true);
   for (const [key, value] of [
@@ -76,3 +83,26 @@ it('requires explicit consent and supplies the actual training, equipment and fo
     exclusions: [],
   });
 });
+
+it.each(['', 'none', 'None'])(
+  'accepts %j allergies/exclusions as none after explicit consent',
+  async (value) => {
+    const build = vi.fn();
+    await act(async () => {
+      tree = create(<WeeklyPlanForm onBuild={build} onLater={vi.fn()} />);
+    });
+    await act(async () => tree.root.findByProps({ testID: 'weekly-plan-next' }).props.onPress());
+    for (const [key, answer] of [
+      ['country', 'India'],
+      ['cuisine', 'Indian'],
+      ['allergies', value],
+      ['exclusions', value],
+    ])
+      await act(async () =>
+        tree.root.findByProps({ testID: 'plan-' + key }).props.onChangeText(answer),
+      );
+    await act(async () => tree.root.findByProps({ testID: 'weekly-plan-consent' }).props.onPress());
+    await act(async () => tree.root.findByProps({ testID: 'build-weekly-plan' }).props.onPress());
+    expect(build).toHaveBeenCalledWith(expect.objectContaining({ allergies: [], exclusions: [] }));
+  },
+);

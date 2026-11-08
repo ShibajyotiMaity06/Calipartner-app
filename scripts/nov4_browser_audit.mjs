@@ -1225,24 +1225,23 @@ try {
   await page.goto('http://127.0.0.1:8098/log');
   await page.getByTestId('log-tile-workout').click();
   await page.getByTestId('workout-hub-modal').waitFor();
+  await page.getByText('Preferred Tuesday routine', { exact: true }).waitFor();
   await snap('restored-workout-hub');
-  await page.getByTestId('btn-action-set-goal').click();
+  await page.getByTestId('workout-show-details').click();
+  await page.getByTestId('workout-preferred-plan').click();
   await page.getByTestId('screen-weekly-plan').waitFor();
   await page.getByTestId('weekly-plan-back').click();
-  await page.getByTestId('btn-action-log-workout').click();
-  await page.getByTestId('workout-logger-modal-input-name').waitFor();
-  await page.waitForFunction(
-    () =>
-      globalThis.document.querySelector('[data-testid="workout-logger-modal-input-name"]')
-        ?.value === 'Preferred Tuesday routine',
-  );
+  await page.getByTestId('workout-show-details').click();
+  await page.getByTestId('workout-use-today-plan').click();
   assert.equal(await page.getByTestId('chip-workout-type-cardio').count(), 0);
-  assert.equal(await page.getByTestId('workout-logger-modal-input-duration').count(), 0);
-  assert.equal(await page.getByTestId('workout-logger-modal-running-timer-bar').count(), 0);
-  await page.getByText('Preferred squat', { exact: true }).waitFor();
+  assert.equal(await page.getByTestId('workout-hub-modal-input-duration').count(), 0);
+  assert.equal(await page.getByTestId('workout-hub-modal-running-timer-bar').count(), 0);
+  await page
+    .getByTestId('workout-exercise-card-0')
+    .getByText('Preferred squat', { exact: true })
+    .waitFor();
   await snap('restored-exercise-workout');
-  await page.getByTestId('workout-logger-modal-btn-close').click();
-  await page.getByTestId('btn-workout-hub-back').click();
+  await page.getByTestId('workout-hub-modal-btn-close').click();
   paid = false;
   // Owner follow-up: empty-Squad widths, discovery, challenges and food library/editor.
   emptySquads = true;

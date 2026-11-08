@@ -67,7 +67,7 @@ export async function runPersonalisedDayTests(db) {
       /check constraint/,
     );
     await db.query(
-      "insert into public.goal_profiles(id,user_id,goal,activity_level,current_weight_kg,weekly_rate_kg,daily_calorie_target,protein_grams,carb_grams,fat_grams,bmr,tdee,gym_days,input_height_cm,custom_macros,recompute_reason) values($1,$2,'cut','moderate',80,0.42,2040,150,225,60,1700,2500,3,175,true,'initial_onboarding')",
+      "insert into public.goal_profiles(id,user_id,goal,activity_level,current_weight_kg,weekly_rate_kg,daily_calorie_target,protein_grams,carb_grams,fat_grams,bmr,tdee,gym_days,input_height_cm,custom_macros,recompute_reason) values($1,$2,'cut','moderate',80,0.42,2040,155,220,60,1700,2500,3,175,true,'initial_onboarding')",
       [uid(10), uid(1)],
     );
     await rejected(

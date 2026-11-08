@@ -1,3 +1,4 @@
+import { CompactSelect } from '@/components/CompactSelect';
 import React, { useEffect, useRef, useState } from 'react';
 import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -7,12 +8,7 @@ import { Button, Text, onboardingLayout as layout, space, useTheme } from '@cali
 import { useAuth } from '@/contexts/AuthContext';
 import { useUsername } from '@/hooks/useUsername';
 import { InteractiveDobPicker } from '@/components/onboarding/InteractiveDobPicker';
-import {
-  PlanCard,
-  PlanChoice,
-  PlanTextField,
-  planStyles,
-} from '@/components/onboarding/PlanPrimitives';
+import { PlanCard, PlanTextField, planStyles } from '@/components/onboarding/PlanPrimitives';
 import { t } from '@/i18n';
 
 export default function ProfileSetupScreen() {
@@ -160,20 +156,16 @@ export default function ProfileSetupScreen() {
                 {t('setup.ageNote')}
               </Text>
             </PlanCard>
-            <View accessibilityRole="radiogroup" style={planStyles.gap}>
-              <Text fontSet="onboarding" variant="heading" color={colors.textHi}>
-                {t('profileSetup.sexLabel')}
-              </Text>
-              {(['male', 'female', 'other'] as const).map((value) => (
-                <PlanChoice
-                  key={value}
-                  title={t(`profileSetup.${value}`)}
-                  selected={sex === value}
-                  onPress={() => setSex(value)}
-                  testID={`btn-sex-${value}`}
-                />
-              ))}
-            </View>
+            <CompactSelect
+              label={t('profileSetup.sexLabel')}
+              selected={[sex]}
+              options={(['male', 'female', 'other'] as const).map((value) => ({
+                value,
+                label: t(`profileSetup.${value}`),
+              }))}
+              onSelect={setSex}
+              testID="profile-sex"
+            />
             <PlanCard>
               <PlanTextField
                 label={t('setup.place')}

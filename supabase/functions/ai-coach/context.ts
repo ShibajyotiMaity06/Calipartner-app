@@ -79,11 +79,13 @@ export async function loadCoachDiaryContext(
     truncated: days.truncated || foods.truncated || workouts.truncated || detailsTruncated,
   };
   // Keep provider context bounded; expose truncation instead of silently implying a complete history.
-  for (const key of ['sets', 'exercises', 'foods', 'workouts', 'days'] as const) {
-    while (context[key].length && JSON.stringify(context).length > 48000) {
-      context[key].pop();
-      context.truncated = true;
-    }
+  while (new TextEncoder().encode(JSON.stringify(context)).length > 20000) {
+    const key = (['sets', 'exercises', 'foods', 'workouts', 'days'] as const)
+      .filter((key) => context[key].length)
+      .sort((a, b) => JSON.stringify(context[b]).length - JSON.stringify(context[a]).length)[0];
+    if (!key) break;
+    context[key].pop();
+    context.truncated = true;
   }
   return context;
 }
