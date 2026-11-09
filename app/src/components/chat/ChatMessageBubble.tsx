@@ -8,7 +8,7 @@ import {
   StyleSheet,
   View,
 } from 'react-native';
-import { Text, space } from '@calipartner/ui';
+import { Text, space, dark } from '@calipartner/ui';
 import { onboardingLayout as layout } from '@calipartner/ui';
 import { Ionicons } from '@expo/vector-icons';
 import type { ChatAttachment, ChatMessage } from '@/types/chat';
@@ -21,6 +21,7 @@ import { MentionText } from './MentionText';
 export interface ChatMessageBubbleProps {
   message: ChatMessage;
   isMine: boolean;
+  isSeenByAll?: boolean;
   onRetry?: (message: ChatMessage) => void;
   onPressImage?: (attachment: ChatAttachment) => void;
   onLongPress?: (message: ChatMessage) => void;
@@ -41,6 +42,7 @@ function formatTime(isoString: string): string {
 export function ChatMessageBubble({
   message,
   isMine,
+  isSeenByAll,
   onRetry,
   onPressImage,
   onLongPress,
@@ -264,7 +266,24 @@ export function ChatMessageBubble({
                     style={styles.sendingSpinner}
                   />
                 )}
-                {isSent && <Ionicons name="checkmark" size={12} color={colors.textMuted} />}
+                {isSent &&
+                  (isSeenByAll ? (
+                    <Ionicons
+                      name="checkmark-done"
+                      size={14}
+                      color={dark.sky}
+                      testID={`tick-seen-${message.id}`}
+                      accessibilityLabel="Seen by everyone"
+                    />
+                  ) : (
+                    <Ionicons
+                      name="checkmark"
+                      size={12}
+                      color={colors.textMuted}
+                      testID={`tick-sent-${message.id}`}
+                      accessibilityLabel="Sent"
+                    />
+                  ))}
                 {isFailed && <Ionicons name="alert-circle" size={14} color={colors.danger} />}
               </View>
             )}

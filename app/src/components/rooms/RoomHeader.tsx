@@ -64,30 +64,53 @@ export function RoomHeader({
   };
   return (
     <View style={[styles.stack, { padding: homeLayout.iconSize }]}>
-      <View style={styles.spread}>
-        <Pressable
-          onPress={() => setPanel('rooms')}
-          accessibilityRole="button"
-          accessibilityLabel={currentRoom?.name ?? t('tabs.room')}
-          testID="btn-room-title-switcher"
-          style={[styles.flex, styles.touch]}
-        >
-          <Text variant="title1">
-            {currentRoom?.name ?? t('tabs.room')}{' '}
-            <Ionicons name="chevron-down" size={homeLayout.iconSize} color={dark.textMid} />
-          </Text>
-        </Pressable>
-        {currentRoom && <EditSquadName room={currentRoom} location="squad" />}
-        {currentRoom && (
-          <Text variant="micro" tabular style={{ flexShrink: 1, textAlign: 'right' }}>
-            {currentRoom.member_cap
-              ? t('homeRefresh.members', {
-                  count: currentRoom.member_count,
-                  cap: currentRoom.member_cap,
-                })
-              : t('squadDesign.members', { count: currentRoom.member_count })}
-          </Text>
-        )}
+      <View
+        style={{
+          flexDirection: 'row',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          gap: space[2],
+        }}
+      >
+        <View style={{ flex: 1, minWidth: 0, justifyContent: 'center' }}>
+          <View
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              gap: space[1],
+            }}
+          >
+            <Pressable
+              onPress={() => setPanel('rooms')}
+              accessibilityRole="button"
+              accessibilityLabel={currentRoom?.name ?? t('tabs.room')}
+              testID="btn-room-title-switcher"
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                gap: space[1],
+                flexShrink: 1,
+                minHeight: homeLayout.touchSize,
+              }}
+            >
+              <Text variant="title1" numberOfLines={1} style={{ flexShrink: 1 }}>
+                {currentRoom?.name ?? t('tabs.room')}
+              </Text>
+              <Ionicons name="chevron-down" size={18} color={dark.textMid} />
+            </Pressable>
+            {currentRoom && <EditSquadName room={currentRoom} location="squad" />}
+          </View>
+          {currentRoom && (
+            <Text variant="micro" tabular color={dark.textMid} style={{ marginTop: -space[1] }}>
+              {currentRoom.member_cap
+                ? t('homeRefresh.members', {
+                    count: currentRoom.member_count,
+                    cap: currentRoom.member_cap,
+                  })
+                : t('squadDesign.members', { count: currentRoom.member_count })}
+            </Text>
+          )}
+        </View>
         <Pressable
           onPress={() => setPanel('actions')}
           accessibilityRole="button"
@@ -103,7 +126,7 @@ export function RoomHeader({
           )}
         </Pressable>
       </View>
-      {currentRoom && (
+      {currentRoom && activeSegment !== 'chat' && (
         <View style={styles.row}>
           <Pressable
             onPress={() => void copy()}

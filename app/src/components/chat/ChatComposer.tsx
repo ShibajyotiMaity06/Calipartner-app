@@ -250,10 +250,11 @@ export function ChatComposer({
           accessibilityRole="button"
           accessibilityLabel={t(allowMedia ? 'repairs.chooseMedia' : 'setup.mediaPro')}
           testID="btn-chat-attach-photo"
+          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
         >
           <Ionicons
             name="attach-outline"
-            size={24}
+            size={22}
             color={selectedMedia.length >= 5 ? colors.textMuted : colors.accent}
           />
         </Pressable>
@@ -306,13 +307,14 @@ export function ChatComposer({
           accessibilityRole="button"
           accessibilityLabel={t('chat.sendBtn')}
           testID="btn-chat-send"
+          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
         >
           {isSending ? (
             <ActivityIndicator size="small" color={colors.onAccent} />
           ) : (
             <Ionicons
               name="arrow-up"
-              size={20}
+              size={18}
               color={canSend && !isOverLimit ? colors.onAccent : colors.textMuted}
             />
           )}
@@ -336,8 +338,8 @@ export function ChatComposer({
 const styles = StyleSheet.create({
   composerContainer: {
     paddingHorizontal: spacing.sm,
-    paddingTop: spacing.xs,
-    paddingBottom: spacing.sm,
+    paddingTop: 4,
+    paddingBottom: 6,
   },
   disabledNoticeWrap: {
     flexDirection: 'row',
@@ -402,12 +404,12 @@ const styles = StyleSheet.create({
   },
   inputBarRow: {
     flexDirection: 'row',
-    alignItems: 'flex-end',
+    alignItems: 'center',
     gap: spacing.xs,
   },
   iconBtn: {
-    width: layout.touch,
-    height: layout.touch,
+    width: 38,
+    height: 38,
     alignItems: 'center',
     justifyContent: 'center',
     borderRadius: radius.pill,
@@ -417,10 +419,11 @@ const styles = StyleSheet.create({
   },
   inputWrapper: {
     flex: 1,
-    borderRadius: radius.lg,
+    borderRadius: radius.pill,
     paddingHorizontal: spacing.md,
-    paddingVertical: spacing.xs,
-    minHeight: layout.touch,
+    paddingVertical: 3,
+    minHeight: 38,
+    maxHeight: 110,
     flexDirection: 'row',
     alignItems: 'center',
   },
@@ -428,9 +431,11 @@ const styles = StyleSheet.create({
     flex: 1,
     fontFamily: typography.body.fontFamily,
     fontSize: fontSize.sm,
-    lineHeight: 20,
-    paddingTop: 6,
-    paddingBottom: 6,
+    lineHeight: 18,
+    paddingTop: 2,
+    paddingBottom: 2,
+    minHeight: 22,
+    textAlignVertical: 'center',
   },
   charLimitText: {
     fontFamily: typography.body.fontFamily,
@@ -439,8 +444,8 @@ const styles = StyleSheet.create({
     marginLeft: 4,
   },
   sendBtn: {
-    width: layout.touch,
-    height: layout.touch,
+    width: 38,
+    height: 38,
     borderRadius: radius.pill,
     alignItems: 'center',
     justifyContent: 'center',

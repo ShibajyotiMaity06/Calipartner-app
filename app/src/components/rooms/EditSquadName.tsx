@@ -39,16 +39,17 @@ function SquadNameEditor({ room, location }: { room: RoomSummary; location: stri
         accessibilityLabel={t('squadDesign.editNameFor', { name: room.name })}
         testID={id}
         style={{
-          minWidth: homeLayout.touchSize,
-          minHeight: homeLayout.touchSize,
+          minWidth: location === 'squad' ? 32 : homeLayout.touchSize,
+          minHeight: location === 'squad' ? 32 : homeLayout.touchSize,
           alignItems: location === 'home' ? 'flex-start' : 'center',
           paddingLeft: location === 'home' ? space[1] : space[0],
           justifyContent: 'center',
         }}
+        hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
       >
         <Ionicons
           name={location === 'home' ? 'pencil' : 'pencil-outline'}
-          size={location === 'home' ? space[4] : homeLayout.iconSize}
+          size={location === 'home' ? space[4] : 18}
           color={dark.copper}
         />
       </Pressable>

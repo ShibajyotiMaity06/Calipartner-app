@@ -220,6 +220,25 @@ export function ChatView({
     return senderId === options.userId;
   };
 
+  const isMessageSeenByAll = (item: ChatMessage) => {
+    if (!item) return false;
+    if (item.delivery_status === 'failed' || item.delivery_status === 'sending') return false;
+    if ((item as unknown as { is_seen_by_all?: boolean }).is_seen_by_all) return true;
+    if ((item as unknown as { seen_by_all?: boolean }).seen_by_all) return true;
+    if ((item as unknown as { delivery_status?: string }).delivery_status === 'read') return true;
+
+    if (!item.created_at) return false;
+    const msgTime = new Date(item.created_at).getTime();
+    if (isNaN(msgTime)) return false;
+
+    return messages.some((m) => {
+      if (!m.sender_id || m.sender_id === options.userId) return false;
+      if (!m.created_at) return false;
+      const peerTime = new Date(m.created_at).getTime();
+      return peerTime >= msgTime;
+    });
+  };
+
   return (
     <KeyboardAvoidingView
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
@@ -263,7 +282,6 @@ export function ChatView({
 
       {!mentionAccessDenied && focusedMentionId && (
         <View style={{ padding: spacing.sm }} testID="focused-chat-mention">
-          <Text>{t('squadDesign.selectedMention')}</Text>
           {mentionError && (
             <Pressable
               onPress={() => setMentionRetry((value) => value + 1)}
@@ -336,6 +354,7 @@ export function ChatView({
                 <ChatMessageBubble
                   message={item}
                   isMine={isMine}
+                  isSeenByAll={isMine && isMessageSeenByAll(item)}
                   onRetry={handleRetry}
                   onPressImage={openAttachment}
                   onLongPress={(msg) => setActiveMenuMessage(msg)}
