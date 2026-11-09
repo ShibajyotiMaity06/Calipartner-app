@@ -61,10 +61,13 @@ export async function buildWorkoutPlan(
   )
     throw new Error('ACCOUNT_CHANGED');
   const accessToken = session.data.session.access_token;
-  await acceptAiProcessingConsent(
-    { rpc: async (name, args) => await client.rpc(name, args) },
-    '1.1-weekly-plan',
-  );
+  // Opening Log must never re-enable revoked AI consent. Onboarding already
+  // acknowledged consent; the explicit rebuild form asks for it again.
+  if (!initial)
+    await acceptAiProcessingConsent(
+      { rpc: async (name, args) => await client.rpc(name, args) },
+      '1.1-weekly-plan',
+    );
   const pending = await request(userId, initial ? 'initial' : 'rebuild', preferences);
   const { data, error } = await client.functions.invoke('workout-plan', {
     headers: { Authorization: `Bearer ${accessToken}` },

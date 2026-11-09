@@ -114,3 +114,17 @@ it('does not regenerate an existing onboarding routine', async () => {
   expect(await buildWorkoutPlan('owner', preferences, true)).toEqual(view);
   expect(state.invoke).not.toHaveBeenCalled();
 });
+it('never re-enables revoked AI consent when opening an older onboarding routine', async () => {
+  state.rpc.mockResolvedValue({
+    data: { ...view, id: null, days: [], full_access: false },
+    error: null,
+  });
+  state.invoke.mockResolvedValue({
+    data: null,
+    error: { context: { json: async () => ({ code: 'CONSENT_REQUIRED' }) } },
+  });
+  await expect(buildWorkoutPlan('owner', preferences, true)).rejects.toThrow('CONSENT_REQUIRED');
+  expect(state.rpc.mock.calls.some((call) => call[0] === 'accept_ai_processing_consent')).toBe(
+    false,
+  );
+});
