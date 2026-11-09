@@ -3,6 +3,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
 import { calculateAge, isAtLeast18, type Sex } from '@calipartner/core';
 import { Button, Text, onboardingLayout as layout, space, useTheme } from '@calipartner/ui';
 import { useAuth } from '@/contexts/AuthContext';
@@ -108,6 +109,7 @@ export default function ProfileSetupScreen() {
               <PlanTextField
                 label={t('profileSetup.nicknameLabel')}
                 accessibilityLabel={t('profileSetup.nicknameLabel')}
+                icon="person-outline"
                 value={nickname}
                 onChangeText={setNickname}
                 maxLength={60}
@@ -117,6 +119,7 @@ export default function ProfileSetupScreen() {
               <PlanTextField
                 label={t('profileSetup.usernameLabel')}
                 accessibilityLabel={t('profileSetup.usernameLabel')}
+                icon="at-outline"
                 value={username}
                 onChangeText={(value) => {
                   setUsername(value.toLowerCase().replace(/[^a-z0-9_.]/g, ''));
@@ -148,9 +151,12 @@ export default function ProfileSetupScreen() {
               ) : null}
             </PlanCard>
             <PlanCard>
-              <Text fontSet="onboarding" variant="heading" color={colors.textHi}>
-                {t('setup.dob')}
-              </Text>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: space[2] }}>
+                <Ionicons name="calendar-outline" size={18} color={colors.copper} />
+                <Text fontSet="onboarding" variant="heading" color={colors.textHi}>
+                  {t('setup.dob')}
+                </Text>
+              </View>
               <InteractiveDobPicker value={dob} onChange={setDob} />
               <Text fontSet="onboarding" variant="bodyS" color={colors.textMid}>
                 {t('setup.ageNote')}
@@ -158,11 +164,13 @@ export default function ProfileSetupScreen() {
             </PlanCard>
             <CompactSelect
               label={t('profileSetup.sexLabel')}
+              icon="person-outline"
               selected={[sex]}
-              options={(['male', 'female', 'other'] as const).map((value) => ({
-                value,
-                label: t(`profileSetup.${value}`),
-              }))}
+              options={[
+                { value: 'male', label: t('profileSetup.male'), icon: 'male-outline' },
+                { value: 'female', label: t('profileSetup.female'), icon: 'female-outline' },
+                { value: 'other', label: t('profileSetup.other'), icon: 'person-outline' },
+              ]}
               onSelect={setSex}
               testID="profile-sex"
             />
@@ -170,6 +178,7 @@ export default function ProfileSetupScreen() {
               <PlanTextField
                 label={t('setup.place')}
                 accessibilityLabel={t('setup.place')}
+                icon="location-outline"
                 value={place}
                 onChangeText={setPlace}
                 maxLength={120}

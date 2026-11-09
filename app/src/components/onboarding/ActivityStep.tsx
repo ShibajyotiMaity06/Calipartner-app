@@ -1,4 +1,4 @@
-import { CompactSelect } from '@/components/CompactSelect';
+import { CompactSelect, type CompactSelectOption } from '@/components/CompactSelect';
 import { Text } from '@calipartner/ui';
 import React from 'react';
 import { View } from 'react-native';
@@ -13,27 +13,52 @@ export function ActivityStep({
   selectedActivityLevel: ActivityLevel;
   onSelectActivityLevel: (level: ActivityLevel) => void;
 }) {
-  const options = [
-    ['sedentary', 'sedentary'],
-    ['light', 'light'],
-    ['moderate', 'moderate'],
-    ['very_active', 'veryActive'],
-    ['extra_active', 'extraActive'],
-  ] as const;
-  const selected = options.find(([value]) => value === selectedActivityLevel)!;
+  const options: CompactSelectOption<ActivityLevel>[] = [
+    {
+      value: 'sedentary',
+      label: t('onboarding.activity.sedentaryTitle'),
+      icon: 'bed-outline',
+      description: t('onboarding.activity.sedentaryDesc'),
+    },
+    {
+      value: 'light',
+      label: t('onboarding.activity.lightTitle'),
+      icon: 'walk-outline',
+      description: t('onboarding.activity.lightDesc'),
+    },
+    {
+      value: 'moderate',
+      label: t('onboarding.activity.moderateTitle'),
+      icon: 'bicycle-outline',
+      description: t('onboarding.activity.moderateDesc'),
+    },
+    {
+      value: 'very_active',
+      label: t('onboarding.activity.veryActiveTitle'),
+      icon: 'fitness-outline',
+      description: t('onboarding.activity.veryActiveDesc'),
+    },
+    {
+      value: 'extra_active',
+      label: t('onboarding.activity.extraActiveTitle'),
+      icon: 'flash-outline',
+      description: t('onboarding.activity.extraActiveDesc'),
+    },
+  ];
+
+  const selected = options.find((item) => item.value === selectedActivityLevel);
+
   return (
     <View style={planStyles.section}>
       <CompactSelect
         label={t('onboarding.activity.title')}
+        icon="fitness-outline"
         selected={[selectedActivityLevel]}
-        options={options.map(([value, key]) => ({
-          value,
-          label: t(`onboarding.activity.${key}Title`),
-        }))}
+        options={options}
         onSelect={onSelectActivityLevel}
         testID="activity-level"
       />
-      <Text variant="bodyS">{t(`onboarding.activity.${selected[1]}Desc`)}</Text>
+      {selected?.description ? <Text variant="bodyS">{selected.description}</Text> : null}
     </View>
   );
 }

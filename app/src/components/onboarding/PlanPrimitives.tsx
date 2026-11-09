@@ -1,6 +1,7 @@
 import { type as inputTypography } from '@calipartner/ui';
 import React, { useEffect, useState } from 'react';
 import { Pressable, StyleSheet, TextInput, View, type TextInputProps } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import {
   CheckIcon,
   Text,
@@ -25,13 +26,22 @@ export function PlanCard({ children, testID }: { children: React.ReactNode; test
   );
 }
 
-export function PlanTextField({ label, ...props }: TextInputProps & { label: string }) {
+export function PlanTextField({
+  label,
+  icon,
+  ...props
+}: TextInputProps & { label: string; icon?: React.ComponentProps<typeof Ionicons>['name'] }) {
   const { colors } = useTheme();
   return (
     <View style={planStyles.gap}>
-      <Text fontSet="onboarding" variant="bodyS" color={colors.textMid}>
-        {label}
-      </Text>
+      <View style={planStyles.labelRow}>
+        {icon ? (
+          <Ionicons name={icon} size={16} color={colors.copper} style={{ marginRight: space[1] }} />
+        ) : null}
+        <Text fontSet="onboarding" variant="bodyS" color={colors.textMid}>
+          {label}
+        </Text>
+      </View>
       <TextInput
         {...props}
         accessibilityLabel={props.accessibilityLabel ?? label}
@@ -58,6 +68,7 @@ export function NumberField({
   nutrient,
   placeholder,
   centered = false,
+  icon,
 }: {
   label: string;
   value: number | null;
@@ -67,6 +78,7 @@ export function NumberField({
   placeholder?: string;
   nutrient?: NutritionMetric;
   centered?: boolean;
+  icon?: React.ComponentProps<typeof Ionicons>['name'];
 }) {
   const { colors } = useTheme();
   const [text, setText] = useState(value !== null && Number.isFinite(value) ? String(value) : '');
@@ -77,15 +89,20 @@ export function NumberField({
   }, [value]);
   return (
     <View style={planStyles.gap}>
-      <Text
-        nutrient={nutrient}
-        fontSet="onboarding"
-        variant="bodyS"
-        color={colors.textMid}
-        maxFontSizeMultiplier={2}
-      >
-        {label}
-      </Text>
+      <View style={planStyles.labelRow}>
+        {icon ? (
+          <Ionicons name={icon} size={16} color={colors.copper} style={{ marginRight: space[1] }} />
+        ) : null}
+        <Text
+          nutrient={nutrient}
+          fontSet="onboarding"
+          variant="bodyS"
+          color={colors.textMid}
+          maxFontSizeMultiplier={2}
+        >
+          {label}
+        </Text>
+      </View>
       <TextInput
         testID={testID}
         placeholder={placeholder}
@@ -121,6 +138,7 @@ export function PlanChoice({
   disabled,
   onPress,
   testID,
+  icon,
 }: {
   title: string;
   description?: string;
@@ -128,6 +146,7 @@ export function PlanChoice({
   disabled?: boolean;
   onPress: () => void;
   testID: string;
+  icon?: React.ComponentProps<typeof Ionicons>['name'];
 }) {
   const { colors } = useTheme();
   return (
@@ -147,6 +166,13 @@ export function PlanChoice({
         },
       ]}
     >
+      {icon ? (
+        <View
+          style={[planStyles.choiceIconBox, { backgroundColor: selected ? colors.s3 : colors.s2 }]}
+        >
+          <Ionicons name={icon} size={22} color={selected ? colors.copper : colors.textMid} />
+        </View>
+      ) : null}
       <View style={planStyles.flex}>
         <Text
           fontSet="onboarding"
@@ -219,4 +245,15 @@ export const planStyles = StyleSheet.create({
   },
   link: { minHeight: layout.touch, justifyContent: 'center', paddingVertical: space[3] },
   centered: { alignItems: 'center', gap: space[3] },
+  choiceIconBox: {
+    width: 44,
+    height: 44,
+    borderRadius: radius.control,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  labelRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
 });

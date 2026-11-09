@@ -1,7 +1,8 @@
-import { CompactSelect } from '@/components/CompactSelect';
-import React, { useCallback, useState } from 'react';
+import { CompactSelect, type CompactSelectOption } from '@/components/CompactSelect';
+import React, { useCallback, useState, type ComponentProps } from 'react';
 import { BackHandler, Platform, Pressable, TextInput, View } from 'react-native';
 import { useFocusEffect } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
 import { useBrowserModalBack } from '@/hooks/useBrowserModalBack';
 import { Button, dark, homeLayout, radius, space, Text, type as typography } from '@calipartner/ui';
 import {
@@ -30,6 +31,34 @@ export const initialPlanPreferences: PlanPreferences = {
   cooking_minutes: 30,
   budget: 'economical',
 };
+
+const OPTION_ICONS: Record<string, ComponentProps<typeof Ionicons>['name']> = {
+  home: 'home-outline',
+  basic: 'barbell-outline',
+  advanced: 'fitness-outline',
+  bodyweight: 'body-outline',
+  dumbbell: 'barbell-outline',
+  barbell: 'barbell-outline',
+  kettlebell: 'cube-outline',
+  cable: 'git-branch-outline',
+  band: 'radio-button-off-outline',
+  machine: 'hardware-chip-outline',
+  bench: 'layers-outline',
+  pullup_bar: 'reorder-three-outline',
+  legpress: 'barbell-outline',
+  beginner: 'leaf-outline',
+  intermediate: 'trending-up-outline',
+  experienced: 'trophy-outline',
+  mixed: 'restaurant-outline',
+  vegetarian: 'nutrition-outline',
+  vegan: 'leaf-outline',
+  keto: 'flame-outline',
+  pescatarian: 'fish-outline',
+  economical: 'wallet-outline',
+  moderate: 'cash-outline',
+  premium: 'diamond-outline',
+};
+
 function Choice<T extends string | number>({
   label,
   values,
@@ -37,17 +66,20 @@ function Choice<T extends string | number>({
   onSelect,
   id,
   multiple = true,
+  icon,
 }: {
   label: string;
-  values: { value: T; label: string }[];
+  values: CompactSelectOption<T>[];
   selected: T[];
   onSelect: (value: T) => void;
   id: string;
   multiple?: boolean;
+  icon?: ComponentProps<typeof Ionicons>['name'];
 }) {
   return (
     <CompactSelect
       label={label}
+      icon={icon}
       options={values}
       selected={selected}
       onSelect={onSelect}
@@ -156,7 +188,20 @@ export function WeeklyPlanForm({
     <Choice
       multiple={false}
       label={label(key)}
-      values={values.map((value) => ({ value, label: label(value) }))}
+      icon={
+        key === 'location'
+          ? 'location-outline'
+          : key === 'experience'
+            ? 'trophy-outline'
+            : key === 'diet'
+              ? 'restaurant-outline'
+              : 'wallet-outline'
+      }
+      values={values.map((value) => ({
+        value,
+        label: label(value),
+        icon: OPTION_ICONS[value],
+      }))}
       selected={[preferences[key]]}
       id={`plan-${key}`}
       onSelect={(value) => {
@@ -216,7 +261,12 @@ export function WeeklyPlanForm({
         <>
           <Choice
             label={t('fixNovember.trainingDays')}
-            values={WEEK_DAYS.map((day, value) => ({ value, label: label(day) }))}
+            icon="calendar-outline"
+            values={WEEK_DAYS.map((day, value) => ({
+              value,
+              label: label(day),
+              icon: 'calendar-outline',
+            }))}
             selected={preferences.workout_days}
             id="plan-day"
             onSelect={(day) => {
@@ -230,9 +280,14 @@ export function WeeklyPlanForm({
           {choose('location', ['home', 'basic', 'advanced'])}
           <Choice
             label={t('fixNovember.equipment')}
+            icon="barbell-outline"
             values={PLAN_EQUIPMENT.filter(
               (e) => preferences.location === 'advanced' || !['cable', 'legpress'].includes(e),
-            ).map((value) => ({ value, label: label(value) }))}
+            ).map((value) => ({
+              value,
+              label: label(value),
+              icon: OPTION_ICONS[value] ?? 'barbell-outline',
+            }))}
             selected={preferences.equipment}
             id="plan-equipment"
             onSelect={(value) =>
@@ -297,7 +352,12 @@ export function WeeklyPlanForm({
             <Choice
               multiple={false}
               label={t('fixNovember.meals')}
-              values={[3, 4, 5].map((value) => ({ value, label: String(value) }))}
+              icon="restaurant-outline"
+              values={[3, 4, 5].map((value) => ({
+                value,
+                label: String(value),
+                icon: 'restaurant-outline',
+              }))}
               selected={[preferences.meals_per_day]}
               onSelect={(value) => update('meals_per_day', value)}
               id="plan-meals"

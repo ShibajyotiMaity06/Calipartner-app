@@ -1,11 +1,23 @@
-import { CompactSelect } from '@/components/CompactSelect';
-import React from 'react';
+import { CompactSelect, type CompactSelectOption } from '@/components/CompactSelect';
+import React, { type ComponentProps } from 'react';
 import { View } from 'react-native';
+import type { Ionicons } from '@expo/vector-icons';
 import type { OnboardingState } from '@/services/onboardingStateMachine';
 import { Text, useTheme } from '@calipartner/ui';
 import { t } from '@/i18n';
 import { NumberField, PlanCard, planStyles } from './PlanPrimitives';
 import { HeightField } from './HeightField';
+
+const DAY_ICONS: ComponentProps<typeof Ionicons>['name'][] = [
+  'bed-outline',
+  'walk-outline',
+  'walk-outline',
+  'fitness-outline',
+  'fitness-outline',
+  'barbell-outline',
+  'barbell-outline',
+  'flame-outline',
+];
 
 export function TrainingStep({
   state,
@@ -19,11 +31,18 @@ export function TrainingStep({
   onDays: (value: number) => void;
 }) {
   const { colors } = useTheme();
+  const dayOptions: CompactSelectOption<number>[] = Array.from({ length: 8 }, (_, day) => ({
+    value: day,
+    label: t('setup.daysLabel', { days: day }),
+    icon: DAY_ICONS[day] ?? 'calendar-outline',
+  }));
+
   return (
     <View style={planStyles.section}>
       <PlanCard>
         <NumberField
           label={t('setup.weight')}
+          icon="scale-outline"
           value={state.weightKg}
           onChange={(value) => onWeight(value ?? NaN)}
           testID="input-weight"
@@ -43,11 +62,9 @@ export function TrainingStep({
         </Text>
         <CompactSelect
           label={t('setup.gymDays')}
+          icon="calendar-outline"
           selected={[state.gymDays]}
-          options={Array.from({ length: 8 }, (_, day) => ({
-            value: day,
-            label: t('setup.daysLabel', { days: day }),
-          }))}
+          options={dayOptions}
           onSelect={onDays}
           testID="gym-days"
         />

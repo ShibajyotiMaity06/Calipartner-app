@@ -430,6 +430,7 @@ export default function OnboardingScreen() {
                       <NumberField
                         optional
                         label={t('setup.targetWeight')}
+                        icon="flag-outline"
                         value={snapshot.targetWeightKg}
                         onChange={(value) => {
                           machine.setTargetWeightAndDate(value, null);
@@ -458,6 +459,7 @@ export default function OnboardingScreen() {
                       <PlanChoice
                         key={rate.rateKgPerWeek}
                         testID={`rate-card-${rate.rateKgPerWeek}`}
+                        icon="flame-outline"
                         title={t('setup.rate', { rate: rate.rateKgPerWeek })}
                         description={`${t('setup.kcalDay', { kcal: rate.targetKcal.toLocaleString() })}${rate.rateKgPerWeek === snapshot.calculatedTargets?.recommendedRateKg ? ` - ${t('setup.recommended')}` : ''}`}
                         selected={snapshot.weeklyRateKg === rate.rateKgPerWeek}
@@ -471,6 +473,9 @@ export default function OnboardingScreen() {
                   {snapshot.goal !== 'maintain' ? (
                     <NumberField
                       label={t('fixes.customPace')}
+                      icon={
+                        snapshot.goal === 'bulk' ? 'trending-up-outline' : 'trending-down-outline'
+                      }
                       value={snapshot.weeklyRateKg}
                       onChange={(value) => {
                         machine.setWeeklyRate(value ?? NaN);
@@ -501,6 +506,7 @@ export default function OnboardingScreen() {
                 <PlanCard>
                   <NumberField
                     label={t('setup.waterGoal')}
+                    icon="water-outline"
                     value={snapshot.waterMlGoal}
                     onChange={(value) => {
                       machine.setStepAndWaterGoals(undefined, value ?? NaN);
@@ -510,6 +516,7 @@ export default function OnboardingScreen() {
                   />
                   <NumberField
                     label={t('setup.stepGoal')}
+                    icon="footsteps-outline"
                     value={snapshot.stepGoal}
                     onChange={(value) => {
                       machine.setStepAndWaterGoals(value ?? NaN);
