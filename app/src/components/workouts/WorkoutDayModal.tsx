@@ -335,9 +335,7 @@ export function WorkoutDayModal({
                           })
                         : t('workoutFlow.proAllowance')}
                   </Text>
-                  {!day ? (
-                    <Text>{t('workoutFlow.noPlan')}</Text>
-                  ) : !day.exercises.length ? (
+                  {!day ? null : !day.exercises.length ? (
                     <Text testID="workout-rest-day">{t('workoutFlow.rest')}</Text>
                   ) : (
                     <View style={styles.card} testID="workout-paid-routine">
