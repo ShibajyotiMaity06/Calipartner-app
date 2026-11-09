@@ -128,3 +128,20 @@ it('never re-enables revoked AI consent when opening an older onboarding routine
     false,
   );
 });
+it('acknowledges explicit consent for a paid initial build launched from the build form', async () => {
+  state.rpc.mockImplementation(async (name: string) => ({
+    data:
+      name === 'get_workout_plan'
+        ? state.invoke.mock.calls.length
+          ? { ...view, id: state.invoke.mock.lastCall![1].body.request_id }
+          : { ...view, id: null, days: [] }
+        : null,
+    error: null,
+  }));
+  state.invoke.mockResolvedValue({ data: { saved: true }, error: null });
+  await buildWorkoutPlan('owner', preferences, true, true);
+  expect(state.rpc.mock.calls.some((call) => call[0] === 'accept_ai_processing_consent')).toBe(
+    true,
+  );
+  expect(state.invoke.mock.lastCall![1].body.initial).toBe(true);
+});

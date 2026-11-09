@@ -28,11 +28,15 @@ export function HomeSquads({
       ? undefined
       : Math.min(homeLayout.cardWidth * Math.min(fontScale, 1.5), width - space[7]);
   const [selected, setSelected] = useState(0);
-  const [cardHeight, setCardHeight] = useState<number>(homeLayout.ringSize * 2);
-  useEffect(() => setCardHeight(homeLayout.ringSize * 2), [width, fontScale]);
-  const measureCard = (event: { nativeEvent: { layout: { height: number } } }) => {
+  const [cardHeights, setCardHeights] = useState<Record<string, number>>({});
+  const selectedKey = rooms[selected]?.id ?? 'create';
+  const cardHeight = cardHeights[selectedKey] ?? homeLayout.ringSize * 2;
+  useEffect(() => setCardHeights({}), [width, fontScale]);
+  const measureCard = (key: string, event: { nativeEvent: { layout: { height: number } } }) => {
     const height = Math.ceil(event.nativeEvent.layout.height);
-    setCardHeight((previous) => Math.max(previous, height));
+    setCardHeights((previous) =>
+      previous[key] === height ? previous : { ...previous, [key]: height },
+    );
   };
   const create = () =>
     router.push({ pathname: '/(tabs)/room', params: { action: 'create', returnTo: 'home' } });
@@ -66,6 +70,7 @@ export function HomeSquads({
         </Pressable>
       ) : null}
       <ScrollView
+        style={rooms.length ? { height: cardHeight } : undefined}
         horizontal={rooms.length > 0}
         showsHorizontalScrollIndicator={false}
         snapToInterval={cardWidth ? cardWidth + space[3] : undefined}
@@ -82,8 +87,8 @@ export function HomeSquads({
         {rooms.map((room, index) => (
           <View
             key={room.id}
-            style={[styles.room, { width: cardWidth, minHeight: cardHeight }]}
-            onLayout={measureCard}
+            style={[styles.room, { width: cardWidth }]}
+            onLayout={(event) => measureCard(room.id, event)}
             testID={`home-squad-card-${room.id}`}
           >
             <View style={styles.header}>
@@ -132,7 +137,7 @@ export function HomeSquads({
         <Pressable
           onPress={create}
           style={[styles.createCard, { width: cardWidth ?? '100%', minHeight: cardHeight }]}
-          onLayout={measureCard}
+          onLayout={(event) => measureCard('create', event)}
           accessibilityRole="button"
           accessibilityLabel={t('homeRefresh.create')}
           testID="home-create-squad-end"
@@ -165,7 +170,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  cards: { gap: space[3], alignItems: 'stretch' },
+  cards: { gap: space[3], alignItems: 'flex-start' },
   room: {
     gap: space[1],
     padding: space[3],
@@ -182,7 +187,7 @@ const styles = StyleSheet.create({
     borderColor: dark.copper,
     borderRadius: radius.card,
     minHeight: homeLayout.ringSize * 2,
-    alignSelf: 'stretch',
+    alignSelf: 'flex-start',
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: dark.s1,

@@ -8,6 +8,7 @@ import {
   PLAN_EQUIPMENT,
   WEEK_DAYS,
   validatePlanPreferences,
+  validateWorkoutPreferences,
   type PlanPreferences,
 } from '@calipartner/core';
 import { t, type TranslationKey } from '@/i18n';
@@ -177,7 +178,7 @@ export function WeeklyPlanForm({
     try {
       if (!consent) throw new Error('INVALID_PLAN');
       onBuild(
-        validatePlanPreferences({
+        (workoutOnly ? validateWorkoutPreferences : validatePlanPreferences)({
           ...preferences,
           ...(singleDay ? { meals_per_day: 4 } : {}),
           allergies: list(allergies),

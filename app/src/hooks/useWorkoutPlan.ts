@@ -64,7 +64,7 @@ export function useWorkoutPlan(visible: boolean) {
     refresh,
     rebuild: async (preferences: PlanPreferences) => {
       if (!userId) throw new Error('UNAUTHENTICATED');
-      publish(await buildWorkoutPlan(userId, preferences));
+      publish(await buildWorkoutPlan(userId, preferences, !current?.plan?.id, true));
     },
     edit: async (content: WorkoutRoutineContent) => {
       if (!userId || !current?.plan) throw new Error('PLAN_STALE');

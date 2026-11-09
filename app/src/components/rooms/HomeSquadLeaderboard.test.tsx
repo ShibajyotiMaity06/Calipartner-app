@@ -175,4 +175,5 @@ it('caps unread chat at 99+, opens the selected room chat, and hides an acknowle
     tree.update(<HomeSquadLeaderboard roomId="room" memberCount={4} visible />),
   );
   expect(tree.root.findAllByProps({ testID: 'home-squad-unread-room' })).toHaveLength(0);
+  expect(tree.root.findAllByProps({ testID: 'home-squad-chat-room' })).toHaveLength(0);
 });

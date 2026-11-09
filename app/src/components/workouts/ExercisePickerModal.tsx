@@ -31,14 +31,12 @@ interface ExercisePickerModalProps {
   testID?: string;
 }
 
-const MUSCLE_GROUPS = ['all', 'upper', 'lower', 'core', 'full'] as const;
+const MUSCLE_GROUPS = ['upper', 'lower', 'core'] as const;
 type ExerciseFilter = (typeof MUSCLE_GROUPS)[number];
 const filterGroups: Record<ExerciseFilter, readonly string[]> = {
-  all: [],
   upper: ['chest', 'back', 'shoulders', 'arms'],
   lower: ['legs'],
   core: ['core'],
-  full: ['full_body'],
 };
 
 export function ExercisePickerModal({
@@ -53,7 +51,7 @@ export function ExercisePickerModal({
   const userId = user?.id ?? 'guest-user';
 
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedMuscle, setSelectedMuscle] = useState<ExerciseFilter>('all');
+  const [selectedMuscle, setSelectedMuscle] = useState<ExerciseFilter>('upper');
   const [configuring, setConfiguring] = useState<Exercise | null>(null);
   useBrowserModalBack(visible, () => {
     if (configuring) setConfiguring(null);
@@ -61,6 +59,7 @@ export function ExercisePickerModal({
   });
   const requestVersion = React.useRef(0);
   const loadedCatalog = React.useRef<string | null>(null);
+  const [visibleCount, setVisibleCount] = useState(5);
   const [exercises, setExercises] = useState<Exercise[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -87,12 +86,13 @@ export function ExercisePickerModal({
         searchQuery: searchQuery.trim().length > 0 ? searchQuery : undefined,
         userId,
       });
-      const filtered =
-        selectedMuscle === 'all'
-          ? list
-          : list.filter((exercise) => filterGroups[selectedMuscle].includes(exercise.muscle_group));
-      if (version === requestVersion.current)
-        setExercises(searchQuery.trim() ? filtered : filtered.slice(0, 5));
+      const filtered = list.filter((exercise) =>
+        filterGroups[selectedMuscle].includes(exercise.muscle_group),
+      );
+      if (version === requestVersion.current) {
+        setExercises(filtered);
+        setVisibleCount(5);
+      }
     } catch (e) {
       if (version === requestVersion.current) setError(e instanceof Error ? e.message : String(e));
     } finally {
@@ -214,15 +214,7 @@ export function ExercisePickerModal({
           <Text style={[styles.modalTitle, { color: colors.text }]}>
             {t('workouts.exercises.title')}
           </Text>
-          <TouchableOpacity
-            testID={`${testID}-btn-open-custom`}
-            onPress={() => setShowCustomModal(true)}
-            style={styles.customAddBtn}
-            accessibilityRole="button"
-            accessibilityLabel={t('workouts.exercises.createCustom')}
-          >
-            <Ionicons name="add" size={22} color={colors.accent} />
-          </TouchableOpacity>
+          <View style={styles.closeBtn} accessible={false} />
         </View>
 
         {/* Search Bar */}
@@ -347,9 +339,30 @@ export function ExercisePickerModal({
             ) : (
               <FlatList
                 testID={`${testID}-list`}
-                data={exercises}
+                data={exercises.slice(0, visibleCount)}
                 keyExtractor={(item) => item.id}
                 renderItem={renderExerciseItem}
+                ListFooterComponent={
+                  visibleCount < exercises.length ? (
+                    <TouchableOpacity
+                      style={styles.moreAction}
+                      accessibilityRole="button"
+                      accessibilityLabel={t('workoutFlow.moreExercises', {
+                        count: Math.min(5, exercises.length - visibleCount),
+                      })}
+                      onPress={() =>
+                        setVisibleCount((count) => Math.min(count + 5, exercises.length))
+                      }
+                      testID="exercise-show-more"
+                    >
+                      <Text tabular>
+                        {t('workoutFlow.moreExercises', {
+                          count: Math.min(5, exercises.length - visibleCount),
+                        })}
+                      </Text>
+                    </TouchableOpacity>
+                  ) : null
+                }
                 contentContainerStyle={styles.listContent}
                 showsVerticalScrollIndicator={false}
               />
@@ -577,6 +590,13 @@ export function ExercisePickerModal({
 }
 
 const styles = StyleSheet.create({
+  moreAction: {
+    minHeight: homeLayout.touchSize,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+  },
   modalScreen: {
     flex: 1,
   },

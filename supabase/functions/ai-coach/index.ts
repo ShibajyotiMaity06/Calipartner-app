@@ -1,6 +1,8 @@
 import {
   COACH_SCOPE_PROMPT,
   COACH_SCOPE_REDIRECT,
+  COACH_GREETING,
+  isCoachGreeting,
   MAX_COACH_INPUT_BYTES,
   MAX_COACH_MESSAGE_BYTES,
   bytes,
@@ -363,8 +365,11 @@ export async function handleAiCoach(
       .map((message) => ({ ...message, content: message.content.slice(0, 1500) }));
     // Include the entire latest question, so a trailing unrelated instruction cannot be hidden by truncation.
     scopeMessages[scopeMessages.length - 1] = incomingMessages.at(-1)!;
-    let inScope: boolean;
-    if (dependencies.classify) inScope = await dependencies.classify(scopeMessages);
+    const greeting = isCoachGreeting(incomingMessages.at(-1)!.content);
+    let inScope = false;
+    if (greeting) {
+      /* The fixed introduction needs no provider call or diary context. */
+    } else if (dependencies.classify) inScope = await dependencies.classify(scopeMessages);
     else {
       const result = await classifyCoachScope(scopeMessages);
       if (!result)
@@ -378,12 +383,12 @@ export async function handleAiCoach(
       classificationUsage = result.tokens;
       inScope = scopeDecision(result.text) === 'HEALTH';
     }
-    if (!inScope) {
+    if (greeting || !inScope) {
       const { error } = await adminClient.rpc('record_ai_usage', {
         p_user_id: userId,
         p_feature: 'coach',
         p_tokens: classificationUsage,
-        p_cost: DEFAULT_ESTIMATED_COST_USD,
+        p_cost: greeting ? 0 : DEFAULT_ESTIMATED_COST_USD,
       });
       if (error)
         return Response.json(
@@ -393,9 +398,9 @@ export async function handleAiCoach(
       return Response.json(
         {
           success: true,
-          message: { role: 'assistant', content: COACH_SCOPE_REDIRECT },
+          message: { role: 'assistant', content: greeting ? COACH_GREETING : COACH_SCOPE_REDIRECT },
           meal_draft: null,
-          model: 'scope-guard',
+          model: greeting ? 'coach-greeting' : 'scope-guard',
         },
         { headers: corsHeaders },
       );

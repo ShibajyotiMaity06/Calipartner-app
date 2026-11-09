@@ -3,6 +3,7 @@ import {
   validateWorkoutRoutine,
   workoutRoutineFromAI,
   validatePlanPreferences,
+  validateWorkoutPreferences,
   workoutRoutineFromLegacy,
 } from './weeklyPlan';
 const preferences = validatePlanPreferences({
@@ -21,6 +22,22 @@ const preferences = validatePlanPreferences({
   meals_per_day: 4,
   cooking_minutes: 30,
   budget: 'economical',
+});
+it('validates workout-only input without requiring or inventing a meal plan', () => {
+  const input = {
+    workout_days: [0, 2, 4],
+    location: 'home',
+    equipment: ['bodyweight'],
+    experience: 'beginner',
+    session_minutes: 30,
+    limitations: '',
+  };
+  const result = validateWorkoutPreferences(input);
+  expect(result.country).toBe('unspecified');
+  expect(result.cuisine).toBe('unspecified');
+  expect(result.workout_days).toEqual([0, 2, 4]);
+  expect(() => validatePlanPreferences(input)).toThrow();
+  expect(() => validateWorkoutPreferences({ ...input, workout_days: [] })).toThrow();
 });
 const raw = () => ({
   days: Array.from({ length: 7 }, (_, day) => ({

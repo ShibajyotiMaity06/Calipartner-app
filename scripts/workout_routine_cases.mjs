@@ -334,7 +334,75 @@ export async function runWorkoutRoutineTests(db) {
     console.log(
       'PASS Workout routine: completed strength sets count once, warmup/deleted sets do not count, minutes stay zero and edits invalidate challenge aggregates',
     );
-    console.log('Workout routine SQL/RLS: 5 groups passed, 0 failed');
+    for (const n of [5, 6, 7]) {
+      await db.query('insert into auth.users(id,email) values($1,$2)', [
+        uid(n),
+        `workout_entry_${n}@example.invalid`,
+      ]);
+      await db.query(
+        "insert into public.profiles(id,username,nickname,date_of_birth,sex,height_cm) values($1,$2,'Workout entry','1995-01-01','male',175)",
+        [uid(n), `workout_entry_${n}`],
+      );
+      await user(n);
+      await rpc('accept_ai_processing_consent($1)', ['1.1-weekly-plan']);
+      await admin();
+      if (n !== 6)
+        await db.query(
+          "insert into public.entitlements(user_id,tier,status,period_end) values($1,$2,'paid',now()+interval '1 year')",
+          [uid(n), n === 5 ? 'pro' : 'plus'],
+        );
+    }
+    await user(6);
+    assert.equal((await rpc('get_workout_plan()')).can_rebuild, false);
+    await admin();
+    await reject(
+      'select public.reserve_workout_plan($1,$2,$3,true)',
+      [uid(6), uid(90), preferences],
+      /ONBOARDING_REQUIRED/,
+    );
+    for (const [n, id] of [
+      [5, 91],
+      [7, 94],
+    ]) {
+      await user(n);
+      const empty = await rpc('get_workout_plan()');
+      assert.equal(empty.id, null);
+      assert.equal(empty.preferences, null);
+      assert.equal(empty.can_rebuild, true);
+      await admin();
+      const initial = await reserve(n, id, true);
+      await finish(n, id, initial.lease);
+      await user(n);
+      const ready = await rpc('get_workout_plan()');
+      assert.equal(ready.rebuilds_used, 0);
+      assert.equal(ready.can_rebuild, true);
+      await admin();
+      await reject(
+        'select public.reserve_workout_plan($1,$2,$3,true)',
+        [uid(n), uid(id + 1), preferences],
+        /INITIAL_PLAN_EXISTS/,
+      );
+    }
+    const paidRebuild = await reserve(7, 96);
+    await finish(7, 96, paidRebuild.lease);
+    await reject(
+      'select public.reserve_workout_plan($1,$2,$3,false)',
+      [uid(7), uid(97), preferences],
+      /WORKOUT_LIFETIME_LIMIT/,
+    );
+    await db.query('delete from public.workout_plans where user_id=$1', [uid(7)]);
+    await user(7);
+    assert.equal((await rpc('get_workout_plan()')).can_rebuild, false);
+    await admin();
+    await reject(
+      'select public.reserve_workout_plan($1,$2,$3,true)',
+      [uid(7), uid(98), preferences],
+      /INITIAL_PLAN_EXISTS/,
+    );
+    console.log(
+      'PASS Workout entry: missing onboarding data permits one purchased initial routine, Free stays blocked, and missing plan rows cannot reset rebuild history',
+    );
+    console.log('Workout routine SQL/RLS: 6 groups passed, 0 failed');
   } finally {
     await db.exec('rollback');
     await admin();

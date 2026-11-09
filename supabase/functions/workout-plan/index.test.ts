@@ -61,6 +61,7 @@ function setup(
     unsafe?: boolean;
     saveFailure?: boolean;
     legacy?: boolean;
+    sourceFailure?: boolean;
   } = {},
 ) {
   const writes: Record<string, unknown>[] = [];
@@ -73,18 +74,31 @@ function setup(
         eq: () => chain,
         single: async () => ({
           data:
-            table === 'personal_weekly_plans' && options.legacy
-              ? { content: content() }
+            table === 'personal_weekly_plans'
+              ? options.legacy
+                ? { content: content() }
+                : null
               : { date_of_birth: '1995-01-01' },
-          error: null,
+          error:
+            table === 'personal_weekly_plans' && !options.legacy
+              ? { message: 'Expected one row' }
+              : null,
         }),
         maybeSingle: async () => ({
-          data: {
-            pregnant_or_breastfeeding: options.unsafe ?? false,
-            has_diabetes_or_medication: false,
-            has_eating_disorder_history: false,
-          },
-          error: null,
+          data:
+            table === 'personal_weekly_plans'
+              ? options.legacy
+                ? { content: content() }
+                : null
+              : {
+                  pregnant_or_breastfeeding: options.unsafe ?? false,
+                  has_diabetes_or_medication: false,
+                  has_eating_disorder_history: false,
+                },
+          error:
+            table === 'personal_weekly_plans' && options.sourceFailure
+              ? { message: 'Database unavailable' }
+              : null,
         }),
       };
       return table === 'profiles' ? chain : chain;
@@ -178,3 +192,27 @@ Deno.test('Existing full-week routines are adopted without another AI generation
   assert.equal(test.calls(), 0);
   assert.equal(test.writes.at(-1)!.name, 'finish_workout_plan');
 });
+
+Deno.test(
+  'An eligible initial plan can generate from training-only inputs without a legacy meal plan',
+  async () => {
+    const test = setup();
+    const training = Object.fromEntries(Object.entries(preferences).slice(0, 7));
+    const result = await test.run({ request_id: id, initial: true, preferences: training });
+    assert.equal(result.status, 200);
+    assert.equal(test.calls(), 1);
+    assert.equal(test.writes[0].p_initial, true);
+    assert.equal(test.writes.at(-1)!.name, 'finish_workout_plan');
+    assert.equal((await result.json()).saved, true);
+  },
+);
+
+Deno.test(
+  'A legacy-source database error releases initial builds without generating a replacement',
+  async () => {
+    const test = setup({ sourceFailure: true });
+    assert.equal((await test.run({ request_id: id, initial: true, preferences })).status, 503);
+    assert.equal(test.calls(), 0);
+    assert.equal(test.writes.at(-1)!.p_content, null);
+  },
+);

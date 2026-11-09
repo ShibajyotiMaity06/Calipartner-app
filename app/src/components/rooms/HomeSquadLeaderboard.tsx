@@ -39,39 +39,41 @@ export function HomeSquadLeaderboard({
     <View style={localStyles.content}>
       <View style={localStyles.notifications}>
         <SquadMentions roomId={roomId} visible={visible} />
-        <Pressable
-          style={localStyles.chatAction}
-          accessibilityRole="button"
-          accessibilityLabel={
-            unread.error
-              ? t('common.errorBody') + ' ' + t('common.retry')
-              : t('squadDesign.unreadMessages', { count: unread.data ?? 0 })
-          }
-          onPress={() =>
-            unread.error
-              ? void unread.refresh()
-              : router.push({ pathname: '/(tabs)/room', params: { room: roomId, tab: 'chat' } })
-          }
-          testID={`home-squad-chat-${roomId}`}
-        >
-          <Ionicons
-            name={unread.error ? 'refresh-outline' : 'chatbubble-outline'}
-            size={homeLayout.iconSize}
-            color={dark.textHi}
-            accessible={false}
-          />
-          {!unread.error && unread.data != null && unread.data > 0 && (
-            <Text
-              variant="micro"
-              color={squadIndicators.unread}
-              tabular
-              accessibilityLiveRegion="polite"
-              testID={`home-squad-unread-${roomId}`}
-            >
-              {unread.data > 99 ? '99+' : unread.data}
-            </Text>
-          )}
-        </Pressable>
+        {(unread.error || (unread.data ?? 0) > 0) && (
+          <Pressable
+            style={localStyles.chatAction}
+            accessibilityRole="button"
+            accessibilityLabel={
+              unread.error
+                ? t('common.errorBody') + ' ' + t('common.retry')
+                : t('squadDesign.unreadMessages', { count: unread.data ?? 0 })
+            }
+            onPress={() =>
+              unread.error
+                ? void unread.refresh()
+                : router.push({ pathname: '/(tabs)/room', params: { room: roomId, tab: 'chat' } })
+            }
+            testID={`home-squad-chat-${roomId}`}
+          >
+            <Ionicons
+              name={unread.error ? 'refresh-outline' : 'chatbubble-outline'}
+              size={homeLayout.iconSize}
+              color={dark.textHi}
+              accessible={false}
+            />
+            {!unread.error && unread.data != null && unread.data > 0 && (
+              <Text
+                variant="micro"
+                color={squadIndicators.unread}
+                tabular
+                accessibilityLiveRegion="polite"
+                testID={`home-squad-unread-${roomId}`}
+              >
+                {unread.data > 99 ? '99+' : unread.data}
+              </Text>
+            )}
+          </Pressable>
+        )}
       </View>
       <View style={localStyles.header}>
         <Text variant="label" style={localStyles.heading}>

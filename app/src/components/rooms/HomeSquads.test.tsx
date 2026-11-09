@@ -90,14 +90,14 @@ it('uses the full available width for the empty-Squad create card', async () => 
   expect(renderer.root.findByProps({ testID: 'home-squad-carousel' }).props.horizontal).toBe(false);
 });
 
-it('aligns squad and create cards at the same height and width without a separate Home feed', async () => {
+it('keeps card widths equal and shrinks the selected carousel height when notification space clears', async () => {
   await act(async () => {
     renderer = create(
       <HomeSquads rooms={rooms} loading={false} error={null} onRetry={vi.fn()} visible />,
     );
   });
   const carousel = renderer.root.findByProps({ testID: 'home-squad-carousel' });
-  expect(carousel.props.contentContainerStyle.alignItems).toBe('stretch');
+  expect(carousel.props.contentContainerStyle.alignItems).toBe('flex-start');
   const first = renderer.root.findByProps({ testID: 'home-squad-card-pair' }).props.style;
   const second = renderer.root.findByProps({ testID: 'home-squad-card-large' }).props.style;
   const createCard = renderer.root.findByProps({ testID: 'home-create-squad-end' }).props.style;
@@ -106,9 +106,21 @@ it('aligns squad and create cards at the same height and width without a separat
       .findByProps({ testID: 'home-squad-card-large' })
       .props.onLayout({ nativeEvent: { layout: { height: 440 } } }),
   );
-  for (const id of ['home-squad-card-pair', 'home-squad-card-large', 'home-create-squad-end']) {
-    expect(renderer.root.findByProps({ testID: id }).props.style[1].minHeight).toBe(440);
-  }
+  await act(async () =>
+    renderer.root
+      .findByProps({ testID: 'home-squad-card-pair' })
+      .props.onLayout({ nativeEvent: { layout: { height: 330 } } }),
+  );
+  expect(renderer.root.findByProps({ testID: 'home-squad-carousel' }).props.style.height).toBe(330);
+  await act(async () =>
+    renderer.root
+      .findByProps({ testID: 'home-squad-card-pair' })
+      .props.onLayout({ nativeEvent: { layout: { height: 286 } } }),
+  );
+  expect(renderer.root.findByProps({ testID: 'home-squad-carousel' }).props.style.height).toBe(286);
+  expect(
+    renderer.root.findByProps({ testID: 'home-create-squad-end' }).props.style[1].minHeight,
+  ).toBe(286);
   expect(first[1].width).toBe(second[1].width);
   expect(first[1].width).toBe(createCard[1].width);
   expect(

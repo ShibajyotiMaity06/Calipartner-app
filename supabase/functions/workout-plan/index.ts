@@ -1,7 +1,7 @@
 import { createClient, type SupabaseClient } from 'npm:@supabase/supabase-js@2.117.3';
 import {
   isAtLeast18,
-  validatePlanPreferences,
+  validateWorkoutPreferences,
   workoutRoutineFromAI,
   workoutRoutineFromLegacy,
   PLAN_EQUIPMENT,
@@ -102,7 +102,7 @@ export async function handleWorkoutPlan(
     id = body.request_id;
     let preferences: PlanPreferences;
     try {
-      preferences = validatePlanPreferences(body.preferences);
+      preferences = validateWorkoutPreferences(body.preferences);
     } catch {
       return reply(400, 'INVALID_WORKOUT_PLAN');
     }
@@ -154,7 +154,7 @@ export async function handleWorkoutPlan(
         .from('personal_weekly_plans')
         .select('content')
         .eq('user_id', userId)
-        .single();
+        .maybeSingle();
       if (saved.error) throw new Error('PLAN_UNAVAILABLE');
       legacy = workoutRoutineFromLegacy(saved.data?.content);
     }

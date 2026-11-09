@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Modal, Pressable, SafeAreaView, ScrollView, StyleSheet, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { useRouter, type Href } from 'expo-router';
+import { useRouter } from 'expo-router';
 import { Button, Text, dark, homeLayout, radius, space } from '@calipartner/ui';
 import {
   addDaysToDateString,
@@ -314,15 +314,7 @@ export function WorkoutDayModal({
                         : t('workoutFlow.proAllowance')}
                   </Text>
                   {!day ? (
-                    <>
-                      <Text>{t('workoutFlow.noPlan')}</Text>
-                      <Button
-                        variant="secondary"
-                        label={t('workoutFlow.setup')}
-                        onPress={() => router.push('/weekly-plan' as Href)}
-                        testID="workout-setup-plan"
-                      />
-                    </>
+                    <Text>{t('workoutFlow.noPlan')}</Text>
                   ) : !day.exercises.length ? (
                     <Text testID="workout-rest-day">{t('workoutFlow.rest')}</Text>
                   ) : (

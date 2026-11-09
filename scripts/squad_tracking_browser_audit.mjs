@@ -49,6 +49,7 @@ const suffix = `
   await page.getByTestId('personal-day-card').waitFor();
   await page.getByTestId('home-squad-unread-'+rid(0)).waitFor();
   assert.equal(await page.getByTestId('home-squad-unread-'+rid(0)).innerText(),'99+');
+  const initialCard = await page.getByTestId('home-squad-card-'+rid(0)).boundingBox();
   const off=page.getByTestId('personal-day-metric-water');
   assert.match(await off.getAttribute('aria-label'),/Not tracked/);
   await capture('home-compact-icons');
@@ -77,8 +78,15 @@ const suffix = `
   await page.clock.runFor(300);
   assert.equal(chatUnread,0);
   await page.goto('http://127.0.0.1:8098/today');
-  await page.getByTestId('home-squad-chat-'+rid(0)).waitFor();
+  await page.getByTestId('home-open-title-'+rid(0)).waitFor();
+  assert.equal(await page.getByTestId('home-squad-chat-'+rid(0)).count(),0);
   assert.equal(await page.getByTestId('home-squad-unread-'+rid(0)).count(),0);
+  await page.clock.runFor(300);
+  const clearedCard = await page.getByTestId('home-squad-card-'+rid(0)).boundingBox();
+  const clearedCarousel = await page.getByTestId('home-squad-carousel').boundingBox();
+  assert.ok(clearedCard.height < initialCard.height, 'Squad shrinks when notification row is empty');
+  assert.ok(Math.abs(clearedCarousel.height - clearedCard.height) <= 2, 'Carousel releases empty notification space');
+  await capture('home-no-unread-compact');
   await page.goto('http://127.0.0.1:8098/log');
   await page.getByTestId('log-tile-workout').click();
   await page.getByTestId('workout-hub-modal-btn-add-exercise').waitFor();

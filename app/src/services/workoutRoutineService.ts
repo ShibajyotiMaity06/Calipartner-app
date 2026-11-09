@@ -47,6 +47,7 @@ export async function buildWorkoutPlan(
   userId: string,
   preferences: PlanPreferences,
   initial = false,
+  explicitConsent = false,
 ): Promise<WorkoutPlanView> {
   const client = await actor(userId);
   if (initial) {
@@ -63,7 +64,7 @@ export async function buildWorkoutPlan(
   const accessToken = session.data.session.access_token;
   // Opening Log must never re-enable revoked AI consent. Onboarding already
   // acknowledged consent; the explicit rebuild form asks for it again.
-  if (!initial)
+  if (!initial || explicitConsent)
     await acceptAiProcessingConsent(
       { rpc: async (name, args) => await client.rpc(name, args) },
       '1.1-weekly-plan',

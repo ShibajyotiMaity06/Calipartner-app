@@ -182,3 +182,23 @@ it('paid rest days show rest copy while custom logging stays available', async (
   expect(tree.root.findByProps({ testID: 'workout-hub-modal-btn-add-exercise' })).toBeDefined();
   expect(tree.root.findAllByProps({ testID: 'workout-save-routine' })).toHaveLength(0);
 });
+
+it('opens Build a new plan for an eligible Pro account without a saved routine or a setup button', async () => {
+  state.plan = {
+    id: null,
+    revision: 0,
+    full_access: true,
+    can_rebuild: true,
+    tier: 'pro',
+    rebuilds_used: 0,
+    days: [],
+    preferences: null,
+  };
+  await render();
+  expect(tree.root.findByProps({ testID: 'workout-build-new-plan' }).props.disabled).toBe(false);
+  expect(tree.root.findAllByProps({ testID: 'workout-setup-plan' })).toHaveLength(0);
+  await act(async () =>
+    tree.root.findByProps({ testID: 'workout-build-new-plan' }).props.onPress(),
+  );
+  expect(tree.root.findByType('WeeklyPlanForm' as React.ElementType).props.workoutOnly).toBe(true);
+});

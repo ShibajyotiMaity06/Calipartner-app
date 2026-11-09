@@ -223,6 +223,21 @@ export function validatePlanPreferences(input: unknown): PlanPreferences {
     budget: choice(p.budget, ['economical', 'flexible']),
   };
 }
+/** Workout-only setup does not invent or change a person's meal preferences or nutrition targets. */
+export function validateWorkoutPreferences(input: unknown): PlanPreferences {
+  const p = object(input);
+  return validatePlanPreferences({
+    ...p,
+    country: typeof p.country === 'string' && p.country.trim() ? p.country : 'unspecified',
+    cuisine: typeof p.cuisine === 'string' && p.cuisine.trim() ? p.cuisine : 'unspecified',
+    diet: p.diet ?? 'mixed',
+    allergies: p.allergies ?? [],
+    exclusions: p.exclusions ?? [],
+    meals_per_day: p.meals_per_day ?? 4,
+    cooking_minutes: p.cooking_minutes ?? 30,
+    budget: p.budget ?? 'economical',
+  });
+}
 export function validatePlanExercises(
   input: unknown,
   preferences: PlanPreferences,

@@ -121,6 +121,65 @@ async function build(client, initial, id = randomUUID()) {
   assert.equal(result.saved, true);
   return id;
 }
+if (process.argv.includes('--entry-only')) {
+  try {
+    const first = await fixture();
+    await query(
+      admin.from('entitlements').upsert({
+        user_id: first.id,
+        tier: 'pro',
+        status: 'paid',
+        period_end: new Date(Date.now() + 365 * 86400000).toISOString(),
+      }),
+    );
+    let plan = await rpc(first.client, 'get_workout_plan');
+    assert.equal(plan.id, null);
+    assert.equal(plan.preferences, null);
+    assert.equal(plan.can_rebuild, true);
+    const training = Object.fromEntries(Object.entries(preferences).slice(0, 7));
+    const result = await endpoint(first.client, 'workout-plan', {
+      request_id: randomUUID(),
+      preferences: training,
+      initial: true,
+    });
+    assert.equal(result.status, 200, 'Initial paid workout: ' + result.code);
+    assert.equal(result.saved, true);
+    plan = await rpc(first.client, 'get_workout_plan');
+    assert.equal(plan.days.length, 7);
+    assert.equal(plan.rebuilds_used, 0);
+    assert.equal(plan.can_rebuild, true);
+    const duplicate = await endpoint(first.client, 'workout-plan', {
+      request_id: randomUUID(),
+      preferences: training,
+      initial: true,
+    });
+    assert.equal(duplicate.code, 'INITIAL_PLAN_EXISTS');
+    console.log(
+      'PASS Hosted Pro account without onboarding: initial training-only plan saved; first rebuild remains available; duplicate initial denied',
+    );
+    const greeting = await endpoint(first.client, 'ai-coach', { message: 'Hello coach' });
+    assert.equal(greeting.status, 200);
+    assert.equal(greeting.model, 'coach-greeting');
+    assert.equal(
+      greeting.message.content,
+      'I am your health coach on behalf of CaliPartner. Ask me about your nutrition, workouts or health.',
+    );
+    await query(
+      admin
+        .from('consent_records')
+        .delete()
+        .eq('user_id', first.id)
+        .eq('consent_type', 'ai_processing'),
+    );
+    const refused = await endpoint(first.client, 'ai-coach', { message: 'Hello coach' });
+    assert.equal(refused.status, 403);
+    assert.equal(refused.code, 'CONSENT_REQUIRED');
+    console.log('PASS Hosted coach greeting: branded introduction and revoked-consent denial');
+  } finally {
+    await cleanup();
+  }
+  process.exit(0);
+}
 if (process.argv.includes('--counts-only')) {
   try {
     const first = await fixture(),
