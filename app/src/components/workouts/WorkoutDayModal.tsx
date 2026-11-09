@@ -226,9 +226,9 @@ export function WorkoutDayModal({
           </Pressable>
         </View>
         <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
-          <View style={styles.date} testID="workout-day-date">
+          <View style={styles.datePill} testID="workout-day-date">
             <Pressable
-              style={styles.icon}
+              style={styles.dateIcon}
               accessibilityRole="button"
               accessibilityLabel={t('workoutFlow.previous')}
               disabled={busy || building}
@@ -239,13 +239,16 @@ export function WorkoutDayModal({
               }}
               testID="workout-day-previous"
             >
-              <Ionicons name="chevron-back" size={homeLayout.iconSize} color={dark.textHi} />
+              <Ionicons name="chevron-back" size={18} color={dark.textHi} />
             </Pressable>
-            <Text style={styles.flex} tabular>
-              {dateLabel}
-            </Text>
+            <View style={styles.dateCenter}>
+              <Ionicons name="calendar-outline" size={18} color={dark.copper} />
+              <Text variant="body" color={dark.textHi} tabular style={styles.dateText}>
+                {dateLabel}
+              </Text>
+            </View>
             <Pressable
-              style={styles.icon}
+              style={styles.dateIcon}
               accessibilityRole="button"
               accessibilityLabel={t('workoutFlow.next')}
               disabled={present || busy || building}
@@ -254,7 +257,7 @@ export function WorkoutDayModal({
             >
               <Ionicons
                 name="chevron-forward"
-                size={homeLayout.iconSize}
+                size={18}
                 color={present ? dark.textOff : dark.textHi}
               />
             </Pressable>
@@ -294,16 +297,35 @@ export function WorkoutDayModal({
                 </>
               ) : plan?.full_access ? (
                 <>
-                  <Button
-                    variant="secondary"
-                    label={t('workoutFlow.build')}
+                  <Pressable
+                    style={[
+                      styles.actionCard,
+                      (!plan.can_rebuild || busy) && styles.actionCardDisabled,
+                    ]}
                     disabled={!plan.can_rebuild || busy}
                     onPress={() => {
                       setBuildDraft(plan.preferences);
                       setForm(true);
                     }}
+                    accessibilityRole="button"
+                    accessibilityLabel={t('workoutFlow.build')}
                     testID="workout-build-new-plan"
-                  />
+                  >
+                    <View style={styles.actionIconBox}>
+                      <Ionicons name="calendar-outline" size={24} color={dark.copper} />
+                    </View>
+                    <View style={styles.actionContent}>
+                      <Text variant="heading" color={dark.textHi}>
+                        {t('workoutFlow.build')}
+                      </Text>
+                      <Text variant="bodyS" color={dark.textMid}>
+                        {t('workoutFlow.buildDesc')}
+                      </Text>
+                    </View>
+                    <View style={styles.actionArrowCircle}>
+                      <Ionicons name="chevron-forward" size={16} color={dark.textMid} />
+                    </View>
+                  </Pressable>
                   <Text variant="bodyS">
                     {plan.tier === 'plus'
                       ? t(plan.rebuilds_used ? 'workoutFlow.plusUsed' : 'workoutFlow.plusAllowance')
@@ -410,13 +432,39 @@ export function WorkoutDayModal({
                   </Pressable>
                 </View>
               )}
-              <Button
-                variant="secondary"
-                label={t(plan?.full_access ? 'workoutFlow.custom' : 'workoutFlow.add')}
+              <View style={styles.dividerRow}>
+                <View style={styles.dividerLine} />
+                <View style={styles.dividerBadge}>
+                  <Ionicons name="flash" size={14} color={dark.copper} />
+                  <Text variant="micro" color={dark.textMid}>
+                    {t('workoutFlow.badgeTagline')}
+                  </Text>
+                </View>
+                <View style={styles.dividerLine} />
+              </View>
+              <Pressable
+                style={[styles.actionCard, busy && styles.actionCardDisabled]}
                 onPress={() => setPicker(true)}
                 disabled={busy}
+                accessibilityRole="button"
+                accessibilityLabel={t(plan?.full_access ? 'workoutFlow.custom' : 'workoutFlow.add')}
                 testID={`${testID}-btn-add-exercise`}
-              />
+              >
+                <View style={styles.actionIconBox}>
+                  <Ionicons name="barbell-outline" size={24} color={dark.copper} />
+                </View>
+                <View style={styles.actionContent}>
+                  <Text variant="heading" color={dark.textHi}>
+                    {t(plan?.full_access ? 'workoutFlow.custom' : 'workoutFlow.add')}
+                  </Text>
+                  <Text variant="bodyS" color={dark.textMid}>
+                    {t('workoutFlow.customDesc')}
+                  </Text>
+                </View>
+                <View style={styles.actionArrowCircle}>
+                  <Ionicons name="chevron-forward" size={16} color={dark.textMid} />
+                </View>
+              </Pressable>
               {!!history.workouts.length && (
                 <>
                   <Text variant="heading">{t('workoutFlow.logged')}</Text>
@@ -537,6 +585,91 @@ const styles = StyleSheet.create({
     borderRadius: radius.card,
   },
   date: { flexDirection: 'row', alignItems: 'center', gap: space[2] },
+  datePill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: dark.s1,
+    borderWidth: 1,
+    borderColor: dark.hairlineLit,
+    borderRadius: radius.full,
+    paddingHorizontal: space[3],
+    paddingVertical: space[1],
+    minHeight: homeLayout.touchSize,
+  },
+  dateCenter: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: space[2],
+    flex: 1,
+  },
+  dateText: {
+    textAlign: 'center',
+  },
+  dateIcon: {
+    width: 36,
+    height: 36,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: radius.full,
+  },
+  actionCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: space[3],
+    backgroundColor: dark.s1,
+    borderWidth: 1,
+    borderColor: dark.hairlineLit,
+    borderRadius: radius.card,
+    padding: space[4],
+  },
+  actionCardDisabled: {
+    opacity: 0.5,
+  },
+  actionIconBox: {
+    width: 48,
+    height: 48,
+    borderRadius: radius.control,
+    backgroundColor: dark.s2,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  actionContent: {
+    flex: 1,
+    minWidth: 0,
+    gap: space[1],
+  },
+  actionArrowCircle: {
+    width: 32,
+    height: 32,
+    borderRadius: radius.full,
+    backgroundColor: dark.s2,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  dividerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: space[3],
+    marginVertical: space[2],
+  },
+  dividerLine: {
+    flex: 1,
+    height: 1,
+    backgroundColor: dark.hairline,
+  },
+  dividerBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: space[2],
+    paddingVertical: space[1],
+    paddingHorizontal: space[3],
+    backgroundColor: dark.s2,
+    borderRadius: radius.full,
+    borderWidth: 1,
+    borderColor: dark.hairline,
+  },
   flex: { flex: 1, minWidth: 0 },
   icon: {
     minWidth: homeLayout.touchSize,
