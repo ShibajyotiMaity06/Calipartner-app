@@ -5,7 +5,7 @@ if (-not ('CaliSupabaseCredential' -as [type])) {
 $previousWorkoutCredential = $env:CALI_WORKOUT_MANAGEMENT_TOKEN
 try {
  $env:CALI_WORKOUT_MANAGEMENT_TOKEN = [CaliSupabaseCredential]::Read()
- & node (Join-Path $PSScriptRoot 'verify_workout_routine_hosted.mjs')
+ & node (Join-Path $PSScriptRoot 'verify_workout_routine_hosted.mjs') @args
  $workoutCheckExit = $LASTEXITCODE
 } finally {
  $env:CALI_WORKOUT_MANAGEMENT_TOKEN = $previousWorkoutCredential

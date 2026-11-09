@@ -121,6 +121,109 @@ async function build(client, initial, id = randomUUID()) {
   assert.equal(result.saved, true);
   return id;
 }
+if (process.argv.includes('--counts-only')) {
+  try {
+    const first = await fixture(),
+      now = new Date().toISOString(),
+      localDate = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/New_York' }).format(
+        new Date(),
+      );
+    const workout = randomUUID(),
+      exercise = randomUUID(),
+      set = randomUUID(),
+      common = { user_id: first.id, created_at: now, updated_at: now, deleted_at: null };
+    const changes = [
+      {
+        id: workout,
+        entity: 'workouts',
+        operation: 'upsert',
+        payload: {
+          ...common,
+          id: workout,
+          type: 'strength',
+          name: 'Private set-count check',
+          duration_minutes: 0,
+          local_date: localDate,
+          notes: null,
+          effort_rating: null,
+          start_time: null,
+        },
+      },
+      {
+        id: exercise,
+        entity: 'workout_exercises',
+        operation: 'upsert',
+        payload: {
+          ...common,
+          id: exercise,
+          workout_id: workout,
+          exercise_id: null,
+          exercise_name: 'Curl',
+          order_in_workout: 1,
+          notes: null,
+        },
+      },
+      {
+        id: set,
+        entity: 'workout_sets',
+        operation: 'upsert',
+        payload: {
+          ...common,
+          id: set,
+          workout_id: workout,
+          workout_exercise_id: exercise,
+          set_number: 1,
+          reps: 10,
+          weight_kg: 5,
+          duration_seconds: null,
+          distance_meters: null,
+          is_warmup: false,
+          completed: true,
+        },
+      },
+    ];
+    await rpc(first.client, 'save_tracking_changes', { p_changes: changes });
+    await rpc(first.client, 'save_tracking_changes', { p_changes: changes });
+    let values = (
+      await rpc(admin, 'challenge_source_days', {
+        p_user: first.id,
+        p_from: localDate,
+        p_to: localDate,
+      })
+    )[0].values;
+    assert.equal(values.workouts_count, 1);
+    assert.equal(values.workout_minutes, 0);
+    const removed = {
+      ...changes[2],
+      payload: {
+        ...changes[2].payload,
+        deleted_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      },
+    };
+    await rpc(first.client, 'save_tracking_changes', { p_changes: [removed] });
+    values = (
+      await rpc(admin, 'challenge_source_days', {
+        p_user: first.id,
+        p_from: localDate,
+        p_to: localDate,
+      })
+    )[0].values;
+    assert.equal(values.workouts_count, 0);
+    assert.equal(values.workout_minutes, 0);
+    assert.equal(
+      (await query(admin.from('challenge_dirty_queue').select('user_id').eq('user_id', first.id)))
+        .length,
+      1,
+    );
+    console.log(
+      'Hosted strength-count integration: 1 passed, 0 failed (retry-safe count, zero invented minutes, removal and scoring refresh)',
+    );
+  } finally {
+    await cleanup();
+  }
+  process.exit(0);
+}
 try {
   const first = await fixture();
   await query(

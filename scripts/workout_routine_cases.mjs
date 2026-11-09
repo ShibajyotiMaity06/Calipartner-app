@@ -300,7 +300,41 @@ export async function runWorkoutRoutineTests(db) {
     console.log(
       'PASS Workout routine: private acknowledged per-set edits/removal, stale and cross-owner rejection, malformed payloads and legacy-generation bypass prevention',
     );
-    console.log('Workout routine SQL/RLS: 4 groups passed, 0 failed');
+    await db.query(
+      "insert into public.workouts(id,user_id,type,duration_minutes,local_date) values($1,$2,'strength',0,'2026-11-08')",
+      [uid(80), uid(1)],
+    );
+    await db.query(
+      "insert into public.workout_exercises(id,user_id,workout_id,exercise_name) values($1,$2,$3,'Curl')",
+      [uid(81), uid(1), uid(80)],
+    );
+    const counts = async () =>
+      (await rpc('challenge_source_days($1,$2::date,$2::date)', [uid(1), '2026-11-08']))[0].values;
+    assert.equal((await counts()).workouts_count, 0);
+    await db.query(
+      'insert into public.workout_sets(id,user_id,workout_id,workout_exercise_id,set_number,reps,weight_kg,completed,is_warmup) values($1,$2,$3,$4,1,10,5,true,false)',
+      [uid(82), uid(1), uid(80), uid(81)],
+    );
+    assert.equal((await counts()).workouts_count, 1);
+    assert.equal((await counts()).workout_minutes, 0);
+    await db.query('delete from public.challenge_dirty_queue where user_id=$1', [uid(1)]);
+    await db.query('update public.workout_sets set reps=12 where id=$1', [uid(82)]);
+    assert.equal((await counts()).workouts_count, 1);
+    assert.equal(
+      (await db.query('select * from public.challenge_dirty_queue where user_id=$1', [uid(1)])).rows
+        .length,
+      1,
+    );
+    await db.query('update public.workout_sets set is_warmup=true where id=$1', [uid(82)]);
+    assert.equal((await counts()).workouts_count, 0);
+    await db.query('update public.workout_sets set is_warmup=false,deleted_at=now() where id=$1', [
+      uid(82),
+    ]);
+    assert.equal((await counts()).workouts_count, 0);
+    console.log(
+      'PASS Workout routine: completed strength sets count once, warmup/deleted sets do not count, minutes stay zero and edits invalidate challenge aggregates',
+    );
+    console.log('Workout routine SQL/RLS: 5 groups passed, 0 failed');
   } finally {
     await db.exec('rollback');
     await admin();
