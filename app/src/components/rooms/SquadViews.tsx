@@ -80,6 +80,7 @@ export const squadStyles = StyleSheet.create({
   },
   rank: { minWidth: space[5] },
   compactLeader: { gap: space[2], paddingVertical: space[1] },
+  compactDetails: { gap: space[1] },
   compactRank: { minWidth: space[4] },
   name: { flexShrink: 1 },
   selector: {
@@ -105,7 +106,8 @@ export const squadStyles = StyleSheet.create({
     borderRadius: radius.full,
   },
 });
-export function numberText(value: number) {
+export function numberText(value: number | null) {
+  if (value == null) return t('squadDesign.notTracked');
   return value.toLocaleString(getLocale(), { maximumFractionDigits: 1 });
 }
 export function memberName(member: RankedSquadMember) {
@@ -175,7 +177,11 @@ export function SquadLeaderboard({
             member.score == null
               ? memberName(member) + ', ' + t('squadDesign.noGoals')
               : t('squadDesign.scoreSummary', { name: memberName(member), score: member.score }),
-            showSteps ? t('squadDesign.stepsToday', { count: numberText(member.steps) }) : null,
+            showSteps
+              ? member.tracking?.steps === false
+                ? t('squadDesign.notTracked')
+                : t('squadDesign.stepsToday', { count: numberText(member.steps) })
+              : null,
           ]
             .filter(Boolean)
             .join(', ')}
@@ -194,7 +200,9 @@ export function SquadLeaderboard({
             size="sm"
             identityHue={member.is_self ? 'iris' : 'teal'}
           />
-          <View style={[squadStyles.flex, squadStyles.stack]}>
+          <View
+            style={[squadStyles.flex, compact ? squadStyles.compactDetails : squadStyles.stack]}
+          >
             <View style={squadStyles.spread}>
               {showSteps ? (
                 <View style={squadStyles.flex}>
@@ -207,7 +215,9 @@ export function SquadLeaderboard({
                     tabular
                     testID={`home-squad-steps-${member.user_id}`}
                   >
-                    {t('squadDesign.stepsToday', { count: numberText(member.steps) })}
+                    {member.tracking?.steps === false
+                      ? t('squadDesign.notTracked')
+                      : t('squadDesign.stepsToday', { count: numberText(member.steps) })}
                   </Text>
                 </View>
               ) : (
@@ -238,10 +248,11 @@ export function MetricValue({
   label?: string;
   color?: string;
 }) {
+  const tracked = member.tracking?.[metric] !== false;
   const value = member[metric] ?? null,
     target = member.targets?.[metric] ?? null;
   const percent =
-    target == null || value == null
+    !tracked || target == null || value == null
       ? null
       : target > 0
         ? (value / target) * 100
@@ -258,8 +269,9 @@ export function MetricValue({
           ? 'squadDesign.ml'
           : 'squadDesign.grams',
   );
-  const amount =
-    value == null
+  const amount = !tracked
+    ? t('squadDesign.notTracked')
+    : value == null
       ? t('common.unavailable')
       : target == null
         ? `${numberText(value)} ${unit}`

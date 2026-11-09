@@ -9,6 +9,7 @@ const state = vi.hoisted(() => ({
   error: false,
   refresh: vi.fn(),
   push: vi.fn(),
+  unread: 0,
 }));
 vi.mock('react-native', () => ({
   Platform: { OS: 'android' },
@@ -16,7 +17,7 @@ vi.mock('react-native', () => ({
   Pressable: 'Pressable',
   StyleSheet: { create: (styles: unknown) => styles, hairlineWidth: 1 },
 }));
-vi.mock('@expo/vector-icons', () => ({ Ionicons: 'Icon' }));
+vi.mock('@expo/vector-icons', () => ({ Ionicons: 'Icon', MaterialCommunityIcons: 'Icon' }));
 vi.mock('@calipartner/ui', async () => ({
   ...(await import('../../../../packages/ui/src/tokens')),
   Text: 'Text',
@@ -25,6 +26,7 @@ vi.mock('@calipartner/ui', async () => ({
 }));
 vi.mock('expo-router', () => ({ useRouter: () => ({ push: state.push }) }));
 vi.mock('@/hooks/useSquad', () => ({
+  useSquadUnread: () => ({ data: state.unread, error: false, refresh: state.refresh }),
   useSquadToday: () => ({
     data: state.loading ? null : { room_id: 'room', members: state.members },
     loading: state.loading,
@@ -157,4 +159,20 @@ it('preserves loading, empty and actionable error states', async () => {
       .findAllByType('Text' as React.ElementType)
       .some((node) => node.children.includes(t('squadDesign.empty'))),
   ).toBe(true);
+});
+
+it('caps unread chat at 99+, opens the selected room chat, and hides an acknowledged zero', async () => {
+  state.unread = 140;
+  await renderHome();
+  expect(tree.root.findByProps({ testID: 'home-squad-unread-room' }).children).toEqual(['99+']);
+  await act(async () => tree.root.findByProps({ testID: 'home-squad-chat-room' }).props.onPress());
+  expect(state.push).toHaveBeenLastCalledWith({
+    pathname: '/(tabs)/room',
+    params: { room: 'room', tab: 'chat' },
+  });
+  state.unread = 0;
+  await act(async () =>
+    tree.update(<HomeSquadLeaderboard roomId="room" memberCount={4} visible />),
+  );
+  expect(tree.root.findAllByProps({ testID: 'home-squad-unread-room' })).toHaveLength(0);
 });

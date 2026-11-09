@@ -168,7 +168,7 @@ const styles = StyleSheet.create({
   cards: { gap: space[3], alignItems: 'stretch' },
   room: {
     gap: space[1],
-    padding: space[4],
+    padding: space[3],
     backgroundColor: dark.s1,
     borderWidth: 2,
     borderColor: dark.copper,

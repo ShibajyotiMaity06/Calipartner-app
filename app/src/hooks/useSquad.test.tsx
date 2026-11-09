@@ -6,6 +6,17 @@ const state = vi.hoisted(() => ({
   read: vi.fn(),
   details: vi.fn(),
   mentions: vi.fn(),
+  unread: vi.fn(),
+  removeChannel: vi.fn(),
+}));
+vi.mock('@/lib/supabase', () => ({
+  getSupabase: () => ({
+    channel: () => {
+      const channel = { on: vi.fn(() => channel), subscribe: vi.fn(() => channel) };
+      return channel;
+    },
+    removeChannel: state.removeChannel,
+  }),
 }));
 vi.mock('@/contexts/AuthContext', () => ({
   useAuth: () => ({ user: state.user ? { id: state.user } : null }),
@@ -17,8 +28,9 @@ vi.mock('@/services/squadService', () => ({
   getSquadToday: state.read,
   getSquadMemberDetails: state.details,
   getSquadMentions: state.mentions,
+  getSquadUnreadCount: state.unread,
 }));
-import { useSquadToday, useSquadDetails } from './useSquad';
+import { useSquadToday, useSquadDetails, useSquadUnread } from './useSquad';
 let tree: ReactTestRenderer;
 let current: ReturnType<typeof useSquadToday>;
 function Probe({ room = 'one', visible = true }: { room?: string; visible?: boolean }) {
@@ -31,12 +43,40 @@ beforeEach(() => {
   state.user = 'viewer';
   state.read.mockResolvedValue({ room_id: 'one', members: [] });
   state.details.mockResolvedValue({ meals: [], workouts: [] });
+  state.unread.mockResolvedValue(140);
+});
+it('refreshes unread counts only while visible and clears them across room/account changes', async () => {
+  let unread: ReturnType<typeof useSquadUnread>;
+  function UnreadProbe({ room = 'one', visible = true }) {
+    unread = useSquadUnread(room, visible);
+    return null;
+  }
+  await act(async () => {
+    tree = create(<UnreadProbe />);
+  });
+  expect(unread!.data).toBe(140);
+  state.unread.mockResolvedValue(0);
+  await act(async () => {
+    vi.advanceTimersByTime(10000);
+  });
+  expect(unread!.data).toBe(0);
+  await act(async () => tree.update(<UnreadProbe visible={false} />));
+  expect(unread!.data).toBeNull();
+  await act(async () => {
+    vi.advanceTimersByTime(30000);
+  });
+  expect(state.unread).toHaveBeenCalledTimes(2);
+  expect(state.removeChannel).toHaveBeenCalledOnce();
+  state.user = 'other';
+  await act(async () => tree.update(<UnreadProbe room="two" />));
+  expect(state.unread).toHaveBeenLastCalledWith('two');
+  expect(unread!.data).toBe(0);
 });
 afterEach(async () => {
   if (tree) await act(async () => tree.unmount());
   vi.useRealTimers();
 });
-it('loads while visible without polling or replacing idle content', async () => {
+it('refreshes visible squad progress for other members while preserving idle content', async () => {
   await act(async () => {
     tree = create(<Probe />);
   });
@@ -45,13 +85,13 @@ it('loads while visible without polling or replacing idle content', async () => 
   await act(async () => {
     vi.advanceTimersByTime(30000);
   });
-  expect(state.read).toHaveBeenCalledTimes(1);
+  expect(state.read).toHaveBeenCalledTimes(3);
   await act(async () => tree.update(<Probe visible={false} />));
   expect(current.data).toBeNull();
   await act(async () => {
     vi.advanceTimersByTime(60000);
   });
-  expect(state.read).toHaveBeenCalledTimes(1);
+  expect(state.read).toHaveBeenCalledTimes(3);
 });
 it('cannot publish an earlier room response after switching squads', async () => {
   let resolve!: (value: unknown) => void;

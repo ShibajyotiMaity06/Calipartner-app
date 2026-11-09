@@ -4,6 +4,7 @@ import {
   type TrackingPreferences,
 } from '@calipartner/core';
 import { getSupabase } from '@/lib/supabase';
+import { diaryEvents } from './diaryEvents';
 
 async function actor(userId: string) {
   const client = getSupabase();
@@ -42,5 +43,6 @@ export async function saveTrackingPreferences(
     )
   )
     throw new Error('TRACKING_NOT_SAVED');
+  diaryEvents.emitChange();
   return saved;
 }

@@ -1,6 +1,14 @@
 import { describe, expect, it } from 'vitest';
 import { rankSquadMembers, squadGoalCompletion, type SquadMember } from './squad';
-const targets = { calories: 2000, protein: 100, carbs: 250, fat: 60 };
+const targets = { calories: 2000, protein: 100, carbs: 250, fat: 60, steps: 8000 };
+const tracking = {
+  calories: true,
+  protein: true,
+  carbs: true,
+  fat: true,
+  steps: true,
+  water: false,
+};
 describe('squad goal completion', () => {
   it('averages all four goals, capping each before averaging', () => {
     expect(squadGoalCompletion({ calories: 3000, protein: 50, carbs: 125, fat: 30 }, targets)).toBe(
@@ -30,8 +38,8 @@ describe('squad goal completion', () => {
   });
   it('shares tied ranks and keeps missing goals at the end without mutating input', () => {
     const members = [
-      { user_id: 'b', ...targets, targets },
-      { user_id: 'a', ...targets, targets },
+      { user_id: 'b', ...targets, targets, tracking },
+      { user_id: 'a', ...targets, targets, tracking },
       { user_id: 'c', ...targets, targets: null },
     ] as SquadMember[];
     const result = rankSquadMembers(members);
@@ -42,4 +50,32 @@ describe('squad goal completion', () => {
     ]);
     expect(members[0]!.user_id).toBe('b');
   });
+});
+
+it('ranks by exactly the enabled targets, including steps and water, matching personal completion', () => {
+  const actual = { calories: 1000, protein: 100, carbs: 0, fat: 0, steps: 8000, water: 1000 };
+  const member = {
+    user_id: 'a',
+    ...actual,
+    targets: { ...targets, water: 2000 },
+    tracking,
+  } as SquadMember;
+  expect(rankSquadMembers([member])[0]!.score).toBe(50);
+  const onlyHabits = {
+    calories: false,
+    protein: false,
+    carbs: false,
+    fat: false,
+    steps: true,
+    water: true,
+  };
+  expect(rankSquadMembers([{ ...member, tracking: onlyHabits }])[0]!.score).toBe(75);
+  expect(
+    rankSquadMembers([{ ...member, tracking: { ...onlyHabits, steps: false, water: false } }])[0]!
+      .score,
+  ).toBeNull();
+  expect(rankSquadMembers([{ ...member, water: null, tracking: onlyHabits }])[0]!.score).toBeNull();
+  expect(rankSquadMembers([{ ...member, calories: null, tracking: onlyHabits }])[0]!.score).toBe(
+    75,
+  );
 });

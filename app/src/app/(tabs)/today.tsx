@@ -304,7 +304,10 @@ export default function TodayScreen() {
               loading: water.loading,
               error: water.error,
             },
-          ].filter((metric) => tracking.enabled[(metric.nutrient ?? metric.id) as TrackingMetric])}
+          ].map((metric) => ({
+            ...metric,
+            enabled: tracking.enabled[(metric.nutrient ?? metric.id) as TrackingMetric],
+          }))}
         />
 
         {/* 6. Date Selector & Meal Logging Diary Sections */}

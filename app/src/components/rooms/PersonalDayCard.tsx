@@ -1,7 +1,15 @@
 import React from 'react';
 import { Ionicons } from '@expo/vector-icons';
 import { Pressable, StyleSheet, View } from 'react-native';
-import { dark, homeLayout, radius, space, Text, nutritionColors } from '@calipartner/ui';
+import {
+  dark,
+  homeLayout,
+  radius,
+  space,
+  Text,
+  nutritionColors,
+  squadIndicators,
+} from '@calipartner/ui';
 import { t } from '@/i18n';
 
 /** A visual progress track. Goal and nutrition calculations remain in core. */
@@ -50,6 +58,7 @@ export function PersonalDayCard({
   goal?: string;
   metrics: {
     id?: string;
+    enabled?: boolean;
     nutrient?: 'calories' | 'protein' | 'carbs' | 'fat';
     label: string;
     value: number;
@@ -71,6 +80,12 @@ export function PersonalDayCard({
       <View style={styles.row}>
         <View style={styles.titleGroup}>
           <Text variant="heading" style={styles.title}>
+            <Ionicons
+              name="stats-chart"
+              size={homeLayout.iconSize}
+              color={dark.textHi}
+              accessible={false}
+            />{' '}
             {t('homeRefresh.yourDay')}
           </Text>
           {onEdit && (
@@ -122,28 +137,72 @@ export function PersonalDayCard({
         >
           {metrics.length === 0 && <Text>{t('personalDay.nothingTracked')}</Text>}
           {metrics.map(
-            ({ id, label, value, target, unit, nutrient, loading: pending, error: failed }) => (
+            ({
+              id,
+              label,
+              value,
+              target,
+              unit,
+              nutrient,
+              enabled = true,
+              loading: pending,
+              error: failed,
+            }) => (
               <View
                 key={label}
-                style={styles.metric}
+                style={[
+                  styles.metric,
+                  nutrient === 'calories' && styles.fullMetric,
+                  !enabled && styles.disabled,
+                ]}
+                testID={`personal-day-metric-${id ?? nutrient}`}
                 accessible
                 accessibilityLabel={
                   label +
                   ': ' +
-                  (pending
-                    ? t('common.loading')
-                    : failed
-                      ? t('common.errorBody')
-                      : target == null
-                        ? t('common.targetUnavailable')
-                        : t('squadDesign.amount', { value, target, unit }))
+                  (!enabled
+                    ? t('squadDesign.notTracked')
+                    : pending
+                      ? t('common.loading')
+                      : failed
+                        ? t('common.errorBody')
+                        : target == null
+                          ? t('common.targetUnavailable')
+                          : t('squadDesign.amount', { value, target, unit }))
                 }
               >
-                <View style={styles.row}>
-                  <Text variant="bodyS" nutrient={nutrient}>
+                <View style={nutrient === 'calories' ? styles.row : styles.tileHeading}>
+                  <Text
+                    variant="bodyS"
+                    nutrient={enabled ? nutrient : undefined}
+                    style={!enabled && styles.blurredText}
+                  >
+                    <Ionicons
+                      name={
+                        nutrient === 'calories'
+                          ? 'flame-outline'
+                          : nutrient === 'protein'
+                            ? 'barbell-outline'
+                            : nutrient === 'carbs'
+                              ? 'restaurant-outline'
+                              : nutrient === 'fat'
+                                ? 'water-outline'
+                                : id === 'steps'
+                                  ? 'footsteps-outline'
+                                  : 'beaker-outline'
+                      }
+                      size={homeLayout.editIconSize}
+                      color={dark.textMid}
+                      accessible={false}
+                    />{' '}
                     {label}
                   </Text>
-                  <Text variant="bodyS" nutrient={nutrient} tabular style={styles.amount}>
+                  <Text
+                    variant="bodyS"
+                    nutrient={enabled ? nutrient : undefined}
+                    tabular
+                    style={[styles.amount, !enabled && styles.blurredText]}
+                  >
                     {pending
                       ? t('common.loading')
                       : failed
@@ -187,6 +246,13 @@ export function PersonalDayCard({
   );
 }
 const styles = StyleSheet.create({
+  disabled: { opacity: homeLayout.disabledOpacity },
+  blurredText: {
+    color: squadIndicators.transparent,
+    textShadowColor: dark.textMid,
+    textShadowOffset: { width: space[0], height: space[0] },
+    textShadowRadius: homeLayout.disabledBlur,
+  },
   titleGroup: { flexDirection: 'row', alignItems: 'center', flexShrink: 1 },
   title: { flexShrink: 1 },
   pencil: { transform: [{ scaleX: homeLayout.editIconWidthScale }] },
@@ -206,8 +272,10 @@ const styles = StyleSheet.create({
     gap: space[4],
     marginBottom: space[5],
   },
-  list: { gap: space[3], minHeight: homeLayout.touchSize },
-  metric: { gap: space[2] },
+  list: { flexDirection: 'row', flexWrap: 'wrap', gap: space[3], minHeight: homeLayout.touchSize },
+  metric: { gap: space[2], flexGrow: 1, flexBasis: homeLayout.metricTileMinWidth, minWidth: 0 },
+  fullMetric: { flexBasis: '100%' },
+  tileHeading: { gap: space[1], flexWrap: 'wrap' },
   row: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', gap: space[2] },
   amount: { flexShrink: 1 },
   track: {

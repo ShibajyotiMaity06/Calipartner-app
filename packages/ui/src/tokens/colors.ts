@@ -59,6 +59,7 @@ export const light = {
 
 export type DarkColors = typeof dark;
 /** Fixed nutrient identities, never indicators of good/bad performance. */
+export const squadIndicators = { unread: '#F69B96', transparent: 'transparent' } as const;
 export const nutritionColors = {
   calories: '#F69B96',
   protein: dark.mint,

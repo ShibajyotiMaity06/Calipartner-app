@@ -90,7 +90,7 @@ export const personalDay = {
   next: 'Next',
   tracking: 'Choose what you track',
   trackingHint:
-    'Your personal daily percentage uses only the targets you turn on. Your saved targets and logs stay available.',
+    'Your daily and squad percentages use only the targets you turn on. Switched-off targets show as not tracked in Compare. Your saved targets and logs stay available.',
   editTracking: 'Edit daily tracking',
   nothingTracked: 'Choose a target to start tracking your day.',
   trackingError: 'Your tracking choices could not be saved. Check your connection and try again.',

@@ -7,6 +7,9 @@ export const squadDesign = {
   savingName: 'Saving squad name',
   nameSaveError:
     'Your squad name could not be confirmed. Check your connection and that you are still the host, then try Save squad name again.',
+  notTracked: 'Not tracked',
+  unreadMessages: '{count} unread messages. Open squad chat',
+  dismissMentions: 'Close mentions',
   personal: 'Your progress, at your pace.',
   noLogs: 'Nothing logged yet',
   calories: 'Calories',
@@ -27,7 +30,7 @@ export const squadDesign = {
   full: 'Full leaderboard',
   today: 'Today',
   ownGoals: 'Progress toward each person’s own goals',
-  scoreRule: 'Average completion of calorie, protein, carb and fat goals. Each counts up to 100%.',
+  scoreRule: 'Average completion of the targets each person tracks. Each counts up to 100%.',
   noGoals: 'Goals not set',
   empty: 'Today’s progress will appear as your squad logs meals.',
   compare: 'Compare',

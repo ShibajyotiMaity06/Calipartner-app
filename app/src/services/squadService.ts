@@ -68,3 +68,11 @@ export async function setSquadVisibility(
   diaryEvents.emitChange();
   return data as SquadVisibility;
 }
+
+export async function getSquadUnreadCount(roomId: string): Promise<number> {
+  const { data, error } = await getSupabase().rpc('get_chat_unread_count', { p_room_id: roomId });
+  if (error) throw error;
+  if (typeof data !== 'number' || !Number.isFinite(data) || data < 0)
+    throw new Error('UNREAD_UNAVAILABLE');
+  return data;
+}

@@ -11,4 +11,8 @@ export const homeLayout = {
   editIconWidthScale: 1.2,
   planProgressChunk: 0.28,
   touchSize: 48,
+  compactTouchSize: 44,
+  disabledOpacity: 0.35,
+  disabledBlur: 3,
+  metricTileMinWidth: 88,
 } as const;

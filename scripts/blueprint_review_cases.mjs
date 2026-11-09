@@ -179,7 +179,8 @@ export async function runBlueprintReviewTests(db) {
       );
       await user(1);
       const today = await rpc('get_squad_today($1)', [rid(10)]);
-      assert.equal(today.members.find((m) => m.user_id === uid(0)).water, 500);
+      assert.equal(today.members.find((m) => m.user_id === uid(0)).water, null);
+      assert.equal(today.members.find((m) => m.user_id === uid(0)).tracking.water, false);
       assert.equal(today.members.find((m) => m.user_id === uid(0)).targets.water, 2500);
       assert.equal(await rpc('count(*)::int from public.water_logs where user_id=$1', [uid(0)]), 0);
       await user(2);

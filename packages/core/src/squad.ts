@@ -1,10 +1,16 @@
+import {
+  DEFAULT_TRACKING,
+  personalTrackingCompletion,
+  type TrackingPreferences,
+} from './personalTracking';
 export interface SquadNutrition {
   calories: number;
   protein: number;
   carbs: number;
   fat: number;
 }
-export interface SquadMember extends SquadNutrition {
+export interface SquadMember extends Record<keyof SquadNutrition, number | null> {
+  tracking?: TrackingPreferences;
   user_id: string;
   username: string;
   nickname: string;
@@ -14,8 +20,8 @@ export interface SquadMember extends SquadNutrition {
   status: string;
   goal: 'cut' | 'bulk' | 'maintain' | null;
   local_date: string;
-  steps: number;
-  water?: number;
+  steps: number | null;
+  water?: number | null;
   targets: (SquadNutrition & { steps: number; water?: number }) | null;
   height_cm: number | null;
   weight_kg: number | null;
@@ -98,7 +104,18 @@ export function rankSquadMembers(members: SquadMember[]): RankedSquadMember[] {
   const ranked = members
     .map((member) => ({
       ...member,
-      score: squadGoalCompletion(member, member.targets),
+      score: personalTrackingCompletion(
+        { ...member, water: member.water ?? null },
+        {
+          calories: member.targets?.calories ?? null,
+          protein: member.targets?.protein ?? null,
+          carbs: member.targets?.carbs ?? null,
+          fat: member.targets?.fat ?? null,
+          steps: member.targets?.steps ?? null,
+          water: member.targets?.water ?? null,
+        },
+        member.tracking ?? DEFAULT_TRACKING,
+      ),
       rank: null as number | null,
     }))
     .sort((a, b) => (b.score ?? -1) - (a.score ?? -1) || a.user_id.localeCompare(b.user_id));

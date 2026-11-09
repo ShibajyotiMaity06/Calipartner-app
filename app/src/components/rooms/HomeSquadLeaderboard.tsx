@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from 'react';
+import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { Platform, Pressable, StyleSheet, View } from 'react-native';
-import { Button, Text, dark, homeLayout, radius, space } from '@calipartner/ui';
+import { Button, Text, dark, homeLayout, radius, space, squadIndicators } from '@calipartner/ui';
 import { useRouter, type Href } from 'expo-router';
-import { useSquadToday } from '@/hooks/useSquad';
+import { useSquadToday, useSquadUnread } from '@/hooks/useSquad';
 import { t } from '@/i18n';
 import { SquadLeaderboard } from './SquadViews';
 import { SquadMentions } from './SquadMentions';
@@ -18,6 +19,7 @@ export function HomeSquadLeaderboard({
 }) {
   const { data, loading, error, refresh } = useSquadToday(roomId, visible);
   const router = useRouter();
+  const unread = useSquadUnread(roomId, visible);
   const [showScoreHint, setShowScoreHint] = useState(false);
   useEffect(() => setShowScoreHint(false), [roomId, visible]);
   useEffect(() => {
@@ -35,9 +37,50 @@ export function HomeSquadLeaderboard({
   }, [showScoreHint]);
   return (
     <View style={localStyles.content}>
-      <SquadMentions roomId={roomId} visible={visible} />
+      <View style={localStyles.notifications}>
+        <SquadMentions roomId={roomId} visible={visible} />
+        <Pressable
+          style={localStyles.chatAction}
+          accessibilityRole="button"
+          accessibilityLabel={
+            unread.error
+              ? t('common.errorBody') + ' ' + t('common.retry')
+              : t('squadDesign.unreadMessages', { count: unread.data ?? 0 })
+          }
+          onPress={() =>
+            unread.error
+              ? void unread.refresh()
+              : router.push({ pathname: '/(tabs)/room', params: { room: roomId, tab: 'chat' } })
+          }
+          testID={`home-squad-chat-${roomId}`}
+        >
+          <Ionicons
+            name={unread.error ? 'refresh-outline' : 'chatbubble-outline'}
+            size={homeLayout.iconSize}
+            color={dark.textHi}
+            accessible={false}
+          />
+          {!unread.error && unread.data != null && unread.data > 0 && (
+            <Text
+              variant="micro"
+              color={squadIndicators.unread}
+              tabular
+              accessibilityLiveRegion="polite"
+              testID={`home-squad-unread-${roomId}`}
+            >
+              {unread.data > 99 ? '99+' : unread.data}
+            </Text>
+          )}
+        </Pressable>
+      </View>
       <View style={localStyles.header}>
         <Text variant="label" style={localStyles.heading}>
+          <Ionicons
+            name="trophy-outline"
+            size={homeLayout.editIconSize}
+            color={dark.textHi}
+            accessible={false}
+          />{' '}
           {t('squadDesign.leaders')}
         </Text>
         <Pressable
@@ -52,6 +95,12 @@ export function HomeSquadLeaderboard({
           testID={`home-squad-score-help-${roomId}`}
         >
           <Text variant="micro" color={dark.textMid} style={localStyles.label}>
+            <MaterialCommunityIcons
+              name="bullseye-arrow"
+              size={homeLayout.editIconSize}
+              color={dark.textMid}
+              accessible={false}
+            />{' '}
             {t('squadDesign.dailyTargetPercent')}
           </Text>
         </Pressable>
@@ -107,7 +156,16 @@ export function HomeSquadLeaderboard({
 }
 
 const localStyles = StyleSheet.create({
-  content: { gap: space[2] },
+  content: { gap: space[0] },
+  notifications: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  chatAction: {
+    minWidth: homeLayout.compactTouchSize,
+    minHeight: homeLayout.compactTouchSize,
+    flexDirection: 'row',
+    gap: space[1],
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   header: {
     zIndex: 1,
     flexDirection: 'row',
@@ -118,7 +176,7 @@ const localStyles = StyleSheet.create({
   },
   heading: { flexShrink: 1 },
   hintAction: {
-    minHeight: homeLayout.touchSize,
+    minHeight: homeLayout.compactTouchSize,
     minWidth: homeLayout.touchSize,
     maxWidth: '100%',
     marginLeft: 'auto',

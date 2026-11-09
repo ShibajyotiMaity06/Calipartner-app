@@ -110,6 +110,47 @@ export async function runSquadRevisionTests(db) {
         /PLUS_REQUIRED/,
       );
     });
+    await test('Tracking choices project through squad access without leaking disabled totals or changing saved logs', async () => {
+      await user(0);
+      const enabled = {
+        calories: true,
+        protein: false,
+        carbs: true,
+        fat: true,
+        steps: true,
+        water: true,
+      };
+      await db.query(
+        'insert into public.tracking_preferences(user_id,request_id,enabled) values($1,$2,$3)',
+        [uid(0), id(88), JSON.stringify(enabled)],
+      );
+      await user(1);
+      const peer = (await rpc('get_squad_today($1)', [room])).members.find(
+        (m) => m.user_id === uid(0),
+      );
+      assert.equal(peer.calories, 500);
+      assert.equal(peer.protein, null);
+      assert.deepEqual(peer.tracking, enabled);
+      assert.equal(
+        (await db.query('select * from public.tracking_preferences where user_id=$1', [uid(0)]))
+          .rows.length,
+        0,
+      );
+      await user(0);
+      assert.equal(
+        Number(
+          (
+            await db.query(
+              'select sum(protein) as total from public.food_entries where user_id=$1',
+              [uid(0)],
+            )
+          ).rows[0].total,
+        ),
+        60,
+      );
+      await admin();
+      await db.query('delete from public.tracking_preferences where user_id=$1', [uid(0)]);
+    });
     await test('Each member uses their own timezone and latest acknowledged goals; future targets stay excluded', async () => {
       await admin();
       await db.query(
