@@ -4,6 +4,7 @@ import { getSupabase } from '@/lib/supabase';
 import { beforeAccountWrite } from './accountDataGate';
 import { generateClientUuid } from './foodService';
 import { workoutEvents } from './workoutEvents';
+import { diaryEvents } from './diaryEvents';
 
 export interface WorkoutSessionRequest {
   ids: Map<string, string>;
@@ -44,7 +45,11 @@ export async function saveNewWorkoutSession(
   const auth = await client.auth.getUser();
   if (auth.error || !auth.data.user || auth.data.user.id !== input.userId)
     throw new Error('ACCOUNT_CHANGED');
-  if (!Number.isFinite(input.durationMinutes) || input.durationMinutes <= 0)
+  if (
+    !Number.isFinite(input.durationMinutes) ||
+    input.durationMinutes < 0 ||
+    (input.type !== 'strength' && input.durationMinutes === 0)
+  )
     throw new Error('INVALID_WORKOUT');
   const id = (key: string) => {
     if (!request.ids.has(key)) request.ids.set(key, generateClientUuid());
@@ -126,5 +131,6 @@ export async function saveNewWorkoutSession(
   const current = await client.auth.getUser();
   if (current.error || current.data.user?.id !== input.userId) throw new Error('ACCOUNT_CHANGED');
   workoutEvents.emitChange();
+  diaryEvents.emitChange();
   return workout;
 }

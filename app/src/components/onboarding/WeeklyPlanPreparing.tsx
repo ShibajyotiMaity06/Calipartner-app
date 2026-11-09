@@ -8,9 +8,11 @@ import { squadStyles as styles } from '@/components/rooms/SquadViews';
 export function WeeklyPlanPreparing({
   singleDay = false,
   name = '',
+  workoutOnly = false,
 }: {
   singleDay?: boolean;
   name?: string;
+  workoutOnly?: boolean;
   preferences?: PlanPreferences;
   targets?: GoalProfile | null;
 }) {
@@ -36,11 +38,21 @@ export function WeeklyPlanPreparing({
   }, []);
   return (
     <View style={styles.stack} testID="weekly-plan-preparing">
-      <Text variant="title1">{t('personalDay.preparingTitle', { name })}</Text>
-      <Text>{t('personalDay.preparingBody')}</Text>
+      <Text variant="title1">
+        {t(workoutOnly ? 'workoutFlow.preparing' : 'personalDay.preparingTitle', { name })}
+      </Text>
+      <Text>{t(workoutOnly ? 'workoutFlow.preparingHint' : 'personalDay.preparingBody')}</Text>
       <View style={styles.card}>
         <View style={styles.spread}>
-          <Text variant="heading">{t(singleDay ? 'personalDay.title' : 'fixNovember.weekly')}</Text>
+          <Text variant="heading">
+            {t(
+              workoutOnly
+                ? 'fixNovember.workoutTitle'
+                : singleDay
+                  ? 'personalDay.title'
+                  : 'fixNovember.weekly',
+            )}
+          </Text>
         </View>
         <View
           onLayout={(event) => setWidth(event.nativeEvent.layout.width)}

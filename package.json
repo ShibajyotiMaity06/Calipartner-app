@@ -32,7 +32,7 @@
     "recipes:import": "npx tsx scripts/recipes_import.ts",
     "test:billing": "npx --yes deno@2.9.6 test --allow-env --config supabase/functions/dodo-checkout/deno.json supabase/functions/_shared/dodoHandlers.test.ts supabase/functions/_shared/razorpayHandlers.test.ts supabase/functions/web-billing/index.test.ts",
     "test:coach": "npx --yes deno@2.9.6 test --allow-env --config supabase/functions/ai-coach/deno.json supabase/functions/ai-coach/index.test.ts && npm run test:weekly-plan",
-    "test:weekly-plan": "npx --yes deno@2.9.6 test --allow-env --config supabase/functions/weekly-plan/deno.json supabase/functions/weekly-plan/index.test.ts"
+    "test:weekly-plan": "npx --yes deno@2.9.6 test --allow-env --config supabase/functions/weekly-plan/deno.json supabase/functions/weekly-plan/index.test.ts && npx --yes deno@2.9.6 test --allow-env --config supabase/functions/workout-plan/deno.json supabase/functions/workout-plan/index.test.ts"
   },
   "devDependencies": {
     "@electric-sql/pglite": "^0.5.11",

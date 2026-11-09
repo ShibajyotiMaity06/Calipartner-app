@@ -26,7 +26,8 @@ import { useTheme } from '@/theme/useTheme';
 interface ExercisePickerModalProps {
   visible: boolean;
   onClose: () => void;
-  onSelectExercise: (exercise: Exercise, sets: ExerciseSetInput[]) => void;
+  onSelectExercise: (exercise: Exercise, sets: ExerciseSetInput[]) => void | Promise<void>;
+  submitLabel?: string;
   testID?: string;
 }
 
@@ -44,6 +45,7 @@ export function ExercisePickerModal({
   visible,
   onClose,
   onSelectExercise,
+  submitLabel,
   testID = 'exercise-picker-modal',
 }: ExercisePickerModalProps) {
   const { colors } = useTheme();
@@ -363,8 +365,9 @@ export function ExercisePickerModal({
               key={configuring.id}
               name={configuring.name}
               onCancel={() => setConfiguring(null)}
-              onAdd={(sets) => {
-                onSelectExercise(configuring, sets);
+              submitLabel={submitLabel}
+              onAdd={async (sets) => {
+                await onSelectExercise(configuring, sets);
                 setConfiguring(null);
                 onClose();
               }}

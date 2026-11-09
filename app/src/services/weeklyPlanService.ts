@@ -3,6 +3,7 @@ import { getSupabase } from '@/lib/supabase';
 import { secureStoreAdapter } from '@/lib/secureStore';
 import { generateClientUuid } from './foodService';
 import { acceptAiProcessingConsent } from './aiFoodPhotoService';
+import { buildWorkoutPlan } from './workoutRoutineService';
 
 async function actor(userId: string) {
   const client = getSupabase();
@@ -72,6 +73,13 @@ export async function buildPersonalWeeklyPlan(
   if (data?.saved !== true) throw new Error('PLAN_UNAVAILABLE');
   const plan = await getPersonalWeeklyPlan(userId);
   if (!plan || plan.id !== request.id) throw new Error('PLAN_UNAVAILABLE');
+  if (singleDay) {
+    await buildWorkoutPlan(userId, preferences, true);
+    const refreshed = await getPersonalWeeklyPlan(userId);
+    if (!refreshed || refreshed.id !== request.id) throw new Error('PLAN_UNAVAILABLE');
+    await request.clear();
+    return refreshed;
+  }
   await request.clear();
   return plan;
 }

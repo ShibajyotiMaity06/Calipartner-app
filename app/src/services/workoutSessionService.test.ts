@@ -81,3 +81,18 @@ it('rejects an account change or account reset before any save', async () => {
   );
   expect(state.rpc).not.toHaveBeenCalled();
 });
+it('logs strength sets without inventing elapsed minutes while cardio still requires duration', async () => {
+  state.rpc.mockResolvedValue({ data: null, error: null });
+  const saved = await saveNewWorkoutSession(newWorkoutSessionRequest(), {
+    ...input,
+    type: 'strength',
+    durationMinutes: 0,
+    exercises: [
+      { exerciseName: 'Curl', sets: [{ reps: 10, weightKg: 5, isWarmup: false, completed: true }] },
+    ],
+  });
+  expect(saved.duration_minutes).toBe(0);
+  await expect(
+    saveNewWorkoutSession(newWorkoutSessionRequest(), { ...input, durationMinutes: 0 }),
+  ).rejects.toThrow('INVALID_WORKOUT');
+});

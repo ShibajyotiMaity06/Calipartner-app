@@ -97,11 +97,13 @@ export function PlanField({
 }
 export function WeeklyPlanForm({
   singleDay = false,
+  workoutOnly = false,
   initial,
   onBuild,
   onLater,
 }: {
   singleDay?: boolean;
+  workoutOnly?: boolean;
   initial?: PlanPreferences;
   onBuild: (preferences: PlanPreferences) => void;
   onLater: () => void;
@@ -188,8 +190,24 @@ export function WeeklyPlanForm({
   };
   return (
     <View style={styles.stack} testID="weekly-plan-form">
-      <Text variant="title1">{t(singleDay ? 'personalDay.title' : 'fixNovember.planTitle')}</Text>
-      <Text>{t(singleDay ? 'personalDay.subtitle' : 'fixNovember.planSubtitle')}</Text>
+      <Text variant="title1">
+        {t(
+          workoutOnly
+            ? 'workoutFlow.buildTitle'
+            : singleDay
+              ? 'personalDay.title'
+              : 'fixNovember.planTitle',
+        )}
+      </Text>
+      <Text>
+        {t(
+          workoutOnly
+            ? 'workoutFlow.buildHint'
+            : singleDay
+              ? 'personalDay.subtitle'
+              : 'fixNovember.planSubtitle',
+        )}
+      </Text>
       <Text variant="title2">
         {t(step === 'workout' ? 'fixNovember.workoutTitle' : 'fixNovember.dietTitle')}
       </Text>
@@ -228,21 +246,30 @@ export function WeeklyPlanForm({
           {choose('experience', ['beginner', 'intermediate', 'experienced'])}
           {field('session_minutes', true)}
           {field('limitations', false, t('fixNovember.limitationsHint'))}
-          <Button
-            label={t('fixNovember.next')}
-            onPress={() => {
-              if (
-                preferences.workout_days.length < 1 ||
-                preferences.workout_days.length > 6 ||
-                !preferences.equipment.length ||
-                preferences.session_minutes < 15 ||
-                preferences.session_minutes > 90
-              )
-                setError(true);
-              else setStep('food');
-            }}
-            testID="weekly-plan-next"
+          <PlanField
+            label={t('workoutFlow.notes')}
+            hint={t('workoutFlow.notesHint')}
+            value={preferences.workout_notes ?? ''}
+            onChange={(value) => update('workout_notes', value)}
+            id="plan-workout-notes"
           />
+          {!workoutOnly && (
+            <Button
+              label={t('fixNovember.next')}
+              onPress={() => {
+                if (
+                  preferences.workout_days.length < 1 ||
+                  preferences.workout_days.length > 6 ||
+                  !preferences.equipment.length ||
+                  preferences.session_minutes < 15 ||
+                  preferences.session_minutes > 90
+                )
+                  setError(true);
+                else setStep('food');
+              }}
+              testID="weekly-plan-next"
+            />
+          )}
         </>
       ) : (
         <>
@@ -301,6 +328,27 @@ export function WeeklyPlanForm({
             label={t('fixNovember.previous')}
             onPress={() => setStep('workout')}
             testID="weekly-plan-form-back"
+          />
+        </>
+      )}
+      {workoutOnly && (
+        <>
+          <Pressable
+            style={styles.selector}
+            accessibilityRole="checkbox"
+            accessibilityState={{ checked: consent }}
+            onPress={() => setConsent((value) => !value)}
+            testID="weekly-plan-consent"
+          >
+            <Text>{t('fixNovember.consent')}</Text>
+            <Text>{consent ? '\u2713' : ''}</Text>
+          </Pressable>
+          <Text variant="bodyS">{t('fixNovember.consentHint')}</Text>
+          <Button
+            label={t('workoutFlow.build')}
+            onPress={build}
+            disabled={!consent}
+            testID="build-weekly-plan"
           />
         </>
       )}

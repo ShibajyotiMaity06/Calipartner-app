@@ -1,4 +1,5 @@
 import { fastingRefresh } from './fastingRefresh';
+import { workoutFlow } from './workoutFlow';
 import { aha } from './aha';
 import { personalDay } from './personalDay';
 import { entryRefresh } from './entryRefresh';
@@ -9,6 +10,7 @@ import { homeRefresh } from './homeRefresh';
 import { squadDesign } from './squadDesign';
 import { repairMessages } from './repairs';
 export const en = {
+  workoutFlow,
   personalDay,
   aha,
   cardlessTrial: {

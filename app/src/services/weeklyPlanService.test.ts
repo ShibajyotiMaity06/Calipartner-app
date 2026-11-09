@@ -5,7 +5,9 @@ const state = vi.hoisted(() => ({
   invoke: vi.fn(),
   rpc: vi.fn(),
   store: new Map<string, string>(),
+  initialWorkout: vi.fn(),
 }));
+vi.mock('./workoutRoutineService', () => ({ buildWorkoutPlan: state.initialWorkout }));
 vi.mock('@/lib/supabase', () => ({
   getSupabase: () => ({
     auth: { getUser: async () => ({ data: { user: { id: state.actor } }, error: null }) },
@@ -88,6 +90,41 @@ it('keeps the generation request UUID across lost acknowledgements and verifies 
     'accept_ai_processing_consent',
     { p_version: '1.1-weekly-plan' },
   ]);
+});
+it('finishes the onboarding routine before acknowledging and rereads the matching workout preview', async () => {
+  let acknowledge!: () => void;
+  state.initialWorkout.mockImplementationOnce(
+    () =>
+      new Promise<void>((resolve) => {
+        acknowledge = resolve;
+      }),
+  );
+  state.invoke.mockResolvedValue({ data: { saved: true }, error: null });
+  state.rpc.mockImplementation(async (name: string) => ({
+    data:
+      name === 'get_personal_weekly_plan'
+        ? {
+            id: state.invoke.mock.lastCall![1].body.request_id,
+            days: [{ day: 0 }],
+            full_access: false,
+            workout_tips: [],
+            diet_tips: [],
+          }
+        : null,
+    error: null,
+  }));
+  const pending = buildPersonalWeeklyPlan('owner', preferences, true);
+  await vi.waitFor(() =>
+    expect(state.initialWorkout).toHaveBeenCalledWith('owner', preferences, true),
+  );
+  expect(state.store.size).toBe(1);
+  acknowledge();
+  const plan = await pending;
+  expect(plan.id).toBe(state.invoke.mock.lastCall![1].body.request_id);
+  expect(
+    state.rpc.mock.calls.filter((call) => call[0] === 'get_personal_weekly_plan'),
+  ).toHaveLength(2);
+  expect(state.store.size).toBe(0);
 });
 it('refuses an invalid free projection that includes hidden days or tips', async () => {
   state.rpc.mockResolvedValue({

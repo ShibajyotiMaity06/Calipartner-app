@@ -1,6 +1,6 @@
 import { loadAccountTable } from '@/services/accountDataService';
 import { workoutEvents } from '@/services/workoutEvents';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   summarizeWorkout as coreGetWorkoutSummary,
   type PreviousExercisePerformance,
@@ -70,11 +70,17 @@ export function useWorkouts(date?: string): UseWorkoutsResult {
   const userId = user?.id ?? 'guest-user';
   const userWeightKg = currentGoalProfile?.current_weight_kg ?? 70;
 
+  const scopeKey = JSON.stringify([userId, localDate]);
+  const activeScope = useRef(scopeKey);
+  activeScope.current = scopeKey;
+  const version = useRef(0);
+  const [dataScope, setDataScope] = useState(scopeKey);
   const [workouts, setWorkouts] = useState<WorkoutWithDetails[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
 
   const loadData = useCallback(async () => {
+    const request = ++version.current;
     try {
       setLoading(true);
       setError(null);
@@ -83,16 +89,26 @@ export function useWorkouts(date?: string): UseWorkoutsResult {
       await loadAccountTable(db, 'workout_exercises', userId);
       await loadAccountTable(db, 'workout_sets', userId);
       const items = await getWorkoutsForDate(db, userId, localDate);
-      setWorkouts(items);
+      if (activeScope.current === scopeKey && request === version.current) setWorkouts(items);
     } catch (err) {
-      setError(err instanceof Error ? err : new Error(String(err)));
+      if (activeScope.current === scopeKey && request === version.current) {
+        setWorkouts([]);
+        setError(err instanceof Error ? err : new Error(String(err)));
+      }
     } finally {
-      setLoading(false);
+      if (activeScope.current === scopeKey && request === version.current) {
+        setDataScope(scopeKey);
+        setLoading(false);
+      }
     }
-  }, [userId, localDate]);
+  }, [userId, localDate, scopeKey]);
 
   useEffect(() => {
     void loadData();
+    const invalidate = () => {
+      version.current++;
+    };
+    return invalidate;
   }, [loadData]);
   useEffect(
     () =>
@@ -218,9 +234,9 @@ export function useWorkouts(date?: string): UseWorkoutsResult {
   );
 
   return {
-    workouts,
-    loading,
-    error,
+    workouts: dataScope === scopeKey ? workouts : [],
+    loading: loading || dataScope !== scopeKey,
+    error: dataScope === scopeKey ? error : null,
     refresh: loadData,
     create,
     update,

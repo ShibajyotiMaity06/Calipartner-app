@@ -55,6 +55,7 @@ export async function generateWeeklyPlan(
   environment: (key: string) => string | undefined = (key) => Deno.env.get(key),
   validate?: (content: unknown) => unknown,
   singleDay = false,
+  customFormat?: Record<string, unknown>,
 ): Promise<unknown> {
   const groqKeys = [
     ...new Set(
@@ -176,11 +177,9 @@ export async function generateWeeklyPlan(
                       : {}),
                     ...(useResponseFormat
                       ? {
-                          response_format: weeklyPlanResponseFormat(
-                            provider.name,
-                            provider.model,
-                            singleDay,
-                          ),
+                          response_format:
+                            customFormat ??
+                            weeklyPlanResponseFormat(provider.name, provider.model, singleDay),
                         }
                       : {}),
                   },
@@ -258,6 +257,8 @@ export async function generateWeeklyPlan(
                 'exactly one day with day=0 and no alternatives',
               );
             if (error.repair) correction += `\nSpecific arithmetic error: ${error.repair}`;
+            if (customFormat)
+              correction = `Your workout routine was rejected for ${error.reason}. Return a corrected workout-only JSON object with exactly seven days in weekday order. Respect the original training schedule, rest days, safe focus/exclusion notes, available equipment, session duration and rep-based exercise bounds. Do not return meals, nutrition, weights or completed logs.`;
             continue;
           }
         }

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { Pressable, View } from 'react-native';
 import { Button, Text, homeLayout, space } from '@calipartner/ui';
 import { NumberField } from '@/components/onboarding/PlanPrimitives';
@@ -12,21 +12,36 @@ export function ExerciseSetsForm({
   name,
   onAdd,
   onCancel,
+  initialSets,
+  submitLabel,
 }: {
   name: string;
-  onAdd: (sets: ExerciseSetInput[]) => void;
+  onAdd: (sets: ExerciseSetInput[]) => void | Promise<void>;
+  initialSets?: ExerciseSetInput[];
+  submitLabel?: string;
   onCancel: () => void;
 }) {
-  const [showWeights, setShowWeights] = useState(false);
-  const [count, setCount] = useState<number | null>(null);
-  const [sets, setSets] = useState<{ reps: number | null; weightKg: number | null }[]>([]);
+  const [showWeights, setShowWeights] = useState(
+    Boolean(initialSets?.some((set) => set.weightKg > 0)),
+  );
+  const [count, setCount] = useState<number | null>(initialSets?.length ?? null);
+  const [sets, setSets] = useState<{ reps: number | null; weightKg: number | null }[]>(
+    initialSets ?? [],
+  );
   const [error, setError] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState(false);
+  const lock = useRef(false);
   const change = (index: number, key: 'reps' | 'weightKg', value: number | null) => {
     setSets((previous) => previous.map((set, i) => (i === index ? { ...set, [key]: value } : set)));
     setError(false);
   };
   return (
-    <View style={{ gap: space[3] }} testID="exercise-sets-form">
+    <View
+      style={{ gap: space[3] }}
+      pointerEvents={saving ? 'none' : 'auto'}
+      testID="exercise-sets-form"
+    >
       <Text variant="heading">{name}</Text>
       <NumberField
         label={t('personalDay.setsCount')}
@@ -39,7 +54,7 @@ export function ExerciseSetsForm({
             setSets((previous) =>
               Array.from(
                 { length: value },
-                (_, index) => previous[index] ?? { reps: null, weightKg: null },
+                (_, index) => previous[index] ?? { reps: 10, weightKg: 0 },
               ),
             );
           else setSets([]);
@@ -61,12 +76,47 @@ export function ExerciseSetsForm({
       )}
       {sets.map((set, index) => (
         <View key={index} style={{ gap: space[2] }}>
-          <NumberField
-            label={t('personalDay.setReps', { set: index + 1 })}
-            value={set.reps}
-            onChange={(value) => change(index, 'reps', value)}
-            testID={`exercise-set-reps-${index}`}
-          />
+          <View style={{ flexDirection: 'row', alignItems: 'flex-end', gap: space[2] }}>
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={t('workoutFlow.repsLess', { set: index + 1 })}
+              disabled={saving || (set.reps ?? 0) <= 1}
+              onPress={() => change(index, 'reps', Math.max(1, (set.reps ?? 1) - 1))}
+              style={{
+                minWidth: homeLayout.touchSize,
+                minHeight: homeLayout.touchSize,
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+              testID={`exercise-set-minus-${index}`}
+            >
+              <Text>-</Text>
+            </Pressable>
+            <View style={{ flex: 1 }}>
+              <NumberField
+                centered
+                label={t('personalDay.setReps', { set: index + 1 })}
+                value={set.reps}
+                onChange={(value) => change(index, 'reps', value)}
+                testID={`exercise-set-reps-${index}`}
+              />
+            </View>
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={t('workoutFlow.repsMore', { set: index + 1 })}
+              disabled={saving || (set.reps ?? 0) >= 100}
+              onPress={() => change(index, 'reps', Math.min(100, (set.reps ?? 0) + 1))}
+              style={{
+                minWidth: homeLayout.touchSize,
+                minHeight: homeLayout.touchSize,
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+              testID={`exercise-set-plus-${index}`}
+            >
+              <Text>+</Text>
+            </Pressable>
+          </View>
           {showWeights && (
             <NumberField
               optional
@@ -78,11 +128,14 @@ export function ExerciseSetsForm({
           )}
         </View>
       ))}
+      {saveError && <Text accessibilityRole="alert">{t('workoutFlow.error')}</Text>}
       {error && <Text accessibilityRole="alert">{t('personalDay.invalidSets')}</Text>}
       <Button
-        label={t('workouts.exercises.addExercise')}
+        label={saving ? t('common.saving') : (submitLabel ?? t('workouts.exercises.addExercise'))}
+        disabled={saving}
         testID="exercise-confirm-sets"
-        onPress={() => {
+        onPress={async () => {
+          if (lock.current) return;
           if (
             !sets.length ||
             sets.some(
@@ -98,12 +151,23 @@ export function ExerciseSetsForm({
             setError(true);
             return;
           }
-          onAdd(sets.map((set) => ({ reps: set.reps!, weightKg: set.weightKg ?? 0 })));
+          lock.current = true;
+          setSaving(true);
+          setSaveError(false);
+          try {
+            await onAdd(sets.map((set) => ({ reps: set.reps!, weightKg: set.weightKg ?? 0 })));
+          } catch {
+            setSaveError(true);
+          } finally {
+            lock.current = false;
+            setSaving(false);
+          }
         }}
       />
       <Button
         variant="secondary"
         label={t('common.cancel')}
+        disabled={saving}
         onPress={onCancel}
         testID="exercise-cancel-sets"
       />

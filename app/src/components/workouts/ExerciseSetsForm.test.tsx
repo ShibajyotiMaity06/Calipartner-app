@@ -45,10 +45,49 @@ it('keeps incomplete, fractional and oversized set drafts editable without addin
     await act(async () =>
       tree.root.findByProps({ testID: 'exercise-set-count' }).props.onChange(count),
     );
+    if (count === 3)
+      await act(async () =>
+        tree.root.findByProps({ testID: 'exercise-set-reps-0' }).props.onChange(0),
+      );
     await act(async () =>
       tree.root.findByProps({ testID: 'exercise-confirm-sets' }).props.onPress(),
     );
     expect(add).not.toHaveBeenCalled();
     expect(tree.root.findByProps({ accessibilityRole: 'alert' })).toBeDefined();
   }
+});
+
+it('changes individual reps with minus/plus and keeps the draft open until a save is acknowledged', async () => {
+  let acknowledge!: () => void;
+  const add = vi.fn(
+    () =>
+      new Promise<void>((resolve) => {
+        acknowledge = resolve;
+      }),
+  );
+  await act(async () => {
+    tree = create(
+      <ExerciseSetsForm
+        name="Curl"
+        initialSets={[
+          { reps: 10, weightKg: 5 },
+          { reps: 8, weightKg: 7.5 },
+        ]}
+        onAdd={add}
+        onCancel={vi.fn()}
+      />,
+    );
+  });
+  await act(async () => tree.root.findByProps({ testID: 'exercise-set-plus-0' }).props.onPress());
+  await act(async () => tree.root.findByProps({ testID: 'exercise-set-minus-1' }).props.onPress());
+  await act(async () => {
+    void tree.root.findByProps({ testID: 'exercise-confirm-sets' }).props.onPress();
+  });
+  expect(add).toHaveBeenCalledExactlyOnceWith([
+    { reps: 11, weightKg: 5 },
+    { reps: 7, weightKg: 7.5 },
+  ]);
+  expect(tree.root.findByProps({ testID: 'exercise-confirm-sets' }).props.disabled).toBe(true);
+  await act(async () => acknowledge());
+  expect(tree.root.findByProps({ testID: 'exercise-confirm-sets' }).props.disabled).toBe(false);
 });

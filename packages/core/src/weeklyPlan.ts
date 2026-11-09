@@ -33,6 +33,7 @@ export interface PlanPreferences {
   experience: 'beginner' | 'intermediate' | 'experienced';
   session_minutes: number;
   limitations: string;
+  workout_notes?: string;
   country: string;
   cuisine: string;
   diet: 'mixed' | 'vegetarian' | 'vegan' | 'pescatarian';
@@ -211,6 +212,7 @@ export function validatePlanPreferences(input: unknown): PlanPreferences {
     experience: choice(p.experience, ['beginner', 'intermediate', 'experienced']),
     session_minutes: number(p.session_minutes, 15, 90),
     limitations: text(p.limitations, 500, true),
+    ...(p.workout_notes === undefined ? {} : { workout_notes: text(p.workout_notes, 500, true) }),
     country: text(p.country, 80),
     cuisine: text(p.cuisine, 200),
     diet: choice(p.diet, ['mixed', 'vegetarian', 'vegan', 'pescatarian']),
@@ -712,4 +714,175 @@ export function planDayNutrition(day: PlanDay) {
     }),
     { calories: 0, protein: 0, carbs: 0, fat: 0 },
   );
+}
+
+export interface WorkoutTargetSet {
+  reps: number;
+  weightKg: number;
+}
+export interface WorkoutRoutineExercise {
+  id: string;
+  name: string;
+  equipment: PlanEquipment;
+  targetSets: WorkoutTargetSet[];
+}
+export interface WorkoutRoutineDay {
+  day: number;
+  title: string;
+  minutes: number;
+  exercises: WorkoutRoutineExercise[];
+}
+export interface WorkoutRoutineContent {
+  days: WorkoutRoutineDay[];
+}
+/** Existing complete weeks keep their accepted/manual exercise choices when opening the new logger. */
+export function workoutRoutineFromLegacy(input: unknown): WorkoutRoutineContent | null {
+  try {
+    const raw = object(input);
+    if (!Array.isArray(raw.days) || raw.days.length !== 7) return null;
+    return validateWorkoutRoutine({
+      days: raw.days.map((value, day) => {
+        const item = object(value),
+          workout = object(item.workout);
+        if (item.day !== day || !Array.isArray(workout.exercises))
+          throw new Error('INVALID_WORKOUT_PLAN');
+        return {
+          day,
+          title: workout.title,
+          minutes: workout.minutes,
+          exercises: workout.exercises.map((value, index) => {
+            const exercise = object(value);
+            const count = number(exercise.sets, 1, 20);
+            return {
+              id: `day-${day}-exercise-${index}`,
+              name: exercise.name,
+              equipment: exercise.equipment,
+              targetSets: Array.from({ length: count }, () => ({
+                reps: number(exercise.reps, 1, 100),
+                weightKg: 0,
+              })),
+            };
+          }),
+        };
+      }),
+    });
+  } catch {
+    return null;
+  }
+}
+export interface WorkoutPlanView {
+  id: string | null;
+  revision: number;
+  full_access: boolean;
+  needs_initial: boolean;
+  preferences: PlanPreferences | null;
+  days: WorkoutRoutineDay[];
+  can_rebuild: boolean;
+  rebuilds_used: number;
+  next_rebuild_at: string | null;
+  tier: 'free' | 'plus' | 'pro';
+}
+export const FREE_WORKOUT_SAMPLES = [
+  'sampleChest',
+  'sampleBack',
+  'sampleCurls',
+  'sampleLegs',
+  'sampleShoulders',
+  'samplePull',
+  'sampleCalves',
+] as const;
+/** Manual targets stay separate from completed workout sets. */
+export function validateWorkoutRoutine(input: unknown): WorkoutRoutineContent {
+  const raw = object(input);
+  if (!Array.isArray(raw.days) || raw.days.length !== 7) throw new Error('INVALID_WORKOUT_PLAN');
+  return {
+    days: raw.days.map((value, day) => {
+      const item = object(value);
+      if (item.day !== day || !Array.isArray(item.exercises) || item.exercises.length > 8)
+        throw new Error('INVALID_WORKOUT_PLAN');
+      const ids = new Set<string>();
+      const exercises = item.exercises.map((value) => {
+        const exercise = object(value);
+        const id = text(exercise.id, 100);
+        if (
+          ids.has(id) ||
+          !Array.isArray(exercise.targetSets) ||
+          !exercise.targetSets.length ||
+          exercise.targetSets.length > 20
+        )
+          throw new Error('INVALID_WORKOUT_PLAN');
+        ids.add(id);
+        return {
+          id,
+          name: text(exercise.name, 100),
+          equipment: choice(exercise.equipment, PLAN_EQUIPMENT),
+          targetSets: exercise.targetSets.map((value) => {
+            const set = object(value);
+            return {
+              reps: number(set.reps, 1, 100),
+              weightKg: number(set.weightKg, 0, 1000, false),
+            };
+          }),
+        };
+      });
+      return {
+        day,
+        title: text(item.title, 100),
+        minutes: exercises.length ? number(item.minutes, 0, 90) : 0,
+        exercises,
+      };
+    }),
+  };
+}
+/** AI prescriptions use conservative existing exercise bounds and the exact requested schedule. */
+export function workoutRoutineFromAI(
+  input: unknown,
+  preferences: PlanPreferences,
+): WorkoutRoutineContent {
+  const raw = object(input);
+  if (!Array.isArray(raw.days) || raw.days.length !== 7)
+    throw new WeeklyPlanValidationError('week_days');
+  const days = raw.days.map((value, day) => {
+    const item = object(value),
+      workout = object(item.workout);
+    const training = preferences.workout_days.includes(day);
+    const exercises = validatePlanExercises(workout.exercises, preferences);
+    if (
+      item.day !== day ||
+      (training ? exercises.length < 3 || exercises.length > 6 : exercises.length !== 0)
+    )
+      throw new WeeklyPlanValidationError('training_schedule');
+    const notes = preferences.workout_notes ?? '';
+    if (
+      /\b(no legs?|avoid legs?|don.t want legs?)\b/i.test(notes) &&
+      exercises.some((exercise) => /squat|deadlift|lunge|leg |calf|calves/i.test(exercise.name))
+    )
+      throw new WeeklyPlanValidationError('unsupported_choice');
+    const title = text(workout.title, 100);
+    if (
+      exercises.some((exercise) => /\bplank\b|\bwall sit\b|\bhold\b|\bamrap\b/i.test(exercise.name))
+    )
+      throw new WeeklyPlanValidationError('unsupported_choice');
+    if (/cure|detox|guarantee|through pain/i.test(title + exercises.map((e) => e.name).join(' ')))
+      throw new WeeklyPlanValidationError('unsafe_copy');
+    return {
+      day,
+      title,
+      minutes: number(
+        workout.minutes,
+        training ? 15 : 0,
+        training ? preferences.session_minutes : 0,
+      ),
+      exercises: exercises.map((exercise, index) => ({
+        id: `day-${day}-exercise-${index}`,
+        name: exercise.name,
+        equipment: exercise.equipment,
+        targetSets: Array.from({ length: exercise.sets }, () => ({
+          reps: exercise.reps,
+          weightKg: 0,
+        })),
+      })),
+    };
+  });
+  return validateWorkoutRoutine({ days });
 }

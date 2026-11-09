@@ -407,9 +407,11 @@ export function WorkoutContent({ workouts }: { workouts: SquadWorkout[] }) {
       {workouts.map((workout) => (
         <View key={workout.id} style={squadStyles.stack}>
           <Text variant="heading">{workout.name}</Text>
-          <Text variant="bodyS" tabular>
-            {t('squadDesign.minutes', { count: workout.duration_minutes })}
-          </Text>
+          {workout.duration_minutes > 0 && (
+            <Text variant="bodyS" tabular>
+              {t('squadDesign.minutes', { count: workout.duration_minutes })}
+            </Text>
+          )}
           {workout.exercises.map((exercise) => (
             <View key={exercise.id} style={squadStyles.stack}>
               <Text>{exercise.name}</Text>

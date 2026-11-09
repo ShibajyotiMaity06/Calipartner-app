@@ -1,6 +1,9 @@
 # Supabase local development config (Phase 1)
 project_id = "calipartner"
 
+[functions.workout-plan]
+verify_jwt = false
+
 [api]
 enabled = true
 port = 54321

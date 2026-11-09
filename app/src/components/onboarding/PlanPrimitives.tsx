@@ -57,6 +57,7 @@ export function NumberField({
   optional = false,
   nutrient,
   placeholder,
+  centered = false,
 }: {
   label: string;
   value: number | null;
@@ -65,6 +66,7 @@ export function NumberField({
   optional?: boolean;
   placeholder?: string;
   nutrient?: NutritionMetric;
+  centered?: boolean;
 }) {
   const { colors } = useTheme();
   const [text, setText] = useState(value !== null && Number.isFinite(value) ? String(value) : '');
@@ -100,6 +102,7 @@ export function NumberField({
           ],
           { fontFamily: inputTypography.body.fontFamily },
           nutrient ? { color: nutritionColors[nutrient] } : {},
+          centered ? { textAlign: 'center', fontVariant: ['tabular-nums'] } : {},
         ]}
         onChangeText={(next) => {
           setText(next);
