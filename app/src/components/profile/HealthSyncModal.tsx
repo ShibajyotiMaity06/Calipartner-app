@@ -1,3 +1,4 @@
+import { NavigationIcon } from '@calipartner/ui';
 import React, { useEffect, useState } from 'react';
 import {
   Modal,
@@ -8,7 +9,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import { Button, Card, ChevronLeftIcon, dark, radius, space, Text } from '@calipartner/ui';
+import { Button, Card, dark, radius, space, Text } from '@calipartner/ui';
 import { t } from '@/i18n';
 import { playClickSound } from '@/lib/sound';
 import {
@@ -92,7 +93,7 @@ export function HealthSyncModal({
               style={styles.backButton}
               testID="btn-close-health-sync"
             >
-              <ChevronLeftIcon color={dark.textHi} size={24} />
+              <NavigationIcon action="back" />
             </TouchableOpacity>
             <Text variant="heading" color={dark.textHi}>
               {t('me.healthSync.title')}

@@ -1,3 +1,5 @@
+import { WeightHistoryModal } from '@/components/trackers/WeightHistoryModal';
+import { weightChange, type WeightLog } from '@calipartner/core';
 import { LogSomethingView } from '@/components/diary/LogSomethingView';
 import React, { useCallback, useState } from 'react';
 import { View, StyleSheet, Modal, Platform, ScrollView } from 'react-native';
@@ -52,6 +54,8 @@ export default function LogScreen() {
 
   const [currentSection, setCurrentSection] = useState<MealSection>(initialSection);
   const [sheetVisible, setSheetVisible] = useState(true);
+  const [weightHistoryOpen, setWeightHistoryOpen] = useState(false);
+  const [editingWeight, setEditingWeight] = useState<WeightLog | null>(null);
   const [activeFlow, setActiveFlow] = useState<ActiveFlowState>('picker');
   useFocusEffect(
     useCallback(() => {
@@ -63,6 +67,8 @@ export default function LogScreen() {
           ? (params.flow as ActiveFlowState)
           : 'picker',
       );
+      setWeightHistoryOpen(false);
+      setEditingWeight(null);
       setSheetVisible(true);
       return () => setSheetVisible(false);
     }, [params.flow, profile?.timezone]),
@@ -70,7 +76,20 @@ export default function LogScreen() {
 
   // Tracker hooks for Water and Weight
   const { addWater } = useWater(todayDate);
-  const { logWeight, latestLog } = useWeight();
+  const {
+    logs: weightLogs,
+    logWeight,
+    editWeight,
+    deleteWeight,
+    latestLog,
+    startingWeightKg,
+    weeklyPaceKg,
+    projectedDate,
+    projectionReason,
+    loading: weightLoading,
+    error: weightError,
+    refresh: refreshWeight,
+  } = useWeight();
   const { logManualSteps } = useSteps(todayDate);
   const { addEntry } = useAddEntry();
 
@@ -84,11 +103,17 @@ export default function LogScreen() {
   };
 
   const closeFlow = () => {
+    setWeightHistoryOpen(false);
+    setEditingWeight(null);
     if (params.flow) handleCloseAll();
     else if (['cycling', 'running', 'steps'].includes(activeFlow)) setActiveFlow('cardio');
     else setActiveFlow('picker');
   };
-  useBrowserModalBack(sheetVisible && activeFlow !== 'picker' && !params.flow, closeFlow);
+  useBrowserModalBack(
+    sheetVisible && activeFlow !== 'picker' && !params.flow && !weightHistoryOpen,
+    closeFlow,
+  );
+  useBrowserModalBack(sheetVisible && weightHistoryOpen, () => setWeightHistoryOpen(false));
 
   return (
     <View style={[styles.rootContainer, { backgroundColor: colors.background }]}>
@@ -181,20 +206,51 @@ export default function LogScreen() {
         </Sheet>
       )}
       {activeFlow === 'weight' && (
-        <WeightEntryModal
-          visible={sheetVisible}
-          defaultDate={todayDate}
-          startWeight={latestLog?.weight_kg ?? null}
-          currentWeight={latestLog?.weight_kg ?? null}
-          totalChangeKg={null}
-          weeklyPace={null}
-          projectedDate={null}
-          hasEnoughTrend={false}
-          onClose={closeFlow}
-          onSave={async (weightKg, notes, date) => {
-            await logWeight(weightKg, date, notes);
-          }}
-        />
+        <>
+          <WeightEntryModal
+            visible={sheetVisible && !weightHistoryOpen}
+            initialEntry={editingWeight}
+            previousWeight={
+              editingWeight
+                ? (weightLogs.find((entry) => entry.local_date < editingWeight.local_date)
+                    ?.weight_kg ?? startingWeightKg)
+                : undefined
+            }
+            onOpenHistory={() => setWeightHistoryOpen(true)}
+            defaultDate={todayDate}
+            startWeight={startingWeightKg}
+            currentWeight={latestLog?.weight_kg ?? null}
+            totalChangeKg={
+              latestLog && startingWeightKg !== null
+                ? weightChange(latestLog.weight_kg, startingWeightKg)
+                : null
+            }
+            weeklyPace={weeklyPaceKg}
+            projectedDate={projectedDate}
+            hasEnoughTrend={projectionReason !== 'not_enough_trend'}
+            onClose={closeFlow}
+            onSave={async (weightKg, notes, date) => {
+              if (editingWeight) await editWeight(editingWeight.id, weightKg, notes, date);
+              else await logWeight(weightKg, date, notes);
+            }}
+          />
+          {weightHistoryOpen && (
+            <WeightHistoryModal
+              visible={sheetVisible}
+              weekly
+              entries={weightLogs}
+              loading={weightLoading}
+              error={weightError}
+              onRetry={() => void refreshWeight()}
+              onClose={() => setWeightHistoryOpen(false)}
+              onDeleteEntry={deleteWeight}
+              onEditEntry={(entry) => {
+                setEditingWeight(entry);
+                setWeightHistoryOpen(false);
+              }}
+            />
+          )}
+        </>
       )}
 
       {/* 5.5 Fasting Timer Modal */}

@@ -24,6 +24,7 @@ vi.mock('react-native', () => ({
 vi.mock('@calipartner/ui', async () => ({
   ...(await import('../../../../packages/ui/src/tokens')),
   Text: 'Text',
+  NavigationIcon: 'NavigationIcon',
   Button: 'Button',
 }));
 vi.mock('@expo/vector-icons', () => ({ Ionicons: 'Icon' }));

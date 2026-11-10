@@ -2,8 +2,9 @@ import { type as inputTypography } from '@calipartner/ui';
 import React, { useEffect, useRef, useState } from 'react';
 import { Modal, Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import type { WeightLog } from '@calipartner/core';
-import { Text, dark, radius, space, type as typeTokens } from '@calipartner/ui';
+import { isValidWeightDate, type WeightLog } from '@calipartner/core';
+import { useCurrentLocalDate } from '@/hooks/useCurrentLocalDate';
+import { Text, dark, radius, space, useReducedMotion, type as typeTokens } from '@calipartner/ui';
 import { t } from '@/i18n';
 
 export interface WeightEntryModalProps {
@@ -12,10 +13,12 @@ export interface WeightEntryModalProps {
   defaultDate?: string;
   startWeight: number | null;
   currentWeight: number | null;
+  previousWeight?: number | null;
   totalChangeKg: number | null;
   weeklyPace: number | null;
   projectedDate: string | null;
   hasEnoughTrend: boolean;
+  onOpenHistory?: () => void;
   onClose: () => void;
   onSave: (weightKg: number, notes?: string, date?: string) => Promise<unknown>;
 }
@@ -26,13 +29,17 @@ export function WeightEntryModal({
   defaultDate,
   startWeight,
   currentWeight,
+  previousWeight,
   totalChangeKg,
   weeklyPace,
   projectedDate,
   hasEnoughTrend,
+  onOpenHistory,
   onClose,
   onSave,
 }: WeightEntryModalProps) {
+  const { localDate: today } = useCurrentLocalDate();
+  const reduceMotion = useReducedMotion();
   const [unit, setUnit] = useState<'kg' | 'lb'>('kg');
   const [weightText, setWeightText] = useState('');
   const [dateText, setDateText] = useState('');
@@ -40,26 +47,37 @@ export function WeightEntryModal({
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const savingRef = useRef(false);
+  const dirtyRef = useRef(false);
+  const openedEntry = useRef<string | null>(null);
 
   const kgToLb = (kg: number) => Math.round(kg * 2.20462 * 10) / 10;
   const lbToKg = (lb: number) => Math.round((lb / 2.20462) * 10) / 10;
 
   useEffect(() => {
+    if (!visible) {
+      openedEntry.current = null;
+      return;
+    }
+    const entryKey = initialEntry?.id ?? 'new';
+    if (openedEntry.current === entryKey && dirtyRef.current) return;
+    openedEntry.current = entryKey;
+    dirtyRef.current = false;
     if (initialEntry) {
       setWeightText(String(initialEntry.weight_kg));
       setDateText(initialEntry.local_date);
       setNotesText(initialEntry.notes ?? '');
     } else {
       setWeightText(currentWeight ? String(currentWeight) : '');
-      setDateText(defaultDate ?? new Date().toISOString().slice(0, 10));
+      setDateText(defaultDate ?? today);
       setNotesText('');
     }
     setError(null);
     setUnit('kg');
-  }, [initialEntry, defaultDate, currentWeight, visible]);
+  }, [initialEntry, defaultDate, currentWeight, visible, today]);
 
   const handleUnitToggle = (newUnit: 'kg' | 'lb') => {
     if (newUnit === unit) return;
+    dirtyRef.current = true;
     const parsed = parseFloat(weightText.trim());
     if (!isNaN(parsed) && parsed > 0) {
       if (newUnit === 'lb') {
@@ -86,11 +104,7 @@ export function WeightEntryModal({
     }
 
     const trimmedDate = dateText.trim();
-    if (
-      !/^\d{4}-\d{2}-\d{2}$/.test(trimmedDate) ||
-      !Number.isFinite(Date.parse(trimmedDate)) ||
-      new Date(trimmedDate).toISOString().slice(0, 10) !== trimmedDate
-    ) {
+    if (!isValidWeightDate(trimmedDate, today)) {
       setError(t('trackers.weight.invalidDate'));
       return;
     }
@@ -102,7 +116,7 @@ export function WeightEntryModal({
       await onSave(weightKg, notesText.trim() || undefined, trimmedDate);
       onClose();
     } catch {
-      setError(t('common.errorBody'));
+      setError(t('weightUpdate.saveError'));
     } finally {
       savingRef.current = false;
       setSaving(false);
@@ -120,8 +134,9 @@ export function WeightEntryModal({
     : null;
 
   let plainWordsChange: string | null = null;
-  if (normalizedInputKg !== null && currentWeight !== null) {
-    const diff = Math.round((normalizedInputKg - currentWeight) * 10) / 10;
+  const comparisonWeight = isEditing ? previousWeight : currentWeight;
+  if (normalizedInputKg !== null && comparisonWeight != null) {
+    const diff = Math.round((normalizedInputKg - comparisonWeight) * 10) / 10;
     if (Math.abs(diff) < 0.05) {
       plainWordsChange = t('trackers.weight.changeSinceLastSame');
     } else if (diff < 0) {
@@ -145,7 +160,7 @@ export function WeightEntryModal({
   return (
     <Modal
       visible={visible}
-      animationType="slide"
+      animationType={reduceMotion ? 'none' : 'slide'}
       transparent
       onRequestClose={onClose}
       testID="modal-weight-entry"
@@ -204,6 +219,18 @@ export function WeightEntryModal({
             contentContainerStyle={styles.formContent}
             showsVerticalScrollIndicator={false}
           >
+            {onOpenHistory && (
+              <Pressable
+                testID="btn-weight-progress"
+                onPress={onOpenHistory}
+                accessibilityRole="button"
+                accessibilityLabel={t('weightUpdate.progress')}
+                style={styles.progressButton}
+              >
+                <Ionicons name="trending-up-outline" size={space[5]} color={dark.textMid} />
+                <Text>{t('weightUpdate.progress')}</Text>
+              </Pressable>
+            )}
             {/* E05 Big Numeric Field */}
             <View style={styles.bigNumericCard} testID="big-numeric-field-card">
               <Text style={styles.fieldLabel}>{t('trackers.weight.weightLabel')}</Text>
@@ -212,6 +239,7 @@ export function WeightEntryModal({
                   testID="input-weight-value"
                   value={weightText}
                   onChangeText={(text) => {
+                    dirtyRef.current = true;
                     setWeightText(text);
                     if (error) setError(null);
                   }}
@@ -242,6 +270,7 @@ export function WeightEntryModal({
                   testID="input-weight-date"
                   value={dateText}
                   onChangeText={(text) => {
+                    dirtyRef.current = true;
                     setDateText(text);
                     if (error) setError(null);
                   }}
@@ -260,7 +289,10 @@ export function WeightEntryModal({
                 <TextInput
                   testID="input-weight-notes"
                   value={notesText}
-                  onChangeText={setNotesText}
+                  onChangeText={(text) => {
+                    dirtyRef.current = true;
+                    setNotesText(text);
+                  }}
                   placeholder={t('trackers.weight.notesPlaceholder')}
                   placeholderTextColor={dark.textLo}
                   style={[styles.input, { fontFamily: inputTypography.body.fontFamily }]}
@@ -275,21 +307,21 @@ export function WeightEntryModal({
 
               <View style={styles.summaryGrid}>
                 <View style={styles.summaryItem}>
-                  <Text style={styles.summaryItemLabel}>Start</Text>
+                  <Text style={styles.summaryItemLabel}>{t('weightUpdate.start')}</Text>
                   <Text style={styles.summaryItemVal}>
                     {startWeight !== null ? `${startWeight.toFixed(1)} kg` : '—'}
                   </Text>
                 </View>
 
                 <View style={styles.summaryItem}>
-                  <Text style={styles.summaryItemLabel}>Current</Text>
+                  <Text style={styles.summaryItemLabel}>{t('weightUpdate.current')}</Text>
                   <Text style={styles.summaryItemVal}>
                     {currentWeight !== null ? `${currentWeight.toFixed(1)} kg` : '—'}
                   </Text>
                 </View>
 
                 <View style={styles.summaryItem}>
-                  <Text style={styles.summaryItemLabel}>Change</Text>
+                  <Text style={styles.summaryItemLabel}>{t('weightUpdate.change')}</Text>
                   <Text style={styles.summaryItemVal}>
                     {totalChangeKg !== null
                       ? `${totalChangeKg > 0 ? '+' : ''}${totalChangeKg.toFixed(1)} kg (${changePercent}%)`
@@ -356,6 +388,17 @@ export function WeightEntryModal({
 }
 
 const styles = StyleSheet.create({
+  progressButton: {
+    minHeight: space[8],
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: space[2],
+    alignSelf: 'flex-start',
+    paddingHorizontal: space[3],
+    borderRadius: radius.control,
+    borderWidth: 1,
+    borderColor: dark.hairline,
+  },
   overlay: {
     flex: 1,
     backgroundColor: 'rgba(0, 0, 0, 0.65)',

@@ -1,3 +1,4 @@
+vi.mock('@/hooks/useNetworkStatus', () => ({ useNetworkStatus: () => ({ isOnline: true }) }));
 import React from 'react';
 import { act, create } from 'react-test-renderer';
 import { expect, it, vi } from 'vitest';

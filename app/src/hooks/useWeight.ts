@@ -1,5 +1,6 @@
+import { generateClientUuid } from '@/services/foodService';
 import { loadAccountTable } from '@/services/accountDataService';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { challengeLocalDate, type WeightLog, type WeightTrendPoint } from '@calipartner/core';
 import { getDb } from '@/db';
 import {
@@ -14,6 +15,7 @@ import { useAuth } from '@/contexts/AuthContext';
 
 export interface UseWeightResult {
   logs: WeightLog[];
+  startingWeightKg: number | null;
   latestLog: WeightLog | null;
   latestTrendKg: number | null;
   weeklyPaceKg: number | null;
@@ -22,8 +24,14 @@ export interface UseWeightResult {
   goalProgressPercent: number;
   trendHistory: WeightTrendPoint[];
   loading: boolean;
+  error: string | null;
   logWeight: (weightKg: number, date?: string, notes?: string) => Promise<WeightLog>;
-  editWeight: (id: string, weightKg: number, notes?: string) => Promise<WeightLog | null>;
+  editWeight: (
+    id: string,
+    weightKg: number,
+    notes?: string,
+    date?: string,
+  ) => Promise<WeightLog | null>;
   deleteWeight: (id: string) => Promise<WeightLog | null>;
   refresh: () => Promise<void>;
 }
@@ -33,6 +41,8 @@ export function useWeight(): UseWeightResult {
   const userId = user?.id ?? 'guest-user';
   const { currentGoalProfile } = useTargets();
 
+  const weightRequest = useRef<{ key: string; id: string } | null>(null);
+  const [startingWeightKg, setStartingWeightKg] = useState<number | null>(null);
   const [logs, setLogs] = useState<WeightLog[]>([]);
   const [latestLog, setLatestLog] = useState<WeightLog | null>(null);
   const [latestTrendKg, setLatestTrendKg] = useState<number | null>(null);
@@ -43,16 +53,18 @@ export function useWeight(): UseWeightResult {
   >('not_enough_trend');
   const [goalProgressPercent, setGoalProgressPercent] = useState(0);
   const [trendHistory, setTrendHistory] = useState<WeightTrendPoint[]>([]);
+  const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
   const loadData = useCallback(async () => {
     try {
       setLoading(true);
+      setError(null);
       const db = await getDb();
 
       await loadAccountTable(db, 'weight_logs', userId);
       const [fetchedLogs, summary] = await Promise.all([
-        getWeightLogs(db, userId, 100),
+        getWeightLogs(db, userId, 100000),
         getWeightSummary(db, userId, {
           startingWeightKg: currentGoalProfile?.current_weight_kg,
           targetWeightKg: currentGoalProfile?.target_weight_kg,
@@ -60,6 +72,9 @@ export function useWeight(): UseWeightResult {
       ]);
 
       setLogs(fetchedLogs);
+      setStartingWeightKg(
+        summary.startingWeightKg ?? currentGoalProfile?.current_weight_kg ?? null,
+      );
       setLatestLog(summary.latestLog);
       setLatestTrendKg(summary.latestTrendKg);
       setWeeklyPaceKg(summary.weeklyPace.weeklyPaceKg);
@@ -68,7 +83,7 @@ export function useWeight(): UseWeightResult {
       setGoalProgressPercent(summary.goalProgressPercent);
       setTrendHistory(summary.trendHistory);
     } catch {
-      // Graceful fallback
+      setError('WEIGHT_UNAVAILABLE');
     } finally {
       setLoading(false);
     }
@@ -80,14 +95,21 @@ export function useWeight(): UseWeightResult {
 
   const logWeight = async (weightKg: number, date?: string, notes?: string): Promise<WeightLog> => {
     const db = await getDb();
+    const localDay = date ?? challengeLocalDate(new Date(), profile?.timezone ?? 'UTC');
+    const key = JSON.stringify([userId, weightKg, localDay, notes ?? null]);
+    if (weightRequest.current?.key !== key)
+      weightRequest.current = { key, id: generateClientUuid() };
     const created = await logWeightService(
       db,
       userId,
       weightKg,
-      date ?? challengeLocalDate(new Date(), profile?.timezone ?? 'UTC'),
+      localDay,
       undefined,
       notes,
+      challengeLocalDate(new Date(), profile?.timezone ?? 'UTC'),
+      weightRequest.current.id,
     );
+    weightRequest.current = null;
     await loadData();
     return created;
   };
@@ -96,9 +118,18 @@ export function useWeight(): UseWeightResult {
     id: string,
     weightKg: number,
     notes?: string,
+    date?: string,
   ): Promise<WeightLog | null> => {
     const db = await getDb();
-    const edited = await editWeightLog(db, userId, id, weightKg, notes);
+    const edited = await editWeightLog(
+      db,
+      userId,
+      id,
+      weightKg,
+      notes,
+      date,
+      challengeLocalDate(new Date(), profile?.timezone ?? 'UTC'),
+    );
     await loadData();
     return edited;
   };
@@ -111,6 +142,7 @@ export function useWeight(): UseWeightResult {
   };
 
   return {
+    startingWeightKg,
     logs,
     latestLog,
     latestTrendKg,
@@ -120,6 +152,7 @@ export function useWeight(): UseWeightResult {
     goalProgressPercent,
     trendHistory,
     loading,
+    error,
     logWeight,
     editWeight,
     deleteWeight,

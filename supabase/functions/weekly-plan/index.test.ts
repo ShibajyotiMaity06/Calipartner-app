@@ -407,7 +407,7 @@ Deno.test('OpenRouter configuration cannot enable any weekly-plan route', async 
   }
 });
 
-Deno.test('Weekly plans use Groq, backup Groq, Gemini, then only Claude Haiku 5.5', async () => {
+Deno.test('Weekly plans use Claude Haiku 5.5, then Groq, backup Groq and Gemini', async () => {
   for (const successAt of [0, 1, 2, 3, -1]) {
     const urls: string[] = [];
     const run = () =>
@@ -418,27 +418,26 @@ Deno.test('Weekly plans use Groq, backup Groq, Gemini, then only Claude Haiku 5.
           const index = urls.length - 1;
           const body = JSON.parse(String(init?.body));
           const headers = new Headers(init?.headers);
-          if (index < 2) {
+          if (index === 0) {
+            assert.equal(String(url), 'https://api.anthropic.com/v1/messages');
+            assert.equal(headers.get('x-api-key'), 'claude');
+            assert.equal(headers.get('anthropic-workspace-id'), 'wrkspc_fixture');
+            assert.equal(body.model, 'claude-haiku-5-5');
+          } else if (index < 3) {
             assert.equal(new URL(String(url)).hostname, 'api.groq.com');
             assert.equal(
               headers.get('authorization'),
-              index === 0 ? 'Bearer primary' : 'Bearer backup',
+              index === 1 ? 'Bearer primary' : 'Bearer backup',
             );
-          } else if (index === 2) {
+          } else {
             assert.match(String(url), /gemini-3\.5-flash-lite:generateContent$/);
             assert.equal(headers.get('x-goog-api-key'), 'gemini');
-          } else {
-            assert.equal(String(url), 'https://api.anthropic.com/v1/messages');
-            assert.equal(headers.get('x-api-key'), 'claude');
-            assert.equal(headers.get('anthropic-version'), '2023-06-01');
-            assert.equal(headers.get('anthropic-workspace-id'), 'wrkspc_fixture');
-            assert.equal(body.model, 'claude-haiku-5-5');
           }
           if (index !== successAt) return Response.json({}, { status: 503 });
           return Response.json(
-            index < 2
+            index > 0 && index < 3
               ? { choices: [{ message: { content: JSON.stringify(content()) } }] }
-              : index === 2
+              : index === 3
                 ? {
                     candidates: [
                       {

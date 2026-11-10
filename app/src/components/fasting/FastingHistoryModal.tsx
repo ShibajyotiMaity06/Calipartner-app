@@ -1,3 +1,4 @@
+import { NavigationIcon } from '@calipartner/ui';
 import React, { useState } from 'react';
 import { Modal, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
@@ -287,7 +288,7 @@ export function FastingHistoryModal({
               accessibilityRole="button"
               accessibilityLabel="Close"
             >
-              <Text style={styles.doneButtonText}>Close</Text>
+              <NavigationIcon action="close" />
             </Pressable>
           </View>
         </View>

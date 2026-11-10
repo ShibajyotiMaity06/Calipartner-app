@@ -1,3 +1,4 @@
+import { NavigationIcon } from '@calipartner/ui';
 import React, { useState } from 'react';
 import {
   Modal,
@@ -9,16 +10,7 @@ import {
   View,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import {
-  Avatar,
-  Button,
-  ChevronLeftIcon,
-  dark,
-  radius,
-  space,
-  Text,
-  type IdentityHue,
-} from '@calipartner/ui';
+import { Avatar, Button, dark, radius, space, Text, type IdentityHue } from '@calipartner/ui';
 import { playClickSound, playSuccessSound } from '@/lib/sound';
 
 export interface AvatarOption {
@@ -206,10 +198,7 @@ export function AvatarPickerModal({
               style={styles.backButton}
               testID="btn-avatar-picker-back"
             >
-              <ChevronLeftIcon size={20} color={dark.textHi} />
-              <Text variant="body" color={dark.textHi}>
-                Back
-              </Text>
+              <NavigationIcon action="back" />
             </TouchableOpacity>
             <Text variant="heading" color={dark.textHi} style={styles.topTitle}>
               Profile Picture

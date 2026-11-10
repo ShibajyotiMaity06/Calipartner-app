@@ -1,3 +1,4 @@
+import { cachedRead } from './offlineReadService';
 import type { MealSection, PlanExercise, PlanPreferences, WeeklyPlanView } from '@calipartner/core';
 import { getSupabase } from '@/lib/supabase';
 import { secureStoreAdapter } from '@/lib/secureStore';
@@ -12,21 +13,24 @@ async function actor(userId: string) {
   return client;
 }
 export async function getPersonalWeeklyPlan(userId: string): Promise<WeeklyPlanView | null> {
-  const client = await actor(userId);
-  const { data, error } = await client.rpc('get_personal_weekly_plan');
-  if (error) throw error;
-  if (!data) return null;
-  if (
-    !Array.isArray(data.days) ||
-    typeof data.full_access !== 'boolean' ||
-    (!data.full_access &&
-      (data.days.length !== 1 ||
-        data.days[0]?.day !== 0 ||
-        data.workout_tips?.length ||
-        data.diet_tips?.length))
-  )
-    throw new Error('INVALID_PLAN');
-  return data as WeeklyPlanView;
+  const client = getSupabase();
+  return cachedRead(client, 'weekly-plan:' + userId, async () => {
+    await actor(userId);
+    const { data, error } = await client.rpc('get_personal_weekly_plan');
+    if (error) throw error;
+    if (!data) return null;
+    if (
+      !Array.isArray(data.days) ||
+      typeof data.full_access !== 'boolean' ||
+      (!data.full_access &&
+        (data.days.length !== 1 ||
+          data.days[0]?.day !== 0 ||
+          data.workout_tips?.length ||
+          data.diet_tips?.length))
+    )
+      throw new Error('INVALID_PLAN');
+    return data as WeeklyPlanView;
+  });
 }
 async function stableRequest(userId: string, operation: string, payload: unknown) {
   const key = `calipartner.weekly.${operation}.${userId}`;

@@ -5,6 +5,7 @@ import type { RoomSummary } from '@/types/rooms';
 const state = vi.hoisted(() => ({ push: vi.fn() }));
 vi.mock('react-native', () => ({
   Pressable: 'Pressable',
+  Platform: { OS: 'web' },
   ScrollView: 'ScrollView',
   View: 'View',
   StyleSheet: { create: (value: unknown) => value },
@@ -129,4 +130,36 @@ it('keeps card widths equal and shrinks the selected carousel height when notifi
       .map((panel) => panel.props.visible),
   ).toEqual([true, false]);
   expect(renderer.root.findAllByType('SquadCheckInFeed' as React.ElementType)).toHaveLength(0);
+});
+
+it('limits even a long fling to one card and lets the next gesture advance one more', async () => {
+  const scrollTo = vi.fn();
+  const moreRooms = [...rooms, { ...rooms[1]!, id: 'third' }, { ...rooms[1]!, id: 'fourth' }];
+  await act(async () => {
+    renderer = create(
+      <HomeSquads rooms={moreRooms} loading={false} error={null} onRetry={vi.fn()} visible />,
+      {
+        createNodeMock: (element) =>
+          (element.props as { testID?: string }).testID === 'home-squad-carousel'
+            ? { scrollTo, getScrollableNode: () => null }
+            : null,
+      },
+    );
+  });
+  const carousel = () => renderer.root.findByProps({ testID: 'home-squad-carousel' });
+  const panels = () => renderer.root.findAllByType('HomeSquadLeaderboard' as React.ElementType);
+  expect(carousel().props.disableIntervalMomentum).toBe(true);
+  await act(async () => {
+    carousel().props.onScrollBeginDrag();
+    carousel().props.onScroll({ nativeEvent: { contentOffset: { x: 5000 } } });
+    carousel().props.onMomentumScrollEnd({ nativeEvent: { contentOffset: { x: 5000 } } });
+  });
+  expect(panels().map((panel) => panel.props.visible)).toEqual([false, true, false, false]);
+  expect(scrollTo).toHaveBeenLastCalledWith({ x: 332, animated: false });
+  await act(async () => {
+    carousel().props.onScrollBeginDrag();
+    carousel().props.onMomentumScrollEnd({ nativeEvent: { contentOffset: { x: 5000 } } });
+  });
+  expect(panels().map((panel) => panel.props.visible)).toEqual([false, false, true, false]);
+  expect(renderer.root.findAllByType('EditSquadName' as React.ElementType)).toHaveLength(0);
 });

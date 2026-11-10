@@ -1,8 +1,8 @@
+import { NavigationIcon } from '@calipartner/ui';
 import React, { useCallback, useState } from 'react';
 import { Pressable, RefreshControl, SafeAreaView, ScrollView, View } from 'react-native';
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
-import { Ionicons } from '@expo/vector-icons';
-import { Button, dark, homeLayout, Text } from '@calipartner/ui';
+import { Button, dark, Text } from '@calipartner/ui';
 import { useSquadToday, useSquadDetails } from '@/hooks/useSquad';
 import { useSubscription } from '@/hooks/useSubscription';
 import { SquadMemberPicker } from '@/components/rooms/SquadMemberPicker';
@@ -77,7 +77,7 @@ export default function SquadCompareScreen() {
             accessibilityLabel={t('squadDesign.back')}
             testID="compare-back"
           >
-            <Ionicons name="chevron-back" size={homeLayout.iconSize} color={dark.textHi} />
+            <NavigationIcon action="back" />
           </Pressable>
           <View style={styles.flex}>
             <Text variant="bodyS">{t('tabs.room')}</Text>

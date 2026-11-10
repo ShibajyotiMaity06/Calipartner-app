@@ -297,3 +297,46 @@ Deno.test(
     }
   },
 );
+
+Deno.test(
+  'Moderation uses Claude Haiku 5.5 first, rejects unsafe media without fallback and uses the existing fallback on provider failure',
+  async () => {
+    const old = Deno.env.get('ANTHROPIC_API_KEY'),
+      oldGemini = Deno.env.get('GEMINI_API_KEY');
+    Deno.env.set('ANTHROPIC_API_KEY', 'claude-fixture');
+    Deno.env.set('GEMINI_API_KEY', 'gemini-fixture');
+    try {
+      for (const safe of [true, false]) {
+        let calls = 0;
+        const result = await checkMediaSafety(
+          new Uint8Array([1]),
+          'image/jpeg',
+          async (url, init) => {
+            calls++;
+            assert.equal(String(url), 'https://api.anthropic.com/v1/messages');
+            assert.equal(JSON.parse(String(init?.body)).model, 'claude-haiku-5-5');
+            return Response.json({ content: [{ type: 'text', text: JSON.stringify({ safe }) }] });
+          },
+        );
+        assert.equal(result, safe);
+        assert.equal(calls, 1);
+      }
+      const urls: string[] = [];
+      assert.equal(
+        await checkMediaSafety(new Uint8Array([1]), 'image/jpeg', async (url) => {
+          urls.push(String(url));
+          return urls.length === 1
+            ? Response.json({}, { status: 402 })
+            : Response.json({ candidates: [{ content: { parts: [{ text: '{"safe":true}' }] } }] });
+        }),
+        true,
+      );
+      assert.match(urls[1], /gemini-3\.5-flash-lite/);
+    } finally {
+      if (old === undefined) Deno.env.delete('ANTHROPIC_API_KEY');
+      else Deno.env.set('ANTHROPIC_API_KEY', old);
+      if (oldGemini === undefined) Deno.env.delete('GEMINI_API_KEY');
+      else Deno.env.set('GEMINI_API_KEY', oldGemini);
+    }
+  },
+);

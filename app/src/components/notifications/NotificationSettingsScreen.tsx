@@ -1,3 +1,4 @@
+import { NavigationIcon } from '@calipartner/ui';
 import { type as inputTypography } from '@calipartner/ui';
 import { Text } from '@calipartner/ui';
 import React, { useEffect, useState } from 'react';
@@ -248,7 +249,7 @@ export function NotificationSettingsScreen({
           style={styles.backButton}
           onPress={handleBack}
         >
-          <Ionicons name="chevron-back" size={24} color={colors.text} />
+          <NavigationIcon action="back" />
         </Pressable>
         <View style={styles.headerTitleContainer}>
           <Text style={[styles.headerTitle, { color: colors.text }]}>

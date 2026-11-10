@@ -1,3 +1,4 @@
+import { NavigationIcon } from '@calipartner/ui';
 import React, { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
@@ -480,7 +481,7 @@ export function StepsCard({ selectedDate, testID = 'steps-card' }: StepsCardProp
                 accessibilityRole="button"
                 accessibilityLabel="Close"
               >
-                <Text style={styles.tableDoneBtnText}>Close</Text>
+                <NavigationIcon action="close" />
               </Pressable>
             </View>
           </View>

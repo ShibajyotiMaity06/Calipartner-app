@@ -1,6 +1,15 @@
 import React, { useEffect, useState } from 'react';
 import { Pressable, ScrollView, View } from 'react-native';
-import { Avatar, Button, dark, homeLayout, radius, space, Sheet, Text } from '@calipartner/ui';
+import {
+  Avatar,
+  Button,
+  dark,
+  homeLayout,
+  Sheet,
+  Text,
+  SegmentedControl,
+  space,
+} from '@calipartner/ui';
 import { Ionicons } from '@expo/vector-icons';
 import { setStringAsync } from 'expo-clipboard';
 import { closeBrowserModalsThen, useBrowserModalBack } from '@/hooks/useBrowserModalBack';
@@ -22,6 +31,7 @@ export interface RoomHeaderProps {
   onOpenInbox: () => void;
   onOpenSettings: () => void;
   onOpenPrivacy: () => void;
+  onBack?: () => void;
   onSwitchRoom?: (room: RoomSummary) => void;
   onCreateOrJoin?: () => void;
 }
@@ -35,6 +45,7 @@ export function RoomHeader({
   onOpenInbox,
   onOpenSettings,
   onOpenPrivacy,
+  onBack,
   onSwitchRoom,
   onCreateOrJoin,
 }: RoomHeaderProps) {
@@ -62,6 +73,32 @@ export function RoomHeader({
       setError(true);
     }
   };
+  if (activeSegment === 'chat')
+    return (
+      <View style={[styles.row, { padding: homeLayout.iconSize }]} testID="squad-chat-header">
+        {onBack && (
+          <Button
+            variant="tertiary"
+            label={t('friends.back')}
+            onPress={onBack}
+            testID="squad-chat-back"
+            fullWidth={false}
+          />
+        )}
+        <Text variant="title2" style={styles.flex}>
+          {currentRoom?.name ?? t('tabs.room')}
+        </Text>
+        <Pressable
+          onPress={onOpenSettings}
+          style={styles.back}
+          accessibilityRole="button"
+          accessibilityLabel={t('rooms.settingsModal.title')}
+          testID="btn-room-settings"
+        >
+          <Ionicons name="settings-outline" size={homeLayout.iconSize} color={dark.textHi} />
+        </Pressable>
+      </View>
+    );
   return (
     <View style={[styles.stack, { padding: homeLayout.iconSize }]}>
       <View
@@ -98,7 +135,9 @@ export function RoomHeader({
               </Text>
               <Ionicons name="chevron-down" size={18} color={dark.textMid} />
             </Pressable>
-            {currentRoom && <EditSquadName room={currentRoom} location="squad" />}
+            {currentRoom && activeSegment === 'today' && (
+              <EditSquadName room={currentRoom} location="squad" />
+            )}
           </View>
           {currentRoom && (
             <Text variant="micro" tabular color={dark.textMid} style={{ marginTop: -space[1] }}>
@@ -126,7 +165,7 @@ export function RoomHeader({
           )}
         </Pressable>
       </View>
-      {currentRoom && activeSegment !== 'chat' && (
+      {currentRoom && (
         <View style={styles.row}>
           <Pressable
             onPress={() => void copy()}
@@ -144,47 +183,20 @@ export function RoomHeader({
       )}
       {error && <Text accessibilityRole="alert">{t('roomAudit.actionError')}</Text>}
       {currentRoom && (
-        <View
-          style={[
-            styles.row,
-            { backgroundColor: dark.s2, borderRadius: radius.control, padding: space[1] },
+        <SegmentedControl
+          options={[
+            { value: 'today', label: t('squadDesign.overview') },
+            { value: 'progress', label: t('squadDesign.leaderboard') },
+            {
+              value: 'chat',
+              label: t('squadDesign.chat'),
+              badge: chatUnreadCount > 0 ? chatUnreadCount : undefined,
+            },
           ]}
-          accessibilityRole="tablist"
-        >
-          {(
-            [
-              ['today', 'squadDesign.overview'],
-              ['progress', 'squadDesign.leaderboard'],
-              ['chat', 'squadDesign.chat'],
-            ] as const
-          ).map(([segment, label]) => (
-            <Pressable
-              key={segment}
-              onPress={() => onSelectSegment(segment)}
-              accessibilityRole="tab"
-              accessibilityState={{ selected: activeSegment === segment }}
-              aria-selected={activeSegment === segment}
-              testID={'room-tab-' + segment}
-              style={{
-                flex: 1,
-                minHeight: homeLayout.touchSize,
-                borderRadius: radius.full,
-                padding: space[2],
-                justifyContent: 'center',
-                alignItems: 'center',
-                backgroundColor: activeSegment === segment ? dark.s3 : 'transparent',
-              }}
-            >
-              <Text
-                variant="bodyS"
-                color={activeSegment === segment ? dark.selection : dark.textMid}
-              >
-                {t(label) +
-                  (segment === 'chat' && chatUnreadCount > 0 ? ' (' + chatUnreadCount + ')' : '')}
-              </Text>
-            </Pressable>
-          ))}
-        </View>
+          value={activeSegment}
+          onChange={onSelectSegment}
+          testID="room-tab"
+        />
       )}
       <Sheet
         visible={panel !== null}

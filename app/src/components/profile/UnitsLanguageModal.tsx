@@ -1,14 +1,7 @@
+import { NavigationIcon } from '@calipartner/ui';
 import React, { useState } from 'react';
 import { Modal, SafeAreaView, ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
-import {
-  Button,
-  Card,
-  ChevronLeftIcon,
-  dark,
-  SegmentedControl,
-  space,
-  Text,
-} from '@calipartner/ui';
+import { Button, Card, dark, SegmentedControl, space, Text } from '@calipartner/ui';
 import { getLocale, setLocale, t } from '@/i18n';
 import { playClickSound } from '@/lib/sound';
 
@@ -61,7 +54,7 @@ export function UnitsLanguageModal({
               style={styles.backButton}
               testID="btn-close-units-lang"
             >
-              <ChevronLeftIcon color={dark.textHi} size={24} />
+              <NavigationIcon action="back" />
             </TouchableOpacity>
             <Text variant="heading" color={dark.textHi}>
               {t('me.unitsLanguage.title')}

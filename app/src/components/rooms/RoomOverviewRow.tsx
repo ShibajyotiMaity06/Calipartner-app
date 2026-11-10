@@ -1,3 +1,4 @@
+import { NavigationIcon } from '@calipartner/ui';
 import { type as inputTypography } from '@calipartner/ui';
 import React, { useMemo, useState } from 'react';
 import { Image, Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
@@ -260,11 +261,7 @@ export function RoomOverviewRow({
                 accessibilityLabel="Previous page"
                 testID="btn-overview-prev-page"
               >
-                <Ionicons
-                  name="chevron-back"
-                  size={16}
-                  color={currentPage <= 1 ? colors.textMuted : colors.text}
-                />
+                <NavigationIcon action="back" />
                 <Text
                   style={[
                     styles.pageBtnText,

@@ -1,3 +1,4 @@
+import { cachedRead } from './offlineReadService';
 import {
   DEFAULT_TRACKING,
   validateTrackingPreferences,
@@ -13,14 +14,17 @@ async function actor(userId: string) {
   return client;
 }
 export async function readTrackingPreferences(userId: string): Promise<TrackingPreferences> {
-  const client = await actor(userId);
-  const { data, error } = await client
-    .from('tracking_preferences')
-    .select('enabled')
-    .eq('user_id', userId)
-    .maybeSingle();
-  if (error) throw error;
-  return data ? validateTrackingPreferences(data.enabled) : { ...DEFAULT_TRACKING };
+  const client = getSupabase();
+  return cachedRead(client, 'tracking-preferences:' + userId, async () => {
+    await actor(userId);
+    const { data, error } = await client
+      .from('tracking_preferences')
+      .select('enabled')
+      .eq('user_id', userId)
+      .maybeSingle();
+    if (error) throw error;
+    return data ? validateTrackingPreferences(data.enabled) : { ...DEFAULT_TRACKING };
+  });
 }
 export async function saveTrackingPreferences(
   userId: string,

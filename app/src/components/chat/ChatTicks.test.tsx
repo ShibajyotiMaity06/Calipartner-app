@@ -36,6 +36,7 @@ vi.mock('@calipartner/ui', async () => ({
   ...(await import('../../../../packages/ui/src/tokens')),
   Text: 'Text',
   Button: 'Button',
+  SegmentedControl: 'SegmentedControl',
   Avatar: 'Avatar',
   Field: 'Field',
   Sheet: ({ visible, children }: { visible: boolean; children: React.ReactNode }) =>
@@ -159,8 +160,9 @@ describe('RoomHeader layout & chat screen code visibility', () => {
       );
     });
     expect(tree!.root.findAllByProps({ testID: 'btn-copy-room-code' })).toHaveLength(0);
-    expect(tree!.root.findByProps({ testID: 'btn-room-title-switcher' })).toBeDefined();
-    expect(tree!.root.findByType('EditSquadName' as React.ElementType)).toBeDefined();
+    expect(tree!.root.findAllByProps({ testID: 'btn-room-title-switcher' })).toHaveLength(0);
+    expect(tree!.root.findAllByType('EditSquadName' as React.ElementType)).toHaveLength(0);
+    expect(tree!.root.findByProps({ testID: 'btn-room-settings' })).toBeDefined();
   });
 
   it('shows room code on overview / today segment', async () => {

@@ -10,6 +10,7 @@ vi.mock('react-native', () => ({
 vi.mock('@calipartner/ui', async () => ({
   ...(await import('../../../../packages/ui/src/tokens')),
   Text: 'Text',
+  NavigationIcon: 'NavigationIcon',
 }));
 vi.mock('@expo/vector-icons', () => ({ Ionicons: 'Icon' }));
 import { CardioHub } from './CardioHub';

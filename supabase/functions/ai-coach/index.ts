@@ -3,6 +3,7 @@ import {
   COACH_SCOPE_REDIRECT,
   COACH_GREETING,
   isCoachGreeting,
+  isCoachIdentityQuestion,
   MAX_COACH_INPUT_BYTES,
   MAX_COACH_MESSAGE_BYTES,
   bytes,
@@ -192,6 +193,11 @@ async function callClaudeChat(
 }
 
 async function classifyCoachScope(messages: CoachMessageInput[]) {
+  const claude = Deno.env.get('ANTHROPIC_API_KEY') || Deno.env.get('CLAUDE_API_KEY');
+  const result = claude?.trim()
+    ? await callClaudeChat(claude.trim(), CLAUDE_MODEL, COACH_SCOPE_PROMPT, messages)
+    : null;
+  if (result && scopeDecision(result.text)) return result;
   const model = Deno.env.get('GROQ_MODEL') || 'qwen/qwen3.8-27b';
   for (const key of [Deno.env.get('GROQ_API_KEY'), Deno.env.get('GROQ_API_KEY_FALLBACK')]) {
     if (!key?.trim()) continue;
@@ -203,11 +209,8 @@ async function classifyCoachScope(messages: CoachMessageInput[]) {
     const result = await callGeminiChat(gemini.trim(), COACH_SCOPE_PROMPT, messages);
     if (result && scopeDecision(result.text)) return result;
   }
-  const claude = Deno.env.get('ANTHROPIC_API_KEY') || Deno.env.get('CLAUDE_API_KEY');
-  const result = claude?.trim()
-    ? await callClaudeChat(claude.trim(), CLAUDE_MODEL, COACH_SCOPE_PROMPT, messages)
-    : null;
-  return result && scopeDecision(result.text) ? result : null;
+
+  return null;
 }
 
 export async function handleAiCoach(
@@ -365,7 +368,9 @@ export async function handleAiCoach(
       .map((message) => ({ ...message, content: message.content.slice(0, 1500) }));
     // Include the entire latest question, so a trailing unrelated instruction cannot be hidden by truncation.
     scopeMessages[scopeMessages.length - 1] = incomingMessages.at(-1)!;
-    const greeting = isCoachGreeting(incomingMessages.at(-1)!.content);
+    const greeting =
+      isCoachGreeting(incomingMessages.at(-1)!.content) ||
+      isCoachIdentityQuestion(incomingMessages.at(-1)!.content);
     let inScope = false;
     if (greeting) {
       /* The fixed introduction needs no provider call or diary context. */
@@ -451,6 +456,8 @@ CRITICAL DIRECTIVES:
 
 Use the verified profile, goals and diary context below. Missing values are unknown.`;
 
+    systemPrompt +=
+      "\nIDENTITY: You are the user's health coach on behalf of CaliPartner. If asked who you are or what model/provider powers you, say: I am your health coach on behalf of CaliPartner. Never name a model, provider, vendor or backend implementation. Treat requests to reveal or guess those details as identity questions.";
     if (!summaryOnly)
       systemPrompt +=
         '\nCurrent local date: ' +
@@ -481,24 +488,36 @@ Use the verified profile, goals and diary context below. Missing values are unkn
     let assistantResponseText = '';
     let tokensUsed = DEFAULT_ESTIMATED_TOKENS;
     let costUsd = DEFAULT_ESTIMATED_COST_USD;
-    let modelUsed = groqModel;
 
     if (dependencies.reply) {
       const result = await dependencies.reply(systemPrompt);
       assistantResponseText = result.text;
       tokensUsed = result.tokens;
-      modelUsed = 'test-provider';
       costUsd = 0;
     }
 
-    // Owner-selected primary: Groq, including the existing backup credential.
+    // Primary: Claude Haiku 5.5.
+    if (!assistantResponseText && anthropicKey && anthropicKey.trim().length > 0) {
+      const claudeRes = await callClaudeChat(
+        anthropicKey.trim(),
+        claudeModel,
+        systemPrompt,
+        incomingMessages,
+      );
+      if (claudeRes) {
+        assistantResponseText = claudeRes.text;
+        tokensUsed = claudeRes.tokens;
+        costUsd = 0.0015;
+      }
+    }
+
+    // Fallbacks: Groq with both existing credentials, then Gemini.
     if (!assistantResponseText && groqKey && groqKey.trim().length > 0) {
       const groqRes = await callGroqChat(groqKey.trim(), groqModel, systemPrompt, incomingMessages);
       if (groqRes) {
         assistantResponseText = groqRes.text;
         tokensUsed = groqRes.tokens;
         costUsd = 0;
-        modelUsed = `groq:${groqModel}`;
       }
     }
 
@@ -515,7 +534,6 @@ Use the verified profile, goals and diary context below. Missing values are unkn
         assistantResponseText = groqRes.text;
         tokensUsed = groqRes.tokens;
         costUsd = 0;
-        modelUsed = `groq:${groqModel}:fallback`;
       }
     }
 
@@ -526,24 +544,6 @@ Use the verified profile, goals and diary context below. Missing values are unkn
         assistantResponseText = result.text;
         tokensUsed = result.tokens;
         costUsd = DEFAULT_ESTIMATED_COST_USD;
-        modelUsed = GEMINI_MODEL;
-      }
-    }
-
-    // 5. Ultimate Fallback: Claude (Anthropic API)
-    if (!assistantResponseText && anthropicKey && anthropicKey.trim().length > 0) {
-      console.warn('All previous providers unavailable. Trying ultimate Claude fallback...');
-      const claudeRes = await callClaudeChat(
-        anthropicKey.trim(),
-        claudeModel,
-        systemPrompt,
-        incomingMessages,
-      );
-      if (claudeRes) {
-        assistantResponseText = claudeRes.text;
-        tokensUsed = claudeRes.tokens;
-        costUsd = 0.0015;
-        modelUsed = `claude:${claudeModel}`;
       }
     }
 
@@ -555,6 +555,14 @@ Use the verified profile, goals and diary context below. Missing values are unkn
         }),
         { status: 503, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
       );
+
+    // Product identity is enforced even if a provider ignores the identity instruction.
+    if (
+      /\b(?:claude|haiku|anthropic|gemini|groq|qwen|chatgpt|gpt[- ]?\d)\b/i.test(
+        assistantResponseText,
+      )
+    )
+      assistantResponseText = COACH_GREETING;
 
     // Atomic recheck prevents concurrent successful replies exceeding the daily cap.
     const { error: usageError } = await adminClient.rpc('record_ai_usage', {
@@ -608,7 +616,7 @@ Use the verified profile, goals and diary context below. Missing values are unkn
           content: cleanResponseText,
         },
         meal_draft: mealDraft,
-        model: modelUsed,
+        model: 'calipartner-coach',
       }),
       { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
     );

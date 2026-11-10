@@ -1,7 +1,8 @@
+import { NavigationIcon } from '@calipartner/ui';
 import { type as inputTypography } from '@calipartner/ui';
 import React, { useState } from 'react';
 import { View, StyleSheet, Modal, SafeAreaView, TextInput, TouchableOpacity } from 'react-native';
-import { Text, Button, ChevronLeftIcon, space, dark, radius } from '@calipartner/ui';
+import { Text, Button, space, dark, radius } from '@calipartner/ui';
 import { playClickSound } from '@/lib/sound';
 
 export interface DeleteAccountModalProps {
@@ -65,7 +66,7 @@ export function DeleteAccountModal({
                 style={styles.backButton}
                 testID="btn-delete-cancel"
               >
-                <ChevronLeftIcon size={20} color={dark.textHi} />
+                <NavigationIcon action="back" />
                 <Text variant="body" color={dark.textHi}>
                   Cancel
                 </Text>

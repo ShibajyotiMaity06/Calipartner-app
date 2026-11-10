@@ -1,3 +1,4 @@
+import { NavigationIcon } from '@calipartner/ui';
 import { type as inputTypography } from '@calipartner/ui';
 import React, { useState, useEffect, useRef } from 'react';
 import {
@@ -10,7 +11,7 @@ import {
   TextInput,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { Text, Button, Card, ChevronLeftIcon, dark, space, radius } from '@calipartner/ui';
+import { Text, Button, Card, dark, space, radius } from '@calipartner/ui';
 import { useSteps } from '@/hooks/useSteps';
 import { useWorkouts } from '@/hooks/useWorkouts';
 import { useTargets } from '@/hooks/useTargets';
@@ -382,7 +383,7 @@ export function CardioTrackerModal({
               style={styles.backButton}
               testID="btn-close-cardio"
             >
-              <ChevronLeftIcon color={dark.textHi} size={24} />
+              <NavigationIcon action="back" />
             </TouchableOpacity>
 
             <View style={styles.tabPillRow}>

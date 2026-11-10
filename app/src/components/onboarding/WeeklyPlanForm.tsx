@@ -2,7 +2,7 @@ import { CompactSelect, type CompactSelectOption } from '@/components/CompactSel
 import React, { useCallback, useState, type ComponentProps } from 'react';
 import { BackHandler, Platform, Pressable, TextInput, View } from 'react-native';
 import { useFocusEffect } from 'expo-router';
-import { Ionicons } from '@expo/vector-icons';
+import type { Ionicons } from '@expo/vector-icons';
 import { useBrowserModalBack } from '@/hooks/useBrowserModalBack';
 import { Button, dark, homeLayout, radius, space, Text, type as typography } from '@calipartner/ui';
 import {

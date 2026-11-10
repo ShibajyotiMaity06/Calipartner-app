@@ -1,3 +1,4 @@
+import { NavigationIcon } from '@calipartner/ui';
 import { NutrientSummary } from '../diary/NutrientSummary';
 import React, { useCallback, useEffect, useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
@@ -61,7 +62,7 @@ export function PersonalDiaryView({
           accessibilityLabel={t('diary.previousDay')}
           testID="you-previous-day"
         >
-          <Ionicons name="chevron-back" size={homeLayout.iconSize} color={dark.textHi} />
+          <NavigationIcon action="back" />
         </Pressable>
         <Pressable
           style={[styles.touch, styles.date]}

@@ -43,6 +43,7 @@ vi.mock('expo-clipboard', () => ({ setStringAsync: vi.fn().mockResolvedValue(tru
 vi.mock('@calipartner/ui', async () => ({
   ...(await import('../../../../packages/ui/src/tokens')),
   Text: 'Text',
+  SegmentedControl: 'SegmentedControl',
   Button: 'Button',
   Avatar: 'Avatar',
   Sheet: 'Sheet',
@@ -189,7 +190,10 @@ it('shows only the top three on Overview and all 20 on Leaderboard without a pai
     tree = create(<RoomScreen />);
   });
   expect(rows()).toHaveLength(3);
-  await act(async () => tree.root.findByProps({ testID: 'open-full-leaderboard' }).props.onPress());
+  expect(tree.root.findAllByProps({ testID: 'open-full-leaderboard' })).toHaveLength(0);
+  await act(async () =>
+    tree.root.findByType('RoomHeader' as React.ElementType).props.onSelectSegment('progress'),
+  );
   expect(rows()).toHaveLength(20);
   await act(async () => rows()[19]!.props.onPress());
   expect(state.push).toHaveBeenLastCalledWith('/squad/person?room=room&member=peer19');
@@ -280,9 +284,9 @@ it('keeps just Overview, Leaderboard and Chat in the squad header for every room
   });
   expect(
     tree.root
-      .findAll((node) => node.props.accessibilityRole === 'tab')
-      .map((node) => node.props.testID),
-  ).toEqual(['room-tab-today', 'room-tab-progress', 'room-tab-chat']);
+      .findByProps({ testID: 'room-tab' })
+      .props.options.map((item: { value: string }) => item.value),
+  ).toEqual(['today', 'progress', 'chat']);
 });
 
 it('cancels a Home create/join sheet back to Home instead of leaving you on the Squad screen', async () => {
@@ -294,4 +298,26 @@ it('cancels a Home create/join sheet back to Home instead of leaving you on the 
     tree.root.findByType('SquadConnectModal' as React.ElementType).props.onClose(),
   );
   expect(state.navigate).toHaveBeenLastCalledWith('/(tabs)/today');
+});
+
+it('keeps chat header to the squad name and direct settings without tabs, switcher, counts or rename', async () => {
+  await act(async () => {
+    tree = create(
+      <RoomHeader
+        currentRoom={{ id: 'room', name: 'Our squad', member_count: 20, role: 'host' } as never}
+        allRooms={[]}
+        pendingRequestsCount={0}
+        activeSegment="chat"
+        onSelectSegment={vi.fn()}
+        onOpenInbox={vi.fn()}
+        onOpenSettings={state.refresh}
+        onOpenPrivacy={vi.fn()}
+      />,
+    );
+  });
+  expect(tree.root.findAllByProps({ testID: 'room-tab' })).toHaveLength(0);
+  expect(tree.root.findAllByProps({ testID: 'btn-room-title-switcher' })).toHaveLength(0);
+  expect(tree.root.findAllByType('EditSquadName' as React.ElementType)).toHaveLength(0);
+  tree.root.findByProps({ testID: 'btn-room-settings' }).props.onPress();
+  expect(state.refresh).toHaveBeenCalledOnce();
 });

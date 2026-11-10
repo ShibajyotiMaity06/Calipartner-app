@@ -77,3 +77,12 @@ export async function saveChallenge(
   await challengeRequest(client, owner, mutation);
   return 'saved';
 }
+
+/** Last authorized challenge projection, for read-only offline browsing. */
+export async function cachedChallenges(db: LocalDb, owner: string): Promise<ChallengeHome | null> {
+  const row = await db.getFirstAsync<{ payload: string }>(
+    'SELECT * FROM local_challenge_cache WHERE owner_id = ?',
+    [owner],
+  );
+  return row ? (JSON.parse(row.payload) as ChallengeHome) : null;
+}

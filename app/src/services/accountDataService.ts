@@ -1,3 +1,4 @@
+import { isDeviceOffline } from './networkService';
 import { getSupabase } from '@/lib/supabase';
 import { beforeAccountWrite } from './accountDataGate';
 import { diaryEvents } from './diaryEvents';
@@ -167,6 +168,7 @@ export function loadAccountTable(db: LocalDb, entity: string, userId: string): P
   return request;
 }
 async function readAccountTable(db: LocalDb, entity: string, userId: string): Promise<void> {
+  if (await isDeviceOffline()) return;
   if (userId === 'guest-user') return;
   const client = getSupabase();
   const actor = await client.auth.getUser();

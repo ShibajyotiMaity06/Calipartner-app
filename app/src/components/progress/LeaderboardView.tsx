@@ -1,3 +1,4 @@
+import { NavigationIcon } from '@calipartner/ui';
 import React, { useState } from 'react';
 import {
   ActivityIndicator,
@@ -261,7 +262,7 @@ export function LeaderboardView({ testID = 'leaderboard-view' }: LeaderboardView
               accessibilityRole="button"
               accessibilityLabel="Close"
             >
-              <Text style={styles.inspectCloseText}>Close</Text>
+              <NavigationIcon action="close" />
             </Pressable>
           </View>
         </Pressable>

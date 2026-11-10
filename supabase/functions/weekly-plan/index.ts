@@ -67,6 +67,12 @@ export async function generateWeeklyPlan(
   // A week of measured meals needs the planning model, rather than inheriting a general chat model.
   const groqModel = environment('WEEKLY_PLAN_MODEL') ?? 'openai/gpt-oss-120b';
   const candidates = [
+    {
+      name: 'claude',
+      key: environment('ANTHROPIC_API_KEY') ?? environment('CLAUDE_API_KEY'),
+      url: 'https://api.anthropic.com/v1/messages',
+      model: CLAUDE_MODEL,
+    },
     ...[...new Set([groqModel, 'openai/gpt-oss-120b', environment('GROQ_MODEL')])]
       .filter((model): model is string => Boolean(model))
       .flatMap((model) =>
@@ -83,12 +89,6 @@ export async function generateWeeklyPlan(
       url: GEMINI_ENDPOINT,
       model: GEMINI_MODEL,
     },
-    {
-      name: 'claude',
-      key: environment('ANTHROPIC_API_KEY') ?? environment('CLAUDE_API_KEY'),
-      url: 'https://api.anthropic.com/v1/messages',
-      model: CLAUDE_MODEL,
-    },
   ];
   const startedAt = Date.now();
   const deadline = startedAt + 140000;
@@ -97,7 +97,7 @@ export async function generateWeeklyPlan(
     // Reserve time for both fallbacks instead of exhausting the request on the primary.
     const providerDeadline = Math.min(
       deadline,
-      startedAt + (provider.name === 'groq' ? 30000 : provider.name === 'gemini' ? 90000 : 140000),
+      startedAt + (provider.name === 'claude' ? 80000 : provider.name === 'groq' ? 110000 : 140000),
     );
     if (!provider.key || Date.now() >= providerDeadline) continue;
     let useResponseFormat = true;
@@ -268,7 +268,7 @@ export async function generateWeeklyPlan(
       }
     }
   }
-  // Owner-selected chain only: Groq, Gemini, then Claude Haiku 5.5.
+  // Owner-selected chain only: Claude Haiku 5.5, Groq, then Gemini.
   throw new Error('PLAN_UNAVAILABLE');
 }
 export async function handleWeeklyPlan(

@@ -1,3 +1,4 @@
+import { NavigationIcon } from '@calipartner/ui';
 import { type as inputTypography } from '@calipartner/ui';
 import React, { useState } from 'react';
 import {
@@ -12,7 +13,6 @@ import {
 import {
   Button,
   Card,
-  ChevronLeftIcon,
   dark,
   radius,
   SegmentedControl,
@@ -71,7 +71,7 @@ export function ReportFeedbackModal({
               style={styles.backButton}
               testID="btn-close-report-feedback"
             >
-              <ChevronLeftIcon color={dark.textHi} size={24} />
+              <NavigationIcon action="back" />
             </TouchableOpacity>
             <Text variant="heading" color={dark.textHi}>
               {t('me.reportFeedback.title')}

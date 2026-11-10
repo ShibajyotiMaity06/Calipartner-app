@@ -1,3 +1,4 @@
+import { NavigationIcon } from '@calipartner/ui';
 import { useSubscription } from '@/hooks/useSubscription';
 import { Text, Button } from '@calipartner/ui';
 import { PaywallModal } from '@/components/rooms/PaywallModal';
@@ -215,7 +216,7 @@ export function RecipeBrowseView({
               accessibilityLabel="Back"
               style={styles.backBtn}
             >
-              <Ionicons name="chevron-back" size={24} color={colors.text} />
+              <NavigationIcon action="back" />
             </Pressable>
           )}
 

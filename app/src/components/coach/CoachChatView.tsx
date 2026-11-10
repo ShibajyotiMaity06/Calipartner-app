@@ -1,3 +1,4 @@
+import { NavigationIcon } from '@calipartner/ui';
 import { type as inputTypography } from '@calipartner/ui';
 import React, { useCallback, useRef, useState } from 'react';
 import {
@@ -301,7 +302,7 @@ export function CoachChatView({ onBack, initialConversationId }: CoachChatViewPr
               accessibilityLabel="Back"
               testID="btn-coach-back-locked"
             >
-              <Ionicons name="chevron-back" size={24} color={colors.text} />
+              <NavigationIcon action="back" />
             </Pressable>
           )}
           <Text style={[styles.headerTitle, { color: colors.text }]}>{t('coach.title')}</Text>
@@ -346,7 +347,7 @@ export function CoachChatView({ onBack, initialConversationId }: CoachChatViewPr
               accessibilityLabel="Back"
               testID="btn-coach-back"
             >
-              <Ionicons name="chevron-back" size={24} color={colors.text} />
+              <NavigationIcon action="back" />
             </Pressable>
           )}
           <View style={styles.titleWrap}>

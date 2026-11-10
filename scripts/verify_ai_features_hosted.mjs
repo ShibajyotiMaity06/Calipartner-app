@@ -81,6 +81,37 @@ async function account(pro) {
 try {
   const pro = await account(true);
   const free = await account(false);
+
+  const weightId = randomUUID();
+  const weightChange = {
+    id: weightId,
+    entity: 'weight_logs',
+    operation: 'upsert',
+    payload: {
+      id: weightId,
+      user_id: pro.id,
+      weight_kg: 79,
+      local_date: new Date().toISOString().slice(0, 10),
+      logged_at: new Date().toISOString(),
+    },
+  };
+  await rpc('save_tracking_changes', { p_changes: [weightChange] }, pro.token);
+  await rpc('save_tracking_changes', { p_changes: [weightChange] }, pro.token);
+  const savedWeights = await request('GET', '/rest/v1/weight_logs?select=id', undefined, pro.token);
+  assert.equal(savedWeights.length, 1);
+  const future = await request(
+    'POST',
+    '/rest/v1/rpc/save_tracking_changes',
+    {
+      p_changes: [
+        { ...weightChange, payload: { ...weightChange.payload, local_date: '2999-01-01' } },
+      ],
+    },
+    pro.token,
+    400,
+  );
+  assert.match(future.message, /INVALID_WEIGHT_DATE/);
+  console.log('PASS Hosted weight retries remain unique and future dates are rejected');
   const messages = [{ role: 'user', content: 'Suggest one simple, safe beginner exercise.' }];
   await request('POST', '/functions/v1/ai-coach', { messages }, free.token, 403);
   await request(
@@ -94,14 +125,18 @@ try {
   await rpc('accept_ai_processing_consent', { p_version: '1.1-gemini-audit' }, pro.token);
   console.log('PASS Free AI denial and purchased-Pro processing consent');
 
+  for (const message of ['Who are you?', 'What model are you using?']) {
+    const identity = await request('POST', '/functions/v1/ai-coach', { message }, pro.token);
+    assert.match(identity.message.content, /health coach on behalf of CaliPartner/);
+    assert.ok(!/claude|haiku|anthropic|gemini|groq/i.test(JSON.stringify(identity)));
+  }
+  console.log('PASS Hosted coach identity answers use only CaliPartner wording');
   const coach = await request('POST', '/functions/v1/ai-coach', { messages }, pro.token);
-  assert.match(
-    coach.model,
-    /^(groq:|gemini-3\.5-flash-lite$|claude:claude-haiku-5-5$)/,
-    'Only the owner-selected provider chain is used',
-  );
+  assert.equal(coach.model, 'calipartner-coach');
   assert.ok(coach.message.content.trim());
-  console.log('PASS Real coach reply from the configured Groq/Gemini/Haiku chain');
+  console.log(
+    'PASS Real coach reply with the configured Haiku-first chain and private provider identity',
+  );
 
   const draft = await request(
     'POST',
@@ -118,7 +153,7 @@ try {
     },
     pro.token,
   );
-  assert.match(draft.model, /^(groq:|gemini-3\.5-flash-lite$|claude:claude-haiku-5-5$)/);
+  assert.equal(draft.model, 'calipartner-coach');
   assert.ok(draft.meal_draft?.items?.length, 'Explicit complete meal yields a reviewable draft');
   assert.deepEqual(
     await request('GET', '/rest/v1/food_entries?select=id', undefined, pro.token),

@@ -53,3 +53,23 @@ describe('browser weight persistence', () => {
     expect(payload).not.toHaveProperty('sync_state');
   });
 });
+
+it('edits the selected date without replacing other weigh-ins and rejects future dates before saving', async () => {
+  const db = createWebDb();
+  const older = await logWeight(db, 'a', 80, '2026-10-22');
+  const latest = await logWeight(db, 'a', 79, '2026-10-29');
+  await editWeightLog(db, 'a', latest.id, 78.5, 'Corrected', '2026-10-28', '2026-10-30');
+  expect(await getWeightLogs(createWebDb(), 'a')).toEqual(
+    expect.arrayContaining([
+      expect.objectContaining({ id: older.id, weight_kg: 80, local_date: '2026-10-22' }),
+      expect.objectContaining({ id: latest.id, weight_kg: 78.5, local_date: '2026-10-28' }),
+    ]),
+  );
+  await expect(
+    logWeight(db, 'a', 78, '2026-11-01', undefined, undefined, '2026-10-30'),
+  ).rejects.toThrow('INVALID_DATE');
+  await expect(
+    editWeightLog(db, 'a', latest.id, 78, undefined, '2026-11-01', '2026-10-30'),
+  ).rejects.toThrow('INVALID_DATE');
+  expect(await getWeightLogs(db, 'a')).toHaveLength(2);
+});

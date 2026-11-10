@@ -1,7 +1,8 @@
+import { NavigationIcon } from '@calipartner/ui';
 import { PremiumFeatureModal } from '@/components/subscription/PremiumFeatureModal';
 import React, { useState } from 'react';
 import { View, StyleSheet, Modal, SafeAreaView, TouchableOpacity, Share } from 'react-native';
-import { Text, Button, ChevronLeftIcon, space, dark, radius } from '@calipartner/ui';
+import { Text, Button, space, dark, radius } from '@calipartner/ui';
 import { playClickSound, playSuccessSound } from '@/lib/sound';
 
 export interface ExportDataModalProps {
@@ -70,10 +71,7 @@ function ExportDataModalContent({
               style={styles.backButton}
               testID="btn-export-back"
             >
-              <ChevronLeftIcon size={20} color={dark.textHi} />
-              <Text variant="body" color={dark.textHi}>
-                Back
-              </Text>
+              <NavigationIcon action="back" />
             </TouchableOpacity>
             <Text variant="heading" color={dark.textHi} style={styles.topTitle}>
               Export My Data

@@ -206,16 +206,8 @@ export default function RoomScreen() {
   };
   return (
     <SafeAreaView style={styles.screen} testID="screen-room">
-      {segment === 'chat' && (
-        <Button
-          variant="tertiary"
-          fullWidth={false}
-          label={t('friends.back')}
-          onPress={() => setSegment(segments.current.pop() ?? 'today')}
-          testID="squad-chat-back"
-        />
-      )}
       <RoomHeader
+        onBack={() => setSegment(segments.current.pop() ?? 'today')}
         currentRoom={room}
         allRooms={roomsHook.rooms}
         pendingRequestsCount={requests.incoming.length + (friends.inbox?.incoming.length ?? 0)}
@@ -313,16 +305,6 @@ export default function RoomScreen() {
                       <Text variant="heading">
                         {t(segment === 'progress' ? 'squadDesign.today' : 'squadDesign.leaders')}
                       </Text>
-                      {segment === 'today' && (
-                        <Button
-                          variant="tertiary"
-                          size="sm"
-                          fullWidth={false}
-                          label={t('squadDesign.full')}
-                          onPress={() => selectSegment('progress')}
-                          testID="open-full-leaderboard"
-                        />
-                      )}
                     </View>
                     <Text variant="bodyS">{t('squadDesign.ownGoals')}</Text>
                     <SquadLeaderboard

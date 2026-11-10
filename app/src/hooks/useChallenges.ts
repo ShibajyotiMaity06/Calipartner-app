@@ -7,7 +7,7 @@ import { useNetworkStatus } from './useNetworkStatus';
 import { getDb } from '@/db';
 import { getSupabase } from '@/lib/supabase';
 import { generateClientUuid } from '@/services/foodService';
-import { loadChallenges, saveChallenge } from '@/services/challengeService';
+import { cachedChallenges, loadChallenges, saveChallenge } from '@/services/challengeService';
 
 export function useChallenges() {
   const channelInstance = useId();
@@ -43,12 +43,15 @@ export function useChallenges() {
     const request = (async () => {
       try {
         const db = await getDb();
-        if (isOnline === false) throw new Error('NETWORK_UNAVAILABLE');
-        const fresh = await loadChallenges(db, getSupabase(), id);
+        const fresh =
+          isOnline === false
+            ? await cachedChallenges(db, id)
+            : await loadChallenges(db, getSupabase(), id);
+        if (!fresh) throw new Error('NETWORK_UNAVAILABLE');
         if (owner.current !== id || readGeneration.current !== generation) return;
         setHome(fresh);
         setDataOwner(id);
-        setCached(false);
+        setCached(isOnline === false);
         setError(null);
       } catch (e) {
         if (owner.current === id && readGeneration.current === generation)

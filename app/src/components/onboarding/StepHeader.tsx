@@ -1,6 +1,7 @@
+import { NavigationIcon } from '@calipartner/ui';
 import React from 'react';
 import { TouchableOpacity, StyleSheet, View } from 'react-native';
-import { Text, ChevronLeftIcon, space, dark, radius } from '@calipartner/ui';
+import { Text, space, dark, radius } from '@calipartner/ui';
 import { t } from '@/i18n';
 import { playClickSound } from '@/lib/sound';
 
@@ -64,10 +65,7 @@ export function StepHeader({
             style={styles.backButton}
             hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
           >
-            <ChevronLeftIcon size={20} color={dark.textHi} />
-            <Text variant="body" color={dark.textHi} style={styles.backText}>
-              {t('onboarding.back')}
-            </Text>
+            <NavigationIcon action="back" />
           </TouchableOpacity>
         ) : (
           <View style={styles.backButtonPlaceholder} />

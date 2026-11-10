@@ -1,3 +1,4 @@
+import { NavigationIcon } from '@calipartner/ui';
 import { type as inputTypography } from '@calipartner/ui';
 import React from 'react';
 import {
@@ -128,7 +129,11 @@ export function CButton({
       onPress={onPress}
       style={[cs.button, brand && cs.brand, selected && cs.selected, disabled && cs.muted]}
     >
-      <Text style={[cs.buttonText, brand && cs.brandText]}>{label}</Text>
+      {/^(back|close)$/i.test(label) ? (
+        <NavigationIcon action={label.toLowerCase() === 'back' ? 'back' : 'close'} />
+      ) : (
+        <Text style={[cs.buttonText, brand && cs.brandText]}>{label}</Text>
+      )}
     </Pressable>
   );
 }

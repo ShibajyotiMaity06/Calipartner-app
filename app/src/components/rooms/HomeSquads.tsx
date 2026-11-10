@@ -1,12 +1,18 @@
-import React, { useEffect, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, useWindowDimensions, View } from 'react-native';
+import React, { useEffect, useRef, useState } from 'react';
+import {
+  Platform,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  useWindowDimensions,
+  View,
+} from 'react-native';
 import { useRouter, type Href } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { dark, homeLayout, radius, space, Text } from '@calipartner/ui';
 import { HomeSquadLeaderboard } from './HomeSquadLeaderboard';
 import type { RoomSummary } from '@/types/rooms';
 import { t } from '@/i18n';
-import { EditSquadName } from './EditSquadName';
 
 export function HomeSquads({
   rooms,
@@ -28,6 +34,64 @@ export function HomeSquads({
       ? undefined
       : Math.min(homeLayout.cardWidth * Math.min(fontScale, 1.5), width - space[7]);
   const [selected, setSelected] = useState(0);
+  const carousel = useRef<ScrollView>(null);
+  const gestureStart = useRef(0);
+  const selectedRef = useRef(selected);
+  selectedRef.current = selected;
+  const step = cardWidth ? cardWidth + space[3] : 1;
+  const settle = (x: number) => {
+    const next = Math.max(
+      0,
+      Math.min(
+        rooms.length,
+        Math.max(
+          gestureStart.current - 1,
+          Math.min(gestureStart.current + 1, Math.round(x / step)),
+        ),
+      ),
+    );
+    setSelected(next);
+    carousel.current?.scrollTo({ x: next * step, animated: false });
+  };
+  useEffect(() => {
+    if (Platform.OS !== 'web') return;
+    type Wheel = { deltaX: number; deltaY: number; preventDefault: () => void };
+    const node = carousel.current?.getScrollableNode() as
+      | {
+          addEventListener?: (
+            name: string,
+            handler: (event: Wheel) => void,
+            options: { passive: boolean },
+          ) => void;
+          removeEventListener?: (name: string, handler: (event: Wheel) => void) => void;
+        }
+      | undefined;
+    let active = false;
+    let timer: ReturnType<typeof setTimeout>;
+    const wheel = (event: Wheel) => {
+      if (!event.deltaX || Math.abs(event.deltaY) > Math.abs(event.deltaX)) return;
+      event.preventDefault();
+      if (!active) {
+        gestureStart.current = selectedRef.current;
+        active = true;
+      }
+      const next = Math.max(
+        0,
+        Math.min(rooms.length, gestureStart.current + Math.sign(event.deltaX)),
+      );
+      setSelected(next);
+      carousel.current?.scrollTo({ x: next * step, animated: false });
+      clearTimeout(timer);
+      timer = setTimeout(() => {
+        active = false;
+      }, 250);
+    };
+    node?.addEventListener?.('wheel', wheel, { passive: false });
+    return () => {
+      clearTimeout(timer);
+      node?.removeEventListener?.('wheel', wheel);
+    };
+  }, [step, rooms.length]);
   const [cardHeights, setCardHeights] = useState<Record<string, number>>({});
   const selectedKey = rooms[selected]?.id ?? 'create';
   const cardHeight = cardHeights[selectedKey] ?? homeLayout.ringSize * 2;
@@ -70,16 +134,29 @@ export function HomeSquads({
         </Pressable>
       ) : null}
       <ScrollView
+        ref={carousel}
+        disableIntervalMomentum
+        onTouchStart={() => {
+          gestureStart.current = selected;
+        }}
+        onScrollBeginDrag={() => {
+          gestureStart.current = selected;
+        }}
+        onScrollEndDrag={(event) => settle(event.nativeEvent.contentOffset.x)}
+        onMomentumScrollEnd={(event) => settle(event.nativeEvent.contentOffset.x)}
         style={rooms.length ? { height: cardHeight } : undefined}
         horizontal={rooms.length > 0}
         showsHorizontalScrollIndicator={false}
         snapToInterval={cardWidth ? cardWidth + space[3] : undefined}
         decelerationRate="fast"
-        onScroll={(event) =>
-          setSelected(
-            cardWidth ? Math.round(event.nativeEvent.contentOffset.x / (cardWidth + space[3])) : 0,
-          )
-        }
+        onScroll={(event) => {
+          const x = event.nativeEvent.contentOffset.x;
+          const lower = Math.max(0, gestureStart.current - 1) * step;
+          const upper = Math.min(rooms.length, gestureStart.current + 1) * step;
+          const clamped = Math.max(lower, Math.min(upper, x));
+          if (x !== clamped) carousel.current?.scrollTo({ x: clamped, animated: false });
+          setSelected(Math.round(clamped / step));
+        }}
         scrollEventThrottle={100}
         contentContainerStyle={styles.cards}
         testID="home-squad-carousel"
@@ -104,7 +181,6 @@ export function HomeSquads({
                 >
                   <Text variant="title2">{room.name}</Text>
                 </Pressable>
-                <EditSquadName room={room} location="home" />
               </View>
               <Text variant="micro" color={dark.textMid} style={styles.count} tabular>
                 {room.member_cap

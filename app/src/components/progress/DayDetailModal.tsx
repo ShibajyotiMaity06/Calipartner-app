@@ -1,3 +1,4 @@
+import { NavigationIcon } from '@calipartner/ui';
 import { Text } from '@calipartner/ui';
 import React from 'react';
 import { Modal, Pressable, StyleSheet, View } from 'react-native';
@@ -181,7 +182,7 @@ export function DayDetailModal({
             accessibilityLabel={t('progress.dayDetailModal.close')}
             testID={`${testID}-dismiss`}
           >
-            <Text style={styles.dismissBtnText}>{t('progress.dayDetailModal.close')}</Text>
+            <NavigationIcon action="close" />
           </Pressable>
         </Pressable>
       </Pressable>

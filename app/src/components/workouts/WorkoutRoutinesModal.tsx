@@ -1,3 +1,4 @@
+import { NavigationIcon } from '@calipartner/ui';
 import { PremiumFeatureModal } from '@/components/subscription/PremiumFeatureModal';
 import React, { useState } from 'react';
 import { Modal, Pressable, ScrollView, StyleSheet, View } from 'react-native';
@@ -168,7 +169,7 @@ function WorkoutRoutinesModalContent({
               accessibilityRole="button"
               accessibilityLabel="Close"
             >
-              <Text style={styles.closeActionBtnText}>Close</Text>
+              <NavigationIcon action="close" />
             </Pressable>
           </View>
         </View>

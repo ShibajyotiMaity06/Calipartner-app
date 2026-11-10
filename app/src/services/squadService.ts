@@ -1,3 +1,4 @@
+import { cachedRead } from './offlineReadService';
 import {
   rankSquadMembers,
   type SquadMember,
@@ -9,22 +10,26 @@ import { getSupabase } from '@/lib/supabase';
 import { diaryEvents } from './diaryEvents';
 
 export async function getSquadToday(roomId: string): Promise<SquadToday> {
-  const { data, error } = await getSupabase().rpc('get_squad_today', { p_room_id: roomId });
-  if (error) throw error;
-  if (data?.room_id !== roomId || !Array.isArray(data.members))
-    throw new Error('SQUAD_UNAVAILABLE');
-  return { room_id: roomId, members: rankSquadMembers(data.members as SquadMember[]) };
+  return cachedRead(getSupabase(), 'squad:' + roomId, async () => {
+    const { data, error } = await getSupabase().rpc('get_squad_today', { p_room_id: roomId });
+    if (error) throw error;
+    if (data?.room_id !== roomId || !Array.isArray(data.members))
+      throw new Error('SQUAD_UNAVAILABLE');
+    return { room_id: roomId, members: rankSquadMembers(data.members as SquadMember[]) };
+  });
 }
 export async function getSquadMemberDetails(
   roomId: string,
   memberId: string,
 ): Promise<SquadMemberDetails> {
-  const { data, error } = await getSupabase().rpc('get_squad_member_details', {
-    p_room_id: roomId,
-    p_member_id: memberId,
+  return cachedRead(getSupabase(), 'squad-details:' + roomId + ':' + memberId, async () => {
+    const { data, error } = await getSupabase().rpc('get_squad_member_details', {
+      p_room_id: roomId,
+      p_member_id: memberId,
+    });
+    if (error) throw error;
+    return data as SquadMemberDetails;
   });
-  if (error) throw error;
-  return data as SquadMemberDetails;
 }
 export async function getSquadMentions(
   roomId: string,

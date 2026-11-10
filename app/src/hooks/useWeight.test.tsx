@@ -1,3 +1,4 @@
+vi.mock('@/services/foodService', () => ({ generateClientUuid: () => 'stable-weight-id' }));
 vi.mock('@/services/accountDataService', () => ({ loadAccountTable: vi.fn() }));
 import React from 'react';
 import { act, create, type ReactTestRenderer } from 'react-test-renderer';
@@ -45,7 +46,7 @@ describe('weight logging before goals have hydrated', () => {
     await act(async () => {
       renderer = create(<Probe />);
     });
-    expect(state.read).toHaveBeenCalledWith({}, 'signed-in', 100);
+    expect(state.read).toHaveBeenCalledWith({}, 'signed-in', 100000);
     await act(async () => {
       await weight.logWeight(79.5, undefined, 'Morning');
     });
@@ -56,6 +57,27 @@ describe('weight logging before goals have hydrated', () => {
       '2026-10-29',
       undefined,
       'Morning',
+      '2026-10-29',
+      'stable-weight-id',
     );
   });
+});
+
+it('reuses the same request UUID after a lost acknowledgement', async () => {
+  (globalThis as unknown as { IS_REACT_ACT_ENVIRONMENT: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
+  state.read.mockResolvedValue([]);
+  state.save
+    .mockRejectedValueOnce(new Error('Response lost'))
+    .mockResolvedValueOnce({ id: 'stable-weight-id' });
+  await act(async () => {
+    renderer = create(<Probe />);
+  });
+  await act(async () => {
+    await expect(weight.logWeight(79, '2026-10-29')).rejects.toThrow('Response lost');
+  });
+  await act(async () => {
+    await weight.logWeight(79, '2026-10-29');
+  });
+  expect(state.save.mock.calls[0]?.[7]).toBe(state.save.mock.calls[1]?.[7]);
+  expect(state.save.mock.calls[0]?.[7]).toBe('stable-weight-id');
 });

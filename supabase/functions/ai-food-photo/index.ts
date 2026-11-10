@@ -38,7 +38,7 @@ export interface AiFoodPhotoRequestBody {
 }
 
 /**
- * Uses Groq first, then Gemini, then Claude Haiku 5.5.
+ * Uses Claude Haiku 5.5 first, then the existing Groq and Gemini fallbacks.
  */
 export async function callVisionModel(
   imageBase64: string,
@@ -114,68 +114,8 @@ export async function callVisionModel(
     return null;
   }
 
-  // Primary: Groq Vision with the existing primary and backup credentials.
-  for (const key of new Set([groqApiKey?.trim(), groqFallbackKey?.trim()])) {
-    if (!key) continue;
-    const result = await callGroqVision(key);
-    if (result) return result;
-  }
-
-  // Fallback: Gemini for images and meal descriptions.
-  if (geminiApiKey && geminiApiKey.trim().length > 0) {
-    try {
-      const response = await fetch(GEMINI_ENDPOINT, {
-        method: 'POST',
-        signal: AbortSignal.timeout(20000),
-        headers: { 'Content-Type': 'application/json', 'x-goog-api-key': geminiApiKey },
-        body: JSON.stringify({
-          ...(description ? { system_instruction: { parts: [{ text: prompt }] } } : {}),
-          contents: [
-            {
-              parts: description
-                ? [{ text: JSON.stringify({ meal_description: description }) }]
-                : [
-                    { text: prompt },
-                    {
-                      inline_data: {
-                        mime_type: mimeType,
-                        data: cleanBase64,
-                      },
-                    },
-                  ],
-            },
-          ],
-          generationConfig: {
-            response_mime_type: 'application/json',
-            maxOutputTokens: 4000,
-            thinkingConfig: { thinkingLevel: 'minimal' },
-          },
-        }),
-      });
-
-      if (response.ok) {
-        const json = await response.json();
-        const rawCandidate = geminiText(json);
-        if (rawCandidate) {
-          const tokens = json.usageMetadata?.totalTokenCount || DEFAULT_ESTIMATED_TOKENS;
-          const cost = (tokens / 1_000_000) * 0.35;
-          return {
-            rawText: rawCandidate,
-            tokens,
-            cost: Math.round(cost * 1_000_000) / 1_000_000,
-          };
-        }
-      } else {
-        console.warn('GEMINI_VISION_HTTP', response.status);
-      }
-    } catch {
-      console.warn('GEMINI_VISION_UNAVAILABLE');
-    }
-  }
-
-  // 4. Ultimate Fallback: Claude Vision (Anthropic API)
+  // Primary: Claude Haiku 5.5 for photos and meal descriptions.
   if (anthropicApiKey && anthropicApiKey.trim().length > 0) {
-    console.warn('All previous vision models unavailable. Trying ultimate Claude fallback...');
     try {
       const claudeUrl = 'https://api.anthropic.com/v1/messages';
       const claudeModel = CLAUDE_MODEL;
@@ -234,6 +174,65 @@ export async function callVisionModel(
       }
     } catch {
       console.warn('CLAUDE_VISION_UNAVAILABLE');
+    }
+  }
+
+  // Fallback: Groq Vision with the existing primary and backup credentials.
+  for (const key of new Set([groqApiKey?.trim(), groqFallbackKey?.trim()])) {
+    if (!key) continue;
+    const result = await callGroqVision(key);
+    if (result) return result;
+  }
+
+  // Fallback: Gemini for images and meal descriptions.
+  if (geminiApiKey && geminiApiKey.trim().length > 0) {
+    try {
+      const response = await fetch(GEMINI_ENDPOINT, {
+        method: 'POST',
+        signal: AbortSignal.timeout(20000),
+        headers: { 'Content-Type': 'application/json', 'x-goog-api-key': geminiApiKey },
+        body: JSON.stringify({
+          ...(description ? { system_instruction: { parts: [{ text: prompt }] } } : {}),
+          contents: [
+            {
+              parts: description
+                ? [{ text: JSON.stringify({ meal_description: description }) }]
+                : [
+                    { text: prompt },
+                    {
+                      inline_data: {
+                        mime_type: mimeType,
+                        data: cleanBase64,
+                      },
+                    },
+                  ],
+            },
+          ],
+          generationConfig: {
+            response_mime_type: 'application/json',
+            maxOutputTokens: 4000,
+            thinkingConfig: { thinkingLevel: 'minimal' },
+          },
+        }),
+      });
+
+      if (response.ok) {
+        const json = await response.json();
+        const rawCandidate = geminiText(json);
+        if (rawCandidate) {
+          const tokens = json.usageMetadata?.totalTokenCount || DEFAULT_ESTIMATED_TOKENS;
+          const cost = (tokens / 1_000_000) * 0.35;
+          return {
+            rawText: rawCandidate,
+            tokens,
+            cost: Math.round(cost * 1_000_000) / 1_000_000,
+          };
+        }
+      } else {
+        console.warn('GEMINI_VISION_HTTP', response.status);
+      }
+    } catch {
+      console.warn('GEMINI_VISION_UNAVAILABLE');
     }
   }
 

@@ -1,3 +1,4 @@
+import { cachedRead } from './offlineReadService';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type {
   IndividualProgressData,
@@ -132,19 +133,21 @@ export async function fetchIndividualProgress(
   client: SupabaseClient,
   range: ProgressDateRange = '30d',
 ): Promise<IndividualProgressData> {
-  try {
-    const { data, error } = await client.rpc('get_individual_progress', {
-      p_range: range,
-    });
+  return cachedRead(client, 'progress:' + range, async () => {
+    try {
+      const { data, error } = await client.rpc('get_individual_progress', {
+        p_range: range,
+      });
 
-    if (error) {
-      throw parseProgressError(error);
+      if (error) {
+        throw parseProgressError(error);
+      }
+
+      return (data as IndividualProgressData) ?? getDefaultIndividualProgress(range);
+    } catch (err) {
+      throw parseProgressError(err);
     }
-
-    return (data as IndividualProgressData) ?? getDefaultIndividualProgress(range);
-  } catch (err) {
-    throw parseProgressError(err);
-  }
+  });
 }
 
 /**

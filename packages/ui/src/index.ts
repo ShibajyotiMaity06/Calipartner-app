@@ -4,3 +4,5 @@ export * from './components';
 export * from './contrast';
 
 export { brandLogoSvg } from './brand/logo';
+
+export { NavigationIcon } from './components/NavigationIcon';

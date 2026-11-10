@@ -74,8 +74,7 @@ function useTargetsState() {
         error: null,
       });
 
-      if (user?.id) {
-        if (!online) throw new Error('NETWORK_UNAVAILABLE');
+      if (user?.id && online) {
         const supabase = getSupabase();
         const restored = await restoreGoalProfile(db, supabase, user.id);
         if (ownerRef.current === effectiveUserId) {

@@ -1,14 +1,7 @@
+import { NavigationIcon } from '@calipartner/ui';
 import React, { useEffect, useState } from 'react';
 import { FlatList, Modal, SafeAreaView, StyleSheet, TouchableOpacity, View } from 'react-native';
-import {
-  Button,
-  Card,
-  ChevronLeftIcon,
-  dark,
-  SegmentedControl,
-  space,
-  Text,
-} from '@calipartner/ui';
+import { Button, Card, dark, SegmentedControl, space, Text } from '@calipartner/ui';
 import { getSupabase } from '@/lib/supabase';
 import { t } from '@/i18n';
 import { playClickSound } from '@/lib/sound';
@@ -113,7 +106,7 @@ export function DiscoverabilityModal({
               style={styles.backButton}
               testID="btn-close-discoverability"
             >
-              <ChevronLeftIcon color={dark.textHi} size={24} />
+              <NavigationIcon action="back" />
             </TouchableOpacity>
             <Text variant="heading" color={dark.textHi}>
               {t('me.discoverability.title')}

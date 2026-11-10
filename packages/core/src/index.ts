@@ -47,3 +47,5 @@ export * from './suppliedRegionalFoods';
 export * from './webBilling';
 export * from './adaptiveReview';
 export * from './weightProjection';
+
+export * from './weightHistory';

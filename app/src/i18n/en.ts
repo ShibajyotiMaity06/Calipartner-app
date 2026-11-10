@@ -10,6 +10,16 @@ import { homeRefresh } from './homeRefresh';
 import { squadDesign } from './squadDesign';
 import { repairMessages } from './repairs';
 export const en = {
+  weightUpdate: {
+    progress: 'Weight progress',
+    start: 'Start',
+    current: 'Current',
+    change: 'Change',
+    weeklyHint:
+      'One weigh-in per week, up to three years. Missing dates use the nearest earlier entry within that week. Dates shown are the actual weigh-in dates.',
+    saveError: 'Your weight was not saved. Check your connection and try again.',
+    offline: 'Offline. Showing your last refreshed data.',
+  },
   workoutFlow,
   personalDay,
   aha,
@@ -1292,7 +1302,7 @@ export const en = {
       notesPlaceholder: 'e.g. Morning weigh-in, fasted',
       summaryTitle: 'Trend Summary',
       invalidWeight: 'Please enter a valid weight between 20 kg and 500 kg',
-      invalidDate: 'Please enter a valid date in YYYY-MM-DD format',
+      invalidDate: 'Enter today?s date or earlier in YYYY-MM-DD format',
       deleteSuccess: 'Weight entry deleted',
       confirmDelete: 'Are you sure you want to delete this weight entry?',
       unitsNotice: 'Units: Kilograms (kg)',

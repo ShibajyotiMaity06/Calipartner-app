@@ -1,15 +1,7 @@
+import { NavigationIcon } from '@calipartner/ui';
 import React from 'react';
 import { View, StyleSheet, Modal, SafeAreaView, TouchableOpacity } from 'react-native';
-import {
-  Text,
-  Button,
-  Avatar,
-  PairedCard,
-  ChevronLeftIcon,
-  space,
-  dark,
-  radius,
-} from '@calipartner/ui';
+import { Text, Button, Avatar, PairedCard, space, dark, radius } from '@calipartner/ui';
 import { playClickSound } from '@/lib/sound';
 
 export interface InvitePreviewModalProps {
@@ -57,10 +49,7 @@ export function InvitePreviewModal({
               style={styles.backButton}
               testID="btn-invite-preview-back"
             >
-              <ChevronLeftIcon size={20} color={dark.textHi} />
-              <Text variant="body" color={dark.textHi}>
-                Back
-              </Text>
+              <NavigationIcon action="back" />
             </TouchableOpacity>
           </View>
 

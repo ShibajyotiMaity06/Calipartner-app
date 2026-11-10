@@ -1,3 +1,4 @@
+import { NavigationIcon } from '@calipartner/ui';
 import React from 'react';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
@@ -27,7 +28,7 @@ export function CardioHub({
           style={styles.back}
           testID="cardio-back"
         >
-          <Ionicons name="chevron-back" size={homeLayout.iconSize} color={dark.textHi} />
+          <NavigationIcon action="back" />
         </Pressable>
         <Text variant="title1">{t('homeRefresh.cardio')}</Text>
       </View>

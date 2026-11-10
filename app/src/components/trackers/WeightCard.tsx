@@ -1,8 +1,9 @@
+import { NavigationIcon } from '@calipartner/ui';
 import React, { useState } from 'react';
 import { Modal, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import type { WeightLog } from '@calipartner/core';
-import { Text, dark, radius, space, type as typeTokens } from '@calipartner/ui';
+import { Text, dark, homeLayout, radius, space, type as typeTokens } from '@calipartner/ui';
 import { useTargets } from '@/hooks/useTargets';
 import { useWeight } from '@/hooks/useWeight';
 import { t } from '@/i18n';
@@ -24,6 +25,7 @@ export function WeightCard({ selectedDate, testID = 'weight-card' }: WeightCardP
   const { currentGoalProfile } = useTargets();
   const {
     logs,
+    startingWeightKg,
     latestLog,
     latestTrendKg,
     weeklyPaceKg,
@@ -36,6 +38,7 @@ export function WeightCard({ selectedDate, testID = 'weight-card' }: WeightCardP
   } = useWeight();
 
   const [entryModalVisible, setEntryModalVisible] = useState(false);
+  const [weeklyHistory, setWeeklyHistory] = useState(false);
   const [historyModalVisible, setHistoryModalVisible] = useState(false);
   const [measurementModalVisible, setMeasurementModalVisible] = useState(false);
   const [photosModalVisible, setPhotosModalVisible] = useState(false);
@@ -52,9 +55,7 @@ export function WeightCard({ selectedDate, testID = 'weight-card' }: WeightCardP
   const weeklyPace = weeklyPaceKg;
   const hasEnoughTrend = projectionReason !== 'not_enough_trend' && logs.length >= 3;
 
-  const startWeight =
-    currentGoalProfile?.current_weight_kg ??
-    (logs.length > 0 ? logs[logs.length - 1]!.weight_kg : null);
+  const startWeight = startingWeightKg;
 
   const targetWeight =
     currentGoalProfile?.target_weight_kg ?? (latestWeight ? latestWeight - 5 : 70);
@@ -75,7 +76,7 @@ export function WeightCard({ selectedDate, testID = 'weight-card' }: WeightCardP
 
   const handleSaveWeight = async (weight: number, notes?: string, date?: string) => {
     if (editingEntry) {
-      await editWeight(editingEntry.id, weight, notes);
+      await editWeight(editingEntry.id, weight, notes, date);
       setEditingEntry(null);
     } else {
       await logWeight(weight, date, notes);
@@ -96,7 +97,7 @@ export function WeightCard({ selectedDate, testID = 'weight-card' }: WeightCardP
   return (
     <View testID={testID} style={styles.card}>
       {/* Header */}
-      <View style={styles.headerRow}>
+      <View style={[styles.headerRow, { flexWrap: 'wrap', gap: space[2] }]}>
         <View style={styles.titleGroup}>
           <View style={styles.iconWrapper}>
             <Ionicons name="scale-outline" size={18} color={dark.apricot} />
@@ -107,10 +108,26 @@ export function WeightCard({ selectedDate, testID = 'weight-card' }: WeightCardP
           </View>
         </View>
 
+        <Pressable
+          testID="btn-weight-progress"
+          style={styles.smallActionBtn}
+          accessibilityRole="button"
+          accessibilityLabel={t('weightUpdate.progress')}
+          onPress={() => {
+            setWeeklyHistory(true);
+            setHistoryModalVisible(true);
+          }}
+        >
+          <Ionicons name="trending-up-outline" size={space[4]} color={dark.textMid} />
+          <Text style={styles.smallActionText}>{t('weightUpdate.progress')}</Text>
+        </Pressable>
         {/* History action button */}
         <Pressable
           testID="btn-weight-history"
-          onPress={() => setHistoryModalVisible(true)}
+          onPress={() => {
+            setWeeklyHistory(false);
+            setHistoryModalVisible(true);
+          }}
           style={styles.smallActionBtn}
           accessibilityRole="button"
           accessibilityLabel={t('trackers.weight.historyButton')}
@@ -368,6 +385,12 @@ export function WeightCard({ selectedDate, testID = 'weight-card' }: WeightCardP
         <WeightEntryModal
           visible={entryModalVisible}
           initialEntry={editingEntry}
+          previousWeight={
+            editingEntry
+              ? (logs.find((entry) => entry.local_date < editingEntry.local_date)?.weight_kg ??
+                startWeight)
+              : undefined
+          }
           defaultDate={selectedDate}
           startWeight={startWeight}
           currentWeight={latestWeight}
@@ -385,6 +408,7 @@ export function WeightCard({ selectedDate, testID = 'weight-card' }: WeightCardP
         <WeightHistoryModal
           visible={historyModalVisible}
           entries={logs}
+          weekly={weeklyHistory}
           onClose={() => setHistoryModalVisible(false)}
           onEditEntry={handleOpenEdit}
           onDeleteEntry={deleteWeight}
@@ -466,7 +490,7 @@ export function WeightCard({ selectedDate, testID = 'weight-card' }: WeightCardP
                 accessibilityRole="button"
                 accessibilityLabel="Close"
               >
-                <Text style={styles.tableDoneBtnText}>Close</Text>
+                <NavigationIcon action="close" />
               </Pressable>
             </View>
           </View>
@@ -519,7 +543,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 4,
     paddingHorizontal: space[3],
-    minHeight: 32,
+    minHeight: homeLayout.compactTouchSize,
     borderRadius: radius.full,
     borderWidth: 1,
     borderColor: dark.hairline,
@@ -611,7 +635,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
-    minHeight: 32,
+    minHeight: homeLayout.compactTouchSize,
     paddingHorizontal: space[2],
   },
   viewTableText: {
@@ -627,7 +651,7 @@ const styles = StyleSheet.create({
   },
   rangeChip: {
     flex: 1,
-    minHeight: 32,
+    minHeight: homeLayout.compactTouchSize,
     borderRadius: radius.full,
     backgroundColor: dark.s3,
     borderWidth: 1,

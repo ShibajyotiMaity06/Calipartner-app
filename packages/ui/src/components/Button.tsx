@@ -11,6 +11,8 @@ import { dark } from '../tokens/colors';
 import { radius } from '../tokens/radius';
 import { space } from '../tokens/space';
 import { Text } from './Text';
+import { homeLayout } from '../tokens/home';
+import { NavigationIcon } from './NavigationIcon';
 
 export type ButtonVariant =
   'primary' | 'secondary' | 'tertiary' | 'destructive' | 'destructiveFill';
@@ -65,6 +67,11 @@ export function Button({
   style,
 }: ButtonProps): React.JSX.Element {
   const isDisabled = disabled || loading;
+  const navigationAction = /^(?:\u2190\s*)?back$/i.test(label.trim())
+    ? 'back'
+    : /^close$/i.test(label.trim())
+      ? 'close'
+      : null;
 
   const getHeight = (): number => {
     switch (size) {
@@ -111,9 +118,26 @@ export function Button({
           flexDirection: 'row',
           alignItems: 'center',
           justifyContent: 'center',
-          width: fullWidth ? '100%' : undefined,
-          alignSelf: fullWidth ? 'stretch' : 'flex-start',
+          width: navigationAction ? undefined : fullWidth ? '100%' : undefined,
+          alignSelf: navigationAction ? 'flex-start' : fullWidth ? 'stretch' : 'flex-start',
         };
+
+        if (navigationAction)
+          return [
+            baseStyle,
+            style,
+            {
+              width: homeLayout.compactTouchSize,
+              minHeight: homeLayout.compactTouchSize,
+              minWidth: homeLayout.compactTouchSize,
+              padding: space[0],
+              paddingHorizontal: space[0],
+              paddingVertical: space[0],
+              backgroundColor: 'transparent',
+              borderRadius: radius.full,
+              alignSelf: 'flex-start',
+            },
+          ];
 
         if (isDisabled) {
           if (variant === 'tertiary') {
@@ -171,49 +195,53 @@ export function Button({
         }
       }}
     >
-      <View style={[styles.contentRow, { width: '100%', flexShrink: 1 }]}>
-        {loading ? (
-          <ActivityIndicator
-            size="small"
-            color={
-              variant === 'primary'
-                ? dark.onBrand
-                : variant === 'destructive' || variant === 'destructiveFill'
-                  ? dark.textHi
-                  : dark.apricot
-            }
-            style={styles.spinner}
-          />
-        ) : icon ? (
-          <View style={styles.iconWrap}>{icon}</View>
-        ) : null}
-
-        <Text
-          fontSet={fontSet}
-          variant={size === 'sm' ? 'label' : 'button'}
-          color={
-            isDisabled
-              ? dark.textOff
-              : (labelColor ??
-                (variant === 'primary'
-                  ? dark.onBrand // Rule U2: On apricot always onBrand (#1C1109), never white
-                  : variant === 'secondary'
+      {navigationAction ? (
+        <NavigationIcon action={navigationAction} />
+      ) : (
+        <View style={[styles.contentRow, { width: '100%', flexShrink: 1 }]}>
+          {loading ? (
+            <ActivityIndicator
+              size="small"
+              color={
+                variant === 'primary'
+                  ? dark.onBrand
+                  : variant === 'destructive' || variant === 'destructiveFill'
                     ? dark.textHi
-                    : variant === 'tertiary'
-                      ? dark.apricot
-                      : variant === 'destructive'
-                        ? dark.danger
-                        : dark.textHi))
-          }
-          style={[styles.label, { flexShrink: 1 }]}
-        >
-          {label}
-        </Text>
+                    : dark.apricot
+              }
+              style={styles.spinner}
+            />
+          ) : icon ? (
+            <View style={styles.iconWrap}>{icon}</View>
+          ) : null}
 
-        {!loading && trailingIcon ? (
-          <View style={styles.trailingIconWrap}>{trailingIcon}</View>
-        ) : null}
-      </View>
+          <Text
+            fontSet={fontSet}
+            variant={size === 'sm' ? 'label' : 'button'}
+            color={
+              isDisabled
+                ? dark.textOff
+                : (labelColor ??
+                  (variant === 'primary'
+                    ? dark.onBrand // Rule U2: On apricot always onBrand (#1C1109), never white
+                    : variant === 'secondary'
+                      ? dark.textHi
+                      : variant === 'tertiary'
+                        ? dark.apricot
+                        : variant === 'destructive'
+                          ? dark.danger
+                          : dark.textHi))
+            }
+            style={[styles.label, { flexShrink: 1 }]}
+          >
+            {label}
+          </Text>
+
+          {!loading && trailingIcon ? (
+            <View style={styles.trailingIconWrap}>{trailingIcon}</View>
+          ) : null}
+        </View>
+      )}
     </Pressable>
   );
 }

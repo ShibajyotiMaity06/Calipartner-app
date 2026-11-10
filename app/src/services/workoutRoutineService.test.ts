@@ -1,3 +1,6 @@
+vi.mock('./offlineReadService', () => ({
+  cachedRead: async (_client: unknown, _key: string, read: () => Promise<unknown>) => read(),
+}));
 import { beforeEach, expect, it, vi } from 'vitest';
 import type { PlanPreferences, WorkoutPlanView } from '@calipartner/core';
 const state = vi.hoisted(() => ({

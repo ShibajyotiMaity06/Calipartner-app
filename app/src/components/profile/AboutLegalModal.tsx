@@ -1,3 +1,4 @@
+import { NavigationIcon } from '@calipartner/ui';
 import React from 'react';
 import {
   Linking,
@@ -8,7 +9,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import { Button, Card, ChevronLeftIcon, dark, space, Text } from '@calipartner/ui';
+import { Button, Card, dark, space, Text } from '@calipartner/ui';
 import { t } from '@/i18n';
 import { playClickSound } from '@/lib/sound';
 
@@ -41,7 +42,7 @@ export function AboutLegalModal({
               style={styles.backButton}
               testID="btn-close-about-legal"
             >
-              <ChevronLeftIcon color={dark.textHi} size={24} />
+              <NavigationIcon action="back" />
             </TouchableOpacity>
             <Text variant="heading" color={dark.textHi}>
               {t('me.aboutLegal.title')}

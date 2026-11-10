@@ -1,3 +1,5 @@
+import { isDeviceOffline } from './networkService';
+import { cachedRead } from './offlineReadService';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { mergeMessagesDeduplicated, validateChatMessageInput } from '@calipartner/core';
 import type { ChatAttachment, ChatMessage } from '@/types/chat';
@@ -167,41 +169,45 @@ export async function getChatMessages(
   roomId: string,
   options: GetMessagesOptions = {},
 ): Promise<ChatMessage[]> {
-  // 1. Get local cached messages first
-  const localMessages = await getLocalChatMessages(db, roomId, options);
+  const projected = await cachedRead(
+    supabase as SupabaseClient,
+    'chat:' + roomId + ':' + JSON.stringify(options),
+    async () => {
+      // 1. Get local cached messages first
+      const localMessages = await getLocalChatMessages(db, roomId, options);
 
-  try {
-    // 2. Fetch remote messages via RPC
-    const { data: remoteData, error } = await supabase.rpc('get_chat_messages_v2', {
-      p_room_id: roomId,
-      p_limit: options.limit ?? 50,
-      p_before_created_at: options.beforeCreatedAt ?? null,
-      p_after_created_at: options.afterCreatedAt ?? null,
-      p_before_id: options.beforeId ?? null,
-      p_after_id: options.afterId ?? null,
-    });
+      try {
+        // 2. Fetch remote messages via RPC
+        const { data: remoteData, error } = await supabase.rpc('get_chat_messages_v2', {
+          p_room_id: roomId,
+          p_limit: options.limit ?? 50,
+          p_before_created_at: options.beforeCreatedAt ?? null,
+          p_after_created_at: options.afterCreatedAt ?? null,
+          p_before_id: options.beforeId ?? null,
+          p_after_id: options.afterId ?? null,
+        });
 
-    if (error) {
-      throw parseChatError(error);
-    }
+        if (error) {
+          throw parseChatError(error);
+        }
 
-    const rawList = (remoteData as ChatMessage[]) || [];
-    const remoteMessages: ChatMessage[] = rawList.map((m) => ({
-      ...m,
-      delivery_status: 'sent',
-      sync_state: 'synced',
-    }));
+        const rawList = (remoteData as ChatMessage[]) || [];
+        const remoteMessages: ChatMessage[] = rawList.map((m) => ({
+          ...m,
+          delivery_status: 'sent',
+          sync_state: 'synced',
+        }));
 
-    // 3. Upsert remote messages into local SQLite
-    const cacheMessages = async () => {
-      for (const msg of remoteMessages) {
-        if (Array.isArray(msg.attachments))
-          await db.runAsync(
-            'DELETE FROM local_chat_attachments WHERE message_id IN (SELECT id FROM local_chat_messages WHERE client_id = ?) OR message_id = ?',
-            [msg.client_id, msg.id],
-          );
-        await db.runAsync(
-          `INSERT INTO local_chat_messages (
+        // 3. Upsert remote messages into local SQLite
+        const cacheMessages = async () => {
+          for (const msg of remoteMessages) {
+            if (Array.isArray(msg.attachments))
+              await db.runAsync(
+                'DELETE FROM local_chat_attachments WHERE message_id IN (SELECT id FROM local_chat_messages WHERE client_id = ?) OR message_id = ?',
+                [msg.client_id, msg.id],
+              );
+            await db.runAsync(
+              `INSERT INTO local_chat_messages (
           id, client_id, room_id, sender_id, sender_nickname, sender_username, sender_avatar_url,
           message_type, system_event_type, text, created_at, deleted_at, delivery_status, sync_state
         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'sent', 'synced')
@@ -211,64 +217,73 @@ export async function getChatMessages(
           deleted_at = excluded.deleted_at,
           delivery_status = 'sent',
           sync_state = 'synced'`,
-          [
-            msg.id,
-            msg.client_id,
-            msg.room_id,
-            msg.sender_id,
-            msg.sender_nickname ?? null,
-            msg.sender_username ?? null,
-            msg.sender_avatar_url ?? null,
-            msg.message_type,
-            msg.system_event_type ?? null,
-            msg.text,
-            msg.created_at,
-            msg.deleted_at ?? null,
-          ],
-        );
+              [
+                msg.id,
+                msg.client_id,
+                msg.room_id,
+                msg.sender_id,
+                msg.sender_nickname ?? null,
+                msg.sender_username ?? null,
+                msg.sender_avatar_url ?? null,
+                msg.message_type,
+                msg.system_event_type ?? null,
+                msg.text,
+                msg.created_at,
+                msg.deleted_at ?? null,
+              ],
+            );
 
-        // Upsert attachments
-        await db.runAsync(
-          'UPDATE local_chat_messages SET reply_to_id = ?, reply_json = ? WHERE id = ?',
-          [msg.reply_to_id ?? null, msg.reply ? JSON.stringify(msg.reply) : null, msg.id],
-        );
-        if (msg.attachments && msg.attachments.length > 0) {
-          for (const att of msg.attachments) {
+            // Upsert attachments
             await db.runAsync(
-              `INSERT INTO local_chat_attachments (
+              'UPDATE local_chat_messages SET reply_to_id = ?, reply_json = ? WHERE id = ?',
+              [msg.reply_to_id ?? null, msg.reply ? JSON.stringify(msg.reply) : null, msg.id],
+            );
+            if (msg.attachments && msg.attachments.length > 0) {
+              for (const att of msg.attachments) {
+                await db.runAsync(
+                  `INSERT INTO local_chat_attachments (
               id, message_id, storage_key, width, height, size, mime_type, moderation_status, upload_status, created_at
             ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'uploaded', ?)
             ON CONFLICT (id) DO UPDATE SET
               moderation_status = excluded.moderation_status`,
-              [
-                att.id,
-                msg.id,
-                att.storage_key,
-                att.width ?? null,
-                att.height ?? null,
-                att.size,
-                att.mime_type,
-                att.moderation_status,
-                att.created_at,
-              ],
-            );
+                  [
+                    att.id,
+                    msg.id,
+                    att.storage_key,
+                    att.width ?? null,
+                    att.height ?? null,
+                    att.size,
+                    att.mime_type,
+                    att.moderation_status,
+                    att.created_at,
+                  ],
+                );
+              }
+            }
           }
-        }
-      }
-    };
-    await withOnlineSave(db, cacheMessages, false);
+        };
+        await withOnlineSave(db, cacheMessages, false);
 
-    return mergeMessagesDeduplicated(
-      localMessages.filter(
-        (message) =>
-          message.sync_state !== 'synced' &&
-          (!options.ownerId || message.sender_id === options.ownerId),
-      ),
-      remoteMessages,
+        return mergeMessagesDeduplicated(
+          localMessages.filter(
+            (message) =>
+              message.sync_state !== 'synced' &&
+              (!options.ownerId || message.sender_id === options.ownerId),
+          ),
+          remoteMessages,
+        );
+      } catch (err: unknown) {
+        throw parseChatError(err);
+      }
+    },
+  );
+  if (await isDeviceOffline()) {
+    const allowedIds = new Set(projected.map((message) => message.id));
+    return (await getLocalChatMessages(db, roomId, options)).filter((message) =>
+      allowedIds.has(message.id),
     );
-  } catch (err: unknown) {
-    throw parseChatError(err);
   }
+  return projected;
 }
 
 /**

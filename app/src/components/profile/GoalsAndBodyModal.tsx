@@ -1,3 +1,4 @@
+import { NavigationIcon } from '@calipartner/ui';
 import { type as inputTypography } from '@calipartner/ui';
 import React, { useState } from 'react';
 import {
@@ -9,16 +10,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import {
-  Button,
-  Card,
-  ChevronLeftIcon,
-  dark,
-  radius,
-  SegmentedControl,
-  space,
-  Text,
-} from '@calipartner/ui';
+import { Button, Card, dark, radius, SegmentedControl, space, Text } from '@calipartner/ui';
 import { NumberField } from '@/components/onboarding/PlanPrimitives';
 import { HeightField } from '@/components/onboarding/HeightField';
 import { t } from '@/i18n';
@@ -116,7 +108,7 @@ export function GoalsAndBodyModal({
               style={styles.backButton}
               testID="btn-close-goals-body"
             >
-              <ChevronLeftIcon color={dark.textHi} size={24} />
+              <NavigationIcon action="back" />
             </TouchableOpacity>
             <Text variant="heading" color={dark.textHi}>
               {t('me.goalsAndBody.title')}

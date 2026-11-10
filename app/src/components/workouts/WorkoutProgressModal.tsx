@@ -1,9 +1,10 @@
+import { NavigationIcon } from '@calipartner/ui';
 import { PremiumFeatureModal } from '@/components/subscription/PremiumFeatureModal';
 import React, { useState } from 'react';
 import { Modal, SafeAreaView, ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import Svg, { Circle, Defs, LinearGradient, Path, Stop } from 'react-native-svg';
-import { ChevronLeftIcon, dark, radius, space, Text } from '@calipartner/ui';
+import { dark, radius, space, Text } from '@calipartner/ui';
 import { playClickSound } from '@/lib/sound';
 import {
   ALL_DAYS,
@@ -72,7 +73,7 @@ function WorkoutProgressModalContent({
               style={styles.backButton}
               testID="btn-workout-progress-back"
             >
-              <ChevronLeftIcon size={22} color={dark.textHi} />
+              <NavigationIcon action="back" />
             </TouchableOpacity>
 
             <Text variant="title2" color={dark.textHi} style={styles.topTitle}>
@@ -126,7 +127,7 @@ function WorkoutProgressModalContent({
                     style={styles.navArrowBtn}
                     accessibilityLabel="Previous week"
                   >
-                    <Ionicons name="chevron-back" size={18} color={dark.textMid} />
+                    <NavigationIcon action="back" />
                   </TouchableOpacity>
 
                   <View style={styles.weekLabelCol}>

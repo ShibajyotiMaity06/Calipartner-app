@@ -1,3 +1,4 @@
+import { NavigationIcon } from '@calipartner/ui';
 import { macroErrorMessage } from '@/i18n/macroErrors';
 import { applyOnboardingTargetOverrides, type OnboardingTargetOverrides } from '@calipartner/core';
 import React, { useEffect, useRef, useState } from 'react';
@@ -303,7 +304,7 @@ export default function OnboardingScreen() {
               style={styles.iconButton}
               testID="btn-onboarding-back"
             >
-              <Ionicons name="arrow-back-outline" size={layout.icon} color={colors.textHi} />
+              <NavigationIcon action="back" />
             </Pressable>
             <Text fontSet="onboarding" variant="bodyS" color={colors.textMid} tabular>
               {t('onboarding.stepIndicator', {

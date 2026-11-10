@@ -1,3 +1,4 @@
+import { NavigationIcon } from '@calipartner/ui';
 import React, { useEffect, useRef, useState } from 'react';
 import {
   KeyboardAvoidingView,
@@ -137,7 +138,7 @@ export default function SignInScreen() {
               accessibilityLabel={t('onboarding.back')}
               testID="btn-auth-top-back"
             >
-              <Ionicons name="chevron-back" size={layout.icon} color={colors.textHi} />
+              <NavigationIcon action="back" />
             </Pressable>
             <View
               style={[styles.tabs, { backgroundColor: colors.s1, borderColor: colors.hairline }]}

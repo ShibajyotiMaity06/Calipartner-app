@@ -1,3 +1,4 @@
+import { cachedRead } from './offlineReadService';
 import {
   validateWorkoutRoutine,
   type PlanPreferences,
@@ -30,18 +31,21 @@ async function request(userId: string, operation: string, payload: unknown) {
   return { id: pending!.id, clear: () => secureStoreAdapter.removeItem(key) };
 }
 export async function getWorkoutPlan(userId: string): Promise<WorkoutPlanView> {
-  const client = await actor(userId);
-  const { data, error } = await client.rpc('get_workout_plan');
-  if (error) throw error;
-  if (
-    !data ||
-    typeof data.full_access !== 'boolean' ||
-    !Array.isArray(data.days) ||
-    (!data.full_access && data.days.length)
-  )
-    throw new Error('PLAN_UNAVAILABLE');
-  if (data.full_access && data.id) validateWorkoutRoutine({ days: data.days });
-  return data as WorkoutPlanView;
+  const client = getSupabase();
+  return cachedRead(client, 'workout-plan:' + userId, async () => {
+    await actor(userId);
+    const { data, error } = await client.rpc('get_workout_plan');
+    if (error) throw error;
+    if (
+      !data ||
+      typeof data.full_access !== 'boolean' ||
+      !Array.isArray(data.days) ||
+      (!data.full_access && data.days.length)
+    )
+      throw new Error('PLAN_UNAVAILABLE');
+    if (data.full_access && data.id) validateWorkoutRoutine({ days: data.days });
+    return data as WorkoutPlanView;
+  });
 }
 export async function buildWorkoutPlan(
   userId: string,

@@ -1,6 +1,7 @@
 import { withOnlineSave } from './accountDataService';
 import {
   calculateGoalProgressPercent,
+  isValidWeightDate,
   calculateProjectedDate,
   calculateWeeklyPace,
   calculateWeightTrend,
@@ -67,14 +68,16 @@ export async function logWeight(
   localDate?: string,
   loggedAt?: string,
   notes?: string | null,
+  today = new Date().toISOString().slice(0, 10),
+  clientId = generateClientUuid(),
 ): Promise<WeightLog> {
   return withOnlineSave(db, async (db) => {
     if (!Number.isFinite(weightKg) || weightKg < 20 || weightKg > 500)
       throw new Error('INVALID_WEIGHT');
     const now = new Date().toISOString();
-    const id = generateClientUuid();
+    const id = clientId;
     const date = localDate ?? now.split('T')[0]!;
-    if (!validWeightDate(date)) throw new Error('INVALID_DATE');
+    if (!isValidWeightDate(date, today)) throw new Error('INVALID_DATE');
     const time = loggedAt ?? now;
 
     const persist = async () => {
@@ -183,9 +186,10 @@ export async function getWeightSummary(
   weeklyPace: WeeklyPaceResult;
   projection: ProjectedDateResult;
   goalProgressPercent: number;
+  startingWeightKg: number | null;
 }> {
   return withOnlineSave(db, async (db) => {
-    const logs = await getWeightLogs(db, userId, 365);
+    const logs = await getWeightLogs(db, userId, 100000);
     if (logs.length === 0) {
       return {
         latestLog: null,
@@ -194,6 +198,7 @@ export async function getWeightSummary(
         weeklyPace: { weeklyPaceKg: null, daysSpan: 0 },
         projection: { projectedDate: null, weeksRemaining: null, reason: 'not_enough_trend' },
         goalProgressPercent: 0,
+        startingWeightKg: profile?.startingWeightKg ?? null,
       };
     }
 
@@ -221,8 +226,15 @@ export async function getWeightSummary(
           })
         : { projectedDate: null, weeksRemaining: null, reason: 'not_enough_trend' as const };
 
+    const firstGoal = await db.getFirstAsync<{ current_weight_kg: number }>(
+      'SELECT * FROM local_goal_profiles WHERE user_id = ? ORDER BY effective_from ASC LIMIT 1',
+      [userId],
+    );
     const startWeight =
-      profile?.startingWeightKg ?? entries[0]?.weightKg ?? latestTrend.trendWeightKg;
+      firstGoal?.current_weight_kg ??
+      profile?.startingWeightKg ??
+      entries[0]?.weightKg ??
+      latestTrend.trendWeightKg;
     const goalProgressPercent =
       targetWeight != null
         ? calculateGoalProgressPercent(startWeight, latestTrend.trendWeightKg, targetWeight)
@@ -235,6 +247,7 @@ export async function getWeightSummary(
       weeklyPace,
       projection,
       goalProgressPercent,
+      startingWeightKg: startWeight,
     };
   });
 }
@@ -248,10 +261,19 @@ export async function editWeightLog(
   id: string,
   weightKg: number,
   notes?: string | null,
+  localDate?: string,
+  today = new Date().toISOString().slice(0, 10),
 ): Promise<WeightLog | null> {
   return withOnlineSave(db, async (db) => {
+    if (!Number.isFinite(weightKg) || weightKg < 20 || weightKg > 500)
+      throw new Error('INVALID_WEIGHT');
+    if (localDate && !isValidWeightDate(localDate, today)) throw new Error('INVALID_DATE');
     const now = new Date().toISOString();
-
+    if (localDate)
+      await db.runAsync(
+        "UPDATE local_weight_logs SET local_date = ?, notes = ?, updated_at = ?, sync_state = 'synced' WHERE id = ? AND user_id = ?",
+        [localDate, notes ?? null, now, id, userId],
+      );
     await db.runAsync(
       `UPDATE local_weight_logs SET
        weight_kg = ?,

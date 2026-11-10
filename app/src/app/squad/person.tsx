@@ -1,8 +1,8 @@
+import { NavigationIcon } from '@calipartner/ui';
 import React, { useCallback, useState } from 'react';
 import { Pressable, RefreshControl, SafeAreaView, ScrollView, View } from 'react-native';
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
-import { Ionicons } from '@expo/vector-icons';
-import { Button, dark, homeLayout, Text } from '@calipartner/ui';
+import { Button, Text } from '@calipartner/ui';
 import { useSquadToday } from '@/hooks/useSquad';
 import { SquadPersonPanel } from '@/components/rooms/SquadPersonPanel';
 import { t } from '@/i18n';
@@ -41,7 +41,7 @@ export default function SquadPersonScreen() {
             accessibilityLabel={t('squadDesign.back')}
             testID="person-back"
           >
-            <Ionicons name="chevron-back" size={homeLayout.iconSize} color={dark.textHi} />
+            <NavigationIcon action="back" />
           </Pressable>
           <View style={styles.flex}>
             <Text variant="bodyS">{t('tabs.room')}</Text>

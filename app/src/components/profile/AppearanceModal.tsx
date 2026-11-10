@@ -1,9 +1,9 @@
+import { NavigationIcon } from '@calipartner/ui';
 import React, { useState } from 'react';
 import { Modal, SafeAreaView, ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
 import {
   Button,
   Card,
-  ChevronLeftIcon,
   dark,
   radius,
   SegmentedControl,
@@ -53,7 +53,7 @@ export function AppearanceModal({
               style={styles.backButton}
               testID="btn-close-appearance"
             >
-              <ChevronLeftIcon color={dark.textHi} size={24} />
+              <NavigationIcon action="back" />
             </TouchableOpacity>
             <Text variant="heading" color={dark.textHi}>
               {t('me.appearance.title')}

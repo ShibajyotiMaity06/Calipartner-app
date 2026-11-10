@@ -22,6 +22,7 @@ vi.mock('react-native', () => ({
 vi.mock('@calipartner/ui', async () => ({
   ...(await import('../../../../packages/ui/src/tokens')),
   Text: 'Text',
+  SegmentedControl: 'SegmentedControl',
   Button: 'Button',
   Field: 'Field',
   Avatar: 'Avatar',
@@ -115,15 +116,15 @@ beforeEach(() => {
 afterEach(async () => {
   if (tree) await act(async () => tree.unmount());
 });
-it('offers all three host entry points, preserves failed drafts and retry IDs, and updates Home and Squad only after acknowledgement', async () => {
+it('offers Overview and settings host entry points without a Home pencil, preserves failed drafts and retry IDs, and updates Home and Squad only after acknowledgement', async () => {
   await act(async () => {
     tree = create(<Harness />);
   });
-  for (const location of ['home', 'squad', 'settings'])
+  for (const location of ['squad', 'settings'])
     expect(tree.root.findByProps({ testID: `${location}-edit-squad-name-hosted` })).toBeDefined();
   expect(tree.root.findAllByProps({ testID: 'home-edit-squad-name-joined' })).toHaveLength(0);
   await act(async () =>
-    tree.root.findByProps({ testID: 'home-edit-squad-name-hosted' }).props.onPress(),
+    tree.root.findByProps({ testID: 'squad-edit-squad-name-hosted' }).props.onPress(),
   );
   expect(tree.root.findByProps({ testID: 'input-squad-name' }).props.value).toBe('Original squad');
   await act(async () =>

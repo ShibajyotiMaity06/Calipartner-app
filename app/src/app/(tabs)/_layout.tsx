@@ -1,11 +1,14 @@
+import { View } from 'react-native';
+import { useNetworkStatus } from '@/hooks/useNetworkStatus';
 import React from 'react';
 import { closeBrowserModalsThen } from '@/hooks/useBrowserModalBack';
 import { Tabs, usePathname, useRouter, useGlobalSearchParams } from 'expo-router';
-import { dark, TabBar, type TabId } from '@calipartner/ui';
+import { Text, space, dark, TabBar, type TabId } from '@calipartner/ui';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { t } from '@/i18n';
 
 export default function TabsLayout() {
+  const { isOnline } = useNetworkStatus();
   const insets = useSafeAreaInsets();
   const pathname = usePathname();
   const router = useRouter();
@@ -18,20 +21,45 @@ export default function TabsLayout() {
     (pathname.endsWith('/room') && chat === 'open');
 
   return (
-    <Tabs
-      backBehavior="fullHistory"
-      tabBar={({ state, navigation }) => {
-        const currentRoute = state.routes[state.index];
-        const routeName = currentRoute?.name ?? 'today';
-        const activeTab = (routeName === 'index' ? 'today' : routeName) as TabId;
+    <View style={{ flex: 1 }}>
+      {isOnline === false && (
+        <Text
+          variant="label"
+          accessibilityLiveRegion="polite"
+          style={{ padding: space[3] }}
+          testID="offline-read-banner"
+        >
+          {t('weightUpdate.offline')}
+        </Text>
+      )}
+      <Tabs
+        backBehavior="fullHistory"
+        tabBar={({ state, navigation }) => {
+          const currentRoute = state.routes[state.index];
+          const routeName = currentRoute?.name ?? 'today';
+          const activeTab = (routeName === 'index' ? 'today' : routeName) as TabId;
 
-        const handleTabPress = (tab: TabId) => {
-          if (tab === 'log') {
-            closeBrowserModalsThen(() => router.push('/(tabs)/log'));
-            return;
-          }
+          const handleTabPress = (tab: TabId) => {
+            if (tab === 'log') {
+              closeBrowserModalsThen(() => router.push('/(tabs)/log'));
+              return;
+            }
 
-          if (tab === activeTab) {
+            if (tab === activeTab) {
+              const route = state.routes.find((r) => r.name === tab);
+              if (route) {
+                navigation.emit({
+                  type: 'tabPress',
+                  target: route.key,
+                  canPreventDefault: true,
+                });
+              }
+            } else {
+              closeBrowserModalsThen(() => router.navigate(`/(tabs)/${tab}`));
+            }
+          };
+
+          const handleActiveTabPress = (tab: TabId) => {
             const route = state.routes.find((r) => r.name === tab);
             if (route) {
               navigation.emit({
@@ -40,74 +68,61 @@ export default function TabsLayout() {
                 canPreventDefault: true,
               });
             }
-          } else {
-            closeBrowserModalsThen(() => router.navigate(`/(tabs)/${tab}`));
-          }
-        };
+          };
 
-        const handleActiveTabPress = (tab: TabId) => {
-          const route = state.routes.find((r) => r.name === tab);
-          if (route) {
-            navigation.emit({
-              type: 'tabPress',
-              target: route.key,
-              canPreventDefault: true,
-            });
-          }
-        };
-
-        return (
-          <TabBar
-            activeTab={activeTab}
-            onTabPress={handleTabPress}
-            onActiveTabPress={handleActiveTabPress}
-            bottomInset={insets.bottom}
-            hasRoomBadge={false}
-            visible={!isFullScreenFlow}
-            labels={{
-              today: t('tabs.today'),
-              progress: t('tabs.progress'),
-              room: t('tabs.room'),
-              me: t('tabs.me'),
-            }}
-          />
-        );
-      }}
-      screenOptions={{
-        headerShown: false,
-        sceneStyle: { backgroundColor: dark.bg0 },
-      }}
-    >
-      <Tabs.Screen
-        name="today"
-        options={{
-          title: t('tabs.today'),
+          return (
+            <TabBar
+              activeTab={activeTab}
+              onTabPress={handleTabPress}
+              onActiveTabPress={handleActiveTabPress}
+              bottomInset={insets.bottom}
+              hasRoomBadge={false}
+              visible={!isFullScreenFlow}
+              labels={{
+                today: t('tabs.today'),
+                progress: t('tabs.progress'),
+                room: t('tabs.room'),
+                me: t('tabs.me'),
+              }}
+            />
+          );
         }}
-      />
-      <Tabs.Screen
-        name="room"
-        options={{
-          title: t('tabs.room'),
+        screenOptions={{
+          headerShown: false,
+          sceneStyle: { backgroundColor: dark.bg0 },
         }}
-      />
-      <Tabs.Screen
-        name="log"
-        options={{
-          title: t('tabs.log'),
-        }}
-      />
-      <Tabs.Screen
-        name="progress"
-        options={{
-          title: t('tabs.progress'),
-        }}
-      />
-      <Tabs.Screen
-        name="me"
-        options={{
-          title: t('tabs.me'),
-        }}
-      />
-    </Tabs>
+      >
+        <Tabs.Screen
+          name="today"
+          options={{
+            title: t('tabs.today'),
+          }}
+        />
+        <Tabs.Screen
+          name="room"
+          options={{
+            title: t('tabs.room'),
+          }}
+        />
+        <Tabs.Screen
+          name="log"
+          options={{
+            title: t('tabs.log'),
+          }}
+        />
+        <Tabs.Screen
+          name="progress"
+          options={{
+            title: t('tabs.progress'),
+          }}
+        />
+        <Tabs.Screen
+          name="me"
+          options={{
+            title: t('tabs.me'),
+          }}
+        />
+      </Tabs>
+    </View>
   );
 }

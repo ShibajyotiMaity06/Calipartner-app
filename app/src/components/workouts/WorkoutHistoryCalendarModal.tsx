@@ -1,3 +1,4 @@
+import { NavigationIcon } from '@calipartner/ui';
 import React, { useCallback, useEffect, useState } from 'react';
 import {
   ActivityIndicator,
@@ -176,7 +177,7 @@ export function WorkoutHistoryCalendarModal({
             accessibilityRole="button"
             accessibilityLabel="Previous Month"
           >
-            <Ionicons name="chevron-back" size={20} color={colors.text} />
+            <NavigationIcon action="back" />
           </TouchableOpacity>
           <Text style={[styles.monthHeaderText, { color: colors.text }]}>{monthName}</Text>
           <TouchableOpacity

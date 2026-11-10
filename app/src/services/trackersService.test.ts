@@ -58,6 +58,8 @@ function createTestDb(): LocalDb {
       sync_state      TEXT NOT NULL DEFAULT 'pending'
     );
 
+    CREATE TABLE local_goal_profiles (id TEXT PRIMARY KEY, user_id TEXT, current_weight_kg REAL, effective_from TEXT);
+
     CREATE TABLE local_weight_logs (
       id              TEXT PRIMARY KEY NOT NULL,
       user_id         TEXT NOT NULL,

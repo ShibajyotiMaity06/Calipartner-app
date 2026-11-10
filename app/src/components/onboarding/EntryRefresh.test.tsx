@@ -31,6 +31,7 @@ vi.mock('@calipartner/ui', async () => {
   return {
     ...tokens,
     Text: 'Text',
+    NavigationIcon: 'NavigationIcon',
     Button: 'Button',
     Field: 'Field',
     CheckIcon: 'CheckIcon',

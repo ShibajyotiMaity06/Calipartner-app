@@ -1,3 +1,4 @@
+import { cachedRead } from './offlineReadService';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type {
   MealSection,
@@ -20,9 +21,11 @@ import { getOrGenerateDeviceHash } from './deviceService';
  * List all active rooms the authenticated user belongs to.
  */
 export async function listUserRooms(client: SupabaseClient): Promise<RoomSummary[]> {
-  const { data, error } = await client.rpc('get_my_rooms');
-  if (error) throw parseRoomError(error);
-  return (data ?? []) as RoomSummary[];
+  return cachedRead(client, 'rooms', async () => {
+    const { data, error } = await client.rpc('get_my_rooms');
+    if (error) throw parseRoomError(error);
+    return (data ?? []) as RoomSummary[];
+  });
 }
 
 /**
@@ -314,23 +317,29 @@ export async function getRoomSnapshot(
     pageSize?: number;
   },
 ): Promise<RoomSnapshot> {
-  try {
-    const { data, error } = await client.rpc('get_room_snapshot', {
-      p_room_id: roomId,
-      p_selected_user_id: options?.selectedUserId ?? null,
-      p_search: options?.search ?? null,
-      p_page: options?.page ?? 1,
-      p_page_size: options?.pageSize ?? 20,
-    });
+  return cachedRead(
+    client,
+    'room-snapshot:' + roomId + ':' + JSON.stringify(options ?? {}),
+    async () => {
+      try {
+        const { data, error } = await client.rpc('get_room_snapshot', {
+          p_room_id: roomId,
+          p_selected_user_id: options?.selectedUserId ?? null,
+          p_search: options?.search ?? null,
+          p_page: options?.page ?? 1,
+          p_page_size: options?.pageSize ?? 20,
+        });
 
-    if (error) {
-      throw parseRoomError(error);
-    }
+        if (error) {
+          throw parseRoomError(error);
+        }
 
-    return data as RoomSnapshot;
-  } catch (err) {
-    throw parseRoomError(err);
-  }
+        return data as RoomSnapshot;
+      } catch (err) {
+        throw parseRoomError(err);
+      }
+    },
+  );
 }
 
 /**

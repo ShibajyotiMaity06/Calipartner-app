@@ -1,8 +1,9 @@
+import { NavigationIcon } from '@calipartner/ui';
 import { PremiumFeatureModal } from '@/components/subscription/PremiumFeatureModal';
 import React, { useState } from 'react';
 import { Modal, SafeAreaView, ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { Button, ChevronLeftIcon, dark, radius, space, Text } from '@calipartner/ui';
+import { Button, dark, radius, space, Text } from '@calipartner/ui';
 import { playClickSound, playSuccessSound } from '@/lib/sound';
 import {
   ALL_DAYS,
@@ -96,7 +97,7 @@ function WeeklyPlanModalContent({
               style={styles.backButton}
               testID="btn-weekly-plan-back"
             >
-              <ChevronLeftIcon size={22} color={dark.textHi} />
+              <NavigationIcon action="back" />
             </TouchableOpacity>
           </View>
 

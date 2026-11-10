@@ -1,3 +1,4 @@
+import { NavigationIcon } from '@calipartner/ui';
 import { Text } from '@calipartner/ui';
 import { useState } from 'react';
 import { Linking, Modal, Platform, Pressable, ScrollView, StyleSheet, View } from 'react-native';
@@ -307,14 +308,7 @@ export function HealthPermissionModal({
               accessibilityRole="button"
               accessibilityLabel={t('trackers.permissions.close')}
             >
-              <Text
-                style={[
-                  styles.closeButtonText,
-                  { color: isGranted ? colors.onAccent : colors.text },
-                ]}
-              >
-                {t('trackers.permissions.close')}
-              </Text>
+              <NavigationIcon action="close" />
             </Pressable>
           </View>
         </View>

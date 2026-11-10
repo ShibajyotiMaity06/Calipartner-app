@@ -1,6 +1,7 @@
+import { NavigationIcon } from '@calipartner/ui';
 import React, { useState } from 'react';
 import { Modal, SafeAreaView, ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
-import { Button, Card, ChevronLeftIcon, dark, space, Stepper, Text } from '@calipartner/ui';
+import { Button, Card, dark, space, Stepper, Text } from '@calipartner/ui';
 import { t } from '@/i18n';
 import { playClickSound } from '@/lib/sound';
 
@@ -57,7 +58,7 @@ export function DailyGoalsModal({
               style={styles.backButton}
               testID="btn-close-daily-goals"
             >
-              <ChevronLeftIcon color={dark.textHi} size={24} />
+              <NavigationIcon action="back" />
             </TouchableOpacity>
             <Text variant="heading" color={dark.textHi}>
               {t('me.dailyGoals.title')}

@@ -16,7 +16,6 @@ import {
 import { MeRoomPlanCard, PaywallModal, RequestsInboxModal } from '@/components/rooms';
 import {
   AboutLegalModal,
-  AppearanceModal,
   AvatarPickerModal,
   DailyGoalsModal,
   DiscoverabilityModal,
@@ -27,8 +26,6 @@ import {
   PerRoomVisibilityModal,
   ReportFeedbackModal,
   SignOutSheet,
-  StorageCacheModal,
-  UnitsLanguageModal,
 } from '@/components/profile';
 import { ProfileRow, ProfileShortcut, SettingsGroup } from '@/components/profile/CompactSettings';
 import { CustomMacrosModal } from '@/components/profile/CustomMacrosModal';
@@ -75,9 +72,6 @@ export default function MeScreen() {
   const [showDiscoverability, setShowDiscoverability] = useState(false);
 
   const [showHealthSync, setShowHealthSync] = useState(false);
-  const [showUnitsLanguage, setShowUnitsLanguage] = useState(false);
-  const [showAppearance, setShowAppearance] = useState(false);
-  const [showStorageCache, setShowStorageCache] = useState(false);
   const [showExportData, setShowExportData] = useState(false);
   const [showHelpCentre, setShowHelpCentre] = useState(false);
   const [showReportFeedback, setShowReportFeedback] = useState(false);
@@ -279,12 +273,6 @@ export default function MeScreen() {
               onPress={() => router.push('/fasting' as never)}
               testID="row-fasting"
             />
-            <ProfileRow
-              title={t('compactProfile.coach')}
-              icon="chatbubbles-outline"
-              onPress={() => router.push('/coach' as never)}
-              testID="row-coach-history"
-            />
           </Card>
           <SettingsGroup
             title={t('me.sections.preferences')}
@@ -304,18 +292,6 @@ export default function MeScreen() {
               onPress={() => setShowHealthSync(true)}
               testID="row-health-sync"
             />
-            <ProfileRow
-              title={t('me.unitsLanguage.title')}
-              icon="globe-outline"
-              onPress={() => setShowUnitsLanguage(true)}
-              testID="row-units-language"
-            />
-            <ProfileRow
-              title={t('me.appearance.title')}
-              icon="color-palette-outline"
-              onPress={() => setShowAppearance(true)}
-              testID="row-appearance"
-            />
           </SettingsGroup>
           <SettingsGroup
             title={t('me.sections.privacy')}
@@ -323,6 +299,12 @@ export default function MeScreen() {
             icon="lock-closed-outline"
             testID="section-privacy"
           >
+            <ProfileRow
+              title={t('compactProfile.export')}
+              icon="download-outline"
+              onPress={() => setShowExportData(true)}
+              testID="row-export-data"
+            />
             <ProfileRow
               title={t('compactProfile.privacyTitle')}
               icon="lock-closed-outline"
@@ -347,25 +329,6 @@ export default function MeScreen() {
               icon="create-outline"
               onPress={() => router.push('/profile/social' as never)}
               testID="me-social-profile"
-            />
-          </SettingsGroup>
-          <SettingsGroup
-            title={t('me.sections.syncStorage')}
-            summary={t('compactProfile.storage')}
-            icon="server-outline"
-            testID="section-storage"
-          >
-            <ProfileRow
-              title={t('me.storageCache.title')}
-              icon="server-outline"
-              onPress={() => setShowStorageCache(true)}
-              testID="row-storage-cache"
-            />
-            <ProfileRow
-              title={t('compactProfile.export')}
-              icon="download-outline"
-              onPress={() => setShowExportData(true)}
-              testID="row-export-data"
             />
           </SettingsGroup>
           <SettingsGroup
@@ -514,16 +477,6 @@ export default function MeScreen() {
         />
 
         <HealthSyncModal visible={showHealthSync} onClose={() => setShowHealthSync(false)} />
-
-        <UnitsLanguageModal
-          visible={showUnitsLanguage}
-          onClose={() => setShowUnitsLanguage(false)}
-          currentUnits={profile?.units ?? 'metric'}
-        />
-
-        <AppearanceModal visible={showAppearance} onClose={() => setShowAppearance(false)} />
-
-        <StorageCacheModal visible={showStorageCache} onClose={() => setShowStorageCache(false)} />
 
         <ExportDataModal visible={showExportData} onClose={() => setShowExportData(false)} />
 

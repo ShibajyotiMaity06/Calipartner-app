@@ -71,6 +71,26 @@ export default function RootLayout() {
         doc.head.appendChild(touch);
       }
       const existingManifest = doc.getElementById('pwa-manifest');
+      const webNavigator = globalThis.navigator as unknown as {
+        serviceWorker?: {
+          register: (
+            url: string,
+          ) => Promise<{ active?: { postMessage: (message: unknown) => void } | null }>;
+          ready: Promise<{ active?: { postMessage: (message: unknown) => void } | null }>;
+        };
+      };
+      if (webNavigator?.serviceWorker) {
+        void webNavigator.serviceWorker
+          .register('/sw.js')
+          .then(async () => {
+            const registration = await webNavigator.serviceWorker!.ready;
+            registration.active?.postMessage({
+              type: 'WARM_SHELL',
+              urls: performance.getEntriesByType('resource').map((entry) => entry.name),
+            });
+          })
+          .catch(() => undefined);
+      }
       if (!existingManifest) {
         const manifestLink = doc.createElement('link');
         manifestLink.id = 'pwa-manifest';

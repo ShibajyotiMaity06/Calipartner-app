@@ -526,6 +526,17 @@ export function createWebDb(storage?: {
       if (mirroredTable.test(lower.match(/from\s+(\w+)/i)?.[1] ?? ''))
         return (selectRows(memory, sql, params)[0] ?? null) as T | null;
 
+      if (lower.includes('from local_social_cache')) {
+        return ((memory.local_social_cache || []).find(
+          (row) =>
+            row.owner_id === params[0] &&
+            (!lower.includes('cache_key = ?') || row.cache_key === params[1]),
+        ) ?? null) as T | null;
+      }
+      if (lower.includes('from local_challenge_cache')) {
+        return ((memory.local_challenge_cache || []).find((row) => row.owner_id === params[0]) ??
+          null) as T | null;
+      }
       if (lower.includes('pragma user_version')) {
         return { user_version: 5 } as unknown as T;
       }
@@ -547,7 +558,9 @@ export function createWebDb(storage?: {
             .sort((a, b) => {
               const timeA = String(a.effective_from || a.created_at || '');
               const timeB = String(b.effective_from || b.created_at || '');
-              return timeB.localeCompare(timeA);
+              return lower.includes('effective_from asc')
+                ? timeA.localeCompare(timeB)
+                : timeB.localeCompare(timeA);
             });
           if (params.length > 0 && params[0]) {
             const userId = String(params[0]);

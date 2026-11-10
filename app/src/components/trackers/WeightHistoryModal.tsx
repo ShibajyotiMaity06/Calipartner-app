@@ -1,8 +1,9 @@
-import { Text } from '@calipartner/ui';
+import { Text, homeLayout, useReducedMotion } from '@calipartner/ui';
 import { useState } from 'react';
 import { Alert, Modal, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import type { WeightLog } from '@calipartner/core';
+import { weeklyWeightHistory, type WeightLog } from '@calipartner/core';
+import { useCurrentLocalDate } from '@/hooks/useCurrentLocalDate';
 import { t } from '@/i18n';
 import { fontSize, radius, spacing } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
@@ -10,6 +11,10 @@ import { useTheme } from '@/theme/useTheme';
 export interface WeightHistoryModalProps {
   visible: boolean;
   entries: WeightLog[];
+  weekly?: boolean;
+  loading?: boolean;
+  error?: string | null;
+  onRetry?: () => void;
   onClose: () => void;
   onEditEntry: (entry: WeightLog) => void;
   onDeleteEntry: (id: string) => Promise<unknown>;
@@ -18,10 +23,17 @@ export interface WeightHistoryModalProps {
 export function WeightHistoryModal({
   visible,
   entries,
+  weekly = false,
+  loading = false,
+  error = null,
+  onRetry,
   onClose,
   onEditEntry,
   onDeleteEntry,
 }: WeightHistoryModalProps) {
+  const { localDate } = useCurrentLocalDate();
+  const reduceMotion = useReducedMotion();
+  const displayedEntries = weekly ? weeklyWeightHistory(entries, localDate) : entries;
   const { colors } = useTheme();
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
@@ -55,7 +67,7 @@ export function WeightHistoryModal({
   return (
     <Modal
       visible={visible}
-      animationType="slide"
+      animationType={reduceMotion ? 'none' : 'slide'}
       transparent
       onRequestClose={onClose}
       testID="modal-weight-history"
@@ -74,11 +86,12 @@ export function WeightHistoryModal({
             <View style={styles.headerTitleRow}>
               <Ionicons name="time-outline" size={20} color={colors.accent} />
               <Text style={[styles.title, { color: colors.text }]}>
-                {t('trackers.weight.historyButton')}
+                {t(weekly ? 'weightUpdate.progress' : 'trackers.weight.historyButton')}
               </Text>
             </View>
             <Pressable
               onPress={onClose}
+              style={styles.iconBtn}
               hitSlop={8}
               accessibilityRole="button"
               accessibilityLabel={t('common.cancel')}
@@ -87,6 +100,7 @@ export function WeightHistoryModal({
             </Pressable>
           </View>
 
+          {weekly && <Text>{t('weightUpdate.weeklyHint')}</Text>}
           {/* List or Empty State */}
           <ScrollView
             testID="list-weight-history"
@@ -94,7 +108,20 @@ export function WeightHistoryModal({
             contentContainerStyle={styles.scrollContent}
             showsVerticalScrollIndicator={false}
           >
-            {entries.length === 0 ? (
+            {loading ? (
+              <Text>{t('common.loading')}</Text>
+            ) : error ? (
+              <Pressable
+                onPress={onRetry}
+                accessibilityRole="button"
+                accessibilityLabel={t('common.retry')}
+                testID="weight-history-retry"
+              >
+                <Text accessibilityRole="alert">
+                  {t('common.errorBody')} {t('common.retry')}
+                </Text>
+              </Pressable>
+            ) : displayedEntries.length === 0 ? (
               <View style={styles.emptyContainer} testID="weight-history-empty">
                 <Ionicons name="scale-outline" size={36} color={colors.textMuted} />
                 <Text style={[styles.emptyText, { color: colors.textMuted }]}>
@@ -102,7 +129,7 @@ export function WeightHistoryModal({
                 </Text>
               </View>
             ) : (
-              entries.map((item) => {
+              displayedEntries.map((item) => {
                 const isDeleting = deletingId === item.id;
 
                 return (
@@ -241,6 +268,7 @@ const styles = StyleSheet.create({
   },
   itemHeader: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
     alignItems: 'baseline',
     gap: 8,
   },
@@ -262,6 +290,10 @@ const styles = StyleSheet.create({
     paddingLeft: spacing.sm,
   },
   iconBtn: {
+    minWidth: homeLayout.compactTouchSize,
+    minHeight: homeLayout.compactTouchSize,
+    alignItems: 'center',
+    justifyContent: 'center',
     padding: 4,
   },
   closeBtn: {
