@@ -36,13 +36,15 @@ import {
   PeopleSelector,
   SquadLeaderboard,
   memberName,
-  squadStyles as styles,
+  useSquadStyles,
 } from '@/components/rooms/SquadViews';
 import { t } from '@/i18n';
 
 type ModalName =
   'connect' | 'join' | 'settings' | 'privacy' | 'invite' | 'inbox' | 'paywall' | null;
 export default function RoomScreen() {
+  const styles = useSquadStyles();
+
   const router = useRouter();
   const { user, profile } = useAuth();
   const roomsHook = useRooms(),

@@ -1,8 +1,9 @@
+import { useTheme as useAppearance } from '@calipartner/ui/theme';
 import { useSubscription } from '@/hooks/useSubscription';
 import React, { useEffect, useState } from 'react';
 import { View } from 'react-native';
 import { useRouter } from 'expo-router';
-import { Button, Text, dark, homeLayout, radius, space } from '@calipartner/ui';
+import { Button, Text, homeLayout, radius, space } from '@calipartner/ui';
 import { weeklyPlanDayIndex, type PlanDay, type WeeklyPlanView } from '@calipartner/core';
 import { useAuth } from '@/contexts/AuthContext';
 import { getPersonalWeeklyPlan } from '@/services/weeklyPlanService';
@@ -15,6 +16,8 @@ export function WorkoutPlanToday({
   localDate: string;
   onUse: (day: PlanDay) => void;
 }) {
+  const { colors: dark } = useAppearance();
+
   const { user } = useAuth();
   const subscription = useSubscription();
   const userId = user?.id;

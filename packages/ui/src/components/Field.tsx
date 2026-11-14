@@ -1,6 +1,7 @@
+import { useTheme as useAppearance } from '../theme/useTheme';
 import React, { useState } from 'react';
 import { View, TextInput, StyleSheet, type TextInputProps, type ViewStyle } from 'react-native';
-import { dark } from '../tokens/colors';
+
 import { radius } from '../tokens/radius';
 import { space } from '../tokens/space';
 import { type as typeTokens } from '../tokens/type';
@@ -30,6 +31,9 @@ export function Field({
   testID,
   ...inputProps
 }: FieldProps): React.JSX.Element {
+  const { colors: dark } = useAppearance();
+  const styles = createStyles(dark);
+
   const [isFocused, setIsFocused] = useState(false);
   const hasError = Boolean(error);
 
@@ -102,52 +106,53 @@ export function Field({
   );
 }
 
-const styles = StyleSheet.create({
-  wrapper: {
-    width: '100%',
-    marginBottom: space[3], // 12
-  },
-  label: {
-    marginBottom: space[1] + 2, // 6
-  },
-  fieldContainer: {
-    height: 56,
-    minHeight: 56,
-    borderRadius: radius.control, // 12
-    borderWidth: 1,
-    paddingHorizontal: space[4], // 16
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  input: {
-    flex: 1,
-    height: '100%',
-    fontFamily: typeTokens.body.fontFamily,
-    fontSize: typeTokens.body.fontSize,
-    padding: 0,
-    outlineStyle: 'none' as never,
-  },
-  leadingIconWrap: {
-    marginRight: space[2], // 8
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  trailingIconWrap: {
-    marginLeft: space[2], // 8
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  unitChip: {
-    backgroundColor: dark.s3,
-    paddingHorizontal: space[2] + 2, // 10
-    paddingVertical: space[1], // 4
-    borderRadius: radius.control - 4, // 8
-    marginLeft: space[2], // 8
-  },
-  errorText: {
-    marginTop: space[1], // 4
-  },
-  disabled: {
-    opacity: 0.6,
-  },
-});
+const createStyles = (dark: ReturnType<typeof useAppearance>['colors']) =>
+  StyleSheet.create({
+    wrapper: {
+      width: '100%',
+      marginBottom: space[3], // 12
+    },
+    label: {
+      marginBottom: space[1] + 2, // 6
+    },
+    fieldContainer: {
+      height: 56,
+      minHeight: 56,
+      borderRadius: radius.control, // 12
+      borderWidth: 1,
+      paddingHorizontal: space[4], // 16
+      flexDirection: 'row',
+      alignItems: 'center',
+    },
+    input: {
+      flex: 1,
+      height: '100%',
+      fontFamily: typeTokens.body.fontFamily,
+      fontSize: typeTokens.body.fontSize,
+      padding: 0,
+      outlineStyle: 'none' as never,
+    },
+    leadingIconWrap: {
+      marginRight: space[2], // 8
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    trailingIconWrap: {
+      marginLeft: space[2], // 8
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    unitChip: {
+      backgroundColor: dark.s3,
+      paddingHorizontal: space[2] + 2, // 10
+      paddingVertical: space[1], // 4
+      borderRadius: radius.control - 4, // 8
+      marginLeft: space[2], // 8
+    },
+    errorText: {
+      marginTop: space[1], // 4
+    },
+    disabled: {
+      opacity: 0.6,
+    },
+  });

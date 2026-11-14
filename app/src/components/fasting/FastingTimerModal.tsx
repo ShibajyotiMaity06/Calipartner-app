@@ -1,7 +1,8 @@
+import { useTheme as useAppearance } from '@calipartner/ui/theme';
 import React, { useEffect, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { Button, Sheet, Text, dark, homeLayout, radius, space } from '@calipartner/ui';
+import { Button, Sheet, Text, homeLayout, radius, space } from '@calipartner/ui';
 import { getProtocolPlannedMinutes, type FastingProtocol } from '@calipartner/core';
 import { useAuth } from '@/contexts/AuthContext';
 import { useFasting } from '@/hooks/useFasting';
@@ -25,6 +26,9 @@ export function FastingTimerModal({
   userId: propUserId,
   testID = 'fasting-timer-modal',
 }: FastingTimerModalProps) {
+  const { colors: dark } = useAppearance();
+  const styles = createStyles(dark);
+
   const { user } = useAuth();
   const fasting = useFasting({ userId: propUserId ?? user?.id ?? '' });
   const {
@@ -378,24 +382,25 @@ export function FastingTimerModal({
     </Sheet>
   );
 }
-const styles = StyleSheet.create({
-  content: { padding: space[3], gap: space[4], paddingBottom: space[7] },
-  row: { flexDirection: 'row', alignItems: 'center', gap: space[2] },
-  flex: { flex: 1 },
-  touch: {
-    minWidth: homeLayout.touchSize,
-    minHeight: homeLayout.touchSize,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  stack: { gap: space[2] },
-  hero: { alignItems: 'center', gap: space[3], paddingVertical: space[6] },
-  card: {
-    padding: space[4],
-    gap: space[3],
-    backgroundColor: dark.s1,
-    borderRadius: radius.card,
-    borderWidth: 1,
-    borderColor: dark.hairline,
-  },
-});
+const createStyles = (dark: ReturnType<typeof useAppearance>['colors']) =>
+  StyleSheet.create({
+    content: { padding: space[3], gap: space[4], paddingBottom: space[7] },
+    row: { flexDirection: 'row', alignItems: 'center', gap: space[2] },
+    flex: { flex: 1 },
+    touch: {
+      minWidth: homeLayout.touchSize,
+      minHeight: homeLayout.touchSize,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    stack: { gap: space[2] },
+    hero: { alignItems: 'center', gap: space[3], paddingVertical: space[6] },
+    card: {
+      padding: space[4],
+      gap: space[3],
+      backgroundColor: dark.s1,
+      borderRadius: radius.card,
+      borderWidth: 1,
+      borderColor: dark.hairline,
+    },
+  });

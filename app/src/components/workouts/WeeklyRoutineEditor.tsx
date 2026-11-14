@@ -6,7 +6,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { editPreferredRoutine } from '@/services/weeklyPlanService';
 import { useBrowserModalBack } from '@/hooks/useBrowserModalBack';
 import { PlanField } from '@/components/onboarding/WeeklyPlanForm';
-import { squadStyles as styles } from '@/components/rooms/SquadViews';
+import { useSquadStyles } from '@/components/rooms/SquadViews';
 import { t } from '@/i18n';
 
 export function WeeklyRoutineEditor({
@@ -20,6 +20,8 @@ export function WeeklyRoutineEditor({
   onClose: () => void;
   onSaved: (plan: WeeklyPlanView) => void;
 }) {
+  const styles = useSquadStyles();
+
   const { user } = useAuth();
   const [exercises, setExercises] = useState<PlanExercise[]>(
     plan.days.find((d) => d.day === day)?.workout.exercises ?? [],

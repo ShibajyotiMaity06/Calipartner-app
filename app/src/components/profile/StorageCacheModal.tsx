@@ -1,7 +1,8 @@
+import { useTheme as useAppearance } from '@calipartner/ui/theme';
 import { NavigationIcon } from '@calipartner/ui';
 import React, { useState } from 'react';
 import { Modal, SafeAreaView, ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
-import { Button, Card, dark, space, Text } from '@calipartner/ui';
+import { Button, Card, space, Text } from '@calipartner/ui';
 import { t } from '@/i18n';
 import { playClickSound, playSuccessSound } from '@/lib/sound';
 
@@ -16,6 +17,9 @@ export function StorageCacheModal({
   onClose,
   testID = 'modal-storage-cache',
 }: StorageCacheModalProps) {
+  const { colors: dark } = useAppearance();
+  const styles = createStyles(dark);
+
   const [cleared, setCleared] = useState(false);
 
   const handleClearCache = () => {
@@ -92,50 +96,51 @@ export function StorageCacheModal({
   );
 }
 
-const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
-    backgroundColor: dark.bg0,
-  },
-  container: {
-    flex: 1,
-    backgroundColor: dark.bg0,
-  },
-  topBar: {
-    height: 56,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: space[4],
-    borderBottomWidth: 1,
-    borderBottomColor: dark.hairline,
-  },
-  backButton: {
-    width: 44,
-    height: 44,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  backButtonPlaceholder: {
-    width: 44,
-  },
-  content: {
-    padding: space[4],
-  },
-  introSubtitle: {
-    marginBottom: space[4],
-  },
-  card: {
-    padding: space[4],
-    marginBottom: space[4],
-  },
-  cardSub: {
-    marginTop: space[1],
-  },
-  actionWrap: {
-    marginTop: space[2],
-  },
-  clearBtn: {
-    width: '100%',
-  },
-});
+const createStyles = (dark: ReturnType<typeof useAppearance>['colors']) =>
+  StyleSheet.create({
+    safeArea: {
+      flex: 1,
+      backgroundColor: dark.bg0,
+    },
+    container: {
+      flex: 1,
+      backgroundColor: dark.bg0,
+    },
+    topBar: {
+      height: 56,
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      paddingHorizontal: space[4],
+      borderBottomWidth: 1,
+      borderBottomColor: dark.hairline,
+    },
+    backButton: {
+      width: 44,
+      height: 44,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    backButtonPlaceholder: {
+      width: 44,
+    },
+    content: {
+      padding: space[4],
+    },
+    introSubtitle: {
+      marginBottom: space[4],
+    },
+    card: {
+      padding: space[4],
+      marginBottom: space[4],
+    },
+    cardSub: {
+      marginTop: space[1],
+    },
+    actionWrap: {
+      marginTop: space[2],
+    },
+    clearBtn: {
+      width: '100%',
+    },
+  });

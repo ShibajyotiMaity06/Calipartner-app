@@ -1,3 +1,4 @@
+import { useTheme as useAppearance } from '@calipartner/ui/theme';
 import { NavigationIcon } from '@calipartner/ui';
 import { NutrientSummary } from '../diary/NutrientSummary';
 import React, { useCallback, useEffect, useState } from 'react';
@@ -24,6 +25,9 @@ export function PersonalDiaryView({
 }: {
   onRefreshReady?: (refresh: () => Promise<void>) => void;
 }) {
+  const { colors: dark } = useAppearance();
+  const styles = createStyles(dark);
+
   const { localDate: today } = useCurrentLocalDate();
   const [date, setDate] = useState<string | null>(null);
   const selectedDate = date ?? today;
@@ -280,30 +284,31 @@ export function PersonalDiaryView({
     </View>
   );
 }
-const styles = StyleSheet.create({
-  stack: { gap: space[3] },
-  dateRow: { flexDirection: 'row', alignItems: 'center', gap: space[2] },
-  date: { flex: 1 },
-  touch: {
-    minWidth: homeLayout.touchSize,
-    minHeight: homeLayout.touchSize,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  card: {
-    backgroundColor: dark.s1,
-    borderWidth: 1,
-    borderColor: dark.hairline,
-    borderRadius: radius.card,
-    padding: space[4],
-    gap: space[3],
-  },
-  macros: { flexDirection: 'row', flexWrap: 'wrap', gap: space[4] },
-  macro: { flexGrow: 1, flexBasis: '40%', gap: space[1] },
-  food: {
-    gap: space[1],
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderColor: dark.hairline,
-    paddingTop: space[3],
-  },
-});
+const createStyles = (dark: ReturnType<typeof useAppearance>['colors']) =>
+  StyleSheet.create({
+    stack: { gap: space[3] },
+    dateRow: { flexDirection: 'row', alignItems: 'center', gap: space[2] },
+    date: { flex: 1 },
+    touch: {
+      minWidth: homeLayout.touchSize,
+      minHeight: homeLayout.touchSize,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    card: {
+      backgroundColor: dark.s1,
+      borderWidth: 1,
+      borderColor: dark.hairline,
+      borderRadius: radius.card,
+      padding: space[4],
+      gap: space[3],
+    },
+    macros: { flexDirection: 'row', flexWrap: 'wrap', gap: space[4] },
+    macro: { flexGrow: 1, flexBasis: '40%', gap: space[1] },
+    food: {
+      gap: space[1],
+      borderTopWidth: StyleSheet.hairlineWidth,
+      borderColor: dark.hairline,
+      paddingTop: space[3],
+    },
+  });

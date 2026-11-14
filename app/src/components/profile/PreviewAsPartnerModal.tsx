@@ -1,6 +1,7 @@
+import { useTheme as useAppearance } from '@calipartner/ui/theme';
 import React, { useEffect, useState } from 'react';
 import { Modal, SafeAreaView, ScrollView, StyleSheet } from 'react-native';
-import { Button, Card, dark, HiddenMetric, space, Text } from '@calipartner/ui';
+import { Button, Card, HiddenMetric, space, Text } from '@calipartner/ui';
 import { getRoomSnapshot, getPrivacySettings } from '@/services/roomService';
 import { getSupabase } from '@/lib/supabase';
 import { t } from '@/i18n';
@@ -16,6 +17,9 @@ export function PreviewAsPartnerModal({
   roomId,
   testID = 'modal-preview-as-partner',
 }: PreviewAsPartnerModalProps) {
+  const { colors: dark } = useAppearance();
+  const styles = createStyles(dark);
+
   const [data, setData] = useState<{ name: string; goal: number | 'locked' } | null>(null);
   const [error, setError] = useState(false);
   const [retry, setRetry] = useState(0);
@@ -84,7 +88,8 @@ export function PreviewAsPartnerModal({
     </Modal>
   );
 }
-const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: dark.bg0 },
-  content: { padding: space[4], gap: space[3] },
-});
+const createStyles = (dark: ReturnType<typeof useAppearance>['colors']) =>
+  StyleSheet.create({
+    screen: { flex: 1, backgroundColor: dark.bg0 },
+    content: { padding: space[4], gap: space[3] },
+  });

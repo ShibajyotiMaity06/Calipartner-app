@@ -1,10 +1,10 @@
+import { useTheme as useAppearance } from '@calipartner/ui/theme';
 import React, { useState } from 'react';
 import { Pressable, View } from 'react-native';
 import Svg, { Line, Polyline, Text as SvgText } from 'react-native-svg';
 import {
   Button,
   Text,
-  dark,
   space,
   homeLayout,
   radius,
@@ -13,7 +13,7 @@ import {
 } from '@calipartner/ui';
 import { projectWeightPaths, type GoalProfile, type Sex } from '@calipartner/core';
 import { t } from '@/i18n';
-import { squadStyles as styles } from '@/components/rooms/SquadViews';
+import { useSquadStyles } from '@/components/rooms/SquadViews';
 
 export function BlueprintStep({
   goal,
@@ -28,6 +28,10 @@ export function BlueprintStep({
   onEdit: () => void;
   onFree: () => void;
 }) {
+  const styles = useSquadStyles();
+
+  const { colors: dark } = useAppearance();
+
   const [bias, setBias] = useState(0),
     [assumptions, setAssumptions] = useState(false);
   let paths;

@@ -4,7 +4,7 @@ import { Button, Sheet, Text } from '@calipartner/ui';
 import type { RankedSquadMember } from '@calipartner/core';
 import { useBrowserModalBack } from '@/hooks/useBrowserModalBack';
 import { t } from '@/i18n';
-import { memberName, squadStyles as styles } from './SquadViews';
+import { memberName, useSquadStyles } from './SquadViews';
 
 export function SquadMemberPicker({
   visible,
@@ -21,6 +21,8 @@ export function SquadMemberPicker({
   onSelect: (id: string) => void;
   onClose: () => void;
 }) {
+  const styles = useSquadStyles();
+
   useBrowserModalBack(visible, onClose);
   return (
     <Sheet

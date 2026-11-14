@@ -1,3 +1,4 @@
+import { useTheme as useAppearance } from '@calipartner/ui/theme';
 import React, { useEffect, useRef, useState } from 'react';
 import {
   Platform,
@@ -9,7 +10,7 @@ import {
 } from 'react-native';
 import { useRouter, type Href } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { dark, homeLayout, radius, space, Text } from '@calipartner/ui';
+import { homeLayout, radius, space, Text } from '@calipartner/ui';
 import { HomeSquadLeaderboard } from './HomeSquadLeaderboard';
 import type { RoomSummary } from '@/types/rooms';
 import { t } from '@/i18n';
@@ -27,6 +28,9 @@ export function HomeSquads({
   onRetry: () => void;
   visible: boolean;
 }) {
+  const { colors: dark } = useAppearance();
+  const styles = createStyles(dark);
+
   const router = useRouter();
   const { width, fontScale } = useWindowDimensions();
   const cardWidth =
@@ -228,45 +232,46 @@ export function HomeSquads({
     </View>
   );
 }
-const styles = StyleSheet.create({
-  stack: { gap: space[2], marginBottom: space[5] },
-  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  nameGroup: {
-    flex: 1,
-    minWidth: 0,
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginRight: space[2],
-  },
-  name: { flexShrink: 1, minWidth: 0 },
-  count: { flexShrink: 1, textAlign: 'right' },
-  smallAction: {
-    minWidth: homeLayout.touchSize,
-    minHeight: homeLayout.touchSize,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  cards: { gap: space[3], alignItems: 'flex-start' },
-  room: {
-    gap: space[1],
-    padding: space[3],
-    backgroundColor: dark.s1,
-    borderWidth: 2,
-    borderColor: dark.copper,
-    borderRadius: radius.card,
-  },
-  createCard: {
-    padding: space[5],
-    gap: space[3],
-    borderWidth: 2,
-    borderStyle: 'dashed',
-    borderColor: dark.copper,
-    borderRadius: radius.card,
-    minHeight: homeLayout.ringSize * 2,
-    alignSelf: 'flex-start',
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: dark.s1,
-  },
-  retry: { minHeight: homeLayout.touchSize, justifyContent: 'center' },
-});
+const createStyles = (dark: ReturnType<typeof useAppearance>['colors']) =>
+  StyleSheet.create({
+    stack: { gap: space[2], marginBottom: space[5] },
+    header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+    nameGroup: {
+      flex: 1,
+      minWidth: 0,
+      flexDirection: 'row',
+      alignItems: 'center',
+      marginRight: space[2],
+    },
+    name: { flexShrink: 1, minWidth: 0 },
+    count: { flexShrink: 1, textAlign: 'right' },
+    smallAction: {
+      minWidth: homeLayout.touchSize,
+      minHeight: homeLayout.touchSize,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    cards: { gap: space[3], alignItems: 'flex-start' },
+    room: {
+      gap: space[1],
+      padding: space[3],
+      backgroundColor: dark.s1,
+      borderWidth: 2,
+      borderColor: dark.copper,
+      borderRadius: radius.card,
+    },
+    createCard: {
+      padding: space[5],
+      gap: space[3],
+      borderWidth: 2,
+      borderStyle: 'dashed',
+      borderColor: dark.copper,
+      borderRadius: radius.card,
+      minHeight: homeLayout.ringSize * 2,
+      alignSelf: 'flex-start',
+      justifyContent: 'center',
+      alignItems: 'center',
+      backgroundColor: dark.s1,
+    },
+    retry: { minHeight: homeLayout.touchSize, justifyContent: 'center' },
+  });

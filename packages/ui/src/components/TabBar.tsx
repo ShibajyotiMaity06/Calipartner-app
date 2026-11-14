@@ -1,3 +1,5 @@
+import { useTheme as useAppearance } from '../theme/useTheme';
+import { themeDock } from '../tokens/colors';
 import React, { useEffect, useState } from 'react';
 import {
   View,
@@ -10,7 +12,7 @@ import {
   type StyleProp,
 } from 'react-native';
 import { Text } from './Text';
-import { dark } from '../tokens/colors';
+
 import { radius } from '../tokens/radius';
 import { space } from '../tokens/space';
 import { SettingsIcon } from './SettingsIcon';
@@ -72,6 +74,9 @@ export function TabBar({
   testID = 'floating-tab-bar',
   labels,
 }: TabBarProps): React.JSX.Element | null {
+  const { colors: dark, scheme } = useAppearance();
+  const styles = createStyles(dark);
+
   const { fontScale } = useWindowDimensions();
   const [reduceTransparency, setReduceTransparency] = useState<boolean>(
     forcedReduceTransparency ?? false,
@@ -167,7 +172,9 @@ export function TabBar({
         styles.floatingContainer,
         { bottom: dynamicBottom },
         { height: getTabBarHeight(fontScale) },
-        isGlass ? styles.glassSurface : styles.opaqueSurface,
+        isGlass
+          ? [styles.glassSurface, { backgroundColor: themeDock[scheme] }]
+          : styles.opaqueSurface,
         style,
       ]}
       accessibilityRole="tablist"
@@ -201,82 +208,83 @@ export function TabBar({
   );
 }
 
-const styles = StyleSheet.create({
-  floatingContainer: {
-    position: 'absolute',
-    left: space[3], // 12
-    right: space[3], // 12
-    height: TAB_BAR_HEIGHT, // 64
-    borderRadius: radius.full, // 999
-    borderWidth: 1,
-    borderColor: dark.hairline,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: space[2], // 8
-    zIndex: 100,
-  },
-  opaqueSurface: {
-    backgroundColor: dark.s2,
-  },
-  glassSurface: {
-    backgroundColor: Platform.OS === 'web' ? 'rgba(36, 30, 24, 0.88)' : dark.s2,
-    ...(Platform.OS === 'web'
-      ? ({
-          backdropFilter: 'blur(20px)',
-          WebkitBackdropFilter: 'blur(20px)',
-        } as unknown as ViewStyle)
-      : {}),
-  },
-  tabSlot: {
-    flex: 1,
-    height: '100%',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: space[1], // 4
-  },
-  iconContainer: {
-    width: 28,
-    height: 28,
-    alignItems: 'center',
-    justifyContent: 'center',
-    position: 'relative',
-  },
-  badgeDot: {
-    position: 'absolute',
-    top: -1,
-    right: -3,
-    width: 8,
-    height: 8,
-    borderRadius: radius.full,
-    backgroundColor: dark.apricot,
-  },
-  tabLabel: {
-    fontSize: 11,
-    lineHeight: 14,
-    fontWeight: '500',
-    marginTop: 2,
-    textAlign: 'center',
-  },
-  activeTabLabel: {
-    fontWeight: '600',
-  },
-  centerSlot: {
-    width: 60,
-    height: '100%',
-    alignItems: 'center',
-    justifyContent: 'center',
-    zIndex: 110,
-  },
-  plusButton: {
-    width: 56,
-    height: 56,
-    borderRadius: radius.full,
-    backgroundColor: dark.apricot,
-    borderWidth: 3,
-    borderColor: dark.bg0,
-    alignItems: 'center',
-    justifyContent: 'center',
-    transform: [{ translateY: -12 }],
-  },
-});
+const createStyles = (dark: ReturnType<typeof useAppearance>['colors']) =>
+  StyleSheet.create({
+    floatingContainer: {
+      position: 'absolute',
+      left: space[3], // 12
+      right: space[3], // 12
+      height: TAB_BAR_HEIGHT, // 64
+      borderRadius: radius.full, // 999
+      borderWidth: 1,
+      borderColor: dark.hairline,
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      paddingHorizontal: space[2], // 8
+      zIndex: 100,
+    },
+    opaqueSurface: {
+      backgroundColor: dark.s2,
+    },
+    glassSurface: {
+      backgroundColor: Platform.OS === 'web' ? 'rgba(36, 30, 24, 0.88)' : dark.s2,
+      ...(Platform.OS === 'web'
+        ? ({
+            backdropFilter: 'blur(20px)',
+            WebkitBackdropFilter: 'blur(20px)',
+          } as unknown as ViewStyle)
+        : {}),
+    },
+    tabSlot: {
+      flex: 1,
+      height: '100%',
+      alignItems: 'center',
+      justifyContent: 'center',
+      paddingVertical: space[1], // 4
+    },
+    iconContainer: {
+      width: 28,
+      height: 28,
+      alignItems: 'center',
+      justifyContent: 'center',
+      position: 'relative',
+    },
+    badgeDot: {
+      position: 'absolute',
+      top: -1,
+      right: -3,
+      width: 8,
+      height: 8,
+      borderRadius: radius.full,
+      backgroundColor: dark.apricot,
+    },
+    tabLabel: {
+      fontSize: 11,
+      lineHeight: 14,
+      fontWeight: '500',
+      marginTop: 2,
+      textAlign: 'center',
+    },
+    activeTabLabel: {
+      fontWeight: '600',
+    },
+    centerSlot: {
+      width: 60,
+      height: '100%',
+      alignItems: 'center',
+      justifyContent: 'center',
+      zIndex: 110,
+    },
+    plusButton: {
+      width: 56,
+      height: 56,
+      borderRadius: radius.full,
+      backgroundColor: dark.apricot,
+      borderWidth: 3,
+      borderColor: dark.bg0,
+      alignItems: 'center',
+      justifyContent: 'center',
+      transform: [{ translateY: -12 }],
+    },
+  });

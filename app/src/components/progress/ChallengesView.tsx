@@ -1,5 +1,6 @@
+import { useTheme as useAppearance } from '@calipartner/ui/theme';
 import React, { useEffect, useRef, useState } from 'react';
-import { Text, Avatar, PairRing, challengeLayout, dark } from '@calipartner/ui';
+import { Text, Avatar, PairRing, challengeLayout } from '@calipartner/ui';
 import { Ionicons } from '@expo/vector-icons';
 import { View } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
@@ -29,6 +30,8 @@ export function ChallengesView({
   onRefreshReady?: (refresh: () => Promise<void>) => void;
   embedded?: boolean;
 }) {
+  const { colors: dark } = useAppearance();
+
   const state = useChallenges();
   useEffect(() => {
     onRefreshReady?.(state.refresh);

@@ -3,7 +3,7 @@ import { View } from 'react-native';
 import { useRouter, type Href } from 'expo-router';
 import { Button, Text } from '@calipartner/ui';
 import { t } from '@/i18n';
-import { squadStyles as styles } from '@/components/rooms/SquadViews';
+import { useSquadStyles } from '@/components/rooms/SquadViews';
 
 export function WeeklyPlanEntry({
   workout = false,
@@ -12,6 +12,8 @@ export function WeeklyPlanEntry({
   workout?: boolean;
   onOpen?: () => void;
 }) {
+  const styles = useSquadStyles();
+
   const router = useRouter();
   return (
     <View style={styles.card} testID="preferred-weekly-plan-entry">

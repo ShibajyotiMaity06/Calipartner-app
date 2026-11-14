@@ -1,7 +1,8 @@
+import { useTheme as useAppearance } from '@calipartner/ui/theme';
 import React, { useState } from 'react';
 import { View, StyleSheet, ScrollView, Pressable } from 'react-native';
 import { sumNutrientSnapshots, type FoodEntry } from '@calipartner/core';
-import { Sheet, Text, CalorieRing, dark, space, radius, type IdentityHue } from '@calipartner/ui';
+import { Sheet, Text, CalorieRing, space, radius, type IdentityHue } from '@calipartner/ui';
 import { t } from '@/i18n';
 import { AdvancedNutrition } from './AdvancedNutrition';
 
@@ -42,6 +43,9 @@ export function CaloriesDetailSheet({
   entries = [],
   identityHue = 'iris',
 }: CaloriesDetailSheetProps) {
+  const { colors: dark } = useAppearance();
+  const styles = createStyles(dark);
+
   const [selectedMacro, setSelectedMacro] = useState<MacroType>(null);
 
   const remainingCalories =
@@ -277,103 +281,104 @@ export function CaloriesDetailSheet({
   );
 }
 
-const styles = StyleSheet.create({
-  content: {
-    paddingHorizontal: space[4],
-    paddingBottom: space[8],
-    gap: space[4],
-  },
-  header: {
-    alignItems: 'center',
-    gap: space[1],
-    paddingTop: space[2],
-  },
-  ringHero: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: space[2],
-  },
-  calorieStatRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-around',
-    backgroundColor: dark.s2,
-    borderRadius: radius.card,
-    paddingVertical: space[3],
-    paddingHorizontal: space[4],
-  },
-  statBox: {
-    alignItems: 'center',
-    gap: space[1],
-  },
-  statDivider: {
-    width: 1,
-    height: 32,
-    backgroundColor: dark.hairlineLit,
-  },
-  macroSection: {
-    gap: space[2],
-  },
-  sectionTitle: {
-    letterSpacing: 1,
-    marginBottom: space[1],
-  },
-  macroRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    backgroundColor: dark.s1,
-    borderRadius: radius.control,
-    padding: space[3],
-    borderWidth: 1,
-    borderColor: dark.hairline,
-  },
-  macroRowSelected: {
-    borderColor: dark.apricot,
-    backgroundColor: dark.s2,
-  },
-  macroLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: space[3],
-  },
-  macroDot: {
-    width: 10,
-    height: 10,
-    borderRadius: radius.full,
-  },
-  macroRight: {
-    alignItems: 'flex-end',
-    gap: space[1],
-  },
-  contributorsSection: {
-    backgroundColor: dark.s2,
-    borderRadius: radius.card,
-    padding: space[3],
-    gap: space[2],
-  },
-  contributorRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingVertical: space[2],
-    borderBottomWidth: 1,
-    borderBottomColor: dark.hairline,
-  },
-  emptyNote: {
-    fontStyle: 'italic',
-    paddingVertical: space[2],
-  },
-  microSection: {
-    backgroundColor: dark.s1,
-    borderRadius: radius.card,
-    padding: space[3],
-    gap: space[2],
-  },
-  microRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingVertical: space[1],
-  },
-});
+const createStyles = (dark: ReturnType<typeof useAppearance>['colors']) =>
+  StyleSheet.create({
+    content: {
+      paddingHorizontal: space[4],
+      paddingBottom: space[8],
+      gap: space[4],
+    },
+    header: {
+      alignItems: 'center',
+      gap: space[1],
+      paddingTop: space[2],
+    },
+    ringHero: {
+      alignItems: 'center',
+      justifyContent: 'center',
+      paddingVertical: space[2],
+    },
+    calorieStatRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-around',
+      backgroundColor: dark.s2,
+      borderRadius: radius.card,
+      paddingVertical: space[3],
+      paddingHorizontal: space[4],
+    },
+    statBox: {
+      alignItems: 'center',
+      gap: space[1],
+    },
+    statDivider: {
+      width: 1,
+      height: 32,
+      backgroundColor: dark.hairlineLit,
+    },
+    macroSection: {
+      gap: space[2],
+    },
+    sectionTitle: {
+      letterSpacing: 1,
+      marginBottom: space[1],
+    },
+    macroRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      backgroundColor: dark.s1,
+      borderRadius: radius.control,
+      padding: space[3],
+      borderWidth: 1,
+      borderColor: dark.hairline,
+    },
+    macroRowSelected: {
+      borderColor: dark.apricot,
+      backgroundColor: dark.s2,
+    },
+    macroLeft: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: space[3],
+    },
+    macroDot: {
+      width: 10,
+      height: 10,
+      borderRadius: radius.full,
+    },
+    macroRight: {
+      alignItems: 'flex-end',
+      gap: space[1],
+    },
+    contributorsSection: {
+      backgroundColor: dark.s2,
+      borderRadius: radius.card,
+      padding: space[3],
+      gap: space[2],
+    },
+    contributorRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      paddingVertical: space[2],
+      borderBottomWidth: 1,
+      borderBottomColor: dark.hairline,
+    },
+    emptyNote: {
+      fontStyle: 'italic',
+      paddingVertical: space[2],
+    },
+    microSection: {
+      backgroundColor: dark.s1,
+      borderRadius: radius.card,
+      padding: space[3],
+      gap: space[2],
+    },
+    microRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      paddingVertical: space[1],
+    },
+  });

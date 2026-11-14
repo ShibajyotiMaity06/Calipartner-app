@@ -1,5 +1,6 @@
+import { useTheme as useAppearance } from '@calipartner/ui/theme';
 import { StyleSheet, View } from 'react-native';
-import { EmptyState, dark, space } from '@calipartner/ui';
+import { EmptyState, space } from '@calipartner/ui';
 import { Ionicons } from '@expo/vector-icons';
 import { t } from '@/i18n';
 
@@ -10,6 +11,8 @@ interface Props {
 }
 
 export function ErrorState({ title, message, onRetry }: Props) {
+  const { colors: dark } = useAppearance();
+
   return (
     <View style={styles.container} accessible accessibilityRole="alert" testID="error-state">
       <EmptyState

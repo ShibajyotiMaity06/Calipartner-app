@@ -1,7 +1,8 @@
+import { useTheme as useAppearance } from '@calipartner/ui/theme';
 import React, { useRef, useState } from 'react';
 import { Pressable, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { Text, challengeLayout, dark } from '@calipartner/ui';
+import { Text, challengeLayout } from '@calipartner/ui';
 import type { ChallengeCatalog } from '@calipartner/core';
 import { challengeText, ct } from '@/i18n/challenges';
 import { t } from '@/i18n';
@@ -20,6 +21,8 @@ export function BadgeShelf({
   userId: string;
   onClose: () => void;
 }) {
+  const { colors: dark } = useAppearance();
+
   const [selected, setSelected] = useState<ChallengeCatalog['badges'][number] | null>(null);
   const [busy, setBusy] = useState(false);
   const [shared, setShared] = useState(false);

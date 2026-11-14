@@ -1,7 +1,8 @@
+import { useTheme as useAppearance } from '../theme/useTheme';
 import React, { useEffect, useRef } from 'react';
 import { View, StyleSheet, Animated, type AccessibilityProps } from 'react-native';
 import Svg, { Circle, Defs, LinearGradient, Stop } from 'react-native-svg';
-import { dark } from '../tokens/colors';
+
 import { motion } from '../tokens/motion';
 import { useReducedMotion } from '../theme/useReducedMotion';
 import { Text } from './Text';
@@ -31,6 +32,8 @@ export function TargetRevealRing({
   accessibilityLabel,
   ...rest
 }: TargetRevealRingProps): React.JSX.Element {
+  const { colors: dark } = useAppearance();
+
   const reduceMotion = useReducedMotion();
 
   const radius = (size - strokeWidth) / 2;

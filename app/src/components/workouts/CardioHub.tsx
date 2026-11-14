@@ -1,8 +1,9 @@
+import { useTheme as useAppearance } from '@calipartner/ui/theme';
 import { NavigationIcon } from '@calipartner/ui';
 import React from 'react';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { dark, homeLayout, radius, space, Text } from '@calipartner/ui';
+import { homeLayout, radius, space, Text } from '@calipartner/ui';
 import { t } from '@/i18n';
 
 const options = [
@@ -18,6 +19,9 @@ export function CardioHub({
   onSelect: (flow: 'cycling' | 'running' | 'steps') => void;
   onBack: () => void;
 }) {
+  const { colors: dark } = useAppearance();
+  const styles = createStyles(dark);
+
   return (
     <ScrollView contentContainerStyle={styles.content} testID="cardio-hub">
       <View style={styles.header}>
@@ -49,24 +53,25 @@ export function CardioHub({
   );
 }
 
-const styles = StyleSheet.create({
-  content: { padding: space[3], gap: space[3], paddingBottom: space[7] },
-  header: { flexDirection: 'row', alignItems: 'center', gap: space[2] },
-  back: {
-    minHeight: homeLayout.touchSize,
-    minWidth: homeLayout.touchSize,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  option: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    minHeight: homeLayout.touchSize,
-    padding: space[3],
-    gap: space[3],
-    borderRadius: radius.control,
-    backgroundColor: dark.s2,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: dark.hairlineLit,
-  },
-});
+const createStyles = (dark: ReturnType<typeof useAppearance>['colors']) =>
+  StyleSheet.create({
+    content: { padding: space[3], gap: space[3], paddingBottom: space[7] },
+    header: { flexDirection: 'row', alignItems: 'center', gap: space[2] },
+    back: {
+      minHeight: homeLayout.touchSize,
+      minWidth: homeLayout.touchSize,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    option: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      minHeight: homeLayout.touchSize,
+      padding: space[3],
+      gap: space[3],
+      borderRadius: radius.control,
+      backgroundColor: dark.s2,
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: dark.hairlineLit,
+    },
+  });

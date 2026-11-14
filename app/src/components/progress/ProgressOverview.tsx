@@ -1,6 +1,7 @@
+import { useTheme as useAppearance } from '@calipartner/ui/theme';
 import React from 'react';
 import { StyleSheet, View } from 'react-native';
-import { dark, radius, space, Text } from '@calipartner/ui';
+import { radius, space, Text } from '@calipartner/ui';
 import {
   getPreviousDateString,
   type IndividualProgressData,
@@ -27,6 +28,9 @@ export function ProgressOverview({
   loading: boolean;
   onSelectDay?: (day: DayDetailData) => void;
 }) {
+  const { colors: dark } = useAppearance();
+  const styles = createStyles(dark);
+
   const { localDate } = useCurrentLocalDate();
   const count = range === '7d' ? 7 : range === '30d' ? 30 : 90;
   const start = getPreviousDateString(localDate, count - 1);
@@ -95,26 +99,32 @@ export function ProgressOverview({
     </View>
   );
 }
-const styles = StyleSheet.create({
-  stack: { gap: space[4], paddingVertical: space[3] },
-  card: {
-    borderColor: dark.hairline,
-    borderWidth: 1,
-    backgroundColor: dark.s1,
-    borderRadius: radius.card,
-    padding: space[4],
-    gap: space[3],
-  },
-  days: { flexDirection: 'row', justifyContent: 'space-between', flexWrap: 'wrap', gap: space[2] },
-  day: { alignItems: 'center', gap: space[1] },
-  dot: {
-    width: space[7],
-    height: space[7],
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderRadius: radius.full,
-    borderWidth: 1,
-    borderColor: dark.hairlineLit,
-  },
-  present: { backgroundColor: dark.apricot, borderColor: dark.apricot },
-});
+const createStyles = (dark: ReturnType<typeof useAppearance>['colors']) =>
+  StyleSheet.create({
+    stack: { gap: space[4], paddingVertical: space[3] },
+    card: {
+      borderColor: dark.hairline,
+      borderWidth: 1,
+      backgroundColor: dark.s1,
+      borderRadius: radius.card,
+      padding: space[4],
+      gap: space[3],
+    },
+    days: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      flexWrap: 'wrap',
+      gap: space[2],
+    },
+    day: { alignItems: 'center', gap: space[1] },
+    dot: {
+      width: space[7],
+      height: space[7],
+      alignItems: 'center',
+      justifyContent: 'center',
+      borderRadius: radius.full,
+      borderWidth: 1,
+      borderColor: dark.hairlineLit,
+    },
+    present: { backgroundColor: dark.apricot, borderColor: dark.apricot },
+  });

@@ -49,3 +49,4 @@ export * from './adaptiveReview';
 export * from './weightProjection';
 
 export * from './weightHistory';
+export * from './avatar.ts';

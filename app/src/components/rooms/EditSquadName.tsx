@@ -1,7 +1,8 @@
+import { useTheme as useAppearance } from '@calipartner/ui/theme';
 import React, { useState } from 'react';
 import { Pressable, ScrollView, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { Button, Field, Sheet, Text, dark, homeLayout, space } from '@calipartner/ui';
+import { Button, Field, Sheet, Text, homeLayout, space } from '@calipartner/ui';
 import type { RoomSummary } from '@/types/rooms';
 import { useRenameSquad } from '@/hooks/useRenameSquad';
 import { useBrowserModalBack } from '@/hooks/useBrowserModalBack';
@@ -18,6 +19,8 @@ export function EditSquadName({
   return <SquadNameEditor key={room.id} room={room} location={location} />;
 }
 function SquadNameEditor({ room, location }: { room: RoomSummary; location: string }) {
+  const { colors: dark } = useAppearance();
+
   const [open, setOpen] = useState(false);
   const [name, setName] = useState(room.name);
   const { save, saving, error, clearError } = useRenameSquad(room.id);

@@ -1,11 +1,14 @@
-﻿import React from 'react';
+import { useTheme as useAppearance } from '@calipartner/ui/theme';
+import React from 'react';
 import { useEvent } from 'expo';
 import { View } from 'react-native';
 import { useVideoPlayer, VideoView } from 'expo-video';
-import { Button, Text, dark, onboardingLayout as layout } from '@calipartner/ui';
+import { Button, Text, onboardingLayout as layout } from '@calipartner/ui';
 import { t } from '@/i18n';
 
 export function ChatVideo({ uri, compact = false }: { uri: string; compact?: boolean }) {
+  const { colors: dark } = useAppearance();
+
   const player = useVideoPlayer(uri);
   const { status } = useEvent(player, 'statusChange', { status: player.status });
   return (

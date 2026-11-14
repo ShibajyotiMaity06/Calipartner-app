@@ -1,7 +1,8 @@
+import { useTheme as useAppearance } from '../theme/useTheme';
 import React, { useEffect, useRef } from 'react';
 import { View, StyleSheet, Animated, type AccessibilityProps } from 'react-native';
 import Svg, { Circle } from 'react-native-svg';
-import { dark, type IdentityHue, getIdentityColor } from '../tokens/colors';
+import { type IdentityHue, getIdentityColor } from '../tokens/colors';
 import { motion } from '../tokens/motion';
 import { useReducedMotion } from '../theme/useReducedMotion';
 import { Text } from './Text';
@@ -34,6 +35,8 @@ export function CalorieRing({
   accessibilityLabel,
   ...rest
 }: CalorieRingProps): React.JSX.Element {
+  const { colors: dark } = useAppearance();
+
   const reduceMotion = useReducedMotion();
   const ownerColor = getIdentityColor(identityHue);
 

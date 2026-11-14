@@ -1,10 +1,11 @@
+import { useTheme as useAppearance } from '@calipartner/ui/theme';
 import { CompactSelect, type CompactSelectOption } from '@/components/CompactSelect';
 import React, { useCallback, useState, type ComponentProps } from 'react';
 import { BackHandler, Platform, Pressable, TextInput, View } from 'react-native';
 import { useFocusEffect } from 'expo-router';
 import type { Ionicons } from '@expo/vector-icons';
 import { useBrowserModalBack } from '@/hooks/useBrowserModalBack';
-import { Button, dark, homeLayout, radius, space, Text, type as typography } from '@calipartner/ui';
+import { Button, homeLayout, radius, space, Text, type as typography } from '@calipartner/ui';
 import {
   PLAN_EQUIPMENT,
   WEEK_DAYS,
@@ -13,7 +14,7 @@ import {
   type PlanPreferences,
 } from '@calipartner/core';
 import { t, type TranslationKey } from '@/i18n';
-import { squadStyles as styles } from '@/components/rooms/SquadViews';
+import { useSquadStyles } from '@/components/rooms/SquadViews';
 
 export const initialPlanPreferences: PlanPreferences = {
   workout_days: [0, 2, 4],
@@ -103,6 +104,10 @@ export function PlanField({
   numeric?: boolean;
   hint?: string;
 }) {
+  const styles = useSquadStyles();
+
+  const { colors: dark } = useAppearance();
+
   return (
     <View style={styles.stack}>
       <Text variant="label">{label}</Text>
@@ -141,6 +146,10 @@ export function WeeklyPlanForm({
   onBuild: (preferences: PlanPreferences) => void;
   onLater: () => void;
 }) {
+  const styles = useSquadStyles();
+
+  const { colors: dark } = useAppearance();
+
   const [preferences, setPreferences] = useState(initial ?? initialPlanPreferences);
   const [step, setStep] = useState<'workout' | 'food'>('workout'),
     [consent, setConsent] = useState(false),

@@ -15,7 +15,7 @@ vi.mock('@/lib/supabase', () => ({
   getSupabase: () => ({ functions: { invoke: api.invoke }, rpc: api.rpc }),
 }));
 vi.mock('@/services/foodService', () => ({ generateClientUuid: () => `request-${++api.next}` }));
-vi.mock('@/components/rooms/SquadViews', () => ({ squadStyles: {} }));
+vi.mock('@/components/rooms/SquadViews', () => ({ squadStyles: {}, useSquadStyles: () => ({}) }));
 vi.mock('@/components/diary/NutrientSummary', () => ({ NutrientSummary: 'Nutrients' }));
 import { AdaptiveReview } from './AdaptiveReview';
 let tree: ReactTestRenderer;

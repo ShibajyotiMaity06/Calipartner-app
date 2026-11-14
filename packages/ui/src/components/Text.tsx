@@ -1,3 +1,4 @@
+import { useTheme as useAppearance } from '../theme/useTheme';
 import React from 'react';
 import {
   StyleSheet,
@@ -5,7 +6,12 @@ import {
   type TextProps as RNTextProps,
   type TextStyle,
 } from 'react-native';
-import { dark, nutritionColors, type NutritionMetric } from '../tokens/colors';
+import {
+  nutritionColors,
+  lightNutritionColors,
+  type ColorPalette,
+  type NutritionMetric,
+} from '../tokens/colors';
 import { onboardingType } from '../tokens/onboarding';
 import {
   type as typeTokens,
@@ -20,7 +26,7 @@ export interface TextProps extends RNTextProps {
   /** Typographic scale variant */
   variant?: TypeVariant;
   /** Color token key (e.g. 'textHi', 'textMid', 'apricot', 'onBrand') or color hex string */
-  color?: keyof typeof dark | string;
+  color?: keyof ColorPalette | string;
   nutrient?: NutritionMetric;
   /** When true, renders with Devanagari typography with 1.15x line height */
   isHindi?: boolean;
@@ -46,6 +52,8 @@ export function Text({
   children,
   ...rest
 }: TextProps): React.JSX.Element {
+  const { colors: dark, scheme } = useAppearance();
+
   const tokenSpec: TextStyleToken = isHindi
     ? typeHindi[variant]
     : fontSet === 'onboarding'
@@ -106,7 +114,7 @@ export function Text({
         resolvedColor !== dark.onBrand &&
         customStyle?.color !== dark.onBrand &&
         rest.accessibilityRole !== 'alert'
-          ? { color: nutritionColors[nutrient] }
+          ? { color: (scheme === 'light' ? lightNutritionColors : nutritionColors)[nutrient] }
           : null,
         !isHindi ? { fontFamily: fontStyle.fontFamily, fontWeight: 'normal' } : null,
       ]}

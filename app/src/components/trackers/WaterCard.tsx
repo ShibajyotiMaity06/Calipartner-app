@@ -1,3 +1,4 @@
+import { useTheme as useAppearance } from '@calipartner/ui/theme';
 import React, { useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
@@ -9,7 +10,7 @@ import {
   View,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { Text, dark, radius, space, type as typeTokens } from '@calipartner/ui';
+import { Text, radius, space, type as typeTokens } from '@calipartner/ui';
 import { useWater } from '@/hooks/useWater';
 import { t } from '@/i18n';
 import { CustomWaterModal } from './CustomWaterModal';
@@ -22,6 +23,9 @@ export interface WaterCardProps {
 }
 
 export function WaterCard({ selectedDate, testID = 'water-card' }: WaterCardProps) {
+  const { colors: dark } = useAppearance();
+  const styles = createStyles(dark);
+
   const {
     logs,
     totalMl,
@@ -418,318 +422,319 @@ export function WaterCard({ selectedDate, testID = 'water-card' }: WaterCardProp
   );
 }
 
-const styles = StyleSheet.create({
-  card: {
-    borderRadius: radius.card,
-    borderWidth: 1,
-    borderColor: dark.hairline,
-    backgroundColor: dark.s1,
-    padding: space[4],
-    gap: space[3],
-  },
-  headerRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  titleGroup: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: space[2],
-  },
-  iconWrapper: {
-    width: 36,
-    height: 36,
-    borderRadius: radius.full,
-    backgroundColor: dark.s2,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  title: {
-    fontSize: typeTokens.body.fontSize,
-    fontFamily: typeTokens.body.fontFamily,
-    color: dark.textHi,
-    fontWeight: '700',
-  },
-  subtitle: {
-    fontSize: typeTokens.micro.fontSize,
-    fontFamily: typeTokens.micro.fontFamily,
-    color: dark.textLo,
-  },
-  headerActions: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: space[2],
-  },
-  unitPill: {
-    minHeight: 32,
-    minWidth: 44,
-    paddingHorizontal: space[2],
-    borderRadius: radius.full,
-    backgroundColor: dark.s2,
-    borderWidth: 1,
-    borderColor: dark.hairline,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  unitPillText: {
-    fontSize: typeTokens.micro.fontSize,
-    fontFamily: typeTokens.micro.fontFamily,
-    color: dark.textHi,
-    fontWeight: '700',
-  },
-  smallActionBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    paddingHorizontal: space[2],
-    minHeight: 32,
-    borderRadius: radius.full,
-    borderWidth: 1,
-    borderColor: dark.hairline,
-    backgroundColor: dark.s2,
-  },
-  smallActionText: {
-    fontSize: typeTokens.micro.fontSize,
-    fontFamily: typeTokens.micro.fontFamily,
-    color: dark.textHi,
-    fontWeight: '600',
-  },
-  loadingContainer: {
-    paddingVertical: space[6],
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: space[2],
-  },
-  loadingText: {
-    fontSize: typeTokens.label.fontSize,
-    color: dark.textLo,
-  },
-  visualContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: dark.s2,
-    borderRadius: radius.card,
-    padding: space[3],
-    gap: space[3],
-    borderWidth: 1,
-    borderColor: dark.hairline,
-  },
-  bottleOuter: {
-    width: 36,
-    alignItems: 'center',
-  },
-  bottleNeck: {
-    width: 14,
-    height: 8,
-    borderTopLeftRadius: 3,
-    borderTopRightRadius: 3,
-    backgroundColor: dark.s3,
-    borderWidth: 1,
-    borderColor: dark.hairlineLit,
-  },
-  bottleBody: {
-    width: 36,
-    height: 72,
-    borderRadius: 8,
-    borderWidth: 1.5,
-    borderColor: dark.hairlineLit,
-    backgroundColor: dark.s3,
-    overflow: 'hidden',
-    justifyContent: 'flex-end',
-  },
-  bottleLiquid: {
-    width: '100%',
-  },
-  progressDetail: {
-    flex: 1,
-    gap: 4,
-  },
-  numeralRow: {
-    flexDirection: 'row',
-    alignItems: 'baseline',
-    flexWrap: 'wrap',
-  },
-  progressNumber: {
-    fontSize: typeTokens.numeralL.fontSize,
-    fontFamily: typeTokens.numeralL.fontFamily,
-    fontVariant: ['tabular-nums'],
-    color: dark.textHi,
-    fontWeight: '800',
-  },
-  progressGoalText: {
-    fontSize: typeTokens.bodyS.fontSize,
-    fontFamily: typeTokens.bodyS.fontFamily,
-    color: dark.textLo,
-  },
-  statusBadgeText: {
-    fontSize: typeTokens.label.fontSize,
-    fontFamily: typeTokens.label.fontFamily,
-    fontWeight: '600',
-  },
-  linearTrack: {
-    height: 6,
-    borderRadius: radius.full,
-    backgroundColor: dark.s3,
-    overflow: 'hidden',
-    marginTop: space[1],
-  },
-  linearBar: {
-    height: '100%',
-    borderRadius: radius.full,
-  },
-  toastBox: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    backgroundColor: dark.s3,
-    borderRadius: radius.control,
-    paddingHorizontal: space[3],
-    minHeight: 44,
-    borderWidth: 1,
-    borderColor: dark.apricot,
-  },
-  toastText: {
-    fontSize: typeTokens.label.fontSize,
-    fontFamily: typeTokens.label.fontFamily,
-    color: dark.textHi,
-    fontWeight: '600',
-  },
-  toastUndoButton: {
-    paddingHorizontal: space[2],
-    paddingVertical: 4,
-    backgroundColor: dark.apricot,
-    borderRadius: radius.control - 4,
-  },
-  toastUndoText: {
-    fontSize: typeTokens.micro.fontSize,
-    fontFamily: typeTokens.micro.fontFamily,
-    color: dark.onBrand, // #1C1109
-    fontWeight: '700',
-  },
-  emptyNotice: {
-    paddingVertical: space[2],
-    alignItems: 'center',
-  },
-  emptyNoticeText: {
-    fontSize: typeTokens.label.fontSize,
-    fontFamily: typeTokens.label.fontFamily,
-    color: dark.textLo,
-    textAlign: 'center',
-  },
-  quickButtonsRow: {
-    flexDirection: 'row',
-    gap: space[2],
-  },
-  thumbZoneButton: {
-    flex: 1,
-    height: 56, // spec: 56 high in the thumb zone
-    borderRadius: radius.button,
-    backgroundColor: dark.s2,
-    borderWidth: 1,
-    borderColor: dark.hairline,
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 2,
-  },
-  thumbBtnLabel: {
-    fontSize: typeTokens.label.fontSize,
-    fontFamily: typeTokens.label.fontFamily,
-    fontVariant: ['tabular-nums'],
-    color: dark.textHi,
-    fontWeight: '700',
-  },
-  thumbBtnSub: {
-    fontSize: typeTokens.micro.fontSize,
-    fontFamily: typeTokens.micro.fontFamily,
-    color: dark.textLo,
-  },
-  customAmountRow: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-  },
-  customTextButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    minHeight: 44,
-    paddingHorizontal: space[3],
-  },
-  customTextButtonLabel: {
-    fontSize: typeTokens.label.fontSize,
-    fontFamily: typeTokens.label.fontFamily,
-    color: dark.apricot,
-    fontWeight: '600',
-  },
-  entriesSection: {
-    backgroundColor: dark.s2,
-    borderRadius: radius.card,
-    padding: space[3],
-    gap: space[2],
-    borderWidth: 1,
-    borderColor: dark.hairline,
-  },
-  entriesTitle: {
-    fontSize: typeTokens.micro.fontSize,
-    fontFamily: typeTokens.micro.fontFamily,
-    color: dark.textLo,
-    textTransform: 'uppercase',
-    fontWeight: '700',
-    letterSpacing: 0.5,
-  },
-  entriesList: {
-    gap: space[2],
-  },
-  entryRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    minHeight: 36,
-  },
-  entryLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: space[2],
-  },
-  entryAmount: {
-    fontSize: typeTokens.bodyS.fontSize,
-    fontFamily: typeTokens.bodyS.fontFamily,
-    fontVariant: ['tabular-nums'],
-    color: dark.textHi,
-    fontWeight: '600',
-  },
-  entryTime: {
-    fontSize: typeTokens.micro.fontSize,
-    fontFamily: typeTokens.micro.fontFamily,
-    color: dark.textLo,
-  },
-  reminderRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingTop: space[1],
-    borderTopWidth: 1,
-    borderTopColor: dark.hairline,
-  },
-  reminderTextWrap: {
-    flex: 1,
-    paddingRight: space[2],
-  },
-  reminderTitleWrap: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-  },
-  reminderTitle: {
-    fontSize: typeTokens.label.fontSize,
-    fontFamily: typeTokens.label.fontFamily,
-    color: dark.textHi,
-    fontWeight: '600',
-  },
-  reminderSubtitle: {
-    fontSize: typeTokens.micro.fontSize,
-    fontFamily: typeTokens.micro.fontFamily,
-    color: dark.textLo,
-    marginTop: 2,
-  },
-});
+const createStyles = (dark: ReturnType<typeof useAppearance>['colors']) =>
+  StyleSheet.create({
+    card: {
+      borderRadius: radius.card,
+      borderWidth: 1,
+      borderColor: dark.hairline,
+      backgroundColor: dark.s1,
+      padding: space[4],
+      gap: space[3],
+    },
+    headerRow: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+    },
+    titleGroup: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: space[2],
+    },
+    iconWrapper: {
+      width: 36,
+      height: 36,
+      borderRadius: radius.full,
+      backgroundColor: dark.s2,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    title: {
+      fontSize: typeTokens.body.fontSize,
+      fontFamily: typeTokens.body.fontFamily,
+      color: dark.textHi,
+      fontWeight: '700',
+    },
+    subtitle: {
+      fontSize: typeTokens.micro.fontSize,
+      fontFamily: typeTokens.micro.fontFamily,
+      color: dark.textLo,
+    },
+    headerActions: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: space[2],
+    },
+    unitPill: {
+      minHeight: 32,
+      minWidth: 44,
+      paddingHorizontal: space[2],
+      borderRadius: radius.full,
+      backgroundColor: dark.s2,
+      borderWidth: 1,
+      borderColor: dark.hairline,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    unitPillText: {
+      fontSize: typeTokens.micro.fontSize,
+      fontFamily: typeTokens.micro.fontFamily,
+      color: dark.textHi,
+      fontWeight: '700',
+    },
+    smallActionBtn: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 4,
+      paddingHorizontal: space[2],
+      minHeight: 32,
+      borderRadius: radius.full,
+      borderWidth: 1,
+      borderColor: dark.hairline,
+      backgroundColor: dark.s2,
+    },
+    smallActionText: {
+      fontSize: typeTokens.micro.fontSize,
+      fontFamily: typeTokens.micro.fontFamily,
+      color: dark.textHi,
+      fontWeight: '600',
+    },
+    loadingContainer: {
+      paddingVertical: space[6],
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: space[2],
+    },
+    loadingText: {
+      fontSize: typeTokens.label.fontSize,
+      color: dark.textLo,
+    },
+    visualContainer: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      backgroundColor: dark.s2,
+      borderRadius: radius.card,
+      padding: space[3],
+      gap: space[3],
+      borderWidth: 1,
+      borderColor: dark.hairline,
+    },
+    bottleOuter: {
+      width: 36,
+      alignItems: 'center',
+    },
+    bottleNeck: {
+      width: 14,
+      height: 8,
+      borderTopLeftRadius: 3,
+      borderTopRightRadius: 3,
+      backgroundColor: dark.s3,
+      borderWidth: 1,
+      borderColor: dark.hairlineLit,
+    },
+    bottleBody: {
+      width: 36,
+      height: 72,
+      borderRadius: 8,
+      borderWidth: 1.5,
+      borderColor: dark.hairlineLit,
+      backgroundColor: dark.s3,
+      overflow: 'hidden',
+      justifyContent: 'flex-end',
+    },
+    bottleLiquid: {
+      width: '100%',
+    },
+    progressDetail: {
+      flex: 1,
+      gap: 4,
+    },
+    numeralRow: {
+      flexDirection: 'row',
+      alignItems: 'baseline',
+      flexWrap: 'wrap',
+    },
+    progressNumber: {
+      fontSize: typeTokens.numeralL.fontSize,
+      fontFamily: typeTokens.numeralL.fontFamily,
+      fontVariant: ['tabular-nums'],
+      color: dark.textHi,
+      fontWeight: '800',
+    },
+    progressGoalText: {
+      fontSize: typeTokens.bodyS.fontSize,
+      fontFamily: typeTokens.bodyS.fontFamily,
+      color: dark.textLo,
+    },
+    statusBadgeText: {
+      fontSize: typeTokens.label.fontSize,
+      fontFamily: typeTokens.label.fontFamily,
+      fontWeight: '600',
+    },
+    linearTrack: {
+      height: 6,
+      borderRadius: radius.full,
+      backgroundColor: dark.s3,
+      overflow: 'hidden',
+      marginTop: space[1],
+    },
+    linearBar: {
+      height: '100%',
+      borderRadius: radius.full,
+    },
+    toastBox: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      backgroundColor: dark.s3,
+      borderRadius: radius.control,
+      paddingHorizontal: space[3],
+      minHeight: 44,
+      borderWidth: 1,
+      borderColor: dark.apricot,
+    },
+    toastText: {
+      fontSize: typeTokens.label.fontSize,
+      fontFamily: typeTokens.label.fontFamily,
+      color: dark.textHi,
+      fontWeight: '600',
+    },
+    toastUndoButton: {
+      paddingHorizontal: space[2],
+      paddingVertical: 4,
+      backgroundColor: dark.apricot,
+      borderRadius: radius.control - 4,
+    },
+    toastUndoText: {
+      fontSize: typeTokens.micro.fontSize,
+      fontFamily: typeTokens.micro.fontFamily,
+      color: dark.onBrand, // #1C1109
+      fontWeight: '700',
+    },
+    emptyNotice: {
+      paddingVertical: space[2],
+      alignItems: 'center',
+    },
+    emptyNoticeText: {
+      fontSize: typeTokens.label.fontSize,
+      fontFamily: typeTokens.label.fontFamily,
+      color: dark.textLo,
+      textAlign: 'center',
+    },
+    quickButtonsRow: {
+      flexDirection: 'row',
+      gap: space[2],
+    },
+    thumbZoneButton: {
+      flex: 1,
+      height: 56, // spec: 56 high in the thumb zone
+      borderRadius: radius.button,
+      backgroundColor: dark.s2,
+      borderWidth: 1,
+      borderColor: dark.hairline,
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: 2,
+    },
+    thumbBtnLabel: {
+      fontSize: typeTokens.label.fontSize,
+      fontFamily: typeTokens.label.fontFamily,
+      fontVariant: ['tabular-nums'],
+      color: dark.textHi,
+      fontWeight: '700',
+    },
+    thumbBtnSub: {
+      fontSize: typeTokens.micro.fontSize,
+      fontFamily: typeTokens.micro.fontFamily,
+      color: dark.textLo,
+    },
+    customAmountRow: {
+      flexDirection: 'row',
+      justifyContent: 'center',
+    },
+    customTextButton: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 6,
+      minHeight: 44,
+      paddingHorizontal: space[3],
+    },
+    customTextButtonLabel: {
+      fontSize: typeTokens.label.fontSize,
+      fontFamily: typeTokens.label.fontFamily,
+      color: dark.apricot,
+      fontWeight: '600',
+    },
+    entriesSection: {
+      backgroundColor: dark.s2,
+      borderRadius: radius.card,
+      padding: space[3],
+      gap: space[2],
+      borderWidth: 1,
+      borderColor: dark.hairline,
+    },
+    entriesTitle: {
+      fontSize: typeTokens.micro.fontSize,
+      fontFamily: typeTokens.micro.fontFamily,
+      color: dark.textLo,
+      textTransform: 'uppercase',
+      fontWeight: '700',
+      letterSpacing: 0.5,
+    },
+    entriesList: {
+      gap: space[2],
+    },
+    entryRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      minHeight: 36,
+    },
+    entryLeft: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: space[2],
+    },
+    entryAmount: {
+      fontSize: typeTokens.bodyS.fontSize,
+      fontFamily: typeTokens.bodyS.fontFamily,
+      fontVariant: ['tabular-nums'],
+      color: dark.textHi,
+      fontWeight: '600',
+    },
+    entryTime: {
+      fontSize: typeTokens.micro.fontSize,
+      fontFamily: typeTokens.micro.fontFamily,
+      color: dark.textLo,
+    },
+    reminderRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      paddingTop: space[1],
+      borderTopWidth: 1,
+      borderTopColor: dark.hairline,
+    },
+    reminderTextWrap: {
+      flex: 1,
+      paddingRight: space[2],
+    },
+    reminderTitleWrap: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 6,
+    },
+    reminderTitle: {
+      fontSize: typeTokens.label.fontSize,
+      fontFamily: typeTokens.label.fontFamily,
+      color: dark.textHi,
+      fontWeight: '600',
+    },
+    reminderSubtitle: {
+      fontSize: typeTokens.micro.fontSize,
+      fontFamily: typeTokens.micro.fontFamily,
+      color: dark.textLo,
+      marginTop: 2,
+    },
+  });

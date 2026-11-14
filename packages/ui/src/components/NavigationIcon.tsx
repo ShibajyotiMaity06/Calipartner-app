@@ -1,10 +1,13 @@
+import { useTheme as useAppearance } from '../theme/useTheme';
 import React from 'react';
 import Svg, { Circle, Path } from 'react-native-svg';
-import { dark } from '../tokens/colors';
+
 import { space } from '../tokens/space';
 
 /** Decorative glyph; the enclosing button supplies the accessible action name. */
 export function NavigationIcon({ action }: { action: 'back' | 'close' }) {
+  const { colors: dark } = useAppearance();
+
   return (
     <Svg
       width={space[7]}

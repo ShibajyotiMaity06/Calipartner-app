@@ -1,3 +1,4 @@
+import { useTheme as useAppearance } from '../theme/useTheme';
 import React, { useEffect, useState } from 'react';
 import { View, StyleSheet, type AccessibilityProps } from 'react-native';
 import Svg, { Circle } from 'react-native-svg';
@@ -52,6 +53,9 @@ export function TimerDisplay({
   accessibilityLabel,
   ...rest
 }: TimerDisplayProps): React.JSX.Element {
+  const { colors: dark } = useAppearance();
+  const styles = createStyles(dark);
+
   const [now, setNow] = useState(Date.now());
 
   // Heartbeat to re-evaluate from UTC timestamp every second
@@ -191,34 +195,35 @@ export function TimerDisplay({
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    position: 'relative',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  centerText: {
-    position: 'absolute',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 4,
-  },
-  titleText: {
-    letterSpacing: 0.5,
-    textTransform: 'uppercase',
-  },
-  subtitleText: {
-    marginTop: 2,
-  },
-  pausedBadge: {
-    backgroundColor: dark.apricot,
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-    borderRadius: 8,
-    marginTop: 4,
-  },
-  pausedText: {
-    fontWeight: '700',
-    fontSize: 10,
-  },
-});
+const createStyles = (dark: ReturnType<typeof useAppearance>['colors']) =>
+  StyleSheet.create({
+    container: {
+      position: 'relative',
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    centerText: {
+      position: 'absolute',
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: 4,
+    },
+    titleText: {
+      letterSpacing: 0.5,
+      textTransform: 'uppercase',
+    },
+    subtitleText: {
+      marginTop: 2,
+    },
+    pausedBadge: {
+      backgroundColor: dark.apricot,
+      paddingHorizontal: 8,
+      paddingVertical: 2,
+      borderRadius: 8,
+      marginTop: 4,
+    },
+    pausedText: {
+      fontWeight: '700',
+      fontSize: 10,
+    },
+  });

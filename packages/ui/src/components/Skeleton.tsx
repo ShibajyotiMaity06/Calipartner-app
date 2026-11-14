@@ -1,3 +1,4 @@
+import { useTheme as useAppearance } from '../theme/useTheme';
 import React from 'react';
 import {
   View,
@@ -27,6 +28,9 @@ export function Skeleton({
   testID,
   style,
 }: SkeletonProps): React.JSX.Element {
+  const { colors: dark } = useAppearance();
+  const styles = createStyles(dark);
+
   const getDefaultHeight = (): DimensionValue => {
     switch (variant) {
       case 'circle':
@@ -96,25 +100,27 @@ Skeleton.ListRow = ({ style }: { style?: StyleProp<ViewStyle> }) => (
   </View>
 );
 
-const styles = StyleSheet.create({
-  skeleton: {
-    backgroundColor: dark.s2, // No shimmer sweep per spec
-  },
-  cardSkeleton: {
-    backgroundColor: dark.s1,
-    borderRadius: radius.card,
-    borderWidth: 1,
-    borderColor: dark.hairline,
-    padding: space[4],
-  },
-  rowSkeleton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: space[3],
-    paddingHorizontal: space[4],
-    gap: space[3],
-  },
-  rowText: {
-    flex: 1,
-  },
-});
+const createStyles = (dark: ReturnType<typeof useAppearance>['colors']) =>
+  StyleSheet.create({
+    skeleton: {
+      backgroundColor: dark.s2, // No shimmer sweep per spec
+    },
+    cardSkeleton: {
+      backgroundColor: dark.s1,
+      borderRadius: radius.card,
+      borderWidth: 1,
+      borderColor: dark.hairline,
+      padding: space[4],
+    },
+    rowSkeleton: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      paddingVertical: space[3],
+      paddingHorizontal: space[4],
+      gap: space[3],
+    },
+    rowText: {
+      flex: 1,
+    },
+  });
+const styles = createStyles(dark);

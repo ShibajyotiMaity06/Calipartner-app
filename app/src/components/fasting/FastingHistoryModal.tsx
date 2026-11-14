@@ -1,9 +1,10 @@
+import { useTheme as useAppearance } from '@calipartner/ui/theme';
 import { NavigationIcon } from '@calipartner/ui';
 import React, { useState } from 'react';
 import { Modal, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import type { FastingSession, FastingStats, FastingStreak } from '@calipartner/core';
-import { Text, dark, radius, space, type as typeTokens } from '@calipartner/ui';
+import { Text, radius, space, type as typeTokens } from '@calipartner/ui';
 import { t } from '@/i18n';
 
 export interface FastingHistoryModalProps {
@@ -23,6 +24,9 @@ export function FastingHistoryModal({
   onClose,
   testID = 'fasting-history-modal',
 }: FastingHistoryModalProps) {
+  const { colors: dark } = useAppearance();
+  const styles = createStyles(dark);
+
   const [viewAsTable, setViewAsTable] = useState(false);
 
   if (!visible) return null;
@@ -297,282 +301,283 @@ export function FastingHistoryModal({
   );
 }
 
-const styles = StyleSheet.create({
-  backdrop: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.75)',
-    justifyContent: 'flex-end',
-  },
-  sheet: {
-    backgroundColor: dark.s2,
-    borderTopLeftRadius: radius.sheet,
-    borderTopRightRadius: radius.sheet,
-    padding: space[4],
-    maxHeight: '90%',
-    borderWidth: 1,
-    borderColor: dark.hairline,
-  },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    marginBottom: space[3],
-  },
-  title: {
-    fontSize: typeTokens.title2.fontSize,
-    fontFamily: typeTokens.title2.fontFamily,
-    color: dark.textHi,
-    marginBottom: 2,
-  },
-  subtitle: {
-    fontSize: typeTokens.bodyS.fontSize,
-    fontFamily: typeTokens.bodyS.fontFamily,
-    color: dark.textMid,
-  },
-  closeButton: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: dark.s1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  content: {
-    gap: space[3],
-    paddingBottom: space[3],
-  },
-  statsGrid: {
-    flexDirection: 'row',
-    gap: space[2],
-  },
-  statTile: {
-    flex: 1,
-    backgroundColor: dark.s1,
-    borderRadius: radius.card,
-    padding: space[2],
-    borderWidth: 1,
-    borderColor: dark.hairline,
-    alignItems: 'center',
-  },
-  statLabel: {
-    fontSize: 11,
-    fontFamily: typeTokens.label.fontFamily,
-    color: dark.textLo,
-    textAlign: 'center',
-    marginBottom: 4,
-  },
-  statValue: {
-    fontSize: typeTokens.numeralM.fontSize,
-    fontFamily: typeTokens.numeralM.fontFamily,
-    fontWeight: '700',
-    color: dark.textHi,
-  },
-  sectionCard: {
-    backgroundColor: dark.s1,
-    borderRadius: radius.card,
-    padding: space[3],
-    borderWidth: 1,
-    borderColor: dark.hairline,
-  },
-  sectionHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: space[3],
-  },
-  sectionTitle: {
-    fontSize: typeTokens.body.fontSize,
-    fontFamily: typeTokens.body.fontFamily,
-    fontWeight: '700',
-    color: dark.textHi,
-  },
-  toggleTableBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    minHeight: 44,
-    paddingHorizontal: space[1],
-  },
-  toggleTableText: {
-    fontSize: typeTokens.bodyS.fontSize,
-    fontFamily: typeTokens.bodyS.fontFamily,
-    color: dark.apricot,
-    fontWeight: '600',
-  },
-  tableContainer: {
-    borderWidth: 1,
-    borderColor: dark.hairline,
-    borderRadius: radius.control,
-    overflow: 'hidden',
-  },
-  tableHeaderRow: {
-    flexDirection: 'row',
-    backgroundColor: dark.s2,
-    paddingVertical: space[1],
-    paddingHorizontal: space[2],
-    borderBottomWidth: 1,
-    borderBottomColor: dark.hairline,
-  },
-  tableHeaderCell: {
-    fontSize: 11,
-    fontFamily: typeTokens.label.fontFamily,
-    color: dark.textLo,
-    fontWeight: '600',
-  },
-  tableRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: space[1],
-    paddingHorizontal: space[2],
-    borderBottomWidth: 1,
-    borderBottomColor: dark.hairline,
-  },
-  tableCell: {
-    fontSize: typeTokens.bodyS.fontSize,
-    fontFamily: typeTokens.bodyS.fontFamily,
-    color: dark.textMid,
-  },
-  chartContainer: {
-    gap: space[1],
-  },
-  barsRow: {
-    flexDirection: 'row',
-    height: 120,
-    alignItems: 'flex-end',
-    justifyContent: 'space-between',
-    paddingHorizontal: space[1],
-    paddingTop: space[2],
-  },
-  barCol: {
-    flex: 1,
-    alignItems: 'center',
-    height: '100%',
-    justifyContent: 'flex-end',
-  },
-  barValue: {
-    fontSize: 10,
-    fontFamily: typeTokens.label.fontFamily,
-    color: dark.textLo,
-    marginBottom: 4,
-  },
-  barTrack: {
-    width: 14,
-    height: 80,
-    backgroundColor: dark.s2,
-    borderRadius: 4,
-    justifyContent: 'flex-end',
-    overflow: 'hidden',
-  },
-  barFill: {
-    width: '100%',
-    borderRadius: 4,
-  },
-  barLabel: {
-    fontSize: 10,
-    fontFamily: typeTokens.label.fontFamily,
-    color: dark.textLo,
-    marginTop: 4,
-  },
-  chartCaption: {
-    fontSize: 11,
-    fontFamily: typeTokens.bodyS.fontFamily,
-    color: dark.textLo,
-    textAlign: 'center',
-    marginTop: space[1],
-  },
-  listSection: {
-    gap: space[1],
-  },
-  emptyBox: {
-    padding: space[4],
-    backgroundColor: dark.s1,
-    borderRadius: radius.card,
-    alignItems: 'center',
-  },
-  emptyText: {
-    fontSize: typeTokens.bodyS.fontSize,
-    fontFamily: typeTokens.bodyS.fontFamily,
-    color: dark.textLo,
-  },
-  historyCard: {
-    backgroundColor: dark.s1,
-    borderRadius: radius.card,
-    padding: space[3],
-    borderWidth: 1,
-    borderColor: dark.hairline,
-    gap: space[1],
-  },
-  historyCardHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  historyDate: {
-    fontSize: typeTokens.body.fontSize,
-    fontFamily: typeTokens.body.fontFamily,
-    fontWeight: '700',
-    color: dark.textHi,
-  },
-  historySub: {
-    fontSize: typeTokens.bodyS.fontSize,
-    fontFamily: typeTokens.bodyS.fontFamily,
-    color: dark.textLo,
-  },
-  historyCardBottom: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: space[1],
-    marginTop: 2,
-  },
-  historyDuration: {
-    fontSize: typeTokens.bodyS.fontSize,
-    fontFamily: typeTokens.bodyS.fontFamily,
-    color: dark.textMid,
-  },
-  statusPill: {
-    paddingHorizontal: space[1],
-    paddingVertical: 2,
-    borderRadius: radius.full,
-  },
-  statusPillCompleted: {
-    backgroundColor: 'rgba(180, 154, 252, 0.15)',
-  },
-  statusPillEarly: {
-    backgroundColor: 'rgba(255, 255, 255, 0.08)',
-  },
-  statusPillText: {
-    fontSize: 11,
-    fontFamily: typeTokens.label.fontFamily,
-    fontWeight: '600',
-  },
-  statusTextCompleted: {
-    color: dark.iris,
-  },
-  statusTextEarly: {
-    color: dark.textMid,
-  },
-  footer: {
-    marginTop: space[2],
-    paddingTop: space[2],
-    borderTopWidth: 1,
-    borderTopColor: dark.hairline,
-  },
-  doneButton: {
-    height: 48,
-    backgroundColor: dark.s1,
-    borderRadius: radius.button,
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: dark.hairline,
-  },
-  doneButtonText: {
-    fontSize: typeTokens.body.fontSize,
-    fontFamily: typeTokens.body.fontFamily,
-    fontWeight: '600',
-    color: dark.textHi,
-  },
-  buttonPressed: {
-    opacity: 0.8,
-  },
-});
+const createStyles = (dark: ReturnType<typeof useAppearance>['colors']) =>
+  StyleSheet.create({
+    backdrop: {
+      flex: 1,
+      backgroundColor: 'rgba(0, 0, 0, 0.75)',
+      justifyContent: 'flex-end',
+    },
+    sheet: {
+      backgroundColor: dark.s2,
+      borderTopLeftRadius: radius.sheet,
+      borderTopRightRadius: radius.sheet,
+      padding: space[4],
+      maxHeight: '90%',
+      borderWidth: 1,
+      borderColor: dark.hairline,
+    },
+    header: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'flex-start',
+      marginBottom: space[3],
+    },
+    title: {
+      fontSize: typeTokens.title2.fontSize,
+      fontFamily: typeTokens.title2.fontFamily,
+      color: dark.textHi,
+      marginBottom: 2,
+    },
+    subtitle: {
+      fontSize: typeTokens.bodyS.fontSize,
+      fontFamily: typeTokens.bodyS.fontFamily,
+      color: dark.textMid,
+    },
+    closeButton: {
+      width: 44,
+      height: 44,
+      borderRadius: 22,
+      backgroundColor: dark.s1,
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    content: {
+      gap: space[3],
+      paddingBottom: space[3],
+    },
+    statsGrid: {
+      flexDirection: 'row',
+      gap: space[2],
+    },
+    statTile: {
+      flex: 1,
+      backgroundColor: dark.s1,
+      borderRadius: radius.card,
+      padding: space[2],
+      borderWidth: 1,
+      borderColor: dark.hairline,
+      alignItems: 'center',
+    },
+    statLabel: {
+      fontSize: 11,
+      fontFamily: typeTokens.label.fontFamily,
+      color: dark.textLo,
+      textAlign: 'center',
+      marginBottom: 4,
+    },
+    statValue: {
+      fontSize: typeTokens.numeralM.fontSize,
+      fontFamily: typeTokens.numeralM.fontFamily,
+      fontWeight: '700',
+      color: dark.textHi,
+    },
+    sectionCard: {
+      backgroundColor: dark.s1,
+      borderRadius: radius.card,
+      padding: space[3],
+      borderWidth: 1,
+      borderColor: dark.hairline,
+    },
+    sectionHeader: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      marginBottom: space[3],
+    },
+    sectionTitle: {
+      fontSize: typeTokens.body.fontSize,
+      fontFamily: typeTokens.body.fontFamily,
+      fontWeight: '700',
+      color: dark.textHi,
+    },
+    toggleTableBtn: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 4,
+      minHeight: 44,
+      paddingHorizontal: space[1],
+    },
+    toggleTableText: {
+      fontSize: typeTokens.bodyS.fontSize,
+      fontFamily: typeTokens.bodyS.fontFamily,
+      color: dark.apricot,
+      fontWeight: '600',
+    },
+    tableContainer: {
+      borderWidth: 1,
+      borderColor: dark.hairline,
+      borderRadius: radius.control,
+      overflow: 'hidden',
+    },
+    tableHeaderRow: {
+      flexDirection: 'row',
+      backgroundColor: dark.s2,
+      paddingVertical: space[1],
+      paddingHorizontal: space[2],
+      borderBottomWidth: 1,
+      borderBottomColor: dark.hairline,
+    },
+    tableHeaderCell: {
+      fontSize: 11,
+      fontFamily: typeTokens.label.fontFamily,
+      color: dark.textLo,
+      fontWeight: '600',
+    },
+    tableRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      paddingVertical: space[1],
+      paddingHorizontal: space[2],
+      borderBottomWidth: 1,
+      borderBottomColor: dark.hairline,
+    },
+    tableCell: {
+      fontSize: typeTokens.bodyS.fontSize,
+      fontFamily: typeTokens.bodyS.fontFamily,
+      color: dark.textMid,
+    },
+    chartContainer: {
+      gap: space[1],
+    },
+    barsRow: {
+      flexDirection: 'row',
+      height: 120,
+      alignItems: 'flex-end',
+      justifyContent: 'space-between',
+      paddingHorizontal: space[1],
+      paddingTop: space[2],
+    },
+    barCol: {
+      flex: 1,
+      alignItems: 'center',
+      height: '100%',
+      justifyContent: 'flex-end',
+    },
+    barValue: {
+      fontSize: 10,
+      fontFamily: typeTokens.label.fontFamily,
+      color: dark.textLo,
+      marginBottom: 4,
+    },
+    barTrack: {
+      width: 14,
+      height: 80,
+      backgroundColor: dark.s2,
+      borderRadius: 4,
+      justifyContent: 'flex-end',
+      overflow: 'hidden',
+    },
+    barFill: {
+      width: '100%',
+      borderRadius: 4,
+    },
+    barLabel: {
+      fontSize: 10,
+      fontFamily: typeTokens.label.fontFamily,
+      color: dark.textLo,
+      marginTop: 4,
+    },
+    chartCaption: {
+      fontSize: 11,
+      fontFamily: typeTokens.bodyS.fontFamily,
+      color: dark.textLo,
+      textAlign: 'center',
+      marginTop: space[1],
+    },
+    listSection: {
+      gap: space[1],
+    },
+    emptyBox: {
+      padding: space[4],
+      backgroundColor: dark.s1,
+      borderRadius: radius.card,
+      alignItems: 'center',
+    },
+    emptyText: {
+      fontSize: typeTokens.bodyS.fontSize,
+      fontFamily: typeTokens.bodyS.fontFamily,
+      color: dark.textLo,
+    },
+    historyCard: {
+      backgroundColor: dark.s1,
+      borderRadius: radius.card,
+      padding: space[3],
+      borderWidth: 1,
+      borderColor: dark.hairline,
+      gap: space[1],
+    },
+    historyCardHeader: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+    },
+    historyDate: {
+      fontSize: typeTokens.body.fontSize,
+      fontFamily: typeTokens.body.fontFamily,
+      fontWeight: '700',
+      color: dark.textHi,
+    },
+    historySub: {
+      fontSize: typeTokens.bodyS.fontSize,
+      fontFamily: typeTokens.bodyS.fontFamily,
+      color: dark.textLo,
+    },
+    historyCardBottom: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: space[1],
+      marginTop: 2,
+    },
+    historyDuration: {
+      fontSize: typeTokens.bodyS.fontSize,
+      fontFamily: typeTokens.bodyS.fontFamily,
+      color: dark.textMid,
+    },
+    statusPill: {
+      paddingHorizontal: space[1],
+      paddingVertical: 2,
+      borderRadius: radius.full,
+    },
+    statusPillCompleted: {
+      backgroundColor: 'rgba(180, 154, 252, 0.15)',
+    },
+    statusPillEarly: {
+      backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    },
+    statusPillText: {
+      fontSize: 11,
+      fontFamily: typeTokens.label.fontFamily,
+      fontWeight: '600',
+    },
+    statusTextCompleted: {
+      color: dark.iris,
+    },
+    statusTextEarly: {
+      color: dark.textMid,
+    },
+    footer: {
+      marginTop: space[2],
+      paddingTop: space[2],
+      borderTopWidth: 1,
+      borderTopColor: dark.hairline,
+    },
+    doneButton: {
+      height: 48,
+      backgroundColor: dark.s1,
+      borderRadius: radius.button,
+      justifyContent: 'center',
+      alignItems: 'center',
+      borderWidth: 1,
+      borderColor: dark.hairline,
+    },
+    doneButtonText: {
+      fontSize: typeTokens.body.fontSize,
+      fontFamily: typeTokens.body.fontFamily,
+      fontWeight: '600',
+      color: dark.textHi,
+    },
+    buttonPressed: {
+      opacity: 0.8,
+    },
+  });

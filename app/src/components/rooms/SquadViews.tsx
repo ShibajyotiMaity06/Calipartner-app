@@ -1,3 +1,4 @@
+import { useTheme as useAppearance } from '@calipartner/ui/theme';
 import { NutrientSummary } from '../diary/NutrientSummary';
 import React from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
@@ -12,100 +13,107 @@ import type {
 import { t, getLocale } from '@/i18n';
 import { SquadFoodItem } from './SquadFoodItem';
 
-export const squadStyles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: dark.bg0 },
-  content: {
-    width: '100%',
-    maxWidth: homeLayout.maxContentWidth,
-    alignSelf: 'center',
-    padding: space[4],
-    paddingBottom: homeLayout.touchSize * 3,
-    gap: space[5],
-  },
-  stack: { gap: space[3] },
-  metricGroup: { gap: space[1], paddingTop: space[2] },
-  row: { flexDirection: 'row', alignItems: 'center', gap: space[3], flexWrap: 'wrap' },
-  spread: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    gap: space[3],
-    flexWrap: 'wrap',
-  },
-  flex: { flex: 1, minWidth: 0 },
-  card: {
-    backgroundColor: dark.s1,
-    borderRadius: radius.card,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: dark.hairline,
-    padding: space[4],
-    gap: space[3],
-  },
-  touch: { minHeight: homeLayout.touchSize, justifyContent: 'center' },
-  mentionCard: { padding: space[2], gap: space[1] },
-  mentionHeader: {
-    flexDirection: 'row',
-    alignItems: 'baseline',
-    justifyContent: 'space-between',
-    gap: space[2],
-    flexWrap: 'wrap',
-  },
-  columns: { flexDirection: 'row', alignItems: 'flex-start', gap: space[3] },
-  column: { flex: 1, minWidth: 0, gap: space[3] },
-  track: {
-    width: '100%',
-    height: space[2],
-    borderRadius: radius.full,
-    backgroundColor: dark.s3,
-    overflow: 'hidden',
-  },
-  fill: { height: '100%', borderRadius: radius.full },
-  secondLap: {
-    position: 'absolute',
-    height: '100%',
-    borderRadius: radius.full,
-    backgroundColor: dark.cream,
-  },
-  divider: {
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderColor: dark.hairline,
-    paddingTop: space[3],
-  },
-  leader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: space[3],
-    minHeight: homeLayout.touchSize + space[3],
-    paddingVertical: space[2],
-  },
-  rank: { minWidth: space[5] },
-  compactLeader: { gap: space[2], paddingVertical: space[1] },
-  compactDetails: { gap: space[1] },
-  compactRank: { minWidth: space[4] },
-  name: { flexShrink: 1 },
-  selector: {
-    flex: 1,
-    minWidth: space[8] * 2,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: dark.hairline,
-    borderRadius: radius.control,
-    padding: space[3],
-    minHeight: homeLayout.touchSize,
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    alignItems: 'center',
-    gap: space[2],
-  },
-  back: {
-    minHeight: homeLayout.touchSize,
-    minWidth: homeLayout.touchSize,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: dark.hairline,
-    borderRadius: radius.full,
-  },
-});
+export const createSquadStyles = (dark: ReturnType<typeof useAppearance>['colors']) =>
+  StyleSheet.create({
+    screen: { flex: 1, backgroundColor: dark.bg0 },
+    content: {
+      width: '100%',
+      maxWidth: homeLayout.maxContentWidth,
+      alignSelf: 'center',
+      padding: space[4],
+      paddingBottom: homeLayout.touchSize * 3,
+      gap: space[5],
+    },
+    stack: { gap: space[3] },
+    metricGroup: { gap: space[1], paddingTop: space[2] },
+    row: { flexDirection: 'row', alignItems: 'center', gap: space[3], flexWrap: 'wrap' },
+    spread: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      gap: space[3],
+      flexWrap: 'wrap',
+    },
+    flex: { flex: 1, minWidth: 0 },
+    card: {
+      backgroundColor: dark.s1,
+      borderRadius: radius.card,
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: dark.hairline,
+      padding: space[4],
+      gap: space[3],
+    },
+    touch: { minHeight: homeLayout.touchSize, justifyContent: 'center' },
+    mentionCard: { padding: space[2], gap: space[1] },
+    mentionHeader: {
+      flexDirection: 'row',
+      alignItems: 'baseline',
+      justifyContent: 'space-between',
+      gap: space[2],
+      flexWrap: 'wrap',
+    },
+    columns: { flexDirection: 'row', alignItems: 'flex-start', gap: space[3] },
+    column: { flex: 1, minWidth: 0, gap: space[3] },
+    track: {
+      width: '100%',
+      height: space[2],
+      borderRadius: radius.full,
+      backgroundColor: dark.s3,
+      overflow: 'hidden',
+    },
+    fill: { height: '100%', borderRadius: radius.full },
+    secondLap: {
+      position: 'absolute',
+      height: '100%',
+      borderRadius: radius.full,
+      backgroundColor: dark.cream,
+    },
+    divider: {
+      borderTopWidth: StyleSheet.hairlineWidth,
+      borderColor: dark.hairline,
+      paddingTop: space[3],
+    },
+    leader: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: space[3],
+      minHeight: homeLayout.touchSize + space[3],
+      paddingVertical: space[2],
+    },
+    rank: { minWidth: space[5] },
+    compactLeader: { gap: space[2], paddingVertical: space[1] },
+    compactDetails: { gap: space[1] },
+    compactRank: { minWidth: space[4] },
+    name: { flexShrink: 1 },
+    selector: {
+      flex: 1,
+      minWidth: space[8] * 2,
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: dark.hairline,
+      borderRadius: radius.control,
+      padding: space[3],
+      minHeight: homeLayout.touchSize,
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      alignItems: 'center',
+      gap: space[2],
+    },
+    back: {
+      minHeight: homeLayout.touchSize,
+      minWidth: homeLayout.touchSize,
+      alignItems: 'center',
+      justifyContent: 'center',
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: dark.hairline,
+      borderRadius: radius.full,
+    },
+  });
+export const squadStyles = createSquadStyles(dark);
+export function useSquadStyles() {
+  const { colors } = useAppearance();
+  return createSquadStyles(colors);
+}
+
 export function numberText(value: number | null) {
   if (value == null) return t('squadDesign.notTracked');
   return value.toLocaleString(getLocale(), { maximumFractionDigits: 1 });
@@ -134,6 +142,9 @@ export function ProgressTrack({
   color?: string;
   testID?: string;
 }) {
+  const { colors: dark } = useAppearance();
+  const squadStyles = createSquadStyles(dark);
+
   return (
     <View style={squadStyles.track} accessible={false} testID={testID}>
       {percent !== null && (
@@ -163,6 +174,9 @@ export function SquadLeaderboard({
   showSteps?: boolean;
   compact?: boolean;
 }) {
+  const { colors: dark } = useAppearance();
+  const squadStyles = createSquadStyles(dark);
+
   if (!members.length) return <Text>{t('squadDesign.empty')}</Text>;
   return (
     <View testID="squad-leaderboard-list">
@@ -248,6 +262,9 @@ export function MetricValue({
   label?: string;
   color?: string;
 }) {
+  const { colors: dark } = useAppearance();
+  const squadStyles = createSquadStyles(dark);
+
   const tracked = member.tracking?.[metric] !== false;
   const value = member[metric] ?? null,
     target = member.targets?.[metric] ?? null;
@@ -299,6 +316,9 @@ export function MetricValue({
   );
 }
 export function MemberMetrics({ member }: { member: RankedSquadMember }) {
+  const { colors: dark } = useAppearance();
+  const squadStyles = createSquadStyles(dark);
+
   return (
     <View style={squadStyles.card} testID="member-macros-steps">
       <View style={squadStyles.spread}>
@@ -330,6 +350,9 @@ export function PeopleSelector({
   right: RankedSquadMember;
   onChoose: (side: 'left' | 'right') => void;
 }) {
+  const { colors: dark } = useAppearance();
+  const squadStyles = createSquadStyles(dark);
+
   return (
     <View style={squadStyles.row}>
       {(
@@ -358,6 +381,9 @@ export function PeopleSelector({
   );
 }
 export function PlusDetailsCard({ onUpgrade }: { onUpgrade: () => void }) {
+  const { colors: dark } = useAppearance();
+  const squadStyles = createSquadStyles(dark);
+
   return (
     <View style={squadStyles.card} testID="squad-details-paywall">
       <View style={squadStyles.row}>
@@ -381,6 +407,9 @@ export function MealContent({
   roomId?: string;
   memberId?: string;
 }) {
+  const { colors: dark } = useAppearance();
+  const squadStyles = createSquadStyles(dark);
+
   if (!meal) return <Text variant="bodyS">{t('squadDesign.noLogs')}</Text>;
   return (
     <View style={squadStyles.stack}>
@@ -401,6 +430,9 @@ export function MealContent({
   );
 }
 export function WorkoutContent({ workouts }: { workouts: SquadWorkout[] }) {
+  const { colors: dark } = useAppearance();
+  const squadStyles = createSquadStyles(dark);
+
   if (!workouts.length) return <Text variant="bodyS">{t('squadDesign.noLogs')}</Text>;
   return (
     <View style={squadStyles.stack}>
@@ -448,6 +480,9 @@ export function MemberDetailsContent({
   roomId?: string;
   memberId?: string;
 }) {
+  const { colors: dark } = useAppearance();
+  const squadStyles = createSquadStyles(dark);
+
   return (
     <View style={squadStyles.stack}>
       <View style={squadStyles.card}>

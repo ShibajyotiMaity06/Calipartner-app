@@ -1,3 +1,4 @@
+import { useTheme as useAppearance } from '../theme/useTheme';
 import React from 'react';
 import {
   Pressable,
@@ -6,7 +7,7 @@ import {
   type GestureResponderEvent,
   type ViewStyle,
 } from 'react-native';
-import { dark } from '../tokens/colors';
+
 import { radius } from '../tokens/radius';
 import { space } from '../tokens/space';
 import { Text } from './Text';
@@ -34,6 +35,9 @@ export function Chip({
   testID,
   style,
 }: ChipProps): React.JSX.Element {
+  const { colors: dark } = useAppearance();
+  const styles = createStyles(dark);
+
   return (
     <Pressable
       onPress={disabled ? undefined : onPress}
@@ -71,28 +75,29 @@ export function Chip({
   );
 }
 
-const styles = StyleSheet.create({
-  chip: {
-    height: 36,
-    minHeight: 36,
-    paddingHorizontal: space[3], // 12
-    borderRadius: radius.control, // 12
-    borderWidth: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    alignSelf: 'flex-start',
-  },
-  inner: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: space[1], // 4
-  },
-  iconWrap: {
-    marginRight: space[1],
-  },
-  disabled: {
-    opacity: 0.5,
-    borderColor: dark.hairline,
-  },
-});
+const createStyles = (dark: ReturnType<typeof useAppearance>['colors']) =>
+  StyleSheet.create({
+    chip: {
+      height: 36,
+      minHeight: 36,
+      paddingHorizontal: space[3], // 12
+      borderRadius: radius.control, // 12
+      borderWidth: 1,
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      alignSelf: 'flex-start',
+    },
+    inner: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: space[1], // 4
+    },
+    iconWrap: {
+      marginRight: space[1],
+    },
+    disabled: {
+      opacity: 0.5,
+      borderColor: dark.hairline,
+    },
+  });

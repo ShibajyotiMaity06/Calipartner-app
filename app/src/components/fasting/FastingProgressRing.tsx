@@ -1,11 +1,14 @@
+import { useTheme as useAppearance } from '@calipartner/ui/theme';
 import React from 'react';
 import { View } from 'react-native';
 import Svg, { Circle } from 'react-native-svg';
-import { Text, dark, homeLayout, space } from '@calipartner/ui';
+import { Text, homeLayout, space } from '@calipartner/ui';
 import { t } from '@/i18n';
 
 /** Geometry only: progress is calculated by the shared fasting engine. */
 export function FastingProgressRing({ percent }: { percent: number }) {
+  const { colors: dark } = useAppearance();
+
   const size = homeLayout.compactRingSize;
   const stroke = homeLayout.ringStroke;
   const r = (size - stroke) / 2;

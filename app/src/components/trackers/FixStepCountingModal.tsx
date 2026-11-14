@@ -1,8 +1,9 @@
+import { useTheme as useAppearance } from '@calipartner/ui/theme';
 import React, { useState } from 'react';
 import { Modal, Platform, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import type { ActivitySource } from '@calipartner/core';
-import { Text, dark, radius, space, type as typeTokens } from '@calipartner/ui';
+import { Text, radius, space, type as typeTokens } from '@calipartner/ui';
 import { t } from '@/i18n';
 
 export interface FixStepCountingModalProps {
@@ -69,6 +70,9 @@ export function FixStepCountingModal({
   onSelectSource,
   testID = 'fix-step-counting-modal',
 }: FixStepCountingModalProps) {
+  const { colors: dark } = useAppearance();
+  const styles = createStyles(dark);
+
   const [selectedBrand, setSelectedBrand] = useState<OEMBrand>('xiaomi');
   const [checklist, setChecklist] = useState({
     autostart: true,
@@ -338,229 +342,230 @@ export function FixStepCountingModal({
   );
 }
 
-const styles = StyleSheet.create({
-  overlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.65)',
-    justifyContent: 'flex-end',
-  },
-  sheet: {
-    backgroundColor: dark.s1,
-    borderTopLeftRadius: radius.sheet,
-    borderTopRightRadius: radius.sheet,
-    borderWidth: 1,
-    borderColor: dark.hairline,
-    maxHeight: '90%',
-    paddingBottom: space[4],
-  },
-  grabHandle: {
-    width: 36,
-    height: 4,
-    borderRadius: radius.full,
-    backgroundColor: dark.hairlineLit,
-    alignSelf: 'center',
-    marginVertical: space[2],
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: space[4],
-    paddingBottom: space[3],
-    borderBottomWidth: 1,
-    borderBottomColor: dark.hairline,
-  },
-  headerLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: space[3],
-  },
-  iconBox: {
-    width: 36,
-    height: 36,
-    borderRadius: radius.full,
-    backgroundColor: dark.s2,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  title: {
-    fontSize: typeTokens.body.fontSize,
-    fontFamily: typeTokens.body.fontFamily,
-    color: dark.textHi,
-    fontWeight: '700',
-  },
-  lastSynced: {
-    fontSize: typeTokens.micro.fontSize,
-    fontFamily: typeTokens.micro.fontFamily,
-    color: dark.textLo,
-  },
-  closeBtn: {
-    width: 44,
-    height: 44,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderRadius: radius.full,
-  },
-  scrollArea: {
-    paddingHorizontal: space[4],
-  },
-  scrollContent: {
-    paddingVertical: space[3],
-    gap: space[3],
-  },
-  sectionCard: {
-    backgroundColor: dark.s2,
-    borderRadius: radius.card,
-    padding: space[3],
-    borderWidth: 1,
-    borderColor: dark.hairline,
-    gap: space[2],
-  },
-  sectionTitle: {
-    fontSize: typeTokens.label.fontSize,
-    fontFamily: typeTokens.label.fontFamily,
-    color: dark.textHi,
-    fontWeight: '700',
-  },
-  sectionSub: {
-    fontSize: typeTokens.micro.fontSize,
-    fontFamily: typeTokens.micro.fontFamily,
-    color: dark.textLo,
-  },
-  sourcesList: {
-    gap: space[2],
-    marginTop: space[1],
-  },
-  sourceRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    backgroundColor: dark.s3,
-    padding: space[3],
-    borderRadius: radius.control,
-    borderWidth: 1,
-    borderColor: dark.hairline,
-    minHeight: 52,
-  },
-  sourceRowActive: {
-    borderColor: dark.apricot,
-  },
-  sourceRowLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: space[3],
-    flex: 1,
-  },
-  sourceName: {
-    fontSize: typeTokens.label.fontSize,
-    fontFamily: typeTokens.label.fontFamily,
-    color: dark.textHi,
-    fontWeight: '600',
-  },
-  sourceDesc: {
-    fontSize: typeTokens.micro.fontSize,
-    fontFamily: typeTokens.micro.fontFamily,
-    color: dark.textLo,
-  },
-  checkRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: space[3],
-    minHeight: 44,
-  },
-  checkLabel: {
-    fontSize: typeTokens.bodyS.fontSize,
-    fontFamily: typeTokens.bodyS.fontFamily,
-    color: dark.textMid,
-    flex: 1,
-  },
-  brandChipsRow: {
-    flexDirection: 'row',
-    gap: space[2],
-    marginTop: space[1],
-    flexWrap: 'wrap',
-  },
-  brandChip: {
-    paddingHorizontal: space[3],
-    minHeight: 36,
-    borderRadius: radius.full,
-    backgroundColor: dark.s3,
-    borderWidth: 1,
-    borderColor: dark.hairline,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  brandChipActive: {
-    backgroundColor: dark.apricot,
-    borderColor: dark.apricot,
-  },
-  brandChipText: {
-    fontSize: typeTokens.micro.fontSize,
-    fontFamily: typeTokens.micro.fontFamily,
-    color: dark.textMid,
-    fontWeight: '700',
-  },
-  brandChipTextActive: {
-    color: dark.onBrand, // #1C1109
-  },
-  stepsBox: {
-    backgroundColor: dark.s3,
-    borderRadius: radius.control,
-    padding: space[3],
-    gap: space[2],
-    marginTop: space[1],
-  },
-  oemTitle: {
-    fontSize: typeTokens.label.fontSize,
-    fontFamily: typeTokens.label.fontFamily,
-    color: dark.textHi,
-    fontWeight: '700',
-    marginBottom: space[1],
-  },
-  stepItemRow: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    gap: space[2],
-  },
-  stepNumberBadge: {
-    width: 20,
-    height: 20,
-    borderRadius: radius.full,
-    backgroundColor: dark.s1,
-    borderWidth: 1,
-    borderColor: dark.hairlineLit,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginTop: 2,
-  },
-  stepNumberText: {
-    fontSize: typeTokens.micro.fontSize,
-    fontFamily: typeTokens.micro.fontFamily,
-    color: dark.textHi,
-    fontWeight: '700',
-  },
-  stepItemText: {
-    fontSize: typeTokens.bodyS.fontSize,
-    fontFamily: typeTokens.bodyS.fontFamily,
-    color: dark.textMid,
-    flex: 1,
-    lineHeight: 20,
-  },
-  footer: {
-    paddingHorizontal: space[4],
-    paddingTop: space[3],
-  },
-  doneBtn: {
-    minHeight: 48,
-    borderRadius: radius.button,
-    backgroundColor: dark.apricot,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  doneBtnText: {
-    fontSize: typeTokens.body.fontSize,
-    fontFamily: typeTokens.body.fontFamily,
-    color: dark.onBrand, // #1C1109
-    fontWeight: '700',
-  },
-});
+const createStyles = (dark: ReturnType<typeof useAppearance>['colors']) =>
+  StyleSheet.create({
+    overlay: {
+      flex: 1,
+      backgroundColor: 'rgba(0, 0, 0, 0.65)',
+      justifyContent: 'flex-end',
+    },
+    sheet: {
+      backgroundColor: dark.s1,
+      borderTopLeftRadius: radius.sheet,
+      borderTopRightRadius: radius.sheet,
+      borderWidth: 1,
+      borderColor: dark.hairline,
+      maxHeight: '90%',
+      paddingBottom: space[4],
+    },
+    grabHandle: {
+      width: 36,
+      height: 4,
+      borderRadius: radius.full,
+      backgroundColor: dark.hairlineLit,
+      alignSelf: 'center',
+      marginVertical: space[2],
+    },
+    header: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      paddingHorizontal: space[4],
+      paddingBottom: space[3],
+      borderBottomWidth: 1,
+      borderBottomColor: dark.hairline,
+    },
+    headerLeft: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: space[3],
+    },
+    iconBox: {
+      width: 36,
+      height: 36,
+      borderRadius: radius.full,
+      backgroundColor: dark.s2,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    title: {
+      fontSize: typeTokens.body.fontSize,
+      fontFamily: typeTokens.body.fontFamily,
+      color: dark.textHi,
+      fontWeight: '700',
+    },
+    lastSynced: {
+      fontSize: typeTokens.micro.fontSize,
+      fontFamily: typeTokens.micro.fontFamily,
+      color: dark.textLo,
+    },
+    closeBtn: {
+      width: 44,
+      height: 44,
+      alignItems: 'center',
+      justifyContent: 'center',
+      borderRadius: radius.full,
+    },
+    scrollArea: {
+      paddingHorizontal: space[4],
+    },
+    scrollContent: {
+      paddingVertical: space[3],
+      gap: space[3],
+    },
+    sectionCard: {
+      backgroundColor: dark.s2,
+      borderRadius: radius.card,
+      padding: space[3],
+      borderWidth: 1,
+      borderColor: dark.hairline,
+      gap: space[2],
+    },
+    sectionTitle: {
+      fontSize: typeTokens.label.fontSize,
+      fontFamily: typeTokens.label.fontFamily,
+      color: dark.textHi,
+      fontWeight: '700',
+    },
+    sectionSub: {
+      fontSize: typeTokens.micro.fontSize,
+      fontFamily: typeTokens.micro.fontFamily,
+      color: dark.textLo,
+    },
+    sourcesList: {
+      gap: space[2],
+      marginTop: space[1],
+    },
+    sourceRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      backgroundColor: dark.s3,
+      padding: space[3],
+      borderRadius: radius.control,
+      borderWidth: 1,
+      borderColor: dark.hairline,
+      minHeight: 52,
+    },
+    sourceRowActive: {
+      borderColor: dark.apricot,
+    },
+    sourceRowLeft: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: space[3],
+      flex: 1,
+    },
+    sourceName: {
+      fontSize: typeTokens.label.fontSize,
+      fontFamily: typeTokens.label.fontFamily,
+      color: dark.textHi,
+      fontWeight: '600',
+    },
+    sourceDesc: {
+      fontSize: typeTokens.micro.fontSize,
+      fontFamily: typeTokens.micro.fontFamily,
+      color: dark.textLo,
+    },
+    checkRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: space[3],
+      minHeight: 44,
+    },
+    checkLabel: {
+      fontSize: typeTokens.bodyS.fontSize,
+      fontFamily: typeTokens.bodyS.fontFamily,
+      color: dark.textMid,
+      flex: 1,
+    },
+    brandChipsRow: {
+      flexDirection: 'row',
+      gap: space[2],
+      marginTop: space[1],
+      flexWrap: 'wrap',
+    },
+    brandChip: {
+      paddingHorizontal: space[3],
+      minHeight: 36,
+      borderRadius: radius.full,
+      backgroundColor: dark.s3,
+      borderWidth: 1,
+      borderColor: dark.hairline,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    brandChipActive: {
+      backgroundColor: dark.apricot,
+      borderColor: dark.apricot,
+    },
+    brandChipText: {
+      fontSize: typeTokens.micro.fontSize,
+      fontFamily: typeTokens.micro.fontFamily,
+      color: dark.textMid,
+      fontWeight: '700',
+    },
+    brandChipTextActive: {
+      color: dark.onBrand, // #1C1109
+    },
+    stepsBox: {
+      backgroundColor: dark.s3,
+      borderRadius: radius.control,
+      padding: space[3],
+      gap: space[2],
+      marginTop: space[1],
+    },
+    oemTitle: {
+      fontSize: typeTokens.label.fontSize,
+      fontFamily: typeTokens.label.fontFamily,
+      color: dark.textHi,
+      fontWeight: '700',
+      marginBottom: space[1],
+    },
+    stepItemRow: {
+      flexDirection: 'row',
+      alignItems: 'flex-start',
+      gap: space[2],
+    },
+    stepNumberBadge: {
+      width: 20,
+      height: 20,
+      borderRadius: radius.full,
+      backgroundColor: dark.s1,
+      borderWidth: 1,
+      borderColor: dark.hairlineLit,
+      alignItems: 'center',
+      justifyContent: 'center',
+      marginTop: 2,
+    },
+    stepNumberText: {
+      fontSize: typeTokens.micro.fontSize,
+      fontFamily: typeTokens.micro.fontFamily,
+      color: dark.textHi,
+      fontWeight: '700',
+    },
+    stepItemText: {
+      fontSize: typeTokens.bodyS.fontSize,
+      fontFamily: typeTokens.bodyS.fontFamily,
+      color: dark.textMid,
+      flex: 1,
+      lineHeight: 20,
+    },
+    footer: {
+      paddingHorizontal: space[4],
+      paddingTop: space[3],
+    },
+    doneBtn: {
+      minHeight: 48,
+      borderRadius: radius.button,
+      backgroundColor: dark.apricot,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    doneBtnText: {
+      fontSize: typeTokens.body.fontSize,
+      fontFamily: typeTokens.body.fontFamily,
+      color: dark.onBrand, // #1C1109
+      fontWeight: '700',
+    },
+  });

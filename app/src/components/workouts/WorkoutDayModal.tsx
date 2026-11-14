@@ -1,8 +1,9 @@
+import { useTheme as useAppearance } from '@calipartner/ui/theme';
 import React, { useEffect, useRef, useState } from 'react';
 import { Modal, Pressable, SafeAreaView, ScrollView, StyleSheet, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import { Button, Text, dark, homeLayout, radius, space } from '@calipartner/ui';
+import { Button, Text, homeLayout, radius, space } from '@calipartner/ui';
 import {
   addDaysToDateString,
   FREE_WORKOUT_SAMPLES,
@@ -31,6 +32,9 @@ export function WorkoutDayModal({
   onSaved,
   testID = 'workout-hub-modal',
 }: WorkoutHubModalProps) {
+  const { colors: dark } = useAppearance();
+  const styles = createStyles(dark);
+
   const { user } = useAuth(),
     { localDate: today } = useCurrentLocalDate(),
     router = useRouter();
@@ -564,123 +568,124 @@ export function WorkoutDayModal({
     </Modal>
   );
 }
-const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: dark.bg0 },
-  header: {
-    padding: space[3],
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  content: { padding: space[4], gap: space[4], paddingBottom: space[8] },
-  stack: { gap: space[2] },
-  card: {
-    padding: space[3],
-    gap: space[3],
-    backgroundColor: dark.s1,
-    borderColor: dark.hairlineLit,
-    borderWidth: 1,
-    borderRadius: radius.card,
-  },
-  date: { flexDirection: 'row', alignItems: 'center', gap: space[2] },
-  datePill: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    backgroundColor: dark.s1,
-    borderWidth: 1,
-    borderColor: dark.hairlineLit,
-    borderRadius: radius.full,
-    paddingHorizontal: space[3],
-    paddingVertical: space[1],
-    minHeight: homeLayout.touchSize,
-  },
-  dateCenter: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: space[2],
-    flex: 1,
-  },
-  dateText: {
-    textAlign: 'center',
-  },
-  dateIcon: {
-    width: 36,
-    height: 36,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderRadius: radius.full,
-  },
-  actionCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: space[3],
-    backgroundColor: dark.s1,
-    borderWidth: 1,
-    borderColor: dark.hairlineLit,
-    borderRadius: radius.card,
-    padding: space[4],
-  },
-  actionCardDisabled: {
-    opacity: 0.5,
-  },
-  actionIconBox: {
-    width: 48,
-    height: 48,
-    borderRadius: radius.control,
-    backgroundColor: dark.s2,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  actionContent: {
-    flex: 1,
-    minWidth: 0,
-    gap: space[1],
-  },
-  actionArrowCircle: {
-    width: 32,
-    height: 32,
-    borderRadius: radius.full,
-    backgroundColor: dark.s2,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  dividerRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: space[3],
-    marginVertical: space[2],
-  },
-  dividerLine: {
-    flex: 1,
-    height: 1,
-    backgroundColor: dark.hairline,
-  },
-  dividerBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: space[2],
-    paddingVertical: space[1],
-    paddingHorizontal: space[3],
-    backgroundColor: dark.s2,
-    borderRadius: radius.full,
-    borderWidth: 1,
-    borderColor: dark.hairline,
-  },
-  flex: { flex: 1, minWidth: 0 },
-  icon: {
-    minWidth: homeLayout.touchSize,
-    minHeight: homeLayout.touchSize,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  exercise: { flexDirection: 'row', alignItems: 'center', gap: space[1] },
-  unlock: {
-    minHeight: homeLayout.touchSize,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: space[2],
-    flexWrap: 'wrap',
-  },
-});
+const createStyles = (dark: ReturnType<typeof useAppearance>['colors']) =>
+  StyleSheet.create({
+    screen: { flex: 1, backgroundColor: dark.bg0 },
+    header: {
+      padding: space[3],
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+    },
+    content: { padding: space[4], gap: space[4], paddingBottom: space[8] },
+    stack: { gap: space[2] },
+    card: {
+      padding: space[3],
+      gap: space[3],
+      backgroundColor: dark.s1,
+      borderColor: dark.hairlineLit,
+      borderWidth: 1,
+      borderRadius: radius.card,
+    },
+    date: { flexDirection: 'row', alignItems: 'center', gap: space[2] },
+    datePill: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      backgroundColor: dark.s1,
+      borderWidth: 1,
+      borderColor: dark.hairlineLit,
+      borderRadius: radius.full,
+      paddingHorizontal: space[3],
+      paddingVertical: space[1],
+      minHeight: homeLayout.touchSize,
+    },
+    dateCenter: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: space[2],
+      flex: 1,
+    },
+    dateText: {
+      textAlign: 'center',
+    },
+    dateIcon: {
+      width: 36,
+      height: 36,
+      alignItems: 'center',
+      justifyContent: 'center',
+      borderRadius: radius.full,
+    },
+    actionCard: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: space[3],
+      backgroundColor: dark.s1,
+      borderWidth: 1,
+      borderColor: dark.hairlineLit,
+      borderRadius: radius.card,
+      padding: space[4],
+    },
+    actionCardDisabled: {
+      opacity: 0.5,
+    },
+    actionIconBox: {
+      width: 48,
+      height: 48,
+      borderRadius: radius.control,
+      backgroundColor: dark.s2,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    actionContent: {
+      flex: 1,
+      minWidth: 0,
+      gap: space[1],
+    },
+    actionArrowCircle: {
+      width: 32,
+      height: 32,
+      borderRadius: radius.full,
+      backgroundColor: dark.s2,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    dividerRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: space[3],
+      marginVertical: space[2],
+    },
+    dividerLine: {
+      flex: 1,
+      height: 1,
+      backgroundColor: dark.hairline,
+    },
+    dividerBadge: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: space[2],
+      paddingVertical: space[1],
+      paddingHorizontal: space[3],
+      backgroundColor: dark.s2,
+      borderRadius: radius.full,
+      borderWidth: 1,
+      borderColor: dark.hairline,
+    },
+    flex: { flex: 1, minWidth: 0 },
+    icon: {
+      minWidth: homeLayout.touchSize,
+      minHeight: homeLayout.touchSize,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    exercise: { flexDirection: 'row', alignItems: 'center', gap: space[1] },
+    unlock: {
+      minHeight: homeLayout.touchSize,
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: space[2],
+      flexWrap: 'wrap',
+    },
+  });

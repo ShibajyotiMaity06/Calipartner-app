@@ -1,9 +1,10 @@
+import { useTheme as useAppearance } from '@calipartner/ui/theme';
 import { NavigationIcon } from '@calipartner/ui';
 import { PremiumFeatureModal } from '@/components/subscription/PremiumFeatureModal';
 import React, { useState } from 'react';
 import { Modal, SafeAreaView, ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { Button, dark, radius, space, Text } from '@calipartner/ui';
+import { Button, radius, space, Text } from '@calipartner/ui';
 import { playClickSound, playSuccessSound } from '@/lib/sound';
 import {
   ALL_DAYS,
@@ -25,6 +26,9 @@ function WeeklyPlanModalContent({
   onSavePlan,
   testID = 'weekly-plan-modal',
 }: WeeklyPlanModalProps) {
+  const { colors: dark } = useAppearance();
+  const styles = createStyles(dark);
+
   const initialPlan = getWeeklyPlan();
   const [daysPerWeek, setDaysPerWeek] = useState<number>(initialPlan.daysPerWeek);
   const [selectedWorkoutDays, setSelectedWorkoutDays] = useState<string[]>(initialPlan.workoutDays);
@@ -284,162 +288,163 @@ function WeeklyPlanModalContent({
   );
 }
 
-const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
-    backgroundColor: dark.bg0,
-  },
-  container: {
-    flex: 1,
-    backgroundColor: dark.bg0,
-  },
-  topBar: {
-    paddingHorizontal: space[4],
-    paddingTop: space[2],
-    paddingBottom: space[1],
-  },
-  backButton: {
-    width: 44,
-    height: 44,
-    borderRadius: radius.full,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  scrollContent: {
-    paddingHorizontal: space[4],
-    paddingBottom: 120,
-    gap: space[4],
-  },
-  titleSection: {
-    gap: 4,
-    marginBottom: space[1],
-  },
-  screenTitle: {
-    letterSpacing: -0.5,
-  },
-  screenSubtitle: {
-    lineHeight: 20,
-  },
-  cardSection: {
-    backgroundColor: dark.s1,
-    borderWidth: 1,
-    borderColor: dark.hairline,
-    borderRadius: radius.card,
-    padding: space[4],
-    gap: space[3],
-  },
-  sectionLabel: {
-    fontWeight: '700',
-  },
-  daysCountRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  countCircle: {
-    width: 42,
-    height: 42,
-    borderRadius: radius.full,
-    backgroundColor: dark.s2,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  countCircleSelected: {
-    backgroundColor: dark.apricot,
-  },
-  daysChipsRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: space[2],
-  },
-  dayChip: {
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-    borderRadius: radius.control,
-    backgroundColor: dark.s2,
-    borderWidth: 1,
-    borderColor: dark.hairline,
-  },
-  dayChipSelected: {
-    backgroundColor: dark.apricot,
-    borderColor: dark.apricot,
-  },
-  restDayChip: {
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-    borderRadius: radius.control,
-    backgroundColor: dark.s2,
-    borderWidth: 1,
-    borderColor: dark.hairline,
-  },
-  infoCalloutCard: {
-    flexDirection: 'row',
-    backgroundColor: 'rgba(244, 182, 125, 0.08)',
-    borderWidth: 1,
-    borderColor: 'rgba(244, 182, 125, 0.25)',
-    borderRadius: radius.card,
-    padding: space[4],
-    gap: space[3],
-  },
-  infoIconCol: {
-    paddingTop: 2,
-  },
-  infoTextCol: {
-    flex: 1,
-  },
-  previewSection: {
-    gap: space[3],
-    marginTop: space[1],
-  },
-  previewTitle: {
-    fontWeight: '700',
-  },
-  previewRow: {
-    gap: space[2],
-    paddingVertical: space[1],
-  },
-  previewDayCard: {
-    backgroundColor: dark.s1,
-    borderWidth: 1,
-    borderColor: dark.hairline,
-    borderRadius: radius.card,
-    paddingVertical: space[3],
-    paddingHorizontal: space[3],
-    alignItems: 'center',
-    width: 76,
-  },
-  previewDayCardWorkout: {
-    borderColor: dark.apricot,
-    backgroundColor: dark.s2,
-  },
-  previewIconBox: {
-    height: 36,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  bottomBar: {
-    position: 'absolute',
-    bottom: 24,
-    left: space[4],
-    right: space[4],
-  },
-  nextButton: {
-    backgroundColor: dark.apricot,
-    paddingVertical: 16,
-    borderRadius: radius.full,
-    alignItems: 'center',
-    justifyContent: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.25,
-    shadowRadius: 8,
-    elevation: 4,
-  },
-  nextButtonText: {
-    fontWeight: '800',
-    fontSize: 16,
-  },
-});
+const createStyles = (dark: ReturnType<typeof useAppearance>['colors']) =>
+  StyleSheet.create({
+    safeArea: {
+      flex: 1,
+      backgroundColor: dark.bg0,
+    },
+    container: {
+      flex: 1,
+      backgroundColor: dark.bg0,
+    },
+    topBar: {
+      paddingHorizontal: space[4],
+      paddingTop: space[2],
+      paddingBottom: space[1],
+    },
+    backButton: {
+      width: 44,
+      height: 44,
+      borderRadius: radius.full,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    scrollContent: {
+      paddingHorizontal: space[4],
+      paddingBottom: 120,
+      gap: space[4],
+    },
+    titleSection: {
+      gap: 4,
+      marginBottom: space[1],
+    },
+    screenTitle: {
+      letterSpacing: -0.5,
+    },
+    screenSubtitle: {
+      lineHeight: 20,
+    },
+    cardSection: {
+      backgroundColor: dark.s1,
+      borderWidth: 1,
+      borderColor: dark.hairline,
+      borderRadius: radius.card,
+      padding: space[4],
+      gap: space[3],
+    },
+    sectionLabel: {
+      fontWeight: '700',
+    },
+    daysCountRow: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+    },
+    countCircle: {
+      width: 42,
+      height: 42,
+      borderRadius: radius.full,
+      backgroundColor: dark.s2,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    countCircleSelected: {
+      backgroundColor: dark.apricot,
+    },
+    daysChipsRow: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      gap: space[2],
+    },
+    dayChip: {
+      paddingHorizontal: 14,
+      paddingVertical: 10,
+      borderRadius: radius.control,
+      backgroundColor: dark.s2,
+      borderWidth: 1,
+      borderColor: dark.hairline,
+    },
+    dayChipSelected: {
+      backgroundColor: dark.apricot,
+      borderColor: dark.apricot,
+    },
+    restDayChip: {
+      paddingHorizontal: 14,
+      paddingVertical: 10,
+      borderRadius: radius.control,
+      backgroundColor: dark.s2,
+      borderWidth: 1,
+      borderColor: dark.hairline,
+    },
+    infoCalloutCard: {
+      flexDirection: 'row',
+      backgroundColor: 'rgba(244, 182, 125, 0.08)',
+      borderWidth: 1,
+      borderColor: 'rgba(244, 182, 125, 0.25)',
+      borderRadius: radius.card,
+      padding: space[4],
+      gap: space[3],
+    },
+    infoIconCol: {
+      paddingTop: 2,
+    },
+    infoTextCol: {
+      flex: 1,
+    },
+    previewSection: {
+      gap: space[3],
+      marginTop: space[1],
+    },
+    previewTitle: {
+      fontWeight: '700',
+    },
+    previewRow: {
+      gap: space[2],
+      paddingVertical: space[1],
+    },
+    previewDayCard: {
+      backgroundColor: dark.s1,
+      borderWidth: 1,
+      borderColor: dark.hairline,
+      borderRadius: radius.card,
+      paddingVertical: space[3],
+      paddingHorizontal: space[3],
+      alignItems: 'center',
+      width: 76,
+    },
+    previewDayCardWorkout: {
+      borderColor: dark.apricot,
+      backgroundColor: dark.s2,
+    },
+    previewIconBox: {
+      height: 36,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    bottomBar: {
+      position: 'absolute',
+      bottom: 24,
+      left: space[4],
+      right: space[4],
+    },
+    nextButton: {
+      backgroundColor: dark.apricot,
+      paddingVertical: 16,
+      borderRadius: radius.full,
+      alignItems: 'center',
+      justifyContent: 'center',
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 4 },
+      shadowOpacity: 0.25,
+      shadowRadius: 8,
+      elevation: 4,
+    },
+    nextButtonText: {
+      fontWeight: '800',
+      fontSize: 16,
+    },
+  });
 
 export function WeeklyPlanModal(props: WeeklyPlanModalProps) {
   return (

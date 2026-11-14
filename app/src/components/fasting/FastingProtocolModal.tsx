@@ -1,3 +1,4 @@
+import { useTheme as useAppearance } from '@calipartner/ui/theme';
 import { type as inputTypography } from '@calipartner/ui';
 import React, { useState } from 'react';
 import { Modal, Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
@@ -8,7 +9,7 @@ import {
   validateFastingSettings,
   type FastingProtocol,
 } from '@calipartner/core';
-import { Text, dark, radius, space, type as typeTokens } from '@calipartner/ui';
+import { Text, radius, space, type as typeTokens } from '@calipartner/ui';
 import { t } from '@/i18n';
 
 export interface FastingProtocolModalProps {
@@ -39,6 +40,9 @@ export function FastingProtocolModal({
   onClose,
   testID = 'fasting-protocol-modal',
 }: FastingProtocolModalProps) {
+  const { colors: dark } = useAppearance();
+  const styles = createStyles(dark);
+
   const [selectedProtocol, setSelectedProtocol] = useState<FastingProtocol>(currentProtocol);
   const [customHours, setCustomHours] = useState<number>(currentCustomHours ?? 16);
   const [windowStart, setWindowStart] = useState<string>(eatingWindowStart);
@@ -295,234 +299,235 @@ export function FastingProtocolModal({
   );
 }
 
-const styles = StyleSheet.create({
-  backdrop: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.75)',
-    justifyContent: 'flex-end',
-  },
-  sheet: {
-    backgroundColor: dark.s2,
-    borderTopLeftRadius: radius.sheet,
-    borderTopRightRadius: radius.sheet,
-    padding: space[4],
-    maxHeight: '88%',
-    borderWidth: 1,
-    borderColor: dark.hairline,
-  },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    marginBottom: space[3],
-  },
-  title: {
-    fontSize: typeTokens.title2.fontSize,
-    fontFamily: typeTokens.title2.fontFamily,
-    color: dark.textHi,
-    marginBottom: 2,
-  },
-  subtitle: {
-    fontSize: typeTokens.bodyS.fontSize,
-    fontFamily: typeTokens.bodyS.fontFamily,
-    color: dark.textMid,
-  },
-  closeButton: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: dark.s1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  list: {
-    gap: space[2],
-    paddingBottom: space[3],
-  },
-  errorBox: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: 'rgba(255, 107, 107, 0.12)',
-    padding: space[3],
-    borderRadius: radius.control,
-    gap: space[2],
-  },
-  errorText: {
-    flex: 1,
-    fontSize: typeTokens.bodyS.fontSize,
-    fontFamily: typeTokens.bodyS.fontFamily,
-    color: dark.danger,
-  },
-  protocolCard: {
-    backgroundColor: dark.s1,
-    borderRadius: radius.card,
-    padding: space[3],
-    borderWidth: 1,
-    borderColor: dark.hairline,
-  },
-  protocolCardSelected: {
-    borderColor: dark.apricot,
-    backgroundColor: 'rgba(255, 179, 138, 0.05)',
-  },
-  protocolCardPressed: {
-    opacity: 0.85,
-  },
-  protocolHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 2,
-  },
-  protocolTitleRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: space[2],
-  },
-  protocolLabel: {
-    fontSize: typeTokens.body.fontSize,
-    fontFamily: typeTokens.body.fontFamily,
-    fontWeight: '700',
-    color: dark.textHi,
-  },
-  textApricot: {
-    color: dark.apricot,
-  },
-  badgeRow: {
-    flexDirection: 'row',
-    gap: space[1],
-  },
-  badge: {
-    backgroundColor: dark.s2,
-    paddingHorizontal: space[1],
-    paddingVertical: 2,
-    borderRadius: radius.control,
-    borderWidth: 1,
-    borderColor: dark.hairline,
-  },
-  badgeText: {
-    fontSize: 11,
-    fontFamily: typeTokens.label.fontFamily,
-    color: dark.textLo,
-  },
-  protocolDesc: {
-    fontSize: typeTokens.bodyS.fontSize,
-    fontFamily: typeTokens.bodyS.fontFamily,
-    color: dark.textMid,
-    lineHeight: 18,
-  },
-  customStepperBox: {
-    marginTop: space[2],
-    paddingTop: space[2],
-    borderTopWidth: 1,
-    borderTopColor: dark.hairline,
-  },
-  customStepperLabel: {
-    fontSize: typeTokens.label.fontSize,
-    fontFamily: typeTokens.label.fontFamily,
-    color: dark.textMid,
-    marginBottom: space[1],
-  },
-  stepperRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: space[3],
-  },
-  stepperBtn: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: dark.s2,
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: dark.hairline,
-  },
-  stepperValue: {
-    fontSize: typeTokens.title2.fontSize,
-    fontFamily: typeTokens.title2.fontFamily,
-    color: dark.textHi,
-    minWidth: 50,
-    textAlign: 'center',
-  },
-  stepperNotice: {
-    fontSize: 11,
-    fontFamily: typeTokens.bodyS.fontFamily,
-    color: dark.textLo,
-    marginTop: space[1],
-  },
-  windowSection: {
-    marginTop: space[3],
-    backgroundColor: dark.s1,
-    borderRadius: radius.card,
-    padding: space[3],
-    borderWidth: 1,
-    borderColor: dark.hairline,
-  },
-  windowSectionTitle: {
-    fontSize: typeTokens.body.fontSize,
-    fontFamily: typeTokens.body.fontFamily,
-    fontWeight: '700',
-    color: dark.textHi,
-    marginBottom: 2,
-  },
-  windowSectionSubtitle: {
-    fontSize: typeTokens.bodyS.fontSize,
-    fontFamily: typeTokens.bodyS.fontFamily,
-    color: dark.textMid,
-    marginBottom: space[3],
-  },
-  windowInputsRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: space[3],
-  },
-  windowInputCol: {
-    flex: 1,
-  },
-  inputLabel: {
-    fontSize: typeTokens.label.fontSize,
-    fontFamily: typeTokens.label.fontFamily,
-    color: dark.textLo,
-    marginBottom: 2,
-  },
-  windowInput: {
-    height: 44,
-    backgroundColor: dark.s2,
-    borderRadius: radius.control,
-    borderWidth: 1,
-    borderColor: dark.hairline,
-    paddingHorizontal: space[3],
-    color: dark.textHi,
-    fontSize: typeTokens.body.fontSize,
-    fontFamily: typeTokens.body.fontFamily,
-    textAlign: 'center',
-  },
-  windowArrow: {
-    paddingTop: 16,
-  },
-  footer: {
-    marginTop: space[3],
-    paddingTop: space[3],
-    borderTopWidth: 1,
-    borderTopColor: dark.hairline,
-  },
-  saveButton: {
-    height: 48,
-    backgroundColor: dark.apricot,
-    borderRadius: radius.button,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  saveButtonText: {
-    fontSize: typeTokens.body.fontSize,
-    fontFamily: typeTokens.body.fontFamily,
-    fontWeight: '700',
-    color: dark.onBrand,
-  },
-  buttonPressed: {
-    opacity: 0.8,
-  },
-  buttonDisabled: {
-    opacity: 0.5,
-  },
-});
+const createStyles = (dark: ReturnType<typeof useAppearance>['colors']) =>
+  StyleSheet.create({
+    backdrop: {
+      flex: 1,
+      backgroundColor: 'rgba(0, 0, 0, 0.75)',
+      justifyContent: 'flex-end',
+    },
+    sheet: {
+      backgroundColor: dark.s2,
+      borderTopLeftRadius: radius.sheet,
+      borderTopRightRadius: radius.sheet,
+      padding: space[4],
+      maxHeight: '88%',
+      borderWidth: 1,
+      borderColor: dark.hairline,
+    },
+    header: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'flex-start',
+      marginBottom: space[3],
+    },
+    title: {
+      fontSize: typeTokens.title2.fontSize,
+      fontFamily: typeTokens.title2.fontFamily,
+      color: dark.textHi,
+      marginBottom: 2,
+    },
+    subtitle: {
+      fontSize: typeTokens.bodyS.fontSize,
+      fontFamily: typeTokens.bodyS.fontFamily,
+      color: dark.textMid,
+    },
+    closeButton: {
+      width: 44,
+      height: 44,
+      borderRadius: 22,
+      backgroundColor: dark.s1,
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    list: {
+      gap: space[2],
+      paddingBottom: space[3],
+    },
+    errorBox: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      backgroundColor: 'rgba(255, 107, 107, 0.12)',
+      padding: space[3],
+      borderRadius: radius.control,
+      gap: space[2],
+    },
+    errorText: {
+      flex: 1,
+      fontSize: typeTokens.bodyS.fontSize,
+      fontFamily: typeTokens.bodyS.fontFamily,
+      color: dark.danger,
+    },
+    protocolCard: {
+      backgroundColor: dark.s1,
+      borderRadius: radius.card,
+      padding: space[3],
+      borderWidth: 1,
+      borderColor: dark.hairline,
+    },
+    protocolCardSelected: {
+      borderColor: dark.apricot,
+      backgroundColor: 'rgba(255, 179, 138, 0.05)',
+    },
+    protocolCardPressed: {
+      opacity: 0.85,
+    },
+    protocolHeader: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      marginBottom: 2,
+    },
+    protocolTitleRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: space[2],
+    },
+    protocolLabel: {
+      fontSize: typeTokens.body.fontSize,
+      fontFamily: typeTokens.body.fontFamily,
+      fontWeight: '700',
+      color: dark.textHi,
+    },
+    textApricot: {
+      color: dark.apricot,
+    },
+    badgeRow: {
+      flexDirection: 'row',
+      gap: space[1],
+    },
+    badge: {
+      backgroundColor: dark.s2,
+      paddingHorizontal: space[1],
+      paddingVertical: 2,
+      borderRadius: radius.control,
+      borderWidth: 1,
+      borderColor: dark.hairline,
+    },
+    badgeText: {
+      fontSize: 11,
+      fontFamily: typeTokens.label.fontFamily,
+      color: dark.textLo,
+    },
+    protocolDesc: {
+      fontSize: typeTokens.bodyS.fontSize,
+      fontFamily: typeTokens.bodyS.fontFamily,
+      color: dark.textMid,
+      lineHeight: 18,
+    },
+    customStepperBox: {
+      marginTop: space[2],
+      paddingTop: space[2],
+      borderTopWidth: 1,
+      borderTopColor: dark.hairline,
+    },
+    customStepperLabel: {
+      fontSize: typeTokens.label.fontSize,
+      fontFamily: typeTokens.label.fontFamily,
+      color: dark.textMid,
+      marginBottom: space[1],
+    },
+    stepperRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: space[3],
+    },
+    stepperBtn: {
+      width: 44,
+      height: 44,
+      borderRadius: 22,
+      backgroundColor: dark.s2,
+      justifyContent: 'center',
+      alignItems: 'center',
+      borderWidth: 1,
+      borderColor: dark.hairline,
+    },
+    stepperValue: {
+      fontSize: typeTokens.title2.fontSize,
+      fontFamily: typeTokens.title2.fontFamily,
+      color: dark.textHi,
+      minWidth: 50,
+      textAlign: 'center',
+    },
+    stepperNotice: {
+      fontSize: 11,
+      fontFamily: typeTokens.bodyS.fontFamily,
+      color: dark.textLo,
+      marginTop: space[1],
+    },
+    windowSection: {
+      marginTop: space[3],
+      backgroundColor: dark.s1,
+      borderRadius: radius.card,
+      padding: space[3],
+      borderWidth: 1,
+      borderColor: dark.hairline,
+    },
+    windowSectionTitle: {
+      fontSize: typeTokens.body.fontSize,
+      fontFamily: typeTokens.body.fontFamily,
+      fontWeight: '700',
+      color: dark.textHi,
+      marginBottom: 2,
+    },
+    windowSectionSubtitle: {
+      fontSize: typeTokens.bodyS.fontSize,
+      fontFamily: typeTokens.bodyS.fontFamily,
+      color: dark.textMid,
+      marginBottom: space[3],
+    },
+    windowInputsRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: space[3],
+    },
+    windowInputCol: {
+      flex: 1,
+    },
+    inputLabel: {
+      fontSize: typeTokens.label.fontSize,
+      fontFamily: typeTokens.label.fontFamily,
+      color: dark.textLo,
+      marginBottom: 2,
+    },
+    windowInput: {
+      height: 44,
+      backgroundColor: dark.s2,
+      borderRadius: radius.control,
+      borderWidth: 1,
+      borderColor: dark.hairline,
+      paddingHorizontal: space[3],
+      color: dark.textHi,
+      fontSize: typeTokens.body.fontSize,
+      fontFamily: typeTokens.body.fontFamily,
+      textAlign: 'center',
+    },
+    windowArrow: {
+      paddingTop: 16,
+    },
+    footer: {
+      marginTop: space[3],
+      paddingTop: space[3],
+      borderTopWidth: 1,
+      borderTopColor: dark.hairline,
+    },
+    saveButton: {
+      height: 48,
+      backgroundColor: dark.apricot,
+      borderRadius: radius.button,
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    saveButtonText: {
+      fontSize: typeTokens.body.fontSize,
+      fontFamily: typeTokens.body.fontFamily,
+      fontWeight: '700',
+      color: dark.onBrand,
+    },
+    buttonPressed: {
+      opacity: 0.8,
+    },
+    buttonDisabled: {
+      opacity: 0.5,
+    },
+  });

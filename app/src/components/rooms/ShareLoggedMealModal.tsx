@@ -1,9 +1,10 @@
+import { useTheme as useAppearance } from '@calipartner/ui/theme';
 import { useBrowserModalBack } from '@/hooks/useBrowserModalBack';
 import React, { useEffect, useRef, useState } from 'react';
 
 import { Modal, SafeAreaView, ScrollView, StyleSheet, View } from 'react-native';
 
-import { Button, Card, dark, space, Text } from '@calipartner/ui';
+import { Button, Card, space, Text } from '@calipartner/ui';
 
 import type { MealSection, RoomMemberSnapshot } from '@calipartner/core';
 
@@ -33,6 +34,9 @@ export function ShareLoggedMealModal({
   onShared: () => void;
   onPrivacy?: () => void;
 }) {
+  const { colors: dark } = useAppearance();
+  const styles = createStyles(dark);
+
   useBrowserModalBack(visible, onClose);
   const { isOnline } = useNetworkStatus();
 
@@ -209,7 +213,8 @@ export function ShareLoggedMealModal({
   );
 }
 
-const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: dark.bg0 },
-  content: { padding: space[4], gap: space[3], paddingBottom: space[8] },
-});
+const createStyles = (dark: ReturnType<typeof useAppearance>['colors']) =>
+  StyleSheet.create({
+    screen: { flex: 1, backgroundColor: dark.bg0 },
+    content: { padding: space[4], gap: space[3], paddingBottom: space[8] },
+  });

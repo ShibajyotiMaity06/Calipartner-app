@@ -1,7 +1,8 @@
+import { useTheme as useAppearance } from '@calipartner/ui/theme';
 import React from 'react';
 import { StyleSheet, View, TouchableOpacity } from 'react-native';
 import type { CalculateTargetsResult, Goal } from '@calipartner/core';
-import { Text, Button, TargetRevealRing, MacroBar, space, dark, radius } from '@calipartner/ui';
+import { Text, Button, TargetRevealRing, MacroBar, space, radius } from '@calipartner/ui';
 import { t } from '@/i18n';
 import { playClickSound, playSuccessSound } from '@/lib/sound';
 
@@ -38,6 +39,9 @@ export function SummaryStep({
   onGoBackToRate,
   onOpenHowCalculated: _onOpenHowCalculated,
 }: SummaryStepProps) {
+  const { colors: dark } = useAppearance();
+  const styles = createStyles(dark);
+
   const [customWaterMl, setCustomWaterMl] = React.useState<number>(waterMlGoal);
   const [customStepGoal, setCustomStepGoal] = React.useState<number>(stepGoal);
   const [proteinMultiplier, setProteinMultiplier] = React.useState<number>(2.0);
@@ -358,159 +362,160 @@ export function SummaryStep({
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    paddingHorizontal: space[4],
-    gap: space[4],
-    paddingTop: space[2],
-    paddingBottom: space[4],
-  },
-  emptyContainer: {
-    padding: space[4],
-    alignItems: 'center',
-    gap: space[3],
-  },
-  emptyTitle: {
-    textAlign: 'center',
-  },
-  emptyBody: {
-    textAlign: 'center',
-    lineHeight: 20,
-  },
-  heroRingCard: {
-    backgroundColor: dark.s1,
-    borderRadius: radius.card,
-    borderWidth: 1,
-    borderColor: dark.hairline,
-    padding: space[4],
-    alignItems: 'center',
-    gap: space[3],
-  },
-  rateSentence: {
-    textAlign: 'center',
-    lineHeight: 22,
-    maxWidth: 320,
-  },
-  card: {
-    backgroundColor: dark.s1,
-    borderRadius: radius.card,
-    borderWidth: 1,
-    borderColor: dark.hairline,
-    padding: space[4],
-    gap: space[3],
-  },
-  macrosRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    paddingTop: space[1],
-  },
-  macroMetric: {
-    alignItems: 'center',
-    flex: 1,
-    gap: 2,
-  },
-  macroValue: {
-    fontWeight: '700',
-  },
-  howCalcLink: {
-    minHeight: 44,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginTop: space[1],
-  },
-  howCalcText: {
-    fontWeight: '600',
-  },
-  habitRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    gap: space[3],
-  },
-  habitItem: {
-    flex: 1,
-    backgroundColor: dark.s2,
-    borderRadius: radius.control,
-    padding: space[3],
-    gap: 4,
-  },
-  habitValue: {
-    fontWeight: '600',
-  },
-  habitControlBlock: {
-    gap: space[2],
-    marginTop: space[1],
-  },
-  habitHeaderRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  habitChipsRow: {
-    flexDirection: 'row',
-    gap: space[2],
-    flexWrap: 'wrap',
-  },
-  habitChip: {
-    backgroundColor: dark.s2,
-    borderWidth: 1,
-    borderColor: dark.hairline,
-    borderRadius: radius.control,
-    paddingVertical: space[2],
-    paddingHorizontal: space[3],
-    alignItems: 'center',
-    justifyContent: 'center',
-    minWidth: 54,
-  },
-  errorBanner: {
-    backgroundColor: dark.s2,
-    borderWidth: 1,
-    borderColor: dark.danger,
-    borderRadius: radius.control,
-    padding: space[3],
-  },
-  actionsGroup: {
-    gap: space[3],
-    marginTop: space[2],
-  },
-  proteinHeaderRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    flexWrap: 'wrap',
-    gap: space[2],
-  },
-  recommendedBadge: {
-    backgroundColor: 'rgba(255, 178, 125, 0.15)',
-    paddingHorizontal: space[2],
-    paddingVertical: 3,
-    borderRadius: radius.full,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 178, 125, 0.3)',
-  },
-  recommendedBadgeText: {
-    fontWeight: '700',
-  },
-  proteinSubtitle: {
-    marginTop: -space[1],
-    marginBottom: space[1],
-  },
-  proteinOptionsRow: {
-    flexDirection: 'row',
-    gap: space[3],
-  },
-  proteinOptionBtn: {
-    flex: 1,
-    backgroundColor: dark.s2,
-    borderRadius: radius.control,
-    paddingVertical: space[3],
-    paddingHorizontal: space[2],
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: dark.hairline,
-    gap: 4,
-  },
-  proteinOptionBtnActive: {
-    backgroundColor: dark.apricot,
-    borderColor: dark.apricot,
-  },
-});
+const createStyles = (dark: ReturnType<typeof useAppearance>['colors']) =>
+  StyleSheet.create({
+    container: {
+      paddingHorizontal: space[4],
+      gap: space[4],
+      paddingTop: space[2],
+      paddingBottom: space[4],
+    },
+    emptyContainer: {
+      padding: space[4],
+      alignItems: 'center',
+      gap: space[3],
+    },
+    emptyTitle: {
+      textAlign: 'center',
+    },
+    emptyBody: {
+      textAlign: 'center',
+      lineHeight: 20,
+    },
+    heroRingCard: {
+      backgroundColor: dark.s1,
+      borderRadius: radius.card,
+      borderWidth: 1,
+      borderColor: dark.hairline,
+      padding: space[4],
+      alignItems: 'center',
+      gap: space[3],
+    },
+    rateSentence: {
+      textAlign: 'center',
+      lineHeight: 22,
+      maxWidth: 320,
+    },
+    card: {
+      backgroundColor: dark.s1,
+      borderRadius: radius.card,
+      borderWidth: 1,
+      borderColor: dark.hairline,
+      padding: space[4],
+      gap: space[3],
+    },
+    macrosRow: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      paddingTop: space[1],
+    },
+    macroMetric: {
+      alignItems: 'center',
+      flex: 1,
+      gap: 2,
+    },
+    macroValue: {
+      fontWeight: '700',
+    },
+    howCalcLink: {
+      minHeight: 44,
+      justifyContent: 'center',
+      alignItems: 'center',
+      marginTop: space[1],
+    },
+    howCalcText: {
+      fontWeight: '600',
+    },
+    habitRow: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      gap: space[3],
+    },
+    habitItem: {
+      flex: 1,
+      backgroundColor: dark.s2,
+      borderRadius: radius.control,
+      padding: space[3],
+      gap: 4,
+    },
+    habitValue: {
+      fontWeight: '600',
+    },
+    habitControlBlock: {
+      gap: space[2],
+      marginTop: space[1],
+    },
+    habitHeaderRow: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+    },
+    habitChipsRow: {
+      flexDirection: 'row',
+      gap: space[2],
+      flexWrap: 'wrap',
+    },
+    habitChip: {
+      backgroundColor: dark.s2,
+      borderWidth: 1,
+      borderColor: dark.hairline,
+      borderRadius: radius.control,
+      paddingVertical: space[2],
+      paddingHorizontal: space[3],
+      alignItems: 'center',
+      justifyContent: 'center',
+      minWidth: 54,
+    },
+    errorBanner: {
+      backgroundColor: dark.s2,
+      borderWidth: 1,
+      borderColor: dark.danger,
+      borderRadius: radius.control,
+      padding: space[3],
+    },
+    actionsGroup: {
+      gap: space[3],
+      marginTop: space[2],
+    },
+    proteinHeaderRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      flexWrap: 'wrap',
+      gap: space[2],
+    },
+    recommendedBadge: {
+      backgroundColor: 'rgba(255, 178, 125, 0.15)',
+      paddingHorizontal: space[2],
+      paddingVertical: 3,
+      borderRadius: radius.full,
+      borderWidth: 1,
+      borderColor: 'rgba(255, 178, 125, 0.3)',
+    },
+    recommendedBadgeText: {
+      fontWeight: '700',
+    },
+    proteinSubtitle: {
+      marginTop: -space[1],
+      marginBottom: space[1],
+    },
+    proteinOptionsRow: {
+      flexDirection: 'row',
+      gap: space[3],
+    },
+    proteinOptionBtn: {
+      flex: 1,
+      backgroundColor: dark.s2,
+      borderRadius: radius.control,
+      paddingVertical: space[3],
+      paddingHorizontal: space[2],
+      alignItems: 'center',
+      borderWidth: 1,
+      borderColor: dark.hairline,
+      gap: 4,
+    },
+    proteinOptionBtnActive: {
+      backgroundColor: dark.apricot,
+      borderColor: dark.apricot,
+    },
+  });

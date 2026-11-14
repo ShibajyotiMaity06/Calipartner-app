@@ -1,6 +1,7 @@
+import { useTheme as useAppearance } from '@calipartner/ui/theme';
 import React, { useState } from 'react';
 import { Pressable, ScrollView, StyleSheet } from 'react-native';
-import { Button, Sheet, Text, dark, homeLayout, space } from '@calipartner/ui';
+import { Button, Sheet, Text, homeLayout, space } from '@calipartner/ui';
 import { weeklyGroceryItems, type WeeklyPlanView } from '@calipartner/core';
 import { t } from '@/i18n';
 
@@ -11,6 +12,8 @@ export function WeeklyGroceryList({
   plan: WeeklyPlanView;
   onUpgrade: () => void;
 }) {
+  const { colors: dark } = useAppearance();
+
   const [visible, setVisible] = useState(false);
   const [checked, setChecked] = useState<Set<string>>(() => new Set());
   const items = weeklyGroceryItems(plan.days);

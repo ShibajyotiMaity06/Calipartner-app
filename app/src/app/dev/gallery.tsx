@@ -1,3 +1,4 @@
+import { useTheme as useAppearance } from '@calipartner/ui/theme';
 import React, { useState } from 'react';
 import { ScrollView, View, StyleSheet, SafeAreaView } from 'react-native';
 import { useRouter } from 'expo-router';
@@ -28,7 +29,6 @@ import {
   TimerDisplay,
   useTheme,
   space,
-  dark,
   type MealStatus,
   type MealType,
   type RoomMemberSummary,
@@ -71,6 +71,9 @@ const FIXTURE_3PLUS_MEMBERS: RoomMemberSummary[] = [
 ];
 
 export default function ComponentGalleryScreen(): React.JSX.Element | null {
+  const { colors: dark } = useAppearance();
+  const styles = createStyles(dark);
+
   const router = useRouter();
   const { reduceMotion } = useTheme();
 
@@ -925,116 +928,117 @@ export default function ComponentGalleryScreen(): React.JSX.Element | null {
   );
 }
 
-const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
-    backgroundColor: dark.bg0,
-  },
-  scrollContent: {
-    padding: space[4], // 16
-    paddingBottom: 40,
-  },
-  header: {
-    marginBottom: space[5], // 20
-    gap: space[2], // 8
-  },
-  controlCard: {
-    marginBottom: space[5], // 20
-    gap: space[3], // 12
-    borderColor: dark.apricot,
-  },
-  controlRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: space[3],
-  },
-  section: {
-    marginBottom: space[6], // 24
-  },
-  sectionTitle: {
-    marginBottom: space[2], // 8
-  },
-  sectionDesc: {
-    marginBottom: space[3],
-  },
-  stateHeading: {
-    marginTop: space[4],
-    marginBottom: space[2],
-  },
-  sectionCard: {
-    gap: space[3], // 12
-  },
-  subLabel: {
-    marginTop: space[3], // 12
-  },
-  rowWrap: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: space[2], // 8
-    alignItems: 'center',
-  },
-  rowBetween: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  avatarRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: space[4], // 16
-    paddingVertical: space[2],
-  },
-  sheetBody: {
-    padding: space[5], // 20
-    gap: space[3], // 12
-  },
-  ringShowcaseRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-around',
-    flexWrap: 'wrap',
-    gap: space[3],
-  },
-  ringItem: {
-    alignItems: 'center',
-    gap: space[2],
-  },
-  ringCenter: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: space[2],
-  },
-  ringLabel: {
-    textAlign: 'center',
-  },
-  seamGrid: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    alignItems: 'flex-start',
-    paddingVertical: space[2],
-  },
-  seamCell: {
-    alignItems: 'center',
-    gap: space[2],
-  },
-  seamSubText: {
-    marginTop: 4,
-  },
-  calorieRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-around',
-    flexWrap: 'wrap',
-    gap: space[4],
-    paddingVertical: space[2],
-  },
-  timerRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-around',
-    flexWrap: 'wrap',
-    gap: space[4],
-    paddingVertical: space[2],
-  },
-});
+const createStyles = (dark: ReturnType<typeof useAppearance>['colors']) =>
+  StyleSheet.create({
+    safeArea: {
+      flex: 1,
+      backgroundColor: dark.bg0,
+    },
+    scrollContent: {
+      padding: space[4], // 16
+      paddingBottom: 40,
+    },
+    header: {
+      marginBottom: space[5], // 20
+      gap: space[2], // 8
+    },
+    controlCard: {
+      marginBottom: space[5], // 20
+      gap: space[3], // 12
+      borderColor: dark.apricot,
+    },
+    controlRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      gap: space[3],
+    },
+    section: {
+      marginBottom: space[6], // 24
+    },
+    sectionTitle: {
+      marginBottom: space[2], // 8
+    },
+    sectionDesc: {
+      marginBottom: space[3],
+    },
+    stateHeading: {
+      marginTop: space[4],
+      marginBottom: space[2],
+    },
+    sectionCard: {
+      gap: space[3], // 12
+    },
+    subLabel: {
+      marginTop: space[3], // 12
+    },
+    rowWrap: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      gap: space[2], // 8
+      alignItems: 'center',
+    },
+    rowBetween: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+    },
+    avatarRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: space[4], // 16
+      paddingVertical: space[2],
+    },
+    sheetBody: {
+      padding: space[5], // 20
+      gap: space[3], // 12
+    },
+    ringShowcaseRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-around',
+      flexWrap: 'wrap',
+      gap: space[3],
+    },
+    ringItem: {
+      alignItems: 'center',
+      gap: space[2],
+    },
+    ringCenter: {
+      alignItems: 'center',
+      justifyContent: 'center',
+      paddingVertical: space[2],
+    },
+    ringLabel: {
+      textAlign: 'center',
+    },
+    seamGrid: {
+      flexDirection: 'row',
+      justifyContent: 'space-around',
+      alignItems: 'flex-start',
+      paddingVertical: space[2],
+    },
+    seamCell: {
+      alignItems: 'center',
+      gap: space[2],
+    },
+    seamSubText: {
+      marginTop: 4,
+    },
+    calorieRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-around',
+      flexWrap: 'wrap',
+      gap: space[4],
+      paddingVertical: space[2],
+    },
+    timerRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-around',
+      flexWrap: 'wrap',
+      gap: space[4],
+      paddingVertical: space[2],
+    },
+  });

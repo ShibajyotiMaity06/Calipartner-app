@@ -1,6 +1,7 @@
+import { useTheme as useAppearance } from '../theme/useTheme';
 import React, { useState } from 'react';
 import { Pressable, View, StyleSheet, type ViewStyle } from 'react-native';
-import { dark } from '../tokens/colors';
+
 import { space } from '../tokens/space';
 import { Text } from './Text';
 import { Sheet } from './Sheet';
@@ -26,6 +27,9 @@ export function VisibilityEye({
   testID,
   style,
 }: VisibilityEyeProps): React.JSX.Element {
+  const { colors: dark } = useAppearance();
+  const styles = createStyles(dark);
+
   const [sheetOpen, setSheetOpen] = useState(false);
 
   return (
@@ -93,53 +97,54 @@ export function VisibilityEye({
   );
 }
 
-const styles = StyleSheet.create({
-  hitArea: {
-    width: 24,
-    height: 24,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  eyeGlyph: {
-    width: 14,
-    height: 14,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  eyeOutline: {
-    width: 14,
-    height: 9,
-    borderRadius: 7,
-    borderWidth: 1.25,
-    borderColor: dark.textLo,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  pupil: {
-    width: 4,
-    height: 4,
-    borderRadius: 2,
-    backgroundColor: dark.textLo,
-  },
-  sheetContent: {
-    padding: space[5], // 20
-    gap: space[3], // 12
-  },
-  audienceChip: {
-    backgroundColor: 'rgba(244, 182, 125, 0.16)',
-    borderColor: dark.apricot,
-    borderWidth: 1,
-    borderRadius: 8,
-    paddingHorizontal: space[3],
-    paddingVertical: space[1],
-    alignSelf: 'flex-start',
-  },
-  sheetDescription: {
-    lineHeight: 22,
-  },
-  buttonRow: {
-    flexDirection: 'row',
-    gap: space[3],
-    marginTop: space[3],
-  },
-});
+const createStyles = (dark: ReturnType<typeof useAppearance>['colors']) =>
+  StyleSheet.create({
+    hitArea: {
+      width: 24,
+      height: 24,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    eyeGlyph: {
+      width: 14,
+      height: 14,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    eyeOutline: {
+      width: 14,
+      height: 9,
+      borderRadius: 7,
+      borderWidth: 1.25,
+      borderColor: dark.textLo,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    pupil: {
+      width: 4,
+      height: 4,
+      borderRadius: 2,
+      backgroundColor: dark.textLo,
+    },
+    sheetContent: {
+      padding: space[5], // 20
+      gap: space[3], // 12
+    },
+    audienceChip: {
+      backgroundColor: 'rgba(244, 182, 125, 0.16)',
+      borderColor: dark.apricot,
+      borderWidth: 1,
+      borderRadius: 8,
+      paddingHorizontal: space[3],
+      paddingVertical: space[1],
+      alignSelf: 'flex-start',
+    },
+    sheetDescription: {
+      lineHeight: 22,
+    },
+    buttonRow: {
+      flexDirection: 'row',
+      gap: space[3],
+      marginTop: space[3],
+    },
+  });

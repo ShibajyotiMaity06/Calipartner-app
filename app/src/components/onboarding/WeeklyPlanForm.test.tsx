@@ -22,7 +22,7 @@ vi.mock('expo-router', () => ({
   useFocusEffect: (callback: () => void | (() => void)) => React.useEffect(callback, [callback]),
 }));
 vi.mock('@/hooks/useBrowserModalBack', () => ({ useBrowserModalBack: vi.fn() }));
-vi.mock('@/components/rooms/SquadViews', () => ({ squadStyles: {} }));
+vi.mock('@/components/rooms/SquadViews', () => ({ squadStyles: {}, useSquadStyles: () => ({}) }));
 vi.mock('@calipartner/ui', async () => ({
   ...(await import('../../../../packages/ui/src/tokens')),
   Text: 'Text',

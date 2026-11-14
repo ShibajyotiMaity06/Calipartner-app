@@ -1,7 +1,8 @@
+import { useTheme as useAppearance } from '@calipartner/ui/theme';
 import React, { useState } from 'react';
 import { Modal, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { Button, Text, dark, homeLayout, radius, space } from '@calipartner/ui';
+import { Button, Text, homeLayout, radius, space } from '@calipartner/ui';
 import { t } from '@/i18n';
 import { useBrowserModalBack } from '@/hooks/useBrowserModalBack';
 
@@ -30,6 +31,9 @@ export function CompactSelect<T extends string | number>({
   multiple?: boolean;
   icon?: React.ComponentProps<typeof Ionicons>['name'];
 }) {
+  const { colors: dark } = useAppearance();
+  const styles = createStyles(dark);
+
   const [open, setOpen] = useState(false);
   useBrowserModalBack(open, () => setOpen(false));
 
@@ -186,148 +190,149 @@ export function CompactSelect<T extends string | number>({
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    gap: space[2],
-  },
-  trigger: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    minHeight: homeLayout.touchSize,
-    paddingHorizontal: space[3],
-    paddingVertical: space[2],
-    borderWidth: 1,
-    borderColor: dark.hairlineLit,
-    borderRadius: radius.control,
-  },
-  triggerLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    flex: 1,
-    minWidth: 0,
-    gap: space[2],
-  },
-  triggerIconBox: {
-    width: 28,
-    height: 28,
-    borderRadius: radius.control,
-    backgroundColor: dark.s2,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  triggerText: {
-    flex: 1,
-  },
-  modalOverlay: {
-    flex: 1,
-    justifyContent: 'center',
-    padding: space[4],
-  },
-  scrim: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: 'rgba(0, 0, 0, 0.65)',
-  },
-  modalCard: {
-    backgroundColor: dark.s1,
-    borderRadius: radius.card,
-    borderWidth: 1,
-    borderColor: dark.hairlineLit,
-    maxHeight: 460,
-    overflow: 'hidden',
-    zIndex: 1,
-  },
-  modalHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: space[4],
-    paddingVertical: space[3],
-  },
-  modalTitleRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: space[2],
-    flex: 1,
-    minWidth: 0,
-  },
-  modalHeaderIconBox: {
-    width: 32,
-    height: 32,
-    borderRadius: radius.control,
-    backgroundColor: dark.s2,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  modalCloseBtn: {
-    width: 32,
-    height: 32,
-    borderRadius: radius.full,
-    backgroundColor: dark.s2,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  divider: {
-    height: 1,
-    backgroundColor: dark.hairline,
-  },
-  optionsScroll: {
-    maxHeight: 320,
-  },
-  optionsList: {
-    padding: space[3],
-    gap: space[2],
-  },
-  optionRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    minHeight: homeLayout.touchSize,
-    paddingHorizontal: space[3],
-    paddingVertical: space[2],
-    backgroundColor: dark.s1,
-    borderRadius: radius.control,
-    borderWidth: 1,
-    borderColor: dark.hairline,
-    gap: space[3],
-  },
-  optionRowActive: {
-    backgroundColor: dark.s2,
-    borderColor: dark.hairlineLit,
-  },
-  optionLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: space[3],
-    flex: 1,
-    minWidth: 0,
-  },
-  optionIconBox: {
-    width: 32,
-    height: 32,
-    borderRadius: radius.control,
-    backgroundColor: dark.s2,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  optionIconBoxActive: {
-    backgroundColor: dark.s3,
-  },
-  optionTextCol: {
-    flex: 1,
-    gap: 2,
-  },
-  boldText: {
-    fontWeight: '600',
-  },
-  modalFooter: {
-    padding: space[3],
-    borderTopWidth: 1,
-    borderTopColor: dark.hairline,
-    backgroundColor: dark.s1,
-  },
-});
+const createStyles = (dark: ReturnType<typeof useAppearance>['colors']) =>
+  StyleSheet.create({
+    container: {
+      gap: space[2],
+    },
+    trigger: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      minHeight: homeLayout.touchSize,
+      paddingHorizontal: space[3],
+      paddingVertical: space[2],
+      borderWidth: 1,
+      borderColor: dark.hairlineLit,
+      borderRadius: radius.control,
+    },
+    triggerLeft: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      flex: 1,
+      minWidth: 0,
+      gap: space[2],
+    },
+    triggerIconBox: {
+      width: 28,
+      height: 28,
+      borderRadius: radius.control,
+      backgroundColor: dark.s2,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    triggerText: {
+      flex: 1,
+    },
+    modalOverlay: {
+      flex: 1,
+      justifyContent: 'center',
+      padding: space[4],
+    },
+    scrim: {
+      position: 'absolute',
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+      backgroundColor: 'rgba(0, 0, 0, 0.65)',
+    },
+    modalCard: {
+      backgroundColor: dark.s1,
+      borderRadius: radius.card,
+      borderWidth: 1,
+      borderColor: dark.hairlineLit,
+      maxHeight: 460,
+      overflow: 'hidden',
+      zIndex: 1,
+    },
+    modalHeader: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      paddingHorizontal: space[4],
+      paddingVertical: space[3],
+    },
+    modalTitleRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: space[2],
+      flex: 1,
+      minWidth: 0,
+    },
+    modalHeaderIconBox: {
+      width: 32,
+      height: 32,
+      borderRadius: radius.control,
+      backgroundColor: dark.s2,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    modalCloseBtn: {
+      width: 32,
+      height: 32,
+      borderRadius: radius.full,
+      backgroundColor: dark.s2,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    divider: {
+      height: 1,
+      backgroundColor: dark.hairline,
+    },
+    optionsScroll: {
+      maxHeight: 320,
+    },
+    optionsList: {
+      padding: space[3],
+      gap: space[2],
+    },
+    optionRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      minHeight: homeLayout.touchSize,
+      paddingHorizontal: space[3],
+      paddingVertical: space[2],
+      backgroundColor: dark.s1,
+      borderRadius: radius.control,
+      borderWidth: 1,
+      borderColor: dark.hairline,
+      gap: space[3],
+    },
+    optionRowActive: {
+      backgroundColor: dark.s2,
+      borderColor: dark.hairlineLit,
+    },
+    optionLeft: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: space[3],
+      flex: 1,
+      minWidth: 0,
+    },
+    optionIconBox: {
+      width: 32,
+      height: 32,
+      borderRadius: radius.control,
+      backgroundColor: dark.s2,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    optionIconBoxActive: {
+      backgroundColor: dark.s3,
+    },
+    optionTextCol: {
+      flex: 1,
+      gap: 2,
+    },
+    boldText: {
+      fontWeight: '600',
+    },
+    modalFooter: {
+      padding: space[3],
+      borderTopWidth: 1,
+      borderTopColor: dark.hairline,
+      backgroundColor: dark.s1,
+    },
+  });

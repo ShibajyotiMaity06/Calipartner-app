@@ -1,15 +1,8 @@
+import { useTheme as useAppearance } from '@calipartner/ui/theme';
 import React from 'react';
 import { Ionicons } from '@expo/vector-icons';
 import { Pressable, StyleSheet, View } from 'react-native';
-import {
-  dark,
-  homeLayout,
-  radius,
-  space,
-  Text,
-  nutritionColors,
-  squadIndicators,
-} from '@calipartner/ui';
+import { homeLayout, radius, space, Text, nutritionColors, squadIndicators } from '@calipartner/ui';
 import { t } from '@/i18n';
 
 /** A visual progress track. Goal and nutrition calculations remain in core. */
@@ -24,6 +17,9 @@ export function DayProgressTrack({
   color: string;
   testID?: string;
 }) {
+  const { colors: dark } = useAppearance();
+  const styles = createStyles(dark);
+
   const ratio = target != null && target > 0 ? value / target : null;
   return (
     <View style={styles.track} accessible={false} testID={testID}>
@@ -75,6 +71,9 @@ export function PersonalDayCard({
   onPress: () => void;
   onEdit?: () => void;
 }) {
+  const { colors: dark } = useAppearance();
+  const styles = createStyles(dark);
+
   return (
     <View style={styles.card} testID="personal-day-card">
       <View style={styles.row}>
@@ -245,52 +244,58 @@ export function PersonalDayCard({
     </View>
   );
 }
-const styles = StyleSheet.create({
-  disabled: { opacity: homeLayout.disabledOpacity },
-  blurredText: {
-    color: squadIndicators.transparent,
-    textShadowColor: dark.textMid,
-    textShadowOffset: { width: space[0], height: space[0] },
-    textShadowRadius: homeLayout.disabledBlur,
-  },
-  titleGroup: { flexDirection: 'row', alignItems: 'center', flexShrink: 1 },
-  title: { flexShrink: 1 },
-  pencil: { transform: [{ scaleX: homeLayout.editIconWidthScale }] },
-  edit: {
-    marginLeft: -space[2],
-    minHeight: homeLayout.touchSize,
-    minWidth: homeLayout.touchSize,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  card: {
-    backgroundColor: dark.s1,
-    borderColor: dark.copper,
-    borderWidth: 1,
-    borderRadius: radius.card,
-    padding: space[4],
-    gap: space[4],
-    marginBottom: space[5],
-  },
-  list: { flexDirection: 'row', flexWrap: 'wrap', gap: space[3], minHeight: homeLayout.touchSize },
-  metric: { gap: space[2], flexGrow: 1, flexBasis: homeLayout.metricTileMinWidth, minWidth: 0 },
-  fullMetric: { flexBasis: '100%' },
-  tileHeading: { gap: space[1], flexWrap: 'wrap' },
-  row: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', gap: space[2] },
-  amount: { flexShrink: 1 },
-  track: {
-    width: '100%',
-    height: space[2],
-    backgroundColor: dark.s3,
-    borderRadius: radius.full,
-    overflow: 'hidden',
-  },
-  fill: { height: '100%', backgroundColor: dark.apricot, borderRadius: radius.full },
-  over: {
-    position: 'absolute',
-    height: '100%',
-    backgroundColor: dark.cream,
-    borderRadius: radius.full,
-  },
-  action: { minHeight: homeLayout.touchSize, justifyContent: 'center' },
-});
+const createStyles = (dark: ReturnType<typeof useAppearance>['colors']) =>
+  StyleSheet.create({
+    disabled: { opacity: homeLayout.disabledOpacity },
+    blurredText: {
+      color: squadIndicators.transparent,
+      textShadowColor: dark.textMid,
+      textShadowOffset: { width: space[0], height: space[0] },
+      textShadowRadius: homeLayout.disabledBlur,
+    },
+    titleGroup: { flexDirection: 'row', alignItems: 'center', flexShrink: 1 },
+    title: { flexShrink: 1 },
+    pencil: { transform: [{ scaleX: homeLayout.editIconWidthScale }] },
+    edit: {
+      marginLeft: -space[2],
+      minHeight: homeLayout.touchSize,
+      minWidth: homeLayout.touchSize,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    card: {
+      backgroundColor: dark.s1,
+      borderColor: dark.copper,
+      borderWidth: 1,
+      borderRadius: radius.card,
+      padding: space[4],
+      gap: space[4],
+      marginBottom: space[5],
+    },
+    list: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      gap: space[3],
+      minHeight: homeLayout.touchSize,
+    },
+    metric: { gap: space[2], flexGrow: 1, flexBasis: homeLayout.metricTileMinWidth, minWidth: 0 },
+    fullMetric: { flexBasis: '100%' },
+    tileHeading: { gap: space[1], flexWrap: 'wrap' },
+    row: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', gap: space[2] },
+    amount: { flexShrink: 1 },
+    track: {
+      width: '100%',
+      height: space[2],
+      backgroundColor: dark.s3,
+      borderRadius: radius.full,
+      overflow: 'hidden',
+    },
+    fill: { height: '100%', backgroundColor: dark.apricot, borderRadius: radius.full },
+    over: {
+      position: 'absolute',
+      height: '100%',
+      backgroundColor: dark.cream,
+      borderRadius: radius.full,
+    },
+    action: { minHeight: homeLayout.touchSize, justifyContent: 'center' },
+  });

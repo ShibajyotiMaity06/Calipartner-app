@@ -1,7 +1,8 @@
+import { useTheme as useAppearance } from '@calipartner/ui/theme';
 import React, { useRef, useState } from 'react';
 import { Pressable, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { Button, dark, homeLayout, radius, Sheet, space, Text } from '@calipartner/ui';
+import { Button, homeLayout, radius, Sheet, space, Text } from '@calipartner/ui';
 import type { MealSection, SquadMeal } from '@calipartner/core';
 import { copyRoomMeal } from '@/services/roomMealService';
 import { generateClientUuid } from '@/services/foodService';
@@ -19,6 +20,8 @@ export function SquadFoodItem({
   memberId?: string;
   section: MealSection;
 }) {
+  const { colors: dark } = useAppearance();
+
   const [open, setOpen] = useState(false),
     [busy, setBusy] = useState(false),
     [failed, setFailed] = useState(false),

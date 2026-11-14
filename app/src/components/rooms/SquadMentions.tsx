@@ -1,15 +1,21 @@
+import { useTheme as useAppearance } from '@calipartner/ui/theme';
 import React, { useEffect, useRef, useState } from 'react';
 import { Modal, Pressable, ScrollView, StyleSheet, View } from 'react-native';
-import { Button, Text, dark, homeLayout, radius, space } from '@calipartner/ui';
+import { Button, Text, homeLayout, radius, space } from '@calipartner/ui';
 import { useRouter } from 'expo-router';
 import type { SquadMention } from '@calipartner/core';
 import { useSquadMentions } from '@/hooks/useSquad';
 import { Ionicons } from '@expo/vector-icons';
 import { getSquadMentions, markSquadMentionSeen } from '@/services/squadService';
 import { t, getLocale } from '@/i18n';
-import { squadStyles as styles } from './SquadViews';
+import { useSquadStyles } from './SquadViews';
 
 export function SquadMentions({ roomId, visible }: { roomId: string; visible: boolean }) {
+  const styles = useSquadStyles();
+
+  const { colors: dark } = useAppearance();
+  const localStyles = createLocalStyles(dark);
+
   const { data, error, refresh } = useSquadMentions(roomId, visible);
   const router = useRouter();
   const [expanded, setExpanded] = useState(false),
@@ -210,23 +216,24 @@ export function SquadMentions({ roomId, visible }: { roomId: string; visible: bo
   );
 }
 
-const localStyles = StyleSheet.create({
-  triggerGroup: { flexShrink: 1 },
-  trigger: {
-    minWidth: homeLayout.compactTouchSize,
-    minHeight: homeLayout.compactTouchSize,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: space[1],
-  },
-  modal: { flex: 1, justifyContent: 'center', padding: space[4] },
-  panel: {
-    flexGrow: 0,
-    maxHeight: '80%',
-    backgroundColor: dark.s2,
-    borderRadius: radius.card,
-    borderColor: dark.copper,
-    borderWidth: 1,
-  },
-  panelContent: { padding: space[3], gap: space[2] },
-});
+const createLocalStyles = (dark: ReturnType<typeof useAppearance>['colors']) =>
+  StyleSheet.create({
+    triggerGroup: { flexShrink: 1 },
+    trigger: {
+      minWidth: homeLayout.compactTouchSize,
+      minHeight: homeLayout.compactTouchSize,
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: space[1],
+    },
+    modal: { flex: 1, justifyContent: 'center', padding: space[4] },
+    panel: {
+      flexGrow: 0,
+      maxHeight: '80%',
+      backgroundColor: dark.s2,
+      borderRadius: radius.card,
+      borderColor: dark.copper,
+      borderWidth: 1,
+    },
+    panelContent: { padding: space[3], gap: space[2] },
+  });

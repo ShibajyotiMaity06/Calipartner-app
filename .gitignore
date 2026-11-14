@@ -65,6 +65,7 @@ yarn-error.log*
 .cache/
 .turbo/
 web-build/
+/app/dist-native/
 
 
 # Local documentation and reference material (tracked sources remain versioned)

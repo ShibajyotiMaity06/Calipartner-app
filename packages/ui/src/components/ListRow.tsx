@@ -1,3 +1,4 @@
+import { useTheme as useAppearance } from '../theme/useTheme';
 import React from 'react';
 import {
   View,
@@ -6,7 +7,7 @@ import {
   type GestureResponderEvent,
   type ViewStyle,
 } from 'react-native';
-import { dark } from '../tokens/colors';
+
 import { space } from '../tokens/space';
 import { Text } from './Text';
 
@@ -33,6 +34,9 @@ export function ListRow({
   testID,
   style,
 }: ListRowProps): React.JSX.Element {
+  const { colors: dark } = useAppearance();
+  const styles = createStyles(dark);
+
   const isPressable = Boolean(onPress);
 
   const content = (
@@ -77,42 +81,43 @@ export function ListRow({
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    width: '100%',
-    backgroundColor: 'transparent',
-  },
-  pressable: {
-    minHeight: 56,
-    paddingHorizontal: space[4], // 16
-    paddingVertical: space[3], // 12
-    justifyContent: 'center',
-  },
-  row: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  leading: {
-    marginRight: space[3], // 12
-    width: 40,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  center: {
-    flex: 1,
-    justifyContent: 'center',
-  },
-  subtitle: {
-    marginTop: 2,
-  },
-  trailing: {
-    marginLeft: space[3], // 12
-    alignItems: 'flex-end',
-    justifyContent: 'center',
-  },
-  divider: {
-    height: 1,
-    backgroundColor: dark.hairline,
-    marginLeft: space[4] + 40 + space[3], // 16 + 40 + 12 inset
-  },
-});
+const createStyles = (dark: ReturnType<typeof useAppearance>['colors']) =>
+  StyleSheet.create({
+    container: {
+      width: '100%',
+      backgroundColor: 'transparent',
+    },
+    pressable: {
+      minHeight: 56,
+      paddingHorizontal: space[4], // 16
+      paddingVertical: space[3], // 12
+      justifyContent: 'center',
+    },
+    row: {
+      flexDirection: 'row',
+      alignItems: 'center',
+    },
+    leading: {
+      marginRight: space[3], // 12
+      width: 40,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    center: {
+      flex: 1,
+      justifyContent: 'center',
+    },
+    subtitle: {
+      marginTop: 2,
+    },
+    trailing: {
+      marginLeft: space[3], // 12
+      alignItems: 'flex-end',
+      justifyContent: 'center',
+    },
+    divider: {
+      height: 1,
+      backgroundColor: dark.hairline,
+      marginLeft: space[4] + 40 + space[3], // 16 + 40 + 12 inset
+    },
+  });

@@ -6,9 +6,11 @@ import { Button, Text } from '@calipartner/ui';
 import { useSquadToday } from '@/hooks/useSquad';
 import { SquadPersonPanel } from '@/components/rooms/SquadPersonPanel';
 import { t } from '@/i18n';
-import { memberName, squadStyles as styles } from '@/components/rooms/SquadViews';
+import { memberName, useSquadStyles } from '@/components/rooms/SquadViews';
 
 export default function SquadPersonScreen() {
+  const styles = useSquadStyles();
+
   const params = useLocalSearchParams<{ room: string; member: string }>(),
     router = useRouter();
   const [visible, setVisible] = useState(false);

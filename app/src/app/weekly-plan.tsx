@@ -1,9 +1,10 @@
+import { useTheme as useAppearance } from '@calipartner/ui/theme';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { BackHandler, Platform, Pressable, ScrollView, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { Button, dark, homeLayout, radius, space, Text } from '@calipartner/ui';
+import { Button, homeLayout, radius, space, Text } from '@calipartner/ui';
 import {
   WEEK_DAYS,
   planDayNutrition,
@@ -21,13 +22,17 @@ import { useTargets } from '@/hooks/useTargets';
 import { WeeklyRoutineEditor } from '@/components/workouts/WeeklyRoutineEditor';
 import { PaywallModal } from '@/components/rooms/PaywallModal';
 import { useBrowserModalBack, closeBrowserModalsThen } from '@/hooks/useBrowserModalBack';
-import { squadStyles as styles } from '@/components/rooms/SquadViews';
+import { useSquadStyles } from '@/components/rooms/SquadViews';
 import { t } from '@/i18n';
 import { NutrientSummary } from '@/components/diary/NutrientSummary';
 import { WeeklyMealActions } from '@/components/diary/WeeklyMealActions';
 import { WeeklyGroceryList } from '@/components/diary/WeeklyGroceryList';
 
 export default function WeeklyPlanScreen({ onClose }: { onClose?: () => void } = {}) {
+  const styles = useSquadStyles();
+
+  const { colors: dark } = useAppearance();
+
   const { user, profile } = useAuth(),
     router = useRouter(),
     params = useLocalSearchParams<{ setup?: string }>();

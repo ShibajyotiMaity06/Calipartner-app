@@ -1,6 +1,7 @@
+import { useTheme as useAppearance } from '../theme/useTheme';
 import React, { useEffect } from 'react';
 import { View, Pressable, StyleSheet, type ViewStyle } from 'react-native';
-import { dark } from '../tokens/colors';
+
 import { radius } from '../tokens/radius';
 import { space } from '../tokens/space';
 import { Text } from './Text';
@@ -26,6 +27,9 @@ export function Toast({
   testID,
   style,
 }: ToastProps): React.JSX.Element | null {
+  const { colors: dark } = useAppearance();
+  const styles = createStyles(dark);
+
   useEffect(() => {
     if (!visible) return;
     const timer = setTimeout(() => {
@@ -69,40 +73,41 @@ export function Toast({
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    position: 'absolute',
-    bottom: 80, // Floats above bottom tab bar
-    left: space[4], // 16
-    right: space[4], // 16
-    alignItems: 'center',
-    zIndex: 9999,
-  },
-  toast: {
-    height: 48,
-    minHeight: 48,
-    backgroundColor: dark.s3,
-    borderRadius: radius.button, // 16
-    borderWidth: 1,
-    borderColor: dark.hairlineLit,
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: space[4], // 16
-    width: '100%',
-    shadowColor: '#000',
-    shadowOpacity: 0.25,
-    shadowRadius: 8,
-    elevation: 4,
-  },
-  message: {
-    flex: 1,
-  },
-  undoBtn: {
-    marginLeft: space[3], // 12
-    paddingVertical: space[1], // 4
-    paddingHorizontal: space[2], // 8
-  },
-  undoText: {
-    fontWeight: '600',
-  },
-});
+const createStyles = (dark: ReturnType<typeof useAppearance>['colors']) =>
+  StyleSheet.create({
+    container: {
+      position: 'absolute',
+      bottom: 80, // Floats above bottom tab bar
+      left: space[4], // 16
+      right: space[4], // 16
+      alignItems: 'center',
+      zIndex: 9999,
+    },
+    toast: {
+      height: 48,
+      minHeight: 48,
+      backgroundColor: dark.s3,
+      borderRadius: radius.button, // 16
+      borderWidth: 1,
+      borderColor: dark.hairlineLit,
+      flexDirection: 'row',
+      alignItems: 'center',
+      paddingHorizontal: space[4], // 16
+      width: '100%',
+      shadowColor: '#000',
+      shadowOpacity: 0.25,
+      shadowRadius: 8,
+      elevation: 4,
+    },
+    message: {
+      flex: 1,
+    },
+    undoBtn: {
+      marginLeft: space[3], // 12
+      paddingVertical: space[1], // 4
+      paddingHorizontal: space[2], // 8
+    },
+    undoText: {
+      fontWeight: '600',
+    },
+  });

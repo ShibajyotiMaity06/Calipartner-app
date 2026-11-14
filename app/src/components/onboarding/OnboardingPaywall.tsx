@@ -1,6 +1,7 @@
+import { useTheme as useAppearance } from '@calipartner/ui/theme';
 import React, { useEffect, useState } from 'react';
 import { Platform, Pressable, View } from 'react-native';
-import { Button, Text, dark, homeLayout, space } from '@calipartner/ui';
+import { Button, Text, homeLayout, space } from '@calipartner/ui';
 import type { DodoCatalogProduct } from '@calipartner/core';
 import { useAuth } from '@/contexts/AuthContext';
 import { useSubscription } from '@/hooks/useSubscription';
@@ -8,7 +9,7 @@ import { usePlusTrial } from '@/hooks/usePlusTrial';
 import { fetchWebCatalog, getCachedWebCatalog } from '@/services/webBillingService';
 import { findSubscriptionPackage } from '@/services/subscriptionPackages';
 import { t } from '@/i18n';
-import { squadStyles as styles } from '@/components/rooms/SquadViews';
+import { useSquadStyles } from '@/components/rooms/SquadViews';
 
 export function OnboardingPaywall({
   onCheckout,
@@ -17,6 +18,10 @@ export function OnboardingPaywall({
   onCheckout: (tier: 'plus' | 'pro', duration: 'monthly' | 'annual') => void;
   onFree: () => void;
 }) {
+  const styles = useSquadStyles();
+
+  const { colors: dark } = useAppearance();
+
   const { session } = useAuth(),
     subscription = useSubscription(),
     trial = usePlusTrial();

@@ -1,7 +1,8 @@
+import { useTheme as useAppearance } from '../theme/useTheme';
 import React, { useEffect, useRef } from 'react';
 import { View, StyleSheet, Animated, type AccessibilityProps } from 'react-native';
 import Svg, { Circle } from 'react-native-svg';
-import { dark, type IdentityHue, getIdentityColor } from '../tokens/colors';
+import { type IdentityHue, getIdentityColor } from '../tokens/colors';
 import { motion } from '../tokens/motion';
 import { useReducedMotion } from '../theme/useReducedMotion';
 import { Text, type TextProps } from './Text';
@@ -61,6 +62,9 @@ export function PairRing({
   accessibilityLabel,
   ...rest
 }: PairRingProps): React.JSX.Element {
+  const { colors: dark } = useAppearance();
+  const styles = createStyles(dark);
+
   const reduceMotion = useReducedMotion();
 
   // Animation values for smooth arc transitions
@@ -359,31 +363,32 @@ export function PairRing({
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    position: 'relative',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  centerContainer: {
-    position: 'absolute',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  partnerPill: {
-    position: 'absolute',
-    width: 32,
-    height: 20,
-    borderRadius: 10,
-    backgroundColor: dark.s3,
-    borderWidth: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    zIndex: 10,
-  },
-  pillText: {
-    fontSize: 9,
-    lineHeight: 11,
-    fontWeight: '700',
-  },
-});
+const createStyles = (dark: ReturnType<typeof useAppearance>['colors']) =>
+  StyleSheet.create({
+    container: {
+      position: 'relative',
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    centerContainer: {
+      position: 'absolute',
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    partnerPill: {
+      position: 'absolute',
+      width: 32,
+      height: 20,
+      borderRadius: 10,
+      backgroundColor: dark.s3,
+      borderWidth: 1,
+      alignItems: 'center',
+      justifyContent: 'center',
+      zIndex: 10,
+    },
+    pillText: {
+      fontSize: 9,
+      lineHeight: 11,
+      fontWeight: '700',
+    },
+  });

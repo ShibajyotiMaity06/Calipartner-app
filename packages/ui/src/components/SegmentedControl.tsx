@@ -1,6 +1,7 @@
+import { useTheme as useAppearance } from '../theme/useTheme';
 import React from 'react';
 import { View, Pressable, ScrollView, StyleSheet, type ViewStyle } from 'react-native';
-import { dark } from '../tokens/colors';
+
 import { radius } from '../tokens/radius';
 import { space } from '../tokens/space';
 import { Text } from './Text';
@@ -28,6 +29,9 @@ export function SegmentedControl<T extends string = string>({
   testID,
   style,
 }: SegmentedControlProps<T>): React.JSX.Element {
+  const { colors: dark } = useAppearance();
+  const styles = createStyles(dark);
+
   return (
     <ScrollView
       horizontal
@@ -76,59 +80,60 @@ export function SegmentedControl<T extends string = string>({
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flexDirection: 'row',
-  },
-  fullWidth: {
-    width: '100%',
-  },
-  innerRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    minHeight: 44,
-    backgroundColor: dark.s2,
-    borderRadius: radius.control, // 12
-    padding: space[1], // 4
-    borderWidth: 1,
-    borderColor: dark.hairline,
-  },
-  innerRowFull: {
-    width: '100%',
-  },
-  segment: {
-    minHeight: 44,
-    minWidth: 44,
-    paddingHorizontal: space[3], // 12
-    borderRadius: radius.control - 3, // 9
-    alignItems: 'center',
-    justifyContent: 'center',
-    flexDirection: 'row',
-    gap: space[1], // 4
-  },
-  segmentFlex: {
-    flex: 1,
-  },
-  segmentSelected: {
-    backgroundColor: dark.s3,
-    borderWidth: 1,
-    borderColor: dark.hairlineLit,
-  },
-  segmentPressed: {
-    backgroundColor: dark.s3,
-    opacity: 0.7,
-  },
-  label: {
-    textAlign: 'center',
-    flexShrink: 1,
-  },
-  badge: {
-    backgroundColor: dark.apricot,
-    borderRadius: radius.full,
-    paddingHorizontal: space[1] + 1,
-    paddingVertical: 1,
-    minWidth: 16,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-});
+const createStyles = (dark: ReturnType<typeof useAppearance>['colors']) =>
+  StyleSheet.create({
+    container: {
+      flexDirection: 'row',
+    },
+    fullWidth: {
+      width: '100%',
+    },
+    innerRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      minHeight: 44,
+      backgroundColor: dark.s2,
+      borderRadius: radius.control, // 12
+      padding: space[1], // 4
+      borderWidth: 1,
+      borderColor: dark.hairline,
+    },
+    innerRowFull: {
+      width: '100%',
+    },
+    segment: {
+      minHeight: 44,
+      minWidth: 44,
+      paddingHorizontal: space[3], // 12
+      borderRadius: radius.control - 3, // 9
+      alignItems: 'center',
+      justifyContent: 'center',
+      flexDirection: 'row',
+      gap: space[1], // 4
+    },
+    segmentFlex: {
+      flex: 1,
+    },
+    segmentSelected: {
+      backgroundColor: dark.s3,
+      borderWidth: 1,
+      borderColor: dark.hairlineLit,
+    },
+    segmentPressed: {
+      backgroundColor: dark.s3,
+      opacity: 0.7,
+    },
+    label: {
+      textAlign: 'center',
+      flexShrink: 1,
+    },
+    badge: {
+      backgroundColor: dark.apricot,
+      borderRadius: radius.full,
+      paddingHorizontal: space[1] + 1,
+      paddingVertical: 1,
+      minWidth: 16,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+  });

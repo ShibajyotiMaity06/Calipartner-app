@@ -1,7 +1,8 @@
+import { useTheme as useAppearance } from '@calipartner/ui/theme';
 import React, { useState } from 'react';
 import { Modal, Pressable, StyleSheet, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { Text, dark, radius, space, type as typeTokens } from '@calipartner/ui';
+import { Text, radius, space, type as typeTokens } from '@calipartner/ui';
 import { t } from '@/i18n';
 
 export interface TargetWeightEditorModalProps {
@@ -23,6 +24,9 @@ export function TargetWeightEditorModal({
   onSave,
   testID = 'target-weight-editor-modal',
 }: TargetWeightEditorModalProps) {
+  const { colors: dark } = useAppearance();
+  const styles = createStyles(dark);
+
   const [targetKg, setTargetKg] = useState<number>(initialTargetKg);
   const [weeklyPace, setWeeklyPace] = useState<number>(initialPaceKg);
   const [saving, setSaving] = useState(false);
@@ -200,194 +204,195 @@ export function TargetWeightEditorModal({
   );
 }
 
-const styles = StyleSheet.create({
-  overlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.65)',
-    justifyContent: 'flex-end',
-  },
-  sheet: {
-    backgroundColor: dark.s1,
-    borderTopLeftRadius: radius.sheet,
-    borderTopRightRadius: radius.sheet,
-    borderWidth: 1,
-    borderColor: dark.hairline,
-    padding: space[4],
-    gap: space[3],
-  },
-  grabHandle: {
-    width: 36,
-    height: 4,
-    borderRadius: radius.full,
-    backgroundColor: dark.hairlineLit,
-    alignSelf: 'center',
-    marginBottom: space[2],
-  },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  headerLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: space[2],
-  },
-  iconBox: {
-    width: 36,
-    height: 36,
-    borderRadius: radius.full,
-    backgroundColor: dark.s2,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  title: {
-    fontSize: typeTokens.body.fontSize,
-    fontFamily: typeTokens.body.fontFamily,
-    color: dark.textHi,
-    fontWeight: '700',
-  },
-  subtitle: {
-    fontSize: typeTokens.micro.fontSize,
-    fontFamily: typeTokens.micro.fontFamily,
-    color: dark.textLo,
-  },
-  closeBtn: {
-    width: 44,
-    height: 44,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  sectionCard: {
-    backgroundColor: dark.s2,
-    borderRadius: radius.card,
-    padding: space[3],
-    borderWidth: 1,
-    borderColor: dark.hairline,
-    gap: space[2],
-  },
-  sectionLabel: {
-    fontSize: typeTokens.label.fontSize,
-    fontFamily: typeTokens.label.fontFamily,
-    color: dark.textHi,
-    fontWeight: '700',
-  },
-  stepperRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: space[2],
-    marginTop: space[1],
-  },
-  stepperBtn: {
-    width: 48,
-    height: 48,
-    borderRadius: radius.button,
-    backgroundColor: dark.s3,
-    borderWidth: 1,
-    borderColor: dark.hairlineLit,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  numeralBox: {
-    alignItems: 'center',
-    gap: 2,
-  },
-  numeralText: {
-    fontSize: typeTokens.numeralL.fontSize,
-    fontFamily: typeTokens.numeralL.fontFamily,
-    fontVariant: ['tabular-nums'],
-    color: dark.textHi,
-    fontWeight: '800',
-  },
-  currentDiff: {
-    fontSize: typeTokens.micro.fontSize,
-    fontFamily: typeTokens.micro.fontFamily,
-    color: dark.textLo,
-  },
-  paceChipsRow: {
-    flexDirection: 'row',
-    gap: space[2],
-  },
-  paceChip: {
-    flex: 1,
-    minHeight: 40,
-    borderRadius: radius.control,
-    backgroundColor: dark.s3,
-    borderWidth: 1,
-    borderColor: dark.hairline,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  paceChipActive: {
-    backgroundColor: dark.apricot,
-    borderColor: dark.apricot,
-  },
-  paceChipText: {
-    fontSize: typeTokens.label.fontSize,
-    fontFamily: typeTokens.label.fontFamily,
-    color: dark.textMid,
-    fontWeight: '600',
-  },
-  paceChipTextActive: {
-    color: dark.onBrand, // #1C1109
-  },
-  projectionCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: dark.s2,
-    borderRadius: radius.card,
-    padding: space[3],
-    gap: space[3],
-    borderWidth: 1,
-    borderColor: dark.hairline,
-  },
-  projTitle: {
-    fontSize: typeTokens.micro.fontSize,
-    fontFamily: typeTokens.micro.fontFamily,
-    color: dark.textLo,
-    textTransform: 'uppercase',
-    fontWeight: '700',
-  },
-  projSubtitle: {
-    fontSize: typeTokens.bodyS.fontSize,
-    fontFamily: typeTokens.bodyS.fontFamily,
-    color: dark.textHi,
-    fontWeight: '600',
-  },
-  actionsRow: {
-    flexDirection: 'row',
-    gap: space[2],
-    marginTop: space[2],
-  },
-  cancelBtn: {
-    flex: 1,
-    minHeight: 48,
-    borderRadius: radius.button,
-    backgroundColor: dark.s2,
-    borderWidth: 1,
-    borderColor: dark.hairline,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  cancelBtnText: {
-    fontSize: typeTokens.body.fontSize,
-    fontFamily: typeTokens.body.fontFamily,
-    color: dark.textMid,
-    fontWeight: '600',
-  },
-  saveBtn: {
-    flex: 1,
-    minHeight: 48,
-    borderRadius: radius.button,
-    backgroundColor: dark.apricot,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  saveBtnText: {
-    fontSize: typeTokens.body.fontSize,
-    fontFamily: typeTokens.body.fontFamily,
-    color: dark.onBrand, // #1C1109
-    fontWeight: '700',
-  },
-});
+const createStyles = (dark: ReturnType<typeof useAppearance>['colors']) =>
+  StyleSheet.create({
+    overlay: {
+      flex: 1,
+      backgroundColor: 'rgba(0, 0, 0, 0.65)',
+      justifyContent: 'flex-end',
+    },
+    sheet: {
+      backgroundColor: dark.s1,
+      borderTopLeftRadius: radius.sheet,
+      borderTopRightRadius: radius.sheet,
+      borderWidth: 1,
+      borderColor: dark.hairline,
+      padding: space[4],
+      gap: space[3],
+    },
+    grabHandle: {
+      width: 36,
+      height: 4,
+      borderRadius: radius.full,
+      backgroundColor: dark.hairlineLit,
+      alignSelf: 'center',
+      marginBottom: space[2],
+    },
+    header: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+    },
+    headerLeft: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: space[2],
+    },
+    iconBox: {
+      width: 36,
+      height: 36,
+      borderRadius: radius.full,
+      backgroundColor: dark.s2,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    title: {
+      fontSize: typeTokens.body.fontSize,
+      fontFamily: typeTokens.body.fontFamily,
+      color: dark.textHi,
+      fontWeight: '700',
+    },
+    subtitle: {
+      fontSize: typeTokens.micro.fontSize,
+      fontFamily: typeTokens.micro.fontFamily,
+      color: dark.textLo,
+    },
+    closeBtn: {
+      width: 44,
+      height: 44,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    sectionCard: {
+      backgroundColor: dark.s2,
+      borderRadius: radius.card,
+      padding: space[3],
+      borderWidth: 1,
+      borderColor: dark.hairline,
+      gap: space[2],
+    },
+    sectionLabel: {
+      fontSize: typeTokens.label.fontSize,
+      fontFamily: typeTokens.label.fontFamily,
+      color: dark.textHi,
+      fontWeight: '700',
+    },
+    stepperRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      gap: space[2],
+      marginTop: space[1],
+    },
+    stepperBtn: {
+      width: 48,
+      height: 48,
+      borderRadius: radius.button,
+      backgroundColor: dark.s3,
+      borderWidth: 1,
+      borderColor: dark.hairlineLit,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    numeralBox: {
+      alignItems: 'center',
+      gap: 2,
+    },
+    numeralText: {
+      fontSize: typeTokens.numeralL.fontSize,
+      fontFamily: typeTokens.numeralL.fontFamily,
+      fontVariant: ['tabular-nums'],
+      color: dark.textHi,
+      fontWeight: '800',
+    },
+    currentDiff: {
+      fontSize: typeTokens.micro.fontSize,
+      fontFamily: typeTokens.micro.fontFamily,
+      color: dark.textLo,
+    },
+    paceChipsRow: {
+      flexDirection: 'row',
+      gap: space[2],
+    },
+    paceChip: {
+      flex: 1,
+      minHeight: 40,
+      borderRadius: radius.control,
+      backgroundColor: dark.s3,
+      borderWidth: 1,
+      borderColor: dark.hairline,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    paceChipActive: {
+      backgroundColor: dark.apricot,
+      borderColor: dark.apricot,
+    },
+    paceChipText: {
+      fontSize: typeTokens.label.fontSize,
+      fontFamily: typeTokens.label.fontFamily,
+      color: dark.textMid,
+      fontWeight: '600',
+    },
+    paceChipTextActive: {
+      color: dark.onBrand, // #1C1109
+    },
+    projectionCard: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      backgroundColor: dark.s2,
+      borderRadius: radius.card,
+      padding: space[3],
+      gap: space[3],
+      borderWidth: 1,
+      borderColor: dark.hairline,
+    },
+    projTitle: {
+      fontSize: typeTokens.micro.fontSize,
+      fontFamily: typeTokens.micro.fontFamily,
+      color: dark.textLo,
+      textTransform: 'uppercase',
+      fontWeight: '700',
+    },
+    projSubtitle: {
+      fontSize: typeTokens.bodyS.fontSize,
+      fontFamily: typeTokens.bodyS.fontFamily,
+      color: dark.textHi,
+      fontWeight: '600',
+    },
+    actionsRow: {
+      flexDirection: 'row',
+      gap: space[2],
+      marginTop: space[2],
+    },
+    cancelBtn: {
+      flex: 1,
+      minHeight: 48,
+      borderRadius: radius.button,
+      backgroundColor: dark.s2,
+      borderWidth: 1,
+      borderColor: dark.hairline,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    cancelBtnText: {
+      fontSize: typeTokens.body.fontSize,
+      fontFamily: typeTokens.body.fontFamily,
+      color: dark.textMid,
+      fontWeight: '600',
+    },
+    saveBtn: {
+      flex: 1,
+      minHeight: 48,
+      borderRadius: radius.button,
+      backgroundColor: dark.apricot,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    saveBtnText: {
+      fontSize: typeTokens.body.fontSize,
+      fontFamily: typeTokens.body.fontFamily,
+      color: dark.onBrand, // #1C1109
+      fontWeight: '700',
+    },
+  });

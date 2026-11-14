@@ -1,8 +1,9 @@
+import { useTheme as useAppearance } from '@calipartner/ui/theme';
 import { afterSetupDestination } from '@/services/pairOnboardingService';
 import React, { useEffect, useState } from 'react';
 import { View, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
-import { PairRing, Text, space, dark } from '@calipartner/ui';
+import { PairRing, Text, space } from '@calipartner/ui';
 import { useAuth } from '@/contexts/AuthContext';
 
 import { isUserOnboarded } from '@/services/onboardingStatus';
@@ -11,6 +12,9 @@ import { RETURNING_USER_KEY } from '@/services/sessionPersistence';
 import { ErrorState } from '@/components/ErrorState';
 
 export default function LaunchScreen() {
+  const { colors: dark } = useAppearance();
+  const styles = createStyles(dark);
+
   const router = useRouter();
   const { user, isGuest, isLoading } = useAuth();
   const [error, setError] = useState(false);
@@ -77,19 +81,20 @@ export default function LaunchScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: dark.bg0,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  logoWrapper: {
-    alignItems: 'center',
-    gap: space[4],
-  },
-  appName: {
-    letterSpacing: -0.5,
-    fontWeight: '700',
-  },
-});
+const createStyles = (dark: ReturnType<typeof useAppearance>['colors']) =>
+  StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: dark.bg0,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    logoWrapper: {
+      alignItems: 'center',
+      gap: space[4],
+    },
+    appName: {
+      letterSpacing: -0.5,
+      fontWeight: '700',
+    },
+  });

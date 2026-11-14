@@ -1,9 +1,10 @@
+import { useTheme as useAppearance } from '@calipartner/ui/theme';
 import { type as inputTypography } from '@calipartner/ui';
 import { PremiumFeatureModal } from '@/components/subscription/PremiumFeatureModal';
 import React, { useState } from 'react';
 import { Modal, Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { Text, dark, radius, space, type as typeTokens } from '@calipartner/ui';
+import { Text, radius, space, type as typeTokens } from '@calipartner/ui';
 import { t } from '@/i18n';
 
 export interface AddMeasurementModalProps {
@@ -34,6 +35,9 @@ function AddMeasurementModalContent({
   onSave,
   testID = 'add-measurement-modal',
 }: AddMeasurementModalProps) {
+  const { colors: dark } = useAppearance();
+  const styles = createStyles(dark);
+
   const [selectedLocation, setSelectedLocation] = useState<MeasurementLocation>('waist');
   const [valueText, setValueText] = useState('80');
   const [unit, setUnit] = useState<'cm' | 'in'>('cm');
@@ -244,234 +248,235 @@ function AddMeasurementModalContent({
   );
 }
 
-const styles = StyleSheet.create({
-  overlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.65)',
-    justifyContent: 'flex-end',
-  },
-  sheet: {
-    backgroundColor: dark.s1,
-    borderTopLeftRadius: radius.sheet,
-    borderTopRightRadius: radius.sheet,
-    borderWidth: 1,
-    borderColor: dark.hairline,
-    padding: space[4],
-    gap: space[3],
-    maxHeight: '90%',
-  },
-  grabHandle: {
-    width: 36,
-    height: 4,
-    borderRadius: radius.full,
-    backgroundColor: dark.hairlineLit,
-    alignSelf: 'center',
-    marginBottom: space[2],
-  },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  headerLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: space[2],
-  },
-  iconBox: {
-    width: 36,
-    height: 36,
-    borderRadius: radius.full,
-    backgroundColor: dark.s2,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  title: {
-    fontSize: typeTokens.body.fontSize,
-    fontFamily: typeTokens.body.fontFamily,
-    color: dark.textHi,
-    fontWeight: '700',
-  },
-  privateBadge: {
-    fontSize: typeTokens.micro.fontSize,
-    fontFamily: typeTokens.micro.fontFamily,
-    color: dark.textLo,
-  },
-  closeBtn: {
-    width: 44,
-    height: 44,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  scrollArea: {
-    maxHeight: 400,
-  },
-  scrollContent: {
-    gap: space[3],
-  },
-  sectionCard: {
-    backgroundColor: dark.s2,
-    borderRadius: radius.card,
-    padding: space[3],
-    borderWidth: 1,
-    borderColor: dark.hairline,
-    gap: space[2],
-  },
-  sectionTitle: {
-    fontSize: typeTokens.label.fontSize,
-    fontFamily: typeTokens.label.fontFamily,
-    color: dark.textHi,
-    fontWeight: '700',
-  },
-  chipsRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: space[2],
-  },
-  locChip: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    paddingHorizontal: space[3],
-    minHeight: 44,
-    borderRadius: radius.control,
-    backgroundColor: dark.s3,
-    borderWidth: 1,
-    borderColor: dark.hairline,
-  },
-  locChipActive: {
-    backgroundColor: dark.apricot,
-    borderColor: dark.apricot,
-  },
-  locChipText: {
-    fontSize: typeTokens.label.fontSize,
-    fontFamily: typeTokens.label.fontFamily,
-    color: dark.textMid,
-    fontWeight: '600',
-  },
-  locChipTextActive: {
-    color: dark.onBrand, // #1C1109
-  },
-  valueHeaderRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  unitToggle: {
-    flexDirection: 'row',
-    backgroundColor: dark.s3,
-    borderRadius: radius.control,
-    padding: 2,
-    borderWidth: 1,
-    borderColor: dark.hairline,
-  },
-  unitToggleBtn: {
-    paddingHorizontal: space[3],
-    minHeight: 32,
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderRadius: radius.control - 2,
-  },
-  unitToggleBtnActive: {
-    backgroundColor: dark.s2,
-  },
-  unitToggleText: {
-    fontSize: typeTokens.micro.fontSize,
-    fontFamily: typeTokens.micro.fontFamily,
-    color: dark.textLo,
-    fontWeight: '700',
-  },
-  unitToggleTextActive: {
-    color: dark.textHi,
-  },
-  inputWrap: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: dark.s3,
-    borderRadius: radius.control,
-    borderWidth: 1,
-    borderColor: dark.hairline,
-    paddingHorizontal: space[3],
-    minHeight: 44,
-  },
-  input: {
-    flex: 1,
-    fontSize: typeTokens.body.fontSize,
-    fontFamily: typeTokens.body.fontFamily,
-    color: dark.textHi,
-    minHeight: 44,
-  },
-  inputSuffix: {
-    fontSize: typeTokens.label.fontSize,
-    fontFamily: typeTokens.label.fontFamily,
-    color: dark.textLo,
-    fontWeight: '600',
-  },
-  dateInput: {
-    backgroundColor: dark.s3,
-    borderRadius: radius.control,
-    borderWidth: 1,
-    borderColor: dark.hairline,
-    paddingHorizontal: space[3],
-    minHeight: 44,
-    color: dark.textHi,
-    fontSize: typeTokens.bodyS.fontSize,
-  },
-  errorText: {
-    fontSize: typeTokens.label.fontSize,
-    fontFamily: typeTokens.label.fontFamily,
-    color: dark.danger,
-  },
-  privacyBanner: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: space[2],
-    backgroundColor: dark.s2,
-    padding: space[3],
-    borderRadius: radius.control,
-  },
-  privacyBannerText: {
-    fontSize: typeTokens.micro.fontSize,
-    fontFamily: typeTokens.micro.fontFamily,
-    color: dark.textLo,
-    flex: 1,
-  },
-  actionsRow: {
-    flexDirection: 'row',
-    gap: space[2],
-    marginTop: space[2],
-  },
-  cancelBtn: {
-    flex: 1,
-    minHeight: 48,
-    borderRadius: radius.button,
-    backgroundColor: dark.s2,
-    borderWidth: 1,
-    borderColor: dark.hairline,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  cancelBtnText: {
-    fontSize: typeTokens.body.fontSize,
-    fontFamily: typeTokens.body.fontFamily,
-    color: dark.textMid,
-    fontWeight: '600',
-  },
-  saveBtn: {
-    flex: 1,
-    minHeight: 48,
-    borderRadius: radius.button,
-    backgroundColor: dark.apricot,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  saveBtnText: {
-    fontSize: typeTokens.body.fontSize,
-    fontFamily: typeTokens.body.fontFamily,
-    color: dark.onBrand, // #1C1109
-    fontWeight: '700',
-  },
-});
+const createStyles = (dark: ReturnType<typeof useAppearance>['colors']) =>
+  StyleSheet.create({
+    overlay: {
+      flex: 1,
+      backgroundColor: 'rgba(0, 0, 0, 0.65)',
+      justifyContent: 'flex-end',
+    },
+    sheet: {
+      backgroundColor: dark.s1,
+      borderTopLeftRadius: radius.sheet,
+      borderTopRightRadius: radius.sheet,
+      borderWidth: 1,
+      borderColor: dark.hairline,
+      padding: space[4],
+      gap: space[3],
+      maxHeight: '90%',
+    },
+    grabHandle: {
+      width: 36,
+      height: 4,
+      borderRadius: radius.full,
+      backgroundColor: dark.hairlineLit,
+      alignSelf: 'center',
+      marginBottom: space[2],
+    },
+    header: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+    },
+    headerLeft: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: space[2],
+    },
+    iconBox: {
+      width: 36,
+      height: 36,
+      borderRadius: radius.full,
+      backgroundColor: dark.s2,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    title: {
+      fontSize: typeTokens.body.fontSize,
+      fontFamily: typeTokens.body.fontFamily,
+      color: dark.textHi,
+      fontWeight: '700',
+    },
+    privateBadge: {
+      fontSize: typeTokens.micro.fontSize,
+      fontFamily: typeTokens.micro.fontFamily,
+      color: dark.textLo,
+    },
+    closeBtn: {
+      width: 44,
+      height: 44,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    scrollArea: {
+      maxHeight: 400,
+    },
+    scrollContent: {
+      gap: space[3],
+    },
+    sectionCard: {
+      backgroundColor: dark.s2,
+      borderRadius: radius.card,
+      padding: space[3],
+      borderWidth: 1,
+      borderColor: dark.hairline,
+      gap: space[2],
+    },
+    sectionTitle: {
+      fontSize: typeTokens.label.fontSize,
+      fontFamily: typeTokens.label.fontFamily,
+      color: dark.textHi,
+      fontWeight: '700',
+    },
+    chipsRow: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      gap: space[2],
+    },
+    locChip: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 6,
+      paddingHorizontal: space[3],
+      minHeight: 44,
+      borderRadius: radius.control,
+      backgroundColor: dark.s3,
+      borderWidth: 1,
+      borderColor: dark.hairline,
+    },
+    locChipActive: {
+      backgroundColor: dark.apricot,
+      borderColor: dark.apricot,
+    },
+    locChipText: {
+      fontSize: typeTokens.label.fontSize,
+      fontFamily: typeTokens.label.fontFamily,
+      color: dark.textMid,
+      fontWeight: '600',
+    },
+    locChipTextActive: {
+      color: dark.onBrand, // #1C1109
+    },
+    valueHeaderRow: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+    },
+    unitToggle: {
+      flexDirection: 'row',
+      backgroundColor: dark.s3,
+      borderRadius: radius.control,
+      padding: 2,
+      borderWidth: 1,
+      borderColor: dark.hairline,
+    },
+    unitToggleBtn: {
+      paddingHorizontal: space[3],
+      minHeight: 32,
+      justifyContent: 'center',
+      alignItems: 'center',
+      borderRadius: radius.control - 2,
+    },
+    unitToggleBtnActive: {
+      backgroundColor: dark.s2,
+    },
+    unitToggleText: {
+      fontSize: typeTokens.micro.fontSize,
+      fontFamily: typeTokens.micro.fontFamily,
+      color: dark.textLo,
+      fontWeight: '700',
+    },
+    unitToggleTextActive: {
+      color: dark.textHi,
+    },
+    inputWrap: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      backgroundColor: dark.s3,
+      borderRadius: radius.control,
+      borderWidth: 1,
+      borderColor: dark.hairline,
+      paddingHorizontal: space[3],
+      minHeight: 44,
+    },
+    input: {
+      flex: 1,
+      fontSize: typeTokens.body.fontSize,
+      fontFamily: typeTokens.body.fontFamily,
+      color: dark.textHi,
+      minHeight: 44,
+    },
+    inputSuffix: {
+      fontSize: typeTokens.label.fontSize,
+      fontFamily: typeTokens.label.fontFamily,
+      color: dark.textLo,
+      fontWeight: '600',
+    },
+    dateInput: {
+      backgroundColor: dark.s3,
+      borderRadius: radius.control,
+      borderWidth: 1,
+      borderColor: dark.hairline,
+      paddingHorizontal: space[3],
+      minHeight: 44,
+      color: dark.textHi,
+      fontSize: typeTokens.bodyS.fontSize,
+    },
+    errorText: {
+      fontSize: typeTokens.label.fontSize,
+      fontFamily: typeTokens.label.fontFamily,
+      color: dark.danger,
+    },
+    privacyBanner: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: space[2],
+      backgroundColor: dark.s2,
+      padding: space[3],
+      borderRadius: radius.control,
+    },
+    privacyBannerText: {
+      fontSize: typeTokens.micro.fontSize,
+      fontFamily: typeTokens.micro.fontFamily,
+      color: dark.textLo,
+      flex: 1,
+    },
+    actionsRow: {
+      flexDirection: 'row',
+      gap: space[2],
+      marginTop: space[2],
+    },
+    cancelBtn: {
+      flex: 1,
+      minHeight: 48,
+      borderRadius: radius.button,
+      backgroundColor: dark.s2,
+      borderWidth: 1,
+      borderColor: dark.hairline,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    cancelBtnText: {
+      fontSize: typeTokens.body.fontSize,
+      fontFamily: typeTokens.body.fontFamily,
+      color: dark.textMid,
+      fontWeight: '600',
+    },
+    saveBtn: {
+      flex: 1,
+      minHeight: 48,
+      borderRadius: radius.button,
+      backgroundColor: dark.apricot,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    saveBtnText: {
+      fontSize: typeTokens.body.fontSize,
+      fontFamily: typeTokens.body.fontFamily,
+      color: dark.onBrand, // #1C1109
+      fontWeight: '700',
+    },
+  });
 
 export function AddMeasurementModal(props: AddMeasurementModalProps) {
   return (

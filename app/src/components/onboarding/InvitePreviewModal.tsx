@@ -1,7 +1,8 @@
+import { useTheme as useAppearance } from '@calipartner/ui/theme';
 import { NavigationIcon } from '@calipartner/ui';
 import React from 'react';
 import { View, StyleSheet, Modal, SafeAreaView, TouchableOpacity } from 'react-native';
-import { Text, Button, Avatar, PairedCard, space, dark, radius } from '@calipartner/ui';
+import { Text, Button, Avatar, PairedCard, space, radius } from '@calipartner/ui';
 import { playClickSound } from '@/lib/sound';
 
 export interface InvitePreviewModalProps {
@@ -25,6 +26,9 @@ export function InvitePreviewModal({
   isInvalidLink = false,
   testID = 'invite-preview-modal',
 }: InvitePreviewModalProps) {
+  const { colors: dark } = useAppearance();
+  const styles = createStyles(dark);
+
   const handleJoin = () => {
     playClickSound();
     onJoin();
@@ -136,72 +140,73 @@ export function InvitePreviewModal({
   );
 }
 
-const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
-    backgroundColor: dark.bg0,
-  },
-  container: {
-    flex: 1,
-    paddingHorizontal: space[4],
-    justifyContent: 'space-between',
-    paddingBottom: space[4],
-  },
-  topBar: {
-    minHeight: 44,
-    justifyContent: 'center',
-    paddingTop: space[1],
-  },
-  backButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: space[1],
-    minWidth: 44,
-    minHeight: 44,
-  },
-  header: {
-    alignItems: 'center',
-    gap: space[3],
-    paddingVertical: space[2],
-  },
-  titleGroup: {
-    alignItems: 'center',
-    gap: 4,
-  },
-  title: {
-    textAlign: 'center',
-    letterSpacing: -0.4,
-  },
-  streakLine: {
-    textAlign: 'center',
-  },
-  previewSection: {
-    flex: 1,
-    justifyContent: 'center',
-    paddingVertical: space[2],
-  },
-  bottomArea: {
-    gap: space[2],
-    paddingTop: space[2],
-  },
-  freeNotice: {
-    textAlign: 'center',
-    lineHeight: 18,
-  },
-  statusBox: {
-    backgroundColor: dark.s1,
-    borderWidth: 1,
-    borderColor: dark.hairlineLit,
-    borderRadius: radius.card,
-    padding: space[4],
-    gap: 4,
-    alignItems: 'center',
-  },
-  statusTitle: {
-    fontWeight: '600',
-    textAlign: 'center',
-  },
-  statusBody: {
-    textAlign: 'center',
-  },
-});
+const createStyles = (dark: ReturnType<typeof useAppearance>['colors']) =>
+  StyleSheet.create({
+    safeArea: {
+      flex: 1,
+      backgroundColor: dark.bg0,
+    },
+    container: {
+      flex: 1,
+      paddingHorizontal: space[4],
+      justifyContent: 'space-between',
+      paddingBottom: space[4],
+    },
+    topBar: {
+      minHeight: 44,
+      justifyContent: 'center',
+      paddingTop: space[1],
+    },
+    backButton: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: space[1],
+      minWidth: 44,
+      minHeight: 44,
+    },
+    header: {
+      alignItems: 'center',
+      gap: space[3],
+      paddingVertical: space[2],
+    },
+    titleGroup: {
+      alignItems: 'center',
+      gap: 4,
+    },
+    title: {
+      textAlign: 'center',
+      letterSpacing: -0.4,
+    },
+    streakLine: {
+      textAlign: 'center',
+    },
+    previewSection: {
+      flex: 1,
+      justifyContent: 'center',
+      paddingVertical: space[2],
+    },
+    bottomArea: {
+      gap: space[2],
+      paddingTop: space[2],
+    },
+    freeNotice: {
+      textAlign: 'center',
+      lineHeight: 18,
+    },
+    statusBox: {
+      backgroundColor: dark.s1,
+      borderWidth: 1,
+      borderColor: dark.hairlineLit,
+      borderRadius: radius.card,
+      padding: space[4],
+      gap: 4,
+      alignItems: 'center',
+    },
+    statusTitle: {
+      fontWeight: '600',
+      textAlign: 'center',
+    },
+    statusBody: {
+      textAlign: 'center',
+    },
+  });

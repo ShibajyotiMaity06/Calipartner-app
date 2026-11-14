@@ -1,9 +1,10 @@
+import { useTheme as useAppearance } from '@calipartner/ui/theme';
 import { NutrientSummary } from './NutrientSummary';
 import React from 'react';
 import { View, StyleSheet, ScrollView, Pressable } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import type { DiarySectionSummary, FoodEntry, MealSection } from '@calipartner/core';
-import { Sheet, Text, Button, dark, space, radius } from '@calipartner/ui';
+import { Sheet, Text, Button, space, radius } from '@calipartner/ui';
 import { t } from '@/i18n';
 
 export interface MealDetailSheetProps {
@@ -27,6 +28,9 @@ export function MealDetailSheet({
   onDeleteEntry,
   onCopyMeal,
 }: MealDetailSheetProps) {
+  const { colors: dark } = useAppearance();
+  const styles = createStyles(dark);
+
   const sectionName = t(`diary.sections.${section}` as Parameters<typeof t>[0]);
 
   return (
@@ -140,66 +144,67 @@ export function MealDetailSheet({
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    paddingHorizontal: space[4],
-  },
-  header: {
-    paddingBottom: space[3],
-    borderBottomWidth: 1,
-    borderBottomColor: dark.hairline,
-  },
-  headerTop: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  headerRight: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: space[3],
-  },
-  copyButton: {
-    padding: space[1],
-  },
-  scrollList: {
-    paddingVertical: space[3],
-    gap: space[2],
-  },
-  emptyContainer: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: space[8],
-    gap: space[2],
-  },
-  emptyText: {
-    textAlign: 'center',
-  },
-  entryRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    backgroundColor: dark.s1,
-    borderRadius: radius.card,
-    padding: space[3],
-    borderWidth: 1,
-    borderColor: dark.hairline,
-  },
-  entryRowPressed: {
-    backgroundColor: dark.s2,
-  },
-  entryRowRight: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: space[3],
-  },
-  deleteIconButton: {
-    padding: space[1],
-  },
-  footer: {
-    paddingVertical: space[4],
-    borderTopWidth: 1,
-    borderTopColor: dark.hairline,
-  },
-});
+const createStyles = (dark: ReturnType<typeof useAppearance>['colors']) =>
+  StyleSheet.create({
+    container: {
+      flex: 1,
+      paddingHorizontal: space[4],
+    },
+    header: {
+      paddingBottom: space[3],
+      borderBottomWidth: 1,
+      borderBottomColor: dark.hairline,
+    },
+    headerTop: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+    },
+    headerRight: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: space[3],
+    },
+    copyButton: {
+      padding: space[1],
+    },
+    scrollList: {
+      paddingVertical: space[3],
+      gap: space[2],
+    },
+    emptyContainer: {
+      alignItems: 'center',
+      justifyContent: 'center',
+      paddingVertical: space[8],
+      gap: space[2],
+    },
+    emptyText: {
+      textAlign: 'center',
+    },
+    entryRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      backgroundColor: dark.s1,
+      borderRadius: radius.card,
+      padding: space[3],
+      borderWidth: 1,
+      borderColor: dark.hairline,
+    },
+    entryRowPressed: {
+      backgroundColor: dark.s2,
+    },
+    entryRowRight: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: space[3],
+    },
+    deleteIconButton: {
+      padding: space[1],
+    },
+    footer: {
+      paddingVertical: space[4],
+      borderTopWidth: 1,
+      borderTopColor: dark.hairline,
+    },
+  });

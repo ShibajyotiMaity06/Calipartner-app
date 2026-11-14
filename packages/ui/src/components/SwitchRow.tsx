@@ -1,6 +1,7 @@
+import { useTheme as useAppearance } from '../theme/useTheme';
 import React from 'react';
 import { Pressable, Switch, View, StyleSheet, type ViewStyle } from 'react-native';
-import { dark } from '../tokens/colors';
+
 import { space } from '../tokens/space';
 import { Text } from './Text';
 
@@ -25,6 +26,8 @@ export function SwitchRow({
   testID,
   style,
 }: SwitchRowProps): React.JSX.Element {
+  const { colors: dark } = useAppearance();
+
   return (
     <Pressable
       onPress={disabled ? undefined : () => onValueChange(!value)}

@@ -1,3 +1,4 @@
+import { useTheme as useAppearance } from '@calipartner/ui/theme';
 import { type as inputTypography } from '@calipartner/ui';
 import { type as typography } from '@calipartner/ui';
 import React, { useState, useMemo } from 'react';
@@ -11,7 +12,7 @@ import {
   View,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { Text, dark, space, radius } from '@calipartner/ui';
+import { Text, space, radius } from '@calipartner/ui';
 import exercisesSeedData from '@/data/exercises_seed.json';
 import { playClickSound, playSuccessSound } from '@/lib/sound';
 
@@ -63,6 +64,9 @@ export function AddExercisePickerModal({
   onSelectExercise,
   initialMuscle = 'All',
 }: AddExercisePickerModalProps) {
+  const { colors: dark } = useAppearance();
+  const styles = createStyles(dark);
+
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedMuscle, setSelectedMuscle] = useState(initialMuscle);
   const [showDropdownModal, setShowDropdownModal] = useState(false);
@@ -413,237 +417,238 @@ export function AddExercisePickerModal({
   );
 }
 
-const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
-    backgroundColor: '#120A04',
-  },
-  container: {
-    flex: 1,
-    backgroundColor: '#120A04',
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: space[4],
-    paddingVertical: space[3],
-    borderBottomWidth: 1,
-    borderBottomColor: '#2B1A0D',
-  },
-  closeBtn: {
-    width: 44,
-    height: 44,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  title: {
-    textAlign: 'center',
-  },
-  searchRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#1C1109',
-    borderRadius: radius.control,
-    borderWidth: 1,
-    borderColor: '#382212',
-    marginHorizontal: space[4],
-    marginTop: space[3],
-    paddingHorizontal: space[3],
-    height: 46,
-  },
-  searchInput: {
-    flex: 1,
-    color: dark.textHi,
-    fontFamily: typography.body.fontFamily,
-    fontSize: 15,
-  },
-  dropdownContainer: {
-    marginHorizontal: space[4],
-    marginTop: space[2],
-    marginBottom: space[2],
-  },
-  dropdownTrigger: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    backgroundColor: '#1C1109',
-    borderRadius: radius.control,
-    borderWidth: 1,
-    borderColor: '#382212',
-    paddingHorizontal: space[3],
-    paddingVertical: space[2],
-    minHeight: 50,
-  },
-  dropdownTriggerLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  dropdownTriggerRight: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  countBadge: {
-    backgroundColor: '#2A170B',
-    borderRadius: radius.full,
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-    borderWidth: 1,
-    borderColor: '#382212',
-  },
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.75)',
-    justifyContent: 'center',
-    paddingHorizontal: space[4],
-  },
-  dropdownModalCard: {
-    backgroundColor: '#1C1109',
-    borderRadius: radius.card,
-    borderWidth: 1,
-    borderColor: '#382212',
-    paddingVertical: space[3],
-    overflow: 'hidden',
-  },
-  dropdownModalHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: space[4],
-    paddingBottom: space[3],
-    borderBottomWidth: 1,
-    borderBottomColor: '#2B1A0D',
-  },
-  dropdownModalClose: {
-    width: 32,
-    height: 32,
-    borderRadius: radius.full,
-    backgroundColor: '#2A170B',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  dropdownItemRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: space[4],
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: '#221308',
-  },
-  dropdownItemRowSelected: {
-    backgroundColor: '#261408',
-  },
-  dropdownItemLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    flex: 1,
-  },
-  dropdownItemRight: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  customRow: {
-    marginHorizontal: space[4],
-    marginBottom: space[2],
-  },
-  customInput: {
-    backgroundColor: '#1C1109',
-    borderRadius: radius.control,
-    borderWidth: 1,
-    borderColor: '#382212',
-    paddingHorizontal: space[3],
-    height: 42,
-    color: dark.textHi,
-    fontFamily: typography.body.fontFamily,
-    fontSize: 14,
-  },
-  setsPickerRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginHorizontal: space[4],
-    marginVertical: space[2],
-    paddingHorizontal: space[3],
-    paddingVertical: space[2],
-    backgroundColor: '#1A0E06',
-    borderRadius: radius.control,
-    borderWidth: 1,
-    borderColor: '#2D180B',
-  },
-  stepperContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: space[3],
-  },
-  stepBtn: {
-    width: 36,
-    height: 36,
-    borderRadius: radius.full,
-    backgroundColor: '#2A170B',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  setsNumberText: {
-    minWidth: 28,
-    textAlign: 'center',
-    fontWeight: '700',
-  },
-  exerciseScroll: {
-    flex: 1,
-    paddingHorizontal: space[4],
-  },
-  exerciseCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#1A0E06',
-    borderRadius: radius.control,
-    borderWidth: 1,
-    borderColor: '#261408',
-    padding: space[3],
-    marginBottom: space[2],
-    gap: space[3],
-  },
-  exerciseCardActive: {
-    borderColor: dark.apricot,
-    backgroundColor: '#261408',
-  },
-  exerciseIconCircle: {
-    width: 38,
-    height: 38,
-    borderRadius: radius.full,
-    backgroundColor: '#261408',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  tagsRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginTop: 2,
-    gap: 4,
-  },
-  tagText: {
-    letterSpacing: 0.5,
-  },
-  bottomBar: {
-    paddingHorizontal: space[4],
-    paddingVertical: space[3],
-    backgroundColor: '#160C05',
-    borderTopWidth: 1,
-    borderTopColor: '#2B1A0D',
-  },
-  addConfirmBtn: {
-    height: 52,
-    backgroundColor: dark.apricot,
-    borderRadius: radius.control,
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-    gap: space[2],
-  },
-  addConfirmBtnText: {
-    fontWeight: '700',
-    fontFamily: typography.body.fontFamily,
-    fontSize: 16,
-  },
-});
+const createStyles = (dark: ReturnType<typeof useAppearance>['colors']) =>
+  StyleSheet.create({
+    safeArea: {
+      flex: 1,
+      backgroundColor: '#120A04',
+    },
+    container: {
+      flex: 1,
+      backgroundColor: '#120A04',
+    },
+    header: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      paddingHorizontal: space[4],
+      paddingVertical: space[3],
+      borderBottomWidth: 1,
+      borderBottomColor: '#2B1A0D',
+    },
+    closeBtn: {
+      width: 44,
+      height: 44,
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    title: {
+      textAlign: 'center',
+    },
+    searchRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      backgroundColor: '#1C1109',
+      borderRadius: radius.control,
+      borderWidth: 1,
+      borderColor: '#382212',
+      marginHorizontal: space[4],
+      marginTop: space[3],
+      paddingHorizontal: space[3],
+      height: 46,
+    },
+    searchInput: {
+      flex: 1,
+      color: dark.textHi,
+      fontFamily: typography.body.fontFamily,
+      fontSize: 15,
+    },
+    dropdownContainer: {
+      marginHorizontal: space[4],
+      marginTop: space[2],
+      marginBottom: space[2],
+    },
+    dropdownTrigger: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      backgroundColor: '#1C1109',
+      borderRadius: radius.control,
+      borderWidth: 1,
+      borderColor: '#382212',
+      paddingHorizontal: space[3],
+      paddingVertical: space[2],
+      minHeight: 50,
+    },
+    dropdownTriggerLeft: {
+      flexDirection: 'row',
+      alignItems: 'center',
+    },
+    dropdownTriggerRight: {
+      flexDirection: 'row',
+      alignItems: 'center',
+    },
+    countBadge: {
+      backgroundColor: '#2A170B',
+      borderRadius: radius.full,
+      paddingHorizontal: 8,
+      paddingVertical: 2,
+      borderWidth: 1,
+      borderColor: '#382212',
+    },
+    modalOverlay: {
+      flex: 1,
+      backgroundColor: 'rgba(0, 0, 0, 0.75)',
+      justifyContent: 'center',
+      paddingHorizontal: space[4],
+    },
+    dropdownModalCard: {
+      backgroundColor: '#1C1109',
+      borderRadius: radius.card,
+      borderWidth: 1,
+      borderColor: '#382212',
+      paddingVertical: space[3],
+      overflow: 'hidden',
+    },
+    dropdownModalHeader: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      paddingHorizontal: space[4],
+      paddingBottom: space[3],
+      borderBottomWidth: 1,
+      borderBottomColor: '#2B1A0D',
+    },
+    dropdownModalClose: {
+      width: 32,
+      height: 32,
+      borderRadius: radius.full,
+      backgroundColor: '#2A170B',
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    dropdownItemRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      paddingHorizontal: space[4],
+      paddingVertical: 12,
+      borderBottomWidth: 1,
+      borderBottomColor: '#221308',
+    },
+    dropdownItemRowSelected: {
+      backgroundColor: '#261408',
+    },
+    dropdownItemLeft: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      flex: 1,
+    },
+    dropdownItemRight: {
+      flexDirection: 'row',
+      alignItems: 'center',
+    },
+    customRow: {
+      marginHorizontal: space[4],
+      marginBottom: space[2],
+    },
+    customInput: {
+      backgroundColor: '#1C1109',
+      borderRadius: radius.control,
+      borderWidth: 1,
+      borderColor: '#382212',
+      paddingHorizontal: space[3],
+      height: 42,
+      color: dark.textHi,
+      fontFamily: typography.body.fontFamily,
+      fontSize: 14,
+    },
+    setsPickerRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      marginHorizontal: space[4],
+      marginVertical: space[2],
+      paddingHorizontal: space[3],
+      paddingVertical: space[2],
+      backgroundColor: '#1A0E06',
+      borderRadius: radius.control,
+      borderWidth: 1,
+      borderColor: '#2D180B',
+    },
+    stepperContainer: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: space[3],
+    },
+    stepBtn: {
+      width: 36,
+      height: 36,
+      borderRadius: radius.full,
+      backgroundColor: '#2A170B',
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    setsNumberText: {
+      minWidth: 28,
+      textAlign: 'center',
+      fontWeight: '700',
+    },
+    exerciseScroll: {
+      flex: 1,
+      paddingHorizontal: space[4],
+    },
+    exerciseCard: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      backgroundColor: '#1A0E06',
+      borderRadius: radius.control,
+      borderWidth: 1,
+      borderColor: '#261408',
+      padding: space[3],
+      marginBottom: space[2],
+      gap: space[3],
+    },
+    exerciseCardActive: {
+      borderColor: dark.apricot,
+      backgroundColor: '#261408',
+    },
+    exerciseIconCircle: {
+      width: 38,
+      height: 38,
+      borderRadius: radius.full,
+      backgroundColor: '#261408',
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    tagsRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      marginTop: 2,
+      gap: 4,
+    },
+    tagText: {
+      letterSpacing: 0.5,
+    },
+    bottomBar: {
+      paddingHorizontal: space[4],
+      paddingVertical: space[3],
+      backgroundColor: '#160C05',
+      borderTopWidth: 1,
+      borderTopColor: '#2B1A0D',
+    },
+    addConfirmBtn: {
+      height: 52,
+      backgroundColor: dark.apricot,
+      borderRadius: radius.control,
+      flexDirection: 'row',
+      justifyContent: 'center',
+      alignItems: 'center',
+      gap: space[2],
+    },
+    addConfirmBtnText: {
+      fontWeight: '700',
+      fontFamily: typography.body.fontFamily,
+      fontSize: 16,
+    },
+  });

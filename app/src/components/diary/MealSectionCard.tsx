@@ -1,8 +1,9 @@
+import { useTheme as useAppearance } from '@calipartner/ui/theme';
 import React from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import type { DiarySectionSummary, FoodEntry, MealSection } from '@calipartner/core';
-import { Text, dark, space, radius, captureLayout } from '@calipartner/ui';
+import { Text, space, radius, captureLayout } from '@calipartner/ui';
 import { useSectionSuggestions, type SectionSuggestion } from '@/hooks/useSectionSuggestions';
 import { t } from '@/i18n';
 import { RepeatPreviousMeal } from './RepeatPreviousMeal';
@@ -36,6 +37,9 @@ export function MealSectionCard({
   onSelectSuggestion,
   testID,
 }: MealSectionCardProps) {
+  const { colors: dark } = useAppearance();
+  const styles = createStyles(dark);
+
   const { suggestions } = useSectionSuggestions(section, !compact);
   const sectionName = t(`diary.sections.${section}` as Parameters<typeof t>[0]);
 
@@ -208,128 +212,129 @@ export function MealSectionCard({
   );
 }
 
-const styles = StyleSheet.create({
-  compact: {
-    backgroundColor: dark.bg0,
-    borderWidth: 0,
-    borderRadius: radius.none,
-    paddingHorizontal: 0,
-    paddingVertical: space[2],
-    borderBottomWidth: StyleSheet.hairlineWidth,
-  },
-  sectionTitle: { flex: 1, minWidth: 0 },
-  metrics: { flexDirection: 'row', gap: space[2] },
-  metric: { flex: 1, minWidth: 0, gap: space[1] },
-  metricValue: { fontVariant: ['tabular-nums'] },
-  entryName: { flexGrow: 1, flexBasis: captureLayout.nutrientMinWidth, minWidth: 0 },
-  deleteButton: {
-    minWidth: captureLayout.touch,
-    minHeight: captureLayout.touch,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
+const createStyles = (dark: ReturnType<typeof useAppearance>['colors']) =>
+  StyleSheet.create({
+    compact: {
+      backgroundColor: dark.bg0,
+      borderWidth: 0,
+      borderRadius: radius.none,
+      paddingHorizontal: 0,
+      paddingVertical: space[2],
+      borderBottomWidth: StyleSheet.hairlineWidth,
+    },
+    sectionTitle: { flex: 1, minWidth: 0 },
+    metrics: { flexDirection: 'row', gap: space[2] },
+    metric: { flex: 1, minWidth: 0, gap: space[1] },
+    metricValue: { fontVariant: ['tabular-nums'] },
+    entryName: { flexGrow: 1, flexBasis: captureLayout.nutrientMinWidth, minWidth: 0 },
+    deleteButton: {
+      minWidth: captureLayout.touch,
+      minHeight: captureLayout.touch,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
 
-  card: {
-    backgroundColor: dark.s1,
-    borderRadius: radius.card,
-    padding: space[4],
-    borderWidth: 1,
-    borderColor: dark.hairline,
-    gap: space[3],
-  },
-  cardPressed: {
-    backgroundColor: dark.s2,
-  },
-  headerRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  headerLeft: {
-    flex: 1,
-    minWidth: 0,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: space[3],
-  },
-  iconWrapper: {
-    width: 36,
-    height: 36,
-    borderRadius: radius.control,
-    backgroundColor: dark.s2,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  iconWrapperSuggested: {
-    backgroundColor: dark.apricot,
-  },
-  headerRight: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: space[3],
-  },
-  addPlusButton: {
-    width: captureLayout.touch,
-    height: captureLayout.touch,
-    borderRadius: radius.full,
-    backgroundColor: dark.s2,
-    borderWidth: 1,
-    borderColor: dark.hairlineLit,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  addPlusButtonSuggested: {
-    backgroundColor: dark.apricot,
-    borderColor: dark.apricot,
-  },
-  suggestionsContainer: {
-    gap: space[1],
-  },
-  suggestionLabel: {
-    letterSpacing: 0.5,
-  },
-  suggestionsRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: space[2],
-  },
-  suggestionPill: {
-    maxWidth: '100%',
-    minHeight: captureLayout.touch,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: space[1],
-    backgroundColor: dark.s2,
-    paddingHorizontal: space[2],
-    paddingVertical: space[1],
-    borderRadius: radius.full,
-    borderWidth: 1,
-    borderColor: dark.hairlineLit,
-  },
-  entriesList: {
-    gap: space[1],
-    borderTopWidth: 1,
-    borderTopColor: dark.hairline,
-    paddingTop: space[2],
-  },
-  entryRow: {
-    flexWrap: 'wrap',
-    gap: space[2],
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingVertical: space[1],
-  },
-  entryRowPressed: {
-    opacity: 0.7,
-  },
-  entryRowRight: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: space[3],
-  },
-  viewMoreText: {
-    paddingTop: space[1],
-    fontWeight: '600',
-  },
-});
+    card: {
+      backgroundColor: dark.s1,
+      borderRadius: radius.card,
+      padding: space[4],
+      borderWidth: 1,
+      borderColor: dark.hairline,
+      gap: space[3],
+    },
+    cardPressed: {
+      backgroundColor: dark.s2,
+    },
+    headerRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+    },
+    headerLeft: {
+      flex: 1,
+      minWidth: 0,
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: space[3],
+    },
+    iconWrapper: {
+      width: 36,
+      height: 36,
+      borderRadius: radius.control,
+      backgroundColor: dark.s2,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    iconWrapperSuggested: {
+      backgroundColor: dark.apricot,
+    },
+    headerRight: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: space[3],
+    },
+    addPlusButton: {
+      width: captureLayout.touch,
+      height: captureLayout.touch,
+      borderRadius: radius.full,
+      backgroundColor: dark.s2,
+      borderWidth: 1,
+      borderColor: dark.hairlineLit,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    addPlusButtonSuggested: {
+      backgroundColor: dark.apricot,
+      borderColor: dark.apricot,
+    },
+    suggestionsContainer: {
+      gap: space[1],
+    },
+    suggestionLabel: {
+      letterSpacing: 0.5,
+    },
+    suggestionsRow: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      gap: space[2],
+    },
+    suggestionPill: {
+      maxWidth: '100%',
+      minHeight: captureLayout.touch,
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: space[1],
+      backgroundColor: dark.s2,
+      paddingHorizontal: space[2],
+      paddingVertical: space[1],
+      borderRadius: radius.full,
+      borderWidth: 1,
+      borderColor: dark.hairlineLit,
+    },
+    entriesList: {
+      gap: space[1],
+      borderTopWidth: 1,
+      borderTopColor: dark.hairline,
+      paddingTop: space[2],
+    },
+    entryRow: {
+      flexWrap: 'wrap',
+      gap: space[2],
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      paddingVertical: space[1],
+    },
+    entryRowPressed: {
+      opacity: 0.7,
+    },
+    entryRowRight: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: space[3],
+    },
+    viewMoreText: {
+      paddingTop: space[1],
+      fontWeight: '600',
+    },
+  });

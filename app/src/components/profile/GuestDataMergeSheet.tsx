@@ -1,6 +1,7 @@
+import { useTheme as useAppearance } from '@calipartner/ui/theme';
 import React from 'react';
 import { View, StyleSheet } from 'react-native';
-import { Text, Button, Sheet, space, dark, radius } from '@calipartner/ui';
+import { Text, Button, Sheet, space, radius } from '@calipartner/ui';
 import { playClickSound, playSuccessSound } from '@/lib/sound';
 
 export interface GuestDataMergeSheetProps {
@@ -22,6 +23,9 @@ export function GuestDataMergeSheet({
   onClose,
   testID = 'guest-data-merge-sheet',
 }: GuestDataMergeSheetProps) {
+  const { colors: dark } = useAppearance();
+  const styles = createStyles(dark);
+
   const handleKeep = () => {
     playSuccessSound();
     onKeepData();
@@ -72,27 +76,28 @@ export function GuestDataMergeSheet({
   );
 }
 
-const styles = StyleSheet.create({
-  content: {
-    padding: space[4],
-    gap: space[4],
-  },
-  summaryCard: {
-    backgroundColor: dark.s1,
-    borderWidth: 1,
-    borderColor: dark.hairline,
-    borderRadius: radius.card,
-    padding: space[4],
-    gap: space[2],
-  },
-  summaryTitle: {
-    fontWeight: '600',
-  },
-  summaryBody: {
-    lineHeight: 20,
-  },
-  actions: {
-    gap: space[3],
-    marginTop: space[2],
-  },
-});
+const createStyles = (dark: ReturnType<typeof useAppearance>['colors']) =>
+  StyleSheet.create({
+    content: {
+      padding: space[4],
+      gap: space[4],
+    },
+    summaryCard: {
+      backgroundColor: dark.s1,
+      borderWidth: 1,
+      borderColor: dark.hairline,
+      borderRadius: radius.card,
+      padding: space[4],
+      gap: space[2],
+    },
+    summaryTitle: {
+      fontWeight: '600',
+    },
+    summaryBody: {
+      lineHeight: 20,
+    },
+    actions: {
+      gap: space[3],
+      marginTop: space[2],
+    },
+  });

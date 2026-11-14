@@ -1,8 +1,9 @@
+import { useTheme as useAppearance } from '@calipartner/ui/theme';
 import React from 'react';
 import { View } from 'react-native';
 import { useRouter, type Href } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { Avatar, Button, dark, homeLayout, Text } from '@calipartner/ui';
+import { Avatar, Button, homeLayout, Text } from '@calipartner/ui';
 import type { RankedSquadMember } from '@calipartner/core';
 import { useSquadDetails } from '@/hooks/useSquad';
 import { useSubscription } from '@/hooks/useSubscription';
@@ -14,7 +15,7 @@ import {
   MemberMetrics,
   numberText,
   PlusDetailsCard,
-  squadStyles as styles,
+  useSquadStyles,
 } from './SquadViews';
 export function SquadPersonPanel({
   roomId,
@@ -27,6 +28,10 @@ export function SquadPersonPanel({
   members: RankedSquadMember[];
   visible: boolean;
 }) {
+  const styles = useSquadStyles();
+
+  const { colors: dark } = useAppearance();
+
   const router = useRouter();
   const { hasActiveAccess, loading: checkingPlan } = useSubscription();
   const details = useSquadDetails(roomId, person.user_id, visible && hasActiveAccess);

@@ -8,7 +8,7 @@ import {
   type SquadVisibility,
 } from '@/services/squadService';
 import { t } from '@/i18n';
-import { squadStyles as styles } from './SquadViews';
+import { useSquadStyles } from './SquadViews';
 
 export function SquadVisibilityModal({
   visible,
@@ -19,6 +19,8 @@ export function SquadVisibilityModal({
   roomId: string;
   onClose: () => void;
 }) {
+  const styles = useSquadStyles();
+
   useBrowserModalBack(visible, onClose);
   const scope = roomId + String(visible);
   const active = useRef(scope);

@@ -1,12 +1,16 @@
+import { useTheme as useAppearance } from '@calipartner/ui/theme';
 import React from 'react';
 import { StyleSheet, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import type { NutrientSnapshot } from '@calipartner/core';
-import { Text, dark, space, captureLayout } from '@calipartner/ui';
+import { Text, space, captureLayout } from '@calipartner/ui';
 import { useSubscription } from '@/hooks/useSubscription';
 import { t } from '@/i18n';
 
 export function AdvancedNutrition({ nutrients }: { nutrients: NutrientSnapshot }) {
+  const { colors: dark } = useAppearance();
+  const styles = createStyles(dark);
+
   const { hasActiveAccess, loading } = useSubscription();
   const visible = hasActiveAccess && !nutrients.nutrition_details?.locked && !loading;
   const values = [
@@ -94,15 +98,16 @@ export function AdvancedNutrition({ nutrients }: { nutrients: NutrientSnapshot }
     </View>
   );
 }
-const styles = StyleSheet.create({
-  container: { gap: space[3] },
-  grid: { flexDirection: 'row', flexWrap: 'wrap', gap: space[3] },
-  tile: { flexGrow: 1, flexBasis: captureLayout.nutrientMinWidth, minWidth: 0, gap: space[1] },
-  value: { fontVariant: ['tabular-nums'] },
-  locked: { flexDirection: 'row', alignItems: 'center', gap: space[2] },
-  blur: {
-    textShadowColor: dark.textLo,
-    textShadowOffset: { width: 0, height: 0 },
-    textShadowRadius: captureLayout.blurRadius,
-  },
-});
+const createStyles = (dark: ReturnType<typeof useAppearance>['colors']) =>
+  StyleSheet.create({
+    container: { gap: space[3] },
+    grid: { flexDirection: 'row', flexWrap: 'wrap', gap: space[3] },
+    tile: { flexGrow: 1, flexBasis: captureLayout.nutrientMinWidth, minWidth: 0, gap: space[1] },
+    value: { fontVariant: ['tabular-nums'] },
+    locked: { flexDirection: 'row', alignItems: 'center', gap: space[2] },
+    blur: {
+      textShadowColor: dark.textLo,
+      textShadowOffset: { width: 0, height: 0 },
+      textShadowRadius: captureLayout.blurRadius,
+    },
+  });

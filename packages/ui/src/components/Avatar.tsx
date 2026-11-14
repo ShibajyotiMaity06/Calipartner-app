@@ -1,6 +1,7 @@
+import { useTheme as useAppearance } from '../theme/useTheme';
 import React from 'react';
 import { View, Image, StyleSheet, type ViewStyle } from 'react-native';
-import { dark } from '../tokens/colors';
+import type { dark } from '../tokens/colors';
 import { radius } from '../tokens/radius';
 import { Text } from './Text';
 
@@ -32,6 +33,9 @@ export function Avatar({
   testID,
   style,
 }: AvatarProps): React.JSX.Element {
+  const { colors: dark } = useAppearance();
+  const styles = createStyles(dark);
+
   const getDimension = (): number => {
     switch (size) {
       case 'xs':
@@ -115,30 +119,31 @@ export function Avatar({
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    position: 'relative',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  innerCircle: {
-    overflow: 'hidden',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  image: {
-    width: '100%',
-    height: '100%',
-    resizeMode: 'cover',
-  },
-  presenceDot: {
-    position: 'absolute',
-    bottom: -1,
-    right: -1,
-    width: 8,
-    height: 8,
-    borderRadius: radius.full,
-    borderWidth: 1.5,
-    borderColor: dark.bg0,
-  },
-});
+const createStyles = (dark: ReturnType<typeof useAppearance>['colors']) =>
+  StyleSheet.create({
+    container: {
+      position: 'relative',
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    innerCircle: {
+      overflow: 'hidden',
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    image: {
+      width: '100%',
+      height: '100%',
+      resizeMode: 'cover',
+    },
+    presenceDot: {
+      position: 'absolute',
+      bottom: -1,
+      right: -1,
+      width: 8,
+      height: 8,
+      borderRadius: radius.full,
+      borderWidth: 1.5,
+      borderColor: dark.bg0,
+    },
+  });

@@ -1,3 +1,4 @@
+import { useTheme as useAppearance } from '@calipartner/ui/theme';
 import React, { useState } from 'react';
 import { Alert, SafeAreaView, ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
 import { useRouter } from 'expo-router';
@@ -6,7 +7,6 @@ import {
   Avatar,
   Button,
   Card,
-  dark,
   onboardingLayout as layout,
   radius,
   space,
@@ -40,6 +40,9 @@ import { t } from '@/i18n';
 import { playClickSound } from '@/lib/sound';
 
 export default function MeScreen() {
+  const { colors: dark } = useAppearance();
+  const styles = createStyles(dark);
+
   const router = useRouter();
   const {
     user,
@@ -499,49 +502,50 @@ export default function MeScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  safeArea: { flex: 1, backgroundColor: dark.bg0 },
-  container: { flex: 1, backgroundColor: dark.bg0 },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: space[4],
-    paddingVertical: space[1],
-  },
-  bellButton: {
-    minWidth: layout.touch,
-    minHeight: layout.touch,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  bellBadge: {
-    position: 'absolute',
-    top: space[0],
-    right: space[0],
-    backgroundColor: dark.apricot,
-    borderRadius: radius.full,
-    minWidth: space[5],
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: space[1],
-  },
-  scrollContent: {
-    paddingHorizontal: space[4],
-    paddingTop: space[1],
-    paddingBottom: space[9] + space[6],
-    gap: space[2],
-  },
-  profileCard: { padding: space[3], gap: space[2] },
-  profileHeaderRow: { flexDirection: 'row', alignItems: 'center', gap: space[2] },
-  profileTextWrap: { flex: 1, minWidth: 0 },
-  shortcuts: { flexDirection: 'row', flexWrap: 'wrap', gap: space[2] },
-  shortcut: {
-    flexGrow: 1,
-    flexShrink: 0,
-    flexBasis: 'auto',
-    maxWidth: '100%',
-    minWidth: layout.touch,
-  },
-  groupCard: { padding: space[0], borderRadius: radius.card, overflow: 'hidden' },
-});
+const createStyles = (dark: ReturnType<typeof useAppearance>['colors']) =>
+  StyleSheet.create({
+    safeArea: { flex: 1, backgroundColor: dark.bg0 },
+    container: { flex: 1, backgroundColor: dark.bg0 },
+    header: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      paddingHorizontal: space[4],
+      paddingVertical: space[1],
+    },
+    bellButton: {
+      minWidth: layout.touch,
+      minHeight: layout.touch,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    bellBadge: {
+      position: 'absolute',
+      top: space[0],
+      right: space[0],
+      backgroundColor: dark.apricot,
+      borderRadius: radius.full,
+      minWidth: space[5],
+      alignItems: 'center',
+      justifyContent: 'center',
+      paddingHorizontal: space[1],
+    },
+    scrollContent: {
+      paddingHorizontal: space[4],
+      paddingTop: space[1],
+      paddingBottom: space[9] + space[6],
+      gap: space[2],
+    },
+    profileCard: { padding: space[3], gap: space[2] },
+    profileHeaderRow: { flexDirection: 'row', alignItems: 'center', gap: space[2] },
+    profileTextWrap: { flex: 1, minWidth: 0 },
+    shortcuts: { flexDirection: 'row', flexWrap: 'wrap', gap: space[2] },
+    shortcut: {
+      flexGrow: 1,
+      flexShrink: 0,
+      flexBasis: 'auto',
+      maxWidth: '100%',
+      minWidth: layout.touch,
+    },
+    groupCard: { padding: space[0], borderRadius: radius.card, overflow: 'hidden' },
+  });

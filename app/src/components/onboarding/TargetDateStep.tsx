@@ -1,8 +1,9 @@
+import { useTheme as useAppearance } from '@calipartner/ui/theme';
 import { type as inputTypography } from '@calipartner/ui';
 import React, { useState } from 'react';
 import { StyleSheet, TextInput, View } from 'react-native';
 import { kgToLb, lbToKg, type CalculateTargetsResult, type Units } from '@calipartner/core';
-import { Text, Button, space, dark, radius } from '@calipartner/ui';
+import { Text, Button, space, radius } from '@calipartner/ui';
 import { t } from '@/i18n';
 import { playClickSound } from '@/lib/sound';
 
@@ -29,6 +30,9 @@ export function TargetDateStep({
   onChangeTargetDate,
   onSkip,
 }: TargetDateStepProps) {
+  const { colors: dark } = useAppearance();
+  const styles = createStyles(dark);
+
   const [weightText, setWeightText] = useState(
     targetWeightKg !== null
       ? units === 'metric'
@@ -198,46 +202,47 @@ export function TargetDateStep({
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    paddingHorizontal: space[4],
-    gap: space[4],
-    paddingTop: space[2],
-  },
-  section: {
-    gap: space[1],
-  },
-  sectionLabel: {
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-    fontWeight: '600',
-  },
-  input: {
-    minHeight: 48,
-    borderRadius: radius.control,
-    borderWidth: 1,
-    paddingHorizontal: space[3],
-    fontSize: 16,
-  },
-  analysisContainer: {
-    gap: space[2],
-  },
-  noticeCard: {
-    backgroundColor: dark.s1,
-    borderWidth: 1,
-    borderColor: dark.hairline,
-    borderRadius: radius.card,
-    padding: space[4],
-    gap: space[1],
-  },
-  noticeTitle: {
-    fontWeight: '600',
-  },
-  noticeBody: {
-    lineHeight: 18,
-  },
-  skipContainer: {
-    marginTop: space[2],
-    alignItems: 'center',
-  },
-});
+const createStyles = (dark: ReturnType<typeof useAppearance>['colors']) =>
+  StyleSheet.create({
+    container: {
+      paddingHorizontal: space[4],
+      gap: space[4],
+      paddingTop: space[2],
+    },
+    section: {
+      gap: space[1],
+    },
+    sectionLabel: {
+      textTransform: 'uppercase',
+      letterSpacing: 0.5,
+      fontWeight: '600',
+    },
+    input: {
+      minHeight: 48,
+      borderRadius: radius.control,
+      borderWidth: 1,
+      paddingHorizontal: space[3],
+      fontSize: 16,
+    },
+    analysisContainer: {
+      gap: space[2],
+    },
+    noticeCard: {
+      backgroundColor: dark.s1,
+      borderWidth: 1,
+      borderColor: dark.hairline,
+      borderRadius: radius.card,
+      padding: space[4],
+      gap: space[1],
+    },
+    noticeTitle: {
+      fontWeight: '600',
+    },
+    noticeBody: {
+      lineHeight: 18,
+    },
+    skipContainer: {
+      marginTop: space[2],
+      alignItems: 'center',
+    },
+  });

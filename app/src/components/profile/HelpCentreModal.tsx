@@ -1,3 +1,4 @@
+import { useTheme as useAppearance } from '@calipartner/ui/theme';
 import { NavigationIcon } from '@calipartner/ui';
 import { type as inputTypography } from '@calipartner/ui';
 import React, { useState } from 'react';
@@ -11,7 +12,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import { Button, Card, dark, radius, space, Text } from '@calipartner/ui';
+import { Button, Card, radius, space, Text } from '@calipartner/ui';
 import { t } from '@/i18n';
 import { playClickSound } from '@/lib/sound';
 
@@ -26,6 +27,9 @@ export function HelpCentreModal({
   onClose,
   testID = 'modal-help-centre',
 }: HelpCentreModalProps) {
+  const { colors: dark } = useAppearance();
+  const styles = createStyles(dark);
+
   const [query, setQuery] = useState('');
 
   const faqs = [
@@ -134,70 +138,71 @@ export function HelpCentreModal({
   );
 }
 
-const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
-    backgroundColor: dark.bg0,
-  },
-  container: {
-    flex: 1,
-    backgroundColor: dark.bg0,
-  },
-  topBar: {
-    height: 56,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: space[4],
-    borderBottomWidth: 1,
-    borderBottomColor: dark.hairline,
-  },
-  backButton: {
-    width: 44,
-    height: 44,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  backButtonPlaceholder: {
-    width: 44,
-  },
-  content: {
-    padding: space[4],
-  },
-  introSubtitle: {
-    marginBottom: space[3],
-  },
-  searchInput: {
-    backgroundColor: dark.s2,
-    borderColor: dark.hairline,
-    borderWidth: 1,
-    borderRadius: radius.control,
-    height: 48,
-    paddingHorizontal: space[3],
-    color: dark.textHi,
-    fontSize: 16,
-    marginBottom: space[4],
-  },
-  faqsList: {
-    marginBottom: space[4],
-  },
-  faqCard: {
-    padding: space[4],
-    marginBottom: space[3],
-  },
-  faqQuestion: {
-    marginBottom: space[2],
-  },
-  faqAnswer: {
-    lineHeight: 22,
-  },
-  noResultsCard: {
-    padding: space[4],
-  },
-  supportWrap: {
-    marginTop: space[2],
-  },
-  supportBtn: {
-    width: '100%',
-  },
-});
+const createStyles = (dark: ReturnType<typeof useAppearance>['colors']) =>
+  StyleSheet.create({
+    safeArea: {
+      flex: 1,
+      backgroundColor: dark.bg0,
+    },
+    container: {
+      flex: 1,
+      backgroundColor: dark.bg0,
+    },
+    topBar: {
+      height: 56,
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      paddingHorizontal: space[4],
+      borderBottomWidth: 1,
+      borderBottomColor: dark.hairline,
+    },
+    backButton: {
+      width: 44,
+      height: 44,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    backButtonPlaceholder: {
+      width: 44,
+    },
+    content: {
+      padding: space[4],
+    },
+    introSubtitle: {
+      marginBottom: space[3],
+    },
+    searchInput: {
+      backgroundColor: dark.s2,
+      borderColor: dark.hairline,
+      borderWidth: 1,
+      borderRadius: radius.control,
+      height: 48,
+      paddingHorizontal: space[3],
+      color: dark.textHi,
+      fontSize: 16,
+      marginBottom: space[4],
+    },
+    faqsList: {
+      marginBottom: space[4],
+    },
+    faqCard: {
+      padding: space[4],
+      marginBottom: space[3],
+    },
+    faqQuestion: {
+      marginBottom: space[2],
+    },
+    faqAnswer: {
+      lineHeight: 22,
+    },
+    noResultsCard: {
+      padding: space[4],
+    },
+    supportWrap: {
+      marginTop: space[2],
+    },
+    supportBtn: {
+      width: '100%',
+    },
+  });

@@ -1,10 +1,11 @@
+import { useTheme as useAppearance } from '@calipartner/ui/theme';
 import { NavigationIcon } from '@calipartner/ui';
 import { PremiumFeatureModal } from '@/components/subscription/PremiumFeatureModal';
 import React, { useState } from 'react';
 import { Modal, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { Text } from '@calipartner/ui';
 import { Ionicons } from '@expo/vector-icons';
-import { dark, radius, space, type as typeTokens } from '@calipartner/ui';
+import { radius, space, type as typeTokens } from '@calipartner/ui';
 import { t } from '@/i18n';
 
 export interface RoutineItem {
@@ -46,6 +47,9 @@ function WorkoutRoutinesModalContent({
   onStartRoutine,
   testID = 'workout-routines-modal',
 }: WorkoutRoutinesModalProps) {
+  const { colors: dark } = useAppearance();
+  const styles = createStyles(dark);
+
   const [routines, setRoutines] = useState<RoutineItem[]>(SAMPLE_ROUTINES);
 
   if (!visible) return null;
@@ -178,140 +182,141 @@ function WorkoutRoutinesModalContent({
   );
 }
 
-const styles = StyleSheet.create({
-  overlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.65)',
-    justifyContent: 'flex-end',
-  },
-  sheet: {
-    backgroundColor: dark.s1,
-    borderTopLeftRadius: radius.sheet,
-    borderTopRightRadius: radius.sheet,
-    borderWidth: 1,
-    borderColor: dark.hairline,
-    padding: space[4],
-    gap: space[3],
-    maxHeight: '90%',
-  },
-  grabHandle: {
-    width: 36,
-    height: 4,
-    borderRadius: radius.full,
-    backgroundColor: dark.hairlineLit,
-    alignSelf: 'center',
-    marginBottom: space[2],
-  },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  headerTitleWrap: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: space[2],
-  },
-  title: {
-    fontSize: typeTokens.body.fontSize,
-    fontFamily: typeTokens.body.fontFamily,
-    color: dark.textHi,
-    fontWeight: '700',
-  },
-  closeBtn: {
-    width: 44,
-    height: 44,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  scrollArea: {
-    maxHeight: 400,
-  },
-  scrollContent: {
-    gap: space[2],
-  },
-  emptyBox: {
-    paddingVertical: space[6],
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: space[2],
-  },
-  emptyText: {
-    fontSize: typeTokens.label.fontSize,
-    fontFamily: typeTokens.label.fontFamily,
-    color: dark.textLo,
-    textAlign: 'center',
-    paddingHorizontal: space[4],
-  },
-  routineCard: {
-    backgroundColor: dark.s2,
-    borderRadius: radius.card,
-    padding: space[3],
-    borderWidth: 1,
-    borderColor: dark.hairline,
-    gap: space[2],
-  },
-  routineInfo: {
-    gap: 2,
-  },
-  routineName: {
-    fontSize: typeTokens.bodyS.fontSize,
-    fontFamily: typeTokens.bodyS.fontFamily,
-    color: dark.textHi,
-    fontWeight: '700',
-  },
-  routineMeta: {
-    fontSize: typeTokens.micro.fontSize,
-    fontFamily: typeTokens.micro.fontFamily,
-    color: dark.textLo,
-  },
-  routineActions: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'flex-end',
-    gap: space[2],
-  },
-  iconBtn: {
-    width: 36,
-    height: 36,
-    borderRadius: radius.full,
-    backgroundColor: dark.s3,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  startBtn: {
-    minHeight: 36,
-    paddingHorizontal: space[3],
-    borderRadius: radius.control,
-    backgroundColor: dark.apricot,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  startBtnText: {
-    fontSize: typeTokens.label.fontSize,
-    fontFamily: typeTokens.label.fontFamily,
-    color: dark.onBrand, // #1C1109
-    fontWeight: '700',
-  },
-  footer: {
-    paddingTop: space[2],
-  },
-  closeActionBtn: {
-    minHeight: 48,
-    borderRadius: radius.button,
-    backgroundColor: dark.s2,
-    borderWidth: 1,
-    borderColor: dark.hairline,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  closeActionBtnText: {
-    fontSize: typeTokens.body.fontSize,
-    fontFamily: typeTokens.body.fontFamily,
-    color: dark.textMid,
-    fontWeight: '600',
-  },
-});
+const createStyles = (dark: ReturnType<typeof useAppearance>['colors']) =>
+  StyleSheet.create({
+    overlay: {
+      flex: 1,
+      backgroundColor: 'rgba(0, 0, 0, 0.65)',
+      justifyContent: 'flex-end',
+    },
+    sheet: {
+      backgroundColor: dark.s1,
+      borderTopLeftRadius: radius.sheet,
+      borderTopRightRadius: radius.sheet,
+      borderWidth: 1,
+      borderColor: dark.hairline,
+      padding: space[4],
+      gap: space[3],
+      maxHeight: '90%',
+    },
+    grabHandle: {
+      width: 36,
+      height: 4,
+      borderRadius: radius.full,
+      backgroundColor: dark.hairlineLit,
+      alignSelf: 'center',
+      marginBottom: space[2],
+    },
+    header: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+    },
+    headerTitleWrap: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: space[2],
+    },
+    title: {
+      fontSize: typeTokens.body.fontSize,
+      fontFamily: typeTokens.body.fontFamily,
+      color: dark.textHi,
+      fontWeight: '700',
+    },
+    closeBtn: {
+      width: 44,
+      height: 44,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    scrollArea: {
+      maxHeight: 400,
+    },
+    scrollContent: {
+      gap: space[2],
+    },
+    emptyBox: {
+      paddingVertical: space[6],
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: space[2],
+    },
+    emptyText: {
+      fontSize: typeTokens.label.fontSize,
+      fontFamily: typeTokens.label.fontFamily,
+      color: dark.textLo,
+      textAlign: 'center',
+      paddingHorizontal: space[4],
+    },
+    routineCard: {
+      backgroundColor: dark.s2,
+      borderRadius: radius.card,
+      padding: space[3],
+      borderWidth: 1,
+      borderColor: dark.hairline,
+      gap: space[2],
+    },
+    routineInfo: {
+      gap: 2,
+    },
+    routineName: {
+      fontSize: typeTokens.bodyS.fontSize,
+      fontFamily: typeTokens.bodyS.fontFamily,
+      color: dark.textHi,
+      fontWeight: '700',
+    },
+    routineMeta: {
+      fontSize: typeTokens.micro.fontSize,
+      fontFamily: typeTokens.micro.fontFamily,
+      color: dark.textLo,
+    },
+    routineActions: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'flex-end',
+      gap: space[2],
+    },
+    iconBtn: {
+      width: 36,
+      height: 36,
+      borderRadius: radius.full,
+      backgroundColor: dark.s3,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    startBtn: {
+      minHeight: 36,
+      paddingHorizontal: space[3],
+      borderRadius: radius.control,
+      backgroundColor: dark.apricot,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    startBtnText: {
+      fontSize: typeTokens.label.fontSize,
+      fontFamily: typeTokens.label.fontFamily,
+      color: dark.onBrand, // #1C1109
+      fontWeight: '700',
+    },
+    footer: {
+      paddingTop: space[2],
+    },
+    closeActionBtn: {
+      minHeight: 48,
+      borderRadius: radius.button,
+      backgroundColor: dark.s2,
+      borderWidth: 1,
+      borderColor: dark.hairline,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    closeActionBtnText: {
+      fontSize: typeTokens.body.fontSize,
+      fontFamily: typeTokens.body.fontFamily,
+      color: dark.textMid,
+      fontWeight: '600',
+    },
+  });
 
 export function WorkoutRoutinesModal(props: WorkoutRoutinesModalProps) {
   return (

@@ -1,7 +1,8 @@
+import { useTheme as useAppearance } from '../theme/useTheme';
 import React, { useEffect, useRef } from 'react';
 import { View, StyleSheet, Animated, type AccessibilityProps } from 'react-native';
 import Svg, { Line, Defs, LinearGradient, Stop, Circle } from 'react-native-svg';
-import { dark, type IdentityHue, getIdentityColor } from '../tokens/colors';
+import { type IdentityHue, getIdentityColor } from '../tokens/colors';
 import { motion } from '../tokens/motion';
 import { useReducedMotion } from '../theme/useReducedMotion';
 import { Text } from './Text';
@@ -49,6 +50,8 @@ export function Seam({
   accessibilityLabel,
   ...rest
 }: SeamProps): React.JSX.Element {
+  const { colors: dark } = useAppearance();
+
   const reduceMotion = useReducedMotion();
 
   // Sweep animation progress: 0 to 1 (both ends meet at the center)
@@ -348,6 +351,8 @@ export function SeamCaption({
   streakDays?: number;
   testID?: string;
 }): React.JSX.Element {
+  const { colors: dark } = useAppearance();
+
   let caption = 'Neither of you has logged today.';
   if (state === 'fused') {
     caption = `Both of you logged today. Day ${streakDays}.`;

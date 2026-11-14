@@ -1,16 +1,8 @@
+import { useTheme as useAppearance } from '@calipartner/ui/theme';
 import { NavigationIcon } from '@calipartner/ui';
 import React, { useState } from 'react';
 import { Modal, SafeAreaView, ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
-import {
-  Button,
-  Card,
-  dark,
-  radius,
-  SegmentedControl,
-  space,
-  SwitchRow,
-  Text,
-} from '@calipartner/ui';
+import { Button, Card, radius, SegmentedControl, space, SwitchRow, Text } from '@calipartner/ui';
 import { t } from '@/i18n';
 import { playClickSound } from '@/lib/sound';
 
@@ -25,6 +17,9 @@ export function AppearanceModal({
   onClose,
   testID = 'modal-appearance',
 }: AppearanceModalProps) {
+  const { colors: dark } = useAppearance();
+  const styles = createStyles(dark);
+
   const [theme, setTheme] = useState<'dark' | 'system' | 'light'>('dark');
   const [reduceMotion, setReduceMotion] = useState(false);
   const [haptics, setHaptics] = useState(true);
@@ -158,77 +153,78 @@ export function AppearanceModal({
   );
 }
 
-const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
-    backgroundColor: dark.bg0,
-  },
-  container: {
-    flex: 1,
-    backgroundColor: dark.bg0,
-  },
-  topBar: {
-    height: 56,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: space[4],
-    borderBottomWidth: 1,
-    borderBottomColor: dark.hairline,
-  },
-  backButton: {
-    width: 44,
-    height: 44,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  backButtonPlaceholder: {
-    width: 44,
-  },
-  content: {
-    padding: space[4],
-  },
-  introSubtitle: {
-    marginBottom: space[4],
-  },
-  sectionCard: {
-    padding: space[4],
-    marginBottom: space[4],
-  },
-  sectionLabel: {
-    marginBottom: space[2],
-  },
-  helperText: {
-    marginTop: space[2],
-  },
-  previewBox: {
-    marginTop: space[4],
-    padding: space[3],
-    backgroundColor: dark.s2,
-    borderRadius: radius.control,
-  },
-  previewText: {
-    lineHeight: 22,
-  },
-  scale130: {
-    fontSize: 20,
-    lineHeight: 28,
-  },
-  scale150: {
-    fontSize: 24,
-    lineHeight: 32,
-  },
-  scale200: {
-    fontSize: 32,
-    lineHeight: 40,
-  },
-  bottomBar: {
-    padding: space[4],
-    borderTopWidth: 1,
-    borderTopColor: dark.hairline,
-    backgroundColor: dark.bg0,
-  },
-  doneBtn: {
-    width: '100%',
-  },
-});
+const createStyles = (dark: ReturnType<typeof useAppearance>['colors']) =>
+  StyleSheet.create({
+    safeArea: {
+      flex: 1,
+      backgroundColor: dark.bg0,
+    },
+    container: {
+      flex: 1,
+      backgroundColor: dark.bg0,
+    },
+    topBar: {
+      height: 56,
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      paddingHorizontal: space[4],
+      borderBottomWidth: 1,
+      borderBottomColor: dark.hairline,
+    },
+    backButton: {
+      width: 44,
+      height: 44,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    backButtonPlaceholder: {
+      width: 44,
+    },
+    content: {
+      padding: space[4],
+    },
+    introSubtitle: {
+      marginBottom: space[4],
+    },
+    sectionCard: {
+      padding: space[4],
+      marginBottom: space[4],
+    },
+    sectionLabel: {
+      marginBottom: space[2],
+    },
+    helperText: {
+      marginTop: space[2],
+    },
+    previewBox: {
+      marginTop: space[4],
+      padding: space[3],
+      backgroundColor: dark.s2,
+      borderRadius: radius.control,
+    },
+    previewText: {
+      lineHeight: 22,
+    },
+    scale130: {
+      fontSize: 20,
+      lineHeight: 28,
+    },
+    scale150: {
+      fontSize: 24,
+      lineHeight: 32,
+    },
+    scale200: {
+      fontSize: 32,
+      lineHeight: 40,
+    },
+    bottomBar: {
+      padding: space[4],
+      borderTopWidth: 1,
+      borderTopColor: dark.hairline,
+      backgroundColor: dark.bg0,
+    },
+    doneBtn: {
+      width: '100%',
+    },
+  });

@@ -1,7 +1,8 @@
+import { useTheme as useAppearance } from '@calipartner/ui/theme';
 import { NutrientSummary } from '../diary/NutrientSummary';
 import React, { useRef, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
-import { Button, dark, radius, space, Text } from '@calipartner/ui';
+import { Button, radius, space, Text } from '@calipartner/ui';
 import { sumNutrientSnapshots, type CoachMealDraft } from '@calipartner/core';
 import {
   prepareCoachMealSave,
@@ -19,6 +20,9 @@ export function CoachMealDraftCard({
   onLogged?: () => void;
   disabled?: boolean;
 }) {
+  const { colors: dark } = useAppearance();
+  const styles = createStyles(dark);
+
   const request = useRef<CoachMealSave | null>(null);
   const inFlight = useRef(false);
   const [saving, setSaving] = useState(false);
@@ -79,13 +83,14 @@ export function CoachMealDraftCard({
     </View>
   );
 }
-const styles = StyleSheet.create({
-  card: {
-    backgroundColor: dark.s2,
-    borderColor: dark.hairlineLit,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderRadius: radius.card,
-    padding: space[3],
-    gap: space[2],
-  },
-});
+const createStyles = (dark: ReturnType<typeof useAppearance>['colors']) =>
+  StyleSheet.create({
+    card: {
+      backgroundColor: dark.s2,
+      borderColor: dark.hairlineLit,
+      borderWidth: StyleSheet.hairlineWidth,
+      borderRadius: radius.card,
+      padding: space[3],
+      gap: space[2],
+    },
+  });

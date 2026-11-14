@@ -1,3 +1,4 @@
+import { useTheme as useAppearance } from '@calipartner/ui/theme';
 import { NavigationIcon } from '@calipartner/ui';
 import { type as inputTypography } from '@calipartner/ui';
 import React, { useState } from 'react';
@@ -10,16 +11,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import {
-  Button,
-  Card,
-  dark,
-  radius,
-  SegmentedControl,
-  space,
-  SwitchRow,
-  Text,
-} from '@calipartner/ui';
+import { Button, Card, radius, SegmentedControl, space, SwitchRow, Text } from '@calipartner/ui';
 import { t } from '@/i18n';
 import { playClickSound, playSuccessSound } from '@/lib/sound';
 
@@ -36,6 +28,9 @@ export function ReportFeedbackModal({
   initialType = 'feedback',
   testID = 'modal-report-feedback',
 }: ReportFeedbackModalProps) {
+  const { colors: dark } = useAppearance();
+  const styles = createStyles(dark);
+
   const [type, setType] = useState<'bug' | 'food' | 'feedback'>(initialType);
   const [message, setMessage] = useState('');
   const [includeLogs, setIncludeLogs] = useState(true);
@@ -154,68 +149,69 @@ export function ReportFeedbackModal({
   );
 }
 
-const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
-    backgroundColor: dark.bg0,
-  },
-  container: {
-    flex: 1,
-    backgroundColor: dark.bg0,
-  },
-  topBar: {
-    height: 56,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: space[4],
-    borderBottomWidth: 1,
-    borderBottomColor: dark.hairline,
-  },
-  backButton: {
-    width: 44,
-    height: 44,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  backButtonPlaceholder: {
-    width: 44,
-  },
-  content: {
-    padding: space[4],
-  },
-  introSubtitle: {
-    marginBottom: space[4],
-  },
-  sectionCard: {
-    padding: space[3],
-    marginBottom: space[4],
-  },
-  sectionLabel: {
-    marginBottom: space[2],
-  },
-  textArea: {
-    backgroundColor: dark.s2,
-    borderColor: dark.hairline,
-    borderWidth: 1,
-    borderRadius: radius.control,
-    height: 120,
-    padding: space[3],
-    color: dark.textHi,
-    fontSize: 16,
-    textAlignVertical: 'top',
-  },
-  successCard: {
-    padding: space[3],
-    marginTop: space[2],
-  },
-  bottomBar: {
-    padding: space[4],
-    borderTopWidth: 1,
-    borderTopColor: dark.hairline,
-    backgroundColor: dark.bg0,
-  },
-  submitBtn: {
-    width: '100%',
-  },
-});
+const createStyles = (dark: ReturnType<typeof useAppearance>['colors']) =>
+  StyleSheet.create({
+    safeArea: {
+      flex: 1,
+      backgroundColor: dark.bg0,
+    },
+    container: {
+      flex: 1,
+      backgroundColor: dark.bg0,
+    },
+    topBar: {
+      height: 56,
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      paddingHorizontal: space[4],
+      borderBottomWidth: 1,
+      borderBottomColor: dark.hairline,
+    },
+    backButton: {
+      width: 44,
+      height: 44,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    backButtonPlaceholder: {
+      width: 44,
+    },
+    content: {
+      padding: space[4],
+    },
+    introSubtitle: {
+      marginBottom: space[4],
+    },
+    sectionCard: {
+      padding: space[3],
+      marginBottom: space[4],
+    },
+    sectionLabel: {
+      marginBottom: space[2],
+    },
+    textArea: {
+      backgroundColor: dark.s2,
+      borderColor: dark.hairline,
+      borderWidth: 1,
+      borderRadius: radius.control,
+      height: 120,
+      padding: space[3],
+      color: dark.textHi,
+      fontSize: 16,
+      textAlignVertical: 'top',
+    },
+    successCard: {
+      padding: space[3],
+      marginTop: space[2],
+    },
+    bottomBar: {
+      padding: space[4],
+      borderTopWidth: 1,
+      borderTopColor: dark.hairline,
+      backgroundColor: dark.bg0,
+    },
+    submitBtn: {
+      width: '100%',
+    },
+  });

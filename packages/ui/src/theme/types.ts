@@ -1,8 +1,8 @@
-import type { dark } from '../tokens/colors';
+import type { ColorPalette } from '../tokens/colors';
 
-export type ColorScheme = 'dark' | 'light';
+export type ColorScheme = 'dark' | 'light' | 'yellow';
 
-export type ThemeColors = typeof dark;
+export type ThemeColors = ColorPalette;
 
 export interface ThemeContextValue {
   theme: ColorScheme;

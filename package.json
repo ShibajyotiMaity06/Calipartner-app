@@ -15,7 +15,7 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "typecheck": "npm run typecheck --workspaces --if-present",
-    "test": "npm run test --workspaces --if-present && npm run test:db && npm run test:billing && npm run test:food-photo && npm run test:push && npm run test:coach && npm run test:challenges && npm run test:adaptive-review",
+    "test": "npm run test --workspaces --if-present && npm run test:db && npm run test:billing && npm run test:food-photo && npm run test:push && npm run test:coach && npm run test:challenges && npm run test:adaptive-review && npm run test:avatar",
     "test:adaptive-review": "npx --yes deno@2.9.6 test --allow-env --config supabase/functions/adaptive-review/deno.json supabase/functions/adaptive-review/index.test.ts",
     "test:challenges": "npx --yes deno@2.9.6 test --allow-env --config supabase/functions/challenges-api/deno.json supabase/functions/challenges-api/index.test.ts",
     "test:push": "npx --yes deno@2.9.6 test --allow-env --config supabase/functions/chat-signed-url/deno.json supabase/functions/send-push/index.test.ts supabase/functions/chat-signed-url/index.test.ts supabase/functions/chat-signed-url/media.test.ts",
@@ -32,7 +32,11 @@
     "recipes:import": "npx tsx scripts/recipes_import.ts",
     "test:billing": "npx --yes deno@2.9.6 test --allow-env --config supabase/functions/dodo-checkout/deno.json supabase/functions/_shared/dodoHandlers.test.ts supabase/functions/_shared/razorpayHandlers.test.ts supabase/functions/web-billing/index.test.ts",
     "test:coach": "npx --yes deno@2.9.6 test --allow-env --config supabase/functions/ai-coach/deno.json supabase/functions/ai-coach/index.test.ts && npm run test:weekly-plan",
-    "test:weekly-plan": "npx --yes deno@2.9.6 test --allow-env --config supabase/functions/weekly-plan/deno.json supabase/functions/weekly-plan/index.test.ts && npx --yes deno@2.9.6 test --allow-env --config supabase/functions/workout-plan/deno.json supabase/functions/workout-plan/index.test.ts"
+    "test:weekly-plan": "npx --yes deno@2.9.6 test --allow-env --config supabase/functions/weekly-plan/deno.json supabase/functions/weekly-plan/index.test.ts && npx --yes deno@2.9.6 test --allow-env --config supabase/functions/workout-plan/deno.json supabase/functions/workout-plan/index.test.ts",
+    "test:avatar": "npx --yes deno@2.9.6 test --allow-env --config supabase/functions/dodo-checkout/deno.json supabase/functions/revenuecat-webhook/index.test.ts",
+    "avatar:assets": "node scripts/build-avatar-assets.mjs",
+    "avatar:seed": "node scripts/seed_avatar_catalog.mjs",
+    "test:avatar-browser": "node scripts/avatar_browser_audit.mjs"
   },
   "devDependencies": {
     "@electric-sql/pglite": "^0.5.11",
@@ -51,6 +55,7 @@
     "react-dom": "19.2.3",
     "supabase": "^2.120.0",
     "typescript": "~6.0.3",
-    "typescript-eslint": "^8.0.0"
+    "typescript-eslint": "^8.0.0",
+    "sharp": "^0.35.5"
   }
 }

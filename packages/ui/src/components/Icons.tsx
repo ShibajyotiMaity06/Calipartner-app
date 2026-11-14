@@ -1,3 +1,4 @@
+import { useTheme as useAppearance } from '../theme/useTheme';
 import React from 'react';
 import Svg, { Circle, Line, Path, Rect, Polyline } from 'react-native-svg';
 import { dark } from '../tokens/colors';
@@ -22,6 +23,8 @@ export function HomeIcon({
   filled = false,
   strokeWidth = 1.75,
 }: IconProps): React.JSX.Element {
+  const { colors: dark } = useAppearance();
+
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <Path
@@ -49,6 +52,8 @@ export function TodayIcon({
   filled = false,
   strokeWidth = 1.75,
 }: IconProps): React.JSX.Element {
+  const { colors: dark } = useAppearance();
+
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <Rect

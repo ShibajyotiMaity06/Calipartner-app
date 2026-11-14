@@ -1,3 +1,4 @@
+import { useTheme as useAppearance } from '@calipartner/ui/theme';
 import { type as inputTypography } from '@calipartner/ui';
 import { useBrowserModalBack } from '@/hooks/useBrowserModalBack';
 import React, { useEffect, useRef, useState } from 'react';
@@ -5,7 +6,6 @@ import { Modal, SafeAreaView, ScrollView, StyleSheet, TextInput, View } from 're
 import {
   Button,
   Card,
-  dark,
   onboardingLayout as layout,
   radius,
   space,
@@ -51,6 +51,9 @@ export function WorkoutLogModal({
   testID = 'workout-log-modal',
   initialCategory,
 }: WorkoutLogModalProps) {
+  const { colors: dark } = useAppearance();
+  const styles = createStyles(dark);
+
   const { localDate: today } = useCurrentLocalDate();
   const { user } = useAuth();
   const { isOnline } = useNetworkStatus();
@@ -394,17 +397,18 @@ export function WorkoutLogModal({
     </Modal>
   );
 }
-const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: dark.bg0 },
-  content: { padding: space[4], paddingBottom: space[8], gap: space[3] },
-  date: { gap: space[2], alignItems: 'center' },
-  gap: { gap: space[2] },
-  input: {
-    ...typography.body,
-    color: dark.textHi,
-    minHeight: layout.touch,
-    padding: space[3],
-    borderRadius: radius.control,
-    backgroundColor: dark.s1,
-  },
-});
+const createStyles = (dark: ReturnType<typeof useAppearance>['colors']) =>
+  StyleSheet.create({
+    screen: { flex: 1, backgroundColor: dark.bg0 },
+    content: { padding: space[4], paddingBottom: space[8], gap: space[3] },
+    date: { gap: space[2], alignItems: 'center' },
+    gap: { gap: space[2] },
+    input: {
+      ...typography.body,
+      color: dark.textHi,
+      minHeight: layout.touch,
+      padding: space[3],
+      borderRadius: radius.control,
+      backgroundColor: dark.s1,
+    },
+  });

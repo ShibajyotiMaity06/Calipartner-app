@@ -1,7 +1,8 @@
+import { useTheme as useAppearance } from '../theme/useTheme';
 import React, { useState } from 'react';
 import { TouchableOpacity, StyleSheet, View, type AccessibilityProps } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
-import { dark, type IdentityHue, getIdentityColor } from '../tokens/colors';
+import { type IdentityHue, getIdentityColor } from '../tokens/colors';
 import { useReducedMotion } from '../theme/useReducedMotion';
 
 export interface NudgeButtonProps extends AccessibilityProps {
@@ -32,6 +33,9 @@ export function NudgeButton({
   accessibilityLabel,
   ...rest
 }: NudgeButtonProps): React.JSX.Element {
+  const { colors: dark } = useAppearance();
+  const styles = createStyles(dark);
+
   const [isHighlighted, setIsHighlighted] = useState(false);
   const reduceMotion = useReducedMotion();
 
@@ -90,23 +94,24 @@ export function NudgeButton({
   );
 }
 
-const styles = StyleSheet.create({
-  button: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: dark.s2,
-    borderWidth: 1,
-    borderColor: dark.hairlineLit,
-    alignItems: 'center',
-    justifyContent: 'center',
-    zIndex: 20,
-    elevation: 3,
-  },
-  iconContainer: {
-    width: 24,
-    height: 24,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-});
+const createStyles = (dark: ReturnType<typeof useAppearance>['colors']) =>
+  StyleSheet.create({
+    button: {
+      width: 44,
+      height: 44,
+      borderRadius: 22,
+      backgroundColor: dark.s2,
+      borderWidth: 1,
+      borderColor: dark.hairlineLit,
+      alignItems: 'center',
+      justifyContent: 'center',
+      zIndex: 20,
+      elevation: 3,
+    },
+    iconContainer: {
+      width: 24,
+      height: 24,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+  });

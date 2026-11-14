@@ -1,3 +1,4 @@
+import { useTheme as useAppearance } from '@calipartner/ui/theme';
 import React, { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
@@ -14,7 +15,7 @@ import {
 import { t } from '@/i18n';
 import { CoachMessageBubble } from '@/components/coach/CoachMessageBubble';
 import { NutrientSummary } from '@/components/diary/NutrientSummary';
-import { ProgressTrack, squadStyles as styles } from '@/components/rooms/SquadViews';
+import { ProgressTrack, useSquadStyles } from '@/components/rooms/SquadViews';
 
 export function PersonalisedDayPreview({
   plan,
@@ -33,6 +34,11 @@ export function PersonalisedDayPreview({
   onNext: () => void;
   onRebuild?: () => void;
 }) {
+  const styles = useSquadStyles();
+
+  const { colors: dark } = useAppearance();
+  const local = createLocal(dark);
+
   const [copiedWorkout, setCopiedWorkout] = useState(false),
     [copiedMeals, setCopiedMeals] = useState(false);
   const day = plan.days[0];
@@ -303,12 +309,14 @@ export function PersonalisedDayPreview({
     </View>
   );
 }
-const local = StyleSheet.create({
-  step: { flex: 1, height: space[1], borderRadius: radius.full },
-  composer: {
-    padding: space[3],
-    borderRadius: radius.control,
-    backgroundColor: dark.s2,
-    justifyContent: 'space-between',
-  },
-});
+const createLocal = (dark: ReturnType<typeof useAppearance>['colors']) =>
+  StyleSheet.create({
+    step: { flex: 1, height: space[1], borderRadius: radius.full },
+    composer: {
+      padding: space[3],
+      borderRadius: radius.control,
+      backgroundColor: dark.s2,
+      justifyContent: 'space-between',
+    },
+  });
+const local = createLocal(dark);

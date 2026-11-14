@@ -1,6 +1,7 @@
+import { useTheme as useAppearance } from '../theme/useTheme';
 import React from 'react';
 import { View, Pressable, StyleSheet, type ViewStyle } from 'react-native';
-import { dark } from '../tokens/colors';
+
 import { radius } from '../tokens/radius';
 import { space } from '../tokens/space';
 import { Text } from './Text';
@@ -28,6 +29,9 @@ export function Stepper({
   testID,
   style,
 }: StepperProps): React.JSX.Element {
+  const { colors: dark } = useAppearance();
+  const styles = createStyles(dark);
+
   const canDecrement = value - step >= min;
   const canIncrement = value + step <= max;
 
@@ -95,38 +99,39 @@ export function Stepper({
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: dark.s2,
-    borderRadius: radius.control, // 12
-    borderWidth: 1,
-    borderColor: dark.hairline,
-    padding: space[1], // 4
-    minHeight: 48,
-  },
-  button: {
-    width: 48,
-    height: 48,
-    borderRadius: radius.control - 4, // 8
-    backgroundColor: dark.s3,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  buttonPressed: {
-    backgroundColor: dark.hairlineLit,
-  },
-  buttonDisabled: {
-    opacity: 0.35,
-  },
-  valueWrap: {
-    minWidth: 56,
-    paddingHorizontal: space[3], // 12
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  unitText: {
-    marginTop: 2,
-  },
-});
+const createStyles = (dark: ReturnType<typeof useAppearance>['colors']) =>
+  StyleSheet.create({
+    container: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      backgroundColor: dark.s2,
+      borderRadius: radius.control, // 12
+      borderWidth: 1,
+      borderColor: dark.hairline,
+      padding: space[1], // 4
+      minHeight: 48,
+    },
+    button: {
+      width: 48,
+      height: 48,
+      borderRadius: radius.control - 4, // 8
+      backgroundColor: dark.s3,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    buttonPressed: {
+      backgroundColor: dark.hairlineLit,
+    },
+    buttonDisabled: {
+      opacity: 0.35,
+    },
+    valueWrap: {
+      minWidth: 56,
+      paddingHorizontal: space[3], // 12
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    unitText: {
+      marginTop: 2,
+    },
+  });

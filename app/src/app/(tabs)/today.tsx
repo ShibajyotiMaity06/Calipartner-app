@@ -1,4 +1,7 @@
+import { useTheme as useAppearance } from '@calipartner/ui/theme';
 import { useTrackingPreferences } from '@/hooks/useTrackingPreferences';
+import { AvatarHero } from '@/components/avatar/AvatarHero';
+import { AppearancePicker } from '@/components/avatar/AppearancePicker';
 import { TrackingPreferencesSheet } from '@/components/rooms/TrackingPreferencesSheet';
 import React, { useCallback, useEffect, useState } from 'react';
 import { AppState, Pressable, RefreshControl, ScrollView, StyleSheet, View } from 'react-native';
@@ -13,7 +16,7 @@ import {
   type FoodEntry,
   type MealSection,
 } from '@calipartner/core';
-import { dark, radius, space, Text, homeLayout } from '@calipartner/ui';
+import { radius, space, Text, homeLayout } from '@calipartner/ui';
 import { PersonalDayCard } from '@/components/rooms/PersonalDayCard';
 import { HomeSquads } from '@/components/rooms/HomeSquads';
 import { FastingCard } from '@/components/fasting/FastingCard';
@@ -45,6 +48,9 @@ import { getDb } from '@/db';
 const MEAL_SECTIONS: MealSection[] = ['breakfast', 'lunch', 'dinner', 'snacks'];
 
 export default function TodayScreen() {
+  const { colors: dark } = useAppearance();
+  const styles = createStyles(dark);
+
   const router = useRouter();
   const tracking = useTrackingPreferences();
   const [editingTracking, setEditingTracking] = useState(false);
@@ -193,6 +199,7 @@ export default function TodayScreen() {
         }
       >
         <MonthlyPlanCheckIn />
+        <AppearancePicker />
 
         {/* 2. Greeting & Dynamic Timezone Question */}
         <View style={styles.greetingSection}>
@@ -218,6 +225,7 @@ export default function TodayScreen() {
           </Text>
         </View>
 
+        <AvatarHero />
         <HomeSquads
           rooms={rooms}
           loading={roomsLoading}
@@ -502,95 +510,96 @@ export default function TodayScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  root: {
-    flex: 1,
-    backgroundColor: dark.bg0,
-  },
-  scrollContent: {
-    paddingHorizontal: space[4],
-    paddingTop: space[5],
-    paddingBottom: 80,
-  },
-  greetingRow: { flexDirection: 'row', alignItems: 'center', gap: space[3] },
-  coachButton: {
-    minWidth: homeLayout.touchSize,
-    minHeight: homeLayout.touchSize,
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: space[1],
-  },
-  greetingSection: {
-    marginBottom: space[4],
-  },
-  greetingTitle: {
-    flex: 1,
-    fontSize: 26,
-    fontWeight: '800',
-    letterSpacing: -0.5,
-    marginBottom: 4,
-  },
-  greetingQuestion: {
-    fontSize: 15,
-  },
-  sectionBlock: {
-    marginBottom: space[5],
-  },
-  sectionHeaderRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: space[3],
-  },
-  sectionHeaderTitle: {
-    fontSize: 18,
-    fontWeight: '700',
-    letterSpacing: -0.3,
-    marginBottom: space[3],
-  },
-  progressRingsRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: space[3],
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    backgroundColor: dark.s1,
-    borderRadius: radius.card,
-    borderWidth: 1,
-    borderColor: dark.hairline,
-    paddingVertical: space[3],
-    paddingHorizontal: space[2],
-  },
-  ringTileContainer: {
-    flexGrow: 1,
-    minWidth: space[9],
-    minHeight: homeLayout.touchSize,
-    gap: space[1],
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  dateSelectorRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: space[3],
-  },
-  datePickerChip: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    backgroundColor: dark.s1,
-    paddingHorizontal: space[3],
-    paddingVertical: space[2],
-    borderRadius: radius.full,
-    borderWidth: 1,
-    borderColor: dark.hairline,
-  },
-  loadingBox: {
-    padding: space[4],
-    alignItems: 'center',
-  },
-  mealsContainer: {
-    gap: space[3],
-  },
-});
+const createStyles = (dark: ReturnType<typeof useAppearance>['colors']) =>
+  StyleSheet.create({
+    root: {
+      flex: 1,
+      backgroundColor: dark.bg0,
+    },
+    scrollContent: {
+      paddingHorizontal: space[4],
+      paddingTop: space[5],
+      paddingBottom: 80,
+    },
+    greetingRow: { flexDirection: 'row', alignItems: 'center', gap: space[3] },
+    coachButton: {
+      minWidth: homeLayout.touchSize,
+      minHeight: homeLayout.touchSize,
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: space[1],
+    },
+    greetingSection: {
+      marginBottom: space[4],
+    },
+    greetingTitle: {
+      flex: 1,
+      fontSize: 26,
+      fontWeight: '800',
+      letterSpacing: -0.5,
+      marginBottom: 4,
+    },
+    greetingQuestion: {
+      fontSize: 15,
+    },
+    sectionBlock: {
+      marginBottom: space[5],
+    },
+    sectionHeaderRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      marginBottom: space[3],
+    },
+    sectionHeaderTitle: {
+      fontSize: 18,
+      fontWeight: '700',
+      letterSpacing: -0.3,
+      marginBottom: space[3],
+    },
+    progressRingsRow: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      gap: space[3],
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      backgroundColor: dark.s1,
+      borderRadius: radius.card,
+      borderWidth: 1,
+      borderColor: dark.hairline,
+      paddingVertical: space[3],
+      paddingHorizontal: space[2],
+    },
+    ringTileContainer: {
+      flexGrow: 1,
+      minWidth: space[9],
+      minHeight: homeLayout.touchSize,
+      gap: space[1],
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    dateSelectorRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      marginBottom: space[3],
+    },
+    datePickerChip: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 6,
+      backgroundColor: dark.s1,
+      paddingHorizontal: space[3],
+      paddingVertical: space[2],
+      borderRadius: radius.full,
+      borderWidth: 1,
+      borderColor: dark.hairline,
+    },
+    loadingBox: {
+      padding: space[4],
+      alignItems: 'center',
+    },
+    mealsContainer: {
+      gap: space[3],
+    },
+  });

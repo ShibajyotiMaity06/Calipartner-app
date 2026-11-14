@@ -217,7 +217,7 @@ export default function OnboardingScreen() {
       completedRef.current = true;
       await draftWrites.current;
       await clearOnboardingDraft(await getDb(), user.id).catch(() => {});
-      router.push('/weekly-plan?setup=1' as never);
+      router.push('/avatar/create?setup=1' as never);
     } catch (error) {
       setSaveError(macroErrorMessage(error));
     } finally {

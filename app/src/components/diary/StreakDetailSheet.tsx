@@ -1,7 +1,8 @@
+import { useTheme as useAppearance } from '@calipartner/ui/theme';
 import React from 'react';
 import { View, StyleSheet, ScrollView } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { Sheet, Text, dark, space, radius } from '@calipartner/ui';
+import { Sheet, Text, space, radius } from '@calipartner/ui';
 
 export interface StreakDetailSheetProps {
   visible: boolean;
@@ -18,6 +19,9 @@ export function StreakDetailSheet({
   longestStreak,
   freezesRemaining = 1,
 }: StreakDetailSheetProps) {
+  const { colors: dark } = useAppearance();
+  const styles = createStyles(dark);
+
   const totalGridDots = 28;
   const dots = Array.from({ length: totalGridDots }, (_, i) => {
     const dayFromEnd = totalGridDots - 1 - i;
@@ -109,88 +113,89 @@ export function StreakDetailSheet({
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    paddingHorizontal: space[4],
-    paddingBottom: space[6],
-    gap: space[4],
-  },
-  header: {
-    alignItems: 'center',
-    gap: space[1],
-  },
-  flameCircle: {
-    width: 64,
-    height: 64,
-    borderRadius: radius.full,
-    backgroundColor: dark.s2,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 1,
-    borderColor: dark.hairlineLit,
-    marginBottom: space[2],
-  },
-  statsCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-around',
-    backgroundColor: dark.s1,
-    borderRadius: radius.card,
-    paddingVertical: space[3],
-    paddingHorizontal: space[4],
-    borderWidth: 1,
-    borderColor: dark.hairline,
-  },
-  statColumn: {
-    alignItems: 'center',
-    gap: space[1],
-  },
-  divider: {
-    width: 1,
-    height: 36,
-    backgroundColor: dark.hairlineLit,
-  },
-  gridSection: {
-    gap: space[2],
-  },
-  gridTitle: {
-    letterSpacing: 1,
-  },
-  gridContainer: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: space[2],
-    justifyContent: 'center',
-    backgroundColor: dark.s1,
-    borderRadius: radius.card,
-    padding: space[3],
-    borderWidth: 1,
-    borderColor: dark.hairline,
-  },
-  dot: {
-    width: 18,
-    height: 18,
-    borderRadius: radius.full,
-  },
-  dotFilled: {
-    backgroundColor: dark.apricot,
-  },
-  dotOpen: {
-    borderWidth: 1.5,
-    borderColor: dark.hairlineLit,
-    backgroundColor: 'transparent',
-  },
-  freezeCard: {
-    backgroundColor: dark.s2,
-    borderRadius: radius.card,
-    padding: space[3],
-    gap: space[1],
-    borderWidth: 1,
-    borderColor: dark.hairline,
-  },
-  freezeHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: space[2],
-  },
-});
+const createStyles = (dark: ReturnType<typeof useAppearance>['colors']) =>
+  StyleSheet.create({
+    container: {
+      paddingHorizontal: space[4],
+      paddingBottom: space[6],
+      gap: space[4],
+    },
+    header: {
+      alignItems: 'center',
+      gap: space[1],
+    },
+    flameCircle: {
+      width: 64,
+      height: 64,
+      borderRadius: radius.full,
+      backgroundColor: dark.s2,
+      alignItems: 'center',
+      justifyContent: 'center',
+      borderWidth: 1,
+      borderColor: dark.hairlineLit,
+      marginBottom: space[2],
+    },
+    statsCard: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-around',
+      backgroundColor: dark.s1,
+      borderRadius: radius.card,
+      paddingVertical: space[3],
+      paddingHorizontal: space[4],
+      borderWidth: 1,
+      borderColor: dark.hairline,
+    },
+    statColumn: {
+      alignItems: 'center',
+      gap: space[1],
+    },
+    divider: {
+      width: 1,
+      height: 36,
+      backgroundColor: dark.hairlineLit,
+    },
+    gridSection: {
+      gap: space[2],
+    },
+    gridTitle: {
+      letterSpacing: 1,
+    },
+    gridContainer: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      gap: space[2],
+      justifyContent: 'center',
+      backgroundColor: dark.s1,
+      borderRadius: radius.card,
+      padding: space[3],
+      borderWidth: 1,
+      borderColor: dark.hairline,
+    },
+    dot: {
+      width: 18,
+      height: 18,
+      borderRadius: radius.full,
+    },
+    dotFilled: {
+      backgroundColor: dark.apricot,
+    },
+    dotOpen: {
+      borderWidth: 1.5,
+      borderColor: dark.hairlineLit,
+      backgroundColor: 'transparent',
+    },
+    freezeCard: {
+      backgroundColor: dark.s2,
+      borderRadius: radius.card,
+      padding: space[3],
+      gap: space[1],
+      borderWidth: 1,
+      borderColor: dark.hairline,
+    },
+    freezeHeader: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: space[2],
+    },
+  });

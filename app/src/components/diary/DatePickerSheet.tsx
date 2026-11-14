@@ -1,8 +1,9 @@
+import { useTheme as useAppearance } from '@calipartner/ui/theme';
 import { useCurrentLocalDate } from '@/hooks/useCurrentLocalDate';
 import React, { useState } from 'react';
 import { View, StyleSheet, Pressable } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { Sheet, Text, Button, dark, space, radius } from '@calipartner/ui';
+import { Sheet, Text, Button, space, radius } from '@calipartner/ui';
 
 export interface DatePickerSheetProps {
   visible: boolean;
@@ -17,6 +18,9 @@ export function DatePickerSheet({
   onSelectDate,
   onClose,
 }: DatePickerSheetProps) {
+  const { colors: dark } = useAppearance();
+  const styles = createStyles(dark);
+
   const { localDate: todayStr } = useCurrentLocalDate();
   const [currentMonthDate, setCurrentMonthDate] = useState(
     () => new Date(selectedDate + 'T12:00:00'),
@@ -192,54 +196,55 @@ export function DatePickerSheet({
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    paddingHorizontal: space[4],
-    gap: space[3],
-  },
-  navHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingVertical: space[1],
-  },
-  navArrow: {
-    padding: space[2],
-  },
-  navArrowDisabled: {
-    opacity: 0.3,
-  },
-  weekdayRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    borderBottomWidth: 1,
-    borderBottomColor: dark.hairline,
-    paddingBottom: space[2],
-  },
-  grid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-  },
-  dayCell: {
-    width: '14.28%',
-    height: 40,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  dayButton: {
-    borderRadius: radius.full,
-  },
-  dayButtonSelected: {
-    backgroundColor: dark.apricot,
-  },
-  dayButtonToday: {
-    borderWidth: 1.5,
-    borderColor: dark.apricot,
-  },
-  dayButtonFuture: {
-    opacity: 0.3,
-  },
-  footer: {
-    paddingTop: space[2],
-  },
-});
+const createStyles = (dark: ReturnType<typeof useAppearance>['colors']) =>
+  StyleSheet.create({
+    container: {
+      paddingHorizontal: space[4],
+      gap: space[3],
+    },
+    navHeader: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      paddingVertical: space[1],
+    },
+    navArrow: {
+      padding: space[2],
+    },
+    navArrowDisabled: {
+      opacity: 0.3,
+    },
+    weekdayRow: {
+      flexDirection: 'row',
+      justifyContent: 'space-around',
+      borderBottomWidth: 1,
+      borderBottomColor: dark.hairline,
+      paddingBottom: space[2],
+    },
+    grid: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+    },
+    dayCell: {
+      width: '14.28%',
+      height: 40,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    dayButton: {
+      borderRadius: radius.full,
+    },
+    dayButtonSelected: {
+      backgroundColor: dark.apricot,
+    },
+    dayButtonToday: {
+      borderWidth: 1.5,
+      borderColor: dark.apricot,
+    },
+    dayButtonFuture: {
+      opacity: 0.3,
+    },
+    footer: {
+      paddingTop: space[2],
+    },
+  });

@@ -1,7 +1,8 @@
+import { useTheme as useAppearance } from '@calipartner/ui/theme';
 import React, { useEffect, useState } from 'react';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { Platform, Pressable, StyleSheet, View } from 'react-native';
-import { Button, Text, dark, homeLayout, radius, space, squadIndicators } from '@calipartner/ui';
+import { Button, Text, homeLayout, radius, space, squadIndicators } from '@calipartner/ui';
 import { useRouter, type Href } from 'expo-router';
 import { useSquadToday, useSquadUnread } from '@/hooks/useSquad';
 import { t } from '@/i18n';
@@ -17,6 +18,9 @@ export function HomeSquadLeaderboard({
   memberCount: number;
   visible: boolean;
 }) {
+  const { colors: dark } = useAppearance();
+  const localStyles = createLocalStyles(dark);
+
   const { data, loading, error, refresh } = useSquadToday(roomId, visible);
   const router = useRouter();
   const unread = useSquadUnread(roomId, visible);
@@ -157,43 +161,44 @@ export function HomeSquadLeaderboard({
   );
 }
 
-const localStyles = StyleSheet.create({
-  content: { gap: space[0] },
-  notifications: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  chatAction: {
-    minWidth: homeLayout.compactTouchSize,
-    minHeight: homeLayout.compactTouchSize,
-    flexDirection: 'row',
-    gap: space[1],
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  header: {
-    zIndex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    flexWrap: 'wrap',
-    gap: space[2],
-  },
-  heading: { flexShrink: 1 },
-  hintAction: {
-    minHeight: homeLayout.compactTouchSize,
-    minWidth: homeLayout.touchSize,
-    maxWidth: '100%',
-    marginLeft: 'auto',
-    justifyContent: 'center',
-  },
-  label: { textAlign: 'right' },
-  hint: {
-    position: 'absolute',
-    top: '100%',
-    left: space[0],
-    right: space[0],
-    padding: space[2],
-    borderRadius: radius.control,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: dark.hairlineLit,
-    backgroundColor: dark.s2,
-  },
-});
+const createLocalStyles = (dark: ReturnType<typeof useAppearance>['colors']) =>
+  StyleSheet.create({
+    content: { gap: space[0] },
+    notifications: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+    chatAction: {
+      minWidth: homeLayout.compactTouchSize,
+      minHeight: homeLayout.compactTouchSize,
+      flexDirection: 'row',
+      gap: space[1],
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    header: {
+      zIndex: 1,
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      flexWrap: 'wrap',
+      gap: space[2],
+    },
+    heading: { flexShrink: 1 },
+    hintAction: {
+      minHeight: homeLayout.compactTouchSize,
+      minWidth: homeLayout.touchSize,
+      maxWidth: '100%',
+      marginLeft: 'auto',
+      justifyContent: 'center',
+    },
+    label: { textAlign: 'right' },
+    hint: {
+      position: 'absolute',
+      top: '100%',
+      left: space[0],
+      right: space[0],
+      padding: space[2],
+      borderRadius: radius.control,
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: dark.hairlineLit,
+      backgroundColor: dark.s2,
+    },
+  });

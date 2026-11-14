@@ -1,9 +1,13 @@
+import { useTheme as useAppearance } from '@calipartner/ui/theme';
 import { useCallback, useEffect, useState } from 'react';
 import { View } from 'react-native';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
-import { dark, ThemeProvider } from '@calipartner/ui';
+import { ThemeProvider } from '@calipartner/ui';
+import { secureStoreAdapter } from '@/lib/secureStore';
+import { AvatarProvider } from '@/hooks/useAvatar';
+import { AvatarMilestone } from '@/components/avatar/AvatarMilestone';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { HardwareBackHandler } from '@/components/navigation/HardwareBackHandler';
 import { SessionNavigationGuard } from '@/components/SessionNavigationGuard';
@@ -52,6 +56,8 @@ function AppInitializationGate({ children }: { children: React.ReactNode }) {
 }
 
 export default function RootLayout() {
+  const { colors: dark } = useAppearance();
+
   useEffect(() => {
     const doc = (
       globalThis as unknown as {
@@ -169,26 +175,24 @@ export default function RootLayout() {
     const cleanup = setupNotificationListeners();
     void cancelRetiredActivityReminders();
     return cleanup;
-  }, []);
+  }, [dark.bg0]);
 
   return (
     <ErrorBoundary>
-      <ThemeProvider initialTheme="dark">
+      <ThemeProvider initialTheme="light" storage={secureStoreAdapter}>
         <SafeAreaProvider>
-          <StatusBar style="light" />
+          <AppearanceStatusBar />
           <AppInitializationGate>
             <AuthProvider>
               <AccountDataResetGate>
                 <TargetsProvider>
-                  <HardwareBackHandler />
-                  <SessionNavigationGuard />
-                  <PlusTrialExpiryGate />
-                  <Stack
-                    screenOptions={{
-                      headerShown: false,
-                      contentStyle: { backgroundColor: dark.bg0 },
-                    }}
-                  />
+                  <AvatarProvider>
+                    <AvatarMilestone />
+                    <HardwareBackHandler />
+                    <SessionNavigationGuard />
+                    <PlusTrialExpiryGate />
+                    <AppearanceStack />
+                  </AvatarProvider>
                 </TargetsProvider>
               </AccountDataResetGate>
             </AuthProvider>
@@ -196,5 +200,35 @@ export default function RootLayout() {
         </SafeAreaProvider>
       </ThemeProvider>
     </ErrorBoundary>
+  );
+}
+
+function AppearanceStatusBar() {
+  const { isDark, colors } = useTheme();
+  useEffect(() => {
+    const doc = (
+      globalThis as unknown as {
+        document?: {
+          documentElement: { style: { backgroundColor: string } };
+          body: { style: { backgroundColor: string } };
+          querySelector: (
+            selector: string,
+          ) => { setAttribute: (name: string, value: string) => void } | null;
+        };
+      }
+    ).document;
+    if (doc) {
+      doc.documentElement.style.backgroundColor = colors.bg0;
+      doc.body.style.backgroundColor = colors.bg0;
+      doc.querySelector('meta[name="theme-color"]')?.setAttribute('content', colors.bg0);
+    }
+  }, [colors.bg0]);
+  return <StatusBar style={isDark ? 'light' : 'dark'} />;
+}
+
+function AppearanceStack() {
+  const { colors } = useTheme();
+  return (
+    <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.bg0 } }} />
   );
 }

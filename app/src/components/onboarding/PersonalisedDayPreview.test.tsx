@@ -15,7 +15,11 @@ vi.mock('@calipartner/ui', async () => ({
 }));
 vi.mock('@/components/coach/CoachMessageBubble', () => ({ CoachMessageBubble: 'Bubble' }));
 vi.mock('@/components/diary/NutrientSummary', () => ({ NutrientSummary: 'Nutrients' }));
-vi.mock('@/components/rooms/SquadViews', () => ({ ProgressTrack: 'Track', squadStyles: {} }));
+vi.mock('@/components/rooms/SquadViews', () => ({
+  ProgressTrack: 'Track',
+  squadStyles: {},
+  useSquadStyles: () => ({}),
+}));
 import { CoachMessageBubble } from '@/components/coach/CoachMessageBubble';
 import { PersonalisedDayPreview } from './PersonalisedDayPreview';
 let tree: ReactTestRenderer;

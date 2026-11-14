@@ -1,3 +1,4 @@
+import { useTheme as useAppearance } from '@calipartner/ui/theme';
 import { NavigationIcon } from '@calipartner/ui';
 import { type as inputTypography } from '@calipartner/ui';
 import React, { useState } from 'react';
@@ -10,7 +11,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import { Button, Card, dark, radius, SegmentedControl, space, Text } from '@calipartner/ui';
+import { Button, Card, radius, SegmentedControl, space, Text } from '@calipartner/ui';
 import { NumberField } from '@/components/onboarding/PlanPrimitives';
 import { HeightField } from '@/components/onboarding/HeightField';
 import { t } from '@/i18n';
@@ -45,6 +46,9 @@ export function GoalsAndBodyModal({
   onSave,
   testID = 'modal-goals-and-body',
 }: GoalsAndBodyModalProps) {
+  const { colors: dark } = useAppearance();
+  const styles = createStyles(dark);
+
   const [goal, setGoal] = useState<'cut' | 'maintain' | 'bulk'>(currentGoal);
   const [rate, setRate] = useState<number>(currentRate);
   const [heightCm, setHeightCm] = useState<string>(String(currentHeightCm));
@@ -235,78 +239,79 @@ export function GoalsAndBodyModal({
   );
 }
 
-const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
-    backgroundColor: dark.bg0,
-  },
-  container: {
-    flex: 1,
-    backgroundColor: dark.bg0,
-  },
-  topBar: {
-    height: 56,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: space[4],
-    borderBottomWidth: 1,
-    borderBottomColor: dark.hairline,
-  },
-  backButton: {
-    width: 44,
-    height: 44,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  backButtonPlaceholder: {
-    width: 44,
-  },
-  scrollContent: {
-    padding: space[4],
-    paddingBottom: space[8],
-  },
-  noticeCard: {
-    padding: space[3],
-    marginBottom: space[5],
-  },
-  section: {
-    marginBottom: space[6],
-  },
-  sectionLabel: {
-    marginBottom: space[2],
-  },
-  helperText: {
-    marginTop: space[2],
-  },
-  inputRow: {
-    flexDirection: 'row',
-    gap: space[3],
-  },
-  inputCol: {
-    flex: 1,
-  },
-  inputLabel: {
-    marginBottom: space[1],
-  },
-  textInput: {
-    backgroundColor: dark.s2,
-    borderColor: dark.hairline,
-    borderWidth: 1,
-    borderRadius: radius.control,
-    height: 48,
-    paddingHorizontal: space[3],
-    color: dark.textHi,
-    fontSize: 16,
-    fontVariant: ['tabular-nums'],
-  },
-  bottomBar: {
-    padding: space[4],
-    borderTopWidth: 1,
-    borderTopColor: dark.hairline,
-    backgroundColor: dark.bg0,
-  },
-  saveButton: {
-    width: '100%',
-  },
-});
+const createStyles = (dark: ReturnType<typeof useAppearance>['colors']) =>
+  StyleSheet.create({
+    safeArea: {
+      flex: 1,
+      backgroundColor: dark.bg0,
+    },
+    container: {
+      flex: 1,
+      backgroundColor: dark.bg0,
+    },
+    topBar: {
+      height: 56,
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      paddingHorizontal: space[4],
+      borderBottomWidth: 1,
+      borderBottomColor: dark.hairline,
+    },
+    backButton: {
+      width: 44,
+      height: 44,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    backButtonPlaceholder: {
+      width: 44,
+    },
+    scrollContent: {
+      padding: space[4],
+      paddingBottom: space[8],
+    },
+    noticeCard: {
+      padding: space[3],
+      marginBottom: space[5],
+    },
+    section: {
+      marginBottom: space[6],
+    },
+    sectionLabel: {
+      marginBottom: space[2],
+    },
+    helperText: {
+      marginTop: space[2],
+    },
+    inputRow: {
+      flexDirection: 'row',
+      gap: space[3],
+    },
+    inputCol: {
+      flex: 1,
+    },
+    inputLabel: {
+      marginBottom: space[1],
+    },
+    textInput: {
+      backgroundColor: dark.s2,
+      borderColor: dark.hairline,
+      borderWidth: 1,
+      borderRadius: radius.control,
+      height: 48,
+      paddingHorizontal: space[3],
+      color: dark.textHi,
+      fontSize: 16,
+      fontVariant: ['tabular-nums'],
+    },
+    bottomBar: {
+      padding: space[4],
+      borderTopWidth: 1,
+      borderTopColor: dark.hairline,
+      backgroundColor: dark.bg0,
+    },
+    saveButton: {
+      width: '100%',
+    },
+  });

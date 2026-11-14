@@ -1,7 +1,8 @@
+import { useTheme as useAppearance } from '@calipartner/ui/theme';
 import React from 'react';
 import { Modal, Pressable, StyleSheet, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { dark, radius, space } from '@calipartner/ui';
+import { radius, space } from '@calipartner/ui';
 import { Text } from '@calipartner/ui';
 import { Button } from '@calipartner/ui';
 
@@ -26,6 +27,9 @@ export function WhatTheyCanSeeSheet({
   roomName = 'your room',
   itemType = 'meal',
 }: WhatTheyCanSeeSheetProps): React.JSX.Element {
+  const { colors: dark } = useAppearance();
+  const styles = createStyles(dark);
+
   const explanation = React.useMemo(() => {
     switch (itemType) {
       case 'meal':
@@ -115,89 +119,90 @@ export function WhatTheyCanSeeSheet({
   );
 }
 
-const styles = StyleSheet.create({
-  backdrop: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    justifyContent: 'flex-end',
-  },
-  sheet: {
-    backgroundColor: dark.s1,
-    borderTopLeftRadius: radius.sheet,
-    borderTopRightRadius: radius.sheet,
-    borderTopWidth: 1,
-    borderColor: dark.hairlineLit,
-    padding: space[4],
-    paddingBottom: space[7],
-    gap: space[3],
-  },
-  grabber: {
-    width: 36,
-    height: 4,
-    borderRadius: 2,
-    backgroundColor: dark.hairlineLit,
-    alignSelf: 'center',
-    marginBottom: space[1],
-  },
-  headerRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  titleWithIcon: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: space[2],
-  },
-  iconCircle: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: dark.s2,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  closeBtn: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  contentBox: {
-    backgroundColor: dark.s2,
-    borderRadius: radius.card,
-    padding: space[3],
-    gap: space[3],
-  },
-  explanationText: {
-    lineHeight: 20,
-  },
-  privacyNoteRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: space[2],
-    paddingTop: space[1],
-    borderTopWidth: 1,
-    borderTopColor: dark.hairline,
-  },
-  privacyNoteText: {
-    flex: 1,
-    lineHeight: 16,
-  },
-  actionRow: {
-    marginTop: space[2],
-    gap: space[3],
-  },
-  privacyLink: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: space[2],
-    paddingVertical: space[2],
-    minHeight: 44,
-  },
-  doneBtn: {
-    width: '100%',
-  },
-});
+const createStyles = (dark: ReturnType<typeof useAppearance>['colors']) =>
+  StyleSheet.create({
+    backdrop: {
+      flex: 1,
+      backgroundColor: 'rgba(0, 0, 0, 0.5)',
+      justifyContent: 'flex-end',
+    },
+    sheet: {
+      backgroundColor: dark.s1,
+      borderTopLeftRadius: radius.sheet,
+      borderTopRightRadius: radius.sheet,
+      borderTopWidth: 1,
+      borderColor: dark.hairlineLit,
+      padding: space[4],
+      paddingBottom: space[7],
+      gap: space[3],
+    },
+    grabber: {
+      width: 36,
+      height: 4,
+      borderRadius: 2,
+      backgroundColor: dark.hairlineLit,
+      alignSelf: 'center',
+      marginBottom: space[1],
+    },
+    headerRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+    },
+    titleWithIcon: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: space[2],
+    },
+    iconCircle: {
+      width: 32,
+      height: 32,
+      borderRadius: 16,
+      backgroundColor: dark.s2,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    closeBtn: {
+      width: 36,
+      height: 36,
+      borderRadius: 18,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    contentBox: {
+      backgroundColor: dark.s2,
+      borderRadius: radius.card,
+      padding: space[3],
+      gap: space[3],
+    },
+    explanationText: {
+      lineHeight: 20,
+    },
+    privacyNoteRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: space[2],
+      paddingTop: space[1],
+      borderTopWidth: 1,
+      borderTopColor: dark.hairline,
+    },
+    privacyNoteText: {
+      flex: 1,
+      lineHeight: 16,
+    },
+    actionRow: {
+      marginTop: space[2],
+      gap: space[3],
+    },
+    privacyLink: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: space[2],
+      paddingVertical: space[2],
+      minHeight: 44,
+    },
+    doneBtn: {
+      width: '100%',
+    },
+  });

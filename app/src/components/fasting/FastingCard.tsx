@@ -1,10 +1,10 @@
+import { useTheme as useAppearance } from '@calipartner/ui/theme';
 import React, { useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import {
   Button,
   Sheet,
   Text,
-  dark,
   homeLayout,
   radius,
   space,
@@ -21,6 +21,9 @@ export interface FastingCardProps {
 }
 
 export function FastingCard({ testID = 'fasting-card' }: FastingCardProps) {
+  const { colors: dark } = useAppearance();
+  const styles = createStyles(dark);
+
   const { user } = useAuth();
   const userId = user?.id ?? '';
 
@@ -200,108 +203,109 @@ export function FastingCard({ testID = 'fasting-card' }: FastingCardProps) {
   );
 }
 
-const styles = StyleSheet.create({
-  card: {
-    backgroundColor: dark.s1,
-    borderRadius: radius.card,
-    padding: space[3],
-    borderWidth: 1,
-    borderColor: dark.hairline,
-    marginBottom: space[2],
-  },
-  cardPressed: {
-    opacity: 0.88,
-  },
-  cardHeader: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: space[2],
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: space[2],
-  },
-  titleRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    alignItems: 'center',
-    gap: space[1],
-  },
-  statusDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-  },
-  cardTitle: {
-    fontSize: typeTokens.body.fontSize,
-    fontFamily: typeTokens.body.fontFamily,
-    fontWeight: '700',
-    color: dark.textHi,
-  },
-  protocolBadge: {
-    backgroundColor: dark.s2,
-    paddingHorizontal: space[1],
-    paddingVertical: 1,
-    borderRadius: radius.control,
-    borderWidth: 1,
-    borderColor: dark.hairline,
-  },
-  protocolBadgeText: {
-    fontSize: 10,
-    fontFamily: typeTokens.label.fontFamily,
-    color: dark.textLo,
-  },
-  stateBadge: {
-    paddingHorizontal: space[1],
-    paddingVertical: 2,
-    backgroundColor: dark.s2,
-    borderRadius: radius.full,
-    borderWidth: 1,
-    borderColor: dark.hairline,
-  },
-  stateBadgeText: {
-    fontSize: 11,
-    fontFamily: typeTokens.label.fontFamily,
-    color: dark.textMid,
-  },
-  cardBody: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: space[2],
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  timeInfo: {
-    flex: 1,
-    minWidth: homeLayout.ringSize,
-  },
-  elapsedText: {
-    fontSize: typeTokens.numeralM.fontSize,
-    fontFamily: typeTokens.numeralM.fontFamily,
-    fontWeight: '700',
-    color: dark.textHi,
-    fontVariant: ['tabular-nums'],
-  },
-  targetSubtext: {
-    fontSize: typeTokens.bodyS.fontSize,
-    fontFamily: typeTokens.bodyS.fontFamily,
-    color: dark.textMid,
-    marginTop: 2,
-  },
-  quickActionButton: {
-    minHeight: 44,
-    paddingHorizontal: space[3],
-    backgroundColor: dark.apricot,
-    borderRadius: radius.button,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  quickActionText: {
-    fontSize: typeTokens.bodyS.fontSize,
-    fontFamily: typeTokens.bodyS.fontFamily,
-    fontWeight: '700',
-    color: dark.onBrand,
-  },
-  buttonDisabled: {
-    opacity: 0.5,
-  },
-});
+const createStyles = (dark: ReturnType<typeof useAppearance>['colors']) =>
+  StyleSheet.create({
+    card: {
+      backgroundColor: dark.s1,
+      borderRadius: radius.card,
+      padding: space[3],
+      borderWidth: 1,
+      borderColor: dark.hairline,
+      marginBottom: space[2],
+    },
+    cardPressed: {
+      opacity: 0.88,
+    },
+    cardHeader: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      gap: space[2],
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      marginBottom: space[2],
+    },
+    titleRow: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      alignItems: 'center',
+      gap: space[1],
+    },
+    statusDot: {
+      width: 8,
+      height: 8,
+      borderRadius: 4,
+    },
+    cardTitle: {
+      fontSize: typeTokens.body.fontSize,
+      fontFamily: typeTokens.body.fontFamily,
+      fontWeight: '700',
+      color: dark.textHi,
+    },
+    protocolBadge: {
+      backgroundColor: dark.s2,
+      paddingHorizontal: space[1],
+      paddingVertical: 1,
+      borderRadius: radius.control,
+      borderWidth: 1,
+      borderColor: dark.hairline,
+    },
+    protocolBadgeText: {
+      fontSize: 10,
+      fontFamily: typeTokens.label.fontFamily,
+      color: dark.textLo,
+    },
+    stateBadge: {
+      paddingHorizontal: space[1],
+      paddingVertical: 2,
+      backgroundColor: dark.s2,
+      borderRadius: radius.full,
+      borderWidth: 1,
+      borderColor: dark.hairline,
+    },
+    stateBadgeText: {
+      fontSize: 11,
+      fontFamily: typeTokens.label.fontFamily,
+      color: dark.textMid,
+    },
+    cardBody: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      gap: space[2],
+      justifyContent: 'space-between',
+      alignItems: 'center',
+    },
+    timeInfo: {
+      flex: 1,
+      minWidth: homeLayout.ringSize,
+    },
+    elapsedText: {
+      fontSize: typeTokens.numeralM.fontSize,
+      fontFamily: typeTokens.numeralM.fontFamily,
+      fontWeight: '700',
+      color: dark.textHi,
+      fontVariant: ['tabular-nums'],
+    },
+    targetSubtext: {
+      fontSize: typeTokens.bodyS.fontSize,
+      fontFamily: typeTokens.bodyS.fontFamily,
+      color: dark.textMid,
+      marginTop: 2,
+    },
+    quickActionButton: {
+      minHeight: 44,
+      paddingHorizontal: space[3],
+      backgroundColor: dark.apricot,
+      borderRadius: radius.button,
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    quickActionText: {
+      fontSize: typeTokens.bodyS.fontSize,
+      fontFamily: typeTokens.bodyS.fontFamily,
+      fontWeight: '700',
+      color: dark.onBrand,
+    },
+    buttonDisabled: {
+      opacity: 0.5,
+    },
+  });

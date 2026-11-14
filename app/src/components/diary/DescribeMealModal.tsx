@@ -1,7 +1,8 @@
+import { useTheme as useAppearance } from '@calipartner/ui/theme';
 import { type as inputTypography } from '@calipartner/ui';
 import React, { useRef, useState } from 'react';
 import { Modal, ScrollView, StyleSheet, TextInput, View } from 'react-native';
-import { Button, dark, homeLayout, radius, space, Text, type as typography } from '@calipartner/ui';
+import { Button, homeLayout, radius, space, Text, type as typography } from '@calipartner/ui';
 import type { FoodCandidateItem, MealSection } from '@calipartner/core';
 import { useAuth } from '@/contexts/AuthContext';
 import { useSubscription } from '@/hooks/useSubscription';
@@ -33,6 +34,9 @@ export function DescribeMealModal({
   onClose: () => void;
   onLogged?: () => void;
 }) {
+  const { colors: dark } = useAppearance();
+  const styles = createStyles(dark);
+
   useBrowserModalBack(visible, onClose);
   const { user } = useAuth();
   const { currentTier, hasActiveAccess, isTrial, loading: planLoading } = useSubscription();
@@ -172,18 +176,19 @@ export function DescribeMealModal({
     </Modal>
   );
 }
-const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: dark.bg0, padding: space[4] },
-  content: { gap: space[4], paddingVertical: space[4] },
-  input: {
-    ...typography.body,
-    minHeight: homeLayout.ringSize,
-    padding: space[4],
-    color: dark.textHi,
-    borderColor: dark.hairline,
-    borderWidth: 1,
-    borderRadius: radius.card,
-    backgroundColor: dark.s1,
-    textAlignVertical: 'top',
-  },
-});
+const createStyles = (dark: ReturnType<typeof useAppearance>['colors']) =>
+  StyleSheet.create({
+    root: { flex: 1, backgroundColor: dark.bg0, padding: space[4] },
+    content: { gap: space[4], paddingVertical: space[4] },
+    input: {
+      ...typography.body,
+      minHeight: homeLayout.ringSize,
+      padding: space[4],
+      color: dark.textHi,
+      borderColor: dark.hairline,
+      borderWidth: 1,
+      borderRadius: radius.card,
+      backgroundColor: dark.s1,
+      textAlignVertical: 'top',
+    },
+  });

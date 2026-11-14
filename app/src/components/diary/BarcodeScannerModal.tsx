@@ -1,3 +1,4 @@
+import { useTheme as useAppearance } from '@calipartner/ui/theme';
 import { type as inputTypography } from '@calipartner/ui';
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
@@ -14,7 +15,7 @@ import {
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import { Ionicons } from '@expo/vector-icons';
 import type { Food, MealSection } from '@calipartner/core';
-import { Text, Button, dark, space, radius, captureLayout } from '@calipartner/ui';
+import { Text, Button, space, radius, captureLayout } from '@calipartner/ui';
 import { lookupBarcode } from '@/services/barcodeScanService';
 import { t } from '@/i18n';
 import { useAuth } from '@/contexts/AuthContext';
@@ -39,6 +40,9 @@ export function BarcodeScannerModal({
   onFoodFound,
   onCreateCustomFood,
 }: BarcodeScannerModalProps) {
+  const { colors: dark } = useAppearance();
+  const styles = createStyles(dark);
+
   const { user } = useAuth();
   const { isOnline } = useNetworkStatus();
   const [permission, requestPermission] = useCameraPermissions();
@@ -478,151 +482,152 @@ export function BarcodeScannerModal({
   );
 }
 
-const styles = StyleSheet.create({
-  scrollContent: { flexGrow: 1, paddingBottom: space[6] },
-  fallbackActions: { padding: space[4], gap: space[3] },
-  container: {
-    flex: 1,
-    backgroundColor: dark.bg0,
-  },
-  headerBar: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingTop: 54,
-    paddingHorizontal: space[4],
-    paddingBottom: space[3],
-    backgroundColor: dark.s1,
-    zIndex: 10,
-    borderBottomWidth: 1,
-    borderBottomColor: dark.hairline,
-  },
-  headerActions: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: space[3],
-  },
-  iconButton: {
-    minWidth: captureLayout.touch,
-    minHeight: captureLayout.touch,
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: space[1],
-  },
-  cameraWrapper: {
-    flexGrow: 1,
-    minHeight: captureLayout.cameraMinHeight,
-  },
-  permissionBox: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: space[6],
-    gap: space[4],
-  },
-  cameraContainer: {
-    flex: 1,
-    position: 'relative',
-  },
-  cutoutOverlay: {
-    ...StyleSheet.absoluteFill,
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: space[4],
-  },
-  cutoutFrame: {
-    width: '90%',
-    maxWidth: captureLayout.cameraMaxWidth,
-    height: captureLayout.guideHeight,
-    position: 'relative',
-  },
-  cornerBracket: {
-    position: 'absolute',
-    width: 24,
-    height: 24,
-    borderColor: dark.apricot,
-  },
-  bracketTopLeft: {
-    top: 0,
-    left: 0,
-    borderTopWidth: 3,
-    borderLeftWidth: 3,
-    borderTopLeftRadius: radius.control,
-  },
-  bracketTopRight: {
-    top: 0,
-    right: 0,
-    borderTopWidth: 3,
-    borderRightWidth: 3,
-    borderTopRightRadius: radius.control,
-  },
-  bracketBottomLeft: {
-    bottom: 0,
-    left: 0,
-    borderBottomWidth: 3,
-    borderLeftWidth: 3,
-    borderBottomLeftRadius: radius.control,
-  },
-  bracketBottomRight: {
-    bottom: 0,
-    right: 0,
-    borderBottomWidth: 3,
-    borderRightWidth: 3,
-    borderBottomRightRadius: radius.control,
-  },
-  cutoutHint: {
-    textAlign: 'center',
-    marginHorizontal: space[4],
-    backgroundColor: dark.s2,
-    paddingHorizontal: space[3],
-    paddingVertical: space[1],
-    borderRadius: radius.full,
-    overflow: 'hidden',
-  },
-  searchingOverlay: {
-    ...StyleSheet.absoluteFill,
-    backgroundColor: 'rgba(0,0,0,0.65)',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: space[3],
-  },
-  foundFoodCard: {
-    backgroundColor: dark.s1,
-    padding: space[4],
-    borderTopWidth: 1,
-    borderTopColor: dark.hairline,
-    gap: space[3],
-  },
-  foundFoodInfo: {
-    gap: space[1],
-  },
-  bottomBar: {
-    padding: space[4],
-    backgroundColor: dark.s1,
-    alignItems: 'center',
-    borderTopWidth: 1,
-    borderTopColor: dark.hairline,
-  },
-  typeNumberLink: {
-    textDecorationLine: 'underline',
-    fontWeight: '600',
-  },
-  manualInputRow: {
-    flexDirection: 'column',
-    alignItems: 'stretch',
-    gap: space[3],
-    width: '100%',
-  },
-  manualTextInput: {
-    width: '100%',
-    minHeight: captureLayout.touch,
-    backgroundColor: dark.s2,
-    borderWidth: 1,
-    borderColor: dark.hairlineLit,
-    borderRadius: radius.control,
-    paddingHorizontal: space[3],
-    paddingVertical: space[2],
-    color: dark.textHi,
-    fontSize: 16,
-  },
-});
+const createStyles = (dark: ReturnType<typeof useAppearance>['colors']) =>
+  StyleSheet.create({
+    scrollContent: { flexGrow: 1, paddingBottom: space[6] },
+    fallbackActions: { padding: space[4], gap: space[3] },
+    container: {
+      flex: 1,
+      backgroundColor: dark.bg0,
+    },
+    headerBar: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      paddingTop: 54,
+      paddingHorizontal: space[4],
+      paddingBottom: space[3],
+      backgroundColor: dark.s1,
+      zIndex: 10,
+      borderBottomWidth: 1,
+      borderBottomColor: dark.hairline,
+    },
+    headerActions: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: space[3],
+    },
+    iconButton: {
+      minWidth: captureLayout.touch,
+      minHeight: captureLayout.touch,
+      alignItems: 'center',
+      justifyContent: 'center',
+      padding: space[1],
+    },
+    cameraWrapper: {
+      flexGrow: 1,
+      minHeight: captureLayout.cameraMinHeight,
+    },
+    permissionBox: {
+      flex: 1,
+      alignItems: 'center',
+      justifyContent: 'center',
+      padding: space[6],
+      gap: space[4],
+    },
+    cameraContainer: {
+      flex: 1,
+      position: 'relative',
+    },
+    cutoutOverlay: {
+      ...StyleSheet.absoluteFill,
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: space[4],
+    },
+    cutoutFrame: {
+      width: '90%',
+      maxWidth: captureLayout.cameraMaxWidth,
+      height: captureLayout.guideHeight,
+      position: 'relative',
+    },
+    cornerBracket: {
+      position: 'absolute',
+      width: 24,
+      height: 24,
+      borderColor: dark.apricot,
+    },
+    bracketTopLeft: {
+      top: 0,
+      left: 0,
+      borderTopWidth: 3,
+      borderLeftWidth: 3,
+      borderTopLeftRadius: radius.control,
+    },
+    bracketTopRight: {
+      top: 0,
+      right: 0,
+      borderTopWidth: 3,
+      borderRightWidth: 3,
+      borderTopRightRadius: radius.control,
+    },
+    bracketBottomLeft: {
+      bottom: 0,
+      left: 0,
+      borderBottomWidth: 3,
+      borderLeftWidth: 3,
+      borderBottomLeftRadius: radius.control,
+    },
+    bracketBottomRight: {
+      bottom: 0,
+      right: 0,
+      borderBottomWidth: 3,
+      borderRightWidth: 3,
+      borderBottomRightRadius: radius.control,
+    },
+    cutoutHint: {
+      textAlign: 'center',
+      marginHorizontal: space[4],
+      backgroundColor: dark.s2,
+      paddingHorizontal: space[3],
+      paddingVertical: space[1],
+      borderRadius: radius.full,
+      overflow: 'hidden',
+    },
+    searchingOverlay: {
+      ...StyleSheet.absoluteFill,
+      backgroundColor: 'rgba(0,0,0,0.65)',
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: space[3],
+    },
+    foundFoodCard: {
+      backgroundColor: dark.s1,
+      padding: space[4],
+      borderTopWidth: 1,
+      borderTopColor: dark.hairline,
+      gap: space[3],
+    },
+    foundFoodInfo: {
+      gap: space[1],
+    },
+    bottomBar: {
+      padding: space[4],
+      backgroundColor: dark.s1,
+      alignItems: 'center',
+      borderTopWidth: 1,
+      borderTopColor: dark.hairline,
+    },
+    typeNumberLink: {
+      textDecorationLine: 'underline',
+      fontWeight: '600',
+    },
+    manualInputRow: {
+      flexDirection: 'column',
+      alignItems: 'stretch',
+      gap: space[3],
+      width: '100%',
+    },
+    manualTextInput: {
+      width: '100%',
+      minHeight: captureLayout.touch,
+      backgroundColor: dark.s2,
+      borderWidth: 1,
+      borderColor: dark.hairlineLit,
+      borderRadius: radius.control,
+      paddingHorizontal: space[3],
+      paddingVertical: space[2],
+      color: dark.textHi,
+      fontSize: 16,
+    },
+  });

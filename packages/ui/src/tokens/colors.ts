@@ -68,7 +68,69 @@ export const nutritionColors = {
 } as const;
 export type NutritionMetric = keyof typeof nutritionColors;
 export type LightColors = typeof light;
-export type ColorPalette = DarkColors;
+export type ColorPalette = { [K in keyof DarkColors]: string };
+
+/** The previous palette remains available as the owner's Yellow appearance. */
+export const yellow: ColorPalette = dark;
+export const wellsLight: ColorPalette = {
+  ...dark,
+  bg0: '#DDD5C7',
+  s1: '#EAE3D6',
+  s2: '#F4EFE6',
+  s3: '#EDE7DC',
+  hairline: '#CBC1B0',
+  hairlineLit: '#BCB19F',
+  textHi: '#151413',
+  textMid: '#191816',
+  textLo: '#6C665C',
+  textOff: '#7A7468',
+  apricot: '#191816',
+  apricotPressed: '#322F2A',
+  onBrand: '#F8F5EE',
+  copper: '#6C665C',
+  chocolate: '#7A7468',
+  selection: '#191816',
+  iris: light.iris,
+  teal: light.teal,
+  rose: light.rose,
+  mint: light.mint,
+  sky: light.sky,
+  orchid: light.orchid,
+  danger: light.danger,
+  cream: '#191816',
+};
+export const wellsDark: ColorPalette = {
+  ...dark,
+  bg0: '#151413',
+  s1: '#1E1C1A',
+  s2: '#262320',
+  s3: '#211E1B',
+  hairline: '#2F2A25',
+  hairlineLit: '#3D3730',
+  textHi: '#FAF6EF',
+  textMid: '#F2EDE4',
+  textLo: '#B2A99C',
+  textOff: '#9C9488',
+  apricot: '#DFD5C6',
+  apricotPressed: '#C8BEAE',
+  onBrand: '#151413',
+  copper: '#9C9488',
+  chocolate: '#9C9488',
+  selection: '#DFD5C6',
+  cream: '#DFD5C6',
+};
+export const themePalettes = { light: wellsLight, dark: wellsDark, yellow };
+export const themeDock = {
+  light: 'rgba(221, 213, 199, 0.94)',
+  dark: 'rgba(21, 20, 19, 0.94)',
+  yellow: 'rgba(36, 30, 24, 0.88)',
+};
+export const lightNutritionColors = {
+  calories: '#923D60',
+  protein: '#32644E',
+  carbs: '#191816',
+  fat: '#805C18',
+};
 
 export type { IdentityHue } from './pairs';
 

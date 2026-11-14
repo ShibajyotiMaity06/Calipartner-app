@@ -1,3 +1,4 @@
+import { useTheme as useAppearance } from '../theme/useTheme';
 import React from 'react';
 import {
   View,
@@ -8,7 +9,7 @@ import {
   type ViewStyle,
   type StyleProp,
 } from 'react-native';
-import { dark } from '../tokens/colors';
+
 import { radius } from '../tokens/radius';
 import { space } from '../tokens/space';
 import {
@@ -63,6 +64,9 @@ export function LogHubView({
   style,
   testID = 'log-hub-view',
 }: LogHubViewProps): React.JSX.Element {
+  const { colors: dark } = useAppearance();
+  const styles = createStyles(dark);
+
   const mealName = MEAL_LABELS[mealSection] || 'Lunch';
 
   return (
@@ -231,119 +235,120 @@ export function LogHubView({
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    paddingHorizontal: space[4], // 16
-    paddingBottom: space[4], // 16
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingVertical: space[2], // 8
-    marginBottom: space[3], // 12
-  },
-  titleWrap: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: space[2], // 8
-  },
-  title: {
-    fontSize: 22,
-    fontWeight: '700',
-    color: dark.textHi,
-    letterSpacing: -0.3,
-  },
-  mealChip: {
-    paddingHorizontal: space[2], // 8
-    paddingVertical: space[1], // 4
-    borderRadius: radius.control, // 12
-    backgroundColor: 'rgba(244, 182, 125, 0.16)',
-    borderWidth: 1,
-    borderColor: dark.apricot,
-  },
-  mealChipText: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: dark.apricot,
-  },
-  closeBtn: {
-    width: 44,
-    height: 44,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderRadius: radius.full,
-  },
-  scrollContent: {
-    paddingBottom: space[6], // 32
-  },
-  gridContainer: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'space-between',
-    gap: space[3], // 12
-    marginBottom: space[6], // 32
-  },
-  tile: {
-    width: '30%',
-    minWidth: 96,
-    height: 96, // 96x96 tile spec
-    borderRadius: radius.card, // 20
-    backgroundColor: dark.s2,
-    borderWidth: 1,
-    borderColor: dark.hairline,
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: space[2], // 8
-  },
-  emptyTile: {
-    backgroundColor: 'transparent',
-    borderColor: 'transparent',
-  },
-  iconCircle: {
-    width: 44,
-    height: 44,
-    borderRadius: radius.full,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  tileLabel: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: dark.textHi,
-  },
-  quickAddSection: {
-    marginTop: space[1], // 4
-  },
-  sectionHeading: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: dark.textLo,
-    textTransform: 'uppercase',
-    letterSpacing: 0.8,
-    marginBottom: space[3], // 12
-  },
-  quickAddRow: {
-    flexDirection: 'row',
-    gap: space[2], // 8
-    flexWrap: 'wrap',
-  },
-  quickChip: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: space[2], // 8
-    paddingHorizontal: space[3], // 12
-    paddingVertical: space[2], // 8
-    height: 44, // Minimum 44 hit area
-    borderRadius: radius.control, // 12
-    backgroundColor: dark.s2,
-    borderWidth: 1,
-    borderColor: dark.hairlineLit,
-  },
-  quickChipText: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: dark.textHi,
-  },
-});
+const createStyles = (dark: ReturnType<typeof useAppearance>['colors']) =>
+  StyleSheet.create({
+    container: {
+      flex: 1,
+      paddingHorizontal: space[4], // 16
+      paddingBottom: space[4], // 16
+    },
+    header: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      paddingVertical: space[2], // 8
+      marginBottom: space[3], // 12
+    },
+    titleWrap: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: space[2], // 8
+    },
+    title: {
+      fontSize: 22,
+      fontWeight: '700',
+      color: dark.textHi,
+      letterSpacing: -0.3,
+    },
+    mealChip: {
+      paddingHorizontal: space[2], // 8
+      paddingVertical: space[1], // 4
+      borderRadius: radius.control, // 12
+      backgroundColor: 'rgba(244, 182, 125, 0.16)',
+      borderWidth: 1,
+      borderColor: dark.apricot,
+    },
+    mealChipText: {
+      fontSize: 12,
+      fontWeight: '600',
+      color: dark.apricot,
+    },
+    closeBtn: {
+      width: 44,
+      height: 44,
+      alignItems: 'center',
+      justifyContent: 'center',
+      borderRadius: radius.full,
+    },
+    scrollContent: {
+      paddingBottom: space[6], // 32
+    },
+    gridContainer: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      justifyContent: 'space-between',
+      gap: space[3], // 12
+      marginBottom: space[6], // 32
+    },
+    tile: {
+      width: '30%',
+      minWidth: 96,
+      height: 96, // 96x96 tile spec
+      borderRadius: radius.card, // 20
+      backgroundColor: dark.s2,
+      borderWidth: 1,
+      borderColor: dark.hairline,
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: space[2], // 8
+    },
+    emptyTile: {
+      backgroundColor: 'transparent',
+      borderColor: 'transparent',
+    },
+    iconCircle: {
+      width: 44,
+      height: 44,
+      borderRadius: radius.full,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    tileLabel: {
+      fontSize: 13,
+      fontWeight: '600',
+      color: dark.textHi,
+    },
+    quickAddSection: {
+      marginTop: space[1], // 4
+    },
+    sectionHeading: {
+      fontSize: 12,
+      fontWeight: '600',
+      color: dark.textLo,
+      textTransform: 'uppercase',
+      letterSpacing: 0.8,
+      marginBottom: space[3], // 12
+    },
+    quickAddRow: {
+      flexDirection: 'row',
+      gap: space[2], // 8
+      flexWrap: 'wrap',
+    },
+    quickChip: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: space[2], // 8
+      paddingHorizontal: space[3], // 12
+      paddingVertical: space[2], // 8
+      height: 44, // Minimum 44 hit area
+      borderRadius: radius.control, // 12
+      backgroundColor: dark.s2,
+      borderWidth: 1,
+      borderColor: dark.hairlineLit,
+    },
+    quickChipText: {
+      fontSize: 13,
+      fontWeight: '600',
+      color: dark.textHi,
+    },
+  });

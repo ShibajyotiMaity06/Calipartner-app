@@ -1,7 +1,8 @@
+import { useTheme as useAppearance } from '@calipartner/ui/theme';
 import React, { useState } from 'react';
 import { Modal, Pressable, StyleSheet, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { Text, dark, radius, space, type as typeTokens } from '@calipartner/ui';
+import { Text, radius, space, type as typeTokens } from '@calipartner/ui';
 import { t } from '@/i18n';
 
 export interface FastingSafetyCheckInModalProps {
@@ -21,6 +22,9 @@ export function FastingSafetyCheckInModal({
   onClose,
   testID = 'fasting-safety-modal',
 }: FastingSafetyCheckInModalProps) {
+  const { colors: dark } = useAppearance();
+  const styles = createStyles(dark);
+
   const [currentVariant, setCurrentVariant] = useState<'checkIn20' | 'checkIn24' | 'unwell'>(
     initialVariant,
   );
@@ -145,116 +149,117 @@ export function FastingSafetyCheckInModal({
   );
 }
 
-const styles = StyleSheet.create({
-  backdrop: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.75)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: space[4],
-  },
-  sheet: {
-    width: '100%',
-    maxWidth: 420,
-    backgroundColor: dark.s2,
-    borderRadius: radius.card,
-    padding: space[5],
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: dark.hairline,
-  },
-  iconCircle: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    backgroundColor: 'rgba(255, 179, 138, 0.12)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: space[3],
-  },
-  iconCircleDanger: {
-    backgroundColor: 'rgba(255, 107, 107, 0.12)',
-  },
-  header: {
-    alignItems: 'center',
-    marginBottom: space[4],
-  },
-  title: {
-    fontSize: typeTokens.title2.fontSize,
-    fontFamily: typeTokens.title2.fontFamily,
-    color: dark.textHi,
-    textAlign: 'center',
-    marginBottom: space[1],
-  },
-  subtitle: {
-    fontSize: typeTokens.body.fontSize,
-    fontFamily: typeTokens.body.fontFamily,
-    color: dark.textMid,
-    textAlign: 'center',
-    lineHeight: 22,
-  },
-  adviceBox: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    backgroundColor: dark.s1,
-    borderRadius: radius.control,
-    padding: space[3],
-    marginBottom: space[5],
-    gap: space[2],
-    width: '100%',
-  },
-  adviceText: {
-    flex: 1,
-    fontSize: typeTokens.bodyS.fontSize,
-    fontFamily: typeTokens.bodyS.fontFamily,
-    color: dark.textMid,
-    lineHeight: 18,
-  },
-  buttonContainer: {
-    width: '100%',
-    gap: space[2],
-  },
-  primaryButton: {
-    minHeight: 48,
-    backgroundColor: dark.apricot,
-    borderRadius: radius.button,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingHorizontal: space[4],
-  },
-  primaryButtonText: {
-    fontSize: typeTokens.body.fontSize,
-    fontFamily: typeTokens.body.fontFamily,
-    fontWeight: '700',
-    color: dark.onBrand,
-  },
-  secondaryButton: {
-    minHeight: 48,
-    backgroundColor: dark.s1,
-    borderRadius: radius.button,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingHorizontal: space[4],
-    borderWidth: 1,
-    borderColor: dark.hairline,
-  },
-  secondaryButtonText: {
-    fontSize: typeTokens.body.fontSize,
-    fontFamily: typeTokens.body.fontFamily,
-    color: dark.textHi,
-    fontWeight: '600',
-  },
-  textButton: {
-    minHeight: 44,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  textButtonLabel: {
-    fontSize: typeTokens.bodyS.fontSize,
-    fontFamily: typeTokens.bodyS.fontFamily,
-    color: dark.textLo,
-  },
-  buttonPressed: {
-    opacity: 0.8,
-  },
-});
+const createStyles = (dark: ReturnType<typeof useAppearance>['colors']) =>
+  StyleSheet.create({
+    backdrop: {
+      flex: 1,
+      backgroundColor: 'rgba(0, 0, 0, 0.75)',
+      justifyContent: 'center',
+      alignItems: 'center',
+      padding: space[4],
+    },
+    sheet: {
+      width: '100%',
+      maxWidth: 420,
+      backgroundColor: dark.s2,
+      borderRadius: radius.card,
+      padding: space[5],
+      alignItems: 'center',
+      borderWidth: 1,
+      borderColor: dark.hairline,
+    },
+    iconCircle: {
+      width: 56,
+      height: 56,
+      borderRadius: 28,
+      backgroundColor: 'rgba(255, 179, 138, 0.12)',
+      justifyContent: 'center',
+      alignItems: 'center',
+      marginBottom: space[3],
+    },
+    iconCircleDanger: {
+      backgroundColor: 'rgba(255, 107, 107, 0.12)',
+    },
+    header: {
+      alignItems: 'center',
+      marginBottom: space[4],
+    },
+    title: {
+      fontSize: typeTokens.title2.fontSize,
+      fontFamily: typeTokens.title2.fontFamily,
+      color: dark.textHi,
+      textAlign: 'center',
+      marginBottom: space[1],
+    },
+    subtitle: {
+      fontSize: typeTokens.body.fontSize,
+      fontFamily: typeTokens.body.fontFamily,
+      color: dark.textMid,
+      textAlign: 'center',
+      lineHeight: 22,
+    },
+    adviceBox: {
+      flexDirection: 'row',
+      alignItems: 'flex-start',
+      backgroundColor: dark.s1,
+      borderRadius: radius.control,
+      padding: space[3],
+      marginBottom: space[5],
+      gap: space[2],
+      width: '100%',
+    },
+    adviceText: {
+      flex: 1,
+      fontSize: typeTokens.bodyS.fontSize,
+      fontFamily: typeTokens.bodyS.fontFamily,
+      color: dark.textMid,
+      lineHeight: 18,
+    },
+    buttonContainer: {
+      width: '100%',
+      gap: space[2],
+    },
+    primaryButton: {
+      minHeight: 48,
+      backgroundColor: dark.apricot,
+      borderRadius: radius.button,
+      justifyContent: 'center',
+      alignItems: 'center',
+      paddingHorizontal: space[4],
+    },
+    primaryButtonText: {
+      fontSize: typeTokens.body.fontSize,
+      fontFamily: typeTokens.body.fontFamily,
+      fontWeight: '700',
+      color: dark.onBrand,
+    },
+    secondaryButton: {
+      minHeight: 48,
+      backgroundColor: dark.s1,
+      borderRadius: radius.button,
+      justifyContent: 'center',
+      alignItems: 'center',
+      paddingHorizontal: space[4],
+      borderWidth: 1,
+      borderColor: dark.hairline,
+    },
+    secondaryButtonText: {
+      fontSize: typeTokens.body.fontSize,
+      fontFamily: typeTokens.body.fontFamily,
+      color: dark.textHi,
+      fontWeight: '600',
+    },
+    textButton: {
+      minHeight: 44,
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    textButtonLabel: {
+      fontSize: typeTokens.bodyS.fontSize,
+      fontFamily: typeTokens.bodyS.fontFamily,
+      color: dark.textLo,
+    },
+    buttonPressed: {
+      opacity: 0.8,
+    },
+  });

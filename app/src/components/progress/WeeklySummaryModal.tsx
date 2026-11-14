@@ -1,7 +1,8 @@
+import { useTheme as useAppearance } from '@calipartner/ui/theme';
 import React, { useState } from 'react';
 import { Modal, Pressable, ScrollView, Share, StyleSheet, Switch, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { Text, dark, radius, space, type } from '@calipartner/ui';
+import { Text, radius, space, type } from '@calipartner/ui';
 import { t } from '@/i18n';
 
 interface WeeklySummaryModalProps {
@@ -29,6 +30,9 @@ export function WeeklySummaryModal({
   consistencyScore = 0,
   testID = 'weekly-summary-modal',
 }: WeeklySummaryModalProps) {
+  const { colors: dark } = useAppearance();
+  const styles = createStyles(dark);
+
   const [includeWeight, setIncludeWeight] = useState(false);
 
   if (!visible) return null;
@@ -177,193 +181,194 @@ export function WeeklySummaryModal({
   );
 }
 
-const styles = StyleSheet.create({
-  overlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.65)',
-    justifyContent: 'flex-end',
-  },
-  backdrop: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-  },
-  sheet: {
-    maxHeight: '90%',
-    backgroundColor: dark.s1,
-    borderTopLeftRadius: radius.sheet,
-    borderTopRightRadius: radius.sheet,
-    paddingHorizontal: space[4],
-    paddingTop: space[3],
-    paddingBottom: space[6],
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: dark.hairline,
-  },
-  handle: {
-    width: 36,
-    height: 4,
-    borderRadius: radius.full,
-    backgroundColor: dark.hairlineLit,
-    alignSelf: 'center',
-    marginBottom: space[3],
-  },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    marginBottom: space[3],
-  },
-  titleColumn: {
-    flex: 1,
-    paddingRight: space[3],
-  },
-  title: {
-    ...type.title1,
-    color: dark.textHi,
-  },
-  subtitle: {
-    ...type.bodyS,
-    color: dark.textLo,
-    marginTop: 2,
-  },
-  closeBtn: {
-    width: 44,
-    height: 44,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderRadius: radius.control,
-    backgroundColor: dark.s2,
-  },
-  scrollContent: {
-    paddingBottom: space[4],
-  },
-  paragraphCard: {
-    backgroundColor: dark.s2,
-    borderRadius: radius.card,
-    padding: space[4],
-    marginBottom: space[4],
-    borderWidth: 1,
-    borderColor: dark.hairline,
-  },
-  paragraphText: {
-    ...type.body,
-    color: dark.textHi,
-    lineHeight: 24,
-  },
-  statsGrid: {
-    flexDirection: 'row',
-    gap: space[2],
-    marginBottom: space[4],
-  },
-  statCard: {
-    flex: 1,
-    backgroundColor: dark.s2,
-    borderRadius: radius.card,
-    padding: space[3],
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: dark.hairline,
-  },
-  statLabel: {
-    ...type.label,
-    color: dark.textLo,
-  },
-  statValue: {
-    ...type.numeralM,
-    fontVariant: ['tabular-nums'] as any,
-    color: dark.apricot,
-    marginTop: 4,
-  },
-  statUnit: {
-    ...type.label,
-    color: dark.textMid,
-    fontSize: 11,
-    marginTop: 2,
-  },
-  shareCard: {
-    backgroundColor: dark.s2,
-    borderRadius: radius.card,
-    padding: space[4],
-    borderWidth: 1,
-    borderColor: dark.hairline,
-  },
-  shareHeader: {
-    marginBottom: space[3],
-  },
-  shareTitle: {
-    ...type.heading,
-    color: dark.textHi,
-  },
-  sharePrivacyHint: {
-    ...type.label,
-    color: dark.textLo,
-    marginTop: 2,
-  },
-  previewBox: {
-    backgroundColor: dark.s3,
-    borderRadius: radius.control,
-    padding: space[4],
-    borderWidth: 1,
-    borderColor: dark.hairlineLit,
-    marginBottom: space[3],
-  },
-  previewLogo: {
-    ...type.label,
-    color: dark.apricot,
-    fontWeight: '700',
-    letterSpacing: 1,
-    textTransform: 'uppercase',
-  },
-  previewHeadline: {
-    ...type.title2,
-    color: dark.textHi,
-    marginTop: space[2],
-  },
-  previewMeta: {
-    ...type.bodyS,
-    color: dark.textMid,
-    marginTop: 4,
-  },
-  previewWeight: {
-    ...type.bodyS,
-    color: dark.apricot,
-    marginTop: 4,
-    fontWeight: '600',
-  },
-  privacyRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingVertical: space[2],
-    marginBottom: space[3],
-  },
-  privacyTextCol: {
-    flex: 1,
-    paddingRight: space[3],
-  },
-  privacyLabel: {
-    ...type.bodyS,
-    color: dark.textHi,
-    fontWeight: '500',
-  },
-  privacySub: {
-    ...type.label,
-    color: dark.textLo,
-    marginTop: 2,
-  },
-  shareButton: {
-    height: 48,
-    borderRadius: radius.button,
-    backgroundColor: dark.apricot,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: space[2],
-  },
-  shareButtonText: {
-    ...type.heading,
-    color: dark.onBrand,
-    fontWeight: '700',
-  },
-});
+const createStyles = (dark: ReturnType<typeof useAppearance>['colors']) =>
+  StyleSheet.create({
+    overlay: {
+      flex: 1,
+      backgroundColor: 'rgba(0, 0, 0, 0.65)',
+      justifyContent: 'flex-end',
+    },
+    backdrop: {
+      position: 'absolute',
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+    },
+    sheet: {
+      maxHeight: '90%',
+      backgroundColor: dark.s1,
+      borderTopLeftRadius: radius.sheet,
+      borderTopRightRadius: radius.sheet,
+      paddingHorizontal: space[4],
+      paddingTop: space[3],
+      paddingBottom: space[6],
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: dark.hairline,
+    },
+    handle: {
+      width: 36,
+      height: 4,
+      borderRadius: radius.full,
+      backgroundColor: dark.hairlineLit,
+      alignSelf: 'center',
+      marginBottom: space[3],
+    },
+    header: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'flex-start',
+      marginBottom: space[3],
+    },
+    titleColumn: {
+      flex: 1,
+      paddingRight: space[3],
+    },
+    title: {
+      ...type.title1,
+      color: dark.textHi,
+    },
+    subtitle: {
+      ...type.bodyS,
+      color: dark.textLo,
+      marginTop: 2,
+    },
+    closeBtn: {
+      width: 44,
+      height: 44,
+      alignItems: 'center',
+      justifyContent: 'center',
+      borderRadius: radius.control,
+      backgroundColor: dark.s2,
+    },
+    scrollContent: {
+      paddingBottom: space[4],
+    },
+    paragraphCard: {
+      backgroundColor: dark.s2,
+      borderRadius: radius.card,
+      padding: space[4],
+      marginBottom: space[4],
+      borderWidth: 1,
+      borderColor: dark.hairline,
+    },
+    paragraphText: {
+      ...type.body,
+      color: dark.textHi,
+      lineHeight: 24,
+    },
+    statsGrid: {
+      flexDirection: 'row',
+      gap: space[2],
+      marginBottom: space[4],
+    },
+    statCard: {
+      flex: 1,
+      backgroundColor: dark.s2,
+      borderRadius: radius.card,
+      padding: space[3],
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: dark.hairline,
+    },
+    statLabel: {
+      ...type.label,
+      color: dark.textLo,
+    },
+    statValue: {
+      ...type.numeralM,
+      fontVariant: ['tabular-nums'] as any,
+      color: dark.apricot,
+      marginTop: 4,
+    },
+    statUnit: {
+      ...type.label,
+      color: dark.textMid,
+      fontSize: 11,
+      marginTop: 2,
+    },
+    shareCard: {
+      backgroundColor: dark.s2,
+      borderRadius: radius.card,
+      padding: space[4],
+      borderWidth: 1,
+      borderColor: dark.hairline,
+    },
+    shareHeader: {
+      marginBottom: space[3],
+    },
+    shareTitle: {
+      ...type.heading,
+      color: dark.textHi,
+    },
+    sharePrivacyHint: {
+      ...type.label,
+      color: dark.textLo,
+      marginTop: 2,
+    },
+    previewBox: {
+      backgroundColor: dark.s3,
+      borderRadius: radius.control,
+      padding: space[4],
+      borderWidth: 1,
+      borderColor: dark.hairlineLit,
+      marginBottom: space[3],
+    },
+    previewLogo: {
+      ...type.label,
+      color: dark.apricot,
+      fontWeight: '700',
+      letterSpacing: 1,
+      textTransform: 'uppercase',
+    },
+    previewHeadline: {
+      ...type.title2,
+      color: dark.textHi,
+      marginTop: space[2],
+    },
+    previewMeta: {
+      ...type.bodyS,
+      color: dark.textMid,
+      marginTop: 4,
+    },
+    previewWeight: {
+      ...type.bodyS,
+      color: dark.apricot,
+      marginTop: 4,
+      fontWeight: '600',
+    },
+    privacyRow: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      paddingVertical: space[2],
+      marginBottom: space[3],
+    },
+    privacyTextCol: {
+      flex: 1,
+      paddingRight: space[3],
+    },
+    privacyLabel: {
+      ...type.bodyS,
+      color: dark.textHi,
+      fontWeight: '500',
+    },
+    privacySub: {
+      ...type.label,
+      color: dark.textLo,
+      marginTop: 2,
+    },
+    shareButton: {
+      height: 48,
+      borderRadius: radius.button,
+      backgroundColor: dark.apricot,
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: space[2],
+    },
+    shareButtonText: {
+      ...type.heading,
+      color: dark.onBrand,
+      fontWeight: '700',
+    },
+  });

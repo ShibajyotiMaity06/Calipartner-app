@@ -1,3 +1,4 @@
+import { avatar } from './avatar';
 import { fastingRefresh } from './fastingRefresh';
 import { workoutFlow } from './workoutFlow';
 import { aha } from './aha';
@@ -10,6 +11,7 @@ import { homeRefresh } from './homeRefresh';
 import { squadDesign } from './squadDesign';
 import { repairMessages } from './repairs';
 export const en = {
+  avatar,
   weightUpdate: {
     progress: 'Weight progress',
     start: 'Start',

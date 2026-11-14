@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { AvatarHero } from '@/components/avatar/AvatarHero';
 import { useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { RefreshControl, SafeAreaView, ScrollView, StyleSheet, View } from 'react-native';
 import { Button, homeLayout, space, Text, SegmentedControl } from '@calipartner/ui';
@@ -66,6 +67,7 @@ export default function ProgressScreen() {
           />
         }
       >
+        <AvatarHero compact />
         <View style={styles.heading}>
           <Text variant="title1">{t('tabs.progress')}</Text>
           <Text>{t(tab === 'diary' ? 'homeRefresh.diaryHint' : 'squadDesign.personal')}</Text>

@@ -1,7 +1,8 @@
+import { useTheme as useAppearance } from '@calipartner/ui/theme';
 import { NavigationIcon } from '@calipartner/ui';
 import React from 'react';
 import { TouchableOpacity, StyleSheet, View } from 'react-native';
-import { Text, space, dark, radius } from '@calipartner/ui';
+import { Text, space, radius } from '@calipartner/ui';
 import { t } from '@/i18n';
 import { playClickSound } from '@/lib/sound';
 
@@ -26,6 +27,9 @@ export function StepHeader({
   onSkip,
   canSkip,
 }: StepHeaderProps) {
+  const { colors: dark } = useAppearance();
+  const styles = createStyles(dark);
+
   // 4px progress bar calculation
   const progressPercent = Math.min(100, Math.max(0, ((currentStepIndex + 1) / totalSteps) * 100));
 
@@ -129,63 +133,64 @@ export function StepHeader({
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    paddingHorizontal: space[4],
-    paddingTop: space[2],
-    paddingBottom: space[2],
-    gap: space[2],
-  },
-  progressTrack: {
-    height: 4,
-    borderRadius: radius.full,
-    overflow: 'hidden',
-    width: '100%',
-    backgroundColor: dark.s2,
-    marginBottom: space[1],
-  },
-  progressFill: {
-    height: '100%',
-    borderRadius: radius.full,
-    backgroundColor: dark.apricot,
-  },
-  topRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    minHeight: 44,
-  },
-  backButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: space[1],
-    minWidth: 44,
-    minHeight: 44,
-    justifyContent: 'center',
-  },
-  backButtonPlaceholder: {
-    width: 60,
-  },
-  backText: {
-    fontWeight: '500',
-  },
-  skipButton: {
-    minWidth: 44,
-    minHeight: 44,
-    justifyContent: 'center',
-    alignItems: 'flex-end',
-  },
-  skipText: {
-    fontWeight: '500',
-  },
-  textContainer: {
-    paddingTop: space[1],
-    gap: space[1],
-  },
-  title: {
-    letterSpacing: -0.4,
-  },
-  subtitle: {
-    lineHeight: 22,
-  },
-});
+const createStyles = (dark: ReturnType<typeof useAppearance>['colors']) =>
+  StyleSheet.create({
+    container: {
+      paddingHorizontal: space[4],
+      paddingTop: space[2],
+      paddingBottom: space[2],
+      gap: space[2],
+    },
+    progressTrack: {
+      height: 4,
+      borderRadius: radius.full,
+      overflow: 'hidden',
+      width: '100%',
+      backgroundColor: dark.s2,
+      marginBottom: space[1],
+    },
+    progressFill: {
+      height: '100%',
+      borderRadius: radius.full,
+      backgroundColor: dark.apricot,
+    },
+    topRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      minHeight: 44,
+    },
+    backButton: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: space[1],
+      minWidth: 44,
+      minHeight: 44,
+      justifyContent: 'center',
+    },
+    backButtonPlaceholder: {
+      width: 60,
+    },
+    backText: {
+      fontWeight: '500',
+    },
+    skipButton: {
+      minWidth: 44,
+      minHeight: 44,
+      justifyContent: 'center',
+      alignItems: 'flex-end',
+    },
+    skipText: {
+      fontWeight: '500',
+    },
+    textContainer: {
+      paddingTop: space[1],
+      gap: space[1],
+    },
+    title: {
+      letterSpacing: -0.4,
+    },
+    subtitle: {
+      lineHeight: 22,
+    },
+  });

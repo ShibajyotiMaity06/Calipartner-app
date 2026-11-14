@@ -1,6 +1,7 @@
+import { useTheme as useAppearance } from '@calipartner/ui/theme';
 import React, { useEffect, useState } from 'react';
 import { Image, Pressable, StyleSheet, View } from 'react-native';
-import { Button, dark, onboardingLayout as layout, radius, space, Text } from '@calipartner/ui';
+import { Button, onboardingLayout as layout, radius, space, Text } from '@calipartner/ui';
 import type { ChatAttachment } from '@/types/chat';
 import { getSignedImageUrl } from '@/services/chatImageService';
 import { getSupabase } from '@/lib/supabase';
@@ -16,6 +17,9 @@ export function ChatAttachmentPreview({
   attachment: ChatAttachment;
   onOpen?: (attachment: ChatAttachment) => void;
 }) {
+  const { colors: dark } = useAppearance();
+  const styles = createStyles(dark);
+
   const [uri, setUri] = useState<string>();
   const [error, setError] = useState(false);
   const [retry, setRetry] = useState(0);
@@ -85,12 +89,13 @@ export function ChatAttachmentPreview({
     </View>
   );
 }
-const styles = StyleSheet.create({
-  container: { gap: space[2], maxWidth: '100%' },
-  image: {
-    width: layout.ring,
-    height: layout.ring,
-    borderRadius: radius.control,
-    backgroundColor: dark.s2,
-  },
-});
+const createStyles = (dark: ReturnType<typeof useAppearance>['colors']) =>
+  StyleSheet.create({
+    container: { gap: space[2], maxWidth: '100%' },
+    image: {
+      width: layout.ring,
+      height: layout.ring,
+      borderRadius: radius.control,
+      backgroundColor: dark.s2,
+    },
+  });

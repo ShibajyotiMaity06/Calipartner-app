@@ -1,6 +1,7 @@
+import { useTheme as useAppearance } from '@calipartner/ui/theme';
 import React, { useState } from 'react';
 import { ActivityIndicator, Modal, StyleSheet, View } from 'react-native';
-import { Button, Card, Text, dark, space } from '@calipartner/ui';
+import { Button, Card, Text, space } from '@calipartner/ui';
 import { getRequiredTierForFeature, isFeatureAllowed, type AppFeature } from '@calipartner/core';
 import { useSubscription } from '@/hooks/useSubscription';
 import { PaywallModal } from '@/components/rooms/PaywallModal';
@@ -17,6 +18,9 @@ export function PremiumFeatureModal({
   onClose: () => void;
   children: React.ReactNode;
 }) {
+  const { colors: dark } = useAppearance();
+  const styles = createStyles(dark);
+
   const { entitlement, hasActiveAccess, loading } = useSubscription();
   const [showPlans, setShowPlans] = useState(false);
   const tier = hasActiveAccess ? (entitlement?.tier ?? 'free') : 'free';
@@ -57,7 +61,8 @@ export function PremiumFeatureModal({
     </Modal>
   );
 }
-const styles = StyleSheet.create({
-  backdrop: { flex: 1, backgroundColor: dark.bg0, justifyContent: 'center', padding: space[4] },
-  card: { gap: space[4], padding: space[5] },
-});
+const createStyles = (dark: ReturnType<typeof useAppearance>['colors']) =>
+  StyleSheet.create({
+    backdrop: { flex: 1, backgroundColor: dark.bg0, justifyContent: 'center', padding: space[4] },
+    card: { gap: space[4], padding: space[5] },
+  });

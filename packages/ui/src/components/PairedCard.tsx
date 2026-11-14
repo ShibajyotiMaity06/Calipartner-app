@@ -1,6 +1,7 @@
+import { useTheme as useAppearance } from '../theme/useTheme';
 import React from 'react';
 import { View, StyleSheet, TouchableOpacity, useWindowDimensions } from 'react-native';
-import { dark, type IdentityHue, getIdentityColor } from '../tokens/colors';
+import { type IdentityHue, getIdentityColor } from '../tokens/colors';
 import { space } from '../tokens/space';
 import { Card } from './Card';
 import { Text } from './Text';
@@ -143,6 +144,9 @@ export function PairedCard({
   accessibilityLabel,
   testID = 'paired-card',
 }: PairedCardProps): React.JSX.Element {
+  const { colors: dark } = useAppearance();
+  const styles = createStyles(dark);
+
   const { width, fontScale } = useWindowDimensions();
 
   // Reflow to stacked columns when screen is narrower than 340dp or forced (Spec 5.4)
@@ -418,103 +422,104 @@ export function PairedCard({
   );
 }
 
-const styles = StyleSheet.create({
-  card: {
-    padding: space[4],
-    width: '100%',
-  },
-  ringSection: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: space[4],
-  },
-  columnsWrapper: {
-    flexDirection: 'row',
-    alignItems: 'stretch',
-    justifyContent: 'space-between',
-    minHeight: 210,
-    position: 'relative',
-  },
-  columnHalf: {
-    flex: 1,
-  },
-  seamCenterContainer: {
-    width: 24,
-    alignItems: 'center',
-    justifyContent: 'center',
-    position: 'relative',
-  },
-  nudgeAbsolute: {
-    position: 'absolute',
-    top: '50%',
-    left: '50%',
-    transform: [{ translateX: -22 }, { translateY: -22 }],
-    zIndex: 10,
-  },
-  emptyPartnerDashed: {
-    flex: 1,
-    borderWidth: 1.5,
-    borderStyle: 'dashed',
-    borderColor: dark.hairlineLit,
-    borderRadius: 16,
-    padding: space[3],
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: dark.s2,
-    gap: space[2],
-  },
-  emptyDashedText: {
-    textAlign: 'center',
-    marginVertical: 4,
-  },
-  dashedActionBtn: {
-    width: '100%',
-  },
-  stackedLayout: {
-    gap: space[4],
-  },
-  horizontalSeamWrapper: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginVertical: space[2],
-  },
-  emptyPartnerBox: {
-    borderWidth: 1,
-    borderColor: dark.hairlineLit,
-    borderRadius: 16,
-    padding: space[4],
-    backgroundColor: dark.s2,
-    alignItems: 'center',
-    gap: space[2],
-  },
-  emptySubtitle: {
-    textAlign: 'center',
-  },
-  emptyButtonRow: {
-    flexDirection: 'row',
-    gap: space[2],
-    marginTop: space[2],
-  },
-  membersStrip: {
-    marginBottom: space[4],
-    gap: space[2],
-  },
-  stripTitle: {
-    fontSize: 11,
-  },
-  avatarRow: {
-    flexDirection: 'row',
-    gap: space[3],
-    alignItems: 'center',
-  },
-  memberAvatarWrapper: {
-    alignItems: 'center',
-    position: 'relative',
-  },
-  activeDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-    marginTop: 4,
-  },
-});
+const createStyles = (dark: ReturnType<typeof useAppearance>['colors']) =>
+  StyleSheet.create({
+    card: {
+      padding: space[4],
+      width: '100%',
+    },
+    ringSection: {
+      alignItems: 'center',
+      justifyContent: 'center',
+      marginBottom: space[4],
+    },
+    columnsWrapper: {
+      flexDirection: 'row',
+      alignItems: 'stretch',
+      justifyContent: 'space-between',
+      minHeight: 210,
+      position: 'relative',
+    },
+    columnHalf: {
+      flex: 1,
+    },
+    seamCenterContainer: {
+      width: 24,
+      alignItems: 'center',
+      justifyContent: 'center',
+      position: 'relative',
+    },
+    nudgeAbsolute: {
+      position: 'absolute',
+      top: '50%',
+      left: '50%',
+      transform: [{ translateX: -22 }, { translateY: -22 }],
+      zIndex: 10,
+    },
+    emptyPartnerDashed: {
+      flex: 1,
+      borderWidth: 1.5,
+      borderStyle: 'dashed',
+      borderColor: dark.hairlineLit,
+      borderRadius: 16,
+      padding: space[3],
+      alignItems: 'center',
+      justifyContent: 'center',
+      backgroundColor: dark.s2,
+      gap: space[2],
+    },
+    emptyDashedText: {
+      textAlign: 'center',
+      marginVertical: 4,
+    },
+    dashedActionBtn: {
+      width: '100%',
+    },
+    stackedLayout: {
+      gap: space[4],
+    },
+    horizontalSeamWrapper: {
+      alignItems: 'center',
+      justifyContent: 'center',
+      marginVertical: space[2],
+    },
+    emptyPartnerBox: {
+      borderWidth: 1,
+      borderColor: dark.hairlineLit,
+      borderRadius: 16,
+      padding: space[4],
+      backgroundColor: dark.s2,
+      alignItems: 'center',
+      gap: space[2],
+    },
+    emptySubtitle: {
+      textAlign: 'center',
+    },
+    emptyButtonRow: {
+      flexDirection: 'row',
+      gap: space[2],
+      marginTop: space[2],
+    },
+    membersStrip: {
+      marginBottom: space[4],
+      gap: space[2],
+    },
+    stripTitle: {
+      fontSize: 11,
+    },
+    avatarRow: {
+      flexDirection: 'row',
+      gap: space[3],
+      alignItems: 'center',
+    },
+    memberAvatarWrapper: {
+      alignItems: 'center',
+      position: 'relative',
+    },
+    activeDot: {
+      width: 6,
+      height: 6,
+      borderRadius: 3,
+      marginTop: 4,
+    },
+  });

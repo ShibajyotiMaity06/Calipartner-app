@@ -1,7 +1,8 @@
+import { useTheme as useAppearance } from '@calipartner/ui/theme';
 import React, { useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { Card, dark, onboardingLayout as layout, radius, space, Text } from '@calipartner/ui';
+import { Card, onboardingLayout as layout, radius, space, Text } from '@calipartner/ui';
 
 type Icon = React.ComponentProps<typeof Ionicons>['name'];
 
@@ -16,6 +17,9 @@ export function ProfileShortcut({
   onPress: () => void;
   testID: string;
 }) {
+  const { colors: dark } = useAppearance();
+  const styles = createStyles(dark);
+
   return (
     <Pressable
       accessibilityRole="button"
@@ -49,6 +53,9 @@ export function ProfileRow({
   danger?: boolean;
   disabled?: boolean;
 }) {
+  const { colors: dark } = useAppearance();
+  const styles = createStyles(dark);
+
   return (
     <Pressable
       accessibilityRole="button"
@@ -94,6 +101,9 @@ export function SettingsGroup({
   testID: string;
   children: React.ReactNode;
 }) {
+  const { colors: dark } = useAppearance();
+  const styles = createStyles(dark);
+
   const [expanded, setExpanded] = useState(false);
   return (
     <Card elevation="s1" style={styles.card}>
@@ -136,18 +146,19 @@ export function SettingsGroup({
   );
 }
 
-const styles = StyleSheet.create({
-  card: { padding: space[0], overflow: 'hidden', borderRadius: radius.card },
-  row: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    minHeight: layout.touch,
-    paddingHorizontal: space[3],
-    paddingVertical: space[2],
-    gap: space[2],
-  },
-  icon: { padding: space[1], backgroundColor: dark.s2, borderRadius: radius.control },
-  copy: { flex: 1, minWidth: 0 },
-  pressed: { backgroundColor: dark.s2 },
-  contents: { borderTopWidth: layout.border, borderTopColor: dark.hairline },
-});
+const createStyles = (dark: ReturnType<typeof useAppearance>['colors']) =>
+  StyleSheet.create({
+    card: { padding: space[0], overflow: 'hidden', borderRadius: radius.card },
+    row: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      minHeight: layout.touch,
+      paddingHorizontal: space[3],
+      paddingVertical: space[2],
+      gap: space[2],
+    },
+    icon: { padding: space[1], backgroundColor: dark.s2, borderRadius: radius.control },
+    copy: { flex: 1, minWidth: 0 },
+    pressed: { backgroundColor: dark.s2 },
+    contents: { borderTopWidth: layout.border, borderTopColor: dark.hairline },
+  });

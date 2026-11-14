@@ -1,3 +1,4 @@
+import { useTheme as useAppearance } from '@calipartner/ui/theme';
 import { type as inputTypography } from '@calipartner/ui';
 import React, { useEffect, useState } from 'react';
 import {
@@ -12,7 +13,7 @@ import {
   View,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { Button, dark, radius, space, Text } from '@calipartner/ui';
+import { Button, radius, space, Text } from '@calipartner/ui';
 import { useWater } from '@/hooks/useWater';
 import {
   getNotificationSettings,
@@ -33,6 +34,9 @@ export function WaterAlarmModal({
   selectedDate,
   testID = 'water-alarm-modal',
 }: WaterAlarmModalProps) {
+  const { colors: dark } = useAppearance();
+  const styles = createStyles(dark);
+
   const { totalMl, goalMl, addWater } = useWater(selectedDate);
   const [remindersEnabled, setRemindersEnabled] = useState(true);
   const [intervalHours, setIntervalHours] = useState(2);
@@ -333,200 +337,201 @@ export function WaterAlarmModal({
   );
 }
 
-const styles = StyleSheet.create({
-  backdrop: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.75)',
-    justifyContent: 'flex-end',
-  },
-  sheetContainer: {
-    backgroundColor: dark.bg0,
-    borderTopLeftRadius: radius.sheet,
-    borderTopRightRadius: radius.sheet,
-    borderWidth: 1,
-    borderColor: dark.hairline,
-    maxHeight: '85%',
-    paddingBottom: 24,
-  },
-  headerRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: space[4],
-    paddingTop: space[4],
-    paddingBottom: space[3],
-    borderBottomWidth: 1,
-    borderBottomColor: dark.hairline,
-  },
-  headerTitleRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: space[3],
-  },
-  iconCircle: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: 'rgba(56, 178, 172, 0.15)',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  closeButton: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: dark.s1,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  bodyScroll: {
-    paddingHorizontal: space[4],
-    paddingTop: space[3],
-  },
-  progressCard: {
-    backgroundColor: dark.s1,
-    borderRadius: radius.card,
-    borderWidth: 1,
-    borderColor: dark.hairline,
-    padding: space[4],
-    marginBottom: space[4],
-  },
-  progressTopRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: space[3],
-  },
-  percentBadge: {
-    backgroundColor: 'rgba(56, 178, 172, 0.15)',
-    paddingHorizontal: space[3],
-    paddingVertical: space[1],
-    borderRadius: radius.full,
-  },
-  progressBarTrack: {
-    height: 8,
-    backgroundColor: dark.s2,
-    borderRadius: radius.full,
-    overflow: 'hidden',
-    marginBottom: space[4],
-  },
-  progressBarFill: {
-    height: '100%',
-    backgroundColor: dark.teal,
-    borderRadius: radius.full,
-  },
-  quickAddRow: {
-    flexDirection: 'row',
-    gap: space[2],
-  },
-  quickAddBtn: {
-    flex: 1,
-    backgroundColor: dark.s2,
-    borderRadius: radius.control,
-    borderWidth: 1,
-    borderColor: dark.hairline,
-    paddingVertical: space[2],
-    alignItems: 'center',
-    justifyContent: 'center',
-    flexDirection: 'row',
-    gap: 6,
-  },
-  customWaterRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: space[2],
-    marginTop: space[3],
-  },
-  customWaterInput: {
-    flex: 1,
-    height: 44,
-    backgroundColor: dark.s2,
-    borderRadius: radius.control,
-    borderWidth: 1,
-    borderColor: dark.hairline,
-    paddingHorizontal: space[3],
-    color: dark.textHi,
-    fontSize: 14,
-  },
-  customWaterAddBtn: {
-    height: 44,
-    paddingHorizontal: space[4],
-    backgroundColor: dark.apricot,
-    borderRadius: radius.control,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  alarmSection: {
-    backgroundColor: dark.s1,
-    borderRadius: radius.card,
-    borderWidth: 1,
-    borderColor: dark.hairline,
-    padding: space[4],
-    marginBottom: space[4],
-  },
-  sectionHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: space[2],
-    marginBottom: space[1],
-  },
-  sectionDesc: {
-    marginBottom: space[3],
-  },
-  toggleRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingVertical: space[2],
-  },
-  optionsContainer: {
-    marginTop: space[3],
-    paddingTop: space[3],
-    borderTopWidth: 1,
-    borderTopColor: dark.hairline,
-  },
-  optionLabel: {
-    marginBottom: space[2],
-  },
-  chipsRow: {
-    flexDirection: 'row',
-    gap: space[2],
-    marginBottom: space[3],
-  },
-  chip: {
-    flex: 1,
-    paddingVertical: space[2],
-    borderRadius: radius.control,
-    backgroundColor: dark.s2,
-    borderWidth: 1,
-    borderColor: dark.hairline,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  chipActive: {
-    backgroundColor: dark.apricot,
-    borderColor: dark.apricot,
-  },
-  timeWindowBox: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: space[2],
-    backgroundColor: dark.s2,
-    padding: space[2],
-    borderRadius: radius.control,
-  },
-  toastBox: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: dark.s2,
-    padding: space[3],
-    borderRadius: radius.control,
-    marginBottom: space[3],
-    borderWidth: 1,
-    borderColor: dark.teal,
-  },
-  actionRow: {
-    paddingVertical: space[2],
-    marginBottom: space[4],
-  },
-});
+const createStyles = (dark: ReturnType<typeof useAppearance>['colors']) =>
+  StyleSheet.create({
+    backdrop: {
+      flex: 1,
+      backgroundColor: 'rgba(0, 0, 0, 0.75)',
+      justifyContent: 'flex-end',
+    },
+    sheetContainer: {
+      backgroundColor: dark.bg0,
+      borderTopLeftRadius: radius.sheet,
+      borderTopRightRadius: radius.sheet,
+      borderWidth: 1,
+      borderColor: dark.hairline,
+      maxHeight: '85%',
+      paddingBottom: 24,
+    },
+    headerRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      paddingHorizontal: space[4],
+      paddingTop: space[4],
+      paddingBottom: space[3],
+      borderBottomWidth: 1,
+      borderBottomColor: dark.hairline,
+    },
+    headerTitleRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: space[3],
+    },
+    iconCircle: {
+      width: 40,
+      height: 40,
+      borderRadius: 20,
+      backgroundColor: 'rgba(56, 178, 172, 0.15)',
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    closeButton: {
+      width: 36,
+      height: 36,
+      borderRadius: 18,
+      backgroundColor: dark.s1,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    bodyScroll: {
+      paddingHorizontal: space[4],
+      paddingTop: space[3],
+    },
+    progressCard: {
+      backgroundColor: dark.s1,
+      borderRadius: radius.card,
+      borderWidth: 1,
+      borderColor: dark.hairline,
+      padding: space[4],
+      marginBottom: space[4],
+    },
+    progressTopRow: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      marginBottom: space[3],
+    },
+    percentBadge: {
+      backgroundColor: 'rgba(56, 178, 172, 0.15)',
+      paddingHorizontal: space[3],
+      paddingVertical: space[1],
+      borderRadius: radius.full,
+    },
+    progressBarTrack: {
+      height: 8,
+      backgroundColor: dark.s2,
+      borderRadius: radius.full,
+      overflow: 'hidden',
+      marginBottom: space[4],
+    },
+    progressBarFill: {
+      height: '100%',
+      backgroundColor: dark.teal,
+      borderRadius: radius.full,
+    },
+    quickAddRow: {
+      flexDirection: 'row',
+      gap: space[2],
+    },
+    quickAddBtn: {
+      flex: 1,
+      backgroundColor: dark.s2,
+      borderRadius: radius.control,
+      borderWidth: 1,
+      borderColor: dark.hairline,
+      paddingVertical: space[2],
+      alignItems: 'center',
+      justifyContent: 'center',
+      flexDirection: 'row',
+      gap: 6,
+    },
+    customWaterRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: space[2],
+      marginTop: space[3],
+    },
+    customWaterInput: {
+      flex: 1,
+      height: 44,
+      backgroundColor: dark.s2,
+      borderRadius: radius.control,
+      borderWidth: 1,
+      borderColor: dark.hairline,
+      paddingHorizontal: space[3],
+      color: dark.textHi,
+      fontSize: 14,
+    },
+    customWaterAddBtn: {
+      height: 44,
+      paddingHorizontal: space[4],
+      backgroundColor: dark.apricot,
+      borderRadius: radius.control,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    alarmSection: {
+      backgroundColor: dark.s1,
+      borderRadius: radius.card,
+      borderWidth: 1,
+      borderColor: dark.hairline,
+      padding: space[4],
+      marginBottom: space[4],
+    },
+    sectionHeader: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: space[2],
+      marginBottom: space[1],
+    },
+    sectionDesc: {
+      marginBottom: space[3],
+    },
+    toggleRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      paddingVertical: space[2],
+    },
+    optionsContainer: {
+      marginTop: space[3],
+      paddingTop: space[3],
+      borderTopWidth: 1,
+      borderTopColor: dark.hairline,
+    },
+    optionLabel: {
+      marginBottom: space[2],
+    },
+    chipsRow: {
+      flexDirection: 'row',
+      gap: space[2],
+      marginBottom: space[3],
+    },
+    chip: {
+      flex: 1,
+      paddingVertical: space[2],
+      borderRadius: radius.control,
+      backgroundColor: dark.s2,
+      borderWidth: 1,
+      borderColor: dark.hairline,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    chipActive: {
+      backgroundColor: dark.apricot,
+      borderColor: dark.apricot,
+    },
+    timeWindowBox: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: space[2],
+      backgroundColor: dark.s2,
+      padding: space[2],
+      borderRadius: radius.control,
+    },
+    toastBox: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      backgroundColor: dark.s2,
+      padding: space[3],
+      borderRadius: radius.control,
+      marginBottom: space[3],
+      borderWidth: 1,
+      borderColor: dark.teal,
+    },
+    actionRow: {
+      paddingVertical: space[2],
+      marginBottom: space[4],
+    },
+  });

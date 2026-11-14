@@ -4,7 +4,7 @@ import { act, create, type ReactTestRenderer } from 'react-test-renderer';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { ChatMessage } from '@/types/chat';
 import type { RoomSummary } from '@/types/rooms';
-import { dark } from '@calipartner/ui';
+import { wellsLight } from '@calipartner/ui';
 
 vi.mock('react-native', () => ({
   View: 'View',
@@ -59,7 +59,7 @@ vi.mock('@/theme/useTheme', () => ({
 vi.mock('./ChatAttachmentPreview', () => ({ ChatAttachmentPreview: 'Attachment' }));
 vi.mock('./MentionText', () => ({ MentionText: 'Mention' }));
 vi.mock('../rooms/EditSquadName', () => ({ EditSquadName: 'EditSquadName' }));
-vi.mock('../rooms/SquadViews', () => ({ squadStyles: {} }));
+vi.mock('../rooms/SquadViews', () => ({ squadStyles: {}, useSquadStyles: () => ({}) }));
 vi.mock('@/hooks/useBrowserModalBack', () => ({
   useBrowserModalBack: vi.fn(),
   closeBrowserModalsThen: (fn: () => void) => fn(),
@@ -115,7 +115,7 @@ describe('ChatMessageBubble WhatsApp double ticks', () => {
     });
     const doubleTick = tree!.root.findByProps({ testID: 'tick-seen-msg-1' });
     expect(doubleTick.props.name).toBe('checkmark-done');
-    expect(doubleTick.props.color).toBe(dark.sky);
+    expect(doubleTick.props.color).toBe(wellsLight.sky);
     expect(tree!.root.findAllByProps({ testID: 'tick-sent-msg-1' })).toHaveLength(0);
   });
 });

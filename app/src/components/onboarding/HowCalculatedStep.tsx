@@ -1,7 +1,8 @@
+import { useTheme as useAppearance } from '@calipartner/ui/theme';
 import React from 'react';
 import { StyleSheet, View } from 'react-native';
 import type { CalculateTargetsResult } from '@calipartner/core';
-import { Text, space, dark, radius } from '@calipartner/ui';
+import { Text, space, radius } from '@calipartner/ui';
 import { t } from '@/i18n';
 
 interface HowCalculatedStepProps {
@@ -13,6 +14,9 @@ export function HowCalculatedStep({
   calculatedTargets,
   bodyFatPercentage,
 }: HowCalculatedStepProps) {
+  const { colors: dark } = useAppearance();
+  const styles = createStyles(dark);
+
   if (!calculatedTargets) {
     return (
       <View style={styles.emptyContainer} testID="how-calc-empty">
@@ -95,39 +99,40 @@ export function HowCalculatedStep({
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    gap: space[3],
-    paddingTop: space[2],
-  },
-  emptyContainer: {
-    padding: space[4],
-    alignItems: 'center',
-  },
-  card: {
-    backgroundColor: dark.s1,
-    borderRadius: radius.card,
-    borderWidth: 1,
-    borderColor: dark.hairline,
-    padding: space[4],
-    gap: space[2],
-  },
-  formulaIntro: {
-    lineHeight: 18,
-  },
-  formulaBox: {
-    backgroundColor: dark.s2,
-    borderRadius: radius.control,
-    padding: space[2],
-    borderWidth: 1,
-    borderColor: dark.hairline,
-  },
-  formulaCode: {
-    fontFamily: 'monospace',
-    lineHeight: 16,
-  },
-  resultText: {
-    fontWeight: '600',
-    marginTop: 2,
-  },
-});
+const createStyles = (dark: ReturnType<typeof useAppearance>['colors']) =>
+  StyleSheet.create({
+    container: {
+      gap: space[3],
+      paddingTop: space[2],
+    },
+    emptyContainer: {
+      padding: space[4],
+      alignItems: 'center',
+    },
+    card: {
+      backgroundColor: dark.s1,
+      borderRadius: radius.card,
+      borderWidth: 1,
+      borderColor: dark.hairline,
+      padding: space[4],
+      gap: space[2],
+    },
+    formulaIntro: {
+      lineHeight: 18,
+    },
+    formulaBox: {
+      backgroundColor: dark.s2,
+      borderRadius: radius.control,
+      padding: space[2],
+      borderWidth: 1,
+      borderColor: dark.hairline,
+    },
+    formulaCode: {
+      fontFamily: 'monospace',
+      lineHeight: 16,
+    },
+    resultText: {
+      fontWeight: '600',
+      marginTop: 2,
+    },
+  });

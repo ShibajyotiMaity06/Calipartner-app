@@ -1,3 +1,4 @@
+import { useTheme as useAppearance } from '@calipartner/ui/theme';
 import { NavigationIcon } from '@calipartner/ui';
 import { type as inputTypography } from '@calipartner/ui';
 import { type as typography } from '@calipartner/ui';
@@ -12,7 +13,7 @@ import {
   View,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { dark, radius, space, Text } from '@calipartner/ui';
+import { radius, space, Text } from '@calipartner/ui';
 import { playClickSound, playSuccessSound } from '@/lib/sound';
 import {
   updateExerciseSets,
@@ -37,6 +38,9 @@ export function ExerciseDetailModal({
   onSaved,
   testID = 'exercise-detail-modal',
 }: ExerciseDetailModalProps) {
+  const { colors: dark } = useAppearance();
+  const styles = createStyles(dark);
+
   const [sets, setSets] = useState<PlannedSet[]>(() =>
     exercise?.sets && exercise.sets.length > 0
       ? JSON.parse(JSON.stringify(exercise.sets))
@@ -272,182 +276,183 @@ export function ExerciseDetailModal({
   );
 }
 
-const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
-    backgroundColor: dark.bg0,
-  },
-  container: {
-    flex: 1,
-    backgroundColor: dark.bg0,
-  },
-  topBar: {
-    paddingHorizontal: space[4],
-    paddingTop: space[2],
-    paddingBottom: space[1],
-  },
-  backButton: {
-    width: 44,
-    height: 44,
-    borderRadius: radius.full,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  scrollContent: {
-    paddingHorizontal: space[4],
-    paddingBottom: 120,
-    gap: space[4],
-  },
-  illustrationCard: {
-    alignItems: 'center',
-    paddingVertical: space[2],
-  },
-  exerciseIconCircle: {
-    width: 96,
-    height: 96,
-    borderRadius: radius.card,
-    backgroundColor: dark.s2,
-    borderWidth: 1.5,
-    borderColor: dark.hairlineLit,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: space[3],
-  },
-  exerciseNameText: {
-    fontWeight: '800',
-    letterSpacing: -0.5,
-    marginBottom: 2,
-  },
-  muscleGroupText: {
-    textTransform: 'uppercase',
-    letterSpacing: 1,
-  },
-  inputGroup: {
-    gap: space[1],
-  },
-  fieldLabel: {
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-  },
-  dropdownBox: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    backgroundColor: dark.s1,
-    borderWidth: 1,
-    borderColor: dark.hairlineLit,
-    borderRadius: radius.control,
-    paddingHorizontal: space[4],
-    paddingVertical: 14,
-  },
-  dateBox: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: space[3],
-    backgroundColor: dark.s1,
-    borderWidth: 1,
-    borderColor: dark.hairlineLit,
-    borderRadius: radius.control,
-    paddingHorizontal: space[4],
-    paddingVertical: 14,
-  },
-  setsTableCard: {
-    backgroundColor: dark.s1,
-    borderWidth: 1,
-    borderColor: dark.hairline,
-    borderRadius: radius.card,
-    padding: space[4],
-    gap: space[3],
-  },
-  tableHeaderRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingBottom: space[1],
-    borderBottomWidth: 1,
-    borderBottomColor: dark.hairline,
-  },
-  colHeader: {
-    fontWeight: '700',
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-  },
-  setRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: space[2],
-  },
-  setNumCol: {
-    fontWeight: '700',
-    textAlign: 'center',
-  },
-  inputCellWrapper: {
-    backgroundColor: dark.s2,
-    borderRadius: radius.control,
-    borderWidth: 1,
-    borderColor: dark.hairline,
-  },
-  cellInput: {
-    color: dark.textHi,
-    paddingHorizontal: space[3],
-    paddingVertical: 10,
-    fontFamily: typography.body.fontFamily,
-    fontSize: 16,
-    textAlign: 'center',
-    fontWeight: '600',
-  },
-  trashBtn: {
-    width: 36,
-    height: 36,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  addSetBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: space[1],
-    backgroundColor: dark.s2,
-    borderWidth: 1,
-    borderColor: dark.hairlineLit,
-    borderRadius: radius.control,
-    paddingVertical: 12,
-    marginTop: space[1],
-  },
-  notesInput: {
-    backgroundColor: dark.s1,
-    borderWidth: 1,
-    borderColor: dark.hairline,
-    borderRadius: radius.control,
-    color: dark.textHi,
-    paddingHorizontal: space[4],
-    paddingVertical: 12,
-    minHeight: 80,
-    textAlignVertical: 'top',
-    fontFamily: typography.body.fontFamily,
-    fontSize: 14,
-    lineHeight: 20,
-  },
-  bottomBar: {
-    position: 'absolute',
-    bottom: 24,
-    left: space[4],
-    right: space[4],
-  },
-  saveButton: {
-    backgroundColor: dark.apricot,
-    paddingVertical: 16,
-    borderRadius: radius.full,
-    alignItems: 'center',
-    justifyContent: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.25,
-    shadowRadius: 8,
-    elevation: 4,
-  },
-  saveButtonText: {
-    fontWeight: '800',
-    fontFamily: typography.body.fontFamily,
-    fontSize: 16,
-  },
-});
+const createStyles = (dark: ReturnType<typeof useAppearance>['colors']) =>
+  StyleSheet.create({
+    safeArea: {
+      flex: 1,
+      backgroundColor: dark.bg0,
+    },
+    container: {
+      flex: 1,
+      backgroundColor: dark.bg0,
+    },
+    topBar: {
+      paddingHorizontal: space[4],
+      paddingTop: space[2],
+      paddingBottom: space[1],
+    },
+    backButton: {
+      width: 44,
+      height: 44,
+      borderRadius: radius.full,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    scrollContent: {
+      paddingHorizontal: space[4],
+      paddingBottom: 120,
+      gap: space[4],
+    },
+    illustrationCard: {
+      alignItems: 'center',
+      paddingVertical: space[2],
+    },
+    exerciseIconCircle: {
+      width: 96,
+      height: 96,
+      borderRadius: radius.card,
+      backgroundColor: dark.s2,
+      borderWidth: 1.5,
+      borderColor: dark.hairlineLit,
+      alignItems: 'center',
+      justifyContent: 'center',
+      marginBottom: space[3],
+    },
+    exerciseNameText: {
+      fontWeight: '800',
+      letterSpacing: -0.5,
+      marginBottom: 2,
+    },
+    muscleGroupText: {
+      textTransform: 'uppercase',
+      letterSpacing: 1,
+    },
+    inputGroup: {
+      gap: space[1],
+    },
+    fieldLabel: {
+      textTransform: 'uppercase',
+      letterSpacing: 0.5,
+    },
+    dropdownBox: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      backgroundColor: dark.s1,
+      borderWidth: 1,
+      borderColor: dark.hairlineLit,
+      borderRadius: radius.control,
+      paddingHorizontal: space[4],
+      paddingVertical: 14,
+    },
+    dateBox: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: space[3],
+      backgroundColor: dark.s1,
+      borderWidth: 1,
+      borderColor: dark.hairlineLit,
+      borderRadius: radius.control,
+      paddingHorizontal: space[4],
+      paddingVertical: 14,
+    },
+    setsTableCard: {
+      backgroundColor: dark.s1,
+      borderWidth: 1,
+      borderColor: dark.hairline,
+      borderRadius: radius.card,
+      padding: space[4],
+      gap: space[3],
+    },
+    tableHeaderRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      paddingBottom: space[1],
+      borderBottomWidth: 1,
+      borderBottomColor: dark.hairline,
+    },
+    colHeader: {
+      fontWeight: '700',
+      textTransform: 'uppercase',
+      letterSpacing: 0.5,
+    },
+    setRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: space[2],
+    },
+    setNumCol: {
+      fontWeight: '700',
+      textAlign: 'center',
+    },
+    inputCellWrapper: {
+      backgroundColor: dark.s2,
+      borderRadius: radius.control,
+      borderWidth: 1,
+      borderColor: dark.hairline,
+    },
+    cellInput: {
+      color: dark.textHi,
+      paddingHorizontal: space[3],
+      paddingVertical: 10,
+      fontFamily: typography.body.fontFamily,
+      fontSize: 16,
+      textAlign: 'center',
+      fontWeight: '600',
+    },
+    trashBtn: {
+      width: 36,
+      height: 36,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    addSetBtn: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: space[1],
+      backgroundColor: dark.s2,
+      borderWidth: 1,
+      borderColor: dark.hairlineLit,
+      borderRadius: radius.control,
+      paddingVertical: 12,
+      marginTop: space[1],
+    },
+    notesInput: {
+      backgroundColor: dark.s1,
+      borderWidth: 1,
+      borderColor: dark.hairline,
+      borderRadius: radius.control,
+      color: dark.textHi,
+      paddingHorizontal: space[4],
+      paddingVertical: 12,
+      minHeight: 80,
+      textAlignVertical: 'top',
+      fontFamily: typography.body.fontFamily,
+      fontSize: 14,
+      lineHeight: 20,
+    },
+    bottomBar: {
+      position: 'absolute',
+      bottom: 24,
+      left: space[4],
+      right: space[4],
+    },
+    saveButton: {
+      backgroundColor: dark.apricot,
+      paddingVertical: 16,
+      borderRadius: radius.full,
+      alignItems: 'center',
+      justifyContent: 'center',
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 4 },
+      shadowOpacity: 0.25,
+      shadowRadius: 8,
+      elevation: 4,
+    },
+    saveButtonText: {
+      fontWeight: '800',
+      fontFamily: typography.body.fontFamily,
+      fontSize: 16,
+    },
+  });

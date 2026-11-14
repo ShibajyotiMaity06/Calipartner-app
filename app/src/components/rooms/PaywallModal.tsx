@@ -1,3 +1,4 @@
+import { useTheme as useAppearance } from '@calipartner/ui/theme';
 import { type as inputTypography } from '@calipartner/ui';
 import { type as typography } from '@calipartner/ui';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -18,7 +19,6 @@ import type { PurchasesPackage } from 'react-native-purchases';
 import {
   Button,
   Card,
-  dark,
   radius,
   space,
   Text,
@@ -178,6 +178,9 @@ export function PaywallModal({
   checkoutCancelled = false,
   trialExpired = false,
 }: PaywallModalProps) {
+  const { colors: dark } = useAppearance();
+  const styles = createStyles(dark);
+
   const { session } = useAuth();
   const preparedCatalog =
     Platform.OS === 'web' ? getCachedWebCatalog(session?.access_token) : undefined;
@@ -1162,350 +1165,351 @@ export function PaywallModal({
   );
 }
 
-const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
-    backgroundColor: dark.bg0,
-  },
-  container: {
-    flex: 1,
-    backgroundColor: dark.bg0,
-  },
-  topBar: {
-    height: 56,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: space[4],
-    borderBottomWidth: 1,
-    borderBottomColor: dark.hairline,
-  },
-  topBarTitle: {
-    fontWeight: '700',
-  },
-  closeButton: {
-    width: onboardingLayout.touch,
-    minHeight: onboardingLayout.touch,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  closeButtonPlaceholder: {
-    width: 44,
-  },
-  scrollContent: {
-    paddingHorizontal: space[4],
-    paddingTop: space[4],
-    paddingBottom: space[6],
-  },
-  headerBlock: {
-    marginBottom: space[4],
-  },
-  titleText: {
-    marginBottom: space[1],
-    fontWeight: '700',
-  },
-  keepGoingSubtitle: {
-    marginBottom: space[1],
-  },
-  subtitleText: {
-    lineHeight: 20,
-  },
-  statusBanner: {
-    padding: space[3],
-    marginBottom: space[3],
-    backgroundColor: dark.s2,
-  },
-  sectionWrap: {
-    marginBottom: space[4],
-  },
-  sectionHeading: {
-    marginBottom: space[2],
-    fontWeight: '700',
-  },
-  durationToggleContainer: {
-    flexDirection: 'row',
-    backgroundColor: dark.s2,
-    borderRadius: radius.control,
-    padding: 3,
-  },
-  durationToggleItem: {
-    flex: 1,
-    minHeight: 44,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderRadius: radius.control - 2,
-  },
-  durationToggleSelected: {
-    backgroundColor: dark.s3,
-    borderWidth: 1,
-    borderColor: dark.hairlineLit,
-  },
-  durationLabelWithChip: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: space[2],
-  },
-  quietChip: {
-    backgroundColor: dark.s1,
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-    borderRadius: radius.full,
-    borderWidth: 0.5,
-    borderColor: dark.teal,
-  },
-  planCardsStack: {
-    gap: space[3],
-  },
-  planCard: {
-    width: '100%',
-    padding: space[4],
-    backgroundColor: dark.s1,
-    borderRadius: radius.card,
-    borderWidth: 1.5,
-    borderColor: dark.hairline,
-  },
-  planCardSelected: {
-    borderColor: dark.apricot,
-    backgroundColor: dark.s2,
-  },
-  planCardTopRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: space[2],
-  },
-  planRadioRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: space[3],
-  },
-  radioCircle: {
-    width: 22,
-    height: 22,
-    borderRadius: 11,
-    borderWidth: 2,
-    borderColor: dark.hairlineLit,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  radioCircleActive: {
-    borderColor: dark.apricot,
-  },
-  radioDot: {
-    width: 10,
-    height: 10,
-    borderRadius: 5,
-    backgroundColor: dark.apricot,
-  },
-  planNameText: {
-    fontWeight: '800',
-    fontFamily: typography.body.fontFamily,
-    fontSize: 18,
-  },
-  trialBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    backgroundColor: dark.s3,
-    paddingHorizontal: space[2],
-    paddingVertical: 3,
-    borderRadius: radius.full,
-    borderWidth: 1,
-    borderColor: dark.apricot,
-  },
-  aiBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    backgroundColor: dark.s3,
-    paddingHorizontal: space[2],
-    paddingVertical: 3,
-    borderRadius: radius.full,
-    borderWidth: 1,
-    borderColor: dark.teal,
-  },
-  planSummaryText: {
-    lineHeight: 18,
-    marginBottom: space[2],
-  },
-  priceDivider: {
-    height: 1,
-    backgroundColor: dark.hairline,
-    marginVertical: space[2],
-  },
-  priceContainer: {
-    gap: 2,
-  },
-  priceMainRow: {
-    flexDirection: 'row',
-    alignItems: 'baseline',
-    gap: space[2],
-  },
-  priceHighlight: {
-    fontWeight: '700',
-  },
-  usdText: {
-    fontVariant: ['tabular-nums'],
-  },
-  monthlyEquiv: {
-    fontWeight: '600',
-  },
-  trialSubNote: {
-    marginTop: 2,
-  },
-  whatYouGetCard: {
-    padding: space[4],
-    marginBottom: space[4],
-    backgroundColor: dark.s1,
-    borderRadius: radius.card,
-    borderWidth: 1,
-    borderColor: dark.hairline,
-  },
-  featuresHeaderRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: space[3],
-  },
-  whatYouGetHeader: {
-    fontWeight: '700',
-  },
-  badgeQuiet: {
-    backgroundColor: dark.s2,
-    paddingHorizontal: space[2],
-    paddingVertical: 2,
-    borderRadius: radius.full,
-  },
-  whatYouGetItem: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    marginBottom: space[2],
-    gap: space[2],
-  },
-  checkIcon: {
-    marginTop: 2,
-  },
-  featureItemText: {
-    flex: 1,
-    lineHeight: 19,
-  },
-  freeSentenceDivider: {
-    height: 1,
-    backgroundColor: dark.hairline,
-    marginVertical: space[3],
-  },
-  freeGuaranteeBlock: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    gap: space[2],
-  },
-  freeSentenceText: {
-    flex: 1,
-    lineHeight: 17,
-  },
-  promoTrigger: {
-    minHeight: 44,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginVertical: space[2],
-  },
-  ctaBottomBar: {
-    padding: space[4],
-    borderTopWidth: 1,
-    borderTopColor: dark.hairline,
-    backgroundColor: dark.bg0,
-  },
-  ctaButton: {
-    width: '100%',
-    marginBottom: space[2],
-  },
-  renewalSentence: {
-    textAlign: 'center',
-    marginBottom: space[3],
-    lineHeight: 18,
-  },
-  footerLinksRow: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-    gap: space[2],
-  },
-  modalBackdrop: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.75)',
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: space[4],
-  },
-  successModalCard: {
-    width: '100%',
-    maxWidth: 360,
-    padding: space[5],
-    alignItems: 'center',
-  },
-  successIcon: {
-    marginBottom: space[3],
-  },
-  successTitle: {
-    marginBottom: space[2],
-    textAlign: 'center',
-  },
-  successSubtitle: {
-    marginBottom: space[5],
-    textAlign: 'center',
-    lineHeight: 22,
-  },
-  successDoneBtn: {
-    width: '100%',
-  },
-  resultModalCard: {
-    width: '100%',
-    maxWidth: 340,
-    padding: space[4],
-    alignItems: 'center',
-  },
-  resultTitle: {
-    marginBottom: space[2],
-  },
-  resultSubtitle: {
-    marginBottom: space[4],
-    textAlign: 'center',
-  },
-  resultCloseBtn: {
-    width: '100%',
-  },
-  promoModalCard: {
-    width: '100%',
-    maxWidth: 360,
-    padding: space[4],
-  },
-  promoTitle: {
-    marginBottom: space[1],
-  },
-  promoSubtitle: {
-    marginBottom: space[3],
-  },
-  promoInput: {
-    backgroundColor: dark.s2,
-    borderWidth: 1,
-    borderColor: dark.hairline,
-    borderRadius: radius.control,
-    height: 48,
-    paddingHorizontal: space[3],
-    color: dark.textHi,
-    fontFamily: typography.body.fontFamily,
-    fontSize: 16,
-    marginBottom: space[3],
-  },
-  promoFeedback: {
-    marginBottom: space[3],
-  },
-  applyBtn: {
-    width: '100%',
-    marginBottom: space[2],
-  },
-  cancelPromoBtn: {
-    width: '100%',
-  },
-});
+const createStyles = (dark: ReturnType<typeof useAppearance>['colors']) =>
+  StyleSheet.create({
+    safeArea: {
+      flex: 1,
+      backgroundColor: dark.bg0,
+    },
+    container: {
+      flex: 1,
+      backgroundColor: dark.bg0,
+    },
+    topBar: {
+      height: 56,
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      paddingHorizontal: space[4],
+      borderBottomWidth: 1,
+      borderBottomColor: dark.hairline,
+    },
+    topBarTitle: {
+      fontWeight: '700',
+    },
+    closeButton: {
+      width: onboardingLayout.touch,
+      minHeight: onboardingLayout.touch,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    closeButtonPlaceholder: {
+      width: 44,
+    },
+    scrollContent: {
+      paddingHorizontal: space[4],
+      paddingTop: space[4],
+      paddingBottom: space[6],
+    },
+    headerBlock: {
+      marginBottom: space[4],
+    },
+    titleText: {
+      marginBottom: space[1],
+      fontWeight: '700',
+    },
+    keepGoingSubtitle: {
+      marginBottom: space[1],
+    },
+    subtitleText: {
+      lineHeight: 20,
+    },
+    statusBanner: {
+      padding: space[3],
+      marginBottom: space[3],
+      backgroundColor: dark.s2,
+    },
+    sectionWrap: {
+      marginBottom: space[4],
+    },
+    sectionHeading: {
+      marginBottom: space[2],
+      fontWeight: '700',
+    },
+    durationToggleContainer: {
+      flexDirection: 'row',
+      backgroundColor: dark.s2,
+      borderRadius: radius.control,
+      padding: 3,
+    },
+    durationToggleItem: {
+      flex: 1,
+      minHeight: 44,
+      alignItems: 'center',
+      justifyContent: 'center',
+      borderRadius: radius.control - 2,
+    },
+    durationToggleSelected: {
+      backgroundColor: dark.s3,
+      borderWidth: 1,
+      borderColor: dark.hairlineLit,
+    },
+    durationLabelWithChip: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: space[2],
+    },
+    quietChip: {
+      backgroundColor: dark.s1,
+      paddingHorizontal: 8,
+      paddingVertical: 2,
+      borderRadius: radius.full,
+      borderWidth: 0.5,
+      borderColor: dark.teal,
+    },
+    planCardsStack: {
+      gap: space[3],
+    },
+    planCard: {
+      width: '100%',
+      padding: space[4],
+      backgroundColor: dark.s1,
+      borderRadius: radius.card,
+      borderWidth: 1.5,
+      borderColor: dark.hairline,
+    },
+    planCardSelected: {
+      borderColor: dark.apricot,
+      backgroundColor: dark.s2,
+    },
+    planCardTopRow: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      marginBottom: space[2],
+    },
+    planRadioRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: space[3],
+    },
+    radioCircle: {
+      width: 22,
+      height: 22,
+      borderRadius: 11,
+      borderWidth: 2,
+      borderColor: dark.hairlineLit,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    radioCircleActive: {
+      borderColor: dark.apricot,
+    },
+    radioDot: {
+      width: 10,
+      height: 10,
+      borderRadius: 5,
+      backgroundColor: dark.apricot,
+    },
+    planNameText: {
+      fontWeight: '800',
+      fontFamily: typography.body.fontFamily,
+      fontSize: 18,
+    },
+    trialBadge: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 4,
+      backgroundColor: dark.s3,
+      paddingHorizontal: space[2],
+      paddingVertical: 3,
+      borderRadius: radius.full,
+      borderWidth: 1,
+      borderColor: dark.apricot,
+    },
+    aiBadge: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 4,
+      backgroundColor: dark.s3,
+      paddingHorizontal: space[2],
+      paddingVertical: 3,
+      borderRadius: radius.full,
+      borderWidth: 1,
+      borderColor: dark.teal,
+    },
+    planSummaryText: {
+      lineHeight: 18,
+      marginBottom: space[2],
+    },
+    priceDivider: {
+      height: 1,
+      backgroundColor: dark.hairline,
+      marginVertical: space[2],
+    },
+    priceContainer: {
+      gap: 2,
+    },
+    priceMainRow: {
+      flexDirection: 'row',
+      alignItems: 'baseline',
+      gap: space[2],
+    },
+    priceHighlight: {
+      fontWeight: '700',
+    },
+    usdText: {
+      fontVariant: ['tabular-nums'],
+    },
+    monthlyEquiv: {
+      fontWeight: '600',
+    },
+    trialSubNote: {
+      marginTop: 2,
+    },
+    whatYouGetCard: {
+      padding: space[4],
+      marginBottom: space[4],
+      backgroundColor: dark.s1,
+      borderRadius: radius.card,
+      borderWidth: 1,
+      borderColor: dark.hairline,
+    },
+    featuresHeaderRow: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      marginBottom: space[3],
+    },
+    whatYouGetHeader: {
+      fontWeight: '700',
+    },
+    badgeQuiet: {
+      backgroundColor: dark.s2,
+      paddingHorizontal: space[2],
+      paddingVertical: 2,
+      borderRadius: radius.full,
+    },
+    whatYouGetItem: {
+      flexDirection: 'row',
+      alignItems: 'flex-start',
+      marginBottom: space[2],
+      gap: space[2],
+    },
+    checkIcon: {
+      marginTop: 2,
+    },
+    featureItemText: {
+      flex: 1,
+      lineHeight: 19,
+    },
+    freeSentenceDivider: {
+      height: 1,
+      backgroundColor: dark.hairline,
+      marginVertical: space[3],
+    },
+    freeGuaranteeBlock: {
+      flexDirection: 'row',
+      alignItems: 'flex-start',
+      gap: space[2],
+    },
+    freeSentenceText: {
+      flex: 1,
+      lineHeight: 17,
+    },
+    promoTrigger: {
+      minHeight: 44,
+      alignItems: 'center',
+      justifyContent: 'center',
+      marginVertical: space[2],
+    },
+    ctaBottomBar: {
+      padding: space[4],
+      borderTopWidth: 1,
+      borderTopColor: dark.hairline,
+      backgroundColor: dark.bg0,
+    },
+    ctaButton: {
+      width: '100%',
+      marginBottom: space[2],
+    },
+    renewalSentence: {
+      textAlign: 'center',
+      marginBottom: space[3],
+      lineHeight: 18,
+    },
+    footerLinksRow: {
+      flexDirection: 'row',
+      justifyContent: 'center',
+      alignItems: 'center',
+      gap: space[2],
+    },
+    modalBackdrop: {
+      flex: 1,
+      backgroundColor: 'rgba(0,0,0,0.75)',
+      alignItems: 'center',
+      justifyContent: 'center',
+      padding: space[4],
+    },
+    successModalCard: {
+      width: '100%',
+      maxWidth: 360,
+      padding: space[5],
+      alignItems: 'center',
+    },
+    successIcon: {
+      marginBottom: space[3],
+    },
+    successTitle: {
+      marginBottom: space[2],
+      textAlign: 'center',
+    },
+    successSubtitle: {
+      marginBottom: space[5],
+      textAlign: 'center',
+      lineHeight: 22,
+    },
+    successDoneBtn: {
+      width: '100%',
+    },
+    resultModalCard: {
+      width: '100%',
+      maxWidth: 340,
+      padding: space[4],
+      alignItems: 'center',
+    },
+    resultTitle: {
+      marginBottom: space[2],
+    },
+    resultSubtitle: {
+      marginBottom: space[4],
+      textAlign: 'center',
+    },
+    resultCloseBtn: {
+      width: '100%',
+    },
+    promoModalCard: {
+      width: '100%',
+      maxWidth: 360,
+      padding: space[4],
+    },
+    promoTitle: {
+      marginBottom: space[1],
+    },
+    promoSubtitle: {
+      marginBottom: space[3],
+    },
+    promoInput: {
+      backgroundColor: dark.s2,
+      borderWidth: 1,
+      borderColor: dark.hairline,
+      borderRadius: radius.control,
+      height: 48,
+      paddingHorizontal: space[3],
+      color: dark.textHi,
+      fontFamily: typography.body.fontFamily,
+      fontSize: 16,
+      marginBottom: space[3],
+    },
+    promoFeedback: {
+      marginBottom: space[3],
+    },
+    applyBtn: {
+      width: '100%',
+      marginBottom: space[2],
+    },
+    cancelPromoBtn: {
+      width: '100%',
+    },
+  });

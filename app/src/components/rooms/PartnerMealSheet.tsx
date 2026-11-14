@@ -1,8 +1,9 @@
+import { useTheme as useAppearance } from '@calipartner/ui/theme';
 import React from 'react';
 import { Modal, Pressable, StyleSheet, TouchableOpacity, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import type { MealSection, RoomReactionType } from '@calipartner/core';
-import { dark, radius, space, Text, Button, HiddenMetric } from '@calipartner/ui';
+import { radius, space, Text, Button, HiddenMetric } from '@calipartner/ui';
 
 export interface PartnerMealItem {
   id: string;
@@ -48,6 +49,9 @@ export function PartnerMealSheet({
   onAddToMyDiary,
   onSendReaction,
 }: PartnerMealSheetProps): React.JSX.Element {
+  const { colors: dark } = useAppearance();
+  const styles = createStyles(dark);
+
   const sectionTitle = mealSection.charAt(0).toUpperCase() + mealSection.slice(1);
 
   return (
@@ -189,117 +193,118 @@ export function PartnerMealSheet({
   );
 }
 
-const styles = StyleSheet.create({
-  backdrop: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    justifyContent: 'flex-end',
-  },
-  sheet: {
-    backgroundColor: dark.s1,
-    borderTopLeftRadius: radius.sheet,
-    borderTopRightRadius: radius.sheet,
-    borderTopWidth: 1,
-    borderColor: dark.hairlineLit,
-    padding: space[4],
-    paddingBottom: space[7],
-    gap: space[3],
-  },
-  grabber: {
-    width: 36,
-    height: 4,
-    borderRadius: 2,
-    backgroundColor: dark.hairlineLit,
-    alignSelf: 'center',
-    marginBottom: space[1],
-  },
-  headerRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  closeBtn: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  contentBox: {
-    backgroundColor: dark.s2,
-    borderRadius: radius.card,
-    padding: space[3],
-    minHeight: 90,
-    justifyContent: 'center',
-  },
-  hiddenStateBox: {
-    alignItems: 'center',
-    paddingVertical: space[2],
-    gap: space[2],
-  },
-  hiddenSubtext: {
-    textAlign: 'center',
-  },
-  unloggedBox: {
-    alignItems: 'center',
-    paddingVertical: space[3],
-    gap: space[2],
-  },
-  unloggedText: {
-    textAlign: 'center',
-  },
-  emptyItemsBox: {
-    alignItems: 'center',
-    paddingVertical: space[2],
-    gap: space[1],
-  },
-  itemsList: {
-    gap: space[2],
-  },
-  itemRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: space[2],
-  },
-  itemBullet: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-    backgroundColor: dark.teal,
-  },
-  itemTextWrap: {
-    flex: 1,
-  },
-  reactionsSection: {
-    gap: space[2],
-  },
-  reactionTitle: {
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-  },
-  reactionRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-around',
-    backgroundColor: dark.s2,
-    borderRadius: radius.control,
-    padding: space[2],
-  },
-  reactionBtn: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  reactionEmoji: {
-    fontSize: 22,
-  },
-  actionRow: {
-    gap: space[2],
-    marginTop: space[2],
-  },
-  actionBtn: {
-    width: '100%',
-  },
-});
+const createStyles = (dark: ReturnType<typeof useAppearance>['colors']) =>
+  StyleSheet.create({
+    backdrop: {
+      flex: 1,
+      backgroundColor: 'rgba(0, 0, 0, 0.5)',
+      justifyContent: 'flex-end',
+    },
+    sheet: {
+      backgroundColor: dark.s1,
+      borderTopLeftRadius: radius.sheet,
+      borderTopRightRadius: radius.sheet,
+      borderTopWidth: 1,
+      borderColor: dark.hairlineLit,
+      padding: space[4],
+      paddingBottom: space[7],
+      gap: space[3],
+    },
+    grabber: {
+      width: 36,
+      height: 4,
+      borderRadius: 2,
+      backgroundColor: dark.hairlineLit,
+      alignSelf: 'center',
+      marginBottom: space[1],
+    },
+    headerRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+    },
+    closeBtn: {
+      width: 36,
+      height: 36,
+      borderRadius: 18,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    contentBox: {
+      backgroundColor: dark.s2,
+      borderRadius: radius.card,
+      padding: space[3],
+      minHeight: 90,
+      justifyContent: 'center',
+    },
+    hiddenStateBox: {
+      alignItems: 'center',
+      paddingVertical: space[2],
+      gap: space[2],
+    },
+    hiddenSubtext: {
+      textAlign: 'center',
+    },
+    unloggedBox: {
+      alignItems: 'center',
+      paddingVertical: space[3],
+      gap: space[2],
+    },
+    unloggedText: {
+      textAlign: 'center',
+    },
+    emptyItemsBox: {
+      alignItems: 'center',
+      paddingVertical: space[2],
+      gap: space[1],
+    },
+    itemsList: {
+      gap: space[2],
+    },
+    itemRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: space[2],
+    },
+    itemBullet: {
+      width: 6,
+      height: 6,
+      borderRadius: 3,
+      backgroundColor: dark.teal,
+    },
+    itemTextWrap: {
+      flex: 1,
+    },
+    reactionsSection: {
+      gap: space[2],
+    },
+    reactionTitle: {
+      textTransform: 'uppercase',
+      letterSpacing: 0.5,
+    },
+    reactionRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-around',
+      backgroundColor: dark.s2,
+      borderRadius: radius.control,
+      padding: space[2],
+    },
+    reactionBtn: {
+      width: 44,
+      height: 44,
+      borderRadius: 22,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    reactionEmoji: {
+      fontSize: 22,
+    },
+    actionRow: {
+      gap: space[2],
+      marginTop: space[2],
+    },
+    actionBtn: {
+      width: '100%',
+    },
+  });

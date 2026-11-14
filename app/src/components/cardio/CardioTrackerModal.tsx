@@ -1,3 +1,4 @@
+import { useTheme as useAppearance } from '@calipartner/ui/theme';
 import { NavigationIcon } from '@calipartner/ui';
 import { type as inputTypography } from '@calipartner/ui';
 import React, { useState, useEffect, useRef } from 'react';
@@ -11,7 +12,7 @@ import {
   TextInput,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { Text, Button, Card, dark, space, radius } from '@calipartner/ui';
+import { Text, Button, Card, space, radius } from '@calipartner/ui';
 import { useSteps } from '@/hooks/useSteps';
 import { useWorkouts } from '@/hooks/useWorkouts';
 import { useTargets } from '@/hooks/useTargets';
@@ -57,6 +58,9 @@ export function CardioTrackerModal({
   selectedDate,
   testID = 'modal-cardio-tracker',
 }: CardioTrackerModalProps) {
+  const { colors: dark } = useAppearance();
+  const styles = createStyles(dark);
+
   const { profile } = useAuth();
   const localDate =
     selectedDate ??
@@ -930,283 +934,284 @@ export function CardioTrackerModal({
   );
 }
 
-const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
-    backgroundColor: dark.bg0,
-  },
-  container: {
-    flex: 1,
-    backgroundColor: dark.bg0,
-  },
-  topBar: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: space[3],
-    paddingTop: space[2],
-    paddingBottom: space[2],
-    borderBottomWidth: 1,
-    borderBottomColor: dark.hairline,
-  },
-  backButton: {
-    width: 44,
-    height: 44,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  tabPillRow: {
-    flexDirection: 'row',
-    backgroundColor: dark.s1,
-    borderRadius: radius.full,
-    padding: 4,
-    borderWidth: 1,
-    borderColor: dark.hairline,
-  },
-  tabButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: space[3],
-    paddingVertical: space[2],
-    borderRadius: radius.full,
-  },
-  tabButtonActive: {
-    backgroundColor: dark.apricot,
-  },
-  scrollContent: {
-    padding: space[4],
-    paddingBottom: space[8],
-  },
-  idleBlock: {
-    gap: space[4],
-  },
-  iconHero: {
-    alignItems: 'center',
-    marginTop: space[3],
-    marginBottom: space[2],
-  },
-  heroIconCircle: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: space[3],
-  },
-  heroTitle: {
-    letterSpacing: -0.5,
-    marginBottom: 6,
-  },
-  heroSubtitle: {
-    textAlign: 'center',
-    lineHeight: 20,
-    maxWidth: 300,
-  },
-  configCard: {
-    padding: space[4],
-  },
-  configTitle: {
-    marginBottom: space[3],
-    fontWeight: '700',
-  },
-  presetChipsRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: space[2],
-  },
-  chip: {
-    paddingHorizontal: space[4],
-    paddingVertical: space[2],
-    borderRadius: radius.control,
-    backgroundColor: dark.s2,
-    borderWidth: 1,
-    borderColor: dark.hairline,
-  },
-  chipActive: {
-    backgroundColor: dark.apricot,
-    borderColor: dark.apricot,
-  },
-  customInputRow: {
-    marginTop: space[3],
-  },
-  customStepInput: {
-    height: 48,
-    borderRadius: radius.control,
-    backgroundColor: dark.s2,
-    borderWidth: 1,
-    borderColor: dark.hairline,
-    paddingHorizontal: space[3],
-    color: dark.textHi,
-    fontSize: 15,
-  },
-  gpsBannerCard: {
-    padding: space[4],
-  },
-  gpsBannerRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  gpsActivePill: {
-    backgroundColor: 'rgba(56, 178, 172, 0.15)',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: radius.full,
-  },
-  startActionRow: {
-    marginTop: space[2],
-  },
-  liveSessionBlock: {
-    alignItems: 'center',
-    paddingTop: space[3],
-    gap: space[4],
-  },
-  sessionStatusPill: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: dark.s1,
-    paddingHorizontal: space[3],
-    paddingVertical: space[1],
-    borderRadius: radius.full,
-    borderWidth: 1,
-    borderColor: dark.hairline,
-  },
-  statusDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    marginRight: 6,
-  },
-  dotGreen: {
-    backgroundColor: '#48BB78',
-  },
-  dotAmber: {
-    backgroundColor: '#ECC94B',
-  },
-  metricHero: {
-    alignItems: 'center',
-    marginVertical: space[2],
-  },
-  heroNumber: {
-    fontVariant: ['tabular-nums'],
-    letterSpacing: -1,
-  },
-  heroUnit: {
-    fontWeight: '700',
-    letterSpacing: 1.5,
-    marginTop: 4,
-  },
-  goalProgressWrap: {
-    width: '100%',
-    backgroundColor: dark.s1,
-    padding: space[4],
-    borderRadius: radius.card,
-    borderWidth: 1,
-    borderColor: dark.hairline,
-  },
-  goalProgressHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: space[2],
-  },
-  track: {
-    height: 8,
-    backgroundColor: dark.s2,
-    borderRadius: radius.full,
-    overflow: 'hidden',
-  },
-  fill: {
-    height: '100%',
-    backgroundColor: dark.apricot,
-    borderRadius: radius.full,
-  },
-  statsGrid: {
-    flexDirection: 'row',
-    gap: space[2],
-    width: '100%',
-  },
-  statTile: {
-    flex: 1,
-    padding: space[3],
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  statNumber: {
-    marginVertical: 4,
-    fontVariant: ['tabular-nums'],
-  },
-  liveGpsPill: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: 'rgba(56, 178, 172, 0.1)',
-    paddingHorizontal: space[3],
-    paddingVertical: space[2],
-    borderRadius: radius.full,
-  },
-  activeControlsRow: {
-    flexDirection: 'row',
-    gap: space[3],
-    width: '100%',
-    marginTop: space[4],
-  },
-  controlBtn: {
-    flex: 1,
-    height: 56,
-    borderRadius: radius.control,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  pauseBtn: {
-    backgroundColor: dark.s2,
-    borderWidth: 1,
-    borderColor: dark.hairline,
-  },
-  finishBtn: {
-    backgroundColor: dark.apricot,
-  },
-  completedBlock: {
-    alignItems: 'center',
-    paddingTop: space[4],
-    gap: space[4],
-  },
-  celebrationCircle: {
-    width: 96,
-    height: 96,
-    borderRadius: 48,
-    backgroundColor: 'rgba(244, 182, 125, 0.15)',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: space[2],
-  },
-  completedTitle: {
-    letterSpacing: -0.5,
-  },
-  completedSubtitle: {
-    textAlign: 'center',
-    lineHeight: 20,
-    maxWidth: 320,
-  },
-  summaryCard: {
-    width: '100%',
-    padding: space[4],
-    gap: space[3],
-  },
-  summaryRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    borderBottomWidth: 1,
-    borderBottomColor: dark.hairline,
-    paddingBottom: space[2],
-  },
-  permissionErrorCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: 'rgba(235, 122, 107, 0.1)',
-    borderWidth: 1,
-    borderColor: dark.danger,
-    borderRadius: radius.card,
-    padding: space[3],
-    marginVertical: space[2],
-  },
-});
+const createStyles = (dark: ReturnType<typeof useAppearance>['colors']) =>
+  StyleSheet.create({
+    safeArea: {
+      flex: 1,
+      backgroundColor: dark.bg0,
+    },
+    container: {
+      flex: 1,
+      backgroundColor: dark.bg0,
+    },
+    topBar: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      paddingHorizontal: space[3],
+      paddingTop: space[2],
+      paddingBottom: space[2],
+      borderBottomWidth: 1,
+      borderBottomColor: dark.hairline,
+    },
+    backButton: {
+      width: 44,
+      height: 44,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    tabPillRow: {
+      flexDirection: 'row',
+      backgroundColor: dark.s1,
+      borderRadius: radius.full,
+      padding: 4,
+      borderWidth: 1,
+      borderColor: dark.hairline,
+    },
+    tabButton: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      paddingHorizontal: space[3],
+      paddingVertical: space[2],
+      borderRadius: radius.full,
+    },
+    tabButtonActive: {
+      backgroundColor: dark.apricot,
+    },
+    scrollContent: {
+      padding: space[4],
+      paddingBottom: space[8],
+    },
+    idleBlock: {
+      gap: space[4],
+    },
+    iconHero: {
+      alignItems: 'center',
+      marginTop: space[3],
+      marginBottom: space[2],
+    },
+    heroIconCircle: {
+      width: 80,
+      height: 80,
+      borderRadius: 40,
+      alignItems: 'center',
+      justifyContent: 'center',
+      marginBottom: space[3],
+    },
+    heroTitle: {
+      letterSpacing: -0.5,
+      marginBottom: 6,
+    },
+    heroSubtitle: {
+      textAlign: 'center',
+      lineHeight: 20,
+      maxWidth: 300,
+    },
+    configCard: {
+      padding: space[4],
+    },
+    configTitle: {
+      marginBottom: space[3],
+      fontWeight: '700',
+    },
+    presetChipsRow: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      gap: space[2],
+    },
+    chip: {
+      paddingHorizontal: space[4],
+      paddingVertical: space[2],
+      borderRadius: radius.control,
+      backgroundColor: dark.s2,
+      borderWidth: 1,
+      borderColor: dark.hairline,
+    },
+    chipActive: {
+      backgroundColor: dark.apricot,
+      borderColor: dark.apricot,
+    },
+    customInputRow: {
+      marginTop: space[3],
+    },
+    customStepInput: {
+      height: 48,
+      borderRadius: radius.control,
+      backgroundColor: dark.s2,
+      borderWidth: 1,
+      borderColor: dark.hairline,
+      paddingHorizontal: space[3],
+      color: dark.textHi,
+      fontSize: 15,
+    },
+    gpsBannerCard: {
+      padding: space[4],
+    },
+    gpsBannerRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+    },
+    gpsActivePill: {
+      backgroundColor: 'rgba(56, 178, 172, 0.15)',
+      paddingHorizontal: 8,
+      paddingVertical: 4,
+      borderRadius: radius.full,
+    },
+    startActionRow: {
+      marginTop: space[2],
+    },
+    liveSessionBlock: {
+      alignItems: 'center',
+      paddingTop: space[3],
+      gap: space[4],
+    },
+    sessionStatusPill: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      backgroundColor: dark.s1,
+      paddingHorizontal: space[3],
+      paddingVertical: space[1],
+      borderRadius: radius.full,
+      borderWidth: 1,
+      borderColor: dark.hairline,
+    },
+    statusDot: {
+      width: 8,
+      height: 8,
+      borderRadius: 4,
+      marginRight: 6,
+    },
+    dotGreen: {
+      backgroundColor: '#48BB78',
+    },
+    dotAmber: {
+      backgroundColor: '#ECC94B',
+    },
+    metricHero: {
+      alignItems: 'center',
+      marginVertical: space[2],
+    },
+    heroNumber: {
+      fontVariant: ['tabular-nums'],
+      letterSpacing: -1,
+    },
+    heroUnit: {
+      fontWeight: '700',
+      letterSpacing: 1.5,
+      marginTop: 4,
+    },
+    goalProgressWrap: {
+      width: '100%',
+      backgroundColor: dark.s1,
+      padding: space[4],
+      borderRadius: radius.card,
+      borderWidth: 1,
+      borderColor: dark.hairline,
+    },
+    goalProgressHeader: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      marginBottom: space[2],
+    },
+    track: {
+      height: 8,
+      backgroundColor: dark.s2,
+      borderRadius: radius.full,
+      overflow: 'hidden',
+    },
+    fill: {
+      height: '100%',
+      backgroundColor: dark.apricot,
+      borderRadius: radius.full,
+    },
+    statsGrid: {
+      flexDirection: 'row',
+      gap: space[2],
+      width: '100%',
+    },
+    statTile: {
+      flex: 1,
+      padding: space[3],
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    statNumber: {
+      marginVertical: 4,
+      fontVariant: ['tabular-nums'],
+    },
+    liveGpsPill: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      backgroundColor: 'rgba(56, 178, 172, 0.1)',
+      paddingHorizontal: space[3],
+      paddingVertical: space[2],
+      borderRadius: radius.full,
+    },
+    activeControlsRow: {
+      flexDirection: 'row',
+      gap: space[3],
+      width: '100%',
+      marginTop: space[4],
+    },
+    controlBtn: {
+      flex: 1,
+      height: 56,
+      borderRadius: radius.control,
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    pauseBtn: {
+      backgroundColor: dark.s2,
+      borderWidth: 1,
+      borderColor: dark.hairline,
+    },
+    finishBtn: {
+      backgroundColor: dark.apricot,
+    },
+    completedBlock: {
+      alignItems: 'center',
+      paddingTop: space[4],
+      gap: space[4],
+    },
+    celebrationCircle: {
+      width: 96,
+      height: 96,
+      borderRadius: 48,
+      backgroundColor: 'rgba(244, 182, 125, 0.15)',
+      alignItems: 'center',
+      justifyContent: 'center',
+      marginBottom: space[2],
+    },
+    completedTitle: {
+      letterSpacing: -0.5,
+    },
+    completedSubtitle: {
+      textAlign: 'center',
+      lineHeight: 20,
+      maxWidth: 320,
+    },
+    summaryCard: {
+      width: '100%',
+      padding: space[4],
+      gap: space[3],
+    },
+    summaryRow: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      borderBottomWidth: 1,
+      borderBottomColor: dark.hairline,
+      paddingBottom: space[2],
+    },
+    permissionErrorCard: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      backgroundColor: 'rgba(235, 122, 107, 0.1)',
+      borderWidth: 1,
+      borderColor: dark.danger,
+      borderRadius: radius.card,
+      padding: space[3],
+      marginVertical: space[2],
+    },
+  });

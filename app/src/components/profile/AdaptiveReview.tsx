@@ -7,10 +7,12 @@ import { useTargets } from '@/hooks/useTargets';
 import { getSupabase } from '@/lib/supabase';
 import { generateClientUuid } from '@/services/foodService';
 import { t, type TranslationKey } from '@/i18n';
-import { squadStyles as styles } from '@/components/rooms/SquadViews';
+import { useSquadStyles } from '@/components/rooms/SquadViews';
 import { NutrientSummary } from '@/components/diary/NutrientSummary';
 
 export function AdaptiveReview({ onAccepted }: { onAccepted?: () => Promise<void> } = {}) {
+  const styles = useSquadStyles();
+
   const { user } = useAuth(),
     { currentGoalProfile: goal, refresh } = useTargets();
   const owner = useRef(user?.id);

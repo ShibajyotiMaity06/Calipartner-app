@@ -1,12 +1,16 @@
+import { useTheme as useAppearance } from '@calipartner/ui/theme';
 import React, { useCallback, useRef, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { useFocusEffect, useRouter } from 'expo-router';
-import { Button, dark, radius, Sheet, space, Text } from '@calipartner/ui';
+import { Button, radius, Sheet, space, Text } from '@calipartner/ui';
 import { useRooms } from '@/hooks/useRooms';
 import { t } from '@/i18n';
 import type { RoomSummary } from '@/types/rooms';
 
 export function PersonalSquads() {
+  const { colors: dark } = useAppearance();
+  const styles = createStyles(dark);
+
   const { rooms, loading, error, refresh, leaveRoom } = useRooms();
   const router = useRouter();
   const [leaving, setLeaving] = useState<RoomSummary | null>(null);
@@ -114,8 +118,9 @@ export function PersonalSquads() {
     </View>
   );
 }
-const styles = StyleSheet.create({
-  card: { backgroundColor: dark.s1, borderRadius: radius.card, padding: space[4], gap: space[4] },
-  stack: { gap: space[2] },
-  actions: { flexDirection: 'row', flexWrap: 'wrap', gap: space[2] },
-});
+const createStyles = (dark: ReturnType<typeof useAppearance>['colors']) =>
+  StyleSheet.create({
+    card: { backgroundColor: dark.s1, borderRadius: radius.card, padding: space[4], gap: space[4] },
+    stack: { gap: space[2] },
+    actions: { flexDirection: 'row', flexWrap: 'wrap', gap: space[2] },
+  });

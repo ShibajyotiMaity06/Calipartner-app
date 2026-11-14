@@ -1,7 +1,8 @@
+import { useTheme as useAppearance } from '@calipartner/ui/theme';
 import React from 'react';
 import { StyleSheet, View } from 'react-native';
 import type { Sex } from '@calipartner/core';
-import { Text, SwitchRow, Button, space, dark, radius } from '@calipartner/ui';
+import { Text, SwitchRow, Button, space, radius } from '@calipartner/ui';
 import { t } from '@/i18n';
 import { playClickSound, playToggleSound } from '@/lib/sound';
 
@@ -26,6 +27,9 @@ export function HealthScreeningStep({
   onChangeEatingDisorder,
   onSkip,
 }: HealthScreeningStepProps) {
+  const { colors: dark } = useAppearance();
+  const styles = createStyles(dark);
+
   const handleTogglePregnant = (val: boolean) => {
     playToggleSound();
     onChangePregnant(val);
@@ -107,38 +111,39 @@ export function HealthScreeningStep({
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    paddingHorizontal: space[4],
-    gap: space[4],
-    paddingTop: space[2],
-  },
-  privacyBanner: {
-    backgroundColor: dark.s1,
-    borderWidth: 1,
-    borderColor: dark.hairline,
-    borderRadius: radius.card,
-    padding: space[4],
-    gap: space[1],
-  },
-  privacyTitle: {
-    fontWeight: '600',
-  },
-  privacyBody: {
-    lineHeight: 18,
-  },
-  switchList: {
-    gap: space[3],
-  },
-  switchCard: {
-    backgroundColor: dark.s1,
-    borderWidth: 1,
-    borderColor: dark.hairline,
-    borderRadius: radius.card,
-    padding: space[4],
-  },
-  skipContainer: {
-    marginTop: space[2],
-    alignItems: 'center',
-  },
-});
+const createStyles = (dark: ReturnType<typeof useAppearance>['colors']) =>
+  StyleSheet.create({
+    container: {
+      paddingHorizontal: space[4],
+      gap: space[4],
+      paddingTop: space[2],
+    },
+    privacyBanner: {
+      backgroundColor: dark.s1,
+      borderWidth: 1,
+      borderColor: dark.hairline,
+      borderRadius: radius.card,
+      padding: space[4],
+      gap: space[1],
+    },
+    privacyTitle: {
+      fontWeight: '600',
+    },
+    privacyBody: {
+      lineHeight: 18,
+    },
+    switchList: {
+      gap: space[3],
+    },
+    switchCard: {
+      backgroundColor: dark.s1,
+      borderWidth: 1,
+      borderColor: dark.hairline,
+      borderRadius: radius.card,
+      padding: space[4],
+    },
+    skipContainer: {
+      marginTop: space[2],
+      alignItems: 'center',
+    },
+  });

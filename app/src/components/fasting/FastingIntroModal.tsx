@@ -1,8 +1,9 @@
+import { useTheme as useAppearance } from '@calipartner/ui/theme';
 import React, { useState } from 'react';
 import { Modal, Pressable, ScrollView, StyleSheet, Switch, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import type { FastingGatingResult } from '@calipartner/core';
-import { Text, dark, radius, space, type as typeTokens } from '@calipartner/ui';
+import { Text, radius, space, type as typeTokens } from '@calipartner/ui';
 import { t } from '@/i18n';
 
 export interface FastingIntroModalProps {
@@ -22,6 +23,9 @@ export function FastingIntroModal({
   onClose,
   testID = 'fasting-intro-modal',
 }: FastingIntroModalProps) {
+  const { colors: dark } = useAppearance();
+  const styles = createStyles(dark);
+
   const [busy, setBusy] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
@@ -184,182 +188,183 @@ export function FastingIntroModal({
   );
 }
 
-const styles = StyleSheet.create({
-  backdrop: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.75)',
-    justifyContent: 'flex-end',
-  },
-  sheet: {
-    backgroundColor: dark.s2,
-    borderTopLeftRadius: radius.sheet,
-    borderTopRightRadius: radius.sheet,
-    padding: space[4],
-    maxHeight: '85%',
-    borderWidth: 1,
-    borderColor: dark.hairline,
-  },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    marginBottom: space[4],
-  },
-  title: {
-    fontSize: typeTokens.title2.fontSize,
-    fontFamily: typeTokens.title2.fontFamily,
-    color: dark.textHi,
-    marginBottom: 2,
-  },
-  subtitle: {
-    fontSize: typeTokens.bodyS.fontSize,
-    fontFamily: typeTokens.bodyS.fontFamily,
-    color: dark.textMid,
-  },
-  closeButton: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: dark.s1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  content: {
-    gap: space[4],
-    paddingBottom: space[3],
-  },
-  errorBox: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: 'rgba(255, 107, 107, 0.12)',
-    padding: space[3],
-    borderRadius: radius.control,
-    gap: space[2],
-  },
-  errorText: {
-    flex: 1,
-    fontSize: typeTokens.bodyS.fontSize,
-    fontFamily: typeTokens.bodyS.fontFamily,
-    color: dark.danger,
-  },
-  gatedBox: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    backgroundColor: 'rgba(255, 248, 230, 0.08)',
-    borderRadius: radius.card,
-    padding: space[3],
-    borderWidth: 1,
-    borderColor: 'rgba(255, 248, 230, 0.25)',
-    gap: space[3],
-  },
-  gatedTitle: {
-    fontSize: typeTokens.body.fontSize,
-    fontFamily: typeTokens.body.fontFamily,
-    fontWeight: '700',
-    color: dark.cream,
-    marginBottom: 2,
-  },
-  gatedDesc: {
-    fontSize: typeTokens.bodyS.fontSize,
-    fontFamily: typeTokens.bodyS.fontFamily,
-    color: dark.textMid,
-    lineHeight: 18,
-  },
-  switchCard: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    backgroundColor: dark.s1,
-    borderRadius: radius.card,
-    padding: space[3],
-    borderWidth: 1,
-    borderColor: dark.hairline,
-  },
-  switchInfo: {
-    flex: 1,
-    paddingRight: space[3],
-  },
-  switchLabel: {
-    fontSize: typeTokens.body.fontSize,
-    fontFamily: typeTokens.body.fontFamily,
-    fontWeight: '700',
-    color: dark.textHi,
-    marginBottom: 2,
-  },
-  switchSublabel: {
-    fontSize: typeTokens.bodyS.fontSize,
-    fontFamily: typeTokens.bodyS.fontFamily,
-    color: dark.textMid,
-  },
-  infoSection: {
-    backgroundColor: dark.s1,
-    borderRadius: radius.card,
-    padding: space[3],
-    borderWidth: 1,
-    borderColor: dark.hairline,
-  },
-  sectionHeading: {
-    fontSize: typeTokens.body.fontSize,
-    fontFamily: typeTokens.body.fontFamily,
-    fontWeight: '700',
-    color: dark.textHi,
-    marginBottom: space[2],
-  },
-  bulletList: {
-    gap: space[2],
-  },
-  bulletRow: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    gap: space[1],
-  },
-  bulletDot: {
-    marginTop: 6,
-  },
-  bulletText: {
-    flex: 1,
-    fontSize: typeTokens.bodyS.fontSize,
-    fontFamily: typeTokens.bodyS.fontFamily,
-    color: dark.textMid,
-    lineHeight: 18,
-  },
-  neutralCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: dark.s1,
-    borderRadius: radius.card,
-    padding: space[3],
-    gap: space[2],
-  },
-  neutralCardText: {
-    flex: 1,
-    fontSize: typeTokens.bodyS.fontSize,
-    fontFamily: typeTokens.bodyS.fontFamily,
-    color: dark.textMid,
-    lineHeight: 18,
-  },
-  footer: {
-    marginTop: space[3],
-    paddingTop: space[3],
-    borderTopWidth: 1,
-    borderTopColor: dark.hairline,
-  },
-  doneButton: {
-    height: 48,
-    backgroundColor: dark.s1,
-    borderRadius: radius.button,
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: dark.hairline,
-  },
-  doneButtonText: {
-    fontSize: typeTokens.body.fontSize,
-    fontFamily: typeTokens.body.fontFamily,
-    fontWeight: '600',
-    color: dark.textHi,
-  },
-  buttonPressed: {
-    opacity: 0.8,
-  },
-});
+const createStyles = (dark: ReturnType<typeof useAppearance>['colors']) =>
+  StyleSheet.create({
+    backdrop: {
+      flex: 1,
+      backgroundColor: 'rgba(0, 0, 0, 0.75)',
+      justifyContent: 'flex-end',
+    },
+    sheet: {
+      backgroundColor: dark.s2,
+      borderTopLeftRadius: radius.sheet,
+      borderTopRightRadius: radius.sheet,
+      padding: space[4],
+      maxHeight: '85%',
+      borderWidth: 1,
+      borderColor: dark.hairline,
+    },
+    header: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'flex-start',
+      marginBottom: space[4],
+    },
+    title: {
+      fontSize: typeTokens.title2.fontSize,
+      fontFamily: typeTokens.title2.fontFamily,
+      color: dark.textHi,
+      marginBottom: 2,
+    },
+    subtitle: {
+      fontSize: typeTokens.bodyS.fontSize,
+      fontFamily: typeTokens.bodyS.fontFamily,
+      color: dark.textMid,
+    },
+    closeButton: {
+      width: 44,
+      height: 44,
+      borderRadius: 22,
+      backgroundColor: dark.s1,
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    content: {
+      gap: space[4],
+      paddingBottom: space[3],
+    },
+    errorBox: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      backgroundColor: 'rgba(255, 107, 107, 0.12)',
+      padding: space[3],
+      borderRadius: radius.control,
+      gap: space[2],
+    },
+    errorText: {
+      flex: 1,
+      fontSize: typeTokens.bodyS.fontSize,
+      fontFamily: typeTokens.bodyS.fontFamily,
+      color: dark.danger,
+    },
+    gatedBox: {
+      flexDirection: 'row',
+      alignItems: 'flex-start',
+      backgroundColor: 'rgba(255, 248, 230, 0.08)',
+      borderRadius: radius.card,
+      padding: space[3],
+      borderWidth: 1,
+      borderColor: 'rgba(255, 248, 230, 0.25)',
+      gap: space[3],
+    },
+    gatedTitle: {
+      fontSize: typeTokens.body.fontSize,
+      fontFamily: typeTokens.body.fontFamily,
+      fontWeight: '700',
+      color: dark.cream,
+      marginBottom: 2,
+    },
+    gatedDesc: {
+      fontSize: typeTokens.bodyS.fontSize,
+      fontFamily: typeTokens.bodyS.fontFamily,
+      color: dark.textMid,
+      lineHeight: 18,
+    },
+    switchCard: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      backgroundColor: dark.s1,
+      borderRadius: radius.card,
+      padding: space[3],
+      borderWidth: 1,
+      borderColor: dark.hairline,
+    },
+    switchInfo: {
+      flex: 1,
+      paddingRight: space[3],
+    },
+    switchLabel: {
+      fontSize: typeTokens.body.fontSize,
+      fontFamily: typeTokens.body.fontFamily,
+      fontWeight: '700',
+      color: dark.textHi,
+      marginBottom: 2,
+    },
+    switchSublabel: {
+      fontSize: typeTokens.bodyS.fontSize,
+      fontFamily: typeTokens.bodyS.fontFamily,
+      color: dark.textMid,
+    },
+    infoSection: {
+      backgroundColor: dark.s1,
+      borderRadius: radius.card,
+      padding: space[3],
+      borderWidth: 1,
+      borderColor: dark.hairline,
+    },
+    sectionHeading: {
+      fontSize: typeTokens.body.fontSize,
+      fontFamily: typeTokens.body.fontFamily,
+      fontWeight: '700',
+      color: dark.textHi,
+      marginBottom: space[2],
+    },
+    bulletList: {
+      gap: space[2],
+    },
+    bulletRow: {
+      flexDirection: 'row',
+      alignItems: 'flex-start',
+      gap: space[1],
+    },
+    bulletDot: {
+      marginTop: 6,
+    },
+    bulletText: {
+      flex: 1,
+      fontSize: typeTokens.bodyS.fontSize,
+      fontFamily: typeTokens.bodyS.fontFamily,
+      color: dark.textMid,
+      lineHeight: 18,
+    },
+    neutralCard: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      backgroundColor: dark.s1,
+      borderRadius: radius.card,
+      padding: space[3],
+      gap: space[2],
+    },
+    neutralCardText: {
+      flex: 1,
+      fontSize: typeTokens.bodyS.fontSize,
+      fontFamily: typeTokens.bodyS.fontFamily,
+      color: dark.textMid,
+      lineHeight: 18,
+    },
+    footer: {
+      marginTop: space[3],
+      paddingTop: space[3],
+      borderTopWidth: 1,
+      borderTopColor: dark.hairline,
+    },
+    doneButton: {
+      height: 48,
+      backgroundColor: dark.s1,
+      borderRadius: radius.button,
+      justifyContent: 'center',
+      alignItems: 'center',
+      borderWidth: 1,
+      borderColor: dark.hairline,
+    },
+    doneButtonText: {
+      fontSize: typeTokens.body.fontSize,
+      fontFamily: typeTokens.body.fontFamily,
+      fontWeight: '600',
+      color: dark.textHi,
+    },
+    buttonPressed: {
+      opacity: 0.8,
+    },
+  });

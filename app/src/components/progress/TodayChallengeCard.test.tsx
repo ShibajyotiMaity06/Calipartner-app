@@ -17,7 +17,7 @@ vi.mock('@/hooks/useChallenges', () => ({
     refresh: state.refresh,
   }),
 }));
-vi.mock('@/components/rooms/SquadViews', () => ({ squadStyles: {} }));
+vi.mock('@/components/rooms/SquadViews', () => ({ squadStyles: {}, useSquadStyles: () => ({}) }));
 import { TodayChallengeCard } from './TodayChallengeCard';
 import { t } from '@/i18n';
 let tree: ReactTestRenderer;

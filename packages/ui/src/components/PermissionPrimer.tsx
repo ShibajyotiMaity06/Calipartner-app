@@ -1,6 +1,7 @@
+import { useTheme as useAppearance } from '../theme/useTheme';
 import React from 'react';
 import { View, StyleSheet, type ViewStyle } from 'react-native';
-import { dark } from '../tokens/colors';
+
 import { radius } from '../tokens/radius';
 import { space } from '../tokens/space';
 import { Text } from './Text';
@@ -40,6 +41,9 @@ export function PermissionPrimer({
   testID,
   style,
 }: PermissionPrimerProps): React.JSX.Element {
+  const { colors: dark } = useAppearance();
+  const styles = createStyles(dark);
+
   return (
     <View style={[styles.container, style]} testID={testID}>
       {icon ? <View style={styles.iconWrap}>{icon}</View> : null}
@@ -118,57 +122,58 @@ export function PermissionPrimer({
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    padding: space[5], // 20
-    backgroundColor: dark.bg0,
-    width: '100%',
-  },
-  iconWrap: {
-    width: 56,
-    height: 56,
-    borderRadius: radius.card,
-    backgroundColor: dark.s2,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: space[4], // 16
-  },
-  title: {
-    marginBottom: space[2], // 8
-  },
-  subtitle: {
-    lineHeight: 22,
-    marginBottom: space[5], // 20
-  },
-  pointsCard: {
-    backgroundColor: dark.s1,
-    borderRadius: radius.card, // 20
-    borderWidth: 1,
-    borderColor: dark.hairline,
-    padding: space[4], // 16
-    gap: space[4], // 16
-    marginBottom: space[6], // 24
-  },
-  pointRow: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    gap: space[3], // 12
-  },
-  indicator: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-    marginTop: 6,
-  },
-  pointContent: {
-    flex: 1,
-  },
-  pointDetail: {
-    marginTop: 2,
-    lineHeight: 18,
-  },
-  buttons: {
-    gap: space[3], // 12
-    width: '100%',
-  },
-});
+const createStyles = (dark: ReturnType<typeof useAppearance>['colors']) =>
+  StyleSheet.create({
+    container: {
+      padding: space[5], // 20
+      backgroundColor: dark.bg0,
+      width: '100%',
+    },
+    iconWrap: {
+      width: 56,
+      height: 56,
+      borderRadius: radius.card,
+      backgroundColor: dark.s2,
+      alignItems: 'center',
+      justifyContent: 'center',
+      marginBottom: space[4], // 16
+    },
+    title: {
+      marginBottom: space[2], // 8
+    },
+    subtitle: {
+      lineHeight: 22,
+      marginBottom: space[5], // 20
+    },
+    pointsCard: {
+      backgroundColor: dark.s1,
+      borderRadius: radius.card, // 20
+      borderWidth: 1,
+      borderColor: dark.hairline,
+      padding: space[4], // 16
+      gap: space[4], // 16
+      marginBottom: space[6], // 24
+    },
+    pointRow: {
+      flexDirection: 'row',
+      alignItems: 'flex-start',
+      gap: space[3], // 12
+    },
+    indicator: {
+      width: 6,
+      height: 6,
+      borderRadius: 3,
+      marginTop: 6,
+    },
+    pointContent: {
+      flex: 1,
+    },
+    pointDetail: {
+      marginTop: 2,
+      lineHeight: 18,
+    },
+    buttons: {
+      gap: space[3], // 12
+      width: '100%',
+    },
+  });

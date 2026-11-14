@@ -1,13 +1,16 @@
+import { useTheme as useAppearance } from '@calipartner/ui/theme';
 import { View } from 'react-native';
 import { useNetworkStatus } from '@/hooks/useNetworkStatus';
 import React from 'react';
 import { closeBrowserModalsThen } from '@/hooks/useBrowserModalBack';
 import { Tabs, usePathname, useRouter, useGlobalSearchParams } from 'expo-router';
-import { Text, space, dark, TabBar, type TabId } from '@calipartner/ui';
+import { Text, space, TabBar, type TabId } from '@calipartner/ui';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { t } from '@/i18n';
 
 export default function TabsLayout() {
+  const { colors: dark } = useAppearance();
+
   const { isOnline } = useNetworkStatus();
   const insets = useSafeAreaInsets();
   const pathname = usePathname();

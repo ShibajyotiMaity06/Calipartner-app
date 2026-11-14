@@ -1,9 +1,10 @@
+import { useTheme as useAppearance } from '@calipartner/ui/theme';
 import { PremiumFeatureModal } from '@/components/subscription/PremiumFeatureModal';
 import React, { useEffect, useRef, useState } from 'react';
 import { Modal, Pressable, StyleSheet, View } from 'react-native';
 import { Text } from '@calipartner/ui';
 import { Ionicons } from '@expo/vector-icons';
-import { dark, radius, space, type as typeTokens } from '@calipartner/ui';
+import { radius, space, type as typeTokens } from '@calipartner/ui';
 import { t } from '@/i18n';
 
 export interface RestTimerModalProps {
@@ -23,6 +24,9 @@ function RestTimerModalContent({
   onComplete,
   testID = 'rest-timer-modal',
 }: RestTimerModalProps) {
+  const { colors: dark } = useAppearance();
+  const styles = createStyles(dark);
+
   const [remainingSeconds, setRemainingSeconds] = useState(initialSeconds);
   const [isRunning, setIsRunning] = useState(true);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -168,133 +172,134 @@ function RestTimerModalContent({
   );
 }
 
-const styles = StyleSheet.create({
-  overlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.7)',
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: space[4],
-  },
-  card: {
-    width: '100%',
-    backgroundColor: dark.s1,
-    borderRadius: radius.sheet,
-    padding: space[4],
-    borderWidth: 1,
-    borderColor: dark.hairline,
-    gap: space[3],
-  },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  headerTitleWrap: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: space[2],
-  },
-  title: {
-    fontSize: typeTokens.body.fontSize,
-    fontFamily: typeTokens.body.fontFamily,
-    color: dark.textHi,
-    fontWeight: '700',
-  },
-  closeBtn: {
-    width: 44,
-    height: 44,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  timerDisplayBox: {
-    alignItems: 'center',
-    backgroundColor: dark.s2,
-    borderRadius: radius.card,
-    paddingVertical: space[4],
-    borderWidth: 1,
-    borderColor: dark.hairline,
-    gap: 4,
-  },
-  numeralTime: {
-    fontSize: 54,
-    fontFamily: typeTokens.numeralL.fontFamily,
-    fontVariant: ['tabular-nums'],
-    color: dark.textHi,
-    fontWeight: '800',
-    letterSpacing: 1,
-  },
-  timerSubtitle: {
-    fontSize: typeTokens.label.fontSize,
-    fontFamily: typeTokens.label.fontFamily,
-    color: dark.textLo,
-  },
-  presetsRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    gap: space[1],
-  },
-  presetChip: {
-    flex: 1,
-    minHeight: 40,
-    borderRadius: radius.control,
-    backgroundColor: dark.s2,
-    borderWidth: 1,
-    borderColor: dark.hairline,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  presetChipActive: {
-    backgroundColor: dark.apricot,
-    borderColor: dark.apricot,
-  },
-  presetChipText: {
-    fontSize: typeTokens.micro.fontSize,
-    fontFamily: typeTokens.micro.fontFamily,
-    color: dark.textMid,
-    fontWeight: '700',
-  },
-  presetChipTextActive: {
-    color: dark.onBrand, // #1C1109
-  },
-  actionsRow: {
-    flexDirection: 'row',
-    gap: space[2],
-    marginTop: space[2],
-  },
-  add15Btn: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    minHeight: 48,
-    borderRadius: radius.button,
-    backgroundColor: dark.s2,
-    borderWidth: 1,
-    borderColor: dark.hairline,
-    gap: 4,
-  },
-  add15BtnText: {
-    fontSize: typeTokens.body.fontSize,
-    fontFamily: typeTokens.body.fontFamily,
-    color: dark.textHi,
-    fontWeight: '700',
-  },
-  skipBtn: {
-    flex: 1,
-    minHeight: 48,
-    borderRadius: radius.button,
-    backgroundColor: dark.apricot,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  skipBtnText: {
-    fontSize: typeTokens.body.fontSize,
-    fontFamily: typeTokens.body.fontFamily,
-    color: dark.onBrand, // #1C1109
-    fontWeight: '700',
-  },
-});
+const createStyles = (dark: ReturnType<typeof useAppearance>['colors']) =>
+  StyleSheet.create({
+    overlay: {
+      flex: 1,
+      backgroundColor: 'rgba(0, 0, 0, 0.7)',
+      alignItems: 'center',
+      justifyContent: 'center',
+      padding: space[4],
+    },
+    card: {
+      width: '100%',
+      backgroundColor: dark.s1,
+      borderRadius: radius.sheet,
+      padding: space[4],
+      borderWidth: 1,
+      borderColor: dark.hairline,
+      gap: space[3],
+    },
+    header: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+    },
+    headerTitleWrap: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: space[2],
+    },
+    title: {
+      fontSize: typeTokens.body.fontSize,
+      fontFamily: typeTokens.body.fontFamily,
+      color: dark.textHi,
+      fontWeight: '700',
+    },
+    closeBtn: {
+      width: 44,
+      height: 44,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    timerDisplayBox: {
+      alignItems: 'center',
+      backgroundColor: dark.s2,
+      borderRadius: radius.card,
+      paddingVertical: space[4],
+      borderWidth: 1,
+      borderColor: dark.hairline,
+      gap: 4,
+    },
+    numeralTime: {
+      fontSize: 54,
+      fontFamily: typeTokens.numeralL.fontFamily,
+      fontVariant: ['tabular-nums'],
+      color: dark.textHi,
+      fontWeight: '800',
+      letterSpacing: 1,
+    },
+    timerSubtitle: {
+      fontSize: typeTokens.label.fontSize,
+      fontFamily: typeTokens.label.fontFamily,
+      color: dark.textLo,
+    },
+    presetsRow: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      gap: space[1],
+    },
+    presetChip: {
+      flex: 1,
+      minHeight: 40,
+      borderRadius: radius.control,
+      backgroundColor: dark.s2,
+      borderWidth: 1,
+      borderColor: dark.hairline,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    presetChipActive: {
+      backgroundColor: dark.apricot,
+      borderColor: dark.apricot,
+    },
+    presetChipText: {
+      fontSize: typeTokens.micro.fontSize,
+      fontFamily: typeTokens.micro.fontFamily,
+      color: dark.textMid,
+      fontWeight: '700',
+    },
+    presetChipTextActive: {
+      color: dark.onBrand, // #1C1109
+    },
+    actionsRow: {
+      flexDirection: 'row',
+      gap: space[2],
+      marginTop: space[2],
+    },
+    add15Btn: {
+      flex: 1,
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      minHeight: 48,
+      borderRadius: radius.button,
+      backgroundColor: dark.s2,
+      borderWidth: 1,
+      borderColor: dark.hairline,
+      gap: 4,
+    },
+    add15BtnText: {
+      fontSize: typeTokens.body.fontSize,
+      fontFamily: typeTokens.body.fontFamily,
+      color: dark.textHi,
+      fontWeight: '700',
+    },
+    skipBtn: {
+      flex: 1,
+      minHeight: 48,
+      borderRadius: radius.button,
+      backgroundColor: dark.apricot,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    skipBtnText: {
+      fontSize: typeTokens.body.fontSize,
+      fontFamily: typeTokens.body.fontFamily,
+      color: dark.onBrand, // #1C1109
+      fontWeight: '700',
+    },
+  });
 
 export function RestTimerModal(props: RestTimerModalProps) {
   return (

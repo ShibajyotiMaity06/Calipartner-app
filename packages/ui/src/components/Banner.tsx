@@ -1,6 +1,7 @@
+import { useTheme as useAppearance } from '../theme/useTheme';
 import React from 'react';
 import { View, StyleSheet, type ViewStyle } from 'react-native';
-import { dark } from '../tokens/colors';
+
 import { radius } from '../tokens/radius';
 import { space } from '../tokens/space';
 import { Text } from './Text';
@@ -31,6 +32,8 @@ export function Banner({
   testID,
   style,
 }: BannerProps): React.JSX.Element {
+  const { colors: dark } = useAppearance();
+
   const getBorderColor = (): string => {
     switch (variant) {
       case 'brand':

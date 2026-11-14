@@ -9,3 +9,4 @@ export * from './capture';
 export * from './challenges';
 export * from './home';
 export * from './blueprint';
+export * from './avatar';

@@ -7,6 +7,7 @@
  */
 import {
   dark,
+  themePalettes,
   nutritionColors,
   space,
   radius as radiusTokens,
@@ -162,10 +163,25 @@ export const fontSize = {
   xxl: typeTokens.numeralL.fontSize, // 34
 } as const;
 
-export type ColorScheme = 'light' | 'dark';
+export type ColorScheme = 'light' | 'dark' | 'yellow';
 
-export function colorsFor(_scheme: ColorScheme): ThemeColors {
-  return modernDarkColors;
+export function colorsFor(scheme: ColorScheme): ThemeColors {
+  const palette = themePalettes[scheme];
+  return {
+    ...modernDarkColors,
+    ...palette,
+    background: palette.bg0,
+    surface: palette.s1,
+    surfaceAlt: palette.s2,
+    border: palette.hairline,
+    text: palette.textHi,
+    textMuted: palette.textMid,
+    accent: palette.apricot,
+    onAccent: palette.onBrand,
+    primary: palette.apricot,
+    cardHighlight: palette.s2,
+    macroCarbs: palette.cream,
+  };
 }
 
 export { dark, light, allowedPairs, space, motion, type } from '@calipartner/ui';

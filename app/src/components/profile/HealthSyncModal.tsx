@@ -1,3 +1,4 @@
+import { useTheme as useAppearance } from '@calipartner/ui/theme';
 import { NavigationIcon } from '@calipartner/ui';
 import React, { useEffect, useState } from 'react';
 import {
@@ -9,7 +10,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import { Button, Card, dark, radius, space, Text } from '@calipartner/ui';
+import { Button, Card, radius, space, Text } from '@calipartner/ui';
 import { t } from '@/i18n';
 import { playClickSound } from '@/lib/sound';
 import {
@@ -36,6 +37,9 @@ export function HealthSyncModal({
   onToggleConnection,
   testID = 'modal-health-sync',
 }: HealthSyncModalProps) {
+  const { colors: dark } = useAppearance();
+  const styles = createStyles(dark);
+
   const [connected, setConnected] = useState<boolean>(isConnected ?? false);
   const [error, setError] = useState<string | null>(null);
   useEffect(() => {
@@ -222,88 +226,89 @@ export function HealthSyncModal({
   );
 }
 
-const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
-    backgroundColor: dark.bg0,
-  },
-  container: {
-    flex: 1,
-    backgroundColor: dark.bg0,
-  },
-  topBar: {
-    height: 56,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: space[4],
-    borderBottomWidth: 1,
-    borderBottomColor: dark.hairline,
-  },
-  backButton: {
-    width: 44,
-    height: 44,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  backButtonPlaceholder: {
-    width: 44,
-  },
-  content: {
-    padding: space[4],
-  },
-  introSubtitle: {
-    marginBottom: space[4],
-  },
-  statusCard: {
-    padding: space[4],
-    marginBottom: space[4],
-  },
-  statusRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: space[4],
-  },
-  syncTime: {
-    marginTop: space[1],
-  },
-  statusPill: {
-    paddingHorizontal: space[2],
-    paddingVertical: 4,
-    borderRadius: radius.full,
-  },
-  statusPillText: {
-    fontWeight: '700',
-  },
-  connectButton: {
-    width: '100%',
-  },
-  permissionsCard: {
-    padding: space[4],
-    marginBottom: space[4],
-  },
-  sectionLabel: {
-    marginBottom: space[3],
-  },
-  permissionItem: {
-    marginBottom: space[2],
-  },
-  fixStepsButton: {
-    minHeight: 44,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginVertical: space[2],
-  },
-  troubleshootCard: {
-    padding: space[4],
-    marginTop: space[2],
-  },
-  guideTitle: {
-    marginBottom: space[2],
-  },
-  guideStep: {
-    marginBottom: space[2],
-    lineHeight: 20,
-  },
-});
+const createStyles = (dark: ReturnType<typeof useAppearance>['colors']) =>
+  StyleSheet.create({
+    safeArea: {
+      flex: 1,
+      backgroundColor: dark.bg0,
+    },
+    container: {
+      flex: 1,
+      backgroundColor: dark.bg0,
+    },
+    topBar: {
+      height: 56,
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      paddingHorizontal: space[4],
+      borderBottomWidth: 1,
+      borderBottomColor: dark.hairline,
+    },
+    backButton: {
+      width: 44,
+      height: 44,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    backButtonPlaceholder: {
+      width: 44,
+    },
+    content: {
+      padding: space[4],
+    },
+    introSubtitle: {
+      marginBottom: space[4],
+    },
+    statusCard: {
+      padding: space[4],
+      marginBottom: space[4],
+    },
+    statusRow: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      marginBottom: space[4],
+    },
+    syncTime: {
+      marginTop: space[1],
+    },
+    statusPill: {
+      paddingHorizontal: space[2],
+      paddingVertical: 4,
+      borderRadius: radius.full,
+    },
+    statusPillText: {
+      fontWeight: '700',
+    },
+    connectButton: {
+      width: '100%',
+    },
+    permissionsCard: {
+      padding: space[4],
+      marginBottom: space[4],
+    },
+    sectionLabel: {
+      marginBottom: space[3],
+    },
+    permissionItem: {
+      marginBottom: space[2],
+    },
+    fixStepsButton: {
+      minHeight: 44,
+      alignItems: 'center',
+      justifyContent: 'center',
+      marginVertical: space[2],
+    },
+    troubleshootCard: {
+      padding: space[4],
+      marginTop: space[2],
+    },
+    guideTitle: {
+      marginBottom: space[2],
+    },
+    guideStep: {
+      marginBottom: space[2],
+      lineHeight: 20,
+    },
+  });

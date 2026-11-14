@@ -1,3 +1,4 @@
+import { useTheme as useAppearance } from '@calipartner/ui/theme';
 import { type as inputTypography } from '@calipartner/ui';
 import { getLocalDateString, fastingTimeToUtc, addDaysToDateString } from '@calipartner/core';
 import { useCurrentLocalDate } from '@/hooks/useCurrentLocalDate';
@@ -5,7 +6,7 @@ import React, { useState } from 'react';
 import { Modal, Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import type { FastingSession } from '@calipartner/core';
-import { Text, dark, radius, space, type as typeTokens } from '@calipartner/ui';
+import { Text, radius, space, type as typeTokens } from '@calipartner/ui';
 import { t } from '@/i18n';
 
 export interface FastingEditTimesModalProps {
@@ -23,6 +24,9 @@ export function FastingEditTimesModal({
   onClose,
   testID = 'fasting-edit-times-modal',
 }: FastingEditTimesModalProps) {
+  const { colors: dark } = useAppearance();
+  const styles = createStyles(dark);
+
   const { timeZone } = useCurrentLocalDate();
   const clock = React.useCallback(
     (date: Date, part: 'hour' | 'minute') =>
@@ -298,144 +302,145 @@ export function FastingEditTimesModal({
   );
 }
 
-const styles = StyleSheet.create({
-  backdrop: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.75)',
-    justifyContent: 'flex-end',
-  },
-  sheet: {
-    backgroundColor: dark.s2,
-    borderTopLeftRadius: radius.sheet,
-    borderTopRightRadius: radius.sheet,
-    padding: space[4],
-    maxHeight: '85%',
-    borderWidth: 1,
-    borderColor: dark.hairline,
-  },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    marginBottom: space[4],
-  },
-  title: {
-    fontSize: typeTokens.title2.fontSize,
-    fontFamily: typeTokens.title2.fontFamily,
-    color: dark.textHi,
-    marginBottom: 2,
-  },
-  subtitle: {
-    fontSize: typeTokens.bodyS.fontSize,
-    fontFamily: typeTokens.bodyS.fontFamily,
-    color: dark.textMid,
-  },
-  closeButton: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: dark.s1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  form: {
-    gap: space[4],
-    paddingBottom: space[3],
-  },
-  errorBox: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: 'rgba(255, 107, 107, 0.12)',
-    padding: space[3],
-    borderRadius: radius.control,
-    gap: space[2],
-  },
-  errorText: {
-    flex: 1,
-    fontSize: typeTokens.bodyS.fontSize,
-    fontFamily: typeTokens.bodyS.fontFamily,
-    color: dark.danger,
-  },
-  fieldGroup: {
-    gap: space[1],
-  },
-  fieldLabel: {
-    fontSize: typeTokens.label.fontSize,
-    fontFamily: typeTokens.label.fontFamily,
-    color: dark.textMid,
-  },
-  input: {
-    height: 48,
-    backgroundColor: dark.s1,
-    borderRadius: radius.control,
-    borderWidth: 1,
-    borderColor: dark.hairline,
-    paddingHorizontal: space[3],
-    color: dark.textHi,
-    fontSize: typeTokens.body.fontSize,
-    fontFamily: typeTokens.body.fontFamily,
-  },
-  timeInputsRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: space[2],
-  },
-  timeInput: {
-    width: 72,
-    height: 48,
-    backgroundColor: dark.s1,
-    borderRadius: radius.control,
-    borderWidth: 1,
-    borderColor: dark.hairline,
-    textAlign: 'center',
-    color: dark.textHi,
-    fontSize: typeTokens.title2.fontSize,
-    fontFamily: typeTokens.title2.fontFamily,
-  },
-  timeColon: {
-    fontSize: typeTokens.title2.fontSize,
-    color: dark.textMid,
-    fontWeight: '700',
-  },
-  toggleRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  checkboxRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: space[1],
-    paddingVertical: 4,
-  },
-  checkboxLabel: {
-    fontSize: typeTokens.bodyS.fontSize,
-    fontFamily: typeTokens.bodyS.fontFamily,
-    color: dark.textMid,
-  },
-  footer: {
-    marginTop: space[3],
-    paddingTop: space[3],
-    borderTopWidth: 1,
-    borderTopColor: dark.hairline,
-  },
-  saveButton: {
-    height: 48,
-    backgroundColor: dark.apricot,
-    borderRadius: radius.button,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  saveButtonText: {
-    fontSize: typeTokens.body.fontSize,
-    fontFamily: typeTokens.body.fontFamily,
-    fontWeight: '700',
-    color: dark.onBrand,
-  },
-  buttonPressed: {
-    opacity: 0.8,
-  },
-  buttonDisabled: {
-    opacity: 0.5,
-  },
-});
+const createStyles = (dark: ReturnType<typeof useAppearance>['colors']) =>
+  StyleSheet.create({
+    backdrop: {
+      flex: 1,
+      backgroundColor: 'rgba(0, 0, 0, 0.75)',
+      justifyContent: 'flex-end',
+    },
+    sheet: {
+      backgroundColor: dark.s2,
+      borderTopLeftRadius: radius.sheet,
+      borderTopRightRadius: radius.sheet,
+      padding: space[4],
+      maxHeight: '85%',
+      borderWidth: 1,
+      borderColor: dark.hairline,
+    },
+    header: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'flex-start',
+      marginBottom: space[4],
+    },
+    title: {
+      fontSize: typeTokens.title2.fontSize,
+      fontFamily: typeTokens.title2.fontFamily,
+      color: dark.textHi,
+      marginBottom: 2,
+    },
+    subtitle: {
+      fontSize: typeTokens.bodyS.fontSize,
+      fontFamily: typeTokens.bodyS.fontFamily,
+      color: dark.textMid,
+    },
+    closeButton: {
+      width: 44,
+      height: 44,
+      borderRadius: 22,
+      backgroundColor: dark.s1,
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    form: {
+      gap: space[4],
+      paddingBottom: space[3],
+    },
+    errorBox: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      backgroundColor: 'rgba(255, 107, 107, 0.12)',
+      padding: space[3],
+      borderRadius: radius.control,
+      gap: space[2],
+    },
+    errorText: {
+      flex: 1,
+      fontSize: typeTokens.bodyS.fontSize,
+      fontFamily: typeTokens.bodyS.fontFamily,
+      color: dark.danger,
+    },
+    fieldGroup: {
+      gap: space[1],
+    },
+    fieldLabel: {
+      fontSize: typeTokens.label.fontSize,
+      fontFamily: typeTokens.label.fontFamily,
+      color: dark.textMid,
+    },
+    input: {
+      height: 48,
+      backgroundColor: dark.s1,
+      borderRadius: radius.control,
+      borderWidth: 1,
+      borderColor: dark.hairline,
+      paddingHorizontal: space[3],
+      color: dark.textHi,
+      fontSize: typeTokens.body.fontSize,
+      fontFamily: typeTokens.body.fontFamily,
+    },
+    timeInputsRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: space[2],
+    },
+    timeInput: {
+      width: 72,
+      height: 48,
+      backgroundColor: dark.s1,
+      borderRadius: radius.control,
+      borderWidth: 1,
+      borderColor: dark.hairline,
+      textAlign: 'center',
+      color: dark.textHi,
+      fontSize: typeTokens.title2.fontSize,
+      fontFamily: typeTokens.title2.fontFamily,
+    },
+    timeColon: {
+      fontSize: typeTokens.title2.fontSize,
+      color: dark.textMid,
+      fontWeight: '700',
+    },
+    toggleRow: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+    },
+    checkboxRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: space[1],
+      paddingVertical: 4,
+    },
+    checkboxLabel: {
+      fontSize: typeTokens.bodyS.fontSize,
+      fontFamily: typeTokens.bodyS.fontFamily,
+      color: dark.textMid,
+    },
+    footer: {
+      marginTop: space[3],
+      paddingTop: space[3],
+      borderTopWidth: 1,
+      borderTopColor: dark.hairline,
+    },
+    saveButton: {
+      height: 48,
+      backgroundColor: dark.apricot,
+      borderRadius: radius.button,
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    saveButtonText: {
+      fontSize: typeTokens.body.fontSize,
+      fontFamily: typeTokens.body.fontFamily,
+      fontWeight: '700',
+      color: dark.onBrand,
+    },
+    buttonPressed: {
+      opacity: 0.8,
+    },
+    buttonDisabled: {
+      opacity: 0.5,
+    },
+  });

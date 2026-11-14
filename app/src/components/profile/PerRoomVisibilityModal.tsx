@@ -1,6 +1,7 @@
+import { useTheme as useAppearance } from '@calipartner/ui/theme';
 import React, { useState } from 'react';
 import { Modal, Pressable, SafeAreaView, ScrollView, StyleSheet } from 'react-native';
-import { Button, dark, onboardingLayout as layout, space, Text } from '@calipartner/ui';
+import { Button, onboardingLayout as layout, space, Text } from '@calipartner/ui';
 import { SquadVisibilityModal } from '@/components/rooms/SquadVisibilityModal';
 import { t } from '@/i18n';
 import type { RoomSummary } from '@/types/rooms';
@@ -17,6 +18,9 @@ export function PerRoomVisibilityModal({
   rooms = [],
   testID = 'modal-per-room-visibility',
 }: PerRoomVisibilityModalProps) {
+  const { colors: dark } = useAppearance();
+  const styles = createStyles(dark);
+
   const [selected, setSelected] = useState<string | null>(null);
   const roomId = rooms.some((room) => room.id === selected) ? selected : null;
   return (
@@ -60,8 +64,9 @@ export function PerRoomVisibilityModal({
     </Modal>
   );
 }
-const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: dark.bg0 },
-  content: { padding: space[4], gap: space[3], paddingBottom: space[8] },
-  room: { minHeight: layout.touch, padding: space[3] },
-});
+const createStyles = (dark: ReturnType<typeof useAppearance>['colors']) =>
+  StyleSheet.create({
+    screen: { flex: 1, backgroundColor: dark.bg0 },
+    content: { padding: space[4], gap: space[3], paddingBottom: space[8] },
+    room: { minHeight: layout.touch, padding: space[3] },
+  });

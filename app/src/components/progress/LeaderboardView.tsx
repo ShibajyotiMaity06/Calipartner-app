@@ -1,3 +1,4 @@
+import { useTheme as useAppearance } from '@calipartner/ui/theme';
 import { NavigationIcon } from '@calipartner/ui';
 import React, { useState } from 'react';
 import {
@@ -10,7 +11,7 @@ import {
   View,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { Text, Avatar, dark, radius, space, type } from '@calipartner/ui';
+import { Text, Avatar, radius, space, type } from '@calipartner/ui';
 import { useLeaderboard } from '@/hooks/useLeaderboard';
 import { t } from '@/i18n';
 import { MondayRecapModal } from './MondayRecapModal';
@@ -29,6 +30,9 @@ const DIVISIONS: { id: DivisionType; label: string }[] = [
 ];
 
 export function LeaderboardView({ testID = 'leaderboard-view' }: LeaderboardViewProps) {
+  const { colors: dark } = useAppearance();
+  const styles = createStyles(dark);
+
   const { data, loading, error, refresh, setOptOut } = useLeaderboard();
   const [selectedDivision, setSelectedDivision] = useState<DivisionType>('cutting');
   const [showRecapModal, setShowRecapModal] = useState(false);
@@ -280,330 +284,331 @@ export function LeaderboardView({ testID = 'leaderboard-view' }: LeaderboardView
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    paddingBottom: space[8],
-  },
-  loadingContainer: {
-    height: 240,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  card: {
-    marginHorizontal: space[4],
-    marginTop: space[3],
-    padding: space[5],
-    borderRadius: radius.card,
-    backgroundColor: dark.s2,
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: space[2],
-  },
-  errorText: {
-    ...type.bodyS,
-    color: dark.textHi,
-    textAlign: 'center',
-  },
-  retryBtn: {
-    marginTop: space[2],
-    paddingHorizontal: space[4],
-    paddingVertical: space[2],
-    borderRadius: radius.control,
-    backgroundColor: dark.apricot,
-  },
-  retryBtnText: {
-    ...type.label,
-    color: dark.onBrand,
-    fontWeight: '700',
-  },
-  ruleBanner: {
-    marginHorizontal: space[4],
-    marginTop: space[3],
-    marginBottom: space[2],
-    paddingHorizontal: space[4],
-    paddingVertical: space[3],
-    borderRadius: radius.control,
-    backgroundColor: dark.s2,
-    borderWidth: 1,
-    borderColor: dark.hairline,
-  },
-  ruleBannerText: {
-    ...type.label,
-    color: dark.textHi,
-    fontWeight: '600',
-    lineHeight: 18,
-    textAlign: 'center',
-  },
-  divisionChipsRow: {
-    flexDirection: 'row',
-    paddingHorizontal: space[4],
-    gap: space[2],
-    marginVertical: space[2],
-  },
-  divisionChip: {
-    paddingHorizontal: space[4],
-    paddingVertical: space[2],
-    borderRadius: radius.full,
-    backgroundColor: dark.s2,
-    borderWidth: 1,
-    borderColor: dark.hairline,
-    minHeight: 44,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  divisionChipSelected: {
-    backgroundColor: 'rgba(244, 182, 125, 0.16)',
-    borderColor: dark.apricot,
-  },
-  divisionChipText: {
-    ...type.label,
-    color: dark.textMid,
-  },
-  divisionChipTextSelected: {
-    color: dark.apricot,
-    fontWeight: '700',
-  },
-  leaderboardBody: {
-    paddingHorizontal: space[4],
-  },
-  top10Card: {
-    backgroundColor: dark.s1,
-    borderRadius: radius.card,
-    padding: space[4],
-    borderWidth: 1,
-    borderColor: dark.hairline,
-    marginTop: space[2],
-  },
-  cardHeaderRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: space[3],
-  },
-  top10Title: {
-    ...type.heading,
-    color: dark.textHi,
-  },
-  recapBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    paddingHorizontal: space[2],
-    paddingVertical: space[1],
-    borderRadius: radius.control,
-    backgroundColor: dark.s2,
-  },
-  recapBtnText: {
-    ...type.label,
-    color: dark.apricot,
-    fontWeight: '600',
-  },
-  emptyContainer: {
-    paddingVertical: space[6],
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: space[2],
-  },
-  emptyText: {
-    ...type.bodyS,
-    color: dark.textLo,
-    textAlign: 'center',
-  },
-  leadersList: {
-    gap: space[2],
-  },
-  leaderRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingVertical: space[2],
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: dark.hairline,
-    minHeight: 48,
-  },
-  meRowInList: {
-    backgroundColor: 'rgba(255, 255, 255, 0.03)',
-    borderRadius: radius.control,
-    paddingHorizontal: space[2],
-  },
-  leaderLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: space[3],
-    flex: 1,
-  },
-  leaderRank: {
-    ...type.numeralM,
-    fontVariant: ['tabular-nums'] as any,
-    color: dark.textLo,
-    width: 32,
-    textAlign: 'center',
-  },
-  leaderName: {
-    ...type.body,
-    color: dark.textHi,
-  },
-  leaderNameMe: {
-    fontWeight: '700',
-    color: dark.apricot,
-  },
-  leaderScore: {
-    ...type.numeralM,
-    fontVariant: ['tabular-nums'] as any,
-    color: dark.textHi,
-  },
-  pinnedMyRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginTop: space[3],
-    padding: space[4],
-    backgroundColor: dark.s2,
-    borderRadius: radius.card,
-    borderWidth: 1,
-    borderColor: dark.hairlineLit,
-  },
-  pinnedLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: space[3],
-    flex: 1,
-  },
-  pinnedRank: {
-    ...type.numeralM,
-    fontVariant: ['tabular-nums'] as any,
-    color: dark.apricot,
-    width: 36,
-    textAlign: 'center',
-  },
-  pinnedName: {
-    ...type.heading,
-    color: dark.textHi,
-  },
-  pinnedYouTag: {
-    ...type.label,
-    color: dark.textLo,
-  },
-  pinnedCaption: {
-    ...type.label,
-    color: dark.textLo,
-    marginTop: 2,
-  },
-  pinnedRight: {
-    alignItems: 'flex-end',
-  },
-  pinnedScore: {
-    ...type.numeralL,
-    fontVariant: ['tabular-nums'] as any,
-    color: dark.apricot,
-  },
-  pinnedScoreLabel: {
-    ...type.label,
-    color: dark.textLo,
-  },
-  notEligibleCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: space[2],
-    padding: space[3],
-    backgroundColor: dark.s2,
-    borderRadius: radius.control,
-    marginTop: space[3],
-    borderWidth: 1,
-    borderColor: dark.hairline,
-  },
-  notEligibleText: {
-    ...type.bodyS,
-    color: dark.textLo,
-    flex: 1,
-  },
-  footerRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginTop: space[4],
-    paddingHorizontal: space[2],
-  },
-  footerText: {
-    ...type.label,
-    color: dark.textLo,
-  },
-  optOutLinkText: {
-    ...type.label,
-    color: dark.apricot,
-    fontWeight: '600',
-  },
-  optedOutCard: {
-    backgroundColor: dark.s2,
-    borderRadius: radius.card,
-    marginHorizontal: space[4],
-    marginTop: space[3],
-    padding: space[6],
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 1,
-    borderColor: dark.hairline,
-    gap: space[2],
-  },
-  optedOutTitle: {
-    ...type.title2,
-    color: dark.textHi,
-  },
-  optedOutText: {
-    ...type.bodyS,
-    color: dark.textLo,
-    textAlign: 'center',
-    lineHeight: 20,
-  },
-  optInButton: {
-    marginTop: space[3],
-    paddingHorizontal: space[4],
-    paddingVertical: space[2],
-    borderRadius: radius.button,
-    backgroundColor: dark.apricot,
-  },
-  optInButtonText: {
-    ...type.heading,
-    color: dark.onBrand,
-    fontWeight: '700',
-  },
-  inspectBackdrop: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.6)',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  inspectCard: {
-    width: 280,
-    backgroundColor: dark.s1,
-    borderRadius: radius.card,
-    padding: space[5],
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: dark.hairlineLit,
-    gap: space[2],
-  },
-  inspectNickname: {
-    ...type.title2,
-    color: dark.textHi,
-    marginTop: space[2],
-  },
-  inspectSub: {
-    ...type.label,
-    color: dark.textLo,
-  },
-  inspectCloseBtn: {
-    marginTop: space[3],
-    height: 44,
-    paddingHorizontal: space[5],
-    borderRadius: radius.control,
-    backgroundColor: dark.s2,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  inspectCloseText: {
-    ...type.label,
-    color: dark.textMid,
-    fontWeight: '600',
-  },
-});
+const createStyles = (dark: ReturnType<typeof useAppearance>['colors']) =>
+  StyleSheet.create({
+    container: {
+      paddingBottom: space[8],
+    },
+    loadingContainer: {
+      height: 240,
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    card: {
+      marginHorizontal: space[4],
+      marginTop: space[3],
+      padding: space[5],
+      borderRadius: radius.card,
+      backgroundColor: dark.s2,
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: space[2],
+    },
+    errorText: {
+      ...type.bodyS,
+      color: dark.textHi,
+      textAlign: 'center',
+    },
+    retryBtn: {
+      marginTop: space[2],
+      paddingHorizontal: space[4],
+      paddingVertical: space[2],
+      borderRadius: radius.control,
+      backgroundColor: dark.apricot,
+    },
+    retryBtnText: {
+      ...type.label,
+      color: dark.onBrand,
+      fontWeight: '700',
+    },
+    ruleBanner: {
+      marginHorizontal: space[4],
+      marginTop: space[3],
+      marginBottom: space[2],
+      paddingHorizontal: space[4],
+      paddingVertical: space[3],
+      borderRadius: radius.control,
+      backgroundColor: dark.s2,
+      borderWidth: 1,
+      borderColor: dark.hairline,
+    },
+    ruleBannerText: {
+      ...type.label,
+      color: dark.textHi,
+      fontWeight: '600',
+      lineHeight: 18,
+      textAlign: 'center',
+    },
+    divisionChipsRow: {
+      flexDirection: 'row',
+      paddingHorizontal: space[4],
+      gap: space[2],
+      marginVertical: space[2],
+    },
+    divisionChip: {
+      paddingHorizontal: space[4],
+      paddingVertical: space[2],
+      borderRadius: radius.full,
+      backgroundColor: dark.s2,
+      borderWidth: 1,
+      borderColor: dark.hairline,
+      minHeight: 44,
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    divisionChipSelected: {
+      backgroundColor: 'rgba(244, 182, 125, 0.16)',
+      borderColor: dark.apricot,
+    },
+    divisionChipText: {
+      ...type.label,
+      color: dark.textMid,
+    },
+    divisionChipTextSelected: {
+      color: dark.apricot,
+      fontWeight: '700',
+    },
+    leaderboardBody: {
+      paddingHorizontal: space[4],
+    },
+    top10Card: {
+      backgroundColor: dark.s1,
+      borderRadius: radius.card,
+      padding: space[4],
+      borderWidth: 1,
+      borderColor: dark.hairline,
+      marginTop: space[2],
+    },
+    cardHeaderRow: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      marginBottom: space[3],
+    },
+    top10Title: {
+      ...type.heading,
+      color: dark.textHi,
+    },
+    recapBtn: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 4,
+      paddingHorizontal: space[2],
+      paddingVertical: space[1],
+      borderRadius: radius.control,
+      backgroundColor: dark.s2,
+    },
+    recapBtnText: {
+      ...type.label,
+      color: dark.apricot,
+      fontWeight: '600',
+    },
+    emptyContainer: {
+      paddingVertical: space[6],
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: space[2],
+    },
+    emptyText: {
+      ...type.bodyS,
+      color: dark.textLo,
+      textAlign: 'center',
+    },
+    leadersList: {
+      gap: space[2],
+    },
+    leaderRow: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      paddingVertical: space[2],
+      borderBottomWidth: StyleSheet.hairlineWidth,
+      borderBottomColor: dark.hairline,
+      minHeight: 48,
+    },
+    meRowInList: {
+      backgroundColor: 'rgba(255, 255, 255, 0.03)',
+      borderRadius: radius.control,
+      paddingHorizontal: space[2],
+    },
+    leaderLeft: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: space[3],
+      flex: 1,
+    },
+    leaderRank: {
+      ...type.numeralM,
+      fontVariant: ['tabular-nums'] as any,
+      color: dark.textLo,
+      width: 32,
+      textAlign: 'center',
+    },
+    leaderName: {
+      ...type.body,
+      color: dark.textHi,
+    },
+    leaderNameMe: {
+      fontWeight: '700',
+      color: dark.apricot,
+    },
+    leaderScore: {
+      ...type.numeralM,
+      fontVariant: ['tabular-nums'] as any,
+      color: dark.textHi,
+    },
+    pinnedMyRow: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      marginTop: space[3],
+      padding: space[4],
+      backgroundColor: dark.s2,
+      borderRadius: radius.card,
+      borderWidth: 1,
+      borderColor: dark.hairlineLit,
+    },
+    pinnedLeft: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: space[3],
+      flex: 1,
+    },
+    pinnedRank: {
+      ...type.numeralM,
+      fontVariant: ['tabular-nums'] as any,
+      color: dark.apricot,
+      width: 36,
+      textAlign: 'center',
+    },
+    pinnedName: {
+      ...type.heading,
+      color: dark.textHi,
+    },
+    pinnedYouTag: {
+      ...type.label,
+      color: dark.textLo,
+    },
+    pinnedCaption: {
+      ...type.label,
+      color: dark.textLo,
+      marginTop: 2,
+    },
+    pinnedRight: {
+      alignItems: 'flex-end',
+    },
+    pinnedScore: {
+      ...type.numeralL,
+      fontVariant: ['tabular-nums'] as any,
+      color: dark.apricot,
+    },
+    pinnedScoreLabel: {
+      ...type.label,
+      color: dark.textLo,
+    },
+    notEligibleCard: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: space[2],
+      padding: space[3],
+      backgroundColor: dark.s2,
+      borderRadius: radius.control,
+      marginTop: space[3],
+      borderWidth: 1,
+      borderColor: dark.hairline,
+    },
+    notEligibleText: {
+      ...type.bodyS,
+      color: dark.textLo,
+      flex: 1,
+    },
+    footerRow: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      marginTop: space[4],
+      paddingHorizontal: space[2],
+    },
+    footerText: {
+      ...type.label,
+      color: dark.textLo,
+    },
+    optOutLinkText: {
+      ...type.label,
+      color: dark.apricot,
+      fontWeight: '600',
+    },
+    optedOutCard: {
+      backgroundColor: dark.s2,
+      borderRadius: radius.card,
+      marginHorizontal: space[4],
+      marginTop: space[3],
+      padding: space[6],
+      alignItems: 'center',
+      justifyContent: 'center',
+      borderWidth: 1,
+      borderColor: dark.hairline,
+      gap: space[2],
+    },
+    optedOutTitle: {
+      ...type.title2,
+      color: dark.textHi,
+    },
+    optedOutText: {
+      ...type.bodyS,
+      color: dark.textLo,
+      textAlign: 'center',
+      lineHeight: 20,
+    },
+    optInButton: {
+      marginTop: space[3],
+      paddingHorizontal: space[4],
+      paddingVertical: space[2],
+      borderRadius: radius.button,
+      backgroundColor: dark.apricot,
+    },
+    optInButtonText: {
+      ...type.heading,
+      color: dark.onBrand,
+      fontWeight: '700',
+    },
+    inspectBackdrop: {
+      flex: 1,
+      backgroundColor: 'rgba(0,0,0,0.6)',
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    inspectCard: {
+      width: 280,
+      backgroundColor: dark.s1,
+      borderRadius: radius.card,
+      padding: space[5],
+      alignItems: 'center',
+      borderWidth: 1,
+      borderColor: dark.hairlineLit,
+      gap: space[2],
+    },
+    inspectNickname: {
+      ...type.title2,
+      color: dark.textHi,
+      marginTop: space[2],
+    },
+    inspectSub: {
+      ...type.label,
+      color: dark.textLo,
+    },
+    inspectCloseBtn: {
+      marginTop: space[3],
+      height: 44,
+      paddingHorizontal: space[5],
+      borderRadius: radius.control,
+      backgroundColor: dark.s2,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    inspectCloseText: {
+      ...type.label,
+      color: dark.textMid,
+      fontWeight: '600',
+    },
+  });

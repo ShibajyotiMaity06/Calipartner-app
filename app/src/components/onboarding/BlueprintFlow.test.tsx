@@ -46,7 +46,7 @@ vi.mock('@/services/pairOnboardingService', () => ({
   afterSetupDestination: async () => '/pair-start',
   finishPairPrompt: vi.fn(),
 }));
-vi.mock('@/components/rooms/SquadViews', () => ({ squadStyles: {} }));
+vi.mock('@/components/rooms/SquadViews', () => ({ squadStyles: {}, useSquadStyles: () => ({}) }));
 vi.mock('@/components/rooms/PaywallModal', () => ({ PaywallModal: 'PaywallModal' }));
 vi.mock('@/components/workouts/WeeklyRoutineEditor', () => ({
   WeeklyRoutineEditor: 'RoutineEditor',

@@ -16,7 +16,7 @@ vi.mock('@calipartner/ui', async () => ({
   Button: 'Button',
 }));
 vi.mock('expo-router', () => ({ useRouter: () => ({ push: state.push }) }));
-vi.mock('./SquadViews', () => ({ squadStyles: {} }));
+vi.mock('./SquadViews', () => ({ squadStyles: {}, useSquadStyles: () => ({}) }));
 vi.mock('@/services/squadService', () => ({
   getSquadMentions: state.page,
   markSquadMentionSeen: state.mark,

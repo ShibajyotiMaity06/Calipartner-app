@@ -49,7 +49,7 @@ vi.mock('@/services/roomService', () => ({
   leaveRoom: vi.fn(),
 }));
 vi.mock('./HomeSquadLeaderboard', () => ({ HomeSquadLeaderboard: 'HomeSquadLeaderboard' }));
-vi.mock('./SquadViews', () => ({ squadStyles: {} }));
+vi.mock('./SquadViews', () => ({ squadStyles: {}, useSquadStyles: () => ({}) }));
 import { HomeSquads } from './HomeSquads';
 import { RoomHeader } from './RoomHeader';
 import { RoomSettingsModal } from './RoomSettingsModal';

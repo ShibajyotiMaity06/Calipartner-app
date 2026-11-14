@@ -1,0 +1,2764 @@
+{
+  "config": {
+    "avatar_enabled": true,
+    "spend_order": "earned_first",
+    "price_multiplier": 1,
+    "bundle_discount_pct": 15,
+    "tier_discount_pct": {
+      "free": 0,
+      "plus": 0,
+      "pro": 0
+    },
+    "level_cap": 6,
+    "pack_bonus_enabled": false,
+    "first_purchase_bonus_pct": 0,
+    "starter_days": 7
+  },
+  "collections": [
+    {
+      "id": "starter_kit",
+      "name": "Starter Kit",
+      "tier_required": "free",
+      "sort": 0,
+      "earn_only": false,
+      "bundle_discount_pct": 15
+    },
+    {
+      "id": "gym_basics",
+      "name": "Gym Basics",
+      "tier_required": "free",
+      "sort": 1,
+      "earn_only": false,
+      "bundle_discount_pct": 15
+    },
+    {
+      "id": "street_basics",
+      "name": "Street Basics",
+      "tier_required": "free",
+      "sort": 2,
+      "earn_only": false,
+      "bundle_discount_pct": 15
+    },
+    {
+      "id": "pulse",
+      "name": "Pulse",
+      "tier_required": "plus",
+      "sort": 3,
+      "earn_only": false,
+      "bundle_discount_pct": 15
+    },
+    {
+      "id": "neon_night",
+      "name": "Neon Night",
+      "tier_required": "plus",
+      "sort": 4,
+      "earn_only": false,
+      "bundle_discount_pct": 15
+    },
+    {
+      "id": "gold_edition",
+      "name": "Gold Edition",
+      "tier_required": "pro",
+      "sort": 5,
+      "earn_only": false,
+      "bundle_discount_pct": 15
+    },
+    {
+      "id": "achievements",
+      "name": "Achievements",
+      "tier_required": "free",
+      "sort": 6,
+      "earn_only": true,
+      "bundle_discount_pct": 15
+    },
+    {
+      "id": "plus_studio",
+      "name": "Plus Studio",
+      "tier_required": "plus",
+      "sort": 7,
+      "earn_only": false,
+      "bundle_discount_pct": 15
+    },
+    {
+      "id": "pro_studio",
+      "name": "Pro Atelier",
+      "tier_required": "pro",
+      "sort": 8,
+      "earn_only": false,
+      "bundle_discount_pct": 15
+    }
+  ],
+  "products": [
+    {
+      "id": "hair_crop",
+      "name": "Classic Crop",
+      "slot": "hair",
+      "kind": "item",
+      "genders": ["m"],
+      "rarity": "common",
+      "price_cc": 0,
+      "collection_id": "starter_kit",
+      "starter": true,
+      "earn_only": false,
+      "tintable": true,
+      "hides": [],
+      "assets": {
+        "m:1": "03_items_clean/hair/hair_crop_m.webp",
+        "m:2": "03_items_clean/hair/hair_crop_m.webp",
+        "m:3": "03_items_clean/hair/hair_crop_m.webp"
+      },
+      "active": true,
+      "per_form": false,
+      "layer_order": 80
+    },
+    {
+      "id": "hair_ponytail",
+      "name": "High Ponytail",
+      "slot": "hair",
+      "kind": "item",
+      "genders": ["f"],
+      "rarity": "common",
+      "price_cc": 0,
+      "collection_id": "starter_kit",
+      "starter": true,
+      "earn_only": false,
+      "tintable": true,
+      "hides": [],
+      "assets": {
+        "f:1": "03_items_clean/hair/hair_ponytail_f.webp",
+        "f:2": "03_items_clean/hair/hair_ponytail_f.webp",
+        "f:3": "03_items_clean/hair/hair_ponytail_f.webp"
+      },
+      "active": true,
+      "per_form": false,
+      "layer_order": 80
+    },
+    {
+      "id": "top_tank",
+      "name": "Plain Tank",
+      "slot": "top",
+      "kind": "item",
+      "genders": ["f", "m"],
+      "rarity": "common",
+      "price_cc": 0,
+      "collection_id": "starter_kit",
+      "starter": true,
+      "earn_only": false,
+      "tintable": true,
+      "hides": [],
+      "assets": {
+        "f:1": "04_outfits/top/top_tank_f_form1.webp",
+        "f:2": "04_outfits/top/top_tank_f_form2.webp",
+        "f:3": "04_outfits/top/top_tank_f_form3.webp",
+        "m:1": "04_outfits/top/top_tank_m_form1.webp",
+        "m:2": "04_outfits/top/top_tank_m_form2.webp",
+        "m:3": "04_outfits/top/top_tank_m_form3.webp"
+      },
+      "active": true,
+      "per_form": true,
+      "layer_order": 40
+    },
+    {
+      "id": "shoes_training",
+      "name": "Training Shoes",
+      "slot": "shoes",
+      "kind": "item",
+      "genders": ["f", "m"],
+      "rarity": "common",
+      "price_cc": 0,
+      "collection_id": "starter_kit",
+      "starter": true,
+      "earn_only": false,
+      "tintable": true,
+      "hides": [],
+      "assets": {
+        "f:1": "03_items_clean/shoes/shoes_training_f.webp",
+        "f:2": "03_items_clean/shoes/shoes_training_f.webp",
+        "f:3": "03_items_clean/shoes/shoes_training_f.webp",
+        "m:1": "03_items_clean/shoes/shoes_training_m.webp",
+        "m:2": "03_items_clean/shoes/shoes_training_m.webp",
+        "m:3": "03_items_clean/shoes/shoes_training_m.webp"
+      },
+      "active": true,
+      "per_form": false,
+      "layer_order": 50
+    },
+    {
+      "id": "backdrop_studio",
+      "name": "Studio Steel",
+      "slot": "backdrop",
+      "kind": "item",
+      "genders": ["f", "m"],
+      "rarity": "common",
+      "price_cc": 0,
+      "collection_id": "starter_kit",
+      "starter": true,
+      "earn_only": false,
+      "tintable": false,
+      "hides": [],
+      "assets": {
+        "m:1": "05_scenes/backdrops/backdrop_studio.webp",
+        "m:2": "05_scenes/backdrops/backdrop_studio.webp",
+        "m:3": "05_scenes/backdrops/backdrop_studio.webp",
+        "f:1": "05_scenes/backdrops/backdrop_studio.webp",
+        "f:2": "05_scenes/backdrops/backdrop_studio.webp",
+        "f:3": "05_scenes/backdrops/backdrop_studio.webp"
+      },
+      "active": true,
+      "per_form": false,
+      "layer_order": 0
+    },
+    {
+      "id": "frame_plain",
+      "name": "Plain Frame",
+      "slot": "frame",
+      "kind": "item",
+      "genders": ["f", "m"],
+      "rarity": "common",
+      "price_cc": 0,
+      "collection_id": "starter_kit",
+      "starter": true,
+      "earn_only": false,
+      "tintable": false,
+      "hides": [],
+      "assets": {
+        "m:1": "06_ui/frames/frame_plain.webp",
+        "m:2": "06_ui/frames/frame_plain.webp",
+        "m:3": "06_ui/frames/frame_plain.webp",
+        "f:1": "06_ui/frames/frame_plain.webp",
+        "f:2": "06_ui/frames/frame_plain.webp",
+        "f:3": "06_ui/frames/frame_plain.webp"
+      },
+      "active": true,
+      "per_form": false,
+      "layer_order": 100
+    },
+    {
+      "id": "hair_fade",
+      "name": "Fade",
+      "slot": "hair",
+      "kind": "item",
+      "genders": ["m"],
+      "rarity": "common",
+      "price_cc": 45,
+      "collection_id": "gym_basics",
+      "starter": false,
+      "earn_only": false,
+      "tintable": true,
+      "hides": [],
+      "assets": {
+        "m:1": "03_items_clean/hair/hair_fade_m.webp",
+        "m:2": "03_items_clean/hair/hair_fade_m.webp",
+        "m:3": "03_items_clean/hair/hair_fade_m.webp"
+      },
+      "active": true,
+      "per_form": false,
+      "layer_order": 80
+    },
+    {
+      "id": "hair_bun",
+      "name": "Top Bun",
+      "slot": "hair",
+      "kind": "item",
+      "genders": ["f"],
+      "rarity": "common",
+      "price_cc": 45,
+      "collection_id": "gym_basics",
+      "starter": false,
+      "earn_only": false,
+      "tintable": true,
+      "hides": [],
+      "assets": {
+        "f:1": "03_items_clean/hair/hair_bun_f.webp",
+        "f:2": "03_items_clean/hair/hair_bun_f.webp",
+        "f:3": "03_items_clean/hair/hair_bun_f.webp"
+      },
+      "active": true,
+      "per_form": false,
+      "layer_order": 80
+    },
+    {
+      "id": "headwear_headband",
+      "name": "Headband",
+      "slot": "headwear",
+      "kind": "item",
+      "genders": ["f", "m"],
+      "rarity": "common",
+      "price_cc": 40,
+      "collection_id": "gym_basics",
+      "starter": false,
+      "earn_only": false,
+      "tintable": true,
+      "hides": [],
+      "assets": {
+        "f:1": "03_items_clean/headwear/headwear_headband_f.webp",
+        "f:2": "03_items_clean/headwear/headwear_headband_f.webp",
+        "f:3": "03_items_clean/headwear/headwear_headband_f.webp",
+        "m:1": "03_items_clean/headwear/headwear_headband_m.webp",
+        "m:2": "03_items_clean/headwear/headwear_headband_m.webp",
+        "m:3": "03_items_clean/headwear/headwear_headband_m.webp"
+      },
+      "active": true,
+      "per_form": false,
+      "layer_order": 85
+    },
+    {
+      "id": "wrist_bands",
+      "name": "Wristbands",
+      "slot": "wrist",
+      "kind": "item",
+      "genders": ["f", "m"],
+      "rarity": "common",
+      "price_cc": 40,
+      "collection_id": "gym_basics",
+      "starter": false,
+      "earn_only": false,
+      "tintable": true,
+      "hides": [],
+      "assets": {
+        "f:1": "03_items_clean/wrist/wrist_bands_f.webp",
+        "f:2": "03_items_clean/wrist/wrist_bands_f.webp",
+        "f:3": "03_items_clean/wrist/wrist_bands_f.webp",
+        "m:1": "03_items_clean/wrist/wrist_bands_m.webp",
+        "m:2": "03_items_clean/wrist/wrist_bands_m.webp",
+        "m:3": "03_items_clean/wrist/wrist_bands_m.webp"
+      },
+      "active": true,
+      "per_form": false,
+      "layer_order": 60
+    },
+    {
+      "id": "top_tee",
+      "name": "Tee",
+      "slot": "top",
+      "kind": "item",
+      "genders": ["f", "m"],
+      "rarity": "common",
+      "price_cc": 60,
+      "collection_id": "gym_basics",
+      "starter": false,
+      "earn_only": false,
+      "tintable": true,
+      "hides": [],
+      "assets": {
+        "f:1": "04_outfits/top/top_tee_f_form1.webp",
+        "f:2": "04_outfits/top/top_tee_f_form2.webp",
+        "f:3": "04_outfits/top/top_tee_f_form3.webp",
+        "m:1": "04_outfits/top/top_tee_m_form1.webp",
+        "m:2": "04_outfits/top/top_tee_m_form2.webp",
+        "m:3": "04_outfits/top/top_tee_m_form3.webp"
+      },
+      "active": true,
+      "per_form": true,
+      "layer_order": 40
+    },
+    {
+      "id": "bottom_compshorts",
+      "name": "Compression Shorts",
+      "slot": "bottom",
+      "kind": "item",
+      "genders": ["f", "m"],
+      "rarity": "common",
+      "price_cc": 60,
+      "collection_id": "gym_basics",
+      "starter": false,
+      "earn_only": false,
+      "tintable": true,
+      "hides": [],
+      "assets": {
+        "f:1": "04_outfits/bottom/bottom_compshorts_f_form1.webp",
+        "f:2": "04_outfits/bottom/bottom_compshorts_f_form2.webp",
+        "f:3": "04_outfits/bottom/bottom_compshorts_f_form3.webp",
+        "m:1": "04_outfits/bottom/bottom_compshorts_m_form1.webp",
+        "m:2": "04_outfits/bottom/bottom_compshorts_m_form2.webp",
+        "m:3": "04_outfits/bottom/bottom_compshorts_m_form3.webp"
+      },
+      "active": true,
+      "per_form": true,
+      "layer_order": 30
+    },
+    {
+      "id": "backdrop_gym",
+      "name": "Gym Floor",
+      "slot": "backdrop",
+      "kind": "item",
+      "genders": ["f", "m"],
+      "rarity": "common",
+      "price_cc": 50,
+      "collection_id": "gym_basics",
+      "starter": false,
+      "earn_only": false,
+      "tintable": false,
+      "hides": [],
+      "assets": {
+        "m:1": "05_scenes/backdrops/backdrop_gym.webp",
+        "m:2": "05_scenes/backdrops/backdrop_gym.webp",
+        "m:3": "05_scenes/backdrops/backdrop_gym.webp",
+        "f:1": "05_scenes/backdrops/backdrop_gym.webp",
+        "f:2": "05_scenes/backdrops/backdrop_gym.webp",
+        "f:3": "05_scenes/backdrops/backdrop_gym.webp"
+      },
+      "active": true,
+      "per_form": false,
+      "layer_order": 0
+    },
+    {
+      "id": "frame_bronze",
+      "name": "Bronze Frame",
+      "slot": "frame",
+      "kind": "item",
+      "genders": ["f", "m"],
+      "rarity": "common",
+      "price_cc": 40,
+      "collection_id": "gym_basics",
+      "starter": false,
+      "earn_only": false,
+      "tintable": false,
+      "hides": [],
+      "assets": {
+        "m:1": "06_ui/frames/frame_bronze.webp",
+        "m:2": "06_ui/frames/frame_bronze.webp",
+        "m:3": "06_ui/frames/frame_bronze.webp",
+        "f:1": "06_ui/frames/frame_bronze.webp",
+        "f:2": "06_ui/frames/frame_bronze.webp",
+        "f:3": "06_ui/frames/frame_bronze.webp"
+      },
+      "active": true,
+      "per_form": false,
+      "layer_order": 100
+    },
+    {
+      "id": "facial_stubble",
+      "name": "Stubble",
+      "slot": "facial",
+      "kind": "item",
+      "genders": ["m"],
+      "rarity": "common",
+      "price_cc": 60,
+      "collection_id": "gym_basics",
+      "starter": false,
+      "earn_only": false,
+      "tintable": true,
+      "hides": [],
+      "assets": {
+        "m:1": "03_items_clean/facial/facial_stubble_m.webp",
+        "m:2": "03_items_clean/facial/facial_stubble_m.webp",
+        "m:3": "03_items_clean/facial/facial_stubble_m.webp"
+      },
+      "active": true,
+      "per_form": false,
+      "layer_order": 70
+    },
+    {
+      "id": "hair_quiff",
+      "name": "Textured Quiff",
+      "slot": "hair",
+      "kind": "item",
+      "genders": ["m"],
+      "rarity": "common",
+      "price_cc": 45,
+      "collection_id": "street_basics",
+      "starter": false,
+      "earn_only": false,
+      "tintable": true,
+      "hides": [],
+      "assets": {
+        "m:1": "03_items_clean/hair/hair_quiff_m.webp",
+        "m:2": "03_items_clean/hair/hair_quiff_m.webp",
+        "m:3": "03_items_clean/hair/hair_quiff_m.webp"
+      },
+      "active": true,
+      "per_form": false,
+      "layer_order": 80
+    },
+    {
+      "id": "hair_bob",
+      "name": "Short Bob",
+      "slot": "hair",
+      "kind": "item",
+      "genders": ["f"],
+      "rarity": "common",
+      "price_cc": 45,
+      "collection_id": "street_basics",
+      "starter": false,
+      "earn_only": false,
+      "tintable": true,
+      "hides": [],
+      "assets": {
+        "f:1": "03_items_clean/hair/hair_bob_f.webp",
+        "f:2": "03_items_clean/hair/hair_bob_f.webp",
+        "f:3": "03_items_clean/hair/hair_bob_f.webp"
+      },
+      "active": true,
+      "per_form": false,
+      "layer_order": 80
+    },
+    {
+      "id": "headwear_cap",
+      "name": "Cap",
+      "slot": "headwear",
+      "kind": "item",
+      "genders": ["f", "m"],
+      "rarity": "common",
+      "price_cc": 50,
+      "collection_id": "street_basics",
+      "starter": false,
+      "earn_only": false,
+      "tintable": true,
+      "hides": ["hair"],
+      "assets": {
+        "f:1": "03_items_clean/headwear/headwear_cap_f.webp",
+        "f:2": "03_items_clean/headwear/headwear_cap_f.webp",
+        "f:3": "03_items_clean/headwear/headwear_cap_f.webp",
+        "m:1": "03_items_clean/headwear/headwear_cap_m.webp",
+        "m:2": "03_items_clean/headwear/headwear_cap_m.webp",
+        "m:3": "03_items_clean/headwear/headwear_cap_m.webp"
+      },
+      "active": true,
+      "per_form": false,
+      "layer_order": 85
+    },
+    {
+      "id": "headwear_reversecap",
+      "name": "Reverse Cap",
+      "slot": "headwear",
+      "kind": "item",
+      "genders": ["f", "m"],
+      "rarity": "common",
+      "price_cc": 50,
+      "collection_id": "street_basics",
+      "starter": false,
+      "earn_only": false,
+      "tintable": true,
+      "hides": ["hair"],
+      "assets": {
+        "f:1": "03_items_clean/headwear/headwear_reversecap_f.webp",
+        "f:2": "03_items_clean/headwear/headwear_reversecap_f.webp",
+        "f:3": "03_items_clean/headwear/headwear_reversecap_f.webp",
+        "m:1": "03_items_clean/headwear/headwear_reversecap_m.webp",
+        "m:2": "03_items_clean/headwear/headwear_reversecap_m.webp",
+        "m:3": "03_items_clean/headwear/headwear_reversecap_m.webp"
+      },
+      "active": true,
+      "per_form": false,
+      "layer_order": 85
+    },
+    {
+      "id": "eyewear_round",
+      "name": "Round Glasses",
+      "slot": "eyewear",
+      "kind": "item",
+      "genders": ["f", "m"],
+      "rarity": "common",
+      "price_cc": 60,
+      "collection_id": "street_basics",
+      "starter": false,
+      "earn_only": false,
+      "tintable": true,
+      "hides": [],
+      "assets": {
+        "f:1": "03_items_clean/eyewear/eyewear_round_f.webp",
+        "f:2": "03_items_clean/eyewear/eyewear_round_f.webp",
+        "f:3": "03_items_clean/eyewear/eyewear_round_f.webp",
+        "m:1": "03_items_clean/eyewear/eyewear_round_m.webp",
+        "m:2": "03_items_clean/eyewear/eyewear_round_m.webp",
+        "m:3": "03_items_clean/eyewear/eyewear_round_m.webp"
+      },
+      "active": true,
+      "per_form": false,
+      "layer_order": 90
+    },
+    {
+      "id": "ears_studs",
+      "name": "Studs",
+      "slot": "ears",
+      "kind": "item",
+      "genders": ["f", "m"],
+      "rarity": "common",
+      "price_cc": 45,
+      "collection_id": "street_basics",
+      "starter": false,
+      "earn_only": false,
+      "tintable": true,
+      "hides": [],
+      "assets": {
+        "f:1": "03_items_clean/ears/ears_studs_f.webp",
+        "f:2": "03_items_clean/ears/ears_studs_f.webp",
+        "f:3": "03_items_clean/ears/ears_studs_f.webp",
+        "m:1": "03_items_clean/ears/ears_studs_m.webp",
+        "m:2": "03_items_clean/ears/ears_studs_m.webp",
+        "m:3": "03_items_clean/ears/ears_studs_m.webp"
+      },
+      "active": true,
+      "per_form": false,
+      "layer_order": 75
+    },
+    {
+      "id": "shoes_runner",
+      "name": "Runner",
+      "slot": "shoes",
+      "kind": "item",
+      "genders": ["f", "m"],
+      "rarity": "uncommon",
+      "price_cc": 100,
+      "collection_id": "street_basics",
+      "starter": false,
+      "earn_only": false,
+      "tintable": true,
+      "hides": [],
+      "assets": {
+        "f:1": "03_items_clean/shoes/shoes_runner_f.webp",
+        "f:2": "03_items_clean/shoes/shoes_runner_f.webp",
+        "f:3": "03_items_clean/shoes/shoes_runner_f.webp",
+        "m:1": "03_items_clean/shoes/shoes_runner_m.webp",
+        "m:2": "03_items_clean/shoes/shoes_runner_m.webp",
+        "m:3": "03_items_clean/shoes/shoes_runner_m.webp"
+      },
+      "active": true,
+      "per_form": false,
+      "layer_order": 50
+    },
+    {
+      "id": "backdrop_sunrise",
+      "name": "Sunrise",
+      "slot": "backdrop",
+      "kind": "item",
+      "genders": ["f", "m"],
+      "rarity": "common",
+      "price_cc": 50,
+      "collection_id": "street_basics",
+      "starter": false,
+      "earn_only": false,
+      "tintable": false,
+      "hides": [],
+      "assets": {
+        "m:1": "05_scenes/backdrops/backdrop_sunrise.webp",
+        "m:2": "05_scenes/backdrops/backdrop_sunrise.webp",
+        "m:3": "05_scenes/backdrops/backdrop_sunrise.webp",
+        "f:1": "05_scenes/backdrops/backdrop_sunrise.webp",
+        "f:2": "05_scenes/backdrops/backdrop_sunrise.webp",
+        "f:3": "05_scenes/backdrops/backdrop_sunrise.webp"
+      },
+      "active": true,
+      "per_form": false,
+      "layer_order": 0
+    },
+    {
+      "id": "facial_moustache",
+      "name": "Moustache",
+      "slot": "facial",
+      "kind": "item",
+      "genders": ["m"],
+      "rarity": "common",
+      "price_cc": 60,
+      "collection_id": "street_basics",
+      "starter": false,
+      "earn_only": false,
+      "tintable": true,
+      "hides": [],
+      "assets": {
+        "m:1": "03_items_clean/facial/facial_moustache_m.webp",
+        "m:2": "03_items_clean/facial/facial_moustache_m.webp",
+        "m:3": "03_items_clean/facial/facial_moustache_m.webp"
+      },
+      "active": true,
+      "per_form": false,
+      "layer_order": 70
+    },
+    {
+      "id": "hair_sleekback",
+      "name": "Sleek Back",
+      "slot": "hair",
+      "kind": "item",
+      "genders": ["m"],
+      "rarity": "uncommon",
+      "price_cc": 110,
+      "collection_id": "pulse",
+      "starter": false,
+      "earn_only": false,
+      "tintable": true,
+      "hides": [],
+      "assets": {
+        "m:1": "03_items_clean/hair/hair_sleekback_m.webp",
+        "m:2": "03_items_clean/hair/hair_sleekback_m.webp",
+        "m:3": "03_items_clean/hair/hair_sleekback_m.webp"
+      },
+      "active": true,
+      "per_form": false,
+      "layer_order": 80
+    },
+    {
+      "id": "eyewear_wayfarer",
+      "name": "Wayfarer",
+      "slot": "eyewear",
+      "kind": "item",
+      "genders": ["f", "m"],
+      "rarity": "uncommon",
+      "price_cc": 120,
+      "collection_id": "pulse",
+      "starter": false,
+      "earn_only": false,
+      "tintable": true,
+      "hides": [],
+      "assets": {
+        "f:1": "03_items_clean/eyewear/eyewear_wayfarer_f.webp",
+        "f:2": "03_items_clean/eyewear/eyewear_wayfarer_f.webp",
+        "f:3": "03_items_clean/eyewear/eyewear_wayfarer_f.webp",
+        "m:1": "03_items_clean/eyewear/eyewear_wayfarer_m.webp",
+        "m:2": "03_items_clean/eyewear/eyewear_wayfarer_m.webp",
+        "m:3": "03_items_clean/eyewear/eyewear_wayfarer_m.webp"
+      },
+      "active": true,
+      "per_form": false,
+      "layer_order": 90
+    },
+    {
+      "id": "headwear_beanie",
+      "name": "Beanie",
+      "slot": "headwear",
+      "kind": "item",
+      "genders": ["f", "m"],
+      "rarity": "uncommon",
+      "price_cc": 90,
+      "collection_id": "pulse",
+      "starter": false,
+      "earn_only": false,
+      "tintable": true,
+      "hides": ["hair"],
+      "assets": {
+        "f:1": "03_items_clean/headwear/headwear_beanie_f.webp",
+        "f:2": "03_items_clean/headwear/headwear_beanie_f.webp",
+        "f:3": "03_items_clean/headwear/headwear_beanie_f.webp",
+        "m:1": "03_items_clean/headwear/headwear_beanie_m.webp",
+        "m:2": "03_items_clean/headwear/headwear_beanie_m.webp",
+        "m:3": "03_items_clean/headwear/headwear_beanie_m.webp"
+      },
+      "active": true,
+      "per_form": false,
+      "layer_order": 85
+    },
+    {
+      "id": "ears_hoops",
+      "name": "Hoops",
+      "slot": "ears",
+      "kind": "item",
+      "genders": ["f", "m"],
+      "rarity": "uncommon",
+      "price_cc": 90,
+      "collection_id": "pulse",
+      "starter": false,
+      "earn_only": false,
+      "tintable": true,
+      "hides": [],
+      "assets": {
+        "f:1": "03_items_clean/ears/ears_hoops_f.webp",
+        "f:2": "03_items_clean/ears/ears_hoops_f.webp",
+        "f:3": "03_items_clean/ears/ears_hoops_f.webp",
+        "m:1": "03_items_clean/ears/ears_hoops_m.webp",
+        "m:2": "03_items_clean/ears/ears_hoops_m.webp",
+        "m:3": "03_items_clean/ears/ears_hoops_m.webp"
+      },
+      "active": true,
+      "per_form": false,
+      "layer_order": 75
+    },
+    {
+      "id": "top_compression",
+      "name": "Compression Top",
+      "slot": "top",
+      "kind": "item",
+      "genders": ["f", "m"],
+      "rarity": "rare",
+      "price_cc": 150,
+      "collection_id": "pulse",
+      "starter": false,
+      "earn_only": false,
+      "tintable": true,
+      "hides": [],
+      "assets": {
+        "f:1": "04_outfits/top/top_compression_f_form1.webp",
+        "f:2": "04_outfits/top/top_compression_f_form2.webp",
+        "f:3": "04_outfits/top/top_compression_f_form3.webp",
+        "m:1": "04_outfits/top/top_compression_m_form1.webp",
+        "m:2": "04_outfits/top/top_compression_m_form2.webp",
+        "m:3": "04_outfits/top/top_compression_m_form3.webp"
+      },
+      "active": true,
+      "per_form": true,
+      "layer_order": 40
+    },
+    {
+      "id": "bottom_joggers",
+      "name": "Joggers",
+      "slot": "bottom",
+      "kind": "item",
+      "genders": ["f", "m"],
+      "rarity": "rare",
+      "price_cc": 150,
+      "collection_id": "pulse",
+      "starter": false,
+      "earn_only": false,
+      "tintable": true,
+      "hides": [],
+      "assets": {
+        "f:1": "04_outfits/bottom/bottom_joggers_f_form1.webp",
+        "f:2": "04_outfits/bottom/bottom_joggers_f_form2.webp",
+        "f:3": "04_outfits/bottom/bottom_joggers_f_form3.webp",
+        "m:1": "04_outfits/bottom/bottom_joggers_m_form1.webp",
+        "m:2": "04_outfits/bottom/bottom_joggers_m_form2.webp",
+        "m:3": "04_outfits/bottom/bottom_joggers_m_form3.webp"
+      },
+      "active": true,
+      "per_form": true,
+      "layer_order": 30
+    },
+    {
+      "id": "shoes_hitop",
+      "name": "Hi-Top",
+      "slot": "shoes",
+      "kind": "item",
+      "genders": ["f", "m"],
+      "rarity": "rare",
+      "price_cc": 180,
+      "collection_id": "pulse",
+      "starter": false,
+      "earn_only": false,
+      "tintable": true,
+      "hides": [],
+      "assets": {
+        "f:1": "03_items_clean/shoes/shoes_hitop_f.webp",
+        "f:2": "03_items_clean/shoes/shoes_hitop_f.webp",
+        "f:3": "03_items_clean/shoes/shoes_hitop_f.webp",
+        "m:1": "03_items_clean/shoes/shoes_hitop_m.webp",
+        "m:2": "03_items_clean/shoes/shoes_hitop_m.webp",
+        "m:3": "03_items_clean/shoes/shoes_hitop_m.webp"
+      },
+      "active": true,
+      "per_form": false,
+      "layer_order": 50
+    },
+    {
+      "id": "backdrop_rooftop",
+      "name": "Rooftop",
+      "slot": "backdrop",
+      "kind": "item",
+      "genders": ["f", "m"],
+      "rarity": "rare",
+      "price_cc": 150,
+      "collection_id": "pulse",
+      "starter": false,
+      "earn_only": false,
+      "tintable": false,
+      "hides": [],
+      "assets": {
+        "m:1": "05_scenes/backdrops/backdrop_rooftop.webp",
+        "m:2": "05_scenes/backdrops/backdrop_rooftop.webp",
+        "m:3": "05_scenes/backdrops/backdrop_rooftop.webp",
+        "f:1": "05_scenes/backdrops/backdrop_rooftop.webp",
+        "f:2": "05_scenes/backdrops/backdrop_rooftop.webp",
+        "f:3": "05_scenes/backdrops/backdrop_rooftop.webp"
+      },
+      "active": true,
+      "per_form": false,
+      "layer_order": 0
+    },
+    {
+      "id": "aura_softglow",
+      "name": "Soft Glow",
+      "slot": "aura",
+      "kind": "item",
+      "genders": ["f", "m"],
+      "rarity": "rare",
+      "price_cc": 220,
+      "collection_id": "pulse",
+      "starter": false,
+      "earn_only": false,
+      "tintable": false,
+      "hides": [],
+      "assets": {
+        "m:1": "05_scenes/auras/aura_softglow.webp",
+        "m:2": "05_scenes/auras/aura_softglow.webp",
+        "m:3": "05_scenes/auras/aura_softglow.webp",
+        "f:1": "05_scenes/auras/aura_softglow.webp",
+        "f:2": "05_scenes/auras/aura_softglow.webp",
+        "f:3": "05_scenes/auras/aura_softglow.webp"
+      },
+      "active": true,
+      "per_form": false,
+      "layer_order": 10
+    },
+    {
+      "id": "frame_silver",
+      "name": "Silver Frame",
+      "slot": "frame",
+      "kind": "item",
+      "genders": ["f", "m"],
+      "rarity": "uncommon",
+      "price_cc": 120,
+      "collection_id": "pulse",
+      "starter": false,
+      "earn_only": false,
+      "tintable": false,
+      "hides": [],
+      "assets": {
+        "m:1": "06_ui/frames/frame_silver.webp",
+        "m:2": "06_ui/frames/frame_silver.webp",
+        "m:3": "06_ui/frames/frame_silver.webp",
+        "f:1": "06_ui/frames/frame_silver.webp",
+        "f:2": "06_ui/frames/frame_silver.webp",
+        "f:3": "06_ui/frames/frame_silver.webp"
+      },
+      "active": true,
+      "per_form": false,
+      "layer_order": 100
+    },
+    {
+      "id": "facial_beard",
+      "name": "Full Beard",
+      "slot": "facial",
+      "kind": "item",
+      "genders": ["m"],
+      "rarity": "rare",
+      "price_cc": 140,
+      "collection_id": "pulse",
+      "starter": false,
+      "earn_only": false,
+      "tintable": true,
+      "hides": [],
+      "assets": {
+        "m:1": "03_items_clean/facial/facial_beard_m.webp",
+        "m:2": "03_items_clean/facial/facial_beard_m.webp",
+        "m:3": "03_items_clean/facial/facial_beard_m.webp"
+      },
+      "active": true,
+      "per_form": false,
+      "layer_order": 70
+    },
+    {
+      "id": "finish_silver",
+      "name": "Silver Finish",
+      "slot": "finish",
+      "kind": "finish",
+      "genders": ["m", "f"],
+      "rarity": "rare",
+      "price_cc": 150,
+      "collection_id": "pulse",
+      "starter": false,
+      "earn_only": false,
+      "tintable": false,
+      "hides": [],
+      "finish": "#C7CDD4",
+      "assets": {},
+      "active": true,
+      "per_form": false,
+      "layer_order": 0
+    },
+    {
+      "id": "eyewear_sportwrap",
+      "name": "Sport Wrap",
+      "slot": "eyewear",
+      "kind": "item",
+      "genders": ["f", "m"],
+      "rarity": "rare",
+      "price_cc": 160,
+      "collection_id": "neon_night",
+      "starter": false,
+      "earn_only": false,
+      "tintable": true,
+      "hides": [],
+      "assets": {
+        "f:1": "03_items_clean/eyewear/eyewear_sportwrap_f.webp",
+        "f:2": "03_items_clean/eyewear/eyewear_sportwrap_f.webp",
+        "f:3": "03_items_clean/eyewear/eyewear_sportwrap_f.webp",
+        "m:1": "03_items_clean/eyewear/eyewear_sportwrap_m.webp",
+        "m:2": "03_items_clean/eyewear/eyewear_sportwrap_m.webp",
+        "m:3": "03_items_clean/eyewear/eyewear_sportwrap_m.webp"
+      },
+      "active": true,
+      "per_form": false,
+      "layer_order": 90
+    },
+    {
+      "id": "headwear_bandana",
+      "name": "Bandana",
+      "slot": "headwear",
+      "kind": "item",
+      "genders": ["f", "m"],
+      "rarity": "uncommon",
+      "price_cc": 100,
+      "collection_id": "neon_night",
+      "starter": false,
+      "earn_only": false,
+      "tintable": true,
+      "hides": ["hair"],
+      "assets": {
+        "f:1": "03_items_clean/headwear/headwear_bandana_f.webp",
+        "f:2": "03_items_clean/headwear/headwear_bandana_f.webp",
+        "f:3": "03_items_clean/headwear/headwear_bandana_f.webp",
+        "m:1": "03_items_clean/headwear/headwear_bandana_m.webp",
+        "m:2": "03_items_clean/headwear/headwear_bandana_m.webp",
+        "m:3": "03_items_clean/headwear/headwear_bandana_m.webp"
+      },
+      "active": true,
+      "per_form": false,
+      "layer_order": 85
+    },
+    {
+      "id": "wrist_watch",
+      "name": "Smartwatch",
+      "slot": "wrist",
+      "kind": "item",
+      "genders": ["f", "m"],
+      "rarity": "rare",
+      "price_cc": 160,
+      "collection_id": "neon_night",
+      "starter": false,
+      "earn_only": false,
+      "tintable": true,
+      "hides": [],
+      "assets": {
+        "f:1": "03_items_clean/wrist/wrist_watch_f.webp",
+        "f:2": "03_items_clean/wrist/wrist_watch_f.webp",
+        "f:3": "03_items_clean/wrist/wrist_watch_f.webp",
+        "m:1": "03_items_clean/wrist/wrist_watch_m.webp",
+        "m:2": "03_items_clean/wrist/wrist_watch_m.webp",
+        "m:3": "03_items_clean/wrist/wrist_watch_m.webp"
+      },
+      "active": true,
+      "per_form": false,
+      "layer_order": 60
+    },
+    {
+      "id": "backdrop_citynight",
+      "name": "City Night",
+      "slot": "backdrop",
+      "kind": "item",
+      "genders": ["f", "m"],
+      "rarity": "rare",
+      "price_cc": 200,
+      "collection_id": "neon_night",
+      "starter": false,
+      "earn_only": false,
+      "tintable": false,
+      "hides": [],
+      "assets": {
+        "m:1": "05_scenes/backdrops/backdrop_citynight.webp",
+        "m:2": "05_scenes/backdrops/backdrop_citynight.webp",
+        "m:3": "05_scenes/backdrops/backdrop_citynight.webp",
+        "f:1": "05_scenes/backdrops/backdrop_citynight.webp",
+        "f:2": "05_scenes/backdrops/backdrop_citynight.webp",
+        "f:3": "05_scenes/backdrops/backdrop_citynight.webp"
+      },
+      "active": true,
+      "per_form": false,
+      "layer_order": 0
+    },
+    {
+      "id": "aura_seafoam",
+      "name": "Seafoam Pulse",
+      "slot": "aura",
+      "kind": "item",
+      "genders": ["f", "m"],
+      "rarity": "epic",
+      "price_cc": 260,
+      "collection_id": "neon_night",
+      "starter": false,
+      "earn_only": false,
+      "tintable": false,
+      "hides": [],
+      "assets": {
+        "m:1": "05_scenes/auras/aura_seafoam.webp",
+        "m:2": "05_scenes/auras/aura_seafoam.webp",
+        "m:3": "05_scenes/auras/aura_seafoam.webp",
+        "f:1": "05_scenes/auras/aura_seafoam.webp",
+        "f:2": "05_scenes/auras/aura_seafoam.webp",
+        "f:3": "05_scenes/auras/aura_seafoam.webp"
+      },
+      "active": true,
+      "per_form": false,
+      "layer_order": 10
+    },
+    {
+      "id": "finish_neon",
+      "name": "Neon Finish",
+      "slot": "finish",
+      "kind": "finish",
+      "genders": ["m", "f"],
+      "rarity": "rare",
+      "price_cc": 200,
+      "collection_id": "neon_night",
+      "starter": false,
+      "earn_only": false,
+      "tintable": false,
+      "hides": [],
+      "finish": "#91FFDA",
+      "assets": {},
+      "active": true,
+      "per_form": false,
+      "layer_order": 0
+    },
+    {
+      "id": "eyewear_aviator",
+      "name": "Aviator",
+      "slot": "eyewear",
+      "kind": "item",
+      "genders": ["f", "m"],
+      "rarity": "epic",
+      "price_cc": 350,
+      "collection_id": "gold_edition",
+      "starter": false,
+      "earn_only": false,
+      "tintable": true,
+      "hides": [],
+      "assets": {
+        "f:1": "03_items_clean/eyewear/eyewear_aviator_f.webp",
+        "f:2": "03_items_clean/eyewear/eyewear_aviator_f.webp",
+        "f:3": "03_items_clean/eyewear/eyewear_aviator_f.webp",
+        "m:1": "03_items_clean/eyewear/eyewear_aviator_m.webp",
+        "m:2": "03_items_clean/eyewear/eyewear_aviator_m.webp",
+        "m:3": "03_items_clean/eyewear/eyewear_aviator_m.webp"
+      },
+      "active": true,
+      "per_form": false,
+      "layer_order": 90
+    },
+    {
+      "id": "neck_chain",
+      "name": "Chain",
+      "slot": "neck",
+      "kind": "item",
+      "genders": ["f", "m"],
+      "rarity": "epic",
+      "price_cc": 450,
+      "collection_id": "gold_edition",
+      "starter": false,
+      "earn_only": false,
+      "tintable": true,
+      "hides": [],
+      "assets": {
+        "f:1": "03_items_clean/neck/neck_chain_f.webp",
+        "f:2": "03_items_clean/neck/neck_chain_f.webp",
+        "f:3": "03_items_clean/neck/neck_chain_f.webp",
+        "m:1": "03_items_clean/neck/neck_chain_m.webp",
+        "m:2": "03_items_clean/neck/neck_chain_m.webp",
+        "m:3": "03_items_clean/neck/neck_chain_m.webp"
+      },
+      "active": true,
+      "per_form": false,
+      "layer_order": 65
+    },
+    {
+      "id": "backdrop_aurora",
+      "name": "Aurora",
+      "slot": "backdrop",
+      "kind": "item",
+      "genders": ["f", "m"],
+      "rarity": "epic",
+      "price_cc": 500,
+      "collection_id": "gold_edition",
+      "starter": false,
+      "earn_only": false,
+      "tintable": false,
+      "hides": [],
+      "assets": {
+        "m:1": "05_scenes/backdrops/backdrop_aurora.webp",
+        "m:2": "05_scenes/backdrops/backdrop_aurora.webp",
+        "m:3": "05_scenes/backdrops/backdrop_aurora.webp",
+        "f:1": "05_scenes/backdrops/backdrop_aurora.webp",
+        "f:2": "05_scenes/backdrops/backdrop_aurora.webp",
+        "f:3": "05_scenes/backdrops/backdrop_aurora.webp"
+      },
+      "active": true,
+      "per_form": false,
+      "layer_order": 0
+    },
+    {
+      "id": "aura_lightning",
+      "name": "Silver Lightning",
+      "slot": "aura",
+      "kind": "item",
+      "genders": ["f", "m"],
+      "rarity": "epic",
+      "price_cc": 600,
+      "collection_id": "gold_edition",
+      "starter": false,
+      "earn_only": false,
+      "tintable": false,
+      "hides": [],
+      "assets": {
+        "m:1": "05_scenes/auras/aura_lightning.webp",
+        "m:2": "05_scenes/auras/aura_lightning.webp",
+        "m:3": "05_scenes/auras/aura_lightning.webp",
+        "f:1": "05_scenes/auras/aura_lightning.webp",
+        "f:2": "05_scenes/auras/aura_lightning.webp",
+        "f:3": "05_scenes/auras/aura_lightning.webp"
+      },
+      "active": true,
+      "per_form": false,
+      "layer_order": 10
+    },
+    {
+      "id": "frame_gold",
+      "name": "Gold Frame",
+      "slot": "frame",
+      "kind": "item",
+      "genders": ["f", "m"],
+      "rarity": "epic",
+      "price_cc": 400,
+      "collection_id": "gold_edition",
+      "starter": false,
+      "earn_only": false,
+      "tintable": false,
+      "hides": [],
+      "assets": {
+        "m:1": "06_ui/frames/frame_gold.webp",
+        "m:2": "06_ui/frames/frame_gold.webp",
+        "m:3": "06_ui/frames/frame_gold.webp",
+        "f:1": "06_ui/frames/frame_gold.webp",
+        "f:2": "06_ui/frames/frame_gold.webp",
+        "f:3": "06_ui/frames/frame_gold.webp"
+      },
+      "active": true,
+      "per_form": false,
+      "layer_order": 100
+    },
+    {
+      "id": "finish_gold",
+      "name": "Gold Finish",
+      "slot": "finish",
+      "kind": "finish",
+      "genders": ["m", "f"],
+      "rarity": "epic",
+      "price_cc": 450,
+      "collection_id": "gold_edition",
+      "starter": false,
+      "earn_only": false,
+      "tintable": false,
+      "hides": [],
+      "finish": "#E4C678",
+      "assets": {},
+      "active": true,
+      "per_form": false,
+      "layer_order": 0
+    },
+    {
+      "id": "backdrop_winterarc",
+      "name": "Winter Arc",
+      "slot": "backdrop",
+      "kind": "item",
+      "genders": ["f", "m"],
+      "rarity": "legendary",
+      "price_cc": 0,
+      "collection_id": "achievements",
+      "starter": false,
+      "earn_only": true,
+      "tintable": false,
+      "hides": [],
+      "assets": {
+        "m:1": "05_scenes/backdrops/backdrop_winterarc.webp",
+        "m:2": "05_scenes/backdrops/backdrop_winterarc.webp",
+        "m:3": "05_scenes/backdrops/backdrop_winterarc.webp",
+        "f:1": "05_scenes/backdrops/backdrop_winterarc.webp",
+        "f:2": "05_scenes/backdrops/backdrop_winterarc.webp",
+        "f:3": "05_scenes/backdrops/backdrop_winterarc.webp"
+      },
+      "active": true,
+      "per_form": false,
+      "layer_order": 0
+    },
+    {
+      "id": "aura_flame",
+      "name": "Streak Flame",
+      "slot": "aura",
+      "kind": "item",
+      "genders": ["f", "m"],
+      "rarity": "legendary",
+      "price_cc": 0,
+      "collection_id": "achievements",
+      "starter": false,
+      "earn_only": true,
+      "tintable": false,
+      "hides": [],
+      "assets": {
+        "m:1": "05_scenes/auras/aura_flame.webp",
+        "m:2": "05_scenes/auras/aura_flame.webp",
+        "m:3": "05_scenes/auras/aura_flame.webp",
+        "f:1": "05_scenes/auras/aura_flame.webp",
+        "f:2": "05_scenes/auras/aura_flame.webp",
+        "f:3": "05_scenes/auras/aura_flame.webp"
+      },
+      "active": true,
+      "per_form": false,
+      "layer_order": 10
+    },
+    {
+      "id": "frame_legendary",
+      "name": "Season Finisher Frame",
+      "slot": "frame",
+      "kind": "item",
+      "genders": ["f", "m"],
+      "rarity": "legendary",
+      "price_cc": 0,
+      "collection_id": "achievements",
+      "starter": false,
+      "earn_only": true,
+      "tintable": false,
+      "hides": [],
+      "assets": {
+        "m:1": "06_ui/frames/frame_legendary.webp",
+        "m:2": "06_ui/frames/frame_legendary.webp",
+        "m:3": "06_ui/frames/frame_legendary.webp",
+        "f:1": "06_ui/frames/frame_legendary.webp",
+        "f:2": "06_ui/frames/frame_legendary.webp",
+        "f:3": "06_ui/frames/frame_legendary.webp"
+      },
+      "active": true,
+      "per_form": false,
+      "layer_order": 100
+    },
+    {
+      "id": "top_plus_ribbedcrop",
+      "name": "Ribbed crop top",
+      "slot": "top",
+      "kind": "item",
+      "genders": ["f"],
+      "rarity": "rare",
+      "price_cc": 140,
+      "collection_id": "plus_studio",
+      "starter": false,
+      "earn_only": false,
+      "tintable": true,
+      "hides": [],
+      "assets": {
+        "f:1": "04_outfits/top/top_plus_ribbedcrop_f_form1.webp",
+        "f:2": "04_outfits/top/top_plus_ribbedcrop_f_form2.webp",
+        "f:3": "04_outfits/top/top_plus_ribbedcrop_f_form3.webp"
+      },
+      "active": true,
+      "per_form": true,
+      "layer_order": 40
+    },
+    {
+      "id": "top_plus_croppedhoodie",
+      "name": "Cropped hoodie",
+      "slot": "top",
+      "kind": "item",
+      "genders": ["f"],
+      "rarity": "rare",
+      "price_cc": 140,
+      "collection_id": "plus_studio",
+      "starter": false,
+      "earn_only": false,
+      "tintable": true,
+      "hides": [],
+      "assets": {
+        "f:1": "04_outfits/top/top_plus_croppedhoodie_f_form1.webp",
+        "f:2": "04_outfits/top/top_plus_croppedhoodie_f_form2.webp",
+        "f:3": "04_outfits/top/top_plus_croppedhoodie_f_form3.webp"
+      },
+      "active": true,
+      "per_form": true,
+      "layer_order": 40
+    },
+    {
+      "id": "top_plus_tennisdress",
+      "name": "Pleated tennis dress",
+      "slot": "top",
+      "kind": "item",
+      "genders": ["f"],
+      "rarity": "rare",
+      "price_cc": 180,
+      "collection_id": "plus_studio",
+      "starter": false,
+      "earn_only": false,
+      "tintable": true,
+      "hides": ["bottom"],
+      "assets": {
+        "f:1": "04_outfits/top/top_plus_tennisdress_f_form1.webp",
+        "f:2": "04_outfits/top/top_plus_tennisdress_f_form2.webp",
+        "f:3": "04_outfits/top/top_plus_tennisdress_f_form3.webp"
+      },
+      "active": true,
+      "per_form": true,
+      "layer_order": 40
+    },
+    {
+      "id": "top_plus_shirtdress",
+      "name": "Belted shirt dress",
+      "slot": "top",
+      "kind": "item",
+      "genders": ["f"],
+      "rarity": "rare",
+      "price_cc": 180,
+      "collection_id": "plus_studio",
+      "starter": false,
+      "earn_only": false,
+      "tintable": true,
+      "hides": ["bottom"],
+      "assets": {
+        "f:1": "04_outfits/top/top_plus_shirtdress_f_form1.webp",
+        "f:2": "04_outfits/top/top_plus_shirtdress_f_form2.webp",
+        "f:3": "04_outfits/top/top_plus_shirtdress_f_form3.webp"
+      },
+      "active": true,
+      "per_form": true,
+      "layer_order": 40
+    },
+    {
+      "id": "bottom_plus_highwaistleggings",
+      "name": "High-waisted leggings",
+      "slot": "bottom",
+      "kind": "item",
+      "genders": ["f"],
+      "rarity": "rare",
+      "price_cc": 120,
+      "collection_id": "plus_studio",
+      "starter": false,
+      "earn_only": false,
+      "tintable": true,
+      "hides": [],
+      "assets": {
+        "f:1": "04_outfits/bottom/bottom_plus_highwaistleggings_f_form1.webp",
+        "f:2": "04_outfits/bottom/bottom_plus_highwaistleggings_f_form2.webp",
+        "f:3": "04_outfits/bottom/bottom_plus_highwaistleggings_f_form3.webp"
+      },
+      "active": true,
+      "per_form": true,
+      "layer_order": 30
+    },
+    {
+      "id": "top_plus_baggytee",
+      "name": "Baggy drop-shoulder tee",
+      "slot": "top",
+      "kind": "item",
+      "genders": ["m"],
+      "rarity": "rare",
+      "price_cc": 140,
+      "collection_id": "plus_studio",
+      "starter": false,
+      "earn_only": false,
+      "tintable": true,
+      "hides": [],
+      "assets": {
+        "m:1": "04_outfits/top/top_plus_baggytee_m_form1.webp",
+        "m:2": "04_outfits/top/top_plus_baggytee_m_form2.webp",
+        "m:3": "04_outfits/top/top_plus_baggytee_m_form3.webp"
+      },
+      "active": true,
+      "per_form": true,
+      "layer_order": 40
+    },
+    {
+      "id": "top_plus_baggyhoodie",
+      "name": "Oversized street hoodie",
+      "slot": "top",
+      "kind": "item",
+      "genders": ["m"],
+      "rarity": "rare",
+      "price_cc": 140,
+      "collection_id": "plus_studio",
+      "starter": false,
+      "earn_only": false,
+      "tintable": true,
+      "hides": [],
+      "assets": {
+        "m:1": "04_outfits/top/top_plus_baggyhoodie_m_form1.webp",
+        "m:2": "04_outfits/top/top_plus_baggyhoodie_m_form2.webp",
+        "m:3": "04_outfits/top/top_plus_baggyhoodie_m_form3.webp"
+      },
+      "active": true,
+      "per_form": true,
+      "layer_order": 40
+    },
+    {
+      "id": "top_plus_varsity",
+      "name": "Premium varsity jacket",
+      "slot": "top",
+      "kind": "item",
+      "genders": ["m"],
+      "rarity": "rare",
+      "price_cc": 140,
+      "collection_id": "plus_studio",
+      "starter": false,
+      "earn_only": false,
+      "tintable": true,
+      "hides": [],
+      "assets": {
+        "m:1": "04_outfits/top/top_plus_varsity_m_form1.webp",
+        "m:2": "04_outfits/top/top_plus_varsity_m_form2.webp",
+        "m:3": "04_outfits/top/top_plus_varsity_m_form3.webp"
+      },
+      "active": true,
+      "per_form": true,
+      "layer_order": 40
+    },
+    {
+      "id": "bottom_plus_baggycargos",
+      "name": "Baggy cargo trousers",
+      "slot": "bottom",
+      "kind": "item",
+      "genders": ["m"],
+      "rarity": "rare",
+      "price_cc": 120,
+      "collection_id": "plus_studio",
+      "starter": false,
+      "earn_only": false,
+      "tintable": true,
+      "hides": [],
+      "assets": {
+        "m:1": "04_outfits/bottom/bottom_plus_baggycargos_m_form1.webp",
+        "m:2": "04_outfits/bottom/bottom_plus_baggycargos_m_form2.webp",
+        "m:3": "04_outfits/bottom/bottom_plus_baggycargos_m_form3.webp"
+      },
+      "active": true,
+      "per_form": true,
+      "layer_order": 30
+    },
+    {
+      "id": "bottom_plus_widejeans",
+      "name": "Wide-leg denim jeans",
+      "slot": "bottom",
+      "kind": "item",
+      "genders": ["m"],
+      "rarity": "rare",
+      "price_cc": 120,
+      "collection_id": "plus_studio",
+      "starter": false,
+      "earn_only": false,
+      "tintable": true,
+      "hides": [],
+      "assets": {
+        "m:1": "04_outfits/bottom/bottom_plus_widejeans_m_form1.webp",
+        "m:2": "04_outfits/bottom/bottom_plus_widejeans_m_form2.webp",
+        "m:3": "04_outfits/bottom/bottom_plus_widejeans_m_form3.webp"
+      },
+      "active": true,
+      "per_form": true,
+      "layer_order": 30
+    },
+    {
+      "id": "top_pro_asymcrop",
+      "name": "Asymmetric sculpted crop top",
+      "slot": "top",
+      "kind": "item",
+      "genders": ["f"],
+      "rarity": "epic",
+      "price_cc": 260,
+      "collection_id": "pro_studio",
+      "starter": false,
+      "earn_only": false,
+      "tintable": true,
+      "hides": [],
+      "assets": {
+        "f:1": "04_outfits/top/top_pro_asymcrop_f_form1.webp",
+        "f:2": "04_outfits/top/top_pro_asymcrop_f_form2.webp",
+        "f:3": "04_outfits/top/top_pro_asymcrop_f_form3.webp"
+      },
+      "active": true,
+      "per_form": true,
+      "layer_order": 40
+    },
+    {
+      "id": "top_pro_croppedtechjacket",
+      "name": "Cropped technical jacket",
+      "slot": "top",
+      "kind": "item",
+      "genders": ["f"],
+      "rarity": "epic",
+      "price_cc": 260,
+      "collection_id": "pro_studio",
+      "starter": false,
+      "earn_only": false,
+      "tintable": true,
+      "hides": [],
+      "assets": {
+        "f:1": "04_outfits/top/top_pro_croppedtechjacket_f_form1.webp",
+        "f:2": "04_outfits/top/top_pro_croppedtechjacket_f_form2.webp",
+        "f:3": "04_outfits/top/top_pro_croppedtechjacket_f_form3.webp"
+      },
+      "active": true,
+      "per_form": true,
+      "layer_order": 40
+    },
+    {
+      "id": "top_pro_pleateddress",
+      "name": "Sculpted pleated dress",
+      "slot": "top",
+      "kind": "item",
+      "genders": ["f"],
+      "rarity": "epic",
+      "price_cc": 300,
+      "collection_id": "pro_studio",
+      "starter": false,
+      "earn_only": false,
+      "tintable": true,
+      "hides": ["bottom"],
+      "assets": {
+        "f:1": "04_outfits/top/top_pro_pleateddress_f_form1.webp",
+        "f:2": "04_outfits/top/top_pro_pleateddress_f_form2.webp",
+        "f:3": "04_outfits/top/top_pro_pleateddress_f_form3.webp"
+      },
+      "active": true,
+      "per_form": true,
+      "layer_order": 40
+    },
+    {
+      "id": "top_pro_drapeddress",
+      "name": "Draped sculptural midi dress",
+      "slot": "top",
+      "kind": "item",
+      "genders": ["f"],
+      "rarity": "epic",
+      "price_cc": 300,
+      "collection_id": "pro_studio",
+      "starter": false,
+      "earn_only": false,
+      "tintable": true,
+      "hides": ["bottom"],
+      "assets": {
+        "f:1": "04_outfits/top/top_pro_drapeddress_f_form1.webp",
+        "f:2": "04_outfits/top/top_pro_drapeddress_f_form2.webp",
+        "f:3": "04_outfits/top/top_pro_drapeddress_f_form3.webp"
+      },
+      "active": true,
+      "per_form": true,
+      "layer_order": 40
+    },
+    {
+      "id": "bottom_pro_panelledflares",
+      "name": "Sculpted panelled flares",
+      "slot": "bottom",
+      "kind": "item",
+      "genders": ["f"],
+      "rarity": "epic",
+      "price_cc": 220,
+      "collection_id": "pro_studio",
+      "starter": false,
+      "earn_only": false,
+      "tintable": true,
+      "hides": [],
+      "assets": {
+        "f:1": "04_outfits/bottom/bottom_pro_panelledflares_f_form1.webp",
+        "f:2": "04_outfits/bottom/bottom_pro_panelledflares_f_form2.webp",
+        "f:3": "04_outfits/bottom/bottom_pro_panelledflares_f_form3.webp"
+      },
+      "active": true,
+      "per_form": true,
+      "layer_order": 30
+    },
+    {
+      "id": "top_pro_oversizedtechjacket",
+      "name": "Oversized technical jacket",
+      "slot": "top",
+      "kind": "item",
+      "genders": ["m"],
+      "rarity": "epic",
+      "price_cc": 260,
+      "collection_id": "pro_studio",
+      "starter": false,
+      "earn_only": false,
+      "tintable": true,
+      "hides": [],
+      "assets": {
+        "m:1": "04_outfits/top/top_pro_oversizedtechjacket_m_form1.webp",
+        "m:2": "04_outfits/top/top_pro_oversizedtechjacket_m_form2.webp",
+        "m:3": "04_outfits/top/top_pro_oversizedtechjacket_m_form3.webp"
+      },
+      "active": true,
+      "per_form": true,
+      "layer_order": 40
+    },
+    {
+      "id": "top_pro_longlinecoat",
+      "name": "Structured longline coat",
+      "slot": "top",
+      "kind": "item",
+      "genders": ["m"],
+      "rarity": "epic",
+      "price_cc": 260,
+      "collection_id": "pro_studio",
+      "starter": false,
+      "earn_only": false,
+      "tintable": true,
+      "hides": [],
+      "assets": {
+        "m:1": "04_outfits/top/top_pro_longlinecoat_m_form1.webp",
+        "m:2": "04_outfits/top/top_pro_longlinecoat_m_form2.webp",
+        "m:3": "04_outfits/top/top_pro_longlinecoat_m_form3.webp"
+      },
+      "active": true,
+      "per_form": true,
+      "layer_order": 40
+    },
+    {
+      "id": "bottom_pro_parachutepants",
+      "name": "Articulated parachute trousers",
+      "slot": "bottom",
+      "kind": "item",
+      "genders": ["m"],
+      "rarity": "epic",
+      "price_cc": 220,
+      "collection_id": "pro_studio",
+      "starter": false,
+      "earn_only": false,
+      "tintable": true,
+      "hides": [],
+      "assets": {
+        "m:1": "04_outfits/bottom/bottom_pro_parachutepants_m_form1.webp",
+        "m:2": "04_outfits/bottom/bottom_pro_parachutepants_m_form2.webp",
+        "m:3": "04_outfits/bottom/bottom_pro_parachutepants_m_form3.webp"
+      },
+      "active": true,
+      "per_form": true,
+      "layer_order": 30
+    },
+    {
+      "id": "bottom_pro_widelegtailored",
+      "name": "Wide-leg tailored trousers",
+      "slot": "bottom",
+      "kind": "item",
+      "genders": ["m"],
+      "rarity": "epic",
+      "price_cc": 220,
+      "collection_id": "pro_studio",
+      "starter": false,
+      "earn_only": false,
+      "tintable": true,
+      "hides": [],
+      "assets": {
+        "m:1": "04_outfits/bottom/bottom_pro_widelegtailored_m_form1.webp",
+        "m:2": "04_outfits/bottom/bottom_pro_widelegtailored_m_form2.webp",
+        "m:3": "04_outfits/bottom/bottom_pro_widelegtailored_m_form3.webp"
+      },
+      "active": true,
+      "per_form": true,
+      "layer_order": 30
+    },
+    {
+      "id": "shoes_plus_retrocourt",
+      "name": "Retro court sneakers",
+      "slot": "shoes",
+      "kind": "item",
+      "genders": ["m"],
+      "rarity": "rare",
+      "price_cc": 100,
+      "collection_id": "plus_studio",
+      "starter": false,
+      "earn_only": false,
+      "tintable": true,
+      "hides": [],
+      "assets": {
+        "m:1": "03_items_clean/shoes/shoes_plus_retrocourt_m.webp",
+        "m:2": "03_items_clean/shoes/shoes_plus_retrocourt_m.webp",
+        "m:3": "03_items_clean/shoes/shoes_plus_retrocourt_m.webp"
+      },
+      "active": true,
+      "per_form": false,
+      "layer_order": 50
+    },
+    {
+      "id": "shoes_plus_platform",
+      "name": "Chunky platform sneakers",
+      "slot": "shoes",
+      "kind": "item",
+      "genders": ["f"],
+      "rarity": "rare",
+      "price_cc": 100,
+      "collection_id": "plus_studio",
+      "starter": false,
+      "earn_only": false,
+      "tintable": true,
+      "hides": [],
+      "assets": {
+        "f:1": "03_items_clean/shoes/shoes_plus_platform_f.webp",
+        "f:2": "03_items_clean/shoes/shoes_plus_platform_f.webp",
+        "f:3": "03_items_clean/shoes/shoes_plus_platform_f.webp"
+      },
+      "active": true,
+      "per_form": false,
+      "layer_order": 50
+    },
+    {
+      "id": "headwear_plus_bucket",
+      "name": "Structured bucket hat",
+      "slot": "headwear",
+      "kind": "item",
+      "genders": ["f", "m"],
+      "rarity": "rare",
+      "price_cc": 100,
+      "collection_id": "plus_studio",
+      "starter": false,
+      "earn_only": false,
+      "tintable": true,
+      "hides": ["hair"],
+      "assets": {
+        "f:1": "03_items_clean/headwear/headwear_plus_bucket_f.webp",
+        "f:2": "03_items_clean/headwear/headwear_plus_bucket_f.webp",
+        "f:3": "03_items_clean/headwear/headwear_plus_bucket_f.webp",
+        "m:1": "03_items_clean/headwear/headwear_plus_bucket_m.webp",
+        "m:2": "03_items_clean/headwear/headwear_plus_bucket_m.webp",
+        "m:3": "03_items_clean/headwear/headwear_plus_bucket_m.webp"
+      },
+      "active": true,
+      "per_form": false,
+      "layer_order": 85
+    },
+    {
+      "id": "eyewear_plus_slimrect",
+      "name": "Slim rectangular sunglasses",
+      "slot": "eyewear",
+      "kind": "item",
+      "genders": ["m"],
+      "rarity": "rare",
+      "price_cc": 100,
+      "collection_id": "plus_studio",
+      "starter": false,
+      "earn_only": false,
+      "tintable": true,
+      "hides": [],
+      "assets": {
+        "m:1": "03_items_clean/eyewear/eyewear_plus_slimrect_m.webp",
+        "m:2": "03_items_clean/eyewear/eyewear_plus_slimrect_m.webp",
+        "m:3": "03_items_clean/eyewear/eyewear_plus_slimrect_m.webp"
+      },
+      "active": true,
+      "per_form": false,
+      "layer_order": 90
+    },
+    {
+      "id": "eyewear_plus_cateye",
+      "name": "Cat-eye sunglasses",
+      "slot": "eyewear",
+      "kind": "item",
+      "genders": ["f"],
+      "rarity": "rare",
+      "price_cc": 100,
+      "collection_id": "plus_studio",
+      "starter": false,
+      "earn_only": false,
+      "tintable": true,
+      "hides": [],
+      "assets": {
+        "f:1": "03_items_clean/eyewear/eyewear_plus_cateye_f.webp",
+        "f:2": "03_items_clean/eyewear/eyewear_plus_cateye_f.webp",
+        "f:3": "03_items_clean/eyewear/eyewear_plus_cateye_f.webp"
+      },
+      "active": true,
+      "per_form": false,
+      "layer_order": 90
+    },
+    {
+      "id": "ears_plus_huggies",
+      "name": "Huggie earrings",
+      "slot": "ears",
+      "kind": "item",
+      "genders": ["f", "m"],
+      "rarity": "rare",
+      "price_cc": 100,
+      "collection_id": "plus_studio",
+      "starter": false,
+      "earn_only": false,
+      "tintable": true,
+      "hides": [],
+      "assets": {
+        "f:1": "03_items_clean/ears/ears_plus_huggies_f.webp",
+        "f:2": "03_items_clean/ears/ears_plus_huggies_f.webp",
+        "f:3": "03_items_clean/ears/ears_plus_huggies_f.webp",
+        "m:1": "03_items_clean/ears/ears_plus_huggies_m.webp",
+        "m:2": "03_items_clean/ears/ears_plus_huggies_m.webp",
+        "m:3": "03_items_clean/ears/ears_plus_huggies_m.webp"
+      },
+      "active": true,
+      "per_form": false,
+      "layer_order": 75
+    },
+    {
+      "id": "neck_plus_layeredchains",
+      "name": "Layered chain necklace",
+      "slot": "neck",
+      "kind": "item",
+      "genders": ["f", "m"],
+      "rarity": "rare",
+      "price_cc": 100,
+      "collection_id": "plus_studio",
+      "starter": false,
+      "earn_only": false,
+      "tintable": true,
+      "hides": [],
+      "assets": {
+        "f:1": "03_items_clean/neck/neck_plus_layeredchains_f.webp",
+        "f:2": "03_items_clean/neck/neck_plus_layeredchains_f.webp",
+        "f:3": "03_items_clean/neck/neck_plus_layeredchains_f.webp",
+        "m:1": "03_items_clean/neck/neck_plus_layeredchains_m.webp",
+        "m:2": "03_items_clean/neck/neck_plus_layeredchains_m.webp",
+        "m:3": "03_items_clean/neck/neck_plus_layeredchains_m.webp"
+      },
+      "active": true,
+      "per_form": false,
+      "layer_order": 65
+    },
+    {
+      "id": "wrist_plus_wovenstack",
+      "name": "Woven bracelet stack",
+      "slot": "wrist",
+      "kind": "item",
+      "genders": ["f", "m"],
+      "rarity": "rare",
+      "price_cc": 100,
+      "collection_id": "plus_studio",
+      "starter": false,
+      "earn_only": false,
+      "tintable": true,
+      "hides": [],
+      "assets": {
+        "f:1": "03_items_clean/wrist/wrist_plus_wovenstack_f.webp",
+        "f:2": "03_items_clean/wrist/wrist_plus_wovenstack_f.webp",
+        "f:3": "03_items_clean/wrist/wrist_plus_wovenstack_f.webp",
+        "m:1": "03_items_clean/wrist/wrist_plus_wovenstack_m.webp",
+        "m:2": "03_items_clean/wrist/wrist_plus_wovenstack_m.webp",
+        "m:3": "03_items_clean/wrist/wrist_plus_wovenstack_m.webp"
+      },
+      "active": true,
+      "per_form": false,
+      "layer_order": 60
+    },
+    {
+      "id": "hair_plus_curls",
+      "name": "Defined curly hairstyle",
+      "slot": "hair",
+      "kind": "item",
+      "genders": ["m"],
+      "rarity": "rare",
+      "price_cc": 100,
+      "collection_id": "plus_studio",
+      "starter": false,
+      "earn_only": false,
+      "tintable": true,
+      "hides": [],
+      "assets": {
+        "m:1": "03_items_clean/hair/hair_plus_curls_m.webp",
+        "m:2": "03_items_clean/hair/hair_plus_curls_m.webp",
+        "m:3": "03_items_clean/hair/hair_plus_curls_m.webp"
+      },
+      "active": true,
+      "per_form": false,
+      "layer_order": 80
+    },
+    {
+      "id": "hair_plus_waves",
+      "name": "Shoulder-length waves",
+      "slot": "hair",
+      "kind": "item",
+      "genders": ["f"],
+      "rarity": "rare",
+      "price_cc": 100,
+      "collection_id": "plus_studio",
+      "starter": false,
+      "earn_only": false,
+      "tintable": true,
+      "hides": [],
+      "assets": {
+        "f:1": "03_items_clean/hair/hair_plus_waves_f.webp",
+        "f:2": "03_items_clean/hair/hair_plus_waves_f.webp",
+        "f:3": "03_items_clean/hair/hair_plus_waves_f.webp"
+      },
+      "active": true,
+      "per_form": false,
+      "layer_order": 80
+    },
+    {
+      "id": "facial_plus_goatee",
+      "name": "Shaped goatee",
+      "slot": "facial",
+      "kind": "item",
+      "genders": ["m"],
+      "rarity": "rare",
+      "price_cc": 100,
+      "collection_id": "plus_studio",
+      "starter": false,
+      "earn_only": false,
+      "tintable": true,
+      "hides": [],
+      "assets": {
+        "m:1": "03_items_clean/facial/facial_plus_goatee_m.webp",
+        "m:2": "03_items_clean/facial/facial_plus_goatee_m.webp",
+        "m:3": "03_items_clean/facial/facial_plus_goatee_m.webp"
+      },
+      "active": true,
+      "per_form": false,
+      "layer_order": 70
+    },
+    {
+      "id": "shoes_pro_tacticalboots",
+      "name": "Sculpted tactical boots",
+      "slot": "shoes",
+      "kind": "item",
+      "genders": ["m"],
+      "rarity": "epic",
+      "price_cc": 200,
+      "collection_id": "pro_studio",
+      "starter": false,
+      "earn_only": false,
+      "tintable": true,
+      "hides": [],
+      "assets": {
+        "m:1": "03_items_clean/shoes/shoes_pro_tacticalboots_m.webp",
+        "m:2": "03_items_clean/shoes/shoes_pro_tacticalboots_m.webp",
+        "m:3": "03_items_clean/shoes/shoes_pro_tacticalboots_m.webp"
+      },
+      "active": true,
+      "per_form": false,
+      "layer_order": 50
+    },
+    {
+      "id": "shoes_pro_sculptedankle",
+      "name": "Sculpted ankle boots",
+      "slot": "shoes",
+      "kind": "item",
+      "genders": ["f"],
+      "rarity": "epic",
+      "price_cc": 200,
+      "collection_id": "pro_studio",
+      "starter": false,
+      "earn_only": false,
+      "tintable": true,
+      "hides": [],
+      "assets": {
+        "f:1": "03_items_clean/shoes/shoes_pro_sculptedankle_f.webp",
+        "f:2": "03_items_clean/shoes/shoes_pro_sculptedankle_f.webp",
+        "f:3": "03_items_clean/shoes/shoes_pro_sculptedankle_f.webp"
+      },
+      "active": true,
+      "per_form": false,
+      "layer_order": 50
+    },
+    {
+      "id": "headwear_pro_techhood",
+      "name": "Sculpted technical hood",
+      "slot": "headwear",
+      "kind": "item",
+      "genders": ["m"],
+      "rarity": "epic",
+      "price_cc": 200,
+      "collection_id": "pro_studio",
+      "starter": false,
+      "earn_only": false,
+      "tintable": true,
+      "hides": ["hair"],
+      "assets": {
+        "m:1": "03_items_clean/headwear/headwear_pro_techhood_m.webp",
+        "m:2": "03_items_clean/headwear/headwear_pro_techhood_m.webp",
+        "m:3": "03_items_clean/headwear/headwear_pro_techhood_m.webp"
+      },
+      "active": true,
+      "per_form": false,
+      "layer_order": 85
+    },
+    {
+      "id": "headwear_pro_metalcrown",
+      "name": "Minimalist sculpted crown",
+      "slot": "headwear",
+      "kind": "item",
+      "genders": ["f"],
+      "rarity": "epic",
+      "price_cc": 200,
+      "collection_id": "pro_studio",
+      "starter": false,
+      "earn_only": false,
+      "tintable": true,
+      "hides": ["hair"],
+      "assets": {
+        "f:1": "03_items_clean/headwear/headwear_pro_metalcrown_f.webp",
+        "f:2": "03_items_clean/headwear/headwear_pro_metalcrown_f.webp",
+        "f:3": "03_items_clean/headwear/headwear_pro_metalcrown_f.webp"
+      },
+      "active": true,
+      "per_form": false,
+      "layer_order": 85
+    },
+    {
+      "id": "eyewear_pro_mirroredshield",
+      "name": "Single-piece shield sunglasses",
+      "slot": "eyewear",
+      "kind": "item",
+      "genders": ["f", "m"],
+      "rarity": "epic",
+      "price_cc": 200,
+      "collection_id": "pro_studio",
+      "starter": false,
+      "earn_only": false,
+      "tintable": true,
+      "hides": [],
+      "assets": {
+        "f:1": "03_items_clean/eyewear/eyewear_pro_mirroredshield_f.webp",
+        "f:2": "03_items_clean/eyewear/eyewear_pro_mirroredshield_f.webp",
+        "f:3": "03_items_clean/eyewear/eyewear_pro_mirroredshield_f.webp",
+        "m:1": "03_items_clean/eyewear/eyewear_pro_mirroredshield_m.webp",
+        "m:2": "03_items_clean/eyewear/eyewear_pro_mirroredshield_m.webp",
+        "m:3": "03_items_clean/eyewear/eyewear_pro_mirroredshield_m.webp"
+      },
+      "active": true,
+      "per_form": false,
+      "layer_order": 90
+    },
+    {
+      "id": "ears_pro_linkedchain",
+      "name": "Linked chain earrings",
+      "slot": "ears",
+      "kind": "item",
+      "genders": ["m"],
+      "rarity": "epic",
+      "price_cc": 200,
+      "collection_id": "pro_studio",
+      "starter": false,
+      "earn_only": false,
+      "tintable": true,
+      "hides": [],
+      "assets": {
+        "m:1": "03_items_clean/ears/ears_pro_linkedchain_m.webp",
+        "m:2": "03_items_clean/ears/ears_pro_linkedchain_m.webp",
+        "m:3": "03_items_clean/ears/ears_pro_linkedchain_m.webp"
+      },
+      "active": true,
+      "per_form": false,
+      "layer_order": 75
+    },
+    {
+      "id": "ears_pro_geodrops",
+      "name": "Geometric drop earrings",
+      "slot": "ears",
+      "kind": "item",
+      "genders": ["f"],
+      "rarity": "epic",
+      "price_cc": 200,
+      "collection_id": "pro_studio",
+      "starter": false,
+      "earn_only": false,
+      "tintable": true,
+      "hides": [],
+      "assets": {
+        "f:1": "03_items_clean/ears/ears_pro_geodrops_f.webp",
+        "f:2": "03_items_clean/ears/ears_pro_geodrops_f.webp",
+        "f:3": "03_items_clean/ears/ears_pro_geodrops_f.webp"
+      },
+      "active": true,
+      "per_form": false,
+      "layer_order": 75
+    },
+    {
+      "id": "neck_pro_sculptedneckpiece",
+      "name": "Sculpted neckpiece",
+      "slot": "neck",
+      "kind": "item",
+      "genders": ["f", "m"],
+      "rarity": "epic",
+      "price_cc": 200,
+      "collection_id": "pro_studio",
+      "starter": false,
+      "earn_only": false,
+      "tintable": true,
+      "hides": [],
+      "assets": {
+        "f:1": "03_items_clean/neck/neck_pro_sculptedneckpiece_f.webp",
+        "f:2": "03_items_clean/neck/neck_pro_sculptedneckpiece_f.webp",
+        "f:3": "03_items_clean/neck/neck_pro_sculptedneckpiece_f.webp",
+        "m:1": "03_items_clean/neck/neck_pro_sculptedneckpiece_m.webp",
+        "m:2": "03_items_clean/neck/neck_pro_sculptedneckpiece_m.webp",
+        "m:3": "03_items_clean/neck/neck_pro_sculptedneckpiece_m.webp"
+      },
+      "active": true,
+      "per_form": false,
+      "layer_order": 65
+    },
+    {
+      "id": "wrist_pro_sculptedcuff",
+      "name": "Sculpted wrist cuff",
+      "slot": "wrist",
+      "kind": "item",
+      "genders": ["f", "m"],
+      "rarity": "epic",
+      "price_cc": 200,
+      "collection_id": "pro_studio",
+      "starter": false,
+      "earn_only": false,
+      "tintable": true,
+      "hides": [],
+      "assets": {
+        "f:1": "03_items_clean/wrist/wrist_pro_sculptedcuff_f.webp",
+        "f:2": "03_items_clean/wrist/wrist_pro_sculptedcuff_f.webp",
+        "f:3": "03_items_clean/wrist/wrist_pro_sculptedcuff_f.webp",
+        "m:1": "03_items_clean/wrist/wrist_pro_sculptedcuff_m.webp",
+        "m:2": "03_items_clean/wrist/wrist_pro_sculptedcuff_m.webp",
+        "m:3": "03_items_clean/wrist/wrist_pro_sculptedcuff_m.webp"
+      },
+      "active": true,
+      "per_form": false,
+      "layer_order": 60
+    },
+    {
+      "id": "hair_pro_braidedundercut",
+      "name": "Braided undercut hairstyle",
+      "slot": "hair",
+      "kind": "item",
+      "genders": ["m"],
+      "rarity": "epic",
+      "price_cc": 200,
+      "collection_id": "pro_studio",
+      "starter": false,
+      "earn_only": false,
+      "tintable": true,
+      "hides": [],
+      "assets": {
+        "m:1": "03_items_clean/hair/hair_pro_braidedundercut_m.webp",
+        "m:2": "03_items_clean/hair/hair_pro_braidedundercut_m.webp",
+        "m:3": "03_items_clean/hair/hair_pro_braidedundercut_m.webp"
+      },
+      "active": true,
+      "per_form": false,
+      "layer_order": 80
+    },
+    {
+      "id": "hair_pro_braidedupdo",
+      "name": "Elaborate braided updo",
+      "slot": "hair",
+      "kind": "item",
+      "genders": ["f"],
+      "rarity": "epic",
+      "price_cc": 200,
+      "collection_id": "pro_studio",
+      "starter": false,
+      "earn_only": false,
+      "tintable": true,
+      "hides": [],
+      "assets": {
+        "f:1": "03_items_clean/hair/hair_pro_braidedupdo_f.webp",
+        "f:2": "03_items_clean/hair/hair_pro_braidedupdo_f.webp",
+        "f:3": "03_items_clean/hair/hair_pro_braidedupdo_f.webp"
+      },
+      "active": true,
+      "per_form": false,
+      "layer_order": 80
+    },
+    {
+      "id": "facial_pro_braidedbeard",
+      "name": "Sculpted braided beard",
+      "slot": "facial",
+      "kind": "item",
+      "genders": ["m"],
+      "rarity": "epic",
+      "price_cc": 200,
+      "collection_id": "pro_studio",
+      "starter": false,
+      "earn_only": false,
+      "tintable": true,
+      "hides": [],
+      "assets": {
+        "m:1": "03_items_clean/facial/facial_pro_braidedbeard_m.webp",
+        "m:2": "03_items_clean/facial/facial_pro_braidedbeard_m.webp",
+        "m:3": "03_items_clean/facial/facial_pro_braidedbeard_m.webp"
+      },
+      "active": true,
+      "per_form": false,
+      "layer_order": 70
+    }
+  ],
+  "tints": [
+    {
+      "id": "skin_1",
+      "kind": "skin",
+      "name": "Tone 1",
+      "hex": "#FFE0C2",
+      "tier_required": "free"
+    },
+    {
+      "id": "skin_2",
+      "kind": "skin",
+      "name": "Tone 2",
+      "hex": "#F4C49E",
+      "tier_required": "free"
+    },
+    {
+      "id": "skin_3",
+      "kind": "skin",
+      "name": "Tone 3",
+      "hex": "#E8AC80",
+      "tier_required": "free"
+    },
+    {
+      "id": "skin_4",
+      "kind": "skin",
+      "name": "Tone 4",
+      "hex": "#CF9068",
+      "tier_required": "free"
+    },
+    {
+      "id": "skin_5",
+      "kind": "skin",
+      "name": "Tone 5",
+      "hex": "#B77652",
+      "tier_required": "free"
+    },
+    {
+      "id": "skin_6",
+      "kind": "skin",
+      "name": "Tone 6",
+      "hex": "#965A3B",
+      "tier_required": "free"
+    },
+    {
+      "id": "skin_7",
+      "kind": "skin",
+      "name": "Tone 7",
+      "hex": "#74422D",
+      "tier_required": "free"
+    },
+    {
+      "id": "skin_8",
+      "kind": "skin",
+      "name": "Tone 8",
+      "hex": "#4F2B20",
+      "tier_required": "free"
+    },
+    {
+      "id": "hair_1",
+      "kind": "hair",
+      "name": "Color 1",
+      "hex": "#252525",
+      "tier_required": "free"
+    },
+    {
+      "id": "hair_2",
+      "kind": "hair",
+      "name": "Color 2",
+      "hex": "#F1EEE7",
+      "tier_required": "free"
+    },
+    {
+      "id": "hair_3",
+      "kind": "hair",
+      "name": "Color 3",
+      "hex": "#76716A",
+      "tier_required": "free"
+    },
+    {
+      "id": "hair_4",
+      "kind": "hair",
+      "name": "Color 4",
+      "hex": "#C4B7A6",
+      "tier_required": "free"
+    },
+    {
+      "id": "hair_5",
+      "kind": "hair",
+      "name": "Color 5",
+      "hex": "#35546B",
+      "tier_required": "free"
+    },
+    {
+      "id": "hair_6",
+      "kind": "hair",
+      "name": "Color 6",
+      "hex": "#7B394A",
+      "tier_required": "free"
+    },
+    {
+      "id": "hair_7",
+      "kind": "hair",
+      "name": "Color 7",
+      "hex": "#40746D",
+      "tier_required": "free"
+    },
+    {
+      "id": "hair_8",
+      "kind": "hair",
+      "name": "Color 8",
+      "hex": "#835D9E",
+      "tier_required": "free"
+    },
+    {
+      "id": "hair_9",
+      "kind": "hair",
+      "name": "Color 9",
+      "hex": "#AB704C",
+      "tier_required": "free"
+    },
+    {
+      "id": "hair_10",
+      "kind": "hair",
+      "name": "Color 10",
+      "hex": "#D5B34C",
+      "tier_required": "free"
+    },
+    {
+      "id": "hair_11",
+      "kind": "hair",
+      "name": "Color 11",
+      "hex": "#C67D98",
+      "tier_required": "free"
+    },
+    {
+      "id": "hair_12",
+      "kind": "hair",
+      "name": "Color 12",
+      "hex": "#81976B",
+      "tier_required": "free"
+    },
+    {
+      "id": "hair_fashion_1",
+      "kind": "hair",
+      "name": "Fashion 1",
+      "hex": "#9DADDA",
+      "tier_required": "plus"
+    },
+    {
+      "id": "hair_fashion_2",
+      "kind": "hair",
+      "name": "Fashion 2",
+      "hex": "#E9A38B",
+      "tier_required": "plus"
+    },
+    {
+      "id": "hair_fashion_3",
+      "kind": "hair",
+      "name": "Fashion 3",
+      "hex": "#57B3CB",
+      "tier_required": "plus"
+    },
+    {
+      "id": "hair_fashion_4",
+      "kind": "hair",
+      "name": "Fashion 4",
+      "hex": "#BB82CC",
+      "tier_required": "plus"
+    },
+    {
+      "id": "hair_fashion_5",
+      "kind": "hair",
+      "name": "Fashion 5",
+      "hex": "#D1B189",
+      "tier_required": "plus"
+    },
+    {
+      "id": "hair_fashion_6",
+      "kind": "hair",
+      "name": "Fashion 6",
+      "hex": "#A2D3C1",
+      "tier_required": "plus"
+    },
+    {
+      "id": "hair_fashion_7",
+      "kind": "hair",
+      "name": "Fashion 7",
+      "hex": "#D978AA",
+      "tier_required": "plus"
+    },
+    {
+      "id": "hair_fashion_8",
+      "kind": "hair",
+      "name": "Fashion 8",
+      "hex": "#BACA82",
+      "tier_required": "plus"
+    },
+    {
+      "id": "garment_1",
+      "kind": "garment",
+      "name": "Color 1",
+      "hex": "#252525",
+      "tier_required": "free"
+    },
+    {
+      "id": "garment_2",
+      "kind": "garment",
+      "name": "Color 2",
+      "hex": "#F1EEE7",
+      "tier_required": "free"
+    },
+    {
+      "id": "garment_3",
+      "kind": "garment",
+      "name": "Color 3",
+      "hex": "#76716A",
+      "tier_required": "free"
+    },
+    {
+      "id": "garment_4",
+      "kind": "garment",
+      "name": "Color 4",
+      "hex": "#C4B7A6",
+      "tier_required": "free"
+    },
+    {
+      "id": "garment_5",
+      "kind": "garment",
+      "name": "Color 5",
+      "hex": "#35546B",
+      "tier_required": "free"
+    },
+    {
+      "id": "garment_6",
+      "kind": "garment",
+      "name": "Color 6",
+      "hex": "#7B394A",
+      "tier_required": "free"
+    },
+    {
+      "id": "garment_7",
+      "kind": "garment",
+      "name": "Color 7",
+      "hex": "#40746D",
+      "tier_required": "free"
+    },
+    {
+      "id": "garment_8",
+      "kind": "garment",
+      "name": "Color 8",
+      "hex": "#835D9E",
+      "tier_required": "free"
+    },
+    {
+      "id": "garment_9",
+      "kind": "garment",
+      "name": "Color 9",
+      "hex": "#AB704C",
+      "tier_required": "free"
+    },
+    {
+      "id": "garment_10",
+      "kind": "garment",
+      "name": "Color 10",
+      "hex": "#D5B34C",
+      "tier_required": "free"
+    },
+    {
+      "id": "garment_11",
+      "kind": "garment",
+      "name": "Color 11",
+      "hex": "#C67D98",
+      "tier_required": "free"
+    },
+    {
+      "id": "garment_12",
+      "kind": "garment",
+      "name": "Color 12",
+      "hex": "#81976B",
+      "tier_required": "free"
+    },
+    {
+      "id": "garment_fashion_1",
+      "kind": "garment",
+      "name": "Fashion 1",
+      "hex": "#9DADDA",
+      "tier_required": "plus"
+    },
+    {
+      "id": "garment_fashion_2",
+      "kind": "garment",
+      "name": "Fashion 2",
+      "hex": "#E9A38B",
+      "tier_required": "plus"
+    },
+    {
+      "id": "garment_fashion_3",
+      "kind": "garment",
+      "name": "Fashion 3",
+      "hex": "#57B3CB",
+      "tier_required": "plus"
+    },
+    {
+      "id": "garment_fashion_4",
+      "kind": "garment",
+      "name": "Fashion 4",
+      "hex": "#BB82CC",
+      "tier_required": "plus"
+    },
+    {
+      "id": "garment_fashion_5",
+      "kind": "garment",
+      "name": "Fashion 5",
+      "hex": "#D1B189",
+      "tier_required": "plus"
+    },
+    {
+      "id": "garment_fashion_6",
+      "kind": "garment",
+      "name": "Fashion 6",
+      "hex": "#A2D3C1",
+      "tier_required": "plus"
+    },
+    {
+      "id": "garment_fashion_7",
+      "kind": "garment",
+      "name": "Fashion 7",
+      "hex": "#D978AA",
+      "tier_required": "plus"
+    },
+    {
+      "id": "garment_fashion_8",
+      "kind": "garment",
+      "name": "Fashion 8",
+      "hex": "#BACA82",
+      "tier_required": "plus"
+    }
+  ],
+  "levels": [
+    {
+      "level": 1,
+      "xp_required": 0,
+      "form": 1
+    },
+    {
+      "level": 2,
+      "xp_required": 500,
+      "form": 1
+    },
+    {
+      "level": 3,
+      "xp_required": 1200,
+      "form": 2
+    },
+    {
+      "level": 4,
+      "xp_required": 2200,
+      "form": 2
+    },
+    {
+      "level": 5,
+      "xp_required": 3500,
+      "form": 3
+    },
+    {
+      "level": 6,
+      "xp_required": 5200,
+      "form": 3
+    }
+  ],
+  "packs": [
+    {
+      "id": "cc_100",
+      "cc": 100,
+      "store_product_id": "cc_100",
+      "price_inr": 75,
+      "price_usd": 0.99
+    },
+    {
+      "id": "cc_250",
+      "cc": 250,
+      "store_product_id": "cc_250",
+      "price_inr": 189,
+      "price_usd": 2.49
+    },
+    {
+      "id": "cc_500",
+      "cc": 500,
+      "store_product_id": "cc_500",
+      "price_inr": 375,
+      "price_usd": 4.99
+    },
+    {
+      "id": "cc_1000",
+      "cc": 1000,
+      "store_product_id": "cc_1000",
+      "price_inr": 750,
+      "price_usd": 9.99
+    },
+    {
+      "id": "cc_2500",
+      "cc": 2500,
+      "store_product_id": "cc_2500",
+      "price_inr": 1875,
+      "price_usd": 24.99
+    }
+  ],
+  "earn_rules": [
+    {
+      "action": "daily_drop",
+      "cc": 5,
+      "xp": 0,
+      "daily_cap": 1
+    },
+    {
+      "action": "meal",
+      "cc": 0,
+      "xp": 10,
+      "daily_cap": 1
+    },
+    {
+      "action": "steps_goal",
+      "cc": 2,
+      "xp": 10,
+      "daily_cap": 1
+    },
+    {
+      "action": "workout",
+      "cc": 3,
+      "xp": 15,
+      "daily_cap": 1
+    },
+    {
+      "action": "water_goal",
+      "cc": 1,
+      "xp": 5,
+      "daily_cap": 1
+    },
+    {
+      "action": "all_rounder",
+      "cc": 3,
+      "xp": 10,
+      "daily_cap": 1
+    },
+    {
+      "action": "pair_day",
+      "cc": 3,
+      "xp": 10,
+      "daily_cap": 1
+    },
+    {
+      "action": "streak_7",
+      "cc": 15,
+      "xp": 50,
+      "daily_cap": 1
+    },
+    {
+      "action": "streak_30",
+      "cc": 60,
+      "xp": 200,
+      "daily_cap": 1
+    }
+  ],
+  "starter_path": [
+    {
+      "key": "create_character",
+      "cc": 20
+    },
+    {
+      "key": "first_log",
+      "cc": 10
+    },
+    {
+      "key": "first_workout",
+      "cc": 10
+    },
+    {
+      "key": "join_or_start_challenge",
+      "cc": 15
+    },
+    {
+      "key": "three_day_streak",
+      "cc": 25
+    }
+  ],
+  "challenge_rewards": {
+    "short": {
+      "cc": 20,
+      "xp": 100
+    },
+    "medium": {
+      "cc": 60,
+      "xp": 300
+    },
+    "long": {
+      "cc": 150,
+      "xp": 600
+    }
+  }
+}

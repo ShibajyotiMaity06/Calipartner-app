@@ -1,6 +1,7 @@
+import { useTheme as useAppearance } from '../theme/useTheme';
 import React from 'react';
 import { View, StyleSheet, TouchableOpacity, type AccessibilityProps } from 'react-native';
-import { dark, type IdentityHue, getIdentityColor } from '../tokens/colors';
+import { type IdentityHue, getIdentityColor } from '../tokens/colors';
 import { space } from '../tokens/space';
 import { Text } from './Text';
 import { Avatar } from './Avatar';
@@ -86,6 +87,9 @@ export function PersonColumn({
   accessibilityLabel,
   ...rest
 }: PersonColumnProps): React.JSX.Element {
+  const { colors: dark } = useAppearance();
+  const styles = createStyles(dark);
+
   const isLeft = side === 'left';
   const personColor = getIdentityColor(identityHue);
 
@@ -228,99 +232,100 @@ export function PersonColumn({
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    paddingVertical: space[1],
-  },
-  leftContainer: {
-    paddingRight: space[2],
-  },
-  rightContainer: {
-    paddingLeft: space[2],
-  },
-  headerRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: space[2],
-    marginBottom: space[3],
-  },
-  headerRowLeft: {
-    justifyContent: 'flex-start',
-  },
-  headerRowRight: {
-    justifyContent: 'flex-end',
-    flexDirection: 'row-reverse',
-  },
-  nameBlock: {
-    gap: 2,
-  },
-  nameBlockLeft: {
-    alignItems: 'flex-start',
-  },
-  nameBlockRight: {
-    alignItems: 'flex-end',
-  },
-  percentRow: {
-    flexDirection: 'row',
-    alignItems: 'baseline',
-    gap: 4,
-  },
-  overLabel: {
-    fontSize: 10,
-    lineHeight: 12,
-  },
-  stepsSection: {
-    marginBottom: space[3],
-    gap: 4,
-  },
-  stepsTextRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-  },
-  stepsTrack: {
-    height: 4,
-    backgroundColor: dark.s2,
-    borderRadius: 2,
-    overflow: 'hidden',
-    width: '100%',
-  },
-  stepsFill: {
-    height: '100%',
-    borderRadius: 2,
-  },
-  mealsContainer: {
-    gap: 4,
-  },
-  mealRow: {
-    height: 24,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  mealRowLeft: {
-    paddingRight: 4,
-  },
-  mealRowRight: {
-    paddingLeft: 4,
-  },
-  glyphTouchArea: {
-    width: 24,
-    height: 24,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  loggedDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-  },
-  unloggedCircle: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    borderWidth: 1.5,
-    borderColor: dark.hairlineLit,
-    backgroundColor: 'transparent',
-  },
-});
+const createStyles = (dark: ReturnType<typeof useAppearance>['colors']) =>
+  StyleSheet.create({
+    container: {
+      flex: 1,
+      paddingVertical: space[1],
+    },
+    leftContainer: {
+      paddingRight: space[2],
+    },
+    rightContainer: {
+      paddingLeft: space[2],
+    },
+    headerRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: space[2],
+      marginBottom: space[3],
+    },
+    headerRowLeft: {
+      justifyContent: 'flex-start',
+    },
+    headerRowRight: {
+      justifyContent: 'flex-end',
+      flexDirection: 'row-reverse',
+    },
+    nameBlock: {
+      gap: 2,
+    },
+    nameBlockLeft: {
+      alignItems: 'flex-start',
+    },
+    nameBlockRight: {
+      alignItems: 'flex-end',
+    },
+    percentRow: {
+      flexDirection: 'row',
+      alignItems: 'baseline',
+      gap: 4,
+    },
+    overLabel: {
+      fontSize: 10,
+      lineHeight: 12,
+    },
+    stepsSection: {
+      marginBottom: space[3],
+      gap: 4,
+    },
+    stepsTextRow: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+    },
+    stepsTrack: {
+      height: 4,
+      backgroundColor: dark.s2,
+      borderRadius: 2,
+      overflow: 'hidden',
+      width: '100%',
+    },
+    stepsFill: {
+      height: '100%',
+      borderRadius: 2,
+    },
+    mealsContainer: {
+      gap: 4,
+    },
+    mealRow: {
+      height: 24,
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+    },
+    mealRowLeft: {
+      paddingRight: 4,
+    },
+    mealRowRight: {
+      paddingLeft: 4,
+    },
+    glyphTouchArea: {
+      width: 24,
+      height: 24,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    loggedDot: {
+      width: 8,
+      height: 8,
+      borderRadius: 4,
+    },
+    unloggedCircle: {
+      width: 8,
+      height: 8,
+      borderRadius: 4,
+      borderWidth: 1.5,
+      borderColor: dark.hairlineLit,
+      backgroundColor: 'transparent',
+    },
+  });

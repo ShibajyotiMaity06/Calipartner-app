@@ -1,4 +1,8 @@
 import { expect, it, vi } from 'vitest';
+vi.mock('../theme/useTheme', async () => {
+  const { dark } = await import('../tokens/colors');
+  return { useTheme: () => ({ colors: dark, scheme: 'yellow' }) };
+});
 vi.mock('react-native', () => ({
   Text: 'Text',
   StyleSheet: {

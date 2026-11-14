@@ -1,8 +1,9 @@
+import { useTheme as useAppearance } from '@calipartner/ui/theme';
 import { PremiumFeatureModal } from '@/components/subscription/PremiumFeatureModal';
 import React, { useState } from 'react';
 import { Modal, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { Text, dark, radius, space, type as typeTokens } from '@calipartner/ui';
+import { Text, radius, space, type as typeTokens } from '@calipartner/ui';
 import { t } from '@/i18n';
 
 export interface ProgressPhotoItem {
@@ -32,6 +33,9 @@ function ProgressPhotosModalContent({
   onAddPhoto,
   testID = 'progress-photos-modal',
 }: ProgressPhotosModalProps) {
+  const { colors: dark } = useAppearance();
+  const styles = createStyles(dark);
+
   const [photos, setPhotos] = useState<ProgressPhotoItem[]>(SAMPLE_PHOTOS);
   const [compareMode, setCompareMode] = useState(false);
   const [selectedForCompare, setSelectedForCompare] = useState<string[]>(['p1', 'p2']);
@@ -238,248 +242,249 @@ function ProgressPhotosModalContent({
   );
 }
 
-const styles = StyleSheet.create({
-  overlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.65)',
-    justifyContent: 'flex-end',
-  },
-  sheet: {
-    backgroundColor: dark.s1,
-    borderTopLeftRadius: radius.sheet,
-    borderTopRightRadius: radius.sheet,
-    borderWidth: 1,
-    borderColor: dark.hairline,
-    padding: space[4],
-    gap: space[3],
-    maxHeight: '90%',
-  },
-  grabHandle: {
-    width: 36,
-    height: 4,
-    borderRadius: radius.full,
-    backgroundColor: dark.hairlineLit,
-    alignSelf: 'center',
-    marginBottom: space[2],
-  },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  headerLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: space[2],
-  },
-  iconBox: {
-    width: 36,
-    height: 36,
-    borderRadius: radius.full,
-    backgroundColor: dark.s2,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  title: {
-    fontSize: typeTokens.body.fontSize,
-    fontFamily: typeTokens.body.fontFamily,
-    color: dark.textHi,
-    fontWeight: '700',
-  },
-  privateBadge: {
-    fontSize: typeTokens.micro.fontSize,
-    fontFamily: typeTokens.micro.fontFamily,
-    color: dark.textLo,
-  },
-  closeBtn: {
-    width: 44,
-    height: 44,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  modeBar: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingVertical: space[1],
-  },
-  modeBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    minHeight: 40,
-    paddingHorizontal: space[3],
-    borderRadius: radius.full,
-    backgroundColor: dark.s2,
-    borderWidth: 1,
-    borderColor: dark.hairline,
-  },
-  modeBtnActive: {
-    backgroundColor: dark.apricot,
-    borderColor: dark.apricot,
-  },
-  modeBtnText: {
-    fontSize: typeTokens.label.fontSize,
-    fontFamily: typeTokens.label.fontFamily,
-    color: dark.textMid,
-    fontWeight: '600',
-  },
-  modeBtnTextActive: {
-    color: dark.onBrand, // #1C1109
-  },
-  compareHint: {
-    fontSize: typeTokens.micro.fontSize,
-    fontFamily: typeTokens.micro.fontFamily,
-    color: dark.textLo,
-  },
-  scrollArea: {
-    maxHeight: 400,
-  },
-  scrollContent: {
-    gap: space[3],
-  },
-  compareContainer: {
-    flexDirection: 'row',
-    backgroundColor: dark.s2,
-    borderRadius: radius.card,
-    padding: space[3],
-    borderWidth: 1,
-    borderColor: dark.hairline,
-    alignItems: 'center',
-    justifyContent: 'space-around',
-  },
-  compareSide: {
-    flex: 1,
-    alignItems: 'center',
-    gap: 4,
-  },
-  compareDivider: {
-    width: 1,
-    height: '80%',
-    backgroundColor: dark.hairline,
-    marginHorizontal: space[2],
-  },
-  compareDate: {
-    fontSize: typeTokens.label.fontSize,
-    fontFamily: typeTokens.label.fontFamily,
-    color: dark.textHi,
-    fontWeight: '600',
-  },
-  compareWeight: {
-    fontSize: typeTokens.micro.fontSize,
-    fontFamily: typeTokens.micro.fontFamily,
-    color: dark.textLo,
-  },
-  grid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: space[2],
-  },
-  addTile: {
-    width: '31%',
-    aspectRatio: 0.85,
-    backgroundColor: dark.s2,
-    borderRadius: radius.card,
-    borderWidth: 1.5,
-    borderStyle: 'dashed',
-    borderColor: dark.apricot,
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: space[1],
-  },
-  addIconCircle: {
-    width: 44,
-    height: 44,
-    borderRadius: radius.full,
-    backgroundColor: dark.s3,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  addTileLabel: {
-    fontSize: typeTokens.micro.fontSize,
-    fontFamily: typeTokens.micro.fontFamily,
-    color: dark.apricot,
-    fontWeight: '600',
-  },
-  photoCard: {
-    width: '31%',
-    aspectRatio: 0.85,
-    backgroundColor: dark.s2,
-    borderRadius: radius.card,
-    borderWidth: 1,
-    borderColor: dark.hairline,
-    overflow: 'hidden',
-  },
-  photoCardSelected: {
-    borderColor: dark.apricot,
-    borderWidth: 2,
-  },
-  photoPlaceholder: {
-    flex: 1,
-    width: '100%',
-    backgroundColor: dark.s3,
-    alignItems: 'center',
-    justifyContent: 'center',
-    position: 'relative',
-  },
-  checkBadge: {
-    position: 'absolute',
-    top: 6,
-    right: 6,
-    width: 22,
-    height: 22,
-    borderRadius: radius.full,
-    backgroundColor: dark.apricot,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  photoMeta: {
-    padding: space[1],
-    backgroundColor: dark.s2,
-    alignItems: 'center',
-  },
-  photoDate: {
-    fontSize: 10,
-    fontFamily: typeTokens.micro.fontFamily,
-    color: dark.textMid,
-  },
-  photoWeight: {
-    fontSize: 9,
-    fontFamily: typeTokens.micro.fontFamily,
-    color: dark.textLo,
-  },
-  privacyBanner: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: space[2],
-    backgroundColor: dark.s2,
-    padding: space[3],
-    borderRadius: radius.control,
-    marginTop: space[1],
-  },
-  privacyBannerText: {
-    fontSize: typeTokens.micro.fontSize,
-    fontFamily: typeTokens.micro.fontFamily,
-    color: dark.textLo,
-    flex: 1,
-  },
-  footer: {
-    paddingTop: space[2],
-  },
-  doneBtn: {
-    minHeight: 48,
-    borderRadius: radius.button,
-    backgroundColor: dark.apricot,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  doneBtnText: {
-    fontSize: typeTokens.body.fontSize,
-    fontFamily: typeTokens.body.fontFamily,
-    color: dark.onBrand, // #1C1109
-    fontWeight: '700',
-  },
-});
+const createStyles = (dark: ReturnType<typeof useAppearance>['colors']) =>
+  StyleSheet.create({
+    overlay: {
+      flex: 1,
+      backgroundColor: 'rgba(0, 0, 0, 0.65)',
+      justifyContent: 'flex-end',
+    },
+    sheet: {
+      backgroundColor: dark.s1,
+      borderTopLeftRadius: radius.sheet,
+      borderTopRightRadius: radius.sheet,
+      borderWidth: 1,
+      borderColor: dark.hairline,
+      padding: space[4],
+      gap: space[3],
+      maxHeight: '90%',
+    },
+    grabHandle: {
+      width: 36,
+      height: 4,
+      borderRadius: radius.full,
+      backgroundColor: dark.hairlineLit,
+      alignSelf: 'center',
+      marginBottom: space[2],
+    },
+    header: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+    },
+    headerLeft: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: space[2],
+    },
+    iconBox: {
+      width: 36,
+      height: 36,
+      borderRadius: radius.full,
+      backgroundColor: dark.s2,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    title: {
+      fontSize: typeTokens.body.fontSize,
+      fontFamily: typeTokens.body.fontFamily,
+      color: dark.textHi,
+      fontWeight: '700',
+    },
+    privateBadge: {
+      fontSize: typeTokens.micro.fontSize,
+      fontFamily: typeTokens.micro.fontFamily,
+      color: dark.textLo,
+    },
+    closeBtn: {
+      width: 44,
+      height: 44,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    modeBar: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      paddingVertical: space[1],
+    },
+    modeBtn: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 6,
+      minHeight: 40,
+      paddingHorizontal: space[3],
+      borderRadius: radius.full,
+      backgroundColor: dark.s2,
+      borderWidth: 1,
+      borderColor: dark.hairline,
+    },
+    modeBtnActive: {
+      backgroundColor: dark.apricot,
+      borderColor: dark.apricot,
+    },
+    modeBtnText: {
+      fontSize: typeTokens.label.fontSize,
+      fontFamily: typeTokens.label.fontFamily,
+      color: dark.textMid,
+      fontWeight: '600',
+    },
+    modeBtnTextActive: {
+      color: dark.onBrand, // #1C1109
+    },
+    compareHint: {
+      fontSize: typeTokens.micro.fontSize,
+      fontFamily: typeTokens.micro.fontFamily,
+      color: dark.textLo,
+    },
+    scrollArea: {
+      maxHeight: 400,
+    },
+    scrollContent: {
+      gap: space[3],
+    },
+    compareContainer: {
+      flexDirection: 'row',
+      backgroundColor: dark.s2,
+      borderRadius: radius.card,
+      padding: space[3],
+      borderWidth: 1,
+      borderColor: dark.hairline,
+      alignItems: 'center',
+      justifyContent: 'space-around',
+    },
+    compareSide: {
+      flex: 1,
+      alignItems: 'center',
+      gap: 4,
+    },
+    compareDivider: {
+      width: 1,
+      height: '80%',
+      backgroundColor: dark.hairline,
+      marginHorizontal: space[2],
+    },
+    compareDate: {
+      fontSize: typeTokens.label.fontSize,
+      fontFamily: typeTokens.label.fontFamily,
+      color: dark.textHi,
+      fontWeight: '600',
+    },
+    compareWeight: {
+      fontSize: typeTokens.micro.fontSize,
+      fontFamily: typeTokens.micro.fontFamily,
+      color: dark.textLo,
+    },
+    grid: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      gap: space[2],
+    },
+    addTile: {
+      width: '31%',
+      aspectRatio: 0.85,
+      backgroundColor: dark.s2,
+      borderRadius: radius.card,
+      borderWidth: 1.5,
+      borderStyle: 'dashed',
+      borderColor: dark.apricot,
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: space[1],
+    },
+    addIconCircle: {
+      width: 44,
+      height: 44,
+      borderRadius: radius.full,
+      backgroundColor: dark.s3,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    addTileLabel: {
+      fontSize: typeTokens.micro.fontSize,
+      fontFamily: typeTokens.micro.fontFamily,
+      color: dark.apricot,
+      fontWeight: '600',
+    },
+    photoCard: {
+      width: '31%',
+      aspectRatio: 0.85,
+      backgroundColor: dark.s2,
+      borderRadius: radius.card,
+      borderWidth: 1,
+      borderColor: dark.hairline,
+      overflow: 'hidden',
+    },
+    photoCardSelected: {
+      borderColor: dark.apricot,
+      borderWidth: 2,
+    },
+    photoPlaceholder: {
+      flex: 1,
+      width: '100%',
+      backgroundColor: dark.s3,
+      alignItems: 'center',
+      justifyContent: 'center',
+      position: 'relative',
+    },
+    checkBadge: {
+      position: 'absolute',
+      top: 6,
+      right: 6,
+      width: 22,
+      height: 22,
+      borderRadius: radius.full,
+      backgroundColor: dark.apricot,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    photoMeta: {
+      padding: space[1],
+      backgroundColor: dark.s2,
+      alignItems: 'center',
+    },
+    photoDate: {
+      fontSize: 10,
+      fontFamily: typeTokens.micro.fontFamily,
+      color: dark.textMid,
+    },
+    photoWeight: {
+      fontSize: 9,
+      fontFamily: typeTokens.micro.fontFamily,
+      color: dark.textLo,
+    },
+    privacyBanner: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: space[2],
+      backgroundColor: dark.s2,
+      padding: space[3],
+      borderRadius: radius.control,
+      marginTop: space[1],
+    },
+    privacyBannerText: {
+      fontSize: typeTokens.micro.fontSize,
+      fontFamily: typeTokens.micro.fontFamily,
+      color: dark.textLo,
+      flex: 1,
+    },
+    footer: {
+      paddingTop: space[2],
+    },
+    doneBtn: {
+      minHeight: 48,
+      borderRadius: radius.button,
+      backgroundColor: dark.apricot,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    doneBtnText: {
+      fontSize: typeTokens.body.fontSize,
+      fontFamily: typeTokens.body.fontFamily,
+      color: dark.onBrand, // #1C1109
+      fontWeight: '700',
+    },
+  });
 
 export function ProgressPhotosModal(props: ProgressPhotosModalProps) {
   return (

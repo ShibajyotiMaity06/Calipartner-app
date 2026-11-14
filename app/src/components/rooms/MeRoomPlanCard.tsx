@@ -1,3 +1,4 @@
+import { useTheme as useAppearance } from '@calipartner/ui/theme';
 import React, { useState } from 'react';
 import {
   ActivityIndicator,
@@ -8,7 +9,7 @@ import {
   View,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { Button, Card, dark, radius, space, Text } from '@calipartner/ui';
+import { Button, Card, radius, space, Text } from '@calipartner/ui';
 import { t } from '@/i18n';
 import { useSubscription } from '@/hooks/useSubscription';
 import { openDodoPortal } from '@/services/dodoService';
@@ -28,6 +29,9 @@ export function MeRoomPlanCard({
   onRestorePurchases,
   compact = false,
 }: MeRoomPlanCardProps) {
+  const { colors: dark } = useAppearance();
+  const styles = createStyles(dark);
+
   const { entitlement, hasActiveAccess, isTrial, isLapsed, isUnattached, loading, restore } =
     useSubscription();
   const [restoring, setRestoring] = useState(false);
@@ -344,112 +348,113 @@ export function MeRoomPlanCard({
   );
 }
 
-const styles = StyleSheet.create({
-  compactCard: { padding: space[3] },
-  compactHeader: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: space[2] },
-  compactDisclosure: {
-    minHeight: space[8],
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: space[2],
-  },
-  compactDetails: { gap: space[2] },
-  card: {
-    padding: space[4],
-    marginBottom: space[4],
-  },
-  loadingText: {
-    textAlign: 'center',
-    marginTop: space[2],
-  },
-  freeHeaderRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  freeTextGroup: {
-    flex: 1,
-  },
-  freeNoticeText: {
-    marginTop: 2,
-  },
-  seePlansBtn: {
-    paddingHorizontal: space[3],
-    paddingVertical: space[2],
-    borderRadius: radius.control,
-    backgroundColor: dark.s2,
-    borderWidth: 1,
-    borderColor: dark.hairlineLit,
-    minHeight: 44,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  freeFooterRow: {
-    marginTop: space[3],
-    paddingTop: space[2],
-    borderTopWidth: 1,
-    borderTopColor: dark.hairline,
-  },
-  headerRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    marginBottom: space[3],
-  },
-  titleGroup: {
-    flex: 1,
-  },
-  tierBadge: {
-    paddingHorizontal: space[2],
-    paddingVertical: 3,
-    backgroundColor: dark.s2,
-    borderRadius: radius.full,
-    borderWidth: 1,
-    borderColor: dark.hairlineLit,
-  },
-  tierBadgeText: {
-    fontWeight: '700',
-    letterSpacing: 0.5,
-  },
-  detailsSection: {
-    paddingVertical: space[2],
-    borderTopWidth: 1,
-    borderBottomWidth: 1,
-    borderColor: dark.hairline,
-    gap: space[2],
-    marginBottom: space[3],
-  },
-  detailRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  tabularNum: {
-    fontVariant: ['tabular-nums'],
-  },
-  unattachedCard: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    gap: space[2],
-    padding: space[3],
-    marginBottom: space[3],
-    borderColor: dark.apricot,
-  },
-  unattachedTextWrap: {
-    flex: 1,
-  },
-  buttonRow: {
-    flexDirection: 'row',
-    gap: space[2],
-  },
-  actionBtn: {
-    flex: 1,
-  },
-  restoreLink: {
-    marginTop: space[2],
-    alignItems: 'center',
-    minHeight: 28,
-    justifyContent: 'center',
-  },
-});
+const createStyles = (dark: ReturnType<typeof useAppearance>['colors']) =>
+  StyleSheet.create({
+    compactCard: { padding: space[3] },
+    compactHeader: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: space[2] },
+    compactDisclosure: {
+      minHeight: space[8],
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      gap: space[2],
+    },
+    compactDetails: { gap: space[2] },
+    card: {
+      padding: space[4],
+      marginBottom: space[4],
+    },
+    loadingText: {
+      textAlign: 'center',
+      marginTop: space[2],
+    },
+    freeHeaderRow: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+    },
+    freeTextGroup: {
+      flex: 1,
+    },
+    freeNoticeText: {
+      marginTop: 2,
+    },
+    seePlansBtn: {
+      paddingHorizontal: space[3],
+      paddingVertical: space[2],
+      borderRadius: radius.control,
+      backgroundColor: dark.s2,
+      borderWidth: 1,
+      borderColor: dark.hairlineLit,
+      minHeight: 44,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    freeFooterRow: {
+      marginTop: space[3],
+      paddingTop: space[2],
+      borderTopWidth: 1,
+      borderTopColor: dark.hairline,
+    },
+    headerRow: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'flex-start',
+      marginBottom: space[3],
+    },
+    titleGroup: {
+      flex: 1,
+    },
+    tierBadge: {
+      paddingHorizontal: space[2],
+      paddingVertical: 3,
+      backgroundColor: dark.s2,
+      borderRadius: radius.full,
+      borderWidth: 1,
+      borderColor: dark.hairlineLit,
+    },
+    tierBadgeText: {
+      fontWeight: '700',
+      letterSpacing: 0.5,
+    },
+    detailsSection: {
+      paddingVertical: space[2],
+      borderTopWidth: 1,
+      borderBottomWidth: 1,
+      borderColor: dark.hairline,
+      gap: space[2],
+      marginBottom: space[3],
+    },
+    detailRow: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+    },
+    tabularNum: {
+      fontVariant: ['tabular-nums'],
+    },
+    unattachedCard: {
+      flexDirection: 'row',
+      alignItems: 'flex-start',
+      gap: space[2],
+      padding: space[3],
+      marginBottom: space[3],
+      borderColor: dark.apricot,
+    },
+    unattachedTextWrap: {
+      flex: 1,
+    },
+    buttonRow: {
+      flexDirection: 'row',
+      gap: space[2],
+    },
+    actionBtn: {
+      flex: 1,
+    },
+    restoreLink: {
+      marginTop: space[2],
+      alignItems: 'center',
+      minHeight: 28,
+      justifyContent: 'center',
+    },
+  });

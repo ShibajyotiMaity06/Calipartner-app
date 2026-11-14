@@ -16,10 +16,10 @@ export function useTheme(): {
 } {
   const uiTheme = useUITheme();
   return {
-    scheme: 'dark',
+    scheme: uiTheme.scheme,
     theme: uiTheme.theme,
-    colors: colorsFor('dark'),
-    isDark: true,
+    colors: colorsFor(uiTheme.scheme),
+    isDark: uiTheme.isDark,
     reduceMotion: uiTheme.reduceMotion,
     reduceTransparency: uiTheme.reduceTransparency,
     setTheme: uiTheme.setTheme,

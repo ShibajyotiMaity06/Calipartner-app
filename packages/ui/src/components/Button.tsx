@@ -1,3 +1,4 @@
+import { useTheme as useAppearance } from '../theme/useTheme';
 import React from 'react';
 import {
   Pressable,
@@ -7,7 +8,7 @@ import {
   type GestureResponderEvent,
   type ViewStyle,
 } from 'react-native';
-import { dark } from '../tokens/colors';
+
 import { radius } from '../tokens/radius';
 import { space } from '../tokens/space';
 import { Text } from './Text';
@@ -66,6 +67,8 @@ export function Button({
   testID,
   style,
 }: ButtonProps): React.JSX.Element {
+  const { colors: dark } = useAppearance();
+
   const isDisabled = disabled || loading;
   const navigationAction = /^(?:\u2190\s*)?back$/i.test(label.trim())
     ? 'back'

@@ -1,7 +1,8 @@
+import { useTheme as useAppearance } from '@calipartner/ui/theme';
 import { NavigationIcon } from '@calipartner/ui';
 import React, { useState } from 'react';
 import { Modal, SafeAreaView, ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
-import { Button, Card, dark, space, Stepper, Text } from '@calipartner/ui';
+import { Button, Card, space, Stepper, Text } from '@calipartner/ui';
 import { t } from '@/i18n';
 import { playClickSound } from '@/lib/sound';
 
@@ -22,6 +23,9 @@ export function DailyGoalsModal({
   onSave,
   testID = 'modal-daily-goals',
 }: DailyGoalsModalProps) {
+  const { colors: dark } = useAppearance();
+  const styles = createStyles(dark);
+
   const [stepGoal, setStepGoal] = useState<number>(currentStepGoal);
   const [waterGoalMl, setWaterGoalMl] = useState<number>(currentWaterGoalMl);
   const [saving, setSaving] = useState(false);
@@ -150,64 +154,65 @@ export function DailyGoalsModal({
   );
 }
 
-const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
-    backgroundColor: dark.bg0,
-  },
-  container: {
-    flex: 1,
-    backgroundColor: dark.bg0,
-  },
-  topBar: {
-    height: 56,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: space[4],
-    borderBottomWidth: 1,
-    borderBottomColor: dark.hairline,
-  },
-  backButton: {
-    width: 44,
-    height: 44,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  backButtonPlaceholder: {
-    width: 44,
-  },
-  scrollContent: {
-    padding: space[4],
-    paddingBottom: space[8],
-  },
-  introSubtitle: {
-    marginBottom: space[4],
-  },
-  goalCard: {
-    padding: space[4],
-    marginBottom: space[4],
-  },
-  goalHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    marginBottom: space[3],
-  },
-  metricDisplay: {
-    fontVariant: ['tabular-nums'],
-  },
-  stepperWrap: {
-    marginTop: space[2],
-    alignItems: 'center',
-  },
-  bottomBar: {
-    padding: space[4],
-    borderTopWidth: 1,
-    borderTopColor: dark.hairline,
-    backgroundColor: dark.bg0,
-  },
-  saveButton: {
-    width: '100%',
-  },
-});
+const createStyles = (dark: ReturnType<typeof useAppearance>['colors']) =>
+  StyleSheet.create({
+    safeArea: {
+      flex: 1,
+      backgroundColor: dark.bg0,
+    },
+    container: {
+      flex: 1,
+      backgroundColor: dark.bg0,
+    },
+    topBar: {
+      height: 56,
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      paddingHorizontal: space[4],
+      borderBottomWidth: 1,
+      borderBottomColor: dark.hairline,
+    },
+    backButton: {
+      width: 44,
+      height: 44,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    backButtonPlaceholder: {
+      width: 44,
+    },
+    scrollContent: {
+      padding: space[4],
+      paddingBottom: space[8],
+    },
+    introSubtitle: {
+      marginBottom: space[4],
+    },
+    goalCard: {
+      padding: space[4],
+      marginBottom: space[4],
+    },
+    goalHeader: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'flex-start',
+      marginBottom: space[3],
+    },
+    metricDisplay: {
+      fontVariant: ['tabular-nums'],
+    },
+    stepperWrap: {
+      marginTop: space[2],
+      alignItems: 'center',
+    },
+    bottomBar: {
+      padding: space[4],
+      borderTopWidth: 1,
+      borderTopColor: dark.hairline,
+      backgroundColor: dark.bg0,
+    },
+    saveButton: {
+      width: '100%',
+    },
+  });

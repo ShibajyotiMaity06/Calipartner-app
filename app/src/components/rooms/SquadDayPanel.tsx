@@ -1,9 +1,10 @@
+import { useTheme as useAppearance } from '@calipartner/ui/theme';
 import { type as inputTypography } from '@calipartner/ui';
 import React, { useRef, useState } from 'react';
 import { Modal, Pressable, ScrollView, StyleSheet, Switch, TextInput, View } from 'react-native';
 import Svg, { Circle } from 'react-native-svg';
 import { getLocalDateString } from '@calipartner/core';
-import { Button, dark, homeLayout, radius, space, Text, type as typography } from '@calipartner/ui';
+import { Button, homeLayout, radius, space, Text, type as typography } from '@calipartner/ui';
 import { useAuth } from '@/contexts/AuthContext';
 import { useSquadDay } from '@/hooks/useSquadDay';
 import { useCurrentLocalDate } from '@/hooks/useCurrentLocalDate';
@@ -14,6 +15,9 @@ import { t } from '@/i18n';
 import { saveCheckIn, type CheckInActivity, type SquadDayMember } from '@/services/checkInService';
 
 export function CheckInRing({ count, total }: { count: number; total: number }) {
+  const { colors: dark } = useAppearance();
+  const styles = createStyles(dark);
+
   const size = homeLayout.ringSize,
     stroke = homeLayout.ringStroke,
     r = (size - stroke) / 2,
@@ -80,6 +84,9 @@ export function SquadDayPanel({
   showFeed?: boolean;
   embedded?: boolean;
 }) {
+  const { colors: dark } = useAppearance();
+  const styles = createStyles(dark);
+
   const { members, loading, error, refresh } = useSquadDay(roomId, visible);
   const { hasActiveAccess } = useSubscription();
   const [checkIn, setCheckIn] = useState(false);
@@ -241,6 +248,9 @@ function SquadFeedContent({
   limit?: number;
   onOpen?: () => void;
 }) {
+  const { colors: dark } = useAppearance();
+  const styles = createStyles(dark);
+
   const checked = members
     .filter((member) => member.checked_in && (hasActiveAccess || member.is_self))
     .sort((a, b) => (b.occurred_at ?? '').localeCompare(a.occurred_at ?? ''));
@@ -330,6 +340,9 @@ export function CheckInModal({
   onClose: () => void;
   onSaved: () => void;
 }) {
+  const { colors: dark } = useAppearance();
+  const styles = createStyles(dark);
+
   useBrowserModalBack(true, onClose);
   const { user } = useAuth();
   const { timeZone } = useCurrentLocalDate();
@@ -450,69 +463,70 @@ export function CheckInModal({
   );
 }
 
-const styles = StyleSheet.create({
-  avatarRow: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: space[2] },
-  stack: { gap: space[3] },
-  embedded: { padding: 0, borderWidth: 0, flex: 1 },
-  card: {
-    backgroundColor: dark.s1,
-    borderRadius: radius.card,
-    padding: space[4],
-    gap: space[3],
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: dark.hairline,
-  },
-  summary: { flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: space[3] },
-  details: { flex: 1, minWidth: space[9] },
-  ring: {
-    width: homeLayout.ringSize,
-    height: homeLayout.ringSize,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  ringText: { position: 'absolute', alignItems: 'center' },
-  memberLine: {
-    flexDirection: 'row',
-    gap: space[2],
-    alignItems: 'center',
-    paddingVertical: space[1],
-  },
-  avatar: {
-    width: homeLayout.avatarSize,
-    height: homeLayout.avatarSize,
-    borderRadius: radius.full,
-    borderWidth: 2,
-    borderColor: dark.chocolate,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: dark.s2,
-  },
-  feedRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: space[3],
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderColor: dark.hairline,
-    paddingVertical: space[3],
-  },
-  modal: { flex: 1, padding: space[4], backgroundColor: dark.bg0 },
-  modalContent: { gap: space[5], paddingBottom: space[7] },
-  chips: { flexDirection: 'row', flexWrap: 'wrap', gap: space[2] },
-  chip: {
-    minHeight: homeLayout.touchSize,
-    padding: space[3],
-    borderRadius: radius.full,
-    backgroundColor: dark.s2,
-    justifyContent: 'center',
-  },
-  selected: { backgroundColor: dark.s3, borderWidth: 1, borderColor: dark.hairlineLit },
-  input: {
-    ...typography.body,
-    color: dark.textHi,
-    borderWidth: 1,
-    borderColor: dark.hairline,
-    borderRadius: radius.control,
-    padding: space[3],
-    minHeight: homeLayout.touchSize,
-  },
-});
+const createStyles = (dark: ReturnType<typeof useAppearance>['colors']) =>
+  StyleSheet.create({
+    avatarRow: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: space[2] },
+    stack: { gap: space[3] },
+    embedded: { padding: 0, borderWidth: 0, flex: 1 },
+    card: {
+      backgroundColor: dark.s1,
+      borderRadius: radius.card,
+      padding: space[4],
+      gap: space[3],
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: dark.hairline,
+    },
+    summary: { flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: space[3] },
+    details: { flex: 1, minWidth: space[9] },
+    ring: {
+      width: homeLayout.ringSize,
+      height: homeLayout.ringSize,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    ringText: { position: 'absolute', alignItems: 'center' },
+    memberLine: {
+      flexDirection: 'row',
+      gap: space[2],
+      alignItems: 'center',
+      paddingVertical: space[1],
+    },
+    avatar: {
+      width: homeLayout.avatarSize,
+      height: homeLayout.avatarSize,
+      borderRadius: radius.full,
+      borderWidth: 2,
+      borderColor: dark.chocolate,
+      alignItems: 'center',
+      justifyContent: 'center',
+      backgroundColor: dark.s2,
+    },
+    feedRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: space[3],
+      borderBottomWidth: StyleSheet.hairlineWidth,
+      borderColor: dark.hairline,
+      paddingVertical: space[3],
+    },
+    modal: { flex: 1, padding: space[4], backgroundColor: dark.bg0 },
+    modalContent: { gap: space[5], paddingBottom: space[7] },
+    chips: { flexDirection: 'row', flexWrap: 'wrap', gap: space[2] },
+    chip: {
+      minHeight: homeLayout.touchSize,
+      padding: space[3],
+      borderRadius: radius.full,
+      backgroundColor: dark.s2,
+      justifyContent: 'center',
+    },
+    selected: { backgroundColor: dark.s3, borderWidth: 1, borderColor: dark.hairlineLit },
+    input: {
+      ...typography.body,
+      color: dark.textHi,
+      borderWidth: 1,
+      borderColor: dark.hairline,
+      borderRadius: radius.control,
+      padding: space[3],
+      minHeight: homeLayout.touchSize,
+    },
+  });

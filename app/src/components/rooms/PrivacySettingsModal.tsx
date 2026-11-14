@@ -1,7 +1,8 @@
+import { useTheme as useAppearance } from '@calipartner/ui/theme';
 import { useBrowserModalBack } from '@/hooks/useBrowserModalBack';
 import React, { useEffect, useState } from 'react';
 import { Modal, SafeAreaView, ScrollView, StyleSheet, View } from 'react-native';
-import { Button, Card, dark, space, SwitchRow, Text } from '@calipartner/ui';
+import { Button, Card, space, SwitchRow, Text } from '@calipartner/ui';
 import type { RoomPrivacySettings } from '@calipartner/core';
 import { t } from '@/i18n';
 import { useAuth } from '@/contexts/AuthContext';
@@ -37,6 +38,9 @@ export function PrivacySettingsModal({
   onOpenPerRoom,
   rooms = [],
 }: PrivacySettingsModalProps) {
+  const { colors: dark } = useAppearance();
+  const styles = createStyles(dark);
+
   useBrowserModalBack(visible, onClose);
   const { profile, updateProfile } = useAuth();
   const { isOnline } = useNetworkStatus();
@@ -190,7 +194,8 @@ export function PrivacySettingsModal({
     </Modal>
   );
 }
-const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: dark.bg0 },
-  content: { padding: space[4], gap: space[3], paddingBottom: space[8] },
-});
+const createStyles = (dark: ReturnType<typeof useAppearance>['colors']) =>
+  StyleSheet.create({
+    screen: { flex: 1, backgroundColor: dark.bg0 },
+    content: { padding: space[4], gap: space[3], paddingBottom: space[8] },
+  });

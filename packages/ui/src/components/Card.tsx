@@ -1,3 +1,4 @@
+import { useTheme as useAppearance } from '../theme/useTheme';
 import React from 'react';
 import {
   Pressable,
@@ -7,7 +8,7 @@ import {
   type ViewStyle,
   type StyleProp,
 } from 'react-native';
-import { dark } from '../tokens/colors';
+
 import { radius } from '../tokens/radius';
 import { space } from '../tokens/space';
 
@@ -41,6 +42,8 @@ export function Card({
   testID,
   style,
 }: CardProps): React.JSX.Element {
+  const { colors: dark } = useAppearance();
+
   const isPressable = Boolean(onPress);
 
   const getBgColor = (pressed = false): string => {

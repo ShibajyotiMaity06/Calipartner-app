@@ -1,14 +1,17 @@
+import { useTheme as useAppearance } from '@calipartner/ui/theme';
 import { afterSetupDestination } from '@/services/pairOnboardingService';
 import React, { useEffect } from 'react';
 import { SafeAreaView, StyleSheet, View } from 'react-native';
 import { useRouter } from 'expo-router';
-import { Button, Text, dark, space } from '@calipartner/ui';
+import { Button, Text, space } from '@calipartner/ui';
 import { CaliPartnerLogo } from '@/components/brand/CaliPartnerLogo';
 import { playSuccessSound } from '@/lib/sound';
 import { useAuth } from '@/contexts/AuthContext';
 import { isUserOnboarded } from '@/services/onboardingStatus';
 
 export default function WelcomeCelebrationScreen() {
+  const { colors: dark } = useAppearance();
+
   const router = useRouter();
   const { user } = useAuth();
 

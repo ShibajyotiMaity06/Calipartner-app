@@ -1,7 +1,8 @@
-﻿import React from 'react';
+import { useTheme as useAppearance } from '@calipartner/ui/theme';
+import React from 'react';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { dark, homeLayout, radius, space, Text } from '@calipartner/ui';
+import { homeLayout, radius, space, Text } from '@calipartner/ui';
 import { t, type TranslationKey } from '@/i18n';
 import type { homeRefresh } from '@/i18n/homeRefresh';
 
@@ -34,6 +35,9 @@ export function LogSomethingView({
   onFlow: (flow: LogFlow) => void;
   onClose: () => void;
 }) {
+  const { colors: dark } = useAppearance();
+  const styles = createStyles(dark);
+
   return (
     <ScrollView contentContainerStyle={styles.content} testID="log-hub-view">
       <View style={styles.header}>
@@ -79,34 +83,35 @@ export function LogSomethingView({
     </ScrollView>
   );
 }
-const styles = StyleSheet.create({
-  content: { gap: space[3], padding: space[3], paddingBottom: space[7] },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: space[2],
-  },
-  iconButton: {
-    minWidth: homeLayout.touchSize,
-    minHeight: homeLayout.touchSize,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: dark.s2,
-    borderRadius: radius.control,
-  },
-  grid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', gap: space[2] },
-  tile: {
-    flexGrow: 0,
-    flexBasis: '48%',
-    minHeight: homeLayout.touchSize,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: space[3],
-    padding: space[3],
-    borderRadius: radius.control,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: dark.hairlineLit,
-    backgroundColor: dark.s2,
-  },
-});
+const createStyles = (dark: ReturnType<typeof useAppearance>['colors']) =>
+  StyleSheet.create({
+    content: { gap: space[3], padding: space[3], paddingBottom: space[7] },
+    header: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      gap: space[2],
+    },
+    iconButton: {
+      minWidth: homeLayout.touchSize,
+      minHeight: homeLayout.touchSize,
+      alignItems: 'center',
+      justifyContent: 'center',
+      backgroundColor: dark.s2,
+      borderRadius: radius.control,
+    },
+    grid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', gap: space[2] },
+    tile: {
+      flexGrow: 0,
+      flexBasis: '48%',
+      minHeight: homeLayout.touchSize,
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: space[3],
+      padding: space[3],
+      borderRadius: radius.control,
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: dark.hairlineLit,
+      backgroundColor: dark.s2,
+    },
+  });

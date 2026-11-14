@@ -1,6 +1,7 @@
+import { useTheme as useAppearance } from '../theme/useTheme';
 import React from 'react';
 import { View, StyleSheet, type AccessibilityProps } from 'react-native';
-import { dark, type IdentityHue, getIdentityColor } from '../tokens/colors';
+import { type IdentityHue, getIdentityColor } from '../tokens/colors';
 import { space } from '../tokens/space';
 import { Text } from './Text';
 
@@ -38,6 +39,9 @@ export function MacroBar({
   accessibilityLabel,
   ...rest
 }: MacroBarProps): React.JSX.Element {
+  const { colors: dark } = useAppearance();
+  const styles = createStyles(dark);
+
   const baseColor = getIdentityColor(identityHue);
 
   const a11y =
@@ -151,37 +155,38 @@ export function MacroBar({
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    width: '100%',
-    gap: space[3],
-  },
-  barTrack: {
-    width: '100%',
-    backgroundColor: dark.s2,
-    flexDirection: 'row',
-    overflow: 'hidden',
-  },
-  barSegment: {
-    height: '100%',
-  },
-  metricsRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-  },
-  macroColumn: {
-    gap: 2,
-    alignItems: 'flex-start',
-  },
-  indicatorRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-  },
-  colorDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-  },
-});
+const createStyles = (dark: ReturnType<typeof useAppearance>['colors']) =>
+  StyleSheet.create({
+    container: {
+      width: '100%',
+      gap: space[3],
+    },
+    barTrack: {
+      width: '100%',
+      backgroundColor: dark.s2,
+      flexDirection: 'row',
+      overflow: 'hidden',
+    },
+    barSegment: {
+      height: '100%',
+    },
+    metricsRow: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'flex-start',
+    },
+    macroColumn: {
+      gap: 2,
+      alignItems: 'flex-start',
+    },
+    indicatorRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 6,
+    },
+    colorDot: {
+      width: 8,
+      height: 8,
+      borderRadius: 4,
+    },
+  });

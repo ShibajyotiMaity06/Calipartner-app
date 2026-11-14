@@ -1,8 +1,9 @@
+import { useTheme as useAppearance } from '@calipartner/ui/theme';
 import React from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import type { IndividualProgressData } from '@calipartner/core';
-import { Text, dark, radius, space, type } from '@calipartner/ui';
+import { Text, radius, space, type } from '@calipartner/ui';
 import { t } from '@/i18n';
 
 interface ProgressHubSummaryProps {
@@ -18,6 +19,9 @@ export function ProgressHubSummary({
   onOpenWeeklySummary,
   testID = 'progress-hub-summary',
 }: ProgressHubSummaryProps) {
+  const { colors: dark } = useAppearance();
+  const styles = createStyles(dark);
+
   const weight = data?.weight;
   const calories = data?.calories;
   const macros = data?.macros;
@@ -316,119 +320,120 @@ export function ProgressHubSummary({
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    paddingHorizontal: space[4],
-    paddingVertical: space[2],
-  },
-  weekSummaryCard: {
-    backgroundColor: dark.s2,
-    borderRadius: radius.card,
-    padding: space[4],
-    marginBottom: space[3],
-    borderWidth: 1,
-    borderColor: dark.hairlineLit,
-  },
-  weekSummaryHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: space[2],
-    marginBottom: space[2],
-  },
-  weekSummaryTag: {
-    ...type.label,
-    color: dark.apricot,
-    fontWeight: '600',
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-  },
-  weekSummaryText: {
-    ...type.body,
-    color: dark.textHi,
-    lineHeight: 22,
-  },
-  recapLink: {
-    marginTop: space[3],
-    alignSelf: 'flex-start',
-  },
-  recapLinkText: {
-    ...type.bodyS,
-    color: dark.apricot,
-    fontWeight: '600',
-  },
-  cardsStack: {
-    gap: space[3],
-  },
-  summaryCard: {
-    backgroundColor: dark.s1,
-    borderRadius: radius.card,
-    padding: space[4],
-    borderWidth: 1,
-    borderColor: dark.hairline,
-  },
-  cardHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: space[2],
-  },
-  cardTitleRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: space[2],
-  },
-  cardTitle: {
-    ...type.heading,
-    color: dark.textHi,
-  },
-  cardDetailHint: {
-    ...type.label,
-    color: dark.textLo,
-  },
-  cardBody: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-end',
-  },
-  headlineNumber: {
-    ...type.numeralL,
-    fontVariant: ['tabular-nums'] as any,
-    color: dark.textHi,
-  },
-  headlineCaption: {
-    ...type.bodyS,
-    color: dark.textLo,
-    marginTop: 2,
-  },
-  pillBadge: {
-    backgroundColor: dark.s2,
-    paddingHorizontal: space[3],
-    paddingVertical: space[1],
-    borderRadius: radius.full,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: dark.hairline,
-  },
-  pillText: {
-    ...type.label,
-    color: dark.apricot,
-    fontVariant: ['tabular-nums'] as any,
-  },
-  macrosMiniRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginTop: space[1],
-  },
-  macroMiniBox: {
-    flex: 1,
-  },
-  macroMiniVal: {
-    ...type.numeralM,
-    fontVariant: ['tabular-nums'] as any,
-    color: dark.textHi,
-  },
-  macroMiniLabel: {
-    ...type.label,
-    color: dark.textLo,
-    marginTop: 2,
-  },
-});
+const createStyles = (dark: ReturnType<typeof useAppearance>['colors']) =>
+  StyleSheet.create({
+    container: {
+      paddingHorizontal: space[4],
+      paddingVertical: space[2],
+    },
+    weekSummaryCard: {
+      backgroundColor: dark.s2,
+      borderRadius: radius.card,
+      padding: space[4],
+      marginBottom: space[3],
+      borderWidth: 1,
+      borderColor: dark.hairlineLit,
+    },
+    weekSummaryHeader: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: space[2],
+      marginBottom: space[2],
+    },
+    weekSummaryTag: {
+      ...type.label,
+      color: dark.apricot,
+      fontWeight: '600',
+      textTransform: 'uppercase',
+      letterSpacing: 0.5,
+    },
+    weekSummaryText: {
+      ...type.body,
+      color: dark.textHi,
+      lineHeight: 22,
+    },
+    recapLink: {
+      marginTop: space[3],
+      alignSelf: 'flex-start',
+    },
+    recapLinkText: {
+      ...type.bodyS,
+      color: dark.apricot,
+      fontWeight: '600',
+    },
+    cardsStack: {
+      gap: space[3],
+    },
+    summaryCard: {
+      backgroundColor: dark.s1,
+      borderRadius: radius.card,
+      padding: space[4],
+      borderWidth: 1,
+      borderColor: dark.hairline,
+    },
+    cardHeader: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      marginBottom: space[2],
+    },
+    cardTitleRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: space[2],
+    },
+    cardTitle: {
+      ...type.heading,
+      color: dark.textHi,
+    },
+    cardDetailHint: {
+      ...type.label,
+      color: dark.textLo,
+    },
+    cardBody: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'flex-end',
+    },
+    headlineNumber: {
+      ...type.numeralL,
+      fontVariant: ['tabular-nums'] as any,
+      color: dark.textHi,
+    },
+    headlineCaption: {
+      ...type.bodyS,
+      color: dark.textLo,
+      marginTop: 2,
+    },
+    pillBadge: {
+      backgroundColor: dark.s2,
+      paddingHorizontal: space[3],
+      paddingVertical: space[1],
+      borderRadius: radius.full,
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: dark.hairline,
+    },
+    pillText: {
+      ...type.label,
+      color: dark.apricot,
+      fontVariant: ['tabular-nums'] as any,
+    },
+    macrosMiniRow: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      marginTop: space[1],
+    },
+    macroMiniBox: {
+      flex: 1,
+    },
+    macroMiniVal: {
+      ...type.numeralM,
+      fontVariant: ['tabular-nums'] as any,
+      color: dark.textHi,
+    },
+    macroMiniLabel: {
+      ...type.label,
+      color: dark.textLo,
+      marginTop: 2,
+    },
+  });

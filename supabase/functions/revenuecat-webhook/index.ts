@@ -12,6 +12,7 @@ export const corsHeaders = {
 };
 
 const ALLOWED_EVENT_TYPES = new Set([
+  'NON_RENEWING_PURCHASE',
   'INITIAL_PURCHASE',
   'RENEWAL',
   'PRODUCT_CHANGE',
@@ -27,7 +28,10 @@ const ALLOWED_EVENT_TYPES = new Set([
 
 const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
-export async function handleRevenueCatWebhook(req: Request): Promise<Response> {
+export async function handleRevenueCatWebhook(
+  req: Request,
+  makeClient = createClient,
+): Promise<Response> {
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders });
   }
@@ -156,7 +160,44 @@ export async function handleRevenueCatWebhook(req: Request): Promise<Response> {
       );
     }
 
-    const adminClient = createClient(supabaseUrl, supabaseServiceKey);
+    const adminClient = makeClient(supabaseUrl, supabaseServiceKey);
+
+    // CC is a separate cosmetic ledger. Never treat a consumable as a subscription.
+    if (eventType === 'NON_RENEWING_PURCHASE' || eventType === 'CANCELLATION') {
+      const { data: pack, error: packError } = await adminClient
+        .from('cc_packs')
+        .select('id')
+        .eq('store_product_id', productId)
+        .maybeSingle();
+      if (packError) throw new Error('CC_PACK_LOOKUP_FAILED');
+      if (pack) {
+        if (!['APP_STORE', 'PLAY_STORE'].includes(store.toUpperCase()) || !event.transaction_id) {
+          return new Response(JSON.stringify({ error: 'INVALID_CC_TRANSACTION' }), {
+            status: 400,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          });
+        }
+        const { data: result, error: creditError } = await adminClient.rpc(
+          'avatar_apply_store_event',
+          {
+            p_user_id: appUserId,
+            p_transaction_id: `${store.toUpperCase()}:${event.transaction_id}`,
+            p_pack_id: pack.id,
+            p_refund: eventType === 'CANCELLATION',
+          },
+        );
+        if (creditError) throw new Error('CC_EVENT_FAILED');
+        return new Response(JSON.stringify({ success: true, event_id: eventId, result }), {
+          status: 200,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+      if (eventType === 'NON_RENEWING_PURCHASE')
+        return new Response(JSON.stringify({ status: 'ignored_non_cc_product' }), {
+          status: 200,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+    }
 
     // 3. Handle TRANSFER event
     if (eventType === 'TRANSFER') {
@@ -252,6 +293,6 @@ declare const Deno: {
   env: { get: (key: string) => string | undefined };
 };
 
-if (typeof Deno !== 'undefined' && typeof Deno.serve === 'function') {
+if (import.meta.main && typeof Deno !== 'undefined' && typeof Deno.serve === 'function') {
   Deno.serve(handleRevenueCatWebhook);
 }

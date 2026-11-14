@@ -1,10 +1,11 @@
+import { useTheme as useAppearance } from '@calipartner/ui/theme';
 import { type as inputTypography } from '@calipartner/ui';
 import { useBrowserModalBack } from '@/hooks/useBrowserModalBack';
 import React, { useEffect, useRef, useState } from 'react';
 
 import { Modal, SafeAreaView, ScrollView, StyleSheet, TextInput } from 'react-native';
 
-import { Button, dark, radius, space, Text, type as typography } from '@calipartner/ui';
+import { Button, radius, space, Text, type as typography } from '@calipartner/ui';
 
 import type { RoomMemberSnapshot } from '@calipartner/core';
 
@@ -33,6 +34,9 @@ export function NudgeModal({
   onClose,
   onSendNudge,
 }: NudgeModalProps) {
+  const { colors: dark } = useAppearance();
+  const styles = createStyles(dark);
+
   useBrowserModalBack(visible, onClose);
   const { isOnline } = useNetworkStatus();
 
@@ -136,18 +140,19 @@ export function NudgeModal({
   );
 }
 
-const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: dark.bg0 },
+const createStyles = (dark: ReturnType<typeof useAppearance>['colors']) =>
+  StyleSheet.create({
+    screen: { flex: 1, backgroundColor: dark.bg0 },
 
-  content: { padding: space[4], gap: space[3] },
+    content: { padding: space[4], gap: space[3] },
 
-  input: {
-    ...typography.body,
-    color: dark.textHi,
-    minHeight: space[9],
-    padding: space[3],
-    borderRadius: radius.control,
-    backgroundColor: dark.s1,
-    textAlignVertical: 'top',
-  },
-});
+    input: {
+      ...typography.body,
+      color: dark.textHi,
+      minHeight: space[9],
+      padding: space[3],
+      borderRadius: radius.control,
+      backgroundColor: dark.s1,
+      textAlignVertical: 'top',
+    },
+  });

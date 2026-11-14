@@ -1,3 +1,4 @@
+import { useTheme as useAppearance } from '@calipartner/ui/theme';
 import { type as inputTypography } from '@calipartner/ui';
 import React, { useCallback, useMemo, useState } from 'react';
 import {
@@ -50,6 +51,8 @@ const METRICS: ProgressMetric[] = [
 ];
 
 export function RoomProgressView({ roomId, testID = 'room-progress-view' }: RoomProgressViewProps) {
+  const { colors: dark } = useAppearance();
+
   const { colors } = useTheme();
 
   const {
@@ -99,7 +102,7 @@ export function RoomProgressView({ roomId, testID = 'room-progress-view' }: Room
       map.set(m.user_id, NEUTRAL_PALETTE[i % NEUTRAL_PALETTE.length] ?? dark.iris);
     });
     return map;
-  }, [memberSeriesList]);
+  }, [memberSeriesList, dark.iris]);
 
   // Filter visible series
   const visibleSeries = useMemo(() => {

@@ -1,7 +1,9 @@
+import { useTheme as useAppearance } from '@calipartner/ui/theme';
 import React, { useState } from 'react';
 import { Modal, Pressable, SafeAreaView, ScrollView, StyleSheet, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { Text, Button, dark, radius, space } from '@calipartner/ui';
+import { Text, Button, radius, space } from '@calipartner/ui';
+import { t } from '@/i18n';
 
 export interface TermsOfServiceModalProps {
   visible: boolean;
@@ -16,6 +18,9 @@ export function TermsOfServiceModal({
   onAccept,
   testID = 'terms-of-service-modal',
 }: TermsOfServiceModalProps) {
+  const { colors: dark } = useAppearance();
+  const styles = createStyles(dark);
+
   const [activeTab, setActiveTab] = useState<'terms' | 'privacy'>('terms');
 
   const handleAgree = () => {
@@ -90,6 +95,8 @@ export function TermsOfServiceModal({
             style={styles.scrollView}
             testID="terms-scroll-view"
           >
+            <Text variant="body">{t('avatar.terms')}</Text>
+            <Text variant="body">{t('avatar.deletionTerms')}</Text>
             {activeTab === 'terms' ? (
               <View style={styles.textSection}>
                 <Text variant="heading" color={dark.textHi} style={styles.sectionHeading}>
@@ -195,76 +202,77 @@ export function TermsOfServiceModal({
   );
 }
 
-const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
-    backgroundColor: dark.bg0,
-  },
-  container: {
-    flex: 1,
-    backgroundColor: dark.bg0,
-  },
-  topBar: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: space[4],
-    paddingVertical: space[3],
-    borderBottomWidth: 1,
-    borderBottomColor: dark.hairline,
-  },
-  headerTitle: {
-    fontWeight: '700',
-  },
-  closeBtn: {
-    width: 44,
-    height: 44,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderRadius: radius.full,
-  },
-  tabsRow: {
-    flexDirection: 'row',
-    paddingHorizontal: space[4],
-    paddingVertical: space[2],
-    gap: space[2],
-    backgroundColor: dark.s1,
-  },
-  tabButton: {
-    flex: 1,
-    minHeight: 44,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderRadius: radius.button,
-    backgroundColor: dark.s2,
-  },
-  tabButtonActive: {
-    backgroundColor: dark.apricot,
-  },
-  tabText: {
-    fontWeight: '600',
-  },
-  scrollView: {
-    flex: 1,
-  },
-  scrollContent: {
-    padding: space[4],
-    paddingBottom: space[7],
-  },
-  textSection: {
-    gap: space[3],
-  },
-  sectionHeading: {
-    marginTop: space[2],
-    fontWeight: '700',
-  },
-  paragraph: {
-    lineHeight: 22,
-  },
-  bottomBar: {
-    padding: space[4],
-    borderTopWidth: 1,
-    borderTopColor: dark.hairline,
-    backgroundColor: dark.s1,
-  },
-});
+const createStyles = (dark: ReturnType<typeof useAppearance>['colors']) =>
+  StyleSheet.create({
+    safeArea: {
+      flex: 1,
+      backgroundColor: dark.bg0,
+    },
+    container: {
+      flex: 1,
+      backgroundColor: dark.bg0,
+    },
+    topBar: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      paddingHorizontal: space[4],
+      paddingVertical: space[3],
+      borderBottomWidth: 1,
+      borderBottomColor: dark.hairline,
+    },
+    headerTitle: {
+      fontWeight: '700',
+    },
+    closeBtn: {
+      width: 44,
+      height: 44,
+      alignItems: 'center',
+      justifyContent: 'center',
+      borderRadius: radius.full,
+    },
+    tabsRow: {
+      flexDirection: 'row',
+      paddingHorizontal: space[4],
+      paddingVertical: space[2],
+      gap: space[2],
+      backgroundColor: dark.s1,
+    },
+    tabButton: {
+      flex: 1,
+      minHeight: 44,
+      alignItems: 'center',
+      justifyContent: 'center',
+      borderRadius: radius.button,
+      backgroundColor: dark.s2,
+    },
+    tabButtonActive: {
+      backgroundColor: dark.apricot,
+    },
+    tabText: {
+      fontWeight: '600',
+    },
+    scrollView: {
+      flex: 1,
+    },
+    scrollContent: {
+      padding: space[4],
+      paddingBottom: space[7],
+    },
+    textSection: {
+      gap: space[3],
+    },
+    sectionHeading: {
+      marginTop: space[2],
+      fontWeight: '700',
+    },
+    paragraph: {
+      lineHeight: 22,
+    },
+    bottomBar: {
+      padding: space[4],
+      borderTopWidth: 1,
+      borderTopColor: dark.hairline,
+      backgroundColor: dark.s1,
+    },
+  });

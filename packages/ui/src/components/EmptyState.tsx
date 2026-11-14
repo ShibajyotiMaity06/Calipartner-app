@@ -1,6 +1,7 @@
+import { useTheme as useAppearance } from '../theme/useTheme';
 import React from 'react';
 import { View, StyleSheet, type ViewStyle } from 'react-native';
-import { dark } from '../tokens/colors';
+
 import { space } from '../tokens/space';
 import { Text } from './Text';
 import { Button } from './Button';
@@ -35,6 +36,8 @@ export function EmptyState({
   testID,
   style,
 }: EmptyStateProps): React.JSX.Element {
+  const { colors: dark } = useAppearance();
+
   return (
     <View style={[styles.container, style]} testID={testID}>
       {icon ? <View style={styles.iconWrap}>{icon}</View> : null}

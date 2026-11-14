@@ -1,8 +1,9 @@
+import { useTheme as useAppearance } from '@calipartner/ui/theme';
 import { type as inputTypography } from '@calipartner/ui';
 import React, { useState } from 'react';
 import { View, StyleSheet, TextInput, ScrollView } from 'react-native';
 import type { Food, MealSection } from '@calipartner/core';
-import { Sheet, Text, Button, Chip, dark, space, radius } from '@calipartner/ui';
+import { Sheet, Text, Button, Chip, space, radius } from '@calipartner/ui';
 import { generateClientUuid } from '@/services/foodService';
 import { t } from '@/i18n';
 
@@ -21,6 +22,9 @@ export function QuickAddCaloriesModal({
   onClose,
   onSave,
 }: QuickAddCaloriesModalProps) {
+  const { colors: dark } = useAppearance();
+  const styles = createStyles(dark);
+
   const [caloriesStr, setCaloriesStr] = useState('');
   const [proteinStr, setProteinStr] = useState('');
   const [carbsStr, setCarbsStr] = useState('');
@@ -185,53 +189,54 @@ export function QuickAddCaloriesModal({
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    paddingHorizontal: space[4],
-    paddingBottom: space[8],
-    gap: space[4],
-  },
-  header: {
-    gap: space[1],
-  },
-  sectionRow: {
-    flexDirection: 'row',
-  },
-  chipScroll: {
-    gap: space[2],
-  },
-  fieldBox: {
-    gap: space[2],
-  },
-  numericInput: {
-    backgroundColor: dark.s2,
-    borderWidth: 1,
-    borderColor: dark.hairlineLit,
-    borderRadius: radius.control,
-    paddingHorizontal: space[4],
-    paddingVertical: space[3],
-    fontSize: 22,
-    color: dark.textHi,
-  },
-  macroInputsRow: {
-    flexDirection: 'row',
-    gap: space[3],
-  },
-  macroField: {
-    flex: 1,
-    gap: space[1],
-  },
-  macroInput: {
-    backgroundColor: dark.s2,
-    borderWidth: 1,
-    borderColor: dark.hairlineLit,
-    borderRadius: radius.control,
-    paddingHorizontal: space[3],
-    paddingVertical: space[2],
-    fontSize: 16,
-    color: dark.textHi,
-  },
-  buttonWrap: {
-    paddingTop: space[4],
-  },
-});
+const createStyles = (dark: ReturnType<typeof useAppearance>['colors']) =>
+  StyleSheet.create({
+    container: {
+      paddingHorizontal: space[4],
+      paddingBottom: space[8],
+      gap: space[4],
+    },
+    header: {
+      gap: space[1],
+    },
+    sectionRow: {
+      flexDirection: 'row',
+    },
+    chipScroll: {
+      gap: space[2],
+    },
+    fieldBox: {
+      gap: space[2],
+    },
+    numericInput: {
+      backgroundColor: dark.s2,
+      borderWidth: 1,
+      borderColor: dark.hairlineLit,
+      borderRadius: radius.control,
+      paddingHorizontal: space[4],
+      paddingVertical: space[3],
+      fontSize: 22,
+      color: dark.textHi,
+    },
+    macroInputsRow: {
+      flexDirection: 'row',
+      gap: space[3],
+    },
+    macroField: {
+      flex: 1,
+      gap: space[1],
+    },
+    macroInput: {
+      backgroundColor: dark.s2,
+      borderWidth: 1,
+      borderColor: dark.hairlineLit,
+      borderRadius: radius.control,
+      paddingHorizontal: space[3],
+      paddingVertical: space[2],
+      fontSize: 16,
+      color: dark.textHi,
+    },
+    buttonWrap: {
+      paddingTop: space[4],
+    },
+  });

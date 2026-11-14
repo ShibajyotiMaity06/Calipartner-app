@@ -1,3 +1,4 @@
+import { useTheme as useAppearance } from '@calipartner/ui/theme';
 import { NavigationIcon } from '@calipartner/ui';
 import React, { useState } from 'react';
 import {
@@ -10,7 +11,7 @@ import {
   View,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { Avatar, Button, dark, radius, space, Text, type IdentityHue } from '@calipartner/ui';
+import { Avatar, Button, radius, space, Text, type IdentityHue } from '@calipartner/ui';
 import { playClickSound, playSuccessSound } from '@/lib/sound';
 
 export interface AvatarOption {
@@ -78,6 +79,9 @@ export function AvatarPickerModal({
   onClose,
   testID = 'avatar-picker-modal',
 }: AvatarPickerModalProps) {
+  const { colors: dark } = useAppearance();
+  const styles = createStyles(dark);
+
   const [currentSelected, setCurrentSelected] = useState<string>(
     currentAvatarUri ? 'custom-photo' : selectedAvatarId,
   );
@@ -316,119 +320,120 @@ export function AvatarPickerModal({
   );
 }
 
-const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
-    backgroundColor: dark.bg0,
-  },
-  container: {
-    flex: 1,
-    paddingHorizontal: space[4],
-    justifyContent: 'space-between',
-    paddingBottom: space[4],
-  },
-  topBar: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    minHeight: 44,
-    paddingTop: space[1],
-  },
-  backButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: space[1],
-    minWidth: 44,
-    minHeight: 44,
-  },
-  topTitle: {
-    fontWeight: '700',
-  },
-  spacer: {
-    width: 60,
-  },
-  noticeSection: {
-    paddingVertical: space[2],
-  },
-  noticeText: {
-    lineHeight: 20,
-  },
-  scrollContent: {
-    paddingBottom: space[6],
-  },
-  uploadCard: {
-    backgroundColor: dark.s1,
-    borderRadius: radius.card,
-    borderWidth: 1,
-    borderColor: dark.hairlineLit,
-    padding: space[4],
-    marginBottom: space[4],
-  },
-  uploadHeaderRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: space[4],
-  },
-  customAvatarCircle: {
-    position: 'relative',
-    borderRadius: radius.full,
-    padding: 3,
-  },
-  customAvatarSelected: {
-    borderWidth: 2,
-    borderColor: dark.apricot,
-  },
-  uploadBadge: {
-    position: 'absolute',
-    bottom: 0,
-    right: 0,
-    backgroundColor: dark.apricot,
-    borderRadius: radius.full,
-    width: 24,
-    height: 24,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 2,
-    borderColor: dark.bg0,
-  },
-  uploadInfoCol: {
-    flex: 1,
-  },
-  uploadActionBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: space[2],
-    marginTop: space[2],
-    paddingVertical: space[1],
-  },
-  presetsTitleRow: {
-    marginBottom: space[2],
-    paddingHorizontal: space[1],
-  },
-  gridContainer: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'space-between',
-    paddingVertical: space[2],
-    gap: space[3],
-  },
-  avatarCell: {
-    width: '22%',
-    alignItems: 'center',
-    padding: space[2],
-    borderRadius: radius.control,
-    borderWidth: 2,
-    borderColor: 'transparent',
-    gap: space[1],
-  },
-  avatarCellSelected: {
-    borderColor: dark.apricot,
-    backgroundColor: dark.s2,
-  },
-  avatarLabel: {
-    fontWeight: '500',
-  },
-  footer: {
-    paddingTop: space[2],
-  },
-});
+const createStyles = (dark: ReturnType<typeof useAppearance>['colors']) =>
+  StyleSheet.create({
+    safeArea: {
+      flex: 1,
+      backgroundColor: dark.bg0,
+    },
+    container: {
+      flex: 1,
+      paddingHorizontal: space[4],
+      justifyContent: 'space-between',
+      paddingBottom: space[4],
+    },
+    topBar: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      minHeight: 44,
+      paddingTop: space[1],
+    },
+    backButton: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: space[1],
+      minWidth: 44,
+      minHeight: 44,
+    },
+    topTitle: {
+      fontWeight: '700',
+    },
+    spacer: {
+      width: 60,
+    },
+    noticeSection: {
+      paddingVertical: space[2],
+    },
+    noticeText: {
+      lineHeight: 20,
+    },
+    scrollContent: {
+      paddingBottom: space[6],
+    },
+    uploadCard: {
+      backgroundColor: dark.s1,
+      borderRadius: radius.card,
+      borderWidth: 1,
+      borderColor: dark.hairlineLit,
+      padding: space[4],
+      marginBottom: space[4],
+    },
+    uploadHeaderRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: space[4],
+    },
+    customAvatarCircle: {
+      position: 'relative',
+      borderRadius: radius.full,
+      padding: 3,
+    },
+    customAvatarSelected: {
+      borderWidth: 2,
+      borderColor: dark.apricot,
+    },
+    uploadBadge: {
+      position: 'absolute',
+      bottom: 0,
+      right: 0,
+      backgroundColor: dark.apricot,
+      borderRadius: radius.full,
+      width: 24,
+      height: 24,
+      alignItems: 'center',
+      justifyContent: 'center',
+      borderWidth: 2,
+      borderColor: dark.bg0,
+    },
+    uploadInfoCol: {
+      flex: 1,
+    },
+    uploadActionBtn: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: space[2],
+      marginTop: space[2],
+      paddingVertical: space[1],
+    },
+    presetsTitleRow: {
+      marginBottom: space[2],
+      paddingHorizontal: space[1],
+    },
+    gridContainer: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      justifyContent: 'space-between',
+      paddingVertical: space[2],
+      gap: space[3],
+    },
+    avatarCell: {
+      width: '22%',
+      alignItems: 'center',
+      padding: space[2],
+      borderRadius: radius.control,
+      borderWidth: 2,
+      borderColor: 'transparent',
+      gap: space[1],
+    },
+    avatarCellSelected: {
+      borderColor: dark.apricot,
+      backgroundColor: dark.s2,
+    },
+    avatarLabel: {
+      fontWeight: '500',
+    },
+    footer: {
+      paddingTop: space[2],
+    },
+  });

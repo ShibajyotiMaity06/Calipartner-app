@@ -1,3 +1,4 @@
+import { useTheme as useAppearance } from '@calipartner/ui/theme';
 import { type as inputTypography } from '@calipartner/ui';
 import React, { useMemo, useState } from 'react';
 import { StyleSheet, TextInput, View, TouchableOpacity } from 'react-native';
@@ -10,7 +11,7 @@ import {
   type Sex,
   type Units,
 } from '@calipartner/core';
-import { Text, space, dark, radius } from '@calipartner/ui';
+import { Text, space, radius } from '@calipartner/ui';
 import { InteractiveDobPicker } from '@/components/onboarding/InteractiveDobPicker';
 import { t } from '@/i18n';
 import { playClickSound } from '@/lib/sound';
@@ -58,6 +59,9 @@ export function BodyStatsStep({
   onChangeWeightKg,
   onChangeBodyFat,
 }: BodyStatsStepProps) {
+  const { colors: dark } = useAppearance();
+  const styles = createStyles(dark);
+
   // Local text input states so user can type freely
   const [heightCmText, setHeightCmText] = useState(heightCm > 0 ? String(heightCm) : '');
   const [weightText, setWeightText] = useState(
@@ -479,102 +483,103 @@ export function BodyStatsStep({
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    paddingHorizontal: space[4],
-    gap: space[4],
-    paddingTop: space[2],
-  },
-  section: {
-    gap: space[1],
-  },
-  sectionLabel: {
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-    fontWeight: '600',
-  },
-  helpText: {
-    lineHeight: 18,
-  },
-  input: {
-    minHeight: 48,
-    borderRadius: radius.control,
-    borderWidth: 1,
-    paddingHorizontal: space[3],
-    fontSize: 16,
-  },
-  segmentContainer: {
-    flexDirection: 'row',
-    borderRadius: radius.full,
-    backgroundColor: dark.s2,
-    borderWidth: 1,
-    borderColor: dark.hairline,
-    padding: 3,
-    minHeight: 44,
-  },
-  segmentItem: {
-    flex: 1,
-    borderRadius: radius.full,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: space[2],
-    minHeight: 40,
-  },
-  segmentActive: {
-    backgroundColor: dark.s1,
-    borderWidth: 1,
-    borderColor: dark.hairlineLit,
-  },
-  segmentTextBold: {
-    fontWeight: '600',
-  },
-  chipsRow: {
-    flexDirection: 'row',
-    gap: space[2],
-  },
-  chip: {
-    flex: 1,
-    borderRadius: radius.full,
-    minHeight: 44,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: space[2],
-  },
-  chipTextBold: {
-    fontWeight: '600',
-  },
-  dualInputRow: {
-    flexDirection: 'row',
-    gap: space[2],
-  },
-  dualInputItem: {
-    flex: 1,
-    position: 'relative',
-    justifyContent: 'center',
-  },
-  unitSuffix: {
-    position: 'absolute',
-    right: space[3],
-    fontWeight: '500',
-  },
-  bmiCard: {
-    backgroundColor: dark.s1,
-    borderWidth: 1,
-    borderRadius: radius.card,
-    padding: space[3],
-    gap: space[1],
-  },
-  bmiRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  bmiBadge: {
-    backgroundColor: dark.s2,
-    borderWidth: 1,
-    borderColor: dark.hairline,
-    borderRadius: radius.full,
-    paddingHorizontal: space[2],
-    paddingVertical: 2,
-  },
-});
+const createStyles = (dark: ReturnType<typeof useAppearance>['colors']) =>
+  StyleSheet.create({
+    container: {
+      paddingHorizontal: space[4],
+      gap: space[4],
+      paddingTop: space[2],
+    },
+    section: {
+      gap: space[1],
+    },
+    sectionLabel: {
+      textTransform: 'uppercase',
+      letterSpacing: 0.5,
+      fontWeight: '600',
+    },
+    helpText: {
+      lineHeight: 18,
+    },
+    input: {
+      minHeight: 48,
+      borderRadius: radius.control,
+      borderWidth: 1,
+      paddingHorizontal: space[3],
+      fontSize: 16,
+    },
+    segmentContainer: {
+      flexDirection: 'row',
+      borderRadius: radius.full,
+      backgroundColor: dark.s2,
+      borderWidth: 1,
+      borderColor: dark.hairline,
+      padding: 3,
+      minHeight: 44,
+    },
+    segmentItem: {
+      flex: 1,
+      borderRadius: radius.full,
+      alignItems: 'center',
+      justifyContent: 'center',
+      paddingVertical: space[2],
+      minHeight: 40,
+    },
+    segmentActive: {
+      backgroundColor: dark.s1,
+      borderWidth: 1,
+      borderColor: dark.hairlineLit,
+    },
+    segmentTextBold: {
+      fontWeight: '600',
+    },
+    chipsRow: {
+      flexDirection: 'row',
+      gap: space[2],
+    },
+    chip: {
+      flex: 1,
+      borderRadius: radius.full,
+      minHeight: 44,
+      alignItems: 'center',
+      justifyContent: 'center',
+      paddingHorizontal: space[2],
+    },
+    chipTextBold: {
+      fontWeight: '600',
+    },
+    dualInputRow: {
+      flexDirection: 'row',
+      gap: space[2],
+    },
+    dualInputItem: {
+      flex: 1,
+      position: 'relative',
+      justifyContent: 'center',
+    },
+    unitSuffix: {
+      position: 'absolute',
+      right: space[3],
+      fontWeight: '500',
+    },
+    bmiCard: {
+      backgroundColor: dark.s1,
+      borderWidth: 1,
+      borderRadius: radius.card,
+      padding: space[3],
+      gap: space[1],
+    },
+    bmiRow: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+    },
+    bmiBadge: {
+      backgroundColor: dark.s2,
+      borderWidth: 1,
+      borderColor: dark.hairline,
+      borderRadius: radius.full,
+      paddingHorizontal: space[2],
+      paddingVertical: 2,
+    },
+  });

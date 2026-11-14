@@ -1,10 +1,11 @@
+import { useTheme as useAppearance } from '@calipartner/ui/theme';
 import { NavigationIcon } from '@calipartner/ui';
 import { PremiumFeatureModal } from '@/components/subscription/PremiumFeatureModal';
 import React, { useState } from 'react';
 import { Modal, SafeAreaView, ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import Svg, { Circle, Defs, LinearGradient, Path, Stop } from 'react-native-svg';
-import { dark, radius, space, Text } from '@calipartner/ui';
+import { radius, space, Text } from '@calipartner/ui';
 import { playClickSound } from '@/lib/sound';
 import {
   ALL_DAYS,
@@ -27,6 +28,9 @@ function WorkoutProgressModalContent({
   initialTab = 'Overview',
   testID = 'workout-progress-modal',
 }: WorkoutProgressModalProps) {
+  const { colors: dark } = useAppearance();
+  const styles = createStyles(dark);
+
   const [activeTab, setActiveTab] = useState<'Overview' | 'Strength' | 'Volume'>(
     initialTab === ('History' as any) ? 'Overview' : initialTab,
   );
@@ -517,278 +521,279 @@ function WorkoutProgressModalContent({
   );
 }
 
-const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
-    backgroundColor: dark.bg0,
-  },
-  container: {
-    flex: 1,
-    backgroundColor: dark.bg0,
-  },
-  topBar: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: space[4],
-    paddingTop: space[2],
-    paddingBottom: space[2],
-  },
-  backButton: {
-    width: 44,
-    height: 44,
-    borderRadius: radius.full,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  topTitle: {
-    fontWeight: '700',
-  },
-  topRightIconBox: {
-    width: 44,
-    height: 44,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  tabsRow: {
-    flexDirection: 'row',
-    paddingHorizontal: space[4],
-    paddingVertical: space[2],
-    gap: space[2],
-  },
-  tabButton: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 10,
-    borderRadius: radius.full,
-    backgroundColor: dark.s1,
-    borderWidth: 1,
-    borderColor: dark.hairline,
-  },
-  tabButtonActive: {
-    backgroundColor: dark.apricot,
-    borderColor: dark.apricot,
-  },
-  scrollContent: {
-    paddingHorizontal: space[4],
-    paddingBottom: space[6],
-    gap: space[4],
-  },
-  weekNavigatorRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    backgroundColor: dark.s1,
-    borderWidth: 1,
-    borderColor: dark.hairlineLit,
-    borderRadius: radius.card,
-    paddingHorizontal: space[3],
-    paddingVertical: space[3],
-  },
-  navArrowBtn: {
-    width: 36,
-    height: 36,
-    borderRadius: radius.full,
-    backgroundColor: dark.s2,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  weekLabelCol: {
-    alignItems: 'center',
-  },
-  daysCompletionRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    backgroundColor: dark.s1,
-    borderRadius: radius.card,
-    borderWidth: 1,
-    borderColor: dark.hairline,
-    paddingHorizontal: space[3],
-    paddingVertical: space[3],
-  },
-  dayStatusCol: {
-    alignItems: 'center',
-  },
-  dayCheckCircle: {
-    width: 28,
-    height: 28,
-    borderRadius: radius.full,
-    backgroundColor: dark.apricot,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  dayRestCircle: {
-    width: 28,
-    height: 28,
-    borderRadius: radius.full,
-    backgroundColor: dark.s2,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  statsRow: {
-    flexDirection: 'row',
-    gap: space[2],
-  },
-  statCard: {
-    flex: 1,
-    backgroundColor: dark.s1,
-    borderWidth: 1,
-    borderColor: dark.hairlineLit,
-    borderRadius: radius.card,
-    padding: space[3],
-    alignItems: 'center',
-  },
-  statValueText: {
-    fontWeight: '800',
-    marginBottom: 4,
-  },
-  statLabelText: {
-    textAlign: 'center',
-    lineHeight: 14,
-  },
-  exerciseSectionHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginTop: space[1],
-  },
-  exerciseDropdownChip: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    backgroundColor: dark.s2,
-    borderWidth: 1,
-    borderColor: dark.hairlineLit,
-    paddingHorizontal: space[3],
-    paddingVertical: 8,
-    borderRadius: radius.full,
-  },
-  chartCard: {
-    backgroundColor: dark.s1,
-    borderWidth: 1,
-    borderColor: dark.hairlineLit,
-    borderRadius: radius.card,
-    padding: space[4],
-  },
-  splitRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: space[2],
-    marginTop: space[2],
-  },
-  splitTag: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: dark.s2,
-    borderRadius: radius.control,
-    paddingHorizontal: space[3],
-    paddingVertical: space[2],
-  },
-  svgContainer: {
-    width: '100%',
-    alignItems: 'center',
-  },
-  xAxisRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    width: '100%',
-    paddingHorizontal: space[2],
-    marginTop: space[1],
-  },
-  metricsCalloutRow: {
-    flexDirection: 'row',
-    gap: space[2],
-  },
-  metricCalloutBox: {
-    flex: 1,
-    backgroundColor: dark.s1,
-    borderWidth: 1,
-    borderColor: dark.hairline,
-    borderRadius: radius.card,
-    padding: space[3],
-    alignItems: 'center',
-  },
-  metricSubLabel: {
-    textAlign: 'center',
-    marginTop: 4,
-    lineHeight: 14,
-  },
-  historyContainer: {
-    gap: space[3],
-  },
-  historySessionCard: {
-    backgroundColor: dark.s1,
-    borderRadius: radius.card,
-    borderWidth: 1,
-    borderColor: dark.hairlineLit,
-    padding: space[3],
-    gap: space[3],
-  },
-  historyHeaderRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    borderBottomWidth: 1,
-    borderBottomColor: dark.hairline,
-    paddingBottom: space[2],
-  },
-  historyBadge: {
-    marginLeft: 'auto',
-    backgroundColor: dark.apricot,
-    borderRadius: radius.full,
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-  },
-  historyExerciseRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingVertical: 4,
-  },
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.75)',
-    justifyContent: 'center',
-    paddingHorizontal: space[4],
-  },
-  dropdownModalCard: {
-    backgroundColor: dark.s1,
-    borderRadius: radius.card,
-    borderWidth: 1,
-    borderColor: dark.hairlineLit,
-    paddingVertical: space[3],
-    overflow: 'hidden',
-  },
-  dropdownModalHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: space[4],
-    paddingBottom: space[3],
-    borderBottomWidth: 1,
-    borderBottomColor: dark.hairline,
-  },
-  dropdownModalClose: {
-    width: 32,
-    height: 32,
-    borderRadius: radius.full,
-    backgroundColor: dark.s2,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  dropdownItemRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: space[4],
-    paddingVertical: 14,
-    borderBottomWidth: 1,
-    borderBottomColor: dark.hairline,
-  },
-  dropdownItemRowSelected: {
-    backgroundColor: dark.s2,
-  },
-});
+const createStyles = (dark: ReturnType<typeof useAppearance>['colors']) =>
+  StyleSheet.create({
+    safeArea: {
+      flex: 1,
+      backgroundColor: dark.bg0,
+    },
+    container: {
+      flex: 1,
+      backgroundColor: dark.bg0,
+    },
+    topBar: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      paddingHorizontal: space[4],
+      paddingTop: space[2],
+      paddingBottom: space[2],
+    },
+    backButton: {
+      width: 44,
+      height: 44,
+      borderRadius: radius.full,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    topTitle: {
+      fontWeight: '700',
+    },
+    topRightIconBox: {
+      width: 44,
+      height: 44,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    tabsRow: {
+      flexDirection: 'row',
+      paddingHorizontal: space[4],
+      paddingVertical: space[2],
+      gap: space[2],
+    },
+    tabButton: {
+      flex: 1,
+      alignItems: 'center',
+      justifyContent: 'center',
+      paddingVertical: 10,
+      borderRadius: radius.full,
+      backgroundColor: dark.s1,
+      borderWidth: 1,
+      borderColor: dark.hairline,
+    },
+    tabButtonActive: {
+      backgroundColor: dark.apricot,
+      borderColor: dark.apricot,
+    },
+    scrollContent: {
+      paddingHorizontal: space[4],
+      paddingBottom: space[6],
+      gap: space[4],
+    },
+    weekNavigatorRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      backgroundColor: dark.s1,
+      borderWidth: 1,
+      borderColor: dark.hairlineLit,
+      borderRadius: radius.card,
+      paddingHorizontal: space[3],
+      paddingVertical: space[3],
+    },
+    navArrowBtn: {
+      width: 36,
+      height: 36,
+      borderRadius: radius.full,
+      backgroundColor: dark.s2,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    weekLabelCol: {
+      alignItems: 'center',
+    },
+    daysCompletionRow: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      backgroundColor: dark.s1,
+      borderRadius: radius.card,
+      borderWidth: 1,
+      borderColor: dark.hairline,
+      paddingHorizontal: space[3],
+      paddingVertical: space[3],
+    },
+    dayStatusCol: {
+      alignItems: 'center',
+    },
+    dayCheckCircle: {
+      width: 28,
+      height: 28,
+      borderRadius: radius.full,
+      backgroundColor: dark.apricot,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    dayRestCircle: {
+      width: 28,
+      height: 28,
+      borderRadius: radius.full,
+      backgroundColor: dark.s2,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    statsRow: {
+      flexDirection: 'row',
+      gap: space[2],
+    },
+    statCard: {
+      flex: 1,
+      backgroundColor: dark.s1,
+      borderWidth: 1,
+      borderColor: dark.hairlineLit,
+      borderRadius: radius.card,
+      padding: space[3],
+      alignItems: 'center',
+    },
+    statValueText: {
+      fontWeight: '800',
+      marginBottom: 4,
+    },
+    statLabelText: {
+      textAlign: 'center',
+      lineHeight: 14,
+    },
+    exerciseSectionHeader: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      marginTop: space[1],
+    },
+    exerciseDropdownChip: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 6,
+      backgroundColor: dark.s2,
+      borderWidth: 1,
+      borderColor: dark.hairlineLit,
+      paddingHorizontal: space[3],
+      paddingVertical: 8,
+      borderRadius: radius.full,
+    },
+    chartCard: {
+      backgroundColor: dark.s1,
+      borderWidth: 1,
+      borderColor: dark.hairlineLit,
+      borderRadius: radius.card,
+      padding: space[4],
+    },
+    splitRow: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      gap: space[2],
+      marginTop: space[2],
+    },
+    splitTag: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      backgroundColor: dark.s2,
+      borderRadius: radius.control,
+      paddingHorizontal: space[3],
+      paddingVertical: space[2],
+    },
+    svgContainer: {
+      width: '100%',
+      alignItems: 'center',
+    },
+    xAxisRow: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      width: '100%',
+      paddingHorizontal: space[2],
+      marginTop: space[1],
+    },
+    metricsCalloutRow: {
+      flexDirection: 'row',
+      gap: space[2],
+    },
+    metricCalloutBox: {
+      flex: 1,
+      backgroundColor: dark.s1,
+      borderWidth: 1,
+      borderColor: dark.hairline,
+      borderRadius: radius.card,
+      padding: space[3],
+      alignItems: 'center',
+    },
+    metricSubLabel: {
+      textAlign: 'center',
+      marginTop: 4,
+      lineHeight: 14,
+    },
+    historyContainer: {
+      gap: space[3],
+    },
+    historySessionCard: {
+      backgroundColor: dark.s1,
+      borderRadius: radius.card,
+      borderWidth: 1,
+      borderColor: dark.hairlineLit,
+      padding: space[3],
+      gap: space[3],
+    },
+    historyHeaderRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      borderBottomWidth: 1,
+      borderBottomColor: dark.hairline,
+      paddingBottom: space[2],
+    },
+    historyBadge: {
+      marginLeft: 'auto',
+      backgroundColor: dark.apricot,
+      borderRadius: radius.full,
+      paddingHorizontal: 8,
+      paddingVertical: 2,
+    },
+    historyExerciseRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      paddingVertical: 4,
+    },
+    modalOverlay: {
+      flex: 1,
+      backgroundColor: 'rgba(0, 0, 0, 0.75)',
+      justifyContent: 'center',
+      paddingHorizontal: space[4],
+    },
+    dropdownModalCard: {
+      backgroundColor: dark.s1,
+      borderRadius: radius.card,
+      borderWidth: 1,
+      borderColor: dark.hairlineLit,
+      paddingVertical: space[3],
+      overflow: 'hidden',
+    },
+    dropdownModalHeader: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      paddingHorizontal: space[4],
+      paddingBottom: space[3],
+      borderBottomWidth: 1,
+      borderBottomColor: dark.hairline,
+    },
+    dropdownModalClose: {
+      width: 32,
+      height: 32,
+      borderRadius: radius.full,
+      backgroundColor: dark.s2,
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    dropdownItemRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      paddingHorizontal: space[4],
+      paddingVertical: 14,
+      borderBottomWidth: 1,
+      borderBottomColor: dark.hairline,
+    },
+    dropdownItemRowSelected: {
+      backgroundColor: dark.s2,
+    },
+  });
 
 export function WorkoutProgressModal(props: WorkoutProgressModalProps) {
   return (

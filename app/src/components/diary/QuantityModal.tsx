@@ -1,3 +1,4 @@
+import { useTheme as useAppearance } from '@calipartner/ui/theme';
 import { type as inputTypography } from '@calipartner/ui';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
@@ -20,7 +21,7 @@ import {
   type MealSection,
 } from '@calipartner/core';
 import { NutrientEditor, type NutrientDraft } from './NutrientEditor';
-import { Sheet, Text, Button, Chip, dark, space, radius } from '@calipartner/ui';
+import { Sheet, Text, Button, Chip, space, radius } from '@calipartner/ui';
 import { t } from '@/i18n';
 import { AdvancedNutrition } from './AdvancedNutrition';
 import { useBrowserModalBack } from '@/hooks/useBrowserModalBack';
@@ -77,6 +78,9 @@ export function QuantityModal({
   onSave,
   onDelete,
 }: QuantityModalProps) {
+  const { colors: dark } = useAppearance();
+  const styles = createStyles(dark);
+
   useBrowserModalBack(visible, onClose);
   const [saving, setSaving] = useState(false);
   const [saveFailed, setSaveFailed] = useState(false);
@@ -494,119 +498,124 @@ export function QuantityModal({
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    paddingHorizontal: space[4],
-    paddingBottom: space[8],
-    gap: space[4],
-  },
-  header: {
-    gap: space[1],
-  },
-  quantitySection: {
-    alignItems: 'center',
-    gap: space[2],
-    backgroundColor: dark.s1,
-    borderRadius: radius.card,
-    padding: space[4],
-    borderWidth: 1,
-    borderColor: dark.hairline,
-  },
-  presetRow: {
-    flexDirection: 'row',
-    gap: space[2],
-  },
-  presetPill: {
-    paddingHorizontal: space[3],
-    paddingVertical: space[1],
-    borderRadius: radius.full,
-    backgroundColor: dark.s2,
-    borderWidth: 1,
-    borderColor: dark.hairlineLit,
-  },
-  presetPillSelected: {
-    backgroundColor: dark.apricot,
-    borderColor: dark.apricot,
-  },
-  bigNumberInputRow: {
-    flexDirection: 'row',
-    alignItems: 'baseline',
-    justifyContent: 'center',
-    gap: space[2],
-  },
-  bigNumberInput: {
-    fontSize: 44,
-    fontWeight: '800',
-    color: dark.textHi,
-    textAlign: 'center',
-    minWidth: 100,
-    maxWidth: '100%',
-    paddingVertical: space[1],
-  },
-  unitSuffix: {
-    paddingBottom: space[2],
-    textAlign: 'center',
-    flexShrink: 1,
-  },
-  labelledServingInputRow: { flexDirection: 'column', alignItems: 'center', alignSelf: 'stretch' },
-  unitScrollWrap: {
-    flexDirection: 'row',
-  },
-  unitList: {
-    gap: space[2],
-  },
-  previewBox: {
-    backgroundColor: dark.s1,
-    borderRadius: radius.card,
-    padding: space[3],
-    gap: space[3],
-    borderWidth: 1,
-    borderColor: dark.hairline,
-  },
-  previewHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  previewLabel: {
-    letterSpacing: 1,
-  },
-  macroValuesRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-  },
-  macroPill: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: space[2],
-    backgroundColor: dark.s2,
-    paddingHorizontal: space[3],
-    paddingVertical: space[2],
-    borderRadius: radius.full,
-  },
-  macroDot: {
-    width: 8,
-    height: 8,
-    borderRadius: radius.full,
-  },
-  sectionPickerWrap: {
-    gap: space[2],
-  },
-  sectionChipsRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: space[2],
-  },
-  switchRowsContainer: {
-    gap: space[1],
-    backgroundColor: dark.s1,
-    borderRadius: radius.card,
-    paddingVertical: space[2],
-    borderWidth: 1,
-    borderColor: dark.hairline,
-  },
-  footerButtons: {
-    gap: space[2],
-    paddingTop: space[2],
-  },
-});
+const createStyles = (dark: ReturnType<typeof useAppearance>['colors']) =>
+  StyleSheet.create({
+    container: {
+      paddingHorizontal: space[4],
+      paddingBottom: space[8],
+      gap: space[4],
+    },
+    header: {
+      gap: space[1],
+    },
+    quantitySection: {
+      alignItems: 'center',
+      gap: space[2],
+      backgroundColor: dark.s1,
+      borderRadius: radius.card,
+      padding: space[4],
+      borderWidth: 1,
+      borderColor: dark.hairline,
+    },
+    presetRow: {
+      flexDirection: 'row',
+      gap: space[2],
+    },
+    presetPill: {
+      paddingHorizontal: space[3],
+      paddingVertical: space[1],
+      borderRadius: radius.full,
+      backgroundColor: dark.s2,
+      borderWidth: 1,
+      borderColor: dark.hairlineLit,
+    },
+    presetPillSelected: {
+      backgroundColor: dark.apricot,
+      borderColor: dark.apricot,
+    },
+    bigNumberInputRow: {
+      flexDirection: 'row',
+      alignItems: 'baseline',
+      justifyContent: 'center',
+      gap: space[2],
+    },
+    bigNumberInput: {
+      fontSize: 44,
+      fontWeight: '800',
+      color: dark.textHi,
+      textAlign: 'center',
+      minWidth: 100,
+      maxWidth: '100%',
+      paddingVertical: space[1],
+    },
+    unitSuffix: {
+      paddingBottom: space[2],
+      textAlign: 'center',
+      flexShrink: 1,
+    },
+    labelledServingInputRow: {
+      flexDirection: 'column',
+      alignItems: 'center',
+      alignSelf: 'stretch',
+    },
+    unitScrollWrap: {
+      flexDirection: 'row',
+    },
+    unitList: {
+      gap: space[2],
+    },
+    previewBox: {
+      backgroundColor: dark.s1,
+      borderRadius: radius.card,
+      padding: space[3],
+      gap: space[3],
+      borderWidth: 1,
+      borderColor: dark.hairline,
+    },
+    previewHeader: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+    },
+    previewLabel: {
+      letterSpacing: 1,
+    },
+    macroValuesRow: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+    },
+    macroPill: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: space[2],
+      backgroundColor: dark.s2,
+      paddingHorizontal: space[3],
+      paddingVertical: space[2],
+      borderRadius: radius.full,
+    },
+    macroDot: {
+      width: 8,
+      height: 8,
+      borderRadius: radius.full,
+    },
+    sectionPickerWrap: {
+      gap: space[2],
+    },
+    sectionChipsRow: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      gap: space[2],
+    },
+    switchRowsContainer: {
+      gap: space[1],
+      backgroundColor: dark.s1,
+      borderRadius: radius.card,
+      paddingVertical: space[2],
+      borderWidth: 1,
+      borderColor: dark.hairline,
+    },
+    footerButtons: {
+      gap: space[2],
+      paddingTop: space[2],
+    },
+  });

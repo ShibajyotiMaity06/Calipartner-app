@@ -1,7 +1,8 @@
+import { useTheme as useAppearance } from '@calipartner/ui/theme';
 import { NavigationIcon } from '@calipartner/ui';
 import React, { useEffect, useState } from 'react';
 import { FlatList, Modal, SafeAreaView, StyleSheet, TouchableOpacity, View } from 'react-native';
-import { Button, Card, dark, SegmentedControl, space, Text } from '@calipartner/ui';
+import { Button, Card, SegmentedControl, space, Text } from '@calipartner/ui';
 import { getSupabase } from '@/lib/supabase';
 import { t } from '@/i18n';
 import { playClickSound } from '@/lib/sound';
@@ -31,6 +32,9 @@ export function DiscoverabilityModal({
   onUnblockUser,
   testID = 'modal-discoverability',
 }: DiscoverabilityModalProps) {
+  const { colors: dark } = useAppearance();
+  const styles = createStyles(dark);
+
   const [isDiscoverable, setIsDiscoverable] = useState<boolean>(discoverable);
   const [users, setUsers] = useState<BlockedUser[]>(blockedUsers ?? []);
   const [error, setError] = useState(false);
@@ -192,62 +196,63 @@ export function DiscoverabilityModal({
   );
 }
 
-const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
-    backgroundColor: dark.bg0,
-  },
-  container: {
-    flex: 1,
-    backgroundColor: dark.bg0,
-  },
-  topBar: {
-    height: 56,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: space[4],
-    borderBottomWidth: 1,
-    borderBottomColor: dark.hairline,
-  },
-  backButton: {
-    width: 44,
-    height: 44,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  backButtonPlaceholder: {
-    width: 44,
-  },
-  content: {
-    flex: 1,
-    padding: space[4],
-  },
-  introSubtitle: {
-    marginBottom: space[4],
-  },
-  sectionCard: {
-    padding: space[4],
-    marginBottom: space[6],
-  },
-  sectionLabel: {
-    marginBottom: space[2],
-  },
-  helperText: {
-    marginTop: space[2],
-    lineHeight: 18,
-  },
-  blockedSection: {
-    flex: 1,
-  },
-  emptyCard: {
-    padding: space[4],
-  },
-  blockedRow: {
-    padding: space[3],
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: space[2],
-  },
-});
+const createStyles = (dark: ReturnType<typeof useAppearance>['colors']) =>
+  StyleSheet.create({
+    safeArea: {
+      flex: 1,
+      backgroundColor: dark.bg0,
+    },
+    container: {
+      flex: 1,
+      backgroundColor: dark.bg0,
+    },
+    topBar: {
+      height: 56,
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      paddingHorizontal: space[4],
+      borderBottomWidth: 1,
+      borderBottomColor: dark.hairline,
+    },
+    backButton: {
+      width: 44,
+      height: 44,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    backButtonPlaceholder: {
+      width: 44,
+    },
+    content: {
+      flex: 1,
+      padding: space[4],
+    },
+    introSubtitle: {
+      marginBottom: space[4],
+    },
+    sectionCard: {
+      padding: space[4],
+      marginBottom: space[6],
+    },
+    sectionLabel: {
+      marginBottom: space[2],
+    },
+    helperText: {
+      marginTop: space[2],
+      lineHeight: 18,
+    },
+    blockedSection: {
+      flex: 1,
+    },
+    emptyCard: {
+      padding: space[4],
+    },
+    blockedRow: {
+      padding: space[3],
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      marginBottom: space[2],
+    },
+  });

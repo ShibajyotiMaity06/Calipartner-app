@@ -1,3 +1,4 @@
+import { useTheme as useAppearance } from '@calipartner/ui/theme';
 import React, { useRef } from 'react';
 import {
   ActivityIndicator,
@@ -8,7 +9,7 @@ import {
   StyleSheet,
   View,
 } from 'react-native';
-import { Text, space, dark } from '@calipartner/ui';
+import { Text, space } from '@calipartner/ui';
 import { onboardingLayout as layout } from '@calipartner/ui';
 import { Ionicons } from '@expo/vector-icons';
 import type { ChatAttachment, ChatMessage } from '@/types/chat';
@@ -49,6 +50,8 @@ export function ChatMessageBubble({
   onReply,
   testID,
 }: ChatMessageBubbleProps) {
+  const { colors: dark } = useAppearance();
+
   const { colors } = useTheme();
   const drag = useRef(new Animated.Value(0)).current;
   const replyHandler = useRef(onReply);

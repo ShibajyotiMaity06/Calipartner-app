@@ -1,21 +1,13 @@
+import { useTheme as useAppearance } from '@calipartner/ui/theme';
 import React, { useEffect, useState } from 'react';
 import { Pressable, ScrollView, View } from 'react-native';
-import {
-  Avatar,
-  Button,
-  dark,
-  homeLayout,
-  Sheet,
-  Text,
-  SegmentedControl,
-  space,
-} from '@calipartner/ui';
+import { Avatar, Button, homeLayout, Sheet, Text, SegmentedControl, space } from '@calipartner/ui';
 import { Ionicons } from '@expo/vector-icons';
 import { setStringAsync } from 'expo-clipboard';
 import { closeBrowserModalsThen, useBrowserModalBack } from '@/hooks/useBrowserModalBack';
 import { t } from '@/i18n';
 import type { RoomSummary } from '@/types/rooms';
-import { squadStyles as styles } from './SquadViews';
+import { useSquadStyles } from './SquadViews';
 import { EditSquadName } from './EditSquadName';
 export type RoomSegment = 'today' | 'chat' | 'progress' | 'members';
 export interface RoomHeaderProps {
@@ -49,6 +41,10 @@ export function RoomHeader({
   onSwitchRoom,
   onCreateOrJoin,
 }: RoomHeaderProps) {
+  const styles = useSquadStyles();
+
+  const { colors: dark } = useAppearance();
+
   const [panel, setPanel] = useState<'rooms' | 'actions' | null>(null),
     [copied, setCopied] = useState(false),
     [error, setError] = useState(false);

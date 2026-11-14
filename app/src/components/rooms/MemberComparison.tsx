@@ -1,6 +1,7 @@
+import { useTheme as useAppearance } from '@calipartner/ui/theme';
 import React from 'react';
 import { View, StyleSheet } from 'react-native';
-import { Avatar, Button, Card, dark, HiddenMetric, space, Text } from '@calipartner/ui';
+import { Avatar, Button, Card, HiddenMetric, space, Text } from '@calipartner/ui';
 import type { RoomMemberSnapshot } from '@calipartner/core';
 import { t } from '@/i18n';
 
@@ -13,6 +14,9 @@ export function MemberComparison({
   callerId: string;
   onNudge: (member: RoomMemberSnapshot) => void;
 }) {
+  const { colors: dark } = useAppearance();
+  const styles = createStyles(dark);
+
   return (
     <View style={styles.grid} testID="multi-member-comparison">
       {members.map((member) => {
@@ -73,10 +77,11 @@ export function MemberComparison({
     </View>
   );
 }
-const styles = StyleSheet.create({
-  grid: { flexDirection: 'row', flexWrap: 'wrap', gap: space[3], padding: space[2] },
-  member: { flexGrow: 1, flexBasis: '45%', minWidth: space[8] * 3 },
-  list: { gap: space[3], padding: space[2] },
-  heading: { flexDirection: 'row', alignItems: 'center', gap: space[3] },
-  name: { flex: 1, color: dark.textHi },
-});
+const createStyles = (dark: ReturnType<typeof useAppearance>['colors']) =>
+  StyleSheet.create({
+    grid: { flexDirection: 'row', flexWrap: 'wrap', gap: space[3], padding: space[2] },
+    member: { flexGrow: 1, flexBasis: '45%', minWidth: space[8] * 3 },
+    list: { gap: space[3], padding: space[2] },
+    heading: { flexDirection: 'row', alignItems: 'center', gap: space[3] },
+    name: { flex: 1, color: dark.textHi },
+  });

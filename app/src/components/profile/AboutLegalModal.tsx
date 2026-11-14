@@ -1,3 +1,4 @@
+import { useTheme as useAppearance } from '@calipartner/ui/theme';
 import { NavigationIcon } from '@calipartner/ui';
 import React from 'react';
 import {
@@ -9,7 +10,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import { Button, Card, dark, space, Text } from '@calipartner/ui';
+import { Button, Card, space, Text } from '@calipartner/ui';
 import { t } from '@/i18n';
 import { playClickSound } from '@/lib/sound';
 
@@ -24,6 +25,9 @@ export function AboutLegalModal({
   onClose,
   testID = 'modal-about-legal',
 }: AboutLegalModalProps) {
+  const { colors: dark } = useAppearance();
+  const styles = createStyles(dark);
+
   const openUrl = (url: string) => {
     playClickSound();
     Linking.openURL(url).catch(() => {});
@@ -128,65 +132,66 @@ export function AboutLegalModal({
   );
 }
 
-const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
-    backgroundColor: dark.bg0,
-  },
-  container: {
-    flex: 1,
-    backgroundColor: dark.bg0,
-  },
-  topBar: {
-    height: 56,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: space[4],
-    borderBottomWidth: 1,
-    borderBottomColor: dark.hairline,
-  },
-  backButton: {
-    width: 44,
-    height: 44,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  backButtonPlaceholder: {
-    width: 44,
-  },
-  content: {
-    padding: space[4],
-  },
-  card: {
-    padding: space[4],
-    marginBottom: space[4],
-  },
-  versionSub: {
-    marginTop: space[1],
-  },
-  sectionHeader: {
-    marginBottom: space[2],
-  },
-  disclaimerText: {
-    lineHeight: 22,
-  },
-  attrItem: {
-    marginBottom: space[2],
-    lineHeight: 20,
-  },
-  linkRow: {
-    paddingVertical: space[2],
-    minHeight: 44,
-    justifyContent: 'center',
-  },
-  bottomBar: {
-    padding: space[4],
-    borderTopWidth: 1,
-    borderTopColor: dark.hairline,
-    backgroundColor: dark.bg0,
-  },
-  doneBtn: {
-    width: '100%',
-  },
-});
+const createStyles = (dark: ReturnType<typeof useAppearance>['colors']) =>
+  StyleSheet.create({
+    safeArea: {
+      flex: 1,
+      backgroundColor: dark.bg0,
+    },
+    container: {
+      flex: 1,
+      backgroundColor: dark.bg0,
+    },
+    topBar: {
+      height: 56,
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      paddingHorizontal: space[4],
+      borderBottomWidth: 1,
+      borderBottomColor: dark.hairline,
+    },
+    backButton: {
+      width: 44,
+      height: 44,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    backButtonPlaceholder: {
+      width: 44,
+    },
+    content: {
+      padding: space[4],
+    },
+    card: {
+      padding: space[4],
+      marginBottom: space[4],
+    },
+    versionSub: {
+      marginTop: space[1],
+    },
+    sectionHeader: {
+      marginBottom: space[2],
+    },
+    disclaimerText: {
+      lineHeight: 22,
+    },
+    attrItem: {
+      marginBottom: space[2],
+      lineHeight: 20,
+    },
+    linkRow: {
+      paddingVertical: space[2],
+      minHeight: 44,
+      justifyContent: 'center',
+    },
+    bottomBar: {
+      padding: space[4],
+      borderTopWidth: 1,
+      borderTopColor: dark.hairline,
+      backgroundColor: dark.bg0,
+    },
+    doneBtn: {
+      width: '100%',
+    },
+  });

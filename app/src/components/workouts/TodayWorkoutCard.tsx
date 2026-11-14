@@ -1,3 +1,4 @@
+import { useTheme as useAppearance } from '@calipartner/ui/theme';
 import React, { useState } from 'react';
 import {
   ActivityIndicator,
@@ -10,7 +11,7 @@ import {
 import { Text } from '@calipartner/ui';
 import { Ionicons } from '@expo/vector-icons';
 import type { WorkoutWithDetails } from '@calipartner/core';
-import { dark, radius, space, type as typeTokens } from '@calipartner/ui';
+import { radius, space, type as typeTokens } from '@calipartner/ui';
 import { useWorkouts } from '@/hooks/useWorkouts';
 import { t } from '@/i18n';
 import { WorkoutDetailModal } from './WorkoutDetailModal';
@@ -27,6 +28,9 @@ export function TodayWorkoutCard({
   selectedDate,
   testID = 'today-workout-card',
 }: TodayWorkoutCardProps) {
+  const { colors: dark } = useAppearance();
+  const styles = createStyles(dark);
+
   const { workouts, loading, error, refresh, getSummary, copyToDate } = useWorkouts(selectedDate);
 
   const [loggerVisible, setLoggerVisible] = useState(false);
@@ -324,282 +328,283 @@ export function TodayWorkoutCard({
   );
 }
 
-const styles = StyleSheet.create({
-  card: {
-    borderRadius: radius.card,
-    borderWidth: 1,
-    borderColor: dark.hairline,
-    backgroundColor: dark.s1,
-    padding: space[4],
-    gap: space[3],
-  },
-  headerRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    gap: space[2],
-  },
-  headerTitleWrap: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: space[2],
-    flex: 1,
-    minWidth: 0,
-  },
-  iconWrapper: {
-    width: 36,
-    height: 36,
-    borderRadius: radius.full,
-    backgroundColor: dark.s2,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  cardTitle: {
-    fontSize: typeTokens.body.fontSize,
-    fontFamily: typeTokens.body.fontFamily,
-    color: dark.textHi,
-    fontWeight: '700',
-  },
-  cardSubTitle: {
-    fontSize: typeTokens.micro.fontSize,
-    fontFamily: typeTokens.micro.fontFamily,
-    color: dark.textLo,
-  },
-  headerButtons: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: space[2],
-    flexShrink: 0,
-  },
-  iconBtn: {
-    width: 36,
-    height: 36,
-    borderRadius: radius.full,
-    backgroundColor: dark.s2,
-    borderWidth: 1,
-    borderColor: dark.hairline,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  addBtn: {
-    width: 36,
-    height: 36,
-    borderRadius: radius.full,
-    backgroundColor: dark.apricot,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  centerState: {
-    paddingVertical: space[6],
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: space[2],
-  },
-  stateText: {
-    fontSize: typeTokens.label.fontSize,
-    fontFamily: typeTokens.label.fontFamily,
-    color: dark.textLo,
-  },
-  errorText: {
-    fontSize: typeTokens.label.fontSize,
-    fontFamily: typeTokens.label.fontFamily,
-    color: dark.danger,
-    textAlign: 'center',
-  },
-  retryBtn: {
-    marginTop: space[2],
-    paddingHorizontal: space[3],
-    paddingVertical: space[1],
-    borderRadius: radius.full,
-    backgroundColor: dark.s2,
-    borderWidth: 1,
-    borderColor: dark.hairline,
-  },
-  retryBtnText: {
-    fontSize: typeTokens.micro.fontSize,
-    fontFamily: typeTokens.micro.fontFamily,
-    color: dark.textHi,
-    fontWeight: '700',
-  },
-  emptyContainer: {
-    paddingVertical: space[4],
-    alignItems: 'center',
-    gap: space[2],
-  },
-  emptyText: {
-    fontSize: typeTokens.label.fontSize,
-    fontFamily: typeTokens.label.fontFamily,
-    color: dark.textLo,
-  },
-  emptyAddBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    paddingHorizontal: space[3],
-    minHeight: 36,
-    borderRadius: radius.full,
-    backgroundColor: dark.s2,
-    borderWidth: 1,
-    borderColor: dark.hairline,
-  },
-  emptyAddBtnText: {
-    fontSize: typeTokens.label.fontSize,
-    fontFamily: typeTokens.label.fontFamily,
-    color: dark.apricot,
-    fontWeight: '600',
-  },
-  contentWrap: {
-    gap: space[3],
-  },
-  aggregateBanner: {
-    flexDirection: 'row',
-    backgroundColor: dark.s2,
-    borderRadius: radius.card,
-    padding: space[3],
-    borderWidth: 1,
-    borderColor: dark.hairline,
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  aggItem: {
-    flex: 1,
-    alignItems: 'center',
-    gap: 2,
-  },
-  aggLabel: {
-    fontSize: typeTokens.micro.fontSize,
-    fontFamily: typeTokens.micro.fontFamily,
-    color: dark.textLo,
-  },
-  aggValue: {
-    fontSize: typeTokens.label.fontSize,
-    fontFamily: typeTokens.label.fontFamily,
-    fontVariant: ['tabular-nums'],
-    color: dark.textHi,
-    fontWeight: '700',
-  },
-  divider: {
-    width: 1,
-    height: 28,
-    backgroundColor: dark.hairline,
-  },
-  estLabelRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-  },
-  microBadge: {
-    paddingHorizontal: 4,
-    paddingVertical: 1,
-    borderRadius: 4,
-    backgroundColor: dark.s3,
-    borderWidth: 1,
-    borderColor: dark.hairlineLit,
-  },
-  microBadgeText: {
-    fontSize: 8,
-    color: dark.apricot,
-    fontWeight: '800',
-  },
-  workoutsList: {
-    gap: space[2],
-  },
-  workoutRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    backgroundColor: dark.s2,
-    borderRadius: radius.card,
-    padding: space[3],
-    borderWidth: 1,
-    borderColor: dark.hairline,
-    minHeight: 52,
-  },
-  rowMain: {
-    flex: 1,
-    gap: 2,
-  },
-  rowTop: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: space[2],
-  },
-  workoutRowName: {
-    fontSize: typeTokens.bodyS.fontSize,
-    fontFamily: typeTokens.bodyS.fontFamily,
-    color: dark.textHi,
-    fontWeight: '700',
-  },
-  typeTag: {
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: radius.control,
-    backgroundColor: dark.s3,
-    borderWidth: 1,
-    borderColor: dark.hairline,
-  },
-  typeTagText: {
-    fontSize: 9,
-    fontFamily: typeTokens.micro.fontFamily,
-    color: dark.textLo,
-  },
-  workoutRowSub: {
-    fontSize: typeTokens.micro.fontSize,
-    fontFamily: typeTokens.micro.fontFamily,
-    color: dark.textLo,
-  },
-  repeatSection: {
-    gap: space[2],
-    marginTop: space[1],
-  },
-  repeatSectionTitle: {
-    fontSize: typeTokens.micro.fontSize,
-    fontFamily: typeTokens.micro.fontFamily,
-    color: dark.textLo,
-    textTransform: 'uppercase',
-    fontWeight: '700',
-    letterSpacing: 0.5,
-  },
-  repeatScrollContent: {
-    gap: space[2],
-    paddingVertical: space[1],
-  },
-  repeatTile: {
-    width: 148,
-    backgroundColor: dark.s2,
-    borderRadius: radius.card,
-    padding: space[2],
-    borderWidth: 1,
-    borderColor: dark.hairline,
-    gap: 2,
-  },
-  repeatTop: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-  },
-  repeatName: {
-    flex: 1,
-    fontSize: typeTokens.label.fontSize,
-    fontFamily: typeTokens.label.fontFamily,
-    color: dark.textHi,
-    fontWeight: '700',
-  },
-  repeatSub: {
-    fontSize: typeTokens.micro.fontSize,
-    fontFamily: typeTokens.micro.fontFamily,
-    color: dark.textLo,
-  },
-  repeatActionRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    marginTop: 4,
-  },
-  repeatActionLabel: {
-    fontSize: typeTokens.micro.fontSize,
-    fontFamily: typeTokens.micro.fontFamily,
-    color: dark.apricot,
-    fontWeight: '700',
-  },
-});
+const createStyles = (dark: ReturnType<typeof useAppearance>['colors']) =>
+  StyleSheet.create({
+    card: {
+      borderRadius: radius.card,
+      borderWidth: 1,
+      borderColor: dark.hairline,
+      backgroundColor: dark.s1,
+      padding: space[4],
+      gap: space[3],
+    },
+    headerRow: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      gap: space[2],
+    },
+    headerTitleWrap: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: space[2],
+      flex: 1,
+      minWidth: 0,
+    },
+    iconWrapper: {
+      width: 36,
+      height: 36,
+      borderRadius: radius.full,
+      backgroundColor: dark.s2,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    cardTitle: {
+      fontSize: typeTokens.body.fontSize,
+      fontFamily: typeTokens.body.fontFamily,
+      color: dark.textHi,
+      fontWeight: '700',
+    },
+    cardSubTitle: {
+      fontSize: typeTokens.micro.fontSize,
+      fontFamily: typeTokens.micro.fontFamily,
+      color: dark.textLo,
+    },
+    headerButtons: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: space[2],
+      flexShrink: 0,
+    },
+    iconBtn: {
+      width: 36,
+      height: 36,
+      borderRadius: radius.full,
+      backgroundColor: dark.s2,
+      borderWidth: 1,
+      borderColor: dark.hairline,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    addBtn: {
+      width: 36,
+      height: 36,
+      borderRadius: radius.full,
+      backgroundColor: dark.apricot,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    centerState: {
+      paddingVertical: space[6],
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: space[2],
+    },
+    stateText: {
+      fontSize: typeTokens.label.fontSize,
+      fontFamily: typeTokens.label.fontFamily,
+      color: dark.textLo,
+    },
+    errorText: {
+      fontSize: typeTokens.label.fontSize,
+      fontFamily: typeTokens.label.fontFamily,
+      color: dark.danger,
+      textAlign: 'center',
+    },
+    retryBtn: {
+      marginTop: space[2],
+      paddingHorizontal: space[3],
+      paddingVertical: space[1],
+      borderRadius: radius.full,
+      backgroundColor: dark.s2,
+      borderWidth: 1,
+      borderColor: dark.hairline,
+    },
+    retryBtnText: {
+      fontSize: typeTokens.micro.fontSize,
+      fontFamily: typeTokens.micro.fontFamily,
+      color: dark.textHi,
+      fontWeight: '700',
+    },
+    emptyContainer: {
+      paddingVertical: space[4],
+      alignItems: 'center',
+      gap: space[2],
+    },
+    emptyText: {
+      fontSize: typeTokens.label.fontSize,
+      fontFamily: typeTokens.label.fontFamily,
+      color: dark.textLo,
+    },
+    emptyAddBtn: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 6,
+      paddingHorizontal: space[3],
+      minHeight: 36,
+      borderRadius: radius.full,
+      backgroundColor: dark.s2,
+      borderWidth: 1,
+      borderColor: dark.hairline,
+    },
+    emptyAddBtnText: {
+      fontSize: typeTokens.label.fontSize,
+      fontFamily: typeTokens.label.fontFamily,
+      color: dark.apricot,
+      fontWeight: '600',
+    },
+    contentWrap: {
+      gap: space[3],
+    },
+    aggregateBanner: {
+      flexDirection: 'row',
+      backgroundColor: dark.s2,
+      borderRadius: radius.card,
+      padding: space[3],
+      borderWidth: 1,
+      borderColor: dark.hairline,
+      justifyContent: 'space-between',
+      alignItems: 'center',
+    },
+    aggItem: {
+      flex: 1,
+      alignItems: 'center',
+      gap: 2,
+    },
+    aggLabel: {
+      fontSize: typeTokens.micro.fontSize,
+      fontFamily: typeTokens.micro.fontFamily,
+      color: dark.textLo,
+    },
+    aggValue: {
+      fontSize: typeTokens.label.fontSize,
+      fontFamily: typeTokens.label.fontFamily,
+      fontVariant: ['tabular-nums'],
+      color: dark.textHi,
+      fontWeight: '700',
+    },
+    divider: {
+      width: 1,
+      height: 28,
+      backgroundColor: dark.hairline,
+    },
+    estLabelRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 4,
+    },
+    microBadge: {
+      paddingHorizontal: 4,
+      paddingVertical: 1,
+      borderRadius: 4,
+      backgroundColor: dark.s3,
+      borderWidth: 1,
+      borderColor: dark.hairlineLit,
+    },
+    microBadgeText: {
+      fontSize: 8,
+      color: dark.apricot,
+      fontWeight: '800',
+    },
+    workoutsList: {
+      gap: space[2],
+    },
+    workoutRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      backgroundColor: dark.s2,
+      borderRadius: radius.card,
+      padding: space[3],
+      borderWidth: 1,
+      borderColor: dark.hairline,
+      minHeight: 52,
+    },
+    rowMain: {
+      flex: 1,
+      gap: 2,
+    },
+    rowTop: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: space[2],
+    },
+    workoutRowName: {
+      fontSize: typeTokens.bodyS.fontSize,
+      fontFamily: typeTokens.bodyS.fontFamily,
+      color: dark.textHi,
+      fontWeight: '700',
+    },
+    typeTag: {
+      paddingHorizontal: 6,
+      paddingVertical: 2,
+      borderRadius: radius.control,
+      backgroundColor: dark.s3,
+      borderWidth: 1,
+      borderColor: dark.hairline,
+    },
+    typeTagText: {
+      fontSize: 9,
+      fontFamily: typeTokens.micro.fontFamily,
+      color: dark.textLo,
+    },
+    workoutRowSub: {
+      fontSize: typeTokens.micro.fontSize,
+      fontFamily: typeTokens.micro.fontFamily,
+      color: dark.textLo,
+    },
+    repeatSection: {
+      gap: space[2],
+      marginTop: space[1],
+    },
+    repeatSectionTitle: {
+      fontSize: typeTokens.micro.fontSize,
+      fontFamily: typeTokens.micro.fontFamily,
+      color: dark.textLo,
+      textTransform: 'uppercase',
+      fontWeight: '700',
+      letterSpacing: 0.5,
+    },
+    repeatScrollContent: {
+      gap: space[2],
+      paddingVertical: space[1],
+    },
+    repeatTile: {
+      width: 148,
+      backgroundColor: dark.s2,
+      borderRadius: radius.card,
+      padding: space[2],
+      borderWidth: 1,
+      borderColor: dark.hairline,
+      gap: 2,
+    },
+    repeatTop: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 4,
+    },
+    repeatName: {
+      flex: 1,
+      fontSize: typeTokens.label.fontSize,
+      fontFamily: typeTokens.label.fontFamily,
+      color: dark.textHi,
+      fontWeight: '700',
+    },
+    repeatSub: {
+      fontSize: typeTokens.micro.fontSize,
+      fontFamily: typeTokens.micro.fontFamily,
+      color: dark.textLo,
+    },
+    repeatActionRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 4,
+      marginTop: 4,
+    },
+    repeatActionLabel: {
+      fontSize: typeTokens.micro.fontSize,
+      fontFamily: typeTokens.micro.fontFamily,
+      color: dark.apricot,
+      fontWeight: '700',
+    },
+  });

@@ -1,9 +1,11 @@
+import { useTheme as useAppearance } from '@calipartner/ui/theme';
 import { NavigationIcon } from '@calipartner/ui';
 import { type as inputTypography } from '@calipartner/ui';
 import React, { useState } from 'react';
 import { View, StyleSheet, Modal, SafeAreaView, TextInput, TouchableOpacity } from 'react-native';
-import { Text, Button, space, dark, radius } from '@calipartner/ui';
+import { Text, Button, space, radius } from '@calipartner/ui';
 import { playClickSound } from '@/lib/sound';
+import { t } from '@/i18n';
 
 export interface DeleteAccountModalProps {
   visible: boolean;
@@ -18,6 +20,9 @@ export function DeleteAccountModal({
   onConfirmDelete,
   testID = 'delete-account-modal',
 }: DeleteAccountModalProps) {
+  const { colors: dark } = useAppearance();
+  const styles = createStyles(dark);
+
   const [deleteInput, setDeleteInput] = useState('');
   const [isDeleting, setIsDeleting] = useState(false);
   const [isComplete, setIsComplete] = useState(false);
@@ -74,6 +79,7 @@ export function DeleteAccountModal({
             )}
           </View>
 
+          {!isComplete ? <Text variant="body">{t('avatar.deletionTerms')}</Text> : null}
           {/* STEP B08: Deletion Complete */}
           {isComplete ? (
             <View style={styles.completeView} testID="deletion-complete-view">
@@ -174,93 +180,94 @@ export function DeleteAccountModal({
   );
 }
 
-const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
-    backgroundColor: dark.bg0,
-  },
-  container: {
-    flex: 1,
-    paddingHorizontal: space[4],
-    paddingBottom: space[4],
-  },
-  topBar: {
-    minHeight: 44,
-    justifyContent: 'center',
-    paddingTop: space[1],
-  },
-  backButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: space[1],
-    minWidth: 44,
-    minHeight: 44,
-  },
-  content: {
-    flex: 1,
-    gap: space[4],
-    justifyContent: 'space-between',
-  },
-  header: {
-    gap: space[1],
-  },
-  title: {
-    letterSpacing: -0.4,
-  },
-  subtitle: {
-    lineHeight: 20,
-  },
-  warningCard: {
-    backgroundColor: dark.s1,
-    borderWidth: 1,
-    borderColor: dark.hairlineLit,
-    borderRadius: radius.card,
-    padding: space[4],
-    gap: space[2],
-  },
-  warningTitle: {
-    fontWeight: '600',
-  },
-  bulletPoint: {
-    lineHeight: 18,
-  },
-  storeNoticeBox: {
-    backgroundColor: dark.s2,
-    borderRadius: radius.control,
-    padding: space[2],
-    marginTop: space[1],
-  },
-  storeNotice: {
-    lineHeight: 18,
-  },
-  inputSection: {
-    gap: space[2],
-  },
-  inputLabel: {
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-    fontWeight: '600',
-  },
-  textInput: {
-    height: 48,
-    borderRadius: radius.control,
-    borderWidth: 1,
-    borderColor: dark.hairline,
-    backgroundColor: dark.s2,
-    color: dark.textHi,
-    paddingHorizontal: space[3],
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  completeView: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: space[3],
-    paddingHorizontal: space[4],
-  },
-  completeButtonWrapper: {
-    width: '100%',
-    marginTop: space[6],
-  },
-});
+const createStyles = (dark: ReturnType<typeof useAppearance>['colors']) =>
+  StyleSheet.create({
+    safeArea: {
+      flex: 1,
+      backgroundColor: dark.bg0,
+    },
+    container: {
+      flex: 1,
+      paddingHorizontal: space[4],
+      paddingBottom: space[4],
+    },
+    topBar: {
+      minHeight: 44,
+      justifyContent: 'center',
+      paddingTop: space[1],
+    },
+    backButton: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: space[1],
+      minWidth: 44,
+      minHeight: 44,
+    },
+    content: {
+      flex: 1,
+      gap: space[4],
+      justifyContent: 'space-between',
+    },
+    header: {
+      gap: space[1],
+    },
+    title: {
+      letterSpacing: -0.4,
+    },
+    subtitle: {
+      lineHeight: 20,
+    },
+    warningCard: {
+      backgroundColor: dark.s1,
+      borderWidth: 1,
+      borderColor: dark.hairlineLit,
+      borderRadius: radius.card,
+      padding: space[4],
+      gap: space[2],
+    },
+    warningTitle: {
+      fontWeight: '600',
+    },
+    bulletPoint: {
+      lineHeight: 18,
+    },
+    storeNoticeBox: {
+      backgroundColor: dark.s2,
+      borderRadius: radius.control,
+      padding: space[2],
+      marginTop: space[1],
+    },
+    storeNotice: {
+      lineHeight: 18,
+    },
+    inputSection: {
+      gap: space[2],
+    },
+    inputLabel: {
+      textTransform: 'uppercase',
+      letterSpacing: 0.5,
+      fontWeight: '600',
+    },
+    textInput: {
+      height: 48,
+      borderRadius: radius.control,
+      borderWidth: 1,
+      borderColor: dark.hairline,
+      backgroundColor: dark.s2,
+      color: dark.textHi,
+      paddingHorizontal: space[3],
+      fontSize: 16,
+      fontWeight: '600',
+    },
+    completeView: {
+      flex: 1,
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: space[3],
+      paddingHorizontal: space[4],
+    },
+    completeButtonWrapper: {
+      width: '100%',
+      marginTop: space[6],
+    },
+  });

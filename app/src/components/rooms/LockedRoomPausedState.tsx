@@ -1,9 +1,10 @@
+import { useTheme as useAppearance } from '@calipartner/ui/theme';
 import React, { useState } from 'react';
 import { Alert, Pressable, StyleSheet, View } from 'react-native';
 import { Text } from '@calipartner/ui';
 import { Ionicons } from '@expo/vector-icons';
 import { t } from '@/i18n';
-import { dark, radius, space, Text as UiText, Button } from '@calipartner/ui';
+import { radius, space, Text as UiText, Button } from '@calipartner/ui';
 import { fontSize } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
 
@@ -23,6 +24,9 @@ export function LockedRoomPausedState({
   onKeepRoomGoing,
   onLeaveRoom,
 }: LockedRoomPausedStateProps): React.JSX.Element {
+  const { colors: dark } = useAppearance();
+  const styles = createStyles(dark);
+
   const { colors } = useTheme();
 
   const handleLeaveConfirm = () => {
@@ -154,98 +158,99 @@ export function LockedRoomPausedState({
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    margin: space[3],
-    gap: space[3],
-  },
-  desaturatedPreviewCard: {
-    backgroundColor: dark.s1,
-    borderRadius: radius.card,
-    borderWidth: 1,
-    borderColor: dark.hairline,
-    padding: space[4],
-    opacity: 0.5,
-  },
-  previewColumnsRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    minHeight: 90,
-  },
-  previewColumn: {
-    flex: 1,
-    alignItems: 'center',
-    gap: space[1],
-  },
-  previewAvatar: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: dark.s2,
-    borderWidth: 1,
-    borderColor: dark.hairlineLit,
-  },
-  dashedSeamLine: {
-    width: 1,
-    height: 80,
-    borderLeftWidth: 1.5,
-    borderStyle: 'dashed',
-    borderColor: dark.hairlineLit,
-  },
-  card: {
-    borderRadius: radius.card,
-    borderWidth: 1,
-    padding: space[4],
-    alignItems: 'center',
-  },
-  iconCircle: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
-    backgroundColor: dark.s2,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: space[2],
-  },
-  title: {
-    fontSize: fontSize.md + 2,
-    fontWeight: '800',
-    textAlign: 'center',
-    marginBottom: space[1],
-  },
-  streakSavedNotice: {
-    fontSize: fontSize.sm,
-    fontWeight: '700',
-    textAlign: 'center',
-    marginBottom: space[2],
-  },
-  subtitle: {
-    fontSize: fontSize.xs + 1,
-    textAlign: 'center',
-    lineHeight: 20,
-    marginBottom: space[4],
-    maxWidth: 340,
-  },
-  guaranteesBox: {
-    width: '100%',
-    borderRadius: radius.control,
-    padding: space[3],
-    marginBottom: space[4],
-    gap: space[2],
-  },
-  guaranteeRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: space[2],
-  },
-  guaranteeText: {
-    fontSize: fontSize.xs,
-    fontWeight: '500',
-    flex: 1,
-  },
-  actionsWrap: {
-    width: '100%',
-    gap: space[2],
-  },
-});
+const createStyles = (dark: ReturnType<typeof useAppearance>['colors']) =>
+  StyleSheet.create({
+    container: {
+      margin: space[3],
+      gap: space[3],
+    },
+    desaturatedPreviewCard: {
+      backgroundColor: dark.s1,
+      borderRadius: radius.card,
+      borderWidth: 1,
+      borderColor: dark.hairline,
+      padding: space[4],
+      opacity: 0.5,
+    },
+    previewColumnsRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      minHeight: 90,
+    },
+    previewColumn: {
+      flex: 1,
+      alignItems: 'center',
+      gap: space[1],
+    },
+    previewAvatar: {
+      width: 36,
+      height: 36,
+      borderRadius: 18,
+      backgroundColor: dark.s2,
+      borderWidth: 1,
+      borderColor: dark.hairlineLit,
+    },
+    dashedSeamLine: {
+      width: 1,
+      height: 80,
+      borderLeftWidth: 1.5,
+      borderStyle: 'dashed',
+      borderColor: dark.hairlineLit,
+    },
+    card: {
+      borderRadius: radius.card,
+      borderWidth: 1,
+      padding: space[4],
+      alignItems: 'center',
+    },
+    iconCircle: {
+      width: 64,
+      height: 64,
+      borderRadius: 32,
+      backgroundColor: dark.s2,
+      alignItems: 'center',
+      justifyContent: 'center',
+      marginBottom: space[2],
+    },
+    title: {
+      fontSize: fontSize.md + 2,
+      fontWeight: '800',
+      textAlign: 'center',
+      marginBottom: space[1],
+    },
+    streakSavedNotice: {
+      fontSize: fontSize.sm,
+      fontWeight: '700',
+      textAlign: 'center',
+      marginBottom: space[2],
+    },
+    subtitle: {
+      fontSize: fontSize.xs + 1,
+      textAlign: 'center',
+      lineHeight: 20,
+      marginBottom: space[4],
+      maxWidth: 340,
+    },
+    guaranteesBox: {
+      width: '100%',
+      borderRadius: radius.control,
+      padding: space[3],
+      marginBottom: space[4],
+      gap: space[2],
+    },
+    guaranteeRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: space[2],
+    },
+    guaranteeText: {
+      fontSize: fontSize.xs,
+      fontWeight: '500',
+      flex: 1,
+    },
+    actionsWrap: {
+      width: '100%',
+      gap: space[2],
+    },
+  });

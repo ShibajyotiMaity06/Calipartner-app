@@ -1,8 +1,9 @@
+import { useTheme as useAppearance } from '@calipartner/ui/theme';
 import { NavigationIcon } from '@calipartner/ui';
 import { PremiumFeatureModal } from '@/components/subscription/PremiumFeatureModal';
 import React, { useState } from 'react';
 import { View, StyleSheet, Modal, SafeAreaView, TouchableOpacity, Share } from 'react-native';
-import { Text, Button, space, dark, radius } from '@calipartner/ui';
+import { Text, Button, space, radius } from '@calipartner/ui';
 import { playClickSound, playSuccessSound } from '@/lib/sound';
 
 export interface ExportDataModalProps {
@@ -16,6 +17,9 @@ function ExportDataModalContent({
   onClose,
   testID = 'export-data-modal',
 }: ExportDataModalProps) {
+  const { colors: dark } = useAppearance();
+  const styles = createStyles(dark);
+
   const [format, setFormat] = useState<'csv' | 'json'>('csv');
   const [isExporting, setIsExporting] = useState(false);
   const [exportComplete, setExportComplete] = useState(false);
@@ -161,102 +165,103 @@ function ExportDataModalContent({
   );
 }
 
-const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
-    backgroundColor: dark.bg0,
-  },
-  container: {
-    flex: 1,
-    paddingHorizontal: space[4],
-    justifyContent: 'space-between',
-    paddingBottom: space[4],
-  },
-  topBar: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    minHeight: 44,
-    paddingTop: space[1],
-  },
-  backButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: space[1],
-    minWidth: 44,
-    minHeight: 44,
-  },
-  topTitle: {
-    fontWeight: '600',
-  },
-  spacer: {
-    width: 60,
-  },
-  content: {
-    flex: 1,
-    gap: space[4],
-    paddingTop: space[2],
-  },
-  header: {
-    gap: space[1],
-  },
-  title: {
-    letterSpacing: -0.4,
-  },
-  subtitle: {
-    lineHeight: 20,
-  },
-  formatSection: {
-    gap: space[2],
-  },
-  formatLabel: {
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-    fontWeight: '600',
-  },
-  formatCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    backgroundColor: dark.s1,
-    borderWidth: 1,
-    borderColor: dark.hairline,
-    borderRadius: radius.card,
-    padding: space[4],
-  },
-  formatCardSelected: {
-    borderColor: dark.apricot,
-    backgroundColor: dark.s2,
-  },
-  formatCardContent: {
-    gap: 4,
-    flex: 1,
-  },
-  formatTitle: {
-    fontWeight: '600',
-  },
-  radioIndicator: {
-    width: 20,
-    height: 20,
-    borderRadius: radius.full,
-    borderWidth: 2,
-    borderColor: dark.hairlineLit,
-  },
-  radioIndicatorActive: {
-    borderColor: dark.apricot,
-    backgroundColor: dark.apricot,
-  },
-  completeBox: {
-    backgroundColor: dark.s2,
-    borderWidth: 1,
-    borderColor: dark.hairlineLit,
-    borderRadius: radius.control,
-    padding: space[3],
-  },
-  footer: {
-    paddingTop: space[2],
-  },
-});
+const createStyles = (dark: ReturnType<typeof useAppearance>['colors']) =>
+  StyleSheet.create({
+    safeArea: {
+      flex: 1,
+      backgroundColor: dark.bg0,
+    },
+    container: {
+      flex: 1,
+      paddingHorizontal: space[4],
+      justifyContent: 'space-between',
+      paddingBottom: space[4],
+    },
+    topBar: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      minHeight: 44,
+      paddingTop: space[1],
+    },
+    backButton: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: space[1],
+      minWidth: 44,
+      minHeight: 44,
+    },
+    topTitle: {
+      fontWeight: '600',
+    },
+    spacer: {
+      width: 60,
+    },
+    content: {
+      flex: 1,
+      gap: space[4],
+      paddingTop: space[2],
+    },
+    header: {
+      gap: space[1],
+    },
+    title: {
+      letterSpacing: -0.4,
+    },
+    subtitle: {
+      lineHeight: 20,
+    },
+    formatSection: {
+      gap: space[2],
+    },
+    formatLabel: {
+      textTransform: 'uppercase',
+      letterSpacing: 0.5,
+      fontWeight: '600',
+    },
+    formatCard: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      backgroundColor: dark.s1,
+      borderWidth: 1,
+      borderColor: dark.hairline,
+      borderRadius: radius.card,
+      padding: space[4],
+    },
+    formatCardSelected: {
+      borderColor: dark.apricot,
+      backgroundColor: dark.s2,
+    },
+    formatCardContent: {
+      gap: 4,
+      flex: 1,
+    },
+    formatTitle: {
+      fontWeight: '600',
+    },
+    radioIndicator: {
+      width: 20,
+      height: 20,
+      borderRadius: radius.full,
+      borderWidth: 2,
+      borderColor: dark.hairlineLit,
+    },
+    radioIndicatorActive: {
+      borderColor: dark.apricot,
+      backgroundColor: dark.apricot,
+    },
+    completeBox: {
+      backgroundColor: dark.s2,
+      borderWidth: 1,
+      borderColor: dark.hairlineLit,
+      borderRadius: radius.control,
+      padding: space[3],
+    },
+    footer: {
+      paddingTop: space[2],
+    },
+  });
 
 export function ExportDataModal(props: ExportDataModalProps) {
   return (

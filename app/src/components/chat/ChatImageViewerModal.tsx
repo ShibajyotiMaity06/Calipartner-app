@@ -1,3 +1,4 @@
+import { useTheme as useAppearance } from '@calipartner/ui/theme';
 import { useBrowserModalBack } from '@/hooks/useBrowserModalBack';
 import React, { useEffect, useState } from 'react';
 import {
@@ -11,7 +12,7 @@ import {
   View,
 } from 'react-native';
 import { Text } from '@calipartner/ui';
-import { dark, onboardingLayout as layout } from '@calipartner/ui';
+import { onboardingLayout as layout } from '@calipartner/ui';
 import { ChatVideo } from './ChatVideo';
 import { Ionicons } from '@expo/vector-icons';
 import type { ChatAttachment } from '@/types/chat';
@@ -31,6 +32,9 @@ export function ChatImageViewerModal({
   onClose,
   testID = 'chat-image-viewer-modal',
 }: ChatImageViewerModalProps) {
+  const { colors: dark } = useAppearance();
+  const styles = createStyles(dark);
+
   useBrowserModalBack(visible, onClose);
   const [scale, setScale] = useState(1);
   const [openError, setOpenError] = useState(false);
@@ -171,97 +175,98 @@ export function ChatImageViewerModal({
   );
 }
 
-const styles = StyleSheet.create({
-  darkBackdrop: {
-    flex: 1,
-    backgroundColor: dark.bg0,
-  },
-  safeArea: {
-    flex: 1,
-  },
-  headerRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
-    zIndex: 10,
-  },
-  circleBtn: {
-    width: layout.touch,
-    height: layout.touch,
-    borderRadius: radius.pill,
-    backgroundColor: dark.s2,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  zoomControlsRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: dark.s2,
-    borderRadius: radius.pill,
-    paddingHorizontal: spacing.xs,
-    paddingVertical: 2,
-    gap: 8,
-  },
-  zoomBtn: {
-    width: layout.touch,
-    height: layout.touch,
-    borderRadius: radius.pill,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  btnDisabled: {
-    opacity: 0.4,
-  },
-  scaleText: {
-    color: dark.textHi,
-    fontSize: fontSize.xs,
-    fontWeight: '700',
-    minWidth: 36,
-    textAlign: 'center',
-  },
-  toastNotice: {
-    position: 'absolute',
-    top: 70,
-    alignSelf: 'center',
-    backgroundColor: '#1E293B',
-    borderRadius: radius.pill,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.xs + 2,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    zIndex: 20,
-    shadowColor: '#000000',
-    shadowOpacity: 0.3,
-    shadowRadius: 6,
-    elevation: 4,
-  },
-  toastText: {
-    color: dark.textHi,
-    fontSize: fontSize.xs,
-    fontWeight: '600',
-  },
-  imageScrollContent: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  fullImage: {
-    width: '100%',
-    height: '100%',
-  },
-  noImageWrap: {
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  footerInfoRow: {
-    paddingVertical: spacing.sm,
-    alignItems: 'center',
-  },
-  footerText: {
-    color: dark.textMid,
-    fontSize: fontSize.xs,
-  },
-});
+const createStyles = (dark: ReturnType<typeof useAppearance>['colors']) =>
+  StyleSheet.create({
+    darkBackdrop: {
+      flex: 1,
+      backgroundColor: dark.bg0,
+    },
+    safeArea: {
+      flex: 1,
+    },
+    headerRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      paddingHorizontal: spacing.md,
+      paddingVertical: spacing.sm,
+      zIndex: 10,
+    },
+    circleBtn: {
+      width: layout.touch,
+      height: layout.touch,
+      borderRadius: radius.pill,
+      backgroundColor: dark.s2,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    zoomControlsRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      backgroundColor: dark.s2,
+      borderRadius: radius.pill,
+      paddingHorizontal: spacing.xs,
+      paddingVertical: 2,
+      gap: 8,
+    },
+    zoomBtn: {
+      width: layout.touch,
+      height: layout.touch,
+      borderRadius: radius.pill,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    btnDisabled: {
+      opacity: 0.4,
+    },
+    scaleText: {
+      color: dark.textHi,
+      fontSize: fontSize.xs,
+      fontWeight: '700',
+      minWidth: 36,
+      textAlign: 'center',
+    },
+    toastNotice: {
+      position: 'absolute',
+      top: 70,
+      alignSelf: 'center',
+      backgroundColor: '#1E293B',
+      borderRadius: radius.pill,
+      paddingHorizontal: spacing.md,
+      paddingVertical: spacing.xs + 2,
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 6,
+      zIndex: 20,
+      shadowColor: '#000000',
+      shadowOpacity: 0.3,
+      shadowRadius: 6,
+      elevation: 4,
+    },
+    toastText: {
+      color: dark.textHi,
+      fontSize: fontSize.xs,
+      fontWeight: '600',
+    },
+    imageScrollContent: {
+      flex: 1,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    fullImage: {
+      width: '100%',
+      height: '100%',
+    },
+    noImageWrap: {
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    footerInfoRow: {
+      paddingVertical: spacing.sm,
+      alignItems: 'center',
+    },
+    footerText: {
+      color: dark.textMid,
+      fontSize: fontSize.xs,
+    },
+  });

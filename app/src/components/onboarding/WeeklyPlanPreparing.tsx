@@ -1,9 +1,10 @@
+import { useTheme as useAppearance } from '@calipartner/ui/theme';
 import React, { useEffect, useRef, useState } from 'react';
 import { Animated, View } from 'react-native';
-import { dark, homeLayout, radius, space, motion, Text, useReducedMotion } from '@calipartner/ui';
+import { homeLayout, radius, space, motion, Text, useReducedMotion } from '@calipartner/ui';
 import type { GoalProfile, PlanPreferences } from '@calipartner/core';
 import { t } from '@/i18n';
-import { squadStyles as styles } from '@/components/rooms/SquadViews';
+import { useSquadStyles } from '@/components/rooms/SquadViews';
 
 export function WeeklyPlanPreparing({
   singleDay = false,
@@ -16,6 +17,10 @@ export function WeeklyPlanPreparing({
   preferences?: PlanPreferences;
   targets?: GoalProfile | null;
 }) {
+  const styles = useSquadStyles();
+
+  const { colors: dark } = useAppearance();
+
   const [width, setWidth] = useState<number>(homeLayout.cardWidth);
   const [longWait, setLongWait] = useState(false);
   const reducedMotion = useReducedMotion();

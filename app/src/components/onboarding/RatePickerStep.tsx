@@ -1,7 +1,8 @@
+import { useTheme as useAppearance } from '@calipartner/ui/theme';
 import React from 'react';
 import { TouchableOpacity, StyleSheet, View } from 'react-native';
 import { kgToLb, type CalculateTargetsResult, type Goal, type Units } from '@calipartner/core';
-import { Text, CheckIcon, space, dark, radius } from '@calipartner/ui';
+import { Text, CheckIcon, space, radius } from '@calipartner/ui';
 import { t } from '@/i18n';
 import { playClickSound } from '@/lib/sound';
 
@@ -22,6 +23,9 @@ export function RatePickerStep({
   errorMessage,
   onSelectRate,
 }: RatePickerStepProps) {
+  const { colors: dark } = useAppearance();
+  const styles = createStyles(dark);
+
   if (!calculatedTargets) {
     return (
       <View style={styles.emptyContainer} testID="rate-picker-empty">
@@ -208,132 +212,133 @@ export function RatePickerStep({
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    paddingHorizontal: space[4],
-    gap: space[3],
-    paddingTop: space[2],
-  },
-  emptyContainer: {
-    padding: space[4],
-    alignItems: 'center',
-  },
-  maintenanceCard: {
-    backgroundColor: dark.s1,
-    borderRadius: radius.card,
-    borderWidth: 1,
-    borderColor: dark.hairline,
-    padding: space[4],
-    gap: space[2],
-  },
-  maintenanceHeader: {
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-    fontWeight: '600',
-  },
-  numeralRow: {
-    flexDirection: 'row',
-    alignItems: 'baseline',
-    gap: space[2],
-  },
-  numeralXL: {
-    lineHeight: 38,
-  },
-  numeralUnit: {
-    flexShrink: 1,
-  },
-  maintenanceCopy: {
-    lineHeight: 20,
-    marginTop: 2,
-  },
-  maintainNoticeCard: {
-    backgroundColor: dark.s1,
-    borderWidth: 1,
-    borderColor: dark.hairline,
-    borderRadius: radius.card,
-    padding: space[4],
-    gap: space[2],
-  },
-  maintainNoticeTitle: {
-    fontWeight: '700',
-  },
-  ratesList: {
-    gap: space[3],
-  },
-  rateCard: {
-    borderRadius: radius.card,
-    padding: space[4],
-    gap: space[2],
-    minHeight: 88,
-  },
-  rateTopRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  rateTitleGroup: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: space[3],
-  },
-  radioCircle: {
-    width: 22,
-    height: 22,
-    borderRadius: radius.full,
-    borderWidth: 2,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  rateTitle: {
-    fontWeight: '600',
-  },
-  badgeRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: space[2],
-  },
-  steadyBadge: {
-    backgroundColor: dark.apricot,
-    paddingHorizontal: space[2],
-    paddingVertical: 2,
-    borderRadius: radius.control,
-  },
-  steadyBadgeText: {
-    fontWeight: '700',
-    fontSize: 11,
-  },
-  unavailableBadge: {
-    backgroundColor: dark.s2,
-    borderWidth: 1,
-    borderColor: dark.hairline,
-    paddingHorizontal: space[2],
-    paddingVertical: 2,
-    borderRadius: radius.control,
-  },
-  rateBottomRow: {
-    flexDirection: 'row',
-    alignItems: 'baseline',
-    gap: space[2],
-    paddingLeft: 34,
-  },
-  targetKcalNumber: {
-    lineHeight: 32,
-    fontWeight: '700',
-  },
-  targetKcalUnit: {
-    fontWeight: '500',
-  },
-  reasonCard: {
-    backgroundColor: dark.s2,
-    borderRadius: radius.control,
-    padding: space[2],
-    marginTop: space[1],
-    marginLeft: 34,
-  },
-  reasonText: {
-    fontWeight: '500',
-  },
-  errorText: {
-    marginTop: space[1],
-  },
-});
+const createStyles = (dark: ReturnType<typeof useAppearance>['colors']) =>
+  StyleSheet.create({
+    container: {
+      paddingHorizontal: space[4],
+      gap: space[3],
+      paddingTop: space[2],
+    },
+    emptyContainer: {
+      padding: space[4],
+      alignItems: 'center',
+    },
+    maintenanceCard: {
+      backgroundColor: dark.s1,
+      borderRadius: radius.card,
+      borderWidth: 1,
+      borderColor: dark.hairline,
+      padding: space[4],
+      gap: space[2],
+    },
+    maintenanceHeader: {
+      textTransform: 'uppercase',
+      letterSpacing: 0.5,
+      fontWeight: '600',
+    },
+    numeralRow: {
+      flexDirection: 'row',
+      alignItems: 'baseline',
+      gap: space[2],
+    },
+    numeralXL: {
+      lineHeight: 38,
+    },
+    numeralUnit: {
+      flexShrink: 1,
+    },
+    maintenanceCopy: {
+      lineHeight: 20,
+      marginTop: 2,
+    },
+    maintainNoticeCard: {
+      backgroundColor: dark.s1,
+      borderWidth: 1,
+      borderColor: dark.hairline,
+      borderRadius: radius.card,
+      padding: space[4],
+      gap: space[2],
+    },
+    maintainNoticeTitle: {
+      fontWeight: '700',
+    },
+    ratesList: {
+      gap: space[3],
+    },
+    rateCard: {
+      borderRadius: radius.card,
+      padding: space[4],
+      gap: space[2],
+      minHeight: 88,
+    },
+    rateTopRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+    },
+    rateTitleGroup: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: space[3],
+    },
+    radioCircle: {
+      width: 22,
+      height: 22,
+      borderRadius: radius.full,
+      borderWidth: 2,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    rateTitle: {
+      fontWeight: '600',
+    },
+    badgeRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: space[2],
+    },
+    steadyBadge: {
+      backgroundColor: dark.apricot,
+      paddingHorizontal: space[2],
+      paddingVertical: 2,
+      borderRadius: radius.control,
+    },
+    steadyBadgeText: {
+      fontWeight: '700',
+      fontSize: 11,
+    },
+    unavailableBadge: {
+      backgroundColor: dark.s2,
+      borderWidth: 1,
+      borderColor: dark.hairline,
+      paddingHorizontal: space[2],
+      paddingVertical: 2,
+      borderRadius: radius.control,
+    },
+    rateBottomRow: {
+      flexDirection: 'row',
+      alignItems: 'baseline',
+      gap: space[2],
+      paddingLeft: 34,
+    },
+    targetKcalNumber: {
+      lineHeight: 32,
+      fontWeight: '700',
+    },
+    targetKcalUnit: {
+      fontWeight: '500',
+    },
+    reasonCard: {
+      backgroundColor: dark.s2,
+      borderRadius: radius.control,
+      padding: space[2],
+      marginTop: space[1],
+      marginLeft: 34,
+    },
+    reasonText: {
+      fontWeight: '500',
+    },
+    errorText: {
+      marginTop: space[1],
+    },
+  });

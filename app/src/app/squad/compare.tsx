@@ -1,8 +1,10 @@
+import { useTheme as useAppearance } from '@calipartner/ui/theme';
 import { NavigationIcon } from '@calipartner/ui';
+import { PublicAvatar } from '@/components/avatar/PublicAvatar';
 import React, { useCallback, useState } from 'react';
 import { Pressable, RefreshControl, SafeAreaView, ScrollView, View } from 'react-native';
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
-import { Button, dark, Text } from '@calipartner/ui';
+import { Button, Text } from '@calipartner/ui';
 import { useSquadToday, useSquadDetails } from '@/hooks/useSquad';
 import { useSubscription } from '@/hooks/useSubscription';
 import { SquadMemberPicker } from '@/components/rooms/SquadMemberPicker';
@@ -15,11 +17,15 @@ import {
   PlusDetailsCard,
   ProgressTrack,
   WorkoutContent,
-  squadStyles as styles,
+  useSquadStyles,
 } from '@/components/rooms/SquadViews';
 import { t } from '@/i18n';
 
 export default function SquadCompareScreen() {
+  const styles = useSquadStyles();
+
+  const { colors: dark } = useAppearance();
+
   const params = useLocalSearchParams<{ room: string; left?: string; right?: string }>(),
     router = useRouter();
   const [visible, setVisible] = useState(false),
@@ -125,6 +131,7 @@ export default function SquadCompareScreen() {
                         })
                   }
                 >
+                  <PublicAvatar userId={member.user_id} name={memberName(member)} />
                   <Text>{memberName(member)}</Text>
                   <Text variant="numeralM" tabular>
                     {member.score == null ? '—' : t('squadDesign.percent', { value: member.score })}

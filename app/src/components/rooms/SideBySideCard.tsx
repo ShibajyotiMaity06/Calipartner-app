@@ -1,10 +1,10 @@
+import { useTheme as useAppearance } from '@calipartner/ui/theme';
 import React, { useMemo, useState } from 'react';
 import { StyleSheet, TouchableOpacity, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import type { MealSection, RoomMemberSnapshot, RoomReactionType } from '@calipartner/core';
 import {
   Avatar,
-  dark,
   PairedCard,
   radius,
   space,
@@ -66,6 +66,9 @@ export function SideBySideCard({
   onInviteFriend,
   onFindPartner,
 }: SideBySideCardProps): React.JSX.Element {
+  const { colors: dark } = useAppearance();
+  const styles = createStyles(dark);
+
   // Modal visibility states for J04 and J07
   const [selectedEyeEvent, setSelectedEyeEvent] = useState<FeedEvent | null>(null);
   const [partnerMealSheetVisible, setPartnerMealSheetVisible] = useState(false);
@@ -341,80 +344,81 @@ export function SideBySideCard({
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    width: '100%',
-    paddingHorizontal: space[3],
-    gap: space[3],
-  },
-  stateSentenceWrap: {
-    paddingHorizontal: space[2],
-    paddingTop: space[1],
-  },
-  stateSentenceText: {
-    fontSize: 13,
-    lineHeight: 18,
-  },
-  quickActionsRow: {
-    flexDirection: 'row',
-    gap: space[2],
-    flexWrap: 'wrap',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginTop: space[1],
-  },
-  quickActionPill: {
-    flexGrow: 1,
-    flexShrink: 0,
-    flexBasis: 'auto',
-    maxWidth: '100%',
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 6,
-    paddingVertical: 10,
-    paddingHorizontal: space[2],
-    borderRadius: radius.control,
-    backgroundColor: dark.s1,
-    borderWidth: 1,
-    borderColor: dark.hairlineLit,
-    minHeight: 44,
-  },
-  feedSection: {
-    marginTop: space[3],
-    gap: space[2],
-  },
-  feedSectionTitle: {
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-    paddingHorizontal: space[2],
-  },
-  feedList: {
-    backgroundColor: dark.s1,
-    borderRadius: radius.card,
-    borderWidth: 1,
-    borderColor: dark.hairline,
-  },
-  feedRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: space[2],
-    paddingHorizontal: space[3],
-    paddingVertical: space[2] + 2,
-    minHeight: 44,
-  },
-  feedHairline: {
-    height: 1,
-    backgroundColor: dark.hairline,
-    marginLeft: space[8],
-  },
-  feedActionText: {
-    flex: 1,
-  },
-  eyeTouchArea: {
-    width: 32,
-    height: 32,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-});
+const createStyles = (dark: ReturnType<typeof useAppearance>['colors']) =>
+  StyleSheet.create({
+    container: {
+      width: '100%',
+      paddingHorizontal: space[3],
+      gap: space[3],
+    },
+    stateSentenceWrap: {
+      paddingHorizontal: space[2],
+      paddingTop: space[1],
+    },
+    stateSentenceText: {
+      fontSize: 13,
+      lineHeight: 18,
+    },
+    quickActionsRow: {
+      flexDirection: 'row',
+      gap: space[2],
+      flexWrap: 'wrap',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      marginTop: space[1],
+    },
+    quickActionPill: {
+      flexGrow: 1,
+      flexShrink: 0,
+      flexBasis: 'auto',
+      maxWidth: '100%',
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: 6,
+      paddingVertical: 10,
+      paddingHorizontal: space[2],
+      borderRadius: radius.control,
+      backgroundColor: dark.s1,
+      borderWidth: 1,
+      borderColor: dark.hairlineLit,
+      minHeight: 44,
+    },
+    feedSection: {
+      marginTop: space[3],
+      gap: space[2],
+    },
+    feedSectionTitle: {
+      textTransform: 'uppercase',
+      letterSpacing: 0.5,
+      paddingHorizontal: space[2],
+    },
+    feedList: {
+      backgroundColor: dark.s1,
+      borderRadius: radius.card,
+      borderWidth: 1,
+      borderColor: dark.hairline,
+    },
+    feedRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: space[2],
+      paddingHorizontal: space[3],
+      paddingVertical: space[2] + 2,
+      minHeight: 44,
+    },
+    feedHairline: {
+      height: 1,
+      backgroundColor: dark.hairline,
+      marginLeft: space[8],
+    },
+    feedActionText: {
+      flex: 1,
+    },
+    eyeTouchArea: {
+      width: 32,
+      height: 32,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+  });

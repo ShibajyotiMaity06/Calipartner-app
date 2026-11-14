@@ -1,0 +1,15 @@
+export const avatarLayout = {
+  canvasWidth: 1536,
+  canvasHeight: 2752,
+  heroHeight: 240,
+  editorHeight: 360,
+  compareHeight: 200,
+  thumbnailHeight: 112,
+  swatchSize: 48,
+  cardMinWidth: 104,
+  tapSize: 48,
+  borderWidth: 1,
+  selectedBorderWidth: 3,
+  opacityPressed: 0.7,
+  aspectRatio: 1536 / 2752,
+} as const;

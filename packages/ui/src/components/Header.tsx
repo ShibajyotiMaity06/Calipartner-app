@@ -1,3 +1,4 @@
+import { useTheme as useAppearance } from '../theme/useTheme';
 import React from 'react';
 import {
   View,
@@ -7,7 +8,7 @@ import {
   type ViewStyle,
   type StyleProp,
 } from 'react-native';
-import { dark } from '../tokens/colors';
+
 import { space } from '../tokens/space';
 import { ChevronLeftIcon } from './Icons';
 
@@ -52,6 +53,9 @@ export function Header({
   style,
   testID = 'screen-header',
 }: HeaderProps): React.JSX.Element {
+  const { colors: dark } = useAppearance();
+  const styles = createStyles(dark);
+
   return (
     <View
       testID={testID}
@@ -106,76 +110,77 @@ export function Header({
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    width: '100%',
-    paddingHorizontal: space[4], // 16
-    paddingTop: space[2], // 8
-    paddingBottom: space[2], // 8
-  },
-  bottomBorder: {
-    borderBottomWidth: 1,
-    borderBottomColor: dark.hairline,
-  },
-  topRow: {
-    minHeight: 44, // Minimum 44 hit area requirement
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  leftSlot: {
-    minWidth: 44,
-    minHeight: 44,
-    justifyContent: 'center',
-    alignItems: 'flex-start',
-  },
-  backButton: {
-    width: 44,
-    height: 44,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginLeft: -space[2], // -8 to align chevron nicely with screen margin
-  },
-  centerSlot: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: space[2], // 8
-  },
-  standardTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: dark.textHi,
-    textAlign: 'center',
-  },
-  standardSubtitle: {
-    fontSize: 12,
-    color: dark.textMid,
-    marginTop: 2,
-    textAlign: 'center',
-  },
-  rightSlot: {
-    minWidth: 44,
-    minHeight: 44,
-    flexDirection: 'row',
-    justifyContent: 'flex-end',
-    alignItems: 'center',
-  },
-  largeTitleSlot: {
-    marginTop: space[3], // 12
-    marginBottom: space[2], // 8
-    paddingHorizontal: space[1], // 4
-  },
-  largeTitleText: {
-    fontSize: 32,
-    lineHeight: 38,
-    fontWeight: '700',
-    color: dark.textHi,
-    letterSpacing: -0.5,
-  },
-  largeSubtitleText: {
-    fontSize: 13,
-    color: dark.textMid,
-    marginTop: space[1], // 4
-  },
-});
+const createStyles = (dark: ReturnType<typeof useAppearance>['colors']) =>
+  StyleSheet.create({
+    container: {
+      width: '100%',
+      paddingHorizontal: space[4], // 16
+      paddingTop: space[2], // 8
+      paddingBottom: space[2], // 8
+    },
+    bottomBorder: {
+      borderBottomWidth: 1,
+      borderBottomColor: dark.hairline,
+    },
+    topRow: {
+      minHeight: 44, // Minimum 44 hit area requirement
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+    },
+    leftSlot: {
+      minWidth: 44,
+      minHeight: 44,
+      justifyContent: 'center',
+      alignItems: 'flex-start',
+    },
+    backButton: {
+      width: 44,
+      height: 44,
+      justifyContent: 'center',
+      alignItems: 'center',
+      marginLeft: -space[2], // -8 to align chevron nicely with screen margin
+    },
+    centerSlot: {
+      flex: 1,
+      alignItems: 'center',
+      justifyContent: 'center',
+      paddingHorizontal: space[2], // 8
+    },
+    standardTitle: {
+      fontSize: 18,
+      fontWeight: '600',
+      color: dark.textHi,
+      textAlign: 'center',
+    },
+    standardSubtitle: {
+      fontSize: 12,
+      color: dark.textMid,
+      marginTop: 2,
+      textAlign: 'center',
+    },
+    rightSlot: {
+      minWidth: 44,
+      minHeight: 44,
+      flexDirection: 'row',
+      justifyContent: 'flex-end',
+      alignItems: 'center',
+    },
+    largeTitleSlot: {
+      marginTop: space[3], // 12
+      marginBottom: space[2], // 8
+      paddingHorizontal: space[1], // 4
+    },
+    largeTitleText: {
+      fontSize: 32,
+      lineHeight: 38,
+      fontWeight: '700',
+      color: dark.textHi,
+      letterSpacing: -0.5,
+    },
+    largeSubtitleText: {
+      fontSize: 13,
+      color: dark.textMid,
+      marginTop: space[1], // 4
+    },
+  });

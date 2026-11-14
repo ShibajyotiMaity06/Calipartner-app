@@ -1,6 +1,7 @@
+import { useTheme as useAppearance } from '@calipartner/ui/theme';
 import React from 'react';
 import { Modal, Pressable, StyleSheet, TouchableOpacity, View } from 'react-native';
-import { Button, dark, radius, space, Text } from '@calipartner/ui';
+import { Button, radius, space, Text } from '@calipartner/ui';
 import { t } from '@/i18n';
 import { playClickSound } from '@/lib/sound';
 
@@ -19,6 +20,9 @@ export function SignOutSheet({
   onOpenDeleteAccount,
   testID = 'sheet-sign-out-confirm',
 }: SignOutSheetProps) {
+  const { colors: dark } = useAppearance();
+  const styles = createStyles(dark);
+
   const handleSignOut = async () => {
     playClickSound();
     await onConfirmSignOut();
@@ -67,42 +71,43 @@ export function SignOutSheet({
   );
 }
 
-const styles = StyleSheet.create({
-  backdrop: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.75)',
-    justifyContent: 'flex-end',
-  },
-  sheet: {
-    backgroundColor: dark.s1,
-    borderTopLeftRadius: radius.sheet,
-    borderTopRightRadius: radius.sheet,
-    borderWidth: 1,
-    borderColor: dark.hairline,
-    padding: space[5],
-    paddingBottom: space[7],
-  },
-  contentWrap: {
-    alignItems: 'center',
-  },
-  title: {
-    marginBottom: space[2],
-    textAlign: 'center',
-  },
-  consequence: {
-    marginBottom: space[5],
-    textAlign: 'center',
-    lineHeight: 22,
-    color: dark.textMid,
-  },
-  actionBtn: {
-    width: '100%',
-    marginBottom: space[3],
-  },
-  deleteLinkWrap: {
-    minHeight: 44,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginTop: space[1],
-  },
-});
+const createStyles = (dark: ReturnType<typeof useAppearance>['colors']) =>
+  StyleSheet.create({
+    backdrop: {
+      flex: 1,
+      backgroundColor: 'rgba(0, 0, 0, 0.75)',
+      justifyContent: 'flex-end',
+    },
+    sheet: {
+      backgroundColor: dark.s1,
+      borderTopLeftRadius: radius.sheet,
+      borderTopRightRadius: radius.sheet,
+      borderWidth: 1,
+      borderColor: dark.hairline,
+      padding: space[5],
+      paddingBottom: space[7],
+    },
+    contentWrap: {
+      alignItems: 'center',
+    },
+    title: {
+      marginBottom: space[2],
+      textAlign: 'center',
+    },
+    consequence: {
+      marginBottom: space[5],
+      textAlign: 'center',
+      lineHeight: 22,
+      color: dark.textMid,
+    },
+    actionBtn: {
+      width: '100%',
+      marginBottom: space[3],
+    },
+    deleteLinkWrap: {
+      minHeight: 44,
+      alignItems: 'center',
+      justifyContent: 'center',
+      marginTop: space[1],
+    },
+  });

@@ -1,9 +1,10 @@
+import { useTheme as useAppearance } from '@calipartner/ui/theme';
 import React, { useRef, useState } from 'react';
 import { ScrollView } from 'react-native';
-import { Button, Sheet, SwitchRow, Text, dark } from '@calipartner/ui';
+import { Button, Sheet, SwitchRow, Text } from '@calipartner/ui';
 import { TRACKING_METRICS, type TrackingPreferences } from '@calipartner/core';
 import { t } from '@/i18n';
-import { squadStyles as styles } from './SquadViews';
+import { useSquadStyles } from './SquadViews';
 
 export function TrackingPreferencesSheet({
   enabled,
@@ -14,6 +15,10 @@ export function TrackingPreferencesSheet({
   onClose: () => void;
   onSave: (enabled: TrackingPreferences) => Promise<void>;
 }) {
+  const styles = useSquadStyles();
+
+  const { colors: dark } = useAppearance();
+
   const [draft, setDraft] = useState({ ...enabled });
   const [saving, setSaving] = useState(false),
     [error, setError] = useState(false);
