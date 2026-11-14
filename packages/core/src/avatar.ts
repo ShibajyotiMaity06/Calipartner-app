@@ -54,6 +54,7 @@ export interface AvatarProfile extends AvatarLoadout {
   level: number;
   form: number;
 }
+export type PublicAvatarProfile = Omit<AvatarProfile, 'xp'>;
 export function avatarProgress(xp: number, levels: AvatarLevel[], cap: number) {
   const active = levels.filter((l) => l.level <= cap).sort((a, b) => a.xp_required - b.xp_required);
   const current = [...active].reverse().find((l) => xp >= l.xp_required) ?? active[0];

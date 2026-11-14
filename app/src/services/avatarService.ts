@@ -1,6 +1,7 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type {
   AvatarProfile,
+  PublicAvatarProfile,
   AvatarProduct,
   AvatarLevel,
   AvatarGender,
@@ -99,7 +100,7 @@ export const purchaseAvatarProduct = (
 export const claimAvatarDrop = (client: SupabaseClient) =>
   rpc<AvatarState>(client, 'claim_daily_drop');
 export const fetchPublicAvatars = (client: SupabaseClient, ids: string[]) =>
-  rpc<AvatarProfile[]>(client, 'get_avatar_public', { p_user_ids: ids });
+  rpc<PublicAvatarProfile[]>(client, 'get_avatar_public', { p_user_ids: ids });
 export async function setAvatarWishlist(
   client: SupabaseClient,
   userId: string,

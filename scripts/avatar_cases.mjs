@@ -225,10 +225,11 @@ export async function runAvatarTests(db) {
         [request(19), ids[0], ids[1]],
       );
       await actor(1);
-      assert.equal(
-        (await scalar('select public.get_avatar_public($1) as value', [[ids[0]]])).length,
-        1,
-      );
+      const avatars = await scalar('select public.get_avatar_public($1) as value', [[ids[0]]]);
+      assert.equal(avatars.length, 1);
+      assert.equal('xp' in avatars[0], false);
+      assert.equal('created_at' in avatars[0], false);
+      assert.ok(avatars[0].slots);
       await admin();
       await db.query('insert into public.blocks(blocker_id,blocked_id) values($1,$2)', [
         ids[1],

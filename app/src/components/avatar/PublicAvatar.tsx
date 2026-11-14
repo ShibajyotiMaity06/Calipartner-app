@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Text, avatarLayout } from '@calipartner/ui';
-import type { AvatarProfile } from '@calipartner/core';
+import type { PublicAvatarProfile } from '@calipartner/core';
 import { useAvatar } from '@/hooks/useAvatar';
 import { getSupabase } from '@/lib/supabase';
 import { fetchPublicAvatars } from '@/services/avatarService';
@@ -8,7 +8,9 @@ import { t } from '@/i18n';
 import { AvatarView } from './AvatarView';
 export function PublicAvatar({ userId, name }: { userId: string; name: string }) {
   const { state } = useAvatar();
-  const [data, setData] = useState<{ owner: string; profile: AvatarProfile | null } | null>(null);
+  const [data, setData] = useState<{ owner: string; profile: PublicAvatarProfile | null } | null>(
+    null,
+  );
   useEffect(() => {
     let active = true;
     setData(null);

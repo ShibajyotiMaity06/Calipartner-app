@@ -16,7 +16,7 @@
 - Routes: `app/src/app/avatar/`, `app/src/app/shop/`, `app/src/app/wallet.tsx`; integration in onboarding, Home, You, Compare and root layout.
 - Shared appearance: `packages/ui/src/theme/`, `packages/ui/src/tokens/colors.ts`, `packages/ui/src/tokens/avatar.ts`, existing token consumers; legacy `app/src/theme/` bridge.
 - `packages/core/src/avatar.ts` and tests; `.ts` imports enabled for the shared Deno/app module while retaining strict no-emit typechecking.
-- `supabase/migrations/20261113000100_avatar_economy.sql`, `20261113000200_avatar_catalog.sql`, `supabase/seed/avatar_catalog.json`, RevenueCat webhook and test.
+- `supabase/migrations/20261113000100_avatar_economy.sql`, `20261113000200_avatar_catalog.sql`, `20261114000100_avatar_public_cosmetic_fields.sql`, `supabase/seed/avatar_catalog.json`, RevenueCat webhook and test. Shared projections exclude exact XP and creation timestamps.
 - `scripts/build-avatar-assets.mjs`, `seed_avatar_catalog.mjs`, `avatar_cases.mjs`, `avatar_browser_audit.mjs`, existing database test runner and package scripts. Raw art tools are excluded from application lint/format checks.
 - Legal/delete screens disclose currency terms and forfeiture. Existing unrelated AI edits are preserved separately.
 
@@ -42,4 +42,10 @@ Forms 4/5, monthly/limited art drops, remote R2 manifest delivery/composite down
 
 ## Verification
 
-See the end-of-session report for final suite summaries. The browser audit uses deterministic contracts and asserts failed-save retries, actual request identity, model/skin/color choices, item purchase, Compare/Home/You integration and persisted theme switching, with narrow and landscape screenshots. SQL tests execute the new migrations and enforce ownership, server tier access, private reads, atomic ledger spending, replay safety, refund debt and reward validation.
+- Vitest summaries: `Tests 898 passed (898)` (app), `Tests 636 passed (636)` (core), `Tests 65 passed (65)` (UI).
+- `Avatar database tests: 10 passed, 0 failed`; every existing database and Edge suite also passed through `npm test`.
+- Format and strict typecheck passed. Lint passed with zero errors and existing warnings; no new token violations.
+- Web, Android and iOS exports passed. Browser checks passed for creation, failed-save retry UUID, skin/outfit tint, CC purchase, Home/You/Compare, discard confirmation, all themes, persistence and narrow/landscape layouts.
+- Hosted verification: 11 checks passed, with disposable accounts/squads removed. The existing missing RevenueCat webhook secret is reported as manual configuration, not as a verified cash purchase.
+
+The browser audit uses deterministic contracts. SQL tests execute the migrations and enforce ownership, server tier access, private reads, atomic ledger spending, replay safety, refund debt, reward validation and cosmetic-only public projections.

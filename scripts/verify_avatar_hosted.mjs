@@ -103,7 +103,13 @@ try {
     { p_code: room.code, p_device_hash: 'avatar-fixture-' + randomUUID() },
     b.token,
   );
-  assert.equal((await rpc('get_avatar_public', { p_user_ids: [a.id, b.id] }, a.token)).length, 2);
+  const publicAvatars = await rpc('get_avatar_public', { p_user_ids: [a.id, b.id] }, a.token);
+  assert.equal(publicAvatars.length, 2);
+  for (const avatar of publicAvatars) {
+    assert.equal('xp' in avatar, false);
+    assert.equal('created_at' in avatar, false);
+    assert.ok(avatar.slots);
+  }
   checks++;
   const day = new Intl.DateTimeFormat('en-CA', {
     timeZone: 'America/New_York',

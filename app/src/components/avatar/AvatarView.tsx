@@ -8,7 +8,7 @@ import { t } from '@/i18n';
 import { avatarAssets } from './assets.generated';
 
 interface Props {
-  profile: AvatarProfile;
+  profile: Pick<AvatarProfile, 'gender' | 'form' | 'slots' | 'tints' | 'skin_tone_id'>;
   products: AvatarProduct[];
   tints: AvatarTint[];
   height?: number;
