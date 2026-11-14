@@ -84,6 +84,8 @@ web-build/
 /test-results/
 /.artifacts/
 # Local scratch notes and generated reports; product requirements stay versioned.
+# Raw avatar artwork and authoring files; the app uses tracked app/assets/avatar files.
+/avatar/
 /notes/
 /reports/
 /tmp/
