@@ -7,7 +7,6 @@ import {
   type StyleProp,
   type DimensionValue,
 } from 'react-native';
-import { dark } from '../tokens/colors';
 import { radius } from '../tokens/radius';
 import { space } from '../tokens/space';
 
@@ -82,23 +81,31 @@ export function Skeleton({
 }
 
 // Composite skeleton layouts
-Skeleton.Card = ({ style }: { style?: StyleProp<ViewStyle> }) => (
-  <View style={[styles.cardSkeleton, style]}>
-    <Skeleton variant="text" width="40%" height={18} />
-    <Skeleton variant="text" width="70%" height={14} style={{ marginTop: space[2] }} />
-    <Skeleton variant="rect" width="100%" height={64} style={{ marginTop: space[3] }} />
-  </View>
-);
-
-Skeleton.ListRow = ({ style }: { style?: StyleProp<ViewStyle> }) => (
-  <View style={[styles.rowSkeleton, style]}>
-    <Skeleton variant="circle" width={40} height={40} />
-    <View style={styles.rowText}>
-      <Skeleton variant="text" width="60%" height={16} />
-      <Skeleton variant="text" width="40%" height={12} style={{ marginTop: space[1] }} />
+Skeleton.Card = function SkeletonCard({ style }: { style?: StyleProp<ViewStyle> }) {
+  const { colors } = useAppearance();
+  const styles = createStyles(colors);
+  return (
+    <View style={[styles.cardSkeleton, style]}>
+      <Skeleton variant="text" width="40%" height={18} />
+      <Skeleton variant="text" width="70%" height={14} style={{ marginTop: space[2] }} />
+      <Skeleton variant="rect" width="100%" height={64} style={{ marginTop: space[3] }} />
     </View>
-  </View>
-);
+  );
+};
+
+Skeleton.ListRow = function SkeletonListRow({ style }: { style?: StyleProp<ViewStyle> }) {
+  const { colors } = useAppearance();
+  const styles = createStyles(colors);
+  return (
+    <View style={[styles.rowSkeleton, style]}>
+      <Skeleton variant="circle" width={40} height={40} />
+      <View style={styles.rowText}>
+        <Skeleton variant="text" width="60%" height={16} />
+        <Skeleton variant="text" width="40%" height={12} style={{ marginTop: space[1] }} />
+      </View>
+    </View>
+  );
+};
 
 const createStyles = (dark: ReturnType<typeof useAppearance>['colors']) =>
   StyleSheet.create({
@@ -123,4 +130,3 @@ const createStyles = (dark: ReturnType<typeof useAppearance>['colors']) =>
       flex: 1,
     },
   });
-const styles = createStyles(dark);

@@ -1,3 +1,4 @@
+import { applyDodoCC } from './ccBilling.ts';
 import {
   dodoProductKey,
   hasPlan,
@@ -168,10 +169,22 @@ export async function handleDodoWebhook(req: Request, getConfig = dodoConfig) {
     if (!id) return dodoResponse({ error: 'INVALID_EVENT' }, 400);
     let subscriptionId: string | undefined;
     const revoked = event.type === 'refund.succeeded' || event.type === 'dispute.lost';
+    if (
+      event.type === 'payment.succeeded' &&
+      'payment_id' in event.data &&
+      event.data.metadata?.cc_checkout_id
+    ) {
+      await applyDodoCC(event.data.payment_id, false, getConfig());
+      return dodoResponse({ status: 'processed' });
+    }
     if (event.type.startsWith('subscription.') && 'subscription_id' in event.data)
       subscriptionId = event.data.subscription_id ?? undefined;
     else if (revoked && 'payment_id' in event.data && event.data.payment_id) {
       const payment = await dodo.payments.retrieve(event.data.payment_id);
+      if (payment.metadata?.cc_checkout_id) {
+        await applyDodoCC(event.data.payment_id, true, getConfig());
+        return dodoResponse({ status: 'processed' });
+      }
       subscriptionId = payment.subscription_id ?? undefined;
     }
     if (!subscriptionId) return dodoResponse({ status: 'ignored' });

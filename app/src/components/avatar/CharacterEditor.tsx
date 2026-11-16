@@ -1,8 +1,17 @@
+import { Ionicons } from '@expo/vector-icons';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Modal, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { useLocalSearchParams, useRouter, useNavigation } from 'expo-router';
 import { usePreventRemove } from 'expo-router/react-navigation';
-import { Button, Text, useTheme, space, radius, avatarLayout } from '@calipartner/ui';
+import {
+  Button,
+  Text,
+  useTheme,
+  space,
+  radius,
+  avatarLayout,
+  avatarPresentation,
+} from '@calipartner/ui';
 import type { AvatarGender, AvatarLoadout, AvatarProfile, AvatarSlot } from '@calipartner/core';
 import { useAvatar } from '@/hooks/useAvatar';
 import { useAuth } from '@/contexts/AuthContext';
@@ -15,8 +24,6 @@ import { AvatarView } from './AvatarView';
 import { PurchaseSheet, type AvatarQuote } from './PurchaseSheet';
 
 const slots: AvatarSlot[] = [
-  'backdrop',
-  'aura',
   'hair',
   'facial',
   'headwear',
@@ -27,7 +34,6 @@ const slots: AvatarSlot[] = [
   'wrist',
   'neck',
   'shoes',
-  'frame',
 ];
 export function CharacterEditor({ creating = false }: { creating?: boolean }) {
   const router = useRouter();
@@ -301,6 +307,100 @@ export function CharacterEditor({ creating = false }: { creating?: boolean }) {
             </>
           ) : (
             <>
+              {draft.slots[tab] &&
+              state.products.find((p) => p.id === draft.slots[tab])?.tintable ? (
+                <>
+                  <Text variant="heading">{t('avatar.color')}</Text>
+                  {button(
+                    t('avatar.originalColor'),
+                    () => {
+                      const tints = { ...draft.tints };
+                      delete tints[tab];
+                      delete tints[`${tab}_finish`];
+                      setDraft({ ...draft, tints });
+                    },
+                    'avatar-color-original',
+                  )}
+                  <ScrollView
+                    horizontal
+                    showsHorizontalScrollIndicator={false}
+                    contentContainerStyle={styles.colorRow}
+                  >
+                    {state.tints
+                      .filter(
+                        (t) => t.kind === (tab === 'hair' || tab === 'facial' ? 'hair' : 'garment'),
+                      )
+                      .map((tint, index) => {
+                        const allowed =
+                          tint.tier_required === 'free' ||
+                          state.tier === 'pro' ||
+                          state.tier === tint.tier_required;
+                        const selected = draft.tints[tab] === tint.id;
+                        return (
+                          <Pressable
+                            key={tint.id}
+                            accessibilityRole="button"
+                            accessibilityLabel={`${t(tint.tier_required === 'free' ? 'avatar.colorName' : 'avatar.fashionColor', { number: index + 1 })}${allowed ? '' : `, ${t('avatar.unlock', { tier: 'Plus' })}`}`}
+                            accessibilityState={{ selected }}
+                            testID={`avatar-color-${tint.id}`}
+                            onPress={() => {
+                              if (!allowed) {
+                                router.push('/paywall');
+                                return;
+                              }
+                              const next = { ...draft.tints, [tab]: tint.id };
+                              delete next[`${tab}_finish`];
+                              setDraft({ ...draft, tints: next });
+                              setSaved(false);
+                            }}
+                            style={[
+                              styles.swatch,
+                              {
+                                backgroundColor: tint.hex,
+                                borderColor: selected ? colors.apricot : colors.hairline,
+                                borderWidth: selected
+                                  ? avatarLayout.selectedBorderWidth
+                                  : avatarLayout.borderWidth,
+                              },
+                            ]}
+                          >
+                            {selected || !allowed ? (
+                              <View
+                                style={{
+                                  backgroundColor: colors.s1,
+                                  borderRadius: radius.full,
+                                  padding: space[1],
+                                }}
+                              >
+                                <Ionicons
+                                  name={selected ? 'checkmark' : 'lock-closed-outline'}
+                                  size={space[4]}
+                                  color={colors.textHi}
+                                />
+                              </View>
+                            ) : null}
+                          </Pressable>
+                        );
+                      })}
+                  </ScrollView>
+                  <View style={styles.row}>
+                    {state.products
+                      .filter((p) => p.kind === 'finish' && p.owned)
+                      .map((finish) =>
+                        button(
+                          finish.name,
+                          () =>
+                            setDraft({
+                              ...draft,
+                              tints: { ...draft.tints, [`${tab}_finish`]: finish.id },
+                            }),
+                          `avatar-finish-${finish.id}`,
+                          draft.tints[`${tab}_finish`] === finish.id,
+                        ),
+                      )}
+                  </View>
+                </>
+              ) : null}
               <View style={styles.grid}>
                 {visibleItems.length === 0 ? (
                   <Text>{t('avatar.empty')}</Text>
@@ -410,92 +510,6 @@ export function CharacterEditor({ creating = false }: { creating?: boolean }) {
                   testID="avatar-remove-item"
                 />
               ) : null}
-              {draft.slots[tab] &&
-              state.products.find((p) => p.id === draft.slots[tab])?.tintable ? (
-                <>
-                  <Text variant="heading">{t('avatar.color')}</Text>
-                  {button(
-                    t('avatar.originalColor'),
-                    () => {
-                      const tints = { ...draft.tints };
-                      delete tints[tab];
-                      delete tints[`${tab}_finish`];
-                      setDraft({ ...draft, tints });
-                    },
-                    'avatar-color-original',
-                  )}
-                  <View style={styles.row}>
-                    {state.tints
-                      .filter(
-                        (t) => t.kind === (tab === 'hair' || tab === 'facial' ? 'hair' : 'garment'),
-                      )
-                      .map((tint, index) => {
-                        const allowed =
-                          tint.tier_required === 'free' ||
-                          state.tier === 'pro' ||
-                          state.tier === tint.tier_required;
-                        const selected = draft.tints[tab] === tint.id;
-                        return (
-                          <Pressable
-                            key={tint.id}
-                            accessibilityRole="button"
-                            accessibilityLabel={`${t(tint.tier_required === 'free' ? 'avatar.colorName' : 'avatar.fashionColor', { number: index + 1 })}${allowed ? '' : `, ${t('avatar.unlock', { tier: 'Plus' })}`}`}
-                            accessibilityState={{ selected }}
-                            testID={`avatar-color-${tint.id}`}
-                            onPress={() => {
-                              if (!allowed) {
-                                router.push('/paywall');
-                                return;
-                              }
-                              const next = { ...draft.tints, [tab]: tint.id };
-                              delete next[`${tab}_finish`];
-                              setDraft({ ...draft, tints: next });
-                              setSaved(false);
-                            }}
-                            style={[
-                              styles.swatch,
-                              {
-                                backgroundColor: tint.hex,
-                                borderColor: selected ? colors.apricot : colors.hairline,
-                                borderWidth: selected
-                                  ? avatarLayout.selectedBorderWidth
-                                  : avatarLayout.borderWidth,
-                              },
-                            ]}
-                          >
-                            {selected || !allowed ? (
-                              <Text
-                                variant="micro"
-                                color={colors.textHi}
-                                style={{ backgroundColor: colors.s1 }}
-                              >
-                                {t(selected ? 'avatar.selected' : 'avatar.unlock', {
-                                  tier: 'Plus',
-                                })}
-                              </Text>
-                            ) : null}
-                          </Pressable>
-                        );
-                      })}
-                  </View>
-                  <View style={styles.row}>
-                    {state.products
-                      .filter((p) => p.kind === 'finish' && p.owned)
-                      .map((finish) =>
-                        button(
-                          finish.name,
-                          () =>
-                            setDraft({
-                              ...draft,
-                              tints: { ...draft.tints, [`${tab}_finish`]: finish.id },
-                            }),
-                          `avatar-finish-${finish.id}`,
-                          draft.tints[`${tab}_finish`] === finish.id,
-                        ),
-                      )}
-                  </View>
-                </>
-              ) : null}
             </>
           )}
           {error ? <Text accessibilityRole="alert">{error}</Text> : null}
@@ -513,35 +527,38 @@ export function CharacterEditor({ creating = false }: { creating?: boolean }) {
       {quote ? <PurchaseSheet quote={quote} onClose={() => setQuote(null)} /> : null}
       <Modal
         visible={!!pendingLeave}
-        transparent={false}
+        transparent
         animationType="none"
         onRequestClose={() => setPendingLeave(null)}
       >
-        <View style={[styles.discard, { backgroundColor: colors.bg0 }]}>
-          <Text variant="title2">{t('avatar.discardTitle')}</Text>
-          <Text>{t('avatar.discardBody')}</Text>
-          <Button
-            variant="secondary"
-            label={t('avatar.stay')}
-            onPress={() => setPendingLeave(null)}
-            testID="avatar-keep-editing"
-          />
-          <Button
-            label={t('avatar.discard')}
-            onPress={() => {
-              allowLeave.current = true;
-              const action = pendingLeave;
-              setPendingLeave(null);
-              action?.();
-            }}
-            testID="avatar-discard"
-          />
+        <View style={styles.discardOverlay}>
+          <View accessibilityViewIsModal style={[styles.discard, { backgroundColor: colors.s1 }]}>
+            <Text variant="title2">{t('avatar.discardTitle')}</Text>
+            <Text>{t('avatar.discardBody')}</Text>
+            <Button
+              variant="secondary"
+              label={t('avatar.stay')}
+              onPress={() => setPendingLeave(null)}
+              testID="avatar-keep-editing"
+            />
+            <Button
+              label={t('avatar.discard')}
+              onPress={() => {
+                allowLeave.current = true;
+                const action = pendingLeave;
+                setPendingLeave(null);
+                action?.();
+              }}
+              testID="avatar-discard"
+            />
+          </View>
         </View>
       </Modal>
     </AvatarPage>
   );
 }
 const styles = StyleSheet.create({
+  colorRow: { flexDirection: 'row', gap: space[2], paddingVertical: space[2] },
   row: { flexDirection: 'row', flexWrap: 'wrap', gap: space[2], alignItems: 'center' },
   grid: { flexDirection: 'row', flexWrap: 'wrap', gap: space[3] },
   item: {
@@ -559,5 +576,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  discard: { flex: 1, justifyContent: 'center', padding: space[5], gap: space[4] },
+  discardOverlay: {
+    flex: 1,
+    justifyContent: 'center',
+    padding: space[5],
+    backgroundColor: avatarPresentation.modalScrim,
+  },
+  discard: { borderRadius: radius.card, padding: space[5], gap: space[4] },
 });

@@ -19,7 +19,9 @@ export function ThemeProvider({
   initialTheme = 'light',
   storage,
 }: ThemeProviderProps): React.JSX.Element {
-  const [theme, updateTheme] = useState<ColorScheme>(initialTheme);
+  const [theme, updateTheme] = useState<ColorScheme>(
+    initialTheme === 'dark' ? 'yellow' : initialTheme,
+  );
   const revision = useRef(0);
   useEffect(() => {
     let active = true;
@@ -32,7 +34,7 @@ export function ThemeProvider({
           revision.current === version &&
           (saved === 'light' || saved === 'dark' || saved === 'yellow')
         )
-          updateTheme(saved);
+          updateTheme(saved === 'dark' ? 'yellow' : saved);
       })
       .catch(() => undefined);
     return () => {
@@ -42,7 +44,7 @@ export function ThemeProvider({
   const setTheme = useCallback(
     (next: ColorScheme) => {
       revision.current++;
-      updateTheme(next);
+      updateTheme(next === 'dark' ? 'yellow' : next);
       void storage?.setItem('calipartner.appearance', next).catch(() => undefined);
     },
     [storage],

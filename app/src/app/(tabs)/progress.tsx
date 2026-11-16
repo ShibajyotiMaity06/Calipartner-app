@@ -1,9 +1,18 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { Ionicons } from '@expo/vector-icons';
+import { useAuth } from '@/contexts/AuthContext';
+import { CCBalance } from '@/components/avatar/CCBalance';
 import { AvatarHero } from '@/components/avatar/AvatarHero';
-import { useFocusEffect, useLocalSearchParams } from 'expo-router';
-import { RefreshControl, SafeAreaView, ScrollView, StyleSheet, View } from 'react-native';
+import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
+import {
+  Pressable,
+  RefreshControl,
+  SafeAreaView,
+  ScrollView,
+  StyleSheet,
+  View,
+} from 'react-native';
 import { Button, homeLayout, space, Text, SegmentedControl } from '@calipartner/ui';
-import { PersonalDiaryView } from '@/components/progress/PersonalDiaryView';
 import { ProgressOverview } from '@/components/progress/ProgressOverview';
 import { ChallengesView } from '@/components/progress/ChallengesView';
 import { WorkoutHistoryCalendarModal } from '@/components/workouts/WorkoutHistoryCalendarModal';
@@ -19,32 +28,29 @@ import type { ProgressDateRange } from '@calipartner/core';
 const ranges: ProgressDateRange[] = ['30d', '90d'];
 export default function ProgressScreen() {
   const { colors } = useTheme();
+  const router = useRouter();
+  const { profile } = useAuth();
   const { range, setRange, data, loading, error, refresh } = useIndividualProgress('30d');
   useFocusEffect(
     useCallback(() => {
       void refresh();
     }, [refresh]),
   );
-  const [tab, setTab] = useState<'diary' | 'progress' | 'challenges'>('diary');
+  const [tab, setTab] = useState<'progress' | 'challenges'>('progress');
   const params = useLocalSearchParams<{ challenge?: string; trophies?: string; tab?: string }>();
   useEffect(() => {
     if (params.challenge || params.trophies) setTab('challenges');
     else if (params.tab === 'progress') setTab('progress');
   }, [params.challenge, params.trophies, params.tab]);
-  const diaryRefresh = useRef<(() => Promise<void>) | null>(null);
   const challengeRefresh = useRef<(() => Promise<void>) | null>(null);
   const registerChallengeRefresh = useCallback((refreshChallenges: () => Promise<void>) => {
     challengeRefresh.current = refreshChallenges;
-  }, []);
-  const registerDiaryRefresh = useCallback((refreshDiary: () => Promise<void>) => {
-    diaryRefresh.current = refreshDiary;
   }, []);
   const [refreshing, setRefreshing] = useState(false);
   const refreshVisible = async () => {
     setRefreshing(true);
     try {
-      if (tab === 'diary') await diaryRefresh.current?.();
-      else if (tab === 'challenges') await challengeRefresh.current?.();
+      if (tab === 'challenges') await challengeRefresh.current?.();
       else await refresh();
     } finally {
       setRefreshing(false);
@@ -67,14 +73,25 @@ export default function ProgressScreen() {
           />
         }
       >
-        <AvatarHero compact />
-        <View style={styles.heading}>
-          <Text variant="title1">{t('tabs.progress')}</Text>
-          <Text>{t(tab === 'diary' ? 'homeRefresh.diaryHint' : 'squadDesign.personal')}</Text>
+        <View style={styles.profileHeader}>
+          <View style={styles.profileName}>
+            <Text variant="title1">{profile?.nickname ?? t('tabs.progress')}</Text>
+            {profile?.username ? <Text>@{profile.username}</Text> : null}
+          </View>
+          <CCBalance />
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={t('tabs.me')}
+            onPress={() => router.push('/(tabs)/me')}
+            testID="you-settings"
+            style={styles.settings}
+          >
+            <Ionicons name="settings-outline" size={homeLayout.iconSize} color={colors.text} />
+          </Pressable>
         </View>
+        <AvatarHero compact />
         <SegmentedControl
           options={[
-            { value: 'diary', label: t('homeRefresh.diary') },
             { value: 'progress', label: t('homeRefresh.progress') },
             { value: 'challenges', label: t('foodPolish.challenges') },
           ]}
@@ -82,16 +99,12 @@ export default function ProgressScreen() {
           onChange={setTab}
           testID="you-tabs"
         />
-        {tab === 'diary' ? (
-          <>
-            <PersonalDiaryView onRefreshReady={registerDiaryRefresh} />
-            <WeeklyPlanEntry />
-            <PersonalSquads />
-          </>
-        ) : tab === 'challenges' ? (
+        {tab === 'challenges' ? (
           <ChallengesView embedded onRefreshReady={registerChallengeRefresh} />
         ) : (
           <>
+            <WeeklyPlanEntry />
+            <PersonalSquads />
             <RangeSelector
               options={ranges}
               selected={range}
@@ -150,4 +163,12 @@ const styles = StyleSheet.create({
     gap: space[4],
   },
   heading: { gap: space[2] },
+  profileHeader: { flexDirection: 'row', alignItems: 'center', gap: space[3] },
+  profileName: { flex: 1 },
+  settings: {
+    minWidth: homeLayout.touchSize,
+    minHeight: homeLayout.touchSize,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
 });

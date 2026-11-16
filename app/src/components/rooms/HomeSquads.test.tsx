@@ -6,7 +6,15 @@ const state = vi.hoisted(() => ({ push: vi.fn() }));
 vi.mock('react-native', () => ({
   Pressable: 'Pressable',
   Platform: { OS: 'web' },
-  ScrollView: 'ScrollView',
+  Animated: {
+    View: 'AnimatedView',
+    Value: class {
+      setValue() {}
+      stopAnimation() {}
+    },
+    timing: () => ({ start() {} }),
+  },
+  PanResponder: { create: (handlers: unknown) => ({ panHandlers: handlers }) },
   View: 'View',
   StyleSheet: { create: (value: unknown) => value },
   useWindowDimensions: () => ({ width: 390, fontScale: 1 }),
@@ -41,7 +49,7 @@ it('uses actual pair and 20-person counts, opens the selected squad and scrolls 
   await act(async () =>
     renderer.root
       .findByProps({ testID: 'home-squad-carousel' })
-      .props.onScroll({ nativeEvent: { contentOffset: { x: 332 } } }),
+      .props.onAccessibilityAction({ nativeEvent: { actionName: 'increment' } }),
   );
   expect(panels().map((panel) => panel.props.visible)).toEqual([false, true]);
   renderer.root.findByProps({ testID: 'home-open-title-large' }).props.onPress();
@@ -88,7 +96,9 @@ it('uses the full available width for the empty-Squad create card', async () => 
   expect(
     renderer.root.findByProps({ testID: 'home-create-squad-end' }).props.style.at(-1).width,
   ).toBe('100%');
-  expect(renderer.root.findByProps({ testID: 'home-squad-carousel' }).props.horizontal).toBe(false);
+  expect(renderer.root.findByProps({ testID: 'home-squad-carousel' }).props.style.overflow).toBe(
+    'hidden',
+  );
 });
 
 it('keeps card widths equal and shrinks the selected carousel height when notification space clears', async () => {
@@ -98,7 +108,7 @@ it('keeps card widths equal and shrinks the selected carousel height when notifi
     );
   });
   const carousel = renderer.root.findByProps({ testID: 'home-squad-carousel' });
-  expect(carousel.props.contentContainerStyle.alignItems).toBe('flex-start');
+  expect(carousel.props.style.overflow).toBe('hidden');
   const first = renderer.root.findByProps({ testID: 'home-squad-card-pair' }).props.style;
   const second = renderer.root.findByProps({ testID: 'home-squad-card-large' }).props.style;
   const createCard = renderer.root.findByProps({ testID: 'home-create-squad-end' }).props.style;
@@ -133,32 +143,25 @@ it('keeps card widths equal and shrinks the selected carousel height when notifi
 });
 
 it('limits even a long fling to one card and lets the next gesture advance one more', async () => {
-  const scrollTo = vi.fn();
   const moreRooms = [...rooms, { ...rooms[1]!, id: 'third' }, { ...rooms[1]!, id: 'fourth' }];
   await act(async () => {
     renderer = create(
       <HomeSquads rooms={moreRooms} loading={false} error={null} onRetry={vi.fn()} visible />,
-      {
-        createNodeMock: (element) =>
-          (element.props as { testID?: string }).testID === 'home-squad-carousel'
-            ? { scrollTo, getScrollableNode: () => null }
-            : null,
-      },
     );
   });
   const carousel = () => renderer.root.findByProps({ testID: 'home-squad-carousel' });
   const panels = () => renderer.root.findAllByType('HomeSquadLeaderboard' as React.ElementType);
-  expect(carousel().props.disableIntervalMomentum).toBe(true);
+
   await act(async () => {
-    carousel().props.onScrollBeginDrag();
-    carousel().props.onScroll({ nativeEvent: { contentOffset: { x: 5000 } } });
-    carousel().props.onMomentumScrollEnd({ nativeEvent: { contentOffset: { x: 5000 } } });
+    carousel().props.onPanResponderGrant();
+    carousel().props.onPanResponderMove(null, { dx: -5000, dy: 0 });
+    carousel().props.onPanResponderRelease(null, { dx: -5000, vx: -3 });
   });
   expect(panels().map((panel) => panel.props.visible)).toEqual([false, true, false, false]);
-  expect(scrollTo).toHaveBeenLastCalledWith({ x: 332, animated: false });
+
   await act(async () => {
-    carousel().props.onScrollBeginDrag();
-    carousel().props.onMomentumScrollEnd({ nativeEvent: { contentOffset: { x: 5000 } } });
+    carousel().props.onPanResponderGrant();
+    carousel().props.onPanResponderRelease(null, { dx: -5000, vx: -3 });
   });
   expect(panels().map((panel) => panel.props.visible)).toEqual([false, false, true, false]);
   expect(renderer.root.findAllByType('EditSquadName' as React.ElementType)).toHaveLength(0);

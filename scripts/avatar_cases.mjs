@@ -1,5 +1,7 @@
 import assert from 'node:assert/strict';
+import { runCCWebTests } from './cc_web_cases.mjs';
 export async function runAvatarTests(db) {
+  await runCCWebTests(db);
   let passed = 0;
   const ids = [1, 2, 3].map((n) => `a8130000-0000-4000-8000-${String(n).padStart(12, '0')}`);
   const request = (n) => `a8140000-0000-4000-8000-${String(n).padStart(12, '0')}`;

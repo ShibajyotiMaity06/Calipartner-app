@@ -111,7 +111,10 @@ type Receipt = {
 };
 type CheckoutConstructor = new (options: {
   key: string;
-  subscription_id: string;
+  subscription_id?: string;
+  order_id?: string;
+  amount?: number;
+  currency?: string;
   name: string;
   prefill: { email: string };
   handler: (receipt: Receipt) => void;
@@ -125,7 +128,7 @@ interface CheckoutScript {
   onload: (() => void) | null;
   remove: () => void;
 }
-async function loadRazorpay(): Promise<CheckoutConstructor> {
+export async function loadRazorpay(): Promise<CheckoutConstructor> {
   webOnly();
   const browser = globalThis as unknown as {
     Razorpay?: CheckoutConstructor;

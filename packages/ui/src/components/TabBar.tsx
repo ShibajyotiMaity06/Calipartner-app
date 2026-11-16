@@ -15,10 +15,23 @@ import { Text } from './Text';
 
 import { radius } from '../tokens/radius';
 import { space } from '../tokens/space';
-import { SettingsIcon } from './SettingsIcon';
+import Svg, { Path } from 'react-native-svg';
+function ChatIcon({ size = 24, color }: { size?: number; color?: string }) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24">
+      <Path
+        d="M4 4h16v12H9l-5 4V4Z"
+        fill="none"
+        stroke={color}
+        strokeWidth={2}
+        strokeLinejoin="round"
+      />
+    </Svg>
+  );
+}
 import { HomeIcon, RoomIcon, MeIcon, PlusIcon } from './Icons';
 
-export type TabId = 'today' | 'room' | 'log' | 'progress' | 'me';
+export type TabId = 'today' | 'room' | 'log' | 'progress' | 'me' | 'chat';
 
 export interface TabBarItemConfig {
   id: TabId;
@@ -31,6 +44,7 @@ export interface TabBarLabels {
   room?: string;
   progress?: string;
   me?: string;
+  chat?: string;
 }
 
 export interface TabBarProps {
@@ -183,7 +197,7 @@ export function TabBar({
       {renderNormalTab('today', labels?.today ?? 'Home', HomeIcon, 'tab-today')}
 
       {/* 2. Progress */}
-      {renderNormalTab('progress', labels?.progress ?? 'You', MeIcon, 'tab-progress')}
+      {renderNormalTab('room', labels?.room ?? 'Squad', RoomIcon, 'tab-room', hasRoomBadge)}
 
       {/* 3. Center Raised Plus Button */}
       <View style={styles.centerSlot}>
@@ -199,11 +213,11 @@ export function TabBar({
         </TouchableOpacity>
       </View>
 
-      {/* 4. Squad */}
-      {renderNormalTab('room', labels?.room ?? 'Squad', RoomIcon, 'tab-room', hasRoomBadge)}
+      {/* 4. Chat */}
+      {renderNormalTab('chat', labels?.chat ?? 'Chat', ChatIcon, 'tab-chat')}
 
       {/* 5. Account */}
-      {renderNormalTab('me', labels?.me ?? 'Settings', SettingsIcon, 'tab-me')}
+      {renderNormalTab('progress', labels?.progress ?? 'You', MeIcon, 'tab-progress')}
     </View>
   );
 }

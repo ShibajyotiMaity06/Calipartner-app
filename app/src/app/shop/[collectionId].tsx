@@ -24,6 +24,7 @@ export default function CollectionScreen() {
     state?.products.filter(
       (p) =>
         (p.active || p.owned) &&
+        !['aura', 'backdrop', 'frame'].includes(p.slot) &&
         p.collection_id === params.collectionId &&
         p.genders.includes(state.profile?.gender ?? 'm'),
     ) ?? [];
@@ -70,7 +71,11 @@ export default function CollectionScreen() {
               total: products.length,
             })}
           </Text>
-          {!collection.earn_only &&
+          {!state.products.some(
+            (p) =>
+              p.collection_id === collection.id && ['aura', 'backdrop', 'frame'].includes(p.slot),
+          ) &&
+          !collection.earn_only &&
           products.some((p) => !p.owned) &&
           access &&
           collection.price_to_complete != null ? (

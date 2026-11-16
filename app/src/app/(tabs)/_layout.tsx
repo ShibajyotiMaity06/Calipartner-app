@@ -3,7 +3,7 @@ import { View } from 'react-native';
 import { useNetworkStatus } from '@/hooks/useNetworkStatus';
 import React from 'react';
 import { closeBrowserModalsThen } from '@/hooks/useBrowserModalBack';
-import { Tabs, usePathname, useRouter, useGlobalSearchParams } from 'expo-router';
+import { Tabs, usePathname, useRouter, useGlobalSearchParams, type Href } from 'expo-router';
 import { Text, space, TabBar, type TabId } from '@calipartner/ui';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { t } from '@/i18n';
@@ -58,7 +58,7 @@ export default function TabsLayout() {
                 });
               }
             } else {
-              closeBrowserModalsThen(() => router.navigate(`/(tabs)/${tab}`));
+              closeBrowserModalsThen(() => router.navigate(`/(tabs)/${tab}` as Href));
             }
           };
 
@@ -86,6 +86,7 @@ export default function TabsLayout() {
                 progress: t('tabs.progress'),
                 room: t('tabs.room'),
                 me: t('tabs.me'),
+                chat: t('rooms.segments.chat'),
               }}
             />
           );
@@ -119,6 +120,7 @@ export default function TabsLayout() {
             title: t('tabs.progress'),
           }}
         />
+        <Tabs.Screen name="chat" options={{ title: t('rooms.segments.chat') }} />
         <Tabs.Screen
           name="me"
           options={{

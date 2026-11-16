@@ -1,3 +1,4 @@
+import { WebCCPacks } from '@/components/avatar/WebCCPacks';
 import React, { useEffect, useRef, useState } from 'react';
 import { Platform, View, StyleSheet } from 'react-native';
 import { Button, Text, space, useTheme, radius, avatarLayout } from '@calipartner/ui';
@@ -90,7 +91,7 @@ export default function WalletScreen() {
           {loading ? (
             <Text>{t('common.loading')}</Text>
           ) : Platform.OS === 'web' ? (
-            <Text>{t('avatar.nativePacks')}</Text>
+            <WebCCPacks />
           ) : packages.length === 0 ? (
             <>
               <Text>{t('avatar.packsUnavailable')}</Text>

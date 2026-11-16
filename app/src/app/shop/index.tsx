@@ -3,6 +3,7 @@ import { View, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Button, Text, space, radius, useTheme, avatarLayout } from '@calipartner/ui';
 import { useAvatar } from '@/hooks/useAvatar';
+import { AvatarView } from '@/components/avatar/AvatarView';
 import { AvatarPage } from '@/components/avatar/AvatarPage';
 import { t } from '@/i18n';
 export default function ShopScreen() {
@@ -37,9 +38,20 @@ export default function ShopScreen() {
                     const products = state.products.filter(
                       (p) =>
                         p.active &&
+                        !['aura', 'backdrop', 'frame'].includes(p.slot) &&
                         p.collection_id === collection.id &&
                         p.genders.includes(state.profile!.gender),
                     );
+                    if (!products.length) return null;
+                    const outfit = {
+                      ...state.profile!,
+                      slots: {
+                        ...state.profile!.slots,
+                        ...Object.fromEntries(
+                          products.filter((p) => p.slot !== 'finish').map((p) => [p.slot, p.id]),
+                        ),
+                      },
+                    };
                     const owned = products.filter((p) => p.owned).length;
                     return (
                       <View
@@ -49,6 +61,13 @@ export default function ShopScreen() {
                           { backgroundColor: colors.s1, borderColor: colors.hairline },
                         ]}
                       >
+                        <AvatarView
+                          profile={outfit}
+                          products={state.products}
+                          tints={state.tints}
+                          height={avatarLayout.compareHeight}
+                          preview
+                        />
                         <Text variant="title2">{collection.name}</Text>
                         <Text tabular>
                           {t('avatar.ownedCount', { owned, total: products.length })}
@@ -72,7 +91,10 @@ export default function ShopScreen() {
             ))}
             <Text variant="heading">{t('avatar.wishlist')}</Text>
             {state.products
-              .filter((p) => state.wishlist.includes(p.id))
+              .filter(
+                (p) =>
+                  state.wishlist.includes(p.id) && !['aura', 'backdrop', 'frame'].includes(p.slot),
+              )
               .map((p) => (
                 <Button
                   key={p.id}

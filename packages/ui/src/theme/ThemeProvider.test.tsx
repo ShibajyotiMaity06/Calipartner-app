@@ -38,7 +38,8 @@ it('defaults to Light, switches palettes and persists the explicit choice', asyn
   expect(current!.colors.bg0).toBe('#DDD5C7');
   expect(current!.reduceMotion).toBe(true);
   await act(async () => current.setTheme('dark'));
-  expect(current!.colors.bg0).toBe('#151413');
+  expect(current!.theme).toBe('yellow');
+  expect(current!.colors.bg0).toBe('#0E0B08');
   expect(storage.setItem).toHaveBeenCalledWith('calipartner.appearance', 'dark');
   await act(async () => current.setTheme('yellow'));
   expect(current!.colors.bg0).toBe('#0E0B08');
@@ -72,4 +73,17 @@ it('keeps text, action labels and Light nutrient text at AA contrast', () => {
     expect(getContrastRatio(palette.apricot, palette.onBrand)).toBeGreaterThanOrEqual(4.5);
   for (const color of Object.values(lightNutritionColors))
     expect(getContrastRatio(color, themePalettes.light.s1)).toBeGreaterThanOrEqual(4.5);
+});
+
+it('migrates a stored retired dark theme to the retained warm palette', async () => {
+  const storage = { getItem: vi.fn(async () => 'dark'), setItem: vi.fn(async () => {}) };
+  await act(async () => {
+    tree = create(
+      <ThemeProvider storage={storage}>
+        <Probe />
+      </ThemeProvider>,
+    );
+  });
+  expect(current.theme).toBe('yellow');
+  expect(current.colors).toBe(themePalettes.yellow);
 });

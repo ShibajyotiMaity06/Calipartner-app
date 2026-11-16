@@ -13,3 +13,5 @@ export const avatarLayout = {
   opacityPressed: 0.7,
   aspectRatio: 1536 / 2752,
 } as const;
+
+export const avatarPresentation = { modalScrim: 'rgba(0, 0, 0, 0.45)' } as const;

@@ -1,4 +1,5 @@
 import React from 'react';
+import { CCBalance } from './CCBalance';
 import { SafeAreaView, ScrollView, View, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Button, Text, useTheme, space, homeLayout } from '@calipartner/ui';
@@ -35,16 +36,7 @@ export function AvatarPage({
           <Text variant="title2" style={styles.title}>
             {title}
           </Text>
-          {state?.enabled ? (
-            <Button
-              variant="secondary"
-              fullWidth={false}
-              size="sm"
-              label={t('avatar.cc', { amount: state.balances.earned + state.balances.purchased })}
-              onPress={() => router.push('/wallet')}
-              testID="avatar-page-wallet"
-            />
-          ) : null}
+          <CCBalance />
         </View>
         {!state && loading ? (
           <Text>{t('common.loading')}</Text>

@@ -121,7 +121,10 @@ try {
     else if (url.pathname.includes('/rpc/')) {
       const name = url.pathname.split('/').at(-1),
         body = req.postDataJSON() ?? {};
-      if (name === 'get_avatar_state') data = state();
+      if (name === 'get_individual_progress') {
+        status = 503;
+        data = { message: 'Progress temporarily unavailable' };
+      } else if (name === 'get_avatar_state') data = state();
       else if (name === 'avatar_reconcile_rewards') data = null;
       else if (name === 'avatar_create') {
         seed.products.filter((p) => p.starter).forEach((p) => owned.add(p.id));
@@ -217,7 +220,12 @@ try {
         };
       else if (name === 'get_tracking_preferences')
         data = { calories: true, protein: true, carbs: true, fat: true, steps: true, water: true };
-    } else if (url.pathname.endsWith('/functions/v1/challenges-api'))
+    } else if (url.pathname.endsWith('/functions/v1/cc-checkout'))
+      data = {
+        provider: 'dodo',
+        products: [{ id: 'cc_100', cc: 100, amount: 199, currency: 'USD' }],
+      };
+    else if (url.pathname.endsWith('/functions/v1/challenges-api'))
       data = { catalog: { templates: [], seasons: [], config: { poll_seconds: 120 } }, items: [] };
     if (req.headers().accept?.includes('vnd.pgrst.object') && Array.isArray(data))
       data = data[0] ?? null;
@@ -290,15 +298,23 @@ try {
     'rgb(221, 213, 199)',
   );
   await page.screenshot({ path: path.join(out, 'home-light-375.png'), fullPage: true });
-  await page.getByTestId('theme-dark').click();
-  assert.equal(
-    await page.evaluate(
-      () => globalThis.getComputedStyle(globalThis.document.body).backgroundColor,
-    ),
-    'rgb(21, 20, 19)',
-  );
-  await page.screenshot({ path: path.join(out, 'home-dark-375.png'), fullPage: true });
-  await page.getByTestId('theme-yellow').click();
+  await page.emulateMedia({ reducedMotion: 'no-preference' });
+  await page.evaluate(() => {
+    globalThis.__themeReveals = [];
+    const original = globalThis.document.documentElement.animate.bind(
+      globalThis.document.documentElement,
+    );
+    globalThis.document.documentElement.animate = (frames, options) => {
+      globalThis.__themeReveals.push({ frames, options });
+      return original(frames, options);
+    };
+  });
+  await page.getByTestId('theme-toggle').click();
+  if (await page.evaluate(() => typeof globalThis.document.startViewTransition === 'function')) {
+    await page.waitForFunction(() => globalThis.__themeReveals.length > 0);
+    assert.equal(await page.evaluate(() => globalThis.__themeReveals[0].options.duration), 700);
+  }
+  await page.emulateMedia({ reducedMotion: 'reduce' });
   await page.reload();
   await page.getByTestId('home-avatar-hero').waitFor();
   assert.equal(
@@ -307,7 +323,7 @@ try {
     ),
     'rgb(14, 11, 8)',
   );
-  await page.getByTestId('theme-light').click();
+  await page.getByTestId('theme-toggle').click();
   await page.goto('http://127.0.0.1:8099/progress');
   await page.getByTestId('you-avatar').waitFor();
   await page.screenshot({ path: path.join(out, 'you-375.png'), fullPage: true });
@@ -319,9 +335,25 @@ try {
   await page.getByTestId('avatar-view').first().waitFor();
   assert.equal(await page.getByTestId('avatar-view').count(), 2);
   await page.screenshot({ path: path.join(out, 'compare-375.png'), fullPage: true });
+  await page.goto('http://127.0.0.1:8099/wallet');
+  await page.getByTestId('web-cc-pack-cc_100').waitFor();
+  assert.ok((await page.getByTestId('web-cc-pack-cc_100').innerText()).includes('$1.99'));
+  await page.screenshot({ path: path.join(out, 'wallet-375.png'), fullPage: true });
+  await page.goto('http://127.0.0.1:8099/avatar');
+  await page.getByTestId('avatar-tab-bottom').click();
+  await page.getByTestId('avatar-item-bottom_joggers').click();
+  assert.equal(await page.getByTestId('avatar-tab-aura').count(), 0);
+  assert.equal(await page.getByTestId('avatar-tab-backdrop').count(), 0);
+  assert.equal(await page.getByTestId('avatar-tab-frame').count(), 0);
+  await page.screenshot({ path: path.join(out, 'trousers-shoes-375.png'), fullPage: true });
+  await page.getByTestId('avatar-page-back').click();
+  await page.getByTestId('avatar-discard').waitFor();
+  await page.screenshot({ path: path.join(out, 'discard-modal-375.png'), fullPage: true });
+  await page.getByTestId('avatar-discard').click();
+  await page.getByTestId('avatar-discard').waitFor({ state: 'hidden' });
   assert.deepEqual(errors, []);
   console.log(
-    'Avatar browser audit: creation, failed-save retry UUID, skin/outfit tint, CC item purchase, Home/You, all three themes, persistence and narrow/landscape screens passed',
+    'Avatar browser audit: creation, failed-save retry UUID, skin/outfit tint, CC item purchase, Home/You, both themes, persistence and narrow/landscape screens passed',
   );
 } finally {
   await browser?.close();

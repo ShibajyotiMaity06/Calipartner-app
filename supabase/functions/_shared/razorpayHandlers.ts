@@ -1,3 +1,4 @@
+import { applyRazorpayCC } from './ccBilling.ts';
 import {
   DODO_PRODUCT_KEYS,
   dodoProductKey,
@@ -241,7 +242,12 @@ export async function handleRazorpayWebhook(req: Request, getConfig = razorpayCo
     ];
     const refund = event.event === 'refund.processed';
     const dispute = event.event === 'payment.dispute.lost';
-    if (!subscriptionEvents.includes(event.event) && !refund && !dispute)
+    if (
+      !subscriptionEvents.includes(event.event) &&
+      event.event !== 'payment.captured' &&
+      !refund &&
+      !dispute
+    )
       return billingResponse({ status: 'ignored' });
     let subscriptionId = event.payload?.subscription?.entity?.id;
     let payment: Record<string, unknown> | undefined;
@@ -254,6 +260,8 @@ export async function handleRazorpayWebhook(req: Request, getConfig = razorpayCo
     if (paymentId) {
       if (!id(paymentId, 'pay')) return billingResponse({ error: 'INVALID_PAYMENT' }, 400);
       payment = await api('/payments/' + paymentId);
+      if (await applyRazorpayCC(payment, refund || dispute, getConfig()))
+        return billingResponse({ status: 'processed' });
       if (!id(payment.invoice_id, 'inv')) {
         // Mandate verification can have a nominal payment without a recurring invoice.
         // Its automatic refund is never a refund of a purchased billing period.

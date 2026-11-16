@@ -4,6 +4,7 @@
  */
 
 export const motion = {
+  theme: { duration: 700 },
   fast: { duration: 120, easing: [0.2, 0, 0, 1] as const },
   base: { duration: 220, easing: [0.2, 0, 0, 1] as const },
   ring: { duration: 680, easing: [0.32, 0, 0.1, 1] as const },

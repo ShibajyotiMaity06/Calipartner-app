@@ -1,16 +1,17 @@
 import { useTheme as useAppearance } from '@calipartner/ui/theme';
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   Platform,
   Pressable,
-  ScrollView,
+  Animated,
+  PanResponder,
   StyleSheet,
   useWindowDimensions,
   View,
 } from 'react-native';
 import { useRouter, type Href } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { homeLayout, radius, space, Text } from '@calipartner/ui';
+import { homeLayout, radius, space, Text, motion } from '@calipartner/ui';
 import { HomeSquadLeaderboard } from './HomeSquadLeaderboard';
 import type { RoomSummary } from '@/types/rooms';
 import { t } from '@/i18n';
@@ -28,7 +29,7 @@ export function HomeSquads({
   onRetry: () => void;
   visible: boolean;
 }) {
-  const { colors: dark } = useAppearance();
+  const { colors: dark, reduceMotion } = useAppearance();
   const styles = createStyles(dark);
 
   const router = useRouter();
@@ -38,64 +39,83 @@ export function HomeSquads({
       ? undefined
       : Math.min(homeLayout.cardWidth * Math.min(fontScale, 1.5), width - space[7]);
   const [selected, setSelected] = useState(0);
-  const carousel = useRef<ScrollView>(null);
+  const carousel = useRef<View>(null);
+  const offset = useRef(new Animated.Value(0)).current;
+  const selectedRef = useRef(0);
   const gestureStart = useRef(0);
-  const selectedRef = useRef(selected);
-  selectedRef.current = selected;
   const step = cardWidth ? cardWidth + space[3] : 1;
-  const settle = (x: number) => {
-    const next = Math.max(
-      0,
-      Math.min(
-        rooms.length,
-        Math.max(
-          gestureStart.current - 1,
-          Math.min(gestureStart.current + 1, Math.round(x / step)),
-        ),
+  const moveTo = useCallback(
+    (index: number) => {
+      const next = Math.max(0, Math.min(rooms.length, index));
+      selectedRef.current = next;
+      setSelected(next);
+      Animated.timing(offset, {
+        toValue: -next * step,
+        duration: reduceMotion ? 0 : motion.base.duration,
+        useNativeDriver: true,
+      }).start();
+    },
+    [rooms.length, offset, reduceMotion, step],
+  );
+  const pan = PanResponder.create({
+    onMoveShouldSetPanResponder: (_, g) =>
+      Math.abs(g.dx) > space[2] && Math.abs(g.dx) > Math.abs(g.dy),
+    onPanResponderGrant: () => {
+      offset.stopAnimation();
+      gestureStart.current = selectedRef.current;
+    },
+    onPanResponderMove: (_, g) => {
+      const from = gestureStart.current;
+      const delta = Math.max(
+        from === rooms.length ? 0 : -step,
+        Math.min(from === 0 ? 0 : step, g.dx),
+      );
+      offset.setValue(-from * step + delta);
+    },
+    onPanResponderRelease: (_, g) =>
+      moveTo(
+        gestureStart.current +
+          (Math.abs(g.dx) > step / 4 || Math.abs(g.vx) > 0.5 ? (g.dx < 0 ? 1 : -1) : 0),
       ),
-    );
+    onPanResponderTerminate: () => moveTo(gestureStart.current),
+  });
+  useEffect(() => {
+    const next = Math.min(selectedRef.current, rooms.length);
+    selectedRef.current = next;
     setSelected(next);
-    carousel.current?.scrollTo({ x: next * step, animated: false });
-  };
+    offset.setValue(-next * step);
+  }, [step, rooms.length, offset]);
   useEffect(() => {
     if (Platform.OS !== 'web') return;
     type Wheel = { deltaX: number; deltaY: number; preventDefault: () => void };
-    const node = carousel.current?.getScrollableNode() as
-      | {
-          addEventListener?: (
-            name: string,
-            handler: (event: Wheel) => void,
-            options: { passive: boolean },
-          ) => void;
-          removeEventListener?: (name: string, handler: (event: Wheel) => void) => void;
-        }
-      | undefined;
+    const node = carousel.current as unknown as {
+      addEventListener?: (
+        name: string,
+        fn: (event: Wheel) => void,
+        options: { passive: boolean },
+      ) => void;
+      removeEventListener?: (name: string, fn: (event: Wheel) => void) => void;
+    } | null;
     let active = false;
     let timer: ReturnType<typeof setTimeout>;
     const wheel = (event: Wheel) => {
       if (!event.deltaX || Math.abs(event.deltaY) > Math.abs(event.deltaX)) return;
       event.preventDefault();
       if (!active) {
-        gestureStart.current = selectedRef.current;
+        moveTo(selectedRef.current + Math.sign(event.deltaX));
         active = true;
       }
-      const next = Math.max(
-        0,
-        Math.min(rooms.length, gestureStart.current + Math.sign(event.deltaX)),
-      );
-      setSelected(next);
-      carousel.current?.scrollTo({ x: next * step, animated: false });
       clearTimeout(timer);
       timer = setTimeout(() => {
         active = false;
-      }, 250);
+      }, motion.base.duration);
     };
     node?.addEventListener?.('wheel', wheel, { passive: false });
     return () => {
       clearTimeout(timer);
       node?.removeEventListener?.('wheel', wheel);
     };
-  }, [step, rooms.length]);
+  }, [moveTo]);
   const [cardHeights, setCardHeights] = useState<Record<string, number>>({});
   const selectedKey = rooms[selected]?.id ?? 'create';
   const cardHeight = cardHeights[selectedKey] ?? homeLayout.ringSize * 2;
@@ -114,6 +134,40 @@ export function HomeSquads({
         <Text variant="bodyS" color={dark.textMid}>
           {t('homeRefresh.squads')}
         </Text>
+        {rooms.length ? (
+          <View style={{ flexDirection: 'row' }}>
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={t('avatar.previousSquad')}
+              accessibilityState={{ disabled: selected === 0 }}
+              disabled={selected === 0}
+              style={styles.smallAction}
+              onPress={() => moveTo(selected - 1)}
+              testID="home-squad-previous"
+            >
+              <Ionicons
+                name="chevron-back"
+                size={homeLayout.iconSize}
+                color={selected === 0 ? dark.textOff : dark.textHi}
+              />
+            </Pressable>
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={t('avatar.nextSquad')}
+              accessibilityState={{ disabled: selected === rooms.length }}
+              disabled={selected === rooms.length}
+              style={styles.smallAction}
+              onPress={() => moveTo(selected + 1)}
+              testID="home-squad-next"
+            >
+              <Ionicons
+                name="chevron-forward"
+                size={homeLayout.iconSize}
+                color={selected === rooms.length ? dark.textOff : dark.textHi}
+              />
+            </Pressable>
+          </View>
+        ) : null}
         <Pressable
           onPress={() => router.push('/friends' as Href)}
           style={styles.smallAction}
@@ -137,98 +191,89 @@ export function HomeSquads({
           </Text>
         </Pressable>
       ) : null}
-      <ScrollView
+      <View
         ref={carousel}
-        disableIntervalMomentum
-        onTouchStart={() => {
-          gestureStart.current = selected;
-        }}
-        onScrollBeginDrag={() => {
-          gestureStart.current = selected;
-        }}
-        onScrollEndDrag={(event) => settle(event.nativeEvent.contentOffset.x)}
-        onMomentumScrollEnd={(event) => settle(event.nativeEvent.contentOffset.x)}
-        style={rooms.length ? { height: cardHeight } : undefined}
-        horizontal={rooms.length > 0}
-        showsHorizontalScrollIndicator={false}
-        snapToInterval={cardWidth ? cardWidth + space[3] : undefined}
-        decelerationRate="fast"
-        onScroll={(event) => {
-          const x = event.nativeEvent.contentOffset.x;
-          const lower = Math.max(0, gestureStart.current - 1) * step;
-          const upper = Math.min(rooms.length, gestureStart.current + 1) * step;
-          const clamped = Math.max(lower, Math.min(upper, x));
-          if (x !== clamped) carousel.current?.scrollTo({ x: clamped, animated: false });
-          setSelected(Math.round(clamped / step));
-        }}
-        scrollEventThrottle={100}
-        contentContainerStyle={styles.cards}
+        {...pan.panHandlers}
+        style={{ overflow: 'hidden', height: cardHeight }}
         testID="home-squad-carousel"
+        accessibilityRole="adjustable"
+        accessibilityActions={[{ name: 'increment' }, { name: 'decrement' }]}
+        onAccessibilityAction={(event) =>
+          moveTo(selectedRef.current + (event.nativeEvent.actionName === 'increment' ? 1 : -1))
+        }
       >
-        {rooms.map((room, index) => (
-          <View
-            key={room.id}
-            style={[styles.room, { width: cardWidth }]}
-            onLayout={(event) => measureCard(room.id, event)}
-            testID={`home-squad-card-${room.id}`}
-          >
-            <View style={styles.header}>
-              <View style={styles.nameGroup}>
+        <Animated.View
+          style={[styles.cards, { flexDirection: 'row', transform: [{ translateX: offset }] }]}
+        >
+          {rooms.map((room, index) => (
+            <View
+              key={room.id}
+              accessibilityElementsHidden={selected !== index}
+              importantForAccessibility={selected === index ? 'auto' : 'no-hide-descendants'}
+              style={[styles.room, { width: cardWidth, flexShrink: 0 }]}
+              onLayout={(event) => measureCard(room.id, event)}
+              testID={`home-squad-card-${room.id}`}
+            >
+              <View style={styles.header}>
+                <View style={styles.nameGroup}>
+                  <Pressable
+                    onPress={() =>
+                      router.push({ pathname: '/(tabs)/room', params: { room: room.id } })
+                    }
+                    accessibilityRole="button"
+                    accessibilityLabel={t('homeRefresh.openSquad', { name: room.name })}
+                    testID={`home-open-title-${room.id}`}
+                    style={[styles.retry, styles.name]}
+                  >
+                    <Text variant="title2">{room.name}</Text>
+                  </Pressable>
+                </View>
+                <Text variant="micro" color={dark.textMid} style={styles.count} tabular>
+                  {room.member_cap
+                    ? t('homeRefresh.members', { count: room.member_count, cap: room.member_cap })
+                    : t('repairs.squadMembers', { count: room.member_count })}
+                </Text>
+              </View>
+              {room.state === 'active' && room.member_count >= 2 ? (
+                <HomeSquadLeaderboard
+                  roomId={room.id}
+                  memberCount={room.member_count}
+                  visible={visible && selected === index}
+                />
+              ) : (
                 <Pressable
                   onPress={() =>
                     router.push({ pathname: '/(tabs)/room', params: { room: room.id } })
                   }
+                  style={styles.retry}
                   accessibilityRole="button"
                   accessibilityLabel={t('homeRefresh.openSquad', { name: room.name })}
-                  testID={`home-open-title-${room.id}`}
-                  style={[styles.retry, styles.name]}
                 >
-                  <Text variant="title2">{room.name}</Text>
+                  <Text color={dark.textMid}>
+                    {room.state === 'dormant'
+                      ? t('repairs.squadEmpty')
+                      : t('homeRefresh.openSquad', { name: room.name })}
+                  </Text>
                 </Pressable>
-              </View>
-              <Text variant="micro" color={dark.textMid} style={styles.count} tabular>
-                {room.member_cap
-                  ? t('homeRefresh.members', { count: room.member_count, cap: room.member_cap })
-                  : t('repairs.squadMembers', { count: room.member_count })}
-              </Text>
+              )}
             </View>
-            {room.state === 'active' && room.member_count >= 2 ? (
-              <HomeSquadLeaderboard
-                roomId={room.id}
-                memberCount={room.member_count}
-                visible={visible && selected === index}
-              />
-            ) : (
-              <Pressable
-                onPress={() => router.push({ pathname: '/(tabs)/room', params: { room: room.id } })}
-                style={styles.retry}
-                accessibilityRole="button"
-                accessibilityLabel={t('homeRefresh.openSquad', { name: room.name })}
-              >
-                <Text color={dark.textMid}>
-                  {room.state === 'dormant'
-                    ? t('repairs.squadEmpty')
-                    : t('homeRefresh.openSquad', { name: room.name })}
-                </Text>
-              </Pressable>
-            )}
-          </View>
-        ))}
-        <Pressable
-          onPress={create}
-          style={[styles.createCard, { width: cardWidth ?? '100%', minHeight: cardHeight }]}
-          onLayout={(event) => measureCard('create', event)}
-          accessibilityRole="button"
-          accessibilityLabel={t('homeRefresh.create')}
-          testID="home-create-squad-end"
-        >
-          <Ionicons name="add-circle-outline" size={space[8]} color={dark.textMid} />
-          <Text variant="heading">{t('homeRefresh.create')}</Text>
-          <Text variant="bodyS" color={dark.textMid}>
-            {t('homeRefresh.createHint')}
-          </Text>
-        </Pressable>
-      </ScrollView>
+          ))}
+          <Pressable
+            onPress={create}
+            style={[styles.createCard, { width: cardWidth ?? '100%', minHeight: cardHeight }]}
+            onLayout={(event) => measureCard('create', event)}
+            accessibilityRole="button"
+            accessibilityLabel={t('homeRefresh.create')}
+            testID="home-create-squad-end"
+          >
+            <Ionicons name="add-circle-outline" size={space[8]} color={dark.textMid} />
+            <Text variant="heading">{t('homeRefresh.create')}</Text>
+            <Text variant="bodyS" color={dark.textMid}>
+              {t('homeRefresh.createHint')}
+            </Text>
+          </Pressable>
+        </Animated.View>
+      </View>
     </View>
   );
 }

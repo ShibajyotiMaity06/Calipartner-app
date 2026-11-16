@@ -143,3 +143,7 @@ verify_jwt = false
 [functions.razorpay-webhook]
 # Verifies HMAC SHA-256 over the untouched request body.
 verify_jwt = false
+
+[functions.cc-checkout]
+# Authenticates web buyers; credits arrive only through verified provider webhooks.
+verify_jwt = false

@@ -12,6 +12,15 @@ vi.mock('react-native', () => ({
   View: 'View',
   Pressable: 'Pressable',
   ScrollView: 'ScrollView',
+  Animated: {
+    View: 'AnimatedView',
+    Value: class {
+      setValue() {}
+      stopAnimation() {}
+    },
+    timing: () => ({ start() {} }),
+  },
+  PanResponder: { create: (handlers: unknown) => ({ panHandlers: handlers }) },
   Modal: 'Modal',
   ActivityIndicator: 'ActivityIndicator',
   Platform: { OS: 'web' },

@@ -1,5 +1,6 @@
 import { useTheme as useAppearance } from '@calipartner/ui/theme';
 import { useTrackingPreferences } from '@/hooks/useTrackingPreferences';
+import { CCBalance } from '@/components/avatar/CCBalance';
 import { AvatarHero } from '@/components/avatar/AvatarHero';
 import { AppearancePicker } from '@/components/avatar/AppearancePicker';
 import { TrackingPreferencesSheet } from '@/components/rooms/TrackingPreferencesSheet';
@@ -199,7 +200,6 @@ export default function TodayScreen() {
         }
       >
         <MonthlyPlanCheckIn />
-        <AppearancePicker />
 
         {/* 2. Greeting & Dynamic Timezone Question */}
         <View style={styles.greetingSection}>
@@ -207,6 +207,8 @@ export default function TodayScreen() {
             <Text variant="heading" color={dark.textHi} style={styles.greetingTitle}>
               {t('homeRefresh.hello', { name: userName })}
             </Text>
+            <CCBalance />
+            <AppearancePicker />
             <Pressable
               onPress={() => router.push('/coach')}
               accessibilityRole="button"
@@ -521,7 +523,7 @@ const createStyles = (dark: ReturnType<typeof useAppearance>['colors']) =>
       paddingTop: space[5],
       paddingBottom: 80,
     },
-    greetingRow: { flexDirection: 'row', alignItems: 'center', gap: space[3] },
+    greetingRow: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: space[2] },
     coachButton: {
       minWidth: homeLayout.touchSize,
       minHeight: homeLayout.touchSize,

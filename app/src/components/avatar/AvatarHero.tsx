@@ -53,6 +53,27 @@ export function AvatarHero({ compact = false }: { compact?: boolean }) {
       setClaiming(false);
     }
   };
+  if (!compact)
+    return (
+      <View style={{ alignItems: 'center', gap: space[2] }} testID="home-avatar-hero">
+        {profile ? (
+          <AvatarView
+            profile={profile}
+            products={state.products}
+            tints={state.tints}
+            height={avatarLayout.heroHeight}
+          />
+        ) : null}
+        <Button
+          variant="tertiary"
+          size="sm"
+          fullWidth={false}
+          label={t(profile ? 'avatar.customize' : 'avatar.create')}
+          onPress={() => router.push(profile ? '/avatar' : '/avatar/create')}
+          testID="avatar-customize"
+        />
+      </View>
+    );
   return (
     <View
       style={[styles.card, { backgroundColor: colors.s1, borderColor: colors.hairline }]}
@@ -104,13 +125,6 @@ export function AvatarHero({ compact = false }: { compact?: boolean }) {
             <Text variant="bodyS">{t('avatar.notCreated')}</Text>
           )}
           <Button
-            variant="secondary"
-            size="sm"
-            label={t('avatar.cc', { amount: state.balances.earned + state.balances.purchased })}
-            onPress={() => router.push('/wallet')}
-            testID="avatar-cc-chip"
-          />
-          <Button
             size="sm"
             label={t(profile ? 'avatar.customize' : 'avatar.create')}
             onPress={() => router.push(profile ? '/avatar' : '/avatar/create')}
@@ -118,7 +132,7 @@ export function AvatarHero({ compact = false }: { compact?: boolean }) {
           />
         </View>
       </View>
-      {profile && !compact ? (
+      {profile ? (
         <Button
           variant="secondary"
           size="sm"
@@ -137,7 +151,7 @@ export function AvatarHero({ compact = false }: { compact?: boolean }) {
         />
       ) : null}
       {claimError ? <Text accessibilityRole="alert">{t('avatar.purchaseError')}</Text> : null}
-      {profile && !compact && state.starter_active ? (
+      {profile && state.starter_active ? (
         <Button
           variant="tertiary"
           size="sm"
