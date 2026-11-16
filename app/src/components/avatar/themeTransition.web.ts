@@ -10,7 +10,12 @@ type ThemeDocument = {
   head: { appendChild: (node: unknown) => void };
 };
 let running = false;
-export function transitionTheme(node: unknown, apply: () => void, reduceMotion: boolean): void {
+export function transitionTheme(
+  node: unknown,
+  apply: () => void,
+  reduceMotion: boolean,
+  _color: string,
+): void {
   const browser = globalThis as unknown as {
     document?: ThemeDocument;
     innerWidth: number;

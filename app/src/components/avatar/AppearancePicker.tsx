@@ -2,7 +2,7 @@ import { transitionTheme } from './themeTransition';
 import React, { useEffect, useRef } from 'react';
 import { Animated, Pressable, StyleSheet, type View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { useTheme, space, radius, avatarLayout, motion } from '@calipartner/ui';
+import { useTheme, space, radius, avatarLayout, motion, themePalettes } from '@calipartner/ui';
 import { t } from '@/i18n';
 export function AppearancePicker() {
   const { theme, setTheme, colors, reduceMotion } = useTheme();
@@ -28,6 +28,7 @@ export function AppearancePicker() {
           button.current,
           () => setTheme(theme === 'light' ? 'yellow' : 'light'),
           reduceMotion,
+          themePalettes[theme === 'light' ? 'yellow' : 'light'].bg0,
         )
       }
       testID="theme-toggle"

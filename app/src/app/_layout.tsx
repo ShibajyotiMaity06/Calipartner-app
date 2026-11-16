@@ -8,6 +8,8 @@ import { ThemeProvider } from '@calipartner/ui';
 import { secureStoreAdapter } from '@/lib/secureStore';
 import { AvatarProvider } from '@/hooks/useAvatar';
 import { AvatarMilestone } from '@/components/avatar/AvatarMilestone';
+import { ThemeTransitionOverlay } from '@/components/avatar/ThemeTransitionOverlay';
+import { CoachSessionProvider } from '@/components/coach/CoachSessionProvider';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { HardwareBackHandler } from '@/components/navigation/HardwareBackHandler';
 import { SessionNavigationGuard } from '@/components/SessionNavigationGuard';
@@ -191,13 +193,16 @@ export default function RootLayout() {
                     <HardwareBackHandler />
                     <SessionNavigationGuard />
                     <PlusTrialExpiryGate />
-                    <AppearanceStack />
+                    <CoachSessionProvider>
+                      <AppearanceStack />
+                    </CoachSessionProvider>
                   </AvatarProvider>
                 </TargetsProvider>
               </AccountDataResetGate>
             </AuthProvider>
           </AppInitializationGate>
         </SafeAreaProvider>
+        <ThemeTransitionOverlay />
       </ThemeProvider>
     </ErrorBoundary>
   );

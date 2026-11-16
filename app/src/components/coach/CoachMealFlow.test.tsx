@@ -2,6 +2,7 @@ import React from 'react';
 import { act, create, type ReactTestRenderer } from 'react-test-renderer';
 import { afterEach, expect, it, vi } from 'vitest';
 const state = vi.hoisted(() => ({ query: vi.fn(), save: vi.fn(), pro: true }));
+vi.mock('@/contexts/AuthContext', () => ({ useAuth: () => ({ user: { id: 'coach-user' } }) }));
 vi.mock('react-native', () => ({
   View: 'View',
   Pressable: 'Pressable',
@@ -65,6 +66,7 @@ vi.mock('./CoachHistoryModal', () => ({ CoachHistoryModal: 'History' }));
 vi.mock('./CoachReportModal', () => ({ CoachReportModal: 'Report' }));
 vi.mock('./CoachSuggestedPrompts', () => ({ CoachSuggestedPrompts: 'Prompts' }));
 import { CoachChatView } from './CoachChatView';
+import { CoachSessionProvider } from './CoachSessionProvider';
 import { AiCoachLockedCard, PaywallModal } from '@/components/rooms';
 let tree: ReactTestRenderer;
 afterEach(async () => {
@@ -104,7 +106,11 @@ it('clarifies portions and meal section, then logs only on a tap and waits for a
       }),
   );
   await act(async () => {
-    tree = create(<CoachChatView />);
+    tree = create(
+      <CoachSessionProvider>
+        <CoachChatView />
+      </CoachSessionProvider>,
+    );
   });
   const send = async (text: string) => {
     await act(async () =>
@@ -139,7 +145,11 @@ it('closes both the local and triggered paywall states for a Free coach user', a
   (globalThis as unknown as { IS_REACT_ACT_ENVIRONMENT: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
   state.pro = false;
   await act(async () => {
-    tree = create(<CoachChatView />);
+    tree = create(
+      <CoachSessionProvider>
+        <CoachChatView />
+      </CoachSessionProvider>,
+    );
   });
   await act(async () => tree.root.findByType(AiCoachLockedCard).props.onUnlock());
   expect(tree.root.findByType(PaywallModal).props.visible).toBe(true);

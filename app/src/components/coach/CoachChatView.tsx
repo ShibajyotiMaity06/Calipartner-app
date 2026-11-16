@@ -1,6 +1,6 @@
 import { NavigationIcon } from '@calipartner/ui';
 import { type as inputTypography } from '@calipartner/ui';
-import React, { useCallback, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   KeyboardAvoidingView,
@@ -23,7 +23,7 @@ import { FoodLogModal } from '@/components/diary/FoodLogModal';
 import { AiCoachLockedCard, PaywallModal } from '@/components/rooms';
 import { useNetworkStatus } from '@/hooks/useNetworkStatus';
 import { usePaywall } from '@/hooks/usePaywall';
-import { useSubscription } from '@/hooks/useSubscription';
+import { useCoachSession } from './CoachSessionProvider';
 import { t } from '@/i18n';
 import { fontSize, radius, spacing } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
@@ -35,7 +35,7 @@ import { CoachReportModal } from './CoachReportModal';
 import { CoachSuggestedPrompts } from './CoachSuggestedPrompts';
 import { useTargets } from '@/hooks/useTargets';
 import { createLogger } from '@/lib/logger';
-import type { CoachConversation, CoachMessage, CoachReportReason, CoachSuggestion } from './types';
+import type { CoachMessage, CoachReportReason, CoachSuggestion } from './types';
 import type { CoachMealDraft } from '@calipartner/core';
 
 const log = createLogger('CoachChatView');
@@ -50,13 +50,34 @@ const MAX_CHAR_COUNT = 1000;
 export function CoachChatView({ onBack, initialConversationId }: CoachChatViewProps) {
   const { colors } = useTheme();
   const { currentGoalProfile } = useTargets();
-  const { currentTier, hasActiveAccess, isTrial, loading: subLoading } = useSubscription();
+  const {
+    subscription: { currentTier, hasActiveAccess, isTrial, loading: subLoading },
+    inputText,
+    setInputText,
+    isSending,
+    setIsSending,
+    isDailyLimitReached,
+    setDailyLimitReached,
+    requestError,
+    setRequestError,
+    sendingRef,
+    currentConversationId,
+    setCurrentConversationId,
+    conversations,
+    setConversations,
+    messages,
+    setMessages,
+    hasConsent,
+    setHasConsent,
+  } = useCoachSession();
+  useEffect(() => {
+    if (initialConversationId) setCurrentConversationId(initialConversationId);
+  }, [initialConversationId, setCurrentConversationId]);
   const isPro = currentTier === 'pro' && hasActiveAccess && !isTrial;
   const { isOnline } = useNetworkStatus();
   const { checkAndTrigger, paywallState, closePaywall } = usePaywall();
 
   // Consent State
-  const [hasConsent, setHasConsent] = useState<boolean>(true);
   const [showConsentModal, setShowConsentModal] = useState<boolean>(false);
 
   // Modals & Panels
@@ -66,27 +87,6 @@ export function CoachChatView({ onBack, initialConversationId }: CoachChatViewPr
 
   // Logging flow states for Suggestion Cards
   const [showFoodLogModal, setShowFoodLogModal] = useState<boolean>(false);
-
-  // Chat message state
-  const [inputText, setInputText] = useState<string>('');
-  const [isSending, setIsSending] = useState<boolean>(false);
-  const [isDailyLimitReached, setDailyLimitReached] = useState(false);
-  const [requestError, setRequestError] = useState<string | null>(null);
-  const sendingRef = useRef(false);
-  const [currentConversationId, setCurrentConversationId] = useState<string>(
-    initialConversationId || 'conv-default',
-  );
-
-  const [conversations, setConversations] = useState<CoachConversation[]>([]);
-
-  const [messages, setMessages] = useState<CoachMessage[]>([
-    {
-      id: 'msg-welcome',
-      role: 'assistant',
-      content: t('coach.meal.welcome'),
-      timestamp: new Date().toISOString(),
-    },
-  ]);
 
   const scrollViewRef = useRef<ScrollView>(null);
 
@@ -109,7 +109,7 @@ export function CoachChatView({ onBack, initialConversationId }: CoachChatViewPr
     } catch {
       setRequestError(t('coach.meal.consentError'));
     }
-  }, []);
+  }, [setHasConsent, setRequestError]);
 
   const handleDeclineConsent = useCallback(() => {
     setShowConsentModal(false);
@@ -118,7 +118,7 @@ export function CoachChatView({ onBack, initialConversationId }: CoachChatViewPr
     }
   }, [hasConsent, onBack]);
 
-  // Message sending with simulated streaming
+  // The session owns in-flight replies, including while this route is closed.
   const handleSendMessage = useCallback(
     async (textToSend: string) => {
       const trimmed = textToSend.trim();
@@ -157,7 +157,7 @@ export function CoachChatView({ onBack, initialConversationId }: CoachChatViewPr
 
       setMessages((prev) => [...prev, initialAssistantMessage]);
 
-      // Determine response from live AI coach (Edge Function or direct Gemini 2.5 Flash)
+      // Coach requests always go through the authenticated Edge Function.
       let finalContent = '';
       let suggestions: CoachSuggestion[] | undefined;
       let mealDraft: CoachMealDraft | null | undefined;
@@ -216,7 +216,20 @@ export function CoachChatView({ onBack, initialConversationId }: CoachChatViewPr
       sendingRef.current = false;
       setIsSending(false);
     },
-    [inputDisabled, hasConsent, currentConversationId, messages, currentGoalProfile],
+    [
+      inputDisabled,
+      hasConsent,
+      currentConversationId,
+      messages,
+      currentGoalProfile,
+      sendingRef,
+      setDailyLimitReached,
+      setHasConsent,
+      setInputText,
+      setIsSending,
+      setMessages,
+      setRequestError,
+    ],
   );
 
   // Thumbs feedback
