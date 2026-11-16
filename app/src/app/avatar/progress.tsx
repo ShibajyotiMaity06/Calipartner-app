@@ -1,3 +1,4 @@
+import { CoinAmount } from '@/components/avatar/CoinAmount';
 import React from 'react';
 import { View, StyleSheet } from 'react-native';
 import { Text, useTheme, space, radius, avatarLayout } from '@calipartner/ui';
@@ -55,11 +56,11 @@ export default function AvatarProgressScreen() {
               style={[styles.step, { backgroundColor: colors.s1, borderColor: colors.hairline }]}
             >
               <Text>{t(`avatar.starter_${step.key}` as TranslationKey)}</Text>
-              <Text tabular>
-                {t(state.starter_progress.includes(step.key) ? 'avatar.owned' : 'avatar.price', {
-                  amount: step.cc,
-                })}
-              </Text>
+              {state.starter_progress.includes(step.key) ? (
+                <Text>{t('avatar.owned')}</Text>
+              ) : (
+                <CoinAmount amount={step.cc} />
+              )}
             </View>
           ))}
         </>

@@ -1,4 +1,12 @@
-import React, { createContext, useContext, useRef, useState, type ReactNode } from 'react';
+import React, {
+  createContext,
+  useCallback,
+  useContext,
+  useRef,
+  useState,
+  type ReactNode,
+} from 'react';
+import { useCurrentLocalDate } from '@/hooks/useCurrentLocalDate';
 import { useAuth } from '@/contexts/AuthContext';
 import { useSubscription } from '@/hooks/useSubscription';
 import { t } from '@/i18n';
@@ -10,7 +18,14 @@ function useSessionState() {
   if (!subscription.loading) settled.current = true;
   const [inputText, setInputText] = useState('');
   const [isSending, setIsSending] = useState(false);
-  const [isDailyLimitReached, setDailyLimitReached] = useState(false);
+  const { localDate } = useCurrentLocalDate();
+  const month = localDate.slice(0, 7);
+  const [limitedMonth, setLimitedMonth] = useState<string | null>(null);
+  const isDailyLimitReached = limitedMonth === month;
+  const setDailyLimitReached = useCallback(
+    (reached: boolean) => setLimitedMonth(reached ? month : null),
+    [month],
+  );
   const [requestError, setRequestError] = useState<string | null>(null);
   const sendingRef = useRef(false);
   const [currentConversationId, setCurrentConversationId] = useState('conv-default');

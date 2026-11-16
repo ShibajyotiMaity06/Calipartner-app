@@ -18,7 +18,7 @@ export function NavigationIcon({ action }: { action: 'back' | 'close' }) {
     >
       <Circle cx="14" cy="14" r="12" stroke={dark.textMid} strokeWidth="1.5" fill="none" />
       <Path
-        d={action === 'back' ? 'M16 9l-5 5 5 5M11 14h9' : 'M10 10l8 8M18 10l-8 8'}
+        d={action === 'back' ? 'M14 9l-5 5 5 5M9 14h10' : 'M10 10l8 8M18 10l-8 8'}
         stroke={dark.textHi}
         strokeWidth="1.5"
         strokeLinecap="round"

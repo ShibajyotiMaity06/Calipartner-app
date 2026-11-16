@@ -219,7 +219,10 @@ export function FoodLogModal({
       setLimitUsage({ usedToday: status.usedToday, dailyCap: status.dailyCap });
       setLimitState(status.userState);
       if (!status.allowed && status.code !== 'CONSENT_REQUIRED') {
-        if (status.code === 'UPGRADE_REQUIRED' || status.code === 'DAILY_LIMIT_REACHED') {
+        if (
+          status.code === 'UPGRADE_REQUIRED' ||
+          ['MONTHLY_LIMIT_REACHED', 'DAILY_LIMIT_REACHED'].includes(status.code ?? '')
+        ) {
           setLimitState(status.userState);
           setShowDailyLimitModal(true);
         } else {
@@ -272,7 +275,7 @@ export function FoodLogModal({
     } catch (err: unknown) {
       const errorObj = err as { code?: string; message?: string };
       if (
-        errorObj?.code === 'DAILY_LIMIT_REACHED' ||
+        ['MONTHLY_LIMIT_REACHED', 'DAILY_LIMIT_REACHED'].includes(errorObj?.code ?? '') ||
         errorObj?.code === 'UPGRADE_REQUIRED' ||
         errorObj?.message?.includes('DAILY_LIMIT_REACHED')
       ) {
@@ -284,7 +287,7 @@ export function FoodLogModal({
           setLimitState(status.userState);
           setLimitUsage({ usedToday: status.usedToday, dailyCap: status.dailyCap });
         } catch {
-          setLimitState('trial');
+          setLimitState(errorObj?.code === 'UPGRADE_REQUIRED' ? 'trial' : 'paid_pro');
         }
         setShowDailyLimitModal(true);
       } else if (errorObj?.code === 'CONSENT_REQUIRED') {

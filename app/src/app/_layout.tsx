@@ -1,10 +1,12 @@
+import { CoinCatalogProvider } from '@/hooks/useCoinCatalog';
+import { HeaderActions } from '@/components/HeaderActions';
 import { useTheme as useAppearance } from '@calipartner/ui/theme';
 import { useCallback, useEffect, useState } from 'react';
 import { View } from 'react-native';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { SafeAreaProvider } from 'react-native-safe-area-context';
-import { ThemeProvider } from '@calipartner/ui';
+import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
+import { ThemeProvider, space } from '@calipartner/ui';
 import { secureStoreAdapter } from '@/lib/secureStore';
 import { AvatarProvider } from '@/hooks/useAvatar';
 import { AvatarMilestone } from '@/components/avatar/AvatarMilestone';
@@ -193,9 +195,11 @@ export default function RootLayout() {
                     <HardwareBackHandler />
                     <SessionNavigationGuard />
                     <PlusTrialExpiryGate />
-                    <CoachSessionProvider>
-                      <AppearanceStack />
-                    </CoachSessionProvider>
+                    <CoinCatalogProvider>
+                      <CoachSessionProvider>
+                        <AppearanceStack />
+                      </CoachSessionProvider>
+                    </CoinCatalogProvider>
                   </AvatarProvider>
                 </TargetsProvider>
               </AccountDataResetGate>
@@ -233,7 +237,30 @@ function AppearanceStatusBar() {
 
 function AppearanceStack() {
   const { colors } = useTheme();
+  const insets = useSafeAreaInsets();
   return (
-    <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.bg0 } }} />
+    <Stack
+      screenOptions={({ route }) => ({
+        // Main tabs and avatar pages integrate the same controls alongside their own title.
+        // Authentication, onboarding and actual conversations keep their focused layout.
+        headerShown:
+          /^(squad\/|profile\/|notifications\/|recipes\/|friends$|fasting$|weekly-plan$|plan-review$|paywall$)/.test(
+            route.name,
+          ),
+        header: () => (
+          <View
+            style={{
+              paddingTop: insets.top,
+              paddingHorizontal: space[4],
+              alignItems: 'flex-end',
+              backgroundColor: colors.bg0,
+            }}
+          >
+            <HeaderActions />
+          </View>
+        ),
+        contentStyle: { backgroundColor: colors.bg0 },
+      })}
+    />
   );
 }

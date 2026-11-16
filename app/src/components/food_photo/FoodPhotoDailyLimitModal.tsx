@@ -19,8 +19,6 @@ export interface FoodPhotoDailyLimitModalProps {
 export function FoodPhotoDailyLimitModal({
   visible,
   userState = 'trial',
-  usedToday,
-  dailyCap,
   onClose,
   onUpgrade,
   onLogManually,
@@ -76,23 +74,6 @@ export function FoodPhotoDailyLimitModal({
           <Text testID="text-limit-body" style={[styles.body, { color: colors.textMuted }]}>
             {getLimitBodyText()}
           </Text>
-
-          {/* Scans Today Pill */}
-          {!showUpsell && typeof usedToday === 'number' && typeof dailyCap === 'number' && (
-            <View
-              testID="pill-scan-usage"
-              style={[
-                styles.usagePill,
-                { backgroundColor: colors.surfaceAlt, borderColor: colors.border },
-              ]}
-            >
-              <Text style={[styles.usageText, { color: colors.textMuted }]}>
-                {t('capture.todayScans')}:{' '}
-                <Text style={{ color: colors.text, fontWeight: '700' }}>{usedToday}</Text> /{' '}
-                {dailyCap}
-              </Text>
-            </View>
-          )}
 
           {/* Gentle Upsell Card for Trial / Free users */}
           {showUpsell && (

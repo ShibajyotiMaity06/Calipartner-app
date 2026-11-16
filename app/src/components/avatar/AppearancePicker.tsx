@@ -1,6 +1,6 @@
 import { transitionTheme } from './themeTransition';
 import React, { useEffect, useRef } from 'react';
-import { Animated, Pressable, StyleSheet, type View } from 'react-native';
+import { Animated, Pressable, StyleSheet, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme, space, radius, avatarLayout, motion, themePalettes } from '@calipartner/ui';
 import { t } from '@/i18n';
@@ -32,45 +32,53 @@ export function AppearancePicker() {
         )
       }
       testID="theme-toggle"
-      style={[styles.track, { backgroundColor: colors.s2, borderColor: colors.hairline }]}
+      style={styles.hitArea}
     >
-      <Animated.View
-        style={[
-          styles.thumb,
-          {
-            backgroundColor: colors.s1,
-            transform: [
-              {
-                translateX: position.interpolate({
-                  inputRange: [0, 1],
-                  outputRange: [0, space[5]],
-                }),
-              },
-            ],
-          },
-        ]}
-      >
-        <Ionicons
-          name={theme === 'light' ? 'sunny-outline' : 'moon-outline'}
-          size={space[5]}
-          color={colors.textHi}
-        />
-      </Animated.View>
+      <View style={[styles.track, { backgroundColor: colors.s2, borderColor: colors.hairline }]}>
+        <Animated.View
+          style={[
+            styles.thumb,
+            {
+              backgroundColor: colors.s1,
+              transform: [
+                {
+                  translateX: position.interpolate({
+                    inputRange: [0, 1],
+                    outputRange: [0, space[4]],
+                  }),
+                },
+              ],
+            },
+          ]}
+        >
+          <Ionicons
+            name={theme === 'light' ? 'sunny-outline' : 'moon-outline'}
+            size={space[4]}
+            color={colors.textHi}
+          />
+        </Animated.View>
+      </View>
     </Pressable>
   );
 }
 const styles = StyleSheet.create({
-  track: {
-    width: avatarLayout.tapSize + space[5],
+  hitArea: {
+    minWidth: avatarLayout.tapSize,
     minHeight: avatarLayout.tapSize,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  track: {
+    width: space[7] + space[2],
+    height: space[6],
     borderRadius: radius.full,
     borderWidth: avatarLayout.borderWidth,
     justifyContent: 'center',
-    padding: space[1],
+    padding: space[1] / 2,
   },
   thumb: {
-    width: avatarLayout.tapSize - space[2],
-    height: avatarLayout.tapSize - space[2],
+    width: space[5],
+    height: space[5],
     borderRadius: radius.full,
     alignItems: 'center',
     justifyContent: 'center',

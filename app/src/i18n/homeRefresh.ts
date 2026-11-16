@@ -122,7 +122,8 @@ export const homeRefresh = {
   estimate: 'AI estimate. Check the foods and portions before adding.',
   fix: 'Change your description to fix or add something',
   aiError: 'Your meal could not be estimated. Try again or search for food.',
-  aiLimit: 'You have reached your daily AI meal limit. You can still log by search.',
+  aiLimit:
+    'To support reliable, responsible use, AI meal analysis is paused until next month. You can still log food by search.',
   consent: 'Allow AI processing to estimate your meal',
   ai: 'AI',
   coach: 'AI coach',

@@ -2,6 +2,8 @@ import { createClient, type SupabaseClient } from 'npm:@supabase/supabase-js@2.1
 import { weeklyPlanResponseFormat } from './schema.ts';
 import {
   CLAUDE_MODEL,
+  cachedClaudeText,
+  claudeUsage,
   GEMINI_ENDPOINT,
   GEMINI_MODEL,
   claudeText,
@@ -141,7 +143,7 @@ export async function generateWeeklyPlan(
                     model: CLAUDE_MODEL,
                     max_tokens: 16000,
                     messages: [
-                      { role: 'user', content: prompt },
+                      { role: 'user', content: cachedClaudeText(prompt) },
                       ...(correction && candidateText
                         ? [
                             { role: 'assistant', content: candidateText },
@@ -227,6 +229,7 @@ export async function generateWeeklyPlan(
           break;
         }
         const data = await result.json();
+        if (provider.name === 'claude') claudeUsage(data.usage, 'plan');
         const content =
           provider.name === 'gemini'
             ? geminiText(data)

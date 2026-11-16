@@ -1,7 +1,7 @@
+import { aiRequestKey } from './aiRequestKey';
 import { withOnlineSave } from './accountDataService';
 import {
   calculateCompressedDimensions,
-  DEFAULT_AI_FOOD_PHOTO_CAPS,
   resolveUnitGrams,
   scaleNutrients,
   resizeNutrientSnapshot,
@@ -214,24 +214,26 @@ export async function analyzeFoodPhoto(
     throw new AiFoodPhotoServiceError('SERVER_ERROR', 'Supabase functions client is unavailable');
   }
 
+  const body =
+    options.description !== undefined
+      ? { description: options.description }
+      : { image: options.imageBase64, mime_type: options.mimeType || 'image/jpeg' };
+  const request = aiRequestKey(supabase, 'food_photo', body);
   const { data, error } = await supabase.functions.invoke('ai-food-photo', {
-    body:
-      options.description !== undefined
-        ? { description: options.description }
-        : {
-            image: options.imageBase64,
-            mime_type: options.mimeType || 'image/jpeg',
-          },
+    body: { ...body, request_id: request.id },
   });
 
   if (error || !data) {
     if (error?.context?.json) {
       const details = await error.context.json().catch(() => null);
-      if (details && typeof details.code === 'string')
+      if (details && typeof details.code === 'string') {
+        if (['REQUEST_EXPIRED', 'REQUEST_CONFLICT', 'NO_FOOD_DETECTED'].includes(details.code))
+          request.acknowledge();
         throw new AiFoodPhotoServiceError(
           details.code,
           typeof details.error === 'string' ? details.error : 'Photo analysis failed',
         );
+      }
     }
     const errorMsg = error?.message || 'Failed to analyze food photograph';
     const status = error?.status;
@@ -242,10 +244,14 @@ export async function analyzeFoodPhoto(
         'AI processing consent is required to analyze photos.',
       );
     }
-    if (errorMsg.includes('DAILY_LIMIT_REACHED') || status === 429) {
+    if (
+      errorMsg.includes('MONTHLY_LIMIT_REACHED') ||
+      errorMsg.includes('DAILY_LIMIT_REACHED') ||
+      status === 429
+    ) {
       throw new AiFoodPhotoServiceError(
-        'DAILY_LIMIT_REACHED',
-        'Daily limit of photo scans reached for today.',
+        'MONTHLY_LIMIT_REACHED',
+        'Photo analysis is paused until next month. You can still add food manually.',
       );
     }
     if (
@@ -290,6 +296,7 @@ export async function analyzeFoodPhoto(
     throw new AiFoodPhotoServiceError('MALFORMED_OUTPUT', 'Invalid photo analysis response');
   if (!data.candidates.length)
     throw new AiFoodPhotoServiceError('NO_FOOD_DETECTED', 'Please provide a clear photo of food.');
+  request.acknowledge();
   return data as unknown as FoodPhotoAnalysisResponse;
 }
 

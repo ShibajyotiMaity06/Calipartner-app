@@ -1,3 +1,4 @@
+import { HeaderActions } from '@/components/HeaderActions';
 import { useTheme as useAppearance } from '@calipartner/ui/theme';
 import React from 'react';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
@@ -41,7 +42,10 @@ export function LogSomethingView({
   return (
     <ScrollView contentContainerStyle={styles.content} testID="log-hub-view">
       <View style={styles.header}>
-        <Text variant="title1">{t('homeRefresh.activity')}</Text>
+        <Text variant="title1" style={{ flex: 1 }}>
+          {t('homeRefresh.activity')}
+        </Text>
+        <HeaderActions />
         <Pressable
           onPress={onClose}
           accessibilityRole="button"

@@ -1,7 +1,10 @@
+import { AiAllowance, aiAccessResponse } from '../_shared/aiAllowance.ts';
 import { createClient, type SupabaseClient } from 'jsr:@supabase/supabase-js@2';
 import { canSeeAdvancedNutrition } from '../_shared/nutritionAccess.ts';
 import {
   CLAUDE_MODEL,
+  cachedClaudeText,
+  claudeUsage,
   GEMINI_ENDPOINT,
   claudeHeaders,
   claudeText,
@@ -13,7 +16,6 @@ import {
   parseAndValidateVisionModelOutput,
   mapVisionItemToFood,
   validateFoodPhotoImage,
-  DEFAULT_AI_FOOD_PHOTO_CAPS,
   type Food,
   type FoodCandidateItem,
   type FoodPhotoAnalysisResponse,
@@ -35,6 +37,7 @@ export interface AiFoodPhotoRequestBody {
   image?: string;
   description?: string;
   mime_type?: string;
+  request_id?: string;
 }
 
 /**
@@ -127,7 +130,7 @@ export async function callVisionModel(
         body: JSON.stringify({
           model: claudeModel,
           max_tokens: 1000,
-          system: prompt,
+          system: cachedClaudeText(prompt),
           messages: [
             {
               role: 'user',
@@ -156,18 +159,8 @@ export async function callVisionModel(
         const json = await response.json();
         const rawCandidate = claudeText(json);
         if (rawCandidate) {
-          const tokens =
-            (json.usage?.input_tokens || 0) + (json.usage?.output_tokens || 0) ||
-            DEFAULT_ESTIMATED_TOKENS;
-          const cost =
-            (json.usage?.input_tokens || 0) * 0.000003 +
-            (json.usage?.output_tokens || 0) * 0.000015;
-
-          return {
-            rawText: rawCandidate,
-            tokens,
-            cost: Math.round(cost * 1_000_000) / 1_000_000,
-          };
+          const usage = claudeUsage(json.usage, 'food_photo');
+          return { rawText: rawCandidate, ...usage };
         }
       } else {
         console.warn('CLAUDE_VISION_HTTP', response.status);
@@ -254,6 +247,7 @@ export async function handleAiFoodPhoto(
       headers: corsHeaders,
     });
 
+  let allowance: AiAllowance | null = null;
   try {
     // -------------------------------------------------------------------------
     // 1. AUTHENTICATION (PRD 8.2)
@@ -302,8 +296,9 @@ export async function handleAiFoodPhoto(
       );
     }
 
-    if (!accessCheck || !accessCheck.allowed) {
+    if (!accessCheck || (!accessCheck.allowed && accessCheck.code !== 'MONTHLY_LIMIT_REACHED')) {
       const code = accessCheck?.code || 'ACCESS_DENIED';
+      if (code === 'DAILY_LIMIT_REACHED') return aiAccessResponse(code, 'food_photo', corsHeaders);
       const status =
         code === 'CONSENT_REQUIRED'
           ? 403
@@ -318,9 +313,6 @@ export async function handleAiFoodPhoto(
           error: accessCheck?.message || 'Access to AI photo logging is currently unavailable',
           code,
           user_state: accessCheck?.user_state,
-          used: accessCheck?.used,
-          cap: accessCheck?.cap,
-          remaining: accessCheck?.remaining,
         }),
         { status, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
       );
@@ -380,6 +372,11 @@ export async function handleAiFoodPhoto(
     }
 
     // -------------------------------------------------------------------------
+    // Reserve before any provider call; the payload is hashed, never stored.
+    allowance = new AiAllowance(adminClient, userId, 'food_photo', body.request_id, corsHeaders);
+    const reserved = await allowance.begin({ image, mime, description });
+    if (reserved) return reserved;
+
     // 4. VISION MODEL CALL (EPHEMERAL, SECRET KEY ON SERVER ONLY)
     // -------------------------------------------------------------------------
     const geminiApiKey = Deno.env.get('GEMINI_API_KEY') || Deno.env.get('AI_API_KEY');
@@ -413,6 +410,7 @@ export async function handleAiFoodPhoto(
     // -------------------------------------------------------------------------
     // 5. OUTPUT SANITIZATION & STRUCTURED VALIDATION (PRD 6.3 LOG-3, 8.2)
     // -------------------------------------------------------------------------
+    allowance.account(visionResult.tokens, visionResult.cost);
     let parsedModelResponse: VisionModelResponse;
     try {
       parsedModelResponse = parseAndValidateVisionModelOutput(visionResult.rawText);
@@ -431,23 +429,15 @@ export async function handleAiFoodPhoto(
     // -------------------------------------------------------------------------
     // 6. FOOD CATALOG MAPPING & PRIVACY BOUNDARY (C03)
     // -------------------------------------------------------------------------
-    const { error: usageError } = await adminClient.rpc('record_ai_usage', {
-      p_user_id: userId,
-      p_feature: 'food_photo',
-      p_tokens: visionResult.tokens,
-      p_cost: visionResult.cost,
-    });
-    if (usageError) throw new Error('AI_USAGE_NOT_RECORDED');
     if (!parsedModelResponse.items.length)
-      return new Response(
-        JSON.stringify({
+      return await allowance.finish(
+        {
           code: 'NO_FOOD_DETECTED',
           error: 'This does not look like a food photo. Please provide a clear photo of your food.',
-        }),
-        {
-          status: 422,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         },
+        visionResult.tokens,
+        visionResult.cost,
+        422,
       );
     const candidates: FoodCandidateItem[] = [];
     const advanced = await canSeeAdvancedNutrition(req, adminClient);
@@ -493,20 +483,10 @@ export async function handleAiFoodPhoto(
     // 7. RECORD AI USAGE (PRD 7.7, 7.10)
     // -------------------------------------------------------------------------
 
-    const usedToday = (accessCheck.used || 0) + 1;
-    const dailyCap = accessCheck.cap || DEFAULT_AI_FOOD_PHOTO_CAPS.paid;
-    const remainingToday = Math.max(0, dailyCap - usedToday);
-
     const responsePayload: FoodPhotoAnalysisResponse = {
       success: true,
       candidates,
       detected_meal_type: parsedModelResponse.detected_meal_type || 'lunch',
-      usage: {
-        used_today: usedToday,
-        daily_cap: dailyCap,
-        remaining_today: remainingToday,
-        user_state: accessCheck.user_state,
-      },
     };
 
     // -------------------------------------------------------------------------
@@ -526,10 +506,7 @@ export async function handleAiFoodPhoto(
       }),
     );
 
-    return new Response(JSON.stringify(responsePayload), {
-      status: 200,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    });
+    return await allowance.finish(responsePayload, visionResult.tokens, visionResult.cost);
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : String(err);
     console.error('Unhandled ai-food-photo error:', message);
@@ -540,6 +517,8 @@ export async function handleAiFoodPhoto(
       }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
     );
+  } finally {
+    await allowance?.release().catch(() => undefined);
   }
 }
 

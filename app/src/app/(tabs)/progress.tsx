@@ -1,7 +1,8 @@
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '@/contexts/AuthContext';
-import { CCBalance } from '@/components/avatar/CCBalance';
+import { HeaderActions } from '@/components/HeaderActions';
 import { AvatarHero } from '@/components/avatar/AvatarHero';
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import {
@@ -11,8 +12,16 @@ import {
   ScrollView,
   StyleSheet,
   View,
+  useWindowDimensions,
 } from 'react-native';
-import { Button, homeLayout, space, Text, SegmentedControl } from '@calipartner/ui';
+import {
+  Button,
+  homeLayout,
+  space,
+  Text,
+  SegmentedControl,
+  getTabBarHeight,
+} from '@calipartner/ui';
 import { ProgressOverview } from '@/components/progress/ProgressOverview';
 import { ChallengesView } from '@/components/progress/ChallengesView';
 import { WorkoutHistoryCalendarModal } from '@/components/workouts/WorkoutHistoryCalendarModal';
@@ -28,6 +37,8 @@ import type { ProgressDateRange } from '@calipartner/core';
 const ranges: ProgressDateRange[] = ['30d', '90d'];
 export default function ProgressScreen() {
   const { colors } = useTheme();
+  const { fontScale } = useWindowDimensions();
+  const insets = useSafeAreaInsets();
   const router = useRouter();
   const { profile } = useAuth();
   const { range, setRange, data, loading, error, refresh } = useIndividualProgress('30d');
@@ -64,7 +75,10 @@ export default function ProgressScreen() {
       testID="screen-progress"
     >
       <ScrollView
-        contentContainerStyle={styles.content}
+        contentContainerStyle={[
+          styles.content,
+          { paddingBottom: getTabBarHeight(fontScale) + insets.bottom + space[6] },
+        ]}
         refreshControl={
           <RefreshControl
             refreshing={refreshing || (tab === 'progress' && loading)}
@@ -78,7 +92,7 @@ export default function ProgressScreen() {
             <Text variant="title1">{profile?.nickname ?? t('tabs.progress')}</Text>
             {profile?.username ? <Text>@{profile.username}</Text> : null}
           </View>
-          <CCBalance />
+          <HeaderActions />
           <Pressable
             accessibilityRole="button"
             accessibilityLabel={t('tabs.me')}
@@ -156,7 +170,7 @@ const styles = StyleSheet.create({
   screen: { flex: 1 },
   content: {
     padding: space[4],
-    paddingBottom: homeLayout.touchSize * 3,
+    paddingBottom: space[4],
     width: '100%',
     maxWidth: homeLayout.maxContentWidth,
     alignSelf: 'center',

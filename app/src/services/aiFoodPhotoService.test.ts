@@ -288,7 +288,7 @@ describe('Phase 11: aiFoodPhotoService (Client Service & Diary Integration)', ()
       expect(result.success).toBe(true);
       expect(result.candidates).toHaveLength(1);
       expect(result.candidates[0]!.detected_name).toBe('Paneer Curry');
-      expect(result.usage.used_today).toBe(1);
+      expect(result.usage?.used_today).toBe(1);
     });
 
     it('translates CONSENT_REQUIRED into typed error', async () => {
@@ -317,7 +317,7 @@ describe('Phase 11: aiFoodPhotoService (Client Service & Diary Integration)', ()
       };
 
       await expect(analyzeFoodPhoto(mockSupabase, { imageBase64: 'abc' })).rejects.toMatchObject({
-        code: 'DAILY_LIMIT_REACHED',
+        code: 'MONTHLY_LIMIT_REACHED',
       });
     });
 

@@ -1,3 +1,5 @@
+import { CoinAmount } from '@/components/avatar/CoinAmount';
+import { CoinIcon } from '@calipartner/ui';
 import React, { useState, useRef } from 'react';
 import { View, StyleSheet } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
@@ -80,6 +82,7 @@ export default function CollectionScreen() {
           access &&
           collection.price_to_complete != null ? (
             <Button
+              icon={<CoinIcon />}
               label={`${t('avatar.completeSet')} · ${t('avatar.price', { amount: collection.price_to_complete })}`}
               onPress={() =>
                 setQuote({
@@ -119,15 +122,13 @@ export default function CollectionScreen() {
                     />
                   )}
                   <Text variant="heading">{product.name}</Text>
-                  <Text variant="bodyS">
-                    {product.owned
-                      ? t('avatar.owned')
-                      : product.earn_only
-                        ? t('avatar.earnedOnly')
-                        : t('avatar.price', {
-                            amount: product.effective_price ?? product.price_cc,
-                          })}
-                  </Text>
+                  {product.owned || product.earn_only ? (
+                    <Text variant="bodyS">
+                      {t(product.owned ? 'avatar.owned' : 'avatar.earnedOnly')}
+                    </Text>
+                  ) : (
+                    <CoinAmount amount={product.effective_price ?? product.price_cc} />
+                  )}
                   {product.slot !== 'finish' ? (
                     <Button
                       size="sm"

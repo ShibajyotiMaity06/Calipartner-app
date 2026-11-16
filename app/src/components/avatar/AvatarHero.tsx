@@ -1,7 +1,7 @@
 import React, { useCallback, useState, useRef } from 'react';
 import { View, StyleSheet } from 'react-native';
 import { useFocusEffect, useRouter } from 'expo-router';
-import { Button, Text, useTheme, space, radius, avatarLayout } from '@calipartner/ui';
+import { Button, CoinIcon, Text, useTheme, space, radius, avatarLayout } from '@calipartner/ui';
 import { useAvatar } from '@/hooks/useAvatar';
 import { useAuth } from '@/contexts/AuthContext';
 import { claimAvatarDrop } from '@/services/avatarService';
@@ -65,7 +65,7 @@ export function AvatarHero({ compact = false }: { compact?: boolean }) {
           />
         ) : null}
         <Button
-          variant="tertiary"
+          variant="secondary"
           size="sm"
           fullWidth={false}
           label={t(profile ? 'avatar.customize' : 'avatar.create')}
@@ -147,6 +147,7 @@ export function AvatarHero({ compact = false }: { compact?: boolean }) {
             { amount: state.daily_drop.amount },
           )}
           onPress={() => void claim()}
+          icon={<CoinIcon />}
           testID="avatar-daily-drop"
         />
       ) : null}

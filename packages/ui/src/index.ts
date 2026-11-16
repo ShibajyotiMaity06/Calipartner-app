@@ -6,3 +6,4 @@ export * from './contrast';
 export { brandLogoSvg } from './brand/logo';
 
 export { NavigationIcon } from './components/NavigationIcon';
+export { CoinIcon } from './components/CoinIcon';

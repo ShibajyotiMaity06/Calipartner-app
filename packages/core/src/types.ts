@@ -1589,7 +1589,7 @@ export interface FoodPhotoAnalysisResponse {
   success: boolean;
   candidates: FoodCandidateItem[];
   detected_meal_type: MealSection;
-  usage: {
+  usage?: {
     used_today: number;
     daily_cap: number;
     remaining_today: number;
@@ -1598,6 +1598,7 @@ export interface FoodPhotoAnalysisResponse {
 }
 
 export type AiFoodPhotoErrorCode =
+  | 'MONTHLY_LIMIT_REACHED'
   | 'UNAUTHENTICATED'
   | 'CONSENT_REQUIRED'
   | 'DAILY_LIMIT_REACHED'

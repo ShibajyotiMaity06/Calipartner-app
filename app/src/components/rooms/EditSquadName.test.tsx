@@ -8,6 +8,7 @@ const api = vi.hoisted(() => ({
   uuid: vi.fn(),
   router: { push: vi.fn() },
 }));
+vi.mock('@/components/HeaderActions', () => ({ HeaderActions: 'HeaderActions' }));
 vi.mock('react-native', () => ({
   View: 'View',
   Pressable: 'Pressable',

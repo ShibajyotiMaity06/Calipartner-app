@@ -103,11 +103,12 @@ describe('Phase 11 Prompt B — AI Food Photo UI Screens & State Tests', () => {
       expect(photoStrings.consentBullet3).toContain('never sold');
       expect(photoStrings.resultsTitle).toBe('Review Meal');
       expect(photoStrings.estimateNotice).toContain('AI estimates');
-      expect(photoStrings.limitTitle).toBe('Daily Photo Limit Reached');
+      expect(photoStrings.limitTitle).toBe('Photo analysis is taking a break');
       expect(photoStrings.limitBodyTrial).toContain('Plus and its trial do not include');
-      expect(photoStrings.limitBodyPaid).toContain('5 AI photo scans');
+      expect(photoStrings.limitBodyPaid).toContain('until next month');
+      expect(photoStrings.limitBodyPaid).not.toMatch(/\b(?:300|900|5)\b/);
       expect(photoStrings.upgradeUpsell).toContain('Pro');
-      expect(photoStrings.upgradeUpsell).toContain('5 photo scans');
+      expect(photoStrings.upgradeUpsell).not.toMatch(/\d/);
     });
 
     it('resolves parameterized strings properly via t() helper', () => {

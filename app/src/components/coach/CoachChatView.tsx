@@ -190,13 +190,22 @@ export function CoachChatView({ onBack, initialConversationId }: CoachChatViewPr
         mealDraft = aiResult.mealDraft;
       } catch (coachErr: unknown) {
         const code = (coachErr as { code?: string })?.code;
+        const allowanceReached = code === 'MONTHLY_LIMIT_REACHED' || code === 'DAILY_LIMIT_REACHED';
         if (code === 'CONSENT_REQUIRED') {
           setHasConsent(false);
           setShowConsentModal(true);
         } else if (code === 'UPGRADE_REQUIRED') setShowPaywallModal(true);
-        else if (code === 'DAILY_LIMIT_REACHED') setDailyLimitReached(true);
+        else if (allowanceReached) setDailyLimitReached(true);
         log.error('AI Coach call failed', code ?? 'unavailable');
-        setRequestError(t('brandRepair.coachUnavailable'));
+        setRequestError(
+          allowanceReached
+            ? null
+            : t(
+                code === 'REQUEST_IN_PROGRESS'
+                  ? 'aiAllowance.processing'
+                  : 'brandRepair.coachUnavailable',
+              ),
+        );
         setInputText(trimmed);
         setMessages((previous) =>
           previous.filter((message) => message.id !== assistantMsgId && message.id !== userMsgId),

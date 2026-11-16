@@ -2,6 +2,8 @@ import { createClient } from 'jsr:@supabase/supabase-js@2';
 import { signR2Url } from '../_shared/r2.ts';
 import {
   CLAUDE_MODEL,
+  cachedClaudeText,
+  claudeUsage,
   GEMINI_ENDPOINT,
   claudeHeaders,
   claudeText,
@@ -70,7 +72,7 @@ export async function checkMediaSafety(
         body: JSON.stringify({
           model: CLAUDE_MODEL,
           max_tokens: 128,
-          system: prompt,
+          system: cachedClaudeText(prompt),
           messages: [
             {
               role: 'user',
@@ -82,7 +84,9 @@ export async function checkMediaSafety(
         }),
       });
       if (result.ok) {
-        const decision = JSON.parse(claudeText(await result.json()));
+        const payload = await result.json();
+        claudeUsage(payload.usage, 'media_moderation');
+        const decision = JSON.parse(claudeText(payload));
         if (typeof decision?.safe === 'boolean') return decision.safe;
       }
     } catch {

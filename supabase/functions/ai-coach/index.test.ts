@@ -1,3 +1,4 @@
+import { cachedClaudeText } from '../_shared/aiModels.ts';
 import { COACH_GREETING, isCoachGreeting } from './scope.ts';
 import assert from 'node:assert/strict';
 import type { SupabaseClient } from 'npm:@supabase/supabase-js@2.117.3';
@@ -150,7 +151,14 @@ function setup(allowed = true, code: string | null = null, consent = true, usage
     auth: { getUser: async () => ({ data: { user: { id: 'owner' } }, error: null }) },
     rpc: async (name: string) => {
       if (name === 'check_ai_coach_access') return { data: { allowed, code }, error: null };
-      return { error: usageError ? new Error('AI_COACH_ACCESS_DENIED') : null };
+      if (name === 'begin_ai_request')
+        return { data: allowed ? { lease_id: 'lease' } : { code }, error: null };
+      if (name === 'finish_ai_request')
+        return {
+          data: usageError ? { code: 'MONTHLY_LIMIT_REACHED' } : { saved: true },
+          error: null,
+        };
+      return { error: null };
     },
     from: (table: string) => ({
       select() {
@@ -200,6 +208,7 @@ function setup(allowed = true, code: string | null = null, consent = true, usage
 }
 for (const code of [
   'UPGRADE_REQUIRED',
+  'MONTHLY_LIMIT_REACHED',
   'DAILY_LIMIT_REACHED',
   'FEATURE_DISABLED',
   'BUDGET_EXCEEDED',
@@ -209,7 +218,11 @@ for (const code of [
     const result = await handleAiCoach(request(), state);
     assert.equal(
       result.status,
-      code === 'DAILY_LIMIT_REACHED' ? 429 : code === 'UPGRADE_REQUIRED' ? 403 : 503,
+      ['MONTHLY_LIMIT_REACHED', 'DAILY_LIMIT_REACHED'].includes(code)
+        ? 429
+        : code === 'UPGRADE_REQUIRED'
+          ? 403
+          : 503,
     );
     assert.equal(state.calls(), 0);
     assert.equal((await result.json()).code, code);
@@ -637,3 +650,70 @@ Deno.test('Greetings preserve the Pro, consent and atomic usage gates', async ()
   assert.equal((await handleAiCoach(greeting(), setup(true, null, false))).status, 403);
   assert.equal((await handleAiCoach(greeting(), setup(true, null, true, true))).status, 429);
 });
+
+Deno.test(
+  'Claude cache breakpoints preserve full instructions and keep changing personal context outside the shared prefix',
+  () => {
+    const base =
+      'Your unchanged safe coach instructions.\nCurrent local date: 2026-11-09\nProfile: Alice';
+    const other = base.replace('Alice', 'Bob');
+    const first = cachedClaudeText(base),
+      second = cachedClaudeText(other);
+    assert.equal(first.map((block) => block.text).join(''), base);
+    assert.equal(first[0].text, second[0].text);
+    assert.deepEqual(first[0].cache_control, { type: 'ephemeral', ttl: '5m' });
+    assert.equal('cache_control' in first[1], false);
+    assert.ok(!first[0].text.includes('Alice'));
+  },
+);
+Deno.test(
+  'A completed retry replays without classification, diary reads or a new model call',
+  async () => {
+    const state = setup();
+    const original = state.admin.rpc.bind(state.admin);
+    state.admin.rpc = ((name: string, args: Record<string, unknown>) =>
+      name === 'begin_ai_request'
+        ? Promise.resolve({
+            data: {
+              replay: {
+                status: 200,
+                body: { message: { role: 'assistant', content: 'Previously acknowledged answer' } },
+              },
+            },
+            error: null,
+          })
+        : original(name, args)) as typeof state.admin.rpc;
+    const result = await handleAiCoach(request(), state);
+    assert.equal((await result.json()).message.content, 'Previously acknowledged answer');
+    assert.equal(state.calls(), 0);
+    assert.deepEqual(state.tables(), ['consent_records']);
+  },
+);
+
+Deno.test(
+  'The request lease is never released while its successful database acknowledgement is pending',
+  async () => {
+    const state = setup();
+    const original = state.admin.rpc.bind(state.admin);
+    let released = false;
+    let acknowledge: (value: unknown) => void = () => {};
+    state.admin.rpc = ((name: string, args: Record<string, unknown>) => {
+      if (name === 'finish_ai_request') {
+        if (args.p_response === null) {
+          released = true;
+          return Promise.resolve({ data: { released: true }, error: null });
+        }
+        return new Promise((resolve) => {
+          acknowledge = resolve;
+        });
+      }
+      return original(name, args);
+    }) as typeof state.admin.rpc;
+    const response = handleAiCoach(request(), state);
+    await new Promise((resolve) => setTimeout(resolve, 10));
+    assert.equal(released, false);
+    acknowledge({ data: { saved: true }, error: null });
+    assert.equal((await response).status, 200);
+    assert.equal(released, false);
+  },
+);

@@ -1,7 +1,15 @@
 import React from 'react';
 import { act, create, type ReactTestRenderer } from 'react-test-renderer';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-const state = vi.hoisted(() => ({ userId: 'alice' as string | null, loading: true, tier: 'pro' }));
+const state = vi.hoisted(() => ({
+  userId: 'alice' as string | null,
+  loading: true,
+  tier: 'pro',
+  localDate: '2026-11-15',
+}));
+vi.mock('@/hooks/useCurrentLocalDate', () => ({
+  useCurrentLocalDate: () => ({ localDate: state.localDate }),
+}));
 vi.mock('@/contexts/AuthContext', () => ({
   useAuth: () => ({ user: state.userId ? { id: state.userId } : null }),
 }));
@@ -25,6 +33,7 @@ const tree = (open = true) => (
   <CoachSessionProvider>{open ? <Chat /> : <div>Home</div>}</CoachSessionProvider>
 );
 beforeEach(() => {
+  state.localDate = '2026-11-15';
   state.userId = 'alice';
   state.loading = true;
   state.tier = 'pro';
@@ -105,4 +114,19 @@ describe('coach navigation session', () => {
     expect(session.messages).toHaveLength(1);
     expect(session.inputText).toBe('');
   });
+});
+
+it('allows a server-checked retry when the stored-zone month rolls over', async () => {
+  await act(async () => {
+    renderer = create(tree());
+  });
+  await act(async () => {
+    session.setDailyLimitReached(true);
+  });
+  expect(session.isDailyLimitReached).toBe(true);
+  state.localDate = '2026-12-01';
+  await act(async () => {
+    renderer.update(tree());
+  });
+  expect(session.isDailyLimitReached).toBe(false);
 });

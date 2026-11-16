@@ -51,7 +51,7 @@ describe('Phase 10 — View Layer UI Tests (Paywall, Lifecycle & Locked Cards)',
       expect(paywallCopy.featureRooms).toContain('Accountability rooms');
       expect(paywallCopy.featureChat).toContain('Room chat');
       expect(paywallCopy.featureProgress).toContain('Room progress graphs');
-      expect(paywallCopy.featureCoach).toContain('AI Coach');
+      expect(paywallCopy.featureCoach).toMatch(/AI coach/i);
       expect(paywallCopy.featureFinder).toContain('Partner Finder');
 
       // Free guarantee

@@ -57,6 +57,7 @@ let avatar = null,
   earned = 200;
 let saved = [];
 let purchase = [];
+let catalogLoads = 0;
 let failSave = true;
 const owned = new Set();
 const state = () => ({
@@ -220,12 +221,13 @@ try {
         };
       else if (name === 'get_tracking_preferences')
         data = { calories: true, protein: true, carbs: true, fat: true, steps: true, water: true };
-    } else if (url.pathname.endsWith('/functions/v1/cc-checkout'))
+    } else if (url.pathname.endsWith('/functions/v1/cc-checkout')) {
+      catalogLoads++;
       data = {
         provider: 'dodo',
         products: [{ id: 'cc_100', cc: 100, amount: 199, currency: 'USD' }],
       };
-    else if (url.pathname.endsWith('/functions/v1/challenges-api'))
+    } else if (url.pathname.endsWith('/functions/v1/challenges-api'))
       data = { catalog: { templates: [], seasons: [], config: { poll_seconds: 120 } }, items: [] };
     if (req.headers().accept?.includes('vnd.pgrst.object') && Array.isArray(data))
       data = data[0] ?? null;
@@ -289,6 +291,40 @@ try {
   await page.getByTestId('buy-top_tee').waitFor({ state: 'detached' });
   assert.equal(purchase.length, 1);
   assert.ok(owned.has('top_tee'));
+  earned = 0;
+  await page.reload();
+  const unaffordable = seed.products.find(
+    (p) =>
+      p.genders.includes(avatar.gender) &&
+      p.collection_id === 'gym_basics' &&
+      !p.starter &&
+      !p.earn_only &&
+      !owned.has(p.id) &&
+      p.price_cc > 0,
+  );
+  assert.ok(unaffordable);
+  await page.getByTestId('buy-' + unaffordable.id).click();
+  await page
+    .getByText('Not enough coins to buy ' + unaffordable.name + '.', { exact: true })
+    .waitFor();
+  assert.equal(await page.getByTestId('avatar-confirm-purchase').count(), 0);
+  const buyPosition = await page.getByTestId('purchase-buy-cc').boundingBox();
+  const cancelPosition = await page.getByTestId('avatar-cancel-purchase').boundingBox();
+  assert.ok(Math.abs(buyPosition.y - cancelPosition.y) < 2 && cancelPosition.x > buyPosition.x);
+  await page.screenshot({ path: path.join(out, 'insufficient-coins-375.png'), fullPage: true });
+  const loadedBeforeWallet = catalogLoads;
+  await page.getByTestId('purchase-buy-cc').click();
+  await page.getByTestId('web-cc-pack-cc_100').waitFor();
+  assert.equal(
+    catalogLoads,
+    loadedBeforeWallet,
+    'Prices should already be loaded before wallet navigation',
+  );
+  assert.equal(await page.getByTestId('wallet-refresh').count(), 0);
+  assert.equal(await page.getByTestId('coin-catalog-skeleton').count(), 0);
+  assert.equal(await page.getByTestId('web-cc-retry').count(), 0);
+  await page.screenshot({ path: path.join(out, 'preloaded-coins-375.png'), fullPage: true });
+
   await page.goto('http://127.0.0.1:8099/today');
   await page.getByTestId('home-avatar-hero').waitFor();
   assert.equal(

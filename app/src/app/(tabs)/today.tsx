@@ -1,8 +1,7 @@
 import { useTheme as useAppearance } from '@calipartner/ui/theme';
 import { useTrackingPreferences } from '@/hooks/useTrackingPreferences';
-import { CCBalance } from '@/components/avatar/CCBalance';
+import { HeaderActions } from '@/components/HeaderActions';
 import { AvatarHero } from '@/components/avatar/AvatarHero';
-import { AppearancePicker } from '@/components/avatar/AppearancePicker';
 import { TrackingPreferencesSheet } from '@/components/rooms/TrackingPreferencesSheet';
 import React, { useCallback, useEffect, useState } from 'react';
 import { AppState, Pressable, RefreshControl, ScrollView, StyleSheet, View } from 'react-native';
@@ -207,20 +206,7 @@ export default function TodayScreen() {
             <Text variant="heading" color={dark.textHi} style={styles.greetingTitle}>
               {t('homeRefresh.hello', { name: userName })}
             </Text>
-            <CCBalance />
-            <AppearancePicker />
-            <Pressable
-              onPress={() => router.push('/coach')}
-              accessibilityRole="button"
-              accessibilityLabel={t('homeRefresh.coach')}
-              testID="home-coach-icon"
-              style={({ pressed }) => [styles.coachButton, pressed && { opacity: 0.7 }]}
-            >
-              <Ionicons name="medkit-outline" size={homeLayout.iconSize} color={dark.textHi} />
-              <Text variant="micro" color={dark.textMid}>
-                {t('homeRefresh.ai')}
-              </Text>
-            </Pressable>
+            <HeaderActions testID="home-coach-icon" />
           </View>
           <Text variant="body" color={dark.textMid} style={styles.greetingQuestion}>
             {getContextualQuestion()}

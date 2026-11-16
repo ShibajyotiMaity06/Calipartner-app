@@ -2,6 +2,9 @@ import React from 'react';
 import { act, create, type ReactTestRenderer } from 'react-test-renderer';
 import { afterEach, expect, it, vi } from 'vitest';
 const state = vi.hoisted(() => ({ query: vi.fn(), save: vi.fn(), pro: true }));
+vi.mock('@/hooks/useCurrentLocalDate', () => ({
+  useCurrentLocalDate: () => ({ localDate: '2026-11-15' }),
+}));
 vi.mock('@/contexts/AuthContext', () => ({ useAuth: () => ({ user: { id: 'coach-user' } }) }));
 vi.mock('react-native', () => ({
   View: 'View',

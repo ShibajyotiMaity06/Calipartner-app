@@ -209,7 +209,12 @@ export default function RoomScreen() {
   return (
     <SafeAreaView style={styles.screen} testID="screen-room">
       <RoomHeader
-        onBack={() => setSegment(segments.current.pop() ?? 'today')}
+        onBack={() => {
+          if (params.returnTo === 'chat') {
+            router.setParams({ returnTo: undefined, chat: undefined });
+            router.navigate('/(tabs)/chat' as Href);
+          } else setSegment(segments.current.pop() ?? 'today');
+        }}
         currentRoom={room}
         allRooms={roomsHook.rooms}
         pendingRequestsCount={requests.incoming.length + (friends.inbox?.incoming.length ?? 0)}

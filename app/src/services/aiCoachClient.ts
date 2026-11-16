@@ -1,3 +1,4 @@
+import { aiRequestKey } from './aiRequestKey';
 import { getSupabase } from '@/lib/supabase';
 import { t } from '@/i18n';
 import type { CoachSuggestion } from '@/components/coach/types';
@@ -53,12 +54,18 @@ export async function queryAiCoach(
   conversationId?: string,
   options?: { mealLogging?: boolean },
 ): Promise<AiCoachCallResult> {
-  const { data, error } = await getSupabase().functions.invoke('ai-coach', {
-    body: {
-      messages,
-      conversation_id: conversationId,
-      ...(options?.mealLogging ? { meal_logging: true } : {}),
-    },
+  const client = getSupabase();
+  const body = {
+    messages,
+    conversation_id: conversationId,
+    ...(options?.mealLogging ? { meal_logging: true } : {}),
+  };
+  const request = aiRequestKey(client, 'coach', {
+    messages,
+    meal_logging: options?.mealLogging === true,
+  });
+  const { data, error } = await client.functions.invoke('ai-coach', {
+    body: { ...body, request_id: request.id },
   });
   if (error) {
     let body: Record<string, unknown> = {};
@@ -68,11 +75,13 @@ export async function queryAiCoach(
       /* No response body. */
     }
     const code = typeof body.code === 'string' ? body.code : 'COACH_UNAVAILABLE';
+    if (['REQUEST_EXPIRED', 'REQUEST_CONFLICT'].includes(code)) request.acknowledge();
     const message = typeof body.error === 'string' ? body.error : t('brandRepair.coachUnavailable');
     throw Object.assign(new Error(message), { code });
   }
   if (typeof data?.message?.content !== 'string' || !data.message.content.trim())
     throw new Error(t('brandRepair.coachUnavailable'));
+  request.acknowledge();
   return {
     content: cleanCoachResponse(data.message.content),
     suggestions: data.suggestions,

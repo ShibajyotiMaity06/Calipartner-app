@@ -77,7 +77,8 @@ export function DescribeMealModal({
       else
         setError(
           t(
-            reason instanceof AiFoodPhotoServiceError && reason.code === 'DAILY_LIMIT_REACHED'
+            reason instanceof AiFoodPhotoServiceError &&
+              ['MONTHLY_LIMIT_REACHED', 'DAILY_LIMIT_REACHED'].includes(reason.code)
               ? 'homeRefresh.aiLimit'
               : 'homeRefresh.aiError',
           ),

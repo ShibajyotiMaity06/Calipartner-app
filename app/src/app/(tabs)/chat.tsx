@@ -1,3 +1,4 @@
+import { HeaderActions } from '@/components/HeaderActions';
 import React, { useCallback, useEffect, useState } from 'react';
 import { ScrollView, View, Pressable, TextInput, StyleSheet } from 'react-native';
 import { useFocusEffect, useRouter } from 'expo-router';
@@ -47,7 +48,10 @@ function Conversation({ room }: { room: RoomSummary }) {
       accessibilityLabel={room.name}
       testID={`chat-thread-${room.id}`}
       onPress={() =>
-        router.push({ pathname: '/(tabs)/room', params: { room: room.id, chat: 'open' } })
+        router.push({
+          pathname: '/(tabs)/room',
+          params: { room: room.id, tab: 'chat', chat: 'open', returnTo: 'chat' },
+        })
       }
       style={[styles.row, { borderColor: colors.hairline }]}
     >
@@ -74,7 +78,6 @@ function Conversation({ room }: { room: RoomSummary }) {
 }
 export default function ChatScreen() {
   const { colors } = useTheme();
-  const router = useRouter();
   const { rooms, loading, error, refresh } = useRooms();
   const [query, setQuery] = useState('');
   const [revision, setRevision] = useState(0);
@@ -93,7 +96,12 @@ export default function ChatScreen() {
       contentContainerStyle={styles.content}
       testID="screen-chat"
     >
-      <Text variant="title1">{t('avatar.chats')}</Text>
+      <View style={styles.header}>
+        <Text variant="title1" style={styles.flex}>
+          {t('avatar.chats')}
+        </Text>
+        <HeaderActions />
+      </View>
       <TextInput
         value={query}
         onChangeText={setQuery}
@@ -102,12 +110,6 @@ export default function ChatScreen() {
         placeholderTextColor={colors.textLo}
         style={[styles.search, { color: colors.textHi, backgroundColor: colors.s1 }]}
         testID="chat-search"
-      />
-      <Button
-        variant="secondary"
-        label={t('homeRefresh.coach')}
-        onPress={() => router.push('/coach')}
-        testID="chat-coach"
       />
       {loading && !rooms.length ? (
         <LoadingState />
@@ -123,8 +125,8 @@ export default function ChatScreen() {
       ) : null}
       {[false, true].map((pair) => (
         <View key={String(pair)}>
-          {filtered.some((r) => (r.member_cap === 2) === pair) ? (
-            <Text variant="heading">{t(pair ? 'avatar.partners' : 'homeRefresh.squads')}</Text>
+          {pair && filtered.some((r) => r.member_cap === 2) ? (
+            <Text variant="heading">{t('avatar.partners')}</Text>
           ) : null}
           {filtered
             .filter((r) => (r.member_cap === 2) === pair)
@@ -137,6 +139,7 @@ export default function ChatScreen() {
   );
 }
 const styles = StyleSheet.create({
+  header: { flexDirection: 'row', alignItems: 'center', gap: space[2] },
   content: {
     padding: space[4],
     paddingBottom: homeLayout.touchSize * 3,

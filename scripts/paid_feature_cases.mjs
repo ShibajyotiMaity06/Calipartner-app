@@ -21,6 +21,12 @@ export async function runPaidFeatureTests(db) {
       'jsonb',
     );
 
+    const monthly = await readFile(
+      'supabase/migrations/20261109010000_ai_monthly_allowances.sql',
+      'utf8',
+    );
+    await db.exec(monthly.split('create table public.ai_requests')[0]);
+
     await db.query("select set_config('request.jwt.claims',$1,false)", [
       JSON.stringify({ sub: uid(i), role: 'authenticated' }),
     ]);
@@ -87,13 +93,16 @@ export async function runPaidFeatureTests(db) {
   await db.exec(
     'set role service_role;select set_config(\'request.jwt.claims\',\'{"role":"service_role"}\',false)',
   );
-  for (let i = 0; i < 10; i++)
+  for (let i = 0; i < 900; i++)
     await db.query("select public.record_ai_usage($1,'coach',10,0.001)", [uid(4)]);
   await assert.rejects(
     () => db.query("select public.record_ai_usage($1,'coach',10,0.001)", [uid(4)]),
-    /DAILY_LIMIT_REACHED/,
+    /MONTHLY_LIMIT_REACHED/,
   );
-  assert.equal((await scalar('select public.check_ai_coach_access($1)', [uid(4)])).remaining, 0);
+  assert.equal(
+    (await scalar('select public.check_ai_coach_access($1)', [uid(4)])).code,
+    'MONTHLY_LIMIT_REACHED',
+  );
   await user(4);
   await assert.rejects(
     () => db.query("select public.record_ai_usage($1,'coach')", [uid(4)]),

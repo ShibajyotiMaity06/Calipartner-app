@@ -1,6 +1,7 @@
 import React from 'react';
 import { act, create, type ReactTestRenderer } from 'react-test-renderer';
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
+vi.mock('@/components/HeaderActions', () => ({ HeaderActions: 'HeaderActions' }));
 vi.mock('./EditSquadName', () => ({ EditSquadName: 'EditSquadName' }));
 const state = vi.hoisted(() => ({
   paid: false,
@@ -320,4 +321,15 @@ it('keeps chat header to the squad name and direct settings without tabs, switch
   expect(tree.root.findAllByType('EditSquadName' as React.ElementType)).toHaveLength(0);
   tree.root.findByProps({ testID: 'btn-room-settings' }).props.onPress();
   expect(state.refresh).toHaveBeenCalledOnce();
+});
+
+it('returns an inbox-opened squad conversation to the Chat tab', async () => {
+  state.paid = true;
+  state.params = { room: 'room', tab: 'chat', returnTo: 'chat' };
+  await act(async () => {
+    tree = create(<RoomScreen />);
+  });
+  expect(tree.root.findByType('ChatView' as React.ElementType).props.roomId).toBe('room');
+  await act(async () => tree.root.findByType('RoomHeader' as React.ElementType).props.onBack());
+  expect(state.navigate).toHaveBeenLastCalledWith('/(tabs)/chat');
 });

@@ -1,11 +1,21 @@
+import { CoinAmount } from '@/components/avatar/CoinAmount';
+import { useCoinCatalog } from '@/hooks/useCoinCatalog';
 import { WebCCPacks } from '@/components/avatar/WebCCPacks';
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { Platform, View, StyleSheet } from 'react-native';
-import { Button, Text, space, useTheme, radius, avatarLayout } from '@calipartner/ui';
+import {
+  Button,
+  CoinIcon,
+  Skeleton,
+  Text,
+  space,
+  useTheme,
+  radius,
+  avatarLayout,
+} from '@calipartner/ui';
 import type { PurchasesPackage } from 'react-native-purchases';
 import { useAvatar } from '@/hooks/useAvatar';
-import { useAuth } from '@/contexts/AuthContext';
-import { fetchAvatarPacks, buyAvatarPack } from '@/services/avatarPackService';
+import { buyAvatarPack } from '@/services/avatarPackService';
 import { AvatarPage } from '@/components/avatar/AvatarPage';
 import { useNetworkStatus } from '@/hooks/useNetworkStatus';
 import { t, type TranslationKey, getLocale } from '@/i18n';
@@ -16,44 +26,18 @@ const reasons: Record<string, TranslationKey> = {
 };
 export default function WalletScreen() {
   const { state, refresh } = useAvatar();
-  const { user } = useAuth();
+  const { packages, loading, refresh: reloadCatalog } = useCoinCatalog();
   const { colors } = useTheme();
   const { isOnline } = useNetworkStatus();
-  const [packages, setPackages] = useState<PurchasesPackage[]>([]);
-  const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
   const [pending, setPending] = useState(false);
   const [buying, setBuying] = useState<string | null>(null);
-  const [retry, setRetry] = useState(0);
   const busy = useRef(false);
   const ids =
     state?.packs
       ?.map((p) => p.store_product_id)
       .sort()
       .join(',') ?? '';
-  useEffect(() => {
-    let active = true;
-    setLoading(true);
-    setError(false);
-    setPackages([]);
-    if (!user || !ids) {
-      setLoading(false);
-      return;
-    }
-    void fetchAvatarPacks(user.id, ids.split(','))
-      .then((rows) => {
-        if (active) setPackages(rows);
-      })
-      .catch(() => {
-        if (active) setError(true);
-      })
-      .finally(() => {
-        if (active) setLoading(false);
-      });
-    return () => {
-      active = false;
-    };
-  }, [user, ids, retry]);
   const buy = async (pkg: PurchasesPackage) => {
     if (busy.current || isOnline === false) return;
     busy.current = true;
@@ -76,9 +60,7 @@ export default function WalletScreen() {
         <>
           <View style={[styles.card, { backgroundColor: colors.s1, borderColor: colors.hairline }]}>
             <Text>{t('avatar.total')}</Text>
-            <Text variant="numeralL" tabular>
-              {t('avatar.cc', { amount: state.balances.earned + state.balances.purchased })}
-            </Text>
+            <CoinAmount large amount={state.balances.earned + state.balances.purchased} />
             <Text tabular>
               {t('avatar.earned')}: {state.balances.earned}
             </Text>
@@ -88,17 +70,17 @@ export default function WalletScreen() {
           </View>
           <Text variant="heading">{t('avatar.buyCC')}</Text>
           {isOnline === false ? <Text accessibilityRole="alert">{t('avatar.offline')}</Text> : null}
-          {loading ? (
-            <Text>{t('common.loading')}</Text>
-          ) : Platform.OS === 'web' ? (
+          {Platform.OS === 'web' ? (
             <WebCCPacks />
+          ) : loading && !packages.length ? (
+            <Skeleton />
           ) : packages.length === 0 ? (
             <>
               <Text>{t('avatar.packsUnavailable')}</Text>
               <Button
                 variant="secondary"
-                label={t('avatar.retry')}
-                onPress={() => setRetry((n) => n + 1)}
+                label={t('avatar.reloadPrices')}
+                onPress={() => void reloadCatalog()}
                 testID="wallet-retry-packs"
               />
             </>
@@ -106,6 +88,7 @@ export default function WalletScreen() {
             packages.map((pkg) => (
               <Button
                 key={pkg.identifier}
+                icon={<CoinIcon />}
                 variant="secondary"
                 disabled={isOnline === false || !!buying}
                 loading={buying === pkg.identifier}
@@ -121,13 +104,6 @@ export default function WalletScreen() {
           )}
           {error ? <Text accessibilityRole="alert">{t('avatar.purchaseError')}</Text> : null}
           {pending ? <Text accessibilityLiveRegion="polite">{t('avatar.packPending')}</Text> : null}
-          <Button
-            variant="secondary"
-            label={t('common.retry')}
-            onPress={() => void refresh()}
-            testID="wallet-refresh"
-          />
-          <Text variant="bodyS">{t('avatar.terms')}</Text>
           <Text variant="heading">{t('avatar.history')}</Text>
           {state.ledger.length === 0 ? (
             <Text>{t('avatar.emptyHistory')}</Text>
@@ -141,10 +117,7 @@ export default function WalletScreen() {
                     {t(entry.wallet === 'earned' ? 'avatar.earned' : 'avatar.purchased')}
                   </Text>
                 </View>
-                <Text tabular>
-                  {entry.delta > 0 ? '+' : ''}
-                  {entry.delta} CC
-                </Text>
+                <CoinAmount signed amount={entry.delta} />
               </View>
             ))
           )}

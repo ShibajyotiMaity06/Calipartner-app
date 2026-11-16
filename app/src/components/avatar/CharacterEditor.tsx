@@ -1,3 +1,4 @@
+import { CoinAmount } from './CoinAmount';
 import { Ionicons } from '@expo/vector-icons';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Modal, Pressable, ScrollView, StyleSheet, View } from 'react-native';
@@ -440,15 +441,19 @@ export function CharacterEditor({ creating = false }: { creating?: boolean }) {
                           height={avatarLayout.thumbnailHeight}
                         />
                         <Text variant="label">{item.name}</Text>
-                        <Text variant="label">
-                          {item.owned || item.starter
-                            ? t(chosen ? 'avatar.equipped' : 'avatar.owned')
-                            : item.earn_only
-                              ? t('avatar.earnedOnly')
-                              : t('avatar.price', {
-                                  amount: item.effective_price ?? item.price_cc,
-                                })}
-                        </Text>
+                        {item.owned || item.starter || item.earn_only ? (
+                          <Text variant="label">
+                            {t(
+                              item.owned || item.starter
+                                ? chosen
+                                  ? 'avatar.equipped'
+                                  : 'avatar.owned'
+                                : 'avatar.earnedOnly',
+                            )}
+                          </Text>
+                        ) : (
+                          <CoinAmount amount={item.effective_price ?? item.price_cc} />
+                        )}
                         {!item.accessible && !item.owned ? (
                           <Text variant="micro">
                             {t('avatar.unlock', {

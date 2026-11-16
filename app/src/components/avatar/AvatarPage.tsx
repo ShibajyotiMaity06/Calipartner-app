@@ -1,5 +1,5 @@
 import React from 'react';
-import { CCBalance } from './CCBalance';
+import { HeaderActions } from '@/components/HeaderActions';
 import { SafeAreaView, ScrollView, View, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Button, Text, useTheme, space, homeLayout } from '@calipartner/ui';
@@ -36,7 +36,7 @@ export function AvatarPage({
           <Text variant="title2" style={styles.title}>
             {title}
           </Text>
-          <CCBalance />
+          <HeaderActions />
         </View>
         {!state && loading ? (
           <Text>{t('common.loading')}</Text>

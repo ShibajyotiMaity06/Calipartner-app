@@ -208,7 +208,7 @@ function setup(allowed = true, advanced = false, denialCode = 'CONSENT_REQUIRED'
   let usage = 0;
   const admin = {
     auth: { getUser: async () => ({ data: { user: { id: 'caller' } }, error: null }) },
-    rpc: async (name: string) => {
+    rpc: async (name: string, args?: Record<string, unknown>) => {
       if (name === 'can_view_advanced_nutrition') return { data: advanced, error: null };
       if (name === 'check_ai_food_photo_access')
         return {
@@ -221,7 +221,11 @@ function setup(allowed = true, advanced = false, denialCode = 'CONSENT_REQUIRED'
           },
           error: null,
         };
-      usage++;
+      if (name === 'begin_ai_request') return { data: { lease_id: 'lease' }, error: null };
+      if (name === 'finish_ai_request') {
+        if (args?.p_response) usage++;
+        return { data: { saved: true }, error: null };
+      }
       return { error: null };
     },
     from: () => ({

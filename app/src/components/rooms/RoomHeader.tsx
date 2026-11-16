@@ -1,3 +1,4 @@
+import { HeaderActions } from '@/components/HeaderActions';
 import { useTheme as useAppearance } from '@calipartner/ui/theme';
 import React, { useEffect, useState } from 'react';
 import { Pressable, ScrollView, View } from 'react-native';
@@ -146,6 +147,7 @@ export function RoomHeader({
             </Text>
           )}
         </View>
+        <HeaderActions />
         <Pressable
           onPress={() => setPanel('actions')}
           accessibilityRole="button"

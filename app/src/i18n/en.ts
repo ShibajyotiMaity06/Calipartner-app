@@ -12,6 +12,9 @@ import { squadDesign } from './squadDesign';
 import { repairMessages } from './repairs';
 export const en = {
   avatar,
+  aiAllowance: {
+    processing: 'Your AI request is still being prepared. Wait a moment and try again.',
+  },
   weightUpdate: {
     progress: 'Weight progress',
     start: 'Start',
@@ -197,7 +200,8 @@ export const en = {
     starterRecipes: 'Free includes 10 starter recipes. Plus or Pro unlocks the full library.',
     coachUnavailable: 'AI Coach is temporarily unavailable. Please try again.',
     photoLimitTitle: 'Photo scan access',
-    coachLimit: 'You have used your 10 AI Coach messages for today.',
+    coachLimit:
+      'To support reliable, responsible use, AI chat is paused until next month. You can still log entries manually.',
   },
   repairs: {
     ...repairMessages,
@@ -1112,13 +1116,14 @@ export const en = {
       noCandidatesTitle: 'No foods detected',
       noCandidatesSub:
         'We couldn’t detect distinct foods in this photo. Try another angle with good lighting.',
-      limitTitle: 'Daily Photo Limit Reached',
+      limitTitle: 'Photo analysis is taking a break',
       limitBodyTrial:
         'AI photo logging is included with Pro. Plus and its trial do not include AI photo scans.',
       limitBodyFree:
         'AI photo logging requires a paid Pro plan. There are no free or trial AI scans.',
-      limitBodyPaid: 'You’ve reached your daily allowance of 5 AI photo scans for today.',
-      upgradeUpsell: 'CaliPartner Pro includes 5 photo scans and 10 AI Coach messages each day.',
+      limitBodyPaid:
+        'To support reliable, responsible use, photo analysis is paused until next month. You can still add food manually.',
+      upgradeUpsell: 'CaliPartner Pro includes AI photo logging and a personal AI coach.',
       upgradeButton: 'View Pro plan',
       logManuallyButton: 'Log Manually',
       swapModalTitle: 'Swap Food Item',
@@ -1572,9 +1577,9 @@ export const en = {
       featureRooms: 'Accountability rooms with live partner updates',
       featureChat: 'Room chat with photo sharing and reaction support',
       featureProgress: 'Room progress graphs, streaks and consistency score',
-      featureCoach: 'Personal 1-on-1 AI Coach (10 messages a day, Pro only)',
+      featureCoach: 'Personal AI coach (Pro only)',
       featureFinder: 'Partner Finder matching and messaging (Plus and Pro)',
-      featurePhotoScan: 'AI food photo logging (5 scans a day, Pro only)',
+      featurePhotoScan: 'AI food photo logging (Pro only)',
       whatYouGetHeader: 'What you get:',
       whatYouGetRow1: 'Room, chat and progress for everyone',
       whatYouGetRow2: 'AI coach and Partner Finder for you',
@@ -2681,9 +2686,9 @@ export const en = {
       declineBtn: 'Not Now',
     },
     dailyLimit: {
-      title: 'Daily message limit reached',
+      title: 'Your coach is taking a break',
       subtitle:
-        'You’ve reached your daily limit of 30 messages. Your coach will be refreshed tomorrow.',
+        'To support reliable, responsible use, AI chat is paused until next month. You can still view your diary and log entries manually.',
     },
     offline: {
       title: 'You are currently offline',

@@ -26,7 +26,7 @@ export async function runFoodCaptureTests(db) {
   await asOwner();
   assert.equal((await access()).code, 'UPGRADE_REQUIRED');
   await db.query("select public.accept_ai_processing_consent('1.0')");
-  assert.equal((await access()).cap, 0);
+  assert.equal('cap' in (await access()), false);
   assert.equal((await access()).allowed, false);
   console.log('PASS Free accounts have no AI allowance even after consent');
   await assert.rejects(
@@ -40,7 +40,7 @@ export async function runFoodCaptureTests(db) {
   await db.exec(
     `update public.remote_config set value='{"paid_pro":5,"free_taste":999,"trial":999,"free_after_trial":999}' where key='ai_food_photo_caps'`,
   );
-  assert.equal((await access()).cap, 0);
+  assert.equal('cap' in (await access()), false);
   await assert.rejects(record, /AI_PHOTO_ACCESS_DENIED/);
   console.log('PASS Legacy starter and trial configuration cannot grant or record Free scans');
   await db.query(
@@ -56,8 +56,8 @@ export async function runFoodCaptureTests(db) {
   assert.equal((await access()).code, 'UPGRADE_REQUIRED');
   await assert.rejects(record, /AI_PHOTO_ACCESS_DENIED/);
   await db.query("update public.entitlements set status='paid' where user_id=$1", [uid]);
-  assert.equal((await access()).cap, 5);
-  for (let i = 0; i < 5; i++) await record();
+  assert.equal((await access()).allowed, true);
+  for (let i = 0; i < 300; i++) await record();
   await assert.rejects(record, /AI_PHOTO_ACCESS_DENIED/);
   const total = (
     await db.query(
@@ -65,9 +65,11 @@ export async function runFoodCaptureTests(db) {
       [uid],
     )
   ).rows[0];
-  assert.equal(total.count, 5);
+  assert.equal(total.count, 300);
   assert.equal(total.day, total.expected_day);
-  console.log('PASS Pro daily scans use the stored time zone and enforce five scans');
+  console.log(
+    'PASS Pro monthly food analyses use the stored time zone and enforce the server allowance',
+  );
   await db.exec(
     "insert into public.remote_config(key,value) values('ai_budgets','{\"ai_disabled\":true}') on conflict(key) do update set value=excluded.value",
   );

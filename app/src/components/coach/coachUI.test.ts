@@ -51,9 +51,10 @@ describe('Phase 14 View Layer: AI Coach UI Specifications & Copy (PRD 6.22)', ()
       expect(reasons.other).toBeDefined();
     });
 
-    it('has 30 message daily-limit copy and offline copy (AIC-7)', () => {
-      expect(en.coach.dailyLimit.title).toContain('Daily message limit reached');
-      expect(en.coach.dailyLimit.subtitle).toContain('30 messages');
+    it('has polite monthly pause copy without exposing allowances', () => {
+      expect(en.coach.dailyLimit.title).toContain('taking a break');
+      expect(en.coach.dailyLimit.subtitle).toContain('next month');
+      expect(en.coach.dailyLimit.subtitle).not.toMatch(/\b(?:300|900|30)\b/);
       expect(en.coach.offline.title).toContain('currently offline');
       expect(en.coach.offline.subtitle).toContain('requires an internet connection');
     });
@@ -150,16 +151,6 @@ describe('Phase 14 View Layer: AI Coach UI Specifications & Copy (PRD 6.22)', ()
       // Delete all history
       convs = [];
       expect(convs.length).toBe(0);
-    });
-
-    it('verifies daily message cap threshold is 30 messages per day', () => {
-      const limit = 30;
-      expect(limit).toBe(30);
-
-      const checkCap = (used: number) => used >= limit;
-      expect(checkCap(29)).toBe(false);
-      expect(checkCap(30)).toBe(true);
-      expect(checkCap(31)).toBe(true);
     });
 
     it('verifies cleanCoachResponse strips asterisks, markdown headers, and em dashes', async () => {

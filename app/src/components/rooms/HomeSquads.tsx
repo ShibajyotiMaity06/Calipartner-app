@@ -134,40 +134,6 @@ export function HomeSquads({
         <Text variant="bodyS" color={dark.textMid}>
           {t('homeRefresh.squads')}
         </Text>
-        {rooms.length ? (
-          <View style={{ flexDirection: 'row' }}>
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel={t('avatar.previousSquad')}
-              accessibilityState={{ disabled: selected === 0 }}
-              disabled={selected === 0}
-              style={styles.smallAction}
-              onPress={() => moveTo(selected - 1)}
-              testID="home-squad-previous"
-            >
-              <Ionicons
-                name="chevron-back"
-                size={homeLayout.iconSize}
-                color={selected === 0 ? dark.textOff : dark.textHi}
-              />
-            </Pressable>
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel={t('avatar.nextSquad')}
-              accessibilityState={{ disabled: selected === rooms.length }}
-              disabled={selected === rooms.length}
-              style={styles.smallAction}
-              onPress={() => moveTo(selected + 1)}
-              testID="home-squad-next"
-            >
-              <Ionicons
-                name="chevron-forward"
-                size={homeLayout.iconSize}
-                color={selected === rooms.length ? dark.textOff : dark.textHi}
-              />
-            </Pressable>
-          </View>
-        ) : null}
         <Pressable
           onPress={() => router.push('/friends' as Href)}
           style={styles.smallAction}

@@ -6,6 +6,7 @@ import type { ChatMessage } from '@/types/chat';
 import type { RoomSummary } from '@/types/rooms';
 import { wellsLight } from '@calipartner/ui';
 
+vi.mock('@/components/HeaderActions', () => ({ HeaderActions: 'HeaderActions' }));
 vi.mock('react-native', () => ({
   View: 'View',
   Pressable: 'Pressable',

@@ -30,6 +30,8 @@ const { runRoomTests } = await import('./rooms_v3_cases.mjs');
 try {
   const { runAvatarTests } = await import('./avatar_cases.mjs');
   await runAvatarTests(db);
+  const { runAiMonthlyAllowanceTests } = await import('./ai_monthly_allowance_cases.mjs');
+  await runAiMonthlyAllowanceTests(db);
   const { runWeightHistoryTests } = await import('./weight_history_cases.mjs');
   await runWeightHistoryTests(db);
   const { runWorkoutRoutineTests } = await import('./workout_routine_cases.mjs');

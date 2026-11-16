@@ -633,3 +633,31 @@ export class MockVisionModelAdapter implements VisionModelAdapter {
     };
   }
 }
+
+export function calculateClaudeUsage(
+  usage:
+    | {
+        input_tokens?: number;
+        output_tokens?: number;
+        cache_read_input_tokens?: number;
+        cache_creation_input_tokens?: number;
+        cache_creation?: { ephemeral_1h_input_tokens?: number };
+      }
+    | undefined,
+) {
+  const input = usage?.input_tokens ?? 0,
+    output = usage?.output_tokens ?? 0;
+  const read = usage?.cache_read_input_tokens ?? 0,
+    write = usage?.cache_creation_input_tokens ?? 0;
+  const hourWrite = usage?.cache_creation?.ephemeral_1h_input_tokens ?? 0;
+  const longPrompt = input + read + write > 100000;
+  const multiplier = longPrompt ? 5 : 1;
+  const cost =
+    Math.round(
+      (input * 0.1 + read * 0.01 + (write - hourWrite) * 0.125 + hourWrite * 0.2 + output * 0.5) *
+        multiplier,
+    ) / 1000000;
+  const tokens = input + output + read + write;
+
+  return { tokens, cost, input, output, read, write };
+}
