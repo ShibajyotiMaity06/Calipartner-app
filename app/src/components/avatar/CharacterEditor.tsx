@@ -1,5 +1,6 @@
+import { CharacterPanel } from './CharacterPanel';
+import { ColorSwatch } from './ColorSwatch';
 import { CoinAmount } from './CoinAmount';
-import { Ionicons } from '@expo/vector-icons';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Modal, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { useLocalSearchParams, useRouter, useNavigation } from 'expo-router';
@@ -55,6 +56,7 @@ export function CharacterEditor({ creating = false }: { creating?: boolean }) {
   const busy = useRef(false);
   const allowLeave = useRef(false);
   const saveRequest = useRef<{ payload: string; id: string } | null>(null);
+  const modelRequest = useRef<{ payload: string; id: string } | null>(null);
   const [pendingLeave, setPendingLeave] = useState<(() => void) | null>(null);
   const fingerprint = useCallback(
     (value: AvatarProfile) =>
@@ -167,6 +169,36 @@ export function CharacterEditor({ creating = false }: { creating?: boolean }) {
     }
   };
   const current = state?.products.find((p) => p.id === selectedId);
+  const preparePurchase = async () => {
+    if (!draft || !state) throw new Error('AVATAR_REQUIRED');
+    if (!state.profile) {
+      acknowledge(await createAvatar(getSupabase(), draft.gender, draft.skin_tone_id));
+    } else if (state.profile.gender !== draft.gender) {
+      // The existing purchase API checks the saved model. Acknowledge that model
+      // with owned items first; no unpurchased preview is sent to avatar_save.
+      const ownedSlots = Object.fromEntries(
+        Object.entries(draft.slots).filter(([, id]) =>
+          state.products.some((p) => p.id === id && (p.owned || p.starter)),
+        ),
+      );
+      const ownedTints = Object.fromEntries(
+        Object.entries(draft.tints).filter(([slot]) => ownedSlots[slot.replace('_finish', '')]),
+      );
+      const loadout = { ...draft, slots: ownedSlots, tints: ownedTints };
+      const payload = fingerprint(loadout);
+      if (modelRequest.current?.payload !== payload)
+        modelRequest.current = { payload, id: generateClientUuid() };
+      acknowledge(
+        await saveAvatar(
+          getSupabase(),
+          modelRequest.current.id,
+          draft.gender,
+          draft.skin_tone_id,
+          loadout,
+        ),
+      );
+    }
+  };
   const unowned = useMemo(
     () =>
       draft && state
@@ -182,6 +214,13 @@ export function CharacterEditor({ creating = false }: { creating?: boolean }) {
     state?.products.filter(
       (p) => (p.active || p.owned) && p.slot === tab && p.genders.includes(draft?.gender ?? 'm'),
     ) ?? [];
+  const selectedPurchases =
+    state?.products.filter(
+      (p) => Object.values(draft?.slots ?? {}).includes(p.id) && !p.owned && !p.starter,
+    ) ?? [];
+  const canBuyAll =
+    selectedPurchases.length > 0 &&
+    selectedPurchases.every((p) => p.active && p.accessible && !p.earn_only);
   const button = (label: string, onPress: () => void, id: string, selected = false) => (
     <Button
       key={id}
@@ -195,6 +234,7 @@ export function CharacterEditor({ creating = false }: { creating?: boolean }) {
   );
   return (
     <AvatarPage
+      fixed
       title={t(creating ? 'avatar.create' : 'avatar.title')}
       onBack={leave}
       onUnavailable={
@@ -202,32 +242,54 @@ export function CharacterEditor({ creating = false }: { creating?: boolean }) {
       }
     >
       {state && draft ? (
-        <>
-          <AvatarView
-            profile={draft}
-            products={state.products}
-            tints={state.tints}
-            height={avatarLayout.editorHeight}
-          />
-          <Text>{t(creating ? 'avatar.freeStarter' : 'avatar.subtitle')}</Text>
-          <View style={styles.row}>
-            <Button
-              variant="secondary"
-              fullWidth={false}
-              label={t('avatar.shop')}
-              onPress={() => router.push('/shop')}
-              testID="wardrobe-shop"
+        <CharacterPanel
+          footer={
+            <>
+              {error ? <Text accessibilityRole="alert">{error}</Text> : null}
+              {saved ? <Text accessibilityLiveRegion="polite">{t('avatar.saved')}</Text> : null}
+              {canBuyAll ? (
+                <Button
+                  label={t('avatar.buyAll')}
+                  testID="wardrobe-buy-all"
+                  onPress={() =>
+                    setQuote({
+                      name: t('avatar.selectedItems'),
+                      price: selectedPurchases.reduce(
+                        (sum, p) => sum + (p.effective_price ?? p.price_cc),
+                        0,
+                      ),
+                      productId: null,
+                      collectionId: null,
+                      items: selectedPurchases.map((p) => ({
+                        productId: p.id,
+                        name: p.name,
+                        price: p.effective_price ?? p.price_cc,
+                      })),
+                    })
+                  }
+                />
+              ) : null}
+              {!canBuyAll ? (
+                <Button
+                  label={t(params.setup === '1' ? 'avatar.continue' : 'avatar.save')}
+                  disabled={!!unowned}
+                  loading={saving}
+                  onPress={() => void save()}
+                  testID="avatar-save"
+                />
+              ) : null}
+              {unowned ? <Text>{t('avatar.previewHint')}</Text> : null}
+            </>
+          }
+          character={(height) => (
+            <AvatarView
+              profile={draft}
+              products={state.products}
+              tints={state.tints}
+              height={height}
             />
-            {state.profile ? (
-              <Button
-                variant="tertiary"
-                fullWidth={false}
-                label={t('avatar.progress')}
-                onPress={() => router.push('/avatar/progress')}
-                testID="wardrobe-progress"
-              />
-            ) : null}
-          </View>
+          )}
+        >
           <ScrollView
             horizontal
             showsHorizontalScrollIndicator={false}
@@ -274,35 +336,17 @@ export function CharacterEditor({ creating = false }: { creating?: boolean }) {
                 {state.tints
                   .filter((t) => t.kind === 'skin')
                   .map((tint, index) => (
-                    <Pressable
+                    <ColorSwatch
                       key={tint.id}
+                      color={tint.hex}
+                      selected={draft.skin_tone_id === tint.id}
+                      label={t('avatar.colorName', { number: index + 1 })}
+                      testID={`avatar-${tint.id}`}
                       onPress={() => {
                         setDraft({ ...draft, skin_tone_id: tint.id });
                         setSaved(false);
                       }}
-                      accessibilityRole="button"
-                      accessibilityLabel={t('avatar.colorName', { number: index + 1 })}
-                      accessibilityState={{ selected: draft.skin_tone_id === tint.id }}
-                      testID={`avatar-${tint.id}`}
-                      style={[
-                        styles.swatch,
-                        {
-                          backgroundColor: tint.hex,
-                          borderColor:
-                            draft.skin_tone_id === tint.id ? colors.textHi : colors.hairline,
-                          borderWidth:
-                            draft.skin_tone_id === tint.id
-                              ? avatarLayout.selectedBorderWidth
-                              : avatarLayout.borderWidth,
-                        },
-                      ]}
-                    >
-                      {draft.skin_tone_id === tint.id ? (
-                        <Text color={colors.textHi} style={{ backgroundColor: colors.s1 }}>
-                          {t('avatar.selected')}
-                        </Text>
-                      ) : null}
-                    </Pressable>
+                    />
                   ))}
               </View>
             </>
@@ -311,22 +355,22 @@ export function CharacterEditor({ creating = false }: { creating?: boolean }) {
               {draft.slots[tab] &&
               state.products.find((p) => p.id === draft.slots[tab])?.tintable ? (
                 <>
-                  <Text variant="heading">{t('avatar.color')}</Text>
-                  {button(
-                    t('avatar.originalColor'),
-                    () => {
-                      const tints = { ...draft.tints };
-                      delete tints[tab];
-                      delete tints[`${tab}_finish`];
-                      setDraft({ ...draft, tints });
-                    },
-                    'avatar-color-original',
-                  )}
                   <ScrollView
                     horizontal
                     showsHorizontalScrollIndicator={false}
                     contentContainerStyle={styles.colorRow}
                   >
+                    {button(
+                      t('avatar.originalColor'),
+                      () => {
+                        const tints = { ...draft.tints };
+                        delete tints[tab];
+                        delete tints[`${tab}_finish`];
+                        setDraft({ ...draft, tints });
+                      },
+                      'avatar-color-original',
+                    )}
+
                     {state.tints
                       .filter(
                         (t) => t.kind === (tab === 'hair' || tab === 'facial' ? 'hair' : 'garment'),
@@ -338,11 +382,12 @@ export function CharacterEditor({ creating = false }: { creating?: boolean }) {
                           state.tier === tint.tier_required;
                         const selected = draft.tints[tab] === tint.id;
                         return (
-                          <Pressable
+                          <ColorSwatch
                             key={tint.id}
-                            accessibilityRole="button"
-                            accessibilityLabel={`${t(tint.tier_required === 'free' ? 'avatar.colorName' : 'avatar.fashionColor', { number: index + 1 })}${allowed ? '' : `, ${t('avatar.unlock', { tier: 'Plus' })}`}`}
-                            accessibilityState={{ selected }}
+                            color={tint.hex}
+                            selected={selected}
+                            locked={!allowed}
+                            label={`${t(tint.tier_required === 'free' ? 'avatar.colorName' : 'avatar.fashionColor', { number: index + 1 })}${allowed ? '' : `, ${t('avatar.unlock', { tier: 'Plus' })}`}`}
                             testID={`avatar-color-${tint.id}`}
                             onPress={() => {
                               if (!allowed) {
@@ -354,33 +399,7 @@ export function CharacterEditor({ creating = false }: { creating?: boolean }) {
                               setDraft({ ...draft, tints: next });
                               setSaved(false);
                             }}
-                            style={[
-                              styles.swatch,
-                              {
-                                backgroundColor: tint.hex,
-                                borderColor: selected ? colors.apricot : colors.hairline,
-                                borderWidth: selected
-                                  ? avatarLayout.selectedBorderWidth
-                                  : avatarLayout.borderWidth,
-                              },
-                            ]}
-                          >
-                            {selected || !allowed ? (
-                              <View
-                                style={{
-                                  backgroundColor: colors.s1,
-                                  borderRadius: radius.full,
-                                  padding: space[1],
-                                }}
-                              >
-                                <Ionicons
-                                  name={selected ? 'checkmark' : 'lock-closed-outline'}
-                                  size={space[4]}
-                                  color={colors.textHi}
-                                />
-                              </View>
-                            ) : null}
-                          </Pressable>
+                          />
                         );
                       })}
                   </ScrollView>
@@ -434,6 +453,8 @@ export function CharacterEditor({ creating = false }: { creating?: boolean }) {
                         ]}
                       >
                         <AvatarView
+                          item={item}
+                          label={item.name}
                           profile={preview}
                           products={state.products}
                           tints={state.tints}
@@ -517,19 +538,33 @@ export function CharacterEditor({ creating = false }: { creating?: boolean }) {
               ) : null}
             </>
           )}
-          {error ? <Text accessibilityRole="alert">{error}</Text> : null}
-          {saved ? <Text accessibilityLiveRegion="polite">{t('avatar.saved')}</Text> : null}
-          <Button
-            label={t(params.setup === '1' ? 'avatar.continue' : 'avatar.save')}
-            disabled={!!unowned}
-            loading={saving}
-            onPress={() => void save()}
-            testID="avatar-save"
-          />
-          {unowned ? <Text>{t('avatar.previewHint')}</Text> : null}
-        </>
+          <View style={styles.row}>
+            <Button
+              variant="secondary"
+              fullWidth={false}
+              label={t('avatar.shop')}
+              onPress={() => router.push('/shop')}
+              testID="wardrobe-shop"
+            />
+            {state.profile ? (
+              <Button
+                variant="tertiary"
+                fullWidth={false}
+                label={t('avatar.progress')}
+                onPress={() => router.push('/avatar/progress')}
+                testID="wardrobe-progress"
+              />
+            ) : null}
+          </View>
+        </CharacterPanel>
       ) : null}
-      {quote ? <PurchaseSheet quote={quote} onClose={() => setQuote(null)} /> : null}
+      {quote ? (
+        <PurchaseSheet
+          quote={quote}
+          onBeforePurchase={preparePurchase}
+          onClose={() => setQuote(null)}
+        />
+      ) : null}
       <Modal
         visible={!!pendingLeave}
         transparent
@@ -563,23 +598,20 @@ export function CharacterEditor({ creating = false }: { creating?: boolean }) {
   );
 }
 const styles = StyleSheet.create({
-  colorRow: { flexDirection: 'row', gap: space[2], paddingVertical: space[2] },
+  colorRow: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: space[2],
+    paddingVertical: space[2],
+  },
   row: { flexDirection: 'row', flexWrap: 'wrap', gap: space[2], alignItems: 'center' },
   grid: { flexDirection: 'row', flexWrap: 'wrap', gap: space[3] },
   item: {
-    width: '46%',
-    minWidth: avatarLayout.cardMinWidth,
+    width: '30%',
+    minWidth: avatarLayout.editorCardMinWidth,
     borderRadius: radius.card,
     padding: space[2],
     gap: space[2],
-  },
-  swatch: {
-    minWidth: avatarLayout.swatchSize,
-    minHeight: avatarLayout.swatchSize,
-    maxWidth: avatarLayout.swatchSize + space[4],
-    borderRadius: radius.control,
-    alignItems: 'center',
-    justifyContent: 'center',
   },
   discardOverlay: {
     flex: 1,

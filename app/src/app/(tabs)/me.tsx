@@ -205,7 +205,7 @@ export default function MeScreen() {
                   <ProfileShortcut
                     title={t('community.title')}
                     icon="people-outline"
-                    onPress={() => router.push('/friends' as never)}
+                    onPress={() => router.push('/(tabs)/chat?tab=friends' as never)}
                     testID="me-friends"
                   />
                 </View>
@@ -268,7 +268,7 @@ export default function MeScreen() {
             <ProfileRow
               title={t('compactProfile.findPartner')}
               icon="people-outline"
-              onPress={() => router.push('/friends' as never)}
+              onPress={() => router.push('/(tabs)/chat?tab=friends' as never)}
               testID="row-find-partner"
             />
             <ProfileRow

@@ -2,10 +2,11 @@ import React from 'react';
 import { View } from 'react-native';
 import { Text } from '@calipartner/ui';
 import { squadTogetherProgress, type RankedSquadMember } from '@calipartner/core';
-import { ProgressTrack, squadStyles } from './SquadViews';
+import { ProgressTrack, useSquadStyles } from './SquadViews';
 import { t } from '@/i18n';
 
 export function SquadTogetherProgress({ members }: { members: RankedSquadMember[] }) {
+  const squadStyles = useSquadStyles();
   const progress = squadTogetherProgress(members);
   return (
     <View style={squadStyles.card} testID="squad-together-progress">

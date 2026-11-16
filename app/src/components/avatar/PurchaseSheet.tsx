@@ -1,6 +1,6 @@
 import { CoinAmount } from './CoinAmount';
 import React, { useRef, useState } from 'react';
-import { Modal, SafeAreaView, View, StyleSheet } from 'react-native';
+import { Modal, SafeAreaView, View, StyleSheet, ScrollView } from 'react-native';
 import { Button, Text, useTheme, space, radius, avatarLayout } from '@calipartner/ui';
 import { useRouter } from 'expo-router';
 import { purchaseAvatarProduct } from '@/services/avatarService';
@@ -13,33 +13,67 @@ export interface AvatarQuote {
   price: number;
   productId: string | null;
   collectionId: string | null;
+  items?: { productId: string; name: string; price: number }[];
 }
-export function PurchaseSheet({ quote, onClose }: { quote: AvatarQuote; onClose: () => void }) {
+export function PurchaseSheet({
+  quote,
+  onClose,
+  onBeforePurchase,
+}: {
+  quote: AvatarQuote;
+  onClose: () => void;
+  onBeforePurchase?: () => Promise<void>;
+}) {
   const { state, acknowledge } = useAvatar();
   const { colors } = useTheme();
   const router = useRouter();
   const request = useRef(generateClientUuid());
+  const requests = useRef(new Map<string, string>());
+  const completed = useRef(new Set<string>());
+  const [completedCount, setCompletedCount] = useState(0);
   const busy = useRef(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const balance = (state?.balances.earned ?? 0) + (state?.balances.purchased ?? 0);
   const debt = (state?.balances.purchased ?? 0) < 0;
-  const shortfall = Math.max(0, quote.price - balance);
+  const remainingItems = quote.items?.filter((item) => !completed.current.has(item.productId));
+  const remainingPrice = remainingItems
+    ? remainingItems.reduce((sum, item) => sum + item.price, 0)
+    : quote.price;
+  const shortfall = Math.max(0, remainingPrice - balance);
   const buy = async () => {
     if (busy.current) return;
     busy.current = true;
     setSaving(true);
     setError(null);
     try {
-      acknowledge(
-        await purchaseAvatarProduct(
-          getSupabase(),
-          request.current,
-          quote.price,
-          quote.productId,
-          quote.collectionId,
-        ),
-      );
+      await onBeforePurchase?.();
+      if (quote.items) {
+        for (const item of quote.items) {
+          if (completed.current.has(item.productId)) continue;
+          if (!requests.current.has(item.productId))
+            requests.current.set(item.productId, generateClientUuid());
+          const result = await purchaseAvatarProduct(
+            getSupabase(),
+            requests.current.get(item.productId)!,
+            item.price,
+            item.productId,
+            null,
+          );
+          acknowledge(result);
+          completed.current.add(item.productId);
+          setCompletedCount(completed.current.size);
+        }
+      } else
+        acknowledge(
+          await purchaseAvatarProduct(
+            getSupabase(),
+            request.current,
+            quote.price,
+            quote.productId,
+            quote.collectionId,
+          ),
+        );
       onClose();
     } catch (e) {
       const message = e instanceof Error ? e.message : '';
@@ -69,8 +103,27 @@ export function PurchaseSheet({ quote, onClose }: { quote: AvatarQuote; onClose:
       }}
     >
       <SafeAreaView style={[styles.overlay, { backgroundColor: colors.bg0 }]}>
-        <View style={[styles.sheet, { backgroundColor: colors.s1, borderColor: colors.hairline }]}>
+        <ScrollView
+          contentContainerStyle={[
+            styles.sheet,
+            { backgroundColor: colors.s1, borderColor: colors.hairline },
+          ]}
+        >
           <Text variant="title2">{quote.name}</Text>
+          {quote.items?.map((item) => (
+            <View key={item.productId} style={styles.actions}>
+              <Text style={styles.action}>{item.name}</Text>
+              <CoinAmount amount={item.price} />
+            </View>
+          ))}
+          {completedCount > 0 ? (
+            <Text accessibilityLiveRegion="polite">
+              {t('avatar.purchaseProgress', {
+                count: completedCount,
+                total: quote.items?.length ?? 1,
+              })}
+            </Text>
+          ) : null}
           {shortfall > 0 || debt ? (
             <Text accessibilityRole="alert">
               {t('avatar.insufficientItem', { name: quote.name })}
@@ -78,12 +131,13 @@ export function PurchaseSheet({ quote, onClose }: { quote: AvatarQuote; onClose:
           ) : (
             <>
               <Text>{t('avatar.confirmPurchase')}</Text>
-              <CoinAmount amount={quote.price} />
+              <CoinAmount amount={remainingPrice} />
               <Text variant="bodyS">{t('avatar.remaining')}</Text>
-              <CoinAmount amount={balance - quote.price} />
+              <CoinAmount amount={balance - remainingPrice} />
             </>
           )}
           {error ? <Text accessibilityRole="alert">{error}</Text> : null}
+          {error && completedCount > 0 ? <Text>{t('avatar.purchasePartial')}</Text> : null}
           <View style={styles.actions}>
             <View style={styles.action}>
               {shortfall > 0 || debt ? (
@@ -114,7 +168,7 @@ export function PurchaseSheet({ quote, onClose }: { quote: AvatarQuote; onClose:
               />
             </View>
           </View>
-        </View>
+        </ScrollView>
       </SafeAreaView>
     </Modal>
   );

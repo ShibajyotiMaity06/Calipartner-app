@@ -24,11 +24,13 @@ type Tab = 'discover' | 'requests' | 'friends';
 
 export function CommunityPanel({
   friends,
+  embedded = false,
   onEdit,
   onBack,
   onNotifications,
 }: {
   friends: FriendsState;
+  embedded?: boolean;
   onEdit: () => void;
   onBack: () => void;
   onNotifications: () => void;
@@ -89,7 +91,7 @@ export function CommunityPanel({
   return (
     <View style={styles.section} testID="community-panel">
       <View style={styles.row}>
-        {iconButton('arrow-back', t('friends.back'), onBack, 'back-from-friends')}
+        {!embedded && iconButton('arrow-back', t('friends.back'), onBack, 'back-from-friends')}
         <View style={styles.flex} />
         {iconButton(
           'notifications-outline',
@@ -113,7 +115,7 @@ export function CommunityPanel({
             color={colors.textHi}
             accessibilityRole="header"
           >
-            {t('community.title')}
+            {t(embedded ? 'community.friends' : 'community.title')}
           </Text>
           <Text variant="bodyS" fontSet="onboarding" color={colors.textMid}>
             {t('community.subtitle')}

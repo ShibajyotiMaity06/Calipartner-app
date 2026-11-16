@@ -1,8 +1,17 @@
+import { FriendsContent } from '@/components/friends/FriendsContent';
 import { HeaderActions } from '@/components/HeaderActions';
 import React, { useCallback, useEffect, useState } from 'react';
 import { ScrollView, View, Pressable, TextInput, StyleSheet } from 'react-native';
-import { useFocusEffect, useRouter } from 'expo-router';
-import { Text, Button, space, radius, homeLayout, useTheme } from '@calipartner/ui';
+import { useFocusEffect, useRouter, useLocalSearchParams } from 'expo-router';
+import {
+  Text,
+  Button,
+  space,
+  radius,
+  homeLayout,
+  useTheme,
+  SegmentedControl,
+} from '@calipartner/ui';
 import { useRooms } from '@/hooks/useRooms';
 import { useAuth } from '@/contexts/AuthContext';
 import { getChatMessages, getChatUnreadCount } from '@/services/chatService';
@@ -79,6 +88,11 @@ function Conversation({ room }: { room: RoomSummary }) {
 export default function ChatScreen() {
   const { colors } = useTheme();
   const { rooms, loading, error, refresh } = useRooms();
+  const params = useLocalSearchParams<{ tab?: string }>();
+  const [tab, setTab] = useState<'chat' | 'friends'>(params.tab === 'friends' ? 'friends' : 'chat');
+  useEffect(() => {
+    if (params.tab === 'friends') setTab('friends');
+  }, [params.tab]);
   const [query, setQuery] = useState('');
   const [revision, setRevision] = useState(0);
   useFocusEffect(
@@ -91,54 +105,77 @@ export default function ChatScreen() {
     r.name.toLocaleLowerCase().includes(query.toLocaleLowerCase().trim()),
   );
   return (
-    <ScrollView
-      style={{ backgroundColor: colors.bg0 }}
-      contentContainerStyle={styles.content}
-      testID="screen-chat"
-    >
-      <View style={styles.header}>
-        <Text variant="title1" style={styles.flex}>
-          {t('avatar.chats')}
-        </Text>
-        <HeaderActions />
-      </View>
-      <TextInput
-        value={query}
-        onChangeText={setQuery}
-        accessibilityLabel={t('avatar.searchChats')}
-        placeholder={t('avatar.searchChats')}
-        placeholderTextColor={colors.textLo}
-        style={[styles.search, { color: colors.textHi, backgroundColor: colors.s1 }]}
-        testID="chat-search"
-      />
-      {loading && !rooms.length ? (
-        <LoadingState />
-      ) : error ? (
-        <Button
-          variant="secondary"
-          label={t('common.retry')}
-          onPress={() => void refresh()}
-          testID="chat-retry"
+    <View testID="chat-screen-shell" style={{ flex: 1, backgroundColor: colors.bg0 }}>
+      <View style={styles.tabs}>
+        <SegmentedControl
+          value={tab}
+          onChange={setTab}
+          options={[
+            { value: 'chat', label: t('rooms.segments.chat') },
+            { value: 'friends', label: t('community.friends') },
+          ]}
+          testID="chat-friends-tabs"
         />
-      ) : !filtered.length ? (
-        <Text>{t(rooms.length ? 'avatar.noMatches' : 'avatar.noChats')}</Text>
-      ) : null}
-      {[false, true].map((pair) => (
-        <View key={String(pair)}>
-          {pair && filtered.some((r) => r.member_cap === 2) ? (
-            <Text variant="heading">{t('avatar.partners')}</Text>
+      </View>
+      {tab === 'friends' ? (
+        <FriendsContent embedded />
+      ) : (
+        <ScrollView
+          style={{ backgroundColor: colors.bg0 }}
+          contentContainerStyle={styles.content}
+          testID="screen-chat"
+        >
+          <View style={styles.header}>
+            <Text variant="title1" style={styles.flex}>
+              {t('avatar.chats')}
+            </Text>
+            <HeaderActions />
+          </View>
+          <TextInput
+            value={query}
+            onChangeText={setQuery}
+            accessibilityLabel={t('avatar.searchChats')}
+            placeholder={t('avatar.searchChats')}
+            placeholderTextColor={colors.textLo}
+            style={[styles.search, { color: colors.textHi, backgroundColor: colors.s1 }]}
+            testID="chat-search"
+          />
+          {loading && !rooms.length ? (
+            <LoadingState />
+          ) : error ? (
+            <Button
+              variant="secondary"
+              label={t('common.retry')}
+              onPress={() => void refresh()}
+              testID="chat-retry"
+            />
+          ) : !filtered.length ? (
+            <Text>{t(rooms.length ? 'avatar.noMatches' : 'avatar.noChats')}</Text>
           ) : null}
-          {filtered
-            .filter((r) => (r.member_cap === 2) === pair)
-            .map((room) => (
-              <Conversation key={`${room.id}-${revision}`} room={room} />
-            ))}
-        </View>
-      ))}
-    </ScrollView>
+          {[false, true].map((pair) => (
+            <View key={String(pair)}>
+              {pair && filtered.some((r) => r.member_cap === 2) ? (
+                <Text variant="heading">{t('avatar.partners')}</Text>
+              ) : null}
+              {filtered
+                .filter((r) => (r.member_cap === 2) === pair)
+                .map((room) => (
+                  <Conversation key={`${room.id}-${revision}`} room={room} />
+                ))}
+            </View>
+          ))}
+        </ScrollView>
+      )}
+    </View>
   );
 }
 const styles = StyleSheet.create({
+  tabs: {
+    padding: space[4],
+    width: '100%',
+    maxWidth: homeLayout.maxContentWidth,
+    alignSelf: 'center',
+  },
   header: { flexDirection: 'row', alignItems: 'center', gap: space[2] },
   content: {
     padding: space[4],

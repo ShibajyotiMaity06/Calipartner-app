@@ -206,7 +206,7 @@ export default function TodayScreen() {
             <Text variant="heading" color={dark.textHi} style={styles.greetingTitle}>
               {t('homeRefresh.hello', { name: userName })}
             </Text>
-            <HeaderActions testID="home-coach-icon" />
+            <HeaderActions coins coach testID="home-coach-icon" />
           </View>
           <Text variant="body" color={dark.textMid} style={styles.greetingQuestion}>
             {getContextualQuestion()}

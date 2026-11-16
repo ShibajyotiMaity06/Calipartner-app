@@ -1,3 +1,4 @@
+vi.mock('@/components/brand/CaliPartnerLogo', () => ({ CaliPartnerLogo: 'CaliPartnerLogo' }));
 import React from 'react';
 import { act, create, type ReactTestRenderer } from 'react-test-renderer';
 import { afterEach, expect, it, vi } from 'vitest';

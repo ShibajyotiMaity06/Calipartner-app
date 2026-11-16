@@ -9,7 +9,7 @@ export function CoinIcon({ size = space[5] }: { size?: number }) {
       <Circle cx="12" cy="12" r="10" fill={coin.fill} stroke={coin.edge} strokeWidth="1.5" />
       <Circle cx="12" cy="12" r="7.5" fill="none" stroke={coin.edge} strokeWidth="0.75" />
       <Path
-        d="M15 8.5c-1-1.5-6-1.5-6 1 0 3 6 1 6 4 0 2.5-5 2.5-6 1M12 6v12"
+        d="M10.5 9.2a3.4 3.4 0 1 0 0 5.6M17 9.2a3.4 3.4 0 1 0 0 5.6"
         fill="none"
         stroke={coin.ink}
         strokeWidth="1.5"

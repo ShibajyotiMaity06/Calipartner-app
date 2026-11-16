@@ -6,6 +6,7 @@ vi.mock('react-native', () => ({
   Modal: 'Modal',
   SafeAreaView: 'SafeAreaView',
   View: 'View',
+  ScrollView: 'ScrollView',
   StyleSheet: { create: (s: unknown) => s },
 }));
 vi.mock('@calipartner/ui', async () => ({
@@ -23,7 +24,7 @@ vi.mock('@/hooks/useAvatar', () => ({
   }),
 }));
 vi.mock('@/services/avatarService', () => ({ purchaseAvatarProduct: state.buy }));
-vi.mock('@/services/foodService', () => ({ generateClientUuid: () => 'request-id' }));
+vi.mock('@/services/foodService', () => ({ generateClientUuid: () => crypto.randomUUID() }));
 vi.mock('@/lib/supabase', () => ({ getSupabase: () => ({}) }));
 import { PurchaseSheet } from './PurchaseSheet';
 let renderer: ReactTestRenderer;
@@ -56,6 +57,69 @@ it('only spends after explicit confirmation when the item is affordable', async 
     renderer = create(<PurchaseSheet quote={quote} onClose={state.close} />);
   });
   expect(state.buy).not.toHaveBeenCalled();
+  await act(async () =>
+    renderer.root.findByProps({ testID: 'avatar-confirm-purchase' }).props.onPress(),
+  );
+  expect(state.buy).toHaveBeenCalledOnce();
+  expect(state.close).toHaveBeenCalledOnce();
+});
+
+it('retries only unfinished cart items with the same request ID after a partial failure', async () => {
+  state.balance = 250;
+  state.buy
+    .mockResolvedValueOnce({})
+    .mockRejectedValueOnce(new Error('NETWORK_UNAVAILABLE'))
+    .mockResolvedValueOnce({});
+  await act(async () => {
+    renderer = create(
+      <PurchaseSheet
+        quote={{
+          name: 'Selected items',
+          price: 150,
+          productId: null,
+          collectionId: null,
+          items: [
+            { name: 'Tee', price: 60, productId: 'tee' },
+            { name: 'Shoes', price: 90, productId: 'shoes' },
+          ],
+        }}
+        onClose={state.close}
+      />,
+    );
+  });
+  expect(state.buy).not.toHaveBeenCalled();
+  await act(async () =>
+    renderer.root.findByProps({ testID: 'avatar-confirm-purchase' }).props.onPress(),
+  );
+  expect(state.buy.mock.calls.map((c) => c[3])).toEqual(['tee', 'shoes']);
+  expect(state.close).not.toHaveBeenCalled();
+  expect(JSON.stringify(renderer.toJSON())).toContain('1 of 2 items purchased');
+  await act(async () =>
+    renderer.root.findByProps({ testID: 'avatar-confirm-purchase' }).props.onPress(),
+  );
+  expect(state.buy.mock.calls.map((c) => c[3])).toEqual(['tee', 'shoes', 'shoes']);
+  expect(state.buy.mock.calls[0]?.[1]).not.toBe(state.buy.mock.calls[1]?.[1]);
+  expect(state.buy.mock.calls[1]?.[1]).toBe(state.buy.mock.calls[2]?.[1]);
+  expect(state.close).toHaveBeenCalledOnce();
+});
+
+it('does not spend until the selected character model is acknowledged', async () => {
+  state.balance = 250;
+  state.buy.mockResolvedValue({});
+  const prepare = vi
+    .fn()
+    .mockRejectedValueOnce(new Error('NETWORK_UNAVAILABLE'))
+    .mockResolvedValueOnce(undefined);
+  await act(async () => {
+    renderer = create(
+      <PurchaseSheet quote={quote} onBeforePurchase={prepare} onClose={state.close} />,
+    );
+  });
+  await act(async () =>
+    renderer.root.findByProps({ testID: 'avatar-confirm-purchase' }).props.onPress(),
+  );
+  expect(state.buy).not.toHaveBeenCalled();
+  expect(state.close).not.toHaveBeenCalled();
   await act(async () =>
     renderer.root.findByProps({ testID: 'avatar-confirm-purchase' }).props.onPress(),
   );

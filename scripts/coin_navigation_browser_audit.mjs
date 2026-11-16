@@ -22,7 +22,15 @@ const suffix = `
   assert.equal(await page.getByTestId('home-squad-next').count(),0);
   await page.getByTestId('tab-chat').click();
   const inbox = page.getByTestId('screen-chat');
-  await inbox.getByTestId('theme-toggle').waitFor();
+  await inbox.waitFor();
+  assert.equal(await page.getByTestId('header-cc-balance').filter({ visible: true }).count(),0);
+  assert.equal(await page.getByTestId('header-coach-icon').filter({ visible: true }).count(),0);
+  await page.getByTestId('chat-friends-tabs-friends').click();
+  await page.getByTestId('friend-username-search').waitFor();
+  assert.equal(await page.getByTestId('friends-screen').getByTestId('theme-toggle').count(),0);
+  assert.equal(await page.getByTestId('friends-screen').getByTestId('header-cc-balance').count(),0);
+  await page.screenshot({path:path.join(out,'friends-tab.png'),fullPage:true});
+  await page.getByTestId('chat-friends-tabs-chat').click();
   assert.equal(await inbox.getByTestId('chat-coach').count(),0);
   assert.doesNotMatch(await inbox.innerText(), /Your squads/i);
   await page.getByTestId('chat-thread-'+rid(1)).click();
@@ -35,6 +43,7 @@ const suffix = `
   await page.getByTestId('tab-progress').click();
   const you = page.getByTestId('screen-progress');
   await you.getByTestId('theme-toggle').waitFor();
+  assert.equal(await you.getByTestId('header-coach-icon').count(),0);
   await you.getByTestId('personal-workout-history').scrollIntoViewIfNeeded();
   await you.getByTestId('personal-workout-history').evaluate(element => {
     for(let parent=element.parentElement; parent; parent=parent.parentElement) {
@@ -47,6 +56,18 @@ const suffix = `
   assert.ok(history.y+history.height <= dock.y+4,'Workout history must remain above the dock');
   assert.ok(dock.y-(history.y+history.height)<50,'No excessive empty space below workout history');
   await page.screenshot({path:path.join(out,'you-bottom.png'),fullPage:true});
+  await page.goto('http://127.0.0.1:8098/room');
+  await page.getByTestId('squad-together-progress').waitFor();
+  assert.equal(await page.getByTestId('header-cc-balance').filter({ visible: true }).count(),0);
+  assert.equal(await page.getByTestId('header-coach-icon').filter({ visible: true }).count(),0);
+  const cardColor = await page.getByTestId('squad-together-progress').evaluate(el=>getComputedStyle(el).backgroundColor);
+  assert.notEqual(cardColor,'rgb(24, 20, 16)');
+  await page.screenshot({path:path.join(out,'squad-light.png'),fullPage:true});
+  await page.goto('http://127.0.0.1:8098/friends');
+  await page.getByTestId('friend-username-search').waitFor();
+  assert.equal(await page.getByTestId('friends-screen').getByTestId('theme-toggle').count(),0);
+  assert.equal(await page.getByTestId('friends-screen').getByTestId('header-cc-balance').count(),0);
+  assert.equal(await page.getByTestId('header-coach-icon').filter({ visible: true }).count(),0);
   assert.deepEqual(errors,[]);
   console.log('Coin navigation browser: header controls, hidden carousel arrows, inbox-to-conversation routing, return navigation and compact You bottom spacing passed.');
 } catch(error) {

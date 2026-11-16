@@ -92,7 +92,7 @@ export default function ProgressScreen() {
             <Text variant="title1">{profile?.nickname ?? t('tabs.progress')}</Text>
             {profile?.username ? <Text>@{profile.username}</Text> : null}
           </View>
-          <HeaderActions />
+          <HeaderActions coins />
           <Pressable
             accessibilityRole="button"
             accessibilityLabel={t('tabs.me')}

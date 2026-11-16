@@ -114,6 +114,8 @@ export default function CollectionScreen() {
                     <Text variant="heading">{product.name}</Text>
                   ) : (
                     <AvatarView
+                      item={product}
+                      label={product.name}
                       profile={preview}
                       products={state.products}
                       tints={state.tints}

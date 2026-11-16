@@ -1,4 +1,5 @@
 import React from 'react';
+import { CaliPartnerLogo } from '@/components/brand/CaliPartnerLogo';
 import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
 import { Text, space } from '@calipartner/ui';
 import { CoachMealDraftCard } from './CoachMealDraftCard';
@@ -45,11 +46,8 @@ export function CoachMessageBubble({
     >
       {/* Coach Avatar */}
       {!demo && !isUser && (
-        <View
-          style={[styles.avatar, { backgroundColor: colors.cardHighlight }]}
-          testID={`avatar-coach-${message.id}`}
-        >
-          <Ionicons name="information-circle-outline" size={16} color={colors.accent} />
+        <View style={styles.avatar} testID={`avatar-coach-${message.id}`}>
+          <CaliPartnerLogo size={space[8]} />
         </View>
       )}
 
@@ -184,12 +182,11 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-start',
   },
   avatar: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
+    width: space[8],
+    height: space[8],
     alignItems: 'center',
     justifyContent: 'center',
-    marginTop: 2,
+    marginTop: space[1],
   },
   bubbleContentWrap: {
     maxWidth: '82%',

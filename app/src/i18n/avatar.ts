@@ -1,4 +1,10 @@
 export const avatar = {
+  showItems: 'Show items',
+  hideItems: 'Hide items',
+  buyAll: 'Buy all selected items',
+  selectedItems: 'Selected items',
+  purchaseProgress: '{count} of {total} items purchased',
+  purchasePartial: 'Your confirmed purchases are kept. Try again to buy the remaining items.',
   webPacksError: 'Could not load your purchase. Check your connection and try again.',
   checkPayment: 'Check payment status',
   packConfirmed: 'Your coins have been added',

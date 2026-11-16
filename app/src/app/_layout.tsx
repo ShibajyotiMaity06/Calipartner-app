@@ -244,7 +244,7 @@ function AppearanceStack() {
         // Main tabs and avatar pages integrate the same controls alongside their own title.
         // Authentication, onboarding and actual conversations keep their focused layout.
         headerShown:
-          /^(squad\/|profile\/|notifications\/|recipes\/|friends$|fasting$|weekly-plan$|plan-review$|paywall$)/.test(
+          /^(squad\/|profile\/|notifications\/|recipes\/|fasting$|weekly-plan$|plan-review$|paywall$)/.test(
             route.name,
           ),
         header: () => (

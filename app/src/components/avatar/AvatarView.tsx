@@ -6,6 +6,7 @@ import { avatarLayout, radius } from '@calipartner/ui';
 import type { AvatarTint } from '@/services/avatarService';
 import { t } from '@/i18n';
 import { avatarAssets } from './assets.generated';
+import { thumbnailBounds } from './thumbnailBounds.generated';
 
 interface Props {
   profile: Pick<AvatarProfile, 'gender' | 'form' | 'slots' | 'tints' | 'skin_tone_id'>;
@@ -14,6 +15,7 @@ interface Props {
   height?: number;
   preview?: boolean;
   label?: string;
+  item?: AvatarProduct;
 }
 /** Luminance colorization preserves each layer's alpha, material shading and highlights. */
 export function tintMatrix(hex: string): string {
@@ -31,6 +33,7 @@ export const AvatarView = memo(function AvatarView({
   height = avatarLayout.heroHeight,
   preview = false,
   label,
+  item,
 }: Props) {
   const id = useId().replaceAll(':', '');
   const suffix = preview ? '_preview' : '';
@@ -46,33 +49,45 @@ export const AvatarView = memo(function AvatarView({
       tint: tints.find((t) => t.id === profile.skin_tone_id)?.hex,
     },
   ];
-  const images = [
-    ...layers
-      .filter((l) => l.product.slot === 'backdrop' || l.product.slot === 'aura')
-      .map((l) => ({ key: l.path!, tint: undefined })),
-    ...base,
-    ...layers
-      .filter((l) => l.product.slot !== 'backdrop' && l.product.slot !== 'aura')
-      .map(({ path, product }) => ({
-        key: path!,
-        tint: product.tintable
-          ? (products.find(
-              (p) => p.id === profile.tints[`${product.slot}_finish`] && p.kind === 'finish',
-            )?.finish ?? tints.find((t) => t.id === profile.tints[product.slot])?.hex)
-          : undefined,
-      })),
-  ];
+  const images = item
+    ? [
+        {
+          key: item.assets[`${profile.gender}:${profile.form}`] ?? '',
+          tint: undefined as string | undefined,
+        },
+      ]
+    : [
+        ...layers
+          .filter((l) => l.product.slot === 'backdrop' || l.product.slot === 'aura')
+          .map((l) => ({ key: l.path!, tint: undefined })),
+        ...base,
+        ...layers
+          .filter((l) => l.product.slot !== 'backdrop' && l.product.slot !== 'aura')
+          .map(({ path, product }) => ({
+            key: path!,
+            tint: product.tintable
+              ? (products.find(
+                  (p) => p.id === profile.tints[`${product.slot}_finish`] && p.kind === 'finish',
+                )?.finish ?? tints.find((t) => t.id === profile.tints[product.slot])?.hex)
+              : undefined,
+          })),
+      ];
   return (
     <View
       style={[styles.canvas, { height }]}
       accessibilityRole="image"
       accessibilityLabel={label ?? t('avatar.title')}
-      testID="avatar-view"
+      testID={item ? `avatar-thumbnail-${item.id}` : 'avatar-view'}
     >
       <Svg
         width="100%"
         height="100%"
-        viewBox={`0 0 ${avatarLayout.canvasWidth} ${avatarLayout.canvasHeight}`}
+        viewBox={
+          item
+            ? (thumbnailBounds[images[0]?.key ?? ''] ??
+              `0 0 ${avatarLayout.canvasWidth} ${avatarLayout.canvasHeight}`)
+            : `0 0 ${avatarLayout.canvasWidth} ${avatarLayout.canvasHeight}`
+        }
       >
         <Defs>
           {images.map((layer, index) =>
@@ -95,6 +110,11 @@ export const AvatarView = memo(function AvatarView({
               height={avatarLayout.canvasHeight}
               preserveAspectRatio="xMidYMid meet"
               filter={layer.tint ? `url(#${id}-${index})` : undefined}
+              transform={
+                !item && layer.key.endsWith('headwear_beanie_f.webp')
+                  ? `translate(${avatarLayout.beanieFemale.x} ${avatarLayout.beanieFemale.y}) scale(${avatarLayout.beanieFemale.scale})`
+                  : undefined
+              }
             />
           ) : null;
         })}

@@ -291,6 +291,30 @@ try {
   await page.getByTestId('buy-top_tee').waitFor({ state: 'detached' });
   assert.equal(purchase.length, 1);
   assert.ok(owned.has('top_tee'));
+  earned = 300;
+  await page.goto('http://127.0.0.1:8099/avatar');
+  await page.getByTestId('avatar-model-m').click();
+  await page.getByTestId('avatar-tab-bottom').click();
+  await page.getByTestId('avatar-item-bottom_compshorts').click();
+  await page.getByTestId('avatar-tab-ears').click();
+  await page.getByTestId('avatar-item-ears_studs').click();
+  await page.getByTestId('wardrobe-buy-all').click();
+  await page.getByText('Selected items', { exact: true }).waitFor();
+  const beforeCart = purchase.length;
+  assert.equal(beforeCart, 1, 'Preview and review do not spend coins');
+  await page.screenshot({ path: path.join(out, 'buy-all-review.png'), fullPage: true });
+  await page.getByTestId('avatar-confirm-purchase').click();
+  await page.getByTestId('avatar-save').waitFor();
+  assert.equal(purchase.length, beforeCart + 2);
+  assert.ok(owned.has('bottom_compshorts') && owned.has('ears_studs'));
+  assert.equal(avatar.gender, 'm', 'Purchases use the acknowledged selected model');
+  await page.getByTestId('avatar-save').click();
+  await page.getByText('Your character is saved', { exact: true }).waitFor();
+  await page.getByTestId('avatar-tab-body').click();
+  await page.getByTestId('avatar-model-f').click();
+  await page.getByTestId('avatar-save').click();
+  await page.getByText('Your character is saved', { exact: true }).waitFor();
+  await page.goto('http://127.0.0.1:8099/shop/gym_basics');
   earned = 0;
   await page.reload();
   const unaffordable = seed.products.find(
@@ -382,6 +406,64 @@ try {
   assert.equal(await page.getByTestId('avatar-tab-backdrop').count(), 0);
   assert.equal(await page.getByTestId('avatar-tab-frame').count(), 0);
   await page.screenshot({ path: path.join(out, 'trousers-shoes-375.png'), fullPage: true });
+  await page.getByTestId('avatar-tab-headwear').click();
+  await page.getByTestId('avatar-item-headwear_beanie').click();
+  await page.getByTestId('character-items-scroll').evaluate((el) => {
+    el.scrollTop = 0;
+  });
+  await page.waitForTimeout(400);
+  assert.equal(
+    await page.getByTestId('avatar-view').count(),
+    1,
+    'Only the stage renders a full character',
+  );
+  for (const thumbnail of await page.locator('[data-testid^="avatar-thumbnail-"]').all()) {
+    assert.equal(
+      await thumbnail.locator('image').count(),
+      1,
+      'Each thumbnail renders only its item layer',
+    );
+  }
+  await page.getByTestId('avatar-item-headwear_beanie').scrollIntoViewIfNeeded();
+  await page.waitForTimeout(300);
+  await page.screenshot({ path: path.join(out, 'beanie-item-only.png'), fullPage: true });
+  const expanded = await page.getByTestId('avatar-view').boundingBox();
+  const handle = page.getByTestId('character-panel-handle');
+  let box = await handle.boundingBox();
+  await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+  await page.mouse.down();
+  await page.mouse.move(box.x + box.width / 2, 790, { steps: 12 });
+  await page.mouse.up();
+  await page.waitForTimeout(350);
+  assert.equal(await handle.getAttribute('aria-expanded'), 'false');
+  const collapsed = await page.getByTestId('avatar-view').boundingBox();
+  assert.ok(collapsed.height > expanded.height + 200, 'Dragging down expands the character stage');
+  await page.screenshot({ path: path.join(out, 'character-fullscreen.png'), fullPage: true });
+  box = await handle.boundingBox();
+  await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+  await page.mouse.down();
+  await page.mouse.move(box.x + box.width / 2, box.y - 350, { steps: 12 });
+  await page.mouse.up();
+  await page.waitForTimeout(350);
+  assert.equal(await handle.getAttribute('aria-expanded'), 'true');
+  await handle.click();
+  await page.waitForTimeout(350);
+  assert.equal(
+    await handle.getAttribute('aria-expanded'),
+    'false',
+    'Handle also supports a single tap',
+  );
+  await handle.click();
+  await page.waitForTimeout(350);
+  await page.getByTestId('avatar-tab-body').click();
+  const swatch = page.getByTestId('avatar-skin_5');
+  assert.equal(await swatch.innerText(), '');
+  assert.ok(
+    await swatch.evaluate(
+      (el) => parseFloat(globalThis.getComputedStyle(el).borderRadius) >= el.clientWidth / 2,
+    ),
+  );
+  await page.screenshot({ path: path.join(out, 'round-skin-swatches.png'), fullPage: true });
   await page.getByTestId('avatar-page-back').click();
   await page.getByTestId('avatar-discard').waitFor();
   await page.screenshot({ path: path.join(out, 'discard-modal-375.png'), fullPage: true });
@@ -389,7 +471,7 @@ try {
   await page.getByTestId('avatar-discard').waitFor({ state: 'hidden' });
   assert.deepEqual(errors, []);
   console.log(
-    'Avatar browser audit: creation, failed-save retry UUID, skin/outfit tint, CC item purchase, Home/You, both themes, persistence and narrow/landscape screens passed',
+    'Avatar browser audit: item-only thumbnails, round swatches, drag/tap collapse and restore, beanie fit, multi-item purchase, save retry UUID, Home/You and both themes passed',
   );
 } finally {
   await browser?.close();

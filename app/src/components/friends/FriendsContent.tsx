@@ -1,0 +1,190 @@
+import React, { useEffect, useRef, useState } from 'react';
+import { Modal, ScrollView, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { useLocalSearchParams, useRouter } from 'expo-router';
+import { Button, Text, useTheme, space, getTabBarHeight } from '@calipartner/ui';
+import { PlanTextField, planStyles } from '@/components/onboarding/PlanPrimitives';
+import { SocialProfileEditor } from '@/components/friends/SocialProfileEditor';
+import { PublicSocialProfile } from '@/components/friends/PublicSocialProfile';
+import { PaywallModal } from '@/components/rooms/PaywallModal';
+import { CommunityPanel } from '@/components/friends/CommunityPanel';
+import { useFriends } from '@/hooks/useFriends';
+import { useAuth } from '@/contexts/AuthContext';
+import { t } from '@/i18n';
+import { LoadingState } from '@/components/LoadingState';
+
+export function FriendsContent({ embedded = false }: { embedded?: boolean }) {
+  const { user } = useAuth();
+  return <FriendsView key={user?.id ?? 'guest'} embedded={embedded} />;
+}
+
+function FriendsView({ embedded = false }: { embedded?: boolean }) {
+  const friends = useFriends();
+  const { colors } = useTheme();
+  const router = useRouter();
+  const params = useLocalSearchParams<{ edit?: string }>();
+  const [editing, setEditing] = useState(false);
+  const [paywall, setPaywall] = useState(false);
+  const [reportTarget, setReportTarget] = useState<string | null>(null);
+  const [reason, setReason] = useState('');
+  const [details, setDetails] = useState('');
+  const openedEditor = useRef(false);
+  useEffect(() => {
+    if (params.edit === '1' && friends.ownProfile && !openedEditor.current) {
+      openedEditor.current = true;
+      setEditing(true);
+    }
+  }, [params.edit, friends.ownProfile]);
+  const errorLabel = friends.error?.includes('SOCIAL_BACKEND_UNAVAILABLE')
+    ? t('fixes.friendsSetup')
+    : friends.error?.includes('INVALID_QUERY')
+      ? t('friends.queryError')
+      : friends.error?.includes('PROFILE_UNAVAILABLE')
+        ? t('friends.unavailable')
+        : t('friends.genericError');
+  const selected = friends.selected;
+  const showUpgrade = () => {
+    friends.closeProfile();
+    setPaywall(true);
+  };
+  return (
+    <SafeAreaView
+      edges={embedded ? [] : undefined}
+      style={{ flex: 1, backgroundColor: colors.bg0 }}
+    >
+      <ScrollView
+        contentContainerStyle={[
+          planStyles.reviewContent,
+          embedded && { paddingBottom: getTabBarHeight() + space[6] },
+        ]}
+        keyboardShouldPersistTaps="handled"
+        testID="friends-screen"
+      >
+        {!friends.signedIn ? (
+          <Button
+            label={t('friends.signIn')}
+            onPress={() => router.push('/auth/sign-in')}
+            testID="friends-sign-in"
+          />
+        ) : (
+          <>
+            <CommunityPanel
+              friends={friends}
+              embedded={embedded}
+              onBack={() => (router.canGoBack() ? router.back() : router.replace('/today'))}
+              onEdit={() => setEditing(true)}
+              onNotifications={() => router.push('/notifications/settings' as never)}
+            />
+            {friends.loading ? <LoadingState /> : null}
+            {friends.cached ? <Text variant="bodyS">{t('friends.cached')}</Text> : null}
+            {friends.error ? (
+              <Text accessibilityRole="alert" color={colors.danger}>
+                {errorLabel}
+              </Text>
+            ) : null}
+            {friends.error ? (
+              <Button
+                variant="tertiary"
+                label={t('friends.retry')}
+                onPress={() => void friends.refresh()}
+                testID="refresh-friends"
+              />
+            ) : null}
+          </>
+        )}
+      </ScrollView>
+      {editing && friends.ownProfile ? (
+        <SocialProfileEditor
+          profile={friends.ownProfile}
+          busy={friends.busy}
+          onClose={() => setEditing(false)}
+          onSave={friends.save}
+        />
+      ) : null}
+      {selected ? (
+        <PublicSocialProfile
+          key={selected.id}
+          profile={selected}
+          busy={friends.busy}
+          limitReached={friends.inbox?.quota.remaining === 0 && !friends.inbox.quota.premium}
+          onClose={friends.closeProfile}
+          onSend={() => void friends.send(selected.id)}
+          onRespond={(action) => {
+            if (selected.request_id) void friends.respond(selected.request_id, action, selected.id);
+          }}
+          onUpgrade={showUpgrade}
+          onBlock={() => {
+            void friends.block(selected.id);
+            friends.closeProfile();
+          }}
+          onReport={() => {
+            setReportTarget(selected.id);
+            friends.closeProfile();
+          }}
+        />
+      ) : null}
+      {reportTarget ? (
+        <Modal visible onRequestClose={() => setReportTarget(null)} animationType="slide">
+          <SafeAreaView style={{ flex: 1, backgroundColor: colors.bg0 }}>
+            <ScrollView
+              contentContainerStyle={planStyles.reviewContent}
+              keyboardShouldPersistTaps="handled"
+            >
+              <Text variant="title2">{t('friends.report')}</Text>
+              {friends.error ? (
+                <Text accessibilityRole="alert" color={colors.danger}>
+                  {t('friends.genericError')}
+                </Text>
+              ) : null}
+              <PlanTextField
+                label={t('rooms.reportModal.reasonOther')}
+                value={reason}
+                onChangeText={setReason}
+                maxLength={100}
+                testID="social-report-reason"
+              />
+              <PlanTextField
+                label={t('rooms.reportModal.detailsPlaceholder')}
+                value={details}
+                onChangeText={setDetails}
+                multiline
+                maxLength={2000}
+                testID="social-report-details"
+              />
+              <Button
+                label={t('friends.report')}
+                disabled={friends.busy || !reason.trim()}
+                onPress={() =>
+                  void friends.report(reportTarget, reason, details).then((saved) => {
+                    if (saved) {
+                      setReportTarget(null);
+                      setReason('');
+                      setDetails('');
+                    }
+                  })
+                }
+                testID="submit-social-report"
+              />
+              <Button
+                variant="secondary"
+                label={t('friends.close')}
+                onPress={() => setReportTarget(null)}
+                testID="close-social-report"
+              />
+            </ScrollView>
+          </SafeAreaView>
+        </Modal>
+      ) : null}
+      <PaywallModal
+        visible={paywall}
+        onClose={() => setPaywall(false)}
+        context="general"
+        preselectedTier="plus"
+        onSuccess={() => {
+          setPaywall(false);
+          void friends.refresh();
+        }}
+      />
+    </SafeAreaView>
+  );
+}

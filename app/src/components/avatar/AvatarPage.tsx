@@ -10,18 +10,28 @@ export function AvatarPage({
   children,
   onBack,
   onUnavailable,
+  fixed = false,
 }: {
   title: string;
   children: React.ReactNode;
   onBack?: () => void;
   onUnavailable?: () => void;
+  fixed?: boolean;
 }) {
   const { colors } = useTheme();
   const router = useRouter();
   const { state, loading, error, refresh } = useAvatar();
+  const Container = fixed ? View : ScrollView;
   return (
     <SafeAreaView style={[styles.root, { backgroundColor: colors.bg0 }]}>
-      <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
+      <Container
+        {...(fixed
+          ? { style: [styles.content, styles.fixed] }
+          : {
+              contentContainerStyle: styles.content,
+              keyboardShouldPersistTaps: 'handled' as const,
+            })}
+      >
         <View style={styles.header}>
           <Button
             variant="tertiary"
@@ -63,12 +73,13 @@ export function AvatarPage({
         ) : (
           children
         )}
-      </ScrollView>
+      </Container>
     </SafeAreaView>
   );
 }
 const styles = StyleSheet.create({
   root: { flex: 1 },
+  fixed: { flex: 1, minHeight: 0, paddingBottom: space[0] },
   content: {
     width: '100%',
     maxWidth: homeLayout.maxContentWidth,
