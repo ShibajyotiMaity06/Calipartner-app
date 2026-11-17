@@ -387,3 +387,23 @@ it('offers the onboarding Free action on the standard paywall without starting c
   expect(billing.create).not.toHaveBeenCalled();
   expect(billing.trial).not.toHaveBeenCalled();
 });
+
+it('separates future benefits from currently available Pro support and hides numerical AI quotas', async () => {
+  await render();
+  await act(async () => {
+    renderer!.root.findByProps({ testID: 'picker-size-21-50' }).props.onPress();
+  });
+  const content = JSON.stringify(renderer!.toJSON());
+  const future = renderer!.root
+    .findByProps({ testID: 'paywall-coming-soon' })
+    .findAll((node) => String(node.type) === 'Text')
+    .map((node) => node.children.filter((child) => typeof child === 'string').join(''))
+    .join(' ');
+  expect(content).toContain('Everything in Plus');
+  expect(content).toContain('Personal AI Coach');
+  expect(content).toContain('Priority support');
+  expect(future).toContain('Coming soon');
+  expect(future).not.toContain('Priority support');
+  expect(content).not.toMatch(/10 messages|5 scans|900.*month|300.*month/);
+  expect(content).toContain('not available with your purchase today');
+});

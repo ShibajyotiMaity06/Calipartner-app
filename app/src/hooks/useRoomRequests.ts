@@ -1,3 +1,4 @@
+import { AppState } from 'react-native';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useFocusEffect } from 'expo-router';
 import { useAuth } from '@/contexts/AuthContext';
@@ -68,8 +69,8 @@ export function useRoomRequests() {
     useCallback(() => {
       void refresh();
       const timer = setInterval(() => {
-        void refresh();
-      }, 5000);
+        if (AppState.currentState === 'active') void refresh();
+      }, 60000);
       return () => clearInterval(timer);
     }, [refresh]),
   );

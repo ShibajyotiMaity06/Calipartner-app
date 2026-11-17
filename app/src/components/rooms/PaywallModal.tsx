@@ -79,7 +79,7 @@ export const TIER_CONFIG = {
     badge: '7-DAY TRIAL',
     cap: 5,
     sizeRange: '3 to 5',
-    summary: 'Rooms, Partner Finder, Fasting & Workouts',
+    summary: 'launch.plus',
     testID: 'picker-size-6-20',
     monthlyPrice: PRICING_PLANS.plus.inr.monthly,
     monthlyPriceUsd: PRICING_PLANS.plus.usd.monthly,
@@ -100,7 +100,7 @@ export const TIER_CONFIG = {
     badge: 'AI COACH & SCANS',
     cap: 20,
     sizeRange: '6 to 20',
-    summary: 'Everything in Plus + AI Coach & 5 Photo Scans/day',
+    summary: 'launch.pro',
     testID: 'picker-size-21-50',
     monthlyPrice: PRICING_PLANS.pro.inr.monthly,
     monthlyPriceUsd: PRICING_PLANS.pro.usd.monthly,
@@ -140,28 +140,33 @@ export const TIER_CONFIG = {
 const PLUS_FEATURES = [
   'setup.plusFriendRequests',
   'setup.plusRoomFeature',
-  'setup.plusChatFeature',
   'setup.pairChallengeFeature',
-  'Partner Finder: browse suggestions and send match requests',
-  'Fasting tracker and eating windows',
-  'Full 150+ recipe library, meal planner & grocery lists',
-  'Workout routines, rest timer, personal records & shared workouts',
-  'Body measurements and private progress photos',
-  'Data export',
-];
-
+  'launch.friends',
+  'launch.fasting',
+  'launch.recipes',
+  'launch.workouts',
+  'launch.photos',
+] as const;
 const PRO_FEATURES = [
-  'Everything in CaliPartner Plus',
-  'Personal AI Coach (10 messages a day)',
-  'AI photo food logging (5 scans a day)',
-  'Chat-to-log ("I ate two rotis and dal")',
-  'Coach-suggested recipes & "fits my day" collections',
-  'Weekly AI progress insights & macro adjustments',
+  'launch.everything',
+  'launch.coach',
+  'launch.scans',
+  'launch.chatLog',
+  'launch.monthly',
   'setup.proRoomFeature',
   'setup.proMediaFeature',
-  'setup.proReviewFeature',
-  'Priority support',
-];
+  'launch.priority',
+] as const;
+const COMING_SOON = {
+  plus: [
+    'launch.measurements',
+    'launch.export',
+    'launch.matching',
+    'launch.seasons',
+    'launch.records',
+  ],
+  pro: ['launch.collections', 'launch.weekly'],
+} as const;
 
 export function PaywallModal({
   onContinueFree,
@@ -870,7 +875,7 @@ export function PaywallModal({
                   </View>
 
                   <Text variant="bodyS" color={dark.textMid} style={styles.planSummaryText}>
-                    Everything in Plus + Personal AI Coach & 5 photo food scans/day.
+                    {t('launch.pro')}
                   </Text>
 
                   <View style={styles.priceDivider} />
@@ -922,11 +927,32 @@ export function PaywallModal({
                     style={styles.checkIcon}
                   />
                   <Text variant="bodyS" color={dark.textHi} style={styles.featureItemText}>
-                    {feat.startsWith('setup.') ? t(feat as Parameters<typeof t>[0]) : feat}
+                    {t(feat)}
                   </Text>
                 </View>
               ))}
 
+              {selectedTier === 'plus' && (
+                <Text variant="bodyS" color={dark.textMid}>
+                  {t('launch.planAccess')}
+                </Text>
+              )}
+              <View testID="paywall-coming-soon">
+                <Text variant="heading">{t('launch.soon')}</Text>
+                <Text variant="bodyS" color={dark.textMid}>
+                  {t('launch.soonNote')}
+                </Text>
+                {[...COMING_SOON.plus, ...(selectedTier === 'pro' ? COMING_SOON.pro : [])].map(
+                  (feature) => (
+                    <View key={feature} style={styles.whatYouGetItem}>
+                      <Ionicons name="time-outline" size={16} color={dark.textMid} />
+                      <Text variant="bodyS" color={dark.textMid} style={styles.featureItemText}>
+                        {t(feature)} ? {t('launch.soon')}
+                      </Text>
+                    </View>
+                  ),
+                )}
+              </View>
               <View style={styles.freeSentenceDivider} />
 
               <View style={styles.freeGuaranteeBlock}>

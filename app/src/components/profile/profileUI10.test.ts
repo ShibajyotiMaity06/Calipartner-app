@@ -204,7 +204,7 @@ describe('UI-10 · Me, Privacy, Plans, and Paywall (Screens N01–N16, O01–O10
     it('includes the three what-you-get inclusions and free tracking guarantee', () => {
       const pw = en.rooms.paywall;
       expect(pw.whatYouGetRow1).toBe('Room, chat and progress for everyone');
-      expect(pw.whatYouGetRow2).toBe('AI coach and Partner Finder for you');
+      expect(pw.whatYouGetRow2).toBe('AI coach and friend discovery for you');
       expect(pw.whatYouGetRow3).toBe('Bigger photo allowance');
       expect(pw.freeSentence).toBe('Logging, your diary and your streak stay free.');
     });

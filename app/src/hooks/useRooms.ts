@@ -1,3 +1,4 @@
+import { invalidateReadCache } from '@/services/readCache';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { generateClientUuid } from '@/services/foodService';
 import { getSupabase } from '@/lib/supabase';
@@ -74,6 +75,9 @@ export function useRooms() {
           friendIds,
         );
         createRequest.current = null;
+        invalidateReadCache('rooms');
+        invalidateReadCache('room-snapshot:');
+        invalidateReadCache('squad');
         await refresh();
         return result;
       } catch (err: unknown) {
@@ -91,6 +95,9 @@ export function useRooms() {
       try {
         const supabase = getSupabase();
         const result = await apiJoinRoomByCode(supabase, code);
+        invalidateReadCache('rooms');
+        invalidateReadCache('room-snapshot:');
+        invalidateReadCache('squad');
         await refresh();
         return result;
       } catch (err: unknown) {
@@ -108,6 +115,9 @@ export function useRooms() {
       try {
         const supabase = getSupabase();
         const result = await apiLeaveRoom(supabase, roomId);
+        invalidateReadCache('rooms');
+        invalidateReadCache('room-snapshot:');
+        invalidateReadCache('squad');
         await refresh();
         return result;
       } catch (err: unknown) {

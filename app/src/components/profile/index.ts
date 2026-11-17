@@ -1,6 +1,5 @@
 export * from './AvatarPickerModal';
 export * from './DeleteAccountModal';
-export * from './ExportDataModal';
 export * from './GuestDataMergeSheet';
 export * from './GoalsAndBodyModal';
 export * from './DailyGoalsModal';
@@ -13,5 +12,4 @@ export * from './HealthSyncModal';
 export * from './HelpCentreModal';
 export * from './ReportFeedbackModal';
 export * from './AboutLegalModal';
-export * from './StorageCacheModal';
 export * from './SignOutSheet';

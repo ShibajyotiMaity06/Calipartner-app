@@ -605,4 +605,10 @@ export const migrations: readonly LocalMigration[] = [
     name: 'chat_reply_references',
     sql: 'ALTER TABLE local_chat_messages ADD COLUMN reply_to_id TEXT; ALTER TABLE local_chat_messages ADD COLUMN reply_json TEXT;',
   },
+  {
+    version: 21,
+    name: 'private_progress_photos',
+    sql: `CREATE TABLE local_progress_photos (id TEXT PRIMARY KEY, user_id TEXT NOT NULL, photo_uri TEXT NOT NULL, captured_date TEXT NOT NULL, weight_kg REAL, pose TEXT NOT NULL DEFAULT 'front', notes TEXT NOT NULL DEFAULT '', created_at TEXT NOT NULL);
+      CREATE INDEX progress_photos_owner_date ON local_progress_photos(user_id,captured_date);`,
+  },
 ];

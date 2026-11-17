@@ -1,3 +1,5 @@
+import { AppState } from 'react-native';
+import { invalidateReadCache } from '@/services/readCache';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { RealtimeChannel } from '@supabase/supabase-js';
 import { mergeMessagesDeduplicated } from '@calipartner/core';
@@ -216,6 +218,7 @@ export function useRoomChat(
         () => {},
       );
     void loadInitialMessages();
+    const invalidateChat = () => invalidateReadCache('chat:' + roomId);
     const channel = client
       .channel(`chat:${roomId}:${userId}`)
       .on(
@@ -226,7 +229,10 @@ export function useRoomChat(
           table: 'chat_messages',
           filter: `room_id=eq.${roomId}`,
         },
-        () => void gapFillReconnect(),
+        () => {
+          invalidateChat();
+          void gapFillReconnect();
+        },
       )
       .on(
         'postgres_changes',
@@ -238,6 +244,7 @@ export function useRoomChat(
         },
         (payload: { new: ChatMessage }) => {
           if (!current) return;
+          invalidateChat();
           const row = payload.new;
           if (row.deleted_at)
             setMessages((previous) =>
@@ -252,32 +259,34 @@ export function useRoomChat(
           void loadInitialMessages();
         },
       )
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'chat_attachments' },
-        () => void loadInitialMessages(),
-      )
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'chat_attachments' }, () => {
+        invalidateChat();
+        void loadInitialMessages();
+      })
       .on(
         'postgres_changes',
         { event: 'UPDATE', schema: 'public', table: 'rooms', filter: `id=eq.${roomId}` },
-        () => void loadInitialMessages(),
+        () => {
+          invalidateChat();
+          void loadInitialMessages();
+        },
       )
       .subscribe((status) => {
-        if (status === 'SUBSCRIBED') void gapFillReconnect();
+        if (status === 'SUBSCRIBED') {
+          invalidateChat();
+          void gapFillReconnect();
+        }
       });
     channelRef.current = channel;
-    const timer = setInterval(() => {
-      void gapFillReconnect();
-      if (
-        messagesRef.current.some((m) =>
-          m.attachments?.some((a) => a.moderation_status === 'pending'),
-        )
-      )
+    const foreground = AppState.addEventListener('change', (state) => {
+      if (state === 'active') {
+        invalidateReadCache('chat:' + roomId);
         void loadInitialMessages();
-    }, 4000);
+      }
+    });
     return () => {
       current = false;
-      clearInterval(timer);
+      foreground.remove();
       activeScope.current = '';
       void client.removeChannel(channel);
     };
@@ -314,6 +323,7 @@ export function useRoomChat(
           avatarUrl: options.avatarUrl,
         });
 
+        invalidateReadCache('chat:' + roomId);
         // Add to local state
         if (activeScope.current === scopeKey)
           setMessages((prev) => mergeMessagesDeduplicated(prev, [sent]));
@@ -345,6 +355,7 @@ export function useRoomChat(
 
       try {
         await deleteChatMessage(supabase, db, messageId);
+        invalidateReadCache('chat:' + roomId);
         setMessages((prev) =>
           prev.map((m) =>
             m.id === messageId
@@ -403,6 +414,7 @@ export function useRoomChat(
     const supabase = getSupabase();
     try {
       await blockChatMember(supabase, targetUserId);
+      invalidateReadCache();
       // Immediately purge their messages from active state and local SQLite
       setMessages((prev) => prev.filter((m) => m.sender_id !== targetUserId));
       try {

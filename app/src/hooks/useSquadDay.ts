@@ -1,3 +1,4 @@
+import { AppState } from 'react-native';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { getSupabase } from '@/lib/supabase';
@@ -39,7 +40,9 @@ export function useSquadDay(roomId: string | null, visible = true) {
     if (!visible || !roomId) return;
     void refresh();
     // Refresh on room visibility and after acknowledged saves without subscribing to private tables.
-    const timer = setInterval(() => void refresh(), 30000);
+    const timer = setInterval(() => {
+      if (AppState.currentState === 'active') void refresh();
+    }, 60000);
     const unsubscribe = diaryEvents.subscribe(() => void refresh());
     return () => {
       invalidate();

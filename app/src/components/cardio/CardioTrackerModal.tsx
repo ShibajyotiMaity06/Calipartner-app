@@ -1,3 +1,6 @@
+import * as Location from 'expo-location';
+import { RouteMap } from './RouteMap';
+import { haversineKm } from '@calipartner/core';
 import { useTheme as useAppearance } from '@calipartner/ui/theme';
 import { NavigationIcon } from '@calipartner/ui';
 import { type as inputTypography } from '@calipartner/ui';
@@ -36,21 +39,6 @@ export interface CardioTrackerModalProps {
 
 type CardioMode = 'walking' | 'running';
 type SessionState = 'idle' | 'active' | 'paused' | 'completed';
-
-// Haversine formula to compute distance in km between two GPS coordinates
-function calculateHaversineKm(lat1: number, lon1: number, lat2: number, lon2: number): number {
-  const R = 6371; // Earth radius in km
-  const dLat = ((lat2 - lat1) * Math.PI) / 180;
-  const dLon = ((lon2 - lon1) * Math.PI) / 180;
-  const a =
-    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-    Math.cos((lat1 * Math.PI) / 180) *
-      Math.cos((lat2 * Math.PI) / 180) *
-      Math.sin(dLon / 2) *
-      Math.sin(dLon / 2);
-  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-  return R * c;
-}
 
 export function CardioTrackerModal({
   visible,
@@ -96,7 +84,7 @@ export function CardioTrackerModal({
 
   // Shared Session Metrics
   const [elapsedSeconds, setElapsedSeconds] = useState<number>(0);
-  const watchIdRef = useRef<number | null>(null);
+
   const [pedometerAvailable, setPedometerAvailable] = useState<boolean | null>(null);
   const measuredStepsRef = useRef(0);
   const dailyBaselineRef = useRef(0);
@@ -154,101 +142,67 @@ export function CardioTrackerModal({
     };
   }, [sessionState, activeTab, visible]);
 
-  // GPS tracking for Running (Real GPS only - NO fake simulation)
   useEffect(() => {
-    if (sessionState === 'active' && activeTab === 'running') {
-      const nav =
-        typeof globalThis !== 'undefined' && 'navigator' in globalThis
-          ? (globalThis as any).navigator
-          : null;
-      if (nav && nav.geolocation) {
-        setGpsStatus('searching');
-        watchIdRef.current = nav.geolocation.watchPosition(
-          (pos: any) => {
-            setGpsStatus('active');
-            const newLat = pos.coords.latitude;
-            const newLng = pos.coords.longitude;
-
-            setGpsCoordinates((prevCoords) => {
-              if (prevCoords.length > 0) {
-                const last = prevCoords[prevCoords.length - 1];
-                if (last) {
-                  const addedKm = calculateHaversineKm(last.lat, last.lng, newLat, newLng);
-                  // Filter out GPS drift (only add if moved > 5 meters)
-                  if (addedKm > 0.005) {
-                    setRunDistanceKm((prevDist) => +(prevDist + addedKm).toFixed(2));
-                    return [...prevCoords, { lat: newLat, lng: newLng }];
-                  }
-                }
-                return prevCoords;
-              }
-              return [{ lat: newLat, lng: newLng }];
-            });
-          },
-          () => {
-            setGpsStatus('unavailable');
-            setPermissionError('GPS signal lost or unavailable.');
-          },
-          { enableHighAccuracy: true, timeout: 15000, maximumAge: 3000 },
-        );
-      } else {
-        setGpsStatus('unavailable');
-      }
-    } else {
-      const nav =
-        typeof globalThis !== 'undefined' && 'navigator' in globalThis
-          ? (globalThis as any).navigator
-          : null;
-      if (watchIdRef.current !== null && nav && nav.geolocation) {
-        nav.geolocation.clearWatch(watchIdRef.current);
-        watchIdRef.current = null;
-      }
-    }
-
+    if (sessionState !== 'active' || activeTab !== 'running' || !visible) return;
+    let cancelled = false;
+    let subscription: Location.LocationSubscription | undefined;
+    let previous: { lat: number; lng: number } | undefined;
+    void Location.watchPositionAsync(
+      { accuracy: Location.Accuracy.High, distanceInterval: 5, timeInterval: 3000 },
+      (position) => {
+        if (cancelled || finishingRef.current) return;
+        if (position.coords.accuracy !== null && position.coords.accuracy > 50) return;
+        const point = { lat: position.coords.latitude, lng: position.coords.longitude };
+        setGpsStatus('active');
+        setPermissionError(null);
+        if (previous) {
+          const distance = haversineKm(previous, point);
+          if (distance < 0.005) return;
+          setRunDistanceKm((value) => value + distance);
+        }
+        previous = point;
+        setGpsCoordinates((values) => [...values, point]);
+      },
+    )
+      .then((value) => {
+        if (cancelled) value.remove();
+        else subscription = value;
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setGpsStatus('unavailable');
+          setPermissionError(t('launch.locationError'));
+        }
+      });
     return () => {
-      const nav =
-        typeof globalThis !== 'undefined' && 'navigator' in globalThis
-          ? (globalThis as any).navigator
-          : null;
-      if (watchIdRef.current !== null && nav && nav.geolocation) {
-        nav.geolocation.clearWatch(watchIdRef.current);
-        watchIdRef.current = null;
-      }
+      cancelled = true;
+      subscription?.remove();
     };
-  }, [sessionState, activeTab]);
+  }, [sessionState, activeTab, visible]);
 
-  const handleStartSession = () => {
+  const handleStartSession = async () => {
     playClickSound();
     setPermissionError(null);
 
     if (activeTab === 'running') {
-      const nav =
-        typeof globalThis !== 'undefined' && 'navigator' in globalThis
-          ? (globalThis as any).navigator
-          : null;
-      if (!nav || !nav.geolocation) {
-        setPermissionError('Location services not available on this device.');
-        return;
+      try {
+        const permission = await Location.requestForegroundPermissionsAsync();
+        if (!permission.granted) throw new Error('LOCATION_PERMISSION');
+        setGpsStatus('searching');
+        const position = await Location.getCurrentPositionAsync({
+          accuracy: Location.Accuracy.High,
+        });
+        setElapsedSeconds(0);
+        setRunDistanceKm(0);
+        setWalkSessionSteps(0);
+        setGpsCoordinates([{ lat: position.coords.latitude, lng: position.coords.longitude }]);
+        finishingRef.current = false;
+        setSessionState('active');
+        setGpsStatus('active');
+      } catch {
+        setGpsStatus('unavailable');
+        setPermissionError(t('launch.locationError'));
       }
-      setGpsStatus('searching');
-      nav.geolocation.getCurrentPosition(
-        (pos: any) => {
-          setGpsStatus('active');
-          setPermissionError(null);
-          setElapsedSeconds(0);
-          setWalkSessionSteps(0);
-          setRunDistanceKm(0);
-          setGpsCoordinates([{ lat: pos.coords.latitude, lng: pos.coords.longitude }]);
-          setSessionState('active');
-        },
-        (_err: any) => {
-          setGpsStatus('unavailable');
-          setPermissionError(
-            'Location permission is required for outdoor GPS running tracking. Please enable location permissions.',
-          );
-        },
-        { enableHighAccuracy: true, timeout: 10000 },
-      );
       return;
     }
 
@@ -792,6 +746,7 @@ export function CardioTrackerModal({
                       </Card>
                     </View>
 
+                    <RouteMap points={gpsCoordinates} />
                     {/* GPS Signal Banner */}
                     <View style={styles.liveGpsPill}>
                       <Ionicons name="radio" size={14} color={dark.teal} />

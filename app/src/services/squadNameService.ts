@@ -1,3 +1,4 @@
+import { invalidateReadCache } from './readCache';
 import { getSupabase } from '@/lib/supabase';
 import { parseRoomError } from '@/types/rooms';
 
@@ -30,6 +31,8 @@ export async function renameSquad(
     !data.name.trim()
   )
     throw new Error('RENAME_NOT_ACKNOWLEDGED');
+  invalidateReadCache('rooms');
+  invalidateReadCache('room-snapshot:' + roomId);
   const change = { room_id: data.room_id, name: data.name };
   for (const listener of listeners) {
     try {

@@ -3,11 +3,23 @@ import { act, create, type ReactTestRenderer } from 'react-test-renderer';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { ChatMessage } from '@/types/chat';
 const state = vi.hoisted(() => ({
+  events: {} as Record<string, () => void>,
+  status: null as null | ((status: string) => void),
+  foreground: null as null | ((status: string) => void),
   get: vi.fn(),
   mark: vi.fn(),
   unread: vi.fn(),
   rpc: vi.fn(),
   remove: vi.fn(),
+}));
+vi.mock('react-native', () => ({
+  AppState: {
+    currentState: 'active',
+    addEventListener: (_event: string, callback: (status: string) => void) => {
+      state.foreground = callback;
+      return { remove: vi.fn() };
+    },
+  },
 }));
 vi.mock('@/lib/supabase', () => ({
   getSupabase: () => ({
@@ -16,10 +28,12 @@ vi.mock('@/lib/supabase', () => ({
       select: () => ({ eq: () => ({ single: async () => ({ data: { state: 'active' } }) }) }),
     }),
     channel: () => ({
-      on() {
+      on(_kind: string, filter: { table: string }, callback: () => void) {
+        state.events[filter.table] = callback;
         return this;
       },
-      subscribe() {
+      subscribe(callback: (status: string) => void) {
+        state.status = callback;
         return this;
       },
     }),
@@ -142,7 +156,7 @@ describe('room chat lifecycle with real hook effects', () => {
     expect(result.messages[0]?.attachments[0]?.moderation_status).toBe('pending');
     approved = true;
     await act(async () => {
-      await vi.advanceTimersByTimeAsync(4000);
+      state.events.chat_attachments?.();
     });
     expect(result.messages[0]?.attachments[0]?.moderation_status).toBe('ok');
   });
@@ -155,7 +169,7 @@ describe('room chat lifecycle with real hook effects', () => {
       tree = create(<Probe room="one" />);
     });
     await act(async () => {
-      await vi.advanceTimersByTimeAsync(4000);
+      state.status?.('SUBSCRIBED');
     });
     expect(state.get).toHaveBeenLastCalledWith(
       expect.anything(),
@@ -165,8 +179,24 @@ describe('room chat lifecycle with real hook effects', () => {
     );
     expect(result.messages.map((m) => m.id)).toEqual(['a', 'b', 'c']);
     await act(async () => {
-      await vi.advanceTimersByTimeAsync(4000);
+      state.status?.('SUBSCRIBED');
     });
     expect(result.messages).toHaveLength(3);
   });
+});
+
+it('does not poll chat while idle and refreshes when the app returns to the foreground', async () => {
+  state.get.mockResolvedValue([message('a')]);
+  await act(async () => {
+    tree = create(<Probe room="one" />);
+  });
+  const reads = state.get.mock.calls.length;
+  await act(async () => {
+    await vi.advanceTimersByTimeAsync(60000);
+  });
+  expect(state.get).toHaveBeenCalledTimes(reads);
+  await act(async () => {
+    state.foreground?.('active');
+  });
+  expect(state.get.mock.calls.length).toBeGreaterThan(reads);
 });

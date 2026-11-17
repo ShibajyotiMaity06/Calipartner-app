@@ -1,3 +1,4 @@
+import { AppState } from 'react-native';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useFocusEffect } from 'expo-router';
 import type {
@@ -121,7 +122,9 @@ export function useFriends({ profileOnly = false }: { profileOnly?: boolean } = 
     useCallback(() => {
       void refresh();
       if (profileOnly) return;
-      const timer = setInterval(() => void refresh(), 5000);
+      const timer = setInterval(() => {
+        if (AppState.currentState === 'active') void refresh();
+      }, 60000);
       return () => clearInterval(timer);
     }, [refresh, profileOnly]),
   );

@@ -1,3 +1,4 @@
+import { invalidateReadCache } from './readCache';
 import { cachedRead } from './offlineReadService';
 import {
   validateWorkoutRoutine,
@@ -89,6 +90,8 @@ export async function buildWorkoutPlan(
     throw new Error(code);
   }
   if (data?.saved !== true) throw new Error('PLAN_UNAVAILABLE');
+  invalidateReadCache('workout-plan:', userId);
+  invalidateReadCache('weekly-plan:', userId);
   const plan = await getWorkoutPlan(userId);
   if (plan.id !== pending.id) {
     await pending.clear();

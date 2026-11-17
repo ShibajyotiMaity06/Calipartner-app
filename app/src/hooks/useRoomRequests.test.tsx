@@ -1,3 +1,4 @@
+vi.mock('react-native', () => ({ AppState: { currentState: 'active' } }));
 import React, { useEffect } from 'react';
 import { act, create, type ReactTestRenderer } from 'react-test-renderer';
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
@@ -99,7 +100,7 @@ it('refreshes outgoing requests resolved by the recipient and prevents duplicate
   await mount();
   api.inbox.mockResolvedValue({ incoming: [], outgoing: [] });
   await act(async () => {
-    await vi.advanceTimersByTimeAsync(5000);
+    await vi.advanceTimersByTimeAsync(60000);
   });
   expect(hooks[0]!.outgoing).toEqual([]);
   let resolve!: (value: unknown) => void;

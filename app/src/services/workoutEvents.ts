@@ -1,3 +1,4 @@
+import { invalidateReadCache } from './readCache';
 const listeners = new Set<() => void>();
 export const workoutEvents = {
   subscribe(listener: () => void) {
@@ -7,6 +8,10 @@ export const workoutEvents = {
     };
   },
   emitChange() {
+    invalidateReadCache('workout-plan:');
+    invalidateReadCache('weekly-plan:');
+    invalidateReadCache('progress:');
+
     for (const listener of listeners) {
       try {
         listener();

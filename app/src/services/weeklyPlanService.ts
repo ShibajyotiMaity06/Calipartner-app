@@ -1,3 +1,4 @@
+import { invalidateReadCache } from './readCache';
 import { cachedRead } from './offlineReadService';
 import type { MealSection, PlanExercise, PlanPreferences, WeeklyPlanView } from '@calipartner/core';
 import { getSupabase } from '@/lib/supabase';
@@ -75,15 +76,20 @@ export async function buildPersonalWeeklyPlan(
     throw new Error(body.code ?? 'PLAN_UNAVAILABLE');
   }
   if (data?.saved !== true) throw new Error('PLAN_UNAVAILABLE');
+  invalidateReadCache('weekly-plan:', userId);
   const plan = await getPersonalWeeklyPlan(userId);
   if (!plan || plan.id !== request.id) throw new Error('PLAN_UNAVAILABLE');
   if (singleDay) {
     await buildWorkoutPlan(userId, preferences, true);
     const refreshed = await getPersonalWeeklyPlan(userId);
     if (!refreshed || refreshed.id !== request.id) throw new Error('PLAN_UNAVAILABLE');
+    invalidateReadCache('weekly-plan:', userId);
+    invalidateReadCache('workout-plan:', userId);
     await request.clear();
     return refreshed;
   }
+  invalidateReadCache('weekly-plan:', userId);
+  invalidateReadCache('workout-plan:', userId);
   await request.clear();
   return plan;
 }
@@ -104,6 +110,8 @@ export async function editPreferredRoutine(
   });
   if (error) throw error;
   if (!data?.full_access) throw new Error('PURCHASED_PLUS_REQUIRED');
+  invalidateReadCache('weekly-plan:', userId);
+  invalidateReadCache('workout-plan:', userId);
   await request.clear();
   return data as WeeklyPlanView;
 }
@@ -133,6 +141,8 @@ export async function logPlannedMeal(
   });
   if (error) throw error;
   if (data !== request.id) throw new Error('MEAL_NOT_SAVED');
+  invalidateReadCache('weekly-plan:', userId);
+  invalidateReadCache('workout-plan:', userId);
   await request.clear();
 }
 
@@ -161,6 +171,8 @@ export async function swapPlannedMeal(
   });
   if (error) throw error;
   if (!data?.full_access || data.id !== plan.id) throw new Error('PLAN_CHANGED');
+  invalidateReadCache('weekly-plan:', userId);
+  invalidateReadCache('workout-plan:', userId);
   await request.clear();
   return data as WeeklyPlanView;
 }

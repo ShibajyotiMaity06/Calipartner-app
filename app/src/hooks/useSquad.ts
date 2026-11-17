@@ -1,3 +1,4 @@
+import { AppState } from 'react-native';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { getSupabase } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
@@ -55,7 +56,14 @@ function useSquadRead<T>(
     if (!roomId || !user?.id || !visible) return;
     void refresh();
     const unsubscribe = diaryEvents.subscribe(() => void refresh());
-    const timer = pollMs ? setInterval(() => void refresh(), pollMs) : null;
+    const timer = pollMs
+      ? setInterval(
+          () => {
+            if (AppState.currentState === 'active') void refresh();
+          },
+          Math.max(pollMs, 60000),
+        )
+      : null;
     return () => {
       invalidate();
       unsubscribe();

@@ -1,3 +1,7 @@
+import Constants from 'expo-constants';
+import { Platform } from 'react-native';
+import { useAuth } from '@/contexts/AuthContext';
+import { useSubscription } from '@/hooks/useSubscription';
 import { useTheme as useAppearance } from '@calipartner/ui/theme';
 import { NavigationIcon } from '@calipartner/ui';
 import { type as inputTypography } from '@calipartner/ui';
@@ -31,6 +35,10 @@ export function HelpCentreModal({
   const styles = createStyles(dark);
 
   const [query, setQuery] = useState('');
+  const [contactError, setContactError] = useState(false);
+  const { user, profile } = useAuth();
+  const { currentTier, hasActiveAccess, loading } = useSubscription();
+  const pro = !loading && hasActiveAccess && currentTier === 'pro';
 
   const faqs = [
     {
@@ -55,11 +63,28 @@ export function HelpCentreModal({
       )
     : faqs;
 
-  const handleContactSupport = () => {
+  const handleContactSupport = async () => {
     playClickSound();
-    Linking.openURL('mailto:support@calipartner.com?subject=CaliPartner%20Help%20Request').catch(
-      () => {},
-    );
+    setContactError(false);
+    const subject = pro
+      ? t('launch.supportSubject', { username: profile?.username ?? '' })
+      : t('launch.supportGeneral');
+    const body = t('launch.supportBody', {
+      id: user?.id ?? '',
+      plan: pro ? 'CaliPartner Pro (Active)' : currentTier,
+      version: Constants.expoConfig?.version ?? '',
+      os: Platform.OS,
+    });
+    try {
+      await Linking.openURL(
+        'mailto:shibajyoti.maity06@gmail.com?subject=' +
+          encodeURIComponent(subject) +
+          '&body=' +
+          encodeURIComponent(body),
+      );
+    } catch {
+      setContactError(true);
+    }
   };
 
   return (
@@ -88,6 +113,13 @@ export function HelpCentreModal({
               {t('me.helpCentre.subtitle')}
             </Text>
 
+            {pro && (
+              <Card elevation="s1" testID="priority-support-card">
+                <Text variant="heading">{t('launch.priorityTitle')}</Text>
+                <Text>{t('launch.priorityHint')}</Text>
+              </Card>
+            )}
+            {contactError && <Text accessibilityRole="alert">{t('launch.supportError')}</Text>}
             {/* Search input */}
             <TextInput
               value={query}
@@ -125,7 +157,7 @@ export function HelpCentreModal({
             <View style={styles.supportWrap}>
               <Button
                 variant="secondary"
-                label={t('me.helpCentre.contactSupportBtn')}
+                label={pro ? t('launch.priorityTitle') : t('me.helpCentre.contactSupportBtn')}
                 onPress={handleContactSupport}
                 testID="btn-contact-support"
                 style={styles.supportBtn}

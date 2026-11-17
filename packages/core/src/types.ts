@@ -387,6 +387,9 @@ export interface UserFoodStats {
 }
 
 export interface SavedMealItem {
+  sugar?: number;
+  sodium_mg?: number;
+  nutrition_details?: NutritionDetails | null;
   food_id: string;
   food_name: string;
   brand_name?: string | null;

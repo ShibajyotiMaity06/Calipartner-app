@@ -1,3 +1,4 @@
+import { invalidateReadCache } from '@/services/readCache';
 import React, { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
 import { AppState, Platform } from 'react-native';
 import { isAuthRetryableFetchError, type Session, type User } from '@supabase/supabase-js';
@@ -112,6 +113,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     // Auth callbacks must finish synchronously. Database requests here can deadlock refresh.
     const { data: authListener } = supabase.auth.onAuthStateChange((_event, newSession) => {
+      if (_event !== 'TOKEN_REFRESHED') invalidateReadCache();
       if (_event === 'INITIAL_SESSION') return; // restoreSession handles expired offline sessions.
       applySession(newSession);
     });

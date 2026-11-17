@@ -52,7 +52,7 @@ describe('Phase 10 — View Layer UI Tests (Paywall, Lifecycle & Locked Cards)',
       expect(paywallCopy.featureChat).toContain('Room chat');
       expect(paywallCopy.featureProgress).toContain('Room progress graphs');
       expect(paywallCopy.featureCoach).toMatch(/AI coach/i);
-      expect(paywallCopy.featureFinder).toContain('Partner Finder');
+      expect(paywallCopy.featureFinder).toContain('Friend discovery');
 
       // Free guarantee
       expect(paywallCopy.featureFree).toContain('100% free');
@@ -153,7 +153,7 @@ describe('Phase 10 — View Layer UI Tests (Paywall, Lifecycle & Locked Cards)',
     it('validates Partner Finder locked card points and transparent tone', () => {
       const finderCopy = en.rooms.lockedPreview.partnerFinder;
 
-      expect(finderCopy.title).toBe('Workout Partner Finder');
+      expect(finderCopy.title).toBe('Friend discovery');
       expect(finderCopy.badge).toBe('PLAN HOLDER');
       expect(finderCopy.feature2).toContain('Free to opt in and be suggested');
       expect(finderCopy.feature3).toContain('photos and usernames stay private until both accept');

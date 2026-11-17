@@ -1,3 +1,10 @@
+vi.mock('expo-location', () => ({
+  Accuracy: { High: 4 },
+  requestForegroundPermissionsAsync: vi.fn(),
+  getCurrentPositionAsync: vi.fn(),
+  watchPositionAsync: vi.fn(),
+}));
+vi.mock('./RouteMap', () => ({ RouteMap: 'RouteMap' }));
 import React from 'react';
 import { act, create, type ReactTestRenderer } from 'react-test-renderer';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';

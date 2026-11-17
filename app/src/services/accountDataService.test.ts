@@ -1,3 +1,5 @@
+import { logMyMeal } from './myMealsService';
+import { savedMealItems, savedMealTotals } from '@calipartner/core';
 import { registerAccountWriteCheck } from './accountDataGate';
 import { DEV_100_FOOD_SEED, type Food } from '@calipartner/core';
 import { savePhotoCandidatesToDiary } from './aiFoodPhotoService';
@@ -253,4 +255,39 @@ describe('online saves without a delivery queue', () => {
     await loadAccountTable(db, 'water_logs', 'owner');
     expect(sql.prepare('SELECT * FROM local_water_logs').all()).toEqual([]);
   });
+});
+
+it('logs a saved combination atomically after acknowledgement and preserves retry IDs', async () => {
+  const { db, sql } = database();
+  const items = savedMealItems([
+    { food: DEV_100_FOOD_SEED[0] as Food, quantity: 100, unit: 'g' },
+    { food: DEV_100_FOOD_SEED[1] as Food, quantity: 50, unit: 'g' },
+  ]);
+  const meal = {
+    id: 'meal',
+    user_id: 'owner',
+    name: 'Breakfast',
+    items,
+    ...savedMealTotals(items),
+    created_at: '2026-11-16T00:00:00Z',
+    updated_at: '2026-11-16T00:00:00Z',
+    deleted_at: null,
+  };
+  const ids = ['11111111-1111-4111-8111-111111111111', '22222222-2222-4222-8222-222222222222'];
+  server.error = new Error('NETWORK_UNAVAILABLE');
+  await expect(logMyMeal(db, 'owner', meal, 'breakfast', '2026-11-16', ids)).rejects.toThrow(
+    'NETWORK_UNAVAILABLE',
+  );
+  expect(sql.prepare('select * from local_food_entries').all()).toEqual([]);
+  const first = server.rpc.mock.calls[0]![1];
+  server.error = null;
+  await logMyMeal(db, 'owner', meal, 'breakfast', '2026-11-16', ids);
+  expect(server.rpc).toHaveBeenCalledTimes(2);
+  const rows = sql.prepare('select id,meal_section from local_food_entries order by id').all();
+  expect(rows).toEqual(ids.map((id) => ({ id, meal_section: 'breakfast' })));
+  expect(JSON.stringify(first)).toContain(ids[0]!);
+  expect(JSON.stringify(server.rpc.mock.calls[1]![1])).toContain(ids[0]!);
+  await expect(logMyMeal(db, 'other', meal, 'lunch', '2026-11-16', ids)).rejects.toThrow(
+    'INVALID_MEAL',
+  );
 });

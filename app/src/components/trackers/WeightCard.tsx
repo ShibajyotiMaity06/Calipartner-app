@@ -9,7 +9,6 @@ import { useTargets } from '@/hooks/useTargets';
 import { useWeight } from '@/hooks/useWeight';
 import { t } from '@/i18n';
 import { LoadingState } from '@/components/LoadingState';
-import { AddMeasurementModal } from './AddMeasurementModal';
 import { ProgressPhotosModal } from './ProgressPhotosModal';
 import { TargetWeightEditorModal } from './TargetWeightEditorModal';
 import { WeightEntryModal } from './WeightEntryModal';
@@ -44,7 +43,6 @@ export function WeightCard({ selectedDate, testID = 'weight-card' }: WeightCardP
   const [entryModalVisible, setEntryModalVisible] = useState(false);
   const [weeklyHistory, setWeeklyHistory] = useState(false);
   const [historyModalVisible, setHistoryModalVisible] = useState(false);
-  const [measurementModalVisible, setMeasurementModalVisible] = useState(false);
   const [photosModalVisible, setPhotosModalVisible] = useState(false);
   const [targetEditorVisible, setTargetEditorVisible] = useState(false);
   const [tableModalVisible, setTableModalVisible] = useState(false);
@@ -310,23 +308,6 @@ export function WeightCard({ selectedDate, testID = 'weight-card' }: WeightCardP
 
           {/* Three Action Rows: Add Measurement, Progress Photos, Target Weight */}
           <View style={styles.actionRowsCard}>
-            {/* Row 1: Add Measurement */}
-            <Pressable
-              testID="btn-open-add-measurement"
-              style={styles.actionRowItem}
-              onPress={() => setMeasurementModalVisible(true)}
-              accessibilityRole="button"
-              accessibilityLabel={t('trackers.weight.addMeasurement')}
-            >
-              <View style={styles.actionRowLeft}>
-                <Ionicons name="ribbon-outline" size={18} color={dark.teal} />
-                <Text style={styles.actionRowTitle}>{t('trackers.weight.addMeasurement')}</Text>
-              </View>
-              <Ionicons name="chevron-forward" size={16} color={dark.textLo} />
-            </Pressable>
-
-            <View style={styles.actionRowDivider} />
-
             {/* Row 2: Progress Photos */}
             <Pressable
               testID="btn-open-progress-photos"
@@ -416,14 +397,6 @@ export function WeightCard({ selectedDate, testID = 'weight-card' }: WeightCardP
           onClose={() => setHistoryModalVisible(false)}
           onEditEntry={handleOpenEdit}
           onDeleteEntry={deleteWeight}
-        />
-      )}
-
-      {/* E07 Add Measurement Modal */}
-      {measurementModalVisible && (
-        <AddMeasurementModal
-          visible={measurementModalVisible}
-          onClose={() => setMeasurementModalVisible(false)}
         />
       )}
 

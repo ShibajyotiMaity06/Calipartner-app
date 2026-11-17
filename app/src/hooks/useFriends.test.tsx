@@ -1,3 +1,4 @@
+vi.mock('react-native', () => ({ AppState: { currentState: 'active' } }));
 import React, { useEffect } from 'react';
 import { act, create, type ReactTestRenderer } from 'react-test-renderer';
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
@@ -98,7 +99,7 @@ it('refreshes outgoing friend requests resolved by the recipient', async () => {
     cached: false,
   });
   await act(async () => {
-    await vi.advanceTimersByTimeAsync(5000);
+    await vi.advanceTimersByTimeAsync(60000);
   });
   expect(hooks[0]!.inbox?.outgoing).toEqual([]);
   expect(hooks[0]!.inbox?.friends).toHaveLength(1);

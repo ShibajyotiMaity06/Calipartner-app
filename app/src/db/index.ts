@@ -690,6 +690,11 @@ export async function clearTrackingDataForReset(customDb?: SQLite.SQLiteDatabase
  */
 export async function clearAllLocalData(): Promise<void> {
   const db = await getDb();
+  const { removePhoto } = await import('@/services/progressPhotoFiles');
+  const photos = await db.getAllAsync<{ user_id: string; photo_uri: string }>(
+    'SELECT * FROM local_progress_photos',
+  );
+  for (const photo of photos) await removePhoto(photo.user_id, photo.photo_uri);
   const tables = [
     'retired_local_writes',
     'retired_social_writes',
@@ -698,6 +703,8 @@ export async function clearAllLocalData(): Promise<void> {
     'local_goal_profiles',
     'local_onboarding_drafts',
     'local_social_cache',
+    'local_progress_photos',
+    'local_saved_meals',
     'local_challenge_cache',
     'local_health_screening',
     'local_foods',

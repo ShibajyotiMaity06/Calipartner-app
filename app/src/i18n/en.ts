@@ -1,3 +1,4 @@
+import { launch } from './launch';
 import { avatar } from './avatar';
 import { fastingRefresh } from './fastingRefresh';
 import { workoutFlow } from './workoutFlow';
@@ -11,6 +12,7 @@ import { homeRefresh } from './homeRefresh';
 import { squadDesign } from './squadDesign';
 import { repairMessages } from './repairs';
 export const en = {
+  launch,
   avatar,
   aiAllowance: {
     processing: 'Your AI request is still being prepared. Wait a moment and try again.',
@@ -509,7 +511,7 @@ export const en = {
     playVideo: 'Play shared video',
 
     finderPaid:
-      'Partner Finder is included with Plus. Create a room for two with someone you know for free.',
+      'Discover friends and request by username. Create a room for two with someone you know for free.',
     roomChoices: 'Two people free. Up to five with a Plus host, or 20 with Pro.',
     roomPaidFeatures: 'Text and workouts with Plus. Photos and videos with Pro.',
     plusRoomFeature: 'Host 3 rooms, up to 5 people each. Friends join free.',
@@ -622,7 +624,7 @@ export const en = {
     plusBadge: '7 days to try Plus',
     plusBody: 'Make showing up a shared habit.',
     plusFeatureOne: 'Three rooms for up to five people each, with chat and shared progress',
-    plusFeatureTwo: 'Partner Finder to help you meet someone with a similar goal',
+    plusFeatureTwo: 'Friend discovery and username requests',
     plusFeatureThree: 'Fasting and workout tools for your routine',
     pro: 'CaliPartner Pro',
     proBadge: 'No free trial',
@@ -1494,14 +1496,14 @@ export const en = {
         title: 'Personal AI Coach',
         badge: 'PLAN HOLDER',
         subtitle:
-          'Get 1-on-1 guidance tailored to your exact logged calories, macros, workouts and progress. Included with the Pro Plan (10 messages a day).',
+          'Get 1-on-1 guidance tailored to your exact logged calories, macros, workouts and progress. Included with the Pro plan.',
         feature1: 'Answers built directly from your personal logs and targets',
         feature2: 'Recipe suggestions and macro adjustments from our library',
         feature3: 'Private and secure — room members never see coach chat',
         unlockBtn: 'Unlock with Room Plan',
       },
       partnerFinder: {
-        title: 'Workout Partner Finder',
+        title: 'Friend discovery',
         badge: 'PLAN HOLDER',
         subtitle:
           'Connect with opted-in fitness partners who share your goals, training style, and schedule. Included with CaliPartner Plus and Pro.',
@@ -1538,13 +1540,13 @@ export const en = {
       sizePlus: 'Plus',
       sizePro: 'Pro',
       sizeBasicDesc: 'Free • Personal tracking forever',
-      sizePlusDesc: 'Plus • Rooms, Partner Finder, Fasting & Tools',
+      sizePlusDesc: 'Plus • Rooms, friend discovery, fasting and tools',
       sizeProDesc: 'Pro • AI Coach, Photo Scans & 3 Rooms',
       sizeBasicTitle: 'Free',
       sizeBasicSub: 'Personal logging forever',
       sizeBasicBadge: 'Free',
       sizePlusTitle: 'Plus',
-      sizePlusSub: 'Rooms, Partner Finder & Fasting',
+      sizePlusSub: 'Rooms, friend discovery and fasting',
       sizePlusBadge: '7-DAY TRIAL',
       sizeProTitle: 'Pro',
       sizeProSub: 'AI Coach & Photo Scans',
@@ -1553,7 +1555,7 @@ export const en = {
       tierPlus: 'Plus',
       tierPro: 'Pro',
       tierBasicDesc: 'Personal diary, calories, steps & GPS runs free forever',
-      tierPlusDesc: '3 rooms of up to 5 people, Partner Finder, fasting and challenges',
+      tierPlusDesc: '3 rooms of up to 5 people, friend discovery, fasting and pair challenges',
       tierProDesc: '5 rooms of up to 20 people, AI coach and photo scans',
       durationMonthly: 'Monthly',
       durationQuarterly: '3 Months',
@@ -1578,11 +1580,11 @@ export const en = {
       featureChat: 'Room chat with photo sharing and reaction support',
       featureProgress: 'Room progress graphs, streaks and consistency score',
       featureCoach: 'Personal AI coach (Pro only)',
-      featureFinder: 'Partner Finder matching and messaging (Plus and Pro)',
+      featureFinder: 'Friend discovery and username requests',
       featurePhotoScan: 'AI food photo logging (Pro only)',
       whatYouGetHeader: 'What you get:',
       whatYouGetRow1: 'Room, chat and progress for everyone',
-      whatYouGetRow2: 'AI coach and Partner Finder for you',
+      whatYouGetRow2: 'AI coach and friend discovery for you',
       whatYouGetRow3: 'Bigger photo allowance',
       freeHeader: 'What stays free forever:',
       freeSentence: 'Logging, your diary and your streak stay free.',

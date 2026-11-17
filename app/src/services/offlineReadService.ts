@@ -1,3 +1,4 @@
+import { memoryRead, invalidateReadCache } from './readCache';
 import { isDeviceOffline } from './networkService';
 import { AUTH_STORAGE_KEY, sessionStorage } from '@/lib/supabase';
 import { readOfflineSession } from './sessionPersistence';
@@ -25,42 +26,49 @@ export async function cachedRead<T>(
     if (row) return JSON.parse(row.payload) as T;
     throw new Error('NETWORK_UNAVAILABLE');
   }
-  try {
-    const data = await read();
-    const current = (await client.auth.getSession()).data.session?.user.id;
-    if (current !== owner) throw new Error('ACCOUNT_CHANGED');
-    if (key === 'rooms' && Array.isArray(data)) {
-      const allowed = new Set(
-        data.filter((room) => !['locked', 'archived'].includes(room.state)).map((room) => room.id),
-      );
-      const entries = await db.getAllAsync<{ cache_key: string }>(
-        'SELECT * FROM local_social_cache WHERE owner_id = ?',
-        [owner],
-      );
-      for (const entry of entries) {
-        const [kind, roomId] = entry.cache_key.split(':');
-        if (
-          ['squad', 'squad-details', 'room-snapshot', 'chat'].includes(kind ?? '') &&
-          !allowed.has(roomId)
-        )
-          await db.runAsync('DELETE FROM local_social_cache WHERE owner_id = ? AND cache_key = ?', [
-            owner,
-            entry.cache_key,
-          ]);
+  return memoryRead(owner, key, async () => {
+    try {
+      const data = await read();
+      const current = (await client.auth.getSession()).data.session?.user.id;
+      if (current !== owner) throw new Error('ACCOUNT_CHANGED');
+      if (key === 'rooms' && Array.isArray(data)) {
+        const allowed = new Set(
+          data
+            .filter((room) => !['locked', 'archived'].includes(room.state))
+            .map((room) => room.id),
+        );
+        const entries = await db.getAllAsync<{ cache_key: string }>(
+          'SELECT * FROM local_social_cache WHERE owner_id = ?',
+          [owner],
+        );
+        for (const entry of entries) {
+          const [kind, roomId] = entry.cache_key.split(':');
+          if (
+            ['squad', 'squad-details', 'room-snapshot', 'chat'].includes(kind ?? '') &&
+            !allowed.has(roomId)
+          ) {
+            invalidateReadCache(entry.cache_key, owner);
+            await db.runAsync(
+              'DELETE FROM local_social_cache WHERE owner_id = ? AND cache_key = ?',
+              [owner, entry.cache_key],
+            );
+          }
+        }
       }
+      await db
+        .runAsync(
+          'INSERT INTO local_social_cache (id,owner_id,cache_key,payload,updated_at) VALUES (?,?,?,?,?) ON CONFLICT(id) DO UPDATE SET payload=excluded.payload,updated_at=excluded.updated_at',
+          [owner + ':' + key, owner, key, JSON.stringify(data), new Date().toISOString()],
+        )
+        .catch(() => undefined);
+      return data;
+    } catch (error) {
+      // A permission/entitlement response is authoritative. Never serve an older projection for it.
+      if (!(await isDeviceOffline())) {
+        invalidateReadCache('', owner);
+        await db.runAsync('DELETE FROM local_social_cache WHERE owner_id = ?', [owner]);
+      }
+      throw error;
     }
-    await db
-      .runAsync(
-        'INSERT INTO local_social_cache (id,owner_id,cache_key,payload,updated_at) VALUES (?,?,?,?,?) ON CONFLICT(id) DO UPDATE SET payload=excluded.payload,updated_at=excluded.updated_at',
-        [owner + ':' + key, owner, key, JSON.stringify(data), new Date().toISOString()],
-      )
-      .catch(() => undefined);
-    return data;
-  } catch (error) {
-    // A permission/entitlement response is authoritative. Never serve an older projection for it.
-    if (!(await isDeviceOffline())) {
-      await db.runAsync('DELETE FROM local_social_cache WHERE owner_id = ?', [owner]);
-    }
-    throw error;
-  }
+  });
 }

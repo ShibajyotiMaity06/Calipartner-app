@@ -1,3 +1,5 @@
+import { MyMealsView } from './MyMealsView';
+import { DescribeMealModal } from './DescribeMealModal';
 import type { NutrientCorrection } from '@calipartner/core';
 import { type as inputTypography } from '@calipartner/ui';
 import { PaywallModal } from '@/components/rooms/PaywallModal';
@@ -49,7 +51,7 @@ export interface FoodLogModalProps {
   initialTab?: TabType;
 }
 
-type TabType = 'search' | 'scan' | 'photo' | 'recipes' | 'favorites';
+type TabType = 'search' | 'scan' | 'photo' | 'recipes' | 'favorites' | 'myMeals';
 
 export function FoodLogModal({
   visible,
@@ -62,6 +64,7 @@ export function FoodLogModal({
   const { colors } = useTheme();
   const { user } = useAuth();
   const library = useFoodLibrary();
+  const [showDescribe, setShowDescribe] = useState(false);
 
   const [showPhotoPlans, setShowPhotoPlans] = useState(false);
   const [selectedFoods, setSelectedFoods] = useState<
@@ -384,7 +387,22 @@ export function FoodLogModal({
               {t('fixNovember.saveFailed')}
             </Text>
           )}
-          {/* 5 Tab Navigation Bar */}
+          <Button
+            variant="secondary"
+            label={t('homeRefresh.describe')}
+            testID="food-describe-meal"
+            onPress={() => setShowDescribe(true)}
+          />
+          {showDescribe && (
+            <DescribeMealModal
+              visible
+              section={defaultSection}
+              localDate={localDate}
+              onClose={() => setShowDescribe(false)}
+              onLogged={onLogged}
+            />
+          )}
+          {/* Food methods */}
           <View
             accessibilityRole="tablist"
             testID="food-log-methods"
@@ -395,6 +413,7 @@ export function FoodLogModal({
                 ['search', 'search-outline'],
                 ['recipes', 'book-outline'],
                 ['favorites', 'heart-outline'],
+                ['myMeals', 'restaurant-outline'],
                 ['photo', 'camera-outline'],
                 ['scan', 'barcode-outline'],
               ] as const
@@ -406,7 +425,11 @@ export function FoodLogModal({
                   testID={`tab-log-${tab}`}
                   accessibilityRole={tab === 'scan' ? 'button' : 'tab'}
                   accessibilityLabel={
-                    tab === 'favorites' ? t('foodPolish.favorites') : t(`foodLog.tabs.${tab}`)
+                    tab === 'myMeals'
+                      ? t('launch.meals')
+                      : tab === 'favorites'
+                        ? t('foodPolish.favorites')
+                        : t(`foodLog.tabs.${tab}`)
                   }
                   accessibilityState={{ selected: isActive }}
                   onPress={() => (tab === 'scan' ? setShowBarcodeScanner(true) : setActiveTab(tab))}
@@ -438,7 +461,11 @@ export function FoodLogModal({
                       color: isActive ? colors.accent : colors.textMuted,
                     }}
                   >
-                    {tab === 'favorites' ? t('foodPolish.favorites') : t(`foodLog.tabs.${tab}`)}
+                    {tab === 'myMeals'
+                      ? t('launch.meals')
+                      : tab === 'favorites'
+                        ? t('foodPolish.favorites')
+                        : t(`foodLog.tabs.${tab}`)}
                   </Text>
                 </Pressable>
               );
@@ -455,6 +482,14 @@ export function FoodLogModal({
                 testID="retry-food-library"
               />
             </View>
+          )}
+          {activeTab === 'myMeals' && (
+            <MyMealsView
+              selection={selection}
+              section={defaultSection}
+              localDate={localDate}
+              onLogged={onLogged}
+            />
           )}
           {activeTab === 'favorites' && (
             <FoodFavoritesView

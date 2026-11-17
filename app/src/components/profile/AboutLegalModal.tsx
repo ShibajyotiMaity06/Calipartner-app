@@ -61,7 +61,7 @@ export function AboutLegalModal({
                 {t('me.aboutLegal.versionValue')}
               </Text>
               <Text variant="micro" color={dark.textLo} style={styles.versionSub}>
-                Built with offline-first SQLite and Supabase Edge Architecture
+                {t('launch.onlineSaves')}
               </Text>
             </Card>
 

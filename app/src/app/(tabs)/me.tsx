@@ -1,3 +1,4 @@
+import { requestStoreReview } from '@/services/storeReviewService';
 import { HeaderActions } from '@/components/HeaderActions';
 import { useTheme as useAppearance } from '@calipartner/ui/theme';
 import React, { useState } from 'react';
@@ -20,7 +21,6 @@ import {
   AvatarPickerModal,
   DailyGoalsModal,
   DiscoverabilityModal,
-  ExportDataModal,
   GoalsAndBodyModal,
   HealthSyncModal,
   HelpCentreModal,
@@ -76,7 +76,6 @@ export default function MeScreen() {
   const [showDiscoverability, setShowDiscoverability] = useState(false);
 
   const [showHealthSync, setShowHealthSync] = useState(false);
-  const [showExportData, setShowExportData] = useState(false);
   const [showHelpCentre, setShowHelpCentre] = useState(false);
   const [showReportFeedback, setShowReportFeedback] = useState(false);
   const [showAboutLegal, setShowAboutLegal] = useState(false);
@@ -85,11 +84,13 @@ export default function MeScreen() {
   const friends = useFriends();
   const pendingRequestsCount = incoming.length + (friends.inbox?.incoming.length ?? 0);
 
-  const handleRateApp = () => {
+  const handleRateApp = async () => {
     playClickSound();
-    Alert.alert(t('compactProfile.rate'), t('compactProfile.rateMessage'), [
-      { text: t('common.cancel'), style: 'cancel' },
-    ]);
+    try {
+      if (!(await requestStoreReview())) setShowReportFeedback(true);
+    } catch {
+      Alert.alert(t('compactProfile.rate'), t('launch.rateError'));
+    }
   };
 
   const performSignOut = async () => {
@@ -305,18 +306,6 @@ export default function MeScreen() {
             testID="section-privacy"
           >
             <ProfileRow
-              title={t('compactProfile.export')}
-              icon="download-outline"
-              onPress={() => setShowExportData(true)}
-              testID="row-export-data"
-            />
-            <ProfileRow
-              title={t('compactProfile.privacyTitle')}
-              icon="lock-closed-outline"
-              onPress={() => setShowPerRoomVisibility(true)}
-              testID="row-privacy"
-            />
-            <ProfileRow
               title={t('me.perRoomVisibility.title')}
               icon="eye-outline"
               onPress={() => setShowPerRoomVisibility(true)}
@@ -482,8 +471,6 @@ export default function MeScreen() {
         />
 
         <HealthSyncModal visible={showHealthSync} onClose={() => setShowHealthSync(false)} />
-
-        <ExportDataModal visible={showExportData} onClose={() => setShowExportData(false)} />
 
         <HelpCentreModal visible={showHelpCentre} onClose={() => setShowHelpCentre(false)} />
 

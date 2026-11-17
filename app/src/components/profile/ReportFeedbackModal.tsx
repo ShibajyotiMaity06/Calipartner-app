@@ -3,6 +3,7 @@ import { NavigationIcon } from '@calipartner/ui';
 import { type as inputTypography } from '@calipartner/ui';
 import React, { useState } from 'react';
 import {
+  Linking,
   Modal,
   SafeAreaView,
   ScrollView,
@@ -11,9 +12,9 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import { Button, Card, radius, SegmentedControl, space, SwitchRow, Text } from '@calipartner/ui';
+import { Button, Card, radius, SegmentedControl, space, Text } from '@calipartner/ui';
 import { t } from '@/i18n';
-import { playClickSound, playSuccessSound } from '@/lib/sound';
+import { playClickSound } from '@/lib/sound';
 
 export interface ReportFeedbackModalProps {
   visible: boolean;
@@ -33,24 +34,28 @@ export function ReportFeedbackModal({
 
   const [type, setType] = useState<'bug' | 'food' | 'feedback'>(initialType);
   const [message, setMessage] = useState('');
-  const [includeLogs, setIncludeLogs] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [sendError, setSendError] = useState(false);
 
-  const handleSubmit = () => {
-    if (!message.trim()) return;
+  const handleSubmit = async () => {
+    if (!message.trim() || submitting) return;
     playClickSound();
     setSubmitting(true);
-    setTimeout(() => {
-      setSubmitting(false);
+    setSendError(false);
+    try {
+      await Linking.openURL(
+        'mailto:shibajyoti.maity06@gmail.com?subject=' +
+          encodeURIComponent('CaliPartner ' + type) +
+          '&body=' +
+          encodeURIComponent(message),
+      );
       setSubmitted(true);
-      playSuccessSound();
-      setTimeout(() => {
-        setSubmitted(false);
-        setMessage('');
-        onClose();
-      }, 1000);
-    }, 600);
+    } catch {
+      setSendError(true);
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -75,6 +80,7 @@ export function ReportFeedbackModal({
           </View>
 
           <ScrollView contentContainerStyle={styles.content}>
+            {sendError && <Text accessibilityRole="alert">{t('launch.supportError')}</Text>}
             <Text variant="bodyS" color={dark.textMid} style={styles.introSubtitle}>
               {t('me.reportFeedback.subtitle')}
             </Text>
@@ -111,21 +117,10 @@ export function ReportFeedbackModal({
               />
             </Card>
 
-            {/* Diagnostic Logs Switch */}
-            <Card elevation="s1" style={styles.sectionCard}>
-              <SwitchRow
-                title={t('me.reportFeedback.includeLogsLabel')}
-                consequence={t('me.reportFeedback.includeLogsDesc')}
-                value={includeLogs}
-                onValueChange={setIncludeLogs}
-                testID="switch-include-logs"
-              />
-            </Card>
-
             {submitted && (
               <Card elevation="s2" style={styles.successCard}>
                 <Text variant="bodyS" color={dark.mint}>
-                  {t('me.reportFeedback.successMessage')}
+                  {t('launch.emailOpened')}
                 </Text>
               </Card>
             )}
@@ -134,9 +129,7 @@ export function ReportFeedbackModal({
           <View style={styles.bottomBar}>
             <Button
               variant="primary"
-              label={
-                submitted ? 'Sent' : submitting ? 'Submitting…' : t('me.reportFeedback.submitBtn')
-              }
+              label={submitting ? t('launch.loading') : t('launch.openFeedback')}
               onPress={handleSubmit}
               disabled={submitting || !message.trim()}
               testID="btn-submit-feedback"

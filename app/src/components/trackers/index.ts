@@ -9,7 +9,6 @@ export * from './FixStepCountingModal';
 export * from './WeightCard';
 export * from './WeightEntryModal';
 export * from './WeightHistoryModal';
-export * from './AddMeasurementModal';
 export * from './ProgressPhotosModal';
 export * from './TargetWeightEditorModal';
 export * from './WaterAlarmModal';

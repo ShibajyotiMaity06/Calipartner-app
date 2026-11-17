@@ -1,3 +1,4 @@
+vi.mock('./MyMealsView', () => ({ MyMealsView: 'MyMealsView' }));
 vi.mock('./DescribeMealModal', () => ({ DescribeMealModal: 'DescribeMeal' }));
 import React from 'react';
 import { act, create, type ReactTestRenderer } from 'react-test-renderer';

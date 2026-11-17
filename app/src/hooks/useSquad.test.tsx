@@ -1,3 +1,5 @@
+import { AppState } from 'react-native';
+vi.mock('react-native', () => ({ AppState: { currentState: 'active' } }));
 import React from 'react';
 import { act, create, type ReactTestRenderer } from 'react-test-renderer';
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
@@ -57,13 +59,13 @@ it('refreshes unread counts only while visible and clears them across room/accou
   expect(unread!.data).toBe(140);
   state.unread.mockResolvedValue(0);
   await act(async () => {
-    vi.advanceTimersByTime(10000);
+    vi.advanceTimersByTime(60000);
   });
   expect(unread!.data).toBe(0);
   await act(async () => tree.update(<UnreadProbe visible={false} />));
   expect(unread!.data).toBeNull();
   await act(async () => {
-    vi.advanceTimersByTime(30000);
+    vi.advanceTimersByTime(120000);
   });
   expect(state.unread).toHaveBeenCalledTimes(2);
   expect(state.removeChannel).toHaveBeenCalledOnce();
@@ -83,7 +85,7 @@ it('refreshes visible squad progress for other members while preserving idle con
   expect(state.read).toHaveBeenCalledTimes(1);
   expect(current.data?.room_id).toBe('one');
   await act(async () => {
-    vi.advanceTimersByTime(30000);
+    vi.advanceTimersByTime(120000);
   });
   expect(state.read).toHaveBeenCalledTimes(3);
   await act(async () => tree.update(<Probe visible={false} />));
@@ -153,7 +155,27 @@ it('does not request premium meal or workout payloads while the viewer is Free',
   expect(state.details).toHaveBeenCalledWith('one', 'peer');
   await act(async () => tree.update(<DetailsProbe paid={false} />));
   await act(async () => {
-    vi.advanceTimersByTime(30000);
+    vi.advanceTimersByTime(120000);
   });
   expect(state.details).toHaveBeenCalledTimes(1);
+});
+
+it('does not poll in the background or at the former 15-second interval', async () => {
+  await act(async () => {
+    tree = create(<Probe />);
+  });
+  await act(async () => {
+    vi.advanceTimersByTime(15000);
+  });
+  expect(state.read).toHaveBeenCalledTimes(1);
+  AppState.currentState = 'background';
+  await act(async () => {
+    vi.advanceTimersByTime(120000);
+  });
+  expect(state.read).toHaveBeenCalledTimes(1);
+  AppState.currentState = 'active';
+  await act(async () => {
+    vi.advanceTimersByTime(60000);
+  });
+  expect(state.read).toHaveBeenCalledTimes(2);
 });

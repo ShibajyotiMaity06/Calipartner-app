@@ -1,3 +1,4 @@
+import { invalidateReadCache } from './readCache';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 const state = vi.hoisted(() => ({ offline: false, owner: 'a', db: undefined as unknown }));
 vi.mock('./networkService', () => ({ isDeviceOffline: async () => state.offline }));
@@ -18,6 +19,7 @@ const client = {
   auth: { getSession: async () => ({ data: { session: { user: { id: state.owner } } } }) },
 } as unknown as SupabaseClient;
 beforeEach(() => {
+  invalidateReadCache();
   state.offline = false;
   state.owner = 'a';
   sqlite = new DatabaseSync(':memory:');
@@ -51,6 +53,7 @@ describe('previously authorized offline reads', () => {
   });
   it('clears cached access after an online authorization failure instead of falling back', async () => {
     await cachedRead(client, 'squad:one', async () => ({ members: ['former member'] }));
+    invalidateReadCache('squad:one');
     await expect(
       cachedRead(client, 'squad:one', async () => {
         throw new Error('NOT_A_ROOM_MEMBER');

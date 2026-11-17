@@ -1,155 +1,62 @@
-# CaliPartner — Plans, Features and Pricing Specification
+# CaliPartner ? launch plans and availability
 
-> Latest owner instruction, 27 October 2026: all AI scans, AI coach/chat and other AI features require a purchased, active Pro plan. No Free starter scans, no AI taste allowance, no AI trial for any tier. Only Plus monthly and annual have a seven-day free trial. Restore validated live Dodo configuration and live webhooks. This supersedes all earlier AI starter-scan references and authorizes the necessary app/core/backend/configuration repairs.
+Updated 16 November 2026. This replaces the stale feature matrix. The purchase sheet displays acknowledged store/web prices; the server entitlement remains the only authority for access.
 
-**October 2026 · Official Tier and Pricing Reference**  
-*Supersedes earlier pricing tables in `CaliPartner_Pricing_Plan.md` and aligns with latest room revisions (`ROOMS_V3.md`, `FRIENDS_AND_ROOM_LIMITS.md`).*
+## Prices and trial
 
----
+| Plan | India monthly / annual | International monthly / annual |
+| --- | --- | --- |
+| Free | Free | Free |
+| Plus | ?249 / ?1,499 | $4.99 / $29.99 |
+| Pro | ?499 / ?2,499 | $9.99 / $49.99 |
 
-## 1. Pricing and Trial Overview
+The eligible Plus trial lasts seven days, needs no card and never starts an automatic charge. Pro has no trial. Native billing uses the stores through RevenueCat; new Indian web subscriptions use Razorpay and other supported web regions use Dodo. Checkout prices must be loaded before purchase.
 
-| Metric | Free (Basic) | Plus Plan | Pro Plan |
-| :--- | :--- | :--- | :--- |
-| **Positioning** | Core daily tracking and free 1-on-1 accountability | The habit and community powerhouse | The elite AI-coached nutrition and body transformation tier |
-| **India Monthly** | ₹0 | **₹249** / month | **₹499** / month |
-| **India Annual** | ₹0 | **₹1,499** / year | **₹2,499** / year |
-| *India Annual Equivalent* | — | *₹125 / month* | *₹208 / month* |
-| *India Annual Savings* | — | **~50% savings** (₹1,489 saved) | **~58% savings** (₹3,489 saved) |
-| **Global (US/Intl) Monthly** | $0 | **$4.99** / month | **$9.99** / month |
-| **Global (US/Intl) Annual** | $0 | **$29.99** / year | **$49.99** / year |
-| *Global Annual Equivalent* | — | *$2.50 / month* | *$4.17 / month* |
-| *Global Annual Savings* | — | **~50% savings** ($29.89 saved) | **~58% savings** ($69.89 saved) |
-| **Free Trial** | Free forever | **7-Day Free Trial** (both Monthly and Annual) | **No Free Trial** (0 days — immediate billing) |
+## Available features
 
-> [!IMPORTANT]
-> **Free Trial Rule:** The 7-day free trial is available **exclusively on CaliPartner Plus**. Pro does not have a trial due to underlying vision model and LLM compute costs. On web checkouts (Dodo Payments) and store checkouts (RevenueCat / Apple / Google), the 7-day trial must be configured on the Plus products, billing ₹0 / $0 upfront.
+| Feature | Availability | Evidence / limits of the promise |
+| --- | --- | --- |
+| Food search, custom foods, barcode and diary | All plans | Signed-in saves require acknowledged online delivery. Four current meal sections; older Extra entries remain. |
+| My meals | All plans | Save selected combinations, load private saved meals, select a meal slot and log the combination atomically. Existing `saved_meals` RLS and online-save transaction are reused. |
+| Steps, water, weight, custom exercise/set logging | All plans | Real measurements and acknowledged saves; native steps come from device integrations. |
+| Outdoor running route | All plans | Foreground location, native map and web route preview. Native builds and Android Maps configuration are required; without the Android key, the route preview remains available. No background tracking promise. |
+| Human squad text chat | All plans | Joined usable squads, consent, moderation and block checks apply. |
+| Friend discovery and username requests | All plans | Free request limits remain server enforced. This is not matchmaking or stranger direct messaging. |
+| Hosted squads | Free / Plus / Pro | Existing server limits: capacities of 2 / 5 / 20 people respectively. |
+| Fasting and eating windows | Plus and Pro | Existing screening and duration safeguards; no health claims. |
+| Recipe library | Plus and Pro | 90+ recipes (93 in bundled_recipes.json); starter content remains available to Free. |
+| Meal plans and grocery lists | Purchased Plus and Pro | Existing consent, plan readiness and access checks apply. Trial access does not include full AI plans. |
+| Workout routines and shared workout detail | Plus and Pro | Routine generation/rebuild has its existing purchased-access rules. No rest-timer or personal-record promise. |
+| Private progress photo vault | Plus and Pro | Camera/gallery, stored date, optional weight/notes/pose, delete and two-photo comparison. Account-scoped device storage only; no cloud backup or application-level encryption claim. |
+| Personal AI Coach | Purchased Pro | Consent, safety, responsible-use and server cost controls remain. No numerical allowance is advertised. |
+| AI photo food logging | Purchased Pro | Review estimates and explicitly save. No numerical allowance is advertised. |
+| Chat-to-log / Describe meal | Purchased Pro | Food logging and coach entry points; review portions and macros before acknowledged saves. |
+| Monthly progress review | Purchased Pro | Existing fourteen-day evidence window and safety limits; changes require explicit acceptance. This is not a weekly automatic adjustment. |
+| Room media sharing | Pro uploads | Existing R2, membership, moderation and read permissions remain. |
+| Priority support | Pro | Owner-confirmed email channel: shibajyoti.maity06@gmail.com; Pro-tagged subject and account/app metadata. No response-time guarantee. |
+| Help and store review | All plans | Real support email draft and native review request; OS may suppress the dialog. Without a configured store listing, feedback is available. |
 
----
+## Coming soon ? not included with a purchase today
 
-## 2. Dynamic Growth Checks and Macro Recalculation
+These remain visible on the paywall as future plans, without release dates:
 
-Nutrition goals are not static. As members lose fat or gain muscle, their Total Daily Energy Expenditure (TDEE) and metabolic rate shift. CaliPartner provides structured progress reviews tailored by plan tier:
+| Planned feature | Intended plan |
+| --- | --- |
+| Body circumferences | Plus / Pro |
+| Full data export (JSON/CSV) | Plus / Pro |
+| Partner Finder matching and messaging | Plus / Pro |
+| Seasonal challenges | Plus / Pro |
+| Workout rest timer and personal records | Plus / Pro |
+| Fits my day recipe collections | Pro |
+| Weekly AI progress insights and macro adjustments | Pro |
 
-| Plan | Recalculation Cadence | How It Works |
-| :--- | :--- | :--- |
-| **Free (Basic)** | On-Demand (Manual) | Users can manually re-trigger the onboarding calculator from settings at any time to recompute targets based on updated weight. |
-| **Plus** | **Every Month (30 Days)** | At the end of each 30-day cycle, the app checks the user's weight trends and logged consistency. It prompts a **Monthly Growth Review**: requests current weight, verifies goal pace, and calculates updated calorie and macro targets. Targets are never changed silently—the user reviews and confirms before saving. |
-| **Pro** | **Every Week (7 Days)** | The AI Coach conducts an active **Weekly Growth & Macro Review**. It analyzes 7-day rolling weight averages, workout volume, and adherence. If weight loss or muscle gain has stalled, the AI provides personalized adjustments (e.g., adjusting carb/fat distribution or small calorie refinements within safety floors) and provides an executive summary of progress. |
 
-*Safety rule:* In both Plus and Pro, calorie floors (1,200 kcal women, 1,500 kcal men) and weekly rate caps (maximum 1% body weight per week) remain strictly enforced by `/packages/core` and the database.
+Pair challenges remain in the Plus/Pro benefits. Existing historical records and backend export capabilities are preserved while deferred entry points are removed. Labelled onboarding demonstrations remain illustrative and never write sample diary data.
 
----
+## Release verification still requiring owner/device access
 
-## 3. Comprehensive Feature Comparison Matrix
-
-**Legend:**  
-- ✔ **Included**  
-- — **Not included**  
-- **Limit** indicates fair-use or plan cap  
-
-### 3.1 Core Tracking and Daily Diary
-| Feature | Free | Plus | Pro | Notes |
-| :--- | :---: | :---: | :---: | :--- |
-| **Food Diary** (Breakfast, Lunch, Dinner, Snacks, Extra) | ✔ | ✔ | ✔ | 5 meal slots; 100% offline-first |
-| **Food Search & Nutrition Database** | ✔ | ✔ | ✔ | Over 70,000 foods (IFCT Indian foods first) |
-| **Barcode Scanner** | ✔ | ✔ | ✔ | Camera and image gallery barcode scanning |
-| **Custom Foods & "My Meals"** | ✔ | ✔ | ✔ | Save personal foods and recurring meals |
-| **Calorie & Macro Targets** | ✔ | ✔ | ✔ | Energy, protein, carbs, fats with safety floors |
-| **Water Logging & Hydration Reminders** | ✔ | ✔ | ✔ | Daily volume targets and reminder schedule |
-| **Steps & Distance Tracking** | ✔ | ✔ | ✔ | Native pedometer & Health Connect / Apple Health |
-| **GPS Activity Tracking** | ✔ | ✔ | ✔ | Walks, runs, rides (live route, distance, pace) |
-| **Workout Logging** | ✔ | ✔ | ✔ | Exercise catalog, sets, reps, weight, history |
-| **Weight Tracking & Trends** | ✔ | ✔ | ✔ | Log weight, BMI, moving average trend line |
-| **Personal Progress Graphs** | ✔ | ✔ | ✔ | Nutrition adherence, calorie intake, weight graph |
-| **Habit Streaks & Consistency Score** | ✔ | ✔ | ✔ | Daily streaks, weekly composite consistency score |
-| **Weekly Community Leaderboard** | ✔ | ✔ | ✔ | Top 10 leaderboard and your cohort position |
-| **Offline-First SQLite Logging** | ✔ | ✔ | ✔ | Logging never blocks or requires internet |
-
----
-
-### 3.2 Social, Accountability and Rooms
-| Feature | Free | Plus | Pro | Notes |
-| :--- | :---: | :---: | :---: | :--- |
-| **Hosted Rooms Count** | **1 room** | **3 rooms** | **5 rooms** | Rooms hosted by you simultaneously |
-| **Capacity Per Room** | **2 people** | **5 people** | **20 people** | Max members per hosted room |
-| **Member Free Join** | ✔ | ✔ | ✔ | Members join any paid room free (host pays) |
-| **Free 1-on-1 Partner Room** | ✔ | ✔ | ✔ | Free pair room with your accountability partner |
-| **Shared Nutrition in Room** | Basic | Full | Full | Free shares cal/protein/fibre/carbs; Plus/Pro share full diary |
-| **Room Text Chat** | Read-only | **Send & Read** | **Send & Read** | Plus/Pro required to post text messages |
-| **Room Media Sharing** (Photos & Videos) | — | — | **✔** | Pro exclusive; Cloudflare R2 signed uploads |
-| **Shared Workouts** | Read-only | **Share & Read** | **Share & Read** | Share full routines/exercises to room feed |
-| **Room-Only Leaderboard** | — | **✔** | **✔** | Filtered leaderboard for just your room |
-| **Pair Challenges** (1, 7, 30 days) | — | **✔** | **✔** | Custom accountability challenges with partner |
-| **Seasonal Challenges** (Winter Arc, etc.) | — | **✔** | **✔** | Platform-wide quarterly motivational events |
-| **Username Search & Friendships** | 3 requests / 7d | **Unlimited** | **Unlimited** | Find friends by @username without limits |
-| **Friend discovery** | Browse & Send (3 requests / 7d) | **Browse & Send** | **Browse & Send** | Goal filter and universal username search; discoverable profiles only |
-
----
-
-### 3.3 Nutrition, Wellness and Content
-| Feature | Free | Plus | Pro | Notes |
-| :--- | :---: | :---: | :---: | :--- |
-| **Recipe Library** | 10 starter | **Full (150+)** | **Full (150+)** | Macro-balanced fitness & Indian recipes |
-| **"Fits My Day" AI Recipe Collections** | — | — | **✔** | Smart recipes fitting remaining daily macros |
-| **Fasting Tracker & Eating Windows** | — | **✔** | **✔** | 16:8, 18:6, custom intermittent fasting timers |
-| **Advanced Micronutrient Tracking** | — | **✔** | **✔** | Fibre, saturated fat, sodium, cholesterol, sugar |
-| **Meal Planner & Auto Grocery Lists** | — | **✔** | **✔** | Plan week meals; compile grocery ingredients |
-| **Workout Routines & Exercise Programs** | — | **✔** | **✔** | Save full multi-day split programs |
-| **Workout Rest Timer & Personal Records** | — | **✔** | **✔** | Auto-rest countdowns and 1RM / PR tracking |
-| **Body Circumferences** (Chest, Waist, Hips) | — | **✔** | **✔** | Detailed tape measurement trend logs |
-| **Private Progress Photo Vault** | — | **✔** | **✔** | Encrypted side-by-side visual progress photos |
-| **Full Data Export** (JSON/CSV) | — | **✔** | **✔** | Export all nutrition, workout and biometric data |
-
----
-
-### 3.4 AI Intelligence and Coaching
-| Feature | Free | Plus | Pro | Notes |
-| :--- | :---: | :---: | :---: | :--- |
-| **Personal AI Nutrition & Fitness Coach** | Locked preview | — | **✔ (10 msgs/day)** | Claude Haiku 5.5; context-aware AI coach |
-| **AI Photo Food Logging** | Not included | — | **✔ (5 scans/day)** | Camera food scan; multi-item macro detection |
-| **Chat-to-Log** (*"I ate 2 eggs and toast"*) | — | — | **✔** | Natural language logging parsed by AI |
-| **Macro Growth Recalculation** | Manual | **Monthly (30d)** | **Weekly (7d)** | Proactive target updates to prevent plateaus |
-| **Weekly AI Progress Summary** | — | — | **✔** | Deep-dive adherence and metabolic analysis |
-| **Priority Support** | Standard | Standard | **✔** | Priority customer support queue |
-
----
-
-## 4. Key Rules, Architecture and Billing Logic
-
-1. **Room Sponsorship Model (Host Pays):**
-   * The room creator/host's plan determines the room capacity (Free: 2, Plus: 5, Pro: 20).
-   * Invited members do not need their own plan to join and experience room progress.
-   * If a host's plan lapses, the room enters a 30-day grace/paused state where any member can upgrade to sponsor it, preserving all streaks and history.
-
-2. **Dodo Payments Product ID Registry:**
-
-| Product Name in Dodo | Product ID | Price | Plan & Cadence | Trial |
-| :--- | :--- | :--- | :--- | :--- |
-| `Plusmonthlyrupees` | `pdt_0NqYkFnrBtumqnnW6amME` | ₹249.00 | Plus Monthly (INR) | 7 Days |
-| `Plusyearlyrupees` | `pdt_0NqYjxau37A8F15U4ovnt` | ₹1,499.00 | Plus Annual (INR) | 7 Days |
-| `Promonthlyrupees` | `pdt_0NqYkgvwBKDtjSQRQxwbm` | ₹499.00 | Pro Monthly (INR) | 0 Days |
-| `Proyearlyrupees` | `pdt_0NqYkSYMM9n1wJoZLJp9Y` | ₹2,499.00 | Pro Annual (INR) | 0 Days |
-| `Plusmonthlydollar` | `pdt_0Np8JSfvie3Eqg47kDEzZ` | $4.99 | Plus Monthly (USD) | 7 Days |
-| `Plusyearlydollars` | `pdt_0Np8JdWRcfrMJqyruTzkE` | $29.99 | Plus Annual (USD) | 7 Days |
-| `Promonthlydollar` | `pdt_0Np8JFZXhiKHXsUJH9GD8` | $9.99 | Pro Monthly (USD) | 0 Days |
-| `Proyearlydollar` | `pdt_0Np8IxfM0q2BFdPQHPMDC` | $49.99 | Pro Annual (USD) | 0 Days |
-
-> [!WARNING]
-> **Currency Verification Warning for `Proyearlyrupees`:**
-> In your Dodo dashboard, check the currency for product `pdt_0NqYkSYMM9n1wJoZLJp9Y`. Ensure its currency is set to **INR (₹)** and not **USD ($)**, so Indian customers are charged ₹2,499 INR rather than $2,499 USD!
-
-**Edge Function Secret (`DODO_PRODUCTS_JSON` for India INR):**
-```json
-{
-  "plus_monthly": "pdt_0NqYkFnrBtumqnnW6amME",
-  "plus_annual": "pdt_0NqYjxau37A8F15U4ovnt",
-  "pro_monthly": "pdt_0NqYkgvwBKDtjSQRQxwbm",
-  "pro_annual": "pdt_0NqYkSYMM9n1wJoZLJp9Y"
-}
-```
-
-3. **Privacy and Safety Rules:**
-   * Room members never read each other's database records directly; all data passes through security-definer views respecting member privacy toggles.
-   * In Partner Finder, strangers only see banded demographics (age bracket, fitness goal, training style, city, language) — never weight, calories, exact location, or contact info before mutual acceptance.
-   * Calorie floors and rate limits are hard product rules that cannot be bypassed by any user or AI recommendation.
+- Configure the Android Maps SDK public key restricted to the actual package `app.calipartner.mobile` and release signing certificate.
+- Configure `EXPO_PUBLIC_APPLE_APP_ID` when the App Store listing exists; never ship the attachment's placeholder ID.
+- Send a test email to the owner-confirmed support address and verify the Pro tag and metadata arrive correctly.
+- Rebuild EAS development/production clients for the added native modules; test permissions, camera, photo persistence, maps and store review on Android and iOS.
+- Migration `20261116000001_launch_hardening.sql` is applied and recorded in the linked Supabase project. Hosted checks confirm idle guarding, signed push transport and anonymous denial for compact avatar rewards. Compare daily egress after the updated app ships; this is not yet a measured live bandwidth reduction.

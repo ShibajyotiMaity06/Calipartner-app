@@ -33,10 +33,15 @@ export function useChatTyping(
     setPeople([]);
     if (!roomId || !userId || !visible) return;
     const client = getSupabase();
+    let expiry: ReturnType<typeof setTimeout> | null = null;
     let scheduled: ReturnType<typeof setTimeout> | null = null;
     const fetchPeople = () =>
       void client.rpc('get_chat_typing', { p_room_id: roomId }).then(
         ({ data, error }) => {
+          if (expiry) clearTimeout(expiry);
+          expiry = setTimeout(() => {
+            if (current) setPeople([]);
+          }, 6000);
           if (current)
             setPeople((previous) =>
               JSON.stringify(previous) === JSON.stringify(data ?? [])
@@ -66,11 +71,12 @@ export function useChatTyping(
       )
       .subscribe(refresh);
     refresh();
-    const timer = setInterval(refresh, 3000);
+
     return () => {
       current = false;
       if (scheduled) clearTimeout(scheduled);
-      clearInterval(timer);
+      if (expiry) clearTimeout(expiry);
+
       void client.removeChannel(channel);
       void client.rpc('set_chat_typing', { p_room_id: roomId, p_is_typing: false });
       lastSent.current = { room: '', at: 0, typing: false };

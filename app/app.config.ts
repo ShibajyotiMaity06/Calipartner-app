@@ -28,6 +28,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   web: { favicon: './assets/favicon.png' },
   android: {
     package: 'app.calipartner.mobile',
+    config: { googleMaps: { apiKey: process.env.EXPO_PUBLIC_GOOGLE_MAPS_ANDROID_KEY ?? '' } },
     googleServicesFile: process.env.GOOGLE_SERVICES_JSON ?? './google-services.json',
     permissions: [
       'android.permission.POST_NOTIFICATIONS',
@@ -54,6 +55,13 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     'expo-router',
     'expo-video',
     [
+      'expo-location',
+      {
+        locationWhenInUsePermission:
+          'Allow CaliPartner to track your route while you record a run.',
+      },
+    ],
+    [
       'expo-camera',
       {
         cameraPermission: 'Allow CaliPartner to photograph food and scan product barcodes.',
@@ -74,7 +82,8 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     [
       'expo-image-picker',
       {
-        photosPermission: 'Choose food photos, product barcodes, or media to share with your room.',
+        photosPermission:
+          'Choose food photos, private progress photos, product barcodes, or room media.',
         cameraPermission:
           'Photograph your food, scan a product barcode, or take a photo to share with your room.',
         microphonePermission: false,

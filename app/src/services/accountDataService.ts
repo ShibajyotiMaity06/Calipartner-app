@@ -1,3 +1,4 @@
+import { avatarRewardEvents } from './avatarRewardEvents';
 import { isDeviceOffline } from './networkService';
 import { getSupabase } from '@/lib/supabase';
 import { beforeAccountWrite } from './accountDataGate';
@@ -131,6 +132,12 @@ export async function withOnlineSave<T>(
         else await run();
         for (const action of afterSaves.get(transaction) ?? []) void action().catch(() => {});
         if (requestChanges.get(transaction)?.size) diaryEvents.emitChange();
+        if (
+          [...(requestChanges.get(transaction)?.values() ?? [])].some((change) =>
+            ['food_entries', 'workouts', 'activity_days', 'water_logs'].includes(change.entity),
+          )
+        )
+          avatarRewardEvents.emitChange();
         return result;
       } finally {
         transactions.delete(transaction);
