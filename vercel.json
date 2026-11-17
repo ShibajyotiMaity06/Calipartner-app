@@ -18,7 +18,7 @@
       "status": 301
     },
     {
-      "src": "/(features|pricing|download|privacy|terms|support|delete-account).html",
+      "src": "/(about|features|pricing|download|privacy|terms|support|delete-account).html",
       "headers": {
         "Location": "/$1"
       },
@@ -26,10 +26,10 @@
     },
     {
       "src": "/",
-      "dest": "/index.html"
+      "dest": "/app-shell.html"
     },
     {
-      "src": "/(features|pricing|download|privacy|terms|support|delete-account)/?",
+      "src": "/(about|features|pricing|download|privacy|terms|support|delete-account)/?",
       "dest": "/$1.html"
     },
     {

@@ -1,3 +1,4 @@
+import { visualPrimitives } from '@calipartner/ui/tokens';
 import { useTheme as useAppearance } from '@calipartner/ui/theme';
 import { NavigationIcon } from '@calipartner/ui';
 import React, { useState } from 'react';
@@ -195,15 +196,18 @@ export function AvatarPickerModal({
         <View style={styles.container}>
           {/* Top Bar */}
           <View style={styles.topBar}>
-            <TouchableOpacity
+            <Button
+              variant="tertiary"
+              fullWidth={false}
+              label="Back"
+              iconOnly
+              icon={<NavigationIcon action="back" />}
               onPress={onClose}
               accessibilityRole="button"
               accessibilityLabel="Back"
               style={styles.backButton}
               testID="btn-avatar-picker-back"
-            >
-              <NavigationIcon action="back" />
-            </TouchableOpacity>
+            />
             <Text variant="heading" color={dark.textHi} style={styles.topTitle}>
               Profile Picture
             </Text>
@@ -248,22 +252,25 @@ export function AvatarPickerModal({
                   <Text variant="bodyS" color={dark.textMid} style={{ marginTop: 2 }}>
                     JPEG, PNG, HEIC or WebP
                   </Text>
-                  <TouchableOpacity
+                  <Button
+                    variant="secondary"
+                    fullWidth={false}
+                    label={customPhotoUri ? 'Change Photo' : 'Upload from Device'}
+                    icon={<Ionicons name="cloud-upload-outline" size={16} color={dark.apricot} />}
                     onPress={handleTriggerUpload}
                     style={styles.uploadActionBtn}
                     accessibilityRole="button"
                     testID="btn-pick-custom-photo"
-                  >
-                    <Ionicons name="cloud-upload-outline" size={16} color={dark.apricot} />
-                    <Text variant="bodyS" color={dark.apricot} style={{ fontWeight: '700' }}>
-                      {customPhotoUri ? 'Change Photo' : 'Upload from Device'}
-                    </Text>
-                  </TouchableOpacity>
+                  />
                 </View>
               </View>
 
               {uploadError && (
-                <Text variant="bodyS" color="#FF6B6B" style={{ marginTop: space[2] }}>
+                <Text
+                  variant="bodyS"
+                  color={visualPrimitives.colors.error}
+                  style={{ marginTop: space[2] }}
+                >
                   {uploadError}
                 </Text>
               )}

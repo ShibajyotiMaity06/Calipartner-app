@@ -88,3 +88,23 @@ it('Compare distinguishes a disabled metric from a tracked zero without showing 
     tree.root.findByProps({ testID: 'member-metric-peer-protein' }).props.accessibilityLabel,
   ).toContain('0 / 150');
 });
+
+it('uses the same blue ink for Home water label, icon and numeric amount', async () => {
+  await act(async () => {
+    tree = create(
+      <PersonalDayCard
+        loading={false}
+        error={false}
+        onRetry={vi.fn()}
+        onPress={vi.fn()}
+        metrics={[
+          { id: 'water', label: 'Water', value: 1500, target: 2500, unit: 'ml', enabled: true },
+        ]}
+      />,
+    );
+  });
+  const tile = tree.root.findByProps({ testID: 'personal-day-metric-water' });
+  const icon = tile.findByType('Icon' as React.ElementType);
+  const labels = tile.findAllByType('Text' as React.ElementType);
+  expect(labels.filter((node) => node.props.color === icon.props.color)).toHaveLength(2);
+});

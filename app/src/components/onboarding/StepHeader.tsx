@@ -1,7 +1,8 @@
+import { Button } from '@calipartner/ui';
 import { useTheme as useAppearance } from '@calipartner/ui/theme';
 import { NavigationIcon } from '@calipartner/ui';
 import React from 'react';
-import { TouchableOpacity, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { Text, space, radius } from '@calipartner/ui';
 import { t } from '@/i18n';
 import { playClickSound } from '@/lib/sound';
@@ -61,16 +62,19 @@ export function StepHeader({
       {/* Top row with Back button, Step indicator, and optional Skip */}
       <View style={styles.topRow}>
         {canGoBack && onBack ? (
-          <TouchableOpacity
+          <Button
+            variant="tertiary"
+            fullWidth={false}
+            label={t('onboarding.back')}
+            iconOnly
+            icon={<NavigationIcon action="back" />}
             onPress={handleBack}
             accessibilityRole="button"
             accessibilityLabel={t('onboarding.back')}
             testID="btn-onboarding-back"
             style={styles.backButton}
             hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-          >
-            <NavigationIcon action="back" />
-          </TouchableOpacity>
+          />
         ) : (
           <View style={styles.backButtonPlaceholder} />
         )}
@@ -91,18 +95,17 @@ export function StepHeader({
         </Text>
 
         {canSkip && onSkip ? (
-          <TouchableOpacity
+          <Button
+            variant="secondary"
+            fullWidth={false}
+            label={t('onboarding.skip')}
             onPress={handleSkip}
             accessibilityRole="button"
             accessibilityLabel={t('onboarding.skip')}
             testID="btn-onboarding-skip"
             style={styles.skipButton}
             hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-          >
-            <Text variant="bodyS" color={dark.textMid} style={styles.skipText}>
-              {t('onboarding.skip')}
-            </Text>
-          </TouchableOpacity>
+          />
         ) : (
           <View style={styles.backButtonPlaceholder} />
         )}

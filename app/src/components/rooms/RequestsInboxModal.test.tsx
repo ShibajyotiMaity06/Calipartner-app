@@ -1,4 +1,5 @@
 vi.mock('@calipartner/ui', async () => ({
+  Button: (await import('@/test/ButtonStub')).ButtonStub,
   Text: 'Text',
   type: { body: {} },
   SegmentedControl: (await import('@/test/SegmentedControlStub')).SegmentedControlStub,

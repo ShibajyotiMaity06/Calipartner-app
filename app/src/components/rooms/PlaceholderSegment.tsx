@@ -1,3 +1,4 @@
+import { visualPrimitives } from '@calipartner/ui/tokens';
 import React from 'react';
 import { StyleSheet, View } from 'react-native';
 import { Text } from '@calipartner/ui';
@@ -37,7 +38,7 @@ const styles = StyleSheet.create({
   iconCircle: {
     width: 64,
     height: 64,
-    borderRadius: 32,
+    borderRadius: visualPrimitives.radii[32],
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: spacing.md,

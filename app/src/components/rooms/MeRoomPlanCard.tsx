@@ -1,13 +1,6 @@
 import { useTheme as useAppearance } from '@calipartner/ui/theme';
 import React, { useState } from 'react';
-import {
-  ActivityIndicator,
-  Linking,
-  Platform,
-  StyleSheet,
-  TouchableOpacity,
-  View,
-} from 'react-native';
+import { ActivityIndicator, Linking, Platform, StyleSheet, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Button, Card, controls, radius, space, Text } from '@calipartner/ui';
 import { t } from '@/i18n';
@@ -50,9 +43,11 @@ export function MeRoomPlanCard({
       return;
     }
     const storeUrl =
-      entitlement?.source === 'apple'
-        ? 'https://apps.apple.com/account/subscriptions'
-        : 'https://play.google.com/store/account/subscriptions';
+      Platform.OS === 'android'
+        ? 'https://play.google.com/store/account/subscriptions'
+        : Platform.OS === 'ios' || entitlement?.source === 'apple'
+          ? 'https://apps.apple.com/account/subscriptions'
+          : 'https://play.google.com/store/account/subscriptions';
     await Linking.openURL(storeUrl).catch(() => setRestoreMessage(t('fixes.nativeManagement')));
   };
 
@@ -159,23 +154,24 @@ export function MeRoomPlanCard({
           </Text>
         )}
         {isTrial && <Text variant="bodyS">{t('progressRefresh.trialNote')}</Text>}
-        <TouchableOpacity
+        <Button
+          variant="secondary"
+          fullWidth={false}
+          label={t('compactProfile.planDetails')}
+          icon={
+            <Ionicons
+              name={expanded ? 'chevron-up' : 'chevron-down'}
+              size={space[4]}
+              color={dark.textMid}
+            />
+          }
           accessibilityRole="button"
           accessibilityState={{ expanded }}
           accessibilityLabel={t('compactProfile.planDetails')}
           onPress={() => setExpanded((value) => !value)}
           style={styles.compactDisclosure}
           testID="toggle-plan-details"
-        >
-          <Text variant="micro" color={dark.textMid}>
-            {t('compactProfile.planDetails')}
-          </Text>
-          <Ionicons
-            name={expanded ? 'chevron-up' : 'chevron-down'}
-            size={space[4]}
-            color={dark.textMid}
-          />
-        </TouchableOpacity>
+        />
         {expanded ? (
           <View style={styles.compactDetails}>
             {hasStorePlan ? (
@@ -217,30 +213,28 @@ export function MeRoomPlanCard({
             </Text>
           </View>
 
-          <TouchableOpacity
+          <Button
+            variant="secondary"
+            fullWidth={false}
+            label="See plans"
             onPress={onChangePlan}
             style={styles.seePlansBtn}
             accessibilityRole="button"
             accessibilityLabel="See plans"
             testID="btn-me-change-plan"
-          >
-            <Text variant="label" color={dark.apricot}>
-              See plans
-            </Text>
-          </TouchableOpacity>
+          />
         </View>
 
         <View style={styles.freeFooterRow}>
-          <TouchableOpacity
+          <Button
+            variant="secondary"
+            fullWidth={false}
+            label={restoring ? 'Restoring…' : (restoreMessage ?? 'Restore purchases')}
             onPress={handleRestore}
             accessibilityRole="button"
             accessibilityLabel="Restore purchases"
             testID="btn-me-restore-free"
-          >
-            <Text variant="micro" color={dark.textLo}>
-              {restoring ? 'Restoring…' : (restoreMessage ?? 'Restore purchases')}
-            </Text>
-          </TouchableOpacity>
+          />
         </View>
       </Card>
     );
@@ -331,17 +325,16 @@ export function MeRoomPlanCard({
         />
       </View>
 
-      <TouchableOpacity
+      <Button
+        variant="tertiary"
+        fullWidth={false}
+        label={restoring ? 'Restoring…' : (restoreMessage ?? 'Restore purchases')}
         onPress={handleRestore}
         style={styles.restoreLink}
         accessibilityRole="button"
         accessibilityLabel="Restore purchases"
         testID="btn-me-restore"
-      >
-        <Text variant="micro" color={dark.textLo}>
-          {restoring ? 'Restoring…' : (restoreMessage ?? 'Restore purchases')}
-        </Text>
-      </TouchableOpacity>
+      />
     </Card>
   );
 }

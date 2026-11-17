@@ -1,3 +1,4 @@
+import { visualPrimitives } from '@calipartner/ui/tokens';
 import { useTheme as useAppearance } from '@calipartner/ui/theme';
 import React, { useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
@@ -233,7 +234,7 @@ const createStyles = (dark: ReturnType<typeof useAppearance>['colors']) =>
     statusDot: {
       width: 8,
       height: 8,
-      borderRadius: 4,
+      borderRadius: visualPrimitives.radii[4],
     },
     cardTitle: {
       fontSize: typeTokens.body.fontSize,

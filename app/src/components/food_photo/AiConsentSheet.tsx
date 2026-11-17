@@ -1,3 +1,4 @@
+import { Button } from '@calipartner/ui';
 import { Text } from '@calipartner/ui';
 import React from 'react';
 import { ActivityIndicator, Modal, Pressable, StyleSheet, View } from 'react-native';
@@ -100,18 +101,17 @@ export function AiConsentSheet({
               )}
             </Pressable>
 
-            <Pressable
+            <Button
+              variant="secondary"
+              fullWidth={false}
+              label={t('foodLog.photo.declineConsent')}
               testID="btn-decline-ai-consent"
               accessibilityRole="button"
               accessibilityLabel={t('foodLog.photo.declineConsent')}
               disabled={loading}
               onPress={onDecline}
               style={styles.secondaryBtn}
-            >
-              <Text style={[styles.secondaryBtnText, { color: colors.textMuted }]}>
-                {t('foodLog.photo.declineConsent')}
-              </Text>
-            </Pressable>
+            />
           </View>
         </View>
       </View>

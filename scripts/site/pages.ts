@@ -12,7 +12,7 @@ export type PublicPage = {
 };
 export const pages: PublicPage[] = [
   {
-    path: '/',
+    path: '/about',
     title: copy.title,
     description: copy.description,
     heading: 'Your food. Your goals. Someone on your side.',

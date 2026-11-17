@@ -1,6 +1,7 @@
+import { visualPrimitives } from '@calipartner/ui/tokens';
 import { useTheme as useAppearance } from '@calipartner/ui/theme';
 import React from 'react';
-import { Modal, Pressable, StyleSheet, TouchableOpacity, View } from 'react-native';
+import { Modal, Pressable, StyleSheet, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import type { MealSection, RoomReactionType } from '@calipartner/core';
 import { radius, space, Text, Button, HiddenMetric } from '@calipartner/ui';
@@ -72,15 +73,18 @@ export function PartnerMealSheet({
               </Text>
             </View>
 
-            <Pressable
+            <Button
+              variant="tertiary"
+              fullWidth={false}
+              label="Close sheet"
+              iconOnly
+              icon={<Ionicons name="close" size={20} color={dark.textMid} />}
               onPress={onClose}
               style={styles.closeBtn}
               accessibilityRole="button"
               accessibilityLabel="Close sheet"
               testID="btn-close-partner-meal"
-            >
-              <Ionicons name="close" size={20} color={dark.textMid} />
-            </Pressable>
+            />
           </View>
 
           {/* Meal Contents or Hidden State */}
@@ -145,9 +149,11 @@ export function PartnerMealSheet({
             </Text>
             <View style={styles.reactionRow}>
               {REACTIONS.map((r) => (
-                <TouchableOpacity
+                <Button
+                  variant="secondary"
+                  fullWidth={false}
+                  label={r.emoji}
                   key={r.type}
-                  activeOpacity={0.7}
                   onPress={() => {
                     onSendReaction?.(r.type);
                     onClose();
@@ -156,9 +162,7 @@ export function PartnerMealSheet({
                   accessibilityLabel={`React with ${r.label}`}
                   style={styles.reactionBtn}
                   testID={`btn-react-${r.type}`}
-                >
-                  <Text style={styles.reactionEmoji}>{r.emoji}</Text>
-                </TouchableOpacity>
+                />
               ))}
             </View>
           </View>
@@ -213,7 +217,7 @@ const createStyles = (dark: ReturnType<typeof useAppearance>['colors']) =>
     grabber: {
       width: 36,
       height: 4,
-      borderRadius: 2,
+      borderRadius: visualPrimitives.radii[2],
       backgroundColor: dark.hairlineLit,
       alignSelf: 'center',
       marginBottom: space[1],
@@ -226,7 +230,7 @@ const createStyles = (dark: ReturnType<typeof useAppearance>['colors']) =>
     closeBtn: {
       width: 36,
       height: 36,
-      borderRadius: 18,
+      borderRadius: visualPrimitives.radii[18],
       alignItems: 'center',
       justifyContent: 'center',
     },
@@ -269,7 +273,7 @@ const createStyles = (dark: ReturnType<typeof useAppearance>['colors']) =>
     itemBullet: {
       width: 6,
       height: 6,
-      borderRadius: 3,
+      borderRadius: visualPrimitives.radii[3],
       backgroundColor: dark.teal,
     },
     itemTextWrap: {
@@ -293,7 +297,7 @@ const createStyles = (dark: ReturnType<typeof useAppearance>['colors']) =>
     reactionBtn: {
       width: 44,
       height: 44,
-      borderRadius: 22,
+      borderRadius: visualPrimitives.radii[22],
       alignItems: 'center',
       justifyContent: 'center',
     },

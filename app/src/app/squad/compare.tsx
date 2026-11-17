@@ -2,7 +2,7 @@ import { useTheme as useAppearance } from '@calipartner/ui/theme';
 import { NavigationIcon } from '@calipartner/ui';
 import { PublicAvatar } from '@/components/avatar/PublicAvatar';
 import React, { useCallback, useState } from 'react';
-import { Pressable, RefreshControl, SafeAreaView, ScrollView, View } from 'react-native';
+import { RefreshControl, SafeAreaView, ScrollView, View } from 'react-native';
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import { Button, Text } from '@calipartner/ui';
 import { useSquadToday, useSquadDetails } from '@/hooks/useSquad';
@@ -76,15 +76,18 @@ export default function SquadCompareScreen() {
         refreshControl={<RefreshControl refreshing={squad.loading} onRefresh={refresh} />}
       >
         <View style={styles.row}>
-          <Pressable
+          <Button
+            variant="tertiary"
+            fullWidth={false}
+            label={t('squadDesign.back')}
+            iconOnly
+            icon={<NavigationIcon action="back" />}
             onPress={back}
             style={styles.back}
             accessibilityRole="button"
             accessibilityLabel={t('squadDesign.back')}
             testID="compare-back"
-          >
-            <NavigationIcon action="back" />
-          </Pressable>
+          />
           <View style={styles.flex}>
             <Text variant="bodyS">{t('tabs.room')}</Text>
             <Text variant="title2">{t('squadDesign.compare')}</Text>

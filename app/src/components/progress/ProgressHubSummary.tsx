@@ -1,3 +1,4 @@
+import { Button } from '@calipartner/ui';
 import { useTheme as useAppearance } from '@calipartner/ui/theme';
 import React from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
@@ -48,15 +49,16 @@ export function ProgressHubSummary({
             goals: goalDays,
           })}
         </Text>
-        <Pressable
+        <Button
+          variant="tertiary"
+          fullWidth={false}
+          label="View full summary & share card →"
           style={styles.recapLink}
           onPress={onOpenWeeklySummary}
           accessibilityRole="button"
           accessibilityLabel="Open weekly recap"
           testID={`${testID}-open-recap`}
-        >
-          <Text style={styles.recapLinkText}>View full summary & share card →</Text>
-        </Pressable>
+        />
       </View>
 
       {/* Summary Cards Stack */}

@@ -1,3 +1,4 @@
+import { Button } from '@calipartner/ui';
 import { Text, homeLayout, useReducedMotion } from '@calipartner/ui';
 import { useState } from 'react';
 import { Alert, Modal, Pressable, ScrollView, StyleSheet, View } from 'react-native';
@@ -89,15 +90,18 @@ export function WeightHistoryModal({
                 {t(weekly ? 'weightUpdate.progress' : 'trackers.weight.historyButton')}
               </Text>
             </View>
-            <Pressable
+            <Button
+              variant="tertiary"
+              fullWidth={false}
+              label={t('common.cancel')}
+              iconOnly
+              icon={<Ionicons name="close" size={22} color={colors.textMuted} />}
               onPress={onClose}
               style={styles.iconBtn}
               hitSlop={8}
               accessibilityRole="button"
               accessibilityLabel={t('common.cancel')}
-            >
-              <Ionicons name="close" size={22} color={colors.textMuted} />
-            </Pressable>
+            />
           </View>
 
           {weekly && <Text>{t('weightUpdate.weeklyHint')}</Text>}
@@ -159,7 +163,12 @@ export function WeightHistoryModal({
                     </View>
 
                     <View style={styles.itemActions}>
-                      <Pressable
+                      <Button
+                        variant="tertiary"
+                        fullWidth={false}
+                        label={t('trackers.weight.editModalTitle')}
+                        iconOnly
+                        icon={<Ionicons name="pencil-outline" size={18} color={colors.textMuted} />}
                         testID={`btn-edit-weight-${item.id}`}
                         onPress={() => onEditEntry(item)}
                         disabled={isDeleting}
@@ -167,11 +176,14 @@ export function WeightHistoryModal({
                         style={styles.iconBtn}
                         accessibilityRole="button"
                         accessibilityLabel={t('trackers.weight.editModalTitle')}
-                      >
-                        <Ionicons name="pencil-outline" size={18} color={colors.textMuted} />
-                      </Pressable>
+                      />
 
-                      <Pressable
+                      <Button
+                        variant="destructive"
+                        fullWidth={false}
+                        label={t('common.delete')}
+                        iconOnly
+                        icon={<Ionicons name="trash-outline" size={18} color={colors.danger} />}
                         testID={`btn-delete-weight-${item.id}`}
                         onPress={() => handleDeletePrompt(item.id)}
                         disabled={isDeleting}
@@ -179,9 +191,7 @@ export function WeightHistoryModal({
                         style={styles.iconBtn}
                         accessibilityRole="button"
                         accessibilityLabel={t('common.delete')}
-                      >
-                        <Ionicons name="trash-outline" size={18} color={colors.danger} />
-                      </Pressable>
+                      />
                     </View>
                   </View>
                 );
@@ -190,7 +200,10 @@ export function WeightHistoryModal({
           </ScrollView>
 
           {/* Close button */}
-          <Pressable
+          <Button
+            variant="secondary"
+            fullWidth={false}
+            label={t('common.cancel')}
             onPress={onClose}
             style={[
               styles.closeBtn,
@@ -198,9 +211,7 @@ export function WeightHistoryModal({
             ]}
             accessibilityRole="button"
             accessibilityLabel={t('common.cancel')}
-          >
-            <Text style={[styles.closeBtnText, { color: colors.text }]}>{t('common.cancel')}</Text>
-          </Pressable>
+          />
         </View>
       </View>
     </Modal>

@@ -1,5 +1,6 @@
+import { Button } from '@calipartner/ui';
 import React from 'react';
-import { Pressable, View } from 'react-native';
+import { View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { homeLayout, space, Text, useTheme } from '@calipartner/ui';
@@ -38,7 +39,11 @@ export function HeaderActions({
       {coins ? <CCBalance /> : null}
       {appearance ? <AppearancePicker /> : null}
       {coach ? (
-        <Pressable
+        <Button
+          variant="secondary"
+          fullWidth={false}
+          label={t('homeRefresh.ai')}
+          icon={<Ionicons name="medkit-outline" size={homeLayout.iconSize} color={colors.textHi} />}
           accessibilityRole="button"
           accessibilityLabel={t('homeRefresh.coach')}
           testID={testID}
@@ -49,12 +54,7 @@ export function HeaderActions({
             alignItems: 'center',
             justifyContent: 'center',
           }}
-        >
-          <Ionicons name="medkit-outline" size={homeLayout.iconSize} color={colors.textHi} />
-          <Text variant="micro" color={colors.textMid}>
-            {t('homeRefresh.ai')}
-          </Text>
-        </Pressable>
+        />
       ) : null}
     </View>
   );

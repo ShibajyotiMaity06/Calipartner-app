@@ -1,3 +1,4 @@
+import { visualPrimitives } from '@calipartner/ui/tokens';
 import React, { useState } from 'react';
 import { ActivityIndicator, Modal, Pressable, StyleSheet, View } from 'react-native';
 import { Text } from '@calipartner/ui';
@@ -111,7 +112,7 @@ export function ChatTermsModal({
             testID="btn-accept-chat-terms"
           >
             {loading ? (
-              <ActivityIndicator size="small" color="#FFFFFF" />
+              <ActivityIndicator size="small" color={visualPrimitives.colors.white} />
             ) : (
               <Text style={styles.agreeButtonText}>{t('chat.termAgreeBtn')}</Text>
             )}
@@ -189,7 +190,7 @@ const styles = StyleSheet.create({
     marginTop: spacing.md,
   },
   agreeButtonText: {
-    color: '#FFFFFF',
+    color: visualPrimitives.colors.white,
     fontSize: fontSize.sm,
     fontWeight: '700',
   },

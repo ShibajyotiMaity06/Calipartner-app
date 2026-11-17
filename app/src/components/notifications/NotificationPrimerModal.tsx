@@ -1,3 +1,5 @@
+import { visualPrimitives } from '@calipartner/ui/tokens';
+import { Button } from '@calipartner/ui';
 import { Text } from '@calipartner/ui';
 import React, { useEffect, useState } from 'react';
 import {
@@ -160,17 +162,16 @@ export function NotificationPrimerModal({
           {/* Action Buttons */}
           <View style={styles.actions}>
             {isDenied ? (
-              <Pressable
+              <Button
+                variant="secondary"
+                fullWidth={false}
+                label={t('notifications.permission.openSettingsButton')}
                 testID="btn-open-settings"
                 accessibilityRole="button"
                 accessibilityLabel={t('notifications.permission.openSettingsButton')}
                 style={[styles.primaryButton, { backgroundColor: colors.accent }]}
                 onPress={handleOpenSettings}
-              >
-                <Text style={[styles.primaryButtonText, { color: colors.onAccent }]}>
-                  {t('notifications.permission.openSettingsButton')}
-                </Text>
-              </Pressable>
+              />
             ) : (
               <Pressable
                 testID="btn-enable-notifications"
@@ -193,7 +194,10 @@ export function NotificationPrimerModal({
               </Pressable>
             )}
 
-            <Pressable
+            <Button
+              variant="secondary"
+              fullWidth={false}
+              label={t('notifications.permission.maybeLaterButton')}
               testID="btn-dismiss-primer"
               accessibilityRole="button"
               accessibilityLabel={t('notifications.permission.maybeLaterButton')}
@@ -202,11 +206,7 @@ export function NotificationPrimerModal({
                 { borderColor: colors.border, backgroundColor: 'transparent' },
               ]}
               onPress={onDismiss}
-            >
-              <Text style={[styles.secondaryButtonText, { color: colors.textMuted }]}>
-                {t('notifications.permission.maybeLaterButton')}
-              </Text>
-            </Pressable>
+            />
           </View>
         </View>
       </View>
@@ -233,7 +233,7 @@ const styles = StyleSheet.create({
   iconCircle: {
     width: 72,
     height: 72,
-    borderRadius: 36,
+    borderRadius: visualPrimitives.radii[36],
     borderWidth: 1,
     alignItems: 'center',
     justifyContent: 'center',

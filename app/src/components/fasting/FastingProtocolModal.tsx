@@ -1,3 +1,5 @@
+import { visualPrimitives } from '@calipartner/ui/tokens';
+import { Button } from '@calipartner/ui';
 import { useTheme as useAppearance } from '@calipartner/ui/theme';
 import { type as inputTypography } from '@calipartner/ui';
 import React, { useState } from 'react';
@@ -119,15 +121,18 @@ export function FastingProtocolModal({
               </Text>
               <Text style={styles.subtitle}>{t('fastingRefresh.protocolHint')}</Text>
             </View>
-            <Pressable
+            <Button
+              variant="tertiary"
+              fullWidth={false}
+              label={t('common.cancel')}
+              iconOnly
+              icon={<Ionicons name="close" size={20} color={dark.textMid} />}
               testID="button-close-protocol-modal"
               onPress={onClose}
               style={styles.closeButton}
               accessibilityRole="button"
               accessibilityLabel={t('common.cancel')}
-            >
-              <Ionicons name="close" size={20} color={dark.textMid} />
-            </Pressable>
+            />
           </View>
 
           <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.list}>
@@ -190,7 +195,12 @@ export function FastingProtocolModal({
                     <View style={styles.customStepperBox} testID="custom-hours-stepper">
                       <Text style={styles.customStepperLabel}>Custom Fast Duration</Text>
                       <View style={styles.stepperRow}>
-                        <Pressable
+                        <Button
+                          variant="tertiary"
+                          fullWidth={false}
+                          label="Decrease custom hours"
+                          iconOnly
+                          icon={<Ionicons name="remove" size={18} color={dark.textHi} />}
                           testID="button-custom-hours-minus"
                           style={styles.stepperBtn}
                           onPress={() => {
@@ -202,15 +212,18 @@ export function FastingProtocolModal({
                           }}
                           accessibilityRole="button"
                           accessibilityLabel="Decrease custom hours"
-                        >
-                          <Ionicons name="remove" size={18} color={dark.textHi} />
-                        </Pressable>
+                        />
 
                         <Text style={styles.stepperValue} testID="custom-hours-value">
                           {customHours} h
                         </Text>
 
-                        <Pressable
+                        <Button
+                          variant="tertiary"
+                          fullWidth={false}
+                          label="Increase custom hours"
+                          iconOnly
+                          icon={<Ionicons name="add" size={18} color={dark.textHi} />}
                           testID="button-custom-hours-plus"
                           style={styles.stepperBtn}
                           onPress={() => {
@@ -222,9 +235,7 @@ export function FastingProtocolModal({
                           }}
                           accessibilityRole="button"
                           accessibilityLabel="Increase custom hours"
-                        >
-                          <Ionicons name="add" size={18} color={dark.textHi} />
-                        </Pressable>
+                        />
                       </View>
                       <Text style={styles.stepperNotice}>
                         Maximum planned fast is 20 hours for health safety.
@@ -335,7 +346,7 @@ const createStyles = (dark: ReturnType<typeof useAppearance>['colors']) =>
     closeButton: {
       width: 44,
       height: 44,
-      borderRadius: 22,
+      borderRadius: visualPrimitives.radii[22],
       backgroundColor: dark.s1,
       justifyContent: 'center',
       alignItems: 'center',
@@ -435,7 +446,7 @@ const createStyles = (dark: ReturnType<typeof useAppearance>['colors']) =>
     stepperBtn: {
       width: 44,
       height: 44,
-      borderRadius: 22,
+      borderRadius: visualPrimitives.radii[22],
       backgroundColor: dark.s2,
       justifyContent: 'center',
       alignItems: 'center',

@@ -1,6 +1,8 @@
+import { visualPrimitives } from '@calipartner/ui/tokens';
+import { Button } from '@calipartner/ui';
 import { Text } from '@calipartner/ui';
 import React from 'react';
-import { Modal, Pressable, StyleSheet, View } from 'react-native';
+import { Modal, StyleSheet, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { t } from '@/i18n';
 import { fontSize, radius, spacing } from '@/theme/tokens';
@@ -103,22 +105,27 @@ export function FoodPhotoDailyLimitModal({
           {/* Action Buttons */}
           <View style={styles.actionCol}>
             {showUpsell && onUpgrade && (
-              <Pressable
+              <Button
+                variant="secondary"
+                fullWidth={false}
+                label={t('foodLog.photo.upgradeButton')}
+                icon={
+                  <Ionicons name="information-circle-outline" size={18} color={colors.onAccent} />
+                }
                 testID="btn-view-room-plans"
                 accessibilityRole="button"
                 accessibilityLabel={t('foodLog.photo.upgradeButton')}
                 onPress={onUpgrade}
                 style={[styles.primaryBtn, { backgroundColor: colors.accent }]}
-              >
-                <Ionicons name="information-circle-outline" size={18} color={colors.onAccent} />
-                <Text style={[styles.primaryBtnText, { color: colors.onAccent }]}>
-                  {t('foodLog.photo.upgradeButton')}
-                </Text>
-              </Pressable>
+              />
             )}
 
             {onLogManually && (
-              <Pressable
+              <Button
+                variant="secondary"
+                fullWidth={false}
+                label={t('foodLog.photo.logManuallyButton')}
+                icon={<Ionicons name="create-outline" size={18} color={colors.text} />}
                 testID="btn-limit-log-manually"
                 accessibilityRole="button"
                 accessibilityLabel={t('foodLog.photo.logManuallyButton')}
@@ -127,25 +134,19 @@ export function FoodPhotoDailyLimitModal({
                   styles.secondaryBtn,
                   { backgroundColor: colors.surfaceAlt, borderColor: colors.border },
                 ]}
-              >
-                <Ionicons name="create-outline" size={18} color={colors.text} />
-                <Text style={[styles.secondaryBtnText, { color: colors.text }]}>
-                  {t('foodLog.photo.logManuallyButton')}
-                </Text>
-              </Pressable>
+              />
             )}
 
-            <Pressable
+            <Button
+              variant="secondary"
+              fullWidth={false}
+              label={t('common.cancel')}
               testID="btn-close-limit-modal"
               accessibilityRole="button"
               accessibilityLabel={t('common.cancel')}
               onPress={onClose}
               style={styles.cancelBtn}
-            >
-              <Text style={{ color: colors.textMuted, fontSize: fontSize.sm }}>
-                {t('common.cancel')}
-              </Text>
-            </Pressable>
+            />
           </View>
         </View>
       </View>
@@ -168,11 +169,11 @@ const styles = StyleSheet.create({
     padding: spacing.xl,
     alignItems: 'center',
     borderWidth: 1,
-    shadowColor: '#000',
+    shadowColor: visualPrimitives.colors.black,
     shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.35,
-    shadowRadius: 16,
-    elevation: 8,
+    shadowRadius: visualPrimitives.effects[16],
+    elevation: visualPrimitives.effects[8],
   },
   iconWrap: {
     width: 68,

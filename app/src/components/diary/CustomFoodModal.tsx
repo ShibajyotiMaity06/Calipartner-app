@@ -1,7 +1,9 @@
+import { visualPrimitives } from '@calipartner/ui/tokens';
+import { Button } from '@calipartner/ui';
 import { type as inputTypography } from '@calipartner/ui';
 import { Text } from '@calipartner/ui';
 import { useRef, useState } from 'react';
-import { Modal, Pressable, ScrollView, TextInput, View } from 'react-native';
+import { Modal, ScrollView, TextInput, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import type { Food } from '@calipartner/core';
 import { customFoodNutritionForPortion } from '@calipartner/core';
@@ -138,23 +140,26 @@ export function CustomFoodModal({
             <Text style={{ fontSize: fontSize.lg, fontWeight: '700', color: colors.text }}>
               {t('customFood.createTitle')}
             </Text>
-            <Pressable
+            <Button
+              variant="tertiary"
+              fullWidth={false}
+              label="Close"
+              iconOnly
+              icon={<Ionicons name="close" size={20} color={colors.text} />}
               testID="btn-close-custom-food"
               onPress={onClose}
               hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
               style={{
                 width: 36,
                 height: 36,
-                borderRadius: 18,
+                borderRadius: visualPrimitives.radii[18],
                 backgroundColor: colors.surfaceAlt,
                 alignItems: 'center',
                 justifyContent: 'center',
               }}
               accessibilityRole="button"
               accessibilityLabel="Close"
-            >
-              <Ionicons name="close" size={20} color={colors.text} />
-            </Pressable>
+            />
           </View>
 
           {errorMsg && (
@@ -417,7 +422,10 @@ export function CustomFoodModal({
           </ScrollView>
 
           <View style={{ gap: spacing.xs, marginTop: spacing.xs }}>
-            <Pressable
+            <Button
+              variant="secondary"
+              fullWidth={false}
+              label={loading ? t('common.saving') : t('customFood.saveButton')}
               testID="btn-submit-custom-food"
               disabled={loading}
               onPress={handleSave}
@@ -429,13 +437,12 @@ export function CustomFoodModal({
                 minHeight: 48,
                 justifyContent: 'center',
               }}
-            >
-              <Text style={{ color: colors.onAccent, fontWeight: '700', fontSize: fontSize.md }}>
-                {loading ? t('common.saving') : t('customFood.saveButton')}
-              </Text>
-            </Pressable>
+            />
 
-            <Pressable
+            <Button
+              variant="secondary"
+              fullWidth={false}
+              label="Cancel"
               testID="btn-cancel-custom-food"
               disabled={loading}
               onPress={onClose}
@@ -448,11 +455,7 @@ export function CustomFoodModal({
                 minHeight: 44,
                 justifyContent: 'center',
               }}
-            >
-              <Text style={{ color: colors.textMuted, fontWeight: '600', fontSize: fontSize.sm }}>
-                Cancel
-              </Text>
-            </Pressable>
+            />
           </View>
         </View>
       </View>

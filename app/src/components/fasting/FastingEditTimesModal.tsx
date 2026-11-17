@@ -1,3 +1,5 @@
+import { visualPrimitives } from '@calipartner/ui/tokens';
+import { Button } from '@calipartner/ui';
 import { useTheme as useAppearance } from '@calipartner/ui/theme';
 import { type as inputTypography } from '@calipartner/ui';
 import { getLocalDateString, fastingTimeToUtc, addDaysToDateString } from '@calipartner/core';
@@ -166,15 +168,18 @@ export function FastingEditTimesModal({
               </Text>
               <Text style={styles.subtitle}>{t('fastingRefresh.localTimes')}</Text>
             </View>
-            <Pressable
+            <Button
+              variant="tertiary"
+              fullWidth={false}
+              label={t('common.cancel')}
+              iconOnly
+              icon={<Ionicons name="close" size={20} color={dark.textMid} />}
               testID="button-close-edit-times"
               onPress={onClose}
               style={styles.closeButton}
               accessibilityRole="button"
               accessibilityLabel={t('common.cancel')}
-            >
-              <Ionicons name="close" size={20} color={dark.textMid} />
-            </Pressable>
+            />
           </View>
 
           <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.form}>
@@ -235,18 +240,21 @@ export function FastingEditTimesModal({
                 <Text style={styles.fieldLabel}>
                   {t('fasting.endTime')} {t('fastingRefresh.clockFormat')}
                 </Text>
-                <Pressable
+                <Button
+                  variant="secondary"
+                  fullWidth={false}
+                  label={t('fastingRefresh.fastEnded')}
+                  icon={
+                    <Ionicons
+                      name={hasEndTime ? 'checkbox' : 'square-outline'}
+                      size={20}
+                      color={hasEndTime ? dark.apricot : dark.textLo}
+                    />
+                  }
                   testID="toggle-end-time"
                   onPress={() => setHasEndTime(!hasEndTime)}
                   style={styles.checkboxRow}
-                >
-                  <Ionicons
-                    name={hasEndTime ? 'checkbox' : 'square-outline'}
-                    size={20}
-                    color={hasEndTime ? dark.apricot : dark.textLo}
-                  />
-                  <Text style={styles.checkboxLabel}>{t('fastingRefresh.fastEnded')}</Text>
-                </Pressable>
+                />
               </View>
 
               {hasEndTime && (
@@ -338,7 +346,7 @@ const createStyles = (dark: ReturnType<typeof useAppearance>['colors']) =>
     closeButton: {
       width: 44,
       height: 44,
-      borderRadius: 22,
+      borderRadius: visualPrimitives.radii[22],
       backgroundColor: dark.s1,
       justifyContent: 'center',
       alignItems: 'center',

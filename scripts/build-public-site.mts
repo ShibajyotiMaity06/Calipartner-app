@@ -47,7 +47,7 @@ export function renderPage(page: PublicPage, env: Record<string, string | undefi
         { '@type': 'ListItem', position: 2, name: page.heading, item: canonical },
       ],
     });
-  if (['/', '/download'].includes(page.path))
+  if (['/about', '/download'].includes(page.path))
     schemas.push({
       '@context': 'https://schema.org',
       '@type': 'MobileApplication',
@@ -78,8 +78,8 @@ ${store.appleId ? `<meta name="apple-itunes-app" content="app-id=${store.appleId
 <script type="application/ld+json">${json(schemas)}</script>${page.path === '/' ? '<script src="/auth-return.js"></script>' : ''}
 </head><body><a class="skip" href="#main" data-testid="skip-content">Skip to content</a>
 <header><a class="brand" href="/" data-testid="site-home" aria-label="CaliPartner home"><img src="/logo.svg" width="48" height="48" alt=""><span>CaliPartner</span></a><nav aria-label="Main navigation">${link('/features', 'Features', 'nav-features')}${link('/pricing', 'Pricing', 'nav-pricing')}${link('/download', 'Get the app', 'nav-download')}</nav></header>
-<main id="main"><div class="hero"><p class="eyebrow">${escapeHtml(copy.audience)}</p><h1>${escapeHtml(page.heading)}</h1><p class="intro">${escapeHtml(page.intro)}</p>${link('/welcome?utm_source=calipartner_site&utm_medium=website', 'Open CaliPartner', 'open-app', true)}</div>
-<div class="${page.path === '/' || page.path === '/features' ? 'grid' : 'reading'}">${page.sections.map((section) => `<section><h2>${escapeHtml(section.title)}</h2><p>${escapeHtml(section.body)}</p></section>`).join('')}${extra}</div>
+<main id="main"><div class="hero"><p class="eyebrow">${escapeHtml(copy.audience)}</p><h1>${escapeHtml(page.heading)}</h1><p class="intro">${escapeHtml(page.intro)}</p>${link('/launch?utm_source=calipartner_site&utm_medium=website', 'Open CaliPartner', 'open-app', true)}</div>
+<div class="${page.path === '/about' || page.path === '/features' ? 'grid' : 'reading'}">${page.sections.map((section) => `<section><h2>${escapeHtml(section.title)}</h2><p>${escapeHtml(section.body)}</p></section>`).join('')}${extra}</div>
 </main><footer><p>CaliPartner · General information, not medical advice.</p><nav aria-label="Footer navigation">${link('/privacy', 'Privacy', 'footer-privacy')}${link('/terms', 'Terms', 'footer-terms')}${link('/support', 'Support', 'footer-support')}${link('/delete-account', 'Delete account', 'footer-delete')}</nav></footer></body></html>`;
 }
 
@@ -106,7 +106,7 @@ export async function buildPublicSite(
   } else await fs.access(shell);
   for (const page of pages)
     await fs.writeFile(
-      path.join(dist, page.path === '/' ? 'index.html' : `${page.path.slice(1)}.html`),
+      path.join(dist, page.path === '/' ? 'about.html' : `${page.path.slice(1)}.html`),
       renderPage(page, env),
     );
   await fs.writeFile(path.join(dist, 'auth-return.js'), authReturnScript);
@@ -126,7 +126,7 @@ export async function buildPublicSite(
   );
   await fs.writeFile(
     path.join(dist, 'download-qr.svg'),
-    await QRCode.toString(`${copy.origin}/welcome?utm_source=website_qr&utm_medium=qr`, {
+    await QRCode.toString(`${copy.origin}/launch?utm_source=website_qr&utm_medium=qr`, {
       type: 'svg',
       margin: 4,
     }),

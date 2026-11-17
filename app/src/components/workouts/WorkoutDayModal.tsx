@@ -214,20 +214,28 @@ export function WorkoutDayModal({
           <Text variant="heading" style={styles.flex}>
             {t('workoutFlow.title')}
           </Text>
-          <Pressable
+          <Button
+            variant="tertiary"
+            fullWidth={false}
+            label={t('squadDesign.close')}
+            iconOnly
+            icon={<Ionicons name="close" size={homeLayout.iconSize} color={dark.textHi} />}
             style={styles.icon}
             accessibilityRole="button"
             accessibilityLabel={t('squadDesign.close')}
             onPress={close}
             disabled={busy || building}
             testID="workout-day-close"
-          >
-            <Ionicons name="close" size={homeLayout.iconSize} color={dark.textHi} />
-          </Pressable>
+          />
         </View>
         <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
           <View style={styles.datePill} testID="workout-day-date">
-            <Pressable
+            <Button
+              variant="tertiary"
+              fullWidth={false}
+              label={t('workoutFlow.previous')}
+              iconOnly
+              icon={<Ionicons name="chevron-back" size={18} color={dark.textHi} />}
               style={styles.dateIcon}
               accessibilityRole="button"
               accessibilityLabel={t('workoutFlow.previous')}
@@ -238,29 +246,32 @@ export function WorkoutDayModal({
                 setError(null);
               }}
               testID="workout-day-previous"
-            >
-              <Ionicons name="chevron-back" size={18} color={dark.textHi} />
-            </Pressable>
+            />
             <View style={styles.dateCenter}>
               <Ionicons name="calendar-outline" size={18} color={dark.copper} />
               <Text variant="body" color={dark.textHi} tabular style={styles.dateText}>
                 {dateLabel}
               </Text>
             </View>
-            <Pressable
+            <Button
+              variant="tertiary"
+              fullWidth={false}
+              label={t('workoutFlow.next')}
+              iconOnly
+              icon={
+                <Ionicons
+                  name="chevron-forward"
+                  size={18}
+                  color={present ? dark.textOff : dark.textHi}
+                />
+              }
               style={styles.dateIcon}
               accessibilityRole="button"
               accessibilityLabel={t('workoutFlow.next')}
               disabled={present || busy || building}
               onPress={() => setDate((value) => addDaysToDateString(value, 1))}
               testID="workout-day-next"
-            >
-              <Ionicons
-                name="chevron-forward"
-                size={18}
-                color={present ? dark.textOff : dark.textHi}
-              />
-            </Pressable>
+            />
           </View>
           {error && (
             <View style={styles.stack}>
@@ -363,34 +374,44 @@ export function WorkoutDayModal({
                               </Text>
                             ))}
                           </Pressable>
-                          <Pressable
+                          <Button
+                            variant="tertiary"
+                            fullWidth={false}
+                            label={t('workoutFlow.edit', { name: exercise.name })}
+                            iconOnly
+                            icon={
+                              <Ionicons
+                                name="pencil"
+                                size={homeLayout.editIconSize}
+                                color={dark.textHi}
+                              />
+                            }
                             style={styles.icon}
                             accessibilityRole="button"
                             accessibilityLabel={t('workoutFlow.edit', { name: exercise.name })}
                             disabled={busy}
                             onPress={() => setEditing(exercise)}
                             testID={`workout-plan-edit-${exercise.id}`}
-                          >
-                            <Ionicons
-                              name="pencil"
-                              size={homeLayout.editIconSize}
-                              color={dark.textHi}
-                            />
-                          </Pressable>
-                          <Pressable
+                          />
+                          <Button
+                            variant="tertiary"
+                            fullWidth={false}
+                            label={t('workoutFlow.remove', { name: exercise.name })}
+                            iconOnly
+                            icon={
+                              <Ionicons
+                                name="remove"
+                                size={homeLayout.iconSize}
+                                color={dark.textHi}
+                              />
+                            }
                             style={styles.icon}
                             accessibilityRole="button"
                             accessibilityLabel={t('workoutFlow.remove', { name: exercise.name })}
                             disabled={busy}
                             onPress={() => void editExercise(exercise).catch(() => {})}
                             testID={`workout-plan-remove-${exercise.id}`}
-                          >
-                            <Ionicons
-                              name="remove"
-                              size={homeLayout.iconSize}
-                              color={dark.textHi}
-                            />
-                          </Pressable>
+                          />
                         </View>
                       ))}
                       <Button
@@ -418,16 +439,23 @@ export function WorkoutDayModal({
                     {t(`workoutFlow.${FREE_WORKOUT_SAMPLES[weeklyPlanDayIndex(today)]!}`)}
                   </Text>
                   <Text variant="bodyS">{t('workoutFlow.sampleHint')}</Text>
-                  <Pressable
+                  <Button
+                    variant="secondary"
+                    fullWidth={false}
+                    label={t('workoutFlow.unlock')}
+                    icon={
+                      <Ionicons
+                        name="arrow-forward"
+                        size={homeLayout.iconSize}
+                        color={dark.textHi}
+                      />
+                    }
                     style={styles.unlock}
                     accessibilityRole="button"
                     accessibilityLabel={t('workoutFlow.unlock')}
                     onPress={() => router.push('/paywall')}
                     testID="workout-plan-upgrade"
-                  >
-                    <Ionicons name="arrow-forward" size={homeLayout.iconSize} color={dark.textHi} />
-                    <Text>{t('workoutFlow.unlock')}</Text>
-                  </Pressable>
+                  />
                 </View>
               )}
               <View style={styles.dividerRow}>

@@ -1,8 +1,7 @@
-import { useTheme as useAppearance } from '@calipartner/ui/theme';
-import { type as inputTypography } from '@calipartner/ui';
-import React, { useMemo, useState } from 'react';
-import { StyleSheet, TextInput, View, TouchableOpacity } from 'react-native';
+import React from 'react';
+import { StyleSheet, View } from 'react-native';
 import {
+  calculateAge,
   cmToFtIn,
   ftInToCm,
   kgToLb,
@@ -11,10 +10,11 @@ import {
   type Sex,
   type Units,
 } from '@calipartner/core';
-import { Text, space, radius } from '@calipartner/ui';
-import { InteractiveDobPicker } from '@/components/onboarding/InteractiveDobPicker';
+import { SegmentedControl, Text, space, useTheme } from '@calipartner/ui';
+import { CompactSelect } from '@/components/CompactSelect';
 import { t } from '@/i18n';
-import { playClickSound } from '@/lib/sound';
+import { PlanCard, PlanTextField, planStyles } from './PlanPrimitives';
+import { StatsPicker } from './StatsPicker';
 
 interface BodyStatsStepProps {
   units: Units;
@@ -29,557 +29,184 @@ interface BodyStatsStepProps {
   errorHeight?: string;
   errorWeight?: string;
   errorBodyFat?: string;
+  identityConfirmed?: boolean;
   onChangeUnits: (units: Units) => void;
   onChangeNickname?: (nickname: string) => void;
   onChangeSex: (sex: Sex) => void;
   onChangeDateOfBirth: (dob: string) => void;
-  onChangeHeightCm: (heightCm: number) => void;
-  onChangeWeightKg: (weightKg: number) => void;
+  onChangeHeightCm: (cm: number) => void;
+  onChangeWeightKg: (kg: number) => void;
   onChangeBodyFat: (bodyFat: number | null) => void;
 }
-
-export function BodyStatsStep({
-  units,
-  nickname = '',
-  sex,
-  dateOfBirth,
-  heightCm,
-  weightKg,
-  bodyFatPercentage,
-  goal,
-  errorDateOfBirth,
-  errorHeight,
-  errorWeight,
-  errorBodyFat,
-  onChangeUnits,
-  onChangeNickname,
-  onChangeSex,
-  onChangeDateOfBirth,
-  onChangeHeightCm,
-  onChangeWeightKg,
-  onChangeBodyFat,
-}: BodyStatsStepProps) {
-  const { colors: dark } = useAppearance();
-  const styles = createStyles(dark);
-
-  // Local text input states so user can type freely
-  const [heightCmText, setHeightCmText] = useState(heightCm > 0 ? String(heightCm) : '');
-  const [weightText, setWeightText] = useState(
-    weightKg > 0
-      ? units === 'metric'
-        ? String(weightKg)
-        : String(Math.round(kgToLb(weightKg) * 10) / 10)
-      : '',
-  );
-  const [bodyFatText, setBodyFatText] = useState(
-    bodyFatPercentage !== null ? String(bodyFatPercentage) : '',
-  );
-
-  // Imperial feet & inches
-  const imperialFtIn = useMemo(() => cmToFtIn(heightCm || 175), [heightCm]);
-  const [feetText, setFeetText] = useState(String(imperialFtIn.feet));
-  const [inchesText, setInchesText] = useState(String(imperialFtIn.inches));
-
-  // Sync when units toggle changes
-  const handleToggleUnits = (nextUnits: Units) => {
-    playClickSound();
-    if (nextUnits === units) return;
-    onChangeUnits(nextUnits);
-    if (nextUnits === 'imperial') {
-      const ftIn = cmToFtIn(heightCm || 175);
-      setFeetText(String(ftIn.feet));
-      setInchesText(String(ftIn.inches));
-      const convertedLb = Math.round(kgToLb(weightKg || 70) * 10) / 10;
-      setWeightText(String(convertedLb));
-    } else {
-      setHeightCmText(String(Math.round(heightCm || 175)));
-      setWeightText(String(Math.round((weightKg || 70) * 10) / 10));
-    }
-  };
-
-  // Height change handlers
-  const handleMetricHeightChange = (text: string) => {
-    setHeightCmText(text);
-    const parsed = parseFloat(text);
-    if (!isNaN(parsed) && parsed > 0) {
-      onChangeHeightCm(parsed);
-    }
-  };
-
-  const handleImperialFeetChange = (ftText: string) => {
-    setFeetText(ftText);
-    const ft = parseInt(ftText, 10) || 0;
-    const inch = parseInt(inchesText, 10) || 0;
-    const cm = Math.round(ftInToCm(ft, inch));
-    onChangeHeightCm(cm);
-  };
-
-  const handleImperialInchesChange = (inchText: string) => {
-    setInchesText(inchText);
-    const ft = parseInt(feetText, 10) || 0;
-    const inch = parseInt(inchText, 10) || 0;
-    const cm = Math.round(ftInToCm(ft, inch));
-    onChangeHeightCm(cm);
-  };
-
-  // Weight change handler
-  const handleWeightChange = (text: string) => {
-    setWeightText(text);
-    const parsed = parseFloat(text);
-    if (!isNaN(parsed) && parsed > 0) {
-      const kg = units === 'metric' ? parsed : lbToKg(parsed);
-      onChangeWeightKg(Math.round(kg * 100) / 100);
-    }
-  };
-
-  // Body fat change handler
-  const handleBodyFatChange = (text: string) => {
-    setBodyFatText(text);
-    if (text.trim() === '') {
-      onChangeBodyFat(null);
-      return;
-    }
-    const parsed = parseFloat(text);
-    if (!isNaN(parsed)) {
-      onChangeBodyFat(parsed);
-    }
-  };
-
-  // Calculate live BMI
-  const bmiInfo = useMemo(() => {
-    if (!heightCm || !weightKg || heightCm <= 0 || weightKg <= 0) return null;
-    const heightM = heightCm / 100;
-    const bmi = weightKg / (heightM * heightM);
-    const rounded = Math.round(bmi * 10) / 10;
-
-    let category = t('onboarding.bodyStats.bmiCategoryNormal');
-    if (rounded < 18.5) {
-      category = t('onboarding.bodyStats.bmiCategoryUnderweight');
-    } else if (rounded >= 25 && rounded < 30) {
-      category = t('onboarding.bodyStats.bmiCategoryOverweight');
-    } else if (rounded >= 30) {
-      category = t('onboarding.bodyStats.bmiCategoryObese');
-    }
-
-    const isCutUnderweight = rounded < 18.5 && goal === 'cut';
-
-    return { value: rounded, category, isCutUnderweight };
-  }, [heightCm, weightKg, goal]);
-
+export function BodyStatsStep(props: BodyStatsStepProps) {
+  const { colors } = useTheme();
+  const { units, weightKg, heightCm, dateOfBirth, onChangeHeightCm, onChangeWeightKg } = props;
+  const metric = units === 'metric';
+  const weight = weightKg > 0 ? (metric ? weightKg : kgToLb(weightKg)) : metric ? 70 : 154;
+  const height = heightCm > 0 ? heightCm : 175;
+  const imperial = cmToFtIn(height);
+  const age = dateOfBirth ? calculateAge(dateOfBirth) : 25;
+  const unit = t(metric ? 'entryPolish.kg' : 'entryPolish.lb');
   return (
-    <View style={styles.container}>
-      {/* What should we call you? (Name / Nickname) */}
-      <View style={styles.section}>
-        <Text variant="label" color={dark.textLo} style={styles.sectionLabel}>
-          What should we call you?
-        </Text>
-        <TextInput
-          style={[
-            [
-              styles.input,
-              {
-                backgroundColor: dark.s1,
-                borderColor: dark.hairline,
-                color: dark.textHi,
-              },
-            ],
-            { fontFamily: inputTypography.body.fontFamily },
-          ]}
-          value={nickname}
-          onChangeText={onChangeNickname}
-          placeholder="Your name or nickname"
-          placeholderTextColor={dark.textOff}
-          autoCapitalize="words"
-          autoCorrect={false}
-          testID="input-nickname"
-        />
-      </View>
-
-      {/* Units Segmented Toggle */}
-      <View style={styles.section}>
-        <Text variant="label" color={dark.textLo} style={styles.sectionLabel}>
-          {t('onboarding.bodyStats.unitsLabel')}
-        </Text>
-        <View style={styles.segmentContainer} accessible accessibilityRole="radiogroup">
-          <TouchableOpacity
-            testID="units-toggle-metric"
-            accessibilityRole="radio"
-            accessibilityState={{ selected: units === 'metric' }}
-            accessibilityLabel={t('onboarding.bodyStats.metric')}
-            onPress={() => handleToggleUnits('metric')}
-            style={[styles.segmentItem, units === 'metric' && styles.segmentActive]}
-          >
-            <Text
-              variant="bodyS"
-              color={units === 'metric' ? dark.textHi : dark.textLo}
-              style={units === 'metric' ? styles.segmentTextBold : undefined}
-            >
-              {t('onboarding.bodyStats.metric')}
-            </Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            testID="units-toggle-imperial"
-            accessibilityRole="radio"
-            accessibilityState={{ selected: units === 'imperial' }}
-            accessibilityLabel={t('onboarding.bodyStats.imperial')}
-            onPress={() => handleToggleUnits('imperial')}
-            style={[styles.segmentItem, units === 'imperial' && styles.segmentActive]}
-          >
-            <Text
-              variant="bodyS"
-              color={units === 'imperial' ? dark.textHi : dark.textLo}
-              style={units === 'imperial' ? styles.segmentTextBold : undefined}
-            >
-              {t('onboarding.bodyStats.imperial')}
-            </Text>
-          </TouchableOpacity>
-        </View>
-      </View>
-
-      {/* Sex Chips */}
-      <View style={styles.section}>
-        <Text variant="label" color={dark.textLo} style={styles.sectionLabel}>
-          {t('onboarding.bodyStats.sexLabel')}
-        </Text>
-        <Text variant="bodyS" color={dark.textMid} style={styles.helpText}>
-          {t('onboarding.bodyStats.sexHelp')}
-        </Text>
-        <View style={styles.chipsRow} accessible accessibilityRole="radiogroup">
-          {(['male', 'female', 'other'] as const).map((s) => {
-            const isSelected = sex === s;
-            return (
-              <TouchableOpacity
-                key={s}
-                testID={`sex-chip-${s}`}
-                accessibilityRole="radio"
-                accessibilityState={{ selected: isSelected }}
-                accessibilityLabel={t(`onboarding.bodyStats.${s}`)}
-                onPress={() => {
-                  playClickSound();
-                  onChangeSex(s);
-                }}
-                style={[
-                  styles.chip,
-                  {
-                    backgroundColor: isSelected ? dark.s2 : dark.s1,
-                    borderColor: isSelected ? dark.apricot : dark.hairline,
-                    borderWidth: isSelected ? 2 : 1,
-                  },
-                ]}
-              >
-                <Text
-                  variant="body"
-                  color={isSelected ? dark.textHi : dark.textMid}
-                  style={isSelected ? styles.chipTextBold : undefined}
-                >
-                  {t(`onboarding.bodyStats.${s}`)}
-                </Text>
-              </TouchableOpacity>
-            );
-          })}
-        </View>
-      </View>
-
-      {/* Interactive Date of Birth Picker */}
-      <View style={styles.section}>
-        <Text variant="label" color={dark.textLo} style={styles.sectionLabel}>
-          {t('onboarding.bodyStats.dobLabel')}
-        </Text>
-        <InteractiveDobPicker
-          value={dateOfBirth}
-          onChange={onChangeDateOfBirth}
-          error={errorDateOfBirth}
-        />
-      </View>
-
-      {/* Height TextInput (cm vs ft/in) */}
-      <View style={styles.section}>
-        <Text variant="label" color={dark.textLo} style={styles.sectionLabel}>
-          {t('onboarding.bodyStats.heightLabel')} ({units === 'metric' ? 'cm' : 'ft & in'})
-        </Text>
-        {units === 'metric' ? (
-          <TextInput
-            testID="input-height"
-            value={heightCmText}
-            onChangeText={handleMetricHeightChange}
-            placeholder={t('onboarding.bodyStats.heightCmPlaceholder')}
-            placeholderTextColor={dark.textOff}
-            keyboardType="numeric"
-            accessibilityLabel={`${t('onboarding.bodyStats.heightLabel')} in centimeters`}
-            style={[
-              [
-                styles.input,
-                {
-                  backgroundColor: dark.s2,
-                  borderColor: errorHeight ? dark.danger : dark.hairline,
-                  color: dark.textHi,
-                },
-              ],
-              { fontFamily: inputTypography.body.fontFamily },
+    <View style={planStyles.section} testID="body-stats-pickers">
+      {!props.identityConfirmed ? (
+        <PlanCard>
+          <PlanTextField
+            label={t('entryPolish.nickname')}
+            value={props.nickname ?? ''}
+            onChangeText={props.onChangeNickname ?? (() => {})}
+            testID="input-nickname"
+          />
+          <CompactSelect
+            label={t('onboarding.bodyStats.sexLabel')}
+            selected={[props.sex]}
+            onSelect={props.onChangeSex}
+            options={(['male', 'female', 'other'] as const).map((value) => ({
+              value,
+              label: t(`onboarding.bodyStats.${value}`),
+            }))}
+            testID="sex-picker"
+          />
+        </PlanCard>
+      ) : null}
+      <PlanCard>
+        <View style={styles.header}>
+          <Text variant="heading">{t('onboarding.bodyStats.weightLabel')}</Text>
+          <SegmentedControl
+            options={[
+              { value: 'imperial', label: t('entryPolish.lb') },
+              { value: 'metric', label: t('entryPolish.kg') },
             ]}
+            value={units}
+            onChange={(value) => props.onChangeUnits(value as Units)}
+            testID="weight-units"
+          />
+        </View>
+        <Text
+          variant="pickerValue"
+          tabular
+          color={colors.textHi}
+          style={styles.value}
+          testID="weight-value"
+        >
+          {weightKg > 0 ? `${Math.round(weight * 10) / 10} ${unit}` : t('entryPolish.chooseValue')}
+        </Text>
+        <StatsPicker
+          key={units}
+          horizontal
+          label={t('onboarding.bodyStats.weightLabel')}
+          value={weight}
+          min={metric ? 20 : 45}
+          max={metric ? 500 : 1102}
+          step={metric ? 0.5 : 1}
+          format={(value) => `${value} ${unit}`}
+          onChange={(value) => onChangeWeightKg(metric ? value : lbToKg(value))}
+          testID="weight-ruler"
+        />
+        <Text variant="bodyS">{t('entryPolish.rulerHint')}</Text>
+        {props.errorWeight ? (
+          <Text color={colors.danger} accessibilityRole="alert">
+            {props.errorWeight}
+          </Text>
+        ) : null}
+      </PlanCard>
+      <PlanCard>
+        <Text variant="heading">{t('onboarding.bodyStats.heightLabel')}</Text>
+        {heightCm <= 0 ? <Text variant="bodyS">{t('entryPolish.chooseValue')}</Text> : null}
+        {metric ? (
+          <StatsPicker
+            label={t('onboarding.bodyStats.heightLabel')}
+            value={height}
+            min={120}
+            max={230}
+            format={(value) => `${value} ${t('repairUnits.cm')}`}
+            onChange={onChangeHeightCm}
+            testID="height-cm-wheel"
           />
         ) : (
-          <View style={styles.dualInputRow}>
-            <View style={styles.dualInputItem}>
-              <TextInput
-                testID="input-height-ft"
-                value={feetText}
-                onChangeText={handleImperialFeetChange}
-                placeholder={t('onboarding.bodyStats.heightFtPlaceholder')}
-                placeholderTextColor={dark.textOff}
-                keyboardType="numeric"
-                accessibilityLabel="Height in feet"
-                style={[
-                  [
-                    styles.input,
-                    {
-                      backgroundColor: dark.s2,
-                      borderColor: errorHeight ? dark.danger : dark.hairline,
-                      color: dark.textHi,
-                    },
-                  ],
-                  { fontFamily: inputTypography.body.fontFamily },
-                ]}
+          <View style={styles.heightRow}>
+            <View style={styles.flex}>
+              <StatsPicker
+                label={t('repairUnits.ft')}
+                value={imperial.feet}
+                min={4}
+                max={7}
+                format={(value) => `${value} ${t('repairUnits.ft')}`}
+                onChange={(value) => onChangeHeightCm(ftInToCm(value, imperial.inches))}
+                testID="height-ft-wheel"
               />
-              <Text variant="bodyS" color={dark.textMid} style={styles.unitSuffix}>
-                ft
-              </Text>
             </View>
-            <View style={styles.dualInputItem}>
-              <TextInput
-                testID="input-height-in"
-                value={inchesText}
-                onChangeText={handleImperialInchesChange}
-                placeholder={t('onboarding.bodyStats.heightInPlaceholder')}
-                placeholderTextColor={dark.textOff}
-                keyboardType="numeric"
-                accessibilityLabel="Height in inches"
-                style={[
-                  [
-                    styles.input,
-                    {
-                      backgroundColor: dark.s2,
-                      borderColor: errorHeight ? dark.danger : dark.hairline,
-                      color: dark.textHi,
-                    },
-                  ],
-                  { fontFamily: inputTypography.body.fontFamily },
-                ]}
+            <View style={styles.flex}>
+              <StatsPicker
+                label={t('entryPolish.inch')}
+                value={imperial.inches}
+                min={0}
+                max={11}
+                format={(value) => `${value} ${t('entryPolish.inch')}`}
+                onChange={(value) => onChangeHeightCm(ftInToCm(imperial.feet, value))}
+                testID="height-in-wheel"
               />
-              <Text variant="bodyS" color={dark.textMid} style={styles.unitSuffix}>
-                in
-              </Text>
             </View>
           </View>
         )}
-        {errorHeight ? (
-          <Text variant="label" color={dark.danger} testID="error-height">
-            {errorHeight}
+        {props.errorHeight ? (
+          <Text color={colors.danger} accessibilityRole="alert">
+            {props.errorHeight}
           </Text>
         ) : null}
-      </View>
-
-      {/* Weight TextInput (kg vs lb) */}
-      <View style={styles.section}>
-        <Text variant="label" color={dark.textLo} style={styles.sectionLabel}>
-          {t('onboarding.bodyStats.weightLabel')} ({units === 'metric' ? 'kg' : 'lb'})
-        </Text>
-        <TextInput
-          testID="input-weight"
-          value={weightText}
-          onChangeText={handleWeightChange}
-          placeholder={t('onboarding.bodyStats.weightPlaceholder')}
-          placeholderTextColor={dark.textOff}
-          keyboardType="numeric"
-          accessibilityLabel={`${t('onboarding.bodyStats.weightLabel')} in ${units === 'metric' ? 'kilograms' : 'pounds'}`}
-          style={[
-            [
-              styles.input,
-              {
-                backgroundColor: dark.s2,
-                borderColor: errorWeight ? dark.danger : dark.hairline,
-                color: dark.textHi,
-              },
-            ],
-            { fontFamily: inputTypography.body.fontFamily },
-          ]}
-        />
-        {errorWeight ? (
-          <Text variant="label" color={dark.danger} testID="error-weight">
-            {errorWeight}
-          </Text>
-        ) : null}
-      </View>
-
-      {/* Optional Body Fat % */}
-      <View style={styles.section}>
-        <Text variant="label" color={dark.textLo} style={styles.sectionLabel}>
-          {t('onboarding.bodyStats.bodyFatLabel')}
-        </Text>
-        <TextInput
-          testID="input-body-fat"
-          value={bodyFatText}
-          onChangeText={handleBodyFatChange}
-          placeholder={t('onboarding.bodyStats.bodyFatPlaceholder')}
-          placeholderTextColor={dark.textOff}
-          keyboardType="numeric"
-          accessibilityLabel={t('onboarding.bodyStats.bodyFatLabel')}
-          style={[
-            [
-              styles.input,
-              {
-                backgroundColor: dark.s2,
-                borderColor: errorBodyFat ? dark.danger : dark.hairline,
-                color: dark.textHi,
-              },
-            ],
-            { fontFamily: inputTypography.body.fontFamily },
-          ]}
-        />
-        {errorBodyFat ? (
-          <Text variant="label" color={dark.danger} testID="error-body-fat">
-            {errorBodyFat}
-          </Text>
+      </PlanCard>
+      <PlanCard>
+        <Text variant="heading">{t('entryPolish.age')}</Text>
+        {props.identityConfirmed ? (
+          <Text tabular>{t('entryPolish.years', { value: age })}</Text>
         ) : (
-          <Text variant="label" color={dark.textLo} style={styles.helpText}>
-            {t('onboarding.bodyStats.bodyFatHelp')}
-          </Text>
+          <StatsPicker
+            label={t('entryPolish.age')}
+            value={age}
+            min={16}
+            max={90}
+            format={(value) => t('entryPolish.years', { value })}
+            testID="age-wheel"
+            onChange={(value) => {
+              // Local estimate for setup only. Account creation requires the actual birth date.
+              const now = new Date();
+              const year = now.getFullYear() - value;
+              const month = now.getMonth();
+              const day = Math.min(now.getDate(), new Date(year, month + 1, 0).getDate());
+              props.onChangeDateOfBirth(
+                `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`,
+              );
+            }}
+          />
         )}
-      </View>
-
-      {/* Live BMI Banner */}
-      {bmiInfo ? (
-        <View
-          style={[
-            styles.bmiCard,
-            {
-              borderColor: bmiInfo.isCutUnderweight ? dark.danger : dark.hairline,
-            },
-          ]}
-          testID="bmi-indicator-card"
-        >
-          <View style={styles.bmiRow}>
-            <Text variant="body" color={dark.textHi}>
-              {t('onboarding.bodyStats.bmiLabel')}:{' '}
-              <Text variant="body" color={dark.textHi} style={{ fontWeight: '700' }}>
-                {bmiInfo.value}
-              </Text>
-            </Text>
-            <View style={styles.bmiBadge}>
-              <Text variant="label" color={dark.textMid}>
-                {bmiInfo.category}
-              </Text>
-            </View>
-          </View>
-          {bmiInfo.isCutUnderweight && (
-            <Text variant="label" color={dark.danger} testID="bmi-cut-warning">
-              {t('onboarding.bodyStats.bmiCutWarning')}
-            </Text>
-          )}
-        </View>
-      ) : null}
+        <Text variant="bodyS">
+          {t(props.identityConfirmed ? 'entryPolish.ageConfirmed' : 'entryPolish.ageHint')}
+        </Text>
+        {!dateOfBirth ? (
+          <Text variant="bodyS">{t('entryPolish.chooseValue')}</Text>
+        ) : age < 18 ? (
+          <Text color={colors.danger} accessibilityRole="alert">
+            {t('profileSetup.under18Error')}
+          </Text>
+        ) : null}
+        {props.errorDateOfBirth ? (
+          <Text color={colors.danger} accessibilityRole="alert">
+            {props.errorDateOfBirth}
+          </Text>
+        ) : null}
+      </PlanCard>
     </View>
   );
 }
-
-const createStyles = (dark: ReturnType<typeof useAppearance>['colors']) =>
-  StyleSheet.create({
-    container: {
-      paddingHorizontal: space[4],
-      gap: space[4],
-      paddingTop: space[2],
-    },
-    section: {
-      gap: space[1],
-    },
-    sectionLabel: {
-      textTransform: 'uppercase',
-      letterSpacing: 0.5,
-      fontWeight: '600',
-    },
-    helpText: {
-      lineHeight: 18,
-    },
-    input: {
-      minHeight: 48,
-      borderRadius: radius.control,
-      borderWidth: 1,
-      paddingHorizontal: space[3],
-      fontSize: 16,
-    },
-    segmentContainer: {
-      flexDirection: 'row',
-      borderRadius: radius.full,
-      backgroundColor: dark.s2,
-      borderWidth: 1,
-      borderColor: dark.hairline,
-      padding: 3,
-      minHeight: 44,
-    },
-    segmentItem: {
-      flex: 1,
-      borderRadius: radius.full,
-      alignItems: 'center',
-      justifyContent: 'center',
-      paddingVertical: space[2],
-      minHeight: 40,
-    },
-    segmentActive: {
-      backgroundColor: dark.s1,
-      borderWidth: 1,
-      borderColor: dark.hairlineLit,
-    },
-    segmentTextBold: {
-      fontWeight: '600',
-    },
-    chipsRow: {
-      flexDirection: 'row',
-      gap: space[2],
-    },
-    chip: {
-      flex: 1,
-      borderRadius: radius.full,
-      minHeight: 44,
-      alignItems: 'center',
-      justifyContent: 'center',
-      paddingHorizontal: space[2],
-    },
-    chipTextBold: {
-      fontWeight: '600',
-    },
-    dualInputRow: {
-      flexDirection: 'row',
-      gap: space[2],
-    },
-    dualInputItem: {
-      flex: 1,
-      position: 'relative',
-      justifyContent: 'center',
-    },
-    unitSuffix: {
-      position: 'absolute',
-      right: space[3],
-      fontWeight: '500',
-    },
-    bmiCard: {
-      backgroundColor: dark.s1,
-      borderWidth: 1,
-      borderRadius: radius.card,
-      padding: space[3],
-      gap: space[1],
-    },
-    bmiRow: {
-      flexDirection: 'row',
-      justifyContent: 'space-between',
-      alignItems: 'center',
-    },
-    bmiBadge: {
-      backgroundColor: dark.s2,
-      borderWidth: 1,
-      borderColor: dark.hairline,
-      borderRadius: radius.full,
-      paddingHorizontal: space[2],
-      paddingVertical: 2,
-    },
-  });
+const styles = StyleSheet.create({
+  header: {
+    gap: space[3],
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    flexWrap: 'wrap',
+  },
+  value: { textAlign: 'center' },
+  heightRow: { flexDirection: 'row', gap: space[2], flexWrap: 'wrap' },
+  flex: { flex: 1, minWidth: 0 },
+});

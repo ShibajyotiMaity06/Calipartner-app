@@ -1,6 +1,8 @@
+import { visualPrimitives } from '@calipartner/ui/tokens';
+import { Button } from '@calipartner/ui';
 import { useTheme as useAppearance } from '@calipartner/ui/theme';
 import React, { useState } from 'react';
-import { Modal, ScrollView, StyleSheet, Switch, TouchableOpacity, View } from 'react-native';
+import { Modal, ScrollView, StyleSheet, Switch, View } from 'react-native';
 import { Text } from '@calipartner/ui';
 import { Ionicons } from '@expo/vector-icons';
 import type { WorkoutSummary, WorkoutWithDetails } from '@calipartner/core';
@@ -50,15 +52,18 @@ export function WorkoutFinishSummaryModal({
         {/* Header */}
         <View style={styles.header}>
           <Text style={styles.headerTitle}>{t('workouts.summary.completeTitle')}</Text>
-          <TouchableOpacity
+          <Button
+            variant="tertiary"
+            fullWidth={false}
+            label={t('common.cancel')}
+            iconOnly
+            icon={<Ionicons name="close" size={24} color={dark.textHi} />}
             testID={`${testID}-btn-close`}
             onPress={onClose}
             style={styles.closeBtn}
             accessibilityRole="button"
             accessibilityLabel={t('common.cancel')}
-          >
-            <Ionicons name="close" size={24} color={dark.textHi} />
-          </TouchableOpacity>
+          />
         </View>
 
         <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
@@ -162,23 +167,24 @@ export function WorkoutFinishSummaryModal({
           </View>
 
           {/* Save as Routine Action */}
-          <TouchableOpacity
+          <Button
+            variant="secondary"
+            fullWidth={false}
+            label={routineSaved ? t('workouts.routineSaved') : t('workouts.saveAsRoutine')}
+            icon={
+              <Ionicons
+                name={routineSaved ? 'checkmark-circle' : 'folder-outline'}
+                size={18}
+                color={routineSaved ? dark.teal : dark.apricot}
+              />
+            }
             testID="btn-save-as-routine"
             style={[styles.routineBtn, routineSaved && styles.routineBtnSaved]}
             onPress={handleSaveAsRoutine}
             disabled={routineSaved}
             accessibilityRole="button"
             accessibilityLabel={t('workouts.saveAsRoutine')}
-          >
-            <Ionicons
-              name={routineSaved ? 'checkmark-circle' : 'folder-outline'}
-              size={18}
-              color={routineSaved ? dark.teal : dark.apricot}
-            />
-            <Text style={[styles.routineBtnText, routineSaved && { color: dark.teal }]}>
-              {routineSaved ? t('workouts.routineSaved') : t('workouts.saveAsRoutine')}
-            </Text>
-          </TouchableOpacity>
+          />
 
           {/* Exercise Breakdown List */}
           {summary.exercise_summaries && summary.exercise_summaries.length > 0 && (
@@ -209,41 +215,44 @@ export function WorkoutFinishSummaryModal({
           {/* Edit & Delete Actions (optional triggers) */}
           <View style={styles.manageRow}>
             {onEdit && (
-              <TouchableOpacity
+              <Button
+                variant="secondary"
+                fullWidth={false}
+                label="Edit workout"
+                icon={<Ionicons name="create-outline" size={16} color={dark.textMid} />}
                 testID="btn-workout-summary-edit"
                 style={styles.manageBtn}
                 onPress={onEdit}
                 accessibilityRole="button"
                 accessibilityLabel="Edit workout"
-              >
-                <Ionicons name="create-outline" size={16} color={dark.textMid} />
-                <Text style={styles.manageBtnText}>Edit workout</Text>
-              </TouchableOpacity>
+              />
             )}
             {onDelete && (
-              <TouchableOpacity
+              <Button
+                variant="destructive"
+                fullWidth={false}
+                label="Delete"
+                icon={<Ionicons name="trash-outline" size={16} color={dark.danger} />}
                 testID="btn-workout-summary-delete"
                 style={styles.manageBtn}
                 onPress={onDelete}
                 accessibilityRole="button"
                 accessibilityLabel="Delete workout"
-              >
-                <Ionicons name="trash-outline" size={16} color={dark.danger} />
-                <Text style={[styles.manageBtnText, { color: dark.danger }]}>Delete</Text>
-              </TouchableOpacity>
+              />
             )}
           </View>
 
           {/* Done Button */}
-          <TouchableOpacity
+          <Button
+            variant="secondary"
+            fullWidth={false}
+            label={t('workouts.summary.doneBtn')}
             testID={`${testID}-btn-done`}
             style={styles.doneBtn}
             onPress={onClose}
             accessibilityRole="button"
             accessibilityLabel={t('workouts.summary.doneBtn')}
-          >
-            <Text style={styles.doneBtnText}>{t('workouts.summary.doneBtn')}</Text>
-          </TouchableOpacity>
+          />
         </ScrollView>
       </View>
     </Modal>
@@ -359,7 +368,7 @@ const createStyles = (dark: ReturnType<typeof useAppearance>['colors']) =>
     estPill: {
       paddingHorizontal: 4,
       paddingVertical: 1,
-      borderRadius: 4,
+      borderRadius: visualPrimitives.radii[4],
       backgroundColor: dark.s2,
       borderWidth: 1,
       borderColor: dark.hairlineLit,
@@ -513,7 +522,7 @@ const createStyles = (dark: ReturnType<typeof useAppearance>['colors']) =>
     doneBtnText: {
       fontSize: typeTokens.body.fontSize,
       fontFamily: typeTokens.body.fontFamily,
-      color: dark.onBrand, // #1C1109
+      color: dark.onBrand, // the onBrand token
       fontWeight: '700',
     },
   });

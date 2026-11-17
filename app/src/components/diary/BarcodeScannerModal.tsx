@@ -7,7 +7,6 @@ import {
   ScrollView,
   KeyboardAvoidingView,
   Platform,
-  Pressable,
   StyleSheet,
   TextInput,
   View,
@@ -260,7 +259,18 @@ export function BarcodeScannerModal({
               {t('foodLog.scan.title')}
             </Text>
             <View style={styles.headerActions}>
-              <Pressable
+              <Button
+                variant="tertiary"
+                fullWidth={false}
+                label={t('capture.flashlight')}
+                iconOnly
+                icon={
+                  <Ionicons
+                    name={torchEnabled ? 'flash' : 'flash-outline'}
+                    size={22}
+                    color={torchEnabled ? dark.apricot : dark.textHi}
+                  />
+                }
                 testID="btn-toggle-torch"
                 disabled={Platform.OS === 'web'}
                 accessibilityState={{ disabled: Platform.OS === 'web' }}
@@ -268,15 +278,14 @@ export function BarcodeScannerModal({
                 hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
                 style={styles.iconButton}
                 accessibilityLabel={t('capture.flashlight')}
-              >
-                <Ionicons
-                  name={torchEnabled ? 'flash' : 'flash-outline'}
-                  size={22}
-                  color={torchEnabled ? dark.apricot : dark.textHi}
-                />
-              </Pressable>
+              />
 
-              <Pressable
+              <Button
+                variant="tertiary"
+                fullWidth={false}
+                label={t('common.cancel')}
+                iconOnly
+                icon={<Ionicons name="close" size={26} color={dark.textHi} />}
                 testID="btn-close-scanner"
                 onPress={() => {
                   controlsRef.current?.stop();
@@ -285,9 +294,7 @@ export function BarcodeScannerModal({
                 hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
                 style={styles.iconButton}
                 accessibilityLabel={t('common.cancel')}
-              >
-                <Ionicons name="close" size={26} color={dark.textHi} />
-              </Pressable>
+              />
             </View>
           </View>
 
@@ -415,15 +422,14 @@ export function BarcodeScannerModal({
           {/* Bottom "{t('fastingRefresh.enterBarcode')}" link & Manual TextInput */}
           <View style={styles.bottomBar}>
             {!showManualInput ? (
-              <Pressable
+              <Button
+                variant="secondary"
+                fullWidth={false}
+                label={t('fastingRefresh.enterBarcode')}
                 testID="btn-show-type-number"
                 onPress={() => setShowManualInput(true)}
                 hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-              >
-                <Text variant="bodyS" color={dark.apricot} style={styles.typeNumberLink}>
-                  {t('fastingRefresh.enterBarcode')}
-                </Text>
-              </Pressable>
+              />
             ) : (
               <View style={styles.manualInputRow}>
                 <TextInput
@@ -447,7 +453,10 @@ export function BarcodeScannerModal({
               </View>
             )}
           </View>
-          <Pressable
+          <Button
+            variant="secondary"
+            fullWidth={false}
+            label={t('fastingRefresh.moreOptions')}
             testID="barcode-more-options"
             onPress={() => setShowMore((current) => !current)}
             accessibilityRole="button"
@@ -457,9 +466,7 @@ export function BarcodeScannerModal({
               justifyContent: 'center',
               alignItems: 'center',
             }}
-          >
-            <Text variant="label">{t('fastingRefresh.moreOptions')}</Text>
-          </Pressable>
+          />
           {showMore && (
             <View style={styles.fallbackActions}>
               <Button

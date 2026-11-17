@@ -1,3 +1,5 @@
+import { visualPrimitives } from '@calipartner/ui/tokens';
+import { Button } from '@calipartner/ui';
 import { type as inputTypography } from '@calipartner/ui';
 import { Text } from '@calipartner/ui';
 import React, { useState } from 'react';
@@ -63,14 +65,17 @@ export function CoachReportModal({ visible, messageId, onClose, onSubmit }: Coac
               <Text style={[styles.title, { color: colors.text }]} testID="text-coach-report-title">
                 {t('coach.reportModal.title')}
               </Text>
-              <Pressable
+              <Button
+                variant="tertiary"
+                fullWidth={false}
+                label={t('coach.reportModal.cancel')}
+                iconOnly
+                icon={<Ionicons name="close" size={22} color={colors.textMuted} />}
                 onPress={onClose}
                 accessibilityRole="button"
                 accessibilityLabel={t('coach.reportModal.cancel')}
                 testID="btn-close-coach-report"
-              >
-                <Ionicons name="close" size={22} color={colors.textMuted} />
-              </Pressable>
+              />
             </View>
             <Text style={[styles.subtitle, { color: colors.textMuted }]}>
               {t('coach.reportModal.subtitle')}
@@ -148,7 +153,10 @@ export function CoachReportModal({ visible, messageId, onClose, onSubmit }: Coac
 
           {/* Footer buttons */}
           <View style={styles.footer}>
-            <Pressable
+            <Button
+              variant="secondary"
+              fullWidth={false}
+              label={submitting ? t('coach.reportModal.submitting') : t('coach.reportModal.submit')}
               onPress={handleSubmit}
               disabled={submitting}
               style={[
@@ -158,23 +166,18 @@ export function CoachReportModal({ visible, messageId, onClose, onSubmit }: Coac
               accessibilityRole="button"
               accessibilityLabel={t('coach.reportModal.submit')}
               testID="btn-submit-coach-report"
-            >
-              <Text style={styles.submitBtnText}>
-                {submitting ? t('coach.reportModal.submitting') : t('coach.reportModal.submit')}
-              </Text>
-            </Pressable>
+            />
 
-            <Pressable
+            <Button
+              variant="secondary"
+              fullWidth={false}
+              label={t('coach.reportModal.cancel')}
               onPress={onClose}
               style={[styles.cancelBtn, { borderColor: colors.border }]}
               accessibilityRole="button"
               accessibilityLabel={t('coach.reportModal.cancel')}
               testID="btn-cancel-coach-report"
-            >
-              <Text style={[styles.cancelBtnText, { color: colors.textMuted }]}>
-                {t('coach.reportModal.cancel')}
-              </Text>
-            </Pressable>
+            />
           </View>
         </View>
       </View>
@@ -259,7 +262,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   submitBtnText: {
-    color: '#FFFFFF',
+    color: visualPrimitives.colors.white,
     fontSize: fontSize.sm + 1,
     fontWeight: '600',
   },

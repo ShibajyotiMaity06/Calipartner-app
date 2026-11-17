@@ -1,3 +1,4 @@
+import { Button } from '@calipartner/ui';
 import { type as inputTypography } from '@calipartner/ui';
 import { Text } from '@calipartner/ui';
 import { useState } from 'react';
@@ -133,7 +134,10 @@ export function CopyMealModal({
                 {SECTIONS.map((sec) => {
                   const isSelected = targetSection === sec;
                   return (
-                    <Pressable
+                    <Button
+                      variant="secondary"
+                      fullWidth={false}
+                      label={t(`diary.sections.${sec}` as Parameters<typeof t>[0])}
                       key={sec}
                       testID={`pill-copy-section-${sec}`}
                       onPress={() => setTargetSection(sec)}
@@ -145,24 +149,17 @@ export function CopyMealModal({
                         borderWidth: 1,
                         borderColor: isSelected ? colors.accent : colors.border,
                       }}
-                    >
-                      <Text
-                        style={{
-                          fontSize: fontSize.sm,
-                          fontWeight: '600',
-                          color: isSelected ? colors.onAccent : colors.text,
-                        }}
-                      >
-                        {t(`diary.sections.${sec}` as Parameters<typeof t>[0])}
-                      </Text>
-                    </Pressable>
+                    />
                   );
                 })}
               </View>
             </View>
           )}
 
-          <Pressable
+          <Button
+            variant="secondary"
+            fullWidth={false}
+            label={loading ? t('common.loading') : t('copy.submitButton')}
             testID="btn-submit-copy"
             disabled={loading}
             onPress={handleSubmit}
@@ -173,11 +170,7 @@ export function CopyMealModal({
               alignItems: 'center',
               marginTop: spacing.xs,
             }}
-          >
-            <Text style={{ color: colors.onAccent, fontWeight: '700', fontSize: fontSize.md }}>
-              {loading ? t('common.loading') : t('copy.submitButton')}
-            </Text>
-          </Pressable>
+          />
         </View>
       </View>
     </Modal>

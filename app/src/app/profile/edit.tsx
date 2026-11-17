@@ -1,3 +1,4 @@
+import { Button } from '@calipartner/ui';
 import { type as inputTypography } from '@calipartner/ui';
 import { Text } from '@calipartner/ui';
 import { useEffect, useState } from 'react';
@@ -99,11 +100,14 @@ export default function ProfileEditScreen() {
     >
       <ScrollView contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled">
         <View style={styles.header}>
-          <Pressable testID="btn-back" style={styles.backButton} onPress={() => router.back()}>
-            <Text style={{ color: colors.accent, fontSize: fontSize.md, fontWeight: '500' }}>
-              ‹ Back
-            </Text>
-          </Pressable>
+          <Button
+            variant="secondary"
+            fullWidth={false}
+            label="‹ Back"
+            testID="btn-back"
+            style={styles.backButton}
+            onPress={() => router.back()}
+          />
           <Text style={[styles.title, { color: colors.text }]}>{t('profileEdit.title')}</Text>
         </View>
 
@@ -182,7 +186,10 @@ export default function ProfileEditScreen() {
           </Text>
           <View style={styles.segmentedRow}>
             {(['metric', 'imperial'] as const).map((u) => (
-              <Pressable
+              <Button
+                variant="secondary"
+                fullWidth={false}
+                label={t(`profileSetup.${u}`)}
                 key={u}
                 testID={`btn-edit-units-${u}`}
                 style={[
@@ -193,17 +200,7 @@ export default function ProfileEditScreen() {
                   },
                 ]}
                 onPress={() => setUnits(u)}
-              >
-                <Text
-                  style={{
-                    color: units === u ? colors.onAccent : colors.text,
-                    fontSize: fontSize.sm,
-                    fontWeight: '600',
-                  }}
-                >
-                  {t(`profileSetup.${u}`)}
-                </Text>
-              </Pressable>
+              />
             ))}
           </View>
 
@@ -296,16 +293,15 @@ export default function ProfileEditScreen() {
             </Text>
           )}
 
-          <Pressable
+          <Button
+            variant="secondary"
+            fullWidth={false}
+            label="Update @username"
             testID="btn-change-username"
             style={[styles.secondaryButton, { borderColor: colors.border }]}
             onPress={handleChangeUsername}
             disabled={loading || !newUsername.trim()}
-          >
-            <Text style={{ color: colors.text, fontSize: fontSize.md, fontWeight: '500' }}>
-              Update @username
-            </Text>
-          </Pressable>
+          />
         </View>
       </ScrollView>
     </KeyboardAvoidingView>

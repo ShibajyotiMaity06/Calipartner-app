@@ -1,15 +1,7 @@
 import { useTheme as useAppearance } from '@calipartner/ui/theme';
 import { NavigationIcon } from '@calipartner/ui';
 import React, { useEffect, useState } from 'react';
-import {
-  Modal,
-  Platform,
-  SafeAreaView,
-  ScrollView,
-  StyleSheet,
-  TouchableOpacity,
-  View,
-} from 'react-native';
+import { Modal, Platform, SafeAreaView, ScrollView, StyleSheet, View } from 'react-native';
 import { Button, Card, radius, space, Text } from '@calipartner/ui';
 import { t } from '@/i18n';
 import { playClickSound } from '@/lib/sound';
@@ -90,15 +82,18 @@ export function HealthSyncModal({
         <View style={styles.container} testID={testID}>
           {/* Top Bar */}
           <View style={styles.topBar}>
-            <TouchableOpacity
+            <Button
+              variant="tertiary"
+              fullWidth={false}
+              label="Back"
+              iconOnly
+              icon={<NavigationIcon action="back" />}
               onPress={onClose}
               accessibilityRole="button"
               accessibilityLabel="Back"
               style={styles.backButton}
               testID="btn-close-health-sync"
-            >
-              <NavigationIcon action="back" />
-            </TouchableOpacity>
+            />
             <Text variant="heading" color={dark.textHi}>
               {t('me.healthSync.title')}
             </Text>
@@ -189,17 +184,16 @@ export function HealthSyncModal({
             </Card>
 
             {/* Fix Step Counting Section (E04) */}
-            <TouchableOpacity
+            <Button
+              variant="secondary"
+              fullWidth={false}
+              label={t('me.healthSync.fixStepsBtn')}
               onPress={handleFixStepCounting}
               style={styles.fixStepsButton}
               accessibilityRole="button"
               accessibilityLabel={t('me.healthSync.fixStepsBtn')}
               testID="btn-fix-step-counting"
-            >
-              <Text variant="label" color={dark.apricot}>
-                {t('me.healthSync.fixStepsBtn')}
-              </Text>
-            </TouchableOpacity>
+            />
 
             {showTroubleshoot && (
               <Card elevation="s2" style={styles.troubleshootCard} testID="card-fix-steps-guide">

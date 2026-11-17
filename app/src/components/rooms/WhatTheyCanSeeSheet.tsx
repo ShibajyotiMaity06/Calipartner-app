@@ -1,3 +1,4 @@
+import { visualPrimitives } from '@calipartner/ui/tokens';
 import { useTheme as useAppearance } from '@calipartner/ui/theme';
 import React from 'react';
 import { Modal, Pressable, StyleSheet, View } from 'react-native';
@@ -61,15 +62,18 @@ export function WhatTheyCanSeeSheet({
                 Who sees this
               </Text>
             </View>
-            <Pressable
+            <Button
+              variant="tertiary"
+              fullWidth={false}
+              label="Close sheet"
+              iconOnly
+              icon={<Ionicons name="close" size={20} color={dark.textMid} />}
               onPress={onClose}
               style={styles.closeBtn}
               accessibilityRole="button"
               accessibilityLabel="Close sheet"
               testID="btn-close-who-sees-this"
-            >
-              <Ionicons name="close" size={20} color={dark.textMid} />
-            </Pressable>
+            />
           </View>
 
           <View style={styles.contentBox}>
@@ -88,7 +92,11 @@ export function WhatTheyCanSeeSheet({
 
           <View style={styles.actionRow}>
             {onOpenPrivacy && (
-              <Pressable
+              <Button
+                variant="tertiary"
+                fullWidth={false}
+                label="Change privacy"
+                icon={<Ionicons name="lock-closed-outline" size={16} color={dark.apricot} />}
                 onPress={() => {
                   onClose();
                   onOpenPrivacy();
@@ -97,12 +105,7 @@ export function WhatTheyCanSeeSheet({
                 accessibilityRole="button"
                 accessibilityLabel="Change privacy settings"
                 testID="btn-change-privacy-link"
-              >
-                <Ionicons name="lock-closed-outline" size={16} color={dark.apricot} />
-                <Text variant="label" color={dark.apricot}>
-                  Change privacy
-                </Text>
-              </Pressable>
+              />
             )}
 
             <Button
@@ -139,7 +142,7 @@ const createStyles = (dark: ReturnType<typeof useAppearance>['colors']) =>
     grabber: {
       width: 36,
       height: 4,
-      borderRadius: 2,
+      borderRadius: visualPrimitives.radii[2],
       backgroundColor: dark.hairlineLit,
       alignSelf: 'center',
       marginBottom: space[1],
@@ -157,7 +160,7 @@ const createStyles = (dark: ReturnType<typeof useAppearance>['colors']) =>
     iconCircle: {
       width: 32,
       height: 32,
-      borderRadius: 16,
+      borderRadius: visualPrimitives.radii[16],
       backgroundColor: dark.s2,
       alignItems: 'center',
       justifyContent: 'center',
@@ -165,7 +168,7 @@ const createStyles = (dark: ReturnType<typeof useAppearance>['colors']) =>
     closeBtn: {
       width: 36,
       height: 36,
-      borderRadius: 18,
+      borderRadius: visualPrimitives.radii[18],
       alignItems: 'center',
       justifyContent: 'center',
     },

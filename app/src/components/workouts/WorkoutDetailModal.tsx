@@ -1,3 +1,5 @@
+import { visualPrimitives } from '@calipartner/ui/tokens';
+import { Button } from '@calipartner/ui';
 import { useCurrentLocalDate } from '@/hooks/useCurrentLocalDate';
 import React, { useState } from 'react';
 import {
@@ -104,30 +106,36 @@ export function WorkoutDetailModal({
               { backgroundColor: colors.surface, borderBottomColor: colors.border },
             ]}
           >
-            <TouchableOpacity
+            <Button
+              variant="tertiary"
+              fullWidth={false}
+              label={t('common.cancel')}
+              iconOnly
+              icon={<Ionicons name="close" size={24} color={colors.text} />}
               testID={`${testID}-btn-close`}
               onPress={onClose}
               style={styles.headerBtn}
               accessibilityRole="button"
               accessibilityLabel={t('common.cancel')}
-            >
-              <Ionicons name="close" size={24} color={colors.text} />
-            </TouchableOpacity>
+            />
 
             <Text style={[styles.headerTitle, { color: colors.text }]}>
               {t('workouts.details.title')}
             </Text>
 
             <View style={styles.headerRightActions}>
-              <TouchableOpacity
+              <Button
+                variant="tertiary"
+                fullWidth={false}
+                label={t('workouts.editWorkout')}
+                iconOnly
+                icon={<Ionicons name="pencil" size={20} color={colors.accent} />}
                 testID={`${testID}-btn-edit`}
                 onPress={() => setIsEditing(true)}
                 style={styles.headerBtn}
                 accessibilityRole="button"
                 accessibilityLabel={t('workouts.editWorkout')}
-              >
-                <Ionicons name="pencil" size={20} color={colors.accent} />
-              </TouchableOpacity>
+              />
               <TouchableOpacity
                 testID={`${testID}-btn-delete`}
                 onPress={handleDelete}
@@ -468,7 +476,7 @@ const styles = StyleSheet.create({
   microBadge: {
     paddingHorizontal: 4,
     paddingVertical: 1,
-    borderRadius: 4,
+    borderRadius: visualPrimitives.radii[4],
     borderWidth: 0.5,
   },
   microBadgeText: {
@@ -532,12 +540,12 @@ const styles = StyleSheet.create({
   warmupTag: {
     paddingHorizontal: 6,
     paddingVertical: 2,
-    borderRadius: 4,
+    borderRadius: visualPrimitives.radii[4],
   },
   warmupTagText: {
     fontSize: 9,
     fontWeight: '800',
-    color: '#FFFFFF',
+    color: visualPrimitives.colors.white,
   },
   setDetailValues: {
     fontSize: fontSize.sm,

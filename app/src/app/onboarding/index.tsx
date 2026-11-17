@@ -7,7 +7,6 @@ import {
   KeyboardAvoidingView,
   Modal,
   Platform,
-  Pressable,
   ScrollView,
   StyleSheet,
   View,
@@ -31,6 +30,7 @@ import { useTargets } from '@/hooks/useTargets';
 import { useNetworkStatus } from '@/hooks/useNetworkStatus';
 import { getDb } from '@/db';
 import { t } from '@/i18n';
+import { GrowthProjectionStep } from '@/components/onboarding/GrowthProjectionStep';
 import { GoalStep } from '@/components/onboarding/GoalStep';
 import { ActivityStep } from '@/components/onboarding/ActivityStep';
 import { MotivationStep } from '@/components/onboarding/MotivationStep';
@@ -88,10 +88,7 @@ export default function OnboardingScreen() {
       router.replace('/auth/profile-setup');
       return;
     }
-    if (!user || !profile) {
-      if (!user) router.replace('/welcome');
-      return;
-    }
+    if (user && !profile) return;
     let active = true;
     setMachine(null);
     setSnapshot(null);
@@ -99,16 +96,22 @@ export default function OnboardingScreen() {
     completedRef.current = false;
     const hydrate = async () => {
       const db = await getDb();
-      const draft = await loadOnboardingDraft(db, ownerId);
+      const ownDraft = await loadOnboardingDraft(db, ownerId);
+      const guestDraft = user && !ownDraft ? await loadOnboardingDraft(db, 'guest-user') : null;
+      const draft = ownDraft ?? guestDraft;
       const next = new OnboardingStateMachine({
-        nickname: profile.nickname,
-        sex: profile.sex,
-        dateOfBirth: profile.date_of_birth,
         heightCm: 0,
         weightKg: 0,
         units: 'metric',
         ...draft,
+        ...(profile
+          ? { nickname: profile.nickname, sex: profile.sex, dateOfBirth: profile.date_of_birth }
+          : {}),
       });
+      if (guestDraft && user) {
+        await saveOnboardingDraft(db, user.id, next.getState());
+        await clearOnboardingDraft(db, 'guest-user');
+      }
       // An interrupted store sheet returns to the reviewable feature preview.
       if (['premium', 'paywall'].includes(next.getState().currentStep)) next.goToStep('completed');
       if (next.getState().currentStep === 'motivation') next.goToStep('activity_level');
@@ -154,7 +157,7 @@ export default function OnboardingScreen() {
   const back = () => {
     if (!machine || savingRef.current) return;
     if (machine.getState().currentStep === 'goal') {
-      router.replace('/welcome');
+      if (user) router.replace('/welcome');
       return;
     }
     if (machine.getState().currentStep === 'completed') machine.goToStep('daily_goals');
@@ -250,6 +253,7 @@ export default function OnboardingScreen() {
   const current = snapshot.currentStep;
   const index = Math.max(0, ACTIVE_ONBOARDING_STEPS.indexOf(current));
   const titles: Record<OnboardingStep, string> = {
+    growth_projection: t('entryPolish.growthTitle'),
     goal: t('setup.goalTitle', { name: snapshot.nickname || profile?.nickname || '' }),
     motivation: t('setup.motivationTitle'),
     activity_level: t('onboarding.activity.title'),
@@ -297,15 +301,18 @@ export default function OnboardingScreen() {
       >
         <View style={styles.frame}>
           <View style={styles.nav}>
-            <Pressable
+            <Button
+              variant="tertiary"
+              fullWidth={false}
+              label={t('onboarding.back')}
+              iconOnly
+              icon={<NavigationIcon action="back" />}
               accessibilityRole="button"
               accessibilityLabel={t('onboarding.back')}
               onPress={back}
               style={styles.iconButton}
               testID="btn-onboarding-back"
-            >
-              <NavigationIcon action="back" />
-            </Pressable>
+            />
             <Text fontSet="onboarding" variant="bodyS" color={colors.textMid} tabular>
               {t('onboarding.stepIndicator', {
                 current: index + 1,
@@ -313,15 +320,18 @@ export default function OnboardingScreen() {
               })}
             </Text>
             {current === 'premium' || current === 'paywall' ? (
-              <Pressable
+              <Button
+                variant="tertiary"
+                fullWidth={false}
+                label={t('setup.closePremium')}
+                iconOnly
+                icon={<Ionicons name="close-outline" size={layout.icon} color={colors.textHi} />}
                 accessibilityRole="button"
                 accessibilityLabel={t('setup.closePremium')}
                 onPress={closePremium}
                 style={styles.iconButton}
                 testID="btn-premium-close"
-              >
-                <Ionicons name="close-outline" size={layout.icon} color={colors.textHi} />
-              </Pressable>
+              />
             ) : (
               <View style={styles.iconButton} />
             )}
@@ -383,16 +393,15 @@ export default function OnboardingScreen() {
                 </Text>
               ) : null}
               {draftError ? (
-                <Pressable
+                <Button
+                  variant="destructive"
+                  fullWidth={false}
+                  label={t('setup.draftError')}
                   onPress={update}
                   accessibilityRole="button"
                   style={planStyles.link}
                   testID="retry-draft"
-                >
-                  <Text fontSet="onboarding" color={colors.danger}>
-                    {t('setup.draftError')}
-                  </Text>
-                </Pressable>
+                />
               ) : null}
               {current === 'goal' ? (
                 <GoalStep
@@ -416,6 +425,19 @@ export default function OnboardingScreen() {
               {current === 'body_stats' ? (
                 <TrainingStep
                   state={snapshot}
+                  identityConfirmed={Boolean(profile)}
+                  onBodyStats={(value) => {
+                    machine.setBodyStats(value);
+                    update();
+                  }}
+                  onUnits={(value) => {
+                    machine.setUnits(value);
+                    update();
+                  }}
+                  onNickname={(value) => {
+                    machine.setNickname(value);
+                    update();
+                  }}
                   onWeight={setWeight}
                   onHeight={(value) => {
                     machine.setBodyStats({ heightCm: value });
@@ -424,6 +446,7 @@ export default function OnboardingScreen() {
                   onDays={setDays}
                 />
               ) : null}
+              {current === 'growth_projection' ? <GrowthProjectionStep /> : null}
               {current === 'rate_selection' ? (
                 <View style={planStyles.section}>
                   {snapshot.goal !== 'maintain' ? (
@@ -491,16 +514,15 @@ export default function OnboardingScreen() {
                       {t('fixes.invalidPlan')}
                     </Text>
                   ) : null}
-                  <Pressable
+                  <Button
+                    variant="tertiary"
+                    fullWidth={false}
+                    label={t('setup.changeGoal')}
                     onPress={() => move('goal')}
                     style={planStyles.link}
                     accessibilityRole="button"
                     testID="pace-change-goal"
-                  >
-                    <Text fontSet="onboarding" color={colors.textMid}>
-                      {t('setup.changeGoal')}
-                    </Text>
-                  </Pressable>
+                  />
                 </View>
               ) : null}
               {current === 'daily_goals' ? (
@@ -533,7 +555,32 @@ export default function OnboardingScreen() {
                 </PlanCard>
               ) : null}
 
-              {current === 'completed' ? (
+              {current === 'completed' && !user ? (
+                <PlanCard>
+                  <Text variant="heading">{t('entryPolish.accountTitle')}</Text>
+                  <Text>{t('entryPolish.accountBody')}</Text>
+                  <Button
+                    label={t('entryPolish.createAccount')}
+                    testID="setup-create-account"
+                    onPress={() => {
+                      void draftWrites.current
+                        .then(() => router.push('/auth/sign-in?mode=signup' as never))
+                        .catch(() => setDraftError(true));
+                    }}
+                  />
+                  <Button
+                    variant="secondary"
+                    label={t('entryPolish.signIn')}
+                    testID="setup-sign-in"
+                    onPress={() => {
+                      void draftWrites.current
+                        .then(() => router.push('/auth/sign-in?mode=signin' as never))
+                        .catch(() => setDraftError(true));
+                    }}
+                  />
+                </PlanCard>
+              ) : null}
+              {current === 'completed' && user ? (
                 <PlanReviewStep
                   state={snapshot}
                   onWeight={setWeight}

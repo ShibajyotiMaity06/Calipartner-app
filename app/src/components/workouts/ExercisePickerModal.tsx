@@ -1,3 +1,4 @@
+import { Button } from '@calipartner/ui';
 import { loadAccountTable } from '@/services/accountDataService';
 import { ExerciseSetsForm, type ExerciseSetInput } from './ExerciseSetsForm';
 import { useBrowserModalBack } from '@/hooks/useBrowserModalBack';
@@ -199,7 +200,12 @@ export function ExercisePickerModal({
             { backgroundColor: colors.surface, borderBottomColor: colors.border },
           ]}
         >
-          <TouchableOpacity
+          <Button
+            variant="tertiary"
+            fullWidth={false}
+            label={t('common.cancel')}
+            iconOnly
+            icon={<Ionicons name="close" size={24} color={colors.text} />}
             testID={`${testID}-btn-close`}
             onPress={() => {
               setConfiguring(null);
@@ -208,9 +214,7 @@ export function ExercisePickerModal({
             style={styles.closeBtn}
             accessibilityRole="button"
             accessibilityLabel={t('common.cancel')}
-          >
-            <Ionicons name="close" size={24} color={colors.text} />
-          </TouchableOpacity>
+          />
           <Text style={[styles.modalTitle, { color: colors.text }]}>
             {t('workouts.exercises.title')}
           </Text>
@@ -242,15 +246,18 @@ export function ExercisePickerModal({
               accessibilityLabel={t('workouts.exercises.searchPlaceholder')}
             />
             {searchQuery.length > 0 && (
-              <TouchableOpacity
+              <Button
+                variant="tertiary"
+                fullWidth={false}
+                label={t('personalDay.clearSearch')}
+                iconOnly
+                icon={<Ionicons name="close-circle" size={18} color={colors.textMuted} />}
                 testID={`${testID}-btn-clear-search`}
                 onPress={() => setSearchQuery('')}
                 accessibilityRole="button"
                 accessibilityLabel={t('personalDay.clearSearch')}
                 style={styles.closeBtn}
-              >
-                <Ionicons name="close-circle" size={18} color={colors.textMuted} />
-              </TouchableOpacity>
+              />
             )}
           </View>
         </View>
@@ -268,7 +275,10 @@ export function ExercisePickerModal({
                 renderItem={({ item }) => {
                   const active = selectedMuscle === item;
                   return (
-                    <TouchableOpacity
+                    <Button
+                      variant="secondary"
+                      fullWidth={false}
+                      label={t(`personalDay.${item}`)}
                       testID={`chip-muscle-${item}`}
                       style={[
                         styles.chip,
@@ -281,13 +291,7 @@ export function ExercisePickerModal({
                       accessibilityRole="button"
                       accessibilityLabel={t(`personalDay.${item}`)}
                       accessibilityState={{ selected: active }}
-                    >
-                      <Text
-                        style={[styles.chipText, { color: active ? colors.onAccent : colors.text }]}
-                      >
-                        {t(`personalDay.${item}`)}
-                      </Text>
-                    </TouchableOpacity>
+                    />
                   );
                 }}
               />
@@ -305,17 +309,16 @@ export function ExercisePickerModal({
               <View style={styles.centerState}>
                 <Ionicons name="alert-circle-outline" size={36} color={colors.danger} />
                 <Text style={[styles.stateText, { color: colors.danger }]}>{error}</Text>
-                <TouchableOpacity
+                <Button
+                  variant="secondary"
+                  fullWidth={false}
+                  label={t('common.retry')}
                   testID={`${testID}-btn-retry`}
                   style={[styles.retryBtn, { backgroundColor: colors.accent }]}
                   onPress={fetchExercises}
                   accessibilityRole="button"
                   accessibilityLabel={t('common.retry')}
-                >
-                  <Text style={{ color: colors.onAccent, fontWeight: '700' }}>
-                    {t('common.retry')}
-                  </Text>
-                </TouchableOpacity>
+                />
               </View>
             ) : exercises.length === 0 ? (
               <View style={styles.centerState}>
@@ -323,18 +326,17 @@ export function ExercisePickerModal({
                 <Text style={[styles.emptyTitle, { color: colors.text }]}>
                   {t('workouts.exercises.noExercisesFound')}
                 </Text>
-                <TouchableOpacity
+                <Button
+                  variant="secondary"
+                  fullWidth={false}
+                  label={t('workouts.exercises.createCustom')}
+                  icon={<Ionicons name="add-circle-outline" size={18} color={colors.onAccent} />}
                   testID={`${testID}-btn-create-custom-empty`}
                   style={[styles.createCustomPromptBtn, { backgroundColor: colors.accent }]}
                   onPress={() => setShowCustomModal(true)}
                   accessibilityRole="button"
                   accessibilityLabel={t('workouts.exercises.createCustom')}
-                >
-                  <Ionicons name="add-circle-outline" size={18} color={colors.onAccent} />
-                  <Text style={[styles.createCustomPromptText, { color: colors.onAccent }]}>
-                    {t('workouts.exercises.createCustom')}
-                  </Text>
-                </TouchableOpacity>
+                />
               </View>
             ) : (
               <FlatList
@@ -344,7 +346,12 @@ export function ExercisePickerModal({
                 renderItem={renderExerciseItem}
                 ListFooterComponent={
                   visibleCount < exercises.length ? (
-                    <TouchableOpacity
+                    <Button
+                      variant="secondary"
+                      fullWidth={false}
+                      label={t('workoutFlow.moreExercises', {
+                        count: Math.min(5, exercises.length - visibleCount),
+                      })}
                       style={styles.moreAction}
                       accessibilityRole="button"
                       accessibilityLabel={t('workoutFlow.moreExercises', {
@@ -354,13 +361,7 @@ export function ExercisePickerModal({
                         setVisibleCount((count) => Math.min(count + 5, exercises.length))
                       }
                       testID="exercise-show-more"
-                    >
-                      <Text tabular>
-                        {t('workoutFlow.moreExercises', {
-                          count: Math.min(5, exercises.length - visibleCount),
-                        })}
-                      </Text>
-                    </TouchableOpacity>
+                    />
                   ) : null
                 }
                 contentContainerStyle={styles.listContent}
@@ -449,7 +450,10 @@ export function ExercisePickerModal({
                       'cardio',
                     ] as MuscleGroup[]
                   ).map((m) => (
-                    <TouchableOpacity
+                    <Button
+                      variant="secondary"
+                      fullWidth={false}
+                      label={m}
                       key={m}
                       style={[
                         styles.dialogPill,
@@ -458,19 +462,7 @@ export function ExercisePickerModal({
                         },
                       ]}
                       onPress={() => setCustomMuscle(m)}
-                    >
-                      <Text
-                        style={{
-                          fontFamily: typography.body.fontFamily,
-                          fontSize: fontSize.xs,
-                          color: customMuscle === m ? colors.onAccent : colors.text,
-                          fontWeight: '600',
-                          textTransform: 'capitalize',
-                        }}
-                      >
-                        {m}
-                      </Text>
-                    </TouchableOpacity>
+                    />
                   ))}
                 </View>
               </View>
@@ -484,7 +476,10 @@ export function ExercisePickerModal({
                   {(
                     ['barbell', 'dumbbell', 'cable', 'machine', 'bodyweight', 'none'] as Equipment[]
                   ).map((eq) => (
-                    <TouchableOpacity
+                    <Button
+                      variant="secondary"
+                      fullWidth={false}
+                      label={eq}
                       key={eq}
                       style={[
                         styles.dialogPill,
@@ -494,19 +489,7 @@ export function ExercisePickerModal({
                         },
                       ]}
                       onPress={() => setCustomEquipment(eq)}
-                    >
-                      <Text
-                        style={{
-                          fontFamily: typography.body.fontFamily,
-                          fontSize: fontSize.xs,
-                          color: customEquipment === eq ? colors.onAccent : colors.text,
-                          fontWeight: '600',
-                          textTransform: 'capitalize',
-                        }}
-                      >
-                        {eq}
-                      </Text>
-                    </TouchableOpacity>
+                    />
                   ))}
                 </View>
               </View>
@@ -518,7 +501,10 @@ export function ExercisePickerModal({
                 </Text>
                 <View style={styles.pillWrap}>
                   {(['strength', 'cardio', 'bodyweight'] as ExerciseType[]).map((tp) => (
-                    <TouchableOpacity
+                    <Button
+                      variant="secondary"
+                      fullWidth={false}
+                      label={tp}
                       key={tp}
                       style={[
                         styles.dialogPill,
@@ -527,33 +513,20 @@ export function ExercisePickerModal({
                         },
                       ]}
                       onPress={() => setCustomType(tp)}
-                    >
-                      <Text
-                        style={{
-                          fontFamily: typography.body.fontFamily,
-                          fontSize: fontSize.xs,
-                          color: customType === tp ? colors.onAccent : colors.text,
-                          fontWeight: '600',
-                          textTransform: 'capitalize',
-                        }}
-                      >
-                        {tp}
-                      </Text>
-                    </TouchableOpacity>
+                    />
                   ))}
                 </View>
               </View>
 
               <View style={styles.dialogActions}>
-                <TouchableOpacity
+                <Button
+                  variant="secondary"
+                  fullWidth={false}
+                  label={t('common.cancel')}
                   testID="btn-cancel-custom-exercise"
                   style={[styles.dialogBtn, { backgroundColor: colors.surfaceAlt }]}
                   onPress={() => setShowCustomModal(false)}
-                >
-                  <Text style={{ color: colors.text, fontWeight: '600' }}>
-                    {t('common.cancel')}
-                  </Text>
-                </TouchableOpacity>
+                />
 
                 <TouchableOpacity
                   testID="btn-save-custom-exercise"

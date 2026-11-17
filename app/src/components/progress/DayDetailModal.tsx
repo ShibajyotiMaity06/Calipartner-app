@@ -1,3 +1,5 @@
+import { visualPrimitives } from '@calipartner/ui/tokens';
+import { Button } from '@calipartner/ui';
 import { NavigationIcon } from '@calipartner/ui';
 import { Text } from '@calipartner/ui';
 import React from 'react';
@@ -60,15 +62,18 @@ export function DayDetailModal({
               </Text>
               <Text style={[styles.dateText, { color: colors.textMuted }]}>{data.date}</Text>
             </View>
-            <Pressable
+            <Button
+              variant="tertiary"
+              fullWidth={false}
+              label={t('progress.dayDetailModal.close')}
+              iconOnly
+              icon={<Ionicons name="close" size={20} color={colors.text} />}
               onPress={onClose}
               style={[styles.closeButton, { backgroundColor: colors.surfaceAlt }]}
               accessibilityRole="button"
               accessibilityLabel={t('progress.dayDetailModal.close')}
               testID={`${testID}-close`}
-            >
-              <Ionicons name="close" size={20} color={colors.text} />
-            </Pressable>
+            />
           </View>
 
           {/* Details Body */}
@@ -177,15 +182,18 @@ export function DayDetailModal({
           </View>
 
           {/* Dismiss Button */}
-          <Pressable
+          <Button
+            variant="tertiary"
+            fullWidth={false}
+            label={t('progress.dayDetailModal.close')}
+            iconOnly
+            icon={<NavigationIcon action="close" />}
             style={[styles.dismissBtn, { backgroundColor: colors.accent }]}
             onPress={onClose}
             accessibilityRole="button"
             accessibilityLabel={t('progress.dayDetailModal.close')}
             testID={`${testID}-dismiss`}
-          >
-            <NavigationIcon action="close" />
-          </Pressable>
+          />
         </Pressable>
       </Pressable>
     </Modal>
@@ -205,11 +213,11 @@ const styles = StyleSheet.create({
     maxWidth: 380,
     borderRadius: radius.lg,
     padding: spacing.lg,
-    shadowColor: '#000',
+    shadowColor: visualPrimitives.colors.black,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.2,
-    shadowRadius: 8,
-    elevation: 6,
+    shadowRadius: visualPrimitives.effects[8],
+    elevation: visualPrimitives.effects[6],
   },
   header: {
     flexDirection: 'row',
@@ -228,7 +236,7 @@ const styles = StyleSheet.create({
   closeButton: {
     width: 32,
     height: 32,
-    borderRadius: 16,
+    borderRadius: visualPrimitives.radii[16],
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -274,7 +282,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   dismissBtnText: {
-    color: '#ffffff',
+    color: visualPrimitives.colors.white,
     fontSize: fontSize.sm,
     fontWeight: '600',
   },

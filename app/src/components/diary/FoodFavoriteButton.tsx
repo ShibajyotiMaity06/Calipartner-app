@@ -1,6 +1,7 @@
+import { Button } from '@calipartner/ui';
 import { useTheme as useAppearance } from '@calipartner/ui/theme';
 import React from 'react';
-import { Pressable } from 'react-native';
+import {} from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { homeLayout } from '@calipartner/ui';
 import type { Food } from '@calipartner/core';
@@ -17,7 +18,20 @@ export function FoodFavoriteButton({
 
   const favorite = library.isFavorite(food);
   return (
-    <Pressable
+    <Button
+      variant="tertiary"
+      fullWidth={false}
+      label={t(favorite ? 'foodPolish.unfavorite' : 'foodPolish.favorite', {
+        name: food.name,
+      })}
+      iconOnly
+      icon={
+        <Ionicons
+          name={favorite ? 'heart' : 'heart-outline'}
+          size={homeLayout.iconSize}
+          color={favorite ? dark.apricot : dark.textMid}
+        />
+      }
       onPress={(event) => {
         event.stopPropagation();
         void library.favorite(food, !favorite);
@@ -35,12 +49,6 @@ export function FoodFavoriteButton({
         alignItems: 'center',
         justifyContent: 'center',
       }}
-    >
-      <Ionicons
-        name={favorite ? 'heart' : 'heart-outline'}
-        size={homeLayout.iconSize}
-        color={favorite ? dark.apricot : dark.textMid}
-      />
-    </Pressable>
+    />
   );
 }

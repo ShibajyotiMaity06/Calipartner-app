@@ -1,7 +1,7 @@
 import { useTheme as useAppearance } from '@calipartner/ui/theme';
 import { NavigationIcon } from '@calipartner/ui';
 import React, { useState } from 'react';
-import { Modal, SafeAreaView, ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
+import { Modal, SafeAreaView, ScrollView, StyleSheet, View } from 'react-native';
 import { Button, Card, radius, SegmentedControl, space, SwitchRow, Text } from '@calipartner/ui';
 import { t } from '@/i18n';
 import { playClickSound } from '@/lib/sound';
@@ -41,15 +41,18 @@ export function AppearanceModal({
         <View style={styles.container} testID={testID}>
           {/* Top Bar */}
           <View style={styles.topBar}>
-            <TouchableOpacity
+            <Button
+              variant="tertiary"
+              fullWidth={false}
+              label="Back"
+              iconOnly
+              icon={<NavigationIcon action="back" />}
               onPress={onClose}
               accessibilityRole="button"
               accessibilityLabel="Back"
               style={styles.backButton}
               testID="btn-close-appearance"
-            >
-              <NavigationIcon action="back" />
-            </TouchableOpacity>
+            />
             <Text variant="heading" color={dark.textHi}>
               {t('me.appearance.title')}
             </Text>

@@ -1,3 +1,5 @@
+import { visualPrimitives } from '@calipartner/ui/tokens';
+import { Button } from '@calipartner/ui';
 import { Text } from '@calipartner/ui';
 import React from 'react';
 import { Modal, Pressable, ScrollView, StyleSheet, View } from 'react-native';
@@ -128,27 +130,27 @@ export function CoachConsentModal({
 
           {/* Action buttons */}
           <View style={styles.buttonGroup}>
-            <Pressable
+            <Button
+              variant="secondary"
+              fullWidth={false}
+              label={t('coach.consent.agreeBtn')}
               onPress={onAgree}
               style={[styles.primaryBtn, { backgroundColor: colors.accent }]}
               accessibilityRole="button"
               accessibilityLabel={t('coach.consent.agreeBtn')}
               testID="btn-coach-consent-agree"
-            >
-              <Text style={styles.primaryBtnText}>{t('coach.consent.agreeBtn')}</Text>
-            </Pressable>
+            />
 
-            <Pressable
+            <Button
+              variant="secondary"
+              fullWidth={false}
+              label={t('coach.consent.declineBtn')}
               onPress={onDecline}
               style={[styles.secondaryBtn, { borderColor: colors.border }]}
               accessibilityRole="button"
               accessibilityLabel={t('coach.consent.declineBtn')}
               testID="btn-coach-consent-decline"
-            >
-              <Text style={[styles.secondaryBtnText, { color: colors.textMuted }]}>
-                {t('coach.consent.declineBtn')}
-              </Text>
-            </Pressable>
+            />
           </View>
         </View>
       </View>
@@ -179,7 +181,7 @@ const styles = StyleSheet.create({
   iconWrap: {
     width: 52,
     height: 52,
-    borderRadius: 26,
+    borderRadius: visualPrimitives.radii[26],
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: spacing.sm,
@@ -236,7 +238,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   primaryBtnText: {
-    color: '#FFFFFF',
+    color: visualPrimitives.colors.white,
     fontSize: fontSize.md,
     fontWeight: '600',
   },

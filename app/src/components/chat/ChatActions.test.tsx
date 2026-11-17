@@ -1,4 +1,8 @@
-vi.mock('@calipartner/ui', () => ({ Text: 'Text', type: { body: {} } }));
+vi.mock('@calipartner/ui', async () => ({
+  Button: (await import('@/test/ButtonStub')).ButtonStub,
+  Text: 'Text',
+  type: { body: {} },
+}));
 import React from 'react';
 import { act, create, type ReactTestRenderer } from 'react-test-renderer';
 import { beforeEach, afterEach, describe, it, expect, vi } from 'vitest';

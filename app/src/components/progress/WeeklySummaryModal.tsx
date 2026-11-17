@@ -1,3 +1,4 @@
+import { Button } from '@calipartner/ui';
 import { useTheme as useAppearance } from '@calipartner/ui/theme';
 import React, { useState } from 'react';
 import { Modal, Pressable, ScrollView, Share, StyleSheet, Switch, View } from 'react-native';
@@ -81,15 +82,18 @@ export function WeeklySummaryModal({
               <Text style={styles.title}>Weekly summary</Text>
               <Text style={styles.subtitle}>Generated from your verified entries</Text>
             </View>
-            <Pressable
+            <Button
+              variant="tertiary"
+              fullWidth={false}
+              label="Close"
+              iconOnly
+              icon={<Ionicons name="close" size={20} color={dark.textMid} />}
               style={styles.closeBtn}
               onPress={onClose}
               accessibilityRole="button"
               accessibilityLabel="Close"
               testID={`${testID}-close`}
-            >
-              <Ionicons name="close" size={20} color={dark.textMid} />
-            </Pressable>
+            />
           </View>
 
           <ScrollView
@@ -163,16 +167,17 @@ export function WeeklySummaryModal({
                 />
               </View>
 
-              <Pressable
+              <Button
+                variant="secondary"
+                fullWidth={false}
+                label="Share card"
+                icon={<Ionicons name="share-outline" size={18} color={dark.onBrand} />}
                 style={styles.shareButton}
                 onPress={handleShare}
                 accessibilityRole="button"
                 accessibilityLabel="Share progress card"
                 testID={`${testID}-share-btn`}
-              >
-                <Ionicons name="share-outline" size={18} color={dark.onBrand} />
-                <Text style={styles.shareButtonText}>Share card</Text>
-              </Pressable>
+              />
             </View>
           </ScrollView>
         </View>

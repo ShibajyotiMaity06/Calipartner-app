@@ -4,6 +4,10 @@
  */
 
 export const dark = {
+  onDanger: '#1C1109',
+  actionInk: '#F4B67D',
+  splashBackground: '#471a06',
+  splashForeground: '#fdecd0',
   modalScrim: 'rgba(0, 0, 0, 0.45)',
   water: '#8CD3F5',
   waterInk: '#8CD3F5',
@@ -35,6 +39,10 @@ export const dark = {
 } as const;
 
 export const light = {
+  onDanger: '#FFFFFF',
+  actionInk: '#8F4A0C',
+  splashBackground: '#471a06',
+  splashForeground: '#fdecd0',
   modalScrim: 'rgba(0, 0, 0, 0.45)',
   water: '#8CD3F5',
   waterInk: '#255D75',
@@ -93,12 +101,14 @@ export const wellsLight: ColorPalette = {
   textMid: '#191816',
   textLo: '#6C665C',
   textOff: '#7A7468',
-  apricot: '#191816',
-  apricotPressed: '#322F2A',
-  onBrand: '#F8F5EE',
+  apricot: light.apricot,
+  actionInk: light.brandInk,
+  onDanger: light.onDanger,
+  apricotPressed: light.apricotPressed,
+  onBrand: light.onBrand,
   copper: '#6C665C',
   chocolate: '#7A7468',
-  selection: '#191816',
+  selection: light.apricot,
   iris: light.iris,
   teal: light.teal,
   rose: light.rose,
@@ -106,7 +116,7 @@ export const wellsLight: ColorPalette = {
   sky: light.sky,
   orchid: light.orchid,
   danger: light.danger,
-  cream: '#191816',
+  cream: light.cream,
 };
 export const wellsDark: ColorPalette = {
   ...dark,

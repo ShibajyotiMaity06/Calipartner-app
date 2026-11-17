@@ -1,6 +1,6 @@
 import { useTheme as useAppearance } from '@calipartner/ui/theme';
 import React, { useEffect, useState } from 'react';
-import { Modal, Pressable, SafeAreaView, ScrollView, StyleSheet, View } from 'react-native';
+import { Modal, SafeAreaView, ScrollView, StyleSheet, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Text, Button, SegmentedControl, radius, space } from '@calipartner/ui';
 import { t } from '@/i18n';
@@ -49,15 +49,18 @@ export function TermsOfServiceModal({
             <Text variant="title2" color={dark.textHi} style={styles.headerTitle}>
               {t('publicSite.legalTitle')}
             </Text>
-            <Pressable
+            <Button
+              variant="tertiary"
+              fullWidth={false}
+              label={t('publicSite.closeLegal')}
+              iconOnly
+              icon={<Ionicons name="close" size={24} color={dark.textHi} />}
               onPress={onClose}
               accessibilityRole="button"
               accessibilityLabel={t('publicSite.closeLegal')}
               style={styles.closeBtn}
               testID="btn-terms-close"
-            >
-              <Ionicons name="close" size={24} color={dark.textHi} />
-            </Pressable>
+            />
           </View>
 
           {/* Segmented Control */}

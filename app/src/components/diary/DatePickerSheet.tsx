@@ -1,7 +1,7 @@
 import { useTheme as useAppearance } from '@calipartner/ui/theme';
 import { useCurrentLocalDate } from '@/hooks/useCurrentLocalDate';
 import React, { useState } from 'react';
-import { View, StyleSheet, Pressable } from 'react-native';
+import { View, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Sheet, Text, Button, space, radius } from '@calipartner/ui';
 
@@ -98,34 +98,42 @@ export function DatePickerSheet({
       <View style={styles.container}>
         {/* Month Navigation */}
         <View style={styles.navHeader}>
-          <Pressable
+          <Button
+            variant="tertiary"
+            fullWidth={false}
+            label="Previous month"
+            iconOnly
+            icon={<Ionicons name="chevron-back" size={20} color={dark.textHi} />}
             testID="btn-prev-month"
             onPress={handlePrevMonth}
             style={styles.navArrow}
             hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
             accessibilityLabel="Previous month"
-          >
-            <Ionicons name="chevron-back" size={20} color={dark.textHi} />
-          </Pressable>
+          />
 
           <Text variant="heading" color={dark.textHi}>
             {monthNames[month]} {year}
           </Text>
 
-          <Pressable
+          <Button
+            variant="tertiary"
+            fullWidth={false}
+            label="Next month"
+            iconOnly
+            icon={
+              <Ionicons
+                name="chevron-forward"
+                size={20}
+                color={isCurrentMonthFuture() ? dark.textLo : dark.textHi}
+              />
+            }
             testID="btn-next-month"
             onPress={handleNextMonth}
             disabled={isCurrentMonthFuture()}
             style={[styles.navArrow, isCurrentMonthFuture() && styles.navArrowDisabled]}
             hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
             accessibilityLabel="Next month"
-          >
-            <Ionicons
-              name="chevron-forward"
-              size={20}
-              color={isCurrentMonthFuture() ? dark.textLo : dark.textHi}
-            />
-          </Pressable>
+          />
         </View>
 
         {/* Weekday Labels */}
@@ -154,7 +162,10 @@ export function DatePickerSheet({
             const isFuture = dateStr > todayStr;
 
             return (
-              <Pressable
+              <Button
+                variant="secondary"
+                fullWidth={false}
+                label={String(day)}
                 key={`day-${day}`}
                 testID={`day-cell-${dateStr}`}
                 disabled={isFuture}
@@ -166,15 +177,7 @@ export function DatePickerSheet({
                   isToday && !isSelected && styles.dayButtonToday,
                   isFuture && styles.dayButtonFuture,
                 ]}
-              >
-                <Text
-                  variant="bodyS"
-                  color={isSelected ? dark.onBrand : isFuture ? dark.textOff : dark.textHi}
-                  style={isSelected ? { fontWeight: '700' } : undefined}
-                >
-                  {day}
-                </Text>
-              </Pressable>
+              />
             );
           })}
         </View>

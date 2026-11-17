@@ -1,5 +1,7 @@
+import { visualPrimitives } from '@calipartner/ui/tokens';
+import { Button } from '@calipartner/ui';
 import React from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { Text } from '@calipartner/ui';
 import { Ionicons } from '@expo/vector-icons';
 import { t } from '@/i18n';
@@ -75,16 +77,23 @@ export function AiCoachLockedCard({ onUnlock }: LockedFeatureCardProps) {
       </View>
 
       {/* Unlock CTA */}
-      <Pressable
+      <Button
+        variant="secondary"
+        fullWidth={false}
+        label={t('rooms.lockedPreview.aiCoach.unlockBtn')}
+        icon={
+          <Ionicons
+            name="information-circle-outline"
+            size={14}
+            color={visualPrimitives.colors.white}
+          />
+        }
         onPress={onUnlock}
         style={[styles.unlockButton, { backgroundColor: colors.accent }]}
         accessibilityRole="button"
         accessibilityLabel={t('rooms.lockedPreview.aiCoach.unlockBtn')}
         testID="btn-unlock-ai-coach"
-      >
-        <Ionicons name="information-circle-outline" size={14} color="#FFFFFF" />
-        <Text style={styles.unlockButtonText}>{t('rooms.lockedPreview.aiCoach.unlockBtn')}</Text>
-      </Pressable>
+      />
     </View>
   );
 }
@@ -154,18 +163,23 @@ export function PartnerFinderLockedCard({ onUnlock }: LockedFeatureCardProps) {
       </View>
 
       {/* Unlock CTA */}
-      <Pressable
+      <Button
+        variant="secondary"
+        fullWidth={false}
+        label={t('rooms.lockedPreview.partnerFinder.unlockBtn')}
+        icon={
+          <Ionicons
+            name="information-circle-outline"
+            size={14}
+            color={visualPrimitives.colors.white}
+          />
+        }
         onPress={onUnlock}
         style={[styles.unlockButton, { backgroundColor: colors.accent }]}
         accessibilityRole="button"
         accessibilityLabel={t('rooms.lockedPreview.partnerFinder.unlockBtn')}
         testID="btn-unlock-partner-finder"
-      >
-        <Ionicons name="information-circle-outline" size={14} color="#FFFFFF" />
-        <Text style={styles.unlockButtonText}>
-          {t('rooms.lockedPreview.partnerFinder.unlockBtn')}
-        </Text>
-      </Pressable>
+      />
     </View>
   );
 }
@@ -186,7 +200,7 @@ const styles = StyleSheet.create({
   iconCircle: {
     width: 44,
     height: 44,
-    borderRadius: 22,
+    borderRadius: visualPrimitives.radii[22],
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -244,7 +258,7 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   unlockButtonText: {
-    color: '#FFFFFF',
+    color: visualPrimitives.colors.white,
     fontSize: fontSize.xs + 1,
     fontWeight: '700',
   },

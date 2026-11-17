@@ -1,3 +1,5 @@
+> Owner request, 17 November 2026: standard action buttons share radius.button (16), a minimum 44px target, Figtree button text, 0.985 press feedback and 120ms surface transitions. Circular icon controls retain radius.full. Reduce Motion suppresses scale and transitions. The supplied 4.9s helping-figures splash and illustrative 4.8s growth-chart reveal are authorized entry animations; Reduce Motion renders their completed state immediately. The chart uses a 400 by 340 responsive viewBox, and wheel row height scales with system text size.
+
 ## Part 4 — Layout, spacing, shape, motion
 
 ### 4.1 Grid and spacing

@@ -1,7 +1,7 @@
 import { useTheme as useAppearance } from '@calipartner/ui/theme';
 import { NavigationIcon } from '@calipartner/ui';
 import React, { useState } from 'react';
-import { Modal, SafeAreaView, ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
+import { Modal, SafeAreaView, ScrollView, StyleSheet, View } from 'react-native';
 import { Button, Card, space, Stepper, Text } from '@calipartner/ui';
 import { t } from '@/i18n';
 import { playClickSound } from '@/lib/sound';
@@ -55,15 +55,18 @@ export function DailyGoalsModal({
         <View style={styles.container} testID={testID}>
           {/* Top Bar */}
           <View style={styles.topBar}>
-            <TouchableOpacity
+            <Button
+              variant="tertiary"
+              fullWidth={false}
+              label="Back to Me"
+              iconOnly
+              icon={<NavigationIcon action="back" />}
               onPress={onClose}
               accessibilityRole="button"
               accessibilityLabel="Back to Me"
               style={styles.backButton}
               testID="btn-close-daily-goals"
-            >
-              <NavigationIcon action="back" />
-            </TouchableOpacity>
+            />
             <Text variant="heading" color={dark.textHi}>
               {t('me.dailyGoals.title')}
             </Text>

@@ -1,3 +1,4 @@
+import { visualPrimitives } from '@calipartner/ui/tokens';
 import * as Location from 'expo-location';
 import { RouteMap } from './RouteMap';
 import { haversineKm } from '@calipartner/core';
@@ -330,7 +331,12 @@ export function CardioTrackerModal({
         <View style={styles.container} testID={testID}>
           {/* Header */}
           <View style={styles.topBar}>
-            <TouchableOpacity
+            <Button
+              variant="tertiary"
+              fullWidth={false}
+              label="Back"
+              iconOnly
+              icon={<NavigationIcon action="back" />}
               onPress={
                 sessionState === 'active' || sessionState === 'paused'
                   ? handleFinishSession
@@ -340,9 +346,7 @@ export function CardioTrackerModal({
               accessibilityLabel="Back"
               style={styles.backButton}
               testID="btn-close-cardio"
-            >
-              <NavigationIcon action="back" />
-            </TouchableOpacity>
+            />
 
             <SegmentedControl
               fullWidth={false}
@@ -401,7 +405,10 @@ export function CardioTrackerModal({
                       </Text>
                       <View style={styles.presetChipsRow}>
                         {[1000, 2500, 5000, 10000].map((count) => (
-                          <TouchableOpacity
+                          <Button
+                            variant="secondary"
+                            fullWidth={false}
+                            label={count.toLocaleString()}
                             key={count}
                             onPress={() => {
                               setStepGoal(count);
@@ -411,17 +418,7 @@ export function CardioTrackerModal({
                               styles.chip,
                               stepGoal === count && !customStepText && styles.chipActive,
                             ]}
-                          >
-                            <Text
-                              variant="bodyS"
-                              color={
-                                stepGoal === count && !customStepText ? dark.onBrand : dark.textHi
-                              }
-                              style={{ fontWeight: '700' }}
-                            >
-                              {count.toLocaleString()}
-                            </Text>
-                          </TouchableOpacity>
+                          />
                         ))}
                       </View>
 
@@ -650,11 +647,15 @@ export function CardioTrackerModal({
                       </Card>
 
                       <Card elevation="s1" style={styles.statTile}>
-                        <Ionicons name="flame-outline" size={20} color="#EB7A6B" />
+                        <Ionicons
+                          name="flame-outline"
+                          size={20}
+                          color={visualPrimitives.colors.coral}
+                        />
                         <Text
                           nutrient="calories"
                           variant="numeralM"
-                          color="#EB7A6B"
+                          color={visualPrimitives.colors.coral}
                           style={styles.statNumber}
                         >
                           {liveWalkingCalories}
@@ -700,11 +701,15 @@ export function CardioTrackerModal({
                       </Card>
 
                       <Card elevation="s1" style={styles.statTile}>
-                        <Ionicons name="flame-outline" size={20} color="#EB7A6B" />
+                        <Ionicons
+                          name="flame-outline"
+                          size={20}
+                          color={visualPrimitives.colors.coral}
+                        />
                         <Text
                           nutrient="calories"
                           variant="numeralM"
-                          color="#EB7A6B"
+                          color={visualPrimitives.colors.coral}
                           style={styles.statNumber}
                         >
                           {liveRunningCalories}
@@ -732,43 +737,35 @@ export function CardioTrackerModal({
 
                 {/* Session Action Buttons */}
                 <View style={styles.activeControlsRow}>
-                  <TouchableOpacity
+                  <Button
+                    variant="secondary"
+                    fullWidth={false}
+                    label={sessionState === 'active' ? 'Pause' : 'Resume'}
+                    icon={
+                      <Ionicons
+                        name={sessionState === 'active' ? 'pause' : 'play'}
+                        size={24}
+                        color={dark.textHi}
+                      />
+                    }
                     onPress={handleTogglePause}
                     style={[styles.controlBtn, styles.pauseBtn]}
                     accessibilityRole="button"
                     accessibilityLabel={
                       sessionState === 'active' ? 'Pause session' : 'Resume session'
                     }
-                  >
-                    <Ionicons
-                      name={sessionState === 'active' ? 'pause' : 'play'}
-                      size={24}
-                      color={dark.textHi}
-                    />
-                    <Text
-                      variant="body"
-                      color={dark.textHi}
-                      style={{ fontWeight: '700', marginLeft: 8 }}
-                    >
-                      {sessionState === 'active' ? 'Pause' : 'Resume'}
-                    </Text>
-                  </TouchableOpacity>
+                  />
 
-                  <TouchableOpacity
+                  <Button
+                    variant="secondary"
+                    fullWidth={false}
+                    label="Finish"
+                    icon={<Ionicons name="checkmark-done" size={24} color={dark.onBrand} />}
                     onPress={handleFinishSession}
                     style={[styles.controlBtn, styles.finishBtn]}
                     accessibilityRole="button"
                     accessibilityLabel="Finish session"
-                  >
-                    <Ionicons name="checkmark-done" size={24} color={dark.onBrand} />
-                    <Text
-                      variant="body"
-                      color={dark.onBrand}
-                      style={{ fontWeight: '700', marginLeft: 8 }}
-                    >
-                      Finish
-                    </Text>
-                  </TouchableOpacity>
+                  />
                 </View>
               </View>
             )}
@@ -824,7 +821,11 @@ export function CardioTrackerModal({
                     <Text nutrient="calories" variant="bodyS" color={dark.textMid}>
                       Calories Burned
                     </Text>
-                    <Text nutrient="calories" variant="heading" color="#EB7A6B">
+                    <Text
+                      nutrient="calories"
+                      variant="heading"
+                      color={visualPrimitives.colors.coral}
+                    >
                       {summaryData.caloriesBurned} kcal
                     </Text>
                   </View>
@@ -917,7 +918,7 @@ const createStyles = (dark: ReturnType<typeof useAppearance>['colors']) =>
     heroIconCircle: {
       width: 80,
       height: 80,
-      borderRadius: 40,
+      borderRadius: visualPrimitives.radii[40],
       alignItems: 'center',
       justifyContent: 'center',
       marginBottom: space[3],
@@ -1002,14 +1003,14 @@ const createStyles = (dark: ReturnType<typeof useAppearance>['colors']) =>
     statusDot: {
       width: 8,
       height: 8,
-      borderRadius: 4,
+      borderRadius: visualPrimitives.radii[4],
       marginRight: 6,
     },
     dotGreen: {
-      backgroundColor: '#48BB78',
+      backgroundColor: visualPrimitives.colors.mint,
     },
     dotAmber: {
-      backgroundColor: '#ECC94B',
+      backgroundColor: visualPrimitives.colors.gold,
     },
     metricHero: {
       alignItems: 'center',
@@ -1101,7 +1102,7 @@ const createStyles = (dark: ReturnType<typeof useAppearance>['colors']) =>
     celebrationCircle: {
       width: 96,
       height: 96,
-      borderRadius: 48,
+      borderRadius: visualPrimitives.radii[48],
       backgroundColor: 'rgba(244, 182, 125, 0.15)',
       alignItems: 'center',
       justifyContent: 'center',

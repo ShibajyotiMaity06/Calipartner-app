@@ -20,6 +20,7 @@ describe('Onboarding redesign state machine', () => {
       'goal',
       'activity_level',
       'body_stats',
+      'growth_projection',
       'rate_selection',
       'daily_goals',
       'completed',

@@ -55,7 +55,7 @@ it('renders meaningful crawlable pages with unique metadata and no invented rati
     );
     expect(data.some((v: { '@type': string }) => v['@type'] === 'Organization')).toBe(true);
     expect(data.some((v: { '@type': string }) => v['@type'] === 'MobileApplication')).toBe(
-      ['/', '/download'].includes(page.path),
+      ['/about', '/download'].includes(page.path),
     );
   }
 });
@@ -109,6 +109,8 @@ it('builds actual static HTML, a separate private app shell, sitemap and share i
   await writeFile(path.join(temp, 'manifest.json'), '{}');
   await buildPublicSite(temp, {});
   expect(await readFile(path.join(temp, 'app-shell.html'), 'utf8')).toContain('noindex,nofollow');
+  expect(await readFile(path.join(temp, 'index.html'), 'utf8')).toContain('/bundle.js');
+  expect(await readFile(path.join(temp, 'about.html'), 'utf8')).toContain('site-home');
   expect(await readFile(path.join(temp, 'privacy.html'), 'utf8')).toContain(
     'AI processing and consent',
   );

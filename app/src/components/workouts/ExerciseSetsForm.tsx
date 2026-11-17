@@ -1,5 +1,5 @@
 import React, { useRef, useState } from 'react';
-import { Pressable, View } from 'react-native';
+import { View } from 'react-native';
 import { Button, Text, homeLayout, space } from '@calipartner/ui';
 import { NumberField } from '@/components/onboarding/PlanPrimitives';
 import { t } from '@/i18n';
@@ -132,7 +132,10 @@ export function ExerciseSetRows({
               />
               <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
                 {(['minus', 'plus'] as const).map((action) => (
-                  <Pressable
+                  <Button
+                    variant="secondary"
+                    fullWidth={false}
+                    label={action === 'minus' ? '\u2212' : '+'}
                     key={action}
                     accessibilityRole="button"
                     accessibilityLabel={t(
@@ -159,9 +162,7 @@ export function ExerciseSetRows({
                       justifyContent: 'center',
                     }}
                     testID={`${prefix}-${action}-${index}`}
-                  >
-                    <Text>{action === 'minus' ? '\u2212' : '+'}</Text>
-                  </Pressable>
+                  />
                 ))}
               </View>
             </View>

@@ -39,15 +39,18 @@ export function AboutLegalModal({
         <View style={styles.container} testID={testID}>
           {/* Top Bar */}
           <View style={styles.topBar}>
-            <TouchableOpacity
+            <Button
+              variant="tertiary"
+              fullWidth={false}
+              label="Back"
+              iconOnly
+              icon={<NavigationIcon action="back" />}
               onPress={onClose}
               accessibilityRole="button"
               accessibilityLabel="Back"
               style={styles.backButton}
               testID="btn-close-about-legal"
-            >
-              <NavigationIcon action="back" />
-            </TouchableOpacity>
+            />
             <Text variant="heading" color={dark.textHi}>
               {t('me.aboutLegal.title')}
             </Text>

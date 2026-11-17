@@ -1,10 +1,11 @@
+import { Button } from '@calipartner/ui';
 import { useTheme as useAppearance } from '@calipartner/ui/theme';
 import { useTrackingPreferences } from '@/hooks/useTrackingPreferences';
 import { HeaderActions } from '@/components/HeaderActions';
 import { AvatarHero } from '@/components/avatar/AvatarHero';
 import { TrackingPreferencesSheet } from '@/components/rooms/TrackingPreferencesSheet';
 import React, { useCallback, useEffect, useState } from 'react';
-import { AppState, Pressable, RefreshControl, ScrollView, StyleSheet, View } from 'react-native';
+import { AppState, RefreshControl, ScrollView, StyleSheet, View } from 'react-native';
 import { useRouter, type Href } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import {
@@ -309,35 +310,40 @@ export default function TodayScreen() {
         <FastingCard />
         <View style={styles.sectionBlock}>
           <View style={styles.dateSelectorRow}>
-            <Pressable
+            <Button
+              variant="tertiary"
+              fullWidth={false}
+              label={t('diary.previousDay')}
+              iconOnly
+              icon={<Ionicons name="chevron-back" size={18} color={dark.textMid} />}
               testID="btn-prev-day"
               onPress={() => handleShiftDate(-1)}
               hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
               accessibilityLabel={t('diary.previousDay')}
-            >
-              <Ionicons name="chevron-back" size={18} color={dark.textMid} />
-            </Pressable>
+            />
 
-            <Pressable
+            <Button
+              variant="secondary"
+              fullWidth={false}
+              label={isToday ? `${t('diary.today')} (${selectedDate})` : selectedDate}
+              icon={<Ionicons name="calendar-outline" size={14} color={dark.apricot} />}
               testID="btn-open-date-picker"
               onPress={() => setShowDatePicker(true)}
               style={styles.datePickerChip}
               accessibilityLabel={`Selected date ${selectedDate}`}
-            >
-              <Ionicons name="calendar-outline" size={14} color={dark.apricot} />
-              <Text variant="label" color={dark.textHi} style={{ fontWeight: '600' }}>
-                {isToday ? `${t('diary.today')} (${selectedDate})` : selectedDate}
-              </Text>
-            </Pressable>
+            />
 
-            <Pressable
+            <Button
+              variant="tertiary"
+              fullWidth={false}
+              label={t('diary.nextDay')}
+              iconOnly
+              icon={<Ionicons name="chevron-forward" size={18} color={dark.textMid} />}
               testID="btn-next-day"
               onPress={() => handleShiftDate(1)}
               hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
               accessibilityLabel={t('diary.nextDay')}
-            >
-              <Ionicons name="chevron-forward" size={18} color={dark.textMid} />
-            </Pressable>
+            />
           </View>
 
           {diaryLoading && loadedDiaryDate !== selectedDate ? (

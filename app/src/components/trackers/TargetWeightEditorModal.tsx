@@ -1,3 +1,4 @@
+import { Button } from '@calipartner/ui';
 import { useTheme as useAppearance } from '@calipartner/ui/theme';
 import React, { useState } from 'react';
 import { Modal, Pressable, StyleSheet, View } from 'react-native';
@@ -89,15 +90,18 @@ export function TargetWeightEditorModal({
               </View>
             </View>
 
-            <Pressable
+            <Button
+              variant="tertiary"
+              fullWidth={false}
+              label={t('common.cancel')}
+              iconOnly
+              icon={<Ionicons name="close" size={20} color={dark.textMid} />}
               onPress={onClose}
               hitSlop={8}
               style={styles.closeBtn}
               accessibilityRole="button"
               accessibilityLabel={t('common.cancel')}
-            >
-              <Ionicons name="close" size={20} color={dark.textMid} />
-            </Pressable>
+            />
           </View>
 
           {/* Target Weight Stepper Card */}
@@ -106,15 +110,18 @@ export function TargetWeightEditorModal({
               {t('trackers.weight.targetWeightGoalLabel', { unit: 'kg' })}
             </Text>
             <View style={styles.stepperRow}>
-              <Pressable
+              <Button
+                variant="tertiary"
+                fullWidth={false}
+                label="Decrease target weight"
+                iconOnly
+                icon={<Ionicons name="remove" size={20} color={dark.textHi} />}
                 testID="btn-target-minus"
                 style={styles.stepperBtn}
                 onPress={() => handleStepTarget(-0.5)}
                 accessibilityRole="button"
                 accessibilityLabel="Decrease target weight"
-              >
-                <Ionicons name="remove" size={20} color={dark.textHi} />
-              </Pressable>
+              />
 
               <View style={styles.numeralBox}>
                 <Text style={styles.numeralText} testID="text-target-weight-val">
@@ -127,15 +134,18 @@ export function TargetWeightEditorModal({
                 </Text>
               </View>
 
-              <Pressable
+              <Button
+                variant="tertiary"
+                fullWidth={false}
+                label="Increase target weight"
+                iconOnly
+                icon={<Ionicons name="add" size={20} color={dark.textHi} />}
                 testID="btn-target-plus"
                 style={styles.stepperBtn}
                 onPress={() => handleStepTarget(0.5)}
                 accessibilityRole="button"
                 accessibilityLabel="Increase target weight"
-              >
-                <Ionicons name="add" size={20} color={dark.textHi} />
-              </Pressable>
+              />
             </View>
           </View>
 
@@ -144,20 +154,17 @@ export function TargetWeightEditorModal({
             <Text style={styles.sectionLabel}>{t('trackers.weight.weeklyPaceLabel')}</Text>
             <View style={styles.paceChipsRow}>
               {[0.25, 0.5, 0.75, 1.0].map((rate) => (
-                <Pressable
+                <Button
+                  variant="secondary"
+                  fullWidth={false}
+                  label={`${rate} kg/wk`}
                   key={rate}
                   testID={`btn-pace-${rate}`}
                   style={[styles.paceChip, weeklyPace === rate && styles.paceChipActive]}
                   onPress={() => setWeeklyPace(rate)}
                   accessibilityRole="button"
                   accessibilityLabel={`${rate} kg per week`}
-                >
-                  <Text
-                    style={[styles.paceChipText, weeklyPace === rate && styles.paceChipTextActive]}
-                  >
-                    {`${rate} kg/wk`}
-                  </Text>
-                </Pressable>
+                />
               ))}
             </View>
           </View>
@@ -175,28 +182,28 @@ export function TargetWeightEditorModal({
 
           {/* Actions */}
           <View style={styles.actionsRow}>
-            <Pressable
+            <Button
+              variant="secondary"
+              fullWidth={false}
+              label={t('common.cancel')}
               testID="btn-target-cancel"
               style={styles.cancelBtn}
               onPress={onClose}
               accessibilityRole="button"
               accessibilityLabel={t('common.cancel')}
-            >
-              <Text style={styles.cancelBtnText}>{t('common.cancel')}</Text>
-            </Pressable>
+            />
 
-            <Pressable
+            <Button
+              variant="secondary"
+              fullWidth={false}
+              label={saving ? t('common.saving') : t('trackers.weight.saveTargetWeightBtn')}
               testID="btn-target-save"
               style={styles.saveBtn}
               onPress={() => void handleSave()}
               disabled={saving}
               accessibilityRole="button"
               accessibilityLabel={t('trackers.weight.saveTargetWeightBtn')}
-            >
-              <Text style={styles.saveBtnText}>
-                {saving ? t('common.saving') : t('trackers.weight.saveTargetWeightBtn')}
-              </Text>
-            </Pressable>
+            />
           </View>
         </View>
       </View>
@@ -335,7 +342,7 @@ const createStyles = (dark: ReturnType<typeof useAppearance>['colors']) =>
       fontWeight: '600',
     },
     paceChipTextActive: {
-      color: dark.onBrand, // #1C1109
+      color: dark.onBrand, // the onBrand token
     },
     projectionCard: {
       flexDirection: 'row',
@@ -392,7 +399,7 @@ const createStyles = (dark: ReturnType<typeof useAppearance>['colors']) =>
     saveBtnText: {
       fontSize: typeTokens.body.fontSize,
       fontFamily: typeTokens.body.fontFamily,
-      color: dark.onBrand, // #1C1109
+      color: dark.onBrand, // the onBrand token
       fontWeight: '700',
     },
   });

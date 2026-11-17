@@ -1,3 +1,5 @@
+import { visualPrimitives } from '@calipartner/ui/tokens';
+import { Button } from '@calipartner/ui';
 import { useTheme as useAppearance } from '@calipartner/ui/theme';
 import { type as inputTypography } from '@calipartner/ui';
 import React, { useCallback, useMemo, useState } from 'react';
@@ -266,12 +268,13 @@ export function RoomProgressView({ roomId, testID = 'room-progress-view' }: Room
         >
           <Ionicons name="alert-circle-outline" size={20} color={colors.textMuted} />
           <Text style={[styles.errorBannerText, { color: colors.text }]}>{error.message}</Text>
-          <Pressable
+          <Button
+            variant="secondary"
+            fullWidth={false}
+            label="Retry"
             style={[styles.retryBtn, { backgroundColor: colors.accent }]}
             onPress={refresh}
-          >
-            <Text style={styles.retryBtnText}>Retry</Text>
-          </Pressable>
+          />
         </View>
       )}
 
@@ -297,7 +300,10 @@ export function RoomProgressView({ roomId, testID = 'room-progress-view' }: Room
                       : t('progress.room.metrics.workouts');
 
           return (
-            <Pressable
+            <Button
+              variant="secondary"
+              fullWidth={false}
+              label={label}
               key={metric}
               style={[
                 styles.metricChip,
@@ -308,13 +314,7 @@ export function RoomProgressView({ roomId, testID = 'room-progress-view' }: Room
               accessibilityLabel={`Select metric ${label}`}
               accessibilityState={{ selected: isSelected }}
               testID={`${testID}-metric-${metric}`}
-            >
-              <Text
-                style={[styles.metricChipText, { color: isSelected ? '#ffffff' : colors.text }]}
-              >
-                {label}
-              </Text>
-            </Pressable>
+            />
           );
         })}
       </ScrollView>
@@ -358,7 +358,11 @@ export function RoomProgressView({ roomId, testID = 'room-progress-view' }: Room
           })}
 
           {data?.is_large_room && (
-            <Pressable
+            <Button
+              variant="secondary"
+              fullWidth={false}
+              label="+ Select Members"
+              icon={<Ionicons name="person-add-outline" size={14} color={colors.text} />}
               style={[
                 styles.memberChip,
                 styles.searchMemberChip,
@@ -366,10 +370,7 @@ export function RoomProgressView({ roomId, testID = 'room-progress-view' }: Room
               ]}
               onPress={() => setShowMemberPicker(true)}
               testID={`${testID}-open-member-picker`}
-            >
-              <Ionicons name="person-add-outline" size={14} color={colors.text} />
-              <Text style={[styles.memberChipText, { color: colors.text }]}>+ Select Members</Text>
-            </Pressable>
+            />
           )}
         </ScrollView>
       </View>
@@ -386,25 +387,31 @@ export function RoomProgressView({ roomId, testID = 'room-progress-view' }: Room
           </Text>
           <View style={styles.headerRightGroup}>
             {/* CMP-14 View as table toggle */}
-            <Pressable
+            <Button
+              variant="secondary"
+              fullWidth={false}
+              label={viewMode === 'chart' ? 'View as table' : 'View chart'}
+              icon={
+                <Ionicons
+                  name={viewMode === 'chart' ? 'grid-outline' : 'stats-chart-outline'}
+                  size={12}
+                  color={colors.accent}
+                />
+              }
               onPress={() => setViewMode((v) => (v === 'chart' ? 'table' : 'chart'))}
               style={[styles.viewTableBtn, { backgroundColor: colors.surfaceAlt }]}
               accessibilityRole="button"
               accessibilityLabel={viewMode === 'chart' ? 'View as table' : 'View as chart'}
               testID={`${testID}-toggle-table-mode`}
-            >
-              <Ionicons
-                name={viewMode === 'chart' ? 'grid-outline' : 'stats-chart-outline'}
-                size={12}
-                color={colors.accent}
-              />
-              <Text style={[styles.viewTableBtnText, { color: colors.accent }]}>
-                {viewMode === 'chart' ? 'View as table' : 'View chart'}
-              </Text>
-            </Pressable>
+            />
 
             <View style={styles.avgLegend}>
-              <View style={[styles.dashedLineLegend, { borderColor: '#64748b' }]} />
+              <View
+                style={[
+                  styles.dashedLineLegend,
+                  { borderColor: visualPrimitives.colors.mutedSlate },
+                ]}
+              />
               <Text style={[styles.avgLegendText, { color: colors.textMuted }]}>
                 {t('progress.room.roomAverage')}
               </Text>
@@ -541,7 +548,7 @@ export function RoomProgressView({ roomId, testID = 'room-progress-view' }: Room
               {roomAvgPath ? (
                 <Path
                   d={roomAvgPath}
-                  stroke="#64748b"
+                  stroke={visualPrimitives.colors.mutedSlate}
                   strokeWidth={2}
                   strokeDasharray="4 4"
                   fill="none"
@@ -578,7 +585,17 @@ export function RoomProgressView({ roomId, testID = 'room-progress-view' }: Room
           </Text>
 
           {/* Sort only by Consistency (PRD RPG-6) */}
-          <Pressable
+          <Button
+            variant="secondary"
+            fullWidth={false}
+            label={t('progress.room.sortConsistency')}
+            icon={
+              <Ionicons
+                name="swap-vertical"
+                size={12}
+                color={sortByConsistency ? visualPrimitives.colors.white : colors.text}
+              />
+            }
             style={[
               styles.sortBtn,
               {
@@ -589,18 +606,7 @@ export function RoomProgressView({ roomId, testID = 'room-progress-view' }: Room
             accessibilityRole="button"
             accessibilityLabel={t('progress.room.sortConsistency')}
             testID={`${testID}-sort-consistency`}
-          >
-            <Ionicons
-              name="swap-vertical"
-              size={12}
-              color={sortByConsistency ? '#ffffff' : colors.text}
-            />
-            <Text
-              style={[styles.sortBtnText, { color: sortByConsistency ? '#ffffff' : colors.text }]}
-            >
-              {t('progress.room.sortConsistency')}
-            </Text>
-          </Pressable>
+          />
         </View>
 
         {sortedSummaryRows.map((row) => {
@@ -762,15 +768,16 @@ export function RoomProgressView({ roomId, testID = 'room-progress-view' }: Room
               }}
             />
 
-            <Pressable
+            <Button
+              variant="secondary"
+              fullWidth={false}
+              label="Done"
               style={[styles.modalDoneBtn, { backgroundColor: colors.accent }]}
               onPress={() => setShowMemberPicker(false)}
               testID="close-progress-member-picker"
               accessibilityRole="button"
               accessibilityLabel={t('rooms.paywall.close')}
-            >
-              <Text style={styles.modalDoneText}>Done</Text>
-            </Pressable>
+            />
           </View>
         </View>
       </Modal>
@@ -822,7 +829,7 @@ const styles = StyleSheet.create({
   colorDot: {
     width: 8,
     height: 8,
-    borderRadius: 4,
+    borderRadius: visualPrimitives.radii[4],
   },
   memberChipText: {
     fontFamily: typography.body.fontFamily,
@@ -834,7 +841,7 @@ const styles = StyleSheet.create({
     marginVertical: spacing.sm,
     padding: spacing.md,
     borderRadius: radius.md,
-    elevation: 2,
+    elevation: visualPrimitives.effects[2],
   },
   chartHeader: {
     flexDirection: 'row',
@@ -1079,7 +1086,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   modalDoneText: {
-    color: '#ffffff',
+    color: visualPrimitives.colors.white,
     fontFamily: typography.body.fontFamily,
     fontSize: fontSize.sm,
     fontWeight: '600',
@@ -1105,7 +1112,7 @@ const styles = StyleSheet.create({
     borderRadius: radius.sm,
   },
   retryBtnText: {
-    color: '#ffffff',
+    color: visualPrimitives.colors.white,
     fontFamily: typography.body.fontFamily,
     fontSize: fontSize.xs,
     fontWeight: '600',

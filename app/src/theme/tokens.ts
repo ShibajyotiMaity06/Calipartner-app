@@ -87,7 +87,7 @@ const modernDarkColors: ThemeColors = {
   text: dark.textHi,
   textMuted: dark.textMid,
   accent: dark.apricot,
-  onAccent: dark.onBrand, // #1C1109 - dark text on apricot
+  onAccent: dark.onBrand, // the onBrand token - dark text on apricot
   danger: dark.danger,
   primary: dark.apricot,
   macroCalories: nutritionColors.calories,

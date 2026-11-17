@@ -1,3 +1,5 @@
+import { visualPrimitives } from '@calipartner/ui/tokens';
+import { Button } from '@calipartner/ui';
 import { NavigationIcon } from '@calipartner/ui';
 import { type as inputTypography } from '@calipartner/ui';
 import { Text } from '@calipartner/ui';
@@ -206,17 +208,16 @@ export function NotificationSettingsScreen({
         <Text style={[styles.statusText, { color: colors.textMuted, marginBottom: spacing.md }]}>
           {error}
         </Text>
-        <Pressable
+        <Button
+          variant="secondary"
+          fullWidth={false}
+          label={t('notifications.retry')}
           testID="btn-retry-notification-settings"
           accessibilityRole="button"
           accessibilityLabel={t('notifications.retry')}
           style={[styles.primaryButton, { backgroundColor: colors.accent }]}
           onPress={() => refresh()}
-        >
-          <Text style={[styles.primaryButtonText, { color: colors.onAccent }]}>
-            {t('notifications.retry')}
-          </Text>
-        </Pressable>
+        />
       </View>
     );
   }
@@ -242,15 +243,18 @@ export function NotificationSettingsScreen({
       <View
         style={[styles.header, { borderColor: colors.border, backgroundColor: colors.surface }]}
       >
-        <Pressable
+        <Button
+          variant="tertiary"
+          fullWidth={false}
+          label={t('notifications.back')}
+          iconOnly
+          icon={<NavigationIcon action="back" />}
           testID="btn-notification-settings-back"
           accessibilityRole="button"
           accessibilityLabel={t('notifications.back')}
           style={styles.backButton}
           onPress={handleBack}
-        >
-          <NavigationIcon action="back" />
-        </Pressable>
+        />
         <View style={styles.headerTitleContainer}>
           <Text style={[styles.headerTitle, { color: colors.text }]}>
             {t('notifications.title')}
@@ -788,11 +792,11 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.sm,
     borderRadius: radius.pill,
     borderWidth: 1,
-    shadowColor: '#000',
+    shadowColor: visualPrimitives.colors.black,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+    shadowRadius: visualPrimitives.effects[4],
+    elevation: visualPrimitives.effects[3],
   },
   toastText: {
     fontSize: fontSize.sm,

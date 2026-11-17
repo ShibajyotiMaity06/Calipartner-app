@@ -1,3 +1,5 @@
+import { visualPrimitives } from '@calipartner/ui/tokens';
+import { Button } from '@calipartner/ui';
 import { type as inputTypography } from '@calipartner/ui';
 import React, { useState } from 'react';
 import { ActivityIndicator, Modal, Pressable, StyleSheet, TextInput, View } from 'react-native';
@@ -72,15 +74,18 @@ export function ReportModal({
                 {t('rooms.reportModal.subtitle')}
               </Text>
             </View>
-            <Pressable
+            <Button
+              variant="tertiary"
+              fullWidth={false}
+              label="Close report modal"
+              iconOnly
+              icon={<Ionicons name="close" size={18} color={colors.text} />}
               onPress={onClose}
               style={[styles.closeButton, { backgroundColor: colors.surfaceAlt }]}
               accessibilityRole="button"
               accessibilityLabel="Close report modal"
               testID="btn-close-report-modal"
-            >
-              <Ionicons name="close" size={18} color={colors.text} />
-            </Pressable>
+            />
           </View>
 
           {targetName && (
@@ -159,7 +164,7 @@ export function ReportModal({
             testID="btn-submit-report"
           >
             {loading ? (
-              <ActivityIndicator size="small" color="#FFFFFF" />
+              <ActivityIndicator size="small" color={visualPrimitives.colors.white} />
             ) : (
               <Text style={styles.submitButtonText}>
                 {submittedToast
@@ -208,7 +213,7 @@ const styles = StyleSheet.create({
   closeButton: {
     width: 32,
     height: 32,
-    borderRadius: 16,
+    borderRadius: visualPrimitives.radii[16],
     alignItems: 'center',
     justifyContent: 'center',
     marginLeft: spacing.sm,
@@ -266,7 +271,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   submitButtonText: {
-    color: '#FFFFFF',
+    color: visualPrimitives.colors.white,
     fontFamily: typography.body.fontFamily,
     fontSize: fontSize.sm,
     fontWeight: '700',

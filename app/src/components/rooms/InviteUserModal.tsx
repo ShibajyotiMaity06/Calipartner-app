@@ -1,3 +1,5 @@
+import { visualPrimitives } from '@calipartner/ui/tokens';
+import { Button } from '@calipartner/ui';
 import { type as inputTypography } from '@calipartner/ui';
 import React, { useEffect, useState } from 'react';
 import {
@@ -97,15 +99,18 @@ export function InviteUserModal({
                 {t('rooms.inviteModal.subtitle')}
               </Text>
             </View>
-            <Pressable
+            <Button
+              variant="tertiary"
+              fullWidth={false}
+              label="Close invite modal"
+              iconOnly
+              icon={<Ionicons name="close" size={18} color={colors.text} />}
               onPress={onClose}
               style={[styles.closeButton, { backgroundColor: colors.surfaceAlt }]}
               accessibilityRole="button"
               accessibilityLabel="Close invite modal"
               testID="btn-close-invite-modal"
-            >
-              <Ionicons name="close" size={18} color={colors.text} />
-            </Pressable>
+            />
           </View>
 
           {/* Search TextInput */}
@@ -203,13 +208,18 @@ export function InviteUserModal({
                         testID={`btn-invite-user-${item.username}`}
                       >
                         {isInviting ? (
-                          <ActivityIndicator size="small" color="#FFFFFF" />
+                          <ActivityIndicator size="small" color={visualPrimitives.colors.white} />
                         ) : isInvited ? (
                           <Text style={[styles.inviteButtonText, { color: colors.mint }]}>
                             {t('rooms.inviteModal.invited')}
                           </Text>
                         ) : (
-                          <Text style={[styles.inviteButtonText, { color: '#FFFFFF' }]}>
+                          <Text
+                            style={[
+                              styles.inviteButtonText,
+                              { color: visualPrimitives.colors.white },
+                            ]}
+                          >
                             {t('rooms.inviteModal.sendInviteBtn')}
                           </Text>
                         )}
@@ -262,7 +272,7 @@ const styles = StyleSheet.create({
   closeButton: {
     width: 32,
     height: 32,
-    borderRadius: 16,
+    borderRadius: visualPrimitives.radii[16],
     alignItems: 'center',
     justifyContent: 'center',
     marginLeft: spacing.sm,
@@ -317,12 +327,12 @@ const styles = StyleSheet.create({
   avatar: {
     width: 38,
     height: 38,
-    borderRadius: 19,
+    borderRadius: visualPrimitives.radii[19],
   },
   avatarPlaceholder: {
     width: 38,
     height: 38,
-    borderRadius: 19,
+    borderRadius: visualPrimitives.radii[19],
     alignItems: 'center',
     justifyContent: 'center',
   },

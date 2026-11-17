@@ -13,6 +13,7 @@ vi.mock('react-native', () => ({
   StyleSheet: { create: (s: unknown) => s, absoluteFill: {} },
 }));
 vi.mock('@calipartner/ui', async () => ({
+  Button: (await import('@/test/ButtonStub')).ButtonStub,
   ...(await import('../../../../packages/ui/src/tokens')),
   Text: 'Text',
 }));

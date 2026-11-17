@@ -1,6 +1,6 @@
 import { useTheme as useAppearance } from '@calipartner/ui/theme';
 import React, { useEffect, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { ScrollView, StyleSheet, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Button, Sheet, Text, homeLayout, radius, space } from '@calipartner/ui';
 import { getProtocolPlannedMinutes, type FastingProtocol } from '@calipartner/core';
@@ -126,15 +126,18 @@ export function FastingTimerModal({
           <Text variant="title1" style={styles.flex}>
             {t('fastingRefresh.title')}
           </Text>
-          <Pressable
+          <Button
+            variant="tertiary"
+            fullWidth={false}
+            label={t('common.cancel')}
+            iconOnly
+            icon={<Ionicons name="close" color={dark.textHi} size={homeLayout.iconSize} />}
             accessibilityRole="button"
             accessibilityLabel={t('common.cancel')}
             style={styles.touch}
             onPress={onClose}
             testID="button-close-timer-modal"
-          >
-            <Ionicons name="close" color={dark.textHi} size={homeLayout.iconSize} />
-          </Pressable>
+          />
         </View>
         {loading || planLoading ? (
           <LoadingState />

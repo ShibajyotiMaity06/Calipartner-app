@@ -1,3 +1,5 @@
+import { visualPrimitives } from '@calipartner/ui/tokens';
+import { Button } from '@calipartner/ui';
 import { useTheme as useAppearance } from '@calipartner/ui/theme';
 import { NavigationIcon } from '@calipartner/ui';
 import React, { useState } from 'react';
@@ -78,15 +80,18 @@ export function FastingHistoryModal({
               </Text>
               <Text style={styles.subtitle}>{t('fasting.safeFastingNotice')}</Text>
             </View>
-            <Pressable
+            <Button
+              variant="tertiary"
+              fullWidth={false}
+              label="Close"
+              iconOnly
+              icon={<Ionicons name="close" size={20} color={dark.textMid} />}
               testID="button-close-history-modal"
               onPress={onClose}
               style={styles.closeButton}
               accessibilityRole="button"
               accessibilityLabel="Close"
-            >
-              <Ionicons name="close" size={20} color={dark.textMid} />
-            </Pressable>
+            />
           </View>
 
           <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.content}>
@@ -125,22 +130,23 @@ export function FastingHistoryModal({
             <View style={styles.sectionCard}>
               <View style={styles.sectionHeader}>
                 <Text style={styles.sectionTitle}>{t('fasting.hoursGraph')}</Text>
-                <Pressable
+                <Button
+                  variant="secondary"
+                  fullWidth={false}
+                  label={viewAsTable ? 'View chart' : t('fasting.viewAsTable')}
+                  icon={
+                    <Ionicons
+                      name={viewAsTable ? 'bar-chart-outline' : 'list-outline'}
+                      size={16}
+                      color={dark.apricot}
+                    />
+                  }
                   testID="button-toggle-cmp14-table"
                   onPress={() => setViewAsTable(!viewAsTable)}
                   style={styles.toggleTableBtn}
                   accessibilityRole="button"
                   accessibilityLabel={viewAsTable ? 'View chart' : t('fasting.viewAsTable')}
-                >
-                  <Ionicons
-                    name={viewAsTable ? 'bar-chart-outline' : 'list-outline'}
-                    size={16}
-                    color={dark.apricot}
-                  />
-                  <Text style={styles.toggleTableText}>
-                    {viewAsTable ? 'View chart' : t('fasting.viewAsTable')}
-                  </Text>
-                </Pressable>
+                />
               </View>
 
               {/* View as Table (CMP-14 Accessible Data Table) */}
@@ -337,7 +343,7 @@ const createStyles = (dark: ReturnType<typeof useAppearance>['colors']) =>
     closeButton: {
       width: 44,
       height: 44,
-      borderRadius: 22,
+      borderRadius: visualPrimitives.radii[22],
       backgroundColor: dark.s1,
       justifyContent: 'center',
       alignItems: 'center',
@@ -464,13 +470,13 @@ const createStyles = (dark: ReturnType<typeof useAppearance>['colors']) =>
       width: 14,
       height: 80,
       backgroundColor: dark.s2,
-      borderRadius: 4,
+      borderRadius: visualPrimitives.radii[4],
       justifyContent: 'flex-end',
       overflow: 'hidden',
     },
     barFill: {
       width: '100%',
-      borderRadius: 4,
+      borderRadius: visualPrimitives.radii[4],
     },
     barLabel: {
       fontSize: 10,

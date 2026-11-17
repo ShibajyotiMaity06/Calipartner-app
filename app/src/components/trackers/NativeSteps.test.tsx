@@ -12,6 +12,7 @@ vi.mock('react-native', () => ({
   StyleSheet: { create: (value: unknown) => value, absoluteFill: {} },
 }));
 vi.mock('@calipartner/ui', async () => ({
+  Button: (await import('@/test/ButtonStub')).ButtonStub,
   ...(await import('../../../../packages/ui/src/tokens')),
   Text: 'Text',
 }));
@@ -53,9 +54,11 @@ it.each(['android', 'ios', 'web'] as const)(
     await act(async () => {
       tree = create(<StepsCard />);
     });
-    expect(tree.root.findAllByProps({ testID: 'btn-steps-manual' })).toHaveLength(
-      platform === 'web' ? 1 : 0,
-    );
+    expect(
+      tree.root.findAll(
+        (node) => typeof node.type === 'string' && node.props.testID === 'btn-steps-manual',
+      ),
+    ).toHaveLength(platform === 'web' ? 1 : 0);
     expect(tree.root.findByProps({ testID: 'btn-steps-sync' })).toBeDefined();
     await act(async () => {
       tree.update(<ManualStepsModal visible onClose={vi.fn()} onSave={vi.fn()} />);

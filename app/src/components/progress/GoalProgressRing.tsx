@@ -1,3 +1,4 @@
+import { visualPrimitives } from '@calipartner/ui/tokens';
 import { Text } from '@calipartner/ui';
 import React from 'react';
 import { StyleSheet, View } from 'react-native';
@@ -110,11 +111,11 @@ const styles = StyleSheet.create({
     marginHorizontal: spacing.md,
     marginVertical: spacing.sm,
     alignItems: 'center',
-    shadowColor: '#000',
+    shadowColor: visualPrimitives.colors.black,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.05,
-    shadowRadius: 4,
-    elevation: 2,
+    shadowRadius: visualPrimitives.effects[4],
+    elevation: visualPrimitives.effects[2],
   },
   ringWrapper: {
     width: 120,

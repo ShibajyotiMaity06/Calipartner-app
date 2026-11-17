@@ -1,13 +1,6 @@
 import { NavigationIcon, SegmentedControl } from '@calipartner/ui';
 import React, { useEffect, useRef, useState } from 'react';
-import {
-  KeyboardAvoidingView,
-  Platform,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  View,
-} from 'react-native';
+import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import {
@@ -164,7 +157,12 @@ export default function SignInScreen() {
       >
         <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
           <View style={styles.frame}>
-            <Pressable
+            <Button
+              variant="tertiary"
+              fullWidth={false}
+              label={t('onboarding.back')}
+              iconOnly
+              icon={<NavigationIcon action="back" />}
               onPress={() => {
                 if (step === 'otp') {
                   setStep('email');
@@ -177,9 +175,7 @@ export default function SignInScreen() {
               accessibilityRole="button"
               accessibilityLabel={t('onboarding.back')}
               testID="btn-auth-top-back"
-            >
-              <NavigationIcon action="back" />
-            </Pressable>
+            />
             <SegmentedControl
               value={isSignUp ? 'signup' : 'signin'}
               onChange={(mode) => changeMode(mode === 'signup')}

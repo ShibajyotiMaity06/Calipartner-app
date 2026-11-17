@@ -1,3 +1,4 @@
+import { Button } from '@calipartner/ui';
 import { HeaderActions } from '@/components/HeaderActions';
 import { useTheme as useAppearance } from '@calipartner/ui/theme';
 import React from 'react';
@@ -46,15 +47,18 @@ export function LogSomethingView({
           {t('homeRefresh.activity')}
         </Text>
         <HeaderActions />
-        <Pressable
+        <Button
+          variant="tertiary"
+          fullWidth={false}
+          label={t('homeRefresh.close')}
+          iconOnly
+          icon={<Ionicons name="close" size={homeLayout.iconSize} color={dark.textHi} />}
           onPress={onClose}
           accessibilityRole="button"
           accessibilityLabel={t('homeRefresh.close')}
           style={styles.iconButton}
           testID="log-hub-close"
-        >
-          <Ionicons name="close" size={homeLayout.iconSize} color={dark.textHi} />
-        </Pressable>
+        />
       </View>
       <Text variant="bodyS">{t('homeRefresh.activityHint')}</Text>
       <View style={styles.grid}>

@@ -10,6 +10,7 @@ vi.mock('react-native', () => ({
   StyleSheet: { create: (s: unknown) => s },
 }));
 vi.mock('@calipartner/ui', async () => ({
+  Button: (await import('@/test/ButtonStub')).ButtonStub,
   ...(await import('../../../../packages/ui/src/tokens')),
   Text: 'Text',
 }));
@@ -36,8 +37,7 @@ it('offers exactly three filters, combines Indian with a focus, and deselects by
   });
   expect(
     tree.root.findAll(
-      (node) =>
-        String(node.type) === 'Pressable' && node.props.testID?.startsWith('recipe-filter-'),
+      (node) => String(node.type) === 'Button' && node.props.testID?.startsWith('recipe-filter-'),
     ),
   ).toHaveLength(3);
   await act(async () => tree.root.findByProps({ testID: 'recipe-filter-indian' }).props.onPress());

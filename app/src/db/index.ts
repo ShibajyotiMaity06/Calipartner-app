@@ -666,6 +666,14 @@ export async function clearTrackingDataForReset(customDb?: SQLite.SQLiteDatabase
     `SELECT name FROM sqlite_master WHERE type = 'table'`,
   );
   const reset = async () => {
+    // Unsigned setup is a local form, not stale account tracking. Keep it through
+    // first sign-in; onboarding recalculates it and requires confirmed profile data.
+    const guestDraft = tables.some(({ name }) => name === 'local_onboarding_drafts')
+      ? await db.getFirstAsync<{ payload: string; updated_at: string }>(
+          'SELECT payload, updated_at FROM local_onboarding_drafts WHERE user_id = ?',
+          ['guest-user'],
+        )
+      : null;
     for (const { name } of tables) {
       if (
         /^local_[a-z_]+$/.test(name) ||
@@ -681,6 +689,11 @@ export async function clearTrackingDataForReset(customDb?: SQLite.SQLiteDatabase
         await db.runAsync(`DELETE FROM ${name}`);
       }
     }
+    if (guestDraft)
+      await db.runAsync(
+        'INSERT INTO local_onboarding_drafts (user_id, payload, updated_at) VALUES (?, ?, ?)',
+        ['guest-user', guestDraft.payload, guestDraft.updated_at],
+      );
   };
   await withOnlineSave(db, reset, false);
 }

@@ -1,3 +1,5 @@
+import { visualPrimitives } from '@calipartner/ui/tokens';
+import { Button } from '@calipartner/ui';
 import { useTheme as useAppearance } from '@calipartner/ui/theme';
 import React, { useState } from 'react';
 import { Modal, Pressable, ScrollView, StyleSheet, Switch, View } from 'react-native';
@@ -78,15 +80,18 @@ export function FastingIntroModal({
               </Text>
               <Text style={styles.subtitle}>{t('fasting.fastingIntroSubtitle')}</Text>
             </View>
-            <Pressable
+            <Button
+              variant="tertiary"
+              fullWidth={false}
+              label="Close"
+              iconOnly
+              icon={<Ionicons name="close" size={20} color={dark.textMid} />}
               testID="button-close-intro-modal"
               onPress={onClose}
               style={styles.closeButton}
               accessibilityRole="button"
               accessibilityLabel="Close"
-            >
-              <Ionicons name="close" size={20} color={dark.textMid} />
-            </Pressable>
+            />
           </View>
 
           <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.content}>
@@ -224,7 +229,7 @@ const createStyles = (dark: ReturnType<typeof useAppearance>['colors']) =>
     closeButton: {
       width: 44,
       height: 44,
-      borderRadius: 22,
+      borderRadius: visualPrimitives.radii[22],
       backgroundColor: dark.s1,
       justifyContent: 'center',
       alignItems: 'center',

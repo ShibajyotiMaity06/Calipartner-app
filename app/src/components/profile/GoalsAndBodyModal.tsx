@@ -2,15 +2,7 @@ import { useTheme as useAppearance } from '@calipartner/ui/theme';
 import { NavigationIcon } from '@calipartner/ui';
 import { type as inputTypography } from '@calipartner/ui';
 import React, { useState } from 'react';
-import {
-  Modal,
-  SafeAreaView,
-  ScrollView,
-  StyleSheet,
-  TextInput,
-  TouchableOpacity,
-  View,
-} from 'react-native';
+import { Modal, SafeAreaView, ScrollView, StyleSheet, TextInput, View } from 'react-native';
 import { Button, Card, radius, SegmentedControl, space, Text } from '@calipartner/ui';
 import { NumberField } from '@/components/onboarding/PlanPrimitives';
 import { HeightField } from '@/components/onboarding/HeightField';
@@ -105,15 +97,18 @@ export function GoalsAndBodyModal({
         <View style={styles.container} testID={testID}>
           {/* Top Bar */}
           <View style={styles.topBar}>
-            <TouchableOpacity
+            <Button
+              variant="tertiary"
+              fullWidth={false}
+              label="Back to Me"
+              iconOnly
+              icon={<NavigationIcon action="back" />}
               onPress={onClose}
               accessibilityRole="button"
               accessibilityLabel="Back to Me"
               style={styles.backButton}
               testID="btn-close-goals-body"
-            >
-              <NavigationIcon action="back" />
-            </TouchableOpacity>
+            />
             <Text variant="heading" color={dark.textHi}>
               {t('me.goalsAndBody.title')}
             </Text>

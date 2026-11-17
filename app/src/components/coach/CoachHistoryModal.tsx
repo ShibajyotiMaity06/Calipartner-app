@@ -1,3 +1,5 @@
+import { visualPrimitives } from '@calipartner/ui/tokens';
+import { Button } from '@calipartner/ui';
 import { Text } from '@calipartner/ui';
 import React from 'react';
 import { Alert, Modal, Platform, Pressable, ScrollView, StyleSheet, View } from 'react-native';
@@ -72,15 +74,18 @@ export function CoachHistoryModal({
               {t('coach.history.title')}
             </Text>
           </View>
-          <Pressable
+          <Button
+            variant="tertiary"
+            fullWidth={false}
+            label="Close history"
+            iconOnly
+            icon={<Ionicons name="close" size={24} color={colors.text} />}
             onPress={onClose}
             accessibilityRole="button"
             accessibilityLabel="Close history"
             testID="btn-close-coach-history"
             style={styles.closeBtn}
-          >
-            <Ionicons name="close" size={24} color={colors.text} />
-          </Pressable>
+          />
         </View>
 
         {/* Content list or empty state */}
@@ -145,15 +150,18 @@ export function CoachHistoryModal({
                     </Text>
                   </Pressable>
 
-                  <Pressable
+                  <Button
+                    variant="destructive"
+                    fullWidth={false}
+                    label={`${t('coach.history.deleteSession')}: ${conv.title}`}
+                    iconOnly
+                    icon={<Ionicons name="trash-outline" size={18} color={colors.danger} />}
                     onPress={() => onDeleteConversation(conv.id)}
                     style={styles.deleteItemBtn}
                     accessibilityRole="button"
                     accessibilityLabel={`${t('coach.history.deleteSession')}: ${conv.title}`}
                     testID={`btn-delete-conv-${conv.id}`}
-                  >
-                    <Ionicons name="trash-outline" size={18} color={colors.danger} />
-                  </Pressable>
+                  />
                 </View>
               ))}
             </View>
@@ -165,18 +173,17 @@ export function CoachHistoryModal({
           <View
             style={[styles.footer, { backgroundColor: colors.surface, borderColor: colors.border }]}
           >
-            <Pressable
+            <Button
+              variant="destructive"
+              fullWidth={false}
+              label={t('coach.history.deleteAll')}
+              icon={<Ionicons name="trash-bin-outline" size={18} color={colors.danger} />}
               onPress={handleConfirmDeleteAll}
               style={[styles.deleteAllBtn, { borderColor: colors.danger }]}
               accessibilityRole="button"
               accessibilityLabel={t('coach.history.deleteAll')}
               testID="btn-delete-all-history"
-            >
-              <Ionicons name="trash-bin-outline" size={18} color={colors.danger} />
-              <Text style={[styles.deleteAllBtnText, { color: colors.danger }]}>
-                {t('coach.history.deleteAll')}
-              </Text>
-            </Pressable>
+            />
           </View>
         )}
       </View>
@@ -220,7 +227,7 @@ const styles = StyleSheet.create({
   emptyIconCircle: {
     width: 64,
     height: 64,
-    borderRadius: 32,
+    borderRadius: visualPrimitives.radii[32],
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: spacing.md,

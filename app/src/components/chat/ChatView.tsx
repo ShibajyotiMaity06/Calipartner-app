@@ -1,3 +1,4 @@
+import { visualPrimitives } from '@calipartner/ui/tokens';
 import React, { useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
@@ -259,7 +260,7 @@ export function ChatView({
           testID="banner-chat-locked"
           accessibilityLabel="Room paused banner"
         >
-          <Ionicons name="lock-closed" size={16} color="#FFFFFF" />
+          <Ionicons name="lock-closed" size={16} color={visualPrimitives.colors.white} />
           <Text style={styles.bannerStripText}>
             {t('chat.pausedTitle')} — {t('chat.pausedSubtitle')}
           </Text>
@@ -505,7 +506,7 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   bannerStripText: {
-    color: '#FFFFFF',
+    color: visualPrimitives.colors.white,
     fontSize: fontSize.xs,
     fontWeight: '600',
     textAlign: 'center',

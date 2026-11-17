@@ -1,5 +1,6 @@
+import { Button } from '@calipartner/ui';
 import React from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { Text } from '@calipartner/ui';
 import { Ionicons } from '@expo/vector-icons';
 import { t } from '@/i18n';
@@ -37,7 +38,10 @@ export function ChatEmptyState({
           </Text>
           <View style={styles.startersRow}>
             {starters.map((starter, index) => (
-              <Pressable
+              <Button
+                variant="secondary"
+                fullWidth={false}
+                label={starter}
                 key={index}
                 onPress={() => onSelectStarter(starter)}
                 style={[
@@ -47,9 +51,7 @@ export function ChatEmptyState({
                 accessibilityRole="button"
                 accessibilityLabel={`Send prompt: ${starter}`}
                 testID={`btn-starter-${index}`}
-              >
-                <Text style={[styles.starterText, { color: colors.text }]}>{starter}</Text>
-              </Pressable>
+              />
             ))}
           </View>
         </View>

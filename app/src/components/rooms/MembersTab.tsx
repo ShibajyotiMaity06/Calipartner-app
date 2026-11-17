@@ -1,3 +1,5 @@
+import { visualPrimitives } from '@calipartner/ui/tokens';
+import { Button } from '@calipartner/ui';
 import React from 'react';
 import { Image, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { Text } from '@calipartner/ui';
@@ -49,18 +51,17 @@ export function MembersTab({
         </View>
 
         {!isRoomFull ? (
-          <Pressable
+          <Button
+            variant="secondary"
+            fullWidth={false}
+            label={t('rooms.inviteModal.sendInviteBtn')}
+            icon={<Ionicons name="person-add" size={14} color={colors.onAccent} />}
             onPress={onInvite}
             style={[styles.inviteBtn, { backgroundColor: colors.accent }]}
             accessibilityRole="button"
             accessibilityLabel="Invite member"
             testID="btn-members-tab-invite"
-          >
-            <Ionicons name="person-add" size={14} color={colors.onAccent} />
-            <Text style={[styles.inviteBtnText, { color: colors.onAccent }]}>
-              {t('rooms.inviteModal.sendInviteBtn')}
-            </Text>
-          </Pressable>
+          />
         ) : (
           <View
             style={[styles.fullBadge, { backgroundColor: colors.surfaceAlt }]}
@@ -150,18 +151,17 @@ export function MembersTab({
       </View>
 
       {/* Manage Settings shortcut */}
-      <Pressable
+      <Button
+        variant="secondary"
+        fullWidth={false}
+        label={t('rooms.settingsModal.title')}
+        icon={<Ionicons name="settings-outline" size={18} color={colors.text} />}
         onPress={onOpenSettings}
         style={[styles.manageButton, { backgroundColor: colors.surfaceAlt }]}
         accessibilityRole="button"
         accessibilityLabel="Room settings"
         testID="btn-members-open-settings"
-      >
-        <Ionicons name="settings-outline" size={18} color={colors.text} />
-        <Text style={[styles.manageButtonText, { color: colors.text }]}>
-          {t('rooms.settingsModal.title')}
-        </Text>
-      </Pressable>
+      />
     </ScrollView>
   );
 }
@@ -201,7 +201,7 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   inviteBtnText: {
-    color: '#FFFFFF',
+    color: visualPrimitives.colors.white,
     fontSize: fontSize.xs,
     fontWeight: '700',
   },
@@ -221,12 +221,12 @@ const styles = StyleSheet.create({
   avatar: {
     width: 40,
     height: 40,
-    borderRadius: 20,
+    borderRadius: visualPrimitives.radii[20],
   },
   avatarPlaceholder: {
     width: 40,
     height: 40,
-    borderRadius: 20,
+    borderRadius: visualPrimitives.radii[20],
     alignItems: 'center',
     justifyContent: 'center',
   },

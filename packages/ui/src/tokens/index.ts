@@ -12,3 +12,7 @@ export * from './blueprint';
 export * from './avatar';
 export * from './coin';
 export * from './controls';
+
+export * from './entry';
+
+export * from './visualPrimitives';

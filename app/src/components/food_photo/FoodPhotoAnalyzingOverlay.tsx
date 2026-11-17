@@ -1,6 +1,8 @@
+import { visualPrimitives } from '@calipartner/ui/tokens';
+import { Button } from '@calipartner/ui';
 import { Text } from '@calipartner/ui';
 import React, { useEffect, useState } from 'react';
-import { ActivityIndicator, Modal, Pressable, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, Modal, StyleSheet, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { t } from '@/i18n';
 import { fontSize, radius, spacing } from '@/theme/tokens';
@@ -83,17 +85,16 @@ export function FoodPhotoAnalyzingOverlay({ visible, onCancel }: FoodPhotoAnalyz
           </View>
 
           {onCancel && (
-            <Pressable
+            <Button
+              variant="secondary"
+              fullWidth={false}
+              label={t('common.cancel')}
               testID="btn-cancel-analyzing"
               accessibilityRole="button"
               accessibilityLabel={t('common.cancel')}
               onPress={onCancel}
               style={styles.cancelBtn}
-            >
-              <Text style={{ color: colors.textMuted, fontSize: fontSize.sm }}>
-                {t('common.cancel')}
-              </Text>
-            </Pressable>
+            />
           )}
         </View>
       </View>
@@ -116,11 +117,11 @@ const styles = StyleSheet.create({
     padding: spacing.xl,
     alignItems: 'center',
     borderWidth: 1,
-    shadowColor: '#000',
+    shadowColor: visualPrimitives.colors.black,
     shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.35,
-    shadowRadius: 16,
-    elevation: 8,
+    shadowRadius: visualPrimitives.effects[16],
+    elevation: visualPrimitives.effects[8],
   },
   sparkleWrap: {
     width: 72,

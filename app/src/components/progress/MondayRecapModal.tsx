@@ -1,3 +1,4 @@
+import { Button } from '@calipartner/ui';
 import { useTheme as useAppearance } from '@calipartner/ui/theme';
 import React from 'react';
 import { Modal, Pressable, StyleSheet, View } from 'react-native';
@@ -56,15 +57,18 @@ export function MondayRecapModal({
               <Text style={styles.title}>{t('progress.recap.title')}</Text>
               <Text style={styles.subtitle}>{t('progress.recap.subtitle')}</Text>
             </View>
-            <Pressable
+            <Button
+              variant="tertiary"
+              fullWidth={false}
+              label="Close"
+              iconOnly
+              icon={<Ionicons name="close" size={20} color={dark.textMid} />}
               style={styles.closeBtn}
               onPress={onClose}
               accessibilityRole="button"
               accessibilityLabel="Close"
               testID={`${testID}-close`}
-            >
-              <Ionicons name="close" size={20} color={dark.textMid} />
-            </Pressable>
+            />
           </View>
 
           {/* Large Score Card */}
@@ -99,7 +103,10 @@ export function MondayRecapModal({
           <Text style={styles.tieBreakerText}>{t('progress.recap.tieBreaker')}</Text>
 
           {/* Pinned Action Button */}
-          <Pressable
+          <Button
+            variant="secondary"
+            fullWidth={false}
+            label={t('progress.recap.seeLeaderboard')}
             style={styles.primaryButton}
             onPress={() => {
               onClose();
@@ -108,9 +115,7 @@ export function MondayRecapModal({
             accessibilityRole="button"
             accessibilityLabel={t('progress.recap.seeLeaderboard')}
             testID={`${testID}-see-leaderboard`}
-          >
-            <Text style={styles.primaryButtonText}>{t('progress.recap.seeLeaderboard')}</Text>
-          </Pressable>
+          />
         </View>
       </View>
     </Modal>

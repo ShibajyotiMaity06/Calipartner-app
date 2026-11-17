@@ -1,3 +1,4 @@
+import { visualPrimitives } from '@calipartner/ui/tokens';
 import { CoinCatalogProvider } from '@/hooks/useCoinCatalog';
 import { HeaderActions } from '@/components/HeaderActions';
 import { useTheme as useAppearance } from '@calipartner/ui/theme';
@@ -18,7 +19,7 @@ import { SessionNavigationGuard } from '@/components/SessionNavigationGuard';
 import { PlusTrialExpiryGate } from '@/components/subscription/PlusTrialExpiryGate';
 import { AccountDataResetGate } from '@/components/AccountDataResetGate';
 import { ErrorState } from '@/components/ErrorState';
-import { LoadingState } from '@/components/LoadingState';
+import { AnimatedLogoSplash } from '@/components/brand/AnimatedLogoSplash';
 import { AuthProvider } from '@/contexts/AuthContext';
 import { TargetsProvider } from '@/hooks/useTargets';
 import { getDb } from '@/db';
@@ -54,7 +55,7 @@ function AppInitializationGate({ children }: { children: React.ReactNode }) {
   if (state === 'ready') return <>{children}</>;
   return (
     <View style={{ flex: 1, justifyContent: 'center', backgroundColor: colors.background }}>
-      {state === 'loading' ? <LoadingState /> : <ErrorState onRetry={init} />}
+      {state === 'loading' ? <AnimatedLogoSplash animate={false} /> : <ErrorState onRetry={init} />}
     </View>
   );
 }
@@ -115,7 +116,7 @@ export default function RootLayout() {
         };
         themeMeta.id = 'theme-color-meta';
         themeMeta.name = 'theme-color';
-        themeMeta.content = '#0E0B08';
+        themeMeta.content = visualPrimitives.colors.warmBlack;
         doc.head.appendChild(themeMeta as unknown);
 
         const mobileMeta = doc.createElement('meta') as unknown as {

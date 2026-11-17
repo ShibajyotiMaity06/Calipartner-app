@@ -1,12 +1,15 @@
 import { useTheme as useAppearance } from '../theme/useTheme';
-import React from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   Pressable,
+  Animated,
   ActivityIndicator,
   View,
   StyleSheet,
   type GestureResponderEvent,
   type ViewStyle,
+  type StyleProp,
+  type PressableProps,
 } from 'react-native';
 
 import { controls } from '../tokens/controls';
@@ -16,12 +19,13 @@ import { Text } from './Text';
 import { homeLayout } from '../tokens/home';
 import { NavigationIcon } from './NavigationIcon';
 import { AddIcon } from './AddIcon';
+import { entryLayout } from '../tokens/entry';
 
 export type ButtonVariant =
   'primary' | 'secondary' | 'tertiary' | 'destructive' | 'destructiveFill';
 export type ButtonSize = 'sm' | 'md' | 'lg';
 
-export interface ButtonProps {
+export interface ButtonProps extends Omit<PressableProps, 'style' | 'children'> {
   fontSet?: 'app' | 'onboarding';
   /** Visual variant */
   variant?: ButtonVariant;
@@ -34,6 +38,7 @@ export interface ButtonProps {
   icon?: React.ReactNode;
   /** Optional trailing icon */
   trailingIcon?: React.ReactNode;
+  iconOnly?: boolean;
   /** When true, button stretches to fill parent width */
   fullWidth?: boolean;
   /** Loading state: keeps label visible and shows 16px spinner */
@@ -49,7 +54,7 @@ export interface ButtonProps {
   /** Test identifier */
   testID?: string;
   /** Custom container style override */
-  style?: ViewStyle;
+  style?: StyleProp<ViewStyle>;
 }
 
 export function Button({
@@ -60,6 +65,7 @@ export function Button({
   labelColor,
   icon,
   trailingIcon,
+  iconOnly = false,
   fullWidth = true,
   loading = false,
   disabled = false,
@@ -68,13 +74,32 @@ export function Button({
   accessibilityHint,
   testID,
   style,
+  onPressIn,
+  onPressOut,
+  accessibilityState,
+  ...rest
 }: ButtonProps): React.JSX.Element {
-  const { colors: dark } = useAppearance();
+  const { colors: dark, reduceMotion } = useAppearance();
+  const [pressActive, setPressActive] = useState(false);
+  const feedback = useRef(new Animated.Value(0)).current;
+  useEffect(() => {
+    const animation = Animated.timing(feedback, {
+      toValue: pressActive && !disabled && !loading ? 1 : 0,
+      duration: reduceMotion ? 0 : entryLayout.pressDuration,
+      useNativeDriver: false,
+    });
+    animation.start();
+    return () => animation.stop();
+  }, [pressActive, disabled, loading, reduceMotion, feedback]);
 
   const isDisabled = disabled || loading;
   const addAction = /^add(?:\s|$)/i.test(label.trim());
+  const suppliedIcon =
+    icon && variant === 'primary' && React.isValidElement<{ color?: string }>(icon)
+      ? React.cloneElement(icon, { color: dark.onBrand })
+      : icon;
   const displayIcon =
-    icon ??
+    suppliedIcon ??
     (addAction ? <AddIcon color={variant === 'primary' ? dark.onBrand : dark.textHi} /> : null);
   const navigationAction = /^(?:\u2190\s*)?back$/i.test(label.trim())
     ? 'back'
@@ -84,15 +109,25 @@ export function Button({
 
   return (
     <Pressable
+      {...rest}
+      onPressIn={(event) => {
+        setPressActive(true);
+        onPressIn?.(event);
+      }}
+      onPressOut={(event) => {
+        setPressActive(false);
+        onPressOut?.(event);
+      }}
       onPress={isDisabled ? undefined : onPress}
       disabled={isDisabled}
       accessibilityRole="button"
       accessibilityLabel={accessibilityLabel ?? label}
       accessibilityHint={accessibilityHint}
-      accessibilityState={{ disabled: isDisabled, busy: loading }}
+      accessibilityState={{ ...accessibilityState, disabled: isDisabled, busy: loading }}
       testID={testID}
       hitSlop={size === 'sm' ? { top: 4, bottom: 4, left: 4, right: 4 } : undefined}
-      style={({ pressed }) => {
+      style={() => {
+        const pressed = pressActive && !isDisabled;
         const h = controls.touch;
         const baseStyle: ViewStyle = {
           minHeight: Math.max(44, h),
@@ -103,14 +138,34 @@ export function Button({
           flexDirection: 'row',
           alignItems: 'center',
           justifyContent: 'center',
-          width: navigationAction ? undefined : fullWidth ? '100%' : undefined,
-          alignSelf: navigationAction ? 'flex-start' : fullWidth ? 'stretch' : 'flex-start',
+          width: navigationAction || iconOnly ? undefined : fullWidth ? '100%' : undefined,
+          alignSelf:
+            navigationAction || iconOnly ? 'flex-start' : fullWidth ? 'stretch' : 'flex-start',
+          transform: [{ scale: pressed && !reduceMotion ? entryLayout.pressScale : 1 }],
         };
 
-        if (navigationAction)
+        // Layout overrides may not change the common shape, touch area or feedback.
+        const layoutStyle = StyleSheet.flatten(style) ?? {};
+        const {
+          borderRadius: _radius,
+          borderTopLeftRadius: _topLeft,
+          borderTopRightRadius: _topRight,
+          borderBottomLeftRadius: _bottomLeft,
+          borderBottomRightRadius: _bottomRight,
+          minHeight: _height,
+          minWidth: _width,
+          height: _fixedHeight,
+          maxHeight: _maxHeight,
+          backgroundColor: _background,
+          transform: _transform,
+          borderWidth: _border,
+          borderColor: _borderColor,
+          ...customStyle
+        } = layoutStyle;
+        if (navigationAction || iconOnly)
           return [
             baseStyle,
-            style,
+            customStyle,
             {
               width: homeLayout.compactTouchSize,
               minHeight: homeLayout.compactTouchSize,
@@ -126,9 +181,9 @@ export function Button({
 
         if (isDisabled) {
           if (variant === 'tertiary') {
-            return [baseStyle, { backgroundColor: 'transparent' }, style];
+            return [customStyle, baseStyle, { backgroundColor: 'transparent' }];
           }
-          return [baseStyle, { backgroundColor: dark.s2, borderWidth: 0 }, style];
+          return [baseStyle, customStyle, { backgroundColor: dark.s2, borderWidth: 0 }];
         }
 
         switch (variant) {
@@ -136,35 +191,35 @@ export function Button({
             return [
               baseStyle,
               {
-                backgroundColor: pressed ? dark.apricotPressed : dark.apricot,
+                backgroundColor: dark.apricot,
               },
-              style,
+              customStyle,
             ];
           case 'secondary':
             return [
               baseStyle,
               {
-                backgroundColor: pressed ? dark.s3 : 'transparent',
+                backgroundColor: accessibilityState?.selected ? dark.s3 : 'transparent',
                 borderWidth: 1,
-                borderColor: dark.hairlineLit,
+                borderColor: accessibilityState?.selected ? dark.selection : dark.hairlineLit,
               },
-              style,
+              customStyle,
             ];
           case 'tertiary':
             return [
               baseStyle,
               {
-                backgroundColor: pressed ? dark.s3 : 'transparent',
+                backgroundColor: 'transparent',
               },
-              style,
+              customStyle,
             ];
           case 'destructive':
             return [
               baseStyle,
               {
-                backgroundColor: pressed ? dark.s3 : 'transparent',
+                backgroundColor: 'transparent',
               },
-              style,
+              customStyle,
             ];
           case 'destructiveFill':
             return [
@@ -173,13 +228,29 @@ export function Button({
                 backgroundColor: dark.danger,
                 opacity: pressed ? 0.85 : 1,
               },
-              style,
+              customStyle,
             ];
           default:
-            return [baseStyle, style];
+            return [baseStyle, customStyle];
         }
       }}
     >
+      <Animated.View
+        pointerEvents="none"
+        style={[
+          StyleSheet.absoluteFill,
+          {
+            borderRadius: navigationAction || iconOnly ? radius.full : radius.button,
+            backgroundColor:
+              variant === 'primary'
+                ? dark.apricotPressed
+                : variant === 'destructiveFill'
+                  ? dark.danger
+                  : dark.s3,
+            opacity: feedback,
+          },
+        ]}
+      />
       {navigationAction ? (
         <NavigationIcon action={navigationAction} />
       ) : (
@@ -200,27 +271,28 @@ export function Button({
             <View style={styles.iconWrap}>{displayIcon}</View>
           ) : null}
 
-          <Text
-            fontSet={fontSet}
-            variant={size === 'sm' ? 'label' : 'button'}
-            color={
-              isDisabled
-                ? dark.textOff
-                : (labelColor ??
-                  (variant === 'primary'
+          {!iconOnly ? (
+            <Text
+              fontSet={fontSet}
+              variant="button"
+              color={
+                isDisabled
+                  ? dark.textOff
+                  : variant === 'primary'
                     ? dark.onBrand // Rule U2: On apricot always onBrand (#1C1109), never white
                     : variant === 'secondary'
-                      ? dark.textHi
+                      ? (labelColor ?? dark.textHi)
                       : variant === 'tertiary'
-                        ? dark.apricot
+                        ? (labelColor ?? dark.actionInk)
                         : variant === 'destructive'
                           ? dark.danger
-                          : dark.textHi))
-            }
-            style={[styles.label, { flexShrink: 1 }]}
-          >
-            {label}
-          </Text>
+                          : dark.onDanger
+              }
+              style={[styles.label, { flexShrink: 1 }]}
+            >
+              {label}
+            </Text>
+          ) : null}
 
           {!loading && trailingIcon ? (
             <View style={styles.trailingIconWrap}>{trailingIcon}</View>

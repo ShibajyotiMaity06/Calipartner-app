@@ -1,3 +1,5 @@
+import { visualPrimitives } from '@calipartner/ui/tokens';
+import { Button } from '@calipartner/ui';
 import { type as inputTypography } from '@calipartner/ui';
 import React, { useState } from 'react';
 import { ActivityIndicator, Modal, Pressable, StyleSheet, TextInput, View } from 'react-native';
@@ -63,15 +65,18 @@ export function CreateRoomModal({ visible, onClose, onCreateRoom }: CreateRoomMo
                 {t('rooms.createModal.subtitle')}
               </Text>
             </View>
-            <Pressable
+            <Button
+              variant="tertiary"
+              fullWidth={false}
+              label="Close create room modal"
+              iconOnly
+              icon={<Ionicons name="close" size={18} color={colors.text} />}
               onPress={onClose}
               style={[styles.closeButton, { backgroundColor: colors.surfaceAlt }]}
               accessibilityRole="button"
               accessibilityLabel="Close create room modal"
               testID="btn-close-create-room"
-            >
-              <Ionicons name="close" size={18} color={colors.text} />
-            </Pressable>
+            />
           </View>
 
           {/* Form */}
@@ -125,7 +130,7 @@ export function CreateRoomModal({ visible, onClose, onCreateRoom }: CreateRoomMo
               testID="btn-submit-create-room"
             >
               {loading ? (
-                <ActivityIndicator size="small" color="#FFFFFF" />
+                <ActivityIndicator size="small" color={visualPrimitives.colors.white} />
               ) : (
                 <Text style={styles.submitButtonText}>{t('rooms.createModal.submitBtn')}</Text>
               )}
@@ -173,7 +178,7 @@ const styles = StyleSheet.create({
   closeButton: {
     width: 32,
     height: 32,
-    borderRadius: 16,
+    borderRadius: visualPrimitives.radii[16],
     alignItems: 'center',
     justifyContent: 'center',
     marginLeft: spacing.sm,
@@ -213,7 +218,7 @@ const styles = StyleSheet.create({
     marginTop: spacing.sm,
   },
   submitButtonText: {
-    color: '#FFFFFF',
+    color: visualPrimitives.colors.white,
     fontFamily: typography.body.fontFamily,
     fontSize: fontSize.sm,
     fontWeight: '700',

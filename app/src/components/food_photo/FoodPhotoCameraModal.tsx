@@ -1,3 +1,5 @@
+import { visualPrimitives } from '@calipartner/ui/tokens';
+import { Button } from '@calipartner/ui';
 import { Text } from '@calipartner/ui';
 import React, { useEffect, useRef, useState } from 'react';
 import {
@@ -177,25 +179,37 @@ export function FoodPhotoCameraModal({
                 { flexDirection: 'column', gap: 10, width: '100%', maxWidth: 320 },
               ]}
             >
-              <Pressable
+              <Button
+                variant="secondary"
+                fullWidth={false}
+                label="Take Photo with Camera"
+                icon={
+                  <Ionicons
+                    name="camera"
+                    size={18}
+                    color={colors.onAccent}
+                    style={{ marginRight: 6 }}
+                  />
+                }
                 testID="btn-grant-camera-permission"
                 accessibilityRole="button"
                 accessibilityLabel={t('capture.takePhoto')}
                 onPress={() => handleTriggerCameraOrUpload('camera')}
                 style={[styles.primaryBtn, { backgroundColor: colors.accent, width: '100%' }]}
-              >
-                <Ionicons
-                  name="camera"
-                  size={18}
-                  color={colors.onAccent}
-                  style={{ marginRight: 6 }}
-                />
-                <Text style={[styles.primaryBtnText, { color: colors.onAccent }]}>
-                  Take Photo with Camera
-                </Text>
-              </Pressable>
+              />
 
-              <Pressable
+              <Button
+                variant="secondary"
+                fullWidth={false}
+                label="Choose from Photos"
+                icon={
+                  <Ionicons
+                    name="images-outline"
+                    size={18}
+                    color={colors.text}
+                    style={{ marginRight: 6 }}
+                  />
+                }
                 testID="btn-choose-from-gallery"
                 accessibilityRole="button"
                 accessibilityLabel={t('capture.choosePhoto')}
@@ -209,29 +223,18 @@ export function FoodPhotoCameraModal({
                     width: '100%',
                   },
                 ]}
-              >
-                <Ionicons
-                  name="images-outline"
-                  size={18}
-                  color={colors.text}
-                  style={{ marginRight: 6 }}
-                />
-                <Text style={[styles.primaryBtnText, { color: colors.text }]}>
-                  Choose from Photos
-                </Text>
-              </Pressable>
+              />
 
-              <Pressable
+              <Button
+                variant="secondary"
+                fullWidth={false}
+                label={t('common.cancel')}
                 testID="btn-close-camera-permission"
                 accessibilityRole="button"
                 accessibilityLabel={t('common.cancel')}
                 onPress={onClose}
                 style={[styles.cancelBtn, { alignSelf: 'center', marginTop: 4 }]}
-              >
-                <Text style={{ color: colors.textMuted, fontSize: fontSize.sm }}>
-                  {t('common.cancel')}
-                </Text>
-              </Pressable>
+              />
             </View>
           </View>
         ) : previewBase64 ? (
@@ -261,31 +264,31 @@ export function FoodPhotoCameraModal({
             </View>
 
             <View style={styles.previewActions}>
-              <Pressable
+              <Button
+                variant="secondary"
+                fullWidth={false}
+                label={t('foodLog.photo.usePhoto')}
+                icon={
+                  <Ionicons name="information-circle-outline" size={18} color={colors.onAccent} />
+                }
                 testID="btn-use-photo"
                 accessibilityRole="button"
                 accessibilityLabel={t('foodLog.photo.usePhoto')}
                 onPress={handleConfirmPhoto}
                 style={[styles.primaryBtn, { backgroundColor: colors.accent }]}
-              >
-                <Ionicons name="information-circle-outline" size={18} color={colors.onAccent} />
-                <Text style={[styles.primaryBtnText, { color: colors.onAccent, marginLeft: 6 }]}>
-                  {t('foodLog.photo.usePhoto')}
-                </Text>
-              </Pressable>
+              />
 
-              <Pressable
+              <Button
+                variant="secondary"
+                fullWidth={false}
+                label={t('foodLog.photo.retake')}
+                icon={<Ionicons name="refresh-outline" size={18} color={colors.text} />}
                 testID="btn-retake-photo"
                 accessibilityRole="button"
                 accessibilityLabel={t('foodLog.photo.retake')}
                 onPress={handleRetake}
                 style={[styles.secondaryBtn, { backgroundColor: colors.surfaceAlt }]}
-              >
-                <Ionicons name="refresh-outline" size={18} color={colors.text} />
-                <Text style={[styles.secondaryBtnText, { color: colors.text, marginLeft: 6 }]}>
-                  {t('foodLog.photo.retake')}
-                </Text>
-              </Pressable>
+              />
             </View>
           </View>
         ) : (
@@ -301,27 +304,39 @@ export function FoodPhotoCameraModal({
 
             {/* Top Bar Controls */}
             <View style={styles.topBar}>
-              <Pressable
+              <Button
+                variant="tertiary"
+                fullWidth={false}
+                label={t('common.cancel')}
+                iconOnly
+                icon={<Ionicons name="close" size={24} color={visualPrimitives.colors.white} />}
                 testID="btn-close-camera"
                 accessibilityRole="button"
                 accessibilityLabel={t('common.cancel')}
                 onPress={onClose}
                 style={styles.iconCircle}
-              >
-                <Ionicons name="close" size={24} color="#FFFFFF" />
-              </Pressable>
+              />
 
               <Text style={styles.topBarTitle}>{t('foodLog.photo.cameraTitle')}</Text>
 
-              <Pressable
+              <Button
+                variant="tertiary"
+                fullWidth={false}
+                label={t('capture.flipCamera')}
+                iconOnly
+                icon={
+                  <Ionicons
+                    name="camera-reverse-outline"
+                    size={24}
+                    color={visualPrimitives.colors.white}
+                  />
+                }
                 testID="btn-flip-camera"
                 accessibilityRole="button"
                 accessibilityLabel={t('capture.flipCamera')}
                 onPress={() => setFacing(facing === 'back' ? 'front' : 'back')}
                 style={styles.iconCircle}
-              >
-                <Ionicons name="camera-reverse-outline" size={24} color="#FFFFFF" />
-              </Pressable>
+              />
             </View>
 
             {/* Meal Alignment Reticle Guide */}
@@ -349,11 +364,18 @@ export function FoodPhotoCameraModal({
                 style={styles.shutterOuter}
               >
                 <View style={styles.shutterInner}>
-                  {capturing && <ActivityIndicator color="#000000" size="small" />}
+                  {capturing && (
+                    <ActivityIndicator color={visualPrimitives.colors.black} size="small" />
+                  )}
                 </View>
               </Pressable>
 
-              <Pressable
+              <Button
+                variant="tertiary"
+                fullWidth={false}
+                label={t('capture.choosePhoto')}
+                iconOnly
+                icon={<Ionicons name="images-outline" size={24} color={colors.text} />}
                 testID="food-camera-gallery"
                 accessibilityRole="button"
                 accessibilityLabel={t('capture.choosePhoto')}
@@ -361,9 +383,7 @@ export function FoodPhotoCameraModal({
                 onPress={() => {
                   void handleTriggerCameraOrUpload('album');
                 }}
-              >
-                <Ionicons name="images-outline" size={24} color={colors.text} />
-              </Pressable>
+              />
             </View>
           </View>
         )}
@@ -375,11 +395,11 @@ export function FoodPhotoCameraModal({
 const styles = StyleSheet.create({
   blackBackground: {
     flex: 1,
-    backgroundColor: '#000000',
+    backgroundColor: visualPrimitives.colors.black,
   },
   permissionContainer: {
     flex: 1,
-    backgroundColor: '#0B0F19',
+    backgroundColor: visualPrimitives.colors.cameraSurface,
     alignItems: 'center',
     justifyContent: 'center',
     padding: spacing.xl,
@@ -422,7 +442,7 @@ const styles = StyleSheet.create({
     zIndex: 10,
   },
   topBarTitle: {
-    color: '#FFFFFF',
+    color: visualPrimitives.colors.white,
     fontSize: fontSize.md,
     fontWeight: '700',
   },
@@ -448,38 +468,38 @@ const styles = StyleSheet.create({
     position: 'absolute',
     width: 28,
     height: 28,
-    borderColor: '#38BDF8',
+    borderColor: visualPrimitives.colors.sky,
   },
   cornerTL: {
     top: 0,
     left: 0,
     borderTopWidth: 4,
     borderLeftWidth: 4,
-    borderTopLeftRadius: 10,
+    borderTopLeftRadius: visualPrimitives.radii[10],
   },
   cornerTR: {
     top: 0,
     right: 0,
     borderTopWidth: 4,
     borderRightWidth: 4,
-    borderTopRightRadius: 10,
+    borderTopRightRadius: visualPrimitives.radii[10],
   },
   cornerBL: {
     bottom: 0,
     left: 0,
     borderBottomWidth: 4,
     borderLeftWidth: 4,
-    borderBottomLeftRadius: 10,
+    borderBottomLeftRadius: visualPrimitives.radii[10],
   },
   cornerBR: {
     bottom: 0,
     right: 0,
     borderBottomWidth: 4,
     borderRightWidth: 4,
-    borderBottomRightRadius: 10,
+    borderBottomRightRadius: visualPrimitives.radii[10],
   },
   reticleText: {
-    color: '#FFFFFF',
+    color: visualPrimitives.colors.white,
     fontSize: fontSize.xs,
     fontWeight: '600',
     backgroundColor: 'rgba(0,0,0,0.5)',
@@ -504,7 +524,7 @@ const styles = StyleSheet.create({
     borderRadius: radius.pill,
   },
   sampleChipText: {
-    color: '#FFFFFF',
+    color: visualPrimitives.colors.white,
     fontSize: fontSize.xs,
     fontWeight: '600',
   },
@@ -513,7 +533,7 @@ const styles = StyleSheet.create({
     height: 76,
     borderRadius: radius.pill,
     borderWidth: 4,
-    borderColor: '#FFFFFF',
+    borderColor: visualPrimitives.colors.white,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -521,13 +541,13 @@ const styles = StyleSheet.create({
     width: 60,
     height: 60,
     borderRadius: radius.pill,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: visualPrimitives.colors.white,
     alignItems: 'center',
     justifyContent: 'center',
   },
   previewContainer: {
     flex: 1,
-    backgroundColor: '#0B0F19',
+    backgroundColor: visualPrimitives.colors.cameraSurface,
     justifyContent: 'space-between',
     paddingTop: 54,
     paddingBottom: 48,
@@ -538,12 +558,12 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   previewTitle: {
-    color: '#FFFFFF',
+    color: visualPrimitives.colors.white,
     fontSize: fontSize.xl,
     fontWeight: '700',
   },
   previewSub: {
-    color: '#94A3B8',
+    color: visualPrimitives.colors.slate,
     fontSize: fontSize.xs,
   },
   previewFrame: {
@@ -559,7 +579,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
-    borderColor: '#2A364F',
+    borderColor: visualPrimitives.colors.slateBorder,
   },
   previewActions: {
     gap: spacing.sm,

@@ -13,11 +13,12 @@ describe('UI-5 Onboarding and Account Polish (Spec A01–A15, B01–B09)', () =>
         'goal',
         'activity_level',
         'body_stats',
+        'growth_projection',
         'rate_selection',
         'daily_goals',
         'completed',
       ]);
-      expect(ACTIVE_ONBOARDING_STEPS.length).toBe(6);
+      expect(ACTIVE_ONBOARDING_STEPS.length).toBe(7);
     });
 
     it('calculates 4px progress percentage accurately across all steps', () => {

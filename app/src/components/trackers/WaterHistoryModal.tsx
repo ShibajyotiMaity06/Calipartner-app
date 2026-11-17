@@ -1,3 +1,4 @@
+import { Button } from '@calipartner/ui';
 import { type as inputTypography } from '@calipartner/ui';
 import { Text } from '@calipartner/ui';
 import { useState } from 'react';
@@ -112,14 +113,17 @@ export function WaterHistoryModal({
                 {t('trackers.water.todayLogs')}
               </Text>
             </View>
-            <Pressable
+            <Button
+              variant="tertiary"
+              fullWidth={false}
+              label={t('common.cancel')}
+              iconOnly
+              icon={<Ionicons name="close" size={22} color={colors.textMuted} />}
               onPress={onClose}
               hitSlop={8}
               accessibilityRole="button"
               accessibilityLabel={t('common.cancel')}
-            >
-              <Ionicons name="close" size={22} color={colors.textMuted} />
-            </Pressable>
+            />
           </View>
 
           {/* List or Empty State */}
@@ -171,25 +175,31 @@ export function WaterHistoryModal({
                           accessibilityLabel={t('trackers.water.amountLabel')}
                         />
                         <Text style={[styles.mlSuffix, { color: colors.textMuted }]}>ml</Text>
-                        <Pressable
+                        <Button
+                          variant="tertiary"
+                          fullWidth={false}
+                          label={t('common.save')}
+                          iconOnly
+                          icon={<Ionicons name="checkmark" size={16} color={colors.onAccent} />}
                           testID={`btn-save-edit-water-${log.id}`}
                           onPress={() => void handleSaveEdit(log.id)}
                           disabled={isBusy}
                           style={[styles.smallBtn, { backgroundColor: colors.waterInk }]}
                           accessibilityRole="button"
                           accessibilityLabel={t('common.save')}
-                        >
-                          <Ionicons name="checkmark" size={16} color={colors.onAccent} />
-                        </Pressable>
-                        <Pressable
+                        />
+                        <Button
+                          variant="tertiary"
+                          fullWidth={false}
+                          label={t('common.cancel')}
+                          iconOnly
+                          icon={<Ionicons name="close" size={16} color={colors.text} />}
                           onPress={() => setEditingId(null)}
                           disabled={isBusy}
                           style={[styles.smallBtn, { backgroundColor: colors.surface }]}
                           accessibilityRole="button"
                           accessibilityLabel={t('common.cancel')}
-                        >
-                          <Ionicons name="close" size={16} color={colors.text} />
-                        </Pressable>
+                        />
                       </View>
                     ) : (
                       <>
@@ -203,7 +213,14 @@ export function WaterHistoryModal({
                         </View>
 
                         <View style={styles.itemActions}>
-                          <Pressable
+                          <Button
+                            variant="tertiary"
+                            fullWidth={false}
+                            label={t('trackers.water.editEntryTitle')}
+                            iconOnly
+                            icon={
+                              <Ionicons name="pencil-outline" size={18} color={colors.textMuted} />
+                            }
                             testID={`btn-edit-water-${log.id}`}
                             onPress={() => startEdit(log)}
                             disabled={isBusy}
@@ -211,11 +228,14 @@ export function WaterHistoryModal({
                             style={styles.iconBtn}
                             accessibilityRole="button"
                             accessibilityLabel={t('trackers.water.editEntryTitle')}
-                          >
-                            <Ionicons name="pencil-outline" size={18} color={colors.textMuted} />
-                          </Pressable>
+                          />
 
-                          <Pressable
+                          <Button
+                            variant="destructive"
+                            fullWidth={false}
+                            label={t('common.delete')}
+                            iconOnly
+                            icon={<Ionicons name="trash-outline" size={18} color={colors.danger} />}
                             testID={`btn-delete-water-${log.id}`}
                             onPress={() => handleDeletePrompt(log.id)}
                             disabled={isBusy}
@@ -223,9 +243,7 @@ export function WaterHistoryModal({
                             style={styles.iconBtn}
                             accessibilityRole="button"
                             accessibilityLabel={t('common.delete')}
-                          >
-                            <Ionicons name="trash-outline" size={18} color={colors.danger} />
-                          </Pressable>
+                          />
                         </View>
                       </>
                     )}
@@ -236,7 +254,10 @@ export function WaterHistoryModal({
           </ScrollView>
 
           {/* Close button */}
-          <Pressable
+          <Button
+            variant="secondary"
+            fullWidth={false}
+            label={t('common.cancel')}
             onPress={onClose}
             style={[
               styles.closeBtn,
@@ -244,9 +265,7 @@ export function WaterHistoryModal({
             ]}
             accessibilityRole="button"
             accessibilityLabel={t('common.cancel')}
-          >
-            <Text style={[styles.closeBtnText, { color: colors.text }]}>{t('common.cancel')}</Text>
-          </Pressable>
+          />
         </View>
       </View>
     </Modal>

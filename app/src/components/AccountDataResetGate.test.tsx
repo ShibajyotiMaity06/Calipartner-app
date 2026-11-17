@@ -42,7 +42,7 @@ vi.mock('@/services/accountDataReset', () => ({
   },
 }));
 vi.mock('./ErrorState', () => ({ ErrorState: () => <div>Error</div> }));
-vi.mock('./LoadingState', () => ({ LoadingState: () => <div>Loading</div> }));
+vi.mock('./brand/AnimatedLogoSplash', () => ({ AnimatedLogoSplash: () => <div>Loading</div> }));
 import { AccountDataResetGate } from './AccountDataResetGate';
 import { beforeAccountWrite } from '@/services/accountDataGate';
 let renderer: ReactTestRenderer;

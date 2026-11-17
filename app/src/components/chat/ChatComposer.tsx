@@ -1,3 +1,5 @@
+import { visualPrimitives } from '@calipartner/ui/tokens';
+import { Button } from '@calipartner/ui';
 import { type as inputTypography } from '@calipartner/ui';
 import React, { useEffect, useState } from 'react';
 import {
@@ -120,7 +122,12 @@ export function ChatComposer({
             <Text>{t('aha.replying', { name: reply.name })}</Text>
             <Text numberOfLines={2}>{reply.text || t('aha.attachment')}</Text>
           </View>
-          <Pressable
+          <Button
+            variant="tertiary"
+            fullWidth={false}
+            label={t('aha.cancelReply')}
+            iconOnly
+            icon={<Ionicons name="close" size={layout.icon} color={colors.text} />}
             onPress={onCancelReply}
             disabled={isSending}
             accessibilityRole="button"
@@ -132,16 +139,17 @@ export function ChatComposer({
               justifyContent: 'center',
             }}
             testID="cancel-chat-reply"
-          >
-            <Ionicons name="close" size={layout.icon} color={colors.text} />
-          </Pressable>
+          />
         </View>
       )}
       {tagOpen && !disabled && (
         <View testID="chat-tag-picker">
           <ScrollView keyboardShouldPersistTaps="handled" style={{ maxHeight: layout.touch * 4 }}>
             {tagMembers.map((member) => (
-              <Pressable
+              <Button
+                variant="secondary"
+                fullWidth={false}
+                label={member.nickname}
                 key={member.user_id}
                 onPress={() => {
                   setText((previous) =>
@@ -164,9 +172,7 @@ export function ChatComposer({
                   paddingHorizontal: spacing.sm,
                 }}
                 testID={`tag-member-${member.user_id}`}
-              >
-                <Text>{member.nickname}</Text>
-              </Pressable>
+              />
             ))}
           </ScrollView>
         </View>
@@ -206,15 +212,18 @@ export function ChatComposer({
               ) : (
                 <Image source={{ uri: item.uri }} style={styles.previewImage} resizeMode="cover" />
               )}
-              <Pressable
+              <Button
+                variant="tertiary"
+                fullWidth={false}
+                label="Remove photo"
+                iconOnly
+                icon={<Ionicons name="close" size={14} color={visualPrimitives.colors.white} />}
                 onPress={() => handleRemoveMedia(idx)}
                 style={styles.removeMediaBtn}
                 accessibilityRole="button"
                 accessibilityLabel="Remove photo"
                 testID={`btn-remove-media-${idx}`}
-              >
-                <Ionicons name="close" size={14} color="#FFFFFF" />
-              </Pressable>
+              />
             </View>
           ))}
           {selectedMedia.length < 5 && (
@@ -240,7 +249,18 @@ export function ChatComposer({
       {/* TextInput bar row */}
       <View style={styles.inputBarRow}>
         {/* Camera / Photo Button */}
-        <Pressable
+        <Button
+          variant="tertiary"
+          fullWidth={false}
+          label={t(allowMedia ? 'repairs.chooseMedia' : 'setup.mediaPro')}
+          iconOnly
+          icon={
+            <Ionicons
+              name="attach-outline"
+              size={22}
+              color={selectedMedia.length >= 5 ? colors.textMuted : colors.accent}
+            />
+          }
           onPress={handlePressAttach}
           disabled={disabled || !allowMedia || selectedMedia.length >= 5}
           style={[
@@ -251,13 +271,7 @@ export function ChatComposer({
           accessibilityLabel={t(allowMedia ? 'repairs.chooseMedia' : 'setup.mediaPro')}
           testID="btn-chat-attach-photo"
           hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-        >
-          <Ionicons
-            name="attach-outline"
-            size={22}
-            color={selectedMedia.length >= 5 ? colors.textMuted : colors.accent}
-          />
-        </Pressable>
+        />
 
         {/* Text TextInput */}
         <View style={[styles.inputWrapper, { backgroundColor: colors.surfaceAlt }]}>

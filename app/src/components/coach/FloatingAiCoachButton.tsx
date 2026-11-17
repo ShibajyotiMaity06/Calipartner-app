@@ -1,3 +1,4 @@
+import { visualPrimitives } from '@calipartner/ui/tokens';
 import { useTheme as useAppearance } from '@calipartner/ui/theme';
 import React from 'react';
 import { StyleSheet, TouchableOpacity, View } from 'react-native';
@@ -61,7 +62,7 @@ const createStyles = (dark: ReturnType<typeof useAppearance>['colors']) =>
     floatingButton: {
       flexDirection: 'row',
       alignItems: 'center',
-      backgroundColor: '#1E120A',
+      backgroundColor: visualPrimitives.colors.brownSurface,
       borderWidth: 1.5,
       borderColor: dark.apricot,
       borderRadius: radius.full,
@@ -70,8 +71,8 @@ const createStyles = (dark: ReturnType<typeof useAppearance>['colors']) =>
       shadowColor: dark.apricot,
       shadowOffset: { width: 0, height: 4 },
       shadowOpacity: 0.35,
-      shadowRadius: 10,
-      elevation: 6,
+      shadowRadius: visualPrimitives.effects[10],
+      elevation: visualPrimitives.effects[6],
     },
     glowHalo: {
       position: 'absolute',

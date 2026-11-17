@@ -1,3 +1,4 @@
+import { visualPrimitives } from '@calipartner/ui/tokens';
 import { Text } from '@calipartner/ui';
 import { View } from 'react-native';
 import { t } from '@/i18n';
@@ -59,11 +60,11 @@ export function CalorieMacroRing({
         borderRadius: radius.lg,
         padding: spacing.md,
         gap: spacing.md,
-        shadowColor: '#000',
+        shadowColor: visualPrimitives.colors.black,
         shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.05,
-        shadowRadius: 8,
-        elevation: 2,
+        shadowRadius: visualPrimitives.effects[8],
+        elevation: visualPrimitives.effects[2],
       }}
     >
       {/* Top calories hero section */}

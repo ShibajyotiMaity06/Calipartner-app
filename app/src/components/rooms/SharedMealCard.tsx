@@ -1,3 +1,5 @@
+import { visualPrimitives } from '@calipartner/ui/tokens';
+import { Button } from '@calipartner/ui';
 import React, { useState } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
 import { Text } from '@calipartner/ui';
@@ -106,7 +108,10 @@ export function SharedMealCard({ meal, onAccept, onDecline }: SharedMealCardProp
                 accessibilityLabel={`${m}x portion`}
               >
                 <Text
-                  style={[styles.portionPillText, { color: isSelected ? '#FFFFFF' : colors.text }]}
+                  style={[
+                    styles.portionPillText,
+                    { color: isSelected ? visualPrimitives.colors.white : colors.text },
+                  ]}
                 >
                   {m}x
                 </Text>
@@ -125,7 +130,10 @@ export function SharedMealCard({ meal, onAccept, onDecline }: SharedMealCardProp
           {sections.map((sec) => {
             const isSelected = selectedSection === sec;
             return (
-              <Pressable
+              <Button
+                variant="secondary"
+                fullWidth={false}
+                label={sec.charAt(0).toUpperCase() + sec.slice(1)}
                 key={sec}
                 onPress={() => setSelectedSection(sec)}
                 style={[
@@ -138,16 +146,7 @@ export function SharedMealCard({ meal, onAccept, onDecline }: SharedMealCardProp
                 ]}
                 accessibilityRole="button"
                 accessibilityLabel={`Meal section: ${sec}`}
-              >
-                <Text
-                  style={[
-                    styles.sectionPillText,
-                    { color: isSelected ? colors.accent : colors.textMuted },
-                  ]}
-                >
-                  {sec.charAt(0).toUpperCase() + sec.slice(1)}
-                </Text>
-              </Pressable>
+              />
             );
           })}
         </View>
@@ -211,7 +210,7 @@ const styles = StyleSheet.create({
   iconPill: {
     width: 32,
     height: 32,
-    borderRadius: 16,
+    borderRadius: visualPrimitives.radii[16],
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -292,7 +291,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   acceptButtonText: {
-    color: '#FFFFFF',
+    color: visualPrimitives.colors.white,
     fontSize: fontSize.xs,
     fontWeight: '700',
   },

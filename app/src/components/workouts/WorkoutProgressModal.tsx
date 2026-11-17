@@ -1,3 +1,4 @@
+import { Button } from '@calipartner/ui';
 import { SegmentedControl } from '@calipartner/ui';
 import { t } from '@/i18n';
 import { useTheme as useAppearance } from '@calipartner/ui/theme';
@@ -72,15 +73,18 @@ function WorkoutProgressModalContent({
         <View style={styles.container}>
           {/* Top Bar with Title & Back */}
           <View style={styles.topBar}>
-            <TouchableOpacity
+            <Button
+              variant="tertiary"
+              fullWidth={false}
+              label="Back"
+              iconOnly
+              icon={<NavigationIcon action="back" />}
               onPress={onClose}
               accessibilityRole="button"
               accessibilityLabel="Back"
               style={styles.backButton}
               testID="btn-workout-progress-back"
-            >
-              <NavigationIcon action="back" />
-            </TouchableOpacity>
+            />
 
             <Text variant="title2" color={dark.textHi} style={styles.topTitle}>
               Workout Progress
@@ -120,13 +124,16 @@ function WorkoutProgressModalContent({
               <>
                 {/* Week Navigator Card */}
                 <View style={styles.weekNavigatorRow}>
-                  <TouchableOpacity
+                  <Button
+                    variant="tertiary"
+                    fullWidth={false}
+                    label="Previous week"
+                    iconOnly
+                    icon={<NavigationIcon action="back" />}
                     onPress={playClickSound}
                     style={styles.navArrowBtn}
                     accessibilityLabel="Previous week"
-                  >
-                    <NavigationIcon action="back" />
-                  </TouchableOpacity>
+                  />
 
                   <View style={styles.weekLabelCol}>
                     <Text variant="body" color={dark.textHi} style={{ fontWeight: '700' }}>
@@ -137,13 +144,16 @@ function WorkoutProgressModalContent({
                     </Text>
                   </View>
 
-                  <TouchableOpacity
+                  <Button
+                    variant="tertiary"
+                    fullWidth={false}
+                    label="Next week"
+                    iconOnly
+                    icon={<Ionicons name="chevron-forward" size={18} color={dark.textMid} />}
                     onPress={playClickSound}
                     style={styles.navArrowBtn}
                     accessibilityLabel="Next week"
-                  >
-                    <Ionicons name="chevron-forward" size={18} color={dark.textMid} />
-                  </TouchableOpacity>
+                  />
                 </View>
 
                 {/* Days completion row */}
@@ -241,7 +251,11 @@ function WorkoutProgressModalContent({
                     Exercise Progress
                   </Text>
 
-                  <TouchableOpacity
+                  <Button
+                    variant="secondary"
+                    fullWidth={false}
+                    label={selectedExercise}
+                    icon={<Ionicons name="chevron-down" size={14} color={dark.apricot} />}
                     style={styles.exerciseDropdownChip}
                     onPress={() => {
                       playClickSound();
@@ -250,12 +264,7 @@ function WorkoutProgressModalContent({
                     accessibilityRole="button"
                     accessibilityLabel={`Selected exercise: ${selectedExercise}. Tap to change`}
                     testID="btn-exercise-selector-dropdown"
-                  >
-                    <Text variant="label" color={dark.apricot} style={{ fontWeight: '600' }}>
-                      {selectedExercise}
-                    </Text>
-                    <Ionicons name="chevron-down" size={14} color={dark.apricot} />
-                  </TouchableOpacity>
+                  />
                 </View>
 
                 {/* Weight Lifted Chart Card */}

@@ -363,18 +363,17 @@ export function PeopleSelector({
       ).map(([side, member], index) => (
         <React.Fragment key={side}>
           {index === 1 && <Text variant="bodyS">{t('squadDesign.vs')}</Text>}
-          <Pressable
+          <Button
+            variant="secondary"
+            fullWidth={false}
+            label={memberName(member)}
+            icon={<Ionicons name="chevron-down" size={homeLayout.iconSize} color={dark.textMid} />}
             onPress={() => onChoose(side)}
             accessibilityRole="button"
             accessibilityLabel={t('squadDesign.choose') + ': ' + memberName(member)}
             style={squadStyles.selector}
             testID={`compare-choose-${side}`}
-          >
-            <Text variant="label" style={squadStyles.flex}>
-              {memberName(member)}
-            </Text>
-            <Ionicons name="chevron-down" size={homeLayout.iconSize} color={dark.textMid} />
-          </Pressable>
+          />
         </React.Fragment>
       ))}
     </View>

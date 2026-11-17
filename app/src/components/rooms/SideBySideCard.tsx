@@ -1,6 +1,7 @@
+import { Button } from '@calipartner/ui';
 import { useTheme as useAppearance } from '@calipartner/ui/theme';
 import React, { useMemo, useState } from 'react';
-import { StyleSheet, TouchableOpacity, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import type { MealSection, RoomMemberSnapshot, RoomReactionType } from '@calipartner/core';
 import {
@@ -243,33 +244,29 @@ export function SideBySideCard({
 
       {/* 3. Quick Actions: Three text pills (Spec J01 #5, RV-6) */}
       <View style={styles.quickActionsRow} testID="quick-actions-row">
-        <TouchableOpacity
-          activeOpacity={0.7}
+        <Button
+          variant="secondary"
+          fullWidth={false}
+          label="Log a shared meal"
+          icon={<Ionicons name="restaurant-outline" size={14} color={dark.textHi} />}
           onPress={onLogSharedMeal}
           style={styles.quickActionPill}
           accessibilityRole="button"
           accessibilityLabel="Log a shared meal"
           testID="btn-quick-shared-meal"
-        >
-          <Ionicons name="restaurant-outline" size={14} color={dark.textHi} />
-          <Text variant="label" color={dark.textHi}>
-            Log a shared meal
-          </Text>
-        </TouchableOpacity>
+        />
 
-        <TouchableOpacity
-          activeOpacity={0.7}
+        <Button
+          variant="secondary"
+          fullWidth={false}
+          label={t('repairs.chooseMedia')}
+          icon={<Ionicons name="attach-outline" size={14} color={dark.textHi} />}
           onPress={onSendPhoto || onOpenChat}
           style={styles.quickActionPill}
           accessibilityRole="button"
           accessibilityLabel={t('repairs.chooseMedia')}
           testID="btn-quick-send-photo"
-        >
-          <Ionicons name="attach-outline" size={14} color={dark.textHi} />
-          <Text variant="label" color={dark.textHi}>
-            {t('repairs.chooseMedia')}
-          </Text>
-        </TouchableOpacity>
+        />
       </View>
 
       {/* 4. Plain Feed: Rows without cards separated by hairlines (Spec J01 #6, RV-7) */}

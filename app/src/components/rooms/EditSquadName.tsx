@@ -1,6 +1,6 @@
 import { useTheme as useAppearance } from '@calipartner/ui/theme';
 import React, { useState } from 'react';
-import { Pressable, ScrollView, View } from 'react-native';
+import { ScrollView, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Button, Field, Sheet, Text, homeLayout, space } from '@calipartner/ui';
 import type { RoomSummary } from '@/types/rooms';
@@ -32,7 +32,18 @@ function SquadNameEditor({ room, location }: { room: RoomSummary; location: stri
   const id = `${location}-edit-squad-name-${room.id}`;
   return (
     <>
-      <Pressable
+      <Button
+        variant="tertiary"
+        fullWidth={false}
+        label={t('squadDesign.editNameFor', { name: room.name })}
+        iconOnly
+        icon={
+          <Ionicons
+            name={location === 'home' ? 'pencil' : 'pencil-outline'}
+            size={location === 'home' ? space[4] : 18}
+            color={dark.copper}
+          />
+        }
         onPress={() => {
           setName(room.name);
           clearError();
@@ -49,13 +60,7 @@ function SquadNameEditor({ room, location }: { room: RoomSummary; location: stri
           justifyContent: 'center',
         }}
         hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-      >
-        <Ionicons
-          name={location === 'home' ? 'pencil' : 'pencil-outline'}
-          size={location === 'home' ? space[4] : 18}
-          color={dark.copper}
-        />
-      </Pressable>
+      />
       {open && (
         <Sheet
           visible

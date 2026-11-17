@@ -1,3 +1,4 @@
+import { visualPrimitives } from '@calipartner/ui/tokens';
 import { Text } from '@calipartner/ui';
 import React from 'react';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
@@ -126,11 +127,11 @@ const styles = StyleSheet.create({
     padding: spacing.md,
     marginHorizontal: spacing.md,
     marginVertical: spacing.sm,
-    shadowColor: '#000',
+    shadowColor: visualPrimitives.colors.black,
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.05,
-    shadowRadius: 3,
-    elevation: 2,
+    shadowRadius: visualPrimitives.effects[3],
+    elevation: visualPrimitives.effects[2],
   },
   header: {
     flexDirection: 'row',

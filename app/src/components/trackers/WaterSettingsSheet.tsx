@@ -1,3 +1,4 @@
+import { Button } from '@calipartner/ui';
 import { useTheme as useAppearance } from '@calipartner/ui/theme';
 import { type as inputTypography } from '@calipartner/ui';
 import React, { useState } from 'react';
@@ -133,7 +134,10 @@ export function WaterSettingsSheet({
 
             {/* Unit Toggle ml / fl oz */}
             <View style={styles.unitToggleWrap} testID="water-unit-toggle">
-              <Pressable
+              <Button
+                variant="secondary"
+                fullWidth={false}
+                label={t('trackers.water.unitMl')}
                 testID="btn-water-unit-ml"
                 style={[styles.unitBtn, unit === 'ml' && styles.unitBtnActive]}
                 onPress={() => {
@@ -145,13 +149,12 @@ export function WaterSettingsSheet({
                 }}
                 accessibilityRole="button"
                 accessibilityLabel="Milliliters"
-              >
-                <Text style={[styles.unitBtnText, unit === 'ml' && styles.unitBtnTextActive]}>
-                  {t('trackers.water.unitMl')}
-                </Text>
-              </Pressable>
+              />
 
-              <Pressable
+              <Button
+                variant="secondary"
+                fullWidth={false}
+                label={t('trackers.water.unitFloz')}
                 testID="btn-water-unit-floz"
                 style={[styles.unitBtn, unit === 'fl_oz' && styles.unitBtnActive]}
                 onPress={() => {
@@ -163,11 +166,7 @@ export function WaterSettingsSheet({
                 }}
                 accessibilityRole="button"
                 accessibilityLabel="Fluid ounces"
-              >
-                <Text style={[styles.unitBtnText, unit === 'fl_oz' && styles.unitBtnTextActive]}>
-                  {t('trackers.water.unitFloz')}
-                </Text>
-              </Pressable>
+              />
             </View>
           </View>
 
@@ -181,39 +180,49 @@ export function WaterSettingsSheet({
             </View>
 
             <View style={styles.stepperRow}>
-              <Pressable
+              <Button
+                variant="tertiary"
+                fullWidth={false}
+                label="Decrease water goal"
+                iconOnly
+                icon={
+                  <Ionicons
+                    name="remove"
+                    size={20}
+                    color={goalMl <= MIN_GOAL_ML ? dark.textOff : dark.textHi}
+                  />
+                }
                 testID="btn-water-goal-minus"
                 style={[styles.stepperBtn, goalMl <= MIN_GOAL_ML && styles.stepperBtnDisabled]}
                 onPress={() => handleGoalStep('down')}
                 disabled={goalMl <= MIN_GOAL_ML}
                 accessibilityRole="button"
                 accessibilityLabel="Decrease water goal"
-              >
-                <Ionicons
-                  name="remove"
-                  size={20}
-                  color={goalMl <= MIN_GOAL_ML ? dark.textOff : dark.textHi}
-                />
-              </Pressable>
+              />
 
               <View style={styles.goalDisplayBox} testID="water-goal-value-display">
                 <Text style={styles.goalNumber}>{displayGoal}</Text>
               </View>
 
-              <Pressable
+              <Button
+                variant="tertiary"
+                fullWidth={false}
+                label="Increase water goal"
+                iconOnly
+                icon={
+                  <Ionicons
+                    name="add"
+                    size={20}
+                    color={goalMl >= MAX_GOAL_ML ? dark.textOff : dark.textHi}
+                  />
+                }
                 testID="btn-water-goal-plus"
                 style={[styles.stepperBtn, goalMl >= MAX_GOAL_ML && styles.stepperBtnDisabled]}
                 onPress={() => handleGoalStep('up')}
                 disabled={goalMl >= MAX_GOAL_ML}
                 accessibilityRole="button"
                 accessibilityLabel="Increase water goal"
-              >
-                <Ionicons
-                  name="add"
-                  size={20}
-                  color={goalMl >= MAX_GOAL_ML ? dark.textOff : dark.textHi}
-                />
-              </Pressable>
+              />
             </View>
           </View>
 
@@ -224,7 +233,11 @@ export function WaterSettingsSheet({
             {/* Container Presets Chips */}
             <View style={styles.presetChipsRow}>
               {PRESET_CONTAINERS.map((c) => (
-                <Pressable
+                <Button
+                  variant="secondary"
+                  fullWidth={false}
+                  label={`${c.label} (${unit === 'fl_oz' ? mlToFloz(c.ml) : c.ml} ${unit})`}
+                  icon={<Ionicons name={c.icon} size={15} color={dark.textMid} />}
                   key={c.ml}
                   testID={`btn-water-preset-${c.ml}`}
                   style={[
@@ -235,12 +248,7 @@ export function WaterSettingsSheet({
                   onPress={() => handleSelectPreset(c.ml)}
                   accessibilityRole="button"
                   accessibilityLabel={`${c.label} ${unit === 'fl_oz' ? mlToFloz(c.ml) : c.ml} ${unit}`}
-                >
-                  <Ionicons name={c.icon} size={15} color={dark.textMid} />
-                  <Text style={styles.presetChipText}>
-                    {`${c.label} (${unit === 'fl_oz' ? mlToFloz(c.ml) : c.ml} ${unit})`}
-                  </Text>
-                </Pressable>
+                />
               ))}
             </View>
 
@@ -272,28 +280,28 @@ export function WaterSettingsSheet({
 
           {/* Actions */}
           <View style={styles.actionsRow}>
-            <Pressable
+            <Button
+              variant="secondary"
+              fullWidth={false}
+              label={t('common.cancel')}
               testID="btn-water-settings-cancel"
               style={styles.cancelBtn}
               onPress={onClose}
               accessibilityRole="button"
               accessibilityLabel={t('common.cancel')}
-            >
-              <Text style={styles.cancelBtnText}>{t('common.cancel')}</Text>
-            </Pressable>
+            />
 
-            <Pressable
+            <Button
+              variant="secondary"
+              fullWidth={false}
+              label={saving ? t('common.saving') : t('common.save')}
               testID="btn-water-settings-save"
               style={[styles.saveBtn, saving && styles.btnDisabled]}
               onPress={() => void handleSaveAll()}
               disabled={saving}
               accessibilityRole="button"
               accessibilityLabel={t('common.save')}
-            >
-              <Text style={styles.saveBtnText}>
-                {saving ? t('common.saving') : t('common.save')}
-              </Text>
-            </Pressable>
+            />
           </View>
         </View>
       </View>
@@ -508,7 +516,7 @@ const createStyles = (dark: ReturnType<typeof useAppearance>['colors']) =>
     saveBtnText: {
       fontSize: typeTokens.body.fontSize,
       fontFamily: typeTokens.body.fontFamily,
-      color: dark.onWater, // #1C1109 - rule U2
+      color: dark.onWater, // the onBrand token - rule U2
       fontWeight: '700',
     },
     btnDisabled: {

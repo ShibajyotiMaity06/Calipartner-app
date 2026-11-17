@@ -1,5 +1,7 @@
+import { visualPrimitives } from '@calipartner/ui/tokens';
+import { Button } from '@calipartner/ui';
 import React from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { Text } from '@calipartner/ui';
 import { Ionicons } from '@expo/vector-icons';
 import { t } from '@/i18n';
@@ -57,18 +59,17 @@ export function TrialBanner({
         </View>
       </View>
 
-      <Pressable
+      <Button
+        variant="secondary"
+        fullWidth={false}
+        label={t('rooms.trialBanner.viewPlansBtn')}
+        icon={<Ionicons name="card-outline" size={14} color={colors.onAccent} />}
         onPress={onViewPlans}
         style={[styles.actionButton, { backgroundColor: colors.accent }]}
         accessibilityRole="button"
         accessibilityLabel={t('rooms.trialBanner.viewPlansBtn')}
         testID="btn-trial-view-plans"
-      >
-        <Ionicons name="card-outline" size={14} color={colors.onAccent} />
-        <Text style={[styles.actionButtonText, { color: colors.onAccent }]}>
-          {t('rooms.trialBanner.viewPlansBtn')}
-        </Text>
-      </Pressable>
+      />
     </View>
   );
 }
@@ -90,7 +91,7 @@ const styles = StyleSheet.create({
   iconCircle: {
     width: 36,
     height: 36,
-    borderRadius: 18,
+    borderRadius: visualPrimitives.radii[18],
     alignItems: 'center',
     justifyContent: 'center',
   },

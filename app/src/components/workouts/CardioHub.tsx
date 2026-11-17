@@ -1,3 +1,4 @@
+import { Button } from '@calipartner/ui';
 import { useTheme as useAppearance } from '@calipartner/ui/theme';
 import { NavigationIcon } from '@calipartner/ui';
 import React from 'react';
@@ -25,15 +26,18 @@ export function CardioHub({
   return (
     <ScrollView contentContainerStyle={styles.content} testID="cardio-hub">
       <View style={styles.header}>
-        <Pressable
+        <Button
+          variant="tertiary"
+          fullWidth={false}
+          label={t('repairs.back')}
+          iconOnly
+          icon={<NavigationIcon action="back" />}
           onPress={onBack}
           accessibilityRole="button"
           accessibilityLabel={t('repairs.back')}
           style={styles.back}
           testID="cardio-back"
-        >
-          <NavigationIcon action="back" />
-        </Pressable>
+        />
         <Text variant="title1">{t('homeRefresh.cardio')}</Text>
       </View>
       {options.map(({ flow, icon }) => (

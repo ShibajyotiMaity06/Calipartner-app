@@ -5,8 +5,8 @@ import type { Ionicons } from '@expo/vector-icons';
 import type { OnboardingState } from '@/services/onboardingStateMachine';
 import { Text, useTheme } from '@calipartner/ui';
 import { t } from '@/i18n';
-import { NumberField, PlanCard, planStyles } from './PlanPrimitives';
-import { HeightField } from './HeightField';
+import { PlanCard, planStyles } from './PlanPrimitives';
+import { BodyStatsStep } from './BodyStatsStep';
 
 const DAY_ICONS: ComponentProps<typeof Ionicons>['name'][] = [
   'bed-outline',
@@ -24,11 +24,19 @@ export function TrainingStep({
   onWeight,
   onHeight,
   onDays,
+  onBodyStats,
+  onUnits,
+  onNickname,
+  identityConfirmed = false,
 }: {
   state: OnboardingState;
   onWeight: (value: number) => void;
   onHeight: (value: number) => void;
   onDays: (value: number) => void;
+  onBodyStats: (value: { sex?: OnboardingState['sex']; dateOfBirth?: string }) => void;
+  onUnits: (value: OnboardingState['units']) => void;
+  onNickname: (value: string) => void;
+  identityConfirmed?: boolean;
 }) {
   const { colors } = useTheme();
   const dayOptions: CompactSelectOption<number>[] = Array.from({ length: 8 }, (_, day) => ({
@@ -39,16 +47,18 @@ export function TrainingStep({
 
   return (
     <View style={planStyles.section}>
-      <PlanCard>
-        <NumberField
-          label={t('setup.weight')}
-          icon="scale-outline"
-          value={state.weightKg}
-          onChange={(value) => onWeight(value ?? NaN)}
-          testID="input-weight"
-        />
-        <HeightField value={state.heightCm} onChange={onHeight} />
-      </PlanCard>
+      <BodyStatsStep
+        {...state}
+        identityConfirmed={identityConfirmed}
+        onChangeUnits={onUnits}
+        onChangeNickname={onNickname}
+        onChangeSex={(sex) => onBodyStats({ sex })}
+        onChangeDateOfBirth={(dateOfBirth) => onBodyStats({ dateOfBirth })}
+        onChangeHeightCm={onHeight}
+        onChangeWeightKg={onWeight}
+        onChangeBodyFat={() => {}}
+        errorDateOfBirth={state.errors.dateOfBirth ? t('profileSetup.under18Error') : undefined}
+      />
       <PlanCard>
         <Text fontSet="onboarding" variant="heading" color={colors.textHi}>
           {t('setup.gymDays')}

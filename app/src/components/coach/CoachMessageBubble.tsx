@@ -1,6 +1,8 @@
+import { visualPrimitives } from '@calipartner/ui/tokens';
+import { Button } from '@calipartner/ui';
 import React from 'react';
 import { CaliPartnerLogo } from '@/components/brand/CaliPartnerLogo';
-import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, StyleSheet, View } from 'react-native';
 import { Text, space } from '@calipartner/ui';
 import { CoachMealDraftCard } from './CoachMealDraftCard';
 import { Ionicons } from '@expo/vector-icons';
@@ -112,7 +114,18 @@ export function CoachMessageBubble({
 
             {/* Thumbs up / down and Report actions */}
             <View style={styles.feedbackRow}>
-              <Pressable
+              <Button
+                variant="tertiary"
+                fullWidth={false}
+                label={t('coach.feedback.helpful')}
+                iconOnly
+                icon={
+                  <Ionicons
+                    name={message.feedback === 'up' ? 'thumbs-up' : 'thumbs-up-outline'}
+                    size={15}
+                    color={message.feedback === 'up' ? colors.accent : colors.textMuted}
+                  />
+                }
                 onPress={() => onThumbsUp?.(message.id)}
                 style={[
                   styles.actionBtn,
@@ -123,15 +136,20 @@ export function CoachMessageBubble({
                 accessibilityRole="button"
                 accessibilityLabel={t('coach.feedback.helpful')}
                 testID={`btn-coach-thumbs-up-${message.id}`}
-              >
-                <Ionicons
-                  name={message.feedback === 'up' ? 'thumbs-up' : 'thumbs-up-outline'}
-                  size={15}
-                  color={message.feedback === 'up' ? colors.accent : colors.textMuted}
-                />
-              </Pressable>
+              />
 
-              <Pressable
+              <Button
+                variant="destructive"
+                fullWidth={false}
+                label={t('coach.feedback.unhelpful')}
+                iconOnly
+                icon={
+                  <Ionicons
+                    name={message.feedback === 'down' ? 'thumbs-down' : 'thumbs-down-outline'}
+                    size={15}
+                    color={message.feedback === 'down' ? colors.danger : colors.textMuted}
+                  />
+                }
                 onPress={() => onThumbsDown?.(message.id)}
                 style={[
                   styles.actionBtn,
@@ -142,23 +160,20 @@ export function CoachMessageBubble({
                 accessibilityRole="button"
                 accessibilityLabel={t('coach.feedback.unhelpful')}
                 testID={`btn-coach-thumbs-down-${message.id}`}
-              >
-                <Ionicons
-                  name={message.feedback === 'down' ? 'thumbs-down' : 'thumbs-down-outline'}
-                  size={15}
-                  color={message.feedback === 'down' ? colors.danger : colors.textMuted}
-                />
-              </Pressable>
+              />
 
-              <Pressable
+              <Button
+                variant="tertiary"
+                fullWidth={false}
+                label={t('coach.feedback.report')}
+                iconOnly
+                icon={<Ionicons name="flag-outline" size={14} color={colors.textMuted} />}
                 onPress={() => onReport?.(message.id)}
                 style={styles.actionBtn}
                 accessibilityRole="button"
                 accessibilityLabel={t('coach.feedback.report')}
                 testID={`btn-coach-report-${message.id}`}
-              >
-                <Ionicons name="flag-outline" size={14} color={colors.textMuted} />
-              </Pressable>
+              />
             </View>
           </View>
         )}
@@ -200,11 +215,11 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.sm + 2,
   },
   userBubble: {
-    borderBottomRightRadius: 2,
+    borderBottomRightRadius: visualPrimitives.radii[2],
   },
   coachBubble: {
     borderWidth: 1,
-    borderBottomLeftRadius: 2,
+    borderBottomLeftRadius: visualPrimitives.radii[2],
   },
   messageText: {
     fontSize: fontSize.sm + 1,

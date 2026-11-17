@@ -183,15 +183,18 @@ export default function MeScreen() {
                     {profile ? `@${profile.username}` : t('profileSetup.title')}
                   </Text>
                 </View>
-                <TouchableOpacity
+                <Button
+                  variant="tertiary"
+                  fullWidth={false}
+                  label={t('profileEdit.title')}
+                  iconOnly
+                  icon={<Ionicons name="create-outline" size={layout.icon} color={dark.textMid} />}
                   accessibilityRole="button"
                   accessibilityLabel={t('profileEdit.title')}
                   onPress={() => router.push(profile ? '/profile/edit' : '/auth/profile-setup')}
                   testID="btn-me-edit-profile"
                   style={styles.bellButton}
-                >
-                  <Ionicons name="create-outline" size={layout.icon} color={dark.textMid} />
-                </TouchableOpacity>
+                />
               </View>
               <View style={styles.shortcuts}>
                 <View style={styles.shortcut}>

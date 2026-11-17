@@ -1,6 +1,6 @@
 import { NavigationIcon } from '@calipartner/ui';
 import React, { useCallback, useState } from 'react';
-import { Pressable, RefreshControl, SafeAreaView, ScrollView, View } from 'react-native';
+import { RefreshControl, SafeAreaView, ScrollView, View } from 'react-native';
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import { Button, Text } from '@calipartner/ui';
 import { useSquadToday } from '@/hooks/useSquad';
@@ -36,15 +36,18 @@ export default function SquadPersonScreen() {
         refreshControl={<RefreshControl refreshing={squad.loading} onRefresh={refresh} />}
       >
         <View style={styles.row}>
-          <Pressable
+          <Button
+            variant="tertiary"
+            fullWidth={false}
+            label={t('squadDesign.back')}
+            iconOnly
+            icon={<NavigationIcon action="back" />}
             onPress={back}
             style={styles.back}
             accessibilityRole="button"
             accessibilityLabel={t('squadDesign.back')}
             testID="person-back"
-          >
-            <NavigationIcon action="back" />
-          </Pressable>
+          />
           <View style={styles.flex}>
             <Text variant="bodyS">{t('tabs.room')}</Text>
             <Text variant="title1">{person ? memberName(person) : t('common.loading')}</Text>

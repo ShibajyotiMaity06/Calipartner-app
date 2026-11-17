@@ -1,3 +1,4 @@
+import { Button } from '@calipartner/ui';
 import { useTheme as useAppearance } from '@calipartner/ui/theme';
 import React, { useState } from 'react';
 import { Modal, Platform, Pressable, ScrollView, StyleSheet, View } from 'react-native';
@@ -116,15 +117,18 @@ export function FixStepCountingModal({
               </View>
             </View>
 
-            <Pressable
+            <Button
+              variant="tertiary"
+              fullWidth={false}
+              label={t('common.cancel')}
+              iconOnly
+              icon={<Ionicons name="close" size={20} color={dark.textMid} />}
               onPress={onClose}
               hitSlop={8}
               style={styles.closeBtn}
               accessibilityRole="button"
               accessibilityLabel={t('common.cancel')}
-            >
-              <Ionicons name="close" size={20} color={dark.textMid} />
-            </Pressable>
+            />
           </View>
 
           <ScrollView style={styles.scrollArea} contentContainerStyle={styles.scrollContent}>
@@ -286,7 +290,10 @@ export function FixStepCountingModal({
               {/* Brand Selector Chips */}
               <View style={styles.brandChipsRow}>
                 {OEM_TIPS.map((tip) => (
-                  <Pressable
+                  <Button
+                    variant="secondary"
+                    fullWidth={false}
+                    label={tip.brand.toUpperCase()}
                     key={tip.brand}
                     testID={`btn-brand-${tip.brand}`}
                     style={[
@@ -296,16 +303,7 @@ export function FixStepCountingModal({
                     onPress={() => setSelectedBrand(tip.brand)}
                     accessibilityRole="button"
                     accessibilityLabel={tip.brand}
-                  >
-                    <Text
-                      style={[
-                        styles.brandChipText,
-                        selectedBrand === tip.brand && styles.brandChipTextActive,
-                      ]}
-                    >
-                      {tip.brand.toUpperCase()}
-                    </Text>
-                  </Pressable>
+                  />
                 ))}
               </View>
 
@@ -326,15 +324,16 @@ export function FixStepCountingModal({
 
           {/* Pinned Action */}
           <View style={styles.footer}>
-            <Pressable
+            <Button
+              variant="secondary"
+              fullWidth={false}
+              label="Done"
               testID="btn-fix-step-done"
               style={styles.doneBtn}
               onPress={onClose}
               accessibilityRole="button"
               accessibilityLabel={t('common.save')}
-            >
-              <Text style={styles.doneBtnText}>Done</Text>
-            </Pressable>
+            />
           </View>
         </View>
       </View>
@@ -506,7 +505,7 @@ const createStyles = (dark: ReturnType<typeof useAppearance>['colors']) =>
       fontWeight: '700',
     },
     brandChipTextActive: {
-      color: dark.onBrand, // #1C1109
+      color: dark.onBrand, // the onBrand token
     },
     stepsBox: {
       backgroundColor: dark.s3,
@@ -565,7 +564,7 @@ const createStyles = (dark: ReturnType<typeof useAppearance>['colors']) =>
     doneBtnText: {
       fontSize: typeTokens.body.fontSize,
       fontFamily: typeTokens.body.fontFamily,
-      color: dark.onBrand, // #1C1109
+      color: dark.onBrand, // the onBrand token
       fontWeight: '700',
     },
   });

@@ -95,6 +95,14 @@ describe('discarding stale offline queues', () => {
         goal_profiles: [{ id: 'old-alias' }],
         local_activity_days: [{ steps: 9999 }],
         outbox: [{ id: 'queued-old-data' }],
+        local_onboarding_drafts: [
+          { user_id: 'guest-user', payload: '{"weightKg":72}', updated_at: '2026-11-17T12:00:00Z' },
+          {
+            user_id: 'old-account',
+            payload: '{"weightKg":99}',
+            updated_at: '2026-01-01T00:00:00Z',
+          },
+        ],
       }),
     );
     await clearTrackingDataForReset(createWebDb());
@@ -102,6 +110,9 @@ describe('discarding stale offline queues', () => {
     expect(await restarted.getAllAsync('SELECT * FROM outbox')).toEqual([]);
     expect(await restarted.getFirstAsync('SELECT * FROM local_goal_profiles')).toBeNull();
     expect(JSON.parse(localStorage.getItem('calipartner_web_db')!).local_activity_days).toEqual([]);
+    expect(JSON.parse(localStorage.getItem('calipartner_web_db')!).local_onboarding_drafts).toEqual(
+      [{ user_id: 'guest-user', payload: '{"weightKg":72}', updated_at: '2026-11-17T12:00:00Z' }],
+    );
   });
 
   it('clears native tracking tables transactionally, retaining unrelated metadata', async () => {
@@ -109,14 +120,17 @@ describe('discarding stale offline queues', () => {
     sql.exec(
       "CREATE TABLE local_goal_profiles(id TEXT); INSERT INTO local_goal_profiles VALUES ('old'); CREATE TABLE retired_local_writes(id TEXT); INSERT INTO retired_local_writes VALUES ('queued'); CREATE TABLE retired_social_writes(id TEXT); INSERT INTO retired_social_writes VALUES ('old-action'); CREATE TABLE schema_metadata(version INTEGER); INSERT INTO schema_metadata VALUES (17)",
     );
+    sql.exec(
+      "CREATE TABLE local_onboarding_drafts(user_id TEXT, payload TEXT, updated_at TEXT); INSERT INTO local_onboarding_drafts VALUES ('guest-user', '{\"weightKg\":72}', '2026-11-17T12:00:00Z'), ('old-account', '{}', '2026-01-01T00:00:00Z')",
+    );
     const db = {
-      async getFirstAsync(query: string) {
-        return sql.prepare(query).get() ?? null;
+      async getFirstAsync(query: string, params: SQLInputValue[] = []) {
+        return sql.prepare(query).get(...params) ?? null;
       },
       async getAllAsync(query: string) {
         return sql.prepare(query).all();
       },
-      async runAsync(query: string, ...params: SQLInputValue[]) {
+      async runAsync(query: string, params: SQLInputValue[] = []) {
         return sql.prepare(query).run(...params);
       },
       async withTransactionAsync(action: () => Promise<void>) {
@@ -135,6 +149,9 @@ describe('discarding stale offline queues', () => {
     expect(sql.prepare('SELECT * FROM retired_local_writes').all()).toEqual([]);
     expect(sql.prepare('SELECT * FROM retired_social_writes').all()).toEqual([]);
     expect(sql.prepare('SELECT version FROM schema_metadata').get()?.version).toBe(17);
+    expect(sql.prepare('SELECT user_id, payload FROM local_onboarding_drafts').all()).toEqual([
+      { user_id: 'guest-user', payload: '{"weightKg":72}' },
+    ]);
     sql.close();
   });
 });

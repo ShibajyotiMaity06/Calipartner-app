@@ -1,3 +1,4 @@
+import { Button } from '@calipartner/ui';
 import React, { useEffect, useState } from 'react';
 import { Modal, Pressable, StyleSheet, View } from 'react-native';
 import { Text } from '@calipartner/ui';
@@ -133,28 +134,26 @@ export function ChatMessageMenuModal({
               </Text>
 
               <View style={styles.confirmButtonsRow}>
-                <Pressable
+                <Button
+                  variant="secondary"
+                  fullWidth={false}
+                  label={t('chat.cancel')}
                   onPress={() => setShowDeleteConfirm(false)}
                   style={[styles.confirmBtn, { backgroundColor: colors.surfaceAlt }]}
                   accessibilityRole="button"
                   testID="btn-delete-cancel"
-                >
-                  <Text style={[styles.confirmBtnText, { color: colors.text }]}>
-                    {t('chat.cancel')}
-                  </Text>
-                </Pressable>
+                />
 
-                <Pressable
+                <Button
+                  variant="destructive"
+                  fullWidth={false}
+                  label={t('chat.deleteConfirmBtn')}
                   onPress={handleConfirmDelete}
                   disabled={loading}
                   style={[styles.confirmBtn, { backgroundColor: colors.danger }]}
                   accessibilityRole="button"
                   testID="btn-delete-confirm"
-                >
-                  <Text style={[styles.confirmBtnText, { color: '#FFFFFF' }]}>
-                    {t('chat.deleteConfirmBtn')}
-                  </Text>
-                </Pressable>
+                />
               </View>
             </View>
           ) : showBlockConfirm ? (
@@ -166,32 +165,43 @@ export function ChatMessageMenuModal({
               </Text>
 
               <View style={styles.confirmButtonsRow}>
-                <Pressable
+                <Button
+                  variant="secondary"
+                  fullWidth={false}
+                  label={t('chat.cancel')}
                   onPress={() => setShowBlockConfirm(false)}
                   style={[styles.confirmBtn, { backgroundColor: colors.surfaceAlt }]}
                   accessibilityRole="button"
                   testID="btn-block-cancel"
-                >
-                  <Text style={[styles.confirmBtnText, { color: colors.text }]}>
-                    {t('chat.cancel')}
-                  </Text>
-                </Pressable>
+                />
 
-                <Pressable
+                <Button
+                  variant="destructive"
+                  fullWidth={false}
+                  label="Block User"
                   onPress={handleConfirmBlock}
                   disabled={loading}
                   style={[styles.confirmBtn, { backgroundColor: colors.danger }]}
                   accessibilityRole="button"
                   testID="btn-block-confirm"
-                >
-                  <Text style={[styles.confirmBtnText, { color: '#FFFFFF' }]}>Block User</Text>
-                </Pressable>
+                />
               </View>
             </View>
           ) : (
             <>
               {onReply && !message.deleted_at && message.message_type === 'user' && (
-                <Pressable
+                <Button
+                  variant="secondary"
+                  fullWidth={false}
+                  label={t('aha.reply')}
+                  icon={
+                    <Ionicons
+                      name="arrow-undo-outline"
+                      size={20}
+                      color={colors.text}
+                      style={styles.optionIcon}
+                    />
+                  }
                   onPress={() => {
                     onReply(message);
                     onClose();
@@ -200,62 +210,67 @@ export function ChatMessageMenuModal({
                   accessibilityRole="button"
                   accessibilityLabel={t('aha.reply')}
                   testID="btn-reply-message"
-                >
-                  <Ionicons
-                    name="arrow-undo-outline"
-                    size={20}
-                    color={colors.text}
-                    style={styles.optionIcon}
-                  />
-                  <Text style={{ color: colors.text }}>{t('aha.reply')}</Text>
-                </Pressable>
+                />
               )}
               {/* Option: Copy Text */}
               {Boolean(message.text) && (
-                <Pressable
+                <Button
+                  variant="secondary"
+                  fullWidth={false}
+                  label={t('chat.copyText')}
+                  icon={
+                    <Ionicons
+                      name="copy-outline"
+                      size={20}
+                      color={colors.text}
+                      style={styles.optionIcon}
+                    />
+                  }
                   onPress={handleCopy}
                   style={[styles.menuOptionRow, { borderBottomColor: colors.border }]}
                   accessibilityRole="button"
                   accessibilityLabel={t('chat.copyText')}
                   testID="btn-copy-text"
-                >
-                  <Ionicons
-                    name="copy-outline"
-                    size={20}
-                    color={colors.text}
-                    style={styles.optionIcon}
-                  />
-                  <Text style={[styles.optionLabel, { color: colors.text }]}>
-                    {t('chat.copyText')}
-                  </Text>
-                </Pressable>
+                />
               )}
 
               {/* Option: Delete Own Message */}
               {isMine && !message.deleted_at && (
-                <Pressable
+                <Button
+                  variant="destructive"
+                  fullWidth={false}
+                  label={t('chat.deleteOwn')}
+                  icon={
+                    <Ionicons
+                      name="trash-outline"
+                      size={20}
+                      color={colors.danger}
+                      style={styles.optionIcon}
+                    />
+                  }
                   onPress={() => setShowDeleteConfirm(true)}
                   style={[styles.menuOptionRow, { borderBottomColor: colors.border }]}
                   accessibilityRole="button"
                   accessibilityLabel={t('chat.deleteOwn')}
                   testID="btn-delete-message"
-                >
-                  <Ionicons
-                    name="trash-outline"
-                    size={20}
-                    color={colors.danger}
-                    style={styles.optionIcon}
-                  />
-                  <Text style={[styles.optionLabel, { color: colors.danger }]}>
-                    {t('chat.deleteOwn')}
-                  </Text>
-                </Pressable>
+                />
               )}
 
               {/* Options for other member's message */}
               {!isMine && (
                 <>
-                  <Pressable
+                  <Button
+                    variant="destructive"
+                    fullWidth={false}
+                    label={t('chat.reportMsg')}
+                    icon={
+                      <Ionicons
+                        name="flag-outline"
+                        size={20}
+                        color={colors.danger}
+                        style={styles.optionIcon}
+                      />
+                    }
                     onPress={() => {
                       onClose();
                       onReportMessage(message.id);
@@ -264,17 +279,7 @@ export function ChatMessageMenuModal({
                     accessibilityRole="button"
                     accessibilityLabel={t('chat.reportMsg')}
                     testID="btn-report-message"
-                  >
-                    <Ionicons
-                      name="flag-outline"
-                      size={20}
-                      color={colors.danger}
-                      style={styles.optionIcon}
-                    />
-                    <Text style={[styles.optionLabel, { color: colors.danger }]}>
-                      {t('chat.reportMsg')}
-                    </Text>
-                  </Pressable>
+                  />
 
                   {message.sender_id && onBlockMember && (
                     <Pressable
@@ -297,39 +302,41 @@ export function ChatMessageMenuModal({
                   )}
 
                   {message.sender_id && (
-                    <Pressable
+                    <Button
+                      variant="secondary"
+                      fullWidth={false}
+                      label={t('chat.muteMember', {
+                        username: message.sender_nickname || 'Member',
+                      })}
+                      icon={
+                        <Ionicons
+                          name="volume-mute-outline"
+                          size={20}
+                          color={colors.textMuted}
+                          style={styles.optionIcon}
+                        />
+                      }
                       onPress={handleMute}
                       style={[styles.menuOptionRow, { borderBottomColor: colors.border }]}
                       accessibilityRole="button"
                       accessibilityLabel={`Mute member`}
                       testID="btn-mute-member"
-                    >
-                      <Ionicons
-                        name="volume-mute-outline"
-                        size={20}
-                        color={colors.textMuted}
-                        style={styles.optionIcon}
-                      />
-                      <Text style={[styles.optionLabel, { color: colors.text }]}>
-                        {t('chat.muteMember', { username: message.sender_nickname || 'Member' })}
-                      </Text>
-                    </Pressable>
+                    />
                   )}
                 </>
               )}
 
               {/* Cancel Button */}
-              <Pressable
+              <Button
+                variant="secondary"
+                fullWidth={false}
+                label={t('chat.cancel')}
                 onPress={onClose}
                 style={[styles.cancelBtn, { backgroundColor: colors.surfaceAlt }]}
                 accessibilityRole="button"
                 accessibilityLabel={t('chat.cancel')}
                 testID="btn-menu-cancel"
-              >
-                <Text style={[styles.cancelBtnText, { color: colors.text }]}>
-                  {t('chat.cancel')}
-                </Text>
-              </Pressable>
+              />
             </>
           )}
         </Pressable>

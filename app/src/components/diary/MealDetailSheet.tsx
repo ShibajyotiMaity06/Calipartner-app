@@ -61,15 +61,18 @@ export function MealDetailSheet({
                 </Text>
               </Text>
               {summary.entries.length > 0 && (
-                <Pressable
+                <Button
+                  variant="tertiary"
+                  fullWidth={false}
+                  label={t('diary.copyMeal')}
+                  iconOnly
+                  icon={<Ionicons name="copy-outline" size={18} color={dark.textMid} />}
                   testID={`btn-sheet-copy-${section}`}
                   onPress={() => onCopyMeal(section)}
                   hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                   accessibilityLabel={t('diary.copyMeal')}
                   style={styles.copyButton}
-                >
-                  <Ionicons name="copy-outline" size={18} color={dark.textMid} />
-                </Pressable>
+                />
               )}
             </View>
           </View>
@@ -112,15 +115,18 @@ export function MealDetailSheet({
                   <Text nutrient="calories" variant="numeralM" color={dark.textHi}>
                     {entry.calories} kcal
                   </Text>
-                  <Pressable
+                  <Button
+                    variant="tertiary"
+                    fullWidth={false}
+                    label={t('common.delete')}
+                    iconOnly
+                    icon={<Ionicons name="trash-outline" size={16} color={dark.textLo} />}
                     testID={`sheet-btn-delete-${entry.id}`}
                     onPress={() => onDeleteEntry(entry.id)}
                     hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                     style={styles.deleteIconButton}
                     accessibilityLabel={t('common.delete')}
-                  >
-                    <Ionicons name="trash-outline" size={16} color={dark.textLo} />
-                  </Pressable>
+                  />
                 </View>
               </Pressable>
             ))

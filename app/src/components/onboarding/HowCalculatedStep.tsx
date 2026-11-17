@@ -1,3 +1,4 @@
+import { visualPrimitives } from '@calipartner/ui/tokens';
 import { useTheme as useAppearance } from '@calipartner/ui/theme';
 import React from 'react';
 import { StyleSheet, View } from 'react-native';
@@ -128,7 +129,7 @@ const createStyles = (dark: ReturnType<typeof useAppearance>['colors']) =>
       borderColor: dark.hairline,
     },
     formulaCode: {
-      fontFamily: 'monospace',
+      fontFamily: visualPrimitives.monospace,
       lineHeight: 16,
     },
     resultText: {

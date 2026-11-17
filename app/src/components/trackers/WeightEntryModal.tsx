@@ -1,3 +1,4 @@
+import { Button } from '@calipartner/ui';
 import { useTheme as useAppearance } from '@calipartner/ui/theme';
 import { type as inputTypography } from '@calipartner/ui';
 import React, { useEffect, useRef, useState } from 'react';
@@ -193,28 +194,26 @@ export function WeightEntryModal({
 
             {/* Unit Chip (kg / lb) */}
             <View style={styles.unitChipWrap} testID="weight-unit-chips">
-              <Pressable
+              <Button
+                variant="secondary"
+                fullWidth={false}
+                label="kg"
                 testID="btn-weight-unit-kg"
                 style={[styles.unitChip, unit === 'kg' && styles.unitChipActive]}
                 onPress={() => handleUnitToggle('kg')}
                 accessibilityRole="button"
                 accessibilityLabel="Kilograms"
-              >
-                <Text style={[styles.unitChipText, unit === 'kg' && styles.unitChipTextActive]}>
-                  kg
-                </Text>
-              </Pressable>
-              <Pressable
+              />
+              <Button
+                variant="secondary"
+                fullWidth={false}
+                label="lb"
                 testID="btn-weight-unit-lb"
                 style={[styles.unitChip, unit === 'lb' && styles.unitChipActive]}
                 onPress={() => handleUnitToggle('lb')}
                 accessibilityRole="button"
                 accessibilityLabel="Pounds"
-              >
-                <Text style={[styles.unitChipText, unit === 'lb' && styles.unitChipTextActive]}>
-                  lb
-                </Text>
-              </Pressable>
+              />
             </View>
           </View>
 
@@ -224,16 +223,17 @@ export function WeightEntryModal({
             showsVerticalScrollIndicator={false}
           >
             {onOpenHistory && (
-              <Pressable
+              <Button
+                variant="secondary"
+                fullWidth={false}
+                label={t('weightUpdate.progress')}
+                icon={<Ionicons name="trending-up-outline" size={space[5]} color={dark.textMid} />}
                 testID="btn-weight-progress"
                 onPress={onOpenHistory}
                 accessibilityRole="button"
                 accessibilityLabel={t('weightUpdate.progress')}
                 style={styles.progressButton}
-              >
-                <Ionicons name="trending-up-outline" size={space[5]} color={dark.textMid} />
-                <Text>{t('weightUpdate.progress')}</Text>
-              </Pressable>
+              />
             )}
             {/* E05 Big Numeric Field */}
             <View style={styles.bigNumericCard} testID="big-numeric-field-card">
@@ -362,28 +362,28 @@ export function WeightEntryModal({
 
           {/* Action Buttons */}
           <View style={styles.actionsRow}>
-            <Pressable
+            <Button
+              variant="secondary"
+              fullWidth={false}
+              label={t('common.cancel')}
               testID="btn-weight-cancel"
               onPress={onClose}
               style={styles.cancelBtn}
               accessibilityRole="button"
               accessibilityLabel={t('common.cancel')}
-            >
-              <Text style={styles.cancelBtnText}>{t('common.cancel')}</Text>
-            </Pressable>
+            />
 
-            <Pressable
+            <Button
+              variant="secondary"
+              fullWidth={false}
+              label={saving ? t('common.saving') : t('common.save')}
               testID="btn-weight-save"
               onPress={() => void handleSubmit()}
               disabled={saving}
               style={[styles.saveBtn, saving && styles.btnDisabled]}
               accessibilityRole="button"
               accessibilityLabel={t('common.save')}
-            >
-              <Text style={styles.saveBtnText}>
-                {saving ? t('common.saving') : t('common.save')}
-              </Text>
-            </Pressable>
+            />
           </View>
         </View>
       </View>
@@ -656,7 +656,7 @@ const createStyles = (dark: ReturnType<typeof useAppearance>['colors']) =>
     saveBtnText: {
       fontSize: typeTokens.body.fontSize,
       fontFamily: typeTokens.body.fontFamily,
-      color: dark.onBrand, // #1C1109
+      color: dark.onBrand, // the onBrand token
       fontWeight: '700',
     },
     btnDisabled: {

@@ -2,7 +2,7 @@ import { useTheme as useAppearance } from '@calipartner/ui/theme';
 import { NavigationIcon } from '@calipartner/ui';
 import { type as inputTypography } from '@calipartner/ui';
 import React, { useState } from 'react';
-import { View, StyleSheet, Modal, SafeAreaView, TextInput, TouchableOpacity } from 'react-native';
+import { View, StyleSheet, Modal, SafeAreaView, TextInput } from 'react-native';
 import { Text, Button, space, radius } from '@calipartner/ui';
 import { playClickSound } from '@/lib/sound';
 import { t } from '@/i18n';
@@ -64,18 +64,17 @@ export function DeleteAccountModal({
           {/* Top Bar */}
           <View style={styles.topBar}>
             {!isComplete && (
-              <TouchableOpacity
+              <Button
+                variant="secondary"
+                fullWidth={false}
+                label="Cancel"
+                icon={<NavigationIcon action="back" />}
                 onPress={onClose}
                 accessibilityRole="button"
                 accessibilityLabel="Cancel"
                 style={styles.backButton}
                 testID="btn-delete-cancel"
-              >
-                <NavigationIcon action="back" />
-                <Text variant="body" color={dark.textHi}>
-                  Cancel
-                </Text>
-              </TouchableOpacity>
+              />
             )}
           </View>
 

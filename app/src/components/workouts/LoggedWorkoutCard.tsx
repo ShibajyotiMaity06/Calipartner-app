@@ -1,5 +1,6 @@
+import { Button } from '@calipartner/ui';
 import React from 'react';
-import { Pressable, View } from 'react-native';
+import { View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { controls, radius, space, Text, useTheme } from '@calipartner/ui';
 import type { WorkoutWithDetails } from '@calipartner/core';
@@ -34,7 +35,20 @@ export function LoggedWorkoutCard({
           {title}
         </Text>
         {(['edit', 'delete'] as const).map((action) => (
-          <Pressable
+          <Button
+            variant="destructive"
+            fullWidth={false}
+            label={t(action === 'edit' ? 'workoutPolish.edit' : 'workoutPolish.remove', {
+              name: title,
+            })}
+            iconOnly
+            icon={
+              <Ionicons
+                name={action === 'edit' ? 'create-outline' : 'trash-outline'}
+                size={controls.icon}
+                color={action === 'delete' ? colors.danger : colors.textHi}
+              />
+            }
             key={action}
             accessibilityRole="button"
             accessibilityLabel={t(
@@ -51,13 +65,7 @@ export function LoggedWorkoutCard({
               backgroundColor: colors.s2,
             }}
             testID={`logged-workout-${action}-${workout.id}`}
-          >
-            <Ionicons
-              name={action === 'edit' ? 'create-outline' : 'trash-outline'}
-              size={controls.icon}
-              color={action === 'delete' ? colors.danger : colors.textHi}
-            />
-          </Pressable>
+          />
         ))}
       </View>
       {workout.exercises.map((exercise) => (

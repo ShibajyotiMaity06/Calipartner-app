@@ -1,3 +1,4 @@
+import { Button } from '@calipartner/ui';
 import { NavigationIcon } from '@calipartner/ui';
 import { type as inputTypography } from '@calipartner/ui';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
@@ -317,15 +318,18 @@ export function CoachChatView({ onBack, initialConversationId }: CoachChatViewPr
           style={[styles.header, { backgroundColor: colors.surface, borderColor: colors.border }]}
         >
           {onBack && (
-            <Pressable
+            <Button
+              variant="tertiary"
+              fullWidth={false}
+              label="Back"
+              iconOnly
+              icon={<NavigationIcon action="back" />}
               onPress={onBack}
               style={styles.backBtn}
               accessibilityRole="button"
               accessibilityLabel="Back"
               testID="btn-coach-back-locked"
-            >
-              <NavigationIcon action="back" />
-            </Pressable>
+            />
           )}
           <Text style={[styles.headerTitle, { color: colors.text }]}>{t('coach.title')}</Text>
         </View>
@@ -362,15 +366,18 @@ export function CoachChatView({ onBack, initialConversationId }: CoachChatViewPr
       >
         <View style={styles.headerLeft}>
           {onBack && (
-            <Pressable
+            <Button
+              variant="tertiary"
+              fullWidth={false}
+              label="Back"
+              iconOnly
+              icon={<NavigationIcon action="back" />}
               onPress={onBack}
               style={styles.backBtn}
               accessibilityRole="button"
               accessibilityLabel="Back"
               testID="btn-coach-back"
-            >
-              <NavigationIcon action="back" />
-            </Pressable>
+            />
           )}
           <View style={styles.titleWrap}>
             <View style={styles.titleRow}>
@@ -386,25 +393,31 @@ export function CoachChatView({ onBack, initialConversationId }: CoachChatViewPr
         </View>
 
         <View style={styles.headerRight}>
-          <Pressable
+          <Button
+            variant="tertiary"
+            fullWidth={false}
+            label="Privacy & Data Info"
+            iconOnly
+            icon={<Ionicons name="shield-checkmark-outline" size={20} color={colors.text} />}
             onPress={() => setShowConsentModal(true)}
             style={styles.headerIconBtn}
             accessibilityRole="button"
             accessibilityLabel="Privacy & Data Info"
             testID="btn-coach-privacy"
-          >
-            <Ionicons name="shield-checkmark-outline" size={20} color={colors.text} />
-          </Pressable>
+          />
 
-          <Pressable
+          <Button
+            variant="tertiary"
+            fullWidth={false}
+            label="View History"
+            iconOnly
+            icon={<Ionicons name="time-outline" size={22} color={colors.text} />}
             onPress={() => setShowHistoryModal(true)}
             style={styles.headerIconBtn}
             accessibilityRole="button"
             accessibilityLabel="View History"
             testID="btn-coach-history"
-          >
-            <Ionicons name="time-outline" size={22} color={colors.text} />
-          </Pressable>
+          />
         </View>
       </View>
 

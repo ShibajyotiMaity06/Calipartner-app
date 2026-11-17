@@ -1,3 +1,4 @@
+import { Button } from '@calipartner/ui';
 import { useTheme as useAppearance } from '@calipartner/ui/theme';
 import { NavigationIcon } from '@calipartner/ui';
 import React, { useState } from 'react';
@@ -65,9 +66,14 @@ export function LeaderboardView({ testID = 'leaderboard-view' }: LeaderboardView
       <View style={styles.card} testID={`${testID}-error`}>
         <Ionicons name="alert-circle-outline" size={36} color={dark.textLo} />
         <Text style={styles.errorText}>{error.message}</Text>
-        <Pressable style={styles.retryBtn} onPress={refresh} testID={`${testID}-retry`}>
-          <Text style={styles.retryBtnText}>Retry</Text>
-        </Pressable>
+        <Button
+          variant="secondary"
+          fullWidth={false}
+          label="Retry"
+          style={styles.retryBtn}
+          onPress={refresh}
+          testID={`${testID}-retry`}
+        />
       </View>
     );
   }
@@ -116,15 +122,16 @@ export function LeaderboardView({ testID = 'leaderboard-view' }: LeaderboardView
           <Ionicons name="eye-off-outline" size={32} color={dark.textLo} />
           <Text style={styles.optedOutTitle}>You're hidden</Text>
           <Text style={styles.optedOutText}>{t('progress.leaderboard.optedOutNotice')}</Text>
-          <Pressable
+          <Button
+            variant="secondary"
+            fullWidth={false}
+            label="Turn on leaderboard participation"
             style={styles.optInButton}
             onPress={() => handleToggleOptOut(true)}
             accessibilityRole="button"
             accessibilityLabel="Participate in leaderboard"
             testID={`${testID}-opt-in-btn`}
-          >
-            <Text style={styles.optInButtonText}>Turn on leaderboard participation</Text>
-          </Pressable>
+          />
         </View>
       ) : (
         <View style={styles.leaderboardBody}>
@@ -132,16 +139,17 @@ export function LeaderboardView({ testID = 'leaderboard-view' }: LeaderboardView
           <View style={styles.top10Card}>
             <View style={styles.cardHeaderRow}>
               <Text style={styles.top10Title}>{t('progress.leaderboard.top10')}</Text>
-              <Pressable
+              <Button
+                variant="secondary"
+                fullWidth={false}
+                label="Monday recap"
+                icon={<Ionicons name="calendar-outline" size={14} color={dark.apricot} />}
                 style={styles.recapBtn}
                 onPress={() => setShowRecapModal(true)}
                 accessibilityRole="button"
                 accessibilityLabel="View Monday recap"
                 testID={`${testID}-btn-monday-recap`}
-              >
-                <Ionicons name="calendar-outline" size={14} color={dark.apricot} />
-                <Text style={styles.recapBtnText}>Monday recap</Text>
-              </Pressable>
+              />
             </View>
 
             {top10.length === 0 ? (
@@ -231,14 +239,15 @@ export function LeaderboardView({ testID = 'leaderboard-view' }: LeaderboardView
           {/* 5. M11: Footer with weekly reset note & link to hide from leaderboards */}
           <View style={styles.footerRow}>
             <Text style={styles.footerText}>Weekly reset on Monday.</Text>
-            <Pressable
+            <Button
+              variant="secondary"
+              fullWidth={false}
+              label="Hide me from leaderboards"
               onPress={() => handleToggleOptOut(false)}
               accessibilityRole="button"
               accessibilityLabel="Hide me from leaderboards"
               testID={`${testID}-optout-link`}
-            >
-              <Text style={styles.optOutLinkText}>Hide me from leaderboards</Text>
-            </Pressable>
+            />
           </View>
         </View>
       )}
@@ -260,14 +269,17 @@ export function LeaderboardView({ testID = 'leaderboard-view' }: LeaderboardView
             />
             <Text style={styles.inspectNickname}>{inspectUser?.nickname}</Text>
             <Text style={styles.inspectSub}>Cohort Member</Text>
-            <Pressable
+            <Button
+              variant="tertiary"
+              fullWidth={false}
+              label="Close"
+              iconOnly
+              icon={<NavigationIcon action="close" />}
               style={styles.inspectCloseBtn}
               onPress={() => setInspectUser(null)}
               accessibilityRole="button"
               accessibilityLabel="Close"
-            >
-              <NavigationIcon action="close" />
-            </Pressable>
+            />
           </View>
         </Pressable>
       </Modal>

@@ -9,7 +9,6 @@ import {
   ScrollView,
   StyleSheet,
   TextInput,
-  TouchableOpacity,
   View,
 } from 'react-native';
 import { Button, Card, radius, SegmentedControl, space, Text } from '@calipartner/ui';
@@ -64,15 +63,18 @@ export function ReportFeedbackModal({
         <View style={styles.container} testID={testID}>
           {/* Top Bar */}
           <View style={styles.topBar}>
-            <TouchableOpacity
+            <Button
+              variant="tertiary"
+              fullWidth={false}
+              label="Back"
+              iconOnly
+              icon={<NavigationIcon action="back" />}
               onPress={onClose}
               accessibilityRole="button"
               accessibilityLabel="Back"
               style={styles.backButton}
               testID="btn-close-report-feedback"
-            >
-              <NavigationIcon action="back" />
-            </TouchableOpacity>
+            />
             <Text variant="heading" color={dark.textHi}>
               {t('me.reportFeedback.title')}
             </Text>

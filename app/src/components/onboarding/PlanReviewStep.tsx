@@ -1,5 +1,5 @@
 import React from 'react';
-import { Pressable, View, StyleSheet } from 'react-native';
+import { View, StyleSheet } from 'react-native';
 import {
   isGymPlanValid,
   type GymTargetsResult,
@@ -125,17 +125,16 @@ export function PlanReviewStep({
       ) : null}
       <PlanSafetyNotice result={result} />
       {onCalculation && (
-        <Pressable
+        <Button
+          variant="tertiary"
+          fullWidth={false}
+          label={t('setup.howCalculated')}
           accessibilityRole="button"
           accessibilityLabel={t('setup.howCalculated')}
           style={planStyles.link}
           onPress={onCalculation}
           testID="btn-how-calculated"
-        >
-          <Text variant="bodyS" style={{ textDecorationLine: 'underline' }}>
-            {t('setup.howCalculated')}
-          </Text>
-        </Pressable>
+        />
       )}
       {!editing && (
         <Button

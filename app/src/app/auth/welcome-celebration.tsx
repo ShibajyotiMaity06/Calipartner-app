@@ -1,3 +1,4 @@
+import { visualPrimitives } from '@calipartner/ui/tokens';
 import { useTheme as useAppearance } from '@calipartner/ui/theme';
 import { afterSetupDestination } from '@/services/pairOnboardingService';
 import React, { useEffect } from 'react';
@@ -94,7 +95,7 @@ export default function WelcomeCelebrationScreen() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#160C05',
+    backgroundColor: visualPrimitives.colors.deepUmber,
   },
   contentContainer: {
     flex: 1,

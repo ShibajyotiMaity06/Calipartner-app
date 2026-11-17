@@ -116,7 +116,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     ],
     [
       'expo-splash-screen',
-      { image: './assets/splash-icon.png', imageWidth: 200, backgroundColor: '#0E0B08' },
+      { image: './assets/splash-icon.png', imageWidth: 200, backgroundColor: '#471a06' },
     ],
   ],
   experiments: { typedRoutes: true },

@@ -1,15 +1,14 @@
+import { visualPrimitives } from '@calipartner/ui/tokens';
 import { useTheme as useAppearance } from '@calipartner/ui/theme';
 import { type as inputTypography } from '@calipartner/ui';
 import React, { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
   Modal,
-  Pressable,
   ScrollView,
   StyleSheet,
   Switch,
   TextInput,
-  TouchableOpacity,
   View,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
@@ -146,14 +145,17 @@ export function WaterAlarmModal({
                 </Text>
               </View>
             </View>
-            <Pressable
+            <Button
+              variant="tertiary"
+              fullWidth={false}
+              label="Close"
+              iconOnly
+              icon={<Ionicons name="close" size={20} color={dark.textMid} />}
               onPress={onClose}
               hitSlop={12}
               style={styles.closeButton}
               accessibilityLabel="Close"
-            >
-              <Ionicons name="close" size={20} color={dark.textMid} />
-            </Pressable>
+            />
           </View>
 
           <ScrollView style={styles.bodyScroll} showsVerticalScrollIndicator={false}>
@@ -180,36 +182,33 @@ export function WaterAlarmModal({
 
               {/* Quick Add Buttons */}
               <View style={styles.quickAddRow}>
-                <Pressable
+                <Button
+                  variant="secondary"
+                  fullWidth={false}
+                  label="+250 ml"
+                  icon={<Ionicons name="pint-outline" size={16} color={dark.waterInk} />}
                   style={styles.quickAddBtn}
                   onPress={() => handleQuickAdd(250)}
                   accessibilityLabel="Add 250 ml glass"
-                >
-                  <Ionicons name="pint-outline" size={16} color={dark.waterInk} />
-                  <Text variant="bodyS" color={dark.textHi}>
-                    +250 ml
-                  </Text>
-                </Pressable>
-                <Pressable
+                />
+                <Button
+                  variant="secondary"
+                  fullWidth={false}
+                  label="+500 ml"
+                  icon={<Ionicons name="water-outline" size={16} color={dark.waterInk} />}
                   style={styles.quickAddBtn}
                   onPress={() => handleQuickAdd(500)}
                   accessibilityLabel="Add 500 ml bottle"
-                >
-                  <Ionicons name="water-outline" size={16} color={dark.waterInk} />
-                  <Text variant="bodyS" color={dark.textHi}>
-                    +500 ml
-                  </Text>
-                </Pressable>
-                <Pressable
+                />
+                <Button
+                  variant="secondary"
+                  fullWidth={false}
+                  label="+750 ml"
+                  icon={<Ionicons name="flask-outline" size={16} color={dark.waterInk} />}
                   style={styles.quickAddBtn}
                   onPress={() => handleQuickAdd(750)}
                   accessibilityLabel="Add 750 ml flask"
-                >
-                  <Ionicons name="flask-outline" size={16} color={dark.waterInk} />
-                  <Text variant="bodyS" color={dark.textHi}>
-                    +750 ml
-                  </Text>
-                </Pressable>
+                />
               </View>
 
               {/* Custom Quantity TextInput */}
@@ -222,16 +221,15 @@ export function WaterAlarmModal({
                   keyboardType="numeric"
                   style={[styles.customWaterInput, { fontFamily: inputTypography.body.fontFamily }]}
                 />
-                <TouchableOpacity
+                <Button
+                  variant="secondary"
+                  fullWidth={false}
+                  label="+ Add"
                   onPress={handleCustomAdd}
                   style={styles.customWaterAddBtn}
                   accessibilityRole="button"
                   accessibilityLabel="Add custom water amount"
-                >
-                  <Text variant="bodyS" color={dark.onWater} style={{ fontWeight: '700' }}>
-                    + Add
-                  </Text>
-                </TouchableOpacity>
+                />
               </View>
             </View>
 
@@ -281,20 +279,15 @@ export function WaterAlarmModal({
                           { hours: 3, label: 'Every 3 hrs' },
                           { hours: 4, label: 'Every 4 hrs' },
                         ].map((item) => (
-                          <Pressable
+                          <Button
+                            variant="secondary"
+                            fullWidth={false}
+                            label={item.label}
                             key={item.hours}
                             style={[styles.chip, intervalHours === item.hours && styles.chipActive]}
                             onPress={() => setIntervalHours(item.hours)}
                             accessibilityLabel={item.label}
-                          >
-                            <Text
-                              variant="bodyS"
-                              color={intervalHours === item.hours ? dark.onWater : dark.textMid}
-                              style={{ fontWeight: intervalHours === item.hours ? '700' : '500' }}
-                            >
-                              {item.label}
-                            </Text>
-                          </Pressable>
+                          />
                         ))}
                       </View>
 
@@ -371,7 +364,7 @@ const createStyles = (dark: ReturnType<typeof useAppearance>['colors']) =>
     iconCircle: {
       width: 40,
       height: 40,
-      borderRadius: 20,
+      borderRadius: visualPrimitives.radii[20],
       backgroundColor: 'rgba(56, 178, 172, 0.15)',
       alignItems: 'center',
       justifyContent: 'center',
@@ -379,7 +372,7 @@ const createStyles = (dark: ReturnType<typeof useAppearance>['colors']) =>
     closeButton: {
       width: 36,
       height: 36,
-      borderRadius: 18,
+      borderRadius: visualPrimitives.radii[18],
       backgroundColor: dark.s1,
       alignItems: 'center',
       justifyContent: 'center',

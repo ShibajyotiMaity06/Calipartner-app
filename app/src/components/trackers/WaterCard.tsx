@@ -1,3 +1,5 @@
+import { visualPrimitives } from '@calipartner/ui/tokens';
+import { Button } from '@calipartner/ui';
 import { useTheme as useAppearance } from '@calipartner/ui/theme';
 import React, { useEffect, useRef, useState } from 'react';
 import {
@@ -123,40 +125,43 @@ export function WaterCard({ selectedDate, testID = 'water-card' }: WaterCardProp
 
         <View style={styles.headerActions}>
           {/* Unit Toggle ml / fl oz */}
-          <Pressable
+          <Button
+            variant="secondary"
+            fullWidth={false}
+            label={unitLabel}
             testID="btn-water-unit-switch"
             style={styles.unitPill}
             onPress={() => setUnit((prev) => (prev === 'ml' ? 'fl_oz' : 'ml'))}
             accessibilityRole="button"
             accessibilityLabel={`Switch unit from ${unit}`}
-          >
-            <Text style={styles.unitPillText}>{unitLabel}</Text>
-          </Pressable>
+          />
 
           {hasLogs && (
-            <Pressable
+            <Button
+              variant="secondary"
+              fullWidth={false}
+              label={t('trackers.water.undo')}
+              icon={<Ionicons name="arrow-undo-outline" size={15} color={dark.textHi} />}
               testID="btn-water-undo"
               onPress={() => void handleUndo()}
               disabled={actionBusy}
               style={styles.smallActionBtn}
               accessibilityRole="button"
               accessibilityLabel={t('trackers.water.undo')}
-            >
-              <Ionicons name="arrow-undo-outline" size={15} color={dark.textHi} />
-              <Text style={styles.smallActionText}>{t('trackers.water.undo')}</Text>
-            </Pressable>
+            />
           )}
 
-          <Pressable
+          <Button
+            variant="secondary"
+            fullWidth={false}
+            label={t('trackers.water.history')}
+            icon={<Ionicons name="time-outline" size={15} color={dark.textMid} />}
             testID="btn-water-history"
             onPress={() => setHistoryModalVisible(true)}
             style={styles.smallActionBtn}
             accessibilityRole="button"
             accessibilityLabel={t('trackers.water.history')}
-          >
-            <Ionicons name="time-outline" size={15} color={dark.textMid} />
-            <Text style={styles.smallActionText}>{t('trackers.water.history')}</Text>
-          </Pressable>
+          />
         </View>
       </View>
 
@@ -313,16 +318,17 @@ export function WaterCard({ selectedDate, testID = 'water-card' }: WaterCardProp
 
           {/* E02 "Custom amount" text button */}
           <View style={styles.customAmountRow}>
-            <Pressable
+            <Button
+              variant="secondary"
+              fullWidth={false}
+              label={t('trackers.water.customAmount')}
+              icon={<Ionicons name="options-outline" size={16} color={dark.waterInk} />}
               testID="btn-water-custom"
               onPress={() => setSettingsSheetVisible(true)}
               style={styles.customTextButton}
               accessibilityRole="button"
               accessibilityLabel={t('trackers.water.customAmount')}
-            >
-              <Ionicons name="options-outline" size={16} color={dark.waterInk} />
-              <Text style={styles.customTextButtonLabel}>{t('trackers.water.customAmount')}</Text>
-            </Pressable>
+            />
           </View>
 
           {/* Today's Entries (time, amount; tap to delete with undo) */}
@@ -344,14 +350,17 @@ export function WaterCard({ selectedDate, testID = 'water-card' }: WaterCardProp
                         <Text style={styles.entryAmount}>{disp}</Text>
                         <Text style={styles.entryTime}>{time}</Text>
                       </View>
-                      <Pressable
+                      <Button
+                        variant="tertiary"
+                        fullWidth={false}
+                        label={`Delete ${disp} logged at ${time}`}
+                        iconOnly
+                        icon={<Ionicons name="trash-outline" size={15} color={dark.textLo} />}
                         onPress={() => void deleteLog(log.id)}
                         hitSlop={8}
                         accessibilityRole="button"
                         accessibilityLabel={`Delete ${disp} logged at ${time}`}
-                      >
-                        <Ionicons name="trash-outline" size={15} color={dark.textLo} />
-                      </Pressable>
+                      />
                     </View>
                   );
                 })}
@@ -530,8 +539,8 @@ const createStyles = (dark: ReturnType<typeof useAppearance>['colors']) =>
     bottleNeck: {
       width: 14,
       height: 8,
-      borderTopLeftRadius: 3,
-      borderTopRightRadius: 3,
+      borderTopLeftRadius: visualPrimitives.radii[3],
+      borderTopRightRadius: visualPrimitives.radii[3],
       backgroundColor: dark.s3,
       borderWidth: 1,
       borderColor: dark.hairlineLit,
@@ -539,7 +548,7 @@ const createStyles = (dark: ReturnType<typeof useAppearance>['colors']) =>
     bottleBody: {
       width: 36,
       height: 72,
-      borderRadius: 8,
+      borderRadius: visualPrimitives.radii[8],
       borderWidth: 1.5,
       borderColor: dark.hairlineLit,
       backgroundColor: dark.s3,
@@ -612,7 +621,7 @@ const createStyles = (dark: ReturnType<typeof useAppearance>['colors']) =>
     toastUndoText: {
       fontSize: typeTokens.micro.fontSize,
       fontFamily: typeTokens.micro.fontFamily,
-      color: dark.onWater, // #1C1109
+      color: dark.onWater, // the onBrand token
       fontWeight: '700',
     },
     emptyNotice: {

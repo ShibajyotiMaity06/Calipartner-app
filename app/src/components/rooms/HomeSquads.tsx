@@ -1,3 +1,4 @@
+import { Button } from '@calipartner/ui';
 import { useTheme as useAppearance } from '@calipartner/ui/theme';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
@@ -134,15 +135,20 @@ export function HomeSquads({
         <Text variant="bodyS" color={dark.textMid}>
           {t('homeRefresh.squads')}
         </Text>
-        <Pressable
+        <Button
+          variant="tertiary"
+          fullWidth={false}
+          label={t('socialUpdate.addFriends')}
+          iconOnly
+          icon={
+            <Ionicons name="person-add-outline" size={homeLayout.iconSize} color={dark.textMid} />
+          }
           onPress={() => router.push('/friends' as Href)}
           style={styles.smallAction}
           accessibilityRole="button"
           accessibilityLabel={t('socialUpdate.addFriends')}
           testID="home-open-friends"
-        >
-          <Ionicons name="person-add-outline" size={homeLayout.iconSize} color={dark.textMid} />
-        </Pressable>
+        />
       </View>
       {loading && !rooms.length ? <Text>{t('common.loading')}</Text> : null}
       {error ? (
@@ -182,7 +188,10 @@ export function HomeSquads({
             >
               <View style={styles.header}>
                 <View style={styles.nameGroup}>
-                  <Pressable
+                  <Button
+                    variant="secondary"
+                    fullWidth={false}
+                    label={room.name}
                     onPress={() =>
                       router.push({ pathname: '/(tabs)/room', params: { room: room.id } })
                     }
@@ -190,9 +199,7 @@ export function HomeSquads({
                     accessibilityLabel={t('homeRefresh.openSquad', { name: room.name })}
                     testID={`home-open-title-${room.id}`}
                     style={[styles.retry, styles.name]}
-                  >
-                    <Text variant="title2">{room.name}</Text>
-                  </Pressable>
+                  />
                 </View>
                 <Text variant="micro" color={dark.textMid} style={styles.count} tabular>
                   {room.member_cap
@@ -207,20 +214,21 @@ export function HomeSquads({
                   visible={visible && selected === index}
                 />
               ) : (
-                <Pressable
+                <Button
+                  variant="secondary"
+                  fullWidth={false}
+                  label={
+                    room.state === 'dormant'
+                      ? t('repairs.squadEmpty')
+                      : t('homeRefresh.openSquad', { name: room.name })
+                  }
                   onPress={() =>
                     router.push({ pathname: '/(tabs)/room', params: { room: room.id } })
                   }
                   style={styles.retry}
                   accessibilityRole="button"
                   accessibilityLabel={t('homeRefresh.openSquad', { name: room.name })}
-                >
-                  <Text color={dark.textMid}>
-                    {room.state === 'dormant'
-                      ? t('repairs.squadEmpty')
-                      : t('homeRefresh.openSquad', { name: room.name })}
-                  </Text>
-                </Pressable>
+                />
               )}
             </View>
           ))}

@@ -1,17 +1,11 @@
+import { visualPrimitives } from '@calipartner/ui/tokens';
+import { Button } from '@calipartner/ui';
 import { useTheme as useAppearance } from '@calipartner/ui/theme';
 import { NavigationIcon } from '@calipartner/ui';
 import { type as inputTypography } from '@calipartner/ui';
 import { type as typography } from '@calipartner/ui';
 import React, { useState } from 'react';
-import {
-  Modal,
-  SafeAreaView,
-  ScrollView,
-  StyleSheet,
-  TextInput,
-  TouchableOpacity,
-  View,
-} from 'react-native';
+import { Modal, SafeAreaView, ScrollView, StyleSheet, TextInput, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { radius, space, Text } from '@calipartner/ui';
 import { playClickSound, playSuccessSound } from '@/lib/sound';
@@ -113,15 +107,18 @@ export function ExerciseDetailModal({
         <View style={styles.container}>
           {/* Top Bar */}
           <View style={styles.topBar}>
-            <TouchableOpacity
+            <Button
+              variant="tertiary"
+              fullWidth={false}
+              label="Back"
+              iconOnly
+              icon={<NavigationIcon action="back" />}
               onPress={onClose}
               accessibilityRole="button"
               accessibilityLabel="Back"
               style={styles.backButton}
               testID="btn-exercise-detail-back"
-            >
-              <NavigationIcon action="back" />
-            </TouchableOpacity>
+            />
           </View>
 
           <ScrollView
@@ -213,29 +210,31 @@ export function ExerciseDetailModal({
                       testID={`input-set-reps-${idx}`}
                     />
                   </View>
-                  <TouchableOpacity
+                  <Button
+                    variant="tertiary"
+                    fullWidth={false}
+                    label={`Delete set ${s.setNumber}`}
+                    iconOnly
+                    icon={<Ionicons name="trash-outline" size={18} color={dark.textLo} />}
                     onPress={() => handleDeleteSet(idx)}
                     style={styles.trashBtn}
                     accessibilityRole="button"
                     accessibilityLabel={`Delete set ${s.setNumber}`}
-                  >
-                    <Ionicons name="trash-outline" size={18} color={dark.textLo} />
-                  </TouchableOpacity>
+                  />
                 </View>
               ))}
 
               {/* Add Set Button */}
-              <TouchableOpacity
+              <Button
+                variant="secondary"
+                fullWidth={false}
+                label="+ Add Set"
+                icon={<Ionicons name="add" size={18} color={dark.apricot} />}
                 onPress={handleAddSet}
                 style={styles.addSetBtn}
                 accessibilityRole="button"
                 testID="btn-add-set"
-              >
-                <Ionicons name="add" size={18} color={dark.apricot} />
-                <Text variant="bodyS" color={dark.apricot} style={{ fontWeight: '700' }}>
-                  + Add Set
-                </Text>
-              </TouchableOpacity>
+              />
             </View>
 
             {/* Notes Section */}
@@ -258,17 +257,16 @@ export function ExerciseDetailModal({
 
           {/* Save Exercise Button */}
           <View style={styles.bottomBar}>
-            <TouchableOpacity
+            <Button
+              variant="secondary"
+              fullWidth={false}
+              label="Save Exercise"
               onPress={handleSave}
               style={styles.saveButton}
               accessibilityRole="button"
               accessibilityLabel="Save Exercise"
               testID="btn-save-exercise"
-            >
-              <Text variant="heading" color={dark.onBrand} style={styles.saveButtonText}>
-                Save Exercise
-              </Text>
-            </TouchableOpacity>
+            />
           </View>
         </View>
       </SafeAreaView>
@@ -444,11 +442,11 @@ const createStyles = (dark: ReturnType<typeof useAppearance>['colors']) =>
       borderRadius: radius.full,
       alignItems: 'center',
       justifyContent: 'center',
-      shadowColor: '#000',
+      shadowColor: visualPrimitives.colors.black,
       shadowOffset: { width: 0, height: 4 },
       shadowOpacity: 0.25,
-      shadowRadius: 8,
-      elevation: 4,
+      shadowRadius: visualPrimitives.effects[8],
+      elevation: visualPrimitives.effects[4],
     },
     saveButtonText: {
       fontWeight: '800',

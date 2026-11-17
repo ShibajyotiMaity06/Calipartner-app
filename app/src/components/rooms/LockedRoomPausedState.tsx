@@ -1,3 +1,4 @@
+import { visualPrimitives } from '@calipartner/ui/tokens';
 import { useTheme as useAppearance } from '@calipartner/ui/theme';
 import React, { useState } from 'react';
 import { Alert, Pressable, StyleSheet, View } from 'react-native';
@@ -186,7 +187,7 @@ const createStyles = (dark: ReturnType<typeof useAppearance>['colors']) =>
     previewAvatar: {
       width: 36,
       height: 36,
-      borderRadius: 18,
+      borderRadius: visualPrimitives.radii[18],
       backgroundColor: dark.s2,
       borderWidth: 1,
       borderColor: dark.hairlineLit,
@@ -207,7 +208,7 @@ const createStyles = (dark: ReturnType<typeof useAppearance>['colors']) =>
     iconCircle: {
       width: 64,
       height: 64,
-      borderRadius: 32,
+      borderRadius: visualPrimitives.radii[32],
       backgroundColor: dark.s2,
       alignItems: 'center',
       justifyContent: 'center',

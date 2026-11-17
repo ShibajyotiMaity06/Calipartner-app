@@ -1,3 +1,5 @@
+import { visualPrimitives } from '@calipartner/ui/tokens';
+import { Button } from '@calipartner/ui';
 import { Text } from '@calipartner/ui';
 import React, { useState } from 'react';
 import { Image, Modal, Pressable, ScrollView, StyleSheet, View } from 'react-native';
@@ -77,23 +79,41 @@ export function RecipeDetailModal({
               },
             ]}
           >
-            <Pressable
+            <Button
+              variant="tertiary"
+              fullWidth={false}
+              label={t('recipes.detail.close')}
+              iconOnly
+              icon={<Ionicons name="close" size={24} color={colors.text} />}
               testID="btn-recipe-detail-close"
               onPress={onClose}
               hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
               accessibilityRole="button"
               accessibilityLabel={t('recipes.detail.close')}
               style={styles.circleBtn}
-            >
-              <Ionicons name="close" size={24} color={colors.text} />
-            </Pressable>
+            />
 
             <Text style={[styles.topBarTitle, { color: colors.text }]} numberOfLines={1}>
               {recipe.title}
             </Text>
 
             {onToggleFavorite && (
-              <Pressable
+              <Button
+                variant="tertiary"
+                fullWidth={false}
+                label={
+                  recipe.is_favorite
+                    ? t('recipes.detail.favoriteOn')
+                    : t('recipes.detail.favoriteOff')
+                }
+                iconOnly
+                icon={
+                  <Ionicons
+                    name={recipe.is_favorite ? 'heart' : 'heart-outline'}
+                    size={24}
+                    color={colors.text}
+                  />
+                }
                 testID="btn-recipe-fav-detail"
                 onPress={() => onToggleFavorite(recipe)}
                 hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
@@ -104,13 +124,7 @@ export function RecipeDetailModal({
                     : t('recipes.detail.favoriteOff')
                 }
                 style={styles.circleBtn}
-              >
-                <Ionicons
-                  name={recipe.is_favorite ? 'heart' : 'heart-outline'}
-                  size={24}
-                  color={colors.text}
-                />
-              </Pressable>
+              />
             )}
           </View>
 
@@ -404,18 +418,17 @@ export function RecipeDetailModal({
             )}
 
             {/* Report an error action link */}
-            <Pressable
+            <Button
+              variant="secondary"
+              fullWidth={false}
+              label={t('recipes.detail.reportErrorCta')}
+              icon={<Ionicons name="flag-outline" size={15} color={colors.textMuted} />}
               testID="btn-recipe-report-issue"
               onPress={() => setShowReportModal(true)}
               accessibilityRole="button"
               accessibilityLabel={t('recipes.detail.reportErrorCta')}
               style={styles.reportBtn}
-            >
-              <Ionicons name="flag-outline" size={15} color={colors.textMuted} />
-              <Text style={[styles.reportBtnText, { color: colors.textMuted }]}>
-                {t('recipes.detail.reportErrorCta')}
-              </Text>
-            </Pressable>
+            />
           </ScrollView>
 
           {/* Sticky Bottom Action CTA */}
@@ -608,8 +621,8 @@ const styles = StyleSheet.create({
   ingredientDot: {
     width: 6,
     height: 6,
-    borderRadius: 3,
-    backgroundColor: '#94A3B8',
+    borderRadius: visualPrimitives.radii[3],
+    backgroundColor: visualPrimitives.colors.slate,
   },
   ingredientName: {
     fontSize: fontSize.xs,
@@ -640,7 +653,7 @@ const styles = StyleSheet.create({
   stepBadge: {
     width: 24,
     height: 24,
-    borderRadius: 12,
+    borderRadius: visualPrimitives.radii[12],
     alignItems: 'center',
     justifyContent: 'center',
     marginTop: 1,

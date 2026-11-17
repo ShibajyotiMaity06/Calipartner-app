@@ -100,15 +100,18 @@ export function CompactSelect<T extends string | number>({
                     {label}
                   </Text>
                 </View>
-                <Pressable
+                <Button
+                  variant="tertiary"
+                  fullWidth={false}
+                  label={t('common.cancel')}
+                  iconOnly
+                  icon={<Ionicons name="close" size={18} color={dark.textHi} />}
                   onPress={() => setOpen(false)}
                   accessibilityRole="button"
                   accessibilityLabel={t('common.cancel')}
                   style={styles.modalCloseBtn}
                   testID={`${testID}-close`}
-                >
-                  <Ionicons name="close" size={18} color={dark.textHi} />
-                </Pressable>
+                />
               </View>
 
               <View style={styles.divider} />

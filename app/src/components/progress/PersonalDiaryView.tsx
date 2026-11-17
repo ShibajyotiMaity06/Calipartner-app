@@ -2,7 +2,7 @@ import { useTheme as useAppearance } from '@calipartner/ui/theme';
 import { NavigationIcon } from '@calipartner/ui';
 import { NutrientSummary } from '../diary/NutrientSummary';
 import React, { useCallback, useEffect, useState } from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { useFocusEffect } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { getPreviousDateString, type MealSection } from '@calipartner/core';
@@ -59,31 +59,44 @@ export function PersonalDiaryView({
   return (
     <View style={styles.stack} testID="personal-diary">
       <View style={styles.dateRow}>
-        <Pressable
+        <Button
+          variant="tertiary"
+          fullWidth={false}
+          label={t('diary.previousDay')}
+          iconOnly
+          icon={<NavigationIcon action="back" />}
           style={styles.touch}
           onPress={() => setDate(getPreviousDateString(selectedDate, 1))}
           accessibilityRole="button"
           accessibilityLabel={t('diary.previousDay')}
           testID="you-previous-day"
-        >
-          <NavigationIcon action="back" />
-        </Pressable>
-        <Pressable
+        />
+        <Button
+          variant="secondary"
+          fullWidth={false}
+          label={new Date(selectedDate + 'T12:00:00Z').toLocaleDateString(getLocale(), {
+            weekday: 'short',
+            month: 'short',
+            day: 'numeric',
+            timeZone: 'UTC',
+          })}
           style={[styles.touch, styles.date]}
           onPress={() => setCalendar(true)}
           accessibilityRole="button"
           testID="you-select-date"
-        >
-          <Text variant="heading">
-            {new Date(selectedDate + 'T12:00:00Z').toLocaleDateString(getLocale(), {
-              weekday: 'short',
-              month: 'short',
-              day: 'numeric',
-              timeZone: 'UTC',
-            })}
-          </Text>
-        </Pressable>
-        <Pressable
+        />
+        <Button
+          variant="tertiary"
+          fullWidth={false}
+          label={t('diary.nextDay')}
+          iconOnly
+          icon={
+            <Ionicons
+              name="chevron-forward"
+              size={homeLayout.iconSize}
+              color={selectedDate >= today ? dark.textOff : dark.textHi}
+            />
+          }
           style={styles.touch}
           disabled={selectedDate >= today}
           onPress={() => setDate(getPreviousDateString(selectedDate, -1))}
@@ -91,13 +104,7 @@ export function PersonalDiaryView({
           accessibilityState={{ disabled: selectedDate >= today }}
           accessibilityLabel={t('diary.nextDay')}
           testID="you-next-day"
-        >
-          <Ionicons
-            name="chevron-forward"
-            size={homeLayout.iconSize}
-            color={selectedDate >= today ? dark.textOff : dark.textHi}
-          />
-        </Pressable>
+        />
       </View>
       {diary.error ? (
         <View style={styles.stack}>
@@ -141,7 +148,14 @@ export function PersonalDiaryView({
                 <Text variant="heading" style={styles.date}>
                   {t(('diary.sections.' + meal) as Parameters<typeof t>[0])}
                 </Text>
-                <Pressable
+                <Button
+                  variant="tertiary"
+                  fullWidth={false}
+                  label={t('repairs.addFood', {
+                    section: t(('diary.sections.' + meal) as Parameters<typeof t>[0]),
+                  })}
+                  iconOnly
+                  icon={<Ionicons name="add" size={homeLayout.iconSize} color={dark.copper} />}
                   style={styles.touch}
                   onPress={() => setSection(meal)}
                   accessibilityRole="button"
@@ -149,9 +163,7 @@ export function PersonalDiaryView({
                     section: t(('diary.sections.' + meal) as Parameters<typeof t>[0]),
                   })}
                   testID={'you-add-' + meal}
-                >
-                  <Ionicons name="add" size={homeLayout.iconSize} color={dark.copper} />
-                </Pressable>
+                />
               </View>
               {!diary.daySummary.sections[meal].entries.length ? (
                 <Text variant="bodyS">{t('homeRefresh.mealEmpty')}</Text>

@@ -14,7 +14,7 @@ vi.mock('@calipartner/ui', async () => ({
   ...(await import('../../../../packages/ui/src/tokens')),
   Text: 'Text',
   NavigationIcon: 'NavigationIcon',
-  Button: 'Button',
+  Button: (await import('@/test/ButtonStub')).ButtonStub,
 }));
 vi.mock('@expo/vector-icons', () => ({ Ionicons: 'Icon' }));
 vi.mock('expo-router', async () => {

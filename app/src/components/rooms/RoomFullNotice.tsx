@@ -1,5 +1,7 @@
+import { visualPrimitives } from '@calipartner/ui/tokens';
+import { Button } from '@calipartner/ui';
 import React from 'react';
-import { Modal, Pressable, StyleSheet, View } from 'react-native';
+import { Modal, StyleSheet, View } from 'react-native';
 import { Text } from '@calipartner/ui';
 import { Ionicons } from '@expo/vector-icons';
 import { onboardingLayout as layout } from '@calipartner/ui';
@@ -64,18 +66,17 @@ export function RoomFullNotice({ memberCount, memberCap, isHost, onUpgrade }: Ro
         </View>
 
         {onUpgrade && !atMaximum && (
-          <Pressable
+          <Button
+            variant="secondary"
+            fullWidth={false}
+            label={t('me.roomPlan.seePlansBtn')}
+            icon={<Ionicons name="information-circle-outline" size={14} color={colors.onAccent} />}
             onPress={onUpgrade}
             style={[styles.upgradeBtn, { backgroundColor: colors.accent }]}
             accessibilityRole="button"
             accessibilityLabel={t('me.roomPlan.seePlansBtn')}
             testID="btn-room-full-upgrade"
-          >
-            <Ionicons name="information-circle-outline" size={14} color={colors.onAccent} />
-            <Text style={[styles.upgradeBtnText, { color: colors.onAccent }]}>
-              {t('me.roomPlan.seePlansBtn')}
-            </Text>
-          </Pressable>
+          />
         )}
       </View>
     );
@@ -140,15 +141,18 @@ export function RoomFullSheet({
             <Text style={[styles.modalTitle, { color: colors.text }]}>
               {t('rooms.roomFull.sheetTitle')}
             </Text>
-            <Pressable
+            <Button
+              variant="tertiary"
+              fullWidth={false}
+              label={t('rooms.paywall.close')}
+              iconOnly
+              icon={<Ionicons name="close" size={18} color={colors.text} />}
               onPress={onClose}
               style={[styles.modalCloseBtn, { backgroundColor: colors.surfaceAlt }]}
               accessibilityRole="button"
               accessibilityLabel={t('rooms.paywall.close')}
               testID="btn-close-room-full-sheet"
-            >
-              <Ionicons name="close" size={18} color={colors.text} />
-            </Pressable>
+            />
           </View>
 
           <RoomFullNotice
@@ -183,7 +187,7 @@ const styles = StyleSheet.create({
   iconCircle: {
     width: 36,
     height: 36,
-    borderRadius: 18,
+    borderRadius: visualPrimitives.radii[18],
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -212,7 +216,7 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   upgradeBtnText: {
-    color: '#FFFFFF',
+    color: visualPrimitives.colors.white,
     fontSize: fontSize.xs,
     fontWeight: '700',
   },
@@ -243,7 +247,7 @@ const styles = StyleSheet.create({
   modalCloseBtn: {
     width: 30,
     height: 30,
-    borderRadius: 15,
+    borderRadius: visualPrimitives.radii[15],
     alignItems: 'center',
     justifyContent: 'center',
   },

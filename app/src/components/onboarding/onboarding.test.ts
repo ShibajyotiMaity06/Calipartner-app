@@ -17,17 +17,18 @@ describe('Onboarding UI and Interaction Logic', () => {
   });
 
   describe('Active Onboarding Steps Configuration', () => {
-    it('contains the 6 input and review steps and omits calculation formula review step as requested', () => {
+    it('contains the 7 input and review steps and omits calculation formula review step as requested', () => {
       expect(EXPECTED_ONBOARDING_STEPS).toEqual([
         'goal',
         'activity_level',
         'body_stats',
+        'growth_projection',
         'rate_selection',
         'daily_goals',
         'completed',
       ]);
       expect(EXPECTED_ONBOARDING_STEPS).not.toContain('review_calculation');
-      expect(EXPECTED_ONBOARDING_STEPS.length).toBe(6);
+      expect(EXPECTED_ONBOARDING_STEPS.length).toBe(7);
     });
   });
 

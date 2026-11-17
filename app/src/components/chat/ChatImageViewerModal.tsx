@@ -1,16 +1,9 @@
+import { visualPrimitives } from '@calipartner/ui/tokens';
+import { Button } from '@calipartner/ui';
 import { useTheme as useAppearance } from '@calipartner/ui/theme';
 import { useBrowserModalBack } from '@/hooks/useBrowserModalBack';
 import React, { useEffect, useState } from 'react';
-import {
-  Image,
-  Linking,
-  Modal,
-  Pressable,
-  SafeAreaView,
-  ScrollView,
-  StyleSheet,
-  View,
-} from 'react-native';
+import { Image, Linking, Modal, SafeAreaView, ScrollView, StyleSheet, View } from 'react-native';
 import { Text } from '@calipartner/ui';
 import { onboardingLayout as layout } from '@calipartner/ui';
 import { ChatVideo } from './ChatVideo';
@@ -76,55 +69,67 @@ export function ChatImageViewerModal({
         <SafeAreaView style={styles.safeArea}>
           {/* Header Controls */}
           <View style={styles.headerRow}>
-            <Pressable
+            <Button
+              variant="tertiary"
+              fullWidth={false}
+              label={t('chat.closeViewer')}
+              iconOnly
+              icon={<Ionicons name="close" size={24} color={dark.textHi} />}
               onPress={onClose}
               style={styles.circleBtn}
               accessibilityRole="button"
               accessibilityLabel={t('chat.closeViewer')}
               testID="btn-close-viewer"
-            >
-              <Ionicons name="close" size={24} color={dark.textHi} />
-            </Pressable>
+            />
 
             {/* Zoom Controls */}
             {!attachment.mime_type.startsWith('video/') ? (
               <View style={styles.zoomControlsRow}>
-                <Pressable
+                <Button
+                  variant="tertiary"
+                  fullWidth={false}
+                  label="Zoom out"
+                  iconOnly
+                  icon={<Ionicons name="remove" size={18} color={dark.textHi} />}
                   onPress={handleZoomOut}
                   disabled={scale <= 1}
                   style={[styles.zoomBtn, scale <= 1 && styles.btnDisabled]}
                   accessibilityRole="button"
                   accessibilityLabel="Zoom out"
                   testID="btn-zoom-out"
-                >
-                  <Ionicons name="remove" size={18} color={dark.textHi} />
-                </Pressable>
+                />
 
                 <Text style={styles.scaleText}>{Math.round(scale * 100)}%</Text>
 
-                <Pressable
+                <Button
+                  variant="tertiary"
+                  fullWidth={false}
+                  label="Zoom in"
+                  iconOnly
+                  icon={<Ionicons name="add" size={18} color={dark.textHi} />}
                   onPress={handleZoomIn}
                   disabled={scale >= 3}
                   style={[styles.zoomBtn, scale >= 3 && styles.btnDisabled]}
                   accessibilityRole="button"
                   accessibilityLabel="Zoom in"
                   testID="btn-zoom-in"
-                >
-                  <Ionicons name="add" size={18} color={dark.textHi} />
-                </Pressable>
+                />
               </View>
             ) : null}
 
             {/* Save to Gallery Button */}
-            <Pressable
+            <Button
+              variant="tertiary"
+              fullWidth={false}
+              label={t('chatAudit.openMedia')}
+              iconOnly
+              icon={<Ionicons name="open-outline" size={22} color={dark.textHi} />}
               onPress={handleSaveToGallery}
               style={styles.circleBtn}
               accessibilityRole="button"
               accessibilityLabel={t('chatAudit.openMedia')}
               testID="btn-save-image"
-            >
-              <Ionicons name="open-outline" size={22} color={dark.textHi} />
-            </Pressable>
+            />
           </View>
 
           {openError ? (
@@ -230,7 +235,7 @@ const createStyles = (dark: ReturnType<typeof useAppearance>['colors']) =>
       position: 'absolute',
       top: 70,
       alignSelf: 'center',
-      backgroundColor: '#1E293B',
+      backgroundColor: visualPrimitives.colors.slateSurface,
       borderRadius: radius.pill,
       paddingHorizontal: spacing.md,
       paddingVertical: spacing.xs + 2,
@@ -238,10 +243,10 @@ const createStyles = (dark: ReturnType<typeof useAppearance>['colors']) =>
       alignItems: 'center',
       gap: 6,
       zIndex: 20,
-      shadowColor: '#000000',
+      shadowColor: visualPrimitives.colors.black,
       shadowOpacity: 0.3,
-      shadowRadius: 6,
-      elevation: 4,
+      shadowRadius: visualPrimitives.effects[6],
+      elevation: visualPrimitives.effects[4],
     },
     toastText: {
       color: dark.textHi,

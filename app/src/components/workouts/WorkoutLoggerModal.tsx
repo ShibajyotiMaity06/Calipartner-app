@@ -514,15 +514,18 @@ export function WorkoutLoggerModal({
             { backgroundColor: colors.surface, borderBottomColor: colors.border },
           ]}
         >
-          <TouchableOpacity
+          <Button
+            variant="tertiary"
+            fullWidth={false}
+            label={t('common.cancel')}
+            iconOnly
+            icon={<Ionicons name="close" size={24} color={colors.text} />}
             testID={`${testID}-btn-close`}
             onPress={onClose}
             style={styles.headerBtn}
             accessibilityRole="button"
             accessibilityLabel={t('common.cancel')}
-          >
-            <Ionicons name="close" size={24} color={colors.text} />
-          </TouchableOpacity>
+          />
 
           <Text style={[styles.headerTitle, { color: colors.text }]}>
             {initialWorkout
@@ -595,7 +598,11 @@ export function WorkoutLoggerModal({
                 <Text style={[styles.sectionHeading, { color: colors.textMuted }]}>
                   {t('workouts.exercises.title')}
                 </Text>
-                <TouchableOpacity
+                <Button
+                  variant="secondary"
+                  fullWidth={false}
+                  label={t('workouts.exercises.addExercise')}
+                  icon={<Ionicons name="add" size={16} color={colors.text} />}
                   testID={`${testID}-btn-add-exercise`}
                   style={[
                     styles.addExerciseBtn,
@@ -608,12 +615,7 @@ export function WorkoutLoggerModal({
                   onPress={() => setPickerVisible(true)}
                   accessibilityRole="button"
                   accessibilityLabel={t('workouts.exercises.addExercise')}
-                >
-                  <Ionicons name="add" size={16} color={colors.text} />
-                  <Text style={[styles.addExerciseBtnText, { color: colors.text }]}>
-                    {t('workouts.exercises.addExercise')}
-                  </Text>
-                </TouchableOpacity>
+                />
               </View>
 
               {/* Exercises List */}
@@ -647,18 +649,26 @@ export function WorkoutLoggerModal({
 
                     {/* Actions: Reorder & Remove */}
                     <View style={styles.exActionsRow}>
-                      <TouchableOpacity
+                      <Button
+                        variant="tertiary"
+                        fullWidth={false}
+                        label={t('workouts.exercises.reorderUp')}
+                        iconOnly
+                        icon={<Ionicons name="chevron-up" size={18} color={colors.textMuted} />}
                         testID={`btn-reorder-up-${exIdx}`}
                         disabled={exIdx === 0}
                         onPress={() => handleMoveExercise(exIdx, 'up')}
                         style={[styles.iconActionBtn, { opacity: exIdx === 0 ? 0.3 : 1 }]}
                         accessibilityRole="button"
                         accessibilityLabel={t('workouts.exercises.reorderUp')}
-                      >
-                        <Ionicons name="chevron-up" size={18} color={colors.textMuted} />
-                      </TouchableOpacity>
+                      />
 
-                      <TouchableOpacity
+                      <Button
+                        variant="tertiary"
+                        fullWidth={false}
+                        label={t('workouts.exercises.reorderDown')}
+                        iconOnly
+                        icon={<Ionicons name="chevron-down" size={18} color={colors.textMuted} />}
                         testID={`btn-reorder-down-${exIdx}`}
                         disabled={exIdx === exercises.length - 1}
                         onPress={() => handleMoveExercise(exIdx, 'down')}
@@ -668,19 +678,20 @@ export function WorkoutLoggerModal({
                         ]}
                         accessibilityRole="button"
                         accessibilityLabel={t('workouts.exercises.reorderDown')}
-                      >
-                        <Ionicons name="chevron-down" size={18} color={colors.textMuted} />
-                      </TouchableOpacity>
+                      />
 
-                      <TouchableOpacity
+                      <Button
+                        variant="destructive"
+                        fullWidth={false}
+                        label={t('workouts.exercises.removeExercise')}
+                        iconOnly
+                        icon={<Ionicons name="trash-outline" size={18} color={colors.danger} />}
                         testID={`btn-remove-exercise-${exIdx}`}
                         onPress={() => handleRemoveExercise(exIdx)}
                         style={styles.iconActionBtn}
                         accessibilityRole="button"
                         accessibilityLabel={t('workouts.exercises.removeExercise')}
-                      >
-                        <Ionicons name="trash-outline" size={18} color={colors.danger} />
-                      </TouchableOpacity>
+                      />
                     </View>
                   </View>
 
@@ -743,37 +754,41 @@ export function WorkoutLoggerModal({
                             {t('workouts.sets.headerDone')}
                           </Text>
                         </TouchableOpacity>
-                        <TouchableOpacity
+                        <Button
+                          variant="destructive"
+                          fullWidth={false}
+                          label={t('workouts.sets.removeSet')}
+                          iconOnly
+                          icon={
+                            <Ionicons
+                              name="trash-outline"
+                              size={homeLayout.iconSize}
+                              color={colors.danger}
+                            />
+                          }
                           testID={`btn-delete-set-${exIdx}-${setIdx}`}
                           style={styles.iconActionBtn}
                           onPress={() => handleDeleteSet(exIdx, setIdx)}
                           accessibilityRole="button"
                           accessibilityLabel={t('workouts.sets.removeSet')}
-                        >
-                          <Ionicons
-                            name="trash-outline"
-                            size={homeLayout.iconSize}
-                            color={colors.danger}
-                          />
-                        </TouchableOpacity>
+                        />
                       </View>
                     </View>
                   ))}
 
                   {/* Add Set and Rest Timer Buttons */}
                   <View style={{ flexDirection: 'row', gap: spacing.sm }}>
-                    <TouchableOpacity
+                    <Button
+                      variant="secondary"
+                      fullWidth={false}
+                      label={t('workouts.sets.addSet')}
+                      icon={<Ionicons name="add" size={16} color={colors.accent} />}
                       testID={`btn-add-set-${exIdx}`}
                       style={[styles.addSetRowBtn, { backgroundColor: colors.surfaceAlt, flex: 1 }]}
                       onPress={() => handleAddSet(exIdx)}
                       accessibilityRole="button"
                       accessibilityLabel={t('workouts.sets.addSet')}
-                    >
-                      <Ionicons name="add" size={16} color={colors.accent} />
-                      <Text style={[styles.addSetRowText, { color: colors.accent }]}>
-                        {t('workouts.sets.addSet')}
-                      </Text>
-                    </TouchableOpacity>
+                    />
                   </View>
                 </View>
               ))}

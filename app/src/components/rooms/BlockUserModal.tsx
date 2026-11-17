@@ -1,3 +1,5 @@
+import { visualPrimitives } from '@calipartner/ui/tokens';
+import { Button } from '@calipartner/ui';
 import React, { useState } from 'react';
 import { ActivityIndicator, Modal, Pressable, StyleSheet, View } from 'react-native';
 import { Text } from '@calipartner/ui';
@@ -50,20 +52,25 @@ export function BlockUserModal({
                 {t('rooms.blockModal.title')}
               </Text>
             </View>
-            <Pressable
+            <Button
+              variant="tertiary"
+              fullWidth={false}
+              label="Close block modal"
+              iconOnly
+              icon={<Ionicons name="close" size={18} color={colors.text} />}
               onPress={onClose}
               style={[styles.closeButton, { backgroundColor: colors.surfaceAlt }]}
               accessibilityRole="button"
               accessibilityLabel="Close block modal"
               testID="btn-close-block-modal"
-            >
-              <Ionicons name="close" size={18} color={colors.text} />
-            </Pressable>
+            />
           </View>
 
           {/* Warning Icon & Message */}
           <View style={styles.body}>
-            <View style={[styles.iconCircle, { backgroundColor: '#FEE2E2' }]}>
+            <View
+              style={[styles.iconCircle, { backgroundColor: visualPrimitives.colors.errorWash }]}
+            >
               <Ionicons name="hand-left-outline" size={32} color={colors.danger} />
             </View>
 
@@ -76,18 +83,17 @@ export function BlockUserModal({
 
           {/* Action Buttons */}
           <View style={styles.buttonRow}>
-            <Pressable
+            <Button
+              variant="secondary"
+              fullWidth={false}
+              label={t('common.cancel')}
               onPress={onClose}
               disabled={loading}
               style={[styles.cancelButton, { backgroundColor: colors.surfaceAlt }]}
               accessibilityRole="button"
               accessibilityLabel="Cancel block"
               testID="btn-cancel-block"
-            >
-              <Text style={[styles.cancelButtonText, { color: colors.text }]}>
-                {t('common.cancel')}
-              </Text>
-            </Pressable>
+            />
 
             <Pressable
               onPress={handleBlock}
@@ -98,7 +104,7 @@ export function BlockUserModal({
               testID="btn-confirm-block"
             >
               {loading ? (
-                <ActivityIndicator size="small" color="#FFFFFF" />
+                <ActivityIndicator size="small" color={visualPrimitives.colors.white} />
               ) : (
                 <Text style={styles.blockButtonText}>
                   {blockedToast
@@ -142,7 +148,7 @@ const styles = StyleSheet.create({
   closeButton: {
     width: 32,
     height: 32,
-    borderRadius: 16,
+    borderRadius: visualPrimitives.radii[16],
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -153,7 +159,7 @@ const styles = StyleSheet.create({
   iconCircle: {
     width: 60,
     height: 60,
-    borderRadius: 30,
+    borderRadius: visualPrimitives.radii[30],
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: spacing.md,
@@ -187,7 +193,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   blockButtonText: {
-    color: '#FFFFFF',
+    color: visualPrimitives.colors.white,
     fontSize: fontSize.sm,
     fontWeight: '700',
   },

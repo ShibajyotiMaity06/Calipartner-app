@@ -1,6 +1,7 @@
+import { Button } from '@calipartner/ui';
 import { type as inputTypography } from '@calipartner/ui';
 import React, { useMemo } from 'react';
-import { StyleSheet, TextInput, TouchableOpacity, View } from 'react-native';
+import { StyleSheet, TextInput, View } from 'react-native';
 import { Text, homeLayout, space, type as typography } from '@calipartner/ui';
 import { Ionicons } from '@expo/vector-icons';
 import { calculateCardioPaceAndSpeed } from '@calipartner/core';
@@ -57,24 +58,28 @@ export function CardioForm({
           {t('workouts.cardio.duration')}
         </Text>
         <View style={styles.stepperRow}>
-          <TouchableOpacity
+          <Button
+            variant="secondary"
+            fullWidth={false}
+            label="-5"
             testID={`${testID}-btn-duration-minus`}
             style={[styles.stepBtn, { backgroundColor: colors.surfaceAlt }]}
             onPress={() => handleStepDuration(-5)}
             accessibilityRole="button"
             accessibilityLabel="-5 minutes"
-          >
-            <Text style={[styles.stepBtnText, { color: colors.text }]}>-5</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
+          />
+          <Button
+            variant="tertiary"
+            fullWidth={false}
+            label="-1 minute"
+            iconOnly
+            icon={<Ionicons name="remove" size={18} color={colors.text} />}
             testID={`${testID}-btn-duration-minus-1`}
             style={[styles.stepBtn, { backgroundColor: colors.surfaceAlt }]}
             onPress={() => handleStepDuration(-1)}
             accessibilityRole="button"
             accessibilityLabel="-1 minute"
-          >
-            <Ionicons name="remove" size={18} color={colors.text} />
-          </TouchableOpacity>
+          />
 
           <TextInput
             testID={`${testID}-input-duration`}
@@ -100,24 +105,28 @@ export function CardioForm({
             accessibilityLabel={t('workouts.cardio.duration')}
           />
 
-          <TouchableOpacity
+          <Button
+            variant="tertiary"
+            fullWidth={false}
+            label="+1 minute"
+            iconOnly
+            icon={<Ionicons name="add" size={18} color={colors.text} />}
             testID={`${testID}-btn-duration-plus-1`}
             style={[styles.stepBtn, { backgroundColor: colors.surfaceAlt }]}
             onPress={() => handleStepDuration(1)}
             accessibilityRole="button"
             accessibilityLabel="+1 minute"
-          >
-            <Ionicons name="add" size={18} color={colors.text} />
-          </TouchableOpacity>
-          <TouchableOpacity
+          />
+          <Button
+            variant="secondary"
+            fullWidth={false}
+            label="+5"
             testID={`${testID}-btn-duration-plus`}
             style={[styles.stepBtn, { backgroundColor: colors.surfaceAlt }]}
             onPress={() => handleStepDuration(5)}
             accessibilityRole="button"
             accessibilityLabel="+5 minutes"
-          >
-            <Text style={[styles.stepBtnText, { color: colors.text }]}>+5</Text>
-          </TouchableOpacity>
+          />
         </View>
       </View>
 
@@ -127,24 +136,28 @@ export function CardioForm({
           {t('workouts.cardio.distance')}
         </Text>
         <View style={styles.stepperRow}>
-          <TouchableOpacity
+          <Button
+            variant="secondary"
+            fullWidth={false}
+            label="-1"
             testID={`${testID}-btn-distance-minus-1`}
             style={[styles.stepBtn, { backgroundColor: colors.surfaceAlt }]}
             onPress={() => handleStepDistance(-1)}
             accessibilityRole="button"
             accessibilityLabel="-1 km"
-          >
-            <Text style={[styles.stepBtnText, { color: colors.text }]}>-1</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
+          />
+          <Button
+            variant="tertiary"
+            fullWidth={false}
+            label="-0.5 km"
+            iconOnly
+            icon={<Ionicons name="remove" size={18} color={colors.text} />}
             testID={`${testID}-btn-distance-minus`}
             style={[styles.stepBtn, { backgroundColor: colors.surfaceAlt }]}
             onPress={() => handleStepDistance(-0.5)}
             accessibilityRole="button"
             accessibilityLabel="-0.5 km"
-          >
-            <Ionicons name="remove" size={18} color={colors.text} />
-          </TouchableOpacity>
+          />
 
           <TextInput
             testID={`${testID}-input-distance`}
@@ -170,24 +183,28 @@ export function CardioForm({
             accessibilityLabel={t('workouts.cardio.distance')}
           />
 
-          <TouchableOpacity
+          <Button
+            variant="tertiary"
+            fullWidth={false}
+            label="+0.5 km"
+            iconOnly
+            icon={<Ionicons name="add" size={18} color={colors.text} />}
             testID={`${testID}-btn-distance-plus`}
             style={[styles.stepBtn, { backgroundColor: colors.surfaceAlt }]}
             onPress={() => handleStepDistance(0.5)}
             accessibilityRole="button"
             accessibilityLabel="+0.5 km"
-          >
-            <Ionicons name="add" size={18} color={colors.text} />
-          </TouchableOpacity>
-          <TouchableOpacity
+          />
+          <Button
+            variant="secondary"
+            fullWidth={false}
+            label="+1"
             testID={`${testID}-btn-distance-plus-1`}
             style={[styles.stepBtn, { backgroundColor: colors.surfaceAlt }]}
             onPress={() => handleStepDistance(1)}
             accessibilityRole="button"
             accessibilityLabel="+1 km"
-          >
-            <Text style={[styles.stepBtnText, { color: colors.text }]}>+1</Text>
-          </TouchableOpacity>
+          />
         </View>
       </View>
 

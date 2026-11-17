@@ -11,6 +11,13 @@ export interface TextStyleToken {
 }
 
 export const type = {
+  splashTitle: { fontFamily: 'Bricolage_700', fontSize: 28, lineHeight: 36 },
+  pickerValue: {
+    fontFamily: 'Bricolage_700',
+    fontSize: 42,
+    lineHeight: 52,
+    fontVariant: ['tabular-nums'] as const,
+  },
   numeralXL: {
     fontFamily: 'PlusJakartaSans_700',
     fontSize: 42,
@@ -65,7 +72,7 @@ export const type = {
     lineHeight: 14,
   },
   button: {
-    fontFamily: 'PlusJakartaSans_600',
+    fontFamily: 'Figtree_600',
     fontSize: 15,
     lineHeight: 20,
   },
@@ -79,6 +86,8 @@ export type TypeVariant = keyof typeof type;
  * Interface text uses Anek Devanagari with line height scaled x1.15 to avoid clipping matras.
  */
 export const typeHindi: Record<TypeVariant, TextStyleToken> = {
+  splashTitle: type.splashTitle,
+  pickerValue: type.pickerValue,
   numeralXL: {
     fontFamily: 'PlusJakartaSans_700',
     fontSize: 42,

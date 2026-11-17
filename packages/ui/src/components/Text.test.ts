@@ -60,7 +60,7 @@ describe('Typography Scale (Plus Jakarta Sans & Apple Design)', () => {
     expect(type.bodyS.fontFamily).toBe('PlusJakartaSans_400');
     expect(type.label.fontFamily).toBe('PlusJakartaSans_500');
     expect(type.micro.fontFamily).toBe('PlusJakartaSans_500');
-    expect(type.button.fontFamily).toBe('PlusJakartaSans_600');
+    expect(type.button.fontFamily).toBe('Figtree_600');
   });
 
   it('scales Hindi line height by 1.15 to avoid clipping matras', () => {

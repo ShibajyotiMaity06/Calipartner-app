@@ -1,5 +1,7 @@
+import { visualPrimitives } from '@calipartner/ui/tokens';
+import { Button } from '@calipartner/ui';
 import React from 'react';
-import { StyleSheet, TouchableOpacity, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { Text } from '@calipartner/ui';
 import { Ionicons } from '@expo/vector-icons';
 import { useWorkoutTimer } from '@/hooks/useWorkouts';
@@ -84,7 +86,24 @@ export function RunningTimerBar({
       </View>
 
       <View style={styles.actionRow}>
-        <TouchableOpacity
+        <Button
+          variant="tertiary"
+          fullWidth={false}
+          label={
+            !hasTimer
+              ? t('workouts.timer.start')
+              : isRunning
+                ? t('workouts.timer.pause')
+                : t('workouts.timer.resume')
+          }
+          iconOnly
+          icon={
+            <Ionicons
+              name={isRunning ? 'pause' : 'play'}
+              size={18}
+              color={isRunning ? colors.text : colors.onAccent}
+            />
+          }
           testID={`${testID}-btn-toggle`}
           style={[
             styles.iconButton,
@@ -99,27 +118,20 @@ export function RunningTimerBar({
                 ? t('workouts.timer.pause')
                 : t('workouts.timer.resume')
           }
-        >
-          <Ionicons
-            name={isRunning ? 'pause' : 'play'}
-            size={18}
-            color={isRunning ? colors.text : colors.onAccent}
-          />
-        </TouchableOpacity>
+        />
 
         {hasTimer && (
-          <TouchableOpacity
+          <Button
+            variant="destructive"
+            fullWidth={false}
+            label={t('workouts.timer.stop')}
+            icon={<Ionicons name="stop" size={16} color={colors.danger} />}
             testID={`${testID}-btn-stop`}
             style={[styles.stopButton, { backgroundColor: colors.surfaceAlt }]}
             onPress={handleStop}
             accessibilityRole="button"
             accessibilityLabel={t('workouts.timer.stop')}
-          >
-            <Ionicons name="stop" size={16} color={colors.danger} />
-            <Text style={[styles.stopText, { color: colors.danger }]}>
-              {t('workouts.timer.stop')}
-            </Text>
-          </TouchableOpacity>
+          />
         )}
       </View>
     </View>
@@ -144,7 +156,7 @@ const styles = StyleSheet.create({
   statusDot: {
     width: 10,
     height: 10,
-    borderRadius: 5,
+    borderRadius: visualPrimitives.radii[5],
   },
   textWrap: {
     justifyContent: 'center',

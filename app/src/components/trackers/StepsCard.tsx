@@ -1,3 +1,5 @@
+import { visualPrimitives } from '@calipartner/ui/tokens';
+import { Button } from '@calipartner/ui';
 import { useTheme as useAppearance } from '@calipartner/ui/theme';
 import { NavigationIcon } from '@calipartner/ui';
 import React, { useEffect, useState } from 'react';
@@ -127,18 +129,30 @@ export function StepsCard({ selectedDate, testID = 'steps-card' }: StepsCardProp
 
         {/* Source Badge & Fix counting button */}
         <View style={styles.headerRight}>
-          <Pressable
+          <Button
+            variant="secondary"
+            fullWidth={false}
+            label={sourceName}
+            icon={<Ionicons name="chevron-forward" size={12} color={dark.textLo} />}
             testID="steps-source-badge"
             onPress={() => setFixModalVisible(true)}
             style={styles.sourceBadge}
             accessibilityRole="button"
             accessibilityLabel={`${sourceName}. Tap to troubleshoot step counting.`}
-          >
-            <Text style={styles.sourceBadgeText}>{sourceName}</Text>
-            <Ionicons name="chevron-forward" size={12} color={dark.textLo} />
-          </Pressable>
+          />
 
-          <Pressable
+          <Button
+            variant="tertiary"
+            fullWidth={false}
+            label={t('trackers.permissions.title')}
+            iconOnly
+            icon={
+              <Ionicons
+                name={permissionStatus === 'granted' ? 'shield-checkmark' : 'shield-outline'}
+                size={14}
+                color={permissionStatus === 'granted' ? dark.teal : dark.textMid}
+              />
+            }
             testID="btn-steps-permissions"
             onPress={() => setPermissionModalVisible(true)}
             hitSlop={8}
@@ -148,13 +162,7 @@ export function StepsCard({ selectedDate, testID = 'steps-card' }: StepsCardProp
             ]}
             accessibilityRole="button"
             accessibilityLabel={t('trackers.permissions.title')}
-          >
-            <Ionicons
-              name={permissionStatus === 'granted' ? 'shield-checkmark' : 'shield-outline'}
-              size={14}
-              color={permissionStatus === 'granted' ? dark.teal : dark.textMid}
-            />
-          </Pressable>
+          />
         </View>
       </View>
 
@@ -249,16 +257,17 @@ export function StepsCard({ selectedDate, testID = 'steps-card' }: StepsCardProp
           <View style={styles.chartContainer} testID="steps-7day-chart">
             <View style={styles.chartHeader}>
               <Text style={styles.chartTitle}>{t('trackers.steps.pastWeek')}</Text>
-              <Pressable
+              <Button
+                variant="secondary"
+                fullWidth={false}
+                label={t('trackers.steps.viewAsTable')}
+                icon={<Ionicons name="list-outline" size={14} color={dark.apricot} />}
                 testID="btn-steps-view-table"
                 onPress={() => setTableModalVisible(true)}
                 style={styles.viewTableBtn}
                 accessibilityRole="button"
                 accessibilityLabel={t('trackers.steps.viewAsTable')}
-              >
-                <Ionicons name="list-outline" size={14} color={dark.apricot} />
-                <Text style={styles.viewTableText}>{t('trackers.steps.viewAsTable')}</Text>
-              </Pressable>
+              />
             </View>
 
             <View
@@ -363,16 +372,17 @@ export function StepsCard({ selectedDate, testID = 'steps-card' }: StepsCardProp
             </Pressable>
 
             {Platform.OS === 'web' && (
-              <Pressable
+              <Button
+                variant="secondary"
+                fullWidth={false}
+                label={t('trackers.steps.logManual')}
+                icon={<Ionicons name="add" size={16} color={dark.onBrand} />}
                 testID="btn-steps-manual"
                 onPress={() => setManualModalVisible(true)}
                 style={[styles.actionBtn, styles.actionBtnAccent]}
                 accessibilityRole="button"
                 accessibilityLabel={t('trackers.steps.logManual')}
-              >
-                <Ionicons name="add" size={16} color={dark.onBrand} />
-                <Text style={styles.actionBtnTextAccent}>{t('trackers.steps.logManual')}</Text>
-              </Pressable>
+              />
             )}
           </View>
         </>
@@ -426,15 +436,18 @@ export function StepsCard({ selectedDate, testID = 'steps-card' }: StepsCardProp
             <View style={styles.tableCard}>
               <View style={styles.tableHeaderRow}>
                 <Text style={styles.tableTitle}>Steps 7-day data table</Text>
-                <Pressable
+                <Button
+                  variant="tertiary"
+                  fullWidth={false}
+                  label="Close table"
+                  iconOnly
+                  icon={<Ionicons name="close" size={20} color={dark.textMid} />}
                   onPress={() => setTableModalVisible(false)}
                   hitSlop={8}
                   style={styles.tableCloseBtn}
                   accessibilityRole="button"
                   accessibilityLabel="Close table"
-                >
-                  <Ionicons name="close" size={20} color={dark.textMid} />
-                </Pressable>
+                />
               </View>
 
               <View style={styles.tableGridHeader}>
@@ -479,14 +492,17 @@ export function StepsCard({ selectedDate, testID = 'steps-card' }: StepsCardProp
                 </View>
               ))}
 
-              <Pressable
+              <Button
+                variant="tertiary"
+                fullWidth={false}
+                label="Close"
+                iconOnly
+                icon={<NavigationIcon action="close" />}
                 style={styles.tableDoneBtn}
                 onPress={() => setTableModalVisible(false)}
                 accessibilityRole="button"
                 accessibilityLabel="Close"
-              >
-                <NavigationIcon action="close" />
-              </Pressable>
+              />
             </View>
           </View>
         </Modal>
@@ -512,32 +528,41 @@ export function StepsCard({ selectedDate, testID = 'steps-card' }: StepsCardProp
               )}
 
               <View style={styles.goalStepperRow}>
-                <Pressable
+                <Button
+                  variant="tertiary"
+                  fullWidth={false}
+                  label="Decrease goal"
+                  iconOnly
+                  icon={<Ionicons name="remove" size={20} color={dark.textHi} />}
                   testID="btn-step-goal-down"
                   style={styles.stepperActionBtn}
                   onPress={() => setCurrentGoal((prev) => Math.max(1000, prev - 500))}
                   accessibilityRole="button"
                   accessibilityLabel="Decrease goal"
-                >
-                  <Ionicons name="remove" size={20} color={dark.textHi} />
-                </Pressable>
+                />
 
                 <Text style={styles.goalModalNumeral} testID="step-goal-display">
                   {currentGoal.toLocaleString()}
                 </Text>
 
-                <Pressable
+                <Button
+                  variant="tertiary"
+                  fullWidth={false}
+                  label="Increase goal"
+                  iconOnly
+                  icon={<Ionicons name="add" size={20} color={dark.textHi} />}
                   testID="btn-step-goal-up"
                   style={styles.stepperActionBtn}
                   onPress={() => setCurrentGoal((prev) => Math.min(30000, prev + 500))}
                   accessibilityRole="button"
                   accessibilityLabel="Increase goal"
-                >
-                  <Ionicons name="add" size={20} color={dark.textHi} />
-                </Pressable>
+                />
               </View>
 
-              <Pressable
+              <Button
+                variant="secondary"
+                fullWidth={false}
+                label={t('common.save')}
                 testID="btn-save-step-goal"
                 style={styles.tableDoneBtn}
                 onPress={() => {
@@ -548,9 +573,7 @@ export function StepsCard({ selectedDate, testID = 'steps-card' }: StepsCardProp
                 }}
                 accessibilityRole="button"
                 accessibilityLabel={t('common.save')}
-              >
-                <Text style={styles.tableDoneBtnText}>{t('common.save')}</Text>
-              </Pressable>
+              />
             </View>
           </View>
         </Modal>
@@ -770,13 +793,13 @@ const createStyles = (dark: ReturnType<typeof useAppearance>['colors']) =>
       width: 14,
       height: 52,
       backgroundColor: dark.s3,
-      borderRadius: 4,
+      borderRadius: visualPrimitives.radii[4],
       overflow: 'hidden',
       justifyContent: 'flex-end',
     },
     barFill: {
       width: '100%',
-      borderRadius: 4,
+      borderRadius: visualPrimitives.radii[4],
     },
     todayBarOutline: {
       borderWidth: 1.5,
@@ -881,7 +904,7 @@ const createStyles = (dark: ReturnType<typeof useAppearance>['colors']) =>
     actionBtnTextAccent: {
       fontSize: typeTokens.bodyS.fontSize,
       fontFamily: typeTokens.bodyS.fontFamily,
-      color: dark.onBrand, // #1C1109
+      color: dark.onBrand, // the onBrand token
       fontWeight: '700',
     },
     modalOverlay: {
@@ -952,7 +975,7 @@ const createStyles = (dark: ReturnType<typeof useAppearance>['colors']) =>
     tableDoneBtnText: {
       fontSize: typeTokens.body.fontSize,
       fontFamily: typeTokens.body.fontFamily,
-      color: dark.onBrand, // #1C1109
+      color: dark.onBrand, // the onBrand token
       fontWeight: '700',
     },
     goalStepperRow: {

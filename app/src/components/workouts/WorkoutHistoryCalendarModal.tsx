@@ -1,3 +1,5 @@
+import { visualPrimitives } from '@calipartner/ui/tokens';
+import { Button } from '@calipartner/ui';
 import { SegmentedControl } from '@calipartner/ui';
 import { NavigationIcon } from '@calipartner/ui';
 import React, { useCallback, useEffect, useState } from 'react';
@@ -171,25 +173,31 @@ export function WorkoutHistoryCalendarModal({
       <View style={styles.calendarContainer}>
         {/* Month Selector */}
         <View style={styles.monthHeaderRow}>
-          <TouchableOpacity
+          <Button
+            variant="tertiary"
+            fullWidth={false}
+            label="Previous Month"
+            iconOnly
+            icon={<NavigationIcon action="back" />}
             testID={`${testID}-btn-prev-month`}
             onPress={() => handleMonthShift(-1)}
             style={styles.monthShiftBtn}
             accessibilityRole="button"
             accessibilityLabel="Previous Month"
-          >
-            <NavigationIcon action="back" />
-          </TouchableOpacity>
+          />
           <Text style={[styles.monthHeaderText, { color: colors.text }]}>{monthName}</Text>
-          <TouchableOpacity
+          <Button
+            variant="tertiary"
+            fullWidth={false}
+            label="Next Month"
+            iconOnly
+            icon={<Ionicons name="chevron-forward" size={20} color={colors.text} />}
             testID={`${testID}-btn-next-month`}
             onPress={() => handleMonthShift(1)}
             style={styles.monthShiftBtn}
             accessibilityRole="button"
             accessibilityLabel="Next Month"
-          >
-            <Ionicons name="chevron-forward" size={20} color={colors.text} />
-          </TouchableOpacity>
+          />
         </View>
 
         {/* Days of Week Row */}
@@ -345,15 +353,18 @@ export function WorkoutHistoryCalendarModal({
               { backgroundColor: colors.surface, borderBottomColor: colors.border },
             ]}
           >
-            <TouchableOpacity
+            <Button
+              variant="tertiary"
+              fullWidth={false}
+              label={t('common.cancel')}
+              iconOnly
+              icon={<Ionicons name="close" size={24} color={colors.text} />}
               testID={`${testID}-btn-close`}
               onPress={onClose}
               style={styles.headerBtn}
               accessibilityRole="button"
               accessibilityLabel={t('common.cancel')}
-            >
-              <Ionicons name="close" size={24} color={colors.text} />
-            </TouchableOpacity>
+            />
 
             <Text style={[styles.headerTitle, { color: colors.text }]}>
               {t('workouts.history.title')}
@@ -395,15 +406,14 @@ export function WorkoutHistoryCalendarModal({
             <View style={styles.centerState}>
               <Ionicons name="alert-circle-outline" size={36} color={colors.danger} />
               <Text style={[styles.stateText, { color: colors.danger }]}>{error}</Text>
-              <TouchableOpacity
+              <Button
+                variant="secondary"
+                fullWidth={false}
+                label={t('common.retry')}
                 testID={`${testID}-btn-retry`}
                 style={[styles.retryBtn, { backgroundColor: colors.accent }]}
                 onPress={loadHistory}
-              >
-                <Text style={{ color: colors.onAccent, fontWeight: '700' }}>
-                  {t('common.retry')}
-                </Text>
-              </TouchableOpacity>
+              />
             </View>
           ) : historyItems.length === 0 ? (
             <View style={styles.centerState}>
@@ -592,7 +602,7 @@ const styles = StyleSheet.create({
   workoutDot: {
     width: 5,
     height: 5,
-    borderRadius: 2.5,
+    borderRadius: visualPrimitives.radii[2.5],
     marginTop: 2,
   },
   dateWorkoutsSection: {

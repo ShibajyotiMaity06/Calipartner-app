@@ -31,7 +31,7 @@ vi.mock('@calipartner/ui', async () => ({
   Text: 'Text',
   SegmentedControl: (await import('@/test/SegmentedControlStub')).SegmentedControlStub,
   NavigationIcon: 'NavigationIcon',
-  Button: 'Button',
+  Button: (await import('@/test/ButtonStub')).ButtonStub,
   Card: 'Card',
   ChevronLeftIcon: 'ChevronLeftIcon',
   dark: {},

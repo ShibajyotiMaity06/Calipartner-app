@@ -12,6 +12,7 @@ import {
 import { generateClientUuid } from './foodService';
 
 export type OnboardingStep =
+  | 'growth_projection'
   | 'motivation'
   | 'premium'
   | 'paywall'
@@ -29,6 +30,7 @@ export const ONBOARDING_STEPS_ORDER: readonly OnboardingStep[] = [
   'goal',
   'activity_level',
   'body_stats',
+  'growth_projection',
   'rate_selection',
   'daily_goals',
   'completed',

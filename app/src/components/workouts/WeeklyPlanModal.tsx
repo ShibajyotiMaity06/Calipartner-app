@@ -1,8 +1,9 @@
+import { visualPrimitives } from '@calipartner/ui/tokens';
 import { useTheme as useAppearance } from '@calipartner/ui/theme';
 import { NavigationIcon } from '@calipartner/ui';
 import { PremiumFeatureModal } from '@/components/subscription/PremiumFeatureModal';
 import React, { useState } from 'react';
-import { Modal, SafeAreaView, ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
+import { Modal, SafeAreaView, ScrollView, StyleSheet, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Button, radius, space, Text } from '@calipartner/ui';
 import { playClickSound, playSuccessSound } from '@/lib/sound';
@@ -94,15 +95,18 @@ function WeeklyPlanModalContent({
         <View style={styles.container}>
           {/* Top Bar with Back Arrow */}
           <View style={styles.topBar}>
-            <TouchableOpacity
+            <Button
+              variant="tertiary"
+              fullWidth={false}
+              label="Back"
+              iconOnly
+              icon={<NavigationIcon action="back" />}
               onPress={onClose}
               accessibilityRole="button"
               accessibilityLabel="Back"
               style={styles.backButton}
               testID="btn-weekly-plan-back"
-            >
-              <NavigationIcon action="back" />
-            </TouchableOpacity>
+            />
           </View>
 
           <ScrollView
@@ -128,7 +132,10 @@ function WeeklyPlanModalContent({
                 {[1, 2, 3, 4, 5, 6, 7].map((num) => {
                   const isSelected = daysPerWeek === num;
                   return (
-                    <TouchableOpacity
+                    <Button
+                      variant="secondary"
+                      fullWidth={false}
+                      label={String(num)}
                       key={num}
                       onPress={() => handleSelectDaysCount(num)}
                       style={[styles.countCircle, isSelected && styles.countCircleSelected]}
@@ -136,15 +143,7 @@ function WeeklyPlanModalContent({
                       accessibilityLabel={`${num} workout days per week`}
                       accessibilityState={{ selected: isSelected }}
                       testID={`btn-days-count-${num}`}
-                    >
-                      <Text
-                        variant="body"
-                        color={isSelected ? dark.onBrand : dark.textHi}
-                        style={{ fontWeight: '700' }}
-                      >
-                        {num}
-                      </Text>
-                    </TouchableOpacity>
+                    />
                   );
                 })}
               </View>
@@ -159,7 +158,10 @@ function WeeklyPlanModalContent({
                 {ALL_DAYS.map((day) => {
                   const isSelected = selectedWorkoutDays.includes(day);
                   return (
-                    <TouchableOpacity
+                    <Button
+                      variant="secondary"
+                      fullWidth={false}
+                      label={String(day)}
                       key={day}
                       onPress={() => handleToggleDay(day)}
                       style={[styles.dayChip, isSelected && styles.dayChipSelected]}
@@ -167,15 +169,7 @@ function WeeklyPlanModalContent({
                       accessibilityLabel={`${day} workout day`}
                       accessibilityState={{ selected: isSelected }}
                       testID={`chip-workout-day-${day}`}
-                    >
-                      <Text
-                        variant="label"
-                        color={isSelected ? dark.onBrand : dark.textHi}
-                        style={{ fontWeight: '700' }}
-                      >
-                        {day}
-                      </Text>
-                    </TouchableOpacity>
+                    />
                   );
                 })}
               </View>
@@ -270,17 +264,16 @@ function WeeklyPlanModalContent({
 
           {/* Bottom Next Button */}
           <View style={styles.bottomBar}>
-            <TouchableOpacity
+            <Button
+              variant="secondary"
+              fullWidth={false}
+              label="Next →"
               onPress={handleSaveAndNext}
               style={styles.nextButton}
               accessibilityRole="button"
               accessibilityLabel="Next"
               testID="btn-weekly-plan-next"
-            >
-              <Text variant="heading" color={dark.onBrand} style={styles.nextButtonText}>
-                Next →
-              </Text>
-            </TouchableOpacity>
+            />
           </View>
         </View>
       </SafeAreaView>
@@ -434,11 +427,11 @@ const createStyles = (dark: ReturnType<typeof useAppearance>['colors']) =>
       borderRadius: radius.full,
       alignItems: 'center',
       justifyContent: 'center',
-      shadowColor: '#000',
+      shadowColor: visualPrimitives.colors.black,
       shadowOffset: { width: 0, height: 4 },
       shadowOpacity: 0.25,
-      shadowRadius: 8,
-      elevation: 4,
+      shadowRadius: visualPrimitives.effects[8],
+      elevation: visualPrimitives.effects[4],
     },
     nextButtonText: {
       fontWeight: '800',

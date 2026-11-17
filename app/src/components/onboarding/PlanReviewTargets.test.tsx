@@ -10,7 +10,7 @@ vi.mock('react-native', () => ({
 }));
 vi.mock('@calipartner/ui', async () => ({
   ...(await import('../../../../packages/ui/src/tokens')),
-  Button: 'Button',
+  Button: (await import('@/test/ButtonStub')).ButtonStub,
   Text: 'Text',
   useTheme: () => ({ colors: {} }),
 }));
@@ -56,7 +56,7 @@ it('offers calculated or custom targets, preserves blanks and keeps calculation 
     tree.root.findByProps({ testID: 'continue-calculated-plan' }).props.onPress(),
   );
   expect(onPlanned).toHaveBeenLastCalledWith({});
-  expect(tree.root.findByProps({ testID: 'btn-how-calculated' }).type).toBe('Pressable');
+  expect(tree.root.findByProps({ testID: 'btn-how-calculated' }).props.label).toBeTruthy();
   await act(async () => tree.root.findByProps({ testID: 'btn-how-calculated' }).props.onPress());
   expect(onCalculation).toHaveBeenCalledOnce();
   await act(async () => tree.root.findByProps({ testID: 'btn-build-your-plan' }).props.onPress());

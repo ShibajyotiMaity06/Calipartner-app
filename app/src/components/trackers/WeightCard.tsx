@@ -1,3 +1,5 @@
+import { visualPrimitives } from '@calipartner/ui/tokens';
+import { Button } from '@calipartner/ui';
 import { useTheme as useAppearance } from '@calipartner/ui/theme';
 import { NavigationIcon } from '@calipartner/ui';
 import React, { useState } from 'react';
@@ -110,7 +112,11 @@ export function WeightCard({ selectedDate, testID = 'weight-card' }: WeightCardP
           </View>
         </View>
 
-        <Pressable
+        <Button
+          variant="secondary"
+          fullWidth={false}
+          label={t('weightUpdate.progress')}
+          icon={<Ionicons name="trending-up-outline" size={space[4]} color={dark.textMid} />}
           testID="btn-weight-progress"
           style={styles.smallActionBtn}
           accessibilityRole="button"
@@ -119,12 +125,13 @@ export function WeightCard({ selectedDate, testID = 'weight-card' }: WeightCardP
             setWeeklyHistory(true);
             setHistoryModalVisible(true);
           }}
-        >
-          <Ionicons name="trending-up-outline" size={space[4]} color={dark.textMid} />
-          <Text style={styles.smallActionText}>{t('weightUpdate.progress')}</Text>
-        </Pressable>
+        />
         {/* History action button */}
-        <Pressable
+        <Button
+          variant="secondary"
+          fullWidth={false}
+          label={t('trackers.weight.historyButton')}
+          icon={<Ionicons name="time-outline" size={15} color={dark.textMid} />}
           testID="btn-weight-history"
           onPress={() => {
             setWeeklyHistory(false);
@@ -133,10 +140,7 @@ export function WeightCard({ selectedDate, testID = 'weight-card' }: WeightCardP
           style={styles.smallActionBtn}
           accessibilityRole="button"
           accessibilityLabel={t('trackers.weight.historyButton')}
-        >
-          <Ionicons name="time-outline" size={15} color={dark.textMid} />
-          <Text style={styles.smallActionText}>{t('trackers.weight.historyButton')}</Text>
-        </Pressable>
+        />
       </View>
 
       {/* Loading state */}
@@ -200,38 +204,33 @@ export function WeightCard({ selectedDate, testID = 'weight-card' }: WeightCardP
               </View>
 
               {/* View as table accessible button */}
-              <Pressable
+              <Button
+                variant="secondary"
+                fullWidth={false}
+                label={t('trackers.weight.viewAsTable')}
+                icon={<Ionicons name="list-outline" size={14} color={dark.apricot} />}
                 testID="btn-weight-view-table"
                 onPress={() => setTableModalVisible(true)}
                 style={styles.viewTableBtn}
                 accessibilityRole="button"
                 accessibilityLabel={t('trackers.weight.viewAsTable')}
-              >
-                <Ionicons name="list-outline" size={14} color={dark.apricot} />
-                <Text style={styles.viewTableText}>{t('trackers.weight.viewAsTable')}</Text>
-              </Pressable>
+              />
             </View>
 
             {/* Range Chips: 7d, 30d, 90d, 6m, 1y, All */}
             <View style={styles.rangeChipsRow} testID="weight-range-chips">
               {(['7d', '30d', '90d', '6m', '1y', 'all'] as RangeChip[]).map((chip) => (
-                <Pressable
+                <Button
+                  variant="secondary"
+                  fullWidth={false}
+                  label={chip.toUpperCase()}
                   key={chip}
                   testID={`btn-range-${chip}`}
                   style={[styles.rangeChip, selectedRange === chip && styles.rangeChipActive]}
                   onPress={() => setSelectedRange(chip)}
                   accessibilityRole="button"
                   accessibilityLabel={chip}
-                >
-                  <Text
-                    style={[
-                      styles.rangeChipText,
-                      selectedRange === chip && styles.rangeChipTextActive,
-                    ]}
-                  >
-                    {chip.toUpperCase()}
-                  </Text>
-                </Pressable>
+                />
               ))}
             </View>
 
@@ -349,7 +348,11 @@ export function WeightCard({ selectedDate, testID = 'weight-card' }: WeightCardP
           )}
 
           {/* Primary Log Weight Button */}
-          <Pressable
+          <Button
+            variant="secondary"
+            fullWidth={false}
+            label={t('trackers.weight.logWeightButton')}
+            icon={<Ionicons name="add" size={18} color={dark.onBrand} />}
             testID="btn-log-weight"
             onPress={() => {
               setEditingEntry(null);
@@ -358,10 +361,7 @@ export function WeightCard({ selectedDate, testID = 'weight-card' }: WeightCardP
             style={styles.primaryLogBtn}
             accessibilityRole="button"
             accessibilityLabel={t('trackers.weight.logWeightButton')}
-          >
-            <Ionicons name="add" size={18} color={dark.onBrand} />
-            <Text style={styles.primaryLogBtnText}>{t('trackers.weight.logWeightButton')}</Text>
-          </Pressable>
+          />
         </>
       )}
 
@@ -431,15 +431,18 @@ export function WeightCard({ selectedDate, testID = 'weight-card' }: WeightCardP
             <View style={styles.tableCard}>
               <View style={styles.tableHeaderRow}>
                 <Text style={styles.tableTitle}>Weight data table</Text>
-                <Pressable
+                <Button
+                  variant="tertiary"
+                  fullWidth={false}
+                  label="Close table"
+                  iconOnly
+                  icon={<Ionicons name="close" size={20} color={dark.textMid} />}
                   onPress={() => setTableModalVisible(false)}
                   hitSlop={8}
                   style={styles.tableCloseBtn}
                   accessibilityRole="button"
                   accessibilityLabel="Close table"
-                >
-                  <Ionicons name="close" size={20} color={dark.textMid} />
-                </Pressable>
+                />
               </View>
 
               <ScrollView style={{ maxHeight: 300 }}>
@@ -461,14 +464,17 @@ export function WeightCard({ selectedDate, testID = 'weight-card' }: WeightCardP
                 ))}
               </ScrollView>
 
-              <Pressable
+              <Button
+                variant="tertiary"
+                fullWidth={false}
+                label="Close"
+                iconOnly
+                icon={<NavigationIcon action="close" />}
                 style={styles.tableDoneBtn}
                 onPress={() => setTableModalVisible(false)}
                 accessibilityRole="button"
                 accessibilityLabel="Close"
-              >
-                <NavigationIcon action="close" />
-              </Pressable>
+              />
             </View>
           </View>
         </Modal>
@@ -648,7 +654,7 @@ const createStyles = (dark: ReturnType<typeof useAppearance>['colors']) =>
       fontWeight: '700',
     },
     rangeChipTextActive: {
-      color: dark.onBrand, // #1C1109
+      color: dark.onBrand, // the onBrand token
     },
     notEnoughTrendBox: {
       paddingVertical: space[4],
@@ -721,7 +727,7 @@ const createStyles = (dark: ReturnType<typeof useAppearance>['colors']) =>
       backgroundColor: dark.s3,
       paddingHorizontal: 6,
       paddingVertical: 2,
-      borderRadius: 4,
+      borderRadius: visualPrimitives.radii[4],
       borderWidth: 1,
       borderColor: dark.hairlineLit,
       alignItems: 'center',
@@ -746,7 +752,7 @@ const createStyles = (dark: ReturnType<typeof useAppearance>['colors']) =>
       width: 16,
       height: 2.5,
       backgroundColor: dark.teal,
-      borderRadius: 2,
+      borderRadius: visualPrimitives.radii[2],
     },
     maLegendText: {
       fontSize: 10,
@@ -824,7 +830,7 @@ const createStyles = (dark: ReturnType<typeof useAppearance>['colors']) =>
     primaryLogBtnText: {
       fontSize: typeTokens.body.fontSize,
       fontFamily: typeTokens.body.fontFamily,
-      color: dark.onBrand, // #1C1109
+      color: dark.onBrand, // the onBrand token
       fontWeight: '700',
     },
     modalOverlay: {
@@ -895,7 +901,7 @@ const createStyles = (dark: ReturnType<typeof useAppearance>['colors']) =>
     tableDoneBtnText: {
       fontSize: typeTokens.body.fontSize,
       fontFamily: typeTokens.body.fontFamily,
-      color: dark.onBrand, // #1C1109
+      color: dark.onBrand, // the onBrand token
       fontWeight: '700',
     },
   });

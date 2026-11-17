@@ -1,3 +1,5 @@
+import { visualPrimitives } from '@calipartner/ui/tokens';
+import { Button } from '@calipartner/ui';
 import { type as inputTypography } from '@calipartner/ui';
 import { Text } from '@calipartner/ui';
 import React, { useState } from 'react';
@@ -108,15 +110,18 @@ export function RecipeReportModal({
                 {recipe.title}
               </Text>
             </View>
-            <Pressable
+            <Button
+              variant="tertiary"
+              fullWidth={false}
+              label={t('recipes.report.cancel')}
+              iconOnly
+              icon={<Ionicons name="close" size={22} color={colors.textMuted} />}
               testID="btn-close-recipe-report"
               onPress={onClose}
               hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
               accessibilityRole="button"
               accessibilityLabel={t('recipes.report.cancel')}
-            >
-              <Ionicons name="close" size={22} color={colors.textMuted} />
-            </Pressable>
+            />
           </View>
 
           {submitted ? (
@@ -132,7 +137,10 @@ export function RecipeReportModal({
                 <View
                   style={[
                     styles.errorBox,
-                    { backgroundColor: '#FEE2E2', borderColor: colors.danger },
+                    {
+                      backgroundColor: visualPrimitives.colors.errorWash,
+                      borderColor: colors.danger,
+                    },
                   ]}
                 >
                   <Text style={[styles.errorText, { color: colors.danger }]}>{errorMsg}</Text>
@@ -212,18 +220,17 @@ export function RecipeReportModal({
 
               {/* Action Buttons */}
               <View style={styles.actionsRow}>
-                <Pressable
+                <Button
+                  variant="secondary"
+                  fullWidth={false}
+                  label={t('recipes.report.cancel')}
                   testID="btn-cancel-recipe-report"
                   onPress={onClose}
                   disabled={submitting}
                   accessibilityRole="button"
                   accessibilityLabel={t('recipes.report.cancel')}
                   style={[styles.cancelBtn, { borderColor: colors.border }]}
-                >
-                  <Text style={[styles.cancelBtnText, { color: colors.textMuted }]}>
-                    {t('recipes.report.cancel')}
-                  </Text>
-                </Pressable>
+                />
 
                 <Pressable
                   testID="btn-submit-recipe-report"
@@ -272,7 +279,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     padding: spacing.md,
     borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: '#CBD5E1',
+    borderBottomColor: visualPrimitives.colors.paleSlate,
   },
   title: {
     fontSize: fontSize.md,

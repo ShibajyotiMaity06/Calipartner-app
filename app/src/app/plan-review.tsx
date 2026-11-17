@@ -146,6 +146,13 @@ export default function MonthlyPlanReviewScreen() {
             />
             <TrainingStep
               state={state}
+              identityConfirmed
+              onBodyStats={() => {}}
+              onUnits={(value) => {
+                machine.current?.setUnits(value);
+                update();
+              }}
+              onNickname={() => {}}
               onWeight={(value) => {
                 machine.current?.setBodyStats({ weightKg: value });
                 update();

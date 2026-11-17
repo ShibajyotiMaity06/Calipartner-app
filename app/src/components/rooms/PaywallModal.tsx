@@ -1,3 +1,4 @@
+import { visualPrimitives } from '@calipartner/ui/tokens';
 import { useTheme as useAppearance } from '@calipartner/ui/theme';
 import { type as inputTypography } from '@calipartner/ui';
 import { type as typography } from '@calipartner/ui';
@@ -455,9 +456,9 @@ export function PaywallModal({
         else if (Platform.OS === 'web') setStatusMessage(t('fixes.nativeManagement'));
         else
           await Linking.openURL(
-            entitlement?.source === 'apple'
-              ? 'https://apps.apple.com/account/subscriptions'
-              : 'https://play.google.com/store/account/subscriptions',
+            Platform.OS === 'android'
+              ? 'https://play.google.com/store/account/subscriptions'
+              : 'https://apps.apple.com/account/subscriptions',
           );
         return;
       }
@@ -625,15 +626,20 @@ export function PaywallModal({
         <View style={styles.container} testID="modal-paywall">
           {/* Top Bar with Top-Left Close Button */}
           <View style={styles.topBar}>
-            <TouchableOpacity
+            <Button
+              variant="tertiary"
+              fullWidth={false}
+              label={t('setup.closePremium')}
+              iconOnly
+              icon={
+                <Ionicons name="close-outline" color={dark.textHi} size={onboardingLayout.icon} />
+              }
               onPress={onClose}
               accessibilityRole="button"
               accessibilityLabel={t('setup.closePremium')}
               style={styles.closeButton}
               testID="btn-close-paywall"
-            >
-              <Ionicons name="close-outline" color={dark.textHi} size={onboardingLayout.icon} />
-            </TouchableOpacity>
+            />
             <Text variant="heading" color={dark.textHi} style={styles.topBarTitle}>
               CaliPartner Plans
             </Text>
@@ -747,7 +753,10 @@ export function PaywallModal({
                 </TouchableOpacity>
 
                 {/* Monthly */}
-                <TouchableOpacity
+                <Button
+                  variant="secondary"
+                  fullWidth={false}
+                  label="Monthly"
                   disabled={actionLoading || awaitingEntitlement}
                   onPress={() => setSelectedDuration('monthly')}
                   style={[
@@ -758,15 +767,7 @@ export function PaywallModal({
                   accessibilityState={{ selected: selectedDuration === 'monthly' }}
                   accessibilityLabel="Monthly billing"
                   testID="toggle-duration-monthly"
-                >
-                  <Text
-                    variant="label"
-                    color={selectedDuration === 'monthly' ? dark.textHi : dark.textMid}
-                    style={{ fontWeight: selectedDuration === 'monthly' ? '700' : '500' }}
-                  >
-                    Monthly
-                  </Text>
-                </TouchableOpacity>
+                />
               </View>
             </View>
 
@@ -965,17 +966,16 @@ export function PaywallModal({
             </Card>
 
             {/* Promo Code Trigger */}
-            <TouchableOpacity
+            <Button
+              variant="secondary"
+              fullWidth={false}
+              label="Have a partner promo code? Enter code"
               onPress={() => setShowPromoModal(true)}
               style={styles.promoTrigger}
               accessibilityRole="button"
               accessibilityLabel="Have a partner promo code?"
               testID="btn-promo-code"
-            >
-              <Text variant="bodyS" color={dark.apricot}>
-                Have a partner promo code? Enter code
-              </Text>
-            </TouchableOpacity>
+            />
           </ScrollView>
 
           {/* Primary CTA Block */}
@@ -1029,16 +1029,15 @@ export function PaywallModal({
 
             {/* Footer Links */}
             <View style={styles.footerLinksRow}>
-              <TouchableOpacity
+              <Button
+                variant="secondary"
+                fullWidth={false}
+                label="Restore purchases"
                 onPress={handleRestore}
                 accessibilityRole="button"
                 accessibilityLabel="Restore purchases"
                 testID="btn-restore-purchases"
-              >
-                <Text variant="micro" color={dark.textLo}>
-                  Restore purchases
-                </Text>
-              </TouchableOpacity>
+              />
               <Text variant="micro" color={dark.hairlineLit}>
                 •
               </Text>
@@ -1313,7 +1312,7 @@ const createStyles = (dark: ReturnType<typeof useAppearance>['colors']) =>
     radioCircle: {
       width: 22,
       height: 22,
-      borderRadius: 11,
+      borderRadius: visualPrimitives.radii[11],
       borderWidth: 2,
       borderColor: dark.hairlineLit,
       alignItems: 'center',
@@ -1325,7 +1324,7 @@ const createStyles = (dark: ReturnType<typeof useAppearance>['colors']) =>
     radioDot: {
       width: 10,
       height: 10,
-      borderRadius: 5,
+      borderRadius: visualPrimitives.radii[5],
       backgroundColor: dark.apricot,
     },
     planNameText: {

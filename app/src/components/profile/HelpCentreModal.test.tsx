@@ -16,7 +16,7 @@ vi.mock('react-native', () => ({
 vi.mock('@calipartner/ui', async () => ({
   ...(await import('../../../../packages/ui/src/tokens')),
   Text: 'Text',
-  Button: 'Button',
+  Button: (await import('@/test/ButtonStub')).ButtonStub,
   Card: 'Card',
   NavigationIcon: 'NavigationIcon',
 }));

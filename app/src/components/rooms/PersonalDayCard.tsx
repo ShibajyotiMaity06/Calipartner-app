@@ -1,3 +1,4 @@
+import { Button } from '@calipartner/ui';
 import { useTheme as useAppearance } from '@calipartner/ui/theme';
 import React from 'react';
 import { Ionicons } from '@expo/vector-icons';
@@ -88,21 +89,26 @@ export function PersonalDayCard({
             {t('homeRefresh.yourDay')}
           </Text>
           {onEdit && (
-            <Pressable
+            <Button
+              variant="tertiary"
+              fullWidth={false}
+              label={t('personalDay.editTracking')}
+              iconOnly
+              icon={
+                <Ionicons
+                  name="pencil"
+                  size={homeLayout.editIconSize}
+                  color={dark.textHi}
+                  style={styles.pencil}
+                  accessible={false}
+                />
+              }
               accessibilityRole="button"
               accessibilityLabel={t('personalDay.editTracking')}
               onPress={onEdit}
               style={styles.edit}
               testID="edit-daily-tracking"
-            >
-              <Ionicons
-                name="pencil"
-                size={homeLayout.editIconSize}
-                color={dark.textHi}
-                style={styles.pencil}
-                accessible={false}
-              />
-            </Pressable>
+            />
           )}
           {goal && <Text variant="bodyS">{goal}</Text>}
         </View>
@@ -174,6 +180,7 @@ export function PersonalDayCard({
                   <Text
                     variant="bodyS"
                     nutrient={enabled ? nutrient : undefined}
+                    color={id === 'water' ? dark.waterInk : undefined}
                     style={!enabled && styles.blurredText}
                   >
                     <Ionicons
@@ -199,6 +206,7 @@ export function PersonalDayCard({
                   <Text
                     variant="bodyS"
                     nutrient={enabled ? nutrient : undefined}
+                    color={id === 'water' ? dark.waterInk : undefined}
                     tabular
                     style={[styles.amount, !enabled && styles.blurredText]}
                   >

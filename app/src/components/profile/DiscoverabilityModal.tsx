@@ -1,7 +1,7 @@
 import { useTheme as useAppearance } from '@calipartner/ui/theme';
 import { NavigationIcon } from '@calipartner/ui';
 import React, { useEffect, useState } from 'react';
-import { FlatList, Modal, SafeAreaView, StyleSheet, TouchableOpacity, View } from 'react-native';
+import { FlatList, Modal, SafeAreaView, StyleSheet, View } from 'react-native';
 import { Button, Card, SegmentedControl, space, Text } from '@calipartner/ui';
 import { getSupabase } from '@/lib/supabase';
 import { t } from '@/i18n';
@@ -103,15 +103,18 @@ export function DiscoverabilityModal({
         <View style={styles.container} testID={testID}>
           {/* Top Bar */}
           <View style={styles.topBar}>
-            <TouchableOpacity
+            <Button
+              variant="tertiary"
+              fullWidth={false}
+              label="Back"
+              iconOnly
+              icon={<NavigationIcon action="back" />}
               onPress={onClose}
               accessibilityRole="button"
               accessibilityLabel="Back"
               style={styles.backButton}
               testID="btn-close-discoverability"
-            >
-              <NavigationIcon action="back" />
-            </TouchableOpacity>
+            />
             <Text variant="heading" color={dark.textHi}>
               {t('me.discoverability.title')}
             </Text>

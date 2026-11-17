@@ -232,15 +232,18 @@ export function FoodPhotoResultsEditor({
             </Text>
           </View>
 
-          <Pressable
+          <Button
+            variant="tertiary"
+            fullWidth={false}
+            label={t('common.cancel')}
+            iconOnly
+            icon={<Ionicons name="close-circle" size={26} color={colors.textMuted} />}
             testID="btn-close-results-editor"
             accessibilityRole="button"
             accessibilityLabel={t('common.cancel')}
             onPress={onClose}
             hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-          >
-            <Ionicons name="close-circle" size={26} color={colors.textMuted} />
-          </Pressable>
+          />
         </View>
 
         {/* Scrollable Content */}
@@ -256,14 +259,15 @@ export function FoodPhotoResultsEditor({
               ]}
             >
               <Text style={{ color: colors.text }}>{mealDescription}</Text>
-              <Pressable
+              <Button
+                variant="secondary"
+                fullWidth={false}
+                label={t('homeRefresh.fix')}
                 onPress={onClose}
                 accessibilityRole="button"
                 accessibilityLabel={t('homeRefresh.fix')}
                 testID="edit-meal-description"
-              >
-                <Text style={{ color: colors.accent }}>{t('homeRefresh.fix')}</Text>
-              </Pressable>
+              />
             </View>
           )}
           {/* Prominent AI Estimate Notice Banner (PRD LOG-3) */}
@@ -300,7 +304,10 @@ export function FoodPhotoResultsEditor({
               {SECTIONS.map((sec) => {
                 const isSelected = selectedSection === sec;
                 return (
-                  <Pressable
+                  <Button
+                    variant="secondary"
+                    fullWidth={false}
+                    label={t(`diary.sections.${sec}` as Parameters<typeof t>[0])}
                     key={sec}
                     testID={`pill-section-${sec}`}
                     accessibilityRole="button"
@@ -313,16 +320,7 @@ export function FoodPhotoResultsEditor({
                         borderColor: isSelected ? colors.accent : colors.border,
                       },
                     ]}
-                  >
-                    <Text
-                      style={[
-                        styles.sectionPillText,
-                        { color: isSelected ? colors.onAccent : colors.text },
-                      ]}
-                    >
-                      {t(`diary.sections.${sec}` as Parameters<typeof t>[0])}
-                    </Text>
-                  </Pressable>
+                  />
                 );
               })}
             </View>
@@ -434,21 +432,24 @@ export function FoodPhotoResultsEditor({
 
               <View style={styles.emptyActionsRow}>
                 {onRetakePhoto && (
-                  <Pressable
+                  <Button
+                    variant="secondary"
+                    fullWidth={false}
+                    label={t('foodLog.photo.retake')}
+                    icon={<Ionicons name="camera-reverse" size={18} color={colors.onAccent} />}
                     testID="btn-empty-retake-photo"
                     accessibilityRole="button"
                     accessibilityLabel={t('foodLog.photo.retake')}
                     onPress={onRetakePhoto}
                     style={[styles.emptyActionBtn, { backgroundColor: colors.accent }]}
-                  >
-                    <Ionicons name="camera-reverse" size={18} color={colors.onAccent} />
-                    <Text style={{ color: colors.onAccent, fontWeight: '700' }}>
-                      {t('foodLog.photo.retake')}
-                    </Text>
-                  </Pressable>
+                  />
                 )}
 
-                <Pressable
+                <Button
+                  variant="secondary"
+                  fullWidth={false}
+                  label={t('foodLog.photo.addItem')}
+                  icon={<Ionicons name="add" size={18} color={colors.text} />}
                   testID="btn-empty-add-item"
                   accessibilityRole="button"
                   accessibilityLabel={t('foodLog.photo.addItem')}
@@ -461,12 +462,7 @@ export function FoodPhotoResultsEditor({
                       borderWidth: 1,
                     },
                   ]}
-                >
-                  <Ionicons name="add" size={18} color={colors.text} />
-                  <Text style={{ color: colors.text, fontWeight: '600' }}>
-                    {t('foodLog.photo.addItem')}
-                  </Text>
-                </Pressable>
+                />
               </View>
             </View>
           ) : (
@@ -523,7 +519,12 @@ export function FoodPhotoResultsEditor({
                     />
                     <View style={styles.stepperRow}>
                       <View style={styles.stepperControls}>
-                        <Pressable
+                        <Button
+                          variant="tertiary"
+                          fullWidth={false}
+                          label={`Decrease ${foodName} quantity`}
+                          iconOnly
+                          icon={<Ionicons name="remove" size={18} color={colors.text} />}
                           testID={`btn-stepper-minus-${idx}`}
                           accessibilityRole="button"
                           accessibilityLabel={`Decrease ${foodName} quantity`}
@@ -532,9 +533,7 @@ export function FoodPhotoResultsEditor({
                             styles.stepperBtn,
                             { backgroundColor: colors.surfaceAlt, borderColor: colors.border },
                           ]}
-                        >
-                          <Ionicons name="remove" size={18} color={colors.text} />
-                        </Pressable>
+                        />
 
                         <View style={styles.quantityDisplay}>
                           <Text style={[styles.quantityVal, { color: colors.text }]}>
@@ -542,7 +541,12 @@ export function FoodPhotoResultsEditor({
                           </Text>
                         </View>
 
-                        <Pressable
+                        <Button
+                          variant="tertiary"
+                          fullWidth={false}
+                          label={`Increase ${foodName} quantity`}
+                          iconOnly
+                          icon={<Ionicons name="add" size={18} color={colors.text} />}
                           testID={`btn-stepper-plus-${idx}`}
                           accessibilityRole="button"
                           accessibilityLabel={`Increase ${foodName} quantity`}
@@ -551,9 +555,7 @@ export function FoodPhotoResultsEditor({
                             styles.stepperBtn,
                             { backgroundColor: colors.surfaceAlt, borderColor: colors.border },
                           ]}
-                        >
-                          <Ionicons name="add" size={18} color={colors.text} />
-                        </Pressable>
+                        />
                       </View>
 
                       {/* Item Macro Preview */}
@@ -564,38 +566,40 @@ export function FoodPhotoResultsEditor({
 
                     {/* Bottom Row: Swap & Remove Actions */}
                     <View style={[styles.candidateActionsRow, { borderTopColor: colors.border }]}>
-                      <Pressable
+                      <Button
+                        variant="secondary"
+                        fullWidth={false}
+                        label={t('foodLog.photo.swapItem')}
+                        icon={<Ionicons name="swap-horizontal" size={16} color={colors.accent} />}
                         testID={`btn-swap-candidate-${idx}`}
                         accessibilityRole="button"
                         accessibilityLabel={`Swap ${foodName}`}
                         onPress={() => handleOpenSwap(idx)}
                         style={styles.cardActionBtn}
-                      >
-                        <Ionicons name="swap-horizontal" size={16} color={colors.accent} />
-                        <Text style={[styles.cardActionText, { color: colors.accent }]}>
-                          {t('foodLog.photo.swapItem')}
-                        </Text>
-                      </Pressable>
+                      />
 
-                      <Pressable
+                      <Button
+                        variant="destructive"
+                        fullWidth={false}
+                        label={t('foodLog.photo.removeItem')}
+                        icon={<Ionicons name="trash-outline" size={16} color={colors.danger} />}
                         testID={`btn-remove-candidate-${idx}`}
                         accessibilityRole="button"
                         accessibilityLabel={`Remove ${foodName}`}
                         onPress={() => handleRemove(idx)}
                         style={styles.cardActionBtn}
-                      >
-                        <Ionicons name="trash-outline" size={16} color={colors.danger} />
-                        <Text style={[styles.cardActionText, { color: colors.danger }]}>
-                          {t('foodLog.photo.removeItem')}
-                        </Text>
-                      </Pressable>
+                      />
                     </View>
                   </View>
                 );
               })}
 
               {/* Add Missing Item Button */}
-              <Pressable
+              <Button
+                variant="secondary"
+                fullWidth={false}
+                label={t('foodLog.photo.addItem')}
+                icon={<Ionicons name="add-circle-outline" size={20} color={colors.accent} />}
                 testID="btn-add-missing-item"
                 accessibilityRole="button"
                 accessibilityLabel={t('foodLog.photo.addItem')}
@@ -604,12 +608,7 @@ export function FoodPhotoResultsEditor({
                   styles.addItemBtn,
                   { backgroundColor: colors.surface, borderColor: colors.border },
                 ]}
-              >
-                <Ionicons name="add-circle-outline" size={20} color={colors.accent} />
-                <Text style={[styles.addItemBtnText, { color: colors.accent }]}>
-                  {t('foodLog.photo.addItem')}
-                </Text>
-              </Pressable>
+              />
             </View>
           )}
           <AdvancedNutrition nutrients={totals} />
@@ -623,7 +622,10 @@ export function FoodPhotoResultsEditor({
           ]}
         >
           {onRetakePhoto && (
-            <Pressable
+            <Button
+              variant="secondary"
+              fullWidth={false}
+              label="Retake"
               testID="btn-retake-photo"
               onPress={onRetakePhoto}
               style={{
@@ -636,11 +638,7 @@ export function FoodPhotoResultsEditor({
                 alignItems: 'center',
                 justifyContent: 'center',
               }}
-            >
-              <Text style={{ color: colors.text, fontWeight: '600', fontSize: fontSize.md }}>
-                Retake
-              </Text>
-            </Pressable>
+            />
           )}
 
           <Pressable

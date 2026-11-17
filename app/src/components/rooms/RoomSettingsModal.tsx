@@ -1,3 +1,5 @@
+import { visualPrimitives } from '@calipartner/ui/tokens';
+import { Button } from '@calipartner/ui';
 import React, { useState } from 'react';
 import {
   ActivityIndicator,
@@ -160,15 +162,18 @@ export function RoomSettingsModal({
             <Text style={[styles.title, { color: colors.text }]}>
               {t('rooms.settingsModal.title')}
             </Text>
-            <Pressable
+            <Button
+              variant="tertiary"
+              fullWidth={false}
+              label="Close room settings"
+              iconOnly
+              icon={<Ionicons name="close" size={18} color={colors.text} />}
               onPress={onClose}
               style={[styles.closeButton, { backgroundColor: colors.surfaceAlt }]}
               accessibilityRole="button"
               accessibilityLabel="Close room settings"
               testID="btn-close-room-settings"
-            >
-              <Ionicons name="close" size={18} color={colors.text} />
-            </Pressable>
+            />
           </View>
 
           <ScrollView
@@ -304,57 +309,53 @@ export function RoomSettingsModal({
                       <View style={styles.memberActionsRow}>
                         {isHost && (
                           <>
-                            <Pressable
+                            <Button
+                              variant="secondary"
+                              fullWidth={false}
+                              label={t('rooms.settingsModal.transferHostBtn')}
                               onPress={() => handleTransfer(m)}
                               disabled={isActionLoading}
                               style={[styles.smallBtn, { borderColor: colors.border }]}
                               accessibilityRole="button"
                               accessibilityLabel={`Make ${m.nickname} host`}
                               testID={`btn-make-host-${m.user_id}`}
-                            >
-                              <Text style={[styles.smallBtnText, { color: colors.text }]}>
-                                {t('rooms.settingsModal.transferHostBtn')}
-                              </Text>
-                            </Pressable>
+                            />
 
-                            <Pressable
+                            <Button
+                              variant="destructive"
+                              fullWidth={false}
+                              label={t('rooms.settingsModal.removeBtn')}
                               onPress={() => handleRemove(m)}
                               disabled={isActionLoading}
                               style={[styles.smallBtn, { borderColor: colors.border }]}
                               accessibilityRole="button"
                               accessibilityLabel={`Remove ${m.nickname}`}
                               testID={`btn-remove-member-${m.user_id}`}
-                            >
-                              <Text style={[styles.smallBtnText, { color: colors.danger }]}>
-                                {t('rooms.settingsModal.removeBtn')}
-                              </Text>
-                            </Pressable>
+                            />
                           </>
                         )}
 
-                        <Pressable
+                        <Button
+                          variant="secondary"
+                          fullWidth={false}
+                          label={t('rooms.settingsModal.reportBtn')}
                           onPress={() => onReportUser(m)}
                           style={[styles.smallBtn, { borderColor: colors.border }]}
                           accessibilityRole="button"
                           accessibilityLabel={`Report ${m.nickname}`}
                           testID={`btn-report-${m.user_id}`}
-                        >
-                          <Text style={[styles.smallBtnText, { color: colors.textMuted }]}>
-                            {t('rooms.settingsModal.reportBtn')}
-                          </Text>
-                        </Pressable>
+                        />
 
-                        <Pressable
+                        <Button
+                          variant="destructive"
+                          fullWidth={false}
+                          label={t('rooms.settingsModal.blockBtn')}
                           onPress={() => onBlockUser(m)}
                           style={[styles.smallBtn, { borderColor: colors.border }]}
                           accessibilityRole="button"
                           accessibilityLabel={`Block ${m.nickname}`}
                           testID={`btn-block-${m.user_id}`}
-                        >
-                          <Text style={[styles.smallBtnText, { color: colors.danger }]}>
-                            {t('rooms.settingsModal.blockBtn')}
-                          </Text>
-                        </Pressable>
+                        />
                       </View>
                     )}
                   </View>
@@ -414,7 +415,7 @@ const styles = StyleSheet.create({
   closeButton: {
     width: 32,
     height: 32,
-    borderRadius: 16,
+    borderRadius: visualPrimitives.radii[16],
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -480,7 +481,7 @@ const styles = StyleSheet.create({
   avatarMini: {
     width: 32,
     height: 32,
-    borderRadius: 16,
+    borderRadius: visualPrimitives.radii[16],
     alignItems: 'center',
     justifyContent: 'center',
   },

@@ -1,3 +1,4 @@
+import { visualPrimitives } from '@calipartner/ui/tokens';
 import { Text } from '@calipartner/ui';
 import React from 'react';
 import { StyleSheet, View } from 'react-native';
@@ -51,16 +52,16 @@ const styles = StyleSheet.create({
     padding: spacing.xl,
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: '#000',
+    shadowColor: visualPrimitives.colors.black,
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.05,
-    shadowRadius: 3,
-    elevation: 2,
+    shadowRadius: visualPrimitives.effects[3],
+    elevation: visualPrimitives.effects[2],
   },
   iconContainer: {
     width: 80,
     height: 80,
-    borderRadius: 40,
+    borderRadius: visualPrimitives.radii[40],
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: spacing.md,

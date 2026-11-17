@@ -1,3 +1,5 @@
+import { visualPrimitives } from '@calipartner/ui/tokens';
+import { Button } from '@calipartner/ui';
 import { Text } from '@calipartner/ui';
 import React, { useRef, useState } from 'react';
 import { ActivityIndicator, Modal, Pressable, ScrollView, StyleSheet, View } from 'react-native';
@@ -131,15 +133,18 @@ export function LogRecipeModal({
                 </Text>
               )}
             </View>
-            <Pressable
+            <Button
+              variant="tertiary"
+              fullWidth={false}
+              label={t('common.cancel')}
+              iconOnly
+              icon={<Ionicons name="close" size={24} color={colors.textMuted} />}
               testID="btn-close-log-recipe"
               onPress={onClose}
               hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
               accessibilityRole="button"
               accessibilityLabel={t('common.cancel')}
-            >
-              <Ionicons name="close" size={24} color={colors.textMuted} />
-            </Pressable>
+            />
           </View>
 
           <ScrollView contentContainerStyle={styles.body} showsVerticalScrollIndicator={false}>
@@ -147,7 +152,10 @@ export function LogRecipeModal({
               <View
                 style={[
                   styles.errorBox,
-                  { backgroundColor: '#FEE2E2', borderColor: colors.danger },
+                  {
+                    backgroundColor: visualPrimitives.colors.errorWash,
+                    borderColor: colors.danger,
+                  },
                 ]}
               >
                 <Text style={[styles.errorText, { color: colors.danger }]}>{errorMsg}</Text>
@@ -255,7 +263,14 @@ export function LogRecipeModal({
                 {SECTIONS.map((sec) => {
                   const isSelected = mealSection === sec;
                   return (
-                    <Pressable
+                    <Button
+                      variant="secondary"
+                      fullWidth={false}
+                      label={t(
+                        (sec === 'snacks'
+                          ? 'recipes.mealTypes.snack'
+                          : `recipes.mealTypes.${sec}`) as Parameters<typeof t>[0],
+                      )}
                       key={sec}
                       testID={`btn-select-meal-section-${sec}`}
                       onPress={() => setMealSection(sec)}
@@ -268,23 +283,7 @@ export function LogRecipeModal({
                           borderColor: isSelected ? colors.accent : colors.border,
                         },
                       ]}
-                    >
-                      <Text
-                        style={[
-                          styles.mealSectionChipText,
-                          {
-                            color: isSelected ? colors.onAccent : colors.text,
-                            fontWeight: isSelected ? '700' : '500',
-                          },
-                        ]}
-                      >
-                        {t(
-                          (sec === 'snacks'
-                            ? 'recipes.mealTypes.snack'
-                            : `recipes.mealTypes.${sec}`) as Parameters<typeof t>[0],
-                        )}
-                      </Text>
-                    </Pressable>
+                    />
                   );
                 })}
               </View>
@@ -424,7 +423,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     padding: spacing.md,
     borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: '#CBD5E1',
+    borderBottomColor: visualPrimitives.colors.paleSlate,
   },
   title: {
     fontSize: fontSize.md,
@@ -457,7 +456,7 @@ const styles = StyleSheet.create({
   stepperBtn: {
     width: 44,
     height: 44,
-    borderRadius: 22,
+    borderRadius: visualPrimitives.radii[22],
     borderWidth: 1,
     alignItems: 'center',
     justifyContent: 'center',

@@ -1,3 +1,4 @@
+import { Button } from '@calipartner/ui';
 import { NutrientSummary } from '../diary/NutrientSummary';
 import React from 'react';
 import { Image, Pressable, StyleSheet, View } from 'react-native';
@@ -77,7 +78,18 @@ export function RecipeCard({
           )}
         </Pressable>
         {onToggleFavorite && (
-          <Pressable
+          <Button
+            variant="tertiary"
+            fullWidth={false}
+            label={t('recipes.card.favoriteLabel', { title: recipe.title })}
+            iconOnly
+            icon={
+              <Ionicons
+                name={recipe.is_favorite ? 'heart' : 'heart-outline'}
+                size={homeLayout.iconSize}
+                color={colors.text}
+              />
+            }
             onPress={() => onToggleFavorite(recipe)}
             accessibilityRole="button"
             accessibilityLabel={t('recipes.card.favoriteLabel', { title: recipe.title })}
@@ -85,13 +97,7 @@ export function RecipeCard({
             disabled={disabled}
             testID={`btn-recipe-fav-${recipe.id}`}
             style={styles.favorite}
-          >
-            <Ionicons
-              name={recipe.is_favorite ? 'heart' : 'heart-outline'}
-              size={homeLayout.iconSize}
-              color={colors.text}
-            />
-          </Pressable>
+          />
         )}
       </View>
     </View>

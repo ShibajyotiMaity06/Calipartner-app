@@ -1,3 +1,5 @@
+import { visualPrimitives } from '@calipartner/ui/tokens';
+import { Button } from '@calipartner/ui';
 import { useTheme as useAppearance } from '@calipartner/ui/theme';
 import { type as inputTypography } from '@calipartner/ui';
 import { type as typography } from '@calipartner/ui';
@@ -130,15 +132,18 @@ export function AddExercisePickerModal({
         <View style={styles.container}>
           {/* Header */}
           <View style={styles.header}>
-            <TouchableOpacity
+            <Button
+              variant="tertiary"
+              fullWidth={false}
+              label="Cancel"
+              iconOnly
+              icon={<Ionicons name="close" size={24} color={dark.textHi} />}
               onPress={onClose}
               style={styles.closeBtn}
               accessibilityRole="button"
               accessibilityLabel="Cancel"
               testID="btn-close-exercise-picker"
-            >
-              <Ionicons name="close" size={24} color={dark.textHi} />
-            </TouchableOpacity>
+            />
 
             <Text variant="title2" color={dark.textHi} style={styles.title}>
               Choose Exercise
@@ -234,7 +239,12 @@ export function AddExercisePickerModal({
               Planned Sets:
             </Text>
             <View style={styles.stepperContainer}>
-              <TouchableOpacity
+              <Button
+                variant="tertiary"
+                fullWidth={false}
+                label="Decrease sets"
+                iconOnly
+                icon={<Ionicons name="remove" size={18} color={dark.textHi} />}
                 onPress={() => {
                   playClickSound();
                   setPlannedSets((prev) => Math.max(1, prev - 1));
@@ -242,13 +252,16 @@ export function AddExercisePickerModal({
                 style={styles.stepBtn}
                 accessibilityRole="button"
                 accessibilityLabel="Decrease sets"
-              >
-                <Ionicons name="remove" size={18} color={dark.textHi} />
-              </TouchableOpacity>
+              />
               <Text variant="title2" color={dark.apricot} style={styles.setsNumberText}>
                 {plannedSets}
               </Text>
-              <TouchableOpacity
+              <Button
+                variant="tertiary"
+                fullWidth={false}
+                label="Increase sets"
+                iconOnly
+                icon={<Ionicons name="add" size={18} color={dark.textHi} />}
                 onPress={() => {
                   playClickSound();
                   setPlannedSets((prev) => Math.min(10, prev + 1));
@@ -256,9 +269,7 @@ export function AddExercisePickerModal({
                 style={styles.stepBtn}
                 accessibilityRole="button"
                 accessibilityLabel="Increase sets"
-              >
-                <Ionicons name="add" size={18} color={dark.textHi} />
-              </TouchableOpacity>
+              />
             </View>
           </View>
 
@@ -421,11 +432,11 @@ const createStyles = (dark: ReturnType<typeof useAppearance>['colors']) =>
   StyleSheet.create({
     safeArea: {
       flex: 1,
-      backgroundColor: '#120A04',
+      backgroundColor: visualPrimitives.colors.deepBrown,
     },
     container: {
       flex: 1,
-      backgroundColor: '#120A04',
+      backgroundColor: visualPrimitives.colors.deepBrown,
     },
     header: {
       flexDirection: 'row',
@@ -434,7 +445,7 @@ const createStyles = (dark: ReturnType<typeof useAppearance>['colors']) =>
       paddingHorizontal: space[4],
       paddingVertical: space[3],
       borderBottomWidth: 1,
-      borderBottomColor: '#2B1A0D',
+      borderBottomColor: visualPrimitives.colors.brownBorder,
     },
     closeBtn: {
       width: 44,
@@ -448,10 +459,10 @@ const createStyles = (dark: ReturnType<typeof useAppearance>['colors']) =>
     searchRow: {
       flexDirection: 'row',
       alignItems: 'center',
-      backgroundColor: '#1C1109',
+      backgroundColor: visualPrimitives.colors.ink,
       borderRadius: radius.control,
       borderWidth: 1,
-      borderColor: '#382212',
+      borderColor: visualPrimitives.colors.brownBorderLit,
       marginHorizontal: space[4],
       marginTop: space[3],
       paddingHorizontal: space[3],
@@ -472,10 +483,10 @@ const createStyles = (dark: ReturnType<typeof useAppearance>['colors']) =>
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'space-between',
-      backgroundColor: '#1C1109',
+      backgroundColor: visualPrimitives.colors.ink,
       borderRadius: radius.control,
       borderWidth: 1,
-      borderColor: '#382212',
+      borderColor: visualPrimitives.colors.brownBorderLit,
       paddingHorizontal: space[3],
       paddingVertical: space[2],
       minHeight: 50,
@@ -489,12 +500,12 @@ const createStyles = (dark: ReturnType<typeof useAppearance>['colors']) =>
       alignItems: 'center',
     },
     countBadge: {
-      backgroundColor: '#2A170B',
+      backgroundColor: visualPrimitives.colors.brownRaised,
       borderRadius: radius.full,
       paddingHorizontal: 8,
       paddingVertical: 2,
       borderWidth: 1,
-      borderColor: '#382212',
+      borderColor: visualPrimitives.colors.brownBorderLit,
     },
     modalOverlay: {
       flex: 1,
@@ -503,10 +514,10 @@ const createStyles = (dark: ReturnType<typeof useAppearance>['colors']) =>
       paddingHorizontal: space[4],
     },
     dropdownModalCard: {
-      backgroundColor: '#1C1109',
+      backgroundColor: visualPrimitives.colors.ink,
       borderRadius: radius.card,
       borderWidth: 1,
-      borderColor: '#382212',
+      borderColor: visualPrimitives.colors.brownBorderLit,
       paddingVertical: space[3],
       overflow: 'hidden',
     },
@@ -517,13 +528,13 @@ const createStyles = (dark: ReturnType<typeof useAppearance>['colors']) =>
       paddingHorizontal: space[4],
       paddingBottom: space[3],
       borderBottomWidth: 1,
-      borderBottomColor: '#2B1A0D',
+      borderBottomColor: visualPrimitives.colors.brownBorder,
     },
     dropdownModalClose: {
       width: 32,
       height: 32,
       borderRadius: radius.full,
-      backgroundColor: '#2A170B',
+      backgroundColor: visualPrimitives.colors.brownRaised,
       justifyContent: 'center',
       alignItems: 'center',
     },
@@ -534,10 +545,10 @@ const createStyles = (dark: ReturnType<typeof useAppearance>['colors']) =>
       paddingHorizontal: space[4],
       paddingVertical: 12,
       borderBottomWidth: 1,
-      borderBottomColor: '#221308',
+      borderBottomColor: visualPrimitives.colors.brownHairline,
     },
     dropdownItemRowSelected: {
-      backgroundColor: '#261408',
+      backgroundColor: visualPrimitives.colors.brownInset,
     },
     dropdownItemLeft: {
       flexDirection: 'row',
@@ -553,10 +564,10 @@ const createStyles = (dark: ReturnType<typeof useAppearance>['colors']) =>
       marginBottom: space[2],
     },
     customInput: {
-      backgroundColor: '#1C1109',
+      backgroundColor: visualPrimitives.colors.ink,
       borderRadius: radius.control,
       borderWidth: 1,
-      borderColor: '#382212',
+      borderColor: visualPrimitives.colors.brownBorderLit,
       paddingHorizontal: space[3],
       height: 42,
       color: dark.textHi,
@@ -571,10 +582,10 @@ const createStyles = (dark: ReturnType<typeof useAppearance>['colors']) =>
       marginVertical: space[2],
       paddingHorizontal: space[3],
       paddingVertical: space[2],
-      backgroundColor: '#1A0E06',
+      backgroundColor: visualPrimitives.colors.brownLow,
       borderRadius: radius.control,
       borderWidth: 1,
-      borderColor: '#2D180B',
+      borderColor: visualPrimitives.colors.brownOutline,
     },
     stepperContainer: {
       flexDirection: 'row',
@@ -585,7 +596,7 @@ const createStyles = (dark: ReturnType<typeof useAppearance>['colors']) =>
       width: 36,
       height: 36,
       borderRadius: radius.full,
-      backgroundColor: '#2A170B',
+      backgroundColor: visualPrimitives.colors.brownRaised,
       justifyContent: 'center',
       alignItems: 'center',
     },
@@ -601,23 +612,23 @@ const createStyles = (dark: ReturnType<typeof useAppearance>['colors']) =>
     exerciseCard: {
       flexDirection: 'row',
       alignItems: 'center',
-      backgroundColor: '#1A0E06',
+      backgroundColor: visualPrimitives.colors.brownLow,
       borderRadius: radius.control,
       borderWidth: 1,
-      borderColor: '#261408',
+      borderColor: visualPrimitives.colors.brownInset,
       padding: space[3],
       marginBottom: space[2],
       gap: space[3],
     },
     exerciseCardActive: {
       borderColor: dark.apricot,
-      backgroundColor: '#261408',
+      backgroundColor: visualPrimitives.colors.brownInset,
     },
     exerciseIconCircle: {
       width: 38,
       height: 38,
       borderRadius: radius.full,
-      backgroundColor: '#261408',
+      backgroundColor: visualPrimitives.colors.brownInset,
       justifyContent: 'center',
       alignItems: 'center',
     },
@@ -633,9 +644,9 @@ const createStyles = (dark: ReturnType<typeof useAppearance>['colors']) =>
     bottomBar: {
       paddingHorizontal: space[4],
       paddingVertical: space[3],
-      backgroundColor: '#160C05',
+      backgroundColor: visualPrimitives.colors.deepUmber,
       borderTopWidth: 1,
-      borderTopColor: '#2B1A0D',
+      borderTopColor: visualPrimitives.colors.brownBorder,
     },
     addConfirmBtn: {
       height: 52,

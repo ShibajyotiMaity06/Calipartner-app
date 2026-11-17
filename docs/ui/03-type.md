@@ -1,3 +1,5 @@
+> Owner request, 17 November 2026: the launch title and large weight readout use bundled Bricolage Grotesque 700; every standard action uses the button text variant with bundled Figtree 600. The chart and remaining UI retain upright Plus Jakarta Sans. Changing values retain tabular figures and 200% text scaling. This supersedes the earlier blanket Jakarta alias rule only for these roles.
+
 > Owner correction, 3 November 2026: restore upright Plus Jakarta Sans static weights: 400 body, 500 labels, 600 headings/buttons and 700 titles/numerals (800 for explicit extra-bold text). Keep Anek Devanagari for Hindi. Legacy English font aliases load the corresponding upright Jakarta files. This supersedes the light italic treatment below.
 
 > Owner request, 2 November 2026: use a light italic treatment throughout the English interface, based on the supplied leaderboard, squad and compare PDF. Bundle static Plus Jakarta Sans 300 Light Italic; keep Anek Devanagari for Hindi, tabular changing numbers, font scaling and accessible contrast. This supersedes the previous upright English weight decision below.

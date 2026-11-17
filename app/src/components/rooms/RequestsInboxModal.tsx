@@ -1,3 +1,5 @@
+import { visualPrimitives } from '@calipartner/ui/tokens';
+import { Button } from '@calipartner/ui';
 import { SegmentedControl } from '@calipartner/ui';
 import React, { useState } from 'react';
 import {
@@ -107,15 +109,18 @@ export function RequestsInboxModal({
             <Text style={[styles.title, { color: colors.text }]}>
               {t('rooms.inboxModal.title')}
             </Text>
-            <Pressable
+            <Button
+              variant="tertiary"
+              fullWidth={false}
+              label={t('setup.close')}
+              iconOnly
+              icon={<Ionicons name="close" size={18} color={colors.text} />}
               onPress={onClose}
               style={[styles.closeButton, { backgroundColor: colors.surfaceAlt }]}
               accessibilityRole="button"
               accessibilityLabel={t('setup.close')}
               testID="btn-close-inbox-modal"
-            >
-              <Ionicons name="close" size={18} color={colors.text} />
-            </Pressable>
+            />
           </View>
 
           {/* Segmented Control */}
@@ -198,7 +203,10 @@ export function RequestsInboxModal({
                         </View>
 
                         <View style={styles.actionRow}>
-                          <Pressable
+                          <Button
+                            variant="secondary"
+                            fullWidth={false}
+                            label={t('rooms.inboxModal.declineBtn')}
                             onPress={() => handleRespond(item, false)}
                             disabled={actingId !== null}
                             style={[
@@ -209,11 +217,7 @@ export function RequestsInboxModal({
                             accessibilityRole="button"
                             accessibilityLabel={t('requestIdentity.decline', { name: fromName })}
                             testID={`btn-decline-req-${item.id}`}
-                          >
-                            <Text style={[styles.actionBtnText, { color: colors.textMuted }]}>
-                              {t('rooms.inboxModal.declineBtn')}
-                            </Text>
-                          </Pressable>
+                          />
 
                           <Pressable
                             onPress={() => handleRespond(item, true)}
@@ -250,7 +254,14 @@ export function RequestsInboxModal({
                               {errorState.message}
                             </Text>
                             {errorState.showUpgrade && onOpenPaywall && (
-                              <Pressable
+                              <Button
+                                variant="secondary"
+                                fullWidth={false}
+                                label={
+                                  errorState.message.includes('Plus or Pro')
+                                    ? t('rooms.inboxModal.upgradeToAcceptBtn')
+                                    : t('rooms.roomFull.upgradeBtn')
+                                }
                                 onPress={onOpenPaywall}
                                 style={[styles.upgradeBtnMini, { backgroundColor: colors.accent }]}
                                 accessibilityRole="button"
@@ -260,13 +271,7 @@ export function RequestsInboxModal({
                                     : t('rooms.roomFull.upgradeBtn')
                                 }
                                 testID={`btn-inbox-room-full-upgrade-${item.id}`}
-                              >
-                                <Text style={styles.upgradeBtnMiniText}>
-                                  {errorState.message.includes('Plus or Pro')
-                                    ? t('rooms.inboxModal.upgradeToAcceptBtn')
-                                    : t('rooms.roomFull.upgradeBtn')}
-                                </Text>
-                              </Pressable>
+                              />
                             )}
                           </View>
                         )}
@@ -401,7 +406,7 @@ const styles = StyleSheet.create({
   closeButton: {
     width: 32,
     height: 32,
-    borderRadius: 16,
+    borderRadius: visualPrimitives.radii[16],
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -418,10 +423,10 @@ const styles = StyleSheet.create({
     borderRadius: radius.pill,
   },
   tabActive: {
-    elevation: 2,
-    shadowColor: '#000',
+    elevation: visualPrimitives.effects[2],
+    shadowColor: visualPrimitives.colors.black,
     shadowOpacity: 0.05,
-    shadowRadius: 2,
+    shadowRadius: visualPrimitives.effects[2],
   },
   tabText: {
     fontSize: fontSize.xs,
@@ -526,7 +531,7 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
   upgradeBtnMiniText: {
-    color: '#FFFFFF',
+    color: visualPrimitives.colors.white,
     fontSize: fontSize.xs - 1,
     fontWeight: '700',
   },

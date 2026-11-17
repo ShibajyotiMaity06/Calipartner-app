@@ -31,7 +31,7 @@ vi.mock('react-native', () => ({
 }));
 vi.mock('@calipartner/ui', async () => ({
   ...(await import('../../../../packages/ui/src/tokens')),
-  Button: 'Button',
+  Button: (await import('@/test/ButtonStub')).ButtonStub,
   Card: 'Card',
   Text: 'Text',
   Skeleton: 'Skeleton',
@@ -265,7 +265,7 @@ it('confirmed Pro success has only its unlocked title and Done action', async ()
   await render(true, false, 'pro');
   const success = renderer!.root.findByProps({ testID: 'modal-purchase-success' });
   const texts = success.findAll((node) => String(node.type) === 'Text');
-  expect(texts).toHaveLength(1);
+  expect(texts.map((node) => node.props.children)).toEqual(['CaliPartner Pro unlocked', 'Done']);
   expect(texts[0]!.props.children).toBe('CaliPartner Pro unlocked');
 });
 
@@ -434,5 +434,36 @@ it.each(['dodo', 'razorpay', 'apple', 'google'])(
           : 'https://play.google.com/store/account/subscriptions',
       );
     expect(billing.create).not.toHaveBeenCalled();
+  },
+);
+
+it.each(['paywall', 'account'] as const)(
+  'Android %s management never opens an Apple URL, even for an Apple entitlement',
+  async (surface) => {
+    Platform.OS = 'android';
+    billing.active = true;
+    billing.entitlement = {
+      tier: 'pro',
+      source: 'apple',
+      status: 'paid',
+      period_end: '2099-01-01',
+    };
+    vi.mocked(Linking.openURL).mockResolvedValue(true);
+    if (surface === 'paywall') {
+      await render();
+      await act(async () =>
+        renderer!.root.findByProps({ testID: 'btn-paywall-cta' }).props.onPress(),
+      );
+    } else {
+      await act(async () => {
+        renderer = create(<MeRoomPlanCard compact onChangePlan={vi.fn()} />);
+      });
+      await act(async () =>
+        renderer!.root.findByProps({ testID: 'btn-me-change-plan' }).props.onPress(),
+      );
+    }
+    expect(Linking.openURL).toHaveBeenCalledWith(
+      'https://play.google.com/store/account/subscriptions',
+    );
   },
 );

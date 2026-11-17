@@ -361,7 +361,12 @@ export function FoodLogModal({
               </Text>
             </View>
 
-            <Pressable
+            <Button
+              variant="tertiary"
+              fullWidth={false}
+              label={t('homeRefresh.close')}
+              iconOnly
+              icon={<Ionicons name="close-circle" size={26} color={colors.textMuted} />}
               testID="btn-close-food-log"
               accessibilityRole="button"
               accessibilityLabel={t('homeRefresh.close')}
@@ -373,9 +378,7 @@ export function FoodLogModal({
               }}
               onPress={onClose}
               hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-            >
-              <Ionicons name="close-circle" size={26} color={colors.textMuted} />
-            </Pressable>
+            />
           </View>
 
           {(saveError || historySaveError) && (
@@ -574,7 +577,10 @@ export function FoodLogModal({
                   >
                     {t('foodLog.noResultsSub')}
                   </Text>
-                  <Pressable
+                  <Button
+                    variant="secondary"
+                    fullWidth={false}
+                    label={t('foodLog.createCustomFood')}
                     testID="btn-create-custom-food-fallback"
                     onPress={() => setShowCustomFoodModal(true)}
                     style={{
@@ -584,13 +590,7 @@ export function FoodLogModal({
                       paddingVertical: 10,
                       borderRadius: radius.sm,
                     }}
-                  >
-                    <Text
-                      style={{ color: colors.onAccent, fontWeight: '700', fontSize: fontSize.sm }}
-                    >
-                      {t('foodLog.createCustomFood')}
-                    </Text>
-                  </Pressable>
+                  />
                 </View>
               ) : (
                 <ScrollView
@@ -767,7 +767,11 @@ export function FoodLogModal({
                 </Text>
               )}
               {/* Start Capture Button */}
-              <Pressable
+              <Button
+                variant="secondary"
+                fullWidth={false}
+                label={t('foodLog.photo.startScan')}
+                icon={<Ionicons name="camera" size={20} color={colors.onAccent} />}
                 testID="btn-start-photo-scan"
                 accessibilityRole="button"
                 accessibilityLabel={t('foodLog.photo.startScan')}
@@ -785,15 +789,16 @@ export function FoodLogModal({
                   maxWidth: 280,
                   justifyContent: 'center',
                 }}
-              >
-                <Ionicons name="camera" size={20} color={colors.onAccent} />
-                <Text style={{ color: colors.onAccent, fontWeight: '700', fontSize: fontSize.md }}>
-                  {t('foodLog.photo.startScan')}
-                </Text>
-              </Pressable>
+              />
 
               {/* Privacy Reassurance Note */}
-              <Pressable
+              <Button
+                variant="secondary"
+                fullWidth={false}
+                label="In-memory processing & privacy guarantees"
+                icon={
+                  <Ionicons name="shield-checkmark-outline" size={14} color={colors.textMuted} />
+                }
                 testID="btn-view-ai-consent"
                 accessibilityRole="button"
                 accessibilityLabel="View AI privacy details"
@@ -804,18 +809,7 @@ export function FoodLogModal({
                   gap: 6,
                   marginTop: spacing.xs,
                 }}
-              >
-                <Ionicons name="shield-checkmark-outline" size={14} color={colors.textMuted} />
-                <Text
-                  style={{
-                    fontSize: fontSize.xs,
-                    color: colors.textMuted,
-                    textDecorationLine: 'underline',
-                  }}
-                >
-                  In-memory processing & privacy guarantees
-                </Text>
-              </Pressable>
+              />
             </View>
           )}
 
@@ -947,7 +941,11 @@ export function FoodLogModal({
                           />
                         </Pressable>
                         {/* 1-tap quick add button (PRD 6.3 LOG-13) */}
-                        <Pressable
+                        <Button
+                          variant="secondary"
+                          fullWidth={false}
+                          label={t('foodPolish.addFood')}
+                          icon={<Ionicons name="add" size={14} color={colors.accent} />}
                           testID={`btn-quick-add-${item.food.id}`}
                           onPress={() => void handleOneTapAdd(item)}
                           disabled={historySaving || batchSaving}
@@ -967,18 +965,7 @@ export function FoodLogModal({
                             borderColor: colors.accent,
                             gap: 3,
                           }}
-                        >
-                          <Ionicons name="add" size={14} color={colors.accent} />
-                          <Text
-                            style={{
-                              fontSize: fontSize.xs,
-                              fontWeight: '700',
-                              color: colors.accent,
-                            }}
-                          >
-                            {t('foodPolish.addFood')}
-                          </Text>
-                        </Pressable>
+                        />
                       </View>
                     </View>
                   ))}

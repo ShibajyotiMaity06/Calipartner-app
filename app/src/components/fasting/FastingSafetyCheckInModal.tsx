@@ -1,3 +1,5 @@
+import { visualPrimitives } from '@calipartner/ui/tokens';
+import { Button } from '@calipartner/ui';
 import { useTheme as useAppearance } from '@calipartner/ui/theme';
 import React, { useState } from 'react';
 import { Modal, Pressable, StyleSheet, View } from 'react-native';
@@ -132,15 +134,16 @@ export function FastingSafetyCheckInModal({
 
             {/* Unwell mode close/back */}
             {isUnwell && (
-              <Pressable
+              <Button
+                variant="secondary"
+                fullWidth={false}
+                label="Dismiss"
                 testID="button-safety-cancel"
                 style={styles.textButton}
                 onPress={onClose}
                 accessibilityRole="button"
                 accessibilityLabel="Close"
-              >
-                <Text style={styles.textButtonLabel}>Dismiss</Text>
-              </Pressable>
+              />
             )}
           </View>
         </View>
@@ -171,7 +174,7 @@ const createStyles = (dark: ReturnType<typeof useAppearance>['colors']) =>
     iconCircle: {
       width: 56,
       height: 56,
-      borderRadius: 28,
+      borderRadius: visualPrimitives.radii[28],
       backgroundColor: 'rgba(255, 179, 138, 0.12)',
       justifyContent: 'center',
       alignItems: 'center',

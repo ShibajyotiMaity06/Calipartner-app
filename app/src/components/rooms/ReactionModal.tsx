@@ -1,3 +1,5 @@
+import { visualPrimitives } from '@calipartner/ui/tokens';
+import { Button } from '@calipartner/ui';
 import React, { useState } from 'react';
 import { ActivityIndicator, Modal, Pressable, StyleSheet, View } from 'react-native';
 import { Text } from '@calipartner/ui';
@@ -76,15 +78,18 @@ export function ReactionModal({
                 {t('rooms.reactionModal.subtitle')}
               </Text>
             </View>
-            <Pressable
+            <Button
+              variant="tertiary"
+              fullWidth={false}
+              label="Close reaction modal"
+              iconOnly
+              icon={<Ionicons name="close" size={18} color={colors.text} />}
               onPress={onClose}
               style={[styles.closeButton, { backgroundColor: colors.surfaceAlt }]}
               accessibilityRole="button"
               accessibilityLabel="Close reaction modal"
               testID="btn-close-reaction-modal"
-            >
-              <Ionicons name="close" size={18} color={colors.text} />
-            </Pressable>
+            />
           </View>
 
           {/* Recipient info pill */}
@@ -102,7 +107,13 @@ export function ReactionModal({
             {reactionOptions.map((opt) => {
               const isSelected = selectedReaction === opt.type;
               return (
-                <Pressable
+                <Button
+                  variant="secondary"
+                  fullWidth={false}
+                  label={opt.label}
+                  icon={
+                    <Ionicons name={opt.icon} size={24} color={colors.text} accessible={false} />
+                  }
                   key={opt.type}
                   onPress={() => setSelectedReaction(opt.type)}
                   style={[
@@ -115,10 +126,7 @@ export function ReactionModal({
                   accessibilityRole="button"
                   accessibilityLabel={opt.label}
                   testID={`reaction-btn-${opt.type}`}
-                >
-                  <Ionicons name={opt.icon} size={24} color={colors.text} accessible={false} />
-                  <Text style={[styles.reactionLabel, { color: colors.text }]}>{opt.label}</Text>
-                </Pressable>
+                />
               );
             })}
           </View>
@@ -138,7 +146,7 @@ export function ReactionModal({
             testID="btn-submit-reaction"
           >
             {loading ? (
-              <ActivityIndicator size="small" color="#FFFFFF" />
+              <ActivityIndicator size="small" color={visualPrimitives.colors.white} />
             ) : (
               <Text style={styles.sendButtonText}>
                 {successToast
@@ -186,7 +194,7 @@ const styles = StyleSheet.create({
   closeButton: {
     width: 32,
     height: 32,
-    borderRadius: 16,
+    borderRadius: visualPrimitives.radii[16],
     alignItems: 'center',
     justifyContent: 'center',
     marginLeft: spacing.sm,
@@ -235,7 +243,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   sendButtonText: {
-    color: '#FFFFFF',
+    color: visualPrimitives.colors.white,
     fontSize: fontSize.sm,
     fontWeight: '700',
   },

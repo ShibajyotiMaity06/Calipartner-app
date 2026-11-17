@@ -1,3 +1,5 @@
+import { visualPrimitives } from '@calipartner/ui/tokens';
+import { Button } from '@calipartner/ui';
 import { useTheme as useAppearance } from '@calipartner/ui/theme';
 import React, { useRef } from 'react';
 import {
@@ -217,15 +219,16 @@ export function ChatMessageBubble({
                       <Ionicons name="time-outline" size={16} color={colors.textMuted} />
                       <Text style={{ color: colors.textMuted }}>{t('chatAudit.checking')}</Text>
                       {isMine ? (
-                        <Pressable
+                        <Button
+                          variant="secondary"
+                          fullWidth={false}
+                          label={t('chatAudit.retryCheck')}
                           accessibilityRole="button"
                           accessibilityLabel={t('chatAudit.retryCheck')}
                           onPress={() => onRetry?.(message)}
                           style={styles.mediaRetry}
                           testID={`retry-media-${att.id}`}
-                        >
-                          <Text style={{ color: colors.text }}>{t('chatAudit.retryCheck')}</Text>
-                        </Pressable>
+                        />
                       ) : null}
                     </View>
                   );
@@ -295,16 +298,17 @@ export function ChatMessageBubble({
 
         {/* Failed state: Retry button */}
         {isMine && isFailed && (
-          <Pressable
+          <Button
+            variant="destructive"
+            fullWidth={false}
+            label={t('chat.retryBtn')}
+            icon={<Ionicons name="refresh-outline" size={14} color={colors.danger} />}
             onPress={() => onRetry?.(message)}
             style={[styles.retryRow]}
             accessibilityRole="button"
             accessibilityLabel="Retry sending failed message"
             testID={`btn-retry-message-${message.id}`}
-          >
-            <Ionicons name="refresh-outline" size={14} color={colors.danger} />
-            <Text style={[styles.retryText, { color: colors.danger }]}>{t('chat.retryBtn')}</Text>
-          </Pressable>
+          />
         )}
       </Animated.View>
     </Animated.View>
@@ -392,10 +396,10 @@ const styles = StyleSheet.create({
     borderRadius: radius.lg,
   },
   bubbleBoxMine: {
-    borderBottomRightRadius: 4,
+    borderBottomRightRadius: visualPrimitives.radii[4],
   },
   bubbleBoxOther: {
-    borderBottomLeftRadius: 4,
+    borderBottomLeftRadius: visualPrimitives.radii[4],
   },
   messageText: {
     fontSize: fontSize.sm,
@@ -428,7 +432,7 @@ const styles = StyleSheet.create({
     borderRadius: radius.md,
   },
   attachmentFallback: {
-    backgroundColor: '#00000010',
+    backgroundColor: visualPrimitives.colors.blackWash,
     alignItems: 'center',
     justifyContent: 'center',
   },

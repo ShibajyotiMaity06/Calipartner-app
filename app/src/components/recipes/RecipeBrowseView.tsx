@@ -1,3 +1,4 @@
+import { visualPrimitives } from '@calipartner/ui/tokens';
 import { NavigationIcon } from '@calipartner/ui';
 import { useSubscription } from '@/hooks/useSubscription';
 import { Text, Button } from '@calipartner/ui';
@@ -208,16 +209,19 @@ export function RecipeBrowseView({
           ]}
         >
           {showBackOrClose && (
-            <Pressable
+            <Button
+              variant="tertiary"
+              fullWidth={false}
+              label="Back"
+              iconOnly
+              icon={<NavigationIcon action="back" />}
               testID="btn-browse-recipes-back"
               onPress={onBackOrClose}
               hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
               accessibilityRole="button"
               accessibilityLabel="Back"
               style={styles.backBtn}
-            >
-              <NavigationIcon action="back" />
-            </Pressable>
+            />
           )}
 
           <Text style={[styles.headerTitle, { color: colors.text }]} numberOfLines={1}>
@@ -281,7 +285,7 @@ export function RecipeBrowseView({
             <Ionicons
               name={activeTab === 'favorites' ? 'heart' : 'heart-outline'}
               size={15}
-              color={activeTab === 'favorites' ? '#EF4444' : colors.textMuted}
+              color={activeTab === 'favorites' ? visualPrimitives.colors.danger : colors.textMuted}
             />
             <Text
               style={[
@@ -328,17 +332,16 @@ export function RecipeBrowseView({
             {t('recipes.browse.errorTitle')}
           </Text>
           <Text style={[styles.stateText, { color: colors.textMuted }]}>{errorMsg}</Text>
-          <Pressable
+          <Button
+            variant="secondary"
+            fullWidth={false}
+            label={t('recipes.browse.errorRetry')}
             testID="btn-retry-recipes"
             onPress={loadRecipes}
             accessibilityRole="button"
             accessibilityLabel={t('recipes.browse.errorRetry')}
             style={[styles.retryBtn, { backgroundColor: colors.accent }]}
-          >
-            <Text style={[styles.retryBtnText, { color: colors.onAccent }]}>
-              {t('recipes.browse.errorRetry')}
-            </Text>
-          </Pressable>
+          />
         </View>
       ) : recipes.length === 0 ? (
         <View
@@ -361,7 +364,10 @@ export function RecipeBrowseView({
               : t('recipes.browse.emptyAllDesc')}
           </Text>
           {activeTab === 'all' && (query.length > 0 || Object.keys(criteria).length > 0) && (
-            <Pressable
+            <Button
+              variant="secondary"
+              fullWidth={false}
+              label={t('recipes.browse.clearFilters')}
               testID="btn-empty-clear-filters"
               onPress={() => {
                 setQuery('');
@@ -370,11 +376,7 @@ export function RecipeBrowseView({
               accessibilityRole="button"
               accessibilityLabel={t('recipes.browse.clearFilters')}
               style={[styles.retryBtn, { backgroundColor: colors.accent }]}
-            >
-              <Text style={[styles.retryBtnText, { color: colors.onAccent }]}>
-                {t('recipes.browse.clearFilters')}
-              </Text>
-            </Pressable>
+            />
           )}
         </View>
       ) : (

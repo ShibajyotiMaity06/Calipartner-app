@@ -1,3 +1,4 @@
+import { Button } from '@calipartner/ui';
 import { type as inputTypography } from '@calipartner/ui';
 import { Text } from '@calipartner/ui';
 import React, { useState } from 'react';
@@ -78,14 +79,17 @@ export function ManualStepsModal({ visible, onClose, onSave }: ManualStepsModalP
                 {t('trackers.steps.manualModalTitle')}
               </Text>
             </View>
-            <Pressable
+            <Button
+              variant="tertiary"
+              fullWidth={false}
+              label={t('common.cancel')}
+              iconOnly
+              icon={<Ionicons name="close" size={22} color={colors.textMuted} />}
               onPress={onClose}
               hitSlop={8}
               accessibilityRole="button"
               accessibilityLabel={t('common.cancel')}
-            >
-              <Ionicons name="close" size={22} color={colors.textMuted} />
-            </Pressable>
+            />
           </View>
 
           {/* Steps TextInput */}
@@ -157,29 +161,29 @@ export function ManualStepsModal({ visible, onClose, onSave }: ManualStepsModalP
 
           {/* Actions */}
           <View style={styles.actionsRow}>
-            <Pressable
+            <Button
+              variant="secondary"
+              fullWidth={false}
+              label={t('common.cancel')}
               testID="btn-cancel-steps"
               onPress={onClose}
               disabled={saving}
               style={[styles.btn, styles.cancelBtn, { borderColor: colors.border }]}
               accessibilityRole="button"
               accessibilityLabel={t('common.cancel')}
-            >
-              <Text style={[styles.btnText, { color: colors.text }]}>{t('common.cancel')}</Text>
-            </Pressable>
+            />
 
-            <Pressable
+            <Button
+              variant="secondary"
+              fullWidth={false}
+              label={saving ? t('common.saving') : t('common.save')}
               testID="btn-save-steps"
               onPress={handleSubmit}
               disabled={saving}
               style={[styles.btn, styles.submitBtn, { backgroundColor: colors.accent }]}
               accessibilityRole="button"
               accessibilityLabel={t('common.save')}
-            >
-              <Text style={[styles.btnText, { color: colors.onAccent, fontWeight: '700' }]}>
-                {saving ? t('common.saving') : t('common.save')}
-              </Text>
-            </Pressable>
+            />
           </View>
         </View>
       </View>

@@ -1,6 +1,8 @@
+import { visualPrimitives } from '@calipartner/ui/tokens';
+import { Button } from '@calipartner/ui';
 import { Text } from '@calipartner/ui';
 import React from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { t } from '@/i18n';
 import { fontSize, radius, spacing } from '@/theme/tokens';
@@ -42,16 +44,17 @@ export function CoachSuggestionCard({ suggestion, onLog }: CoachSuggestionCardPr
           </View>
         </View>
 
-        <Pressable
+        <Button
+          variant="secondary"
+          fullWidth={false}
+          label={t('coach.suggestion.logIt')}
+          icon={<Ionicons name="add" size={14} color={visualPrimitives.colors.white} />}
           onPress={() => onLog(suggestion)}
           style={[styles.logButton, { backgroundColor: colors.accent }]}
           accessibilityRole="button"
           accessibilityLabel={`${t('coach.suggestion.logIt')} ${suggestion.title}`}
           testID={`btn-coach-log-${suggestion.id}`}
-        >
-          <Ionicons name="add" size={14} color="#FFFFFF" />
-          <Text style={styles.logButtonText}>{t('coach.suggestion.logIt')}</Text>
-        </Pressable>
+        />
       </View>
 
       <Text
@@ -141,7 +144,7 @@ const styles = StyleSheet.create({
     borderRadius: radius.pill,
   },
   logButtonText: {
-    color: '#FFFFFF',
+    color: visualPrimitives.colors.white,
     fontSize: fontSize.xs,
     fontWeight: '700',
   },

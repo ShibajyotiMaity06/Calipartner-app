@@ -1,3 +1,5 @@
+import { visualPrimitives } from '@calipartner/ui/tokens';
+import { Button } from '@calipartner/ui';
 import { type as inputTypography } from '@calipartner/ui';
 import React, { useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, Modal, Pressable, StyleSheet, TextInput, View } from 'react-native';
@@ -92,7 +94,7 @@ export function ChatReportModal({
           ) : null}
           {submittedToast ? (
             <View style={styles.toastWrap} testID="toast-report-submitted">
-              <Ionicons name="checkmark-circle" size={40} color="#10B981" />
+              <Ionicons name="checkmark-circle" size={40} color={visualPrimitives.colors.emerald} />
               <Text style={[styles.toastText, { color: colors.text }]}>
                 {t('rooms.reportModal.submittedToast')}
               </Text>
@@ -161,16 +163,15 @@ export function ChatReportModal({
 
               {/* Buttons Row */}
               <View style={styles.buttonsRow}>
-                <Pressable
+                <Button
+                  variant="secondary"
+                  fullWidth={false}
+                  label={t('chat.cancel')}
                   onPress={onClose}
                   style={[styles.cancelBtn, { backgroundColor: colors.surfaceAlt }]}
                   accessibilityRole="button"
                   testID="btn-cancel-report"
-                >
-                  <Text style={[styles.cancelBtnText, { color: colors.text }]}>
-                    {t('chat.cancel')}
-                  </Text>
-                </Pressable>
+                />
 
                 <Pressable
                   onPress={handleSubmit}
@@ -181,7 +182,7 @@ export function ChatReportModal({
                   testID="btn-submit-report"
                 >
                   {submitting ? (
-                    <ActivityIndicator size="small" color="#FFFFFF" />
+                    <ActivityIndicator size="small" color={visualPrimitives.colors.white} />
                   ) : (
                     <Text style={styles.submitBtnText}>{t('rooms.reportModal.submitBtn')}</Text>
                   )}
@@ -283,7 +284,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   submitBtnText: {
-    color: '#FFFFFF',
+    color: visualPrimitives.colors.white,
     fontFamily: typography.body.fontFamily,
     fontSize: fontSize.sm,
     fontWeight: '700',

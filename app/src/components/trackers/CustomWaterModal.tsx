@@ -1,3 +1,4 @@
+import { Button } from '@calipartner/ui';
 import { type as inputTypography } from '@calipartner/ui';
 import { Text } from '@calipartner/ui';
 import { useState } from 'react';
@@ -72,14 +73,17 @@ export function CustomWaterModal({ visible, onClose, onSave }: CustomWaterModalP
                 {t('trackers.water.customModalTitle')}
               </Text>
             </View>
-            <Pressable
+            <Button
+              variant="tertiary"
+              fullWidth={false}
+              label={t('common.cancel')}
+              iconOnly
+              icon={<Ionicons name="close" size={22} color={colors.textMuted} />}
               onPress={onClose}
               hitSlop={8}
               accessibilityRole="button"
               accessibilityLabel={t('common.cancel')}
-            >
-              <Ionicons name="close" size={22} color={colors.textMuted} />
-            </Pressable>
+            />
           </View>
 
           {/* Quick Preset Buttons */}
@@ -151,29 +155,29 @@ export function CustomWaterModal({ visible, onClose, onSave }: CustomWaterModalP
 
           {/* Action Buttons */}
           <View style={styles.actionsRow}>
-            <Pressable
+            <Button
+              variant="secondary"
+              fullWidth={false}
+              label={t('common.cancel')}
               testID="btn-cancel-water"
               onPress={onClose}
               disabled={saving}
               style={[styles.btn, styles.cancelBtn, { borderColor: colors.border }]}
               accessibilityRole="button"
               accessibilityLabel={t('common.cancel')}
-            >
-              <Text style={[styles.btnText, { color: colors.text }]}>{t('common.cancel')}</Text>
-            </Pressable>
+            />
 
-            <Pressable
+            <Button
+              variant="secondary"
+              fullWidth={false}
+              label={saving ? t('common.saving') : t('common.save')}
               testID="btn-submit-water"
               onPress={handleSubmit}
               disabled={saving}
               style={[styles.btn, styles.submitBtn, { backgroundColor: colors.water }]}
               accessibilityRole="button"
               accessibilityLabel={t('common.save')}
-            >
-              <Text style={[styles.btnText, { color: colors.onWater, fontWeight: '700' }]}>
-                {saving ? t('common.saving') : t('common.save')}
-              </Text>
-            </Pressable>
+            />
           </View>
         </View>
       </View>

@@ -1,3 +1,4 @@
+import { Button } from '@calipartner/ui';
 import { useTheme as useAppearance } from '@calipartner/ui/theme';
 import { PremiumFeatureModal } from '@/components/subscription/PremiumFeatureModal';
 import React, { useEffect, useRef, useState } from 'react';
@@ -101,15 +102,18 @@ function RestTimerModalContent({
               <Text style={styles.title}>{t('workouts.restTimerTitle')}</Text>
             </View>
 
-            <Pressable
+            <Button
+              variant="tertiary"
+              fullWidth={false}
+              label="Close rest timer"
+              iconOnly
+              icon={<Ionicons name="close" size={20} color={dark.textMid} />}
               onPress={onClose}
               hitSlop={8}
               style={styles.closeBtn}
               accessibilityRole="button"
               accessibilityLabel="Close rest timer"
-            >
-              <Ionicons name="close" size={20} color={dark.textMid} />
-            </Pressable>
+            />
           </View>
 
           {/* Large Countdown Display */}
@@ -123,48 +127,44 @@ function RestTimerModalContent({
           {/* Preset Buttons */}
           <View style={styles.presetsRow}>
             {PRESET_INTERVALS.map((secs) => (
-              <Pressable
+              <Button
+                variant="secondary"
+                fullWidth={false}
+                label={`${secs}s`}
                 key={secs}
                 testID={`btn-preset-${secs}`}
                 style={[styles.presetChip, remainingSeconds === secs && styles.presetChipActive]}
                 onPress={() => handleSelectPreset(secs)}
                 accessibilityRole="button"
                 accessibilityLabel={`${secs} seconds rest`}
-              >
-                <Text
-                  style={[
-                    styles.presetChipText,
-                    remainingSeconds === secs && styles.presetChipTextActive,
-                  ]}
-                >
-                  {`${secs}s`}
-                </Text>
-              </Pressable>
+              />
             ))}
           </View>
 
           {/* Action Row: +15s and Skip */}
           <View style={styles.actionsRow}>
-            <Pressable
+            <Button
+              variant="secondary"
+              fullWidth={false}
+              label={t('workouts.add15s')}
+              icon={<Ionicons name="add" size={18} color={dark.textHi} />}
               testID="btn-rest-timer-add15"
               style={styles.add15Btn}
               onPress={handleAdd15}
               accessibilityRole="button"
               accessibilityLabel={t('workouts.add15s')}
-            >
-              <Ionicons name="add" size={18} color={dark.textHi} />
-              <Text style={styles.add15BtnText}>{t('workouts.add15s')}</Text>
-            </Pressable>
+            />
 
-            <Pressable
+            <Button
+              variant="secondary"
+              fullWidth={false}
+              label={t('workouts.skipRest')}
               testID="btn-rest-timer-skip"
               style={styles.skipBtn}
               onPress={onClose}
               accessibilityRole="button"
               accessibilityLabel={t('workouts.skipRest')}
-            >
-              <Text style={styles.skipBtnText}>{t('workouts.skipRest')}</Text>
-            </Pressable>
+            />
           </View>
         </View>
       </View>
@@ -260,7 +260,7 @@ const createStyles = (dark: ReturnType<typeof useAppearance>['colors']) =>
       fontWeight: '700',
     },
     presetChipTextActive: {
-      color: dark.onBrand, // #1C1109
+      color: dark.onBrand, // the onBrand token
     },
     actionsRow: {
       flexDirection: 'row',
@@ -296,7 +296,7 @@ const createStyles = (dark: ReturnType<typeof useAppearance>['colors']) =>
     skipBtnText: {
       fontSize: typeTokens.body.fontSize,
       fontFamily: typeTokens.body.fontFamily,
-      color: dark.onBrand, // #1C1109
+      color: dark.onBrand, // the onBrand token
       fontWeight: '700',
     },
   });

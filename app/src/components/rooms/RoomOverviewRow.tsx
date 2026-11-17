@@ -1,3 +1,5 @@
+import { visualPrimitives } from '@calipartner/ui/tokens';
+import { Button } from '@calipartner/ui';
 import { NavigationIcon } from '@calipartner/ui';
 import { type as inputTypography } from '@calipartner/ui';
 import React, { useMemo, useState } from 'react';
@@ -195,7 +197,12 @@ export function RoomOverviewRow({
               testID="input-search-overview"
             />
             {searchQuery.length > 0 && (
-              <Pressable
+              <Button
+                variant="tertiary"
+                fullWidth={false}
+                label="Clear search"
+                iconOnly
+                icon={<Ionicons name="close-circle" size={16} color={colors.textMuted} />}
                 onPress={() => {
                   setSearchQuery('');
                   setPage(1);
@@ -203,9 +210,7 @@ export function RoomOverviewRow({
                 accessibilityRole="button"
                 accessibilityLabel="Clear search"
                 testID="btn-clear-overview-search"
-              >
-                <Ionicons name="close-circle" size={16} color={colors.textMuted} />
-              </Pressable>
+              />
             )}
           </View>
 
@@ -249,7 +254,11 @@ export function RoomOverviewRow({
           {/* Pagination Controls */}
           {totalPages > 1 && (
             <View style={styles.paginationRow}>
-              <Pressable
+              <Button
+                variant="secondary"
+                fullWidth={false}
+                label={t('rooms.today.overviewPrev')}
+                icon={<NavigationIcon action="back" />}
                 onPress={() => setPage((p) => Math.max(1, p - 1))}
                 disabled={currentPage <= 1}
                 style={[
@@ -260,17 +269,7 @@ export function RoomOverviewRow({
                 accessibilityRole="button"
                 accessibilityLabel="Previous page"
                 testID="btn-overview-prev-page"
-              >
-                <NavigationIcon action="back" />
-                <Text
-                  style={[
-                    styles.pageBtnText,
-                    { color: currentPage <= 1 ? colors.textMuted : colors.text },
-                  ]}
-                >
-                  {t('rooms.today.overviewPrev')}
-                </Text>
-              </Pressable>
+              />
 
               <Text
                 style={[styles.pageIndicatorText, { color: colors.textMuted }]}
@@ -279,7 +278,17 @@ export function RoomOverviewRow({
                 {t('rooms.today.overviewPage', { page: currentPage, totalPages })}
               </Text>
 
-              <Pressable
+              <Button
+                variant="secondary"
+                fullWidth={false}
+                label={t('rooms.today.overviewNext')}
+                icon={
+                  <Ionicons
+                    name="chevron-forward"
+                    size={16}
+                    color={currentPage >= totalPages ? colors.textMuted : colors.text}
+                  />
+                }
                 onPress={() => setPage((p) => Math.min(totalPages, p + 1))}
                 disabled={currentPage >= totalPages}
                 style={[
@@ -290,21 +299,7 @@ export function RoomOverviewRow({
                 accessibilityRole="button"
                 accessibilityLabel="Next page"
                 testID="btn-overview-next-page"
-              >
-                <Text
-                  style={[
-                    styles.pageBtnText,
-                    { color: currentPage >= totalPages ? colors.textMuted : colors.text },
-                  ]}
-                >
-                  {t('rooms.today.overviewNext')}
-                </Text>
-                <Ionicons
-                  name="chevron-forward"
-                  size={16}
-                  color={currentPage >= totalPages ? colors.textMuted : colors.text}
-                />
-              </Pressable>
+              />
             </View>
           )}
         </View>
@@ -405,13 +400,13 @@ const styles = StyleSheet.create({
   avatar: {
     width: 32,
     height: 32,
-    borderRadius: 16,
+    borderRadius: visualPrimitives.radii[16],
     marginBottom: 4,
   },
   avatarPlaceholder: {
     width: 32,
     height: 32,
-    borderRadius: 16,
+    borderRadius: visualPrimitives.radii[16],
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 4,

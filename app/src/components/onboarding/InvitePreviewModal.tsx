@@ -1,7 +1,7 @@
 import { useTheme as useAppearance } from '@calipartner/ui/theme';
 import { NavigationIcon } from '@calipartner/ui';
 import React from 'react';
-import { View, StyleSheet, Modal, SafeAreaView, TouchableOpacity } from 'react-native';
+import { View, StyleSheet, Modal, SafeAreaView } from 'react-native';
 import { Text, Button, Avatar, PairedCard, space, radius } from '@calipartner/ui';
 import { playClickSound } from '@/lib/sound';
 
@@ -46,15 +46,18 @@ export function InvitePreviewModal({
         <View style={styles.container}>
           {/* Top close button */}
           <View style={styles.topBar}>
-            <TouchableOpacity
+            <Button
+              variant="tertiary"
+              fullWidth={false}
+              label="Go back"
+              iconOnly
+              icon={<NavigationIcon action="back" />}
               onPress={onClose}
               accessibilityRole="button"
               accessibilityLabel="Go back"
               style={styles.backButton}
               testID="btn-invite-preview-back"
-            >
-              <NavigationIcon action="back" />
-            </TouchableOpacity>
+            />
           </View>
 
           {/* Inviter Info Header (Spec A15) */}

@@ -1,5 +1,6 @@
+import { Button } from '@calipartner/ui';
 import React from 'react';
-import { Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
+import { ScrollView, StyleSheet, TextInput, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Text, homeLayout, type as inputTypography } from '@calipartner/ui';
 import type { RecipeFilterCriteria } from '@calipartner/core';
@@ -43,7 +44,12 @@ export function RecipeFilterBar({
           ]}
         />
         {query.length > 0 && (
-          <Pressable
+          <Button
+            variant="tertiary"
+            fullWidth={false}
+            label={t('homeRefresh.clearSearch')}
+            iconOnly
+            icon={<Ionicons name="close" size={homeLayout.iconSize} color={colors.textMuted} />}
             testID="btn-clear-recipe-search"
             onPress={() => onQueryChange('')}
             accessibilityRole="button"
@@ -54,9 +60,7 @@ export function RecipeFilterBar({
               alignItems: 'center',
               justifyContent: 'center',
             }}
-          >
-            <Ionicons name="close" size={homeLayout.iconSize} color={colors.textMuted} />
-          </Pressable>
+          />
         )}
       </View>
       <ScrollView
@@ -70,7 +74,16 @@ export function RecipeFilterBar({
               ? criteria.cuisine_group === 'indian'
               : criteria.nutrition_focus === filter;
           return (
-            <Pressable
+            <Button
+              variant="secondary"
+              fullWidth={false}
+              label={t(
+                filter === 'high-protein'
+                  ? 'homeRefresh.highProtein'
+                  : filter === 'high-carb'
+                    ? 'homeRefresh.highCarb'
+                    : 'fastingRefresh.indian',
+              )}
               key={filter}
               testID={'recipe-filter-' + filter}
               accessibilityRole="button"
@@ -94,27 +107,7 @@ export function RecipeFilterBar({
                   borderColor: selected ? colors.copper : colors.border,
                 },
               ]}
-            >
-              <Text
-                nutrient={
-                  filter === 'high-protein'
-                    ? 'protein'
-                    : filter === 'high-carb'
-                      ? 'carbs'
-                      : undefined
-                }
-                variant="label"
-                color={selected ? colors.accent : colors.text}
-              >
-                {t(
-                  filter === 'high-protein'
-                    ? 'homeRefresh.highProtein'
-                    : filter === 'high-carb'
-                      ? 'homeRefresh.highCarb'
-                      : 'fastingRefresh.indian',
-                )}
-              </Text>
-            </Pressable>
+            />
           );
         })}
       </ScrollView>

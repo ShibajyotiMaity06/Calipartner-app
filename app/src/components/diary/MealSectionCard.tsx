@@ -1,3 +1,4 @@
+import { Button } from '@calipartner/ui';
 import { useTheme as useAppearance } from '@calipartner/ui/theme';
 import React from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
@@ -71,7 +72,18 @@ export function MealSectionCard({
         </View>
         <View style={styles.headerRight}>
           {/* Trailing 32 Circle ＋ Button (Spec C01) */}
-          <Pressable
+          <Button
+            variant="tertiary"
+            fullWidth={false}
+            label={t('repairs.addFood', { section: sectionName })}
+            iconOnly
+            icon={
+              <Ionicons
+                name="add"
+                size={20}
+                color={isCurrentMealSuggestion ? dark.onBrand : dark.textHi}
+              />
+            }
             testID={`btn-add-food-${section}`}
             onPress={(e) => {
               e.stopPropagation();
@@ -81,13 +93,7 @@ export function MealSectionCard({
             style={[styles.addPlusButton, isCurrentMealSuggestion && styles.addPlusButtonSuggested]}
             accessibilityRole="button"
             accessibilityLabel={t('repairs.addFood', { section: sectionName })}
-          >
-            <Ionicons
-              name="add"
-              size={20}
-              color={isCurrentMealSuggestion ? dark.onBrand : dark.textHi}
-            />
-          </Pressable>
+          />
         </View>
       </View>
 
@@ -127,7 +133,11 @@ export function MealSectionCard({
           </Text>
           <View style={styles.suggestionsRow}>
             {suggestions.slice(0, 3).map((s) => (
-              <Pressable
+              <Button
+                variant="secondary"
+                fullWidth={false}
+                label={s.food_name}
+                icon={<Ionicons name="add" size={12} color={dark.apricot} />}
                 key={s.food_id}
                 testID={`suggestion-${section}-${s.food_id}`}
                 onPress={(e) => {
@@ -135,12 +145,7 @@ export function MealSectionCard({
                   onSelectSuggestion?.(s, section);
                 }}
                 style={styles.suggestionPill}
-              >
-                <Ionicons name="add" size={12} color={dark.apricot} />
-                <Text variant="bodyS" color={dark.textHi}>
-                  {s.food_name}
-                </Text>
-              </Pressable>
+              />
             ))}
           </View>
         </View>
@@ -184,7 +189,12 @@ export function MealSectionCard({
                 <Text nutrient="calories" variant="numeralM" color={dark.textHi}>
                   {entry.calories}
                 </Text>
-                <Pressable
+                <Button
+                  variant="tertiary"
+                  fullWidth={false}
+                  label={t('repairs.deleteFood', { name: entry.food_name })}
+                  iconOnly
+                  icon={<Ionicons name="trash-outline" size={15} color={dark.textLo} />}
                   testID={`btn-delete-${entry.id}`}
                   style={styles.deleteButton}
                   accessibilityRole="button"
@@ -194,9 +204,7 @@ export function MealSectionCard({
                     onDeleteEntry(entry.id);
                   }}
                   hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-                >
-                  <Ionicons name="trash-outline" size={15} color={dark.textLo} />
-                </Pressable>
+                />
               </View>
             </Pressable>
           ))}

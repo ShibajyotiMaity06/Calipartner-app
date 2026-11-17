@@ -85,15 +85,18 @@ export function RoomHeader({
         <Text variant="title2" style={styles.flex}>
           {currentRoom?.name ?? t('tabs.room')}
         </Text>
-        <Pressable
+        <Button
+          variant="tertiary"
+          fullWidth={false}
+          label={t('rooms.settingsModal.title')}
+          iconOnly
+          icon={<Ionicons name="settings-outline" size={homeLayout.iconSize} color={dark.textHi} />}
           onPress={onOpenSettings}
           style={styles.back}
           accessibilityRole="button"
           accessibilityLabel={t('rooms.settingsModal.title')}
           testID="btn-room-settings"
-        >
-          <Ionicons name="settings-outline" size={homeLayout.iconSize} color={dark.textHi} />
-        </Pressable>
+        />
       </View>
     );
   return (
@@ -114,7 +117,11 @@ export function RoomHeader({
               gap: space[1],
             }}
           >
-            <Pressable
+            <Button
+              variant="secondary"
+              fullWidth={false}
+              label={currentRoom?.name ?? t('tabs.room')}
+              icon={<Ionicons name="chevron-down" size={18} color={dark.textMid} />}
               onPress={() => setPanel('rooms')}
               accessibilityRole="button"
               accessibilityLabel={currentRoom?.name ?? t('tabs.room')}
@@ -126,12 +133,7 @@ export function RoomHeader({
                 flexShrink: 1,
                 minHeight: homeLayout.touchSize,
               }}
-            >
-              <Text variant="title1" numberOfLines={1} style={{ flexShrink: 1 }}>
-                {currentRoom?.name ?? t('tabs.room')}
-              </Text>
-              <Ionicons name="chevron-down" size={18} color={dark.textMid} />
-            </Pressable>
+            />
             {currentRoom && activeSegment === 'today' && (
               <EditSquadName room={currentRoom} location="squad" />
             )}

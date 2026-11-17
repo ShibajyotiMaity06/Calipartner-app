@@ -33,7 +33,7 @@ vi.mock('@calipartner/ui', async () => ({
   ...(await import('../../../../packages/ui/src/tokens')),
   Text: 'Text',
   SegmentedControl: 'SegmentedControl',
-  Button: 'Button',
+  Button: (await import('@/test/ButtonStub')).ButtonStub,
   Field: 'Field',
   Avatar: 'Avatar',
   Sheet: ({ visible, children }: { visible: boolean; children: React.ReactNode }) =>

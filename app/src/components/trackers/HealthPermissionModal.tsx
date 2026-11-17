@@ -1,3 +1,4 @@
+import { Button } from '@calipartner/ui';
 import { NavigationIcon } from '@calipartner/ui';
 import { Text } from '@calipartner/ui';
 import { useState } from 'react';
@@ -77,15 +78,18 @@ export function HealthPermissionModal({
                 <Text style={[styles.subtitle, { color: colors.textMuted }]}>{platformName}</Text>
               </View>
             </View>
-            <Pressable
+            <Button
+              variant="tertiary"
+              fullWidth={false}
+              label={t('common.cancel')}
+              iconOnly
+              icon={<Ionicons name="close" size={22} color={colors.textMuted} />}
               testID="btn-close-permission"
               onPress={onClose}
               hitSlop={8}
               accessibilityRole="button"
               accessibilityLabel={t('common.cancel')}
-            >
-              <Ionicons name="close" size={22} color={colors.textMuted} />
-            </Pressable>
+            />
           </View>
 
           <ScrollView
@@ -179,7 +183,11 @@ export function HealthPermissionModal({
                   </View>
                 )}
 
-                <Pressable
+                <Button
+                  variant="secondary"
+                  fullWidth={false}
+                  label={t('trackers.permissions.openSettingsButton')}
+                  icon={<Ionicons name="open-outline" size={16} color={colors.accent} />}
                   testID="btn-open-settings"
                   onPress={() => void handleOpenSettings()}
                   style={[
@@ -188,12 +196,7 @@ export function HealthPermissionModal({
                   ]}
                   accessibilityRole="button"
                   accessibilityLabel={t('trackers.permissions.openSettingsButton')}
-                >
-                  <Ionicons name="open-outline" size={16} color={colors.accent} />
-                  <Text style={[styles.settingsBtnText, { color: colors.accent }]}>
-                    {t('trackers.permissions.openSettingsButton')}
-                  </Text>
-                </Pressable>
+                />
               </View>
             )}
 
@@ -273,7 +276,17 @@ export function HealthPermissionModal({
           {/* Action Buttons */}
           <View style={styles.footerRow}>
             {!isGranted && !isUnavailable && (
-              <Pressable
+              <Button
+                variant="secondary"
+                fullWidth={false}
+                label={
+                  requesting
+                    ? t('common.loading')
+                    : isDenied
+                      ? t('trackers.permissions.reconnectButton')
+                      : t('trackers.permissions.connectButton')
+                }
+                icon={<Ionicons name="link-outline" size={18} color={colors.onAccent} />}
                 testID="btn-grant-permission"
                 onPress={() => void handleRequest()}
                 disabled={requesting}
@@ -284,19 +297,15 @@ export function HealthPermissionModal({
                     ? t('trackers.permissions.reconnectButton')
                     : t('trackers.permissions.connectButton')
                 }
-              >
-                <Ionicons name="link-outline" size={18} color={colors.onAccent} />
-                <Text style={[styles.primaryActionText, { color: colors.onAccent }]}>
-                  {requesting
-                    ? t('common.loading')
-                    : isDenied
-                      ? t('trackers.permissions.reconnectButton')
-                      : t('trackers.permissions.connectButton')}
-                </Text>
-              </Pressable>
+              />
             )}
 
-            <Pressable
+            <Button
+              variant="tertiary"
+              fullWidth={false}
+              label={t('trackers.permissions.close')}
+              iconOnly
+              icon={<NavigationIcon action="close" />}
               onPress={onClose}
               style={[
                 styles.closeButton,
@@ -307,9 +316,7 @@ export function HealthPermissionModal({
               ]}
               accessibilityRole="button"
               accessibilityLabel={t('trackers.permissions.close')}
-            >
-              <NavigationIcon action="close" />
-            </Pressable>
+            />
           </View>
         </View>
       </View>

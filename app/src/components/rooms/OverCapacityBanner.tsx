@@ -1,5 +1,7 @@
+import { visualPrimitives } from '@calipartner/ui/tokens';
+import { Button } from '@calipartner/ui';
 import React from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { Text } from '@calipartner/ui';
 import { Ionicons } from '@expo/vector-icons';
 import { t } from '@/i18n';
@@ -66,19 +68,29 @@ export function OverCapacityBanner({
       {/* Host actions */}
       {isHost && (
         <View style={styles.actionsRow}>
-          <Pressable
+          <Button
+            variant="secondary"
+            fullWidth={false}
+            label={t('rooms.overCapacity.upgradeBtn')}
+            icon={
+              <Ionicons
+                name="information-circle-outline"
+                size={14}
+                color={visualPrimitives.colors.white}
+              />
+            }
             onPress={onUpgrade}
             style={[styles.upgradeBtn, { backgroundColor: colors.accent }]}
             accessibilityRole="button"
             accessibilityLabel={t('rooms.overCapacity.upgradeBtn')}
             testID="btn-over-capacity-upgrade"
-          >
-            <Ionicons name="information-circle-outline" size={14} color="#FFFFFF" />
-            <Text style={styles.upgradeBtnText}>{t('rooms.overCapacity.upgradeBtn')}</Text>
-          </Pressable>
+          />
 
           {onManageMembers && (
-            <Pressable
+            <Button
+              variant="secondary"
+              fullWidth={false}
+              label={t('rooms.overCapacity.manageMembersBtn')}
               onPress={onManageMembers}
               style={[
                 styles.manageBtn,
@@ -87,11 +99,7 @@ export function OverCapacityBanner({
               accessibilityRole="button"
               accessibilityLabel={t('rooms.overCapacity.manageMembersBtn')}
               testID="btn-over-capacity-manage"
-            >
-              <Text style={[styles.manageBtnText, { color: colors.text }]}>
-                {t('rooms.overCapacity.manageMembersBtn')}
-              </Text>
-            </Pressable>
+            />
           )}
         </View>
       )}
@@ -116,7 +124,7 @@ const styles = StyleSheet.create({
   iconCircle: {
     width: 36,
     height: 36,
-    borderRadius: 18,
+    borderRadius: visualPrimitives.radii[18],
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -148,7 +156,7 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   upgradeBtnText: {
-    color: '#FFFFFF',
+    color: visualPrimitives.colors.white,
     fontSize: fontSize.xs,
     fontWeight: '700',
   },
