@@ -336,7 +336,7 @@ export default function ComponentGalleryScreen(): React.JSX.Element | null {
             <ListRow
               title="Water Reminder"
               subtitle="Every 2 hours during day"
-              leading={<Ionicons name="water-outline" size={24} color={dark.teal} />}
+              leading={<Ionicons name="water-outline" size={24} color={dark.waterInk} />}
               trailing={<Ionicons name="chevron-forward" size={18} color={dark.textLo} />}
               onPress={() => {}}
             />

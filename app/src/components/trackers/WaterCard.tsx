@@ -113,7 +113,7 @@ export function WaterCard({ selectedDate, testID = 'water-card' }: WaterCardProp
       <View style={styles.headerRow}>
         <View style={styles.titleGroup}>
           <View style={styles.iconWrapper}>
-            <Ionicons name="water" size={18} color={dark.apricot} />
+            <Ionicons name="water" size={18} color={dark.waterInk} />
           </View>
           <View>
             <Text style={styles.title}>{t('trackers.water.title')}</Text>
@@ -163,7 +163,7 @@ export function WaterCard({ selectedDate, testID = 'water-card' }: WaterCardProp
       {/* Loading state */}
       {loading ? (
         <View style={styles.loadingContainer} testID="water-loading-state">
-          <ActivityIndicator size="small" color={dark.apricot} />
+          <ActivityIndicator size="small" color={dark.waterInk} />
           <Text style={styles.loadingText}>{t('common.loading')}</Text>
         </View>
       ) : (
@@ -194,7 +194,7 @@ export function WaterCard({ selectedDate, testID = 'water-card' }: WaterCardProp
                         inputRange: [0, 1],
                         outputRange: ['0%', '100%'],
                       }),
-                      backgroundColor: isGoalMet ? dark.teal : dark.iris,
+                      backgroundColor: dark.water,
                     },
                   ]}
                 />
@@ -213,7 +213,10 @@ export function WaterCard({ selectedDate, testID = 'water-card' }: WaterCardProp
               </View>
 
               <Text
-                style={[styles.statusBadgeText, { color: isGoalMet ? dark.teal : dark.textMid }]}
+                style={[
+                  styles.statusBadgeText,
+                  { color: isGoalMet ? dark.waterInk : dark.textMid },
+                ]}
               >
                 {isGoalMet
                   ? t('trackers.water.goalMetText')
@@ -235,7 +238,7 @@ export function WaterCard({ selectedDate, testID = 'water-card' }: WaterCardProp
                         inputRange: [0, 1],
                         outputRange: ['0%', '100%'],
                       }),
-                      backgroundColor: isGoalMet ? dark.teal : dark.apricot,
+                      backgroundColor: dark.water,
                     },
                   ]}
                 />
@@ -276,7 +279,7 @@ export function WaterCard({ selectedDate, testID = 'water-card' }: WaterCardProp
               accessibilityRole="button"
               accessibilityLabel={t('trackers.water.glass')}
             >
-              <Ionicons name="pint-outline" size={18} color={dark.apricot} />
+              <Ionicons name="pint-outline" size={18} color={dark.waterInk} />
               <Text style={styles.thumbBtnLabel}>{unit === 'fl_oz' ? '8 oz' : '250 ml'}</Text>
               <Text style={styles.thumbBtnSub}>Glass</Text>
             </Pressable>
@@ -289,7 +292,7 @@ export function WaterCard({ selectedDate, testID = 'water-card' }: WaterCardProp
               accessibilityRole="button"
               accessibilityLabel={t('trackers.water.bottle')}
             >
-              <Ionicons name="water-outline" size={18} color={dark.apricot} />
+              <Ionicons name="water-outline" size={18} color={dark.waterInk} />
               <Text style={styles.thumbBtnLabel}>{unit === 'fl_oz' ? '17 oz' : '500 ml'}</Text>
               <Text style={styles.thumbBtnSub}>Bottle</Text>
             </Pressable>
@@ -302,7 +305,7 @@ export function WaterCard({ selectedDate, testID = 'water-card' }: WaterCardProp
               accessibilityRole="button"
               accessibilityLabel={t('trackers.water.large')}
             >
-              <Ionicons name="flask-outline" size={18} color={dark.apricot} />
+              <Ionicons name="flask-outline" size={18} color={dark.waterInk} />
               <Text style={styles.thumbBtnLabel}>{unit === 'fl_oz' ? '34 oz' : '1 L'}</Text>
               <Text style={styles.thumbBtnSub}>Large</Text>
             </Pressable>
@@ -317,7 +320,7 @@ export function WaterCard({ selectedDate, testID = 'water-card' }: WaterCardProp
               accessibilityRole="button"
               accessibilityLabel={t('trackers.water.customAmount')}
             >
-              <Ionicons name="options-outline" size={16} color={dark.apricot} />
+              <Ionicons name="options-outline" size={16} color={dark.waterInk} />
               <Text style={styles.customTextButtonLabel}>{t('trackers.water.customAmount')}</Text>
             </Pressable>
           </View>
@@ -337,7 +340,7 @@ export function WaterCard({ selectedDate, testID = 'water-card' }: WaterCardProp
                   return (
                     <View key={log.id} style={styles.entryRow} testID={`water-entry-${log.id}`}>
                       <View style={styles.entryLeft}>
-                        <Ionicons name="water-outline" size={14} color={dark.teal} />
+                        <Ionicons name="water-outline" size={14} color={dark.waterInk} />
                         <Text style={styles.entryAmount}>{disp}</Text>
                         <Text style={styles.entryTime}>{time}</Text>
                       </View>
@@ -374,7 +377,7 @@ export function WaterCard({ selectedDate, testID = 'water-card' }: WaterCardProp
               testID="switch-water-reminders"
               value={remindersEnabled}
               onValueChange={setRemindersEnabled}
-              trackColor={{ false: dark.s3, true: dark.apricot }}
+              trackColor={{ false: dark.s3, true: dark.waterInk }}
               thumbColor={dark.bg0}
               accessibilityLabel={t('trackers.water.remindersTitle')}
             />
@@ -592,7 +595,7 @@ const createStyles = (dark: ReturnType<typeof useAppearance>['colors']) =>
       paddingHorizontal: space[3],
       minHeight: 44,
       borderWidth: 1,
-      borderColor: dark.apricot,
+      borderColor: dark.waterInk,
     },
     toastText: {
       fontSize: typeTokens.label.fontSize,
@@ -603,13 +606,13 @@ const createStyles = (dark: ReturnType<typeof useAppearance>['colors']) =>
     toastUndoButton: {
       paddingHorizontal: space[2],
       paddingVertical: 4,
-      backgroundColor: dark.apricot,
+      backgroundColor: dark.water,
       borderRadius: radius.control - 4,
     },
     toastUndoText: {
       fontSize: typeTokens.micro.fontSize,
       fontFamily: typeTokens.micro.fontFamily,
-      color: dark.onBrand, // #1C1109
+      color: dark.onWater, // #1C1109
       fontWeight: '700',
     },
     emptyNotice: {
@@ -663,7 +666,7 @@ const createStyles = (dark: ReturnType<typeof useAppearance>['colors']) =>
     customTextButtonLabel: {
       fontSize: typeTokens.label.fontSize,
       fontFamily: typeTokens.label.fontFamily,
-      color: dark.apricot,
+      color: dark.waterInk,
       fontWeight: '600',
     },
     entriesSection: {

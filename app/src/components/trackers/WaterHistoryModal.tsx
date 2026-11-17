@@ -107,7 +107,7 @@ export function WaterHistoryModal({
           {/* Header */}
           <View style={styles.header}>
             <View style={styles.headerTitleRow}>
-              <Ionicons name="time-outline" size={20} color={colors.accent} />
+              <Ionicons name="time-outline" size={20} color={colors.waterInk} />
               <Text style={[styles.title, { color: colors.text }]}>
                 {t('trackers.water.todayLogs')}
               </Text>
@@ -131,7 +131,7 @@ export function WaterHistoryModal({
           >
             {logs.length === 0 ? (
               <View style={styles.emptyContainer} testID="water-history-empty">
-                <Ionicons name="water-outline" size={36} color={colors.textMuted} />
+                <Ionicons name="water-outline" size={36} color={colors.waterInk} />
                 <Text style={[styles.emptyText, { color: colors.textMuted }]}>
                   {t('trackers.water.emptyHistory')}
                 </Text>
@@ -175,7 +175,7 @@ export function WaterHistoryModal({
                           testID={`btn-save-edit-water-${log.id}`}
                           onPress={() => void handleSaveEdit(log.id)}
                           disabled={isBusy}
-                          style={[styles.smallBtn, { backgroundColor: colors.accent }]}
+                          style={[styles.smallBtn, { backgroundColor: colors.waterInk }]}
                           accessibilityRole="button"
                           accessibilityLabel={t('common.save')}
                         >

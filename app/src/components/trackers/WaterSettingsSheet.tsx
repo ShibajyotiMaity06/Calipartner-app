@@ -127,7 +127,7 @@ export function WaterSettingsSheet({
           {/* Header */}
           <View style={styles.headerRow}>
             <View style={styles.headerTitleWrap}>
-              <Ionicons name="water" size={20} color={dark.apricot} />
+              <Ionicons name="water" size={20} color={dark.waterInk} />
               <Text style={styles.title}>{t('trackers.water.title')}</Text>
             </View>
 
@@ -441,7 +441,7 @@ const createStyles = (dark: ReturnType<typeof useAppearance>['colors']) =>
       borderColor: dark.hairline,
     },
     presetChipActive: {
-      borderColor: dark.apricot,
+      borderColor: dark.waterInk,
     },
     presetChipText: {
       fontSize: typeTokens.label.fontSize,
@@ -501,14 +501,14 @@ const createStyles = (dark: ReturnType<typeof useAppearance>['colors']) =>
       flex: 1,
       minHeight: 48,
       borderRadius: radius.button,
-      backgroundColor: dark.apricot,
+      backgroundColor: dark.water,
       alignItems: 'center',
       justifyContent: 'center',
     },
     saveBtnText: {
       fontSize: typeTokens.body.fontSize,
       fontFamily: typeTokens.body.fontFamily,
-      color: dark.onBrand, // #1C1109 - rule U2
+      color: dark.onWater, // #1C1109 - rule U2
       fontWeight: '700',
     },
     btnDisabled: {

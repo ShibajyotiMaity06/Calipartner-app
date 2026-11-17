@@ -191,7 +191,7 @@ export function PersonalDayCard({
                                   : 'beaker-outline'
                       }
                       size={homeLayout.editIconSize}
-                      color={dark.textMid}
+                      color={id === 'water' ? dark.waterInk : dark.textMid}
                       accessible={false}
                     />{' '}
                     {label}
@@ -215,7 +215,13 @@ export function PersonalDayCard({
                   <DayProgressTrack
                     value={value}
                     target={target}
-                    color={nutrient ? nutritionColors[nutrient] : dark.textMid}
+                    color={
+                      id === 'water'
+                        ? dark.water
+                        : nutrient
+                          ? nutritionColors[nutrient]
+                          : dark.textMid
+                    }
                     testID={`personal-day-track-${id ?? nutrient ?? 'steps'}`}
                   />
                 )}

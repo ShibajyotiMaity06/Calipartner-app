@@ -1,3 +1,7 @@
+import { LoggedWorkoutCard } from './LoggedWorkoutCard';
+import { LoggedWorkoutEditModal } from './LoggedWorkoutEditModal';
+import { LoggedWorkoutDeleteModal } from './LoggedWorkoutDeleteModal';
+import { WorkoutLoggerModal } from './WorkoutLoggerModal';
 import { useTheme as useAppearance } from '@calipartner/ui/theme';
 import React, { useEffect, useRef, useState } from 'react';
 import { Modal, Pressable, SafeAreaView, ScrollView, StyleSheet, View } from 'react-native';
@@ -9,6 +13,7 @@ import {
   FREE_WORKOUT_SAMPLES,
   weeklyPlanDayIndex,
   type Exercise,
+  type WorkoutWithDetails,
   type PlanPreferences,
   type WorkoutRoutineExercise,
 } from '@calipartner/core';
@@ -44,6 +49,8 @@ export function WorkoutDayModal({
     history = useWorkouts(date);
   const plan = routine.plan,
     day = plan?.days.find((day) => day.day === weeklyPlanDayIndex(date));
+  const [editLog, setEditLog] = useState<WorkoutWithDetails | null>(null);
+  const [deleteLog, setDeleteLog] = useState<WorkoutWithDetails | null>(null);
   const [picker, setPicker] = useState(false),
     [editing, setEditing] = useState<WorkoutRoutineExercise | null>(null),
     [logging, setLogging] = useState<WorkoutRoutineExercise | null>(null);
@@ -72,6 +79,8 @@ export function WorkoutDayModal({
       setError(null);
       setNotice(null);
       setAllLogged(false);
+      setEditLog(null);
+      setDeleteLog(null);
       session.current = newWorkoutSessionRequest();
     }
   }, [visible, defaultDate, today, user?.id]);
@@ -188,25 +197,12 @@ export function WorkoutDayModal({
         <Text>{t('workoutFlow.historyEmpty')}</Text>
       ) : (
         history.workouts.map((workout) => (
-          <View key={workout.id} style={styles.card}>
-            <Text variant="heading">{workout.name ?? t('workouts.types.strength')}</Text>
-            {workout.exercises.map((exercise) => (
-              <View key={exercise.id}>
-                <Text>{exercise.exercise_name}</Text>
-                {exercise.sets
-                  ?.filter((set) => set.completed)
-                  .map((set) => (
-                    <Text key={set.id} variant="bodyS" tabular>
-                      {t('workoutFlow.setSummary', {
-                        set: set.set_number,
-                        reps: set.reps ?? 0,
-                        weight: set.weight_kg ?? 0,
-                      })}
-                    </Text>
-                  ))}
-              </View>
-            ))}
-          </View>
+          <LoggedWorkoutCard
+            key={workout.id}
+            workout={workout}
+            onEdit={() => setEditLog(workout)}
+            onDelete={() => setDeleteLog(workout)}
+          />
         ))
       )}
     </View>
@@ -476,6 +472,36 @@ export function WorkoutDayModal({
             </>
           )}
         </ScrollView>
+        {editLog &&
+          (editLog.type === 'strength' ? (
+            <LoggedWorkoutEditModal
+              key={editLog.id}
+              workout={editLog}
+              onClose={() => setEditLog(null)}
+              onSaved={history.refresh}
+            />
+          ) : (
+            <WorkoutLoggerModal
+              visible
+              initialWorkout={editLog}
+              defaultDate={editLog.local_date}
+              onClose={() => setEditLog(null)}
+              onSaved={() => {
+                setEditLog(null);
+                void history.refresh();
+              }}
+            />
+          ))}
+        {deleteLog && (
+          <LoggedWorkoutDeleteModal
+            name={deleteLog.name || t(`workouts.types.${deleteLog.type}`)}
+            onClose={() => setDeleteLog(null)}
+            onDelete={async () => {
+              await history.remove(deleteLog.id);
+              setAllLogged(false);
+            }}
+          />
+        )}
         <ExercisePickerModal
           visible={picker}
           onClose={() => setPicker(false)}

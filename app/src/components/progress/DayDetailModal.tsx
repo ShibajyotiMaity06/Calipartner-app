@@ -159,7 +159,9 @@ export function DayDetailModal({
                 <Text style={[styles.detailLabel, { color: colors.textMuted }]}>
                   {t('progress.water.title')}
                 </Text>
-                <Text style={[styles.detailValue, { color: colors.text }]}>{data.waterMl} ml</Text>
+                <Text style={[styles.detailValue, { color: colors.waterInk }]}>
+                  {data.waterMl} ml
+                </Text>
               </View>
             )}
 

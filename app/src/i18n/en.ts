@@ -1,3 +1,4 @@
+import { workoutPolish } from './workoutPolish';
 import { publicSite } from './publicSite';
 import { progressRefresh } from './progressRefresh';
 import { launch } from './launch';
@@ -14,6 +15,7 @@ import { homeRefresh } from './homeRefresh';
 import { squadDesign } from './squadDesign';
 import { repairMessages } from './repairs';
 export const en = {
+  workoutPolish,
   progressRefresh,
   publicSite,
   launch,

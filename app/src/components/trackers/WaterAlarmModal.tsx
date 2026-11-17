@@ -135,7 +135,7 @@ export function WaterAlarmModal({
           <View style={styles.headerRow}>
             <View style={styles.headerTitleRow}>
               <View style={styles.iconCircle}>
-                <Ionicons name="water" size={20} color={dark.teal} />
+                <Ionicons name="water" size={20} color={dark.waterInk} />
               </View>
               <View>
                 <Text variant="heading" color={dark.textHi}>
@@ -169,7 +169,7 @@ export function WaterAlarmModal({
                   </Text>
                 </View>
                 <View style={styles.percentBadge}>
-                  <Text variant="numeralM" color={dark.teal}>
+                  <Text variant="numeralM" color={dark.waterInk}>
                     {progressPercent}%
                   </Text>
                 </View>
@@ -185,7 +185,7 @@ export function WaterAlarmModal({
                   onPress={() => handleQuickAdd(250)}
                   accessibilityLabel="Add 250 ml glass"
                 >
-                  <Ionicons name="pint-outline" size={16} color={dark.teal} />
+                  <Ionicons name="pint-outline" size={16} color={dark.waterInk} />
                   <Text variant="bodyS" color={dark.textHi}>
                     +250 ml
                   </Text>
@@ -195,7 +195,7 @@ export function WaterAlarmModal({
                   onPress={() => handleQuickAdd(500)}
                   accessibilityLabel="Add 500 ml bottle"
                 >
-                  <Ionicons name="water-outline" size={16} color={dark.teal} />
+                  <Ionicons name="water-outline" size={16} color={dark.waterInk} />
                   <Text variant="bodyS" color={dark.textHi}>
                     +500 ml
                   </Text>
@@ -205,7 +205,7 @@ export function WaterAlarmModal({
                   onPress={() => handleQuickAdd(750)}
                   accessibilityLabel="Add 750 ml flask"
                 >
-                  <Ionicons name="flask-outline" size={16} color={dark.teal} />
+                  <Ionicons name="flask-outline" size={16} color={dark.waterInk} />
                   <Text variant="bodyS" color={dark.textHi}>
                     +750 ml
                   </Text>
@@ -228,7 +228,7 @@ export function WaterAlarmModal({
                   accessibilityRole="button"
                   accessibilityLabel="Add custom water amount"
                 >
-                  <Text variant="bodyS" color={dark.onBrand} style={{ fontWeight: '700' }}>
+                  <Text variant="bodyS" color={dark.onWater} style={{ fontWeight: '700' }}>
                     + Add
                   </Text>
                 </TouchableOpacity>
@@ -238,7 +238,7 @@ export function WaterAlarmModal({
             {/* Phone Notification Alarm Section */}
             <View style={styles.alarmSection}>
               <View style={styles.sectionHeader}>
-                <Ionicons name="notifications" size={18} color={dark.apricot} />
+                <Ionicons name="notifications" size={18} color={dark.waterInk} />
                 <Text variant="body" color={dark.textHi} style={{ fontWeight: '700' }}>
                   Phone Hydration Alarms
                 </Text>
@@ -248,7 +248,7 @@ export function WaterAlarmModal({
               </Text>
 
               {loading ? (
-                <ActivityIndicator color={dark.apricot} style={{ marginVertical: 20 }} />
+                <ActivityIndicator color={dark.waterInk} style={{ marginVertical: 20 }} />
               ) : (
                 <>
                   {/* Enable Alarm Toggle */}
@@ -264,7 +264,7 @@ export function WaterAlarmModal({
                     <Switch
                       value={remindersEnabled}
                       onValueChange={setRemindersEnabled}
-                      trackColor={{ false: dark.s2, true: dark.teal }}
+                      trackColor={{ false: dark.s2, true: dark.waterInk }}
                       thumbColor={dark.textHi}
                     />
                   </View>
@@ -289,7 +289,7 @@ export function WaterAlarmModal({
                           >
                             <Text
                               variant="bodyS"
-                              color={intervalHours === item.hours ? dark.onBrand : dark.textMid}
+                              color={intervalHours === item.hours ? dark.onWater : dark.textMid}
                               style={{ fontWeight: intervalHours === item.hours ? '700' : '500' }}
                             >
                               {item.label}
@@ -313,7 +313,7 @@ export function WaterAlarmModal({
 
             {toastMessage && (
               <View style={styles.toastBox}>
-                <Ionicons name="checkmark-circle" size={16} color={dark.teal} />
+                <Ionicons name="checkmark-circle" size={16} color={dark.waterInk} />
                 <Text variant="bodyS" color={dark.textHi} style={{ marginLeft: 6 }}>
                   {toastMessage}
                 </Text>
@@ -417,7 +417,7 @@ const createStyles = (dark: ReturnType<typeof useAppearance>['colors']) =>
     },
     progressBarFill: {
       height: '100%',
-      backgroundColor: dark.teal,
+      backgroundColor: dark.water,
       borderRadius: radius.full,
     },
     quickAddRow: {
@@ -456,7 +456,7 @@ const createStyles = (dark: ReturnType<typeof useAppearance>['colors']) =>
     customWaterAddBtn: {
       height: 44,
       paddingHorizontal: space[4],
-      backgroundColor: dark.apricot,
+      backgroundColor: dark.water,
       borderRadius: radius.control,
       alignItems: 'center',
       justifyContent: 'center',
@@ -509,8 +509,8 @@ const createStyles = (dark: ReturnType<typeof useAppearance>['colors']) =>
       justifyContent: 'center',
     },
     chipActive: {
-      backgroundColor: dark.apricot,
-      borderColor: dark.apricot,
+      backgroundColor: dark.water,
+      borderColor: dark.waterInk,
     },
     timeWindowBox: {
       flexDirection: 'row',
@@ -528,7 +528,7 @@ const createStyles = (dark: ReturnType<typeof useAppearance>['colors']) =>
       borderRadius: radius.control,
       marginBottom: space[3],
       borderWidth: 1,
-      borderColor: dark.teal,
+      borderColor: dark.waterInk,
     },
     actionRow: {
       paddingVertical: space[2],

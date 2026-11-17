@@ -74,7 +74,7 @@ export function LogSomethingView({
                 {
                   food: dark.mint,
                   workout: dark.iris,
-                  water: dark.teal,
+                  water: dark.waterInk,
                   cardio: dark.sky,
                   weight: dark.orchid,
                 }[flow as 'food' | 'workout' | 'water' | 'cardio' | 'weight']

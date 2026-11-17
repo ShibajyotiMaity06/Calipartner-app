@@ -118,7 +118,7 @@ export function DailyGoalsModal({
                     Hydration target throughout the day
                   </Text>
                 </View>
-                <Text variant="numeralM" color={dark.teal} style={styles.metricDisplay}>
+                <Text variant="numeralM" color={dark.waterInk} style={styles.metricDisplay}>
                   {waterGoalMl.toLocaleString()} ml
                 </Text>
               </View>

@@ -246,7 +246,7 @@ export function PersonalDiaryView({
                           number: set.set_number,
                           reps: set.reps ?? '\u2014',
                         })}
-                        {set.weight_kg != null
+                        {set.weight_kg != null && set.weight_kg > 0
                           ? ' \u00b7 ' + t('squadDesign.load', { weight: set.weight_kg })
                           : ''}
                         {set.duration_seconds != null

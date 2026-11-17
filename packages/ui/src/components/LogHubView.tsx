@@ -144,7 +144,7 @@ export function LogHubView({
             onPress={() => onSelectTile('water')}
           >
             <View style={[styles.iconCircle, { backgroundColor: 'rgba(31, 189, 182, 0.16)' }]}>
-              <WaterIcon size={28} color={dark.teal} />
+              <WaterIcon size={28} color={dark.waterInk} />
             </View>
             <Text style={styles.tileLabel}>Water</Text>
           </TouchableOpacity>

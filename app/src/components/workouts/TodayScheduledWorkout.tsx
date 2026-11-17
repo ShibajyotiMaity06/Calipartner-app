@@ -100,7 +100,6 @@ export function TodayScheduledWorkout({
           defaultDate={localDate}
           onClose={() => setLogger(false)}
           onSaved={() => {
-            setLogger(false);
             onSaved();
           }}
         />

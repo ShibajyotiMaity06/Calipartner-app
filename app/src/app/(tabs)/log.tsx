@@ -163,12 +163,7 @@ export default function LogScreen() {
 
       {/* 3. Workout Logger Modal */}
       {activeFlow === 'workout' && (
-        <WorkoutHubModal
-          visible={sheetVisible}
-          defaultDate={todayDate}
-          onClose={closeFlow}
-          onSaved={handleCloseAll}
-        />
+        <WorkoutHubModal visible={sheetVisible} defaultDate={todayDate} onClose={closeFlow} />
       )}
 
       {/* 4. Water Quick Add Modal */}

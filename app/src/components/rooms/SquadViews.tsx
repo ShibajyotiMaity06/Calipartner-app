@@ -310,7 +310,7 @@ export function MetricValue({
           {amount}
         </Text>
       </View>
-      <ProgressTrack percent={percent} color={color} />
+      <ProgressTrack percent={percent} color={metric === 'water' ? dark.water : color} />
       {percent !== null && percent > 100 && <Text variant="bodyS">{t('homeRefresh.over')}</Text>}
     </View>
   );
@@ -451,7 +451,7 @@ export function WorkoutContent({ workouts }: { workouts: SquadWorkout[] }) {
                 <View key={set.set_number} style={squadStyles.stack}>
                   <Text variant="bodyS" tabular>
                     {t('squadDesign.set', { number: set.set_number, reps: set.reps ?? '—' })}
-                    {set.weight_kg != null
+                    {set.weight_kg != null && set.weight_kg > 0
                       ? ' · ' + t('squadDesign.load', { weight: set.weight_kg })
                       : ''}
                     {set.duration_seconds != null

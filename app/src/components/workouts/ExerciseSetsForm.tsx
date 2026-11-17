@@ -21,12 +21,9 @@ export function ExerciseSetsForm({
   submitLabel?: string;
   onCancel: () => void;
 }) {
-  const [showWeights, setShowWeights] = useState(
-    Boolean(initialSets?.some((set) => set.weightKg > 0)),
-  );
   const [count, setCount] = useState<number | null>(initialSets?.length ?? null);
   const [sets, setSets] = useState<{ reps: number | null; weightKg: number | null }[]>(
-    initialSets ?? [],
+    initialSets?.map((set) => ({ ...set, weightKg: set.weightKg || null })) ?? [],
   );
   const [error, setError] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -54,80 +51,13 @@ export function ExerciseSetsForm({
             setSets((previous) =>
               Array.from(
                 { length: value },
-                (_, index) => previous[index] ?? { reps: 10, weightKg: 0 },
+                (_, index) => previous[index] ?? { reps: 10, weightKg: null },
               ),
             );
           else setSets([]);
         }}
       />
-      {sets.length > 0 && (
-        <Pressable
-          style={{ minHeight: homeLayout.touchSize, justifyContent: 'center' }}
-          accessibilityRole="button"
-          accessibilityState={{ expanded: showWeights }}
-          accessibilityLabel={t(showWeights ? 'personalDay.hideWeights' : 'personalDay.addWeights')}
-          onPress={() => setShowWeights((value) => !value)}
-          testID="exercise-add-weights"
-        >
-          <Text variant="bodyS" style={{ textDecorationLine: 'underline' }}>
-            {t(showWeights ? 'personalDay.hideWeights' : 'personalDay.addWeights')}
-          </Text>
-        </Pressable>
-      )}
-      {sets.map((set, index) => (
-        <View key={index} style={{ gap: space[2] }}>
-          <View style={{ flexDirection: 'row', alignItems: 'flex-end', gap: space[2] }}>
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel={t('workoutFlow.repsLess', { set: index + 1 })}
-              disabled={saving || (set.reps ?? 0) <= 1}
-              onPress={() => change(index, 'reps', Math.max(1, (set.reps ?? 1) - 1))}
-              style={{
-                minWidth: homeLayout.touchSize,
-                minHeight: homeLayout.touchSize,
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}
-              testID={`exercise-set-minus-${index}`}
-            >
-              <Text>-</Text>
-            </Pressable>
-            <View style={{ flex: 1 }}>
-              <NumberField
-                centered
-                label={t('personalDay.setReps', { set: index + 1 })}
-                value={set.reps}
-                onChange={(value) => change(index, 'reps', value)}
-                testID={`exercise-set-reps-${index}`}
-              />
-            </View>
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel={t('workoutFlow.repsMore', { set: index + 1 })}
-              disabled={saving || (set.reps ?? 0) >= 100}
-              onPress={() => change(index, 'reps', Math.min(100, (set.reps ?? 0) + 1))}
-              style={{
-                minWidth: homeLayout.touchSize,
-                minHeight: homeLayout.touchSize,
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}
-              testID={`exercise-set-plus-${index}`}
-            >
-              <Text>+</Text>
-            </Pressable>
-          </View>
-          {showWeights && (
-            <NumberField
-              optional
-              label={t('personalDay.setWeight', { set: index + 1 })}
-              value={set.weightKg}
-              onChange={(value) => change(index, 'weightKg', value)}
-              testID={`exercise-set-weight-${index}`}
-            />
-          )}
-        </View>
-      ))}
+      <ExerciseSetRows sets={sets} onChange={change} disabled={saving} />
       {saveError && <Text accessibilityRole="alert">{t('workoutFlow.error')}</Text>}
       {error && <Text accessibilityRole="alert">{t('personalDay.invalidSets')}</Text>}
       <Button
@@ -171,6 +101,83 @@ export function ExerciseSetsForm({
         onPress={onCancel}
         testID="exercise-cancel-sets"
       />
+    </View>
+  );
+}
+
+export function ExerciseSetRows({
+  sets,
+  onChange,
+  disabled = false,
+  prefix = 'exercise-set',
+}: {
+  sets: Array<{ reps: number | null; weightKg: number | null }>;
+  onChange: (index: number, key: 'reps' | 'weightKg', value: number | null) => void;
+  disabled?: boolean;
+  prefix?: string;
+}) {
+  return (
+    <View style={{ gap: space[3] }}>
+      {sets.map((set, index) => (
+        <View key={index} testID={`${prefix}-row-${index}`} style={{ gap: space[1] }}>
+          <Text variant="micro">{t('workoutPolish.set', { number: index + 1 })}</Text>
+          <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: space[2] }}>
+            <View style={{ flex: 1, minWidth: 0 }}>
+              <NumberField
+                centered
+                label={t('workoutPolish.reps')}
+                value={set.reps}
+                onChange={(value) => onChange(index, 'reps', value)}
+                testID={`${prefix}-reps-${index}`}
+              />
+              <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+                {(['minus', 'plus'] as const).map((action) => (
+                  <Pressable
+                    key={action}
+                    accessibilityRole="button"
+                    accessibilityLabel={t(
+                      action === 'minus' ? 'workoutFlow.repsLess' : 'workoutFlow.repsMore',
+                      { set: index + 1 },
+                    )}
+                    disabled={
+                      disabled ||
+                      (action === 'minus' ? (set.reps ?? 0) <= 1 : (set.reps ?? 0) >= 100)
+                    }
+                    onPress={() =>
+                      onChange(
+                        index,
+                        'reps',
+                        action === 'minus'
+                          ? Math.max(1, (set.reps ?? 1) - 1)
+                          : Math.min(100, (set.reps ?? 0) + 1),
+                      )
+                    }
+                    style={{
+                      minWidth: homeLayout.touchSize,
+                      minHeight: homeLayout.touchSize,
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                    }}
+                    testID={`${prefix}-${action}-${index}`}
+                  >
+                    <Text>{action === 'minus' ? '\u2212' : '+'}</Text>
+                  </Pressable>
+                ))}
+              </View>
+            </View>
+            <View style={{ flex: 1, minWidth: 0 }}>
+              <NumberField
+                optional
+                centered
+                label={t('workoutPolish.weight')}
+                value={set.weightKg}
+                onChange={(value) => onChange(index, 'weightKg', value)}
+                testID={`${prefix}-weight-${index}`}
+              />
+            </View>
+          </View>
+        </View>
+      ))}
     </View>
   );
 }

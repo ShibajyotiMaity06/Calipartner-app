@@ -97,15 +97,17 @@ export function WorkoutFinishSummaryModal({
             </View>
 
             {/* Total Volume */}
-            <View style={styles.metricCard}>
-              <Ionicons name="barbell-outline" size={20} color={dark.iris} />
-              <Text style={styles.metricLabel}>{t('workouts.summary.volume')}</Text>
-              <Text testID={`${testID}-stat-volume`} style={styles.metricValue}>
-                {summary.total_volume_kg > 0
-                  ? `${summary.total_volume_kg.toLocaleString()} kg`
-                  : '0 kg'}
-              </Text>
-            </View>
+            {summary.total_volume_kg > 0 && (
+              <View style={styles.metricCard}>
+                <Ionicons name="barbell-outline" size={20} color={dark.iris} />
+                <Text style={styles.metricLabel}>{t('workouts.summary.volume')}</Text>
+                <Text testID={`${testID}-stat-volume`} style={styles.metricValue}>
+                  {summary.total_volume_kg > 0
+                    ? `${summary.total_volume_kg.toLocaleString()} kg`
+                    : '0 kg'}
+                </Text>
+              </View>
+            )}
 
             {/* Sets Completed */}
             <View style={styles.metricCard}>

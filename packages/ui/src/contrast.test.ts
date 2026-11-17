@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { dark } from './tokens/colors';
+import { dark, themePalettes } from './tokens/colors';
 import { allowedPairs, isPairAllowed, getSelectablePairsData } from './tokens/pairs';
 import { getContrastRatio } from './contrast';
 
@@ -88,4 +88,11 @@ describe('Colour-Blind Safe Allowed Pairs (Phase UI-1)', () => {
     expect(isPairAllowed('sky', 'mint')).toBe(false);
     expect(isPairAllowed('sky', 'orchid')).toBe(false);
   });
+});
+
+it('water accents keep readable labels in every appearance', () => {
+  for (const colors of Object.values(themePalettes)) {
+    expect(getContrastRatio(colors.waterInk, colors.s1)).toBeGreaterThanOrEqual(4.5);
+    expect(getContrastRatio(colors.onWater, colors.water)).toBeGreaterThanOrEqual(4.5);
+  }
 });

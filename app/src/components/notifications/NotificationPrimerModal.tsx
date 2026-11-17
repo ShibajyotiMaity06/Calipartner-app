@@ -142,7 +142,7 @@ export function NotificationPrimerModal({
               </View>
 
               <View style={styles.bulletRow}>
-                <Ionicons name="water-outline" size={18} color={colors.accent} />
+                <Ionicons name="water-outline" size={18} color={colors.waterInk} />
                 <Text style={[styles.bulletText, { color: colors.text }]}>
                   {t('notifications.permission.primerBulletReminders')}
                 </Text>

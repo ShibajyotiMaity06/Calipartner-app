@@ -26,6 +26,7 @@ vi.mock('@calipartner/ui', async () => ({
   Text: 'Text',
   NavigationIcon: 'NavigationIcon',
   Button: 'Button',
+  useTheme: () => ({ colors: {} }),
 }));
 vi.mock('@expo/vector-icons', () => ({ Ionicons: 'Icon' }));
 vi.mock('expo-router', () => ({ useRouter: () => ({ push: state.push }) }));
@@ -62,6 +63,11 @@ vi.mock('@/services/workoutSessionService', () => ({
 vi.mock('@/components/onboarding/WeeklyPlanForm', () => ({ WeeklyPlanForm: 'WeeklyPlanForm' }));
 vi.mock('@/components/onboarding/WeeklyPlanPreparing', () => ({
   WeeklyPlanPreparing: 'WeeklyPlanPreparing',
+}));
+vi.mock('./WorkoutLoggerModal', () => ({ WorkoutLoggerModal: 'WorkoutLoggerModal' }));
+vi.mock('./LoggedWorkoutEditModal', () => ({ LoggedWorkoutEditModal: 'LoggedWorkoutEditModal' }));
+vi.mock('./LoggedWorkoutDeleteModal', () => ({
+  LoggedWorkoutDeleteModal: 'LoggedWorkoutDeleteModal',
 }));
 vi.mock('./ExercisePickerModal', () => ({ ExercisePickerModal: 'ExercisePickerModal' }));
 vi.mock('./ExerciseSetsForm', () => ({ ExerciseSetsForm: 'ExerciseSetsForm' }));

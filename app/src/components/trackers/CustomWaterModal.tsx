@@ -67,7 +67,7 @@ export function CustomWaterModal({ visible, onClose, onSave }: CustomWaterModalP
           {/* Header */}
           <View style={styles.header}>
             <View style={styles.headerTitleRow}>
-              <Ionicons name="water" size={20} color={colors.accent} />
+              <Ionicons name="water" size={20} color={colors.waterInk} />
               <Text style={[styles.title, { color: colors.text }]}>
                 {t('trackers.water.customModalTitle')}
               </Text>
@@ -91,7 +91,7 @@ export function CustomWaterModal({ visible, onClose, onSave }: CustomWaterModalP
                 style={[
                   styles.presetChip,
                   {
-                    backgroundColor: amountText === String(p) ? colors.accent : colors.surfaceAlt,
+                    backgroundColor: amountText === String(p) ? colors.water : colors.surfaceAlt,
                     borderColor: colors.border,
                   },
                 ]}
@@ -102,7 +102,7 @@ export function CustomWaterModal({ visible, onClose, onSave }: CustomWaterModalP
                   style={[
                     styles.presetText,
                     {
-                      color: amountText === String(p) ? colors.onAccent : colors.text,
+                      color: amountText === String(p) ? colors.onWater : colors.text,
                     },
                   ]}
                 >
@@ -166,11 +166,11 @@ export function CustomWaterModal({ visible, onClose, onSave }: CustomWaterModalP
               testID="btn-submit-water"
               onPress={handleSubmit}
               disabled={saving}
-              style={[styles.btn, styles.submitBtn, { backgroundColor: colors.accent }]}
+              style={[styles.btn, styles.submitBtn, { backgroundColor: colors.water }]}
               accessibilityRole="button"
               accessibilityLabel={t('common.save')}
             >
-              <Text style={[styles.btnText, { color: colors.onAccent, fontWeight: '700' }]}>
+              <Text style={[styles.btnText, { color: colors.onWater, fontWeight: '700' }]}>
                 {saving ? t('common.saving') : t('common.save')}
               </Text>
             </Pressable>

@@ -4,6 +4,10 @@
  */
 
 export const dark = {
+  modalScrim: 'rgba(0, 0, 0, 0.45)',
+  water: '#8CD3F5',
+  waterInk: '#8CD3F5',
+  onWater: '#102F3F',
   bg0: '#0E0B08',
   s1: '#1A1511',
   s2: '#241E18',
@@ -31,6 +35,10 @@ export const dark = {
 } as const;
 
 export const light = {
+  modalScrim: 'rgba(0, 0, 0, 0.45)',
+  water: '#8CD3F5',
+  waterInk: '#255D75',
+  onWater: '#102F3F',
   bg0: '#FBF6EF',
   s1: '#FFFFFF',
   s2: '#F3EBE0',
@@ -74,6 +82,7 @@ export type ColorPalette = { [K in keyof DarkColors]: string };
 export const yellow: ColorPalette = dark;
 export const wellsLight: ColorPalette = {
   ...dark,
+  waterInk: light.waterInk,
   bg0: '#DDD5C7',
   s1: '#EAE3D6',
   s2: '#F4EFE6',

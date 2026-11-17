@@ -15,6 +15,9 @@ import {
 } from '@calipartner/ui';
 
 export interface ThemeColors {
+  water: string;
+  waterInk: string;
+  onWater: string;
   /** @deprecated Use colors.bg0 instead */
   background: string;
   /** @deprecated Use colors.s1 instead */
@@ -73,6 +76,9 @@ export interface ThemeColors {
 }
 
 const modernDarkColors: ThemeColors = {
+  water: dark.water,
+  waterInk: dark.waterInk,
+  onWater: dark.onWater,
   // Legacy mappings:
   background: dark.bg0,
   surface: dark.s1,

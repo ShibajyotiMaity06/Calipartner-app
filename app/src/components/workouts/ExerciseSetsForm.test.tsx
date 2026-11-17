@@ -13,7 +13,7 @@ let tree: ReactTestRenderer;
 afterEach(async () => {
   if (tree) await act(async () => tree.unmount());
 });
-it('asks for set count, preserves different reps per set and leaves optional weights at zero', async () => {
+it('asks for set count, preserves different reps per set and always shows paired weight inputs and permits blank weights', async () => {
   (globalThis as unknown as { IS_REACT_ACT_ENVIRONMENT: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
   const add = vi.fn();
   await act(async () => {
@@ -25,7 +25,9 @@ it('asks for set count, preserves different reps per set and leaves optional wei
     await act(async () =>
       tree.root.findByProps({ testID: `exercise-set-reps-${index}` }).props.onChange(reps),
     );
-  await act(async () => tree.root.findByProps({ testID: 'exercise-add-weights' }).props.onPress());
+  expect(tree.root.findAllByProps({ testID: 'exercise-add-weights' })).toHaveLength(0);
+  expect(tree.root.findByProps({ testID: 'exercise-set-weight-0' }).props.value).toBeNull();
+  expect(tree.root.findByProps({ testID: 'exercise-set-weight-0' }).props.optional).toBe(true);
   await act(async () =>
     tree.root.findByProps({ testID: 'exercise-set-weight-1' }).props.onChange(20),
   );

@@ -183,14 +183,14 @@ export function WaterChart({
             y1={goalLineY}
             x2={containerWidth - padRight}
             y2={goalLineY}
-            stroke={colors.accent}
+            stroke={colors.waterInk}
             strokeWidth={1.5}
             strokeDasharray="4 4"
           />
           <SvgText
             x={containerWidth - padRight - 2}
             y={goalLineY - 4}
-            fill={colors.accent}
+            fill={colors.waterInk}
             fontSize="9"
             textAnchor="end"
           >
@@ -203,9 +203,8 @@ export function WaterChart({
             const barH = (day.water_ml / (maxY || 1)) * chartH;
             const y = padTop + chartH - barH;
 
-            const isGoalMet = day.water_ml >= goalVal;
-            const barFill = isGoalMet ? colors.accent : colors.surfaceAlt;
-            const barBorder = isGoalMet ? colors.accent : colors.border;
+            const barFill = colors.water;
+            const barBorder = colors.waterInk;
 
             return (
               <React.Fragment key={day.date}>

@@ -220,7 +220,7 @@ export function ProgressHubSummary({
         >
           <View style={styles.cardHeader}>
             <View style={styles.cardTitleRow}>
-              <Ionicons name="water-outline" size={18} color={dark.apricot} />
+              <Ionicons name="water-outline" size={18} color={dark.waterInk} />
               <Text style={styles.cardTitle}>Water</Text>
             </View>
             <Text style={styles.cardDetailHint}>Tap for detail →</Text>

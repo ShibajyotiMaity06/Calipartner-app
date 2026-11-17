@@ -223,7 +223,7 @@ export function WorkoutDetailModal({
                   >
                     {summary.total_volume_kg > 0
                       ? `${summary.total_volume_kg.toLocaleString()} kg`
-                      : '0 kg'}
+                      : t('progressRefresh.missing')}
                   </Text>
                 </View>
 
@@ -333,7 +333,7 @@ export function WorkoutDetailModal({
                         </View>
 
                         <Text style={[styles.setDetailValues, { color: colors.text }]}>
-                          {s.weight_kg ? `${s.weight_kg} kg` : '0 kg'} ×{' '}
+                          {s.weight_kg && s.weight_kg > 0 ? `${s.weight_kg} kg \u00d7 ` : ''}
                           {s.reps ? `${s.reps} reps` : '0 reps'}
                         </Text>
 

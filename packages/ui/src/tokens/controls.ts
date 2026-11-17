@@ -1,5 +1,6 @@
 /** Shared compact controls retain a full touch target and expand with text. */
 export const controls = {
+  dialogMaxWidth: 640,
   touch: 44,
   pill: 32,
   icon: 18,
