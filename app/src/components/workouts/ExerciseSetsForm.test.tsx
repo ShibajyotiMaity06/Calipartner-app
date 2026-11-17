@@ -10,6 +10,26 @@ vi.mock('@calipartner/ui', async () => ({
 vi.mock('@/components/onboarding/PlanPrimitives', () => ({ NumberField: 'NumberField' }));
 import { ExerciseSetsForm } from './ExerciseSetsForm';
 let tree: ReactTestRenderer;
+it('shows reps only when editing a plan and preserves any existing weight data', async () => {
+  const add = vi.fn();
+  await act(async () => {
+    tree = create(
+      <ExerciseSetsForm
+        name="Curl"
+        planOnly
+        initialSets={[{ reps: 10, weightKg: 7.5 }]}
+        onAdd={add}
+        onCancel={vi.fn()}
+      />,
+    );
+  });
+  expect(tree.root.findAllByProps({ testID: 'exercise-set-weight-0' })).toHaveLength(0);
+  await act(async () =>
+    tree.root.findByProps({ testID: 'exercise-set-reps-0' }).props.onChange(12),
+  );
+  await act(async () => tree.root.findByProps({ testID: 'exercise-confirm-sets' }).props.onPress());
+  expect(add).toHaveBeenCalledWith([{ reps: 12, weightKg: 7.5 }]);
+});
 afterEach(async () => {
   if (tree) await act(async () => tree.unmount());
 });

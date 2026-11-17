@@ -940,15 +940,12 @@ export function PaywallModal({
               )}
               <View testID="paywall-coming-soon">
                 <Text variant="heading">{t('launch.soon')}</Text>
-                <Text variant="bodyS" color={dark.textMid}>
-                  {t('launch.soonNote')}
-                </Text>
                 {[...COMING_SOON.plus, ...(selectedTier === 'pro' ? COMING_SOON.pro : [])].map(
                   (feature) => (
                     <View key={feature} style={styles.whatYouGetItem}>
                       <Ionicons name="time-outline" size={16} color={dark.textMid} />
                       <Text variant="bodyS" color={dark.textMid} style={styles.featureItemText}>
-                        {t(feature)} ? {t('launch.soon')}
+                        {t(feature)}
                       </Text>
                     </View>
                   ),

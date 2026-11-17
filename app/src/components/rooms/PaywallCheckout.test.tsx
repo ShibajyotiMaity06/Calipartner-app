@@ -402,10 +402,10 @@ it('separates future benefits from currently available Pro support and hides num
   expect(content).toContain('Everything in Plus');
   expect(content).toContain('Personal AI Coach');
   expect(content).toContain('Priority support');
-  expect(future).toContain('Coming soon');
+  expect(future.match(/Coming Soon/g)).toHaveLength(1);
   expect(future).not.toContain('Priority support');
   expect(content).not.toMatch(/10 messages|5 scans|900.*month|300.*month/);
-  expect(content).toContain('not available with your purchase today');
+  expect(future).not.toContain('not available with your purchase today');
 });
 
 it.each(['dodo', 'razorpay', 'apple', 'google'])(

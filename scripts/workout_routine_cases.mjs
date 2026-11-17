@@ -334,7 +334,7 @@ export async function runWorkoutRoutineTests(db) {
     console.log(
       'PASS Workout routine: completed strength sets count once, warmup/deleted sets do not count, minutes stay zero and edits invalidate challenge aggregates',
     );
-    for (const n of [5, 6, 7]) {
+    for (const n of [5, 6, 7, 8]) {
       await db.query('insert into auth.users(id,email) values($1,$2)', [
         uid(n),
         `workout_entry_${n}@example.invalid`,
@@ -402,7 +402,58 @@ export async function runWorkoutRoutineTests(db) {
     console.log(
       'PASS Workout entry: missing onboarding data permits one purchased initial routine, Free stays blocked, and missing plan rows cannot reset rebuild history',
     );
-    console.log('Workout routine SQL/RLS: 6 groups passed, 0 failed');
+    const splitPreferences = {
+      ...preferences,
+      workout_split: 'ppl',
+      workout_notes: '',
+    };
+    await reject(
+      'select public.reserve_workout_plan($1,$2,$3,true)',
+      [uid(6), uid(101), splitPreferences],
+      /PURCHASED_PLUS_REQUIRED/,
+    );
+    await db.query(
+      'insert into public.personal_weekly_plans(user_id,id,preferences,content) select $1,$2,preferences,content from public.personal_weekly_plans where user_id=$3',
+      [uid(8), uid(102), uid(1)],
+    );
+    const splitInitial = await rpc('reserve_workout_plan($1,$2,$3,true)', [
+      uid(8),
+      uid(103),
+      splitPreferences,
+    ]);
+    await db.query(
+      "update public.entitlements set period_end=now()-interval '1 day' where user_id=$1",
+      [uid(8)],
+    );
+    await reject(
+      'select public.finish_workout_plan($1,$2,$3,$4)',
+      [uid(8), uid(103), splitInitial.lease, content],
+      /PURCHASED_PLUS_REQUIRED/,
+    );
+    await db.query(
+      "update public.entitlements set period_end=now()+interval '1 year' where user_id=$1",
+      [uid(8)],
+    );
+    await finish(8, 103, splitInitial.lease);
+    await user(8);
+    const splitSaved = await rpc('get_workout_plan()');
+    assert.deepEqual(splitSaved.preferences, splitPreferences);
+    assert.equal(splitSaved.rebuilds_used, 0);
+    await admin();
+    assert.equal(
+      (await rpc('reserve_workout_plan($1,$2,$3,true)', [uid(8), uid(103), splitPreferences]))
+        .cached,
+      true,
+    );
+    await reject(
+      'select public.reserve_workout_plan($1,$2,$3,true)',
+      [uid(8), uid(104), splitPreferences],
+      /INITIAL_PLAN_EXISTS/,
+    );
+    console.log(
+      'PASS Workout splits: paid initial preferences replace an onboarding snapshot, persist exactly, recheck expiry and retain retry/history guards',
+    );
+    console.log('Workout routine SQL/RLS: 7 groups passed, 0 failed');
   } finally {
     await db.exec('rollback');
     await admin();

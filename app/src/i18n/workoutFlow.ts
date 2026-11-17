@@ -21,10 +21,30 @@ export const workoutFlow = {
   buildDesc: 'Create a structured workout plan and follow your weekly routine.',
   badgeTagline: 'Plan • Track • Progress',
   buildTitle: 'Build your workout plan',
-  buildHint: 'Choose your training schedule and tell us what you want to focus on.',
+  buildHint: 'Choose your training days and the workout split you want to follow.',
+  daysPerWeek: 'How many days do you train each week?',
+  dayCount: '{count} days',
+  split: 'Choose your workout split',
+  splitDays: 'Choose {days} training days for this split, or select another split.',
+  splits: {
+    full_body: 'Full-body split',
+    upper_lower: 'Upper/lower split',
+    ppl: 'Push / pull / legs',
+    body_part: 'Bro split (body-part split)',
+    hybrid: 'Upper/lower/PPL hybrid',
+  },
+  splitDescriptions: {
+    full_body:
+      '2–3 days. Train your upper and lower body each session, with rest days between sessions where possible.',
+    upper_lower: '4 days. Alternate upper-body and lower-body sessions, twice each per week.',
+    ppl: '3 or 6 days. Push works chest, shoulders and triceps; pull works back and biceps; legs includes core. Repeat the cycle on a 6-day plan.',
+    body_part:
+      '5–6 days. Give chest, back, shoulders, arms and legs their own main session. A sixth day focuses on core.',
+    hybrid: '5 days. Follow upper, lower, push, pull and legs sessions across your training days.',
+  },
   notes: 'Notes (optional)',
   notesHint:
-    'For example: focus more on arms and leave out leg exercises. Your safety limitations still apply.',
+    'Add exercise preferences or movements to avoid. Your chosen split and safety limitations still apply.',
   plusAllowance:
     'After onboarding, Plus includes one workout-plan rebuild for your account’s lifetime.',
   plusUsed: 'You have used your one workout-plan rebuild.',
@@ -49,7 +69,7 @@ export const workoutFlow = {
   savePlan: 'Save plan changes',
   saved: 'Workout logged',
   planSaved: 'Plan updated',
-  setSummary: 'Set {set}: {reps} reps · {weight} kg',
+  setSummary: 'Set {set}: {reps} reps',
   targets: 'Planned sets',
   logged: 'Logged workouts',
   lifetimeLimit: 'You have used your lifetime Plus rebuild. Your saved routine is still available.',

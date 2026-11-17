@@ -8,6 +8,9 @@ import { useBrowserModalBack } from '@/hooks/useBrowserModalBack';
 import { Button, homeLayout, radius, space, Text, type as typography } from '@calipartner/ui';
 import {
   PLAN_EQUIPMENT,
+  WORKOUT_SPLITS,
+  WORKOUT_SPLIT_DAYS,
+  defaultWorkoutDays,
   WEEK_DAYS,
   validatePlanPreferences,
   validateWorkoutPreferences,
@@ -151,6 +154,11 @@ export function WeeklyPlanForm({
   const { colors: dark } = useAppearance();
 
   const [preferences, setPreferences] = useState(initial ?? initialPlanPreferences);
+  const splitDays = preferences.workout_split
+    ? (WORKOUT_SPLIT_DAYS[preferences.workout_split] ?? [])
+    : [];
+  const splitValid =
+    !!preferences.workout_split && splitDays.includes(preferences.workout_days.length);
   const [step, setStep] = useState<'workout' | 'food'>('workout'),
     [consent, setConsent] = useState(false),
     [error, setError] = useState(false);
@@ -230,7 +238,7 @@ export function WeeklyPlanForm({
         .map((v) => v.trim())
         .filter((v) => v && !/^none$/i.test(v));
     try {
-      if (!consent) throw new Error('INVALID_PLAN');
+      if (!consent || (workoutOnly && !splitValid)) throw new Error('INVALID_PLAN');
       onBuild(
         (workoutOnly ? validateWorkoutPreferences : validatePlanPreferences)({
           ...preferences,
@@ -268,6 +276,45 @@ export function WeeklyPlanForm({
       </Text>
       {step === 'workout' ? (
         <>
+          {workoutOnly && (
+            <>
+              <Choice
+                label={t('workoutFlow.daysPerWeek')}
+                icon="calendar-outline"
+                multiple={false}
+                values={[2, 3, 4, 5, 6].map((value) => ({
+                  value,
+                  label: t('workoutFlow.dayCount', { count: value }),
+                }))}
+                selected={[preferences.workout_days.length]}
+                onSelect={(count) => update('workout_days', defaultWorkoutDays(count))}
+                id="plan-day-count"
+              />
+              <Choice
+                label={t('workoutFlow.split')}
+                icon="barbell-outline"
+                multiple={false}
+                values={WORKOUT_SPLITS.map((value) => ({
+                  value,
+                  label: t(`workoutFlow.splits.${value}`),
+                  description: t(`workoutFlow.splitDescriptions.${value}`),
+                }))}
+                selected={preferences.workout_split ? [preferences.workout_split] : []}
+                onSelect={(value) => update('workout_split', value)}
+                id="plan-split"
+              />
+              {preferences.workout_split && (
+                <Text variant="bodyS" testID="plan-split-description">
+                  {t(`workoutFlow.splitDescriptions.${preferences.workout_split}`)}
+                </Text>
+              )}
+              {preferences.workout_split && !splitValid && (
+                <Text accessibilityRole="alert" testID="plan-split-days-error">
+                  {t('workoutFlow.splitDays', { days: splitDays.join(' / ') })}
+                </Text>
+              )}
+            </>
+          )}
           <Choice
             label={t('fixNovember.trainingDays')}
             icon="calendar-outline"
@@ -417,7 +464,7 @@ export function WeeklyPlanForm({
           <Button
             label={t('workoutFlow.build')}
             onPress={build}
-            disabled={!consent}
+            disabled={!consent || !splitValid}
             testID="build-weekly-plan"
           />
         </>

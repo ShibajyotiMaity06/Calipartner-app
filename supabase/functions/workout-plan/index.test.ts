@@ -62,6 +62,7 @@ function setup(
     saveFailure?: boolean;
     legacy?: boolean;
     sourceFailure?: boolean;
+    generated?: unknown;
   } = {},
 ) {
   const writes: Record<string, unknown>[] = [];
@@ -118,7 +119,7 @@ function setup(
   const generate = async () => {
     calls++;
     if (options.failure) throw new Error('provider unavailable');
-    return content();
+    return options.generated ?? content();
   };
   const run = (body: unknown = { request_id: id, initial: false, preferences }) =>
     handleWorkoutPlan(
@@ -192,6 +193,74 @@ Deno.test('Existing full-week routines are adopted without another AI generation
   assert.equal(test.calls(), 0);
   assert.equal(test.writes.at(-1)!.name, 'finish_workout_plan');
 });
+
+Deno.test(
+  'Explicit splits cannot silently reuse an old routine; wrong coverage releases the allowance',
+  async () => {
+    const chosen = {
+      ...preferences,
+      workout_split: 'ppl',
+      workout_notes: '',
+    };
+    const test = setup({ legacy: true });
+    const result = await test.run({ request_id: id, initial: true, preferences: chosen });
+    assert.equal(result.status, 503); // The old arm-only fixture cannot satisfy PPL.
+    assert.equal(test.calls(), 1);
+    assert.equal((test.writes[0].p_preferences as typeof chosen).workout_split, 'ppl');
+    assert.equal(test.writes.at(-1)!.p_content, null);
+    const invalid = setup();
+    assert.equal(
+      (
+        await invalid.run({
+          request_id: id,
+          initial: true,
+          preferences: { ...chosen, workout_split: 'hybrid' },
+        })
+      ).status,
+      400,
+    );
+    assert.equal(invalid.writes.length, 0);
+  },
+);
+
+Deno.test(
+  'Split-aware generation acknowledges a valid saved schedule with its muscle coverage',
+  async () => {
+    const chosen = {
+      ...preferences,
+      workout_split: 'ppl' as const,
+      workout_notes: '',
+    };
+    const generated = content();
+    for (const day of generated.days) {
+      const groups =
+        day.day === 0
+          ? ['chest', 'shoulders', 'triceps']
+          : day.day === 2
+            ? ['back', 'biceps', 'back']
+            : day.day === 4
+              ? ['legs', 'core', 'legs']
+              : [];
+      day.workout.exercises = groups.map((muscle) => ({
+        name: `${muscle} exercise`,
+        equipment: 'dumbbell',
+        primary_muscles: [muscle],
+        sets: 2,
+        reps: 10,
+        rest_seconds: 60,
+      }));
+    }
+    const test = setup({ generated, legacy: true });
+    assert.equal(
+      (await test.run({ request_id: id, initial: true, preferences: chosen })).status,
+      200,
+    );
+    assert.equal(test.calls(), 1);
+    assert.match(workoutRoutinePrompt(chosen), /Required split schedule/);
+    assert.match(workoutRoutinePrompt(chosen), /"focus":"Pull"/);
+    assert.ok(test.writes.at(-1)!.p_content);
+  },
+);
 
 Deno.test(
   'An eligible initial plan can generate from training-only inputs without a legacy meal plan',

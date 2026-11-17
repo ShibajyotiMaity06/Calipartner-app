@@ -14,11 +14,13 @@ export function ExerciseSetsForm({
   onCancel,
   initialSets,
   submitLabel,
+  planOnly = false,
 }: {
   name: string;
   onAdd: (sets: ExerciseSetInput[]) => void | Promise<void>;
   initialSets?: ExerciseSetInput[];
   submitLabel?: string;
+  planOnly?: boolean;
   onCancel: () => void;
 }) {
   const [count, setCount] = useState<number | null>(initialSets?.length ?? null);
@@ -57,7 +59,7 @@ export function ExerciseSetsForm({
           else setSets([]);
         }}
       />
-      <ExerciseSetRows sets={sets} onChange={change} disabled={saving} />
+      <ExerciseSetRows sets={sets} onChange={change} disabled={saving} showWeight={!planOnly} />
       {saveError && <Text accessibilityRole="alert">{t('workoutFlow.error')}</Text>}
       {error && <Text accessibilityRole="alert">{t('personalDay.invalidSets')}</Text>}
       <Button
@@ -110,11 +112,13 @@ export function ExerciseSetRows({
   onChange,
   disabled = false,
   prefix = 'exercise-set',
+  showWeight = true,
 }: {
   sets: Array<{ reps: number | null; weightKg: number | null }>;
   onChange: (index: number, key: 'reps' | 'weightKg', value: number | null) => void;
   disabled?: boolean;
   prefix?: string;
+  showWeight?: boolean;
 }) {
   return (
     <View style={{ gap: space[3] }}>
@@ -166,16 +170,18 @@ export function ExerciseSetRows({
                 ))}
               </View>
             </View>
-            <View style={{ flex: 1, minWidth: 0 }}>
-              <NumberField
-                optional
-                centered
-                label={t('workoutPolish.weight')}
-                value={set.weightKg}
-                onChange={(value) => onChange(index, 'weightKg', value)}
-                testID={`${prefix}-weight-${index}`}
-              />
-            </View>
+            {showWeight && (
+              <View style={{ flex: 1, minWidth: 0 }}>
+                <NumberField
+                  optional
+                  centered
+                  label={t('workoutPolish.weight')}
+                  value={set.weightKg}
+                  onChange={(value) => onChange(index, 'weightKg', value)}
+                  testID={`${prefix}-weight-${index}`}
+                />
+              </View>
+            )}
           </View>
         </View>
       ))}

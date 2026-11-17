@@ -162,9 +162,6 @@ export default function TodayScreen() {
   const targetProtein = currentGoalProfile?.protein_grams ?? null;
   const effectiveGoalSteps = currentGoalProfile?.step_goal ?? goalSteps;
 
-  const getContextualQuestion = () =>
-    t('repairs.mealQuestion', { meal: t(`diary.sections.${currentSuggestedMeal}`) });
-
   const [homeVisible, setHomeVisible] = useState(false);
   useFocusEffect(
     useCallback(() => {
@@ -200,7 +197,7 @@ export default function TodayScreen() {
       >
         <MonthlyPlanCheckIn />
 
-        {/* 2. Greeting & Dynamic Timezone Question */}
+        {/* 2. Greeting */}
         <View style={styles.greetingSection}>
           <View style={styles.greetingRow}>
             <Text variant="heading" color={dark.textHi} style={styles.greetingTitle}>
@@ -208,9 +205,6 @@ export default function TodayScreen() {
             </Text>
             <HeaderActions coins coach appearance testID="home-coach-icon" />
           </View>
-          <Text variant="body" color={dark.textMid} style={styles.greetingQuestion}>
-            {getContextualQuestion()}
-          </Text>
         </View>
 
         <AvatarHero />
@@ -530,9 +524,6 @@ const createStyles = (dark: ReturnType<typeof useAppearance>['colors']) =>
       fontWeight: '800',
       letterSpacing: -0.5,
       marginBottom: 4,
-    },
-    greetingQuestion: {
-      fontSize: 15,
     },
     sectionBlock: {
       marginBottom: space[5],

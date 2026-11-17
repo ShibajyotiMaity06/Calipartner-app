@@ -64,7 +64,6 @@ export function CompactSelect<T extends string | number>({
           <Text
             variant="body"
             color={summary ? dark.textHi : dark.textLo}
-            numberOfLines={1}
             style={styles.triggerText}
           >
             {summary || t('personalDay.choose')}
@@ -96,7 +95,7 @@ export function CompactSelect<T extends string | number>({
                       <Ionicons name={icon} size={18} color={dark.copper} />
                     </View>
                   ) : null}
-                  <Text variant="heading" color={dark.textHi}>
+                  <Text variant="heading" color={dark.textHi} style={styles.triggerText}>
                     {label}
                   </Text>
                 </View>

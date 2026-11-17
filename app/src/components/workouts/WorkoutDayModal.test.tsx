@@ -107,6 +107,18 @@ const render = async () => {
     tree = create(<WorkoutDayModal visible onClose={vi.fn()} onSaved={state.saved} />);
   });
 };
+it('shows planned reps without zero or stored weights', async () => {
+  state.plan = { full_access: true, days, can_rebuild: true, tier: 'pro' };
+  await render();
+  const text = JSON.stringify(
+    tree.root
+      .findByProps({ testID: 'workout-paid-routine' })
+      .findAllByType('Text' as React.ElementType)
+      .map((node) => node.children),
+  );
+  expect(text).toContain('10 reps');
+  expect(text).not.toContain('kg');
+});
 it('Free shows the Wednesday sample, opens the paywall, and past days show actual history without samples or logging', async () => {
   await render();
   expect(JSON.stringify(tree.toJSON())).toContain('Seated dumbbell curls');

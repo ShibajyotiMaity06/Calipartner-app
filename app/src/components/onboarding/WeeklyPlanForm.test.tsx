@@ -29,7 +29,37 @@ vi.mock('@calipartner/ui', async () => ({
   Button: 'Button',
 }));
 import { WeeklyPlanForm } from './WeeklyPlanForm';
+import { CompactSelect } from '@/components/CompactSelect';
 let tree: ReactTestRenderer;
+it('collects workout frequency and split, blocks incompatible days and has no priority-muscle fields', async () => {
+  const build = vi.fn();
+  await act(async () => {
+    tree = create(<WeeklyPlanForm workoutOnly onBuild={build} onLater={vi.fn()} />);
+  });
+  const select = async (id: string, value: unknown) => {
+    const control = tree.root
+      .findAllByType(CompactSelect)
+      .find((node) => node.props.testID === id)!;
+    await act(async () => control.props.onSelect(value));
+  };
+  await act(async () => tree.root.findByProps({ testID: 'weekly-plan-consent' }).props.onPress());
+  expect(tree.root.findByProps({ testID: 'build-weekly-plan' }).props.disabled).toBe(true);
+  await select('plan-split', 'hybrid');
+  expect(tree.root.findByProps({ testID: 'plan-split-days-error' })).toBeDefined();
+  await select('plan-day-count', 5);
+  expect(tree.root.findAllByProps({ testID: 'plan-split-days-error' })).toHaveLength(0);
+  expect(tree.root.findByProps({ testID: 'build-weekly-plan' }).props.disabled).toBe(false);
+  await act(async () => tree.root.findByProps({ testID: 'build-weekly-plan' }).props.onPress());
+  expect(build).toHaveBeenCalledWith(
+    expect.objectContaining({
+      workout_days: [0, 1, 2, 4, 5],
+      workout_split: 'hybrid',
+    }),
+  );
+  expect(tree.root.findAllByProps({ testID: 'plan-country' })).toHaveLength(0);
+  expect(tree.root.findAllByProps({ testID: 'plan-target-muscles' })).toHaveLength(0);
+  expect(build.mock.calls[0]![0]).not.toHaveProperty('target_muscles');
+});
 beforeEach(() => {
   (globalThis as unknown as { IS_REACT_ACT_ENVIRONMENT: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 });

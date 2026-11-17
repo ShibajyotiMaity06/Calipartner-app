@@ -369,7 +369,6 @@ export function WorkoutDayModal({
                                 {t('workoutFlow.setSummary', {
                                   set: index + 1,
                                   reps: set.reps,
-                                  weight: set.weightKg,
                                 })}
                               </Text>
                             ))}
@@ -553,6 +552,7 @@ export function WorkoutDayModal({
                 <ExerciseSetsForm
                   key={targetForm.id}
                   name={targetForm.name}
+                  planOnly={!!editing}
                   initialSets={targetForm.targetSets}
                   submitLabel={t(editing ? 'workoutFlow.savePlan' : 'workoutFlow.saveExercise')}
                   onCancel={() => {

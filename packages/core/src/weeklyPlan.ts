@@ -1,3 +1,11 @@
+import {
+  validateWorkoutSplitPreferences,
+  workoutSplitSchedule,
+  WORKOUT_MUSCLES,
+  type WorkoutSplit,
+  type WorkoutMuscle,
+} from './workoutSplits.ts';
+
 export const WEEK_DAYS = [
   'monday',
   'tuesday',
@@ -34,6 +42,7 @@ export interface PlanPreferences {
   session_minutes: number;
   limitations: string;
   workout_notes?: string;
+  workout_split?: WorkoutSplit;
   country: string;
   cuisine: string;
   diet: 'mixed' | 'vegetarian' | 'vegan' | 'pescatarian';
@@ -205,7 +214,18 @@ export function validatePlanPreferences(input: unknown): PlanPreferences {
   );
   if (location !== 'advanced' && equipment.some((e) => ['cable', 'legpress'].includes(e)))
     throw new Error('INVALID_PLAN');
+  const split =
+    p.workout_split === undefined
+      ? {}
+      : {
+          workout_split: p.workout_split as WorkoutSplit,
+        };
+  validateWorkoutSplitPreferences({
+    workout_days: p.workout_days as number[],
+    ...split,
+  });
   return {
+    ...split,
     workout_days: p.workout_days.map((day) => number(day, 0, 6)).sort(),
     location,
     equipment: [...new Set(equipment)],
@@ -739,6 +759,7 @@ export interface WorkoutRoutineExercise {
   id: string;
   name: string;
   equipment: PlanEquipment;
+  primary_muscles?: WorkoutMuscle[];
   targetSets: WorkoutTargetSet[];
 }
 export interface WorkoutRoutineDay {
@@ -831,6 +852,17 @@ export function validateWorkoutRoutine(input: unknown): WorkoutRoutineContent {
           id,
           name: text(exercise.name, 100),
           equipment: choice(exercise.equipment, PLAN_EQUIPMENT),
+          ...(exercise.primary_muscles === undefined
+            ? {}
+            : {
+                primary_muscles: [
+                  ...new Set(
+                    strings(exercise.primary_muscles, 1, WORKOUT_MUSCLES.length).map((m) =>
+                      choice(m, WORKOUT_MUSCLES),
+                    ),
+                  ),
+                ],
+              }),
           targetSets: exercise.targetSets.map((value) => {
             const set = object(value);
             return {
@@ -857,11 +889,24 @@ export function workoutRoutineFromAI(
   const raw = object(input);
   if (!Array.isArray(raw.days) || raw.days.length !== 7)
     throw new WeeklyPlanValidationError('week_days');
+  const schedule = workoutSplitSchedule(preferences);
   const days = raw.days.map((value, day) => {
     const item = object(value),
       workout = object(item.workout);
     const training = preferences.workout_days.includes(day);
     const exercises = validatePlanExercises(workout.exercises, preferences);
+    const planned = schedule?.find((entry) => entry.day === day);
+    const muscleGroups = (workout.exercises as unknown[]).map((value) => {
+      if (!schedule) return undefined;
+      const groups = strings(object(value).primary_muscles, 1, WORKOUT_MUSCLES.length).map((m) =>
+        choice(m, WORKOUT_MUSCLES),
+      );
+      if (!planned || groups.some((m) => !planned.muscles.includes(m)))
+        throw new WeeklyPlanValidationError('training_schedule');
+      return [...new Set(groups)];
+    });
+    if (planned?.muscles.some((m) => !muscleGroups.some((groups) => groups?.includes(m))))
+      throw new WeeklyPlanValidationError('training_schedule');
     if (
       item.day !== day ||
       (training ? exercises.length < 3 || exercises.length > 6 : exercises.length !== 0)
@@ -882,7 +927,7 @@ export function workoutRoutineFromAI(
       throw new WeeklyPlanValidationError('unsafe_copy');
     return {
       day,
-      title,
+      title: planned?.focus ?? title,
       minutes: number(
         workout.minutes,
         training ? 15 : 0,
@@ -892,6 +937,7 @@ export function workoutRoutineFromAI(
         id: `day-${day}-exercise-${index}`,
         name: exercise.name,
         equipment: exercise.equipment,
+        ...(muscleGroups[index] ? { primary_muscles: muscleGroups[index] } : {}),
         targetSets: Array.from({ length: exercise.sets }, () => ({
           reps: exercise.reps,
           weightKg: 0,
