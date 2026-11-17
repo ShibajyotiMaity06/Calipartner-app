@@ -220,7 +220,7 @@ export default function OnboardingScreen() {
       completedRef.current = true;
       await draftWrites.current;
       await clearOnboardingDraft(await getDb(), user.id).catch(() => {});
-      router.push('/avatar/create?setup=1' as never);
+      router.push('/weekly-plan?setup=1' as never);
     } catch (error) {
       setSaveError(macroErrorMessage(error));
     } finally {
@@ -432,6 +432,10 @@ export default function OnboardingScreen() {
                   }}
                   onUnits={(value) => {
                     machine.setUnits(value);
+                    update();
+                  }}
+                  onHeightUnits={(value) => {
+                    machine.setHeightUnits(value);
                     update();
                   }}
                   onNickname={(value) => {

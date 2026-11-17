@@ -40,6 +40,7 @@ export interface OnboardingState {
   currentStep: OnboardingStep;
   goal: Goal;
   units: Units;
+  heightUnits: Units;
   nickname: string;
   sex: Sex;
   dateOfBirth: string; // YYYY-MM-DD
@@ -68,6 +69,7 @@ export const INITIAL_ONBOARDING_STATE: OnboardingState = {
   currentStep: 'goal',
   goal: 'cut',
   units: 'metric',
+  heightUnits: 'metric',
   nickname: '',
   sex: 'male',
   dateOfBirth: '',
@@ -124,6 +126,11 @@ export class OnboardingStateMachine {
 
   setUnits(units: Units): this {
     this.state.units = units;
+    return this;
+  }
+
+  setHeightUnits(units: Units): this {
+    this.state.heightUnits = units;
     return this;
   }
 

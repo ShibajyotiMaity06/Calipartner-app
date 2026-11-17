@@ -200,10 +200,10 @@ export default function TodayScreen() {
         {/* 2. Greeting */}
         <View style={styles.greetingSection}>
           <View style={styles.greetingRow}>
-            <Text variant="heading" color={dark.textHi} style={styles.greetingTitle}>
+            <Text variant="heading" color={dark.textHi}>
               {t('homeRefresh.hello', { name: userName })}
             </Text>
-            <HeaderActions coins coach appearance testID="home-coach-icon" />
+            <HeaderActions coins coach testID="home-coach-icon" />
           </View>
         </View>
 
@@ -518,13 +518,7 @@ const createStyles = (dark: ReturnType<typeof useAppearance>['colors']) =>
     greetingSection: {
       marginBottom: space[4],
     },
-    greetingTitle: {
-      flex: 1,
-      fontSize: 26,
-      fontWeight: '800',
-      letterSpacing: -0.5,
-      marginBottom: 4,
-    },
+
     sectionBlock: {
       marginBottom: space[5],
     },

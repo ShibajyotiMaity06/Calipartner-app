@@ -90,6 +90,12 @@ try {
     assert.equal(await page.getByTestId('input-nickname').inputValue(), 'Alex');
     assert.equal(await page.getByTestId('weight-value').innerText(), savedWeight);
     await page.getByTestId('weight-units').getByRole('tab', { name: 'lb', exact: true }).click();
+    await page.getByTestId('height-cm-wheel').waitFor();
+    assert.equal(await page.getByTestId('btn-header-upgrade').count(), 0);
+    await page
+      .getByTestId('height-units')
+      .getByRole('tab', { name: 'ft / in', exact: true })
+      .click();
     await page.getByTestId('height-ft-wheel').waitFor();
     await page.getByTestId('height-ft-wheel').scrollIntoViewIfNeeded();
     await page.screenshot({ path: path.join(out, `height-wheels-${theme}.png`) });
@@ -144,7 +150,7 @@ try {
   await context.close();
   assert.deepEqual(errors, []);
   console.log(
-    'Entry browser audit: PASS — both themes, 320/390px, guest draft restore, unit toggles, growth chart, deferred account entry, animated/reduced-motion launch.',
+    'Entry browser audit: PASS — brown/apricot despite saved Light, 320/390px, guest draft restore, unit toggles, growth chart, deferred account entry, animated/reduced-motion launch.',
   );
 } finally {
   await browser.close();

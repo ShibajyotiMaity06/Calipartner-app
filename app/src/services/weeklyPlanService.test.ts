@@ -91,14 +91,8 @@ it('keeps the generation request UUID across lost acknowledgements and verifies 
     { p_version: '1.1-weekly-plan' },
   ]);
 });
-it('finishes the onboarding routine before acknowledging and rereads the matching workout preview', async () => {
-  let acknowledge!: () => void;
-  state.initialWorkout.mockImplementationOnce(
-    () =>
-      new Promise<void>((resolve) => {
-        acknowledge = resolve;
-      }),
-  );
+it('acknowledges the saved day without a second workout generation or extra read', async () => {
+  state.initialWorkout.mockRejectedValue(new Error('WORKOUT_UNAVAILABLE'));
   state.invoke.mockResolvedValue({ data: { saved: true }, error: null });
   state.rpc.mockImplementation(async (name: string) => ({
     data:
@@ -113,17 +107,12 @@ it('finishes the onboarding routine before acknowledging and rereads the matchin
         : null,
     error: null,
   }));
-  const pending = buildPersonalWeeklyPlan('owner', preferences, true);
-  await vi.waitFor(() =>
-    expect(state.initialWorkout).toHaveBeenCalledWith('owner', preferences, true),
-  );
-  expect(state.store.size).toBe(1);
-  acknowledge();
-  const plan = await pending;
+  const plan = await buildPersonalWeeklyPlan('owner', preferences, true);
   expect(plan.id).toBe(state.invoke.mock.lastCall![1].body.request_id);
+  expect(state.initialWorkout).not.toHaveBeenCalled();
   expect(
     state.rpc.mock.calls.filter((call) => call[0] === 'get_personal_weekly_plan'),
-  ).toHaveLength(2);
+  ).toHaveLength(1);
   expect(state.store.size).toBe(0);
 });
 it('refuses an invalid free projection that includes hidden days or tips', async () => {

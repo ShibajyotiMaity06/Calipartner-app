@@ -3,9 +3,8 @@ import React from 'react';
 import { View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { homeLayout, space, Text, useTheme } from '@calipartner/ui';
+import { homeLayout, space, useTheme } from '@calipartner/ui';
 import { CCBalance } from './avatar/CCBalance';
-import { AppearancePicker } from './avatar/AppearancePicker';
 import { t } from '@/i18n';
 import { SubscriptionPill } from './subscription/SubscriptionPill';
 
@@ -14,13 +13,11 @@ export function HeaderActions({
   coins = false,
   coach = false,
   showUpgrade = true,
-  appearance = false,
 }: {
   testID?: string;
   coins?: boolean;
   coach?: boolean;
   showUpgrade?: boolean;
-  appearance?: boolean;
 }) {
   const router = useRouter();
   const { colors } = useTheme();
@@ -37,10 +34,9 @@ export function HeaderActions({
     >
       {showUpgrade ? <SubscriptionPill /> : null}
       {coins ? <CCBalance /> : null}
-      {appearance ? <AppearancePicker /> : null}
       {coach ? (
         <Button
-          variant="secondary"
+          variant="tertiary"
           fullWidth={false}
           label={t('homeRefresh.ai')}
           icon={<Ionicons name="medkit-outline" size={homeLayout.iconSize} color={colors.textHi} />}

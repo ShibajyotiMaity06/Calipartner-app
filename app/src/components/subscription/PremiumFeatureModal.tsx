@@ -25,7 +25,7 @@ export function PremiumFeatureModal({
   const [showPlans, setShowPlans] = useState(false);
   const tier = hasActiveAccess ? (entitlement?.tier ?? 'free') : 'free';
   if (!visible) return null;
-  if (!loading && isFeatureAllowed(feature, tier)) return <>{children}</>;
+  if (isFeatureAllowed(feature, tier)) return <>{children}</>;
   const required = getRequiredTierForFeature(feature) === 'pro' ? 'pro' : 'plus';
   if (showPlans)
     return <PaywallModal visible onClose={() => setShowPlans(false)} preselectedTier={required} />;

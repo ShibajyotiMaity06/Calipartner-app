@@ -60,7 +60,7 @@ export const en = {
     title: 'Custom macros',
     locked: 'Available with Plus and Pro',
     description:
-      'Enter your daily grams. Calories come from these macros. Override to use them from today, or keep your current goals.',
+      'Set calories, protein, carbs and fat independently within your plan limits. Save to use them from today.',
     current: 'Current: {calories} kcal · {protein} g protein · {carbs} g carbs · {fat} g fat',
     protein: 'Protein (g)',
     carbs: 'Carbs (g)',

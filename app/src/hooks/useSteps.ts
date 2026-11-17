@@ -68,10 +68,11 @@ export function useSteps(date?: string): UseStepsResult {
   const activeKey = useRef(ownerKey);
   activeKey.current = ownerKey;
   const [loadedKey, setLoadedKey] = useState<string | null>(null);
+  const loadedKeyRef = useRef<string | null>(null);
 
   const loadData = useCallback(async () => {
     try {
-      setLoading(true);
+      setLoading(loadedKeyRef.current !== ownerKey);
       const db = await getDb();
 
       await loadAccountTable(db, 'activity_days', effectiveUserId);
@@ -83,6 +84,7 @@ export function useSteps(date?: string): UseStepsResult {
 
       if (activeKey.current !== ownerKey) return;
       setLoadedKey(ownerKey);
+      loadedKeyRef.current = ownerKey;
       setActivity(act);
       setPermissionStatus(perm);
       setWeek(history);
@@ -200,7 +202,7 @@ export function useSteps(date?: string): UseStepsResult {
     goalSteps,
     progressPercent,
     permissionStatus,
-    loading,
+    loading: loading || loadedKey !== ownerKey,
     error,
     week: loadedKey === ownerKey ? week : [],
     logPedometerSession,

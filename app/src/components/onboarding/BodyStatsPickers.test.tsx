@@ -69,6 +69,10 @@ it('preserves canonical weight and height on unit toggles, converting only expli
   );
   expect(weight).not.toHaveBeenCalled();
   expect(height).not.toHaveBeenCalled();
+  expect(tree.root.findByProps({ testID: 'height-units' }).props.value).toBe('metric');
+  await act(async () =>
+    tree.root.findByProps({ testID: 'height-units' }).props.onChange('imperial'),
+  );
   await act(async () =>
     tree.root.findByProps({ testID: 'height-in-wheel-increase' }).props.onPress(),
   );

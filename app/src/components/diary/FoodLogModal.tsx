@@ -10,6 +10,7 @@ import type { Food, FoodCandidateItem, MealSection } from '@calipartner/core';
 import { applyNutrientCorrection, scaleNutrients, sumNutrientSnapshots } from '@calipartner/core';
 import { Button, Chip, homeLayout, Text } from '@calipartner/ui';
 import { useAuth } from '@/contexts/AuthContext';
+import { useSubscription } from '@/hooks/useSubscription';
 import { getDb } from '@/db';
 import { useFoodSearch } from '@/hooks/useFoodSearch';
 import { useFoodLibrary } from '@/hooks/useFoodLibrary';
@@ -63,6 +64,11 @@ export function FoodLogModal({
 }: FoodLogModalProps) {
   const { colors } = useTheme();
   const { user } = useAuth();
+  const photoSubscription = useSubscription();
+  const hasPhotoAccess =
+    photoSubscription.hasActiveAccess &&
+    photoSubscription.currentTier === 'pro' &&
+    !photoSubscription.isTrial;
   const library = useFoodLibrary();
   const [showDescribe, setShowDescribe] = useState(false);
 
@@ -701,12 +707,14 @@ export function FoodLogModal({
                 gap: spacing.md,
               }}
             >
-              <Text
-                style={{ fontSize: fontSize.sm, color: colors.textMuted }}
-                testID="photo-access-copy"
-              >
-                {t('brandRepair.photoPro')}
-              </Text>
+              {!hasPhotoAccess && (
+                <Text
+                  style={{ fontSize: fontSize.sm, color: colors.textMuted }}
+                  testID="photo-access-copy"
+                >
+                  {t('brandRepair.photoPro')}
+                </Text>
+              )}
               <View
                 style={{
                   width: 80,
@@ -717,7 +725,7 @@ export function FoodLogModal({
                   justifyContent: 'center',
                 }}
               >
-                <Ionicons name="information-circle-outline" size={40} color={colors.accent} />
+                <Ionicons name="camera-outline" size={40} color={colors.accent} />
               </View>
 
               <View
@@ -768,7 +776,7 @@ export function FoodLogModal({
               )}
               {/* Start Capture Button */}
               <Button
-                variant="secondary"
+                variant="primary"
                 fullWidth={false}
                 label={t('foodLog.photo.startScan')}
                 icon={<Ionicons name="camera" size={20} color={colors.onAccent} />}
@@ -788,26 +796,7 @@ export function FoodLogModal({
                   width: '100%',
                   maxWidth: 280,
                   justifyContent: 'center',
-                }}
-              />
-
-              {/* Privacy Reassurance Note */}
-              <Button
-                variant="secondary"
-                fullWidth={false}
-                label="In-memory processing & privacy guarantees"
-                icon={
-                  <Ionicons name="shield-checkmark-outline" size={14} color={colors.textMuted} />
-                }
-                testID="btn-view-ai-consent"
-                accessibilityRole="button"
-                accessibilityLabel="View AI privacy details"
-                onPress={() => setShowPhotoConsent(true)}
-                style={{
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                  gap: 6,
-                  marginTop: spacing.xs,
+                  alignSelf: 'center',
                 }}
               />
             </View>

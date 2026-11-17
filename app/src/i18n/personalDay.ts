@@ -53,7 +53,7 @@ export const personalDay = {
   planMacros: 'Build my own macros',
   caloriesInput: 'Calories (kcal)',
   customTitle: 'Make your targets yours',
-  blankDefaults: 'Change what you need. We will fill in anything you leave blank.',
+  blankDefaults: 'Change each target independently. Blank fields keep your current plan.',
   defaultValue: 'Calculated target: {value}',
   useTargets: 'Use these targets',
   skipTargets: 'Skip and use my calculated targets',

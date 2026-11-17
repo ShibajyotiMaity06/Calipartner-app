@@ -5,7 +5,6 @@ import { getSupabase } from '@/lib/supabase';
 import { secureStoreAdapter } from '@/lib/secureStore';
 import { generateClientUuid } from './foodService';
 import { acceptAiProcessingConsent } from './aiFoodPhotoService';
-import { buildWorkoutPlan } from './workoutRoutineService';
 
 async function actor(userId: string) {
   const client = getSupabase();
@@ -79,15 +78,6 @@ export async function buildPersonalWeeklyPlan(
   invalidateReadCache('weekly-plan:', userId);
   const plan = await getPersonalWeeklyPlan(userId);
   if (!plan || plan.id !== request.id) throw new Error('PLAN_UNAVAILABLE');
-  if (singleDay) {
-    await buildWorkoutPlan(userId, preferences, true);
-    const refreshed = await getPersonalWeeklyPlan(userId);
-    if (!refreshed || refreshed.id !== request.id) throw new Error('PLAN_UNAVAILABLE');
-    invalidateReadCache('weekly-plan:', userId);
-    invalidateReadCache('workout-plan:', userId);
-    await request.clear();
-    return refreshed;
-  }
   invalidateReadCache('weekly-plan:', userId);
   invalidateReadCache('workout-plan:', userId);
   await request.clear();

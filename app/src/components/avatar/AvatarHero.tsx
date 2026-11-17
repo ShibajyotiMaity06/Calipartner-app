@@ -1,17 +1,17 @@
-import React, { useCallback, useState, useRef } from 'react';
+import React, { useCallback, useState, useRef, useEffect } from 'react';
 import { View, StyleSheet } from 'react-native';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { Button, CoinIcon, Text, useTheme, space, radius, avatarLayout } from '@calipartner/ui';
 import { useAvatar } from '@/hooks/useAvatar';
 import { useAuth } from '@/contexts/AuthContext';
-import { claimAvatarDrop } from '@/services/avatarService';
+import { claimAvatarDrop, createAvatar } from '@/services/avatarService';
 import { getSupabase } from '@/lib/supabase';
 import { t } from '@/i18n';
 import { AvatarView } from './AvatarView';
 import { avatarProgress } from '@calipartner/core';
 
 export function AvatarHero({ compact = false }: { compact?: boolean }) {
-  const { user } = useAuth();
+  const { user, profile: account } = useAuth();
   const { state, loading, error, refresh, acknowledge } = useAvatar();
   const router = useRouter();
   const { colors } = useTheme();
@@ -23,6 +23,38 @@ export function AvatarHero({ compact = false }: { compact?: boolean }) {
       void refresh();
     }, [refresh]),
   );
+  const createAttempt = useRef<string | null>(null);
+  const activeOwner = useRef(user?.id);
+  activeOwner.current = user?.id;
+  useEffect(
+    () => () => {
+      activeOwner.current = undefined;
+    },
+    [],
+  );
+  useEffect(() => {
+    const owner = user?.id;
+    const skin = state?.tints?.find((tint) => tint.kind === 'skin')?.id;
+    if (
+      compact ||
+      !owner ||
+      !account ||
+      loading ||
+      !state?.enabled ||
+      state.profile ||
+      !skin ||
+      createAttempt.current === owner
+    )
+      return;
+    createAttempt.current = owner;
+    void createAvatar(getSupabase(), account.sex === 'female' ? 'f' : 'm', skin)
+      .then((created) => {
+        if (activeOwner.current === owner) acknowledge(created);
+      })
+      .catch(() => {
+        if (activeOwner.current === owner) setClaimError(true);
+      });
+  }, [user?.id, account, loading, state, compact, acknowledge]);
   if (!user) return null;
   if (loading && !state) return <Text>{t('common.loading')}</Text>;
   if (error && !state)
@@ -56,6 +88,18 @@ export function AvatarHero({ compact = false }: { compact?: boolean }) {
   if (!compact)
     return (
       <View style={{ alignItems: 'center', gap: space[2] }} testID="home-avatar-hero">
+        {claimError && !profile ? (
+          <Button
+            variant="tertiary"
+            label={t('avatar.retry')}
+            testID="avatar-create-retry"
+            onPress={() => {
+              createAttempt.current = null;
+              setClaimError(false);
+              void refresh();
+            }}
+          />
+        ) : null}
         {profile ? (
           <AvatarView
             profile={profile}

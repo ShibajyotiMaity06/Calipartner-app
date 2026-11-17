@@ -25,44 +25,23 @@ beforeEach(() => {
 afterEach(async () => {
   if (tree) await act(async () => tree.unmount());
 });
-it('defaults to Light, switches palettes and persists the explicit choice', async () => {
-  const storage = { getItem: vi.fn(async () => null), setItem: vi.fn(async () => {}) };
+it('always uses brown/apricot, ignoring retired stored themes and switches', async () => {
+  const storage = { getItem: vi.fn(async () => 'light'), setItem: vi.fn(async () => {}) };
   await act(async () => {
     tree = create(
-      <ThemeProvider storage={storage}>
+      <ThemeProvider initialTheme="light" storage={storage}>
         <Probe />
       </ThemeProvider>,
     );
   });
-  expect(current!.theme).toBe('light');
-  expect(current!.colors.bg0).toBe('#DDD5C7');
-  expect(current!.reduceMotion).toBe(true);
-  await act(async () => current.setTheme('dark'));
-  expect(current!.theme).toBe('yellow');
-  expect(current!.colors.bg0).toBe('#0E0B08');
-  expect(storage.setItem).toHaveBeenCalledWith('calipartner.appearance', 'dark');
-  await act(async () => current.setTheme('yellow'));
-  expect(current!.colors.bg0).toBe('#0E0B08');
-});
-it('does not let delayed hydration overwrite a new selection', async () => {
-  let resolve!: (s: string) => void;
-  const storage = {
-    getItem: () =>
-      new Promise<string>((r) => {
-        resolve = r;
-      }),
-    setItem: async () => {},
-  };
-  await act(async () => {
-    tree = create(
-      <ThemeProvider storage={storage}>
-        <Probe />
-      </ThemeProvider>,
-    );
-  });
-  await act(async () => current.setTheme('yellow'));
-  await act(async () => resolve('dark'));
-  expect(current!.theme).toBe('yellow');
+  expect(current.theme).toBe('yellow');
+  expect(current.colors).toBe(themePalettes.yellow);
+  expect(current.isDark).toBe(true);
+  expect(current.reduceMotion).toBe(true);
+  await act(async () => current.setTheme('light'));
+  expect(current.theme).toBe('yellow');
+  expect(storage.getItem).not.toHaveBeenCalled();
+  expect(storage.setItem).not.toHaveBeenCalled();
 });
 it('keeps text, action labels and Light nutrient text at AA contrast', () => {
   for (const palette of Object.values(themePalettes))

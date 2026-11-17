@@ -52,11 +52,11 @@ export function HomeSquadLeaderboard({
                 ? t('common.errorBody') + ' ' + t('common.retry')
                 : t('squadDesign.unreadMessages', { count: unread.data ?? 0 })
             }
-            onPress={() =>
-              unread.error
-                ? void unread.refresh()
-                : router.push({ pathname: '/(tabs)/room', params: { room: roomId, tab: 'chat' } })
-            }
+            onPress={(event) => {
+              event?.stopPropagation();
+              if (unread.error) void unread.refresh();
+              else router.push({ pathname: '/(tabs)/room', params: { room: roomId, tab: 'chat' } });
+            }}
             testID={`home-squad-chat-${roomId}`}
           >
             <Ionicons
@@ -95,7 +95,10 @@ export function HomeSquadLeaderboard({
           accessibilityLabel={t('squadDesign.dailyTargetPercent')}
           accessibilityState={{ expanded: showScoreHint }}
           aria-expanded={showScoreHint}
-          onPress={() => setShowScoreHint((value) => !value)}
+          onPress={(event) => {
+            event?.stopPropagation();
+            setShowScoreHint((value) => !value);
+          }}
           onBlur={() => setShowScoreHint(false)}
           onAccessibilityEscape={() => setShowScoreHint(false)}
           testID={`home-squad-score-help-${roomId}`}
@@ -124,7 +127,10 @@ export function HomeSquadLeaderboard({
         <Button
           variant="tertiary"
           label={t('common.retry')}
-          onPress={() => void refresh()}
+          onPress={(event) => {
+            event?.stopPropagation();
+            void refresh();
+          }}
           testID={`retry-squad-${roomId}`}
         />
       ) : (
@@ -149,12 +155,13 @@ export function HomeSquadLeaderboard({
         label={t(memberCount === 2 ? 'squadDesign.open' : 'squadDesign.seeAll', {
           count: memberCount,
         })}
-        onPress={() =>
+        onPress={(event) => {
+          event?.stopPropagation();
           router.push({
             pathname: '/(tabs)/room',
             params: { room: roomId, tab: memberCount === 2 ? 'today' : 'progress' },
-          })
-        }
+          });
+        }}
         testID={`home-leaderboard-${roomId}`}
       />
     </View>

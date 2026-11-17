@@ -1,4 +1,11 @@
 export const entryPolish = {
+  close: 'Close',
+  workoutNotes: 'Notes',
+  copyLink: 'Copy invite link',
+  linkCopied: 'Link copied',
+  optional: '(optional)',
+  durationMinutes: '{minutes} min',
+  ftIn: 'ft / in',
   tagline: 'Get stronger together',
   logo: 'CaliPartner: helping each other up',
   inch: 'in',

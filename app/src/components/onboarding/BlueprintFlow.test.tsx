@@ -104,7 +104,7 @@ it('builds one day after all preferences, then visits day, coach, compare and pa
   }
   expect(tree.root.findByType(PaywallModal).props.context).toBe('weekly_plan');
   await act(async () => tree.root.findByType(PaywallModal).props.onContinueFree());
-  expect(state.replace).toHaveBeenCalledWith('/(tabs)/today');
+  expect(state.replace).toHaveBeenCalledWith('/pair-start');
 });
 it('a failed request retains the preferences and shows an error instead of a fabricated plan', async () => {
   state.build.mockRejectedValue(new Error('PLAN_UNAVAILABLE'));

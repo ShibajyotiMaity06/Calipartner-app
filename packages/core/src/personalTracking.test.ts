@@ -26,7 +26,7 @@ it('preserves every default for blank inputs and only changes supplied targets',
   });
   expect(applyOnboardingTargetOverrides(goal, 'male', { protein: 160 })).toMatchObject({
     protein_grams: 160,
-    carb_grams: 215,
+    carb_grams: 225,
     fat_grams: 60,
     daily_calorie_target: 2040,
     custom_macros: true,
@@ -45,12 +45,12 @@ it('enforces the calorie floor, whole grams, direction, weekly cap and habit bou
     applyOnboardingTargetOverrides({ ...goal, goal: 'maintain' }, 'male', { protein: 100 }),
   ).toThrow('UNSAFE_MACROS');
 });
-it('accepts calorie-only targets, derives missing grams and rejects inconsistent explicit inputs', () => {
+it('accepts independent calorie and macro entries without changing other targets', () => {
   const result = applyOnboardingTargetOverrides(goal, 'male', { calories: 2200 });
   expect(result).toMatchObject({
     daily_calorie_target: 2200,
     protein_grams: 150,
-    carb_grams: 265,
+    carb_grams: 225,
     fat_grams: 60,
   });
   expect(
@@ -64,14 +64,19 @@ it('accepts calorie-only targets, derives missing grams and rejects inconsistent
       fat: 60,
     }).daily_calorie_target,
   ).toBe(2040);
-  expect(() =>
+  expect(
     applyOnboardingTargetOverrides(goal, 'male', {
       calories: 2100,
       protein: 150,
       carbs: 225,
       fat: 60,
     }),
-  ).toThrow('INCONSISTENT_TARGETS');
+  ).toMatchObject({
+    daily_calorie_target: 2100,
+    protein_grams: 150,
+    carb_grams: 225,
+    fat_grams: 60,
+  });
   expect(() => applyOnboardingTargetOverrides(goal, 'male', { calories: 1000 })).toThrow(
     'MACRO_RANGE_CALORIES',
   );
@@ -109,12 +114,12 @@ it('uses only enabled own-goal percentages, caps excess and handles no targets o
   expect(() => validateTrackingPreferences({ ...DEFAULT_TRACKING, water: 1 })).toThrow();
 });
 
-it('protein alone fills the remaining calories on maintenance without a calorie-matching error', () => {
+it('protein alone preserves every other target on maintenance', () => {
   const maintenance = { ...goal, goal: 'maintain' as const, tdee: 2040 };
   expect(applyOnboardingTargetOverrides(maintenance, 'male', { protein: 160 })).toMatchObject({
     daily_calorie_target: 2040,
     protein_grams: 160,
-    carb_grams: 215,
+    carb_grams: 225,
     fat_grams: 60,
   });
 });

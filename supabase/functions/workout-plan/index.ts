@@ -38,7 +38,7 @@ export const workoutRoutineFormat = {
             day: { type: 'integer', minimum: 0, maximum: 6 },
             workout: obj({
               title: { type: 'string' },
-              minutes: { type: 'integer', minimum: 0, maximum: 90 },
+              minutes: { type: 'integer', minimum: 0, maximum: 120 },
               exercises: array(
                 obj({
                   name: { type: 'string' },

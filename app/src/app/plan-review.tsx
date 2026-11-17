@@ -152,6 +152,10 @@ export default function MonthlyPlanReviewScreen() {
                 machine.current?.setUnits(value);
                 update();
               }}
+              onHeightUnits={(value) => {
+                machine.current?.setHeightUnits(value);
+                update();
+              }}
               onNickname={() => {}}
               onWeight={(value) => {
                 machine.current?.setBodyStats({ weightKg: value });

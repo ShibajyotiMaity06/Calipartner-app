@@ -58,6 +58,11 @@ export async function runWorkoutRoutineTests(db) {
   const finish = (n, id, lease, value = content) =>
     rpc('finish_workout_plan($1,$2,$3,$4)', [uid(n), uid(id), lease, value]);
   await admin();
+  for (const minutes of [30, 60, 90, 120, 121]) {
+    const candidate = structuredClone(content);
+    candidate.days[0].minutes = minutes;
+    assert.equal(await rpc('valid_workout_routine($1)', [candidate]), minutes <= 120);
+  }
   await db.exec('begin');
   try {
     for (const n of [1, 2, 3, 4]) {

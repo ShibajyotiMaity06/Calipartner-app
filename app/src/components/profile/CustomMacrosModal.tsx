@@ -50,7 +50,12 @@ export function CustomMacrosModal({
     setError(false);
     try {
       const result = await updateCustomMacros(
-        { protein: preview.protein_grams, carbs: preview.carb_grams, fat: preview.fat_grams },
+        {
+          calories: preview.daily_calorie_target,
+          protein: preview.protein_grams,
+          carbs: preview.carb_grams,
+          fat: preview.fat_grams,
+        },
         sex,
       );
       if (result.success) onClose();

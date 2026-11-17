@@ -64,11 +64,16 @@ export async function runLoggingSettingsTests(db) {
       db.query('update public.goal_profiles set daily_calorie_target=1000 where id=$1', [id(102)]),
     /UNSAFE_MACROS/,
   );
-  await assert.rejects(
-    () =>
-      db.query('update public.goal_profiles set daily_calorie_target=2041 where id=$1', [id(102)]),
-    /UNSAFE_MACROS/,
+  await db.query('update public.goal_profiles set daily_calorie_target=2041 where id=$1', [
+    id(102),
+  ]);
+  assert.equal(
+    await scalar('select carb_grams from public.goal_profiles where id=$1', [id(102)]),
+    220,
   );
+  await db.query('update public.goal_profiles set daily_calorie_target=2040 where id=$1', [
+    id(102),
+  ]);
   await asUser(1);
   assert.equal(
     await scalar('select count(*)::int from public.goal_profiles where user_id=$1', [id(2)]),

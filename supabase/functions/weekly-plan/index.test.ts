@@ -132,7 +132,7 @@ function setup(
     admin: admin as unknown as SupabaseClient,
     generate: async (prompt: string) => {
       calls++;
-      assert.ok(prompt.includes('Verified saved daily goals'));
+      assert.ok(prompt.includes('Meal planning targets'));
       assert.ok(!prompt.includes('stranger'));
       if (options.providerFailure) throw new Error('network');
       return content();

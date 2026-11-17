@@ -34,6 +34,12 @@ export const PLAN_EQUIPMENT = [
   'bike',
 ] as const;
 export type PlanEquipment = (typeof PLAN_EQUIPMENT)[number];
+/** Conservative equipment defaults for the selected training location. */
+export function equipmentForLocation(location: PlanPreferences['location']): PlanEquipment[] {
+  if (location === 'home') return ['bodyweight'];
+  const basic: PlanEquipment[] = ['bodyweight', 'dumbbell', 'barbell', 'bench', 'pullup'];
+  return location === 'advanced' ? [...basic, 'cable', 'legpress'] : basic;
+}
 export interface PlanPreferences {
   workout_days: number[];
   location: 'home' | 'basic' | 'advanced';
@@ -134,6 +140,20 @@ export interface PlanGoals {
   fat: number;
   calorie_floor: number;
 }
+/** Food must have real energy values even when independently saved tracking targets
+ * do not add up. Keep their proportions for recipe planning; never mutate the diary goals. */
+export function mealPlanningGoals(goals: PlanGoals): PlanGoals {
+  const energy = goals.protein * 4 + goals.carbs * 4 + goals.fat * 9;
+  if (!Number.isFinite(energy) || energy <= 0) throw new Error('INVALID_PLAN_GOALS');
+  if (Math.abs(energy - goals.calories) <= 10) return { ...goals };
+  const factor = goals.calories / energy;
+  return {
+    ...goals,
+    protein: Math.round(goals.protein * factor),
+    carbs: Math.round(goals.carbs * factor),
+    fat: Math.round(goals.fat * factor),
+  };
+}
 export class WeeklyPlanValidationError extends Error {
   constructor(
     readonly reason:
@@ -230,7 +250,7 @@ export function validatePlanPreferences(input: unknown): PlanPreferences {
     location,
     equipment: [...new Set(equipment)],
     experience: choice(p.experience, ['beginner', 'intermediate', 'experienced']),
-    session_minutes: number(p.session_minutes, 15, 90),
+    session_minutes: number(p.session_minutes, 15, 120),
     limitations: text(p.limitations, 500, true),
     ...(p.workout_notes === undefined ? {} : { workout_notes: text(p.workout_notes, 500, true) }),
     country: text(p.country, 80),
@@ -875,7 +895,7 @@ export function validateWorkoutRoutine(input: unknown): WorkoutRoutineContent {
       return {
         day,
         title: text(item.title, 100),
-        minutes: exercises.length ? number(item.minutes, 0, 90) : 0,
+        minutes: exercises.length ? number(item.minutes, 0, 120) : 0,
         exercises,
       };
     }),

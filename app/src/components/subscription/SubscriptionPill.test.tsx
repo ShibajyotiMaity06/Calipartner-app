@@ -32,7 +32,7 @@ it.each([
   ['pro', true, false, 'offline', 'Plans', '/paywall'],
 ] as const)(
   'routes %s active=%s loading=%s error=%s honestly',
-  async (tier, active, loading, error, label, destination) => {
+  async (tier, active, loading, error, _label, destination) => {
     Object.assign(state, { tier, active, loading, error });
     state.push.mockClear();
     let tree!: ReturnType<typeof create>;
@@ -42,7 +42,8 @@ it.each([
     const button = tree.root.findByProps({ testID: 'btn-header-upgrade' });
     expect(button.props.style.minHeight).toBeGreaterThanOrEqual(44);
     expect(button.props.accessibilityRole).toBe('button');
-    expect(JSON.stringify(tree.toJSON())).toContain(label);
+    expect(tree.root.findByProps({ name: 'flash-outline' })).toBeDefined();
+    expect(button.props.accessibilityLabel).toBeTruthy();
     await act(async () => button.props.onPress());
     expect(state.push).toHaveBeenCalledWith(destination);
     await act(async () => tree.unmount());

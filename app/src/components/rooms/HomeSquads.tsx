@@ -178,8 +178,11 @@ export function HomeSquads({
           style={[styles.cards, { flexDirection: 'row', transform: [{ translateX: offset }] }]}
         >
           {rooms.map((room, index) => (
-            <View
+            <Pressable
               key={room.id}
+              onPress={() => router.push({ pathname: '/(tabs)/room', params: { room: room.id } })}
+              accessibilityRole="button"
+              accessibilityLabel={t('homeRefresh.openSquad', { name: room.name })}
               accessibilityElementsHidden={selected !== index}
               importantForAccessibility={selected === index ? 'auto' : 'no-hide-descendants'}
               style={[styles.room, { width: cardWidth, flexShrink: 0 }]}
@@ -188,18 +191,9 @@ export function HomeSquads({
             >
               <View style={styles.header}>
                 <View style={styles.nameGroup}>
-                  <Button
-                    variant="secondary"
-                    fullWidth={false}
-                    label={room.name}
-                    onPress={() =>
-                      router.push({ pathname: '/(tabs)/room', params: { room: room.id } })
-                    }
-                    accessibilityRole="button"
-                    accessibilityLabel={t('homeRefresh.openSquad', { name: room.name })}
-                    testID={`home-open-title-${room.id}`}
-                    style={[styles.retry, styles.name]}
-                  />
+                  <Text variant="heading" testID={`home-open-title-${room.id}`} style={styles.name}>
+                    {room.name}
+                  </Text>
                 </View>
                 <Text variant="micro" color={dark.textMid} style={styles.count} tabular>
                   {room.member_cap
@@ -214,23 +208,13 @@ export function HomeSquads({
                   visible={visible && selected === index}
                 />
               ) : (
-                <Button
-                  variant="secondary"
-                  fullWidth={false}
-                  label={
-                    room.state === 'dormant'
-                      ? t('repairs.squadEmpty')
-                      : t('homeRefresh.openSquad', { name: room.name })
-                  }
-                  onPress={() =>
-                    router.push({ pathname: '/(tabs)/room', params: { room: room.id } })
-                  }
-                  style={styles.retry}
-                  accessibilityRole="button"
-                  accessibilityLabel={t('homeRefresh.openSquad', { name: room.name })}
-                />
+                <Text>
+                  {room.state === 'dormant'
+                    ? t('repairs.squadEmpty')
+                    : t('homeRefresh.openSquad', { name: room.name })}
+                </Text>
               )}
-            </View>
+            </Pressable>
           ))}
           <Pressable
             onPress={create}

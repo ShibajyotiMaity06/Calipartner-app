@@ -1,9 +1,4 @@
-import {
-  customMacroTargets,
-  getCalorieFloor,
-  macroRecommendation,
-  validateMacroBounds,
-} from './targets';
+import { customMacroTargets, macroRecommendation, validateMacroBounds } from './targets';
 import type { GoalProfile, Sex } from './types';
 
 export const TRACKING_METRICS = ['calories', 'protein', 'carbs', 'fat', 'steps', 'water'] as const;
@@ -82,59 +77,14 @@ export function applyOnboardingTargetOverrides(
     carbs: input.carbs ?? goal.carb_grams,
     fat: input.fat ?? goal.fat_grams,
   };
-  const shouldFill =
-    hasMacros &&
-    ['protein', 'carbs', 'fat'].some(
-      (key) => input[key as keyof OnboardingTargetOverrides] == null,
-    );
-  if (input.calories != null || shouldFill) {
-    input = { ...input, calories: input.calories ?? goal.daily_calorie_target };
-    if (!Number.isInteger(input.calories) || input.calories! <= 0)
-      throw new Error('INVALID_MACROS');
-    if (input.calories! < getCalorieFloor(sex) || input.calories! > 10000)
-      throw new Error('UNSAFE_MACROS');
-    if (input.carbs == null) {
-      // Whole-gram targets must still add up exactly to the requested calories.
-      if (input.fat == null) {
-        const compatibleFat = [
-          grams.fat,
-          grams.fat + 1,
-          grams.fat - 1,
-          grams.fat + 2,
-          grams.fat - 2,
-          grams.fat + 3,
-          grams.fat - 3,
-        ].find(
-          (fat) =>
-            fat >= 0 &&
-            input.calories! - 4 * grams.protein - 9 * fat >= 0 &&
-            (input.calories! - 4 * grams.protein - 9 * fat) % 4 === 0,
-        );
-        if (compatibleFat !== undefined) grams.fat = compatibleFat;
-      }
-      grams.carbs = (input.calories! - 4 * grams.protein - 9 * grams.fat) / 4;
-    } else if (input.protein == null) {
-      if (input.fat == null) {
-        const compatibleFat = [0, 1, -1, 2, -2, 3, -3]
-          .map((delta) => grams.fat + delta)
-          .find(
-            (fat) =>
-              fat >= 0 &&
-              input.calories! - 4 * grams.carbs - 9 * fat >= 0 &&
-              (input.calories! - 4 * grams.carbs - 9 * fat) % 4 === 0,
-          );
-        if (compatibleFat !== undefined) grams.fat = compatibleFat;
-      }
-      grams.protein = (input.calories! - 4 * grams.carbs - 9 * grams.fat) / 4;
-    } else if (input.fat == null)
-      grams.fat = (input.calories! - 4 * grams.protein - 4 * grams.carbs) / 9;
-    if (
-      4 * grams.protein + 4 * grams.carbs + 9 * grams.fat !== input.calories ||
-      Object.values(grams).some((value) => !Number.isInteger(value))
-    )
-      throw new Error('INCONSISTENT_TARGETS');
-  }
-  const macros = hasMacros || input.calories != null ? customMacroTargets(grams, goal, sex) : {};
+  const macros =
+    hasMacros || input.calories != null
+      ? customMacroTargets(
+          { ...grams, calories: input.calories ?? goal.daily_calorie_target },
+          goal,
+          sex,
+        )
+      : {};
   const step_goal = input.steps ?? goal.step_goal;
   const water_ml_goal = input.water ?? goal.water_ml_goal;
   if (

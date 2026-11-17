@@ -84,20 +84,14 @@ it('requires explicit consent and supplies the actual training, equipment and fo
   await act(async () => {
     tree = create(<WeeklyPlanForm onBuild={build} onLater={vi.fn()} />);
   });
-  await act(async () =>
-    tree.root.findAllByProps({ testID: 'plan-equipment' }).at(-1)!.props.onPress(),
-  );
-  await act(async () =>
-    tree.root.findByProps({ testID: 'plan-equipment-dumbbell' }).props.onPress(),
-  );
-  await act(async () => tree.root.findByProps({ testID: 'plan-equipment-done' }).props.onPress());
+  expect(tree.root.findAllByProps({ testID: 'plan-equipment' })).toHaveLength(0);
+  await act(async () => tree.root.findByProps({ testID: 'plan-minutes-120' }).props.onPress());
   await act(async () => tree.root.findByProps({ testID: 'weekly-plan-next' }).props.onPress());
   expect(tree.root.findByProps({ testID: 'build-weekly-plan' }).props.disabled).toBe(true);
   for (const [key, value] of [
     ['country', 'India'],
     ['cuisine', 'Indian'],
     ['allergies', 'milk, peanut'],
-    ['exclusions', 'none'],
   ])
     await act(async () =>
       tree.root.findByProps({ testID: 'plan-' + key }).props.onChangeText(value),
@@ -108,7 +102,8 @@ it('requires explicit consent and supplies the actual training, equipment and fo
   expect(build.mock.calls[0]![0]).toMatchObject({
     country: 'India',
     workout_days: [0, 2, 4],
-    equipment: ['bodyweight', 'dumbbell'],
+    equipment: ['bodyweight'],
+    session_minutes: 120,
     allergies: ['milk', 'peanut'],
     exclusions: [],
   });
@@ -126,7 +121,6 @@ it.each(['', 'none', 'None'])(
       ['country', 'India'],
       ['cuisine', 'Indian'],
       ['allergies', value],
-      ['exclusions', value],
     ])
       await act(async () =>
         tree.root.findByProps({ testID: 'plan-' + key }).props.onChangeText(answer),

@@ -29,7 +29,6 @@ export function MeRoomPlanCard({
     useSubscription();
   const [restoring, setRestoring] = useState(false);
   const [restoreMessage, setRestoreMessage] = useState<string | null>(null);
-  const [expanded, setExpanded] = useState(false);
 
   const handleManageInStore = async () => {
     playClickSound();
@@ -154,42 +153,6 @@ export function MeRoomPlanCard({
           </Text>
         )}
         {isTrial && <Text variant="bodyS">{t('progressRefresh.trialNote')}</Text>}
-        <Button
-          variant="secondary"
-          fullWidth={false}
-          label={t('compactProfile.planDetails')}
-          icon={
-            <Ionicons
-              name={expanded ? 'chevron-up' : 'chevron-down'}
-              size={space[4]}
-              color={dark.textMid}
-            />
-          }
-          accessibilityRole="button"
-          accessibilityState={{ expanded }}
-          accessibilityLabel={t('compactProfile.planDetails')}
-          onPress={() => setExpanded((value) => !value)}
-          style={styles.compactDisclosure}
-          testID="toggle-plan-details"
-        />
-        {expanded ? (
-          <View style={styles.compactDetails}>
-            {hasStorePlan ? (
-              <Text variant="bodyS" color={dark.textMid} testID="plan-management-note">
-                {managementNote}
-              </Text>
-            ) : null}
-            {Platform.OS !== 'web' && (
-              <Button
-                variant="tertiary"
-                label={restoring ? t('common.loading') : t('me.roomPlan.restoreBtn')}
-                onPress={() => void handleRestore()}
-                disabled={restoring}
-                testID="btn-me-restore"
-              />
-            )}
-          </View>
-        ) : null}
         {restoreMessage ? (
           <Text variant="bodyS" accessibilityLiveRegion="polite">
             {restoreMessage}

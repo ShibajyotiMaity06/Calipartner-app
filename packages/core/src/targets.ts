@@ -68,17 +68,19 @@ export function validateMacroBounds(
 }
 
 export interface CustomMacros {
+  calories?: number;
   protein: number;
   carbs: number;
   fat: number;
 }
 
-/** Custom grams determine calories; preserve the plan's direction and safety limits. */
+/** Independent targets preserve the plan's direction and individual safety limits. */
 export function customMacroTargets(macros: CustomMacros, goal: GoalProfile, sex: Sex) {
   const grams = [macros.protein, macros.carbs, macros.fat];
   if (grams.some((value) => !Number.isInteger(value) || value < 0 || value > 2500))
     throw new Error('INVALID_MACROS');
-  const calories = macros.protein * 4 + macros.carbs * 4 + macros.fat * 9;
+  const calories = macros.calories ?? goal.daily_calorie_target;
+  if (!Number.isInteger(calories)) throw new Error('INVALID_MACROS');
   const change = calories - goal.tdee;
   const weeklyRate = Math.round((Math.abs(change) / 1100) * 100) / 100;
   if (
@@ -93,7 +95,7 @@ export function customMacroTargets(macros: CustomMacros, goal: GoalProfile, sex:
     (goal.goal === 'maintain' && change !== 0)
   )
     throw new Error('UNSAFE_MACROS');
-  validateMacroBounds({ calories, ...macros }, goal, sex);
+  validateMacroBounds({ ...macros, calories }, goal, sex);
   return {
     daily_calorie_target: calories,
     protein_grams: macros.protein,

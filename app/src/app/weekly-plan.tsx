@@ -14,7 +14,7 @@ import {
 } from '@calipartner/core';
 import { useAuth } from '@/contexts/AuthContext';
 import { getPersonalWeeklyPlan, buildPersonalWeeklyPlan } from '@/services/weeklyPlanService';
-import { afterSetupDestination, finishPairPrompt } from '@/services/pairOnboardingService';
+import { afterSetupDestination } from '@/services/pairOnboardingService';
 import { WeeklyPlanForm } from '@/components/onboarding/WeeklyPlanForm';
 import { WeeklyPlanPreparing } from '@/components/onboarding/WeeklyPlanPreparing';
 import { PersonalisedDayPreview } from '@/components/onboarding/PersonalisedDayPreview';
@@ -45,12 +45,13 @@ export default function WeeklyPlanScreen({ onClose }: { onClose?: () => void } =
   const finishSetup = useCallback(async () => {
     if (finishingSetup.current) return;
     finishingSetup.current = true;
+    let destination = '/today';
     try {
-      if (user) await finishPairPrompt(user.id);
+      if (user) destination = await afterSetupDestination(user.id);
     } catch {
-      /* Local pairing preferences cannot block completed setup from reaching Home. */
+      /* Saved setup can still reach Home. */
     }
-    closeBrowserModalsThen(() => router.replace('/(tabs)/today'));
+    closeBrowserModalsThen(() => router.replace(destination as never));
   }, [user, router]);
   useFocusEffect(
     useCallback(() => {

@@ -31,8 +31,7 @@ export async function runMacroBoundsTests(db) {
       JSON.stringify({ sub: id(1), role: 'authenticated' }),
     ]);
     await db.exec('set role authenticated');
-    const insert = (n, p, c, f, claimedTdee = tdee) => {
-      const kcal = p * 4 + c * 4 + f * 9;
+    const insert = (n, p, c, f, claimedTdee = tdee, kcal = p * 4 + c * 4 + f * 9) => {
       const rate = Math.round((Math.abs(kcal - claimedTdee) / 1100) * 100) / 100;
       return db.query(
         "insert into public.goal_profiles(id,user_id,goal,activity_level,current_weight_kg,weekly_rate_kg,daily_calorie_target,protein_grams,carb_grams,fat_grams,bmr,tdee,gym_days,input_height_cm,custom_macros) values($1,$2,'cut','moderate',80,$3,$4,$5,$6,$7,1744,$8,3,175,true)",
@@ -44,6 +43,14 @@ export async function runMacroBoundsTests(db) {
       await assert.rejects(run, code);
       await db.exec('rollback to savepoint invalid_macro');
     };
+    // Independently supplied calories no longer force compensating carb/fat edits.
+    await insert(30, protein + 25, carbs + 40, fat, tdee, calories);
+    await insert(31, protein, carbs, fat + 20, tdee, calories);
+    await denied(() => insert(32, protein, carbs + 126, fat, tdee, calories), /MACRO_RANGE_CARBS/);
+    await denied(
+      () => insert(33, protein, carbs, fat, tdee, 1000),
+      /UNSAFE_MACROS|MACRO_RANGE_CALORIES/,
+    );
     // Redistributing protein keeps energy unchanged at either inclusive boundary.
     await insert(10, protein + 50, carbs - 50, fat);
     await insert(11, protein - 50, carbs + 50, fat);

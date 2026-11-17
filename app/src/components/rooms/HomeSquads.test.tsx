@@ -53,7 +53,7 @@ it('uses actual pair and 20-person counts, opens the selected squad and scrolls 
       .props.onAccessibilityAction({ nativeEvent: { actionName: 'increment' } }),
   );
   expect(panels().map((panel) => panel.props.visible)).toEqual([false, true]);
-  renderer.root.findByProps({ testID: 'home-open-title-large' }).props.onPress();
+  renderer.root.findByProps({ testID: 'home-squad-card-large' }).props.onPress();
   expect(state.push).toHaveBeenLastCalledWith({
     pathname: '/(tabs)/room',
     params: { room: 'large' },

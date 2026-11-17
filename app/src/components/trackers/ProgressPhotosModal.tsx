@@ -51,6 +51,7 @@ export function PhotoVault({
 }: ProgressPhotosModalProps) {
   const { colors } = useTheme();
   const { user } = useAuth();
+  const userId = user?.id;
   const { localDate } = useCurrentLocalDate();
   const owner = useRef(user?.id);
   owner.current = user?.id;
@@ -67,21 +68,21 @@ export function PhotoVault({
   const [notes, setNotes] = useState('');
   const [pose, setPose] = useState<ProgressPhoto['pose']>('front');
   const refresh = useCallback(async () => {
-    if (!user) return;
+    if (!userId) return;
     setLoading(true);
     setError(false);
     try {
-      const photos = await getProgressPhotos(await getDb(), user.id);
-      if (owner.current === user.id) {
+      const photos = await getProgressPhotos(await getDb(), userId);
+      if (owner.current === userId) {
         setRows(photos);
-        setLoadedOwner(user.id);
+        setLoadedOwner(userId);
       }
     } catch {
-      if (owner.current === user.id) setError(true);
+      if (owner.current === userId) setError(true);
     } finally {
-      if (owner.current === user.id) setLoading(false);
+      if (owner.current === userId) setLoading(false);
     }
-  }, [user]);
+  }, [userId]);
   useEffect(() => {
     setDraft(null);
     setSelected([]);
@@ -187,7 +188,6 @@ export function PhotoVault({
           keyboardShouldPersistTaps="handled"
         >
           <Text variant="title1">{t('trackers.weight.photosTitle')}</Text>
-          <Text>{t('launch.photoNotice')}</Text>
           {!embedded && (
             <Button
               variant="secondary"

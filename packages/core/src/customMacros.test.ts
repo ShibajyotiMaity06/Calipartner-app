@@ -2,13 +2,14 @@ import { describe, expect, it } from 'vitest';
 import { customMacroTargets } from './targets';
 import type { GoalProfile } from './types';
 const goal = {
+  daily_calorie_target: 2040,
   goal: 'cut',
   tdee: 2500,
   current_weight_kg: 80,
   input_height_cm: 175,
 } as GoalProfile;
 describe('custom macro goals', () => {
-  it('uses entered grams, derives calories and preserves safe goal direction', () => {
+  it('uses independent grams and preserves the saved calorie target and safe direction', () => {
     expect(customMacroTargets({ protein: 150, carbs: 225, fat: 60 }, goal, 'male')).toEqual({
       daily_calorie_target: 2040,
       protein_grams: 150,
@@ -25,12 +26,12 @@ describe('custom macro goals', () => {
   });
   it('rejects floors, excessive change, opposite direction and low-BMI cuts', () => {
     for (const [macros, plan] of [
-      [{ protein: 100, carbs: 100, fat: 40 }, goal],
+      [{ calories: 1160, protein: 100, carbs: 100, fat: 40 }, goal],
       [
-        { protein: 100, carbs: 200, fat: 40 },
+        { calories: 1560, protein: 100, carbs: 200, fat: 40 },
         { ...goal, tdee: 3000 },
       ],
-      [{ protein: 200, carbs: 300, fat: 80 }, goal],
+      [{ calories: 2720, protein: 200, carbs: 300, fat: 80 }, goal],
       [
         { protein: 150, carbs: 225, fat: 60 },
         { ...goal, current_weight_kg: 50 },
@@ -42,14 +43,14 @@ describe('custom macro goals', () => {
     expect(
       customMacroTargets(
         { protein: 150, carbs: 250, fat: 100 },
-        { ...goal, goal: 'maintain' },
+        { ...goal, goal: 'maintain', daily_calorie_target: 2500 },
         'male',
       ).daily_calorie_target,
     ).toBe(2500);
     expect(() =>
       customMacroTargets(
-        { protein: 150, carbs: 251, fat: 100 },
-        { ...goal, goal: 'maintain' },
+        { calories: 2504, protein: 150, carbs: 251, fat: 100 },
+        { ...goal, goal: 'maintain', daily_calorie_target: 2500 },
         'male',
       ),
     ).toThrow();

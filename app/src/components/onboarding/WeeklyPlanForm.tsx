@@ -3,12 +3,12 @@ import { CompactSelect, type CompactSelectOption } from '@/components/CompactSel
 import React, { useCallback, useState, type ComponentProps } from 'react';
 import { BackHandler, Platform, Pressable, TextInput, View } from 'react-native';
 import { useFocusEffect } from 'expo-router';
-import type { Ionicons } from '@expo/vector-icons';
+import { Ionicons } from '@expo/vector-icons';
 import { useBrowserModalBack } from '@/hooks/useBrowserModalBack';
 import { Button, homeLayout, radius, space, Text, type as typography } from '@calipartner/ui';
 import {
-  PLAN_EQUIPMENT,
   WORKOUT_SPLITS,
+  equipmentForLocation,
   WORKOUT_SPLIT_DAYS,
   defaultWorkoutDays,
   WEEK_DAYS,
@@ -99,6 +99,7 @@ export function PlanField({
   id,
   numeric = false,
   hint,
+  optional = false,
 }: {
   label: string;
   value: string;
@@ -106,6 +107,7 @@ export function PlanField({
   id: string;
   numeric?: boolean;
   hint?: string;
+  optional?: boolean;
 }) {
   const styles = useSquadStyles();
 
@@ -113,7 +115,15 @@ export function PlanField({
 
   return (
     <View style={styles.stack}>
-      <Text variant="label">{label}</Text>
+      <Text variant="label">
+        {label}
+        {optional ? (
+          <Text variant="label" color={dark.textMid}>
+            {' '}
+            {t('entryPolish.optional')}
+          </Text>
+        ) : null}
+      </Text>
       {hint && <Text variant="bodyS">{hint}</Text>}
       <TextInput
         accessibilityLabel={label}
@@ -153,7 +163,15 @@ export function WeeklyPlanForm({
 
   const { colors: dark } = useAppearance();
 
-  const [preferences, setPreferences] = useState(initial ?? initialPlanPreferences);
+  const [preferences, setPreferences] = useState(() => {
+    const value = initial ?? initialPlanPreferences;
+    return {
+      ...value,
+      session_minutes: [30, 60, 90, 120].includes(value.session_minutes)
+        ? value.session_minutes
+        : 30,
+    };
+  });
   const splitDays = preferences.workout_split
     ? (WORKOUT_SPLIT_DAYS[preferences.workout_split] ?? [])
     : [];
@@ -162,8 +180,9 @@ export function WeeklyPlanForm({
   const [step, setStep] = useState<'workout' | 'food'>('workout'),
     [consent, setConsent] = useState(false),
     [error, setError] = useState(false);
-  const [allergies, setAllergies] = useState(initial?.allergies.join(', ') ?? ''),
-    [exclusions, setExclusions] = useState(initial?.exclusions.join(', ') ?? '');
+  const [allergies, setAllergies] = useState(
+    [...new Set([...(initial?.allergies ?? []), ...(initial?.exclusions ?? [])])].join(', '),
+  );
   useBrowserModalBack(step === 'food', () => setStep('workout'));
   useFocusEffect(
     useCallback(() => {
@@ -223,11 +242,6 @@ export function WeeklyPlanForm({
       id={`plan-${key}`}
       onSelect={(value) => {
         update(key, value);
-        if (key === 'location' && value !== 'advanced')
-          setPreferences((p) => ({
-            ...p,
-            equipment: p.equipment.filter((e) => !['cable', 'legpress'].includes(e)),
-          }));
       }}
     />
   );
@@ -244,7 +258,8 @@ export function WeeklyPlanForm({
           ...preferences,
           ...(singleDay ? { meals_per_day: 4 } : {}),
           allergies: list(allergies),
-          exclusions: list(exclusions),
+          exclusions: [],
+          equipment: equipmentForLocation(preferences.location),
         }),
       );
     } catch {
@@ -334,32 +349,40 @@ export function WeeklyPlanForm({
           />
           <Text variant="bodyS">{t('fixNovember.trainingDaysHint')}</Text>
           {choose('location', ['home', 'basic', 'advanced'])}
-          <Choice
-            label={t('fixNovember.equipment')}
-            icon="barbell-outline"
-            values={PLAN_EQUIPMENT.filter(
-              (e) => preferences.location === 'advanced' || !['cable', 'legpress'].includes(e),
-            ).map((value) => ({
-              value,
-              label: label(value),
-              icon: OPTION_ICONS[value] ?? 'barbell-outline',
-            }))}
-            selected={preferences.equipment}
-            id="plan-equipment"
-            onSelect={(value) =>
-              update(
-                'equipment',
-                preferences.equipment.includes(value)
-                  ? preferences.equipment.filter((e) => e !== value)
-                  : [...preferences.equipment, value],
-              )
-            }
-          />
           {choose('experience', ['beginner', 'intermediate', 'experienced'])}
-          {field('session_minutes', true)}
+          <View style={styles.stack}>
+            <Text variant="label">{t('fixNovember.minutes')}</Text>
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: space[2] }}>
+              {[30, 60, 90, 120].map((minutes) => (
+                <Button
+                  key={minutes}
+                  variant="secondary"
+                  fullWidth={false}
+                  label={t('entryPolish.durationMinutes', { minutes })}
+                  icon={
+                    preferences.session_minutes === minutes ? (
+                      <Ionicons
+                        name="checkmark"
+                        size={homeLayout.editIconSize}
+                        color={dark.textHi}
+                      />
+                    ) : undefined
+                  }
+                  accessibilityRole="radio"
+                  accessibilityState={{ checked: preferences.session_minutes === minutes }}
+                  style={{
+                    backgroundColor: preferences.session_minutes === minutes ? dark.s3 : dark.s1,
+                  }}
+                  onPress={() => update('session_minutes', minutes)}
+                  testID={`plan-minutes-${minutes}`}
+                />
+              ))}
+            </View>
+          </View>
           {field('limitations', false, t('fixNovember.limitationsHint'))}
           <PlanField
-            label={t('workoutFlow.notes')}
+            label={t('entryPolish.workoutNotes')}
+            optional
             hint={t('workoutFlow.notesHint')}
             value={preferences.workout_notes ?? ''}
             onChange={(value) => update('workout_notes', value)}
@@ -374,7 +397,7 @@ export function WeeklyPlanForm({
                   preferences.workout_days.length > 6 ||
                   !preferences.equipment.length ||
                   preferences.session_minutes < 15 ||
-                  preferences.session_minutes > 90
+                  preferences.session_minutes > 120
                 )
                   setError(true);
                 else setStep('food');
@@ -392,15 +415,8 @@ export function WeeklyPlanForm({
             label={t('fixNovember.allergies')}
             value={allergies}
             onChange={setAllergies}
-            hint={t('personalDay.optionalFoods')}
+            optional
             id="plan-allergies"
-          />
-          <PlanField
-            label={t('fixNovember.exclusions')}
-            value={exclusions}
-            onChange={setExclusions}
-            hint={t('personalDay.optionalFoods')}
-            id="plan-exclusions"
           />
           {singleDay ? (
             <Text>{t('personalDay.fourMeals')}</Text>

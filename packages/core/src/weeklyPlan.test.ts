@@ -1,3 +1,4 @@
+import { equipmentForLocation, mealPlanningGoals } from './weeklyPlan';
 import { describe, expect, it } from 'vitest';
 import {
   validatePlanPreferences,
@@ -436,4 +437,21 @@ describe('weekly planning constraints', () => {
       fat: 60,
     });
   });
+});
+
+it('derives location defaults without equipment selection and keeps home bodyweight-only', () => {
+  expect(equipmentForLocation('home')).toEqual(['bodyweight']);
+  expect(equipmentForLocation('basic')).toContain('dumbbell');
+  expect(equipmentForLocation('advanced')).toContain('cable');
+});
+it('fits recipe macro proportions to calories without mutating independent tracking goals', () => {
+  const saved = { calories: 2000, protein: 200, carbs: 300, fat: 100, calorie_floor: 1500 };
+  const original = { ...saved };
+  const meals = mealPlanningGoals(saved);
+  expect(saved).toEqual(original);
+  expect(meals.calories).toBe(2000);
+  expect(Math.abs(meals.protein * 4 + meals.carbs * 4 + meals.fat * 9 - 2000)).toBeLessThanOrEqual(
+    10,
+  );
+  expect(meals.protein / meals.carbs).toBeCloseTo(saved.protein / saved.carbs, 1);
 });

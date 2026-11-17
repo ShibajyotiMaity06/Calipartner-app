@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import {
   calculateAge,
@@ -18,6 +18,7 @@ import { StatsPicker } from './StatsPicker';
 
 interface BodyStatsStepProps {
   units: Units;
+  heightUnits?: Units;
   nickname?: string;
   sex: Sex;
   dateOfBirth: string;
@@ -31,6 +32,7 @@ interface BodyStatsStepProps {
   errorBodyFat?: string;
   identityConfirmed?: boolean;
   onChangeUnits: (units: Units) => void;
+  onChangeHeightUnits?: (units: Units) => void;
   onChangeNickname?: (nickname: string) => void;
   onChangeSex: (sex: Sex) => void;
   onChangeDateOfBirth: (dob: string) => void;
@@ -42,6 +44,9 @@ export function BodyStatsStep(props: BodyStatsStepProps) {
   const { colors } = useTheme();
   const { units, weightKg, heightCm, dateOfBirth, onChangeHeightCm, onChangeWeightKg } = props;
   const metric = units === 'metric';
+  const [localHeightUnits, setLocalHeightUnits] = useState<Units>('metric');
+  const heightUnits = props.heightUnits ?? localHeightUnits;
+  const heightMetric = heightUnits === 'metric';
   const weight = weightKg > 0 ? (metric ? weightKg : kgToLb(weightKg)) : metric ? 70 : 154;
   const height = heightCm > 0 ? heightCm : 175;
   const imperial = cmToFtIn(height);
@@ -111,9 +116,23 @@ export function BodyStatsStep(props: BodyStatsStepProps) {
         ) : null}
       </PlanCard>
       <PlanCard>
-        <Text variant="heading">{t('onboarding.bodyStats.heightLabel')}</Text>
+        <View style={styles.header}>
+          <Text variant="heading">{t('onboarding.bodyStats.heightLabel')}</Text>
+          <SegmentedControl
+            options={[
+              { value: 'imperial', label: t('entryPolish.ftIn') },
+              { value: 'metric', label: t('repairUnits.cm') },
+            ]}
+            value={heightUnits}
+            onChange={(value) => {
+              setLocalHeightUnits(value as Units);
+              props.onChangeHeightUnits?.(value as Units);
+            }}
+            testID="height-units"
+          />
+        </View>
         {heightCm <= 0 ? <Text variant="bodyS">{t('entryPolish.chooseValue')}</Text> : null}
-        {metric ? (
+        {heightMetric ? (
           <StatsPicker
             label={t('onboarding.bodyStats.heightLabel')}
             value={height}

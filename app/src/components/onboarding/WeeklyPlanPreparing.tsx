@@ -1,6 +1,6 @@
 import { useTheme as useAppearance } from '@calipartner/ui/theme';
 import React, { useEffect, useRef, useState } from 'react';
-import { Animated, View } from 'react-native';
+import { ActivityIndicator, Animated, Easing, View } from 'react-native';
 import { homeLayout, radius, space, motion, Text, useReducedMotion } from '@calipartner/ui';
 import type { GoalProfile, PlanPreferences } from '@calipartner/core';
 import { t } from '@/i18n';
@@ -28,11 +28,21 @@ export function WeeklyPlanPreparing({
   useEffect(() => {
     if (reducedMotion) return;
     const animation = Animated.loop(
-      Animated.timing(progress, {
-        toValue: 1,
-        duration: motion.seam.duration,
-        useNativeDriver: true,
-      }),
+      Animated.sequence([
+        Animated.timing(progress, {
+          toValue: 1,
+          duration: motion.seam.duration,
+          easing: Easing.linear,
+          useNativeDriver: true,
+          isInteraction: false,
+        }),
+        Animated.timing(progress, {
+          toValue: 0,
+          duration: 0,
+          useNativeDriver: true,
+          isInteraction: false,
+        }),
+      ]),
     );
     animation.start();
     return () => animation.stop();
@@ -48,6 +58,11 @@ export function WeeklyPlanPreparing({
       </Text>
       <Text>{t(workoutOnly ? 'workoutFlow.preparingHint' : 'personalDay.preparingBody')}</Text>
       <View style={styles.card}>
+        <ActivityIndicator
+          color={dark.apricot}
+          accessibilityLabel={t('personalDay.buildingAndChecking')}
+          testID="plan-building-spinner"
+        />
         <View style={styles.spread}>
           <Text variant="heading">
             {t(

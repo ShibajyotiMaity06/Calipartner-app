@@ -26,6 +26,7 @@ export function TrainingStep({
   onDays,
   onBodyStats,
   onUnits,
+  onHeightUnits,
   onNickname,
   identityConfirmed = false,
 }: {
@@ -35,6 +36,7 @@ export function TrainingStep({
   onDays: (value: number) => void;
   onBodyStats: (value: { sex?: OnboardingState['sex']; dateOfBirth?: string }) => void;
   onUnits: (value: OnboardingState['units']) => void;
+  onHeightUnits: (value: OnboardingState['heightUnits']) => void;
   onNickname: (value: string) => void;
   identityConfirmed?: boolean;
 }) {
@@ -51,6 +53,7 @@ export function TrainingStep({
         {...state}
         identityConfirmed={identityConfirmed}
         onChangeUnits={onUnits}
+        onChangeHeightUnits={onHeightUnits}
         onChangeNickname={onNickname}
         onChangeSex={(sex) => onBodyStats({ sex })}
         onChangeDateOfBirth={(dateOfBirth) => onBodyStats({ dateOfBirth })}

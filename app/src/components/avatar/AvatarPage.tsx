@@ -1,7 +1,7 @@
 import React from 'react';
 import { HeaderActions } from '@/components/HeaderActions';
 import { SafeAreaView, ScrollView, View, StyleSheet } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useRouter, useLocalSearchParams } from 'expo-router';
 import { Button, Text, useTheme, space, homeLayout } from '@calipartner/ui';
 import { useAvatar } from '@/hooks/useAvatar';
 import { t } from '@/i18n';
@@ -20,6 +20,7 @@ export function AvatarPage({
 }) {
   const { colors } = useTheme();
   const router = useRouter();
+  const params = useLocalSearchParams<{ setup?: string }>();
   const { state, loading, error, refresh } = useAvatar();
   const Container = fixed ? View : ScrollView;
   return (
@@ -46,7 +47,7 @@ export function AvatarPage({
           <Text variant="title2" style={styles.title}>
             {title}
           </Text>
-          <HeaderActions />
+          <HeaderActions showUpgrade={params.setup !== '1'} />
         </View>
         {!state && loading ? (
           <Text>{t('common.loading')}</Text>

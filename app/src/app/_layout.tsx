@@ -11,7 +11,6 @@ import { ThemeProvider, space } from '@calipartner/ui';
 import { secureStoreAdapter } from '@/lib/secureStore';
 import { AvatarProvider } from '@/hooks/useAvatar';
 import { AvatarMilestone } from '@/components/avatar/AvatarMilestone';
-import { ThemeTransitionOverlay } from '@/components/avatar/ThemeTransitionOverlay';
 import { CoachSessionProvider } from '@/components/coach/CoachSessionProvider';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { HardwareBackHandler } from '@/components/navigation/HardwareBackHandler';
@@ -184,7 +183,7 @@ export default function RootLayout() {
 
   return (
     <ErrorBoundary>
-      <ThemeProvider initialTheme="light" storage={secureStoreAdapter}>
+      <ThemeProvider initialTheme="yellow" storage={secureStoreAdapter}>
         <SafeAreaProvider>
           <AppearanceStatusBar />
           <AppInitializationGate>
@@ -207,7 +206,6 @@ export default function RootLayout() {
             </AuthProvider>
           </AppInitializationGate>
         </SafeAreaProvider>
-        <ThemeTransitionOverlay />
       </ThemeProvider>
     </ErrorBoundary>
   );
@@ -257,7 +255,12 @@ function AppearanceStack() {
               backgroundColor: colors.bg0,
             }}
           >
-            <HeaderActions showUpgrade={route.name !== 'paywall'} />
+            <HeaderActions
+              showUpgrade={
+                route.name !== 'paywall' &&
+                (route.params as { setup?: string } | undefined)?.setup !== '1'
+              }
+            />
           </View>
         ),
         contentStyle: { backgroundColor: colors.bg0 },

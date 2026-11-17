@@ -96,7 +96,10 @@ export function SquadMentions({ roomId, visible }: { roomId: string; visible: bo
       <Button
         variant="tertiary"
         label={t('squadDesign.mentionError') + ' ' + t('common.retry')}
-        onPress={() => void refresh()}
+        onPress={(event) => {
+          event?.stopPropagation();
+          void refresh();
+        }}
         testID={`retry-mentions-${roomId}`}
       />
     );
@@ -105,7 +108,10 @@ export function SquadMentions({ roomId, visible }: { roomId: string; visible: bo
     <View style={localStyles.triggerGroup}>
       <Pressable
         style={localStyles.trigger}
-        onPress={() => setExpanded(true)}
+        onPress={(event) => {
+          event?.stopPropagation();
+          setExpanded(true);
+        }}
         accessibilityRole="button"
         accessibilityState={{ expanded }}
         aria-expanded={expanded}
@@ -128,7 +134,10 @@ export function SquadMentions({ roomId, visible }: { roomId: string; visible: bo
         <Button
           variant="tertiary"
           label={t('squadDesign.mentionReadError') + ' ' + t('common.retry')}
-          onPress={() => void dismiss()}
+          onPress={(event) => {
+            event?.stopPropagation();
+            void dismiss();
+          }}
           testID="retry-mention-seen"
         />
       )}
@@ -141,7 +150,10 @@ export function SquadMentions({ roomId, visible }: { roomId: string; visible: bo
         <View style={localStyles.modal}>
           <Pressable
             style={StyleSheet.absoluteFill}
-            onPress={() => void dismiss()}
+            onPress={(event) => {
+              event?.stopPropagation();
+              void dismiss();
+            }}
             accessibilityRole="button"
             accessibilityLabel={t('squadDesign.dismissMentions')}
             testID="dismiss-home-mentions"
@@ -154,14 +166,20 @@ export function SquadMentions({ roomId, visible }: { roomId: string; visible: bo
             <Button
               variant="tertiary"
               label={t('squadDesign.dismissMentions')}
-              onPress={() => void dismiss()}
+              onPress={(event) => {
+                event?.stopPropagation();
+                void dismiss();
+              }}
               testID="close-home-mentions"
             />
             {data?.locked ? (
               <Button
                 variant="secondary"
                 label={t('squadDesign.unlock')}
-                onPress={() => router.push('/paywall')}
+                onPress={(event) => {
+                  event?.stopPropagation();
+                  router.push('/paywall');
+                }}
                 testID="unlock-mentions"
               />
             ) : (
@@ -169,7 +187,8 @@ export function SquadMentions({ roomId, visible }: { roomId: string; visible: bo
                 {items.map((item) => (
                   <Pressable
                     key={item.message_id}
-                    onPress={() => {
+                    onPress={(event) => {
+                      event?.stopPropagation();
                       void dismiss();
                       router.push({
                         pathname: '/(tabs)/room',
@@ -202,7 +221,10 @@ export function SquadMentions({ roomId, visible }: { roomId: string; visible: bo
                   <Button
                     variant="tertiary"
                     label={busy ? t('common.loading') : t('squadDesign.moreMentions')}
-                    onPress={() => void loadMore()}
+                    onPress={(event) => {
+                      event?.stopPropagation();
+                      void loadMore();
+                    }}
                     disabled={busy}
                     testID="load-more-mentions"
                   />

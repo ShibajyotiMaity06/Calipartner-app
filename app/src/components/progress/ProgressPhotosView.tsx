@@ -16,8 +16,8 @@ export function ProgressPhotosView({
 }) {
   const { currentTier, hasActiveAccess, loading, error, refresh } = useSubscription();
   const router = useRouter();
-  if (loading) return <LoadingState />;
-  if (error)
+  if (loading && !hasActiveAccess) return <LoadingState />;
+  if (error && !hasActiveAccess)
     return (
       <Button
         variant="secondary"

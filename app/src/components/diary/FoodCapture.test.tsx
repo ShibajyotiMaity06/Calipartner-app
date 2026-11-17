@@ -25,6 +25,9 @@ vi.mock('react-native', () => ({
   View: 'View',
 }));
 vi.mock('@/contexts/AuthContext', () => ({ useAuth: () => ({ user: { id: 'owner' } }) }));
+vi.mock('@/hooks/useSubscription', () => ({
+  useSubscription: () => ({ hasActiveAccess: true, currentTier: 'pro', isTrial: false }),
+}));
 vi.mock('@/db', () => ({ getDb: vi.fn() }));
 vi.mock('@/lib/supabase', () => ({ getSupabase: () => ({}) }));
 vi.mock('@/hooks/useFoodSearch', () => ({

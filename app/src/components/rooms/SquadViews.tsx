@@ -183,7 +183,10 @@ export function SquadLeaderboard({
       {members.slice(0, limit).map((member) => (
         <Pressable
           key={member.user_id}
-          onPress={() => onMember(member)}
+          onPress={(event) => {
+            event?.stopPropagation();
+            onMember(member);
+          }}
           style={[squadStyles.leader, compact && squadStyles.compactLeader]}
           accessibilityRole="button"
           accessibilityHint={t('squadDesign.scoreRule')}

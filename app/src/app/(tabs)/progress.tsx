@@ -85,7 +85,24 @@ export default function ProgressScreen() {
           <Text variant="title1" accessibilityRole="header">
             {t('progressRefresh.title')}
           </Text>
-          <HeaderActions />
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: space[1] }}>
+            <HeaderActions />
+            <Button
+              variant="tertiary"
+              fullWidth={false}
+              iconOnly
+              label={t('compactProfile.account')}
+              icon={
+                <Ionicons
+                  name="settings-outline"
+                  size={homeLayout.iconSize}
+                  color={colors.textHi}
+                />
+              }
+              onPress={() => router.push('/me')}
+              testID="you-open-settings"
+            />
+          </View>
         </View>
         {weight.loading ? (
           <LoadingState />

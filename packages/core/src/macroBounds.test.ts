@@ -49,9 +49,9 @@ it('uses inclusive bounds for every macro and calories without changing recommen
     }
 });
 it('retains safety floors, rate caps and maintenance direction even within adjustment bounds', () => {
-  expect(() => customMacroTargets({ protein: 176, carbs: 259, fat: 96 }, goal, 'male')).toThrow(
-    'UNSAFE_MACROS',
-  );
+  expect(() =>
+    customMacroTargets({ calories: 2601, protein: 176, carbs: 259, fat: 96 }, goal, 'male'),
+  ).toThrow('UNSAFE_MACROS');
   expect(
     applyOnboardingTargetOverrides(goal, 'male', { protein: null, carbs: null, fat: null }),
   ).toEqual(goal);
