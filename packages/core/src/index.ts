@@ -54,3 +54,4 @@ export * from './avatar.ts';
 export * from './savedMeals.ts';
 
 export * from './route.ts';
+export * from './progressSummary.ts';

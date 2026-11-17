@@ -1,9 +1,11 @@
+import { HeaderActions } from '@/components/HeaderActions';
 import { type as inputTypography } from '@calipartner/ui';
 import React, { useState } from 'react';
 import { Pressable, Share, StyleSheet, TextInput, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import {
   Avatar,
+  SegmentedControl,
   Button,
   Text,
   onboardingLayout as layout,
@@ -93,6 +95,7 @@ export function CommunityPanel({
       <View style={styles.row}>
         {!embedded && iconButton('arrow-back', t('friends.back'), onBack, 'back-from-friends')}
         <View style={styles.flex} />
+        {!embedded && <HeaderActions />}
         {iconButton(
           'notifications-outline',
           t('notifications.title'),
@@ -121,11 +124,14 @@ export function CommunityPanel({
             {t('community.subtitle')}
           </Text>
         </View>
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel={t('community.invite')}
+        <Button
+          variant="secondary"
+          fullWidth={false}
+          size="sm"
+          label={t('community.invite')}
           disabled={!friends.ownProfile}
           testID="community-invite"
+          icon={<Ionicons name="person-add-outline" size={space[4]} color={colors.textHi} />}
           onPress={() => {
             if (!friends.ownProfile) return;
             setShareError(false);
@@ -133,16 +139,7 @@ export function CommunityPanel({
               message: t('community.shareMessage', { username: friends.ownProfile.username }),
             }).catch(() => setShareError(true));
           }}
-          style={({ pressed }) => [
-            styles.invite,
-            { backgroundColor: pressed ? colors.s2 : colors.s1, borderColor: colors.hairline },
-          ]}
-        >
-          <Ionicons name="share-social-outline" size={layout.icon} color={colors.textMid} />
-          <Text variant="bodyS" fontSet="onboarding" color={colors.textHi}>
-            {t('community.invite')}
-          </Text>
-        </Pressable>
+        />
       </View>
       {shareError ? (
         <Text accessibilityRole="alert" color={colors.danger}>
@@ -167,58 +164,27 @@ export function CommunityPanel({
           ]}
         />
       </View>
-      <View
-        style={[styles.tabs, { backgroundColor: colors.s1, borderColor: colors.hairline }]}
-        accessibilityRole="tablist"
-      >
-        {(['discover', 'requests', 'friends'] as const).map((value) => (
-          <Pressable
-            key={value}
-            accessibilityRole="tab"
-            accessibilityState={{ selected: tab === value }}
-            onPress={() => setTab(value)}
-            testID={`community-tab-${value}`}
-            style={({ pressed }) => [
-              styles.tab,
-              { backgroundColor: tab === value || pressed ? colors.s2 : colors.s1 },
-            ]}
-          >
-            <Text
-              variant="bodyS"
-              fontSet="onboarding"
-              color={tab === value ? colors.textHi : colors.textMid}
-            >
-              {t(`community.${value}`)}
-            </Text>
-            <Text variant="bodyS" fontSet="onboarding" tabular color={colors.textMid}>
-              {counts[value]}
-            </Text>
-          </Pressable>
-        ))}
-      </View>
+      <SegmentedControl
+        value={tab}
+        onChange={setTab}
+        options={(['discover', 'requests', 'friends'] as const).map((value) => ({
+          value,
+          label: t(`community.${value}`),
+          badge: counts[value] || undefined,
+        }))}
+        testID="community-tab"
+      />
       {tab === 'requests' ? (
-        <View style={styles.filters}>
-          {(['incoming', 'outgoing'] as const).map((value) => (
-            <Pressable
-              key={value}
-              accessibilityRole="tab"
-              accessibilityState={{ selected: requestTab === value }}
-              testID={`community-requests-${value}`}
-              onPress={() => setRequestTab(value)}
-              style={[
-                styles.filter,
-                {
-                  backgroundColor: requestTab === value ? colors.s2 : colors.bg0,
-                  borderColor: colors.hairline,
-                },
-              ]}
-            >
-              <Text variant="bodyS" fontSet="onboarding" color={colors.textHi}>
-                {t(`rooms.inboxModal.${value}Tab`)}
-              </Text>
-            </Pressable>
-          ))}
-        </View>
+        <SegmentedControl
+          fullWidth={false}
+          value={requestTab}
+          onChange={setRequestTab}
+          options={(['incoming', 'outgoing'] as const).map((value) => ({
+            value,
+            label: t(`rooms.inboxModal.${value}Tab`),
+          }))}
+          testID="community-requests"
+        />
       ) : null}
       <View style={styles.header}>
         <Text

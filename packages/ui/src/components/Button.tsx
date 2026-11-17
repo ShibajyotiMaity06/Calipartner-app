@@ -9,11 +9,13 @@ import {
   type ViewStyle,
 } from 'react-native';
 
+import { controls } from '../tokens/controls';
 import { radius } from '../tokens/radius';
 import { space } from '../tokens/space';
 import { Text } from './Text';
 import { homeLayout } from '../tokens/home';
 import { NavigationIcon } from './NavigationIcon';
+import { AddIcon } from './AddIcon';
 
 export type ButtonVariant =
   'primary' | 'secondary' | 'tertiary' | 'destructive' | 'destructiveFill';
@@ -23,7 +25,7 @@ export interface ButtonProps {
   fontSet?: 'app' | 'onboarding';
   /** Visual variant */
   variant?: ButtonVariant;
-  /** Size variant: sm (36h / 44 hit area), md (44h), lg (56h) */
+  /** Legacy size hint; all standard actions share a 44px minimum touch target. */
   size?: ButtonSize;
   /** Button text label (verb names the object: e.g. "Add to lunch") */
   label: string;
@@ -70,35 +72,15 @@ export function Button({
   const { colors: dark } = useAppearance();
 
   const isDisabled = disabled || loading;
+  const addAction = /^add(?:\s|$)/i.test(label.trim());
+  const displayIcon =
+    icon ??
+    (addAction ? <AddIcon color={variant === 'primary' ? dark.onBrand : dark.textHi} /> : null);
   const navigationAction = /^(?:\u2190\s*)?back$/i.test(label.trim())
     ? 'back'
     : /^close$/i.test(label.trim())
       ? 'close'
       : null;
-
-  const getHeight = (): number => {
-    switch (size) {
-      case 'sm':
-        return 36;
-      case 'md':
-        return 44;
-      case 'lg':
-      default:
-        return 56;
-    }
-  };
-
-  const getPaddingHorizontal = (): number => {
-    switch (size) {
-      case 'sm':
-        return space[3]; // 12
-      case 'md':
-        return space[4]; // 16
-      case 'lg':
-      default:
-        return space[6]; // 24
-    }
-  };
 
   return (
     <Pressable
@@ -111,12 +93,12 @@ export function Button({
       testID={testID}
       hitSlop={size === 'sm' ? { top: 4, bottom: 4, left: 4, right: 4 } : undefined}
       style={({ pressed }) => {
-        const h = getHeight();
+        const h = controls.touch;
         const baseStyle: ViewStyle = {
           minHeight: Math.max(44, h),
-          paddingVertical: size === 'lg' ? space[3] : space[2],
+          paddingVertical: space[2],
           minWidth: 44,
-          paddingHorizontal: getPaddingHorizontal(),
+          paddingHorizontal: space[3],
           borderRadius: radius.button,
           flexDirection: 'row',
           alignItems: 'center',
@@ -214,8 +196,8 @@ export function Button({
               }
               style={styles.spinner}
             />
-          ) : icon ? (
-            <View style={styles.iconWrap}>{icon}</View>
+          ) : displayIcon ? (
+            <View style={styles.iconWrap}>{displayIcon}</View>
           ) : null}
 
           <Text

@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from 'vitest';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import {
   fetchIndividualProgress,
+  getDefaultIndividualProgress,
   fetchRoomProgress,
   fetchRoomStreak,
   fetchUserStreaks,
@@ -47,6 +48,7 @@ function createMockSupabase(overrides: {
 describe('progressService', () => {
   it('fetchIndividualProgress calls get_individual_progress with range', async () => {
     const mockData = {
+      ...getDefaultIndividualProgress('30d'),
       range: '30d',
       calories: { logged_days_count: 20, goal_days_count: 18, adherence_pct: 90 },
       weight: { start_weight_kg: 80, current_weight_kg: 78 },

@@ -1,4 +1,5 @@
 import { publicSite } from './publicSite';
+import { progressRefresh } from './progressRefresh';
 import { launch } from './launch';
 import { avatar } from './avatar';
 import { fastingRefresh } from './fastingRefresh';
@@ -13,6 +14,7 @@ import { homeRefresh } from './homeRefresh';
 import { squadDesign } from './squadDesign';
 import { repairMessages } from './repairs';
 export const en = {
+  progressRefresh,
   publicSite,
   launch,
   avatar,
@@ -133,7 +135,7 @@ export const en = {
     findPartner: 'Find a partner',
     fasting: 'Fasting',
     coach: 'AI coach history',
-    preferences: 'Notifications, health, language, appearance',
+    preferences: 'Notifications and health sync',
     privacy: 'Room visibility, discoverability, social profile',
     privacyTitle: 'Privacy',
     storage: 'Storage, cache and data export',
@@ -1557,7 +1559,7 @@ export const en = {
       tierPlus: 'Plus',
       tierPro: 'Pro',
       tierBasicDesc: 'Personal diary, calories, steps & GPS runs free forever',
-      tierPlusDesc: '3 rooms of up to 5 people, friend discovery, fasting and pair challenges',
+      tierPlusDesc: '3 rooms of up to 5 people, friend discovery and fasting',
       tierProDesc: '5 rooms of up to 20 people, AI coach and photo scans',
       durationMonthly: 'Monthly',
       durationQuarterly: '3 Months',

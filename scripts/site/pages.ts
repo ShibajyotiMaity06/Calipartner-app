@@ -102,7 +102,7 @@ export const pages: PublicPage[] = [
       },
       {
         title: 'Coming soon — not included today',
-        body: 'Body circumferences, full data export, partner matching and messaging, seasonal challenges, workout timers and personal records, fits-my-day recipe collections and weekly AI insights are planned. There are no guaranteed release dates. Monthly progress reviews are available on purchased Pro.',
+        body: 'Body circumferences, full data export, partner matching and messaging, challenges, trophies and badges, workout timers and personal records, fits-my-day recipe collections and weekly AI insights are planned. There are no guaranteed release dates. Monthly progress reviews are available on purchased Pro.',
       },
     ],
   },

@@ -1,12 +1,7 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { useRouter } from 'expo-router';
 import { View } from 'react-native';
 import { Button, Card, HiddenMetric, Text } from '@calipartner/ui';
-import {
-  loadRoomExtras,
-  shareRoomWorkout,
-  respondPairChallenge,
-} from '@/services/roomExtrasService';
+import { loadRoomExtras, shareRoomWorkout } from '@/services/roomExtrasService';
 import { generateClientUuid } from '@/services/foodService';
 import { planStyles } from '@/components/onboarding/PlanPrimitives';
 import { useNetworkStatus } from '@/hooks/useNetworkStatus';
@@ -24,7 +19,6 @@ export function RoomExtras({
   canSend: boolean;
   refreshToken?: unknown;
 }) {
-  const router = useRouter();
   const [data, setData] = useState<Awaited<ReturnType<typeof loadRoomExtras>> | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -139,61 +133,6 @@ export function RoomExtras({
                 ))}
               </View>
             ))}
-          </View>
-        </Card>
-      ))}
-      <Button
-        variant="secondary"
-        label={t('challengeHub.title')}
-        onPress={() => router.push('/progress?tab=challenges' as never)}
-        testID="room-open-challenges"
-      />
-      {data?.challenges.length === 0 ? (
-        <Text variant="bodyS">{t('setup.noChallenges')}</Text>
-      ) : null}
-      {data?.challenges.map((challenge) => (
-        <Card key={challenge.id}>
-          <View style={planStyles.gap}>
-            <Text>
-              {t(
-                challenge.status === 'pending'
-                  ? 'setup.challengePending'
-                  : challenge.status === 'declined'
-                    ? 'setup.challengeDeclined'
-                    : challenge.status === 'completed'
-                      ? 'setup.challengeCompleted'
-                      : 'setup.challengeActive',
-              )}
-            </Text>
-            {challenge.days.map((day) => (
-              <View key={day.user_id}>
-                {day.logged_days === 'locked' ? (
-                  <HiddenMetric label={day.name} />
-                ) : (
-                  <Text tabular>
-                    {t('setup.challengeDays', { name: day.name, days: day.logged_days })}
-                  </Text>
-                )}
-              </View>
-            ))}
-            {challenge.status === 'pending' && challenge.partner_id === userId ? (
-              <>
-                <Button
-                  variant="secondary"
-                  label={t('setup.acceptChallenge')}
-                  disabled={disabled}
-                  onPress={() => void act(() => respondPairChallenge(challenge.id, true))}
-                  testID={`accept-challenge-${challenge.id}`}
-                />
-                <Button
-                  variant="tertiary"
-                  label={t('setup.declineChallenge')}
-                  disabled={disabled}
-                  onPress={() => void act(() => respondPairChallenge(challenge.id, false))}
-                  testID={`decline-challenge-${challenge.id}`}
-                />
-              </>
-            ) : null}
           </View>
         </Card>
       ))}

@@ -21,7 +21,6 @@ import { PersonalDayCard } from '@/components/rooms/PersonalDayCard';
 import { HomeSquads } from '@/components/rooms/HomeSquads';
 import { FastingCard } from '@/components/fasting/FastingCard';
 import { TodayScheduledWorkout } from '@/components/workouts/TodayScheduledWorkout';
-import { TodayChallengeCard } from '@/components/progress/TodayChallengeCard';
 import { useFocusEffect } from 'expo-router';
 import { LoadingState } from '@/components/LoadingState';
 import { MonthlyPlanCheckIn } from '@/components/profile/MonthlyPlanCheckIn';
@@ -206,7 +205,7 @@ export default function TodayScreen() {
             <Text variant="heading" color={dark.textHi} style={styles.greetingTitle}>
               {t('homeRefresh.hello', { name: userName })}
             </Text>
-            <HeaderActions coins coach testID="home-coach-icon" />
+            <HeaderActions coins coach appearance testID="home-coach-icon" />
           </View>
           <Text variant="body" color={dark.textMid} style={styles.greetingQuestion}>
             {getContextualQuestion()}
@@ -308,7 +307,6 @@ export default function TodayScreen() {
 
         {/* 6. Date Selector & Meal Logging Diary Sections */}
         <FastingCard />
-        <TodayChallengeCard />
         <View style={styles.sectionBlock}>
           <View style={styles.dateSelectorRow}>
             <Pressable

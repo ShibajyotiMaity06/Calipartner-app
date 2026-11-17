@@ -1,4 +1,8 @@
-vi.mock('@calipartner/ui', () => ({ Text: 'Text', type: { body: {} } }));
+vi.mock('@calipartner/ui', async () => ({
+  Text: 'Text',
+  type: { body: {} },
+  SegmentedControl: (await import('@/test/SegmentedControlStub')).SegmentedControlStub,
+}));
 import React from 'react';
 import { act, create, type ReactTestRenderer } from 'react-test-renderer';
 import { describe, expect, it, vi } from 'vitest';

@@ -9,7 +9,7 @@ import {
   View,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { Button, Card, radius, space, Text } from '@calipartner/ui';
+import { Button, Card, controls, radius, space, Text } from '@calipartner/ui';
 import { t } from '@/i18n';
 import { useSubscription } from '@/hooks/useSubscription';
 import { openDodoPortal } from '@/services/dodoService';
@@ -49,18 +49,11 @@ export function MeRoomPlanCard({
       await openDodoPortal().catch(() => setRestoreMessage(t('fixes.storeNotReady')));
       return;
     }
-    if (Platform.OS === 'web') {
-      setRestoreMessage(t('fixes.nativeManagement'));
-      return;
-    }
     const storeUrl =
-      Platform.OS === 'ios'
+      entitlement?.source === 'apple'
         ? 'https://apps.apple.com/account/subscriptions'
         : 'https://play.google.com/store/account/subscriptions';
-
-    Linking.openURL(storeUrl).catch(() => {
-      Linking.openURL('https://play.google.com/store/account/subscriptions');
-    });
+    await Linking.openURL(storeUrl).catch(() => setRestoreMessage(t('fixes.nativeManagement')));
   };
 
   const handleRestore = async () => {
@@ -97,7 +90,7 @@ export function MeRoomPlanCard({
     );
   }
 
-  const tier = entitlement?.tier ?? (isTrial ? 'trial' : 'free');
+  const tier = hasActiveAccess ? (entitlement?.tier ?? 'free') : 'free';
   const isPaidOrTrial = hasActiveAccess;
 
   const tierName =
@@ -124,26 +117,30 @@ export function MeRoomPlanCard({
       ? t('me.roomPlan.trialEnds', { date: formattedPeriodEnd })
       : isLapsed
         ? t('me.roomPlan.expiredDate', { date: formattedPeriodEnd })
-        : t('me.roomPlan.renewalDate', { date: formattedPeriodEnd })
+        : t('progressRefresh.accessUntil', { date: formattedPeriodEnd })
     : null;
 
   const planDefaultCap = tier === 'pro' ? 20 : tier === 'plus' ? 5 : 2;
   const capacityText = t('brandRepair.capacityValue', { count: planDefaultCap });
-  const hasStorePlan = isPaidOrTrial && entitlement?.source !== 'none';
+  const hasStorePlan =
+    isPaidOrTrial && Boolean(entitlement?.source && entitlement.source !== 'none');
+  const webPlan = entitlement?.source === 'dodo' || entitlement?.source === 'razorpay';
+  const manageLabel = t(webPlan ? 'progressRefresh.manageWeb' : 'progressRefresh.manageStore');
+  const managementNote = t(webPlan ? 'progressRefresh.webNote' : 'progressRefresh.storeNote');
 
   if (compact) {
     return (
       <Card elevation="s1" style={styles.compactCard} testID="card-me-room-plan">
         <View style={styles.compactHeader}>
           <View style={styles.freeTextGroup}>
-            <Text variant="heading">{isPaidOrTrial ? tierName : t('compactProfile.freePlan')}</Text>
+            <Text variant="heading">{isPaidOrTrial ? tierName : t('progressRefresh.unlock')}</Text>
             <Text variant="micro" color={dark.textMid} tabular>
               {isPaidOrTrial
                 ? t('compactProfile.planSummary', {
                     people: planDefaultCap,
                     rooms: tier === 'pro' ? 5 : 3,
                   })
-                : t('compactProfile.freeNotice')}
+                : t('progressRefresh.unlockBody')}
             </Text>
           </View>
           <Button
@@ -151,11 +148,17 @@ export function MeRoomPlanCard({
             fullWidth={false}
             size="md"
             fontSet="onboarding"
-            label={t(hasStorePlan ? 'me.roomPlan.manageStoreBtn' : 'me.roomPlan.seePlansBtn')}
+            label={hasStorePlan ? manageLabel : t('progressRefresh.seePlans')}
             onPress={hasStorePlan ? handleManageInStore : onChangePlan}
             testID="btn-me-change-plan"
           />
         </View>
+        {renewalText && (
+          <Text variant="bodyS" tabular testID="plan-period-status">
+            {renewalText}
+          </Text>
+        )}
+        {isTrial && <Text variant="bodyS">{t('progressRefresh.trialNote')}</Text>}
         <TouchableOpacity
           accessibilityRole="button"
           accessibilityState={{ expanded }}
@@ -175,25 +178,20 @@ export function MeRoomPlanCard({
         </TouchableOpacity>
         {expanded ? (
           <View style={styles.compactDetails}>
-            {renewalText ? (
-              <Text variant="bodyS" color={dark.textMid}>
-                {!hasStorePlan && formattedPeriodEnd && isPaidOrTrial
-                  ? t('compactProfile.accessUntil', { date: formattedPeriodEnd })
-                  : renewalText}
-              </Text>
-            ) : null}
             {hasStorePlan ? (
               <Text variant="bodyS" color={dark.textMid} testID="plan-management-note">
-                {t('brandRepair.managementNote')}
+                {managementNote}
               </Text>
             ) : null}
-            <Button
-              variant="tertiary"
-              label={restoring ? t('common.loading') : t('me.roomPlan.restoreBtn')}
-              onPress={() => void handleRestore()}
-              disabled={restoring}
-              testID="btn-me-restore"
-            />
+            {Platform.OS !== 'web' && (
+              <Button
+                variant="tertiary"
+                label={restoring ? t('common.loading') : t('me.roomPlan.restoreBtn')}
+                onPress={() => void handleRestore()}
+                disabled={restoring}
+                testID="btn-me-restore"
+              />
+            )}
           </View>
         ) : null}
         {restoreMessage ? (
@@ -293,7 +291,7 @@ export function MeRoomPlanCard({
       </View>
 
       <Text variant="bodyS" color={dark.textMid} testID="plan-management-note">
-        {t('brandRepair.managementNote')}
+        {managementNote}
       </Text>
       <Text variant="bodyS" color={dark.textMid} testID="hosted-room-quota">
         {t('brandRepair.hostedValue', { count: tier === 'pro' ? 5 : tier === 'plus' ? 3 : 1 })}
@@ -326,7 +324,7 @@ export function MeRoomPlanCard({
 
         <Button
           variant="secondary"
-          label={t('me.roomPlan.manageStoreBtn')}
+          label={manageLabel}
           onPress={handleManageInStore}
           testID="btn-me-manage-store"
           style={styles.actionBtn}
@@ -351,9 +349,9 @@ export function MeRoomPlanCard({
 const createStyles = (dark: ReturnType<typeof useAppearance>['colors']) =>
   StyleSheet.create({
     compactCard: { padding: space[3] },
-    compactHeader: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: space[2] },
+    compactHeader: { flexDirection: 'column', alignItems: 'stretch', gap: space[3] },
     compactDisclosure: {
-      minHeight: space[8],
+      minHeight: controls.touch,
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'space-between',

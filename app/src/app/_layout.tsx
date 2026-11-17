@@ -256,7 +256,7 @@ function AppearanceStack() {
               backgroundColor: colors.bg0,
             }}
           >
-            <HeaderActions />
+            <HeaderActions showUpgrade={route.name !== 'paywall'} />
           </View>
         ),
         contentStyle: { backgroundColor: colors.bg0 },

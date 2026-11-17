@@ -1,3 +1,5 @@
+import { SegmentedControl } from '@calipartner/ui';
+import { t } from '@/i18n';
 import { useTheme as useAppearance } from '@calipartner/ui/theme';
 import { NavigationIcon } from '@calipartner/ui';
 import { PremiumFeatureModal } from '@/components/subscription/PremiumFeatureModal';
@@ -90,33 +92,25 @@ function WorkoutProgressModalContent({
           </View>
 
           {/* Tab Selector: Overview | Strength | Volume */}
-          <View style={styles.tabsRow}>
-            {(['Overview', 'Strength', 'Volume'] as const).map((tab) => {
-              const isActive = activeTab === tab;
-              return (
-                <TouchableOpacity
-                  key={tab}
-                  onPress={() => {
-                    playClickSound();
-                    setActiveTab(tab);
-                  }}
-                  style={[styles.tabButton, isActive && styles.tabButtonActive]}
-                  accessibilityRole="tab"
-                  accessibilityState={{ selected: isActive }}
-                  testID={`tab-${tab.toLowerCase()}`}
-                >
-                  <Text
-                    variant="label"
-                    color={isActive ? dark.onBrand : dark.textMid}
-                    style={{ fontWeight: isActive ? '700' : '500' }}
-                  >
-                    {tab}
-                  </Text>
-                </TouchableOpacity>
-              );
-            })}
-          </View>
-
+          <SegmentedControl
+            value={activeTab}
+            onChange={(value) => {
+              playClickSound();
+              setActiveTab(value);
+            }}
+            options={(['Overview', 'Strength', 'Volume'] as const).map((value) => ({
+              value,
+              label: t(
+                value === 'Overview'
+                  ? 'progressRefresh.overview'
+                  : value === 'Strength'
+                    ? 'progressRefresh.strength'
+                    : 'progressRefresh.volume',
+              ),
+              testID: `tab-${value.toLowerCase()}`,
+            }))}
+            testID="workout-progress-tabs"
+          />
           <ScrollView
             contentContainerStyle={styles.scrollContent}
             showsVerticalScrollIndicator={false}

@@ -6,7 +6,7 @@ import { Text, challengeLayout } from '@calipartner/ui';
 import type { ChallengeCatalog } from '@calipartner/core';
 import { challengeText, ct } from '@/i18n/challenges';
 import { t } from '@/i18n';
-import { CButton, CSheet, cs } from './ChallengeUI';
+import { CButton, CSheet, useCs } from './ChallengeUI';
 import { getDb } from '@/db';
 import { getSupabase } from '@/lib/supabase';
 import { sendChatMessage } from '@/services/chatService';
@@ -22,6 +22,7 @@ export function BadgeShelf({
   onClose: () => void;
 }) {
   const { colors: dark } = useAppearance();
+  const cs = useCs();
 
   const [selected, setSelected] = useState<ChallengeCatalog['badges'][number] | null>(null);
   const [busy, setBusy] = useState(false);

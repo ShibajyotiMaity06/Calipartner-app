@@ -1,130 +1,162 @@
-import { useTheme as useAppearance } from '@calipartner/ui/theme';
 import React from 'react';
-import { StyleSheet, View } from 'react-native';
-import { radius, space, Text } from '@calipartner/ui';
+import { View } from 'react-native';
+import { controls, radius, space, Text, useTheme } from '@calipartner/ui';
 import {
-  getPreviousDateString,
+  summarizeProgress,
   type IndividualProgressData,
   type ProgressDateRange,
 } from '@calipartner/core';
-import { useCurrentLocalDate } from '@/hooks/useCurrentLocalDate';
 import { WeightChart } from './WeightChart';
 import { CaloriesChart } from './CaloriesChart';
 import { MacrosChart } from './MacrosChart';
 import { StepsChart } from './StepsChart';
 import { WaterChart } from './WaterChart';
 import { WorkoutsChart } from './WorkoutsChart';
-import { t, getLocale } from '@/i18n';
+import { t } from '@/i18n';
 import type { DayDetailData } from './DayDetailModal';
-
+export type ProgressCategory = 'weight' | 'nutrition' | 'workouts' | 'photos' | 'habits';
 export function ProgressOverview({
   data,
-  range,
   loading,
   onSelectDay,
+  category = 'weight',
 }: {
   data: IndividualProgressData | null;
   range: ProgressDateRange;
   loading: boolean;
+  category?: ProgressCategory;
   onSelectDay?: (day: DayDetailData) => void;
 }) {
-  const { colors: dark } = useAppearance();
-  const styles = createStyles(dark);
-
-  const { localDate } = useCurrentLocalDate();
-  const count = range === '7d' ? 7 : range === '30d' ? 30 : 90;
-  const start = getPreviousDateString(localDate, count - 1);
-  const present = new Set(
-    [
-      ...(data?.calories.daily.filter((day) => day.is_logged_day).map((day) => day.date) ?? []),
-    ].filter((date) => date >= start && date <= localDate),
-  );
-  const latest = Array.from({ length: count }, (_, index) =>
-    getPreviousDateString(localDate, count - 1 - index),
-  );
-  const goals = data?.calories.daily.filter((day) => day.is_goal_day).length;
-  return (
-    <View style={styles.stack} testID="progress-overview">
-      <View style={styles.card}>
-        <Text variant="heading">{t('homeRefresh.showingUp')}</Text>
-        <Text variant="numeralM" tabular>
-          {loading
-            ? t('common.loading')
-            : t('homeRefresh.loggedDays', { logged: present.size, total: count })}
-        </Text>
-        <View style={styles.days}>
-          {latest.map((date) => (
-            <View
-              key={date}
-              style={styles.day}
-              accessible
-              accessibilityLabel={`${date}: ${present.has(date) ? t('repairs.logged') : t('squadDesign.noLogs')}`}
-            >
-              <View style={[styles.dot, present.has(date) && styles.present]}>
-                <Text color={present.has(date) ? dark.onBrand : dark.textMid}>
-                  {present.has(date) ? '✓' : '·'}
-                </Text>
-              </View>
-              <Text variant="micro" color={dark.textMid}>
-                {new Date(`${date}T12:00:00Z`).toLocaleDateString(getLocale(), {
-                  weekday: 'narrow',
-                  timeZone: 'UTC',
-                })}
-              </Text>
-            </View>
-          ))}
+  const { colors } = useTheme();
+  if (!data) return <Text>{t('homeRefresh.noProgress')}</Text>;
+  const summary = summarizeProgress(data);
+  const number = (
+    value: number | null | undefined,
+    unit: '' | 'kg' | 'kcal' | 'grams' | 'ml' = '',
+    decimals = 1,
+  ) =>
+    value == null
+      ? t('progressRefresh.missing')
+      : unit
+        ? t(`progressRefresh.${unit}`, { value: value.toFixed(decimals) })
+        : value.toFixed(decimals);
+  const stats = (values: Array<[string, string]>) => (
+    <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: space[3] }}>
+      {values.map(([label, value]) => (
+        <View
+          key={label}
+          style={{
+            minWidth: controls.summaryMinWidth,
+            flexGrow: 1,
+            backgroundColor: colors.s1,
+            borderRadius: radius.card,
+            padding: space[3],
+            gap: space[1],
+          }}
+        >
+          <Text variant="micro" color={colors.textMid}>
+            {label}
+          </Text>
+          <Text variant="heading" tabular>
+            {value}
+          </Text>
         </View>
-        <Text variant="bodyS" color={dark.textMid}>
-          {t('squadDesign.personal')}
-        </Text>
-      </View>
-      <WeightChart data={data?.weight} loading={loading} onSelectDay={onSelectDay} />
-      <View style={styles.card}>
-        <Text nutrient="calories" variant="heading">
-          {t('homeRefresh.calories')}
-        </Text>
-        <Text variant="bodyS" color={dark.textMid}>
-          {goals === undefined || !data?.calories.daily.length
-            ? t('homeRefresh.noProgress')
-            : t('homeRefresh.inRange', { count: goals, total: data?.calories.daily.length ?? 0 })}
-        </Text>
-      </View>
-      {Boolean(data?.calories.daily.length) && (
-        <CaloriesChart data={data?.calories} loading={loading} onSelectDay={onSelectDay} />
+      ))}
+    </View>
+  );
+  return (
+    <View style={{ gap: space[4] }} testID={`progress-view-${category}`}>
+      {category === 'weight' && (
+        <>
+          {stats([
+            [t('progressRefresh.rolling'), number(summary.rolling, 'kg')],
+            [t('progressRefresh.lowest'), number(summary.lowest, 'kg')],
+            [t('progressRefresh.periodChange'), number(summary.periodChange, 'kg')],
+          ])}
+          <WeightChart data={data.weight} loading={loading} onSelectDay={onSelectDay} />
+        </>
       )}
-      <MacrosChart data={data?.macros} loading={loading} />
-      <WorkoutsChart data={data?.workouts} loading={loading} />
-      <StepsChart data={data?.steps} loading={loading} onSelectDay={onSelectDay} />
-      <WaterChart data={data?.water} loading={loading} onSelectDay={onSelectDay} />
+      {category === 'nutrition' && (
+        <>
+          {stats([
+            [t('progressRefresh.dailyCalories'), number(summary.calories, 'kcal', 0)],
+            [t('progressRefresh.goal'), number(summary.calorieTarget, 'kcal', 0)],
+            [
+              t('progressRefresh.dailyProtein'),
+              number(summary.foodDays ? data.macros.protein_avg_g : null, 'grams'),
+            ],
+          ])}
+          <Text>
+            {t('progressRefresh.consistency', {
+              count: summary.goalDays,
+              total: summary.qualifyingDays,
+            })}
+          </Text>
+          {summary.proteinGoalPercent !== null && (
+            <Text>{t('progressRefresh.proteinDays', { percent: summary.proteinGoalPercent })}</Text>
+          )}
+          <Text variant="bodyS" color={colors.textMid}>
+            {t('progressRefresh.loggedBasis')}
+          </Text>
+          <CaloriesChart data={data.calories} loading={loading} onSelectDay={onSelectDay} />
+          <MacrosChart data={summary.foodDays ? data.macros : null} loading={loading} />
+        </>
+      )}
+      {category === 'workouts' && (
+        <>
+          {stats([
+            [t('progressRefresh.sessions'), number(data.workouts.total_workouts, '', 0)],
+            [t('progressRefresh.sets'), number(data.workouts.total_strength_sets, '', 0)],
+            [
+              t('progressRefresh.best'),
+              summary.strength
+                ? `${summary.strength.name}: ${number(summary.strength.value, 'kg')}`
+                : t('progressRefresh.missing'),
+            ],
+          ])}
+          <Text variant="bodyS" color={colors.textMid}>
+            {t('progressRefresh.estimate')}
+          </Text>
+          <WorkoutsChart data={data.workouts} loading={loading} />
+        </>
+      )}
+      {category === 'habits' && (
+        <>
+          <Text variant="heading">{t('progressRefresh.showingUp')}</Text>
+          <Text tabular>
+            {t('progressRefresh.days', { count: summary.qualifyingDays, total: summary.totalDays })}
+          </Text>
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: space[2] }}>
+            {summary.dates.map(({ date, logged }) => (
+              <View
+                key={date}
+                accessible
+                accessibilityLabel={`${date}: ${t(logged ? 'repairs.logged' : 'squadDesign.noLogs')}`}
+                style={{
+                  width: space[7],
+                  height: space[7],
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  borderRadius: radius.full,
+                  backgroundColor: logged ? colors.s3 : colors.s1,
+                }}
+              >
+                <Text color={logged ? colors.textHi : colors.textMid}>{logged ? '✓' : '·'}</Text>
+              </View>
+            ))}
+          </View>
+          {summary.totalDays > 90 && <Text>{t('progressRefresh.gridNote', { count: 90 })}</Text>}
+          {stats([
+            [t('progressRefresh.stepAverage'), number(summary.steps, '', 0)],
+            [t('progressRefresh.waterAverage'), number(summary.water, 'ml', 0)],
+          ])}
+          <Text variant="bodyS" color={colors.textMid}>
+            {t('progressRefresh.habitBasis')}
+          </Text>
+          <StepsChart data={data.steps} loading={loading} onSelectDay={onSelectDay} />
+          <WaterChart data={data.water} loading={loading} onSelectDay={onSelectDay} />
+        </>
+      )}
     </View>
   );
 }
-const createStyles = (dark: ReturnType<typeof useAppearance>['colors']) =>
-  StyleSheet.create({
-    stack: { gap: space[4], paddingVertical: space[3] },
-    card: {
-      borderColor: dark.hairline,
-      borderWidth: 1,
-      backgroundColor: dark.s1,
-      borderRadius: radius.card,
-      padding: space[4],
-      gap: space[3],
-    },
-    days: {
-      flexDirection: 'row',
-      justifyContent: 'space-between',
-      flexWrap: 'wrap',
-      gap: space[2],
-    },
-    day: { alignItems: 'center', gap: space[1] },
-    dot: {
-      width: space[7],
-      height: space[7],
-      alignItems: 'center',
-      justifyContent: 'center',
-      borderRadius: radius.full,
-      borderWidth: 1,
-      borderColor: dark.hairlineLit,
-    },
-    present: { backgroundColor: dark.apricot, borderColor: dark.apricot },
-  });

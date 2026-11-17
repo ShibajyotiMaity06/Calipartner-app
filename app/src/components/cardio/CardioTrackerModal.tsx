@@ -2,7 +2,7 @@ import * as Location from 'expo-location';
 import { RouteMap } from './RouteMap';
 import { haversineKm } from '@calipartner/core';
 import { useTheme as useAppearance } from '@calipartner/ui/theme';
-import { NavigationIcon } from '@calipartner/ui';
+import { NavigationIcon, SegmentedControl } from '@calipartner/ui';
 import { type as inputTypography } from '@calipartner/ui';
 import React, { useState, useEffect, useRef } from 'react';
 import {
@@ -344,55 +344,24 @@ export function CardioTrackerModal({
               <NavigationIcon action="back" />
             </TouchableOpacity>
 
-            <View style={styles.tabPillRow}>
-              <TouchableOpacity
-                onPress={() => {
-                  if (sessionState === 'idle') setActiveTab('walking');
-                }}
-                disabled={sessionState !== 'idle'}
-                style={[styles.tabButton, activeTab === 'walking' && styles.tabButtonActive]}
-                accessibilityRole="button"
-                accessibilityLabel="Walking mode"
-                testID="tab-cardio-walking"
-              >
-                <Ionicons
-                  name="walk"
-                  size={16}
-                  color={activeTab === 'walking' ? dark.onBrand : dark.textMid}
-                />
-                <Text
-                  variant="bodyS"
-                  color={activeTab === 'walking' ? dark.onBrand : dark.textMid}
-                  style={{ fontWeight: '700', marginLeft: 4 }}
-                >
-                  Walking
-                </Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                onPress={() => {
-                  if (sessionState === 'idle') setActiveTab('running');
-                }}
-                disabled={sessionState !== 'idle'}
-                style={[styles.tabButton, activeTab === 'running' && styles.tabButtonActive]}
-                accessibilityRole="button"
-                accessibilityLabel="Running mode"
-                testID="tab-cardio-running"
-              >
-                <Ionicons
-                  name="fitness"
-                  size={16}
-                  color={activeTab === 'running' ? dark.onBrand : dark.textMid}
-                />
-                <Text
-                  variant="bodyS"
-                  color={activeTab === 'running' ? dark.onBrand : dark.textMid}
-                  style={{ fontWeight: '700', marginLeft: 4 }}
-                >
-                  Running (GPS)
-                </Text>
-              </TouchableOpacity>
-            </View>
+            <SegmentedControl
+              fullWidth={false}
+              value={activeTab}
+              disabled={sessionState !== 'idle'}
+              onChange={setActiveTab}
+              options={[
+                {
+                  value: 'walking',
+                  label: t('progressRefresh.walking'),
+                  testID: 'tab-cardio-walking',
+                },
+                {
+                  value: 'running',
+                  label: t('progressRefresh.running'),
+                  testID: 'tab-cardio-running',
+                },
+              ]}
+            />
 
             <View style={{ width: 44 }} />
           </View>

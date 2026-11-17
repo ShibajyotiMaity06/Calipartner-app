@@ -6,7 +6,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { challengeRequest } from '@/services/challengeService';
 import { getSupabase } from '@/lib/supabase';
 import { ct } from '@/i18n/challenges';
-import { CSheet, cs } from '@/components/progress/ChallengeUI';
+import { CSheet, useCs } from '@/components/progress/ChallengeUI';
 interface Analytics {
   events: Record<string, number>;
   templates: Array<{ slug: string; joined: number; completed: number }>;
@@ -16,6 +16,7 @@ interface Analytics {
 }
 /** The endpoint checks server-owned Auth app_metadata; showing this route grants no privilege. */
 export default function ChallengeDashboard() {
+  const cs = useCs();
   const { user } = useAuth();
   const router = useRouter();
   const [data, setData] = useState<Analytics | null>(null);

@@ -30,6 +30,9 @@ export interface ProgressPhotosModalProps {
   visible: boolean;
   onClose: () => void;
   testID?: string;
+  embedded?: boolean;
+  startDate?: string;
+  endDate?: string;
 }
 export function ProgressPhotosModal(props: ProgressPhotosModalProps) {
   return (
@@ -38,10 +41,13 @@ export function ProgressPhotosModal(props: ProgressPhotosModalProps) {
     </PremiumFeatureModal>
   );
 }
-function PhotoVault({
+export function PhotoVault({
   visible,
   onClose,
   testID = 'progress-photos-modal',
+  embedded = false,
+  startDate,
+  endDate,
 }: ProgressPhotosModalProps) {
   const { colors } = useTheme();
   const { user } = useAuth();
@@ -153,7 +159,14 @@ function PhotoVault({
       setBusy(false);
     }
   };
-  const photos = loadedOwner === user?.id ? rows : [];
+  const photos =
+    loadedOwner === user?.id
+      ? rows.filter(
+          (photo) =>
+            (!startDate || photo.captured_date >= startDate) &&
+            (!endDate || photo.captured_date <= endDate),
+        )
+      : [];
   const comparison = photos.filter((row) => selected.includes(row.id));
   const image = (photo: ProgressPhoto) => (
     <Image
@@ -164,9 +177,10 @@ function PhotoVault({
     />
   );
   return (
-    <Modal visible={visible} onRequestClose={onClose} animationType="slide">
-      <SafeAreaView style={{ flex: 1, backgroundColor: colors.bg0 }}>
+    <PhotoFrame embedded={embedded} visible={visible} onClose={onClose}>
+      <SafeAreaView style={{ flex: embedded ? undefined : 1, backgroundColor: colors.bg0 }}>
         <ScrollView
+          scrollEnabled={!embedded}
           style={{ backgroundColor: colors.bg0 }}
           contentContainerStyle={styles.content}
           testID={testID}
@@ -174,13 +188,15 @@ function PhotoVault({
         >
           <Text variant="title1">{t('trackers.weight.photosTitle')}</Text>
           <Text>{t('launch.photoNotice')}</Text>
-          <Button
-            variant="secondary"
-            label={t('common.cancel')}
-            onPress={onClose}
-            testID="photos-close"
-            disabled={busy}
-          />
+          {!embedded && (
+            <Button
+              variant="secondary"
+              label={t('common.cancel')}
+              onPress={onClose}
+              testID="photos-close"
+              disabled={busy}
+            />
+          )}
           {loading && <ActivityIndicator accessibilityLabel={t('launch.loading')} />}
           {error && (
             <>
@@ -307,6 +323,25 @@ function PhotoVault({
           ))}
         </ScrollView>
       </SafeAreaView>
+    </PhotoFrame>
+  );
+}
+function PhotoFrame({
+  embedded,
+  visible,
+  onClose,
+  children,
+}: {
+  embedded: boolean;
+  visible: boolean;
+  onClose: () => void;
+  children: React.ReactNode;
+}) {
+  return embedded ? (
+    <View>{children}</View>
+  ) : (
+    <Modal visible={visible} onRequestClose={onClose} animationType="slide">
+      {children}
     </Modal>
   );
 }

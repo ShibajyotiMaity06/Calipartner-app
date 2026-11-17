@@ -1,4 +1,4 @@
-import { NavigationIcon } from '@calipartner/ui';
+import { NavigationIcon, SegmentedControl } from '@calipartner/ui';
 import React, { useEffect, useRef, useState } from 'react';
 import {
   KeyboardAvoidingView,
@@ -180,35 +180,19 @@ export default function SignInScreen() {
             >
               <NavigationIcon action="back" />
             </Pressable>
-            <View
-              style={[styles.tabs, { backgroundColor: colors.s1, borderColor: colors.hairline }]}
-              accessibilityRole="tablist"
-            >
-              {([true, false] as const).map((signup) => (
-                <Pressable
-                  key={String(signup)}
-                  onPress={() => changeMode(signup)}
-                  disabled={loading}
-                  accessibilityRole="tab"
-                  accessibilityLabel={t(
-                    signup ? 'entryRefresh.createAccount' : 'entryRefresh.logIn',
-                  )}
-                  accessibilityState={{ selected: isSignUp === signup }}
-                  testID={signup ? 'auth-tab-signup' : 'auth-tab-signin'}
-                  style={[
-                    styles.tab,
-                    { backgroundColor: isSignUp === signup ? colors.apricot : 'transparent' },
-                  ]}
-                >
-                  <Text
-                    variant="label"
-                    color={isSignUp === signup ? colors.onBrand : colors.textMid}
-                  >
-                    {t(signup ? 'entryRefresh.createAccount' : 'entryRefresh.logIn')}
-                  </Text>
-                </Pressable>
-              ))}
-            </View>
+            <SegmentedControl
+              value={isSignUp ? 'signup' : 'signin'}
+              onChange={(mode) => changeMode(mode === 'signup')}
+              disabled={loading}
+              options={[
+                {
+                  value: 'signup',
+                  label: t('entryRefresh.createAccount'),
+                  testID: 'auth-tab-signup',
+                },
+                { value: 'signin', label: t('entryRefresh.logIn'), testID: 'auth-tab-signin' },
+              ]}
+            />
             <View style={styles.heading}>
               <CaliPartnerLogo size={layout.previewAvatar} testID="auth-logo" />
               <Text variant="title1" accessibilityRole="header" testID="auth-title">

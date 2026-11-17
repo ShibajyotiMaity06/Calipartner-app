@@ -6,7 +6,7 @@ import { File, Paths } from 'expo-file-system';
 import type { ChallengeCatalog, ChallengeSnapshot } from '@calipartner/core';
 import { Text, challengeLayout as layout, onboardingType } from '@calipartner/ui';
 import { ct, challengeText } from '@/i18n/challenges';
-import { CButton, cs } from './ChallengeUI';
+import { CButton, useCs } from './ChallengeUI';
 import { shareChallengeImage } from '@/services/challengeShare';
 
 export function ChallengeShareCard({
@@ -19,6 +19,7 @@ export function ChallengeShareCard({
   onShared: () => void;
 }) {
   const { colors: dark } = useAppearance();
+  const cs = useCs();
 
   const ref = useRef<Svg>(null);
   const [error, setError] = useState(false);

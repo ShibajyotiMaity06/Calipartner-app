@@ -140,7 +140,6 @@ export const TIER_CONFIG = {
 const PLUS_FEATURES = [
   'setup.plusFriendRequests',
   'setup.plusRoomFeature',
-  'setup.pairChallengeFeature',
   'launch.friends',
   'launch.fasting',
   'launch.recipes',
@@ -159,6 +158,7 @@ const PRO_FEATURES = [
 ] as const;
 const COMING_SOON = {
   plus: [
+    'progressRefresh.coming',
     'launch.measurements',
     'launch.export',
     'launch.matching',

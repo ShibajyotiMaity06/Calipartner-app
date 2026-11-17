@@ -47,7 +47,7 @@ export function CoachMessageBubble({
       {/* Coach Avatar */}
       {!demo && !isUser && (
         <View style={styles.avatar} testID={`avatar-coach-${message.id}`}>
-          <CaliPartnerLogo size={space[8]} />
+          <CaliPartnerLogo size={space[6]} />
         </View>
       )}
 
@@ -182,8 +182,8 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-start',
   },
   avatar: {
-    width: space[8],
-    height: space[8],
+    width: space[7],
+    height: space[7],
     alignItems: 'center',
     justifyContent: 'center',
     marginTop: space[1],

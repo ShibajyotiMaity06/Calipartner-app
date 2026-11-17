@@ -4,7 +4,7 @@ import { View } from 'react-native';
 import type { ChallengeCatalog, ChallengeMutation, ChallengeMetric } from '@calipartner/core';
 import { ct, challengeError } from '@/i18n/challenges';
 import { generateClientUuid } from '@/services/foodService';
-import { cs, CButton, CInput, CSheet } from './ChallengeUI';
+import { useCs, CButton, CInput, CSheet } from './ChallengeUI';
 export function OccasionPlanModal({
   catalog,
   onClose,
@@ -14,6 +14,7 @@ export function OccasionPlanModal({
   onClose: () => void;
   mutate: (m: ChallengeMutation) => Promise<string>;
 }) {
+  const cs = useCs();
   const [event, setEvent] = useState(catalog.config.occasion_event_types[0]!);
   const [date, setDate] = useState('');
   const [weight, setWeight] = useState('');

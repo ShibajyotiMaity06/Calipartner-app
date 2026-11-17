@@ -1,3 +1,4 @@
+import { SegmentedControl } from '@calipartner/ui';
 import { NavigationIcon } from '@calipartner/ui';
 import React, { useCallback, useEffect, useState } from 'react';
 import {
@@ -361,75 +362,19 @@ export function WorkoutHistoryCalendarModal({
             <View style={{ width: 36 }} />
           </View>
 
-          {/* Tab Selector: List vs Calendar */}
-          <View
-            style={[
-              styles.tabSelectorWrap,
-              { backgroundColor: colors.surface, borderBottomColor: colors.border },
+          <SegmentedControl
+            value={activeTab}
+            onChange={setActiveTab}
+            options={[
+              { value: 'list', label: t('workouts.history.tabList'), testID: 'tab-history-list' },
+              {
+                value: 'calendar',
+                label: t('workouts.history.tabCalendar'),
+                testID: 'tab-calendar-view',
+              },
             ]}
-          >
-            <TouchableOpacity
-              testID="tab-history-list"
-              style={[
-                styles.tabButton,
-                activeTab === 'list' && {
-                  borderBottomColor: colors.accent,
-                  borderBottomWidth: 2,
-                },
-              ]}
-              onPress={() => setActiveTab('list')}
-              accessibilityRole="tab"
-              accessibilityLabel={t('workouts.history.tabList')}
-            >
-              <Ionicons
-                name="list-outline"
-                size={18}
-                color={activeTab === 'list' ? colors.accent : colors.textMuted}
-              />
-              <Text
-                style={[
-                  styles.tabText,
-                  {
-                    color: activeTab === 'list' ? colors.accent : colors.textMuted,
-                    fontWeight: activeTab === 'list' ? '700' : '500',
-                  },
-                ]}
-              >
-                {t('workouts.history.tabList')}
-              </Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              testID="tab-calendar-view"
-              style={[
-                styles.tabButton,
-                activeTab === 'calendar' && {
-                  borderBottomColor: colors.accent,
-                  borderBottomWidth: 2,
-                },
-              ]}
-              onPress={() => setActiveTab('calendar')}
-              accessibilityRole="tab"
-              accessibilityLabel={t('workouts.history.tabCalendar')}
-            >
-              <Ionicons
-                name="calendar-outline"
-                size={18}
-                color={activeTab === 'calendar' ? colors.accent : colors.textMuted}
-              />
-              <Text
-                style={[
-                  styles.tabText,
-                  {
-                    color: activeTab === 'calendar' ? colors.accent : colors.textMuted,
-                    fontWeight: activeTab === 'calendar' ? '700' : '500',
-                  },
-                ]}
-              >
-                {t('workouts.history.tabCalendar')}
-              </Text>
-            </TouchableOpacity>
-          </View>
+            testID="workout-history-tabs"
+          />
 
           {/* Content Body */}
           {activeTab === 'calendar' ? (

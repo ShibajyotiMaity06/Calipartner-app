@@ -15,7 +15,7 @@ import { challengeRequest } from '@/services/challengeService';
 import { getSupabase } from '@/lib/supabase';
 import { generateClientUuid } from '@/services/foodService';
 import { createLogger } from '@/lib/logger';
-import { cs, CButton, CInput, CSheet } from './ChallengeUI';
+import { useCs, CButton, CInput, CSheet } from './ChallengeUI';
 
 export function CreateChallengeModal({
   catalog,
@@ -32,6 +32,7 @@ export function CreateChallengeModal({
   userId: string;
   isOnline: boolean;
 }) {
+  const cs = useCs();
   const router = useRouter();
   const [scope, setScope] = useState(
     template.season_id ? 'season' : (template.scope_options[0] ?? 'solo'),

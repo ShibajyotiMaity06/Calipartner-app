@@ -5,9 +5,10 @@ import { Button, Text } from '@calipartner/ui';
 import { useChallenges } from '@/hooks/useChallenges';
 import { challengeText } from '@/i18n/challenges';
 import { t } from '@/i18n';
-import { squadStyles } from '@/components/rooms/SquadViews';
+import { useSquadStyles } from '@/components/rooms/SquadViews';
 
 export function TodayChallengeCard() {
+  const squadStyles = useSquadStyles();
   const { home, loading, error, refresh, userId } = useChallenges();
   const router = useRouter();
   if (!userId) return null;

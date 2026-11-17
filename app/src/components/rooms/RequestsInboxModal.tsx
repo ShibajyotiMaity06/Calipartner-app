@@ -1,3 +1,4 @@
+import { SegmentedControl } from '@calipartner/ui';
 import React, { useState } from 'react';
 import {
   ActivityIndicator,
@@ -118,50 +119,20 @@ export function RequestsInboxModal({
           </View>
 
           {/* Segmented Control */}
-          <View style={[styles.tabRow, { backgroundColor: colors.surfaceAlt }]}>
-            <Pressable
-              onPress={() => setActiveTab('incoming')}
-              style={[
-                styles.tabButton,
-                activeTab === 'incoming' && [styles.tabActive, { backgroundColor: colors.surface }],
-              ]}
-              accessibilityRole="tab"
-              accessibilityState={{ selected: activeTab === 'incoming' }}
-              testID="tab-inbox-incoming"
-            >
-              <Text
-                style={[
-                  styles.tabText,
-                  { color: activeTab === 'incoming' ? colors.text : colors.textMuted },
-                  activeTab === 'incoming' && styles.tabTextActive,
-                ]}
-              >
-                {t('rooms.inboxModal.incomingTab')}
-              </Text>
-            </Pressable>
-
-            <Pressable
-              onPress={() => setActiveTab('outgoing')}
-              style={[
-                styles.tabButton,
-                activeTab === 'outgoing' && [styles.tabActive, { backgroundColor: colors.surface }],
-              ]}
-              accessibilityRole="tab"
-              accessibilityState={{ selected: activeTab === 'outgoing' }}
-              testID="tab-inbox-outgoing"
-            >
-              <Text
-                style={[
-                  styles.tabText,
-                  { color: activeTab === 'outgoing' ? colors.text : colors.textMuted },
-                  activeTab === 'outgoing' && styles.tabTextActive,
-                ]}
-              >
-                {t('rooms.inboxModal.outgoingTab')}
-              </Text>
-            </Pressable>
-          </View>
-
+          <SegmentedControl
+            value={activeTab}
+            onChange={setActiveTab}
+            options={['incoming', 'outgoing'].map((value) => ({
+              value: value as 'incoming' | 'outgoing',
+              label: t(
+                value === 'incoming'
+                  ? 'rooms.inboxModal.incomingTab'
+                  : 'rooms.inboxModal.outgoingTab',
+              ),
+              testID: `tab-inbox-${value}`,
+            }))}
+            testID="inbox-tabs"
+          />
           {/* List Content */}
           <ScrollView style={styles.listContainer} keyboardShouldPersistTaps="handled">
             {visible ? (

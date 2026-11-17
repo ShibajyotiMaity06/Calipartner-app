@@ -6,22 +6,37 @@ import { homeLayout, space, Text, useTheme } from '@calipartner/ui';
 import { CCBalance } from './avatar/CCBalance';
 import { AppearancePicker } from './avatar/AppearancePicker';
 import { t } from '@/i18n';
+import { SubscriptionPill } from './subscription/SubscriptionPill';
 
 export function HeaderActions({
   testID = 'header-coach-icon',
   coins = false,
   coach = false,
+  showUpgrade = true,
+  appearance = false,
 }: {
   testID?: string;
   coins?: boolean;
   coach?: boolean;
+  showUpgrade?: boolean;
+  appearance?: boolean;
 }) {
   const router = useRouter();
   const { colors } = useTheme();
   return (
-    <View style={{ flexDirection: 'row', alignItems: 'center', gap: space[1], flexShrink: 0 }}>
+    <View
+      style={{
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: space[1],
+        flexShrink: 1,
+        flexWrap: 'wrap',
+        maxWidth: '100%',
+      }}
+    >
+      {showUpgrade ? <SubscriptionPill /> : null}
       {coins ? <CCBalance /> : null}
-      <AppearancePicker />
+      {appearance ? <AppearancePicker /> : null}
       {coach ? (
         <Pressable
           accessibilityRole="button"

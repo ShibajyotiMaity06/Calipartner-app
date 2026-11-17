@@ -1,4 +1,5 @@
 import { cachedRead } from './offlineReadService';
+import { enrichProgress } from '@calipartner/core';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type {
   IndividualProgressData,
@@ -143,7 +144,9 @@ export async function fetchIndividualProgress(
         throw parseProgressError(error);
       }
 
-      return (data as IndividualProgressData) ?? getDefaultIndividualProgress(range);
+      return enrichProgress(
+        (data as IndividualProgressData) ?? getDefaultIndividualProgress(range),
+      );
     } catch (err) {
       throw parseProgressError(err);
     }

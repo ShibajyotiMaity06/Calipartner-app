@@ -17,9 +17,11 @@ vi.mock('@calipartner/ui', async () => ({
   ...(await import('../../../../packages/ui/src/tokens')),
   dark: {},
   Avatar: 'Avatar',
-  Button: 'Button',
+  Button: ({ icon: _icon, ...props }: Record<string, unknown>) =>
+    React.createElement('Button', props),
   Card: 'Card',
   Text: 'Text',
+  SegmentedControl: (await import('@/test/SegmentedControlStub')).SegmentedControlStub,
   Sheet: 'Sheet',
   CheckIcon: 'CheckIcon',
   useTheme: () => ({ colors: {} }),
@@ -32,6 +34,7 @@ vi.mock('@/hooks/useFriendDiscovery', () => ({ useFriendDiscovery: mocks.discove
 vi.mock('@/hooks/useFriends', () => ({ useFriends: mocks.friends }));
 import { FriendDiscovery } from './FriendDiscovery';
 import { FriendRequests } from './FriendRequests';
+vi.mock('@/components/HeaderActions', () => ({ HeaderActions: 'HeaderActions' }));
 import { CommunityPanel } from './CommunityPanel';
 import { SquadConnectFlow } from '@/components/rooms/SquadConnectFlow';
 const people = [1, 2].map((id) => ({

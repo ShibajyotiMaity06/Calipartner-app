@@ -3,9 +3,10 @@ import React from 'react';
 import {} from 'react-native';
 import type { ChallengeSnapshot } from '@calipartner/core';
 import { ct } from '@/i18n/challenges';
-import { cs } from './ChallengeUI';
+import { useCs } from './ChallengeUI';
 /** Real results are embedded in the detail sheet so the same cached record drives both. */
 export function ChallengeResultModal({ snapshot }: { snapshot: ChallengeSnapshot }) {
+  const cs = useCs();
   const summary = snapshot.participants.find((p) => p.self)?.summary;
   if (!summary) return null;
   return (

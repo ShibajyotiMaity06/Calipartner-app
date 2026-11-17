@@ -14,7 +14,7 @@ import { useChallenges } from '@/hooks/useChallenges';
 import { ct, challengeError, challengeText, type ChallengeCopy } from '@/i18n/challenges';
 import { challengeRequest } from '@/services/challengeService';
 import { getSupabase } from '@/lib/supabase';
-import { cs, CButton, CSheet } from './ChallengeUI';
+import { useCs, CButton, CSheet } from './ChallengeUI';
 import { CreateChallengeModal } from './CreateChallengeModal';
 import { ChallengeDetailModal } from './ChallengeDetailModal';
 import { OccasionPlanModal } from './OccasionPlanModal';
@@ -31,6 +31,7 @@ export function ChallengesView({
   embedded?: boolean;
 }) {
   const { colors: dark } = useAppearance();
+  const cs = useCs();
 
   const state = useChallenges();
   useEffect(() => {

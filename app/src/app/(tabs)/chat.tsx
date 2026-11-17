@@ -107,6 +107,12 @@ export default function ChatScreen() {
   return (
     <View testID="chat-screen-shell" style={{ flex: 1, backgroundColor: colors.bg0 }}>
       <View style={styles.tabs}>
+        <View style={styles.header}>
+          <Text variant="title1" style={styles.flex}>
+            {t('avatar.chats')}
+          </Text>
+          <HeaderActions />
+        </View>
         <SegmentedControl
           value={tab}
           onChange={setTab}
@@ -125,12 +131,6 @@ export default function ChatScreen() {
           contentContainerStyle={styles.content}
           testID="screen-chat"
         >
-          <View style={styles.header}>
-            <Text variant="title1" style={styles.flex}>
-              {t('avatar.chats')}
-            </Text>
-            <HeaderActions />
-          </View>
           <TextInput
             value={query}
             onChangeText={setQuery}

@@ -29,6 +29,7 @@ vi.mock('react-native', () => ({
 vi.mock('@calipartner/ui', async () => ({
   ...(await import('../../../../packages/ui/src/tokens')),
   Text: 'Text',
+  SegmentedControl: (await import('@/test/SegmentedControlStub')).SegmentedControlStub,
   NavigationIcon: 'NavigationIcon',
   Button: 'Button',
   Card: 'Card',

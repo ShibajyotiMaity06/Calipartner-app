@@ -2,7 +2,7 @@ import { useTheme as useAppearance } from '@calipartner/ui/theme';
 import React, { useEffect, useState } from 'react';
 import { Modal, Pressable, SafeAreaView, ScrollView, StyleSheet, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { Text, Button, radius, space } from '@calipartner/ui';
+import { Text, Button, SegmentedControl, radius, space } from '@calipartner/ui';
 import { t } from '@/i18n';
 import { publicSite } from '@/i18n/publicSite';
 
@@ -61,39 +61,15 @@ export function TermsOfServiceModal({
           </View>
 
           {/* Segmented Control */}
-          <View style={styles.tabsRow}>
-            <Pressable
-              onPress={() => setActiveTab('terms')}
-              style={[styles.tabButton, activeTab === 'terms' && styles.tabButtonActive]}
-              accessibilityRole="tab"
-              accessibilityState={{ selected: activeTab === 'terms' }}
-              testID="tab-terms-of-service"
-            >
-              <Text
-                variant="body"
-                color={activeTab === 'terms' ? dark.onBrand : dark.textMid}
-                style={styles.tabText}
-              >
-                {t('entryRefresh.terms')}
-              </Text>
-            </Pressable>
-
-            <Pressable
-              onPress={() => setActiveTab('privacy')}
-              style={[styles.tabButton, activeTab === 'privacy' && styles.tabButtonActive]}
-              accessibilityRole="tab"
-              accessibilityState={{ selected: activeTab === 'privacy' }}
-              testID="tab-privacy-policy"
-            >
-              <Text
-                variant="body"
-                color={activeTab === 'privacy' ? dark.onBrand : dark.textMid}
-                style={styles.tabText}
-              >
-                {t('entryRefresh.privacy')}
-              </Text>
-            </Pressable>
-          </View>
+          <SegmentedControl
+            value={activeTab}
+            onChange={setActiveTab}
+            options={[
+              { value: 'terms', label: t('entryRefresh.terms'), testID: 'tab-terms-of-service' },
+              { value: 'privacy', label: t('entryRefresh.privacy'), testID: 'tab-privacy-policy' },
+            ]}
+            testID="legal-tabs"
+          />
 
           {/* Scrollable Content */}
           <ScrollView

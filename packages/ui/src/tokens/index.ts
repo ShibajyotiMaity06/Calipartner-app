@@ -11,3 +11,4 @@ export * from './home';
 export * from './blueprint';
 export * from './avatar';
 export * from './coin';
+export * from './controls';

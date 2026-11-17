@@ -77,7 +77,7 @@ export function SocialProfileEditor({
           />
           <SwitchRow
             title={t('friends.publicLabel')}
-            consequence={t('friends.publicHelp')}
+            consequence={t('progressRefresh.publicDefault')}
             value={draft.is_public}
             onValueChange={(is_public) => setDraft({ ...draft, is_public })}
             testID="social-sharing"

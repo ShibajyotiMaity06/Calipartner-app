@@ -1,159 +1,211 @@
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useState } from 'react';
+import { RefreshControl, ScrollView, View, useWindowDimensions } from 'react-native';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useFocusEffect, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { useAuth } from '@/contexts/AuthContext';
-import { HeaderActions } from '@/components/HeaderActions';
-import { AvatarHero } from '@/components/avatar/AvatarHero';
-import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
-import {
-  Pressable,
-  RefreshControl,
-  SafeAreaView,
-  ScrollView,
-  StyleSheet,
-  View,
-  useWindowDimensions,
-} from 'react-native';
 import {
   Button,
-  homeLayout,
-  space,
-  Text,
   SegmentedControl,
+  Text,
+  space,
+  homeLayout,
   getTabBarHeight,
+  useTheme,
 } from '@calipartner/ui';
-import { ProgressOverview } from '@/components/progress/ProgressOverview';
-import { ChallengesView } from '@/components/progress/ChallengesView';
-import { WorkoutHistoryCalendarModal } from '@/components/workouts/WorkoutHistoryCalendarModal';
-import { PersonalSquads } from '@/components/rooms/PersonalSquads';
-import { WeeklyPlanEntry } from '@/components/workouts/WeeklyPlanEntry';
+import { getPreviousDateString, type ProgressDateRange, type WeightLog } from '@calipartner/core';
+import { HeaderActions } from '@/components/HeaderActions';
+import { WeightGoalHeroCard } from '@/components/progress/WeightGoalHeroCard';
+import { ProgressOverview, type ProgressCategory } from '@/components/progress/ProgressOverview';
+import { ProgressPhotosView } from '@/components/progress/ProgressPhotosView';
 import { DayDetailModal, RangeSelector, type DayDetailData } from '@/components/progress';
+import { WeightEntryModal } from '@/components/trackers/WeightEntryModal';
+import { WeightHistoryModal } from '@/components/trackers/WeightHistoryModal';
+import { WorkoutHistoryCalendarModal } from '@/components/workouts/WorkoutHistoryCalendarModal';
 import { LoadingState } from '@/components/LoadingState';
 import { useIndividualProgress } from '@/hooks/useIndividualProgress';
-import { useTheme } from '@/theme/useTheme';
+import { useWeight } from '@/hooks/useWeight';
+import { useCurrentLocalDate } from '@/hooks/useCurrentLocalDate';
+import { useTargets } from '@/hooks/useTargets';
 import { t } from '@/i18n';
-import type { ProgressDateRange } from '@calipartner/core';
-
-const ranges: ProgressDateRange[] = ['30d', '90d'];
+const ranges: ProgressDateRange[] = ['7d', '30d', '90d', 'all'];
+const categories: ProgressCategory[] = ['weight', 'nutrition', 'workouts', 'photos', 'habits'];
 export default function ProgressScreen() {
   const { colors } = useTheme();
-  const { fontScale } = useWindowDimensions();
-  const insets = useSafeAreaInsets();
   const router = useRouter();
-  const { profile } = useAuth();
+  const insets = useSafeAreaInsets();
+  const { fontScale } = useWindowDimensions();
   const { range, setRange, data, loading, error, refresh } = useIndividualProgress('30d');
+  const weight = useWeight();
+  const { localDate } = useCurrentLocalDate();
+  const photoStart =
+    range === 'all' ? undefined : getPreviousDateString(localDate, Number.parseInt(range) - 1);
+  const { currentGoalProfile } = useTargets();
+  const [category, setCategory] = useState<ProgressCategory>('weight');
+  const [showWeight, setShowWeight] = useState(false);
+  const [showHistory, setShowHistory] = useState(false);
+  const [editing, setEditing] = useState<WeightLog | null>(null);
+  const [showWorkouts, setShowWorkouts] = useState(false);
+  const [selectedDay, setSelectedDay] = useState<DayDetailData | null>(null);
   useFocusEffect(
     useCallback(() => {
       void refresh();
     }, [refresh]),
   );
-  const [tab, setTab] = useState<'progress' | 'challenges'>('progress');
-  const params = useLocalSearchParams<{ challenge?: string; trophies?: string; tab?: string }>();
-  useEffect(() => {
-    if (params.challenge || params.trophies) setTab('challenges');
-    else if (params.tab === 'progress') setTab('progress');
-  }, [params.challenge, params.trophies, params.tab]);
-  const challengeRefresh = useRef<(() => Promise<void>) | null>(null);
-  const registerChallengeRefresh = useCallback((refreshChallenges: () => Promise<void>) => {
-    challengeRefresh.current = refreshChallenges;
-  }, []);
-  const [refreshing, setRefreshing] = useState(false);
-  const refreshVisible = async () => {
-    setRefreshing(true);
-    try {
-      if (tab === 'challenges') await challengeRefresh.current?.();
-      else await refresh();
-    } finally {
-      setRefreshing(false);
-    }
+  const refreshAll = async () => {
+    await Promise.all([refresh(), weight.refresh()]);
   };
-  const [showWorkouts, setShowWorkouts] = useState(false);
-  const [selectedDay, setSelectedDay] = useState<DayDetailData | null>(null);
   return (
-    <SafeAreaView
-      style={[styles.screen, { backgroundColor: colors.background }]}
-      testID="screen-progress"
-    >
+    <SafeAreaView style={{ flex: 1, backgroundColor: colors.bg0 }} testID="screen-progress">
       <ScrollView
-        contentContainerStyle={[
-          styles.content,
-          { paddingBottom: getTabBarHeight(fontScale) + insets.bottom + space[6] },
-        ]}
+        contentContainerStyle={{
+          padding: space[4],
+          paddingBottom: getTabBarHeight(fontScale) + insets.bottom + space[6],
+          width: '100%',
+          maxWidth: homeLayout.maxContentWidth,
+          alignSelf: 'center',
+          gap: space[4],
+        }}
         refreshControl={
           <RefreshControl
-            refreshing={refreshing || (tab === 'progress' && loading)}
-            onRefresh={() => void refreshVisible()}
-            tintColor={colors.accent}
+            refreshing={loading}
+            onRefresh={() => void refreshAll()}
+            tintColor={colors.textHi}
           />
         }
       >
-        <View style={styles.profileHeader}>
-          <View style={styles.profileName}>
-            <Text variant="title1">{profile?.nickname ?? t('tabs.progress')}</Text>
-            {profile?.username ? <Text>@{profile.username}</Text> : null}
-          </View>
-          <HeaderActions coins />
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel={t('tabs.me')}
-            onPress={() => router.push('/(tabs)/me')}
-            testID="you-settings"
-            style={styles.settings}
-          >
-            <Ionicons name="settings-outline" size={homeLayout.iconSize} color={colors.text} />
-          </Pressable>
+        <View
+          style={{
+            flexDirection: 'row',
+            flexWrap: 'wrap',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: space[2],
+          }}
+        >
+          <Text variant="title1" accessibilityRole="header">
+            {t('progressRefresh.title')}
+          </Text>
+          <HeaderActions />
         </View>
-        <AvatarHero compact />
-        <SegmentedControl
-          options={[
-            { value: 'progress', label: t('homeRefresh.progress') },
-            { value: 'challenges', label: t('foodPolish.challenges') },
-          ]}
-          value={tab}
-          onChange={setTab}
-          testID="you-tabs"
-        />
-        {tab === 'challenges' ? (
-          <ChallengesView embedded onRefreshReady={registerChallengeRefresh} />
+        {weight.loading ? (
+          <LoadingState />
         ) : (
-          <>
-            <WeeklyPlanEntry />
-            <PersonalSquads />
-            <RangeSelector
-              options={ranges}
-              selected={range}
-              onSelect={setRange}
-              testID="progress-range-selector"
-            />
-            {error ? (
-              <View style={styles.heading}>
-                <Text accessibilityRole="alert">{t('common.errorBody')}</Text>
-                <Button
-                  variant="secondary"
-                  label={t('common.retry')}
-                  onPress={() => void refresh()}
-                  testID="personal-progress-retry"
-                />
-              </View>
-            ) : loading && !data ? (
-              <LoadingState />
-            ) : (
-              <ProgressOverview
-                data={data}
-                range={range}
-                loading={loading}
-                onSelectDay={setSelectedDay}
-              />
-            )}
+          <WeightGoalHeroCard
+            starting={weight.startingWeightKg}
+            current={weight.latestLog?.weight_kg ?? null}
+            target={currentGoalProfile?.target_weight_kg ?? null}
+            pace={weight.weeklyPaceKg}
+            onGoals={() => router.push('/me')}
+          />
+        )}
+        <RangeSelector
+          options={ranges}
+          selected={range}
+          onSelect={setRange}
+          testID="progress-range-selector"
+        />
+        <SegmentedControl
+          fullWidth={false}
+          options={categories.map((value) => ({ value, label: t(`progressRefresh.${value}`) }))}
+          value={category}
+          onChange={setCategory}
+          testID="progress-category"
+        />
+        {category === 'photos' ? (
+          <ProgressPhotosView startDate={photoStart} endDate={localDate} />
+        ) : error ? (
+          <View style={{ gap: space[2] }}>
+            <Text accessibilityRole="alert">{t('common.errorBody')}</Text>
             <Button
               variant="secondary"
-              label={t('homeRefresh.workoutHistory')}
-              onPress={() => setShowWorkouts(true)}
-              testID="personal-workout-history"
+              label={t('common.retry')}
+              onPress={() => void refreshAll()}
+              testID="personal-progress-retry"
+            />
+          </View>
+        ) : loading ? (
+          <LoadingState />
+        ) : (
+          <ProgressOverview
+            data={data}
+            range={range}
+            category={category}
+            loading={loading}
+            onSelectDay={setSelectedDay}
+          />
+        )}
+        {category === 'weight' && (
+          <>
+            {weight.error && <Text accessibilityRole="alert">{t('common.errorBody')}</Text>}
+            <Button
+              variant="secondary"
+              label={t('progressRefresh.addWeight')}
+              icon={<Ionicons name="add" size={homeLayout.iconSize} color={colors.textHi} />}
+              onPress={() => {
+                setEditing(null);
+                setShowWeight(true);
+              }}
+              testID="progress-log-weight"
+            />
+            <Button
+              variant="tertiary"
+              label={t('progressRefresh.history')}
+              onPress={() => setShowHistory(true)}
+              testID="progress-weight-history"
             />
           </>
         )}
+        {category === 'workouts' && (
+          <Button
+            variant="secondary"
+            label={t('homeRefresh.workoutHistory')}
+            onPress={() => setShowWorkouts(true)}
+            testID="personal-workout-history"
+          />
+        )}
       </ScrollView>
+      {showWeight && (
+        <WeightEntryModal
+          visible
+          initialEntry={editing}
+          startWeight={weight.startingWeightKg}
+          currentWeight={weight.latestLog?.weight_kg ?? null}
+          totalChangeKg={data?.weight.total_change_kg ?? null}
+          weeklyPace={weight.weeklyPaceKg}
+          projectedDate={weight.projectedDate}
+          hasEnoughTrend={weight.weeklyPaceKg !== null}
+          onClose={() => setShowWeight(false)}
+          onSave={async (kg, notes, date) => {
+            const saved = editing
+              ? await weight.editWeight(editing.id, kg, notes, date)
+              : await weight.logWeight(kg, date, notes);
+            if (!saved) throw new Error('WEIGHT_SAVE_FAILED');
+            setShowWeight(false);
+            await refresh();
+            return saved;
+          }}
+        />
+      )}
+      {showHistory && (
+        <WeightHistoryModal
+          visible
+          entries={weight.logs}
+          loading={weight.loading}
+          error={weight.error}
+          onRetry={() => void weight.refresh()}
+          onClose={() => setShowHistory(false)}
+          onEditEntry={(entry) => {
+            setShowHistory(false);
+            setEditing(entry);
+            setShowWeight(true);
+          }}
+          onDeleteEntry={async (id) => {
+            const result = await weight.deleteWeight(id);
+            await refresh();
+            return result;
+          }}
+        />
+      )}
       {showWorkouts && (
         <WorkoutHistoryCalendarModal visible onClose={() => setShowWorkouts(false)} />
       )}
@@ -166,23 +218,3 @@ export default function ProgressScreen() {
     </SafeAreaView>
   );
 }
-const styles = StyleSheet.create({
-  screen: { flex: 1 },
-  content: {
-    padding: space[4],
-    paddingBottom: space[4],
-    width: '100%',
-    maxWidth: homeLayout.maxContentWidth,
-    alignSelf: 'center',
-    gap: space[4],
-  },
-  heading: { gap: space[2] },
-  profileHeader: { flexDirection: 'row', alignItems: 'center', gap: space[3] },
-  profileName: { flex: 1 },
-  settings: {
-    minWidth: homeLayout.touchSize,
-    minHeight: homeLayout.touchSize,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-});

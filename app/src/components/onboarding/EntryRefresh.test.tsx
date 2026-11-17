@@ -32,6 +32,7 @@ vi.mock('@calipartner/ui', async () => {
   return {
     ...tokens,
     Text: 'Text',
+    SegmentedControl: (await import('@/test/SegmentedControlStub')).SegmentedControlStub,
     NavigationIcon: 'NavigationIcon',
     Button: 'Button',
     Field: 'Field',

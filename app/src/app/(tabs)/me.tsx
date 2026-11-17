@@ -196,14 +196,6 @@ export default function MeScreen() {
               <View style={styles.shortcuts}>
                 <View style={styles.shortcut}>
                   <ProfileShortcut
-                    title={t('compactProfile.trophies')}
-                    icon="trophy-outline"
-                    onPress={() => router.push('/progress?tab=challenges&trophies=1' as never)}
-                    testID="me-challenge-trophies"
-                  />
-                </View>
-                <View style={styles.shortcut}>
-                  <ProfileShortcut
                     title={t('community.title')}
                     icon="people-outline"
                     onPress={() => router.push('/(tabs)/chat?tab=friends' as never)}
@@ -215,7 +207,7 @@ export default function MeScreen() {
           )}
           <MeRoomPlanCard
             attachedRoom={rooms[0] ?? null}
-            onChangePlan={() => setShowPaywall(true)}
+            onChangePlan={() => router.push('/paywall')}
             compact
           />
           <Text variant="label" color={dark.textMid}>

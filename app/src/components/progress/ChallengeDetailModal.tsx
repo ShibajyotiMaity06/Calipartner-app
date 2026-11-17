@@ -15,7 +15,7 @@ import { challengeRequest } from '@/services/challengeService';
 import { getSupabase } from '@/lib/supabase';
 import { acceptAiProcessingConsent } from '@/services/aiFoodPhotoService';
 import { generateClientUuid } from '@/services/foodService';
-import { cs, CButton, CInput, CSheet } from './ChallengeUI';
+import { useCs, CButton, CInput, CSheet } from './ChallengeUI';
 import { ChallengeResultModal } from './ChallengeResultModal';
 import { ChallengeShareCard } from './ChallengeShareCard';
 
@@ -38,6 +38,7 @@ export function ChallengeDetailModal({
   refresh: () => Promise<void>;
   onRematch: () => void;
 }) {
+  const cs = useCs();
   const router = useRouter();
   const [snapshot, setSnapshot] = useState(initial);
   const [error, setError] = useState<string>();

@@ -407,3 +407,32 @@ it('separates future benefits from currently available Pro support and hides num
   expect(content).not.toMatch(/10 messages|5 scans|900.*month|300.*month/);
   expect(content).toContain('not available with your purchase today');
 });
+
+it.each(['dodo', 'razorpay', 'apple', 'google'])(
+  'account management follows the %s purchase provider on web',
+  async (source) => {
+    billing.active = true;
+    billing.entitlement = { tier: 'pro', source, status: 'paid', period_end: '2099-01-01' };
+    const change = vi.fn();
+    vi.mocked(Linking.openURL).mockResolvedValue(true);
+    await act(async () => {
+      renderer = create(<MeRoomPlanCard compact onChangePlan={change} />);
+    });
+    const button = renderer!.root.findByProps({ testID: 'btn-me-change-plan' });
+    expect(button.props.label).toBe(
+      source === 'dodo' || source === 'razorpay'
+        ? 'Manage web subscription'
+        : 'Manage app subscription',
+    );
+    await act(async () => button.props.onPress());
+    if (source === 'dodo') expect(billing.portal).toHaveBeenCalledOnce();
+    else if (source === 'razorpay') expect(change).toHaveBeenCalledOnce();
+    else
+      expect(Linking.openURL).toHaveBeenCalledWith(
+        source === 'apple'
+          ? 'https://apps.apple.com/account/subscriptions'
+          : 'https://play.google.com/store/account/subscriptions',
+      );
+    expect(billing.create).not.toHaveBeenCalled();
+  },
+);

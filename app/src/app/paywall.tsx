@@ -32,8 +32,9 @@ export default function PaywallScreen() {
       visible={true}
       checkoutReturn={checkoutReturn}
       checkoutCancelled={params.cancelled === '1'}
+      preselectedTier={params.tier === 'pro' ? 'pro' : params.tier === 'plus' ? 'plus' : undefined}
       onClose={handleClose}
-      context={params.feature === 'weekly_plan' ? 'weekly_plan' : 'partner_finder'}
+      context={params.feature === 'weekly_plan' ? 'weekly_plan' : 'general'}
       onSuccess={handleClose}
     />
   );

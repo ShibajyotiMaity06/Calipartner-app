@@ -1118,6 +1118,8 @@ export interface IndividualCaloriesProgress {
 }
 
 export interface IndividualMacrosProgress {
+  food_days?: number;
+  protein_goal_days?: number;
   protein_avg_g: number;
   carbs_avg_g: number;
   fat_avg_g: number;
@@ -1149,6 +1151,15 @@ export interface IndividualWaterProgress {
 }
 
 export interface IndividualWorkoutsProgress {
+  daily_sessions?: Array<{ date: string; sessions: number }>;
+  total_strength_sets?: number;
+  strength_sets?: Array<{
+    exercise_id: string | null;
+    exercise_name: string;
+    date: string;
+    weight_kg: number | null;
+    reps: number;
+  }>;
   total_workouts: number;
   sessions_per_week: number;
   total_duration_minutes: number;

@@ -9,7 +9,7 @@ vi.mock('@calipartner/ui', async () => ({
   Text: 'Text',
 }));
 vi.mock('@expo/vector-icons', () => ({ Ionicons: 'Icon' }));
-vi.mock('./ChallengeUI', () => ({ CButton: 'Button', CSheet: 'Sheet', cs: {} }));
+vi.mock('./ChallengeUI', () => ({ CButton: 'Button', CSheet: 'Sheet', cs: {}, useCs: () => ({}) }));
 vi.mock('@/db', () => ({ getDb: async () => ({}) }));
 vi.mock('@/lib/supabase', () => ({ getSupabase: () => ({}) }));
 vi.mock('@/services/chatService', () => ({ sendChatMessage: state.send }));
