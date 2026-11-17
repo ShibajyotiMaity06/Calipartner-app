@@ -94,7 +94,7 @@ export function AboutLegalModal({
             {/* Legal Links */}
             <Card elevation="s1" style={styles.card}>
               <TouchableOpacity
-                onPress={() => openUrl('https://calipartner.com/terms')}
+                onPress={() => openUrl('https://app.calipartner.site/terms')}
                 style={styles.linkRow}
                 accessibilityRole="link"
                 testID="link-terms-of-service"
@@ -105,7 +105,7 @@ export function AboutLegalModal({
               </TouchableOpacity>
 
               <TouchableOpacity
-                onPress={() => openUrl('https://calipartner.com/privacy')}
+                onPress={() => openUrl('https://app.calipartner.site/privacy')}
                 style={styles.linkRow}
                 accessibilityRole="link"
                 testID="link-privacy-policy"

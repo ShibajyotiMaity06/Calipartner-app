@@ -6,6 +6,7 @@ import { t } from '@/i18n';
 
 export function EntryTerms() {
   const [visible, setVisible] = useState(false);
+  const [tab, setTab] = useState<'terms' | 'privacy'>('terms');
   const { colors } = useTheme();
   return (
     <View style={{ alignItems: 'center', gap: space[1] }}>
@@ -18,7 +19,10 @@ export function EntryTerms() {
           size="sm"
           fullWidth={false}
           label={t('entryRefresh.terms')}
-          onPress={() => setVisible(true)}
+          onPress={() => {
+            setTab('terms');
+            setVisible(true);
+          }}
           testID="link-terms-of-service"
         />
         <Button
@@ -26,11 +30,14 @@ export function EntryTerms() {
           size="sm"
           fullWidth={false}
           label={t('entryRefresh.privacy')}
-          onPress={() => setVisible(true)}
+          onPress={() => {
+            setTab('privacy');
+            setVisible(true);
+          }}
           testID="link-privacy-policy"
         />
       </View>
-      <TermsOfServiceModal visible={visible} onClose={() => setVisible(false)} />
+      <TermsOfServiceModal initialTab={tab} visible={visible} onClose={() => setVisible(false)} />
     </View>
   );
 }

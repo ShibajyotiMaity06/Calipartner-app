@@ -6,7 +6,7 @@
   "scripts": {
     "start": "expo start --dev-client",
     "web": "expo start --web",
-    "build:web": "expo export -p web",
+    "build:web": "expo export -p web && tsx ../scripts/build-public-site.mts dist",
     "android": "expo run:android",
     "ios": "expo run:ios",
     "typecheck": "tsc --noEmit",

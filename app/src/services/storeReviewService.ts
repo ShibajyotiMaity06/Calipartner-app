@@ -15,6 +15,7 @@ export async function requestStoreReview(): Promise<boolean> {
     }
   }
   if (Platform.OS === 'android') {
+    if (process.env.EXPO_PUBLIC_GOOGLE_PLAY_AVAILABLE !== 'true') return false;
     const id = Constants.expoConfig?.android?.package;
     if (!id) return false;
     try {

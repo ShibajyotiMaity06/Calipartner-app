@@ -25,6 +25,7 @@ beforeEach(() => {
   vi.resetAllMocks();
   state.os = 'android';
   delete process.env.EXPO_PUBLIC_APPLE_APP_ID;
+  delete process.env.EXPO_PUBLIC_GOOGLE_PLAY_AVAILABLE;
 });
 it('uses the native dialog when available', async () => {
   state.available.mockResolvedValue(true);
@@ -33,11 +34,16 @@ it('uses the native dialog when available', async () => {
   expect(state.open).not.toHaveBeenCalled();
 });
 it('uses the actual Android package and HTTPS if the market scheme fails', async () => {
+  process.env.EXPO_PUBLIC_GOOGLE_PLAY_AVAILABLE = 'true';
   state.open.mockRejectedValueOnce(Error('NO_MARKET'));
   expect(await requestStoreReview()).toBe(true);
   expect(state.open).toHaveBeenLastCalledWith(
     'https://play.google.com/store/apps/details?id=app.calipartner.mobile',
   );
+});
+it('offers feedback instead of a broken Android listing before store launch', async () => {
+  expect(await requestStoreReview()).toBe(false);
+  expect(state.open).not.toHaveBeenCalled();
 });
 it('offers feedback on web or an iPhone without a published store ID', async () => {
   state.os = 'web';

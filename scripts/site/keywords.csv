@@ -1,0 +1,15 @@
+keyword,theme,relevance_1_to_3,volume,difficulty,priority,evidence
+indian food calorie counter,tracking,3,,,high,Seed only; verify store autocomplete and search reports
+calorie tracker,tracking,3,,,high,Seed only; no measured volume
+food diary,tracking,3,,,high,Seed only; no measured volume
+macro tracker,tracking,3,,,medium,Seed only; no measured volume
+protein tracker,tracking,3,,,medium,Seed only; no measured volume
+barcode scanner food,tracking,3,,,medium,Seed only; no measured volume
+workout buddy,social,3,,,high,Seed only; rooms with friends rather than matching
+accountability partner,social,3,,,high,Seed only; rooms with friends rather than matching
+workout with friends,social,3,,,high,Seed only; no measured volume
+streak tracker,social,3,,,medium,Seed only; no measured volume
+indian meal planner,planning,3,,,medium,Purchased plan and consent required
+healthy recipes indian,planning,3,,,medium,90+ recipe library
+roti calories,food content,3,,,research,Nutrition source and reviewer approval needed before publishing
+dal calories,food content,3,,,research,Nutrition source and reviewer approval needed before publishing

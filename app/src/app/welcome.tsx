@@ -49,6 +49,9 @@ export default function WelcomeScreen() {
             </Text>
           </View>
           <View style={styles.hero}>
+            <Text variant="label" style={styles.center} testID="welcome-audience">
+              {t('publicSite.audience')}
+            </Text>
             <Text
               variant="title1"
               style={styles.center}
@@ -67,6 +70,14 @@ export default function WelcomeScreen() {
             </Text>
           </View>
           <View style={styles.actions}>
+            <Text
+              variant="bodyS"
+              color={colors.textMid}
+              style={styles.center}
+              testID="welcome-trial"
+            >
+              {t('publicSite.trial')}
+            </Text>
             <Button
               label={t('entryRefresh.createAccount')}
               onPress={() => router.push({ pathname: '/auth/sign-in', params: { mode: 'signup' } })}

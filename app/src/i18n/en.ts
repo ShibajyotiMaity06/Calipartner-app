@@ -1,3 +1,4 @@
+import { publicSite } from './publicSite';
 import { launch } from './launch';
 import { avatar } from './avatar';
 import { fastingRefresh } from './fastingRefresh';
@@ -12,6 +13,7 @@ import { homeRefresh } from './homeRefresh';
 import { squadDesign } from './squadDesign';
 import { repairMessages } from './repairs';
 export const en = {
+  publicSite,
   launch,
   avatar,
   aiAllowance: {

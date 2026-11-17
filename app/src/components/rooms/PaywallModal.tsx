@@ -1043,7 +1043,7 @@ export function PaywallModal({
                 •
               </Text>
               <TouchableOpacity
-                onPress={() => openUrl('https://calipartner.com/terms')}
+                onPress={() => openUrl('https://app.calipartner.site/terms')}
                 accessibilityRole="link"
                 testID="link-paywall-terms"
               >
@@ -1055,7 +1055,7 @@ export function PaywallModal({
                 •
               </Text>
               <TouchableOpacity
-                onPress={() => openUrl('https://calipartner.com/privacy')}
+                onPress={() => openUrl('https://app.calipartner.site/privacy')}
                 accessibilityRole="link"
                 testID="link-paywall-privacy"
               >

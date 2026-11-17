@@ -10,14 +10,14 @@ ASO (App Store Optimization) gets people to find and install the app from the Ap
 
 ## 0. The plan in one page
 
-1. **Pick the strategy (Section 1).** Google Play first for India (most Indian phones are Android); the App Store matters for the US, UK, Gulf and Singapore, which are your highest-paying users (about 41% of base-case cash in the pricing plan).
-2. **Fix names, accounts and policy pages** (Section 2). These block submission, so do them first.
+1. **Pick the strategy (Section 1).** Google Play first for India (most Indian phones are Android); the App Store matters for the US, UK, Gulf and Singapore, which are your highest-paying users.
+2. **Fix names, accounts and policy pages** (Section 2). These block submission, so do them first. Domain: `app.calipartner.site`.
 3. **Find your keywords** (Section 3), then **write the listing** (Section 4) and **make the screenshots** (Section 5).
 4. **Build the website** (Section 6), then the **food pages** (Section 7), which are your biggest free search opportunity.
-5. **Collect ratings the right way** (Section 8) and **measure weekly** (Section 9).
+5. **Collect ratings the right way** (Section 8) with native in-app review prompts and direct store links.
 6. **Run one ASO test and one content drop a month**, tied to your feature releases (Section 10).
 
-**Rule for everything:** only describe features that are **live in the build you submit**. You are releasing features monthly, so update the listing each time. Reviewers reject listings that promise things the app does not do.
+**Rule for everything:** only describe features that are **live in the build you submit**. Never claim features not in the app (e.g., no focus sessions, no 150+ recipes claims—use 90+, no quota phrasing). Reviewers reject listings that promise things the app does not do.
 
 ---
 
@@ -87,7 +87,7 @@ Everything below is a **starting draft**. Character counts are checked. Replace 
 | App name | 30 | `CaliPartner: Calorie Tracker` | 28 |
 | Subtitle | 30 | `Diet, workouts & gym buddy` | 26 |
 | Keywords | 100 | `counter,partner,fitness,macro,food,diary,indian,weight,loss,steps,water,fasting,streak,nutrition` | 96 |
-| Promotional text (editable any time, not searchable) | 170 | `Log Indian meals in seconds, find a workout partner and keep each other going with streaks, rooms and a weekly leaderboard. Start your 7-day trial.` | 147 |
+| Promotional text (editable any time, not searchable) | 170 | `Log Indian meals in seconds, team up in accountability rooms, and stay consistent with streaks and shared progress. Start your 7-day Plus trial.` | 147 |
 | Description | 4,000 | See 4.4 (not searchable on iOS; it is for conversion) | 1496 |
 | What's New | 4,000 | Short, specific, human (template in 4.6) | |
 
@@ -126,35 +126,33 @@ Also add a Hinglish keyword set in the Hindi listing (for example `kaise,khana,c
 Edit the bracketed lines. The first 3 lines are what shows before "more", so the hook is in the first sentence.
 
 ```text
-Eating well and training are easier with someone on your side. CaliPartner is a calorie tracker and workout app built for Indian food, with a partner or a small room to keep you going.
+Eating well and training are easier with someone on your side. CaliPartner is an Indian food calorie tracker and accountability app with partner rooms to keep you consistent.
 
 TRACK WHAT YOU EAT
 • Log breakfast, lunch, dinner and snacks in seconds
-• Search Indian foods first: roti, dal, sabzi, idli, biryani and more
-• Scan barcodes, save your own foods and re-log favourites in one tap
+• Search Indian foods first: roti, dal, sabzi, idli, paneer, biryani and more
+• Scan barcodes, create custom foods, save My Meals, and re-log favourites in one tap
 • See calories, protein, carbs and fat against your daily target
-• Water, steps and distance in one place
+• Hydration logging with reminder alerts, daily steps and GPS runs
 
 TRAIN AND MOVE
-• Log workouts, sets and your weight
-• Follow your progress in simple graphs
-• [Add only when live] Track walks, runs and rides with GPS
+• Log strength workouts, exercises, sets, reps and body weight
+• Track outdoor runs with live GPS route distance and pace
+• Follow your body trends with private progress photos
 
 KEEP EACH OTHER GOING
-• Find a partner or start a room with friends
-• See your day and theirs side by side
-• Streaks, a weekly leaderboard and challenges
-• [Add only when live] Focus sessions you can run together
+• Start an accountability room for two for free
+• See your daily progress side by side with your partner
+• Stay motivated with streaks and custom pair challenges
 
 GO FURTHER WITH PLUS AND PRO
-• Plus: rooms, Partner Finder, the full recipe library, fasting, meal planner and workout routines
-• Pro: AI photo logging and an AI coach (daily limits apply)
-Both start with a 7-day free trial.
+• Plus (7-day free trial): 3 rooms of up to 5 people, 90+ healthy Indian recipes, fasting tracker, weekly meal planner, and custom macro targets
+• Pro (Immediate access): Personal AI Coach, AI photo food logging, chat-to-log, weekly growth reviews, and room media sharing
 
 SAFE BY DESIGN
-Calorie targets stay within safe weekly rates. CaliPartner is not medical advice. Talk to a doctor or dietitian before changing your diet.
+Calorie targets enforce strict safety floors and weekly rate caps. CaliPartner is not medical advice. Talk to a doctor or dietitian before changing your diet.
 
-Subscriptions: Plus and Pro renew automatically unless you cancel at least 24 hours before the end of the current period. Manage or cancel in your App Store or Google Play account settings. Terms: [your terms URL]. Privacy: [your privacy URL].
+Subscriptions: Plus starts with a 7-day free trial. Pro bills immediately. Manage or cancel anytime in your store account settings. Terms: https://app.calipartner.site/terms. Privacy: https://app.calipartner.site/privacy.
 ```
 
 ### 4.5 Page checklist (both stores)
@@ -184,14 +182,12 @@ The first 3 screenshots decide most installs. Use big captions of **6 words or f
 |---|---|---|---|
 | 1 | **Log Indian food in seconds** | Today screen with the calorie ring and roti or dal search | Your main use and your difference |
 | 2 | **Train with a partner** | Side-by-side view of you and your partner | Your unique idea |
-| 3 | **Keep each other on track** | Streak, weekly leaderboard, room | Retention story |
+| 3 | **Streaks and accountability** | Daily streak, room check-in, pair challenge | Retention story |
 | 4 | **Scan, search, re-log** | Barcode scan and quick re-log | Speed |
-| 5 | **Workouts and progress** | Workout log and weight graph | Breadth |
-| 6 | **Healthy Indian recipes** | Recipe library (Plus) | A reason to pay |
-| 7 | **Rooms for friends and family** | Room chat and progress | Social |
-| 8 | **Free plan that works** | Free vs Plus summary | Trust (only if you want to say it) |
-
-Add a Pro screenshot ("Snap your meal, we log it") **only after Pro is live**.
+| 5 | **Workouts and GPS runs** | Workout logger and outdoor GPS route | Breadth |
+| 6 | **90+ healthy Indian recipes** | Recipe library (Plus) | A reason to pay |
+| 7 | **Rooms for friends and squad** | Room chat and shared progress | Social |
+| 8 | **AI photo food scan & coach** | AI food recognition & coach chat (Pro) | Pro conversion |
 
 **Sizes:** App Store Connect shows the exact required sizes (currently the largest iPhone size, plus iPad only if the app supports iPad). Google needs 2 to 8 phone screenshots; export at high resolution. Use real screens from the app, not mock features. Build all captions in one Figma file so Hindi versions are a text swap.
 
@@ -205,15 +201,14 @@ Add a Pro screenshot ("Snap your meal, we log it") **only after Pro is live**.
 ### 6.1 Pages to build (launch)
 | URL | Purpose |
 |---|---|
-| `/` | Home: one-line promise, 3 benefits, screenshots, store buttons, "Free plan, Plus and Pro" summary |
-| `/features` | Food tracking, partner and rooms, workouts, recipes (one section each, with its own heading) |
-| `/pricing` | Free, Plus, Pro, FAQ (what happens after the trial, how to cancel) |
-| `/download` | Store buttons and a QR code |
-| `/foods/` | Indian food nutrition pages (Section 7) |
-| `/blog/` | Guides and articles (Section 7.4) |
-| `/about`, `/contact`, `/support` | Trust pages, with a real name and email |
-| `/privacy`, `/terms`, `/delete-account` | Required by the stores |
-| `/join/[code]` | Invite landing page (opens the app or shows store buttons; **noindex**) |
+| `https://app.calipartner.site/` | Home: one-line promise, 3 benefits, screenshots, store buttons, "Free plan, Plus and Pro" summary |
+| `https://app.calipartner.site/features` | Food tracking, partner rooms, workouts, recipes (one section each, with its own heading) |
+| `https://app.calipartner.site/pricing` | Free, Plus (₹249 / $4.99 with 7-day trial), Pro (₹499 / $9.99 immediate), FAQ (how to cancel) |
+| `https://app.calipartner.site/download` | Store buttons and a QR code |
+| `https://app.calipartner.site/foods/` | Indian food nutrition pages (Section 7) |
+| `https://app.calipartner.site/privacy` | Privacy policy covering nutrition logs, AI processing consent, and health data |
+| `https://app.calipartner.site/terms` | Subscription terms of service and billing renewal details |
+| `https://app.calipartner.site/delete-account` | Public web account deletion request page required by Google Play |
 
 ### 6.2 Technical checklist
 - [ ] HTTPS everywhere; one canonical domain (choose `www` or not and redirect the other).

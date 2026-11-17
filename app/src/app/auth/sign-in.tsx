@@ -39,6 +39,43 @@ export default function SignInScreen() {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [resendCooldown, setResendCooldown] = useState(0);
   const pending = useRef(false);
+  const [googleWaiting, setGoogleWaiting] = useState(false);
+  const googleTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const googleAttempt = useRef(0);
+  useEffect(
+    () => () => {
+      if (googleTimer.current) clearTimeout(googleTimer.current);
+      googleAttempt.current += 1;
+    },
+    [],
+  );
+  const googleSignIn = async () => {
+    if (googleWaiting || pending.current) return;
+    const attempt = ++googleAttempt.current;
+    setGoogleWaiting(true);
+    setErrorMessage(null);
+    // OAuth redirects can be suppressed by embedded browsers. Keep email usable throughout.
+    googleTimer.current = setTimeout(() => {
+      if (attempt !== googleAttempt.current) return;
+      googleAttempt.current += 1;
+      setGoogleWaiting(false);
+      setErrorMessage(t('publicSite.googlePending'));
+    }, 12000);
+    try {
+      const result = await signInWithGoogle();
+      if (attempt !== googleAttempt.current) return;
+      if (result.error) {
+        if (googleTimer.current) clearTimeout(googleTimer.current);
+        setGoogleWaiting(false);
+        setErrorMessage(t('publicSite.browserHelp'));
+      }
+    } catch {
+      if (attempt !== googleAttempt.current) return;
+      if (googleTimer.current) clearTimeout(googleTimer.current);
+      setGoogleWaiting(false);
+      setErrorMessage(t('publicSite.browserHelp'));
+    }
+  };
 
   useEffect(() => {
     let mounted = true;
@@ -86,6 +123,9 @@ export default function SignInScreen() {
     }
   };
   const sendCode = () => {
+    googleAttempt.current += 1;
+    if (googleTimer.current) clearTimeout(googleTimer.current);
+    setGoogleWaiting(false);
     const cleanEmail = email.trim();
     if (!cleanEmail || !cleanEmail.includes('@')) {
       setErrorMessage(t('auth.invalidEmailError'));
@@ -150,6 +190,9 @@ export default function SignInScreen() {
                   onPress={() => changeMode(signup)}
                   disabled={loading}
                   accessibilityRole="tab"
+                  accessibilityLabel={t(
+                    signup ? 'entryRefresh.createAccount' : 'entryRefresh.logIn',
+                  )}
                   accessibilityState={{ selected: isSignUp === signup }}
                   testID={signup ? 'auth-tab-signup' : 'auth-tab-signin'}
                   style={[
@@ -215,11 +258,21 @@ export default function SignInScreen() {
                     variant="secondary"
                     label={t('auth.googleSignIn')}
                     icon={<Ionicons name="logo-google" size={layout.icon} color={colors.textHi} />}
-                    disabled={loading}
-                    onPress={() => void authenticate(signInWithGoogle)}
+                    disabled={loading || googleWaiting}
+                    onPress={() => void googleSignIn()}
                     testID="btn-google-signin"
                   />
                 </View>
+                {Platform.OS === 'web' && (
+                  <Text
+                    variant="bodyS"
+                    color={colors.textMid}
+                    testID="auth-browser-help"
+                    accessibilityLiveRegion="polite"
+                  >
+                    {t('publicSite.browserHelp')}
+                  </Text>
+                )}
                 <View style={styles.divider}>
                   <View style={[styles.line, { backgroundColor: colors.hairline }]} />
                   <Text variant="micro" color={colors.textMid}>

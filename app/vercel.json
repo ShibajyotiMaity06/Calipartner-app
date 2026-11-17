@@ -1,8 +1,60 @@
 {
-  "rewrites": [
+  "buildCommand": "npm run build:web",
+  "outputDirectory": "dist",
+  "routes": [
     {
-      "source": "/(.*)",
-      "destination": "/index.html"
+      "src": "/(.*)",
+      "headers": {
+        "Referrer-Policy": "strict-origin-when-cross-origin",
+        "X-Content-Type-Options": "nosniff"
+      },
+      "continue": true
+    },
+    {
+      "src": "/index.html",
+      "headers": {
+        "Location": "/"
+      },
+      "status": 301
+    },
+    {
+      "src": "/(features|pricing|download|privacy|terms|support|delete-account).html",
+      "headers": {
+        "Location": "/$1"
+      },
+      "status": 301
+    },
+    {
+      "src": "/",
+      "dest": "/index.html"
+    },
+    {
+      "src": "/(features|pricing|download|privacy|terms|support|delete-account)/?",
+      "dest": "/$1.html"
+    },
+    {
+      "handle": "filesystem"
+    },
+    {
+      "src": "/(launch|welcome|weekly-plan|wallet|pair-start|plan-review|paywall|today|room|progress|me|log|chat|friends|fasting|onboarding|recipes|shop|avatar|coach)/?",
+      "dest": "/app-shell.html",
+      "headers": {
+        "Cache-Control": "no-store",
+        "X-Robots-Tag": "noindex, nofollow"
+      }
+    },
+    {
+      "src": "/(auth|squad|invite|profile|shop|avatar|notifications|onboarding|dev|\\(tabs\\))/(.*)",
+      "dest": "/app-shell.html",
+      "headers": {
+        "Cache-Control": "no-store",
+        "X-Robots-Tag": "noindex, nofollow"
+      }
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/404.html",
+      "status": 404
     }
   ]
 }

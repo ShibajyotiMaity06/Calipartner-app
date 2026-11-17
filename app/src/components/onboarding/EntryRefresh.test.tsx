@@ -4,6 +4,7 @@ import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 const api = vi.hoisted(() => ({
   catalog: vi.fn(),
   otp: vi.fn(),
+  google: vi.fn(),
   verify: vi.fn(),
   params: { mode: 'signup' },
   setParams: vi.fn(),
@@ -52,7 +53,12 @@ vi.mock('@/hooks/useSubscription', () => ({
   useSubscription: () => ({ offerings: null, loading: false, refresh: api.refresh }),
 }));
 vi.mock('@/contexts/AuthContext', () => ({
-  useAuth: () => ({ user: null, signInWithOtp: api.otp, verifyOtp: api.verify }),
+  useAuth: () => ({
+    user: null,
+    signInWithOtp: api.otp,
+    verifyOtp: api.verify,
+    signInWithGoogle: api.google,
+  }),
 }));
 vi.mock('@/services/webBillingService', () => ({
   fetchWebCatalog: api.catalog,
@@ -67,6 +73,7 @@ vi.mock('./PlanPrimitives', () => ({
 }));
 import { PremiumStep } from './PremiumStep';
 import SignInScreen from '@/app/auth/sign-in';
+import WelcomeScreen from '@/app/welcome';
 let tree: ReactTestRenderer | undefined;
 beforeEach(() => {
   (globalThis as unknown as { IS_REACT_ACT_ENVIRONMENT: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
@@ -209,4 +216,50 @@ it('starts Plus without waiting for pricing and advances only after acknowledgem
   await act(async () => tree!.root.findByProps({ testID: 'btn-onboarding-next' }).props.onPress());
   expect(skip).toHaveBeenCalledOnce();
   expect(proceed).not.toHaveBeenCalled();
+});
+
+it('explains Indian food and cardless trial before registration', async () => {
+  await act(async () => {
+    tree = create(<WelcomeScreen />);
+  });
+  expect(tree!.root.findByProps({ testID: 'welcome-audience' }).props.children).toContain(
+    'Indian food',
+  );
+  expect(tree!.root.findByProps({ testID: 'welcome-trial' }).props.children).toContain('No card');
+});
+it('keeps email available when Google hangs and shows recovery guidance', async () => {
+  vi.useFakeTimers();
+  try {
+    api.google.mockReturnValue(new Promise(() => {}));
+    await act(async () => {
+      tree = create(<SignInScreen />);
+    });
+    await act(async () => {
+      tree!.root.findByProps({ testID: 'btn-google-signin' }).props.onPress();
+    });
+    expect(tree!.root.findByProps({ testID: 'auth-browser-help' }).props.children).toContain(
+      'Safari/Chrome',
+    );
+    expect(tree!.root.findByProps({ testID: 'btn-send-code' }).props.disabled).not.toBe(true);
+    await act(async () => {
+      vi.advanceTimersByTime(12000);
+    });
+    expect(tree!.root.findByProps({ testID: 'auth-error-banner' })).toBeTruthy();
+    expect(tree!.root.findByProps({ testID: 'btn-google-signin' }).props.disabled).toBe(false);
+  } finally {
+    vi.useRealTimers();
+  }
+});
+it('shows actionable alternatives on disallowed Google user agent', async () => {
+  api.google.mockResolvedValue({ error: new Error('disallowed_useragent') });
+  await act(async () => {
+    tree = create(<SignInScreen />);
+  });
+  await act(async () => {
+    tree!.root.findByProps({ testID: 'btn-google-signin' }).props.onPress();
+  });
+  expect(tree!.root.findByProps({ testID: 'auth-browser-help' }).props.children).toContain(
+    'email 6-digit code',
+  );
+  expect(tree!.root.findByProps({ testID: 'btn-send-code' }).props.disabled).not.toBe(true);
 });

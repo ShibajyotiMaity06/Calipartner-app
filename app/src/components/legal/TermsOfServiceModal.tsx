@@ -1,12 +1,14 @@
 import { useTheme as useAppearance } from '@calipartner/ui/theme';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Modal, Pressable, SafeAreaView, ScrollView, StyleSheet, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Text, Button, radius, space } from '@calipartner/ui';
 import { t } from '@/i18n';
+import { publicSite } from '@/i18n/publicSite';
 
 export interface TermsOfServiceModalProps {
   visible: boolean;
+  initialTab?: 'terms' | 'privacy';
   onClose: () => void;
   onAccept?: () => void;
   testID?: string;
@@ -14,6 +16,7 @@ export interface TermsOfServiceModalProps {
 
 export function TermsOfServiceModal({
   visible,
+  initialTab = 'terms',
   onClose,
   onAccept,
   testID = 'terms-of-service-modal',
@@ -21,7 +24,10 @@ export function TermsOfServiceModal({
   const { colors: dark } = useAppearance();
   const styles = createStyles(dark);
 
-  const [activeTab, setActiveTab] = useState<'terms' | 'privacy'>('terms');
+  const [activeTab, setActiveTab] = useState<'terms' | 'privacy'>(initialTab);
+  useEffect(() => {
+    if (visible) setActiveTab(initialTab);
+  }, [visible, initialTab]);
 
   const handleAgree = () => {
     onAccept?.();
@@ -41,12 +47,12 @@ export function TermsOfServiceModal({
           {/* Top Bar Header */}
           <View style={styles.topBar}>
             <Text variant="title2" color={dark.textHi} style={styles.headerTitle}>
-              Legal & Privacy
+              {t('publicSite.legalTitle')}
             </Text>
             <Pressable
               onPress={onClose}
               accessibilityRole="button"
-              accessibilityLabel="Close terms dialog"
+              accessibilityLabel={t('publicSite.closeLegal')}
               style={styles.closeBtn}
               testID="btn-terms-close"
             >
@@ -68,7 +74,7 @@ export function TermsOfServiceModal({
                 color={activeTab === 'terms' ? dark.onBrand : dark.textMid}
                 style={styles.tabText}
               >
-                Terms of Service
+                {t('entryRefresh.terms')}
               </Text>
             </Pressable>
 
@@ -84,7 +90,7 @@ export function TermsOfServiceModal({
                 color={activeTab === 'privacy' ? dark.onBrand : dark.textMid}
                 style={styles.tabText}
               >
-                Privacy Policy
+                {t('entryRefresh.privacy')}
               </Text>
             </Pressable>
           </View>
@@ -97,93 +103,26 @@ export function TermsOfServiceModal({
           >
             <Text variant="body">{t('avatar.terms')}</Text>
             <Text variant="body">{t('avatar.deletionTerms')}</Text>
-            {activeTab === 'terms' ? (
-              <View style={styles.textSection}>
-                <Text variant="heading" color={dark.textHi} style={styles.sectionHeading}>
-                  1. Acceptance of Terms
-                </Text>
-                <Text variant="body" color={dark.textMid} style={styles.paragraph}>
-                  By creating an account, accessing, or using CaliPartner, you agree to be bound by
-                  these Terms of Service. If you do not agree with any part of these terms, you may
-                  not use our services.
-                </Text>
-
-                <Text variant="heading" color={dark.textHi} style={styles.sectionHeading}>
-                  2. Health & Safety Disclaimer
-                </Text>
-                <Text variant="body" color={dark.textMid} style={styles.paragraph}>
-                  CaliPartner is a nutrition, workout, and habits companion. We do NOT provide
-                  medical advice, diagnosis, or treatment. Always consult a physician or certified
-                  dietitian before starting any calorie deficit, intensive workout routine, or
-                  fasting regimen.
-                </Text>
-                <Text variant="body" color={dark.textMid} style={styles.paragraph}>
-                  Safety floors: We enforce hard calorie floors (minimum 1,200 kcal/day for women,
-                  1,500 kcal/day for men) and safe weekly weight change limits to protect your
-                  health.
-                </Text>
-
-                <Text variant="heading" color={dark.textHi} style={styles.sectionHeading}>
-                  3. Community Standards & Zero Tolerance
-                </Text>
-                <Text variant="body" color={dark.textMid} style={styles.paragraph}>
-                  We have zero tolerance for objectionable content or abusive behavior. In shared
-                  rooms and chat, users must not post harassment, threats, hate speech, spam, or
-                  sexually explicit material.
-                </Text>
-                <Text variant="body" color={dark.textMid} style={styles.paragraph}>
-                  You may instantly block any abusive user or report inappropriate messages.
-                  Reported content is reviewed promptly and offending accounts will be terminated.
-                </Text>
-
-                <Text variant="heading" color={dark.textHi} style={styles.sectionHeading}>
-                  4. Account Deletion & Termination
-                </Text>
-                <Text variant="body" color={dark.textMid} style={styles.paragraph}>
-                  You can permanently delete your account and all associated personal data directly
-                  inside the app under Profile Settings at any time.
-                </Text>
-              </View>
-            ) : (
-              <View style={styles.textSection}>
-                <Text variant="heading" color={dark.textHi} style={styles.sectionHeading}>
-                  1. Information We Collect
-                </Text>
-                <Text variant="body" color={dark.textMid} style={styles.paragraph}>
-                  We collect account credentials (email or Apple/Google sign-in identifiers),
-                  fitness profile data (height, weight, date of birth, goal preferences), and logged
-                  diary entries (food, water and workouts).
-                </Text>
-
-                <Text variant="heading" color={dark.textHi} style={styles.sectionHeading}>
-                  2. Room Privacy & Peer Sharing
-                </Text>
-                <Text variant="body" color={dark.textMid} style={styles.paragraph}>
-                  You control what your room partner sees. By default, partners view percentage
-                  adherence to daily goals and shared activity check-ins. Exact calories, body
-                  weight numbers, and private logs remain hidden unless you explicitly toggle them
-                  on.
-                </Text>
-
-                <Text variant="heading" color={dark.textHi} style={styles.sectionHeading}>
-                  3. AI Processing Privacy
-                </Text>
-                <Text variant="body" color={dark.textMid} style={styles.paragraph}>
-                  AI features (Food Photo Scanning and Coach) are processed securely and
-                  ephemerally. Your personal photos and diary entries are strictly protected and
-                  never used to train third-party public models.
-                </Text>
-
-                <Text variant="heading" color={dark.textHi} style={styles.sectionHeading}>
-                  4. Data Ownership & Storage
-                </Text>
-                <Text variant="body" color={dark.textMid} style={styles.paragraph}>
-                  Your data belongs to you. You can export your entire history in JSON format or
-                  delete your account with immediate data purging from both cloud servers and local
-                  storage.
-                </Text>
-              </View>
-            )}
+            <View style={styles.textSection}>
+              <Text variant="micro" color={dark.textMid}>
+                {t('publicSite.updated')}
+              </Text>
+              {publicSite[activeTab].sections.map((section) => (
+                <View key={section.title}>
+                  <Text
+                    variant="heading"
+                    accessibilityRole="header"
+                    color={dark.textHi}
+                    style={styles.sectionHeading}
+                  >
+                    {section.title}
+                  </Text>
+                  <Text variant="body" color={dark.textMid} style={styles.paragraph}>
+                    {section.body}
+                  </Text>
+                </View>
+              ))}
+            </View>
           </ScrollView>
 
           {/* Bottom Accept Action */}
@@ -191,7 +130,7 @@ export function TermsOfServiceModal({
             <Button
               variant="primary"
               size="lg"
-              label="I Agree & Continue"
+              label={t(onAccept ? 'publicSite.agree' : 'publicSite.done')}
               onPress={handleAgree}
               testID="btn-terms-agree"
             />
