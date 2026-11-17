@@ -6,9 +6,11 @@ import { Button, Text, space, useTheme } from '@calipartner/ui';
 import { useAuth } from '@/contexts/AuthContext';
 import { useNetworkStatus } from '@/hooks/useNetworkStatus';
 import { isUserOnboarded } from '@/services/onboardingStatus';
+import { afterPairReviewDestination } from '@/services/onboardingReviewService';
 import {
   acceptPairInvite,
   clearPendingPairInvite,
+  finishPairPrompt,
   isPairToken,
   previewPairInvite,
   rememberPairInvite,
@@ -63,8 +65,21 @@ export default function PairInviteScreen() {
       active = false;
     };
   }, [token, userId, isLoading, isOnline, refresh]);
-  const openRoom = (roomId?: string) =>
-    router.replace((roomId ? `/room?room=${roomId}` : '/room') as never);
+  const openRoom = async (roomId?: string) => {
+    setError(null);
+    setBusy(true);
+    try {
+      if (!user) return;
+      await finishPairPrompt(user.id);
+      router.replace(
+        (await afterPairReviewDestination(user.id, roomId ? 'room' : 'rooms', roomId)) as never,
+      );
+    } catch {
+      setError(t('pairStart.error'));
+    } finally {
+      setBusy(false);
+    }
+  };
   const join = async () => {
     if (
       busy ||
@@ -86,7 +101,8 @@ export default function PairInviteScreen() {
         router.replace('/onboarding');
         return;
       }
-      openRoom(await acceptPairInvite(token));
+      const roomId = await acceptPairInvite(token);
+      router.replace((await afterPairReviewDestination(user.id, 'room', roomId)) as never);
     } catch (e) {
       const message = String((e as { message?: string }).message ?? e);
       setError(
@@ -173,7 +189,8 @@ export default function PairInviteScreen() {
         {ready && member ? (
           <Button
             label={t('pairStart.openRoom')}
-            onPress={() => openRoom(preview.room_id)}
+            onPress={() => void openRoom(preview.room_id)}
+            disabled={busy}
             testID="open-invited-room"
           />
         ) : ready && sender ? (
@@ -189,7 +206,7 @@ export default function PairInviteScreen() {
             onPress={() => {
               if (preview.can_share) void share();
               else if (preview.reason === 'expired') router.replace('/pair-start' as never);
-              else openRoom();
+              else void openRoom();
             }}
             testID="share-own-pair-invite"
           />
@@ -215,7 +232,14 @@ export default function PairInviteScreen() {
           disabled={busy}
           onPress={() =>
             void clearPendingPairInvite()
-              .then(() => router.replace(user ? '/today' : '/welcome'))
+              .then(async () => {
+                if (!user) {
+                  router.replace('/welcome');
+                  return;
+                }
+                await finishPairPrompt(user.id);
+                router.replace((await afterPairReviewDestination(user.id)) as never);
+              })
               .catch(() => setError(t('pairStart.error')))
           }
           testID="decline-onboarding-pair"

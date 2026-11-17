@@ -4,6 +4,7 @@ import { useRouter } from 'expo-router';
 import { useTheme } from '@calipartner/ui';
 import { useAuth } from '@/contexts/AuthContext';
 import { isUserOnboarded } from '@/services/onboardingStatus';
+import { afterSetupDestination } from '@/services/pairOnboardingService';
 import { ErrorState } from '@/components/ErrorState';
 import { AnimatedLogoSplash } from '@/components/brand/AnimatedLogoSplash';
 
@@ -19,8 +20,11 @@ export default function LaunchScreen() {
     if (isLoading) return;
     let active = true;
     setDestination(null);
-    const resolve = async () =>
-      user && (await isUserOnboarded(user.id)) ? '/(tabs)/today' : '/onboarding';
+    const resolve = async () => {
+      if (!user || !(await isUserOnboarded(user.id))) return '/onboarding';
+      const next = await afterSetupDestination(user.id);
+      return next === '/today' ? '/(tabs)/today' : next;
+    };
     void resolve()
       .then((value) => {
         if (active) setDestination(value);

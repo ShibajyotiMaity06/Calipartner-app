@@ -6,6 +6,7 @@ import { CaliPartnerLogo } from '@/components/brand/CaliPartnerLogo';
 import { useAuth } from '@/contexts/AuthContext';
 import { useNetworkStatus } from '@/hooks/useNetworkStatus';
 import { finishPairPrompt, preparePairInvite } from '@/services/pairOnboardingService';
+import { afterPairReviewDestination } from '@/services/onboardingReviewService';
 import { t } from '@/i18n';
 import * as Clipboard from 'expo-clipboard';
 
@@ -120,7 +121,10 @@ export function PairStartView() {
         onPress={() => {
           if (!user) return;
           void finishPairPrompt(user.id)
-            .then(() => router.replace((limit ? '/room' : '/today') as never))
+            .then(async () => {
+              const next = await afterPairReviewDestination(user.id, limit ? 'rooms' : 'home');
+              if (currentOwner.current === user.id) router.replace(next as never);
+            })
             .catch(() => setError(t('pairStart.error')));
         }}
         testID="continue-after-pair-invite"

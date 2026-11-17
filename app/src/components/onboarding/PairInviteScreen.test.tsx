@@ -10,6 +10,7 @@ const fake = vi.hoisted(() => ({
   replace: vi.fn(),
   push: vi.fn(),
   share: vi.fn(),
+  review: false,
 }));
 vi.mock('react-native', () => ({
   ScrollView: 'ScrollView',
@@ -32,12 +33,16 @@ vi.mock('@/contexts/AuthContext', () => ({
 }));
 vi.mock('@/hooks/useNetworkStatus', () => ({ useNetworkStatus: () => ({ isOnline: true }) }));
 vi.mock('@/services/onboardingStatus', () => ({ isUserOnboarded: async () => true }));
+vi.mock('@/lib/secureStore', () => ({
+  secureStoreAdapter: { getItem: async () => (fake.review ? 'end' : null) },
+}));
 vi.mock('@/services/pairOnboardingService', () => ({
   isPairToken: () => true,
   previewPairInvite: fake.preview,
   rememberPairInvite: fake.remember,
   clearPendingPairInvite: fake.clear,
   acceptPairInvite: fake.accept,
+  finishPairPrompt: vi.fn(),
 }));
 import PairInviteScreen from '../../app/invite/[token]';
 let tree: ReactTestRenderer;
@@ -45,6 +50,7 @@ beforeEach(() => {
   (globalThis as unknown as { IS_REACT_ACT_ENVIRONMENT: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
   vi.clearAllMocks();
   fake.user = 'sender';
+  fake.review = false;
   fake.preview.mockResolvedValue({ state: 'sender', can_share: true });
   fake.remember.mockResolvedValue(undefined);
   fake.clear.mockResolvedValue(undefined);
@@ -95,6 +101,20 @@ describe('invitation identity before showing join', () => {
     await render();
     expect(tree.root.findAllByProps({ testID: 'accept-onboarding-pair' })).toHaveLength(0);
     expect(fake.clear).toHaveBeenCalled();
+  });
+  it('ends iOS setup with the review screen after joining or declining an invitation', async () => {
+    fake.user = 'recipient';
+    fake.review = true;
+    fake.preview.mockResolvedValue({ state: 'joinable' });
+    await render();
+    await act(async () =>
+      tree.root.findByProps({ testID: 'accept-onboarding-pair' }).props.onPress(),
+    );
+    expect(fake.replace).toHaveBeenCalledWith('/founders?next=room&room=room-id');
+    await act(async () =>
+      tree.root.findByProps({ testID: 'decline-onboarding-pair' }).props.onPress(),
+    );
+    expect(fake.replace).toHaveBeenLastCalledWith('/founders?next=home');
   });
   it('a guest keeps the link through sign-in without attempting acceptance', async () => {
     fake.user = null;

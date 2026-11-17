@@ -30,6 +30,7 @@ vi.mock('@/services/pairOnboardingService', () => ({
   preparePairInvite: state.prepare,
   finishPairPrompt: vi.fn(),
 }));
+vi.mock('@/lib/secureStore', () => ({ secureStoreAdapter: { getItem: async () => null } }));
 import { PairStartView } from './PairStartView';
 let tree: ReactTestRenderer;
 beforeEach(() => {

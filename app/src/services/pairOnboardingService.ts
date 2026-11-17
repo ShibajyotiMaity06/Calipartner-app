@@ -1,6 +1,7 @@
 import { secureStoreAdapter } from '@/lib/secureStore';
 import { getSupabase } from '@/lib/supabase';
 import { generateClientUuid } from './foodService';
+import { pendingOnboardingReview, afterPairReviewDestination } from './onboardingReviewService';
 
 const pendingKey = 'calipartner.pending_pair_invite';
 const promptKey = (userId: string) => `calipartner.pair_prompt.${userId}`;
@@ -23,11 +24,12 @@ export const finishPairPrompt = (userId: string) =>
   secureStoreAdapter.setItem(promptKey(userId), 'done');
 
 export async function afterSetupDestination(userId: string): Promise<string> {
+  if ((await pendingOnboardingReview(userId)) === 'before_plan') return '/founders?next=plan';
   const token = await pendingPairInvite();
   if (token) return `/invite/${token}`;
   return (await secureStoreAdapter.getItem(promptKey(userId))) === 'pending'
     ? '/pair-start'
-    : '/today';
+    : afterPairReviewDestination(userId);
 }
 
 export async function preparePairInvite(userId: string, roomName: string) {

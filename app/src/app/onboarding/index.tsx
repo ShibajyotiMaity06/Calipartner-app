@@ -31,6 +31,7 @@ import { useNetworkStatus } from '@/hooks/useNetworkStatus';
 import { getDb } from '@/db';
 import { t } from '@/i18n';
 import { GrowthProjectionStep } from '@/components/onboarding/GrowthProjectionStep';
+import { requireOnboardingReview } from '@/services/onboardingReviewService';
 import { GoalStep } from '@/components/onboarding/GoalStep';
 import { ActivityStep } from '@/components/onboarding/ActivityStep';
 import { MotivationStep } from '@/components/onboarding/MotivationStep';
@@ -217,10 +218,14 @@ export default function OnboardingScreen() {
       const saved = await saveGoalProfile(goal);
       if (!saved.success) throw new Error(saved.error ?? t('common.errorBody'));
       if (owner.current !== user.id) return;
+      await requireOnboardingReview(user.id, Platform.OS);
+      if (owner.current !== user.id) return;
       completedRef.current = true;
       await draftWrites.current;
       await clearOnboardingDraft(await getDb(), user.id).catch(() => {});
-      router.push('/weekly-plan?setup=1' as never);
+      router.push(
+        (Platform.OS === 'ios' ? '/weekly-plan?setup=1' : '/founders?next=plan') as never,
+      );
     } catch (error) {
       setSaveError(macroErrorMessage(error));
     } finally {

@@ -6,6 +6,7 @@ const state = vi.hoisted(() => ({
   loading: false,
   check: vi.fn(),
   replace: vi.fn(),
+  next: vi.fn(),
 }));
 vi.mock('react-native', () => ({
   View: 'View',
@@ -17,6 +18,7 @@ vi.mock('@/contexts/AuthContext', () => ({
   useAuth: () => ({ user: state.user, isLoading: state.loading }),
 }));
 vi.mock('@/services/onboardingStatus', () => ({ isUserOnboarded: state.check }));
+vi.mock('@/services/pairOnboardingService', () => ({ afterSetupDestination: state.next }));
 vi.mock('@/components/ErrorState', () => ({ ErrorState: 'ErrorState' }));
 vi.mock('./AnimatedLogoSplash', () => ({ AnimatedLogoSplash: 'Splash' }));
 import LaunchScreen from '@/app/index';
@@ -25,6 +27,7 @@ beforeEach(() => {
   state.user = null;
   state.loading = false;
   vi.clearAllMocks();
+  state.next.mockResolvedValue('/today');
 });
 afterEach(async () => {
   if (tree) await act(async () => tree.unmount());
@@ -61,6 +64,14 @@ it('keeps incomplete signed-in setup in onboarding', async () => {
   await render();
   await finish();
   expect(state.replace).toHaveBeenCalledWith('/onboarding');
+});
+it('resumes a pending founders screen after relaunch instead of skipping to Home', async () => {
+  state.user = { id: 'new-account' };
+  state.check.mockResolvedValue(true);
+  state.next.mockResolvedValue('/founders?next=plan');
+  await render();
+  await finish();
+  expect(state.replace).toHaveBeenCalledWith('/founders?next=plan');
 });
 it('keeps a failed readiness check actionable and retries without replaying the splash', async () => {
   state.user = { id: 'returning' };

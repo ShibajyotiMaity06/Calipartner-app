@@ -20,4 +20,5 @@ export const onboardingLayout = {
   chartActiveDot: 8,
   previewBar: 6,
   previewAvatar: 32,
+  foundersImageHeight: 264,
 } as const;
