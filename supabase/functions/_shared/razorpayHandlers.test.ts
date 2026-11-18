@@ -71,6 +71,7 @@ function setup(
       user_id: 'owner',
       provider: 'razorpay',
       product_id: plans.plus_monthly,
+      product_key: 'plus_monthly',
       subscription_id: 'sub_Fixture',
       trial_end: new Date((now + 7 * 86400) * 1000).toISOString(),
       state: 'ready',
@@ -104,6 +105,7 @@ function setup(
           user_id: 'owner',
           provider: 'razorpay',
           product_id: args.p_product_id,
+          product_key: args.p_product_key,
           state: 'reserved',
           trial_end: null,
         };
@@ -352,6 +354,8 @@ Deno.test(
   async () => {
     for (const captured of [true, false]) {
       const state = setup({ existing: true });
+      state.config.plans = { ...state.config.plans };
+      delete state.config.plans.plus_monthly;
       state.payment.status = captured ? 'captured' : 'authorized';
       const result = await handleRazorpayWebhook(
         await webhook({
@@ -364,6 +368,7 @@ Deno.test(
         () => state.config,
       );
       assert.equal(result.status, 200);
+      assert.equal(state.events[0].p_plan_id, plans.plus_monthly);
       assert.equal(state.events[0].p_kind, captured ? 'paid' : 'retain');
       if (captured)
         assert.equal(

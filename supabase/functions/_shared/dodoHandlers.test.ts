@@ -150,6 +150,23 @@ Deno.test(
     assert.equal(state.writes(), 1);
   },
 );
+Deno.test('Dodo renewals use the saved checkout after its original price is replaced', async () => {
+  Deno.env.set('DODO_PAYMENTS_WEBHOOK_KEY', secret);
+  try {
+    const state = setup();
+    state.config.globalProducts = { pro_annual: 'pdt_new' };
+    const body = JSON.stringify({
+      business_id: 'business_test',
+      type: 'subscription.renewed',
+      timestamp: new Date().toISOString(),
+      data: subscription,
+    });
+    assert.equal((await handleDodoWebhook(signed(body), () => state.config)).status, 200);
+    assert.equal(state.writes(), 1);
+  } finally {
+    Deno.env.delete('DODO_PAYMENTS_WEBHOOK_KEY');
+  }
+});
 Deno.test(
   'Checkout requires authenticated account context before creating a payment session',
   async () => {

@@ -17,7 +17,7 @@ export const releaseUpdate = {
   charged: '{total} charged today',
   exitEyebrow: 'Wait! Special Offer',
   exitTitle: 'Commit to 3 months and build habits that stick',
-  exitBody: 'Give yourself 90 days to build consistency with your squad partner.',
+  exitBody: '90 days is all it takes to transform your consistency with your squad partner.',
   exitAction: 'Claim 3-Month Transformation Pass',
   exitDecline: 'No thanks, dismiss',
   upgradeNow: 'Subscribe to {tier}',

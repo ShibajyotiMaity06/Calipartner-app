@@ -192,11 +192,33 @@ export async function handleDodoWebhook(req: Request, getConfig = dodoConfig) {
     }
     if (!subscriptionId) return dodoResponse({ status: 'ignored' });
     const subscription = await dodo.subscriptions.retrieve(subscriptionId);
-    const key = BILLING_WEBHOOK_PRODUCT_KEYS.find(
+    const checkoutId = subscription.metadata.checkout_id ?? null;
+    let key = BILLING_WEBHOOK_PRODUCT_KEYS.find(
       (key) =>
         products[key] === subscription.product_id ||
         globalProducts?.[key] === subscription.product_id,
     );
+    if (!key) {
+      const linkedCheckout =
+        checkoutId ??
+        (
+          await admin
+            .from('dodo_subscriptions')
+            .select('checkout_id')
+            .eq('subscription_id', subscription.subscription_id)
+            .eq('customer_id', subscription.customer.customer_id)
+            .maybeSingle()
+        ).data?.checkout_id;
+      if (linkedCheckout) {
+        const { data: original } = await admin
+          .from('dodo_checkouts')
+          .select('product_key,product_id')
+          .eq('id', linkedCheckout)
+          .maybeSingle();
+        if (original?.product_id === subscription.product_id)
+          key = BILLING_WEBHOOK_PRODUCT_KEYS.find((key) => key === original.product_key);
+      }
+    }
     if (!key) return dodoResponse({ error: 'UNKNOWN_PRODUCT' }, 400);
     const normalized = dodoSubscriptionEvent(subscription, revoked);
     const { error } = await admin.rpc('apply_dodo_event', {
@@ -208,7 +230,7 @@ export async function handleDodoWebhook(req: Request, getConfig = dodoConfig) {
       p_subscription_id: subscription.subscription_id,
       p_customer_id: subscription.customer.customer_id,
       p_product_id: subscription.product_id,
-      p_checkout_id: subscription.metadata.checkout_id ?? null,
+      p_checkout_id: checkoutId,
       p_payload: { ...event, event: { original_transaction_id: subscription.subscription_id } },
     });
     if (error) return dodoResponse({ error: 'EVENT_NOT_APPLIED' }, 500);

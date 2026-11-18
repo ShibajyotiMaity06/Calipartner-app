@@ -219,7 +219,7 @@ export async function handleRazorpayCheckout(req: Request, getConfig = razorpayC
 export async function handleRazorpayWebhook(req: Request, getConfig = razorpayConfig) {
   if (req.method !== 'POST') return billingResponse({ error: 'METHOD_NOT_ALLOWED' }, 405);
   try {
-    const { admin, api, webhookSecret, plans } = getConfig();
+    const { admin, api, webhookSecret } = getConfig();
     const raw = await req.text();
     if (
       raw.length > 128000 ||
@@ -282,20 +282,28 @@ export async function handleRazorpayWebhook(req: Request, getConfig = razorpayCo
     }
     if (!id(subscriptionId, 'sub')) return billingResponse({ error: 'INVALID_SUBSCRIPTION' }, 400);
     const subscription = await api('/subscriptions/' + subscriptionId);
-    const key = BILLING_WEBHOOK_PRODUCT_KEYS.find((key) => plans[key] === subscription.plan_id);
-    if (!key || subscription.id !== subscriptionId)
+    const planId = subscription.plan_id;
+    if (!id(planId, 'plan') || subscription.id !== subscriptionId)
       return billingResponse({ error: 'UNKNOWN_PLAN' }, 400);
-    const product = verifiedRazorpayPlan(key, await api('/plans/' + plans[key]));
     const notes = subscription.notes as Record<string, unknown> | undefined;
     if (!uuid(notes?.checkout_id)) return billingResponse({ error: 'INVALID_CHECKOUT' }, 400);
     const checkout = await admin
       .from('web_billing_checkouts')
-      .select('trial_end')
+      .select('trial_end,product_id,product_key,subscription_id')
       .eq('id', notes.checkout_id)
       .eq('provider', 'razorpay')
       .maybeSingle();
-    if (checkout.error || !checkout.data)
+    const original = checkout.data;
+    if (
+      checkout.error ||
+      !original ||
+      original.product_id !== planId ||
+      original.subscription_id !== subscriptionId
+    )
       return billingResponse({ error: 'INVALID_CHECKOUT' }, 400);
+    const key = BILLING_WEBHOOK_PRODUCT_KEYS.find((key) => key === original.product_key);
+    if (!key) return billingResponse({ error: 'UNKNOWN_PLAN' }, 400);
+    const product = verifiedRazorpayPlan(key, await api('/plans/' + planId));
     let kind = 'retain';
     let periodEnd: string | null = null;
     if (refund || dispute) {
@@ -314,11 +322,11 @@ export async function handleRazorpayWebhook(req: Request, getConfig = razorpayCo
       key.startsWith('plus_') &&
       Number(subscription.paid_count) === 0 &&
       ['authenticated', 'active'].includes(String(subscription.status)) &&
-      checkout.data.trial_end &&
-      razorpayEpoch(subscription.start_at) === new Date(checkout.data.trial_end).toISOString()
+      original.trial_end &&
+      razorpayEpoch(subscription.start_at) === new Date(original.trial_end).toISOString()
     ) {
       kind = 'trial';
-      periodEnd = new Date(checkout.data.trial_end).toISOString();
+      periodEnd = new Date(original.trial_end).toISOString();
     }
     if (['paid', 'revoke'].includes(kind) && !periodEnd)
       return billingResponse({ error: 'INVALID_PERIOD' }, 400);
@@ -327,7 +335,7 @@ export async function handleRazorpayWebhook(req: Request, getConfig = razorpayCo
       p_event_type: event.event,
       p_checkout_id: notes.checkout_id,
       p_subscription_id: subscriptionId,
-      p_plan_id: plans[key],
+      p_plan_id: planId,
       p_kind: kind,
       p_period_end: periodEnd,
       p_event_timestamp: razorpayEpoch(event.created_at),
