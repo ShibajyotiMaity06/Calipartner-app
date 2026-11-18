@@ -55,10 +55,6 @@ export function ExercisePickerModal({
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedMuscle, setSelectedMuscle] = useState<ExerciseFilter>('upper');
   const [configuring, setConfiguring] = useState<Exercise | null>(null);
-  useBrowserModalBack(visible, () => {
-    if (configuring) setConfiguring(null);
-    else onClose();
-  });
   const requestVersion = React.useRef(0);
   const loadedCatalog = React.useRef<string | null>(null);
   const [visibleCount, setVisibleCount] = useState(5);
@@ -76,6 +72,19 @@ export function ExercisePickerModal({
   const [customError, setCustomError] = useState(false);
   const customRequest = React.useRef<string | null>(null);
   const customSaving = React.useRef(false);
+  const closeCustom = () => {
+    if (!customSaving.current) setShowCustomModal(false);
+  };
+  const backLabel = t(configuring ? 'common.back' : 'common.cancel');
+  const back = () => {
+    if (showCustomModal) closeCustom();
+    else if (configuring) setConfiguring(null);
+    else onClose();
+  };
+  useBrowserModalBack(visible, onClose, {
+    depth: Number(Boolean(configuring || showCustomModal)),
+    onDepthChange: back,
+  });
 
   const fetchExercises = useCallback(async () => {
     const version = ++requestVersion.current;
@@ -199,7 +208,7 @@ export function ExercisePickerModal({
       visible={visible}
       animationType="slide"
       transparent={false}
-      onRequestClose={onClose}
+      onRequestClose={back}
     >
       <View style={[styles.modalScreen, { backgroundColor: colors.background }]}>
         {/* Header */}
@@ -212,17 +221,20 @@ export function ExercisePickerModal({
           <Button
             variant="tertiary"
             fullWidth={false}
-            label={t('common.cancel')}
+            label={backLabel}
             iconOnly
-            icon={<Ionicons name="close" size={24} color={colors.text} />}
+            icon={
+              <Ionicons
+                name={configuring ? 'chevron-back' : 'close'}
+                size={24}
+                color={colors.text}
+              />
+            }
             testID={`${testID}-btn-close`}
-            onPress={() => {
-              setConfiguring(null);
-              onClose();
-            }}
+            onPress={back}
             style={styles.closeBtn}
             accessibilityRole="button"
-            accessibilityLabel={t('common.cancel')}
+            accessibilityLabel={backLabel}
           />
           <Text style={[styles.modalTitle, { color: colors.text }]}>
             {t('workouts.exercises.title')}
@@ -417,7 +429,7 @@ export function ExercisePickerModal({
           visible={showCustomModal}
           transparent
           animationType="fade"
-          onRequestClose={() => setShowCustomModal(false)}
+          onRequestClose={closeCustom}
         >
           <View style={styles.dialogBackdrop}>
             <View

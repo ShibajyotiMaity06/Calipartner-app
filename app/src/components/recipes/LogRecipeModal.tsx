@@ -14,6 +14,7 @@ import {
 import { useAuth } from '@/contexts/AuthContext';
 import { getDb } from '@/db';
 import { t } from '@/i18n';
+import { useBrowserModalBack } from '@/hooks/useBrowserModalBack';
 import { logRecipe } from '@/services/recipeService';
 import { fontSize, radius, spacing } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
@@ -54,6 +55,7 @@ export function LogRecipeModal({
   const [submitting, setSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
+  useBrowserModalBack(visible && Boolean(recipe), onClose);
   if (!recipe) return null;
 
   // Live scaled nutrients preview (RCP-6)

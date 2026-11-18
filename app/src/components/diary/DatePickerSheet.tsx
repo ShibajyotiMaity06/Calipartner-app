@@ -1,253 +1,207 @@
 import { useTheme as useAppearance } from '@calipartner/ui/theme';
 import { useCurrentLocalDate } from '@/hooks/useCurrentLocalDate';
-import React, { useState } from 'react';
-import { View, StyleSheet } from 'react-native';
+import { useBrowserModalBack } from '@/hooks/useBrowserModalBack';
+import React, { useEffect, useState } from 'react';
+import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { Sheet, Text, Button, space, radius } from '@calipartner/ui';
+import { Sheet, Text, Button, controls, space, radius } from '@calipartner/ui';
+import { getLocale, t } from '@/i18n';
 
 export interface DatePickerSheetProps {
   visible: boolean;
   selectedDate: string; // YYYY-MM-DD
   onSelectDate: (date: string) => void;
   onClose: () => void;
+  confirmSelection?: boolean;
 }
+
+const monthStart = (date: string) => new Date(date.slice(0, 7) + '-01T12:00:00Z');
 
 export function DatePickerSheet({
   visible,
   selectedDate,
   onSelectDate,
   onClose,
+  confirmSelection = false,
 }: DatePickerSheetProps) {
-  const { colors: dark } = useAppearance();
-  const styles = createStyles(dark);
-
-  const { localDate: todayStr } = useCurrentLocalDate();
-  const [currentMonthDate, setCurrentMonthDate] = useState(
-    () => new Date(selectedDate + 'T12:00:00'),
-  );
-
-  const year = currentMonthDate.getFullYear();
-  const month = currentMonthDate.getMonth(); // 0-indexed
-
-  // Month navigation
-  const handlePrevMonth = () => {
-    setCurrentMonthDate(new Date(year, month - 1, 1));
-  };
-
-  const handleNextMonth = () => {
-    const nextMonth = new Date(year, month + 1, 1);
-    const now = new Date();
-    if (
-      nextMonth.getFullYear() > now.getFullYear() ||
-      (nextMonth.getFullYear() === now.getFullYear() && nextMonth.getMonth() > now.getMonth())
-    ) {
-      return;
+  const { colors } = useAppearance();
+  const styles = createStyles(colors);
+  const { localDate: today } = useCurrentLocalDate();
+  const [monthDate, setMonthDate] = useState(() => monthStart(selectedDate));
+  const [draft, setDraft] = useState(selectedDate);
+  useEffect(() => {
+    if (visible) {
+      setMonthDate(monthStart(selectedDate));
+      setDraft(selectedDate);
     }
-    setCurrentMonthDate(nextMonth);
+  }, [selectedDate, visible]);
+  useBrowserModalBack(visible, onClose);
+
+  const year = monthDate.getUTCFullYear();
+  const month = monthDate.getUTCMonth();
+  const numberOfDays = new Date(Date.UTC(year, month + 1, 0)).getUTCDate();
+  const offset = monthDate.getUTCDay();
+  const currentMonth = monthDate.getTime() >= monthStart(today).getTime();
+  const locale = getLocale();
+  const dateLabel = new Intl.DateTimeFormat(locale, { dateStyle: 'full', timeZone: 'UTC' });
+  const weekdayLabel = new Intl.DateTimeFormat(locale, { weekday: 'narrow', timeZone: 'UTC' });
+  const choose = (date: string) => {
+    if (date > today) return;
+    if (confirmSelection) {
+      setDraft(date);
+    } else {
+      onSelectDate(date);
+      onClose();
+    }
   };
-
-  // Build calendar days
-  const daysInMonth = new Date(year, month + 1, 0).getDate();
-  const firstDayWeekday = new Date(year, month, 1).getDay(); // 0 is Sunday
-
-  const days: (number | null)[] = [];
-  for (let i = 0; i < firstDayWeekday; i++) {
-    days.push(null);
-  }
-  for (let d = 1; d <= daysInMonth; d++) {
-    days.push(d);
-  }
-
-  const monthNames = [
-    'January',
-    'February',
-    'March',
-    'April',
-    'May',
-    'June',
-    'July',
-    'August',
-    'September',
-    'October',
-    'November',
-    'December',
-  ];
-
-  const handleSelectDay = (day: number) => {
-    const mm = String(month + 1).padStart(2, '0');
-    const dd = String(day).padStart(2, '0');
-    const dateStr = `${year}-${mm}-${dd}`;
-    if (dateStr > todayStr) return; // Future days disabled
-    onSelectDate(dateStr);
-    onClose();
-  };
-
-  const isCurrentMonthFuture = () => {
-    const now = new Date();
-    return year === now.getFullYear() && month >= now.getMonth();
+  const changeMonth = (direction: -1 | 1) => {
+    if (direction === 1 && currentMonth) return;
+    setMonthDate(new Date(Date.UTC(year, month + direction, 1, 12)));
   };
 
   return (
     <Sheet
       visible={visible}
       onClose={onClose}
-      snapPoint="half"
+      snapPoint={confirmSelection ? 'tall' : 'half'}
       testID="sheet-date-picker"
-      accessibilityLabel="Calendar Date Picker"
+      accessibilityLabel={t('calendar.title')}
     >
-      <View style={styles.container}>
-        {/* Month Navigation */}
+      <ScrollView contentContainerStyle={styles.container}>
         <View style={styles.navHeader}>
           <Button
             variant="tertiary"
             fullWidth={false}
-            label="Previous month"
+            label={t('calendar.previousMonth')}
             iconOnly
-            icon={<Ionicons name="chevron-back" size={20} color={dark.textHi} />}
+            icon={<Ionicons name="chevron-back" size={controls.icon} color={colors.textHi} />}
             testID="btn-prev-month"
-            onPress={handlePrevMonth}
-            style={styles.navArrow}
-            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-            accessibilityLabel="Previous month"
+            onPress={() => changeMonth(-1)}
           />
-
-          <Text variant="heading" color={dark.textHi}>
-            {monthNames[month]} {year}
+          <Text variant="heading" color={colors.textHi} accessibilityLiveRegion="polite">
+            {monthDate.toLocaleDateString(locale, {
+              month: 'long',
+              year: 'numeric',
+              timeZone: 'UTC',
+            })}
           </Text>
-
           <Button
             variant="tertiary"
             fullWidth={false}
-            label="Next month"
+            label={t('calendar.nextMonth')}
             iconOnly
             icon={
               <Ionicons
                 name="chevron-forward"
-                size={20}
-                color={isCurrentMonthFuture() ? dark.textLo : dark.textHi}
+                size={controls.icon}
+                color={currentMonth ? colors.textLo : colors.textHi}
               />
             }
             testID="btn-next-month"
-            onPress={handleNextMonth}
-            disabled={isCurrentMonthFuture()}
-            style={[styles.navArrow, isCurrentMonthFuture() && styles.navArrowDisabled]}
-            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-            accessibilityLabel="Next month"
+            onPress={() => changeMonth(1)}
+            disabled={currentMonth}
           />
         </View>
-
-        {/* Weekday Labels */}
-        <View style={styles.weekdayRow}>
-          {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((w, idx) => (
-            <View key={idx} style={styles.dayCell}>
-              <Text variant="label" color={dark.textLo}>
-                {w}
+        <View
+          style={styles.weekdayRow}
+          accessibilityElementsHidden
+          importantForAccessibility="no-hide-descendants"
+        >
+          {Array.from({ length: 7 }, (_, index) => (
+            <View key={index} style={styles.dayCell}>
+              <Text variant="label" color={colors.textLo}>
+                {weekdayLabel.format(new Date(Date.UTC(year, month, 1 - offset + index, 12)))}
               </Text>
             </View>
           ))}
         </View>
-
-        {/* Days Grid */}
         <View style={styles.grid}>
-          {days.map((day, idx) => {
-            if (day === null) {
-              return <View key={`empty-${idx}`} style={styles.dayCell} />;
-            }
-
-            const mm = String(month + 1).padStart(2, '0');
-            const dd = String(day).padStart(2, '0');
-            const dateStr = `${year}-${mm}-${dd}`;
-            const isToday = dateStr === todayStr;
-            const isSelected = dateStr === selectedDate;
-            const isFuture = dateStr > todayStr;
-
+          {Array.from({ length: offset + numberOfDays }, (_, index) => {
+            const day = index - offset + 1;
+            if (day < 1) return <View key={index} style={styles.dayCell} />;
+            const date = new Date(Date.UTC(year, month, day, 12));
+            const key = date.toISOString().slice(0, 10);
+            const selected = key === draft;
+            const future = key > today;
             return (
-              <Button
-                variant="secondary"
-                fullWidth={false}
-                label={String(day)}
-                key={`day-${day}`}
-                testID={`day-cell-${dateStr}`}
-                disabled={isFuture}
-                onPress={() => handleSelectDay(day)}
-                style={[
+              <Pressable
+                key={index}
+                accessibilityRole="button"
+                accessibilityLabel={dateLabel.format(date)}
+                accessibilityState={{ selected, disabled: future }}
+                testID={`day-cell-${key}`}
+                disabled={future}
+                onPress={() => choose(key)}
+                style={({ pressed }) => [
                   styles.dayCell,
-                  styles.dayButton,
-                  isSelected && styles.dayButtonSelected,
-                  isToday && !isSelected && styles.dayButtonToday,
-                  isFuture && styles.dayButtonFuture,
+                  selected && styles.selected,
+                  !selected && key === today && styles.today,
+                  pressed && !selected && styles.pressed,
                 ]}
-              />
+              >
+                <Text
+                  variant="label"
+                  tabular
+                  color={selected ? colors.onBrand : future ? colors.textOff : colors.textHi}
+                >
+                  {day}
+                </Text>
+              </Pressable>
             );
           })}
         </View>
-
-        {/* Quick Jump to Today */}
         <View style={styles.footer}>
           <Button
             testID="btn-jump-today-sheet"
-            variant="secondary"
-            label="Jump to Today"
+            variant={confirmSelection ? 'tertiary' : 'secondary'}
+            label={t('calendar.today')}
             onPress={() => {
-              onSelectDate(todayStr);
-              onClose();
+              setMonthDate(monthStart(today));
+              choose(today);
             }}
           />
+          {confirmSelection && (
+            <Button
+              testID="workout-calendar-confirm"
+              label={t('calendar.ok')}
+              disabled={draft > today}
+              onPress={() => {
+                if (draft > today) return;
+                onSelectDate(draft);
+                onClose();
+              }}
+            />
+          )}
         </View>
-      </View>
+      </ScrollView>
     </Sheet>
   );
 }
 
-const createStyles = (dark: ReturnType<typeof useAppearance>['colors']) =>
+const createStyles = (colors: ReturnType<typeof useAppearance>['colors']) =>
   StyleSheet.create({
-    container: {
-      paddingHorizontal: space[4],
-      gap: space[3],
-    },
+    container: { paddingHorizontal: space[1], paddingBottom: space[3], gap: space[2] },
     navHeader: {
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'space-between',
-      paddingVertical: space[1],
-    },
-    navArrow: {
-      padding: space[2],
-    },
-    navArrowDisabled: {
-      opacity: 0.3,
+      gap: space[1],
     },
     weekdayRow: {
       flexDirection: 'row',
-      justifyContent: 'space-around',
-      borderBottomWidth: 1,
-      borderBottomColor: dark.hairline,
-      paddingBottom: space[2],
+      borderBottomWidth: StyleSheet.hairlineWidth,
+      borderBottomColor: colors.hairline,
     },
-    grid: {
-      flexDirection: 'row',
-      flexWrap: 'wrap',
-    },
+    grid: { flexDirection: 'row', flexWrap: 'wrap' },
     dayCell: {
-      width: '14.28%',
-      height: 40,
+      width: '14.285%',
+      minHeight: controls.touch,
       alignItems: 'center',
       justifyContent: 'center',
+      borderRadius: radius.control,
     },
-    dayButton: {
-      borderRadius: radius.full,
-    },
-    dayButtonSelected: {
-      backgroundColor: dark.apricot,
-    },
-    dayButtonToday: {
-      borderWidth: 1.5,
-      borderColor: dark.apricot,
-    },
-    dayButtonFuture: {
-      opacity: 0.3,
-    },
-    footer: {
-      paddingTop: space[2],
-    },
+    selected: { backgroundColor: colors.apricot },
+    today: { borderWidth: StyleSheet.hairlineWidth, borderColor: colors.apricot },
+    pressed: { backgroundColor: colors.s3 },
+    footer: { paddingHorizontal: space[3], gap: space[2] },
   });

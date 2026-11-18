@@ -17,6 +17,7 @@ import type { Recipe } from '@calipartner/core';
 import { useAuth } from '@/contexts/AuthContext';
 import { getDb } from '@/db';
 import { t } from '@/i18n';
+import { useBrowserModalBack } from '@/hooks/useBrowserModalBack';
 import { reportRecipe } from '@/services/recipeService';
 import { fontSize, radius, spacing } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
@@ -51,6 +52,7 @@ export function RecipeReportModal({
   const [submitted, setSubmitted] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
+  useBrowserModalBack(visible && Boolean(recipe), onClose);
   if (!recipe) return null;
 
   const handleSubmit = async () => {

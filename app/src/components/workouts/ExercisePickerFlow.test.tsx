@@ -76,6 +76,12 @@ it('shows five relevant suggestions, searches the selected category and asks for
   await act(async () => list().props.renderItem({ item: list().props.data[0] }).props.onPress());
   expect(select).not.toHaveBeenCalled();
   expect(close).not.toHaveBeenCalled();
+  await act(async () =>
+    tree.root.findByProps({ testID: 'exercise-picker-modal' }).props.onRequestClose(),
+  );
+  expect(list().props.data.map((item: { id: string }) => item.id)).toEqual(['12']);
+  expect(close).not.toHaveBeenCalled();
+  await act(async () => list().props.renderItem({ item: list().props.data[0] }).props.onPress());
   const sets = [
     { reps: 10, weightKg: 0 },
     { reps: 8, weightKg: 0 },

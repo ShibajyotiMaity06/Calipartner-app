@@ -9,7 +9,6 @@ import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { Button, Text, homeLayout, radius, space } from '@calipartner/ui';
 import {
-  addDaysToDateString,
   FREE_WORKOUT_SAMPLES,
   weeklyPlanDayIndex,
   type Exercise,
@@ -23,6 +22,7 @@ import { useWorkoutPlan } from '@/hooks/useWorkoutPlan';
 import { useWorkouts } from '@/hooks/useWorkouts';
 import { useBrowserModalBack } from '@/hooks/useBrowserModalBack';
 import { newWorkoutSessionRequest, saveNewWorkoutSession } from '@/services/workoutSessionService';
+import { DatePickerSheet } from '@/components/diary/DatePickerSheet';
 import { WeeklyPlanForm } from '@/components/onboarding/WeeklyPlanForm';
 import { WeeklyPlanPreparing } from '@/components/onboarding/WeeklyPlanPreparing';
 import { ExercisePickerModal } from './ExercisePickerModal';
@@ -44,9 +44,7 @@ export function WorkoutDayModal({
     { localDate: today } = useCurrentLocalDate(),
     router = useRouter();
   const [date, setDate] = useState(defaultDate && defaultDate <= today ? defaultDate : today);
-  const [windowEnd, setWindowEnd] = useState(today);
-  const strip = useRef<ScrollView>(null);
-  const dates = Array.from({ length: 7 }, (_, index) => addDaysToDateString(windowEnd, index - 6));
+  const [calendarOpen, setCalendarOpen] = useState(false);
   const present = date === today;
   const routine = useWorkoutPlan(visible && present),
     history = useWorkouts(date);
@@ -70,7 +68,8 @@ export function WorkoutDayModal({
   owner.current = user?.id;
   const close = () => {
     if (busy || building) return;
-    if (editing) setEditing(null);
+    if (calendarOpen) setCalendarOpen(false);
+    else if (editing) setEditing(null);
     else if (logging) setLogging(null);
     else if (form) setForm(false);
     else onClose();
@@ -80,7 +79,7 @@ export function WorkoutDayModal({
     if (visible) {
       const initial = defaultDate && defaultDate <= today ? defaultDate : today;
       setDate(initial);
-      setWindowEnd(initial < addDaysToDateString(today, -6) ? initial : today);
+      setCalendarOpen(false);
       setError(null);
       setNotice(null);
       setAllLogged(false);
@@ -185,6 +184,8 @@ export function WorkoutDayModal({
     }
   };
   const targetForm = editing ?? logging;
+  useBrowserModalBack(visible && Boolean(targetForm), close);
+  useBrowserModalBack(visible && form, close);
   const renderLogs = () => (
     <View style={styles.stack} testID="workout-day-history">
       {history.loading ? (
@@ -235,82 +236,22 @@ export function WorkoutDayModal({
           />
         </View>
         <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
-          <View style={styles.stack} testID="workout-day-date">
-            <ScrollView
-              ref={strip}
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              contentContainerStyle={styles.dateStrip}
-              onContentSizeChange={() => strip.current?.scrollToEnd({ animated: false })}
-            >
-              {dates.map((day, index) => {
-                const calendarDay = new Date(day + 'T12:00:00Z');
-                const selected = date === day;
-                return (
-                  <Pressable
-                    key={day}
-                    testID={`workout-date-${day}`}
-                    accessibilityRole="button"
-                    accessibilityLabel={
-                      index === 0
-                        ? dateLabel(day) + '. ' + t('ownerPolish.olderDates')
-                        : dateLabel(day)
-                    }
-                    accessibilityState={{ selected }}
-                    disabled={busy || building}
-                    onPress={() => {
-                      if (index === 0) {
-                        const older = addDaysToDateString(day, -1);
-                        setWindowEnd(older);
-                        setDate(older);
-                      } else {
-                        setDate(day);
-                      }
-                      setNotice(null);
-                      setError(null);
-                    }}
-                    style={({ pressed }) => [
-                      styles.dateBox,
-                      selected && styles.dateSelected,
-                      pressed && { opacity: homeLayout.disabledOpacity },
-                    ]}
-                  >
-                    <Text variant="micro" color={selected ? dark.onBrand : dark.textMid}>
-                      {calendarDay.toLocaleDateString(getLocale(), {
-                        weekday: 'short',
-                        timeZone: 'UTC',
-                      })}
-                    </Text>
-                    <Text variant="label" tabular color={selected ? dark.onBrand : dark.textHi}>
-                      {calendarDay.toLocaleDateString(getLocale(), {
-                        day: 'numeric',
-                        timeZone: 'UTC',
-                      })}
-                    </Text>
-                  </Pressable>
-                );
-              })}
-            </ScrollView>
-            <Text variant="bodyS" tabular>
+          <View style={styles.date} testID="workout-day-date">
+            <Text variant="bodyS" style={styles.flex} tabular>
               {dateLabel(date)}
             </Text>
-            {windowEnd !== today && (
-              <Button
-                variant="tertiary"
-                fullWidth={false}
-                label={t('ownerPolish.newerDates')}
-                disabled={busy || building}
-                onPress={() => {
-                  const next = addDaysToDateString(windowEnd, 7);
-                  const end = next < today ? next : today;
-                  setWindowEnd(end);
-                  setDate(end);
-                  setError(null);
-                  setNotice(null);
-                }}
-                testID="workout-day-next"
-              />
-            )}
+            <Button
+              variant="tertiary"
+              fullWidth={false}
+              label={t('workoutFlow.chooseDate')}
+              iconOnly
+              icon={
+                <Ionicons name="calendar-outline" size={homeLayout.iconSize} color={dark.textHi} />
+              }
+              disabled={busy || building}
+              onPress={() => setCalendarOpen(true)}
+              testID="workout-day-calendar"
+            />
           </View>
           {error && (
             <View style={styles.stack}>
@@ -538,6 +479,19 @@ export function WorkoutDayModal({
             </>
           )}
         </ScrollView>
+        {calendarOpen && (
+          <DatePickerSheet
+            visible={visible}
+            confirmSelection
+            selectedDate={date}
+            onSelectDate={(selected) => {
+              setDate(selected);
+              setError(null);
+              setNotice(null);
+            }}
+            onClose={() => setCalendarOpen(false)}
+          />
+        )}
         {editLog &&
           (editLog.type === 'strength' ? (
             <LoggedWorkoutEditModal
@@ -681,19 +635,6 @@ const createStyles = (dark: ReturnType<typeof useAppearance>['colors']) =>
       borderRadius: radius.card,
     },
     date: { flexDirection: 'row', alignItems: 'center', gap: space[2] },
-    dateStrip: { flexGrow: 1, gap: space[1] },
-    dateBox: {
-      flexGrow: 1,
-      minWidth: homeLayout.compactTouchSize,
-      minHeight: homeLayout.compactTouchSize,
-      justifyContent: 'center',
-      alignItems: 'center',
-      borderRadius: radius.control,
-      borderWidth: StyleSheet.hairlineWidth,
-      borderColor: dark.hairlineLit,
-      backgroundColor: dark.s1,
-    },
-    dateSelected: { backgroundColor: dark.apricot, borderColor: dark.apricot },
     actionCard: {
       flexDirection: 'row',
       alignItems: 'center',

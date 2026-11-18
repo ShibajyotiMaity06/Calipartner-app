@@ -7,6 +7,7 @@ const state = vi.hoisted(() => ({ log: vi.fn() }));
 vi.mock('react-native', () => ({
   ActivityIndicator: 'Loading',
   Modal: 'Modal',
+  Platform: { OS: 'android' },
   Pressable: 'Pressable',
   ScrollView: 'ScrollView',
   Text: 'Text',

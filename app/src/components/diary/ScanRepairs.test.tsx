@@ -82,6 +82,9 @@ vi.mock('expo-router', async () => ({
   },
 }));
 vi.mock('./FoodLogModal', () => ({ FoodLogModal: 'FoodLog' }));
+vi.mock('@/components/trackers/WeightHistoryModal', () => ({
+  WeightHistoryModal: 'WeightHistory',
+}));
 vi.mock('@/components/workouts/WorkoutHubModal', () => ({ WorkoutHubModal: 'Workout' }));
 vi.mock('@/components/cardio/CardioTrackerModal', () => ({ CardioTrackerModal: 'CardioTracker' }));
 vi.mock('@/components/food_photo/ScanSweep', () => ({ ScanSweep: 'ScanSweep' }));
@@ -96,7 +99,7 @@ vi.mock('@/components/fasting', () => ({ FastingTimerModal: 'Fasting' }));
 vi.mock('@/hooks/useFoodEntries', () => ({ useAddEntry: () => ({ addEntry: vi.fn() }) }));
 vi.mock('@/hooks/useWater', () => ({ useWater: () => ({ addWater: vi.fn() }) }));
 vi.mock('@/hooks/useWeight', () => ({
-  useWeight: () => ({ logWeight: vi.fn(), latestLog: null }),
+  useWeight: () => ({ logWeight: vi.fn(), latestLog: null, logs: [] }),
 }));
 vi.mock('@/theme/useTheme', () => ({ useTheme: () => ({ colors: {} }) }));
 vi.mock('@/hooks/useCurrentLocalDate', () => ({
@@ -292,6 +295,58 @@ it.each([
   expect(state.setParams).toHaveBeenCalledWith({ flow: undefined });
   expect(state.back).toHaveBeenCalledOnce();
   expect(state.replace).not.toHaveBeenCalled();
+});
+it('returns from a child route to the same workout and backs out one level', async () => {
+  await act(async () => {
+    renderer = create(<LogScreen />);
+  });
+  await act(async () =>
+    renderer.root.findByType('LogHub' as React.ElementType).props.onFlow('workout'),
+  );
+  state.focused = false;
+  await act(async () => renderer.update(<LogScreen />));
+  expect(renderer.root.findByType('Workout' as React.ElementType).props.visible).toBe(false);
+  state.focused = true;
+  await act(async () => renderer.update(<LogScreen />));
+  const workout = renderer.root.findByType('Workout' as React.ElementType);
+  expect(workout.props.visible).toBe(true);
+  await act(async () => workout.props.onClose());
+  expect(renderer.root.findByType('LogHub' as React.ElementType)).toBeDefined();
+  expect(state.back).not.toHaveBeenCalled();
+});
+
+it('returns from weight editing to history, then to weight entry and the Log picker', async () => {
+  await act(async () => {
+    renderer = create(<LogScreen />);
+  });
+  await act(async () =>
+    renderer.root.findByType('LogHub' as React.ElementType).props.onFlow('weight'),
+  );
+  const weight = () => renderer.root.findByType('Weight' as React.ElementType);
+  await act(async () => weight().props.onOpenHistory());
+  const history = () => renderer.root.findByType('WeightHistory' as React.ElementType);
+  await act(async () => history().props.onEditEntry({ id: 'weight', local_date: '2026-10-26' }));
+  expect(weight().props.initialEntry.id).toBe('weight');
+  await act(async () => weight().props.onClose());
+  expect(history().props.visible).toBe(true);
+  await act(async () => history().props.onClose());
+  expect(weight().props.visible).toBe(true);
+  await act(async () => weight().props.onClose());
+  expect(renderer.root.findByType('LogHub' as React.ElementType)).toBeDefined();
+  expect(state.back).not.toHaveBeenCalled();
+});
+
+it('navigates away once when save and modal close are acknowledged together', async () => {
+  state.flow = 'food';
+  await act(async () => {
+    renderer = create(<LogScreen />);
+  });
+  const { onLogged, onClose } = renderer.root.findByType('FoodLog' as React.ElementType).props;
+  await act(async () => {
+    onLogged();
+    onClose();
+  });
+  expect(state.back).toHaveBeenCalledOnce();
 });
 it('shows separate meal metrics and preserves add, edit and delete actions for logged food', async () => {
   const add = vi.fn(),

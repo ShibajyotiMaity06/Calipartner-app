@@ -2,10 +2,15 @@ import React from 'react';
 import { act, create, type ReactTestRenderer } from 'react-test-renderer';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 vi.mock('react-native', () => ({ Platform: { OS: 'web' } }));
-import { closeBrowserModalsThen, useBrowserModalBack } from './useBrowserModalBack';
+import {
+  closeBrowserModalsThen,
+  prepareBrowserModalBack,
+  useBrowserModalBack,
+} from './useBrowserModalBack';
 let tree: ReactTestRenderer;
 let entries: Record<string, unknown>[];
 let listeners: Set<() => void>;
+let capturingListeners: Set<(event: { stopImmediatePropagation: () => void }) => void>;
 let position: number;
 const history = {
   get state() {
@@ -18,7 +23,16 @@ const history = {
   },
   go(delta: number) {
     position = Math.max(0, position + delta);
-    for (const listener of listeners) listener();
+    let stopped = false;
+    for (const listener of capturingListeners) {
+      if (stopped) break;
+      listener({
+        stopImmediatePropagation: () => {
+          stopped = true;
+        },
+      });
+    }
+    if (!stopped) for (const listener of listeners) listener();
   },
 };
 beforeEach(() => {
@@ -26,9 +40,14 @@ beforeEach(() => {
   entries = [{ router: 'room' }];
   position = 0;
   listeners = new Set();
+  capturingListeners = new Set();
   vi.stubGlobal('window', {
     history,
-    addEventListener: (_type: string, callback: () => void) => listeners.add(callback),
+    addEventListener: (
+      _type: string,
+      callback: (() => void) & ((event: { stopImmediatePropagation: () => void }) => void),
+      capture?: boolean,
+    ) => (capture ? capturingListeners.add(callback) : listeners.add(callback)),
     removeEventListener: (_type: string, callback: () => void) => listeners.delete(callback),
   });
 });
@@ -84,6 +103,38 @@ describe('installed web Back navigation', () => {
     expect(child).toHaveBeenCalledOnce();
     expect(parent).not.toHaveBeenCalled();
     expect(history.state.router).toBe('room');
+  });
+  it('keeps same-route modal history from resetting Expo Router while real route changes still reach it', async () => {
+    entries = [{ id: 'log-route', router: 'log' }];
+    const browser = (globalThis as unknown as { window: { location: { pathname: string } } })
+      .window;
+    browser.location = { pathname: '/log' };
+    prepareBrowserModalBack();
+    const routerPop = vi.fn(() => {
+      entries[position] = { id: 'remaining-route' };
+    });
+    listeners.add(routerPop);
+    const parent = vi.fn(),
+      child = vi.fn(),
+      step = vi.fn();
+    await act(async () => {
+      tree = create(<Probe child depth={1} onParent={parent} onChild={child} onDepth={step} />);
+    });
+    await act(async () => history.go(-1));
+    expect(step).toHaveBeenCalledWith(0);
+    expect(routerPop).not.toHaveBeenCalled();
+    expect(child).not.toHaveBeenCalled();
+    expect(parent).not.toHaveBeenCalled();
+    await act(async () => history.go(-1));
+    expect(child).toHaveBeenCalledOnce();
+    expect(parent).not.toHaveBeenCalled();
+    expect(routerPop).not.toHaveBeenCalled();
+
+    history.pushState({ id: 'another-route' });
+    browser.location.pathname = '/today';
+    await act(async () => history.go(-1));
+    expect(routerPop).toHaveBeenCalledOnce();
+    expect(parent).not.toHaveBeenCalled();
   });
   it('returns to the previous workout step and removes every step when saving', async () => {
     const parent = vi.fn(),

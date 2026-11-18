@@ -1,5 +1,6 @@
 import { useTheme as useAppearance } from '@calipartner/ui/theme';
 import { type as inputTypography } from '@calipartner/ui';
+import { useBrowserModalBack } from '@/hooks/useBrowserModalBack';
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
   Modal,
@@ -28,6 +29,7 @@ export interface BarcodeScannerModalProps {
   visible: boolean;
   defaultSection?: MealSection;
   onClose: () => void;
+  covered?: boolean;
   onFoodFound: (food: Food) => void;
   onCreateCustomFood: (barcode: string) => void;
 }
@@ -36,6 +38,7 @@ export function BarcodeScannerModal({
   visible,
   defaultSection = 'lunch',
   onClose,
+  covered = false,
   onFoodFound,
   onCreateCustomFood,
 }: BarcodeScannerModalProps) {
@@ -73,6 +76,20 @@ export function BarcodeScannerModal({
     setScanError(null);
     setFoundFood(null);
   };
+  const back = () => {
+    if (covered) return;
+    if (scanned || searching || foundFood || scanError) resetScan();
+    else if (showManualInput || showMore) {
+      setShowManualInput(false);
+      setShowMore(false);
+    } else onClose();
+  };
+  useBrowserModalBack(visible, onClose, {
+    depth:
+      Number(showManualInput || showMore) +
+      Number(Boolean(scanned || searching || foundFood || scanError)),
+    onDepthChange: back,
+  });
   useEffect(() => {
     generation.current++;
     resetScan();
@@ -117,10 +134,7 @@ export function BarcodeScannerModal({
     void handleBarcodeScanned(manualCode.trim());
   };
   const handleConfirmFoundFood = () => {
-    if (foundFood) {
-      onFoodFound(foundFood);
-      onClose();
-    }
+    if (foundFood) onFoodFound(foundFood);
   };
   const handleTriggerBarcodePhoto = async (takePhoto = false) => {
     resetScan();
@@ -182,7 +196,7 @@ export function BarcodeScannerModal({
     }
   };
   useEffect(() => {
-    if (!visible || !webCameraActive || foundFood || Platform.OS !== 'web') return;
+    if (!visible || covered || !webCameraActive || foundFood || Platform.OS !== 'web') return;
     let disposed = false;
     let controls: IScannerControls | undefined;
     void import('@zxing/browser')
@@ -237,14 +251,14 @@ export function BarcodeScannerModal({
       controls?.stop();
       controlsRef.current = null;
     };
-  }, [visible, webCameraActive, handleBarcodeScanned, cameraSession, foundFood]);
+  }, [visible, covered, webCameraActive, handleBarcodeScanned, cameraSession, foundFood]);
 
   const isCameraReady =
-    Platform.OS === 'web' ? webCameraActive : !!permission?.granted && !cameraPaused;
+    !covered && (Platform.OS === 'web' ? webCameraActive : !!permission?.granted && !cameraPaused);
 
   if (!visible) return null;
   return (
-    <Modal visible={visible} animationType="slide" onRequestClose={onClose}>
+    <Modal visible={visible} animationType="slide" onRequestClose={back}>
       <KeyboardAvoidingView
         style={styles.container}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
@@ -384,7 +398,6 @@ export function BarcodeScannerModal({
                 label={t('capture.createFood')}
                 onPress={() => {
                   onCreateCustomFood(manualCode);
-                  onClose();
                 }}
                 testID="barcode-create-food"
               />

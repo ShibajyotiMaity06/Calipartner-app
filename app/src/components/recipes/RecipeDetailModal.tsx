@@ -6,6 +6,7 @@ import { Image, Modal, Pressable, ScrollView, StyleSheet, View } from 'react-nat
 import { Ionicons } from '@expo/vector-icons';
 import { scaleRecipeServings, type MealSection, type Recipe } from '@calipartner/core';
 import { t } from '@/i18n';
+import { useBrowserModalBack } from '@/hooks/useBrowserModalBack';
 import { fontSize, radius, spacing } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
 import { LogRecipeModal } from './LogRecipeModal';
@@ -44,6 +45,7 @@ export function RecipeDetailModal({
     }
   }, [recipe]);
 
+  useBrowserModalBack(visible && Boolean(recipe), onClose);
   if (!recipe) return null;
 
   const totalMinutes = (recipe.prep_minutes || 0) + (recipe.cook_minutes || 0);

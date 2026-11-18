@@ -3,7 +3,7 @@ import { DescribeMealModal } from './DescribeMealModal';
 import type { NutrientCorrection } from '@calipartner/core';
 import { type as inputTypography } from '@calipartner/ui';
 import { PaywallModal } from '@/components/rooms/PaywallModal';
-import React, { useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, Modal, Pressable, ScrollView, TextInput, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import type { Food, FoodCandidateItem, MealSection } from '@calipartner/core';
@@ -11,6 +11,7 @@ import { applyNutrientCorrection, scaleNutrients, sumNutrientSnapshots } from '@
 import { Button, Chip, homeLayout, Text } from '@calipartner/ui';
 import { useAuth } from '@/contexts/AuthContext';
 import { useSubscription } from '@/hooks/useSubscription';
+import { useBrowserModalBack } from '@/hooks/useBrowserModalBack';
 import { getDb } from '@/db';
 import { useFoodSearch } from '@/hooks/useFoodSearch';
 import { useFoodLibrary } from '@/hooks/useFoodLibrary';
@@ -52,7 +53,8 @@ export interface FoodLogModalProps {
   initialTab?: TabType;
 }
 
-type TabType = 'search' | 'scan' | 'photo' | 'recipes' | 'favorites' | 'myMeals';
+type FoodView = 'search' | 'photo' | 'recipes' | 'favorites' | 'myMeals';
+type TabType = FoodView | 'scan';
 
 export function FoodLogModal({
   visible,
@@ -102,12 +104,30 @@ export function FoodLogModal({
       return next;
     });
   };
-  const [activeTab, setActiveTab] = useState<TabType>(
-    initialTab === 'scan' ? 'search' : initialTab,
-  );
+  const [views, setViews] = useState<FoodView[]>([initialTab === 'scan' ? 'search' : initialTab]);
+  const activeTab = views.at(-1)!;
+  const backLabel = t(views.length > 1 ? 'common.back' : 'homeRefresh.close');
+  const setActiveTab = (tab: FoodView) => {
+    setViews((current) => (current.at(-1) === tab ? current : [...current, tab]));
+  };
+  const back = () => {
+    if (batchInFlight.current) return;
+    if (views.length > 1)
+      setViews((current) =>
+        current.length > 1 && current.at(-1) === activeTab ? current.slice(0, -1) : current,
+      );
+    else onClose();
+  };
+  useBrowserModalBack(visible, onClose, {
+    depth: views.length - 1,
+    onDepthChange: (depth) => setViews((current) => current.slice(0, depth + 1)),
+  });
   const [portionDefaults, setPortionDefaults] = useState<{ quantity: number; unit: string }>();
   const [selectedFoodForQuantity, setSelectedFoodForQuantity] = useState<Food | null>(null);
-  const [showBarcodeScanner, setShowBarcodeScanner] = useState(initialTab === 'scan');
+  const [showBarcodeScanner, setShowBarcodeScanner] = useState(false);
+  useEffect(() => {
+    if (visible && initialTab === 'scan') setShowBarcodeScanner(true);
+  }, [visible, initialTab]);
   const [showCustomFoodModal, setShowCustomFoodModal] = useState(false);
   const [prefilledBarcode, setPrefilledBarcode] = useState<string | null>(null);
 
@@ -125,6 +145,20 @@ export function FoodLogModal({
   );
   const [consentLoading, setConsentLoading] = useState(false);
   const [photoError, setPhotoError] = useState<string | null>(null);
+  const closePhotoConsent = () => {
+    if (!consentLoading) setShowPhotoConsent(false);
+  };
+  const returnToPhotoCamera = () => {
+    photoRequest.current++;
+    setPhotoAnalyzing(false);
+    setShowResultsEditor(false);
+    setPhotoResults(null);
+    setShowPhotoCamera(true);
+  };
+  const closePhotoLimit = () => setShowDailyLimitModal(false);
+  useBrowserModalBack(visible && showPhotoConsent, closePhotoConsent);
+  useBrowserModalBack(visible && photoAnalyzing, returnToPhotoCamera);
+  useBrowserModalBack(visible && showDailyLimitModal, closePhotoLimit);
   const { addEntry, error: saveError } = useAddEntry();
   const selection = Object.values(selectedFoods);
   const selectionTotals = sumNutrientSnapshots(
@@ -336,7 +370,7 @@ export function FoodLogModal({
   };
 
   return (
-    <Modal visible={visible} animationType="slide" transparent onRequestClose={onClose}>
+    <Modal visible={visible} animationType="slide" transparent onRequestClose={back}>
       <View
         style={{
           flex: 1,
@@ -376,19 +410,25 @@ export function FoodLogModal({
             <Button
               variant="tertiary"
               fullWidth={false}
-              label={t('homeRefresh.close')}
+              label={backLabel}
               iconOnly
-              icon={<Ionicons name="close-circle" size={26} color={colors.textMuted} />}
+              icon={
+                <Ionicons
+                  name={views.length > 1 ? 'chevron-back' : 'close-circle'}
+                  size={26}
+                  color={colors.textMuted}
+                />
+              }
               testID="btn-close-food-log"
               accessibilityRole="button"
-              accessibilityLabel={t('homeRefresh.close')}
+              accessibilityLabel={backLabel}
               style={{
                 minWidth: homeLayout.touchSize,
                 minHeight: homeLayout.touchSize,
                 alignItems: 'center',
                 justifyContent: 'center',
               }}
-              onPress={onClose}
+              onPress={back}
               hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
             />
           </View>
@@ -955,6 +995,32 @@ export function FoodLogModal({
               />
             </View>
           )}
+          {showBarcodeScanner && (
+            <BarcodeScannerModal
+              visible={showBarcodeScanner}
+              defaultSection={defaultSection}
+              covered={Boolean(selectedFoodForQuantity) || showCustomFoodModal}
+              onClose={() => setShowBarcodeScanner(false)}
+              onFoodFound={handleSelectFood}
+              onCreateCustomFood={(code) => {
+                setPrefilledBarcode(code);
+                setShowCustomFoodModal(true);
+              }}
+            />
+          )}
+
+          {showCustomFoodModal && (
+            <CustomFoodModal
+              visible={showCustomFoodModal}
+              initialBarcode={prefilledBarcode}
+              onClose={() => {
+                setShowCustomFoodModal(false);
+                setPrefilledBarcode(null);
+              }}
+              onCreated={handleSelectFood}
+            />
+          )}
+
           {selectedFoodForQuantity && (
             <QuantityModal
               visible={Boolean(selectedFoodForQuantity)}
@@ -971,42 +1037,13 @@ export function FoodLogModal({
             />
           )}
 
-          {showBarcodeScanner && (
-            <BarcodeScannerModal
-              visible={showBarcodeScanner}
-              defaultSection={defaultSection}
-              onClose={() => setShowBarcodeScanner(false)}
-              onFoodFound={(f) => {
-                setSelectedFoodForQuantity(f);
-              }}
-              onCreateCustomFood={(code) => {
-                setPrefilledBarcode(code);
-                setShowCustomFoodModal(true);
-              }}
-            />
-          )}
-
-          {showCustomFoodModal && (
-            <CustomFoodModal
-              visible={showCustomFoodModal}
-              initialBarcode={prefilledBarcode}
-              onClose={() => {
-                setShowCustomFoodModal(false);
-                setPrefilledBarcode(null);
-              }}
-              onCreated={(f) => {
-                setSelectedFoodForQuantity(f);
-              }}
-            />
-          )}
-
           {/* Phase 11 Food Photo Flow Modals */}
           {showPhotoConsent && (
             <AiConsentSheet
               visible={showPhotoConsent}
               loading={consentLoading}
               onAccept={handleAcceptConsent}
-              onDecline={() => setShowPhotoConsent(false)}
+              onDecline={closePhotoConsent}
             />
           )}
 
@@ -1019,13 +1056,7 @@ export function FoodLogModal({
           )}
 
           {photoAnalyzing && (
-            <FoodPhotoAnalyzingOverlay
-              visible={photoAnalyzing}
-              onCancel={() => {
-                photoRequest.current++;
-                setPhotoAnalyzing(false);
-              }}
-            />
+            <FoodPhotoAnalyzingOverlay visible={photoAnalyzing} onCancel={returnToPhotoCamera} />
           )}
 
           {showDailyLimitModal && (
@@ -1034,7 +1065,7 @@ export function FoodLogModal({
               userState={limitState}
               usedToday={limitUsage?.usedToday}
               dailyCap={limitUsage?.dailyCap}
-              onClose={() => setShowDailyLimitModal(false)}
+              onClose={closePhotoLimit}
               onUpgrade={() => {
                 setShowDailyLimitModal(false);
                 setShowPhotoPlans(true);
@@ -1051,7 +1082,10 @@ export function FoodLogModal({
               visible
               preselectedTier="pro"
               context="general"
-              onClose={() => setShowPhotoPlans(false)}
+              onClose={() => {
+                setShowPhotoPlans(false);
+                setShowDailyLimitModal(true);
+              }}
             />
           )}
           {showResultsEditor && photoResults && (
@@ -1060,10 +1094,7 @@ export function FoodLogModal({
               initialCandidates={photoResults}
               defaultSection={defaultSection}
               localDate={localDate}
-              onClose={() => {
-                setShowResultsEditor(false);
-                setPhotoResults(null);
-              }}
+              onClose={returnToPhotoCamera}
               onRetakePhoto={() => {
                 setShowResultsEditor(false);
                 setPhotoResults(null);

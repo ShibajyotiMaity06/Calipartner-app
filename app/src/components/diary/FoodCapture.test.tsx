@@ -18,6 +18,7 @@ vi.mock('@calipartner/ui', async () => ({
 vi.mock('react-native', () => ({
   ActivityIndicator: 'ActivityIndicator',
   Modal: 'Modal',
+  Platform: { OS: 'android' },
   Pressable: 'Pressable',
   ScrollView: 'ScrollView',
   Text: 'Text',
@@ -253,5 +254,37 @@ it('multi-food selection retries only unsaved foods after a partial storage fail
     renderer.root.findByProps({ testID: 'save-food-selection' }).props.onPress(),
   );
   expect(flow.add.mock.calls.map((call) => call[0].food.id)).toEqual(['first', 'second', 'second']);
+  expect(closed).toHaveBeenCalledOnce();
+});
+
+it('walks back from nested Food views and keeps the barcode screen underneath Custom Food', async () => {
+  const closed = vi.fn();
+  await act(async () => {
+    renderer = create(
+      <FoodLogModal visible defaultSection="lunch" localDate="2026-11-01" onClose={closed} />,
+    );
+  });
+  const press = async (id: string) =>
+    act(async () => renderer.root.findByProps({ testID: id }).props.onPress());
+  const back = async () =>
+    act(async () => renderer.root.findByType('Modal' as React.ElementType).props.onRequestClose());
+  await press('tab-log-favorites');
+  await press('tab-log-photo');
+  await press('tab-log-scan');
+  const scanner = () => renderer.root.findByType('BarcodeScanner' as React.ElementType);
+  await act(async () => scanner().props.onCreateCustomFood('1234567'));
+  expect(scanner().props.covered).toBe(true);
+  await act(async () =>
+    renderer.root.findByType('CustomFood' as React.ElementType).props.onClose(),
+  );
+  expect(scanner().props.covered).toBe(false);
+  await act(async () => scanner().props.onClose());
+  expect(renderer.root.findByProps({ testID: 'tab-view-photo-logging' })).toBeDefined();
+  await back();
+  expect(renderer.root.findByType('FoodFavorites' as React.ElementType)).toBeDefined();
+  await back();
+  expect(renderer.root.findAllByType('FoodFavorites' as React.ElementType)).toHaveLength(0);
+  expect(closed).not.toHaveBeenCalled();
+  await back();
   expect(closed).toHaveBeenCalledOnce();
 });

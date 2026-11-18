@@ -1,3 +1,4 @@
+import { prepareBrowserModalBack } from '@/hooks/useBrowserModalBack';
 import { visualPrimitives } from '@calipartner/ui/tokens';
 import { CoinCatalogProvider } from '@/hooks/useCoinCatalog';
 import { HeaderActions } from '@/components/HeaderActions';
@@ -56,6 +57,8 @@ function AppInitializationGate({ children }: { children: React.ReactNode }) {
     </View>
   );
 }
+
+prepareBrowserModalBack();
 
 export default function RootLayout() {
   const { colors: dark } = useAppearance();

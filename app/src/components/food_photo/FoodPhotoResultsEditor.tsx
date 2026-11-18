@@ -23,6 +23,7 @@ import {
 import { useAuth } from '@/contexts/AuthContext';
 import { getDb } from '@/db';
 import { t } from '@/i18n';
+import { useBrowserModalBack } from '@/hooks/useBrowserModalBack';
 import { swapCandidateFood, updateCandidateQuantity } from '@/services/aiFoodPhotoService';
 import { generateClientUuid, searchLocalFoods } from '@/services/foodService';
 import { fontSize, radius, spacing } from '@/theme/tokens';
@@ -70,6 +71,12 @@ export function FoodPhotoResultsEditor({
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<Food[]>([]);
   const [searchLoading, setSearchLoading] = useState(false);
+  const close = () => {
+    if (!savingRef.current) onClose();
+  };
+  const closeSearch = () => setSearchModalVisible(false);
+  useBrowserModalBack(visible, close);
+  useBrowserModalBack(visible && searchModalVisible, closeSearch);
 
   useEffect(() => {
     setCandidates(initialCandidates);
@@ -212,7 +219,7 @@ export function FoodPhotoResultsEditor({
       visible={visible}
       animationType="slide"
       transparent={false}
-      onRequestClose={onClose}
+      onRequestClose={close}
     >
       <View style={[styles.screen, { backgroundColor: colors.background }]}>
         {/* Navigation / Header */}
@@ -707,7 +714,7 @@ export function FoodPhotoResultsEditor({
           visible={searchModalVisible}
           animationType="slide"
           transparent
-          onRequestClose={() => setSearchModalVisible(false)}
+          onRequestClose={closeSearch}
         >
           <View style={styles.subModalBackdrop}>
             <View

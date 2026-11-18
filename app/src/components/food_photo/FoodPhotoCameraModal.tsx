@@ -16,6 +16,7 @@ import * as ImagePicker from 'expo-image-picker';
 import * as ImageManipulator from 'expo-image-manipulator';
 import { Ionicons } from '@expo/vector-icons';
 import { t } from '@/i18n';
+import { useBrowserModalBack } from '@/hooks/useBrowserModalBack';
 import { fontSize, radius, spacing } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
 
@@ -122,6 +123,16 @@ export function FoodPhotoCameraModal({
     setPreviewUri(null);
   };
 
+  const back = () => {
+    if (capturing) return;
+    if (previewBase64) handleRetake();
+    else onClose();
+  };
+  useBrowserModalBack(visible, onClose, {
+    depth: Number(Boolean(previewBase64)),
+    onDepthChange: back,
+  });
+
   const handleTriggerCameraOrUpload = async (mode: 'camera' | 'album' = 'camera') => {
     setCameraError(null);
     if (mode === 'album') {
@@ -152,7 +163,7 @@ export function FoodPhotoCameraModal({
       visible={visible}
       animationType="slide"
       transparent={false}
-      onRequestClose={onClose}
+      onRequestClose={back}
     >
       <View style={styles.blackBackground}>
         {cameraError && (
@@ -232,7 +243,7 @@ export function FoodPhotoCameraModal({
                 testID="btn-close-camera-permission"
                 accessibilityRole="button"
                 accessibilityLabel={t('common.cancel')}
-                onPress={onClose}
+                onPress={back}
                 style={[styles.cancelBtn, { alignSelf: 'center', marginTop: 4 }]}
               />
             </View>
@@ -313,7 +324,7 @@ export function FoodPhotoCameraModal({
                 testID="btn-close-camera"
                 accessibilityRole="button"
                 accessibilityLabel={t('common.cancel')}
-                onPress={onClose}
+                onPress={back}
                 style={styles.iconCircle}
               />
 

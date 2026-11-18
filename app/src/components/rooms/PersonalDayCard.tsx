@@ -97,7 +97,7 @@ export function PersonalDayCard({
               icon={
                 <Ionicons
                   name="pencil"
-                  size={homeLayout.editIconSize}
+                  size={homeLayout.trackingEditIconSize}
                   color={dark.textHi}
                   style={styles.pencil}
                   accessible={false}

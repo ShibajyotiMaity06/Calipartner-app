@@ -10,6 +10,7 @@ import { customFoodNutritionForPortion } from '@calipartner/core';
 import { generateClientUuid } from '@/services/foodService';
 import { useCustomFood } from '@/hooks/useFoodEntries';
 import { t } from '@/i18n';
+import { useBrowserModalBack } from '@/hooks/useBrowserModalBack';
 import { fontSize, radius, spacing } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
 
@@ -42,6 +43,10 @@ export function CustomFoodModal({
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const clientId = useRef(generateClientUuid());
   const savingRef = useRef(false);
+  const cancel = () => {
+    if (!savingRef.current) onClose();
+  };
+  useBrowserModalBack(visible, cancel);
 
   const resetForm = () => {
     setName('');
@@ -110,7 +115,7 @@ export function CustomFoodModal({
   };
 
   return (
-    <Modal visible={visible} animationType="slide" transparent onRequestClose={onClose}>
+    <Modal visible={visible} animationType="slide" transparent onRequestClose={cancel}>
       <View
         style={{
           flex: 1,
@@ -147,7 +152,7 @@ export function CustomFoodModal({
               iconOnly
               icon={<Ionicons name="close" size={20} color={colors.text} />}
               testID="btn-close-custom-food"
-              onPress={onClose}
+              onPress={cancel}
               hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
               style={{
                 width: 36,
@@ -440,21 +445,14 @@ export function CustomFoodModal({
             />
 
             <Button
-              variant="secondary"
+              variant="tertiary"
               fullWidth={false}
-              label="Cancel"
+              label={t('common.cancel')}
+              labelColor={colors.danger}
               testID="btn-cancel-custom-food"
               disabled={loading}
-              onPress={onClose}
-              style={{
-                borderRadius: radius.md,
-                borderWidth: 1,
-                borderColor: colors.border,
-                paddingVertical: 12,
-                alignItems: 'center',
-                minHeight: 44,
-                justifyContent: 'center',
-              }}
+              onPress={cancel}
+              style={{ alignSelf: 'center' }}
             />
           </View>
         </View>

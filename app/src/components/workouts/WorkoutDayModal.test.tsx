@@ -24,6 +24,7 @@ vi.mock('react-native', () => ({
 vi.mock('@calipartner/ui', async () => ({
   ...(await import('../../../../packages/ui/src/tokens')),
   Text: 'Text',
+  Sheet: 'Sheet',
   NavigationIcon: 'NavigationIcon',
   Button: (await import('@/test/ButtonStub')).ButtonStub,
   useTheme: () => ({ colors: {} }),
@@ -124,27 +125,31 @@ it('Free shows the Wednesday sample, opens the paywall, and past days show actua
   expect(JSON.stringify(tree.toJSON())).toContain('Seated dumbbell curls');
   await act(async () => tree.root.findByProps({ testID: 'workout-plan-upgrade' }).props.onPress());
   expect(state.push).toHaveBeenCalledWith('/paywall');
-  const dateBoxes = () =>
-    tree.root.findAll(
-      (node) =>
-        node.type === ('Pressable' as unknown) &&
-        typeof node.props.testID === 'string' &&
-        node.props.testID.startsWith('workout-date-'),
-    );
-  expect(dateBoxes()).toHaveLength(7);
-  expect(dateBoxes().at(-1)?.props.testID).toBe('workout-date-2026-11-11');
+  const openCalendar = () =>
+    tree.root.findByProps({ testID: 'workout-day-calendar' }).props.onPress();
+  const choosePreviousDay = () =>
+    tree.root.findByProps({ testID: 'day-cell-2026-11-10' }).props.onPress();
+  await act(async () => openCalendar());
+  expect(tree.root.findByProps({ testID: 'day-cell-2026-11-12' }).props.disabled).toBe(true);
+  await act(async () => choosePreviousDay());
+  expect(JSON.stringify(tree.toJSON())).not.toContain('Actual previous workout');
+  await act(async () => tree.root.findByProps({ testID: 'sheet-date-picker' }).props.onClose());
+  expect(tree.root.findByProps({ testID: 'workout-free-sample' })).toBeDefined();
+  await act(async () => openCalendar());
+  expect(
+    tree.root.findByProps({ testID: 'day-cell-2026-11-11' }).props.accessibilityState.selected,
+  ).toBe(true);
+  await act(async () => choosePreviousDay());
   await act(async () =>
-    tree.root.findByProps({ testID: 'workout-date-2026-11-10' }).props.onPress(),
+    tree.root.findByProps({ testID: 'workout-calendar-confirm' }).props.onPress(),
   );
+  expect(tree.root.findAllByProps({ testID: 'sheet-date-picker' })).toHaveLength(0);
   expect(JSON.stringify(tree.toJSON())).toContain('Actual previous workout');
   expect(tree.root.findAllByProps({ testID: 'workout-free-sample' })).toHaveLength(0);
   expect(tree.root.findAllByProps({ testID: 'workout-hub-modal-btn-add-exercise' })).toHaveLength(
     0,
   );
   expect(state.save).not.toHaveBeenCalled();
-  await act(async () => dateBoxes()[0]!.props.onPress());
-  expect(dateBoxes()).toHaveLength(7);
-  expect(dateBoxes().at(-1)?.props.testID).toBe('workout-date-2026-11-04');
 });
 it('custom Save waits for acknowledgement, saves all entered sets and only then reports success', async () => {
   let resolve!: (value: unknown) => void;

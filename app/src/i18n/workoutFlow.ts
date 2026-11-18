@@ -1,6 +1,7 @@
 export const workoutFlow = {
   logExercise: 'Log {name}',
   title: 'Log workout',
+  chooseDate: 'Choose workout date',
   previous: 'Previous day',
   next: 'Next day',
   historyEmpty: 'No workouts logged on this day.',

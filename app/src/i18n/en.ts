@@ -741,7 +741,15 @@ export const en = {
     inviteCodePlaceholder: 'e.g. RAHUL8',
     joinRoom: 'View invite',
   },
+  calendar: {
+    title: 'Choose a date',
+    previousMonth: 'Previous month',
+    nextMonth: 'Next month',
+    today: 'Jump to today',
+    ok: 'OK',
+  },
   common: {
+    back: 'Back',
     unavailable: 'Not available',
     targetUnavailable: 'Your saved targets are not available yet. Reconnect and try again.',
     targetsLoading: 'Loading your saved targets',

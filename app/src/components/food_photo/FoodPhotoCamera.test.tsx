@@ -44,9 +44,10 @@ afterEach(async () => {
 describe('camera and gallery permissions', () => {
   it('previews an uploaded photo even if camera permission was denied and sends the actual JPEG', async () => {
     const captured = vi.fn();
+    const close = vi.fn();
     await act(async () => {
       renderer = create(
-        <FoodPhotoCameraModal visible onClose={vi.fn()} onPhotoCaptured={captured} />,
+        <FoodPhotoCameraModal visible onClose={close} onPhotoCaptured={captured} />,
       );
     });
     await act(async () =>
@@ -58,6 +59,14 @@ describe('camera and gallery permissions', () => {
       format: 'jpeg',
       base64: true,
     });
+    await act(async () =>
+      renderer.root.findByProps({ testID: 'modal-food-photo-camera' }).props.onRequestClose(),
+    );
+    expect(close).not.toHaveBeenCalled();
+    expect(renderer.root.findAllByProps({ testID: 'view-photo-preview' })).toHaveLength(0);
+    await act(async () =>
+      renderer.root.findByProps({ testID: 'btn-choose-from-gallery' }).props.onPress(),
+    );
     await act(async () => renderer.root.findByProps({ testID: 'btn-use-photo' }).props.onPress());
     expect(captured).toHaveBeenCalledWith({ base64: 'prepared-jpeg', mimeType: 'image/jpeg' });
     expect(camera.request).not.toHaveBeenCalled();

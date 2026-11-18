@@ -1,7 +1,7 @@
 import { WeightHistoryModal } from '@/components/trackers/WeightHistoryModal';
 import { weightChange, type WeightLog } from '@calipartner/core';
 import { LogSomethingView } from '@/components/diary/LogSomethingView';
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { View, StyleSheet, Modal } from 'react-native';
 import { useFocusEffect, useRouter, useLocalSearchParams } from 'expo-router';
 import { getMealSectionForTime, type MealSection } from '@calipartner/core';
@@ -50,27 +50,45 @@ export default function LogScreen() {
   const { localDate: todayDate } = useCurrentLocalDate();
   const initialSection: MealSection = getMealSectionForTime(new Date(), profile?.timezone);
 
+  const requestedFlow = [
+    'food',
+    'workout',
+    'water',
+    'steps',
+    'weight',
+    'cardio',
+    'cycling',
+    'running',
+  ].includes(params.flow ?? '')
+    ? (params.flow as ActiveFlowState)
+    : 'picker';
   const [currentSection, setCurrentSection] = useState<MealSection>(initialSection);
   const [sheetVisible, setSheetVisible] = useState(true);
   const [weightHistoryOpen, setWeightHistoryOpen] = useState(false);
   const [editingWeight, setEditingWeight] = useState<WeightLog | null>(null);
-  const [activeFlow, setActiveFlow] = useState<ActiveFlowState>('picker');
-  useFocusEffect(
-    useCallback(() => {
-      setCurrentSection(getMealSectionForTime(new Date(), profile?.timezone));
-      setActiveFlow(
-        ['food', 'workout', 'water', 'steps', 'weight', 'cardio', 'cycling', 'running'].includes(
-          params.flow ?? '',
-        )
-          ? (params.flow as ActiveFlowState)
-          : 'picker',
-      );
+  const [flows, setFlows] = useState<ActiveFlowState[]>([requestedFlow]);
+  const activeFlow = flows[flows.length - 1]!;
+  const closing = useRef(false);
+  useEffect(() => {
+    if (!closing.current) {
+      setFlows([requestedFlow]);
       setWeightHistoryOpen(false);
       setEditingWeight(null);
+    }
+  }, [requestedFlow]);
+  useFocusEffect(
+    useCallback(() => {
+      closing.current = false;
       setSheetVisible(true);
       return () => setSheetVisible(false);
-    }, [params.flow, profile?.timezone]),
+    }, []),
   );
+  const openFlow = (flow: ActiveFlowState) => {
+    if (closing.current) return;
+    if (activeFlow === 'picker')
+      setCurrentSection(getMealSectionForTime(new Date(), profile?.timezone));
+    setFlows((current) => (current.at(-1) === flow ? current : [...current, flow]));
+  };
 
   // Tracker hooks for Water and Weight
   const { addWater } = useWater(todayDate);
@@ -91,32 +109,47 @@ export default function LogScreen() {
   const { addEntry } = useAddEntry();
 
   const handleCloseAll = () => {
-    router.setParams({ flow: undefined });
+    if (closing.current) return;
+    closing.current = true;
+    setFlows(['picker']);
+    setWeightHistoryOpen(false);
+    setEditingWeight(null);
+    setCurrentSection(getMealSectionForTime(new Date(), profile?.timezone));
     setSheetVisible(false);
     closeBrowserModalsThen(() => {
+      if (params.flow) router.setParams({ flow: undefined });
       if (router.canGoBack()) router.back();
       else router.replace('/today');
     });
   };
 
   const closeFlow = () => {
+    if (closing.current) return;
+    if (flows.length === 1) {
+      handleCloseAll();
+      return;
+    }
     setWeightHistoryOpen(false);
     setEditingWeight(null);
-    if (params.flow) handleCloseAll();
-    else if (['cycling', 'running', 'steps'].includes(activeFlow)) setActiveFlow('cardio');
-    else setActiveFlow('picker');
+    setFlows((current) =>
+      current.length > 1 && current.at(-1) === activeFlow ? current.slice(0, -1) : current,
+    );
   };
   const isCardioActivity =
     activeFlow === 'running' || activeFlow === 'cycling' || activeFlow === 'steps';
   useBrowserModalBack(
     sheetVisible &&
-      activeFlow !== 'picker' &&
-      !params.flow &&
-      !weightHistoryOpen &&
-      !isCardioActivity,
+      ['cardio', 'water', 'weight', 'fast', 'recipe', 'quick_calories'].includes(activeFlow),
     closeFlow,
   );
-  useBrowserModalBack(sheetVisible && weightHistoryOpen, () => setWeightHistoryOpen(false));
+  const closeWeightHistory = () => {
+    setEditingWeight(null);
+    setWeightHistoryOpen(false);
+  };
+  useBrowserModalBack(sheetVisible && weightHistoryOpen, closeWeightHistory, {
+    depth: Number(Boolean(editingWeight)),
+    onDepthChange: () => setEditingWeight(null),
+  });
 
   return (
     <View style={[styles.rootContainer, { backgroundColor: colors.background }]}>
@@ -130,7 +163,7 @@ export default function LogScreen() {
           isGlass={true}
           accessibilityLabel="Log Hub"
         >
-          <LogSomethingView onFlow={setActiveFlow} onClose={handleCloseAll} />
+          <LogSomethingView onFlow={openFlow} onClose={handleCloseAll} />
         </Sheet>
       )}
 
@@ -142,7 +175,7 @@ export default function LogScreen() {
           snapPoint="tall"
           accessibilityLabel={t('homeRefresh.cardio')}
         >
-          <CardioHub onSelect={setActiveFlow} onBack={closeFlow} />
+          <CardioHub onSelect={openFlow} onBack={closeFlow} />
         </Sheet>
       )}
       {isCardioActivity && sheetVisible && (
@@ -185,7 +218,7 @@ export default function LogScreen() {
       {activeFlow === 'weight' && (
         <>
           <WeightEntryModal
-            visible={sheetVisible && !weightHistoryOpen}
+            visible={sheetVisible && (!weightHistoryOpen || !!editingWeight)}
             initialEntry={editingWeight}
             previousWeight={
               editingWeight
@@ -193,7 +226,7 @@ export default function LogScreen() {
                     ?.weight_kg ?? startingWeightKg)
                 : undefined
             }
-            onOpenHistory={() => setWeightHistoryOpen(true)}
+            onOpenHistory={editingWeight ? undefined : () => setWeightHistoryOpen(true)}
             defaultDate={todayDate}
             startWeight={startingWeightKg}
             currentWeight={latestLog?.weight_kg ?? null}
@@ -205,13 +238,13 @@ export default function LogScreen() {
             weeklyPace={weeklyPaceKg}
             projectedDate={projectedDate}
             hasEnoughTrend={projectionReason !== 'not_enough_trend'}
-            onClose={closeFlow}
+            onClose={editingWeight ? () => setEditingWeight(null) : closeFlow}
             onSave={async (weightKg, notes, date) => {
               if (editingWeight) await editWeight(editingWeight.id, weightKg, notes, date);
               else await logWeight(weightKg, date, notes);
             }}
           />
-          {weightHistoryOpen && (
+          {weightHistoryOpen && !editingWeight && (
             <WeightHistoryModal
               visible={sheetVisible}
               weekly
@@ -219,12 +252,9 @@ export default function LogScreen() {
               loading={weightLoading}
               error={weightError}
               onRetry={() => void refreshWeight()}
-              onClose={() => setWeightHistoryOpen(false)}
+              onClose={closeWeightHistory}
               onDeleteEntry={deleteWeight}
-              onEditEntry={(entry) => {
-                setEditingWeight(entry);
-                setWeightHistoryOpen(false);
-              }}
+              onEditEntry={setEditingWeight}
             />
           )}
         </>

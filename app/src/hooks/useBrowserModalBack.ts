@@ -1,18 +1,72 @@
 import { useEffect, useRef } from 'react';
 import { Platform } from 'react-native';
 
+type BrowserPopEvent = { stopImmediatePropagation: () => void };
+type RouteEntry = { id: string; url: string };
+
 interface BrowserWindow {
-  location?: { pathname: string };
+  location?: { pathname: string; search?: string; hash?: string };
   history: {
     state: Record<string, unknown> | null;
     pushState(state: unknown, title: string): void;
     go(delta: number): void;
   };
-  addEventListener(type: 'popstate', listener: () => void): void;
-  removeEventListener(type: 'popstate', listener: () => void): void;
+  addEventListener(
+    type: 'popstate',
+    listener: (event: BrowserPopEvent) => void,
+    capture?: boolean,
+  ): void;
 }
+
+const subscribers = new WeakMap<BrowserWindow, Map<() => void, RouteEntry | undefined>>();
 const moving = new WeakMap<BrowserWindow, Promise<void>>();
 const closingSyntheticEntry = new WeakSet<BrowserWindow>();
+
+function routeEntry(browser: BrowserWindow): RouteEntry | undefined {
+  const { location } = browser;
+  const id = browser.history.state?.id;
+  if (location && typeof id === 'string')
+    return { id, url: location.pathname + (location.search ?? '') + (location.hash ?? '') };
+}
+
+function backSubscribers(browser: BrowserWindow) {
+  const existing = subscribers.get(browser);
+  if (existing) return existing;
+
+  const callbacks = new Map<() => void, RouteEntry | undefined>();
+  browser.addEventListener(
+    'popstate',
+    (event) => {
+      const destination = routeEntry(browser);
+      // These entries share the router's route ID and URL. Let the modal consume them
+      // before Expo Router resets the route and replaces the modal's history state.
+      if (
+        destination &&
+        [...callbacks.values()].some(
+          (entry) => entry?.id === destination.id && entry.url === destination.url,
+        )
+      )
+        event?.stopImmediatePropagation();
+      for (const callback of [...callbacks.keys()]) callback();
+    },
+    true,
+  );
+  subscribers.set(browser, callbacks);
+  return callbacks;
+}
+
+/** Register ahead of Expo Router's history listener at application startup. */
+export function prepareBrowserModalBack() {
+  const browser = (globalThis as unknown as { window?: BrowserWindow }).window;
+  if (Platform?.OS === 'web' && browser) backSubscribers(browser);
+}
+
+function subscribeToBack(browser: BrowserWindow, listener: () => void) {
+  const callbacks = backSubscribers(browser);
+  callbacks.set(listener, routeEntry(browser));
+  return () => callbacks.delete(listener);
+}
+
 function afterNavigation(browser: BrowserWindow, action: () => void) {
   const pending = moving.get(browser);
   if (pending) void pending.then(action);
@@ -21,13 +75,12 @@ function afterNavigation(browser: BrowserWindow, action: () => void) {
 function go(browser: BrowserWindow, delta: number, syntheticClose = false) {
   if (syntheticClose) closingSyntheticEntry.add(browser);
   const pending = new Promise<void>((resolve) => {
-    const done = () => {
-      browser.removeEventListener('popstate', done);
+    const unsubscribe = subscribeToBack(browser, () => {
+      unsubscribe();
       moving.delete(browser);
       closingSyntheticEntry.delete(browser);
       resolve();
-    };
-    browser.addEventListener('popstate', done);
+    });
   });
   moving.set(browser, pending);
   browser.history.go(delta);
@@ -83,11 +136,16 @@ export function useBrowserModalBack(
     if (!browser) return;
     const routePath = browser.location?.pathname;
     let current = true;
+    let entry: RouteEntry | undefined;
+    let unsubscribe: (() => void) | undefined;
     const key = `modal-${Date.now()}-${Math.random()}`;
     const pop = () => {
       // Closing a child sheet rewinds its synthetic entry. That programmatic pop
       // must not act as Back on a parent's section when Router replaced its state.
-      if (closingSyntheticEntry.has(browser)) return;
+      if (closingSyntheticEntry.has(browser) || browser.location?.pathname !== routePath) return;
+      const destination = routeEntry(browser);
+      if (entry && destination && (entry.id !== destination.id || entry.url !== destination.url))
+        return;
       const active = browser.history.state?.calipartnerModalStack;
       if (!Array.isArray(active) || !active.includes(key)) close.current();
       else if (active.at(-1) === key) {
@@ -99,6 +157,7 @@ export function useBrowserModalBack(
     afterNavigation(browser, () => {
       if (!current) return;
       ownKey.current = key;
+      entry = routeEntry(browser);
       const previous = browser.history.state?.calipartnerModalStack;
       const stack = Array.isArray(previous) ? (previous as string[]) : [];
       browser.history.pushState(
@@ -111,11 +170,11 @@ export function useBrowserModalBack(
       );
       for (let step = 1; step <= (currentOptions.current?.depth ?? 0); step++)
         pushDepth(browser, key, step);
-      browser.addEventListener('popstate', pop);
+      unsubscribe = subscribeToBack(browser, pop);
     });
     return () => {
       current = false;
-      browser.removeEventListener('popstate', pop);
+      unsubscribe?.();
       ownKey.current = undefined;
       afterNavigation(browser, () => {
         const active = browser.history.state?.calipartnerModalStack;

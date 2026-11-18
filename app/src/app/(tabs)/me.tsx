@@ -1,5 +1,4 @@
 import { requestStoreReview } from '@/services/storeReviewService';
-import { HeaderActions } from '@/components/HeaderActions';
 import { useTheme as useAppearance } from '@calipartner/ui/theme';
 import React, { useState } from 'react';
 import { Alert, SafeAreaView, ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
@@ -106,7 +105,6 @@ export default function MeScreen() {
           <Text variant="title2" color={dark.textHi}>
             {t('compactProfile.account')}
           </Text>
-          <HeaderActions />
           <TouchableOpacity
             onPress={() => {
               playClickSound();

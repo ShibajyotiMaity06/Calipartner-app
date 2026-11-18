@@ -3,7 +3,7 @@ import { Animated, Easing, StyleSheet, View } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import { Button, Text, controls, radius, space, useTheme } from '@calipartner/ui';
+import { Button, Text, controls, homeLayout, radius, space, useTheme } from '@calipartner/ui';
 import { useAvatar } from '@/hooks/useAvatar';
 import { useSubscription } from '@/hooks/useSubscription';
 import { useBrowserModalBack } from '@/hooks/useBrowserModalBack';
@@ -66,8 +66,8 @@ export function HomeActionsMenu() {
             }}
           >
             <Svg
-              width={controls.icon}
-              height={controls.icon}
+              width={homeLayout.menuIconSize}
+              height={homeLayout.menuIconSize}
               viewBox="0 0 32 32"
               fill="none"
               stroke={colors.textHi}
