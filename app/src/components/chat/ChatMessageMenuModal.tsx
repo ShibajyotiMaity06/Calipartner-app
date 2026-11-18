@@ -135,24 +135,20 @@ export function ChatMessageMenuModal({
 
               <View style={styles.confirmButtonsRow}>
                 <Button
-                  variant="secondary"
-                  fullWidth={false}
-                  label={t('chat.cancel')}
-                  onPress={() => setShowDeleteConfirm(false)}
-                  style={[styles.confirmBtn, { backgroundColor: colors.surfaceAlt }]}
-                  accessibilityRole="button"
-                  testID="btn-delete-cancel"
-                />
-
-                <Button
                   variant="destructive"
-                  fullWidth={false}
                   label={t('chat.deleteConfirmBtn')}
                   onPress={handleConfirmDelete}
                   disabled={loading}
                   style={[styles.confirmBtn, { backgroundColor: colors.danger }]}
                   accessibilityRole="button"
                   testID="btn-delete-confirm"
+                />
+                <Button
+                  variant="cancel"
+                  label={t('chat.cancel')}
+                  onPress={() => setShowDeleteConfirm(false)}
+                  accessibilityRole="button"
+                  testID="btn-delete-cancel"
                 />
               </View>
             </View>
@@ -166,24 +162,20 @@ export function ChatMessageMenuModal({
 
               <View style={styles.confirmButtonsRow}>
                 <Button
-                  variant="secondary"
-                  fullWidth={false}
-                  label={t('chat.cancel')}
-                  onPress={() => setShowBlockConfirm(false)}
-                  style={[styles.confirmBtn, { backgroundColor: colors.surfaceAlt }]}
-                  accessibilityRole="button"
-                  testID="btn-block-cancel"
-                />
-
-                <Button
                   variant="destructive"
-                  fullWidth={false}
                   label="Block User"
                   onPress={handleConfirmBlock}
                   disabled={loading}
                   style={[styles.confirmBtn, { backgroundColor: colors.danger }]}
                   accessibilityRole="button"
                   testID="btn-block-confirm"
+                />
+                <Button
+                  variant="cancel"
+                  label={t('chat.cancel')}
+                  onPress={() => setShowBlockConfirm(false)}
+                  accessibilityRole="button"
+                  testID="btn-block-cancel"
                 />
               </View>
             </View>
@@ -328,11 +320,9 @@ export function ChatMessageMenuModal({
 
               {/* Cancel Button */}
               <Button
-                variant="secondary"
-                fullWidth={false}
+                variant="cancel"
                 label={t('chat.cancel')}
                 onPress={onClose}
-                style={[styles.cancelBtn, { backgroundColor: colors.surfaceAlt }]}
                 accessibilityRole="button"
                 accessibilityLabel={t('chat.cancel')}
                 testID="btn-menu-cancel"
@@ -383,16 +373,6 @@ const styles = StyleSheet.create({
     fontSize: fontSize.sm,
     fontWeight: '500',
   },
-  cancelBtn: {
-    marginTop: spacing.md,
-    paddingVertical: spacing.md,
-    borderRadius: radius.lg,
-    alignItems: 'center',
-  },
-  cancelBtnText: {
-    fontSize: fontSize.sm,
-    fontWeight: '600',
-  },
   // Delete confirm box
   deleteConfirmBox: {
     paddingVertical: spacing.sm,
@@ -408,11 +388,9 @@ const styles = StyleSheet.create({
     marginBottom: spacing.md,
   },
   confirmButtonsRow: {
-    flexDirection: 'row',
     gap: spacing.sm,
   },
   confirmBtn: {
-    flex: 1,
     paddingVertical: spacing.md,
     borderRadius: radius.lg,
     alignItems: 'center',

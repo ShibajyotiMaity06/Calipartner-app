@@ -1,5 +1,4 @@
 import { useTheme as useAppearance } from '@calipartner/ui/theme';
-import { NavigationIcon } from '@calipartner/ui';
 import { type as inputTypography } from '@calipartner/ui';
 import React, { useState } from 'react';
 import { View, StyleSheet, Modal, SafeAreaView, TextInput } from 'react-native';
@@ -65,14 +64,11 @@ export function DeleteAccountModal({
           <View style={styles.topBar}>
             {!isComplete && (
               <Button
-                variant="secondary"
-                fullWidth={false}
-                label="Cancel"
-                icon={<NavigationIcon action="back" />}
+                variant="cancel"
+                label={t('common.cancel')}
                 onPress={onClose}
                 accessibilityRole="button"
-                accessibilityLabel="Cancel"
-                style={styles.backButton}
+                accessibilityLabel={t('common.cancel')}
                 testID="btn-delete-cancel"
               />
             )}
@@ -194,13 +190,6 @@ const createStyles = (dark: ReturnType<typeof useAppearance>['colors']) =>
       minHeight: 44,
       justifyContent: 'center',
       paddingTop: space[1],
-    },
-    backButton: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      gap: space[1],
-      minWidth: 44,
-      minHeight: 44,
     },
     content: {
       flex: 1,

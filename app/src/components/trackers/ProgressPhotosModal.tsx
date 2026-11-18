@@ -190,7 +190,7 @@ export function PhotoVault({
           <Text variant="title1">{t('trackers.weight.photosTitle')}</Text>
           {!embedded && (
             <Button
-              variant="secondary"
+              variant="cancel"
               label={t('common.cancel')}
               onPress={onClose}
               testID="photos-close"

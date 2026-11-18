@@ -222,18 +222,6 @@ export function RecipeReportModal({
 
               {/* Action Buttons */}
               <View style={styles.actionsRow}>
-                <Button
-                  variant="secondary"
-                  fullWidth={false}
-                  label={t('recipes.report.cancel')}
-                  testID="btn-cancel-recipe-report"
-                  onPress={onClose}
-                  disabled={submitting}
-                  accessibilityRole="button"
-                  accessibilityLabel={t('recipes.report.cancel')}
-                  style={[styles.cancelBtn, { borderColor: colors.border }]}
-                />
-
                 <Pressable
                   testID="btn-submit-recipe-report"
                   onPress={handleSubmit}
@@ -250,6 +238,15 @@ export function RecipeReportModal({
                     </Text>
                   )}
                 </Pressable>
+                <Button
+                  variant="cancel"
+                  label={t('recipes.report.cancel')}
+                  testID="btn-cancel-recipe-report"
+                  onPress={onClose}
+                  disabled={submitting}
+                  accessibilityRole="button"
+                  accessibilityLabel={t('recipes.report.cancel')}
+                />
               </View>
             </ScrollView>
           )}
@@ -328,21 +325,8 @@ const styles = StyleSheet.create({
     minHeight: 70,
   },
   actionsRow: {
-    flexDirection: 'row',
     gap: 10,
     marginTop: spacing.xs,
-  },
-  cancelBtn: {
-    flex: 1,
-    paddingVertical: 12,
-    borderRadius: radius.sm,
-    borderWidth: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  cancelBtnText: {
-    fontSize: fontSize.xs,
-    fontWeight: '600',
   },
   submitBtn: {
     flex: 2,

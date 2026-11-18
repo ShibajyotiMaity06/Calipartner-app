@@ -77,7 +77,7 @@ export function LoggedWorkoutDeleteModal({
             }}
           />
           <Button
-            variant="secondary"
+            variant="cancel"
             label={t('common.cancel')}
             disabled={busy}
             onPress={close}

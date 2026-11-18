@@ -102,7 +102,7 @@ export function FriendActions({
               testID="confirm-friend-action"
             />
             <Button
-              variant="secondary"
+              variant="cancel"
               label={t('common.cancel')}
               disabled={saving}
               onPress={close}

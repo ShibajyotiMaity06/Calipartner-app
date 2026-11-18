@@ -211,7 +211,7 @@ export default function ComponentGalleryScreen(): React.JSX.Element | null {
               Tertiary & Destructive
             </Text>
             <View style={styles.rowWrap}>
-              <Button variant="tertiary" size="md" label="Cancel" onPress={() => {}} />
+              <Button variant="cancel" size="md" label="Cancel" onPress={() => {}} />
               <Button variant="destructive" size="md" label="Delete entry" onPress={() => {}} />
             </View>
 

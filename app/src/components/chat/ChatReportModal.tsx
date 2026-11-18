@@ -163,16 +163,6 @@ export function ChatReportModal({
 
               {/* Buttons Row */}
               <View style={styles.buttonsRow}>
-                <Button
-                  variant="secondary"
-                  fullWidth={false}
-                  label={t('chat.cancel')}
-                  onPress={onClose}
-                  style={[styles.cancelBtn, { backgroundColor: colors.surfaceAlt }]}
-                  accessibilityRole="button"
-                  testID="btn-cancel-report"
-                />
-
                 <Pressable
                   onPress={handleSubmit}
                   disabled={submitting}
@@ -187,6 +177,13 @@ export function ChatReportModal({
                     <Text style={styles.submitBtnText}>{t('rooms.reportModal.submitBtn')}</Text>
                   )}
                 </Pressable>
+                <Button
+                  variant="cancel"
+                  label={t('chat.cancel')}
+                  onPress={onClose}
+                  accessibilityRole="button"
+                  testID="btn-cancel-report"
+                />
               </View>
             </>
           )}
@@ -261,20 +258,7 @@ const styles = StyleSheet.create({
     marginBottom: spacing.md,
   },
   buttonsRow: {
-    flexDirection: 'row',
     gap: spacing.sm,
-  },
-  cancelBtn: {
-    flex: 1,
-    paddingVertical: spacing.md,
-    borderRadius: radius.lg,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  cancelBtnText: {
-    fontFamily: typography.body.fontFamily,
-    fontSize: fontSize.sm,
-    fontWeight: '600',
   },
   submitBtn: {
     flex: 2,

@@ -142,7 +142,7 @@ export function LoggedWorkoutEditModal({
             }}
           />
           <Button
-            variant="secondary"
+            variant="cancel"
             label={t('common.cancel')}
             disabled={saving}
             onPress={close}

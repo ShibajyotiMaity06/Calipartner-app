@@ -282,18 +282,6 @@ export function WaterSettingsSheet({
           <View style={styles.actionsRow}>
             <Button
               variant="secondary"
-              fullWidth={false}
-              label={t('common.cancel')}
-              testID="btn-water-settings-cancel"
-              style={styles.cancelBtn}
-              onPress={onClose}
-              accessibilityRole="button"
-              accessibilityLabel={t('common.cancel')}
-            />
-
-            <Button
-              variant="secondary"
-              fullWidth={false}
               label={saving ? t('common.saving') : t('common.save')}
               testID="btn-water-settings-save"
               style={[styles.saveBtn, saving && styles.btnDisabled]}
@@ -301,6 +289,14 @@ export function WaterSettingsSheet({
               disabled={saving}
               accessibilityRole="button"
               accessibilityLabel={t('common.save')}
+            />
+            <Button
+              variant="cancel"
+              label={t('common.cancel')}
+              testID="btn-water-settings-cancel"
+              onPress={onClose}
+              accessibilityRole="button"
+              accessibilityLabel={t('common.cancel')}
             />
           </View>
         </View>
@@ -485,28 +481,10 @@ const createStyles = (dark: ReturnType<typeof useAppearance>['colors']) =>
       color: dark.danger,
     },
     actionsRow: {
-      flexDirection: 'row',
       gap: space[2],
       marginTop: space[2],
     },
-    cancelBtn: {
-      flex: 1,
-      minHeight: 48,
-      borderRadius: radius.button,
-      backgroundColor: dark.s2,
-      borderWidth: 1,
-      borderColor: dark.hairline,
-      alignItems: 'center',
-      justifyContent: 'center',
-    },
-    cancelBtnText: {
-      fontSize: typeTokens.body.fontSize,
-      fontFamily: typeTokens.body.fontFamily,
-      color: dark.textMid,
-      fontWeight: '600',
-    },
     saveBtn: {
-      flex: 1,
       minHeight: 48,
       borderRadius: radius.button,
       backgroundColor: dark.water,

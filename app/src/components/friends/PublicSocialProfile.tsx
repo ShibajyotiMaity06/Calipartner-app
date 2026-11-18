@@ -93,7 +93,7 @@ export function PublicSocialProfile({
             <>
               <Text>{t('friends.pending')}</Text>
               <Button
-                variant="secondary"
+                variant="cancel"
                 label={t('friends.cancel')}
                 disabled={busy}
                 onPress={() => onRespond('cancel')}

@@ -117,7 +117,7 @@ export function WeeklyRoutineEditor({
           testID="save-weekly-routine"
         />
         <Button
-          variant="tertiary"
+          variant="cancel"
           label={t('common.cancel')}
           onPress={close}
           disabled={busy}

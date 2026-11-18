@@ -43,7 +43,7 @@ it('shows an item-specific shortfall without a negative projected balance or pur
   expect(content).not.toContain('-100');
   expect(renderer.root.findAllByProps({ testID: 'avatar-confirm-purchase' })).toHaveLength(0);
   expect(renderer.root.findByProps({ testID: 'avatar-cancel-purchase' }).props.variant).toBe(
-    'destructive',
+    'cancel',
   );
   await act(async () => renderer.root.findByProps({ testID: 'purchase-buy-cc' }).props.onPress());
   expect(state.buy).not.toHaveBeenCalled();

@@ -276,7 +276,13 @@ export function CommunityPanel({
               </View>
               <Ionicons name="chevron-forward" size={layout.icon} color={colors.textLo} />
             </Pressable>
-            <View style={[styles.actions, tab === 'friends' && { width: '100%' }]}>
+            <View
+              style={[
+                styles.actions,
+                tab === 'friends' && { width: '100%' },
+                tab === 'requests' && requestTab === 'outgoing' && styles.outgoingActions,
+              ]}
+            >
               {tab === 'friends' ? (
                 <FriendActions
                   person={person}
@@ -301,7 +307,7 @@ export function CommunityPanel({
               ) : tab === 'requests' ? (
                 <>
                   <Button
-                    variant="secondary"
+                    variant={requestTab === 'incoming' ? 'secondary' : 'cancel'}
                     label={t(requestTab === 'incoming' ? 'community.accept' : 'community.cancel')}
                     disabled={friends.busy}
                     onPress={() => request(requestTab === 'incoming' ? 'accept' : 'cancel')}
@@ -468,4 +474,5 @@ const styles = StyleSheet.create({
   },
   identity: { flex: 1, minWidth: 0, gap: space[1] },
   actions: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: space[2] },
+  outgoingActions: { width: '100%', flexDirection: 'column' },
 });

@@ -169,11 +169,9 @@ export function CoachReportModal({ visible, messageId, onClose, onSubmit }: Coac
             />
 
             <Button
-              variant="secondary"
-              fullWidth={false}
+              variant="cancel"
               label={t('coach.reportModal.cancel')}
               onPress={onClose}
-              style={[styles.cancelBtn, { borderColor: colors.border }]}
               accessibilityRole="button"
               accessibilityLabel={t('coach.reportModal.cancel')}
               testID="btn-cancel-coach-report"
@@ -265,14 +263,5 @@ const styles = StyleSheet.create({
     color: visualPrimitives.colors.white,
     fontSize: fontSize.sm + 1,
     fontWeight: '600',
-  },
-  cancelBtn: {
-    height: 40,
-    borderRadius: radius.md,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  cancelBtnText: {
-    fontSize: fontSize.sm,
   },
 });

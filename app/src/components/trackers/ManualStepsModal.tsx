@@ -163,19 +163,6 @@ export function ManualStepsModal({ visible, onClose, onSave }: ManualStepsModalP
           <View style={styles.actionsRow}>
             <Button
               variant="secondary"
-              fullWidth={false}
-              label={t('common.cancel')}
-              testID="btn-cancel-steps"
-              onPress={onClose}
-              disabled={saving}
-              style={[styles.btn, styles.cancelBtn, { borderColor: colors.border }]}
-              accessibilityRole="button"
-              accessibilityLabel={t('common.cancel')}
-            />
-
-            <Button
-              variant="secondary"
-              fullWidth={false}
               label={saving ? t('common.saving') : t('common.save')}
               testID="btn-save-steps"
               onPress={handleSubmit}
@@ -183,6 +170,15 @@ export function ManualStepsModal({ visible, onClose, onSave }: ManualStepsModalP
               style={[styles.btn, styles.submitBtn, { backgroundColor: colors.accent }]}
               accessibilityRole="button"
               accessibilityLabel={t('common.save')}
+            />
+            <Button
+              variant="cancel"
+              label={t('common.cancel')}
+              testID="btn-cancel-steps"
+              onPress={onClose}
+              disabled={saving}
+              accessibilityRole="button"
+              accessibilityLabel={t('common.cancel')}
             />
           </View>
         </View>
@@ -250,19 +246,14 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
   actionsRow: {
-    flexDirection: 'row',
     gap: spacing.sm,
     marginTop: spacing.xs,
   },
   btn: {
-    flex: 1,
     height: 48,
     borderRadius: radius.sm,
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  cancelBtn: {
-    borderWidth: 1,
   },
   submitBtn: {},
   btnText: {

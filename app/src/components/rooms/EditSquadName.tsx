@@ -111,7 +111,7 @@ function SquadNameEditor({ room, location }: { room: RoomSummary; location: stri
                 testID="save-squad-name"
               />
               <Button
-                variant="secondary"
+                variant="cancel"
                 label={t('common.cancel')}
                 disabled={saving}
                 onPress={close}

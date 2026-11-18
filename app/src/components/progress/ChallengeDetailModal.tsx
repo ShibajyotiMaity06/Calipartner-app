@@ -1,4 +1,4 @@
-import { Text } from '@calipartner/ui';
+import { Button, Text } from '@calipartner/ui';
 import React, { useEffect, useState } from 'react';
 import { View } from 'react-native';
 import { useRouter } from 'expo-router';
@@ -531,7 +531,8 @@ export function ChallengeDetailModal({
                     onPress={() => social('leave')}
                     testID="challenge-leave-confirm"
                   />
-                  <CButton
+                  <Button
+                    variant="cancel"
                     label={ct('cancel')}
                     onPress={() => setConfirm(false)}
                     testID="challenge-leave-cancel"

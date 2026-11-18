@@ -112,7 +112,7 @@ export function PersonalSquads() {
             onPress={() => void confirmLeave()}
             testID="personal-confirm-leave"
           />
-          <Button variant="secondary" disabled={busy} label={t('common.cancel')} onPress={close} />
+          <Button variant="cancel" disabled={busy} label={t('common.cancel')} onPress={close} />
         </View>
       </Sheet>
     </View>

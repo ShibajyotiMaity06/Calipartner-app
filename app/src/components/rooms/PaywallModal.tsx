@@ -1131,15 +1131,14 @@ export function PaywallModal({
                   style={styles.applyBtn}
                 />
                 <Button
-                  variant="secondary"
-                  label="Cancel"
+                  variant="cancel"
+                  label={t('common.cancel')}
                   onPress={() => {
                     setShowPromoModal(false);
                     setPromoCode('');
                     setPromoMessage(null);
                   }}
                   testID="btn-cancel-promo"
-                  style={styles.cancelPromoBtn}
                 />
               </Card>
             </View>
@@ -1493,8 +1492,5 @@ const createStyles = (dark: ReturnType<typeof useAppearance>['colors']) =>
     applyBtn: {
       width: '100%',
       marginBottom: space[2],
-    },
-    cancelPromoBtn: {
-      width: '100%',
     },
   });

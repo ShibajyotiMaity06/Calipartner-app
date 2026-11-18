@@ -255,14 +255,9 @@ export function WaterHistoryModal({
 
           {/* Close button */}
           <Button
-            variant="secondary"
-            fullWidth={false}
+            variant="cancel"
             label={t('common.cancel')}
             onPress={onClose}
-            style={[
-              styles.closeBtn,
-              { backgroundColor: colors.surfaceAlt, borderColor: colors.border },
-            ]}
             accessibilityRole="button"
             accessibilityLabel={t('common.cancel')}
           />
@@ -370,14 +365,6 @@ const styles = StyleSheet.create({
     borderRadius: radius.sm,
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  closeBtn: {
-    height: 46,
-    borderRadius: radius.sm,
-    borderWidth: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginTop: spacing.xs,
   },
   closeBtnText: {
     fontSize: fontSize.sm,

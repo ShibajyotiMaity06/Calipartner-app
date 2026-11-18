@@ -129,7 +129,7 @@ export function SquadFoodItem({
               testID="confirm-peer-food-log"
             />
             <Button
-              variant="tertiary"
+              variant="cancel"
               label={t('common.cancel')}
               disabled={busy}
               onPress={close}

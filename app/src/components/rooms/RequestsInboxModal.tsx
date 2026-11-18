@@ -346,22 +346,14 @@ export function RequestsInboxModal({
                       </View>
 
                       {item.status === 'pending' && (
-                        <Pressable
+                        <Button
+                          variant="cancel"
+                          label={t('rooms.inboxModal.cancelBtn')}
                           onPress={() => handleCancel(item.id)}
                           disabled={actingId !== null}
-                          style={[styles.cancelBtn, { borderColor: colors.border }]}
-                          accessibilityRole="button"
-                          accessibilityLabel={t('rooms.inboxModal.cancelBtn')}
+                          loading={isActing}
                           testID={`btn-cancel-req-${item.id}`}
-                        >
-                          {isActing ? (
-                            <ActivityIndicator size="small" color={colors.textMuted} />
-                          ) : (
-                            <Text style={[styles.cancelBtnText, { color: colors.danger }]}>
-                              {t('rooms.inboxModal.cancelBtn')}
-                            </Text>
-                          )}
-                        </Pressable>
+                        />
                       )}
                       {errorState?.requestId === item.id && (
                         <Text accessibilityRole="alert" color={colors.danger}>
@@ -500,17 +492,6 @@ const styles = StyleSheet.create({
   actionBtnText: {
     fontSize: fontSize.xs,
     fontWeight: '700',
-  },
-  cancelBtn: {
-    paddingVertical: 6,
-    borderRadius: radius.pill,
-    borderWidth: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  cancelBtnText: {
-    fontSize: fontSize.xs,
-    fontWeight: '600',
   },
   errorBox: {
     marginTop: spacing.xs + 2,

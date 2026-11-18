@@ -201,14 +201,9 @@ export function WeightHistoryModal({
 
           {/* Close button */}
           <Button
-            variant="secondary"
-            fullWidth={false}
+            variant="cancel"
             label={t('common.cancel')}
             onPress={onClose}
-            style={[
-              styles.closeBtn,
-              { backgroundColor: colors.surfaceAlt, borderColor: colors.border },
-            ]}
             accessibilityRole="button"
             accessibilityLabel={t('common.cancel')}
           />
@@ -306,14 +301,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     padding: 4,
-  },
-  closeBtn: {
-    height: 46,
-    borderRadius: radius.sm,
-    borderWidth: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginTop: spacing.xs,
   },
   closeBtnText: {
     fontSize: fontSize.sm,

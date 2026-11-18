@@ -132,7 +132,7 @@ export function ExerciseSetsForm({
         }}
       />
       <Button
-        variant="secondary"
+        variant="cancel"
         label={t('common.cancel')}
         disabled={saving}
         onPress={onCancel}

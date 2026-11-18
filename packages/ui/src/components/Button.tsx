@@ -22,7 +22,7 @@ import { AddIcon } from './AddIcon';
 import { entryLayout } from '../tokens/entry';
 
 export type ButtonVariant =
-  'primary' | 'secondary' | 'tertiary' | 'destructive' | 'destructiveFill';
+  'primary' | 'secondary' | 'tertiary' | 'cancel' | 'destructive' | 'destructiveFill';
 export type ButtonSize = 'sm' | 'md' | 'lg';
 
 export interface ButtonProps extends Omit<PressableProps, 'style' | 'children'> {
@@ -179,6 +179,21 @@ export function Button({
             },
           ];
 
+        if (variant === 'cancel')
+          return [
+            baseStyle,
+            customStyle,
+            {
+              alignSelf: 'center',
+              width: 'auto',
+              flexGrow: 0,
+              flexShrink: 1,
+              flexBasis: 'auto',
+              backgroundColor: 'transparent',
+              borderWidth: 0,
+            },
+          ];
+
         if (isDisabled) {
           if (variant === 'tertiary') {
             return [customStyle, baseStyle, { backgroundColor: 'transparent' }];
@@ -261,9 +276,11 @@ export function Button({
               color={
                 variant === 'primary'
                   ? dark.onBrand
-                  : variant === 'destructive' || variant === 'destructiveFill'
-                    ? dark.textHi
-                    : dark.apricot
+                  : variant === 'cancel'
+                    ? dark.textOff
+                    : variant === 'destructive' || variant === 'destructiveFill'
+                      ? dark.textHi
+                      : dark.apricot
               }
               style={styles.spinner}
             />
@@ -284,7 +301,7 @@ export function Button({
                       ? (labelColor ?? dark.textHi)
                       : variant === 'tertiary'
                         ? (labelColor ?? dark.actionInk)
-                        : variant === 'destructive'
+                        : variant === 'cancel' || variant === 'destructive'
                           ? dark.danger
                           : dark.onDanger
               }

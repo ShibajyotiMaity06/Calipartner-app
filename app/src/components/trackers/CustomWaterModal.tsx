@@ -157,19 +157,6 @@ export function CustomWaterModal({ visible, onClose, onSave }: CustomWaterModalP
           <View style={styles.actionsRow}>
             <Button
               variant="secondary"
-              fullWidth={false}
-              label={t('common.cancel')}
-              testID="btn-cancel-water"
-              onPress={onClose}
-              disabled={saving}
-              style={[styles.btn, styles.cancelBtn, { borderColor: colors.border }]}
-              accessibilityRole="button"
-              accessibilityLabel={t('common.cancel')}
-            />
-
-            <Button
-              variant="secondary"
-              fullWidth={false}
               label={saving ? t('common.saving') : t('common.save')}
               testID="btn-submit-water"
               onPress={handleSubmit}
@@ -177,6 +164,15 @@ export function CustomWaterModal({ visible, onClose, onSave }: CustomWaterModalP
               style={[styles.btn, styles.submitBtn, { backgroundColor: colors.water }]}
               accessibilityRole="button"
               accessibilityLabel={t('common.save')}
+            />
+            <Button
+              variant="cancel"
+              label={t('common.cancel')}
+              testID="btn-cancel-water"
+              onPress={onClose}
+              disabled={saving}
+              accessibilityRole="button"
+              accessibilityLabel={t('common.cancel')}
             />
           </View>
         </View>
@@ -259,19 +255,14 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
   actionsRow: {
-    flexDirection: 'row',
     gap: spacing.sm,
     marginTop: spacing.xs,
   },
   btn: {
-    flex: 1,
     height: 48,
     borderRadius: radius.sm,
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  cancelBtn: {
-    borderWidth: 1,
   },
   submitBtn: {},
   btnText: {

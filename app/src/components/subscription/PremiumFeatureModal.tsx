@@ -51,7 +51,7 @@ export function PremiumFeatureModal({
             </>
           )}
           <Button
-            variant="secondary"
+            variant="cancel"
             label={t('common.cancel')}
             onPress={onClose}
             testID={`close-${feature}`}

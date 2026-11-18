@@ -138,14 +138,12 @@ export function FoodPhotoDailyLimitModal({
             )}
 
             <Button
-              variant="secondary"
-              fullWidth={false}
+              variant="cancel"
               label={t('common.cancel')}
               testID="btn-close-limit-modal"
               accessibilityRole="button"
               accessibilityLabel={t('common.cancel')}
               onPress={onClose}
-              style={styles.cancelBtn}
             />
           </View>
         </View>
@@ -254,9 +252,5 @@ const styles = StyleSheet.create({
   secondaryBtnText: {
     fontSize: fontSize.sm,
     fontWeight: '600',
-  },
-  cancelBtn: {
-    alignItems: 'center',
-    paddingVertical: spacing.xs,
   },
 });

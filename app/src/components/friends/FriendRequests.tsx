@@ -69,7 +69,7 @@ export function FriendRequests({
                 </>
               ) : (
                 <Button
-                  variant="secondary"
+                  variant="cancel"
                   label={t('friends.cancel')}
                   disabled={friends.busy}
                   onPress={() => {

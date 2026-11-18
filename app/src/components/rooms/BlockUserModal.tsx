@@ -83,18 +83,6 @@ export function BlockUserModal({
 
           {/* Action Buttons */}
           <View style={styles.buttonRow}>
-            <Button
-              variant="secondary"
-              fullWidth={false}
-              label={t('common.cancel')}
-              onPress={onClose}
-              disabled={loading}
-              style={[styles.cancelButton, { backgroundColor: colors.surfaceAlt }]}
-              accessibilityRole="button"
-              accessibilityLabel="Cancel block"
-              testID="btn-cancel-block"
-            />
-
             <Pressable
               onPress={handleBlock}
               disabled={loading}
@@ -113,6 +101,15 @@ export function BlockUserModal({
                 </Text>
               )}
             </Pressable>
+            <Button
+              variant="cancel"
+              label={t('common.cancel')}
+              onPress={onClose}
+              disabled={loading}
+              accessibilityRole="button"
+              accessibilityLabel="Cancel block"
+              testID="btn-cancel-block"
+            />
           </View>
         </View>
       </View>
@@ -171,22 +168,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.sm,
   },
   buttonRow: {
-    flexDirection: 'row',
     gap: spacing.sm,
   },
-  cancelButton: {
-    flex: 1,
-    paddingVertical: 12,
-    borderRadius: radius.pill,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  cancelButtonText: {
-    fontSize: fontSize.sm,
-    fontWeight: '600',
-  },
   blockButton: {
-    flex: 1,
     paddingVertical: 12,
     borderRadius: radius.pill,
     alignItems: 'center',

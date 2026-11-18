@@ -160,7 +160,7 @@ export function PurchaseSheet({
             </View>
             <View style={styles.action}>
               <Button
-                variant="destructive"
+                variant="cancel"
                 disabled={saving}
                 label={t('avatar.cancel')}
                 onPress={onClose}

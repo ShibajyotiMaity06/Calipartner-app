@@ -82,14 +82,12 @@ export function FoodPhotoAnalyzingOverlay({ visible, onCancel }: FoodPhotoAnalyz
 
           {onCancel && (
             <Button
-              variant="secondary"
-              fullWidth={false}
+              variant="cancel"
               label={t('common.cancel')}
               testID="btn-cancel-analyzing"
               accessibilityRole="button"
               accessibilityLabel={t('common.cancel')}
               onPress={onCancel}
-              style={styles.cancelBtn}
             />
           )}
         </View>
@@ -153,10 +151,5 @@ const styles = StyleSheet.create({
   privacyBadgeText: {
     fontSize: fontSize.xs,
     fontWeight: '500',
-  },
-  cancelBtn: {
-    marginTop: spacing.lg,
-    paddingVertical: spacing.xs,
-    paddingHorizontal: spacing.md,
   },
 });

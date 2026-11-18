@@ -237,14 +237,12 @@ export function FoodPhotoCameraModal({
               />
 
               <Button
-                variant="secondary"
-                fullWidth={false}
+                variant="cancel"
                 label={t('common.cancel')}
                 testID="btn-close-camera-permission"
                 accessibilityRole="button"
                 accessibilityLabel={t('common.cancel')}
                 onPress={back}
-                style={[styles.cancelBtn, { alignSelf: 'center', marginTop: 4 }]}
               />
             </View>
           </View>
@@ -616,10 +614,5 @@ const styles = StyleSheet.create({
   secondaryBtnText: {
     fontSize: fontSize.sm,
     fontWeight: '600',
-  },
-  cancelBtn: {
-    height: 38,
-    alignItems: 'center',
-    justifyContent: 'center',
   },
 });

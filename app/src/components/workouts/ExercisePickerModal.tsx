@@ -554,16 +554,6 @@ export function ExercisePickerModal({
 
               {customError && <Text accessibilityRole="alert">{t('workoutFlow.error')}</Text>}
               <View style={styles.dialogActions}>
-                <Button
-                  variant="secondary"
-                  fullWidth={false}
-                  label={t('common.cancel')}
-                  testID="btn-cancel-custom-exercise"
-                  disabled={creatingCustom}
-                  style={[styles.dialogBtn, { backgroundColor: colors.surfaceAlt }]}
-                  onPress={() => setShowCustomModal(false)}
-                />
-
                 <TouchableOpacity
                   testID="btn-save-custom-exercise"
                   style={[
@@ -589,6 +579,13 @@ export function ExercisePickerModal({
                     </Text>
                   )}
                 </TouchableOpacity>
+                <Button
+                  variant="cancel"
+                  label={t('common.cancel')}
+                  testID="btn-cancel-custom-exercise"
+                  disabled={creatingCustom}
+                  onPress={() => setShowCustomModal(false)}
+                />
               </View>
             </View>
           </View>
@@ -793,8 +790,6 @@ const styles = StyleSheet.create({
     borderRadius: radius.sm,
   },
   dialogActions: {
-    flexDirection: 'row',
-    justifyContent: 'flex-end',
     gap: spacing.sm,
     marginTop: spacing.xs,
   },

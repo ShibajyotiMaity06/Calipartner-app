@@ -187,7 +187,7 @@ export function FastingCard({ testID = 'fasting-card' }: FastingCardProps) {
             testID="fasting-card-confirm-end"
           />
           <Button
-            variant="tertiary"
+            variant="cancel"
             label={t('common.cancel')}
             onPress={() => setConfirmEnd(false)}
             testID="fasting-card-cancel-end"

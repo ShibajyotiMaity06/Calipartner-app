@@ -445,14 +445,11 @@ export function CustomFoodModal({
             />
 
             <Button
-              variant="tertiary"
-              fullWidth={false}
+              variant="cancel"
               label={t('common.cancel')}
-              labelColor={colors.danger}
               testID="btn-cancel-custom-food"
               disabled={loading}
               onPress={cancel}
-              style={{ alignSelf: 'center' }}
             />
           </View>
         </View>

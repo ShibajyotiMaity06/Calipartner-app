@@ -756,7 +756,7 @@ export function CardioTrackerModal({
               <View style={card}>
                 <Text>{t('ownerPolish.discardQuestion')}</Text>
                 <Button
-                  variant="secondary"
+                  variant={phase === 'retry' ? 'cancel' : 'secondary'}
                   label={t(phase === 'retry' ? 'common.cancel' : 'ownerPolish.keepSession')}
                   onPress={() => setConfirmDiscard(false)}
                 />

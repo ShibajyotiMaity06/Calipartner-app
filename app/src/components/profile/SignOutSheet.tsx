@@ -47,13 +47,11 @@ export function SignOutSheet({
               {t('me.signOutSheet.consequence')}
             </Text>
 
-            {/* Primary Cancel (Default focus per P05) */}
             <Button
-              variant="secondary"
+              variant="cancel"
               label={t('me.signOutSheet.cancelBtn')}
               onPress={onClose}
               testID="btn-cancel-sign-out"
-              style={styles.actionBtn}
             />
 
             {/* Destructive Sign Out */}
