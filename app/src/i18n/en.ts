@@ -211,8 +211,7 @@ export const en = {
     paidBody: 'Choose a plan to use this feature. Your personal tracking stays free.',
     seePlans: 'See plans',
     unavailable: 'We could not check access. Connect and try again.',
-    photoPro:
-      'AI photo scans require a paid Pro plan. Free, Plus and Plus trials do not include AI access.',
+    photoPro: 'AI photo scans are available with a paid Pro plan.',
     starterRecipes: 'Free includes 10 starter recipes. Plus or Pro unlocks the full library.',
     coachUnavailable: 'AI Coach is temporarily unavailable. Please try again.',
     photoLimitTitle: 'Photo scan access',

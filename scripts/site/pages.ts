@@ -1,4 +1,19 @@
 import { publicSite as copy } from '../../app/src/i18n/publicSite';
+import { subscriptionTerm } from '../../packages/core/src/subscriptions';
+
+function standardPlanPrices(tier: 'plus' | 'pro') {
+  const india = new Intl.NumberFormat('en-IN', {
+    style: 'currency',
+    currency: 'INR',
+    maximumFractionDigits: 0,
+  });
+  const international = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' });
+  const annualInr = india.format(subscriptionTerm(tier, 'INR', 'annual').amount);
+  const halfYearInr = india.format(subscriptionTerm(tier, 'INR', 'semiannual').amount);
+  const annualUsd = international.format(subscriptionTerm(tier, 'USD', 'annual').amount);
+  const halfYearUsd = international.format(subscriptionTerm(tier, 'USD', 'semiannual').amount);
+  return `India: ${annualInr} for 1 year or ${halfYearInr} for 6 months. International: ${annualUsd} for 1 year or ${halfYearUsd} for 6 months.`;
+}
 
 export type Section = { title: string; body: string };
 export type PublicPage = {
@@ -34,7 +49,7 @@ export const pages: PublicPage[] = [
       { title: 'Start with Free', body: copy.trial },
       {
         title: 'Add tools when you need them',
-        body: 'Plus adds 90+ Indian recipes, fasting and larger rooms. Purchased Plus and Pro include AI plans with consent. Purchased Pro adds your AI coach, food-photo estimates and monthly progress reviews. Review and accept changes yourself.',
+        body: 'Plus adds 90+ recipes, fasting and larger rooms. Purchased Plus and Pro include AI plans with consent. Purchased Pro adds your AI coach, food-photo estimates and monthly progress reviews. Review and accept changes yourself.',
       },
     ],
   },
@@ -60,7 +75,7 @@ export const pages: PublicPage[] = [
       },
       {
         title: 'Recipes and planning — Plus and Pro',
-        body: 'Browse 90+ Indian recipes and use the fasting tracker with its safety screening. Full AI meal plans and grocery lists require purchased Plus or Pro and consent; these plans are excluded from the cardless trial.',
+        body: 'Browse 90+ recipes and use the fasting tracker with its safety screening. Full AI meal plans and grocery lists require a paid Plus or Pro subscription and your consent.',
       },
       {
         title: 'Private progress photos — Plus and Pro',
@@ -74,9 +89,9 @@ export const pages: PublicPage[] = [
   },
   {
     path: '/pricing',
-    title: 'Free, Plus and Pro Plans and Trial Details | CaliPartner',
+    title: 'Free, Plus and Pro Plans | CaliPartner',
     description:
-      'Compare CaliPartner Free, Plus and Pro. Learn how the cardless seven-day Plus trial works, what purchased plans include and how to cancel subscriptions.',
+      'Compare CaliPartner Free, Plus and Pro. See 1-year and 6-month prices, what each plan includes and how to cancel a subscription.',
     heading: 'Start free. Choose the support you need.',
     intro: copy.trial,
     sections: [
@@ -86,15 +101,15 @@ export const pages: PublicPage[] = [
       },
       {
         title: 'Plus — more ways to stay consistent',
-        body: 'India: ₹249 monthly or ₹1,499 annually. International: $4.99 monthly or $29.99 annually. Larger rooms, 90+ recipes, fasting, custom macros and device-local progress photos. Full AI meal and workout plans require a purchased subscription and consent.',
+        body:
+          standardPlanPrices('plus') +
+          ' Larger rooms, 90+ recipes, fasting, custom macros and device-local progress photos. Full AI meal and workout plans require a purchased subscription and consent.',
       },
       {
         title: 'Pro — personal AI support',
-        body: 'India: ₹499 monthly or ₹2,499 annually. International: $9.99 monthly or $49.99 annually. Plus features, personal AI coach, food-photo estimates, chat-to-log, monthly progress reviews, room media sharing and Pro-tagged support. Pro has no trial.',
-      },
-      {
-        title: 'What happens after the trial?',
-        body: 'The seven-day Plus trial requires no card and never starts an automatic charge. Eligible accounts get one trial. At expiry you return to Free unless you separately purchase a plan. Full AI plans and Pro AI features are excluded.',
+        body:
+          standardPlanPrices('pro') +
+          ' Plus features, personal AI coach, food-photo estimates, chat-to-log, monthly progress reviews, room media sharing and Pro-tagged support.',
       },
       {
         title: 'How do billing and cancellation work?',
@@ -110,7 +125,7 @@ export const pages: PublicPage[] = [
     path: '/download',
     title: 'Open CaliPartner and Check App Availability | CaliPartner',
     description:
-      'Start using CaliPartner on the web. Find verified iPhone and Android download links when available, and learn about Free tracking and the Plus trial.',
+      'Start using CaliPartner on the web. Find verified iPhone and Android download links when available, and learn about free personal tracking.',
     heading: 'Your next small step starts here.',
     intro:
       'Open CaliPartner in your browser. You can create an account with a six-digit email code.',
@@ -122,7 +137,7 @@ export const pages: PublicPage[] = [
     description:
       key === 'privacy'
         ? 'Read how CaliPartner handles account and health logs, photos, foreground location, AI consent, room sharing, retention and requests to delete your data.'
-        : 'Read CaliPartner terms for Free tracking, the cardless Plus trial, paid subscriptions, automatic renewal, cancellation, community use and account deletion.',
+        : 'Read CaliPartner terms for Free tracking, paid subscriptions, automatic renewal, cancellation, community use and account deletion.',
     heading: copy[key].title,
     intro: copy.updated,
     sections: copy[key].sections,

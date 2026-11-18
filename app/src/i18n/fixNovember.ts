@@ -93,8 +93,7 @@ export const fixNovember = {
   sunday: 'Sunday',
   mondayPreview: 'Your Monday preview',
   lockedTitle: 'The rest of your week, with Plus',
-  lockedBody:
-    'Buy Plus to unlock Tuesday to Sunday and personal workout and food tips. The free Plus trial does not include these plans.',
+  lockedBody: 'Buy Plus to unlock Tuesday to Sunday and personal workout and food tips.',
   buy: 'Buy Plus',
   lockedDay: '{day} is locked. A purchased Plus or Pro plan is required.',
   tips: 'Tips for your week',

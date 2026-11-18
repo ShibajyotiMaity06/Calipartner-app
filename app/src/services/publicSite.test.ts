@@ -60,6 +60,23 @@ it('renders meaningful crawlable pages with unique metadata and no invented rati
   }
 });
 
+it('publishes the approved upfront terms without advertising a trial or monthly plan', () => {
+  const html = renderPage(pages.find((page) => page.path === '/pricing')!);
+  for (const price of [
+    '\u20b91,499 for 1 year',
+    '\u20b9999 for 6 months',
+    '\u20b92,499 for 1 year',
+    '\u20b91,599 for 6 months',
+    '$29.99 for 1 year',
+    '$19.99 for 6 months',
+    '$49.99 for 1 year',
+    '$32.99 for 6 months',
+  ])
+    expect(html).toContain(price);
+  expect(html).toContain('Personal tracking is free forever.');
+  expect(html).not.toMatch(/cardless|free trial|\$4\.99 monthly|\$9\.99 monthly/i);
+});
+
 it('only publishes store links and banners with real configured availability', () => {
   const download = pages.find((p) => p.path === '/download')!;
   expect(renderPage(download)).not.toContain('apps.apple.com');
