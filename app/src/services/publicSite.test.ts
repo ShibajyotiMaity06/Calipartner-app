@@ -34,7 +34,7 @@ it('keeps store fields within official limits and copy within delivered capabili
     ).toBe(true);
   expect(listing.apple.keywords).not.toContain(', ');
   expect(listing.description).toContain('monthly progress reviews');
-  expect(listing.description).toContain('no automatic charge');
+  expect(listing.description).toContain('Personal tracking is free forever');
   expect(listing.description).not.toMatch(
     /150\+|weekly growth|300 photo|900|focus session|partner finder/i,
   );

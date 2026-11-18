@@ -85,9 +85,11 @@ import { PaywallModal } from './PaywallModal';
 import { MeRoomPlanCard } from './MeRoomPlanCard';
 let renderer: ReactTestRenderer | undefined;
 const products = [
-  { key: 'plus_monthly', currency: 'INR', amount: 249, trialDays: 7 },
-  { key: 'plus_annual', currency: 'INR', amount: 1499, trialDays: 7 },
-  { key: 'pro_monthly', currency: 'INR', amount: 499, trialDays: 0 },
+  { key: 'plus_semiannual', currency: 'INR', amount: 999, trialDays: 0 },
+  { key: 'plus_quarterly', currency: 'INR', amount: 599, trialDays: 0 },
+  { key: 'plus_annual', currency: 'INR', amount: 1499, trialDays: 0 },
+  { key: 'pro_semiannual', currency: 'INR', amount: 1599, trialDays: 0 },
+  { key: 'pro_quarterly', currency: 'INR', amount: 899, trialDays: 0 },
   { key: 'pro_annual', currency: 'INR', amount: 2499, trialDays: 0 },
 ];
 beforeEach(() => {
@@ -133,7 +135,7 @@ describe('Chrome payment UI', () => {
     billing.prepared.mockReturnValue({ provider: 'razorpay', products });
     billing.catalog.mockReturnValue(new Promise(() => {}));
     await render();
-    expect(JSON.stringify(renderer!.toJSON())).toContain('₹1,499.00');
+    expect(JSON.stringify(renderer!.toJSON())).toContain('₹1,499');
     expect(JSON.stringify(renderer!.toJSON())).not.toContain('Loading prices');
     expect(
       renderer!.root.findAllByProps({ testID: 'paywall-plus-price-placeholder' }),
@@ -163,8 +165,8 @@ describe('Chrome payment UI', () => {
   it('displays verified prices and opens the selected product without granting access', async () => {
     await render();
     const content = JSON.stringify(renderer!.toJSON());
-    expect(content).toContain('₹1,499.00 / year');
-    expect(content).toContain('₹2,499.00 / year');
+    expect(content).toContain('₹1,499');
+    expect(content).toContain('₹2,499');
     await act(async () =>
       renderer!.root.findByProps({ testID: 'btn-paywall-cta' }).props.onPress(),
     );
@@ -309,7 +311,7 @@ it('Indian web checkout stays pending until a matching Razorpay webhook entitlem
     source: 'razorpay',
     tier: 'plus',
     period: 'annual',
-    status: 'trial',
+    status: 'paid',
     period_end: '2099-01-01',
   });
   await act(async () => {
@@ -345,20 +347,48 @@ it('Razorpay management requires explicit confirmation before stopping renewal',
   expect(billing.start).not.toHaveBeenCalled();
 });
 
-it('activates a cardless trial without a provider or a loaded catalogue', async () => {
-  billing.trialEligible = true;
-  billing.catalog.mockReturnValue(new Promise(() => {}));
-  await render();
-  expect(renderer!.root.findByProps({ testID: 'btn-paywall-cta' }).props.disabled).toBe(false);
-  billing.trial.mockResolvedValueOnce(false);
-  await act(async () => renderer!.root.findByProps({ testID: 'btn-paywall-cta' }).props.onPress());
-  expect(JSON.stringify(renderer!.toJSON())).toContain('Your trial could not be confirmed');
-  expect(billing.refresh).not.toHaveBeenCalled();
-  await act(async () => renderer!.root.findByProps({ testID: 'btn-paywall-cta' }).props.onPress());
-  expect(billing.refresh).toHaveBeenCalledOnce();
+it.each(['close', 'back', 'swipe'])(
+  'shows the quarterly offer on %s and checks out only after claim',
+  async (method) => {
+    await render();
+    const root = renderer!.root;
+    expect(
+      root.findByProps({ testID: 'toggle-duration-annual' }).props.accessibilityState.selected,
+    ).toBe(true);
+    expect(root.findByProps({ testID: 'toggle-duration-semiannual' })).toBeDefined();
+    expect(root.findAllByProps({ testID: 'toggle-duration-monthly' })).toHaveLength(0);
+    expect(root.findAllByProps({ testID: 'toggle-duration-quarterly' })).toHaveLength(0);
+    await act(async () => root.findByProps({ testID: 'picker-size-21-50' }).props.onPress());
+    await act(async () => {
+      if (method === 'close') root.findByProps({ testID: 'btn-close-paywall' }).props.onPress();
+      if (method === 'back')
+        root.find((node) => String(node.type) === 'Modal').props.onRequestClose();
+      if (method === 'swipe') {
+        const header = root.findByProps({ testID: 'paywall-swipe-header' });
+        header.props.onTouchStart({ nativeEvent: { pageX: 10, pageY: 20 } });
+        header.props.onTouchEnd({ nativeEvent: { pageX: 10, pageY: 100 } });
+      }
+    });
+    expect(root.findByProps({ testID: 'paywall-downsell' })).toBeDefined();
+    expect(root.findByProps({ testID: 'paywall-downsell-total' }).props.children).toBe('₹899');
+    expect(billing.create).not.toHaveBeenCalled();
+    await act(async () => root.findByProps({ testID: 'claim-three-month-pass' }).props.onPress());
+    expect(billing.create).toHaveBeenCalledWith('pro', 'quarterly', 'request-id');
+  },
+);
+it('declines the three-month offer without initiating checkout', async () => {
+  const close = vi.fn();
+  await act(async () => {
+    renderer = create(<PaywallModal visible onClose={close} />);
+  });
+  await act(async () =>
+    renderer!.root.findByProps({ testID: 'btn-close-paywall' }).props.onPress(),
+  );
+  await act(async () =>
+    renderer!.root.findByProps({ testID: 'dismiss-three-month-pass' }).props.onPress(),
+  );
+  expect(close).toHaveBeenCalledOnce();
   expect(billing.create).not.toHaveBeenCalled();
-  expect(billing.start).not.toHaveBeenCalled();
-  expect(billing.navigate).not.toHaveBeenCalled();
 });
 it('lets an expired trial continue on Free even when pricing fails', async () => {
   billing.catalog.mockRejectedValue(new Error('offline'));

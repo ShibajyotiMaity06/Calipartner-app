@@ -1,10 +1,17 @@
 export const DODO_PRODUCT_KEYS = [
-  'plus_monthly',
   'plus_annual',
-  'pro_monthly',
+  'plus_semiannual',
+  'plus_quarterly',
   'pro_annual',
+  'pro_semiannual',
+  'pro_quarterly',
 ] as const;
-export type DodoProductKey = (typeof DODO_PRODUCT_KEYS)[number];
+export const LEGACY_BILLING_PRODUCT_KEYS = ['plus_monthly', 'pro_monthly'] as const;
+export const BILLING_WEBHOOK_PRODUCT_KEYS = [
+  ...DODO_PRODUCT_KEYS,
+  ...LEGACY_BILLING_PRODUCT_KEYS,
+] as const;
+export type DodoProductKey = (typeof BILLING_WEBHOOK_PRODUCT_KEYS)[number];
 
 export interface DodoCatalogProduct {
   key: DodoProductKey;
@@ -29,21 +36,25 @@ export function verifiedDodoProduct(key: DodoProductKey, product: unknown): Dodo
     };
   } | null;
   const tier = key.startsWith('plus_') ? 'plus' : 'pro';
-  const annual = key.endsWith('_annual');
+  const duration = key.split('_')[1] as CheckoutDuration | 'monthly';
+  const annual = duration === 'annual';
   const price = data?.price;
   const currency = price?.currency;
   if (currency !== 'INR' && currency !== 'USD') throw new Error('DODO_PRODUCT_MISMATCH');
   const plan = PRICING_PLANS[tier];
-  const amount = plan[currency === 'INR' ? 'inr' : 'usd'][annual ? 'rawAnnual' : 'rawMonthly'];
+  const amount =
+    duration === 'monthly'
+      ? plan[currency === 'INR' ? 'inr' : 'usd'].rawMonthly
+      : subscriptionTerm(tier, currency, duration).amount;
   if (
     !data?.is_recurring ||
     price?.type !== 'recurring_price' ||
     price.price !== Math.round(amount * 100) ||
-    price.payment_frequency_count !== 1 ||
+    price.payment_frequency_count !==
+      (annual || duration === 'monthly' ? 1 : CHECKOUT_MONTHS[duration]) ||
     price.payment_frequency_interval !== (annual ? 'Year' : 'Month') ||
-    ![0, plan.trialDays].includes(price.trial_period_days ?? 0) ||
-    ((price.trial_period_days ?? 0) > 0 &&
-      (price.trial_type !== 'free' || (price.trial_amount ?? 0) !== 0))
+    (price.trial_period_days ?? 0) !== 0 ||
+    (price.trial_amount ?? 0) !== 0
   )
     throw new Error('DODO_PRODUCT_MISMATCH');
   return { key, currency, amount, trialDays: plan.trialDays };
@@ -51,7 +62,7 @@ export function verifiedDodoProduct(key: DodoProductKey, product: unknown): Dodo
 
 export function dodoProductKey(tier: unknown, duration: unknown): DodoProductKey | null {
   const key = `${tier}_${duration}`;
-  return DODO_PRODUCT_KEYS.includes(key as DodoProductKey) ? (key as DodoProductKey) : null;
+  return DODO_PRODUCT_KEYS.find((candidate) => candidate === key) ?? null;
 }
 
 export interface DodoSubscription {
@@ -82,4 +93,9 @@ export function dodoSubscriptionEvent(
   // Pending, failed and on-hold subscriptions must not activate access.
   return { eventType: 'EXPIRATION', periodEnd };
 }
-import { PRICING_PLANS } from './subscriptions';
+import {
+  CHECKOUT_MONTHS,
+  PRICING_PLANS,
+  subscriptionTerm,
+  type CheckoutDuration,
+} from './subscriptions';

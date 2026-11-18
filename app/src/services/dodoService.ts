@@ -1,6 +1,10 @@
 import { getSupabase } from '@/lib/supabase';
 import { t } from '@/i18n';
-import { DODO_PRODUCT_KEYS, type DodoCatalogProduct } from '@calipartner/core';
+import {
+  DODO_PRODUCT_KEYS,
+  type CheckoutDuration,
+  type DodoCatalogProduct,
+} from '@calipartner/core';
 
 export async function fetchDodoCatalog(): Promise<DodoCatalogProduct[]> {
   const { data, error } = await getSupabase().functions.invoke('dodo-checkout', {
@@ -10,15 +14,15 @@ export async function fetchDodoCatalog(): Promise<DodoCatalogProduct[]> {
   if (
     error ||
     !Array.isArray(products) ||
-    products.length !== DODO_PRODUCT_KEYS.length ||
-    !DODO_PRODUCT_KEYS.every((key) =>
-      products.some(
-        (p) =>
-          p.key === key &&
-          (p.currency === 'INR' || p.currency === 'USD') &&
-          Number.isFinite(p.amount) &&
-          p.amount > 0,
-      ),
+    !products.length ||
+    new Set(products.map((product) => product.key)).size !== products.length ||
+    !products.every(
+      (product) =>
+        DODO_PRODUCT_KEYS.some((key) => key === product.key) &&
+        product.currency === 'USD' &&
+        Number.isFinite(product.amount) &&
+        product.amount > 0 &&
+        product.trialDays === 0,
     )
   )
     throw new Error(t('fixes.dodoNotReady'));
@@ -27,7 +31,7 @@ export async function fetchDodoCatalog(): Promise<DodoCatalogProduct[]> {
 
 export async function createDodoCheckout(
   tier: 'plus' | 'pro',
-  duration: 'monthly' | 'annual',
+  duration: CheckoutDuration,
   requestId: string,
 ): Promise<string> {
   const { data, error } = await getSupabase().functions.invoke('dodo-checkout', {

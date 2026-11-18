@@ -13,7 +13,6 @@ import type { DodoCatalogProduct } from '@calipartner/core';
 import { useSubscription } from '@/hooks/useSubscription';
 import { fetchWebCatalog, getCachedWebCatalog } from '@/services/webBillingService';
 import { useAuth } from '@/contexts/AuthContext';
-import { usePlusTrial } from '@/hooks/usePlusTrial';
 import { findSubscriptionPackage } from '@/services/subscriptionPackages';
 import { t } from '@/i18n';
 import { PlanCard, planStyles } from './PlanPrimitives';
@@ -29,7 +28,6 @@ export function PremiumStep({
   const { session } = useAuth();
   const prepared = Platform.OS === 'web' ? getCachedWebCatalog(session?.access_token) : undefined;
   const { offerings, loading: storeLoading, refresh } = useSubscription();
-  const plusTrial = usePlusTrial();
   const [tier, setTier] = useState<'plus' | 'pro'>('plus');
   const [catalog, setCatalog] = useState<DodoCatalogProduct[]>(prepared?.products ?? []);
   const [loading, setLoading] = useState(Platform.OS === 'web' && !prepared);
@@ -58,7 +56,7 @@ export function PremiumStep({
     };
   }, [retry, session?.access_token]);
   const price = useCallback(
-    (duration: 'monthly' | 'annual') => {
+    (duration: 'semiannual' | 'annual') => {
       if (Platform.OS !== 'web')
         return findSubscriptionPackage(offerings, tier, duration)?.product.priceString;
       const product = catalog.find((item) => item.key === `${tier}_${duration}`);
@@ -71,10 +69,9 @@ export function PremiumStep({
     },
     [catalog, offerings, tier],
   );
-  const monthly = price('monthly'),
+  const semiannual = price('semiannual'),
     annual = price('annual');
   const waiting = Platform.OS === 'web' ? loading : storeLoading;
-  const trial = tier === 'plus' && plusTrial.offer?.eligible === true;
   return (
     <View style={styles.frame} testID="premium-highlights">
       <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
@@ -144,11 +141,6 @@ export function PremiumStep({
             </Text>
           </View>
         ))}
-        {trial && (
-          <Text variant="micro" color={colors.textMid}>
-            {t('entryRefresh.trialNote')}
-          </Text>
-        )}
       </ScrollView>
       <View style={[styles.purchase, { borderTopColor: colors.hairline }]}>
         {waiting ? (
@@ -160,21 +152,16 @@ export function PremiumStep({
           >
             <Text accessibilityLiveRegion="polite">{t('fixes.loadingPrices')}</Text>
           </View>
-        ) : monthly && annual && !error ? (
+        ) : (semiannual || annual) && !error ? (
           <>
             <View style={styles.priceRow}>
-              <Text variant="title2" tabular testID="onboarding-monthly-price">
-                {t('entryRefresh.monthly', { price: monthly })}
+              <Text variant="bodyS" tabular testID="onboarding-six-month-price">
+                {t('releaseUpdate.semiannual')} {'\u00b7'} {semiannual}
               </Text>
-              {trial && (
-                <Text variant="label" color={colors.apricot}>
-                  {t('entryRefresh.trial')}
-                </Text>
-              )}
+              <Text variant="bodyS" tabular testID="onboarding-annual-price">
+                {t('releaseUpdate.annual')} {'\u00b7'} {annual}
+              </Text>
             </View>
-            <Text variant="bodyS" tabular color={colors.textMid}>
-              {t('entryRefresh.annual', { price: annual })}
-            </Text>
             {Platform.OS === 'web' && (
               <Text variant="micro" color={colors.textMid}>
                 {t(
@@ -201,43 +188,11 @@ export function PremiumStep({
             />
           </>
         )}
-        {trial && <Text variant="bodyS">{t('cardlessTrial.noCard')}</Text>}
-        {plusTrial.error && (
-          <>
-            <Text color="danger" accessibilityRole="alert">
-              {t('cardlessTrial.error')}
-            </Text>
-            {!plusTrial.offer && (
-              <Button
-                variant="secondary"
-                label={t('common.retry')}
-                onPress={() => void plusTrial.refresh()}
-                testID="onboarding-trial-retry"
-              />
-            )}
-          </>
-        )}
+        <Text variant="bodyS">{t('releaseUpdate.freeForever')}</Text>
         <Button
-          label={
-            !plusTrial.offer && plusTrial.error
-              ? t('common.retry')
-              : trial
-                ? t('entryRefresh.trialAction')
-                : t('entryRefresh.choosePlan', { plan: t(`entryRefresh.${tier}`) })
-          }
-          onPress={async () => {
-            if (!plusTrial.offer) {
-              await plusTrial.refresh();
-              return;
-            }
-            if (trial) {
-              if (await plusTrial.start()) onSkip();
-            } else onContinue(tier);
-          }}
-          disabled={
-            plusTrial.starting ||
-            (trial ? false : waiting || !monthly || !annual || error || plusTrial.loading)
-          }
+          label={t('entryRefresh.choosePlan', { plan: t(`entryRefresh.${tier}`) })}
+          onPress={() => onContinue(tier)}
+          disabled={waiting || (!semiannual && !annual) || error}
           testID="btn-onboarding-next"
         />
         <Button

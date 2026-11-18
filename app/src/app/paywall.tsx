@@ -1,5 +1,7 @@
+import { CHECKOUT_DURATIONS, type CheckoutDuration, type RoomPeriod } from '@calipartner/core';
 import React from 'react';
 import { useLocalSearchParams, useRouter } from 'expo-router';
+import { closeBrowserModalsThen } from '@/hooks/useBrowserModalBack';
 import { PaywallModal } from '@/components/rooms/PaywallModal';
 
 export default function PaywallScreen() {
@@ -12,20 +14,26 @@ export default function PaywallScreen() {
     feature?: string;
   }>();
   const checkoutReturn:
-    { tier: 'plus' | 'pro'; duration: 'monthly' | 'annual'; requestId: string } | undefined =
+    { tier: 'plus' | 'pro'; duration: RoomPeriod; requestId: string } | undefined =
     params.checkout &&
     (params.tier === 'plus' || params.tier === 'pro') &&
-    (params.duration === 'monthly' || params.duration === 'annual')
-      ? { tier: params.tier, duration: params.duration, requestId: params.checkout }
+    (params.duration === 'monthly' ||
+      CHECKOUT_DURATIONS.some((duration) => duration === params.duration))
+      ? {
+          tier: params.tier,
+          duration: params.duration as CheckoutDuration | 'monthly',
+          requestId: params.checkout,
+        }
       : undefined;
 
-  const handleClose = () => {
-    if (router.canGoBack()) {
-      router.back();
-    } else {
-      router.replace('/today' as never);
-    }
-  };
+  const handleClose = () =>
+    closeBrowserModalsThen(() => {
+      if (router.canGoBack()) {
+        router.back();
+      } else {
+        router.replace('/today' as never);
+      }
+    });
 
   return (
     <PaywallModal

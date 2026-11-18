@@ -68,6 +68,7 @@ export function PlanReviewStep({
   onCalculation,
   saving,
   error,
+  onClearError,
 }: {
   state: OnboardingState;
   onWeight: (value: number) => void;
@@ -79,6 +80,7 @@ export function PlanReviewStep({
   onChangeGoal: () => void;
   saving: boolean;
   error: string | null;
+  onClearError?: () => void;
 }) {
   const { colors } = useTheme();
   const result = state.calculatedTargets;
@@ -155,7 +157,10 @@ export function PlanReviewStep({
                 value={overrides[key] ?? null}
                 optional
                 placeholder={String(value ?? '')}
-                onChange={(next) => setOverrides((previous) => ({ ...previous, [key]: next }))}
+                onChange={(next) => {
+                  onClearError?.();
+                  setOverrides((previous) => ({ ...previous, [key]: next }));
+                }}
                 testID={`custom-target-${key}`}
               />
             </View>
@@ -176,18 +181,34 @@ export function PlanReviewStep({
               ? 'personalDay.useTargets'
               : 'personalDay.planMacros',
         )}
-        onPress={() => (editing ? onPlanned(overrides) : setEditing(true))}
+        onPress={() => {
+          onClearError?.();
+          if (editing) onPlanned(overrides);
+          else setEditing(true);
+        }}
         disabled={saving || !result || !isGymPlanValid(result)}
         testID={editing ? 'btn-use-planned' : 'btn-build-your-plan'}
       />
       {editing && (
-        <Button
-          variant="secondary"
-          label={t('personalDay.skipTargets')}
-          onPress={() => onPlanned({})}
-          disabled={saving}
-          testID="skip-custom-targets"
-        />
+        <>
+          <Button
+            variant="secondary"
+            label={t('releaseUpdate.returnToTargets')}
+            disabled={saving}
+            onPress={() => {
+              onClearError?.();
+              setEditing(false);
+            }}
+            testID="back-to-recommended-targets"
+          />
+          <Button
+            variant="tertiary"
+            label={t('personalDay.skipTargets')}
+            onPress={() => onPlanned({})}
+            disabled={saving}
+            testID="skip-custom-targets"
+          />
+        </>
       )}
     </View>
   );

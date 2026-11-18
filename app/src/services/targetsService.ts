@@ -11,6 +11,7 @@ export interface TargetsDb {
 
 export interface LocalGoalProfileRow {
   custom_macros?: number;
+  macro_reference_adjustment_kcal?: number | null;
   gym_days?: number | null;
   input_height_cm?: number | null;
   id: string;
@@ -60,8 +61,8 @@ export async function saveLocalGoalProfile(
       id, user_id, goal, activity_level, current_weight_kg, body_fat_percentage,
       weekly_rate_kg, target_weight_kg, target_date, daily_calorie_target,
       protein_grams, fat_grams, carb_grams, bmr, tdee, step_goal, water_ml_goal,
-      effective_from, confirmed_at, recompute_reason, created_at, is_synced, gym_days, input_height_cm, custom_macros
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      effective_from, confirmed_at, recompute_reason, created_at, is_synced, gym_days, input_height_cm, custom_macros, macro_reference_adjustment_kcal
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     ON CONFLICT (id) DO UPDATE SET
       goal = excluded.goal,
       activity_level = excluded.activity_level,
@@ -84,7 +85,8 @@ export async function saveLocalGoalProfile(
       is_synced = excluded.is_synced,
       gym_days = excluded.gym_days,
       input_height_cm = excluded.input_height_cm,
-      custom_macros = excluded.custom_macros`,
+      custom_macros = excluded.custom_macros,
+      macro_reference_adjustment_kcal = excluded.macro_reference_adjustment_kcal`,
     [
       profile.id,
       profile.user_id,
@@ -111,6 +113,7 @@ export async function saveLocalGoalProfile(
       profile.gym_days ?? null,
       profile.input_height_cm ?? null,
       profile.custom_macros ? 1 : 0,
+      profile.macro_reference_adjustment_kcal ?? null,
     ],
   );
 }
@@ -131,6 +134,9 @@ export async function getCurrentLocalGoalProfile(
 
   return {
     ...(row.custom_macros ? { custom_macros: true } : {}),
+    ...(row.macro_reference_adjustment_kcal != null
+      ? { macro_reference_adjustment_kcal: row.macro_reference_adjustment_kcal }
+      : {}),
     id: row.id,
     user_id: row.user_id,
     goal: row.goal as GoalProfile['goal'],

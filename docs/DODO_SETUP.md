@@ -1,13 +1,11 @@
 # Connect Dodo Payments for Chrome
 
-> 5 November 2026: Plus trials are account-owned, cardless and fixed at seven days. New paid checkouts add no provider trial. For native releases, remove Apple/Google Plus introductory trial offers in the store consoles before shipping this flow; preserve existing subscribers and their renewal terms. No store-console change is needed for the web trial.
-
-> 4 November 2026: new Indian web subscriptions now route to Razorpay; new international web subscriptions use the Dodo USD registry. Keep the INR registry for historical Dodo webhook events and existing subscribers' management. Android/iOS remain RevenueCat. See [Razorpay setup](RAZORPAY_SETUP.md).
+New international web subscriptions use Dodo in USD. New Indian web subscriptions use [Razorpay](RAZORPAY_SETUP.md). Preserve existing Dodo mapping keys for renewals, refunds and management. Android and iOS sell through RevenueCat and the native stores.
 
 Chrome uses Dodo directly. Android and iOS retain RevenueCat store billing. The browser requires no RevenueCat web key or Stripe account.
 
 1. Create or open your [Dodo account](https://app.dodopayments.com), finish the business/account verification and enable live payments. Test mode is for an isolated test backend.
-2. Create four recurring subscription products: Plus monthly (₹249 / $4.99), Plus yearly (₹1,499 / $29.99), Pro monthly (₹499 / $9.99) and Pro yearly (₹2,499 / $49.99). Configure no provider trial on any new product. The app grants an eligible seven-day Plus trial directly, without checkout or a payment method. Existing Plus products with legacy seven-day intros remain recognized for historical subscriptions; new checkout sessions explicitly override trial_period_days to zero. Copy each product ID (`pdt_...`). The live checkout displays the final local price, taxes and renewal/trial terms.
+2. Verify the six USD recurring products against [the pricing matrix](PLANS_AND_FEATURES.md). For each tier, use one year, six months and three months. Set zero provider trial days on every sale product. Three-month products are offered after dismissal of the standard paywall.
 3. In Dodo Developer settings, create a live API key. In Supabase Project Settings, Edge Functions, Secrets, set these values. Do not paste secret values into chat, app config, git or any `EXPO_PUBLIC_*` variable.
 
 ```dotenv
@@ -15,17 +13,17 @@ DODO_PAYMENTS_API_KEY=<live API key>
 DODO_ENVIRONMENT=live_mode
 DODO_ALLOW_TEST_MODE=false
 DODO_APP_URL=https://<your existing app domain>
-# Production India INR products:
-DODO_PRODUCTS_JSON={"plus_monthly":"pdt_0NqYkFnrBtumqnnW6amME","plus_annual":"pdt_0NqYjxau37A8F15U4ovnt","pro_monthly":"pdt_0NqYkgvwBKDtjSQRQxwbm","pro_annual":"pdt_0NqYkSYMM9n1wJoZLJp9Y"}
-# (Or Global USD products: {"plus_monthly":"pdt_0Np8JSfvie3Eqg47kDEzZ","plus_annual":"pdt_0Np8JdWRcfrMJqyruTzkE","pro_monthly":"pdt_0Np8JFZXhiKHXsUJH9GD8","pro_annual":"pdt_0Np8IxfM0q2BFdPQHPMDC"})
-DODO_PRODUCTS_USD_JSON={"plus_monthly":"pdt_0Np8JSfvie3Eqg47kDEzZ","plus_annual":"pdt_0Np8JdWRcfrMJqyruTzkE","pro_monthly":"pdt_0Np8JFZXhiKHXsUJH9GD8","pro_annual":"pdt_0Np8IxfM0q2BFdPQHPMDC"}
+# Existing India registry stays configured for historical events.
+DODO_PRODUCTS_JSON=<existing INR JSON>
+DODO_PRODUCTS_USD_JSON={"plus_annual":"pdt_...","plus_semiannual":"pdt_...","plus_quarterly":"pdt_...","pro_annual":"pdt_...","pro_semiannual":"pdt_...","pro_quarterly":"pdt_..."}
 ```
 
 4. In Dodo, open **Developer > Webhooks > Add endpoint**. Use `https://ipxsziqwrowxblwalnqj.supabase.co/functions/v1/dodo-webhook`. Subscribe to subscription events, `refund.succeeded` and `dispute.lost`. Copy the endpoint signing secret to the Supabase secret `DODO_PAYMENTS_WEBHOOK_KEY`.
 
-The optional USD registry selects the fixed international prices for accounts whose stored profile country is not `IN`. India and missing-country profiles use the default registry. Catalog and checkout use the same server selection; the browser never supplies prices or product IDs. Checkout validates the recurring amount, currency, billing interval and trial against `PLANS_AND_FEATURES.md`, and fixes the checkout currency to the quoted currency. Both registries are recognized by the verified webhook. Keep JSON values valid JSON without surrounding shell quotes in the dashboard.
-5. The functions and migrations were deployed in this session. For another environment, deploy `dodo-checkout` and `dodo-webhook` with their function-local import maps and JWT verification disabled at the gateway. Checkout verifies the signed-in bearer token itself. The webhook verifies Dodo's signature on the raw body. Apply the committed Dodo migration first. Native RevenueCat webhook deployment remains separate.
-6. Redeploy/rebuild the app, sign in with a free account, select a plan and press Buy. You should leave the app for Dodo checkout. Cancel once: no access should be granted. Complete a paid purchase: only a verified webhook should activate the matching Supabase entitlement with `source=dodo`. Starting the cardless Plus trial instead calls the authenticated claim_plus_trial RPC and grants source=none, with no Dodo session. On return to the app, press **Check plan status** if confirmation is still pending. Check Dodo's webhook delivery log for a 200 response. Me opens Dodo's customer portal for cancellation and plan management.
+Keep the existing monthly keys in the registries when monthly subscribers are still active. The server fetches each configured product and verifies currency, price, cadence and zero trial days before quoting or opening checkout.
+
+5. Apply the subscription-term migration and deploy the checkout and webhook functions. Checkout validates the signed-in bearer token. The webhook validates Dodo's signature.
+6. Confirm both main options and the three-month offer open the matching checkout. Cancelling keeps existing access. Only a signed, verified payment event activates the corresponding entitlement. Check the Dodo webhook delivery log and the customer portal for a subscribed account.
 
 For local testing, use a separate Supabase project, Dodo test products/keys, `DODO_ENVIRONMENT=test_mode`, `DODO_ALLOW_TEST_MODE=true`, and an appropriate localhost return URL. Never point test-mode billing at the production entitlement database. Do not claim that a real charge occurred in test mode.
 

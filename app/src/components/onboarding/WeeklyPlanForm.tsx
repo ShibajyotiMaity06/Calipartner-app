@@ -118,9 +118,9 @@ export function PlanField({
       <Text variant="label">
         {label}
         {optional ? (
-          <Text variant="label" color={dark.textMid}>
+          <Text variant="label" color={dark.textLo}>
             {' '}
-            {t('entryPolish.optional')}
+            {t('releaseUpdate.optional')}
           </Text>
         ) : null}
       </Text>
@@ -291,7 +291,7 @@ export function WeeklyPlanForm({
       </Text>
       {step === 'workout' ? (
         <>
-          {workoutOnly && (
+          {
             <>
               <Choice
                 label={t('workoutFlow.daysPerWeek')}
@@ -329,7 +329,7 @@ export function WeeklyPlanForm({
                 </Text>
               )}
             </>
-          )}
+          }
           <Choice
             label={t('fixNovember.trainingDays')}
             icon="calendar-outline"
@@ -379,11 +379,9 @@ export function WeeklyPlanForm({
               ))}
             </View>
           </View>
-          {field('limitations', false, t('fixNovember.limitationsHint'))}
           <PlanField
-            label={t('entryPolish.workoutNotes')}
+            label={t('releaseUpdate.avoid')}
             optional
-            hint={t('workoutFlow.notesHint')}
             value={preferences.workout_notes ?? ''}
             onChange={(value) => update('workout_notes', value)}
             id="plan-workout-notes"
@@ -393,6 +391,7 @@ export function WeeklyPlanForm({
               label={t('fixNovember.next')}
               onPress={() => {
                 if (
+                  (Boolean(preferences.workout_split) && !splitValid) ||
                   preferences.workout_days.length < 1 ||
                   preferences.workout_days.length > 6 ||
                   !preferences.equipment.length ||
@@ -418,9 +417,7 @@ export function WeeklyPlanForm({
             optional
             id="plan-allergies"
           />
-          {singleDay ? (
-            <Text>{t('personalDay.fourMeals')}</Text>
-          ) : (
+          {!singleDay && (
             <Choice
               multiple={false}
               label={t('fixNovember.meals')}

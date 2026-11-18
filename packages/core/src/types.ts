@@ -146,6 +146,7 @@ export type RecomputeReason =
 
 export interface GoalProfile {
   custom_macros?: boolean;
+  macro_reference_adjustment_kcal?: number | null;
   /** Null/absent retains the original calculator for historical plans. */
   gym_days?: number | null;
   input_height_cm?: number | null;
@@ -543,7 +544,7 @@ export type RoomState = 'active' | 'dormant' | 'locked' | 'over_capacity' | 'arc
 export type RoomWhoCanInvite = 'host_only' | 'any_member';
 
 export type RoomTier = 'free' | 'plus' | 'pro' | 'basic' | 'community';
-export type RoomPeriod = 'monthly' | 'annual' | 'quarterly';
+export type RoomPeriod = 'monthly' | 'annual' | 'semiannual' | 'quarterly';
 
 export type AppFeature =
   | 'chat_media'

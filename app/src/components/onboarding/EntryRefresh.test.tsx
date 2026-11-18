@@ -91,11 +91,11 @@ afterEach(async () => {
   tree = undefined;
 });
 const products = (currency: string) =>
-  ['plus_monthly', 'plus_annual', 'pro_monthly', 'pro_annual'].map((key) => ({
+  ['plus_semiannual', 'plus_annual', 'pro_semiannual', 'pro_annual'].map((key) => ({
     key,
     currency,
-    amount: currency === 'INR' ? 249 : 4.99,
-    trialDays: key.startsWith('plus') ? 7 : 0,
+    amount: currency === 'INR' ? 999 : 19.99,
+    trialDays: 0,
   }));
 it('shows prepared onboarding prices immediately without a loading-prices message', async () => {
   api.cached.mockReturnValue({ products: products('INR') });
@@ -104,9 +104,9 @@ it('shows prepared onboarding prices immediately without a loading-prices messag
     tree = create(<PremiumStep onContinue={vi.fn()} onSkip={vi.fn()} />);
   });
   expect(tree!.root.findAllByProps({ testID: 'onboarding-pricing-placeholder' })).toHaveLength(0);
-  expect(tree!.root.findByProps({ testID: 'onboarding-monthly-price' }).props.children).toContain(
-    '249',
-  );
+  expect(
+    tree!.root.findByProps({ testID: 'onboarding-six-month-price' }).props.children.join(''),
+  ).toContain('999');
   expect(JSON.stringify(tree!.toJSON())).not.toContain('Loading prices');
 });
 it('uses a price placeholder while an unprepared request is still pending', async () => {
@@ -126,9 +126,9 @@ it.each(['INR', 'USD'])(
     await act(async () => {
       tree = create(<PremiumStep onContinue={proceed} onSkip={skip} />);
     });
-    expect(JSON.stringify(tree!.toJSON())).toContain(currency === 'INR' ? '₹249.00' : '$4.99');
+    expect(JSON.stringify(tree!.toJSON())).toContain(currency === 'INR' ? '₹999.00' : '$19.99');
     expect(tree!.root.findByProps({ testID: 'btn-onboarding-next' }).props.label).toBe(
-      'Start 7-day free trial',
+      'Continue with Plus',
     );
     await act(async () =>
       tree!.root.findByProps({ testID: 'onboarding-plan-pro' }).props.onPress(),
@@ -203,30 +203,29 @@ it('shows request errors and restores the email action for a retry', async () =>
   expect(tree!.root.findByProps({ testID: 'btn-send-code' }).props.loading).toBe(false);
 });
 
-it('starts Plus without waiting for pricing and advances only after acknowledgement', async () => {
+it('keeps the Free action available while paid checkout waits for verified pricing', async () => {
   api.catalog.mockReturnValue(new Promise(() => {}));
   const skip = vi.fn(),
     proceed = vi.fn();
   await act(async () => {
     tree = create(<PremiumStep onContinue={proceed} onSkip={skip} />);
   });
-  expect(tree!.root.findByProps({ testID: 'btn-onboarding-next' }).props.disabled).toBe(false);
-  api.trial.mockResolvedValueOnce(false);
-  await act(async () => tree!.root.findByProps({ testID: 'btn-onboarding-next' }).props.onPress());
-  expect(skip).not.toHaveBeenCalled();
-  await act(async () => tree!.root.findByProps({ testID: 'btn-onboarding-next' }).props.onPress());
+  expect(tree!.root.findByProps({ testID: 'btn-onboarding-next' }).props.disabled).toBe(true);
+  await act(async () => tree!.root.findByProps({ testID: 'btn-onboarding-free' }).props.onPress());
   expect(skip).toHaveBeenCalledOnce();
   expect(proceed).not.toHaveBeenCalled();
+  expect(api.trial).not.toHaveBeenCalled();
 });
-
-it('explains Indian food and cardless trial before registration', async () => {
+it('explains Indian food and free personal tracking before registration', async () => {
   await act(async () => {
     tree = create(<WelcomeScreen />);
   });
   expect(tree!.root.findByProps({ testID: 'welcome-audience' }).props.children).toContain(
     'Indian food',
   );
-  expect(tree!.root.findByProps({ testID: 'welcome-trial' }).props.children).toContain('No card');
+  expect(tree!.root.findByProps({ testID: 'welcome-trial' }).props.children).toContain(
+    'Personal tracking is free forever.',
+  );
 });
 it('keeps email available when Google hangs and shows recovery guidance', async () => {
   vi.useFakeTimers();

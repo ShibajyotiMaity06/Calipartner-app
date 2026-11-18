@@ -14,7 +14,7 @@ vi.mock('react-native', () => ({
   Pressable: 'Pressable',
   ScrollView: 'ScrollView',
   View: 'View',
-  StyleSheet: { create: (value: unknown) => value },
+  StyleSheet: { create: (value: unknown) => value, hairlineWidth: 1 },
 }));
 vi.mock('react-native-safe-area-context', () => ({ SafeAreaView: 'SafeAreaView' }));
 vi.mock('expo-router', () => ({
@@ -38,6 +38,11 @@ vi.mock('@/hooks/useBrowserModalBack', () => ({
   useBrowserModalBack: vi.fn(),
   closeBrowserModalsThen: (navigate: () => void) => navigate(),
 }));
+vi.mock('@/services/recipeService', async () => {
+  const { default: recipes } = await import('../../../../datasets/owner_recipes.json');
+  const { ownerRecipeToRecipe } = await import('@calipartner/core');
+  return { OWNER_RECIPES: recipes.map((recipe) => ownerRecipeToRecipe(recipe, recipe.id)) };
+});
 vi.mock('@/services/weeklyPlanService', () => ({
   getPersonalWeeklyPlan: state.load,
   buildPersonalWeeklyPlan: state.build,
@@ -59,13 +64,11 @@ vi.mock('./OnboardingPaywall', () => ({ OnboardingPaywall: 'OnboardingPaywall' }
 import WeeklyPlanScreen from '@/app/weekly-plan';
 import { WeeklyPlanForm } from './WeeklyPlanForm';
 import { PersonalisedDayPreview } from './PersonalisedDayPreview';
-import { WeeklyPlanPreparing } from './WeeklyPlanPreparing';
-import { OnboardingPaywall } from './OnboardingPaywall';
-import { PaywallModal } from '@/components/rooms/PaywallModal';
 let tree: ReactTestRenderer;
 beforeEach(() => {
   (globalThis as unknown as { IS_REACT_ACT_ENVIRONMENT: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
   vi.clearAllMocks();
+  state.params.setup = '';
   state.load.mockResolvedValue(null);
 });
 afterEach(async () => {
@@ -75,35 +78,34 @@ const preferences = { country: 'India' };
 const monday = {
   id: 'saved',
   revision: 1,
+  scope: 'day',
   preferences,
   full_access: false,
   days: [{ day: 0, workout: { title: 'Rest', minutes: 0, exercises: [] }, meals: [] }],
   workout_tips: [],
   diet_tips: [],
 };
-it('builds one day after all preferences, then visits day, coach, compare and paywall in order', async () => {
-  let finish: ((value: unknown) => void) | undefined;
-  state.build.mockImplementation(
-    () =>
-      new Promise((resolve) => {
-        finish = resolve;
-      }),
-  );
+it('shows real recipes and continues setup without loading or generating a plan', async () => {
+  state.params.setup = '1';
   await act(async () => {
     tree = create(<WeeklyPlanScreen />);
   });
-  await act(async () => tree.root.findByType(WeeklyPlanForm).props.onBuild(preferences));
-  expect(state.build).toHaveBeenCalledWith('owner', preferences, true);
-  expect(tree.root.findByType(WeeklyPlanPreparing)).toBeDefined();
-  expect(tree.root.findAllByType(OnboardingPaywall)).toHaveLength(0);
-  await act(async () => finish?.(monday));
-  for (const stage of [0, 1, 2]) {
-    expect(tree.root.findByType(PersonalisedDayPreview).props.stage).toBe(stage);
-    expect(tree.root.findAllByType(OnboardingPaywall)).toHaveLength(0);
-    await act(async () => tree.root.findByType(PersonalisedDayPreview).props.onNext());
+  expect(tree.root.findByProps({ testID: 'onboarding-recipe-preview' })).toBeDefined();
+  const content = JSON.stringify(tree.toJSON());
+  for (const title of [
+    'Palak Paneer',
+    'Chicken Teriyaki Rice Bowl',
+    'Chicken Fajitas',
+    'Turkey Meatballs in Marinara',
+  ]) {
+    expect(content).toContain(title);
   }
-  expect(tree.root.findByType(PaywallModal).props.context).toBe('weekly_plan');
-  await act(async () => tree.root.findByType(PaywallModal).props.onContinueFree());
+  expect(content).toContain('more than 90 recipes');
+  expect(state.load).not.toHaveBeenCalled();
+  expect(state.build).not.toHaveBeenCalled();
+  await act(async () =>
+    tree.root.findByProps({ testID: 'recipe-preview-continue' }).props.onPress(),
+  );
   expect(state.replace).toHaveBeenCalledWith('/pair-start');
 });
 it('a failed request retains the preferences and shows an error instead of a fabricated plan', async () => {

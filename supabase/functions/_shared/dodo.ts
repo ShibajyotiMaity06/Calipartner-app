@@ -1,4 +1,4 @@
-import { DODO_PRODUCT_KEYS } from '@calipartner/core';
+import { BILLING_WEBHOOK_PRODUCT_KEYS } from '@calipartner/core';
 import DodoPayments from 'npm:dodopayments@2.40.0';
 import { createClient } from 'jsr:@supabase/supabase-js@2';
 
@@ -11,20 +11,14 @@ export function dodoConfig() {
     string
   > | null;
   const environment = Deno.env.get('DODO_ENVIRONMENT') ?? 'live_mode';
-  const productIds = DODO_PRODUCT_KEYS.map((key) => products[key]);
+  const productIds = BILLING_WEBHOOK_PRODUCT_KEYS.flatMap((key) =>
+    [products[key], globalProducts?.[key]].filter((value): value is string => Boolean(value)),
+  );
   if (
-    productIds.some((id) => typeof id !== 'string' || !id.trim()) ||
-    new Set(productIds).size !== 4
+    new Set(productIds).size !== productIds.length ||
+    productIds.some((id) => !/^pdt_[A-Za-z0-9]+$/.test(id))
   )
     throw new Error('DODO_PRODUCTS_NOT_CONFIGURED');
-  if (
-    globalProducts &&
-    (DODO_PRODUCT_KEYS.some(
-      (key) => typeof globalProducts[key] !== 'string' || !globalProducts[key].trim(),
-    ) ||
-      new Set([...productIds, ...DODO_PRODUCT_KEYS.map((key) => globalProducts[key])]).size !== 8)
-  )
-    throw new Error('DODO_GLOBAL_PRODUCTS_NOT_CONFIGURED');
   if (
     !apiKey ||
     !appUrl ||

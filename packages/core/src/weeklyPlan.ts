@@ -1,4 +1,5 @@
 import {
+  avoidedWorkoutMuscles,
   validateWorkoutSplitPreferences,
   workoutSplitSchedule,
   WORKOUT_MUSCLES,
@@ -283,11 +284,23 @@ export function validatePlanExercises(
   preferences: PlanPreferences,
 ): PlanExercise[] {
   if (!Array.isArray(input) || input.length > 8) throw new Error('INVALID_PLAN');
+  const avoided = avoidedWorkoutMuscles(preferences.workout_notes ?? '');
   return input.map((value) => {
     const e = object(value),
-      equipment = choice(e.equipment, preferences.equipment);
+      equipment = choice(e.equipment, preferences.equipment),
+      name = text(e.name, 100);
+    if (avoided.length) {
+      const groups = strings(e.primary_muscles, 1, WORKOUT_MUSCLES.length).map((m) =>
+        choice(m, WORKOUT_MUSCLES),
+      );
+      if (
+        groups.some((m) => avoided.includes(m)) ||
+        (avoided.includes('legs') && /squat|deadlift|lunge|leg |calf|calves/i.test(name))
+      )
+        throw new WeeklyPlanValidationError('unsupported_choice');
+    }
     return {
-      name: text(e.name, 100),
+      name,
       equipment,
       sets: number(e.sets, 1, 5, true, 'exercise_sets'),
       reps: number(e.reps, 5, 30, true, 'exercise_reps'),
@@ -375,6 +388,7 @@ export function validateWeeklyPlan(
       throw new WeeklyPlanValidationError('unsafe_copy');
     return value;
   };
+  const split = workoutSplitSchedule(preferences);
   const unscaledDays: Pick<PlanDay, 'meals'>[] = [];
   const days = plan.days.map((value, index): PlanDay => {
     const d = object(value),
@@ -382,8 +396,12 @@ export function validateWeeklyPlan(
     if (d.day !== index) throw new WeeklyPlanValidationError('week_days');
     const exercises = validatePlanExercises(workout.exercises, preferences);
     const training = options.singleDay
-      ? preferences.workout_days.length > 0
-      : preferences.workout_days.includes(index);
+      ? split
+        ? split.some((day) => day.muscles.length > 0)
+        : preferences.workout_days.length > 0
+      : split
+        ? split.some((day) => day.day === index && day.muscles.length > 0)
+        : preferences.workout_days.includes(index);
     if (training !== exercises.length > 0) throw new WeeklyPlanValidationError('training_schedule');
     const minutes = number(
       workout.minutes,
@@ -913,9 +931,10 @@ export function workoutRoutineFromAI(
   const days = raw.days.map((value, day) => {
     const item = object(value),
       workout = object(item.workout);
-    const training = preferences.workout_days.includes(day);
-    const exercises = validatePlanExercises(workout.exercises, preferences);
     const planned = schedule?.find((entry) => entry.day === day);
+    const training =
+      preferences.workout_days.includes(day) && (!planned || planned.muscles.length > 0);
+    const exercises = validatePlanExercises(workout.exercises, preferences);
     const muscleGroups = (workout.exercises as unknown[]).map((value) => {
       if (!schedule) return undefined;
       const groups = strings(object(value).primary_muscles, 1, WORKOUT_MUSCLES.length).map((m) =>
@@ -932,12 +951,6 @@ export function workoutRoutineFromAI(
       (training ? exercises.length < 3 || exercises.length > 6 : exercises.length !== 0)
     )
       throw new WeeklyPlanValidationError('training_schedule');
-    const notes = preferences.workout_notes ?? '';
-    if (
-      /\b(no legs?|avoid legs?|don.t want legs?)\b/i.test(notes) &&
-      exercises.some((exercise) => /squat|deadlift|lunge|leg |calf|calves/i.test(exercise.name))
-    )
-      throw new WeeklyPlanValidationError('unsupported_choice');
     const title = text(workout.title, 100);
     if (
       exercises.some((exercise) => /\bplank\b|\bwall sit\b|\bhold\b|\bamrap\b/i.test(exercise.name))
@@ -947,7 +960,7 @@ export function workoutRoutineFromAI(
       throw new WeeklyPlanValidationError('unsafe_copy');
     return {
       day,
-      title: planned?.focus ?? title,
+      title: training ? (planned?.focus ?? title) : title,
       minutes: number(
         workout.minutes,
         training ? 15 : 0,

@@ -27,8 +27,14 @@ import { t } from '@/i18n';
 import { NutrientSummary } from '@/components/diary/NutrientSummary';
 import { WeeklyMealActions } from '@/components/diary/WeeklyMealActions';
 import { WeeklyGroceryList } from '@/components/diary/WeeklyGroceryList';
+import { OnboardingRecipePreview } from '@/components/onboarding/OnboardingRecipePreview';
 
-export default function WeeklyPlanScreen({ onClose }: { onClose?: () => void } = {}) {
+export default function WeeklyPlanScreen(props: { onClose?: () => void } = {}) {
+  const { setup } = useLocalSearchParams<{ setup?: string }>();
+  return setup === '1' ? <OnboardingRecipePreview /> : <WeeklyPlanContent {...props} />;
+}
+
+function WeeklyPlanContent({ onClose }: { onClose?: () => void }) {
   const styles = useSquadStyles();
 
   const { colors: dark } = useAppearance();

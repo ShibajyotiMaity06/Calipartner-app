@@ -13,11 +13,18 @@ describe('browser Dodo checkout', () => {
     expect(assign).toHaveBeenCalledWith('https://customer.dodopayments.com/portal');
   });
   it('loads server-verified prices for every selectable plan', async () => {
-    const products = ['plus_monthly', 'plus_annual', 'pro_monthly', 'pro_annual'].map((key) => ({
+    const products = [
+      'plus_semiannual',
+      'plus_annual',
+      'plus_quarterly',
+      'pro_semiannual',
+      'pro_annual',
+      'pro_quarterly',
+    ].map((key) => ({
       key,
-      currency: 'INR',
-      amount: 249,
-      trialDays: key.startsWith('plus') ? 7 : 0,
+      currency: 'USD',
+      amount: 29.99,
+      trialDays: 0,
     }));
     invoke.mockResolvedValue({ data: { products } });
     expect(await fetchDodoCatalog()).toEqual(products);

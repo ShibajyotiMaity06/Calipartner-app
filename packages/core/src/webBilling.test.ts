@@ -39,29 +39,30 @@ describe('web billing boundaries', () => {
     for (const country of [null, '', 'India', 0, 'USA'])
       expect(() => webBillingProvider('web', country)).toThrow('BILLING_COUNTRY_REQUIRED');
   });
-  it('validates each INR plan amount, interval and seven-day Plus-only trial terms', () => {
-    for (const [key, period, amount, trial] of [
-      ['plus_monthly', 'monthly', 24900, 7],
-      ['plus_annual', 'yearly', 149900, 7],
-      ['pro_monthly', 'monthly', 49900, 0],
-      ['pro_annual', 'yearly', 249900, 0],
-    ] as const) {
-      const plan = { period, interval: 1, item: { currency: 'INR', amount } };
-      expect(verifiedRazorpayPlan(key, plan)).toMatchObject({
-        amount: amount / 100,
-        currency: 'INR',
-        trialDays: trial,
-      });
-      for (const patch of [
-        { interval: 3 },
-        { period: 'weekly' },
-        { item: { currency: 'USD', amount } },
-        { item: { currency: 'INR', amount: amount - 1 } },
-      ])
-        expect(() => verifiedRazorpayPlan(key, { ...plan, ...patch })).toThrow(
-          'RAZORPAY_PLAN_MISMATCH',
-        );
-    }
+  it.each([
+    ['plus_annual', 'yearly', 1, 149900],
+    ['plus_semiannual', 'monthly', 6, 99900],
+    ['plus_quarterly', 'monthly', 3, 59900],
+    ['pro_annual', 'yearly', 1, 249900],
+    ['pro_semiannual', 'monthly', 6, 159900],
+    ['pro_quarterly', 'monthly', 3, 89900],
+  ] as const)('verifies %s INR checkout terms', (key, period, interval, amount) => {
+    const plan = { period, interval, item: { currency: 'INR', amount } };
+    expect(verifiedRazorpayPlan(key, plan)).toEqual({
+      key,
+      amount: amount / 100,
+      currency: 'INR',
+      trialDays: 0,
+    });
+    for (const patch of [
+      { interval: interval + 1 },
+      { period: 'weekly' },
+      { item: { currency: 'USD', amount } },
+      { item: { currency: 'INR', amount: amount - 1 } },
+    ])
+      expect(() => verifiedRazorpayPlan(key, { ...plan, ...patch })).toThrow(
+        'RAZORPAY_PLAN_MISMATCH',
+      );
   });
   it('rejects missing and invalid provider billing timestamps', () => {
     for (const value of [null, 0, -1, '1900000000', NaN, Infinity, 1e12])

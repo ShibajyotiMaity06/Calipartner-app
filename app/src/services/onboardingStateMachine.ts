@@ -408,6 +408,7 @@ export class OnboardingStateMachine {
     goal: Goal;
     activity_level: ActivityLevel;
     gym_days: number;
+    macro_reference_adjustment_kcal: number;
     input_height_cm: number;
     current_weight_kg: number;
     body_fat_percentage: number | null;
@@ -446,6 +447,9 @@ export class OnboardingStateMachine {
       goal: this.state.goal,
       activity_level: this.state.activityLevel,
       gym_days: this.state.gymDays,
+      macro_reference_adjustment_kcal: Math.round(
+        Math.abs(this.state.calculatedTargets.dailyChangeKcal),
+      ),
       input_height_cm: this.state.heightCm,
       current_weight_kg: this.state.weightKg,
       body_fat_percentage: this.state.bodyFatPercentage,

@@ -1,4 +1,5 @@
 import { expect, it } from 'vitest';
+import { workoutSplitSchedule } from './workoutSplits';
 import {
   validateWorkoutRoutine,
   workoutRoutineFromAI,
@@ -49,6 +50,7 @@ const raw = () => ({
         ? [
             {
               name: 'Seated dumbbell curls',
+              primary_muscles: ['biceps'],
               equipment: 'dumbbell',
               sets: 3,
               reps: 10,
@@ -56,6 +58,7 @@ const raw = () => ({
             },
             {
               name: 'Hammer curls',
+              primary_muscles: ['biceps'],
               equipment: 'dumbbell',
               sets: 3,
               reps: 10,
@@ -63,6 +66,7 @@ const raw = () => ({
             },
             {
               name: 'Dumbbell triceps extension',
+              primary_muscles: ['triceps'],
               equipment: 'dumbbell',
               sets: 3,
               reps: 10,
@@ -126,4 +130,21 @@ it('preserves individually edited reps and fractional weights, and validates rem
   expect(validateWorkoutRoutine(plan).days[2]!.minutes).toBe(0);
   plan.days[0]!.exercises[0]!.targetSets[0]!.reps = 0;
   expect(() => validateWorkoutRoutine(plan)).toThrow();
+});
+
+it('leaves excluded muscles out of the requested split and rejects an exercise targeting them', () => {
+  const excluded = {
+    ...preferences,
+    workout_split: 'ppl' as const,
+    workout_notes: 'Right shoulder and lats',
+  };
+  const schedule = workoutSplitSchedule(excluded)!;
+  expect(schedule.map((day) => day.muscles)).toEqual([
+    ['chest', 'triceps'],
+    ['biceps'],
+    ['legs', 'core'],
+  ]);
+  const plan = raw();
+  plan.days[0]!.workout.exercises[0]!.primary_muscles = ['shoulders'];
+  expect(() => workoutRoutineFromAI(plan, excluded)).toThrow();
 });

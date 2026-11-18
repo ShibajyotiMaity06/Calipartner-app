@@ -62,17 +62,19 @@ export {
 // -----------------------------------------------------------------------------
 
 export const PLUS_PRODUCTS = Object.freeze({
+  semiannual: 'plus_semiannual',
   monthly: 'plus_monthly',
   annual: 'plus_annual',
   yearly: 'plus_yearly',
-  quarterly: 'plus_quarterly', // legacy
+  quarterly: 'plus_quarterly',
 } as const);
 
 export const PRO_PRODUCTS = Object.freeze({
+  semiannual: 'pro_semiannual',
   monthly: 'pro_monthly',
   annual: 'pro_annual',
   yearly: 'pro_yearly',
-  quarterly: 'pro_quarterly', // legacy
+  quarterly: 'pro_quarterly',
 } as const);
 
 export const BASIC_PRODUCTS = Object.freeze({
@@ -82,9 +84,11 @@ export const BASIC_PRODUCTS = Object.freeze({
 } as const);
 
 export const ACTIVE_REVENUECAT_PRODUCT_IDS: readonly string[] = Object.freeze([
-  PLUS_PRODUCTS.monthly,
+  PLUS_PRODUCTS.semiannual,
+  PLUS_PRODUCTS.quarterly,
   PLUS_PRODUCTS.annual,
-  PRO_PRODUCTS.monthly,
+  PRO_PRODUCTS.semiannual,
+  PRO_PRODUCTS.quarterly,
   PRO_PRODUCTS.annual,
 ]);
 
@@ -93,9 +97,11 @@ export const REVENUECAT_PRODUCT_IDS: readonly string[] = Object.freeze([
   BASIC_PRODUCTS.quarterly,
   BASIC_PRODUCTS.annual,
   PLUS_PRODUCTS.monthly,
+  PLUS_PRODUCTS.semiannual,
   PLUS_PRODUCTS.quarterly,
   PLUS_PRODUCTS.annual,
   PRO_PRODUCTS.monthly,
+  PRO_PRODUCTS.semiannual,
   PRO_PRODUCTS.quarterly,
   PRO_PRODUCTS.annual,
 ]);
@@ -131,6 +137,11 @@ export const PRICING_PLANS = Object.freeze({
   plus: {
     name: 'Plus',
     inr: {
+      terms: {
+        annual: { amount: 1499, monthlyEquivalent: 125 },
+        semiannual: { amount: 999, monthlyEquivalent: 166 },
+        quarterly: { amount: 599, monthlyEquivalent: 199 },
+      },
       monthly: '₹249 / mo',
       annual: '₹1,499 / yr',
       perMonthAnnual: '₹125 / mo',
@@ -138,13 +149,18 @@ export const PRICING_PLANS = Object.freeze({
       rawMonthly: 249,
     },
     usd: {
+      terms: {
+        annual: { amount: 29.99, monthlyEquivalent: 2.5 },
+        semiannual: { amount: 19.99, monthlyEquivalent: 3.33 },
+        quarterly: { amount: 11.99, monthlyEquivalent: 4.0 },
+      },
       monthly: '$4.99 / mo',
       annual: '$29.99 / yr',
       perMonthAnnual: '$2.50 / mo',
       rawAnnual: 29.99,
       rawMonthly: 4.99,
     },
-    trialDays: 7,
+    trialDays: 0,
     roomCap: 5,
     hostedRoomsMax: 3,
     rawMonthly: 249,
@@ -156,6 +172,11 @@ export const PRICING_PLANS = Object.freeze({
   pro: {
     name: 'Pro',
     inr: {
+      terms: {
+        annual: { amount: 2499, monthlyEquivalent: 208 },
+        semiannual: { amount: 1599, monthlyEquivalent: 266 },
+        quarterly: { amount: 899, monthlyEquivalent: 299 },
+      },
       monthly: '₹499 / mo',
       annual: '₹2,499 / yr',
       perMonthAnnual: '₹208 / mo',
@@ -163,6 +184,11 @@ export const PRICING_PLANS = Object.freeze({
       rawMonthly: 499,
     },
     usd: {
+      terms: {
+        annual: { amount: 49.99, monthlyEquivalent: 4.17 },
+        semiannual: { amount: 32.99, monthlyEquivalent: 5.5 },
+        quarterly: { amount: 18.99, monthlyEquivalent: 6.33 },
+      },
       monthly: '$9.99 / mo',
       annual: '$49.99 / yr',
       perMonthAnnual: '$4.17 / mo',
@@ -179,6 +205,22 @@ export const PRICING_PLANS = Object.freeze({
     aiCoachMessagesPerDay: 10,
   },
 });
+
+export const CHECKOUT_DURATIONS = ['annual', 'semiannual', 'quarterly'] as const;
+export type CheckoutDuration = (typeof CHECKOUT_DURATIONS)[number];
+export const CHECKOUT_MONTHS: Record<CheckoutDuration, number> = {
+  annual: 12,
+  semiannual: 6,
+  quarterly: 3,
+};
+
+export function subscriptionTerm(
+  tier: 'plus' | 'pro',
+  currency: 'INR' | 'USD',
+  duration: CheckoutDuration,
+) {
+  return PRICING_PLANS[tier][currency === 'INR' ? 'inr' : 'usd'].terms[duration];
+}
 
 // -----------------------------------------------------------------------------
 // 2. TIER RANKINGS & COMPARISONS (Free < Basic < Plus < Pro < Community)
@@ -233,7 +275,9 @@ export function mapProductIdToTierAndPeriod(
   }
 
   let period: RoomPeriod | null = null;
-  if (
+  if (/semi.?annual|half.?year|6[_-]?months?|six[_-]?months?|p6m/.test(normalized)) {
+    period = 'semiannual';
+  } else if (
     normalized.includes('annual') ||
     normalized.includes('yearly') ||
     normalized.includes('year')
@@ -269,7 +313,7 @@ export const DEFAULT_REMOTE_CONFIG: RemoteConfigMap = Object.freeze({
     pro: 20,
     community: 20,
   }),
-  trial_length_days: 7,
+  trial_length_days: 0,
   trial_cap: 5,
   community_tier_enabled: false,
 });
@@ -463,7 +507,7 @@ export const PAYWALL_TRIGGER_METADATA: Record<
 > = Object.freeze({
   accept_room_invite: {
     title: 'Join Room with Plus',
-    subtitle: 'Joining accountability rooms requires Plus or Pro. Start your 7-day free trial.',
+    subtitle: 'Joining accountability rooms requires Plus or Pro.',
     suggestedTier: 'plus',
     allowsTrial: true,
   },
@@ -476,14 +520,13 @@ export const PAYWALL_TRIGGER_METADATA: Record<
   },
   join_room: {
     title: 'Join an Accountability Room',
-    subtitle: 'Room participation requires Plus or Pro. Start your 7-day free trial.',
+    subtitle: 'Room participation requires Plus or Pro.',
     suggestedTier: 'plus',
     allowsTrial: true,
   },
   create_room_after_trial: {
     title: 'Keep Your Room Active',
-    subtitle:
-      'Your 7-day free trial has ended. Subscribe to Plus or Pro to keep tracking together.',
+    subtitle: 'Your Plus trial has ended. Subscribe to Plus or Pro to keep tracking together.',
     suggestedTier: 'plus',
     allowsTrial: false,
   },

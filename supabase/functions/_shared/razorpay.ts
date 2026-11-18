@@ -1,5 +1,5 @@
 import { createClient } from 'npm:@supabase/supabase-js@2.117.3';
-import { DODO_PRODUCT_KEYS } from '@calipartner/core';
+import { BILLING_WEBHOOK_PRODUCT_KEYS } from '@calipartner/core';
 
 export const billingHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -37,6 +37,7 @@ export function razorpayConfig() {
   const origin = new URL(Deno.env.get('RAZORPAY_APP_URL') ?? Deno.env.get('DODO_APP_URL') ?? '')
     .origin;
   const plans = JSON.parse(Deno.env.get('RAZORPAY_PLANS_JSON') ?? '{}') as Record<string, string>;
+  const planIds = BILLING_WEBHOOK_PRODUCT_KEYS.map((key) => plans[key]).filter(Boolean);
   if (
     !keySecret ||
     !['test', 'live'].includes(mode) ||
@@ -44,8 +45,8 @@ export function razorpayConfig() {
     !keyId.startsWith(test ? 'rzp_test_' : 'rzp_live_') ||
     (test && Deno.env.get('RAZORPAY_ALLOW_TEST_MODE') !== 'true') ||
     (!origin.startsWith('https://') && !(test && new URL(origin).hostname === 'localhost')) ||
-    DODO_PRODUCT_KEYS.some((key) => !/^plan_[A-Za-z0-9]+$/.test(plans[key] ?? '')) ||
-    new Set(DODO_PRODUCT_KEYS.map((key) => plans[key])).size !== 4
+    planIds.some((id) => !/^plan_[A-Za-z0-9]+$/.test(id)) ||
+    new Set(planIds).size !== planIds.length
   )
     throw new Error('RAZORPAY_NOT_CONFIGURED');
   return {

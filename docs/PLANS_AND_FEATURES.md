@@ -1,16 +1,23 @@
-# CaliPartner ? launch plans and availability
+# CaliPartner launch plans and availability
 
-Updated 16 November 2026. This replaces the stale feature matrix. The purchase sheet displays acknowledged store/web prices; the server entitlement remains the only authority for access.
+Updated 18 November 2026. The purchase sheet displays verified provider prices. The entitlement service controls access.
 
-## Prices and trial
+## Pricing
 
-| Plan | India monthly / annual | International monthly / annual |
-| --- | --- | --- |
-| Free | Free | Free |
-| Plus | ?249 / ?1,499 | $4.99 / $29.99 |
-| Pro | ?499 / ?2,499 | $9.99 / $49.99 |
+Personal tracking is free forever. Plus and Pro charge the full amount at checkout and renew at the selected interval. There are no new free trials.
 
-The eligible Plus trial lasts seven days, needs no card and never starts an automatic charge. Pro has no trial. Native billing uses the stores through RevenueCat; new Indian web subscriptions use Razorpay and other supported web regions use Dodo. Checkout prices must be loaded before purchase.
+| Plan | Duration | India upfront | International upfront | Monthly equivalent |
+| --- | --- | ---: | ---: | --- |
+| Plus | 1 year | ₹1,499 | $29.99 | ₹125 / $2.50 |
+| Plus | 6 months | ₹999 | $19.99 | ₹166 / $3.33 |
+| Plus | 3-month exit offer | ₹599 | $11.99 | ₹199 / $4.00 |
+| Pro | 1 year | ₹2,499 | $49.99 | ₹208 / $4.17 |
+| Pro | 6 months | ₹1,599 | $32.99 | ₹266 / $5.50 |
+| Pro | 3-month exit offer | ₹899 | $18.99 | ₹299 / $6.33 |
+
+The main paywall defaults to **1 Year** and also offers **6 Months**. The three-month offer appears when an eligible customer exits before completing a purchase. Monthly equivalents are informational. Existing subscriptions retain their provider and agreed terms.
+
+Indian web checkout uses Razorpay in INR. International web checkout uses Dodo in USD. Android and iOS use their store prices through RevenueCat. Verify all three intervals in the provider catalog before enabling checkout. Keep historical product mappings for existing subscribers.
 
 ## Available features
 
@@ -25,7 +32,7 @@ The eligible Plus trial lasts seven days, needs no card and never starts an auto
 | Hosted squads | Free / Plus / Pro | Existing server limits: capacities of 2 / 5 / 20 people respectively. |
 | Fasting and eating windows | Plus and Pro | Existing screening and duration safeguards; no health claims. |
 | Recipe library | Plus and Pro | 90+ recipes (93 in bundled_recipes.json); starter content remains available to Free. |
-| Meal plans and grocery lists | Purchased Plus and Pro | Existing consent, plan readiness and access checks apply. Trial access does not include full AI plans. |
+| Meal plans and grocery lists | Purchased Plus and Pro | Consent and purchased access are required. Setup previews existing recipes without requesting AI generation. |
 | Workout routines and shared workout detail | Plus and Pro | Routine generation/rebuild has its existing purchased-access rules. No rest-timer or personal-record promise. |
 | Private progress photo vault | Plus and Pro | Camera/gallery, stored date, optional weight/notes/pose, delete and two-photo comparison. Account-scoped device storage only; no cloud backup or application-level encryption claim. |
 | Personal AI Coach | Purchased Pro | Consent, safety, responsible-use and server cost controls remain. No numerical allowance is advertised. |
@@ -51,7 +58,7 @@ These remain visible on the paywall as future plans, without release dates:
 | Weekly AI progress insights and macro adjustments | Pro |
 
 
-Pair challenges remain in the Plus/Pro benefits. Existing historical records and backend export capabilities are preserved while deferred entry points are removed. Labelled onboarding demonstrations remain illustrative and never write sample diary data.
+Pair challenges remain in the Plus/Pro benefits. Existing historical records and backend export capabilities are preserved while deferred entry points are removed. Onboarding previews four published recipes from the library.
 
 ## Release verification still requiring owner/device access
 

@@ -15,23 +15,23 @@ RAZORPAY_WEBHOOK_SECRET=<separate random webhook signing secret>
 RAZORPAY_ENVIRONMENT=live
 RAZORPAY_ALLOW_TEST_MODE=false
 RAZORPAY_APP_URL=https://<your production web-app domain>
-RAZORPAY_PLANS_JSON={"plus_monthly":"plan_...","plus_annual":"plan_...","pro_monthly":"plan_...","pro_annual":"plan_..."}
+RAZORPAY_PLANS_JSON={"plus_annual":"plan_...","plus_semiannual":"plan_...","plus_quarterly":"plan_...","pro_annual":"plan_...","pro_semiannual":"plan_...","pro_quarterly":"plan_..."}
 ```
 
 `RAZORPAY_APP_URL` must match the browser origin where checkout runs. It may be omitted if the existing `DODO_APP_URL` already names that same origin. The public Key ID is returned only when opening browser Checkout; API and webhook secrets remain server-side.
 
-Generate the API keys in the Razorpay dashboard after account/website activation. Enable Razorpay Subscriptions for the account. Create these four plans with quantity one, interval one, and currency INR:
+Generate the API keys in the Razorpay dashboard after account/website activation. Enable Razorpay Subscriptions for the account. Configure these six plans with one subscription item and currency INR:
 
-| Registry key | Razorpay period | Price in INR | API amount in paise |
-| --- | --- | ---: | ---: |
-| `plus_monthly` | `monthly` | 249 | 24900 |
-| `plus_annual` | `yearly` | 1499 | 149900 |
-| `pro_monthly` | `monthly` | 499 | 49900 |
-| `pro_annual` | `yearly` | 2499 | 249900 |
+| Registry key | Razorpay period | Interval | INR | Paise |
+| --- | --- | ---: | ---: | ---: |
+| `plus_annual` | `yearly` | 1 | 1,499 | 149900 |
+| `plus_semiannual` | `monthly` | 6 | 999 | 99900 |
+| `plus_quarterly` | `monthly` | 3 | 599 | 59900 |
+| `pro_annual` | `yearly` | 1 | 2,499 | 249900 |
+| `pro_semiannual` | `monthly` | 6 | 1,599 | 159900 |
+| `pro_quarterly` | `monthly` | 3 | 899 | 89900 |
 
-Each configured plan is fetched and checked against the approved amount, currency and cadence before catalog display or subscription creation. The browser cannot choose an amount, plan ID or entitlement owner. Plans use the existing approved prices; provider checkout displays final payment/mandate terms.
-
-New Plus trials call the authenticated `claim_plus_trial` RPC, granting exactly seven days of source=none Plus without opening Razorpay or collecting any payment method. Expiry is enforced by server gates, with a dismissible paywall and continued Free access. Trial claims are idempotent and limited to one per account/device. New paid checkout reservations have no `trial_end`, and provider subscriptions omit delayed `start_at`. Pro has no trial. Preserve existing reserved mandates and signed webhook handling for their historical trial terms; mandate verification or refunds are never classified as purchased billing cycles. Subscriptions use 119 monthly or nine annual cycles to stay below the documented checkout duration limit.
+The server verifies each configured plan before displaying it or starting checkout. New subscriptions charge immediately and have no trial. Keep existing monthly mapping keys and historical trial mandates for webhooks. Annual, six-month and three-month subscriptions use 9, 18 and 36 billing cycles, respectively.
 
 ## Register the webhook
 
@@ -52,15 +52,15 @@ Signature verification uses HMAC SHA-256 over the original request body, before 
 
 Stopping renewal requires a separate confirmation and an acknowledged provider cancellation. Razorpay renewal is stopped immediately, while CaliPartner retains the existing paid/trial access through its recorded expiry. Full current-period refunds and lost disputes revoke that period. Partial refunds preserve access. Refunds of older periods cannot revoke a later renewal; a late capture cannot restore a refunded period. A lapsed/refunded subscription that remains open at the provider can still be managed and cancelled before starting another subscription.
 
-Keep the existing Dodo keys, both product registries and Dodo webhook. The INR registry remains necessary for historical Dodo events; new international checkouts require the USD registry. RevenueCat keys, offerings and webhook remain unchanged.
+Keep the existing Dodo keys, both product registries and Dodo webhook. The INR registry remains necessary for historical Dodo events; new international checkouts require the USD registry. Configure annual, six-month and three-month RevenueCat packages with immediate store pricing.
 
 ## Deployment and testing
 
-Apply `20261104000500_india_web_razorpay.sql` before deploying `web-billing`, `razorpay-checkout`, `razorpay-webhook`, and the updated `dodo-checkout`/`dodo-webhook`. The JWT gateway is disabled for these handlers; they perform their own bearer-token or webhook-signature verification. Function import maps include the shared pure TypeScript billing module.
+Apply the subscription-term migration before deploying `web-billing`, `razorpay-checkout`, `razorpay-webhook`, and the updated `dodo-checkout`/`dodo-webhook`. The JWT gateway is disabled for these handlers; they perform their own bearer-token or webhook-signature verification. Function import maps include the shared pure TypeScript billing module.
 
 For an isolated test Supabase project, use matching Razorpay test keys, test plans, a separate webhook secret, `RAZORPAY_ENVIRONMENT=test` and `RAZORPAY_ALLOW_TEST_MODE=true`. Configure that project's own webhook URL and test web origin. Default live configuration rejects test keys. Never enable test billing against the production entitlement database.
 
-After keys/plans and webhooks are configured, test a cardless Plus claim and expiry, immediate Plus/Pro purchase, modal cancellation, failed payment, repeated callback/webhook, renewal cancellation, refund, and account ownership. Verify the cardless Plus trial is `source=none`, `status=trial`, with no checkout or mandate; it must not unlock purchased-only weekly plans. Verify captured payments become `status=paid` only after the signed webhook. Check Android/iOS still use their native store flow and international web still uses Dodo.
+After configuration, check the annual and six-month quotes and the three-month exit offer. Verify immediate checkout, cancellation, failed payment, repeated callbacks and webhooks, renewal cancellation, refunds and account ownership. Only verified captured payments yield paid access. Check Android and iOS through RevenueCat and international web through Dodo.
 
 Razorpay subscription creation has no documented idempotency header. The server reserves the client UUID before creating anything and never repeats a creation with an unknown outcome. If a provider response is lost before its subscription ID is recorded, the checkout remains pending for investigation. Reconcile the provider dashboard/API using `notes.checkout_id`; do not delete the reservation or create a second subscription blindly.
 

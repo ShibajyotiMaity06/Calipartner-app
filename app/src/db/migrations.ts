@@ -611,4 +611,9 @@ export const migrations: readonly LocalMigration[] = [
     sql: `CREATE TABLE local_progress_photos (id TEXT PRIMARY KEY, user_id TEXT NOT NULL, photo_uri TEXT NOT NULL, captured_date TEXT NOT NULL, weight_kg REAL, pose TEXT NOT NULL DEFAULT 'front', notes TEXT NOT NULL DEFAULT '', created_at TEXT NOT NULL);
       CREATE INDEX progress_photos_owner_date ON local_progress_photos(user_id,captured_date);`,
   },
+  {
+    version: 22,
+    name: 'macro_reference_adjustment',
+    sql: 'ALTER TABLE local_goal_profiles ADD COLUMN macro_reference_adjustment_kcal INTEGER;',
+  },
 ];

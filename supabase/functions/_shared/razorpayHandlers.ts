@@ -1,5 +1,6 @@
 import { applyRazorpayCC } from './ccBilling.ts';
 import {
+  BILLING_WEBHOOK_PRODUCT_KEYS,
   DODO_PRODUCT_KEYS,
   dodoProductKey,
   razorpayEpoch,
@@ -142,7 +143,7 @@ export async function handleRazorpayCheckout(req: Request, getConfig = razorpayC
       return billingResponse({
         provider: 'razorpay',
         products: await Promise.all(
-          DODO_PRODUCT_KEYS.map(async (key) => {
+          DODO_PRODUCT_KEYS.filter((key) => plans[key]).map(async (key) => {
             const product = verifiedRazorpayPlan(key, await api('/plans/' + plans[key]));
             return {
               ...product,
@@ -155,6 +156,7 @@ export async function handleRazorpayCheckout(req: Request, getConfig = razorpayC
     const key = dodoProductKey(body.tier, body.duration);
     if (!key || !uuid(body.request_id) || (body.action && body.action !== 'checkout'))
       return billingResponse({ error: 'INVALID_CHECKOUT' }, 400);
+    if (!plans[key]) return billingResponse({ error: 'RAZORPAY_NOT_CONFIGURED' }, 503);
     verifiedRazorpayPlan(key, await api('/plans/' + plans[key]));
     const reserved = await admin.rpc('reserve_web_checkout', {
       p_user_id: user.id,
@@ -184,7 +186,7 @@ export async function handleRazorpayCheckout(req: Request, getConfig = razorpayC
       const subscription = await api('/subscriptions', {
         plan_id: plans[key],
         quantity: 1,
-        total_count: key.endsWith('_annual') ? 9 : 119,
+        total_count: key.endsWith('_annual') ? 9 : key.endsWith('_semiannual') ? 18 : 36,
         customer_notify: 1,
         ...(c.trial_end ? { start_at: Math.floor(Date.parse(c.trial_end) / 1000) } : {}),
         notes: { checkout_id: c.id },
@@ -280,7 +282,7 @@ export async function handleRazorpayWebhook(req: Request, getConfig = razorpayCo
     }
     if (!id(subscriptionId, 'sub')) return billingResponse({ error: 'INVALID_SUBSCRIPTION' }, 400);
     const subscription = await api('/subscriptions/' + subscriptionId);
-    const key = DODO_PRODUCT_KEYS.find((key) => plans[key] === subscription.plan_id);
+    const key = BILLING_WEBHOOK_PRODUCT_KEYS.find((key) => plans[key] === subscription.plan_id);
     if (!key || subscription.id !== subscriptionId)
       return billingResponse({ error: 'UNKNOWN_PLAN' }, 400);
     const product = verifiedRazorpayPlan(key, await api('/plans/' + plans[key]));

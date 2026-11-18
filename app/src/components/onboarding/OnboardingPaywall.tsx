@@ -5,7 +5,6 @@ import { Button, Text, homeLayout, space } from '@calipartner/ui';
 import type { DodoCatalogProduct } from '@calipartner/core';
 import { useAuth } from '@/contexts/AuthContext';
 import { useSubscription } from '@/hooks/useSubscription';
-import { usePlusTrial } from '@/hooks/usePlusTrial';
 import { fetchWebCatalog, getCachedWebCatalog } from '@/services/webBillingService';
 import { findSubscriptionPackage } from '@/services/subscriptionPackages';
 import { t } from '@/i18n';
@@ -15,7 +14,7 @@ export function OnboardingPaywall({
   onCheckout,
   onFree,
 }: {
-  onCheckout: (tier: 'plus' | 'pro', duration: 'monthly' | 'annual') => void;
+  onCheckout: (tier: 'plus' | 'pro', duration: 'semiannual' | 'annual') => void;
   onFree: () => void;
 }) {
   const styles = useSquadStyles();
@@ -23,10 +22,9 @@ export function OnboardingPaywall({
   const { colors: dark } = useAppearance();
 
   const { session } = useAuth(),
-    subscription = useSubscription(),
-    trial = usePlusTrial();
+    subscription = useSubscription();
   const cached = Platform.OS === 'web' ? getCachedWebCatalog(session?.access_token) : undefined;
-  const [period, setPeriod] = useState<'monthly' | 'annual'>('annual'),
+  const [period, setPeriod] = useState<'semiannual' | 'annual'>('annual'),
     [catalog, setCatalog] = useState<DodoCatalogProduct[]>(cached?.products ?? []),
     [pending, setPending] = useState(Platform.OS === 'web' && !cached),
     [error, setError] = useState(false),
@@ -70,7 +68,7 @@ export function OnboardingPaywall({
       <Text variant="title1">{t('aha.paywallTitle')}</Text>
       <Text>{t('aha.paywallBody')}</Text>
       <View style={styles.row} accessibilityRole="tablist">
-        {(['monthly', 'annual'] as const).map((value) => (
+        {(['annual', 'semiannual'] as const).map((value) => (
           <Pressable
             key={value}
             onPress={() => setPeriod(value)}
@@ -84,7 +82,7 @@ export function OnboardingPaywall({
             }}
             testID={`support-duration-${value}`}
           >
-            <Text>{t(`aha.${value}`)}</Text>
+            <Text>{t(`releaseUpdate.${value}`)}</Text>
           </Pressable>
         ))}
       </View>
@@ -95,29 +93,12 @@ export function OnboardingPaywall({
             <Text accessibilityLiveRegion="polite">{t('fixes.loadingPrices')}</Text>
           ) : price(tier) && !error ? (
             <Text variant="numeralM" tabular>
-              {period === 'annual'
-                ? t('aha.billed', { price: price(tier)! })
-                : t('entryRefresh.monthly', { price: price(tier)! })}
+              {t('releaseUpdate.charged', { total: price(tier)! })}
             </Text>
           ) : (
             <Text accessibilityRole="alert">{t('entryRefresh.priceError')}</Text>
           )}
           <Text>{t(tier === 'plus' ? 'aha.plusBody' : 'aha.proBody')}</Text>
-          {tier === 'plus' && trial.offer?.eligible && (
-            <>
-              <Text variant="bodyS">{t('cardlessTrial.noCard')}</Text>
-              <Text variant="bodyS">{t('aha.previewBody')}</Text>
-              <Button
-                variant="secondary"
-                label={t('entryRefresh.trialAction')}
-                onPress={async () => {
-                  if (await trial.start()) onFree();
-                }}
-                disabled={trial.starting}
-                testID="support-start-plus-trial"
-              />
-            </>
-          )}
           <Button
             variant={tier === 'pro' ? 'primary' : 'secondary'}
             label={t('entryRefresh.choosePlan', { plan: t(`entryRefresh.${tier}`) })}
@@ -138,20 +119,7 @@ export function OnboardingPaywall({
           testID="support-prices-retry"
         />
       )}
-      {trial.error && (
-        <>
-          <Text accessibilityRole="alert">{t('cardlessTrial.error')}</Text>
-          <Button
-            variant="secondary"
-            label={t('common.retry')}
-            onPress={() => void trial.refresh()}
-            testID="support-trial-retry"
-          />
-        </>
-      )}
-      <View style={styles.card}>
-        <Text>{t('aha.paywallBody')}</Text>
-      </View>
+      <Text>{t('releaseUpdate.freeForever')}</Text>
       <Button
         variant="tertiary"
         label={t('aha.free')}

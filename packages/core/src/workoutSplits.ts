@@ -50,6 +50,27 @@ export interface WorkoutSplitDay {
   focus: string;
   muscles: WorkoutMuscle[];
 }
+
+export function avoidedWorkoutMuscles(notes: string): WorkoutMuscle[] {
+  const regions: Record<WorkoutMuscle, RegExp> = {
+    chest: /\b(chest|pecs?|pectoral[s]?)\b/i,
+    back: /\b(back|lats?|spine|traps?)\b/i,
+    shoulders: /\b(shoulders?|delts?|rotator cuff)\b/i,
+    biceps: /\b(biceps?|arms?|elbows?|wrists?|forearms?)\b/i,
+    triceps: /\b(triceps?|arms?|elbows?|wrists?|forearms?)\b/i,
+    legs: /\b(legs?|knees?|hips?|calf|calves|quads?|quadriceps|hamstrings?|glutes?|ankles?|lower body)\b/i,
+    core: /\b(core|abs?|abdominals?)\b/i,
+  };
+  const exclusions = notes
+    .split(/[.;,\n]+/)
+    .map((clause) => {
+      if (!/^\s*(focus|prioriti[sz]e|target)\b/i.test(clause)) return clause;
+      const start = clause.search(/\b(no|avoid|skip|exclude|without)\b/i);
+      return start < 0 ? '' : clause.slice(start);
+    })
+    .join(' ');
+  return WORKOUT_MUSCLES.filter((muscle) => regions[muscle].test(exclusions));
+}
 /** A deterministic prescription: the provider chooses exercises, never the weekly split. */
 export function workoutSplitSchedule(input: WorkoutSplitPreferences): WorkoutSplitDay[] | null {
   validateWorkoutSplitPreferences(input);
@@ -89,7 +110,7 @@ export function workoutSplitSchedule(input: WorkoutSplitPreferences): WorkoutSpl
     ],
   };
   const template = templates[input.workout_split];
-  const omitLegs = /\b(no legs?|avoid legs?|don.t want legs?)\b/i.test(input.workout_notes ?? '');
+  const excluded = avoidedWorkoutMuscles(input.workout_notes ?? '');
   const days = [...input.workout_days]
     .sort((a, b) => a - b)
     .map((day, index) => {
@@ -97,7 +118,7 @@ export function workoutSplitSchedule(input: WorkoutSplitPreferences): WorkoutSpl
       return {
         day,
         focus,
-        muscles: muscles.filter((m) => !(omitLegs && m === 'legs')),
+        muscles: muscles.filter((m) => !excluded.includes(m)),
       };
     });
   return days;

@@ -2,6 +2,7 @@ import { Platform } from 'react-native';
 import {
   BILLING_COUNTRY_CODES,
   DODO_PRODUCT_KEYS,
+  type CheckoutDuration,
   type DodoCatalogProduct,
 } from '@calipartner/core';
 import { getSupabase } from '@/lib/supabase';
@@ -89,15 +90,16 @@ async function loadWebCatalog(): Promise<WebCatalog> {
   if (
     !['dodo', 'razorpay'].includes(data?.provider) ||
     !Array.isArray(data?.products) ||
-    data.products.length !== 4 ||
-    !DODO_PRODUCT_KEYS.every((key) =>
-      data.products.some(
-        (p: DodoCatalogProduct) =>
-          p.key === key &&
-          p.currency === (data.provider === 'razorpay' ? 'INR' : 'USD') &&
-          Number.isFinite(p.amount) &&
-          p.amount > 0,
-      ),
+    !data.products.length ||
+    new Set(data.products.map((product: DodoCatalogProduct) => product.key)).size !==
+      data.products.length ||
+    !data.products.every(
+      (p: DodoCatalogProduct) =>
+        DODO_PRODUCT_KEYS.some((key) => key === p.key) &&
+        p.currency === (data.provider === 'razorpay' ? 'INR' : 'USD') &&
+        Number.isFinite(p.amount) &&
+        p.amount > 0 &&
+        p.trialDays === 0,
     )
   )
     throw new Error(t('webBilling.unavailable'));
@@ -167,7 +169,7 @@ export async function loadRazorpay(): Promise<CheckoutConstructor> {
 export async function startWebCheckout(
   provider: WebPaymentProvider,
   tier: 'plus' | 'pro',
-  duration: 'monthly' | 'annual',
+  duration: CheckoutDuration,
   requestId: string,
 ): Promise<'redirected' | 'pending' | 'cancelled'> {
   webOnly();

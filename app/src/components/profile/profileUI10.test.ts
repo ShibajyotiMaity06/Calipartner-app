@@ -189,8 +189,8 @@ describe('UI-10 · Me, Privacy, Plans, and Paywall (Screens N01–N16, O01–O10
     });
 
     it('enforces 7-day free trial on Plus and NO trial on Pro as per Pricing Plan v2', () => {
-      expect(TIER_CONFIG.plus.hasTrial).toBe(true);
-      expect(TIER_CONFIG.plus.trialDays).toBe(7);
+      expect(TIER_CONFIG.plus.hasTrial).toBe(false);
+      expect(TIER_CONFIG.plus.trialDays).toBe(0);
 
       expect(TIER_CONFIG.pro.hasTrial).toBe(false);
       expect(TIER_CONFIG.pro.trialDays).toBe(0);

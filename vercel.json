@@ -44,7 +44,7 @@
       }
     },
     {
-      "src": "/(auth|squad|invite|profile|shop|avatar|notifications|onboarding|dev|\\(tabs\\))/(.*)",
+      "src": "/(auth|squad|invite|referral|profile|shop|avatar|notifications|onboarding|dev|\\(tabs\\))/(.*)",
       "dest": "/app-shell.html",
       "headers": {
         "Cache-Control": "no-store",

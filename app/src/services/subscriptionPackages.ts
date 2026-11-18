@@ -15,7 +15,18 @@ export function findSubscriptionPackage(
   for (const offering of candidates) {
     const match = offering?.availablePackages.find((pkg) => {
       const product = mapProductIdToTierAndPeriod(pkg.product.identifier);
-      return product?.tier === tier && product.period === duration;
+      if (product?.tier !== tier || product?.period !== duration) return false;
+      if (duration === 'monthly') return true; // Historical product lookups only.
+      const expected = { annual: 'P1Y', semiannual: 'P6M', quarterly: 'P3M' }[duration];
+      const storePeriod = pkg.product.subscriptionPeriod;
+      return (
+        (!storePeriod ||
+          storePeriod === expected ||
+          (duration === 'annual' && storePeriod === 'P12M')) &&
+        !pkg.product.introPrice &&
+        !pkg.product.defaultOption?.freePhase &&
+        !pkg.product.defaultOption?.introPhase
+      );
     });
     if (match) return match;
   }

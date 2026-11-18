@@ -29,6 +29,7 @@ const content = () => ({
         ? [
             {
               name: 'Seated dumbbell curls',
+              primary_muscles: ['biceps'],
               equipment: 'dumbbell',
               sets: 3,
               reps: 10,
@@ -36,6 +37,7 @@ const content = () => ({
             },
             {
               name: 'Hammer curls',
+              primary_muscles: ['biceps'],
               equipment: 'dumbbell',
               sets: 3,
               reps: 10,
@@ -43,6 +45,7 @@ const content = () => ({
             },
             {
               name: 'Dumbbell triceps extension',
+              primary_muscles: ['triceps'],
               equipment: 'dumbbell',
               sets: 3,
               reps: 10,

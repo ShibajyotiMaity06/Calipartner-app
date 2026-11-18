@@ -8,7 +8,7 @@ import {
 } from './activity_retirement_cases.mjs';
 const db = new PGlite({ extensions: { citext } });
 await db.exec(`create role anon; create role authenticated; create role service_role bypassrls;
-create schema auth; create table auth.users(id uuid primary key,email text, raw_user_meta_data jsonb default '{}'::jsonb,created_at timestamptz default now());
+create schema auth; create table auth.users(id uuid primary key,email text,email_confirmed_at timestamptz, raw_user_meta_data jsonb default '{}'::jsonb,created_at timestamptz default now());
 create function auth.uid() returns uuid language sql stable as $$ select (nullif(current_setting('request.jwt.claims',true),'')::jsonb->>'sub')::uuid $$;
 create function auth.jwt() returns jsonb language sql stable as $$ select nullif(current_setting('request.jwt.claims',true),'')::jsonb $$;
 create publication supabase_realtime;
@@ -19,6 +19,18 @@ let migrations = 0;
 for (const f of (await readdir('supabase/migrations')).filter((f) => f.endsWith('.sql')).sort()) {
   try {
     if (f === '20261029000031_retire_focus_time.sql') await seedActivityRetirementHistory(db);
+    if (f === '20261118000002_subscription_terms.sql') {
+      const { runCardlessTrialTests } = await import('./cardless_trial_cases.mjs');
+      await runCardlessTrialTests(db);
+    }
+    if (f === '20261118000002_subscription_terms.sql') {
+      const { runRazorpayBillingTests } = await import('./razorpay_billing_cases.mjs');
+      await runRazorpayBillingTests(db);
+    }
+    if (f === '20261118000002_subscription_terms.sql') {
+      const { runBillingGoalTests } = await import('./billing_goal_cases.mjs');
+      await runBillingGoalTests(db);
+    }
     await db.exec(await readFile(`supabase/migrations/${f}`, 'utf8'));
     migrations++;
   } catch (error) {
@@ -28,6 +40,9 @@ for (const f of (await readdir('supabase/migrations')).filter((f) => f.endsWith(
 console.log(`Database migrations: ${migrations} passed`);
 const { runRoomTests } = await import('./rooms_v3_cases.mjs');
 try {
+  const { runSubscriptionAndReferralReleaseTests } =
+    await import('./subscription_release_cases.mjs');
+  await runSubscriptionAndReferralReleaseTests(db);
   const { runProgressLaunchTests } = await import('./progress_launch_cases.mjs');
   await runProgressLaunchTests(db);
   const { runLaunchHardeningTests } = await import('./launch_hardening_cases.mjs');
@@ -50,14 +65,10 @@ try {
   await runWeeklyHabitTests(db);
   const { runBlueprintReviewTests } = await import('./blueprint_review_cases.mjs');
   await runBlueprintReviewTests(db);
-  const { runCardlessTrialTests } = await import('./cardless_trial_cases.mjs');
-  await runCardlessTrialTests(db);
   const { runSquadRenameTests } = await import('./squad_rename_cases.mjs');
   await runSquadRenameTests(db);
   const { runFoodLibraryTests } = await import('./food_library_cases.mjs');
   await runFoodLibraryTests(db);
-  const { runRazorpayBillingTests } = await import('./razorpay_billing_cases.mjs');
-  await runRazorpayBillingTests(db);
   const { runWeeklyPlanTests } = await import('./weekly_plan_cases.mjs');
   await runWeeklyPlanTests(db);
   const { runFastingAccessTests } = await import('./fasting_access_cases.mjs');
@@ -89,8 +100,6 @@ try {
   await runFriendTests(db);
   const { runSocialDiscoveryTests } = await import('./social_discovery_cases.mjs');
   await runSocialDiscoveryTests(db);
-  const { runBillingGoalTests } = await import('./billing_goal_cases.mjs');
-  await runBillingGoalTests(db);
   const { runFoodCaptureTests } = await import('./food_capture_cases.mjs');
   await runFoodCaptureTests(db);
   const { runPushDeliveryTests } = await import('./push_delivery_cases.mjs');

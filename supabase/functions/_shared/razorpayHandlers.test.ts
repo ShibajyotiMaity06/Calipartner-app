@@ -6,8 +6,12 @@ const secret = 'fixture-webhook-secret';
 const now = Math.floor(Date.now() / 1000);
 const plans = {
   plus_monthly: 'plan_PlusMonthly',
+  plus_semiannual: 'plan_PlusSix',
+  plus_quarterly: 'plan_PlusThree',
   plus_annual: 'plan_PlusAnnual',
   pro_monthly: 'plan_ProMonthly',
+  pro_semiannual: 'plan_ProSix',
+  pro_quarterly: 'plan_ProThree',
   pro_annual: 'plan_ProAnnual',
 };
 async function sign(raw: string, key = secret) {
@@ -142,23 +146,24 @@ function setup(
     api: async (path: string, body?: unknown) => {
       calls.push({ path, body });
       if (path.startsWith('/plans/')) {
-        const key = Object.entries(plans).find(([, value]) => path.endsWith(value))![0];
+        const key = Object.entries(plans).find(([, value]) =>
+          path.endsWith(value),
+        )![0] as keyof typeof plans;
+        const amounts: Record<keyof typeof plans, number> = {
+          plus_monthly: 24900,
+          plus_annual: 149900,
+          plus_semiannual: 99900,
+          plus_quarterly: 59900,
+          pro_monthly: 49900,
+          pro_annual: 249900,
+          pro_semiannual: 159900,
+          pro_quarterly: 89900,
+        };
         return {
-          id: plans[key as keyof typeof plans],
-          period: key.endsWith('annual') ? 'yearly' : 'monthly',
-          interval: 1,
-          item: {
-            currency: 'INR',
-            amount: options.wrongPrice
-              ? 1
-              : key === 'plus_monthly'
-                ? 24900
-                : key === 'plus_annual'
-                  ? 149900
-                  : key === 'pro_monthly'
-                    ? 49900
-                    : 249900,
-          },
+          id: plans[key],
+          period: key.endsWith('_annual') ? 'yearly' : 'monthly',
+          interval: key.endsWith('_semiannual') ? 6 : key.endsWith('_quarterly') ? 3 : 1,
+          item: { currency: 'INR', amount: options.wrongPrice ? 1 : amounts[key] },
         };
       }
       if (path === '/subscriptions') {
@@ -240,12 +245,12 @@ Deno.test(
     const state = setup();
     const result = await handleRazorpayCheckout(request({ action: 'catalog' }), () => state.config);
     assert.equal(result.status, 200);
-    assert.equal((await result.json()).products.length, 4);
+    assert.equal((await result.json()).products.length, 6);
     const bad = setup({ wrongPrice: true });
     assert.equal(
       (
         await handleRazorpayCheckout(
-          request({ tier: 'plus', duration: 'monthly', request_id: checkoutId }),
+          request({ tier: 'plus', duration: 'semiannual', request_id: checkoutId }),
           () => bad.config,
         )
       ).status,
@@ -261,7 +266,7 @@ Deno.test(
       const state = setup();
       const body = {
         tier,
-        duration: 'monthly',
+        duration: 'semiannual',
         request_id: checkoutId,
         user_id: 'attacker',
         amount: 1,
@@ -279,7 +284,7 @@ Deno.test(
   'Unknown creation outcome stays reserved; a retry never creates another subscription',
   async () => {
     const state = setup({ lostAck: true });
-    const body = { tier: 'plus', duration: 'monthly', request_id: checkoutId };
+    const body = { tier: 'plus', duration: 'semiannual', request_id: checkoutId };
     assert.equal((await handleRazorpayCheckout(request(body), () => state.config)).status, 503);
     assert.equal((await handleRazorpayCheckout(request(body), () => state.config)).status, 409);
     assert.equal(state.calls.filter((call) => call.path === '/subscriptions').length, 1);

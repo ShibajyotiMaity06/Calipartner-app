@@ -1,4 +1,9 @@
-import { PRICING_PLANS } from './subscriptions';
+import {
+  CHECKOUT_MONTHS,
+  PRICING_PLANS,
+  subscriptionTerm,
+  type CheckoutDuration,
+} from './subscriptions';
 import type { DodoCatalogProduct, DodoProductKey } from './dodoBilling';
 
 export const BILLING_COUNTRY_CODES =
@@ -20,17 +25,19 @@ export function verifiedRazorpayPlan(key: DodoProductKey, input: unknown): DodoC
     item?: { currency?: string; amount?: number };
   } | null;
   const tier = key.startsWith('plus_') ? 'plus' : 'pro';
-  const annual = key.endsWith('_annual');
-  const price = PRICING_PLANS[tier];
-  const amount = price.inr[annual ? 'rawAnnual' : 'rawMonthly'];
-  if (
-    plan?.period !== (annual ? 'yearly' : 'monthly') ||
-    plan.interval !== 1 ||
-    plan.item?.currency !== 'INR' ||
-    plan.item.amount !== Math.round(amount * 100)
-  )
+  const duration = key.split('_')[1] as CheckoutDuration | 'monthly';
+  const annual = duration === 'annual';
+  const amount =
+    duration === 'monthly'
+      ? PRICING_PLANS[tier].inr.rawMonthly
+      : subscriptionTerm(tier, 'INR', duration).amount;
+  const interval = annual || duration === 'monthly' ? 1 : CHECKOUT_MONTHS[duration];
+  const cadence =
+    (plan?.period === (annual ? 'yearly' : 'monthly') && plan.interval === interval) ||
+    (duration === 'quarterly' && plan?.period === 'quarterly' && plan.interval === 1);
+  if (!cadence || plan?.item?.currency !== 'INR' || plan.item.amount !== Math.round(amount * 100))
     throw new Error('RAZORPAY_PLAN_MISMATCH');
-  return { key, currency: 'INR', amount, trialDays: price.trialDays };
+  return { key, currency: 'INR', amount, trialDays: 0 };
 }
 
 export function razorpayEpoch(value: unknown): string | null {

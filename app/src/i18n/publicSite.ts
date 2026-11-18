@@ -6,8 +6,7 @@ export const publicSite = {
   description:
     'Log Indian meals in seconds, team up in accountability rooms, track workouts, and stay consistent with streaks. Built for Indian food.',
   audience: 'Built for Indian food & fitness accountability.',
-  trial:
-    'Personal tracking is free forever. Eligible accounts get a 7-day Plus trial. No card and no automatic charge.',
+  trial: 'Personal tracking is free forever. Plus and Pro are optional paid subscriptions.',
   browserHelp:
     'If Google login doesn’t open in this browser, use the email 6-digit code or open in Safari/Chrome.',
   googlePending: 'Google sign-in has not completed. You can use your email code below.',
@@ -65,12 +64,12 @@ export const publicSite = {
         body: 'CaliPartner provides general nutrition, workout and habit information, not medical advice, diagnosis or treatment. Targets include calorie floors and rate limits, but are not a guarantee of individual suitability or results. Consult a qualified clinician or dietitian before changing your diet, training or fasting, especially if you have a health condition. AI estimates and food data require your review.',
       },
       {
-        title: 'Free tracking and the Plus trial',
-        body: 'Personal tracking is free. Eligible accounts can activate one seven-day Plus trial without a card, payment details or automatic charge. At expiry, access returns to Free unless you separately purchase a plan. Full AI meal and workout plans require purchased Plus or Pro and consent; the trial does not include them. Pro has no trial.',
+        title: 'Free tracking',
+        body: 'Personal tracking is free forever. Full AI meal and workout plans require purchased Plus or Pro and consent',
       },
       {
         title: 'Subscriptions, renewal and cancellation',
-        body: 'Paid Plus and Pro subscriptions are offered monthly or annually. The purchase screen shows the price, currency, duration and renewal terms before you confirm. Paid purchases bill immediately and automatically renew unless cancelled according to your provider’s terms. Manage Apple subscriptions in Apple account subscription settings and Google Play subscriptions in Payments and subscriptions. For web purchases, use the billing management link in the app or your provider’s receipt. Cancel before the provider’s renewal deadline; access generally continues to the end of the paid period. Refund requests follow the payment provider’s policy and applicable law. Deleting your account or uninstalling the app does not cancel a subscription.',
+        body: 'Paid Plus and Pro subscriptions are offered for six months or one year, with a three-month exit offer. The purchase screen shows the price, currency, duration and renewal terms before you confirm. Paid purchases bill immediately and automatically renew unless cancelled according to your provider’s terms. Manage Apple subscriptions in Apple account subscription settings and Google Play subscriptions in Payments and subscriptions. For web purchases, use the billing management link in the app or your provider’s receipt. Cancel before the provider’s renewal deadline; access generally continues to the end of the paid period. Refund requests follow the payment provider’s policy and applicable law. Deleting your account or uninstalling the app does not cancel a subscription.',
       },
       {
         title: 'Available and planned features',

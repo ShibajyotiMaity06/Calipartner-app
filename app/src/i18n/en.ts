@@ -15,6 +15,7 @@ import { fixNovember } from './fixNovember';
 import { challengeMessages } from './challengeMessages';
 import { homeRefresh } from './homeRefresh';
 import { ownerPolish } from './ownerPolish';
+import { releaseUpdate } from './releaseUpdate';
 import { squadDesign } from './squadDesign';
 import { repairMessages } from './repairs';
 export const en = {
@@ -43,7 +44,7 @@ export const en = {
   aha,
   cardlessTrial: {
     checkError: 'Check your trial eligibility, then choose your plan again.',
-    noCard: '7 days of Plus. No card, no payment details and no automatic charge.',
+    noCard: 'Personal tracking is free forever. Paid plans bill immediately.',
     error: 'Your trial could not be confirmed. Check your connection and try again.',
     continue: 'Continue with Plus',
     expiredTitle: 'Your Plus trial has ended',
@@ -59,6 +60,7 @@ export const en = {
   squadDesign,
   homeRefresh,
   ownerPolish,
+  releaseUpdate,
   repairUnits: { cm: 'cm', ftIn: 'ft / inch', ft: 'ft', inch: 'inch' },
   customMacros: {
     title: 'Custom macros',
@@ -314,7 +316,7 @@ export const en = {
       'Automatic steps need the native Android or iPhone app. Installing from Chrome does not enable phone step access.',
   },
   webBilling: {
-    trialBadge: '7 days free',
+    trialBadge: 'Billed upfront',
     mandateNotice:
       'Razorpay may request a refundable payment to verify your recurring payment mandate.',
     unavailable: 'Checkout is unavailable right now. Please try again later.',
@@ -341,7 +343,7 @@ export const en = {
     loadingPrices: 'Loading prices',
     retryPrices: 'Retry loading prices',
     connectingPayment: 'Connecting to checkout',
-    plusTrialTerms: '7 days free, then your selected price. Auto-renews until you cancel.',
+    plusTrialTerms: 'Billed upfront, then your selected price. Auto-renews until you cancel.',
     proBillingTerms: 'No free trial. Billed now and auto-renews until you cancel.',
     dodoNotReady:
       'Dodo checkout is not available yet. Please try again once payments are configured.',
@@ -633,7 +635,7 @@ export const en = {
     premiumTitle: 'More support for the days ahead',
     premiumSubtitle: 'A little extra support. A lot more possibilities.',
     plus: 'CaliPartner Plus',
-    plusBadge: '7 days to try Plus',
+    plusBadge: 'Plus',
     plusBody: 'Make showing up a shared habit.',
     plusFeatureOne: 'Three rooms for up to five people each, with chat and shared progress',
     plusFeatureTwo: 'Friend discovery and username requests',
@@ -1584,7 +1586,7 @@ export const en = {
       monthlyPrice: '₹249 / month',
       perMonthSuffix: '/ mo',
       billedPeriodically: 'Billed as {price}',
-      trialNotice: 'Includes 7-day free trial on Plus • Cancel anytime',
+      trialNotice: 'Personal tracking is free forever. Paid plans bill immediately.',
       haveCodePrompt: 'Have a partner promo code?',
       haveCodeBtn: 'Enter Code',
       featuresHeader: 'What your plan includes:',
@@ -1603,7 +1605,7 @@ export const en = {
       featureFree:
         'All personal tracking (food diary, barcode scan, water, steps, distance, GPS tracking, workouts, and weight) stays 100% free.',
       renewalSentence: 'Renews at {price} every {period}. Cancel any time in your store settings.',
-      startTrial: 'Start 7-Day Free Trial',
+      startTrial: 'Choose Plus',
       startPlan: 'Start {tier} Plan',
       upgradePro: 'Get CaliPartner Pro',
       continueBtn: 'Continue',

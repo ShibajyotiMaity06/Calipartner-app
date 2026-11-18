@@ -15,7 +15,6 @@ import { CoachSessionProvider } from '@/components/coach/CoachSessionProvider';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { HardwareBackHandler } from '@/components/navigation/HardwareBackHandler';
 import { SessionNavigationGuard } from '@/components/SessionNavigationGuard';
-import { PlusTrialExpiryGate } from '@/components/subscription/PlusTrialExpiryGate';
 import { AccountDataResetGate } from '@/components/AccountDataResetGate';
 import { ErrorState } from '@/components/ErrorState';
 import { AuthProvider } from '@/contexts/AuthContext';
@@ -193,7 +192,6 @@ export default function RootLayout() {
                     <AvatarMilestone />
                     <HardwareBackHandler />
                     <SessionNavigationGuard />
-                    <PlusTrialExpiryGate />
                     <CoinCatalogProvider>
                       <CoachSessionProvider>
                         <AppearanceStack />

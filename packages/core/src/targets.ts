@@ -44,7 +44,8 @@ export function macroRecommendation(goal: GoalProfile, sex: Sex) {
       : goal.goal === 'bulk'
         ? Math.floor(Math.min(weight * 0.005, weight * 0.01) * 100) / 100
         : 0;
-  const calories = Math.round(goal.tdee + (goal.goal === 'cut' ? -1 : 1) * Math.round(rate * 1100));
+  const adjustment = goal.macro_reference_adjustment_kcal ?? Math.round(rate * 1100);
+  const calories = Math.round(goal.tdee + (goal.goal === 'cut' ? -1 : 1) * adjustment);
   const protein = Math.round(
     weight * (gym ? 2.2 : goal.goal === 'cut' ? 2 : goal.goal === 'bulk' ? 1.8 : 1.6),
   );

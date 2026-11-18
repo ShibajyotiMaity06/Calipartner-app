@@ -43,59 +43,43 @@ describe('Dodo subscription verification', () => {
       verifiedDodoProduct('pro_annual', { ...product, price: { ...product.price, ...change } }),
     ).toThrow('DODO_PRODUCT_MISMATCH');
   });
-  it('requires a free seven-day Plus trial and supports USD products', () => {
-    const plus = {
-      ...product,
-      price: {
+  it.each([
+    ['plus_annual', 'Year', 1, 2999],
+    ['plus_semiannual', 'Month', 6, 1999],
+    ['plus_quarterly', 'Month', 3, 1199],
+    ['pro_annual', 'Year', 1, 4999],
+    ['pro_semiannual', 'Month', 6, 3299],
+    ['pro_quarterly', 'Month', 3, 1899],
+  ] as const)(
+    'validates the %s USD checkout product without a trial',
+    (key, unit, count, price) => {
+      const terms = {
         ...product.price,
         currency: 'USD',
-        price: 2999,
-        trial_period_days: 7,
-        trial_type: 'free',
-      },
-    };
-    expect(verifiedDodoProduct('plus_annual', plus).amount).toBe(29.99);
-    expect(() =>
-      verifiedDodoProduct('plus_annual', {
-        ...plus,
-        price: { ...plus.price, trial_type: 'paid', trial_amount: 100 },
-      }),
-    ).toThrow();
-    expect(() => verifiedDodoProduct('plus_annual', null)).toThrow();
-  });
-  it.each(['monthly', 'annual'] as const)(
-    'accepts zero provider trial days or the legacy free seven-day Plus product for %s',
-    (duration) => {
-      const key = `plus_${duration}` as const;
-      const plus = {
-        is_recurring: true,
-        price: {
-          type: 'recurring_price',
-          currency: 'INR',
-          price: duration === 'monthly' ? 24900 : 149900,
-          payment_frequency_count: 1,
-          payment_frequency_interval: duration === 'monthly' ? 'Month' : 'Year',
-          trial_period_days: 7,
-          trial_type: 'free',
-          trial_amount: 0,
-        },
+        price,
+        payment_frequency_count: count,
+        payment_frequency_interval: unit,
       };
-      expect(verifiedDodoProduct(key, plus).trialDays).toBe(7);
-      expect(
-        verifiedDodoProduct(key, { ...plus, price: { ...plus.price, trial_period_days: 0 } }),
-      ).toBeDefined();
-      for (const days of [3, 8, 30]) {
-        expect(() =>
-          verifiedDodoProduct(key, { ...plus, price: { ...plus.price, trial_period_days: days } }),
-        ).toThrow('DODO_PRODUCT_MISMATCH');
-      }
+      expect(verifiedDodoProduct(key, { ...product, price: terms })).toEqual({
+        key,
+        currency: 'USD',
+        amount: price / 100,
+        trialDays: 0,
+      });
+      expect(() =>
+        verifiedDodoProduct(key, {
+          ...product,
+          price: { ...terms, trial_period_days: 7, trial_type: 'free' },
+        }),
+      ).toThrow('DODO_PRODUCT_MISMATCH');
     },
   );
-  it('accepts only supported tier and duration combinations', () => {
+  it('allows the offered terms and rejects new monthly checkout', () => {
     expect(dodoProductKey('pro', 'annual')).toBe('pro_annual');
-    expect(dodoProductKey('plus', 'monthly')).toBe('plus_monthly');
+    expect(dodoProductKey('plus', 'semiannual')).toBe('plus_semiannual');
+    expect(dodoProductKey('plus', 'monthly')).toBeNull();
     expect(dodoProductKey('free', 'annual')).toBeNull();
-    expect(dodoProductKey('pro', 'quarterly')).toBeNull();
+    expect(dodoProductKey('pro', 'quarterly')).toBe('pro_quarterly');
   });
   it('requires a verified active subscription with a real billing deadline', () => {
     expect(dodoSubscriptionEvent(subscription).eventType).toBe('INITIAL_PURCHASE');

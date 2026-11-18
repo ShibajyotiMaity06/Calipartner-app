@@ -72,9 +72,8 @@ export const progressRefresh = {
   unlock: 'Unlock Plus or Pro',
   unlockBody:
     'Explore 90+ Indian recipes, the photo vault and personal AI tools across Plus and Pro.',
-  seePlans: 'See plans and Plus trial',
-  trialNote:
-    '7-day Plus trial. No card and no automatic charge. Full AI plans require a purchased plan.',
+  seePlans: 'See plans',
+  trialNote: 'Personal tracking is free forever. Full AI plans require a paid subscription.',
   manageWeb: 'Manage web subscription',
   manageStore: 'Manage app subscription',
   storeNote:

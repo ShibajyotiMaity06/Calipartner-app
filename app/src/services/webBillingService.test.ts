@@ -43,10 +43,11 @@ const checkout = {
 describe('platform-separated web billing', () => {
   it('reuses prepared prices only for the same session and refreshes expired quotes', async () => {
     const products = (currency: string) =>
-      ['plus_monthly', 'plus_annual', 'pro_monthly', 'pro_annual'].map((key) => ({
+      ['plus_semiannual', 'plus_annual', 'pro_semiannual', 'pro_annual'].map((key) => ({
         key,
         currency,
         amount: 249,
+        trialDays: 0,
       }));
     mocks.invoke
       .mockResolvedValueOnce({ data: { country: 'IN' } })
@@ -91,10 +92,11 @@ describe('platform-separated web billing', () => {
     mocks.invoke.mockResolvedValueOnce({ data: { country: 'US' } }).mockResolvedValueOnce({
       data: {
         provider: 'dodo',
-        products: ['plus_monthly', 'plus_annual', 'pro_monthly', 'pro_annual'].map((key) => ({
+        products: ['plus_semiannual', 'plus_annual', 'pro_semiannual', 'pro_annual'].map((key) => ({
           key,
           currency: 'USD',
           amount: 4.99,
+          trialDays: 0,
         })),
       },
     });
@@ -105,8 +107,10 @@ describe('platform-separated web billing', () => {
     'never loads or calls web payments from %s',
     async (platform) => {
       Platform.OS = platform;
-      await expect(startWebCheckout('razorpay', 'plus', 'monthly', 'request-id')).rejects.toThrow();
-      await expect(startWebCheckout('dodo', 'plus', 'monthly', 'request-id')).rejects.toThrow();
+      await expect(
+        startWebCheckout('razorpay', 'plus', 'semiannual', 'request-id'),
+      ).rejects.toThrow();
+      await expect(startWebCheckout('dodo', 'plus', 'semiannual', 'request-id')).rejects.toThrow();
       await expect(fetchWebCatalog()).rejects.toThrow();
       expect(mocks.invoke).not.toHaveBeenCalled();
       expect(mocks.dodo).not.toHaveBeenCalled();
@@ -138,9 +142,9 @@ describe('platform-separated web billing', () => {
     mocks.invoke
       .mockResolvedValueOnce({ data: checkout, error: null })
       .mockResolvedValueOnce({ data: null, error: new Error('verification offline') });
-    expect(await startWebCheckout('razorpay', 'plus', 'monthly', 'request-id')).toBe('pending');
+    expect(await startWebCheckout('razorpay', 'plus', 'semiannual', 'request-id')).toBe('pending');
     expect(mocks.invoke).toHaveBeenNthCalledWith(1, 'web-billing', {
-      body: { tier: 'plus', duration: 'monthly', request_id: 'request-id' },
+      body: { tier: 'plus', duration: 'semiannual', request_id: 'request-id' },
     });
     expect(mocks.invoke).toHaveBeenNthCalledWith(2, 'razorpay-checkout', {
       body: {
@@ -167,7 +171,9 @@ describe('platform-separated web billing', () => {
     mocks.invoke
       .mockResolvedValueOnce({ data: checkout })
       .mockResolvedValueOnce({ data: { status: 'checkout_cancelled' } });
-    expect(await startWebCheckout('razorpay', 'plus', 'monthly', 'request-id')).toBe('cancelled');
+    expect(await startWebCheckout('razorpay', 'plus', 'semiannual', 'request-id')).toBe(
+      'cancelled',
+    );
     expect(mocks.invoke).toHaveBeenCalledTimes(2);
   });
   it('missing configuration and malformed checkout data cannot open a payment modal', async () => {
@@ -195,13 +201,15 @@ describe('platform-separated web billing', () => {
     await cancelRazorpayRenewal('request-id');
     await expect(fetchBillingCountry()).rejects.toThrow();
   });
-  it('accepts only complete catalogs in the selected provider currency', async () => {
-    const products = ['plus_monthly', 'plus_annual', 'pro_monthly', 'pro_annual'].map((key) => ({
-      key,
-      currency: 'INR',
-      amount: 249,
-      trialDays: key.startsWith('plus') ? 7 : 0,
-    }));
+  it('accepts only accepts catalog entries in the selected provider currency', async () => {
+    const products = ['plus_semiannual', 'plus_annual', 'pro_semiannual', 'pro_annual'].map(
+      (key) => ({
+        key,
+        currency: 'INR',
+        amount: 249,
+        trialDays: 0,
+      }),
+    );
     mocks.invoke
       .mockResolvedValueOnce({ data: { country: 'IN' } })
       .mockResolvedValueOnce({ data: { provider: 'razorpay', products } })

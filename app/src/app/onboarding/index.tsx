@@ -151,12 +151,14 @@ export default function OnboardingScreen() {
   };
   const move = (step: OnboardingStep) => {
     if (!machine || savingRef.current) return;
+    setSaveError(null);
     machine.goToStep(step);
     update();
     scroll.current?.scrollTo({ y: 0, animated: false });
   };
   const back = () => {
     if (!machine || savingRef.current) return;
+    setSaveError(null);
     if (machine.getState().currentStep === 'goal') {
       if (user) router.replace('/welcome');
       return;
@@ -178,6 +180,7 @@ export default function OnboardingScreen() {
 
   const next = () => {
     if (!machine) return;
+    setSaveError(null);
     machine.next();
     update();
     scroll.current?.scrollTo({ y: 0, animated: false });
@@ -604,6 +607,7 @@ export default function OnboardingScreen() {
                   onChangeGoal={() => move('goal')}
                   saving={saving}
                   error={saveError}
+                  onClearError={() => setSaveError(null)}
                 />
               ) : null}
             </ScrollView>

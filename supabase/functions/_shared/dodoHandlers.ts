@@ -2,6 +2,7 @@ import { applyDodoCC } from './ccBilling.ts';
 import {
   dodoProductKey,
   hasPlan,
+  BILLING_WEBHOOK_PRODUCT_KEYS,
   DODO_PRODUCT_KEYS,
   dodoSubscriptionEvent,
   verifiedDodoProduct,
@@ -42,13 +43,15 @@ export async function handleDodoCheckout(req: Request, getConfig = dodoConfig) {
       return dodoResponse({ error: 'DODO_NOT_CONFIGURED' }, 503);
     if (body.action === 'catalog') {
       const catalog = await Promise.all(
-        DODO_PRODUCT_KEYS.map(async (key) => {
+        DODO_PRODUCT_KEYS.filter((key) => products[key]).map(async (key) => {
           const product = verifiedDodoProduct(key, await dodo.products.retrieve(products[key]));
           if (product.currency !== 'USD') throw new Error('DODO_PRODUCT_MISMATCH');
           return { ...product, trialDays: 0 };
         }),
       );
-      return dodoResponse({ products: catalog });
+      return catalog.length
+        ? dodoResponse({ products: catalog })
+        : dodoResponse({ error: 'DODO_NOT_CONFIGURED' }, 503);
     }
     if (body.action === 'portal') {
       const { data: subscription } = await admin
@@ -189,7 +192,7 @@ export async function handleDodoWebhook(req: Request, getConfig = dodoConfig) {
     }
     if (!subscriptionId) return dodoResponse({ status: 'ignored' });
     const subscription = await dodo.subscriptions.retrieve(subscriptionId);
-    const key = DODO_PRODUCT_KEYS.find(
+    const key = BILLING_WEBHOOK_PRODUCT_KEYS.find(
       (key) =>
         products[key] === subscription.product_id ||
         globalProducts?.[key] === subscription.product_id,

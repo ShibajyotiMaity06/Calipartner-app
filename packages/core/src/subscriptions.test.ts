@@ -26,12 +26,14 @@ import {
 import type { Entitlement } from './types';
 
 describe('Phase 10 Core: Subscriptions, Offerings, Tiers & Periods', () => {
-  it('defines exactly nine products across 3 tiers and 3 durations', () => {
-    expect(REVENUECAT_PRODUCT_IDS).toHaveLength(9);
+  it('preserves legacy product IDs and includes both six-month tiers', () => {
+    expect(REVENUECAT_PRODUCT_IDS).toHaveLength(11);
     expect(REVENUECAT_PRODUCT_IDS).toContain('basic_monthly');
     expect(REVENUECAT_PRODUCT_IDS).toContain('basic_quarterly');
     expect(REVENUECAT_PRODUCT_IDS).toContain('basic_annual');
     expect(REVENUECAT_PRODUCT_IDS).toContain('plus_monthly');
+    expect(REVENUECAT_PRODUCT_IDS).toContain('plus_semiannual');
+    expect(REVENUECAT_PRODUCT_IDS).toContain('pro_semiannual');
     expect(REVENUECAT_PRODUCT_IDS).toContain('plus_quarterly');
     expect(REVENUECAT_PRODUCT_IDS).toContain('plus_annual');
     expect(REVENUECAT_PRODUCT_IDS).toContain('pro_monthly');
@@ -128,7 +130,7 @@ describe('Phase 10 Core: Subscriptions, Offerings, Tiers & Periods', () => {
     expect(getTierCap('pro', customConfig)).toBe(60);
 
     expect(DEFAULT_REMOTE_CONFIG.community_tier_enabled).toBe(false);
-    expect(DEFAULT_REMOTE_CONFIG.trial_length_days).toBe(7);
+    expect(DEFAULT_REMOTE_CONFIG.trial_length_days).toBe(0);
     expect(DEFAULT_REMOTE_CONFIG.trial_cap).toBe(5);
   });
 });
@@ -309,7 +311,7 @@ describe('Phase 10 Core: Paywall Triggers & Trial Banners (CaliPartner Pricing P
     expect(PRICING_PLANS.plus.rawAnnual).toBe(1499);
     expect(PRICING_PLANS.plus.usd.rawMonthly).toBe(4.99);
     expect(PRICING_PLANS.plus.usd.rawAnnual).toBe(29.99);
-    expect(PRICING_PLANS.plus.trialDays).toBe(7);
+    expect(PRICING_PLANS.plus.trialDays).toBe(0);
 
     expect(PRICING_PLANS.pro.roomCap).toBe(20);
     expect(PRICING_PLANS.pro.rawMonthly).toBe(499);

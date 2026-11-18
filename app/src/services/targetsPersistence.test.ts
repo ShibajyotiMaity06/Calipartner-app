@@ -20,6 +20,7 @@ function nativeDb(): TargetsDb {
   sql.exec(migrations.find((migration) => migration.version === 3)!.sql);
   sql.exec(migrations.find((migration) => migration.version === 12)!.sql);
   sql.exec(migrations.find((migration) => migration.version === 16)!.sql);
+  sql.exec(migrations.find((migration) => migration.version === 22)!.sql);
   sql.exec(
     `CREATE TABLE outbox (id TEXT PRIMARY KEY, entity TEXT, operation TEXT, payload TEXT, created_at TEXT, attempts INTEGER, last_error TEXT)`,
   );
@@ -102,7 +103,7 @@ describe.each(['native SQLite', 'browser persistence'])('online targets: %s', (p
     ({ from: () => ({ upsert: async () => ({ error: null }) }) }) as unknown as SupabaseClient;
   it('retains exact custom macros in the local read cache after an acknowledged save', async () => {
     const db = open();
-    const profile = { ...goal, custom_macros: true };
+    const profile = { ...goal, custom_macros: true, macro_reference_adjustment_kcal: 250 };
     await saveGoalProfileOnline(db, successfulClient(), profile, true);
     expect(await getCurrentLocalGoalProfile(db, goal.user_id)).toEqual(profile);
     expect(await getCurrentLocalGoalProfile(db, 'another-account')).toBeNull();

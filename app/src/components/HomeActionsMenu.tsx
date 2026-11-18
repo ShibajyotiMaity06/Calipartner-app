@@ -9,6 +9,7 @@ import { useSubscription } from '@/hooks/useSubscription';
 import { useBrowserModalBack } from '@/hooks/useBrowserModalBack';
 import { t } from '@/i18n';
 import { CoinAmount } from './avatar/CoinAmount';
+import { CoinRewardsModal } from './avatar/CoinRewardsModal';
 
 const AnimatedPath = Animated.createAnimatedComponent(Path);
 
@@ -18,6 +19,7 @@ export function HomeActionsMenu() {
   const { state } = useAvatar();
   const { currentTier, hasActiveAccess, loading, error } = useSubscription();
   const [open, setOpen] = useState(false);
+  const [rewards, setRewards] = useState<'invite' | 'earn' | null>(null);
   const progress = useRef(new Animated.Value(0)).current;
   const close = () => setOpen(false);
   useBrowserModalBack(open, close);
@@ -134,7 +136,28 @@ export function HomeActionsMenu() {
               <CoinAmount amount={balance} />
             )}
           </View>
+          <Button
+            variant="tertiary"
+            label={t('releaseUpdate.invite')}
+            testID="home-coin-invite"
+            onPress={() => {
+              close();
+              setRewards('invite');
+            }}
+          />
+          <Button
+            variant="tertiary"
+            label={t('releaseUpdate.earn')}
+            testID="home-earn-coins"
+            onPress={() => {
+              close();
+              setRewards('earn');
+            }}
+          />
         </View>
+      )}
+      {rewards && (
+        <CoinRewardsModal key={rewards} mode={rewards} onClose={() => setRewards(null)} />
       )}
     </View>
   );
