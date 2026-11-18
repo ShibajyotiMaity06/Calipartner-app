@@ -124,13 +124,27 @@ it('Free shows the Wednesday sample, opens the paywall, and past days show actua
   expect(JSON.stringify(tree.toJSON())).toContain('Seated dumbbell curls');
   await act(async () => tree.root.findByProps({ testID: 'workout-plan-upgrade' }).props.onPress());
   expect(state.push).toHaveBeenCalledWith('/paywall');
-  await act(async () => tree.root.findByProps({ testID: 'workout-day-previous' }).props.onPress());
+  const dateBoxes = () =>
+    tree.root.findAll(
+      (node) =>
+        node.type === ('Pressable' as unknown) &&
+        typeof node.props.testID === 'string' &&
+        node.props.testID.startsWith('workout-date-'),
+    );
+  expect(dateBoxes()).toHaveLength(7);
+  expect(dateBoxes().at(-1)?.props.testID).toBe('workout-date-2026-11-11');
+  await act(async () =>
+    tree.root.findByProps({ testID: 'workout-date-2026-11-10' }).props.onPress(),
+  );
   expect(JSON.stringify(tree.toJSON())).toContain('Actual previous workout');
   expect(tree.root.findAllByProps({ testID: 'workout-free-sample' })).toHaveLength(0);
   expect(tree.root.findAllByProps({ testID: 'workout-hub-modal-btn-add-exercise' })).toHaveLength(
     0,
   );
   expect(state.save).not.toHaveBeenCalled();
+  await act(async () => dateBoxes()[0]!.props.onPress());
+  expect(dateBoxes()).toHaveLength(7);
+  expect(dateBoxes().at(-1)?.props.testID).toBe('workout-date-2026-11-04');
 });
 it('custom Save waits for acknowledgement, saves all entered sets and only then reports success', async () => {
   let resolve!: (value: unknown) => void;

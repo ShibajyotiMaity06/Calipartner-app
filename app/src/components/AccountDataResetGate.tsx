@@ -7,7 +7,7 @@ import { clearTrackingDataForReset } from '@/db';
 import { applyAccountDataReset } from '@/services/accountDataReset';
 import { registerAccountWriteCheck } from '@/services/accountDataGate';
 import { ErrorState } from './ErrorState';
-import { AnimatedLogoSplash } from './brand/AnimatedLogoSplash';
+import { LaunchBackground } from './brand/LaunchBackground';
 
 /** Keep stale targets unmounted until the server's reset generation has been checked. */
 export function AccountDataResetGate({ children }: { children: ReactNode }) {
@@ -80,9 +80,9 @@ export function AccountDataResetGate({ children }: { children: ReactNode }) {
 
   // Mount navigation once after session restoration. Mounting it during auth loading
   // then removing it for reset verification loses browser checkout return routes.
-  if (isLoading) return <AnimatedLogoSplash animate={false} />;
+  if (isLoading) return <LaunchBackground />;
   if (!user || isOnline === false) return <>{children}</>;
   if (error) return <ErrorState onRetry={retry} />;
-  if (readyUserId !== userId || resetting) return <AnimatedLogoSplash animate={false} />;
+  if (readyUserId !== userId || resetting) return <LaunchBackground />;
   return <>{children}</>;
 }

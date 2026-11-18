@@ -14,6 +14,7 @@ import { foodPolish } from './foodPolish';
 import { fixNovember } from './fixNovember';
 import { challengeMessages } from './challengeMessages';
 import { homeRefresh } from './homeRefresh';
+import { ownerPolish } from './ownerPolish';
 import { squadDesign } from './squadDesign';
 import { repairMessages } from './repairs';
 export const en = {
@@ -57,6 +58,7 @@ export const en = {
   fastingRefresh,
   squadDesign,
   homeRefresh,
+  ownerPolish,
   repairUnits: { cm: 'cm', ftIn: 'ft / inch', ft: 'ft', inch: 'inch' },
   customMacros: {
     title: 'Custom macros',

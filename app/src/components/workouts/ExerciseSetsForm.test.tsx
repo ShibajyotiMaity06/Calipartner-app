@@ -1,13 +1,24 @@
 import React from 'react';
 import { act, create, type ReactTestRenderer } from 'react-test-renderer';
 import { afterEach, expect, it, vi } from 'vitest';
+import { lbToKg } from '@calipartner/core';
 vi.mock('react-native', () => ({ View: 'View', Pressable: 'Pressable' }));
 vi.mock('@calipartner/ui', async () => ({
   ...(await import('../../../../packages/ui/src/tokens')),
   Text: 'Text',
   Button: 'Button',
 }));
-vi.mock('@/components/onboarding/PlanPrimitives', () => ({ NumberField: 'NumberField' }));
+vi.mock('@/components/onboarding/PlanPrimitives', () => ({
+  NumberField: ({
+    leading,
+    trailing,
+    ...props
+  }: {
+    leading?: React.ReactNode;
+    trailing?: React.ReactNode;
+    testID: string;
+  }) => React.createElement('NumberField', props, leading, trailing),
+}));
 import { ExerciseSetsForm } from './ExerciseSetsForm';
 let tree: ReactTestRenderer;
 it('shows reps only when editing a plan and preserves any existing weight data', async () => {
@@ -46,15 +57,19 @@ it('asks for set count, preserves different reps per set and always shows paired
       tree.root.findByProps({ testID: `exercise-set-reps-${index}` }).props.onChange(reps),
     );
   expect(tree.root.findAllByProps({ testID: 'exercise-add-weights' })).toHaveLength(0);
-  expect(tree.root.findByProps({ testID: 'exercise-set-weight-0' }).props.value).toBeNull();
-  expect(tree.root.findByProps({ testID: 'exercise-set-weight-0' }).props.optional).toBe(true);
+  const field = (index: number) =>
+    tree.root.findAllByProps({ testID: 'exercise-set-weight-' + index }).at(-1)!;
+  expect(field(0).props.value).toBeNull();
+  expect(field(0).props.optional).toBe(true);
   await act(async () =>
-    tree.root.findByProps({ testID: 'exercise-set-weight-1' }).props.onChange(20),
+    tree.root.findByProps({ testID: 'exercise-set-weight-1-unit' }).props.onPress(),
   );
+  expect(field(1).props.label).toBe('Weight (lb)');
+  await act(async () => field(1).props.onChange(45));
   await act(async () => tree.root.findByProps({ testID: 'exercise-confirm-sets' }).props.onPress());
   expect(add).toHaveBeenCalledWith([
     { reps: 10, weightKg: 0 },
-    { reps: 8, weightKg: 20 },
+    { reps: 8, weightKg: lbToKg(45) },
     { reps: 6, weightKg: 0 },
   ]);
 });

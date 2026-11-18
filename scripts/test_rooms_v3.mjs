@@ -32,6 +32,8 @@ try {
   await runProgressLaunchTests(db);
   const { runLaunchHardeningTests } = await import('./launch_hardening_cases.mjs');
   await runLaunchHardeningTests(db);
+  const { runCardioSessionTests } = await import('./cardio_session_cases.mjs');
+  await runCardioSessionTests(db);
   const { runAvatarTests } = await import('./avatar_cases.mjs');
   await runAvatarTests(db);
   const { runAiMonthlyAllowanceTests } = await import('./ai_monthly_allowance_cases.mjs');

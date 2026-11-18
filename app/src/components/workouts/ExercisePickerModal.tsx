@@ -21,6 +21,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { getDb } from '@/db';
 import { t } from '@/i18n';
 import { createCustomExercise, getExercises } from '@/services/workoutService';
+import { generateClientUuid } from '@/services/foodService';
 import { fontSize, radius, spacing } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
 
@@ -72,6 +73,9 @@ export function ExercisePickerModal({
   const [customEquipment, setCustomEquipment] = useState<Equipment>('barbell');
   const [customType, setCustomType] = useState<ExerciseType>('strength');
   const [creatingCustom, setCreatingCustom] = useState(false);
+  const [customError, setCustomError] = useState(false);
+  const customRequest = React.useRef<string | null>(null);
+  const customSaving = React.useRef(false);
 
   const fetchExercises = useCallback(async () => {
     const version = ++requestVersion.current;
@@ -108,13 +112,16 @@ export function ExercisePickerModal({
   }, [visible, fetchExercises]);
 
   const handleCreateCustom = async () => {
-    if (!customName.trim()) return;
+    if (!customName.trim() || customSaving.current) return;
+    customSaving.current = true;
+    setCustomError(false);
     try {
       setCreatingCustom(true);
       const db = await getDb();
       const created = await createCustomExercise(
         db,
         {
+          id: (customRequest.current ??= generateClientUuid()),
           name: customName.trim(),
           muscleGroup: customMuscle,
           equipment: customEquipment,
@@ -125,9 +132,11 @@ export function ExercisePickerModal({
       setShowCustomModal(false);
       setCustomName('');
       setConfiguring(created);
-    } catch (e) {
-      setError(e instanceof Error ? e.message : String(e));
+      customRequest.current = null;
+    } catch {
+      setCustomError(true);
     } finally {
+      customSaving.current = false;
       setCreatingCustom(false);
     }
   };
@@ -270,6 +279,19 @@ export function ExercisePickerModal({
                 horizontal
                 showsHorizontalScrollIndicator={false}
                 data={MUSCLE_GROUPS}
+                ListFooterComponent={
+                  <Button
+                    variant="secondary"
+                    fullWidth={false}
+                    label={t('ownerPolish.custom')}
+                    testID="workout-custom-exercise"
+                    onPress={() => {
+                      setCustomError(false);
+                      setShowCustomModal(true);
+                    }}
+                    style={styles.chip}
+                  />
+                }
                 keyExtractor={(item) => item}
                 contentContainerStyle={{ paddingHorizontal: spacing.md, gap: spacing.xs }}
                 renderItem={({ item }) => {
@@ -518,12 +540,14 @@ export function ExercisePickerModal({
                 </View>
               </View>
 
+              {customError && <Text accessibilityRole="alert">{t('workoutFlow.error')}</Text>}
               <View style={styles.dialogActions}>
                 <Button
                   variant="secondary"
                   fullWidth={false}
                   label={t('common.cancel')}
                   testID="btn-cancel-custom-exercise"
+                  disabled={creatingCustom}
                   style={[styles.dialogBtn, { backgroundColor: colors.surfaceAlt }]}
                   onPress={() => setShowCustomModal(false)}
                 />

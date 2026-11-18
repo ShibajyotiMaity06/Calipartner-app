@@ -1,7 +1,7 @@
 import { Button } from '@calipartner/ui';
 import { useTheme as useAppearance } from '@calipartner/ui/theme';
 import { useTrackingPreferences } from '@/hooks/useTrackingPreferences';
-import { HeaderActions } from '@/components/HeaderActions';
+import { HomeActionsMenu } from '@/components/HomeActionsMenu';
 import { AvatarHero } from '@/components/avatar/AvatarHero';
 import { TrackingPreferencesSheet } from '@/components/rooms/TrackingPreferencesSheet';
 import React, { useCallback, useEffect, useState } from 'react';
@@ -200,10 +200,10 @@ export default function TodayScreen() {
         {/* 2. Greeting */}
         <View style={styles.greetingSection}>
           <View style={styles.greetingRow}>
-            <Text variant="heading" color={dark.textHi}>
+            <Text variant="heading" color={dark.textHi} style={styles.greeting}>
               {t('homeRefresh.hello', { name: userName })}
             </Text>
-            <HeaderActions coins coach testID="home-coach-icon" />
+            <HomeActionsMenu />
           </View>
         </View>
 
@@ -507,16 +507,11 @@ const createStyles = (dark: ReturnType<typeof useAppearance>['colors']) =>
       paddingTop: space[5],
       paddingBottom: 80,
     },
-    greetingRow: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: space[2] },
-    coachButton: {
-      minWidth: homeLayout.touchSize,
-      minHeight: homeLayout.touchSize,
-      alignItems: 'center',
-      justifyContent: 'center',
-      gap: space[1],
-    },
+    greetingRow: { flexDirection: 'row', alignItems: 'center', gap: space[2] },
+    greeting: { flex: 1, fontSize: homeLayout.greetingSize },
     greetingSection: {
       marginBottom: space[4],
+      zIndex: 2,
     },
 
     sectionBlock: {

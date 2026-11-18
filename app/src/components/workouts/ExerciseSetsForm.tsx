@@ -1,12 +1,47 @@
 import React, { useRef, useState } from 'react';
 import { View } from 'react-native';
 import { Button, Text, homeLayout, space } from '@calipartner/ui';
+import { kgToLb, lbToKg } from '@calipartner/core';
 import { NumberField } from '@/components/onboarding/PlanPrimitives';
 import { t } from '@/i18n';
 
 export interface ExerciseSetInput {
   reps: number;
   weightKg: number;
+}
+
+export function WorkoutWeightField({
+  value,
+  onChange,
+  testID,
+}: {
+  value: number | null;
+  onChange: (kg: number | null) => void;
+  testID: string;
+}) {
+  const [unit, setUnit] = useState<'kg' | 'lb'>('kg');
+  const next = unit === 'kg' ? 'lb' : 'kg';
+  const display = value == null || unit === 'kg' ? value : Number(kgToLb(value).toFixed(4));
+  return (
+    <NumberField
+      optional
+      centered
+      label={t('ownerPolish.weightValue', { unit })}
+      value={display}
+      onChange={(amount) => onChange(amount == null || unit === 'kg' ? amount : lbToKg(amount))}
+      testID={testID}
+      trailing={
+        <Button
+          variant="tertiary"
+          fullWidth={false}
+          label={unit}
+          accessibilityLabel={t('ownerPolish.weightUnit', { unit, next })}
+          testID={testID + '-unit'}
+          onPress={() => setUnit(next)}
+        />
+      }
+    />
+  );
 }
 export function ExerciseSetsForm({
   name,
@@ -122,69 +157,57 @@ export function ExerciseSetRows({
 }) {
   return (
     <View style={{ gap: space[3] }}>
-      {sets.map((set, index) => (
-        <View key={index} testID={`${prefix}-row-${index}`} style={{ gap: space[1] }}>
-          <Text variant="micro">{t('workoutPolish.set', { number: index + 1 })}</Text>
-          <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: space[2] }}>
-            <View style={{ flex: 1, minWidth: 0 }}>
-              <NumberField
-                centered
-                label={t('workoutPolish.reps')}
-                value={set.reps}
-                onChange={(value) => onChange(index, 'reps', value)}
-                testID={`${prefix}-reps-${index}`}
-              />
-              <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-                {(['minus', 'plus'] as const).map((action) => (
-                  <Button
-                    variant="secondary"
-                    fullWidth={false}
-                    label={action === 'minus' ? '\u2212' : '+'}
-                    key={action}
-                    accessibilityRole="button"
-                    accessibilityLabel={t(
-                      action === 'minus' ? 'workoutFlow.repsLess' : 'workoutFlow.repsMore',
-                      { set: index + 1 },
-                    )}
-                    disabled={
-                      disabled ||
-                      (action === 'minus' ? (set.reps ?? 0) <= 1 : (set.reps ?? 0) >= 100)
-                    }
-                    onPress={() =>
-                      onChange(
-                        index,
-                        'reps',
-                        action === 'minus'
-                          ? Math.max(1, (set.reps ?? 1) - 1)
-                          : Math.min(100, (set.reps ?? 0) + 1),
-                      )
-                    }
-                    style={{
-                      minWidth: homeLayout.touchSize,
-                      minHeight: homeLayout.touchSize,
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                    }}
-                    testID={`${prefix}-${action}-${index}`}
-                  />
-                ))}
-              </View>
-            </View>
-            {showWeight && (
+      {sets.map((set, index) => {
+        const step = (direction: -1 | 1) => {
+          const action = direction === -1 ? 'minus' : 'plus';
+          const reps = Number.isInteger(set.reps) ? set.reps! : 0;
+          return (
+            <Button
+              variant="tertiary"
+              fullWidth={false}
+              label={direction === -1 ? '−' : '+'}
+              accessibilityLabel={t(
+                direction === -1 ? 'workoutFlow.repsLess' : 'workoutFlow.repsMore',
+                { set: index + 1 },
+              )}
+              disabled={disabled || (direction === -1 ? reps <= 1 : reps >= 100)}
+              onPress={() => onChange(index, 'reps', Math.min(100, Math.max(1, reps + direction)))}
+              style={{
+                minWidth: homeLayout.compactTouchSize,
+                minHeight: homeLayout.compactTouchSize,
+              }}
+              testID={prefix + '-' + action + '-' + index}
+            />
+          );
+        };
+        return (
+          <View key={index} testID={`${prefix}-row-${index}`} style={{ gap: space[1] }}>
+            <Text variant="micro">{t('workoutPolish.set', { number: index + 1 })}</Text>
+            <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: space[2] }}>
               <View style={{ flex: 1, minWidth: 0 }}>
                 <NumberField
-                  optional
                   centered
-                  label={t('workoutPolish.weight')}
-                  value={set.weightKg}
-                  onChange={(value) => onChange(index, 'weightKg', value)}
-                  testID={`${prefix}-weight-${index}`}
+                  label={t('workoutPolish.reps')}
+                  value={set.reps}
+                  onChange={(value) => onChange(index, 'reps', value)}
+                  testID={`${prefix}-reps-${index}`}
+                  leading={step(-1)}
+                  trailing={step(1)}
                 />
               </View>
-            )}
+              {showWeight && (
+                <View style={{ flex: 1, minWidth: 0 }}>
+                  <WorkoutWeightField
+                    value={set.weightKg}
+                    onChange={(value) => onChange(index, 'weightKg', value)}
+                    testID={`${prefix}-weight-${index}`}
+                  />
+                </View>
+              )}
+            </View>
           </View>
-        </View>
-      ))}
+        );
+      })}
     </View>
   );
 }

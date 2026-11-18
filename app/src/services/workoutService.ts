@@ -1096,6 +1096,7 @@ export async function getExercises(
 export async function createCustomExercise(
   db: LocalDb,
   input: {
+    id?: string;
     name: string;
     muscleGroup: MuscleGroup;
     equipment: Equipment;
@@ -1105,7 +1106,7 @@ export async function createCustomExercise(
   userId: string,
 ): Promise<Exercise> {
   return withOnlineSave(db, async (db) => {
-    const id = crypto.randomUUID();
+    const id = input.id ?? crypto.randomUUID();
     const now = new Date().toISOString();
 
     const ex: Exercise = {
@@ -1124,7 +1125,10 @@ export async function createCustomExercise(
     await db.runAsync(
       `INSERT INTO local_exercises (
       id, name, muscle_group, equipment, type, owner_id, attribution, created_at, updated_at, deleted_at, sync_state
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NULL, 'synced')`,
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NULL, 'synced')
+    ON CONFLICT(id) DO UPDATE SET name = excluded.name, muscle_group = excluded.muscle_group,
+      equipment = excluded.equipment, type = excluded.type, updated_at = excluded.updated_at
+    WHERE local_exercises.owner_id = excluded.owner_id`,
       [
         ex.id,
         ex.name,

@@ -69,6 +69,8 @@ export function NumberField({
   placeholder,
   centered = false,
   icon,
+  leading,
+  trailing,
 }: {
   label: string;
   value: number | null;
@@ -79,6 +81,8 @@ export function NumberField({
   nutrient?: NutritionMetric;
   centered?: boolean;
   icon?: React.ComponentProps<typeof Ionicons>['name'];
+  leading?: React.ReactNode;
+  trailing?: React.ReactNode;
 }) {
   const { colors } = useTheme();
   const [text, setText] = useState(value !== null && Number.isFinite(value) ? String(value) : '');
@@ -87,6 +91,34 @@ export function NumberField({
       setText((previous) => (Number(previous) === value ? previous : String(value)));
     else if (value === null) setText('');
   }, [value]);
+  const embedded = Boolean(leading || trailing);
+  const input = (
+    <TextInput
+      testID={testID}
+      placeholder={placeholder}
+      accessibilityLabel={label}
+      value={text}
+      keyboardType="decimal-pad"
+      maxLength={10}
+      placeholderTextColor={colors.textLo}
+      selectionColor={colors.apricot}
+      style={[
+        [
+          planStyles.input,
+          { color: colors.textHi, backgroundColor: colors.s2, borderColor: colors.hairlineLit },
+        ],
+        { fontFamily: inputTypography.body.fontFamily },
+        nutrient ? { color: nutritionColors[nutrient] } : {},
+        centered ? { textAlign: 'center', fontVariant: ['tabular-nums'] } : {},
+        embedded ? { flex: 1, minWidth: 0, paddingHorizontal: 0, borderWidth: 0 } : {},
+      ]}
+      onChangeText={(next) => {
+        setText(next);
+        const parsed = next.trim() && /^\d*\.?\d*$/.test(next) ? Number(next) : NaN;
+        onChange(optional && !next.trim() ? null : parsed);
+      }}
+    />
+  );
   return (
     <View style={planStyles.gap}>
       <View style={planStyles.labelRow}>
@@ -103,30 +135,20 @@ export function NumberField({
           {label}
         </Text>
       </View>
-      <TextInput
-        testID={testID}
-        placeholder={placeholder}
-        accessibilityLabel={label}
-        value={text}
-        keyboardType="decimal-pad"
-        maxLength={10}
-        placeholderTextColor={colors.textLo}
-        selectionColor={colors.apricot}
-        style={[
-          [
-            planStyles.input,
-            { color: colors.textHi, backgroundColor: colors.s2, borderColor: colors.hairlineLit },
-          ],
-          { fontFamily: inputTypography.body.fontFamily },
-          nutrient ? { color: nutritionColors[nutrient] } : {},
-          centered ? { textAlign: 'center', fontVariant: ['tabular-nums'] } : {},
-        ]}
-        onChangeText={(next) => {
-          setText(next);
-          const parsed = next.trim() && /^\d*\.?\d*$/.test(next) ? Number(next) : NaN;
-          onChange(optional && !next.trim() ? null : parsed);
-        }}
-      />
+      {embedded ? (
+        <View
+          style={[
+            planStyles.inputAccessories,
+            { backgroundColor: colors.s2, borderColor: colors.hairlineLit },
+          ]}
+        >
+          {leading}
+          {input}
+          {trailing}
+        </View>
+      ) : (
+        input
+      )}
     </View>
   );
 }
@@ -225,6 +247,14 @@ export const planStyles = StyleSheet.create({
     padding: space[3],
     borderWidth: layout.border,
     borderRadius: radius.control,
+  },
+  inputAccessories: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    minHeight: layout.touch,
+    borderRadius: radius.control,
+    borderWidth: layout.border,
+    overflow: 'hidden',
   },
   choice: {
     flexDirection: 'row',

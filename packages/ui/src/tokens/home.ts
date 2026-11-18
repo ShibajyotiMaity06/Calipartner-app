@@ -7,6 +7,7 @@ export const homeLayout = {
   maxContentWidth: 640,
   avatarSize: 36,
   iconSize: 20,
+  greetingSize: 18,
   editIconSize: 16,
   editIconWidthScale: 1.2,
   planProgressChunk: 0.28,

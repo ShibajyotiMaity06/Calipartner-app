@@ -114,9 +114,10 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
         ],
       },
     ],
+    ['expo-splash-screen', { image: './assets/splash-blank.png', backgroundColor: '#471a06' }],
     [
-      'expo-splash-screen',
-      { image: './assets/splash-icon.png', imageWidth: 200, backgroundColor: '#471a06' },
+      'expo-audio',
+      { microphonePermission: false, recordAudioAndroid: false, enableBackgroundPlayback: false },
     ],
   ],
   experiments: { typedRoutes: true },

@@ -28,6 +28,7 @@
     "@zxing/browser": "^0.2.0",
     "@zxing/library": "^0.21.3",
     "expo": "~57.0.27",
+    "expo-audio": "~57.0.5",
     "expo-build-properties": "~57.0.22",
     "expo-camera": "~57.0.6",
     "expo-clipboard": "~57.0.2",

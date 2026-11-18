@@ -2,11 +2,12 @@ import { visualPrimitives } from '@calipartner/ui/tokens';
 import { Button } from '@calipartner/ui';
 import { Text } from '@calipartner/ui';
 import React, { useEffect, useState } from 'react';
-import { ActivityIndicator, Modal, StyleSheet, View } from 'react-native';
+import { Modal, StyleSheet, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { t } from '@/i18n';
 import { fontSize, radius, spacing } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
+import { ScanSweep } from './ScanSweep';
 
 export interface FoodPhotoAnalyzingOverlayProps {
   visible: boolean;
@@ -53,12 +54,7 @@ export function FoodPhotoAnalyzingOverlay({ visible, onCancel }: FoodPhotoAnalyz
             <Ionicons name="information-circle-outline" size={36} color={colors.accent} />
           </View>
 
-          <ActivityIndicator
-            testID="spinner-food-photo-analyzing"
-            size="large"
-            color={colors.accent}
-            style={{ marginVertical: spacing.sm }}
-          />
+          {visible && <ScanSweep />}
 
           <Text testID="text-analyzing-title" style={[styles.title, { color: colors.text }]}>
             {t('foodLog.photo.analyzingTitle')}

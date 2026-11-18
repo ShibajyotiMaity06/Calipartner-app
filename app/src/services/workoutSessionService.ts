@@ -1,4 +1,9 @@
-import type { WorkoutType, WorkoutWithDetails } from '@calipartner/core';
+import type {
+  ActivitySource,
+  CardioSessionMetrics,
+  WorkoutType,
+  WorkoutWithDetails,
+} from '@calipartner/core';
 import { cardioSessionMetrics } from '@calipartner/core';
 import { getSupabase } from '@/lib/supabase';
 import { beforeAccountWrite } from './accountDataGate';
@@ -25,6 +30,8 @@ export async function saveNewWorkoutSession(
     distanceKm: number;
     notes: string | null;
     effortRating: number | null;
+    cardioSession?: CardioSessionMetrics & { started_at: string };
+    dailySteps?: { steps: number; distance_m: number; source: Exclude<ActivitySource, 'manual'> };
     exercises: Array<{
       exerciseId?: string | null;
       exerciseName: string;
@@ -64,9 +71,14 @@ export async function saveNewWorkoutSession(
   };
   const workoutId = id('workout');
   const cardio = input.type === 'cardio' || input.type === 'walk_run';
-  const cardioMetrics = cardio
-    ? cardioSessionMetrics(input.durationMinutes, input.distanceKm)
-    : null;
+  const cardioMetrics = input.cardioSession
+    ? {
+        durationSeconds: input.cardioSession.duration_seconds,
+        distanceMeters: input.cardioSession.distance_m ?? undefined,
+      }
+    : cardio
+      ? cardioSessionMetrics(input.durationMinutes, input.distanceKm)
+      : null;
   const exercises = cardio
     ? [
         {
@@ -80,7 +92,7 @@ export async function saveNewWorkoutSession(
     id: workoutId,
     type: input.type,
     name: input.name,
-    start_time: null,
+    start_time: input.cardioSession?.started_at ?? null,
     duration_minutes: input.durationMinutes,
     local_date: input.localDate,
     notes: input.notes,
@@ -126,7 +138,18 @@ export async function saveNewWorkoutSession(
     operation: 'upsert',
     payload: active.has(key) ? row.payload : { ...row.payload, deleted_at: now, updated_at: now },
   }));
-  const { error } = await client.rpc('save_tracking_changes', { p_changes: changes });
+  const { error } = input.cardioSession
+    ? await client.rpc('save_cardio_session', {
+        p_changes: changes,
+        p_session: {
+          ...input.cardioSession,
+          workout_id: workoutId,
+          local_date: input.localDate,
+          user_id: input.userId,
+        },
+        p_daily: input.dailySteps ?? null,
+      })
+    : await client.rpc('save_tracking_changes', { p_changes: changes });
   if (error) throw error;
   const current = await client.auth.getUser();
   if (current.error || current.data.user?.id !== input.userId) throw new Error('ACCOUNT_CHANGED');

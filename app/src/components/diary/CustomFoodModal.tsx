@@ -138,7 +138,7 @@ export function CustomFoodModal({
             }}
           >
             <Text style={{ fontSize: fontSize.lg, fontWeight: '700', color: colors.text }}>
-              {t('customFood.createTitle')}
+              {t('ownerPolish.customMeal')}
             </Text>
             <Button
               variant="tertiary"

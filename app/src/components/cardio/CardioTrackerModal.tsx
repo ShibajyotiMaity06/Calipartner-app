@@ -1,1142 +1,851 @@
-import { visualPrimitives } from '@calipartner/ui/tokens';
-import * as Location from 'expo-location';
-import { RouteMap } from './RouteMap';
-import { haversineKm } from '@calipartner/core';
-import { useTheme as useAppearance } from '@calipartner/ui/theme';
-import { NavigationIcon, SegmentedControl } from '@calipartner/ui';
-import { type as inputTypography } from '@calipartner/ui';
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
+  Animated,
   Modal,
-  View,
-  StyleSheet,
-  SafeAreaView,
-  TouchableOpacity,
+  Platform,
   ScrollView,
-  TextInput,
+  StyleSheet,
+  View,
+  type DimensionValue,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { Text, Button, Card, space, radius } from '@calipartner/ui';
-import { useSteps } from '@/hooks/useSteps';
-import { useWorkouts } from '@/hooks/useWorkouts';
-import { useTargets } from '@/hooks/useTargets';
-import { playClickSound, playSuccessSound } from '@/lib/sound';
-import { watchWalkingSteps } from '@/services/stepIntegrationService';
-import { t } from '@/i18n';
+import * as Haptics from 'expo-haptics';
 import {
+  addDaysToDateString,
   calculateDistanceFromStepsKm,
   calculateStrideLengthCm,
+  deduplicateActivitySources,
   calculateWalkingCalories,
-  getLocalDateString,
+  cardioGoalReached,
+  estimateOutdoorCardioCalories,
+  haversineKm,
+  paceForSpeed,
+  speedKmh,
+  type CardioMode,
+  type CardioSessionMetrics,
+  type RoutePoint,
+  type ActivitySource,
 } from '@calipartner/core';
+import {
+  Button,
+  Chip,
+  NavigationIcon,
+  SegmentedControl,
+  Text,
+  controls,
+  radius,
+  space,
+  useTheme,
+} from '@calipartner/ui';
 import { useAuth } from '@/contexts/AuthContext';
+import { useCurrentLocalDate } from '@/hooks/useCurrentLocalDate';
+import { useSteps } from '@/hooks/useSteps';
+import { useTargets } from '@/hooks/useTargets';
+import { useBrowserModalBack } from '@/hooks/useBrowserModalBack';
+import { NumberField } from '@/components/onboarding/PlanPrimitives';
+import { ManualStepsModal } from '@/components/trackers';
+import { getLocale, t, type TranslationKey } from '@/i18n';
+import { getSupabase } from '@/lib/supabase';
+import { readDeviceSteps, watchWalkingSteps } from '@/services/stepIntegrationService';
+import { watchCardioLocation } from '@/services/cardioLocation';
+import { newWorkoutSessionRequest, saveNewWorkoutSession } from '@/services/workoutSessionService';
+import { RouteMap } from './RouteMap';
+import { useCardioGoalSound } from './useCardioGoalSound';
 
 export interface CardioTrackerModalProps {
   visible: boolean;
   onClose: () => void;
   selectedDate?: string;
+  initialMode?: CardioMode;
   testID?: string;
 }
 
-type CardioMode = 'walking' | 'running';
-type SessionState = 'idle' | 'active' | 'paused' | 'completed';
+const modes = ['running', 'cycling', 'steps'] as const;
+const goals = {
+  running: [1, 3, 5, 10],
+  cycling: [5, 10, 20, 50],
+  steps: [3000, 5000, 8000, 10000],
+};
+const startLabels = { running: 'startRun', cycling: 'startRide', steps: 'startWalk' } as const;
+const historyLabels = {
+  running: 'recentRunning',
+  cycling: 'recentCycling',
+  steps: 'recentSteps',
+} as const;
+const emptyLabels = {
+  running: 'emptyRunning',
+  cycling: 'emptyCycling',
+  steps: 'emptySteps',
+} as const;
+const workoutNames = {
+  running: 'Running (Outdoor GPS)',
+  cycling: 'Cycling (Outdoor GPS)',
+  steps: 'Walking Session',
+};
+const initialMetrics = {
+  seconds: 0,
+  steps: 0,
+  distance: 0,
+  speed: null as number | null,
+  segments: [] as RoutePoint[][],
+};
+type Phase = 'idle' | 'starting' | 'active' | 'paused' | 'saving' | 'retry' | 'saved';
+type HistoryItem = Omit<CardioSessionMetrics, 'target'> & {
+  workout_id: string;
+  local_date: string;
+  target: number | null;
+};
+type DailyReading = {
+  steps: number;
+  distance_m: number;
+  source: Exclude<ActivitySource, 'manual'>;
+};
+
+const clock = (seconds: number) =>
+  [Math.floor(seconds / 3600), Math.floor((seconds % 3600) / 60), seconds % 60]
+    .map((value) => String(value).padStart(2, '0'))
+    .join(':');
+
+const number = (value: number, digits = 0) =>
+  value.toLocaleString(getLocale(), { maximumFractionDigits: digits });
+const stepsLabel = (steps: number) => t('ownerPolish.steps', { value: number(steps) });
+const distanceLabel = (km: number) => t('ownerPolish.distance', { value: number(km, 2) });
+const speedLabel = (mode: CardioMode, speed: number | null) => {
+  if (speed === null) return '—';
+  if (mode === 'cycling') return t('ownerPolish.speedValue', { value: number(speed, 1) });
+  const pace = paceForSpeed(speed);
+  return pace
+    ? t('ownerPolish.paceValue', {
+        minutes: pace.minutes,
+        seconds: String(pace.seconds).padStart(2, '0'),
+      })
+    : '—';
+};
 
 export function CardioTrackerModal({
   visible,
   onClose,
   selectedDate,
+  initialMode = 'steps',
   testID = 'modal-cardio-tracker',
 }: CardioTrackerModalProps) {
-  const { colors: dark } = useAppearance();
-  const styles = createStyles(dark);
-
-  const { profile } = useAuth();
-  const localDate =
-    selectedDate ??
-    getLocalDateString(
-      new Date(),
-      profile?.timezone ?? Intl.DateTimeFormat().resolvedOptions().timeZone,
-    );
-  const { steps: dailySteps, logPedometerSession, refresh: refreshSteps } = useSteps(localDate);
-  const { create: createWorkoutRecord } = useWorkouts(localDate);
+  const { colors, reduceMotion } = useTheme();
+  const playSuccessSound = useCardioGoalSound();
+  const { user, profile } = useAuth();
+  const { localDate } = useCurrentLocalDate();
+  const day = selectedDate ?? localDate;
+  const [mode, setMode] = useState(initialMode);
+  const [phase, setPhase] = useState<Phase>('idle');
+  const [metric, setMetric] = useState(initialMetrics);
+  const [targets, setTargets] = useState<Partial<Record<CardioMode, number>>>({ steps: 3000 });
+  const [customGoal, setCustomGoal] = useState(false);
+  const [targetDraft, setTargetDraft] = useState<number | null>(null);
+  const [error, setError] = useState<TranslationKey | null>(null);
+  const [confirmDiscard, setConfirmDiscard] = useState(false);
+  const [manualSteps, setManualSteps] = useState(false);
+  const [sessionDay, setSessionDay] = useState(day);
+  const daily = useSteps(phase === 'idle' ? day : sessionDay);
   const { currentGoalProfile } = useTargets();
+  const weight = currentGoalProfile?.current_weight_kg ?? 0;
+  const stride = profile?.height_cm ? calculateStrideLengthCm(profile.height_cm, profile.sex) : 0;
+  const walking = mode === 'steps';
+  const target = customGoal ? targetDraft : targets[mode];
+  const validTarget =
+    target != null && Number.isFinite(target) && target >= 1 && target <= (walking ? 100000 : 1000);
+  const storedTarget = validTarget ? Math.round(target * (walking ? 1 : 1000)) : 0;
+  const metres = walking
+    ? stride
+      ? Math.floor(calculateDistanceFromStepsKm(metric.steps, stride) * 1000)
+      : null
+    : Math.floor(metric.distance * 1000);
+  const calories = walking
+    ? weight > 0 && metres != null
+      ? Math.round(calculateWalkingCalories(weight, metres / 1000))
+      : null
+    : estimateOutdoorCardioCalories(mode, weight, metric.distance, metric.seconds);
+  const data: CardioSessionMetrics = {
+    mode,
+    duration_seconds: metric.seconds,
+    distance_m: metres,
+    step_count: walking ? metric.steps : null,
+    target: storedTarget,
+    estimated_calories: calories,
+  };
+  const reached = storedTarget > 0 && cardioGoalReached(data);
+  const badgeOpacity = useRef(new Animated.Value(1)).current;
+  const startedAt = useRef('');
+  const activeAt = useRef<number | null>(null);
+  const priorMs = useRef(0);
+  const stepsAtStart = useRef(0);
+  const dailyReading = useRef<DailyReading | undefined>(undefined);
+  const celebrated = useRef(false);
+  const request = useRef(newWorkoutSessionRequest());
+  const generation = useRef(0);
+  const watcher = useRef<{ remove: () => void } | null>(null);
+  const pending = useRef(false);
+  const frozen = useRef<(CardioSessionMetrics & { started_at: string }) | null>(null);
 
-  const userWeightKg = currentGoalProfile?.current_weight_kg ?? 0;
-  const strideCm = profile?.height_cm ? calculateStrideLengthCm(profile.height_cm, profile.sex) : 0;
-  const walkingCalories = (count: number) =>
-    calculateWalkingCalories(userWeightKg, calculateDistanceFromStepsKm(count, strideCm));
-
-  // Tabs: Walking vs Running
-  const [activeTab, setActiveTab] = useState<CardioMode>('walking');
-  const [sessionState, setSessionState] = useState<SessionState>('idle');
-
-  // Walking Config & Metrics
-  const [stepGoal, setStepGoal] = useState<number>(3000);
-  const [customStepText, setCustomStepText] = useState<string>('');
-  const [walkSessionSteps, setWalkSessionSteps] = useState<number>(0);
-  const [targetDurationMinutes, setTargetDurationMinutes] = useState<number>(30);
-
-  // Running Config & Metrics (GPS based)
-  const [targetDistanceKm, setTargetDistanceKm] = useState<number>(3);
-  const [runDistanceKm, setRunDistanceKm] = useState<number>(0);
-  const [gpsStatus, setGpsStatus] = useState<'searching' | 'active' | 'unavailable'>('searching');
-  const [gpsCoordinates, setGpsCoordinates] = useState<Array<{ lat: number; lng: number }>>([]);
-  const [permissionError, setPermissionError] = useState<string | null>(null);
-
-  // Shared Session Metrics
-  const [elapsedSeconds, setElapsedSeconds] = useState<number>(0);
-
-  const [pedometerAvailable, setPedometerAvailable] = useState<boolean | null>(null);
-  const measuredStepsRef = useRef(0);
-  const dailyBaselineRef = useRef(0);
-  const finishingRef = useRef(false);
-  const pedometerSubRef = useRef<{ remove: () => void } | null>(null);
-
-  // Summary state after session completion
-  const [summaryData, setSummaryData] = useState<{
-    mode: CardioMode;
-    steps?: number;
-    distanceKm?: number;
-    durationSeconds: number;
-    caloriesBurned: number;
-    avgPace?: string;
-  } | null>(null);
-
-  // Cleanup pedometer on unmount
-  useEffect(() => {
-    return () => {
-      if (pedometerSubRef.current) {
-        pedometerSubRef.current.remove();
-        pedometerSubRef.current = null;
-      }
-    };
+  const [history, setHistory] = useState<{ scope: string; rows: HistoryItem[]; failed: boolean }>();
+  const scope = JSON.stringify([user?.id, mode]);
+  const historyRequest = useRef(0);
+  const invalidateHistory = useCallback(() => {
+    historyRequest.current++;
   }, []);
-
-  // Time never generates activity. Only real hardware events change the step count.
-  useEffect(() => {
-    if (sessionState !== 'active' || !visible) return;
-    const timer = setInterval(() => setElapsedSeconds((seconds) => seconds + 1), 1000);
-    return () => clearInterval(timer);
-  }, [sessionState, visible]);
-
-  useEffect(() => {
-    if (sessionState !== 'active' || activeTab !== 'walking' || !visible) return;
-    let cancelled = false;
-    const offset = measuredStepsRef.current;
-    void watchWalkingSteps((count) => {
-      if (cancelled || finishingRef.current) return;
-      measuredStepsRef.current = Math.max(measuredStepsRef.current, offset + count);
-      setWalkSessionSteps(measuredStepsRef.current);
-    }).then((watcher) => {
-      if (cancelled) {
-        watcher.remove();
-        return;
-      }
-      pedometerSubRef.current = watcher;
-      setPedometerAvailable(watcher.status === 'granted');
-      if (watcher.status !== 'granted') setPermissionError(t('trackers.steps.sensorUnavailable'));
-    });
-    return () => {
-      cancelled = true;
-      pedometerSubRef.current?.remove();
-      pedometerSubRef.current = null;
-    };
-  }, [sessionState, activeTab, visible]);
-
-  useEffect(() => {
-    if (sessionState !== 'active' || activeTab !== 'running' || !visible) return;
-    let cancelled = false;
-    let subscription: Location.LocationSubscription | undefined;
-    let previous: { lat: number; lng: number } | undefined;
-    void Location.watchPositionAsync(
-      { accuracy: Location.Accuracy.High, distanceInterval: 5, timeInterval: 3000 },
-      (position) => {
-        if (cancelled || finishingRef.current) return;
-        if (position.coords.accuracy !== null && position.coords.accuracy > 50) return;
-        const point = { lat: position.coords.latitude, lng: position.coords.longitude };
-        setGpsStatus('active');
-        setPermissionError(null);
-        if (previous) {
-          const distance = haversineKm(previous, point);
-          if (distance < 0.005) return;
-          setRunDistanceKm((value) => value + distance);
-        }
-        previous = point;
-        setGpsCoordinates((values) => [...values, point]);
-      },
-    )
-      .then((value) => {
-        if (cancelled) value.remove();
-        else subscription = value;
-      })
-      .catch(() => {
-        if (!cancelled) {
-          setGpsStatus('unavailable');
-          setPermissionError(t('launch.locationError'));
-        }
-      });
-    return () => {
-      cancelled = true;
-      subscription?.remove();
-    };
-  }, [sessionState, activeTab, visible]);
-
-  const handleStartSession = async () => {
-    playClickSound();
-    setPermissionError(null);
-
-    if (activeTab === 'running') {
-      try {
-        const permission = await Location.requestForegroundPermissionsAsync();
-        if (!permission.granted) throw new Error('LOCATION_PERMISSION');
-        setGpsStatus('searching');
-        const position = await Location.getCurrentPositionAsync({
-          accuracy: Location.Accuracy.High,
-        });
-        setElapsedSeconds(0);
-        setRunDistanceKm(0);
-        setWalkSessionSteps(0);
-        setGpsCoordinates([{ lat: position.coords.latitude, lng: position.coords.longitude }]);
-        finishingRef.current = false;
-        setSessionState('active');
-        setGpsStatus('active');
-      } catch {
-        setGpsStatus('unavailable');
-        setPermissionError(t('launch.locationError'));
-      }
-      return;
+  const refresh = useCallback(async () => {
+    if (!user?.id || !visible) return;
+    const version = ++historyRequest.current;
+    setHistory(undefined);
+    try {
+      const { data: rows, error: failure } = await getSupabase()
+        .from('cardio_history')
+        .select(
+          'workout_id, mode, local_date, duration_seconds, distance_m, step_count, target, estimated_calories',
+        )
+        .eq('user_id', user.id)
+        .eq('mode', mode)
+        .order('started_at', { ascending: false })
+        .limit(20);
+      if (failure) throw failure;
+      if (version === historyRequest.current)
+        setHistory({ scope, rows: rows ?? [], failed: false });
+    } catch {
+      if (version === historyRequest.current) setHistory({ scope, rows: [], failed: true });
     }
+  }, [mode, scope, user?.id, visible]);
+  useEffect(() => {
+    void refresh();
+    return invalidateHistory;
+  }, [refresh, invalidateHistory]);
 
-    // Walking session starts directly with phone pedometer
-    setElapsedSeconds(0);
-    setWalkSessionSteps(0);
-    setRunDistanceKm(0);
-    setGpsCoordinates([]);
-
-    measuredStepsRef.current = 0;
-    dailyBaselineRef.current = dailySteps;
-    finishingRef.current = false;
-    setPedometerAvailable(null);
-    setSessionState('active');
-  };
-
-  const handleTogglePause = () => {
-    playClickSound();
-    setSessionState((prev) => (prev === 'active' ? 'paused' : 'active'));
-  };
-
-  const handleFinishSession = async () => {
-    if (finishingRef.current) return;
-    finishingRef.current = true;
-    setSessionState('paused');
+  const stopTracking = useCallback(() => {
+    generation.current++;
+    watcher.current?.remove();
+    watcher.current = null;
+    if (activeAt.current !== null) {
+      priorMs.current += Date.now() - activeAt.current;
+      activeAt.current = null;
+    }
+  }, []);
+  useEffect(() => {
+    if (visible) return stopTracking;
+    stopTracking();
+  }, [visible, stopTracking]);
+  useEffect(() => {
+    if (phase !== 'active' || !visible) return;
+    const interval = setInterval(() => {
+      if (activeAt.current === null) return;
+      const seconds = Math.floor((priorMs.current + Date.now() - activeAt.current) / 1000);
+      setMetric((value) => ({ ...value, seconds }));
+    }, 250);
+    return () => clearInterval(interval);
+  }, [phase, visible]);
+  useEffect(() => {
+    if (phase !== 'active' || !reached || celebrated.current) return;
+    celebrated.current = true;
     playSuccessSound();
-    if (pedometerSubRef.current) {
-      pedometerSubRef.current.remove();
-      pedometerSubRef.current = null;
+    void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
+    if (!reduceMotion) {
+      badgeOpacity.setValue(0);
+      Animated.timing(badgeOpacity, { toValue: 1, duration: 240, useNativeDriver: true }).start();
     }
+  }, [badgeOpacity, phase, playSuccessSound, reached, reduceMotion]);
 
-    const duration = elapsedSeconds;
-    const mode = activeTab;
+  const pause = () => {
+    stopTracking();
+    setMetric((value) => ({ ...value, seconds: Math.floor(priorMs.current / 1000), speed: null }));
+    setPhase('paused');
+  };
 
-    if (mode === 'walking') {
-      const calories = walkingCalories(walkSessionSteps);
-      setSummaryData({
-        mode: 'walking',
-        steps: walkSessionSteps,
-        durationSeconds: duration,
-        caloriesBurned: calories,
-      });
-
-      // Automatically add walking session steps to daily total
-      try {
-        if (walkSessionSteps > 0) {
-          await logPedometerSession(dailyBaselineRef.current, walkSessionSteps);
-          await refreshSteps();
+  const start = async (resume: boolean) => {
+    if (!user?.id || !validTarget || pending.current) return;
+    const version = ++generation.current;
+    pending.current = true;
+    setPhase('starting');
+    setError(null);
+    if (!resume) {
+      setMetric(initialMetrics);
+      setSessionDay(day);
+      dailyReading.current = undefined;
+      frozen.current = null;
+      celebrated.current = false;
+      priorMs.current = 0;
+      stepsAtStart.current = daily.steps;
+      request.current = newWorkoutSessionRequest();
+    }
+    try {
+      if (walking) {
+        const offset = resume ? metric.steps : 0;
+        const stepWatcher = await watchWalkingSteps((count) => {
+          if (version !== generation.current || activeAt.current === null) return;
+          setMetric((value) => ({ ...value, steps: Math.max(value.steps, offset + count) }));
+        });
+        if (version !== generation.current || stepWatcher.status !== 'granted') {
+          stepWatcher.remove();
+          if (version === generation.current) throw new Error('STEP_SENSOR');
+          return;
         }
-        await createWorkoutRecord({
-          type: 'cardio',
-          name: 'Walking Session',
-          durationMinutes: Math.max(1, Math.round(duration / 60)),
-          localDate,
-        });
-      } catch (err) {
-        console.warn('Failed to log walking session', err);
+        watcher.current = stepWatcher;
+      } else {
+        let last: { point: RoutePoint; timestamp: number } | null = null;
+        const positionWatcher = await watchCardioLocation(
+          ({ coords, timestamp }) => {
+            if (version !== generation.current || (coords.accuracy != null && coords.accuracy > 50))
+              return;
+            const point = { lat: coords.latitude, lng: coords.longitude };
+            if (!Number.isFinite(point.lat) || !Number.isFinite(point.lng)) return;
+            setError(null);
+            const previous = last;
+            const delta = previous ? haversineKm(previous.point, point) : 0;
+            const speed = previous
+              ? speedKmh(delta, (timestamp - previous.timestamp) / 1000)
+              : null;
+            if (previous && (timestamp <= previous.timestamp || (speed ?? 0) > 120)) return;
+            if (previous && delta < 0.005) {
+              if (timestamp - previous.timestamp > 5000)
+                setMetric((value) => ({ ...value, speed: 0 }));
+              return;
+            }
+            last = { point, timestamp };
+            setMetric((value) => {
+              const segments = previous
+                ? [...value.segments.slice(0, -1), [...(value.segments.at(-1) ?? []), point]]
+                : [...value.segments, [point]];
+              return { ...value, distance: value.distance + delta, speed, segments };
+            });
+          },
+          (denied) => {
+            if (version !== generation.current) return;
+            last = null;
+            setMetric((value) => ({ ...value, speed: null }));
+            setError(denied ? 'ownerPolish.locationDenied' : 'ownerPolish.gpsUnavailable');
+            if (denied) {
+              pending.current = false;
+              pause();
+            }
+          },
+        );
+        if (version !== generation.current) {
+          positionWatcher.remove();
+          return;
+        }
+        watcher.current = positionWatcher;
       }
-    } else {
-      const finalDist = runDistanceKm;
-      const calories = Math.round(finalDist * userWeightKg * 1.036);
-      const paceMinutesPerKm = finalDist > 0 ? duration / 60 / finalDist : 0;
-      const paceMins = Math.floor(paceMinutesPerKm);
-      const paceSecs = Math.round((paceMinutesPerKm - paceMins) * 60);
-      const formattedPace = `${paceMins}'${paceSecs < 10 ? '0' : ''}${paceSecs}" / km`;
-
-      setSummaryData({
-        mode: 'running',
-        distanceKm: finalDist,
-        durationSeconds: duration,
-        caloriesBurned: calories,
-        avgPace: formattedPace,
-      });
-
-      // Save running workout entry
-      try {
-        await createWorkoutRecord({
-          type: 'cardio',
-          name: 'Running (Outdoor GPS)',
-          durationMinutes: Math.max(1, Math.round(duration / 60)),
-          localDate,
-        });
-      } catch (err) {
-        console.warn('Failed to log running session', err);
-      }
+      if (!resume) startedAt.current = new Date().toISOString();
+      activeAt.current = Date.now();
+      setPhase('active');
+    } catch (failure) {
+      if (version !== generation.current) return;
+      setError(
+        walking
+          ? 'ownerPolish.walkingUnavailable'
+          : failure instanceof Error && failure.message === 'LOCATION_PERMISSION'
+            ? 'ownerPolish.locationDenied'
+            : 'ownerPolish.gpsUnavailable',
+      );
+      setPhase(resume ? 'paused' : 'idle');
+    } finally {
+      if (version === generation.current) pending.current = false;
     }
-
-    setSessionState('completed');
   };
 
-  const handleResetAndClose = () => {
-    playClickSound();
-    finishingRef.current = false;
-    measuredStepsRef.current = 0;
-    setSessionState('idle');
-    setElapsedSeconds(0);
-    setWalkSessionSteps(0);
-    setRunDistanceKm(0);
-    setSummaryData(null);
-    onClose();
+  const reset = () => {
+    stopTracking();
+    pending.current = false;
+    setConfirmDiscard(false);
+    setError(null);
+    setPhase('idle');
+    setMetric(initialMetrics);
+  };
+  const close = () => {
+    if (phase === 'saving') return;
+    if (phase === 'active') pause();
+    if (phase === 'active' || phase === 'paused' || phase === 'retry') setConfirmDiscard(true);
+    else {
+      reset();
+      onClose();
+    }
+  };
+  useBrowserModalBack(visible, close);
+
+  const finish = async () => {
+    if (
+      pending.current ||
+      !user?.id ||
+      (!frozen.current && (walking ? !data.step_count : !data.distance_m))
+    )
+      return;
+    stopTracking();
+    frozen.current ??= {
+      ...data,
+      duration_seconds: Math.max(1, Math.floor(priorMs.current / 1000)),
+      started_at: startedAt.current,
+    };
+    const session = frozen.current;
+    pending.current = true;
+    setError(null);
+    setPhase('saving');
+    const version = generation.current;
+    try {
+      if (session.mode === 'steps' && !dailyReading.current) {
+        const reading = await readDeviceSteps(sessionDay, profile?.timezone ?? undefined);
+        const source = reading?.source === 'health_platform' ? 'health_platform' : 'pedometer';
+        const totals = deduplicateActivitySources(null, {
+          steps: reading?.steps ?? stepsAtStart.current + session.step_count!,
+          distance_m: reading?.distance_m,
+          source,
+          strideLengthCm: stride,
+        });
+        dailyReading.current = { ...totals, source };
+      }
+      if (version !== generation.current) return;
+      await saveNewWorkoutSession(request.current, {
+        userId: user.id,
+        localDate: sessionDay,
+        type: session.mode === 'cycling' ? 'cardio' : 'walk_run',
+        name: workoutNames[session.mode],
+        durationMinutes: Math.max(1, Math.round(session.duration_seconds / 60)),
+        distanceKm: (session.distance_m ?? 0) / 1000,
+        notes: null,
+        effortRating: null,
+        exercises: [],
+        cardioSession: session,
+        dailySteps: dailyReading.current,
+      });
+      if (version !== generation.current) return;
+      setPhase('saved');
+      void refresh();
+      if (session.mode === 'steps') void daily.refresh();
+    } catch {
+      if (version !== generation.current) return;
+      setError('ownerPolish.savingError');
+      setPhase('retry');
+    } finally {
+      pending.current = false;
+    }
   };
 
-  const formatTimer = (seconds: number): string => {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins < 10 ? '0' : ''}${mins}:${secs < 10 ? '0' : ''}${secs}`;
+  const card = [styles.card, { backgroundColor: colors.s1, borderColor: colors.hairlineLit }];
+  const goalLabel = walking ? stepsLabel(target ?? 0) : distanceLabel(target ?? 0);
+  const progress = (value: number, goal: number, label: string) => {
+    const percent = goal > 0 ? Math.max(0, Math.min(100, Math.round((value / goal) * 100))) : 0;
+    const width: DimensionValue = (String(percent) + '%') as DimensionValue;
+    return (
+      <View
+        accessibilityRole="progressbar"
+        accessibilityLabel={label}
+        accessibilityValue={{ min: 0, max: 100, now: percent }}
+        style={[styles.track, { backgroundColor: colors.s3 }]}
+      >
+        <View style={[styles.fill, { width, backgroundColor: colors.apricot }]} />
+      </View>
+    );
   };
 
-  // Live walking calories
-  const liveWalkingCalories = walkingCalories(walkSessionSteps);
-  // Live running calories
-  const liveRunningCalories = Math.round(runDistanceKm * userWeightKg * 1.036);
-  // Live running pace
-  const livePaceMinutesPerKm = runDistanceKm > 0.05 ? elapsedSeconds / 60 / runDistanceKm : 0;
-  const livePaceMins = Math.floor(livePaceMinutesPerKm);
-  const livePaceSecs = Math.round((livePaceMinutesPerKm - livePaceMins) * 60);
-  const livePaceString =
-    runDistanceKm > 0.05
-      ? `${livePaceMins}'${livePaceSecs < 10 ? '0' : ''}${livePaceSecs}"`
-      : `--'--"`;
+  const dateLabel = (date: string) => {
+    if (date === day) return t('ownerPolish.activityToday');
+    if (date === addDaysToDateString(day, -1)) return t('ownerPolish.activityYesterday');
+    return new Date(date + 'T12:00:00Z').toLocaleDateString(getLocale(), {
+      day: 'numeric',
+      month: 'short',
+      timeZone: 'UTC',
+    });
+  };
+  const resultStats = (item: HistoryItem | CardioSessionMetrics) => (
+    <View style={styles.row}>
+      {item.step_count != null && <Text tabular>{stepsLabel(item.step_count)}</Text>}
+      {item.distance_m != null && <Text tabular>{distanceLabel(item.distance_m / 1000)}</Text>}
+      <Text tabular>{clock(item.duration_seconds)}</Text>
+      {item.estimated_calories != null && (
+        <Text tabular>{t('ownerPolish.calories', { value: number(item.estimated_calories) })}</Text>
+      )}
+    </View>
+  );
+  const active = phase === 'active';
+  const displayed = frozen.current ?? data;
 
   return (
-    <Modal visible={visible} animationType="slide" transparent={false} onRequestClose={onClose}>
-      <SafeAreaView style={styles.safeArea}>
-        <View style={styles.container} testID={testID}>
-          {/* Header */}
-          <View style={styles.topBar}>
-            <Button
-              variant="tertiary"
-              fullWidth={false}
-              label="Back"
-              iconOnly
-              icon={<NavigationIcon action="back" />}
-              onPress={
-                sessionState === 'active' || sessionState === 'paused'
-                  ? handleFinishSession
-                  : handleResetAndClose
-              }
-              accessibilityRole="button"
-              accessibilityLabel="Back"
-              style={styles.backButton}
-              testID="btn-close-cardio"
-            />
-
+    <Modal visible={visible} animationType="slide" onRequestClose={close}>
+      <SafeAreaView style={[styles.screen, { backgroundColor: colors.bg0 }]} testID={testID}>
+        <View style={styles.header}>
+          <Button
+            variant="tertiary"
+            fullWidth={false}
+            iconOnly
+            label={t('repairs.back')}
+            icon={<NavigationIcon action="back" />}
+            testID="btn-close-cardio"
+            onPress={close}
+            disabled={phase === 'saving'}
+          />
+          <Text variant="title2" style={styles.headerTitle}>
+            {t(`homeRefresh.${mode}`)}
+          </Text>
+        </View>
+        <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
+          {phase === 'idle' && (
             <SegmentedControl
-              fullWidth={false}
-              value={activeTab}
-              disabled={sessionState !== 'idle'}
-              onChange={setActiveTab}
-              options={[
-                {
-                  value: 'walking',
-                  label: t('progressRefresh.walking'),
-                  testID: 'tab-cardio-walking',
-                },
-                {
-                  value: 'running',
-                  label: t('progressRefresh.running'),
-                  testID: 'tab-cardio-running',
-                },
-              ]}
+              value={mode}
+              options={modes.map((value) => ({
+                value,
+                label: t(`homeRefresh.${value}`),
+                testID: `tab-cardio-${value}`,
+              }))}
+              onChange={(next) => {
+                setMode(next);
+                setCustomGoal(false);
+                setTargetDraft(null);
+                setError(null);
+              }}
             />
-
-            <View style={{ width: 44 }} />
-          </View>
-
-          {/* MAIN CONTENT */}
-          <ScrollView
-            contentContainerStyle={styles.scrollContent}
-            showsVerticalScrollIndicator={false}
-          >
-            {/* 1. IDLE STATE: SETUP VIEW */}
-            {sessionState === 'idle' && (
-              <View style={styles.idleBlock}>
-                {activeTab === 'walking' ? (
-                  <>
-                    <View style={styles.iconHero}>
-                      <View
-                        style={[
-                          styles.heroIconCircle,
-                          { backgroundColor: 'rgba(244, 182, 125, 0.15)' },
-                        ]}
-                      >
-                        <Ionicons name="walk" size={40} color={dark.apricot} />
-                      </View>
-                      <Text variant="title1" color={dark.textHi} style={styles.heroTitle}>
-                        Walking Session
-                      </Text>
-                      <Text variant="bodyS" color={dark.textMid} style={styles.heroSubtitle}>
-                        Set your target steps and time. Steps will calculate live and add to your
-                        daily total.
-                      </Text>
-                    </View>
-
-                    {/* Step Goal Selection */}
-                    <Card elevation="s1" style={styles.configCard}>
-                      <Text variant="label" color={dark.textHi} style={styles.configTitle}>
-                        Choose Step Goal
-                      </Text>
-                      <View style={styles.presetChipsRow}>
-                        {[1000, 2500, 5000, 10000].map((count) => (
-                          <Button
-                            variant="secondary"
-                            fullWidth={false}
-                            label={count.toLocaleString()}
-                            key={count}
-                            onPress={() => {
-                              setStepGoal(count);
-                              setCustomStepText('');
-                            }}
-                            style={[
-                              styles.chip,
-                              stepGoal === count && !customStepText && styles.chipActive,
-                            ]}
-                          />
-                        ))}
-                      </View>
-
-                      {/* Custom Step TextInput */}
-                      <View style={styles.customInputRow}>
-                        <TextInput
-                          value={customStepText}
-                          onChangeText={(val) => {
-                            setCustomStepText(val);
-                            const parsed = parseInt(val, 10);
-                            if (!isNaN(parsed) && parsed > 0) {
-                              setStepGoal(parsed);
-                            }
-                          }}
-                          placeholder="Or custom step goal..."
-                          placeholderTextColor={dark.textLo}
-                          keyboardType="numeric"
-                          style={[
-                            styles.customStepInput,
-                            { fontFamily: inputTypography.body.fontFamily },
-                          ]}
-                        />
-                      </View>
-                    </Card>
-
-                    {/* Target Duration Selection */}
-                    <Card elevation="s1" style={styles.configCard}>
-                      <Text variant="label" color={dark.textHi} style={styles.configTitle}>
-                        Session Duration
-                      </Text>
-                      <View style={styles.presetChipsRow}>
-                        {[15, 30, 45, 60].map((mins) => (
-                          <TouchableOpacity
-                            key={mins}
-                            onPress={() => setTargetDurationMinutes(mins)}
-                            style={[
-                              styles.chip,
-                              targetDurationMinutes === mins && styles.chipActive,
-                            ]}
-                          >
-                            <Text
-                              variant="bodyS"
-                              color={targetDurationMinutes === mins ? dark.onBrand : dark.textHi}
-                              style={{ fontWeight: '700' }}
-                            >
-                              {mins} mins
-                            </Text>
-                          </TouchableOpacity>
-                        ))}
-                      </View>
-                    </Card>
-                  </>
-                ) : (
-                  <>
-                    <View style={styles.iconHero}>
-                      <View
-                        style={[
-                          styles.heroIconCircle,
-                          { backgroundColor: 'rgba(56, 178, 172, 0.15)' },
-                        ]}
-                      >
-                        <Ionicons name="location" size={40} color={dark.teal} />
-                      </View>
-                      <Text variant="title1" color={dark.textHi} style={styles.heroTitle}>
-                        Outdoor Running
-                      </Text>
-                      <Text
-                        nutrient="calories"
-                        variant="bodyS"
-                        color={dark.textMid}
-                        style={styles.heroSubtitle}
-                      >
-                        GPS tracks your live path, distance, pace, and calories burned like Nike Run
-                        & Strava.
-                      </Text>
-                    </View>
-
-                    {/* Target Distance Selection */}
-                    <Card elevation="s1" style={styles.configCard}>
-                      <Text variant="label" color={dark.textHi} style={styles.configTitle}>
-                        Target Distance
-                      </Text>
-                      <View style={styles.presetChipsRow}>
-                        {[1, 3, 5, 10].map((km) => (
-                          <TouchableOpacity
-                            key={km}
-                            onPress={() => setTargetDistanceKm(km)}
-                            style={[styles.chip, targetDistanceKm === km && styles.chipActive]}
-                          >
-                            <Text
-                              variant="bodyS"
-                              color={targetDistanceKm === km ? dark.onBrand : dark.textHi}
-                              style={{ fontWeight: '700' }}
-                            >
-                              {km} km
-                            </Text>
-                          </TouchableOpacity>
-                        ))}
-                      </View>
-                    </Card>
-
-                    {/* GPS Signal Card */}
-                    <Card elevation="s1" style={styles.gpsBannerCard}>
-                      <View style={styles.gpsBannerRow}>
-                        <Ionicons name="navigate-circle" size={24} color={dark.teal} />
-                        <View style={{ flex: 1, marginLeft: 10 }}>
-                          <Text variant="bodyS" color={dark.textHi} style={{ fontWeight: '700' }}>
-                            Location & GPS Tracker
-                          </Text>
-                          <Text variant="micro" color={dark.textMid}>
-                            Real-time coordinates and pace tracking enabled.
-                          </Text>
-                        </View>
-                        <View style={styles.gpsActivePill}>
-                          <Text variant="micro" color={dark.teal} style={{ fontWeight: '700' }}>
-                            GPS READY
-                          </Text>
-                        </View>
-                      </View>
-                    </Card>
-                  </>
-                )}
-
-                {/* Permission Error Banner */}
-                {permissionError && (
-                  <View style={styles.permissionErrorCard}>
-                    <Ionicons name="alert-circle" size={20} color={dark.danger} />
-                    <Text variant="bodyS" color={dark.danger} style={{ flex: 1, marginLeft: 8 }}>
-                      {permissionError}
-                    </Text>
-                  </View>
-                )}
-
-                {/* Start Button */}
-                <View style={styles.startActionRow}>
-                  <Button
-                    variant="primary"
-                    size="lg"
-                    label={
-                      activeTab === 'walking' ? 'Start Walking Session' : 'Start Running (GPS)'
-                    }
-                    onPress={handleStartSession}
-                    fullWidth
-                    testID="btn-start-cardio"
-                  />
-                </View>
-              </View>
-            )}
-
-            {/* 2. ACTIVE / PAUSED SESSION VIEW */}
-            {(sessionState === 'active' || sessionState === 'paused') && (
-              <View style={styles.liveSessionBlock}>
-                {/* Status Indicator */}
-                <View style={styles.sessionStatusPill}>
-                  <View
-                    style={[
-                      styles.statusDot,
-                      sessionState === 'active' ? styles.dotGreen : styles.dotAmber,
-                    ]}
-                  />
-                  <Text variant="micro" color={dark.textHi} style={{ fontWeight: '700' }}>
-                    {sessionState === 'active' ? 'SESSION IN PROGRESS' : 'PAUSED'}
-                  </Text>
-                </View>
-
-                {activeTab === 'walking' ? (
-                  <>
-                    {/* Giant Step Counter */}
-                    <View style={styles.metricHero}>
-                      <Text variant="numeralXL" color={dark.apricot} style={styles.heroNumber}>
-                        {walkSessionSteps.toLocaleString()}
-                      </Text>
-                      <Text variant="label" color={dark.textMid} style={styles.heroUnit}>
-                        STEPS TAKEN
-                      </Text>
-                    </View>
-
-                    {/* Device Hardware Pedometer Sensor Indicator */}
-                    <View style={styles.liveGpsPill}>
-                      <Ionicons name="footsteps" size={15} color={dark.apricot} />
-                      <Text
-                        variant="micro"
-                        color={dark.apricot}
-                        style={{ marginLeft: 6, fontWeight: '600' }}
-                      >
-                        {pedometerAvailable === true
-                          ? t('trackers.steps.sensorActive')
-                          : pedometerAvailable === false
-                            ? t('trackers.steps.sensorUnavailable')
-                            : t('trackers.steps.sensorChecking')}
-                      </Text>
-                    </View>
-
-                    {/* Goal Progress Bar */}
-                    <View style={styles.goalProgressWrap}>
-                      <View style={styles.goalProgressHeader}>
-                        <Text variant="bodyS" color={dark.textMid}>
-                          Target: {stepGoal.toLocaleString()} steps
-                        </Text>
-                        <Text variant="bodyS" color={dark.apricot} style={{ fontWeight: '700' }}>
-                          {Math.min(100, Math.round((walkSessionSteps / stepGoal) * 100))}%
-                        </Text>
-                      </View>
-                      <View style={styles.track}>
-                        <View
-                          style={[
-                            styles.fill,
-                            {
-                              width: `${Math.min(100, Math.round((walkSessionSteps / stepGoal) * 100))}%`,
-                            },
-                          ]}
-                        />
-                      </View>
-                    </View>
-
-                    {/* Live Stats Grid */}
-                    <View style={styles.statsGrid}>
-                      <Card elevation="s1" style={styles.statTile}>
-                        <Ionicons name="time-outline" size={20} color={dark.textMid} />
-                        <Text variant="numeralM" color={dark.textHi} style={styles.statNumber}>
-                          {formatTimer(elapsedSeconds)}
-                        </Text>
-                        <Text variant="micro" color={dark.textLo}>
-                          TIME
-                        </Text>
-                      </Card>
-
-                      <Card elevation="s1" style={styles.statTile}>
-                        <Ionicons
-                          name="flame-outline"
-                          size={20}
-                          color={visualPrimitives.colors.coral}
-                        />
-                        <Text
-                          nutrient="calories"
-                          variant="numeralM"
-                          color={visualPrimitives.colors.coral}
-                          style={styles.statNumber}
-                        >
-                          {liveWalkingCalories}
-                        </Text>
-                        <Text nutrient="calories" variant="micro" color={dark.textLo}>
-                          CALORIES (KCAL)
-                        </Text>
-                      </Card>
-                    </View>
-                  </>
-                ) : (
-                  <>
-                    {/* Giant Distance Counter */}
-                    <View style={styles.metricHero}>
-                      <Text variant="numeralXL" color={dark.teal} style={styles.heroNumber}>
-                        {runDistanceKm.toFixed(2)}
-                      </Text>
-                      <Text variant="label" color={dark.textMid} style={styles.heroUnit}>
-                        KILOMETERS (GPS)
-                      </Text>
-                    </View>
-
-                    {/* Live Stats Grid: Time, Pace, Calories */}
-                    <View style={styles.statsGrid}>
-                      <Card elevation="s1" style={styles.statTile}>
-                        <Ionicons name="time-outline" size={20} color={dark.textMid} />
-                        <Text variant="numeralM" color={dark.textHi} style={styles.statNumber}>
-                          {formatTimer(elapsedSeconds)}
-                        </Text>
-                        <Text variant="micro" color={dark.textLo}>
-                          TIME
-                        </Text>
-                      </Card>
-
-                      <Card elevation="s1" style={styles.statTile}>
-                        <Ionicons name="speedometer-outline" size={20} color={dark.apricot} />
-                        <Text variant="numeralM" color={dark.apricot} style={styles.statNumber}>
-                          {livePaceString}
-                        </Text>
-                        <Text variant="micro" color={dark.textLo}>
-                          CURRENT PACE
-                        </Text>
-                      </Card>
-
-                      <Card elevation="s1" style={styles.statTile}>
-                        <Ionicons
-                          name="flame-outline"
-                          size={20}
-                          color={visualPrimitives.colors.coral}
-                        />
-                        <Text
-                          nutrient="calories"
-                          variant="numeralM"
-                          color={visualPrimitives.colors.coral}
-                          style={styles.statNumber}
-                        >
-                          {liveRunningCalories}
-                        </Text>
-                        <Text nutrient="calories" variant="micro" color={dark.textLo}>
-                          CALORIES (KCAL)
-                        </Text>
-                      </Card>
-                    </View>
-
-                    <RouteMap points={gpsCoordinates} />
-                    {/* GPS Signal Banner */}
-                    <View style={styles.liveGpsPill}>
-                      <Ionicons name="radio" size={14} color={dark.teal} />
-                      <Text
-                        variant="micro"
-                        color={dark.teal}
-                        style={{ marginLeft: 6, fontWeight: '600' }}
-                      >
-                        GPS Tracking Active · {gpsCoordinates.length} waypoints recorded
-                      </Text>
-                    </View>
-                  </>
-                )}
-
-                {/* Session Action Buttons */}
-                <View style={styles.activeControlsRow}>
-                  <Button
-                    variant="secondary"
-                    fullWidth={false}
-                    label={sessionState === 'active' ? 'Pause' : 'Resume'}
-                    icon={
-                      <Ionicons
-                        name={sessionState === 'active' ? 'pause' : 'play'}
-                        size={24}
-                        color={dark.textHi}
-                      />
-                    }
-                    onPress={handleTogglePause}
-                    style={[styles.controlBtn, styles.pauseBtn]}
-                    accessibilityRole="button"
-                    accessibilityLabel={
-                      sessionState === 'active' ? 'Pause session' : 'Resume session'
-                    }
-                  />
-
-                  <Button
-                    variant="secondary"
-                    fullWidth={false}
-                    label="Finish"
-                    icon={<Ionicons name="checkmark-done" size={24} color={dark.onBrand} />}
-                    onPress={handleFinishSession}
-                    style={[styles.controlBtn, styles.finishBtn]}
-                    accessibilityRole="button"
-                    accessibilityLabel="Finish session"
-                  />
-                </View>
-              </View>
-            )}
-
-            {/* 3. COMPLETED SUMMARY MODAL */}
-            {sessionState === 'completed' && summaryData && (
-              <View style={styles.completedBlock}>
-                <View style={styles.celebrationCircle}>
-                  <Ionicons name="trophy" size={48} color={dark.apricot} />
-                </View>
-
-                <Text variant="title1" color={dark.textHi} style={styles.completedTitle}>
-                  {summaryData.mode === 'walking' ? 'Walk Completed!' : 'Run Finished!'}
-                </Text>
-
-                <Text variant="bodyS" color={dark.textMid} style={styles.completedSubtitle}>
-                  {summaryData.mode === 'walking'
-                    ? 'Your steps have been calculated and added directly to your overall daily steps.'
-                    : 'Your running workout and distance have been saved to your activity log.'}
-                </Text>
-
-                <Card elevation="s1" style={styles.summaryCard}>
-                  {summaryData.mode === 'walking' ? (
-                    <View style={styles.summaryRow}>
-                      <Text variant="bodyS" color={dark.textMid}>
-                        Total Steps
-                      </Text>
-                      <Text variant="heading" color={dark.apricot}>
-                        {summaryData.steps?.toLocaleString()}
-                      </Text>
-                    </View>
-                  ) : (
-                    <View style={styles.summaryRow}>
-                      <Text variant="bodyS" color={dark.textMid}>
-                        Total Distance
-                      </Text>
-                      <Text variant="heading" color={dark.teal}>
-                        {summaryData.distanceKm?.toFixed(2)} km
-                      </Text>
-                    </View>
-                  )}
-
-                  <View style={styles.summaryRow}>
-                    <Text variant="bodyS" color={dark.textMid}>
-                      Duration
-                    </Text>
-                    <Text variant="heading" color={dark.textHi}>
-                      {formatTimer(summaryData.durationSeconds)}
-                    </Text>
-                  </View>
-
-                  <View style={styles.summaryRow}>
-                    <Text nutrient="calories" variant="bodyS" color={dark.textMid}>
-                      Calories Burned
-                    </Text>
-                    <Text
-                      nutrient="calories"
-                      variant="heading"
-                      color={visualPrimitives.colors.coral}
-                    >
-                      {summaryData.caloriesBurned} kcal
-                    </Text>
-                  </View>
-
-                  {summaryData.avgPace && (
-                    <View style={styles.summaryRow}>
-                      <Text variant="bodyS" color={dark.textMid}>
-                        Average Pace
-                      </Text>
-                      <Text variant="heading" color={dark.apricot}>
-                        {summaryData.avgPace}
-                      </Text>
-                    </View>
-                  )}
-                </Card>
-
+          )}
+          {phase === 'idle' && walking && (
+            <View style={card}>
+              <Text variant="heading">{t('ownerPolish.todaySteps')}</Text>
+              {daily.loading ? (
+                <Text>{t('common.loading')}</Text>
+              ) : daily.error ? (
                 <Button
-                  variant="primary"
-                  size="lg"
-                  label="Done & Return to Today"
-                  onPress={handleResetAndClose}
-                  fullWidth
-                  testID="btn-cardio-done"
+                  variant="secondary"
+                  label={t('common.retry')}
+                  onPress={() => void daily.refresh()}
+                />
+              ) : (
+                <>
+                  <Text variant="title1" tabular>
+                    {stepsLabel(daily.steps)}
+                  </Text>
+                  {progress(daily.steps, daily.goalSteps, t('ownerPolish.todaySteps'))}
+                  <Text tabular>
+                    {t('ownerPolish.dailyGoal', { value: number(daily.goalSteps) })}
+                  </Text>
+                </>
+              )}
+              {Platform.OS === 'web' ? (
+                <Button
+                  variant="tertiary"
+                  label={t('trackers.steps.manualModalTitle')}
+                  onPress={() => setManualSteps(true)}
+                  testID="cardio-manual-steps"
+                />
+              ) : (
+                <Button
+                  variant="tertiary"
+                  label={t('trackers.steps.syncButton')}
+                  onPress={() => {
+                    void (
+                      daily.permissionStatus === 'granted'
+                        ? daily.syncFromPlatform()
+                        : daily.requestPermission()
+                    ).catch(() => setError('ownerPolish.walkingUnavailable'));
+                  }}
+                  testID="cardio-sync-steps"
+                />
+              )}
+            </View>
+          )}
+          {error && (
+            <Text accessibilityRole="alert" color={colors.danger} testID="cardio-error">
+              {t(error)}
+            </Text>
+          )}
+          {phase === 'idle' && (
+            <>
+              <View style={card}>
+                <Text variant="heading">
+                  {t(walking ? 'ownerPolish.stepGoal' : 'ownerPolish.distanceGoal')}
+                </Text>
+                <View style={styles.row}>
+                  {goals[mode].map((value) => (
+                    <Chip
+                      key={value}
+                      label={walking ? stepsLabel(value) : distanceLabel(value)}
+                      selected={!customGoal && target === value}
+                      onPress={() => {
+                        setCustomGoal(false);
+                        setTargets((previous) => ({ ...previous, [mode]: value }));
+                      }}
+                      testID={`cardio-goal-${value}`}
+                    />
+                  ))}
+                  {!walking && (
+                    <Chip
+                      label={t('ownerPolish.custom')}
+                      selected={customGoal}
+                      onPress={() => setCustomGoal(true)}
+                      testID="cardio-custom-goal"
+                    />
+                  )}
+                </View>
+                {customGoal && (
+                  <NumberField
+                    label={t('ownerPolish.distanceInput')}
+                    value={targetDraft}
+                    onChange={setTargetDraft}
+                    optional
+                    testID="cardio-distance-input"
+                  />
+                )}
+                {!walking && !validTarget && <Text>{t('ownerPolish.distanceMinimum')}</Text>}
+                {!user && <Text>{t('ownerPolish.signInToTrack')}</Text>}
+                {walking && Platform.OS === 'web' && (
+                  <Text>{t('ownerPolish.walkingUnavailable')}</Text>
+                )}
+                <Button
+                  label={t(`ownerPolish.${startLabels[mode]}`)}
+                  disabled={!validTarget || !user || (walking && Platform.OS === 'web')}
+                  onPress={() => void start(false)}
+                  testID="btn-start-cardio"
                 />
               </View>
+              {walking && (
+                <View style={card}>
+                  <Text variant="heading">{t('ownerPolish.dailyHistory')}</Text>
+                  {daily.loading ? (
+                    <Text>{t('common.loading')}</Text>
+                  ) : (daily.week ?? []).some((item) => item.steps != null) ? (
+                    (daily.week ?? [])
+                      .filter((item) => item.steps != null)
+                      .slice()
+                      .reverse()
+                      .map((item) => (
+                        <View key={item.localDate} style={styles.dailyRow}>
+                          <Text>{dateLabel(item.localDate)}</Text>
+                          <Text tabular>{stepsLabel(item.steps!)}</Text>
+                        </View>
+                      ))
+                  ) : (
+                    <Text>{t('ownerPolish.emptyDaily')}</Text>
+                  )}
+                </View>
+              )}
+              <Text variant="heading">{t(`ownerPolish.${historyLabels[mode]}`)}</Text>
+              {!user ? (
+                <Text>{t(`ownerPolish.${emptyLabels[mode]}`)}</Text>
+              ) : history?.scope !== scope ? (
+                <Text>{t('common.loading')}</Text>
+              ) : history.failed ? (
+                <View style={card}>
+                  <Text accessibilityRole="alert">{t('ownerPolish.historyError')}</Text>
+                  <Button
+                    variant="secondary"
+                    label={t('common.retry')}
+                    onPress={() => void refresh()}
+                    testID="cardio-retry-history"
+                  />
+                </View>
+              ) : history.rows.length ? (
+                history.rows.map((item) => (
+                  <View
+                    key={item.workout_id}
+                    style={card}
+                    testID={`cardio-history-${item.workout_id}`}
+                  >
+                    <View style={styles.dailyRow}>
+                      <Text variant="label">{dateLabel(item.local_date)}</Text>
+                      {item.target != null &&
+                        cardioGoalReached({ ...item, target: item.target }) && (
+                          <Text color={colors.copper}>{t('ownerPolish.goalReached')}</Text>
+                        )}
+                    </View>
+                    {resultStats(item)}
+                  </View>
+                ))
+              ) : (
+                <Text>{t(`ownerPolish.${emptyLabels[mode]}`)}</Text>
+              )}
+            </>
+          )}
+          {phase === 'starting' && (
+            <Text accessibilityLiveRegion="polite">{t('ownerPolish.starting')}</Text>
+          )}
+          {phase !== 'idle' && phase !== 'starting' && (
+            <>
+              {phase === 'saved' && (
+                <Text variant="title2" accessibilityLiveRegion="polite">
+                  {t('ownerPolish.saved')}
+                </Text>
+              )}
+              {!walking && (
+                <View style={card}>
+                  <Text>
+                    {t(metric.segments.length > 0 ? 'ownerPolish.gpsReady' : 'ownerPolish.fix')}
+                  </Text>
+                  {metric.segments.length > 0 && (
+                    <RouteMap points={metric.segments.flat()} segments={metric.segments} />
+                  )}
+                </View>
+              )}
+              <View style={card}>
+                <Text variant="title1" tabular>
+                  {walking
+                    ? stepsLabel(displayed.step_count ?? 0)
+                    : distanceLabel((displayed.distance_m ?? 0) / 1000)}
+                </Text>
+                <Text tabular>
+                  {t('ownerPolish.time')} · {clock(displayed.duration_seconds)}
+                </Text>
+                {walking && displayed.distance_m != null && (
+                  <Text tabular>{distanceLabel(displayed.distance_m / 1000)}</Text>
+                )}
+                {!walking && (
+                  <View style={styles.row}>
+                    {phase !== 'saved' && (
+                      <Text tabular>
+                        {t(
+                          mode === 'cycling'
+                            ? 'ownerPolish.currentSpeed'
+                            : 'ownerPolish.currentPace',
+                        )}{' '}
+                        · {speedLabel(mode, metric.speed)}
+                      </Text>
+                    )}
+                    <Text tabular>
+                      {t(
+                        mode === 'cycling' ? 'ownerPolish.averageSpeed' : 'ownerPolish.averagePace',
+                      )}{' '}
+                      ·{' '}
+                      {speedLabel(
+                        mode,
+                        speedKmh((displayed.distance_m ?? 0) / 1000, displayed.duration_seconds),
+                      )}
+                    </Text>
+                  </View>
+                )}
+                {displayed.estimated_calories != null && (
+                  <Text tabular>
+                    {t('ownerPolish.calories', { value: number(displayed.estimated_calories) })}
+                  </Text>
+                )}
+                {progress(walking ? metric.steps : (metres ?? 0), storedTarget, goalLabel)}
+                <Text tabular>
+                  {t('ownerPolish.goalProgress', {
+                    current: walking
+                      ? stepsLabel(metric.steps)
+                      : distanceLabel((metres ?? 0) / 1000),
+                    target: goalLabel,
+                  })}
+                </Text>
+              </View>
+              {reached && (
+                <Animated.View
+                  accessibilityLiveRegion="polite"
+                  style={[card, { opacity: badgeOpacity }]}
+                  testID="cardio-goal-reached"
+                >
+                  <View style={styles.row}>
+                    <Ionicons name="star-outline" size={controls.icon} color={colors.apricot} />
+                    <Text variant="heading">{t('ownerPolish.goalReached')}</Text>
+                  </View>
+                  {phase === 'active' && (
+                    <Text>{t('ownerPolish.goalMessage', { goal: goalLabel })}</Text>
+                  )}
+                </Animated.View>
+              )}
+            </>
+          )}
+        </ScrollView>
+        {phase !== 'idle' && phase !== 'starting' && (
+          <View
+            style={[
+              styles.footer,
+              { backgroundColor: colors.bg0, borderColor: colors.hairlineLit },
+            ]}
+          >
+            {confirmDiscard ? (
+              <View style={card}>
+                <Text>{t('ownerPolish.discardQuestion')}</Text>
+                <Button
+                  variant="secondary"
+                  label={t(phase === 'retry' ? 'common.cancel' : 'ownerPolish.keepSession')}
+                  onPress={() => setConfirmDiscard(false)}
+                />
+                <Button
+                  variant="destructiveFill"
+                  label={t('ownerPolish.discard')}
+                  onPress={() => {
+                    reset();
+                    onClose();
+                  }}
+                  testID="cardio-discard"
+                />
+              </View>
+            ) : phase === 'saved' ? (
+              <Button
+                label={t('ownerPolish.viewHistory')}
+                onPress={reset}
+                testID="cardio-view-history"
+              />
+            ) : (
+              <>
+                {(active || phase === 'paused') && (
+                  <Button
+                    variant="secondary"
+                    label={t(active ? 'ownerPolish.pause' : 'ownerPolish.resume')}
+                    onPress={() => (active ? pause() : void start(true))}
+                    testID="cardio-pause-resume"
+                  />
+                )}
+                <Button
+                  label={t(
+                    phase === 'saving'
+                      ? 'common.saving'
+                      : phase === 'retry'
+                        ? 'common.retry'
+                        : 'ownerPolish.finish',
+                  )}
+                  onPress={() => void finish()}
+                  disabled={
+                    phase === 'saving' ||
+                    (!frozen.current && !(walking ? data.step_count : data.distance_m))
+                  }
+                  testID="cardio-finish"
+                />
+              </>
             )}
-          </ScrollView>
-        </View>
+          </View>
+        )}
+        {manualSteps && (
+          <ManualStepsModal
+            visible
+            onClose={() => setManualSteps(false)}
+            onSave={daily.logManualSteps}
+          />
+        )}
       </SafeAreaView>
     </Modal>
   );
 }
 
-const createStyles = (dark: ReturnType<typeof useAppearance>['colors']) =>
-  StyleSheet.create({
-    safeArea: {
-      flex: 1,
-      backgroundColor: dark.bg0,
-    },
-    container: {
-      flex: 1,
-      backgroundColor: dark.bg0,
-    },
-    topBar: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'space-between',
-      paddingHorizontal: space[3],
-      paddingTop: space[2],
-      paddingBottom: space[2],
-      borderBottomWidth: 1,
-      borderBottomColor: dark.hairline,
-    },
-    backButton: {
-      width: 44,
-      height: 44,
-      alignItems: 'center',
-      justifyContent: 'center',
-    },
-    tabPillRow: {
-      flexDirection: 'row',
-      backgroundColor: dark.s1,
-      borderRadius: radius.full,
-      padding: 4,
-      borderWidth: 1,
-      borderColor: dark.hairline,
-    },
-    tabButton: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      paddingHorizontal: space[3],
-      paddingVertical: space[2],
-      borderRadius: radius.full,
-    },
-    tabButtonActive: {
-      backgroundColor: dark.apricot,
-    },
-    scrollContent: {
-      padding: space[4],
-      paddingBottom: space[8],
-    },
-    idleBlock: {
-      gap: space[4],
-    },
-    iconHero: {
-      alignItems: 'center',
-      marginTop: space[3],
-      marginBottom: space[2],
-    },
-    heroIconCircle: {
-      width: 80,
-      height: 80,
-      borderRadius: visualPrimitives.radii[40],
-      alignItems: 'center',
-      justifyContent: 'center',
-      marginBottom: space[3],
-    },
-    heroTitle: {
-      letterSpacing: -0.5,
-      marginBottom: 6,
-    },
-    heroSubtitle: {
-      textAlign: 'center',
-      lineHeight: 20,
-      maxWidth: 300,
-    },
-    configCard: {
-      padding: space[4],
-    },
-    configTitle: {
-      marginBottom: space[3],
-      fontWeight: '700',
-    },
-    presetChipsRow: {
-      flexDirection: 'row',
-      flexWrap: 'wrap',
-      gap: space[2],
-    },
-    chip: {
-      paddingHorizontal: space[4],
-      paddingVertical: space[2],
-      borderRadius: radius.control,
-      backgroundColor: dark.s2,
-      borderWidth: 1,
-      borderColor: dark.hairline,
-    },
-    chipActive: {
-      backgroundColor: dark.apricot,
-      borderColor: dark.apricot,
-    },
-    customInputRow: {
-      marginTop: space[3],
-    },
-    customStepInput: {
-      height: 48,
-      borderRadius: radius.control,
-      backgroundColor: dark.s2,
-      borderWidth: 1,
-      borderColor: dark.hairline,
-      paddingHorizontal: space[3],
-      color: dark.textHi,
-      fontSize: 15,
-    },
-    gpsBannerCard: {
-      padding: space[4],
-    },
-    gpsBannerRow: {
-      flexDirection: 'row',
-      alignItems: 'center',
-    },
-    gpsActivePill: {
-      backgroundColor: 'rgba(56, 178, 172, 0.15)',
-      paddingHorizontal: 8,
-      paddingVertical: 4,
-      borderRadius: radius.full,
-    },
-    startActionRow: {
-      marginTop: space[2],
-    },
-    liveSessionBlock: {
-      alignItems: 'center',
-      paddingTop: space[3],
-      gap: space[4],
-    },
-    sessionStatusPill: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      backgroundColor: dark.s1,
-      paddingHorizontal: space[3],
-      paddingVertical: space[1],
-      borderRadius: radius.full,
-      borderWidth: 1,
-      borderColor: dark.hairline,
-    },
-    statusDot: {
-      width: 8,
-      height: 8,
-      borderRadius: visualPrimitives.radii[4],
-      marginRight: 6,
-    },
-    dotGreen: {
-      backgroundColor: visualPrimitives.colors.mint,
-    },
-    dotAmber: {
-      backgroundColor: visualPrimitives.colors.gold,
-    },
-    metricHero: {
-      alignItems: 'center',
-      marginVertical: space[2],
-    },
-    heroNumber: {
-      fontVariant: ['tabular-nums'],
-      letterSpacing: -1,
-    },
-    heroUnit: {
-      fontWeight: '700',
-      letterSpacing: 1.5,
-      marginTop: 4,
-    },
-    goalProgressWrap: {
-      width: '100%',
-      backgroundColor: dark.s1,
-      padding: space[4],
-      borderRadius: radius.card,
-      borderWidth: 1,
-      borderColor: dark.hairline,
-    },
-    goalProgressHeader: {
-      flexDirection: 'row',
-      justifyContent: 'space-between',
-      marginBottom: space[2],
-    },
-    track: {
-      height: 8,
-      backgroundColor: dark.s2,
-      borderRadius: radius.full,
-      overflow: 'hidden',
-    },
-    fill: {
-      height: '100%',
-      backgroundColor: dark.apricot,
-      borderRadius: radius.full,
-    },
-    statsGrid: {
-      flexDirection: 'row',
-      gap: space[2],
-      width: '100%',
-    },
-    statTile: {
-      flex: 1,
-      padding: space[3],
-      alignItems: 'center',
-      justifyContent: 'center',
-    },
-    statNumber: {
-      marginVertical: 4,
-      fontVariant: ['tabular-nums'],
-    },
-    liveGpsPill: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      backgroundColor: 'rgba(56, 178, 172, 0.1)',
-      paddingHorizontal: space[3],
-      paddingVertical: space[2],
-      borderRadius: radius.full,
-    },
-    activeControlsRow: {
-      flexDirection: 'row',
-      gap: space[3],
-      width: '100%',
-      marginTop: space[4],
-    },
-    controlBtn: {
-      flex: 1,
-      height: 56,
-      borderRadius: radius.control,
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'center',
-    },
-    pauseBtn: {
-      backgroundColor: dark.s2,
-      borderWidth: 1,
-      borderColor: dark.hairline,
-    },
-    finishBtn: {
-      backgroundColor: dark.apricot,
-    },
-    completedBlock: {
-      alignItems: 'center',
-      paddingTop: space[4],
-      gap: space[4],
-    },
-    celebrationCircle: {
-      width: 96,
-      height: 96,
-      borderRadius: visualPrimitives.radii[48],
-      backgroundColor: 'rgba(244, 182, 125, 0.15)',
-      alignItems: 'center',
-      justifyContent: 'center',
-      marginBottom: space[2],
-    },
-    completedTitle: {
-      letterSpacing: -0.5,
-    },
-    completedSubtitle: {
-      textAlign: 'center',
-      lineHeight: 20,
-      maxWidth: 320,
-    },
-    summaryCard: {
-      width: '100%',
-      padding: space[4],
-      gap: space[3],
-    },
-    summaryRow: {
-      flexDirection: 'row',
-      justifyContent: 'space-between',
-      alignItems: 'center',
-      borderBottomWidth: 1,
-      borderBottomColor: dark.hairline,
-      paddingBottom: space[2],
-    },
-    permissionErrorCard: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      backgroundColor: 'rgba(235, 122, 107, 0.1)',
-      borderWidth: 1,
-      borderColor: dark.danger,
-      borderRadius: radius.card,
-      padding: space[3],
-      marginVertical: space[2],
-    },
-  });
+const styles = StyleSheet.create({
+  screen: { flex: 1 },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: space[2],
+    paddingHorizontal: space[4],
+  },
+  headerTitle: { flex: 1 },
+  content: { gap: space[4], padding: space[4] },
+  footer: {
+    paddingHorizontal: space[4],
+    paddingVertical: space[2],
+    borderTopWidth: StyleSheet.hairlineWidth,
+    gap: space[2],
+  },
+  card: {
+    borderWidth: StyleSheet.hairlineWidth,
+    borderRadius: radius.control,
+    padding: space[3],
+    gap: space[2],
+  },
+  row: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: space[2] },
+  dailyRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+    gap: space[2],
+  },
+  track: { height: space[2], borderRadius: radius.full, overflow: 'hidden' },
+  fill: { height: '100%' },
+});

@@ -56,3 +56,4 @@ export * from './savedMeals.ts';
 export * from './route.ts';
 export * from './progressSummary.ts';
 export * from './workoutSplits.ts';
+export * from './cardio.ts';

@@ -6,7 +6,13 @@ import { Button, Text, space } from '@calipartner/ui';
 import { useTheme } from '@calipartner/ui/theme';
 import type { RoutePoint } from '@calipartner/core';
 import { t } from '@/i18n';
-export function RouteMap({ points }: { points: RoutePoint[] }) {
+export function RouteMap({
+  points,
+  segments = [points],
+}: {
+  points: RoutePoint[];
+  segments?: RoutePoint[][];
+}) {
   const { colors } = useTheme();
   const map = useRef<MapView>(null);
   const coordinates = useMemo(
@@ -24,7 +30,7 @@ export function RouteMap({ points }: { points: RoutePoint[] }) {
     fit();
   }, [fit]);
   if (Platform.OS === 'android' && !process.env.EXPO_PUBLIC_GOOGLE_MAPS_ANDROID_KEY)
-    return <RoutePreview points={points} />;
+    return <RoutePreview points={points} segments={segments} />;
   if (!coordinates.length) return <Text>{t('launch.routeEmpty')}</Text>;
   return (
     <View testID="gps-route">
@@ -36,7 +42,13 @@ export function RouteMap({ points }: { points: RoutePoint[] }) {
         initialRegion={{ ...coordinates[0]!, latitudeDelta: 0.01, longitudeDelta: 0.01 }}
         accessibilityLabel={t('launch.routeSummary', { count: points.length })}
       >
-        <Polyline coordinates={coordinates} strokeColor={colors.teal} />
+        {segments.map((segment, index) => (
+          <Polyline
+            key={index}
+            coordinates={segment.map((p) => ({ latitude: p.lat, longitude: p.lng }))}
+            strokeColor={colors.teal}
+          />
+        ))}
         <Marker coordinate={coordinates[0]!} title={t('launch.start')} pinColor={colors.textHi} />
         <Marker
           coordinate={coordinates.at(-1)!}

@@ -115,6 +115,7 @@ export function FoodLogModal({
   const [showPhotoConsent, setShowPhotoConsent] = useState(false);
   const [showPhotoCamera, setShowPhotoCamera] = useState(false);
   const [photoAnalyzing, setPhotoAnalyzing] = useState(false);
+  const photoRequest = useRef(0);
   const [photoResults, setPhotoResults] = useState<FoodCandidateItem[] | null>(null);
   const [showResultsEditor, setShowResultsEditor] = useState(false);
   const [showDailyLimitModal, setShowDailyLimitModal] = useState(false);
@@ -267,6 +268,7 @@ export function FoodLogModal({
   };
 
   const handlePhotoCaptured = async (payload: { base64: string; mimeType: string }) => {
+    const request = ++photoRequest.current;
     setShowPhotoCamera(false);
     setPhotoAnalyzing(true);
     try {
@@ -274,6 +276,7 @@ export function FoodLogModal({
         imageBase64: payload.base64,
         mimeType: payload.mimeType,
       });
+      if (request !== photoRequest.current) return;
 
       if (!response.candidates.length) {
         setPhotoError(t('capture.noFood'));
@@ -282,6 +285,7 @@ export function FoodLogModal({
       setPhotoResults(response.candidates);
       setShowResultsEditor(true);
     } catch (err: unknown) {
+      if (request !== photoRequest.current) return;
       const errorObj = err as { code?: string; message?: string };
       if (
         ['MONTHLY_LIMIT_REACHED', 'DAILY_LIMIT_REACHED'].includes(errorObj?.code ?? '') ||
@@ -293,9 +297,11 @@ export function FoodLogModal({
             getSupabase() as unknown as SupabaseFunctionsClient,
             user?.id ?? '',
           );
+          if (request !== photoRequest.current) return;
           setLimitState(status.userState);
           setLimitUsage({ usedToday: status.usedToday, dailyCap: status.dailyCap });
         } catch {
+          if (request !== photoRequest.current) return;
           setLimitState(errorObj?.code === 'UPGRADE_REQUIRED' ? 'trial' : 'paid_pro');
         }
         setShowDailyLimitModal(true);
@@ -308,7 +314,7 @@ export function FoodLogModal({
         );
       }
     } finally {
-      setPhotoAnalyzing(false);
+      if (request === photoRequest.current) setPhotoAnalyzing(false);
     }
   };
 
@@ -396,6 +402,41 @@ export function FoodLogModal({
               {t('fixNovember.saveFailed')}
             </Text>
           )}
+          <View
+            style={{
+              flexDirection: 'row',
+              justifyContent: 'flex-end',
+              gap: spacing.xs,
+              paddingHorizontal: spacing.md,
+            }}
+            testID="food-log-quick-actions"
+          >
+            {(
+              [
+                ['favorites', 'heart-outline', t('foodPolish.favorites')],
+                ['myMeals', 'restaurant-outline', t('launch.meals')],
+                ['search', 'search-outline', t('foodLog.tabs.search')],
+              ] as const
+            ).map(([tab, icon, label]) => (
+              <Button
+                key={tab}
+                variant="tertiary"
+                iconOnly
+                fullWidth={false}
+                label={label}
+                accessibilityState={{ selected: activeTab === tab }}
+                testID={`tab-log-${tab}`}
+                icon={
+                  <Ionicons
+                    name={tab === 'favorites' && activeTab === tab ? 'heart' : icon}
+                    size={homeLayout.iconSize}
+                    color={activeTab === tab ? colors.accent : colors.text}
+                  />
+                }
+                onPress={() => setActiveTab(tab)}
+              />
+            ))}
+          </View>
           <Button
             variant="secondary"
             label={t('homeRefresh.describe')}
@@ -411,70 +452,53 @@ export function FoodLogModal({
               onLogged={onLogged}
             />
           )}
-          {/* Food methods */}
           <View
-            accessibilityRole="tablist"
             testID="food-log-methods"
-            style={{ flexDirection: 'row', flexWrap: 'wrap', gap: spacing.xs, padding: spacing.md }}
+            style={{ flexDirection: 'row', gap: spacing.xs, padding: spacing.md }}
           >
             {(
               [
-                ['search', 'search-outline'],
-                ['recipes', 'book-outline'],
-                ['favorites', 'heart-outline'],
-                ['myMeals', 'restaurant-outline'],
-                ['photo', 'camera-outline'],
-                ['scan', 'barcode-outline'],
+                ['recipes', 'book-outline', t('foodLog.tabs.recipes')],
+                ['photo', 'camera-outline', t('foodLog.tabs.photo')],
+                ['custom', 'create-outline', t('ownerPolish.custom')],
               ] as const
-            ).map(([tab, icon]) => {
-              const isActive = activeTab === tab;
+            ).map(([method, icon, label]) => {
+              const selected = activeTab === method;
               return (
                 <Pressable
-                  key={tab}
-                  testID={`tab-log-${tab}`}
-                  accessibilityRole={tab === 'scan' ? 'button' : 'tab'}
-                  accessibilityLabel={
-                    tab === 'myMeals'
-                      ? t('launch.meals')
-                      : tab === 'favorites'
-                        ? t('foodPolish.favorites')
-                        : t(`foodLog.tabs.${tab}`)
-                  }
-                  accessibilityState={{ selected: isActive }}
-                  onPress={() => (tab === 'scan' ? setShowBarcodeScanner(true) : setActiveTab(tab))}
+                  key={method}
+                  testID={`tab-log-${method}`}
+                  accessibilityRole="button"
+                  accessibilityLabel={label}
+                  accessibilityState={{ selected }}
+                  onPress={() => {
+                    if (method === 'custom') {
+                      setPrefilledBarcode(null);
+                      setShowCustomFoodModal(true);
+                    } else setActiveTab(method);
+                  }}
                   style={({ pressed }) => ({
-                    flexBasis: 0,
                     flexGrow: 1,
-                    minWidth: homeLayout.touchSize,
+                    flexBasis: 0,
+                    minWidth: homeLayout.compactTouchSize,
                     minHeight: homeLayout.touchSize,
-                    paddingVertical: spacing.sm,
-                    paddingHorizontal: spacing.xs,
+                    padding: spacing.xs,
                     gap: spacing.xs,
                     alignItems: 'center',
                     justifyContent: 'center',
                     borderRadius: radius.md,
                     borderWidth: 1,
-                    borderColor: isActive ? colors.accent : colors.border,
-                    backgroundColor: pressed || isActive ? colors.surfaceAlt : colors.surface,
+                    borderColor: selected ? colors.accent : colors.border,
+                    backgroundColor: pressed || selected ? colors.surfaceAlt : colors.surface,
                   })}
                 >
                   <Ionicons
                     name={icon}
                     size={homeLayout.iconSize}
-                    color={isActive ? colors.accent : colors.textMuted}
+                    color={selected ? colors.accent : colors.textMuted}
                   />
-                  <Text
-                    style={{
-                      fontSize: fontSize.xs,
-                      textAlign: 'center',
-                      color: isActive ? colors.accent : colors.textMuted,
-                    }}
-                  >
-                    {tab === 'myMeals'
-                      ? t('launch.meals')
-                      : tab === 'favorites'
-                        ? t('foodPolish.favorites')
-                        : t(`foodLog.tabs.${tab}`)}
+                  <Text variant="bodyS" style={{ textAlign: 'center' }}>
+                    {label}
                   </Text>
                 </Pressable>
               );
@@ -556,12 +580,6 @@ export function FoodLogModal({
                 )}
               </View>
 
-              <Button
-                variant="secondary"
-                label={t('foodPolish.customFood')}
-                onPress={() => setShowCustomFoodModal(true)}
-                testID="btn-create-custom-food"
-              />
               {/* Search status & results */}
               {searchLoading ? (
                 <View style={{ paddingVertical: spacing.lg, alignItems: 'center' }}>
@@ -697,108 +715,39 @@ export function FoodLogModal({
 
           {/* TAB 3: Photo (PRD LOG-3) */}
           {activeTab === 'photo' && (
-            <View
-              testID="tab-view-photo-logging"
-              style={{
-                flex: 1,
-                alignItems: 'center',
-                justifyContent: 'center',
-                padding: spacing.xl,
-                gap: spacing.md,
-              }}
-            >
-              {!hasPhotoAccess && (
-                <Text
-                  style={{ fontSize: fontSize.sm, color: colors.textMuted }}
-                  testID="photo-access-copy"
-                >
-                  {t('brandRepair.photoPro')}
-                </Text>
-              )}
-              <View
-                style={{
-                  width: 80,
-                  height: 80,
-                  borderRadius: radius.pill,
-                  backgroundColor: colors.cardHighlight,
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                }}
-              >
-                <Ionicons name="camera-outline" size={40} color={colors.accent} />
-              </View>
-
-              <View
-                style={{
-                  backgroundColor: colors.surfaceAlt,
-                  paddingHorizontal: 12,
-                  paddingVertical: 4,
-                  borderRadius: radius.pill,
-                  borderWidth: 1,
-                  borderColor: colors.border,
-                }}
-              >
-                <Text style={{ fontSize: fontSize.xs, fontWeight: '700', color: colors.accent }}>
-                  {t('foodLog.photo.badge')}
-                </Text>
-              </View>
-
-              <Text
-                style={{
-                  fontSize: fontSize.lg,
-                  fontWeight: '700',
-                  color: colors.text,
-                  textAlign: 'center',
-                }}
-              >
-                {t('foodLog.photo.title')}
-              </Text>
-              <Text
-                style={{
-                  fontSize: fontSize.sm,
-                  color: colors.textMuted,
-                  textAlign: 'center',
-                  maxWidth: 300,
-                  lineHeight: 20,
-                }}
-              >
-                {t('foodLog.photo.subtitle')}
-              </Text>
-
+            <View testID="tab-view-photo-logging" style={{ gap: spacing.sm, padding: spacing.md }}>
+              <Text variant="heading">{t('ownerPolish.scanMethods')}</Text>
               {photoError && (
-                <Text
-                  accessibilityRole="alert"
-                  testID="food-photo-error"
-                  style={{ color: colors.text }}
-                >
+                <Text accessibilityRole="alert" testID="food-photo-error">
                   {photoError}
                 </Text>
               )}
-              {/* Start Capture Button */}
               <Button
-                variant="primary"
-                fullWidth={false}
-                label={t('foodLog.photo.startScan')}
-                icon={<Ionicons name="camera" size={20} color={colors.onAccent} />}
-                testID="btn-start-photo-scan"
-                accessibilityRole="button"
-                accessibilityLabel={t('foodLog.photo.startScan')}
-                onPress={handleStartPhotoScan}
-                style={{
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                  gap: 8,
-                  backgroundColor: colors.accent,
-                  paddingHorizontal: 24,
-                  paddingVertical: 14,
-                  borderRadius: radius.md,
-                  marginTop: spacing.sm,
-                  width: '100%',
-                  maxWidth: 280,
-                  justifyContent: 'center',
-                  alignSelf: 'center',
-                }}
+                variant="secondary"
+                label={t('ownerPolish.barcodeScan')}
+                icon={
+                  <Ionicons name="barcode-outline" size={homeLayout.iconSize} color={colors.text} />
+                }
+                testID="tab-log-scan"
+                onPress={() => setShowBarcodeScanner(true)}
               />
+              <Button
+                label={t('ownerPolish.aiScan')}
+                icon={
+                  <Ionicons
+                    name="camera-outline"
+                    size={homeLayout.iconSize}
+                    color={colors.onAccent}
+                  />
+                }
+                testID="btn-start-photo-scan"
+                onPress={handleStartPhotoScan}
+              />
+              {!hasPhotoAccess && !photoSubscription.loading && (
+                <Text variant="bodyS" testID="photo-access-copy">
+                  {t('brandRepair.photoPro')}
+                </Text>
+              )}
             </View>
           )}
 
@@ -806,6 +755,7 @@ export function FoodLogModal({
           {activeTab === 'recipes' && (
             <View style={{ flex: 1 }}>
               <RecipeBrowseView
+                hideFavoritesShortcut
                 initialMealSection={defaultSection}
                 localDate={localDate}
                 onRecipeLogged={() => {
@@ -1071,7 +1021,10 @@ export function FoodLogModal({
           {photoAnalyzing && (
             <FoodPhotoAnalyzingOverlay
               visible={photoAnalyzing}
-              onCancel={() => setPhotoAnalyzing(false)}
+              onCancel={() => {
+                photoRequest.current++;
+                setPhotoAnalyzing(false);
+              }}
             />
           )}
 

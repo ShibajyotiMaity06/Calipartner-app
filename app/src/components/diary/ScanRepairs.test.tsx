@@ -83,10 +83,8 @@ vi.mock('expo-router', async () => ({
 }));
 vi.mock('./FoodLogModal', () => ({ FoodLogModal: 'FoodLog' }));
 vi.mock('@/components/workouts/WorkoutHubModal', () => ({ WorkoutHubModal: 'Workout' }));
-vi.mock('@/components/workouts/WorkoutLoggerModal', () => ({
-  WorkoutLoggerModal: 'WorkoutLogger',
-}));
-vi.mock('@/components/trackers/StepsCard', () => ({ StepsCard: 'StepsCard' }));
+vi.mock('@/components/cardio/CardioTrackerModal', () => ({ CardioTrackerModal: 'CardioTracker' }));
+vi.mock('@/components/food_photo/ScanSweep', () => ({ ScanSweep: 'ScanSweep' }));
 vi.mock('@/components/trackers', () => ({
   CustomWaterModal: 'Water',
   WeightEntryModal: 'Weight',
@@ -279,27 +277,18 @@ it.each([
   ['workout', 'Workout'],
   ['water', 'Water'],
   ['weight', 'Weight'],
-  ['steps', 'StepsCard'],
-  ['cycling', 'WorkoutLogger'],
-  ['running', 'WorkoutLogger'],
+  ['steps', 'CardioTracker'],
+  ['cycling', 'CardioTracker'],
+  ['running', 'CardioTracker'],
 ])('opens the %s logging shortcut and clears it on close', async (flow, component) => {
   state.flow = flow;
   await act(async () => {
     renderer = create(<LogScreen />);
   });
   expect(renderer.root.findAllByType(component as React.ElementType)).toHaveLength(1);
-  if (flow === 'steps') {
-    expect(renderer.root.findAllByType('ManualSteps' as React.ElementType)).toHaveLength(0);
-    await act(async () =>
-      renderer.root.findByProps({ testID: 'cardio-steps-back' }).props.onPress(),
-    );
-  } else {
-    if (flow === 'cycling' || flow === 'running')
-      expect(
-        renderer.root.findByType(component as React.ElementType).props.initialWorkoutType,
-      ).toBe(flow === 'cycling' ? 'cardio' : 'walk_run');
-    await act(async () => renderer.root.findByType(component as React.ElementType).props.onClose());
-  }
+  const view = renderer.root.findByType(component as React.ElementType);
+  if (component === 'CardioTracker') expect(view.props.initialMode).toBe(flow);
+  await act(async () => view.props.onClose());
   expect(state.setParams).toHaveBeenCalledWith({ flow: undefined });
   expect(state.back).toHaveBeenCalledOnce();
   expect(state.replace).not.toHaveBeenCalled();

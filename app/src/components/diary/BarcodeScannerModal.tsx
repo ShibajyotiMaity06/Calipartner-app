@@ -2,7 +2,6 @@ import { useTheme as useAppearance } from '@calipartner/ui/theme';
 import { type as inputTypography } from '@calipartner/ui';
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
-  ActivityIndicator,
   Modal,
   ScrollView,
   KeyboardAvoidingView,
@@ -16,6 +15,7 @@ import { Ionicons } from '@expo/vector-icons';
 import type { Food, MealSection } from '@calipartner/core';
 import { Text, Button, space, radius, captureLayout } from '@calipartner/ui';
 import { lookupBarcode } from '@/services/barcodeScanService';
+import { ScanSweep } from '@/components/food_photo/ScanSweep';
 import { t } from '@/i18n';
 import { useAuth } from '@/contexts/AuthContext';
 import { useNetworkStatus } from '@/hooks/useNetworkStatus';
@@ -355,19 +355,16 @@ export function BarcodeScannerModal({
                     <View style={[styles.cornerBracket, styles.bracketBottomRight]} />
                   </View>
                 </View>
-
-                {searching && (
-                  <View style={styles.searchingOverlay}>
-                    <ActivityIndicator size="large" color={dark.apricot} />
-                    <Text variant="body" color={dark.textHi} style={{ fontWeight: '700' }}>
-                      {t('foodLog.scan.scanning')}
-                    </Text>
-                  </View>
-                )}
               </View>
             )}
           </View>
 
+          {searching && (
+            <View accessibilityLiveRegion="polite" testID="barcode-lookup-progress">
+              <ScanSweep />
+              <Text color={dark.textHi}>{t('foodLog.scan.scanning')}</Text>
+            </View>
+          )}
           <Text variant="bodyS" color={dark.textHi} style={styles.cutoutHint}>
             {t('fastingRefresh.scanHint')}
           </Text>
@@ -590,13 +587,6 @@ const createStyles = (dark: ReturnType<typeof useAppearance>['colors']) =>
       paddingVertical: space[1],
       borderRadius: radius.full,
       overflow: 'hidden',
-    },
-    searchingOverlay: {
-      ...StyleSheet.absoluteFill,
-      backgroundColor: 'rgba(0,0,0,0.65)',
-      alignItems: 'center',
-      justifyContent: 'center',
-      gap: space[3],
     },
     foundFoodCard: {
       backgroundColor: dark.s1,

@@ -44,6 +44,9 @@ export function WorkoutDayModal({
     { localDate: today } = useCurrentLocalDate(),
     router = useRouter();
   const [date, setDate] = useState(defaultDate && defaultDate <= today ? defaultDate : today);
+  const [windowEnd, setWindowEnd] = useState(today);
+  const strip = useRef<ScrollView>(null);
+  const dates = Array.from({ length: 7 }, (_, index) => addDaysToDateString(windowEnd, index - 6));
   const present = date === today;
   const routine = useWorkoutPlan(visible && present),
     history = useWorkouts(date);
@@ -75,7 +78,9 @@ export function WorkoutDayModal({
   useBrowserModalBack(visible, close);
   useEffect(() => {
     if (visible) {
-      setDate(defaultDate && defaultDate <= today ? defaultDate : today);
+      const initial = defaultDate && defaultDate <= today ? defaultDate : today;
+      setDate(initial);
+      setWindowEnd(initial < addDaysToDateString(today, -6) ? initial : today);
       setError(null);
       setNotice(null);
       setAllLogged(false);
@@ -84,13 +89,14 @@ export function WorkoutDayModal({
       session.current = newWorkoutSessionRequest();
     }
   }, [visible, defaultDate, today, user?.id]);
-  const dateLabel = new Date(date + 'T12:00:00Z').toLocaleDateString(getLocale(), {
-    weekday: 'long',
-    day: 'numeric',
-    month: 'long',
-    year: 'numeric',
-    timeZone: 'UTC',
-  });
+  const dateLabel = (day: string) =>
+    new Date(day + 'T12:00:00Z').toLocaleDateString(getLocale(), {
+      weekday: 'long',
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric',
+      timeZone: 'UTC',
+    });
   const message = (failure: unknown) => {
     const code = failure instanceof Error ? failure.message : '';
     return t(
@@ -229,49 +235,82 @@ export function WorkoutDayModal({
           />
         </View>
         <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
-          <View style={styles.datePill} testID="workout-day-date">
-            <Button
-              variant="tertiary"
-              fullWidth={false}
-              label={t('workoutFlow.previous')}
-              iconOnly
-              icon={<Ionicons name="chevron-back" size={18} color={dark.textHi} />}
-              style={styles.dateIcon}
-              accessibilityRole="button"
-              accessibilityLabel={t('workoutFlow.previous')}
-              disabled={busy || building}
-              onPress={() => {
-                setDate((value) => addDaysToDateString(value, -1));
-                setNotice(null);
-                setError(null);
-              }}
-              testID="workout-day-previous"
-            />
-            <View style={styles.dateCenter}>
-              <Ionicons name="calendar-outline" size={18} color={dark.copper} />
-              <Text variant="body" color={dark.textHi} tabular style={styles.dateText}>
-                {dateLabel}
-              </Text>
-            </View>
-            <Button
-              variant="tertiary"
-              fullWidth={false}
-              label={t('workoutFlow.next')}
-              iconOnly
-              icon={
-                <Ionicons
-                  name="chevron-forward"
-                  size={18}
-                  color={present ? dark.textOff : dark.textHi}
-                />
-              }
-              style={styles.dateIcon}
-              accessibilityRole="button"
-              accessibilityLabel={t('workoutFlow.next')}
-              disabled={present || busy || building}
-              onPress={() => setDate((value) => addDaysToDateString(value, 1))}
-              testID="workout-day-next"
-            />
+          <View style={styles.stack} testID="workout-day-date">
+            <ScrollView
+              ref={strip}
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.dateStrip}
+              onContentSizeChange={() => strip.current?.scrollToEnd({ animated: false })}
+            >
+              {dates.map((day, index) => {
+                const calendarDay = new Date(day + 'T12:00:00Z');
+                const selected = date === day;
+                return (
+                  <Pressable
+                    key={day}
+                    testID={`workout-date-${day}`}
+                    accessibilityRole="button"
+                    accessibilityLabel={
+                      index === 0
+                        ? dateLabel(day) + '. ' + t('ownerPolish.olderDates')
+                        : dateLabel(day)
+                    }
+                    accessibilityState={{ selected }}
+                    disabled={busy || building}
+                    onPress={() => {
+                      if (index === 0) {
+                        const older = addDaysToDateString(day, -1);
+                        setWindowEnd(older);
+                        setDate(older);
+                      } else {
+                        setDate(day);
+                      }
+                      setNotice(null);
+                      setError(null);
+                    }}
+                    style={({ pressed }) => [
+                      styles.dateBox,
+                      selected && styles.dateSelected,
+                      pressed && { opacity: homeLayout.disabledOpacity },
+                    ]}
+                  >
+                    <Text variant="micro" color={selected ? dark.onBrand : dark.textMid}>
+                      {calendarDay.toLocaleDateString(getLocale(), {
+                        weekday: 'short',
+                        timeZone: 'UTC',
+                      })}
+                    </Text>
+                    <Text variant="label" tabular color={selected ? dark.onBrand : dark.textHi}>
+                      {calendarDay.toLocaleDateString(getLocale(), {
+                        day: 'numeric',
+                        timeZone: 'UTC',
+                      })}
+                    </Text>
+                  </Pressable>
+                );
+              })}
+            </ScrollView>
+            <Text variant="bodyS" tabular>
+              {dateLabel(date)}
+            </Text>
+            {windowEnd !== today && (
+              <Button
+                variant="tertiary"
+                fullWidth={false}
+                label={t('ownerPolish.newerDates')}
+                disabled={busy || building}
+                onPress={() => {
+                  const next = addDaysToDateString(windowEnd, 7);
+                  const end = next < today ? next : today;
+                  setWindowEnd(end);
+                  setDate(end);
+                  setError(null);
+                  setNotice(null);
+                }}
+                testID="workout-day-next"
+              />
+            )}
           </View>
           {error && (
             <View style={styles.stack}>
@@ -642,35 +681,19 @@ const createStyles = (dark: ReturnType<typeof useAppearance>['colors']) =>
       borderRadius: radius.card,
     },
     date: { flexDirection: 'row', alignItems: 'center', gap: space[2] },
-    datePill: {
-      flexDirection: 'row',
+    dateStrip: { flexGrow: 1, gap: space[1] },
+    dateBox: {
+      flexGrow: 1,
+      minWidth: homeLayout.compactTouchSize,
+      minHeight: homeLayout.compactTouchSize,
+      justifyContent: 'center',
       alignItems: 'center',
-      justifyContent: 'space-between',
-      backgroundColor: dark.s1,
-      borderWidth: 1,
+      borderRadius: radius.control,
+      borderWidth: StyleSheet.hairlineWidth,
       borderColor: dark.hairlineLit,
-      borderRadius: radius.full,
-      paddingHorizontal: space[3],
-      paddingVertical: space[1],
-      minHeight: homeLayout.touchSize,
+      backgroundColor: dark.s1,
     },
-    dateCenter: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'center',
-      gap: space[2],
-      flex: 1,
-    },
-    dateText: {
-      textAlign: 'center',
-    },
-    dateIcon: {
-      width: 36,
-      height: 36,
-      alignItems: 'center',
-      justifyContent: 'center',
-      borderRadius: radius.full,
-    },
+    dateSelected: { backgroundColor: dark.apricot, borderColor: dark.apricot },
     actionCard: {
       flexDirection: 'row',
       alignItems: 'center',

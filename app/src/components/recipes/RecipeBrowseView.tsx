@@ -1,4 +1,3 @@
-import { visualPrimitives } from '@calipartner/ui/tokens';
 import { NavigationIcon } from '@calipartner/ui';
 import { useSubscription } from '@/hooks/useSubscription';
 import { Text, Button } from '@calipartner/ui';
@@ -6,14 +5,7 @@ import { PaywallModal } from '@/components/rooms/PaywallModal';
 import { loadAccountTable } from '@/services/accountDataService';
 import { STARTER_RECIPE_IDS } from '@/services/recipeService';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import {
-  ActivityIndicator,
-  FlatList,
-  Pressable,
-  RefreshControl,
-  StyleSheet,
-  View,
-} from 'react-native';
+import { ActivityIndicator, FlatList, RefreshControl, StyleSheet, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import {
   filterRecipes,
@@ -44,6 +36,7 @@ export interface RecipeBrowseViewProps {
   headerTitle?: string;
   showBackOrClose?: boolean;
   onBackOrClose?: () => void;
+  hideFavoritesShortcut?: boolean;
 }
 
 type BrowseTab = 'all' | 'favorites';
@@ -55,6 +48,7 @@ export function RecipeBrowseView({
   headerTitle,
   showBackOrClose,
   onBackOrClose,
+  hideFavoritesShortcut = false,
 }: RecipeBrowseViewProps) {
   const { colors } = useTheme();
   const { user } = useAuth();
@@ -180,17 +174,6 @@ export function RecipeBrowseView({
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
-      {!planLoading && !hasActiveAccess && (
-        <View style={{ padding: spacing.md }} testID="starter-recipe-notice">
-          <Text style={{ color: colors.text }}>{t('brandRepair.starterRecipes')}</Text>
-          <Button
-            variant="secondary"
-            label={t('brandRepair.seePlans')}
-            onPress={() => setShowPlans(true)}
-            testID="recipe-see-plans"
-          />
-        </View>
-      )}
       <PaywallModal
         visible={showPlans}
         onClose={() => setShowPlans(false)}
@@ -232,75 +215,26 @@ export function RecipeBrowseView({
         </View>
       )}
 
-      {/* Tabs: All Recipes vs Favourites */}
-      <View
-        style={[
-          styles.tabsBar,
-          {
-            backgroundColor: colors.surface,
-            borderBottomColor: colors.border,
-          },
-        ]}
-      >
-        <Pressable
-          testID="tab-recipes-all"
-          onPress={() => setActiveTab('all')}
-          accessibilityRole="tab"
-          accessibilityState={{ selected: activeTab === 'all' }}
-          style={[
-            styles.tabItem,
-            {
-              borderBottomColor: activeTab === 'all' ? colors.accent : 'transparent',
-              borderBottomWidth: activeTab === 'all' ? 2.5 : 0,
-            },
-          ]}
-        >
-          <Text
-            style={[
-              styles.tabText,
-              {
-                color: activeTab === 'all' ? colors.accent : colors.textMuted,
-                fontWeight: activeTab === 'all' ? '700' : '500',
-              },
-            ]}
-          >
-            {t('recipes.browse.tabAll')}
-          </Text>
-        </Pressable>
-
-        <Pressable
-          testID="tab-recipes-favorites"
-          onPress={() => setActiveTab('favorites')}
-          accessibilityRole="tab"
-          accessibilityState={{ selected: activeTab === 'favorites' }}
-          style={[
-            styles.tabItem,
-            {
-              borderBottomColor: activeTab === 'favorites' ? colors.accent : 'transparent',
-              borderBottomWidth: activeTab === 'favorites' ? 2.5 : 0,
-            },
-          ]}
-        >
-          <View style={styles.tabWithIcon}>
-            <Ionicons
-              name={activeTab === 'favorites' ? 'heart' : 'heart-outline'}
-              size={15}
-              color={activeTab === 'favorites' ? visualPrimitives.colors.danger : colors.textMuted}
-            />
-            <Text
-              style={[
-                styles.tabText,
-                {
-                  color: activeTab === 'favorites' ? colors.accent : colors.textMuted,
-                  fontWeight: activeTab === 'favorites' ? '700' : '500',
-                },
-              ]}
-            >
-              {t('recipes.browse.tabFavorites')}
-            </Text>
-          </View>
-        </Pressable>
-      </View>
+      {!hideFavoritesShortcut && (
+        <View style={{ alignItems: 'flex-end', paddingHorizontal: spacing.md }}>
+          <Button
+            variant="tertiary"
+            fullWidth={false}
+            iconOnly
+            label={t('recipes.browse.tabFavorites')}
+            testID="tab-recipes-favorites"
+            accessibilityState={{ selected: activeTab === 'favorites' }}
+            icon={
+              <Ionicons
+                name={activeTab === 'favorites' ? 'heart' : 'heart-outline'}
+                size={20}
+                color={colors.accent}
+              />
+            }
+            onPress={() => setActiveTab(activeTab === 'all' ? 'favorites' : 'all')}
+          />
+        </View>
+      )}
 
       {/* Filter and Search Bar */}
       <View style={styles.filterBarWrap}>
@@ -447,25 +381,6 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     flex: 1,
     textAlign: 'center',
-  },
-  tabsBar: {
-    flexDirection: 'row',
-    borderBottomWidth: 1,
-    paddingHorizontal: spacing.md,
-  },
-  tabItem: {
-    flex: 1,
-    paddingVertical: 12,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  tabWithIcon: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-  },
-  tabText: {
-    fontSize: fontSize.xs,
   },
   filterBarWrap: {
     paddingHorizontal: spacing.md,

@@ -1,7 +1,7 @@
 import { NumberField } from '@/components/onboarding/PlanPrimitives';
+import { WorkoutWeightField } from './ExerciseSetsForm';
 import { WorkoutPlanToday } from './WorkoutPlanToday';
 import type { ExerciseSetInput } from './ExerciseSetsForm';
-import { type as inputTypography } from '@calipartner/ui';
 import { useBrowserModalBack } from '@/hooks/useBrowserModalBack';
 import { useCurrentLocalDate } from '@/hooks/useCurrentLocalDate';
 import React, { useEffect, useRef, useState } from 'react';
@@ -10,7 +10,6 @@ import {
   Modal,
   ScrollView,
   StyleSheet,
-  TextInput,
   TouchableOpacity,
   View,
 } from 'react-native';
@@ -719,9 +718,8 @@ export function WorkoutLoggerModal({
                           />
                         </View>
                         <View style={{ flexGrow: 1, flexBasis: homeLayout.touchSize * 2 }}>
-                          <NumberField
-                            label={t('personalDay.setWeight', { set: set.setNumber })}
-                            value={set.weightKg}
+                          <WorkoutWeightField
+                            value={set.weightKg === 0 ? null : set.weightKg}
                             onChange={(value) => handleSetWeightDirect(exIdx, setIdx, value)}
                             testID={`input-weight-${exIdx}-${setIdx}`}
                           />

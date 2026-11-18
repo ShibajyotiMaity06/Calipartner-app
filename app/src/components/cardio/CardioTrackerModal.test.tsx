@@ -1,131 +1,215 @@
-vi.mock('expo-location', () => ({
-  Accuracy: { High: 4 },
-  requestForegroundPermissionsAsync: vi.fn(),
-  getCurrentPositionAsync: vi.fn(),
-  watchPositionAsync: vi.fn(),
-}));
-vi.mock('./RouteMap', () => ({ RouteMap: 'RouteMap' }));
 import React from 'react';
 import { act, create, type ReactTestRenderer } from 'react-test-renderer';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 const sensor = vi.hoisted(() => ({
-  callback: null as ((steps: number) => void) | null,
+  steps: null as ((steps: number) => void) | null,
+  gps: null as
+    | ((location: {
+        coords: { latitude: number; longitude: number; accuracy: number };
+        timestamp: number;
+      }) => void)
+    | null,
   status: 'granted',
   remove: vi.fn(),
   save: vi.fn(),
-  workout: vi.fn(),
+  haptic: vi.fn(),
+  sound: vi.fn(),
+  permission: vi.fn(),
+  read: vi.fn(),
+  request: vi.fn(),
+  history: vi.fn(),
 }));
+vi.mock('expo-location', () => ({
+  Accuracy: { High: 4 },
+  requestForegroundPermissionsAsync: sensor.permission,
+  watchPositionAsync: vi.fn(async (options, callback) => {
+    sensor.gps = callback;
+    return { remove: sensor.remove };
+  }),
+}));
+vi.mock('expo-haptics', () => ({
+  NotificationFeedbackType: { Success: 'success' },
+  notificationAsync: sensor.haptic,
+}));
+vi.mock('./RouteMap', () => ({ RouteMap: 'RouteMap' }));
+vi.mock('@expo/vector-icons', () => ({ Ionicons: 'Icon' }));
+vi.mock('react-native-safe-area-context', () => ({ SafeAreaView: 'SafeAreaView' }));
 vi.mock('react-native', () => ({
-  Platform: { OS: 'web' },
-  StyleSheet: { create: (value: unknown) => value },
+  Platform: { OS: 'android' },
+  Animated: { Value: class {}, View: 'AnimatedView' },
+  StyleSheet: { create: (value: unknown) => value, hairlineWidth: 1 },
   Modal: 'Modal',
   View: 'View',
-  SafeAreaView: 'SafeAreaView',
-  TouchableOpacity: 'TouchableOpacity',
   ScrollView: 'ScrollView',
-  TextInput: 'TextInput',
 }));
 vi.mock('@calipartner/ui', async () => ({
   ...(await import('../../../../packages/ui/src/tokens')),
   Text: 'Text',
+  useTheme: () => ({ colors: {}, reduceMotion: true }),
   SegmentedControl: (await import('@/test/SegmentedControlStub')).SegmentedControlStub,
   NavigationIcon: 'NavigationIcon',
   Button: (await import('@/test/ButtonStub')).ButtonStub,
-  Card: 'Card',
-  ChevronLeftIcon: 'ChevronLeftIcon',
-  dark: {},
-  space: {},
-  radius: {},
+  Chip: 'Chip',
+}));
+vi.mock('@/components/onboarding/PlanPrimitives', () => ({ NumberField: 'NumberField' }));
+vi.mock('@/components/trackers', () => ({ ManualStepsModal: 'ManualStepsModal' }));
+vi.mock('@/hooks/useCurrentLocalDate', () => ({
+  useCurrentLocalDate: () => ({ localDate: '2026-11-18' }),
 }));
 vi.mock('@/hooks/useSteps', () => ({
-  useSteps: () => ({ steps: 400, logPedometerSession: sensor.save, refresh: vi.fn() }),
+  useSteps: () => ({ steps: 400, goalSteps: 8000, week: [], refresh: vi.fn() }),
 }));
-vi.mock('@/hooks/useWorkouts', () => ({ useWorkouts: () => ({ create: sensor.workout }) }));
 vi.mock('@/hooks/useTargets', () => ({
   useTargets: () => ({ currentGoalProfile: { current_weight_kg: 80 } }),
 }));
 vi.mock('@/contexts/AuthContext', () => ({
-  useAuth: () => ({ profile: { height_cm: 180, sex: 'male' } }),
+  useAuth: () => ({
+    user: { id: 'owner' },
+    profile: { height_cm: 180, sex: 'male', timezone: 'UTC' },
+  }),
 }));
-vi.mock('@/lib/sound', () => ({ playClickSound: vi.fn(), playSuccessSound: vi.fn() }));
+vi.mock('@/lib/sound', () => ({ playSuccessSound: sensor.sound }));
+vi.mock('@/services/workoutSessionService', () => ({
+  newWorkoutSessionRequest: sensor.request,
+  saveNewWorkoutSession: sensor.save,
+}));
+vi.mock('@/lib/supabase', () => ({
+  getSupabase: () => ({
+    from: () => ({
+      select: () => ({ eq: () => ({ eq: () => ({ order: () => ({ limit: sensor.history }) }) }) }),
+    }),
+  }),
+}));
 vi.mock('@/services/stepIntegrationService', () => ({
-  watchWalkingSteps: vi.fn(async (callback: typeof sensor.callback) => {
-    sensor.callback = callback;
+  readDeviceSteps: sensor.read,
+  watchWalkingSteps: vi.fn(async (callback: typeof sensor.steps) => {
+    sensor.steps = callback;
     return { status: sensor.status, remove: sensor.remove };
   }),
 }));
 import { CardioTrackerModal } from './CardioTrackerModal';
 
 let renderer: ReactTestRenderer;
+const onClose = vi.fn();
 beforeEach(async () => {
   vi.useFakeTimers();
   vi.clearAllMocks();
   sensor.status = 'granted';
-  sensor.callback = null;
+  sensor.steps = null;
+  sensor.gps = null;
+  sensor.permission.mockResolvedValue({ granted: true });
+  sensor.haptic.mockResolvedValue(null);
+  sensor.history.mockResolvedValue({ data: [], error: null });
+  sensor.request.mockImplementation(() => ({}));
+  sensor.save.mockResolvedValue(undefined);
+  sensor.read.mockResolvedValue(null);
   (globalThis as unknown as { IS_REACT_ACT_ENVIRONMENT: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
   await act(async () => {
-    renderer = create(<CardioTrackerModal visible onClose={vi.fn()} selectedDate="2026-10-23" />);
+    renderer = create(<CardioTrackerModal visible onClose={onClose} selectedDate="2026-11-18" />);
   });
 });
 afterEach(async () => {
   await act(async () => renderer.unmount());
   vi.useRealTimers();
 });
-const press = async (label: string) => {
-  await act(async () => {
-    await renderer.root.findByProps({ accessibilityLabel: label }).props.onPress();
-  });
+const control = (testID: string) => renderer.root.findAllByProps({ testID }).at(-1)!;
+const press = async (testID: string) => {
+  await act(async () => control(testID).props.onPress());
 };
-const start = async () => {
+const wait = async () => {
   await act(async () => {
-    renderer.root.findByProps({ testID: 'btn-start-cardio' }).props.onPress();
+    await vi.advanceTimersByTimeAsync(5000);
   });
 };
 
-describe('walking session regressions', () => {
-  it('staying still for ten minutes records no steps when the sensor is unavailable', async () => {
+describe('live cardio tracking', () => {
+  it('keeps walking idle when the sensor is unavailable and writes no fabricated steps', async () => {
     sensor.status = 'unavailable';
-    await start();
-    await act(async () => {
-      await vi.advanceTimersByTimeAsync(600_000);
-    });
-    await press('Finish session');
+    await press('btn-start-cardio');
+    await wait();
+    expect(control('cardio-error')).toBeTruthy();
+    expect(renderer.root.findAllByProps({ testID: 'cardio-finish' })).toHaveLength(0);
     expect(sensor.save).not.toHaveBeenCalled();
-    expect(JSON.stringify(renderer.toJSON())).not.toContain('Cadence');
+    expect(sensor.permission).not.toHaveBeenCalled();
   });
 
-  it('counts only active sensor updates, preserves paused totals and saves once', async () => {
-    await start();
-    await act(async () => {
-      sensor.callback?.(25);
-    });
-    const pausedCallback = sensor.callback;
-    await press('Pause session');
+  it('counts only active sensor steps and prefers the daily platform total without counting the walk twice', async () => {
+    sensor.read.mockResolvedValue({ steps: 900, distance_m: 650, source: 'health_platform' });
+    await press('btn-start-cardio');
+    await act(async () => sensor.steps?.(25));
+    const pausedCallback = sensor.steps;
+    await press('cardio-pause-resume');
     expect(sensor.remove).toHaveBeenCalled();
+    await act(async () => pausedCallback?.(100));
+    await press('cardio-pause-resume');
+    await act(async () => sensor.steps?.(10));
+    await wait();
+    await press('cardio-finish');
+    expect(sensor.save).toHaveBeenCalledExactlyOnceWith(
+      expect.anything(),
+      expect.objectContaining({
+        type: 'walk_run',
+        cardioSession: expect.objectContaining({ step_count: 35, target: 3000 }),
+        dailySteps: { steps: 900, distance_m: 650, source: 'health_platform' },
+      }),
+    );
+    expect(sensor.permission).not.toHaveBeenCalled();
+    expect(onClose).not.toHaveBeenCalled();
+  });
+
+  it('disables a sub-kilometre goal and runs GPS only after a valid selection', async () => {
+    await press('tab-cardio-running');
+    expect(control('btn-start-cardio').props.disabled).toBe(true);
+    await press('cardio-custom-goal');
+    await act(async () => control('cardio-distance-input').props.onChange(0.99));
+    expect(control('btn-start-cardio').props.disabled).toBe(true);
+    await press('cardio-goal-1');
+    await press('btn-start-cardio');
+    expect(sensor.permission).toHaveBeenCalledOnce();
+    expect(sensor.gps).not.toBeNull();
+  });
+
+  it('celebrates once and saves the measured ride with the same request after a missing acknowledgement', async () => {
+    sensor.save.mockRejectedValueOnce(new Error('offline'));
+    await press('tab-cardio-cycling');
+    await press('cardio-custom-goal');
+    await act(async () => control('cardio-distance-input').props.onChange(1));
+    await press('btn-start-cardio');
     await act(async () => {
-      pausedCallback?.(100);
-      await vi.advanceTimersByTimeAsync(60_000);
+      sensor.gps?.({ coords: { latitude: 0, longitude: 0, accuracy: 5 }, timestamp: 1000 });
+      sensor.gps?.({ coords: { latitude: 0, longitude: 0.01, accuracy: 5 }, timestamp: 120000 });
     });
-    await press('Resume session');
-    await act(async () => {
-      sensor.callback?.(10);
+    expect(sensor.sound).toHaveBeenCalledOnce();
+    expect(sensor.haptic).toHaveBeenCalledOnce();
+    expect(control('cardio-goal-reached')).toBeTruthy();
+    expect(control('cardio-finish').props.disabled).toBe(false);
+    await wait();
+    await press('cardio-finish');
+    expect(control('cardio-error')).toBeTruthy();
+    expect(renderer.root.findAllByProps({ testID: 'cardio-view-history' })).toHaveLength(0);
+    const request = sensor.save.mock.calls[0]!;
+    await press('cardio-finish');
+    expect(sensor.save.mock.calls[1]?.[0]).toBe(request[0]);
+    expect(sensor.save.mock.calls[1]?.[1]).toEqual(request[1]);
+    expect(request[1]).toMatchObject({
+      type: 'cardio',
+      cardioSession: { mode: 'cycling', target: 1000, distance_m: 1111 },
     });
-    await press('Finish session');
-    expect(sensor.save).toHaveBeenCalledExactlyOnceWith(400, 35);
+    await press('cardio-view-history');
+    expect(sensor.history).toHaveBeenCalled();
+    expect(onClose).not.toHaveBeenCalled();
   });
 
   it('removes the sensor when the modal closes and ignores delayed events', async () => {
-    await start();
-    const callback = sensor.callback;
-    await act(async () => {
-      renderer.update(<CardioTrackerModal visible={false} onClose={vi.fn()} />);
-    });
+    await press('btn-start-cardio');
+    const callback = sensor.steps;
+    await act(async () =>
+      renderer.update(<CardioTrackerModal visible={false} onClose={onClose} />),
+    );
     expect(sensor.remove).toHaveBeenCalled();
-    await act(async () => {
-      callback?.(300);
-      await vi.advanceTimersByTimeAsync(60_000);
-    });
+    await act(async () => callback?.(300));
+    await wait();
     expect(sensor.save).not.toHaveBeenCalled();
   });
 });

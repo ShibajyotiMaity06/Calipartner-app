@@ -18,7 +18,6 @@ import { SessionNavigationGuard } from '@/components/SessionNavigationGuard';
 import { PlusTrialExpiryGate } from '@/components/subscription/PlusTrialExpiryGate';
 import { AccountDataResetGate } from '@/components/AccountDataResetGate';
 import { ErrorState } from '@/components/ErrorState';
-import { AnimatedLogoSplash } from '@/components/brand/AnimatedLogoSplash';
 import { AuthProvider } from '@/contexts/AuthContext';
 import { TargetsProvider } from '@/hooks/useTargets';
 import { getDb } from '@/db';
@@ -31,7 +30,7 @@ import { cancelRetiredActivityReminders } from '@/services/localNotificationServ
 const log = createLogger('root');
 
 function AppInitializationGate({ children }: { children: React.ReactNode }) {
-  const { colors } = useTheme();
+  const { colors } = useAppearance();
   const [state, setState] = useState<'loading' | 'ready' | 'error'>('loading');
 
   const init = useCallback(() => {
@@ -53,8 +52,8 @@ function AppInitializationGate({ children }: { children: React.ReactNode }) {
 
   if (state === 'ready') return <>{children}</>;
   return (
-    <View style={{ flex: 1, justifyContent: 'center', backgroundColor: colors.background }}>
-      {state === 'loading' ? <AnimatedLogoSplash animate={false} /> : <ErrorState onRetry={init} />}
+    <View style={{ flex: 1, justifyContent: 'center', backgroundColor: colors.splashBackground }}>
+      {state === 'error' && <ErrorState onRetry={init} />}
     </View>
   );
 }

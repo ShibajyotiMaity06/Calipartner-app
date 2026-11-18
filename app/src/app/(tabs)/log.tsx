@@ -2,17 +2,16 @@ import { WeightHistoryModal } from '@/components/trackers/WeightHistoryModal';
 import { weightChange, type WeightLog } from '@calipartner/core';
 import { LogSomethingView } from '@/components/diary/LogSomethingView';
 import React, { useCallback, useState } from 'react';
-import { View, StyleSheet, Modal, Platform, ScrollView } from 'react-native';
+import { View, StyleSheet, Modal } from 'react-native';
 import { useFocusEffect, useRouter, useLocalSearchParams } from 'expo-router';
 import { getMealSectionForTime, type MealSection } from '@calipartner/core';
-import { Sheet, Button, space } from '@calipartner/ui';
+import { Sheet } from '@calipartner/ui';
 import { t } from '@/i18n';
 import { FoodLogModal } from '@/components/diary/FoodLogModal';
 import { WorkoutHubModal } from '@/components/workouts/WorkoutHubModal';
 import { CardioHub } from '@/components/workouts/CardioHub';
-import { WorkoutLoggerModal } from '@/components/workouts/WorkoutLoggerModal';
-import { StepsCard } from '@/components/trackers/StepsCard';
-import { CustomWaterModal, ManualStepsModal, WeightEntryModal } from '@/components/trackers';
+import { CardioTrackerModal } from '@/components/cardio/CardioTrackerModal';
+import { CustomWaterModal, WeightEntryModal } from '@/components/trackers';
 
 import { RecipeBrowseView } from '@/components/recipes';
 import { QuickAddCaloriesModal } from '@/components/diary/QuickAddCaloriesModal';
@@ -22,7 +21,6 @@ import { useAddEntry } from '@/hooks/useFoodEntries';
 
 import { useWater } from '@/hooks/useWater';
 import { useWeight } from '@/hooks/useWeight';
-import { useSteps } from '@/hooks/useSteps';
 import { useTheme } from '@/theme/useTheme';
 import { useCurrentLocalDate } from '@/hooks/useCurrentLocalDate';
 import { closeBrowserModalsThen, useBrowserModalBack } from '@/hooks/useBrowserModalBack';
@@ -90,7 +88,6 @@ export default function LogScreen() {
     error: weightError,
     refresh: refreshWeight,
   } = useWeight();
-  const { logManualSteps } = useSteps(todayDate);
   const { addEntry } = useAddEntry();
 
   const handleCloseAll = () => {
@@ -109,8 +106,14 @@ export default function LogScreen() {
     else if (['cycling', 'running', 'steps'].includes(activeFlow)) setActiveFlow('cardio');
     else setActiveFlow('picker');
   };
+  const isCardioActivity =
+    activeFlow === 'running' || activeFlow === 'cycling' || activeFlow === 'steps';
   useBrowserModalBack(
-    sheetVisible && activeFlow !== 'picker' && !params.flow && !weightHistoryOpen,
+    sheetVisible &&
+      activeFlow !== 'picker' &&
+      !params.flow &&
+      !weightHistoryOpen &&
+      !isCardioActivity,
     closeFlow,
   );
   useBrowserModalBack(sheetVisible && weightHistoryOpen, () => setWeightHistoryOpen(false));
@@ -142,13 +145,13 @@ export default function LogScreen() {
           <CardioHub onSelect={setActiveFlow} onBack={closeFlow} />
         </Sheet>
       )}
-      {(activeFlow === 'cycling' || activeFlow === 'running') && (
-        <WorkoutLoggerModal
+      {isCardioActivity && sheetVisible && (
+        <CardioTrackerModal
+          key={(user?.id ?? 'guest') + activeFlow}
           visible={sheetVisible}
-          initialWorkoutType={activeFlow === 'cycling' ? 'cardio' : 'walk_run'}
-          defaultDate={todayDate}
+          initialMode={activeFlow}
+          selectedDate={todayDate}
           onClose={closeFlow}
-          onSaved={handleCloseAll}
         />
       )}
       {activeFlow === 'food' && (
@@ -179,27 +182,6 @@ export default function LogScreen() {
       )}
 
       {/* 5. Weight Entry Modal */}
-      {activeFlow === 'steps' && Platform.OS === 'web' && (
-        <ManualStepsModal visible={sheetVisible} onClose={closeFlow} onSave={logManualSteps} />
-      )}
-      {activeFlow === 'steps' && Platform.OS !== 'web' && (
-        <Sheet
-          visible={sheetVisible}
-          onClose={closeFlow}
-          snapPoint="tall"
-          accessibilityLabel={t('homeRefresh.steps')}
-        >
-          <ScrollView contentContainerStyle={{ padding: space[3], gap: space[3] }}>
-            <Button
-              variant="tertiary"
-              label={t('repairs.back')}
-              onPress={closeFlow}
-              testID="cardio-steps-back"
-            />
-            <StepsCard selectedDate={todayDate} />
-          </ScrollView>
-        </Sheet>
-      )}
       {activeFlow === 'weight' && (
         <>
           <WeightEntryModal
