@@ -1066,6 +1066,13 @@ export function PaywallModal({
           >
             <View style={styles.modalBackdrop}>
               <Card elevation="s1" style={styles.resultModalCard} testID="modal-restore-result">
+                <Button
+                  variant="secondary"
+                  label="Close"
+                  onPress={() => setShowRestoreModal(false)}
+                  testID="btn-restore-result-close"
+                  style={[styles.resultCloseBtn, { alignSelf: 'flex-end' }]}
+                />
                 <Ionicons
                   name={restoreSuccess ? 'checkmark-circle' : 'alert-circle-outline'}
                   size={36}
@@ -1080,13 +1087,6 @@ export function PaywallModal({
                     ? 'Your plan has been successfully restored.'
                     : 'We could not find any active subscriptions for this store account.'}
                 </Text>
-                <Button
-                  variant="secondary"
-                  label="Close"
-                  onPress={() => setShowRestoreModal(false)}
-                  testID="btn-restore-result-close"
-                  style={styles.resultCloseBtn}
-                />
               </Card>
             </View>
           </Modal>

@@ -31,34 +31,33 @@ vi.mock('@calipartner/ui', async () => ({
 import { WeeklyPlanForm } from './WeeklyPlanForm';
 import { CompactSelect } from '@/components/CompactSelect';
 let tree: ReactTestRenderer;
-it('collects workout frequency and split, blocks incompatible days and has no priority-muscle fields', async () => {
+it('offers four AI splits and None, omits location and saves valid training days after consent', async () => {
   const build = vi.fn();
   await act(async () => {
     tree = create(<WeeklyPlanForm workoutOnly onBuild={build} onLater={vi.fn()} />);
   });
-  const select = async (id: string, value: unknown) => {
-    const control = tree.root
-      .findAllByType(CompactSelect)
-      .find((node) => node.props.testID === id)!;
-    await act(async () => control.props.onSelect(value));
-  };
-  await act(async () => tree.root.findByProps({ testID: 'weekly-plan-consent' }).props.onPress());
+  const split = tree.root
+    .findAllByType(CompactSelect)
+    .find((node) => node.props.testID === 'plan-split')!;
+  expect(split.props.options.map((option: { value: string }) => option.value)).toEqual([
+    'full_body',
+    'bro',
+    'upper_lower',
+    'push_pull_legs',
+    'none',
+  ]);
+  expect(split.props.selected).toEqual(['none']);
+  expect(tree.root.findAllByProps({ testID: 'plan-location' })).toHaveLength(0);
+  expect(tree.root.findAllByProps({ testID: 'plan-equipment' })).toHaveLength(0);
   expect(tree.root.findByProps({ testID: 'build-weekly-plan' }).props.disabled).toBe(true);
-  await select('plan-split', 'hybrid');
-  expect(tree.root.findByProps({ testID: 'plan-split-days-error' })).toBeDefined();
-  await select('plan-day-count', 5);
-  expect(tree.root.findAllByProps({ testID: 'plan-split-days-error' })).toHaveLength(0);
-  expect(tree.root.findByProps({ testID: 'build-weekly-plan' }).props.disabled).toBe(false);
+  await act(async () => tree.root.findByProps({ testID: 'weekly-plan-consent' }).props.onPress());
   await act(async () => tree.root.findByProps({ testID: 'build-weekly-plan' }).props.onPress());
   expect(build).toHaveBeenCalledWith(
     expect.objectContaining({
-      workout_days: [0, 1, 2, 4, 5],
-      workout_split: 'hybrid',
+      workout_days: [0, 2, 4],
+      ai_workout_split: 'none',
     }),
   );
-  expect(tree.root.findAllByProps({ testID: 'plan-country' })).toHaveLength(0);
-  expect(tree.root.findAllByProps({ testID: 'plan-target-muscles' })).toHaveLength(0);
-  expect(build.mock.calls[0]![0]).not.toHaveProperty('target_muscles');
 });
 beforeEach(() => {
   (globalThis as unknown as { IS_REACT_ACT_ENVIRONMENT: boolean }).IS_REACT_ACT_ENVIRONMENT = true;

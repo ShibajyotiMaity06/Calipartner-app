@@ -134,7 +134,7 @@ export function FoodLogModal({
   // Phase 11 AI Food Photo states
   const [showPhotoConsent, setShowPhotoConsent] = useState(false);
   const [showPhotoCamera, setShowPhotoCamera] = useState(false);
-  const [photoAnalyzing, setPhotoAnalyzing] = useState(false);
+  const [photoAnalyzing, setPhotoAnalyzing] = useState<string | null>(null);
   const photoRequest = useRef(0);
   const [photoResults, setPhotoResults] = useState<FoodCandidateItem[] | null>(null);
   const [showResultsEditor, setShowResultsEditor] = useState(false);
@@ -150,14 +150,14 @@ export function FoodLogModal({
   };
   const returnToPhotoCamera = () => {
     photoRequest.current++;
-    setPhotoAnalyzing(false);
+    setPhotoAnalyzing(null);
     setShowResultsEditor(false);
     setPhotoResults(null);
     setShowPhotoCamera(true);
   };
   const closePhotoLimit = () => setShowDailyLimitModal(false);
   useBrowserModalBack(visible && showPhotoConsent, closePhotoConsent);
-  useBrowserModalBack(visible && photoAnalyzing, returnToPhotoCamera);
+  useBrowserModalBack(visible && !!photoAnalyzing, returnToPhotoCamera);
   useBrowserModalBack(visible && showDailyLimitModal, closePhotoLimit);
   const { addEntry, error: saveError } = useAddEntry();
   const selection = Object.values(selectedFoods);
@@ -304,7 +304,11 @@ export function FoodLogModal({
   const handlePhotoCaptured = async (payload: { base64: string; mimeType: string }) => {
     const request = ++photoRequest.current;
     setShowPhotoCamera(false);
-    setPhotoAnalyzing(true);
+    setPhotoAnalyzing(
+      payload.base64.startsWith('data:')
+        ? payload.base64
+        : `data:${payload.mimeType};base64,${payload.base64}`,
+    );
     try {
       const response = await analyzeFoodPhoto(getSupabase() as unknown as SupabaseFunctionsClient, {
         imageBase64: payload.base64,
@@ -348,7 +352,7 @@ export function FoodLogModal({
         );
       }
     } finally {
-      if (request === photoRequest.current) setPhotoAnalyzing(false);
+      if (request === photoRequest.current) setPhotoAnalyzing(null);
     }
   };
 
@@ -392,13 +396,13 @@ export function FoodLogModal({
           {/* Header */}
           <View
             style={{
-              flexDirection: 'row',
+              flexDirection: views.length > 1 ? 'row-reverse' : 'row',
               alignItems: 'center',
               justifyContent: 'space-between',
               paddingHorizontal: spacing.md,
             }}
           >
-            <View>
+            <View style={{ flex: 1 }}>
               <Text style={{ fontSize: fontSize.lg, fontWeight: '700', color: colors.text }}>
                 {t('foodLog.title')}
               </Text>
@@ -414,7 +418,7 @@ export function FoodLogModal({
               iconOnly
               icon={
                 <Ionicons
-                  name={views.length > 1 ? 'chevron-back' : 'close-circle'}
+                  name={views.length > 1 ? 'chevron-back' : 'close'}
                   size={26}
                   color={colors.textMuted}
                 />
@@ -1056,7 +1060,11 @@ export function FoodLogModal({
           )}
 
           {photoAnalyzing && (
-            <FoodPhotoAnalyzingOverlay visible={photoAnalyzing} onCancel={returnToPhotoCamera} />
+            <FoodPhotoAnalyzingOverlay
+              visible
+              imageUri={photoAnalyzing}
+              onCancel={returnToPhotoCamera}
+            />
           )}
 
           {showDailyLimitModal && (

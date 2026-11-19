@@ -1,6 +1,7 @@
 import type {
   ActivitySource,
   CardioSessionMetrics,
+  Exercise,
   WorkoutType,
   WorkoutWithDetails,
 } from '@calipartner/core';
@@ -31,6 +32,7 @@ export async function saveNewWorkoutSession(
     notes: string | null;
     effortRating: number | null;
     cardioSession?: CardioSessionMetrics & { started_at: string };
+    customExercise?: Exercise;
     dailySteps?: { steps: number; distance_m: number; source: Exclude<ActivitySource, 'manual'> };
     exercises: Array<{
       exerciseId?: string | null;
@@ -138,6 +140,30 @@ export async function saveNewWorkoutSession(
     operation: 'upsert',
     payload: active.has(key) ? row.payload : { ...row.payload, deleted_at: now, updated_at: now },
   }));
+  if (input.customExercise) {
+    const exercise = input.customExercise;
+    if (
+      exercise.owner_id !== input.userId ||
+      !exercises.some((item) => 'exerciseId' in item && item.exerciseId === exercise.id)
+    )
+      throw new Error('INVALID_WORKOUT');
+    changes.unshift({
+      id: exercise.id,
+      entity: 'exercises',
+      operation: 'upsert',
+      payload: {
+        id: exercise.id,
+        name: exercise.name,
+        muscle_group: exercise.muscle_group,
+        equipment: exercise.equipment,
+        type: exercise.type,
+        owner_id: input.userId,
+        created_at: request.createdAt,
+        updated_at: now,
+        deleted_at: null,
+      },
+    });
+  }
   const { error } = input.cardioSession
     ? await client.rpc('save_cardio_session', {
         p_changes: changes,

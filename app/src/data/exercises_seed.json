@@ -84,7 +84,7 @@
     "id": "00000000-0000-0000-0000-00000000006e",
     "name": "Incline Bench Press",
     "muscle_group": "chest",
-    "equipment": "other",
+    "equipment": "barbell",
     "type": "strength",
     "category": "Chest",
     "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
@@ -93,7 +93,7 @@
     "id": "00000000-0000-0000-0000-00000000006f",
     "name": "Decline Bench Press",
     "muscle_group": "chest",
-    "equipment": "other",
+    "equipment": "barbell",
     "type": "strength",
     "category": "Chest",
     "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
@@ -147,7 +147,7 @@
     "id": "00000000-0000-0000-0000-000000000075",
     "name": "Smith Machine Bench Press",
     "muscle_group": "chest",
-    "equipment": "barbell",
+    "equipment": "machine",
     "type": "strength",
     "category": "Chest",
     "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
@@ -939,7 +939,7 @@
     "id": "00000000-0000-0000-0000-0000000000cd",
     "name": "Skull Crushers",
     "muscle_group": "arms",
-    "equipment": "other",
+    "equipment": "barbell",
     "type": "strength",
     "category": "Triceps",
     "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
@@ -1621,9 +1621,9 @@
   },
   {
     "id": "00000000-0000-0000-0000-000000000119",
-    "name": "Smith Machine Squats",
+    "name": "Smith Machine Squat",
     "muscle_group": "legs",
-    "equipment": "barbell",
+    "equipment": "machine",
     "type": "strength",
     "category": "Quadriceps (Front Thighs)",
     "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
@@ -3107,11 +3107,20 @@
   {
     "id": "00000000-0000-0000-0000-0000000001be",
     "name": "Pec Deck Machine",
-    "muscle_group": "full_body",
+    "muscle_group": "chest",
     "equipment": "machine",
     "type": "strength",
     "category": "Gym Machine Exercises",
     "attribution": "CaliPartner Open Exercise Library (CC-BY-4.0)"
+  },
+  {
+    "id": "a6111800-0000-4000-8000-000000000003",
+    "name": "Seated Chest Press",
+    "muscle_group": "chest",
+    "equipment": "machine",
+    "type": "strength",
+    "category": "Chest",
+    "owner_id": null
   },
   {
     "id": "00000000-0000-0000-0000-0000000001bf",

@@ -175,7 +175,6 @@ export function Button({
               paddingVertical: space[0],
               backgroundColor: 'transparent',
               borderRadius: radius.full,
-              alignSelf: 'flex-start',
             },
           ];
 

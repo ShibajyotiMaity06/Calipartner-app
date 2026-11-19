@@ -12,9 +12,16 @@ vi.mock('react-native', () => ({
 vi.mock('react-native-safe-area-context', () => ({ SafeAreaView: 'SafeAreaView' }));
 vi.mock('@calipartner/ui', async () => {
   const tokens = await import('../../../../packages/ui/src/tokens');
-  return { ...tokens, Text: 'Text', Button: 'Button', useTheme: () => ({ colors: tokens.light }) };
+  return {
+    ...tokens,
+    Text: 'Text',
+    Button: 'Button',
+    NavigationIcon: 'NavigationIcon',
+    useTheme: () => ({ colors: tokens.light }),
+  };
 });
 vi.mock('@/hooks/useBrowserModalBack', () => ({ useBrowserModalBack: vi.fn() }));
+vi.mock('@/components/onboarding/WeeklyPlanForm', () => ({ PlanField: 'PlanField' }));
 vi.mock('@/components/onboarding/PlanPrimitives', () => ({ NumberField: 'NumberField' }));
 vi.mock('@/services/workoutSessionService', () => ({ newWorkoutSessionRequest: () => ({}) }));
 vi.mock('@/services/loggedWorkoutEditService', () => ({ saveLoggedWorkoutSets: state.save }));
@@ -73,6 +80,9 @@ it('keeps edits open after failure and closes only after an acknowledged retry',
   });
   expect(tree.root.findByProps({ testID: 'logged-edit-0-weight-0' }).props.value).toBeNull();
   await act(async () =>
+    tree.root.findByProps({ id: 'logged-edit-name-0' }).props.onChange('Paused squat'),
+  );
+  await act(async () =>
     tree.root.findByProps({ testID: 'logged-edit-0-reps-0' }).props.onChange(12),
   );
   await act(async () => tree.root.findByProps({ testID: 'logged-edit-save' }).props.onPress());
@@ -87,6 +97,7 @@ it('keeps edits open after failure and closes only after an acknowledged retry',
   expect(close).toHaveBeenCalledOnce();
   expect(refresh).toHaveBeenCalledOnce();
   expect(state.save.mock.lastCall![2]).toEqual([[{ reps: 12, weightKg: 0 }]]);
+  expect(state.save.mock.lastCall![3]).toEqual(['Paused squat']);
 });
 it('requires confirmation for deletion and retains a failed delete for retry', async () => {
   const close = vi.fn(),

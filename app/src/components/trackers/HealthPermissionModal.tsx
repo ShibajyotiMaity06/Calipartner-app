@@ -1,5 +1,4 @@
 import { Button } from '@calipartner/ui';
-import { NavigationIcon } from '@calipartner/ui';
 import { Text } from '@calipartner/ui';
 import { useState } from 'react';
 import { Linking, Modal, Platform, Pressable, ScrollView, StyleSheet, View } from 'react-native';
@@ -299,24 +298,6 @@ export function HealthPermissionModal({
                 }
               />
             )}
-
-            <Button
-              variant="tertiary"
-              fullWidth={false}
-              label={t('trackers.permissions.close')}
-              iconOnly
-              icon={<NavigationIcon action="close" />}
-              onPress={onClose}
-              style={[
-                styles.closeButton,
-                {
-                  backgroundColor: isGranted ? colors.accent : colors.surfaceAlt,
-                  borderColor: colors.border,
-                },
-              ]}
-              accessibilityRole="button"
-              accessibilityLabel={t('trackers.permissions.close')}
-            />
           </View>
         </View>
       </View>
@@ -476,13 +457,6 @@ const styles = StyleSheet.create({
   primaryActionText: {
     fontSize: fontSize.sm,
     fontWeight: '700',
-  },
-  closeButton: {
-    height: 44,
-    borderRadius: radius.sm,
-    borderWidth: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
   },
   closeButtonText: {
     fontSize: fontSize.sm,

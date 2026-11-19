@@ -88,6 +88,35 @@ it('rejects invalid numbers and a different account before making a write', asyn
   ).rejects.toThrow('ACCOUNT_CHANGED');
   expect(state.rpc).not.toHaveBeenCalled();
 });
+it('renames only private workout snapshots and omits cache-only columns from edits', async () => {
+  const cached = structuredClone(workout);
+  cached.name = 'Squat';
+  const exercise = cached.exercises[0]!;
+  exercise.exercise_id = 'shared-catalog-squat';
+  Object.assign(exercise, { sync_state: 'synced' });
+  Object.assign(exercise.sets![0]!, { sync_state: 'synced' });
+  await saveLoggedWorkoutSets(
+    newWorkoutSessionRequest(),
+    cached,
+    [[{ reps: 15, weightKg: 0 }]],
+    ['Paused squat'],
+  );
+  const writes = state.rpc.mock.lastCall![1].p_changes;
+  expect(writes.map((row: { entity: string }) => row.entity)).toEqual([
+    'workouts',
+    'workout_exercises',
+    'workout_sets',
+  ]);
+  expect(writes[0].payload.name).toBe('Paused squat');
+  expect(writes[1].payload).toMatchObject({
+    exercise_name: 'Paused squat',
+    exercise_id: 'shared-catalog-squat',
+  });
+  expect(writes[2].payload.reps).toBe(15);
+  expect(
+    writes.every((row: { payload: object }) => !Object.hasOwn(row.payload, 'sync_state')),
+  ).toBe(true);
+});
 it('does not report success if the account changes during acknowledgement', async () => {
   state.rpc.mockImplementation(async () => {
     state.owner = 'other';

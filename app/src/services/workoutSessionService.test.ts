@@ -69,6 +69,45 @@ it('removes a set from an uncertain earlier draft within the same atomic retry',
     changes.filter((row: { payload: { deleted_at: string | null } }) => row.payload.deleted_at),
   ).toHaveLength(1);
 });
+it('commits a new private favorite and the first strength log in a retry-safe transaction', async () => {
+  state.rpc
+    .mockResolvedValueOnce({ error: new Error('offline') })
+    .mockResolvedValue({ error: null });
+  const request = newWorkoutSessionRequest();
+  const custom = {
+    ...input,
+    type: 'strength' as const,
+    durationMinutes: 0,
+    customExercise: {
+      id: 'custom',
+      owner_id: 'owner',
+      name: 'Custom row',
+      muscle_group: 'other' as const,
+      equipment: 'none' as const,
+      type: 'strength' as const,
+    },
+    exercises: [
+      {
+        exerciseId: 'custom',
+        exerciseName: 'Custom row',
+        sets: [{ reps: 10, weightKg: 0, isWarmup: false, completed: true }],
+      },
+    ],
+  };
+  await expect(saveNewWorkoutSession(request, custom)).rejects.toThrow('offline');
+  expect(state.changed).not.toHaveBeenCalled();
+  await saveNewWorkoutSession(request, custom);
+  expect(state.changed).toHaveBeenCalledOnce();
+  const [first, retry] = state.rpc.mock.calls.map((call) => call[1].p_changes);
+  expect(retry.map((row: { id: string }) => row.id)).toEqual(
+    first.map((row: { id: string }) => row.id),
+  );
+  expect(retry[0]).toMatchObject({
+    entity: 'exercises',
+    payload: { owner_id: 'owner', name: 'Custom row' },
+  });
+  expect(retry[2].payload.exercise_id).toBe('custom');
+});
 it('rejects an account change or account reset before any save', async () => {
   state.owner = 'stranger';
   await expect(saveNewWorkoutSession(newWorkoutSessionRequest(), input)).rejects.toThrow(

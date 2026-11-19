@@ -380,7 +380,8 @@ export async function runWorkoutRoutineTests(db) {
       await user(n);
       const ready = await rpc('get_workout_plan()');
       assert.equal(ready.rebuilds_used, 0);
-      assert.equal(ready.can_rebuild, true);
+      assert.equal(ready.can_rebuild, n !== 5);
+      if (n === 5) assert.ok(ready.next_rebuild_at);
       await admin();
       await reject(
         'select public.reserve_workout_plan($1,$2,$3,true)',
@@ -458,7 +459,80 @@ export async function runWorkoutRoutineTests(db) {
     console.log(
       'PASS Workout splits: paid initial preferences replace an onboarding snapshot, persist exactly, recheck expiry and retain retry/history guards',
     );
-    console.log('Workout routine SQL/RLS: 7 groups passed, 0 failed');
+    await user(5);
+    const prior = await rpc('get_workout_plan()');
+    const manual = structuredClone(content);
+    manual.days[0].exercises[0].name = 'My private exercise';
+    manual.days[0].exercises[0].equipment = 'machine';
+    const params = [uid(105), prior.id, prior.revision, manual];
+    const custom = await rpc('save_custom_workout_plan($1,$2,$3,$4)', params);
+    assert.equal(custom.days[0].exercises[0].name, 'My private exercise');
+    assert.equal(custom.next_rebuild_at, prior.next_rebuild_at);
+    assert.equal(custom.can_rebuild, false);
+    assert.equal(
+      (await rpc('save_custom_workout_plan($1,$2,$3,$4)', params)).revision,
+      custom.revision,
+    );
+    await reject(
+      'select public.save_custom_workout_plan($1,$2,$3,$4)',
+      [uid(106), ...params.slice(1)],
+      /PLAN_STALE/,
+    );
+    await user(8);
+    await reject(
+      'select public.save_custom_workout_plan($1,$2,$3,$4)',
+      params,
+      /IDEMPOTENCY_CONFLICT/,
+    );
+    await user(6);
+    await reject(
+      'select public.save_custom_workout_plan($1,$2,$3,$4)',
+      [uid(107), null, 0, manual],
+      /PURCHASED_PLUS_REQUIRED/,
+    );
+    await admin();
+    await reject(
+      'select public.reserve_workout_plan($1,$2,$3,false)',
+      [uid(5), uid(108), preferences],
+      /WORKOUT_COOLDOWN/,
+    );
+    await db.query(
+      "insert into public.entitlements(user_id,tier,status,period_end) values($1,'pro','paid',now()+interval '1 year')",
+      [uid(6)],
+    );
+    await user(6);
+    const firstCustom = await rpc('save_custom_workout_plan($1,$2,$3,$4)', [
+      uid(107),
+      null,
+      0,
+      manual,
+    ]);
+    assert.equal(firstCustom.id, uid(107));
+    assert.equal(firstCustom.can_rebuild, true);
+    assert.equal(firstCustom.next_rebuild_at, null);
+    assert.equal(firstCustom.needs_initial, false);
+    await admin();
+    const names = (
+      await db.query(
+        "select name from public.exercises where owner_id is null and id::text like 'a6111800%' or id=$1",
+        ['00000000-0000-0000-0000-000000000127'],
+      )
+    ).rows.map((row) => row.name);
+    for (const name of [
+      'Smith Machine Bench Press',
+      'Smith Machine Squat',
+      'Seated Chest Press',
+      'Pec Deck Machine',
+      'Skull Crushers',
+      'Incline Bench Press',
+      'Decline Bench Press',
+    ]) {
+      assert.ok(names.includes(name));
+    }
+    console.log(
+      'PASS Workout planner: private manual weeks, stale/idempotent save handling, cooldown preserved and requested catalog entries available',
+    );
+    console.log('Workout routine SQL/RLS: 8 groups passed, 0 failed');
   } finally {
     await db.exec('rollback');
     await admin();

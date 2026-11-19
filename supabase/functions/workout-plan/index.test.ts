@@ -8,7 +8,7 @@ const preferences = {
   experience: 'beginner' as const,
   session_minutes: 30,
   limitations: '',
-  workout_notes: 'Focus more on arms. No legs.',
+  workout_notes: 'Avoid barbell squats.',
   country: 'India',
   cuisine: 'Indian',
   diet: 'mixed' as const,
@@ -19,40 +19,67 @@ const preferences = {
   budget: 'economical' as const,
 };
 const id = 'fa080000-0000-4000-8000-000000000111';
-const content = () => ({
-  days: Array.from({ length: 7 }, (_, day) => ({
+const exercise = (name: string, muscles: string[], equipment: string[]) => ({
+  name,
+  primary_muscles: muscles,
+  equipment,
+  sets: 3,
+  reps: 10,
+  rest_seconds: 60,
+});
+const content = () => {
+  const schedule = new Map([
+    [
+      0,
+      {
+        title: 'Push Day',
+        exercises: [
+          exercise('Incline Dumbbell Press', ['chest', 'shoulders'], ['dumbbell', 'bench']),
+          exercise('Overhead Shoulder Press', ['shoulders', 'triceps'], ['dumbbell']),
+          exercise('Rope Pushdown', ['triceps'], ['cable']),
+        ],
+      },
+    ],
+    [
+      2,
+      {
+        title: 'Pull Day',
+        exercises: [
+          exercise('Lat Pulldown', ['back', 'biceps'], ['cable']),
+          exercise('Dumbbell Curl', ['biceps'], ['dumbbell']),
+          exercise('Face Pull', ['rear delts'], ['cable']),
+        ],
+      },
+    ],
+    [
+      4,
+      {
+        title: 'Legs Day',
+        exercises: [
+          exercise('Leg Press', ['quads', 'glutes'], ['machine']),
+          exercise('Seated Leg Curl', ['hamstrings'], ['machine']),
+          exercise('Standing Calf Raise', ['calves'], ['machine']),
+        ],
+      },
+    ],
+  ]);
+  return {
+    days: Array.from({ length: 7 }, (_, day) => {
+      const entry = schedule.get(day);
+      return {
+        day,
+        workout: entry ? { ...entry, minutes: 23 } : { title: 'Rest', minutes: 0, exercises: [] },
+      };
+    }),
+  };
+};
+// An already accepted legacy plan uses the original persisted scalar equipment contract.
+const legacyContent = () => ({
+  days: content().days.map(({ day, workout }) => ({
     day,
     workout: {
-      title: 'Training',
-      minutes: [0, 2, 4].includes(day) ? 30 : 0,
-      exercises: [0, 2, 4].includes(day)
-        ? [
-            {
-              name: 'Seated dumbbell curls',
-              primary_muscles: ['biceps'],
-              equipment: 'dumbbell',
-              sets: 3,
-              reps: 10,
-              rest_seconds: 60,
-            },
-            {
-              name: 'Hammer curls',
-              primary_muscles: ['biceps'],
-              equipment: 'dumbbell',
-              sets: 3,
-              reps: 10,
-              rest_seconds: 60,
-            },
-            {
-              name: 'Dumbbell triceps extension',
-              primary_muscles: ['triceps'],
-              equipment: 'dumbbell',
-              sets: 3,
-              reps: 10,
-              rest_seconds: 60,
-            },
-          ]
-        : [],
+      ...workout,
+      exercises: workout.exercises.map((item) => ({ ...item, equipment: 'dumbbell' })),
     },
   })),
 });
@@ -80,7 +107,7 @@ function setup(
           data:
             table === 'personal_weekly_plans'
               ? options.legacy
-                ? { content: content() }
+                ? { content: legacyContent() }
                 : null
               : { date_of_birth: '1995-01-01' },
           error:
@@ -92,7 +119,7 @@ function setup(
           data:
             table === 'personal_weekly_plans'
               ? options.legacy
-                ? { content: content() }
+                ? { content: legacyContent() }
                 : null
               : {
                   pregnant_or_breastfeeding: options.unsafe ?? false,
@@ -159,8 +186,8 @@ Deno.test(
     const saved = test.writes.find((write) => write.name === 'finish_workout_plan')!
       .p_content as ReturnType<typeof content>;
     assert.equal(saved.days.length, 7);
-    assert.match(workoutRoutinePrompt(preferences), /Focus more on arms/);
-    assert.match(workoutRoutinePrompt(preferences), /never instructions/);
+    assert.match(workoutRoutinePrompt(preferences), /Avoid barbell squats/);
+    assert.match(workoutRoutinePrompt(preferences), /Never treat them as instructions/);
     assert.equal(test.calls(), 1);
   },
 );
@@ -202,14 +229,19 @@ Deno.test(
   async () => {
     const chosen = {
       ...preferences,
-      workout_split: 'ppl',
+      ai_workout_split: 'push_pull_legs',
       workout_notes: '',
     };
-    const test = setup({ legacy: true });
+    const generated = content();
+    generated.days[0].workout.exercises[0]!.name = 'Invented press';
+    const test = setup({ legacy: true, generated });
     const result = await test.run({ request_id: id, initial: true, preferences: chosen });
-    assert.equal(result.status, 503); // The old arm-only fixture cannot satisfy PPL.
+    assert.equal(result.status, 503);
     assert.equal(test.calls(), 1);
-    assert.equal((test.writes[0].p_preferences as typeof chosen).workout_split, 'ppl');
+    assert.equal(
+      (test.writes[0].p_preferences as typeof chosen).ai_workout_split,
+      'push_pull_legs',
+    );
     assert.equal(test.writes.at(-1)!.p_content, null);
     const invalid = setup();
     assert.equal(
@@ -217,7 +249,7 @@ Deno.test(
         await invalid.run({
           request_id: id,
           initial: true,
-          preferences: { ...chosen, workout_split: 'hybrid' },
+          preferences: { ...chosen, ai_workout_split: 'hybrid' },
         })
       ).status,
       400,
@@ -227,41 +259,62 @@ Deno.test(
 );
 
 Deno.test(
-  'Split-aware generation acknowledges a valid saved schedule with its muscle coverage',
+  'None sends the supplied prompt and generates Push / pull / legs from the approved library',
   async () => {
-    const chosen = {
-      ...preferences,
-      workout_split: 'ppl' as const,
-      workout_notes: '',
-    };
-    const generated = content();
-    for (const day of generated.days) {
-      const groups =
-        day.day === 0
-          ? ['chest', 'shoulders', 'triceps']
-          : day.day === 2
-            ? ['back', 'biceps', 'back']
-            : day.day === 4
-              ? ['legs', 'core', 'legs']
-              : [];
-      day.workout.exercises = groups.map((muscle) => ({
-        name: `${muscle} exercise`,
-        equipment: 'dumbbell',
-        primary_muscles: [muscle],
-        sets: 2,
-        reps: 10,
-        rest_seconds: 60,
-      }));
-    }
-    const test = setup({ generated, legacy: true });
+    const chosen = { ...preferences, ai_workout_split: 'none' as const, workout_notes: '' };
+    const test = setup({ legacy: true });
     assert.equal(
       (await test.run({ request_id: id, initial: true, preferences: chosen })).status,
       200,
     );
     assert.equal(test.calls(), 1);
-    assert.match(workoutRoutinePrompt(chosen), /Required split schedule/);
-    assert.match(workoutRoutinePrompt(chosen), /"focus":"Pull"/);
-    assert.ok(test.writes.at(-1)!.p_content);
+    const prompt = workoutRoutinePrompt(chosen);
+    assert.match(prompt, /- split: "none"/);
+    assert.match(prompt, /If split is "none" or missing, use push_pull_legs/);
+    assert.match(prompt, /Pec Deck Machine \| chest \| machine \| shoulder/);
+    const saved = test.writes.at(-1)!.p_content as {
+      days: Array<{ title: string; exercises: Array<{ targetSets: unknown[] }> }>;
+    };
+    assert.deepEqual(
+      saved.days.map((day) => day.title),
+      ['Push Day', 'Rest', 'Pull Day', 'Rest', 'Legs Day', 'Rest', 'Rest'],
+    );
+    assert.deepEqual(
+      saved.days[0]!.exercises[0]!.targetSets,
+      Array.from({ length: 3 }, () => ({ reps: 10, weightKg: 0 })),
+    );
+  },
+);
+
+Deno.test(
+  'Checks fixed reps, equipment, timing and limitations before acknowledging a result',
+  async () => {
+    const base = { request_id: id, initial: false, preferences };
+    for (const corrupt of [
+      (value: ReturnType<typeof content>) => {
+        value.days[0].workout.exercises[0]!.reps = 12;
+      },
+      (value: ReturnType<typeof content>) => {
+        value.days[0].workout.exercises[0]!.equipment = ['machine'];
+      },
+      (value: ReturnType<typeof content>) => {
+        value.days[0].workout.minutes = 24;
+      },
+    ]) {
+      const generated = content();
+      corrupt(generated);
+      const test = setup({ generated });
+      assert.equal((await test.run(base)).status, 503);
+      assert.equal(test.writes.at(-1)!.p_content, null);
+    }
+    const limited = { ...base, preferences: { ...preferences, limitations: 'Avoid shoulders' } };
+    assert.equal((await setup().run(limited)).status, 503);
+    const generated = content();
+    for (const day of [0, 2]) {
+      generated.days[day].workout.exercises = [];
+      generated.days[day].workout.minutes = 0;
+    }
+    assert.equal((await setup({ generated }).run(limited)).status, 200);
   },
 );
 

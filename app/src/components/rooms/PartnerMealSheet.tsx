@@ -182,14 +182,6 @@ export function PartnerMealSheet({
                 testID="btn-add-partner-meal-diary"
               />
             )}
-
-            <Button
-              variant="secondary"
-              size="md"
-              label="Close"
-              onPress={onClose}
-              style={styles.actionBtn}
-            />
           </View>
         </View>
       </View>

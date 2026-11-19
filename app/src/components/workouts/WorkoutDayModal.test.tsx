@@ -8,6 +8,7 @@ const state = vi.hoisted(() => ({
   save: vi.fn(),
   edit: vi.fn(),
   rebuild: vi.fn(),
+  saveCustom: vi.fn(),
   refresh: vi.fn(),
   push: vi.fn(),
   saved: vi.fn(),
@@ -25,11 +26,13 @@ vi.mock('@calipartner/ui', async () => ({
   ...(await import('../../../../packages/ui/src/tokens')),
   Text: 'Text',
   Sheet: 'Sheet',
+  Chip: 'Chip',
   NavigationIcon: 'NavigationIcon',
   Button: (await import('@/test/ButtonStub')).ButtonStub,
   useTheme: () => ({ colors: {} }),
 }));
 vi.mock('@expo/vector-icons', () => ({ Ionicons: 'Icon' }));
+vi.mock('react-native-safe-area-context', () => ({ SafeAreaView: 'SafeAreaView' }));
 vi.mock('expo-router', () => ({ useRouter: () => ({ push: state.push }) }));
 vi.mock('@/contexts/AuthContext', () => ({ useAuth: () => ({ user: { id: 'owner' } }) }));
 vi.mock('@/hooks/useCurrentLocalDate', () => ({
@@ -44,6 +47,7 @@ vi.mock('@/hooks/useWorkoutPlan', () => ({
     refresh: state.refresh,
     edit: state.edit,
     rebuild: state.rebuild,
+    saveCustom: state.saveCustom,
   }),
 }));
 vi.mock('@/hooks/useWorkouts', () => ({
@@ -61,7 +65,11 @@ vi.mock('@/services/workoutSessionService', () => ({
   newWorkoutSessionRequest: () => ({}),
   saveNewWorkoutSession: state.save,
 }));
-vi.mock('@/components/onboarding/WeeklyPlanForm', () => ({ WeeklyPlanForm: 'WeeklyPlanForm' }));
+vi.mock('@/components/onboarding/WeeklyPlanForm', () => ({
+  WeeklyPlanForm: 'WeeklyPlanForm',
+  PlanField: 'PlanField',
+}));
+vi.mock('@/services/foodService', () => ({ generateClientUuid: () => 'manual-exercise' }));
 vi.mock('@/components/onboarding/WeeklyPlanPreparing', () => ({
   WeeklyPlanPreparing: 'WeeklyPlanPreparing',
 }));
@@ -239,4 +247,44 @@ it('opens Build a new plan for an eligible Pro account without a saved routine o
     tree.root.findByProps({ testID: 'workout-build-new-plan' }).props.onPress(),
   );
   expect(tree.root.findByType('WeeklyPlanForm' as React.ElementType).props.workoutOnly).toBe(true);
+});
+
+it('saves a manual week without opening or calling AI during the Pro cooldown', async () => {
+  state.plan = {
+    id: 'plan',
+    revision: 3,
+    full_access: true,
+    can_rebuild: false,
+    tier: 'pro',
+    next_rebuild_at: '2027-05-16T00:00:00Z',
+    days: [],
+  };
+  await render();
+  expect(tree.root.findByProps({ testID: 'workout-build-new-plan' }).props.disabled).toBe(true);
+  await act(async () => tree.root.findByProps({ testID: 'workout-custom-plan' }).props.onPress());
+  await act(async () => tree.root.findByProps({ testID: 'custom-plan-day-0' }).props.onPress());
+  await act(async () =>
+    tree.root.findByProps({ testID: 'custom-plan-add-exercise' }).props.onPress(),
+  );
+  await act(async () =>
+    tree.root.findByProps({ id: 'custom-plan-exercise-name' }).props.onChange('Seated Chest Press'),
+  );
+  await act(async () =>
+    tree.root
+      .findByType('ExerciseSetsForm' as React.ElementType)
+      .props.onAdd([{ reps: 12, weightKg: 0 }]),
+  );
+  await act(async () => tree.root.findByProps({ testID: 'custom-plan-save' }).props.onPress());
+  const [content, base] = state.saveCustom.mock.lastCall!;
+  expect(base.revision).toBe(3);
+  expect(content.days).toHaveLength(7);
+  expect(content.days[0].exercises[0]).toMatchObject({
+    name: 'Seated Chest Press',
+    targetSets: [{ reps: 12, weightKg: 0 }],
+  });
+  expect(
+    content.days.slice(1).every((day: { exercises: unknown[] }) => !day.exercises.length),
+  ).toBe(true);
+  expect(state.rebuild).not.toHaveBeenCalled();
+  expect(tree.root.findAllByProps({ testID: 'workout-build-form' })).toHaveLength(0);
 });

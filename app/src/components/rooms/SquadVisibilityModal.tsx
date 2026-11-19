@@ -79,7 +79,12 @@ export function SquadVisibilityModal({
       testID="squad-visibility-modal"
     >
       <ScrollView contentContainerStyle={styles.content}>
-        <Button variant="tertiary" label={t('squadDesign.close')} onPress={onClose} />
+        <Button
+          variant="tertiary"
+          label={t('squadDesign.close')}
+          onPress={onClose}
+          style={{ alignSelf: 'flex-end' }}
+        />
         <Text variant="title1">{t('rooms.privacyModal.title')}</Text>
         <Text>{t('squadDesign.sharing')}</Text>
         {loading ? <Text>{t('common.loading')}</Text> : null}

@@ -1,9 +1,8 @@
 import { visualPrimitives } from '@calipartner/ui/tokens';
 import { Button } from '@calipartner/ui';
 import { useTheme as useAppearance } from '@calipartner/ui/theme';
-import { NavigationIcon } from '@calipartner/ui';
 import React, { useState } from 'react';
-import { Modal, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { Modal, ScrollView, StyleSheet, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import type { FastingSession, FastingStats, FastingStreak } from '@calipartner/core';
 import { Text, radius, space, type as typeTokens } from '@calipartner/ui';
@@ -288,19 +287,6 @@ export function FastingHistoryModal({
               )}
             </View>
           </ScrollView>
-
-          {/* Footer */}
-          <View style={styles.footer}>
-            <Pressable
-              testID="button-close-history"
-              style={({ pressed }) => [styles.doneButton, pressed && styles.buttonPressed]}
-              onPress={onClose}
-              accessibilityRole="button"
-              accessibilityLabel="Close"
-            >
-              <NavigationIcon action="close" />
-            </Pressable>
-          </View>
         </View>
       </View>
     </Modal>
@@ -561,27 +547,6 @@ const createStyles = (dark: ReturnType<typeof useAppearance>['colors']) =>
     },
     statusTextEarly: {
       color: dark.textMid,
-    },
-    footer: {
-      marginTop: space[2],
-      paddingTop: space[2],
-      borderTopWidth: 1,
-      borderTopColor: dark.hairline,
-    },
-    doneButton: {
-      height: 48,
-      backgroundColor: dark.s1,
-      borderRadius: radius.button,
-      justifyContent: 'center',
-      alignItems: 'center',
-      borderWidth: 1,
-      borderColor: dark.hairline,
-    },
-    doneButtonText: {
-      fontSize: typeTokens.body.fontSize,
-      fontFamily: typeTokens.body.fontFamily,
-      fontWeight: '600',
-      color: dark.textHi,
     },
     buttonPressed: {
       opacity: 0.8,

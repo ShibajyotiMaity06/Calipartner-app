@@ -2,6 +2,7 @@ import React, { useRef, useState } from 'react';
 import { Modal, View } from 'react-native';
 import { Button, controls, radius, space, Text, useTheme } from '@calipartner/ui';
 import { useBrowserModalBack } from '@/hooks/useBrowserModalBack';
+import { ModalNavigation } from '@/components/ModalNavigation';
 import { t } from '@/i18n';
 export function LoggedWorkoutDeleteModal({
   name,
@@ -48,6 +49,7 @@ export function LoggedWorkoutDeleteModal({
             borderRadius: radius.card,
           }}
         >
+          <ModalNavigation onClose={close} disabled={busy} closeTestID="logged-delete-cancel" />
           <Text variant="heading">{t('workoutPolish.deleteTitle')}</Text>
           <Text>{t('workoutPolish.deleteBody', { name })}</Text>
           {error && (
@@ -75,13 +77,6 @@ export function LoggedWorkoutDeleteModal({
                 setBusy(false);
               }
             }}
-          />
-          <Button
-            variant="cancel"
-            label={t('common.cancel')}
-            disabled={busy}
-            onPress={close}
-            testID="logged-delete-cancel"
           />
         </View>
       </View>

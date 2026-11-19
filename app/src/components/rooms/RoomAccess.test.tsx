@@ -205,12 +205,10 @@ it('allows either of exactly two comparison slots to select another member', asy
     tree = create(<RoomScreen />);
   });
   await act(async () => tree.root.findByProps({ testID: 'compare-choose-left' }).props.onPress());
-  const picker = tree.root.findByType('SquadMemberPicker' as React.ElementType);
-  expect(picker.props.excludedId).toBe('peer1');
-  await act(async () => {
-    picker.props.onSelect('peer2');
-    picker.props.onClose();
-  });
+  const menu = tree.root.findByProps({ testID: 'compare-members-left' });
+  expect(menu.findAllByProps({ testID: 'compare-member-peer1' })).toHaveLength(0);
+  await act(async () => menu.findByProps({ testID: 'compare-member-peer2' }).props.onPress());
+  expect(tree.root.findAllByProps({ testID: 'compare-members-left' })).toHaveLength(0);
   await act(async () =>
     tree.root.findByProps({ testID: 'open-two-person-compare' }).props.onPress(),
   );

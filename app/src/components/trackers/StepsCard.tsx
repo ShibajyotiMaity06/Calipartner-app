@@ -1,7 +1,6 @@
 import { visualPrimitives } from '@calipartner/ui/tokens';
 import { Button } from '@calipartner/ui';
 import { useTheme as useAppearance } from '@calipartner/ui/theme';
-import { NavigationIcon } from '@calipartner/ui';
 import React, { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
@@ -491,18 +490,6 @@ export function StepsCard({ selectedDate, testID = 'steps-card' }: StepsCardProp
                   </Text>
                 </View>
               ))}
-
-              <Button
-                variant="tertiary"
-                fullWidth={false}
-                label="Close"
-                iconOnly
-                icon={<NavigationIcon action="close" />}
-                style={styles.tableDoneBtn}
-                onPress={() => setTableModalVisible(false)}
-                accessibilityRole="button"
-                accessibilityLabel="Close"
-              />
             </View>
           </View>
         </Modal>

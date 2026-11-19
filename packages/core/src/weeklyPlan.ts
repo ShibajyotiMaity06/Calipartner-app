@@ -6,6 +6,7 @@ import {
   type WorkoutSplit,
   type WorkoutMuscle,
 } from './workoutSplits.ts';
+import { AI_WORKOUT_SPLITS, type AiWorkoutSplit } from './workoutPlanner.ts';
 
 export const WEEK_DAYS = [
   'monday',
@@ -50,6 +51,7 @@ export interface PlanPreferences {
   limitations: string;
   workout_notes?: string;
   workout_split?: WorkoutSplit;
+  ai_workout_split?: AiWorkoutSplit;
   country: string;
   cuisine: string;
   diet: 'mixed' | 'vegetarian' | 'vegan' | 'pescatarian';
@@ -267,8 +269,17 @@ export function validatePlanPreferences(input: unknown): PlanPreferences {
 /** Workout-only setup does not invent or change a person's meal preferences or nutrition targets. */
 export function validateWorkoutPreferences(input: unknown): PlanPreferences {
   const p = object(input);
-  return validatePlanPreferences({
+  const split =
+    p.ai_workout_split === undefined ? undefined : choice(p.ai_workout_split, AI_WORKOUT_SPLITS);
+  const preferences = validatePlanPreferences({
     ...p,
+    ...(split === undefined
+      ? {}
+      : {
+          workout_split: undefined,
+          location: 'advanced',
+          equipment: equipmentForLocation('advanced'),
+        }),
     country: typeof p.country === 'string' && p.country.trim() ? p.country : 'unspecified',
     cuisine: typeof p.cuisine === 'string' && p.cuisine.trim() ? p.cuisine : 'unspecified',
     diet: p.diet ?? 'mixed',
@@ -278,6 +289,7 @@ export function validateWorkoutPreferences(input: unknown): PlanPreferences {
     cooking_minutes: p.cooking_minutes ?? 30,
     budget: p.budget ?? 'economical',
   });
+  return split === undefined ? preferences : { ...preferences, ai_workout_split: split };
 }
 export function validatePlanExercises(
   input: unknown,
@@ -796,7 +808,7 @@ export interface WorkoutTargetSet {
 export interface WorkoutRoutineExercise {
   id: string;
   name: string;
-  equipment: PlanEquipment;
+  equipment: PlanEquipment | 'machine';
   primary_muscles?: WorkoutMuscle[];
   targetSets: WorkoutTargetSet[];
 }
@@ -889,7 +901,7 @@ export function validateWorkoutRoutine(input: unknown): WorkoutRoutineContent {
         return {
           id,
           name: text(exercise.name, 100),
-          equipment: choice(exercise.equipment, PLAN_EQUIPMENT),
+          equipment: choice(exercise.equipment, [...PLAN_EQUIPMENT, 'machine']),
           ...(exercise.primary_muscles === undefined
             ? {}
             : {

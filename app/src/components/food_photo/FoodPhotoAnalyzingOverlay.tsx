@@ -1,37 +1,22 @@
-import { visualPrimitives } from '@calipartner/ui/tokens';
-import { Button } from '@calipartner/ui';
-import { Text } from '@calipartner/ui';
-import React, { useEffect, useState } from 'react';
-import { Modal, StyleSheet, View } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+﻿import React from 'react';
+import { Image, Modal, ScrollView, StyleSheet, View } from 'react-native';
+import { controls, radius, space, Text, useTheme } from '@calipartner/ui';
+import { ModalNavigation } from '@/components/ModalNavigation';
 import { t } from '@/i18n';
-import { fontSize, radius, spacing } from '@/theme/tokens';
-import { useTheme } from '@/theme/useTheme';
 import { ScanSweep } from './ScanSweep';
 
 export interface FoodPhotoAnalyzingOverlayProps {
   visible: boolean;
+  imageUri: string;
   onCancel?: () => void;
 }
 
-const HINT_STEPS = ['foodLog.photo.analyzingSubtitle', 'foodLog.photo.analyzingHint'] as const;
-
-export function FoodPhotoAnalyzingOverlay({ visible, onCancel }: FoodPhotoAnalyzingOverlayProps) {
+export function FoodPhotoAnalyzingOverlay({
+  visible,
+  imageUri,
+  onCancel,
+}: FoodPhotoAnalyzingOverlayProps) {
   const { colors } = useTheme();
-  const [currentHintIdx, setCurrentHintIdx] = useState(0);
-
-  useEffect(() => {
-    if (!visible) {
-      setCurrentHintIdx(0);
-      return;
-    }
-
-    const interval = setInterval(() => {
-      setCurrentHintIdx((prev) => (prev + 1) % HINT_STEPS.length);
-    }, 2800);
-
-    return () => clearInterval(interval);
-  }, [visible]);
 
   return (
     <Modal
@@ -41,115 +26,46 @@ export function FoodPhotoAnalyzingOverlay({ visible, onCancel }: FoodPhotoAnalyz
       animationType="fade"
       onRequestClose={onCancel}
     >
-      <View style={styles.backdrop}>
-        <View
+      <View style={[styles.backdrop, { backgroundColor: colors.modalScrim }]}>
+        <ScrollView
           testID="card-food-photo-analyzing"
-          style={[
-            styles.container,
-            { backgroundColor: colors.surface, borderColor: colors.border },
-          ]}
+          accessibilityViewIsModal
+          style={[styles.container, { backgroundColor: colors.s1, borderColor: colors.hairline }]}
+          contentContainerStyle={styles.content}
         >
-          {/* Pulsing Visual / Sparkles Wrap */}
-          <View style={[styles.sparkleWrap, { backgroundColor: colors.cardHighlight }]}>
-            <Ionicons name="information-circle-outline" size={36} color={colors.accent} />
+          <ModalNavigation onClose={onCancel} closeTestID="btn-cancel-analyzing" />
+          <View testID="food-photo-scan-preview" style={styles.preview}>
+            <Image
+              source={{ uri: imageUri }}
+              style={StyleSheet.absoluteFill}
+              resizeMode="cover"
+              accessibilityLabel={t('foodLog.photo.cameraTitle')}
+            />
+            {visible && <ScanSweep overlay />}
           </View>
-
-          {visible && <ScanSweep />}
-
-          <Text testID="text-analyzing-title" style={[styles.title, { color: colors.text }]}>
+          <Text variant="heading" accessibilityLiveRegion="polite" testID="text-analyzing-title">
             {t('foodLog.photo.analyzingTitle')}
           </Text>
-
-          <Text
-            testID="text-analyzing-subtitle"
-            style={[styles.subtitle, { color: colors.textMuted }]}
-          >
-            {t(HINT_STEPS[currentHintIdx] || 'foodLog.photo.analyzingSubtitle')}
+          <Text variant="bodyS" testID="text-analyzing-subtitle">
+            {t('foodLog.photo.analyzingSubtitle')}
           </Text>
-
-          {/* Privacy Footnote Badge */}
-          <View
-            style={[
-              styles.privacyBadge,
-              { backgroundColor: colors.surfaceAlt, borderColor: colors.border },
-            ]}
-          >
-            <Ionicons name="shield-checkmark" size={14} color={colors.accent} />
-            <Text style={[styles.privacyBadgeText, { color: colors.textMuted }]}>
-              {t('foodLog.photo.analyzingHint')}
-            </Text>
-          </View>
-
-          {onCancel && (
-            <Button
-              variant="cancel"
-              label={t('common.cancel')}
-              testID="btn-cancel-analyzing"
-              accessibilityRole="button"
-              accessibilityLabel={t('common.cancel')}
-              onPress={onCancel}
-            />
-          )}
-        </View>
+          <Text variant="bodyS">{t('foodLog.photo.analyzingHint')}</Text>
+        </ScrollView>
       </View>
     </Modal>
   );
 }
 
 const styles = StyleSheet.create({
-  backdrop: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.70)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: spacing.md,
-  },
+  backdrop: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: space[4] },
   container: {
+    flexGrow: 0,
+    maxHeight: '90%',
     width: '100%',
-    maxWidth: 380,
-    borderRadius: radius.lg,
-    padding: spacing.xl,
-    alignItems: 'center',
-    borderWidth: 1,
-    shadowColor: visualPrimitives.colors.black,
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.35,
-    shadowRadius: visualPrimitives.effects[16],
-    elevation: visualPrimitives.effects[8],
+    maxWidth: controls.dialogMaxWidth,
+    borderRadius: radius.sheet,
+    borderWidth: controls.border,
   },
-  sparkleWrap: {
-    width: 72,
-    height: 72,
-    borderRadius: radius.pill,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: spacing.xs,
-  },
-  title: {
-    fontSize: fontSize.lg,
-    fontWeight: '700',
-    textAlign: 'center',
-    marginBottom: spacing.xs,
-  },
-  subtitle: {
-    fontSize: fontSize.sm,
-    textAlign: 'center',
-    lineHeight: 20,
-    minHeight: 40,
-    paddingHorizontal: spacing.sm,
-  },
-  privacyBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    marginTop: spacing.md,
-    paddingHorizontal: spacing.sm,
-    paddingVertical: 6,
-    borderRadius: radius.pill,
-    borderWidth: 1,
-  },
-  privacyBadgeText: {
-    fontSize: fontSize.xs,
-    fontWeight: '500',
-  },
+  content: { padding: space[4], gap: space[3] },
+  preview: { width: '100%', aspectRatio: 4 / 3, overflow: 'hidden', borderRadius: radius.card },
 });

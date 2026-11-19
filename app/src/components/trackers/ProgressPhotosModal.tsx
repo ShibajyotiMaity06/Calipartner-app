@@ -13,6 +13,7 @@ import {
 import * as ImagePicker from 'expo-image-picker';
 import { Button, Chip, Text, space, radius, homeLayout, type as typography } from '@calipartner/ui';
 import { useTheme } from '@calipartner/ui/theme';
+import { ModalNavigation } from '@/components/ModalNavigation';
 import { PremiumFeatureModal } from '@/components/subscription/PremiumFeatureModal';
 import { useAuth } from '@/contexts/AuthContext';
 import { useCurrentLocalDate } from '@/hooks/useCurrentLocalDate';
@@ -177,176 +178,153 @@ export function PhotoVault({
       resizeMode="contain"
     />
   );
-  return (
-    <PhotoFrame embedded={embedded} visible={visible} onClose={onClose}>
-      <SafeAreaView style={{ flex: embedded ? undefined : 1, backgroundColor: colors.bg0 }}>
-        <ScrollView
-          scrollEnabled={!embedded}
-          style={{ backgroundColor: colors.bg0 }}
-          contentContainerStyle={styles.content}
-          testID={testID}
-          keyboardShouldPersistTaps="handled"
-        >
-          <Text variant="title1">{t('trackers.weight.photosTitle')}</Text>
-          {!embedded && (
-            <Button
-              variant="cancel"
-              label={t('common.cancel')}
-              onPress={onClose}
-              testID="photos-close"
-              disabled={busy}
+  const content = (
+    <View style={styles.content} testID={testID}>
+      <Text variant="title1">{t('trackers.weight.photosTitle')}</Text>
+      {loading && <ActivityIndicator accessibilityLabel={t('launch.loading')} />}
+      {error && (
+        <>
+          <Text accessibilityRole="alert">{t('launch.photoError')}</Text>
+          <Button
+            label={t('common.retry')}
+            variant="secondary"
+            onPress={() => void refresh()}
+            testID="photos-retry"
+          />
+        </>
+      )}
+      <View style={styles.actions}>
+        <Button
+          variant="secondary"
+          fullWidth={false}
+          label={t('launch.camera')}
+          onPress={() => void pick(true)}
+          disabled={busy}
+          testID="photos-camera"
+        />
+        <Button
+          variant="secondary"
+          fullWidth={false}
+          label={t('launch.gallery')}
+          onPress={() => void pick(false)}
+          disabled={busy}
+          testID="photos-gallery"
+        />
+      </View>
+      {draft && (
+        <View style={styles.content}>
+          <Image
+            source={{ uri: draft.uri }}
+            style={styles.photo}
+            resizeMode="contain"
+            accessibilityLabel={t('trackers.weight.addPhoto')}
+          />
+          {(
+            [
+              { key: 'date', value: date, set: setDate, label: 'launch.date' },
+              { key: 'weight', value: weight, set: setWeight, label: 'launch.weight' },
+              { key: 'notes', value: notes, set: setNotes, label: 'launch.notes' },
+            ] as const
+          ).map((field) => (
+            <TextInput
+              key={field.key}
+              value={field.value}
+              onChangeText={field.set}
+              accessibilityLabel={t(field.label)}
+              placeholder={t(field.label)}
+              placeholderTextColor={colors.textLo}
+              style={[styles.input, { color: colors.textHi, borderColor: colors.hairline }]}
+              testID={'photo-' + field.key}
+              maxLength={field.key === 'notes' ? 1000 : 12}
             />
-          )}
-          {loading && <ActivityIndicator accessibilityLabel={t('launch.loading')} />}
-          {error && (
-            <>
-              <Text accessibilityRole="alert">{t('launch.photoError')}</Text>
-              <Button
-                label={t('common.retry')}
-                variant="secondary"
-                onPress={() => void refresh()}
-                testID="photos-retry"
-              />
-            </>
-          )}
+          ))}
           <View style={styles.actions}>
-            <Button
-              variant="secondary"
-              label={t('launch.camera')}
-              onPress={() => void pick(true)}
-              disabled={busy}
-              testID="photos-camera"
-            />
-            <Button
-              variant="secondary"
-              label={t('launch.gallery')}
-              onPress={() => void pick(false)}
-              disabled={busy}
-              testID="photos-gallery"
-            />
-          </View>
-          {draft && (
-            <View style={styles.content}>
-              <Image
-                source={{ uri: draft.uri }}
-                style={styles.photo}
-                resizeMode="contain"
-                accessibilityLabel={t('trackers.weight.addPhoto')}
-              />
-              {(
-                [
-                  { key: 'date', value: date, set: setDate, label: 'launch.date' },
-                  { key: 'weight', value: weight, set: setWeight, label: 'launch.weight' },
-                  { key: 'notes', value: notes, set: setNotes, label: 'launch.notes' },
-                ] as const
-              ).map((field) => (
-                <TextInput
-                  key={field.key}
-                  value={field.value}
-                  onChangeText={field.set}
-                  accessibilityLabel={t(field.label)}
-                  placeholder={t(field.label)}
-                  placeholderTextColor={colors.textLo}
-                  style={[styles.input, { color: colors.textHi, borderColor: colors.hairline }]}
-                  testID={'photo-' + field.key}
-                  maxLength={field.key === 'notes' ? 1000 : 12}
-                />
-              ))}
-              <View style={styles.actions}>
-                {(['front', 'side', 'back'] as const).map((value) => (
-                  <Chip
-                    key={value}
-                    label={t(`launch.${value}`)}
-                    selected={pose === value}
-                    onPress={() => setPose(value)}
-                    testID={'photo-pose-' + value}
-                  />
-                ))}
-              </View>
-              <Button
-                label={t('launch.savePhoto')}
-                onPress={() => void save()}
-                disabled={busy}
-                testID="photos-save"
-              />
-            </View>
-          )}
-          {!loading && !photos.length && <Text>{t('launch.photoEmpty')}</Text>}
-          {!!photos.length && <Text>{t('launch.compare')}</Text>}
-          {comparison.length === 2 && (
-            <View style={styles.comparison} testID="photo-compare-view">
-              {comparison.map((photo) => (
-                <View key={photo.id} style={styles.side}>
-                  {image(photo)}
-                  <Text>{photo.captured_date}</Text>
-                </View>
-              ))}
-            </View>
-          )}
-          {photos.map((photo) => (
-            <View key={photo.id} style={styles.content}>
-              {image(photo)}
-              <Text>
-                {photo.captured_date} ? {t(`launch.${photo.pose}`)}
-              </Text>
-              {photo.weight_kg !== null && <Text style={styles.number}>{photo.weight_kg} kg</Text>}
-              {!!photo.notes && <Text>{photo.notes}</Text>}
+            {(['front', 'side', 'back'] as const).map((value) => (
               <Chip
-                label={t('launch.photoLabel', { date: photo.captured_date })}
-                selected={selected.includes(photo.id)}
-                onPress={() =>
-                  setSelected((current) =>
-                    current.includes(photo.id)
-                      ? current.filter((id) => id !== photo.id)
-                      : [...current.slice(-1), photo.id],
-                  )
-                }
-                testID={'photo-item-' + photo.id}
+                key={value}
+                label={t(`launch.${value}`)}
+                selected={pose === value}
+                onPress={() => setPose(value)}
+                testID={'photo-pose-' + value}
               />
-              <Button
-                variant="secondary"
-                label={t('launch.deletePhoto')}
-                disabled={busy}
-                testID={'photo-delete-' + photo.id}
-                onPress={() =>
-                  Alert.alert(t('launch.deletePhoto'), t('launch.confirmDelete'), [
-                    { text: t('common.cancel'), style: 'cancel' },
-                    {
-                      text: t('launch.deletePhoto'),
-                      style: 'destructive',
-                      onPress: () => void remove(photo.id),
-                    },
-                  ])
-                }
-              />
+            ))}
+          </View>
+          <Button
+            label={t('launch.savePhoto')}
+            onPress={() => void save()}
+            disabled={busy}
+            testID="photos-save"
+          />
+        </View>
+      )}
+      {!loading && !photos.length && <Text>{t('launch.photoEmpty')}</Text>}
+      {!!photos.length && <Text>{t('launch.compare')}</Text>}
+      {comparison.length === 2 && (
+        <View style={styles.comparison} testID="photo-compare-view">
+          {comparison.map((photo) => (
+            <View key={photo.id} style={styles.side}>
+              {image(photo)}
+              <Text>{photo.captured_date}</Text>
             </View>
           ))}
-        </ScrollView>
-      </SafeAreaView>
-    </PhotoFrame>
+        </View>
+      )}
+      {photos.map((photo) => (
+        <View key={photo.id} style={styles.content}>
+          {image(photo)}
+          <Text>
+            {photo.captured_date} ? {t(`launch.${photo.pose}`)}
+          </Text>
+          {photo.weight_kg !== null && <Text style={styles.number}>{photo.weight_kg} kg</Text>}
+          {!!photo.notes && <Text>{photo.notes}</Text>}
+          <Chip
+            label={t('launch.photoLabel', { date: photo.captured_date })}
+            selected={selected.includes(photo.id)}
+            onPress={() =>
+              setSelected((current) =>
+                current.includes(photo.id)
+                  ? current.filter((id) => id !== photo.id)
+                  : [...current.slice(-1), photo.id],
+              )
+            }
+            testID={'photo-item-' + photo.id}
+          />
+          <Button
+            variant="secondary"
+            label={t('launch.deletePhoto')}
+            disabled={busy}
+            testID={'photo-delete-' + photo.id}
+            onPress={() =>
+              Alert.alert(t('launch.deletePhoto'), t('launch.confirmDelete'), [
+                { text: t('common.cancel'), style: 'cancel' },
+                {
+                  text: t('launch.deletePhoto'),
+                  style: 'destructive',
+                  onPress: () => void remove(photo.id),
+                },
+              ])
+            }
+          />
+        </View>
+      ))}
+    </View>
   );
-}
-function PhotoFrame({
-  embedded,
-  visible,
-  onClose,
-  children,
-}: {
-  embedded: boolean;
-  visible: boolean;
-  onClose: () => void;
-  children: React.ReactNode;
-}) {
   return embedded ? (
-    <View>{children}</View>
+    content
   ) : (
     <Modal visible={visible} onRequestClose={onClose} animationType="slide">
-      {children}
+      <SafeAreaView style={{ flex: 1, backgroundColor: colors.bg0 }}>
+        <View style={styles.navigation}>
+          <ModalNavigation onClose={onClose} disabled={busy} closeTestID="photos-close" />
+        </View>
+        <ScrollView keyboardShouldPersistTaps="handled">{content}</ScrollView>
+      </SafeAreaView>
     </Modal>
   );
 }
 const styles = StyleSheet.create({
   content: { padding: space[4], gap: space[3] },
+  navigation: { paddingHorizontal: space[4] },
   actions: { flexDirection: 'row', flexWrap: 'wrap', gap: space[2] },
   comparison: { flexDirection: 'row', gap: space[2] },
   side: { flex: 1, minWidth: 0 },

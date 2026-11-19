@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { Animated, Easing, StyleSheet, View } from 'react-native';
 import { space, useTheme } from '@calipartner/ui';
 
-export function ScanSweep() {
+export function ScanSweep({ overlay = false }: { overlay?: boolean }) {
   const { colors, reduceMotion } = useTheme();
   const [height, setHeight] = useState(0);
   const progress = useRef(new Animated.Value(0)).current;
@@ -15,6 +15,7 @@ export function ScanSweep() {
         duration: 900,
         easing: Easing.inOut(Easing.ease),
         useNativeDriver: true,
+        isInteraction: false,
       });
     const sweep = Animated.loop(Animated.sequence([move(1), move(0)]));
     sweep.start();
@@ -25,7 +26,7 @@ export function ScanSweep() {
       accessible={false}
       pointerEvents="none"
       testID="scan-sweep"
-      style={[styles.track, { backgroundColor: colors.s2 }]}
+      style={overlay ? StyleSheet.absoluteFill : [styles.track, { backgroundColor: colors.s2 }]}
       onLayout={(event) => setHeight(event.nativeEvent.layout.height)}
     >
       <Animated.View

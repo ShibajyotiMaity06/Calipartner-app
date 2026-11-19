@@ -61,6 +61,12 @@ export function CoinRewardsModal({
         contentContainerStyle={styles.content}
         testID={mode === 'invite' ? 'coin-invite-modal' : 'coin-earn-modal'}
       >
+        <Button
+          style={{ alignSelf: 'flex-end' }}
+          variant="tertiary"
+          label={t('homeRefresh.close')}
+          onPress={onClose}
+        />
         <Text variant="title2">{title}</Text>
         {mode === 'invite' && <Text>{t('releaseUpdate.inviteBody')}</Text>}
         {loading && <Text accessibilityLiveRegion="polite">{t('common.loading')}</Text>}
@@ -100,7 +106,6 @@ export function CoinRewardsModal({
           />
         )}
         {copied && <Text accessibilityLiveRegion="polite">{t('releaseUpdate.inviteCopied')}</Text>}
-        <Button variant="tertiary" label={t('homeRefresh.close')} onPress={onClose} />
       </ScrollView>
     </Sheet>
   );

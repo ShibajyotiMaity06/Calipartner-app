@@ -7,7 +7,9 @@ import { Ionicons } from '@expo/vector-icons';
 import { useBrowserModalBack } from '@/hooks/useBrowserModalBack';
 import { Button, homeLayout, radius, space, Text, type as typography } from '@calipartner/ui';
 import {
+  AI_WORKOUT_SPLITS,
   WORKOUT_SPLITS,
+  savedAiWorkoutSplit,
   equipmentForLocation,
   WORKOUT_SPLIT_DAYS,
   defaultWorkoutDays,
@@ -100,6 +102,7 @@ export function PlanField({
   numeric = false,
   hint,
   optional = false,
+  maxLength,
 }: {
   label: string;
   value: string;
@@ -108,6 +111,7 @@ export function PlanField({
   numeric?: boolean;
   hint?: string;
   optional?: boolean;
+  maxLength?: number;
 }) {
   const styles = useSquadStyles();
 
@@ -130,7 +134,7 @@ export function PlanField({
         value={value}
         onChangeText={onChange}
         keyboardType={numeric ? 'number-pad' : 'default'}
-        maxLength={numeric ? 3 : 500}
+        maxLength={maxLength ?? (numeric ? 3 : 500)}
         style={{
           ...typography.body,
           minHeight: homeLayout.touchSize,
@@ -167,6 +171,7 @@ export function WeeklyPlanForm({
     const value = initial ?? initialPlanPreferences;
     return {
       ...value,
+      ...(workoutOnly ? { ai_workout_split: savedAiWorkoutSplit(value) } : {}),
       session_minutes: [30, 60, 90, 120].includes(value.session_minutes)
         ? value.session_minutes
         : 30,
@@ -175,8 +180,9 @@ export function WeeklyPlanForm({
   const splitDays = preferences.workout_split
     ? (WORKOUT_SPLIT_DAYS[preferences.workout_split] ?? [])
     : [];
-  const splitValid =
-    !!preferences.workout_split && splitDays.includes(preferences.workout_days.length);
+  const splitValid = workoutOnly
+    ? preferences.workout_days.length >= 1 && preferences.workout_days.length <= 6
+    : !!preferences.workout_split && splitDays.includes(preferences.workout_days.length);
   const [step, setStep] = useState<'workout' | 'food'>('workout'),
     [consent, setConsent] = useState(false),
     [error, setError] = useState(false);
@@ -286,12 +292,32 @@ export function WeeklyPlanForm({
               : 'fixNovember.planSubtitle',
         )}
       </Text>
-      <Text variant="title2">
-        {t(step === 'workout' ? 'fixNovember.workoutTitle' : 'fixNovember.dietTitle')}
-      </Text>
+      {!workoutOnly && (
+        <Text variant="title2">
+          {t(step === 'workout' ? 'fixNovember.workoutTitle' : 'fixNovember.dietTitle')}
+        </Text>
+      )}
       {step === 'workout' ? (
         <>
-          {
+          {workoutOnly ? (
+            <>
+              <Choice
+                label={t('workoutFlow.split')}
+                icon="barbell-outline"
+                multiple={false}
+                values={AI_WORKOUT_SPLITS.map((value) => ({
+                  value,
+                  label: t(`workoutFlow.aiSplits.${value}`),
+                }))}
+                selected={[preferences.ai_workout_split ?? 'none']}
+                onSelect={(value) => update('ai_workout_split', value)}
+                id="plan-split"
+              />
+              {preferences.ai_workout_split === 'none' && (
+                <Text variant="bodyS">{t('workoutFlow.noneSplitHint')}</Text>
+              )}
+            </>
+          ) : (
             <>
               <Choice
                 label={t('workoutFlow.daysPerWeek')}
@@ -329,7 +355,7 @@ export function WeeklyPlanForm({
                 </Text>
               )}
             </>
-          }
+          )}
           <Choice
             label={t('fixNovember.trainingDays')}
             icon="calendar-outline"
@@ -348,7 +374,7 @@ export function WeeklyPlanForm({
             }}
           />
           <Text variant="bodyS">{t('fixNovember.trainingDaysHint')}</Text>
-          {choose('location', ['home', 'basic', 'advanced'])}
+          {!workoutOnly && choose('location', ['home', 'basic', 'advanced'])}
           {choose('experience', ['beginner', 'intermediate', 'experienced'])}
           <View style={styles.stack}>
             <Text variant="label">{t('fixNovember.minutes')}</Text>
@@ -379,6 +405,7 @@ export function WeeklyPlanForm({
               ))}
             </View>
           </View>
+          {workoutOnly && field('limitations')}
           <PlanField
             label={t('releaseUpdate.avoid')}
             optional
@@ -487,12 +514,14 @@ export function WeeklyPlanForm({
           {t('fixNovember.invalidPreferences')}
         </Text>
       )}
-      <Button
-        variant="tertiary"
-        label={t('fixNovember.later')}
-        onPress={onLater}
-        testID="skip-weekly-plan"
-      />
+      {!workoutOnly && (
+        <Button
+          variant="tertiary"
+          label={t('fixNovember.later')}
+          onPress={onLater}
+          testID="skip-weekly-plan"
+        />
+      )}
     </View>
   );
 }

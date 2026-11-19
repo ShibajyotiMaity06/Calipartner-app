@@ -75,3 +75,17 @@ it('keeps disabled cancel actions borderless and prevents activation', async () 
   expect(button.props.onPress).toBeUndefined();
   expect(tree.root.findByType('Text' as React.ElementType).props.color).toBe(palette.textOff);
 });
+
+it('honors a modal close icon’s explicit alignment while keeping its touch target', async () => {
+  await act(async () => {
+    tree = create(
+      <Button variant="tertiary" label="Close" iconOnly style={{ alignSelf: 'flex-end' }} />,
+    );
+  });
+  const button = tree.root.findByType('Pressable' as React.ElementType);
+  expect(Object.assign({}, ...button.props.style())).toMatchObject({
+    alignSelf: 'flex-end',
+    minWidth: controls.touch,
+    minHeight: controls.touch,
+  });
+});

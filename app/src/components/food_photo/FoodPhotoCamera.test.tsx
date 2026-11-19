@@ -7,15 +7,18 @@ vi.mock('react-native', () => ({
   ActivityIndicator: 'Spinner',
   Image: 'Image',
   Modal: 'Modal',
+  ScrollView: 'ScrollView',
   Pressable: 'Pressable',
   Text: 'Text',
   View: 'View',
   StyleSheet: { create: (s: unknown) => s, absoluteFill: {} },
 }));
+vi.mock('react-native-safe-area-context', () => ({ SafeAreaView: 'SafeAreaView' }));
 vi.mock('@calipartner/ui', async () => ({
   Button: (await import('@/test/ButtonStub')).ButtonStub,
   ...(await import('../../../../packages/ui/src/tokens')),
   Text: 'Text',
+  NavigationIcon: 'NavigationIcon',
 }));
 vi.mock('expo-camera', () => ({
   CameraView: 'CameraView',

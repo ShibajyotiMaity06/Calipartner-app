@@ -383,6 +383,7 @@ export function CheckInModal({
           variant="tertiary"
           label={t('homeRefresh.close')}
           onPress={onClose}
+          style={{ alignSelf: 'flex-end' }}
           testID="close-check-in"
         />
         <ScrollView contentContainerStyle={styles.modalContent}>

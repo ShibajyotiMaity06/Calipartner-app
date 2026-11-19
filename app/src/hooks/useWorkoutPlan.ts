@@ -5,6 +5,7 @@ import {
   getWorkoutPlan,
   buildWorkoutPlan,
   editWorkoutPlan,
+  saveCustomWorkoutPlan,
 } from '@/services/workoutRoutineService';
 import { workoutEvents } from '@/services/workoutEvents';
 
@@ -32,8 +33,13 @@ export function useWorkoutPlan(visible: boolean) {
     }));
     try {
       let plan = await getWorkoutPlan(userId);
-      if (plan.needs_initial && plan.preferences)
-        plan = await buildWorkoutPlan(userId, plan.preferences, true);
+      if (plan.needs_initial && plan.preferences) {
+        try {
+          plan = await buildWorkoutPlan(userId, plan.preferences, true);
+        } catch {
+          // Keep the server's plan options available, including manual creation.
+        }
+      }
       if (active.current === key && request === version.current)
         setState({ key, plan, loading: false, error: false });
     } catch {
@@ -69,6 +75,10 @@ export function useWorkoutPlan(visible: boolean) {
     edit: async (content: WorkoutRoutineContent) => {
       if (!userId || !current?.plan) throw new Error('PLAN_STALE');
       publish(await editWorkoutPlan(userId, current.plan, content));
+    },
+    saveCustom: async (content: WorkoutRoutineContent, base: WorkoutPlanView) => {
+      if (!userId) throw new Error('PLAN_STALE');
+      publish(await saveCustomWorkoutPlan(userId, base, content));
     },
   };
 }

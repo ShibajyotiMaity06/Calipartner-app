@@ -328,10 +328,15 @@ export default function RoomScreen() {
                       <PeopleSelector
                         left={left}
                         right={right}
-                        onChoose={(side) => {
-                          setLeftId(left.user_id);
-                          setRightId(right.user_id);
-                          setPicker(side);
+                        members={members}
+                        open={picker === 'person' ? null : picker}
+                        onChoose={(side) =>
+                          setPicker((current) => (current === side ? null : side))
+                        }
+                        onSelect={(side, id) => {
+                          setLeftId(side === 'left' ? id : left.user_id);
+                          setRightId(side === 'right' ? id : right.user_id);
+                          setPicker(null);
                         }}
                       />
                       <Button
@@ -507,25 +512,13 @@ export default function RoomScreen() {
           }}
         />
       )}
-      {picker && left && right && (
+      {picker === 'person' && left && right && (
         <SquadMemberPicker
           visible
-          members={picker === 'person' ? otherMembers : members}
-          excludedId={picker === 'person' ? '' : picker === 'left' ? right.user_id : left.user_id}
-          selectedId={
-            picker === 'person'
-              ? (selectedPerson?.user_id ?? '')
-              : picker === 'left'
-                ? left.user_id
-                : right.user_id
-          }
-          onSelect={(id) =>
-            picker === 'person'
-              ? setPersonId(id)
-              : picker === 'left'
-                ? setLeftId(id)
-                : setRightId(id)
-          }
+          members={otherMembers}
+          excludedId=""
+          selectedId={selectedPerson?.user_id ?? ''}
+          onSelect={setPersonId}
           onClose={() => setPicker(null)}
         />
       )}

@@ -132,6 +132,10 @@ export function AddExercisePickerModal({
         <View style={styles.container}>
           {/* Header */}
           <View style={styles.header}>
+            <Text variant="title2" color={dark.textHi} style={styles.title}>
+              Choose Exercise
+            </Text>
+
             <Button
               variant="tertiary"
               fullWidth={false}
@@ -144,12 +148,6 @@ export function AddExercisePickerModal({
               accessibilityLabel="Cancel"
               testID="btn-close-exercise-picker"
             />
-
-            <Text variant="title2" color={dark.textHi} style={styles.title}>
-              Choose Exercise
-            </Text>
-
-            <View style={{ width: 44 }} />
           </View>
 
           {/* Search Box */}

@@ -106,19 +106,6 @@ export function WorkoutDetailModal({
               { backgroundColor: colors.surface, borderBottomColor: colors.border },
             ]}
           >
-            <Button
-              variant="tertiary"
-              fullWidth={false}
-              label={t('common.cancel')}
-              iconOnly
-              icon={<Ionicons name="close" size={24} color={colors.text} />}
-              testID={`${testID}-btn-close`}
-              onPress={onClose}
-              style={styles.headerBtn}
-              accessibilityRole="button"
-              accessibilityLabel={t('common.cancel')}
-            />
-
             <Text style={[styles.headerTitle, { color: colors.text }]}>
               {t('workouts.details.title')}
             </Text>
@@ -151,6 +138,18 @@ export function WorkoutDetailModal({
                 )}
               </TouchableOpacity>
             </View>
+            <Button
+              variant="tertiary"
+              fullWidth={false}
+              label={t('common.cancel')}
+              iconOnly
+              icon={<Ionicons name="close" size={24} color={colors.text} />}
+              testID={`${testID}-btn-close`}
+              onPress={onClose}
+              style={styles.headerBtn}
+              accessibilityRole="button"
+              accessibilityLabel={t('common.cancel')}
+            />
           </View>
 
           <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>

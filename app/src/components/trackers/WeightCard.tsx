@@ -1,7 +1,6 @@
 import { visualPrimitives } from '@calipartner/ui/tokens';
 import { Button } from '@calipartner/ui';
 import { useTheme as useAppearance } from '@calipartner/ui/theme';
-import { NavigationIcon } from '@calipartner/ui';
 import React, { useState } from 'react';
 import { Modal, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
@@ -463,18 +462,6 @@ export function WeightCard({ selectedDate, testID = 'weight-card' }: WeightCardP
                   </View>
                 ))}
               </ScrollView>
-
-              <Button
-                variant="tertiary"
-                fullWidth={false}
-                label="Close"
-                iconOnly
-                icon={<NavigationIcon action="close" />}
-                style={styles.tableDoneBtn}
-                onPress={() => setTableModalVisible(false)}
-                accessibilityRole="button"
-                accessibilityLabel="Close"
-              />
             </View>
           </View>
         </Modal>
@@ -889,19 +876,5 @@ const createStyles = (dark: ReturnType<typeof useAppearance>['colors']) =>
       fontSize: typeTokens.bodyS.fontSize,
       fontFamily: typeTokens.bodyS.fontFamily,
       color: dark.textHi,
-    },
-    tableDoneBtn: {
-      minHeight: 48,
-      borderRadius: radius.button,
-      backgroundColor: dark.apricot,
-      alignItems: 'center',
-      justifyContent: 'center',
-      marginTop: space[2],
-    },
-    tableDoneBtnText: {
-      fontSize: typeTokens.body.fontSize,
-      fontFamily: typeTokens.body.fontFamily,
-      color: dark.onBrand, // the onBrand token
-      fontWeight: '700',
     },
   });

@@ -1,5 +1,5 @@
 import { visualPrimitives } from '@calipartner/ui/tokens';
-import { Button } from '@calipartner/ui';
+import { Button, controls } from '@calipartner/ui';
 import { Text } from '@calipartner/ui';
 import React, { useEffect, useRef, useState } from 'react';
 import {
@@ -8,6 +8,7 @@ import {
   Modal,
   Platform,
   Pressable,
+  ScrollView,
   StyleSheet,
   View,
 } from 'react-native';
@@ -16,6 +17,8 @@ import * as ImagePicker from 'expo-image-picker';
 import * as ImageManipulator from 'expo-image-manipulator';
 import { Ionicons } from '@expo/vector-icons';
 import { t } from '@/i18n';
+import { ModalNavigation } from '@/components/ModalNavigation';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useBrowserModalBack } from '@/hooks/useBrowserModalBack';
 import { fontSize, radius, spacing } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
@@ -121,6 +124,7 @@ export function FoodPhotoCameraModal({
   const handleRetake = () => {
     setPreviewBase64(null);
     setPreviewUri(null);
+    setCameraReady(false);
   };
 
   const back = () => {
@@ -173,133 +177,125 @@ export function FoodPhotoCameraModal({
         )}
         {/* Permission Denied / Web Upload Screen */}
         {!permission?.granted && !testMode && !previewBase64 ? (
-          <View style={styles.permissionContainer}>
-            <View style={[styles.permissionIconWrap, { backgroundColor: colors.surfaceAlt }]}>
-              <Ionicons name="camera-outline" size={44} color={colors.accent} />
-            </View>
-            <Text style={[styles.permissionTitle, { color: colors.text }]}>
-              {t('foodLog.photo.cameraPermissionTitle')}
-            </Text>
-            <Text style={[styles.permissionBody, { color: colors.textMuted }]}>
-              {t('capture.cameraReason')}
-            </Text>
+          <SafeAreaView style={styles.previewContainer}>
+            <ModalNavigation onClose={onClose} closeTestID="btn-close-camera-permission" />
+            <ScrollView contentContainerStyle={styles.permissionContainer}>
+              <View style={[styles.permissionIconWrap, { backgroundColor: colors.surfaceAlt }]}>
+                <Ionicons name="camera-outline" size={44} color={colors.accent} />
+              </View>
+              <Text style={[styles.permissionTitle, { color: colors.text }]}>
+                {t('foodLog.photo.cameraPermissionTitle')}
+              </Text>
+              <Text style={[styles.permissionBody, { color: colors.textMuted }]}>
+                {t('capture.cameraReason')}
+              </Text>
 
-            <View
-              style={[
-                styles.permissionBtnRow,
-                { flexDirection: 'column', gap: 10, width: '100%', maxWidth: 320 },
-              ]}
-            >
-              <Button
-                variant="secondary"
-                fullWidth={false}
-                label="Take Photo with Camera"
-                icon={
-                  <Ionicons
-                    name="camera"
-                    size={18}
-                    color={colors.onAccent}
-                    style={{ marginRight: 6 }}
-                  />
-                }
-                testID="btn-grant-camera-permission"
-                accessibilityRole="button"
-                accessibilityLabel={t('capture.takePhoto')}
-                onPress={() => handleTriggerCameraOrUpload('camera')}
-                style={[styles.primaryBtn, { backgroundColor: colors.accent, width: '100%' }]}
-              />
-
-              <Button
-                variant="secondary"
-                fullWidth={false}
-                label="Choose from Photos"
-                icon={
-                  <Ionicons
-                    name="images-outline"
-                    size={18}
-                    color={colors.text}
-                    style={{ marginRight: 6 }}
-                  />
-                }
-                testID="btn-choose-from-gallery"
-                accessibilityRole="button"
-                accessibilityLabel={t('capture.choosePhoto')}
-                onPress={() => handleTriggerCameraOrUpload('album')}
+              <View
                 style={[
-                  styles.primaryBtn,
-                  {
-                    backgroundColor: colors.surfaceAlt,
-                    borderWidth: 1,
-                    borderColor: colors.border,
-                    width: '100%',
-                  },
+                  styles.permissionBtnRow,
+                  { flexDirection: 'column', gap: 10, width: '100%', maxWidth: 320 },
                 ]}
-              />
+              >
+                <Button
+                  variant="secondary"
+                  fullWidth={false}
+                  label={t('capture.takePhoto')}
+                  icon={
+                    <Ionicons
+                      name="camera"
+                      size={18}
+                      color={colors.onAccent}
+                      style={{ marginRight: 6 }}
+                    />
+                  }
+                  testID="btn-grant-camera-permission"
+                  accessibilityRole="button"
+                  accessibilityLabel={t('capture.takePhoto')}
+                  onPress={() => handleTriggerCameraOrUpload('camera')}
+                  style={[styles.primaryBtn, { backgroundColor: colors.accent, width: '100%' }]}
+                />
 
-              <Button
-                variant="cancel"
-                label={t('common.cancel')}
-                testID="btn-close-camera-permission"
-                accessibilityRole="button"
-                accessibilityLabel={t('common.cancel')}
-                onPress={back}
-              />
-            </View>
-          </View>
+                <Button
+                  variant="secondary"
+                  fullWidth={false}
+                  label={t('capture.choosePhoto')}
+                  icon={
+                    <Ionicons
+                      name="images-outline"
+                      size={18}
+                      color={colors.text}
+                      style={{ marginRight: 6 }}
+                    />
+                  }
+                  testID="btn-choose-from-gallery"
+                  accessibilityRole="button"
+                  accessibilityLabel={t('capture.choosePhoto')}
+                  onPress={() => handleTriggerCameraOrUpload('album')}
+                  style={[
+                    styles.primaryBtn,
+                    {
+                      backgroundColor: colors.surfaceAlt,
+                      borderWidth: 1,
+                      borderColor: colors.border,
+                      width: '100%',
+                    },
+                  ]}
+                />
+              </View>
+            </ScrollView>
+          </SafeAreaView>
         ) : previewBase64 ? (
           /* Preview State (Confirm / Retake) */
-          <View testID="view-photo-preview" style={styles.previewContainer}>
-            <View style={styles.previewHeader}>
-              <Text style={styles.previewTitle}>{t('foodLog.photo.cameraTitle')}</Text>
-              <Text style={styles.previewSub}>{t('foodLog.photo.subtitle')}</Text>
-            </View>
+          <SafeAreaView testID="view-photo-preview" style={styles.previewContainer}>
+            <ModalNavigation
+              onBack={handleRetake}
+              onClose={onClose}
+              closeTestID="btn-close-photo-preview"
+            />
+            <ScrollView contentContainerStyle={styles.previewContent}>
+              <View style={styles.previewHeader}>
+                <Text style={styles.previewTitle}>{t('foodLog.photo.cameraTitle')}</Text>
+                <Text style={styles.previewSub}>{t('foodLog.photo.subtitle')}</Text>
+              </View>
 
-            <View style={styles.previewFrame}>
-              <Image
-                source={{
-                  uri:
-                    previewUri ||
-                    (previewBase64.startsWith('data:')
-                      ? previewBase64
-                      : `data:image/jpeg;base64,${previewBase64}`),
-                }}
-                style={{
-                  width: '100%',
-                  height: 320,
-                  borderRadius: radius.md,
-                }}
-                resizeMode="cover"
-              />
-            </View>
+              <View style={styles.previewFrame}>
+                <Image
+                  source={{
+                    uri:
+                      previewUri ||
+                      (previewBase64.startsWith('data:')
+                        ? previewBase64
+                        : `data:image/jpeg;base64,${previewBase64}`),
+                  }}
+                  style={styles.previewImage}
+                  resizeMode="cover"
+                />
+              </View>
 
-            <View style={styles.previewActions}>
-              <Button
-                variant="secondary"
-                fullWidth={false}
-                label={t('foodLog.photo.usePhoto')}
-                icon={
-                  <Ionicons name="information-circle-outline" size={18} color={colors.onAccent} />
-                }
-                testID="btn-use-photo"
-                accessibilityRole="button"
-                accessibilityLabel={t('foodLog.photo.usePhoto')}
-                onPress={handleConfirmPhoto}
-                style={[styles.primaryBtn, { backgroundColor: colors.accent }]}
-              />
+              <View style={styles.previewActions}>
+                <Button
+                  fullWidth={false}
+                  label={t('foodLog.photo.usePhoto')}
+                  testID="btn-use-photo"
+                  accessibilityRole="button"
+                  accessibilityLabel={t('foodLog.photo.usePhoto')}
+                  onPress={handleConfirmPhoto}
+                  style={styles.previewAction}
+                />
 
-              <Button
-                variant="secondary"
-                fullWidth={false}
-                label={t('foodLog.photo.retake')}
-                icon={<Ionicons name="refresh-outline" size={18} color={colors.text} />}
-                testID="btn-retake-photo"
-                accessibilityRole="button"
-                accessibilityLabel={t('foodLog.photo.retake')}
-                onPress={handleRetake}
-                style={[styles.secondaryBtn, { backgroundColor: colors.surfaceAlt }]}
-              />
-            </View>
-          </View>
+                <Button
+                  variant="secondary"
+                  fullWidth={false}
+                  label={t('foodLog.photo.retake')}
+                  testID="btn-retake-photo"
+                  accessibilityRole="button"
+                  accessibilityLabel={t('foodLog.photo.retake')}
+                  onPress={handleRetake}
+                  style={styles.previewAction}
+                />
+              </View>
+            </ScrollView>
+          </SafeAreaView>
         ) : (
           /* Active Camera Screen */
           <View style={styles.cameraContainer}>
@@ -316,21 +312,6 @@ export function FoodPhotoCameraModal({
               <Button
                 variant="tertiary"
                 fullWidth={false}
-                label={t('common.cancel')}
-                iconOnly
-                icon={<Ionicons name="close" size={24} color={visualPrimitives.colors.white} />}
-                testID="btn-close-camera"
-                accessibilityRole="button"
-                accessibilityLabel={t('common.cancel')}
-                onPress={back}
-                style={styles.iconCircle}
-              />
-
-              <Text style={styles.topBarTitle}>{t('foodLog.photo.cameraTitle')}</Text>
-
-              <Button
-                variant="tertiary"
-                fullWidth={false}
                 label={t('capture.flipCamera')}
                 iconOnly
                 icon={
@@ -344,6 +325,21 @@ export function FoodPhotoCameraModal({
                 accessibilityRole="button"
                 accessibilityLabel={t('capture.flipCamera')}
                 onPress={() => setFacing(facing === 'back' ? 'front' : 'back')}
+                style={styles.iconCircle}
+              />
+
+              <Text style={styles.topBarTitle}>{t('foodLog.photo.cameraTitle')}</Text>
+
+              <Button
+                variant="tertiary"
+                fullWidth={false}
+                label={t('common.cancel')}
+                iconOnly
+                icon={<Ionicons name="close" size={24} color={visualPrimitives.colors.white} />}
+                testID="btn-close-camera"
+                accessibilityRole="button"
+                accessibilityLabel={t('common.cancel')}
+                onPress={back}
                 style={styles.iconCircle}
               />
             </View>
@@ -407,8 +403,7 @@ const styles = StyleSheet.create({
     backgroundColor: visualPrimitives.colors.black,
   },
   permissionContainer: {
-    flex: 1,
-    backgroundColor: visualPrimitives.colors.cameraSurface,
+    flexGrow: 1,
     alignItems: 'center',
     justifyContent: 'center',
     padding: spacing.xl,
@@ -557,11 +552,9 @@ const styles = StyleSheet.create({
   previewContainer: {
     flex: 1,
     backgroundColor: visualPrimitives.colors.cameraSurface,
-    justifyContent: 'space-between',
-    paddingTop: 54,
-    paddingBottom: 48,
     paddingHorizontal: spacing.lg,
   },
+  previewContent: { flexGrow: 1, paddingVertical: spacing.md, gap: spacing.md },
   previewHeader: {
     alignItems: 'center',
     gap: 4,
@@ -575,24 +568,15 @@ const styles = StyleSheet.create({
     color: visualPrimitives.colors.slate,
     fontSize: fontSize.xs,
   },
-  previewFrame: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginVertical: spacing.lg,
-  },
-  previewMockBox: {
+  previewFrame: { alignItems: 'center', justifyContent: 'center' },
+  previewImage: {
     width: '100%',
-    height: 280,
-    borderRadius: radius.lg,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 1,
-    borderColor: visualPrimitives.colors.slateBorder,
+    maxWidth: controls.dialogMaxWidth,
+    aspectRatio: 4 / 3,
+    borderRadius: radius.md,
   },
-  previewActions: {
-    gap: spacing.sm,
-  },
+  previewActions: { flexDirection: 'row', gap: spacing.sm },
+  previewAction: { flex: 1, alignSelf: 'stretch', minWidth: 0 },
   primaryBtn: {
     height: 48,
     borderRadius: radius.md,

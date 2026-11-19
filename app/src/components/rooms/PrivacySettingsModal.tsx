@@ -99,6 +99,7 @@ export function PrivacySettingsModal({
             variant="tertiary"
             label={t('rooms.paywall.close')}
             onPress={onClose}
+            style={{ alignSelf: 'flex-end' }}
             testID="btn-close-privacy-modal"
           />
           <Text variant="title2">{t('rooms.privacyModal.title')}</Text>

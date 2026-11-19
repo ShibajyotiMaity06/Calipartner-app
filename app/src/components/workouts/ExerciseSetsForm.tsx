@@ -56,7 +56,7 @@ export function ExerciseSetsForm({
   initialSets?: ExerciseSetInput[];
   submitLabel?: string;
   planOnly?: boolean;
-  onCancel: () => void;
+  onCancel?: () => void;
 }) {
   const [count, setCount] = useState<number | null>(initialSets?.length ?? null);
   const [sets, setSets] = useState<{ reps: number | null; weightKg: number | null }[]>(
@@ -131,13 +131,15 @@ export function ExerciseSetsForm({
           }
         }}
       />
-      <Button
-        variant="cancel"
-        label={t('common.cancel')}
-        disabled={saving}
-        onPress={onCancel}
-        testID="exercise-cancel-sets"
-      />
+      {!!onCancel && (
+        <Button
+          variant="cancel"
+          label={t('common.cancel')}
+          disabled={saving}
+          onPress={onCancel}
+          testID="exercise-cancel-sets"
+        />
+      )}
     </View>
   );
 }

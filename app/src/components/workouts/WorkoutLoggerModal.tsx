@@ -513,27 +513,6 @@ export function WorkoutLoggerModal({
             { backgroundColor: colors.surface, borderBottomColor: colors.border },
           ]}
         >
-          <Button
-            variant="tertiary"
-            fullWidth={false}
-            label={t('common.cancel')}
-            iconOnly
-            icon={<Ionicons name="close" size={24} color={colors.text} />}
-            testID={`${testID}-btn-close`}
-            onPress={onClose}
-            style={styles.headerBtn}
-            accessibilityRole="button"
-            accessibilityLabel={t('common.cancel')}
-          />
-
-          <Text style={[styles.headerTitle, { color: colors.text }]}>
-            {initialWorkout
-              ? t('workouts.editWorkout')
-              : initialWorkoutType
-                ? t(initialWorkoutType === 'cardio' ? 'homeRefresh.cycling' : 'homeRefresh.running')
-                : t('workouts.logWorkout')}
-          </Text>
-
           <TouchableOpacity
             testID={`${testID}-btn-save`}
             onPress={handleSaveWorkout}
@@ -550,6 +529,27 @@ export function WorkoutLoggerModal({
               </Text>
             )}
           </TouchableOpacity>
+
+          <Text style={[styles.headerTitle, { color: colors.text }]}>
+            {initialWorkout
+              ? t('workouts.editWorkout')
+              : initialWorkoutType
+                ? t(initialWorkoutType === 'cardio' ? 'homeRefresh.cycling' : 'homeRefresh.running')
+                : t('workouts.logWorkout')}
+          </Text>
+
+          <Button
+            variant="tertiary"
+            fullWidth={false}
+            label={t('common.cancel')}
+            iconOnly
+            icon={<Ionicons name="close" size={24} color={colors.text} />}
+            testID={`${testID}-btn-close`}
+            onPress={onClose}
+            style={styles.headerBtn}
+            accessibilityRole="button"
+            accessibilityLabel={t('common.cancel')}
+          />
         </View>
 
         <ScrollView

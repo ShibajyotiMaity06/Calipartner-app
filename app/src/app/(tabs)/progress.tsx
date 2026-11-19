@@ -57,6 +57,7 @@ export default function ProgressScreen() {
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: colors.bg0 }} testID="screen-progress">
       <ScrollView
+        keyboardShouldPersistTaps="handled"
         contentContainerStyle={{
           padding: space[4],
           paddingBottom: getTabBarHeight(fontScale) + insets.bottom + space[6],

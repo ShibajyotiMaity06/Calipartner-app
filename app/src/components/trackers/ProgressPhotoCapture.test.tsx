@@ -86,6 +86,7 @@ it('keeps the camera preview across token and foreground entitlement refresh, th
     ),
   ).toHaveLength(1);
   expect(state.photos).toHaveBeenCalledTimes(1);
+  expect(tree.root.findAllByType('ScrollView' as React.ElementType)).toHaveLength(0);
   await act(async () => tree.root.findByProps({ testID: 'photos-save' }).props.onPress());
   expect(state.save).toHaveBeenCalledWith(
     {},

@@ -8,6 +8,8 @@ import { ExerciseSetRows } from './ExerciseSetsForm';
 import { newWorkoutSessionRequest } from '@/services/workoutSessionService';
 import { saveLoggedWorkoutSets } from '@/services/loggedWorkoutEditService';
 import { useBrowserModalBack } from '@/hooks/useBrowserModalBack';
+import { ModalNavigation } from '@/components/ModalNavigation';
+import { PlanField } from '@/components/onboarding/WeeklyPlanForm';
 import { t } from '@/i18n';
 
 export function LoggedWorkoutEditModal({
@@ -20,6 +22,13 @@ export function LoggedWorkoutEditModal({
   onSaved: () => void | Promise<void>;
 }) {
   const { colors } = useTheme();
+  const [names, setNames] = useState(() =>
+    workout.exercises.map((exercise) => exercise.exercise_name),
+  );
+  const [title, setTitle] = useState(workout.name ?? '');
+  const showTitle =
+    workout.exercises.length !== 1 ||
+    (!!workout.name && workout.name !== workout.exercises[0]?.exercise_name);
   const [draft, setDraft] = useState(() =>
     workout.exercises.map((ex) =>
       (ex.sets ?? []).map((set) => ({ reps: set.reps ?? null, weightKg: set.weight_kg || null })),
@@ -66,12 +75,30 @@ export function LoggedWorkoutEditModal({
           contentContainerStyle={{ padding: space[4], gap: space[4] }}
           keyboardShouldPersistTaps="handled"
         >
+          <ModalNavigation onClose={close} disabled={saving} closeTestID="logged-edit-cancel" />
           <Text variant="title2">{t('workoutPolish.editTitle')}</Text>
           <Text variant="bodyS">{t('workoutPolish.weightHint')}</Text>
           <View pointerEvents={saving ? 'none' : 'auto'} style={{ gap: space[4] }}>
+            {showTitle && (
+              <PlanField
+                label={t('workoutFlow.workoutName')}
+                value={title}
+                onChange={setTitle}
+                maxLength={100}
+                id="logged-edit-title"
+              />
+            )}
             {workout.exercises.map((exercise, index) => (
               <View key={exercise.id} style={{ gap: space[2] }}>
-                <Text variant="heading">{exercise.exercise_name}</Text>
+                <PlanField
+                  label={t('workoutFlow.workoutName')}
+                  value={names[index]!}
+                  maxLength={100}
+                  onChange={(name) =>
+                    setNames((current) => current.map((value, i) => (i === index ? name : value)))
+                  }
+                  id={`logged-edit-name-${index}`}
+                />
                 <NumberField
                   label={t('personalDay.setsCount')}
                   value={counts[index] ?? null}
@@ -116,7 +143,7 @@ export function LoggedWorkoutEditModal({
           )}
           <Button
             label={t('workoutPolish.save')}
-            disabled={saving}
+            disabled={saving || names.some((name) => !name.trim())}
             testID="logged-edit-save"
             onPress={async () => {
               if (lock.current) return;
@@ -130,9 +157,11 @@ export function LoggedWorkoutEditModal({
                   draft.map((sets) =>
                     sets.map((set) => ({ reps: set.reps ?? NaN, weightKg: set.weightKg ?? 0 })),
                   ),
+                  names,
+                  title,
                 );
-                await onSaved();
                 onClose();
+                await onSaved();
               } catch {
                 setError(true);
               } finally {
@@ -140,13 +169,6 @@ export function LoggedWorkoutEditModal({
                 setSaving(false);
               }
             }}
-          />
-          <Button
-            variant="cancel"
-            label={t('common.cancel')}
-            disabled={saving}
-            onPress={close}
-            testID="logged-edit-cancel"
           />
         </ScrollView>
       </SafeAreaView>

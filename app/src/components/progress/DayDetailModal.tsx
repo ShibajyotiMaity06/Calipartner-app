@@ -1,6 +1,5 @@
 import { visualPrimitives } from '@calipartner/ui/tokens';
 import { Button } from '@calipartner/ui';
-import { NavigationIcon } from '@calipartner/ui';
 import { Text } from '@calipartner/ui';
 import React from 'react';
 import { Modal, Pressable, StyleSheet, View } from 'react-native';
@@ -180,20 +179,6 @@ export function DayDetailModal({
               </View>
             )}
           </View>
-
-          {/* Dismiss Button */}
-          <Button
-            variant="tertiary"
-            fullWidth={false}
-            label={t('progress.dayDetailModal.close')}
-            iconOnly
-            icon={<NavigationIcon action="close" />}
-            style={[styles.dismissBtn, { backgroundColor: colors.accent }]}
-            onPress={onClose}
-            accessibilityRole="button"
-            accessibilityLabel={t('progress.dayDetailModal.close')}
-            testID={`${testID}-dismiss`}
-          />
         </Pressable>
       </Pressable>
     </Modal>
@@ -274,12 +259,6 @@ const styles = StyleSheet.create({
   badgeText: {
     fontSize: fontSize.xs,
     fontWeight: '500',
-  },
-  dismissBtn: {
-    paddingVertical: spacing.sm + 2,
-    borderRadius: radius.md,
-    alignItems: 'center',
-    justifyContent: 'center',
   },
   dismissBtnText: {
     color: visualPrimitives.colors.white,

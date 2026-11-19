@@ -7,7 +7,6 @@ import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import { Button, Text } from '@calipartner/ui';
 import { useSquadToday, useSquadDetails } from '@/hooks/useSquad';
 import { useSubscription } from '@/hooks/useSubscription';
-import { SquadMemberPicker } from '@/components/rooms/SquadMemberPicker';
 import {
   MealContent,
   mealSections,
@@ -112,10 +111,13 @@ export default function SquadCompareScreen() {
             <PeopleSelector
               left={left}
               right={right}
-              onChoose={(side) => {
-                setLeftId(left.user_id);
-                setRightId(right.user_id);
-                setPicker(side);
+              members={members}
+              open={picker}
+              onChoose={(side) => setPicker((current) => (current === side ? null : side))}
+              onSelect={(side, id) => {
+                setLeftId(side === 'left' ? id : left.user_id);
+                setRightId(side === 'right' ? id : right.user_id);
+                setPicker(null);
               }}
             />
             <Text variant="bodyS">{t('squadDesign.ownGoals')}</Text>
@@ -248,19 +250,6 @@ export default function SquadCompareScreen() {
           </>
         )}
       </ScrollView>
-      {picker && left && right && (
-        <SquadMemberPicker
-          visible
-          members={members}
-          excludedId={picker === 'left' ? right.user_id : left.user_id}
-          selectedId={picker === 'left' ? left.user_id : right.user_id}
-          onSelect={(id) => {
-            if (picker === 'left') setLeftId(id);
-            else setRightId(id);
-          }}
-          onClose={() => setPicker(null)}
-        />
-      )}
     </SafeAreaView>
   );
 }

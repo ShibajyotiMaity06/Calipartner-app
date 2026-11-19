@@ -123,3 +123,27 @@ export async function editWorkoutPlan(
   workoutEvents.emitChange();
   return data as WorkoutPlanView;
 }
+export async function saveCustomWorkoutPlan(
+  userId: string,
+  plan: WorkoutPlanView,
+  content: WorkoutRoutineContent,
+): Promise<WorkoutPlanView> {
+  const client = await actor(userId);
+  const valid = validateWorkoutRoutine(content);
+  const pending = await request(userId, 'custom', [plan.id, plan.revision, valid]);
+  const { data, error } = await client.rpc('save_custom_workout_plan', {
+    p_id: pending.id,
+    p_plan_id: plan.id,
+    p_revision: plan.revision,
+    p_content: valid,
+  });
+  if (error) throw new Error(error.message);
+  if (!data?.full_access || data.id !== (plan.id ?? pending.id) || data.revision <= plan.revision)
+    throw new Error('PLAN_STALE');
+  validateWorkoutRoutine({ days: data.days });
+  invalidateReadCache('workout-plan:', userId);
+  invalidateReadCache('weekly-plan:', userId);
+  await pending.clear();
+  workoutEvents.emitChange();
+  return data as WorkoutPlanView;
+}

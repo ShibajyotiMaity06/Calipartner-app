@@ -1,7 +1,7 @@
 import { useTheme as useAppearance } from '@calipartner/ui/theme';
 import { NutrientSummary } from '../diary/NutrientSummary';
 import React from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Avatar, Button, dark, homeLayout, radius, space, Text } from '@calipartner/ui';
 import type {
@@ -347,41 +347,126 @@ export function MemberMetrics({ member }: { member: RankedSquadMember }) {
 export function PeopleSelector({
   left,
   right,
+  members,
+  open,
   onChoose,
+  onSelect,
 }: {
   left: RankedSquadMember;
   right: RankedSquadMember;
+  members: RankedSquadMember[];
+  open: 'left' | 'right' | null;
   onChoose: (side: 'left' | 'right') => void;
+  onSelect: (side: 'left' | 'right', id: string) => void;
 }) {
-  const { colors: dark } = useAppearance();
-  const squadStyles = createSquadStyles(dark);
+  const { colors } = useAppearance();
 
   return (
-    <View style={squadStyles.row}>
+    <View style={memberDropdownStyles.row}>
       {(
         [
-          ['left', left],
-          ['right', right],
+          ['left', left, right],
+          ['right', right, left],
         ] as const
-      ).map(([side, member], index) => (
+      ).map(([side, member, other], index) => (
         <React.Fragment key={side}>
-          {index === 1 && <Text variant="bodyS">{t('squadDesign.vs')}</Text>}
-          <Button
-            variant="secondary"
-            fullWidth={false}
-            label={memberName(member)}
-            icon={<Ionicons name="chevron-down" size={homeLayout.iconSize} color={dark.textMid} />}
-            onPress={() => onChoose(side)}
-            accessibilityRole="button"
-            accessibilityLabel={t('squadDesign.choose') + ': ' + memberName(member)}
-            style={squadStyles.selector}
-            testID={`compare-choose-${side}`}
-          />
+          {index === 1 && (
+            <View style={memberDropdownStyles.option}>
+              <Text variant="bodyS">{t('squadDesign.vs')}</Text>
+            </View>
+          )}
+          <View style={memberDropdownStyles.column}>
+            <Pressable
+              onPress={() => onChoose(side)}
+              accessibilityRole="button"
+              accessibilityLabel={t('squadDesign.choose') + ': ' + memberName(member)}
+              accessibilityState={{ expanded: open === side }}
+              style={({ pressed }) => [
+                memberDropdownStyles.trigger,
+                {
+                  backgroundColor: pressed ? colors.s2 : colors.s1,
+                  borderColor: colors.hairline,
+                },
+              ]}
+              testID={`compare-choose-${side}`}
+            >
+              <Text variant="bodyS" numberOfLines={1} style={memberDropdownStyles.label}>
+                {memberName(member)}
+              </Text>
+              <Ionicons
+                name={open === side ? 'chevron-up' : 'chevron-down'}
+                size={homeLayout.editIconSize}
+                color={colors.textMid}
+              />
+            </Pressable>
+            {open === side && (
+              <View
+                style={[
+                  memberDropdownStyles.menu,
+                  { backgroundColor: colors.s1, borderColor: colors.hairline },
+                ]}
+                testID={`compare-members-${side}`}
+              >
+                <ScrollView
+                  nestedScrollEnabled
+                  keyboardShouldPersistTaps="handled"
+                  style={memberDropdownStyles.options}
+                >
+                  {members
+                    .filter((item) => item.user_id !== other.user_id)
+                    .map((item) => (
+                      <Pressable
+                        key={item.user_id}
+                        accessibilityRole="radio"
+                        accessibilityState={{ checked: member.user_id === item.user_id }}
+                        onPress={() => onSelect(side, item.user_id)}
+                        style={({ pressed }) => [
+                          memberDropdownStyles.option,
+                          (pressed || member.user_id === item.user_id) && {
+                            backgroundColor: colors.s2,
+                          },
+                        ]}
+                        testID={`compare-member-${item.user_id}`}
+                      >
+                        <Text variant="bodyS">{memberName(item)}</Text>
+                      </Pressable>
+                    ))}
+                </ScrollView>
+              </View>
+            )}
+          </View>
         </React.Fragment>
       ))}
     </View>
   );
 }
+
+const memberDropdownStyles = StyleSheet.create({
+  row: { flexDirection: 'row', alignItems: 'flex-start', gap: space[2] },
+  column: { flex: 1, minWidth: 0 },
+  trigger: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: space[2],
+    minHeight: homeLayout.touchSize,
+    borderRadius: radius.control,
+    borderWidth: StyleSheet.hairlineWidth,
+    paddingHorizontal: space[2],
+  },
+  label: { flex: 1 },
+  menu: {
+    marginTop: space[1],
+    borderRadius: radius.control,
+    borderWidth: StyleSheet.hairlineWidth,
+    overflow: 'hidden',
+  },
+  options: { maxHeight: homeLayout.touchSize * 5 },
+  option: {
+    minHeight: homeLayout.touchSize,
+    justifyContent: 'center',
+    paddingHorizontal: space[2],
+  },
+});
 export function PlusDetailsCard({ onUpgrade }: { onUpgrade: () => void }) {
   const { colors: dark } = useAppearance();
   const squadStyles = createSquadStyles(dark);

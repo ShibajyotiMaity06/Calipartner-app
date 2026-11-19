@@ -353,6 +353,10 @@ export function WorkoutHistoryCalendarModal({
               { backgroundColor: colors.surface, borderBottomColor: colors.border },
             ]}
           >
+            <Text style={[styles.headerTitle, { color: colors.text }]}>
+              {t('workouts.history.title')}
+            </Text>
+
             <Button
               variant="tertiary"
               fullWidth={false}
@@ -365,12 +369,6 @@ export function WorkoutHistoryCalendarModal({
               accessibilityRole="button"
               accessibilityLabel={t('common.cancel')}
             />
-
-            <Text style={[styles.headerTitle, { color: colors.text }]}>
-              {t('workouts.history.title')}
-            </Text>
-
-            <View style={{ width: 36 }} />
           </View>
 
           <SegmentedControl

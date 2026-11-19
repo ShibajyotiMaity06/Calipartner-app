@@ -1,801 +1,386 @@
-import { Button } from '@calipartner/ui';
-import { loadAccountTable } from '@/services/accountDataService';
-import { ExerciseSetsForm, type ExerciseSetInput } from './ExerciseSetsForm';
-import { useBrowserModalBack } from '@/hooks/useBrowserModalBack';
-import { type as inputTypography } from '@calipartner/ui';
-import React, { useCallback, useEffect, useState } from 'react';
+﻿import React, { useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   FlatList,
-  ScrollView,
   Modal,
+  ScrollView,
   StyleSheet,
   TextInput,
-  TouchableOpacity,
   View,
 } from 'react-native';
-import { Text, homeLayout, type as typography } from '@calipartner/ui';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import {
+  Button,
+  Text,
+  controls,
+  homeLayout,
+  radius,
+  space,
+  type as typography,
+  useTheme,
+} from '@calipartner/ui';
 import { Ionicons } from '@expo/vector-icons';
-import type { Equipment, Exercise, ExerciseType, MuscleGroup } from '@calipartner/core';
+import type { Exercise } from '@calipartner/core';
+import { ModalNavigation } from '@/components/ModalNavigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { getDb } from '@/db';
+import { useBrowserModalBack } from '@/hooks/useBrowserModalBack';
 import { t } from '@/i18n';
-import { createCustomExercise, getExercises } from '@/services/workoutService';
+import { loadAccountTable } from '@/services/accountDataService';
 import { generateClientUuid } from '@/services/foodService';
-import { fontSize, radius, spacing } from '@/theme/tokens';
-import { useTheme } from '@/theme/useTheme';
+import { createCustomExercise, getExercises } from '@/services/workoutService';
+import { ExerciseSetsForm, type ExerciseSetInput } from './ExerciseSetsForm';
 
 interface ExercisePickerModalProps {
   visible: boolean;
   onClose: () => void;
-  onSelectExercise: (exercise: Exercise, sets: ExerciseSetInput[]) => void | Promise<void>;
+  onSelectExercise: (
+    exercise: Exercise,
+    sets: ExerciseSetInput[],
+    custom?: Exercise,
+  ) => void | Promise<void>;
+  deferCustomSave?: boolean;
   submitLabel?: string;
   testID?: string;
 }
 
-const MUSCLE_GROUPS = ['upper', 'lower', 'core'] as const;
-type ExerciseFilter = (typeof MUSCLE_GROUPS)[number];
-const filterGroups: Record<ExerciseFilter, readonly string[]> = {
-  upper: ['chest', 'back', 'shoulders', 'arms'],
-  lower: ['legs'],
-  core: ['core'],
-};
+const searchKey = (value: string) => value.toLowerCase().replace(/[^\p{L}\p{N}]/gu, '');
 
-export function ExercisePickerModal({
-  visible,
+export function ExercisePickerModal(props: ExercisePickerModalProps) {
+  const { user } = useAuth();
+  return props.visible ? (
+    <ExercisePicker key={user?.id} {...props} userId={user?.id ?? 'guest-user'} />
+  ) : null;
+}
+
+function ExercisePicker({
   onClose,
   onSelectExercise,
+  deferCustomSave,
   submitLabel,
   testID = 'exercise-picker-modal',
-}: ExercisePickerModalProps) {
-  const { colors } = useTheme();
-  const { user } = useAuth();
-  const userId = user?.id ?? 'guest-user';
+  userId,
+}: ExercisePickerModalProps & { userId: string }) {
+  const { colors, reduceMotion } = useTheme();
+  const [query, setQuery] = useState('');
+  const [favourites, setFavourites] = useState(false);
+  const [naming, setNaming] = useState(false);
+  const [name, setName] = useState('');
+  const [selection, setSelection] = useState<{ exercise: Exercise; custom?: Exercise } | null>(
+    null,
+  );
+  const [catalog, setCatalog] = useState<Exercise[]>();
+  const [loadError, setLoadError] = useState(false);
+  const [saveError, setSaveError] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [attempt, setAttempt] = useState(0);
+  const lock = useRef(false);
+  const customId = useRef<string | null>(null);
+  const key = searchKey(query);
+  const showResults = favourites || !!key;
 
-  const [searchQuery, setSearchQuery] = useState('');
-  const [selectedMuscle, setSelectedMuscle] = useState<ExerciseFilter>('upper');
-  const [configuring, setConfiguring] = useState<Exercise | null>(null);
-  const requestVersion = React.useRef(0);
-  const loadedCatalog = React.useRef<string | null>(null);
-  const [visibleCount, setVisibleCount] = useState(5);
-  const [exercises, setExercises] = useState<Exercise[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  useEffect(() => {
+    let active = true;
+    void (async () => {
+      try {
+        const db = await getDb();
+        await loadAccountTable(db, 'exercises', userId);
+        const results = await getExercises(db, { userId });
+        if (active) setCatalog(results);
+      } catch {
+        if (active) setLoadError(true);
+      }
+    })();
+    return () => {
+      active = false;
+    };
+  }, [userId, attempt]);
 
-  // Custom Exercise Creation Sub-modal State
-  const [showCustomModal, setShowCustomModal] = useState(false);
-  const [customName, setCustomName] = useState('');
-  const [customMuscle, setCustomMuscle] = useState<MuscleGroup>('chest');
-  const [customEquipment, setCustomEquipment] = useState<Equipment>('barbell');
-  const [customType, setCustomType] = useState<ExerciseType>('strength');
-  const [creatingCustom, setCreatingCustom] = useState(false);
-  const [customError, setCustomError] = useState(false);
-  const customRequest = React.useRef<string | null>(null);
-  const customSaving = React.useRef(false);
-  const closeCustom = () => {
-    if (!customSaving.current) setShowCustomModal(false);
-  };
-  const backLabel = t(configuring ? 'common.back' : 'common.cancel');
   const back = () => {
-    if (showCustomModal) closeCustom();
-    else if (configuring) setConfiguring(null);
+    if (lock.current) return;
+    if (selection) setSelection(null);
+    else if (naming) setNaming(false);
     else onClose();
   };
-  useBrowserModalBack(visible, onClose, {
-    depth: Number(Boolean(configuring || showCustomModal)),
+  const close = () => {
+    if (!lock.current) onClose();
+  };
+  useBrowserModalBack(true, close, {
+    depth: selection || naming ? 1 : 0,
     onDepthChange: back,
   });
 
-  const fetchExercises = useCallback(async () => {
-    const version = ++requestVersion.current;
-    try {
-      setLoading(true);
-      setError(null);
-      const db = await getDb();
-      if (loadedCatalog.current !== userId) {
-        await loadAccountTable(db, 'exercises', userId);
-        loadedCatalog.current = userId;
-      }
-      const list = await getExercises(db, {
-        searchQuery: searchQuery.trim().length > 0 ? searchQuery : undefined,
-        userId,
-      });
-      const filtered = list.filter((exercise) =>
-        filterGroups[selectedMuscle].includes(exercise.muscle_group),
-      );
-      if (version === requestVersion.current) {
-        setExercises(filtered);
-        setVisibleCount(5);
-      }
-    } catch (e) {
-      if (version === requestVersion.current) setError(e instanceof Error ? e.message : String(e));
-    } finally {
-      if (version === requestVersion.current) setLoading(false);
-    }
-  }, [selectedMuscle, searchQuery, userId]);
-
-  useEffect(() => {
-    if (visible) {
-      void fetchExercises();
-    }
-  }, [visible, fetchExercises]);
-
-  const handleCreateCustom = async () => {
-    if (!customName.trim() || customSaving.current) return;
-    customSaving.current = true;
-    setCustomError(false);
-    try {
-      setCreatingCustom(true);
-      const db = await getDb();
-      const created = await createCustomExercise(
-        db,
-        {
-          id: (customRequest.current ??= generateClientUuid()),
-          name: customName.trim(),
-          muscleGroup: customMuscle,
-          equipment: customEquipment,
-          type: customType,
-        },
-        userId,
-      );
-      setShowCustomModal(false);
-      setCustomName('');
-      setConfiguring(created);
-      customRequest.current = null;
-    } catch {
-      setCustomError(true);
-    } finally {
-      customSaving.current = false;
-      setCreatingCustom(false);
-    }
+  const results = showResults
+    ? (catalog ?? []).filter((item) =>
+        favourites ? item.owner_id === userId : searchKey(item.name).includes(key),
+      )
+    : [];
+  const startNaming = () => {
+    customId.current = null;
+    setName(query.trim().slice(0, 100));
+    setSaveError(false);
+    setNaming(true);
   };
-
-  const renderExerciseItem = ({ item }: { item: Exercise }) => {
-    return (
-      <TouchableOpacity
-        testID={`exercise-item-${item.id}`}
-        style={[
-          styles.exerciseItem,
-          { backgroundColor: colors.surface, borderColor: colors.border },
-        ]}
-        onPress={() => {
-          setConfiguring(item);
-        }}
-        accessibilityRole="button"
-        accessibilityLabel={`${item.name}, ${item.muscle_group}, ${item.equipment}`}
-      >
-        <View style={styles.exerciseContent}>
-          <Text style={[styles.exerciseName, { color: colors.text }]}>{item.name}</Text>
-          <View style={styles.tagRow}>
-            <View
-              style={[
-                styles.badge,
-                { backgroundColor: colors.surfaceAlt, borderColor: colors.border },
-              ]}
-            >
-              <Text style={[styles.badgeText, { color: colors.textMuted }]}>
-                {item.muscle_group.replace('_', ' ')}
-              </Text>
-            </View>
-            <View
-              style={[
-                styles.badge,
-                { backgroundColor: colors.surfaceAlt, borderColor: colors.border },
-              ]}
-            >
-              <Text style={[styles.badgeText, { color: colors.textMuted }]}>{item.equipment}</Text>
-            </View>
-            {item.owner_id && (
-              <View
-                style={[
-                  styles.badge,
-                  { backgroundColor: colors.cardHighlight, borderColor: colors.accent },
-                ]}
-              >
-                <Text style={[styles.badgeText, { color: colors.accent }]}>Custom</Text>
-              </View>
-            )}
-          </View>
-        </View>
-        <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
-      </TouchableOpacity>
-    );
+  const nameWorkout = async () => {
+    if (!name.trim() || lock.current) return;
+    lock.current = true;
+    setBusy(true);
+    setSaveError(false);
+    const exercise: Exercise = {
+      id: (customId.current ??= generateClientUuid()),
+      name: name.trim(),
+      muscle_group: 'other',
+      equipment: 'none',
+      type: 'strength',
+      owner_id: userId,
+    };
+    try {
+      if (deferCustomSave) setSelection({ exercise, custom: exercise });
+      else {
+        const created = await createCustomExercise(
+          await getDb(),
+          {
+            id: exercise.id,
+            name: exercise.name,
+            muscleGroup: 'other',
+            equipment: 'none',
+            type: 'strength',
+          },
+          userId,
+        );
+        setSelection({ exercise: created });
+        setCatalog((current) => (current ? [...current, created] : current));
+      }
+      setNaming(false);
+    } catch {
+      setSaveError(true);
+    } finally {
+      lock.current = false;
+      setBusy(false);
+    }
   };
 
   return (
     <Modal
+      visible
       testID={testID}
-      visible={visible}
-      animationType="slide"
-      transparent={false}
+      animationType={reduceMotion ? 'none' : 'slide'}
       onRequestClose={back}
     >
-      <View style={[styles.modalScreen, { backgroundColor: colors.background }]}>
-        {/* Header */}
-        <View
-          style={[
-            styles.modalHeader,
-            { backgroundColor: colors.surface, borderBottomColor: colors.border },
-          ]}
-        >
-          <Button
-            variant="tertiary"
-            fullWidth={false}
-            label={backLabel}
-            iconOnly
-            icon={
-              <Ionicons
-                name={configuring ? 'chevron-back' : 'close'}
-                size={24}
-                color={colors.text}
-              />
-            }
-            testID={`${testID}-btn-close`}
-            onPress={back}
-            style={styles.closeBtn}
-            accessibilityRole="button"
-            accessibilityLabel={backLabel}
-          />
-          <Text style={[styles.modalTitle, { color: colors.text }]}>
-            {t('workouts.exercises.title')}
-          </Text>
-          <View style={styles.closeBtn} accessible={false} />
-        </View>
-
-        {/* Search Bar */}
-        <View style={styles.searchContainer}>
-          <View
-            style={[
-              styles.searchBar,
-              {
-                backgroundColor: colors.surface,
-                borderColor: colors.border,
-              },
-            ]}
-          >
-            <Ionicons name="search" size={18} color={colors.textMuted} />
-            <TextInput
-              testID={`${testID}-input-search`}
-              style={[
-                [styles.searchInput, { color: colors.text }],
-                { fontFamily: inputTypography.body.fontFamily },
-              ]}
-              value={searchQuery}
-              onChangeText={setSearchQuery}
-              placeholder={t('workouts.exercises.searchPlaceholder')}
-              placeholderTextColor={colors.textMuted}
-              accessibilityLabel={t('workouts.exercises.searchPlaceholder')}
-            />
-            {searchQuery.length > 0 && (
-              <Button
-                variant="tertiary"
-                fullWidth={false}
-                label={t('personalDay.clearSearch')}
-                iconOnly
-                icon={<Ionicons name="close-circle" size={18} color={colors.textMuted} />}
-                testID={`${testID}-btn-clear-search`}
-                onPress={() => setSearchQuery('')}
-                accessibilityRole="button"
-                accessibilityLabel={t('personalDay.clearSearch')}
-                style={styles.closeBtn}
-              />
-            )}
-          </View>
-        </View>
-
-        {!configuring && (
-          <>
-            {/* Muscle Group Filter Chips */}
-            <View style={styles.chipsRow}>
-              <FlatList
-                horizontal
-                showsHorizontalScrollIndicator={false}
-                data={MUSCLE_GROUPS}
-                ListFooterComponent={
-                  <Button
-                    variant="secondary"
-                    fullWidth={false}
-                    label={t('ownerPolish.custom')}
-                    testID="workout-custom-exercise"
-                    onPress={() => {
-                      setCustomError(false);
-                      setShowCustomModal(true);
-                    }}
-                    style={styles.chip}
-                  />
-                }
-                keyExtractor={(item) => item}
-                contentContainerStyle={{ paddingHorizontal: spacing.md, gap: spacing.xs }}
-                renderItem={({ item }) => {
-                  const active = selectedMuscle === item;
-                  return (
-                    <Button
-                      variant="secondary"
-                      fullWidth={false}
-                      label={t(`personalDay.${item}`)}
-                      testID={`chip-muscle-${item}`}
-                      style={[
-                        styles.chip,
-                        {
-                          backgroundColor: active ? colors.accent : colors.surface,
-                          borderColor: active ? colors.accent : colors.border,
-                        },
-                      ]}
-                      onPress={() => setSelectedMuscle(item)}
-                      accessibilityRole="button"
-                      accessibilityLabel={t(`personalDay.${item}`)}
-                      accessibilityState={{ selected: active }}
-                    />
-                  );
-                }}
-              />
-            </View>
-
-            {/* Exercise List / Loading / Error / Empty states */}
-            {loading ? (
-              <View style={styles.centerState}>
-                <ActivityIndicator size="large" color={colors.accent} />
-                <Text style={[styles.stateText, { color: colors.textMuted }]}>
-                  {t('common.loading')}
-                </Text>
-              </View>
-            ) : error ? (
-              <View style={styles.centerState}>
-                <Ionicons name="alert-circle-outline" size={36} color={colors.danger} />
-                <Text style={[styles.stateText, { color: colors.danger }]}>{error}</Text>
-                <Button
-                  variant="secondary"
-                  fullWidth={false}
-                  label={t('common.retry')}
-                  testID={`${testID}-btn-retry`}
-                  style={[styles.retryBtn, { backgroundColor: colors.accent }]}
-                  onPress={fetchExercises}
-                  accessibilityRole="button"
-                  accessibilityLabel={t('common.retry')}
-                />
-              </View>
-            ) : exercises.length === 0 ? (
-              <View style={styles.centerState}>
-                <Ionicons name="barbell-outline" size={44} color={colors.textMuted} />
-                <Text style={[styles.emptyTitle, { color: colors.text }]}>
-                  {t('workouts.exercises.noExercisesFound')}
-                </Text>
-                <Button
-                  variant="secondary"
-                  fullWidth={false}
-                  label={t('workouts.exercises.createCustom')}
-                  icon={<Ionicons name="add-circle-outline" size={18} color={colors.onAccent} />}
-                  testID={`${testID}-btn-create-custom-empty`}
-                  style={[styles.createCustomPromptBtn, { backgroundColor: colors.accent }]}
-                  onPress={() => setShowCustomModal(true)}
-                  accessibilityRole="button"
-                  accessibilityLabel={t('workouts.exercises.createCustom')}
-                />
-              </View>
-            ) : (
-              <FlatList
-                testID={`${testID}-list`}
-                data={exercises.slice(0, visibleCount)}
-                keyExtractor={(item) => item.id}
-                renderItem={renderExerciseItem}
-                ListFooterComponent={
-                  visibleCount < exercises.length ? (
-                    <Button
-                      variant="secondary"
-                      fullWidth={false}
-                      label={t('workoutFlow.moreExercises', {
-                        count: Math.min(5, exercises.length - visibleCount),
-                      })}
-                      style={styles.moreAction}
-                      accessibilityRole="button"
-                      accessibilityLabel={t('workoutFlow.moreExercises', {
-                        count: Math.min(5, exercises.length - visibleCount),
-                      })}
-                      onPress={() =>
-                        setVisibleCount((count) => Math.min(count + 5, exercises.length))
-                      }
-                      testID="exercise-show-more"
-                    />
-                  ) : null
-                }
-                contentContainerStyle={styles.listContent}
-                showsVerticalScrollIndicator={false}
-              />
-            )}
-          </>
-        )}
-        {configuring && (
-          <ScrollView
-            contentContainerStyle={styles.listContent}
-            keyboardShouldPersistTaps="handled"
-          >
+      <SafeAreaView style={[styles.screen, { backgroundColor: colors.bg0 }]}>
+        <ModalNavigation
+          onBack={selection ? back : undefined}
+          onClose={close}
+          title={selection ? undefined : t('workouts.exercises.title')}
+          disabled={busy}
+          closeTestID={testID + '-btn-close'}
+          backTestID={testID + '-btn-back'}
+        />
+        {selection ? (
+          <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={styles.content}>
             <ExerciseSetsForm
-              key={configuring.id}
-              name={configuring.name}
-              onCancel={() => setConfiguring(null)}
+              key={selection.exercise.id}
+              name={selection.exercise.name}
               submitLabel={submitLabel}
               onAdd={async (sets) => {
-                await onSelectExercise(configuring, sets);
-                setConfiguring(null);
-                onClose();
+                lock.current = true;
+                setBusy(true);
+                try {
+                  await onSelectExercise(selection.exercise, sets, selection.custom);
+                  onClose();
+                } finally {
+                  lock.current = false;
+                  setBusy(false);
+                }
               }}
             />
           </ScrollView>
-        )}
-
-        {/* Custom Exercise Modal */}
-        <Modal
-          testID="custom-exercise-modal"
-          visible={showCustomModal}
-          transparent
-          animationType="fade"
-          onRequestClose={closeCustom}
-        >
-          <View style={styles.dialogBackdrop}>
-            <View
-              style={[
-                styles.dialogBox,
-                { backgroundColor: colors.surface, borderColor: colors.border },
-              ]}
-            >
-              <Text style={[styles.dialogTitle, { color: colors.text }]}>
-                {t('workouts.exercises.createCustom')}
-              </Text>
-
-              {/* Name */}
-              <View style={styles.formGroup}>
-                <Text style={[styles.formLabel, { color: colors.textMuted }]}>
-                  {t('workouts.exercises.customName')}
-                </Text>
+        ) : (
+          <>
+            <View style={styles.row}>
+              <View
+                testID="workout-search-field"
+                style={[
+                  styles.search,
+                  { backgroundColor: colors.s1, borderColor: colors.hairline },
+                ]}
+              >
+                <Ionicons name="search" size={controls.icon} color={colors.textMid} />
                 <TextInput
-                  testID="input-custom-exercise-name"
-                  style={[
-                    [
-                      styles.formInput,
-                      {
-                        color: colors.text,
-                        backgroundColor: colors.background,
-                        borderColor: colors.border,
-                      },
-                    ],
-                    { fontFamily: inputTypography.body.fontFamily },
-                  ]}
-                  value={customName}
-                  onChangeText={setCustomName}
-                  placeholder="e.g. Bulgarian Split Squat"
-                  placeholderTextColor={colors.textMuted}
+                  testID={testID + '-input-search'}
+                  value={query}
+                  onChangeText={(value) => {
+                    setQuery(value);
+                    setFavourites(false);
+                  }}
+                  placeholder={t('workoutFlow.searchWorkouts')}
+                  placeholderTextColor={colors.textLo}
+                  accessibilityLabel={t('workoutFlow.searchWorkouts')}
+                  style={[styles.input, { color: colors.textHi }]}
                 />
               </View>
-
-              {/* Muscle Group */}
-              <View style={styles.formGroup}>
-                <Text style={[styles.formLabel, { color: colors.textMuted }]}>
-                  {t('workouts.exercises.muscleGroup')}
-                </Text>
-                <View style={styles.pillWrap}>
-                  {(
-                    [
-                      'chest',
-                      'back',
-                      'legs',
-                      'shoulders',
-                      'arms',
-                      'core',
-                      'cardio',
-                    ] as MuscleGroup[]
-                  ).map((m) => (
-                    <Button
-                      variant="secondary"
-                      fullWidth={false}
-                      label={m}
-                      key={m}
-                      style={[
-                        styles.dialogPill,
-                        {
-                          backgroundColor: customMuscle === m ? colors.accent : colors.surfaceAlt,
-                        },
-                      ]}
-                      onPress={() => setCustomMuscle(m)}
-                    />
-                  ))}
-                </View>
-              </View>
-
-              {/* Equipment */}
-              <View style={styles.formGroup}>
-                <Text style={[styles.formLabel, { color: colors.textMuted }]}>
-                  {t('workouts.exercises.equipment')}
-                </Text>
-                <View style={styles.pillWrap}>
-                  {(
-                    ['barbell', 'dumbbell', 'cable', 'machine', 'bodyweight', 'none'] as Equipment[]
-                  ).map((eq) => (
-                    <Button
-                      variant="secondary"
-                      fullWidth={false}
-                      label={eq}
-                      key={eq}
-                      style={[
-                        styles.dialogPill,
-                        {
-                          backgroundColor:
-                            customEquipment === eq ? colors.accent : colors.surfaceAlt,
-                        },
-                      ]}
-                      onPress={() => setCustomEquipment(eq)}
-                    />
-                  ))}
-                </View>
-              </View>
-
-              {/* Exercise Type */}
-              <View style={styles.formGroup}>
-                <Text style={[styles.formLabel, { color: colors.textMuted }]}>
-                  {t('workouts.exercises.exerciseType')}
-                </Text>
-                <View style={styles.pillWrap}>
-                  {(['strength', 'cardio', 'bodyweight'] as ExerciseType[]).map((tp) => (
-                    <Button
-                      variant="secondary"
-                      fullWidth={false}
-                      label={tp}
-                      key={tp}
-                      style={[
-                        styles.dialogPill,
-                        {
-                          backgroundColor: customType === tp ? colors.accent : colors.surfaceAlt,
-                        },
-                      ]}
-                      onPress={() => setCustomType(tp)}
-                    />
-                  ))}
-                </View>
-              </View>
-
-              {customError && <Text accessibilityRole="alert">{t('workoutFlow.error')}</Text>}
-              <View style={styles.dialogActions}>
-                <TouchableOpacity
-                  testID="btn-save-custom-exercise"
-                  style={[
-                    styles.dialogBtn,
-                    {
-                      backgroundColor:
-                        customName.trim().length > 0 ? colors.accent : colors.surfaceAlt,
-                    },
-                  ]}
-                  disabled={customName.trim().length === 0 || creatingCustom}
-                  onPress={handleCreateCustom}
-                >
-                  {creatingCustom ? (
-                    <ActivityIndicator size="small" color={colors.onAccent} />
-                  ) : (
-                    <Text
-                      style={{
-                        color: customName.trim().length > 0 ? colors.onAccent : colors.textMuted,
-                        fontWeight: '700',
-                      }}
-                    >
-                      {t('common.save')}
-                    </Text>
-                  )}
-                </TouchableOpacity>
-                <Button
-                  variant="cancel"
-                  label={t('common.cancel')}
-                  testID="btn-cancel-custom-exercise"
-                  disabled={creatingCustom}
-                  onPress={() => setShowCustomModal(false)}
-                />
-              </View>
+              <Button
+                variant="secondary"
+                fullWidth={false}
+                iconOnly
+                icon={
+                  <Ionicons
+                    name={favourites ? 'heart' : 'heart-outline'}
+                    size={controls.icon}
+                    color={colors.textHi}
+                  />
+                }
+                label={t('workoutFlow.myWorkouts')}
+                style={styles.heart}
+                accessibilityState={{ selected: favourites }}
+                onPress={() => setFavourites((value) => !value)}
+                testID="workout-my-exercises"
+              />
             </View>
-          </View>
-        </Modal>
-      </View>
+            {favourites && <Text variant="heading">{t('workoutFlow.myWorkouts')}</Text>}
+            {showResults &&
+              (loadError ? (
+                <View style={styles.content}>
+                  <Text accessibilityRole="alert">{t('common.errorBody')}</Text>
+                  <Button
+                    label={t('common.retry')}
+                    variant="secondary"
+                    fullWidth={false}
+                    onPress={() => {
+                      setLoadError(false);
+                      setAttempt((value) => value + 1);
+                    }}
+                    testID={testID + '-btn-retry'}
+                  />
+                </View>
+              ) : !catalog ? (
+                <ActivityIndicator
+                  accessibilityLabel={t('common.loading')}
+                  color={colors.apricot}
+                />
+              ) : results.length ? (
+                <FlatList
+                  testID={testID + '-list'}
+                  data={results}
+                  keyExtractor={(item) => item.id}
+                  keyboardShouldPersistTaps="handled"
+                  contentContainerStyle={styles.results}
+                  renderItem={({ item }) => (
+                    <Button
+                      variant="secondary"
+                      label={item.name}
+                      testID={'exercise-item-' + item.id}
+                      onPress={() => setSelection({ exercise: item })}
+                    />
+                  )}
+                />
+              ) : (
+                <View style={styles.content}>
+                  <Text variant="bodyS" accessibilityLiveRegion="polite">
+                    {t(favourites ? 'workoutFlow.myWorkoutsEmpty' : 'workoutFlow.noWorkoutFound')}
+                  </Text>
+                  {!favourites && (
+                    <Button
+                      variant="secondary"
+                      fullWidth={false}
+                      label={t('workoutFlow.addCustomWorkout')}
+                      onPress={startNaming}
+                      testID={testID + '-btn-create-custom-empty'}
+                    />
+                  )}
+                </View>
+              ))}
+          </>
+        )}
+        {naming && (
+          <Modal
+            visible
+            transparent
+            animationType={reduceMotion ? 'none' : 'fade'}
+            onRequestClose={back}
+            testID="custom-exercise-modal"
+          >
+            <SafeAreaView style={[styles.dialog, { backgroundColor: colors.modalScrim }]}>
+              <ScrollView
+                accessibilityViewIsModal
+                keyboardShouldPersistTaps="handled"
+                style={[styles.dialogCard, { backgroundColor: colors.s1 }]}
+                contentContainerStyle={styles.screenContent}
+              >
+                <ModalNavigation
+                  onClose={back}
+                  disabled={busy}
+                  closeTestID="custom-exercise-cancel"
+                />
+                <Text variant="heading">{t('workoutFlow.addCustomWorkout')}</Text>
+                <TextInput
+                  value={name}
+                  onChangeText={setName}
+                  maxLength={100}
+                  autoFocus
+                  placeholder={t('workoutFlow.workoutName')}
+                  placeholderTextColor={colors.textLo}
+                  accessibilityLabel={t('workoutFlow.workoutName')}
+                  style={[
+                    styles.input,
+                    styles.nameInput,
+                    { color: colors.textHi, borderColor: colors.hairline },
+                  ]}
+                  testID="input-custom-exercise-name"
+                />
+                {saveError && <Text accessibilityRole="alert">{t('workoutFlow.error')}</Text>}
+                <Button
+                  label={t('common.save')}
+                  disabled={busy || !name.trim()}
+                  onPress={() => void nameWorkout()}
+                  testID="btn-save-custom-exercise"
+                />
+              </ScrollView>
+            </SafeAreaView>
+          </Modal>
+        )}
+      </SafeAreaView>
     </Modal>
   );
 }
 
 const styles = StyleSheet.create({
-  moreAction: {
-    minHeight: homeLayout.touchSize,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
-  },
-  modalScreen: {
+  screen: { flex: 1, gap: space[3], paddingHorizontal: space[4] },
+  screenContent: { gap: space[3], padding: space[4] },
+  content: { gap: space[3], paddingBottom: space[4] },
+  results: { gap: space[2], paddingBottom: space[4] },
+  row: { flexDirection: 'row', alignItems: 'center', gap: space[2] },
+  heart: { alignSelf: 'center' },
+  search: {
     flex: 1,
-  },
-  modalHeader: {
+    minWidth: 0,
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: spacing.md,
-    paddingTop: 54,
-    paddingBottom: spacing.sm,
-    borderBottomWidth: 1,
-  },
-  closeBtn: {
-    minWidth: homeLayout.touchSize,
+    gap: space[2],
+    paddingHorizontal: space[3],
     minHeight: homeLayout.touchSize,
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: 6,
+    borderRadius: radius.control,
+    borderWidth: controls.border,
   },
-  modalTitle: {
-    fontFamily: typography.body.fontFamily,
-    fontSize: fontSize.md,
-    fontWeight: '700',
-  },
-  customAddBtn: {
-    minWidth: homeLayout.touchSize,
-    minHeight: homeLayout.touchSize,
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: 6,
-  },
-  searchContainer: {
-    paddingHorizontal: spacing.md,
-    paddingTop: spacing.sm,
-    paddingBottom: 6,
-  },
-  searchBar: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.xs,
-    paddingHorizontal: spacing.sm,
-    minHeight: homeLayout.touchSize,
-    borderRadius: radius.md,
-    borderWidth: 1,
-  },
-  searchInput: {
+  input: {
     flex: 1,
+    minWidth: 0,
     minHeight: homeLayout.touchSize,
     fontFamily: typography.body.fontFamily,
-    fontSize: fontSize.sm,
+    fontSize: typography.body.fontSize,
   },
-  chipsRow: {
-    paddingVertical: spacing.xs,
+  nameInput: {
+    borderWidth: controls.border,
+    paddingHorizontal: space[3],
+    borderRadius: radius.control,
   },
-  chip: {
-    minHeight: homeLayout.touchSize,
-    justifyContent: 'center',
-    paddingHorizontal: spacing.sm,
-    paddingVertical: 6,
-    borderRadius: radius.pill,
-    borderWidth: 1,
-  },
-  chipText: {
-    fontFamily: typography.body.fontFamily,
-    fontSize: fontSize.xs,
-    fontWeight: '600',
-  },
-  listContent: {
-    padding: spacing.md,
-    gap: spacing.xs,
-  },
-  exerciseItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    padding: spacing.md,
-    borderRadius: radius.md,
-    borderWidth: 1,
-  },
-  exerciseContent: {
-    flex: 1,
-    gap: 4,
-  },
-  exerciseName: {
-    fontFamily: typography.body.fontFamily,
-    fontSize: fontSize.sm,
-    fontWeight: '700',
-  },
-  tagRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-  },
-  badge: {
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: radius.sm,
-    borderWidth: 0.5,
-  },
-  badgeText: {
-    fontFamily: typography.body.fontFamily,
-    fontSize: 10,
-    fontWeight: '600',
-    textTransform: 'capitalize',
-  },
-  centerState: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: spacing.xl,
-    gap: spacing.sm,
-  },
-  stateText: {
-    fontFamily: typography.body.fontFamily,
-    fontSize: fontSize.sm,
-    fontWeight: '500',
-  },
-  emptyTitle: {
-    fontFamily: typography.body.fontFamily,
-    fontSize: fontSize.md,
-    fontWeight: '600',
-    textAlign: 'center',
-    marginTop: 4,
-  },
-  retryBtn: {
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.xs,
-    borderRadius: radius.sm,
-  },
-  createCustomPromptBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    paddingHorizontal: spacing.md,
-    paddingVertical: 10,
-    borderRadius: radius.md,
-    marginTop: spacing.sm,
-  },
-  createCustomPromptText: {
-    fontFamily: typography.body.fontFamily,
-    fontSize: fontSize.sm,
-    fontWeight: '700',
-  },
-  dialogBackdrop: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.5)',
-    justifyContent: 'center',
-    padding: spacing.md,
-  },
-  dialogBox: {
-    borderRadius: radius.md,
-    borderWidth: 1,
-    padding: spacing.md,
-    gap: spacing.md,
-  },
-  dialogTitle: {
-    fontFamily: typography.body.fontFamily,
-    fontSize: fontSize.md,
-    fontWeight: '700',
-  },
-  formGroup: {
-    gap: 6,
-  },
-  formLabel: {
-    fontFamily: typography.body.fontFamily,
-    fontSize: fontSize.xs,
-    fontWeight: '600',
-  },
-  formInput: {
-    minHeight: homeLayout.touchSize,
-    borderRadius: radius.sm,
-    borderWidth: 1,
-    paddingHorizontal: spacing.sm,
-    fontFamily: typography.body.fontFamily,
-    fontSize: fontSize.sm,
-  },
-  pillWrap: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 6,
-  },
-  dialogPill: {
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: radius.sm,
-  },
-  dialogActions: {
-    gap: spacing.sm,
-    marginTop: spacing.xs,
-  },
-  dialogBtn: {
-    paddingHorizontal: spacing.md,
-    paddingVertical: 8,
-    borderRadius: radius.sm,
+  dialog: { flex: 1, justifyContent: 'center', padding: space[4] },
+  dialogCard: {
+    flexGrow: 0,
+    width: '100%',
+    maxWidth: controls.dialogMaxWidth,
+    maxHeight: '90%',
+    alignSelf: 'center',
+    borderRadius: radius.sheet,
   },
 });

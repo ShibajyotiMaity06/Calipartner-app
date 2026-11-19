@@ -261,6 +261,17 @@ export function LeaderboardView({ testID = 'leaderboard-view' }: LeaderboardView
       >
         <Pressable style={styles.inspectBackdrop} onPress={() => setInspectUser(null)}>
           <View style={styles.inspectCard}>
+            <Button
+              variant="tertiary"
+              fullWidth={false}
+              label="Close"
+              iconOnly
+              icon={<NavigationIcon action="close" />}
+              style={{ alignSelf: 'flex-end' }}
+              onPress={() => setInspectUser(null)}
+              accessibilityRole="button"
+              accessibilityLabel="Close"
+            />
             <Avatar
               name={inspectUser?.nickname ?? ''}
               uri={inspectUser?.avatarUrl}
@@ -269,17 +280,6 @@ export function LeaderboardView({ testID = 'leaderboard-view' }: LeaderboardView
             />
             <Text style={styles.inspectNickname}>{inspectUser?.nickname}</Text>
             <Text style={styles.inspectSub}>Cohort Member</Text>
-            <Button
-              variant="tertiary"
-              fullWidth={false}
-              label="Close"
-              iconOnly
-              icon={<NavigationIcon action="close" />}
-              style={styles.inspectCloseBtn}
-              onPress={() => setInspectUser(null)}
-              accessibilityRole="button"
-              accessibilityLabel="Close"
-            />
           </View>
         </Pressable>
       </Modal>
@@ -608,15 +608,6 @@ const createStyles = (dark: ReturnType<typeof useAppearance>['colors']) =>
     inspectSub: {
       ...type.label,
       color: dark.textLo,
-    },
-    inspectCloseBtn: {
-      marginTop: space[3],
-      height: 44,
-      paddingHorizontal: space[5],
-      borderRadius: radius.control,
-      backgroundColor: dark.s2,
-      alignItems: 'center',
-      justifyContent: 'center',
     },
     inspectCloseText: {
       ...type.label,

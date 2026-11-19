@@ -14,6 +14,7 @@ import {
   type Exercise,
   type WorkoutWithDetails,
   type PlanPreferences,
+  type WorkoutPlanView,
   type WorkoutRoutineExercise,
 } from '@calipartner/core';
 import { useAuth } from '@/contexts/AuthContext';
@@ -23,7 +24,9 @@ import { useWorkouts } from '@/hooks/useWorkouts';
 import { useBrowserModalBack } from '@/hooks/useBrowserModalBack';
 import { newWorkoutSessionRequest, saveNewWorkoutSession } from '@/services/workoutSessionService';
 import { DatePickerSheet } from '@/components/diary/DatePickerSheet';
-import { WeeklyPlanForm } from '@/components/onboarding/WeeklyPlanForm';
+import { PlanField, WeeklyPlanForm } from '@/components/onboarding/WeeklyPlanForm';
+import { ModalNavigation } from '@/components/ModalNavigation';
+import { CustomWorkoutPlan } from './CustomWorkoutPlan';
 import { WeeklyPlanPreparing } from '@/components/onboarding/WeeklyPlanPreparing';
 import { ExercisePickerModal } from './ExercisePickerModal';
 import { ExerciseSetsForm, type ExerciseSetInput } from './ExerciseSetsForm';
@@ -41,7 +44,7 @@ export function WorkoutDayModal({
   const styles = createStyles(dark);
 
   const { user } = useAuth(),
-    { localDate: today } = useCurrentLocalDate(),
+    { localDate: today, timeZone } = useCurrentLocalDate(),
     router = useRouter();
   const [date, setDate] = useState(defaultDate && defaultDate <= today ? defaultDate : today);
   const [calendarOpen, setCalendarOpen] = useState(false);
@@ -56,6 +59,8 @@ export function WorkoutDayModal({
     [editing, setEditing] = useState<WorkoutRoutineExercise | null>(null),
     [logging, setLogging] = useState<WorkoutRoutineExercise | null>(null);
   const [buildDraft, setBuildDraft] = useState<PlanPreferences | null>(null);
+  const [customPlan, setCustomPlan] = useState<WorkoutPlanView | null>(null);
+  const [plannedName, setPlannedName] = useState('');
   const [building, setBuilding] = useState(false),
     [form, setForm] = useState(false),
     [busy, setBusy] = useState(false),
@@ -72,6 +77,7 @@ export function WorkoutDayModal({
     else if (editing) setEditing(null);
     else if (logging) setLogging(null);
     else if (form) setForm(false);
+    else if (customPlan) setCustomPlan(null);
     else onClose();
   };
   useBrowserModalBack(visible, close);
@@ -85,6 +91,9 @@ export function WorkoutDayModal({
       setAllLogged(false);
       setEditLog(null);
       setDeleteLog(null);
+      setPicker(false);
+      setForm(false);
+      setCustomPlan(null);
       session.current = newWorkoutSessionRequest();
     }
   }, [visible, defaultDate, today, user?.id]);
@@ -114,6 +123,7 @@ export function WorkoutDayModal({
   };
   const save = async (
     exercises: { exerciseName: string; exerciseId?: string; sets: ExerciseSetInput[] }[],
+    customExercise?: Exercise,
   ) => {
     if (lock.current || !present) return;
     lock.current = true;
@@ -131,6 +141,7 @@ export function WorkoutDayModal({
         distanceKm: 0,
         notes: null,
         effortRating: null,
+        customExercise,
         exercises: exercises.map((exercise) => ({
           ...exercise,
           sets: exercise.sets.map((set) => ({ ...set, isWarmup: false, completed: true })),
@@ -150,13 +161,17 @@ export function WorkoutDayModal({
       setBusy(false);
     }
   };
-  const custom = async (exercise: Exercise, sets: ExerciseSetInput[]) =>
-    save([{ exerciseId: exercise.id, exerciseName: exercise.name, sets }]);
+  const custom = async (exercise: Exercise, sets: ExerciseSetInput[], customExercise?: Exercise) =>
+    save([{ exerciseId: exercise.id, exerciseName: exercise.name, sets }], customExercise);
   const editExercise = async (
     exercise: WorkoutRoutineExercise | null,
     sets?: ExerciseSetInput[],
   ) => {
     if (!plan || !day || !exercise || busy) return;
+    if (sets && (!plannedName.trim() || plannedName.trim().length > 100)) {
+      setError(t('workoutFlow.invalidName'));
+      throw new Error('INVALID_WORKOUT_PLAN');
+    }
     setBusy(true);
     setError(null);
     try {
@@ -168,7 +183,9 @@ export function WorkoutDayModal({
                 ...item,
                 exercises: sets
                   ? item.exercises.map((value) =>
-                      value.id === exercise.id ? { ...value, targetSets: sets } : value,
+                      value.id === exercise.id
+                        ? { ...value, name: plannedName.trim(), targetSets: sets }
+                        : value,
                     )
                   : item.exercises.filter((value) => value.id !== exercise.id),
               },
@@ -288,44 +305,44 @@ export function WorkoutDayModal({
                 </>
               ) : plan?.full_access ? (
                 <>
-                  <Pressable
-                    style={[
-                      styles.actionCard,
-                      (!plan.can_rebuild || busy) && styles.actionCardDisabled,
-                    ]}
-                    disabled={!plan.can_rebuild || busy}
-                    onPress={() => {
-                      setBuildDraft(plan.preferences);
-                      setForm(true);
-                    }}
-                    accessibilityRole="button"
-                    accessibilityLabel={t('workoutFlow.build')}
-                    testID="workout-build-new-plan"
-                  >
-                    <View style={styles.actionIconBox}>
-                      <Ionicons name="calendar-outline" size={24} color={dark.copper} />
-                    </View>
-                    <View style={styles.actionContent}>
-                      <Text variant="heading" color={dark.textHi}>
-                        {t('workoutFlow.build')}
-                      </Text>
-                      <Text variant="bodyS" color={dark.textMid}>
-                        {t('workoutFlow.buildDesc')}
-                      </Text>
-                    </View>
-                    <View style={styles.actionArrowCircle}>
-                      <Ionicons name="chevron-forward" size={16} color={dark.textMid} />
-                    </View>
-                  </Pressable>
-                  <Text variant="bodyS">
-                    {plan.tier === 'plus'
-                      ? t(plan.rebuilds_used ? 'workoutFlow.plusUsed' : 'workoutFlow.plusAllowance')
-                      : plan.next_rebuild_at && !plan.can_rebuild
-                        ? t('workoutFlow.proNext', {
-                            date: new Date(plan.next_rebuild_at).toLocaleDateString(getLocale()),
-                          })
-                        : t('workoutFlow.proAllowance')}
-                  </Text>
+                  <View style={styles.planActions}>
+                    <Button
+                      variant="secondary"
+                      fullWidth={false}
+                      label={t('workoutFlow.customPlan')}
+                      onPress={() => setCustomPlan(plan)}
+                      disabled={busy}
+                      testID="workout-custom-plan"
+                      style={styles.planAction}
+                    />
+                    <Button
+                      variant="secondary"
+                      fullWidth={false}
+                      label={t('workoutFlow.aiPlan')}
+                      disabled={!plan.can_rebuild || busy}
+                      onPress={() => {
+                        if (!plan.can_rebuild) return;
+                        setError(null);
+                        setBuildDraft(plan.preferences);
+                        setForm(true);
+                      }}
+                      testID="workout-build-new-plan"
+                      style={styles.planAction}
+                    />
+                  </View>
+                  {!plan.can_rebuild && (
+                    <Text variant="bodyS" testID="workout-ai-unavailable">
+                      {plan.tier === 'plus'
+                        ? t('workoutFlow.plusUsed')
+                        : plan.next_rebuild_at
+                          ? t('workoutFlow.proNext', {
+                              date: new Date(plan.next_rebuild_at).toLocaleDateString(getLocale(), {
+                                timeZone,
+                              }),
+                            })
+                          : t('workoutFlow.planError')}
+                    </Text>
+                  )}
                   {!day ? null : !day.exercises.length ? (
                     <Text testID="workout-rest-day">{t('workoutFlow.rest')}</Text>
                   ) : (
@@ -369,7 +386,10 @@ export function WorkoutDayModal({
                             accessibilityRole="button"
                             accessibilityLabel={t('workoutFlow.edit', { name: exercise.name })}
                             disabled={busy}
-                            onPress={() => setEditing(exercise)}
+                            onPress={() => {
+                              setPlannedName(exercise.name);
+                              setEditing(exercise);
+                            }}
                             testID={`workout-plan-edit-${exercise.id}`}
                           />
                           <Button
@@ -449,10 +469,13 @@ export function WorkoutDayModal({
               </View>
               <Pressable
                 style={[styles.actionCard, busy && styles.actionCardDisabled]}
-                onPress={() => setPicker(true)}
+                onPress={() => {
+                  session.current = newWorkoutSessionRequest();
+                  setPicker(true);
+                }}
                 disabled={busy}
                 accessibilityRole="button"
-                accessibilityLabel={t(plan?.full_access ? 'workoutFlow.custom' : 'workoutFlow.add')}
+                accessibilityLabel={t('workoutFlow.title')}
                 testID={`${testID}-btn-add-exercise`}
               >
                 <View style={styles.actionIconBox}>
@@ -460,7 +483,7 @@ export function WorkoutDayModal({
                 </View>
                 <View style={styles.actionContent}>
                   <Text variant="heading" color={dark.textHi}>
-                    {t(plan?.full_access ? 'workoutFlow.custom' : 'workoutFlow.add')}
+                    {t('workoutFlow.title')}
                   </Text>
                   <Text variant="bodyS" color={dark.textMid}>
                     {t('workoutFlow.customDesc')}
@@ -526,7 +549,8 @@ export function WorkoutDayModal({
           visible={picker}
           onClose={() => setPicker(false)}
           onSelectExercise={custom}
-          submitLabel={t('workoutFlow.saveExercise')}
+          deferCustomSave
+          submitLabel={t('workoutFlow.saveWorkout')}
         />
         {targetForm && (
           <Modal
@@ -541,17 +565,30 @@ export function WorkoutDayModal({
             testID="workout-target-editor"
           >
             <SafeAreaView style={styles.screen}>
-              <ScrollView contentContainerStyle={styles.content}>
+              <ScrollView
+                contentContainerStyle={styles.content}
+                keyboardShouldPersistTaps="handled"
+              >
+                <ModalNavigation
+                  onClose={close}
+                  disabled={busy}
+                  closeTestID="workout-target-close"
+                />
+                {editing && (
+                  <PlanField
+                    label={t('workoutFlow.workoutName')}
+                    value={plannedName}
+                    maxLength={100}
+                    onChange={setPlannedName}
+                    id="workout-target-name"
+                  />
+                )}
                 <ExerciseSetsForm
                   key={targetForm.id}
-                  name={targetForm.name}
+                  name={editing ? t('workoutFlow.targets') : targetForm.name}
                   planOnly={!!editing}
                   initialSets={targetForm.targetSets}
                   submitLabel={t(editing ? 'workoutFlow.savePlan' : 'workoutFlow.saveExercise')}
-                  onCancel={() => {
-                    setEditing(null);
-                    setLogging(null);
-                  }}
                   onAdd={(sets) =>
                     editing
                       ? editExercise(editing, sets)
@@ -562,7 +599,20 @@ export function WorkoutDayModal({
             </SafeAreaView>
           </Modal>
         )}
-        {form && (
+        {customPlan && (
+          <CustomWorkoutPlan
+            initial={customPlan.days}
+            weekday={weeklyPlanDayIndex(date)}
+            onClose={() => setCustomPlan(null)}
+            onSaved={async (content) => {
+              await routine.saveCustom(content, customPlan);
+              setCustomPlan(null);
+              setAllLogged(false);
+              setNotice(t('workoutFlow.planSaved'));
+            }}
+          />
+        )}
+        {form && (building || plan?.can_rebuild) && (
           <Modal
             visible
             onRequestClose={() => {
@@ -572,7 +622,15 @@ export function WorkoutDayModal({
             testID="workout-build-form"
           >
             <SafeAreaView style={styles.screen}>
-              <ScrollView contentContainerStyle={styles.content}>
+              <ScrollView
+                contentContainerStyle={styles.content}
+                keyboardShouldPersistTaps="handled"
+              >
+                <ModalNavigation
+                  onClose={close}
+                  disabled={building}
+                  closeTestID="workout-ai-close"
+                />
                 {building ? (
                   <WeeklyPlanPreparing
                     workoutOnly
@@ -617,6 +675,8 @@ export function WorkoutDayModal({
 }
 const createStyles = (dark: ReturnType<typeof useAppearance>['colors']) =>
   StyleSheet.create({
+    planActions: { flexDirection: 'row', gap: space[2] },
+    planAction: { flex: 1, alignSelf: 'stretch' },
     screen: { flex: 1, backgroundColor: dark.bg0 },
     header: {
       padding: space[3],
