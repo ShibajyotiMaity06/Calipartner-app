@@ -3,6 +3,7 @@ import {
   ActivityIndicator,
   FlatList,
   Modal,
+  Pressable,
   ScrollView,
   StyleSheet,
   TextInput,
@@ -28,7 +29,12 @@ import { useBrowserModalBack } from '@/hooks/useBrowserModalBack';
 import { t } from '@/i18n';
 import { loadAccountTable } from '@/services/accountDataService';
 import { generateClientUuid } from '@/services/foodService';
-import { createCustomExercise, getExercises } from '@/services/workoutService';
+import {
+  capitalizeFirstLetter,
+  createCustomExercise,
+  deduplicateExercises,
+  getExercises,
+} from '@/services/workoutService';
 import { ExerciseSetsForm, type ExerciseSetInput } from './ExerciseSetsForm';
 
 interface ExercisePickerModalProps {
@@ -111,8 +117,10 @@ function ExercisePicker({
   });
 
   const results = showResults
-    ? (catalog ?? []).filter((item) =>
-        favourites ? item.owner_id === userId : searchKey(item.name).includes(key),
+    ? deduplicateExercises(
+        (catalog ?? []).filter((item) =>
+          favourites ? item.owner_id === userId : searchKey(item.name).includes(key),
+        ),
       )
     : [];
   const startNaming = () => {
@@ -128,7 +136,7 @@ function ExercisePicker({
     setSaveError(false);
     const exercise: Exercise = {
       id: (customId.current ??= generateClientUuid()),
-      name: name.trim(),
+      name: capitalizeFirstLetter(name),
       muscle_group: 'other',
       equipment: 'none',
       type: 'strength',
@@ -266,12 +274,31 @@ function ExercisePicker({
                   keyboardShouldPersistTaps="handled"
                   contentContainerStyle={styles.results}
                   renderItem={({ item }) => (
-                    <Button
-                      variant="secondary"
-                      label={item.name}
+                    <Pressable
                       testID={'exercise-item-' + item.id}
+                      accessibilityRole="button"
+                      accessibilityLabel={item.name}
                       onPress={() => setSelection({ exercise: item })}
-                    />
+                      style={({ pressed }) => [
+                        styles.exerciseRow,
+                        {
+                          backgroundColor: pressed ? colors.s2 : 'transparent',
+                          borderBottomColor: colors.hairline,
+                        },
+                      ]}
+                    >
+                      <View style={styles.exerciseContent}>
+                        <Text variant="body" color={colors.textHi} style={styles.exerciseName}>
+                          {item.name}
+                        </Text>
+                        {item.muscle_group && item.muscle_group !== 'other' && (
+                          <Text variant="micro" color={colors.textMid}>
+                            {capitalizeFirstLetter(item.muscle_group)}
+                          </Text>
+                        )}
+                      </View>
+                      <Ionicons name="chevron-forward" size={16} color={colors.textLo} />
+                    </Pressable>
                   )}
                 />
               ) : (
@@ -348,7 +375,24 @@ const styles = StyleSheet.create({
   screen: { flex: 1, gap: space[3], paddingHorizontal: space[4] },
   screenContent: { gap: space[3], padding: space[4] },
   content: { gap: space[3], paddingBottom: space[4] },
-  results: { gap: space[2], paddingBottom: space[4] },
+  results: { paddingBottom: space[4] },
+  exerciseRow: {
+    minHeight: homeLayout.touchSize,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: space[2],
+    paddingHorizontal: space[2],
+    borderBottomWidth: StyleSheet.hairlineWidth,
+  },
+  exerciseContent: {
+    flex: 1,
+    minWidth: 0,
+    gap: 2,
+  },
+  exerciseName: {
+    flex: 1,
+  },
   row: { flexDirection: 'row', alignItems: 'center', gap: space[2] },
   heart: { alignSelf: 'center' },
   search: {

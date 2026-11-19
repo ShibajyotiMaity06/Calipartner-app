@@ -371,7 +371,7 @@ export function PeopleSelector({
       ).map(([side, member, other], index) => (
         <React.Fragment key={side}>
           {index === 1 && (
-            <View style={memberDropdownStyles.option}>
+            <View style={memberDropdownStyles.separator}>
               <Text variant="bodyS">{t('squadDesign.vs')}</Text>
             </View>
           )}
@@ -442,8 +442,14 @@ export function PeopleSelector({
 }
 
 const memberDropdownStyles = StyleSheet.create({
-  row: { flexDirection: 'row', alignItems: 'flex-start', gap: space[2] },
-  column: { flex: 1, minWidth: 0 },
+  row: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: space[2],
+    position: 'relative',
+    zIndex: 100,
+  },
+  column: { flex: 1, minWidth: 0, position: 'relative', zIndex: 100 },
   trigger: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -454,11 +460,21 @@ const memberDropdownStyles = StyleSheet.create({
     paddingHorizontal: space[2],
   },
   label: { flex: 1 },
+  separator: {
+    minHeight: homeLayout.touchSize,
+    justifyContent: 'center',
+    paddingHorizontal: space[1],
+  },
   menu: {
+    position: 'absolute',
+    top: '100%',
+    left: 0,
+    right: 0,
     marginTop: space[1],
     borderRadius: radius.control,
     borderWidth: StyleSheet.hairlineWidth,
     overflow: 'hidden',
+    zIndex: 1000,
   },
   options: { maxHeight: homeLayout.touchSize * 5 },
   option: {

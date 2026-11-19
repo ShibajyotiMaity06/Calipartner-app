@@ -57,10 +57,10 @@ const suffix = `
   assert.ok(dock.y-(history.y+history.height)<50,'No excessive empty space below workout history');
   await page.screenshot({path:path.join(out,'you-bottom.png'),fullPage:true});
   await page.goto('http://127.0.0.1:8098/room');
-  await page.getByTestId('squad-together-progress').waitFor();
+  await page.getByTestId('squad-leaderboard').waitFor();
   assert.equal(await page.getByTestId('header-cc-balance').filter({ visible: true }).count(),0);
   assert.equal(await page.getByTestId('header-coach-icon').filter({ visible: true }).count(),0);
-  const cardColor = await page.getByTestId('squad-together-progress').evaluate(el=>getComputedStyle(el).backgroundColor);
+  const cardColor = await page.getByTestId('squad-leaderboard').evaluate(el=>getComputedStyle(el).backgroundColor);
   assert.notEqual(cardColor,'rgb(24, 20, 16)');
   await page.screenshot({path:path.join(out,'squad-light.png'),fullPage:true});
   await page.goto('http://127.0.0.1:8098/friends');

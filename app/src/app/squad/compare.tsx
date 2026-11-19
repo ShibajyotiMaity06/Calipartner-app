@@ -112,18 +112,20 @@ export default function SquadCompareScreen() {
           <Text>{t('common.unavailable')}</Text>
         ) : (
           <>
-            <PeopleSelector
-              left={left}
-              right={right}
-              members={members}
-              open={picker}
-              onChoose={(side) => setPicker((current) => (current === side ? null : side))}
-              onSelect={(side, id) => {
-                setLeftId(side === 'left' ? id : left.user_id);
-                setRightId(side === 'right' ? id : right.user_id);
-                setPicker(null);
-              }}
-            />
+            <View style={{ position: 'relative', zIndex: 100 }}>
+              <PeopleSelector
+                left={left}
+                right={right}
+                members={members}
+                open={picker}
+                onChoose={(side) => setPicker((current) => (current === side ? null : side))}
+                onSelect={(side, id) => {
+                  setLeftId(side === 'left' ? id : left.user_id);
+                  setRightId(side === 'right' ? id : right.user_id);
+                  setPicker(null);
+                }}
+              />
+            </View>
             <Text variant="bodyS">{t('squadDesign.ownGoals')}</Text>
             <View style={[styles.card, styles.columns]}>
               {[left, right].map((member, index) => (

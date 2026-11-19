@@ -12,7 +12,6 @@ import { useFriends } from '@/hooks/useFriends';
 import { useSubscription } from '@/hooks/useSubscription';
 import { useRoomChat } from '@/hooks/useRoomChat';
 import { useSquadToday } from '@/hooks/useSquad';
-import { SquadTogetherProgress } from '@/components/rooms/SquadTogetherProgress';
 import { closeBrowserModalsThen, useBrowserModalBack } from '@/hooks/useBrowserModalBack';
 import { ChatView } from '@/components/chat';
 import {
@@ -320,9 +319,8 @@ export default function RoomScreen() {
                       onMember={(member) => openPerson(member.user_id)}
                     />
                   </View>
-                  {segment === 'today' && <SquadTogetherProgress members={members} />}
                   {segment === 'today' && left && right && (
-                    <View style={styles.card}>
+                    <View style={[styles.card, { position: 'relative', zIndex: 100 }]}>
                       <Text variant="heading">{t('squadDesign.compareTwo')}</Text>
                       <Text variant="bodyS">{t('squadDesign.compareHint')}</Text>
                       <PeopleSelector

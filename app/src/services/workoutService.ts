@@ -1060,6 +1060,47 @@ export async function getRunningWorkoutTimer(
 // 7. EXERCISE LIBRARY SEARCH & CUSTOM EXERCISES
 // -----------------------------------------------------------------------------
 
+export function capitalizeFirstLetter(name: string): string {
+  const trimmed = name.trim();
+  if (!trimmed) return '';
+  return trimmed.charAt(0).toUpperCase() + trimmed.slice(1);
+}
+
+export function normalizeExerciseKey(name: string): string {
+  let key = name
+    .trim()
+    .toLowerCase()
+    .replace(/[^\p{L}\p{N}]/gu, '');
+  if (key.length > 5 && key.endsWith('es')) {
+    key = key.slice(0, -2);
+  } else if (key.length > 4 && key.endsWith('s')) {
+    key = key.slice(0, -1);
+  }
+  return key;
+}
+
+export function deduplicateExercises(exercises: Exercise[]): Exercise[] {
+  const seen = new Map<string, Exercise>();
+  for (const ex of exercises) {
+    const key = normalizeExerciseKey(ex.name);
+    const existing = seen.get(key);
+    const formatted = capitalizeFirstLetter(ex.name);
+    if (!existing) {
+      seen.set(key, { ...ex, name: formatted });
+    } else {
+      if (existing.owner_id !== null && ex.owner_id === null) {
+        seen.set(key, { ...ex, name: formatted });
+      } else if (
+        existing.name.charAt(0) === existing.name.charAt(0).toLowerCase() &&
+        formatted.charAt(0) !== formatted.charAt(0).toLowerCase()
+      ) {
+        seen.set(key, { ...ex, name: formatted });
+      }
+    }
+  }
+  return Array.from(seen.values()).sort((a, b) => a.name.localeCompare(b.name));
+}
+
 export async function getExercises(
   db: LocalDb,
   options?: {
@@ -1090,7 +1131,8 @@ export async function getExercises(
 
   sql += ` ORDER BY name ASC`;
 
-  return db.getAllAsync<Exercise>(sql, params);
+  const rows = await db.getAllAsync<Exercise>(sql, params);
+  return deduplicateExercises(rows);
 }
 
 export async function createCustomExercise(
@@ -1111,7 +1153,7 @@ export async function createCustomExercise(
 
     const ex: Exercise = {
       id,
-      name: input.name.trim(),
+      name: capitalizeFirstLetter(input.name),
       muscle_group: input.muscleGroup,
       equipment: input.equipment,
       type: input.type,

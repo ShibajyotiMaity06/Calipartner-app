@@ -7,6 +7,7 @@ vi.mock('react-native', () => ({
   FlatList: 'FlatList',
   ScrollView: 'ScrollView',
   Modal: 'Modal',
+  Pressable: 'Pressable',
   View: 'View',
   TextInput: 'TextInput',
   TouchableOpacity: 'TouchableOpacity',
@@ -28,10 +29,14 @@ vi.mock('@/services/accountDataService', () => ({
 }));
 vi.mock('@/db', () => ({ getDb: async () => ({}) }));
 vi.mock('@/hooks/useBrowserModalBack', () => ({ useBrowserModalBack: vi.fn() }));
-vi.mock('@/services/workoutService', () => ({
-  getExercises: api.list,
-  createCustomExercise: vi.fn(),
-}));
+vi.mock('@/services/workoutService', async (importOriginal) => {
+  const actual = (await importOriginal()) as Record<string, unknown>;
+  return {
+    ...actual,
+    getExercises: api.list,
+    createCustomExercise: vi.fn(),
+  };
+});
 vi.mock('./ExerciseSetsForm', () => ({ ExerciseSetsForm: 'ExerciseSetsForm' }));
 import { ExercisePickerModal } from './ExercisePickerModal';
 let tree: ReactTestRenderer;
@@ -112,4 +117,20 @@ it('moves from an empty result through name and sets, then submits a private wor
     owner_id: 'owner',
   });
   expect(close).toHaveBeenCalledOnce();
+});
+
+it('deduplicates case variants like skullcrusher and renders borderless list items', async () => {
+  const duplicateCatalog = [
+    { id: 'lib-crusher', name: 'Skull Crushers', owner_id: null },
+    { id: 'user-crusher', name: 'skullcrusher', owner_id: 'owner' },
+  ];
+  api.list.mockResolvedValue(duplicateCatalog);
+  await act(async () => {
+    tree = create(<ExercisePickerModal visible onClose={vi.fn()} onSelectExercise={vi.fn()} />);
+  });
+  await act(async () => search('skullcrusher'));
+  expect(list().props.data).toHaveLength(1);
+  expect(list().props.data[0].name).toBe('Skull Crushers');
+  const renderedRow = list().props.renderItem({ item: list().props.data[0] });
+  expect(renderedRow.type).toBe('Pressable');
 });
