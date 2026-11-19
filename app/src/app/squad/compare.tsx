@@ -49,10 +49,10 @@ export default function SquadCompareScreen() {
     members.find((member) => member.user_id === rightId && member.user_id !== left?.user_id) ??
     members.find((member) => member.user_id !== left?.user_id);
   const first = useSquadDetails(
-    params.room ?? null,
-    left?.user_id ?? null,
-    visible && hasActiveAccess,
-  ),
+      params.room ?? null,
+      left?.user_id ?? null,
+      visible && hasActiveAccess,
+    ),
     second = useSquadDetails(
       params.room ?? null,
       right?.user_id ?? null,
@@ -137,9 +137,9 @@ export default function SquadCompareScreen() {
                     member.score == null
                       ? memberName(member) + ', ' + t('squadDesign.noGoals')
                       : t('squadDesign.scoreSummary', {
-                        name: memberName(member),
-                        score: member.score,
-                      })
+                          name: memberName(member),
+                          score: member.score,
+                        })
                   }
                 >
                   <PublicAvatar userId={member.user_id} name={memberName(member)} />

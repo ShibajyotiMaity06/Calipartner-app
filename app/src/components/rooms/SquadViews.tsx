@@ -496,11 +496,20 @@ export function PlusDetailsCard({ onUpgrade }: { onUpgrade: () => void }) {
         <Ionicons name="lock-closed-outline" size={homeLayout.iconSize} color={dark.copper} />
         <View style={squadStyles.flex}>
           <Text variant="heading">{t('squadDesign.details')}</Text>
-          <Text variant="micro" color={dark.textMid}>{t('squadDesign.detailsHint')}</Text>
+          <Text variant="micro" color={dark.textMid}>
+            {t('squadDesign.detailsHint')}
+          </Text>
         </View>
-        <Text variant="label" color={dark.copper}>{t('squadDesign.plus')}</Text>
+        <Text variant="label" color={dark.copper}>
+          {t('squadDesign.plus')}
+        </Text>
       </View>
-      <Button size="sm" label={t('squadDesign.unlock')} onPress={onUpgrade} testID="unlock-squad-details" />
+      <Button
+        size="sm"
+        label={t('squadDesign.unlock')}
+        onPress={onUpgrade}
+        testID="unlock-squad-details"
+      />
     </View>
   );
 }

@@ -59,7 +59,9 @@ export function SquadPersonPanel({
             <Text variant="bodyS" color={dark.textMid}>
               {goalName(person)}
             </Text>
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: space[2], marginTop: 2 }}>
+            <View
+              style={{ flexDirection: 'row', alignItems: 'center', gap: space[2], marginTop: 2 }}
+            >
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
                 {person.height_cm == null && (
                   <Ionicons name="lock-closed-outline" size={12} color={dark.textMid} />
