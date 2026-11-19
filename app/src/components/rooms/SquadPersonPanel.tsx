@@ -3,7 +3,7 @@ import React from 'react';
 import { View } from 'react-native';
 import { useRouter, type Href } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { Avatar, Button, homeLayout, Text } from '@calipartner/ui';
+import { Avatar, Button, homeLayout, space, Text } from '@calipartner/ui';
 import type { RankedSquadMember } from '@calipartner/core';
 import { useSquadDetails } from '@/hooks/useSquad';
 import { useSubscription } from '@/hooks/useSubscription';
@@ -46,18 +46,50 @@ export function SquadPersonPanel({
           <Avatar
             name={memberName(person)}
             uri={person.avatar_url ?? undefined}
-            size="lg"
+            size="md"
             identityHue={person.is_self ? 'iris' : 'teal'}
           />
           <View style={styles.flex}>
-            <Text variant="title1">{memberName(person)}</Text>
-            <Text>{goalName(person)}</Text>
-            <Text variant="bodyS">{person.local_date}</Text>
+            <View style={styles.spread}>
+              <Text variant="heading">{memberName(person)}</Text>
+              <Text variant="micro" color={dark.textMid}>
+                {person.local_date}
+              </Text>
+            </View>
+            <Text variant="bodyS" color={dark.textMid}>
+              {goalName(person)}
+            </Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: space[2], marginTop: 2 }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                {person.height_cm == null && (
+                  <Ionicons name="lock-closed-outline" size={12} color={dark.textMid} />
+                )}
+                <Text variant="micro" color={dark.textMid}>
+                  {person.height_cm == null
+                    ? t('squadDesign.hiddenHeight')
+                    : t('squadDesign.height', { value: numberText(person.height_cm) })}
+                </Text>
+              </View>
+              <Text variant="micro" color={dark.textMid}>
+                ·
+              </Text>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                {person.weight_kg == null && (
+                  <Ionicons name="lock-closed-outline" size={12} color={dark.textMid} />
+                )}
+                <Text variant="micro" color={dark.textMid}>
+                  {person.weight_kg == null
+                    ? t('squadDesign.hiddenWeight')
+                    : t('squadDesign.weight', { value: numberText(person.weight_kg) })}
+                </Text>
+              </View>
+            </View>
           </View>
         </View>
         {other && (
           <Button
             variant={hasActiveAccess ? 'primary' : 'secondary'}
+            size="sm"
             label={t(person.is_self ? 'squadDesign.compare' : 'squadDesign.compareYou')}
             onPress={() =>
               router.push(
@@ -83,6 +115,7 @@ export function SquadPersonPanel({
           <Text accessibilityRole="alert">{t('common.errorBody')}</Text>
           <Button
             variant="secondary"
+            size="sm"
             label={t('common.retry')}
             onPress={() => void details.refresh()}
             testID="person-details-retry"
@@ -97,28 +130,6 @@ export function SquadPersonPanel({
           memberId={person.is_self ? undefined : person.user_id}
         />
       ) : null}
-      <View style={styles.card}>
-        <View style={styles.row}>
-          {person.height_cm == null && (
-            <Ionicons name="lock-closed-outline" size={homeLayout.iconSize} color={dark.textMid} />
-          )}
-          <Text>
-            {person.height_cm == null
-              ? t('squadDesign.hiddenHeight')
-              : t('squadDesign.height', { value: numberText(person.height_cm) })}
-          </Text>
-        </View>
-        <View style={styles.row}>
-          {person.weight_kg == null && (
-            <Ionicons name="lock-closed-outline" size={homeLayout.iconSize} color={dark.textMid} />
-          )}
-          <Text>
-            {person.weight_kg == null
-              ? t('squadDesign.hiddenWeight')
-              : t('squadDesign.weight', { value: numberText(person.weight_kg) })}
-          </Text>
-        </View>
-      </View>
     </>
   );
 }

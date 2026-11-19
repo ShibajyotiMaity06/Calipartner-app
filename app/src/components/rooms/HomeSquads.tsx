@@ -237,7 +237,7 @@ export function HomeSquads({
 }
 const createStyles = (dark: ReturnType<typeof useAppearance>['colors']) =>
   StyleSheet.create({
-    stack: { gap: space[2], marginBottom: space[5] },
+    stack: { gap: space[2], marginBottom: space[3] },
     header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
     nameGroup: {
       flex: 1,
@@ -259,17 +259,17 @@ const createStyles = (dark: ReturnType<typeof useAppearance>['colors']) =>
       gap: space[1],
       padding: space[3],
       backgroundColor: dark.s1,
-      borderWidth: 2,
-      borderColor: dark.copper,
-      borderRadius: radius.card,
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: dark.hairlineLit,
+      borderRadius: radius.button,
     },
     createCard: {
-      padding: space[5],
-      gap: space[3],
-      borderWidth: 2,
+      padding: space[4],
+      gap: space[2],
+      borderWidth: 1,
       borderStyle: 'dashed',
-      borderColor: dark.copper,
-      borderRadius: radius.card,
+      borderColor: dark.hairline,
+      borderRadius: radius.button,
       minHeight: homeLayout.ringSize * 2,
       alignSelf: 'flex-start',
       justifyContent: 'center',

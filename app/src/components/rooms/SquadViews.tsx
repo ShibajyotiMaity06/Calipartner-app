@@ -20,28 +20,29 @@ export const createSquadStyles = (dark: ReturnType<typeof useAppearance>['colors
       width: '100%',
       maxWidth: homeLayout.maxContentWidth,
       alignSelf: 'center',
-      padding: space[4],
-      paddingBottom: homeLayout.touchSize * 3,
-      gap: space[5],
+      paddingHorizontal: space[3],
+      paddingVertical: space[3],
+      paddingBottom: homeLayout.touchSize * 2,
+      gap: space[3],
     },
-    stack: { gap: space[3] },
-    metricGroup: { gap: space[1], paddingTop: space[2] },
-    row: { flexDirection: 'row', alignItems: 'center', gap: space[3], flexWrap: 'wrap' },
+    stack: { gap: space[2] },
+    metricGroup: { gap: space[1], paddingTop: space[1] },
+    row: { flexDirection: 'row', alignItems: 'center', gap: space[2], flexWrap: 'wrap' },
     spread: {
       flexDirection: 'row',
       justifyContent: 'space-between',
       alignItems: 'center',
-      gap: space[3],
+      gap: space[2],
       flexWrap: 'wrap',
     },
     flex: { flex: 1, minWidth: 0 },
     card: {
       backgroundColor: dark.s1,
-      borderRadius: radius.card,
+      borderRadius: radius.button,
       borderWidth: StyleSheet.hairlineWidth,
       borderColor: dark.hairline,
-      padding: space[4],
-      gap: space[3],
+      padding: space[3],
+      gap: space[2],
     },
     touch: { minHeight: homeLayout.touchSize, justifyContent: 'center' },
     mentionCard: { padding: space[2], gap: space[1] },
@@ -52,11 +53,11 @@ export const createSquadStyles = (dark: ReturnType<typeof useAppearance>['colors
       gap: space[2],
       flexWrap: 'wrap',
     },
-    columns: { flexDirection: 'row', alignItems: 'flex-start', gap: space[3] },
-    column: { flex: 1, minWidth: 0, gap: space[3] },
+    columns: { flexDirection: 'row', alignItems: 'flex-start', gap: space[2] },
+    column: { flex: 1, minWidth: 0, gap: space[2] },
     track: {
       width: '100%',
-      height: space[2],
+      height: 4,
       borderRadius: radius.full,
       backgroundColor: dark.s3,
       overflow: 'hidden',
@@ -71,7 +72,7 @@ export const createSquadStyles = (dark: ReturnType<typeof useAppearance>['colors
     divider: {
       borderTopWidth: StyleSheet.hairlineWidth,
       borderColor: dark.hairline,
-      paddingTop: space[3],
+      paddingTop: space[2],
     },
     leader: {
       flexDirection: 'row',
@@ -298,7 +299,7 @@ export function MetricValue({
         : t('squadDesign.amount', { value: numberText(value), target: numberText(target), unit });
   return (
     <View
-      style={{ gap: space[1] }}
+      style={{ gap: 2 }}
       accessible
       testID={`member-metric-${member.user_id}-${metric}`}
       accessibilityLabel={memberName(member) + ', ' + t(`squadDesign.${metric}`) + ': ' + amount}
@@ -314,7 +315,7 @@ export function MetricValue({
         </Text>
       </View>
       <ProgressTrack percent={percent} color={metric === 'water' ? dark.water : color} />
-      {percent !== null && percent > 100 && <Text variant="bodyS">{t('homeRefresh.over')}</Text>}
+      {percent !== null && percent > 100 && <Text variant="micro">{t('homeRefresh.over')}</Text>}
     </View>
   );
 }
@@ -326,21 +327,23 @@ export function MemberMetrics({ member }: { member: RankedSquadMember }) {
     <View style={squadStyles.card} testID="member-macros-steps">
       <View style={squadStyles.spread}>
         <Text variant="heading">{t('squadDesign.goal')}</Text>
-        <Text variant="numeralL" tabular>
+        <Text variant="numeralM" tabular>
           {member.score == null
             ? t('squadDesign.noGoals')
             : t('squadDesign.percent', { value: member.score })}
         </Text>
       </View>
       <ProgressTrack percent={member.score} />
-      {metricKeys.map((metric) => (
-        <MetricValue
-          key={metric}
-          member={member}
-          metric={metric}
-          label={t(`squadDesign.${metric}`)}
-        />
-      ))}
+      <View style={{ gap: space[2], marginTop: space[1] }}>
+        {metricKeys.map((metric) => (
+          <MetricValue
+            key={metric}
+            member={member}
+            metric={metric}
+            label={t(`squadDesign.${metric}`)}
+          />
+        ))}
+      </View>
     </View>
   );
 }
@@ -493,11 +496,11 @@ export function PlusDetailsCard({ onUpgrade }: { onUpgrade: () => void }) {
         <Ionicons name="lock-closed-outline" size={homeLayout.iconSize} color={dark.copper} />
         <View style={squadStyles.flex}>
           <Text variant="heading">{t('squadDesign.details')}</Text>
-          <Text variant="bodyS">{t('squadDesign.detailsHint')}</Text>
+          <Text variant="micro" color={dark.textMid}>{t('squadDesign.detailsHint')}</Text>
         </View>
-        <Text>{t('squadDesign.plus')}</Text>
+        <Text variant="label" color={dark.copper}>{t('squadDesign.plus')}</Text>
       </View>
-      <Button label={t('squadDesign.unlock')} onPress={onUpgrade} testID="unlock-squad-details" />
+      <Button size="sm" label={t('squadDesign.unlock')} onPress={onUpgrade} testID="unlock-squad-details" />
     </View>
   );
 }

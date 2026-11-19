@@ -502,19 +502,19 @@ const createStyles = (dark: ReturnType<typeof useAppearance>['colors']) =>
       backgroundColor: dark.bg0,
     },
     scrollContent: {
-      paddingHorizontal: space[4],
-      paddingTop: space[5],
+      paddingHorizontal: space[3],
+      paddingTop: space[3],
       paddingBottom: 80,
     },
     greetingRow: { flexDirection: 'row', alignItems: 'center', gap: space[2] },
-    greeting: { flex: 1, fontSize: homeLayout.greetingSize },
+    greeting: { flex: 1, fontSize: 16 },
     greetingSection: {
-      marginBottom: space[4],
+      marginBottom: space[2],
       zIndex: 2,
     },
 
     sectionBlock: {
-      marginBottom: space[5],
+      marginBottom: space[3],
     },
     sectionHeaderRow: {
       flexDirection: 'row',

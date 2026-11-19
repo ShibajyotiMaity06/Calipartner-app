@@ -258,12 +258,14 @@ function WeeklyPlanContent({ onClose }: { onClose?: () => void }) {
               />
             ) : (
               <>
-                <Text variant="bodyS">{t('aha.ready')}</Text>
-                <Text variant="title1">
-                  {t(plan.full_access ? 'fixNovember.weekly' : 'fixNovember.mondayPreview')}
-                </Text>
-                <Text variant="bodyS">{t('fixNovember.planDisclaimer')}</Text>
-                <Text variant="bodyS">{t('aha.flexible')}</Text>
+                <View style={{ gap: 2 }}>
+                  <Text variant="heading">
+                    {t(plan.full_access ? 'fixNovember.weekly' : 'fixNovember.mondayPreview')}
+                  </Text>
+                  <Text variant="micro" color={dark.textMid}>
+                    {t('fixNovember.planDisclaimer')}
+                  </Text>
+                </View>
                 <ScrollView
                   horizontal
                   showsHorizontalScrollIndicator={false}

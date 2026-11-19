@@ -17,6 +17,8 @@ import { Ionicons } from '@expo/vector-icons';
 import { Text, space, radius } from '@calipartner/ui';
 import exercisesSeedData from '@/data/exercises_seed.json';
 import { playClickSound, playSuccessSound } from '@/lib/sound';
+import { deduplicateExercises } from '@/services/workoutService';
+import type { Exercise } from '@calipartner/core';
 
 export interface AddExercisePickerModalProps {
   visible: boolean;
@@ -86,14 +88,20 @@ export function AddExercisePickerModal({
     MUSCLE_OPTIONS.find((opt) => opt.filterValue === selectedMuscle) ?? MUSCLE_OPTIONS[0]!;
 
   const filteredExercises = useMemo(() => {
-    return (
+    const rawList = (
       exercisesSeedData as Array<{
         id: string;
         name: string;
         muscle_group: string;
         equipment: string;
       }>
-    ).filter((ex) => {
+    ).map((ex) => ({
+      ...ex,
+      type: 'strength' as const,
+      owner_id: null,
+    }));
+    const deduped = deduplicateExercises(rawList as Exercise[]);
+    return deduped.filter((ex) => {
       const matchesSearch =
         !searchQuery.trim() || ex.name.toLowerCase().includes(searchQuery.toLowerCase().trim());
       const matchesMuscle =
@@ -457,14 +465,14 @@ const createStyles = (dark: ReturnType<typeof useAppearance>['colors']) =>
     searchRow: {
       flexDirection: 'row',
       alignItems: 'center',
-      backgroundColor: visualPrimitives.colors.ink,
+      backgroundColor: dark.s1,
       borderRadius: radius.control,
-      borderWidth: 1,
-      borderColor: visualPrimitives.colors.brownBorderLit,
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: dark.hairline,
       marginHorizontal: space[4],
       marginTop: space[3],
       paddingHorizontal: space[3],
-      height: 46,
+      height: 44,
     },
     searchInput: {
       flex: 1,
@@ -481,13 +489,13 @@ const createStyles = (dark: ReturnType<typeof useAppearance>['colors']) =>
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'space-between',
-      backgroundColor: visualPrimitives.colors.ink,
+      backgroundColor: dark.s1,
       borderRadius: radius.control,
-      borderWidth: 1,
-      borderColor: visualPrimitives.colors.brownBorderLit,
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: dark.hairline,
       paddingHorizontal: space[3],
       paddingVertical: space[2],
-      minHeight: 50,
+      minHeight: 44,
     },
     dropdownTriggerLeft: {
       flexDirection: 'row',
@@ -562,12 +570,12 @@ const createStyles = (dark: ReturnType<typeof useAppearance>['colors']) =>
       marginBottom: space[2],
     },
     customInput: {
-      backgroundColor: visualPrimitives.colors.ink,
+      backgroundColor: dark.s1,
       borderRadius: radius.control,
-      borderWidth: 1,
-      borderColor: visualPrimitives.colors.brownBorderLit,
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: dark.hairline,
       paddingHorizontal: space[3],
-      height: 42,
+      height: 44,
       color: dark.textHi,
       fontFamily: typography.body.fontFamily,
       fontSize: 14,
@@ -580,10 +588,10 @@ const createStyles = (dark: ReturnType<typeof useAppearance>['colors']) =>
       marginVertical: space[2],
       paddingHorizontal: space[3],
       paddingVertical: space[2],
-      backgroundColor: visualPrimitives.colors.brownLow,
+      backgroundColor: dark.s1,
       borderRadius: radius.control,
-      borderWidth: 1,
-      borderColor: visualPrimitives.colors.brownOutline,
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: dark.hairline,
     },
     stepperContainer: {
       flexDirection: 'row',
@@ -594,7 +602,7 @@ const createStyles = (dark: ReturnType<typeof useAppearance>['colors']) =>
       width: 36,
       height: 36,
       borderRadius: radius.full,
-      backgroundColor: visualPrimitives.colors.brownRaised,
+      backgroundColor: dark.s2,
       justifyContent: 'center',
       alignItems: 'center',
     },
@@ -610,23 +618,24 @@ const createStyles = (dark: ReturnType<typeof useAppearance>['colors']) =>
     exerciseCard: {
       flexDirection: 'row',
       alignItems: 'center',
-      backgroundColor: visualPrimitives.colors.brownLow,
+      backgroundColor: 'transparent',
       borderRadius: radius.control,
-      borderWidth: 1,
-      borderColor: visualPrimitives.colors.brownInset,
-      padding: space[3],
-      marginBottom: space[2],
+      borderBottomWidth: StyleSheet.hairlineWidth,
+      borderBottomColor: dark.hairline,
+      paddingVertical: space[2],
+      paddingHorizontal: space[2],
+      marginBottom: 2,
       gap: space[3],
     },
     exerciseCardActive: {
-      borderColor: dark.apricot,
-      backgroundColor: visualPrimitives.colors.brownInset,
+      backgroundColor: dark.s2,
+      borderBottomColor: 'transparent',
     },
     exerciseIconCircle: {
-      width: 38,
-      height: 38,
+      width: 36,
+      height: 36,
       borderRadius: radius.full,
-      backgroundColor: visualPrimitives.colors.brownInset,
+      backgroundColor: dark.s2,
       justifyContent: 'center',
       alignItems: 'center',
     },
