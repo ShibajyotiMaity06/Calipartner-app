@@ -73,7 +73,7 @@ export function MeRoomPlanCard({
     }
   };
 
-  if (loading) {
+  if (loading && !entitlement) {
     return (
       <Card elevation="s1" style={styles.card} testID="card-me-room-plan-loading">
         <ActivityIndicator size="small" color={dark.apricot} />

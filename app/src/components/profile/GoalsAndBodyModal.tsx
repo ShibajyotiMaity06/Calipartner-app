@@ -4,8 +4,8 @@ import { type as inputTypography } from '@calipartner/ui';
 import React, { useState } from 'react';
 import { Modal, SafeAreaView, ScrollView, StyleSheet, TextInput, View } from 'react-native';
 import { Button, Card, radius, SegmentedControl, space, Text } from '@calipartner/ui';
+import { cmToFtIn, ftInToCm, kgToLb, lbToKg } from '@calipartner/core';
 import { NumberField } from '@/components/onboarding/PlanPrimitives';
-import { HeightField } from '@/components/onboarding/HeightField';
 import { t } from '@/i18n';
 import { playClickSound } from '@/lib/sound';
 
@@ -43,8 +43,15 @@ export function GoalsAndBodyModal({
 
   const [goal, setGoal] = useState<'cut' | 'maintain' | 'bulk'>(currentGoal);
   const [rate, setRate] = useState<number>(currentRate);
+  const [unitSystem, setUnitSystem] = useState<'metric' | 'imperial'>('metric');
   const [heightCm, setHeightCm] = useState<string>(String(currentHeightCm));
   const [weightKg, setWeightKg] = useState<string>(String(currentWeightKg));
+  const initialFtIn = cmToFtIn(currentHeightCm);
+  const [feetStr, setFeetStr] = useState<string>(String(initialFtIn.feet));
+  const [inchesStr, setInchesStr] = useState<string>(String(initialFtIn.inches));
+  const [weightLbStr, setWeightLbStr] = useState<string>(
+    String(Math.round(kgToLb(currentWeightKg) * 10) / 10),
+  );
   const [sex, setSex] = useState<'male' | 'female' | 'other'>(currentSex);
   const [saving, setSaving] = useState(false);
   const [success, setSuccess] = useState(false);
@@ -165,32 +172,143 @@ export function GoalsAndBodyModal({
 
             {/* Measurements */}
             <View style={styles.section}>
-              <Text variant="label" color={dark.textHi} style={styles.sectionLabel}>
-                Body measurements
-              </Text>
+              <View style={styles.sectionHeaderRow}>
+                <Text variant="label" color={dark.textHi}>
+                  Body measurements
+                </Text>
+              </View>
+
+              <View style={styles.unitToggleWrap}>
+                <SegmentedControl
+                  options={[
+                    { value: 'metric', label: 'Metric (cm, kg)' },
+                    { value: 'imperial', label: 'Imperial (ft, lb)' },
+                  ]}
+                  value={unitSystem}
+                  onChange={(val: string) => {
+                    const next = val as 'metric' | 'imperial';
+                    setUnitSystem(next);
+                    if (next === 'imperial') {
+                      const h = parseFloat(heightCm) || 0;
+                      const w = parseFloat(weightKg) || 0;
+                      const ftIn = cmToFtIn(h);
+                      setFeetStr(String(ftIn.feet));
+                      setInchesStr(String(ftIn.inches));
+                      setWeightLbStr(String(Math.round(kgToLb(w) * 10) / 10));
+                    } else {
+                      const ft = parseFloat(feetStr) || 0;
+                      const inch = parseFloat(inchesStr) || 0;
+                      const lb = parseFloat(weightLbStr) || 0;
+                      if (ft || inch) setHeightCm(String(Math.round(ftInToCm(ft, inch))));
+                      if (lb) setWeightKg(String(Math.round(lbToKg(lb) * 10) / 10));
+                    }
+                  }}
+                  testID="segment-measurements-unit"
+                />
+              </View>
 
               <View style={styles.inputRow}>
-                <View style={styles.inputCol}>
-                  <HeightField
-                    value={Number(heightCm)}
-                    onChange={(value) => setHeightCm(String(value))}
-                  />
-                </View>
-
-                <View style={styles.inputCol}>
-                  <Text variant="micro" color={dark.textMid} style={styles.inputLabel}>
-                    Weight (kg)
-                  </Text>
-                  <TextInput
-                    value={weightKg}
-                    onChangeText={setWeightKg}
-                    keyboardType="numeric"
-                    style={[styles.textInput, { fontFamily: inputTypography.body.fontFamily }]}
-                    placeholderTextColor={dark.textOff}
-                    testID="input-weight-kg"
-                    accessibilityLabel="Weight in kilograms"
-                  />
-                </View>
+                {unitSystem === 'metric' ? (
+                  <>
+                    <View style={styles.inputCol}>
+                      <Text variant="micro" color={dark.textMid} style={styles.inputLabel}>
+                        Height (cm)
+                      </Text>
+                      <TextInput
+                        value={heightCm}
+                        onChangeText={setHeightCm}
+                        keyboardType="numeric"
+                        style={[styles.textInput, { fontFamily: inputTypography.body.fontFamily }]}
+                        placeholder="175"
+                        placeholderTextColor={dark.textOff}
+                        testID="input-height"
+                        accessibilityLabel="Height in centimetres"
+                      />
+                    </View>
+                    <View style={styles.inputCol}>
+                      <Text variant="micro" color={dark.textMid} style={styles.inputLabel}>
+                        Weight (kg)
+                      </Text>
+                      <TextInput
+                        value={weightKg}
+                        onChangeText={setWeightKg}
+                        keyboardType="numeric"
+                        style={[styles.textInput, { fontFamily: inputTypography.body.fontFamily }]}
+                        placeholder="70"
+                        placeholderTextColor={dark.textOff}
+                        testID="input-weight-kg"
+                        accessibilityLabel="Weight in kilograms"
+                      />
+                    </View>
+                  </>
+                ) : (
+                  <>
+                    <View style={styles.inputCol}>
+                      <Text variant="micro" color={dark.textMid} style={styles.inputLabel}>
+                        Height (ft / in)
+                      </Text>
+                      <View style={styles.ftInRow}>
+                        <TextInput
+                          value={feetStr}
+                          onChangeText={(val) => {
+                            setFeetStr(val);
+                            const ft = parseFloat(val) || 0;
+                            const inch = parseFloat(inchesStr) || 0;
+                            setHeightCm(String(Math.round(ftInToCm(ft, inch))));
+                          }}
+                          keyboardType="numeric"
+                          style={[
+                            styles.textInput,
+                            styles.halfInput,
+                            { fontFamily: inputTypography.body.fontFamily },
+                          ]}
+                          placeholder="ft"
+                          placeholderTextColor={dark.textOff}
+                          testID="input-height-ft"
+                          accessibilityLabel="Height in feet"
+                        />
+                        <TextInput
+                          value={inchesStr}
+                          onChangeText={(val) => {
+                            setInchesStr(val);
+                            const ft = parseFloat(feetStr) || 0;
+                            const inch = parseFloat(val) || 0;
+                            setHeightCm(String(Math.round(ftInToCm(ft, inch))));
+                          }}
+                          keyboardType="numeric"
+                          style={[
+                            styles.textInput,
+                            styles.halfInput,
+                            { fontFamily: inputTypography.body.fontFamily },
+                          ]}
+                          placeholder="in"
+                          placeholderTextColor={dark.textOff}
+                          testID="input-height-in"
+                          accessibilityLabel="Height in inches"
+                        />
+                      </View>
+                    </View>
+                    <View style={styles.inputCol}>
+                      <Text variant="micro" color={dark.textMid} style={styles.inputLabel}>
+                        Weight (lb)
+                      </Text>
+                      <TextInput
+                        value={weightLbStr}
+                        onChangeText={(val) => {
+                          setWeightLbStr(val);
+                          const lb = parseFloat(val) || 0;
+                          setWeightKg(String(Math.round(lbToKg(lb) * 10) / 10));
+                        }}
+                        keyboardType="numeric"
+                        style={[styles.textInput, { fontFamily: inputTypography.body.fontFamily }]}
+                        placeholder="154"
+                        placeholderTextColor={dark.textOff}
+                        testID="input-weight-kg"
+                        accessibilityLabel="Weight in pounds"
+                      />
+                    </View>
+                  </>
+                )}
               </View>
             </View>
 
@@ -278,6 +396,22 @@ const createStyles = (dark: ReturnType<typeof useAppearance>['colors']) =>
     },
     helperText: {
       marginTop: space[2],
+    },
+    sectionHeaderRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      marginBottom: space[2],
+    },
+    unitToggleWrap: {
+      marginBottom: space[3],
+    },
+    ftInRow: {
+      flexDirection: 'row',
+      gap: space[2],
+    },
+    halfInput: {
+      flex: 1,
     },
     inputRow: {
       flexDirection: 'row',

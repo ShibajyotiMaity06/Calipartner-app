@@ -88,7 +88,7 @@ export function BodyStatsStep(props: BodyStatsStepProps) {
           />
         </View>
         <Text
-          variant="pickerValue"
+          variant="title1"
           tabular
           color={colors.textHi}
           style={styles.value}
@@ -108,7 +108,6 @@ export function BodyStatsStep(props: BodyStatsStepProps) {
           onChange={(value) => onChangeWeightKg(metric ? value : lbToKg(value))}
           testID="weight-ruler"
         />
-        <Text variant="bodyS">{t('entryPolish.rulerHint')}</Text>
         {props.errorWeight ? (
           <Text color={colors.danger} accessibilityRole="alert">
             {props.errorWeight}

@@ -99,14 +99,11 @@ export async function runSquadRevisionTests(db) {
           (await db.query(`select * from public.${table} where user_id=$1`, [uid(0)])).rows.length,
           0,
         );
+      // A member can see their own logged details; other members' details require Plus.
+      await db.query('select public.get_squad_member_details($1,$2)', [room, uid(1)]);
       await reject(
         'select public.get_squad_member_details($1,$2)',
         [room, uid(0)],
-        /PLUS_REQUIRED/,
-      );
-      await reject(
-        'select public.get_squad_member_details($1,$2)',
-        [room, uid(1)],
         /PLUS_REQUIRED/,
       );
     });

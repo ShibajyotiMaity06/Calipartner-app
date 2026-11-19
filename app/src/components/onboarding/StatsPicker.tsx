@@ -243,16 +243,14 @@ export function StatsPicker({
           onPress={() => choose(index - 1)}
           testID={`${testID}-decrease`}
         />
-        {horizontal ? (
-          <Button
-            variant="tertiary"
-            fullWidth={false}
-            label={format(toValue(index))}
-            accessibilityLabel={format(toValue(index))}
-            onPress={() => choose(index)}
-            testID={`${testID}-select`}
-          />
-        ) : null}
+        <Button
+          variant="tertiary"
+          fullWidth={false}
+          label={format(toValue(index))}
+          accessibilityLabel={format(toValue(index))}
+          onPress={() => choose(index)}
+          testID={`${testID}-select`}
+        />
         <Button
           variant="secondary"
           fullWidth={false}
@@ -263,14 +261,6 @@ export function StatsPicker({
           testID={`${testID}-increase`}
         />
       </View>
-      {!horizontal ? (
-        <Button
-          variant="tertiary"
-          label={format(toValue(index))}
-          onPress={() => choose(index)}
-          testID={`${testID}-select`}
-        />
-      ) : null}
     </View>
   );
 }

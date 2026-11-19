@@ -43,6 +43,11 @@ export function generateClientUuid(): string {
   });
 }
 
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+export function isValidUuid(value?: string | null): boolean {
+  return typeof value === 'string' && UUID_REGEX.test(value);
+}
+
 /**
  * Initializes local bundled foods if local_foods is currently empty.
  * Populates from bundled_foods.json (2,351 Indian foods & barcodes) shipped inside the app bundle,
@@ -545,7 +550,7 @@ export async function logFoodEntry(
         input.userId,
         input.food.id,
       ]);
-      if (statsRow) {
+      if (statsRow && isValidUuid(input.food.id)) {
         await saveRemote(db, {
           id: `stats-${input.userId}-${input.food.id}`,
           entity: 'user_food_stats',
@@ -573,7 +578,7 @@ export async function logFoodEntry(
       payload: {
         id: entry.id,
         user_id: entry.user_id,
-        food_id: entry.food_id,
+        food_id: isValidUuid(entry.food_id) ? entry.food_id : null,
         meal_section: entry.meal_section,
         quantity: entry.quantity,
         unit: entry.unit,
@@ -729,7 +734,7 @@ export async function editFoodEntry(
       payload: {
         id: updatedEntry.id,
         user_id: updatedEntry.user_id,
-        food_id: updatedEntry.food_id,
+        food_id: isValidUuid(updatedEntry.food_id) ? updatedEntry.food_id : null,
         meal_section: updatedEntry.meal_section,
         quantity: updatedEntry.quantity,
         unit: updatedEntry.unit,
@@ -940,17 +945,19 @@ export async function hideFoodFromHistory(
       [now, userId, foodId],
     );
 
-    await saveRemote(db, {
-      id: `stats-${userId}-${foodId}`,
-      entity: 'user_food_stats',
-      operation: 'upsert',
-      payload: {
-        user_id: userId,
-        food_id: foodId,
-        hidden: true,
-        updated_at: now,
-      },
-    });
+    if (isValidUuid(foodId)) {
+      await saveRemote(db, {
+        id: `stats-${userId}-${foodId}`,
+        entity: 'user_food_stats',
+        operation: 'upsert',
+        payload: {
+          user_id: userId,
+          food_id: foodId,
+          hidden: true,
+          updated_at: now,
+        },
+      });
+    }
   });
 }
 
@@ -1016,7 +1023,7 @@ export async function copyMealSection(
         payload: {
           id: entry.id,
           user_id: entry.user_id,
-          food_id: entry.food_id,
+          food_id: isValidUuid(entry.food_id) ? entry.food_id : null,
           meal_section: entry.meal_section,
           quantity: entry.quantity,
           unit: entry.unit,
@@ -1101,7 +1108,7 @@ export async function copyEntireDay(
         payload: {
           id: entry.id,
           user_id: entry.user_id,
-          food_id: entry.food_id,
+          food_id: isValidUuid(entry.food_id) ? entry.food_id : null,
           meal_section: entry.meal_section,
           quantity: entry.quantity,
           unit: entry.unit,

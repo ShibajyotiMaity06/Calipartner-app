@@ -27,7 +27,7 @@ import {
   ReportFeedbackModal,
   SignOutSheet,
 } from '@/components/profile';
-import { ProfileRow, ProfileShortcut, SettingsGroup } from '@/components/profile/CompactSettings';
+import { ProfileRow, SettingsGroup } from '@/components/profile/CompactSettings';
 import { CustomMacrosModal } from '@/components/profile/CustomMacrosModal';
 import { LoadingState } from '@/components/LoadingState';
 import { useAuth } from '@/contexts/AuthContext';
@@ -193,16 +193,6 @@ export default function MeScreen() {
                   testID="btn-me-edit-profile"
                   style={styles.bellButton}
                 />
-              </View>
-              <View style={styles.shortcuts}>
-                <View style={styles.shortcut}>
-                  <ProfileShortcut
-                    title={t('community.title')}
-                    icon="people-outline"
-                    onPress={() => router.push('/(tabs)/chat?tab=friends' as never)}
-                    testID="me-friends"
-                  />
-                </View>
               </View>
             </Card>
           )}

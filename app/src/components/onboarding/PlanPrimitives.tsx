@@ -192,22 +192,17 @@ export function PlanChoice({
         <View
           style={[planStyles.choiceIconBox, { backgroundColor: selected ? colors.s3 : colors.s2 }]}
         >
-          <Ionicons name={icon} size={22} color={selected ? colors.copper : colors.textMid} />
+          <Ionicons name={icon} size={18} color={selected ? colors.copper : colors.textMid} />
         </View>
       ) : null}
       <View style={planStyles.flex}>
-        <Text
-          fontSet="onboarding"
-          variant="heading"
-          color={colors.textHi}
-          maxFontSizeMultiplier={2}
-        >
+        <Text fontSet="onboarding" variant="body" color={colors.textHi} maxFontSizeMultiplier={2}>
           {title}
         </Text>
         {description ? (
           <Text
             fontSet="onboarding"
-            variant="bodyS"
+            variant="micro"
             color={colors.textMid}
             maxFontSizeMultiplier={2}
           >
@@ -218,7 +213,7 @@ export function PlanChoice({
       <View
         style={[planStyles.radio, { borderColor: selected ? colors.textHi : colors.hairlineLit }]}
       >
-        {selected ? <CheckIcon size={layout.icon} color={colors.textHi} /> : null}
+        {selected ? <CheckIcon size={14} color={colors.textHi} /> : null}
       </View>
     </Pressable>
   );
@@ -261,13 +256,15 @@ export const planStyles = StyleSheet.create({
     alignItems: 'center',
     gap: space[3],
     minHeight: layout.touch,
-    padding: space[4],
+    paddingVertical: space[2],
+    paddingHorizontal: space[3],
     borderWidth: layout.border,
-    borderRadius: radius.card,
+    borderRadius: radius.control,
   },
   radio: {
-    width: layout.touch,
-    minHeight: layout.touch,
+    width: 24,
+    height: 24,
+    minHeight: 24,
     borderWidth: layout.border,
     borderRadius: radius.full,
     alignItems: 'center',
@@ -276,8 +273,8 @@ export const planStyles = StyleSheet.create({
   link: { minHeight: layout.touch, justifyContent: 'center', paddingVertical: space[3] },
   centered: { alignItems: 'center', gap: space[3] },
   choiceIconBox: {
-    width: 44,
-    height: 44,
+    width: 32,
+    height: 32,
     borderRadius: radius.control,
     alignItems: 'center',
     justifyContent: 'center',

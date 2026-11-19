@@ -32,9 +32,9 @@ export function useSubscription() {
   const [error, setError] = useState<string | null>(null);
   const [accessClock, setAccessClock] = useState(0);
 
-  const loadData = useCallback(async () => {
+  const loadData = useCallback(async (silent = false) => {
     try {
-      setLoading(true);
+      if (!silent) setLoading(true);
       setError(null);
 
       const client = getSupabase();
@@ -120,7 +120,7 @@ export function useSubscription() {
     const listener = AppState.addEventListener('change', (value) => {
       if (value === 'active') {
         setAccessClock((tick) => tick + 1);
-        void loadData();
+        void loadData(true);
       }
     });
     return () => listener.remove();

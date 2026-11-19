@@ -101,9 +101,9 @@ export default function OnboardingScreen() {
       const guestDraft = user && !ownDraft ? await loadOnboardingDraft(db, 'guest-user') : null;
       const draft = ownDraft ?? guestDraft;
       const next = new OnboardingStateMachine({
-        heightCm: 0,
-        weightKg: 0,
         units: 'metric',
+        heightCm: 175,
+        weightKg: 70,
         ...draft,
         ...(profile
           ? { nickname: profile.nickname, sex: profile.sex, dateOfBirth: profile.date_of_birth }
