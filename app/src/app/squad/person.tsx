@@ -3,6 +3,7 @@ import React, { useCallback, useState } from 'react';
 import { RefreshControl, SafeAreaView, ScrollView, View } from 'react-native';
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import { Button, Text } from '@calipartner/ui';
+import { HeaderActions } from '@/components/HeaderActions';
 import { useSquadToday } from '@/hooks/useSquad';
 import { SquadPersonPanel } from '@/components/rooms/SquadPersonPanel';
 import { t } from '@/i18n';
@@ -35,23 +36,26 @@ export default function SquadPersonScreen() {
         contentContainerStyle={styles.content}
         refreshControl={<RefreshControl refreshing={squad.loading} onRefresh={refresh} />}
       >
-        <View style={styles.row}>
-          <Button
-            variant="tertiary"
-            fullWidth={false}
-            label={t('squadDesign.back')}
-            iconOnly
-            icon={<NavigationIcon action="back" />}
-            onPress={back}
-            style={styles.back}
-            accessibilityRole="button"
-            accessibilityLabel={t('squadDesign.back')}
-            testID="person-back"
-          />
-          <View style={styles.flex}>
-            <Text variant="bodyS">{t('tabs.room')}</Text>
-            <Text variant="title1">{person ? memberName(person) : t('common.loading')}</Text>
+        <View style={styles.spread}>
+          <View style={styles.row}>
+            <Button
+              variant="tertiary"
+              fullWidth={false}
+              label={t('squadDesign.back')}
+              iconOnly
+              icon={<NavigationIcon action="back" />}
+              onPress={back}
+              style={styles.back}
+              accessibilityRole="button"
+              accessibilityLabel={t('squadDesign.back')}
+              testID="person-back"
+            />
+            <View>
+              <Text variant="bodyS">{t('tabs.room')}</Text>
+              <Text variant="title1">{person ? memberName(person) : t('common.loading')}</Text>
+            </View>
           </View>
+          <HeaderActions />
         </View>
         {squad.error ? (
           <View style={styles.card}>

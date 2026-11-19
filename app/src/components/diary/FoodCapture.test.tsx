@@ -156,6 +156,51 @@ describe('food capture paths', () => {
     });
     expect(closed).toHaveBeenCalledOnce();
   });
+
+  it('keeps food log modal open with toast when logging an item from history or search', async () => {
+    const closed = vi.fn();
+    const logged = vi.fn();
+    const item = {
+      food: { id: 'apple', name: 'Apple', serving_units: [{ unit: 'piece', grams: 180 }] },
+      stats: { last_quantity: 1, last_unit: 'piece', use_count: 2 },
+    };
+    flow.history = [item];
+    flow.add.mockResolvedValueOnce({ id: 'entry-1' });
+    await act(async () => {
+      renderer = create(
+        <FoodLogModal
+          visible
+          initialTab="search"
+          defaultSection="lunch"
+          localDate="2026-10-25"
+          onClose={closed}
+          onLogged={logged}
+        />,
+      );
+    });
+    await act(async () => {
+      const pressable = renderer.root
+        .findByProps({ testID: 'history-item-apple' })
+        .findAllByType('Pressable' as React.ElementType)[0];
+      pressable?.props.onPress();
+    });
+    await act(async () => {
+      renderer.root
+        .findByType('Quantity' as React.ElementType)
+        .props.onSave({ food: item.food, quantity: 1, unit: 'piece', mealSection: 'lunch' });
+    });
+    expect(flow.add).toHaveBeenCalledWith({
+      food: item.food,
+      quantity: 1,
+      unit: 'piece',
+      mealSection: 'lunch',
+      localDate: '2026-10-25',
+      source: 'search',
+    });
+    expect(logged).toHaveBeenCalledOnce();
+    expect(closed).not.toHaveBeenCalled();
+    expect(renderer.root.findByProps({ testID: 'food-log-success-toast' })).toBeDefined();
+  });
 });
 
 it.each(['paid_plus', 'free_taste', 'free_after_trial', 'trial'])(

@@ -31,30 +31,45 @@ const log = createLogger('root');
 
 function AppInitializationGate({ children }: { children: React.ReactNode }) {
   const { colors } = useAppearance();
-  const [state, setState] = useState<'loading' | 'ready' | 'error'>('loading');
+  const [initError, setInitError] = useState(false);
 
   const init = useCallback(() => {
-    setState('loading');
+    setInitError(false);
+    hideSplashScreen().catch(() => {});
     Promise.all([getDb(), loadAppFonts()])
       .then(([, fontsReady]) => {
         if (!fontsReady) throw new Error('Font loading failed');
-        setState('ready');
-        hideSplashScreen().catch(() => {});
       })
       .catch((e: unknown) => {
         log.error('app initialization failed', e instanceof Error ? e.message : String(e));
-        setState('error');
+        setInitError(true);
+      })
+      .finally(() => {
         hideSplashScreen().catch(() => {});
       });
   }, []);
 
   useEffect(init, [init]);
 
-  if (state === 'ready') return <>{children}</>;
   return (
-    <View style={{ flex: 1, justifyContent: 'center', backgroundColor: colors.splashBackground }}>
-      {state === 'error' && <ErrorState onRetry={init} />}
-    </View>
+    <>
+      {children}
+      {initError && (
+        <View
+          style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            justifyContent: 'center',
+            backgroundColor: colors.splashBackground,
+          }}
+        >
+          <ErrorState onRetry={init} />
+        </View>
+      )}
+    </>
   );
 }
 
@@ -243,7 +258,7 @@ function AppearanceStack() {
         // Main tabs and avatar pages integrate the same controls alongside their own title.
         // Authentication, onboarding and actual conversations keep their focused layout.
         headerShown:
-          /^(squad\/|profile\/|notifications\/|recipes\/|fasting$|weekly-plan$|plan-review$|paywall$)/.test(
+          /^(profile\/|notifications\/|recipes\/|fasting$|weekly-plan$|plan-review$|paywall$)/.test(
             route.name,
           ),
         header: () => (

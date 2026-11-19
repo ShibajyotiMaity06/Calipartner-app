@@ -193,7 +193,7 @@ export default function LogScreen() {
           defaultSection={currentSection}
           localDate={todayDate}
           onClose={closeFlow}
-          onLogged={handleCloseAll}
+          onLogged={() => {}}
         />
       )}
 

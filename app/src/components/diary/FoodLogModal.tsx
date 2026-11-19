@@ -91,6 +91,13 @@ export function FoodLogModal({
   const [batchSaving, setBatchSaving] = useState(false);
   const [batchError, setBatchError] = useState(false);
   const batchInFlight = useRef(false);
+  const [loggedToast, setLoggedToast] = useState<string | null>(null);
+  const toastTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => {
+    return () => {
+      if (toastTimeoutRef.current) clearTimeout(toastTimeoutRef.current);
+    };
+  }, []);
   const toggleSelection = (
     food: Food,
     quantity = !food.serving_units[0] || ['g', 'ml'].includes(food.serving_units[0].unit) ? 100 : 1,
@@ -250,7 +257,11 @@ export function FoodLogModal({
     });
     if (!saved) throw new Error(t('fixNovember.saveFailed'));
     if (onLogged) onLogged();
-    onClose();
+    setSelectedFoodForQuantity(null);
+    setLoggedToast(data.food.name);
+    if (toastTimeoutRef.current) clearTimeout(toastTimeoutRef.current);
+    toastTimeoutRef.current = setTimeout(() => setLoggedToast(null), 3000);
+    if (initialTab === 'scan') onClose();
   };
 
   const handleStartPhotoScan = async () => {
@@ -436,6 +447,27 @@ export function FoodLogModal({
               hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
             />
           </View>
+
+          {loggedToast && (
+            <View
+              testID="food-log-success-toast"
+              style={{
+                marginHorizontal: spacing.md,
+                paddingVertical: spacing.xs,
+                paddingHorizontal: spacing.sm,
+                backgroundColor: colors.surfaceAlt,
+                borderRadius: radius.md,
+                flexDirection: 'row',
+                alignItems: 'center',
+                gap: spacing.xs,
+              }}
+            >
+              <Ionicons name="checkmark-circle" size={18} color={colors.primary} />
+              <Text style={{ color: colors.text, fontSize: fontSize.sm }}>
+                {t('launch.mealLogged')}: {loggedToast}
+              </Text>
+            </View>
+          )}
 
           {(saveError || historySaveError) && (
             <Text

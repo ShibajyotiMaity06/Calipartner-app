@@ -34,7 +34,9 @@ export function SquadPersonPanel({
 
   const router = useRouter();
   const { hasActiveAccess, loading: checkingPlan } = useSubscription();
-  const details = useSquadDetails(roomId, person.user_id, visible && hasActiveAccess);
+  const isOwn = Boolean(person.is_self);
+  const canViewDetails = hasActiveAccess || isOwn;
+  const details = useSquadDetails(roomId, person.user_id, visible && canViewDetails);
   const own = members.find((member) => member.is_self);
   const other = person.is_self ? members.find((member) => !member.is_self) : own;
   return (
@@ -72,9 +74,9 @@ export function SquadPersonPanel({
         )}
       </View>
       <MemberMetrics member={person} />
-      {checkingPlan ? (
+      {checkingPlan && !isOwn ? (
         <Text>{t('common.loading')}</Text>
-      ) : !hasActiveAccess ? (
+      ) : !canViewDetails ? (
         <PlusDetailsCard onUpgrade={() => router.push('/paywall')} />
       ) : details.error ? (
         <View style={styles.card}>

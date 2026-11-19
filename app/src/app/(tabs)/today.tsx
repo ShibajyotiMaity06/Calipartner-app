@@ -384,7 +384,6 @@ export default function TodayScreen() {
             localDate={selectedDate}
             onClose={() => setActiveLogSection(null)}
             onLogged={() => {
-              setActiveLogSection(null);
               void refresh();
             }}
           />
