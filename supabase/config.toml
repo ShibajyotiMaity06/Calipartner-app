@@ -79,8 +79,8 @@ policy = "per_worker"
 verify_jwt = false
 
 [functions.delete-account]
-# Account deletion endpoint; requires valid user JWT
-verify_jwt = true
+# The handler validates the bearer token with Supabase Auth.
+verify_jwt = false
 
 [functions.calculate-targets]
 # Deterministic targets calculator; can be called during onboarding
@@ -146,4 +146,8 @@ verify_jwt = false
 
 [functions.cc-checkout]
 # Authenticates web buyers; credits arrive only through verified provider webhooks.
+verify_jwt = false
+
+[functions.feed-api]
+# The handler verifies the bearer token and rechecks database access before signing.
 verify_jwt = false

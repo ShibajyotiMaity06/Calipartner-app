@@ -32,9 +32,11 @@ const entries: {
 ];
 export function LogSomethingView({
   onFlow,
+  onPost,
   onClose,
 }: {
   onFlow: (flow: LogFlow) => void;
+  onPost?: () => void;
   onClose: () => void;
 }) {
   const { colors: dark } = useAppearance();
@@ -87,6 +89,18 @@ export function LogSomethingView({
             <Text variant="label">{t(('homeRefresh.' + label) as TranslationKey)}</Text>
           </Pressable>
         ))}
+        {onPost && (
+          <Pressable
+            onPress={onPost}
+            style={({ pressed }) => [styles.tile, pressed && { backgroundColor: dark.s3 }]}
+            accessibilityRole="button"
+            accessibilityLabel={t('feed.newPost')}
+            testID="log-tile-post"
+          >
+            <Ionicons name="images-outline" size={homeLayout.iconSize} color={dark.textHi} />
+            <Text variant="label">{t('feed.post')}</Text>
+          </Pressable>
+        )}
       </View>
     </ScrollView>
   );

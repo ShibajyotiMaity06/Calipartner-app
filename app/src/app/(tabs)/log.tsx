@@ -3,7 +3,7 @@ import { weightChange, type WeightLog } from '@calipartner/core';
 import { LogSomethingView } from '@/components/diary/LogSomethingView';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { View, StyleSheet, Modal } from 'react-native';
-import { useFocusEffect, useRouter, useLocalSearchParams } from 'expo-router';
+import { useFocusEffect, useRouter, useLocalSearchParams, type Href } from 'expo-router';
 import { getMealSectionForTime, type MealSection } from '@calipartner/core';
 import { Sheet } from '@calipartner/ui';
 import { t } from '@/i18n';
@@ -163,7 +163,14 @@ export default function LogScreen() {
           isGlass={true}
           accessibilityLabel="Log Hub"
         >
-          <LogSomethingView onFlow={openFlow} onClose={handleCloseAll} />
+          <LogSomethingView
+            onFlow={openFlow}
+            onPost={() => {
+              setSheetVisible(false);
+              closeBrowserModalsThen(() => router.push('/feed/create' as Href));
+            }}
+            onClose={handleCloseAll}
+          />
         </Sheet>
       )}
 

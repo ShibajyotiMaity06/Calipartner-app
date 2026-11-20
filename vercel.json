@@ -36,7 +36,7 @@
       "handle": "filesystem"
     },
     {
-      "src": "/(launch|welcome|founders|weekly-plan|wallet|pair-start|plan-review|paywall|today|room|progress|me|log|chat|friends|fasting|onboarding|recipes|shop|avatar|coach)/?",
+      "src": "/(launch|welcome|founders|weekly-plan|wallet|pair-start|plan-review|paywall|today|room|progress|me|log|chat|feed|friends|fasting|onboarding|recipes|shop|avatar|coach)/?",
       "dest": "/app-shell.html",
       "headers": {
         "Cache-Control": "no-store",
@@ -44,7 +44,7 @@
       }
     },
     {
-      "src": "/(auth|squad|invite|referral|profile|shop|avatar|notifications|onboarding|dev|\\(tabs\\))/(.*)",
+      "src": "/(auth|squad|invite|referral|feed|profile|shop|avatar|notifications|onboarding|dev|\\(tabs\\))/(.*)",
       "dest": "/app-shell.html",
       "headers": {
         "Cache-Control": "no-store",

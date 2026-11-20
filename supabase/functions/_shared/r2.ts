@@ -6,11 +6,13 @@ export async function signR2Url({
   key,
   expiresInSeconds = 300,
   contentType,
+  headers,
 }: {
   method: 'GET' | 'PUT' | 'HEAD' | 'DELETE';
   key: string;
   expiresInSeconds?: number;
   contentType?: string;
+  headers?: HeadersInit;
 }): Promise<string> {
   const account = Deno.env.get('R2_ACCOUNT_ID');
   const bucket = Deno.env.get('R2_CHAT_BUCKET') || 'calipartner-chat-private';
@@ -27,7 +29,7 @@ export async function signR2Url({
     await client.sign(
       new Request(url, {
         method,
-        headers: contentType ? { 'Content-Type': contentType } : undefined,
+        headers: headers ?? (contentType ? { 'Content-Type': contentType } : undefined),
       }),
       { aws: { signQuery: true, allHeaders: true } },
     )

@@ -44,4 +44,26 @@ describe('ScreenAnalyticsTracker', () => {
       route_segment: 'today',
     });
   });
+
+  it('uses route templates for private Feed links and profiles', async () => {
+    const transition = vi.spyOn(analyticsService, 'recordScreenTransition');
+    mockRoute.pathname = '/feed/post/7fea0000-0000-4000-8000-000000000001';
+    mockRoute.segments = ['feed', 'post', '[postId]'];
+    let tree!: ReturnType<typeof create>;
+    await act(async () => {
+      tree = create(<ScreenAnalyticsTracker />);
+    });
+    expect(transition).toHaveBeenLastCalledWith('/feed/post/[postId]', {
+      route_segment: 'feed/post/[postId]',
+    });
+    mockRoute.pathname = '/feed/profile/7fea0000-0000-4000-8000-000000000002';
+    mockRoute.segments = ['feed', 'profile', '[userId]'];
+    await act(async () => {
+      tree.update(<ScreenAnalyticsTracker />);
+    });
+    expect(transition).toHaveBeenLastCalledWith('/feed/profile/[userId]', {
+      route_segment: 'feed/profile/[userId]',
+    });
+    await act(async () => tree.unmount());
+  });
 });

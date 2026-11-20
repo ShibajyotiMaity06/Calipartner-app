@@ -15,7 +15,7 @@ import { Text } from './Text';
 
 import { radius } from '../tokens/radius';
 import { space } from '../tokens/space';
-import Svg, { Path } from 'react-native-svg';
+import Svg, { Circle, Path } from 'react-native-svg';
 function ChatIcon({ size = 24, color }: { size?: number; color?: string }) {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24">
@@ -29,9 +29,17 @@ function ChatIcon({ size = 24, color }: { size?: number; color?: string }) {
     </Svg>
   );
 }
-import { HomeIcon, RoomIcon, MeIcon, PlusIcon } from './Icons';
+function GlobeIcon({ size = 24, color }: { size?: number; color?: string }) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth={2}>
+      <Circle cx={12} cy={12} r={9} />
+      <Path d="M3 12h18M12 3a14 14 0 0 0 0 18 14 14 0 0 0 0-18Z" />
+    </Svg>
+  );
+}
+import { HomeIcon, RoomIcon, MeIcon } from './Icons';
 
-export type TabId = 'today' | 'room' | 'log' | 'progress' | 'me' | 'chat';
+export type TabId = 'today' | 'room' | 'feed' | 'progress' | 'me' | 'chat';
 
 export interface TabBarItemConfig {
   id: TabId;
@@ -42,6 +50,7 @@ export interface TabBarItemConfig {
 export interface TabBarLabels {
   today?: string;
   room?: string;
+  feed?: string;
   progress?: string;
   me?: string;
   chat?: string;
@@ -199,19 +208,7 @@ export function TabBar({
       {/* 2. Progress */}
       {renderNormalTab('room', labels?.room ?? 'Squad', RoomIcon, 'tab-room', hasRoomBadge)}
 
-      {/* 3. Center Raised Plus Button */}
-      <View style={styles.centerSlot}>
-        <TouchableOpacity
-          testID="tab-log"
-          accessibilityRole="button"
-          accessibilityLabel="Add to log"
-          style={styles.plusButton}
-          activeOpacity={0.8}
-          onPress={() => onTabPress('log')}
-        >
-          <PlusIcon size={28} color={dark.onBrand} strokeWidth={2.5} />
-        </TouchableOpacity>
-      </View>
+      {renderNormalTab('feed', labels?.feed ?? 'Feed', GlobeIcon, 'tab-feed')}
 
       {/* 4. Chat */}
       {renderNormalTab('chat', labels?.chat ?? 'Chat', ChatIcon, 'tab-chat')}
@@ -282,23 +279,5 @@ const createStyles = (dark: ReturnType<typeof useAppearance>['colors']) =>
     },
     activeTabLabel: {
       fontWeight: '600',
-    },
-    centerSlot: {
-      width: 60,
-      height: '100%',
-      alignItems: 'center',
-      justifyContent: 'center',
-      zIndex: 110,
-    },
-    plusButton: {
-      width: 56,
-      height: 56,
-      borderRadius: radius.full,
-      backgroundColor: dark.apricot,
-      borderWidth: 3,
-      borderColor: dark.bg0,
-      alignItems: 'center',
-      justifyContent: 'center',
-      transform: [{ translateY: -12 }],
     },
   });

@@ -5,7 +5,7 @@ import { HomeActionsMenu } from '@/components/HomeActionsMenu';
 import { AvatarHero } from '@/components/avatar/AvatarHero';
 import { TrackingPreferencesSheet } from '@/components/rooms/TrackingPreferencesSheet';
 import React, { useCallback, useEffect, useState } from 'react';
-import { AppState, RefreshControl, ScrollView, StyleSheet, View } from 'react-native';
+import { AppState, Pressable, RefreshControl, ScrollView, StyleSheet, View } from 'react-native';
 import { useRouter, type Href } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import {
@@ -203,7 +203,21 @@ export default function TodayScreen() {
             <Text variant="heading" color={dark.textHi} style={styles.greeting}>
               {t('homeRefresh.hello', { name: userName })}
             </Text>
-            <HomeActionsMenu />
+            <View style={styles.homeActions}>
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel={t('feed.openLog')}
+                onPress={() => router.push('/(tabs)/log')}
+                testID="home-log"
+                style={styles.logAction}
+              >
+                <Ionicons name="add" size={homeLayout.iconSize} color={dark.apricot} />
+                <Text variant="label" color={dark.apricot}>
+                  {t('feed.log')}
+                </Text>
+              </Pressable>
+              <HomeActionsMenu />
+            </View>
           </View>
         </View>
 
@@ -507,6 +521,14 @@ const createStyles = (dark: ReturnType<typeof useAppearance>['colors']) =>
       paddingBottom: 80,
     },
     greetingRow: { flexDirection: 'row', alignItems: 'center', gap: space[2] },
+    homeActions: { flexDirection: 'row', alignItems: 'center', flexShrink: 0, gap: space[1] },
+    logAction: {
+      minWidth: homeLayout.touchSize,
+      minHeight: homeLayout.touchSize,
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
     greeting: { flex: 1, fontSize: 16 },
     greetingSection: {
       marginBottom: space[2],

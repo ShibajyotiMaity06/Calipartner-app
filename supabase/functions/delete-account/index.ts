@@ -1,4 +1,5 @@
 import { createClient } from 'jsr:@supabase/supabase-js@2';
+import { removeFeedObject } from '../_shared/feedStorage.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -47,6 +48,33 @@ Deno.serve(async (req: Request) => {
     }
 
     const userId = user.id;
+
+    // Revoke feed access before removing its private objects.
+    const disabledFeed = await adminClient
+      .from('feed_posts')
+      .update({ state: 'deleted', share_progress: false, progress_date: null })
+      .eq('author_id', userId);
+    if (disabledFeed.error) throw new Error('FEED_MEDIA_LOOKUP_FAILED');
+    while (true) {
+      const feed = await adminClient
+        .from('feed_posts')
+        .select('id,storage_key')
+        .eq('author_id', userId)
+        .is('media_removed_at', null)
+        .limit(50);
+      if (feed.error) throw new Error('FEED_MEDIA_LOOKUP_FAILED');
+      if (!feed.data?.length) break;
+      for (const post of feed.data) await removeFeedObject(post.storage_key);
+      const recorded = await adminClient
+        .from('feed_posts')
+        .update({ media_removed_at: new Date().toISOString() })
+        .eq('author_id', userId)
+        .in(
+          'id',
+          feed.data.map((post) => post.id),
+        );
+      if (recorded.error) throw new Error('FEED_MEDIA_DELETE_FAILED');
+    }
 
     const media = await adminClient
       .from('chat_media_uploads')

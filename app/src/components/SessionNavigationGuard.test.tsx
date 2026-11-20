@@ -6,17 +6,21 @@ const state = vi.hoisted(() => ({
   isGuest: false,
   isLoading: false,
   first: '(tabs)',
+  second: '',
   replace: vi.fn(),
+  push: vi.fn(),
+  pendingFeed: vi.fn().mockResolvedValue(null),
   missingTargets: false,
 }));
 vi.mock('expo-router', () => ({
-  useRouter: () => ({ replace: state.replace }),
-  useSegments: () => [state.first],
+  useRouter: () => ({ replace: state.replace, push: state.push }),
+  useSegments: () => [state.first, state.second],
 }));
+vi.mock('@/services/feedLinks', () => ({ takePendingFeedPost: state.pendingFeed }));
 vi.mock('@/contexts/AuthContext', () => ({ useAuth: () => state }));
 vi.mock('@/hooks/useTargets', () => ({
   useTargets: () => ({
-    currentGoalProfile: state.missingTargets ? null : { id: 'saved' },
+    currentGoalProfile: state.missingTargets ? null : { id: 'saved', user_id: state.user?.id },
     loading: false,
     error: null,
   }),
@@ -28,6 +32,8 @@ beforeEach(() => {
   state.isGuest = false;
   state.isLoading = false;
   state.first = '(tabs)';
+  state.second = '';
+  state.pendingFeed.mockResolvedValue(null);
   state.missingTargets = false;
   vi.clearAllMocks();
   (globalThis as unknown as { IS_REACT_ACT_ENVIRONMENT: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
@@ -53,6 +59,25 @@ describe('session expiry navigation', () => {
       renderer.update(<SessionNavigationGuard />);
     });
     expect(state.replace).toHaveBeenCalledWith('/auth/sign-in?mode=signin');
+  });
+
+  it('keeps shared Feed links open and resumes the saved post after setup', async () => {
+    const post = '290a0000-0000-4000-8000-000000000001';
+    state.user = null;
+    state.first = 'feed';
+    state.second = 'post';
+    await act(async () => {
+      renderer = create(<SessionNavigationGuard />);
+    });
+    expect(state.replace).not.toHaveBeenCalled();
+    expect(state.pendingFeed).not.toHaveBeenCalled();
+    state.user = { id: 'returning' };
+    state.first = '(tabs)';
+    state.pendingFeed.mockResolvedValueOnce(post);
+    await act(async () => {
+      renderer.update(<SessionNavigationGuard />);
+    });
+    expect(state.push).toHaveBeenCalledWith('/feed/post/' + post);
   });
 
   it.each(['loading', 'guest', 'signup'])('does not interrupt %s', async (mode) => {

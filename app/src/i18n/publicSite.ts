@@ -14,7 +14,7 @@ export const publicSite = {
   closeLegal: 'Close legal information',
   agree: 'Agree and continue',
   done: 'Done',
-  updated: 'Updated 16 November 2026',
+  updated: 'Updated 20 November 2026',
   privacy: {
     title: 'Privacy policy',
     sections: [
@@ -33,6 +33,10 @@ export const publicSite = {
       {
         title: 'Room privacy and sharing',
         body: 'Room members receive only the progress allowed by your sharing settings and membership. Review per-room privacy before sharing. Messages and media you post are visible to permitted room members. Blocking and reporting tools help manage interactions. Other people may retain information they have already seen or copied.',
+      },
+      {
+        title: 'Feed posts and comments',
+        body: 'Photos, videos, descriptions, captions and comments you submit to Feed are checked by server-side moderation providers before publication. Published media is stored privately and can be opened by the signed-in audience you choose. If you choose to share goal completion on a post, Plus and Pro viewers who can open that post can compare percentages for that day. Shares and links follow the same audience settings. You can delete your posts and comments and report or block other users.',
       },
       {
         title: 'AI processing and consent',
@@ -77,7 +81,7 @@ export const publicSite = {
       },
       {
         title: 'Community and availability',
-        body: 'Do not post harassment, threats, hate speech, spam or unlawful content. Use report and block controls when needed. We may restrict abusive accounts or remove content. Signed-in saves require an internet connection and are confirmed only after the server acknowledges them. Cached browsing can be available offline. Services may be interrupted for maintenance or failures.',
+        body: 'Share only content you have permission to post. Harassment, threats, hate speech, sexual content, graphic violence, scams, spam and unlawful content are prohibited. Use report and block controls when needed. We may restrict abusive accounts or remove content. Signed-in saves require an internet connection and are confirmed only after the server acknowledges them. Cached browsing can be available offline. Services may be interrupted for maintenance or failures.',
       },
       {
         title: 'Deletion and changes',

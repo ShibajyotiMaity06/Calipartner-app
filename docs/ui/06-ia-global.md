@@ -8,12 +8,14 @@ Launch → Welcome → Onboarding (A) → Today
 
 TAB 1  Today        diary, rings, meals, water, steps, workouts, fasting, focus, room strip
 TAB 2  Room         segments: Today · Focus · Chat · Progress · Members; inbox; invites
-TAB 3  ＋ Log        sheet: Food · Workout · Water · Weight · Fast · Focus
+TAB 3  Feed         globe; photos, videos, post actions, shared posts and author profiles
 TAB 4  Progress     segments: My progress · Leaderboard · Challenges
 TAB 5  Me           profile, goals, privacy, plan, Find a partner, settings, support
 ```
 
 Entry points that are not tabs: Recipes and Ask Coach (from Today, the Log sheet and Me); Requests inbox (Room header and Me); Partner Finder (Today room strip when you have no room, empty Room tab, Me, end of onboarding).
+
+Use the unboxed + Log action beside the menu on Home to open the Log sheet. Post opens the media composer from that sheet. Feed uses a fork-and-spoon reaction and expresses comparisons as each person’s percentage of their own goal.
 
 ### 6.2 Navigation rules
 - Tabs keep their own stack and scroll position; tapping the active tab scrolls to top.

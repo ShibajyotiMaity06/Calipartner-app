@@ -14,9 +14,9 @@ export function ScreenAnalyticsTracker(): null {
   useEffect(() => {
     if (!pathname) return;
 
-    recordScreenTransition(pathname, {
-      route_segment: segments?.length ? segments.join('/') : pathname,
-    });
+    const routeSegment = segments?.length ? segments.join('/') : pathname;
+    const screen = (segments[0] as string | undefined) === 'feed' ? '/' + routeSegment : pathname;
+    recordScreenTransition(screen, { route_segment: routeSegment });
   }, [pathname, segments]);
 
   return null;

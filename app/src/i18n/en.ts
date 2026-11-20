@@ -19,7 +19,9 @@ import { releaseUpdate } from './releaseUpdate';
 import { characterSetup } from './characterSetup';
 import { squadDesign } from './squadDesign';
 import { repairMessages } from './repairs';
+import { feed } from './feed';
 export const en = {
+  feed,
   founders,
   entryPolish,
   workoutPolish,

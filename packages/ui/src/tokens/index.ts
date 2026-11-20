@@ -16,3 +16,4 @@ export * from './controls';
 export * from './entry';
 
 export * from './visualPrimitives';
+export * from './feed';

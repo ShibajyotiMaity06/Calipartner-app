@@ -43,11 +43,6 @@ export default function TabsLayout() {
           const activeTab = (routeName === 'index' ? 'today' : routeName) as TabId;
 
           const handleTabPress = (tab: TabId) => {
-            if (tab === 'log') {
-              closeBrowserModalsThen(() => router.push('/(tabs)/log'));
-              return;
-            }
-
             if (tab === activeTab) {
               const route = state.routes.find((r) => r.name === tab);
               if (route) {
@@ -85,6 +80,7 @@ export default function TabsLayout() {
                 today: t('tabs.today'),
                 progress: t('tabs.progress'),
                 room: t('tabs.room'),
+                feed: t('feed.title'),
                 me: t('tabs.me'),
                 chat: t('rooms.segments.chat'),
               }}
@@ -114,6 +110,7 @@ export default function TabsLayout() {
             title: t('tabs.log'),
           }}
         />
+        <Tabs.Screen name="feed" options={{ title: t('feed.title') }} />
         <Tabs.Screen
           name="progress"
           options={{
