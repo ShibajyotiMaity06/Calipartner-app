@@ -8,6 +8,7 @@ import {
   type SocialProfileDraft,
 } from '@calipartner/core';
 import { PlanTextField, planStyles } from '@/components/onboarding/PlanPrimitives';
+import { useTargets } from '@/hooks/useTargets';
 import { t } from '@/i18n';
 
 export function SocialProfileEditor({
@@ -22,21 +23,36 @@ export function SocialProfileEditor({
   onSave: (draft: SocialProfileDraft) => Promise<boolean>;
 }) {
   const { colors } = useTheme();
+  const { currentGoalProfile } = useTargets();
+  const onboardingGoal =
+    currentGoalProfile?.goal === 'bulk' || currentGoalProfile?.goal === 'cut'
+      ? currentGoalProfile.goal
+      : '';
+  const initialGoal = ['bulk', 'cut'].includes(profile.training_style)
+    ? profile.training_style
+    : onboardingGoal;
+
   const [draft, setDraft] = useState<SocialProfileDraft>({
     ...profile,
-    instagram_handle: '',
+    instagram_handle: profile.instagram_handle ?? '',
     website_url: '',
-    training_style: ['bulk', 'cut'].includes(profile.training_style) ? profile.training_style : '',
+    training_style: initialGoal,
+    is_public: profile.is_public ?? true,
   });
   const [invalid, setInvalid] = useState(false);
   const [saveError, setSaveError] = useState(false);
   const save = async () => {
-    if (!validateSocialProfile(draft).valid) {
+    const cleanedHandle = draft.instagram_handle.trim().replace(/^@/, '');
+    const toSave: SocialProfileDraft = {
+      ...draft,
+      instagram_handle: cleanedHandle,
+    };
+    if (!validateSocialProfile(toSave).valid) {
       setInvalid(true);
       return;
     }
     setSaveError(false);
-    if (await onSave(draft)) onClose();
+    if (await onSave(toSave)) onClose();
     else setSaveError(true);
   };
   return (
@@ -74,6 +90,24 @@ export function SocialProfileEditor({
             value={draft.training_style}
             onChange={(training_style: string) => setDraft({ ...draft, training_style })}
             testID="social-goal"
+          />
+          <PlanTextField
+            label={t('friends.instagram')}
+            placeholder="@username"
+            value={
+              draft.instagram_handle
+                ? draft.instagram_handle.startsWith('@')
+                  ? draft.instagram_handle
+                  : `@${draft.instagram_handle}`
+                : ''
+            }
+            onChangeText={(instagram_handle) =>
+              setDraft({ ...draft, instagram_handle: instagram_handle.replace(/^@/, '').trim() })
+            }
+            maxLength={31}
+            autoCapitalize="none"
+            autoCorrect={false}
+            testID="social-instagram"
           />
           <SwitchRow
             title={t('friends.publicLabel')}

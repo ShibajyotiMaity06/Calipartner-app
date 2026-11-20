@@ -40,17 +40,32 @@ export function CardioHub({
         />
         <Text variant="title1">{t('homeRefresh.cardio')}</Text>
       </View>
+      <View style={styles.noticeCard} testID="cardio-launch-notice">
+        <Ionicons name="information-circle-outline" size={20} color={dark.sky} />
+        <Text variant="bodyS" color={dark.textMid} style={{ flex: 1 }}>
+          {t('workouts.cardio.storeLaunchNotice')}
+        </Text>
+      </View>
       {options.map(({ flow, icon }) => (
         <Pressable
           key={flow}
-          onPress={() => onSelect(flow)}
+          disabled={true}
           accessibilityRole="button"
           accessibilityLabel={t(`homeRefresh.${flow}`)}
-          style={({ pressed }) => [styles.option, pressed && { backgroundColor: dark.s3 }]}
+          accessibilityState={{ disabled: true }}
+          style={[styles.option, styles.optionDisabled]}
           testID={`cardio-${flow}`}
         >
-          <Ionicons name={icon} size={homeLayout.iconSize} color={dark.sky} />
-          <Text variant="label">{t(`homeRefresh.${flow}`)}</Text>
+          <Ionicons name={icon} size={homeLayout.iconSize} color={dark.textLo} />
+          <View style={{ flex: 1, gap: 2 }}>
+            <Text variant="label" color={dark.textLo}>
+              {t(`homeRefresh.${flow}`)}
+            </Text>
+            <Text variant="micro" color={dark.textLo}>
+              {t('workouts.cardio.availableOnLaunch')}
+            </Text>
+          </View>
+          <Ionicons name="lock-closed-outline" size={16} color={dark.textLo} />
         </Pressable>
       ))}
     </ScrollView>
@@ -61,6 +76,16 @@ const createStyles = (dark: ReturnType<typeof useAppearance>['colors']) =>
   StyleSheet.create({
     content: { padding: space[3], gap: space[3], paddingBottom: space[7] },
     header: { flexDirection: 'row', alignItems: 'center', gap: space[2] },
+    noticeCard: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: space[2],
+      padding: space[3],
+      backgroundColor: dark.s1,
+      borderRadius: radius.control,
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: dark.hairlineLit,
+    },
     back: {
       minHeight: homeLayout.touchSize,
       minWidth: homeLayout.touchSize,
@@ -77,5 +102,8 @@ const createStyles = (dark: ReturnType<typeof useAppearance>['colors']) =>
       backgroundColor: dark.s2,
       borderWidth: StyleSheet.hairlineWidth,
       borderColor: dark.hairlineLit,
+    },
+    optionDisabled: {
+      opacity: 0.6,
     },
   });

@@ -230,7 +230,7 @@ export function WorkoutLoggerModal({
           ...set,
           setNumber: index + 1,
           isWarmup: false,
-          completed: true,
+          completed: false,
         })),
       },
     ]);
@@ -262,7 +262,7 @@ export function WorkoutLoggerModal({
         reps: nextReps,
         weightKg: nextWeight,
         isWarmup: false,
-        completed: true,
+        completed: false,
       };
 
       copy[exerciseIndex] = {

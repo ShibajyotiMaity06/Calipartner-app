@@ -90,7 +90,7 @@ export function useFriends({ profileOnly = false }: { profileOnly?: boolean } = 
           training_style: '',
           instagram_handle: '',
           website_url: '',
-          is_public: false,
+          is_public: true,
           relationship: 'self',
           request_id: null,
         });

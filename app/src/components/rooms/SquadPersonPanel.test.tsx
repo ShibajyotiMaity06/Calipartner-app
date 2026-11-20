@@ -64,6 +64,10 @@ vi.mock('@/hooks/useSquad', () => ({
   useSquadDetails: () => squadDetailsState,
 }));
 
+vi.mock('@/components/avatar/PublicAvatar', () => ({
+  PublicAvatar: 'PublicAvatar',
+}));
+
 vi.mock('./SquadViews', () => ({
   createSquadStyles: () => ({}),
   useSquadStyles: () => ({}),

@@ -22,6 +22,9 @@ vi.mock('@/components/onboarding/PlanPrimitives', () => ({
   PlanTextField: 'TextInput',
   planStyles: { reviewContent: {} },
 }));
+vi.mock('@/hooks/useTargets', () => ({
+  useTargets: () => ({ currentGoalProfile: null }),
+}));
 import { PublicSocialProfile } from './PublicSocialProfile';
 import { SocialProfileEditor } from './SocialProfileEditor';
 
@@ -123,7 +126,7 @@ describe('social profile controls', () => {
     });
     expect(renderer.root.findByProps({ testID: 'social-sharing' }).props.value).toBe(false);
     expect(renderer.root.findAllByProps({ testID: 'social-website' })).toHaveLength(0);
-    expect(renderer.root.findAllByProps({ testID: 'social-instagram' })).toHaveLength(0);
+    expect(renderer.root.findAllByProps({ testID: 'social-instagram' })).toHaveLength(1);
     await act(async () =>
       renderer.root.findByProps({ testID: 'social-goal' }).props.onChange('bulk'),
     );
@@ -138,7 +141,7 @@ describe('social profile controls', () => {
         is_public: true,
         training_style: 'bulk',
         website_url: '',
-        instagram_handle: '',
+        instagram_handle: 'private_handle',
       }),
     );
     expect(close).not.toHaveBeenCalled();

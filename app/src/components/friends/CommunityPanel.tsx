@@ -97,6 +97,19 @@ export function CommunityPanel({
         <View style={styles.flex} />
         {!embedded && <HeaderActions />}
         {iconButton(
+          'person-add-outline',
+          t('community.invite'),
+          () => {
+            if (!friends.ownProfile) return;
+            setShareError(false);
+            void Share.share({
+              message: t('community.shareMessage', { username: friends.ownProfile.username }),
+            }).catch(() => setShareError(true));
+          },
+          'community-invite',
+          !friends.ownProfile,
+        )}
+        {iconButton(
           'notifications-outline',
           t('notifications.title'),
           onNotifications,
@@ -124,22 +137,6 @@ export function CommunityPanel({
             {t('community.subtitle')}
           </Text>
         </View>
-        <Button
-          variant="secondary"
-          fullWidth={false}
-          size="sm"
-          label={t('community.invite')}
-          disabled={!friends.ownProfile}
-          testID="community-invite"
-          icon={<Ionicons name="person-add-outline" size={space[4]} color={colors.textHi} />}
-          onPress={() => {
-            if (!friends.ownProfile) return;
-            setShareError(false);
-            void Share.share({
-              message: t('community.shareMessage', { username: friends.ownProfile.username }),
-            }).catch(() => setShareError(true));
-          }}
-        />
       </View>
       {shareError ? (
         <Text accessibilityRole="alert" color={colors.danger}>

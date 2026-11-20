@@ -1974,6 +1974,8 @@ export const en = {
       distance: 'Distance (km)',
       calculatedPace: 'Avg Pace',
       calculatedSpeed: 'Avg Speed',
+      storeLaunchNotice: 'Available only on Play Store and App Store. Please wait till launch.',
+      availableOnLaunch: 'Available only on Play Store & App Store',
     },
     summary: {
       completeTitle: 'Workout Complete!',

@@ -3,6 +3,7 @@ import { act, create, type ReactTestRenderer } from 'react-test-renderer';
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 vi.mock('@/components/HeaderActions', () => ({ HeaderActions: 'HeaderActions' }));
 vi.mock('./EditSquadName', () => ({ EditSquadName: 'EditSquadName' }));
+vi.mock('@/components/avatar/PublicAvatar', () => ({ PublicAvatar: 'PublicAvatar' }));
 const state = vi.hoisted(() => ({
   paid: false,
   count: 2,
@@ -21,6 +22,8 @@ vi.mock('react-native', () => ({
   ScrollView: 'ScrollView',
   SafeAreaView: 'SafeAreaView',
   RefreshControl: 'RefreshControl',
+  NativeModules: {},
+  Platform: { OS: 'web', select: (x: any) => x?.default ?? x?.web },
   useWindowDimensions: () => ({ fontScale: 1 }),
   StyleSheet: { create: (s: unknown) => s, hairlineWidth: 1 },
   BackHandler: {

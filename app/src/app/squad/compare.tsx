@@ -1,5 +1,6 @@
 import { useTheme as useAppearance } from '@calipartner/ui/theme';
-import { NavigationIcon } from '@calipartner/ui';
+import { NavigationIcon, avatarLayout, radius, space } from '@calipartner/ui';
+import { Ionicons } from '@expo/vector-icons';
 import { PublicAvatar } from '@/components/avatar/PublicAvatar';
 import React, { useCallback, useState } from 'react';
 import { RefreshControl, SafeAreaView, ScrollView, View } from 'react-native';
@@ -128,31 +129,66 @@ export default function SquadCompareScreen() {
             </View>
             <Text variant="bodyS">{t('squadDesign.ownGoals')}</Text>
             <View style={[styles.card, styles.columns]}>
-              {[left, right].map((member, index) => (
-                <View
-                  key={member.user_id}
-                  style={styles.column}
-                  accessible
-                  accessibilityLabel={
-                    member.score == null
-                      ? memberName(member) + ', ' + t('squadDesign.noGoals')
-                      : t('squadDesign.scoreSummary', {
-                          name: memberName(member),
-                          score: member.score,
-                        })
-                  }
-                >
-                  <PublicAvatar userId={member.user_id} name={memberName(member)} />
-                  <Text>{memberName(member)}</Text>
-                  <Text variant="numeralM" tabular>
-                    {member.score == null ? '—' : t('squadDesign.percent', { value: member.score })}
-                  </Text>
-                  <ProgressTrack
-                    percent={member.score}
-                    color={index === 0 ? dark.iris : dark.teal}
-                  />
-                </View>
-              ))}
+              {[left, right].map((member, index) => {
+                const isLockedOtherAvatar = !hasActiveAccess && !member.is_self;
+                return (
+                  <View
+                    key={member.user_id}
+                    style={styles.column}
+                    accessible
+                    accessibilityLabel={
+                      member.score == null
+                        ? memberName(member) + ', ' + t('squadDesign.noGoals')
+                        : t('squadDesign.scoreSummary', {
+                            name: memberName(member),
+                            score: member.score,
+                          })
+                    }
+                  >
+                    {isLockedOtherAvatar ? (
+                      <View
+                        style={{
+                          height: avatarLayout.compareHeight,
+                          justifyContent: 'center',
+                          alignItems: 'center',
+                          gap: space[1],
+                        }}
+                        testID={`locked-avatar-${member.user_id}`}
+                      >
+                        <View
+                          style={{
+                            width: 52,
+                            height: 52,
+                            borderRadius: radius.full,
+                            backgroundColor: dark.s2,
+                            justifyContent: 'center',
+                            alignItems: 'center',
+                            borderWidth: 1,
+                            borderColor: dark.hairlineLit,
+                          }}
+                        >
+                          <Ionicons name="lock-closed" size={20} color={dark.copper} />
+                        </View>
+                        <Text variant="micro" color={dark.textMid}>
+                          {t('squadDesign.unlock')}
+                        </Text>
+                      </View>
+                    ) : (
+                      <PublicAvatar userId={member.user_id} name={memberName(member)} />
+                    )}
+                    <Text>{memberName(member)}</Text>
+                    <Text variant="numeralM" tabular>
+                      {member.score == null
+                        ? '—'
+                        : t('squadDesign.percent', { value: member.score })}
+                    </Text>
+                    <ProgressTrack
+                      percent={member.score}
+                      color={index === 0 ? dark.iris : dark.teal}
+                    />
+                  </View>
+                );
+              })}
             </View>
             <View style={styles.card}>
               <Text variant="heading">{t('squadDesign.macros')}</Text>

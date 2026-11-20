@@ -5,6 +5,7 @@ import { useRouter, type Href } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { Avatar, Button, homeLayout, space, Text } from '@calipartner/ui';
 import type { RankedSquadMember } from '@calipartner/core';
+import { PublicAvatar } from '@/components/avatar/PublicAvatar';
 import { useSquadDetails } from '@/hooks/useSquad';
 import { useSubscription } from '@/hooks/useSubscription';
 import { t } from '@/i18n';
@@ -87,6 +88,12 @@ export function SquadPersonPanel({
               </View>
             </View>
           </View>
+        </View>
+        <View
+          style={{ alignItems: 'center', marginVertical: space[2] }}
+          testID="squad-person-avatar"
+        >
+          <PublicAvatar userId={person.user_id} name={memberName(person)} />
         </View>
         {other && (
           <Button

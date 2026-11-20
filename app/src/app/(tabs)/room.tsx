@@ -1,7 +1,16 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { BackHandler, RefreshControl, SafeAreaView, ScrollView, View } from 'react-native';
+import {
+  BackHandler,
+  Pressable,
+  RefreshControl,
+  SafeAreaView,
+  ScrollView,
+  View,
+} from 'react-native';
 import { useFocusEffect, useLocalSearchParams, useRouter, type Href } from 'expo-router';
-import { Button, Text } from '@calipartner/ui';
+import { Ionicons } from '@expo/vector-icons';
+import { Avatar, Button, Text, homeLayout, radius, space } from '@calipartner/ui';
+import { useTheme as useAppearance } from '@calipartner/ui/theme';
 import type { RoomMemberSnapshot } from '@calipartner/core';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRooms } from '@/hooks/useRooms';
@@ -34,6 +43,7 @@ import { SquadVisibilityModal } from '@/components/rooms/SquadVisibilityModal';
 import {
   PeopleSelector,
   SquadLeaderboard,
+  goalName,
   memberName,
   useSquadStyles,
 } from '@/components/rooms/SquadViews';
@@ -43,6 +53,7 @@ type ModalName =
   'connect' | 'join' | 'settings' | 'privacy' | 'invite' | 'inbox' | 'paywall' | null;
 export default function RoomScreen() {
   const styles = useSquadStyles();
+  const { colors: dark } = useAppearance();
 
   const router = useRouter();
   const { user, profile } = useAuth();
@@ -360,12 +371,50 @@ export default function RoomScreen() {
                     <View style={styles.stack} testID="squad-person-inline">
                       <Text variant="heading">{t('fixNovember.person')}</Text>
                       <Text variant="bodyS">{t('fixNovember.personHint')}</Text>
-                      <Button
-                        variant="secondary"
-                        label={memberName(selectedPerson)}
+                      <Pressable
+                        style={{
+                          flexDirection: 'row',
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
+                          padding: space[3],
+                          backgroundColor: dark.s1,
+                          borderRadius: radius.control,
+                          borderWidth: 1,
+                          borderColor: dark.hairlineLit,
+                          minHeight: homeLayout.touchSize,
+                        }}
                         onPress={() => setPicker('person')}
+                        accessibilityRole="button"
+                        accessibilityLabel={memberName(selectedPerson)}
                         testID="squad-choose-person"
-                      />
+                        aria-label={memberName(selectedPerson)}
+                        {...({ label: memberName(selectedPerson) } as any)}
+                      >
+                        <View
+                          style={{
+                            flexDirection: 'row',
+                            alignItems: 'center',
+                            gap: space[2],
+                            flex: 1,
+                          }}
+                        >
+                          <Avatar
+                            name={memberName(selectedPerson)}
+                            uri={selectedPerson.avatar_url ?? undefined}
+                            size="sm"
+                            identityHue={selectedPerson.is_self ? 'iris' : 'teal'}
+                          />
+                          <View style={{ flex: 1 }}>
+                            <Text variant="heading" color={dark.textHi}>
+                              {memberName(selectedPerson)}
+                            </Text>
+                            <Text variant="micro" color={dark.textMid}>
+                              {goalName(selectedPerson)}
+                            </Text>
+                          </View>
+                        </View>
+                        <Ionicons name="chevron-down" size={18} color={dark.textMid} />
+                      </Pressable>
                       <SquadPersonPanel
                         roomId={roomId}
                         person={selectedPerson}
