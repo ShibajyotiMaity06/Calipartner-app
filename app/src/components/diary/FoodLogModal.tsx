@@ -43,6 +43,8 @@ import {
   FoodPhotoResultsEditor,
 } from '@/components/food_photo';
 import { RecipeBrowseView } from '@/components/recipes';
+import { posthog } from '@/lib/posthog';
+import { posthogLog } from '@/lib/posthogLogs';
 
 export interface FoodLogModalProps {
   visible: boolean;
@@ -202,6 +204,14 @@ export function FoodLogModal({
           return next;
         });
       }
+      posthog?.capture('meal_logged', {
+        logging_method: 'batch',
+        item_count: selection.length,
+      });
+      posthogLog.info('meal logging completed', {
+        logging_method: 'batch',
+        item_count: selection.length,
+      });
       onLogged?.();
       onClose();
     } catch {
@@ -256,6 +266,10 @@ export function FoodLogModal({
       source: portionDefaults ? 'history' : data.food.barcode ? 'scan' : 'search',
     });
     if (!saved) throw new Error(t('fixNovember.saveFailed'));
+    posthog?.capture('meal_logged', {
+      logging_method: portionDefaults ? 'history' : data.food.barcode ? 'scan' : 'search',
+      item_count: 1,
+    });
     if (onLogged) onLogged();
     setSelectedFoodForQuantity(null);
     setLoggedToast(data.food.name);
@@ -380,6 +394,10 @@ export function FoodLogModal({
     });
     setShowResultsEditor(false);
     setPhotoResults(null);
+    posthog?.capture('meal_logged', {
+      logging_method: 'photo',
+      item_count: candidatesToSave.length,
+    });
     if (onLogged) onLogged();
     onClose();
   };

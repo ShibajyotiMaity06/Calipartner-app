@@ -3,6 +3,7 @@ import { cachedRead } from './offlineReadService';
 import type { MealSection, PlanExercise, PlanPreferences, WeeklyPlanView } from '@calipartner/core';
 import { getSupabase } from '@/lib/supabase';
 import { secureStoreAdapter } from '@/lib/secureStore';
+import { startAiGeneration } from '@/lib/aiObservability';
 import { generateClientUuid } from './foodService';
 import { acceptAiProcessingConsent } from './aiFoodPhotoService';
 
@@ -62,6 +63,16 @@ export async function buildPersonalWeeklyPlan(
     singleDay ? 'build-day-sections' : 'build',
     preferences,
   );
+  const generation = startAiGeneration({
+    spanName: 'weekly_plan_generation',
+    sessionId: null,
+    input: [
+      {
+        role: 'user',
+        content: JSON.stringify({ preferences, scope: singleDay ? 'day' : 'week' }),
+      },
+    ],
+  });
   const { data, error } = await client.functions.invoke('weekly-plan', {
     body: { request_id: request.id, preferences, ...(singleDay ? { scope: 'day' } : {}) },
   });
@@ -78,6 +89,7 @@ export async function buildPersonalWeeklyPlan(
   invalidateReadCache('weekly-plan:', userId);
   const plan = await getPersonalWeeklyPlan(userId);
   if (!plan || plan.id !== request.id) throw new Error('PLAN_UNAVAILABLE');
+  generation.captureSuccess([{ role: 'assistant', content: JSON.stringify(plan) }]);
   invalidateReadCache('weekly-plan:', userId);
   invalidateReadCache('workout-plan:', userId);
   await request.clear();

@@ -37,6 +37,7 @@ import { EvolutionCharacter } from '@/components/onboarding/EvolutionCharacter';
 import { OnboardingQuestion, questionCopy } from '@/components/onboarding/OnboardingQuestion';
 import { FinishOnboardingProfile } from '@/components/onboarding/FinishOnboardingProfile';
 import { PaywallModal } from '@/components/rooms/PaywallModal';
+import { posthog } from '@/lib/posthog';
 
 export const ACTIVE_ONBOARDING_STEPS = ONBOARDING_STEPS_ORDER;
 
@@ -237,6 +238,7 @@ function Questionnaire({ ownerId }: { ownerId: string }) {
       const destination = await afterSetupDestination(ownerId);
       if (!active.current) return;
       completed.current = true;
+      posthog?.capture('onboarding_completed');
       await clearOnboardingDraft(await getDb(), ownerId).catch(() => {});
       if (active.current) router.replace(destination as never);
     } catch (error) {

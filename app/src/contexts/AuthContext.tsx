@@ -15,6 +15,7 @@ import { secureStoreAdapter } from '@/lib/secureStore';
 import { readOfflineSession } from '@/services/sessionPersistence';
 import { useNetworkStatus } from '@/hooks/useNetworkStatus';
 import { migrateGuestData } from '@/services/guestMigration';
+import { posthog } from '@/lib/posthog';
 
 const log = createLogger('auth-context');
 
@@ -103,7 +104,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     const applySession = (nextSession: Session | null) => {
       if (!mounted) return;
-      activeUserId.current = nextSession?.user.id ?? null;
+      const previousUserId = activeUserId.current;
+      const nextUser = nextSession?.user ?? null;
+
+      if (nextUser?.id && nextUser.id !== previousUserId) {
+        if (previousUserId) posthog?.reset();
+        posthog?.identify(
+          nextUser.id,
+          nextUser.email ? { $set: { $email: nextUser.email } } : undefined,
+        );
+      } else if (!nextUser && previousUserId) {
+        posthog?.reset();
+      }
+
+      activeUserId.current = nextUser?.id ?? null;
       setSession(nextSession);
       setUser(nextSession?.user ?? null);
       if (nextSession) setIsGuest(false);
@@ -288,6 +302,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } catch (e) {
       log.warn('signOut error', String(e));
     } finally {
+      if (activeUserId.current) posthog?.reset();
       activeUserId.current = null;
       setSession(null);
       setUser(null);

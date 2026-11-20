@@ -30,6 +30,8 @@ import { shareRoomWorkout } from '@/services/roomExtrasService';
 import { generateClientUuid } from '@/services/foodService';
 import { t } from '@/i18n';
 import exercises from '@/data/exercises_seed.json';
+import { posthog } from '@/lib/posthog';
+import { posthogLog } from '@/lib/posthogLogs';
 
 type Category = 'upper' | 'lower' | 'core' | 'full';
 const groups: Record<Category, string[]> = {
@@ -117,6 +119,14 @@ export function WorkoutLogModal({
         sets: values,
       });
       setSaved(logged);
+      posthog?.capture('workout_logged', {
+        workout_category: category,
+        set_count: values.length,
+      });
+      posthogLog.info('workout logging completed', {
+        workout_category: category,
+        set_count: values.length,
+      });
       setStage('diary');
       setSharing(false);
       setShared(false);
@@ -138,6 +148,7 @@ export function WorkoutLogModal({
       const key = `${saved.id}:${roomId}`;
       if (!shareIds.current.has(key)) shareIds.current.set(key, generateClientUuid());
       await shareRoomWorkout(shareIds.current.get(key)!, roomId, saved.id);
+      posthog?.capture('workout_shared');
       setShared(true);
       setSharing(false);
     } catch (failure) {

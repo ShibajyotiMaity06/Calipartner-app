@@ -21,6 +21,8 @@ import {
 import { getSupabase } from '@/lib/supabase';
 import { createLogger } from '@/lib/logger';
 import { t } from '@/i18n';
+import { posthog } from '@/lib/posthog';
+import { posthogLog } from '@/lib/posthogLogs';
 
 const logger = createLogger('useSubscription');
 
@@ -169,6 +171,11 @@ export function useSubscription() {
               Boolean(latest.period_end && new Date(latest.period_end) > new Date())))
         ) {
           setEntitlement(latest);
+          const subscriptionTier = latest.tier ?? 'free';
+          posthog?.capture('subscription_purchased', { subscription_tier: subscriptionTier });
+          posthogLog.info('subscription purchase verified', {
+            subscription_tier: subscriptionTier,
+          });
           return 'verified';
         }
       }
@@ -198,6 +205,9 @@ export function useSubscription() {
           new Date(latest.period_end) > new Date(),
         );
       if (!active) setError(t('fixes.paymentPending'));
+      if (active) {
+        posthog?.capture('subscription_restored', { subscription_tier: latest?.tier ?? 'free' });
+      }
       return active;
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : String(err);

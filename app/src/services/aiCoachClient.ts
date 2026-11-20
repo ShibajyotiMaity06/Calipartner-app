@@ -1,6 +1,7 @@
 import { aiRequestKey } from './aiRequestKey';
 import { getSupabase } from '@/lib/supabase';
 import { t } from '@/i18n';
+import { startAiGeneration } from '@/lib/aiObservability';
 import type { CoachSuggestion } from '@/components/coach/types';
 import { validateCoachMealDraft, type CoachMealDraft } from '@calipartner/core';
 
@@ -64,6 +65,11 @@ export async function queryAiCoach(
     messages,
     meal_logging: options?.mealLogging === true,
   });
+  const generation = startAiGeneration({
+    spanName: 'ai_coach_response',
+    sessionId: conversationId ?? null,
+    input: messages,
+  });
   const { data, error } = await client.functions.invoke('ai-coach', {
     body: { ...body, request_id: request.id },
   });
@@ -82,8 +88,10 @@ export async function queryAiCoach(
   if (typeof data?.message?.content !== 'string' || !data.message.content.trim())
     throw new Error(t('brandRepair.coachUnavailable'));
   request.acknowledge();
+  const content = cleanCoachResponse(data.message.content);
+  generation.captureSuccess([{ role: 'assistant', content }]);
   return {
-    content: cleanCoachResponse(data.message.content),
+    content,
     suggestions: data.suggestions,
     mealDraft: data.meal_draft ? validateCoachMealDraft(data.meal_draft) : null,
     source: 'edge_function',

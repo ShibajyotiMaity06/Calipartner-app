@@ -127,5 +127,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     supabaseAnonKey: process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY ?? '',
     revenueCatAppleKey: process.env.EXPO_PUBLIC_REVENUECAT_APPLE_KEY ?? '',
     revenueCatGoogleKey: process.env.EXPO_PUBLIC_REVENUECAT_GOOGLE_KEY ?? '',
+    posthogProjectToken: process.env.EXPO_PUBLIC_POSTHOG_PROJECT_TOKEN ?? '',
+    posthogHost: process.env.EXPO_PUBLIC_POSTHOG_HOST ?? '',
   },
 });

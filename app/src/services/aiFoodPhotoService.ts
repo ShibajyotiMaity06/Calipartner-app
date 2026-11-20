@@ -16,6 +16,7 @@ import {
   type MealSection,
 } from '@calipartner/core';
 import { createLogger } from '@/lib/logger';
+import { startAiGeneration } from '@/lib/aiObservability';
 import { logFoodEntry, saveCustomFood } from './foodService';
 import type { LocalDb } from './accountDataService';
 
@@ -219,6 +220,19 @@ export async function analyzeFoodPhoto(
       ? { description: options.description }
       : { image: options.imageBase64, mime_type: options.mimeType || 'image/jpeg' };
   const request = aiRequestKey(supabase, 'food_photo', body);
+  const generation = startAiGeneration({
+    spanName: 'food_photo_analysis',
+    sessionId: null,
+    input: [
+      options.description !== undefined
+        ? { role: 'user', content: options.description }
+        : {
+            role: 'user',
+            // Base64 image data is not suitable for event ingestion; the Edge Function receives it unchanged.
+            content: [{ type: 'image', image: 'uploaded_food_photo' }],
+          },
+    ],
+  });
   const { data, error } = await supabase.functions.invoke('ai-food-photo', {
     body: { ...body, request_id: request.id },
   });
@@ -297,6 +311,9 @@ export async function analyzeFoodPhoto(
   if (!data.candidates.length)
     throw new AiFoodPhotoServiceError('NO_FOOD_DETECTED', 'Please provide a clear photo of food.');
   request.acknowledge();
+  generation.captureSuccess([
+    { role: 'assistant', content: JSON.stringify(data.candidates) },
+  ]);
   return data as unknown as FoodPhotoAnalysisResponse;
 }
 
