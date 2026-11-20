@@ -383,7 +383,9 @@ export default function RoomScreen() {
                           borderColor: dark.hairlineLit,
                           minHeight: homeLayout.touchSize,
                         }}
-                        onPress={() => setPicker('person')}
+                        onPress={() =>
+                          setPicker((current) => (current === 'person' ? null : 'person'))
+                        }
                         accessibilityRole="button"
                         accessibilityLabel={memberName(selectedPerson)}
                         testID="squad-choose-person"
@@ -413,8 +415,22 @@ export default function RoomScreen() {
                             </Text>
                           </View>
                         </View>
-                        <Ionicons name="chevron-down" size={18} color={dark.textMid} />
+                        <Ionicons
+                          name={picker === 'person' ? 'chevron-up' : 'chevron-down'}
+                          size={18}
+                          color={dark.textMid}
+                        />
                       </Pressable>
+                      {picker === 'person' && (
+                        <SquadMemberPicker
+                          visible
+                          members={otherMembers}
+                          excludedId=""
+                          selectedId={selectedPerson?.user_id ?? ''}
+                          onSelect={setPersonId}
+                          onClose={() => setPicker(null)}
+                        />
+                      )}
                       <SquadPersonPanel
                         roomId={roomId}
                         person={selectedPerson}
@@ -557,16 +573,6 @@ export default function RoomScreen() {
             await actions.blockUser(id);
             await refresh();
           }}
-        />
-      )}
-      {picker === 'person' && left && right && (
-        <SquadMemberPicker
-          visible
-          members={otherMembers}
-          excludedId=""
-          selectedId={selectedPerson?.user_id ?? ''}
-          onSelect={setPersonId}
-          onClose={() => setPicker(null)}
         />
       )}
     </SafeAreaView>

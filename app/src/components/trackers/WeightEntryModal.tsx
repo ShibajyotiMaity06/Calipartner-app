@@ -192,28 +192,30 @@ export function WeightEntryModal({
               </Text>
             </View>
 
-            {/* Unit Chip (kg / lb) */}
-            <View style={styles.unitChipWrap} testID="weight-unit-chips">
-              <Button
-                variant="secondary"
-                fullWidth={false}
-                label="kg"
+            {/* Unit Toggle (kg / lb) */}
+            <View style={styles.unitToggleContainer} testID="weight-unit-chips">
+              <Pressable
                 testID="btn-weight-unit-kg"
-                style={[styles.unitChip, unit === 'kg' && styles.unitChipActive]}
+                style={[styles.unitToggleOption, unit === 'kg' && styles.unitToggleOptionActive]}
                 onPress={() => handleUnitToggle('kg')}
                 accessibilityRole="button"
                 accessibilityLabel="Kilograms"
-              />
-              <Button
-                variant="secondary"
-                fullWidth={false}
-                label="lb"
+              >
+                <Text style={[styles.unitToggleText, unit === 'kg' && styles.unitToggleTextActive]}>
+                  kg
+                </Text>
+              </Pressable>
+              <Pressable
                 testID="btn-weight-unit-lb"
-                style={[styles.unitChip, unit === 'lb' && styles.unitChipActive]}
+                style={[styles.unitToggleOption, unit === 'lb' && styles.unitToggleOptionActive]}
                 onPress={() => handleUnitToggle('lb')}
                 accessibilityRole="button"
                 accessibilityLabel="Pounds"
-              />
+              >
+                <Text style={[styles.unitToggleText, unit === 'lb' && styles.unitToggleTextActive]}>
+                  lb
+                </Text>
+              </Pressable>
             </View>
           </View>
 
@@ -447,32 +449,36 @@ const createStyles = (dark: ReturnType<typeof useAppearance>['colors']) =>
       color: dark.textHi,
       fontWeight: '700',
     },
-    unitChipWrap: {
+    unitToggleContainer: {
       flexDirection: 'row',
       backgroundColor: dark.s2,
       borderRadius: radius.control,
-      padding: 2,
+      padding: 3,
       borderWidth: 1,
-      borderColor: dark.hairline,
+      borderColor: dark.hairlineLit,
+      alignItems: 'center',
     },
-    unitChip: {
-      minHeight: 32,
+    unitToggleOption: {
       paddingHorizontal: space[3],
+      paddingVertical: space[1],
+      borderRadius: radius.control - 2,
       justifyContent: 'center',
       alignItems: 'center',
-      borderRadius: radius.control - 2,
+      minWidth: 42,
+      minHeight: 28,
     },
-    unitChipActive: {
-      backgroundColor: dark.s3,
+    unitToggleOptionActive: {
+      backgroundColor: dark.copper,
     },
-    unitChipText: {
-      fontSize: typeTokens.micro.fontSize,
-      fontFamily: typeTokens.micro.fontFamily,
-      color: dark.textLo,
-      fontWeight: '700',
+    unitToggleText: {
+      fontSize: typeTokens.label.fontSize,
+      fontFamily: typeTokens.label.fontFamily,
+      color: dark.textMid,
+      textTransform: 'uppercase',
     },
-    unitChipTextActive: {
-      color: dark.textHi,
+    unitToggleTextActive: {
+      color: dark.onBrand,
+      fontFamily: typeTokens.heading.fontFamily,
     },
     formScroll: {
       maxHeight: 440,

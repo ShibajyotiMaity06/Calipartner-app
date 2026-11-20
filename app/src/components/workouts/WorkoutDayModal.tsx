@@ -64,7 +64,8 @@ export function WorkoutDayModal({
   const [building, setBuilding] = useState(false),
     [form, setForm] = useState(false),
     [busy, setBusy] = useState(false),
-    [allLogged, setAllLogged] = useState(false);
+    [allLogged, setAllLogged] = useState(false),
+    [routineExpanded, setRoutineExpanded] = useState(true);
   const [error, setError] = useState<string | null>(null),
     [notice, setNotice] = useState<string | null>(null);
   const session = useRef(newWorkoutSessionRequest()),
@@ -89,6 +90,7 @@ export function WorkoutDayModal({
       setError(null);
       setNotice(null);
       setAllLogged(false);
+      setRoutineExpanded(true);
       setEditLog(null);
       setDeleteLog(null);
       setPicker(false);
@@ -347,87 +349,125 @@ export function WorkoutDayModal({
                     <Text testID="workout-rest-day">{t('workoutFlow.rest')}</Text>
                   ) : (
                     <View style={styles.card} testID="workout-paid-routine">
-                      <Text variant="heading">{day.title}</Text>
-                      {day.exercises.map((exercise) => (
-                        <View key={exercise.id} style={styles.exercise}>
-                          <Pressable
-                            style={styles.flex}
-                            accessibilityRole="button"
-                            accessibilityLabel={t('workoutFlow.logExercise', {
-                              name: exercise.name,
-                            })}
-                            disabled={busy}
-                            onPress={() => setLogging(exercise)}
-                            testID={`workout-plan-log-${exercise.id}`}
-                          >
-                            <Text variant="heading">{exercise.name}</Text>
-                            {exercise.targetSets.map((set, index) => (
-                              <Text key={index} variant="bodyS" tabular>
-                                {t('workoutFlow.setSummary', {
-                                  set: index + 1,
-                                  reps: set.reps,
-                                })}
-                              </Text>
-                            ))}
-                          </Pressable>
-                          <Button
-                            variant="tertiary"
-                            fullWidth={false}
-                            label={t('workoutFlow.edit', { name: exercise.name })}
-                            iconOnly
-                            icon={
-                              <Ionicons
-                                name="pencil"
-                                size={homeLayout.editIconSize}
-                                color={dark.textHi}
-                              />
-                            }
-                            style={styles.icon}
-                            accessibilityRole="button"
-                            accessibilityLabel={t('workoutFlow.edit', { name: exercise.name })}
-                            disabled={busy}
-                            onPress={() => {
-                              setPlannedName(exercise.name);
-                              setEditing(exercise);
-                            }}
-                            testID={`workout-plan-edit-${exercise.id}`}
-                          />
-                          <Button
-                            variant="tertiary"
-                            fullWidth={false}
-                            label={t('workoutFlow.remove', { name: exercise.name })}
-                            iconOnly
-                            icon={
-                              <Ionicons
-                                name="remove"
-                                size={homeLayout.iconSize}
-                                color={dark.textHi}
-                              />
-                            }
-                            style={styles.icon}
-                            accessibilityRole="button"
-                            accessibilityLabel={t('workoutFlow.remove', { name: exercise.name })}
-                            disabled={busy}
-                            onPress={() => void editExercise(exercise).catch(() => {})}
-                            testID={`workout-plan-remove-${exercise.id}`}
-                          />
+                      <Pressable
+                        style={{
+                          flexDirection: 'row',
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
+                          minHeight: 36,
+                        }}
+                        onPress={() => setRoutineExpanded((prev) => !prev)}
+                        accessibilityRole="button"
+                        accessibilityLabel={day.title}
+                        testID="workout-routine-toggle"
+                      >
+                        <View
+                          style={{
+                            flex: 1,
+                            flexDirection: 'row',
+                            alignItems: 'center',
+                            gap: space[2],
+                          }}
+                        >
+                          <Text variant="heading">{day.title}</Text>
+                          {!routineExpanded && (
+                            <Text variant="micro" color={dark.textMid} tabular>
+                              ({day.exercises.length})
+                            </Text>
+                          )}
                         </View>
-                      ))}
-                      <Button
-                        label={t('workoutFlow.saveWorkout')}
-                        disabled={busy || allLogged}
-                        onPress={() =>
-                          void save(
-                            day.exercises.map((exercise) => ({
-                              exerciseName: exercise.name,
-                              sets: exercise.targetSets,
-                            })),
-                          )
-                            .then(() => setAllLogged(true))
-                            .catch(() => {})
-                        }
-                        testID="workout-save-routine"
-                      />
+                        <Ionicons
+                          name={routineExpanded ? 'chevron-up' : 'chevron-down'}
+                          size={18}
+                          color={dark.textMid}
+                        />
+                      </Pressable>
+                      {routineExpanded && (
+                        <>
+                          {day.exercises.map((exercise) => (
+                            <View key={exercise.id} style={styles.exercise}>
+                              <Pressable
+                                style={styles.flex}
+                                accessibilityRole="button"
+                                accessibilityLabel={t('workoutFlow.logExercise', {
+                                  name: exercise.name,
+                                })}
+                                disabled={busy}
+                                onPress={() => setLogging(exercise)}
+                                testID={`workout-plan-log-${exercise.id}`}
+                              >
+                                <Text variant="heading">{exercise.name}</Text>
+                                {exercise.targetSets.map((set, index) => (
+                                  <Text key={index} variant="bodyS" tabular>
+                                    {t('workoutFlow.setSummary', {
+                                      set: index + 1,
+                                      reps: set.reps,
+                                    })}
+                                  </Text>
+                                ))}
+                              </Pressable>
+                              <Button
+                                variant="tertiary"
+                                fullWidth={false}
+                                label={t('workoutFlow.edit', { name: exercise.name })}
+                                iconOnly
+                                icon={
+                                  <Ionicons
+                                    name="pencil"
+                                    size={homeLayout.editIconSize}
+                                    color={dark.textHi}
+                                  />
+                                }
+                                style={styles.icon}
+                                accessibilityRole="button"
+                                accessibilityLabel={t('workoutFlow.edit', { name: exercise.name })}
+                                disabled={busy}
+                                onPress={() => {
+                                  setPlannedName(exercise.name);
+                                  setEditing(exercise);
+                                }}
+                                testID={`workout-plan-edit-${exercise.id}`}
+                              />
+                              <Button
+                                variant="tertiary"
+                                fullWidth={false}
+                                label={t('workoutFlow.remove', { name: exercise.name })}
+                                iconOnly
+                                icon={
+                                  <Ionicons
+                                    name="remove"
+                                    size={homeLayout.iconSize}
+                                    color={dark.textHi}
+                                  />
+                                }
+                                style={styles.icon}
+                                accessibilityRole="button"
+                                accessibilityLabel={t('workoutFlow.remove', {
+                                  name: exercise.name,
+                                })}
+                                disabled={busy}
+                                onPress={() => void editExercise(exercise).catch(() => {})}
+                                testID={`workout-plan-remove-${exercise.id}`}
+                              />
+                            </View>
+                          ))}
+                          <Button
+                            label={t('workoutFlow.saveWorkout')}
+                            disabled={busy || allLogged}
+                            onPress={() =>
+                              void save(
+                                day.exercises.map((exercise) => ({
+                                  exerciseName: exercise.name,
+                                  sets: exercise.targetSets,
+                                })),
+                              )
+                                .then(() => setAllLogged(true))
+                                .catch(() => {})
+                            }
+                            testID="workout-save-routine"
+                          />
+                        </>
+                      )}
                     </View>
                   )}
                 </>
@@ -601,7 +641,7 @@ export function WorkoutDayModal({
         )}
         {customPlan && (
           <CustomWorkoutPlan
-            initial={customPlan.days}
+            initial={[]}
             weekday={weeklyPlanDayIndex(date)}
             onClose={() => setCustomPlan(null)}
             onSaved={async (content) => {
