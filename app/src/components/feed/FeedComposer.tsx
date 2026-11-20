@@ -97,6 +97,7 @@ function Composer() {
     setMessage('');
     try {
       if (!preferences?.accepted && !(await feedApi.accept())) throw new Error('FEED_UNCONFIRMED');
+      const retrying = draft.current !== null;
       const id = draft.current ?? (draft.current = generateClientUuid());
       const result = await feedApi.publish({
         id,
@@ -107,6 +108,7 @@ function Composer() {
         description: description.trim(),
         audience,
         shareProgress,
+        retrying,
       });
       router.dismissTo(('/feed/post/' + result.id) as Href);
     } catch (error) {

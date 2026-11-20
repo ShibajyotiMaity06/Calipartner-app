@@ -100,7 +100,12 @@ export const feedApi = {
     mediaType: string;
     audience: FeedAudience;
     shareProgress: boolean;
+    retrying: boolean;
   }) {
+    if (input.retrying) {
+      const posted = await rpc<FeedPost | null>('get_feed_post', { p_post: input.id });
+      if (posted?.id === input.id) return { id: posted.id };
+    }
     const file =
       input.file ??
       (Platform.OS === 'web'

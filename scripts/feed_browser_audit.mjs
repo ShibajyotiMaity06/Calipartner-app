@@ -72,7 +72,8 @@ const check = `
       assert.equal(params.get('post'), savedDraft.p_id);
       assert.deepEqual(route.request().postDataBuffer(), photo);
       publicationCount++;
-      return sendJson(route, { id: savedDraft.p_id });
+      return route.fulfill({ status: 503, json: { error: 'FEED_UNCONFIRMED' },
+        headers: { 'Access-Control-Allow-Origin': '*' } });
     }
     return route.fallback();
   });
@@ -97,6 +98,8 @@ const check = `
   await (await choosing).setFiles({ name: 'trail.png', mimeType: 'image/png', buffer: photo });
   await page.getByTestId('feed-caption').fill('A new walk');
   await page.getByTestId('feed-description').fill('An empty trail');
+  await page.getByTestId('feed-publish').click();
+  await page.getByText('We couldn’t confirm this change. Check your connection and try again.').waitFor();
   await page.getByTestId('feed-publish').click();
   await page.getByTestId('screen-feed-post').getByText('A new walk').waitFor();
   assert.equal(publicationCount, 1);
