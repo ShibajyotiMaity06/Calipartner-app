@@ -148,6 +148,35 @@ const COMING_SOON = {
   pro: ['launch.collections', 'launch.weekly'],
 } as const;
 
+interface ComparisonRow {
+  id: string;
+  label?: string;
+  labelKey?: Parameters<typeof t>[0];
+  free: boolean;
+  plus: boolean;
+  pro: boolean;
+  proOnly?: boolean;
+}
+
+const COMPARISON_ROWS: ComparisonRow[] = [
+  { id: 'workouts', label: 'Track workouts & meals', free: true, plus: true, pro: true },
+  { id: 'rooms', label: '2-person partner room', free: true, plus: true, pro: true },
+  { id: 'fasting', labelKey: 'launch.fasting', free: false, plus: true, pro: true },
+  { id: 'recipes', labelKey: 'launch.recipes', free: false, plus: true, pro: true },
+  { id: 'photos', labelKey: 'launch.photos', free: false, plus: true, pro: true },
+  { id: 'scans', labelKey: 'launch.scans', free: false, plus: false, pro: true },
+  { id: 'coach', labelKey: 'launch.coach', free: false, plus: false, pro: true },
+  { id: 'priority', labelKey: 'launch.priority', free: false, plus: false, pro: true },
+  {
+    id: 'everything',
+    labelKey: 'launch.everything',
+    free: false,
+    plus: false,
+    pro: true,
+    proOnly: true,
+  },
+];
+
 export function PaywallModal({
   onContinueFree,
   preloadPrices = false,
@@ -628,6 +657,15 @@ export function PaywallModal({
                 contentContainerStyle={styles.scrollContent}
                 showsVerticalScrollIndicator={false}
               >
+                {/* Brand Badge */}
+                <View style={styles.badgeWrapper}>
+                  <View style={styles.brandBadge}>
+                    <Text variant="micro" color={dark.apricot} style={styles.brandBadgeText}>
+                      CALIPARTNER {selectedTier.toUpperCase()}
+                    </Text>
+                  </View>
+                </View>
+
                 {/* Header Titles */}
                 <View style={styles.headerBlock}>
                   <Text
@@ -699,217 +737,169 @@ export function PaywallModal({
                   </Card>
                 )}
 
-                <View>
-                  <View style={styles.durationToggleContainer} accessibilityRole="radiogroup">
-                    {MAIN_PAYWALL_DURATIONS.map((duration) => (
-                      <TouchableOpacity
-                        key={duration}
-                        onPress={() => setSelectedDuration(duration)}
-                        disabled={actionLoading || awaitingEntitlement}
-                        style={[
-                          styles.durationToggleItem,
-                          mainDuration === duration && styles.durationToggleSelected,
-                        ]}
-                        accessibilityRole="radio"
-                        accessibilityState={{ selected: mainDuration === duration }}
-                        accessibilityLabel={t(`releaseUpdate.${duration}`)}
-                        testID={`toggle-duration-${duration}`}
-                      >
-                        <Text variant="label">{t(`releaseUpdate.${duration}`)}</Text>
-                        {duration === 'annual' && (
-                          <Text variant="micro" color={dark.actionInk}>
-                            {t('releaseUpdate.bestValue')}
-                          </Text>
-                        )}
-                      </TouchableOpacity>
-                    ))}
-                  </View>
-                </View>
-
-                {/* 2. Plan Selection Cards: Plus vs Pro (Spacious stacked layout) */}
-                <View style={styles.sectionWrap}>
-                  <Text variant="label" color={dark.textHi} style={styles.sectionHeading}>
-                    Select your plan
-                  </Text>
-
-                  <View style={styles.planCardsStack}>
-                    {/* Plus Card */}
-                    <TouchableOpacity
-                      disabled={actionLoading || awaitingEntitlement}
-                      onPress={() => setSelectedTier('plus')}
-                      style={[styles.planCard, selectedTier === 'plus' && styles.planCardSelected]}
-                      accessibilityRole="radio"
-                      accessibilityState={{ selected: selectedTier === 'plus' }}
-                      accessibilityLabel={`CaliPartner Plus, ${storePrice('plus')}`}
-                      testID="picker-size-6-20"
+                {/* Tier Selection Tabs (Plus vs Pro) */}
+                <View style={styles.tierSelectorRow} accessibilityRole="radiogroup">
+                  <TouchableOpacity
+                    disabled={actionLoading || awaitingEntitlement}
+                    onPress={() => setSelectedTier('plus')}
+                    style={[styles.tierTab, selectedTier === 'plus' && styles.tierTabSelected]}
+                    accessibilityRole="radio"
+                    accessibilityState={{ selected: selectedTier === 'plus' }}
+                    accessibilityLabel={`CaliPartner Plus, ${storePrice('plus')}`}
+                    testID="picker-size-6-20"
+                  >
+                    <Text
+                      variant="label"
+                      color={selectedTier === 'plus' ? dark.apricot : dark.textHi}
+                      style={styles.tierTabText}
                     >
-                      <View style={styles.planCardTopRow}>
-                        <View style={styles.planRadioRow}>
-                          <View
-                            style={[
-                              styles.radioCircle,
-                              selectedTier === 'plus' && styles.radioCircleActive,
-                            ]}
-                          >
-                            {selectedTier === 'plus' && <View style={styles.radioDot} />}
-                          </View>
-                          <View>
-                            <Text
-                              variant="heading"
-                              color={selectedTier === 'plus' ? dark.apricot : dark.textHi}
-                              style={styles.planNameText}
-                            >
-                              Plus
-                            </Text>
-                            <Text variant="micro" color={dark.textLo}>
-                              {t('setup.plusRoomFeature')}
-                            </Text>
-                          </View>
-                        </View>
-                      </View>
-
-                      <Text variant="bodyS" color={dark.textMid} style={styles.planSummaryText}>
-                        {t('setup.plusFeatureOne')}
-                      </Text>
-
-                      <View style={styles.priceDivider} />
-
-                      <View style={styles.priceContainer}>
-                        <View style={styles.priceMainRow}>
-                          {Platform.OS === 'web' && catalogLoading ? (
-                            <Text
-                              accessibilityLiveRegion="polite"
-                              testID="paywall-plus-price-placeholder"
-                            >
-                              {t('fixes.loadingPrices')}
-                            </Text>
-                          ) : (
-                            <Text
-                              variant="numeralM"
-                              color={dark.textHi}
-                              style={styles.priceHighlight}
-                            >
-                              {storePrice('plus')}
-                            </Text>
-                          )}
-                        </View>
-                        <Text variant="bodyS" tabular>
-                          {quote('plus', mainDuration)?.equivalent}
-                        </Text>
-                      </View>
-                    </TouchableOpacity>
-
-                    {/* Pro Card */}
-                    <TouchableOpacity
-                      disabled={actionLoading || awaitingEntitlement}
-                      onPress={() => setSelectedTier('pro')}
-                      style={[styles.planCard, selectedTier === 'pro' && styles.planCardSelected]}
-                      accessibilityRole="radio"
-                      accessibilityState={{ selected: selectedTier === 'pro' }}
-                      accessibilityLabel={`CaliPartner Pro, ${storePrice('pro')}`}
-                      testID="picker-size-21-50"
-                    >
-                      <View style={styles.planCardTopRow}>
-                        <View style={styles.planRadioRow}>
-                          <View
-                            style={[
-                              styles.radioCircle,
-                              selectedTier === 'pro' && styles.radioCircleActive,
-                            ]}
-                          >
-                            {selectedTier === 'pro' && <View style={styles.radioDot} />}
-                          </View>
-                          <View>
-                            <Text
-                              variant="heading"
-                              color={selectedTier === 'pro' ? dark.apricot : dark.textHi}
-                              style={styles.planNameText}
-                            >
-                              Pro
-                            </Text>
-                            <Text variant="micro" color={dark.textLo}>
-                              {t('setup.proRoomFeature')}
-                            </Text>
-                          </View>
-                        </View>
-                      </View>
-
-                      <Text variant="bodyS" color={dark.textMid} style={styles.planSummaryText}>
-                        {t('launch.pro')}
-                      </Text>
-
-                      <View style={styles.priceDivider} />
-
-                      <View style={styles.priceContainer}>
-                        <View style={styles.priceMainRow}>
-                          {Platform.OS === 'web' && catalogLoading ? (
-                            <Text
-                              accessibilityLiveRegion="polite"
-                              testID="paywall-pro-price-placeholder"
-                            >
-                              {t('fixes.loadingPrices')}
-                            </Text>
-                          ) : (
-                            <Text
-                              variant="numeralM"
-                              color={dark.textHi}
-                              style={styles.priceHighlight}
-                            >
-                              {storePrice('pro')}
-                            </Text>
-                          )}
-                        </View>
-                        <Text variant="bodyS" tabular>
-                          {quote('pro', mainDuration)?.equivalent}
-                        </Text>
-                      </View>
-                    </TouchableOpacity>
-                  </View>
-                </View>
-
-                {/* 3. Section 7 Feature Checklist: Dynamic for Selected Plan */}
-                <Card elevation="s1" style={styles.whatYouGetCard}>
-                  <View style={styles.featuresHeaderRow}>
-                    <Text variant="label" color={dark.textHi} style={styles.whatYouGetHeader}>
-                      {selectedTier === 'pro'
-                        ? 'What you get with Pro:'
-                        : 'What you get with Plus:'}
+                      PLUS
                     </Text>
-                  </View>
+                    {Platform.OS === 'web' && catalogLoading ? (
+                      <Text
+                        accessibilityLiveRegion="polite"
+                        testID="paywall-plus-price-placeholder"
+                        variant="micro"
+                        color={dark.textLo}
+                      >
+                        {t('fixes.loadingPrices')}
+                      </Text>
+                    ) : (
+                      <Text variant="micro" color={dark.textMid} tabular>
+                        {storePrice('plus')}
+                      </Text>
+                    )}
+                  </TouchableOpacity>
 
-                  {(selectedTier === 'pro' ? PRO_FEATURES : PLUS_FEATURES).map((feat, index) => (
-                    <View key={index} style={styles.whatYouGetItem}>
-                      <Ionicons
-                        name="checkmark-circle"
-                        size={16}
-                        color={dark.apricot}
-                        style={styles.checkIcon}
-                      />
-                      <Text variant="bodyS" color={dark.textHi} style={styles.featureItemText}>
-                        {t(feat)}
+                  <TouchableOpacity
+                    disabled={actionLoading || awaitingEntitlement}
+                    onPress={() => setSelectedTier('pro')}
+                    style={[styles.tierTab, selectedTier === 'pro' && styles.tierTabSelected]}
+                    accessibilityRole="radio"
+                    accessibilityState={{ selected: selectedTier === 'pro' }}
+                    accessibilityLabel={`CaliPartner Pro, ${storePrice('pro')}`}
+                    testID="picker-size-21-50"
+                  >
+                    <Text
+                      variant="label"
+                      color={selectedTier === 'pro' ? dark.apricot : dark.textHi}
+                      style={styles.tierTabText}
+                    >
+                      PRO
+                    </Text>
+                    {Platform.OS === 'web' && catalogLoading ? (
+                      <Text
+                        accessibilityLiveRegion="polite"
+                        testID="paywall-pro-price-placeholder"
+                        variant="micro"
+                        color={dark.textLo}
+                      >
+                        {t('fixes.loadingPrices')}
+                      </Text>
+                    ) : (
+                      <Text variant="micro" color={dark.textMid} tabular>
+                        {storePrice('pro')}
+                      </Text>
+                    )}
+                  </TouchableOpacity>
+                </View>
+
+                {/* Duration Toggle (Annual vs Semiannual) */}
+                <View style={styles.durationToggleContainer} accessibilityRole="radiogroup">
+                  {MAIN_PAYWALL_DURATIONS.map((duration) => (
+                    <TouchableOpacity
+                      key={duration}
+                      onPress={() => setSelectedDuration(duration)}
+                      disabled={actionLoading || awaitingEntitlement}
+                      style={[
+                        styles.durationToggleItem,
+                        mainDuration === duration && styles.durationToggleSelected,
+                      ]}
+                      accessibilityRole="radio"
+                      accessibilityState={{ selected: mainDuration === duration }}
+                      accessibilityLabel={t(`releaseUpdate.${duration}`)}
+                      testID={`toggle-duration-${duration}`}
+                    >
+                      <Text variant="label">{t(`releaseUpdate.${duration}`)}</Text>
+                      {duration === 'annual' && (
+                        <Text variant="micro" color={dark.actionInk}>
+                          {t('releaseUpdate.bestValue')}
+                        </Text>
+                      )}
+                    </TouchableOpacity>
+                  ))}
+                </View>
+
+                {/* Symmetry 2-Column Minimal Comparison Table */}
+                <View style={styles.tableContainer}>
+                  <View style={styles.tableHeaderRow}>
+                    <View style={styles.featureCol} />
+                    <View style={styles.checkCol}>
+                      <Text variant="label" color={dark.textMid} style={styles.colHeaderText}>
+                        FREE
                       </Text>
                     </View>
-                  ))}
+                    <View style={styles.checkCol}>
+                      <Text
+                        variant="label"
+                        color={selectedTier === 'pro' ? dark.apricot : dark.textHi}
+                        style={styles.colHeaderText}
+                      >
+                        {selectedTier === 'pro' ? 'PRO' : 'PLUS'}
+                      </Text>
+                    </View>
+                  </View>
 
-                  {selectedTier === 'plus' && (
-                    <Text variant="bodyS" color={dark.textMid}>
-                      {t('launch.planAccess')}
-                    </Text>
-                  )}
-                  <View testID="paywall-coming-soon">
-                    <Text variant="heading">{t('launch.soon')}</Text>
-                    {[...COMING_SOON.plus, ...(selectedTier === 'pro' ? COMING_SOON.pro : [])].map(
-                      (feature) => (
-                        <View key={feature} style={styles.whatYouGetItem}>
-                          <Ionicons name="time-outline" size={16} color={dark.textMid} />
-                          <Text variant="bodyS" color={dark.textMid} style={styles.featureItemText}>
-                            {t(feature)}
+                  {COMPARISON_ROWS.map((row) => {
+                    if (row.proOnly && selectedTier !== 'pro') return null;
+                    const label = row.labelKey ? t(row.labelKey) : row.label;
+                    const isPaidCheck = selectedTier === 'pro' ? row.pro : row.plus;
+                    return (
+                      <View key={row.id} style={styles.tableRow}>
+                        <View style={styles.featureCol}>
+                          <Text variant="bodyS" color={dark.textHi} style={styles.featureRowText}>
+                            {label}
                           </Text>
                         </View>
-                      ),
-                    )}
-                  </View>
-                </Card>
+                        <View style={styles.checkCol}>
+                          {row.free ? (
+                            <Ionicons name="checkmark" size={18} color={dark.textMid} />
+                          ) : (
+                            <Text color={dark.textLo} style={styles.dashText}>
+                              —
+                            </Text>
+                          )}
+                        </View>
+                        <View style={styles.checkCol}>
+                          {isPaidCheck ? (
+                            <Ionicons name="checkmark" size={18} color={dark.apricot} />
+                          ) : (
+                            <Text color={dark.textLo} style={styles.dashText}>
+                              —
+                            </Text>
+                          )}
+                        </View>
+                      </View>
+                    );
+                  })}
+                </View>
+
+                {/* Tagline: and much more to come! */}
+                <Text variant="heading" color={dark.textHi} style={styles.muchMoreText}>
+                  and much more to come!
+                </Text>
+
+                {/* Subtle Coming Soon for future roadmap */}
+                <View testID="paywall-coming-soon" style={styles.comingSoonWrap}>
+                  <Text variant="label" color={dark.textMid} style={styles.comingSoonTitle}>
+                    {t('launch.soon')}
+                  </Text>
+                  <Text variant="micro" color={dark.textLo} style={styles.comingSoonItems}>
+                    {[...COMING_SOON.plus, ...(selectedTier === 'pro' ? COMING_SOON.pro : [])]
+                      .map((f) => t(f))
+                      .join(' · ')}
+                  </Text>
+                </View>
 
                 {/* Promo Code Trigger */}
                 <Button
@@ -1185,20 +1175,128 @@ const createStyles = (dark: ReturnType<typeof useAppearance>['colors']) =>
       paddingTop: space[4],
       paddingBottom: space[6],
     },
+    badgeWrapper: {
+      alignItems: 'center',
+      marginBottom: space[3],
+    },
+    brandBadge: {
+      paddingHorizontal: space[3],
+      paddingVertical: space[1],
+      borderRadius: radius.full,
+      borderWidth: 1,
+      borderColor: dark.hairline,
+      backgroundColor: dark.s1,
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: space[2],
+    },
+    brandBadgeText: {
+      letterSpacing: 1.5,
+      fontWeight: '700',
+    },
     headerBlock: {
       marginBottom: space[4],
+      alignItems: 'center',
     },
     titleText: {
       marginBottom: space[1],
       fontWeight: '700',
+      textAlign: 'center',
     },
     keepGoingSubtitle: {
       marginBottom: space[1],
+      textAlign: 'center',
     },
     statusBanner: {
       padding: space[3],
       marginBottom: space[3],
       backgroundColor: dark.s2,
+    },
+    tierSelectorRow: {
+      flexDirection: 'row',
+      gap: space[2],
+      marginBottom: space[3],
+    },
+    tierTab: {
+      flex: 1,
+      paddingVertical: space[2],
+      paddingHorizontal: space[3],
+      borderRadius: radius.control,
+      backgroundColor: dark.s1,
+      borderWidth: 1,
+      borderColor: dark.hairline,
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: 2,
+    },
+    tierTabSelected: {
+      borderColor: dark.apricot,
+      backgroundColor: dark.s2,
+    },
+    tierTabText: {
+      letterSpacing: 1,
+      fontWeight: '700',
+    },
+    tableContainer: {
+      marginTop: space[3],
+      marginBottom: space[3],
+      borderTopWidth: 1,
+      borderTopColor: dark.hairline,
+    },
+    tableHeaderRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      paddingVertical: space[2],
+      borderBottomWidth: 1,
+      borderBottomColor: dark.hairline,
+    },
+    colHeaderText: {
+      letterSpacing: 1,
+      fontWeight: '700',
+      textAlign: 'center',
+    },
+    tableRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      paddingVertical: space[3],
+      borderBottomWidth: StyleSheet.hairlineWidth,
+      borderBottomColor: dark.hairline,
+    },
+    featureCol: {
+      flex: 1,
+      paddingRight: space[2],
+    },
+    featureRowText: {
+      fontSize: 14,
+      lineHeight: 20,
+    },
+    checkCol: {
+      width: 56,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    dashText: {
+      fontSize: 16,
+    },
+    muchMoreText: {
+      textAlign: 'center',
+      marginVertical: space[5],
+      fontStyle: 'italic',
+      letterSpacing: 0.5,
+    },
+    comingSoonWrap: {
+      backgroundColor: dark.s1,
+      padding: space[3],
+      borderRadius: radius.control,
+      marginBottom: space[4],
+      gap: space[1],
+    },
+    comingSoonTitle: {
+      letterSpacing: 0.5,
+      fontWeight: '700',
+    },
+    comingSoonItems: {
+      lineHeight: 18,
     },
     sectionWrap: {
       marginBottom: space[4],

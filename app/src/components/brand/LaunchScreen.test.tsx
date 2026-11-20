@@ -40,11 +40,11 @@ const render = async () => {
 const finish = async () => {
   await act(async () => tree.root.findByType('Splash' as React.ElementType).props.onComplete());
 };
-it('shows splash until finished, then sends a new visitor to signup or login', async () => {
+it('shows splash until finished, then sends a new visitor to onboarding', async () => {
   await render();
   expect(state.replace).not.toHaveBeenCalled();
   await finish();
-  expect(state.replace).toHaveBeenCalledWith('/auth/sign-in?mode=signup');
+  expect(state.replace).toHaveBeenCalledWith('/onboarding');
   expect(state.check).not.toHaveBeenCalled();
 });
 it('waits for session restoration even when motion is skipped', async () => {

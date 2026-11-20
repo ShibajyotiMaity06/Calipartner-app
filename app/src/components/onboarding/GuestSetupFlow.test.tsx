@@ -88,6 +88,7 @@ vi.mock('./PlanPrimitives', () => ({
   planStyles: {},
 }));
 vi.mock('@/components/rooms/PaywallModal', () => ({ PaywallModal: 'Paywall' }));
+vi.mock('./OnboardingAuthModal', () => ({ OnboardingAuthModal: 'AuthModal' }));
 
 import OnboardingScreen from '@/app/onboarding';
 import { GoalStep } from './GoalStep';
@@ -122,11 +123,11 @@ afterEach(async () => {
   if (tree) await act(async () => tree.unmount());
 });
 
-it('routes unauthenticated visitors to signup or login before asking questions', async () => {
+it('allows unauthenticated visitors to start questionnaire as guest', async () => {
   await render();
-  expect(state.replace).toHaveBeenCalledWith('/auth/sign-in?mode=signup');
-  expect(all('Question')).toHaveLength(0);
-  expect(state.drafts.size).toBe(0);
+  expect(state.replace).not.toHaveBeenCalled();
+  expect(find('Question').props.step).toBe('goal');
+  expect(state.drafts.has('guest-user')).toBe(true);
 });
 
 it('offers only Bulk and Cut when a historical goal is maintenance', async () => {

@@ -38,6 +38,7 @@ import { OnboardingQuestion, questionCopy } from '@/components/onboarding/Onboar
 import { FinishOnboardingProfile } from '@/components/onboarding/FinishOnboardingProfile';
 import { PlanCard } from '@/components/onboarding/PlanPrimitives';
 import { PaywallModal } from '@/components/rooms/PaywallModal';
+import { OnboardingAuthModal } from '@/components/onboarding/OnboardingAuthModal';
 import { fetchWebCatalog } from '@/services/webBillingService';
 
 export const ACTIVE_ONBOARDING_STEPS = ONBOARDING_STEPS_ORDER;
@@ -46,13 +47,12 @@ export default function OnboardingScreen() {
   const router = useRouter();
   const { user, profile, isLoading, needsProfileSetup, profileError, refreshProfile } = useAuth();
   const profileReady = profile?.id === user?.id && Boolean(profile);
-  useEffect(() => {
-    if (!isLoading && !user) router.replace('/auth/sign-in?mode=signup' as never);
-  }, [isLoading, router, user]);
-  if (!user || isLoading || (!profileReady && !needsProfileSetup)) {
+
+  if (isLoading || (user && !profileReady && !needsProfileSetup)) {
     return <OnboardingStatus error={Boolean(profileError)} onRetry={() => void refreshProfile()} />;
   }
-  return <Questionnaire key={user.id} ownerId={user.id} />;
+  const ownerId = user?.id ?? 'guest-user';
+  return <Questionnaire key={ownerId} ownerId={ownerId} />;
 }
 
 function OnboardingStatus({ error, onRetry }: { error?: boolean; onRetry?: () => void }) {
@@ -72,7 +72,7 @@ function OnboardingStatus({ error, onRetry }: { error?: boolean; onRetry?: () =>
 function Questionnaire({ ownerId }: { ownerId: string }) {
   const router = useRouter();
   const { checkoutDone } = useLocalSearchParams<{ checkoutDone?: string }>();
-  const { profile, updateProfile } = useAuth();
+  const { user, profile, updateProfile } = useAuth();
   const { saveGoalProfile } = useTargets();
   const { colors, reduceMotion } = useTheme();
   const { isOnline } = useNetworkStatus();
@@ -87,6 +87,8 @@ function Questionnaire({ ownerId }: { ownerId: string }) {
   const [draftError, setDraftError] = useState(false);
   const [calculation, showCalculation] = useState(false);
   const [paywallClosed, setPaywallClosed] = useState(false);
+  const [authModalVisible, setAuthModalVisible] = useState(false);
+  const [showProfileSetupModal, setShowProfileSetupModal] = useState(false);
   const savingRef = useRef(false);
   const completed = useRef(false);
   const active = useRef(false);
@@ -110,7 +112,7 @@ function Questionnaire({ ownerId }: { ownerId: string }) {
         identityRef.current,
         Boolean(guestDraft),
       );
-      if (guestDraft) {
+      if (guestDraft && ownerId !== 'guest-user') {
         await saveOnboardingDraft(db, ownerId, next.getState());
         await clearOnboardingDraft(db, 'guest-user');
       }
@@ -141,12 +143,22 @@ function Questionnaire({ ownerId }: { ownerId: string }) {
     });
   }, [snapshot, ownerId]);
 
+  useEffect(() => {
+    if (ownerId === 'guest-user' && snapshot?.currentStep === 'profile' && machine) {
+      machine.goToStep('height');
+      update();
+    }
+  }, [ownerId, snapshot?.currentStep, machine]);
+
   const update = () => {
     if (machine) setSnapshot(machine.getState());
   };
   const back = () => {
     if (!machine || savingRef.current) return;
     if (!machine.back()) return;
+    if (ownerId === 'guest-user' && machine.getState().currentStep === 'profile') {
+      machine.back();
+    }
     Keyboard.dismiss();
     setSaveError(null);
     setPaywallClosed(false);
@@ -158,7 +170,10 @@ function Questionnaire({ ownerId }: { ownerId: string }) {
     const listener = BackHandler.addEventListener('hardwareBackPress', () => {
       if (
         calculation ||
-        (snapshot.currentStep === 'paywall' && identity && !paywallClosed && checkoutDone !== '1')
+        (snapshot.currentStep === 'paywall' &&
+          (identity || user) &&
+          !paywallClosed &&
+          checkoutDone !== '1')
       )
         return false;
       back();
@@ -207,7 +222,8 @@ function Questionnaire({ ownerId }: { ownerId: string }) {
   };
 
   const finish = async () => {
-    if (savingRef.current || completed.current || !identity) return;
+    if (savingRef.current || completed.current) return;
+    if (!identity && !user) return;
     savingRef.current = true;
     setSaving(true);
     setSaveError(null);
@@ -217,30 +233,32 @@ function Questionnaire({ ownerId }: { ownerId: string }) {
         setSaveError(t('setup.offlineDraft'));
         return;
       }
+      const targetUserId = user?.id ?? ownerId;
       const state = machine.getState();
       let goal;
       try {
         goal = applyOnboardingTargetOverrides(
-          machine.buildGoalProfile(ownerId),
-          state.sex ?? identity.sex ?? 'male',
+          machine.buildGoalProfile(targetUserId),
+          state.sex ?? identity?.sex ?? 'male',
           state.targetOverrides,
         );
       } catch {
         // Safe fallback: if custom target overrides violate safety bounds,
         // use calculated base targets so the user is never blocked or shown an error
-        goal = machine.buildGoalProfile(ownerId);
+        goal = machine.buildGoalProfile(targetUserId);
       }
       if (goal.weekly_rate_kg > MAX_ONBOARDING_WEEKLY_RATE_KG) {
         goal.weekly_rate_kg = MAX_ONBOARDING_WEEKLY_RATE_KG;
       }
       await draftWrites.current;
-      await saveOnboardingDraft(await getDb(), ownerId, state);
+      await saveOnboardingDraft(await getDb(), targetUserId, state);
       if (!active.current) return;
       const needsProfileUpdate =
-        state.nickname.trim() !== identity.nickname ||
-        state.heightCm !== identity.height_cm ||
-        state.sex !== identity.sex ||
-        state.units !== identity.units;
+        identity &&
+        (state.nickname.trim() !== identity.nickname ||
+          state.heightCm !== identity.height_cm ||
+          state.sex !== identity.sex ||
+          state.units !== identity.units);
       if (updateProfile && needsProfileUpdate) {
         const result = await updateProfile({
           nickname: state.nickname.trim(),
@@ -251,16 +269,17 @@ function Questionnaire({ ownerId }: { ownerId: string }) {
         if (result?.error) throw result.error;
       }
       if (!active.current) return;
-      await requirePairPrompt(ownerId);
-      await requireOnboardingReview(ownerId, Platform.OS);
+      await requirePairPrompt(targetUserId);
+      await requireOnboardingReview(targetUserId, Platform.OS);
       if (!active.current) return;
       const saved = await saveGoalProfile(goal);
       if (!saved.success) throw new Error(saved.error ?? t('common.errorBody'));
       if (!active.current) return;
-      const destination = await afterSetupDestination(ownerId);
+      const destination = await afterSetupDestination(targetUserId);
       if (!active.current) return;
       completed.current = true;
-      await clearOnboardingDraft(await getDb(), ownerId).catch(() => {});
+      await clearOnboardingDraft(await getDb(), targetUserId).catch(() => {});
+      await clearOnboardingDraft(await getDb(), 'guest-user').catch(() => {});
       if (active.current) router.replace(destination as never);
     } catch (error) {
       if (active.current) {
@@ -300,7 +319,19 @@ function Questionnaire({ ownerId }: { ownerId: string }) {
               })}
             </Text>
           )}
-          <View style={styles.iconButton} />
+          {!user ? (
+            <Button
+              variant="tertiary"
+              fullWidth={false}
+              label={t('entryRefresh.logIn')}
+              onPress={() => router.push({ pathname: '/auth/sign-in', params: { mode: 'signin' } })}
+              disabled={saving}
+              style={styles.iconButton}
+              testID="btn-onboarding-login"
+            />
+          ) : (
+            <View style={styles.iconButton} />
+          )}
         </View>
         {index >= 0 && (
           <View
@@ -383,7 +414,7 @@ function Questionnaire({ ownerId }: { ownerId: string }) {
               </View>
             ) : step === 'paywall' ? (
               <>
-                {identity && (paywallClosed || checkoutDone === '1') && (
+                {(identity || user) && (paywallClosed || checkoutDone === '1') && (
                   <Button
                     label={t(saveError ? 'setup.retry' : 'setup.next')}
                     loading={saving}
@@ -428,14 +459,22 @@ function Questionnaire({ ownerId }: { ownerId: string }) {
           <View style={[styles.footer, { borderTopColor: colors.hairline }]}>
             <Button
               label={t('setup.next')}
-              onPress={next}
+              onPress={() => {
+                if (step === 'reveal' && !user) {
+                  setAuthModalVisible(true);
+                  return;
+                }
+                next();
+              }}
               testID={step === 'reveal' ? 'onboarding-open-paywall' : 'btn-onboarding-next'}
             />
           </View>
         )}
       </View>
       <PaywallModal
-        visible={step === 'paywall' && Boolean(identity) && !paywallClosed && checkoutDone !== '1'}
+        visible={
+          step === 'paywall' && Boolean(identity || user) && !paywallClosed && checkoutDone !== '1'
+        }
         preloadPrices={isOnline === true}
         completionPending={saving}
         context="general"
@@ -443,6 +482,44 @@ function Questionnaire({ ownerId }: { ownerId: string }) {
         onContinueFree={() => void finish()}
         onSuccess={() => void finish()}
       />
+      <OnboardingAuthModal
+        visible={authModalVisible}
+        onClose={() => setAuthModalVisible(false)}
+        onAuthenticated={() => {
+          setAuthModalVisible(false);
+          if (!profile) {
+            setShowProfileSetupModal(true);
+          } else {
+            next();
+          }
+        }}
+      />
+      {showProfileSetupModal && (
+        <Modal
+          visible={showProfileSetupModal}
+          animationType={reduceMotion ? 'none' : 'slide'}
+          onRequestClose={() => {}}
+        >
+          <SafeAreaView style={[styles.safe, { backgroundColor: colors.bg0 }]}>
+            <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
+              <View style={styles.question}>
+                <Text variant="title1" accessibilityRole="header">
+                  {t('characterSetup.profileTitle')}
+                </Text>
+                <Text color={colors.textMid}>{t('setup.usernameRules')}</Text>
+                <FinishOnboardingProfile
+                  state={snapshot}
+                  waitForDraft={() => draftWrites.current}
+                  onComplete={() => {
+                    setShowProfileSetupModal(false);
+                    next();
+                  }}
+                />
+              </View>
+            </ScrollView>
+          </SafeAreaView>
+        </Modal>
+      )}
       <Modal
         visible={calculation}
         onRequestClose={() => showCalculation(false)}
