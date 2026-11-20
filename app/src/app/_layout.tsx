@@ -5,7 +5,8 @@ import { HeaderActions } from '@/components/HeaderActions';
 import { useTheme as useAppearance } from '@calipartner/ui/theme';
 import { useCallback, useEffect, useState } from 'react';
 import { View } from 'react-native';
-import { Stack } from 'expo-router';
+import { Stack, usePathname } from 'expo-router';
+import { PostHogProvider, usePostHog } from 'posthog-react-native';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ThemeProvider, space } from '@calipartner/ui';
@@ -26,8 +27,31 @@ import { useTheme } from '@/theme/useTheme';
 import { setupNotificationListeners } from '@/lib/deepLinks';
 import { loadAppFonts, hideSplashScreen } from '@/theme/fontLoader';
 import { cancelRetiredActivityReminders } from '@/services/localNotificationService';
+import { posthog } from '@/lib/posthog';
 
 const log = createLogger('root');
+
+function PostHogBoundary({ children }: { children: React.ReactNode }) {
+  return posthog ? (
+    <PostHogProvider client={posthog}>
+      <PostHogScreenTracking />
+      {children}
+    </PostHogProvider>
+  ) : (
+    <>{children}</>
+  );
+}
+
+function PostHogScreenTracking() {
+  const client = usePostHog();
+  const pathname = usePathname();
+
+  useEffect(() => {
+    client.screen(pathname);
+  }, [client, pathname]);
+
+  return null;
+}
 
 function AppInitializationGate({ children }: { children: React.ReactNode }) {
   const { colors } = useAppearance();
@@ -202,24 +226,26 @@ export default function RootLayout() {
       <ThemeProvider initialTheme="yellow" storage={secureStoreAdapter}>
         <SafeAreaProvider>
           <AppearanceStatusBar />
-          <AppInitializationGate>
-            <AuthProvider>
-              <AccountDataResetGate>
-                <TargetsProvider>
-                  <AvatarProvider>
-                    <AvatarMilestone />
-                    <HardwareBackHandler />
-                    <SessionNavigationGuard />
-                    <CoinCatalogProvider>
-                      <CoachSessionProvider>
-                        <AppearanceStack />
-                      </CoachSessionProvider>
-                    </CoinCatalogProvider>
-                  </AvatarProvider>
-                </TargetsProvider>
-              </AccountDataResetGate>
-            </AuthProvider>
-          </AppInitializationGate>
+          <PostHogBoundary>
+            <AppInitializationGate>
+              <AuthProvider>
+                <AccountDataResetGate>
+                  <TargetsProvider>
+                    <AvatarProvider>
+                      <AvatarMilestone />
+                      <HardwareBackHandler />
+                      <SessionNavigationGuard />
+                      <CoinCatalogProvider>
+                        <CoachSessionProvider>
+                          <AppearanceStack />
+                        </CoachSessionProvider>
+                      </CoinCatalogProvider>
+                    </AvatarProvider>
+                  </TargetsProvider>
+                </AccountDataResetGate>
+              </AuthProvider>
+            </AppInitializationGate>
+          </PostHogBoundary>
         </SafeAreaProvider>
       </ThemeProvider>
     </ErrorBoundary>

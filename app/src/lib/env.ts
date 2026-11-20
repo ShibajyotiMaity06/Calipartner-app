@@ -8,6 +8,8 @@ interface Extra {
   supabaseAnonKey?: string;
   revenueCatAppleKey?: string;
   revenueCatGoogleKey?: string;
+  posthogProjectToken?: string;
+  posthogHost?: string;
 }
 
 const extra = (Constants.expoConfig?.extra ?? {}) as Extra;
@@ -24,6 +26,9 @@ export const env = {
     process.env.EXPO_PUBLIC_REVENUECAT_APPLE_KEY ?? extra.revenueCatAppleKey ?? '',
   revenueCatGoogleKey:
     process.env.EXPO_PUBLIC_REVENUECAT_GOOGLE_KEY ?? extra.revenueCatGoogleKey ?? '',
+  posthogProjectToken:
+    process.env.EXPO_PUBLIC_POSTHOG_PROJECT_TOKEN ?? extra.posthogProjectToken ?? '',
+  posthogHost: process.env.EXPO_PUBLIC_POSTHOG_HOST ?? extra.posthogHost ?? '',
 } as const;
 
 export function isSupabaseConfigured(): boolean {

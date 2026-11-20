@@ -8,6 +8,7 @@ import {
 } from '@calipartner/core';
 import { getSupabase } from '@/lib/supabase';
 import { secureStoreAdapter } from '@/lib/secureStore';
+import { startAiGeneration } from '@/lib/aiObservability';
 import { generateClientUuid } from './foodService';
 import { acceptAiProcessingConsent } from './aiFoodPhotoService';
 import { workoutEvents } from './workoutEvents';
@@ -75,6 +76,16 @@ export async function buildWorkoutPlan(
       '1.1-weekly-plan',
     );
   const pending = await request(userId, initial ? 'initial' : 'rebuild', preferences);
+  const generation = startAiGeneration({
+    spanName: 'workout_plan_generation',
+    sessionId: null,
+    input: [
+      {
+        role: 'user',
+        content: JSON.stringify({ preferences, initial }),
+      },
+    ],
+  });
   const { data, error } = await client.functions.invoke('workout-plan', {
     headers: { Authorization: `Bearer ${accessToken}` },
     body: { request_id: pending.id, initial, preferences },
@@ -97,6 +108,7 @@ export async function buildWorkoutPlan(
     await pending.clear();
     throw new Error('PLAN_STALE');
   }
+  generation.captureSuccess([{ role: 'assistant', content: JSON.stringify(plan) }]);
   await pending.clear();
   workoutEvents.emitChange();
   return plan;

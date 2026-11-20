@@ -2,6 +2,7 @@ import { Component, type ErrorInfo, type ReactNode } from 'react';
 import { View } from 'react-native';
 import { ErrorState } from '@/components/ErrorState';
 import { createLogger } from '@/lib/logger';
+import { posthog } from '@/lib/posthog';
 
 const log = createLogger('error-boundary');
 
@@ -22,6 +23,13 @@ export class ErrorBoundary extends Component<Props, State> {
 
   override componentDidCatch(error: Error, info: ErrorInfo): void {
     log.error(error.message, info.componentStack);
+    try {
+      posthog?.captureException(error, {
+        component_stack: info.componentStack ?? null,
+      });
+    } catch {
+      // Error reporting must not interfere with the app's recovery UI.
+    }
   }
 
   private reset = () => this.setState({ hasError: false });
