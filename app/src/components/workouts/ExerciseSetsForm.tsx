@@ -50,6 +50,7 @@ export function ExerciseSetsForm({
   initialSets,
   submitLabel,
   planOnly = false,
+  defaultSets = 3,
 }: {
   name: string;
   onAdd: (sets: ExerciseSetInput[]) => void | Promise<void>;
@@ -57,15 +58,63 @@ export function ExerciseSetsForm({
   submitLabel?: string;
   planOnly?: boolean;
   onCancel?: () => void;
+  defaultSets?: number;
 }) {
-  const [count, setCount] = useState<number | null>(initialSets?.length ?? null);
+  const initialCount =
+    initialSets && initialSets.length > 0
+      ? initialSets.length
+      : defaultSets && defaultSets > 0
+        ? defaultSets
+        : null;
+  const [count, setCount] = useState<number | null>(initialCount);
   const [sets, setSets] = useState<{ reps: number | null; weightKg: number | null }[]>(
-    initialSets?.map((set) => ({ ...set, weightKg: set.weightKg || null })) ?? [],
+    initialSets && initialSets.length > 0
+      ? initialSets.map((set) => ({ ...set, weightKg: set.weightKg || null }))
+      : defaultSets && defaultSets > 0
+        ? Array.from({ length: defaultSets }, () => ({ reps: 10, weightKg: null }))
+        : [],
   );
   const [error, setError] = useState(false);
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState(false);
   const lock = useRef(false);
+
+  const updateSetCount = (value: number | null) => {
+    setCount(value);
+    setError(false);
+    if (value != null && Number.isInteger(value) && value >= 1 && value <= 20) {
+      setSets((previous) =>
+        Array.from(
+          { length: value },
+          (_, index) => previous[index] ?? { reps: 10, weightKg: null },
+        ),
+      );
+    } else {
+      setSets([]);
+    }
+  };
+
+  const currentCount = count ?? 3;
+  const setsStep = (direction: -1 | 1) => (
+    <Button
+      variant="tertiary"
+      fullWidth={false}
+      label={direction === -1 ? '−' : '+'}
+      accessibilityLabel={t(direction === -1 ? 'workoutFlow.setsLess' : 'workoutFlow.setsMore')}
+      disabled={saving || (direction === -1 ? currentCount <= 1 : currentCount >= 20)}
+      onPress={() => {
+        const base = count != null && count >= 1 ? count : 3;
+        const next = Math.min(20, Math.max(1, base + direction));
+        updateSetCount(next);
+      }}
+      style={{
+        minWidth: homeLayout.compactTouchSize,
+        minHeight: homeLayout.compactTouchSize,
+      }}
+      testID={`exercise-set-count-${direction === -1 ? 'minus' : 'plus'}`}
+    />
+  );
+
   const change = (index: number, key: 'reps' | 'weightKg', value: number | null) => {
     setSets((previous) => previous.map((set, i) => (i === index ? { ...set, [key]: value } : set)));
     setError(false);
@@ -78,21 +127,13 @@ export function ExerciseSetsForm({
     >
       <Text variant="heading">{name}</Text>
       <NumberField
+        centered
         label={t('personalDay.setsCount')}
         value={count}
         testID="exercise-set-count"
-        onChange={(value) => {
-          setCount(value);
-          setError(false);
-          if (value != null && Number.isInteger(value) && value >= 1 && value <= 20)
-            setSets((previous) =>
-              Array.from(
-                { length: value },
-                (_, index) => previous[index] ?? { reps: 10, weightKg: null },
-              ),
-            );
-          else setSets([]);
-        }}
+        leading={setsStep(-1)}
+        trailing={setsStep(1)}
+        onChange={updateSetCount}
       />
       <ExerciseSetRows sets={sets} onChange={change} disabled={saving} showWeight={!planOnly} />
       {saveError && <Text accessibilityRole="alert">{t('workoutFlow.error')}</Text>}

@@ -50,7 +50,8 @@ it('asks for set count, preserves different reps per set and always shows paired
   await act(async () => {
     tree = create(<ExerciseSetsForm name="Squat" onAdd={add} onCancel={vi.fn()} />);
   });
-  expect(tree.root.findAllByProps({ testID: 'exercise-set-reps-0' })).toHaveLength(0);
+  expect(tree.root.findByProps({ testID: 'exercise-set-count' }).props.value).toBe(3);
+  expect(tree.root.findAllByProps({ testID: 'exercise-set-reps-0' }).length).toBeGreaterThan(0);
   await act(async () => tree.root.findByProps({ testID: 'exercise-set-count' }).props.onChange(3));
   for (const [index, reps] of [10, 8, 6].entries())
     await act(async () =>
@@ -127,4 +128,31 @@ it('changes individual reps with minus/plus and keeps the draft open until a sav
   expect(tree.root.findByProps({ testID: 'exercise-confirm-sets' }).props.disabled).toBe(true);
   await act(async () => acknowledge());
   expect(tree.root.findByProps({ testID: 'exercise-confirm-sets' }).props.disabled).toBe(false);
+});
+
+it('increments and decrements set count using stepper buttons', async () => {
+  const add = vi.fn();
+  await act(async () => {
+    tree = create(<ExerciseSetsForm name="Squat" onAdd={add} onCancel={vi.fn()} />);
+  });
+  expect(tree.root.findByProps({ testID: 'exercise-set-count' }).props.value).toBe(3);
+  expect(tree.root.findAllByProps({ testID: 'exercise-set-row-2' })).toHaveLength(1);
+  expect(tree.root.findAllByProps({ testID: 'exercise-set-row-3' })).toHaveLength(0);
+
+  await act(async () =>
+    tree.root.findByProps({ testID: 'exercise-set-count-plus' }).props.onPress(),
+  );
+  expect(tree.root.findByProps({ testID: 'exercise-set-count' }).props.value).toBe(4);
+  expect(tree.root.findAllByProps({ testID: 'exercise-set-row-3' })).toHaveLength(1);
+
+  await act(async () =>
+    tree.root.findByProps({ testID: 'exercise-set-count-minus' }).props.onPress(),
+  );
+  expect(tree.root.findByProps({ testID: 'exercise-set-count' }).props.value).toBe(3);
+  await act(async () =>
+    tree.root.findByProps({ testID: 'exercise-set-count-minus' }).props.onPress(),
+  );
+  expect(tree.root.findByProps({ testID: 'exercise-set-count' }).props.value).toBe(2);
+  expect(tree.root.findAllByProps({ testID: 'exercise-set-row-2' })).toHaveLength(0);
+  expect(tree.root.findAllByProps({ testID: 'exercise-set-row-1' })).toHaveLength(1);
 });

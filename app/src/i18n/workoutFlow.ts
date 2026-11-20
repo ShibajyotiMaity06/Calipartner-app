@@ -87,6 +87,8 @@ export const workoutFlow = {
   remove: 'Remove {name} from your plan',
   repsLess: 'Decrease reps for set {set}',
   repsMore: 'Increase reps for set {set}',
+  setsLess: 'Decrease number of sets',
+  setsMore: 'Increase number of sets',
   saveWorkout: 'Save workout',
   savePlan: 'Save plan changes',
   saved: 'Workout logged',
