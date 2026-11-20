@@ -9,6 +9,7 @@ export const releaseUpdate = {
   invite: 'Invite',
   earn: 'Earn coins',
   freeForever: 'Personal tracking is free forever.',
+  restorePurchases: 'Restore purchases',
   annual: '1 Year',
   semiannual: '6 Months',
   quarterly: '3 Months',

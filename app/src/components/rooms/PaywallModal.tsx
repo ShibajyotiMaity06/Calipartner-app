@@ -20,6 +20,7 @@ import type { PurchasesPackage } from 'react-native-purchases';
 import {
   Button,
   Card,
+  controls,
   radius,
   space,
   Text,
@@ -60,6 +61,8 @@ export type PaywallContext =
 
 export interface PaywallModalProps {
   onContinueFree?: () => void;
+  preloadPrices?: boolean;
+  completionPending?: boolean;
   trialExpired?: boolean;
   visible: boolean;
   onClose: () => void;
@@ -147,6 +150,8 @@ const COMING_SOON = {
 
 export function PaywallModal({
   onContinueFree,
+  preloadPrices = false,
+  completionPending = false,
   visible,
   onClose,
   context = 'general',
@@ -249,8 +254,8 @@ export function PaywallModal({
     }
   }, [preparedCatalog]);
   useEffect(() => {
-    if (visible && Platform.OS === 'web') void loadCatalog();
-  }, [visible, loadCatalog]);
+    if ((visible || preloadPrices) && Platform.OS === 'web') void loadCatalog();
+  }, [visible, preloadPrices, loadCatalog]);
 
   // Sub-modal states
   const [showSuccessModal, setShowSuccessModal] = useState(false);
@@ -354,7 +359,7 @@ export function PaywallModal({
   const managing = (hasActiveAccess && !cardlessActive) || requiresWebManagement;
   const offerPrice = quote(offerTier, 'quarterly');
   const requestClose = () => {
-    if (actionInFlight.current) return;
+    if (completionPending || actionInFlight.current) return;
     if (exitOffer || completed.current || managing || awaitingEntitlement) {
       onClose();
     } else {
@@ -369,7 +374,7 @@ export function PaywallModal({
   });
 
   const handlePurchase = async () => {
-    if (actionInFlight.current) return;
+    if (completionPending || actionInFlight.current) return;
     actionInFlight.current = true;
     playClickSound();
     setActionLoading(true);
@@ -490,7 +495,7 @@ export function PaywallModal({
   };
 
   const handleRestore = async () => {
-    if (actionInFlight.current) return;
+    if (completionPending || actionInFlight.current) return;
     actionInFlight.current = true;
     playClickSound();
     setActionLoading(true);
@@ -568,9 +573,11 @@ export function PaywallModal({
               quote={offerPrice}
               pending={awaitingEntitlement}
               message={statusMessage ?? catalogError}
-              loading={actionLoading || catalogLoading}
+              loading={actionLoading || catalogLoading || completionPending}
               onClaim={handlePurchase}
-              onDismiss={onClose}
+              onDismiss={() => {
+                if (!completionPending) onClose();
+              }}
             />
           ) : (
             <>
@@ -605,6 +612,7 @@ export function PaywallModal({
                     />
                   }
                   onPress={requestClose}
+                  disabled={completionPending}
                   accessibilityRole="button"
                   accessibilityLabel={t('setup.closePremium')}
                   style={styles.closeButton}
@@ -640,10 +648,6 @@ export function PaywallModal({
                       {t('fixNovember.lockedBody')}
                     </Text>
                   )}
-                  <Text variant="bodyS" color={dark.textMid} style={styles.subtitleText}>
-                    Personal tracking is 100% free forever. Upgrade for rooms, partner finder, and
-                    AI coach.
-                  </Text>
                 </View>
 
                 {/* Status / Error Banner if any */}
@@ -905,15 +909,6 @@ export function PaywallModal({
                       ),
                     )}
                   </View>
-                  <View style={styles.freeSentenceDivider} />
-
-                  <View style={styles.freeGuaranteeBlock}>
-                    <Ionicons name="lock-open-outline" size={15} color={dark.teal} />
-                    <Text variant="micro" color={dark.textMid} style={styles.freeSentenceText}>
-                      Personal food diary, barcode scan, water, steps, distance, GPS tracking,
-                      workouts & weight stay 100% free forever.
-                    </Text>
-                  </View>
                 </Card>
 
                 {/* Promo Code Trigger */}
@@ -931,11 +926,24 @@ export function PaywallModal({
 
               {/* Primary CTA Block */}
               <View style={styles.ctaBottomBar}>
+                <Text
+                  variant="micro"
+                  color={dark.textMid}
+                  style={styles.renewalSentence}
+                  testID="text-renewal-sentence"
+                >
+                  {quote(offerTier, mainDuration) && !managing
+                    ? t('releaseUpdate.charged', { total: quote(offerTier, mainDuration)!.total }) +
+                      ' '
+                    : ''}
+                  {renewalSentence}
+                </Text>
                 <Button
                   variant="primary"
                   label={primaryCtaLabel}
                   onPress={handlePurchase}
                   disabled={
+                    completionPending ||
                     actionLoading ||
                     (subscriptionLoading && !awaitingEntitlement) ||
                     (!managing &&
@@ -952,6 +960,8 @@ export function PaywallModal({
                       variant="secondary"
                       label={t('cardlessTrial.continueFree')}
                       onPress={onContinueFree ?? onClose}
+                      disabled={completionPending}
+                      loading={completionPending}
                       testID={
                         onContinueFree ? 'continue-free-onboarding' : 'continue-free-after-trial'
                       }
@@ -959,7 +969,6 @@ export function PaywallModal({
                   </>
                 )}
 
-                <Text variant="bodyS">{t('releaseUpdate.freeForever')}</Text>
                 {awaitingEntitlement ? (
                   <Button
                     variant="secondary"
@@ -973,36 +982,26 @@ export function PaywallModal({
                   />
                 ) : null}
 
-                <Text
-                  variant="micro"
-                  color={dark.textMid}
-                  style={styles.renewalSentence}
-                  testID="text-renewal-sentence"
-                >
-                  {quote(offerTier, mainDuration) && !managing
-                    ? t('releaseUpdate.charged', { total: quote(offerTier, mainDuration)!.total }) +
-                      ' '
-                    : ''}
-                  {renewalSentence}
-                </Text>
-
                 {/* Footer Links */}
                 <View style={styles.footerLinksRow}>
-                  <Button
-                    variant="secondary"
-                    fullWidth={false}
-                    label="Restore purchases"
+                  <TouchableOpacity
                     onPress={handleRestore}
                     accessibilityRole="button"
-                    accessibilityLabel="Restore purchases"
+                    disabled={completionPending}
+                    style={styles.footerLink}
                     testID="btn-restore-purchases"
-                  />
+                  >
+                    <Text variant="micro" color={dark.textLo}>
+                      {t('releaseUpdate.restorePurchases')}
+                    </Text>
+                  </TouchableOpacity>
                   <Text variant="micro" color={dark.hairlineLit}>
                     •
                   </Text>
                   <TouchableOpacity
                     onPress={() => openUrl('https://app.calipartner.site/terms')}
                     accessibilityRole="link"
+                    style={styles.footerLink}
                     testID="link-paywall-terms"
                   >
                     <Text variant="micro" color={dark.textLo}>
@@ -1015,6 +1014,7 @@ export function PaywallModal({
                   <TouchableOpacity
                     onPress={() => openUrl('https://app.calipartner.site/privacy')}
                     accessibilityRole="link"
+                    style={styles.footerLink}
                     testID="link-paywall-privacy"
                   >
                     <Text variant="micro" color={dark.textLo}>
@@ -1194,9 +1194,6 @@ const createStyles = (dark: ReturnType<typeof useAppearance>['colors']) =>
     },
     keepGoingSubtitle: {
       marginBottom: space[1],
-    },
-    subtitleText: {
-      lineHeight: 20,
     },
     statusBanner: {
       padding: space[3],
@@ -1378,20 +1375,6 @@ const createStyles = (dark: ReturnType<typeof useAppearance>['colors']) =>
       flex: 1,
       lineHeight: 19,
     },
-    freeSentenceDivider: {
-      height: 1,
-      backgroundColor: dark.hairline,
-      marginVertical: space[3],
-    },
-    freeGuaranteeBlock: {
-      flexDirection: 'row',
-      alignItems: 'flex-start',
-      gap: space[2],
-    },
-    freeSentenceText: {
-      flex: 1,
-      lineHeight: 17,
-    },
     promoTrigger: {
       minHeight: 44,
       alignItems: 'center',
@@ -1415,9 +1398,16 @@ const createStyles = (dark: ReturnType<typeof useAppearance>['colors']) =>
     },
     footerLinksRow: {
       flexDirection: 'row',
+      flexWrap: 'wrap',
       justifyContent: 'center',
       alignItems: 'center',
       gap: space[2],
+    },
+    footerLink: {
+      minHeight: controls.touch,
+      minWidth: controls.touch,
+      justifyContent: 'center',
+      alignItems: 'center',
     },
     modalBackdrop: {
       flex: 1,

@@ -17,7 +17,7 @@ describe('Onboarding redesign state machine', () => {
       .setGoal('cut');
     const visited = [machine.getState().currentStep];
     while (machine.next()) visited.push(machine.getState().currentStep);
-    expect(visited).toEqual(ONBOARDING_STEPS_ORDER);
+    expect(visited).toEqual([...ONBOARDING_STEPS_ORDER, 'reveal', 'paywall']);
     expect(visited).toEqual([
       'goal',
       'nickname',
@@ -30,7 +30,9 @@ describe('Onboarding redesign state machine', () => {
       'rate_selection',
       'step_goal',
       'water_goal',
+      'profile',
       'plan_summary',
+      'reveal',
       'paywall',
     ]);
   });
@@ -104,14 +106,28 @@ describe('Onboarding redesign state machine', () => {
     machine.setBodyStats({ heightCm: 175 });
     expect(machine.goToStep('paywall')).toBe(true);
     expect(machine.back()).toBe(true);
-    expect(machine.getState().currentStep).toBe('plan_summary');
+    expect(machine.getState().currentStep).toBe('reveal');
   });
 
-  it('rejects an unsafe cut even when the macro totals fit', () => {
+  it('allows a 2 kg bulk and caps onboarding paces at 3 kg even above advisory guidance', () => {
+    const machine = new OnboardingStateMachine(adult)
+      .setCharacterGender('male', true)
+      .setGoal('bulk');
+    expect(machine.setWeeklyRate(2).validateStep('rate_selection').isValid).toBe(true);
+    expect(machine.buildGoalProfile('user-a').weekly_rate_kg).toBe(2);
+    expect(machine.setWeeklyRate(3).validateStep('rate_selection').isValid).toBe(true);
+    expect(
+      machine.setWeeklyRate(3.1).validateStep('rate_selection').errors.rateTooHigh,
+    ).toBeDefined();
+  });
+
+  it('allows a cut past the advisory rate when calories fit and blocks an inadequate deficit', () => {
     const machine = new OnboardingStateMachine(adult)
       .setCharacterGender('male', true)
       .setGoal('cut')
       .setWeeklyRate(0.75);
+    expect(machine.validateStep('rate_selection').isValid).toBe(true);
+    machine.setWeeklyRate(2);
     expect(machine.validateStep('rate_selection').isValid).toBe(false);
     machine.useRecommendedRate();
     expect(machine.validateStep('rate_selection').isValid).toBe(true);

@@ -29,19 +29,31 @@ export function PlanCard({ children, testID }: { children: React.ReactNode; test
 export function PlanTextField({
   label,
   icon,
+  hideLabel = false,
   ...props
-}: TextInputProps & { label: string; icon?: React.ComponentProps<typeof Ionicons>['name'] }) {
+}: TextInputProps & {
+  label: string;
+  icon?: React.ComponentProps<typeof Ionicons>['name'];
+  hideLabel?: boolean;
+}) {
   const { colors } = useTheme();
   return (
     <View style={planStyles.gap}>
-      <View style={planStyles.labelRow}>
-        {icon ? (
-          <Ionicons name={icon} size={16} color={colors.copper} style={{ marginRight: space[1] }} />
-        ) : null}
-        <Text fontSet="onboarding" variant="bodyS" color={colors.textMid}>
-          {label}
-        </Text>
-      </View>
+      {!hideLabel && (
+        <View style={planStyles.labelRow}>
+          {icon ? (
+            <Ionicons
+              name={icon}
+              size={16}
+              color={colors.copper}
+              style={{ marginRight: space[1] }}
+            />
+          ) : null}
+          <Text fontSet="onboarding" variant="bodyS" color={colors.textMid}>
+            {label}
+          </Text>
+        </View>
+      )}
       <TextInput
         {...props}
         accessibilityLabel={props.accessibilityLabel ?? label}

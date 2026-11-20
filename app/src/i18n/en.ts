@@ -806,7 +806,7 @@ export const en = {
     usernameLabel: 'Username',
     usernamePlaceholder: 'username',
     usernameAvailable: 'Username is available!',
-    usernameTaken: 'This username is already taken.',
+    usernameTaken: 'This username is unavailable. Choose a different one.',
     usernameInvalid:
       '3–20 characters. Letters, numbers, underscores and periods only. No consecutive periods.',
     usernameReserved: 'This username is reserved by the system.',

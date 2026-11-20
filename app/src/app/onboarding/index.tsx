@@ -1,13 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import {
-  BackHandler,
-  KeyboardAvoidingView,
-  Modal,
-  Platform,
-  ScrollView,
-  StyleSheet,
-  View,
-} from 'react-native';
+import { BackHandler, Keyboard, Modal, Platform, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { applyOnboardingTargetOverrides, type OnboardingTargetOverrides } from '@calipartner/core';
@@ -27,6 +19,7 @@ import { getDb } from '@/db';
 import { t } from '@/i18n';
 import { macroErrorMessage } from '@/i18n/macroErrors';
 import {
+  MAX_ONBOARDING_WEEKLY_RATE_KG,
   ONBOARDING_STEPS_ORDER,
   type OnboardingStateMachine,
 } from '@/services/onboardingStateMachine';
@@ -152,6 +145,7 @@ function Questionnaire({ ownerId }: { ownerId: string }) {
   const back = () => {
     if (!machine || savingRef.current) return;
     if (!machine.back()) return;
+    Keyboard.dismiss();
     setSaveError(null);
     setPaywallClosed(false);
     update();
@@ -175,17 +169,28 @@ function Questionnaire({ ownerId }: { ownerId: string }) {
     return <OnboardingStatus error={loadError} onRetry={() => setRetry((value) => value + 1)} />;
   }
   const step = snapshot.currentStep;
-  const index = ACTIVE_ONBOARDING_STEPS.indexOf(step);
+  const index = ACTIVE_ONBOARDING_STEPS.findIndex((numbered) => numbered === step);
   const copy = questionCopy[step];
   const next = () => {
     const moved = machine.next();
     update();
-    if (moved) scroll.current?.scrollTo({ y: 0, animated: false });
+    if (moved) {
+      Keyboard.dismiss();
+      scroll.current?.scrollTo({ y: 0, animated: false });
+    }
   };
-  const continueToPaywall = (overrides: OnboardingTargetOverrides = {}) => {
+  const continueToReveal = (overrides: OnboardingTargetOverrides = {}) => {
     setSaveError(null);
     try {
-      applyOnboardingTargetOverrides(machine.buildGoalProfile(ownerId), snapshot.sex, overrides);
+      const goal = applyOnboardingTargetOverrides(
+        machine.buildGoalProfile(ownerId),
+        snapshot.sex,
+        overrides,
+      );
+      if (goal.weekly_rate_kg > MAX_ONBOARDING_WEEKLY_RATE_KG) {
+        setSaveError(t('characterSetup.paceTooHigh', { max: MAX_ONBOARDING_WEEKLY_RATE_KG }));
+        return;
+      }
       machine.setTargetOverrides(overrides);
       next();
     } catch (error) {
@@ -196,11 +201,11 @@ function Questionnaire({ ownerId }: { ownerId: string }) {
   const finish = async () => {
     if (savingRef.current || completed.current || !identity) return;
     savingRef.current = true;
-    setPaywallClosed(true);
     setSaving(true);
     setSaveError(null);
     try {
       if (!isOnline) {
+        setPaywallClosed(true);
         setSaveError(t('setup.offlineDraft'));
         return;
       }
@@ -210,6 +215,11 @@ function Questionnaire({ ownerId }: { ownerId: string }) {
         identity.sex,
         state.targetOverrides,
       );
+      if (goal.weekly_rate_kg > MAX_ONBOARDING_WEEKLY_RATE_KG) {
+        setPaywallClosed(true);
+        setSaveError(t('characterSetup.paceTooHigh', { max: MAX_ONBOARDING_WEEKLY_RATE_KG }));
+        return;
+      }
       await draftWrites.current;
       await saveOnboardingDraft(await getDb(), ownerId, state);
       if (!active.current) return;
@@ -230,7 +240,10 @@ function Questionnaire({ ownerId }: { ownerId: string }) {
       await clearOnboardingDraft(await getDb(), ownerId).catch(() => {});
       if (active.current) router.replace(destination as never);
     } catch (error) {
-      if (active.current) setSaveError(macroErrorMessage(error));
+      if (active.current) {
+        setPaywallClosed(true);
+        setSaveError(macroErrorMessage(error));
+      }
     } finally {
       savingRef.current = false;
       if (active.current) setSaving(false);
@@ -239,35 +252,34 @@ function Questionnaire({ ownerId }: { ownerId: string }) {
 
   return (
     <SafeAreaView style={[styles.safe, { backgroundColor: colors.bg0 }]}>
-      <KeyboardAvoidingView
-        style={styles.safe}
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-      >
-        <View style={styles.frame}>
-          <View style={styles.nav}>
-            {index > 0 ? (
-              <Button
-                variant="tertiary"
-                fullWidth={false}
-                label={t('onboarding.back')}
-                iconOnly
-                icon={<NavigationIcon action="back" />}
-                onPress={back}
-                disabled={saving}
-                style={styles.iconButton}
-                testID="btn-onboarding-back"
-              />
-            ) : (
-              <View style={styles.iconButton} />
-            )}
+      <View style={styles.frame}>
+        <View style={styles.nav}>
+          {step !== 'goal' ? (
+            <Button
+              variant="tertiary"
+              fullWidth={false}
+              label={t('onboarding.back')}
+              iconOnly
+              icon={<NavigationIcon action="back" />}
+              onPress={back}
+              disabled={saving}
+              style={styles.iconButton}
+              testID="btn-onboarding-back"
+            />
+          ) : (
+            <View style={styles.iconButton} />
+          )}
+          {index >= 0 && (
             <Text variant="bodyS" color={colors.textMid} tabular>
               {t('onboarding.stepIndicator', {
                 current: index + 1,
                 total: ACTIVE_ONBOARDING_STEPS.length,
               })}
             </Text>
-            <View style={styles.iconButton} />
-          </View>
+          )}
+          <View style={styles.iconButton} />
+        </View>
+        {index >= 0 && (
           <View
             style={[styles.track, { backgroundColor: colors.s3 }]}
             accessibilityRole="progressbar"
@@ -284,112 +296,120 @@ function Questionnaire({ ownerId }: { ownerId: string }) {
               ]}
             />
           </View>
-          <ScrollView
-            ref={scroll}
-            contentContainerStyle={styles.content}
-            keyboardShouldPersistTaps="handled"
-          >
-            <View style={styles.question}>
+        )}
+        <ScrollView
+          ref={scroll}
+          contentContainerStyle={styles.content}
+          keyboardShouldPersistTaps="handled"
+        >
+          <View style={styles.question}>
+            {step !== 'reveal' && (step !== 'profile' || !identity) && (
               <Text variant="title1" accessibilityRole="header" testID="onboarding-title">
                 {t(copy.title)}
               </Text>
-              <Text color={colors.textMid}>{t(copy.subtitle)}</Text>
-              {isOnline === false && (
-                <Text variant="bodyS" accessibilityLiveRegion="polite">
-                  {t('setup.offlineDraft')}
-                </Text>
-              )}
-              {draftError && (
-                <Button
-                  variant="tertiary"
-                  label={t('setup.draftError')}
-                  onPress={update}
-                  testID="retry-draft"
-                />
-              )}
-              {step === 'plan_summary' ? (
-                <View style={styles.summary}>
-                  <View style={styles.summaryCharacter}>
-                    <EvolutionCharacter
-                      gender={snapshot.characterGender}
-                      goal={snapshot.goal}
-                      stage={11}
-                    />
-                  </View>
-                  <View style={styles.summaryTargets}>
-                    <PlanReviewStep
-                      state={snapshot}
-                      onPlanned={continueToPaywall}
-                      onCalculation={() => showCalculation(true)}
-                      error={saveError}
-                      onClearError={() => setSaveError(null)}
-                      saving={false}
-                      continueLabel={t('characterSetup.getPlan')}
-                    />
-                  </View>
-                </View>
-              ) : step === 'paywall' ? (
-                <>
-                  {!identity && (
-                    <FinishOnboardingProfile
-                      state={snapshot}
-                      waitForDraft={() => draftWrites.current}
-                    />
-                  )}
-                  {identity && (paywallClosed || checkoutDone === '1') && (
-                    <Button
-                      label={t(saveError ? 'setup.retry' : 'setup.next')}
-                      loading={saving}
-                      disabled={saving}
-                      onPress={() => void finish()}
-                      testID="finish-onboarding-retry"
-                    />
-                  )}
-                  {saveError && (
-                    <Text
-                      color={colors.danger}
-                      accessibilityRole="alert"
-                      testID="onboarding-save-error"
-                    >
-                      {saveError}
-                    </Text>
-                  )}
-                </>
-              ) : (
-                <OnboardingQuestion
-                  key={step}
-                  step={step}
-                  state={snapshot}
-                  machine={machine}
-                  update={update}
-                  identityConfirmed={Boolean(identity)}
-                />
-              )}
-            </View>
-            {index > 0 && index < 11 && (
-              <EvolutionCharacter
-                gender={snapshot.characterGender}
-                goal={snapshot.goal}
-                stage={index}
+            )}
+            {copy.subtitle && <Text color={colors.textMid}>{t(copy.subtitle)}</Text>}
+            {isOnline === false && (
+              <Text variant="bodyS" accessibilityLiveRegion="polite">
+                {t('setup.offlineDraft')}
+              </Text>
+            )}
+            {draftError && (
+              <Button
+                variant="tertiary"
+                label={t('setup.draftError')}
+                onPress={update}
+                testID="retry-draft"
               />
             )}
-          </ScrollView>
-          {index < 11 && (
-            <View style={[styles.footer, { borderTopColor: colors.hairline }]}>
-              <Button label={t('setup.next')} onPress={next} testID="btn-onboarding-next" />
-            </View>
+            {step === 'plan_summary' ? (
+              <PlanReviewStep
+                state={snapshot}
+                onPlanned={continueToReveal}
+                onCalculation={() => showCalculation(true)}
+                error={saveError}
+                onClearError={() => setSaveError(null)}
+                saving={false}
+              />
+            ) : step === 'profile' ? (
+              !identity && (
+                <FinishOnboardingProfile
+                  state={snapshot}
+                  waitForDraft={() => draftWrites.current}
+                  onComplete={next}
+                />
+              )
+            ) : step === 'reveal' ? (
+              <View style={styles.reveal} testID="onboarding-peak-reveal">
+                <EvolutionCharacter
+                  gender={snapshot.characterGender}
+                  goal={snapshot.goal}
+                  stage={11}
+                  reveal
+                />
+                <Text variant="title1" accessibilityRole="header" style={styles.revealTitle}>
+                  {t('characterSetup.revealTitle')}
+                </Text>
+              </View>
+            ) : step === 'paywall' ? (
+              <>
+                {identity && (paywallClosed || checkoutDone === '1') && (
+                  <Button
+                    label={t(saveError ? 'setup.retry' : 'setup.next')}
+                    loading={saving}
+                    disabled={saving}
+                    onPress={() => void finish()}
+                    testID="finish-onboarding-retry"
+                  />
+                )}
+                {saveError && (
+                  <Text
+                    color={colors.danger}
+                    accessibilityRole="alert"
+                    testID="onboarding-save-error"
+                  >
+                    {saveError}
+                  </Text>
+                )}
+              </>
+            ) : (
+              <OnboardingQuestion
+                key={step}
+                step={step}
+                state={snapshot}
+                machine={machine}
+                update={update}
+                identityConfirmed={Boolean(identity)}
+              />
+            )}
+          </View>
+          {index > 0 && index <= 11 && (
+            <EvolutionCharacter
+              gender={snapshot.characterGender}
+              goal={snapshot.goal}
+              stage={index}
+            />
           )}
-        </View>
-      </KeyboardAvoidingView>
-      {step === 'paywall' && identity && !paywallClosed && checkoutDone !== '1' && (
-        <PaywallModal
-          visible
-          context="general"
-          onClose={() => void finish()}
-          onContinueFree={() => void finish()}
-          onSuccess={() => void finish()}
-        />
-      )}
+        </ScrollView>
+        {((index >= 0 && index < 11) || (step === 'profile' && identity) || step === 'reveal') && (
+          <View style={[styles.footer, { borderTopColor: colors.hairline }]}>
+            <Button
+              label={t('setup.next')}
+              onPress={next}
+              testID={step === 'reveal' ? 'onboarding-open-paywall' : 'btn-onboarding-next'}
+            />
+          </View>
+        )}
+      </View>
+      <PaywallModal
+        visible={step === 'paywall' && Boolean(identity) && !paywallClosed && checkoutDone !== '1'}
+        preloadPrices={isOnline === true}
+        completionPending={saving}
+        context="general"
+        onClose={() => void finish()}
+        onContinueFree={() => void finish()}
+        onSuccess={() => void finish()}
+      />
       <Modal
         visible={calculation}
         onRequestClose={() => showCalculation(false)}
@@ -433,8 +453,7 @@ const styles = StyleSheet.create({
   track: { height: controls.progressHeight },
   content: { flexGrow: 1, padding: space[5], gap: space[5] },
   question: { gap: space[3] },
-  summary: { flexDirection: 'row', flexWrap: 'wrap', gap: space[4] },
-  summaryCharacter: { flexBasis: controls.summaryMinWidth, flexGrow: 1, flexShrink: 1 },
-  summaryTargets: { flexBasis: layout.entryWidth / 2, flexGrow: 2, flexShrink: 1 },
+  reveal: { alignItems: 'center', gap: space[3] },
+  revealTitle: { textAlign: 'center' },
   footer: { borderTopWidth: StyleSheet.hairlineWidth, padding: space[5] },
 });

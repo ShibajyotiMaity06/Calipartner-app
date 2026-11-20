@@ -15,10 +15,12 @@ vi.mock('react-native', () => ({
 }));
 vi.mock('@calipartner/ui', () => ({
   Button: 'Button',
+  NavigationIcon: 'Icon',
   Text: 'Text',
   space: [],
   useTheme: () => ({ colors: {} }),
 }));
+vi.mock('react-native-safe-area-context', () => ({ SafeAreaView: 'SafeAreaView' }));
 vi.mock('expo-clipboard', () => ({ setStringAsync: vi.fn() }));
 vi.mock('@/components/brand/CaliPartnerLogo', () => ({ CaliPartnerLogo: 'Logo' }));
 vi.mock('expo-router', () => ({ useRouter: () => ({ replace: vi.fn() }) }));
@@ -63,6 +65,9 @@ it('waits for connectivity and opens a copyable invite modal on web', async () =
   state.online = true;
   await act(async () => tree.update(<PairStartView />));
   expect(tree.root.findByType('Modal' as never).props.visible).toBe(true);
+  const headerClose = tree.root.findByProps({ testID: 'pair-close-share' });
+  expect(headerClose.props.iconOnly).toBe(true);
+  expect(headerClose.parent?.props.testID).toBe('pair-share-sheet');
   expect(state.share).not.toHaveBeenCalled();
   await act(async () => tree.root.findByProps({ testID: 'pair-close-share' }).props.onPress());
   expect(tree.root.findByType('Modal' as never).props.visible).toBe(false);

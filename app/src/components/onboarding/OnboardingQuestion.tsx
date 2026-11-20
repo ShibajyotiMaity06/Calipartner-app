@@ -4,10 +4,11 @@ import { calculateAge, kgToLb, lbToKg, type Units } from '@calipartner/core';
 import { Button, SegmentedControl, Text, useTheme } from '@calipartner/ui';
 import { CompactSelect } from '@/components/CompactSelect';
 import { t, type TranslationKey } from '@/i18n';
-import type {
-  OnboardingState,
-  OnboardingStateMachine,
-  OnboardingStep,
+import {
+  MAX_ONBOARDING_WEEKLY_RATE_KG,
+  type OnboardingState,
+  type OnboardingStateMachine,
+  type OnboardingStep,
 } from '@/services/onboardingStateMachine';
 import { ActivityStep } from './ActivityStep';
 import { GoalStep } from './GoalStep';
@@ -16,21 +17,23 @@ import { InteractiveDobPicker } from './InteractiveDobPicker';
 import { PlanSafetyNotice } from './PlanReviewStep';
 import { NumberField, PlanChoice, PlanTextField, planStyles } from './PlanPrimitives';
 
-type Copy = { title: TranslationKey; subtitle: TranslationKey };
+type Copy = { title: TranslationKey; subtitle?: TranslationKey };
 export const questionCopy: Record<OnboardingStep, Copy> = {
-  goal: { title: 'characterSetup.startTitle', subtitle: 'characterSetup.startBody' },
-  nickname: { title: 'characterSetup.nameTitle', subtitle: 'characterSetup.nameBody' },
+  goal: { title: 'characterSetup.startTitle' },
+  nickname: { title: 'characterSetup.nameTitle' },
   age: { title: 'characterSetup.ageTitle', subtitle: 'setup.ageNote' },
-  height: { title: 'characterSetup.heightTitle', subtitle: 'characterSetup.heightBody' },
-  weight: { title: 'characterSetup.weightTitle', subtitle: 'characterSetup.weightBody' },
+  height: { title: 'characterSetup.heightTitle' },
+  weight: { title: 'characterSetup.weightTitle' },
   activity_level: { title: 'onboarding.activity.title', subtitle: 'setup.activitySubtitle' },
-  gym_days: { title: 'characterSetup.trainingTitle', subtitle: 'setup.activeTraining' },
-  target_weight: { title: 'characterSetup.targetTitle', subtitle: 'characterSetup.targetBody' },
-  rate_selection: { title: 'characterSetup.paceTitle', subtitle: 'characterSetup.paceBody' },
-  step_goal: { title: 'characterSetup.stepTitle', subtitle: 'characterSetup.stepBody' },
-  water_goal: { title: 'characterSetup.waterTitle', subtitle: 'characterSetup.waterBody' },
-  plan_summary: { title: 'setup.reviewTitle', subtitle: 'characterSetup.summaryBody' },
-  paywall: { title: 'characterSetup.finalTitle', subtitle: 'characterSetup.finalBody' },
+  gym_days: { title: 'characterSetup.trainingTitle' },
+  target_weight: { title: 'characterSetup.targetTitle' },
+  rate_selection: { title: 'characterSetup.paceTitle' },
+  step_goal: { title: 'characterSetup.stepTitle' },
+  water_goal: { title: 'characterSetup.waterTitle' },
+  profile: { title: 'characterSetup.profileTitle' },
+  plan_summary: { title: 'characterSetup.summaryTitle' },
+  reveal: { title: 'characterSetup.revealTitle' },
+  paywall: { title: 'characterSetup.finalTitle' },
 };
 
 const errorCopy: Record<string, TranslationKey> = {
@@ -101,6 +104,7 @@ export function OnboardingQuestion({
       input = (
         <PlanTextField
           label={t('profileSetup.nicknameLabel')}
+          hideLabel
           value={state.nickname}
           onChangeText={(value) => change((draft) => draft.setNickname(value))}
           maxLength={60}
@@ -201,11 +205,9 @@ export function OnboardingQuestion({
         <>
           <View accessibilityRole="radiogroup" style={planStyles.gap}>
             {state.calculatedTargets?.presetRates.map((rate) => {
-              const unavailable = !rate.available || Boolean(rate.reason);
               const description = t('setup.kcalDay', { kcal: rate.targetKcal.toLocaleString() });
-              const note = unavailable
-                ? t('setup.unavailable')
-                : rate.rateKgPerWeek === state.calculatedTargets?.recommendedRateKg
+              const note =
+                rate.rateKgPerWeek === state.calculatedTargets?.recommendedRateKg
                   ? t('setup.recommended')
                   : null;
               return (
@@ -215,7 +217,6 @@ export function OnboardingQuestion({
                   testID={`rate-card-${rate.rateKgPerWeek}`}
                   title={t('setup.rate', { rate: rate.rateKgPerWeek })}
                   description={note ? `${description} · ${note}` : description}
-                  disabled={unavailable}
                   selected={state.weeklyRateKg === rate.rateKgPerWeek}
                   onPress={() => change((draft) => draft.setWeeklyRate(rate.rateKgPerWeek))}
                 />
@@ -228,6 +229,9 @@ export function OnboardingQuestion({
             onChange={(value) => change((draft) => draft.setWeeklyRate(value ?? NaN))}
             testID="input-custom-pace"
           />
+          <Text variant="bodyS">
+            {t('characterSetup.paceLimit', { max: MAX_ONBOARDING_WEEKLY_RATE_KG })}
+          </Text>
           <PlanSafetyNotice result={state.calculatedTargets} />
           {state.calculatedTargets?.safety.isBmiTooLowForCut && (
             <Button
@@ -280,6 +284,11 @@ export function OnboardingQuestion({
               {t(errorCopy[key])}
             </Text>
           ),
+      )}
+      {state.errors.rateTooHigh && (
+        <Text color={colors.danger} accessibilityRole="alert" testID="onboarding-error-rate-limit">
+          {t('characterSetup.paceTooHigh', { max: MAX_ONBOARDING_WEEKLY_RATE_KG })}
+        </Text>
       )}
     </View>
   );

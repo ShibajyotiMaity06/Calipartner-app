@@ -2,7 +2,6 @@ import {
   calculateGymTargets,
   calculateAge,
   isGymPlanValid,
-  isGymPlanSafe,
   isAtLeast18,
   type ActivityLevel,
   type GymTargetsResult,
@@ -26,11 +25,13 @@ export const ONBOARDING_STEPS_ORDER = [
   'rate_selection',
   'step_goal',
   'water_goal',
+  'profile',
   'plan_summary',
-  'paywall',
 ] as const;
 
-export type OnboardingStep = (typeof ONBOARDING_STEPS_ORDER)[number];
+const ONBOARDING_FLOW = [...ONBOARDING_STEPS_ORDER, 'reveal', 'paywall'] as const;
+export const MAX_ONBOARDING_WEEKLY_RATE_KG = 3;
+export type OnboardingStep = (typeof ONBOARDING_FLOW)[number];
 type ValidationStep = OnboardingStep | 'body_stats' | 'daily_goals';
 export type SelectedGoal = Exclude<Goal, 'maintain'>;
 export type CharacterGender = Exclude<Sex, 'other'>;
@@ -323,11 +324,16 @@ export class OnboardingStateMachine {
 
       case 'rate_selection':
       case 'plan_summary':
+        if (this.state.characterGender && this.state.weeklyRateKg > MAX_ONBOARDING_WEEKLY_RATE_KG) {
+          errors.rateTooHigh = 'Pace exceeds the maximum';
+        }
         if (
           !this.state.calculatedTargets ||
           !isGymPlanValid(this.state.calculatedTargets) ||
           (this.state.characterGender &&
-            (!isGymPlanSafe(this.state.calculatedTargets) || this.state.weeklyRateKg <= 0))
+            (this.state.calculatedTargets.safety.isFloorApplied ||
+              this.state.calculatedTargets.safety.isBmiTooLowForCut ||
+              this.state.weeklyRateKg <= 0))
         )
           errors.rate = 'Enter a valid pace with enough calories for your macros';
         Object.assign(errors, this.validateStep('target_weight').errors);
@@ -366,9 +372,9 @@ export class OnboardingStateMachine {
     }
 
     this.state.errors = {};
-    const currentIndex = ONBOARDING_STEPS_ORDER.indexOf(this.state.currentStep);
-    if (currentIndex < ONBOARDING_STEPS_ORDER.length - 1) {
-      const nextStep = ONBOARDING_STEPS_ORDER[currentIndex + 1];
+    const currentIndex = ONBOARDING_FLOW.indexOf(this.state.currentStep);
+    if (currentIndex < ONBOARDING_FLOW.length - 1) {
+      const nextStep = ONBOARDING_FLOW[currentIndex + 1];
       if (nextStep) {
         this.state.currentStep = nextStep;
         this.recalculateTargets();
@@ -380,9 +386,9 @@ export class OnboardingStateMachine {
 
   back(): boolean {
     this.state.errors = {};
-    const currentIndex = ONBOARDING_STEPS_ORDER.indexOf(this.state.currentStep);
+    const currentIndex = ONBOARDING_FLOW.indexOf(this.state.currentStep);
     if (currentIndex > 0) {
-      const prevStep = ONBOARDING_STEPS_ORDER[currentIndex - 1];
+      const prevStep = ONBOARDING_FLOW[currentIndex - 1];
       if (prevStep) {
         this.state.currentStep = prevStep;
         return true;
@@ -392,15 +398,15 @@ export class OnboardingStateMachine {
   }
 
   goToStep(step: OnboardingStep): boolean {
-    const targetIndex = ONBOARDING_STEPS_ORDER.indexOf(step);
-    const currentIndex = ONBOARDING_STEPS_ORDER.indexOf(this.state.currentStep);
+    const targetIndex = ONBOARDING_FLOW.indexOf(step);
+    const currentIndex = ONBOARDING_FLOW.indexOf(this.state.currentStep);
     if (targetIndex === -1) return false;
     if (targetIndex <= currentIndex) {
       this.state.currentStep = step;
       this.state.errors = {};
       return true;
     }
-    for (const required of ONBOARDING_STEPS_ORDER.slice(currentIndex, targetIndex)) {
+    for (const required of ONBOARDING_FLOW.slice(currentIndex, targetIndex)) {
       const validation = this.validateStep(required);
       if (!validation.isValid) {
         this.state.currentStep = required;

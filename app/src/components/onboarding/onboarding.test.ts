@@ -30,8 +30,8 @@ describe('Onboarding UI and Interaction Logic', () => {
         'rate_selection',
         'step_goal',
         'water_goal',
+        'profile',
         'plan_summary',
-        'paywall',
       ]);
       expect(EXPECTED_ONBOARDING_STEPS).not.toContain('review_calculation');
       expect(EXPECTED_ONBOARDING_STEPS.length).toBe(13);

@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Share, StyleSheet, View, Modal, Platform } from 'react-native';
 import { useRouter } from 'expo-router';
-import { Button, Text, space, useTheme } from '@calipartner/ui';
+import { Button, NavigationIcon, Text, space, useTheme } from '@calipartner/ui';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { CaliPartnerLogo } from '@/components/brand/CaliPartnerLogo';
 import { useAuth } from '@/contexts/AuthContext';
 import { useNetworkStatus } from '@/hooks/useNetworkStatus';
@@ -58,15 +59,21 @@ export function PairStartView() {
   return (
     <View style={styles.content} testID="pair-start-screen">
       <Modal visible={!!shareLink} transparent onRequestClose={() => setShareLink(null)}>
-        <View
-          style={{
-            flex: 1,
-            backgroundColor: colors.bg0,
-            justifyContent: 'center',
-            padding: space[6],
-          }}
+        <SafeAreaView
+          style={[styles.shareSheet, { backgroundColor: colors.bg0 }]}
+          testID="pair-share-sheet"
         >
-          <View style={{ gap: space[4] }} testID="pair-share-sheet">
+          <Button
+            variant="tertiary"
+            fullWidth={false}
+            iconOnly
+            icon={<NavigationIcon action="close" />}
+            label={t('entryPolish.close')}
+            testID="pair-close-share"
+            onPress={() => setShareLink(null)}
+            style={styles.shareClose}
+          />
+          <View style={styles.shareBody}>
             <Text variant="title2">{t('pairStart.share')}</Text>
             <Text selectable>{shareLink}</Text>
             <Button
@@ -79,14 +86,13 @@ export function PairStartView() {
                     .catch(() => setError(t('pairStart.error')));
               }}
             />
-            <Button
-              variant="tertiary"
-              label={t('entryPolish.close')}
-              testID="pair-close-share"
-              onPress={() => setShareLink(null)}
-            />
+            {error && (
+              <Text accessibilityRole="alert" color={colors.danger}>
+                {error}
+              </Text>
+            )}
           </View>
-        </View>
+        </SafeAreaView>
       </Modal>
       <View style={{ alignItems: 'center' }}>
         <CaliPartnerLogo />
@@ -134,4 +140,7 @@ export function PairStartView() {
 }
 const styles = StyleSheet.create({
   content: { flexGrow: 1, padding: space[6], justifyContent: 'center', gap: space[5] },
+  shareSheet: { flex: 1, padding: space[6] },
+  shareClose: { alignSelf: 'flex-start' },
+  shareBody: { flex: 1, gap: space[4], justifyContent: 'center' },
 });

@@ -10,23 +10,37 @@ import { PlanCard, PlanTextField } from './PlanPrimitives';
 export function FinishOnboardingProfile({
   state,
   waitForDraft,
+  onComplete,
 }: {
   state: OnboardingState;
   waitForDraft: () => Promise<void>;
+  onComplete: () => void;
 }) {
   const { colors } = useTheme();
   const { createProfile } = useAuth();
   const { isOnline } = useNetworkStatus();
-  const { checkAvailability } = useUsername();
+  const { checkAvailability, status, setStatus } = useUsername();
   const [username, setUsername] = useState('');
   const [place, setPlace] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const busy = useRef(false);
+  const usernameError =
+    status === 'taken' || status === 'reserved' || status === 'held'
+      ? t('profileSetup.usernameTaken')
+      : status === 'invalid'
+        ? t('profileSetup.usernameInvalid')
+        : status === 'error'
+          ? t('common.errorBody')
+          : null;
 
   const submit = async () => {
     if (busy.current || !isOnline) return;
     setError(null);
+    if (!username.trim()) {
+      setStatus('invalid');
+      return;
+    }
     if (!place.trim()) {
       setError(t('setup.placeError'));
       return;
@@ -35,10 +49,7 @@ export function FinishOnboardingProfile({
     setSaving(true);
     try {
       await waitForDraft();
-      if (!(await checkAvailability(username))) {
-        setError(t('characterSetup.usernameError'));
-        return;
-      }
+      if (!(await checkAvailability(username))) return;
       const result = await createProfile({
         username: username.trim(),
         nickname: state.nickname.trim(),
@@ -49,7 +60,14 @@ export function FinishOnboardingProfile({
         place: place.trim(),
         timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC',
       });
-      if (result.error) throw result.error;
+      if (result.error) {
+        if (result.error.message.includes('profiles_username_key')) {
+          setStatus('taken');
+          return;
+        }
+        throw result.error;
+      }
+      onComplete();
     } catch {
       setError(t('common.errorBody'));
     } finally {
@@ -62,7 +80,10 @@ export function FinishOnboardingProfile({
       <PlanTextField
         label={t('profileSetup.usernameLabel')}
         value={username}
-        onChangeText={(value) => setUsername(value.toLowerCase().replace(/[^a-z0-9_.]/g, ''))}
+        onChangeText={(value) => {
+          setUsername(value.toLowerCase().replace(/[^a-z0-9_.]/g, ''));
+          setStatus('idle');
+        }}
         maxLength={20}
         autoComplete="username"
         autoCapitalize="none"
@@ -71,6 +92,11 @@ export function FinishOnboardingProfile({
         testID="input-username"
       />
       <Text variant="bodyS">{t('setup.usernameRules')}</Text>
+      {usernameError && (
+        <Text color={colors.danger} accessibilityRole="alert" testID="onboarding-username-error">
+          {usernameError}
+        </Text>
+      )}
       <PlanTextField
         label={t('setup.place')}
         value={place}

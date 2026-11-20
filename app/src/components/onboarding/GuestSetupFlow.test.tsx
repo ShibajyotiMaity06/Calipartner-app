@@ -18,7 +18,7 @@ vi.mock('react-native', () => ({
   View: 'View',
   ScrollView: 'ScrollView',
   Modal: 'Modal',
-  KeyboardAvoidingView: 'KeyboardAvoidingView',
+  Keyboard: { dismiss: vi.fn() },
   Platform: {
     get OS() {
       return state.os;
@@ -71,9 +71,9 @@ vi.mock('./OnboardingQuestion', async () => {
   return {
     OnboardingQuestion: 'Question',
     questionCopy: Object.fromEntries(
-      ONBOARDING_STEPS_ORDER.map((step) => [
+      [...ONBOARDING_STEPS_ORDER, 'reveal', 'paywall'].map((step) => [
         step,
-        { title: 'characterSetup.startTitle', subtitle: 'characterSetup.startBody' },
+        { title: 'characterSetup.startTitle' },
       ]),
     ),
   };
@@ -164,6 +164,7 @@ it('maps 11 asset stages and only finishes after an acknowledged, retry-safe sav
   await render();
   expect(find('Question').props.step).toBe('goal');
   expect(all('Character')).toHaveLength(0);
+  expect(find('Paywall').props).toMatchObject({ visible: false, preloadPrices: true });
   await edit((machine) => machine.setCharacterGender('female', true).setGoal('bulk'));
   await next();
   expect(find('Character').props).toMatchObject({ gender: 'female', goal: 'bulk', stage: 1 });
@@ -179,9 +180,7 @@ it('maps 11 asset stages and only finishes after an acknowledged, retry-safe sav
     await next();
   }
   expect(find('Character').props.stage).toBe(11);
-  expect(find('Review').props.state.calculatedTargets.targetKcal).toBeGreaterThan(0);
-  await act(async () => find('Review').props.onPlanned({}));
-  expect(find('ProfileForm').props.state.currentStep).toBe('paywall');
+  expect(find('ProfileForm').props.state.currentStep).toBe('profile');
   expect(state.save).not.toHaveBeenCalled();
   state.profile = {
     id: 'owner',
@@ -190,9 +189,25 @@ it('maps 11 asset stages and only finishes after an acknowledged, retry-safe sav
     date_of_birth: '1999-06-12',
   } as Profile;
   await act(async () => tree.update(<OnboardingScreen />));
+  await next();
+  expect(find('Review').props.state.calculatedTargets.targetKcal).toBeGreaterThan(0);
+  expect(all('Character')).toHaveLength(0);
+  await act(async () => find('Review').props.onPlanned({}));
+  expect(find('Character').props).toMatchObject({ stage: 11, reveal: true });
+  expect(find('Paywall').props.visible).toBe(false);
+  await act(async () =>
+    tree.root.findByProps({ testID: 'onboarding-open-paywall' }).props.onPress(),
+  );
   expect(state.drafts.get('owner')?.currentStep).toBe('paywall');
-  state.save.mockResolvedValueOnce({ success: false, error: 'network' });
+  let rejectSave!: (value: { success: false; error: string }) => void;
+  state.save.mockReturnValueOnce(
+    new Promise((resolve) => {
+      rejectSave = resolve;
+    }),
+  );
   await act(async () => find('Paywall').props.onContinueFree());
+  expect(find('Paywall').props).toMatchObject({ visible: true, completionPending: true });
+  await act(async () => rejectSave({ success: false, error: 'network' }));
   expect(state.replace).not.toHaveBeenCalled();
   expect(state.drafts.get('owner')?.goalProfileId).toBe('stable-draft-id');
   await act(async () =>

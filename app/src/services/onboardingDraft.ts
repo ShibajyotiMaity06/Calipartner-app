@@ -1,11 +1,6 @@
 import type { TargetsDb } from './targetsService';
 import type { Profile } from '@calipartner/core';
-import {
-  ONBOARDING_STEPS_ORDER,
-  OnboardingStateMachine,
-  type OnboardingState,
-  type OnboardingStep,
-} from './onboardingStateMachine';
+import { OnboardingStateMachine, type OnboardingState } from './onboardingStateMachine';
 
 export function resumeOnboardingDraft(
   draft: Partial<OnboardingState> | null,
@@ -27,8 +22,10 @@ export function resumeOnboardingDraft(
     errors: {},
   });
   const savedStep = draft?.currentStep;
-  if (savedStep && ONBOARDING_STEPS_ORDER.includes(savedStep as OnboardingStep))
-    machine.goToStep(savedStep);
+  if (savedStep)
+    machine.goToStep(
+      !profile && ['plan_summary', 'reveal', 'paywall'].includes(savedStep) ? 'profile' : savedStep,
+    );
   return machine;
 }
 

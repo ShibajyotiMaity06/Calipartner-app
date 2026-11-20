@@ -21,8 +21,8 @@ describe('UI-5 Onboarding and Account Polish (Spec A01–A15, B01–B09)', () =>
         'rate_selection',
         'step_goal',
         'water_goal',
+        'profile',
         'plan_summary',
-        'paywall',
       ]);
       expect(ACTIVE_ONBOARDING_STEPS.length).toBe(13);
     });

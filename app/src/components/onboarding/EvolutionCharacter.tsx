@@ -72,24 +72,42 @@ const images: Record<
 };
 /* eslint-enable @typescript-eslint/no-require-imports */
 
+const captions = [
+  'one',
+  'two',
+  'three',
+  'four',
+  'five',
+  'six',
+  'seven',
+  'eight',
+  'nine',
+  'ten',
+  'eleven',
+] as const;
+
 export function EvolutionCharacter({
   gender,
   goal,
   stage,
+  reveal = false,
 }: {
   gender: CharacterGender | null;
   goal: Goal;
   stage: number;
+  reveal?: boolean;
 }) {
   const [failedSource, setFailedSource] = useState<ImageSourcePropType | null>(null);
   const { colors } = useTheme();
-  const { height } = useWindowDimensions();
+  // Keyboard resize changes the window height. Keep the portrait geometry anchored to width.
+  const { width } = useWindowDimensions();
   const source = gender && goal !== 'maintain' ? images[`${gender}_${goal}`][stage - 1] : undefined;
   if (!source) return null;
   const imageHeight = Math.min(
-    stage === 11 ? layout.characterSummaryHeight : layout.characterHeight,
-    Math.max(layout.characterMinHeight, height * 0.44),
+    layout.characterHeight,
+    Math.max(layout.characterMinHeight, width * 0.88),
   );
+  const caption = captions[stage - 1];
   return (
     <View style={styles.frame}>
       {failedSource === source ? (
@@ -107,9 +125,9 @@ export function EvolutionCharacter({
           testID={`onboarding-character-${stage}`}
         />
       )}
-      {stage === 11 && (
+      {!reveal && caption && (
         <Text variant="bodyS" color={colors.textMid} style={styles.caption}>
-          {t('characterSetup.imageNote')}
+          {t(`characterSetup.stages.${caption}`)}
         </Text>
       )}
     </View>
@@ -117,7 +135,7 @@ export function EvolutionCharacter({
 }
 
 const styles = StyleSheet.create({
-  frame: { flexGrow: 1, alignItems: 'center', justifyContent: 'center', gap: space[2] },
+  frame: { width: '100%', alignItems: 'center', gap: space[2] },
   image: { width: '100%' },
   caption: { textAlign: 'center' },
 });

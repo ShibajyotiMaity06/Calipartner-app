@@ -23,5 +23,4 @@ export const onboardingLayout = {
   foundersImageHeight: 264,
   characterMinHeight: 168,
   characterHeight: 376,
-  characterSummaryHeight: 232,
 } as const;
