@@ -35,10 +35,10 @@ export function HomeSquads({
 
   const router = useRouter();
   const { width, fontScale } = useWindowDimensions();
-  const cardWidth =
-    rooms.length === 0
-      ? undefined
-      : Math.min(homeLayout.cardWidth * Math.min(fontScale, 1.5), width - space[7]);
+  const [containerWidth, setContainerWidth] = useState(0);
+  const defaultCardWidth = Math.max(0, width - space[3] * 2);
+  const resolvedWidth = containerWidth > 0 ? containerWidth : defaultCardWidth;
+  const cardWidth = rooms.length === 0 ? undefined : resolvedWidth;
   const [selected, setSelected] = useState(0);
   const carousel = useRef<View>(null);
   const offset = useRef(new Animated.Value(0)).current;
@@ -135,20 +135,54 @@ export function HomeSquads({
         <Text variant="bodyS" color={dark.textMid}>
           {t('homeRefresh.squads')}
         </Text>
-        <Button
-          variant="tertiary"
-          fullWidth={false}
-          label={t('socialUpdate.addFriends')}
-          iconOnly
-          icon={
-            <Ionicons name="person-add-outline" size={homeLayout.iconSize} color={dark.textMid} />
-          }
-          onPress={() => router.push('/friends' as Href)}
-          style={styles.smallAction}
-          accessibilityRole="button"
-          accessibilityLabel={t('socialUpdate.addFriends')}
-          testID="home-open-friends"
-        />
+        <View style={styles.headerRight}>
+          {rooms.length > 0 && (
+            <View style={styles.navArrows} testID="home-squad-arrows">
+              <Pressable
+                onPress={() => moveTo(selected - 1)}
+                disabled={selected === 0}
+                style={[styles.arrowBtn, selected === 0 && styles.arrowDisabled]}
+                accessibilityRole="button"
+                accessibilityLabel={t('avatar.previousSquad')}
+                testID="home-squad-prev"
+              >
+                <Ionicons
+                  name="chevron-back"
+                  size={16}
+                  color={selected === 0 ? dark.textOff : dark.textMid}
+                />
+              </Pressable>
+              <Pressable
+                onPress={() => moveTo(selected + 1)}
+                disabled={selected >= rooms.length}
+                style={[styles.arrowBtn, selected >= rooms.length && styles.arrowDisabled]}
+                accessibilityRole="button"
+                accessibilityLabel={t('avatar.nextSquad')}
+                testID="home-squad-next"
+              >
+                <Ionicons
+                  name="chevron-forward"
+                  size={16}
+                  color={selected >= rooms.length ? dark.textOff : dark.textMid}
+                />
+              </Pressable>
+            </View>
+          )}
+          <Button
+            variant="tertiary"
+            fullWidth={false}
+            label={t('socialUpdate.addFriends')}
+            iconOnly
+            icon={
+              <Ionicons name="person-add-outline" size={homeLayout.iconSize} color={dark.textMid} />
+            }
+            onPress={() => router.push('/friends' as Href)}
+            style={styles.smallAction}
+            accessibilityRole="button"
+            accessibilityLabel={t('socialUpdate.addFriends')}
+            testID="home-open-friends"
+          />
+        </View>
       </View>
       {loading && !rooms.length ? <Text>{t('common.loading')}</Text> : null}
       {error ? (
@@ -166,7 +200,13 @@ export function HomeSquads({
       <View
         ref={carousel}
         {...pan.panHandlers}
-        style={{ overflow: 'hidden', height: cardHeight }}
+        onLayout={(event) => {
+          const w = Math.ceil(event.nativeEvent.layout.width);
+          if (w > 0 && w !== containerWidth) {
+            setContainerWidth(w);
+          }
+        }}
+        style={{ overflow: 'hidden', height: cardHeight, width: '100%' }}
         testID="home-squad-carousel"
         accessibilityRole="adjustable"
         accessibilityActions={[{ name: 'increment' }, { name: 'decrement' }]}
@@ -239,6 +279,18 @@ const createStyles = (dark: ReturnType<typeof useAppearance>['colors']) =>
   StyleSheet.create({
     stack: { gap: space[2], marginBottom: space[3] },
     header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+    headerRight: { flexDirection: 'row', alignItems: 'center', gap: space[1] },
+    navArrows: { flexDirection: 'row', alignItems: 'center', gap: 2 },
+    arrowBtn: {
+      minWidth: 32,
+      minHeight: homeLayout.touchSize,
+      alignItems: 'center',
+      justifyContent: 'center',
+      paddingHorizontal: 4,
+    },
+    arrowDisabled: {
+      opacity: 0.35,
+    },
     nameGroup: {
       flex: 1,
       minWidth: 0,

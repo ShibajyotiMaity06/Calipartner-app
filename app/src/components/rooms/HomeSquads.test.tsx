@@ -167,3 +167,45 @@ it('limits even a long fling to one card and lets the next gesture advance one m
   expect(panels().map((panel) => panel.props.visible)).toEqual([false, false, true, false]);
   expect(renderer.root.findAllByType('EditSquadName' as React.ElementType)).toHaveLength(0);
 });
+
+it('supports navigating cards using left and right arrows beside the friends button', async () => {
+  await act(async () => {
+    renderer = create(
+      <HomeSquads rooms={rooms} loading={false} error={null} onRetry={vi.fn()} visible />,
+    );
+  });
+  const prevBtn = () => renderer.root.findByProps({ testID: 'home-squad-prev' });
+  const nextBtn = () => renderer.root.findByProps({ testID: 'home-squad-next' });
+  const panels = () => renderer.root.findAllByType('HomeSquadLeaderboard' as React.ElementType);
+
+  expect(prevBtn().props.disabled).toBe(true);
+  expect(nextBtn().props.disabled).toBe(false);
+  expect(panels().map((p) => p.props.visible)).toEqual([true, false]);
+
+  // Click next arrow
+  await act(async () => {
+    nextBtn().props.onPress();
+  });
+  expect(panels().map((p) => p.props.visible)).toEqual([false, true]);
+  expect(prevBtn().props.disabled).toBe(false);
+
+  // Click next arrow again to reach create card (index 2)
+  await act(async () => {
+    nextBtn().props.onPress();
+  });
+  expect(nextBtn().props.disabled).toBe(true);
+  expect(prevBtn().props.disabled).toBe(false);
+
+  // Click prev arrow back to second squad
+  await act(async () => {
+    prevBtn().props.onPress();
+  });
+  expect(panels().map((p) => p.props.visible)).toEqual([false, true]);
+
+  // Click prev arrow back to first squad
+  await act(async () => {
+    prevBtn().props.onPress();
+  });
+  expect(panels().map((p) => p.props.visible)).toEqual([true, false]);
+  expect(prevBtn().props.disabled).toBe(true);
+});
