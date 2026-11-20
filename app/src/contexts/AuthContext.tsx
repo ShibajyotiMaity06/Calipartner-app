@@ -376,9 +376,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const updateProfile = useCallback(
     async (input: UpdateProfileInput) => {
-      // Optimistically apply update to in-memory profile
-      setProfile((prev) => (prev ? { ...prev, ...input } : null));
-
       if (!user?.id) {
         return { error: new Error('User not authenticated') };
       }
@@ -389,8 +386,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
         if (error) {
           log.warn('updateProfile error:', error.message);
+          return { error: new Error(error.message) };
         }
 
+        if (activeUserId.current === user.id)
+          setProfile((prev) => (prev?.id === user.id ? { ...prev, ...input } : prev));
         await fetchProfile(user.id);
         return { error: null };
       } catch (e: unknown) {

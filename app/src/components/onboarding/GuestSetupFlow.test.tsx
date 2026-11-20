@@ -1,15 +1,17 @@
 import React from 'react';
 import { act, create, type ReactTestRenderer } from 'react-test-renderer';
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
-import type { OnboardingState } from '@/services/onboardingStateMachine';
+import type { Profile } from '@calipartner/core';
+import type * as onboardingDraft from '@/services/onboardingDraft';
+import type { OnboardingState, OnboardingStateMachine } from '@/services/onboardingStateMachine';
 const state = vi.hoisted(() => ({
   user: null as { id: string } | null,
-  profile: null as { id: string; nickname: string; sex: 'female'; date_of_birth: string } | null,
+  profile: null as Profile | null,
   drafts: new Map<string, Partial<OnboardingState>>(),
-  push: vi.fn(),
   replace: vi.fn(),
   save: vi.fn(),
   review: vi.fn(),
+  next: vi.fn(),
   os: 'web',
 }));
 vi.mock('react-native', () => ({
@@ -26,8 +28,8 @@ vi.mock('react-native', () => ({
 }));
 vi.mock('react-native-safe-area-context', () => ({ SafeAreaView: 'SafeAreaView' }));
 vi.mock('expo-router', () => {
-  const router = { push: state.push, replace: state.replace };
-  return { useRouter: () => router };
+  const router = { replace: state.replace };
+  return { useRouter: () => router, useLocalSearchParams: () => ({}) };
 });
 vi.mock('@calipartner/ui', async () => ({
   ...(await import('../../../../packages/ui/src/tokens')),
@@ -37,18 +39,24 @@ vi.mock('@calipartner/ui', async () => ({
   useTheme: () => ({ colors: {}, reduceMotion: true }),
 }));
 vi.mock('@/contexts/AuthContext', () => ({
-  useAuth: () => ({ user: state.user, profile: state.profile, isLoading: false }),
+  useAuth: () => ({
+    user: state.user,
+    profile: state.profile,
+    isLoading: false,
+    needsProfileSetup: Boolean(state.user && !state.profile),
+  }),
 }));
-vi.mock('@/hooks/useTargets', () => ({
-  useTargets: () => ({ saveGoalProfile: state.save, saveScreening: state.save }),
-}));
+vi.mock('@/hooks/useTargets', () => ({ useTargets: () => ({ saveGoalProfile: state.save }) }));
 vi.mock('@/hooks/useNetworkStatus', () => ({ useNetworkStatus: () => ({ isOnline: true }) }));
 vi.mock('@/db', () => ({ getDb: async () => ({}) }));
 vi.mock('@/services/foodService', () => ({ generateClientUuid: () => 'stable-draft-id' }));
-vi.mock('@/services/webBillingService', () => ({ fetchWebCatalog: async () => ({}) }));
-vi.mock('@/services/pairOnboardingService', () => ({ requirePairPrompt: vi.fn() }));
+vi.mock('@/services/pairOnboardingService', () => ({
+  requirePairPrompt: vi.fn(),
+  afterSetupDestination: state.next,
+}));
 vi.mock('@/services/onboardingReviewService', () => ({ requireOnboardingReview: state.review }));
-vi.mock('@/services/onboardingDraft', () => ({
+vi.mock('@/services/onboardingDraft', async (importOriginal) => ({
+  ...(await importOriginal<typeof onboardingDraft>()),
   loadOnboardingDraft: async (_db: unknown, owner: string) => state.drafts.get(owner) ?? null,
   saveOnboardingDraft: async (_db: unknown, owner: string, draft: OnboardingState) => {
     state.drafts.set(owner, { ...draft });
@@ -57,92 +65,145 @@ vi.mock('@/services/onboardingDraft', () => ({
     state.drafts.delete(owner);
   },
 }));
-vi.mock('./GrowthProjectionStep', () => ({ GrowthProjectionStep: 'Growth' }));
-vi.mock('./GoalStep', () => ({ GoalStep: 'Goal' }));
-vi.mock('./ActivityStep', () => ({ ActivityStep: 'Activity' }));
-vi.mock('./MotivationStep', () => ({ MotivationStep: 'Motivation' }));
-vi.mock('./TrainingStep', () => ({ TrainingStep: 'Training' }));
-vi.mock('./PremiumStep', () => ({ PremiumStep: 'Premium' }));
-vi.mock('./PlanReviewStep', () => ({ PlanReviewStep: 'Review', PlanSafetyNotice: 'Safety' }));
+vi.mock('./EvolutionCharacter', () => ({ EvolutionCharacter: 'Character' }));
+vi.mock('./OnboardingQuestion', async () => {
+  const { ONBOARDING_STEPS_ORDER } = await import('@/services/onboardingStateMachine');
+  return {
+    OnboardingQuestion: 'Question',
+    questionCopy: Object.fromEntries(
+      ONBOARDING_STEPS_ORDER.map((step) => [
+        step,
+        { title: 'characterSetup.startTitle', subtitle: 'characterSetup.startBody' },
+      ]),
+    ),
+  };
+});
+vi.mock('./FinishOnboardingProfile', () => ({ FinishOnboardingProfile: 'ProfileForm' }));
+vi.mock('./PlanReviewStep', () => ({ PlanReviewStep: 'Review' }));
 vi.mock('./GymCalculationStep', () => ({ GymCalculationStep: 'Calculation' }));
-vi.mock('./PlanPrimitives', () => ({
-  PlanChoice: 'Choice',
-  NumberField: 'NumberField',
-  PlanCard: 'Card',
-  planStyles: {},
-}));
+vi.mock('./PlanPrimitives', () => ({ PlanChoice: 'GoalChoice', planStyles: {} }));
 vi.mock('@/components/rooms/PaywallModal', () => ({ PaywallModal: 'Paywall' }));
+
 import OnboardingScreen from '@/app/onboarding';
+import { GoalStep } from './GoalStep';
 let tree: ReactTestRenderer;
+const find = (type: string) => tree.root.findByType(type as React.ElementType);
+const all = (type: string) => tree.root.findAllByType(type as React.ElementType);
+const next = async () =>
+  act(async () => tree.root.findByProps({ testID: 'btn-onboarding-next' }).props.onPress());
+const edit = async (change: (machine: OnboardingStateMachine) => void) => {
+  const question = find('Question').props;
+  await act(async () => {
+    change(question.machine);
+    question.update();
+  });
+};
+const render = async () => {
+  await act(async () => {
+    tree = create(<OnboardingScreen />);
+  });
+};
+
 beforeEach(() => {
+  (globalThis as unknown as { IS_REACT_ACT_ENVIRONMENT: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
   vi.clearAllMocks();
   state.user = null;
   state.profile = null;
   state.drafts.clear();
   state.save.mockResolvedValue({ success: true });
+  state.next.mockResolvedValue('/founders?next=pair');
 });
 afterEach(async () => {
   if (tree) await act(async () => tree.unmount());
 });
-it.each(['web', 'ios'])(
-  'keeps guest setup local and starts the review at the correct point on %s',
-  async (platform) => {
-    state.os = platform;
-    await act(async () => {
-      tree = create(<OnboardingScreen />);
-    });
-    expect(state.replace).not.toHaveBeenCalled();
-    const next = async () => {
-      await act(async () =>
-        tree.root.findByProps({ testID: 'btn-onboarding-next' }).props.onPress(),
-      );
-    };
+
+it('routes unauthenticated visitors to signup or login before asking questions', async () => {
+  await render();
+  expect(state.replace).toHaveBeenCalledWith('/auth/sign-in?mode=signup');
+  expect(all('Question')).toHaveLength(0);
+  expect(state.drafts.size).toBe(0);
+});
+
+it('offers only Bulk and Cut when a historical goal is maintenance', async () => {
+  const onSelectGoal = vi.fn();
+  await act(async () => {
+    tree = create(<GoalStep selectedGoal="maintain" onSelectGoal={onSelectGoal} />);
+  });
+  const choices = all('GoalChoice');
+  expect(choices.map(({ props }) => props.testID)).toEqual(['goal-card-bulk', 'goal-card-cut']);
+  expect(choices.some(({ props }) => props.selected)).toBe(false);
+  tree.root.findByProps({ testID: 'goal-card-cut' }).props.onPress();
+  expect(onSelectGoal).toHaveBeenCalledWith('cut');
+});
+
+it('keeps measurements and the save ID when resuming an old guest draft', async () => {
+  state.drafts.set('guest-user', {
+    currentStep: 'completed' as OnboardingState['currentStep'],
+    goalProfileId: 'original-id',
+    goal: 'maintain',
+    heightCm: 172,
+    weightKg: 72,
+    dateOfBirth: '1999-06-12',
+  });
+  state.user = { id: 'owner' };
+  await render();
+  expect(find('Question').props.state).toMatchObject({
+    currentStep: 'goal',
+    goalSelected: false,
+    dateOfBirth: '',
+    heightCm: 172,
+    weightKg: 72,
+    goalProfileId: 'original-id',
+  });
+  expect(state.drafts.has('guest-user')).toBe(false);
+  expect(state.drafts.has('owner')).toBe(true);
+});
+
+it('maps 11 asset stages and only finishes after an acknowledged, retry-safe save from the paywall', async () => {
+  state.user = { id: 'owner' };
+  await render();
+  expect(find('Question').props.step).toBe('goal');
+  expect(all('Character')).toHaveLength(0);
+  await edit((machine) => machine.setCharacterGender('female', true).setGoal('bulk'));
+  await next();
+  expect(find('Character').props).toMatchObject({ gender: 'female', goal: 'bulk', stage: 1 });
+  await edit((machine) => machine.setNickname('Alex'));
+  await next();
+  await edit((machine) => machine.setBodyStats({ dateOfBirth: '1999-06-12' }));
+  await next();
+  await edit((machine) => machine.setBodyStats({ heightCm: 172 }));
+  await next();
+  await edit((machine) => machine.setBodyStats({ weightKg: 72 }));
+  for (let stage = 4; stage <= 10; stage++) {
+    expect(find('Character').props.stage).toBe(stage);
     await next();
-    await next();
-    const training = tree.root.findByType('Training' as React.ElementType);
-    await act(async () => {
-      training.props.onWeight(72);
-      training.props.onHeight(172);
-      training.props.onBodyStats({ dateOfBirth: '2001-01-01' });
-      training.props.onNickname('Guest name');
-    });
-    await next();
-    expect(tree.root.findByType('Growth' as React.ElementType)).toBeDefined();
-    await next();
-    await next();
-    await next();
-    expect(state.save).not.toHaveBeenCalled();
-    await act(async () =>
-      tree.root.findByProps({ testID: 'setup-create-account' }).props.onPress(),
-    );
-    expect(state.push).toHaveBeenCalledWith('/auth/sign-in?mode=signup');
-    expect(state.drafts.get('guest-user')?.weightKg).toBe(72);
-    state.user = { id: 'confirmed-owner' };
-    state.profile = {
-      id: 'confirmed-owner',
-      nickname: 'Alex',
-      sex: 'female',
-      date_of_birth: '1999-06-12',
-    };
-    await act(async () => tree.update(<OnboardingScreen />));
-    const review = tree.root.findByType('Review' as React.ElementType).props.state;
-    expect(review).toMatchObject({
-      weightKg: 72,
-      heightCm: 172,
-      dateOfBirth: '1999-06-12',
-      nickname: 'Alex',
-      sex: 'female',
-      goalProfileId: 'stable-draft-id',
-    });
-    expect(state.drafts.has('guest-user')).toBe(false);
-    expect(state.drafts.get('confirmed-owner')?.weightKg).toBe(72);
-    expect(state.save).not.toHaveBeenCalled();
-    await act(async () =>
-      tree.root.findByType('Review' as React.ElementType).props.onRecommended(),
-    );
-    expect(state.review).toHaveBeenCalledWith('confirmed-owner', platform);
-    expect(state.push).toHaveBeenLastCalledWith(
-      platform === 'ios' ? '/weekly-plan?setup=1' : '/founders?next=plan',
-    );
-  },
-);
+  }
+  expect(find('Character').props.stage).toBe(11);
+  expect(find('Review').props.state.calculatedTargets.targetKcal).toBeGreaterThan(0);
+  await act(async () => find('Review').props.onPlanned({}));
+  expect(find('ProfileForm').props.state.currentStep).toBe('paywall');
+  expect(state.save).not.toHaveBeenCalled();
+  state.profile = {
+    id: 'owner',
+    nickname: 'Alex',
+    sex: 'female',
+    date_of_birth: '1999-06-12',
+  } as Profile;
+  await act(async () => tree.update(<OnboardingScreen />));
+  expect(state.drafts.get('owner')?.currentStep).toBe('paywall');
+  state.save.mockResolvedValueOnce({ success: false, error: 'network' });
+  await act(async () => find('Paywall').props.onContinueFree());
+  expect(state.replace).not.toHaveBeenCalled();
+  expect(state.drafts.get('owner')?.goalProfileId).toBe('stable-draft-id');
+  await act(async () =>
+    tree.root.findByProps({ testID: 'finish-onboarding-retry' }).props.onPress(),
+  );
+  expect(state.save).toHaveBeenCalledTimes(2);
+  expect(state.save.mock.calls.map(([record]) => record.id)).toEqual([
+    'stable-draft-id',
+    'stable-draft-id',
+  ]);
+  expect(state.review).toHaveBeenCalledWith('owner', 'web');
+  expect(state.replace).toHaveBeenCalledWith('/founders?next=pair');
+  expect(state.drafts.has('owner')).toBe(false);
+});

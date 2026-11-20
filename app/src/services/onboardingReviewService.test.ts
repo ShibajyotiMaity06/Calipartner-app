@@ -27,10 +27,10 @@ import {
   rememberPairInvite,
 } from './pairOnboardingService';
 beforeEach(() => store.clear());
-it('resumes Android before the plan, then continues normally without nagging another account', async () => {
+it('resumes Android after onboarding and before the invitation prompt', async () => {
   await requireOnboardingReview('owner', 'android');
   await requirePairPrompt('owner');
-  expect(await afterSetupDestination('owner')).toBe('/founders?next=plan');
+  expect(await afterSetupDestination('owner')).toBe('/founders?next=pair');
   expect(await afterSetupDestination('other')).toBe('/today');
   await finishOnboardingReview('owner');
   expect(await afterSetupDestination('owner')).toBe('/pair-start');
@@ -53,8 +53,11 @@ it('defers iOS until the end and preserves an invitation before the review', asy
   expect(await pendingOnboardingReview('owner')).toBeNull();
   expect(await afterPairReviewDestination('owner', 'room', token)).toBe('/room?room=' + token);
 });
+it('resumes a saved founders prompt from the retired plan flow', async () => {
+  store.set('calipartner.founders_review.owner', 'before_plan');
+  expect(await afterSetupDestination('owner')).toBe('/founders?next=pair');
+});
 it('only resumes known app routes, never a user-supplied URL', () => {
-  expect(reviewContinueDestination('plan')).toBe('/weekly-plan?setup=1');
   expect(reviewContinueDestination('https://example.invalid')).toBe('/today');
   expect(reviewContinueDestination('room', 'bad&redirect=outside')).toBe('/room');
 });

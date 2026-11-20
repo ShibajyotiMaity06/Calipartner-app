@@ -1,44 +1,45 @@
 import {
   calculateGymTargets,
+  calculateAge,
   isGymPlanValid,
+  isGymPlanSafe,
   isAtLeast18,
   type ActivityLevel,
   type GymTargetsResult,
   type Goal,
   type HealthScreening,
+  type OnboardingTargetOverrides,
   type Sex,
   type Units,
 } from '@calipartner/core';
 import { generateClientUuid } from './foodService';
 
-export type OnboardingStep =
-  | 'growth_projection'
-  | 'motivation'
-  | 'premium'
-  | 'paywall'
-  | 'goal'
-  | 'body_stats'
-  | 'activity_level'
-  | 'daily_goals'
-  | 'rate_selection'
-  | 'target_weight_date'
-  | 'health_screening'
-  | 'review_calculation'
-  | 'completed';
-
-export const ONBOARDING_STEPS_ORDER: readonly OnboardingStep[] = [
+export const ONBOARDING_STEPS_ORDER = [
   'goal',
+  'nickname',
+  'age',
+  'height',
+  'weight',
   'activity_level',
-  'body_stats',
-  'growth_projection',
+  'gym_days',
+  'target_weight',
   'rate_selection',
-  'daily_goals',
-  'completed',
+  'step_goal',
+  'water_goal',
+  'plan_summary',
+  'paywall',
 ] as const;
+
+export type OnboardingStep = (typeof ONBOARDING_STEPS_ORDER)[number];
+type ValidationStep = OnboardingStep | 'body_stats' | 'daily_goals';
+export type SelectedGoal = Exclude<Goal, 'maintain'>;
+export type CharacterGender = Exclude<Sex, 'other'>;
 
 export interface OnboardingState {
   currentStep: OnboardingStep;
   goal: Goal;
+  goalSelected: boolean;
+  characterGender: CharacterGender | null;
   units: Units;
   heightUnits: Units;
   nickname: string;
@@ -61,6 +62,7 @@ export interface OnboardingState {
   };
   stepGoal: number;
   waterMlGoal: number;
+  targetOverrides: OnboardingTargetOverrides;
   calculatedTargets: GymTargetsResult | null;
   errors: Record<string, string>;
 }
@@ -68,6 +70,8 @@ export interface OnboardingState {
 export const INITIAL_ONBOARDING_STATE: OnboardingState = {
   currentStep: 'goal',
   goal: 'cut',
+  goalSelected: false,
+  characterGender: null,
   units: 'metric',
   heightUnits: 'metric',
   nickname: '',
@@ -90,6 +94,7 @@ export const INITIAL_ONBOARDING_STATE: OnboardingState = {
   },
   stepGoal: 8000,
   waterMlGoal: 2500,
+  targetOverrides: {},
   calculatedTargets: null,
   errors: {},
 };
@@ -113,14 +118,30 @@ export class OnboardingStateMachine {
   }
 
   setGoal(goal: Goal): this {
+    if (this.state.characterGender && goal !== this.state.goal) {
+      this.state.targetWeightKg = null;
+      this.state.targetDate = null;
+    }
     this.state.goal = goal;
     this.state.dailyAdjustmentKcal = null;
+    this.state.goalSelected = goal === 'bulk' || goal === 'cut';
     if (goal === 'maintain') {
       this.state.weeklyRateKg = 0;
     } else if (this.state.weeklyRateKg === 0) {
       this.state.weeklyRateKg = 0.5;
     }
     this.recalculateTargets();
+    return this;
+  }
+
+  setCharacterGender(gender: CharacterGender, useForCalculation: boolean): this {
+    this.state.characterGender = gender;
+    if (useForCalculation) this.setBodyStats({ sex: gender });
+    return this;
+  }
+
+  setTargetOverrides(overrides: OnboardingTargetOverrides): this {
+    this.state.targetOverrides = overrides;
     return this;
   }
 
@@ -209,17 +230,26 @@ export class OnboardingStateMachine {
     return this;
   }
 
-  validateStep(step: OnboardingStep): { isValid: boolean; errors: Record<string, string> } {
+  validateStep(step: ValidationStep): { isValid: boolean; errors: Record<string, string> } {
     const errors: Record<string, string> = {};
 
     switch (step) {
       case 'daily_goals':
+        Object.assign(
+          errors,
+          this.validateStep('step_goal').errors,
+          this.validateStep('water_goal').errors,
+        );
+        break;
+      case 'step_goal':
         if (
           !Number.isInteger(this.state.stepGoal) ||
           this.state.stepGoal < 1 ||
           this.state.stepGoal > 100000
         )
           errors.stepGoal = 'Invalid step goal';
+        break;
+      case 'water_goal':
         if (
           !Number.isInteger(this.state.waterMlGoal) ||
           this.state.waterMlGoal < 1 ||
@@ -228,30 +258,19 @@ export class OnboardingStateMachine {
           errors.waterMlGoal = 'Invalid water goal';
         break;
       case 'goal':
-        if (!['cut', 'maintain', 'bulk'].includes(this.state.goal)) {
+        if (!this.state.characterGender) errors.characterGender = 'Please choose a character';
+        if (!this.state.goalSelected || !['cut', 'bulk'].includes(this.state.goal)) {
           errors.goal = 'Please choose a goal';
         }
         break;
+      case 'nickname':
+        if (!this.state.nickname.trim() || this.state.nickname.trim().length > 60)
+          errors.nickname = 'Please enter a nickname';
+        break;
 
       case 'body_stats':
-        if (!this.state.dateOfBirth) {
-          errors.dateOfBirth = 'Date of birth is required';
-        } else if (!isAtLeast18(this.state.dateOfBirth)) {
-          errors.dateOfBirth = 'You must be at least 18 years old to use CaliPartner';
-        }
-        if (
-          !Number.isFinite(this.state.heightCm) ||
-          this.state.heightCm < 50 ||
-          this.state.heightCm > 300
-        ) {
-          errors.height = 'Please enter a valid height';
-        }
-        if (
-          !Number.isFinite(this.state.weightKg) ||
-          this.state.weightKg < 20 ||
-          this.state.weightKg > 500
-        ) {
-          errors.weight = 'Please enter a valid weight';
+        for (const detail of ['age', 'height', 'weight', 'gym_days'] as const) {
+          Object.assign(errors, this.validateStep(detail).errors);
         }
         if (
           this.state.bodyFatPercentage !== null &&
@@ -259,6 +278,35 @@ export class OnboardingStateMachine {
         ) {
           errors.bodyFat = 'Body fat percentage must be between 3% and 70%';
         }
+        break;
+      case 'age':
+        if (!this.state.dateOfBirth) {
+          errors.dateOfBirth = 'Date of birth is required';
+        } else if (!isAtLeast18(this.state.dateOfBirth)) {
+          errors.dateOfBirth = 'You must be at least 18 years old to use CaliPartner';
+        } else if (calculateAge(this.state.dateOfBirth) > 120) {
+          errors.dateOfBirth = 'Please enter a valid date of birth';
+        }
+        break;
+      case 'height':
+        if (
+          !Number.isFinite(this.state.heightCm) ||
+          this.state.heightCm < 50 ||
+          this.state.heightCm > 300
+        ) {
+          errors.height = 'Please enter a valid height';
+        }
+        break;
+      case 'weight':
+        if (
+          !Number.isFinite(this.state.weightKg) ||
+          this.state.weightKg < 20 ||
+          this.state.weightKg > 500
+        ) {
+          errors.weight = 'Please enter a valid weight';
+        }
+        break;
+      case 'gym_days':
         if (
           !Number.isInteger(this.state.gymDays) ||
           this.state.gymDays < 0 ||
@@ -274,8 +322,17 @@ export class OnboardingStateMachine {
         break;
 
       case 'rate_selection':
-        if (!this.state.calculatedTargets || !isGymPlanValid(this.state.calculatedTargets))
+      case 'plan_summary':
+        if (
+          !this.state.calculatedTargets ||
+          !isGymPlanValid(this.state.calculatedTargets) ||
+          (this.state.characterGender &&
+            (!isGymPlanSafe(this.state.calculatedTargets) || this.state.weeklyRateKg <= 0))
+        )
           errors.rate = 'Enter a valid pace with enough calories for your macros';
+        Object.assign(errors, this.validateStep('target_weight').errors);
+        break;
+      case 'target_weight':
         if (
           this.state.targetWeightKg !== null &&
           (!Number.isFinite(this.state.targetWeightKg) ||
@@ -289,21 +346,6 @@ export class OnboardingStateMachine {
             (this.state.goal === 'cut' && this.state.targetWeightKg >= this.state.weightKg))
         )
           errors.targetWeight = 'Target weight must match your chosen goal';
-        break;
-
-      case 'target_weight_date':
-        // Target weight and date are optional; but if entered, must be valid
-        if (this.state.targetWeightKg !== null) {
-          if (this.state.targetWeightKg < 20 || this.state.targetWeightKg > 500) {
-            errors.targetWeight = 'Please enter a valid target weight';
-          }
-        }
-        if (this.state.targetDate) {
-          const date = new Date(this.state.targetDate + 'T00:00:00Z');
-          if (isNaN(date.getTime()) || date.getTime() <= Date.now()) {
-            errors.targetDate = 'Target date must be in the future';
-          }
-        }
         break;
 
       default:
@@ -358,11 +400,13 @@ export class OnboardingStateMachine {
       this.state.errors = {};
       return true;
     }
-    // Forward jump: validate current step
-    const validation = this.validateStep(this.state.currentStep);
-    if (!validation.isValid) {
-      this.state.errors = validation.errors;
-      return false;
+    for (const required of ONBOARDING_STEPS_ORDER.slice(currentIndex, targetIndex)) {
+      const validation = this.validateStep(required);
+      if (!validation.isValid) {
+        this.state.currentStep = required;
+        this.state.errors = validation.errors;
+        return false;
+      }
     }
     this.state.currentStep = step;
     this.state.errors = {};

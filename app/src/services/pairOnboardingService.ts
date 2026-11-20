@@ -24,7 +24,7 @@ export const finishPairPrompt = (userId: string) =>
   secureStoreAdapter.setItem(promptKey(userId), 'done');
 
 export async function afterSetupDestination(userId: string): Promise<string> {
-  if ((await pendingOnboardingReview(userId)) === 'before_plan') return '/founders?next=plan';
+  if ((await pendingOnboardingReview(userId)) === 'before_pair') return '/founders?next=pair';
   const token = await pendingPairInvite();
   if (token) return `/invite/${token}`;
   return (await secureStoreAdapter.getItem(promptKey(userId))) === 'pending'

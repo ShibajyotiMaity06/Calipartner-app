@@ -40,11 +40,11 @@ const render = async () => {
 const finish = async () => {
   await act(async () => tree.root.findByType('Splash' as React.ElementType).props.onComplete());
 };
-it('shows splash until finished, then sends a new visitor directly to setup', async () => {
+it('shows splash until finished, then sends a new visitor to signup or login', async () => {
   await render();
   expect(state.replace).not.toHaveBeenCalled();
   await finish();
-  expect(state.replace).toHaveBeenCalledWith('/onboarding');
+  expect(state.replace).toHaveBeenCalledWith('/auth/sign-in?mode=signup');
   expect(state.check).not.toHaveBeenCalled();
 });
 it('waits for session restoration even when motion is skipped', async () => {
@@ -68,10 +68,10 @@ it('keeps incomplete signed-in setup in onboarding', async () => {
 it('resumes a pending founders screen after relaunch instead of skipping to Home', async () => {
   state.user = { id: 'new-account' };
   state.check.mockResolvedValue(true);
-  state.next.mockResolvedValue('/founders?next=plan');
+  state.next.mockResolvedValue('/founders?next=pair');
   await render();
   await finish();
-  expect(state.replace).toHaveBeenCalledWith('/founders?next=plan');
+  expect(state.replace).toHaveBeenCalledWith('/founders?next=pair');
 });
 it('keeps a failed readiness check actionable and retries without replaying the splash', async () => {
   state.user = { id: 'returning' };

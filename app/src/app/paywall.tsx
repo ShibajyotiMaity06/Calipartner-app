@@ -1,11 +1,16 @@
 import { CHECKOUT_DURATIONS, type CheckoutDuration, type RoomPeriod } from '@calipartner/core';
-import React from 'react';
+import React, { useRef } from 'react';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { closeBrowserModalsThen } from '@/hooks/useBrowserModalBack';
 import { PaywallModal } from '@/components/rooms/PaywallModal';
+import { useAuth } from '@/contexts/AuthContext';
+import { loadOnboardingDraft } from '@/services/onboardingDraft';
+import { getDb } from '@/db';
 
 export default function PaywallScreen() {
   const router = useRouter();
+  const { user } = useAuth();
+  const closing = useRef(false);
   const params = useLocalSearchParams<{
     checkout?: string;
     tier?: string;
@@ -26,14 +31,27 @@ export default function PaywallScreen() {
         }
       : undefined;
 
-  const handleClose = () =>
+  const handleClose = async () => {
+    if (closing.current) return;
+    closing.current = true;
+    const draft =
+      checkoutReturn && user
+        ? await getDb()
+            .then((db) => loadOnboardingDraft(db, user.id))
+            .catch(() => null)
+        : null;
     closeBrowserModalsThen(() => {
+      if (draft?.currentStep === 'paywall') {
+        router.replace('/onboarding?checkoutDone=1' as never);
+        return;
+      }
       if (router.canGoBack()) {
         router.back();
       } else {
         router.replace('/today' as never);
       }
     });
+  };
 
   return (
     <PaywallModal

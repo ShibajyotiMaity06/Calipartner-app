@@ -21,7 +21,8 @@ export default function LaunchScreen() {
     let active = true;
     setDestination(null);
     const resolve = async () => {
-      if (!user || !(await isUserOnboarded(user.id))) return '/onboarding';
+      if (!user) return '/auth/sign-in?mode=signup';
+      if (!(await isUserOnboarded(user.id))) return '/onboarding';
       const next = await afterSetupDestination(user.id);
       return next === '/today' ? '/(tabs)/today' : next;
     };

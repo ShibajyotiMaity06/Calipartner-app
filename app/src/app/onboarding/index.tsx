@@ -1,6 +1,3 @@
-import { NavigationIcon } from '@calipartner/ui';
-import { macroErrorMessage } from '@/i18n/macroErrors';
-import { applyOnboardingTargetOverrides, type OnboardingTargetOverrides } from '@calipartner/core';
 import React, { useEffect, useRef, useState } from 'react';
 import {
   BackHandler,
@@ -12,294 +9,233 @@ import {
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useRouter } from 'expo-router';
-import { Ionicons } from '@expo/vector-icons';
-import { Button, Text, onboardingLayout as layout, space, useTheme } from '@calipartner/ui';
+import { useLocalSearchParams, useRouter } from 'expo-router';
+import { applyOnboardingTargetOverrides, type OnboardingTargetOverrides } from '@calipartner/core';
 import {
-  OnboardingStateMachine,
-  ONBOARDING_STEPS_ORDER,
-  type OnboardingStep,
-} from '@/services/onboardingStateMachine';
-import {
-  clearOnboardingDraft,
-  loadOnboardingDraft,
-  saveOnboardingDraft,
-} from '@/services/onboardingDraft';
+  Button,
+  NavigationIcon,
+  Text,
+  controls,
+  onboardingLayout as layout,
+  space,
+  useTheme,
+} from '@calipartner/ui';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTargets } from '@/hooks/useTargets';
 import { useNetworkStatus } from '@/hooks/useNetworkStatus';
 import { getDb } from '@/db';
 import { t } from '@/i18n';
-import { GrowthProjectionStep } from '@/components/onboarding/GrowthProjectionStep';
-import { requireOnboardingReview } from '@/services/onboardingReviewService';
-import { GoalStep } from '@/components/onboarding/GoalStep';
-import { ActivityStep } from '@/components/onboarding/ActivityStep';
-import { MotivationStep } from '@/components/onboarding/MotivationStep';
-import { TrainingStep } from '@/components/onboarding/TrainingStep';
-import { PremiumStep } from '@/components/onboarding/PremiumStep';
-import { fetchWebCatalog } from '@/services/webBillingService';
-import { PlanReviewStep, PlanSafetyNotice } from '@/components/onboarding/PlanReviewStep';
-import { GymCalculationStep } from '@/components/onboarding/GymCalculationStep';
+import { macroErrorMessage } from '@/i18n/macroErrors';
 import {
-  PlanChoice,
-  NumberField,
-  PlanCard,
-  planStyles,
-} from '@/components/onboarding/PlanPrimitives';
+  ONBOARDING_STEPS_ORDER,
+  type OnboardingStateMachine,
+} from '@/services/onboardingStateMachine';
+import {
+  clearOnboardingDraft,
+  loadOnboardingDraft,
+  resumeOnboardingDraft,
+  saveOnboardingDraft,
+} from '@/services/onboardingDraft';
+import { requireOnboardingReview } from '@/services/onboardingReviewService';
+import { afterSetupDestination, requirePairPrompt } from '@/services/pairOnboardingService';
+import { PlanReviewStep } from '@/components/onboarding/PlanReviewStep';
+import { GymCalculationStep } from '@/components/onboarding/GymCalculationStep';
+import { EvolutionCharacter } from '@/components/onboarding/EvolutionCharacter';
+import { OnboardingQuestion, questionCopy } from '@/components/onboarding/OnboardingQuestion';
+import { FinishOnboardingProfile } from '@/components/onboarding/FinishOnboardingProfile';
 import { PaywallModal } from '@/components/rooms/PaywallModal';
-import { requirePairPrompt } from '@/services/pairOnboardingService';
 
 export const ACTIVE_ONBOARDING_STEPS = ONBOARDING_STEPS_ORDER;
 
 export default function OnboardingScreen() {
   const router = useRouter();
   const { user, profile, isLoading, needsProfileSetup, profileError, refreshProfile } = useAuth();
-  const { saveGoalProfile, saveScreening } = useTargets();
+  const profileReady = profile?.id === user?.id && Boolean(profile);
+  useEffect(() => {
+    if (!isLoading && !user) router.replace('/auth/sign-in?mode=signup' as never);
+  }, [isLoading, router, user]);
+  if (!user || isLoading || (!profileReady && !needsProfileSetup)) {
+    return <OnboardingStatus error={Boolean(profileError)} onRetry={() => void refreshProfile()} />;
+  }
+  return <Questionnaire key={user.id} ownerId={user.id} />;
+}
+
+function OnboardingStatus({ error, onRetry }: { error?: boolean; onRetry?: () => void }) {
+  const { colors } = useTheme();
+  return (
+    <SafeAreaView style={[styles.safe, { backgroundColor: colors.bg0 }]}>
+      <View style={styles.center}>
+        <Text color={colors.textMid} accessibilityLiveRegion="polite">
+          {t(error ? 'common.errorBody' : 'setup.preparing')}
+        </Text>
+        {error && <Button label={t('setup.retry')} onPress={onRetry} testID="onboarding-retry" />}
+      </View>
+    </SafeAreaView>
+  );
+}
+
+function Questionnaire({ ownerId }: { ownerId: string }) {
+  const router = useRouter();
+  const { checkoutDone } = useLocalSearchParams<{ checkoutDone?: string }>();
+  const { profile, updateProfile } = useAuth();
+  const { saveGoalProfile } = useTargets();
   const { colors, reduceMotion } = useTheme();
   const { isOnline } = useNetworkStatus();
   const [machine, setMachine] = useState<OnboardingStateMachine | null>(null);
   const [snapshot, setSnapshot] = useState<ReturnType<OnboardingStateMachine['getState']> | null>(
     null,
   );
-  const [loadError, setLoadError] = useState<string | null>(null);
+  const [loadError, setLoadError] = useState(false);
   const [retry, setRetry] = useState(0);
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
   const [draftError, setDraftError] = useState(false);
-  const [sheet, setSheet] = useState<'calculation' | null>(null);
-  const [premiumTier, setPremiumTier] = useState<'plus' | 'pro'>('plus');
+  const [calculation, showCalculation] = useState(false);
+  const [paywallClosed, setPaywallClosed] = useState(false);
   const savingRef = useRef(false);
-  const completedRef = useRef(false);
+  const completed = useRef(false);
+  const active = useRef(false);
   const draftWrites = useRef(Promise.resolve());
   const scroll = useRef<ScrollView>(null);
-  const ownerId = user?.id ?? 'guest-user';
-  const owner = useRef(ownerId);
-  owner.current = ownerId;
+  const identity = profile?.id === ownerId ? profile : null;
+  const identityRef = useRef(identity);
+  identityRef.current = identity;
 
   useEffect(() => {
-    if (Platform.OS === 'web' && user && profile)
-      void fetchWebCatalog().catch(() => {
-        /* The pricing screen retains its actionable retry. */
-      });
-  }, [user, profile, snapshot?.currentStep]);
-
-  useEffect(() => {
-    if (isLoading) return;
-    if (needsProfileSetup) {
-      router.replace('/auth/profile-setup');
-      return;
-    }
-    if (user && !profile) return;
-    let active = true;
-    setMachine(null);
-    setSnapshot(null);
-    setLoadError(null);
-    completedRef.current = false;
+    active.current = true;
+    let cancelled = false;
+    setLoadError(false);
     const hydrate = async () => {
       const db = await getDb();
       const ownDraft = await loadOnboardingDraft(db, ownerId);
-      const guestDraft = user && !ownDraft ? await loadOnboardingDraft(db, 'guest-user') : null;
-      const draft = ownDraft ?? guestDraft;
-      const next = new OnboardingStateMachine({
-        units: 'metric',
-        heightCm: 175,
-        weightKg: 70,
-        ...draft,
-        ...(profile
-          ? { nickname: profile.nickname, sex: profile.sex, dateOfBirth: profile.date_of_birth }
-          : {}),
-      });
-      if (guestDraft && user) {
-        await saveOnboardingDraft(db, user.id, next.getState());
+      const guestDraft = ownDraft ? null : await loadOnboardingDraft(db, 'guest-user');
+      if (cancelled) return;
+      const next = resumeOnboardingDraft(
+        ownDraft ?? guestDraft,
+        identityRef.current,
+        Boolean(guestDraft),
+      );
+      if (guestDraft) {
+        await saveOnboardingDraft(db, ownerId, next.getState());
         await clearOnboardingDraft(db, 'guest-user');
       }
-      // An interrupted store sheet returns to the reviewable feature preview.
-      if (['premium', 'paywall'].includes(next.getState().currentStep)) next.goToStep('completed');
-      if (next.getState().currentStep === 'motivation') next.goToStep('activity_level');
-      if (active) {
+      if (!cancelled) {
         setMachine(next);
         setSnapshot(next.getState());
       }
     };
     void hydrate().catch(() => {
-      if (active) setLoadError(t('common.errorBody'));
+      if (!cancelled) setLoadError(true);
     });
     return () => {
-      active = false;
+      cancelled = true;
+      active.current = false;
     };
-    // Identity inputs are captured when this account's draft is hydrated.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [ownerId, profile?.id, isLoading, needsProfileSetup, retry, router]);
+  }, [ownerId, retry]);
 
   useEffect(() => {
-    if (!snapshot || completedRef.current) return;
-    const pending = snapshot;
-    draftWrites.current = draftWrites.current
-      .catch(() => {})
-      .then(async () => {
-        if (completedRef.current || owner.current !== ownerId) return;
-        await saveOnboardingDraft(await getDb(), ownerId, pending);
-        if (owner.current === ownerId) setDraftError(false);
-      })
-      .catch(() => {
-        if (owner.current === ownerId) setDraftError(true);
-      });
+    if (!snapshot || completed.current) return;
+    draftWrites.current = draftWrites.current.then(async () => {
+      if (completed.current || !active.current) return;
+      try {
+        await saveOnboardingDraft(await getDb(), ownerId, snapshot);
+        if (active.current) setDraftError(false);
+      } catch {
+        if (active.current) setDraftError(true);
+      }
+    });
   }, [snapshot, ownerId]);
 
   const update = () => {
     if (machine) setSnapshot(machine.getState());
   };
-  const move = (step: OnboardingStep) => {
-    if (!machine || savingRef.current) return;
-    setSaveError(null);
-    machine.goToStep(step);
-    update();
-    scroll.current?.scrollTo({ y: 0, animated: false });
-  };
   const back = () => {
     if (!machine || savingRef.current) return;
+    if (!machine.back()) return;
     setSaveError(null);
-    if (machine.getState().currentStep === 'goal') {
-      if (user) router.replace('/welcome');
-      return;
-    }
-    if (machine.getState().currentStep === 'completed') machine.goToStep('daily_goals');
-    else machine.back();
+    setPaywallClosed(false);
     update();
     scroll.current?.scrollTo({ y: 0, animated: false });
   };
   useEffect(() => {
-    if (Platform.OS !== 'android') return;
+    if (Platform.OS !== 'android' || !snapshot) return;
     const listener = BackHandler.addEventListener('hardwareBackPress', () => {
-      if (!snapshot || sheet) return false;
+      if (
+        calculation ||
+        (snapshot.currentStep === 'paywall' && identity && !paywallClosed && checkoutDone !== '1')
+      )
+        return false;
       back();
       return true;
     });
     return () => listener.remove();
   });
 
+  if (!snapshot || !machine) {
+    return <OnboardingStatus error={loadError} onRetry={() => setRetry((value) => value + 1)} />;
+  }
+  const step = snapshot.currentStep;
+  const index = ACTIVE_ONBOARDING_STEPS.indexOf(step);
+  const copy = questionCopy[step];
   const next = () => {
-    if (!machine) return;
-    setSaveError(null);
-    machine.next();
+    const moved = machine.next();
     update();
-    scroll.current?.scrollTo({ y: 0, animated: false });
+    if (moved) scroll.current?.scrollTo({ y: 0, animated: false });
   };
-
-  const save = async (recommended: boolean, overrides: OnboardingTargetOverrides = {}) => {
-    if (!machine || !user || !profile || savingRef.current) return;
-    savingRef.current = true;
-    setSaving(true);
+  const continueToPaywall = (overrides: OnboardingTargetOverrides = {}) => {
     setSaveError(null);
     try {
-      if (recommended) {
-        machine.useRecommendedRate();
-        update();
-      }
-      if (!machine.validateStep('body_stats').isValid) {
-        setSaveError(t('setup.detailsError'));
-        return;
-      }
-      const validation = machine.validateStep('rate_selection');
-      if (!validation.isValid) {
-        setSaveError(
-          t(validation.errors.targetWeight ? 'setup.targetDirectionError' : 'setup.chooseSafePace'),
-        );
-        return;
-      }
-      const goal = applyOnboardingTargetOverrides(
-        machine.buildGoalProfile(user.id),
-        profile.sex,
-        overrides,
-      );
-      // Retried completion uses the same client UUID, including after app restart.
-      await draftWrites.current;
-      await saveOnboardingDraft(await getDb(), user.id, machine.getState());
-      const screening = await saveScreening(machine.buildHealthScreening(user.id));
-      if (!screening.success) throw new Error(screening.error ?? t('common.errorBody'));
-      await requirePairPrompt(user.id);
-      const saved = await saveGoalProfile(goal);
-      if (!saved.success) throw new Error(saved.error ?? t('common.errorBody'));
-      if (owner.current !== user.id) return;
-      await requireOnboardingReview(user.id, Platform.OS);
-      if (owner.current !== user.id) return;
-      completedRef.current = true;
-      await draftWrites.current;
-      await clearOnboardingDraft(await getDb(), user.id).catch(() => {});
-      router.push(
-        (Platform.OS === 'ios' ? '/weekly-plan?setup=1' : '/founders?next=plan') as never,
-      );
+      applyOnboardingTargetOverrides(machine.buildGoalProfile(ownerId), snapshot.sex, overrides);
+      machine.setTargetOverrides(overrides);
+      next();
     } catch (error) {
       setSaveError(macroErrorMessage(error));
-    } finally {
-      savingRef.current = false;
-      setSaving(false);
     }
   };
 
-  if (!snapshot || !machine)
-    return (
-      <SafeAreaView style={[styles.safe, { backgroundColor: colors.bg0 }]}>
-        <View style={styles.center}>
-          <Text fontSet="onboarding" color={colors.textMid} accessibilityLiveRegion="polite">
-            {loadError ?? (profileError ? t('common.errorBody') : t('setup.preparing'))}
-          </Text>
-          {loadError || profileError ? (
-            <Button
-              fontSet="onboarding"
-              label={t('setup.retry')}
-              onPress={() => {
-                if (profileError) void refreshProfile();
-                else setRetry((value) => value + 1);
-              }}
-              testID="onboarding-retry"
-            />
-          ) : null}
-        </View>
-      </SafeAreaView>
-    );
-  const current = snapshot.currentStep;
-  const index = Math.max(0, ACTIVE_ONBOARDING_STEPS.indexOf(current));
-  const titles: Record<OnboardingStep, string> = {
-    growth_projection: t('entryPolish.growthTitle'),
-    goal: t('setup.goalTitle', { name: snapshot.nickname || profile?.nickname || '' }),
-    motivation: t('setup.motivationTitle'),
-    activity_level: t('onboarding.activity.title'),
-    body_stats: t('setup.trainingTitle'),
-    rate_selection: t('setup.paceTitle'),
-    daily_goals: t('setup.dailyGoalsTitle'),
-    premium: t('setup.premiumTitle'),
-    paywall: t('setup.premiumTitle'),
-    completed: t('setup.reviewTitle'),
-    health_screening: t('setup.privateHealth'),
-    review_calculation: t('setup.howCalculated'),
-    target_weight_date: t('setup.paceTitle'),
+  const finish = async () => {
+    if (savingRef.current || completed.current || !identity) return;
+    savingRef.current = true;
+    setPaywallClosed(true);
+    setSaving(true);
+    setSaveError(null);
+    try {
+      if (!isOnline) {
+        setSaveError(t('setup.offlineDraft'));
+        return;
+      }
+      const state = machine.getState();
+      const goal = applyOnboardingTargetOverrides(
+        machine.buildGoalProfile(ownerId),
+        identity.sex,
+        state.targetOverrides,
+      );
+      await draftWrites.current;
+      await saveOnboardingDraft(await getDb(), ownerId, state);
+      if (!active.current) return;
+      if (state.nickname.trim() !== identity.nickname) {
+        const result = await updateProfile({ nickname: state.nickname.trim() });
+        if (result.error) throw result.error;
+      }
+      if (!active.current) return;
+      await requirePairPrompt(ownerId);
+      await requireOnboardingReview(ownerId, Platform.OS);
+      if (!active.current) return;
+      const saved = await saveGoalProfile(goal);
+      if (!saved.success) throw new Error(saved.error ?? t('common.errorBody'));
+      if (!active.current) return;
+      const destination = await afterSetupDestination(ownerId);
+      if (!active.current) return;
+      completed.current = true;
+      await clearOnboardingDraft(await getDb(), ownerId).catch(() => {});
+      if (active.current) router.replace(destination as never);
+    } catch (error) {
+      if (active.current) setSaveError(macroErrorMessage(error));
+    } finally {
+      savingRef.current = false;
+      if (active.current) setSaving(false);
+    }
   };
-  const subtitle =
-    current === 'goal'
-      ? t('setup.goalSubtitle')
-      : current === 'activity_level'
-        ? t('setup.activitySubtitle')
-        : current === 'body_stats'
-          ? t('setup.trainingSubtitle')
-          : current === 'daily_goals'
-            ? t('setup.dailyGoalsSubtitle')
-            : current === 'rate_selection'
-              ? t('setup.paceSubtitle')
-              : current === 'premium' || current === 'paywall'
-                ? t('setup.premiumSubtitle')
-                : current === 'completed'
-                  ? t('setup.reviewSubtitle')
-                  : null;
-  const setWeight = (value: number) => {
-    machine.setBodyStats({ weightKg: value });
-    update();
-  };
-  const setDays = (value: number) => {
-    machine.setGymDays(value);
-    update();
-  };
-  const closePremium = () => move('completed');
 
   return (
     <SafeAreaView style={[styles.safe, { backgroundColor: colors.bg0 }]}>
@@ -309,40 +245,28 @@ export default function OnboardingScreen() {
       >
         <View style={styles.frame}>
           <View style={styles.nav}>
-            <Button
-              variant="tertiary"
-              fullWidth={false}
-              label={t('onboarding.back')}
-              iconOnly
-              icon={<NavigationIcon action="back" />}
-              accessibilityRole="button"
-              accessibilityLabel={t('onboarding.back')}
-              onPress={back}
-              style={styles.iconButton}
-              testID="btn-onboarding-back"
-            />
-            <Text fontSet="onboarding" variant="bodyS" color={colors.textMid} tabular>
+            {index > 0 ? (
+              <Button
+                variant="tertiary"
+                fullWidth={false}
+                label={t('onboarding.back')}
+                iconOnly
+                icon={<NavigationIcon action="back" />}
+                onPress={back}
+                disabled={saving}
+                style={styles.iconButton}
+                testID="btn-onboarding-back"
+              />
+            ) : (
+              <View style={styles.iconButton} />
+            )}
+            <Text variant="bodyS" color={colors.textMid} tabular>
               {t('onboarding.stepIndicator', {
                 current: index + 1,
                 total: ACTIVE_ONBOARDING_STEPS.length,
               })}
             </Text>
-            {current === 'premium' || current === 'paywall' ? (
-              <Button
-                variant="tertiary"
-                fullWidth={false}
-                label={t('setup.closePremium')}
-                iconOnly
-                icon={<Ionicons name="close-outline" size={layout.icon} color={colors.textHi} />}
-                accessibilityRole="button"
-                accessibilityLabel={t('setup.closePremium')}
-                onPress={closePremium}
-                style={styles.iconButton}
-                testID="btn-premium-close"
-              />
-            ) : (
-              <View style={styles.iconButton} />
-            )}
+            <View style={styles.iconButton} />
           </View>
           <View
             style={[styles.track, { backgroundColor: colors.s3 }]}
@@ -360,298 +284,127 @@ export default function OnboardingScreen() {
               ]}
             />
           </View>
-          {current === 'premium' || current === 'paywall' ? (
-            <PremiumStep
-              onContinue={(tier) => {
-                setPremiumTier(tier);
-                next();
-              }}
-              onSkip={closePremium}
-            />
-          ) : (
-            <ScrollView
-              ref={scroll}
-              contentContainerStyle={styles.content}
-              keyboardShouldPersistTaps="handled"
-            >
-              {current !== 'motivation' ? (
-                <Text
-                  fontSet="onboarding"
-                  variant="title1"
-                  color={colors.textHi}
-                  accessibilityRole="header"
-                  testID="onboarding-title"
-                >
-                  {titles[current]}
-                </Text>
-              ) : null}
-              {subtitle ? (
-                <Text fontSet="onboarding" color={colors.textMid}>
-                  {subtitle}
-                </Text>
-              ) : null}
-              {isOnline === false ? (
-                <Text
-                  fontSet="onboarding"
-                  variant="bodyS"
-                  color={colors.textMid}
-                  accessibilityLiveRegion="polite"
-                >
+          <ScrollView
+            ref={scroll}
+            contentContainerStyle={styles.content}
+            keyboardShouldPersistTaps="handled"
+          >
+            <View style={styles.question}>
+              <Text variant="title1" accessibilityRole="header" testID="onboarding-title">
+                {t(copy.title)}
+              </Text>
+              <Text color={colors.textMid}>{t(copy.subtitle)}</Text>
+              {isOnline === false && (
+                <Text variant="bodyS" accessibilityLiveRegion="polite">
                   {t('setup.offlineDraft')}
                 </Text>
-              ) : null}
-              {draftError ? (
+              )}
+              {draftError && (
                 <Button
-                  variant="destructive"
-                  fullWidth={false}
+                  variant="tertiary"
                   label={t('setup.draftError')}
                   onPress={update}
-                  accessibilityRole="button"
-                  style={planStyles.link}
                   testID="retry-draft"
                 />
-              ) : null}
-              {current === 'goal' ? (
-                <GoalStep
-                  selectedGoal={snapshot.goal}
-                  onSelectGoal={(goal) => {
-                    machine.setGoal(goal);
-                    update();
-                  }}
-                />
-              ) : null}
-              {current === 'motivation' ? <MotivationStep goal={snapshot.goal} /> : null}
-              {current === 'activity_level' ? (
-                <ActivityStep
-                  selectedActivityLevel={snapshot.activityLevel}
-                  onSelectActivityLevel={(value) => {
-                    machine.setActivityLevel(value);
-                    update();
-                  }}
-                />
-              ) : null}
-              {current === 'body_stats' ? (
-                <TrainingStep
-                  state={snapshot}
-                  identityConfirmed={Boolean(profile)}
-                  onBodyStats={(value) => {
-                    machine.setBodyStats(value);
-                    update();
-                  }}
-                  onUnits={(value) => {
-                    machine.setUnits(value);
-                    update();
-                  }}
-                  onHeightUnits={(value) => {
-                    machine.setHeightUnits(value);
-                    update();
-                  }}
-                  onNickname={(value) => {
-                    machine.setNickname(value);
-                    update();
-                  }}
-                  onWeight={setWeight}
-                  onHeight={(value) => {
-                    machine.setBodyStats({ heightCm: value });
-                    update();
-                  }}
-                  onDays={setDays}
-                />
-              ) : null}
-              {current === 'growth_projection' ? <GrowthProjectionStep /> : null}
-              {current === 'rate_selection' ? (
-                <View style={planStyles.section}>
-                  {snapshot.goal !== 'maintain' ? (
-                    <PlanCard>
-                      <NumberField
-                        optional
-                        label={t('setup.targetWeight')}
-                        icon="flag-outline"
-                        value={snapshot.targetWeightKg}
-                        onChange={(value) => {
-                          machine.setTargetWeightAndDate(value, null);
-                          update();
-                        }}
-                        testID="input-target-weight"
-                      />
-                      {snapshot.errors.targetWeight ? (
-                        <Text fontSet="onboarding" color={colors.danger} accessibilityRole="alert">
-                          {t('setup.targetDirectionError')}
-                        </Text>
-                      ) : null}
-                    </PlanCard>
-                  ) : (
-                    <PlanCard>
-                      <Text fontSet="onboarding" variant="heading" color={colors.textHi}>
-                        {t('setup.maintainPace')}
-                      </Text>
-                      <Text fontSet="onboarding" color={colors.textMid}>
-                        {t('setup.maintainPaceBody')}
-                      </Text>
-                    </PlanCard>
-                  )}
-                  <View accessibilityRole="radiogroup" style={planStyles.section}>
-                    {snapshot.calculatedTargets?.presetRates.map((rate) => (
-                      <PlanChoice
-                        key={rate.rateKgPerWeek}
-                        testID={`rate-card-${rate.rateKgPerWeek}`}
-                        icon="flame-outline"
-                        title={t('setup.rate', { rate: rate.rateKgPerWeek })}
-                        description={`${t('setup.kcalDay', { kcal: rate.targetKcal.toLocaleString() })}${rate.rateKgPerWeek === snapshot.calculatedTargets?.recommendedRateKg ? ` - ${t('setup.recommended')}` : ''}`}
-                        selected={snapshot.weeklyRateKg === rate.rateKgPerWeek}
-                        onPress={() => {
-                          machine.setWeeklyRate(rate.rateKgPerWeek);
-                          update();
-                        }}
-                      />
-                    ))}
-                  </View>
-                  {snapshot.goal !== 'maintain' ? (
-                    <NumberField
-                      label={t('fixes.customPace')}
-                      icon={
-                        snapshot.goal === 'bulk' ? 'trending-up-outline' : 'trending-down-outline'
-                      }
-                      value={snapshot.weeklyRateKg}
-                      onChange={(value) => {
-                        machine.setWeeklyRate(value ?? NaN);
-                        update();
-                      }}
-                      testID="input-custom-pace"
+              )}
+              {step === 'plan_summary' ? (
+                <View style={styles.summary}>
+                  <View style={styles.summaryCharacter}>
+                    <EvolutionCharacter
+                      gender={snapshot.characterGender}
+                      goal={snapshot.goal}
+                      stage={11}
                     />
-                  ) : null}
-                  <PlanSafetyNotice result={snapshot.calculatedTargets} />
-                  {snapshot.errors.rate ? (
-                    <Text fontSet="onboarding" accessibilityRole="alert" color={colors.danger}>
-                      {t('fixes.invalidPlan')}
-                    </Text>
-                  ) : null}
-                  <Button
-                    variant="tertiary"
-                    fullWidth={false}
-                    label={t('setup.changeGoal')}
-                    onPress={() => move('goal')}
-                    style={planStyles.link}
-                    accessibilityRole="button"
-                    testID="pace-change-goal"
-                  />
+                  </View>
+                  <View style={styles.summaryTargets}>
+                    <PlanReviewStep
+                      state={snapshot}
+                      onPlanned={continueToPaywall}
+                      onCalculation={() => showCalculation(true)}
+                      error={saveError}
+                      onClearError={() => setSaveError(null)}
+                      saving={false}
+                      continueLabel={t('characterSetup.getPlan')}
+                    />
+                  </View>
                 </View>
-              ) : null}
-              {current === 'daily_goals' ? (
-                <PlanCard>
-                  <NumberField
-                    label={t('setup.waterGoal')}
-                    icon="water-outline"
-                    value={snapshot.waterMlGoal}
-                    onChange={(value) => {
-                      machine.setStepAndWaterGoals(undefined, value ?? NaN);
-                      update();
-                    }}
-                    testID="input-water-goal"
-                  />
-                  <NumberField
-                    label={t('setup.stepGoal')}
-                    icon="footsteps-outline"
-                    value={snapshot.stepGoal}
-                    onChange={(value) => {
-                      machine.setStepAndWaterGoals(value ?? NaN);
-                      update();
-                    }}
-                    testID="input-step-goal"
-                  />
-                  {Object.keys(snapshot.errors).length ? (
-                    <Text fontSet="onboarding" color={colors.danger} accessibilityRole="alert">
-                      {t('setup.dailyGoalsError')}
+              ) : step === 'paywall' ? (
+                <>
+                  {!identity && (
+                    <FinishOnboardingProfile
+                      state={snapshot}
+                      waitForDraft={() => draftWrites.current}
+                    />
+                  )}
+                  {identity && (paywallClosed || checkoutDone === '1') && (
+                    <Button
+                      label={t(saveError ? 'setup.retry' : 'setup.next')}
+                      loading={saving}
+                      disabled={saving}
+                      onPress={() => void finish()}
+                      testID="finish-onboarding-retry"
+                    />
+                  )}
+                  {saveError && (
+                    <Text
+                      color={colors.danger}
+                      accessibilityRole="alert"
+                      testID="onboarding-save-error"
+                    >
+                      {saveError}
                     </Text>
-                  ) : null}
-                </PlanCard>
-              ) : null}
-
-              {current === 'completed' && !user ? (
-                <PlanCard>
-                  <Text variant="heading">{t('entryPolish.accountTitle')}</Text>
-                  <Text>{t('entryPolish.accountBody')}</Text>
-                  <Button
-                    label={t('entryPolish.createAccount')}
-                    testID="setup-create-account"
-                    onPress={() => {
-                      void draftWrites.current
-                        .then(() => router.push('/auth/sign-in?mode=signup' as never))
-                        .catch(() => setDraftError(true));
-                    }}
-                  />
-                  <Button
-                    variant="secondary"
-                    label={t('entryPolish.signIn')}
-                    testID="setup-sign-in"
-                    onPress={() => {
-                      void draftWrites.current
-                        .then(() => router.push('/auth/sign-in?mode=signin' as never))
-                        .catch(() => setDraftError(true));
-                    }}
-                  />
-                </PlanCard>
-              ) : null}
-              {current === 'completed' && user ? (
-                <PlanReviewStep
+                  )}
+                </>
+              ) : (
+                <OnboardingQuestion
+                  key={step}
+                  step={step}
                   state={snapshot}
-                  onWeight={setWeight}
-                  onDays={setDays}
-                  onAdjustment={(value) => {
-                    machine.setDailyAdjustment(value);
-                    update();
-                  }}
-                  onRecommended={() => void save(true)}
-                  onPlanned={(overrides) => void save(false, overrides)}
-                  onCalculation={() => setSheet('calculation')}
-                  onChangeGoal={() => move('goal')}
-                  saving={saving}
-                  error={saveError}
-                  onClearError={() => setSaveError(null)}
+                  machine={machine}
+                  update={update}
+                  identityConfirmed={Boolean(identity)}
                 />
-              ) : null}
-            </ScrollView>
-          )}
-          {current !== 'completed' && current !== 'premium' && current !== 'paywall' ? (
-            <View style={[styles.footer, { borderTopColor: colors.hairline }]}>
-              <Button
-                fontSet="onboarding"
-                label={t('setup.next')}
-                onPress={next}
-                testID="btn-onboarding-next"
-              />
+              )}
             </View>
-          ) : null}
+            {index > 0 && index < 11 && (
+              <EvolutionCharacter
+                gender={snapshot.characterGender}
+                goal={snapshot.goal}
+                stage={index}
+              />
+            )}
+          </ScrollView>
+          {index < 11 && (
+            <View style={[styles.footer, { borderTopColor: colors.hairline }]}>
+              <Button label={t('setup.next')} onPress={next} testID="btn-onboarding-next" />
+            </View>
+          )}
         </View>
       </KeyboardAvoidingView>
-      {current === 'paywall' ? (
+      {step === 'paywall' && identity && !paywallClosed && checkoutDone !== '1' && (
         <PaywallModal
           visible
-          onClose={closePremium}
           context="general"
-          preselectedTier={premiumTier}
-          onSuccess={closePremium}
+          onClose={() => void finish()}
+          onContinueFree={() => void finish()}
+          onSuccess={() => void finish()}
         />
-      ) : null}
+      )}
       <Modal
-        visible={sheet !== null}
-        onRequestClose={() => setSheet(null)}
+        visible={calculation}
+        onRequestClose={() => showCalculation(false)}
         animationType={reduceMotion ? 'none' : 'slide'}
         accessibilityLabel={t('setup.howCalculated')}
         testID="onboarding-details-sheet"
       >
         <SafeAreaView style={[styles.safe, { backgroundColor: colors.bg0 }]}>
-          <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
+          <ScrollView contentContainerStyle={styles.content}>
             <Button
-              fontSet="onboarding"
               variant="secondary"
               label={t('setup.close')}
-              onPress={() => setSheet(null)}
+              onPress={() => showCalculation(false)}
               testID="btn-close-details"
             />
-            <Text fontSet="onboarding" variant="title2" color={colors.textHi}>
-              {t('setup.howCalculated')}
-            </Text>
             <GymCalculationStep result={snapshot.calculatedTargets} />
           </ScrollView>
         </SafeAreaView>
@@ -663,21 +416,25 @@ export default function OnboardingScreen() {
 const styles = StyleSheet.create({
   safe: { flex: 1 },
   frame: { flex: 1, width: '100%', maxWidth: layout.contentWidth, alignSelf: 'center' },
-  center: { flex: 1, padding: space[6], justifyContent: 'center', gap: space[4] },
-  nav: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: space[4],
-    paddingVertical: space[2],
-  },
-  iconButton: {
-    width: layout.touch,
-    minHeight: layout.touch,
-    alignItems: 'center',
+  center: {
+    flex: 1,
     justifyContent: 'center',
+    alignItems: 'center',
+    padding: space[5],
+    gap: space[4],
   },
-  track: { height: space[1] },
-  content: { padding: space[4], paddingBottom: space[8], gap: space[4] },
-  footer: { padding: space[4], borderTopWidth: layout.border },
+  nav: {
+    paddingHorizontal: space[5],
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  iconButton: { minWidth: layout.touch, minHeight: layout.touch },
+  track: { height: controls.progressHeight },
+  content: { flexGrow: 1, padding: space[5], gap: space[5] },
+  question: { gap: space[3] },
+  summary: { flexDirection: 'row', flexWrap: 'wrap', gap: space[4] },
+  summaryCharacter: { flexBasis: controls.summaryMinWidth, flexGrow: 1, flexShrink: 1 },
+  summaryTargets: { flexBasis: layout.entryWidth / 2, flexGrow: 2, flexShrink: 1 },
+  footer: { borderTopWidth: StyleSheet.hairlineWidth, padding: space[5] },
 });

@@ -6,7 +6,7 @@ import { getSupabase } from '@/lib/supabase';
 import { browseSocialProfiles } from '@/services/friendsService';
 import { useNetworkStatus } from './useNetworkStatus';
 
-export type FriendGoal = 'bulk' | 'cut' | 'maintain' | null;
+export type FriendGoal = 'bulk' | 'cut' | null;
 export function useFriendDiscovery(goal: FriendGoal, query: string, random = false) {
   const { user } = useAuth();
   const id = user?.id;

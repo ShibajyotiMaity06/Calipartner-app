@@ -8,49 +8,46 @@ const ACTIVE_ONBOARDING_STEPS = ONBOARDING_STEPS_ORDER;
 
 describe('UI-5 Onboarding and Account Polish (Spec A01–A15, B01–B09)', () => {
   describe('1. Active Onboarding Flow Geometry & Order (Spec 7.A)', () => {
-    it('has 6 steps after welcome and account setup with one question per screen and 4px progress bar', () => {
+    it('has 13 steps after authentication', () => {
       expect(ACTIVE_ONBOARDING_STEPS).toEqual([
         'goal',
+        'nickname',
+        'age',
+        'height',
+        'weight',
         'activity_level',
-        'body_stats',
-        'growth_projection',
+        'gym_days',
+        'target_weight',
         'rate_selection',
-        'daily_goals',
-        'completed',
+        'step_goal',
+        'water_goal',
+        'plan_summary',
+        'paywall',
       ]);
-      expect(ACTIVE_ONBOARDING_STEPS.length).toBe(7);
+      expect(ACTIVE_ONBOARDING_STEPS.length).toBe(13);
     });
 
-    it('calculates 4px progress percentage accurately across all steps', () => {
+    it('calculates progress across all 13 steps', () => {
       const getProgressPct = (stepIndex: number, total: number) => {
         return Math.min(100, Math.max(0, ((stepIndex + 1) / total) * 100));
       };
 
-      // Step 1: ~14.28%
-      expect(Math.round(getProgressPct(0, 7))).toBe(14);
-      // Step 4: ~57.14%
-      expect(Math.round(getProgressPct(3, 7))).toBe(57);
-      // Step 7: 100%
-      expect(getProgressPct(6, 7)).toBe(100);
+      expect(Math.round(getProgressPct(0, 13))).toBe(8);
+      expect(Math.round(getProgressPct(6, 13))).toBe(54);
+      expect(getProgressPct(12, 13)).toBe(100);
     });
   });
 
   describe('2. A04: Goal Cards Specifications', () => {
-    it('defines 3 full-width cards with 88dp height and plain copy', () => {
+    it('defines Bulk and Cut goal cards', () => {
       const GOAL_OPTIONS = [
         { id: 'cut', title: 'Lose fat', desc: 'Eat a little less than you burn.' },
         { id: 'bulk', title: 'Build muscle', desc: 'Eat enough protein and train with intent.' },
-        {
-          id: 'maintain',
-          title: 'Stay where I am',
-          desc: 'Keep your weight and build consistency.',
-        },
       ];
 
-      expect(GOAL_OPTIONS.length).toBe(3);
+      expect(GOAL_OPTIONS.length).toBe(2);
       expect(GOAL_OPTIONS[0]?.title).toBe('Lose fat');
       expect(GOAL_OPTIONS[1]?.title).toBe('Build muscle');
-      expect(GOAL_OPTIONS[2]?.title).toBe('Stay where I am');
     });
   });
 

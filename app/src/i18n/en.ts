@@ -16,6 +16,7 @@ import { challengeMessages } from './challengeMessages';
 import { homeRefresh } from './homeRefresh';
 import { ownerPolish } from './ownerPolish';
 import { releaseUpdate } from './releaseUpdate';
+import { characterSetup } from './characterSetup';
 import { squadDesign } from './squadDesign';
 import { repairMessages } from './repairs';
 export const en = {
@@ -61,6 +62,7 @@ export const en = {
   homeRefresh,
   ownerPolish,
   releaseUpdate,
+  characterSetup,
   repairUnits: { cm: 'cm', ftIn: 'ft / inch', ft: 'ft', inch: 'inch' },
   customMacros: {
     title: 'Custom macros',
@@ -626,8 +628,7 @@ export const en = {
       'Your daily target matches your estimated maintenance. There is no surplus or deficit to choose.',
     floorReason: 'Below your minimum of {floor} kcal per day.',
     capReason: 'Choose another available pace.',
-    bmiReason:
-      'A cut is unavailable at this body weight and height. Choose maintain or bulk to continue.',
+    bmiReason: 'A cut is unavailable at this body weight and height. Choose Bulk to continue.',
     macroReason:
       'This intake is too low to fit the protein and fat targets. Choose a smaller deficit.',
     chooseSafePace: 'Choose an available pace before continuing.',

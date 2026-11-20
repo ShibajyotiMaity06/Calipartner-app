@@ -69,18 +69,20 @@ export function PlanReviewStep({
   saving,
   error,
   onClearError,
+  continueLabel,
 }: {
   state: OnboardingState;
-  onWeight: (value: number) => void;
-  onDays: (value: number) => void;
-  onAdjustment: (value: number) => void;
-  onRecommended: () => void;
+  onWeight?: (value: number) => void;
+  onDays?: (value: number) => void;
+  onAdjustment?: (value: number) => void;
+  onRecommended?: () => void;
   onPlanned: (overrides?: OnboardingTargetOverrides) => void;
   onCalculation?: () => void;
-  onChangeGoal: () => void;
+  onChangeGoal?: () => void;
   saving: boolean;
   error: string | null;
   onClearError?: () => void;
+  continueLabel?: string;
 }) {
   const { colors } = useTheme();
   const result = state.calculatedTargets;
@@ -140,7 +142,9 @@ export function PlanReviewStep({
       )}
       {!editing && (
         <Button
-          label={t(saving ? 'setup.statusSaving' : 'personalDay.continuePlan')}
+          label={
+            saving ? t('setup.statusSaving') : (continueLabel ?? t('personalDay.continuePlan'))
+          }
           onPress={() => onPlanned({})}
           disabled={saving || !result || !isGymPlanValid(result)}
           testID="continue-calculated-plan"

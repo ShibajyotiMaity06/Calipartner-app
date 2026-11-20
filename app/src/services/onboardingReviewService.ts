@@ -1,20 +1,20 @@
 import { secureStoreAdapter } from '@/lib/secureStore';
 
 const key = (userId: string) => `calipartner.founders_review.${userId}`;
-export type ReviewPlacement = 'before_plan' | 'end';
+export type ReviewPlacement = 'before_pair' | 'end';
 
 export const requireOnboardingReview = (userId: string, platform: string) =>
-  secureStoreAdapter.setItem(key(userId), platform === 'ios' ? 'end' : 'before_plan');
+  secureStoreAdapter.setItem(key(userId), platform === 'ios' ? 'end' : 'before_pair');
 export async function pendingOnboardingReview(userId: string): Promise<ReviewPlacement | null> {
   const value = await secureStoreAdapter.getItem(key(userId));
-  return value === 'before_plan' || value === 'end' ? value : null;
+  if (value === 'before_plan') return 'before_pair';
+  return value === 'before_pair' || value === 'end' ? value : null;
 }
 export const finishOnboardingReview = (userId: string) =>
   secureStoreAdapter.setItem(key(userId), 'done');
 
 /** Only app-owned destinations can be resumed from the optional review screen. */
 export function reviewContinueDestination(next?: string, room?: string): string {
-  if (next === 'plan') return '/weekly-plan?setup=1';
   if (next === 'rooms') return '/room';
   if (next === 'room')
     return room && /^[\da-f]{8}-[\da-f]{4}-[\da-f]{4}-[\da-f]{4}-[\da-f]{12}$/i.test(room)

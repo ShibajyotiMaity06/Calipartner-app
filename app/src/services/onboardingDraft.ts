@@ -1,5 +1,36 @@
 import type { TargetsDb } from './targetsService';
-import type { OnboardingState } from './onboardingStateMachine';
+import type { Profile } from '@calipartner/core';
+import {
+  ONBOARDING_STEPS_ORDER,
+  OnboardingStateMachine,
+  type OnboardingState,
+  type OnboardingStep,
+} from './onboardingStateMachine';
+
+export function resumeOnboardingDraft(
+  draft: Partial<OnboardingState> | null,
+  profile: Profile | null,
+  fromGuest = false,
+): OnboardingStateMachine {
+  const goal = draft?.goal === 'bulk' ? 'bulk' : 'cut';
+  const machine = new OnboardingStateMachine({
+    ...draft,
+    goal,
+    goalSelected: draft?.goalSelected === true && draft.goal !== 'maintain',
+    currentStep: 'goal',
+    heightCm: draft?.heightCm ?? 0,
+    weightKg: draft?.weightKg ?? 0,
+    nickname: draft?.nickname || profile?.nickname || '',
+    sex: profile?.sex ?? draft?.sex ?? 'male',
+    dateOfBirth: profile?.date_of_birth ?? (fromGuest ? '' : (draft?.dateOfBirth ?? '')),
+    weeklyRateKg: draft?.goal === 'maintain' ? 0.5 : (draft?.weeklyRateKg ?? 0.5),
+    errors: {},
+  });
+  const savedStep = draft?.currentStep;
+  if (savedStep && ONBOARDING_STEPS_ORDER.includes(savedStep as OnboardingStep))
+    machine.goToStep(savedStep);
+  return machine;
+}
 
 export async function loadOnboardingDraft(
   db: TargetsDb,

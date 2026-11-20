@@ -5,6 +5,7 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useTheme } from '@calipartner/ui';
 import { useAuth } from '@/contexts/AuthContext';
 import { FoundersThanksView } from '@/components/onboarding/FoundersThanksView';
+import { afterSetupDestination } from '@/services/pairOnboardingService';
 import {
   finishOnboardingReview,
   reviewContinueDestination,
@@ -28,8 +29,12 @@ export default function FoundersScreen() {
               return;
             }
             await finishOnboardingReview(user.id);
+            const destination =
+              params.next === 'pair' || params.next === 'plan'
+                ? await afterSetupDestination(user.id)
+                : reviewContinueDestination(params.next, params.room);
             if (currentOwner.current !== user.id) return;
-            router.replace(reviewContinueDestination(params.next, params.room) as never);
+            router.replace(destination as never);
           }}
         />
       </ScrollView>

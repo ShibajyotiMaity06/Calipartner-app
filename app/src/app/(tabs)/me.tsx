@@ -414,7 +414,7 @@ export default function MeScreen() {
                 bodyFatPercentage: currentGoalProfile.body_fat_percentage,
                 activityLevel: currentGoalProfile.activity_level,
                 gymDays: currentGoalProfile.gym_days ?? 3,
-                weeklyRateKg: details.goal === 'maintain' ? 0 : details.rate,
+                weeklyRateKg: details.rate,
                 stepGoal: currentGoalProfile.step_goal,
                 waterMlGoal: currentGoalProfile.water_ml_goal,
               });

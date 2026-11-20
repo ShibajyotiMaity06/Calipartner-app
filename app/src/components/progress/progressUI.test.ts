@@ -441,11 +441,10 @@ describe('Phase 7 — Progress & Leaderboard UI Presentation & Logic Tests', () 
       );
     });
 
-    it('verifies allowed divisions match spec', () => {
-      const DIVISIONS = ['cutting', 'bulking', 'maintain', 'beginner'] as const;
+    it('uses Cutting, Bulking and Beginner as leaderboard divisions', () => {
+      const DIVISIONS = ['cutting', 'bulking', 'beginner'] as const;
       expect(DIVISIONS).toContain('cutting');
       expect(DIVISIONS).toContain('bulking');
-      expect(DIVISIONS).toContain('maintain');
       expect(DIVISIONS).toContain('beginner');
     });
 

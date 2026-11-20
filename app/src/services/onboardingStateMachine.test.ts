@@ -11,34 +11,41 @@ const adult = {
 };
 
 describe('Onboarding redesign state machine', () => {
-  it('follows the approved journey after signup and profile setup', () => {
-    const machine = new OnboardingStateMachine(adult);
+  it('follows the 13 steps after authentication', () => {
+    const machine = new OnboardingStateMachine(adult)
+      .setCharacterGender('male', true)
+      .setGoal('cut');
     const visited = [machine.getState().currentStep];
     while (machine.next()) visited.push(machine.getState().currentStep);
     expect(visited).toEqual(ONBOARDING_STEPS_ORDER);
     expect(visited).toEqual([
       'goal',
+      'nickname',
+      'age',
+      'height',
+      'weight',
       'activity_level',
-      'body_stats',
-      'growth_projection',
+      'gym_days',
+      'target_weight',
       'rate_selection',
-      'daily_goals',
-      'completed',
+      'step_goal',
+      'water_goal',
+      'plan_summary',
+      'paywall',
     ]);
   });
 
   it('blocks missing body details, minors, invalid training days, and stale calculations', () => {
     const machine = new OnboardingStateMachine({ ...adult, heightCm: 0 });
-    machine.goToStep('body_stats');
-    expect(machine.next()).toBe(false);
+    expect(machine.validateStep('height').isValid).toBe(false);
     machine.setBodyStats({ heightCm: 175, dateOfBirth: '2020-01-01' });
-    expect(machine.next()).toBe(false);
+    expect(machine.validateStep('age').isValid).toBe(false);
     machine.setBodyStats({ dateOfBirth: adult.dateOfBirth });
     machine.setGymDays(8);
     expect(machine.getState().calculatedTargets).toBeNull();
-    expect(machine.next()).toBe(false);
+    expect(machine.validateStep('gym_days').isValid).toBe(false);
     machine.setGymDays(3);
-    expect(machine.next()).toBe(true);
+    expect(machine.validateStep('body_stats').isValid).toBe(true);
     machine.setBodyStats({ weightKg: NaN });
     expect(machine.getState().calculatedTargets).toBeNull();
     expect(() => machine.buildGoalProfile('user-a')).toThrow();
@@ -46,9 +53,8 @@ describe('Onboarding redesign state machine', () => {
 
   it('accepts a custom pace and surplus above recommendations while rejecting invalid totals', () => {
     const machine = new OnboardingStateMachine(adult).setGoal('bulk');
-    machine.goToStep('rate_selection');
     machine.setWeeklyRate(1.5);
-    expect(machine.next()).toBe(true);
+    expect(machine.validateStep('rate_selection').isValid).toBe(true);
     expect(machine.buildGoalProfile('user-a').weekly_rate_kg).toBe(1.5);
     machine.setDailyAdjustment(2000);
     expect(machine.buildGoalProfile('user-a').weekly_rate_kg).toBeCloseTo(2000 / 1100);
@@ -89,15 +95,26 @@ describe('Onboarding redesign state machine', () => {
     expect(machine.validateStep('rate_selection').isValid).toBe(true);
   });
 
-  it('can dismiss either premium step and go back to edit inputs', () => {
-    for (const step of ['premium', 'paywall'] as const) {
-      const machine = new OnboardingStateMachine(adult);
-      machine.goToStep(step);
-      expect(machine.goToStep('completed')).toBe(true);
-      expect(machine.goToStep('body_stats')).toBe(true);
-      machine.setBodyStats({ weightKg: 72 });
-      expect(machine.getState().weightKg).toBe(72);
-    }
+  it('requires both choices and blocks a jump past an invalid earlier answer', () => {
+    const machine = new OnboardingStateMachine({ ...adult, heightCm: 0 });
+    expect(machine.next()).toBe(false);
+    machine.setCharacterGender('male', true).setGoal('bulk');
+    expect(machine.goToStep('paywall')).toBe(false);
+    expect(machine.getState().currentStep).toBe('height');
+    machine.setBodyStats({ heightCm: 175 });
+    expect(machine.goToStep('paywall')).toBe(true);
+    expect(machine.back()).toBe(true);
+    expect(machine.getState().currentStep).toBe('plan_summary');
+  });
+
+  it('rejects an unsafe cut even when the macro totals fit', () => {
+    const machine = new OnboardingStateMachine(adult)
+      .setCharacterGender('male', true)
+      .setGoal('cut')
+      .setWeeklyRate(0.75);
+    expect(machine.validateStep('rate_selection').isValid).toBe(false);
+    machine.useRecommendedRate();
+    expect(machine.validateStep('rate_selection').isValid).toBe(true);
   });
 });
 

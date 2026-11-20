@@ -8,6 +8,7 @@ import { cmToFtIn, ftInToCm, kgToLb, lbToKg } from '@calipartner/core';
 import { NumberField } from '@/components/onboarding/PlanPrimitives';
 import { t } from '@/i18n';
 import { playClickSound } from '@/lib/sound';
+import type { SelectedGoal } from '@/services/onboardingStateMachine';
 
 export interface GoalsAndBodyModalProps {
   visible: boolean;
@@ -18,7 +19,7 @@ export interface GoalsAndBodyModalProps {
   currentWeightKg?: number;
   currentSex?: 'male' | 'female' | 'other';
   onSave?: (data: {
-    goal: 'cut' | 'maintain' | 'bulk';
+    goal: SelectedGoal;
     rate: number;
     heightCm: number;
     weightKg: number;
@@ -41,7 +42,9 @@ export function GoalsAndBodyModal({
   const { colors: dark } = useAppearance();
   const styles = createStyles(dark);
 
-  const [goal, setGoal] = useState<'cut' | 'maintain' | 'bulk'>(currentGoal);
+  const [goal, setGoal] = useState<SelectedGoal | null>(
+    currentGoal === 'maintain' ? null : currentGoal,
+  );
   const [rate, setRate] = useState<number>(currentRate);
   const [unitSystem, setUnitSystem] = useState<'metric' | 'imperial'>('metric');
   const [heightCm, setHeightCm] = useState<string>(String(currentHeightCm));
@@ -58,9 +61,8 @@ export function GoalsAndBodyModal({
   const [saveError, setSaveError] = useState(false);
 
   const goalOptions = [
-    { value: 'cut', label: 'Lose fat' },
-    { value: 'maintain', label: 'Maintain' },
-    { value: 'bulk', label: 'Build muscle' },
+    { value: 'bulk', label: t('socialUpdate.bulk') },
+    { value: 'cut', label: t('socialUpdate.cut') },
   ];
 
   const rateOptions = [
@@ -71,6 +73,7 @@ export function GoalsAndBodyModal({
   ];
 
   const handleSave = async () => {
+    if (!goal || saving) return;
     playClickSound();
     setSaveError(false);
     setSaving(true);
@@ -140,14 +143,19 @@ export function GoalsAndBodyModal({
               </Text>
               <SegmentedControl
                 options={goalOptions}
-                value={goal}
-                onChange={(val: string) => setGoal(val as 'cut' | 'maintain' | 'bulk')}
+                value={goal ?? ''}
+                onChange={(value) => {
+                  if (value === 'bulk' || value === 'cut') {
+                    setGoal(value);
+                    if (rate === 0) setRate(0.5);
+                  }
+                }}
                 testID="segment-goal-type"
               />
             </View>
 
             {/* Rate selector if cut or bulk */}
-            {goal !== 'maintain' && (
+            {goal && (
               <View style={styles.section}>
                 <Text variant="label" color={dark.textHi} style={styles.sectionLabel}>
                   {t('me.goalsAndBody.rateLabel')}
@@ -341,7 +349,7 @@ export function GoalsAndBodyModal({
               variant="primary"
               label={success ? 'Saved' : saving ? 'Saving…' : t('me.goalsAndBody.saveBtn')}
               onPress={handleSave}
-              disabled={saving}
+              disabled={saving || !goal}
               testID="btn-save-goals-body"
               style={styles.saveButton}
             />

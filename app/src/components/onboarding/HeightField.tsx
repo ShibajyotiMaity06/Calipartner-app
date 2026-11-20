@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Pressable, View } from 'react-native';
-import { cmToFtIn, ftInToCm } from '@calipartner/core';
+import { cmToFtIn, ftInToCm, type Units } from '@calipartner/core';
 import { Text, useTheme } from '@calipartner/ui';
 import { t } from '@/i18n';
 import { NumberField, planStyles } from './PlanPrimitives';
@@ -9,12 +9,17 @@ import { NumberField, planStyles } from './PlanPrimitives';
 export function HeightField({
   value,
   onChange,
+  units,
+  onChangeUnits,
 }: {
   value: number;
   onChange: (cm: number) => void;
+  units?: Units;
+  onChangeUnits?: (units: Units) => void;
 }) {
   const { colors } = useTheme();
-  const [unit, setUnit] = useState('cm');
+  const [localUnit, setLocalUnit] = useState('cm');
+  const unit = units ? (units === 'metric' ? 'cm' : 'ft') : localUnit;
   const converted = cmToFtIn(Number.isFinite(value) && value > 0 ? value : 0);
   const [feet, setFeet] = useState<number | null>(converted.feet);
   const [inches, setInches] = useState<number | null>(converted.inches);
@@ -55,7 +60,8 @@ export function HeightField({
                 setFeet(converted.feet);
                 setInches(converted.inches);
               }
-              setUnit(next);
+              setLocalUnit(next);
+              onChangeUnits?.(next === 'cm' ? 'metric' : 'imperial');
             }}
           >
             <Text

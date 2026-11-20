@@ -2,7 +2,7 @@ import { useTheme as useAppearance } from '@calipartner/ui/theme';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { BackHandler, Platform, Pressable, ScrollView, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
+import { Redirect, useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { Button, homeLayout, radius, space, Text } from '@calipartner/ui';
 import {
@@ -27,11 +27,10 @@ import { t } from '@/i18n';
 import { NutrientSummary } from '@/components/diary/NutrientSummary';
 import { WeeklyMealActions } from '@/components/diary/WeeklyMealActions';
 import { WeeklyGroceryList } from '@/components/diary/WeeklyGroceryList';
-import { OnboardingRecipePreview } from '@/components/onboarding/OnboardingRecipePreview';
 
 export default function WeeklyPlanScreen(props: { onClose?: () => void } = {}) {
   const { setup } = useLocalSearchParams<{ setup?: string }>();
-  return setup === '1' ? <OnboardingRecipePreview /> : <WeeklyPlanContent {...props} />;
+  return setup === '1' ? <Redirect href="/" /> : <WeeklyPlanContent {...props} />;
 }
 
 function WeeklyPlanContent({ onClose }: { onClose?: () => void }) {

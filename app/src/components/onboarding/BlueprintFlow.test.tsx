@@ -18,6 +18,7 @@ vi.mock('react-native', () => ({
 }));
 vi.mock('react-native-safe-area-context', () => ({ SafeAreaView: 'SafeAreaView' }));
 vi.mock('expo-router', () => ({
+  Redirect: 'Redirect',
   useRouter: () => ({ replace: state.replace, back: state.back, canGoBack: () => true }),
   useLocalSearchParams: () => state.params,
   useFocusEffect: (callback: () => void | (() => void)) => React.useEffect(callback, [callback]),
@@ -85,28 +86,14 @@ const monday = {
   workout_tips: [],
   diet_tips: [],
 };
-it('shows real recipes and continues setup without loading or generating a plan', async () => {
+it('redirects old setup links through normal launch without loading or generating a plan', async () => {
   state.params.setup = '1';
   await act(async () => {
     tree = create(<WeeklyPlanScreen />);
   });
-  expect(tree.root.findByProps({ testID: 'onboarding-recipe-preview' })).toBeDefined();
-  const content = JSON.stringify(tree.toJSON());
-  for (const title of [
-    'Palak Paneer',
-    'Chicken Teriyaki Rice Bowl',
-    'Chicken Fajitas',
-    'Turkey Meatballs in Marinara',
-  ]) {
-    expect(content).toContain(title);
-  }
-  expect(content).toContain('more than 90 recipes');
+  expect(tree.root.findByType('Redirect' as React.ElementType).props.href).toBe('/');
   expect(state.load).not.toHaveBeenCalled();
   expect(state.build).not.toHaveBeenCalled();
-  await act(async () =>
-    tree.root.findByProps({ testID: 'recipe-preview-continue' }).props.onPress(),
-  );
-  expect(state.replace).toHaveBeenCalledWith('/pair-start');
 });
 it('a failed request retains the preferences and shows an error instead of a fabricated plan', async () => {
   state.build.mockRejectedValue(new Error('PLAN_UNAVAILABLE'));

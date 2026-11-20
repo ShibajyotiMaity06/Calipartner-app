@@ -48,7 +48,7 @@ export function FriendDiscovery({
           />
           <Text variant="bodyS">{t('socialUpdate.universalSearch')}</Text>
           <View style={styles.filters} accessibilityRole="radiogroup">
-            {([null, 'bulk', 'cut', 'maintain'] as const).map((value) => (
+            {([null, 'bulk', 'cut'] as const).map((value) => (
               <Pressable
                 key={value ?? 'all'}
                 style={[
@@ -64,15 +64,7 @@ export function FriendDiscovery({
                 testID={`friend-filter-${value ?? 'all'}`}
               >
                 <Text>
-                  {t(
-                    value === 'bulk'
-                      ? 'socialUpdate.bulk'
-                      : value === 'cut'
-                        ? 'socialUpdate.cut'
-                        : value === 'maintain'
-                          ? 'socialUpdate.maintain'
-                          : 'socialUpdate.all',
-                  )}
+                  {t(`socialUpdate.${value ?? 'all'}`)}
                   {goal === value ? ' \u2713' : ''}
                 </Text>
               </Pressable>

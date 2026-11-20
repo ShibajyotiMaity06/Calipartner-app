@@ -21,12 +21,11 @@ interface LeaderboardViewProps {
   testID?: string;
 }
 
-type DivisionType = 'cutting' | 'bulking' | 'maintain' | 'beginner';
+type DivisionType = 'cutting' | 'bulking' | 'beginner';
 
 const DIVISIONS: { id: DivisionType; label: string }[] = [
   { id: 'cutting', label: 'Cutting' },
   { id: 'bulking', label: 'Bulking' },
-  { id: 'maintain', label: 'Maintain' },
   { id: 'beginner', label: 'Beginner' },
 ];
 
@@ -87,7 +86,6 @@ export function LeaderboardView({ testID = 'leaderboard-view' }: LeaderboardView
         </Text>
       </View>
 
-      {/* 2. M11: Division chips: Cutting · Bulking · Maintain · Beginner */}
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
