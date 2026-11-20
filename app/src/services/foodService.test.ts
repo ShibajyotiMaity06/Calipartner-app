@@ -1,6 +1,7 @@
 import suppliedRegional from '../../assets/supplied_regional_foods.json';
 import suppliedFoods from '../../assets/supplied_foods.json';
 import suppliedProducts from '../../assets/supplied_food_products.json';
+import suppliedTopFoods from '../../assets/supplied_top_foods.json';
 vi.mock('./accountDataService', async (original) => ({
   ...(await original<object>()),
   withOnlineSave: async <T>(db: LocalDb, action: (db: LocalDb) => Promise<T>) => action(db),
@@ -516,6 +517,34 @@ describe('Supplied individual foods and recovered diary history', () => {
     expect(await ensureBundledFoodsSeeded(db)).toBe(1);
     expect(await ensureBundledFoodsSeeded(db)).toBe(0);
     expect(new Set(suppliedRegional.map((food) => food.id)).size).toBe(650);
+  });
+  it('adds all 604 deduplicated popular foods and state dishes to the read catalogue', async () => {
+    const db = createTestDb();
+    await ensureBundledFoodsSeeded(db);
+    expect(suppliedTopFoods).toHaveLength(604);
+    expect(new Set(suppliedTopFoods.map((f) => f.id)).size).toBe(604);
+
+    const omelette = suppliedTopFoods.find((f) => f.name === 'Omelette (2 eggs, plain)')!;
+    expect(omelette).toBeDefined();
+    const omeletteRows = await searchLocalFoods(db, 'Omelette (2 eggs, plain)');
+    expect(omeletteRows.find((r) => r.id === omelette.id)).toMatchObject({
+      calories_per_100g: 181.82,
+      protein_per_100g: 11.82,
+      serving_units: omelette.serving_units,
+    });
+
+    const gonguraChicken = suppliedTopFoods.find((f) => f.name === 'Gongura chicken')!;
+    expect(gonguraChicken).toBeDefined();
+    const gonguraRows = await searchLocalFoods(db, 'Gongura chicken');
+    expect(gonguraRows.find((r) => r.id === gonguraChicken.id)).toMatchObject({
+      calories_per_100g: 150,
+      protein_per_100g: 13,
+      serving_units: gonguraChicken.serving_units,
+    });
+
+    await db.runAsync('DELETE FROM local_foods WHERE id = ?', [gonguraChicken.id]);
+    expect(await ensureBundledFoodsSeeded(db)).toBe(1);
+    expect(await ensureBundledFoodsSeeded(db)).toBe(0);
   });
   it('installs all 247 foods on an existing catalog and preserves servings and advanced nutrients', async () => {
     const db = createTestDb();
