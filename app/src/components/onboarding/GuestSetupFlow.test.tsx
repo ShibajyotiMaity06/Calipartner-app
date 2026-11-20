@@ -44,6 +44,7 @@ vi.mock('@/contexts/AuthContext', () => ({
     profile: state.profile,
     isLoading: false,
     needsProfileSetup: Boolean(state.user && !state.profile),
+    updateProfile: vi.fn(async () => ({ error: null })),
   }),
 }));
 vi.mock('@/hooks/useTargets', () => ({ useTargets: () => ({ saveGoalProfile: state.save }) }));
@@ -81,7 +82,7 @@ vi.mock('./OnboardingQuestion', async () => {
 vi.mock('./FinishOnboardingProfile', () => ({ FinishOnboardingProfile: 'ProfileForm' }));
 vi.mock('./PlanReviewStep', () => ({ PlanReviewStep: 'Review' }));
 vi.mock('./GymCalculationStep', () => ({ GymCalculationStep: 'Calculation' }));
-vi.mock('./PlanPrimitives', () => ({ PlanChoice: 'GoalChoice', planStyles: {} }));
+vi.mock('./PlanPrimitives', () => ({ PlanChoice: 'GoalChoice', PlanCard: 'PlanCard', planStyles: {} }));
 vi.mock('@/components/rooms/PaywallModal', () => ({ PaywallModal: 'Paywall' }));
 
 import OnboardingScreen from '@/app/onboarding';
@@ -172,14 +173,6 @@ it('maps 11 asset stages and only finishes after an acknowledged, retry-safe sav
   await next();
   await edit((machine) => machine.setBodyStats({ dateOfBirth: '1999-06-12' }));
   await next();
-  await edit((machine) => machine.setBodyStats({ heightCm: 172 }));
-  await next();
-  await edit((machine) => machine.setBodyStats({ weightKg: 72 }));
-  for (let stage = 4; stage <= 10; stage++) {
-    expect(find('Character').props.stage).toBe(stage);
-    await next();
-  }
-  expect(find('Character').props.stage).toBe(11);
   expect(find('ProfileForm').props.state.currentStep).toBe('profile');
   expect(state.save).not.toHaveBeenCalled();
   state.profile = {
@@ -190,6 +183,13 @@ it('maps 11 asset stages and only finishes after an acknowledged, retry-safe sav
   } as Profile;
   await act(async () => tree.update(<OnboardingScreen />));
   await next();
+  await edit((machine) => machine.setBodyStats({ heightCm: 172 }));
+  await next();
+  await edit((machine) => machine.setBodyStats({ weightKg: 72 }));
+  for (let stage = 5; stage <= 11; stage++) {
+    expect(find('Character').props.stage).toBe(stage);
+    await next();
+  }
   expect(find('Review').props.state.calculatedTargets.targetKcal).toBeGreaterThan(0);
   expect(all('Character')).toHaveLength(0);
   await act(async () => find('Review').props.onPlanned({}));

@@ -17,6 +17,7 @@ export const ONBOARDING_STEPS_ORDER = [
   'goal',
   'nickname',
   'age',
+  'profile',
   'height',
   'weight',
   'activity_level',
@@ -25,7 +26,6 @@ export const ONBOARDING_STEPS_ORDER = [
   'rate_selection',
   'step_goal',
   'water_goal',
-  'profile',
   'plan_summary',
 ] as const;
 

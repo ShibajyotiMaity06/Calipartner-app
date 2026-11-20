@@ -81,3 +81,22 @@ vi.mock('react-native-purchases', () => ({
     DEFERRED: 2,
   },
 }));
+
+vi.mock('posthog-react-native', () => {
+  class MockPostHog {
+    identify = vi.fn();
+    capture = vi.fn();
+    screen = vi.fn();
+    reset = vi.fn();
+    optOut = vi.fn();
+    optIn = vi.fn();
+    getFeatureFlag = vi.fn();
+    ready = vi.fn().mockResolvedValue(undefined);
+  }
+  return {
+    default: MockPostHog,
+    PostHog: MockPostHog,
+    usePostHog: () => new MockPostHog(),
+    useFeatureFlag: () => undefined,
+  };
+});

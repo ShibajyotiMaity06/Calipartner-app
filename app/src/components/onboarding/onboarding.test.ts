@@ -22,6 +22,7 @@ describe('Onboarding UI and Interaction Logic', () => {
         'goal',
         'nickname',
         'age',
+        'profile',
         'height',
         'weight',
         'activity_level',
@@ -30,7 +31,6 @@ describe('Onboarding UI and Interaction Logic', () => {
         'rate_selection',
         'step_goal',
         'water_goal',
-        'profile',
         'plan_summary',
       ]);
       expect(EXPECTED_ONBOARDING_STEPS).not.toContain('review_calculation');

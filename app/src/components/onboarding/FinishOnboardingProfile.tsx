@@ -1,9 +1,11 @@
 import React, { useRef, useState } from 'react';
+import { Platform } from 'react-native';
 import { Button, Text, useTheme } from '@calipartner/ui';
 import { t } from '@/i18n';
 import { useAuth } from '@/contexts/AuthContext';
 import { useUsername } from '@/hooks/useUsername';
 import { useNetworkStatus } from '@/hooks/useNetworkStatus';
+import { fetchWebCatalog } from '@/services/webBillingService';
 import type { OnboardingState } from '@/services/onboardingStateMachine';
 import { PlanCard, PlanTextField } from './PlanPrimitives';
 
@@ -66,6 +68,9 @@ export function FinishOnboardingProfile({
           return;
         }
         throw result.error;
+      }
+      if (Platform.OS === 'web') {
+        void fetchWebCatalog({ force: true }).catch(() => {});
       }
       onComplete();
     } catch {

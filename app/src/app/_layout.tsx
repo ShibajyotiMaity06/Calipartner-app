@@ -15,6 +15,8 @@ import { AvatarMilestone } from '@/components/avatar/AvatarMilestone';
 import { CoachSessionProvider } from '@/components/coach/CoachSessionProvider';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { HardwareBackHandler } from '@/components/navigation/HardwareBackHandler';
+import { ScreenAnalyticsTracker } from '@/components/navigation/ScreenAnalyticsTracker';
+import { initAnalytics } from '@/services/analyticsService';
 import { SessionNavigationGuard } from '@/components/SessionNavigationGuard';
 import { AccountDataResetGate } from '@/components/AccountDataResetGate';
 import { ErrorState } from '@/components/ErrorState';
@@ -36,6 +38,7 @@ function AppInitializationGate({ children }: { children: React.ReactNode }) {
   const init = useCallback(() => {
     setInitError(false);
     hideSplashScreen().catch(() => {});
+    void initAnalytics();
     Promise.all([getDb(), loadAppFonts()])
       .then(([, fontsReady]) => {
         if (!fontsReady) throw new Error('Font loading failed');
@@ -209,6 +212,7 @@ export default function RootLayout() {
                   <AvatarProvider>
                     <AvatarMilestone />
                     <HardwareBackHandler />
+                    <ScreenAnalyticsTracker />
                     <SessionNavigationGuard />
                     <CoinCatalogProvider>
                       <CoachSessionProvider>

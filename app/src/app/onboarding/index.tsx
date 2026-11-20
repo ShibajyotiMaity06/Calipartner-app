@@ -36,7 +36,9 @@ import { GymCalculationStep } from '@/components/onboarding/GymCalculationStep';
 import { EvolutionCharacter } from '@/components/onboarding/EvolutionCharacter';
 import { OnboardingQuestion, questionCopy } from '@/components/onboarding/OnboardingQuestion';
 import { FinishOnboardingProfile } from '@/components/onboarding/FinishOnboardingProfile';
+import { PlanCard } from '@/components/onboarding/PlanPrimitives';
 import { PaywallModal } from '@/components/rooms/PaywallModal';
+import { fetchWebCatalog } from '@/services/webBillingService';
 
 export const ACTIVE_ONBOARDING_STEPS = ONBOARDING_STEPS_ORDER;
 
@@ -182,16 +184,22 @@ function Questionnaire({ ownerId }: { ownerId: string }) {
   const continueToReveal = (overrides: OnboardingTargetOverrides = {}) => {
     setSaveError(null);
     try {
-      const goal = applyOnboardingTargetOverrides(
-        machine.buildGoalProfile(ownerId),
-        snapshot.sex,
-        overrides,
-      );
-      if (goal.weekly_rate_kg > MAX_ONBOARDING_WEEKLY_RATE_KG) {
-        setSaveError(t('characterSetup.paceTooHigh', { max: MAX_ONBOARDING_WEEKLY_RATE_KG }));
-        return;
+      const baseGoal = machine.buildGoalProfile(ownerId);
+      let goal;
+      try {
+        goal = applyOnboardingTargetOverrides(
+          baseGoal,
+          snapshot.sex ?? identity?.sex ?? 'male',
+          overrides,
+        );
+        if (goal.weekly_rate_kg > MAX_ONBOARDING_WEEKLY_RATE_KG) {
+          goal.weekly_rate_kg = MAX_ONBOARDING_WEEKLY_RATE_KG;
+        }
+        machine.setTargetOverrides(overrides);
+      } catch {
+        goal = baseGoal;
+        machine.setTargetOverrides({});
       }
-      machine.setTargetOverrides(overrides);
       next();
     } catch (error) {
       setSaveError(macroErrorMessage(error));
@@ -210,22 +218,37 @@ function Questionnaire({ ownerId }: { ownerId: string }) {
         return;
       }
       const state = machine.getState();
-      const goal = applyOnboardingTargetOverrides(
-        machine.buildGoalProfile(ownerId),
-        identity.sex,
-        state.targetOverrides,
-      );
+      let goal;
+      try {
+        goal = applyOnboardingTargetOverrides(
+          machine.buildGoalProfile(ownerId),
+          state.sex ?? identity.sex ?? 'male',
+          state.targetOverrides,
+        );
+      } catch {
+        // Safe fallback: if custom target overrides violate safety bounds,
+        // use calculated base targets so the user is never blocked or shown an error
+        goal = machine.buildGoalProfile(ownerId);
+      }
       if (goal.weekly_rate_kg > MAX_ONBOARDING_WEEKLY_RATE_KG) {
-        setPaywallClosed(true);
-        setSaveError(t('characterSetup.paceTooHigh', { max: MAX_ONBOARDING_WEEKLY_RATE_KG }));
-        return;
+        goal.weekly_rate_kg = MAX_ONBOARDING_WEEKLY_RATE_KG;
       }
       await draftWrites.current;
       await saveOnboardingDraft(await getDb(), ownerId, state);
       if (!active.current) return;
-      if (state.nickname.trim() !== identity.nickname) {
-        const result = await updateProfile({ nickname: state.nickname.trim() });
-        if (result.error) throw result.error;
+      const needsProfileUpdate =
+        state.nickname.trim() !== identity.nickname ||
+        state.heightCm !== identity.height_cm ||
+        state.sex !== identity.sex ||
+        state.units !== identity.units;
+      if (updateProfile && needsProfileUpdate) {
+        const result = await updateProfile({
+          nickname: state.nickname.trim(),
+          height_cm: state.heightCm,
+          sex: state.sex,
+          units: state.units,
+        });
+        if (result?.error) throw result.error;
       }
       if (!active.current) return;
       await requirePairPrompt(ownerId);
@@ -332,12 +355,19 @@ function Questionnaire({ ownerId }: { ownerId: string }) {
                 saving={false}
               />
             ) : step === 'profile' ? (
-              !identity && (
+              !identity ? (
                 <FinishOnboardingProfile
                   state={snapshot}
                   waitForDraft={() => draftWrites.current}
                   onComplete={next}
                 />
+              ) : (
+                <PlanCard>
+                  <Text variant="heading">{t('profileSetup.usernameLabel')}</Text>
+                  <Text tabular>@{identity.username}</Text>
+                  <Text variant="heading">{t('setup.place')}</Text>
+                  <Text>{identity.place || '—'}</Text>
+                </PlanCard>
               )
             ) : step === 'reveal' ? (
               <View style={styles.reveal} testID="onboarding-peak-reveal">
@@ -391,7 +421,10 @@ function Questionnaire({ ownerId }: { ownerId: string }) {
             />
           )}
         </ScrollView>
-        {((index >= 0 && index < 11) || (step === 'profile' && identity) || step === 'reveal') && (
+        {(step === 'reveal' ||
+          (step !== 'plan_summary' &&
+            step !== 'paywall' &&
+            (step !== 'profile' || Boolean(identity)))) && (
           <View style={[styles.footer, { borderTopColor: colors.hairline }]}>
             <Button
               label={t('setup.next')}
