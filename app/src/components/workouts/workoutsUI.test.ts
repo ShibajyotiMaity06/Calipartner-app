@@ -288,4 +288,58 @@ describe('Phase 6 — Workout Tracker UI Logic & Presentation Tests', () => {
       expect(Math.round((completed / exercises.length) * 100)).toBe(40);
     });
   });
+
+  describe('8. Workout Logger Table UI & Set Completion Logic', () => {
+    it('toggles set completed status while preserving weights and reps', () => {
+      const set = { setNumber: 1, weightKg: 36, reps: 15, isWarmup: false, completed: false };
+      const toggled = { ...set, completed: !set.completed };
+      expect(toggled.completed).toBe(true);
+      expect(toggled.weightKg).toBe(36);
+      expect(toggled.reps).toBe(15);
+
+      const unToggled = { ...toggled, completed: !toggled.completed };
+      expect(unToggled.completed).toBe(false);
+    });
+
+    it('formats previous performance display correctly with fallback to dash', () => {
+      const formatPrev = (prevSet?: { weight_kg?: number | null; reps?: number | null }) => {
+        if (prevSet && (prevSet.weight_kg != null || prevSet.reps != null)) {
+          return `${prevSet.weight_kg ?? 0} x ${prevSet.reps ?? 0}`;
+        }
+        return '—';
+      };
+
+      expect(formatPrev({ weight_kg: 36, reps: 15 })).toBe('36 x 15');
+      expect(formatPrev({ weight_kg: 37.5, reps: 10 })).toBe('37.5 x 10');
+      expect(formatPrev(undefined)).toBe('—');
+      expect(formatPrev({ weight_kg: null, reps: null })).toBe('—');
+    });
+
+    it('displays W badge for warmup sets and set number for working sets', () => {
+      const getSetBadgeText = (setNumber: number, isWarmup: boolean) =>
+        isWarmup ? 'W' : String(setNumber);
+      expect(getSetBadgeText(1, true)).toBe('W');
+      expect(getSetBadgeText(1, false)).toBe('1');
+      expect(getSetBadgeText(2, false)).toBe('2');
+    });
+
+    it('selects weight unit column header based on user profile units', () => {
+      const getUnitLabel = (units?: string) => (units === 'imperial' ? 'LBS' : 'KG');
+      expect(getUnitLabel('metric')).toBe('KG');
+      expect(getUnitLabel('imperial')).toBe('LBS');
+      expect(getUnitLabel(undefined)).toBe('KG');
+    });
+
+    it('allows updating exercise notes without altering sets array', () => {
+      const exercise = {
+        exerciseName: 'Unilateral Preacher Curl',
+        notes: null as string | null,
+        sets: [{ setNumber: 1, weightKg: 36, reps: 15, completed: false }],
+      };
+
+      const updated = { ...exercise, notes: 'Felt good, increase weight next time' };
+      expect(updated.notes).toBe('Felt good, increase weight next time');
+      expect(updated.sets).toEqual(exercise.sets);
+    });
+  });
 });

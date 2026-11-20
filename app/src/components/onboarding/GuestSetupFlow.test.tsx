@@ -82,7 +82,11 @@ vi.mock('./OnboardingQuestion', async () => {
 vi.mock('./FinishOnboardingProfile', () => ({ FinishOnboardingProfile: 'ProfileForm' }));
 vi.mock('./PlanReviewStep', () => ({ PlanReviewStep: 'Review' }));
 vi.mock('./GymCalculationStep', () => ({ GymCalculationStep: 'Calculation' }));
-vi.mock('./PlanPrimitives', () => ({ PlanChoice: 'GoalChoice', PlanCard: 'PlanCard', planStyles: {} }));
+vi.mock('./PlanPrimitives', () => ({
+  PlanChoice: 'GoalChoice',
+  PlanCard: 'PlanCard',
+  planStyles: {},
+}));
 vi.mock('@/components/rooms/PaywallModal', () => ({ PaywallModal: 'Paywall' }));
 
 import OnboardingScreen from '@/app/onboarding';

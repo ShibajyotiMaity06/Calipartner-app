@@ -74,14 +74,8 @@ export async function initAnalytics(options?: {
   host?: string;
   optOut?: boolean;
 }): Promise<void> {
-  const apiKey =
-    options?.apiKey ??
-    process.env.EXPO_PUBLIC_POSTHOG_API_KEY ??
-    '';
-  const host =
-    options?.host ??
-    process.env.EXPO_PUBLIC_POSTHOG_HOST ??
-    'https://us.i.posthog.com';
+  const apiKey = options?.apiKey ?? process.env.EXPO_PUBLIC_POSTHOG_API_KEY ?? '';
+  const host = options?.host ?? process.env.EXPO_PUBLIC_POSTHOG_HOST ?? 'https://us.i.posthog.com';
 
   state.optedOut = Boolean(options?.optOut);
 
@@ -158,10 +152,7 @@ export function resetAnalyticsUser(): void {
 /**
  * Track an event with automatic PII/health data sanitization.
  */
-export function trackEvent(
-  eventName: string,
-  properties?: Record<string, unknown>,
-): void {
+export function trackEvent(eventName: string, properties?: Record<string, unknown>): void {
   if (state.optedOut) return;
 
   const sanitized = sanitizeAnalyticsProperties(properties);
@@ -174,10 +165,7 @@ export function trackEvent(
 /**
  * Track entering a screen.
  */
-export function trackScreenView(
-  screenName: string,
-  properties?: Record<string, unknown>,
-): void {
+export function trackScreenView(screenName: string, properties?: Record<string, unknown>): void {
   if (state.optedOut) return;
 
   const sanitized = sanitizeAnalyticsProperties(properties);
@@ -199,10 +187,7 @@ export function recordScreenTransition(
 ): { previousScreen: string | null; dwellSeconds: number } {
   const now = Date.now();
   const previousScreen = state.activeScreen;
-  const dwellSeconds = Math.max(
-    0,
-    Math.round((now - state.screenEnteredAt) / 1000),
-  );
+  const dwellSeconds = Math.max(0, Math.round((now - state.screenEnteredAt) / 1000));
 
   // If leaving an existing screen, track dwell time
   if (previousScreen && previousScreen !== nextScreen && dwellSeconds > 0) {
@@ -227,9 +212,7 @@ export function recordScreenTransition(
  * Used for hypothesis-driven experimentation (Mauro's methodology).
  * Returns undefined if flag is not evaluated or client is not loaded.
  */
-export function getFeatureFlag(
-  flagKey: string,
-): string | boolean | undefined {
+export function getFeatureFlag(flagKey: string): string | boolean | undefined {
   if (!state.client) return undefined;
   return state.client.getFeatureFlag(flagKey);
 }

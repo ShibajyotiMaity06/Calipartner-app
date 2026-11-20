@@ -100,3 +100,19 @@ vi.mock('posthog-react-native', () => {
     useFeatureFlag: () => undefined,
   };
 });
+
+vi.mock('expo-haptics', () => ({
+  selectionAsync: vi.fn().mockResolvedValue(undefined),
+  impactAsync: vi.fn().mockResolvedValue(undefined),
+  notificationAsync: vi.fn().mockResolvedValue(undefined),
+  ImpactFeedbackStyle: {
+    Light: 'light',
+    Medium: 'medium',
+    Heavy: 'heavy',
+  },
+  NotificationFeedbackType: {
+    Success: 'success',
+    Warning: 'warning',
+    Error: 'error',
+  },
+}));
