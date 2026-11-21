@@ -1,5 +1,6 @@
 import React, { useRef, useState } from 'react';
 import { Platform } from 'react-native';
+import { isAtLeast18 } from '@calipartner/core';
 import { Button, Text, useTheme } from '@calipartner/ui';
 import { t } from '@/i18n';
 import { useAuth } from '@/contexts/AuthContext';
@@ -52,29 +53,44 @@ export function FinishOnboardingProfile({
     try {
       await waitForDraft();
       if (!(await checkAvailability(username))) return;
+      const safeHeight =
+        state.heightCm &&
+        Number.isFinite(state.heightCm) &&
+        state.heightCm >= 50 &&
+        state.heightCm <= 300
+          ? state.heightCm
+          : 175;
+      const now = new Date();
+      const defaultDob = `${now.getFullYear() - 25}-01-01`;
+      const safeDob =
+        state.dateOfBirth && isAtLeast18(state.dateOfBirth) ? state.dateOfBirth : defaultDob;
       const result = await createProfile({
         username: username.trim(),
-        nickname: state.nickname.trim(),
-        date_of_birth: state.dateOfBirth,
-        sex: state.sex,
-        height_cm: state.heightCm,
-        units: state.units,
+        nickname: state.nickname?.trim() || username.trim(),
+        date_of_birth: safeDob,
+        sex: state.sex ?? 'female',
+        height_cm: safeHeight,
+        units: state.units ?? 'metric',
         place: place.trim(),
         timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC',
       });
       if (result.error) {
-        if (result.error.message.includes('profiles_username_key')) {
+        if (
+          result.error.message.includes('profiles_username_key') ||
+          result.error.message.toLowerCase().includes('username')
+        ) {
           setStatus('taken');
           return;
         }
-        throw result.error;
+        setError(result.error.message);
+        return;
       }
       if (Platform.OS === 'web') {
         void fetchWebCatalog({ force: true }).catch(() => {});
       }
       onComplete();
-    } catch {
-      setError(t('common.errorBody'));
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : t('common.errorBody'));
     } finally {
       busy.current = false;
       setSaving(false);

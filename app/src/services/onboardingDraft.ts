@@ -13,8 +13,10 @@ export function resumeOnboardingDraft(
     goal,
     goalSelected: draft?.goalSelected === true && draft.goal !== 'maintain',
     currentStep: 'goal',
-    heightCm: draft?.heightCm ?? 0,
-    weightKg: draft?.weightKg ?? 0,
+    heightCm:
+      draft?.heightCm && draft.heightCm >= 50 && draft.heightCm <= 300 ? draft.heightCm : 175,
+    weightKg:
+      draft?.weightKg && draft.weightKg >= 20 && draft.weightKg <= 500 ? draft.weightKg : 70,
     nickname: draft?.nickname || profile?.nickname || '',
     sex: profile?.sex ?? draft?.sex ?? 'male',
     dateOfBirth:

@@ -24,7 +24,7 @@ type Tab = 'discover' | 'requests' | 'friends';
 
 export function CommunityPanel({
   friends,
-  _embedded = false,
+  embedded: _embedded = false,
   onEdit,
   onBack,
   onNotifications,
