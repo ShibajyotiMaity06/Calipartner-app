@@ -1,5 +1,5 @@
 import { useTheme as useAppearance } from '../theme/useTheme';
-import { themeDock } from '../tokens/colors';
+import { themeDock, themeDockBorder } from '../tokens/colors';
 import React, { useEffect, useState } from 'react';
 import {
   View,
@@ -128,7 +128,7 @@ export function TabBar({
 
   if (!visible) return null;
 
-  const isGlass = !reduceTransparency && Platform.OS !== 'android';
+  const isGlass = !reduceTransparency;
 
   const handleTabPress = (tab: TabId) => {
     if (tab === activeTab && onActiveTabPress) {
@@ -196,7 +196,13 @@ export function TabBar({
         { bottom: dynamicBottom },
         { height: getTabBarHeight(fontScale) },
         isGlass
-          ? [styles.glassSurface, { backgroundColor: themeDock[scheme] }]
+          ? [
+              styles.glassSurface,
+              {
+                backgroundColor: themeDock[scheme],
+                borderColor: themeDockBorder[scheme],
+              },
+            ]
           : styles.opaqueSurface,
         style,
       ]}

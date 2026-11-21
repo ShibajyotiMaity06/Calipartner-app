@@ -1,5 +1,5 @@
 import { useTheme as useAppearance } from '../theme/useTheme';
-import { themeDock } from '../tokens/colors';
+import { themeDock, themeDockBorder } from '../tokens/colors';
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import {
   Modal,
@@ -134,7 +134,14 @@ export function Sheet({
           style={[
             styles.sheetSurface,
             isGlassActive
-              ? [styles.glassSurface, { backgroundColor: themeDock[scheme] }]
+              ? [
+                  styles.glassSurface,
+                  {
+                    backgroundColor: themeDock[scheme],
+                    borderColor: themeDockBorder[scheme],
+                    borderTopColor: themeDockBorder[scheme],
+                  },
+                ]
               : styles.opaqueSurface,
             getHeightStyle(),
             style,
