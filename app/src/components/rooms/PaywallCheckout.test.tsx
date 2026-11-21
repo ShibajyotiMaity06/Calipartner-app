@@ -365,23 +365,37 @@ it.each(['close', 'back', 'swipe'])(
         header.props.onTouchEnd({ nativeEvent: { pageX: 10, pageY: 100 } });
       }
     });
+    // Exit discount modal is presented on first dismissal; declining it closes the paywall
+    const decline = root.findAllByProps({ testID: 'btn-decline-discount' });
+    if (decline.length > 0 && decline[0]) {
+      await act(async () => decline[0]!.props.onPress());
+    }
     expect(close).toHaveBeenCalledOnce();
     expect(billing.create).not.toHaveBeenCalled();
   },
 );
 
-it('offers the three-month term alongside the annual and six-month terms', async () => {
-  await render();
+it('offers the three-month term exclusively in the exit discount modal on close rather than the main toggle', async () => {
+  const close = vi.fn();
+  await act(async () => {
+    renderer = create(<PaywallModal visible onClose={close} />);
+  });
   const root = renderer!.root;
   expect(
     root.findByProps({ testID: 'toggle-duration-annual' }).props.accessibilityState.selected,
   ).toBe(true);
   expect(root.findByProps({ testID: 'toggle-duration-semiannual' })).toBeDefined();
   expect(root.findAllByProps({ testID: 'toggle-duration-monthly' })).toHaveLength(0);
-  await act(async () => root.findByProps({ testID: 'toggle-duration-quarterly' }).props.onPress());
+  expect(root.findAllByProps({ testID: 'toggle-duration-quarterly' })).toHaveLength(0);
+
+  // Trigger close to open the 3-month discount offer modal
+  await act(async () => root.findByProps({ testID: 'btn-close-paywall' }).props.onPress());
+  expect(close).not.toHaveBeenCalled();
+  expect(JSON.stringify(renderer!.toJSON())).toContain('Special 3-Month Offer');
   expect(JSON.stringify(renderer!.toJSON())).toContain('₹899');
-  expect(billing.create).not.toHaveBeenCalled();
-  await act(async () => root.findByProps({ testID: 'btn-paywall-cta' }).props.onPress());
+
+  // Claim the 3-month discount offer
+  await act(async () => root.findByProps({ testID: 'btn-claim-discount' }).props.onPress());
   expect(billing.create).toHaveBeenCalledWith('pro', 'quarterly', 'request-id');
 });
 
@@ -421,8 +435,8 @@ it('shows current Pro benefits, inclusive tax and the free workout calendar', as
     .findAll((node) => String(node.type) === 'Text')
     .map((node) => node.children.filter((child) => typeof child === 'string').join(''))
     .join(' ');
-  expect(content).toContain('465 chats per month');
-  expect(content).toContain('248 scans per month');
+  expect(content).toContain('Personalized AI coach');
+  expect(content).toContain('Instant meal scanning');
   expect(content).toContain('Workout calendar indicators');
   expect(content).toContain('All taxes included');
   expect(content).toContain('Priority support');

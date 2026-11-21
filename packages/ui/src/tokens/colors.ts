@@ -140,14 +140,14 @@ export const wellsDark: ColorPalette = {
 };
 export const themePalettes = { light: wellsLight, dark: wellsDark, yellow };
 export const themeDock = {
-  light: 'rgba(244, 239, 230, 0.72)',
-  dark: 'rgba(21, 20, 19, 0.65)',
-  yellow: 'rgba(30, 22, 14, 0.62)',
+  light: 'rgba(255, 255, 255, 0.65)',
+  dark: 'rgba(22, 19, 16, 0.58)',
+  yellow: 'rgba(30, 22, 14, 0.55)',
 };
 export const themeDockBorder = {
-  light: 'rgba(154, 139, 120, 0.40)',
-  dark: 'rgba(247, 240, 231, 0.24)',
-  yellow: 'rgba(244, 182, 125, 0.32)',
+  light: 'rgba(255, 255, 255, 0.60)',
+  dark: 'rgba(255, 255, 255, 0.28)',
+  yellow: 'rgba(255, 200, 150, 0.35)',
 };
 export const lightNutritionColors = {
   calories: '#923D60',

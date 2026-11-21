@@ -7,7 +7,6 @@ import type { AvatarTint } from '@/services/avatarService';
 import { t } from '@/i18n';
 import { avatarAssets } from './assets.generated';
 import { thumbnailBounds } from './thumbnailBounds.generated';
-import { useAvatar } from '@/hooks/useAvatar';
 
 interface Props {
   profile: Pick<AvatarProfile, 'gender' | 'form' | 'slots' | 'tints' | 'skin_tone_id'> &
@@ -38,14 +37,8 @@ export const AvatarView = memo(function AvatarView({
   item,
 }: Props) {
   const id = useId().replaceAll(':', '');
-  const { customBase } = useAvatar();
-  const custom =
-    !item &&
-    !preview &&
-    customBase?.owner === profile.user_id &&
-    customBase?.gender === profile.gender
-      ? customBase
-      : undefined;
+  // Custom photo avatars moved to Pro Coming Soon; render curated default character avatar
+  const custom = undefined;
   const form = custom ? 1 : profile.form;
   const suffix = preview ? '_preview' : '';
   const layers = avatarLayers({ ...profile, form }, products).filter(
@@ -111,10 +104,7 @@ export const AvatarView = memo(function AvatarView({
           )}
         </Defs>
         {images.map((layer, index) => {
-          const asset =
-            layer.key === 'custom-base' && custom
-              ? { uri: custom.custom_base_url }
-              : (avatarAssets[layer.key + suffix] ?? avatarAssets[layer.key]);
+          const asset = avatarAssets[layer.key + suffix] ?? avatarAssets[layer.key];
           return asset ? (
             <SvgImage
               key={`${index}-${layer.key}`}

@@ -96,6 +96,12 @@ const COMPARISON_ROWS = [
   ),
 ];
 
+const DEFAULT_FALLBACK_PRODUCTS: DodoCatalogProduct[] = [
+  { key: 'pro_annual', currency: 'INR', amount: 2499, trialDays: 0 },
+  { key: 'pro_semiannual', currency: 'INR', amount: 1599, trialDays: 0 },
+  { key: 'pro_quarterly', currency: 'INR', amount: 899, trialDays: 0 },
+];
+
 export function PaywallModal({
   onContinueFree,
   preloadPrices = false,
@@ -150,9 +156,11 @@ export function PaywallModal({
   const [statusMessage, setStatusMessage] = useState<string | null>(
     checkoutCancelled ? t('fixes.storeCancelled') : null,
   );
-  const [catalog, setCatalog] = useState<DodoCatalogProduct[]>(preparedCatalog?.products ?? []);
+  const [catalog, setCatalog] = useState<DodoCatalogProduct[]>(
+    preparedCatalog?.products?.length ? preparedCatalog.products : DEFAULT_FALLBACK_PRODUCTS,
+  );
   const [webProvider, setWebProvider] = useState<WebPaymentProvider>(
-    preparedCatalog?.provider ?? 'dodo',
+    preparedCatalog?.provider ?? 'razorpay',
   );
   const [requiresWebManagement, setRequiresWebManagement] = useState(
     Boolean(preparedCatalog?.managementRequired),
@@ -161,7 +169,7 @@ export function PaywallModal({
     null,
   );
   const [confirmCancellation, setConfirmCancellation] = useState(false);
-  const [catalogLoading, setCatalogLoading] = useState(Platform.OS === 'web' && !preparedCatalog);
+  const [catalogLoading, setCatalogLoading] = useState(false);
   const [catalogError, setCatalogError] = useState<string | null>(null);
   const cardlessActive = isCardlessPlusTrial(entitlement);
   const loadCatalog = useCallback(async () => {
@@ -193,6 +201,8 @@ export function PaywallModal({
   }, [visible, preloadPrices, loadCatalog]);
 
   // Sub-modal states
+  const [showDiscountModal, setShowDiscountModal] = useState(false);
+  const [discountDismissed, setDiscountDismissed] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [showRestoreModal, setShowRestoreModal] = useState(false);
   const [restoreSuccess, setRestoreSuccess] = useState(false);
@@ -287,15 +297,22 @@ export function PaywallModal({
   const mainDuration = selectedDuration === 'monthly' ? 'annual' : selectedDuration;
   const managing = (hasActiveAccess && !cardlessActive) || requiresWebManagement;
   const requestClose = () => {
-    if (!completionPending && !actionInFlight.current) onClose();
+    if (completionPending || actionInFlight.current) return;
+    if (!hasActiveAccess && !discountDismissed && !completed.current) {
+      setShowDiscountModal(true);
+      return;
+    }
+    onClose();
   };
   useBrowserModalBack(visible, requestClose, {
     depth: 1,
     onDepthChange: requestClose,
   });
 
-  const handlePurchase = async () => {
+  const handlePurchase = async (durationOverride?: RoomPeriod) => {
     if (completionPending || actionInFlight.current) return;
+    const duration = durationOverride ?? selectedDuration;
+    if (durationOverride) setSelectedDuration(durationOverride);
     actionInFlight.current = true;
     playClickSound();
     setActionLoading(true);
@@ -307,7 +324,7 @@ export function PaywallModal({
         const active = hasPlan(latest);
         const matches =
           latest?.tier === selectedTier &&
-          latest?.period === selectedDuration &&
+          latest?.period === duration &&
           (Platform.OS !== 'web' || latest?.source === (checkoutReturn ? 'dodo' : webProvider));
         if (!active || !matches) {
           setStatusMessage(t('fixes.paymentPending'));
@@ -363,11 +380,10 @@ export function PaywallModal({
           return;
         }
         const tier = 'pro';
-        if (selectedDuration === 'monthly' || !quote(tier, selectedDuration)) {
+        if (duration === 'monthly' || !quote(tier, duration)) {
           setStatusMessage(t('fixes.priceUnavailable'));
           return;
         }
-        const duration = selectedDuration;
         const key = `${tier}_${duration}`;
         if (webRequest.current?.key !== key) webRequest.current = { key, id: generateClientUuid() };
         const result = await startWebCheckout(webProvider, tier, duration, webRequest.current.id);
@@ -381,9 +397,13 @@ export function PaywallModal({
         return;
       }
 
-      if (matchedPackage && selectedDuration !== 'monthly' && quote('pro', selectedDuration)) {
+      const targetPackage =
+        duration === selectedDuration
+          ? matchedPackage
+          : findSubscriptionPackage(offerings, 'pro', duration);
+      if (targetPackage && duration !== 'monthly' && quote('pro', duration)) {
         const success = await purchase(
-          matchedPackage,
+          targetPackage,
           Boolean(isUpgrade),
           entitlement?.store_product_id ?? undefined,
         );
@@ -724,7 +744,7 @@ export function PaywallModal({
             <Button
               variant="primary"
               label={primaryCtaLabel}
-              onPress={handlePurchase}
+              onPress={() => void handlePurchase()}
               disabled={
                 completionPending ||
                 actionLoading ||
@@ -919,6 +939,69 @@ export function PaywallModal({
                     setPromoMessage(null);
                   }}
                   testID="btn-cancel-promo"
+                />
+              </Card>
+            </View>
+          </Modal>
+
+          {/* Exit-Intent Discount Modal: 3 Months Pro Offer */}
+          <Modal
+            visible={showDiscountModal}
+            transparent
+            animationType={reduceMotion ? 'none' : 'fade'}
+            onRequestClose={() => {
+              setShowDiscountModal(false);
+              setDiscountDismissed(true);
+              onClose();
+            }}
+          >
+            <View style={styles.modalBackdrop}>
+              <Card elevation="s2" style={styles.discountModalCard} testID="modal-discount-offer">
+                <View style={styles.discountBadge}>
+                  <Text variant="micro" color={dark.onBrand} style={styles.discountBadgeText}>
+                    {t('discountOffer.badge')}
+                  </Text>
+                </View>
+                <Text variant="heading" color={dark.textHi} style={styles.discountTitle}>
+                  {t('discountOffer.title')}
+                </Text>
+                <Text variant="bodyS" color={dark.textMid} style={styles.discountSubtitle}>
+                  {t('discountOffer.subtitle')}
+                </Text>
+
+                <View style={styles.discountPriceBox}>
+                  <Text variant="title1" color={dark.apricot} tabular>
+                    {quote('pro', 'quarterly')?.total ?? '₹899'}
+                  </Text>
+                  <Text variant="label" color={dark.textMid}>
+                    {t('discountOffer.monthlyHint', {
+                      amount: quote('pro', 'quarterly')?.equivalent ?? '₹299 / mo',
+                    })}
+                  </Text>
+                </View>
+
+                <Button
+                  variant="primary"
+                  label={t('discountOffer.claim', {
+                    price: quote('pro', 'quarterly')?.total ?? '₹899',
+                  })}
+                  onPress={() => {
+                    setShowDiscountModal(false);
+                    setDiscountDismissed(true);
+                    void handlePurchase('quarterly');
+                  }}
+                  testID="btn-claim-discount"
+                  style={styles.discountCtaBtn}
+                />
+                <Button
+                  variant="cancel"
+                  label={t('discountOffer.decline')}
+                  onPress={() => {
+                    setShowDiscountModal(false);
+                    setDiscountDismissed(true);
+                    onClose();
+                  }}
+                  testID="btn-decline-discount"
                 />
               </Card>
             </View>
@@ -1370,5 +1453,38 @@ const createStyles = (dark: ReturnType<typeof useAppearance>['colors']) =>
     applyBtn: {
       width: '100%',
       marginBottom: space[2],
+    },
+    discountModalCard: {
+      width: '100%',
+      maxWidth: 380,
+      padding: space[5],
+      alignItems: 'center',
+      gap: space[3],
+    },
+    discountBadge: {
+      paddingHorizontal: space[3],
+      paddingVertical: space[1],
+      borderRadius: radius.full,
+      backgroundColor: dark.apricot,
+    },
+    discountBadgeText: {
+      letterSpacing: 1.5,
+      fontWeight: '700',
+    },
+    discountTitle: {
+      textAlign: 'center',
+      fontWeight: '700',
+    },
+    discountSubtitle: {
+      textAlign: 'center',
+      lineHeight: 20,
+    },
+    discountPriceBox: {
+      alignItems: 'center',
+      paddingVertical: space[2],
+      gap: space[1],
+    },
+    discountCtaBtn: {
+      width: '100%',
     },
   });

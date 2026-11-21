@@ -201,6 +201,8 @@ export function TabBar({
               {
                 backgroundColor: themeDock[scheme],
                 borderColor: themeDockBorder[scheme],
+                borderTopColor:
+                  scheme === 'light' ? 'rgba(255, 255, 255, 0.85)' : 'rgba(255, 255, 255, 0.38)',
               },
             ]
           : styles.opaqueSurface,
@@ -208,6 +210,7 @@ export function TabBar({
       ]}
       accessibilityRole="tablist"
     >
+      {isGlass && <View pointerEvents="none" style={styles.glassHighlight} />}
       {/* 1. Home */}
       {renderNormalTab('today', labels?.today ?? 'Home', HomeIcon, 'tab-today')}
 
@@ -251,18 +254,31 @@ const createStyles = (dark: ReturnType<typeof useAppearance>['colors']) =>
     },
     glassSurface: {
       borderColor: dark.hairlineLit,
-      backgroundColor: Platform.OS === 'web' ? 'rgba(36, 30, 24, 0.86)' : dark.s2,
+      borderTopColor: 'rgba(255, 255, 255, 0.38)',
+      borderBottomColor: 'rgba(0, 0, 0, 0.45)',
+      backgroundColor: Platform.OS === 'web' ? 'rgba(22, 19, 16, 0.58)' : 'rgba(26, 21, 17, 0.65)',
       shadowColor: '#000000',
-      shadowOffset: { width: 0, height: 8 },
-      shadowOpacity: 0.35,
-      shadowRadius: 18,
-      elevation: 10,
+      shadowOffset: { width: 0, height: 10 },
+      shadowOpacity: 0.42,
+      shadowRadius: 22,
+      elevation: 12,
+      overflow: 'hidden',
       ...(Platform.OS === 'web'
         ? ({
-            backdropFilter: 'blur(24px)',
-            WebkitBackdropFilter: 'blur(24px)',
+            backdropFilter: 'blur(32px) saturate(200%) brightness(1.1)',
+            WebkitBackdropFilter: 'blur(32px) saturate(200%) brightness(1.1)',
           } as unknown as ViewStyle)
         : {}),
+    },
+    glassHighlight: {
+      position: 'absolute',
+      top: 1,
+      left: space[4],
+      right: space[4],
+      height: 1,
+      backgroundColor: 'rgba(255, 255, 255, 0.25)',
+      borderRadius: radius.full,
+      zIndex: 1,
     },
     tabSlot: {
       flex: 1,

@@ -541,7 +541,7 @@ export const PAYWALL_TRIGGER_METADATA: Record<
   },
   open_ai_coach: {
     title: 'CaliPartner AI Coach',
-    subtitle: 'Personalized guidance with 465 chats per month on Pro.',
+    subtitle: 'Personalized guidance with your AI coach on Pro.',
     suggestedTier: 'pro',
     allowsTrial: true,
   },
@@ -553,7 +553,7 @@ export const PAYWALL_TRIGGER_METADATA: Record<
   },
   ai_photo_scan: {
     title: 'AI Food Photo Logging',
-    subtitle: 'Instant meal detection with 248 scans per month on Pro.',
+    subtitle: 'Instant meal detection and logging on Pro.',
     suggestedTier: 'pro',
     allowsTrial: true,
   },

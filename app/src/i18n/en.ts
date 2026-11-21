@@ -23,17 +23,27 @@ import { feed } from './feed';
 export const en = {
   feed,
   avatarAi: {
-    create: 'Create my AI avatar',
-    title: 'Create your AI avatar',
+    create: 'Bring your photo (Pro · Coming soon)',
+    title: 'AI Avatar (Coming Soon)',
     instructions:
-      'Choose a clear, front-facing full-body photo. Keep your head, hands and feet in the frame.',
-    privacy:
-      'By choosing a photo, you agree to create your avatar. CaliPartner stores the generated avatar in your private account.',
+      'Turn your full-body photo into a personalized 2D avatar. This feature is in active development and coming soon for CaliPartner Pro members.',
+    privacy: 'CaliPartner stores your avatar securely in your private account.',
     choose: 'Choose a full-body photo',
     fullBody: 'Choose another photo with your whole body visible from head to feet.',
     error: 'Your avatar could not be created. Try again.',
     generating: 'Creating your avatar',
     retry: 'Retry avatar generation',
+    comingSoonBadge: 'PRO • COMING SOON',
+    gotIt: 'Got it',
+  },
+  discountOffer: {
+    badge: 'SPECIAL OFFER',
+    title: 'Wait! Special 3-Month Offer',
+    subtitle:
+      'Not ready for a full year? Try CaliPartner Pro for 3 months with all premium features included.',
+    claim: 'Get 3 Months for {price}',
+    decline: 'No thanks, continue without Pro',
+    monthlyHint: '{amount} / mo',
   },
   photoJourney: {
     title: 'Progress photo journey',
@@ -53,8 +63,8 @@ export const en = {
     pro: 'Pro',
     tax: 'All taxes included. No extra surcharges at checkout.',
     rooms: 'Create and host rooms with your squads and friends — unlimited members',
-    coach: 'AI coach with 465 chats per month',
-    scans: 'Instant meal scanning with 248 scans per month',
+    coach: 'Personalized AI coach and daily guidance',
+    scans: 'Instant meal scanning and nutrition detection',
     finder: 'Partner Finder and friend connections',
     avatar: 'Create your own AI avatar from a full-body photo',
     photos: 'Weekly and monthly progress photo journey',

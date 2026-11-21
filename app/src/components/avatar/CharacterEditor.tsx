@@ -333,7 +333,7 @@ export function CharacterEditor({ creating = false }: { creating?: boolean }) {
                   variant="secondary"
                   label={t('avatarAi.create')}
                   disabled={state.profile.gender !== draft.gender}
-                  onPress={() => (hasPaidPro ? setAiAvatarOpen(true) : openUpgrade())}
+                  onPress={() => setAiAvatarOpen(true)}
                   testID="create-ai-avatar"
                 />
               )}
@@ -578,16 +578,7 @@ export function CharacterEditor({ creating = false }: { creating?: boolean }) {
           onClose={() => setQuote(null)}
         />
       ) : null}
-      {aiAvatarOpen && hasPaidPro && (
-        <CreateAiAvatarModal
-          onClose={() => setAiAvatarOpen(false)}
-          onCreated={(avatar) => {
-            acknowledgeCustomBase?.(avatar);
-            setAiAvatarOpen(false);
-          }}
-          onUpgrade={openUpgrade}
-        />
-      )}
+      {aiAvatarOpen && <CreateAiAvatarModal onClose={() => setAiAvatarOpen(false)} />}
       {upgradeOpen && <PaywallModal visible onClose={() => setUpgradeOpen(false)} />}
       <Modal
         visible={!!pendingLeave}
