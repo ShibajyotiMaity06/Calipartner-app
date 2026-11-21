@@ -103,7 +103,8 @@ export function calculateGymTargets(input: GymTargetsInput): GymTargetsResult {
       rateLbPerWeek: Number((rate * 2.2046226218).toFixed(2)),
       dailyChangeKcal: change,
       targetKcal: kcal,
-      available: rawKcal > 0 && rawKcal >= proteinKcal + fatKcal,
+      available:
+        rawKcal > 0 && rawKcal >= proteinKcal + fatKcal && (goal !== 'cut' || rawKcal >= floor),
       reason,
       advisories: [],
       macros: null,

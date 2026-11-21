@@ -378,6 +378,14 @@ export class OnboardingStateMachine {
       if (nextStep) {
         this.state.currentStep = nextStep;
         this.recalculateTargets();
+        if (nextStep === 'rate_selection' && this.state.calculatedTargets) {
+          const isAvailable = this.state.calculatedTargets.presetRates.some(
+            (r) => r.rateKgPerWeek === this.state.weeklyRateKg && r.available,
+          );
+          if (!isAvailable && this.state.calculatedTargets.recommendedRateKg > 0) {
+            this.useRecommendedRate();
+          }
+        }
         return true;
       }
     }
@@ -417,6 +425,14 @@ export class OnboardingStateMachine {
     this.state.currentStep = step;
     this.state.errors = {};
     this.recalculateTargets();
+    if (step === 'rate_selection' && this.state.calculatedTargets) {
+      const isAvailable = this.state.calculatedTargets.presetRates.some(
+        (r) => r.rateKgPerWeek === this.state.weeklyRateKg && r.available,
+      );
+      if (!isAvailable && this.state.calculatedTargets.recommendedRateKg > 0) {
+        this.useRecommendedRate();
+      }
+    }
     return true;
   }
 

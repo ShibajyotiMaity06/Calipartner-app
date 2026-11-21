@@ -132,6 +132,29 @@ describe('Onboarding redesign state machine', () => {
     machine.useRecommendedRate();
     expect(machine.validateStep('rate_selection').isValid).toBe(true);
   });
+
+  it('automatically heals an unavailable pace to the safe recommended pace on navigating to rate_selection', () => {
+    // 70kg female cut with 0 gym days where 0.5kg/week exceeds macro allocation (recommended is 0.43kg/week)
+    const machine = new OnboardingStateMachine({
+      nickname: 'Pushpa',
+      sex: 'female',
+      dateOfBirth: '2001-01-01',
+      heightCm: 165,
+      weightKg: 70,
+      gymDays: 0,
+      activityLevel: 'sedentary',
+    })
+      .setCharacterGender('female', true)
+      .setGoal('cut');
+
+    // Default rate is 0.5, which is unavailable for this target
+    expect(machine.getState().weeklyRateKg).toBe(0.5);
+    // When navigating to rate_selection, it auto-heals to recommended
+    machine.goToStep('rate_selection');
+    expect(machine.getState().weeklyRateKg).toBe(0.43);
+    expect(machine.validateStep('rate_selection').isValid).toBe(true);
+    expect(machine.getState().errors.rate).toBeUndefined();
+  });
 });
 
 describe('daily water and step goals', () => {

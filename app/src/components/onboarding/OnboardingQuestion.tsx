@@ -12,10 +12,7 @@ import {
 } from '@/services/onboardingStateMachine';
 import { ActivityStep } from './ActivityStep';
 import { GoalStep } from './GoalStep';
-import { HeightField } from './HeightField';
-import { InteractiveDobPicker } from './InteractiveDobPicker';
 import { StatsPicker } from './StatsPicker';
-import { PlanSafetyNotice } from './PlanReviewStep';
 import { NumberField, PlanChoice, PlanTextField, planStyles } from './PlanPrimitives';
 
 type Copy = { title: TranslationKey; subtitle?: TranslationKey };
@@ -87,6 +84,17 @@ export function OnboardingQuestion({
       );
     }
   }, [step, state.dateOfBirth, identityConfirmed]);
+
+  useEffect(() => {
+    if (step === 'rate_selection' && state.calculatedTargets) {
+      const isAvailable = state.calculatedTargets.presetRates.some(
+        (r) => r.rateKgPerWeek === state.weeklyRateKg && r.available,
+      );
+      if (!isAvailable && state.calculatedTargets.recommendedRateKg > 0) {
+        change((draft) => draft.useRecommendedRate());
+      }
+    }
+  }, [step, state.calculatedTargets, state.weeklyRateKg]);
   let input: React.ReactNode;
   switch (step) {
     case 'goal':
@@ -361,40 +369,47 @@ export function OnboardingQuestion({
       );
       break;
     }
-    case 'rate_selection':
+    case 'rate_selection': {
+      const targets = state.calculatedTargets;
+      const recommended = targets?.recommendedRateKg;
       input = (
         <>
           <View accessibilityRole="radiogroup" style={planStyles.gap}>
-            {state.calculatedTargets?.presetRates.map((rate) => {
-              const description = t('setup.kcalDay', { kcal: rate.targetKcal.toLocaleString() });
-              const note =
-                rate.rateKgPerWeek === state.calculatedTargets?.recommendedRateKg
-                  ? t('setup.recommended')
-                  : null;
+            {targets?.presetRates.map((rate) => {
+              const kcalDesc = t('setup.kcalDay', { kcal: rate.targetKcal.toLocaleString() });
+              const isRecommended = rate.rateKgPerWeek === recommended;
+              const isAvailable = rate.available;
+              const reasonText = !isAvailable
+                ? rate.reason === 'below_calorie_floor'
+                  ? t('setup.floorReason', { floor: targets.safety.calorieFloor })
+                  : rate.reason === 'macro_allocation'
+                    ? t('setup.macroReason')
+                    : t('setup.capReason')
+                : null;
+              const description = reasonText
+                ? `${kcalDesc} · ${reasonText}`
+                : isRecommended
+                  ? `${kcalDesc} · ${t('setup.recommended')}`
+                  : kcalDesc;
               return (
                 <PlanChoice
                   key={rate.rateKgPerWeek}
                   icon="speedometer-outline"
                   testID={`rate-card-${rate.rateKgPerWeek}`}
                   title={t('setup.rate', { rate: rate.rateKgPerWeek })}
-                  description={note ? `${description} · ${note}` : description}
+                  description={description}
                   selected={state.weeklyRateKg === rate.rateKgPerWeek}
-                  onPress={() => change((draft) => draft.setWeeklyRate(rate.rateKgPerWeek))}
+                  disabled={!isAvailable}
+                  onPress={() => {
+                    if (isAvailable) {
+                      change((draft) => draft.setWeeklyRate(rate.rateKgPerWeek));
+                    }
+                  }}
                 />
               );
             })}
           </View>
-          <NumberField
-            label={t('fixes.customPace')}
-            value={state.weeklyRateKg}
-            onChange={(value) => change((draft) => draft.setWeeklyRate(value ?? NaN))}
-            testID="input-custom-pace"
-          />
-          <Text variant="bodyS">
-            {t('characterSetup.paceLimit', { max: MAX_ONBOARDING_WEEKLY_RATE_KG })}
-          </Text>
-          <PlanSafetyNotice result={state.calculatedTargets} />
-          {state.calculatedTargets?.safety.isBmiTooLowForCut && (
+          {targets?.safety.isBmiTooLowForCut && (
             <Button
               variant="tertiary"
               label={t('setup.changeGoal')}
@@ -405,6 +420,7 @@ export function OnboardingQuestion({
         </>
       );
       break;
+    }
     case 'step_goal':
       input = (
         <NumberField
