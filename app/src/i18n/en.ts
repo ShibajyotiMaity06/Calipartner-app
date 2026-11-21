@@ -28,7 +28,7 @@ export const en = {
     instructions:
       'Choose a clear, front-facing full-body photo. Keep your head, hands and feet in the frame.',
     privacy:
-      'By choosing a photo, you agree to send it to Google Gemini to create your avatar. CaliPartner stores the generated avatar in your private account.',
+      'By choosing a photo, you agree to create your avatar. CaliPartner stores the generated avatar in your private account.',
     choose: 'Choose a full-body photo',
     fullBody: 'Choose another photo with your whole body visible from head to feet.',
     error: 'Your avatar could not be created. Try again.',

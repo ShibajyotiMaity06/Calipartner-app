@@ -88,9 +88,6 @@ export function CreateAiAvatarModal({
             {t('avatarAi.title')}
           </Text>
           <Text>{t('avatarAi.instructions')}</Text>
-          <Text variant="bodyS" color={colors.textMid}>
-            {t('avatarAi.privacy')}
-          </Text>
           {error && <Text accessibilityRole="alert">{t(`avatarAi.${error}`)}</Text>}
           <Button
             label={t(busy ? 'avatarAi.generating' : 'avatarAi.choose')}

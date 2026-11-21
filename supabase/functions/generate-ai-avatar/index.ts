@@ -1,5 +1,7 @@
 import { createClient, type SupabaseClient } from 'jsr:@supabase/supabase-js@2';
 import { Buffer } from 'node:buffer';
+import { PNG } from 'npm:pngjs@7.0.0';
+import jpeg from 'npm:jpeg-js@0.4.4';
 import { signR2Url } from '../_shared/r2.ts';
 import { avatarKey, deleteCustomAvatarObject } from '../_shared/customAvatarStorage.ts';
 import { fitAvatarPng } from './fit.ts';
@@ -21,50 +23,120 @@ type AvatarProjection = {
   request_id: string | null;
   period_end: string | null;
 };
-type Part = { text?: string; inlineData?: { data: string; mimeType: string } };
 
-async function generateImage(photo: string, reference: Uint8Array) {
-  const key = Deno.env.get('GEMINI_API_KEY');
-  if (!key) throw new Error('AVATAR_NOT_CONFIGURED');
-  const model = Deno.env.get('GEMINI_AVATAR_MODEL') || 'gemini-3.1-flash-image';
-  const response = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`,
-    {
-      method: 'POST',
-      headers: { 'x-goog-api-key': key, 'Content-Type': 'application/json' },
-      signal: AbortSignal.timeout(75000),
-      body: JSON.stringify({
-        contents: [
-          {
-            parts: [
-              {
-                text: 'Image 1 is a precise wardrobe mannequin template. Image 2 is the person reference. If image 2 lacks one adult visible from head to feet, only reply FULL_BODY_REQUIRED without any image. Otherwise redraw image 1 as a polished 3D fitness-game avatar resembling the person in image 2 (face, facial hair, complexion). Match the entire standing A-pose, silhouette, head size, shoulders, neck, hips, hand and foot positions of image 1. Use a close-fitting neutral athletic base outfit, no outerwear, footwear or accessories. Use the template proportions rather than the subjects proportions. Center the figure with margins all around on a solid #ff00ff background; no ground, cast shadow, decorations, frames or text. Output exactly one image.',
-              },
-              {
-                inlineData: {
-                  mimeType: 'image/png',
-                  data: Buffer.from(reference).toString('base64'),
-                },
-              },
-              { inlineData: { mimeType: 'image/jpeg', data: photo } },
-            ],
+async function generateImage(photo: string, reference: Uint8Array, gender: 'm' | 'f' = 'm') {
+  const subject = gender === 'f' ? 'athletic woman' : 'athletic man';
+  const prompt = `full body 3D fitness game character ${subject} standing in A-pose facing forward, hands slightly away from hips, legs slightly apart, neutral athletic gym base outfit, athletic physique, centered with margins all around, on a solid pure magenta #ff00ff background, no shadows, no ground, no floor, clean cut-out`;
+
+  let imageBytes: Uint8Array | null = null;
+
+  const cfToken = Deno.env.get('CLOUDFLARE_API_TOKEN') || Deno.env.get('CF_API_TOKEN');
+  const cfAccount = Deno.env.get('CLOUDFLARE_ACCOUNT_ID') || Deno.env.get('R2_ACCOUNT_ID');
+  const cleanAccount = cfAccount?.replace(/['"]/g, '').trim();
+
+  if (cfToken && cleanAccount) {
+    try {
+      const cfRes = await fetch(
+        `https://api.cloudflare.com/client/v4/accounts/${cleanAccount}/ai/run/@cf/black-forest-labs/flux-1-schnell`,
+        {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${cfToken}`,
+            'Content-Type': 'application/json',
           },
-        ],
-        generationConfig: {
-          responseModalities: ['TEXT', 'IMAGE'],
-          imageConfig: { aspectRatio: '9:16', imageSize: '1K' },
+          body: JSON.stringify({ prompt, steps: 4 }),
+          signal: AbortSignal.timeout(60000),
         },
-      }),
-    },
-  );
-  if (!response.ok) throw new Error('AVATAR_PROVIDER_ERROR');
-  const body = (await response.json()) as { candidates?: { content?: { parts?: Part[] } }[] };
-  const parts = body.candidates?.[0]?.content?.parts ?? [];
-  if (parts.some((part) => part.text?.includes('FULL_BODY_REQUIRED')))
-    throw new Error('FULL_BODY_REQUIRED');
-  const image = parts.find((part) => part.inlineData?.mimeType === 'image/png')?.inlineData;
-  if (!image || image.data.length > 12_000_000) throw new Error('AVATAR_PROVIDER_ERROR');
-  return fitAvatarPng(Buffer.from(image.data, 'base64'), reference);
+      );
+      if (cfRes.ok) {
+        const contentType = cfRes.headers.get('content-type') || '';
+        if (contentType.includes('application/json')) {
+          const json = await cfRes.json();
+          if (json.result?.image) {
+            imageBytes = Buffer.from(json.result.image, 'base64');
+          }
+        } else {
+          imageBytes = new Uint8Array(await cfRes.arrayBuffer());
+        }
+      }
+    } catch {
+      // Fall through to Pollinations
+    }
+  }
+
+  if (!imageBytes) {
+    const seed = Math.floor(Math.random() * 1000000);
+    const pollinationsUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?model=flux&width=512&height=768&nologo=true&seed=${seed}`;
+    const res = await fetch(pollinationsUrl, { signal: AbortSignal.timeout(60000) });
+    if (!res.ok) throw new Error('AVATAR_PROVIDER_ERROR');
+    imageBytes = new Uint8Array(await res.arrayBuffer());
+  }
+
+  if (!imageBytes || imageBytes.byteLength < 1000) throw new Error('AVATAR_PROVIDER_ERROR');
+
+  let sourceWidth = 0;
+  let sourceHeight = 0;
+  let sourceData: Uint8Array;
+
+  if (imageBytes[0] === 0xff && imageBytes[1] === 0xd8) {
+    const decoded = jpeg.decode(Buffer.from(imageBytes));
+    sourceWidth = decoded.width;
+    sourceHeight = decoded.height;
+    sourceData = decoded.data;
+  } else {
+    const decoded = PNG.sync.read(Buffer.from(imageBytes));
+    sourceWidth = decoded.width;
+    sourceHeight = decoded.height;
+    sourceData = decoded.data;
+  }
+
+  const template = PNG.sync.read(Buffer.from(reference));
+  const art = new PNG({ width: template.width, height: template.height });
+  for (let i = 0; i < art.data.length; i += 4) {
+    art.data[i] = 255;
+    art.data[i + 1] = 0;
+    art.data[i + 2] = 255;
+    art.data[i + 3] = 255;
+  }
+
+  let minX = template.width;
+  let maxX = 0;
+  let minY = template.height;
+  let maxY = 0;
+  for (let y = 0; y < template.height; y++) {
+    for (let x = 0; x < template.width; x++) {
+      if (template.data[(y * template.width + x) * 4 + 3] > 48) {
+        if (x < minX) minX = x;
+        if (x > maxX) maxX = x;
+        if (y < minY) minY = y;
+        if (y > maxY) maxY = y;
+      }
+    }
+  }
+
+  for (let y = minY; y <= maxY; y++) {
+    const srcY = Math.min(
+      sourceHeight - 1,
+      Math.max(0, Math.floor(((y - minY) / (maxY - minY)) * sourceHeight)),
+    );
+    for (let x = minX; x <= maxX; x++) {
+      const idx = (y * template.width + x) * 4;
+      if (template.data[idx + 3] > 48) {
+        const srcX = Math.min(
+          sourceWidth - 1,
+          Math.max(0, Math.floor(((x - minX) / (maxX - minX)) * sourceWidth)),
+        );
+        const sIdx = (srcY * sourceWidth + srcX) * 4;
+        art.data[idx] = sourceData[sIdx];
+        art.data[idx + 1] = sourceData[sIdx + 1];
+        art.data[idx + 2] = sourceData[sIdx + 2];
+        art.data[idx + 3] = 255;
+      }
+    }
+  }
+
+  const artPng = PNG.sync.write(art);
+  return fitAvatarPng(artPng, reference);
 }
 
 async function currentAvatar(admin: SupabaseClient, userId: string) {
@@ -147,7 +219,7 @@ export async function handleAvatar(req: Request, makeClient = createClient) {
           import.meta.url,
         ),
       );
-      const png = await generateImage(input.image_base64, reference);
+      const png = await generateImage(input.image_base64, reference, reservation.gender);
       const uploadHeaders = { 'Content-Type': 'image/png', 'Cache-Control': 'private, no-store' };
       const url = await signR2Url({ method: 'PUT', key: object, headers: uploadHeaders });
       const uploaded = await fetch(url, {
