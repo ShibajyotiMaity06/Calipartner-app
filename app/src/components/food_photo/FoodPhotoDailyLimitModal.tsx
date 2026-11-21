@@ -62,7 +62,7 @@ export function FoodPhotoDailyLimitModal({
         >
           {/* Top Status Icon */}
           <View style={[styles.iconWrap, { backgroundColor: colors.cardHighlight }]}>
-            <Ionicons name="information-circle-outline" size={36} color={colors.accent} />
+            <Ionicons name="scan-outline" size={36} color={colors.accent} />
           </View>
 
           <Text testID="text-limit-title" style={[styles.title, { color: colors.text }]}>
@@ -77,63 +77,28 @@ export function FoodPhotoDailyLimitModal({
             {getLimitBodyText()}
           </Text>
 
-          {/* Gentle Upsell Card for Trial / Free users */}
-          {showUpsell && (
-            <View
-              testID="card-gentle-upsell"
-              style={[
-                styles.upsellCard,
-                { backgroundColor: colors.cardHighlight, borderColor: colors.border },
-              ]}
-            >
-              <View style={styles.upsellHeader}>
-                <Ionicons
-                  name="information-circle-outline"
-                  size={18}
-                  color={colors.macroCalories}
-                />
-                <Text style={[styles.upsellHeaderTitle, { color: colors.text }]}>
-                  Room Plan Perks
-                </Text>
-              </View>
-              <Text style={[styles.upsellText, { color: colors.textMuted }]}>
-                {t('foodLog.photo.upgradeUpsell')}
-              </Text>
-            </View>
-          )}
-
           {/* Action Buttons */}
           <View style={styles.actionCol}>
             {showUpsell && onUpgrade && (
               <Button
-                variant="secondary"
-                fullWidth={false}
                 label={t('foodLog.photo.upgradeButton')}
-                icon={
-                  <Ionicons name="information-circle-outline" size={18} color={colors.onAccent} />
-                }
+                icon={<Ionicons name="sparkles" size={18} color={colors.onBrand} />}
                 testID="btn-view-room-plans"
                 accessibilityRole="button"
                 accessibilityLabel={t('foodLog.photo.upgradeButton')}
                 onPress={onUpgrade}
-                style={[styles.primaryBtn, { backgroundColor: colors.accent }]}
               />
             )}
 
             {onLogManually && (
               <Button
                 variant="secondary"
-                fullWidth={false}
                 label={t('foodLog.photo.logManuallyButton')}
                 icon={<Ionicons name="create-outline" size={18} color={colors.text} />}
                 testID="btn-limit-log-manually"
                 accessibilityRole="button"
                 accessibilityLabel={t('foodLog.photo.logManuallyButton')}
                 onPress={onLogManually}
-                style={[
-                  styles.secondaryBtn,
-                  { backgroundColor: colors.surfaceAlt, borderColor: colors.border },
-                ]}
               />
             )}
 
@@ -203,54 +168,9 @@ const styles = StyleSheet.create({
   usageText: {
     fontSize: fontSize.xs,
   },
-  upsellCard: {
-    width: '100%',
-    padding: spacing.md,
-    borderRadius: radius.md,
-    borderWidth: 1,
-    gap: 6,
-    marginBottom: spacing.lg,
-  },
-  upsellHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-  },
-  upsellHeaderTitle: {
-    fontSize: fontSize.sm,
-    fontWeight: '700',
-  },
-  upsellText: {
-    fontSize: fontSize.xs,
-    lineHeight: 18,
-  },
   actionCol: {
     width: '100%',
-    gap: spacing.sm,
-  },
-  primaryBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-    paddingVertical: 14,
-    borderRadius: radius.md,
-  },
-  primaryBtnText: {
-    fontSize: fontSize.md,
-    fontWeight: '700',
-  },
-  secondaryBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-    paddingVertical: 12,
-    borderRadius: radius.md,
-    borderWidth: 1,
-  },
-  secondaryBtnText: {
-    fontSize: fontSize.sm,
-    fontWeight: '600',
+    gap: spacing.md,
+    marginTop: spacing.sm,
   },
 });

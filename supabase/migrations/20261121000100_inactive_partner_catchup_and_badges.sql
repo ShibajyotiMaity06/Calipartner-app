@@ -41,7 +41,7 @@ as $$
     select 1 from public.workouts w
     where w.user_id = p_user_id
       and w.deleted_at is null
-      and w.logged_at >= (now() - interval '48 hours')
+      and coalesce(w.created_at, w.start_time, now()) >= (now() - interval '48 hours')
   );
 $$;
 
@@ -251,9 +251,9 @@ begin
       where fe.deleted_at is null and fe.logged_at >= (now() - interval '24 hours')
       union all
       -- Workout in last 24h
-      select w.user_id as partner_id, 'workout' as act_type, w.logged_at
+      select w.user_id as partner_id, 'workout' as act_type, coalesce(w.created_at, w.start_time, now()) as logged_at
       from public.workouts w
-      where w.deleted_at is null and w.logged_at >= (now() - interval '24 hours')
+      where w.deleted_at is null and coalesce(w.created_at, w.start_time, now()) >= (now() - interval '24 hours')
     ) sub
     join public.profiles pr on pr.id = sub.partner_id
     where (

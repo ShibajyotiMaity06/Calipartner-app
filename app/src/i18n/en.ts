@@ -65,6 +65,7 @@ export const en = {
     rooms: 'Create and host rooms with your squads and friends — unlimited members',
     coach: 'Personalized AI coach and daily guidance',
     scans: 'Instant meal scanning and nutrition detection',
+    voiceLogging: 'Voice-based logging',
     finder: 'Partner Finder and friend connections',
     avatar: 'Create your own AI avatar from a full-body photo',
     photos: 'Weekly and monthly progress photo journey',

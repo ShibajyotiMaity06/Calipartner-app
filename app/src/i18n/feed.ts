@@ -3,7 +3,7 @@ export const feed = {
   log: 'Log',
   openLog: 'Open log',
   post: 'Post',
-  newPost: 'Create a post',
+  newPost: 'Create post',
   all: 'All posts',
   shared: 'Shared with you',
   empty: 'No posts yet',

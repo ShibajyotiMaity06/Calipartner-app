@@ -1,15 +1,24 @@
 import { useCallback, useRef, useState } from 'react';
-import { Image, Linking, Pressable, ScrollView, Switch, View } from 'react-native';
+import {
+  Image,
+  Linking,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Switch,
+  TextInput,
+  View,
+} from 'react-native';
 import { useRouter, type Href } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
-import { Button, Text, useTheme } from '@calipartner/ui';
+import { Ionicons } from '@expo/vector-icons';
+import { Button, controls, radius, space, Text, useTheme } from '@calipartner/ui';
 import { useAuth } from '@/contexts/AuthContext';
 import { generateClientUuid } from '@/services/foodService';
 import { feedApi, feedMaxBytes, getFeedMediaType, type FeedAudience } from '@/services/feedService';
 import { t } from '@/i18n';
 import {
   FeedAction,
-  FeedInput,
   FeedScreen,
   FeedSignIn,
   FeedStatus,
@@ -50,7 +59,6 @@ function Composer() {
     null,
   );
   const [caption, setCaption] = useState('');
-  const [description, setDescription] = useState('');
   const [audience, setAudience] = useState<FeedAudience>('friends');
   const [shareProgress, setShareProgress] = useState(false);
   const [accept, setAccept] = useState(false);
@@ -58,10 +66,29 @@ function Composer() {
   const saving = useRef(false);
   const draft = useRef<string | null>(null);
   const [message, setMessage] = useState('');
+
   const reset = () => {
     draft.current = null;
     setMessage('');
   };
+
+  const handleSelectedAsset = (selected: ImagePicker.ImagePickerAsset) => {
+    const mediaType = getFeedMediaType(
+      selected.mimeType || selected.file?.type,
+      selected.fileName || selected.file?.name || selected.uri.split('?')[0],
+    );
+    if (!mediaType) {
+      setMessage(t('feed.unsupported'));
+      return;
+    }
+    if ((selected.fileSize ?? selected.file?.size ?? 0) > feedMaxBytes) {
+      setMessage(t('feed.tooLarge'));
+      return;
+    }
+    reset();
+    setAsset({ ...selected, mediaType });
+  };
+
   const choose = async () => {
     if (saving.current) return;
     setMessage('');
@@ -73,23 +100,36 @@ function Composer() {
         preferredAssetRepresentationMode:
           ImagePicker.UIImagePickerPreferredAssetRepresentationMode.Compatible,
       });
-      if (result.canceled) return;
-      const selected = result.assets[0];
-      if (!selected) return;
-      const mediaType = getFeedMediaType(
-        selected.mimeType || selected.file?.type,
-        selected.fileName || selected.file?.name || selected.uri.split('?')[0],
-      );
-      if (!mediaType) return setMessage(t('feed.unsupported'));
-      if ((selected.fileSize ?? selected.file?.size ?? 0) > feedMaxBytes)
-        return setMessage(t('feed.tooLarge'));
-      reset();
-      setAsset({ ...selected, mediaType });
-    } catch (error) {
-      setMessage(feedErrorMessage(error));
+      if (result.canceled || !result.assets[0]) return;
+      handleSelectedAsset(result.assets[0]);
+    } catch (err) {
+      setMessage(feedErrorMessage(err));
     }
   };
-  const mayPublish = !!(asset && description.trim() && (preferences?.accepted || accept));
+
+  const takePhoto = async () => {
+    if (saving.current) return;
+    setMessage('');
+    try {
+      const permission = await ImagePicker.requestCameraPermissionsAsync();
+      if (!permission.granted) {
+        setMessage('Camera permission is required to capture photos or videos.');
+        return;
+      }
+      const result = await ImagePicker.launchCameraAsync({
+        mediaTypes: ['images', 'videos'],
+        quality: 0.85,
+        videoExportPreset: ImagePicker.VideoExportPreset.MediumQuality,
+      });
+      if (result.canceled || !result.assets[0]) return;
+      handleSelectedAsset(result.assets[0]);
+    } catch (err) {
+      setMessage(feedErrorMessage(err));
+    }
+  };
+
+  const mayPublish = !!(asset && (preferences?.accepted || accept));
+
   const publish = useCallback(async () => {
     if (!asset || !mayPublish || saving.current) return;
     saving.current = true;
@@ -99,91 +139,180 @@ function Composer() {
       if (!preferences?.accepted && !(await feedApi.accept())) throw new Error('FEED_UNCONFIRMED');
       const retrying = draft.current !== null;
       const id = draft.current ?? (draft.current = generateClientUuid());
+      const effectiveDescription = (caption.trim() || 'Photo or video post').slice(0, 240);
       const result = await feedApi.publish({
         id,
         uri: asset.uri,
         file: asset.file,
         mediaType: asset.mediaType,
         caption: caption.trim(),
-        description: description.trim(),
+        description: effectiveDescription,
         audience,
         shareProgress,
         retrying,
       });
       router.dismissTo(('/feed/post/' + result.id) as Href);
-    } catch (error) {
-      setMessage(feedErrorMessage(error));
+    } catch (err) {
+      setMessage(feedErrorMessage(err));
     } finally {
       saving.current = false;
       setBusy(false);
     }
-  }, [
-    asset,
-    audience,
-    caption,
-    description,
-    mayPublish,
-    preferences?.accepted,
-    router,
-    shareProgress,
-  ]);
+  }, [asset, audience, caption, mayPublish, preferences?.accepted, router, shareProgress]);
 
   if (!preferences && (loading || error))
     return <FeedStatus loading={loading} error={error} retry={reload} />;
   if (!preferences) return <FeedSignIn setup onSignIn={() => router.push('/onboarding')} />;
+
   return (
     <ScrollView contentContainerStyle={styles.page} keyboardShouldPersistTaps="handled">
-      {asset &&
-        (asset.mediaType.startsWith('image/') ? (
-          <Image
-            source={{ uri: asset.uri }}
-            style={styles.media}
-            resizeMode="contain"
-            accessibilityLabel={description || t('feed.description')}
-            accessible
-          />
+      {/* Dashed Media Box */}
+      <View
+        style={[
+          customStyles.uploadCard,
+          {
+            backgroundColor: colors.s1,
+            borderColor: colors.hairline,
+          },
+        ]}
+      >
+        {asset ? (
+          <View style={customStyles.previewContainer}>
+            {asset.mediaType.startsWith('image/') ? (
+              <Image
+                source={{ uri: asset.uri }}
+                style={customStyles.previewImage}
+                resizeMode="cover"
+                accessibilityLabel={caption || 'Selected media'}
+                accessible
+              />
+            ) : (
+              <View style={[customStyles.videoPlaceholder, { backgroundColor: colors.s3 }]}>
+                <Ionicons name="videocam" size={48} color={colors.apricot} />
+                <Text variant="label" style={{ color: colors.textHi, marginTop: 8 }}>
+                  {asset.fileName || asset.file?.name || t('feed.paused')}
+                </Text>
+              </View>
+            )}
+            <View style={customStyles.previewActions}>
+              <Pressable
+                style={[
+                  customStyles.pillButton,
+                  { backgroundColor: colors.bg0, borderColor: colors.hairline },
+                ]}
+                onPress={() => void choose()}
+                disabled={busy}
+                testID="feed-choose-media"
+                accessibilityRole="button"
+                accessibilityLabel={t('feed.replaceMedia')}
+              >
+                <Ionicons name="images-outline" size={16} color={colors.textHi} />
+                <Text style={[customStyles.pillText, { color: colors.textHi }]}>
+                  {t('feed.replaceMedia')}
+                </Text>
+              </Pressable>
+              <Pressable
+                style={[
+                  customStyles.pillButton,
+                  { backgroundColor: colors.bg0, borderColor: colors.hairline },
+                ]}
+                onPress={() => {
+                  reset();
+                  setAsset(null);
+                }}
+                disabled={busy}
+                accessibilityRole="button"
+                accessibilityLabel="Remove media"
+              >
+                <Ionicons name="trash-outline" size={16} color={colors.danger} />
+                <Text style={[customStyles.pillText, { color: colors.danger }]}>Remove</Text>
+              </Pressable>
+            </View>
+          </View>
         ) : (
-          <Text variant="label">{asset.fileName || asset.file?.name || t('feed.paused')}</Text>
-        ))}
-      <Button
-        variant="secondary"
-        label={t(asset ? 'feed.replaceMedia' : 'feed.chooseMedia')}
-        onPress={() => void choose()}
-        disabled={busy}
-        testID="feed-choose-media"
-      />
-      {!asset && (
-        <Text variant="bodyS" color={colors.textMid}>
-          {t('feed.mediaHint')}
+          <View style={customStyles.uploadEmptyContent}>
+            {/* Circle camera icon */}
+            <View style={[customStyles.iconCircle, { backgroundColor: colors.apricot }]}>
+              <Ionicons name="camera" size={28} color={colors.onBrand} />
+            </View>
+            <Text style={[customStyles.uploadTitle, { color: colors.textHi }]}>
+              Add photo or video
+            </Text>
+            <Text style={[customStyles.uploadSubtitle, { color: colors.textMid }]}>
+              Max 10 MB · JPG, PNG, MP4
+            </Text>
+
+            {/* Pill buttons row */}
+            <View style={customStyles.pillsRow}>
+              <Pressable
+                style={[
+                  customStyles.pillButton,
+                  { backgroundColor: colors.bg0, borderColor: colors.hairline },
+                ]}
+                onPress={() => void choose()}
+                disabled={busy}
+                testID="feed-choose-media"
+                accessibilityRole="button"
+                accessibilityLabel="Gallery"
+              >
+                <Ionicons name="images-outline" size={18} color={colors.textHi} />
+                <Text style={[customStyles.pillText, { color: colors.textHi }]}>Gallery</Text>
+              </Pressable>
+
+              <Pressable
+                style={[
+                  customStyles.pillButton,
+                  { backgroundColor: colors.bg0, borderColor: colors.hairline },
+                ]}
+                onPress={() => void takePhoto()}
+                disabled={busy}
+                testID="feed-take-photo"
+                accessibilityRole="button"
+                accessibilityLabel="Camera"
+              >
+                <Ionicons name="camera-outline" size={18} color={colors.textHi} />
+                <Text style={[customStyles.pillText, { color: colors.textHi }]}>Camera</Text>
+              </Pressable>
+            </View>
+          </View>
+        )}
+      </View>
+
+      {/* Caption Card */}
+      <View
+        style={[
+          customStyles.captionCard,
+          {
+            backgroundColor: colors.s1,
+            borderColor: colors.hairline,
+          },
+        ]}
+      >
+        <TextInput
+          style={[customStyles.captionInput, { color: colors.textHi }]}
+          placeholder="Write a caption..."
+          placeholderTextColor={colors.textOff}
+          multiline
+          value={caption}
+          onChangeText={(value) => {
+            reset();
+            setCaption(value);
+          }}
+          maxLength={300}
+          editable={!busy}
+          testID="feed-caption"
+        />
+        <Text style={[customStyles.counterText, { color: colors.textMid }]}>
+          {caption.length}/300
         </Text>
-      )}
-      <FeedInput
-        label={t('feed.caption')}
-        value={caption}
-        onChange={(value) => {
-          reset();
-          setCaption(value);
-        }}
-        placeholder={t('feed.captionHint')}
-        limit={1000}
-        testID="feed-caption"
-        disabled={busy}
-      />
-      <FeedInput
-        label={t('feed.description')}
-        value={description}
-        onChange={(value) => {
-          reset();
-          setDescription(value);
-        }}
-        placeholder={t('feed.descriptionHint')}
-        limit={240}
-        testID="feed-description"
-        disabled={busy}
-      />
-      <View style={styles.stack}>
-        <Text variant="label">{t('feed.audience')}</Text>
-        <View style={styles.wrap}>
+      </View>
+
+      {/* Audience */}
+      <View style={customStyles.section}>
+        <Text variant="label" style={{ color: colors.textMid, marginBottom: 8 }}>
+          {t('feed.audience')}
+        </Text>
+        <View style={customStyles.pillsRow}>
           {(Object.keys(audienceOptions) as FeedAudience[]).map((option) => (
             <FeedAction
               key={option}
@@ -200,18 +329,20 @@ function Composer() {
             />
           ))}
         </View>
-        <Text variant="bodyS" color={colors.textMid}>
+        <Text variant="bodyS" color={colors.textMid} style={{ marginTop: 6 }}>
           {t(audienceOptions[audience])}
         </Text>
         {!preferences.community && (
-          <Text variant="bodyS" color={colors.textMid}>
+          <Text variant="bodyS" color={colors.textMid} style={{ marginTop: 2 }}>
             {t('feed.privateProfile')}
           </Text>
         )}
       </View>
-      <View style={styles.stack}>
-        <View style={styles.row}>
-          <Text variant="label" style={styles.grow}>
+
+      {/* Compare Progress Switch */}
+      <View style={customStyles.compareCard}>
+        <View style={customStyles.rowBetween}>
+          <Text variant="label" style={{ color: colors.textHi, flex: 1 }}>
             {t('feed.compareOptIn')}
           </Text>
           <Switch
@@ -225,8 +356,14 @@ function Composer() {
             testID="feed-comparison-opt-in"
           />
         </View>
-        {shareProgress && <Text variant="bodyS">{t('feed.compareHint')}</Text>}
+        {shareProgress && (
+          <Text variant="bodyS" color={colors.textMid} style={{ marginTop: 4 }}>
+            {t('feed.compareHint')}
+          </Text>
+        )}
       </View>
+
+      {/* Terms and Guidelines if not accepted */}
       {!preferences.accepted && (
         <View style={styles.stack}>
           <Text variant="label">{t('feed.rulesTitle')}</Text>
@@ -235,8 +372,8 @@ function Composer() {
             variant="tertiary"
             label={t('feed.reviewRules')}
             onPress={() => {
-              void Linking.openURL('https://app.calipartner.site/terms').catch((error) =>
-                setMessage(feedErrorMessage(error)),
+              void Linking.openURL('https://app.calipartner.site/terms').catch((err) =>
+                setMessage(feedErrorMessage(err)),
               );
             }}
           />
@@ -254,20 +391,153 @@ function Composer() {
           </Pressable>
         </View>
       )}
-      <Text variant="bodyS" color={colors.textMid}>
-        {t('feed.moderation')}
-      </Text>
+
+      {/* Error alert */}
       {!!message && (
         <Text accessibilityRole="alert" color={colors.danger}>
           {message}
         </Text>
       )}
-      <Button
-        label={t(busy ? 'feed.publishing' : 'feed.publish')}
+
+      {/* Bottom Publish Post Button */}
+      <Pressable
+        style={[
+          customStyles.publishBtn,
+          {
+            backgroundColor: mayPublish && !busy ? colors.apricot : colors.s2,
+            opacity: mayPublish && !busy ? 1 : 0.6,
+          },
+        ]}
         onPress={() => void publish()}
         disabled={busy || !mayPublish}
         testID="feed-publish"
-      />
+        accessibilityRole="button"
+        accessibilityLabel={t('feed.publish')}
+      >
+        <Text
+          style={[
+            customStyles.publishBtnText,
+            { color: mayPublish && !busy ? colors.onBrand : colors.textMid },
+          ]}
+        >
+          {t(busy ? 'feed.publishing' : 'feed.publish')}
+        </Text>
+      </Pressable>
     </ScrollView>
   );
 }
+
+const customStyles = StyleSheet.create({
+  uploadCard: {
+    width: '100%',
+    borderRadius: radius.card,
+    borderWidth: 1.5,
+    borderStyle: 'dashed',
+    padding: space[4],
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  uploadEmptyContent: {
+    alignItems: 'center',
+    width: '100%',
+  },
+  iconCircle: {
+    width: 60,
+    height: 60,
+    borderRadius: radius.full,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: space[3],
+  },
+  uploadTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    marginBottom: space[1],
+  },
+  uploadSubtitle: {
+    fontSize: 13,
+    marginBottom: space[3],
+  },
+  pillsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flexWrap: 'wrap',
+    gap: space[2],
+  },
+  pillButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: space[2],
+    paddingVertical: space[2],
+    paddingHorizontal: space[3],
+    borderRadius: radius.full,
+    borderWidth: 1,
+    minHeight: controls.touch,
+  },
+  pillText: {
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  previewContainer: {
+    width: '100%',
+    alignItems: 'center',
+    gap: space[2],
+  },
+  previewImage: {
+    width: '100%',
+    height: 220,
+    borderRadius: radius.control,
+  },
+  videoPlaceholder: {
+    width: '100%',
+    height: 180,
+    borderRadius: radius.control,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  previewActions: {
+    flexDirection: 'row',
+    gap: space[2],
+  },
+  captionCard: {
+    width: '100%',
+    borderRadius: radius.button,
+    borderWidth: 1,
+    padding: space[3],
+    minHeight: 140,
+    justifyContent: 'space-between',
+  },
+  captionInput: {
+    fontSize: 15,
+    minHeight: 80,
+    textAlignVertical: 'top',
+  },
+  counterText: {
+    fontSize: 12,
+    alignSelf: 'flex-end',
+  },
+  section: {
+    width: '100%',
+  },
+  compareCard: {
+    width: '100%',
+  },
+  rowBetween: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  publishBtn: {
+    width: '100%',
+    borderRadius: radius.full,
+    paddingVertical: space[3],
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: space[2],
+    minHeight: 52,
+  },
+  publishBtnText: {
+    fontSize: 16,
+    fontWeight: '700',
+  },
+});

@@ -78,6 +78,7 @@ export interface PaywallModalProps {
 }
 
 const COMING_SOON = [
+  'proPlan.voiceLogging',
   'progressRefresh.coming',
   'launch.measurements',
   'launch.export',
@@ -89,11 +90,12 @@ const COMING_SOON = [
 ] as const;
 const FREE_BENEFITS = ['proPlan.logs', 'proPlan.workoutCalendar', 'proPlan.pair'] as const;
 const COMPARISON_ROWS = [
-  ...FREE_BENEFITS.map((label) => ({ label, free: true })),
-  ...PRO_BENEFITS.map((label) => ({ label, free: false })),
+  ...FREE_BENEFITS.map((label) => ({ label, free: true, comingSoon: false })),
+  ...PRO_BENEFITS.map((label) => ({ label, free: false, comingSoon: false })),
   ...(['launch.fasting', 'launch.recipes', 'launch.workouts', 'launch.priority'] as const).map(
-    (label) => ({ label, free: false }),
+    (label) => ({ label, free: false, comingSoon: false }),
   ),
+  { label: 'proPlan.voiceLogging' as const, free: false, comingSoon: true },
 ];
 
 const DEFAULT_FALLBACK_PRODUCTS: DodoCatalogProduct[] = [
@@ -686,7 +688,19 @@ export function PaywallModal({
                       )}
                     </View>
                     <View style={styles.checkCol}>
-                      <Ionicons name="checkmark" size={18} color={dark.apricot} />
+                      {row.comingSoon ? (
+                        <View style={styles.comingSoonPill}>
+                          <Text
+                            variant="micro"
+                            color={dark.apricot}
+                            style={styles.comingSoonPillText}
+                          >
+                            {t('launch.soon')}
+                          </Text>
+                        </View>
+                      ) : (
+                        <Ionicons name="checkmark" size={18} color={dark.apricot} />
+                      )}
                     </View>
                   </View>
                 );
@@ -1332,6 +1346,17 @@ const createStyles = (dark: ReturnType<typeof useAppearance>['colors']) =>
       paddingHorizontal: space[2],
       paddingVertical: 2,
       borderRadius: radius.full,
+    },
+    comingSoonPill: {
+      backgroundColor: dark.s2,
+      paddingHorizontal: space[2],
+      paddingVertical: 2,
+      borderRadius: radius.full,
+      alignSelf: 'center',
+    },
+    comingSoonPillText: {
+      fontWeight: '600',
+      fontSize: 10,
     },
     whatYouGetItem: {
       flexDirection: 'row',
