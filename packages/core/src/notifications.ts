@@ -100,6 +100,7 @@ export function shouldDeliverNotification(options: {
       break;
     case 'partner_workout':
     case 'partner_food':
+    case 'inactive_partner_catchup':
       if (!settings.partner_activity_enabled) return { deliver: false, reason: 'type_disabled' };
       break;
     case 'room_invitation':
@@ -196,6 +197,7 @@ export function formatNotificationCopy(
     roomName?: string;
     workoutTitle?: string;
     mealSection?: string;
+    activityType?: 'meal' | 'workout';
     streakDays?: number;
     customMessage?: string;
     hidePreviews?: boolean;
@@ -210,6 +212,17 @@ export function formatNotificationCopy(
         title: `${sender} sent you a nudge`,
         body: params.customMessage || `${sender} is cheering you on today!`,
       };
+
+    case 'inactive_partner_catchup': {
+      const isWorkout = params.activityType === 'workout';
+      const action = isWorkout ? 'a workout' : 'their meal';
+      return {
+        title: `${sender} logged ${action}`,
+        body:
+          params.customMessage ||
+          `${sender} logged ${action} and is ahead of you. Tap to catch up!`,
+      };
+    }
 
     case 'partner_workout':
       return {

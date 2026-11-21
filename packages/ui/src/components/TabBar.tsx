@@ -77,6 +77,8 @@ export interface TabBarProps {
   testID?: string;
   /** Configurable tab labels */
   labels?: TabBarLabels;
+  /** Badges per tab (number of pending updates, e.g. unread messages, requests, feed notifications) */
+  badges?: Partial<Record<TabId, number>>;
 }
 
 export const TAB_BAR_HEIGHT = 64;
@@ -96,6 +98,7 @@ export function TabBar({
   style,
   testID = 'floating-tab-bar',
   labels,
+  badges,
 }: TabBarProps): React.JSX.Element | null {
   const { colors: dark, scheme } = useAppearance();
   const styles = createStyles(dark);
@@ -147,17 +150,26 @@ export function TabBar({
       filled?: boolean;
     }>,
     testId: string,
-    showBadge = false,
+    badgeCount?: number,
+    showDotFallback = false,
   ) => {
     const isActive = activeTab === id;
     const color = isActive ? dark.apricot : dark.textLo;
+    const hasNumericBadge = typeof badgeCount === 'number' && badgeCount > 0;
+    const showDot = !hasNumericBadge && showDotFallback;
 
     return (
       <TouchableOpacity
         key={id}
         testID={testId}
         accessibilityRole="tab"
-        accessibilityLabel={showBadge ? `${label}, unread updates` : label}
+        accessibilityLabel={
+          hasNumericBadge
+            ? `${label}, ${badgeCount} unread`
+            : showDot
+              ? `${label}, unread updates`
+              : label
+        }
         accessibilityState={{ selected: isActive }}
         style={styles.tabSlot}
         activeOpacity={0.7}
@@ -165,7 +177,17 @@ export function TabBar({
       >
         <View style={styles.iconContainer}>
           <IconComponent size={24} color={color} filled={isActive} />
-          {showBadge ? (
+          {hasNumericBadge ? (
+            <View
+              testID={`${testId}-badge`}
+              style={styles.badgePill}
+              accessibilityLabel={`${badgeCount} unread`}
+            >
+              <Text style={styles.badgeText} numberOfLines={1}>
+                {badgeCount > 99 ? '99+' : String(badgeCount)}
+              </Text>
+            </View>
+          ) : showDot ? (
             <View
               testID="tab-room-badge"
               style={styles.badgeDot}
@@ -212,18 +234,31 @@ export function TabBar({
     >
       {isGlass && <View pointerEvents="none" style={styles.glassHighlight} />}
       {/* 1. Home */}
-      {renderNormalTab('today', labels?.today ?? 'Home', HomeIcon, 'tab-today')}
+      {renderNormalTab('today', labels?.today ?? 'Home', HomeIcon, 'tab-today', badges?.today)}
 
       {/* 2. Progress */}
-      {renderNormalTab('room', labels?.room ?? 'Squad', RoomIcon, 'tab-room', hasRoomBadge)}
+      {renderNormalTab(
+        'room',
+        labels?.room ?? 'Squad',
+        RoomIcon,
+        'tab-room',
+        badges?.room,
+        hasRoomBadge,
+      )}
 
-      {renderNormalTab('feed', labels?.feed ?? 'Feed', GlobeIcon, 'tab-feed')}
+      {renderNormalTab('feed', labels?.feed ?? 'Feed', GlobeIcon, 'tab-feed', badges?.feed)}
 
       {/* 4. Chat */}
-      {renderNormalTab('chat', labels?.chat ?? 'Chat', ChatIcon, 'tab-chat')}
+      {renderNormalTab('chat', labels?.chat ?? 'Chat', ChatIcon, 'tab-chat', badges?.chat)}
 
       {/* 5. Account */}
-      {renderNormalTab('progress', labels?.progress ?? 'You', MeIcon, 'tab-progress')}
+      {renderNormalTab(
+        'progress',
+        labels?.progress ?? 'You',
+        MeIcon,
+        'tab-progress',
+        badges?.progress,
+      )}
     </View>
   );
 }
@@ -302,6 +337,26 @@ const createStyles = (dark: ReturnType<typeof useAppearance>['colors']) =>
       height: 8,
       borderRadius: radius.full,
       backgroundColor: dark.apricot,
+    },
+    badgePill: {
+      position: 'absolute',
+      top: -5,
+      right: -10,
+      minWidth: 18,
+      height: 18,
+      borderRadius: radius.full,
+      backgroundColor: dark.apricot,
+      paddingHorizontal: 4,
+      alignItems: 'center',
+      justifyContent: 'center',
+      zIndex: 10,
+    },
+    badgeText: {
+      color: dark.onBrand, // #1C1109 per U2
+      fontSize: 10,
+      fontWeight: '700',
+      lineHeight: 12,
+      textAlign: 'center',
     },
     tabLabel: {
       fontSize: 11,

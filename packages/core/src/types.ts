@@ -1465,6 +1465,7 @@ export type NotificationType =
   | 'nudge'
   | 'partner_workout'
   | 'partner_food'
+  | 'inactive_partner_catchup'
   | 'room_invitation'
   | 'room_join_request'
   | 'room_request_accepted'

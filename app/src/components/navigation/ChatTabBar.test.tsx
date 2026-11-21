@@ -1,4 +1,7 @@
 vi.mock('@/hooks/useNetworkStatus', () => ({ useNetworkStatus: () => ({ isOnline: true }) }));
+vi.mock('@/hooks/useNavigationBadges', () => ({
+  useNavigationBadges: () => ({ chat: 0, room: 0, feed: 0, today: 0, progress: 0 }),
+}));
 import React from 'react';
 import { act, create } from 'react-test-renderer';
 import { expect, it, vi } from 'vitest';

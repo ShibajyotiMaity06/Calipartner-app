@@ -6,12 +6,14 @@ import { closeBrowserModalsThen } from '@/hooks/useBrowserModalBack';
 import { Tabs, usePathname, useRouter, useGlobalSearchParams, type Href } from 'expo-router';
 import { Text, space, TabBar, type TabId } from '@calipartner/ui';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useNavigationBadges } from '@/hooks/useNavigationBadges';
 import { t } from '@/i18n';
 
 export default function TabsLayout() {
   const { colors: dark } = useAppearance();
 
   const { isOnline } = useNetworkStatus();
+  const badges = useNavigationBadges();
   const insets = useSafeAreaInsets();
   const pathname = usePathname();
   const router = useRouter();
@@ -74,7 +76,8 @@ export default function TabsLayout() {
               onTabPress={handleTabPress}
               onActiveTabPress={handleActiveTabPress}
               bottomInset={insets.bottom}
-              hasRoomBadge={false}
+              hasRoomBadge={Boolean(badges.room && badges.room > 0)}
+              badges={badges}
               visible={!isFullScreenFlow}
               labels={{
                 today: t('tabs.today'),

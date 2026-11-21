@@ -172,6 +172,22 @@ describe('Phase 9 Core: Notifications, Quiet Hours, Safety & Schedules', () => {
       const copy = formatNotificationCopy('weekly_summary', {});
       expect(copy.title).toBe('Your Weekly Summary is ready');
     });
+
+    it('produces supportive catchup copy for 2-day inactive users without calories', () => {
+      const mealCopy = formatNotificationCopy('inactive_partner_catchup', {
+        senderNickname: 'Rohan',
+        activityType: 'meal',
+      });
+      expect(mealCopy.title).toBe('Rohan logged their meal');
+      expect(mealCopy.body).toBe('Rohan logged their meal and is ahead of you. Tap to catch up!');
+
+      const workoutCopy = formatNotificationCopy('inactive_partner_catchup', {
+        senderNickname: 'Rohan',
+        activityType: 'workout',
+      });
+      expect(workoutCopy.title).toBe('Rohan logged a workout');
+      expect(workoutCopy.body).toBe('Rohan logged a workout and is ahead of you. Tap to catch up!');
+    });
   });
 
   describe('validateFcmToken', () => {

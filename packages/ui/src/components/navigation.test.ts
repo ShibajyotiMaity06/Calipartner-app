@@ -40,6 +40,14 @@ describe('UI-4 Navigation Shell Components Specification & Tokens', () => {
       expect(dark.apricot).toBe('#F4B67D');
     });
 
+    it('defines apricot numeric badge pill with onBrand text satisfying WCAG AAA contrast', () => {
+      // Rule U2: Text on apricot must be onBrand (#1C1109), never white
+      expect(dark.apricot).toBe('#F4B67D');
+      expect(dark.onBrand).toBe('#1C1109');
+      const ratio = getContrastRatio(dark.onBrand, dark.apricot);
+      expect(ratio).toBeGreaterThanOrEqual(7.0);
+    });
+
     it('uses opaque s2 fallback for low-end Android and Reduce Transparency', () => {
       expect(dark.s2).toBe('#241E18');
       expect(dark.hairline).toBe('#3A3228');
