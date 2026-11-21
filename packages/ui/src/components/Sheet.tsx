@@ -185,11 +185,18 @@ const createStyles = (dark: ReturnType<typeof useAppearance>['colors']) =>
       backgroundColor: dark.s2,
     },
     glassSurface: {
-      backgroundColor: Platform.OS === 'web' ? 'rgba(36, 30, 24, 0.88)' : dark.s2,
+      borderColor: dark.hairlineLit,
+      borderTopColor: dark.hairlineLit,
+      shadowColor: '#000000',
+      shadowOffset: { width: 0, height: -4 },
+      shadowOpacity: 0.32,
+      shadowRadius: 20,
+      elevation: 12,
+      backgroundColor: Platform.OS === 'web' ? 'rgba(36, 30, 24, 0.86)' : dark.s2,
       ...(Platform.OS === 'web'
         ? ({
-            backdropFilter: 'blur(20px)',
-            WebkitBackdropFilter: 'blur(20px)',
+            backdropFilter: 'blur(24px)',
+            WebkitBackdropFilter: 'blur(24px)',
           } as unknown as ViewStyle)
         : {}),
     },

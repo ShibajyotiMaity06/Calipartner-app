@@ -234,16 +234,27 @@ const createStyles = (dark: ReturnType<typeof useAppearance>['colors']) =>
       justifyContent: 'space-between',
       paddingHorizontal: space[2], // 8
       zIndex: 100,
+      shadowColor: '#000000',
+      shadowOffset: { width: 0, height: 6 },
+      shadowOpacity: 0.28,
+      shadowRadius: 16,
+      elevation: 8,
     },
     opaqueSurface: {
       backgroundColor: dark.s2,
     },
     glassSurface: {
-      backgroundColor: Platform.OS === 'web' ? 'rgba(36, 30, 24, 0.88)' : dark.s2,
+      borderColor: dark.hairlineLit,
+      backgroundColor: Platform.OS === 'web' ? 'rgba(36, 30, 24, 0.86)' : dark.s2,
+      shadowColor: '#000000',
+      shadowOffset: { width: 0, height: 8 },
+      shadowOpacity: 0.35,
+      shadowRadius: 18,
+      elevation: 10,
       ...(Platform.OS === 'web'
         ? ({
-            backdropFilter: 'blur(20px)',
-            WebkitBackdropFilter: 'blur(20px)',
+            backdropFilter: 'blur(24px)',
+            WebkitBackdropFilter: 'blur(24px)',
           } as unknown as ViewStyle)
         : {}),
     },

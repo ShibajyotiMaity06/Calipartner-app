@@ -140,9 +140,9 @@ export const wellsDark: ColorPalette = {
 };
 export const themePalettes = { light: wellsLight, dark: wellsDark, yellow };
 export const themeDock = {
-  light: 'rgba(221, 213, 199, 0.94)',
-  dark: 'rgba(21, 20, 19, 0.94)',
-  yellow: 'rgba(36, 30, 24, 0.88)',
+  light: 'rgba(221, 213, 199, 0.88)',
+  dark: 'rgba(21, 20, 19, 0.88)',
+  yellow: 'rgba(36, 30, 24, 0.86)',
 };
 export const lightNutritionColors = {
   calories: '#923D60',
