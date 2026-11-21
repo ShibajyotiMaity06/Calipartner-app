@@ -1,6 +1,6 @@
 import React from 'react';
 import type { WorkoutWithDetails } from '@calipartner/core';
-import { WorkoutDayModal } from './WorkoutDayModal';
+import { WorkoutRedesignContainer } from './redesign/WorkoutRedesignContainer';
 
 export interface WorkoutHubModalProps {
   visible: boolean;
@@ -10,5 +10,12 @@ export interface WorkoutHubModalProps {
   onSaved?: (workout: WorkoutWithDetails) => void;
 }
 export function WorkoutHubModal(props: WorkoutHubModalProps) {
-  return <WorkoutDayModal {...props} />;
+  return (
+    <WorkoutRedesignContainer
+      visible={props.visible}
+      onClose={props.onClose}
+      defaultDate={props.defaultDate}
+      testID={props.testID}
+    />
+  );
 }

@@ -17,3 +17,4 @@ export * from './entry';
 
 export * from './visualPrimitives';
 export * from './feed';
+export * from './workoutTokens';

@@ -57,4 +57,5 @@ export * from './route.ts';
 export * from './progressSummary.ts';
 export * from './workoutSplits.ts';
 export * from './workoutPlanner.ts';
+export * from './workoutRedesign.ts';
 export * from './cardio.ts';
