@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { StyleSheet, Text, View, ScrollView, Pressable, TextInput, Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { workoutTokens, workoutRadius } from '@calipartner/ui';
@@ -31,6 +31,10 @@ export function S07DayEditorScreen({
     JSON.parse(JSON.stringify(allDays)),
   );
   const [todayScope, setTodayScope] = useState<'just_today' | 'update_plan'>('just_today');
+
+  useEffect(() => {
+    setWorkingDays(JSON.parse(JSON.stringify(allDays)));
+  }, [allDays]);
 
   const currentDay = workingDays.find((d) => d.weekday === currentWeekday) || {
     weekday: currentWeekday,

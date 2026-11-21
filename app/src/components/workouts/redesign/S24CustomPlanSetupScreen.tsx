@@ -6,17 +6,57 @@ import { PrimaryButton, WorkoutToggle, StickyCtaBar } from '../s_common';
 import type { GeneratedPlanDay } from '@calipartner/core';
 
 interface S24CustomPlanSetupScreenProps {
+  planName?: string;
+  onChangePlanName?: (name: string) => void;
+  days?: GeneratedPlanDay[];
+  onChangeDays?:
+    ((days: GeneratedPlanDay[]) => void) | React.Dispatch<React.SetStateAction<GeneratedPlanDay[]>>;
   onSavePlan: (name: string, days: GeneratedPlanDay[]) => void;
   onEditDayExercises: (day: GeneratedPlanDay, dayIndex: number) => void;
   onBack: () => void;
 }
 
 export function S24CustomPlanSetupScreen({
+  planName,
+  onChangePlanName,
+  days,
+  onChangeDays,
   onSavePlan,
   onEditDayExercises,
   onBack,
 }: S24CustomPlanSetupScreenProps) {
-  const [planName, setPlanName] = useState('My Custom Plan');
+  const defaultDays: GeneratedPlanDay[] = [
+    { weekday: 1, is_rest: false, name: 'Upper Body', exercises: [], about_minutes: 60 },
+    { weekday: 2, is_rest: false, name: 'Lower Body', exercises: [], about_minutes: 60 },
+    { weekday: 3, is_rest: true, name: 'Rest Day', exercises: [], about_minutes: 0 },
+    { weekday: 4, is_rest: false, name: 'Push', exercises: [], about_minutes: 60 },
+    { weekday: 5, is_rest: false, name: 'Pull', exercises: [], about_minutes: 60 },
+    { weekday: 6, is_rest: true, name: 'Rest Day', exercises: [], about_minutes: 0 },
+    { weekday: 7, is_rest: true, name: 'Rest Day', exercises: [], about_minutes: 0 },
+  ];
+
+  const [localPlanName, setLocalPlanName] = useState('My Custom Plan');
+  const [localDays, setLocalDays] = useState<GeneratedPlanDay[]>(defaultDays);
+
+  const activePlanName = planName !== undefined ? planName : localPlanName;
+  const setEffectivePlanName = onChangePlanName || setLocalPlanName;
+
+  const activeDays = days !== undefined ? days : localDays;
+  const setEffectiveDays = (
+    updater: GeneratedPlanDay[] | ((prev: GeneratedPlanDay[]) => GeneratedPlanDay[]),
+  ) => {
+    if (onChangeDays) {
+      if (typeof updater === 'function') {
+        const next = updater(activeDays);
+        (onChangeDays as (val: GeneratedPlanDay[]) => void)(next);
+      } else {
+        (onChangeDays as (val: GeneratedPlanDay[]) => void)(updater);
+      }
+    } else {
+      setLocalDays(updater);
+    }
+  };
+
   const weekdayNames = [
     'Monday',
     'Tuesday',
@@ -27,18 +67,8 @@ export function S24CustomPlanSetupScreen({
     'Sunday',
   ];
 
-  const [days, setDays] = useState<GeneratedPlanDay[]>([
-    { weekday: 1, is_rest: false, name: 'Upper Body', exercises: [], about_minutes: 60 },
-    { weekday: 2, is_rest: false, name: 'Lower Body', exercises: [], about_minutes: 60 },
-    { weekday: 3, is_rest: true, name: 'Rest Day', exercises: [], about_minutes: 0 },
-    { weekday: 4, is_rest: false, name: 'Push', exercises: [], about_minutes: 60 },
-    { weekday: 5, is_rest: false, name: 'Pull', exercises: [], about_minutes: 60 },
-    { weekday: 6, is_rest: true, name: 'Rest Day', exercises: [], about_minutes: 0 },
-    { weekday: 7, is_rest: true, name: 'Rest Day', exercises: [], about_minutes: 0 },
-  ]);
-
   const toggleDayRest = (index: number) => {
-    setDays((prev) => {
+    setEffectiveDays((prev) => {
       const updated = [...prev];
       const targetDay = updated[index];
       if (!targetDay) return prev;
@@ -53,9 +83,9 @@ export function S24CustomPlanSetupScreen({
     });
   };
 
-  const trainingDays = days.filter((d) => !d.is_rest);
+  const trainingDays = activeDays.filter((d) => !d.is_rest);
   const isValid =
-    planName.trim().length > 0 &&
+    activePlanName.trim().length > 0 &&
     trainingDays.length > 0 &&
     trainingDays.every((d) => d.name.trim().length > 0 && d.exercises.length > 0);
 
@@ -80,8 +110,8 @@ export function S24CustomPlanSetupScreen({
         {/* Plan Name */}
         <Text style={styles.fieldLabel}>PLAN NAME</Text>
         <TextInput
-          value={planName}
-          onChangeText={setPlanName}
+          value={activePlanName}
+          onChangeText={setEffectivePlanName}
           placeholder="e.g. 4-Day Strength Routine"
           placeholderTextColor={workoutTokens.dim}
           style={styles.textInput}
@@ -91,7 +121,7 @@ export function S24CustomPlanSetupScreen({
         {/* 7 Days List */}
         <Text style={[styles.fieldLabel, { marginTop: 24 }]}>WEEKLY SCHEDULE</Text>
         <View style={styles.daysList}>
-          {days.map((day, idx) => {
+          {activeDays.map((day, idx) => {
             return (
               <View key={day.weekday} style={styles.dayCard}>
                 <View style={styles.dayTopRow}>
@@ -138,7 +168,7 @@ export function S24CustomPlanSetupScreen({
       <StickyCtaBar>
         <PrimaryButton
           label="Save plan"
-          onPress={() => onSavePlan(planName.trim(), days)}
+          onPress={() => onSavePlan(activePlanName.trim(), activeDays)}
           disabled={!isValid}
           testID="save-custom-plan-btn"
         />

@@ -1,24 +1,14 @@
 import { useCallback, useRef, useState } from 'react';
-import {
-  Image,
-  Linking,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Switch,
-  TextInput,
-  View,
-} from 'react-native';
+import { Image, Pressable, ScrollView, StyleSheet, Switch, TextInput, View } from 'react-native';
 import { useRouter, type Href } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
 import { Ionicons } from '@expo/vector-icons';
-import { Button, controls, radius, space, Text, useTheme } from '@calipartner/ui';
+import { controls, radius, space, Text, useTheme } from '@calipartner/ui';
 import { useAuth } from '@/contexts/AuthContext';
 import { generateClientUuid } from '@/services/foodService';
 import { feedApi, feedMaxBytes, getFeedMediaType, type FeedAudience } from '@/services/feedService';
 import { t } from '@/i18n';
 import {
-  FeedAction,
   FeedScreen,
   FeedSignIn,
   FeedStatus,
@@ -28,11 +18,12 @@ import {
   useFeedResource,
 } from './FeedPrimitives';
 
-const audienceOptions = {
-  friends: 'feed.friendsHint',
-  squads: 'feed.squadsHint',
-  community: 'feed.communityHint',
-} as const;
+const audienceChoices: { id: FeedAudience; label: string; icon: keyof typeof Ionicons.glyphMap }[] =
+  [
+    { id: 'friends', label: 'Friends', icon: 'people-outline' },
+    { id: 'squads', label: 'Squad', icon: 'shield-outline' },
+    { id: 'community', label: 'Community', icon: 'globe-outline' },
+  ];
 
 export function FeedComposer() {
   const router = useRouter();
@@ -60,8 +51,8 @@ function Composer() {
   );
   const [caption, setCaption] = useState('');
   const [audience, setAudience] = useState<FeedAudience>('friends');
+  const [dropdownOpen, setDropdownOpen] = useState(false);
   const [shareProgress, setShareProgress] = useState(false);
-  const [accept, setAccept] = useState(false);
   const [busy, setBusy] = useState(false);
   const saving = useRef(false);
   const draft = useRef<string | null>(null);
@@ -128,15 +119,21 @@ function Composer() {
     }
   };
 
-  const mayPublish = !!(asset && (preferences?.accepted || accept));
+  const mayPublish = !!asset;
 
   const publish = useCallback(async () => {
-    if (!asset || !mayPublish || saving.current) return;
+    if (!asset || saving.current) return;
     saving.current = true;
     setBusy(true);
     setMessage('');
     try {
-      if (!preferences?.accepted && !(await feedApi.accept())) throw new Error('FEED_UNCONFIRMED');
+      if (!preferences?.accepted) {
+        try {
+          await feedApi.accept();
+        } catch {
+          // ignore
+        }
+      }
       const retrying = draft.current !== null;
       const id = draft.current ?? (draft.current = generateClientUuid());
       const effectiveDescription = (caption.trim() || 'Photo or video post').slice(0, 240);
@@ -158,7 +155,7 @@ function Composer() {
       saving.current = false;
       setBusy(false);
     }
-  }, [asset, audience, caption, mayPublish, preferences?.accepted, router, shareProgress]);
+  }, [asset, audience, caption, preferences?.accepted, router, shareProgress]);
 
   if (!preferences && (loading || error))
     return <FeedStatus loading={loading} error={error} retry={reload} />;
@@ -307,36 +304,82 @@ function Composer() {
         </Text>
       </View>
 
-      {/* Audience */}
+      {/* Audience Dropdown */}
       <View style={customStyles.section}>
         <Text variant="label" style={{ color: colors.textMid, marginBottom: 8 }}>
           {t('feed.audience')}
         </Text>
-        <View style={customStyles.pillsRow}>
-          {(Object.keys(audienceOptions) as FeedAudience[]).map((option) => (
-            <FeedAction
-              key={option}
-              icon={option === 'community' ? 'globe-outline' : 'people-outline'}
-              label={t(`feed.${option}`)}
-              text={t(`feed.${option}`)}
-              selected={audience === option}
-              disabled={busy || (option === 'community' && !preferences.community)}
-              onPress={() => {
-                reset();
-                setAudience(option);
-              }}
-              testID={'feed-audience-' + option}
+        <Pressable
+          style={[
+            customStyles.dropdownButton,
+            { backgroundColor: colors.s1, borderColor: colors.hairline },
+          ]}
+          onPress={() => setDropdownOpen(!dropdownOpen)}
+          accessibilityRole="button"
+          accessibilityLabel={`Audience: ${audienceChoices.find((c) => c.id === audience)?.label}`}
+          testID="feed-audience-dropdown"
+        >
+          <View style={customStyles.dropdownButtonContent}>
+            <Ionicons
+              name={audienceChoices.find((c) => c.id === audience)?.icon || 'people-outline'}
+              size={18}
+              color={colors.apricot}
             />
-          ))}
-        </View>
-        <Text variant="bodyS" color={colors.textMid} style={{ marginTop: 6 }}>
-          {t(audienceOptions[audience])}
-        </Text>
-        {!preferences.community && (
-          <Text variant="bodyS" color={colors.textMid} style={{ marginTop: 2 }}>
-            {t('feed.privateProfile')}
-          </Text>
-        )}
+            <Text style={[customStyles.dropdownButtonText, { color: colors.textHi }]}>
+              {audienceChoices.find((c) => c.id === audience)?.label}
+            </Text>
+          </View>
+          <Ionicons
+            name={dropdownOpen ? 'chevron-up' : 'chevron-down'}
+            size={18}
+            color={colors.textMid}
+          />
+        </Pressable>
+
+        {dropdownOpen ? (
+          <View
+            style={[
+              customStyles.dropdownMenu,
+              { backgroundColor: colors.s1, borderColor: colors.hairline },
+            ]}
+          >
+            {audienceChoices.map((choice) => (
+              <Pressable
+                key={choice.id}
+                style={[
+                  customStyles.dropdownItem,
+                  audience === choice.id && { backgroundColor: colors.s2 },
+                ]}
+                onPress={() => {
+                  reset();
+                  setAudience(choice.id);
+                  setDropdownOpen(false);
+                }}
+                disabled={busy || (choice.id === 'community' && !preferences.community)}
+                testID={`feed-audience-${choice.id}`}
+              >
+                <View style={customStyles.dropdownButtonContent}>
+                  <Ionicons
+                    name={choice.icon}
+                    size={18}
+                    color={audience === choice.id ? colors.apricot : colors.textMid}
+                  />
+                  <Text
+                    style={[
+                      customStyles.dropdownItemText,
+                      { color: audience === choice.id ? colors.textHi : colors.textMid },
+                    ]}
+                  >
+                    {choice.label}
+                  </Text>
+                </View>
+                {audience === choice.id ? (
+                  <Ionicons name="checkmark" size={18} color={colors.apricot} />
+                ) : null}
+              </Pressable>
+            ))}
+          </View>
+        ) : null}
       </View>
 
       {/* Compare Progress Switch */}
@@ -362,35 +405,6 @@ function Composer() {
           </Text>
         )}
       </View>
-
-      {/* Terms and Guidelines if not accepted */}
-      {!preferences.accepted && (
-        <View style={styles.stack}>
-          <Text variant="label">{t('feed.rulesTitle')}</Text>
-          <Text variant="bodyS">{t('feed.rules')}</Text>
-          <Button
-            variant="tertiary"
-            label={t('feed.reviewRules')}
-            onPress={() => {
-              void Linking.openURL('https://app.calipartner.site/terms').catch((err) =>
-                setMessage(feedErrorMessage(err)),
-              );
-            }}
-          />
-          <Pressable
-            accessibilityRole="checkbox"
-            accessibilityLabel={t('feed.accept')}
-            accessibilityState={{ checked: accept, disabled: busy }}
-            disabled={busy}
-            onPress={() => setAccept(!accept)}
-            style={[styles.action, styles.row]}
-            testID="feed-create-accept"
-          >
-            <Text>{t('feed.accept')}</Text>
-            <Switch value={accept} onValueChange={setAccept} disabled={busy} accessible={false} />
-          </Pressable>
-        </View>
-      )}
 
       {/* Error alert */}
       {!!message && (
@@ -539,5 +553,42 @@ const customStyles = StyleSheet.create({
   publishBtnText: {
     fontSize: 16,
     fontWeight: '700',
+  },
+  dropdownButton: {
+    borderRadius: radius.button,
+    borderWidth: 1,
+    paddingHorizontal: space[3],
+    paddingVertical: space[3],
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    minHeight: controls.touch,
+  },
+  dropdownButtonContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: space[2],
+  },
+  dropdownButtonText: {
+    fontSize: 15,
+    fontWeight: '600',
+  },
+  dropdownMenu: {
+    borderRadius: radius.button,
+    borderWidth: 1,
+    marginTop: space[2],
+    overflow: 'hidden',
+  },
+  dropdownItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: space[3],
+    paddingVertical: space[3],
+    minHeight: controls.touch,
+  },
+  dropdownItemText: {
+    fontSize: 15,
+    fontWeight: '600',
   },
 });

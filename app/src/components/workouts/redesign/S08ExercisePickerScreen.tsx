@@ -43,7 +43,7 @@ export function S08ExercisePickerScreen({ mode, onSelect, onBack }: S08ExerciseP
           onPress={onBack}
           style={styles.backBtn}
         >
-          <Ionicons name="close" size={24} color={workoutTokens.text} />
+          <Ionicons name="arrow-back" size={24} color={workoutTokens.text} />
         </Pressable>
         <Text style={styles.headerTitle}>
           {mode === 'log' ? 'Log activity' : 'Choose exercise'}
@@ -78,6 +78,7 @@ export function S08ExercisePickerScreen({ mode, onSelect, onBack }: S08ExerciseP
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
+        style={styles.chipsScrollContainer}
         contentContainerStyle={styles.chipsScroll}
       >
         {muscleFilters.map((m) => (
@@ -167,14 +168,20 @@ const styles = StyleSheet.create({
     color: workoutTokens.text,
     fontSize: 15,
   },
+  chipsScrollContainer: {
+    flexGrow: 0,
+    height: 44,
+    marginBottom: 8,
+  },
   chipsScroll: {
-    paddingHorizontal: 20,
+    paddingLeft: 20,
+    paddingRight: 20,
     gap: 8,
-    paddingBottom: 12,
+    alignItems: 'center',
   },
   listContent: {
     paddingHorizontal: 20,
-    paddingTop: 8,
+    paddingTop: 4,
     paddingBottom: 60,
   },
   resultsCount: {
@@ -182,7 +189,7 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '700',
     letterSpacing: 0.8,
-    marginBottom: 10,
+    marginBottom: 8,
   },
   exerciseCard: {
     flexDirection: 'row',

@@ -151,6 +151,20 @@ export function WorkoutRedesignContainer({
   const [dayEditorInitialWeekday, setDayEditorInitialWeekday] = useState(1);
   const [pickerMode, setPickerMode] = useState<'plan' | 'session' | 'log'>('plan');
 
+  // Custom plan draft state
+  const [customPlanName, setCustomPlanName] = useState('My Custom Plan');
+  const [customPlanDays, setCustomPlanDays] = useState<GeneratedPlanDay[]>([
+    { weekday: 1, is_rest: false, name: 'Upper Body', exercises: [], about_minutes: 60 },
+    { weekday: 2, is_rest: false, name: 'Lower Body', exercises: [], about_minutes: 60 },
+    { weekday: 3, is_rest: true, name: 'Rest Day', exercises: [], about_minutes: 0 },
+    { weekday: 4, is_rest: false, name: 'Push', exercises: [], about_minutes: 60 },
+    { weekday: 5, is_rest: false, name: 'Pull', exercises: [], about_minutes: 60 },
+    { weekday: 6, is_rest: true, name: 'Rest Day', exercises: [], about_minutes: 0 },
+    { weekday: 7, is_rest: true, name: 'Rest Day', exercises: [], about_minutes: 0 },
+  ]);
+  const [editingCustomPlan, setEditingCustomPlan] = useState(false);
+  const [logStrengthTarget, setLogStrengthTarget] = useState<CatalogExercise | null>(null);
+
   // Push / Pop stack
   const pushScreen = (screen: ScreenId) => {
     setNavStack((prev) => [...prev, screen]);
@@ -429,11 +443,13 @@ export function WorkoutRedesignContainer({
                   onResumeWorkout={() => pushScreen('s05_active_session')}
                   onTrainAnyway={handleTrainAnyway}
                   onEditToday={() => {
+                    setEditingCustomPlan(false);
                     setDayEditorMode('today');
                     setDayEditorInitialWeekday(todayWeekday);
                     pushScreen('s07_day_editor');
                   }}
                   onOpenUpNextDay={(d) => {
+                    setEditingCustomPlan(false);
                     setDayEditorMode('plan');
                     setDayEditorInitialWeekday(d.weekday);
                     pushScreen('s07_day_editor');
@@ -455,7 +471,10 @@ export function WorkoutRedesignContainer({
               ) : (
                 <S10NoPlanScreen
                   onBuildWithAi={startAiBuilder}
-                  onBuildMyOwn={() => pushScreen('s24_custom_plan')}
+                  onBuildMyOwn={() => {
+                    setEditingCustomPlan(true);
+                    pushScreen('s24_custom_plan');
+                  }}
                   onLogOneOff={() => {
                     setPickerMode('log');
                     pushScreen('s08_exercise_picker');
@@ -472,23 +491,31 @@ export function WorkoutRedesignContainer({
                   todayWeekday={todayWeekday}
                   onOpenSettings={() => pushScreen('s25_settings')}
                   onEditDay={(d) => {
+                    setEditingCustomPlan(false);
                     setDayEditorMode('plan');
                     setDayEditorInitialWeekday(d.weekday);
                     pushScreen('s07_day_editor');
                   }}
                   onAddRestDayWorkout={(d) => {
+                    setEditingCustomPlan(false);
                     setDayEditorMode('plan');
                     setDayEditorInitialWeekday(d.weekday);
                     pushScreen('s07_day_editor');
                   }}
                   onBuildWithAi={startAiBuilder}
                   onOpenLockedScreen={() => pushScreen('s21_locked')}
-                  onStartBlankCustomPlan={() => pushScreen('s24_custom_plan')}
+                  onStartBlankCustomPlan={() => {
+                    setEditingCustomPlan(true);
+                    pushScreen('s24_custom_plan');
+                  }}
                 />
               ) : (
                 <S10NoPlanScreen
                   onBuildWithAi={startAiBuilder}
-                  onBuildMyOwn={() => pushScreen('s24_custom_plan')}
+                  onBuildMyOwn={() => {
+                    setEditingCustomPlan(true);
+                    pushScreen('s24_custom_plan');
+                  }}
                   onLogOneOff={() => {
                     setPickerMode('log');
                     pushScreen('s08_exercise_picker');
@@ -567,15 +594,20 @@ export function WorkoutRedesignContainer({
           />
         ) : null}
 
-        {currentScreen === 's07_day_editor' && activePlan ? (
+        {currentScreen === 's07_day_editor' && (activePlan || editingCustomPlan) ? (
           <S07DayEditorScreen
             mode={dayEditorMode}
             initialWeekday={dayEditorInitialWeekday}
-            allDays={activePlan.days}
+            allDays={editingCustomPlan ? customPlanDays : activePlan?.days || []}
             onSavePlanMode={async (updatedDays) => {
-              await workoutRedesignService.saveCustomPlan(activePlan.name, updatedDays);
-              loadData();
-              popScreen();
+              if (editingCustomPlan) {
+                setCustomPlanDays(updatedDays);
+                popScreen();
+              } else if (activePlan) {
+                await workoutRedesignService.saveCustomPlan(activePlan.name, updatedDays);
+                loadData();
+                popScreen();
+              }
             }}
             onSaveTodayMode={(day, scope) => {
               popScreen();
@@ -593,11 +625,42 @@ export function WorkoutRedesignContainer({
           <S08ExercisePickerScreen
             mode={pickerMode}
             onSelect={(catEx) => {
-              if (pickerMode === 'log') {
+              if (pickerMode === 'plan') {
+                const newEx: GeneratedPlanExercise = {
+                  id: 'draft_' + Math.random().toString(36).substring(2, 9),
+                  name: catEx.name,
+                  primary_muscle: catEx.primary_muscle,
+                  equipment: catEx.equipment,
+                  target_sets: 3,
+                  target_reps: 10,
+                  target_weight_kg: 0,
+                  rest_seconds: 60,
+                  is_compound: catEx.is_compound,
+                };
+                if (editingCustomPlan) {
+                  setCustomPlanDays((prev) =>
+                    prev.map((d) =>
+                      d.weekday === dayEditorInitialWeekday
+                        ? { ...d, exercises: [...d.exercises, newEx] }
+                        : d,
+                    ),
+                  );
+                } else if (activePlan) {
+                  setActivePlan({
+                    ...activePlan,
+                    days: activePlan.days.map((d) =>
+                      d.weekday === dayEditorInitialWeekday
+                        ? { ...d, exercises: [...d.exercises, newEx] }
+                        : d,
+                    ),
+                  });
+                }
                 popScreen();
-                setActivitySheetTarget('new');
               } else if (pickerMode === 'session' && inProgressSession) {
                 popScreen();
+              } else if (pickerMode === 'log') {
+                popScreen();
+                setLogStrengthTarget(catEx);
               } else {
                 popScreen();
               }
@@ -704,6 +767,10 @@ export function WorkoutRedesignContainer({
 
         {currentScreen === 's24_custom_plan' ? (
           <S24CustomPlanSetupScreen
+            planName={customPlanName}
+            onChangePlanName={setCustomPlanName}
+            days={customPlanDays}
+            onChangeDays={setCustomPlanDays}
             onSavePlan={async (name, days) => {
               const saved = await workoutRedesignService.saveCustomPlan(name, days);
               setActivePlan(saved);
@@ -713,6 +780,7 @@ export function WorkoutRedesignContainer({
             }}
             onEditDayExercises={(day, idx) => {
               setDayEditorMode('plan');
+              setEditingCustomPlan(true);
               setDayEditorInitialWeekday(day.weekday);
               pushScreen('s07_day_editor');
             }}
@@ -792,10 +860,113 @@ export function WorkoutRedesignContainer({
         <S09SetTargetsSheet
           visible={!!setTargetsTarget}
           exercise={setTargetsTarget?.exercise || null}
+          mode="plan_targets"
           onSave={(sets, reps, weight, rest) => {
+            if (setTargetsTarget) {
+              const { index } = setTargetsTarget;
+              if (editingCustomPlan) {
+                setCustomPlanDays((prev) =>
+                  prev.map((d) => {
+                    if (d.weekday !== dayEditorInitialWeekday) return d;
+                    const updatedEx = [...d.exercises];
+                    const ex = updatedEx[index];
+                    if (ex) {
+                      updatedEx[index] = {
+                        ...ex,
+                        target_sets: sets,
+                        target_reps: reps,
+                        target_weight_kg: weight,
+                        rest_seconds: rest,
+                      };
+                    }
+                    return { ...d, exercises: updatedEx };
+                  }),
+                );
+              } else if (activePlan) {
+                setActivePlan({
+                  ...activePlan,
+                  days: activePlan.days.map((d) => {
+                    if (d.weekday !== dayEditorInitialWeekday) return d;
+                    const updatedEx = [...d.exercises];
+                    const ex = updatedEx[index];
+                    if (ex) {
+                      updatedEx[index] = {
+                        ...ex,
+                        target_sets: sets,
+                        target_reps: reps,
+                        target_weight_kg: weight,
+                        rest_seconds: rest,
+                      };
+                    }
+                    return { ...d, exercises: updatedEx };
+                  }),
+                });
+              }
+            }
             setSetTargetsTarget(null);
           }}
           onClose={() => setSetTargetsTarget(null)}
+        />
+
+        <S09SetTargetsSheet
+          visible={!!logStrengthTarget}
+          exercise={
+            logStrengthTarget
+              ? {
+                  id: logStrengthTarget.id,
+                  name: logStrengthTarget.name,
+                  primary_muscle: logStrengthTarget.primary_muscle,
+                  equipment: logStrengthTarget.equipment,
+                  target_sets: 3,
+                  target_reps: 10,
+                  target_weight_kg: 0,
+                  rest_seconds: 60,
+                  is_compound: logStrengthTarget.is_compound,
+                }
+              : null
+          }
+          mode="log_exercise"
+          onSave={async (sets, reps, weightKg) => {
+            if (logStrengthTarget) {
+              await workoutRedesignService.logCompletedStrengthExercise(
+                logStrengthTarget.name,
+                sets,
+                reps,
+                weightKg,
+                selectedDate,
+              );
+              await loadData();
+              setLogStrengthTarget(null);
+            }
+          }}
+          onStartSession={async (sets, reps, weightKg, restSeconds) => {
+            if (logStrengthTarget) {
+              const oneDay: GeneratedPlanDay = {
+                weekday: todayWeekday,
+                name: logStrengthTarget.name,
+                is_rest: false,
+                about_minutes: 30,
+                exercises: [
+                  {
+                    id: logStrengthTarget.id,
+                    name: logStrengthTarget.name,
+                    primary_muscle: logStrengthTarget.primary_muscle,
+                    equipment: logStrengthTarget.equipment,
+                    target_sets: sets,
+                    target_reps: reps,
+                    target_weight_kg: weightKg,
+                    rest_seconds: restSeconds,
+                    is_compound: logStrengthTarget.is_compound,
+                  },
+                ],
+              };
+              const sess = await workoutRedesignService.startSession(oneDay, selectedDate);
+              setInProgressSession(sess);
+              setLogStrengthTarget(null);
+              pushScreen('s05_active_session');
+            }
+          }}
+          onClose={() => setLogStrengthTarget(null)}
         />
 
         <S31FinalWarningSheet

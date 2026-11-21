@@ -21,7 +21,7 @@ export function S29LogActivitySheet({
 }: S29LogActivitySheetProps) {
   const isEditing = !!activityToEdit;
 
-  const [name, setName] = useState(activityToEdit?.activity_name || 'Stationary Cycling');
+  const [name, setName] = useState(activityToEdit?.activity_name || 'Yoga');
   const [duration, setDuration] = useState<number>(activityToEdit?.duration_minutes || 30);
   const [calories, setCalories] = useState(
     activityToEdit?.calories_burned ? String(activityToEdit.calories_burned) : '',
@@ -29,13 +29,13 @@ export function S29LogActivitySheet({
   const [notes, setNotes] = useState(activityToEdit?.notes || '');
 
   const quickActivities = [
-    'Stationary Cycling',
-    'Running',
-    'Walking',
-    'Swimming',
-    'Rowing',
     'Yoga',
     'HIIT',
+    'Stretching',
+    'Pilates',
+    'Calisthenics',
+    'Core Workout',
+    'Mobility',
   ];
 
   const handleSave = () => {

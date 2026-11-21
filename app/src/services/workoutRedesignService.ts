@@ -718,6 +718,79 @@ export const workoutRedesignService = {
     }
   },
 
+  async logCompletedStrengthExercise(
+    exerciseName: string,
+    setsCount: number,
+    reps: number,
+    weightKg: number | null,
+    localDate: string,
+  ): Promise<void> {
+    const supabase = getSupabase();
+    const { data: authData } = await supabase.auth.getUser();
+    const userId = authData?.user?.id || 'offline_user';
+    const workoutId = 'wrk_' + Math.random().toString(36).substring(2, 10);
+    const weId = 'we_' + Math.random().toString(36).substring(2, 10);
+    const now = new Date().toISOString();
+
+    const sets: SessionSet[] = [];
+    for (let i = 1; i <= setsCount; i++) {
+      sets.push({
+        id: 'set_' + Math.random().toString(36).substring(2, 10),
+        workout_exercise_id: weId,
+        set_number: i,
+        reps,
+        weight_kg: weightKg,
+        completed: true,
+        completed_at: now,
+      });
+    }
+
+    inMemoryActiveSession = null;
+
+    try {
+      if (authData?.user) {
+        await supabase.from('workouts').insert({
+          id: workoutId,
+          user_id: userId,
+          name: exerciseName,
+          local_date: localDate,
+          status: 'completed',
+          started_at: now,
+          ended_at: now,
+          effort: 7,
+        });
+
+        await supabase.from('workout_exercises').insert({
+          id: weId,
+          workout_id: workoutId,
+          exercise_name: exerciseName,
+          position: 1,
+          target_sets: setsCount,
+          target_reps: reps,
+          target_weight_kg: weightKg,
+          rest_seconds: 60,
+        });
+
+        const setsToInsert = sets.map((s) => ({
+          id: s.id,
+          workout_exercise_id: weId,
+          set_number: s.set_number,
+          reps: s.reps,
+          weight_kg: s.weight_kg,
+          completed: true,
+          completed_at: now,
+        }));
+        await supabase.from('workout_sets').insert(setsToInsert);
+
+        if (weightKg && weightKg > 0) {
+          await this.recordPersonalBest(exerciseName, weightKg, reps);
+        }
+      }
+    } catch {
+      // offline fallback
+    }
+  },
+
   async discardSession(workoutId: string): Promise<void> {
     if (inMemoryActiveSession && inMemoryActiveSession.id === workoutId) {
       inMemoryActiveSession = null;

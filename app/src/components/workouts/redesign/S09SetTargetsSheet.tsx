@@ -1,20 +1,29 @@
 import React, { useState, useEffect } from 'react';
 import { StyleSheet, Text, View, ScrollView } from 'react-native';
 import { workoutTokens } from '@calipartner/ui';
-import { WorkoutSheet, PrimaryButton, StepperRow, WorkoutChip } from '../s_common';
+import { WorkoutSheet, PrimaryButton, SecondaryButton, StepperRow, WorkoutChip } from '../s_common';
 import type { GeneratedPlanExercise } from '@calipartner/core';
 
 interface S09SetTargetsSheetProps {
   visible: boolean;
   exercise: GeneratedPlanExercise | null;
+  mode?: 'plan_targets' | 'log_exercise';
   onSave: (sets: number, reps: number, weightKg: number | null, restSeconds: number) => void;
+  onStartSession?: (
+    sets: number,
+    reps: number,
+    weightKg: number | null,
+    restSeconds: number,
+  ) => void;
   onClose: () => void;
 }
 
 export function S09SetTargetsSheet({
   visible,
   exercise,
+  mode = 'plan_targets',
   onSave,
+  onStartSession,
   onClose,
 }: S09SetTargetsSheetProps) {
   const [sets, setSets] = useState<number>(3);
@@ -39,16 +48,18 @@ export function S09SetTargetsSheet({
     onSave(sets, reps, weightKg > 0 ? weightKg : null, restSeconds);
   };
 
+  const isLogMode = mode === 'log_exercise';
+
   return (
     <WorkoutSheet
       visible={visible}
       onClose={onClose}
-      title={`Targets for ${exercise.name}`}
+      title={isLogMode ? exercise.name : `Targets for ${exercise.name}`}
       testID="s09-set-targets-sheet"
     >
       <ScrollView contentContainerStyle={styles.container} showsVerticalScrollIndicator={false}>
         <StepperRow
-          label="Target sets"
+          label={isLogMode ? 'Sets' : 'Target sets'}
           value={sets}
           onIncrement={() => setSets((prev) => Math.min(10, prev + 1))}
           onDecrement={() => setSets((prev) => Math.max(1, prev - 1))}
@@ -56,7 +67,7 @@ export function S09SetTargetsSheet({
         />
 
         <StepperRow
-          label="Target reps"
+          label={isLogMode ? 'Reps per set' : 'Target reps'}
           value={reps}
           onIncrement={() => setReps((prev) => Math.min(50, prev + 1))}
           onDecrement={() => setReps((prev) => Math.max(1, prev - 1))}
@@ -64,7 +75,7 @@ export function S09SetTargetsSheet({
         />
 
         <StepperRow
-          label="Target weight"
+          label={isLogMode ? 'Weight' : 'Target weight'}
           value={weightKg > 0 ? `${weightKg} kg` : 'Bodyweight'}
           onIncrement={() => setWeightKg((prev) => prev + 2.5)}
           onDecrement={() => setWeightKg((prev) => Math.max(0, prev - 2.5))}
@@ -85,11 +96,20 @@ export function S09SetTargetsSheet({
         </View>
 
         <PrimaryButton
-          label="Save targets"
+          label={isLogMode ? 'Log as completed' : 'Save targets'}
           onPress={handleSave}
           style={styles.saveBtn}
           testID="save-targets-btn"
         />
+
+        {isLogMode && onStartSession ? (
+          <SecondaryButton
+            label="Start workout session"
+            onPress={() => onStartSession(sets, reps, weightKg > 0 ? weightKg : null, restSeconds)}
+            style={styles.startSessionBtn}
+            testID="start-session-from-targets-btn"
+          />
+        ) : null}
       </ScrollView>
     </WorkoutSheet>
   );
@@ -116,5 +136,9 @@ const styles = StyleSheet.create({
   },
   saveBtn: {
     width: '100%',
+  },
+  startSessionBtn: {
+    width: '100%',
+    marginTop: 10,
   },
 });

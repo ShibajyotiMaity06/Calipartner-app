@@ -70,7 +70,7 @@ export default function LogScreen() {
   const activeFlow = flows[flows.length - 1]!;
   const closing = useRef(false);
   useEffect(() => {
-    if (!closing.current) {
+    if (!closing.current && requestedFlow !== 'picker') {
       setFlows([requestedFlow]);
       setWeightHistoryOpen(false);
       setEditingWeight(null);
@@ -80,8 +80,14 @@ export default function LogScreen() {
     useCallback(() => {
       closing.current = false;
       setSheetVisible(true);
+      if (params.flow) {
+        setFlows([requestedFlow]);
+        router.setParams({ flow: undefined });
+      } else {
+        setFlows(['picker']);
+      }
       return () => setSheetVisible(false);
-    }, []),
+    }, [params.flow, requestedFlow, router]),
   );
   const openFlow = (flow: ActiveFlowState) => {
     if (closing.current) return;
@@ -126,7 +132,12 @@ export default function LogScreen() {
   const closeFlow = () => {
     if (closing.current) return;
     if (flows.length === 1) {
-      handleCloseAll();
+      if (flows[0] !== 'picker') {
+        setFlows(['picker']);
+        if (params.flow) router.setParams({ flow: undefined });
+      } else {
+        handleCloseAll();
+      }
       return;
     }
     setWeightHistoryOpen(false);

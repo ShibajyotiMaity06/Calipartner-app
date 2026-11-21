@@ -3,6 +3,8 @@
  * Source of truth: Workout Redesign Spec (Nov 21, 2026) & attached PDF
  */
 
+import { EXERCISE_DEV_SEED_ALL } from './exercise_dataset';
+
 export interface AiWorkoutInputs {
   days_per_week: number; // 1 to 6
   training_days: number[]; // 1 (Mon) to 7 (Sun), exactly days_per_week elements
@@ -823,7 +825,42 @@ export function getSplitDayTemplates(
   ];
 }
 
-export const EXERCISE_CATALOG = WORKOUT_MASTER_LIBRARY;
+const datasetCatalog: MasterExercise[] = EXERCISE_DEV_SEED_ALL.filter(
+  (e) => e.muscle_group !== 'cardio',
+).map((e) => {
+  let muscle = e.muscle_group as string;
+  if (muscle === 'full_body') muscle = 'legs';
+  else if (muscle === 'other') muscle = 'core';
+  return {
+    id: e.id,
+    name: e.name,
+    primary_muscle: muscle,
+    equipment: e.equipment || 'bodyweight',
+    level_min: 'beginner' as const,
+    is_compound: e.type === 'strength',
+  };
+});
+
+const seenExerciseNames = new Set<string>();
+const combinedCatalog: MasterExercise[] = [];
+
+for (const ex of WORKOUT_MASTER_LIBRARY) {
+  const norm = ex.name.toLowerCase().trim();
+  if (!seenExerciseNames.has(norm)) {
+    seenExerciseNames.add(norm);
+    combinedCatalog.push(ex);
+  }
+}
+
+for (const ex of datasetCatalog) {
+  const norm = ex.name.toLowerCase().trim();
+  if (!seenExerciseNames.has(norm)) {
+    seenExerciseNames.add(norm);
+    combinedCatalog.push(ex);
+  }
+}
+
+export const EXERCISE_CATALOG: MasterExercise[] = combinedCatalog;
 
 /**
  * Builds a deterministic, validated workout plan matching Section 9 rules.
