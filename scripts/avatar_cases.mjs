@@ -61,6 +61,56 @@ export async function runAvatarTests(db) {
       assert.equal((await create()).balances.earned, 20);
       assert.equal(first.products.length, 93);
     });
+    await test('custom bases are private, replay-safe, and gated by live paid Pro', async () => {
+      const id = ids[2];
+      await actor(2);
+      await create();
+      await assert.rejects(
+        () => db.query('select public.get_custom_avatar($1)', [id]),
+        /permission denied/,
+      );
+      await assert.rejects(
+        () => db.query('select custom_base_url from public.avatar_profiles where user_id=$1', [id]),
+        /permission denied/,
+      );
+      await admin();
+      const read = () => scalar('select public.get_custom_avatar($1) as value', [id]);
+      const begin = (attempt, hash = 'a'.repeat(64)) =>
+        scalar('select public.begin_custom_avatar($1,$2,$3) as value', [
+          id,
+          request(attempt),
+          hash,
+        ]);
+      const finish = (attempt, lease) =>
+        scalar('select public.finish_custom_avatar($1,$2,$3,$4) as value', [
+          id,
+          request(attempt),
+          lease,
+          'https://example.invalid/private-signed-image',
+        ]);
+      assert.equal((await begin(80)).code, 'UPGRADE_REQUIRED');
+      await db.query(
+        "insert into public.entitlements(user_id,tier,period,source,status,period_end) values($1,'pro','annual','none','paid',now()+interval '1 day') on conflict (user_id) do update set tier='pro',status='paid',period_end=now()+interval '1 day'",
+        [id],
+      );
+      const { lease_id } = await begin(80);
+      assert.ok(lease_id);
+      assert.equal((await begin(81)).code, 'REQUEST_IN_PROGRESS');
+      assert.equal((await finish(80, lease_id)).saved, true);
+      assert.equal((await begin(80)).replay, true);
+      assert.equal((await begin(80, 'b'.repeat(64))).code, 'REQUEST_CONFLICT');
+      assert.equal((await read()).request_id, request(80));
+      await actor(2);
+      assert.equal('custom_base_url' in (await state()).profile, false);
+      await admin();
+      await db.query(
+        "update public.entitlements set period_end=now()-interval '1 second' where user_id=$1",
+        [id],
+      );
+      assert.equal(await read(), null);
+      assert.equal((await begin(82)).code, 'UPGRADE_REQUIRED');
+      await actor(0);
+    });
     await test('fake rewards, unowned loadouts, invalid slots and foreign reads are rejected', async () => {
       await assert.rejects(
         () => scalar('select public.claim_daily_drop() as value'),

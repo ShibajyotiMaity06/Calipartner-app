@@ -62,7 +62,7 @@ export default function CollectionScreen() {
           {!access ? (
             <Button
               variant="secondary"
-              label={t('avatar.unlock', { tier: collection.tier_required })}
+              label={t('avatar.unlock', { tier: t('proPlan.pro') })}
               onPress={() => router.push('/paywall')}
               testID="collection-unlock"
             />
@@ -147,7 +147,7 @@ export default function CollectionScreen() {
                       size="sm"
                       variant="secondary"
                       label={t(product.accessible ? 'avatar.buy' : 'avatar.unlock', {
-                        tier: collection.tier_required,
+                        tier: t('proPlan.pro'),
                       })}
                       onPress={() =>
                         product.accessible

@@ -6,7 +6,7 @@ export const publicSite = {
   description:
     'Log Indian meals in seconds, team up in accountability rooms, track workouts, and stay consistent with streaks. Built for Indian food.',
   audience: 'Built for Indian food & fitness accountability.',
-  trial: 'Personal tracking is free forever. Plus and Pro are optional paid subscriptions.',
+  trial: 'Personal tracking is free forever. Pro is an optional paid subscription.',
   browserHelp:
     'If Google login doesn’t open in this browser, use the email 6-digit code or open in Safari/Chrome.',
   googlePending: 'Google sign-in has not completed. You can use your email code below.',
@@ -36,7 +36,7 @@ export const publicSite = {
       },
       {
         title: 'Feed posts and comments',
-        body: 'Photos, videos, descriptions, captions and comments you submit to Feed are checked by server-side moderation providers before publication. Published media is stored privately and can be opened by the signed-in audience you choose. If you choose to share goal completion on a post, Plus and Pro viewers who can open that post can compare percentages for that day. Shares and links follow the same audience settings. You can delete your posts and comments and report or block other users.',
+        body: 'Photos, videos, descriptions, captions and comments you submit to Feed are checked by server-side moderation providers before publication. Published media is stored privately and can be opened by the signed-in audience you choose. If you choose to share goal completion on a post, Pro viewers who can open that post can compare percentages for that day. Shares and links follow the same audience settings. You can delete your posts and comments and report or block other users.',
       },
       {
         title: 'AI processing and consent',
@@ -69,11 +69,11 @@ export const publicSite = {
       },
       {
         title: 'Free tracking',
-        body: 'Personal tracking is free forever. Full AI meal and workout plans require purchased Plus or Pro and consent',
+        body: 'Personal tracking is free forever. Full AI meal and workout plans require purchased Pro and consent',
       },
       {
         title: 'Subscriptions, renewal and cancellation',
-        body: 'Paid Plus and Pro subscriptions are offered for six months or one year, with a three-month exit offer. The purchase screen shows the price, currency, duration and renewal terms before you confirm. Paid purchases bill immediately and automatically renew unless cancelled according to your provider’s terms. Manage Apple subscriptions in Apple account subscription settings and Google Play subscriptions in Payments and subscriptions. For web purchases, use the billing management link in the app or your provider’s receipt. Cancel before the provider’s renewal deadline; access generally continues to the end of the paid period. Refund requests follow the payment provider’s policy and applicable law. Deleting your account or uninstalling the app does not cancel a subscription.',
+        body: 'Paid Pro subscriptions are offered for one year, six months or three months. The purchase screen shows the price, currency, duration and renewal terms before you confirm. Paid purchases bill immediately and automatically renew unless cancelled according to your provider’s terms. Manage Apple subscriptions in Apple account subscription settings and Google Play subscriptions in Payments and subscriptions. For web purchases, use the billing management link in the app or your provider’s receipt. Cancel before the provider’s renewal deadline; access generally continues to the end of the paid period. Refund requests follow the payment provider’s policy and applicable law. Deleting your account or uninstalling the app does not cancel a subscription.',
       },
       {
         title: 'Available and planned features',

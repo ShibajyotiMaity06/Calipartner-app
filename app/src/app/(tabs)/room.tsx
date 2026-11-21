@@ -12,6 +12,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { Avatar, Button, Text, homeLayout, radius, space } from '@calipartner/ui';
 import { useTheme as useAppearance } from '@calipartner/ui/theme';
 import type { RoomMemberSnapshot } from '@calipartner/core';
+import { roomCap } from '@calipartner/core';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRooms } from '@/hooks/useRooms';
 import { useRoomSnapshot } from '@/hooks/useRoomSnapshot';
@@ -450,7 +451,7 @@ export default function RoomScreen() {
           visible
           onClose={closeEntry}
           isPlusOrPro={hasActiveAccess}
-          memberCap={hasActiveAccess ? (currentTier === 'pro' ? 20 : 5) : 2}
+          memberCap={roomCap(hasActiveAccess ? currentTier : 'free')}
           friends={friends.inbox?.friends ?? []}
           loading={friends.loading}
           error={Boolean(friends.error)}

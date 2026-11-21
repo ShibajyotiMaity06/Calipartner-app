@@ -247,28 +247,37 @@ Deno.test(
     const state = setup();
     const result = await handleRazorpayCheckout(request({ action: 'catalog' }), () => state.config);
     assert.equal(result.status, 200);
-    assert.equal((await result.json()).products.length, 6);
+    assert.equal((await result.json()).products.length, 3);
     const bad = setup({ wrongPrice: true });
     assert.equal(
       (
         await handleRazorpayCheckout(
-          request({ tier: 'plus', duration: 'semiannual', request_id: checkoutId }),
+          request({ tier: 'pro', duration: 'semiannual', request_id: checkoutId }),
           () => bad.config,
         )
       ).status,
       503,
     );
     assert.equal(bad.reserveCount(), 0);
+    assert.equal(
+      (
+        await handleRazorpayCheckout(
+          request({ tier: 'plus', duration: 'annual', request_id: checkoutId }),
+          () => state.config,
+        )
+      ).status,
+      400,
+    );
   },
 );
 Deno.test(
   'Account-bound reservations reuse one subscription, without a new provider trial or client-granted entitlements',
   async () => {
-    for (const tier of ['plus', 'pro']) {
+    for (const duration of ['annual', 'semiannual', 'quarterly']) {
       const state = setup();
       const body = {
-        tier,
-        duration: 'semiannual',
+        tier: 'pro',
+        duration,
         request_id: checkoutId,
         user_id: 'attacker',
         amount: 1,
@@ -286,7 +295,7 @@ Deno.test(
   'Unknown creation outcome stays reserved; a retry never creates another subscription',
   async () => {
     const state = setup({ lostAck: true });
-    const body = { tier: 'plus', duration: 'semiannual', request_id: checkoutId };
+    const body = { tier: 'pro', duration: 'semiannual', request_id: checkoutId };
     assert.equal((await handleRazorpayCheckout(request(body), () => state.config)).status, 503);
     assert.equal((await handleRazorpayCheckout(request(body), () => state.config)).status, 409);
     assert.equal(state.calls.filter((call) => call.path === '/subscriptions').length, 1);

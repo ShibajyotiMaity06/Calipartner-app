@@ -7,9 +7,11 @@ import type { AvatarTint } from '@/services/avatarService';
 import { t } from '@/i18n';
 import { avatarAssets } from './assets.generated';
 import { thumbnailBounds } from './thumbnailBounds.generated';
+import { useAvatar } from '@/hooks/useAvatar';
 
 interface Props {
-  profile: Pick<AvatarProfile, 'gender' | 'form' | 'slots' | 'tints' | 'skin_tone_id'>;
+  profile: Pick<AvatarProfile, 'gender' | 'form' | 'slots' | 'tints' | 'skin_tone_id'> &
+    Partial<Pick<AvatarProfile, 'user_id'>>;
   products: AvatarProduct[];
   tints: AvatarTint[];
   height?: number;
@@ -36,8 +38,17 @@ export const AvatarView = memo(function AvatarView({
   item,
 }: Props) {
   const id = useId().replaceAll(':', '');
+  const { customBase } = useAvatar();
+  const custom =
+    !item &&
+    !preview &&
+    customBase?.owner === profile.user_id &&
+    customBase?.gender === profile.gender
+      ? customBase
+      : undefined;
+  const form = custom ? 1 : profile.form;
   const suffix = preview ? '_preview' : '';
-  const layers = avatarLayers(profile, products).filter(
+  const layers = avatarLayers({ ...profile, form }, products).filter(
     (l) => !['backdrop', 'aura', 'frame'].includes(l.product.slot),
   );
   // Trouser hems overlap shoe collars; drawing shoes last leaves a detached cuff.
@@ -48,6 +59,7 @@ export const AvatarView = memo(function AvatarView({
       key: `skinmask_${profile.gender}_form${profile.form}`,
       tint: tints.find((t) => t.id === profile.skin_tone_id)?.hex,
     },
+    ...(custom ? [{ key: 'custom-base', tint: undefined }] : []),
   ];
   const images = item
     ? [
@@ -99,7 +111,10 @@ export const AvatarView = memo(function AvatarView({
           )}
         </Defs>
         {images.map((layer, index) => {
-          const asset = avatarAssets[layer.key + suffix] ?? avatarAssets[layer.key];
+          const asset =
+            layer.key === 'custom-base' && custom
+              ? { uri: custom.custom_base_url }
+              : (avatarAssets[layer.key + suffix] ?? avatarAssets[layer.key]);
           return asset ? (
             <SvgImage
               key={`${index}-${layer.key}`}

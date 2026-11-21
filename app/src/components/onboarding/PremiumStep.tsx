@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { Platform, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { Platform, ScrollView, StyleSheet, View } from 'react-native';
 import {
   Button,
   CheckIcon,
@@ -9,26 +9,30 @@ import {
   space,
   useTheme,
 } from '@calipartner/ui';
-import type { DodoCatalogProduct } from '@calipartner/core';
+import {
+  CHECKOUT_DURATIONS,
+  type CheckoutDuration,
+  type DodoCatalogProduct,
+} from '@calipartner/core';
 import { useSubscription } from '@/hooks/useSubscription';
 import { fetchWebCatalog, getCachedWebCatalog } from '@/services/webBillingService';
 import { useAuth } from '@/contexts/AuthContext';
 import { findSubscriptionPackage } from '@/services/subscriptionPackages';
 import { t } from '@/i18n';
+import { checkoutPrice, PRO_BENEFITS } from '@/components/rooms/PaywallCheckout';
 import { PlanCard, planStyles } from './PlanPrimitives';
 
 export function PremiumStep({
   onContinue,
   onSkip,
 }: {
-  onContinue: (tier: 'plus' | 'pro') => void;
+  onContinue: (tier: 'pro') => void;
   onSkip: () => void;
 }) {
   const { colors } = useTheme();
   const { session } = useAuth();
   const prepared = Platform.OS === 'web' ? getCachedWebCatalog(session?.access_token) : undefined;
   const { offerings, loading: storeLoading, refresh } = useSubscription();
-  const [tier, setTier] = useState<'plus' | 'pro'>('plus');
   const [catalog, setCatalog] = useState<DodoCatalogProduct[]>(prepared?.products ?? []);
   const [loading, setLoading] = useState(Platform.OS === 'web' && !prepared);
   const [error, setError] = useState(false);
@@ -56,53 +60,34 @@ export function PremiumStep({
     };
   }, [retry, session?.access_token]);
   const price = useCallback(
-    (duration: 'semiannual' | 'annual') => {
-      if (Platform.OS !== 'web')
-        return findSubscriptionPackage(offerings, tier, duration)?.product.priceString;
-      const product = catalog.find((item) => item.key === `${tier}_${duration}`);
-      return product
-        ? new Intl.NumberFormat(product.currency === 'INR' ? 'en-IN' : 'en-US', {
-            style: 'currency',
-            currency: product.currency,
-          }).format(product.amount)
-        : undefined;
+    (duration: CheckoutDuration) => {
+      return Platform.OS !== 'web'
+        ? checkoutPrice(
+            'pro',
+            duration,
+            undefined,
+            findSubscriptionPackage(offerings, 'pro', duration),
+          )?.total
+        : checkoutPrice(
+            'pro',
+            duration,
+            catalog.find((product) => product.key === 'pro_' + duration),
+          )?.total;
     },
-    [catalog, offerings, tier],
+    [catalog, offerings],
   );
-  const semiannual = price('semiannual'),
-    annual = price('annual');
+  const prices = CHECKOUT_DURATIONS.map((duration) => ({ duration, total: price(duration) }));
+  const available = prices.some(({ total }) => Boolean(total));
   const waiting = Platform.OS === 'web' ? loading : storeLoading;
   return (
     <View style={styles.frame} testID="premium-highlights">
       <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
         <Text variant="title1" accessibilityRole="header" testID="onboarding-title">
-          {t('entryRefresh.plansTitle')}
+          {t('proPlan.title')}
         </Text>
         <Text variant="bodyS" color={colors.textMid}>
-          {t('entryRefresh.plansSubtitle')}
+          {t('proPlan.tax')}
         </Text>
-        <View
-          style={[styles.tabs, { backgroundColor: colors.s1, borderColor: colors.hairline }]}
-          accessibilityRole="tablist"
-        >
-          {(['plus', 'pro'] as const).map((value) => (
-            <Pressable
-              key={value}
-              onPress={() => setTier(value)}
-              accessibilityRole="tab"
-              accessibilityState={{ selected: tier === value }}
-              testID={`onboarding-plan-${value}`}
-              style={[
-                styles.tab,
-                { backgroundColor: tier === value ? colors.apricot : 'transparent' },
-              ]}
-            >
-              <Text variant="label" color={tier === value ? colors.onBrand : colors.textMid}>
-                {t(`entryRefresh.${value}`)}
-              </Text>
-            </Pressable>
-          ))}
-        </View>
         <PlanCard testID="premium-week-preview">
           <Text variant="label">{t('entryRefresh.exampleWeek')}</Text>
           <View style={styles.days}>
@@ -133,11 +118,11 @@ export function PremiumStep({
             ))}
           </View>
         </PlanCard>
-        {(['One', 'Two', 'Three', 'Four'] as const).map((number) => (
-          <View key={number} style={planStyles.row}>
+        {PRO_BENEFITS.map((benefit) => (
+          <View key={benefit} style={planStyles.row}>
             <CheckIcon size={layout.icon} color={colors.apricot} />
             <Text variant="bodyS" style={planStyles.flex}>
-              {t(`entryRefresh.${tier}${number}`)}
+              {t(benefit)}
             </Text>
           </View>
         ))}
@@ -152,15 +137,22 @@ export function PremiumStep({
           >
             <Text accessibilityLiveRegion="polite">{t('fixes.loadingPrices')}</Text>
           </View>
-        ) : (semiannual || annual) && !error ? (
+        ) : available && !error ? (
           <>
             <View style={styles.priceRow}>
-              <Text variant="bodyS" tabular testID="onboarding-six-month-price">
-                {t('releaseUpdate.semiannual')} {'\u00b7'} {semiannual}
-              </Text>
-              <Text variant="bodyS" tabular testID="onboarding-annual-price">
-                {t('releaseUpdate.annual')} {'\u00b7'} {annual}
-              </Text>
+              {prices.map(
+                ({ duration, total }) =>
+                  total && (
+                    <Text
+                      key={duration}
+                      variant="bodyS"
+                      tabular
+                      testID={`onboarding-${duration}-price`}
+                    >
+                      {t(`releaseUpdate.${duration}`)} {'·'} {total}
+                    </Text>
+                  ),
+              )}
             </View>
             {Platform.OS === 'web' && (
               <Text variant="micro" color={colors.textMid}>
@@ -190,9 +182,9 @@ export function PremiumStep({
         )}
         <Text variant="bodyS">{t('releaseUpdate.freeForever')}</Text>
         <Button
-          label={t('entryRefresh.choosePlan', { plan: t(`entryRefresh.${tier}`) })}
-          onPress={() => onContinue(tier)}
-          disabled={waiting || (!semiannual && !annual) || error}
+          label={t('entryRefresh.choosePlan', { plan: t('proPlan.pro') })}
+          onPress={() => onContinue('pro')}
+          disabled={waiting || !available || error}
           testID="btn-onboarding-next"
         />
         <Button

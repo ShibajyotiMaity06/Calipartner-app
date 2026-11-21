@@ -84,9 +84,6 @@ export const BASIC_PRODUCTS = Object.freeze({
 } as const);
 
 export const ACTIVE_REVENUECAT_PRODUCT_IDS: readonly string[] = Object.freeze([
-  PLUS_PRODUCTS.semiannual,
-  PLUS_PRODUCTS.quarterly,
-  PLUS_PRODUCTS.annual,
   PRO_PRODUCTS.semiannual,
   PRO_PRODUCTS.quarterly,
   PRO_PRODUCTS.annual,
@@ -196,13 +193,13 @@ export const PRICING_PLANS = Object.freeze({
       rawMonthly: 9.99,
     },
     trialDays: 0,
-    roomCap: 20, // Explicit requirement: 20 members for Pro
-    hostedRoomsMax: 5,
+    roomCap: 9999,
+    hostedRoomsMax: 20,
     rawMonthly: 499,
     rawAnnual: 2499,
-    aiScansPerDay: 5,
+    aiScansPerMonth: 248,
     aiFreeTasteScans: 0,
-    aiCoachMessagesPerDay: 10,
+    aiCoachMessagesPerMonth: 465,
   },
 });
 
@@ -310,7 +307,7 @@ export const DEFAULT_REMOTE_CONFIG: RemoteConfigMap = Object.freeze({
     free: 2,
     basic: 2,
     plus: 5,
-    pro: 20,
+    pro: 9999,
     community: 20,
   }),
   trial_length_days: 0,
@@ -322,7 +319,7 @@ export function getTierCap(tier: RoomTier, config?: Partial<RemoteConfigMap> | n
   if (config?.room_caps && config.room_caps[tier] !== undefined) {
     return config.room_caps[tier];
   }
-  return DEFAULT_REMOTE_CONFIG.room_caps[tier] ?? (tier === 'pro' ? 20 : tier === 'plus' ? 5 : 2);
+  return DEFAULT_REMOTE_CONFIG.room_caps[tier] ?? (tier === 'pro' ? 9999 : tier === 'plus' ? 5 : 2);
 }
 
 // -----------------------------------------------------------------------------
@@ -355,6 +352,7 @@ export function getRequiredTierForFeature(feature: AppFeature): 'free' | 'plus' 
   if (freeFeatures.includes(feature)) return 'free';
 
   const proFeatures: AppFeature[] = [
+    'progress_photos',
     'ai_coach',
     'ai_photo_logging',
     'chat_to_log',
@@ -513,8 +511,7 @@ export const PAYWALL_TRIGGER_METADATA: Record<
   },
   create_room: {
     title: 'Host an Accountability Room',
-    subtitle:
-      'Free hosts 1 room of 2 people. Plus hosts 3 rooms of 5 people each; Pro hosts 5 rooms of 20 people each.',
+    subtitle: 'Free hosts 1 room of 2 people. Pro lets you host rooms with unlimited members.',
     suggestedTier: 'plus',
     allowsTrial: true,
   },
@@ -532,7 +529,7 @@ export const PAYWALL_TRIGGER_METADATA: Record<
   },
   add_member_beyond_cap: {
     title: 'Need room for more friends?',
-    subtitle: 'Plus supports up to 5 people per room. Pro supports up to 20 people per room.',
+    subtitle: 'Host rooms with unlimited members on Pro.',
     suggestedTier: 'pro',
     allowsTrial: false,
   },
@@ -544,7 +541,7 @@ export const PAYWALL_TRIGGER_METADATA: Record<
   },
   open_ai_coach: {
     title: 'CaliPartner AI Coach',
-    subtitle: 'Personalized guidance using Claude Haiku 5.5 (10 messages per day). Requires Pro.',
+    subtitle: 'Personalized guidance with 465 chats per month on Pro.',
     suggestedTier: 'pro',
     allowsTrial: true,
   },
@@ -556,7 +553,7 @@ export const PAYWALL_TRIGGER_METADATA: Record<
   },
   ai_photo_scan: {
     title: 'AI Food Photo Logging',
-    subtitle: 'Instant meal detection from photos (5 scans per day). Requires Pro.',
+    subtitle: 'Instant meal detection with 248 scans per month on Pro.',
     suggestedTier: 'pro',
     allowsTrial: true,
   },
@@ -586,7 +583,7 @@ export const PAYWALL_TRIGGER_METADATA: Record<
   },
   body_measurements: {
     title: 'Body Measurements & Progress Photos',
-    subtitle: 'Track private body circumference and photos with Plus.',
+    subtitle: 'Track private body measurements and progress photos with Pro.',
     suggestedTier: 'plus',
     allowsTrial: true,
   },

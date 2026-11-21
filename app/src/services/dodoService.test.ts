@@ -13,14 +13,7 @@ describe('browser Dodo checkout', () => {
     expect(assign).toHaveBeenCalledWith('https://customer.dodopayments.com/portal');
   });
   it('loads server-verified prices for every selectable plan', async () => {
-    const products = [
-      'plus_semiannual',
-      'plus_annual',
-      'plus_quarterly',
-      'pro_semiannual',
-      'pro_annual',
-      'pro_quarterly',
-    ].map((key) => ({
+    const products = ['pro_semiannual', 'pro_annual', 'pro_quarterly'].map((key) => ({
       key,
       currency: 'USD',
       amount: 29.99,

@@ -48,8 +48,7 @@ import {
   type DodoCatalogProduct,
 } from '@calipartner/core';
 import { useBrowserModalBack } from '@/hooks/useBrowserModalBack';
-import { checkoutPrice, MAIN_PAYWALL_DURATIONS } from './PaywallCheckout';
-import { PaywallDownsellModal } from './PaywallDownsellModal';
+import { checkoutPrice, MAIN_PAYWALL_DURATIONS, PRO_BENEFITS } from './PaywallCheckout';
 import { useSubscription } from '@/hooks/useSubscription';
 import { playClickSound, playSuccessSound } from '@/lib/sound';
 
@@ -78,103 +77,23 @@ export interface PaywallModalProps {
   checkoutCancelled?: boolean;
 }
 
-export const TIER_CONFIG = {
-  plus: {
-    key: 'plus' as PlanTier,
-    label: 'Plus',
-    title: 'CaliPartner Plus',
-    badge: 'PLUS',
-    cap: 5,
-    sizeRange: '3 to 5',
-    summary: 'launch.plus',
-    testID: 'picker-size-6-20',
-    hasTrial: false,
-    trialDays: 0,
-  },
-  pro: {
-    key: 'pro' as PlanTier,
-    label: 'Pro',
-    title: 'CaliPartner Pro',
-    badge: 'AI COACH & SCANS',
-    cap: 20,
-    sizeRange: '6 to 20',
-    summary: 'launch.pro',
-    testID: 'picker-size-21-50',
-    hasTrial: false,
-    trialDays: 0,
-  },
-  basic: {
-    key: 'basic' as PlanTier,
-    label: 'Basic',
-    title: 'CaliPartner Free',
-    badge: 'FREE FOREVER',
-    cap: 2,
-    sizeRange: '2 people',
-    summary: 'Food diary, barcode, steps & GPS tracking free forever',
-    testID: 'picker-size-2-5',
-    hasTrial: false,
-    trialDays: 0,
-  },
-};
-
-const PLUS_FEATURES = [
-  'setup.plusFriendRequests',
-  'setup.plusRoomFeature',
-  'launch.friends',
-  'launch.fasting',
-  'launch.recipes',
-  'launch.workouts',
-  'launch.photos',
+const COMING_SOON = [
+  'progressRefresh.coming',
+  'launch.measurements',
+  'launch.export',
+  'launch.matching',
+  'launch.seasons',
+  'launch.records',
+  'launch.collections',
+  'launch.weekly',
 ] as const;
-const PRO_FEATURES = [
-  'launch.everything',
-  'launch.coach',
-  'launch.scans',
-  'launch.chatLog',
-  'launch.monthly',
-  'setup.proRoomFeature',
-  'setup.proMediaFeature',
-  'launch.priority',
-] as const;
-const COMING_SOON = {
-  plus: [
-    'progressRefresh.coming',
-    'launch.measurements',
-    'launch.export',
-    'launch.matching',
-    'launch.seasons',
-    'launch.records',
-  ],
-  pro: ['launch.collections', 'launch.weekly'],
-} as const;
-
-interface ComparisonRow {
-  id: string;
-  label?: string;
-  labelKey?: Parameters<typeof t>[0];
-  free: boolean;
-  plus: boolean;
-  pro: boolean;
-  proOnly?: boolean;
-}
-
-const COMPARISON_ROWS: ComparisonRow[] = [
-  { id: 'workouts', label: 'Track workouts & meals', free: true, plus: true, pro: true },
-  { id: 'rooms', label: '2-person partner room', free: true, plus: true, pro: true },
-  { id: 'fasting', labelKey: 'launch.fasting', free: false, plus: true, pro: true },
-  { id: 'recipes', labelKey: 'launch.recipes', free: false, plus: true, pro: true },
-  { id: 'photos', labelKey: 'launch.photos', free: false, plus: true, pro: true },
-  { id: 'scans', labelKey: 'launch.scans', free: false, plus: false, pro: true },
-  { id: 'coach', labelKey: 'launch.coach', free: false, plus: false, pro: true },
-  { id: 'priority', labelKey: 'launch.priority', free: false, plus: false, pro: true },
-  {
-    id: 'everything',
-    labelKey: 'launch.everything',
-    free: false,
-    plus: false,
-    pro: true,
-    proOnly: true,
-  },
+const FREE_BENEFITS = ['proPlan.logs', 'proPlan.workoutCalendar', 'proPlan.pair'] as const;
+const COMPARISON_ROWS = [
+  ...FREE_BENEFITS.map((label) => ({ label, free: true })),
+  ...PRO_BENEFITS.map((label) => ({ label, free: false })),
+  ...(['launch.fasting', 'launch.recipes', 'launch.workouts', 'launch.priority'] as const).map(
+    (label) => ({ label, free: false }),
+  ),
 ];
 
 export function PaywallModal({
@@ -185,7 +104,6 @@ export function PaywallModal({
   onClose,
   context = 'general',
   roomPartnerName,
-  preselectedTier,
   preselectedDuration,
   sponsorRoomId,
   isUpgrade,
@@ -213,22 +131,10 @@ export function PaywallModal({
     loading: subscriptionLoading,
   } = useSubscription();
 
-  // Selected Tier (Plus, Pro) - default to Plus
-  const [selectedTier, setSelectedTier] = useState<PlanTier>(() => {
-    if (checkoutReturn) return checkoutReturn.tier;
-    if (preselectedTier === 'pro') return 'pro';
-    return 'plus';
-  });
-
-  // Keep the term from an in-progress checkout on return.
+  const selectedTier = checkoutReturn?.tier ?? 'pro';
   const [selectedDuration, setSelectedDuration] = useState<RoomPeriod>(
-    (!checkoutCancelled || checkoutReturn?.duration === 'quarterly'
-      ? checkoutReturn?.duration
-      : undefined) ??
-      preselectedDuration ??
-      'annual',
+    checkoutReturn?.duration ?? preselectedDuration ?? 'annual',
   );
-  const [exitOffer, setExitOffer] = useState(checkoutReturn?.duration === 'quarterly');
   const swipeStart = useRef<{ x: number; y: number } | null>(null);
   const completed = useRef(false);
   const actionInFlight = useRef(false);
@@ -356,16 +262,14 @@ export function PaywallModal({
         return 'Keep your room going';
       case 'general':
       default:
-        return 'Choose your CaliPartner plan';
+        return t('proPlan.title');
     }
   }, [context, roomPartnerName, trialExpired]);
 
-  const activeTierConfig = TIER_CONFIG[selectedTier === 'basic' ? 'plus' : selectedTier];
-
   // Find corresponding RevenueCat package if offerings are loaded
   const matchedPackage: PurchasesPackage | null = useMemo(
-    () => findSubscriptionPackage(offerings, selectedTier, selectedDuration),
-    [offerings, selectedTier, selectedDuration],
+    () => findSubscriptionPackage(offerings, 'pro', selectedDuration),
+    [offerings, selectedDuration],
   );
   const quote = (tier: 'plus' | 'pro', duration: CheckoutDuration) =>
     Platform.OS === 'web'
@@ -380,22 +284,10 @@ export function PaywallModal({
           undefined,
           findSubscriptionPackage(offerings, tier, duration),
         );
-  const mainDuration = selectedDuration === 'semiannual' ? 'semiannual' : 'annual';
-  const storePrice = (tier: 'plus' | 'pro') =>
-    quote(tier, mainDuration)?.total ??
-    t(catalogLoading ? 'fixes.loadingPrices' : 'fixes.priceUnavailable');
-  const offerTier = selectedTier === 'pro' ? 'pro' : 'plus';
+  const mainDuration = selectedDuration === 'monthly' ? 'annual' : selectedDuration;
   const managing = (hasActiveAccess && !cardlessActive) || requiresWebManagement;
-  const offerPrice = quote(offerTier, 'quarterly');
   const requestClose = () => {
-    if (completionPending || actionInFlight.current) return;
-    if (exitOffer || completed.current || managing || awaitingEntitlement) {
-      onClose();
-    } else {
-      setStatusMessage(null);
-      setSelectedDuration('quarterly');
-      setExitOffer(true);
-    }
+    if (!completionPending && !actionInFlight.current) onClose();
   };
   useBrowserModalBack(visible, requestClose, {
     depth: 1,
@@ -470,7 +362,7 @@ export function PaywallModal({
           await loadCatalog();
           return;
         }
-        const tier = selectedTier === 'pro' ? 'pro' : 'plus';
+        const tier = 'pro';
         if (selectedDuration === 'monthly' || !quote(tier, selectedDuration)) {
           setStatusMessage(t('fixes.priceUnavailable'));
           return;
@@ -489,7 +381,7 @@ export function PaywallModal({
         return;
       }
 
-      if (matchedPackage) {
+      if (matchedPackage && selectedDuration !== 'monthly' && quote('pro', selectedDuration)) {
         const success = await purchase(
           matchedPackage,
           Boolean(isUpgrade),
@@ -585,7 +477,7 @@ export function PaywallModal({
         ? t('brandRepair.manage')
         : catalogError
           ? t('fixes.retryPrices')
-          : t('releaseUpdate.upgradeNow', { tier: activeTierConfig.label });
+          : t('releaseUpdate.upgradeNow', { tier: t('proPlan.pro') });
 
   return (
     <Modal
@@ -596,425 +488,323 @@ export function PaywallModal({
     >
       <SafeAreaView style={styles.safeArea}>
         <View style={styles.container} testID="modal-paywall">
-          {exitOffer ? (
-            <PaywallDownsellModal
-              tier={activeTierConfig.label}
-              quote={offerPrice}
-              pending={awaitingEntitlement}
-              message={statusMessage ?? catalogError}
-              loading={actionLoading || catalogLoading || completionPending}
-              onClaim={handlePurchase}
-              onDismiss={() => {
-                if (!completionPending) onClose();
-              }}
+          {/* Top Bar with Top-Left Close Button */}
+          <View
+            style={styles.topBar}
+            testID="paywall-swipe-header"
+            onTouchStart={(event) => {
+              swipeStart.current = { x: event.nativeEvent.pageX, y: event.nativeEvent.pageY };
+            }}
+            onTouchEnd={(event) => {
+              const start = swipeStart.current;
+              swipeStart.current = null;
+              if (
+                start &&
+                event.nativeEvent.pageY - start.y > space[8] &&
+                event.nativeEvent.pageY - start.y > Math.abs(event.nativeEvent.pageX - start.x)
+              )
+                requestClose();
+            }}
+          >
+            <Button
+              variant="tertiary"
+              fullWidth={false}
+              label={t('setup.closePremium')}
+              iconOnly
+              icon={
+                <Ionicons name="close-outline" color={dark.textHi} size={onboardingLayout.icon} />
+              }
+              onPress={requestClose}
+              disabled={completionPending}
+              accessibilityRole="button"
+              accessibilityLabel={t('setup.closePremium')}
+              style={styles.closeButton}
+              testID="btn-close-paywall"
             />
-          ) : (
-            <>
-              {/* Top Bar with Top-Left Close Button */}
-              <View
-                style={styles.topBar}
-                testID="paywall-swipe-header"
-                onTouchStart={(event) => {
-                  swipeStart.current = { x: event.nativeEvent.pageX, y: event.nativeEvent.pageY };
-                }}
-                onTouchEnd={(event) => {
-                  const start = swipeStart.current;
-                  swipeStart.current = null;
-                  if (
-                    start &&
-                    event.nativeEvent.pageY - start.y > space[8] &&
-                    event.nativeEvent.pageY - start.y > Math.abs(event.nativeEvent.pageX - start.x)
-                  )
-                    requestClose();
-                }}
+            <Text variant="heading" color={dark.textHi} style={styles.topBarTitle}>
+              {t('proPlan.title')}
+            </Text>
+            <View style={styles.closeButtonPlaceholder} />
+          </View>
+
+          <ScrollView
+            contentContainerStyle={styles.scrollContent}
+            showsVerticalScrollIndicator={false}
+          >
+            {/* Header Titles */}
+            <View style={styles.headerBlock}>
+              <Text
+                variant="title1"
+                color={dark.textHi}
+                style={styles.titleText}
+                testID="text-paywall-title"
               >
-                <Button
-                  variant="tertiary"
-                  fullWidth={false}
-                  label={t('setup.closePremium')}
-                  iconOnly
-                  icon={
-                    <Ionicons
-                      name="close-outline"
-                      color={dark.textHi}
-                      size={onboardingLayout.icon}
-                    />
-                  }
-                  onPress={requestClose}
-                  disabled={completionPending}
-                  accessibilityRole="button"
-                  accessibilityLabel={t('setup.closePremium')}
-                  style={styles.closeButton}
-                  testID="btn-close-paywall"
-                />
-                <Text variant="heading" color={dark.textHi} style={styles.topBarTitle}>
-                  CaliPartner Plans
+                {contextualTitle}
+              </Text>
+              {context === 'keep_going' && (
+                <Text variant="body" color={dark.apricot} style={styles.keepGoingSubtitle}>
+                  {"You'll become the plan holder."}
                 </Text>
-                <View style={styles.closeButtonPlaceholder} />
+              )}
+              {context === 'weekly_plan' && (
+                <Text variant="bodyS" color={dark.textHi}>
+                  {t('fixNovember.lockedBody')}
+                </Text>
+              )}
+            </View>
+
+            {/* Status / Error Banner if any */}
+            {(statusMessage || subError || catalogError) && (
+              <Card elevation="s2" style={styles.statusBanner} testID="banner-paywall-status">
+                <Text
+                  variant="bodyS"
+                  color={dark.textHi}
+                  accessibilityRole="alert"
+                  accessibilityLiveRegion="polite"
+                >
+                  {statusMessage ?? subError ?? catalogError}
+                </Text>
+              </Card>
+            )}
+
+            {management && Platform.OS === 'web' && (
+              <Card elevation="s2" style={styles.statusBanner} testID="razorpay-management">
+                <Text variant="heading">{t('webBilling.manageTitle')}</Text>
+                <Text>
+                  {t(management.cancelled ? 'webBilling.cancelled' : 'webBilling.cancelBody')}
+                </Text>
+                {!management.cancelled &&
+                  (confirmCancellation ? (
+                    <>
+                      <Button
+                        label={t('webBilling.confirmCancel')}
+                        variant="destructive"
+                        disabled={actionLoading}
+                        onPress={handleCancelRenewal}
+                        testID="btn-confirm-razorpay-cancel"
+                      />
+                      <Button
+                        label={t('webBilling.keepRenewal')}
+                        variant="secondary"
+                        disabled={actionLoading}
+                        onPress={() => setConfirmCancellation(false)}
+                        testID="btn-keep-razorpay-renewal"
+                      />
+                    </>
+                  ) : (
+                    <Button
+                      label={t('webBilling.cancelRenewal')}
+                      variant="secondary"
+                      onPress={() => setConfirmCancellation(true)}
+                      testID="btn-razorpay-cancel"
+                    />
+                  ))}
+              </Card>
+            )}
+
+            {/* Billing term selection */}
+            <View style={styles.durationToggleContainer} accessibilityRole="radiogroup">
+              {MAIN_PAYWALL_DURATIONS.map((duration) => (
+                <TouchableOpacity
+                  key={duration}
+                  onPress={() => setSelectedDuration(duration)}
+                  disabled={actionLoading || awaitingEntitlement}
+                  style={[
+                    styles.durationToggleItem,
+                    mainDuration === duration && styles.durationToggleSelected,
+                  ]}
+                  accessibilityRole="radio"
+                  accessibilityState={{ selected: mainDuration === duration }}
+                  accessibilityLabel={t(`releaseUpdate.${duration}`)}
+                  testID={`toggle-duration-${duration}`}
+                >
+                  <Text variant="label">{t(`releaseUpdate.${duration}`)}</Text>
+                  <Text variant="micro" tabular>
+                    {quote('pro', duration)?.total}
+                  </Text>
+                  {duration === 'annual' && (
+                    <Text variant="micro" color={dark.actionInk}>
+                      {t('releaseUpdate.bestValue')}
+                    </Text>
+                  )}
+                </TouchableOpacity>
+              ))}
+            </View>
+
+            {/* Symmetry 2-Column Minimal Comparison Table */}
+            <View style={styles.tableContainer}>
+              <View style={styles.tableHeaderRow}>
+                <View style={styles.featureCol} />
+                <View style={styles.checkCol}>
+                  <Text variant="label" color={dark.textMid} style={styles.colHeaderText}>
+                    {t('proPlan.free')}
+                  </Text>
+                </View>
+                <View style={styles.checkCol}>
+                  <Text variant="label" color={dark.apricot} style={styles.colHeaderText}>
+                    {t('proPlan.pro')}
+                  </Text>
+                </View>
               </View>
 
-              <ScrollView
-                contentContainerStyle={styles.scrollContent}
-                showsVerticalScrollIndicator={false}
-              >
-                {/* Brand Badge */}
-                <View style={styles.badgeWrapper}>
-                  <View style={styles.brandBadge}>
-                    <Text variant="micro" color={dark.apricot} style={styles.brandBadgeText}>
-                      CALIPARTNER {selectedTier.toUpperCase()}
-                    </Text>
-                  </View>
-                </View>
-
-                {/* Header Titles */}
-                <View style={styles.headerBlock}>
-                  <Text
-                    variant="title1"
-                    color={dark.textHi}
-                    style={styles.titleText}
-                    testID="text-paywall-title"
-                  >
-                    {contextualTitle}
-                  </Text>
-                  {context === 'keep_going' && (
-                    <Text variant="body" color={dark.apricot} style={styles.keepGoingSubtitle}>
-                      {"You'll become the plan holder."}
-                    </Text>
-                  )}
-                  {context === 'weekly_plan' && (
-                    <Text variant="bodyS" color={dark.textHi}>
-                      {t('fixNovember.lockedBody')}
-                    </Text>
-                  )}
-                </View>
-
-                {/* Status / Error Banner if any */}
-                {(statusMessage || subError || catalogError) && (
-                  <Card elevation="s2" style={styles.statusBanner} testID="banner-paywall-status">
-                    <Text
-                      variant="bodyS"
-                      color={dark.textHi}
-                      accessibilityRole="alert"
-                      accessibilityLiveRegion="polite"
-                    >
-                      {statusMessage ?? subError ?? catalogError}
-                    </Text>
-                  </Card>
-                )}
-
-                {management && Platform.OS === 'web' && (
-                  <Card elevation="s2" style={styles.statusBanner} testID="razorpay-management">
-                    <Text variant="heading">{t('webBilling.manageTitle')}</Text>
-                    <Text>
-                      {t(management.cancelled ? 'webBilling.cancelled' : 'webBilling.cancelBody')}
-                    </Text>
-                    {!management.cancelled &&
-                      (confirmCancellation ? (
-                        <>
-                          <Button
-                            label={t('webBilling.confirmCancel')}
-                            variant="destructive"
-                            disabled={actionLoading}
-                            onPress={handleCancelRenewal}
-                            testID="btn-confirm-razorpay-cancel"
-                          />
-                          <Button
-                            label={t('webBilling.keepRenewal')}
-                            variant="secondary"
-                            disabled={actionLoading}
-                            onPress={() => setConfirmCancellation(false)}
-                            testID="btn-keep-razorpay-renewal"
-                          />
-                        </>
+              {COMPARISON_ROWS.map((row) => {
+                const label = t(row.label);
+                return (
+                  <View key={row.label} style={styles.tableRow}>
+                    <View style={styles.featureCol}>
+                      <Text variant="bodyS" color={dark.textHi} style={styles.featureRowText}>
+                        {label}
+                      </Text>
+                    </View>
+                    <View style={styles.checkCol}>
+                      {row.free ? (
+                        <Ionicons name="checkmark" size={18} color={dark.textMid} />
                       ) : (
-                        <Button
-                          label={t('webBilling.cancelRenewal')}
-                          variant="secondary"
-                          onPress={() => setConfirmCancellation(true)}
-                          testID="btn-razorpay-cancel"
-                        />
-                      ))}
-                  </Card>
-                )}
-
-                {/* Tier Selection Tabs (Plus vs Pro) */}
-                <View style={styles.tierSelectorRow} accessibilityRole="radiogroup">
-                  <TouchableOpacity
-                    disabled={actionLoading || awaitingEntitlement}
-                    onPress={() => setSelectedTier('plus')}
-                    style={[styles.tierTab, selectedTier === 'plus' && styles.tierTabSelected]}
-                    accessibilityRole="radio"
-                    accessibilityState={{ selected: selectedTier === 'plus' }}
-                    accessibilityLabel={`CaliPartner Plus, ${storePrice('plus')}`}
-                    testID="picker-size-6-20"
-                  >
-                    <Text
-                      variant="label"
-                      color={selectedTier === 'plus' ? dark.apricot : dark.textHi}
-                      style={styles.tierTabText}
-                    >
-                      PLUS
-                    </Text>
-                    {Platform.OS === 'web' && catalogLoading ? (
-                      <Text
-                        accessibilityLiveRegion="polite"
-                        testID="paywall-plus-price-placeholder"
-                        variant="micro"
-                        color={dark.textLo}
-                      >
-                        {t('fixes.loadingPrices')}
-                      </Text>
-                    ) : (
-                      <Text variant="micro" color={dark.textMid} tabular>
-                        {storePrice('plus')}
-                      </Text>
-                    )}
-                  </TouchableOpacity>
-
-                  <TouchableOpacity
-                    disabled={actionLoading || awaitingEntitlement}
-                    onPress={() => setSelectedTier('pro')}
-                    style={[styles.tierTab, selectedTier === 'pro' && styles.tierTabSelected]}
-                    accessibilityRole="radio"
-                    accessibilityState={{ selected: selectedTier === 'pro' }}
-                    accessibilityLabel={`CaliPartner Pro, ${storePrice('pro')}`}
-                    testID="picker-size-21-50"
-                  >
-                    <Text
-                      variant="label"
-                      color={selectedTier === 'pro' ? dark.apricot : dark.textHi}
-                      style={styles.tierTabText}
-                    >
-                      PRO
-                    </Text>
-                    {Platform.OS === 'web' && catalogLoading ? (
-                      <Text
-                        accessibilityLiveRegion="polite"
-                        testID="paywall-pro-price-placeholder"
-                        variant="micro"
-                        color={dark.textLo}
-                      >
-                        {t('fixes.loadingPrices')}
-                      </Text>
-                    ) : (
-                      <Text variant="micro" color={dark.textMid} tabular>
-                        {storePrice('pro')}
-                      </Text>
-                    )}
-                  </TouchableOpacity>
-                </View>
-
-                {/* Duration Toggle (Annual vs Semiannual) */}
-                <View style={styles.durationToggleContainer} accessibilityRole="radiogroup">
-                  {MAIN_PAYWALL_DURATIONS.map((duration) => (
-                    <TouchableOpacity
-                      key={duration}
-                      onPress={() => setSelectedDuration(duration)}
-                      disabled={actionLoading || awaitingEntitlement}
-                      style={[
-                        styles.durationToggleItem,
-                        mainDuration === duration && styles.durationToggleSelected,
-                      ]}
-                      accessibilityRole="radio"
-                      accessibilityState={{ selected: mainDuration === duration }}
-                      accessibilityLabel={t(`releaseUpdate.${duration}`)}
-                      testID={`toggle-duration-${duration}`}
-                    >
-                      <Text variant="label">{t(`releaseUpdate.${duration}`)}</Text>
-                      {duration === 'annual' && (
-                        <Text variant="micro" color={dark.actionInk}>
-                          {t('releaseUpdate.bestValue')}
+                        <Text color={dark.textLo} style={styles.dashText}>
+                          —
                         </Text>
                       )}
-                    </TouchableOpacity>
-                  ))}
-                </View>
-
-                {/* Symmetry 2-Column Minimal Comparison Table */}
-                <View style={styles.tableContainer}>
-                  <View style={styles.tableHeaderRow}>
-                    <View style={styles.featureCol} />
-                    <View style={styles.checkCol}>
-                      <Text variant="label" color={dark.textMid} style={styles.colHeaderText}>
-                        FREE
-                      </Text>
                     </View>
                     <View style={styles.checkCol}>
-                      <Text
-                        variant="label"
-                        color={selectedTier === 'pro' ? dark.apricot : dark.textHi}
-                        style={styles.colHeaderText}
-                      >
-                        {selectedTier === 'pro' ? 'PRO' : 'PLUS'}
-                      </Text>
+                      <Ionicons name="checkmark" size={18} color={dark.apricot} />
                     </View>
                   </View>
+                );
+              })}
+            </View>
 
-                  {COMPARISON_ROWS.map((row) => {
-                    if (row.proOnly && selectedTier !== 'pro') return null;
-                    const label = row.labelKey ? t(row.labelKey) : row.label;
-                    const isPaidCheck = selectedTier === 'pro' ? row.pro : row.plus;
-                    return (
-                      <View key={row.id} style={styles.tableRow}>
-                        <View style={styles.featureCol}>
-                          <Text variant="bodyS" color={dark.textHi} style={styles.featureRowText}>
-                            {label}
-                          </Text>
-                        </View>
-                        <View style={styles.checkCol}>
-                          {row.free ? (
-                            <Ionicons name="checkmark" size={18} color={dark.textMid} />
-                          ) : (
-                            <Text color={dark.textLo} style={styles.dashText}>
-                              —
-                            </Text>
-                          )}
-                        </View>
-                        <View style={styles.checkCol}>
-                          {isPaidCheck ? (
-                            <Ionicons name="checkmark" size={18} color={dark.apricot} />
-                          ) : (
-                            <Text color={dark.textLo} style={styles.dashText}>
-                              —
-                            </Text>
-                          )}
-                        </View>
-                      </View>
-                    );
-                  })}
-                </View>
+            {/* Subtle Coming Soon for future roadmap */}
+            <View testID="paywall-coming-soon" style={styles.comingSoonWrap}>
+              <Text variant="label" color={dark.textMid} style={styles.comingSoonTitle}>
+                {t('launch.soon')}
+              </Text>
+              <Text variant="micro" color={dark.textLo} style={styles.comingSoonItems}>
+                {COMING_SOON.map((f) => t(f)).join(' · ')}
+              </Text>
+            </View>
 
-                {/* Tagline: and much more to come! */}
-                <Text variant="heading" color={dark.textHi} style={styles.muchMoreText}>
-                  and much more to come!
+            {/* Promo Code Trigger */}
+            <Button
+              variant="secondary"
+              fullWidth={false}
+              label="Have a partner promo code? Enter code"
+              onPress={() => setShowPromoModal(true)}
+              style={styles.promoTrigger}
+              accessibilityRole="button"
+              accessibilityLabel="Have a partner promo code?"
+              testID="btn-promo-code"
+            />
+          </ScrollView>
+
+          {/* Primary CTA Block */}
+          <View style={styles.ctaBottomBar}>
+            <Text
+              variant="micro"
+              color={dark.textMid}
+              style={styles.renewalSentence}
+              testID="text-renewal-sentence"
+            >
+              {catalogLoading && !managing && (
+                <Text
+                  testID="paywall-pro-price-placeholder"
+                  variant="micro"
+                  accessibilityLiveRegion="polite"
+                >
+                  {t('fixes.loadingPrices')}{' '}
                 </Text>
-
-                {/* Subtle Coming Soon for future roadmap */}
-                <View testID="paywall-coming-soon" style={styles.comingSoonWrap}>
-                  <Text variant="label" color={dark.textMid} style={styles.comingSoonTitle}>
-                    {t('launch.soon')}
-                  </Text>
-                  <Text variant="micro" color={dark.textLo} style={styles.comingSoonItems}>
-                    {[...COMING_SOON.plus, ...(selectedTier === 'pro' ? COMING_SOON.pro : [])]
-                      .map((f) => t(f))
-                      .join(' · ')}
-                  </Text>
-                </View>
-
-                {/* Promo Code Trigger */}
+              )}
+              {quote('pro', mainDuration) && !managing
+                ? t('releaseUpdate.charged', { total: quote('pro', mainDuration)!.total }) +
+                  ' · ' +
+                  quote('pro', mainDuration)!.equivalent +
+                  '. '
+                : ''}
+              {renewalSentence} {t('proPlan.tax')}
+            </Text>
+            <Button
+              variant="primary"
+              label={primaryCtaLabel}
+              onPress={handlePurchase}
+              disabled={
+                completionPending ||
+                actionLoading ||
+                (subscriptionLoading && !awaitingEntitlement) ||
+                (!managing &&
+                  (catalogLoading ||
+                    (!catalogError && !awaitingEntitlement && !quote('pro', mainDuration))))
+              }
+              testID="btn-paywall-cta"
+              style={styles.ctaButton}
+            />
+            {(trialExpired || onContinueFree) && (
+              <>
+                {trialExpired && <Text variant="bodyS">{t('cardlessTrial.expiredBody')}</Text>}
                 <Button
                   variant="secondary"
-                  fullWidth={false}
-                  label="Have a partner promo code? Enter code"
-                  onPress={() => setShowPromoModal(true)}
-                  style={styles.promoTrigger}
-                  accessibilityRole="button"
-                  accessibilityLabel="Have a partner promo code?"
-                  testID="btn-promo-code"
+                  label={t('cardlessTrial.continueFree')}
+                  onPress={onContinueFree ?? onClose}
+                  disabled={completionPending}
+                  loading={completionPending}
+                  testID={onContinueFree ? 'continue-free-onboarding' : 'continue-free-after-trial'}
                 />
-              </ScrollView>
+              </>
+            )}
 
-              {/* Primary CTA Block */}
-              <View style={styles.ctaBottomBar}>
-                <Text
-                  variant="micro"
-                  color={dark.textMid}
-                  style={styles.renewalSentence}
-                  testID="text-renewal-sentence"
-                >
-                  {quote(offerTier, mainDuration) && !managing
-                    ? t('releaseUpdate.charged', { total: quote(offerTier, mainDuration)!.total }) +
-                      ' '
-                    : ''}
-                  {renewalSentence}
+            {awaitingEntitlement ? (
+              <Button
+                variant="secondary"
+                size="md"
+                label={t('fixes.choosePlanAgain')}
+                onPress={() => {
+                  setAwaitingEntitlement(false);
+                  setStatusMessage(null);
+                }}
+                testID="btn-resume-plan-selection"
+              />
+            ) : null}
+
+            {/* Footer Links */}
+            <View style={styles.footerLinksRow}>
+              <TouchableOpacity
+                onPress={handleRestore}
+                accessibilityRole="button"
+                disabled={completionPending}
+                style={styles.footerLink}
+                testID="btn-restore-purchases"
+              >
+                <Text variant="micro" color={dark.textLo}>
+                  {t('releaseUpdate.restorePurchases')}
                 </Text>
-                <Button
-                  variant="primary"
-                  label={primaryCtaLabel}
-                  onPress={handlePurchase}
-                  disabled={
-                    completionPending ||
-                    actionLoading ||
-                    (subscriptionLoading && !awaitingEntitlement) ||
-                    (!managing &&
-                      (catalogLoading ||
-                        (!catalogError && !awaitingEntitlement && !quote(offerTier, mainDuration))))
-                  }
-                  testID="btn-paywall-cta"
-                  style={styles.ctaButton}
-                />
-                {(trialExpired || onContinueFree) && (
-                  <>
-                    {trialExpired && <Text variant="bodyS">{t('cardlessTrial.expiredBody')}</Text>}
-                    <Button
-                      variant="secondary"
-                      label={t('cardlessTrial.continueFree')}
-                      onPress={onContinueFree ?? onClose}
-                      disabled={completionPending}
-                      loading={completionPending}
-                      testID={
-                        onContinueFree ? 'continue-free-onboarding' : 'continue-free-after-trial'
-                      }
-                    />
-                  </>
-                )}
+              </TouchableOpacity>
+              <Text variant="micro" color={dark.hairlineLit}>
+                •
+              </Text>
+              <TouchableOpacity
+                onPress={() => openUrl('https://app.calipartner.site/terms')}
+                accessibilityRole="link"
+                style={styles.footerLink}
+                testID="link-paywall-terms"
+              >
+                <Text variant="micro" color={dark.textLo}>
+                  Terms
+                </Text>
+              </TouchableOpacity>
+              <Text variant="micro" color={dark.hairlineLit}>
+                •
+              </Text>
+              <TouchableOpacity
+                onPress={() => openUrl('https://app.calipartner.site/privacy')}
+                accessibilityRole="link"
+                style={styles.footerLink}
+                testID="link-paywall-privacy"
+              >
+                <Text variant="micro" color={dark.textLo}>
+                  Privacy
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </View>
 
-                {awaitingEntitlement ? (
-                  <Button
-                    variant="secondary"
-                    size="md"
-                    label={t('fixes.choosePlanAgain')}
-                    onPress={() => {
-                      setAwaitingEntitlement(false);
-                      setStatusMessage(null);
-                    }}
-                    testID="btn-resume-plan-selection"
-                  />
-                ) : null}
-
-                {/* Footer Links */}
-                <View style={styles.footerLinksRow}>
-                  <TouchableOpacity
-                    onPress={handleRestore}
-                    accessibilityRole="button"
-                    disabled={completionPending}
-                    style={styles.footerLink}
-                    testID="btn-restore-purchases"
-                  >
-                    <Text variant="micro" color={dark.textLo}>
-                      {t('releaseUpdate.restorePurchases')}
-                    </Text>
-                  </TouchableOpacity>
-                  <Text variant="micro" color={dark.hairlineLit}>
-                    •
-                  </Text>
-                  <TouchableOpacity
-                    onPress={() => openUrl('https://app.calipartner.site/terms')}
-                    accessibilityRole="link"
-                    style={styles.footerLink}
-                    testID="link-paywall-terms"
-                  >
-                    <Text variant="micro" color={dark.textLo}>
-                      Terms
-                    </Text>
-                  </TouchableOpacity>
-                  <Text variant="micro" color={dark.hairlineLit}>
-                    •
-                  </Text>
-                  <TouchableOpacity
-                    onPress={() => openUrl('https://app.calipartner.site/privacy')}
-                    accessibilityRole="link"
-                    style={styles.footerLink}
-                    testID="link-paywall-privacy"
-                  >
-                    <Text variant="micro" color={dark.textLo}>
-                      Privacy
-                    </Text>
-                  </TouchableOpacity>
-                </View>
-              </View>
-            </>
-          )}
           {/* O04 Purchase Success Moment */}
           <Modal
             visible={showSuccessModal}
@@ -1029,7 +819,7 @@ export function PaywallModal({
             <View style={styles.modalBackdrop}>
               <Card elevation="s1" style={styles.successModalCard} testID="modal-purchase-success">
                 <Text variant="title1" color={dark.textHi} style={styles.successTitle}>
-                  {t('brandRepair.unlocked', { plan: activeTierConfig.label })}
+                  {t('brandRepair.unlocked', { plan: t('proPlan.pro') })}
                 </Text>
 
                 <Button

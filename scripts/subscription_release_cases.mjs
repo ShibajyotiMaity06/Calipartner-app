@@ -113,11 +113,15 @@ export async function runSubscriptionAndReferralReleaseTests(db) {
       () => reserve(friend, randomUUID(), 'razorpay', 'plus_monthly'),
       /INVALID_CHECKOUT/,
     );
+    await denied(
+      () => reserve(friend, randomUUID(), 'razorpay', 'plus_semiannual'),
+      /INVALID_CHECKOUT/,
+    );
     const initialRequest = randomUUID();
-    const reservation = await reserve(friend, initialRequest, 'razorpay', 'plus_semiannual');
+    const reservation = await reserve(friend, initialRequest, 'razorpay', 'pro_semiannual');
     assert.equal(reservation.trial_end, null);
     assert.equal(
-      (await reserve(friend, initialRequest, 'razorpay', 'plus_semiannual')).cached,
+      (await reserve(friend, initialRequest, 'razorpay', 'pro_semiannual')).cached,
       true,
     );
     const trialResponse = await scalar(
@@ -130,7 +134,7 @@ export async function runSubscriptionAndReferralReleaseTests(db) {
     await paid(
       'paid-referral-one',
       friend,
-      'plus_semiannual',
+      'pro_semiannual',
       'razorpay',
       'sub_release',
       '6 months',
@@ -138,7 +142,7 @@ export async function runSubscriptionAndReferralReleaseTests(db) {
     await paid(
       'paid-referral-repeat',
       friend,
-      'plus_semiannual',
+      'pro_semiannual',
       'razorpay',
       'sub_release',
       '6 months',

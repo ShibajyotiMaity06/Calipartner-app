@@ -30,7 +30,7 @@ export const fastingRefresh = {
   loading: 'Loading your fasting settings',
   loadError: 'Could not load fasting. Check your connection and try again.',
   saveError: 'Could not save this change. Check your connection and try again.',
-  plus: 'Fasting is included with Plus and Pro.',
+  plus: 'Fasting is included with Pro.',
   recovery: 'Your plan has ended. You can still end the fast already in progress.',
   hours: '{hours} h',
   saved: 'Saved',

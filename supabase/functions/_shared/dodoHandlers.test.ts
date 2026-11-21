@@ -38,6 +38,7 @@ function setup(existing = true, badCurrency = false, country = 'US') {
             payment_frequency_count: 1,
             payment_frequency_interval: 'Year',
             trial_period_days: 0,
+            tax_inclusive: true,
           },
         }),
       },

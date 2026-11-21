@@ -1,7 +1,7 @@
 import React, { useRef, useState } from 'react';
 import { Pressable, ScrollView, View } from 'react-native';
 import { Avatar, Button, Card, Text, onboardingLayout } from '@calipartner/ui';
-import type { SocialProfile } from '@calipartner/core';
+import { roomCap, type SocialProfile } from '@calipartner/core';
 import { PlanTextField, planStyles } from '@/components/onboarding/PlanPrimitives';
 import { t } from '@/i18n';
 
@@ -97,7 +97,11 @@ export function SquadConnectFlow({
             testID="squad-name"
           />
           <Text variant="heading">{t('socialUpdate.selectFriends')}</Text>
-          <Text>{t('socialUpdate.capacity', { count: memberCap - 1 })}</Text>
+          <Text>
+            {memberCap >= roomCap('pro')
+              ? t('proPlan.unlimited')
+              : t('socialUpdate.capacity', { count: memberCap - 1 })}
+          </Text>
           {loading ? <Text accessibilityLiveRegion="polite">{t('common.loading')}</Text> : null}
           {error ? (
             <>

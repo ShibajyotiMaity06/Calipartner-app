@@ -57,7 +57,7 @@ export async function runFoodCaptureTests(db) {
   await assert.rejects(record, /AI_PHOTO_ACCESS_DENIED/);
   await db.query("update public.entitlements set status='paid' where user_id=$1", [uid]);
   assert.equal((await access()).allowed, true);
-  for (let i = 0; i < 300; i++) await record();
+  for (let i = 0; i < 248; i++) await record();
   await assert.rejects(record, /AI_PHOTO_ACCESS_DENIED/);
   const total = (
     await db.query(
@@ -65,7 +65,7 @@ export async function runFoodCaptureTests(db) {
       [uid],
     )
   ).rows[0];
-  assert.equal(total.count, 300);
+  assert.equal(total.count, 248);
   assert.equal(total.day, total.expected_day);
   console.log(
     'PASS Pro monthly food analyses use the stored time zone and enforce the server allowance',

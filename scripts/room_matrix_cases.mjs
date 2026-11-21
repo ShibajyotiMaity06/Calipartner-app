@@ -229,12 +229,12 @@ export async function runRoomMatrixTests(db) {
       await user(0);
       await rpc('set_privacy($1,$2)', [rid(1), JSON.stringify({ share_meals: 'always' })]);
     });
-    await test('Plus hosts three and Pro hosts five independent rooms; excess room creation is atomic', async () => {
+    await test('Existing Plus hosts three and Pro hosts 20 independent rooms; excess creation is atomic', async () => {
       await user(0);
-      for (let i = 2; i <= 5; i++) await rpc('create_room_v3($1,$2)', [rid(i), `Pro room ${i}`]);
+      for (let i = 100; i < 119; i++) await rpc('create_room_v3($1,$2)', [rid(i), `Pro room ${i}`]);
       await db.exec('savepoint quota');
       await assert.rejects(
-        () => rpc('create_room_v3($1,$2)', [rid(6), 'Excess']),
+        () => rpc('create_room_v3($1,$2)', [rid(119), 'Excess']),
         /HOSTED_ROOM_LIMIT/,
       );
       await db.exec('rollback to savepoint quota');
@@ -250,7 +250,7 @@ export async function runRoomMatrixTests(db) {
       assert.equal(
         (
           await db.query('select count(*)::int as count from public.rooms where id in ($1,$2)', [
-            rid(6),
+            rid(119),
             rid(13),
           ])
         ).rows[0].count,

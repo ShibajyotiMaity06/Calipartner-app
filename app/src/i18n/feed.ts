@@ -33,7 +33,7 @@ export const feed = {
   friendsHint: 'Only your accepted friends can see this post.',
   squadsHint: 'Only members of your active squads can see this post.',
   privateProfile: 'Your profile settings limit posts to friends or squads.',
-  compareOptIn: 'Let Plus and Pro members compare progress',
+  compareOptIn: 'Let Pro members compare progress',
   compareHint: 'People who can see this post can compare goal completion for the day you post.',
   rulesTitle: 'Feed guidelines',
   rules:

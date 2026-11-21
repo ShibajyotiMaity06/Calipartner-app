@@ -24,6 +24,8 @@ import { t } from '@/i18n';
 import { AvatarPage } from './AvatarPage';
 import { AvatarView } from './AvatarView';
 import { PurchaseSheet, type AvatarQuote } from './PurchaseSheet';
+import { CreateAiAvatarModal } from './CreateAiAvatarModal';
+import { PaywallModal } from '@/components/rooms/PaywallModal';
 
 const slots: AvatarSlot[] = [
   'hair',
@@ -42,7 +44,7 @@ export function CharacterEditor({ creating = false }: { creating?: boolean }) {
   const navigation = useNavigation();
   const params = useLocalSearchParams<{ setup?: string; try?: string }>();
   const { user, profile: account } = useAuth();
-  const { state, acknowledge } = useAvatar();
+  const { state, acknowledge, hasPaidPro, acknowledgeCustomBase } = useAvatar();
   const { colors } = useTheme();
   const [draft, setDraft] = useState<AvatarProfile | null>(null);
   const [tab, setTab] = useState<AvatarSlot | 'body'>('body');
@@ -51,6 +53,12 @@ export function CharacterEditor({ creating = false }: { creating?: boolean }) {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
+  const [aiAvatarOpen, setAiAvatarOpen] = useState(false);
+  const [upgradeOpen, setUpgradeOpen] = useState(false);
+  const openUpgrade = () => {
+    setAiAvatarOpen(false);
+    setUpgradeOpen(true);
+  };
   const baseline = useRef('');
   const initialized = useRef<string | null>(null);
   const busy = useRef(false);
@@ -320,6 +328,15 @@ export function CharacterEditor({ creating = false }: { creating?: boolean }) {
           </ScrollView>
           {tab === 'body' ? (
             <>
+              {state.profile && (
+                <Button
+                  variant="secondary"
+                  label={t('avatarAi.create')}
+                  disabled={state.profile.gender !== draft.gender}
+                  onPress={() => (hasPaidPro ? setAiAvatarOpen(true) : openUpgrade())}
+                  testID="create-ai-avatar"
+                />
+              )}
               <Text variant="heading">{t('avatar.model')}</Text>
               <View style={styles.row}>
                 {(['m', 'f'] as AvatarGender[]).map((g) =>
@@ -387,7 +404,7 @@ export function CharacterEditor({ creating = false }: { creating?: boolean }) {
                             color={tint.hex}
                             selected={selected}
                             locked={!allowed}
-                            label={`${t(tint.tier_required === 'free' ? 'avatar.colorName' : 'avatar.fashionColor', { number: index + 1 })}${allowed ? '' : `, ${t('avatar.unlock', { tier: 'Plus' })}`}`}
+                            label={`${t(tint.tier_required === 'free' ? 'avatar.colorName' : 'avatar.fashionColor', { number: index + 1 })}${allowed ? '' : `, ${t('avatar.unlock', { tier: t('proPlan.pro') })}`}`}
                             testID={`avatar-color-${tint.id}`}
                             onPress={() => {
                               if (!allowed) {
@@ -478,9 +495,7 @@ export function CharacterEditor({ creating = false }: { creating?: boolean }) {
                         {!item.accessible && !item.owned ? (
                           <Text variant="micro">
                             {t('avatar.unlock', {
-                              tier:
-                                state.collections.find((c) => c.id === item.collection_id)
-                                  ?.tier_required ?? 'Plus',
+                              tier: t('proPlan.pro'),
                             })}
                           </Text>
                         ) : null}
@@ -500,9 +515,7 @@ export function CharacterEditor({ creating = false }: { creating?: boolean }) {
                     <Button
                       variant="secondary"
                       label={t(current.accessible ? 'avatar.buy' : 'avatar.unlock', {
-                        tier:
-                          state.collections.find((c) => c.id === current.collection_id)
-                            ?.tier_required ?? 'Plus',
+                        tier: t('proPlan.pro'),
                       })}
                       onPress={() =>
                         current.accessible
@@ -565,6 +578,17 @@ export function CharacterEditor({ creating = false }: { creating?: boolean }) {
           onClose={() => setQuote(null)}
         />
       ) : null}
+      {aiAvatarOpen && hasPaidPro && (
+        <CreateAiAvatarModal
+          onClose={() => setAiAvatarOpen(false)}
+          onCreated={(avatar) => {
+            acknowledgeCustomBase?.(avatar);
+            setAiAvatarOpen(false);
+          }}
+          onUpgrade={openUpgrade}
+        />
+      )}
+      {upgradeOpen && <PaywallModal visible onClose={() => setUpgradeOpen(false)} />}
       <Modal
         visible={!!pendingLeave}
         transparent

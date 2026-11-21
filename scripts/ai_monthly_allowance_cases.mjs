@@ -70,8 +70,8 @@ export async function runAiMonthlyAllowanceTests(db) {
     await rejected(() => access(peer, 'coach'), /FORBIDDEN/);
     await service();
     for (const [feature, cap] of [
-      ['coach', 900],
-      ['food_photo', 300],
+      ['coach', 465],
+      ['food_photo', 248],
     ]) {
       await db.query(
         "insert into public.ai_usage(user_id,feature,day,count) values($1,$2,(now() at time zone 'Pacific/Kiritimati')::date,$3)",
@@ -140,7 +140,7 @@ export async function runAiMonthlyAllowanceTests(db) {
     );
     assert.equal((await access(peer, 'coach')).allowed, true);
     console.log(
-      'Monthly AI allowances: 300/900 boundaries, hidden counters, stored-zone month, concurrent reservations, replay, retries, lease fencing, entitlement recheck and RLS passed',
+      'Monthly AI allowances: 248/465 boundaries, hidden counters, stored-zone month, concurrent reservations, replay, retries, lease fencing, entitlement recheck and RLS passed',
     );
   } finally {
     await db.exec('rollback;reset role');

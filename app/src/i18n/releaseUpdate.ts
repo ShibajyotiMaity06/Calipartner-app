@@ -2,7 +2,7 @@ export const releaseUpdate = {
   recipeTitle: 'Find your next meal',
   recipeBody: 'Explore more than 90 recipes in CaliPartner.',
   recipeDuration: '{minutes} min',
-  recipePlans: 'Explore Plus and Pro',
+  recipePlans: 'Explore Pro',
   optional: '(optional)',
   avoid: 'Any body part to avoid',
   returnToTargets: 'Back to recommended targets',

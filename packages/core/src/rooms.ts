@@ -68,7 +68,7 @@ export const ROOM_TIER_CAPS: Record<RoomTier, number> = Object.freeze({
   free: 2,
   basic: 2,
   plus: 5,
-  pro: 20,
+  pro: 9999,
   community: 20,
 });
 
@@ -101,7 +101,7 @@ export function canCreateRoom(
     );
   const maxRooms = active
     ? entitlement?.tier === 'pro'
-      ? 5
+      ? 20
       : entitlement?.tier === 'plus'
         ? 3
         : 1

@@ -29,7 +29,7 @@ describe('Rooms v3 permission boundaries', () => {
     ['free', 2],
     ['basic', 2],
     ['plus', 5],
-    ['pro', 20],
+    ['pro', 9999],
   ] as const)('%s capacity is %i', (tier, cap) => expect(roomCap(tier)).toBe(cap));
   it('allows one free pair even after a trial has been used', () => {
     const expired = { ...entitlement('plus', 'lapsed'), trial_started_at: '2026-01-01T00:00:00Z' };
@@ -41,8 +41,8 @@ describe('Rooms v3 permission boundaries', () => {
     expect(canCreateRoom(entitlement('plus'), 1, now)).toBe(true);
     expect(canCreateRoom(entitlement('plus'), 2, now)).toBe(true);
     expect(canCreateRoom(entitlement('plus'), 3, now)).toBe(false);
-    expect(canCreateRoom(entitlement('pro'), 4, now)).toBe(true);
-    expect(canCreateRoom(entitlement('pro'), 5, now)).toBe(false);
+    expect(canCreateRoom(entitlement('pro'), 19, now)).toBe(true);
+    expect(canCreateRoom(entitlement('pro'), 20, now)).toBe(false);
     expect(canCreateRoom({ ...entitlement('pro'), period_end: now.toISOString() }, 1, now)).toBe(
       false,
     );

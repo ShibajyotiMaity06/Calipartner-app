@@ -84,10 +84,9 @@ describe('Phase 10 — View Layer UI Tests (Paywall, Lifecycle & Locked Cards)',
   });
 
   describe('3. Room Full Notices (Host Upgrade Sheet vs Member Plain Notice)', () => {
-    it('generates host upgrade recommendation targeting 10 and 20 capacity tiers', () => {
+    it('points hosts to Pro', () => {
       const hostFull = t('rooms.roomFull.hostNotice');
-      expect(hostFull).toContain('Plus fits up to 5 people');
-      expect(hostFull).toContain('Pro fits up to 20');
+      expect(hostFull).toContain('Pro lets you invite more people');
       expect(t('rooms.roomFull.upgradeBtn')).toBe('Upgrade Plan');
     });
 

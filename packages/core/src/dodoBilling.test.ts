@@ -22,6 +22,7 @@ describe('Dodo subscription verification', () => {
       payment_frequency_count: 1,
       payment_frequency_interval: 'Year',
       trial_period_days: 0,
+      tax_inclusive: true,
     },
   };
   it('verifies the approved recurring price before checkout', () => {
@@ -34,6 +35,7 @@ describe('Dodo subscription verification', () => {
   });
   it.each([
     { currency: 'USD' },
+    { tax_inclusive: false },
     { price: 119900 },
     { trial_period_days: 7 },
     { payment_frequency_interval: 'Month' },
@@ -76,7 +78,7 @@ describe('Dodo subscription verification', () => {
   );
   it('allows the offered terms and rejects new monthly checkout', () => {
     expect(dodoProductKey('pro', 'annual')).toBe('pro_annual');
-    expect(dodoProductKey('plus', 'semiannual')).toBe('plus_semiannual');
+    expect(dodoProductKey('plus', 'semiannual')).toBeNull();
     expect(dodoProductKey('plus', 'monthly')).toBeNull();
     expect(dodoProductKey('free', 'annual')).toBeNull();
     expect(dodoProductKey('pro', 'quarterly')).toBe('pro_quarterly');

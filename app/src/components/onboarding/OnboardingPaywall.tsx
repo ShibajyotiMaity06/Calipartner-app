@@ -2,19 +2,24 @@ import { useTheme as useAppearance } from '@calipartner/ui/theme';
 import React, { useEffect, useState } from 'react';
 import { Platform, Pressable, View } from 'react-native';
 import { Button, Text, homeLayout, space } from '@calipartner/ui';
-import type { DodoCatalogProduct } from '@calipartner/core';
+import {
+  CHECKOUT_DURATIONS,
+  type CheckoutDuration,
+  type DodoCatalogProduct,
+} from '@calipartner/core';
 import { useAuth } from '@/contexts/AuthContext';
 import { useSubscription } from '@/hooks/useSubscription';
 import { fetchWebCatalog, getCachedWebCatalog } from '@/services/webBillingService';
 import { findSubscriptionPackage } from '@/services/subscriptionPackages';
 import { t } from '@/i18n';
+import { checkoutPrice, PRO_BENEFITS } from '@/components/rooms/PaywallCheckout';
 import { useSquadStyles } from '@/components/rooms/SquadViews';
 
 export function OnboardingPaywall({
   onCheckout,
   onFree,
 }: {
-  onCheckout: (tier: 'plus' | 'pro', duration: 'semiannual' | 'annual') => void;
+  onCheckout: (tier: 'pro', duration: CheckoutDuration) => void;
   onFree: () => void;
 }) {
   const styles = useSquadStyles();
@@ -24,7 +29,7 @@ export function OnboardingPaywall({
   const { session } = useAuth(),
     subscription = useSubscription();
   const cached = Platform.OS === 'web' ? getCachedWebCatalog(session?.access_token) : undefined;
-  const [period, setPeriod] = useState<'semiannual' | 'annual'>('annual'),
+  const [period, setPeriod] = useState<CheckoutDuration>('annual'),
     [catalog, setCatalog] = useState<DodoCatalogProduct[]>(cached?.products ?? []),
     [pending, setPending] = useState(Platform.OS === 'web' && !cached),
     [error, setError] = useState(false),
@@ -51,16 +56,19 @@ export function OnboardingPaywall({
       active = false;
     };
   }, [retry, session?.access_token]);
-  const price = (tier: 'plus' | 'pro') => {
-    if (Platform.OS !== 'web')
-      return findSubscriptionPackage(subscription.offerings, tier, period)?.product.priceString;
-    const product = catalog.find((product) => product.key === `${tier}_${period}`);
-    return product
-      ? new Intl.NumberFormat(product.currency === 'INR' ? 'en-IN' : 'en-US', {
-          style: 'currency',
-          currency: product.currency,
-        }).format(product.amount)
-      : undefined;
+  const price = () => {
+    return Platform.OS !== 'web'
+      ? checkoutPrice(
+          'pro',
+          period,
+          undefined,
+          findSubscriptionPackage(subscription.offerings, 'pro', period),
+        )?.total
+      : checkoutPrice(
+          'pro',
+          period,
+          catalog.find((product) => product.key === 'pro_' + period),
+        )?.total;
   };
   const loading = Platform.OS === 'web' ? pending : subscription.loading;
   return (
@@ -68,7 +76,7 @@ export function OnboardingPaywall({
       <Text variant="title1">{t('aha.paywallTitle')}</Text>
       <Text>{t('aha.paywallBody')}</Text>
       <View style={styles.row} accessibilityRole="tablist">
-        {(['annual', 'semiannual'] as const).map((value) => (
+        {CHECKOUT_DURATIONS.map((value) => (
           <Pressable
             key={value}
             onPress={() => setPeriod(value)}
@@ -86,29 +94,31 @@ export function OnboardingPaywall({
           </Pressable>
         ))}
       </View>
-      {(['plus', 'pro'] as const).map((tier) => (
-        <View key={tier} style={styles.card} testID={`support-plan-${tier}`}>
-          <Text variant="title2">{t(`entryRefresh.${tier}`)}</Text>
-          {loading ? (
-            <Text accessibilityLiveRegion="polite">{t('fixes.loadingPrices')}</Text>
-          ) : price(tier) && !error ? (
-            <Text variant="numeralM" tabular>
-              {t('releaseUpdate.charged', { total: price(tier)! })}
-            </Text>
-          ) : (
-            <Text accessibilityRole="alert">{t('entryRefresh.priceError')}</Text>
-          )}
-          <Text>{t(tier === 'plus' ? 'aha.plusBody' : 'aha.proBody')}</Text>
-          <Button
-            variant={tier === 'pro' ? 'primary' : 'secondary'}
-            label={t('entryRefresh.choosePlan', { plan: t(`entryRefresh.${tier}`) })}
-            onPress={() => onCheckout(tier, period)}
-            disabled={loading || error || !price(tier)}
-            testID={`support-buy-${tier}`}
-          />
-        </View>
-      ))}
-      {(error || (!loading && (!price('plus') || !price('pro')))) && (
+
+      <View style={styles.card} testID="support-plan-pro">
+        <Text variant="title2">{t('proPlan.pro')}</Text>
+        {loading ? (
+          <Text accessibilityLiveRegion="polite">{t('fixes.loadingPrices')}</Text>
+        ) : price() && !error ? (
+          <Text variant="numeralM" tabular>
+            {t('releaseUpdate.charged', { total: price()! })}
+          </Text>
+        ) : (
+          <Text accessibilityRole="alert">{t('entryRefresh.priceError')}</Text>
+        )}
+        <Text>{t('proPlan.tax')}</Text>
+        {PRO_BENEFITS.map((benefit) => (
+          <Text key={benefit}>{t(benefit)}</Text>
+        ))}
+        <Button
+          variant="primary"
+          label={t('entryRefresh.choosePlan', { plan: t('proPlan.pro') })}
+          onPress={() => onCheckout('pro', period)}
+          disabled={loading || error || !price()}
+          testID="support-buy-pro"
+        />
+      </View>
+      {(error || (!loading && !price())) && (
         <Button
           variant="secondary"
           label={t('common.retry')}

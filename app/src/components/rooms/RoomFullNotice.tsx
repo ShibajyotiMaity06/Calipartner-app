@@ -8,6 +8,7 @@ import { onboardingLayout as layout } from '@calipartner/ui';
 import { t } from '@/i18n';
 import { fontSize, radius, spacing } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
+import { roomCap } from '@calipartner/core';
 
 export interface RoomFullNoticeProps {
   memberCount: number;
@@ -28,9 +29,7 @@ export interface RoomFullSheetProps extends RoomFullNoticeProps {
 export function RoomFullNotice({ memberCount, memberCap, isHost, onUpgrade }: RoomFullNoticeProps) {
   const { colors } = useTheme();
 
-  const atMaximum = memberCap >= 20;
-  const nextTier = memberCap < 5 ? 'Plus' : 'Pro';
-  const nextCap = memberCap < 5 ? 5 : 20;
+  const atMaximum = memberCap >= roomCap('pro');
 
   if (isHost) {
     return (
@@ -53,14 +52,7 @@ export function RoomFullNotice({ memberCount, memberCap, isHost, onUpgrade }: Ro
               {t('rooms.roomFull.sheetTitle')}
             </Text>
             <Text style={[styles.subtitle, { color: colors.textMuted }]}>
-              {atMaximum
-                ? t('roomAudit.maximumCapacity')
-                : t('roomAudit.nextCapacity', {
-                    count: memberCount,
-                    cap: memberCap,
-                    nextTier,
-                    nextCap,
-                  })}
+              {atMaximum ? t('roomAudit.maximumCapacity') : t('proPlan.roomFull')}
             </Text>
           </View>
         </View>

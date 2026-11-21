@@ -120,7 +120,7 @@ describe('Phase 10 Core: Subscriptions, Offerings, Tiers & Periods', () => {
   it('reads remote config caps with fallback to defaults (Plus 10, Pro 20)', () => {
     expect(getTierCap('basic')).toBe(2);
     expect(getTierCap('plus')).toBe(5);
-    expect(getTierCap('pro')).toBe(20);
+    expect(getTierCap('pro')).toBe(9999);
 
     const customConfig = {
       room_caps: { basic: 6, plus: 25, pro: 60, community: 120 },
@@ -313,14 +313,14 @@ describe('Phase 10 Core: Paywall Triggers & Trial Banners (CaliPartner Pricing P
     expect(PRICING_PLANS.plus.usd.rawAnnual).toBe(29.99);
     expect(PRICING_PLANS.plus.trialDays).toBe(0);
 
-    expect(PRICING_PLANS.pro.roomCap).toBe(20);
+    expect(PRICING_PLANS.pro.roomCap).toBe(9999);
     expect(PRICING_PLANS.pro.rawMonthly).toBe(499);
     expect(PRICING_PLANS.pro.rawAnnual).toBe(2499);
     expect(PRICING_PLANS.pro.usd.rawMonthly).toBe(9.99);
     expect(PRICING_PLANS.pro.usd.rawAnnual).toBe(49.99);
     expect(PRICING_PLANS.pro.trialDays).toBe(0);
-    expect(PRICING_PLANS.pro.aiScansPerDay).toBe(5);
-    expect(PRICING_PLANS.pro.aiCoachMessagesPerDay).toBe(10);
+    expect(PRICING_PLANS.pro.aiScansPerMonth).toBe(248);
+    expect(PRICING_PLANS.pro.aiCoachMessagesPerMonth).toBe(465);
   });
 
   it('enforces feature permissions matrix across Free, Plus, and Pro', () => {

@@ -34,7 +34,7 @@
     "test:billing": "npx --yes deno@2.9.6 test --allow-env --config supabase/functions/dodo-checkout/deno.json supabase/functions/_shared/dodoHandlers.test.ts supabase/functions/_shared/razorpayHandlers.test.ts supabase/functions/_shared/ccBilling.test.ts supabase/functions/web-billing/index.test.ts",
     "test:coach": "npx --yes deno@2.9.6 test --allow-env --config supabase/functions/ai-coach/deno.json supabase/functions/ai-coach/index.test.ts && npm run test:weekly-plan",
     "test:weekly-plan": "npx --yes deno@2.9.6 test --allow-env --config supabase/functions/weekly-plan/deno.json supabase/functions/weekly-plan/index.test.ts && npx --yes deno@2.9.6 test --allow-env --config supabase/functions/workout-plan/deno.json supabase/functions/workout-plan/index.test.ts",
-    "test:avatar": "npx --yes deno@2.9.6 test --allow-env --config supabase/functions/dodo-checkout/deno.json supabase/functions/revenuecat-webhook/index.test.ts",
+    "test:avatar": "npx --yes deno@2.9.6 test --allow-env --config supabase/functions/dodo-checkout/deno.json supabase/functions/revenuecat-webhook/index.test.ts && npx --yes deno@2.9.6 test --allow-read=supabase/functions/generate-ai-avatar --config supabase/functions/generate-ai-avatar/deno.json supabase/functions/generate-ai-avatar/fit.test.ts",
     "avatar:assets": "node scripts/build-avatar-assets.mjs",
     "avatar:seed": "node scripts/seed_avatar_catalog.mjs",
     "test:avatar-browser": "node scripts/avatar_browser_audit.mjs"

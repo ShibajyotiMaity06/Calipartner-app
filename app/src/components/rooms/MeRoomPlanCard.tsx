@@ -114,8 +114,11 @@ export function MeRoomPlanCard({
         : t('progressRefresh.accessUntil', { date: formattedPeriodEnd })
     : null;
 
-  const planDefaultCap = tier === 'pro' ? 20 : tier === 'plus' ? 5 : 2;
-  const capacityText = t('brandRepair.capacityValue', { count: planDefaultCap });
+  const planDefaultCap = tier === 'plus' ? 5 : 2;
+  const capacityText =
+    tier === 'pro'
+      ? t('proPlan.unlimited')
+      : t('brandRepair.capacityValue', { count: planDefaultCap });
   const hasStorePlan =
     isPaidOrTrial && Boolean(entitlement?.source && entitlement.source !== 'none');
   const webPlan = entitlement?.source === 'dodo' || entitlement?.source === 'razorpay';
@@ -129,12 +132,14 @@ export function MeRoomPlanCard({
           <View style={styles.freeTextGroup}>
             <Text variant="heading">{isPaidOrTrial ? tierName : t('progressRefresh.unlock')}</Text>
             <Text variant="micro" color={dark.textMid} tabular>
-              {isPaidOrTrial
-                ? t('compactProfile.planSummary', {
-                    people: planDefaultCap,
-                    rooms: tier === 'pro' ? 5 : 3,
-                  })
-                : t('progressRefresh.unlockBody')}
+              {tier === 'pro'
+                ? t('proPlan.rooms')
+                : isPaidOrTrial
+                  ? t('compactProfile.planSummary', {
+                      people: planDefaultCap,
+                      rooms: 3,
+                    })
+                  : t('progressRefresh.unlockBody')}
             </Text>
           </View>
           <Button
@@ -250,9 +255,11 @@ export function MeRoomPlanCard({
       <Text variant="bodyS" color={dark.textMid} testID="plan-management-note">
         {managementNote}
       </Text>
-      <Text variant="bodyS" color={dark.textMid} testID="hosted-room-quota">
-        {t('brandRepair.hostedValue', { count: tier === 'pro' ? 5 : tier === 'plus' ? 3 : 1 })}
-      </Text>
+      {tier !== 'pro' && (
+        <Text variant="bodyS" color={dark.textMid} testID="hosted-room-quota">
+          {t('brandRepair.hostedValue', { count: tier === 'plus' ? 3 : 1 })}
+        </Text>
+      )}
 
       {/* Unattached Subscription Note (PRD 6.18 SUB-14) */}
       {isUnattached && (

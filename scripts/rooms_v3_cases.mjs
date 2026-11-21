@@ -93,12 +93,11 @@ export async function runRoomTests(db) {
     await user(9);
     await fails('select public.join_by_code($1,$2)', /ROOM_FULL/, [plus.code, null]);
   });
-  await test('Pro hosts five rooms and admits a sixth free member', async () => {
+  await test('Pro raises room capacity and admits a sixth free member', async () => {
     await plan(4, 'pro');
     for (const n of [7, 8]) await create(4, n);
-    await fails('select public.create_room_v3($1,$2)', /HOSTED_ROOM_LIMIT/, [rid(9), 'Sixth']);
     await join(9, plus.code);
-    assert.equal(await scalar('select public.room_cap($1)', [rid(4)]), 20);
+    assert.equal(await scalar('select public.room_cap($1)', [rid(4)]), 9999);
   });
   await test('Plus and Free members can chat, but nobody may impersonate a sender', async () => {
     await plan(1, 'plus');

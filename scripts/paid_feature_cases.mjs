@@ -4,6 +4,14 @@ export async function runPaidFeatureTests(db) {
   const uid = (i) => `fa270000-0000-4000-8000-${String(i).padStart(12, '0')}`;
   const id = (i) => `fb270000-0000-4000-8000-${String(i).padStart(12, '0')}`;
   const admin = () => db.exec("reset role;select set_config('request.jwt.claims','',false)");
+  const current = await readFile(
+    'supabase/migrations/20261120001000_single_pro_limits.sql',
+    'utf8',
+  );
+  const currentAllowance = current.slice(
+    current.indexOf('create or replace function public.ai_monthly_access'),
+    current.indexOf('create or replace function public.begin_ai_request'),
+  );
   const user = async (i) => {
     await admin();
     await db.exec(
@@ -26,6 +34,7 @@ export async function runPaidFeatureTests(db) {
       'utf8',
     );
     await db.exec(monthly.split('create table public.ai_requests')[0]);
+    await db.exec(currentAllowance);
 
     await db.query("select set_config('request.jwt.claims',$1,false)", [
       JSON.stringify({ sub: uid(i), role: 'authenticated' }),
@@ -93,7 +102,7 @@ export async function runPaidFeatureTests(db) {
   await db.exec(
     'set role service_role;select set_config(\'request.jwt.claims\',\'{"role":"service_role"}\',false)',
   );
-  for (let i = 0; i < 900; i++)
+  for (let i = 0; i < 465; i++)
     await db.query("select public.record_ai_usage($1,'coach',10,0.001)", [uid(4)]);
   await assert.rejects(
     () => db.query("select public.record_ai_usage($1,'coach',10,0.001)", [uid(4)]),
@@ -109,7 +118,7 @@ export async function runPaidFeatureTests(db) {
     /permission denied/,
   );
   console.log(
-    'PASS Coach daily usage is capped atomically at ten; clients cannot reset or write its counter',
+    'PASS Coach usage is capped at 465 per calendar month; clients cannot reset or write its counter',
   );
   await user(1);
   const insertFast = (i) =>

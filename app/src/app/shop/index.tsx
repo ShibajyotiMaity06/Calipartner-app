@@ -27,13 +27,11 @@ export default function ShopScreen() {
               onPress={() => router.push('/wallet')}
               testID="shop-wallet"
             />
-            {(['free', 'plus', 'pro'] as const).map((tier) => (
+            {(['free', 'pro'] as const).map((tier) => (
               <View key={tier} style={styles.section}>
-                <Text variant="heading">
-                  {tier === 'free' ? 'Basic' : tier === 'plus' ? 'Plus' : 'Pro'}
-                </Text>
+                <Text variant="heading">{t(`proPlan.${tier}`)}</Text>
                 {state.collections
-                  .filter((c) => c.tier_required === tier)
+                  .filter((c) => (c.tier_required === 'free') === (tier === 'free'))
                   .map((collection) => {
                     const products = state.products.filter(
                       (p) =>

@@ -214,9 +214,7 @@ describe('Phase 5C — Room UI Presentation & Logic Tests', () => {
         return isHost ? t('rooms.roomFull.hostNotice') : t('rooms.roomFull.memberNotice');
       };
 
-      expect(getRoomFullNotice(true)).toBe(
-        'Your room is full. Plus fits up to 5 people, and Pro fits up to 20.',
-      );
+      expect(getRoomFullNotice(true)).toBe('Your room is full. Pro lets you invite more people.');
       expect(getRoomFullNotice(false)).toBe('This room is full');
       expect(t('rooms.roomFull.upgradeBtn')).toBe('Upgrade Plan');
     });

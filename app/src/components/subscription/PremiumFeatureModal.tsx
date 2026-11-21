@@ -2,7 +2,7 @@ import { useTheme as useAppearance } from '@calipartner/ui/theme';
 import React, { useState } from 'react';
 import { ActivityIndicator, Modal, StyleSheet, View } from 'react-native';
 import { Button, Card, Text, space } from '@calipartner/ui';
-import { getRequiredTierForFeature, isFeatureAllowed, type AppFeature } from '@calipartner/core';
+import { isFeatureAllowed, type AppFeature } from '@calipartner/core';
 import { useSubscription } from '@/hooks/useSubscription';
 import { PaywallModal } from '@/components/rooms/PaywallModal';
 import { t } from '@/i18n';
@@ -26,19 +26,23 @@ export function PremiumFeatureModal({
   const tier = hasActiveAccess ? (entitlement?.tier ?? 'free') : 'free';
   if (!visible) return null;
   if (isFeatureAllowed(feature, tier)) return <>{children}</>;
-  const required = getRequiredTierForFeature(feature) === 'pro' ? 'pro' : 'plus';
+
   if (showPlans)
-    return <PaywallModal visible onClose={() => setShowPlans(false)} preselectedTier={required} />;
+    return <PaywallModal visible onClose={() => setShowPlans(false)} preselectedTier="pro" />;
   return (
     <Modal visible transparent onRequestClose={onClose}>
       <View style={styles.backdrop}>
-        <Card elevation="s1" style={styles.card} testID={`locked-${feature}`}>
+        <Card
+          elevation="s1"
+          style={styles.card}
+          testID={feature === 'progress_photos' ? 'progress-photos-locked' : `locked-${feature}`}
+        >
           {loading ? (
             <ActivityIndicator color={dark.textHi} />
           ) : (
             <>
               <Text variant="title1" color={dark.textHi}>
-                {t(required === 'pro' ? 'brandRepair.proRequired' : 'brandRepair.plusRequired')}
+                {t('brandRepair.proRequired')}
               </Text>
               <Text variant="body" color={dark.textMid}>
                 {t('brandRepair.paidBody')}
@@ -46,7 +50,9 @@ export function PremiumFeatureModal({
               <Button
                 label={t('brandRepair.seePlans')}
                 onPress={() => setShowPlans(true)}
-                testID={`upgrade-${feature}`}
+                testID={
+                  feature === 'progress_photos' ? 'progress-photos-upgrade' : `upgrade-${feature}`
+                }
               />
             </>
           )}

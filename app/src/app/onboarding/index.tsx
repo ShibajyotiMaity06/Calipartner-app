@@ -88,7 +88,6 @@ function Questionnaire({ ownerId }: { ownerId: string }) {
   const [calculation, showCalculation] = useState(false);
   const [paywallClosed, setPaywallClosed] = useState(false);
   const [authModalVisible, setAuthModalVisible] = useState(false);
-  const [showProfileSetupModal, setShowProfileSetupModal] = useState(false);
   const savingRef = useRef(false);
   const completed = useRef(false);
   const active = useRef(false);
@@ -459,9 +458,16 @@ function Questionnaire({ ownerId }: { ownerId: string }) {
           <View style={[styles.footer, { borderTopColor: colors.hairline }]}>
             <Button
               label={t('setup.next')}
-              onPress={() => {
+              onPress={async () => {
                 if (step === 'reveal' && !user) {
-                  setAuthModalVisible(true);
+                  try {
+                    await draftWrites.current;
+                    await saveOnboardingDraft(await getDb(), ownerId, machine.getState());
+                    setDraftError(false);
+                    setAuthModalVisible(true);
+                  } catch {
+                    setDraftError(true);
+                  }
                   return;
                 }
                 next();
@@ -472,9 +478,7 @@ function Questionnaire({ ownerId }: { ownerId: string }) {
         )}
       </View>
       <PaywallModal
-        visible={
-          step === 'paywall' && Boolean(identity || user) && !paywallClosed && checkoutDone !== '1'
-        }
+        visible={step === 'paywall' && Boolean(identity) && !paywallClosed && checkoutDone !== '1'}
         preloadPrices={isOnline === true}
         completionPending={saving}
         context="general"
@@ -485,21 +489,10 @@ function Questionnaire({ ownerId }: { ownerId: string }) {
       <OnboardingAuthModal
         visible={authModalVisible}
         onClose={() => setAuthModalVisible(false)}
-        onAuthenticated={() => {
-          setAuthModalVisible(false);
-          if (!profile) {
-            setShowProfileSetupModal(true);
-          } else {
-            next();
-          }
-        }}
+        onAuthenticated={() => setAuthModalVisible(false)}
       />
-      {showProfileSetupModal && (
-        <Modal
-          visible={showProfileSetupModal}
-          animationType={reduceMotion ? 'none' : 'slide'}
-          onRequestClose={() => {}}
-        >
+      {user && !identity && (step === 'reveal' || step === 'paywall') && (
+        <Modal visible animationType={reduceMotion ? 'none' : 'slide'} onRequestClose={() => {}}>
           <SafeAreaView style={[styles.safe, { backgroundColor: colors.bg0 }]}>
             <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
               <View style={styles.question}>
@@ -510,10 +503,7 @@ function Questionnaire({ ownerId }: { ownerId: string }) {
                 <FinishOnboardingProfile
                   state={snapshot}
                   waitForDraft={() => draftWrites.current}
-                  onComplete={() => {
-                    setShowProfileSetupModal(false);
-                    next();
-                  }}
+                  onComplete={next}
                 />
               </View>
             </ScrollView>

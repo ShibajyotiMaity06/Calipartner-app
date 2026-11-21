@@ -43,7 +43,7 @@ const checkout = {
 describe('platform-separated web billing', () => {
   it('reuses prepared prices only for the same session and refreshes expired quotes', async () => {
     const products = (currency: string) =>
-      ['plus_semiannual', 'plus_annual', 'pro_semiannual', 'pro_annual'].map((key) => ({
+      ['pro_semiannual', 'pro_annual', 'pro_quarterly'].map((key) => ({
         key,
         currency,
         amount: 249,
@@ -92,7 +92,7 @@ describe('platform-separated web billing', () => {
     mocks.invoke.mockResolvedValueOnce({ data: { country: 'US' } }).mockResolvedValueOnce({
       data: {
         provider: 'dodo',
-        products: ['plus_semiannual', 'plus_annual', 'pro_semiannual', 'pro_annual'].map((key) => ({
+        products: ['pro_semiannual', 'pro_annual', 'pro_quarterly'].map((key) => ({
           key,
           currency: 'USD',
           amount: 4.99,
@@ -202,14 +202,12 @@ describe('platform-separated web billing', () => {
     await expect(fetchBillingCountry()).rejects.toThrow();
   });
   it('accepts only accepts catalog entries in the selected provider currency', async () => {
-    const products = ['plus_semiannual', 'plus_annual', 'pro_semiannual', 'pro_annual'].map(
-      (key) => ({
-        key,
-        currency: 'INR',
-        amount: 249,
-        trialDays: 0,
-      }),
-    );
+    const products = ['pro_semiannual', 'pro_annual', 'pro_quarterly'].map((key) => ({
+      key,
+      currency: 'INR',
+      amount: 249,
+      trialDays: 0,
+    }));
     mocks.invoke
       .mockResolvedValueOnce({ data: { country: 'IN' } })
       .mockResolvedValueOnce({ data: { provider: 'razorpay', products } })

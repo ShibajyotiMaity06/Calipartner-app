@@ -1,12 +1,11 @@
-export const DODO_PRODUCT_KEYS = [
+export const DODO_PRODUCT_KEYS = ['pro_annual', 'pro_semiannual', 'pro_quarterly'] as const;
+export const LEGACY_BILLING_PRODUCT_KEYS = [
+  'plus_monthly',
   'plus_annual',
   'plus_semiannual',
   'plus_quarterly',
-  'pro_annual',
-  'pro_semiannual',
-  'pro_quarterly',
+  'pro_monthly',
 ] as const;
-export const LEGACY_BILLING_PRODUCT_KEYS = ['plus_monthly', 'pro_monthly'] as const;
 export const BILLING_WEBHOOK_PRODUCT_KEYS = [
   ...DODO_PRODUCT_KEYS,
   ...LEGACY_BILLING_PRODUCT_KEYS,
@@ -33,6 +32,7 @@ export function verifiedDodoProduct(key: DodoProductKey, product: unknown): Dodo
       trial_period_days?: number;
       trial_type?: string;
       trial_amount?: number | null;
+      tax_inclusive?: boolean;
     };
   } | null;
   const tier = key.startsWith('plus_') ? 'plus' : 'pro';
@@ -49,6 +49,7 @@ export function verifiedDodoProduct(key: DodoProductKey, product: unknown): Dodo
   if (
     !data?.is_recurring ||
     price?.type !== 'recurring_price' ||
+    (DODO_PRODUCT_KEYS.some((activeKey) => activeKey === key) && price.tax_inclusive !== true) ||
     price.price !== Math.round(amount * 100) ||
     price.payment_frequency_count !==
       (annual || duration === 'monthly' ? 1 : CHECKOUT_MONTHS[duration]) ||

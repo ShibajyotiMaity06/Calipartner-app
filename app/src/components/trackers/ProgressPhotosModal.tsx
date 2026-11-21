@@ -13,6 +13,7 @@ import {
 import * as ImagePicker from 'expo-image-picker';
 import { Button, Chip, Text, space, radius, homeLayout, type as typography } from '@calipartner/ui';
 import { useTheme } from '@calipartner/ui/theme';
+import { ProgressPhotoJourneyModal } from '@/components/progress/ProgressPhotoJourneyModal';
 import { ModalNavigation } from '@/components/ModalNavigation';
 import { PremiumFeatureModal } from '@/components/subscription/PremiumFeatureModal';
 import { useAuth } from '@/contexts/AuthContext';
@@ -62,7 +63,7 @@ export function PhotoVault({
   const [busy, setBusy] = useState(false);
   const acting = useRef(false);
   const [error, setError] = useState(false);
-  const [selected, setSelected] = useState<string[]>([]);
+  const [journey, setJourney] = useState(false);
   const [draft, setDraft] = useState<{ id: string; uri: string } | null>(null);
   const [date, setDate] = useState(localDate);
   const [weight, setWeight] = useState('');
@@ -86,7 +87,7 @@ export function PhotoVault({
   }, [userId]);
   useEffect(() => {
     setDraft(null);
-    setSelected([]);
+    setJourney(false);
     if (visible) void refresh();
   }, [visible, refresh]);
   const pick = async (camera: boolean) => {
@@ -152,7 +153,6 @@ export function PhotoVault({
     setBusy(true);
     try {
       await deleteProgressPhoto(await getDb(), user.id, id);
-      setSelected((current) => current.filter((value) => value !== id));
       await refresh();
     } catch {
       setError(true);
@@ -169,15 +169,6 @@ export function PhotoVault({
             (!endDate || photo.captured_date <= endDate),
         )
       : [];
-  const comparison = photos.filter((row) => selected.includes(row.id));
-  const image = (photo: ProgressPhoto) => (
-    <Image
-      source={{ uri: photo.photo_uri }}
-      accessibilityLabel={t('launch.photoLabel', { date: photo.captured_date })}
-      style={styles.photo}
-      resizeMode="contain"
-    />
-  );
   const content = (
     <View style={styles.content} testID={testID}>
       <Text variant="title1">{t('trackers.weight.photosTitle')}</Text>
@@ -258,55 +249,32 @@ export function PhotoVault({
         </View>
       )}
       {!loading && !photos.length && <Text>{t('launch.photoEmpty')}</Text>}
-      {!!photos.length && <Text>{t('launch.compare')}</Text>}
-      {comparison.length === 2 && (
-        <View style={styles.comparison} testID="photo-compare-view">
-          {comparison.map((photo) => (
-            <View key={photo.id} style={styles.side}>
-              {image(photo)}
-              <Text>{photo.captured_date}</Text>
-            </View>
-          ))}
-        </View>
+      <Button
+        variant="secondary"
+        label={t('photoJourney.open')}
+        onPress={() => setJourney(true)}
+        disabled={loading}
+        testID="open-photo-journey"
+      />
+      {journey && loadedOwner === user?.id && (
+        <ProgressPhotoJourneyModal
+          photos={rows}
+          busy={busy}
+          error={error}
+          onClose={() => setJourney(false)}
+          onDelete={(id) => {
+            if (busy) return;
+            Alert.alert(t('launch.deletePhoto'), t('launch.confirmDelete'), [
+              { text: t('common.cancel'), style: 'cancel' },
+              {
+                text: t('launch.deletePhoto'),
+                style: 'destructive',
+                onPress: () => void remove(id),
+              },
+            ]);
+          }}
+        />
       )}
-      {photos.map((photo) => (
-        <View key={photo.id} style={styles.content}>
-          {image(photo)}
-          <Text>
-            {photo.captured_date} ? {t(`launch.${photo.pose}`)}
-          </Text>
-          {photo.weight_kg !== null && <Text style={styles.number}>{photo.weight_kg} kg</Text>}
-          {!!photo.notes && <Text>{photo.notes}</Text>}
-          <Chip
-            label={t('launch.photoLabel', { date: photo.captured_date })}
-            selected={selected.includes(photo.id)}
-            onPress={() =>
-              setSelected((current) =>
-                current.includes(photo.id)
-                  ? current.filter((id) => id !== photo.id)
-                  : [...current.slice(-1), photo.id],
-              )
-            }
-            testID={'photo-item-' + photo.id}
-          />
-          <Button
-            variant="secondary"
-            label={t('launch.deletePhoto')}
-            disabled={busy}
-            testID={'photo-delete-' + photo.id}
-            onPress={() =>
-              Alert.alert(t('launch.deletePhoto'), t('launch.confirmDelete'), [
-                { text: t('common.cancel'), style: 'cancel' },
-                {
-                  text: t('launch.deletePhoto'),
-                  style: 'destructive',
-                  onPress: () => void remove(photo.id),
-                },
-              ])
-            }
-          />
-        </View>
-      ))}
     </View>
   );
   return embedded ? (

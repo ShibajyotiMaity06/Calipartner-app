@@ -1,5 +1,6 @@
 import { createClient } from 'jsr:@supabase/supabase-js@2';
 import { removeFeedObject } from '../_shared/feedStorage.ts';
+import { deleteCustomAvatarObject } from '../_shared/customAvatarStorage.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -48,6 +49,16 @@ Deno.serve(async (req: Request) => {
     }
 
     const userId = user.id;
+
+    const customAvatar = await adminClient
+      .from('avatar_profiles')
+      .update({ custom_base_deleting: true })
+      .eq('user_id', userId)
+      .select('custom_base_request_id')
+      .maybeSingle();
+    if (customAvatar.error) throw new Error('AVATAR_LOOKUP_FAILED');
+    if (customAvatar.data?.custom_base_request_id)
+      await deleteCustomAvatarObject(userId, customAvatar.data.custom_base_request_id);
 
     // Revoke feed access before removing its private objects.
     const disabledFeed = await adminClient

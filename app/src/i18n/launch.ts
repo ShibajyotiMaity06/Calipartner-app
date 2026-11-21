@@ -3,14 +3,14 @@ export const launch = {
   openFeedback: 'Open feedback email',
   onlineSaves: 'Browse saved data offline. Logging needs an internet connection.',
   planAccess:
-    'Full AI meal and workout plans require purchased Plus or Pro and your consent. They are not included in the trial.',
-  everything: 'Everything in Plus',
+    'Full AI meal and workout plans require purchased Pro and your consent. They are not included in the trial.',
+  everything: 'Pro benefits',
   fasting: 'Fasting tracker and eating windows',
   soon: 'Coming Soon',
   soonNote:
     'Planned for future updates. These features are not available with your purchase today.',
   plus: 'Friend discovery, fasting, recipes and workout plans',
-  pro: 'Everything in Plus, with your personal AI coach',
+  pro: 'Pro benefits, with your personal AI coach',
   recipes: '90+ recipe library, meal planner and grocery lists',
   friends: 'Friend discovery and username requests',
   workouts: 'Workout routines and shared workouts',

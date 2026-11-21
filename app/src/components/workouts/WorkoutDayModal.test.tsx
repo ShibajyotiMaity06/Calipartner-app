@@ -12,6 +12,7 @@ const state = vi.hoisted(() => ({
   refresh: vi.fn(),
   push: vi.fn(),
   saved: vi.fn(),
+  calendar: vi.fn(),
   date: '2026-11-11',
 }));
 vi.mock('react-native', () => ({
@@ -20,6 +21,7 @@ vi.mock('react-native', () => ({
   ScrollView: 'ScrollView',
   Pressable: 'Pressable',
   View: 'View',
+  ActivityIndicator: 'ActivityIndicator',
   StyleSheet: { create: (value: unknown) => value },
 }));
 vi.mock('@calipartner/ui', async () => ({
@@ -39,6 +41,8 @@ vi.mock('@/hooks/useCurrentLocalDate', () => ({
   useCurrentLocalDate: () => ({ localDate: state.date }),
 }));
 vi.mock('@/hooks/useBrowserModalBack', () => ({ useBrowserModalBack: vi.fn() }));
+vi.mock('@/db', () => ({ getDb: async () => ({}) }));
+vi.mock('@/services/workoutService', () => ({ getWorkoutsCalendarData: state.calendar }));
 vi.mock('@/hooks/useWorkoutPlan', () => ({
   useWorkoutPlan: () => ({
     plan: state.plan,
@@ -107,6 +111,7 @@ beforeEach(() => {
   state.error = false;
   state.plan = { full_access: false, days: [], can_rebuild: false };
   state.save.mockResolvedValue({ id: 'acknowledged' });
+  state.calendar.mockResolvedValue({ '2026-11-03': 1, '2026-11-10': 2 });
 });
 afterEach(async () => {
   if (tree) await act(async () => tree.unmount());
@@ -138,6 +143,15 @@ it('Free shows the Wednesday sample, opens the paywall, and past days show actua
   const choosePreviousDay = () =>
     tree.root.findByProps({ testID: 'day-cell-2026-11-10' }).props.onPress();
   await act(async () => openCalendar());
+  expect(state.calendar).toHaveBeenCalledWith(
+    expect.anything(),
+    'owner',
+    '2026-11-01',
+    '2026-11-30',
+  );
+  expect(tree.root.findByProps({ testID: 'workout-dot-2026-11-03' })).toBeDefined();
+  expect(tree.root.findByProps({ testID: 'workout-dot-2026-11-10' })).toBeDefined();
+  expect(tree.root.findAllByProps({ testID: 'workout-dot-2026-11-11' })).toHaveLength(0);
   expect(tree.root.findByProps({ testID: 'day-cell-2026-11-12' }).props.disabled).toBe(true);
   await act(async () => choosePreviousDay());
   expect(JSON.stringify(tree.toJSON())).not.toContain('Actual previous workout');

@@ -130,6 +130,56 @@ it('allows unauthenticated visitors to start questionnaire as guest', async () =
   expect(state.drafts.has('guest-user')).toBe(true);
 });
 
+it('carries a finished guest questionnaire through signup and profile creation', async () => {
+  await render();
+  await edit((machine) => machine.setCharacterGender('female', true).setGoal('bulk'));
+  await next();
+  await edit((machine) => machine.setNickname('Alex'));
+  await next();
+  await edit((machine) => machine.setBodyStats({ dateOfBirth: '1999-06-12' }));
+  await next();
+  expect(find('Question').props.step).toBe('height');
+  expect(find('AuthModal').props.visible).toBe(false);
+  await edit((machine) => machine.setBodyStats({ heightCm: 172 }));
+  await next();
+  await edit((machine) => machine.setBodyStats({ weightKg: 72 }));
+  for (let stage = 5; stage <= 11; stage++) await next();
+  await act(async () => find('Review').props.onPlanned({}));
+  await act(async () =>
+    tree.root.findByProps({ testID: 'onboarding-open-paywall' }).props.onPress(),
+  );
+  expect(find('AuthModal').props.visible).toBe(true);
+  const guest = state.drafts.get('guest-user');
+  expect(guest).toMatchObject({
+    currentStep: 'reveal',
+    heightCm: 172,
+    weightKg: 72,
+    dateOfBirth: '1999-06-12',
+  });
+  state.user = { id: 'owner' };
+  await act(async () => tree.update(<OnboardingScreen />));
+  expect(find('ProfileForm').props.state).toMatchObject({
+    currentStep: 'reveal',
+    heightCm: 172,
+    weightKg: 72,
+    dateOfBirth: '1999-06-12',
+    goalProfileId: guest?.goalProfileId,
+  });
+  state.profile = {
+    id: 'owner',
+    nickname: 'Alex',
+    sex: 'female',
+    date_of_birth: '1999-06-12',
+  } as Profile;
+  await act(async () => {
+    find('ProfileForm').props.onComplete();
+    tree.update(<OnboardingScreen />);
+  });
+  expect(find('Paywall').props.visible).toBe(true);
+  expect(state.drafts.has('guest-user')).toBe(false);
+  expect(state.drafts.get('owner')?.goalProfileId).toBe(guest?.goalProfileId);
+});
+
 it('offers only Bulk and Cut when a historical goal is maintenance', async () => {
   const onSelectGoal = vi.fn();
   await act(async () => {

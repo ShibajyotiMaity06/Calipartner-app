@@ -91,10 +91,10 @@ afterEach(async () => {
   tree = undefined;
 });
 const products = (currency: string) =>
-  ['plus_semiannual', 'plus_annual', 'pro_semiannual', 'pro_annual'].map((key) => ({
+  ['pro_semiannual', 'pro_annual', 'pro_quarterly'].map((key, index) => ({
     key,
     currency,
-    amount: currency === 'INR' ? 999 : 19.99,
+    amount: (currency === 'INR' ? [1599, 2499, 899] : [32.99, 49.99, 18.99])[index],
     trialDays: 0,
   }));
 it('shows prepared onboarding prices immediately without a loading-prices message', async () => {
@@ -105,8 +105,8 @@ it('shows prepared onboarding prices immediately without a loading-prices messag
   });
   expect(tree!.root.findAllByProps({ testID: 'onboarding-pricing-placeholder' })).toHaveLength(0);
   expect(
-    tree!.root.findByProps({ testID: 'onboarding-six-month-price' }).props.children.join(''),
-  ).toContain('999');
+    tree!.root.findByProps({ testID: 'onboarding-semiannual-price' }).props.children.join(''),
+  ).toContain('1,599');
   expect(JSON.stringify(tree!.toJSON())).not.toContain('Loading prices');
 });
 it('uses a price placeholder while an unprepared request is still pending', async () => {
@@ -126,13 +126,9 @@ it.each(['INR', 'USD'])(
     await act(async () => {
       tree = create(<PremiumStep onContinue={proceed} onSkip={skip} />);
     });
-    expect(JSON.stringify(tree!.toJSON())).toContain(currency === 'INR' ? '₹999.00' : '$19.99');
-    expect(tree!.root.findByProps({ testID: 'btn-onboarding-next' }).props.label).toBe(
-      'Continue with Plus',
-    );
-    await act(async () =>
-      tree!.root.findByProps({ testID: 'onboarding-plan-pro' }).props.onPress(),
-    );
+    expect(JSON.stringify(tree!.toJSON())).toContain(currency === 'INR' ? '₹1,599' : '$32.99');
+    expect(tree!.root.findAllByProps({ testID: 'onboarding-plan-plus' })).toHaveLength(0);
+    expect(tree!.root.findByProps({ testID: 'onboarding-quarterly-price' })).toBeDefined();
     expect(tree!.root.findByProps({ testID: 'btn-onboarding-next' }).props.label).toBe(
       'Continue with Pro',
     );

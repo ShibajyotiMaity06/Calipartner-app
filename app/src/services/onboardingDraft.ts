@@ -17,15 +17,15 @@ export function resumeOnboardingDraft(
     weightKg: draft?.weightKg ?? 0,
     nickname: draft?.nickname || profile?.nickname || '',
     sex: profile?.sex ?? draft?.sex ?? 'male',
-    dateOfBirth: profile?.date_of_birth ?? (fromGuest ? '' : (draft?.dateOfBirth ?? '')),
+    dateOfBirth:
+      profile?.date_of_birth ??
+      (fromGuest && String(draft?.currentStep) === 'completed' ? '' : (draft?.dateOfBirth ?? '')),
     weeklyRateKg: draft?.goal === 'maintain' ? 0.5 : (draft?.weeklyRateKg ?? 0.5),
     errors: {},
   });
   const savedStep = draft?.currentStep;
   if (savedStep)
-    machine.goToStep(
-      !profile && ['plan_summary', 'reveal', 'paywall'].includes(savedStep) ? 'profile' : savedStep,
-    );
+    machine.goToStep(fromGuest && profile && savedStep === 'reveal' ? 'paywall' : savedStep);
   return machine;
 }
 

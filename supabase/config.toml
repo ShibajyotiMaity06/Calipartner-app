@@ -151,3 +151,7 @@ verify_jwt = false
 [functions.feed-api]
 # The handler verifies the bearer token and rechecks database access before signing.
 verify_jwt = false
+
+[functions.generate-ai-avatar]
+verify_jwt = false
+static_files = ["./functions/generate-ai-avatar/base_f_form1.png", "./functions/generate-ai-avatar/base_m_form1.png"]

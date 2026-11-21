@@ -139,7 +139,7 @@ it('renders locked Free placeholders without advanced values in text or accessib
   });
   const text = JSON.stringify(renderer.toJSON());
   for (const value of ['4.3', '11.7', '349', '2.8']) expect(text).not.toContain(value);
-  expect(text).toContain('Plus or Pro');
+  expect(text).toContain('Pro unlocks');
   expect(text).toContain('Locked');
   state.paid = true;
   await act(async () => renderer.update(<AdvancedNutrition nutrients={nutrients} />));

@@ -55,10 +55,14 @@ it.each([
   });
   expect(mounted).not.toHaveBeenCalled();
   await act(async () =>
-    renderer.root.findByProps({ testID: `upgrade-${feature}` }).props.onPress(),
+    renderer.root
+      .findByProps({
+        testID: feature === 'progress_photos' ? 'progress-photos-upgrade' : `upgrade-${feature}`,
+      })
+      .props.onPress(),
   );
   expect(renderer.root.findByType('Paywall' as React.ElementType).props.preselectedTier).toBe(
-    'plus',
+    'pro',
   );
 });
 it.each(['plus', 'pro'])(

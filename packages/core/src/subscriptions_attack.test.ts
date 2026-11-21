@@ -27,11 +27,11 @@ describe('Individual subscription security boundaries', () => {
   it('retains prices and existing Pro allowances', () => {
     expect(PRICING_PLANS.plus.rawMonthly).toBe(249);
     expect(PRICING_PLANS.pro.rawAnnual).toBe(2499);
-    expect(PRICING_PLANS.pro.aiCoachMessagesPerDay).toBe(10);
-    expect(PRICING_PLANS.pro.aiScansPerDay).toBe(5);
+    expect(PRICING_PLANS.pro.aiCoachMessagesPerMonth).toBe(465);
+    expect(PRICING_PLANS.pro.aiScansPerMonth).toBe(248);
     expect(PRICING_PLANS.pro.trialDays).toBe(0);
     expect(PRICING_PLANS.plus.hostedRoomsMax).toBe(3);
-    expect(PRICING_PLANS.pro.hostedRoomsMax).toBe(5);
+    expect(PRICING_PLANS.pro.hostedRoomsMax).toBe(20);
   });
   it('rejects forged and absent webhook authorization', () => {
     expect(verifyWebhookAuth('Bearer forged', 'real-secret')).toBe(false);

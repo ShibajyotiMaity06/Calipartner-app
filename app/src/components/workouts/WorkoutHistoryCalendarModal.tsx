@@ -16,13 +16,10 @@ import { Ionicons } from '@expo/vector-icons';
 import type { Workout, WorkoutWithDetails } from '@calipartner/core';
 import { useAuth } from '@/contexts/AuthContext';
 import { getDb } from '@/db';
-import { t } from '@/i18n';
-import {
-  getWorkoutById,
-  getWorkoutsCalendarData,
-  getWorkoutsForDate,
-  getWorkoutsHistory,
-} from '@/services/workoutService';
+import { getLocale, t } from '@/i18n';
+import { useWorkoutCalendar } from '@/hooks/useWorkoutCalendar';
+import { useCurrentLocalDate } from '@/hooks/useCurrentLocalDate';
+import { getWorkoutById, getWorkoutsForDate, getWorkoutsHistory } from '@/services/workoutService';
 import { fontSize, radius, spacing } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
 import { WorkoutDetailModal } from './WorkoutDetailModal';
@@ -52,8 +49,13 @@ export function WorkoutHistoryCalendarModal({
   const [error, setError] = useState<string | null>(null);
 
   // Calendar state
-  const [currentMonthDate, setCurrentMonthDate] = useState(() => new Date());
-  const [calendarCounts, setCalendarCounts] = useState<Record<string, number>>({});
+  const { localDate } = useCurrentLocalDate();
+  const [currentMonthDate, setCurrentMonthDate] = useState(
+    () => new Date(localDate.slice(0, 7) + '-01T12:00:00Z'),
+  );
+  const year = currentMonthDate.getUTCFullYear();
+  const month = currentMonthDate.getUTCMonth();
+  const workouts = useWorkoutCalendar(visible && activeTab === 'calendar', year, month);
   const [selectedCalendarDate, setSelectedCalendarDate] = useState<string | null>(null);
   const [dateWorkouts, setDateWorkouts] = useState<WorkoutWithDetails[]>([]);
   const [dateLoading, setDateLoading] = useState(false);
@@ -78,26 +80,6 @@ export function WorkoutHistoryCalendarModal({
     }
   }, [userId]);
 
-  // Load calendar counts for current month
-  const loadCalendarData = useCallback(async () => {
-    try {
-      const db = await getDb();
-      const year = currentMonthDate.getFullYear();
-      const month = currentMonthDate.getMonth();
-      const startStr = `${year}-${String(month + 1).padStart(2, '0')}-01`;
-      const endDay = new Date(year, month + 1, 0).getDate();
-      const endStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(endDay).padStart(
-        2,
-        '0',
-      )}`;
-
-      const counts = await getWorkoutsCalendarData(db, userId, startStr, endStr);
-      setCalendarCounts(counts);
-    } catch {
-      // Ignore
-    }
-  }, [currentMonthDate, userId]);
-
   // Load workouts for selected calendar date
   const loadDateWorkouts = useCallback(
     async (dateStr: string) => {
@@ -118,9 +100,8 @@ export function WorkoutHistoryCalendarModal({
   useEffect(() => {
     if (visible) {
       void loadHistory();
-      void loadCalendarData();
     }
-  }, [visible, loadHistory, loadCalendarData]);
+  }, [visible, loadHistory]);
 
   useEffect(() => {
     if (selectedCalendarDate) {
@@ -138,19 +119,15 @@ export function WorkoutHistoryCalendarModal({
   };
 
   const handleMonthShift = (delta: number) => {
-    const next = new Date(currentMonthDate);
-    next.setMonth(next.getMonth() + delta);
-    setCurrentMonthDate(next);
+    setCurrentMonthDate(new Date(Date.UTC(year, month + delta, 1, 12)));
   };
 
   // Build calendar matrix
   const renderCalendar = () => {
-    const year = currentMonthDate.getFullYear();
-    const month = currentMonthDate.getMonth();
-    const firstDayOfWeek = new Date(year, month, 1).getDay(); // 0 = Sun
+    const firstDayOfWeek = new Date(Date.UTC(year, month, 1)).getUTCDay(); // 0 = Sun
     // Shift so Mon = 0, Sun = 6
     const startOffset = (firstDayOfWeek + 6) % 7;
-    const daysInMonth = new Date(year, month + 1, 0).getDate();
+    const daysInMonth = new Date(Date.UTC(year, month + 1, 0)).getUTCDate();
 
     const cells: Array<{ dayNum?: number; dateStr?: string }> = [];
     for (let i = 0; i < startOffset; i++) {
@@ -164,7 +141,8 @@ export function WorkoutHistoryCalendarModal({
       cells.push({ dayNum: day, dateStr });
     }
 
-    const monthName = currentMonthDate.toLocaleString('default', {
+    const monthName = currentMonthDate.toLocaleString(getLocale(), {
+      timeZone: 'UTC',
       month: 'long',
       year: 'numeric',
     });
@@ -176,27 +154,25 @@ export function WorkoutHistoryCalendarModal({
           <Button
             variant="tertiary"
             fullWidth={false}
-            label="Previous Month"
+            label={t('calendar.previousMonth')}
             iconOnly
             icon={<NavigationIcon action="back" />}
             testID={`${testID}-btn-prev-month`}
             onPress={() => handleMonthShift(-1)}
             style={styles.monthShiftBtn}
             accessibilityRole="button"
-            accessibilityLabel="Previous Month"
           />
           <Text style={[styles.monthHeaderText, { color: colors.text }]}>{monthName}</Text>
           <Button
             variant="tertiary"
             fullWidth={false}
-            label="Next Month"
+            label={t('calendar.nextMonth')}
             iconOnly
             icon={<Ionicons name="chevron-forward" size={20} color={colors.text} />}
             testID={`${testID}-btn-next-month`}
             onPress={() => handleMonthShift(1)}
             style={styles.monthShiftBtn}
             accessibilityRole="button"
-            accessibilityLabel="Next Month"
           />
         </View>
 
@@ -209,6 +185,10 @@ export function WorkoutHistoryCalendarModal({
           ))}
         </View>
 
+        {workouts.loading && <ActivityIndicator accessibilityLabel={t('common.loading')} />}
+        {workouts.error && (
+          <Button variant="tertiary" label={t('calendar.workoutsRetry')} onPress={workouts.retry} />
+        )}
         {/* Days Grid */}
         <View style={styles.gridWrap}>
           {cells.map((cell, idx) => {
@@ -216,7 +196,11 @@ export function WorkoutHistoryCalendarModal({
               return <View key={`blank-${idx}`} style={styles.gridCell} />;
             }
 
-            const count = calendarCounts[cell.dateStr] ?? 0;
+            const count = workouts.counts[cell.dateStr] ?? 0;
+            const dateLabel = new Intl.DateTimeFormat(getLocale(), {
+              dateStyle: 'full',
+              timeZone: 'UTC',
+            }).format(new Date(cell.dateStr));
             const isSelected = selectedCalendarDate === cell.dateStr;
 
             return (
@@ -233,7 +217,10 @@ export function WorkoutHistoryCalendarModal({
                 ]}
                 onPress={() => setSelectedCalendarDate(cell.dateStr!)}
                 accessibilityRole="button"
-                accessibilityLabel={`${cell.dateStr}, ${count} workouts`}
+                accessibilityLabel={
+                  count ? t('calendar.workoutLogged', { date: dateLabel }) : dateLabel
+                }
+                accessibilityState={{ selected: isSelected }}
               >
                 <Text
                   style={[styles.cellDayNum, { color: isSelected ? colors.accent : colors.text }]}
@@ -242,7 +229,7 @@ export function WorkoutHistoryCalendarModal({
                 </Text>
                 {count > 0 && (
                   <View
-                    testID={`cal-dot-${cell.dateStr}`}
+                    testID={`workout-dot-${cell.dateStr}`}
                     style={[styles.workoutDot, { backgroundColor: colors.accent }]}
                   />
                 )}
@@ -441,17 +428,14 @@ export function WorkoutHistoryCalendarModal({
           onClose={() => {
             setSelectedWorkoutDetail(null);
             void loadHistory();
-            void loadCalendarData();
           }}
           onDeleted={() => {
             setSelectedWorkoutDetail(null);
             void loadHistory();
-            void loadCalendarData();
           }}
           onUpdated={(up) => {
             setSelectedWorkoutDetail(up);
             void loadHistory();
-            void loadCalendarData();
           }}
         />
       )}

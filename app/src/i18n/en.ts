@@ -22,6 +22,49 @@ import { repairMessages } from './repairs';
 import { feed } from './feed';
 export const en = {
   feed,
+  avatarAi: {
+    create: 'Create my AI avatar',
+    title: 'Create your AI avatar',
+    instructions:
+      'Choose a clear, front-facing full-body photo. Keep your head, hands and feet in the frame.',
+    privacy:
+      'By choosing a photo, you agree to send it to Google Gemini to create your avatar. CaliPartner stores the generated avatar in your private account.',
+    choose: 'Choose a full-body photo',
+    fullBody: 'Choose another photo with your whole body visible from head to feet.',
+    error: 'Your avatar could not be created. Try again.',
+    generating: 'Creating your avatar',
+    retry: 'Retry avatar generation',
+  },
+  photoJourney: {
+    title: 'Progress photo journey',
+    open: 'View your photo journey',
+    weekly: 'Weekly',
+    monthly: 'Monthly',
+    all: 'All',
+    select: 'Select photo from {date}',
+    hint: 'Select two photos to compare.',
+    dayDelta: '{count} days apart',
+    weightDelta: 'Weight change {weight}',
+    weight: '{weight} kg',
+  },
+  proPlan: {
+    title: 'CaliPartner Pro',
+    free: 'Free',
+    pro: 'Pro',
+    tax: 'All taxes included. No extra surcharges at checkout.',
+    rooms: 'Create and host rooms with your squads and friends — unlimited members',
+    coach: 'AI coach with 465 chats per month',
+    scans: 'Instant meal scanning with 248 scans per month',
+    finder: 'Partner Finder and friend connections',
+    avatar: 'Create your own AI avatar from a full-body photo',
+    photos: 'Weekly and monthly progress photo journey',
+    trackers: 'Custom trackers',
+    logs: 'Track workouts and meals',
+    workoutCalendar: 'Workout calendar indicators',
+    unlimited: 'Unlimited members',
+    roomFull: 'Your room is full. Pro lets you invite more people.',
+    pair: 'Two-person partner room',
+  },
   founders,
   entryPolish,
   workoutPolish,
@@ -49,7 +92,7 @@ export const en = {
     checkError: 'Check your trial eligibility, then choose your plan again.',
     noCard: 'Personal tracking is free forever. Paid plans bill immediately.',
     error: 'Your trial could not be confirmed. Check your connection and try again.',
-    continue: 'Continue with Plus',
+    continue: 'Continue with Pro',
     expiredTitle: 'Your Plus trial has ended',
     expiredBody:
       'Plus features are paused. Choose a paid plan to use them again, or continue with all Free features.',
@@ -68,7 +111,7 @@ export const en = {
   repairUnits: { cm: 'cm', ftIn: 'ft / inch', ft: 'ft', inch: 'inch' },
   customMacros: {
     title: 'Custom macros',
-    locked: 'Available with Plus and Pro',
+    locked: 'Available with Pro',
     description:
       'Set calories, protein, carbs and fat independently within your plan limits. Save to use them from today.',
     current: 'Current: {calories} kcal · {protein} g protein · {carbs} g carbs · {fat} g fat',
@@ -210,13 +253,13 @@ export const en = {
     manage: 'Manage current plan',
     managementNote:
       'Your current plan stays active. Review changes with your billing provider before confirming.',
-    plusRequired: 'Available with Plus or Pro',
+    plusRequired: 'Available with Pro',
     proRequired: 'Available with Pro',
     paidBody: 'Choose a plan to use this feature. Your personal tracking stays free.',
     seePlans: 'See plans',
     unavailable: 'We could not check access. Connect and try again.',
     photoPro: 'AI photo scans are available with a paid Pro plan.',
-    starterRecipes: 'Free includes 10 starter recipes. Plus or Pro unlocks the full library.',
+    starterRecipes: 'Free includes 10 starter recipes. Pro unlocks the full library.',
     coachUnavailable: 'AI Coach is temporarily unavailable. Please try again.',
     photoLimitTitle: 'Photo scan access',
     coachLimit:
@@ -240,8 +283,8 @@ export const en = {
     calories: 'Energy',
     locked: 'Locked',
     unavailable: 'Not available',
-    unlock: 'Plus or Pro unlocks fibre, sugar, sodium and more.',
-    upgrade: 'Explore Plus and Pro',
+    unlock: 'Pro unlocks fibre, sugar, sodium and more.',
+    upgrade: 'Explore Pro',
     refreshNutrition: 'Connect and scan again to refresh these values.',
     barcodeHelp:
       'Keep the barcode visible and hold steady. Move back if it looks blurry. The guide is optional.',
@@ -270,9 +313,9 @@ export const en = {
     select: 'Select {name}',
     selected: 'Selected: {name}',
     capacity: 'You can invite up to {count} friends with your plan.',
-    upgrade: 'Add more people with Plus or Pro',
+    upgrade: 'Add more people with Pro',
     invitationNote:
-      'Your friends receive an invitation. After they accept, macros and steps are shared. Members with Plus can also see meals and workouts. Height and weight stay private unless you share them.',
+      'Your friends receive an invitation. After they accept, macros and steps are shared. Members with Pro can also see meals and workouts. Height and weight stay private unless you share them.',
     createError: 'Could not create your squad. Check your connection and try again.',
     requests: 'Friend requests',
     rooms: 'Squad invitations',
@@ -481,13 +524,14 @@ export const en = {
   },
   setup: {
     plusFriendRequests: 'No weekly friend-request limit',
-    hostRoomLimit: 'Your plan has reached its hosted room limit. Free: 1, Plus: 3, Pro: 5.',
+    hostRoomLimit:
+      'You have reached your hosted room limit. Archive a room before creating another.',
     subscriptionPending:
       'Your purchase is confirmed. Waiting for your plan to update. Try again in a moment.',
     takeoverCheck:
       'Check your plan capacity and available hosted rooms, then try taking over again.',
     progressPlus:
-      'Shared progress charts are included with Plus. Your daily room summary stays free.',
+      'Shared progress charts are included with Pro. Your daily room summary stays free.',
 
     nutritionPrivate: 'Nutrition is not shared',
     logPrivate: 'Logging status is not shared',
@@ -509,8 +553,8 @@ export const en = {
     workoutMinutes: '{minutes} minutes',
     sharedSet: '{reps} reps ? {weight} kg ? {seconds} seconds ? {meters} m',
     pairChallenge: 'Seven days of showing up',
-    pairChallengeBody: 'Log each day together for seven days. Both people need Plus or Pro.',
-    bothPlus: 'Both people need Plus or Pro to start this challenge.',
+    pairChallengeBody: 'Log each day together for seven days. Both people need Pro.',
+    bothPlus: 'Both people need Pro to start this challenge.',
     inviteChallenge: 'Invite your partner to a challenge',
     noChallenges: 'No pair challenges yet.',
     challengePending: 'Waiting for your partner',
@@ -530,11 +574,11 @@ export const en = {
     finderPaid:
       'Discover friends and request by username. Create a room for two with someone you know for free.',
     roomChoices: 'Two people free. Up to five with a Plus host, or 20 with Pro.',
-    roomPaidFeatures: 'Text and workouts with Plus. Photos and videos with Pro.',
+    roomPaidFeatures: 'Text and workouts with Pro. Photos and videos with Pro.',
     plusRoomFeature: 'Host 3 rooms, up to 5 people each. Friends join free.',
     plusChatFeature: 'Share detailed workouts with your squad',
     pairChallengeFeature: 'Pair challenges when both people have Plus',
-    proRoomFeature: 'Host 5 rooms, up to 20 people each',
+    proRoomFeature: 'Host rooms with unlimited members',
     proMediaFeature: 'Share photos and videos in room chat',
     proReviewFeature: 'Monthly weight check-in and refreshed macros',
 
@@ -557,7 +601,7 @@ export const en = {
       'Has your weight or routine changed? Review your details and confirm your updated macros.',
     reviewMonthlyAction: 'Review my plan',
     reviewMonthlyLater: 'Later',
-    chatPlus: 'Squad text chat is free. Sharing detailed workouts requires Plus or Pro.',
+    chatPlus: 'Squad text chat is free. Sharing detailed workouts requires Pro.',
     mediaPro: 'Photo and video sharing requires Pro.',
     frozenRoom:
       'Renew or take over with an eligible plan within 30 days. After that, this room is deleted. Your personal logs stay yours.',
@@ -645,7 +689,7 @@ export const en = {
     pro: 'CaliPartner Pro',
     proBadge: 'No free trial',
     proBody: 'Extra help when your day gets busy.',
-    proFeatureOne: 'Everything in Plus, with larger rooms',
+    proFeatureOne: 'Pro benefits, with larger rooms',
     proFeatureTwo: 'A personal AI coach for questions about your plan',
     proFeatureThree: 'Photo food logging to help you start an entry',
     premiumFootnote:
@@ -745,6 +789,8 @@ export const en = {
     joinRoom: 'View invite',
   },
   calendar: {
+    workoutLogged: '{date}, workout logged',
+    workoutsRetry: 'Retry workout indicators',
     title: 'Choose a date',
     previousMonth: 'Previous month',
     nextMonth: 'Next month',
@@ -1466,7 +1512,7 @@ export const en = {
       logSharedBtn: 'Tag Shared Meal',
     },
     access: {
-      chatUpgrade: 'Get Plus or Pro to open room chat.',
+      chatUpgrade: 'Get Pro to open room chat.',
       chatWaiting: 'Chat opens when your friend accepts the invitation.',
       progressWaiting: 'Progress opens when your friend accepts the invitation.',
       upgrade: 'See plans',
@@ -1498,7 +1544,7 @@ export const en = {
     },
     roomFull: {
       memberNotice: 'This room is full',
-      hostNotice: 'Your room is full. Plus fits up to 5 people, and Pro fits up to 20.',
+      hostNotice: 'Your room is full. Pro lets you invite more people.',
       upgradeBtn: 'Upgrade Plan',
       sheetTitle: 'Room is Full',
       sheetSubtitle: 'Upgrade your room plan to add more members.',
@@ -1530,9 +1576,9 @@ export const en = {
         title: 'Friend discovery',
         badge: 'PLAN HOLDER',
         subtitle:
-          'Connect with opted-in fitness partners who share your goals, training style, and schedule. Included with CaliPartner Plus and Pro.',
+          'Connect with opted-in fitness partners who share your goals, training style, and schedule. Included with CaliPartner Pro.',
         feature1: 'Deterministic matching based on goals, age bands & routines',
-        feature2: 'Free to opt in and be suggested; Plus and Pro members browse and send requests',
+        feature2: 'Free to opt in and be suggested; Pro members browse and send requests',
         feature3: 'Safe banded profiles — photos and usernames stay private until both accept',
         unlockBtn: 'Unlock with Room Plan',
       },
@@ -1540,7 +1586,7 @@ export const en = {
     rejoin: {
       title: 'Rejoin Your Room',
       subtitle:
-        'Your room trial has ended. Upgrade to CaliPartner Plus or Pro to continue tracking side by side with your partners.',
+        'Your room trial has ended. Upgrade to CaliPartner Pro to continue tracking side by side with your partners.',
       unlockBtn: 'Unlock CaliPartner Plus',
     },
     paywall: {
@@ -1580,7 +1626,7 @@ export const en = {
       tierPro: 'Pro',
       tierBasicDesc: 'Personal diary, calories, steps & GPS runs free forever',
       tierPlusDesc: '3 rooms of up to 5 people, friend discovery and fasting',
-      tierProDesc: '5 rooms of up to 20 people, AI coach and photo scans',
+      tierProDesc: 'Rooms with unlimited members, AI coach and meal scans',
       durationMonthly: 'Monthly',
       durationQuarterly: '3 Months',
       durationAnnual: 'Annual',
@@ -1661,12 +1707,13 @@ export const en = {
       errorMinLength: 'Room name must be at least 3 characters.',
       errorMaxRooms:
         'You can be in up to 3 rooms at a time. Leave an existing room to create a new one.',
-      errorPlanAttached: 'Your plan has reached its hosted room limit. Free: 1, Plus: 3, Pro: 5.',
+      errorPlanAttached:
+        'You have reached your hosted room limit. Archive a room before creating another.',
     },
     joinModal: {
       title: 'Join a squad',
       subtitle:
-        'Join with a squad code. Macros and steps are shared; members with Plus can see meals and workouts. Height and weight stay private unless you share them.',
+        'Join with a squad code. Macros and steps are shared; members with Pro can see meals and workouts. Height and weight stay private unless you share them.',
       codeLabel: 'Squad code',
       codePlaceholder: 'e.g. CP1234',
       submitBtn: 'Join Room',

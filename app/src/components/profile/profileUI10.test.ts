@@ -3,7 +3,7 @@ vi.mock('@/contexts/AuthContext', () => ({ useAuth: () => ({ session: null }) })
 vi.mock('@/hooks/usePlusTrial', () => ({ usePlusTrial: () => ({ offer: null, loading: false }) }));
 import { en } from '@/i18n/en';
 import { t } from '@/i18n';
-import { TIER_CONFIG } from '@/components/rooms/PaywallModal';
+import { ACTIVE_REVENUECAT_PRODUCT_IDS, PRICING_PLANS } from '@calipartner/core';
 
 describe('UI-10 · Me, Privacy, Plans, and Paywall (Screens N01–N16, O01–O10)', () => {
   describe('1. N01: Me Screen Layout & Information Architecture', () => {
@@ -177,23 +177,13 @@ describe('UI-10 · Me, Privacy, Plans, and Paywall (Screens N01–N16, O01–O10
       expect(titles.general).toBe('Choose your CaliPartner plan');
     });
 
-    it('configures the three room size tiers: Basic (2-5), Plus (6-20), Pro (21-50)', () => {
-      expect(TIER_CONFIG.basic.sizeRange).toBe('2 people');
-      expect(TIER_CONFIG.basic.cap).toBe(2);
-
-      expect(TIER_CONFIG.plus.sizeRange).toBe('3 to 5');
-      expect(TIER_CONFIG.plus.cap).toBe(5);
-
-      expect(TIER_CONFIG.pro.sizeRange).toBe('6 to 20');
-      expect(TIER_CONFIG.pro.cap).toBe(20);
-    });
-
-    it('enforces 7-day free trial on Plus and NO trial on Pro as per Pricing Plan v2', () => {
-      expect(TIER_CONFIG.plus.hasTrial).toBe(false);
-      expect(TIER_CONFIG.plus.trialDays).toBe(0);
-
-      expect(TIER_CONFIG.pro.hasTrial).toBe(false);
-      expect(TIER_CONFIG.pro.trialDays).toBe(0);
+    it('offers only the three Pro products with no trial', () => {
+      expect(ACTIVE_REVENUECAT_PRODUCT_IDS).toEqual([
+        'pro_semiannual',
+        'pro_quarterly',
+        'pro_annual',
+      ]);
+      expect(PRICING_PLANS.pro.trialDays).toBe(0);
     });
 
     it('displays quiet savings badges without shouting badges', () => {

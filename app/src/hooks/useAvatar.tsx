@@ -9,6 +9,8 @@ import {
   type AvatarState,
 } from '@/services/avatarService';
 import { invalidateReadCache } from '@/services/readCache';
+import { useCustomAvatar } from '@/hooks/useCustomAvatar';
+import type { CustomAvatar } from '@/services/aiAvatarService';
 
 interface AvatarContextValue {
   state: AvatarState | null;
@@ -16,6 +18,9 @@ interface AvatarContextValue {
   error: boolean;
   refresh: () => Promise<void>;
   acknowledge: (state: AvatarState) => void;
+  hasPaidPro?: boolean;
+  customBase?: CustomAvatar & { owner?: string };
+  acknowledgeCustomBase?: (avatar: CustomAvatar) => void;
 }
 const AvatarContext = createContext<AvatarContextValue>({
   state: null,
@@ -28,6 +33,10 @@ export function AvatarProvider({ children }: { children: React.ReactNode }) {
   const { user } = useAuth();
   const userId = user?.id;
   const [result, setResult] = useState<{ owner: string; state: AvatarState } | null>(null);
+  const custom = useCustomAvatar(
+    userId,
+    result?.owner === userId && Boolean(result?.state.profile),
+  );
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(false);
   const epoch = useRef(0);
@@ -131,6 +140,9 @@ export function AvatarProvider({ children }: { children: React.ReactNode }) {
         error,
         refresh,
         acknowledge,
+        hasPaidPro: custom.hasPaidPro,
+        customBase: custom.customBase,
+        acknowledgeCustomBase: custom.acknowledge,
       }}
     >
       {children}

@@ -1,4 +1,47 @@
 import type { Goal, Sex } from './types';
+import { addDaysToDateString } from './trackers';
+
+export type ProgressPhotoPeriod = 'weekly' | 'monthly' | 'all';
+
+interface ProgressPhotoDate {
+  captured_date: string;
+  created_at: string;
+}
+
+export function selectJourneyPhotos<T extends ProgressPhotoDate>(
+  photos: T[],
+  period: ProgressPhotoPeriod,
+) {
+  const sorted = [...photos].sort(
+    (a, b) =>
+      a.captured_date.localeCompare(b.captured_date) || a.created_at.localeCompare(b.created_at),
+  );
+  if (period === 'all') return sorted;
+  const groups = new Map<string, T>();
+  for (const photo of sorted) {
+    const localDay = photo.captured_date;
+    const dayOfWeek = new Date(localDay + 'T12:00:00Z').getUTCDay();
+    const group =
+      period === 'monthly'
+        ? localDay.slice(0, 7)
+        : addDaysToDateString(localDay, -((dayOfWeek + 6) % 7));
+    groups.set(group, photo);
+  }
+  return [...groups.values()];
+}
+
+export function progressPhotoDelta(
+  baseline: { captured_date: string; weight_kg: number | null },
+  current: { captured_date: string; weight_kg: number | null },
+) {
+  return {
+    days: (Date.parse(current.captured_date) - Date.parse(baseline.captured_date)) / 86_400_000,
+    weightKg:
+      baseline.weight_kg !== null && current.weight_kg !== null
+        ? current.weight_kg - baseline.weight_kg
+        : null,
+  };
+}
 
 export type LeaderboardDivision = 'beginner' | 'cutting' | 'bulking' | 'maintain';
 

@@ -24,7 +24,7 @@ import { t } from '@/i18n';
 
 const logger = createLogger('useSubscription');
 
-export function useSubscription() {
+export function useSubscription(ownerId?: string) {
   const [entitlement, setEntitlement] = useState<Entitlement | null>(null);
   const [remoteConfig, setRemoteConfig] = useState<RemoteConfigMap>(DEFAULT_REMOTE_CONFIG);
   const [offerings, setOfferings] = useState<PurchasesOfferings | null>(null);
@@ -103,7 +103,7 @@ export function useSubscription() {
         channel = null;
       }
     };
-  }, [loadData]);
+  }, [loadData, ownerId]);
 
   const hasPlan = checkHasPlan(entitlement);
   useEffect(() => {

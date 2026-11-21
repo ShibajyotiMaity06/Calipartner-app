@@ -1,8 +1,9 @@
 import { useTheme as useAppearance } from '@calipartner/ui/theme';
 import { useCurrentLocalDate } from '@/hooks/useCurrentLocalDate';
 import { useBrowserModalBack } from '@/hooks/useBrowserModalBack';
+import { useWorkoutCalendar } from '@/hooks/useWorkoutCalendar';
 import React, { useEffect, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Sheet, Text, Button, controls, space, radius } from '@calipartner/ui';
 import { getLocale, t } from '@/i18n';
@@ -39,6 +40,7 @@ export function DatePickerSheet({
 
   const year = monthDate.getUTCFullYear();
   const month = monthDate.getUTCMonth();
+  const workouts = useWorkoutCalendar(visible, year, month);
   const numberOfDays = new Date(Date.UTC(year, month + 1, 0)).getUTCDate();
   const offset = monthDate.getUTCDay();
   const currentMonth = monthDate.getTime() >= monthStart(today).getTime();
@@ -115,6 +117,17 @@ export function DatePickerSheet({
             </View>
           ))}
         </View>
+        {visible && workouts.loading && (
+          <ActivityIndicator accessibilityLabel={t('common.loading')} />
+        )}
+        {workouts.error && (
+          <Button
+            variant="tertiary"
+            label={t('calendar.workoutsRetry')}
+            onPress={workouts.retry}
+            testID="workout-calendar-retry"
+          />
+        )}
         <View style={styles.grid}>
           {Array.from({ length: offset + numberOfDays }, (_, index) => {
             const day = index - offset + 1;
@@ -123,11 +136,16 @@ export function DatePickerSheet({
             const key = date.toISOString().slice(0, 10);
             const selected = key === draft;
             const future = key > today;
+            const logged = Boolean(workouts.counts[key]);
             return (
               <Pressable
                 key={index}
                 accessibilityRole="button"
-                accessibilityLabel={dateLabel.format(date)}
+                accessibilityLabel={
+                  logged
+                    ? t('calendar.workoutLogged', { date: dateLabel.format(date) })
+                    : dateLabel.format(date)
+                }
                 accessibilityState={{ selected, disabled: future }}
                 testID={`day-cell-${key}`}
                 disabled={future}
@@ -146,6 +164,15 @@ export function DatePickerSheet({
                 >
                   {day}
                 </Text>
+                {logged && (
+                  <View
+                    testID={`workout-dot-${key}`}
+                    style={[
+                      styles.workoutDot,
+                      { backgroundColor: selected ? colors.onBrand : colors.apricot },
+                    ]}
+                  />
+                )}
               </Pressable>
             );
           })}
@@ -201,6 +228,7 @@ const createStyles = (colors: ReturnType<typeof useAppearance>['colors']) =>
       borderRadius: radius.control,
     },
     selected: { backgroundColor: colors.apricot },
+    workoutDot: { width: space[1], height: space[1], borderRadius: radius.full },
     today: { borderWidth: StyleSheet.hairlineWidth, borderColor: colors.apricot },
     pressed: { backgroundColor: colors.s3 },
     footer: { paddingHorizontal: space[3], gap: space[2] },
