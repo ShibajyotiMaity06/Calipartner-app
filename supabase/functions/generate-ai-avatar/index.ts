@@ -187,18 +187,21 @@ export async function handleAvatar(req: Request, makeClient = createClient) {
     const input = await req.json().catch(() => null);
     if (input?.action === 'read') return await signedAvatar(admin, user.id);
     if (!(await currentAvatar(admin, user.id))) return respond({ error: 'UPGRADE_REQUIRED' }, 403);
+    const cleanBase64 =
+      typeof input?.image_base64 === 'string' ? input.image_base64.replace(/\s+/g, '') : '';
     if (
       input?.action !== 'generate' ||
       typeof input.request_id !== 'string' ||
       !uuid.test(input.request_id) ||
-      typeof input.image_base64 !== 'string' ||
-      input.image_base64.length > (photoLimit * 4) / 3 ||
-      !/^[a-z0-9+/]+={0,2}$/i.test(input.image_base64)
+      !cleanBase64 ||
+      cleanBase64.length > (photoLimit * 4) / 3 ||
+      !/^[a-z0-9+/]+={0,2}$/i.test(cleanBase64)
     )
       return respond({ error: 'INVALID_PHOTO' }, 400);
-    const photo = Buffer.from(input.image_base64, 'base64');
-    if (photo[0] !== 255 || photo[1] !== 216 || photo[2] !== 255)
-      return respond({ error: 'INVALID_PHOTO' }, 400);
+    const photo = Buffer.from(cleanBase64, 'base64');
+    const isJpeg = photo[0] === 255 && photo[1] === 216 && photo[2] === 255;
+    const isPng = photo[0] === 0x89 && photo[1] === 0x50 && photo[2] === 0x4e && photo[3] === 0x47;
+    if (!isJpeg && !isPng) return respond({ error: 'INVALID_PHOTO' }, 400);
     const requestId = input.request_id.toLowerCase();
     const photoHash = Buffer.from(await crypto.subtle.digest('SHA-256', photo)).toString('hex');
     const args = { p_user_id: user.id, p_request_id: requestId };

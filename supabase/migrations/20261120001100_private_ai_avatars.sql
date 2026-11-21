@@ -65,7 +65,7 @@ begin
     where user_id = p_user_id and status = 'pending' and expires_at > now()) then
     return jsonb_build_object('code', 'REQUEST_IN_PROGRESS');
   end if;
-  if not public.check_rate_limit('custom_avatar:' || p_user_id::text, 3, 3600) then
+  if not public.check_rate_limit('custom_avatar:' || p_user_id::text, 30, 3600) then
     return jsonb_build_object('code', 'RATE_LIMITED');
   end if;
   insert into public.avatar_generation_requests (user_id, request_id, photo_hash, gender, lease_id, expires_at, status)

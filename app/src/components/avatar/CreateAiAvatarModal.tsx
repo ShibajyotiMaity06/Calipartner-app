@@ -48,7 +48,7 @@ export function CreateAiAvatarModal({
           base64: true,
         });
         if (!prepared.base64) throw new Error('INVALID_PHOTO');
-        input = { id: generateClientUuid(), base64: prepared.base64 };
+        input = { id: generateClientUuid(), base64: prepared.base64.replace(/\s+/g, '') };
       }
       setPhoto(input);
       const result = await requestCustomAvatar({

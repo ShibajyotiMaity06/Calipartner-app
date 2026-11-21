@@ -3,15 +3,8 @@ import { HeaderActions } from '@/components/HeaderActions';
 import React, { useCallback, useEffect, useState } from 'react';
 import { ScrollView, View, Pressable, TextInput, StyleSheet } from 'react-native';
 import { useFocusEffect, useRouter, useLocalSearchParams } from 'expo-router';
-import {
-  Text,
-  Button,
-  space,
-  radius,
-  homeLayout,
-  useTheme,
-  SegmentedControl,
-} from '@calipartner/ui';
+import { Ionicons } from '@expo/vector-icons';
+import { Text, Button, space, radius, homeLayout, useTheme } from '@calipartner/ui';
 import { useRooms } from '@/hooks/useRooms';
 import { useAuth } from '@/contexts/AuthContext';
 import { getChatMessages, getChatUnreadCount } from '@/services/chatService';
@@ -106,77 +99,102 @@ export default function ChatScreen() {
   );
   return (
     <View testID="chat-screen-shell" style={{ flex: 1, backgroundColor: colors.bg0 }}>
-      <View style={styles.tabs}>
-        <View style={styles.header}>
-          <Text variant="title1" style={styles.flex}>
-            {t('avatar.chats')}
-          </Text>
-          <HeaderActions />
-        </View>
-        <SegmentedControl
-          value={tab}
-          onChange={setTab}
-          options={[
-            { value: 'chat', label: t('rooms.segments.chat') },
-            { value: 'friends', label: t('community.friends') },
-          ]}
-          testID="chat-friends-tabs"
-        />
-      </View>
       {tab === 'friends' ? (
-        <FriendsContent embedded />
+        <FriendsContent embedded onBack={() => setTab('chat')} />
       ) : (
-        <ScrollView
-          style={{ backgroundColor: colors.bg0 }}
-          contentContainerStyle={styles.content}
-          testID="screen-chat"
-        >
-          <TextInput
-            value={query}
-            onChangeText={setQuery}
-            accessibilityLabel={t('avatar.searchChats')}
-            placeholder={t('avatar.searchChats')}
-            placeholderTextColor={colors.textLo}
-            style={[styles.search, { color: colors.textHi, backgroundColor: colors.s1 }]}
-            testID="chat-search"
-          />
-          {loading && !rooms.length ? (
-            <LoadingState />
-          ) : error ? (
-            <Button
-              variant="secondary"
-              label={t('common.retry')}
-              onPress={() => void refresh()}
-              testID="chat-retry"
-            />
-          ) : !filtered.length ? (
-            <Text>{t(rooms.length ? 'avatar.noMatches' : 'avatar.noChats')}</Text>
-          ) : null}
-          {[false, true].map((pair) => (
-            <View key={String(pair)}>
-              {pair && filtered.some((r) => r.member_cap === 2) ? (
-                <Text variant="heading">{t('avatar.partners')}</Text>
-              ) : null}
-              {filtered
-                .filter((r) => (r.member_cap === 2) === pair)
-                .map((room) => (
-                  <Conversation key={`${room.id}-${revision}`} room={room} />
-                ))}
+        <>
+          <View style={styles.headerBar}>
+            <View style={styles.header}>
+              <Text variant="title1" style={styles.flex}>
+                {t('avatar.chats')}
+              </Text>
+              <HeaderActions />
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel={t('community.friends')}
+                testID="chat-friends-button"
+                onPress={() => setTab('friends')}
+                style={({ pressed }) => [
+                  styles.friendsButton,
+                  {
+                    backgroundColor: pressed ? colors.s2 : colors.s1,
+                    borderColor: colors.hairline,
+                  },
+                ]}
+              >
+                <Ionicons name="people-outline" size={18} color={colors.textHi} />
+                <Text variant="bodyS" color={colors.textHi} style={styles.friendsButtonText}>
+                  {t('community.friends')}
+                </Text>
+              </Pressable>
             </View>
-          ))}
-        </ScrollView>
+          </View>
+          <ScrollView
+            style={{ backgroundColor: colors.bg0 }}
+            contentContainerStyle={styles.content}
+            testID="screen-chat"
+          >
+            <TextInput
+              value={query}
+              onChangeText={setQuery}
+              accessibilityLabel={t('avatar.searchChats')}
+              placeholder={t('avatar.searchChats')}
+              placeholderTextColor={colors.textLo}
+              style={[styles.search, { color: colors.textHi, backgroundColor: colors.s1 }]}
+              testID="chat-search"
+            />
+            {loading && !rooms.length ? (
+              <LoadingState />
+            ) : error ? (
+              <Button
+                variant="secondary"
+                label={t('common.retry')}
+                onPress={() => void refresh()}
+                testID="chat-retry"
+              />
+            ) : !filtered.length ? (
+              <Text>{t(rooms.length ? 'avatar.noMatches' : 'avatar.noChats')}</Text>
+            ) : null}
+            {[false, true].map((pair) => (
+              <View key={String(pair)}>
+                {pair && filtered.some((r) => r.member_cap === 2) ? (
+                  <Text variant="heading">{t('avatar.partners')}</Text>
+                ) : null}
+                {filtered
+                  .filter((r) => (r.member_cap === 2) === pair)
+                  .map((room) => (
+                    <Conversation key={`${room.id}-${revision}`} room={room} />
+                  ))}
+              </View>
+            ))}
+          </ScrollView>
+        </>
       )}
     </View>
   );
 }
 const styles = StyleSheet.create({
-  tabs: {
-    padding: space[4],
+  headerBar: {
+    paddingHorizontal: space[4],
+    paddingTop: space[4],
+    paddingBottom: space[2],
     width: '100%',
     maxWidth: homeLayout.maxContentWidth,
     alignSelf: 'center',
   },
   header: { flexDirection: 'row', alignItems: 'center', gap: space[2] },
+  friendsButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: space[1],
+    paddingHorizontal: space[3],
+    paddingVertical: space[2],
+    borderRadius: radius.control,
+    borderWidth: 1,
+  },
+  friendsButtonText: {
+    fontWeight: '500',
+  },
   content: {
     padding: space[4],
     paddingBottom: homeLayout.touchSize * 3,

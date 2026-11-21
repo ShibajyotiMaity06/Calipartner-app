@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Modal, ScrollView, View } from 'react-native';
+import { Modal, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Button, Text, useTheme, space, getTabBarHeight } from '@calipartner/ui';
@@ -13,12 +13,18 @@ import { useAuth } from '@/contexts/AuthContext';
 import { t } from '@/i18n';
 import { LoadingState } from '@/components/LoadingState';
 
-export function FriendsContent({ embedded = false }: { embedded?: boolean }) {
+export function FriendsContent({
+  embedded = false,
+  onBack,
+}: {
+  embedded?: boolean;
+  onBack?: () => void;
+}) {
   const { user } = useAuth();
-  return <FriendsView key={user?.id ?? 'guest'} embedded={embedded} />;
+  return <FriendsView key={user?.id ?? 'guest'} embedded={embedded} onBack={onBack} />;
 }
 
-function FriendsView({ embedded = false }: { embedded?: boolean }) {
+function FriendsView({ embedded = false, onBack }: { embedded?: boolean; onBack?: () => void }) {
   const friends = useFriends();
   const { colors } = useTheme();
   const router = useRouter();
@@ -47,6 +53,15 @@ function FriendsView({ embedded = false }: { embedded?: boolean }) {
     friends.closeProfile();
     setPaywall(true);
   };
+  const handleBack = () => {
+    if (onBack) {
+      onBack();
+    } else if (router.canGoBack()) {
+      router.back();
+    } else {
+      router.replace('/(tabs)/chat');
+    }
+  };
   return (
     <SafeAreaView
       edges={embedded ? [] : undefined}
@@ -71,7 +86,7 @@ function FriendsView({ embedded = false }: { embedded?: boolean }) {
             <CommunityPanel
               friends={friends}
               embedded={embedded}
-              onBack={() => (router.canGoBack() ? router.back() : router.replace('/today'))}
+              onBack={handleBack}
               onEdit={() => setEditing(true)}
               onNotifications={() => router.push('/notifications/settings' as never)}
             />

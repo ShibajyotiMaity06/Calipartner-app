@@ -1,11 +1,9 @@
-import { HeaderActions } from '@/components/HeaderActions';
 import { type as inputTypography } from '@calipartner/ui';
 import React, { useState } from 'react';
 import { Pressable, Share, StyleSheet, TextInput, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import {
   Avatar,
-  SegmentedControl,
   Button,
   Text,
   onboardingLayout as layout,
@@ -26,7 +24,7 @@ type Tab = 'discover' | 'requests' | 'friends';
 
 export function CommunityPanel({
   friends,
-  embedded = false,
+  _embedded = false,
   onEdit,
   onBack,
   onNotifications,
@@ -87,15 +85,31 @@ export function CommunityPanel({
   );
   const counts = {
     discover: discovery.people.length,
-    requests: incoming.length + outgoing.length,
+    requests: incoming.length,
     friends: connected.length,
   };
   return (
-    <View style={styles.section} testID="community-panel">
-      <View style={styles.row}>
-        {!embedded && iconButton('arrow-back', t('friends.back'), onBack, 'back-from-friends')}
+    <View style={styles.section} testID="community-panel" accessibilityLabel={t('community.title')}>
+      <View style={styles.topBar}>
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel={t('friends.back')}
+          onPress={onBack}
+          testID="back-from-friends"
+          style={styles.backButtonContainer}
+        >
+          <Ionicons name="chevron-back" size={24} color={colors.textHi} />
+          <Text variant="title1" color={colors.textHi} accessibilityRole="header">
+            {t('community.friends')}
+          </Text>
+        </Pressable>
         <View style={styles.flex} />
-        {!embedded && <HeaderActions />}
+        {iconButton(
+          'notifications-outline',
+          t('notifications.title'),
+          onNotifications,
+          'friend-notification-settings',
+        )}
         {iconButton(
           'person-add-outline',
           t('community.invite'),
@@ -110,33 +124,12 @@ export function CommunityPanel({
           !friends.ownProfile,
         )}
         {iconButton(
-          'notifications-outline',
-          t('notifications.title'),
-          onNotifications,
-          'friend-notification-settings',
-        )}
-        {iconButton(
           'person-circle-outline',
           t('friends.editProfile'),
           onEdit,
           'edit-social-profile',
           !friends.ownProfile,
         )}
-      </View>
-      <View style={styles.header}>
-        <View style={styles.heading}>
-          <Text
-            variant="title2"
-            fontSet="onboarding"
-            color={colors.textHi}
-            accessibilityRole="header"
-          >
-            {t(embedded ? 'community.friends' : 'community.title')}
-          </Text>
-          <Text variant="bodyS" fontSet="onboarding" color={colors.textMid}>
-            {t('community.subtitle')}
-          </Text>
-        </View>
       </View>
       {shareError ? (
         <Text accessibilityRole="alert" color={colors.danger}>
@@ -161,27 +154,65 @@ export function CommunityPanel({
           ]}
         />
       </View>
-      <SegmentedControl
-        value={tab}
-        onChange={setTab}
-        options={(['discover', 'requests', 'friends'] as const).map((value) => ({
-          value,
-          label: t(`community.${value}`),
-          badge: counts[value] || undefined,
-        }))}
-        testID="community-tab"
-      />
+      <View style={[styles.tabBar, { borderBottomColor: colors.hairline }]} testID="community-tab">
+        {(['friends', 'requests', 'discover'] as const).map((value) => {
+          const active = tab === value;
+          const count = counts[value];
+          const hasCount = value === 'requests' ? count > 0 : count !== undefined && count > 0;
+          const label = `${t(`community.${value}`)}${hasCount ? ` (${count})` : ''}`;
+          return (
+            <Pressable
+              key={value}
+              onPress={() => setTab(value)}
+              accessibilityRole="tab"
+              accessibilityState={{ selected: active }}
+              testID={`community-tab-${value}`}
+              style={styles.tabItem}
+            >
+              <Text
+                variant="body"
+                color={active ? colors.textHi : colors.textMid}
+                style={active ? styles.tabTextActive : undefined}
+              >
+                {label}
+              </Text>
+              {active ? (
+                <View style={[styles.tabIndicator, { backgroundColor: colors.apricot }]} />
+              ) : null}
+            </Pressable>
+          );
+        })}
+      </View>
       {tab === 'requests' ? (
-        <SegmentedControl
-          fullWidth={false}
-          value={requestTab}
-          onChange={setRequestTab}
-          options={(['incoming', 'outgoing'] as const).map((value) => ({
-            value,
-            label: t(`rooms.inboxModal.${value}Tab`),
-          }))}
-          testID="community-requests"
-        />
+        <View style={styles.requestSubTabs} testID="community-requests">
+          {(['incoming', 'outgoing'] as const).map((value) => {
+            const active = requestTab === value;
+            const count = value === 'incoming' ? incoming.length : outgoing.length;
+            return (
+              <Pressable
+                key={value}
+                onPress={() => setRequestTab(value)}
+                accessibilityRole="button"
+                testID={`community-requests-${value}`}
+                style={[
+                  styles.requestChip,
+                  {
+                    backgroundColor: active ? colors.s2 : 'transparent',
+                    borderColor: active ? colors.apricot : colors.hairline,
+                  },
+                ]}
+              >
+                <Text
+                  variant="bodyS"
+                  color={active ? colors.textHi : colors.textLo}
+                  style={active ? styles.tabTextActive : undefined}
+                >
+                  {t(`rooms.inboxModal.${value}Tab`)} ({count})
+                </Text>
+              </Pressable>
+            );
+          })}
+        </View>
       ) : null}
       <View style={styles.header}>
         <Text
@@ -373,6 +404,57 @@ export function CommunityPanel({
 const styles = StyleSheet.create({
   section: { gap: space[4] },
   row: { flexDirection: 'row', alignItems: 'center', gap: space[2] },
+  topBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: space[2],
+    minHeight: layout.touch,
+  },
+  backButtonContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: space[1],
+  },
+  tabBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-around',
+    borderBottomWidth: 1,
+    marginTop: space[1],
+  },
+  tabItem: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: space[3],
+    position: 'relative',
+    minHeight: 44,
+  },
+  tabIndicator: {
+    position: 'absolute',
+    bottom: -1,
+    left: space[3],
+    right: space[3],
+    height: 3,
+    borderRadius: radius.full,
+  },
+  tabTextActive: {
+    fontWeight: '700',
+  },
+  requestSubTabs: {
+    flexDirection: 'row',
+    gap: space[2],
+    paddingVertical: space[2],
+  },
+  requestChip: {
+    paddingHorizontal: space[4],
+    paddingVertical: space[2],
+    borderRadius: radius.full,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    minHeight: 36,
+  },
   flex: { flex: 1 },
   heading: {
     flexGrow: 1,
