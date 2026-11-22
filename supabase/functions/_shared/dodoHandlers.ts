@@ -215,7 +215,7 @@ export async function handleDodoWebhook(req: Request, getConfig = dodoConfig) {
           .select('product_key,product_id')
           .eq('id', linkedCheckout)
           .maybeSingle();
-        if (original?.product_id === subscription.product_id)
+        if (original && original.product_id === subscription.product_id)
           key = BILLING_WEBHOOK_PRODUCT_KEYS.find((key) => key === original.product_key);
       }
     }

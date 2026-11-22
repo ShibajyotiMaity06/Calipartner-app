@@ -4,14 +4,21 @@
     "module": "ESNext",
     "moduleResolution": "Bundler",
     "lib": ["ESNext", "DOM"],
-    "types": ["deno"],
+    "typeRoots": ["../../node_modules/@types"],
+    "types": ["deno", "node"],
+    "allowImportingTsExtensions": true,
     "strict": true,
     "noEmit": true,
     "skipLibCheck": true,
     "paths": {
-      "jsr:@supabase/supabase-js@2": ["../../node_modules/@supabase/supabase-js"],
-      "@calipartner/core": ["../../packages/core/src/index.ts"]
+      "jsr:@supabase/supabase-js@*": ["../../node_modules/@supabase/supabase-js"],
+      "jsr:@supabase/supabase-js": ["../../node_modules/@supabase/supabase-js"],
+      "npm:@supabase/supabase-js@*": ["../../node_modules/@supabase/supabase-js"],
+      "npm:@supabase/supabase-js": ["../../node_modules/@supabase/supabase-js"],
+      "@calipartner/core": ["../../packages/core/src/index.ts"],
+      "@feed-tracking": ["../../packages/core/src/personalTracking.ts"],
+      "npm:*": ["../../node_modules/*"]
     }
   },
-  "include": ["./**/*.ts"]
+  "include": ["./**/*.ts", "./*.d.ts"]
 }
