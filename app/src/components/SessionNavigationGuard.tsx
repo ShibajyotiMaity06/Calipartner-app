@@ -10,9 +10,9 @@ export function SessionNavigationGuard() {
   const { user, isGuest, isLoading } = useAuth();
   const { currentGoalProfile, loading: targetsLoading, error: targetsError } = useTargets();
   const router = useRouter();
-  const segments = useSegments();
-  const first = segments[0] as string | undefined;
-  const sharedFeedPost = first === 'feed' && (segments[1] as string | undefined) === 'post';
+  const segments = useSegments() as unknown as string[];
+  const first = segments[0];
+  const sharedFeedPost = first === 'feed' && segments[1] === 'post';
   useEffect(() => {
     if (isLoading || user || isGuest) return;
     if (
