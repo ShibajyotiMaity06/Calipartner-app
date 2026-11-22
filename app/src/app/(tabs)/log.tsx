@@ -83,8 +83,6 @@ export default function LogScreen() {
       if (params.flow) {
         setFlows([requestedFlow]);
         router.setParams({ flow: undefined });
-      } else {
-        setFlows(['picker']);
       }
       return () => setSheetVisible(false);
     }, [params.flow, requestedFlow, router]),

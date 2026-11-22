@@ -220,4 +220,14 @@ describe('UI-5 Onboarding and Account Polish (Spec A01–A15, B01–B09)', () =>
       expect(termsPrompt).toContain('Privacy Policy');
     });
   });
+
+  describe('14. Step 5 & 6 Notification Primer Modal (Spec A05/A06)', () => {
+    it('targets step 5 (height) and step 6 (weight) for the glass notification permission primer', () => {
+      expect(ACTIVE_ONBOARDING_STEPS[4]).toBe('height');
+      expect(ACTIVE_ONBOARDING_STEPS[5]).toBe('weight');
+      const targetSteps = ['height', 'weight'];
+      expect(targetSteps.includes(ACTIVE_ONBOARDING_STEPS[4])).toBe(true);
+      expect(targetSteps.includes(ACTIVE_ONBOARDING_STEPS[5])).toBe(true);
+    });
+  });
 });

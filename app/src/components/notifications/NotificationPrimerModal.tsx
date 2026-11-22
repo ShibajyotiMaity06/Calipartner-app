@@ -1,6 +1,5 @@
 import { visualPrimitives } from '@calipartner/ui/tokens';
-import { Button } from '@calipartner/ui';
-import { Text } from '@calipartner/ui';
+import { Button, Text, useReduceTransparency } from '@calipartner/ui';
 import React, { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
@@ -10,6 +9,7 @@ import {
   Pressable,
   StyleSheet,
   View,
+  type ViewStyle,
 } from 'react-native';
 import * as Notifications from 'expo-notifications';
 import { Ionicons } from '@expo/vector-icons';
@@ -25,6 +25,7 @@ import { useTheme } from '@/theme/useTheme';
 export interface NotificationPrimerModalProps {
   visible: boolean;
   context?: NotificationPromptContext;
+  isGlass?: boolean;
   onGranted?: () => void;
   onDismiss: () => void;
   testID?: string;
@@ -33,11 +34,14 @@ export interface NotificationPrimerModalProps {
 export function NotificationPrimerModal({
   visible,
   context = 'settings_manual',
+  isGlass = false,
   onGranted,
   onDismiss,
   testID = 'notification-primer-modal',
 }: NotificationPrimerModalProps) {
   const { colors } = useTheme();
+  const reduceTransparency = useReduceTransparency();
+  const isGlassActive = isGlass && !reduceTransparency;
   const [requesting, setRequesting] = useState(false);
   const [status, setStatus] = useState<Notifications.PermissionStatus>(
     Notifications.PermissionStatus.UNDETERMINED,
@@ -100,12 +104,15 @@ export function NotificationPrimerModal({
         <View
           style={[
             styles.card,
-            {
-              backgroundColor: colors.surface,
-              borderColor: colors.border,
-            },
+            isGlassActive
+              ? styles.glassCard
+              : {
+                  backgroundColor: colors.surface,
+                  borderColor: colors.border,
+                },
           ]}
         >
+          {isGlassActive && <View pointerEvents="none" style={styles.glassHighlight} />}
           {/* Header Icon */}
           <View
             style={[
@@ -229,6 +236,31 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     padding: spacing.lg,
     alignItems: 'center',
+    position: 'relative',
+  },
+  glassCard: {
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.22)',
+    borderTopColor: 'rgba(255, 255, 255, 0.38)',
+    borderBottomColor: 'rgba(0, 0, 0, 0.45)',
+    backgroundColor: Platform.OS === 'web' ? 'rgba(22, 19, 16, 0.68)' : 'rgba(26, 21, 17, 0.78)',
+    overflow: 'hidden',
+    ...(Platform.OS === 'web'
+      ? ({
+          backdropFilter: 'blur(32px) saturate(190%) brightness(1.05)',
+          WebkitBackdropFilter: 'blur(32px) saturate(190%) brightness(1.05)',
+        } as unknown as ViewStyle)
+      : {}),
+  },
+  glassHighlight: {
+    position: 'absolute',
+    top: 0,
+    left: spacing.lg,
+    right: spacing.lg,
+    height: 1,
+    backgroundColor: 'rgba(255, 255, 255, 0.28)',
+    borderRadius: radius.full,
+    zIndex: 1,
   },
   iconCircle: {
     width: 72,

@@ -567,7 +567,7 @@ export const workoutRedesignService = {
       .order('started_at', { ascending: false })
       .maybeSingle();
 
-    if (!workout) return null;
+    if (!workout || workout.status !== 'in_progress') return null;
 
     const { data: wExercises } = await supabase
       .from('workout_exercises')

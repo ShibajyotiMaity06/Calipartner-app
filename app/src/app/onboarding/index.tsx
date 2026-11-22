@@ -39,6 +39,8 @@ import { FinishOnboardingProfile } from '@/components/onboarding/FinishOnboardin
 import { PlanCard } from '@/components/onboarding/PlanPrimitives';
 import { PaywallModal } from '@/components/rooms/PaywallModal';
 import { OnboardingAuthModal } from '@/components/onboarding/OnboardingAuthModal';
+import { NotificationPrimerModal } from '@/components/notifications/NotificationPrimerModal';
+import { shouldPromptForNotifications } from '@/services/notificationPermissionService';
 import { fetchWebCatalog } from '@/services/webBillingService';
 
 export const ACTIVE_ONBOARDING_STEPS = ONBOARDING_STEPS_ORDER;
@@ -88,6 +90,20 @@ function Questionnaire({ ownerId }: { ownerId: string }) {
   const [calculation, showCalculation] = useState(false);
   const [paywallClosed, setPaywallClosed] = useState(false);
   const [authModalVisible, setAuthModalVisible] = useState(false);
+  const [notificationModalVisible, setNotificationModalVisible] = useState(false);
+  const hasPromptedNotifications = useRef(false);
+
+  useEffect(() => {
+    if (hasPromptedNotifications.current) return;
+    if (snapshot?.currentStep === 'height' || snapshot?.currentStep === 'weight') {
+      void shouldPromptForNotifications('reminder_configured').then((shouldPrompt) => {
+        if (shouldPrompt && !hasPromptedNotifications.current) {
+          hasPromptedNotifications.current = true;
+          setNotificationModalVisible(true);
+        }
+      });
+    }
+  }, [snapshot?.currentStep]);
   const savingRef = useRef(false);
   const completed = useRef(false);
   const active = useRef(false);
@@ -529,6 +545,14 @@ function Questionnaire({ ownerId }: { ownerId: string }) {
           </ScrollView>
         </SafeAreaView>
       </Modal>
+      <NotificationPrimerModal
+        visible={notificationModalVisible}
+        context="reminder_configured"
+        isGlass
+        onDismiss={() => setNotificationModalVisible(false)}
+        onGranted={() => setNotificationModalVisible(false)}
+        testID="onboarding-notification-primer-modal"
+      />
     </SafeAreaView>
   );
 }
