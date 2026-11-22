@@ -138,7 +138,7 @@ describe('Onboarding redesign state machine', () => {
     const machine = new OnboardingStateMachine({
       nickname: 'Pushpa',
       sex: 'female',
-      dateOfBirth: '2001-01-01',
+      dateOfBirth: '1986-01-01',
       heightCm: 165,
       weightKg: 70,
       gymDays: 0,

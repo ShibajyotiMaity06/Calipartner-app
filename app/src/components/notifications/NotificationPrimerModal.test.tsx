@@ -26,7 +26,7 @@ vi.mock('@expo/vector-icons', () => ({
 }));
 
 vi.mock('@calipartner/ui', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('@calipartner/ui')>();
+  const actual = (await importOriginal()) as Record<string, unknown>;
   return {
     ...actual,
     Button: 'Button',

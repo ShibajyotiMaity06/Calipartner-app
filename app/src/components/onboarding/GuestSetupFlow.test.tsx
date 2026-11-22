@@ -89,6 +89,14 @@ vi.mock('./PlanPrimitives', () => ({
 }));
 vi.mock('@/components/rooms/PaywallModal', () => ({ PaywallModal: 'Paywall' }));
 vi.mock('./OnboardingAuthModal', () => ({ OnboardingAuthModal: 'AuthModal' }));
+vi.mock('@/components/notifications/NotificationPrimerModal', () => ({
+  NotificationPrimerModal: 'NotificationPrimerModal',
+}));
+vi.mock('@/services/notificationPermissionService', () => ({
+  shouldPromptForNotifications: vi.fn().mockResolvedValue(false),
+  getNotificationPermissionStatus: vi.fn().mockResolvedValue('undetermined'),
+  requestNotificationPermissions: vi.fn().mockResolvedValue({ status: 'granted' }),
+}));
 
 import OnboardingScreen from '@/app/onboarding';
 import { GoalStep } from './GoalStep';

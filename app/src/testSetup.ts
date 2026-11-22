@@ -116,3 +116,22 @@ vi.mock('expo-haptics', () => ({
     Error: 'error',
   },
 }));
+
+vi.mock('expo-notifications', () => ({
+  getPermissionsAsync: vi.fn().mockResolvedValue({ status: 'undetermined' }),
+  requestPermissionsAsync: vi.fn().mockResolvedValue({ status: 'granted' }),
+  getDevicePushTokenAsync: vi
+    .fn()
+    .mockResolvedValue({ data: 'mock-fcm-token-1234567890abcdef123' }),
+  PermissionStatus: {
+    UNDETERMINED: 'undetermined',
+    GRANTED: 'granted',
+    DENIED: 'denied',
+  },
+  setNotificationHandler: vi.fn(),
+  addNotificationReceivedListener: vi.fn().mockReturnValue({ remove: vi.fn() }),
+  addNotificationResponseReceivedListener: vi.fn().mockReturnValue({ remove: vi.fn() }),
+  scheduleNotificationAsync: vi.fn().mockResolvedValue('notif-id'),
+  cancelScheduledNotificationAsync: vi.fn().mockResolvedValue(undefined),
+  cancelAllScheduledNotificationsAsync: vi.fn().mockResolvedValue(undefined),
+}));

@@ -130,12 +130,7 @@ export default function LogScreen() {
   const closeFlow = () => {
     if (closing.current) return;
     if (flows.length === 1) {
-      if (flows[0] !== 'picker') {
-        setFlows(['picker']);
-        if (params.flow) router.setParams({ flow: undefined });
-      } else {
-        handleCloseAll();
-      }
+      handleCloseAll();
       return;
     }
     setWeightHistoryOpen(false);
