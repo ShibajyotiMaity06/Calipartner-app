@@ -42,7 +42,7 @@ export const en = {
     subtitle:
       'Not ready for a full year? Try CaliPartner Pro for 3 months with all premium features included.',
     claim: 'Get 3 Months for {price}',
-    decline: 'No thanks, continue without Pro',
+    decline: 'No thanks, continue with free',
     monthlyHint: '{amount} / mo',
   },
   photoJourney: {
@@ -61,7 +61,7 @@ export const en = {
     title: 'CaliPartner Pro',
     free: 'Free',
     pro: 'Pro',
-    tax: 'All taxes included. No extra surcharges at checkout.',
+    tax: 'All taxes included.',
     rooms: 'Create and host rooms with your squads and friends — unlimited members',
     coach: 'Personalized AI coach and daily guidance',
     scans: 'Instant meal scanning and nutrition detection',

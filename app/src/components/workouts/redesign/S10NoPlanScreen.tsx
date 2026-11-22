@@ -30,7 +30,7 @@ export function S10NoPlanScreen({
             <Ionicons name="sparkles" size={22} color={workoutTokens.accent} />
           </View>
           <View style={styles.recBadge}>
-            <Text style={styles.recBadgeText}>Recommended</Text>
+            <Text style={styles.recBadgeText}>Pro</Text>
           </View>
         </View>
 

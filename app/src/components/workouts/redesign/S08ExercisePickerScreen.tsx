@@ -75,22 +75,25 @@ export function S08ExercisePickerScreen({ mode, onSelect, onBack }: S08ExerciseP
       </View>
 
       {/* Category Chips */}
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        style={styles.chipsScrollContainer}
-        contentContainerStyle={styles.chipsScroll}
-      >
-        {muscleFilters.map((m) => (
-          <WorkoutChip
-            key={m.id}
-            label={m.label}
-            selected={selectedMuscle === m.id}
-            onPress={() => setSelectedMuscle(m.id)}
-            testID={`filter-${m.id}`}
-          />
-        ))}
-      </ScrollView>
+      <View style={styles.filterSection}>
+        <Text style={styles.filterHeader}>FILTER BY MUSCLE</Text>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          style={styles.chipsScrollContainer}
+          contentContainerStyle={styles.chipsScroll}
+        >
+          {muscleFilters.map((m) => (
+            <WorkoutChip
+              key={m.id}
+              label={m.label}
+              selected={selectedMuscle === m.id}
+              onPress={() => setSelectedMuscle(m.id)}
+              testID={`filter-${m.id}`}
+            />
+          ))}
+        </ScrollView>
+      </View>
 
       {/* Exercise list */}
       <ScrollView contentContainerStyle={styles.listContent} showsVerticalScrollIndicator={false}>
@@ -168,10 +171,21 @@ const styles = StyleSheet.create({
     color: workoutTokens.text,
     fontSize: 15,
   },
+  filterSection: {
+    marginBottom: 10,
+  },
+  filterHeader: {
+    color: workoutTokens.dim,
+    fontSize: 11,
+    fontWeight: '800',
+    letterSpacing: 0.8,
+    marginHorizontal: 20,
+    marginBottom: 6,
+  },
   chipsScrollContainer: {
     flexGrow: 0,
-    height: 44,
-    marginBottom: 8,
+    minHeight: 46,
+    paddingVertical: 2,
   },
   chipsScroll: {
     paddingLeft: 20,

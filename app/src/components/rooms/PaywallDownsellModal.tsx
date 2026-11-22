@@ -40,7 +40,7 @@ export function PaywallDownsellModal({
             </Text>
             <Text tabular>{quote.equivalent}</Text>
             <Text variant="bodyS">{t('releaseUpdate.charged', { total: quote.total })}</Text>
-            <Text variant="bodyS">{t('fixes.storeTerms')}</Text>
+            <Text variant="bodyS">{t('proPlan.tax')}</Text>
           </>
         ) : (
           <Text>{t(loading ? 'fixes.loadingPrices' : 'fixes.priceUnavailable')}</Text>

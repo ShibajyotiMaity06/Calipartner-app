@@ -3,16 +3,14 @@ import {
   type AiWorkoutInputs,
   type GeneratedWorkoutPlan,
   type GeneratedPlanDay,
-  type GeneratedPlanExercise,
   generateWorkoutPlan,
   validateGeneratedWorkoutPlan,
   addCooldownMonths,
-  calculateDaysRemaining,
 } from '@calipartner/core';
 
 export interface WorkoutEligibilityResponse {
   eligible: boolean;
-  reason: 'age' | 'health' | 'profile_incomplete' | 'cooldown' | null;
+  reason: 'age' | 'health' | 'profile_incomplete' | 'cooldown' | 'pro_required' | null;
   state: 'never' | 'locked' | 'ready';
   next_available_at: string | null;
   previews_used: number;
@@ -93,6 +91,7 @@ let localSettings: WorkoutSettings = {
 };
 
 let inMemoryActiveSession: ActiveWorkoutSession | null = null;
+const inMemoryCompletedSessions: ActiveWorkoutSession[] = [];
 
 export const workoutRedesignService = {
   async fetchEligibility(): Promise<WorkoutEligibilityResponse> {
@@ -131,6 +130,33 @@ export const workoutRedesignService = {
         eligible: true,
         reason: null,
         state: 'ready',
+        next_available_at: null,
+        previews_used: 0,
+        projected_next_available_at: null,
+      };
+    }
+
+    // Check Pro entitlement for AI workout plans
+    const { data: ent } = await supabase
+      .from('entitlements')
+      .select('tier, status, period_end')
+      .eq('user_id', user.id)
+      .maybeSingle();
+
+    const isPro = Boolean(
+      ent &&
+      ent.tier === 'pro' &&
+      (ent.status === 'active' ||
+        (ent.status === 'trial' &&
+          (!ent.period_end || new Date(ent.period_end).getTime() > Date.now())) ||
+        (ent.period_end && new Date(ent.period_end).getTime() > Date.now())),
+    );
+
+    if (!isPro) {
+      return {
+        eligible: false,
+        reason: 'pro_required',
+        state: 'locked',
         next_available_at: null,
         previews_used: 0,
         projected_next_available_at: null,
@@ -249,18 +275,53 @@ export const workoutRedesignService = {
       });
 
       if (error || !data) {
-        throw new Error(error?.message || 'AI Plan generation failed');
+        const errorMsg = error?.message || '';
+        if (
+          errorMsg.includes('pro_required') ||
+          (data as { reason?: string })?.reason === 'pro_required'
+        ) {
+          throw new Error('AI workout plans require CaliPartner Pro.');
+        }
+        throw new Error(errorMsg || 'AI Plan generation failed');
       }
       return data;
-    } catch {
-      // Local pure fallback generation
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : '';
+      if (msg.includes('Pro') || msg.includes('pro_required')) {
+        throw err;
+      }
+      // Verify user has Pro access before doing local generation
+      const { data: authData } = await supabase.auth.getUser();
+      const user = authData?.user;
+      if (user && user.email !== 'shibajyoti.maity06@gmail.com') {
+        const { data: ent } = await supabase
+          .from('entitlements')
+          .select('tier, status, period_end')
+          .eq('user_id', user.id)
+          .maybeSingle();
+
+        const isPro = Boolean(
+          ent &&
+          ent.tier === 'pro' &&
+          (ent.status === 'active' ||
+            (ent.status === 'trial' &&
+              (!ent.period_end || new Date(ent.period_end).getTime() > Date.now())) ||
+            (ent.period_end && new Date(ent.period_end).getTime() > Date.now())),
+        );
+
+        if (!isPro) {
+          throw new Error('AI workout plans require CaliPartner Pro.');
+        }
+      }
+
+      // Local pure fallback generation for entitled users
       const plan = generateWorkoutPlan(inputs);
       const validation = validateGeneratedWorkoutPlan(plan, inputs);
       if (!validation.valid) {
         throw new Error(`Generation validation failed: ${validation.errors.join(', ')}`);
       }
       return {
-        draft_id: 'draft_' + Math.random().toString(36).substring(2, 10),
+        draft_id: crypto.randomUUID(),
         plan,
         excluded: plan.excluded,
         unmatched_limitations: plan.unmatched_limitations,
@@ -349,16 +410,18 @@ export const workoutRedesignService = {
 
     const { data: planData } = await supabase
       .from('user_workout_plans')
-      .select('id, name, plan_source, ai_inputs, is_active')
+      .select('id, name, source, ai_inputs, status')
       .eq('user_id', authData.user.id)
-      .eq('is_active', true)
+      .eq('status', 'active')
+      .order('created_at', { ascending: false })
+      .limit(1)
       .maybeSingle();
 
     if (!planData) return null;
 
     const { data: daysData } = await supabase
       .from('plan_days')
-      .select('id, weekday, is_rest, name, about_minutes')
+      .select('id, weekday, is_rest, name')
       .eq('plan_id', planData.id)
       .order('weekday');
 
@@ -393,13 +456,13 @@ export const workoutRedesignService = {
         is_rest: day.is_rest,
         name: day.name,
         exercises: exList,
-        about_minutes: day.about_minutes || 60,
+        about_minutes: 60,
       };
     });
 
     return {
       name: planData.name,
-      source: planData.plan_source as 'ai' | 'custom',
+      source: planData.source as 'ai' | 'custom',
       ai_inputs: planData.ai_inputs,
       days,
       excluded: [],
@@ -421,18 +484,20 @@ export const workoutRedesignService = {
     // Archive existing active plans
     await supabase
       .from('user_workout_plans')
-      .update({ is_active: false })
+      .update({ status: 'archived', updated_at: new Date().toISOString() })
       .eq('user_id', userId)
-      .eq('is_active', true);
+      .eq('status', 'active');
 
+    const planId = crypto.randomUUID();
     const { data: planRow, error: planError } = await supabase
       .from('user_workout_plans')
       .insert({
+        id: planId,
         user_id: userId,
         name,
-        plan_source: source,
+        source,
         ai_inputs: ai_inputs || null,
-        is_active: true,
+        status: 'active',
       })
       .select()
       .single();
@@ -442,14 +507,16 @@ export const workoutRedesignService = {
     }
 
     for (const d of days) {
+      const dayId = crypto.randomUUID();
       const { data: dayRow, error: dayError } = await supabase
         .from('plan_days')
         .insert({
+          id: dayId,
           plan_id: planRow.id,
+          user_id: userId,
           weekday: d.weekday,
           is_rest: d.is_rest,
           name: d.name,
-          about_minutes: d.about_minutes,
         })
         .select()
         .single();
@@ -458,14 +525,15 @@ export const workoutRedesignService = {
 
       if (!d.is_rest && d.exercises.length > 0) {
         const exercisesToInsert = d.exercises.map((ex, idx) => ({
+          id: crypto.randomUUID(),
           plan_day_id: dayRow.id,
-          exercise_id: ex.id.startsWith('draft') ? null : ex.id,
+          exercise_id: ex.id && !ex.id.startsWith('draft') ? ex.id : null,
           exercise_name: ex.name,
           position: idx + 1,
-          target_sets: ex.target_sets,
-          target_reps: ex.target_reps,
-          target_weight_kg: ex.target_weight_kg,
-          rest_seconds: ex.rest_seconds,
+          target_sets: ex.target_sets || 3,
+          target_reps: ex.target_reps || 10,
+          target_weight_kg: ex.target_weight_kg || null,
+          rest_seconds: ex.rest_seconds || 60,
         }));
 
         await supabase.from('plan_exercises').insert(exercisesToInsert);
@@ -559,17 +627,17 @@ export const workoutRedesignService = {
   async startSession(day: GeneratedPlanDay, localDate: string): Promise<ActiveWorkoutSession> {
     const supabase = getSupabase();
     const { data: authData } = await supabase.auth.getUser();
-    const userId = authData?.user?.id || 'offline_user';
+    const userId = authData?.user?.id || '00000000-0000-0000-0000-000000000001';
 
-    const workoutId = 'wrk_' + Math.random().toString(36).substring(2, 10);
+    const workoutId = crypto.randomUUID();
     const startedAt = new Date().toISOString();
 
     const sessionExercises: SessionExercise[] = day.exercises.map((ex, idx) => {
-      const weId = 'we_' + Math.random().toString(36).substring(2, 10);
+      const weId = crypto.randomUUID();
       const sets: SessionSet[] = [];
       for (let s = 1; s <= ex.target_sets; s++) {
         sets.push({
-          id: 'set_' + Math.random().toString(36).substring(2, 10),
+          id: crypto.randomUUID(),
           workout_exercise_id: weId,
           set_number: s,
           reps: ex.target_reps,
@@ -608,19 +676,25 @@ export const workoutRedesignService = {
         await supabase.from('workouts').insert({
           id: workoutId,
           user_id: userId,
+          type: 'strength',
           name: day.name,
           local_date: localDate,
           status: 'in_progress',
+          start_time: startedAt,
           started_at: startedAt,
+          duration_minutes: 0,
         });
 
         for (const se of sessionExercises) {
           await supabase.from('workout_exercises').insert({
             id: se.id,
             workout_id: workoutId,
-            exercise_id: se.exercise_id?.startsWith('draft') ? null : se.exercise_id,
+            user_id: userId,
+            exercise_id:
+              se.exercise_id && !se.exercise_id.startsWith('draft') ? se.exercise_id : null,
             exercise_name: se.exercise_name,
             position: se.position,
+            order_in_workout: se.position,
             target_sets: se.target_sets,
             target_reps: se.target_reps,
             target_weight_kg: se.target_weight_kg,
@@ -630,6 +704,8 @@ export const workoutRedesignService = {
           const setsToInsert = se.sets.map((s) => ({
             id: s.id,
             workout_exercise_id: se.id,
+            workout_id: workoutId,
+            user_id: userId,
             set_number: s.set_number,
             reps: s.reps,
             weight_kg: s.weight_kg,
@@ -683,13 +759,17 @@ export const workoutRedesignService = {
   async finishSession(
     workoutId: string,
     effort: number,
-    useWeightsNextTime: boolean,
+    _useWeightsNextTime: boolean,
   ): Promise<void> {
     const endedAt = new Date().toISOString();
+    const effortString: 'easy' | 'good' | 'hard' | 'max' =
+      effort <= 4 ? 'easy' : effort <= 7 ? 'good' : effort <= 9 ? 'hard' : 'max';
+
     if (inMemoryActiveSession && inMemoryActiveSession.id === workoutId) {
       inMemoryActiveSession.status = 'completed';
       inMemoryActiveSession.ended_at = endedAt;
       inMemoryActiveSession.effort = effort;
+      inMemoryCompletedSessions.unshift({ ...inMemoryActiveSession });
     }
 
     const supabase = getSupabase();
@@ -699,7 +779,8 @@ export const workoutRedesignService = {
         .update({
           status: 'completed',
           ended_at: endedAt,
-          effort,
+          effort: effortString,
+          effort_rating: effort,
         })
         .eq('id', workoutId);
 
@@ -727,15 +808,15 @@ export const workoutRedesignService = {
   ): Promise<void> {
     const supabase = getSupabase();
     const { data: authData } = await supabase.auth.getUser();
-    const userId = authData?.user?.id || 'offline_user';
-    const workoutId = 'wrk_' + Math.random().toString(36).substring(2, 10);
-    const weId = 'we_' + Math.random().toString(36).substring(2, 10);
+    const userId = authData?.user?.id || '00000000-0000-0000-0000-000000000001';
+    const workoutId = crypto.randomUUID();
+    const weId = crypto.randomUUID();
     const now = new Date().toISOString();
 
     const sets: SessionSet[] = [];
     for (let i = 1; i <= setsCount; i++) {
       sets.push({
-        id: 'set_' + Math.random().toString(36).substring(2, 10),
+        id: crypto.randomUUID(),
         workout_exercise_id: weId,
         set_number: i,
         reps,
@@ -745,6 +826,31 @@ export const workoutRedesignService = {
       });
     }
 
+    const completedSession: ActiveWorkoutSession = {
+      id: workoutId,
+      name: exerciseName,
+      local_date: localDate,
+      status: 'completed',
+      started_at: now,
+      ended_at: now,
+      effort: 3,
+      exercises: [
+        {
+          id: weId,
+          workout_id: workoutId,
+          exercise_id: null,
+          exercise_name: exerciseName,
+          position: 1,
+          target_sets: setsCount,
+          target_reps: reps,
+          target_weight_kg: weightKg,
+          rest_seconds: 60,
+          sets,
+        },
+      ],
+    };
+
+    inMemoryCompletedSessions.unshift(completedSession);
     inMemoryActiveSession = null;
 
     try {
@@ -752,19 +858,24 @@ export const workoutRedesignService = {
         await supabase.from('workouts').insert({
           id: workoutId,
           user_id: userId,
+          type: 'strength',
           name: exerciseName,
           local_date: localDate,
           status: 'completed',
+          start_time: now,
           started_at: now,
           ended_at: now,
-          effort: 7,
+          duration_minutes: Math.max(5, setsCount * 2),
+          effort: 'good',
         });
 
         await supabase.from('workout_exercises').insert({
           id: weId,
           workout_id: workoutId,
+          user_id: userId,
           exercise_name: exerciseName,
           position: 1,
+          order_in_workout: 1,
           target_sets: setsCount,
           target_reps: reps,
           target_weight_kg: weightKg,
@@ -774,6 +885,8 @@ export const workoutRedesignService = {
         const setsToInsert = sets.map((s) => ({
           id: s.id,
           workout_exercise_id: weId,
+          workout_id: workoutId,
+          user_id: userId,
           set_number: s.set_number,
           reps: s.reps,
           weight_kg: s.weight_kg,
@@ -787,7 +900,7 @@ export const workoutRedesignService = {
         }
       }
     } catch {
-      // offline fallback
+      // offline fallback - already safely retained in inMemoryCompletedSessions
     }
   },
 
@@ -849,10 +962,11 @@ export const workoutRedesignService = {
   ): Promise<ActivityLogItem> {
     const supabase = getSupabase();
     const { data: authData } = await supabase.auth.getUser();
-    const userId = authData?.user?.id || 'user';
+    const userId = authData?.user?.id || '00000000-0000-0000-0000-000000000001';
+    const actId = crypto.randomUUID();
 
     const item: ActivityLogItem = {
-      id: 'act_' + Math.random().toString(36).substring(2, 10),
+      id: actId,
       user_id: userId,
       activity_name: activityName,
       duration_minutes: durationMinutes,
@@ -864,7 +978,13 @@ export const workoutRedesignService = {
 
     try {
       if (authData?.user) {
-        await supabase.from('activity_logs').insert(item);
+        await supabase.from('activity_logs').insert({
+          id: actId,
+          user_id: userId,
+          name: activityName,
+          local_date: localDate,
+          sets: [],
+        });
       }
     } catch {
       // resilience
@@ -890,53 +1010,72 @@ export const workoutRedesignService = {
   }> {
     const supabase = getSupabase();
     const { data: authData } = await supabase.auth.getUser();
-    if (!authData?.user) {
-      return {
-        workouts:
-          inMemoryActiveSession && inMemoryActiveSession.status === 'completed'
-            ? [inMemoryActiveSession]
-            : [],
-        activities: [],
-      };
+
+    let remoteWorkouts: ActiveWorkoutSession[] = [];
+    let remoteActivities: ActivityLogItem[] = [];
+
+    if (authData?.user) {
+      let wQuery = supabase
+        .from('workouts')
+        .select('id, name, local_date, status, started_at, ended_at, effort')
+        .eq('user_id', authData.user.id)
+        .eq('status', 'completed')
+        .order('local_date', { ascending: false });
+
+      let aQuery = supabase
+        .from('activity_logs')
+        .select('id, user_id, name, local_date, created_at')
+        .eq('user_id', authData.user.id)
+        .order('local_date', { ascending: false });
+
+      if (date) {
+        wQuery = wQuery.eq('local_date', date);
+        aQuery = aQuery.eq('local_date', date);
+      }
+
+      const [{ data: workouts }, { data: activities }] = await Promise.all([
+        filter === 'activities' ? Promise.resolve({ data: [] }) : wQuery,
+        filter === 'workouts' ? Promise.resolve({ data: [] }) : aQuery,
+      ]);
+
+      remoteWorkouts = (workouts || []).map((w) => ({
+        id: w.id,
+        name: w.name || 'Workout',
+        local_date: w.local_date,
+        status: w.status,
+        started_at: w.started_at,
+        ended_at: w.ended_at,
+        effort: w.effort,
+        exercises: [],
+      }));
+
+      remoteActivities = (activities || []).map((a) => ({
+        id: a.id,
+        user_id: a.user_id,
+        activity_name: a.name || 'Activity',
+        duration_minutes: 30,
+        calories_burned: null,
+        local_date: a.local_date,
+        notes: null,
+        created_at: a.created_at,
+      }));
     }
 
-    let wQuery = supabase
-      .from('workouts')
-      .select('id, name, local_date, status, started_at, ended_at, effort')
-      .eq('user_id', authData.user.id)
-      .eq('status', 'completed')
-      .order('local_date', { ascending: false });
+    const seenIds = new Set<string>();
+    const combinedWorkouts: ActiveWorkoutSession[] = [];
 
-    let aQuery = supabase
-      .from('activity_logs')
-      .select('*')
-      .eq('user_id', authData.user.id)
-      .order('local_date', { ascending: false });
-
-    if (date) {
-      wQuery = wQuery.eq('local_date', date);
-      aQuery = aQuery.eq('local_date', date);
+    for (const w of [...inMemoryCompletedSessions, ...remoteWorkouts]) {
+      if (!seenIds.has(w.id)) {
+        if (!date || w.local_date === date) {
+          seenIds.add(w.id);
+          combinedWorkouts.push(w);
+        }
+      }
     }
-
-    const [{ data: workouts }, { data: activities }] = await Promise.all([
-      filter === 'activities' ? Promise.resolve({ data: [] }) : wQuery,
-      filter === 'workouts' ? Promise.resolve({ data: [] }) : aQuery,
-    ]);
-
-    const mappedWorkouts: ActiveWorkoutSession[] = (workouts || []).map((w) => ({
-      id: w.id,
-      name: w.name || 'Workout',
-      local_date: w.local_date,
-      status: w.status,
-      started_at: w.started_at,
-      ended_at: w.ended_at,
-      effort: w.effort,
-      exercises: [],
-    }));
 
     return {
-      workouts: mappedWorkouts,
-      activities: activities || [],
+      workouts: filter === 'activities' ? [] : combinedWorkouts,
+      activities: filter === 'workouts' ? [] : remoteActivities,
     };
   },
 };

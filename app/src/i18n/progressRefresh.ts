@@ -52,7 +52,7 @@ export const progressRefresh = {
   best: 'Top estimated 1RM',
   estimate: 'An estimate from logged sets, not a tested maximum.',
   photoTitle: 'Your private photo timeline',
-  photoBody: 'Compare photos stored on this device. No CaliPartner cloud backup.',
+  photoBody: 'Visual progress comparison is available on CaliPartner Pro.',
   openPhotos: 'Open photo vault',
   showingUp: 'Showing up',
   days: '{count} of {total} days logged',

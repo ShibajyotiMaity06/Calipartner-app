@@ -48,6 +48,7 @@ import { S27FinishEarlySheet } from './S27FinishEarlySheet';
 import { S29LogActivitySheet } from './S29LogActivitySheet';
 import { S31FinalWarningSheet } from './S31FinalWarningSheet';
 import { S32FinalAppliedScreen } from './S32FinalAppliedScreen';
+import { PaywallModal } from '@/components/rooms/PaywallModal';
 
 export type ScreenId =
   | 'main'
@@ -99,6 +100,7 @@ export function WorkoutRedesignContainer({
   } | null>(null);
   const [finalWarningVisible, setFinalWarningVisible] = useState(false);
   const [replacePlanVisible, setReplacePlanVisible] = useState(false);
+  const [showPaywall, setShowPaywall] = useState(false);
 
   // Dates & States
   const todayStr: string = useMemo(() => {
@@ -272,7 +274,9 @@ export function WorkoutRedesignContainer({
       setEligibility(elig);
 
       if (!elig.eligible) {
-        if (elig.reason === 'age') {
+        if (elig.reason === 'pro_required') {
+          setShowPaywall(true);
+        } else if (elig.reason === 'age') {
           pushScreen('s20_age_blocked');
         } else if (elig.reason === 'health') {
           pushScreen('s19_health_blocked');
@@ -284,8 +288,13 @@ export function WorkoutRedesignContainer({
         return;
       }
       pushScreen('s13_schedule');
-    } catch {
-      pushScreen('s13_schedule');
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : '';
+      if (msg.includes('Pro') || msg.includes('pro_required')) {
+        setShowPaywall(true);
+      } else {
+        pushScreen('s13_schedule');
+      }
     }
   };
 
@@ -419,14 +428,33 @@ export function WorkoutRedesignContainer({
         {currentScreen === 'main' ? (
           <View style={styles.tabContainer}>
             {activeTab === 'today' ? (
-              activePlan ? (
+              activePlan || completedTodaySession || inProgressSession ? (
                 <S01TodayScreen
                   currentTab={activeTab}
                   onChangeTab={setActiveTab}
                   selectedDate={selectedDate}
                   todayDate={todayStr}
                   activePlan={activePlan}
-                  todayPlanDay={todayPlanDay}
+                  todayPlanDay={
+                    todayPlanDay ||
+                    (completedTodaySession
+                      ? {
+                          weekday: todayWeekday,
+                          name: completedTodaySession.name,
+                          is_rest: false,
+                          about_minutes: 30,
+                          exercises: [],
+                        }
+                      : inProgressSession
+                        ? {
+                            weekday: todayWeekday,
+                            name: inProgressSession.name,
+                            is_rest: false,
+                            about_minutes: 30,
+                            exercises: [],
+                          }
+                        : null)
+                  }
                   upNextPlanDay={upNextPlanDay}
                   inProgressSession={inProgressSession}
                   completedTodaySession={completedTodaySession}
@@ -465,7 +493,9 @@ export function WorkoutRedesignContainer({
                   }}
                   onViewInHistory={() => setActiveTab('history')}
                   weekDays={weekDays}
-                  trainingDaysCount={activePlan.days.filter((d) => !d.is_rest).length}
+                  trainingDaysCount={
+                    activePlan ? activePlan.days.filter((d) => !d.is_rest).length : 1
+                  }
                   completedDaysCount={weekDays.filter((d) => d.isDone).length}
                 />
               ) : (
@@ -545,11 +575,11 @@ export function WorkoutRedesignContainer({
                 elapsedSeconds={
                   inProgressSession.started_at
                     ? Math.max(
-                        0,
-                        Math.floor(
-                          (Date.now() - new Date(inProgressSession.started_at).getTime()) / 1000,
-                        ),
-                      )
+                      0,
+                      Math.floor(
+                        (Date.now() - new Date(inProgressSession.started_at).getTime()) / 1000,
+                      ),
+                    )
                     : 0
                 }
                 completedSets={inProgressSession.exercises.reduce(
@@ -598,7 +628,7 @@ export function WorkoutRedesignContainer({
           <S07DayEditorScreen
             mode={dayEditorMode}
             initialWeekday={dayEditorInitialWeekday}
-            allDays={editingCustomPlan ? customPlanDays : activePlan?.days || []}
+            allDays={editingCustomPlan ? customPlanDays : (activePlan?.days || [])}
             onSavePlanMode={async (updatedDays) => {
               if (editingCustomPlan) {
                 setCustomPlanDays(updatedDays);
@@ -747,7 +777,7 @@ export function WorkoutRedesignContainer({
         ) : null}
 
         {currentScreen === 's18_generating' ? (
-          <S18GeneratingScreen onGenerationComplete={() => {}} />
+          <S18GeneratingScreen onGenerationComplete={() => { }} />
         ) : null}
 
         {currentScreen === 's19_health_blocked' ? (
@@ -816,9 +846,9 @@ export function WorkoutRedesignContainer({
           unfinishedCount={
             inProgressSession
               ? inProgressSession.exercises.reduce(
-                  (acc, ex) => acc + ex.sets.filter((s) => !s.completed).length,
-                  0,
-                )
+                (acc, ex) => acc + ex.sets.filter((s) => !s.completed).length,
+                0,
+              )
               : 0
           }
           onSaveCompletedSets={() => {
@@ -913,16 +943,16 @@ export function WorkoutRedesignContainer({
           exercise={
             logStrengthTarget
               ? {
-                  id: logStrengthTarget.id,
-                  name: logStrengthTarget.name,
-                  primary_muscle: logStrengthTarget.primary_muscle,
-                  equipment: logStrengthTarget.equipment,
-                  target_sets: 3,
-                  target_reps: 10,
-                  target_weight_kg: 0,
-                  rest_seconds: 60,
-                  is_compound: logStrengthTarget.is_compound,
-                }
+                id: logStrengthTarget.id,
+                name: logStrengthTarget.name,
+                primary_muscle: logStrengthTarget.primary_muscle,
+                equipment: logStrengthTarget.equipment,
+                target_sets: 3,
+                target_reps: 10,
+                target_weight_kg: 0,
+                rest_seconds: 60,
+                is_compound: logStrengthTarget.is_compound,
+              }
               : null
           }
           mode="log_exercise"
@@ -984,6 +1014,12 @@ export function WorkoutRedesignContainer({
             setReplacePlanVisible(false);
           }}
           onCancel={() => setReplacePlanVisible(false)}
+        />
+
+        <PaywallModal
+          visible={showPaywall}
+          onClose={() => setShowPaywall(false)}
+          context="general"
         />
       </SafeAreaView>
     </Modal>

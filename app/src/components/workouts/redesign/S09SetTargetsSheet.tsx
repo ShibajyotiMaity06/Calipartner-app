@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { StyleSheet, Text, View, ScrollView } from 'react-native';
 import { workoutTokens } from '@calipartner/ui';
 import { WorkoutSheet, PrimaryButton, SecondaryButton, StepperRow, WorkoutChip } from '../s_common';
@@ -9,12 +9,7 @@ interface S09SetTargetsSheetProps {
   exercise: GeneratedPlanExercise | null;
   mode?: 'plan_targets' | 'log_exercise';
   onSave: (sets: number, reps: number, weightKg: number | null, restSeconds: number) => void;
-  onStartSession?: (
-    sets: number,
-    reps: number,
-    weightKg: number | null,
-    restSeconds: number,
-  ) => void;
+  onStartSession?: (sets: number, reps: number, weightKg: number | null, restSeconds: number) => void;
   onClose: () => void;
 }
 
@@ -30,13 +25,20 @@ export function S09SetTargetsSheet({
   const [reps, setReps] = useState<number>(10);
   const [weightKg, setWeightKg] = useState<number>(0);
   const [restSeconds, setRestSeconds] = useState<number>(60);
+  const prevExerciseKey = useRef<string | null>(null);
 
   useEffect(() => {
     if (exercise) {
-      setSets(exercise.target_sets || 3);
-      setReps(exercise.target_reps || 10);
-      setWeightKg(exercise.target_weight_kg || 0);
-      setRestSeconds(exercise.rest_seconds || 60);
+      const key = `${exercise.id || ''}_${exercise.name || ''}`;
+      if (prevExerciseKey.current !== key) {
+        prevExerciseKey.current = key;
+        setSets(exercise.target_sets || 3);
+        setReps(exercise.target_reps || 10);
+        setWeightKg(exercise.target_weight_kg || 0);
+        setRestSeconds(exercise.rest_seconds || 60);
+      }
+    } else {
+      prevExerciseKey.current = null;
     }
   }, [exercise]);
 

@@ -1,6 +1,6 @@
 import React from 'react';
 import { act, create, type ReactTestRenderer } from 'react-test-renderer';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('react-native', () => ({
   Modal: 'Modal',
@@ -21,45 +21,48 @@ vi.mock('@calipartner/ui', async () => ({
   ...(await import('../../../../../packages/ui/src/tokens')),
 }));
 
-vi.mock('@/lib/supabase', () => ({
-  getSupabase: () => ({
-    auth: {
-      getUser: vi.fn().mockResolvedValue({
-        data: { user: { id: 'test_user', email: 'shibajyoti.maity06@gmail.com' } },
-      }),
-    },
-    from: () => ({
-      select: () => ({
-        eq: () => ({
-          maybeSingle: vi.fn().mockResolvedValue({ data: null }),
-          order: vi.fn().mockResolvedValue({ data: [] }),
-          in: vi.fn().mockResolvedValue({ data: [] }),
-        }),
-        order: () => ({
-          eq: vi.fn().mockResolvedValue({ data: [] }),
-        }),
-      }),
-      insert: vi.fn().mockReturnValue({
-        select: () => ({ single: vi.fn().mockResolvedValue({ data: { id: 'plan_1' } }) }),
-      }),
-      upsert: vi.fn().mockResolvedValue({}),
-      update: vi
-        .fn()
-        .mockReturnValue({ eq: vi.fn().mockReturnValue({ eq: vi.fn().mockResolvedValue({}) }) }),
-      delete: vi.fn().mockReturnValue({ eq: vi.fn().mockResolvedValue({}) }),
+const createMockQuery = () => {
+  const query: any = {
+    eq: vi.fn(() => query),
+    in: vi.fn(() => query),
+    order: vi.fn(() => query),
+    maybeSingle: vi.fn().mockResolvedValue({ data: null }),
+    single: vi.fn().mockResolvedValue({ data: { id: 'plan_1' } }),
+    then: (resolve: any, reject?: any) => Promise.resolve({ data: [] }).then(resolve, reject),
+  };
+  return query;
+};
+
+const mockSupabase = {
+  auth: {
+    getUser: vi.fn().mockResolvedValue({
+      data: { user: { id: 'test_user', email: 'shibajyoti.maity06@gmail.com' } },
     }),
-    functions: {
-      invoke: vi.fn().mockResolvedValue({
-        data: {
-          eligible: true,
-          reason: null,
-          state: 'ready',
-          next_available_at: null,
-          previews_used: 0,
-        },
-      }),
-    },
-  }),
+  },
+  from: vi.fn(() => ({
+    select: vi.fn(() => createMockQuery()),
+    insert: vi.fn().mockReturnValue({
+      select: () => ({ single: vi.fn().mockResolvedValue({ data: { id: 'plan_1' } }) }),
+    }),
+    upsert: vi.fn().mockResolvedValue({}),
+    update: vi.fn().mockReturnValue(createMockQuery()),
+    delete: vi.fn().mockReturnValue(createMockQuery()),
+  })),
+  functions: {
+    invoke: vi.fn().mockResolvedValue({
+      data: {
+        eligible: true,
+        reason: null,
+        state: 'ready',
+        next_available_at: null,
+        previews_used: 0,
+      },
+    }),
+  },
+};
+
+vi.mock('@/lib/supabase', () => ({
+  getSupabase: () => mockSupabase,
 }));
 
 import { S01TodayScreen } from './S01TodayScreen';
@@ -67,7 +70,6 @@ import { S03PlanScreen } from './S03PlanScreen';
 import { S04HistoryScreen } from './S04HistoryScreen';
 import { S05ActiveSessionScreen } from './S05ActiveSessionScreen';
 import { S06WorkoutSummaryScreen } from './S06WorkoutSummaryScreen';
-import { S07DayEditorScreen } from './S07DayEditorScreen';
 import { S08ExercisePickerScreen } from './S08ExercisePickerScreen';
 import { S09SetTargetsSheet } from './S09SetTargetsSheet';
 import { S10NoPlanScreen } from './S10NoPlanScreen';
@@ -82,12 +84,6 @@ import { S18GeneratingScreen } from './S18GeneratingScreen';
 import { S19HealthBlockedScreen } from './S19HealthBlockedScreen';
 import { S20AgeBlockedScreen } from './S20AgeBlockedScreen';
 import { S21LockedScreen } from './S21LockedScreen';
-import { S23ReplacePlanSheet } from './S23ReplacePlanSheet';
-import { S24CustomPlanSetupScreen } from './S24CustomPlanSetupScreen';
-import { S25WorkoutSettingsScreen } from './S25WorkoutSettingsScreen';
-import { S26SwapExerciseSheet } from './S26SwapExerciseSheet';
-import { S27FinishEarlySheet } from './S27FinishEarlySheet';
-import { S29LogActivitySheet } from './S29LogActivitySheet';
 import { S31FinalWarningSheet } from './S31FinalWarningSheet';
 import { S32FinalAppliedScreen } from './S32FinalAppliedScreen';
 import { workoutRedesignService } from '@/services/workoutRedesignService';
@@ -547,5 +543,101 @@ describe('Workout Redesign (S00 - S32)', () => {
     // User email in mock is shibajyoti.maity06@gmail.com, so eligible is true with state ready
     expect(res.eligible).toBe(true);
     expect(res.state).toBe('ready');
+  });
+
+  it('Non-owner free user receives pro_required and cannot generate AI plan', async () => {
+    const supabase = (await import('@/lib/supabase')).getSupabase();
+    vi.spyOn(supabase.auth, 'getUser').mockResolvedValue({
+      data: { user: { id: 'free_user_1', email: 'freeuser@example.com' } as any },
+      error: null,
+    } as any);
+    vi.spyOn(supabase.functions, 'invoke').mockResolvedValueOnce({
+      data: null,
+      error: { message: 'pro_required' } as any,
+    });
+
+    const res = await workoutRedesignService.fallbackEligibilityCheck();
+    expect(res.eligible).toBe(false);
+    expect(res.reason).toBe('pro_required');
+
+    await expect(
+      workoutRedesignService.generateAiPlan({
+        days_per_week: 3,
+        training_days: [1, 3, 5],
+        session_minutes: 60,
+        split: 'auto',
+        experience: 'beginner',
+        location: 'advanced_gym',
+      }),
+    ).rejects.toThrow('AI workout plans require CaliPartner Pro.');
+  });
+
+  it('Logs completed strength exercise and updates history immediately', async () => {
+    await workoutRedesignService.logCompletedStrengthExercise(
+      'Bench Press',
+      3,
+      10,
+      60,
+      '2026-11-22',
+    );
+
+    const history = await workoutRedesignService.fetchHistory('all');
+    const logged = history.workouts.find((w) => w.name === 'Bench Press');
+    expect(logged).toBeDefined();
+    expect(logged?.status).toBe('completed');
+    expect(logged?.exercises?.[0]?.target_sets).toBe(3);
+    expect(logged?.exercises?.[0]?.target_reps).toBe(10);
+    expect(logged?.exercises?.[0]?.target_weight_kg).toBe(60);
+  });
+
+  it('S08 Exercise Picker screen renders muscle filter chips and section header', async () => {
+    await act(async () => {
+      tree = create(<S08ExercisePickerScreen mode="log" onSelect={vi.fn()} onBack={vi.fn()} />);
+    });
+    const json = JSON.stringify(tree.toJSON());
+    expect(json).toContain('FILTER BY MUSCLE');
+    expect(json).toContain('All');
+    expect(json).toContain('Chest');
+    expect(json).toContain('Back');
+  });
+
+  it('S09 Set Targets sheet retains entered weight on re-render', async () => {
+    const testExercise = {
+      id: 'ex_bench',
+      name: 'Bench Press',
+      primary_muscle: 'chest',
+      equipment: 'barbell',
+      is_compound: true,
+      target_sets: 3,
+      target_reps: 10,
+      target_weight_kg: 50,
+      rest_seconds: 60,
+    };
+    await act(async () => {
+      tree = create(
+        <S09SetTargetsSheet
+          visible={true}
+          exercise={testExercise}
+          mode="log_exercise"
+          onSave={vi.fn()}
+          onClose={vi.fn()}
+        />,
+      );
+    });
+    expect(JSON.stringify(tree.toJSON())).toContain('50');
+
+    // Re-render with same exercise identity (like AppState background-to-foreground)
+    await act(async () => {
+      tree.update(
+        <S09SetTargetsSheet
+          visible={true}
+          exercise={{ ...testExercise }}
+          mode="log_exercise"
+          onSave={vi.fn()}
+          onClose={vi.fn()}
+        />,
+      );
+    });
+    expect(JSON.stringify(tree.toJSON())).toContain('50');
   });
 });

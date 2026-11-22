@@ -56,7 +56,7 @@ export async function handleGenerate(req: Request, dependencies: { admin?: Supab
     }
 
     // Eligibility check
-    const [profileRes, screeningRes, aiStateRes] = await Promise.all([
+    const [profileRes, screeningRes, aiStateRes, entitlementRes] = await Promise.all([
       admin.from('profiles').select('date_of_birth').eq('id', userId).maybeSingle(),
       admin
         .from('health_screening')
@@ -64,7 +64,23 @@ export async function handleGenerate(req: Request, dependencies: { admin?: Supab
         .eq('user_id', userId)
         .maybeSingle(),
       admin.from('ai_plan_state').select('*').eq('user_id', userId).maybeSingle(),
+      admin.from('entitlements').select('*').eq('user_id', userId).maybeSingle(),
     ]);
+
+    // 0. Pro Subscription Check (AI Plan generation requires Pro, except owner test bypass)
+    const entitlement = entitlementRes.data;
+    const isPro =
+      isOwnerTestBypass ||
+      (entitlement &&
+        entitlement.tier === 'pro' &&
+        (entitlement.status === 'active' ||
+          (entitlement.status === 'trial' &&
+            (!entitlement.period_end || new Date(entitlement.period_end).getTime() > Date.now())) ||
+          (entitlement.period_end && new Date(entitlement.period_end).getTime() > Date.now())));
+
+    if (!isPro) {
+      return reply(403, { error: 'not_eligible', reason: 'pro_required' });
+    }
 
     const dob = profileRes.data?.date_of_birth;
     if (!dob) return reply(403, { error: 'not_eligible', reason: 'profile_incomplete' });

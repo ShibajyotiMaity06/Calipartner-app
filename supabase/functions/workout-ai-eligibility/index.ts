@@ -32,7 +32,7 @@ export async function handleEligibility(
     const userId = user.id;
     const isOwnerTestBypass = user.email?.toLowerCase() === 'shibajyoti.maity06@gmail.com';
 
-    const [profileRes, screeningRes, aiStateRes] = await Promise.all([
+    const [profileRes, screeningRes, aiStateRes, entitlementRes] = await Promise.all([
       admin.from('profiles').select('date_of_birth').eq('id', userId).maybeSingle(),
       admin
         .from('health_screening')
@@ -40,16 +40,39 @@ export async function handleEligibility(
         .eq('user_id', userId)
         .maybeSingle(),
       admin.from('ai_plan_state').select('*').eq('user_id', userId).maybeSingle(),
+      admin.from('entitlements').select('*').eq('user_id', userId).maybeSingle(),
     ]);
 
     const dob = profileRes.data?.date_of_birth;
     const screening = screeningRes.data;
     const aiState = aiStateRes.data;
+    const entitlement = entitlementRes.data;
 
     // Projected next available at (now + 3 months) for S31 warning display
     const projected_next_available_at = addCooldownMonths(new Date()).toISOString();
     const previews_used = aiState?.previews_used ?? 0;
     const next_available_at = aiState?.next_available_at ?? null;
+
+    // 0. Pro Subscription Check (AI Plan requires Pro, except owner test bypass)
+    const isPro =
+      isOwnerTestBypass ||
+      (entitlement &&
+        entitlement.tier === 'pro' &&
+        (entitlement.status === 'active' ||
+          (entitlement.status === 'trial' &&
+            (!entitlement.period_end || new Date(entitlement.period_end).getTime() > Date.now())) ||
+          (entitlement.period_end && new Date(entitlement.period_end).getTime() > Date.now())));
+
+    if (!isPro) {
+      return reply(200, {
+        eligible: false,
+        reason: 'pro_required',
+        state: 'locked',
+        next_available_at,
+        previews_used,
+        projected_next_available_at,
+      });
+    }
 
     // 1. Check Age (18+)
     if (!dob) {

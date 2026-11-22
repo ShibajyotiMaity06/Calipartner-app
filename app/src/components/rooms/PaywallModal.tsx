@@ -490,7 +490,6 @@ export function PaywallModal({
     });
   };
 
-  const renewalSentence = t('fixes.storeTerms');
   const primaryCtaLabel = awaitingEntitlement
     ? t('fixes.checkPayment')
     : actionLoading
@@ -753,7 +752,7 @@ export function PaywallModal({
                   quote('pro', mainDuration)!.equivalent +
                   '. '
                 : ''}
-              {renewalSentence} {t('proPlan.tax')}
+              {t('proPlan.tax')}
             </Text>
             <Button
               variant="primary"

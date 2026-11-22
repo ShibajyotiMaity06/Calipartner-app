@@ -21,9 +21,7 @@ export function S32FinalAppliedScreen({ plan, onDone }: S32FinalAppliedScreenPro
         </View>
 
         <Text style={styles.title}>Plan applied!</Text>
-        <Text style={styles.subtitle}>
-          Your 3rd preview has been saved as your new active workout routine.
-        </Text>
+        <Text style={styles.subtitle}>Your plan is saved and active for this week.</Text>
 
         <View style={styles.planCard}>
           <Text style={styles.planName}>{plan.name}</Text>

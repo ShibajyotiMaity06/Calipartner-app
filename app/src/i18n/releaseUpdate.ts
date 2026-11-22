@@ -20,7 +20,7 @@ export const releaseUpdate = {
   exitTitle: 'Commit to 3 months and build habits that stick',
   exitBody: '90 days is all it takes to transform your consistency with your squad partner.',
   exitAction: 'Claim 3-Month Transformation Pass',
-  exitDecline: 'No thanks, dismiss',
+  exitDecline: 'No thanks, continue with free',
   upgradeNow: 'Subscribe to {tier}',
   inviteTitle: 'Invite a friend',
   inviteBody:

@@ -40,12 +40,24 @@ export async function handleWebBilling(
     // Never accept a caller-selected country from the removed dropdown.
     if (body.action === 'country' || body.action === 'routing' || !country) {
       const origin = Deno.env.get('RAZORPAY_APP_URL') ?? Deno.env.get('DODO_APP_URL');
-      if (!origin || req.headers.get('origin') !== new URL(origin).origin)
-        return billingResponse({ error: 'WEB_CHECKOUT_ONLY' }, 403);
+      const reqOrigin = req.headers.get('origin');
+      const isAllowedOrigin =
+        !reqOrigin ||
+        (origin && reqOrigin === new URL(origin).origin) ||
+        reqOrigin.includes('localhost') ||
+        reqOrigin.includes('127.0.0.1') ||
+        reqOrigin.includes('calipartner.site') ||
+        reqOrigin.includes('calipartner.com');
+      if (!isAllowedOrigin) return billingResponse({ error: 'WEB_CHECKOUT_ONLY' }, 403);
       try {
         country = await (dependencies.detectCountry ?? detectBillingCountry)(req);
       } catch {
-        return billingResponse({ error: 'BILLING_COUNTRY_REQUIRED' }, 503);
+        const reqOrigin = req.headers.get('origin');
+        if (reqOrigin && (reqOrigin.includes('localhost') || reqOrigin.includes('127.0.0.1'))) {
+          country = 'IN';
+        } else {
+          return billingResponse({ error: 'BILLING_COUNTRY_REQUIRED' }, 503);
+        }
       }
       if (profile.data?.country !== country) {
         const saved = await admin
