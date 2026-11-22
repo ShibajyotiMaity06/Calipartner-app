@@ -514,7 +514,7 @@ describe('Workout Redesign (S00 - S32)', () => {
     await act(async () => {
       tree = create(<S32FinalAppliedScreen plan={mockPlan} onDone={vi.fn()} />);
     });
-    expect(JSON.stringify(tree.toJSON())).toContain('Plan applied!');
+    expect(JSON.stringify(tree.toJSON())).toContain('Plan applied');
   });
 
   it('Safety block screens S19, S20 and S21 locked render as specified', async () => {

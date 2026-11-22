@@ -11,6 +11,10 @@ const headers = {
 const reply = (status: number, data: unknown) =>
   new Response(JSON.stringify(data), { status, headers });
 
+const isUuid = (s?: string | null): boolean =>
+  typeof s === 'string' &&
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(s);
+
 export async function handleConfirm(req: Request, dependencies: { admin?: SupabaseClient } = {}) {
   if (req.method === 'OPTIONS') return new Response('ok', { headers });
   if (req.method !== 'POST') return reply(405, { error: 'METHOD_NOT_ALLOWED' });
@@ -140,7 +144,8 @@ export async function handleConfirm(req: Request, dependencies: { admin?: Supaba
         const exRows = d.exercises.map((e, idx) => ({
           id: crypto.randomUUID(),
           plan_day_id: dayId,
-          exercise_id: e.id,
+          exercise_id: isUuid(e.id) ? e.id : null,
+          exercise_name: e.name,
           position: idx + 1,
           target_sets: e.target_sets,
           target_reps: e.target_reps,

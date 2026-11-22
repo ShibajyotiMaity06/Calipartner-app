@@ -6,6 +6,10 @@ export async function detectBillingCountry(
   req: Request,
   fetcher: typeof fetch = fetch,
 ): Promise<string> {
+  const cfCountry = req.headers.get('cf-ipcountry')?.toUpperCase();
+  if (cfCountry && BILLING_COUNTRY_CODES.includes(cfCountry)) {
+    return cfCountry;
+  }
   const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim();
   if (!ip || !isIP(ip)) throw new Error('BILLING_COUNTRY_REQUIRED');
   if (ip === '127.0.0.1' || ip === '::1' || ip.startsWith('192.168.') || ip.startsWith('10.')) {

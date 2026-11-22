@@ -20,7 +20,7 @@ export function S32FinalAppliedScreen({ plan, onDone }: S32FinalAppliedScreenPro
           <Ionicons name="checkmark" size={32} color={workoutTokens.onAccent} />
         </View>
 
-        <Text style={styles.title}>Plan applied!</Text>
+        <Text style={styles.title}>Plan applied</Text>
         <Text style={styles.subtitle}>Your plan is saved and active for this week.</Text>
 
         <View style={styles.planCard}>

@@ -527,7 +527,11 @@ export const workoutRedesignService = {
         const exercisesToInsert = d.exercises.map((ex, idx) => ({
           id: crypto.randomUUID(),
           plan_day_id: dayRow.id,
-          exercise_id: ex.id && !ex.id.startsWith('draft') ? ex.id : null,
+          exercise_id:
+            typeof ex.id === 'string' &&
+            /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(ex.id)
+              ? ex.id
+              : null,
           exercise_name: ex.name,
           position: idx + 1,
           target_sets: ex.target_sets || 3,

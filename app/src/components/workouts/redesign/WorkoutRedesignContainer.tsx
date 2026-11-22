@@ -575,11 +575,11 @@ export function WorkoutRedesignContainer({
                 elapsedSeconds={
                   inProgressSession.started_at
                     ? Math.max(
-                      0,
-                      Math.floor(
-                        (Date.now() - new Date(inProgressSession.started_at).getTime()) / 1000,
-                      ),
-                    )
+                        0,
+                        Math.floor(
+                          (Date.now() - new Date(inProgressSession.started_at).getTime()) / 1000,
+                        ),
+                      )
                     : 0
                 }
                 completedSets={inProgressSession.exercises.reduce(
@@ -628,7 +628,7 @@ export function WorkoutRedesignContainer({
           <S07DayEditorScreen
             mode={dayEditorMode}
             initialWeekday={dayEditorInitialWeekday}
-            allDays={editingCustomPlan ? customPlanDays : (activePlan?.days || [])}
+            allDays={editingCustomPlan ? customPlanDays : activePlan?.days || []}
             onSavePlanMode={async (updatedDays) => {
               if (editingCustomPlan) {
                 setCustomPlanDays(updatedDays);
@@ -777,7 +777,7 @@ export function WorkoutRedesignContainer({
         ) : null}
 
         {currentScreen === 's18_generating' ? (
-          <S18GeneratingScreen onGenerationComplete={() => { }} />
+          <S18GeneratingScreen onGenerationComplete={() => {}} />
         ) : null}
 
         {currentScreen === 's19_health_blocked' ? (
@@ -846,9 +846,9 @@ export function WorkoutRedesignContainer({
           unfinishedCount={
             inProgressSession
               ? inProgressSession.exercises.reduce(
-                (acc, ex) => acc + ex.sets.filter((s) => !s.completed).length,
-                0,
-              )
+                  (acc, ex) => acc + ex.sets.filter((s) => !s.completed).length,
+                  0,
+                )
               : 0
           }
           onSaveCompletedSets={() => {
@@ -943,16 +943,16 @@ export function WorkoutRedesignContainer({
           exercise={
             logStrengthTarget
               ? {
-                id: logStrengthTarget.id,
-                name: logStrengthTarget.name,
-                primary_muscle: logStrengthTarget.primary_muscle,
-                equipment: logStrengthTarget.equipment,
-                target_sets: 3,
-                target_reps: 10,
-                target_weight_kg: 0,
-                rest_seconds: 60,
-                is_compound: logStrengthTarget.is_compound,
-              }
+                  id: logStrengthTarget.id,
+                  name: logStrengthTarget.name,
+                  primary_muscle: logStrengthTarget.primary_muscle,
+                  equipment: logStrengthTarget.equipment,
+                  target_sets: 3,
+                  target_reps: 10,
+                  target_weight_kg: 0,
+                  rest_seconds: 60,
+                  is_compound: logStrengthTarget.is_compound,
+                }
               : null
           }
           mode="log_exercise"

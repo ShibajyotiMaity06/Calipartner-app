@@ -9,7 +9,12 @@ interface S09SetTargetsSheetProps {
   exercise: GeneratedPlanExercise | null;
   mode?: 'plan_targets' | 'log_exercise';
   onSave: (sets: number, reps: number, weightKg: number | null, restSeconds: number) => void;
-  onStartSession?: (sets: number, reps: number, weightKg: number | null, restSeconds: number) => void;
+  onStartSession?: (
+    sets: number,
+    reps: number,
+    weightKg: number | null,
+    restSeconds: number,
+  ) => void;
   onClose: () => void;
 }
 
