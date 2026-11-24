@@ -1,7 +1,7 @@
 import https from 'node:https';
 
 const INDEXNOW_KEY = 'b8f9a2e64c1d30587e9b0a2f4c6d8e1a';
-const HOSTS = ['www.calipartner.site', 'calipartner.site'];
+const HOSTS = ['www.calipartner.site', 'calipartner.site', 'app.calipartner.site'];
 
 const URL_PATHS = [
   '/',
