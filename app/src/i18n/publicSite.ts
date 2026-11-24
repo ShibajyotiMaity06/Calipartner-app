@@ -1,6 +1,6 @@
 /** English launch catalogue, shared by static web pages and the in-app legal sheet. */
 export const publicSite = {
-  origin: 'https://app.calipartner.site',
+  origin: 'https://www.calipartner.site',
   email: 'shibajyoti.maity06@gmail.com',
   title: 'CaliPartner: Indian Calorie Tracker, Diet & Workout Partner',
   description:

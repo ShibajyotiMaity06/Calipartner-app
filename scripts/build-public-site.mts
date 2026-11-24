@@ -7,6 +7,8 @@ import { publicSite as copy } from '../app/src/i18n/publicSite';
 import { publicWeb as token } from '../packages/ui/tokens/publicWeb';
 import { pages, type PublicPage } from './site/pages';
 
+export const INDEXNOW_KEY = 'b8f9a2e64c1d30587e9b0a2f4c6d8e1a';
+
 export const escapeHtml = (value: string) =>
   value.replace(
     /[&<>"']/g,
@@ -27,13 +29,13 @@ export function storeConfig(env: Record<string, string | undefined>) {
 
 export function renderPage(page: PublicPage, env: Record<string, string | undefined> = {}) {
   const store = storeConfig(env);
-  const canonical = copy.origin + page.path;
+  const canonical = page.path === '/' ? copy.origin + '/' : copy.origin + page.path;
   const schemas: unknown[] = [
     {
       '@context': 'https://schema.org',
       '@type': 'Organization',
       name: 'CaliPartner',
-      url: copy.origin,
+      url: copy.origin + '/',
       logo: `${copy.origin}/icon.png`,
       email: copy.email,
     },
@@ -47,7 +49,23 @@ export function renderPage(page: PublicPage, env: Record<string, string | undefi
         { '@type': 'ListItem', position: 2, name: page.heading, item: canonical },
       ],
     });
-  if (['/about', '/download'].includes(page.path))
+  if (['/', '/about', '/download'].includes(page.path)) {
+    schemas.push({
+      '@context': 'https://schema.org',
+      '@type': 'SoftwareApplication',
+      name: 'CaliPartner',
+      url: copy.origin + '/',
+      applicationCategory: 'HealthApplication',
+      operatingSystem: 'Web, Android, iOS',
+      description:
+        'A social calorie, workout, and habit tracker built for accountability partners and friend squads.',
+      offers: {
+        '@type': 'Offer',
+        price: '0',
+        priceCurrency: 'INR',
+        description: 'Free personal tracking; optional paid plans.',
+      },
+    });
     schemas.push({
       '@context': 'https://schema.org',
       '@type': 'MobileApplication',
@@ -62,6 +80,7 @@ export function renderPage(page: PublicPage, env: Record<string, string | undefi
         description: 'Free personal tracking; optional paid plans.',
       },
     });
+  }
   let extra = '';
   if (page.path === '/download') {
     extra = `<section><h2>App availability</h2>${store.android ? link('https://play.google.com/store/apps/details?id=app.calipartner.mobile&referrer=utm_source%3Dcalipartner_site%26utm_medium%3Dwebsite', 'Get CaliPartner on Google Play', 'download-android') : '<p>Google Play release: Coming soon. Use the web app today.</p>'}${store.appleId ? link(`https://apps.apple.com/app/id${store.appleId}`, 'Download CaliPartner on the App Store', 'download-ios') : '<p>App Store release: Coming soon. Use the web app today.</p>'}<figure><img src="/download-qr.svg" width="192" height="192" alt="QR code opening CaliPartner in your phone’s browser"><figcaption>Scan to open the web app.</figcaption></figure></section>`;
@@ -104,11 +123,10 @@ export async function buildPublicSite(
       .replace('</head>', '<meta name="robots" content="noindex,nofollow"></head>');
     await fs.writeFile(shell, expo);
   } else await fs.access(shell);
-  for (const page of pages)
-    await fs.writeFile(
-      path.join(dist, page.path === '/' ? 'about.html' : `${page.path.slice(1)}.html`),
-      renderPage(page, env),
-    );
+  for (const page of pages) {
+    const filename = page.path === '/' ? 'index.html' : `${page.path.slice(1)}.html`;
+    await fs.writeFile(path.join(dist, filename), renderPage(page, env));
+  }
   await fs.writeFile(path.join(dist, 'auth-return.js'), authReturnScript);
   const c = token.colors,
     s = token.space;
@@ -134,17 +152,38 @@ export async function buildPublicSite(
   const logo = await fs.readFile(path.join(root, 'app/public/logo.svg'));
   const card = `<svg width="1200" height="630" xmlns="http://www.w3.org/2000/svg"><rect width="1200" height="630" fill="${c.bg0}"/><image href="data:image/svg+xml;base64,${logo.toString('base64')}" x="80" y="70" width="100" height="100"/><text x="80" y="270" font-size="72" fill="${c.textHi}" font-family="sans-serif">CaliPartner</text><text x="80" y="355" font-size="42" fill="${c.textMid}" font-family="sans-serif">Indian food. Fitness. Accountability.</text><rect x="80" y="430" width="470" height="72" rx="16" fill="${c.apricot}"/><text x="112" y="478" font-size="32" fill="${c.onBrand}" font-family="sans-serif">Start with free personal tracking</text></svg>`;
   await sharp(Buffer.from(card)).png().toFile(path.join(dist, 'social-card.png'));
-  await fs.writeFile(
-    path.join(dist, 'robots.txt'),
-    `User-agent: *\nAllow: /\n\nSitemap: ${copy.origin}/sitemap.xml\n`,
-  );
+  const robotsTxt = `User-agent: OAI-SearchBot
+Allow: /
+
+User-agent: ChatGPT-User
+Allow: /
+
+User-agent: GPTBot
+Allow: /
+
+User-agent: Bingbot
+Allow: /
+
+User-agent: Googlebot
+Allow: /
+
+User-agent: *
+Allow: /
+
+Sitemap: ${copy.origin}/sitemap.xml
+Sitemap: https://www.calipartner.site/sitemap.xml
+Sitemap: https://calipartner.site/sitemap.xml
+Sitemap: https://app.calipartner.site/sitemap.xml
+`;
+  await fs.writeFile(path.join(dist, 'robots.txt'), robotsTxt);
   await fs.writeFile(
     path.join(dist, 'sitemap.xml'),
     `<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">${pages
       .filter((p) => !p.noindex)
-      .map((p) => `<url><loc>${copy.origin}${p.path}</loc></url>`)
+      .map((p) => `<url><loc>${copy.origin}${p.path === '/' ? '/' : p.path}</loc></url>`)
       .join('')}</urlset>`,
   );
+  await fs.writeFile(path.join(dist, `${INDEXNOW_KEY}.txt`), INDEXNOW_KEY);
   const manifestFile = path.join(dist, 'manifest.json');
   const manifest = JSON.parse(await fs.readFile(manifestFile, 'utf8'));
   manifest.start_url = '/launch';

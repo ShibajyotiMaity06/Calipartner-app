@@ -33,7 +33,6 @@ import { requireOnboardingReview } from '@/services/onboardingReviewService';
 import { afterSetupDestination, requirePairPrompt } from '@/services/pairOnboardingService';
 import { PlanReviewStep } from '@/components/onboarding/PlanReviewStep';
 import { GymCalculationStep } from '@/components/onboarding/GymCalculationStep';
-import { EvolutionCharacter } from '@/components/onboarding/EvolutionCharacter';
 import { OnboardingQuestion, questionCopy } from '@/components/onboarding/OnboardingQuestion';
 import { FinishOnboardingProfile } from '@/components/onboarding/FinishOnboardingProfile';
 import { PlanCard } from '@/components/onboarding/PlanPrimitives';
@@ -417,12 +416,6 @@ function Questionnaire({ ownerId }: { ownerId: string }) {
               )
             ) : step === 'reveal' ? (
               <View style={styles.reveal} testID="onboarding-peak-reveal">
-                <EvolutionCharacter
-                  gender={snapshot.characterGender}
-                  goal={snapshot.goal}
-                  stage={11}
-                  reveal
-                />
                 <Text variant="title1" accessibilityRole="header" style={styles.revealTitle}>
                   {t('characterSetup.revealTitle')}
                 </Text>
@@ -459,13 +452,6 @@ function Questionnaire({ ownerId }: { ownerId: string }) {
               />
             )}
           </View>
-          {index > 0 && index <= 11 && (
-            <EvolutionCharacter
-              gender={snapshot.characterGender}
-              goal={snapshot.goal}
-              stage={index}
-            />
-          )}
         </ScrollView>
         {(step === 'reveal' ||
           (step !== 'plan_summary' &&

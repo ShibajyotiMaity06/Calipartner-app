@@ -1,0 +1,21 @@
+User-agent: OAI-SearchBot
+Allow: /
+
+User-agent: ChatGPT-User
+Allow: /
+
+User-agent: GPTBot
+Allow: /
+
+User-agent: Bingbot
+Allow: /
+
+User-agent: Googlebot
+Allow: /
+
+User-agent: *
+Allow: /
+
+Sitemap: https://www.calipartner.site/sitemap.xml
+Sitemap: https://calipartner.site/sitemap.xml
+Sitemap: https://app.calipartner.site/sitemap.xml

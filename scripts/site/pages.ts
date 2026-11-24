@@ -27,9 +27,37 @@ export type PublicPage = {
 };
 export const pages: PublicPage[] = [
   {
-    path: '/about',
+    path: '/',
     title: copy.title,
     description: copy.description,
+    heading: 'Your food. Your goals. Someone on your side.',
+    intro:
+      'An Indian food calorie tracker with workouts and partner accountability. Build your day around the meals you actually eat.',
+    sections: [
+      {
+        title: 'Log familiar meals',
+        body: 'Search roti, dal, sabzi and more. Track calories and macros, scan a barcode or save a meal combination for next time.',
+      },
+      {
+        title: 'Keep each other going',
+        body: 'Start a room for two on Free. Chat with your squad and share only the progress you choose. Compare consistency against your own goals.',
+      },
+      {
+        title: 'Make movement part of your day',
+        body: 'Log exercises, sets and reps, track steps and water, and record outdoor running routes with foreground GPS.',
+      },
+      { title: 'Start with Free', body: copy.trial },
+      {
+        title: 'Add tools when you need them',
+        body: 'Plus adds 90+ recipes, fasting and larger rooms. Purchased Plus and Pro include AI plans with consent. Purchased Pro adds your AI coach, food-photo estimates and monthly progress reviews. Review and accept changes yourself.',
+      },
+    ],
+  },
+  {
+    path: '/about',
+    title: `About CaliPartner — Indian Food, Workouts & Accountability`,
+    description:
+      'Learn about CaliPartner: our mission to make Indian food tracking, workouts, and social accountability accessible to everyone.',
     heading: 'Your food. Your goals. Someone on your side.',
     intro:
       'An Indian food calorie tracker with workouts and partner accountability. Build your day around the meals you actually eat.',

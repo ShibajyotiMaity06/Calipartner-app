@@ -12,6 +12,7 @@ import {
 import { pages } from '../../../scripts/site/pages';
 import listing from '../../../scripts/site/store-listing.json';
 import routing from '../../../vercel.json';
+import { publicSite as copy } from '../i18n/publicSite';
 
 let temp: string | undefined;
 afterEach(async () => {
@@ -46,7 +47,7 @@ it('renders meaningful crawlable pages with unique metadata and no invented rati
   for (const page of pages) {
     const html = renderPage(page);
     expect(html.match(/<h1>/g)).toHaveLength(1);
-    expect(html).toContain(`https://app.calipartner.site${page.path}`);
+    expect(html).toContain(`${copy.origin}${page.path === '/' ? '/' : page.path}`);
     expect(html).toContain('summary_large_image');
     expect(html).toContain('maximum-scale=5');
     expect(html).not.toMatch(/aggregateRating|YOUR_APP_ID|REAL_VALUE/);
@@ -54,8 +55,11 @@ it('renders meaningful crawlable pages with unique metadata and no invented rati
       html.match(/<script type="application\/ld\+json">(.*?)<\/script>/s)![1]!,
     );
     expect(data.some((v: { '@type': string }) => v['@type'] === 'Organization')).toBe(true);
+    expect(data.some((v: { '@type': string }) => v['@type'] === 'SoftwareApplication')).toBe(
+      ['/', '/about', '/download'].includes(page.path),
+    );
     expect(data.some((v: { '@type': string }) => v['@type'] === 'MobileApplication')).toBe(
-      ['/about', '/download'].includes(page.path),
+      ['/', '/about', '/download'].includes(page.path),
     );
   }
 });
@@ -126,7 +130,8 @@ it('builds actual static HTML, a separate private app shell, sitemap and share i
   await writeFile(path.join(temp, 'manifest.json'), '{}');
   await buildPublicSite(temp, {});
   expect(await readFile(path.join(temp, 'app-shell.html'), 'utf8')).toContain('noindex,nofollow');
-  expect(await readFile(path.join(temp, 'index.html'), 'utf8')).toContain('/bundle.js');
+  expect(await readFile(path.join(temp, 'app-shell.html'), 'utf8')).toContain('/bundle.js');
+  expect(await readFile(path.join(temp, 'index.html'), 'utf8')).toContain('site-home');
   expect(await readFile(path.join(temp, 'about.html'), 'utf8')).toContain('site-home');
   expect(await readFile(path.join(temp, 'privacy.html'), 'utf8')).toContain(
     'AI processing and consent',
@@ -135,10 +140,16 @@ it('builds actual static HTML, a separate private app shell, sitemap and share i
     'mailto:shibajyoti.maity06@gmail.com',
   );
   const sitemap = await readFile(path.join(temp, 'sitemap.xml'), 'utf8');
-  expect(sitemap.match(/<url>/g)).toHaveLength(8);
+  expect(sitemap.match(/<url>/g)).toHaveLength(9);
   expect(sitemap).not.toMatch(/launch|auth|404|today/);
   expect((await readFile(path.join(temp, 'social-card.png'))).length).toBeGreaterThan(1000);
+  const robots = await readFile(path.join(temp, 'robots.txt'), 'utf8');
+  expect(robots).toContain('User-agent: OAI-SearchBot');
+  expect(robots).toContain('User-agent: ChatGPT-User');
+  expect(await readFile(path.join(temp, 'b8f9a2e64c1d30587e9b0a2f4c6d8e1a.txt'), 'utf8')).toBe(
+    'b8f9a2e64c1d30587e9b0a2f4c6d8e1a',
+  );
   await buildPublicSite(temp, {});
   expect(await readFile(path.join(temp, 'app-shell.html'), 'utf8')).toContain('/bundle.js');
   expect(routing.routes.at(-1)?.status).toBe(404);
-});
+}, 20000);

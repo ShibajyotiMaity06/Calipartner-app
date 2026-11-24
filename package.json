@@ -23,6 +23,7 @@
     "test:food-photo": "npx --yes deno@2.9.6 test --allow-env --config supabase/functions/ai-food-photo/deno.json supabase/functions/ai-food-photo/index.test.ts supabase/functions/food-lookup/index.test.ts supabase/functions/food-lookup/recoverEnergy.test.ts",
     "test:db": "node scripts/test_rooms_v3.mjs",
     "check": "npm run lint && npm run typecheck && npm test",
+    "indexnow": "tsx scripts/submit-indexnow.mts",
     "app": "npm run start --workspace app",
     "app:web": "npm run web --workspace app",
     "build:web": "npm run build:web --workspace app",
