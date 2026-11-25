@@ -641,7 +641,9 @@ export function LogFabButton({
   const { scale, onPressIn, onPressOut } = usePressScale(reduceMotion);
 
   return (
-    <Animated.View style={[{ transform: [{ scale }] }, elevation.logButton, style]}>
+    <Animated.View
+      style={[styles.logFabCircle, { transform: [{ scale }] }, elevation.logButton, style]}
+    >
       <Pressable
         onPress={onPress}
         onPressIn={onPressIn}
@@ -651,10 +653,8 @@ export function LogFabButton({
         testID={testID}
         style={({ pressed }) => [
           styles.roundCenter,
+          styles.logFabPress,
           {
-            width: 64,
-            height: 64,
-            borderRadius: radius.full,
             backgroundColor: pressed ? colors.apricotPressed : colors.apricot,
           },
         ]}
@@ -688,6 +688,17 @@ const styles = StyleSheet.create({
   roundCenter: {
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  logFabCircle: {
+    width: 64,
+    height: 64,
+    borderRadius: radius.full,
+    backgroundColor: colors.apricot,
+  },
+  logFabPress: {
+    width: 64,
+    height: 64,
+    borderRadius: radius.full,
   },
   startWrap: {
     width: 156,

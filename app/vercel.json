@@ -26,6 +26,20 @@
     },
     {
       "src": "/",
+      "has": [
+        {
+          "type": "host",
+          "value": "(app\\.calipartner\\.site|.*\\.vercel\\.app)"
+        }
+      ],
+      "dest": "/app-shell.html",
+      "headers": {
+        "Cache-Control": "no-store",
+        "X-Robots-Tag": "noindex, nofollow"
+      }
+    },
+    {
+      "src": "/",
       "dest": "/index.html"
     },
     {

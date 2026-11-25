@@ -252,7 +252,7 @@ export const layout = {
   screenPaddingX: 24,
   sheetPaddingX: 20,
   floatingEdge: 20,
-  floatingBottomOffset: 26,
+  floatingBottomOffset: 10,
   topContentOffset: 12,
   ctaBottomMin: 34,
   navRowHeight: 44,
@@ -320,10 +320,10 @@ export const elevation = {
   },
   logButton: {
     shadowColor: colors.apricot,
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.28,
-    shadowRadius: 28,
-    elevation: 12,
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.22,
+    shadowRadius: 16,
+    elevation: 0,
   },
   notificationPreview: {
     shadowColor: '#000000',

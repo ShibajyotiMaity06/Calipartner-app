@@ -245,7 +245,7 @@ export default function TodayScreen() {
           styles.scrollContent,
           {
             paddingTop: insets.top + v1Space.md,
-            paddingBottom: v1Layout.tabBarClearance + insets.bottom,
+            paddingBottom: v1Space.max * 3 + insets.bottom,
           },
         ]}
         showsVerticalScrollIndicator={false}

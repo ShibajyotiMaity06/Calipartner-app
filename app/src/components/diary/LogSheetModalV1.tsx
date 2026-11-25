@@ -12,6 +12,7 @@ import {
   BarcodeIcon,
   BookmarkIcon,
   CameraIcon,
+  CheckIcon,
   ChevronRightIcon,
   CloseIcon,
   DropletIcon,
@@ -29,6 +30,7 @@ import {
   TimerIcon,
   borders,
   colors,
+  elevation,
   fonts,
   layout,
   radius,
@@ -231,48 +233,55 @@ export function LogSheetModalV1({
           </Pressable>
 
           {/* FOOD SECTION */}
-          <View style={styles.sectionHeaderRow}>
-            <Text variant="eyebrow" color="textLo">
-              {t('homeV1.foodEyebrow')}
-            </Text>
-            <Pressable
-              onPress={() => setMealMenuOpen((prev) => !prev)}
-              accessibilityRole="button"
-              accessibilityLabel={currentSectionLabel}
-              accessibilityState={{ expanded: mealMenuOpen }}
-              style={styles.mealDropdown}
-              testID="log-meal-section-picker"
-            >
-              <Text variant="label" color="textHi">
-                {`${currentSectionLabel} ▾`}
+          <View style={styles.foodSectionAnchor}>
+            <View style={styles.sectionHeaderRow}>
+              <Text variant="eyebrow" color="textLo">
+                {t('homeV1.foodEyebrow')}
               </Text>
-            </Pressable>
-          </View>
-
-          {mealMenuOpen ? (
-            <View style={styles.mealChipsRow} testID="log-meal-options">
-              {MEAL_SECTIONS.map((sec) => {
-                const selected = sec === currentSection;
-                return (
-                  <Pressable
-                    key={sec}
-                    onPress={() => {
-                      setCurrentSection(sec);
-                      setMealMenuOpen(false);
-                    }}
-                    accessibilityRole="button"
-                    accessibilityState={{ selected }}
-                    style={[styles.mealChip, selected ? styles.mealChipSelected : null]}
-                    testID={`log-meal-option-${sec}`}
-                  >
-                    <Text variant="meta" color={selected ? 'onBrand' : 'textMid'}>
-                      {t(`diary.sections.${sec}` as Parameters<typeof t>[0])}
-                    </Text>
-                  </Pressable>
-                );
-              })}
+              <Pressable
+                onPress={() => setMealMenuOpen((prev) => !prev)}
+                accessibilityRole="button"
+                accessibilityLabel={currentSectionLabel}
+                accessibilityState={{ expanded: mealMenuOpen }}
+                style={styles.mealDropdown}
+                testID="log-meal-section-picker"
+              >
+                <Text variant="label" color="textHi">
+                  {`${currentSectionLabel} ▾`}
+                </Text>
+              </Pressable>
             </View>
-          ) : null}
+
+            {mealMenuOpen ? (
+              <View style={styles.mealDropdownMenu} testID="log-meal-options">
+                {MEAL_SECTIONS.map((sec, idx) => {
+                  const selected = sec === currentSection;
+                  return (
+                    <Pressable
+                      key={sec}
+                      onPress={() => {
+                        setCurrentSection(sec);
+                        setMealMenuOpen(false);
+                      }}
+                      accessibilityRole="button"
+                      accessibilityState={{ selected }}
+                      style={({ pressed }) => [
+                        styles.mealDropdownOption,
+                        idx < MEAL_SECTIONS.length - 1 ? styles.mealDropdownDivider : null,
+                        pressed ? styles.pressedSurface : null,
+                      ]}
+                      testID={`log-meal-option-${sec}`}
+                    >
+                      <Text variant="label" color={selected ? 'apricot' : 'textHi'}>
+                        {t(`diary.sections.${sec}` as Parameters<typeof t>[0])}
+                      </Text>
+                      {selected ? <CheckIcon size={14} color={colors.apricot} /> : null}
+                    </Pressable>
+                  );
+                })}
+              </View>
+            ) : null}
+          </View>
 
           <View style={styles.bentoGrid}>
             {/* Left tall Scan meal tile */}
@@ -317,7 +326,14 @@ export function LogSheetModalV1({
                     <EditIcon size={16} color={colors.textHi} />
                     <Badge variant="pro" label={t('onboardingV1.paywallColPro')} mini />
                   </View>
-                  <Text variant="label" color="textHi">
+                  <Text
+                    variant="label"
+                    color="textHi"
+                    numberOfLines={1}
+                    adjustsFontSizeToFit
+                    minimumFontScale={0.8}
+                    style={styles.compactTileLabel}
+                  >
                     {t('homeV1.describe')}
                   </Text>
                 </Pressable>
@@ -332,11 +348,15 @@ export function LogSheetModalV1({
                   ]}
                   testID="log-tile-scan"
                 >
-                  <View style={styles.tileTopRow}>
-                    <BarcodeIcon size={16} color={colors.textHi} />
-                    <Badge variant="pro" label={t('onboardingV1.paywallColPro')} mini />
-                  </View>
-                  <Text variant="label" color="textHi">
+                  <BarcodeIcon size={17} color={colors.textMid} />
+                  <Text
+                    variant="label"
+                    color="textHi"
+                    numberOfLines={1}
+                    adjustsFontSizeToFit
+                    minimumFontScale={0.8}
+                    style={styles.compactTileLabel}
+                  >
                     {t('homeV1.barcode')}
                   </Text>
                 </Pressable>
@@ -354,7 +374,14 @@ export function LogSheetModalV1({
                   testID="log-tile-saved"
                 >
                   <BookmarkIcon size={16} color={colors.textMid} />
-                  <Text variant="label" color="textHi">
+                  <Text
+                    variant="label"
+                    color="textHi"
+                    numberOfLines={1}
+                    adjustsFontSizeToFit
+                    minimumFontScale={0.8}
+                    style={styles.compactTileLabel}
+                  >
                     {t('homeV1.saved')}
                   </Text>
                 </Pressable>
@@ -370,7 +397,14 @@ export function LogSheetModalV1({
                   testID="log-tile-recent"
                 >
                   <HistoryClockIcon size={16} color={colors.textMid} />
-                  <Text variant="label" color="textHi">
+                  <Text
+                    variant="label"
+                    color="textHi"
+                    numberOfLines={1}
+                    adjustsFontSizeToFit
+                    minimumFontScale={0.8}
+                    style={styles.compactTileLabel}
+                  >
                     {t('homeV1.recent')}
                   </Text>
                 </Pressable>
@@ -430,7 +464,13 @@ export function LogSheetModalV1({
                 testID={`log-tile-${item.id}`}
               >
                 {item.icon}
-                <Text variant="micro" color="textMid" numberOfLines={1}>
+                <Text
+                  variant="micro"
+                  color="textMid"
+                  numberOfLines={1}
+                  adjustsFontSizeToFit
+                  minimumFontScale={0.8}
+                >
                   {item.label}
                 </Text>
               </Pressable>
@@ -675,7 +715,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   sheetInner: {
-    gap: space.md,
+    gap: space.optical10,
   },
   headerRow: {
     flexDirection: 'row',
@@ -693,6 +733,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: space.sm,
   },
+  foodSectionAnchor: {
+    position: 'relative',
+    zIndex: 30,
+  },
   sectionHeaderRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -709,32 +753,41 @@ const styles = StyleSheet.create({
     minHeight: 34,
     justifyContent: 'center',
   },
-  mealChipsRow: {
-    flexDirection: 'row',
-    gap: space.sm,
-    flexWrap: 'wrap',
-  },
-  mealChip: {
+  mealDropdownMenu: {
+    position: 'absolute',
+    top: '100%',
+    right: 0,
+    marginTop: space.xs,
+    minWidth: 164,
     backgroundColor: colors.s2,
     borderWidth: borders.width,
-    borderColor: colors.hairline,
-    borderRadius: radius.full,
-    paddingHorizontal: space.md,
-    paddingVertical: space.xs + 2,
+    borderColor: colors.hairlineLit,
+    borderRadius: radius.chip,
+    overflow: 'hidden',
+    zIndex: 40,
+    ...elevation.notificationPreview,
   },
-  mealChipSelected: {
-    backgroundColor: colors.apricot,
-    borderColor: colors.apricot,
+  mealDropdownOption: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: space.md,
+    paddingVertical: space.optical10,
+    minHeight: 40,
+  },
+  mealDropdownDivider: {
+    borderBottomWidth: borders.width,
+    borderBottomColor: colors.hairline,
   },
   bentoGrid: {
     flexDirection: 'row',
-    gap: space.optical10,
+    gap: space.sm,
   },
   heroScanTile: {
-    flex: 1.04,
+    flex: 0.86,
     backgroundColor: colors.apricot,
     borderRadius: radius.bento,
-    padding: space.lg,
+    padding: space.md,
     justifyContent: 'space-between',
     minHeight: 152,
   },
@@ -745,14 +798,15 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+    gap: space.xs,
   },
   heroScanBottom: {
     gap: 2,
   },
   heroScanTitle: {
     fontFamily: fonts.bold,
-    fontSize: 20,
-    lineHeight: 24,
+    fontSize: 19,
+    lineHeight: 23,
   },
   heroScanSubtitle: {
     color: colors.onBrand,
@@ -760,23 +814,29 @@ const styles = StyleSheet.create({
     fontSize: 12,
   },
   rightBentoCol: {
-    flex: 1,
-    gap: space.optical10,
+    flex: 1.2,
+    gap: space.sm,
   },
   rightBentoRow: {
     flex: 1,
     flexDirection: 'row',
-    gap: space.optical10,
+    gap: space.sm,
   },
   compactTile: {
     flex: 1,
+    minWidth: 0,
     backgroundColor: colors.s2,
     borderWidth: borders.width,
     borderColor: colors.hairline,
     borderRadius: radius.chip,
-    padding: space.md,
+    paddingVertical: space.md,
+    paddingHorizontal: space.optical10,
     justifyContent: 'space-between',
-    minHeight: 71,
+    minHeight: 72,
+  },
+  compactTileLabel: {
+    fontSize: 13,
+    lineHeight: 16,
   },
   trackStrip: {
     flexDirection: 'row',

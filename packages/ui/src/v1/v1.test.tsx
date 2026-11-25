@@ -427,6 +427,14 @@ describe('CaliPartner Design System v1 — Foundation & Primitives', () => {
     expect(tree!.root.findByProps({ testID: 'inp-error' })).toBeDefined();
     expect(tree!.root.findAllByProps({ testID: 'tabs' }).length).toBeGreaterThan(1);
     expect(tree!.root.findByProps({ testID: 'tabs-hidden' }).children).toHaveLength(0);
+    const fabWrap = tree!.root
+      .findAllByProps({ testID: 'btn-fab' })
+      .find((n) => String(n.type) === 'Pressable')!.parent!;
+    expect(fabWrap.props.style).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ width: 64, height: 64, borderRadius: radius.full }),
+      ]),
+    );
     const sheetModal = tree!.root
       .findAllByProps({ testID: 'sheet' })
       .find((n) => String(n.type) === 'Modal')!;

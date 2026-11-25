@@ -502,14 +502,14 @@ export function FloatingTabBar({
   return (
     <View pointerEvents="box-none" style={styles.tabBarDock}>
       <View pointerEvents="none" style={styles.tabGradientWrap}>
-        <Svg width="100%" height={150} preserveAspectRatio="none">
+        <Svg width="100%" height={104} preserveAspectRatio="none">
           <Defs>
             <LinearGradient id="tabFade" x1="0" y1="0" x2="0" y2="1">
               <Stop offset="0" stopColor={colors.bg0} stopOpacity="0" />
               <Stop offset="1" stopColor={colors.bg0} stopOpacity="1" />
             </LinearGradient>
           </Defs>
-          <Rect x="0" y="0" width="100%" height="150" fill="url(#tabFade)" />
+          <Rect x="0" y="0" width="100%" height="104" fill="url(#tabFade)" />
         </Svg>
       </View>
 
@@ -759,7 +759,7 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    height: 150,
+    height: 104,
   },
   tabRow: {
     flexDirection: 'row',

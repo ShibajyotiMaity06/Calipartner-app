@@ -95,23 +95,28 @@ it('only publishes store links and banners with real configured availability', (
 });
 
 it.each([
-  ['?code=oauth-code', '', '/launch?code=oauth-code'],
+  ['?code=oauth-code', '', undefined, '/launch?code=oauth-code'],
   [
     '',
     '#access_token=example&refresh_token=example',
+    undefined,
     '/launch#access_token=example&refresh_token=example',
   ],
-  ['?error=access_denied', '', '/launch?error=access_denied'],
-  ['?utm_source=search', '', undefined],
+  ['?error=access_denied', '', undefined, '/launch?error=access_denied'],
+  ['?utm_source=search', '', undefined, undefined],
+  ['?utm_source=search', '', 'www.calipartner.site', undefined],
+  ['', '', 'app.calipartner.site', '/launch'],
+  ['?tab=today', '', 'preview-123.vercel.app', '/launch?tab=today'],
 ])(
-  'preserves OAuth returns without redirecting ordinary marketing visitors: %s',
-  (search, hash, expected) => {
+  'preserves OAuth returns while launching app hosts directly into the Expo shell: %s %s',
+  (search, hash, hostname, expected) => {
     let target: string | undefined;
     vm.runInNewContext(authReturnScript, {
       URLSearchParams,
       location: {
         search,
         hash,
+        hostname,
         replace: (value: string) => {
           target = value;
         },

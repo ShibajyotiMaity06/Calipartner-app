@@ -102,10 +102,20 @@ ${store.appleId ? `<meta name="apple-itunes-app" content="app-id=${store.appleId
 </main><footer><p>CaliPartner · General information, not medical advice.</p><nav aria-label="Footer navigation">${link('/privacy', 'Privacy', 'footer-privacy')}${link('/terms', 'Terms', 'footer-terms')}${link('/support', 'Support', 'footer-support')}${link('/delete-account', 'Delete account', 'footer-delete')}</nav></footer></body></html>`;
 }
 
-export const authReturnScript = `// Preserve existing root OAuth callbacks without exposing tokens to third parties.
+export const authReturnScript = `// Preserve existing root OAuth callbacks and launch app hosts directly into the Expo app.
+const host = typeof location.hostname === 'string' ? location.hostname.toLowerCase() : '';
 const query = new URLSearchParams(location.search);
 const fragment = new URLSearchParams(location.hash.slice(1));
-if (query.has('code') || query.has('error') || fragment.has('access_token') || fragment.has('error')) {
+if (
+  host === 'app.calipartner.site' ||
+  host.endsWith('.vercel.app') ||
+  host === 'localhost' ||
+  host === '127.0.0.1' ||
+  query.has('code') ||
+  query.has('error') ||
+  fragment.has('access_token') ||
+  fragment.has('error')
+) {
   location.replace('/launch' + location.search + location.hash);
 }
 `;

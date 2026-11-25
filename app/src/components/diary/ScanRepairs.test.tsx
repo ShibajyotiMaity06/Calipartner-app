@@ -43,6 +43,7 @@ vi.mock('@calipartner/ui/v1', async () => {
     BarcodeIcon: 'BarcodeIcon',
     BookmarkIcon: 'BookmarkIcon',
     CameraIcon: 'CameraIcon',
+    CheckIcon: 'CheckIcon',
     ChevronRightIcon: 'ChevronRightIcon',
     CloseIcon: 'CloseIcon',
     DropletIcon: 'DropletIcon',

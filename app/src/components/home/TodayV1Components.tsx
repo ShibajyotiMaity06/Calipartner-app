@@ -118,13 +118,18 @@ export function TodayHeaderV1({
         </Text>
         <Pressable
           onPress={onUpgradePress}
+          hitSlop={6}
           accessibilityRole="button"
           accessibilityLabel={isPro ? t('onboardingV1.paywallColPro') : t('homeV1.upgradeCta')}
-          style={({ pressed }) => [styles.upgradePill, pressed ? styles.pressedTile : null]}
+          style={({ pressed }) => [
+            isPro ? styles.proBadgeTrigger : styles.upgradePill,
+            !isPro && pressed ? styles.pressedTile : null,
+            isPro && pressed ? styles.pressedOpacity : null,
+          ]}
           testID="today-upgrade-pill"
         >
           {isPro ? (
-            <Badge variant="outlinePro" label={t('onboardingV1.paywallColPro')} mini />
+            <Badge variant="outlinePro" label={t('onboardingV1.paywallColPro')} />
           ) : (
             <Text variant="meta" color="textMid" style={styles.upgradeText}>
               {`✦ ${t('homeV1.upgradeCta')}`}
@@ -1093,6 +1098,12 @@ const styles = StyleSheet.create({
     borderRadius: radius.full,
     paddingHorizontal: space.md,
     paddingVertical: space.xs + 1,
+  },
+  proBadgeTrigger: {
+    borderRadius: radius.full,
+  },
+  pressedOpacity: {
+    opacity: 0.78,
   },
   upgradeText: {
     fontFamily: fonts.semibold,

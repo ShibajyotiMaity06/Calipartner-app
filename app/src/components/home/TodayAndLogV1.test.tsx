@@ -90,6 +90,7 @@ vi.mock('@calipartner/ui/v1', async () => {
     CameraIcon: 'CameraIcon',
     Card: ({ children, ...rest }: Record<string, unknown>) =>
       React.createElement('Card', rest, children as React.ReactNode),
+    CheckIcon: 'CheckIcon',
     ChevronLeftIcon: 'ChevronLeftIcon',
     ChevronRightIcon: 'ChevronRightIcon',
     CloseIcon: 'CloseIcon',
@@ -335,6 +336,25 @@ describe('Screens 26–28 Design System v1 Today & Log sheet', () => {
     expect(tree.root.findAllByType('LockIcon' as React.ElementType)).toHaveLength(1);
     await act(async () => byId('today-squad-invite').props.onPress());
     expect(mocks.routerPush).toHaveBeenCalledWith('/friends');
+
+    // When Pro, TodayHeaderV1 renders Badge outlinePro without a duplicate outer border on the Pressable
+    await act(async () => {
+      tree.update(
+        <TodayHeaderV1
+          selectedDate="2026-11-23"
+          userName="Priya"
+          isPro
+          coinBalance={1240}
+          onUpgradePress={onUpgrade}
+          onCoinPress={onCoin}
+          onProfilePress={onProfile}
+        />,
+      );
+    });
+    const proPill = byId('today-upgrade-pill');
+    const proPillStyle = proPill.props.style({ pressed: false });
+    expect(JSON.stringify(proPillStyle)).not.toContain('borderWidth');
+    expect(proPill.findByType('Badge' as React.ElementType).props.variant).toBe('outlinePro');
   });
 
   it('renders Screen 27 scrolled sticky header and meal rows accurately', async () => {
@@ -421,9 +441,15 @@ describe('Screens 26–28 Design System v1 Today & Log sheet', () => {
     expect(byId('log-tile-fast')).toBeTruthy();
     expect(byId('log-tile-post')).toBeTruthy();
 
-    // Switch meal section dropdown to Breakfast
+    // Barcode is free (no PRO badge); only Scan meal and Describe show PRO badges
+    expect(byId('log-tile-scan').findAllByType('Badge' as React.ElementType)).toHaveLength(0);
+    expect(tree.root.findAllByType('Badge' as React.ElementType)).toHaveLength(2);
+
+    // Switch meal section dropdown to Breakfast and close menu
     await act(async () => byId('log-meal-section-picker').props.onPress());
+    expect(byId('log-meal-options')).toBeTruthy();
     await act(async () => byId('log-meal-option-breakfast').props.onPress());
+    expect(tree.root.findAllByProps({ testID: 'log-meal-options' })).toHaveLength(0);
 
     // Open Scan meal flow -> mounts FoodLogModal with initialTab="photo" and selected section
     await act(async () => byId('log-tile-photo').props.onPress());
