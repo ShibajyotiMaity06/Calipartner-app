@@ -135,3 +135,9 @@ vi.mock('expo-notifications', () => ({
   cancelScheduledNotificationAsync: vi.fn().mockResolvedValue(undefined),
   cancelAllScheduledNotificationsAsync: vi.fn().mockResolvedValue(undefined),
 }));
+
+vi.mock('react-native-safe-area-context', () => ({
+  SafeAreaProvider: ({ children }: { children?: unknown }) => children ?? null,
+  SafeAreaView: 'SafeAreaView',
+  useSafeAreaInsets: () => ({ top: 0, right: 0, bottom: 0, left: 0 }),
+}));

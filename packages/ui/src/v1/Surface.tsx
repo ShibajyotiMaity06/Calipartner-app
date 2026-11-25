@@ -473,6 +473,8 @@ export interface FloatingTabBarProps {
   logAccessibilityLabel?: string;
   logTestID?: string;
   bottomOffset?: number;
+  visible?: boolean;
+  badges?: Partial<Record<string, number>>;
   testID?: string;
 }
 
@@ -491,8 +493,12 @@ export function FloatingTabBar({
   logAccessibilityLabel = 'Log activity',
   logTestID = 'tab-log-fab',
   bottomOffset = layout.floatingBottomOffset,
+  visible = true,
+  badges,
   testID = 'v1-floating-tab-bar',
-}: FloatingTabBarProps): React.JSX.Element {
+}: FloatingTabBarProps): React.JSX.Element | null {
+  if (!visible) return null;
+
   return (
     <View pointerEvents="box-none" style={styles.tabBarDock}>
       <View pointerEvents="none" style={styles.tabGradientWrap}>
@@ -524,17 +530,23 @@ export function FloatingTabBar({
         >
           {tabs.map((tab) => {
             const active = tab.id === activeId;
+            const badgeCount = badges?.[tab.id] ?? 0;
             return (
               <Pressable
                 key={tab.id}
                 onPress={() => onSelect(tab.id)}
                 accessibilityRole="tab"
-                accessibilityLabel={tab.label}
+                accessibilityLabel={
+                  badgeCount > 0 ? `${tab.label}, ${badgeCount} unread` : tab.label
+                }
                 accessibilityState={{ selected: active }}
                 testID={tab.testID ?? `tab-${tab.id}`}
                 style={[styles.tabSlot, active ? styles.tabSlotActive : null]}
               >
-                {tab.icon(active ? colors.apricot : colors.textLo, active)}
+                <View style={styles.tabIconWrap}>
+                  {tab.icon(active ? colors.apricot : colors.textLo, active)}
+                  {badgeCount > 0 && !active ? <View style={styles.tabBadgeDot} /> : null}
+                </View>
                 {active ? (
                   <Text variant="tabLabel" color="textHi" numberOfLines={1}>
                     {tab.label}
@@ -780,6 +792,20 @@ const styles = StyleSheet.create({
   tabSlotActive: {
     flex: 1,
     backgroundColor: colors.s3,
+  },
+  tabIconWrap: {
+    position: 'relative',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  tabBadgeDot: {
+    position: 'absolute',
+    top: -2,
+    right: -4,
+    width: 7,
+    height: 7,
+    borderRadius: radius.full,
+    backgroundColor: colors.apricot,
   },
   notificationCard: {
     backgroundColor: colors.s1,

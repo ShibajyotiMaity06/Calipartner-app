@@ -15,6 +15,7 @@ import {
   radius,
   space,
 } from '@calipartner/ui/v1';
+import type { Goal } from '@calipartner/core';
 import { t } from '@/i18n';
 
 export type ProTeaserSlide = 'pro_coach' | 'pro_partners' | 'pro_adaptive';
@@ -22,6 +23,7 @@ export type ProTeaserSlide = 'pro_coach' | 'pro_partners' | 'pro_adaptive';
 export interface ProTeaserStepProps {
   slide: ProTeaserSlide;
   nickname?: string;
+  goal?: Goal;
 }
 
 const SQUAD_PREVIEW = [
@@ -34,26 +36,34 @@ const SQUAD_PREVIEW = [
 function AdaptiveCurveGraphic({
   youLabel,
   planLabel,
+  isBulk,
 }: {
   youLabel: string;
   planLabel: string;
+  isBulk: boolean;
 }): React.JSX.Element {
   const [width, setWidth] = useState(280);
   const w = Math.max(200, width);
   const h = 100;
   const padX = 12;
-  const startY = 18;
-  const endYPlan = 78;
-  const endYYou = 70;
+  const startY = isBulk ? 78 : 18;
+  const endYPlan = isBulk ? 18 : 78;
+  const endYYou = isBulk ? 28 : 70;
   const midX = Math.round(w * 0.56);
-  const midYYou = 44;
+  const midYYou = isBulk ? 48 : 44;
 
   const planPath = `M ${padX} ${startY} L ${w - padX} ${endYPlan}`;
-  const youPath = `M ${padX} ${startY} C ${Math.round(w * 0.28)} ${startY + 8}, ${Math.round(
-    w * 0.42,
-  )} ${midYYou - 6}, ${midX} ${midYYou} C ${Math.round(w * 0.72)} ${midYYou + 10}, ${Math.round(
-    w * 0.86,
-  )} ${endYYou - 4}, ${w - padX} ${endYYou}`;
+  const youPath = isBulk
+    ? `M ${padX} ${startY} C ${Math.round(w * 0.28)} ${startY - 8}, ${Math.round(
+        w * 0.42,
+      )} ${midYYou + 8}, ${midX} ${midYYou} C ${Math.round(w * 0.72)} ${midYYou - 8}, ${Math.round(
+        w * 0.86,
+      )} ${endYYou + 4}, ${w - padX} ${endYYou}`
+    : `M ${padX} ${startY} C ${Math.round(w * 0.28)} ${startY + 8}, ${Math.round(
+        w * 0.42,
+      )} ${midYYou - 6}, ${midX} ${midYYou} C ${Math.round(w * 0.72)} ${midYYou + 10}, ${Math.round(
+        w * 0.86,
+      )} ${endYYou - 4}, ${w - padX} ${endYYou}`;
 
   return (
     <View
@@ -63,7 +73,7 @@ function AdaptiveCurveGraphic({
         if (nextW > 40) setWidth(nextW);
       }}
       accessibilityRole="image"
-      accessibilityLabel={`${youLabel} vs ${planLabel}`}
+      accessibilityLabel={`${isBulk ? 'Bulk' : 'Cut'} progress: ${youLabel} vs ${planLabel}`}
       testID="pro-adaptive-chart"
     >
       <Text
@@ -76,7 +86,7 @@ function AdaptiveCurveGraphic({
       <Text
         variant="micro"
         color="textLo"
-        style={[styles.chartTag, { right: padX + 4, top: endYYou - 22 }]}
+        style={[styles.chartTag, { right: padX + 4, top: isBulk ? endYPlan + 6 : endYYou - 22 }]}
       >
         {planLabel}
       </Text>
@@ -110,7 +120,7 @@ function AdaptiveCurveGraphic({
   );
 }
 
-export function ProTeaserStep({ slide, nickname }: ProTeaserStepProps): React.JSX.Element {
+export function ProTeaserStep({ slide, nickname, goal }: ProTeaserStepProps): React.JSX.Element {
   const cleanName = nickname?.trim() ?? '';
 
   if (slide === 'pro_coach') {
@@ -284,6 +294,8 @@ export function ProTeaserStep({ slide, nickname }: ProTeaserStepProps): React.JS
     );
   }
 
+  const isBulk = goal === 'bulk';
+
   return (
     <View style={styles.root} testID="step-pro_adaptive-v1">
       <ScreenTitle
@@ -310,6 +322,7 @@ export function ProTeaserStep({ slide, nickname }: ProTeaserStepProps): React.JS
         <AdaptiveCurveGraphic
           youLabel={t('onboardingV1.proAdaptiveYou')}
           planLabel={t('onboardingV1.proAdaptivePlan')}
+          isBulk={isBulk}
         />
 
         <View style={styles.adaptiveTileRow}>
@@ -318,11 +331,19 @@ export function ProTeaserStep({ slide, nickname }: ProTeaserStepProps): React.JS
               {t('onboardingV1.proAdaptiveCalories')}
             </Text>
             <View style={styles.adaptiveValueRow}>
-              <Text variant="numS" color="textHi" tabular>
-                {t('onboardingV1.proAdaptiveCaloriesNew')}
+              <Text variant="numS" color="textHi" tabular testID="pro-adaptive-calories-new">
+                {t(
+                  isBulk
+                    ? 'onboardingV1.proAdaptiveBulkCaloriesNew'
+                    : 'onboardingV1.proAdaptiveCaloriesNew',
+                )}
               </Text>
               <Text variant="meta" color="textOff" tabular style={styles.strikeText}>
-                {t('onboardingV1.proAdaptiveCaloriesOld')}
+                {t(
+                  isBulk
+                    ? 'onboardingV1.proAdaptiveBulkCaloriesOld'
+                    : 'onboardingV1.proAdaptiveCaloriesOld',
+                )}
               </Text>
             </View>
           </Card>
@@ -332,18 +353,26 @@ export function ProTeaserStep({ slide, nickname }: ProTeaserStepProps): React.JS
               {t('onboardingV1.proAdaptiveProtein')}
             </Text>
             <View style={styles.adaptiveValueRow}>
-              <Text variant="numS" color="textHi" tabular>
-                {t('onboardingV1.proAdaptiveProteinNew')}
+              <Text variant="numS" color="textHi" tabular testID="pro-adaptive-protein-new">
+                {t(
+                  isBulk
+                    ? 'onboardingV1.proAdaptiveBulkProteinNew'
+                    : 'onboardingV1.proAdaptiveProteinNew',
+                )}
               </Text>
               <Text variant="meta" color="textOff" tabular style={styles.strikeText}>
-                {t('onboardingV1.proAdaptiveProteinOld')}
+                {t(
+                  isBulk
+                    ? 'onboardingV1.proAdaptiveBulkProteinOld'
+                    : 'onboardingV1.proAdaptiveProteinOld',
+                )}
               </Text>
             </View>
           </Card>
         </View>
 
-        <Text variant="meta" color="textLo">
-          {t('onboardingV1.proAdaptiveNote')}
+        <Text variant="meta" color="textLo" testID="pro-adaptive-note">
+          {t(isBulk ? 'onboardingV1.proAdaptiveBulkNote' : 'onboardingV1.proAdaptiveNote')}
         </Text>
       </Card>
     </View>

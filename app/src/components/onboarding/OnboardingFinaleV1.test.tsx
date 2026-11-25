@@ -203,9 +203,18 @@ describe('Onboarding Screens 16–25 Design System v1 components', () => {
     expect(byId('pro-partners-squad-card')).toBeTruthy();
 
     await act(async () => {
-      tree.update(<ProTeaserStep slide="pro_adaptive" nickname="Priya" />);
+      tree.update(<ProTeaserStep slide="pro_adaptive" nickname="Priya" goal="cut" />);
     });
     expect(byId('pro-adaptive-chart')).toBeTruthy();
+    expect(byId('pro-adaptive-calories-new').props.children).toBe('1,850');
+    expect(byId('pro-adaptive-protein-new').props.children).toBe('145 g');
+
+    await act(async () => {
+      tree.update(<ProTeaserStep slide="pro_adaptive" nickname="Priya" goal="bulk" />);
+    });
+    expect(byId('pro-adaptive-chart')).toBeTruthy();
+    expect(byId('pro-adaptive-calories-new').props.children).toBe('2,950');
+    expect(byId('pro-adaptive-protein-new').props.children).toBe('165 g');
   });
 
   it('renders Screen 22 Paywall, switches via See other plans to Screen 23 All plans, and purchases or skips cleanly', async () => {

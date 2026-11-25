@@ -736,7 +736,7 @@ function Questionnaire({ ownerId }: { ownerId: string }) {
             }}
           />
         ) : isProTeaser ? (
-          <ProTeaserStep slide={step} nickname={snapshot.nickname} />
+          <ProTeaserStep slide={step} nickname={snapshot.nickname} goal={snapshot.goal} />
         ) : step === 'profile' ? (
           <ProfileSetupStep
             nickname={snapshot.nickname}

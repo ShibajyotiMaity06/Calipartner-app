@@ -35,6 +35,33 @@ vi.mock('@calipartner/ui', async () => ({
   Sheet: 'Sheet',
   LogHubView: 'LogHub',
 }));
+vi.mock('@calipartner/ui/v1', async () => {
+  const theme = await import('../../../../packages/ui/src/v1/theme');
+  return {
+    ...theme,
+    Badge: 'Badge',
+    BarcodeIcon: 'BarcodeIcon',
+    BookmarkIcon: 'BookmarkIcon',
+    CameraIcon: 'CameraIcon',
+    ChevronRightIcon: 'ChevronRightIcon',
+    CloseIcon: 'CloseIcon',
+    DropletIcon: 'DropletIcon',
+    DumbbellIcon: 'DumbbellIcon',
+    EditIcon: 'EditIcon',
+    FeedImageIcon: 'FeedImageIcon',
+    HistoryClockIcon: 'HistoryClockIcon',
+    IconButton: 'IconButton',
+    LinkButton: 'LinkButton',
+    PulseIcon: 'PulseIcon',
+    ScaleIcon: 'ScaleIcon',
+    SearchIcon: 'SearchIcon',
+    Sheet: ({ children, ...rest }: Record<string, unknown>) =>
+      React.createElement('Sheet', rest, children as React.ReactNode),
+    Text: ({ children, ...rest }: Record<string, unknown>) =>
+      React.createElement('Text', rest, children as React.ReactNode),
+    TimerIcon: 'TimerIcon',
+  };
+});
 vi.mock('@expo/vector-icons', () => ({ Ionicons: 'Icon' }));
 vi.mock('expo-camera', () => ({
   CameraView: 'Camera',
@@ -86,11 +113,22 @@ vi.mock('@/components/trackers/WeightHistoryModal', () => ({
   WeightHistoryModal: 'WeightHistory',
 }));
 vi.mock('@/components/workouts/WorkoutHubModal', () => ({ WorkoutHubModal: 'Workout' }));
+vi.mock('@/components/workouts/CardioHub', () => ({ CardioHub: 'CardioHub' }));
+vi.mock('@/components/rooms/TrackingPreferencesSheet', () => ({
+  TrackingPreferencesSheet: 'TrackingPreferencesSheet',
+}));
+vi.mock('@/hooks/useTrackingPreferences', () => ({
+  useTrackingPreferences: () => ({
+    enabled: { calories: true, protein: true, carbs: true, fat: true, steps: true, water: true },
+    save: vi.fn(),
+  }),
+}));
 vi.mock('@/components/cardio/CardioTrackerModal', () => ({ CardioTrackerModal: 'CardioTracker' }));
 vi.mock('@/components/food_photo/ScanSweep', () => ({ ScanSweep: 'ScanSweep' }));
 vi.mock('@/components/trackers', () => ({
   CustomWaterModal: 'Water',
   WeightEntryModal: 'Weight',
+  WeightHistoryModal: 'WeightHistory',
   ManualStepsModal: 'ManualSteps',
 }));
 vi.mock('@/components/recipes', () => ({ RecipeBrowseView: 'Recipe' }));
@@ -261,18 +299,16 @@ it('reopens the cached Log tab with its picker after a previous food flow closes
   await act(async () => {
     renderer = create(<LogScreen />);
   });
-  await act(async () =>
-    renderer.root.findByType('LogHub' as React.ElementType).props.onFlow('food'),
-  );
+  await act(async () => renderer.root.findByProps({ testID: 'log-search-foods' }).props.onPress());
   await act(async () => renderer.root.findByType('FoodLog' as React.ElementType).props.onClose());
   expect(state.replace).not.toHaveBeenCalled();
-  expect(renderer.root.findAllByType('LogHub' as React.ElementType)).toHaveLength(1);
+  expect(renderer.root.findByProps({ testID: 'log-sheet-modal' }).props.visible).toBe(true);
   state.focused = false;
   await act(async () => renderer.update(<LogScreen />));
   state.focused = true;
   await act(async () => renderer.update(<LogScreen />));
   expect(renderer.root.findByProps({ testID: 'log-sheet-modal' }).props.visible).toBe(true);
-  expect(renderer.root.findAllByType('LogHub' as React.ElementType)).toHaveLength(1);
+  expect(renderer.root.findByProps({ testID: 'log-hub-view' })).toBeDefined();
   expect(renderer.root.findAllByType('FoodLog' as React.ElementType)).toHaveLength(0);
 });
 it.each([
@@ -300,9 +336,7 @@ it('returns from a child route to the same workout and backs out one level', asy
   await act(async () => {
     renderer = create(<LogScreen />);
   });
-  await act(async () =>
-    renderer.root.findByType('LogHub' as React.ElementType).props.onFlow('workout'),
-  );
+  await act(async () => renderer.root.findByProps({ testID: 'log-tile-workout' }).props.onPress());
   state.focused = false;
   await act(async () => renderer.update(<LogScreen />));
   expect(renderer.root.findByType('Workout' as React.ElementType).props.visible).toBe(false);
@@ -311,7 +345,7 @@ it('returns from a child route to the same workout and backs out one level', asy
   const workout = renderer.root.findByType('Workout' as React.ElementType);
   expect(workout.props.visible).toBe(true);
   await act(async () => workout.props.onClose());
-  expect(renderer.root.findByType('LogHub' as React.ElementType)).toBeDefined();
+  expect(renderer.root.findByProps({ testID: 'log-sheet-modal' }).props.visible).toBe(true);
   expect(state.back).not.toHaveBeenCalled();
 });
 
@@ -319,9 +353,7 @@ it('returns from weight editing to history, then to weight entry and the Log pic
   await act(async () => {
     renderer = create(<LogScreen />);
   });
-  await act(async () =>
-    renderer.root.findByType('LogHub' as React.ElementType).props.onFlow('weight'),
-  );
+  await act(async () => renderer.root.findByProps({ testID: 'log-tile-weight' }).props.onPress());
   const weight = () => renderer.root.findByType('Weight' as React.ElementType);
   await act(async () => weight().props.onOpenHistory());
   const history = () => renderer.root.findByType('WeightHistory' as React.ElementType);
@@ -332,7 +364,7 @@ it('returns from weight editing to history, then to weight entry and the Log pic
   await act(async () => history().props.onClose());
   expect(weight().props.visible).toBe(true);
   await act(async () => weight().props.onClose());
-  expect(renderer.root.findByType('LogHub' as React.ElementType)).toBeDefined();
+  expect(renderer.root.findByProps({ testID: 'log-sheet-modal' }).props.visible).toBe(true);
   expect(state.back).not.toHaveBeenCalled();
 });
 

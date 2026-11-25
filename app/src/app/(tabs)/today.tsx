@@ -1,60 +1,89 @@
-import { Button } from '@calipartner/ui';
-import { useTheme as useAppearance } from '@calipartner/ui/theme';
-import { useTrackingPreferences } from '@/hooks/useTrackingPreferences';
-import { HomeActionsMenu } from '@/components/HomeActionsMenu';
-import { AvatarHero } from '@/components/avatar/AvatarHero';
-import { TrackingPreferencesSheet } from '@/components/rooms/TrackingPreferencesSheet';
 import React, { useCallback, useEffect, useState } from 'react';
-import { AppState, Pressable, RefreshControl, ScrollView, StyleSheet, View } from 'react-native';
-import { useRouter, type Href } from 'expo-router';
-import { Ionicons } from '@expo/vector-icons';
 import {
-  getMealSectionForTime,
-  getLocalDateString,
+  AppState,
+  Pressable,
+  RefreshControl,
+  ScrollView,
+  StyleSheet,
+  View,
+  type NativeScrollEvent,
+  type NativeSyntheticEvent,
+} from 'react-native';
+import { useFocusEffect, useRouter, type Href } from 'expo-router';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import {
   foodFromEntrySnapshot,
-  personalTrackingCompletion,
-  type TrackingMetric,
+  getLocalDateString,
+  getMealSectionForTime,
   type FoodEntry,
   type MealSection,
 } from '@calipartner/core';
-import { radius, space, Text, homeLayout } from '@calipartner/ui';
-import { PersonalDayCard } from '@/components/rooms/PersonalDayCard';
-import { HomeSquads } from '@/components/rooms/HomeSquads';
-import { FastingCard } from '@/components/fasting/FastingCard';
-import { TodayScheduledWorkout } from '@/components/workouts/TodayScheduledWorkout';
-import { useFocusEffect } from 'expo-router';
+import {
+  ChevronLeftIcon,
+  ChevronRightIcon,
+  Text as V1Text,
+  borders as v1Borders,
+  colors as v1Colors,
+  layout as v1Layout,
+  radius as v1Radius,
+  space as v1Space,
+} from '@calipartner/ui/v1';
 import { LoadingState } from '@/components/LoadingState';
-import { MonthlyPlanCheckIn } from '@/components/profile/MonthlyPlanCheckIn';
 import { CaloriesDetailSheet } from '@/components/diary/CaloriesDetailSheet';
 import { CopyMealModal } from '@/components/diary/CopyMealModal';
 import { DatePickerSheet } from '@/components/diary/DatePickerSheet';
 import { FoodLogModal } from '@/components/diary/FoodLogModal';
 import { MealDetailSheet } from '@/components/diary/MealDetailSheet';
-import { MealSectionCard } from '@/components/diary/MealSectionCard';
-import { RepeatYesterdayMeals } from '@/components/diary/RepeatYesterdayMeals';
 import { QuantityModal } from '@/components/diary/QuantityModal';
+import { RepeatYesterdayMeals } from '@/components/diary/RepeatYesterdayMeals';
+import {
+  TodayDayCardV1,
+  TodayFastingCardV1,
+  TodayHeaderV1,
+  TodayMealRowV1,
+  TodaySquadCardV1,
+  TodayStickyBarV1,
+  TodayWorkoutCardV1,
+} from '@/components/home/TodayV1Components';
+import { MonthlyPlanCheckIn } from '@/components/profile/MonthlyPlanCheckIn';
+import { TrackingPreferencesSheet } from '@/components/rooms/TrackingPreferencesSheet';
 import { WaterAlarmModal } from '@/components/trackers/WaterAlarmModal';
 import { useAuth } from '@/contexts/AuthContext';
+import { getDb } from '@/db';
+import { useAvatar } from '@/hooks/useAvatar';
 import { useDiary } from '@/hooks/useDiary';
 import { useDeleteEntry, useEditEntry } from '@/hooks/useFoodEntries';
 import { useRooms } from '@/hooks/useRooms';
 import { useSteps } from '@/hooks/useSteps';
+import { useSubscription } from '@/hooks/useSubscription';
+import { useTargets } from '@/hooks/useTargets';
+import { useTrackingPreferences } from '@/hooks/useTrackingPreferences';
 import { useWater } from '@/hooks/useWater';
 import { useWorkouts } from '@/hooks/useWorkouts';
-import { useTargets } from '@/hooks/useTargets';
 import { t } from '@/i18n';
-import { getDb } from '@/db';
+import { diaryEvents } from '@/services/diaryEvents';
 
 const MEAL_SECTIONS: MealSection[] = ['breakfast', 'lunch', 'dinner', 'snacks'];
+const STICKY_SCROLL_THRESHOLD = 200;
+
+function formatMealsDatePill(isoDate: string, isToday: boolean): string {
+  if (isToday) return t('homeV1.todayLabel');
+  const parsed = new Date(`${isoDate}T12:00:00`);
+  if (Number.isNaN(parsed.getTime())) return isoDate;
+  const weekday = new Intl.DateTimeFormat('en-US', { weekday: 'short' }).format(parsed);
+  const day = new Intl.DateTimeFormat('en-US', { day: 'numeric' }).format(parsed);
+  const month = new Intl.DateTimeFormat('en-US', { month: 'short' }).format(parsed);
+  return `${weekday}, ${day} ${month}`;
+}
 
 export default function TodayScreen() {
-  const { colors: dark } = useAppearance();
-  const styles = createStyles(dark);
-
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const tracking = useTrackingPreferences();
   const [editingTracking, setEditingTracking] = useState(false);
   const { profile } = useAuth();
+  const { state: avatarState } = useAvatar();
+  const { currentTier, hasActiveAccess, isTrial } = useSubscription();
   const {
     currentGoalProfile,
     loading: targetsLoading,
@@ -63,14 +92,12 @@ export default function TodayScreen() {
   } = useTargets();
   const { rooms, loading: roomsLoading, error: roomsError, refresh: refreshRooms } = useRooms();
 
-  // Current selected date in ISO format YYYY-MM-DD
   const todayDate = getLocalDateString(
     new Date(),
     profile?.timezone ?? Intl.DateTimeFormat().resolvedOptions().timeZone,
   );
   const [selectedDate, setSelectedDate] = useState(todayDate);
 
-  // Diary hook for selected date
   const { daySummary, loading: diaryLoading, error: diaryError, refresh } = useDiary(selectedDate);
   const [loadedDiaryDate, setLoadedDiaryDate] = useState<string | null>(null);
   useEffect(() => {
@@ -79,7 +106,6 @@ export default function TodayScreen() {
   const { editEntry } = useEditEntry();
   const { deleteEntry } = useDeleteEntry();
 
-  // Steps & Water hooks
   const {
     steps,
     goalSteps,
@@ -102,20 +128,25 @@ export default function TodayScreen() {
     ]);
   }, [refresh, refreshSteps, refreshRooms, refreshWater, refreshWorkouts]);
 
-  // Sheet & modal states
+  useEffect(() => {
+    return diaryEvents.subscribe(() => {
+      void handlePullRefresh();
+    });
+  }, [handlePullRefresh]);
+
   const [activeLogSection, setActiveLogSection] = useState<MealSection | null>(null);
   const [inspectingSection, setInspectingSection] = useState<MealSection | null>(null);
   const [showCaloriesDetail, setShowCaloriesDetail] = useState(false);
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [showWaterAlarmModal, setShowWaterAlarmModal] = useState(false);
   const [editingEntry, setEditingEntry] = useState<FoodEntry | null>(null);
+  const [scrolledPastHero, setScrolledPastHero] = useState(false);
   const [copyModalState, setCopyModalState] = useState<{
     visible: boolean;
     mode: 'meal' | 'day';
     section?: MealSection;
   }>({ visible: false, mode: 'day' });
 
-  // Date navigation handlers
   const handleShiftDate = (days: number) => {
     const d = new Date(selectedDate);
     d.setDate(d.getDate() + days);
@@ -137,7 +168,6 @@ export default function TodayScreen() {
   }, []);
 
   const [guestName, setGuestName] = useState<string | null>(null);
-
   useEffect(() => {
     async function loadGuestName() {
       try {
@@ -154,7 +184,7 @@ export default function TodayScreen() {
       }
     }
     if (!profile?.nickname) {
-      loadGuestName();
+      void loadGuestName();
     }
   }, [profile?.nickname]);
 
@@ -171,10 +201,21 @@ export default function TodayScreen() {
       return () => setHomeVisible(false);
     }, [refreshRooms]),
   );
+
   const userName = profile?.nickname || guestName || profile?.username || t('homeRefresh.friend');
+  const isPro = currentTier === 'pro' && hasActiveAccess && !isTrial;
+  const coinBalance = avatarState?.enabled
+    ? avatarState.balances.earned + avatarState.balances.purchased
+    : null;
+  const caloriesLeft = targetCalories != null ? targetCalories - daySummary.totals.calories : null;
+
+  const handleScroll = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
+    const next = event.nativeEvent.contentOffset.y >= STICKY_SCROLL_THRESHOLD;
+    setScrolledPastHero((prev) => (prev === next ? prev : next));
+  };
 
   return (
-    <View style={{ flex: 1, backgroundColor: dark.bg0 }}>
+    <View style={styles.rootContainer}>
       {editingTracking && (
         <TrackingPreferencesSheet
           enabled={tracking.enabled}
@@ -182,71 +223,75 @@ export default function TodayScreen() {
           onSave={tracking.save}
         />
       )}
+
+      {scrolledPastHero ? (
+        <View style={[styles.stickyOverlay, { paddingTop: insets.top }]}>
+          <TodayStickyBarV1
+            selectedDate={selectedDate}
+            isToday={isToday}
+            caloriesLeft={caloriesLeft}
+            onPrevDay={() => handleShiftDate(-1)}
+            onNextDay={() => handleShiftDate(1)}
+            onOpenDatePicker={() => setShowDatePicker(true)}
+            onOpenCaloriesDetail={() => setShowCaloriesDetail(true)}
+          />
+        </View>
+      ) : null}
+
       <ScrollView
         testID="screen-today"
-        style={styles.root}
-        contentContainerStyle={styles.scrollContent}
+        style={styles.rootScroll}
+        contentContainerStyle={[
+          styles.scrollContent,
+          {
+            paddingTop: insets.top + v1Space.md,
+            paddingBottom: v1Layout.tabBarClearance + insets.bottom,
+          },
+        ]}
         showsVerticalScrollIndicator={false}
+        onScroll={handleScroll}
+        scrollEventThrottle={16}
         refreshControl={
           <RefreshControl
             refreshing={diaryLoading}
-            onRefresh={handlePullRefresh}
-            tintColor={dark.apricot}
+            onRefresh={() => void handlePullRefresh()}
+            tintColor={v1Colors.apricot}
           />
         }
       >
         <MonthlyPlanCheckIn />
 
-        {/* 2. Greeting */}
-        <View style={styles.greetingSection}>
-          <View style={styles.greetingRow}>
-            <Text variant="heading" color={dark.textHi} style={styles.greeting}>
-              {t('homeRefresh.hello', { name: userName })}
-            </Text>
-            <View style={styles.homeActions}>
-              <Pressable
-                accessibilityRole="button"
-                accessibilityLabel={t('feed.openLog')}
-                onPress={() => router.push('/(tabs)/log')}
-                testID="home-log"
-                style={styles.logAction}
-              >
-                <Ionicons name="add" size={homeLayout.iconSize} color={dark.apricot} />
-                <Text variant="label" color={dark.apricot}>
-                  {t('feed.log')}
-                </Text>
-              </Pressable>
-              <HomeActionsMenu />
-            </View>
-          </View>
-        </View>
-
-        <AvatarHero />
-        <HomeSquads
-          rooms={rooms}
-          loading={roomsLoading}
-          error={roomsError}
-          onRetry={() => void refreshRooms()}
-          visible={homeVisible}
+        <TodayHeaderV1
+          selectedDate={selectedDate}
+          userName={userName}
+          isPro={isPro}
+          coinBalance={coinBalance}
+          onUpgradePress={() => router.push('/paywall' as Href)}
+          onCoinPress={() => router.push('/wallet' as Href)}
+          onProfilePress={() => router.push('/(tabs)/me' as Href)}
         />
-        <PersonalDayCard
-          score={personalTrackingCompletion(
-            {
-              ...daySummary.totals,
-              steps: stepsLoading || stepsError ? null : steps,
-              water: water.error || water.loading ? null : water.totalMl,
-            },
-            {
-              calories: targetCalories,
-              protein: targetProtein,
-              carbs: currentGoalProfile?.carb_grams ?? null,
-              fat: currentGoalProfile?.fat_grams ?? null,
-              steps: effectiveGoalSteps,
-              water: currentGoalProfile?.water_ml_goal ?? null,
-            },
-            tracking.enabled,
-          )}
-          onEdit={tracking.loading || tracking.error ? undefined : () => setEditingTracking(true)}
+
+        <TodayDayCardV1
+          eatenCalories={daySummary.totals.calories}
+          targetCalories={targetCalories}
+          protein={{ value: daySummary.totals.protein, target: targetProtein }}
+          carbs={{
+            value: daySummary.totals.carbs,
+            target: currentGoalProfile?.carb_grams ?? null,
+          }}
+          fat={{ value: daySummary.totals.fat, target: currentGoalProfile?.fat_grams ?? null }}
+          steps={{
+            value: steps,
+            target: effectiveGoalSteps,
+            loading: stepsLoading,
+            error: Boolean(stepsError),
+          }}
+          water={{
+            valueMl: water.totalMl,
+            targetMl: currentGoalProfile?.water_ml_goal ?? null,
+            loading: water.loading,
+            error: water.error,
+          }}
           loading={diaryLoading || targetsLoading || tracking.loading}
           error={Boolean(diaryError || targetsError || tracking.error)}
           errorMessage={
@@ -260,98 +305,73 @@ export default function TodayScreen() {
             void refreshWater();
             void refreshWorkouts();
           }}
-          onPress={() => router.push('/(tabs)/progress' as Href)}
-          metrics={[
-            {
-              nutrient: 'calories' as const,
-              label: t('squadDesign.calories'),
-              value: daySummary.totals.calories,
-              target: targetCalories,
-              unit: t('squadDesign.kcal'),
-            },
-            {
-              nutrient: 'protein' as const,
-              label: t('squadDesign.protein'),
-              value: daySummary.totals.protein,
-              target: targetProtein,
-              unit: t('squadDesign.grams'),
-            },
-            {
-              nutrient: 'carbs' as const,
-              label: t('squadDesign.carbs'),
-              value: daySummary.totals.carbs,
-              target: currentGoalProfile?.carb_grams ?? null,
-              unit: t('squadDesign.grams'),
-            },
-            {
-              nutrient: 'fat' as const,
-              label: t('squadDesign.fat'),
-              value: daySummary.totals.fat,
-              target: currentGoalProfile?.fat_grams ?? null,
-              unit: t('squadDesign.grams'),
-            },
-            {
-              id: 'steps',
-              loading: stepsLoading,
-              error: Boolean(stepsError),
-              label: t('squadDesign.steps'),
-              value: steps,
-              target: effectiveGoalSteps,
-              unit: t('squadDesign.stepUnit'),
-            },
-            {
-              id: 'water',
-              label: t('squadDesign.water'),
-              value: water.totalMl,
-              target: currentGoalProfile?.water_ml_goal ?? null,
-              unit: t('squadDesign.ml'),
-              loading: water.loading,
-              error: water.error,
-            },
-          ].map((metric) => ({
-            ...metric,
-            enabled: tracking.enabled[(metric.nutrient ?? metric.id) as TrackingMetric],
-          }))}
+          onOpenDetail={() => setShowCaloriesDetail(true)}
+          onEditTracking={
+            tracking.loading || tracking.error ? undefined : () => setEditingTracking(true)
+          }
+          onQuickAddWater={() => void water.addWater(250)}
+          onOpenWater={() => setShowWaterAlarmModal(true)}
         />
 
-        {/* 6. Date Selector & Meal Logging Diary Sections */}
-        <FastingCard />
-        <View style={styles.sectionBlock}>
-          <View style={styles.dateSelectorRow}>
-            <Button
-              variant="tertiary"
-              fullWidth={false}
-              label={t('diary.previousDay')}
-              iconOnly
-              icon={<Ionicons name="chevron-back" size={18} color={dark.textMid} />}
-              testID="btn-prev-day"
-              onPress={() => handleShiftDate(-1)}
-              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-              accessibilityLabel={t('diary.previousDay')}
-            />
+        <TodaySquadCardV1
+          rooms={rooms}
+          loading={roomsLoading}
+          error={roomsError}
+          visible={homeVisible}
+          onRetry={() => void refreshRooms()}
+        />
 
-            <Button
-              variant="secondary"
-              fullWidth={false}
-              label={isToday ? `${t('diary.today')} (${selectedDate})` : selectedDate}
-              icon={<Ionicons name="calendar-outline" size={14} color={dark.apricot} />}
-              testID="btn-open-date-picker"
-              onPress={() => setShowDatePicker(true)}
-              style={styles.datePickerChip}
-              accessibilityLabel={`Selected date ${selectedDate}`}
-            />
+        <View style={styles.mealsSectionBlock}>
+          <View style={styles.mealsHeaderRow}>
+            <V1Text variant="titleM" color="textHi">
+              {t('homeV1.mealsHeading')}
+            </V1Text>
 
-            <Button
-              variant="tertiary"
-              fullWidth={false}
-              label={t('diary.nextDay')}
-              iconOnly
-              icon={<Ionicons name="chevron-forward" size={18} color={dark.textMid} />}
-              testID="btn-next-day"
-              onPress={() => handleShiftDate(1)}
-              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-              accessibilityLabel={t('diary.nextDay')}
-            />
+            <View style={styles.mealsDateCluster}>
+              <Pressable
+                onPress={() => handleShiftDate(-1)}
+                hitSlop={6}
+                accessibilityRole="button"
+                accessibilityLabel={t('diary.previousDay')}
+                style={({ pressed }) => [
+                  styles.dateArrowBtn,
+                  pressed ? styles.pressedSurface : null,
+                ]}
+                testID="btn-prev-day"
+              >
+                <ChevronLeftIcon size={15} color={v1Colors.textMid} />
+              </Pressable>
+
+              <Pressable
+                onPress={() => setShowDatePicker(true)}
+                hitSlop={6}
+                accessibilityRole="button"
+                accessibilityLabel={`Selected date ${selectedDate}`}
+                style={({ pressed }) => [
+                  styles.dateCenterBtn,
+                  pressed ? styles.pressedSurface : null,
+                ]}
+                testID="btn-open-date-picker"
+              >
+                <V1Text variant="label" color="textHi">
+                  {formatMealsDatePill(selectedDate, isToday)}
+                </V1Text>
+              </Pressable>
+
+              <Pressable
+                onPress={() => handleShiftDate(1)}
+                hitSlop={6}
+                accessibilityRole="button"
+                accessibilityLabel={t('diary.nextDay')}
+                style={({ pressed }) => [
+                  styles.dateArrowBtn,
+                  pressed ? styles.pressedSurface : null,
+                ]}
+                testID="btn-next-day"
+              >
+                <ChevronRightIcon size={15} color={v1Colors.textMid} />
+              </Pressable>
+            </View>
           </View>
 
           {diaryLoading && loadedDiaryDate !== selectedDate ? (
@@ -361,238 +381,200 @@ export default function TodayScreen() {
           ) : (
             <View style={styles.mealsContainer} testID="meals-section">
               {MEAL_SECTIONS.map((sec) => (
-                <MealSectionCard
+                <TodayMealRowV1
                   key={sec}
-                  compact
                   section={sec}
                   summary={daySummary.sections[sec]}
-                  isCurrentMealSuggestion={currentSuggestedMeal === sec}
-                  onAddFood={(s) => setActiveLogSection(s)}
-                  onOpenDetail={(s) => setInspectingSection(s)}
-                  onEditEntry={(entry) => setEditingEntry(entry)}
-                  onDeleteEntry={(id) => void deleteEntry(id)}
-                  onCopyMeal={(s) => setCopyModalState({ visible: true, mode: 'meal', section: s })}
+                  suggested={currentSuggestedMeal === sec}
+                  onPress={() => setInspectingSection(sec)}
+                  onAdd={() => setActiveLogSection(sec)}
                 />
               ))}
-              <RepeatYesterdayMeals key={selectedDate} localDate={selectedDate} />
+              <RepeatYesterdayMeals key={selectedDate} localDate={selectedDate} variant="v1" />
             </View>
           )}
         </View>
 
-        {isToday && !workouts.loading && !workouts.error && (
-          <TodayScheduledWorkout
+        <TodayFastingCardV1 />
+
+        {isToday && !workouts.loading && !workouts.error ? (
+          <TodayWorkoutCardV1
             localDate={todayDate}
             hasWorkout={workouts.workouts.length > 0}
             onSaved={() => void refreshWorkouts()}
           />
-        )}
-
-        <View style={{ height: space[8] }} />
-
-        {/* MODALS */}
-        {/* 1. Food Log Modal */}
-        {activeLogSection && (
-          <FoodLogModal
-            visible={Boolean(activeLogSection)}
-            defaultSection={activeLogSection}
-            localDate={selectedDate}
-            onClose={() => setActiveLogSection(null)}
-            onLogged={() => {
-              void refresh();
-            }}
-          />
-        )}
-
-        {/* 2. Water Alarm & Logging Modal */}
-        <WaterAlarmModal
-          visible={showWaterAlarmModal}
-          onClose={() => {
-            setShowWaterAlarmModal(false);
-            void refresh();
-          }}
-          selectedDate={selectedDate}
-        />
-
-        {/* 4. Date Picker Sheet */}
-        <DatePickerSheet
-          visible={showDatePicker}
-          selectedDate={selectedDate}
-          onSelectDate={(date) => {
-            setSelectedDate(date);
-            setShowDatePicker(false);
-          }}
-          onClose={() => setShowDatePicker(false)}
-        />
-
-        {/* 6. Calories & Macros Detail Sheet */}
-        <CaloriesDetailSheet
-          visible={showCaloriesDetail}
-          eatenCalories={daySummary.totals.calories}
-          targetCalories={targetCalories}
-          proteinGrams={daySummary.totals.protein}
-          carbGrams={daySummary.totals.carbs}
-          fatGrams={daySummary.totals.fat}
-          fiberGrams={daySummary.totals.fiber}
-          sugarGrams={daySummary.totals.sugar}
-          sodiumMg={daySummary.totals.sodium_mg}
-          entries={Object.values(daySummary.sections).flatMap((section) => section.entries)}
-          targetProtein={targetProtein}
-          targetCarbs={currentGoalProfile?.carb_grams ?? null}
-          targetFat={currentGoalProfile?.fat_grams ?? null}
-          onClose={() => setShowCaloriesDetail(false)}
-        />
-
-        {/* 7. Meal Detail Sheet */}
-        {inspectingSection && (
-          <MealDetailSheet
-            visible={Boolean(inspectingSection)}
-            section={inspectingSection}
-            summary={daySummary.sections[inspectingSection]}
-            onClose={() => setInspectingSection(null)}
-            onAddFood={() => {
-              const sec = inspectingSection;
-              setInspectingSection(null);
-              setActiveLogSection(sec);
-            }}
-            onEditEntry={(entry) => {
-              setInspectingSection(null);
-              setEditingEntry(entry);
-            }}
-            onDeleteEntry={async (id) => {
-              await deleteEntry(id);
-              void refresh();
-            }}
-            onCopyMeal={(s) => setCopyModalState({ visible: true, mode: 'meal', section: s })}
-          />
-        )}
-
-        {/* 8. Quantity / Edit Entry Modal */}
-        {editingEntry && (
-          <QuantityModal
-            visible={Boolean(editingEntry)}
-            food={foodFromEntrySnapshot(editingEntry)}
-            initialEntry={editingEntry}
-            defaultSection={editingEntry.meal_section}
-            onClose={() => setEditingEntry(null)}
-            onSave={async (data) => {
-              const saved = await editEntry(
-                editingEntry.id,
-                {
-                  quantity: data.quantity,
-                  unit: data.unit,
-                  meal_section: data.mealSection,
-                  ...data.nutrientOverrides,
-                },
-                data.food,
-              );
-              if (!saved) throw new Error(t('common.errorBody'));
-              setEditingEntry(null);
-              void refresh();
-            }}
-          />
-        )}
-
-        {/* 9. Copy Meal Modal */}
-        <CopyMealModal
-          visible={copyModalState.visible}
-          mode={copyModalState.mode}
-          sourceSection={copyModalState.section}
-          sourceDate={selectedDate}
-          onClose={() => setCopyModalState({ visible: false, mode: 'day' })}
-          onSuccess={() => {
-            setCopyModalState({ visible: false, mode: 'day' });
-            void refresh();
-          }}
-        />
+        ) : null}
       </ScrollView>
+
+      {activeLogSection ? (
+        <FoodLogModal
+          visible={Boolean(activeLogSection)}
+          defaultSection={activeLogSection}
+          localDate={selectedDate}
+          onClose={() => setActiveLogSection(null)}
+          onLogged={() => {
+            void refresh();
+          }}
+        />
+      ) : null}
+
+      <WaterAlarmModal
+        visible={showWaterAlarmModal}
+        onClose={() => {
+          setShowWaterAlarmModal(false);
+          void refreshWater();
+        }}
+        selectedDate={selectedDate}
+      />
+
+      <DatePickerSheet
+        visible={showDatePicker}
+        selectedDate={selectedDate}
+        onSelectDate={(date) => {
+          setSelectedDate(date);
+          setShowDatePicker(false);
+        }}
+        onClose={() => setShowDatePicker(false)}
+      />
+
+      <CaloriesDetailSheet
+        visible={showCaloriesDetail}
+        eatenCalories={daySummary.totals.calories}
+        targetCalories={targetCalories}
+        proteinGrams={daySummary.totals.protein}
+        carbGrams={daySummary.totals.carbs}
+        fatGrams={daySummary.totals.fat}
+        fiberGrams={daySummary.totals.fiber}
+        sugarGrams={daySummary.totals.sugar}
+        sodiumMg={daySummary.totals.sodium_mg}
+        entries={Object.values(daySummary.sections).flatMap((section) => section.entries)}
+        targetProtein={targetProtein}
+        targetCarbs={currentGoalProfile?.carb_grams ?? null}
+        targetFat={currentGoalProfile?.fat_grams ?? null}
+        onClose={() => setShowCaloriesDetail(false)}
+      />
+
+      {inspectingSection ? (
+        <MealDetailSheet
+          visible={Boolean(inspectingSection)}
+          section={inspectingSection}
+          summary={daySummary.sections[inspectingSection]}
+          onClose={() => setInspectingSection(null)}
+          onAddFood={() => {
+            const sec = inspectingSection;
+            setInspectingSection(null);
+            setActiveLogSection(sec);
+          }}
+          onEditEntry={(entry) => {
+            setInspectingSection(null);
+            setEditingEntry(entry);
+          }}
+          onDeleteEntry={async (id) => {
+            await deleteEntry(id);
+            void refresh();
+          }}
+          onCopyMeal={(s) => setCopyModalState({ visible: true, mode: 'meal', section: s })}
+        />
+      ) : null}
+
+      {editingEntry ? (
+        <QuantityModal
+          visible={Boolean(editingEntry)}
+          food={foodFromEntrySnapshot(editingEntry)}
+          initialEntry={editingEntry}
+          defaultSection={editingEntry.meal_section}
+          onClose={() => setEditingEntry(null)}
+          onSave={async (data) => {
+            const saved = await editEntry(
+              editingEntry.id,
+              {
+                quantity: data.quantity,
+                unit: data.unit,
+                meal_section: data.mealSection,
+                ...data.nutrientOverrides,
+              },
+              data.food,
+            );
+            if (!saved) throw new Error(t('common.errorBody'));
+            setEditingEntry(null);
+            void refresh();
+          }}
+        />
+      ) : null}
+
+      <CopyMealModal
+        visible={copyModalState.visible}
+        mode={copyModalState.mode}
+        sourceSection={copyModalState.section}
+        sourceDate={selectedDate}
+        onClose={() => setCopyModalState({ visible: false, mode: 'day' })}
+        onSuccess={() => {
+          setCopyModalState({ visible: false, mode: 'day' });
+          void refresh();
+        }}
+      />
     </View>
   );
 }
 
-const createStyles = (dark: ReturnType<typeof useAppearance>['colors']) =>
-  StyleSheet.create({
-    root: {
-      flex: 1,
-      backgroundColor: dark.bg0,
-    },
-    scrollContent: {
-      paddingHorizontal: space[3],
-      paddingTop: space[3],
-      paddingBottom: 80,
-    },
-    greetingRow: { flexDirection: 'row', alignItems: 'center', gap: space[2] },
-    homeActions: { flexDirection: 'row', alignItems: 'center', flexShrink: 0, gap: space[1] },
-    logAction: {
-      minWidth: homeLayout.touchSize,
-      minHeight: homeLayout.touchSize,
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'center',
-    },
-    greeting: { flex: 1, fontSize: 16 },
-    greetingSection: {
-      marginBottom: space[2],
-      zIndex: 2,
-    },
-
-    sectionBlock: {
-      marginBottom: space[3],
-    },
-    sectionHeaderRow: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'space-between',
-      marginBottom: space[3],
-    },
-    sectionHeaderTitle: {
-      fontSize: 18,
-      fontWeight: '700',
-      letterSpacing: -0.3,
-      marginBottom: space[3],
-    },
-    progressRingsRow: {
-      flexDirection: 'row',
-      flexWrap: 'wrap',
-      gap: space[3],
-      justifyContent: 'space-between',
-      alignItems: 'center',
-      backgroundColor: dark.s1,
-      borderRadius: radius.card,
-      borderWidth: 1,
-      borderColor: dark.hairline,
-      paddingVertical: space[3],
-      paddingHorizontal: space[2],
-    },
-    ringTileContainer: {
-      flexGrow: 1,
-      minWidth: space[9],
-      minHeight: homeLayout.touchSize,
-      gap: space[1],
-      alignItems: 'center',
-      justifyContent: 'center',
-    },
-    dateSelectorRow: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'space-between',
-      marginBottom: space[3],
-    },
-    datePickerChip: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      gap: 6,
-      backgroundColor: dark.s1,
-      paddingHorizontal: space[3],
-      paddingVertical: space[2],
-      borderRadius: radius.full,
-      borderWidth: 1,
-      borderColor: dark.hairline,
-    },
-    loadingBox: {
-      padding: space[4],
-      alignItems: 'center',
-    },
-    mealsContainer: {
-      gap: space[3],
-    },
-  });
+const styles = StyleSheet.create({
+  rootContainer: {
+    flex: 1,
+    backgroundColor: v1Colors.bg0,
+  },
+  rootScroll: {
+    flex: 1,
+    backgroundColor: v1Colors.bg0,
+  },
+  scrollContent: {
+    paddingHorizontal: v1Layout.screenPaddingX,
+    gap: v1Space.lg,
+  },
+  stickyOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    zIndex: 20,
+    backgroundColor: v1Colors.bg0,
+  },
+  mealsSectionBlock: {
+    gap: v1Space.md,
+  },
+  mealsHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: v1Space.md,
+  },
+  mealsDateCluster: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: v1Space.xs,
+  },
+  dateArrowBtn: {
+    width: 34,
+    height: 34,
+    borderRadius: v1Radius.full,
+    backgroundColor: v1Colors.s1,
+    borderWidth: v1Borders.width,
+    borderColor: v1Colors.hairline,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  dateCenterBtn: {
+    minHeight: 34,
+    paddingHorizontal: v1Space.sm,
+    justifyContent: 'center',
+  },
+  pressedSurface: {
+    backgroundColor: v1Colors.s2,
+  },
+  loadingBox: {
+    padding: v1Space.lg,
+    alignItems: 'center',
+  },
+  mealsContainer: {
+    gap: v1Space.sm + 2,
+  },
+});

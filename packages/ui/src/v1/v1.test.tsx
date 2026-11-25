@@ -78,20 +78,27 @@ import {
   ArrowRightIcon,
   AvatarRing,
   Badge,
+  BarcodeIcon,
   BigNameField,
+  BookmarkIcon,
+  BowlIcon,
   CameraIcon,
   Card,
+  ChartBarIcon,
   Checkbox,
   Chip,
   colors,
+  EditIcon,
   elevation,
   EyeIcon,
   EyeOffIcon,
+  FeedImageIcon,
   FloatingTabBar,
   fonts,
   GoogleIcon,
   Heatmap,
   heatmapScale,
+  HistoryClockIcon,
   HomeIcon,
   IconButton,
   Input,
@@ -102,8 +109,10 @@ import {
   LogFabButton,
   macroColors,
   MealRow,
+  MoonIcon,
   motion,
   ScanIcon,
+  SunIcon,
   UtensilsIcon,
   NotificationPreview,
   NumberWithUnit,
@@ -371,9 +380,18 @@ describe('CaliPartner Design System v1 — Foundation & Primitives', () => {
           <FloatingTabBar
             tabs={[{ id: 'today', label: 'Today', icon: (c) => <HomeIcon color={c} /> }]}
             activeId="today"
+            badges={{ today: 0, room: 2 }}
             onSelect={press}
             onLogPress={press}
             testID="tabs"
+          />
+          <FloatingTabBar
+            tabs={[{ id: 'today', label: 'Today', icon: (c) => <HomeIcon color={c} /> }]}
+            activeId="today"
+            visible={false}
+            onSelect={press}
+            onLogPress={press}
+            testID="tabs-hidden"
           />
           <NotificationPreview
             appName="CALIPARTNER"
@@ -389,6 +407,15 @@ describe('CaliPartner Design System v1 — Foundation & Primitives', () => {
           <ScanIcon />
           <EyeIcon />
           <EyeOffIcon />
+          <EditIcon />
+          <ChartBarIcon />
+          <FeedImageIcon />
+          <SunIcon />
+          <BowlIcon />
+          <MoonIcon />
+          <BarcodeIcon />
+          <BookmarkIcon />
+          <HistoryClockIcon />
         </View>,
       );
     });
@@ -398,6 +425,8 @@ describe('CaliPartner Design System v1 — Foundation & Primitives', () => {
       .find((n) => String(n.type) === 'Pressable')!;
     expect(primaryBtn.props.accessibilityRole).toBe('button');
     expect(tree!.root.findByProps({ testID: 'inp-error' })).toBeDefined();
+    expect(tree!.root.findAllByProps({ testID: 'tabs' }).length).toBeGreaterThan(1);
+    expect(tree!.root.findByProps({ testID: 'tabs-hidden' }).children).toHaveLength(0);
     const sheetModal = tree!.root
       .findAllByProps({ testID: 'sheet' })
       .find((n) => String(n.type) === 'Modal')!;

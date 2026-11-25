@@ -723,3 +723,319 @@ export function EyeOffIcon({
     </Svg>
   );
 }
+
+export function EditIcon({
+  size = 16,
+  color = colors.textMid,
+  strokeWidth = DEFAULT_STROKE,
+}: DSIconProps): React.JSX.Element {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Path
+        d="M15.5 4.5l4 4L8 20H4v-4L15.5 4.5z"
+        stroke={color}
+        strokeWidth={strokeWidth}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <Line
+        x1={13}
+        y1={7}
+        x2={17}
+        y2={11}
+        stroke={color}
+        strokeWidth={strokeWidth}
+        strokeLinecap="round"
+      />
+    </Svg>
+  );
+}
+
+export function ChartBarIcon({
+  size = 20,
+  color = colors.textLo,
+  strokeWidth = DEFAULT_STROKE,
+}: DSIconProps): React.JSX.Element {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Line
+        x1={6}
+        y1={19}
+        x2={6}
+        y2={13}
+        stroke={color}
+        strokeWidth={strokeWidth}
+        strokeLinecap="round"
+      />
+      <Line
+        x1={12}
+        y1={19}
+        x2={12}
+        y2={6}
+        stroke={color}
+        strokeWidth={strokeWidth}
+        strokeLinecap="round"
+      />
+      <Line
+        x1={18}
+        y1={19}
+        x2={18}
+        y2={10}
+        stroke={color}
+        strokeWidth={strokeWidth}
+        strokeLinecap="round"
+      />
+    </Svg>
+  );
+}
+
+export function FeedImageIcon({
+  size = 20,
+  color = colors.textLo,
+  strokeWidth = DEFAULT_STROKE,
+}: DSIconProps): React.JSX.Element {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Rect x={3} y={4} width={18} height={16} rx={3} stroke={color} strokeWidth={strokeWidth} />
+      <Circle cx={8.5} cy={9.5} r={1.5} stroke={color} strokeWidth={strokeWidth} />
+      <Polyline
+        points="21 16 15.5 11 6 19"
+        stroke={color}
+        strokeWidth={strokeWidth}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </Svg>
+  );
+}
+
+export function SunIcon({
+  size = 20,
+  color = colors.textMid,
+  strokeWidth = DEFAULT_STROKE,
+}: DSIconProps): React.JSX.Element {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Circle cx={12} cy={12} r={4} stroke={color} strokeWidth={strokeWidth} />
+      <Line
+        x1={12}
+        y1={2.5}
+        x2={12}
+        y2={5}
+        stroke={color}
+        strokeWidth={strokeWidth}
+        strokeLinecap="round"
+      />
+      <Line
+        x1={12}
+        y1={19}
+        x2={12}
+        y2={21.5}
+        stroke={color}
+        strokeWidth={strokeWidth}
+        strokeLinecap="round"
+      />
+      <Line
+        x1={2.5}
+        y1={12}
+        x2={5}
+        y2={12}
+        stroke={color}
+        strokeWidth={strokeWidth}
+        strokeLinecap="round"
+      />
+      <Line
+        x1={19}
+        y1={12}
+        x2={21.5}
+        y2={12}
+        stroke={color}
+        strokeWidth={strokeWidth}
+        strokeLinecap="round"
+      />
+      <Line
+        x1={5.3}
+        y1={5.3}
+        x2={7.1}
+        y2={7.1}
+        stroke={color}
+        strokeWidth={strokeWidth}
+        strokeLinecap="round"
+      />
+      <Line
+        x1={16.9}
+        y1={16.9}
+        x2={18.7}
+        y2={18.7}
+        stroke={color}
+        strokeWidth={strokeWidth}
+        strokeLinecap="round"
+      />
+      <Line
+        x1={18.7}
+        y1={5.3}
+        x2={16.9}
+        y2={7.1}
+        stroke={color}
+        strokeWidth={strokeWidth}
+        strokeLinecap="round"
+      />
+      <Line
+        x1={7.1}
+        y1={16.9}
+        x2={5.3}
+        y2={18.7}
+        stroke={color}
+        strokeWidth={strokeWidth}
+        strokeLinecap="round"
+      />
+    </Svg>
+  );
+}
+
+export function BowlIcon({
+  size = 20,
+  color = colors.textMid,
+  strokeWidth = DEFAULT_STROKE,
+}: DSIconProps): React.JSX.Element {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Path
+        d="M3.5 11.5h17a8.5 8.5 0 0 1-17 0z"
+        stroke={color}
+        strokeWidth={strokeWidth}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <Line
+        x1={8}
+        y1={20}
+        x2={16}
+        y2={20}
+        stroke={color}
+        strokeWidth={strokeWidth}
+        strokeLinecap="round"
+      />
+      <Line
+        x1={16.5}
+        y1={5.5}
+        x2={14.5}
+        y2={11.5}
+        stroke={color}
+        strokeWidth={strokeWidth}
+        strokeLinecap="round"
+      />
+    </Svg>
+  );
+}
+
+export function MoonIcon({
+  size = 20,
+  color = colors.textMid,
+  strokeWidth = DEFAULT_STROKE,
+}: DSIconProps): React.JSX.Element {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Path
+        d="M20 14.5A8.5 8.5 0 0 1 9.5 4a8.5 8.5 0 1 0 10.5 10.5z"
+        stroke={color}
+        strokeWidth={strokeWidth}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </Svg>
+  );
+}
+
+export function BarcodeIcon({
+  size = 20,
+  color = colors.textMid,
+  strokeWidth = DEFAULT_STROKE,
+}: DSIconProps): React.JSX.Element {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Line
+        x1={4}
+        y1={6}
+        x2={4}
+        y2={18}
+        stroke={color}
+        strokeWidth={strokeWidth}
+        strokeLinecap="round"
+      />
+      <Line
+        x1={8}
+        y1={6}
+        x2={8}
+        y2={18}
+        stroke={color}
+        strokeWidth={strokeWidth}
+        strokeLinecap="round"
+      />
+      <Line
+        x1={12}
+        y1={6}
+        x2={12}
+        y2={18}
+        stroke={color}
+        strokeWidth={strokeWidth}
+        strokeLinecap="round"
+      />
+      <Line
+        x1={16}
+        y1={6}
+        x2={16}
+        y2={18}
+        stroke={color}
+        strokeWidth={strokeWidth}
+        strokeLinecap="round"
+      />
+      <Line
+        x1={20}
+        y1={6}
+        x2={20}
+        y2={18}
+        stroke={color}
+        strokeWidth={strokeWidth}
+        strokeLinecap="round"
+      />
+    </Svg>
+  );
+}
+
+export function BookmarkIcon({
+  size = 20,
+  color = colors.textMid,
+  strokeWidth = DEFAULT_STROKE,
+}: DSIconProps): React.JSX.Element {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Path
+        d="M6 4.5A1.5 1.5 0 0 1 7.5 3h9A1.5 1.5 0 0 1 18 4.5V20l-6-4-6 4V4.5z"
+        stroke={color}
+        strokeWidth={strokeWidth}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </Svg>
+  );
+}
+
+export function HistoryClockIcon({
+  size = 20,
+  color = colors.textMid,
+  strokeWidth = DEFAULT_STROKE,
+}: DSIconProps): React.JSX.Element {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Circle cx={12} cy={12} r={8.5} stroke={color} strokeWidth={strokeWidth} />
+      <Polyline
+        points="12 7.5 12 12 15 14"
+        stroke={color}
+        strokeWidth={strokeWidth}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </Svg>
+  );
+}

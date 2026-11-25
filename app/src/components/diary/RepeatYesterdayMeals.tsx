@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { ScrollView, StyleSheet } from 'react-native';
+import { ScrollView, StyleSheet, View } from 'react-native';
 import { Button, Sheet, Text, space } from '@calipartner/ui';
+import { LinkButton } from '@calipartner/ui/v1';
 import { useAuth } from '@/contexts/AuthContext';
 import { useBrowserModalBack } from '@/hooks/useBrowserModalBack';
 import { t } from '@/i18n';
@@ -8,19 +9,36 @@ import { RepeatPreviousMeal } from './RepeatPreviousMeal';
 
 const meals = ['breakfast', 'lunch', 'dinner', 'snacks'] as const;
 
-export function RepeatYesterdayMeals({ localDate }: { localDate: string }) {
+export function RepeatYesterdayMeals({
+  localDate,
+  variant = 'default',
+}: {
+  localDate: string;
+  variant?: 'default' | 'v1';
+}) {
   const { user } = useAuth();
   const [visible, setVisible] = useState(false);
   useBrowserModalBack(visible, () => setVisible(false));
   if (!user) return null;
   return (
     <>
-      <Button
-        variant="secondary"
-        label={t('homeRefresh.repeatYesterday')}
-        onPress={() => setVisible(true)}
-        testID="home-repeat-yesterday"
-      />
+      {variant === 'v1' ? (
+        <View style={styles.v1Trigger}>
+          <LinkButton
+            title={t('homeRefresh.repeatYesterday')}
+            variant="accent"
+            onPress={() => setVisible(true)}
+            testID="home-repeat-yesterday"
+          />
+        </View>
+      ) : (
+        <Button
+          variant="secondary"
+          label={t('homeRefresh.repeatYesterday')}
+          onPress={() => setVisible(true)}
+          testID="home-repeat-yesterday"
+        />
+      )}
       <Sheet
         visible={visible}
         onClose={() => setVisible(false)}
@@ -51,4 +69,7 @@ export function RepeatYesterdayMeals({ localDate }: { localDate: string }) {
   );
 }
 
-const styles = StyleSheet.create({ content: { padding: space[3], gap: space[3] } });
+const styles = StyleSheet.create({
+  content: { padding: space[3], gap: space[3] },
+  v1Trigger: { alignItems: 'center', justifyContent: 'center' },
+});
