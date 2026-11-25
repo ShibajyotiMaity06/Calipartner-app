@@ -1,5 +1,7 @@
 # CaliPartner — UI Specification Index
 
+> **Single Source of Truth — Design System v1**: [DESIGN_SYSTEM_V1.md](./DESIGN_SYSTEM_V1.md) is the authoritative build spec for all colors, typography (`Fraunces` + `Manrope`), spacing, radii, icons, primitives (`@calipartner/ui/v1`), motion, haptics, accessibility, and screen builds. Whenever older documents below conflict with `DESIGN_SYSTEM_V1.md`, `DESIGN_SYSTEM_V1.md` wins.
+
 > Owner request, 2 November 2026: use online-only signed-in reads and saves. Retire automatic background upload, local retry queues, conflict merging, manual sync actions and all sync status UI. Failed network saves must report failure and remain unsaved; retries use client-generated IDs. Keep local read caches and guest setup only where required, without promising offline logging. Preserve database privacy, entitlements, safety, existing records and immutable migration history. Simplify Home to greeting and time-based meal prompt, a top-right AI coach icon, aligned equal-size squad cards, Your part today, and compact meal rows (four nutrition values in one row only when logged). Remove the personal streak subtitle, Today with squad feed, coach card and Log something tiles. Present food-log methods clearly and repair Home and device Back navigation. Necessary targeted hooks, services, local database, backend retirement and documentation changes supersede earlier offline-first, UI-only and phase restrictions for this request.
 
 

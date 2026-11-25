@@ -19,6 +19,8 @@
     "@expo-google-fonts/anek-devanagari": "^0.4.1",
     "@expo-google-fonts/bricolage-grotesque": "^0.4.1",
     "@expo-google-fonts/figtree": "^0.4.1",
+    "@expo-google-fonts/fraunces": "^0.4.1",
+    "@expo-google-fonts/manrope": "^0.4.3",
     "@expo-google-fonts/plus-jakarta-sans": "^0.4.2",
     "@expo/metro-runtime": "~57.0.2",
     "@expo/vector-icons": "^15.0.2",

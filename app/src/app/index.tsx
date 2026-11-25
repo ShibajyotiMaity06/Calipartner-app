@@ -1,27 +1,25 @@
 import React, { useEffect, useState } from 'react';
-import { View, StyleSheet } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { useRouter } from 'expo-router';
-import { useTheme } from '@calipartner/ui';
+import { colors } from '@calipartner/ui/v1';
 import { useAuth } from '@/contexts/AuthContext';
 import { isUserOnboarded } from '@/services/onboardingStatus';
 import { afterSetupDestination } from '@/services/pairOnboardingService';
 import { ErrorState } from '@/components/ErrorState';
-import { AnimatedLogoSplash } from '@/components/brand/AnimatedLogoSplash';
 
 export default function LaunchScreen() {
-  const { colors } = useTheme();
   const router = useRouter();
   const { user, isLoading } = useAuth();
-  const [finished, setFinished] = useState(false);
   const [destination, setDestination] = useState<string | null>(null);
   const [error, setError] = useState(false);
   const [retry, setRetry] = useState(0);
+
   useEffect(() => {
     if (isLoading) return;
     let active = true;
     setDestination(null);
     const resolve = async () => {
-      if (!user) return '/onboarding';
+      if (!user) return '/welcome';
       if (!(await isUserOnboarded(user.id))) return '/onboarding';
       const next = await afterSetupDestination(user.id);
       return next === '/today' ? '/(tabs)/today' : next;
@@ -37,15 +35,13 @@ export default function LaunchScreen() {
       active = false;
     };
   }, [user, isLoading, retry]);
+
   useEffect(() => {
-    if (finished && destination && !isLoading && !error) router.replace(destination as never);
-  }, [finished, destination, isLoading, error, router]);
+    if (destination && !isLoading && !error) router.replace(destination as never);
+  }, [destination, isLoading, error, router]);
+
   return (
-    <View
-      style={[styles.container, { backgroundColor: colors.splashBackground }]}
-      testID="launch-screen"
-    >
-      <AnimatedLogoSplash onComplete={() => setFinished(true)} />
+    <View style={[styles.container, { backgroundColor: colors.bg0 }]} testID="launch-screen">
       {error ? (
         <ErrorState
           onRetry={() => {
@@ -57,4 +53,4 @@ export default function LaunchScreen() {
     </View>
   );
 }
-const styles = StyleSheet.create({ container: { flex: 1 } });
+const styles = StyleSheet.create({ container: { flex: 1, justifyContent: 'center' } });

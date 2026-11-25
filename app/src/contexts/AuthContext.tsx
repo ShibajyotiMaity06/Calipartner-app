@@ -26,8 +26,12 @@ interface AuthContextValue {
   isGuest: boolean;
   needsProfileSetup: boolean;
   profileError: string | null;
-  signInWithOtp: (email: string, shouldCreateUser?: boolean) => Promise<{ error: Error | null }>;
-  verifyOtp: (email: string, token: string) => Promise<{ error: Error | null }>;
+  signUpWithPassword: (
+    email: string,
+    password: string,
+  ) => Promise<{ error: Error | null; needsEmailConfirmation?: boolean }>;
+  signInWithPassword: (email: string, password: string) => Promise<{ error: Error | null }>;
+  resetPassword: (email: string) => Promise<{ error: Error | null }>;
   signInWithGoogle: () => Promise<{ error: Error | null }>;
   signInWithApple: () => Promise<{ error: Error | null }>;
   continueAsGuest: () => void;
@@ -37,6 +41,33 @@ interface AuthContextValue {
   updateProfile: (input: UpdateProfileInput) => Promise<{ error: Error | null }>;
   changeUsername: (newUsername: string) => Promise<{ error: Error | null }>;
   refreshProfile: () => Promise<void>;
+}
+
+function getAuthRedirectUrl(): string | undefined {
+  const browserOrigin =
+    typeof globalThis !== 'undefined' && 'window' in globalThis
+      ? (globalThis as unknown as { window: { location: { origin: string } } }).window?.location
+          ?.origin
+      : undefined;
+  return Platform.OS === 'web'
+    ? browserOrigin
+      ? `${browserOrigin}/`
+      : undefined
+    : 'calipartner://auth/callback';
+}
+
+function formatAuthError(rawMsg: string): Error {
+  if (
+    rawMsg.toLowerCase().includes('security purposes') ||
+    rawMsg.toLowerCase().includes('rate limit') ||
+    rawMsg.toLowerCase().includes('seconds')
+  ) {
+    const match = rawMsg.match(/(\d+)\s*sec/i);
+    const parsedSecs = match && match[1] ? parseInt(match[1], 10) : 30;
+    const cappedSecs = Math.min(30, Math.max(5, parsedSecs));
+    return new Error(`Retry after ${cappedSecs} seconds`);
+  }
+  return new Error(rawMsg);
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -167,51 +198,47 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (user?.id) void fetchProfile(user.id);
   }, [fetchProfile, user?.id]);
 
-  const signInWithOtp = useCallback(async (email: string, shouldCreateUser = false) => {
-    const cleanEmail = email.trim();
-    if (isDisposableEmail(cleanEmail)) {
-      return { error: new Error('DISPOSABLE_EMAIL') };
-    }
-
-    try {
-      const supabase = getSupabase();
-      const { error } = await supabase.auth.signInWithOtp({
-        email: cleanEmail,
-        options: {
-          shouldCreateUser,
-        },
-      });
-      if (error) {
-        const rawMsg = error.message || '';
-        if (
-          rawMsg.toLowerCase().includes('security purposes') ||
-          rawMsg.toLowerCase().includes('rate limit') ||
-          rawMsg.toLowerCase().includes('seconds')
-        ) {
-          const match = rawMsg.match(/(\d+)\s*sec/i);
-          const parsedSecs = match && match[1] ? parseInt(match[1], 10) : 30;
-          const cappedSecs = Math.min(30, Math.max(5, parsedSecs));
-          return { error: new Error(`Retry after ${cappedSecs} seconds`) };
-        }
-        return { error: new Error(rawMsg) };
+  const signUpWithPassword = useCallback(
+    async (email: string, password: string) => {
+      const cleanEmail = email.trim();
+      if (isDisposableEmail(cleanEmail)) {
+        return { error: new Error('DISPOSABLE_EMAIL') };
       }
-      return { error: null };
-    } catch (e: unknown) {
-      return { error: e instanceof Error ? e : new Error(String(e)) };
-    }
-  }, []);
 
-  const verifyOtp = useCallback(
-    async (email: string, token: string) => {
       try {
         const supabase = getSupabase();
-        const { data, error } = await supabase.auth.verifyOtp({
-          email: email.trim(),
-          token: token.trim(),
-          type: 'email',
+        const redirectTo = getAuthRedirectUrl();
+        const { data, error } = await supabase.auth.signUp({
+          email: cleanEmail,
+          password,
+          options: redirectTo ? { emailRedirectTo: redirectTo } : undefined,
         });
         if (error) {
-          return { error: new Error(error.message) };
+          return { error: formatAuthError(error.message || '') };
+        }
+        if (data.session?.user?.id) {
+          setIsGuest(false);
+          await fetchProfile(data.session.user.id);
+          return { error: null, needsEmailConfirmation: false };
+        }
+        return { error: null, needsEmailConfirmation: Boolean(data.user && !data.session) };
+      } catch (e: unknown) {
+        return { error: e instanceof Error ? e : new Error(String(e)) };
+      }
+    },
+    [fetchProfile],
+  );
+
+  const signInWithPassword = useCallback(
+    async (email: string, password: string) => {
+      try {
+        const supabase = getSupabase();
+        const { data, error } = await supabase.auth.signInWithPassword({
+          email: email.trim(),
+          password,
+        });
+        if (error) {
+          return { error: formatAuthError(error.message || '') };
         }
         if (data.user?.id) {
           setIsGuest(false);
@@ -225,20 +252,27 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     [fetchProfile],
   );
 
+  const resetPassword = useCallback(async (email: string) => {
+    try {
+      const supabase = getSupabase();
+      const redirectTo = getAuthRedirectUrl();
+      const { error } = await supabase.auth.resetPasswordForEmail(
+        email.trim(),
+        redirectTo ? { redirectTo } : undefined,
+      );
+      if (error) {
+        return { error: formatAuthError(error.message || '') };
+      }
+      return { error: null };
+    } catch (e: unknown) {
+      return { error: e instanceof Error ? e : new Error(String(e)) };
+    }
+  }, []);
+
   const signInWithGoogle = useCallback(async () => {
     try {
       const supabase = getSupabase();
-      const browserOrigin =
-        typeof globalThis !== 'undefined' && 'window' in globalThis
-          ? (globalThis as unknown as { window: { location: { origin: string } } }).window?.location
-              ?.origin
-          : undefined;
-      const redirectTo =
-        Platform.OS === 'web'
-          ? browserOrigin
-            ? `${browserOrigin}/`
-            : undefined
-          : 'calipartner://auth/callback';
+      const redirectTo = getAuthRedirectUrl();
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
@@ -254,17 +288,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const signInWithApple = useCallback(async () => {
     try {
       const supabase = getSupabase();
-      const browserOrigin =
-        typeof globalThis !== 'undefined' && 'window' in globalThis
-          ? (globalThis as unknown as { window: { location: { origin: string } } }).window?.location
-              ?.origin
-          : undefined;
-      const redirectTo =
-        Platform.OS === 'web'
-          ? browserOrigin
-            ? `${browserOrigin}/`
-            : undefined
-          : 'calipartner://auth/callback';
+      const redirectTo = getAuthRedirectUrl();
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'apple',
         options: {
@@ -440,8 +464,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         isGuest,
         needsProfileSetup,
         profileError,
-        signInWithOtp,
-        verifyOtp,
+        signUpWithPassword,
+        signInWithPassword,
+        resetPassword,
         signInWithGoogle,
         signInWithApple,
         continueAsGuest,

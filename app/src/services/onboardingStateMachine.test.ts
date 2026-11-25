@@ -11,29 +11,47 @@ const adult = {
 };
 
 describe('Onboarding redesign state machine', () => {
-  it('follows the 13 steps after authentication', () => {
+  it('follows the onboarding steps through finale in exact order', () => {
     const machine = new OnboardingStateMachine(adult)
       .setCharacterGender('male', true)
       .setGoal('cut');
     const visited = [machine.getState().currentStep];
     while (machine.next()) visited.push(machine.getState().currentStep);
-    expect(visited).toEqual([...ONBOARDING_STEPS_ORDER, 'reveal', 'paywall']);
+    expect(visited).toEqual([
+      ...ONBOARDING_STEPS_ORDER,
+      'reveal',
+      'reminders',
+      'auth',
+      'pro_coach',
+      'pro_partners',
+      'pro_adaptive',
+      'paywall',
+      'profile',
+      'all_set',
+    ]);
     expect(visited).toEqual([
       'goal',
       'nickname',
       'age',
-      'profile',
       'height',
       'weight',
       'activity_level',
       'gym_days',
       'target_weight',
       'rate_selection',
-      'step_goal',
-      'water_goal',
+      'trackers',
+      'daily_targets',
+      'health_sync',
       'plan_summary',
       'reveal',
+      'reminders',
+      'auth',
+      'pro_coach',
+      'pro_partners',
+      'pro_adaptive',
       'paywall',
+      'profile',
+      'all_set',
     ]);
   });
 
@@ -104,7 +122,21 @@ describe('Onboarding redesign state machine', () => {
     expect(machine.goToStep('paywall')).toBe(false);
     expect(machine.getState().currentStep).toBe('height');
     machine.setBodyStats({ heightCm: 175 });
-    expect(machine.goToStep('paywall')).toBe(true);
+    expect(machine.goToStep('all_set')).toBe(true);
+    expect(machine.back()).toBe(true);
+    expect(machine.getState().currentStep).toBe('profile');
+    expect(machine.back()).toBe(true);
+    expect(machine.getState().currentStep).toBe('paywall');
+    expect(machine.back()).toBe(true);
+    expect(machine.getState().currentStep).toBe('pro_adaptive');
+    expect(machine.back()).toBe(true);
+    expect(machine.getState().currentStep).toBe('pro_partners');
+    expect(machine.back()).toBe(true);
+    expect(machine.getState().currentStep).toBe('pro_coach');
+    expect(machine.back()).toBe(true);
+    expect(machine.getState().currentStep).toBe('auth');
+    expect(machine.back()).toBe(true);
+    expect(machine.getState().currentStep).toBe('reminders');
     expect(machine.back()).toBe(true);
     expect(machine.getState().currentStep).toBe('reveal');
   });

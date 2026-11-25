@@ -3,14 +3,18 @@ import { act, create, type ReactTestRenderer } from 'react-test-renderer';
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 const api = vi.hoisted(() => ({
   catalog: vi.fn(),
-  otp: vi.fn(),
+  signUp: vi.fn(),
+  signIn: vi.fn(),
+  resetPassword: vi.fn(),
   google: vi.fn(),
-  verify: vi.fn(),
+  apple: vi.fn(),
   params: { mode: 'signup' },
   setParams: vi.fn(),
   refresh: vi.fn(),
   cached: vi.fn(),
   trial: vi.fn(),
+  replace: vi.fn(),
+  push: vi.fn(),
   eligible: true,
 }));
 vi.mock('react-native', () => ({
@@ -21,12 +25,49 @@ vi.mock('react-native', () => ({
   View: 'View',
   StyleSheet: { create: (value: unknown) => value },
 }));
-vi.mock('react-native-safe-area-context', () => ({ SafeAreaView: 'SafeAreaView' }));
+vi.mock('react-native-safe-area-context', () => ({
+  SafeAreaView: 'SafeAreaView',
+  useSafeAreaInsets: () => ({ top: 0, bottom: 0, left: 0, right: 0 }),
+}));
+vi.mock('react-native-svg', () => ({
+  default: 'Svg',
+  Svg: 'Svg',
+  Circle: 'Circle',
+  Path: 'Path',
+}));
 vi.mock('expo-router', () => ({
-  useRouter: () => ({ setParams: api.setParams, replace: vi.fn() }),
+  useRouter: () => ({ setParams: api.setParams, replace: api.replace, push: api.push }),
   useLocalSearchParams: () => api.params,
 }));
 vi.mock('@expo/vector-icons', () => ({ Ionicons: 'Ionicons' }));
+vi.mock('@calipartner/ui/v1', async () => {
+  const tokens = await import('../../../../packages/ui/src/v1/theme');
+  return {
+    ...tokens,
+    AppleIcon: 'AppleIcon',
+    BrandRingMark: 'BrandRingMark',
+    ChevronLeftIcon: 'ChevronLeftIcon',
+    CloseIcon: 'CloseIcon',
+    EyeIcon: 'EyeIcon',
+    EyeOffIcon: 'EyeOffIcon',
+    GoogleIcon: 'GoogleIcon',
+    IconButton: 'IconButton',
+    Input: 'Input',
+    LinkButton: 'LinkButton',
+    PrimaryButton: 'PrimaryButton',
+    ScreenTitle: 'ScreenTitle',
+    ScreenWrapper: ({ children, footer, testID }: Record<string, unknown>) =>
+      React.createElement(
+        'View',
+        { testID },
+        children as React.ReactNode,
+        footer as React.ReactNode,
+      ),
+    SocialButton: 'SocialButton',
+    Text: 'Text',
+    useTheme: () => ({ reduceMotion: true, reduceTransparency: false }),
+  };
+});
 vi.mock('@calipartner/ui', async () => {
   const tokens = await import('../../../../packages/ui/src/tokens');
   return {
@@ -56,11 +97,14 @@ vi.mock('@/hooks/useSubscription', () => ({
 vi.mock('@/contexts/AuthContext', () => ({
   useAuth: () => ({
     user: null,
-    signInWithOtp: api.otp,
-    verifyOtp: api.verify,
+    signUpWithPassword: api.signUp,
+    signInWithPassword: api.signIn,
+    resetPassword: api.resetPassword,
     signInWithGoogle: api.google,
+    signInWithApple: api.apple,
   }),
 }));
+vi.mock('@/components/legal', () => ({ TermsOfServiceModal: 'TermsOfServiceModal' }));
 vi.mock('@/services/webBillingService', () => ({
   fetchWebCatalog: api.catalog,
   getCachedWebCatalog: api.cached,
@@ -83,8 +127,11 @@ beforeEach(() => {
   api.eligible = true;
   api.trial.mockResolvedValue(true);
   api.params.mode = 'signup';
-  api.otp.mockResolvedValue({ error: null });
-  api.verify.mockResolvedValue({ error: null });
+  api.signUp.mockResolvedValue({ error: null, needsEmailConfirmation: false });
+  api.signIn.mockResolvedValue({ error: null });
+  api.resetPassword.mockResolvedValue({ error: null });
+  api.google.mockResolvedValue({ error: null });
+  api.apple.mockResolvedValue({ error: null });
 });
 afterEach(async () => {
   if (tree) await act(async () => tree?.unmount());
@@ -158,45 +205,55 @@ it('keeps Free and price retry usable after automatic country detection fails', 
   expect(tree!.root.findByProps({ testID: 'btn-onboarding-next' }).props.disabled).toBe(false);
 });
 it.each(['signup', 'signin'])(
-  'preserves email-code %s semantics and validates six digits',
+  'uses Google/Apple primary with email and password %s without OTP',
   async (mode) => {
     api.params.mode = mode;
     await act(async () => {
       tree = create(<SignInScreen />);
     });
-    expect(tree!.root.findByProps({ testID: 'auth-logo' })).toBeTruthy();
-    expect(tree!.root.findAllByProps({ secureTextEntry: true })).toHaveLength(0);
-    await act(async () =>
-      tree!.root.findByProps({ testID: 'input-email' }).props.onChangeText('person@example.com'),
-    );
-    await act(async () => tree!.root.findByProps({ testID: 'btn-send-code' }).props.onPress());
-    expect(api.otp).toHaveBeenCalledWith('person@example.com', mode === 'signup');
-    expect(tree!.root.findByProps({ testID: 'input-otp' }).props.autoComplete).toBe(
-      'one-time-code',
-    );
-    await act(async () =>
-      tree!.root.findByProps({ testID: 'input-otp' }).props.onChangeText('abc123'),
-    );
-    await act(async () => tree!.root.findByProps({ testID: 'btn-verify-code' }).props.onPress());
-    expect(api.verify).not.toHaveBeenCalled();
-    await act(async () =>
-      tree!.root.findByProps({ testID: 'input-otp' }).props.onChangeText('123456'),
-    );
-    await act(async () => tree!.root.findByProps({ testID: 'btn-verify-code' }).props.onPress());
-    expect(api.verify).toHaveBeenCalledWith('person@example.com', '123456');
+    expect(tree!.root.findByProps({ testID: 'btn-apple-signin' })).toBeTruthy();
+    expect(tree!.root.findByProps({ testID: 'btn-google-signin' })).toBeTruthy();
+    expect(tree!.root.findByProps({ testID: 'input-password' }).props.secureTextEntry).toBe(true);
+    expect(tree!.root.findAllByProps({ testID: 'input-otp' })).toHaveLength(0);
+
+    await act(async () => {
+      tree!.root.findByProps({ testID: 'input-email' }).props.onChangeText('person@example.com');
+      tree!.root.findByProps({ testID: 'input-password' }).props.onChangeText('short');
+    });
+    await act(async () => {
+      tree!.root.findByProps({ testID: 'btn-submit-email-auth' }).props.onPress();
+    });
+    if (mode === 'signup') {
+      expect(api.signUp).not.toHaveBeenCalled();
+    }
+
+    await act(async () => {
+      tree!.root.findByProps({ testID: 'input-password' }).props.onChangeText('password123');
+    });
+    await act(async () => {
+      tree!.root.findByProps({ testID: 'btn-submit-email-auth' }).props.onPress();
+    });
+    if (mode === 'signup') {
+      expect(api.signUp).toHaveBeenCalledWith('person@example.com', 'password123');
+    } else {
+      expect(api.signIn).toHaveBeenCalledWith('person@example.com', 'password123');
+    }
   },
 );
-it('shows request errors and restores the email action for a retry', async () => {
-  api.otp.mockRejectedValueOnce(new Error('offline'));
+it('shows request errors and restores the submit action for a retry', async () => {
+  api.signUp.mockRejectedValueOnce(new Error('offline'));
   await act(async () => {
     tree = create(<SignInScreen />);
   });
-  await act(async () =>
-    tree!.root.findByProps({ testID: 'input-email' }).props.onChangeText('person@example.com'),
-  );
-  await act(async () => tree!.root.findByProps({ testID: 'btn-send-code' }).props.onPress());
+  await act(async () => {
+    tree!.root.findByProps({ testID: 'input-email' }).props.onChangeText('person@example.com');
+    tree!.root.findByProps({ testID: 'input-password' }).props.onChangeText('password123');
+  });
+  await act(async () => {
+    tree!.root.findByProps({ testID: 'btn-submit-email-auth' }).props.onPress();
+  });
   expect(tree!.root.findByProps({ testID: 'auth-error-banner' })).toBeTruthy();
-  expect(tree!.root.findByProps({ testID: 'btn-send-code' }).props.loading).toBe(false);
+  expect(tree!.root.findByProps({ testID: 'btn-submit-email-auth' }).props.loading).toBe(false);
 });
 
 it('keeps the Free action available while paid checkout waits for verified pricing', async () => {
@@ -212,18 +269,27 @@ it('keeps the Free action available while paid checkout waits for verified prici
   expect(proceed).not.toHaveBeenCalled();
   expect(api.trial).not.toHaveBeenCalled();
 });
-it('explains Indian food and free personal tracking before registration', async () => {
+it('renders the Design System v1 Welcome screen with concentric rings, activity pills, and Get started CTA', async () => {
   await act(async () => {
     tree = create(<WelcomeScreen />);
   });
-  expect(tree!.root.findByProps({ testID: 'welcome-audience' }).props.children).toContain(
-    'Indian food',
+  expect(tree!.root.findByProps({ testID: 'welcome-brand' })).toBeTruthy();
+  expect(tree!.root.findByProps({ testID: 'welcome-hero' })).toBeTruthy();
+  expect(tree!.root.findByProps({ testID: 'welcome-pill-priya' })).toBeTruthy();
+  expect(tree!.root.findByProps({ testID: 'welcome-pill-jack' })).toBeTruthy();
+  expect(tree!.root.findByProps({ testID: 'welcome-title' }).props).toMatchObject({
+    title: 'Get fit with someone in your corner.',
+    accentWord: 'someone',
+  });
+  expect(tree!.root.findByProps({ testID: 'welcome-setup-note' }).props.children).toBe(
+    'Takes about two minutes to set up',
   );
-  expect(tree!.root.findByProps({ testID: 'welcome-trial' }).props.children).toContain(
-    'Personal tracking is free forever.',
-  );
+  await act(async () => {
+    tree!.root.findByProps({ testID: 'btn-welcome-get-started' }).props.onPress();
+  });
+  expect(api.push).toHaveBeenCalledWith('/onboarding');
 });
-it('keeps email available when Google hangs and shows recovery guidance', async () => {
+it('keeps email and password available when Google hangs and shows recovery guidance', async () => {
   vi.useFakeTimers();
   try {
     api.google.mockReturnValue(new Promise(() => {}));
@@ -236,7 +302,9 @@ it('keeps email available when Google hangs and shows recovery guidance', async 
     expect(tree!.root.findByProps({ testID: 'auth-browser-help' }).props.children).toContain(
       'Safari/Chrome',
     );
-    expect(tree!.root.findByProps({ testID: 'btn-send-code' }).props.disabled).not.toBe(true);
+    expect(tree!.root.findByProps({ testID: 'btn-submit-email-auth' }).props.disabled).not.toBe(
+      true,
+    );
     await act(async () => {
       vi.advanceTimersByTime(12000);
     });
@@ -255,7 +323,7 @@ it('shows actionable alternatives on disallowed Google user agent', async () => 
     tree!.root.findByProps({ testID: 'btn-google-signin' }).props.onPress();
   });
   expect(tree!.root.findByProps({ testID: 'auth-browser-help' }).props.children).toContain(
-    'email 6-digit code',
+    'email and password',
   );
-  expect(tree!.root.findByProps({ testID: 'btn-send-code' }).props.disabled).not.toBe(true);
+  expect(tree!.root.findByProps({ testID: 'btn-submit-email-auth' }).props.disabled).not.toBe(true);
 });

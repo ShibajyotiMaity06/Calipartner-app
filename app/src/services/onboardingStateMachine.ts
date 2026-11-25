@@ -1,6 +1,7 @@
 import {
   calculateGymTargets,
   calculateAge,
+  defaultWorkoutDays,
   isGymPlanValid,
   isAtLeast18,
   type ActivityLevel,
@@ -17,24 +18,37 @@ export const ONBOARDING_STEPS_ORDER = [
   'goal',
   'nickname',
   'age',
-  'profile',
   'height',
   'weight',
   'activity_level',
   'gym_days',
   'target_weight',
   'rate_selection',
-  'step_goal',
-  'water_goal',
+  'trackers',
+  'daily_targets',
+  'health_sync',
   'plan_summary',
 ] as const;
 
-const ONBOARDING_FLOW = [...ONBOARDING_STEPS_ORDER, 'reveal', 'paywall'] as const;
+const ONBOARDING_FLOW = [
+  ...ONBOARDING_STEPS_ORDER,
+  'reveal',
+  'reminders',
+  'auth',
+  'pro_coach',
+  'pro_partners',
+  'pro_adaptive',
+  'paywall',
+  'profile',
+  'all_set',
+] as const;
 export const MAX_ONBOARDING_WEEKLY_RATE_KG = 3;
 export type OnboardingStep = (typeof ONBOARDING_FLOW)[number];
-type ValidationStep = OnboardingStep | 'body_stats' | 'daily_goals';
+type ValidationStep = OnboardingStep | 'body_stats' | 'daily_goals' | 'step_goal' | 'water_goal';
 export type SelectedGoal = Exclude<Goal, 'maintain'>;
 export type CharacterGender = Exclude<Sex, 'other'>;
+export type OnboardingTrackerKey =
+  'calories' | 'steps' | 'water' | 'workouts' | 'weight' | 'fasting';
 
 export interface OnboardingState {
   currentStep: OnboardingStep;
@@ -51,6 +65,7 @@ export interface OnboardingState {
   bodyFatPercentage: number | null;
   activityLevel: ActivityLevel;
   gymDays: number;
+  trainingDays: number[];
   dailyAdjustmentKcal: number | null;
   goalProfileId: string;
   weeklyRateKg: number;
@@ -61,8 +76,19 @@ export interface OnboardingState {
     hasDiabetesOrMedication: boolean;
     hasEatingDisorderHistory: boolean;
   };
+  enabledTrackers: Record<OnboardingTrackerKey, boolean>;
   stepGoal: number;
   waterMlGoal: number;
+  healthSyncOptions: {
+    steps: boolean;
+    weight: boolean;
+    workouts: boolean;
+  };
+  reminderPrefs: {
+    meals: boolean;
+    hydration: boolean;
+    partner: boolean;
+  };
   targetOverrides: OnboardingTargetOverrides;
   calculatedTargets: GymTargetsResult | null;
   errors: Record<string, string>;
@@ -83,6 +109,7 @@ export const INITIAL_ONBOARDING_STATE: OnboardingState = {
   bodyFatPercentage: null,
   activityLevel: 'moderate',
   gymDays: 3,
+  trainingDays: defaultWorkoutDays(3),
   dailyAdjustmentKcal: null,
   goalProfileId: '',
   weeklyRateKg: 0.5,
@@ -93,8 +120,26 @@ export const INITIAL_ONBOARDING_STATE: OnboardingState = {
     hasDiabetesOrMedication: false,
     hasEatingDisorderHistory: false,
   },
+  enabledTrackers: {
+    calories: true,
+    steps: true,
+    water: true,
+    workouts: true,
+    weight: true,
+    fasting: false,
+  },
   stepGoal: 8000,
   waterMlGoal: 2500,
+  healthSyncOptions: {
+    steps: true,
+    weight: true,
+    workouts: true,
+  },
+  reminderPrefs: {
+    meals: true,
+    hydration: true,
+    partner: true,
+  },
   targetOverrides: {},
   calculatedTargets: null,
   errors: {},
@@ -104,9 +149,25 @@ export class OnboardingStateMachine {
   private state: OnboardingState;
 
   constructor(initialState?: Partial<OnboardingState>) {
+    const gymDays = initialState?.gymDays ?? INITIAL_ONBOARDING_STATE.gymDays;
     this.state = {
       ...INITIAL_ONBOARDING_STATE,
       ...initialState,
+      trainingDays: initialState?.trainingDays
+        ? [...initialState.trainingDays]
+        : gymDays === 1
+          ? [0]
+          : gymDays === 7
+            ? [0, 1, 2, 3, 4, 5, 6]
+            : defaultWorkoutDays(gymDays),
+      enabledTrackers: {
+        ...INITIAL_ONBOARDING_STATE.enabledTrackers,
+        ...initialState?.enabledTrackers,
+      },
+      healthSyncOptions: {
+        ...INITIAL_ONBOARDING_STATE.healthSyncOptions,
+        ...initialState?.healthSyncOptions,
+      },
       goalProfileId: initialState?.goalProfileId || generateClientUuid(),
     };
     if (this.canCalculateTargets()) {
@@ -193,7 +254,52 @@ export class OnboardingStateMachine {
 
   setGymDays(days: number): this {
     this.state.gymDays = days;
+    this.state.trainingDays =
+      days === 0
+        ? []
+        : days === 1
+          ? [0]
+          : days === 7
+            ? [0, 1, 2, 3, 4, 5, 6]
+            : defaultWorkoutDays(days);
     this.recalculateTargets();
+    return this;
+  }
+
+  toggleTrainingDay(day: number): this {
+    if (!Number.isInteger(day) || day < 0 || day > 6) return this;
+    const exists = this.state.trainingDays.includes(day);
+    const nextDays = exists
+      ? this.state.trainingDays.filter((item) => item !== day)
+      : [...this.state.trainingDays, day].sort((a, b) => a - b);
+    this.state.trainingDays = nextDays;
+    this.state.gymDays = nextDays.length;
+    this.recalculateTargets();
+    return this;
+  }
+
+  toggleTracker(key: OnboardingTrackerKey): this {
+    this.state.enabledTrackers = {
+      ...this.state.enabledTrackers,
+      [key]: !this.state.enabledTrackers[key],
+    };
+    return this;
+  }
+
+  setHealthSyncOption(key: 'steps' | 'weight' | 'workouts', value: boolean): this {
+    this.state.healthSyncOptions = {
+      ...this.state.healthSyncOptions,
+      [key]: value,
+    };
+    return this;
+  }
+
+  setReminderPrefs(prefs: Partial<OnboardingState['reminderPrefs']>): this {
+    this.state.reminderPrefs = {
+      ...INITIAL_ONBOARDING_STATE.reminderPrefs,
+      ...this.state.reminderPrefs,
+      ...prefs,
+    };
     return this;
   }
 
@@ -235,12 +341,18 @@ export class OnboardingStateMachine {
     const errors: Record<string, string> = {};
 
     switch (step) {
+      case 'daily_targets':
       case 'daily_goals':
         Object.assign(
           errors,
           this.validateStep('step_goal').errors,
           this.validateStep('water_goal').errors,
         );
+        break;
+      case 'trackers':
+        if (!Object.values(this.state.enabledTrackers).some(Boolean)) {
+          errors.trackers = 'Keep at least one tracker turned on';
+        }
         break;
       case 'step_goal':
         if (
@@ -259,7 +371,6 @@ export class OnboardingStateMachine {
           errors.waterMlGoal = 'Invalid water goal';
         break;
       case 'goal':
-        if (!this.state.characterGender) errors.characterGender = 'Please choose a character';
         if (!this.state.goalSelected || !['cut', 'bulk'].includes(this.state.goal)) {
           errors.goal = 'Please choose a goal';
         }

@@ -8,8 +8,8 @@ export const publicSite = {
   audience: 'Built for Indian food & fitness accountability.',
   trial: 'Personal tracking is free forever. Pro is an optional paid subscription.',
   browserHelp:
-    'If Google login doesn’t open in this browser, use the email 6-digit code or open in Safari/Chrome.',
-  googlePending: 'Google sign-in has not completed. You can use your email code below.',
+    'If Google login doesn’t open in this browser, use email and password below or open in Safari/Chrome.',
+  googlePending: 'Google sign-in has not completed. You can use email and password below.',
   legalTitle: 'Legal and privacy',
   closeLegal: 'Close legal information',
   agree: 'Agree and continue',

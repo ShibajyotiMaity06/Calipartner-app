@@ -57,16 +57,16 @@ AGENT_RULES.md
 5. Anything I must do manually (accounts, keys, console settings).
 6. Anything you noticed that belongs to a later phase (do NOT build it).
 
-## UI rules (from CaliPartner_UI_UX_Spec.md)
-U1. Design source of truth is docs/ui/. Tokens live only in packages/ui/tokens. No hex, font name, spacing or radius literals elsewhere.
-U2. Apricot is the app, not a person. One apricot action per screen. Text and icons on apricot use onBrand (#1C1109), never white.
-U3. Two people = identity hues (default Iris and Teal). Identity colour never means good or bad. Only the pairs in allowedPairs may be used together.
-U4. No red or green for performance. Over goal = cream second lap + the word "over". danger colour only for destructive actions and errors.
+## UI rules (Design System v1 — Single Source of Truth)
+U1. Design source of truth is `docs/ui/DESIGN_SYSTEM_V1.md`. Tokens live only in `packages/ui/src/v1/` (and `packages/ui/tokens`). No hex, font name, spacing or radius literals elsewhere.
+U2. Apricot (`#F4B67D`) is for the next action, selected state, and progress only. Text and icons on apricot use `onBrand` (`#1C1109`), never white.
+U3. Warm dark surfaces (`bg0` `#0E0B08`, `s1` `#1A1511`, `s2` `#241E18`, `s3` `#2F2821`) and `1 pt` hairlines (`#3A3228` / `#85755F`), not shadows for surface depth.
+U4. Macro colors: protein `apricot`, carbs `apricotPressed`, fat `hairlineLit`. `danger` (`#F65C58`) only for errors and sign out. No green or blue anywhere in Design System v1 screens.
 U5. Percent of own goal in any side-by-side view. Raw calories only in a person's own view. Hidden data shows a lock, never zero.
-U6. Fonts: Bricolage Grotesque (numbers, titles), Figtree (UI), Anek Devanagari (Hindi). Static weights only. Tabular numerals on every number that changes.
-U7. Glass only on the tab bar and the Log sheet, with opaque fallback for Reduce Transparency and low-end Android.
-U8. One orchestrated motion moment: the seam fuse. All other motion answers an action. Respect Reduce Motion.
-U9. Every tappable element is at least 44x44. Every icon button has an accessibility label. Text scales to 200% without clipping.
+U6. Fonts: **Fraunces** (`Fraunces_500Medium`, `Fraunces_500Medium_Italic`) for headlines and big numbers; **Manrope** (`Manrope_400Regular`, `500`, `600`, `700`, `800`) for all UI text, body, buttons, labels. Static family names only (`fontWeight` never combined with custom fonts). Tabular numerals on changing numbers and row/chip/table numbers.
+U7. Accent word: max 1 word in a headline in Fraunces italic `apricot`. Units in Manrope `textLo` at ~45% size.
+U8. Calm motion: rings fill 700 ms ease out, sheets spring (damping 20, stiffness 220), press scale 0.98 (120 ms). Respect Reduce Motion.
+U9. Every tappable element is at least 44x44. Every icon-only button has an accessibility label. Scale body/labels, cap Fraunces display numbers at 1.2x.
 U10. Copy: plain, warm, second person, sentence case, no emoji, no exclamation marks, no guilt. Verb names the object ("Add to lunch").
-U11. Logging never blocks and works offline. Show status, not spinners.
+U11. Logging requires an internet connection. Confirm saves only after server acknowledgement and show actionable request errors.
 U12. UI work never changes logic, schema, RLS, packages/core or entitlement checks.

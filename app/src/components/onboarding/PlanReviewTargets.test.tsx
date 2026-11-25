@@ -14,6 +14,17 @@ vi.mock('@calipartner/ui', async () => ({
   Text: 'Text',
   useTheme: () => ({ colors: {} }),
 }));
+vi.mock('@calipartner/ui/v1', async () => {
+  const tokens = await import('../../../../packages/ui/src/v1/theme');
+  return {
+    ...tokens,
+    Card: 'Card',
+    LinkButton: 'LinkButton',
+    Ring: 'Ring',
+    ScreenTitle: 'ScreenTitle',
+    Text: 'V1Text',
+  };
+});
 vi.mock('./PlanPrimitives', () => ({
   PlanCard: 'PlanCard',
   NumberField: 'NumberField',

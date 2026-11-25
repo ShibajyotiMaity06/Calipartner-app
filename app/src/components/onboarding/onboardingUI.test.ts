@@ -8,20 +8,20 @@ const ACTIVE_ONBOARDING_STEPS = ONBOARDING_STEPS_ORDER;
 
 describe('UI-5 Onboarding and Account Polish (Spec A01–A15, B01–B09)', () => {
   describe('1. Active Onboarding Flow Geometry & Order (Spec 7.A)', () => {
-    it('has 13 steps after authentication', () => {
+    it('has 13 steps in exact sequence from Goal through Plan Summary', () => {
       expect(ACTIVE_ONBOARDING_STEPS).toEqual([
         'goal',
         'nickname',
         'age',
-        'profile',
         'height',
         'weight',
         'activity_level',
         'gym_days',
         'target_weight',
         'rate_selection',
-        'step_goal',
-        'water_goal',
+        'trackers',
+        'daily_targets',
+        'health_sync',
         'plan_summary',
       ]);
       expect(ACTIVE_ONBOARDING_STEPS.length).toBe(13);
@@ -33,7 +33,8 @@ describe('UI-5 Onboarding and Account Polish (Spec A01–A15, B01–B09)', () =>
       };
 
       expect(Math.round(getProgressPct(0, 13))).toBe(8);
-      expect(Math.round(getProgressPct(6, 13))).toBe(54);
+      expect(Math.round(getProgressPct(3, 13))).toBe(31);
+      expect(Math.round(getProgressPct(4, 13))).toBe(38);
       expect(getProgressPct(12, 13)).toBe(100);
     });
   });
@@ -223,11 +224,11 @@ describe('UI-5 Onboarding and Account Polish (Spec A01–A15, B01–B09)', () =>
 
   describe('14. Step 5 & 6 Notification Primer Modal (Spec A05/A06)', () => {
     it('targets step 5 (height) and step 6 (weight) for the glass notification permission primer', () => {
-      expect(ACTIVE_ONBOARDING_STEPS[4]).toBe('height');
-      expect(ACTIVE_ONBOARDING_STEPS[5]).toBe('weight');
+      expect(ACTIVE_ONBOARDING_STEPS[3]).toBe('height');
+      expect(ACTIVE_ONBOARDING_STEPS[4]).toBe('weight');
       const targetSteps = ['height', 'weight'];
+      expect(targetSteps.includes(ACTIVE_ONBOARDING_STEPS[3])).toBe(true);
       expect(targetSteps.includes(ACTIVE_ONBOARDING_STEPS[4])).toBe(true);
-      expect(targetSteps.includes(ACTIVE_ONBOARDING_STEPS[5])).toBe(true);
     });
   });
 });

@@ -16,7 +16,15 @@ const state = vi.hoisted(() => ({
   updateTimezone: vi.fn(),
   startRefresh: vi.fn(),
   stopRefresh: vi.fn(),
-  otp: vi.fn(async () => ({ error: null })),
+  signUp: vi.fn(async () => ({
+    data: { session: null, user: { id: 'new-user' } },
+    error: null,
+  })),
+  signInWithPassword: vi.fn(async () => ({
+    data: { user: { id: 'returning-user' } },
+    error: null,
+  })),
+  resetPasswordForEmail: vi.fn(async () => ({ error: null })),
 }));
 vi.mock('react-native', () => ({
   Platform: { OS: 'android' },
@@ -54,7 +62,9 @@ vi.mock('@/lib/supabase', () => ({
       },
       startAutoRefresh: state.startRefresh,
       stopAutoRefresh: state.stopRefresh,
-      signInWithOtp: state.otp,
+      signUp: state.signUp,
+      signInWithPassword: state.signInWithPassword,
+      resetPasswordForEmail: state.resetPasswordForEmail,
     },
     from: () => ({
       update: (values: unknown) => ({
@@ -132,11 +142,12 @@ describe('returning user sessions', () => {
     expect(auth.profileError).toBeNull();
     expect(auth.profile?.nickname).toBe('Saved user');
   });
-  it('restores a session without sending another email code', async () => {
+  it('restores a session without sending another auth request', async () => {
     await mount();
     expect(auth.user?.id).toBe('returning-user');
     expect(auth.isLoading).toBe(false);
-    expect(state.otp).not.toHaveBeenCalled();
+    expect(state.signUp).not.toHaveBeenCalled();
+    expect(state.signInWithPassword).not.toHaveBeenCalled();
     let callbackResult: unknown;
     await act(async () => {
       callbackResult = state.callback?.('TOKEN_REFRESHED', session);
@@ -181,22 +192,33 @@ describe('returning user sessions', () => {
     expect(state.startRefresh.mock.calls.length).toBeGreaterThan(starts);
   });
 
-  it('creates accounts only for an explicit signup request', async () => {
+  it('supports email and password sign up, sign in, and password reset while blocking disposable emails', async () => {
     await mount();
+    const bad = await auth.signUpWithPassword('person@mailinator.com', 'password123');
+    expect(bad.error?.message).toBe('DISPOSABLE_EMAIL');
+    expect(state.signUp).not.toHaveBeenCalled();
+
+    const ok = await auth.signUpWithPassword('new@example.com', 'password123');
+    expect(state.signUp).toHaveBeenCalledWith(
+      expect.objectContaining({ email: 'new@example.com', password: 'password123' }),
+    );
+    expect(ok).toEqual({ error: null, needsEmailConfirmation: true });
+
     await act(async () => {
-      await auth.signInWithOtp('person@example.com');
+      await auth.signInWithPassword('person@example.com', 'password123');
     });
-    expect(state.otp).toHaveBeenLastCalledWith({
+    expect(state.signInWithPassword).toHaveBeenLastCalledWith({
       email: 'person@example.com',
-      options: { shouldCreateUser: false },
+      password: 'password123',
     });
+
     await act(async () => {
-      await auth.signInWithOtp('new@example.com', true);
+      await auth.resetPassword('person@example.com');
     });
-    expect(state.otp).toHaveBeenLastCalledWith({
-      email: 'new@example.com',
-      options: { shouldCreateUser: true },
-    });
+    expect(state.resetPasswordForEmail).toHaveBeenCalledWith(
+      'person@example.com',
+      expect.any(Object),
+    );
   });
 });
 

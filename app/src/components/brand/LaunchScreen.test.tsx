@@ -12,7 +12,9 @@ vi.mock('react-native', () => ({
   View: 'View',
   StyleSheet: { create: (value: unknown) => value },
 }));
-vi.mock('@calipartner/ui', () => ({ useTheme: () => ({ colors: {} }) }));
+vi.mock('@calipartner/ui/v1', () => ({
+  colors: { bg0: '#0E0B08' },
+}));
 vi.mock('expo-router', () => ({ useRouter: () => ({ replace: state.replace }) }));
 vi.mock('@/contexts/AuthContext', () => ({
   useAuth: () => ({ user: state.user, isLoading: state.loading }),
@@ -20,10 +22,10 @@ vi.mock('@/contexts/AuthContext', () => ({
 vi.mock('@/services/onboardingStatus', () => ({ isUserOnboarded: state.check }));
 vi.mock('@/services/pairOnboardingService', () => ({ afterSetupDestination: state.next }));
 vi.mock('@/components/ErrorState', () => ({ ErrorState: 'ErrorState' }));
-vi.mock('./AnimatedLogoSplash', () => ({ AnimatedLogoSplash: 'Splash' }));
 import LaunchScreen from '@/app/index';
 let tree: ReactTestRenderer;
 beforeEach(() => {
+  (globalThis as unknown as { IS_REACT_ACT_ENVIRONMENT: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
   state.user = null;
   state.loading = false;
   vi.clearAllMocks();
@@ -37,20 +39,14 @@ const render = async () => {
     tree = create(<LaunchScreen />);
   });
 };
-const finish = async () => {
-  await act(async () => tree.root.findByType('Splash' as React.ElementType).props.onComplete());
-};
-it('shows splash until finished, then sends a new visitor to onboarding', async () => {
+it('routes a first-time visitor straight to the Welcome screen with no splash animation', async () => {
   await render();
-  expect(state.replace).not.toHaveBeenCalled();
-  await finish();
-  expect(state.replace).toHaveBeenCalledWith('/onboarding');
+  expect(state.replace).toHaveBeenCalledWith('/welcome');
   expect(state.check).not.toHaveBeenCalled();
 });
-it('waits for session restoration even when motion is skipped', async () => {
+it('waits for session restoration and sends a returning user straight to Home', async () => {
   state.loading = true;
   await render();
-  await finish();
   expect(state.replace).not.toHaveBeenCalled();
   state.user = { id: 'returning' };
   state.loading = false;
@@ -62,7 +58,6 @@ it('keeps incomplete signed-in setup in onboarding', async () => {
   state.user = { id: 'new-account' };
   state.check.mockResolvedValue(false);
   await render();
-  await finish();
   expect(state.replace).toHaveBeenCalledWith('/onboarding');
 });
 it('resumes a pending founders screen after relaunch instead of skipping to Home', async () => {
@@ -70,14 +65,12 @@ it('resumes a pending founders screen after relaunch instead of skipping to Home
   state.check.mockResolvedValue(true);
   state.next.mockResolvedValue('/founders?next=pair');
   await render();
-  await finish();
   expect(state.replace).toHaveBeenCalledWith('/founders?next=pair');
 });
-it('keeps a failed readiness check actionable and retries without replaying the splash', async () => {
+it('keeps a failed readiness check actionable and retries cleanly', async () => {
   state.user = { id: 'returning' };
   state.check.mockRejectedValueOnce(new Error('network')).mockResolvedValue(true);
   await render();
-  await finish();
   expect(state.replace).not.toHaveBeenCalled();
   await act(async () => tree.root.findByType('ErrorState' as React.ElementType).props.onRetry());
   expect(state.replace).toHaveBeenCalledWith('/(tabs)/today');
@@ -91,7 +84,6 @@ it('ignores a pending result after unmount', async () => {
     }),
   );
   await render();
-  await finish();
   await act(async () => tree.unmount());
   await act(async () => resolve(true));
   expect(state.replace).not.toHaveBeenCalled();

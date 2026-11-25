@@ -17,20 +17,20 @@ describe('Onboarding UI and Interaction Logic', () => {
   });
 
   describe('Active Onboarding Steps Configuration', () => {
-    it('contains the questions, summary and paywall in order', () => {
+    it('contains the 13 core questions and summary in exact screenshot order', () => {
       expect(EXPECTED_ONBOARDING_STEPS).toEqual([
         'goal',
         'nickname',
         'age',
-        'profile',
         'height',
         'weight',
         'activity_level',
         'gym_days',
         'target_weight',
         'rate_selection',
-        'step_goal',
-        'water_goal',
+        'trackers',
+        'daily_targets',
+        'health_sync',
         'plan_summary',
       ]);
       expect(EXPECTED_ONBOARDING_STEPS).not.toContain('review_calculation');

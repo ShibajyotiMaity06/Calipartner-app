@@ -4,8 +4,9 @@ import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 
 const authState = vi.hoisted(() => ({
   user: null as { id: string } | null,
-  signInWithOtp: vi.fn(),
-  verifyOtp: vi.fn(),
+  signUpWithPassword: vi.fn(),
+  signInWithPassword: vi.fn(),
+  resetPassword: vi.fn(),
   signInWithGoogle: vi.fn(),
   signInWithApple: vi.fn(),
   os: 'ios',
@@ -13,6 +14,7 @@ const authState = vi.hoisted(() => ({
 
 vi.mock('react-native', () => ({
   View: 'View',
+  Pressable: 'Pressable',
   ScrollView: 'ScrollView',
   Modal: 'Modal',
   TouchableOpacity: 'TouchableOpacity',
@@ -27,43 +29,52 @@ vi.mock('react-native', () => ({
 
 vi.mock('react-native-safe-area-context', () => ({
   SafeAreaView: 'SafeAreaView',
+  useSafeAreaInsets: () => ({ top: 0, right: 0, bottom: 0, left: 0 }),
 }));
 
-vi.mock('@expo/vector-icons', () => ({
-  Ionicons: 'Ionicons',
+vi.mock('@calipartner/ui', () => ({
+  useTheme: () => ({ reduceMotion: true, reduceTransparency: false }),
 }));
 
-vi.mock('@calipartner/ui', async () => ({
-  ...(await import('../../../../packages/ui/src/tokens')),
-  Button: (await import('@/test/ButtonStub')).ButtonStub,
-  Field: 'Field',
-  SegmentedControl: 'SegmentedControl',
-  Text: 'Text',
-  useTheme: () => ({ colors: {}, reduceMotion: true }),
+vi.mock('@calipartner/ui/v1', async () => {
+  const tokens = await import('../../../../packages/ui/src/v1/theme');
+  return {
+    ...tokens,
+    AppleIcon: 'AppleIcon',
+    ChevronLeftIcon: 'ChevronLeftIcon',
+    CloseIcon: 'CloseIcon',
+    EyeIcon: 'EyeIcon',
+    EyeOffIcon: 'EyeOffIcon',
+    GoogleIcon: 'GoogleIcon',
+    IconButton: 'IconButton',
+    Input: 'Input',
+    LinkButton: 'LinkButton',
+    PrimaryButton: 'PrimaryButton',
+    ScreenTitle: 'ScreenTitle',
+    SocialButton: 'SocialButton',
+    Text: 'Text',
+    useTheme: () => ({ reduceMotion: true, reduceTransparency: false }),
+  };
+});
+
+vi.mock('@/components/legal', () => ({
+  TermsOfServiceModal: 'TermsOfServiceModal',
 }));
 
 vi.mock('@/contexts/AuthContext', () => ({
   useAuth: () => ({
     user: authState.user,
-    signInWithOtp: authState.signInWithOtp,
-    verifyOtp: authState.verifyOtp,
+    signUpWithPassword: authState.signUpWithPassword,
+    signInWithPassword: authState.signInWithPassword,
+    resetPassword: authState.resetPassword,
     signInWithGoogle: authState.signInWithGoogle,
     signInWithApple: authState.signInWithApple,
   }),
 }));
 
-vi.mock('@/components/brand/CaliPartnerLogo', () => ({
-  CaliPartnerLogo: 'Logo',
-}));
-
-vi.mock('@/components/brand/EntryTerms', () => ({
-  EntryTerms: 'Terms',
-}));
-
 import { OnboardingAuthModal } from './OnboardingAuthModal';
 
 let tree: ReactTestRenderer;
-const find = (type: string) => tree.root.findByType(type as React.ElementType);
 const findById = (id: string) => tree.root.findByProps({ testID: id });
 
 beforeEach(() => {
@@ -71,8 +82,9 @@ beforeEach(() => {
   vi.clearAllMocks();
   authState.user = null;
   authState.os = 'ios';
-  authState.signInWithOtp.mockResolvedValue({ error: null });
-  authState.verifyOtp.mockResolvedValue({ error: null });
+  authState.signUpWithPassword.mockResolvedValue({ error: null, needsEmailConfirmation: false });
+  authState.signInWithPassword.mockResolvedValue({ error: null });
+  authState.resetPassword.mockResolvedValue({ error: null });
   authState.signInWithGoogle.mockResolvedValue({ error: null });
   authState.signInWithApple.mockResolvedValue({ error: null });
 });
@@ -81,7 +93,7 @@ afterEach(async () => {
   if (tree) await act(async () => tree.unmount());
 });
 
-it('renders signup options with Apple and Google and validates email OTP', async () => {
+it('renders Screen 17 signup with Apple/Google primary and email + password below', async () => {
   const onClose = vi.fn();
   const onAuth = vi.fn();
 
@@ -89,39 +101,45 @@ it('renders signup options with Apple and Google and validates email OTP', async
     tree = create(<OnboardingAuthModal visible onClose={onClose} onAuthenticated={onAuth} />);
   });
 
-  expect(findById('onboarding-auth-title').props.children).toBe('Save your plan & start tracking');
-  expect(findById('btn-onboarding-apple-signin')).toBeTruthy();
-  expect(findById('btn-onboarding-google-signin')).toBeTruthy();
+  expect(findById('auth-header').props).toMatchObject({
+    title: 'Save your plan',
+    accentWord: 'plan',
+  });
+  expect(findById('btn-apple-signin').props.provider).toBe('apple');
+  expect(findById('btn-google-signin').props.provider).toBe('google');
 
   // Invalid email rejects
   await act(async () => {
-    findById('input-onboarding-email').props.onChangeText('invalid');
+    findById('input-email').props.onChangeText('invalid');
+    findById('input-password').props.onChangeText('password123');
   });
   await act(async () => {
-    findById('btn-onboarding-send-code').props.onPress();
+    findById('btn-submit-email-auth').props.onPress();
   });
-  expect(authState.signInWithOtp).not.toHaveBeenCalled();
+  expect(authState.signUpWithPassword).not.toHaveBeenCalled();
 
-  // Valid email triggers OTP send
+  // Short password rejects
   await act(async () => {
-    findById('input-onboarding-email').props.onChangeText('test@example.com');
+    findById('input-email').props.onChangeText('test@example.com');
+    findById('input-password').props.onChangeText('short');
   });
   await act(async () => {
-    findById('btn-onboarding-send-code').props.onPress();
+    findById('btn-submit-email-auth').props.onPress();
   });
-  expect(authState.signInWithOtp).toHaveBeenCalledWith('test@example.com', true);
+  expect(authState.signUpWithPassword).not.toHaveBeenCalled();
 
-  // Now in OTP step: valid 6 digit code verifies
+  // Valid email + 8+ password signs up cleanly
   await act(async () => {
-    findById('input-onboarding-otp').props.onChangeText('123456');
+    findById('input-password').props.onChangeText('password123');
   });
   await act(async () => {
-    findById('btn-onboarding-verify-code').props.onPress();
+    findById('btn-submit-email-auth').props.onPress();
   });
-  expect(authState.verifyOtp).toHaveBeenCalledWith('test@example.com', '123456');
+  expect(authState.signUpWithPassword).toHaveBeenCalledWith('test@example.com', 'password123');
+  expect(onAuth).toHaveBeenCalledOnce();
 });
 
-it('switches to signin mode smoothly', async () => {
+it('switches smoothly to Screen 18 Sign in mode with Forgot password', async () => {
   const onClose = vi.fn();
   const onAuth = vi.fn();
 
@@ -130,15 +148,26 @@ it('switches to signin mode smoothly', async () => {
   });
 
   await act(async () => {
-    find('SegmentedControl').props.onChange('signin');
+    findById('auth-switch-mode').props.onPress();
   });
 
-  expect(findById('input-onboarding-email')).toBeTruthy();
+  expect(findById('auth-header').props).toMatchObject({
+    title: 'Welcome back',
+    accentWord: 'back',
+  });
+
   await act(async () => {
-    findById('input-onboarding-email').props.onChangeText('user@test.com');
+    findById('input-email').props.onChangeText('user@test.com');
+    findById('input-password').props.onChangeText('secret123');
   });
   await act(async () => {
-    findById('btn-onboarding-send-code').props.onPress();
+    findById('btn-forgot-password').props.onPress();
   });
-  expect(authState.signInWithOtp).toHaveBeenCalledWith('user@test.com', false);
+  expect(authState.resetPassword).toHaveBeenCalledWith('user@test.com');
+
+  await act(async () => {
+    findById('btn-submit-email-auth').props.onPress();
+  });
+  expect(authState.signInWithPassword).toHaveBeenCalledWith('user@test.com', 'secret123');
+  expect(onAuth).toHaveBeenCalledOnce();
 });

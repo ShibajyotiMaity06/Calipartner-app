@@ -1,28 +1,55 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { BackHandler, Keyboard, Modal, Platform, ScrollView, StyleSheet, View } from 'react-native';
+import {
+  BackHandler,
+  Keyboard,
+  Modal,
+  Platform,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  View,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { applyOnboardingTargetOverrides, type OnboardingTargetOverrides } from '@calipartner/core';
 import {
-  Button,
-  NavigationIcon,
-  Text,
-  controls,
-  onboardingLayout as layout,
-  space,
-  useTheme,
-} from '@calipartner/ui';
+  applyOnboardingTargetOverrides,
+  isAtLeast18,
+  isGymPlanValid,
+  type OnboardingTargetOverrides,
+} from '@calipartner/core';
+import {
+  ChevronLeftIcon,
+  IconButton,
+  LinkButton,
+  PageDots,
+  PrimaryButton,
+  ProgressBar,
+  ScreenWrapper,
+  Text as V1Text,
+  colors as v1Colors,
+  layout as v1Layout,
+  space as v1Space,
+} from '@calipartner/ui/v1';
+import { AuthFormView, type AuthFormMode } from '@/components/auth/AuthFormView';
+import { AllSetStep } from '@/components/onboarding/AllSetStep';
+import { GymCalculationStep } from '@/components/onboarding/GymCalculationStep';
+import { OnboardingQuestion } from '@/components/onboarding/OnboardingQuestion';
+import { PaywallV1Step } from '@/components/onboarding/PaywallV1Step';
+import { PlanReviewStep } from '@/components/onboarding/PlanReviewStep';
+import { ProfileSetupStep } from '@/components/onboarding/ProfileSetupStep';
+import { ProTeaserStep } from '@/components/onboarding/ProTeaserStep';
+import { RemindersStep, type ReminderPrefs } from '@/components/onboarding/RemindersStep';
+import { RevealStepView } from '@/components/onboarding/RevealStepView';
 import { useAuth } from '@/contexts/AuthContext';
-import { useTargets } from '@/hooks/useTargets';
-import { useNetworkStatus } from '@/hooks/useNetworkStatus';
 import { getDb } from '@/db';
+import { useNetworkStatus } from '@/hooks/useNetworkStatus';
+import { useTargets } from '@/hooks/useTargets';
 import { t } from '@/i18n';
 import { macroErrorMessage } from '@/i18n/macroErrors';
-import {
-  MAX_ONBOARDING_WEEKLY_RATE_KG,
-  ONBOARDING_STEPS_ORDER,
-  type OnboardingStateMachine,
-} from '@/services/onboardingStateMachine';
+import { syncAllLocalReminders } from '@/services/localNotificationService';
+import { requestNativeHealthPermission } from '@/services/nativeHealthService';
+import { requestNotificationPermissions } from '@/services/notificationPermissionService';
+import { updateNotificationSettings } from '@/services/notificationSettingsService';
 import {
   clearOnboardingDraft,
   loadOnboardingDraft,
@@ -30,22 +57,26 @@ import {
   saveOnboardingDraft,
 } from '@/services/onboardingDraft';
 import { requireOnboardingReview } from '@/services/onboardingReviewService';
-import { afterSetupDestination, requirePairPrompt } from '@/services/pairOnboardingService';
-import { PlanReviewStep } from '@/components/onboarding/PlanReviewStep';
-import { GymCalculationStep } from '@/components/onboarding/GymCalculationStep';
-import { OnboardingQuestion, questionCopy } from '@/components/onboarding/OnboardingQuestion';
-import { FinishOnboardingProfile } from '@/components/onboarding/FinishOnboardingProfile';
-import { PlanCard } from '@/components/onboarding/PlanPrimitives';
-import { PaywallModal } from '@/components/rooms/PaywallModal';
-import { OnboardingAuthModal } from '@/components/onboarding/OnboardingAuthModal';
-import { NotificationPrimerModal } from '@/components/notifications/NotificationPrimerModal';
-import { shouldPromptForNotifications } from '@/services/notificationPermissionService';
-import { fetchWebCatalog } from '@/services/webBillingService';
+import {
+  MAX_ONBOARDING_WEEKLY_RATE_KG,
+  ONBOARDING_STEPS_ORDER,
+  type OnboardingStateMachine,
+} from '@/services/onboardingStateMachine';
+import {
+  finishPairPrompt,
+  pendingPairInvite,
+  requirePairPrompt,
+} from '@/services/pairOnboardingService';
 
 export const ACTIVE_ONBOARDING_STEPS = ONBOARDING_STEPS_ORDER;
 
+const DEFAULT_REMINDER_PREFS: ReminderPrefs = {
+  meals: true,
+  hydration: true,
+  partner: true,
+};
+
 export default function OnboardingScreen() {
-  const router = useRouter();
   const { user, profile, isLoading, needsProfileSetup, profileError, refreshProfile } = useAuth();
   const profileReady = profile?.id === user?.id && Boolean(profile);
 
@@ -57,14 +88,20 @@ export default function OnboardingScreen() {
 }
 
 function OnboardingStatus({ error, onRetry }: { error?: boolean; onRetry?: () => void }) {
-  const { colors } = useTheme();
   return (
-    <SafeAreaView style={[styles.safe, { backgroundColor: colors.bg0 }]}>
-      <View style={styles.center}>
-        <Text color={colors.textMid} accessibilityLiveRegion="polite">
+    <SafeAreaView style={v1Styles.safe}>
+      <View style={v1Styles.center}>
+        <V1Text variant="body" color="textMid" accessibilityLiveRegion="polite">
           {t(error ? 'common.errorBody' : 'setup.preparing')}
-        </Text>
-        {error && <Button label={t('setup.retry')} onPress={onRetry} testID="onboarding-retry" />}
+        </V1Text>
+        {error && onRetry ? (
+          <PrimaryButton
+            title={t('setup.retry')}
+            showArrow={false}
+            onPress={onRetry}
+            testID="onboarding-retry"
+          />
+        ) : null}
       </View>
     </SafeAreaView>
   );
@@ -73,10 +110,10 @@ function OnboardingStatus({ error, onRetry }: { error?: boolean; onRetry?: () =>
 function Questionnaire({ ownerId }: { ownerId: string }) {
   const router = useRouter();
   const { checkoutDone } = useLocalSearchParams<{ checkoutDone?: string }>();
-  const { user, profile, updateProfile } = useAuth();
+  const { user, profile, createProfile, updateProfile, changeUsername } = useAuth();
   const { saveGoalProfile } = useTargets();
-  const { colors, reduceMotion } = useTheme();
   const { isOnline } = useNetworkStatus();
+
   const [machine, setMachine] = useState<OnboardingStateMachine | null>(null);
   const [snapshot, setSnapshot] = useState<ReturnType<OnboardingStateMachine['getState']> | null>(
     null,
@@ -87,22 +124,17 @@ function Questionnaire({ ownerId }: { ownerId: string }) {
   const [saveError, setSaveError] = useState<string | null>(null);
   const [draftError, setDraftError] = useState(false);
   const [calculation, showCalculation] = useState(false);
-  const [paywallClosed, setPaywallClosed] = useState(false);
-  const [authModalVisible, setAuthModalVisible] = useState(false);
-  const [notificationModalVisible, setNotificationModalVisible] = useState(false);
-  const hasPromptedNotifications = useRef(false);
+  const [healthConnecting, setHealthConnecting] = useState(false);
+  const [reminderBusy, setReminderBusy] = useState(false);
+  const [authMode, setAuthMode] = useState<AuthFormMode>('signup');
+  const [paywallViewMode, setPaywallViewMode] = useState<'compare' | 'all_plans'>('compare');
+  const [handleInput, setHandleInput] = useState(profile?.username ?? '');
+  const [handleValid, setHandleValid] = useState(Boolean(profile?.username));
+  const [avatarPreviewUri, setAvatarPreviewUri] = useState<string | null>(
+    profile?.avatar_url ?? null,
+  );
+  const [finishingNav, setFinishingNav] = useState(false);
 
-  useEffect(() => {
-    if (hasPromptedNotifications.current) return;
-    if (snapshot?.currentStep === 'height' || snapshot?.currentStep === 'weight') {
-      void shouldPromptForNotifications('reminder_configured').then((shouldPrompt) => {
-        if (shouldPrompt && !hasPromptedNotifications.current) {
-          hasPromptedNotifications.current = true;
-          setNotificationModalVisible(true);
-        }
-      });
-    }
-  }, [snapshot?.currentStep]);
   const savingRef = useRef(false);
   const completed = useRef(false);
   const active = useRef(false);
@@ -121,18 +153,18 @@ function Questionnaire({ ownerId }: { ownerId: string }) {
       const ownDraft = await loadOnboardingDraft(db, ownerId);
       const guestDraft = ownDraft ? null : await loadOnboardingDraft(db, 'guest-user');
       if (cancelled) return;
-      const next = resumeOnboardingDraft(
+      const nextMachine = resumeOnboardingDraft(
         ownDraft ?? guestDraft,
         identityRef.current,
         Boolean(guestDraft),
       );
       if (guestDraft && ownerId !== 'guest-user') {
-        await saveOnboardingDraft(db, ownerId, next.getState());
+        await saveOnboardingDraft(db, ownerId, nextMachine.getState());
         await clearOnboardingDraft(db, 'guest-user');
       }
       if (!cancelled) {
-        setMachine(next);
-        setSnapshot(next.getState());
+        setMachine(nextMachine);
+        setSnapshot(nextMachine.getState());
       }
     };
     void hydrate().catch(() => {
@@ -145,7 +177,7 @@ function Questionnaire({ ownerId }: { ownerId: string }) {
   }, [ownerId, retry]);
 
   useEffect(() => {
-    if (!snapshot || completed.current) return;
+    if (!snapshot || completed.current || snapshot.currentStep === 'all_set') return;
     draftWrites.current = draftWrites.current.then(async () => {
       if (completed.current || !active.current) return;
       try {
@@ -157,39 +189,46 @@ function Questionnaire({ ownerId }: { ownerId: string }) {
     });
   }, [snapshot, ownerId]);
 
-  useEffect(() => {
-    if (ownerId === 'guest-user' && snapshot?.currentStep === 'profile' && machine) {
-      machine.goToStep('height');
-      update();
-    }
-  }, [ownerId, snapshot?.currentStep, machine]);
-
   const update = () => {
     if (machine) setSnapshot(machine.getState());
   };
+
+  useEffect(() => {
+    if (user && snapshot?.currentStep === 'auth' && machine) {
+      machine.goToStep('pro_coach');
+      update();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.id, snapshot?.currentStep, machine]);
+
+  useEffect(() => {
+    if (checkoutDone === '1' && snapshot?.currentStep === 'paywall' && machine) {
+      machine.goToStep('profile');
+      update();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [checkoutDone, snapshot?.currentStep, machine]);
+
   const back = () => {
     if (!machine || savingRef.current) return;
+    if (snapshot?.currentStep === 'paywall' && paywallViewMode === 'all_plans') {
+      setPaywallViewMode('compare');
+      return;
+    }
     if (!machine.back()) return;
-    if (ownerId === 'guest-user' && machine.getState().currentStep === 'profile') {
+    if (user && machine.getState().currentStep === 'auth') {
       machine.back();
     }
     Keyboard.dismiss();
     setSaveError(null);
-    setPaywallClosed(false);
     update();
     scroll.current?.scrollTo({ y: 0, animated: false });
   };
+
   useEffect(() => {
     if (Platform.OS !== 'android' || !snapshot) return;
     const listener = BackHandler.addEventListener('hardwareBackPress', () => {
-      if (
-        calculation ||
-        (snapshot.currentStep === 'paywall' &&
-          (identity || user) &&
-          !paywallClosed &&
-          checkoutDone !== '1')
-      )
-        return false;
+      if (calculation || snapshot.currentStep === 'all_set') return false;
       back();
       return true;
     });
@@ -199,9 +238,10 @@ function Questionnaire({ ownerId }: { ownerId: string }) {
   if (!snapshot || !machine) {
     return <OnboardingStatus error={loadError} onRetry={() => setRetry((value) => value + 1)} />;
   }
+
   const step = snapshot.currentStep;
   const index = ACTIVE_ONBOARDING_STEPS.findIndex((numbered) => numbered === step);
-  const copy = questionCopy[step];
+
   const next = () => {
     const moved = machine.next();
     update();
@@ -210,6 +250,7 @@ function Questionnaire({ ownerId }: { ownerId: string }) {
       scroll.current?.scrollTo({ y: 0, animated: false });
     }
   };
+
   const continueToReveal = (overrides: OnboardingTargetOverrides = {}) => {
     setSaveError(null);
     try {
@@ -225,345 +266,555 @@ function Questionnaire({ ownerId }: { ownerId: string }) {
           goal.weekly_rate_kg = MAX_ONBOARDING_WEEKLY_RATE_KG;
         }
         machine.setTargetOverrides(overrides);
-      } catch {
-        goal = baseGoal;
-        machine.setTargetOverrides({});
+        if (machine.goToStep('reveal')) {
+          update();
+        }
+      } catch (e) {
+        setSaveError(macroErrorMessage(e));
       }
-      next();
-    } catch (error) {
-      setSaveError(macroErrorMessage(error));
+    } catch (e) {
+      setSaveError(macroErrorMessage(e));
     }
   };
 
-  const finish = async () => {
-    if (savingRef.current || completed.current) return;
-    if (!identity && !user) return;
+  const advanceAfterReminders = (prefs: ReminderPrefs) => {
+    machine.setReminderPrefs(prefs);
+    if (user) {
+      machine.goToStep('pro_coach');
+    } else {
+      machine.goToStep('auth');
+    }
+    update();
+    Keyboard.dismiss();
+    scroll.current?.scrollTo({ y: 0, animated: false });
+  };
+
+  const handleTurnOnReminders = async () => {
+    if (reminderBusy) return;
+    setReminderBusy(true);
+    try {
+      await requestNotificationPermissions('reminder_configured').catch(() => false);
+      advanceAfterReminders(snapshot.reminderPrefs ?? DEFAULT_REMINDER_PREFS);
+    } finally {
+      if (active.current) setReminderBusy(false);
+    }
+  };
+
+  const handleSkipReminders = () => {
+    if (reminderBusy) return;
+    advanceAfterReminders({ meals: false, hydration: false, partner: false });
+  };
+
+  const handleSaveProfileAndPlan = async () => {
+    if (savingRef.current || isOnline === false) return;
     savingRef.current = true;
     setSaving(true);
     setSaveError(null);
     try {
-      if (!isOnline) {
-        setPaywallClosed(true);
-        setSaveError(t('setup.offlineDraft'));
-        return;
-      }
+      await draftWrites.current;
       const targetUserId = user?.id ?? ownerId;
-      const state = machine.getState();
-      let goal;
-      try {
-        goal = applyOnboardingTargetOverrides(
-          machine.buildGoalProfile(targetUserId),
-          state.sex ?? identity?.sex ?? 'male',
-          state.targetOverrides,
-        );
-      } catch {
-        // Safe fallback: if custom target overrides violate safety bounds,
-        // use calculated base targets so the user is never blocked or shown an error
-        goal = machine.buildGoalProfile(targetUserId);
+      const cleanHandle = handleInput.trim().toLowerCase();
+      const safeHeight =
+        snapshot.heightCm &&
+        Number.isFinite(snapshot.heightCm) &&
+        snapshot.heightCm >= 50 &&
+        snapshot.heightCm <= 300
+          ? snapshot.heightCm
+          : 175;
+      const now = new Date();
+      const defaultDob = `${now.getFullYear() - 25}-01-01`;
+      const safeDob =
+        snapshot.dateOfBirth && isAtLeast18(snapshot.dateOfBirth)
+          ? snapshot.dateOfBirth
+          : defaultDob;
+      const resolvedTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC';
+      const displayName = snapshot.nickname?.trim() || cleanHandle;
+
+      if (!identity) {
+        const created = await createProfile({
+          username: cleanHandle,
+          nickname: displayName,
+          avatar_url: null,
+          date_of_birth: safeDob,
+          sex: snapshot.sex ?? 'female',
+          height_cm: safeHeight,
+          units: snapshot.units ?? 'metric',
+          timezone: resolvedTimezone,
+        });
+        if (created.error) {
+          throw created.error;
+        }
+      } else {
+        if (cleanHandle && cleanHandle !== identity.username) {
+          const handleChanged = await changeUsername(cleanHandle);
+          if (handleChanged.error) throw handleChanged.error;
+        }
+        const updated = await updateProfile({
+          nickname: displayName,
+          sex: snapshot.sex ?? identity.sex,
+          height_cm: safeHeight,
+          units: snapshot.units ?? identity.units,
+          timezone: resolvedTimezone,
+        });
+        if (updated.error) throw updated.error;
       }
+
+      const baseGoal = machine.buildGoalProfile(targetUserId);
+      const goal = applyOnboardingTargetOverrides(
+        baseGoal,
+        snapshot.sex ?? identity?.sex ?? 'male',
+        snapshot.targetOverrides ?? {},
+      );
       if (goal.weekly_rate_kg > MAX_ONBOARDING_WEEKLY_RATE_KG) {
         goal.weekly_rate_kg = MAX_ONBOARDING_WEEKLY_RATE_KG;
       }
-      await draftWrites.current;
-      await saveOnboardingDraft(await getDb(), targetUserId, state);
-      if (!active.current) return;
-      const needsProfileUpdate =
-        identity &&
-        (state.nickname.trim() !== identity.nickname ||
-          state.heightCm !== identity.height_cm ||
-          state.sex !== identity.sex ||
-          state.units !== identity.units);
-      if (updateProfile && needsProfileUpdate) {
-        const result = await updateProfile({
-          nickname: state.nickname.trim(),
-          height_cm: state.heightCm,
-          sex: state.sex,
-          units: state.units,
-        });
-        if (result?.error) throw result.error;
-      }
-      if (!active.current) return;
-      await requirePairPrompt(targetUserId);
-      await requireOnboardingReview(targetUserId, Platform.OS);
-      if (!active.current) return;
+
       const saved = await saveGoalProfile(goal);
-      if (!saved.success) throw new Error(saved.error ?? t('common.errorBody'));
-      if (!active.current) return;
-      const destination = await afterSetupDestination(targetUserId);
-      if (!active.current) return;
+      if (!saved.success) {
+        throw new Error(saved.error ?? t('common.errorBody'));
+      }
+
+      await requireOnboardingReview(targetUserId, Platform.OS);
+
+      const rem = snapshot.reminderPrefs ?? DEFAULT_REMINDER_PREFS;
+      void updateNotificationSettings({
+        meal_reminders_enabled: rem.meals,
+        water_reminders_enabled: rem.hydration,
+        partner_activity_enabled: rem.partner,
+      })
+        .then((updatedSettings) => {
+          if (updatedSettings) void syncAllLocalReminders(updatedSettings).catch(() => {});
+        })
+        .catch(() => {});
+
       completed.current = true;
       await clearOnboardingDraft(await getDb(), targetUserId).catch(() => {});
       await clearOnboardingDraft(await getDb(), 'guest-user').catch(() => {});
-      if (active.current) router.replace(destination as never);
+
+      machine.goToStep('all_set');
+      if (active.current) update();
     } catch (error) {
-      if (active.current) {
-        setPaywallClosed(true);
-        setSaveError(macroErrorMessage(error));
-      }
+      completed.current = false;
+      if (active.current) setSaveError(macroErrorMessage(error));
     } finally {
       savingRef.current = false;
       if (active.current) setSaving(false);
     }
   };
 
+  const handleLeaveAllSet = async (choice: 'today' | 'invite') => {
+    if (finishingNav) return;
+    setFinishingNav(true);
+    try {
+      const targetUserId = user?.id ?? ownerId;
+      if (choice === 'invite') {
+        await requirePairPrompt(targetUserId).catch(() => {});
+        router.replace('/pair-start');
+        return;
+      }
+      await finishPairPrompt(targetUserId).catch(() => {});
+      const inviteToken = await pendingPairInvite().catch(() => null);
+      if (inviteToken) {
+        router.replace(`/invite/${inviteToken}` as never);
+        return;
+      }
+      router.replace('/(tabs)/today');
+    } finally {
+      if (active.current) setFinishingNav(false);
+    }
+  };
+
+  const calculationModal = (
+    <Modal
+      visible={calculation}
+      onRequestClose={() => showCalculation(false)}
+      animationType="slide"
+      accessibilityLabel={t('setup.howCalculated')}
+      testID="onboarding-details-sheet"
+    >
+      <SafeAreaView style={v1Styles.safe}>
+        <ScrollView contentContainerStyle={v1Styles.modalScroll}>
+          <PrimaryButton
+            title={t('setup.close')}
+            showArrow={false}
+            onPress={() => showCalculation(false)}
+            testID="btn-close-details"
+          />
+          <GymCalculationStep result={snapshot.calculatedTargets} />
+        </ScrollView>
+      </SafeAreaView>
+    </Modal>
+  );
+
+  // Screen 17 & 18 · Auth
+  if (step === 'auth') {
+    return (
+      <>
+        <AuthFormView
+          mode={authMode}
+          onModeChange={setAuthMode}
+          onBack={back}
+          onAuthenticated={() => {
+            machine.goToStep('pro_coach');
+            update();
+          }}
+          testID="onboarding-screen-auth"
+        />
+        {calculationModal}
+      </>
+    );
+  }
+
+  // Screen 22 & 23 · Paywall & All plans
+  if (step === 'paywall') {
+    return (
+      <>
+        <PaywallV1Step
+          viewMode={paywallViewMode}
+          onViewModeChange={setPaywallViewMode}
+          onBack={back}
+          onContinueProSuccess={() => {
+            setPaywallViewMode('compare');
+            next();
+          }}
+          onContinueFree={() => {
+            setPaywallViewMode('compare');
+            next();
+          }}
+        />
+        {calculationModal}
+      </>
+    );
+  }
+
+  // Screen 25 · All set celebration
+  if (step === 'all_set') {
+    return (
+      <>
+        <AllSetStep
+          nickname={snapshot.nickname}
+          loading={finishingNav}
+          onGoToToday={() => void handleLeaveAllSet('today')}
+          onInvitePartner={() => void handleLeaveAllSet('invite')}
+        />
+        {calculationModal}
+      </>
+    );
+  }
+
+  const isProTeaser = step === 'pro_coach' || step === 'pro_partners' || step === 'pro_adaptive';
+  const showProgressBar = index >= 0 || step === 'reveal';
+  const progress =
+    step === 'reveal' ? 1 : index >= 0 ? (index + 1) / ACTIVE_ONBOARDING_STEPS.length : 0;
+  const isGoal = step === 'goal';
+  const isFlexNonScrolling =
+    step === 'height' || step === 'weight' || step === 'gym_days' || step === 'target_weight';
+  const hasAnyTracker = Object.values(snapshot.enabledTrackers).some(Boolean);
+
+  const isNextDisabled =
+    saving ||
+    healthConnecting ||
+    reminderBusy ||
+    (step === 'nickname' && !snapshot.nickname.trim()) ||
+    (step === 'trackers' && !hasAnyTracker) ||
+    (step === 'plan_summary' &&
+      (!snapshot.calculatedTargets || !isGymPlanValid(snapshot.calculatedTargets))) ||
+    (step === 'profile' && (!handleValid || isOnline === false));
+
+  const handleStepBack = () => {
+    if (isGoal) {
+      router.replace('/welcome');
+      return;
+    }
+    back();
+  };
+
+  const handleTargetSkip = () => {
+    machine.setTargetWeightAndDate(null, null);
+    next();
+  };
+
+  const handleStepNext = async () => {
+    if (isGoal && !snapshot.goalSelected && snapshot.goal !== 'maintain') {
+      machine.setGoal('cut');
+    } else if (step === 'target_weight' && snapshot.targetWeightKg === null) {
+      const baseWeight = snapshot.weightKg > 0 ? snapshot.weightKg : 70;
+      const suggestedTargetKg =
+        snapshot.goal === 'cut'
+          ? Math.max(30, Math.round(baseWeight * 0.9 * 2) / 2)
+          : Math.min(250, Math.round(baseWeight * 1.07 * 2) / 2);
+      machine.setTargetWeightAndDate(suggestedTargetKg, null);
+    } else if (step === 'health_sync' && Platform.OS !== 'web') {
+      setHealthConnecting(true);
+      try {
+        await requestNativeHealthPermission().catch(() => 'unavailable');
+      } finally {
+        setHealthConnecting(false);
+      }
+    } else if (step === 'plan_summary') {
+      continueToReveal({});
+      return;
+    } else if (step === 'reminders') {
+      await handleTurnOnReminders();
+      return;
+    } else if (step === 'profile') {
+      await handleSaveProfileAndPlan();
+      return;
+    }
+    next();
+  };
+
+  const primaryTitle =
+    step === 'health_sync'
+      ? Platform.OS === 'ios'
+        ? t('onboardingV1.healthCtaIos')
+        : Platform.OS === 'android'
+          ? t('onboardingV1.healthCtaAndroid')
+          : t('setup.next')
+      : step === 'plan_summary'
+        ? t('onboardingV1.planCta')
+        : step === 'reveal'
+          ? t('onboardingV1.revealCta')
+          : step === 'reminders'
+            ? t('onboardingV1.remindersCta')
+            : step === 'pro_adaptive'
+              ? t('onboardingV1.proSeePlansCta')
+              : isProTeaser
+                ? t('onboardingV1.proContinue')
+                : step === 'profile'
+                  ? saving
+                    ? t('setup.statusSaving')
+                    : t('onboardingV1.profileCta')
+                  : t('setup.next');
+
+  const primaryTestID =
+    step === 'plan_summary'
+      ? 'continue-calculated-plan'
+      : step === 'reveal'
+        ? 'onboarding-open-paywall'
+        : step === 'reminders'
+          ? 'btn-turn-on-reminders'
+          : isProTeaser
+            ? 'btn-pro-teaser-next'
+            : step === 'profile'
+              ? 'btn-submit-profile'
+              : 'btn-onboarding-next';
+
+  const proActiveIndex = step === 'pro_coach' ? 0 : step === 'pro_partners' ? 1 : 2;
+
   return (
-    <SafeAreaView style={[styles.safe, { backgroundColor: colors.bg0 }]}>
-      <View style={styles.frame}>
-        <View style={styles.nav}>
-          {step !== 'goal' ? (
-            <Button
-              variant="tertiary"
-              fullWidth={false}
-              label={t('onboarding.back')}
-              iconOnly
-              icon={<NavigationIcon action="back" />}
-              onPress={back}
-              disabled={saving}
-              style={styles.iconButton}
+    <>
+      <ScreenWrapper
+        scroll={!isFlexNonScrolling}
+        keyboardAvoiding={step === 'nickname' || step === 'profile'}
+        testID={`onboarding-screen-${step}`}
+        navRow={
+          <View style={v1Styles.navRow}>
+            <IconButton
+              icon={<ChevronLeftIcon size={18} color={v1Colors.textHi} />}
+              size={44}
+              onPress={handleStepBack}
+              disabled={saving || healthConnecting || reminderBusy}
+              accessibilityLabel={t('onboarding.back')}
               testID="btn-onboarding-back"
             />
-          ) : (
-            <View style={styles.iconButton} />
-          )}
-          {index >= 0 && (
-            <Text variant="bodyS" color={colors.textMid} tabular>
-              {t('onboarding.stepIndicator', {
-                current: index + 1,
-                total: ACTIVE_ONBOARDING_STEPS.length,
-              })}
-            </Text>
-          )}
-          {!user ? (
-            <Button
-              variant="tertiary"
-              fullWidth={false}
-              label={t('entryRefresh.logIn')}
-              onPress={() => router.push({ pathname: '/auth/sign-in', params: { mode: 'signin' } })}
-              disabled={saving}
-              style={styles.iconButton}
-              testID="btn-onboarding-login"
-            />
-          ) : (
-            <View style={styles.iconButton} />
-          )}
-        </View>
-        {index >= 0 && (
-          <View
-            style={[styles.track, { backgroundColor: colors.s3 }]}
-            accessibilityRole="progressbar"
-            accessibilityValue={{ min: 1, max: ACTIVE_ONBOARDING_STEPS.length, now: index + 1 }}
-          >
-            <View
-              testID="onboarding-progress-fill"
-              style={[
-                styles.track,
-                {
-                  backgroundColor: colors.apricot,
-                  width: `${((index + 1) / ACTIVE_ONBOARDING_STEPS.length) * 100}%`,
-                },
-              ]}
-            />
-          </View>
-        )}
-        <ScrollView
-          ref={scroll}
-          contentContainerStyle={styles.content}
-          keyboardShouldPersistTaps="handled"
-        >
-          <View style={styles.question}>
-            {step !== 'reveal' && (step !== 'profile' || !identity) && (
-              <Text variant="title1" accessibilityRole="header" testID="onboarding-title">
-                {t(copy.title)}
-              </Text>
-            )}
-            {copy.subtitle && <Text color={colors.textMid}>{t(copy.subtitle)}</Text>}
-            {isOnline === false && (
-              <Text variant="bodyS" accessibilityLiveRegion="polite">
-                {t('setup.offlineDraft')}
-              </Text>
-            )}
-            {draftError && (
-              <Button
-                variant="tertiary"
-                label={t('setup.draftError')}
-                onPress={update}
-                testID="retry-draft"
-              />
-            )}
-            {step === 'plan_summary' ? (
-              <PlanReviewStep
-                state={snapshot}
-                onPlanned={continueToReveal}
-                onCalculation={() => showCalculation(true)}
-                error={saveError}
-                onClearError={() => setSaveError(null)}
-                saving={false}
-              />
-            ) : step === 'profile' ? (
-              !identity ? (
-                <FinishOnboardingProfile
-                  state={snapshot}
-                  waitForDraft={() => draftWrites.current}
-                  onComplete={next}
-                />
-              ) : (
-                <PlanCard>
-                  <Text variant="heading">{t('profileSetup.usernameLabel')}</Text>
-                  <Text tabular>@{identity.username}</Text>
-                  <Text variant="heading">{t('setup.place')}</Text>
-                  <Text>{identity.place || '—'}</Text>
-                </PlanCard>
-              )
-            ) : step === 'reveal' ? (
-              <View style={styles.reveal} testID="onboarding-peak-reveal">
-                <Text variant="title1" accessibilityRole="header" style={styles.revealTitle}>
-                  {t('characterSetup.revealTitle')}
-                </Text>
+            {showProgressBar ? (
+              <View style={v1Styles.progressWrap}>
+                <ProgressBar progress={progress} height={4} testID="onboarding-progress-fill" />
               </View>
-            ) : step === 'paywall' ? (
-              <>
-                {(identity || user) && (paywallClosed || checkoutDone === '1') && (
-                  <Button
-                    label={t(saveError ? 'setup.retry' : 'setup.next')}
-                    loading={saving}
-                    disabled={saving}
-                    onPress={() => void finish()}
-                    testID="finish-onboarding-retry"
-                  />
-                )}
-                {saveError && (
-                  <Text
-                    color={colors.danger}
-                    accessibilityRole="alert"
-                    testID="onboarding-save-error"
-                  >
-                    {saveError}
-                  </Text>
-                )}
-              </>
-            ) : (
-              <OnboardingQuestion
-                key={step}
-                step={step}
-                state={snapshot}
-                machine={machine}
-                update={update}
-                identityConfirmed={Boolean(identity)}
-              />
-            )}
+            ) : isProTeaser ? (
+              <View style={v1Styles.skipWrap}>
+                <Pressable
+                  onPress={() => {
+                    machine.goToStep('paywall');
+                    update();
+                  }}
+                  accessibilityRole="button"
+                  style={v1Styles.skipBtn}
+                  testID="btn-pro-teaser-skip"
+                >
+                  <V1Text variant="meta" color="textMid">
+                    {t('onboardingV1.proSkip')}
+                  </V1Text>
+                </Pressable>
+              </View>
+            ) : null}
           </View>
-        </ScrollView>
-        {(step === 'reveal' ||
-          (step !== 'plan_summary' &&
-            step !== 'paywall' &&
-            (step !== 'profile' || Boolean(identity)))) && (
-          <View style={[styles.footer, { borderTopColor: colors.hairline }]}>
-            <Button
-              label={t('setup.next')}
-              onPress={async () => {
-                if (step === 'reveal' && !user) {
-                  try {
-                    await draftWrites.current;
-                    await saveOnboardingDraft(await getDb(), ownerId, machine.getState());
-                    setDraftError(false);
-                    setAuthModalVisible(true);
-                  } catch {
-                    setDraftError(true);
-                  }
-                  return;
-                }
-                next();
-              }}
-              testID={step === 'reveal' ? 'onboarding-open-paywall' : 'btn-onboarding-next'}
+        }
+        footer={
+          <View style={v1Styles.footer}>
+            {isGoal ? (
+              <V1Text variant="meta" color="textLo" style={v1Styles.footerHint}>
+                {t('onboardingV1.goalFooterNote')}
+              </V1Text>
+            ) : null}
+            {step === 'reminders' ? (
+              <V1Text variant="micro" color="textLo" style={v1Styles.footerHint}>
+                {t('onboardingV1.remindersFooterNote')}
+              </V1Text>
+            ) : null}
+            {isProTeaser ? (
+              <View style={v1Styles.dotsWrap}>
+                <PageDots count={3} activeIndex={proActiveIndex} testID="pro-teaser-dots" />
+              </View>
+            ) : null}
+            <PrimaryButton
+              title={primaryTitle}
+              showArrow
+              loading={healthConnecting || saving || reminderBusy}
+              disabled={isNextDisabled}
+              onPress={() => void handleStepNext()}
+              testID={primaryTestID}
             />
-          </View>
-        )}
-      </View>
-      <PaywallModal
-        visible={step === 'paywall' && Boolean(identity) && !paywallClosed && checkoutDone !== '1'}
-        preloadPrices={isOnline === true}
-        completionPending={saving}
-        context="general"
-        onClose={() => void finish()}
-        onContinueFree={() => void finish()}
-        onSuccess={() => void finish()}
-      />
-      <OnboardingAuthModal
-        visible={authModalVisible}
-        onClose={() => setAuthModalVisible(false)}
-        onAuthenticated={() => setAuthModalVisible(false)}
-      />
-      {user && !identity && (step === 'reveal' || step === 'paywall') && (
-        <Modal visible animationType={reduceMotion ? 'none' : 'slide'} onRequestClose={() => {}}>
-          <SafeAreaView style={[styles.safe, { backgroundColor: colors.bg0 }]}>
-            <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
-              <View style={styles.question}>
-                <Text variant="title1" accessibilityRole="header">
-                  {t('characterSetup.profileTitle')}
-                </Text>
-                <Text color={colors.textMid}>{t('setup.usernameRules')}</Text>
-                <FinishOnboardingProfile
-                  state={snapshot}
-                  waitForDraft={() => draftWrites.current}
-                  onComplete={next}
+            {step === 'target_weight' ? (
+              <View style={v1Styles.footerSecondary}>
+                <LinkButton
+                  title={t('onboardingV1.skipForNow')}
+                  onPress={handleTargetSkip}
+                  testID="btn-skip-target-weight"
                 />
               </View>
-            </ScrollView>
-          </SafeAreaView>
-        </Modal>
-      )}
-      <Modal
-        visible={calculation}
-        onRequestClose={() => showCalculation(false)}
-        animationType={reduceMotion ? 'none' : 'slide'}
-        accessibilityLabel={t('setup.howCalculated')}
-        testID="onboarding-details-sheet"
+            ) : null}
+            {step === 'health_sync' && Platform.OS !== 'web' ? (
+              <View style={v1Styles.footerSecondary}>
+                <LinkButton
+                  title={t('onboardingV1.healthNotNow')}
+                  disabled={healthConnecting}
+                  onPress={next}
+                  testID="btn-skip-health-sync"
+                />
+              </View>
+            ) : null}
+            {step === 'reminders' ? (
+              <View style={v1Styles.footerSecondary}>
+                <LinkButton
+                  title={t('onboardingV1.remindersNotNow')}
+                  disabled={reminderBusy}
+                  onPress={handleSkipReminders}
+                  testID="btn-skip-reminders"
+                />
+              </View>
+            ) : null}
+          </View>
+        }
       >
-        <SafeAreaView style={[styles.safe, { backgroundColor: colors.bg0 }]}>
-          <ScrollView contentContainerStyle={styles.content}>
-            <Button
-              variant="secondary"
-              label={t('setup.close')}
-              onPress={() => showCalculation(false)}
-              testID="btn-close-details"
-            />
-            <GymCalculationStep result={snapshot.calculatedTargets} />
-          </ScrollView>
-        </SafeAreaView>
-      </Modal>
-      <NotificationPrimerModal
-        visible={notificationModalVisible}
-        context="reminder_configured"
-        isGlass
-        onDismiss={() => setNotificationModalVisible(false)}
-        onGranted={() => setNotificationModalVisible(false)}
-        testID="onboarding-notification-primer-modal"
-      />
-    </SafeAreaView>
+        {isOnline === false ? (
+          <V1Text
+            variant="meta"
+            color="textLo"
+            accessibilityLiveRegion="polite"
+            style={v1Styles.statusNote}
+          >
+            {t('setup.offlineDraft')}
+          </V1Text>
+        ) : null}
+        {draftError ? (
+          <View style={v1Styles.footerSecondary}>
+            <LinkButton title={t('setup.draftError')} onPress={update} testID="retry-draft" />
+          </View>
+        ) : null}
+
+        {step === 'plan_summary' ? (
+          <PlanReviewStep
+            variant="v1"
+            state={snapshot}
+            onPlanned={continueToReveal}
+            onCalculation={() => showCalculation(true)}
+            error={saveError}
+            onClearError={() => setSaveError(null)}
+            saving={false}
+          />
+        ) : step === 'reveal' ? (
+          <RevealStepView state={snapshot} />
+        ) : step === 'reminders' ? (
+          <RemindersStep
+            nickname={snapshot.nickname}
+            prefs={snapshot.reminderPrefs ?? DEFAULT_REMINDER_PREFS}
+            onChangePrefs={(prefs) => {
+              machine.setReminderPrefs(prefs);
+              update();
+            }}
+          />
+        ) : isProTeaser ? (
+          <ProTeaserStep slide={step} nickname={snapshot.nickname} />
+        ) : step === 'profile' ? (
+          <ProfileSetupStep
+            nickname={snapshot.nickname}
+            initialUsername={handleInput}
+            initialAvatarUri={avatarPreviewUri}
+            onChangeUsername={setHandleInput}
+            onChangeValid={setHandleValid}
+            onChangePhotoUri={setAvatarPreviewUri}
+            errorMessage={saveError}
+          />
+        ) : (
+          <OnboardingQuestion
+            key={step}
+            step={step}
+            state={snapshot}
+            machine={machine}
+            update={update}
+            identityConfirmed={Boolean(identity)}
+          />
+        )}
+      </ScreenWrapper>
+      {calculationModal}
+    </>
   );
 }
 
-const styles = StyleSheet.create({
-  safe: { flex: 1 },
-  frame: { flex: 1, width: '100%', maxWidth: layout.contentWidth, alignSelf: 'center' },
+const v1Styles = StyleSheet.create({
+  safe: {
+    flex: 1,
+    backgroundColor: v1Colors.bg0,
+  },
   center: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    padding: space[5],
-    gap: space[4],
+    padding: v1Space.xl,
+    gap: v1Space.lg,
   },
-  nav: {
-    paddingHorizontal: space[5],
+  modalScroll: {
+    flexGrow: 1,
+    padding: v1Space.xl,
+    gap: v1Space.lg,
+  },
+  navRow: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: v1Space.lg,
   },
-  iconButton: { minWidth: layout.touch, minHeight: layout.touch },
-  track: { height: controls.progressHeight },
-  content: { flexGrow: 1, padding: space[5], gap: space[5] },
-  question: { gap: space[3] },
-  reveal: { alignItems: 'center', gap: space[3] },
-  revealTitle: { textAlign: 'center' },
-  footer: { borderTopWidth: StyleSheet.hairlineWidth, padding: space[5] },
+  progressWrap: {
+    flex: 1,
+  },
+  skipWrap: {
+    marginLeft: 'auto',
+  },
+  skipBtn: {
+    minWidth: v1Layout.minTouchTarget,
+    minHeight: v1Layout.minTouchTarget,
+    alignItems: 'flex-end',
+    justifyContent: 'center',
+    paddingLeft: v1Space.md,
+  },
+  footer: {
+    width: '100%',
+  },
+  footerHint: {
+    textAlign: 'center',
+    marginBottom: v1Space.md,
+  },
+  dotsWrap: {
+    alignItems: 'center',
+    marginBottom: v1Space.lg,
+  },
+  footerSecondary: {
+    alignItems: 'center',
+    marginTop: v1Space.sm,
+  },
+  statusNote: {
+    marginBottom: v1Space.md,
+  },
 });

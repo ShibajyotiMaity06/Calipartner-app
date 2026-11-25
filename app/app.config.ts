@@ -97,6 +97,13 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
       'expo-font',
       {
         fonts: [
+          require.resolve('@expo-google-fonts/fraunces/500Medium/Fraunces_500Medium.ttf'),
+          require.resolve('@expo-google-fonts/fraunces/500Medium_Italic/Fraunces_500Medium_Italic.ttf'),
+          require.resolve('@expo-google-fonts/manrope/400Regular/Manrope_400Regular.ttf'),
+          require.resolve('@expo-google-fonts/manrope/500Medium/Manrope_500Medium.ttf'),
+          require.resolve('@expo-google-fonts/manrope/600SemiBold/Manrope_600SemiBold.ttf'),
+          require.resolve('@expo-google-fonts/manrope/700Bold/Manrope_700Bold.ttf'),
+          require.resolve('@expo-google-fonts/manrope/800ExtraBold/Manrope_800ExtraBold.ttf'),
           './assets/fonts/PlusJakartaSans_300Light_Italic.ttf',
           './assets/fonts/PlusJakartaSans_400Regular.ttf',
           './assets/fonts/PlusJakartaSans_500Medium.ttf',
