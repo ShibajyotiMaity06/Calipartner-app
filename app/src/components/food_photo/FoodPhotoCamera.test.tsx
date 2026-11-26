@@ -13,7 +13,27 @@ vi.mock('react-native', () => ({
   View: 'View',
   StyleSheet: { create: (s: unknown) => s, absoluteFill: {} },
 }));
-vi.mock('react-native-safe-area-context', () => ({ SafeAreaView: 'SafeAreaView' }));
+vi.mock('react-native-safe-area-context', () => ({
+  SafeAreaView: 'SafeAreaView',
+  useSafeAreaInsets: () => ({ top: 44, bottom: 34, left: 0, right: 0 }),
+}));
+vi.mock('@calipartner/ui/v1', async () => {
+  const theme = await import('../../../../packages/ui/src/v1/theme');
+  return {
+    ...theme,
+    CameraIcon: 'CameraIcon',
+    CheckIcon: 'CheckIcon',
+    CloseIcon: 'CloseIcon',
+    EditIcon: 'EditIcon',
+    FeedImageIcon: 'FeedImageIcon',
+    FlashIcon: 'FlashIcon',
+    IconButton: (props: Record<string, unknown>) => React.createElement('IconButton', props),
+    PrimaryButton: (props: Record<string, unknown>) => React.createElement('Button', props),
+    SecondaryButton: (props: Record<string, unknown>) => React.createElement('Button', props),
+    Text: ({ children, ...rest }: Record<string, unknown>) =>
+      React.createElement('Text', rest, children as React.ReactNode),
+  };
+});
 vi.mock('@calipartner/ui', async () => ({
   Button: (await import('@/test/ButtonStub')).ButtonStub,
   ...(await import('../../../../packages/ui/src/tokens')),

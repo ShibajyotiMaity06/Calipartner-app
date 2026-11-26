@@ -1,50 +1,73 @@
-import { useTheme as useAppearance } from '@calipartner/ui/theme';
-import { type as inputTypography } from '@calipartner/ui';
-import { useBrowserModalBack } from '@/hooks/useBrowserModalBack';
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
-  Modal,
-  ScrollView,
+  ActivityIndicator,
   KeyboardAvoidingView,
+  Modal,
   Platform,
+  Pressable,
+  ScrollView,
   StyleSheet,
   TextInput,
   View,
 } from 'react-native';
 import { CameraView, useCameraPermissions } from 'expo-camera';
-import { Ionicons } from '@expo/vector-icons';
-import type { Food, MealSection } from '@calipartner/core';
-import { Text, Button, space, radius, captureLayout } from '@calipartner/ui';
-import { lookupBarcode } from '@/services/barcodeScanService';
-import { ScanSweep } from '@/components/food_photo/ScanSweep';
-import { t } from '@/i18n';
-import { useAuth } from '@/contexts/AuthContext';
-import { useNetworkStatus } from '@/hooks/useNetworkStatus';
 import * as ImagePicker from 'expo-image-picker';
 import * as ImageManipulator from 'expo-image-manipulator';
-import { decodeBarcodeImage } from '@/services/barcodeImageService';
 import type { IScannerControls } from '@zxing/browser';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import {
+  CheckIcon,
+  CloseIcon,
+  CubeIcon,
+  FlashIcon,
+  IconButton,
+  LinkButton,
+  PrimaryButton,
+  SecondaryButton,
+  Text,
+  borders,
+  colors,
+  elevation,
+  fonts,
+  layout,
+  radius,
+  space,
+} from '@calipartner/ui/v1';
+import { scaleNutrients, type Food, type MealSection } from '@calipartner/core';
+import { useAuth } from '@/contexts/AuthContext';
+import { useBrowserModalBack } from '@/hooks/useBrowserModalBack';
+import { useNetworkStatus } from '@/hooks/useNetworkStatus';
+import { ScanSweep } from '@/components/food_photo/ScanSweep';
+import { t } from '@/i18n';
+import { decodeBarcodeImage } from '@/services/barcodeImageService';
+import { lookupBarcode } from '@/services/barcodeScanService';
 
 export interface BarcodeScannerModalProps {
   visible: boolean;
   defaultSection?: MealSection;
+  onSectionChange?: (section: MealSection) => void;
+  onSwitchToPhoto?: () => void;
+  onSwitchToLabel?: () => void;
   onClose: () => void;
   covered?: boolean;
-  onFoodFound: (food: Food) => void;
+  onFoodFound: (food: Food, initialPortion?: { quantity: number; unit: string }) => void;
   onCreateCustomFood: (barcode: string) => void;
 }
+
+const SECTIONS: readonly MealSection[] = ['breakfast', 'lunch', 'dinner', 'snacks'];
 
 export function BarcodeScannerModal({
   visible,
   defaultSection = 'lunch',
+  onSectionChange,
+  onSwitchToPhoto,
+  onSwitchToLabel,
   onClose,
   covered = false,
   onFoodFound,
   onCreateCustomFood,
 }: BarcodeScannerModalProps) {
-  const { colors: dark } = useAppearance();
-  const styles = createStyles(dark);
-
+  const insets = useSafeAreaInsets();
   const { user } = useAuth();
   const { isOnline } = useNetworkStatus();
   const [permission, requestPermission] = useCameraPermissions();
@@ -56,16 +79,20 @@ export function BarcodeScannerModal({
   const [manualCode, setManualCode] = useState('');
   const [searching, setSearching] = useState(false);
   const [foundFood, setFoundFood] = useState<Food | null>(null);
-
-  const sectionName = t(`diary.sections.${defaultSection}` as Parameters<typeof t>[0]);
-
-  const scanLock = useRef(false);
-  const generation = useRef(0);
+  const [servings, setServings] = useState(1);
+  const [section, setSection] = useState<MealSection>(defaultSection);
+  const [mealMenuOpen, setMealMenuOpen] = useState(false);
   const [scanError, setScanError] = useState<string | null>(null);
   const [cameraSession, setCameraSession] = useState(0);
   const [webCameraActive, setWebCameraActive] = useState(false);
+
+  const scanLock = useRef(false);
+  const generation = useRef(0);
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const controlsRef = useRef<IScannerControls | null>(null);
+
+  const sectionName = t(`diary.sections.${section}` as Parameters<typeof t>[0]);
+
   const resetScan = () => {
     setCameraPaused(false);
     generation.current++;
@@ -75,7 +102,9 @@ export function BarcodeScannerModal({
     setScanned(false);
     setScanError(null);
     setFoundFood(null);
+    setServings(1);
   };
+
   const back = () => {
     if (covered) return;
     if (scanned || searching || foundFood || scanError) resetScan();
@@ -84,23 +113,29 @@ export function BarcodeScannerModal({
       setShowMore(false);
     } else onClose();
   };
+
   useBrowserModalBack(visible, onClose, {
     depth:
       Number(showManualInput || showMore) +
       Number(Boolean(scanned || searching || foundFood || scanError)),
     onDepthChange: back,
   });
+
   useEffect(() => {
     generation.current++;
     resetScan();
     if (!visible) {
       controlsRef.current?.stop();
       setWebCameraActive(false);
+      setMealMenuOpen(false);
+    } else {
+      setSection(defaultSection);
     }
     return () => {
       generation.current++;
     };
-  }, [visible]);
+  }, [visible, defaultSection]);
+
   const handleBarcodeScanned = useCallback(
     async (barcodeData: string) => {
       if (scanLock.current) return;
@@ -114,28 +149,44 @@ export function BarcodeScannerModal({
         if (generation.current !== current) return;
         if (result.food) {
           setFoundFood(result.food);
+          setServings(1);
           controlsRef.current?.stop();
         } else {
           setManualCode(barcodeData);
           setScanError(t('capture.barcodeNotFound'));
         }
       } catch (error) {
-        if (generation.current === current)
+        if (generation.current === current) {
           setScanError(error instanceof Error ? error.message : t('capture.barcodeError'));
+        }
       } finally {
         if (generation.current === current) setSearching(false);
       }
     },
     [isOnline, user?.id],
   );
+
   const handleManualLookup = () => {
     if (!manualCode.trim()) return;
     resetScan();
     void handleBarcodeScanned(manualCode.trim());
   };
+
   const handleConfirmFoundFood = () => {
-    if (foundFood) onFoodFound(foundFood);
+    if (!foundFood) return;
+    if (servings === 1) {
+      onFoodFound(foundFood);
+      return;
+    }
+    const baseUnit = foundFood.serving_units?.[0]?.unit ?? 'serving';
+    const baseGrams = foundFood.serving_units?.[0]?.grams ?? 100;
+    const baseQty = baseUnit === 'g' || baseUnit === 'ml' ? baseGrams : 1;
+    onFoodFound(foundFood, {
+      quantity: Math.round(baseQty * servings * 100) / 100,
+      unit: baseUnit,
+    });
   };
+
   const handleTriggerBarcodePhoto = async (takePhoto = false) => {
     resetScan();
     controlsRef.current?.stop();
@@ -144,8 +195,8 @@ export function BarcodeScannerModal({
     const current = generation.current;
     try {
       if (takePhoto) {
-        const permission = await ImagePicker.requestCameraPermissionsAsync();
-        if (!permission.granted) {
+        const perm = await ImagePicker.requestCameraPermissionsAsync();
+        if (!perm.granted) {
           setCameraPaused(false);
           setScanError(t('capture.cameraError'));
           return;
@@ -183,6 +234,7 @@ export function BarcodeScannerModal({
       if (current === generation.current) setSearching(false);
     }
   };
+
   const handleRequestCamera = async () => {
     resetScan();
     if (Platform.OS === 'web') {
@@ -195,6 +247,7 @@ export function BarcodeScannerModal({
       setScanError(t('capture.cameraError'));
     }
   };
+
   useEffect(() => {
     if (!visible || covered || !webCameraActive || foundFood || Platform.OS !== 'web') return;
     let disposed = false;
@@ -228,8 +281,7 @@ export function BarcodeScannerModal({
               }>;
             };
           } | null;
-          const stream = video?.srcObject;
-          const track = stream?.getVideoTracks()[0];
+          const track = video?.srcObject?.getVideoTracks()[0];
           const capabilities = track?.getCapabilities?.();
           if (capabilities?.focusMode?.includes('continuous')) {
             try {
@@ -257,387 +309,714 @@ export function BarcodeScannerModal({
     !covered && (Platform.OS === 'web' ? webCameraActive : !!permission?.granted && !cameraPaused);
 
   if (!visible) return null;
+
+  const baseUnit = foundFood?.serving_units?.[0]?.unit ?? 'serving';
+  const baseGrams = foundFood?.serving_units?.[0]?.grams ?? 100;
+  const baseQty = baseUnit === 'g' || baseUnit === 'ml' ? baseGrams : 1;
+  const safeFoundFood = foundFood
+    ? {
+        ...foundFood,
+        protein_per_100g: foundFood.protein_per_100g ?? 0,
+        carbs_per_100g: foundFood.carbs_per_100g ?? 0,
+        fat_per_100g: foundFood.fat_per_100g ?? 0,
+        fiber_per_100g: foundFood.fiber_per_100g ?? 0,
+        sugar_per_100g: foundFood.sugar_per_100g ?? 0,
+        sodium_mg_per_100g: foundFood.sodium_mg_per_100g ?? 0,
+        serving_units: foundFood.serving_units ?? [],
+      }
+    : null;
+  const scaledNutrients = safeFoundFood
+    ? scaleNutrients(safeFoundFood, baseQty * servings, baseUnit)
+    : null;
+  const servingSubtext = foundFood
+    ? `${Math.round(baseGrams)} g${foundFood.brand ? ` · ${foundFood.brand}` : ' · 1 serving'}`
+    : '';
+
   return (
     <Modal visible={visible} animationType="slide" onRequestClose={back}>
       <KeyboardAvoidingView
-        style={styles.container}
+        style={styles.root}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       >
-        <ScrollView
-          contentContainerStyle={styles.scrollContent}
-          keyboardShouldPersistTaps="handled"
-        >
-          {/* Header bar */}
-          <View style={styles.headerBar}>
-            <Text variant="heading" color={dark.textHi}>
-              {t('foodLog.scan.title')}
-            </Text>
-            <View style={styles.headerActions}>
-              <Button
-                variant="tertiary"
-                fullWidth={false}
-                label={t('capture.flashlight')}
-                iconOnly
-                icon={
-                  <Ionicons
-                    name={torchEnabled ? 'flash' : 'flash-outline'}
-                    size={22}
-                    color={torchEnabled ? dark.apricot : dark.textHi}
-                  />
-                }
-                testID="btn-toggle-torch"
-                disabled={Platform.OS === 'web'}
-                accessibilityState={{ disabled: Platform.OS === 'web' }}
-                onPress={() => setTorchEnabled((prev: boolean) => !prev)}
-                hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
-                style={styles.iconButton}
-                accessibilityLabel={t('capture.flashlight')}
-              />
+        {/* Top Camera / Barcode Viewfinder Stage */}
+        <View style={[styles.cameraStage, { paddingTop: insets.top + layout.topContentOffset }]}>
+          {isCameraReady && Platform.OS === 'web' ? (
+            React.createElement('video', {
+              ref: videoRef,
+              autoPlay: true,
+              muted: true,
+              playsInline: true,
+              style: styles.webVideo,
+            })
+          ) : isCameraReady ? (
+            <CameraView
+              key={cameraSession}
+              style={StyleSheet.absoluteFill}
+              facing="back"
+              enableTorch={torchEnabled}
+              barcodeScannerSettings={{
+                barcodeTypes: ['ean13', 'ean8', 'upc_a', 'upc_e', 'code128', 'code39'],
+              }}
+              onBarcodeScanned={scanned ? undefined : (e) => void handleBarcodeScanned(e.data)}
+            />
+          ) : null}
 
-              <Button
-                variant="tertiary"
-                fullWidth={false}
-                label={t('common.cancel')}
-                iconOnly
-                icon={<Ionicons name="close" size={26} color={dark.textHi} />}
-                testID="btn-close-scanner"
-                onPress={() => {
-                  controlsRef.current?.stop();
-                  onClose();
-                }}
-                hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
-                style={styles.iconButton}
-                accessibilityLabel={t('common.cancel')}
-              />
+          {/* Top Bar */}
+          <View style={styles.topBar}>
+            <IconButton
+              icon={<CloseIcon size={18} color={colors.textHi} />}
+              onPress={back}
+              accessibilityLabel={t('common.cancel')}
+              testID="btn-close-scanner"
+              style={styles.glassCircle}
+            />
+
+            <View style={styles.dropdownAnchor}>
+              <Pressable
+                onPress={() => setMealMenuOpen((prev) => !prev)}
+                accessibilityRole="button"
+                accessibilityLabel={sectionName}
+                style={styles.sectionPill}
+                testID="barcode-section-picker"
+              >
+                <Text variant="label" color="textHi">
+                  {`${sectionName} ▾`}
+                </Text>
+              </Pressable>
+              {mealMenuOpen ? (
+                <View style={styles.dropdownMenu}>
+                  {SECTIONS.map((sec, idx) => {
+                    const active = sec === section;
+                    return (
+                      <Pressable
+                        key={sec}
+                        onPress={() => {
+                          setSection(sec);
+                          onSectionChange?.(sec);
+                          setMealMenuOpen(false);
+                        }}
+                        style={[
+                          styles.dropdownItem,
+                          idx < SECTIONS.length - 1 ? styles.dropdownDivider : null,
+                        ]}
+                      >
+                        <Text variant="label" color={active ? 'apricot' : 'textHi'}>
+                          {t(`diary.sections.${sec}` as Parameters<typeof t>[0])}
+                        </Text>
+                        {active ? <CheckIcon size={14} color={colors.apricot} /> : null}
+                      </Pressable>
+                    );
+                  })}
+                </View>
+              ) : null}
+            </View>
+
+            <IconButton
+              icon={<FlashIcon size={18} color={torchEnabled ? colors.apricot : colors.textHi} />}
+              onPress={() => setTorchEnabled((prev) => !prev)}
+              accessibilityLabel={t('capture.flashlight')}
+              testID="btn-toggle-torch"
+              style={[styles.glassCircle, torchEnabled ? styles.glassCircleActive : null]}
+            />
+          </View>
+
+          {/* Status Pill + Barcode Reticle */}
+          <View style={styles.viewfinderCenter}>
+            {foundFood ? (
+              <View style={styles.detectedPill} testID="barcode-detected-pill">
+                <CheckIcon size={14} color={colors.apricot} />
+                <Text variant="buttonS" color="apricot">
+                  {t('captureV1.barcodeDetected')}
+                </Text>
+              </View>
+            ) : searching ? (
+              <View style={styles.statusPill} testID="barcode-lookup-progress">
+                <ActivityIndicator size="small" color={colors.apricot} />
+                <Text variant="meta" color="textHi">
+                  {t('captureV1.lookingUpProduct')}
+                </Text>
+              </View>
+            ) : null}
+
+            <View style={styles.reticleBox}>
+              {isCameraReady && !foundFood ? <ScanSweep overlay /> : null}
+              <View style={[styles.corner, styles.cornerTL]} />
+              <View style={[styles.corner, styles.cornerTR]} />
+              <View style={[styles.corner, styles.cornerBL]} />
+              <View style={[styles.corner, styles.cornerBR]} />
+
+              {/* Horizontal Apricot Laser Line */}
+              <View style={styles.laserHalo} />
+              <View style={styles.laserLine} />
             </View>
           </View>
 
-          {/* Camera Frame or Permission Screen */}
-          <View style={styles.cameraWrapper}>
-            {!isCameraReady ? (
-              <View style={styles.permissionBox}>
-                <Ionicons name="camera-outline" size={54} color={dark.apricot} />
-                <Text variant="body" color={dark.textHi} style={{ textAlign: 'center' }}>
-                  {t('fastingRefresh.cameraHint')}
+          {/* Mode Pill Switcher */}
+          <View style={styles.modeWrap}>
+            <View style={styles.modePillBar}>
+              <Pressable
+                onPress={() => onSwitchToPhoto?.()}
+                accessibilityRole="button"
+                style={styles.modePillItem}
+                testID="barcode-mode-photo"
+              >
+                <Text variant="buttonS" color="textLo" numberOfLines={1}>
+                  {t('captureV1.modeScanFood')}
                 </Text>
-                <View style={{ gap: 10, width: '100%', maxWidth: 280, marginTop: 12 }}>
-                  <Button
-                    testID="btn-grant-camera-permission"
-                    variant="primary"
-                    label={t('capture.openScanner')}
-                    onPress={handleRequestCamera}
-                  />
-                </View>
-              </View>
-            ) : (
-              <View style={styles.cameraContainer}>
-                {Platform.OS === 'web' ? (
-                  React.createElement('video', {
-                    ref: videoRef,
-                    autoPlay: true,
-                    playsInline: true,
-                    muted: true,
-                    style: { width: '100%', height: '100%', objectFit: 'contain' },
-                  })
-                ) : (
-                  <CameraView
-                    style={StyleSheet.absoluteFill}
-                    key={cameraSession}
-                    facing="back"
-                    autofocus="off"
-                    barcodeScannerSettings={{
-                      barcodeTypes: ['ean13', 'ean8', 'upc_a', 'upc_e', 'code128'],
-                    }}
-                    onMountError={() => setScanError(t('capture.cameraError'))}
-                    enableTorch={torchEnabled}
-                    onBarcodeScanned={
-                      scanned ? undefined : (result) => handleBarcodeScanned(result.data)
-                    }
-                  />
-                )}
+              </Pressable>
 
-                {/* D04: 260x160 Cutout with Apricot Corner Brackets Only */}
-                <View style={styles.cutoutOverlay} pointerEvents="none">
-                  <View style={styles.cutoutFrame}>
-                    {/* Top-Left Bracket */}
-                    <View style={[styles.cornerBracket, styles.bracketTopLeft]} />
-                    {/* Top-Right Bracket */}
-                    <View style={[styles.cornerBracket, styles.bracketTopRight]} />
-                    {/* Bottom-Left Bracket */}
-                    <View style={[styles.cornerBracket, styles.bracketBottomLeft]} />
-                    {/* Bottom-Right Bracket */}
-                    <View style={[styles.cornerBracket, styles.bracketBottomRight]} />
+              <Pressable
+                accessibilityRole="button"
+                accessibilityState={{ selected: true }}
+                style={[styles.modePillItem, styles.modePillActive]}
+                testID="barcode-mode-barcode"
+              >
+                <Text variant="buttonS" color="textHi" numberOfLines={1}>
+                  {t('captureV1.modeBarcode')}
+                </Text>
+              </Pressable>
+
+              <Pressable
+                onPress={() => onSwitchToLabel?.()}
+                accessibilityRole="button"
+                style={styles.modePillItem}
+                testID="barcode-mode-label"
+              >
+                <Text variant="buttonS" color="textLo" numberOfLines={1}>
+                  {t('captureV1.modeLabel')}
+                </Text>
+              </Pressable>
+            </View>
+          </View>
+        </View>
+
+        {/* Elevated Bottom Sheet */}
+        <View
+          style={[
+            styles.bottomSheet,
+            elevation.sheet,
+            { paddingBottom: Math.max(layout.ctaBottomMin, insets.bottom + space.sm) },
+          ]}
+        >
+          <View style={styles.grabber} />
+          <ScrollView
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={styles.sheetContent}
+            keyboardShouldPersistTaps="handled"
+          >
+            {foundFood && scaledNutrients ? (
+              <View testID="card-scanned-food" style={styles.foundWrap}>
+                <View style={styles.productHeaderRow}>
+                  <View style={styles.cubeTile}>
+                    <CubeIcon size={20} color={colors.apricot} />
+                  </View>
+                  <View style={styles.productCopy}>
+                    <Text variant="rowTitle" color="textHi" numberOfLines={2}>
+                      {foundFood.name}
+                    </Text>
+                    <Text variant="meta" color="textLo" numberOfLines={1}>
+                      {servingSubtext}
+                    </Text>
+                  </View>
+                  <View style={styles.kcalCol}>
+                    <Text variant="numL" tabular color="textHi">
+                      {String(Math.round(scaledNutrients.calories))}
+                    </Text>
+                    <Text variant="meta" color="textLo">
+                      kcal
+                    </Text>
                   </View>
                 </View>
-              </View>
-            )}
-          </View>
 
-          {searching && (
-            <View accessibilityLiveRegion="polite" testID="barcode-lookup-progress">
-              <ScanSweep />
-              <Text color={dark.textHi}>{t('foodLog.scan.scanning')}</Text>
-            </View>
-          )}
-          <Text variant="bodyS" color={dark.textHi} style={styles.cutoutHint}>
-            {t('fastingRefresh.scanHint')}
-          </Text>
-          {scanError && (
-            <View style={styles.foundFoodCard} testID="barcode-error">
-              <Text variant="bodyS" color={dark.textHi} accessibilityRole="alert">
-                {scanError}
-              </Text>
-              <Button
-                variant="secondary"
-                label={t('capture.tryAgain')}
-                onPress={handleRequestCamera}
-                testID="barcode-retry"
-              />
-              <Button
-                variant="secondary"
-                label={t('capture.createFood')}
-                onPress={() => {
-                  onCreateCustomFood(manualCode);
-                }}
-                testID="barcode-create-food"
-              />
-            </View>
-          )}
-          {/* Found Food Slide-up Card */}
-          {foundFood && (
-            <View style={styles.foundFoodCard} testID="card-scanned-food">
-              <View style={styles.foundFoodInfo}>
-                <Text
-                  variant="body"
-                  color={dark.textHi}
-                  style={{ fontWeight: '700' }}
-                  numberOfLines={1}
-                >
-                  {foundFood.name}
-                </Text>
-                <Text nutrient="calories" variant="bodyS" color={dark.textMid}>
-                  {foundFood.serving_units?.[0]?.unit ?? '100g'} · {foundFood.calories_per_100g}{' '}
-                  kcal
-                </Text>
-              </View>
-              <Button
-                testID="btn-add-scanned-food"
-                variant="primary"
-                label={t('repairs.addToMeal', { section: sectionName.toLowerCase() })}
-                onPress={handleConfirmFoundFood}
-              />
-            </View>
-          )}
+                <View style={styles.macroRow}>
+                  <View style={styles.macroPill}>
+                    <Text variant="meta" color="textMid" tabular>
+                      {t('captureV1.proteinShort', { g: Math.round(scaledNutrients.protein) })}
+                    </Text>
+                  </View>
+                  <View style={styles.macroPill}>
+                    <Text variant="meta" color="textMid" tabular>
+                      {t('captureV1.carbsShort', { g: Math.round(scaledNutrients.carbs) })}
+                    </Text>
+                  </View>
+                  <View style={styles.macroPill}>
+                    <Text variant="meta" color="textMid" tabular>
+                      {t('captureV1.fatShort', { g: Math.round(scaledNutrients.fat) })}
+                    </Text>
+                  </View>
+                </View>
 
-          {/* Bottom "{t('fastingRefresh.enterBarcode')}" link & Manual TextInput */}
-          <View style={styles.bottomBar}>
-            {!showManualInput ? (
-              <Button
-                variant="secondary"
-                fullWidth={false}
-                label={t('fastingRefresh.enterBarcode')}
-                testID="btn-show-type-number"
-                onPress={() => setShowManualInput(true)}
-                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-              />
+                <View style={styles.servingsRow}>
+                  <Text variant="rowTitle" color="textHi">
+                    {t('captureV1.servingsLabel')}
+                  </Text>
+                  <View style={styles.stepperGroup}>
+                    <Pressable
+                      onPress={() => setServings((s) => Math.max(0.5, s - 0.5))}
+                      accessibilityRole="button"
+                      accessibilityLabel="Decrease servings"
+                      testID="btn-servings-minus"
+                      style={styles.stepperBtn}
+                    >
+                      <Text variant="buttonM" color="textHi">
+                        −
+                      </Text>
+                    </Pressable>
+                    <Text variant="rowTitle" tabular color="textHi" style={styles.servingsVal}>
+                      {String(servings)}
+                    </Text>
+                    <Pressable
+                      onPress={() => setServings((s) => Math.min(20, s + 0.5))}
+                      accessibilityRole="button"
+                      accessibilityLabel="Increase servings"
+                      testID="btn-servings-plus"
+                      style={styles.stepperBtn}
+                    >
+                      <Text variant="buttonM" color="textHi">
+                        +
+                      </Text>
+                    </Pressable>
+                  </View>
+                </View>
+
+                <PrimaryButton
+                  title={t('captureV1.logToSection', { section: sectionName })}
+                  showArrow
+                  onPress={handleConfirmFoundFood}
+                  testID="btn-add-scanned-food"
+                />
+
+                <LinkButton
+                  title={t('captureV1.wrongProductReport')}
+                  variant="default"
+                  onPress={() => {
+                    setManualCode(foundFood.barcode ?? manualCode);
+                    setShowManualInput(true);
+                    resetScan();
+                  }}
+                  testID="btn-wrong-product"
+                />
+                {showManualInput ? (
+                  <View style={styles.manualRow}>
+                    <TextInput
+                      testID="input-manual-barcode"
+                      value={manualCode}
+                      onChangeText={setManualCode}
+                      placeholder={t('foodLog.scan.manualPlaceholder')}
+                      placeholderTextColor={colors.textLo}
+                      keyboardType="number-pad"
+                      style={styles.manualInput}
+                    />
+                    <PrimaryButton
+                      title={t('foodLog.scan.lookupButton')}
+                      onPress={handleManualLookup}
+                      testID="btn-lookup-manual-barcode"
+                    />
+                  </View>
+                ) : null}
+              </View>
             ) : (
-              <View style={styles.manualInputRow}>
-                <TextInput
-                  testID="input-manual-barcode"
-                  value={manualCode}
-                  onChangeText={setManualCode}
-                  keyboardType="number-pad"
-                  placeholder={t('foodLog.scan.manualPlaceholder')}
-                  placeholderTextColor={dark.textLo}
-                  style={[styles.manualTextInput, { fontFamily: inputTypography.body.fontFamily }]}
-                  autoFocus
-                  accessibilityLabel={t('foodLog.scan.manualPlaceholder')}
+              <View style={styles.idleSheetContent}>
+                {scanError ? (
+                  <View style={styles.errorCard}>
+                    <Text
+                      variant="meta"
+                      color="danger"
+                      accessibilityRole="alert"
+                      testID="barcode-error"
+                    >
+                      {scanError}
+                    </Text>
+                    <View style={styles.errorActions}>
+                      <PrimaryButton
+                        title={t('capture.tryAgain')}
+                        onPress={resetScan}
+                        testID="barcode-retry"
+                      />
+                      <SecondaryButton
+                        title={t('capture.createFood')}
+                        onPress={() => onCreateCustomFood(manualCode || '')}
+                        testID="barcode-create-food"
+                      />
+                    </View>
+                  </View>
+                ) : null}
+
+                {!isCameraReady ? (
+                  <PrimaryButton
+                    title={t('capture.openScanner')}
+                    onPress={() => void handleRequestCamera()}
+                    testID="btn-grant-camera-permission"
+                  />
+                ) : null}
+
+                <SecondaryButton
+                  title={t('capture.typeBarcode')}
+                  onPress={() => setShowManualInput((prev) => !prev)}
+                  testID="btn-show-type-number"
                 />
-                <Button
-                  testID="btn-lookup-manual-barcode"
-                  variant="primary"
-                  label={t('foodLog.scan.lookupButton')}
-                  disabled={searching || !manualCode.trim()}
-                  onPress={handleManualLookup}
-                />
+
+                {showManualInput ? (
+                  <View style={styles.manualRow}>
+                    <TextInput
+                      testID="input-manual-barcode"
+                      value={manualCode}
+                      onChangeText={setManualCode}
+                      placeholder={t('foodLog.scan.manualPlaceholder')}
+                      placeholderTextColor={colors.textLo}
+                      keyboardType="number-pad"
+                      style={styles.manualInput}
+                    />
+                    <PrimaryButton
+                      title={t('foodLog.scan.lookupButton')}
+                      onPress={handleManualLookup}
+                      testID="btn-lookup-manual-barcode"
+                    />
+                  </View>
+                ) : null}
+
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityState={{ expanded: showMore }}
+                  accessibilityLabel={t('fastingRefresh.moreOptions')}
+                  onPress={() => setShowMore((prev) => !prev)}
+                  style={styles.moreOptionsBtn}
+                  testID="barcode-more-options"
+                >
+                  <Text variant="buttonS" color="textMid">
+                    {t('fastingRefresh.moreOptions')}
+                  </Text>
+                </Pressable>
+
+                {showMore ? (
+                  <View style={styles.moreActions}>
+                    <SecondaryButton
+                      title={t('fastingRefresh.takePhoto')}
+                      onPress={() => void handleTriggerBarcodePhoto(true)}
+                      testID="barcode-take-photo"
+                    />
+                    <SecondaryButton
+                      title={t('fastingRefresh.choosePhoto')}
+                      onPress={() => void handleTriggerBarcodePhoto(false)}
+                      testID="barcode-choose-photo"
+                    />
+                  </View>
+                ) : null}
               </View>
             )}
-          </View>
-          <Button
-            variant="secondary"
-            fullWidth={false}
-            label={t('fastingRefresh.moreOptions')}
-            testID="barcode-more-options"
-            onPress={() => setShowMore((current) => !current)}
-            accessibilityRole="button"
-            accessibilityState={{ expanded: showMore }}
-            style={{
-              minHeight: captureLayout.touch,
-              justifyContent: 'center',
-              alignItems: 'center',
-            }}
-          />
-          {showMore && (
-            <View style={styles.fallbackActions}>
-              <Button
-                testID="barcode-take-photo"
-                variant="secondary"
-                label={t('fastingRefresh.takePhoto')}
-                onPress={() => void handleTriggerBarcodePhoto(true)}
-              />
-              <Button
-                testID="barcode-choose-photo"
-                variant="secondary"
-                label={t('fastingRefresh.choosePhoto')}
-                onPress={() => void handleTriggerBarcodePhoto()}
-              />
-            </View>
-          )}
-        </ScrollView>
+          </ScrollView>
+        </View>
       </KeyboardAvoidingView>
     </Modal>
   );
 }
 
-const createStyles = (dark: ReturnType<typeof useAppearance>['colors']) =>
-  StyleSheet.create({
-    scrollContent: { flexGrow: 1, paddingBottom: space[6] },
-    fallbackActions: { padding: space[4], gap: space[3] },
-    container: {
-      flex: 1,
-      backgroundColor: dark.bg0,
-    },
-    headerBar: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'space-between',
-      paddingTop: 54,
-      paddingHorizontal: space[4],
-      paddingBottom: space[3],
-      backgroundColor: dark.s1,
-      zIndex: 10,
-      borderBottomWidth: 1,
-      borderBottomColor: dark.hairline,
-    },
-    headerActions: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      gap: space[3],
-    },
-    iconButton: {
-      minWidth: captureLayout.touch,
-      minHeight: captureLayout.touch,
-      alignItems: 'center',
-      justifyContent: 'center',
-      padding: space[1],
-    },
-    cameraWrapper: {
-      flexGrow: 1,
-      minHeight: captureLayout.cameraMinHeight,
-    },
-    permissionBox: {
-      flex: 1,
-      alignItems: 'center',
-      justifyContent: 'center',
-      padding: space[6],
-      gap: space[4],
-    },
-    cameraContainer: {
-      flex: 1,
-      position: 'relative',
-    },
-    cutoutOverlay: {
-      ...StyleSheet.absoluteFill,
-      alignItems: 'center',
-      justifyContent: 'center',
-      gap: space[4],
-    },
-    cutoutFrame: {
-      width: '90%',
-      maxWidth: captureLayout.cameraMaxWidth,
-      height: captureLayout.guideHeight,
-      position: 'relative',
-    },
-    cornerBracket: {
-      position: 'absolute',
-      width: 24,
-      height: 24,
-      borderColor: dark.apricot,
-    },
-    bracketTopLeft: {
-      top: 0,
-      left: 0,
-      borderTopWidth: 3,
-      borderLeftWidth: 3,
-      borderTopLeftRadius: radius.control,
-    },
-    bracketTopRight: {
-      top: 0,
-      right: 0,
-      borderTopWidth: 3,
-      borderRightWidth: 3,
-      borderTopRightRadius: radius.control,
-    },
-    bracketBottomLeft: {
-      bottom: 0,
-      left: 0,
-      borderBottomWidth: 3,
-      borderLeftWidth: 3,
-      borderBottomLeftRadius: radius.control,
-    },
-    bracketBottomRight: {
-      bottom: 0,
-      right: 0,
-      borderBottomWidth: 3,
-      borderRightWidth: 3,
-      borderBottomRightRadius: radius.control,
-    },
-    cutoutHint: {
-      textAlign: 'center',
-      marginHorizontal: space[4],
-      backgroundColor: dark.s2,
-      paddingHorizontal: space[3],
-      paddingVertical: space[1],
-      borderRadius: radius.full,
-      overflow: 'hidden',
-    },
-    foundFoodCard: {
-      backgroundColor: dark.s1,
-      padding: space[4],
-      borderTopWidth: 1,
-      borderTopColor: dark.hairline,
-      gap: space[3],
-    },
-    foundFoodInfo: {
-      gap: space[1],
-    },
-    bottomBar: {
-      padding: space[4],
-      backgroundColor: dark.s1,
-      alignItems: 'center',
-      borderTopWidth: 1,
-      borderTopColor: dark.hairline,
-    },
-    typeNumberLink: {
-      textDecorationLine: 'underline',
-      fontWeight: '600',
-    },
-    manualInputRow: {
-      flexDirection: 'column',
-      alignItems: 'stretch',
-      gap: space[3],
-      width: '100%',
-    },
-    manualTextInput: {
-      width: '100%',
-      minHeight: captureLayout.touch,
-      backgroundColor: dark.s2,
-      borderWidth: 1,
-      borderColor: dark.hairlineLit,
-      borderRadius: radius.control,
-      paddingHorizontal: space[3],
-      paddingVertical: space[2],
-      color: dark.textHi,
-      fontSize: 16,
-    },
-  });
+const RETICLE_W = 264;
+const RETICLE_H = 152;
+const CORNER_LEN = 24;
+const CORNER_STROKE = 2.5;
+
+const styles = StyleSheet.create({
+  root: {
+    flex: 1,
+    backgroundColor: colors.bg0,
+  },
+  cameraStage: {
+    flex: 1,
+    justifyContent: 'space-between',
+    paddingHorizontal: layout.screenPaddingX,
+    paddingBottom: space.md,
+    position: 'relative',
+  },
+  webVideo: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    width: '100%',
+    height: '100%',
+    objectFit: 'cover',
+  },
+  topBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    zIndex: 20,
+  },
+  glassCircle: {
+    backgroundColor: colors.glass,
+    borderColor: colors.hairline,
+  },
+  glassCircleActive: {
+    borderColor: colors.apricot,
+  },
+  dropdownAnchor: {
+    position: 'relative',
+    alignItems: 'center',
+  },
+  sectionPill: {
+    backgroundColor: colors.glass,
+    borderWidth: borders.width,
+    borderColor: colors.hairline,
+    borderRadius: radius.full,
+    paddingHorizontal: space.lg,
+    minHeight: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  dropdownMenu: {
+    position: 'absolute',
+    top: 46,
+    minWidth: 160,
+    backgroundColor: colors.s1,
+    borderWidth: borders.width,
+    borderColor: colors.hairlineLit,
+    borderRadius: radius.card,
+    paddingVertical: space.xs,
+    zIndex: 30,
+  },
+  dropdownItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: space.md,
+    paddingVertical: space.sm,
+    minHeight: 40,
+  },
+  dropdownDivider: {
+    borderBottomWidth: borders.width,
+    borderBottomColor: colors.s2,
+  },
+  viewfinderCenter: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: space.md,
+  },
+  detectedPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: space.xs,
+    backgroundColor: colors.glass,
+    borderWidth: borders.width,
+    borderColor: colors.apricot,
+    borderRadius: radius.full,
+    paddingHorizontal: space.md,
+    paddingVertical: space.xs + 2,
+  },
+  statusPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: space.sm,
+    backgroundColor: colors.glass,
+    borderWidth: borders.width,
+    borderColor: colors.hairline,
+    borderRadius: radius.full,
+    paddingHorizontal: space.md,
+    paddingVertical: space.xs + 2,
+  },
+  reticleBox: {
+    width: RETICLE_W,
+    height: RETICLE_H,
+    borderRadius: radius.card,
+    backgroundColor: colors.apricotGlowSoft,
+    alignItems: 'center',
+    justifyContent: 'center',
+    position: 'relative',
+  },
+  corner: {
+    position: 'absolute',
+    width: CORNER_LEN,
+    height: CORNER_LEN,
+    borderColor: colors.apricot,
+  },
+  cornerTL: {
+    top: 0,
+    left: 0,
+    borderTopWidth: CORNER_STROKE,
+    borderLeftWidth: CORNER_STROKE,
+    borderTopLeftRadius: radius.control,
+  },
+  cornerTR: {
+    top: 0,
+    right: 0,
+    borderTopWidth: CORNER_STROKE,
+    borderRightWidth: CORNER_STROKE,
+    borderTopRightRadius: radius.control,
+  },
+  cornerBL: {
+    bottom: 0,
+    left: 0,
+    borderBottomWidth: CORNER_STROKE,
+    borderLeftWidth: CORNER_STROKE,
+    borderBottomLeftRadius: radius.control,
+  },
+  cornerBR: {
+    bottom: 0,
+    right: 0,
+    borderBottomWidth: CORNER_STROKE,
+    borderRightWidth: CORNER_STROKE,
+    borderBottomRightRadius: radius.control,
+  },
+  laserHalo: {
+    position: 'absolute',
+    left: 6,
+    right: 6,
+    height: 14,
+    backgroundColor: colors.apricotGlow,
+  },
+  laserLine: {
+    position: 'absolute',
+    left: 6,
+    right: 6,
+    height: 2,
+    backgroundColor: colors.apricot,
+  },
+  modeWrap: {
+    alignItems: 'center',
+  },
+  modePillBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.s1,
+    borderWidth: borders.width,
+    borderColor: colors.hairline,
+    borderRadius: radius.tabBar,
+    padding: space.xs,
+    gap: space.xs,
+  },
+  modePillItem: {
+    paddingHorizontal: space.md,
+    paddingVertical: space.sm,
+    borderRadius: radius.button,
+    minHeight: 36,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  modePillActive: {
+    backgroundColor: colors.s3,
+  },
+  bottomSheet: {
+    backgroundColor: colors.s1,
+    borderTopLeftRadius: radius.sheet,
+    borderTopRightRadius: radius.sheet,
+    borderTopWidth: borders.width,
+    borderColor: colors.hairlineLit,
+    paddingHorizontal: layout.sheetPaddingX,
+    paddingTop: space.sm,
+    maxHeight: '52%',
+  },
+  grabber: {
+    width: 40,
+    height: 5,
+    borderRadius: radius.full,
+    backgroundColor: colors.hairline,
+    alignSelf: 'center',
+    marginBottom: space.md,
+  },
+  sheetContent: {
+    gap: space.md,
+    paddingBottom: space.xs,
+  },
+  foundWrap: {
+    gap: space.md,
+  },
+  productHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: space.md,
+  },
+  cubeTile: {
+    width: 44,
+    height: 44,
+    borderRadius: radius.iconTile,
+    backgroundColor: colors.s2,
+    borderWidth: borders.width,
+    borderColor: colors.hairline,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  productCopy: {
+    flex: 1,
+    gap: 2,
+  },
+  kcalCol: {
+    alignItems: 'flex-end',
+  },
+  macroRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: space.sm,
+  },
+  macroPill: {
+    backgroundColor: colors.s2,
+    borderWidth: borders.width,
+    borderColor: colors.hairline,
+    borderRadius: radius.chip,
+    paddingHorizontal: space.md,
+    paddingVertical: space.xs,
+  },
+  servingsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: space.xs,
+  },
+  stepperGroup: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: space.md,
+  },
+  stepperBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: radius.full,
+    backgroundColor: colors.s2,
+    borderWidth: borders.width,
+    borderColor: colors.hairline,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  servingsVal: {
+    minWidth: 24,
+    textAlign: 'center',
+  },
+  idleSheetContent: {
+    gap: space.sm,
+  },
+  errorCard: {
+    gap: space.sm,
+    padding: space.md,
+    backgroundColor: colors.s2,
+    borderWidth: borders.width,
+    borderColor: colors.danger,
+    borderRadius: radius.card,
+  },
+  errorActions: {
+    gap: space.sm,
+  },
+  manualRow: {
+    flexDirection: 'column',
+    alignItems: 'stretch',
+    gap: space.sm,
+  },
+  manualInput: {
+    backgroundColor: colors.s2,
+    borderWidth: borders.width,
+    borderColor: colors.hairline,
+    borderRadius: radius.input,
+    paddingHorizontal: space.md,
+    minHeight: 48,
+    color: colors.textHi,
+    fontFamily: fonts.regular,
+    fontSize: 15,
+  },
+  moreActions: {
+    gap: space.sm,
+  },
+  moreOptionsBtn: {
+    minHeight: layout.minTouchTarget,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+});

@@ -1039,3 +1039,77 @@ export function HistoryClockIcon({
     </Svg>
   );
 }
+
+export function FlashIcon({
+  size = 20,
+  color = colors.textMid,
+  strokeWidth = DEFAULT_STROKE,
+}: DSIconProps): React.JSX.Element {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Path
+        d="M13 2.5 5.5 13h6l-1 8.5L18.5 11h-6l.5-8.5z"
+        stroke={color}
+        strokeWidth={strokeWidth}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </Svg>
+  );
+}
+
+export function CubeIcon({
+  size = 20,
+  color = colors.apricot,
+  strokeWidth = DEFAULT_STROKE,
+}: DSIconProps): React.JSX.Element {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Path
+        d="M12 3 4.5 7.2v9.6L12 21l7.5-4.2V7.2L12 3z"
+        stroke={color}
+        strokeWidth={strokeWidth}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <Polyline
+        points="4.5 7.2 12 11.4 19.5 7.2"
+        stroke={color}
+        strokeWidth={strokeWidth}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <Line
+        x1={12}
+        y1={11.4}
+        x2={12}
+        y2={21}
+        stroke={color}
+        strokeWidth={strokeWidth}
+        strokeLinecap="round"
+      />
+    </Svg>
+  );
+}
+
+export function InfoCircleIcon({
+  size = 18,
+  color = colors.textLo,
+  strokeWidth = DEFAULT_STROKE,
+}: DSIconProps): React.JSX.Element {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Circle cx={12} cy={12} r={9} stroke={color} strokeWidth={strokeWidth} />
+      <Line
+        x1={12}
+        y1={8}
+        x2={12}
+        y2={12.5}
+        stroke={color}
+        strokeWidth={strokeWidth}
+        strokeLinecap="round"
+      />
+      <Circle cx={12} cy={16} r={0.9} fill={color} />
+    </Svg>
+  );
+}

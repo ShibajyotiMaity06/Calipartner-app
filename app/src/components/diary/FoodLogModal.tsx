@@ -1,23 +1,45 @@
-import { MyMealsView } from './MyMealsView';
-import { DescribeMealModal } from './DescribeMealModal';
-import type { NutrientCorrection } from '@calipartner/core';
-import { type as inputTypography } from '@calipartner/ui';
-import { PaywallModal } from '@/components/rooms/PaywallModal';
 import React, { useEffect, useRef, useState } from 'react';
-import { ActivityIndicator, Modal, Pressable, ScrollView, TextInput, View } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import type { Food, FoodCandidateItem, MealSection } from '@calipartner/core';
+import {
+  ActivityIndicator,
+  Modal,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  TextInput,
+  View,
+} from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Button } from '@calipartner/ui';
+import {
+  BarcodeIcon,
+  CameraIcon,
+  CheckIcon,
+  ChevronLeftIcon,
+  Chip,
+  CloseIcon,
+  EditIcon,
+  IconButton,
+  LinkButton,
+  PlusIcon,
+  PrimaryButton,
+  SearchIcon,
+  Text,
+  borders,
+  colors,
+  elevation,
+  fonts,
+  layout,
+  radius,
+  space,
+} from '@calipartner/ui/v1';
+import type { Food, FoodCandidateItem, MealSection, NutrientCorrection } from '@calipartner/core';
 import { applyNutrientCorrection, scaleNutrients, sumNutrientSnapshots } from '@calipartner/core';
-import { Button, Chip, homeLayout, Text } from '@calipartner/ui';
 import { useAuth } from '@/contexts/AuthContext';
 import { useSubscription } from '@/hooks/useSubscription';
 import { useBrowserModalBack } from '@/hooks/useBrowserModalBack';
 import { getDb } from '@/db';
 import { useFoodSearch } from '@/hooks/useFoodSearch';
 import { useFoodLibrary } from '@/hooks/useFoodLibrary';
-import { FoodFavoriteButton } from './FoodFavoriteButton';
-import { FoodFavoritesView } from './FoodFavoritesView';
-import { NutrientSummary } from './NutrientSummary';
 import { useAddEntry } from '@/hooks/useFoodEntries';
 import { usePreviouslyLogged, type PreviouslyLoggedItem } from '@/hooks/usePreviouslyLogged';
 import { t } from '@/i18n';
@@ -30,11 +52,8 @@ import {
   savePhotoCandidatesToDiary,
   type SupabaseFunctionsClient,
 } from '@/services/aiFoodPhotoService';
-import { fontSize, radius, spacing } from '@/theme/tokens';
-import { useTheme } from '@/theme/useTheme';
-import { BarcodeScannerModal } from './BarcodeScannerModal';
-import { CustomFoodModal } from './CustomFoodModal';
-import { QuantityModal } from './QuantityModal';
+import { PaywallModal } from '@/components/rooms/PaywallModal';
+import { RecipeBrowseView } from '@/components/recipes';
 import {
   AiConsentSheet,
   FoodPhotoAnalyzingOverlay,
@@ -42,7 +61,13 @@ import {
   FoodPhotoDailyLimitModal,
   FoodPhotoResultsEditor,
 } from '@/components/food_photo';
-import { RecipeBrowseView } from '@/components/recipes';
+import { BarcodeScannerModal } from './BarcodeScannerModal';
+import { CustomFoodModal } from './CustomFoodModal';
+import { DescribeMealModal } from './DescribeMealModal';
+import { FoodFavoriteButton } from './FoodFavoriteButton';
+import { FoodFavoritesView } from './FoodFavoritesView';
+import { MyMealsView } from './MyMealsView';
+import { QuantityModal } from './QuantityModal';
 
 export interface FoodLogModalProps {
   visible: boolean;
@@ -51,6 +76,7 @@ export interface FoodLogModalProps {
   onClose: () => void;
   onLogged?: () => void;
   initialTab?: TabType;
+  autoStartPhoto?: boolean;
 }
 
 type FoodView = 'search' | 'photo' | 'recipes' | 'favorites' | 'myMeals';
@@ -63,8 +89,9 @@ export function FoodLogModal({
   onClose,
   onLogged,
   initialTab = 'search',
+  autoStartPhoto = false,
 }: FoodLogModalProps) {
-  const { colors } = useTheme();
+  const insets = useSafeAreaInsets();
   const { user } = useAuth();
   const photoSubscription = useSubscription();
   const hasPhotoAccess =
@@ -72,8 +99,8 @@ export function FoodLogModal({
     photoSubscription.currentTier === 'pro' &&
     !photoSubscription.isTrial;
   const library = useFoodLibrary();
-  const [showDescribe, setShowDescribe] = useState(false);
 
+  const [showDescribe, setShowDescribe] = useState(false);
   const [showPhotoPlans, setShowPhotoPlans] = useState(false);
   const [selectedFoods, setSelectedFoods] = useState<
     Record<
@@ -87,21 +114,25 @@ export function FoodLogModal({
       }
     >
   >({});
-  const [batchMeal, setBatchMeal] = useState<MealSection | null>(null);
+  const [batchMeal, setBatchMeal] = useState<MealSection | null>(defaultSection);
   const [batchSaving, setBatchSaving] = useState(false);
   const [batchError, setBatchError] = useState(false);
   const batchInFlight = useRef(false);
   const [loggedToast, setLoggedToast] = useState<string | null>(null);
   const toastTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
   useEffect(() => {
     return () => {
       if (toastTimeoutRef.current) clearTimeout(toastTimeoutRef.current);
     };
   }, []);
+
   const toggleSelection = (
     food: Food,
-    quantity = !food.serving_units[0] || ['g', 'ml'].includes(food.serving_units[0].unit) ? 100 : 1,
-    unit = food.serving_units[0]?.unit ?? 'g',
+    quantity = !food.serving_units?.[0] || ['g', 'ml'].includes(food.serving_units[0].unit)
+      ? 100
+      : 1,
+    unit = food.serving_units?.[0]?.unit ?? 'g',
     source: 'search' | 'history' = 'search',
   ) => {
     setSelectedFoods((current) => {
@@ -111,6 +142,7 @@ export function FoodLogModal({
       return next;
     });
   };
+
   const [views, setViews] = useState<FoodView[]>([initialTab === 'scan' ? 'search' : initialTab]);
   const activeTab = views.at(-1)!;
   const backLabel = t(views.length > 1 ? 'common.back' : 'homeRefresh.close');
@@ -119,29 +151,35 @@ export function FoodLogModal({
   };
   const back = () => {
     if (batchInFlight.current) return;
-    if (views.length > 1)
+    if (views.length > 1) {
       setViews((current) =>
         current.length > 1 && current.at(-1) === activeTab ? current.slice(0, -1) : current,
       );
-    else onClose();
+    } else {
+      onClose();
+    }
   };
   useBrowserModalBack(visible, onClose, {
     depth: views.length - 1,
     onDepthChange: (depth) => setViews((current) => current.slice(0, depth + 1)),
   });
+
   const [portionDefaults, setPortionDefaults] = useState<{ quantity: number; unit: string }>();
   const [selectedFoodForQuantity, setSelectedFoodForQuantity] = useState<Food | null>(null);
   const [showBarcodeScanner, setShowBarcodeScanner] = useState(false);
+
   useEffect(() => {
     if (visible && initialTab === 'scan') setShowBarcodeScanner(true);
   }, [visible, initialTab]);
+
   const [showCustomFoodModal, setShowCustomFoodModal] = useState(false);
   const [prefilledBarcode, setPrefilledBarcode] = useState<string | null>(null);
 
-  // Phase 11 AI Food Photo states
+  // AI Food Photo states
   const [showPhotoConsent, setShowPhotoConsent] = useState(false);
   const [showPhotoCamera, setShowPhotoCamera] = useState(false);
   const [photoAnalyzing, setPhotoAnalyzing] = useState<string | null>(null);
+  const [lastPhotoUri, setLastPhotoUri] = useState<string | null>(null);
   const photoRequest = useRef(0);
   const [photoResults, setPhotoResults] = useState<FoodCandidateItem[] | null>(null);
   const [showResultsEditor, setShowResultsEditor] = useState(false);
@@ -152,6 +190,8 @@ export function FoodLogModal({
   );
   const [consentLoading, setConsentLoading] = useState(false);
   const [photoError, setPhotoError] = useState<string | null>(null);
+  const autoStartedRef = useRef(false);
+
   const closePhotoConsent = () => {
     if (!consentLoading) setShowPhotoConsent(false);
   };
@@ -163,9 +203,11 @@ export function FoodLogModal({
     setShowPhotoCamera(true);
   };
   const closePhotoLimit = () => setShowDailyLimitModal(false);
+
   useBrowserModalBack(visible && showPhotoConsent, closePhotoConsent);
   useBrowserModalBack(visible && !!photoAnalyzing, returnToPhotoCamera);
   useBrowserModalBack(visible && showDailyLimitModal, closePhotoLimit);
+
   const { addEntry, error: saveError } = useAddEntry();
   const selection = Object.values(selectedFoods);
   const selectionTotals = sumNutrientSnapshots(
@@ -178,6 +220,7 @@ export function FoodLogModal({
         : scaleNutrients(item.food, item.quantity, item.unit),
     ),
   );
+
   const saveSelection = async () => {
     if (batchInFlight.current || !selection.length || !batchMeal) return;
     batchInFlight.current = true;
@@ -195,7 +238,6 @@ export function FoodLogModal({
           setBatchError(true);
           return;
         }
-        // Completed items leave the selection immediately; retry only the unsaved remainder.
         setSelectedFoods((current) => {
           const next = { ...current };
           delete next[item.food.id];
@@ -212,10 +254,7 @@ export function FoodLogModal({
     }
   };
 
-  // Search tab hook
   const { query, setQuery, results: searchResults, loading: searchLoading } = useFoodSearch();
-
-  // History tab hook
   const {
     items: historyItems,
     loading: historyLoading,
@@ -225,8 +264,8 @@ export function FoodLogModal({
     refresh: refreshHistory,
   } = usePreviouslyLogged();
 
-  const handleSelectFood = (food: Food) => {
-    setPortionDefaults(undefined);
+  const handleSelectFood = (food: Food, initialPortion?: { quantity: number; unit: string }) => {
+    setPortionDefaults(initialPortion);
     setSelectedFoodForQuantity(food);
   };
 
@@ -299,6 +338,20 @@ export function FoodLogModal({
     }
   };
 
+  const startPhotoRef = useRef(handleStartPhotoScan);
+  startPhotoRef.current = handleStartPhotoScan;
+
+  useEffect(() => {
+    if (!visible) {
+      autoStartedRef.current = false;
+      return;
+    }
+    if (autoStartPhoto && initialTab === 'photo' && !autoStartedRef.current) {
+      autoStartedRef.current = true;
+      void startPhotoRef.current();
+    }
+  }, [visible, autoStartPhoto, initialTab]);
+
   const handleAcceptConsent = async () => {
     try {
       setConsentLoading(true);
@@ -314,12 +367,12 @@ export function FoodLogModal({
 
   const handlePhotoCaptured = async (payload: { base64: string; mimeType: string }) => {
     const request = ++photoRequest.current;
+    const dataUri = payload.base64.startsWith('data:')
+      ? payload.base64
+      : `data:${payload.mimeType};base64,${payload.base64}`;
+    setLastPhotoUri((prev) => prev ?? dataUri);
     setShowPhotoCamera(false);
-    setPhotoAnalyzing(
-      payload.base64.startsWith('data:')
-        ? payload.base64
-        : `data:${payload.mimeType};base64,${payload.base64}`,
-    );
+    setPhotoAnalyzing(dataUri);
     try {
       const response = await analyzeFoodPhoto(getSupabase() as unknown as SupabaseFunctionsClient, {
         imageBase64: payload.base64,
@@ -380,200 +433,133 @@ export function FoodLogModal({
     });
     setShowResultsEditor(false);
     setPhotoResults(null);
-    if (onLogged) onLogged();
+    onLogged?.();
     onClose();
   };
 
+  const targetSection = batchMeal ?? defaultSection;
+  const targetSectionLabel = t(`diary.sections.${targetSection}` as Parameters<typeof t>[0]);
+  const segmentValue =
+    activeTab === 'favorites' ? 'favorites' : activeTab === 'myMeals' ? 'myMeals' : 'search';
+
   return (
     <Modal visible={visible} animationType="slide" transparent onRequestClose={back}>
-      <View
-        style={{
-          flex: 1,
-          justifyContent: 'flex-end',
-          backgroundColor: 'rgba(0,0,0,0.5)',
-        }}
-      >
+      <View style={styles.backdrop}>
         <View
           testID="modal-food-log"
-          style={{
-            backgroundColor: colors.surface,
-            borderTopLeftRadius: radius.lg,
-            borderTopRightRadius: radius.lg,
-            height: '92%',
-            paddingTop: spacing.md,
-            gap: spacing.sm,
-          }}
+          style={[
+            styles.sheetRoot,
+            {
+              paddingTop: Math.max(space.lg, insets.top + layout.topContentOffset),
+              paddingBottom: Math.max(space.lg, insets.bottom + space.sm),
+            },
+          ]}
         >
-          {/* Header */}
-          <View
-            style={{
-              flexDirection: views.length > 1 ? 'row-reverse' : 'row',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              paddingHorizontal: spacing.md,
-            }}
-          >
-            <View style={{ flex: 1 }}>
-              <Text style={{ fontSize: fontSize.lg, fontWeight: '700', color: colors.text }}>
-                {t('foodLog.title')}
-              </Text>
-              <Text style={{ fontSize: fontSize.xs, color: colors.textMuted }}>
-                {t(`diary.sections.${defaultSection}` as Parameters<typeof t>[0])} • {localDate}
-              </Text>
-            </View>
-
-            <Button
-              variant="tertiary"
-              fullWidth={false}
-              label={backLabel}
-              iconOnly
-              icon={
-                <Ionicons
-                  name={views.length > 1 ? 'chevron-back' : 'close'}
-                  size={26}
-                  color={colors.textMuted}
-                />
-              }
-              testID="btn-close-food-log"
-              accessibilityRole="button"
-              accessibilityLabel={backLabel}
-              style={{
-                minWidth: homeLayout.touchSize,
-                minHeight: homeLayout.touchSize,
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}
+          {/* Top Nav Bar: < and + New food pill */}
+          <View style={styles.topBar}>
+            <IconButton
+              icon={<ChevronLeftIcon size={20} color={colors.textHi} />}
               onPress={back}
-              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+              accessibilityLabel={backLabel}
+              testID="btn-close-food-log"
             />
+            <Pressable
+              onPress={() => {
+                setPrefilledBarcode(null);
+                setShowCustomFoodModal(true);
+              }}
+              accessibilityRole="button"
+              accessibilityLabel={t('ownerPolish.custom')}
+              testID="tab-log-custom"
+              style={styles.newFoodPill}
+            >
+              <Text variant="buttonS" color="textHi">
+                {t('captureV1.newFoodPill')}
+              </Text>
+            </Pressable>
           </View>
 
-          {loggedToast && (
-            <View
-              testID="food-log-success-toast"
-              style={{
-                marginHorizontal: spacing.md,
-                paddingVertical: spacing.xs,
-                paddingHorizontal: spacing.sm,
-                backgroundColor: colors.surfaceAlt,
-                borderRadius: radius.md,
-                flexDirection: 'row',
-                alignItems: 'center',
-                gap: spacing.xs,
-              }}
-            >
-              <Ionicons name="checkmark-circle" size={18} color={colors.primary} />
-              <Text style={{ color: colors.text, fontSize: fontSize.sm }}>
-                {t('launch.mealLogged')}: {loggedToast}
+          {/* Eyebrow + Your foods Headline */}
+          <View style={styles.titleBlock}>
+            <View style={styles.eyebrowRow}>
+              <View style={styles.apricotDot} />
+              <Text variant="eyebrow" color="textLo">
+                {t('captureV1.addingToEyebrow', {
+                  section: t(
+                    `diary.sections.${defaultSection}` as Parameters<typeof t>[0],
+                  ).toUpperCase(),
+                })}
               </Text>
             </View>
-          )}
+            <Text variant="title" color="textHi">
+              {t('captureV1.yourFoodsTitle')}
+            </Text>
+          </View>
 
-          {(saveError || historySaveError) && (
+          {loggedToast ? (
+            <View testID="food-log-success-toast" style={styles.toastBanner}>
+              <CheckIcon size={16} color={colors.apricot} />
+              <Text variant="meta" color="textHi">
+                {`${t('launch.mealLogged')}: ${loggedToast}`}
+              </Text>
+            </View>
+          ) : null}
+
+          {saveError || historySaveError ? (
             <Text
+              variant="meta"
+              color="danger"
               accessibilityRole="alert"
               testID="food-log-save-error"
-              style={{ color: colors.text }}
             >
               {t('fixNovember.saveFailed')}
             </Text>
-          )}
-          <View
-            style={{
-              flexDirection: 'row',
-              justifyContent: 'flex-end',
-              gap: spacing.xs,
-              paddingHorizontal: spacing.md,
-            }}
-            testID="food-log-quick-actions"
-          >
-            {(
-              [
-                ['favorites', 'heart-outline', t('foodPolish.favorites')],
-                ['myMeals', 'restaurant-outline', t('launch.meals')],
-                ['search', 'search-outline', t('foodLog.tabs.search')],
-              ] as const
-            ).map(([tab, icon, label]) => (
-              <Button
-                key={tab}
-                variant="tertiary"
-                iconOnly
-                fullWidth={false}
-                label={label}
-                accessibilityState={{ selected: activeTab === tab }}
-                testID={`tab-log-${tab}`}
-                icon={
-                  <Ionicons
-                    name={tab === 'favorites' && activeTab === tab ? 'heart' : icon}
-                    size={homeLayout.iconSize}
-                    color={activeTab === tab ? colors.accent : colors.text}
-                  />
-                }
-                onPress={() => setActiveTab(tab)}
-              />
-            ))}
-          </View>
-          <Button
-            variant="secondary"
-            label={t('homeRefresh.describe')}
-            testID="food-describe-meal"
-            onPress={() => setShowDescribe(true)}
-          />
-          {showDescribe && (
-            <DescribeMealModal
-              visible
-              section={defaultSection}
-              localDate={localDate}
-              onClose={() => setShowDescribe(false)}
-              onLogged={onLogged}
+          ) : null}
+
+          {/* Search Input */}
+          <View style={styles.searchBar}>
+            <SearchIcon size={18} color={colors.textLo} />
+            <TextInput
+              testID="input-food-search"
+              value={query}
+              onChangeText={(text) => {
+                setQuery(text);
+                if (text.trim() && activeTab !== 'search') setActiveTab('search');
+              }}
+              placeholder={t('captureV1.searchYourFoods')}
+              placeholderTextColor={colors.textLo}
+              autoFocus={false}
+              style={styles.searchInput}
             />
-          )}
-          <View
-            testID="food-log-methods"
-            style={{ flexDirection: 'row', gap: spacing.xs, padding: spacing.md }}
-          >
+            {query.length > 0 ? (
+              <Pressable onPress={() => setQuery('')}>
+                <CloseIcon size={16} color={colors.textLo} />
+              </Pressable>
+            ) : null}
+          </View>
+
+          {/* 3-Tab Segmented Switcher (Saved | Recent | Meals) preserving tab-log-* */}
+          <View style={styles.segmentedBar} testID="food-log-quick-actions">
             {(
               [
-                ['recipes', 'book-outline', t('foodLog.tabs.recipes')],
-                ['photo', 'camera-outline', t('foodLog.tabs.photo')],
-                ['custom', 'create-outline', t('ownerPolish.custom')],
+                ['favorites', t('captureV1.tabSaved')],
+                ['search', t('captureV1.tabRecent')],
+                ['myMeals', t('captureV1.tabMeals')],
               ] as const
-            ).map(([method, icon, label]) => {
-              const selected = activeTab === method;
+            ).map(([tab, label]) => {
+              const selected =
+                segmentValue === tab && activeTab !== 'photo' && activeTab !== 'recipes';
               return (
                 <Pressable
-                  key={method}
-                  testID={`tab-log-${method}`}
+                  key={tab}
+                  onPress={() => setActiveTab(tab)}
                   accessibilityRole="button"
                   accessibilityLabel={label}
                   accessibilityState={{ selected }}
-                  onPress={() => {
-                    if (method === 'custom') {
-                      setPrefilledBarcode(null);
-                      setShowCustomFoodModal(true);
-                    } else setActiveTab(method);
-                  }}
-                  style={({ pressed }) => ({
-                    flexGrow: 1,
-                    flexBasis: 0,
-                    minWidth: homeLayout.compactTouchSize,
-                    minHeight: homeLayout.touchSize,
-                    padding: spacing.xs,
-                    gap: spacing.xs,
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    borderRadius: radius.md,
-                    borderWidth: 1,
-                    borderColor: selected ? colors.accent : colors.border,
-                    backgroundColor: pressed || selected ? colors.surfaceAlt : colors.surface,
-                  })}
+                  testID={`tab-log-${tab}`}
+                  style={[styles.segmentBtn, selected ? styles.segmentBtnSelected : null]}
                 >
-                  <Ionicons
-                    name={icon}
-                    size={homeLayout.iconSize}
-                    color={selected ? colors.accent : colors.textMuted}
-                  />
-                  <Text variant="bodyS" style={{ textAlign: 'center' }}>
+                  <Text variant="buttonS" color={selected ? 'textHi' : 'textLo'} numberOfLines={1}>
                     {label}
                   </Text>
                 </Pressable>
@@ -581,423 +567,340 @@ export function FoodLogModal({
             })}
           </View>
 
-          {library.error && (
-            <View style={{ paddingHorizontal: spacing.md, gap: spacing.xs }}>
-              <Text accessibilityRole="alert">{t('foodPolish.libraryError')}</Text>
-              <Button
-                variant="secondary"
-                label={t('common.retry')}
+          {library.error ? (
+            <View style={styles.errorBanner}>
+              <Text variant="meta" color="danger" accessibilityRole="alert">
+                {t('foodPolish.libraryError')}
+              </Text>
+              <LinkButton
+                title={t('common.retry')}
+                variant="accent"
                 onPress={() => void library.refresh()}
                 testID="retry-food-library"
               />
             </View>
-          )}
-          {activeTab === 'myMeals' && (
-            <MyMealsView
-              selection={selection}
-              section={defaultSection}
-              localDate={localDate}
-              onLogged={onLogged}
-            />
-          )}
-          {activeTab === 'favorites' && (
-            <FoodFavoritesView
-              library={library}
-              onFood={handleSelectFood}
-              defaultSection={defaultSection}
-              localDate={localDate}
-              onLogged={onLogged}
-            />
-          )}
-          {/* TAB 1: Search */}
-          {activeTab === 'search' && (
-            <View
-              style={{
-                flex: query.trim() ? 1 : undefined,
-                paddingHorizontal: spacing.md,
-                gap: spacing.sm,
-              }}
-            >
-              {/* Search input bar */}
-              <View
-                style={{
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                  backgroundColor: colors.surfaceAlt,
-                  borderRadius: radius.md,
-                  paddingHorizontal: 12,
-                  borderWidth: 1,
-                  borderColor: colors.border,
-                }}
-              >
-                <Ionicons name="search" size={18} color={colors.textMuted} />
-                <TextInput
-                  testID="input-food-search"
-                  value={query}
-                  onChangeText={setQuery}
-                  placeholder={t('foodLog.searchPlaceholder')}
-                  placeholderTextColor={colors.textMuted}
-                  autoFocus={false}
-                  style={[
-                    {
-                      flex: 1,
-                      paddingVertical: 10,
-                      paddingHorizontal: 8,
-                      fontSize: fontSize.md,
-                      color: colors.text,
-                    },
-                    { fontFamily: inputTypography.body.fontFamily },
-                  ]}
-                />
-                {query.length > 0 && (
-                  <Pressable onPress={() => setQuery('')}>
-                    <Ionicons name="close" size={18} color={colors.textMuted} />
-                  </Pressable>
-                )}
-              </View>
+          ) : null}
 
-              {/* Search status & results */}
-              {searchLoading ? (
-                <View style={{ paddingVertical: spacing.lg, alignItems: 'center' }}>
-                  <ActivityIndicator color={colors.accent} size="small" />
-                  <Text style={{ fontSize: fontSize.xs, color: colors.textMuted, marginTop: 6 }}>
+          {/* Tab Body */}
+          <View style={styles.bodyFlex}>
+            {activeTab === 'myMeals' ? (
+              <MyMealsView
+                selection={selection}
+                section={defaultSection}
+                localDate={localDate}
+                onLogged={onLogged}
+              />
+            ) : activeTab === 'favorites' ? (
+              <FoodFavoritesView
+                library={library}
+                onFood={handleSelectFood}
+                defaultSection={defaultSection}
+                localDate={localDate}
+                onLogged={onLogged}
+                selectedIds={Object.fromEntries(Object.keys(selectedFoods).map((k) => [k, true]))}
+                onToggleSelect={(food) => toggleSelection(food)}
+              />
+            ) : activeTab === 'photo' ? (
+              <View testID="tab-view-photo-logging" style={styles.photoTabCard}>
+                <Text variant="titleS" color="textHi">
+                  {t('ownerPolish.scanMethods')}
+                </Text>
+                {photoError ? (
+                  <Text
+                    variant="meta"
+                    color="danger"
+                    accessibilityRole="alert"
+                    testID="food-photo-error"
+                  >
+                    {photoError}
+                  </Text>
+                ) : null}
+                <PrimaryButton
+                  title={t('ownerPolish.aiScan')}
+                  onPress={() => void handleStartPhotoScan()}
+                  testID="btn-start-photo-scan"
+                />
+                <Button
+                  variant="secondary"
+                  label={t('ownerPolish.barcodeScan')}
+                  testID="tab-log-scan"
+                  onPress={() => setShowBarcodeScanner(true)}
+                />
+                {!hasPhotoAccess && !photoSubscription.loading ? (
+                  <Text variant="meta" color="textLo" testID="photo-access-copy">
+                    {t('brandRepair.photoPro')}
+                  </Text>
+                ) : null}
+              </View>
+            ) : activeTab === 'recipes' ? (
+              <View style={styles.bodyFlex}>
+                <RecipeBrowseView
+                  hideFavoritesShortcut
+                  initialMealSection={defaultSection}
+                  localDate={localDate}
+                  onRecipeLogged={() => {
+                    onLogged?.();
+                  }}
+                />
+              </View>
+            ) : query.trim().length > 0 ? (
+              /* Search results */
+              searchLoading ? (
+                <View style={styles.centerPad}>
+                  <ActivityIndicator color={colors.apricot} size="small" />
+                  <Text variant="meta" color="textLo">
                     {t('foodLog.searching')}
                   </Text>
                 </View>
-              ) : query.trim().length > 0 && searchResults.length === 0 ? (
-                <View
-                  style={{ paddingVertical: spacing.xl, alignItems: 'center', gap: spacing.sm }}
-                >
-                  <Ionicons name="search-outline" size={36} color={colors.textMuted} />
-                  <Text style={{ fontSize: fontSize.md, fontWeight: '700', color: colors.text }}>
+              ) : searchResults.length === 0 ? (
+                <View style={styles.emptySearch}>
+                  <Text variant="rowTitle" color="textHi">
                     {t('foodLog.noResultsTitle')}
                   </Text>
-                  <Text
-                    style={{ fontSize: fontSize.xs, color: colors.textMuted, textAlign: 'center' }}
-                  >
+                  <Text variant="meta" color="textLo" style={styles.centeredText}>
                     {t('foodLog.noResultsSub')}
                   </Text>
-                  <Button
-                    variant="secondary"
-                    fullWidth={false}
-                    label={t('foodLog.createCustomFood')}
-                    testID="btn-create-custom-food-fallback"
+                  <PrimaryButton
+                    title={t('foodLog.createCustomFood')}
                     onPress={() => setShowCustomFoodModal(true)}
-                    style={{
-                      marginTop: spacing.xs,
-                      backgroundColor: colors.accent,
-                      paddingHorizontal: 16,
-                      paddingVertical: 10,
-                      borderRadius: radius.sm,
-                    }}
+                    testID="btn-create-custom-food-fallback"
                   />
                 </View>
               ) : (
                 <ScrollView
                   showsVerticalScrollIndicator={false}
-                  contentContainerStyle={{ gap: 6, paddingBottom: 20 }}
+                  contentContainerStyle={styles.listContent}
+                  keyboardShouldPersistTaps="handled"
                 >
-                  {searchResults.map((f) => (
-                    <Pressable
-                      key={f.id}
-                      testID={`search-result-${f.id}`}
-                      onPress={() => handleSelectFood(f)}
-                      style={({ pressed }) => ({
-                        flexDirection: 'row',
-                        alignItems: 'center',
-                        justifyContent: 'space-between',
-                        paddingVertical: 10,
-                        paddingHorizontal: 12,
-                        backgroundColor: pressed ? colors.surfaceAlt : colors.surface,
-                        borderBottomWidth: 1,
-                        borderColor: colors.border,
-                      })}
-                    >
-                      <View style={{ flex: 1, gap: 2 }}>
-                        <Text
-                          style={{ fontSize: fontSize.md, fontWeight: '600', color: colors.text }}
-                          numberOfLines={1}
-                        >
-                          {f.name}
-                        </Text>
-                        {f.brand && <Text variant="micro">{f.brand}</Text>}
-                        <NutrientSummary
-                          variant="micro"
-                          values={{
-                            calories: f.calories_per_100g,
-                            protein: f.protein_per_100g,
-                            carbs: f.carbs_per_100g,
-                            fat: f.fat_per_100g,
-                          }}
-                        />
-                        <Text variant="micro">{t('foodPolish.portion')}</Text>
-                      </View>
+                  {searchResults.map((f, idx) => {
+                    const isSelected = Boolean(selectedFoods[f.id]);
+                    const baseServing = f.serving_units?.[0];
+                    const subMeta = baseServing
+                      ? `1 ${baseServing.unit} · ${Math.round(baseServing.grams)} g`
+                      : t('foodPolish.portion');
+                    const displayKcal = baseServing
+                      ? Math.round((f.calories_per_100g * baseServing.grams) / 100)
+                      : Math.round(f.calories_per_100g);
 
-                      <FoodFavoriteButton food={f} library={library} />
-                      <Pressable
-                        testID={`select-food-${f.id}`}
-                        onPress={(event) => {
-                          event.stopPropagation();
-                          toggleSelection(f);
-                        }}
-                        accessibilityRole="checkbox"
-                        accessibilityState={{ checked: Boolean(selectedFoods[f.id]) }}
-                        accessibilityLabel={t('homeRefresh.selectFood', { name: f.name })}
-                        style={{
-                          minWidth: homeLayout.touchSize,
-                          minHeight: homeLayout.touchSize,
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                        }}
-                      >
-                        <Ionicons
-                          name={selectedFoods[f.id] ? 'checkmark-circle' : 'add-circle-outline'}
-                          size={homeLayout.iconSize}
-                          color={colors.accent}
-                        />
-                      </Pressable>
-                      <View style={{ alignItems: 'flex-end', gap: 2 }}>
-                        <Text
-                          nutrient="calories"
-                          style={{
-                            fontSize: fontSize.sm,
-                            fontWeight: '700',
-                            color: colors.macroCalories,
-                          }}
-                        >
-                          {f.calories_per_100g} kcal
-                        </Text>
-                        {f.owner_id ? (
-                          <View
-                            style={{
-                              backgroundColor: colors.surfaceAlt,
-                              paddingHorizontal: 6,
-                              paddingVertical: 2,
-                              borderRadius: radius.pill,
-                            }}
+                    return (
+                      <View key={f.id}>
+                        <View style={styles.foodRow}>
+                          <Pressable
+                            testID={`search-result-${f.id}`}
+                            onPress={() => handleSelectFood(f)}
+                            style={styles.foodRowCopy}
                           >
-                            <Text style={{ fontSize: 9, fontWeight: '700', color: colors.accent }}>
-                              MY FOOD
+                            <Text variant="rowTitle" color="textHi" numberOfLines={1}>
+                              {f.name}
                             </Text>
+                            <Text variant="meta" color="textLo" numberOfLines={1}>
+                              {subMeta}
+                            </Text>
+                          </Pressable>
+
+                          <View style={styles.foodRowRight}>
+                            <FoodFavoriteButton food={f} library={library} />
+                            <Text variant="rowTitle" tabular color="textHi">
+                              {String(displayKcal)}
+                              <Text variant="meta" color="textLo">
+                                {' kcal'}
+                              </Text>
+                            </Text>
+                            <Pressable
+                              testID={`select-food-${f.id}`}
+                              onPress={() => toggleSelection(f)}
+                              accessibilityRole="checkbox"
+                              accessibilityState={{ checked: isSelected }}
+                              accessibilityLabel={t('homeRefresh.selectFood', { name: f.name })}
+                              style={[
+                                styles.circleBtn,
+                                isSelected ? styles.circleBtnSelected : null,
+                              ]}
+                            >
+                              {isSelected ? (
+                                <CheckIcon size={16} color={colors.onBrand} strokeWidth={2.5} />
+                              ) : (
+                                <PlusIcon size={16} color={colors.textMid} />
+                              )}
+                            </Pressable>
                           </View>
-                        ) : null}
+                        </View>
+                        {idx < searchResults.length - 1 ? <View style={styles.divider} /> : null}
                       </View>
-                    </Pressable>
-                  ))}
+                    );
+                  })}
                 </ScrollView>
-              )}
-            </View>
-          )}
-
-          {/* TAB 3: Photo (PRD LOG-3) */}
-          {activeTab === 'photo' && (
-            <View testID="tab-view-photo-logging" style={{ gap: spacing.sm, padding: spacing.md }}>
-              <Text variant="heading">{t('ownerPolish.scanMethods')}</Text>
-              {photoError && (
-                <Text accessibilityRole="alert" testID="food-photo-error">
-                  {photoError}
-                </Text>
-              )}
-              <Button
-                variant="secondary"
-                label={t('ownerPolish.barcodeScan')}
-                icon={
-                  <Ionicons name="barcode-outline" size={homeLayout.iconSize} color={colors.text} />
-                }
-                testID="tab-log-scan"
-                onPress={() => setShowBarcodeScanner(true)}
-              />
-              <Button
-                label={t('ownerPolish.aiScan')}
-                icon={
-                  <Ionicons
-                    name="camera-outline"
-                    size={homeLayout.iconSize}
-                    color={colors.onAccent}
-                  />
-                }
-                testID="btn-start-photo-scan"
-                onPress={handleStartPhotoScan}
-              />
-              {!hasPhotoAccess && !photoSubscription.loading && (
-                <Text variant="bodyS" testID="photo-access-copy">
-                  {t('brandRepair.photoPro')}
-                </Text>
-              )}
-            </View>
-          )}
-
-          {/* TAB: Recipes */}
-          {activeTab === 'recipes' && (
-            <View style={{ flex: 1 }}>
-              <RecipeBrowseView
-                hideFavoritesShortcut
-                initialMealSection={defaultSection}
-                localDate={localDate}
-                onRecipeLogged={() => {
-                  onLogged?.();
-                }}
-              />
-            </View>
-          )}
-
-          {activeTab === 'search' && !query.trim() && (
-            <View style={{ flex: 1, paddingHorizontal: spacing.md, gap: spacing.sm }}>
-              <View
-                style={{
-                  flexDirection: 'row',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                  flexWrap: 'wrap',
-                }}
-              >
-                <Text variant="heading">{t('homeRefresh.recentFoods')}</Text>
-                <Button
-                  variant="tertiary"
-                  fullWidth={false}
-                  label={t('foodPolish.clearRecentFoods')}
-                  disabled={library.busy || historyLoading || !historyItems.length}
-                  onPress={() => void library.clearRecentFoods()}
-                  testID="clear-recent-foods"
-                />
-              </View>
-              {/* History Items List */}
-              {historyError ? (
-                <View>
-                  <Text accessibilityRole="alert">{t('common.errorBody')}</Text>
-                  <Button
-                    variant="secondary"
-                    label={t('common.retry')}
-                    onPress={() => void refreshHistory()}
-                    testID="retry-recent-foods"
-                  />
-                </View>
-              ) : historyLoading ? (
-                <ActivityIndicator color={colors.accent} style={{ marginTop: spacing.md }} />
-              ) : historyItems.length === 0 ? (
-                <View style={{ paddingVertical: spacing.xl, alignItems: 'center', gap: 6 }}>
-                  <Text style={{ fontSize: fontSize.md, fontWeight: '700', color: colors.text }}>
-                    {t('foodLog.history.emptyTitle')}
-                  </Text>
-                  <Text
-                    style={{ fontSize: fontSize.xs, color: colors.textMuted, textAlign: 'center' }}
+              )
+            ) : (
+              /* Recent / History items */
+              <View style={styles.bodyFlex}>
+                {historyError ? (
+                  <View style={styles.errorBanner}>
+                    <Text variant="meta" color="danger" accessibilityRole="alert">
+                      {t('common.errorBody')}
+                    </Text>
+                    <LinkButton
+                      title={t('common.retry')}
+                      variant="accent"
+                      onPress={() => void refreshHistory()}
+                      testID="retry-recent-foods"
+                    />
+                  </View>
+                ) : historyLoading ? (
+                  <View style={styles.centerPad}>
+                    <ActivityIndicator color={colors.apricot} />
+                  </View>
+                ) : historyItems.length === 0 ? (
+                  <View style={styles.emptySearch}>
+                    <Text variant="rowTitle" color="textHi">
+                      {t('foodLog.history.emptyTitle')}
+                    </Text>
+                    <Text variant="meta" color="textLo" style={styles.centeredText}>
+                      {t('foodLog.history.emptySub')}
+                    </Text>
+                  </View>
+                ) : (
+                  <ScrollView
+                    showsVerticalScrollIndicator={false}
+                    contentContainerStyle={styles.listContent}
+                    keyboardShouldPersistTaps="handled"
                   >
-                    {t('foodLog.history.emptySub')}
-                  </Text>
-                </View>
-              ) : (
-                <ScrollView
-                  showsVerticalScrollIndicator={false}
-                  contentContainerStyle={{ gap: 6, paddingBottom: 20, marginTop: 4 }}
-                >
-                  {historyItems.map((item) => (
-                    <View
-                      key={item.food.id}
-                      testID={`history-item-${item.food.id}`}
-                      style={{
-                        flexDirection: 'row',
-                        alignItems: 'center',
-                        justifyContent: 'space-between',
-                        paddingVertical: 8,
-                        paddingHorizontal: 10,
-                        backgroundColor: colors.surface,
-                        borderBottomWidth: 1,
-                        borderColor: colors.border,
-                      }}
-                    >
-                      <Pressable
-                        style={{ flex: 1, gap: 2 }}
-                        onPress={() => handleSelectFood(item.food)}
-                      >
-                        <Text
-                          style={{ fontSize: fontSize.sm, fontWeight: '600', color: colors.text }}
-                          numberOfLines={1}
-                        >
-                          {item.food.name}
-                        </Text>
-                        <Text style={{ fontSize: fontSize.xs, color: colors.textMuted }}>
-                          {t('homeRefresh.recentQuantity', {
-                            quantity: item.stats.last_quantity,
-                            unit: item.stats.last_unit,
-                            count: item.stats.use_count,
-                          })}
-                        </Text>
-                      </Pressable>
+                    {historyItems.map((item, idx) => {
+                      const isSelected = Boolean(selectedFoods[item.food.id]);
+                      const scaled = scaleNutrients(
+                        item.food,
+                        item.stats.last_quantity,
+                        item.stats.last_unit,
+                      );
+                      return (
+                        <View key={item.food.id} testID={`history-item-${item.food.id}`}>
+                          <View style={styles.foodRow}>
+                            <Pressable
+                              style={styles.foodRowCopy}
+                              onPress={() => handleSelectFood(item.food)}
+                            >
+                              <Text variant="rowTitle" color="textHi" numberOfLines={1}>
+                                {item.food.name}
+                              </Text>
+                              <Text variant="meta" color="textLo" numberOfLines={1}>
+                                {t('homeRefresh.recentQuantity', {
+                                  quantity: item.stats.last_quantity,
+                                  unit: item.stats.last_unit,
+                                  count: item.stats.use_count,
+                                })}
+                              </Text>
+                            </Pressable>
 
-                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                        <FoodFavoriteButton food={item.food} library={library} />
-                        <Pressable
-                          testID={`select-history-${item.food.id}`}
-                          onPress={() =>
-                            toggleSelection(
-                              item.food,
-                              item.stats.last_quantity,
-                              item.stats.last_unit,
-                              'history',
-                            )
-                          }
-                          disabled={batchSaving}
-                          accessibilityRole="checkbox"
-                          accessibilityState={{ checked: Boolean(selectedFoods[item.food.id]) }}
-                          accessibilityLabel={t('homeRefresh.selectFood', { name: item.food.name })}
-                          style={{
-                            minWidth: homeLayout.touchSize,
-                            minHeight: homeLayout.touchSize,
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                          }}
-                        >
-                          <Ionicons
-                            name={
-                              selectedFoods[item.food.id] ? 'checkmark-circle' : 'ellipse-outline'
-                            }
-                            size={homeLayout.iconSize}
-                            color={colors.accent}
-                          />
-                        </Pressable>
-                        {/* 1-tap quick add button (PRD 6.3 LOG-13) */}
-                        <Button
-                          variant="secondary"
-                          fullWidth={false}
-                          label={t('foodPolish.addFood')}
-                          icon={<Ionicons name="add" size={14} color={colors.accent} />}
-                          testID={`btn-quick-add-${item.food.id}`}
-                          onPress={() => void handleOneTapAdd(item)}
-                          disabled={historySaving || batchSaving}
-                          accessibilityRole="button"
-                          accessibilityLabel={t('foodPolish.chooseMealFor', {
-                            name: item.food.name,
-                          })}
-                          style={{
-                            flexDirection: 'row',
-                            alignItems: 'center',
-                            backgroundColor: colors.surfaceAlt,
-                            paddingHorizontal: 8,
-                            paddingVertical: spacing.sm,
-                            minHeight: homeLayout.touchSize,
-                            borderRadius: radius.pill,
-                            borderWidth: 1,
-                            borderColor: colors.accent,
-                            gap: 3,
-                          }}
-                        />
-                      </View>
+                            <View style={styles.foodRowRight}>
+                              <Text variant="rowTitle" tabular color="textHi">
+                                {String(Math.round(scaled.calories))}
+                                <Text variant="meta" color="textLo">
+                                  {' kcal'}
+                                </Text>
+                              </Text>
+
+                              <Pressable
+                                testID={`select-history-${item.food.id}`}
+                                onPress={() =>
+                                  toggleSelection(
+                                    item.food,
+                                    item.stats.last_quantity,
+                                    item.stats.last_unit,
+                                    'history',
+                                  )
+                                }
+                                disabled={batchSaving}
+                                accessibilityRole="checkbox"
+                                accessibilityState={{ checked: isSelected }}
+                                accessibilityLabel={t('homeRefresh.selectFood', {
+                                  name: item.food.name,
+                                })}
+                                style={[
+                                  styles.circleBtn,
+                                  isSelected ? styles.circleBtnSelected : null,
+                                ]}
+                              >
+                                {isSelected ? (
+                                  <CheckIcon size={16} color={colors.onBrand} strokeWidth={2.5} />
+                                ) : (
+                                  <PlusIcon size={16} color={colors.textMid} />
+                                )}
+                              </Pressable>
+                            </View>
+                          </View>
+
+                          <View style={styles.subtleRowMeta}>
+                            <FoodFavoriteButton food={item.food} library={library} />
+                            <LinkButton
+                              title={t('foodPolish.addFood')}
+                              variant="default"
+                              onPress={() => void handleOneTapAdd(item)}
+                              disabled={historySaving || batchSaving}
+                              testID={`btn-quick-add-${item.food.id}`}
+                            />
+                          </View>
+
+                          {idx < historyItems.length - 1 ? <View style={styles.divider} /> : null}
+                        </View>
+                      );
+                    })}
+
+                    <View style={styles.clearRecentWrap}>
+                      <LinkButton
+                        title={t('foodPolish.clearRecentFoods')}
+                        variant="default"
+                        disabled={library.busy || historyLoading || !historyItems.length}
+                        onPress={() => void library.clearRecentFoods()}
+                        testID="clear-recent-foods"
+                      />
                     </View>
-                  ))}
-                </ScrollView>
-              )}
-            </View>
-          )}
+                  </ScrollView>
+                )}
+              </View>
+            )}
+          </View>
 
-          {/* Sub-modals */}
-          {selection.length > 0 && (
-            <View
-              style={{ padding: spacing.md, gap: spacing.sm, backgroundColor: colors.surface }}
-              testID="food-selection-footer"
+          {/* Compact Secondary Capture Strip */}
+          <View style={styles.methodsStrip} testID="food-log-methods">
+            <Pressable
+              testID="tab-log-photo"
+              accessibilityRole="button"
+              onPress={() => setActiveTab('photo')}
+              style={styles.methodChip}
             >
-              <Text>{t('foodPolish.selected', { count: selection.length })}</Text>
-              <Text>{t('foodPolish.chooseMeal')}</Text>
-              <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: spacing.xs }}>
+              <CameraIcon size={14} color={colors.textLo} />
+              <Text variant="micro" color="textLo">
+                {t('foodLog.tabs.photo')}
+              </Text>
+            </Pressable>
+            <Pressable
+              testID="food-describe-meal"
+              accessibilityRole="button"
+              onPress={() => setShowDescribe(true)}
+              style={styles.methodChip}
+            >
+              <EditIcon size={14} color={colors.textLo} />
+              <Text variant="micro" color="textLo">
+                {t('homeRefresh.describe')}
+              </Text>
+            </Pressable>
+            <Pressable
+              testID="tab-log-recipes"
+              accessibilityRole="button"
+              onPress={() => setActiveTab('recipes')}
+              style={styles.methodChip}
+            >
+              <BarcodeIcon size={14} color={colors.textLo} />
+              <Text variant="micro" color="textLo">
+                {t('foodLog.tabs.recipes')}
+              </Text>
+            </Pressable>
+          </View>
+
+          {/* Floating Summary Pill (Screen 32) */}
+          {selection.length > 0 ? (
+            <View testID="food-selection-footer" style={styles.selectionFooterWrap}>
+              <View style={styles.batchMealsRow}>
                 {(['breakfast', 'lunch', 'dinner', 'snacks', 'extra'] as MealSection[]).map(
                   (meal) => (
                     <Chip
@@ -1010,31 +913,59 @@ export function FoodLogModal({
                   ),
                 )}
               </View>
-              <NutrientSummary values={selectionTotals} />
-              {batchError && (
-                <Text style={{ color: colors.danger }} accessibilityRole="alert">
+              {batchError ? (
+                <Text variant="meta" color="danger" accessibilityRole="alert">
                   {t('fixNovember.saveFailed')}
                 </Text>
-              )}
-              <Button
-                variant="primary"
-                label={
-                  batchSaving
-                    ? t('common.saving')
-                    : batchMeal
-                      ? t('homeRefresh.addSelection', { meal: t(`diary.sections.${batchMeal}`) })
-                      : t('foodPolish.chooseMeal')
-                }
-                onPress={() => void saveSelection()}
-                disabled={batchSaving || !batchMeal}
-                testID="save-food-selection"
-              />
+              ) : null}
+              <View style={[styles.floatingSummaryPill, elevation.floatingBar]}>
+                <View style={styles.summaryCopyRow}>
+                  <Text variant="rowTitle" color="textHi" tabular>
+                    {t('captureV1.addedCount', { count: selection.length })}
+                  </Text>
+                  <Text variant="meta" color="textLo" tabular numberOfLines={1}>
+                    {` · ${t('captureV1.summaryTotal', {
+                      calories: Math.round(selectionTotals.calories).toLocaleString('en-US'),
+                      section: targetSectionLabel,
+                    })}`}
+                  </Text>
+                </View>
+                <Pressable
+                  testID="save-food-selection"
+                  accessibilityRole="button"
+                  disabled={batchSaving || !batchMeal}
+                  onPress={() => void saveSelection()}
+                  style={[
+                    styles.donePillBtn,
+                    batchSaving || !batchMeal ? styles.donePillDisabled : null,
+                  ]}
+                >
+                  <Text variant="buttonS" color="onBrand">
+                    {batchSaving ? t('common.saving') : t('captureV1.done')}
+                  </Text>
+                </Pressable>
+              </View>
             </View>
-          )}
-          {showBarcodeScanner && (
+          ) : null}
+
+          {showDescribe ? (
+            <DescribeMealModal
+              visible
+              section={defaultSection}
+              localDate={localDate}
+              onClose={() => setShowDescribe(false)}
+              onLogged={onLogged}
+            />
+          ) : null}
+
+          {showBarcodeScanner ? (
             <BarcodeScannerModal
               visible={showBarcodeScanner}
               defaultSection={defaultSection}
+              onSwitchToPhoto={() => {
+                setShowBarcodeScanner(false);
+                void handleStartPhotoScan();
+              }}
               covered={Boolean(selectedFoodForQuantity) || showCustomFoodModal}
               onClose={() => setShowBarcodeScanner(false)}
               onFoodFound={handleSelectFood}
@@ -1043,9 +974,9 @@ export function FoodLogModal({
                 setShowCustomFoodModal(true);
               }}
             />
-          )}
+          ) : null}
 
-          {showCustomFoodModal && (
+          {showCustomFoodModal ? (
             <CustomFoodModal
               visible={showCustomFoodModal}
               initialBarcode={prefilledBarcode}
@@ -1055,9 +986,9 @@ export function FoodLogModal({
               }}
               onCreated={handleSelectFood}
             />
-          )}
+          ) : null}
 
-          {selectedFoodForQuantity && (
+          {selectedFoodForQuantity ? (
             <QuantityModal
               visible={Boolean(selectedFoodForQuantity)}
               food={selectedFoodForQuantity}
@@ -1071,35 +1002,44 @@ export function FoodLogModal({
               }}
               onSave={handleLogFromQuantity}
             />
-          )}
+          ) : null}
 
-          {/* Phase 11 Food Photo Flow Modals */}
-          {showPhotoConsent && (
+          {showPhotoConsent ? (
             <AiConsentSheet
               visible={showPhotoConsent}
               loading={consentLoading}
               onAccept={handleAcceptConsent}
               onDecline={closePhotoConsent}
             />
-          )}
+          ) : null}
 
-          {showPhotoCamera && (
+          {showPhotoCamera ? (
             <FoodPhotoCameraModal
               visible={showPhotoCamera}
+              defaultSection={defaultSection}
+              onSwitchToBarcode={() => {
+                setShowPhotoCamera(false);
+                setShowBarcodeScanner(true);
+              }}
+              onSwitchToDescribe={() => {
+                setShowPhotoCamera(false);
+                setShowDescribe(true);
+              }}
               onClose={() => setShowPhotoCamera(false)}
+              onPhotoUri={setLastPhotoUri}
               onPhotoCaptured={handlePhotoCaptured}
             />
-          )}
+          ) : null}
 
-          {photoAnalyzing && (
+          {photoAnalyzing ? (
             <FoodPhotoAnalyzingOverlay
               visible
               imageUri={photoAnalyzing}
               onCancel={returnToPhotoCamera}
             />
-          )}
+          ) : null}
 
-          {showDailyLimitModal && (
+          {showDailyLimitModal ? (
             <FoodPhotoDailyLimitModal
               visible={showDailyLimitModal}
               userState={limitState}
@@ -1115,9 +1055,9 @@ export function FoodLogModal({
                 setActiveTab('search');
               }}
             />
-          )}
+          ) : null}
 
-          {showPhotoPlans && (
+          {showPhotoPlans ? (
             <PaywallModal
               visible
               preselectedTier="pro"
@@ -1127,10 +1067,12 @@ export function FoodLogModal({
                 setShowDailyLimitModal(true);
               }}
             />
-          )}
-          {showResultsEditor && photoResults && (
+          ) : null}
+
+          {showResultsEditor && photoResults ? (
             <FoodPhotoResultsEditor
               visible={showResultsEditor}
+              imageUri={lastPhotoUri}
               initialCandidates={photoResults}
               defaultSection={defaultSection}
               localDate={localDate}
@@ -1142,9 +1084,235 @@ export function FoodLogModal({
               }}
               onSaveMeal={handleSavePhotoMeal}
             />
-          )}
+          ) : null}
         </View>
       </View>
     </Modal>
   );
 }
+
+const styles = StyleSheet.create({
+  backdrop: {
+    flex: 1,
+    backgroundColor: colors.bg0,
+  },
+  sheetRoot: {
+    flex: 1,
+    backgroundColor: colors.bg0,
+    paddingHorizontal: layout.screenPaddingX,
+    gap: space.md,
+  },
+  topBar: {
+    height: layout.navRowHeight,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  newFoodPill: {
+    backgroundColor: colors.s2,
+    borderWidth: borders.width,
+    borderColor: colors.hairline,
+    borderRadius: radius.full,
+    paddingHorizontal: space.md,
+    minHeight: 36,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  titleBlock: {
+    gap: space.xs,
+  },
+  eyebrowRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: space.sm,
+  },
+  apricotDot: {
+    width: 6,
+    height: 6,
+    borderRadius: radius.full,
+    backgroundColor: colors.apricot,
+  },
+  toastBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: space.sm,
+    backgroundColor: colors.s1,
+    borderWidth: borders.width,
+    borderColor: colors.apricot,
+    borderRadius: radius.banner,
+    paddingHorizontal: space.md,
+    paddingVertical: space.sm,
+  },
+  searchBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: space.sm,
+    backgroundColor: colors.s1,
+    borderWidth: borders.width,
+    borderColor: colors.hairline,
+    borderRadius: radius.input,
+    paddingHorizontal: space.md,
+    minHeight: 48,
+  },
+  searchInput: {
+    flex: 1,
+    color: colors.textHi,
+    fontFamily: fonts.regular,
+    fontSize: 15,
+  },
+  segmentedBar: {
+    flexDirection: 'row',
+    backgroundColor: colors.s1,
+    borderWidth: borders.width,
+    borderColor: colors.hairline,
+    borderRadius: radius.segmented,
+    padding: space.xs,
+    gap: space.xs,
+  },
+  segmentBtn: {
+    flex: 1,
+    minHeight: 38,
+    borderRadius: radius.control,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  segmentBtnSelected: {
+    backgroundColor: colors.s3,
+  },
+  errorBanner: {
+    gap: space.xs,
+    backgroundColor: colors.s1,
+    borderWidth: borders.width,
+    borderColor: colors.danger,
+    borderRadius: radius.banner,
+    padding: space.md,
+  },
+  bodyFlex: {
+    flex: 1,
+  },
+  listContent: {
+    paddingBottom: 120,
+  },
+  foodRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: space.md,
+    paddingVertical: space.md,
+    minHeight: 56,
+  },
+  foodRowCopy: {
+    flex: 1,
+    gap: 2,
+  },
+  foodRowRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: space.md,
+  },
+  circleBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: radius.full,
+    backgroundColor: colors.s2,
+    borderWidth: borders.width,
+    borderColor: colors.hairline,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  circleBtnSelected: {
+    backgroundColor: colors.apricot,
+    borderColor: colors.apricot,
+  },
+  subtleRowMeta: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingBottom: space.xs,
+  },
+  divider: {
+    height: borders.width,
+    backgroundColor: colors.s2,
+  },
+  centerPad: {
+    paddingVertical: space.xl,
+    alignItems: 'center',
+    gap: space.sm,
+  },
+  emptySearch: {
+    paddingVertical: space.xl,
+    alignItems: 'center',
+    gap: space.sm,
+  },
+  centeredText: {
+    textAlign: 'center',
+  },
+  clearRecentWrap: {
+    alignItems: 'center',
+    paddingTop: space.md,
+  },
+  photoTabCard: {
+    backgroundColor: colors.s1,
+    borderWidth: borders.width,
+    borderColor: colors.hairline,
+    borderRadius: radius.card,
+    padding: layout.cardPadding,
+    gap: space.md,
+  },
+  methodsStrip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: space.md,
+  },
+  methodChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: space.xs,
+    paddingHorizontal: space.sm,
+    paddingVertical: space.xs,
+    borderRadius: radius.full,
+    backgroundColor: colors.s1,
+    borderWidth: borders.width,
+    borderColor: colors.hairline,
+  },
+  selectionFooterWrap: {
+    gap: space.sm,
+  },
+  batchMealsRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: space.xs,
+  },
+  floatingSummaryPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: colors.s1,
+    borderWidth: borders.width,
+    borderColor: colors.hairline,
+    borderRadius: radius.tabBar,
+    paddingLeft: space.lg,
+    paddingRight: space.xs,
+    paddingVertical: space.xs,
+    minHeight: 56,
+    gap: space.sm,
+  },
+  summaryCopyRow: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    overflow: 'hidden',
+  },
+  donePillBtn: {
+    backgroundColor: colors.apricot,
+    borderRadius: radius.button,
+    paddingHorizontal: space.lg,
+    minHeight: 44,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  donePillDisabled: {
+    opacity: 0.5,
+  },
+});

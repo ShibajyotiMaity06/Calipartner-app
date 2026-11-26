@@ -35,6 +35,9 @@ vi.mock('@calipartner/ui', async () => ({
   Sheet: 'Sheet',
   LogHubView: 'LogHub',
 }));
+vi.mock('react-native-safe-area-context', () => ({
+  useSafeAreaInsets: () => ({ top: 44, bottom: 34, left: 0, right: 0 }),
+}));
 vi.mock('@calipartner/ui/v1', async () => {
   const theme = await import('../../../../packages/ui/src/v1/theme');
   return {
@@ -44,18 +47,25 @@ vi.mock('@calipartner/ui/v1', async () => {
     BookmarkIcon: 'BookmarkIcon',
     CameraIcon: 'CameraIcon',
     CheckIcon: 'CheckIcon',
+    ChevronLeftIcon: 'ChevronLeftIcon',
     ChevronRightIcon: 'ChevronRightIcon',
     CloseIcon: 'CloseIcon',
+    CubeIcon: 'CubeIcon',
     DropletIcon: 'DropletIcon',
     DumbbellIcon: 'DumbbellIcon',
     EditIcon: 'EditIcon',
     FeedImageIcon: 'FeedImageIcon',
+    FlashIcon: 'FlashIcon',
     HistoryClockIcon: 'HistoryClockIcon',
-    IconButton: 'IconButton',
-    LinkButton: 'LinkButton',
+    IconButton: (props: Record<string, unknown>) => React.createElement('IconButton', props),
+    InfoCircleIcon: 'InfoCircleIcon',
+    LinkButton: (props: Record<string, unknown>) => React.createElement('LinkButton', props),
+    PrimaryButton: (props: Record<string, unknown>) => React.createElement('Button', props),
     PulseIcon: 'PulseIcon',
     ScaleIcon: 'ScaleIcon',
     SearchIcon: 'SearchIcon',
+    SecondaryButton: (props: Record<string, unknown>) => React.createElement('Button', props),
+    Segmented: (props: Record<string, unknown>) => React.createElement('Segmented', props),
     Sheet: ({ children, ...rest }: Record<string, unknown>) =>
       React.createElement('Sheet', rest, children as React.ReactNode),
     Text: ({ children, ...rest }: Record<string, unknown>) =>

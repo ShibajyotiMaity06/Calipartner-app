@@ -657,6 +657,7 @@ export function LogSheetModalV1({
           defaultSection={currentSection}
           localDate={todayDate}
           initialTab="photo"
+          autoStartPhoto
           onClose={closeFlow}
           onLogged={() => {
             diaryEvents.emitChange();

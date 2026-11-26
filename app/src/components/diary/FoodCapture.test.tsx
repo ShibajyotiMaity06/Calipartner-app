@@ -15,12 +15,42 @@ vi.mock('@calipartner/ui', async () => ({
   Button: 'Button',
   Chip: 'Chip',
 }));
+vi.mock('react-native-safe-area-context', () => ({
+  useSafeAreaInsets: () => ({ top: 44, bottom: 34, left: 0, right: 0 }),
+}));
+vi.mock('@calipartner/ui/v1', async () => {
+  const theme = await import('../../../../packages/ui/src/v1/theme');
+  return {
+    ...theme,
+    BarcodeIcon: 'BarcodeIcon',
+    CameraIcon: 'CameraIcon',
+    CheckIcon: 'CheckIcon',
+    ChevronLeftIcon: 'ChevronLeftIcon',
+    Chip: (props: Record<string, unknown>) => React.createElement('Chip', props),
+    CloseIcon: 'CloseIcon',
+    EditIcon: 'EditIcon',
+    IconButton: (props: Record<string, unknown>) => React.createElement('IconButton', props),
+    LinkButton: (props: Record<string, unknown>) => React.createElement('LinkButton', props),
+    PlusIcon: 'PlusIcon',
+    PrimaryButton: (props: Record<string, unknown>) => React.createElement('Button', props),
+    SearchIcon: 'SearchIcon',
+    Segmented: (props: Record<string, unknown>) => React.createElement('Segmented', props),
+    Text: ({ children, ...rest }: Record<string, unknown>) =>
+      React.createElement('Text', rest, children as React.ReactNode),
+  };
+});
 vi.mock('react-native', () => ({
   ActivityIndicator: 'ActivityIndicator',
   Modal: 'Modal',
   Platform: { OS: 'android' },
   Pressable: 'Pressable',
   ScrollView: 'ScrollView',
+  StyleSheet: {
+    create: (value: unknown) => value,
+    flatten: (value: unknown) =>
+      Array.isArray(value) ? Object.assign({}, ...value.flat(Infinity).filter(Boolean)) : value,
+    absoluteFill: {},
+  },
   Text: 'Text',
   TextInput: 'TextInput',
   View: 'View',

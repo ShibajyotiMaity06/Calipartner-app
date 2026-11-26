@@ -1,8 +1,7 @@
-import { useTheme as useAppearance } from '@calipartner/ui/theme';
-import { NutrientSummary } from '../diary/NutrientSummary';
 import React, { useRef, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
-import { Button, radius, space, Text } from '@calipartner/ui';
+import { Button } from '@calipartner/ui';
+import { Text, borders, colors, radius, space } from '@calipartner/ui/v1';
 import { sumNutrientSnapshots, type CoachMealDraft } from '@calipartner/core';
 import {
   prepareCoachMealSave,
@@ -20,15 +19,13 @@ export function CoachMealDraftCard({
   onLogged?: () => void;
   disabled?: boolean;
 }) {
-  const { colors: dark } = useAppearance();
-  const styles = createStyles(dark);
-
   const request = useRef<CoachMealSave | null>(null);
   const inFlight = useRef(false);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const totals = sumNutrientSnapshots(draft.items);
+
   const save = async () => {
     if (disabled || inFlight.current || saved) return;
     inFlight.current = true;
@@ -55,24 +52,77 @@ export function CoachMealDraftCard({
       setSaving(false);
     }
   };
+
   return (
     <View style={styles.card} testID="coach-meal-draft">
-      <Text variant="heading">{draft.description}</Text>
-      <Text variant="label">
-        {t(('diary.sections.' + draft.mealSection) as Parameters<typeof t>[0])} · {draft.localDate}
-      </Text>
-      {draft.items.map((item, index) => (
-        <Text key={index} variant="bodyS" tabular>
-          {item.quantity} {item.unit} · {item.name}
-        </Text>
-      ))}
-      <NutrientSummary values={totals} testID="coach-meal-macros" />
-      <Text variant="micro">{t('coach.meal.estimate')}</Text>
-      {error && (
-        <Text color={dark.danger} accessibilityRole="alert">
+      <View style={styles.headerRow}>
+        <View style={styles.titleCol}>
+          <Text variant="eyebrow" color="textLo">
+            {t('captureV1.aiEstimateEyebrow')}
+          </Text>
+          <Text variant="titleS" color="textHi" numberOfLines={2}>
+            {draft.description}
+          </Text>
+          <Text variant="meta" color="textLo">
+            {`${t(`diary.sections.${draft.mealSection}` as Parameters<typeof t>[0])} · ${draft.localDate}`}
+          </Text>
+        </View>
+        <View style={styles.kcalCol}>
+          <Text variant="numM" tabular color="textHi">
+            {String(Math.round(totals.calories))}
+          </Text>
+          <Text variant="meta" color="textLo">
+            kcal
+          </Text>
+        </View>
+      </View>
+
+      <View style={styles.macroRow} testID="coach-meal-macros">
+        <View style={styles.macroPill}>
+          <Text variant="meta" color="textMid" tabular>
+            {t('captureV1.proteinShort', { g: Math.round(totals.protein) })}
+          </Text>
+        </View>
+        <View style={styles.macroPill}>
+          <Text variant="meta" color="textMid" tabular>
+            {t('captureV1.carbsShort', { g: Math.round(totals.carbs) })}
+          </Text>
+        </View>
+        <View style={styles.macroPill}>
+          <Text variant="meta" color="textMid" tabular>
+            {t('captureV1.fatShort', { g: Math.round(totals.fat) })}
+          </Text>
+        </View>
+      </View>
+
+      <View style={styles.itemsWrap}>
+        {draft.items.map((item, index) => (
+          <View key={`${item.name}-${index}`}>
+            <View style={styles.itemRow}>
+              <Text variant="rowTitle" color="textHi" style={styles.itemName} numberOfLines={1}>
+                {item.name}
+                <Text variant="meta" color="textLo">
+                  {` · ${item.quantity} ${item.unit}`}
+                </Text>
+              </Text>
+              <Text variant="label" tabular color="textHi">
+                {Math.round(item.calories)}
+                <Text variant="meta" color="textLo">
+                  {' kcal'}
+                </Text>
+              </Text>
+            </View>
+            {index < draft.items.length - 1 ? <View style={styles.divider} /> : null}
+          </View>
+        ))}
+      </View>
+
+      {error ? (
+        <Text variant="meta" color="danger" accessibilityRole="alert">
           {error}
         </Text>
-      )}
+      ) : null}
+
       <Button
         label={t(saved ? 'coach.meal.logged' : 'coach.meal.log')}
         onPress={() => void save()}
@@ -83,14 +133,59 @@ export function CoachMealDraftCard({
     </View>
   );
 }
-const createStyles = (dark: ReturnType<typeof useAppearance>['colors']) =>
-  StyleSheet.create({
-    card: {
-      backgroundColor: dark.s2,
-      borderColor: dark.hairlineLit,
-      borderWidth: StyleSheet.hairlineWidth,
-      borderRadius: radius.card,
-      padding: space[3],
-      gap: space[2],
-    },
-  });
+
+const styles = StyleSheet.create({
+  card: {
+    backgroundColor: colors.s1,
+    borderColor: colors.hairlineLit,
+    borderWidth: borders.width,
+    borderRadius: radius.card,
+    padding: space.lg,
+    gap: space.md,
+  },
+  headerRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    justifyContent: 'space-between',
+    gap: space.md,
+  },
+  titleCol: {
+    flex: 1,
+    gap: space.xs,
+  },
+  kcalCol: {
+    alignItems: 'flex-end',
+  },
+  macroRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: space.sm,
+  },
+  macroPill: {
+    backgroundColor: colors.s2,
+    borderWidth: borders.width,
+    borderColor: colors.hairline,
+    borderRadius: radius.chip,
+    paddingHorizontal: space.md,
+    paddingVertical: space.xs,
+  },
+  itemsWrap: {
+    borderTopWidth: borders.width,
+    borderTopColor: colors.s2,
+    paddingTop: space.xs,
+  },
+  itemRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: space.sm,
+    paddingVertical: space.sm,
+  },
+  itemName: {
+    flex: 1,
+  },
+  divider: {
+    height: borders.width,
+    backgroundColor: colors.s2,
+  },
+});

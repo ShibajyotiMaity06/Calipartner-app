@@ -22,6 +22,14 @@ vi.mock('@calipartner/ui', async () => ({
   Text: 'Text',
   Button: 'Button',
 }));
+vi.mock('@calipartner/ui/v1', async () => {
+  const theme = await import('../../../../packages/ui/src/v1/theme');
+  return {
+    ...theme,
+    Text: ({ children, ...rest }: Record<string, unknown>) =>
+      React.createElement('Text', rest, children as React.ReactNode),
+  };
+});
 vi.mock('@expo/vector-icons', () => ({ Ionicons: 'Icon' }));
 vi.mock('@/theme/useTheme', () => ({ useTheme: () => ({ colors: {} }) }));
 vi.mock('@/hooks/useTargets', () => ({

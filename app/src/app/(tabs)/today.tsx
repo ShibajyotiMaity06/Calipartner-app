@@ -390,7 +390,12 @@ export default function TodayScreen() {
                   onAdd={() => setActiveLogSection(sec)}
                 />
               ))}
-              <RepeatYesterdayMeals key={selectedDate} localDate={selectedDate} variant="v1" />
+              <RepeatYesterdayMeals
+                key={selectedDate}
+                localDate={selectedDate}
+                variant="v1"
+                remainingCalories={caloriesLeft}
+              />
             </View>
           )}
         </View>

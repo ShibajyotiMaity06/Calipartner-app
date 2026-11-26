@@ -88,17 +88,20 @@ import {
   Checkbox,
   Chip,
   colors,
+  CubeIcon,
   EditIcon,
   elevation,
   EyeIcon,
   EyeOffIcon,
   FeedImageIcon,
+  FlashIcon,
   FloatingTabBar,
   fonts,
   GoogleIcon,
   Heatmap,
   heatmapScale,
   HistoryClockIcon,
+  InfoCircleIcon,
   HomeIcon,
   IconButton,
   Input,
@@ -416,6 +419,9 @@ describe('CaliPartner Design System v1 — Foundation & Primitives', () => {
           <BarcodeIcon />
           <BookmarkIcon />
           <HistoryClockIcon />
+          <FlashIcon />
+          <CubeIcon />
+          <InfoCircleIcon />
         </View>,
       );
     });

@@ -1,7 +1,18 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, Alert, ScrollView, StyleSheet, TextInput, View } from 'react-native';
-import { Button, Chip, Text, space, radius, homeLayout, type as typography } from '@calipartner/ui';
-import { useTheme } from '@calipartner/ui/theme';
+import { Button } from '@calipartner/ui';
+import {
+  Chip,
+  PrimaryButton,
+  SecondaryButton,
+  Text,
+  borders,
+  colors,
+  fonts,
+  layout,
+  radius,
+  space,
+} from '@calipartner/ui/v1';
 import type { MealSelection, SavedMeal, MealSection } from '@calipartner/core';
 import { useAuth } from '@/contexts/AuthContext';
 import { getDb } from '@/db';
@@ -21,7 +32,6 @@ export function MyMealsView({
   onLogged?: () => void;
 }) {
   const { user } = useAuth();
-  const { colors } = useTheme();
   const owner = useRef(user?.id);
   owner.current = user?.id;
   const [rows, setRows] = useState<SavedMeal[]>([]);
@@ -35,6 +45,7 @@ export function MyMealsView({
   const acting = useRef(false);
   const saveRequest = useRef<{ key: string; id: string } | undefined>(undefined);
   const logRequest = useRef<{ key: string; ids: string[] } | undefined>(undefined);
+
   const refresh = useCallback(async () => {
     if (!user) return;
     setLoading(true);
@@ -48,10 +59,12 @@ export function MyMealsView({
       if (owner.current === user.id) setLoading(false);
     }
   }, [user]);
+
   useEffect(() => {
     setRows([]);
     void refresh();
   }, [refresh]);
+
   const act = async (operation: () => Promise<void>) => {
     if (acting.current) return;
     acting.current = true;
@@ -68,6 +81,7 @@ export function MyMealsView({
       setBusy(false);
     }
   };
+
   const save = () =>
     act(async () => {
       if (!user) return;
@@ -79,6 +93,7 @@ export function MyMealsView({
       saveRequest.current = undefined;
       await refresh();
     });
+
   const log = (meal: SavedMeal) =>
     act(async () => {
       if (!user) return;
@@ -90,14 +105,16 @@ export function MyMealsView({
       setLogged(true);
       onLogged?.();
     });
+
   return (
     <ScrollView
       contentContainerStyle={styles.content}
       testID="my-meals-view"
       keyboardShouldPersistTaps="handled"
+      showsVerticalScrollIndicator={false}
     >
-      {!!selection.length && (
-        <View style={styles.content}>
+      {selection.length > 0 ? (
+        <View style={styles.saveBox}>
           <TextInput
             value={name}
             onChangeText={setName}
@@ -106,31 +123,48 @@ export function MyMealsView({
             placeholder={t('launch.mealName')}
             placeholderTextColor={colors.textLo}
             testID="my-meal-name"
-            style={[styles.input, { color: colors.textHi, borderColor: colors.hairline }]}
+            style={styles.input}
           />
-          <Button
-            label={t('launch.saveMeal')}
+          <PrimaryButton
+            title={t('launch.saveMeal')}
             disabled={busy || !name.trim()}
             onPress={() => void save()}
             testID="my-meal-save"
           />
         </View>
-      )}
-      {logged && <Text accessibilityRole="alert">{t('launch.mealLogged')}</Text>}
-      {saved && <Text accessibilityRole="alert">{t('launch.mealSaved')}</Text>}
-      {loading && <ActivityIndicator accessibilityLabel={t('launch.loading')} />}
-      {error && (
-        <>
-          <Text accessibilityRole="alert">{t('launch.mealError')}</Text>
-          <Button
-            variant="secondary"
-            label={t('common.retry')}
+      ) : null}
+
+      {logged ? (
+        <Text variant="meta" color="apricot" accessibilityRole="alert">
+          {t('launch.mealLogged')}
+        </Text>
+      ) : null}
+      {saved ? (
+        <Text variant="meta" color="apricot" accessibilityRole="alert">
+          {t('launch.mealSaved')}
+        </Text>
+      ) : null}
+      {loading ? (
+        <ActivityIndicator color={colors.apricot} accessibilityLabel={t('launch.loading')} />
+      ) : null}
+      {error ? (
+        <View style={styles.errorBox}>
+          <Text variant="meta" color="danger" accessibilityRole="alert">
+            {t('launch.mealError')}
+          </Text>
+          <SecondaryButton
+            title={t('common.retry')}
             onPress={() => void refresh()}
             testID="my-meals-retry"
           />
-        </>
-      )}
-      {!loading && !rows.length && <Text>{t('launch.mealEmpty')}</Text>}
+        </View>
+      ) : null}
+      {!loading && !rows.length ? (
+        <Text variant="body" color="textLo" style={styles.emptyText}>
+          {t('launch.mealEmpty')}
+        </Text>
+      ) : null}
+
       <View style={styles.actions}>
         {(['breakfast', 'lunch', 'dinner', 'snacks'] as const).map((slot) => (
           <Chip
@@ -138,29 +172,43 @@ export function MyMealsView({
             label={t(`diary.sections.${slot}`)}
             selected={mealSlot === slot}
             onPress={() => setMealSlot(slot)}
-            testID={'my-meal-slot-' + slot}
+            testID={`my-meal-slot-${slot}`}
           />
         ))}
       </View>
+
       {rows
         .filter((meal) => meal.user_id === user?.id)
         .map((meal) => (
-          <View key={meal.id} style={styles.content}>
-            <Text variant="heading">{meal.name}</Text>
-            <Text>{meal.items.map((item) => item.food_name).join(', ')}</Text>
-            <Text style={styles.number}>{meal.total_calories} kcal</Text>
+          <View key={meal.id} style={styles.mealCard}>
+            <View style={styles.mealHeader}>
+              <View style={styles.mealCopy}>
+                <Text variant="rowTitle" color="textHi" numberOfLines={1}>
+                  {meal.name}
+                </Text>
+                <Text variant="meta" color="textLo" numberOfLines={2}>
+                  {meal.items.map((item) => item.food_name).join(', ')}
+                </Text>
+              </View>
+              <Text variant="rowTitle" tabular color="textHi">
+                {Math.round(meal.total_calories)}
+                <Text variant="meta" color="textLo">
+                  {' kcal'}
+                </Text>
+              </Text>
+            </View>
             <Button
               variant="secondary"
               label={t('launch.mealLog', { meal: t(`diary.sections.${mealSlot}`) })}
               disabled={busy}
               onPress={() => void log(meal)}
-              testID={'my-meal-log-' + meal.id}
+              testID={`my-meal-log-${meal.id}`}
             />
             <Button
               variant="tertiary"
               label={t('launch.deleteMeal')}
               disabled={busy}
-              testID={'my-meal-delete-' + meal.id}
+              testID={`my-meal-delete-${meal.id}`}
               onPress={() =>
                 Alert.alert(t('launch.deleteMeal'), t('launch.deleteMealConfirm'), [
                   { text: t('common.cancel'), style: 'cancel' },
@@ -181,15 +229,59 @@ export function MyMealsView({
     </ScrollView>
   );
 }
+
 const styles = StyleSheet.create({
-  content: { padding: space[3], gap: space[3] },
-  actions: { flexDirection: 'row', flexWrap: 'wrap', gap: space[2] },
-  input: {
-    fontFamily: typography.body.fontFamily,
-    padding: space[3],
-    minHeight: homeLayout.touchSize,
-    borderWidth: 1,
-    borderRadius: radius.control,
+  content: {
+    gap: space.md,
+    paddingBottom: space.xl,
   },
-  number: { fontVariant: ['tabular-nums'] },
+  saveBox: {
+    gap: space.sm,
+    backgroundColor: colors.s1,
+    borderWidth: borders.width,
+    borderColor: colors.hairline,
+    borderRadius: radius.card,
+    padding: space.md,
+  },
+  input: {
+    fontFamily: fonts.regular,
+    fontSize: 15,
+    paddingHorizontal: space.md,
+    minHeight: layout.minTouchTarget,
+    backgroundColor: colors.s2,
+    borderWidth: borders.width,
+    borderColor: colors.hairline,
+    borderRadius: radius.input,
+    color: colors.textHi,
+  },
+  actions: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: space.sm,
+  },
+  errorBox: {
+    gap: space.sm,
+  },
+  emptyText: {
+    paddingVertical: space.lg,
+    textAlign: 'center',
+  },
+  mealCard: {
+    backgroundColor: colors.s1,
+    borderWidth: borders.width,
+    borderColor: colors.hairline,
+    borderRadius: radius.card,
+    padding: space.md,
+    gap: space.sm,
+  },
+  mealHeader: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    justifyContent: 'space-between',
+    gap: space.md,
+  },
+  mealCopy: {
+    flex: 1,
+    gap: 2,
+  },
 });

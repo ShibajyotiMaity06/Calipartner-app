@@ -20,6 +20,24 @@ vi.mock('@calipartner/ui', async () => ({
   Button: 'Button',
   Sheet: 'Sheet',
 }));
+vi.mock('@calipartner/ui/v1', async () => {
+  const theme = await import('../../../../packages/ui/src/v1/theme');
+  return {
+    ...theme,
+    Checkbox: 'Checkbox',
+    CloseIcon: 'CloseIcon',
+    IconButton: 'IconButton',
+    InfoCircleIcon: 'InfoCircleIcon',
+    LinkButton: 'LinkButton',
+    PrimaryButton: 'PrimaryButton',
+    Sheet: ({ children, ...rest }: Record<string, unknown>) =>
+      React.createElement('Sheet', rest, children as React.ReactNode),
+    Text: ({ children, ...rest }: Record<string, unknown>) =>
+      React.createElement('Text', rest, children as React.ReactNode),
+  };
+});
+vi.mock('@/db', () => ({ getDb: vi.fn() }));
+vi.mock('@/services/foodService', () => ({ getDiaryDaySummary: vi.fn() }));
 vi.mock('@/contexts/AuthContext', () => ({
   useAuth: () => ({ user: { id: 'owner' }, profile: { timezone: 'America/New_York' } }),
 }));
