@@ -365,10 +365,10 @@ export function BarcodeScannerModal({
           <View style={styles.topBar}>
             <IconButton
               icon={<CloseIcon size={18} color={colors.textHi} />}
+              variant="glass"
               onPress={back}
               accessibilityLabel={t('common.cancel')}
               testID="btn-close-scanner"
-              style={styles.glassCircle}
             />
 
             <View style={styles.dropdownAnchor}>
@@ -413,10 +413,10 @@ export function BarcodeScannerModal({
 
             <IconButton
               icon={<FlashIcon size={18} color={torchEnabled ? colors.apricot : colors.textHi} />}
+              variant="glass"
               onPress={() => setTorchEnabled((prev) => !prev)}
               accessibilityLabel={t('capture.flashlight')}
               testID="btn-toggle-torch"
-              style={[styles.glassCircle, torchEnabled ? styles.glassCircleActive : null]}
             />
           </View>
 

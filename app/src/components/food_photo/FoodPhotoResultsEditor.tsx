@@ -308,10 +308,10 @@ export function FoodPhotoResultsEditor({
           <View style={styles.topOverlayBar}>
             <IconButton
               icon={<CloseIcon size={18} color={colors.textHi} />}
+              variant="glass"
               onPress={close}
               accessibilityLabel={t('common.cancel')}
               testID="btn-close-results-editor"
-              style={styles.glassCircle}
             />
 
             <View style={styles.dropdownAnchor}>
@@ -359,9 +359,9 @@ export function FoodPhotoResultsEditor({
 
             <IconButton
               icon={<FlashIcon size={18} color={colors.textMid} />}
+              variant="glass"
               onPress={onRetakePhoto ?? close}
               accessibilityLabel={t('captureV1.retake')}
-              style={styles.glassCircle}
             />
           </View>
 

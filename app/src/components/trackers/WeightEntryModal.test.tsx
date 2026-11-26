@@ -15,6 +15,27 @@ vi.mock('@calipartner/ui', async () => ({
   Text: 'Text',
   useReducedMotion: () => true,
 }));
+vi.mock('react-native-safe-area-context', () => ({
+  useSafeAreaInsets: () => ({ top: 44, bottom: 34, left: 0, right: 0 }),
+}));
+vi.mock('@calipartner/ui/v1', async () => {
+  const theme = await import('../../../../packages/ui/src/v1/theme');
+  return {
+    ...theme,
+    Badge: 'Badge',
+    CameraIcon: 'CameraIcon',
+    ChevronLeftIcon: 'ChevronLeftIcon',
+    HistoryClockIcon: 'HistoryClockIcon',
+    IconButton: (props: Record<string, unknown>) => React.createElement('IconButton', props),
+    LinkButton: (props: Record<string, unknown>) => React.createElement('LinkButton', props),
+    PrimaryButton: (props: Record<string, unknown>) => React.createElement('PrimaryButton', props),
+    ProgressBar: 'ProgressBar',
+    RulerPicker: 'RulerPicker',
+    Segmented: 'Segmented',
+    Text: ({ children, ...rest }: Record<string, unknown>) =>
+      React.createElement('Text', rest, children as React.ReactNode),
+  };
+});
 vi.mock('@expo/vector-icons', () => ({ Ionicons: 'Icon' }));
 vi.mock('@/hooks/useCurrentLocalDate', () => ({
   useCurrentLocalDate: () => ({ localDate: '2026-11-09' }),

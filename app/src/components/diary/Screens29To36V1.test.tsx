@@ -46,12 +46,23 @@ vi.mock('@calipartner/ui', async () => ({
     React.createElement('Sheet', rest, children as React.ReactNode),
   Text: ({ children, ...rest }: Record<string, unknown>) =>
     React.createElement('Text', rest, children as React.ReactNode),
+  useReducedMotion: () => true,
+}));
+
+vi.mock('react-native-svg', () => ({
+  default: 'Svg',
+  Svg: 'Svg',
+  ClipPath: 'ClipPath',
+  Defs: 'Defs',
+  Path: 'Path',
+  Rect: 'Rect',
 }));
 
 vi.mock('@calipartner/ui/v1', async () => {
   const theme = await import('../../../../packages/ui/src/v1/theme');
   return {
     ...theme,
+    Badge: 'Badge',
     BarcodeIcon: 'BarcodeIcon',
     CameraIcon: 'CameraIcon',
     ChartBarIcon: 'ChartBarIcon',
@@ -67,14 +78,17 @@ vi.mock('@calipartner/ui/v1', async () => {
     FeedImageIcon: 'FeedImageIcon',
     FlameIcon: 'FlameIcon',
     FlashIcon: 'FlashIcon',
+    HistoryClockIcon: 'HistoryClockIcon',
     IconButton: (props: Record<string, unknown>) => React.createElement('IconButton', props),
     InfoCircleIcon: 'InfoCircleIcon',
     LinkButton: (props: Record<string, unknown>) => React.createElement('LinkButton', props),
     PlusIcon: 'PlusIcon',
     PrimaryButton: (props: Record<string, unknown>) => React.createElement('PrimaryButton', props),
+    ProgressBar: 'ProgressBar',
     PulseIcon: 'PulseIcon',
     Ring: ({ children, ...rest }: Record<string, unknown>) =>
       React.createElement('Ring', rest, children as React.ReactNode),
+    RulerPicker: (props: Record<string, unknown>) => React.createElement('RulerPicker', props),
     ScaleIcon: 'ScaleIcon',
     SearchIcon: 'SearchIcon',
     SecondaryButton: (props: Record<string, unknown>) =>
@@ -92,6 +106,9 @@ vi.mock('@/contexts/AuthContext', () => ({
   useAuth: () => ({ user: { id: 'user-1' } }),
 }));
 vi.mock('@/hooks/useBrowserModalBack', () => ({ useBrowserModalBack: vi.fn() }));
+vi.mock('@/hooks/useCurrentLocalDate', () => ({
+  useCurrentLocalDate: () => ({ localDate: '2026-11-23' }),
+}));
 vi.mock('@/hooks/useNetworkStatus', () => ({ useNetworkStatus: () => ({ isOnline: true }) }));
 vi.mock('@/lib/supabase', () => ({ getSupabase: () => ({}) }));
 vi.mock('@/db', () => ({ getDb: async () => ({}) }));
@@ -289,6 +306,8 @@ import { FastingTimerModal } from '../fasting/FastingTimerModal';
 import { FoodPhotoCameraModal } from '../food_photo/FoodPhotoCameraModal';
 import { FoodPhotoResultsEditor } from '../food_photo/FoodPhotoResultsEditor';
 import { TrackingPreferencesSheet } from '../rooms/TrackingPreferencesSheet';
+import { CustomWaterModal } from '../trackers/CustomWaterModal';
+import { WeightEntryModal } from '../trackers/WeightEntryModal';
 import { BarcodeScannerModal } from './BarcodeScannerModal';
 import { FoodLogModal } from './FoodLogModal';
 import { RepeatYesterdayMeals } from './RepeatYesterdayMeals';
@@ -623,5 +642,92 @@ describe('Screens 29–36 Design System v1 + AI alignment', () => {
     expect(afterSelect).toContain('1 added');
     expect(afterSelect).toContain('182 kcal to Dinner');
     expect(tree!.root.findByProps({ testID: 'save-food-selection' })).toBeDefined();
+  });
+
+  it('renders Screen 37 Water sheet with bottle progress, quick add, and custom stepper', async () => {
+    const onSave = vi.fn().mockResolvedValue(undefined);
+    const onUndo = vi.fn().mockResolvedValue(undefined);
+    await act(async () => {
+      tree = create(
+        <CustomWaterModal
+          visible
+          totalMl={1500}
+          goalMl={3000}
+          logs={[
+            {
+              id: 'w1',
+              user_id: 'user-1',
+              amount_ml: 500,
+              logged_at: '2026-11-23T08:10:00Z',
+              local_date: '2026-11-23',
+              created_at: '2026-11-23T08:10:00Z',
+              updated_at: '2026-11-23T08:10:00Z',
+              deleted_at: null,
+            },
+          ]}
+          onClose={vi.fn()}
+          onSave={onSave}
+          onUndo={onUndo}
+        />,
+      );
+    });
+    const txt = allText(tree!);
+    expect(txt).toContain('1,500');
+    expect(txt).toContain('of 3,000 ml');
+    expect(txt).toContain('halfway there');
+    await act(async () => {
+      tree!.root.findByProps({ testID: 'water-quick-add-500' }).props.onPress();
+    });
+    expect(onSave).toHaveBeenCalledWith(500);
+    await act(async () => {
+      tree!.root.findByProps({ testID: 'water-undo-last' }).props.onPress();
+    });
+    expect(onUndo).toHaveBeenCalledOnce();
+  });
+
+  it('renders Screen 38 Log weight with ruler, progress card, and check-ins', async () => {
+    const onSave = vi.fn().mockResolvedValue(undefined);
+    await act(async () => {
+      tree = create(
+        <WeightEntryModal
+          visible
+          startWeight={74.5}
+          currentWeight={73.8}
+          goalWeight={68.0}
+          totalChangeKg={-0.7}
+          weeklyPace={-0.5}
+          projectedDate="2027-02-01"
+          hasEnoughTrend
+          recentLogs={[
+            {
+              id: 'wl1',
+              user_id: 'user-1',
+              weight_kg: 73.8,
+              logged_at: '2026-11-22T08:00:00Z',
+              local_date: '2026-11-22',
+              notes: null,
+              created_at: '2026-11-22T08:00:00Z',
+              updated_at: '2026-11-22T08:00:00Z',
+              deleted_at: null,
+            },
+          ]}
+          onOpenHistory={vi.fn()}
+          onOpenPhotos={vi.fn()}
+          onClose={vi.fn()}
+          onSave={onSave}
+        />,
+      );
+    });
+    const txt = allText(tree!);
+    expect(txt).toContain('Log weight');
+    expect(txt).toContain('Weight progress');
+    expect(txt).toContain('Add a progress photo');
+    await act(async () => {
+      tree!.root.findByProps({ testID: 'weight-ruler-picker' }).props.onChange(73.5);
+    });
+    await act(async () => {
+      tree!.root.findByProps({ testID: 'btn-weight-save' }).props.onPress();
+    });
+    expect(onSave).toHaveBeenCalledWith(73.5, undefined, '2026-11-23');
   });
 });

@@ -231,6 +231,7 @@ vi.mock('@/components/rooms/TrackingPreferencesSheet', () => ({
 }));
 vi.mock('@/components/trackers', () => ({
   CustomWaterModal: 'CustomWaterModal',
+  ProgressPhotosModal: 'ProgressPhotosModal',
   WeightEntryModal: 'WeightEntryModal',
   WeightHistoryModal: 'WeightHistoryModal',
 }));

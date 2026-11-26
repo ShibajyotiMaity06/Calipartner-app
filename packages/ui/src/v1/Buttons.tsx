@@ -249,6 +249,7 @@ export interface IconButtonProps {
   onPress?: (event: GestureResponderEvent) => void;
   size?: 44 | 40 | 36;
   inSheet?: boolean;
+  variant?: 'default' | 'glass';
   disabled?: boolean;
   accessibilityLabel: string;
   testID?: string;
@@ -260,6 +261,7 @@ export function IconButton({
   onPress,
   size = 44,
   inSheet = false,
+  variant = 'default',
   disabled = false,
   accessibilityLabel,
   testID,
@@ -268,9 +270,21 @@ export function IconButton({
   const { reduceMotion } = useTheme();
   const { scale, onPressIn, onPressOut } = usePressScale(reduceMotion);
   const pad = size < 44 ? Math.ceil((44 - size) / 2) : 0;
+  const idleBg = variant === 'glass' ? colors.glass : inSheet ? colors.s2 : colors.s1;
 
   return (
-    <Animated.View style={[{ transform: [{ scale }] }, style]}>
+    <Animated.View
+      style={[
+        {
+          width: size,
+          height: size,
+          borderRadius: radius.full,
+          overflow: 'hidden',
+          transform: [{ scale }],
+        },
+        style,
+      ]}
+    >
       <Pressable
         onPress={disabled ? undefined : onPress}
         onPressIn={disabled ? undefined : onPressIn}
@@ -289,7 +303,7 @@ export function IconButton({
             borderRadius: radius.full,
             borderWidth: 1,
             borderColor: colors.hairline,
-            backgroundColor: pressed && !disabled ? colors.s2 : inSheet ? colors.s2 : colors.s1,
+            backgroundColor: pressed && !disabled ? colors.s2 : idleBg,
             opacity: disabled ? 0.5 : 1,
           },
         ]}

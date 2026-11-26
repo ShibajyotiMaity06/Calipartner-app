@@ -138,6 +138,7 @@ vi.mock('@/components/cardio/CardioTrackerModal', () => ({ CardioTrackerModal: '
 vi.mock('@/components/food_photo/ScanSweep', () => ({ ScanSweep: 'ScanSweep' }));
 vi.mock('@/components/trackers', () => ({
   CustomWaterModal: 'Water',
+  ProgressPhotosModal: 'ProgressPhotosModal',
   WeightEntryModal: 'Weight',
   WeightHistoryModal: 'WeightHistory',
   ManualStepsModal: 'ManualSteps',

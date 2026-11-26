@@ -43,7 +43,12 @@ import { QuickAddCaloriesModal } from '@/components/diary/QuickAddCaloriesModal'
 import { FastingTimerModal } from '@/components/fasting';
 import { RecipeBrowseView } from '@/components/recipes';
 import { TrackingPreferencesSheet } from '@/components/rooms/TrackingPreferencesSheet';
-import { CustomWaterModal, WeightEntryModal, WeightHistoryModal } from '@/components/trackers';
+import {
+  CustomWaterModal,
+  ProgressPhotosModal,
+  WeightEntryModal,
+  WeightHistoryModal,
+} from '@/components/trackers';
 import { CardioHub } from '@/components/workouts/CardioHub';
 import { WorkoutHubModal } from '@/components/workouts/WorkoutHubModal';
 import { useAuth } from '@/contexts/AuthContext';
@@ -127,7 +132,7 @@ export function LogSheetModalV1({
     }
   }, [visible, initialFlow, preserveStackWhileHidden, profile?.timezone]);
 
-  const { addWater } = useWater(todayDate);
+  const water = useWater(todayDate);
   const {
     logs: weightLogs,
     logWeight,
@@ -142,6 +147,7 @@ export function LogSheetModalV1({
     error: weightError,
     refresh: refreshWeight,
   } = useWeight();
+  const [weightPhotosOpen, setWeightPhotosOpen] = useState(false);
   const { addEntry } = useAddEntry();
 
   const openFlow = (flow: LogFlowState) => {
@@ -571,11 +577,17 @@ export function LogSheetModalV1({
       {activeFlow === 'water' ? (
         <CustomWaterModal
           visible={visible}
+          totalMl={water.totalMl}
+          goalMl={water.goalMl}
+          logs={water.logs}
           onClose={closeFlow}
           onSave={async (amountMl) => {
-            await addWater(amountMl);
+            await water.addWater(amountMl);
             diaryEvents.emitChange();
-            handleCloseAll();
+          }}
+          onUndo={async () => {
+            await water.undoLast();
+            diaryEvents.emitChange();
           }}
         />
       ) : null}
@@ -583,7 +595,7 @@ export function LogSheetModalV1({
       {activeFlow === 'weight' ? (
         <>
           <WeightEntryModal
-            visible={visible && (!weightHistoryOpen || Boolean(editingWeight))}
+            visible={visible && (!weightHistoryOpen || Boolean(editingWeight)) && !weightPhotosOpen}
             initialEntry={editingWeight}
             previousWeight={
               editingWeight
@@ -591,7 +603,9 @@ export function LogSheetModalV1({
                     ?.weight_kg ?? startingWeightKg)
                 : undefined
             }
+            recentLogs={weightLogs}
             onOpenHistory={editingWeight ? undefined : () => setWeightHistoryOpen(true)}
+            onOpenPhotos={() => setWeightPhotosOpen(true)}
             defaultDate={todayDate}
             startWeight={startingWeightKg}
             currentWeight={latestLog?.weight_kg ?? null}
@@ -610,6 +624,9 @@ export function LogSheetModalV1({
               diaryEvents.emitChange();
             }}
           />
+          {weightPhotosOpen ? (
+            <ProgressPhotosModal visible={visible} onClose={() => setWeightPhotosOpen(false)} />
+          ) : null}
           {weightHistoryOpen && !editingWeight ? (
             <WeightHistoryModal
               visible={visible}

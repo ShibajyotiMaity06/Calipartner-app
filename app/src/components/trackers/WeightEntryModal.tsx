@@ -1,12 +1,28 @@
-import { Button } from '@calipartner/ui';
-import { useTheme as useAppearance } from '@calipartner/ui/theme';
-import { type as inputTypography } from '@calipartner/ui';
 import React, { useEffect, useRef, useState } from 'react';
 import { Modal, Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import {
+  Badge,
+  CameraIcon,
+  ChevronLeftIcon,
+  HistoryClockIcon,
+  IconButton,
+  LinkButton,
+  PrimaryButton,
+  ProgressBar,
+  RulerPicker,
+  Segmented,
+  Text,
+  borders,
+  colors,
+  fonts,
+  layout,
+  radius,
+  space,
+} from '@calipartner/ui/v1';
+import { useReducedMotion } from '@calipartner/ui';
 import { isValidWeightDate, type WeightLog } from '@calipartner/core';
 import { useCurrentLocalDate } from '@/hooks/useCurrentLocalDate';
-import { Text, radius, space, useReducedMotion, type as typeTokens } from '@calipartner/ui';
 import { t } from '@/i18n';
 
 export interface WeightEntryModalProps {
@@ -15,14 +31,36 @@ export interface WeightEntryModalProps {
   defaultDate?: string;
   startWeight: number | null;
   currentWeight: number | null;
+  goalWeight?: number | null;
   previousWeight?: number | null;
+  recentLogs?: WeightLog[];
   totalChangeKg: number | null;
   weeklyPace: number | null;
   projectedDate: string | null;
   hasEnoughTrend: boolean;
   onOpenHistory?: () => void;
+  onOpenPhotos?: () => void;
   onClose: () => void;
   onSave: (weightKg: number, notes?: string, date?: string) => Promise<unknown>;
+}
+
+const LB_PER_KG = 2.20462;
+const kgToLb = (kg: number) => Math.round(kg * LB_PER_KG * 10) / 10;
+const lbToKg = (lb: number) => Math.round((lb / LB_PER_KG) * 10) / 10;
+
+function formatLogDayLabel(dateStr: string): string {
+  try {
+    const dt = new Date(`${dateStr}T12:00:00Z`);
+    if (Number.isNaN(dt.getTime())) return dateStr;
+    return dt.toLocaleDateString('en-US', {
+      weekday: 'short',
+      day: 'numeric',
+      month: 'short',
+      timeZone: 'UTC',
+    });
+  } catch {
+    return dateStr;
+  }
 }
 
 export function WeightEntryModal({
@@ -31,32 +69,33 @@ export function WeightEntryModal({
   defaultDate,
   startWeight,
   currentWeight,
+  goalWeight,
   previousWeight,
+  recentLogs = [],
   totalChangeKg,
   weeklyPace,
   projectedDate,
   hasEnoughTrend,
   onOpenHistory,
+  onOpenPhotos,
   onClose,
   onSave,
 }: WeightEntryModalProps) {
-  const { colors: dark } = useAppearance();
-  const styles = createStyles(dark);
-
+  const insets = useSafeAreaInsets();
   const { localDate: today } = useCurrentLocalDate();
   const reduceMotion = useReducedMotion();
+
   const [unit, setUnit] = useState<'kg' | 'lb'>('kg');
   const [weightText, setWeightText] = useState('');
   const [dateText, setDateText] = useState('');
   const [notesText, setNotesText] = useState('');
+  const [showDateNotes, setShowDateNotes] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+
   const savingRef = useRef(false);
   const dirtyRef = useRef(false);
   const openedEntry = useRef<string | null>(null);
-
-  const kgToLb = (kg: number) => Math.round(kg * 2.20462 * 10) / 10;
-  const lbToKg = (lb: number) => Math.round((lb / 2.20462) * 10) / 10;
 
   useEffect(() => {
     if (!visible) {
@@ -72,12 +111,13 @@ export function WeightEntryModal({
       setDateText(initialEntry.local_date);
       setNotesText(initialEntry.notes ?? '');
     } else {
-      setWeightText(currentWeight ? String(currentWeight) : '');
+      setWeightText(currentWeight != null ? String(currentWeight) : '73.5');
       setDateText(defaultDate ?? today);
       setNotesText('');
     }
     setError(null);
     setUnit('kg');
+    setShowDateNotes(false);
   }, [initialEntry, defaultDate, currentWeight, visible, today]);
 
   const handleUnitToggle = (newUnit: 'kg' | 'lb') => {
@@ -85,11 +125,7 @@ export function WeightEntryModal({
     dirtyRef.current = true;
     const parsed = parseFloat(weightText.trim());
     if (!isNaN(parsed) && parsed > 0) {
-      if (newUnit === 'lb') {
-        setWeightText(String(kgToLb(parsed)));
-      } else {
-        setWeightText(String(lbToKg(parsed)));
-      }
+      setWeightText(String(newUnit === 'lb' ? kgToLb(parsed) : lbToKg(parsed)));
     }
     setUnit(newUnit);
   };
@@ -128,9 +164,9 @@ export function WeightEntryModal({
     }
   };
 
-  const isEditing = Boolean(initialEntry);
+  if (!visible) return null;
 
-  // E05: Change vs last entry in plain words
+  const isEditing = Boolean(initialEntry);
   const parsedCurrentInput = parseFloat(weightText.trim());
   const normalizedInputKg = !isNaN(parsedCurrentInput)
     ? unit === 'lb'
@@ -138,512 +174,499 @@ export function WeightEntryModal({
       : parsedCurrentInput
     : null;
 
-  let plainWordsChange: string | null = null;
   const comparisonWeight = isEditing ? previousWeight : currentWeight;
+  let deltaValueText: string | null = null;
+  let plainWordsSuffix: string | null = null;
   if (normalizedInputKg !== null && comparisonWeight != null) {
-    const diff = Math.round((normalizedInputKg - comparisonWeight) * 10) / 10;
-    if (Math.abs(diff) < 0.05) {
-      plainWordsChange = t('trackers.weight.changeSinceLastSame');
-    } else if (diff < 0) {
-      plainWordsChange = t('trackers.weight.changeSinceLastDown', {
-        amount: `${Math.abs(diff)} kg`,
-      });
+    const diffKg = Math.round((normalizedInputKg - comparisonWeight) * 10) / 10;
+    const diffUnit = unit === 'lb' ? Math.round(diffKg * LB_PER_KG * 10) / 10 : diffKg;
+    if (Math.abs(diffKg) < 0.05) {
+      deltaValueText = null;
+      plainWordsSuffix = t('trackers.weight.changeSinceLastSame');
     } else {
-      plainWordsChange = t('trackers.weight.changeSinceLastUp', {
-        amount: `${diff} kg`,
-      });
+      deltaValueText = `${diffUnit > 0 ? '+' : ''}${diffUnit.toFixed(1)} ${unit}`;
+      plainWordsSuffix = ' since last weigh-in';
     }
   }
 
-  const changePercent =
-    startWeight && startWeight > 0 && totalChangeKg !== null
-      ? ((totalChangeKg / startWeight) * 100).toFixed(1)
+  const rulerValue = Number.isFinite(parsedCurrentInput)
+    ? parsedCurrentInput
+    : unit === 'lb'
+      ? 162
+      : 73.5;
+
+  const startDisp =
+    startWeight != null ? (unit === 'lb' ? kgToLb(startWeight) : startWeight).toFixed(1) : '—';
+  const goalDisp =
+    goalWeight != null ? (unit === 'lb' ? kgToLb(goalWeight) : goalWeight).toFixed(1) : '—';
+
+  const progressRatio =
+    startWeight != null && goalWeight != null && currentWeight != null && startWeight !== goalWeight
+      ? Math.max(
+          0.04,
+          Math.min(1, Math.abs(currentWeight - startWeight) / Math.abs(goalWeight - startWeight)),
+        )
+      : totalChangeKg !== null
+        ? 0.25
+        : 0;
+
+  const remainingGoalKg =
+    goalWeight != null && (normalizedInputKg ?? currentWeight) != null
+      ? Math.round(Math.abs(goalWeight - (normalizedInputKg ?? currentWeight)!) * 10) / 10
       : null;
 
-  if (!visible) return null;
+  const displayHistory = recentLogs.slice(0, 2);
 
   return (
     <Modal
       visible={visible}
       animationType={reduceMotion ? 'none' : 'slide'}
-      transparent
+      transparent={false}
       onRequestClose={onClose}
       testID="modal-weight-entry"
     >
-      <View style={styles.overlay}>
-        <Pressable
-          style={StyleSheet.absoluteFill}
-          onPress={onClose}
-          accessibilityLabel={t('common.cancel')}
-        />
-        <View style={styles.sheet} testID="weight-entry-sheet">
-          <View style={styles.grabHandle} />
+      <View
+        style={[
+          styles.screen,
+          {
+            paddingTop: insets.top + layout.topContentOffset,
+            paddingBottom: Math.max(layout.ctaBottomMin, insets.bottom + space.sm),
+          },
+        ]}
+      >
+        {/* Top Bar: < | Log weight | History */}
+        <View style={styles.topNav}>
+          <IconButton
+            icon={<ChevronLeftIcon size={20} color={colors.textHi} />}
+            onPress={onClose}
+            accessibilityLabel={t('common.back')}
+            testID="btn-weight-cancel"
+          />
+          <Text variant="rowTitle" color="textHi">
+            {isEditing ? t('trackers.weight.editModalTitle') : t('weightV1.title')}
+          </Text>
+          {onOpenHistory ? (
+            <LinkButton
+              title={t('weightV1.history')}
+              variant="default"
+              onPress={onOpenHistory}
+              testID="btn-weight-progress"
+            />
+          ) : (
+            <View style={styles.navSpacer} />
+          )}
+        </View>
 
-          {/* Header with Title and Unit Chip */}
-          <View style={styles.header}>
-            <View style={styles.headerTitleRow}>
-              <View style={styles.iconBox}>
-                <Ionicons name="scale-outline" size={20} color={dark.apricot} />
-              </View>
-              <Text style={styles.title}>
-                {isEditing
-                  ? t('trackers.weight.editModalTitle')
-                  : t('trackers.weight.entryModalTitle')}
+        <ScrollView
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={styles.scrollContent}
+          keyboardShouldPersistTaps="handled"
+        >
+          {/* Controls Row: Today Pill | kg / lb */}
+          <View style={styles.controlsRow}>
+            <Pressable
+              onPress={() => setShowDateNotes((prev) => !prev)}
+              accessibilityRole="button"
+              accessibilityLabel={t('trackers.weight.dateLabel')}
+              style={styles.datePill}
+            >
+              <HistoryClockIcon size={15} color={colors.textLo} />
+              <Text variant="meta" color="textHi" tabular>
+                {dateText === today ? t('weightV1.todayLabel') : dateText}
               </Text>
-            </View>
+            </Pressable>
 
-            {/* Unit Toggle (kg / lb) */}
-            <View style={styles.unitToggleContainer} testID="weight-unit-chips">
-              <Pressable
-                testID="btn-weight-unit-kg"
-                style={[styles.unitToggleOption, unit === 'kg' && styles.unitToggleOptionActive]}
-                onPress={() => handleUnitToggle('kg')}
-                accessibilityRole="button"
-                accessibilityLabel="Kilograms"
-              >
-                <Text style={[styles.unitToggleText, unit === 'kg' && styles.unitToggleTextActive]}>
-                  kg
-                </Text>
-              </Pressable>
-              <Pressable
-                testID="btn-weight-unit-lb"
-                style={[styles.unitToggleOption, unit === 'lb' && styles.unitToggleOptionActive]}
-                onPress={() => handleUnitToggle('lb')}
-                accessibilityRole="button"
-                accessibilityLabel="Pounds"
-              >
-                <Text style={[styles.unitToggleText, unit === 'lb' && styles.unitToggleTextActive]}>
-                  lb
-                </Text>
-              </Pressable>
-            </View>
-          </View>
-
-          <ScrollView
-            style={styles.formScroll}
-            contentContainerStyle={styles.formContent}
-            showsVerticalScrollIndicator={false}
-          >
-            {onOpenHistory && (
-              <Button
-                variant="secondary"
-                fullWidth={false}
-                label={t('weightUpdate.progress')}
-                icon={<Ionicons name="trending-up-outline" size={space[5]} color={dark.textMid} />}
-                testID="btn-weight-progress"
-                onPress={onOpenHistory}
-                accessibilityRole="button"
-                accessibilityLabel={t('weightUpdate.progress')}
-                style={styles.progressButton}
+            <View testID="weight-unit-chips">
+              <Segmented
+                options={[
+                  { value: 'kg', label: 'kg' },
+                  { value: 'lb', label: 'lb' },
+                ]}
+                value={unit}
+                onChange={(val) => handleUnitToggle(val as 'kg' | 'lb')}
+                compact
+                testID="btn-weight-unit-segmented"
               />
-            )}
-            {/* E05 Big Numeric Field */}
-            <View style={styles.bigNumericCard} testID="big-numeric-field-card">
-              <Text style={styles.fieldLabel}>{t('trackers.weight.weightLabel')}</Text>
-              <View style={styles.bigInputWrap}>
-                <TextInput
-                  testID="input-weight-value"
-                  value={weightText}
-                  onChangeText={(text) => {
-                    dirtyRef.current = true;
-                    setWeightText(text);
-                    if (error) setError(null);
-                  }}
-                  keyboardType="decimal-pad"
-                  placeholder={unit === 'lb' ? '165.0' : '75.0'}
-                  placeholderTextColor={dark.textLo}
-                  style={[styles.bigInput, { fontFamily: inputTypography.body.fontFamily }]}
-                  accessibilityLabel={t('trackers.weight.weightLabel')}
-                />
-                <Text style={styles.bigUnitSuffix}>{unit}</Text>
-              </View>
-
-              {/* Plain words change vs last entry */}
-              {plainWordsChange && (
-                <View style={styles.plainWordsPill} testID="plain-words-change">
-                  <Ionicons name="information-circle-outline" size={14} color={dark.teal} />
-                  <Text style={styles.plainWordsText}>{plainWordsChange}</Text>
-                </View>
-              )}
             </View>
+          </View>
 
-            {/* Date TextInput (defaults today, back-datable) */}
-            <View style={styles.inputGroup}>
-              <Text style={styles.fieldLabel}>{t('trackers.weight.dateLabel')}</Text>
-              <View style={styles.inputWrapper}>
-                <Ionicons name="calendar-outline" size={16} color={dark.textLo} />
-                <TextInput
-                  testID="input-weight-date"
-                  value={dateText}
-                  onChangeText={(text) => {
-                    dirtyRef.current = true;
-                    setDateText(text);
-                    if (error) setError(null);
-                  }}
-                  placeholder="YYYY-MM-DD"
-                  placeholderTextColor={dark.textLo}
-                  style={[styles.input, { fontFamily: inputTypography.body.fontFamily }]}
-                  accessibilityLabel={t('trackers.weight.dateLabel')}
-                />
-              </View>
-            </View>
-
-            {/* Notes TextInput */}
-            <View style={styles.inputGroup}>
-              <Text style={styles.fieldLabel}>{t('trackers.weight.notesLabel')}</Text>
-              <View style={styles.inputWrapper}>
-                <TextInput
-                  testID="input-weight-notes"
-                  value={notesText}
-                  onChangeText={(text) => {
-                    dirtyRef.current = true;
-                    setNotesText(text);
-                  }}
-                  placeholder={t('trackers.weight.notesPlaceholder')}
-                  placeholderTextColor={dark.textLo}
-                  style={[styles.input, { fontFamily: inputTypography.body.fontFamily }]}
-                  accessibilityLabel={t('trackers.weight.notesLabel')}
-                />
-              </View>
-            </View>
-
-            {/* Trend Summary Card */}
-            <View testID="weight-sheet-trend-summary" style={styles.trendSummaryCard}>
-              <Text style={styles.summaryTitle}>{t('trackers.weight.summaryTitle')}</Text>
-
-              <View style={styles.summaryGrid}>
-                <View style={styles.summaryItem}>
-                  <Text style={styles.summaryItemLabel}>{t('weightUpdate.start')}</Text>
-                  <Text style={styles.summaryItemVal}>
-                    {startWeight !== null ? `${startWeight.toFixed(1)} kg` : '—'}
-                  </Text>
-                </View>
-
-                <View style={styles.summaryItem}>
-                  <Text style={styles.summaryItemLabel}>{t('weightUpdate.current')}</Text>
-                  <Text style={styles.summaryItemVal}>
-                    {currentWeight !== null ? `${currentWeight.toFixed(1)} kg` : '—'}
-                  </Text>
-                </View>
-
-                <View style={styles.summaryItem}>
-                  <Text style={styles.summaryItemLabel}>{t('weightUpdate.change')}</Text>
-                  <Text style={styles.summaryItemVal}>
-                    {totalChangeKg !== null
-                      ? `${totalChangeKg > 0 ? '+' : ''}${totalChangeKg.toFixed(1)} kg (${changePercent}%)`
-                      : '—'}
-                  </Text>
-                </View>
-              </View>
-
-              <View style={styles.paceRow}>
-                {hasEnoughTrend && weeklyPace !== null ? (
-                  <View style={styles.paceInfo}>
-                    <Text style={styles.paceText}>
-                      {t('trackers.weight.weeklyPace', { pace: weeklyPace.toFixed(2) })}
-                    </Text>
-                    {projectedDate ? (
-                      <Text style={styles.projectionText}>
-                        {t('trackers.weight.projectedDate', { date: projectedDate })}
-                      </Text>
-                    ) : null}
-                  </View>
-                ) : (
-                  <Text style={styles.trendPendingText}>{t('trackers.weight.notEnoughTrend')}</Text>
-                )}
-              </View>
-            </View>
-
-            {/* Error Message */}
-            {error && (
-              <Text testID="weight-entry-error" style={styles.errorText}>
-                {error}
-              </Text>
-            )}
-          </ScrollView>
-
-          {/* Action Buttons */}
-          <View style={styles.actionsRow}>
-            <Button
-              variant="secondary"
-              label={saving ? t('common.saving') : t('common.save')}
-              testID="btn-weight-save"
-              onPress={() => void handleSubmit()}
-              disabled={saving}
-              style={[styles.saveBtn, saving && styles.btnDisabled]}
-              accessibilityRole="button"
-              accessibilityLabel={t('common.save')}
+          {/* Compact Date & Notes inputs always accessible for editing & tests */}
+          <View style={[styles.dateNotesRow, !showDateNotes ? styles.compactDateBar : null]}>
+            <TextInput
+              testID="input-weight-date"
+              value={dateText}
+              onChangeText={(text) => {
+                dirtyRef.current = true;
+                setDateText(text);
+                if (error) setError(null);
+              }}
+              placeholder="YYYY-MM-DD"
+              placeholderTextColor={colors.textLo}
+              accessibilityLabel={t('trackers.weight.dateLabel')}
+              style={styles.dateTextInput}
             />
-            <Button
-              variant="cancel"
-              label={t('common.cancel')}
-              testID="btn-weight-cancel"
-              onPress={onClose}
-              accessibilityRole="button"
-              accessibilityLabel={t('common.cancel')}
+            {showDateNotes ? (
+              <TextInput
+                testID="input-weight-notes"
+                value={notesText}
+                onChangeText={(text) => {
+                  dirtyRef.current = true;
+                  setNotesText(text);
+                }}
+                placeholder={t('trackers.weight.notesPlaceholder')}
+                placeholderTextColor={colors.textLo}
+                accessibilityLabel={t('trackers.weight.notesLabel')}
+                style={styles.notesInput}
+              />
+            ) : null}
+          </View>
+
+          {/* Hero Numeric Input + Delta Pill */}
+          <View style={styles.heroDisplayBlock} testID="big-numeric-field-card">
+            <View style={styles.heroWeightRow}>
+              <TextInput
+                testID="input-weight-value"
+                value={weightText}
+                onChangeText={(text) => {
+                  dirtyRef.current = true;
+                  setWeightText(text);
+                  if (error) setError(null);
+                }}
+                keyboardType="decimal-pad"
+                placeholder={unit === 'lb' ? '162.0' : '73.5'}
+                placeholderTextColor={colors.textLo}
+                style={styles.heroNumericInput}
+                accessibilityLabel={t('trackers.weight.weightLabel')}
+              />
+              <Text variant="bodyL" color="textLo" style={styles.heroUnit}>
+                {unit}
+              </Text>
+            </View>
+
+            {plainWordsSuffix ? (
+              <View style={styles.deltaPill} testID="plain-words-change">
+                {deltaValueText ? (
+                  <Text variant="label" tabular color="apricot">
+                    {deltaValueText}
+                  </Text>
+                ) : null}
+                <Text variant="meta" color="textMid">
+                  {plainWordsSuffix}
+                </Text>
+              </View>
+            ) : null}
+          </View>
+
+          {/* Horizontal Weight Ruler */}
+          <View style={styles.rulerWrap}>
+            <RulerPicker
+              min={unit === 'kg' ? 30 : 66}
+              max={unit === 'kg' ? 250 : 550}
+              step={0.5}
+              majorStep={5}
+              midStep={1}
+              value={rulerValue}
+              unit={unit}
+              onChange={(val) => {
+                dirtyRef.current = true;
+                setWeightText(val.toFixed(1));
+                if (error) setError(null);
+              }}
+              accessibilityLabel={t('trackers.weight.weightLabel')}
+              testID="weight-ruler-picker"
             />
           </View>
+
+          {/* Weight Progress & Recent Check-ins Card */}
+          <View style={styles.progressCard} testID="weight-sheet-trend-summary">
+            <View style={styles.cardHeaderRow}>
+              <Text variant="rowTitle" color="textHi">
+                {t('weightV1.weightProgress')}
+              </Text>
+              {onOpenHistory ? (
+                <LinkButton
+                  title={t('weightV1.seeAllWeeks')}
+                  variant="accent"
+                  onPress={onOpenHistory}
+                />
+              ) : null}
+            </View>
+
+            <View style={styles.progressGoalsRow}>
+              <Text variant="meta" color="textLo" tabular>
+                {t('weightV1.startLabel', { val: startDisp })}
+              </Text>
+              <Text variant="meta" color="textLo" tabular>
+                {t('weightV1.goalLabel', { val: goalDisp })}
+              </Text>
+            </View>
+
+            <ProgressBar progress={progressRatio} />
+
+            <Text variant="meta" color="textLo" tabular>
+              {totalChangeKg !== null
+                ? `${totalChangeKg > 0 ? '+' : ''}${totalChangeKg.toFixed(1)} kg so far${
+                    remainingGoalKg !== null ? ` · ${remainingGoalKg.toFixed(1)} kg to go` : ''
+                  }`
+                : hasEnoughTrend && weeklyPace !== null
+                  ? t('trackers.weight.weeklyPace', { pace: weeklyPace.toFixed(2) })
+                  : projectedDate
+                    ? t('trackers.weight.projectedDate', { date: projectedDate })
+                    : t('trackers.weight.notEnoughTrend')}
+            </Text>
+
+            {displayHistory.length > 0 ? (
+              <View style={styles.checkInsWrap}>
+                <Text variant="eyebrow" color="textLo">
+                  {t('weightV1.checkInsEyebrow')}
+                </Text>
+                {displayHistory.map((item, idx) => {
+                  const prevItem = recentLogs[idx + 1];
+                  const delta =
+                    prevItem != null
+                      ? Math.round((item.weight_kg - prevItem.weight_kg) * 10) / 10
+                      : null;
+                  const dispWeight = unit === 'lb' ? kgToLb(item.weight_kg) : item.weight_kg;
+                  return (
+                    <View key={item.id} style={styles.checkInRow}>
+                      <Text variant="label" color="textHi" style={styles.checkInDate}>
+                        {formatLogDayLabel(item.local_date)}
+                      </Text>
+                      <Text variant="label" tabular color="textHi">
+                        {`${dispWeight.toFixed(1)} ${unit}`}
+                      </Text>
+                      {delta !== null ? (
+                        <Text variant="label" tabular color="apricot" style={styles.checkInDelta}>
+                          {`${delta > 0 ? '+' : ''}${delta.toFixed(1)}`}
+                        </Text>
+                      ) : null}
+                    </View>
+                  );
+                })}
+              </View>
+            ) : null}
+          </View>
+
+          {/* Add a Progress Photo Row Card */}
+          <Pressable
+            onPress={() => onOpenPhotos?.()}
+            disabled={!onOpenPhotos}
+            accessibilityRole="button"
+            accessibilityLabel={t('weightV1.addProgressPhoto')}
+            style={({ pressed }) => [styles.photoCard, pressed ? styles.photoCardPressed : null]}
+            testID="weight-add-progress-photo"
+          >
+            <View style={styles.photoIconTile}>
+              <CameraIcon size={18} color={colors.textMid} />
+            </View>
+            <View style={styles.photoCopy}>
+              <Text variant="rowTitle" color="textHi">
+                {t('weightV1.addProgressPhoto')}
+              </Text>
+              <Text variant="meta" color="textLo">
+                {t('weightV1.compareBeforeAfter')}
+              </Text>
+            </View>
+            <Badge variant="pro" label="PRO" mini />
+          </Pressable>
+
+          {error ? (
+            <Text
+              variant="meta"
+              color="danger"
+              accessibilityRole="alert"
+              testID="weight-entry-error"
+              style={styles.errorText}
+            >
+              {error}
+            </Text>
+          ) : null}
+        </ScrollView>
+
+        <View style={styles.ctaFooter}>
+          <PrimaryButton
+            title={saving ? t('common.saving') : t('weightV1.saveWeighIn')}
+            showArrow
+            disabled={saving}
+            loading={saving}
+            onPress={() => void handleSubmit()}
+            testID="btn-weight-save"
+          />
         </View>
       </View>
     </Modal>
   );
 }
 
-const createStyles = (dark: ReturnType<typeof useAppearance>['colors']) =>
-  StyleSheet.create({
-    progressButton: {
-      minHeight: space[8],
-      flexDirection: 'row',
-      alignItems: 'center',
-      gap: space[2],
-      alignSelf: 'flex-start',
-      paddingHorizontal: space[3],
-      borderRadius: radius.control,
-      borderWidth: 1,
-      borderColor: dark.hairline,
-    },
-    overlay: {
-      flex: 1,
-      backgroundColor: 'rgba(0, 0, 0, 0.65)',
-      justifyContent: 'flex-end',
-    },
-    sheet: {
-      backgroundColor: dark.s1,
-      borderTopLeftRadius: radius.sheet,
-      borderTopRightRadius: radius.sheet,
-      borderWidth: 1,
-      borderColor: dark.hairline,
-      padding: space[4],
-      gap: space[3],
-      maxHeight: '90%',
-    },
-    grabHandle: {
-      width: 36,
-      height: 4,
-      borderRadius: radius.full,
-      backgroundColor: dark.hairlineLit,
-      alignSelf: 'center',
-      marginBottom: space[2],
-    },
-    header: {
-      flexDirection: 'row',
-      justifyContent: 'space-between',
-      alignItems: 'center',
-    },
-    headerTitleRow: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      gap: space[2],
-    },
-    iconBox: {
-      width: 36,
-      height: 36,
-      borderRadius: radius.full,
-      backgroundColor: dark.s2,
-      alignItems: 'center',
-      justifyContent: 'center',
-    },
-    title: {
-      fontSize: typeTokens.body.fontSize,
-      fontFamily: typeTokens.body.fontFamily,
-      color: dark.textHi,
-      fontWeight: '700',
-    },
-    unitToggleContainer: {
-      flexDirection: 'row',
-      backgroundColor: dark.s2,
-      borderRadius: radius.control,
-      padding: 3,
-      borderWidth: 1,
-      borderColor: dark.hairlineLit,
-      alignItems: 'center',
-    },
-    unitToggleOption: {
-      paddingHorizontal: space[3],
-      paddingVertical: space[1],
-      borderRadius: radius.control - 2,
-      justifyContent: 'center',
-      alignItems: 'center',
-      minWidth: 42,
-      minHeight: 28,
-    },
-    unitToggleOptionActive: {
-      backgroundColor: dark.copper,
-    },
-    unitToggleText: {
-      fontSize: typeTokens.label.fontSize,
-      fontFamily: typeTokens.label.fontFamily,
-      color: dark.textMid,
-      textTransform: 'uppercase',
-    },
-    unitToggleTextActive: {
-      color: dark.onBrand,
-      fontFamily: typeTokens.heading.fontFamily,
-    },
-    formScroll: {
-      maxHeight: 440,
-    },
-    formContent: {
-      gap: space[3],
-    },
-    bigNumericCard: {
-      backgroundColor: dark.s2,
-      borderRadius: radius.card,
-      padding: space[3],
-      borderWidth: 1,
-      borderColor: dark.hairline,
-      gap: space[2],
-    },
-    fieldLabel: {
-      fontSize: typeTokens.label.fontSize,
-      fontFamily: typeTokens.label.fontFamily,
-      color: dark.textLo,
-      fontWeight: '600',
-    },
-    bigInputWrap: {
-      flexDirection: 'row',
-      alignItems: 'baseline',
-      gap: space[2],
-    },
-    bigInput: {
-      fontSize: 40,
-      fontFamily: typeTokens.numeralL.fontFamily,
-      fontVariant: ['tabular-nums'],
-      color: dark.textHi,
-      fontWeight: '800',
-      minWidth: 120,
-      padding: 0,
-    },
-    bigUnitSuffix: {
-      fontSize: typeTokens.title2.fontSize,
-      fontFamily: typeTokens.title2.fontFamily,
-      color: dark.textLo,
-      fontWeight: '700',
-    },
-    plainWordsPill: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      gap: 6,
-      backgroundColor: dark.s3,
-      paddingHorizontal: space[3],
-      paddingVertical: space[1],
-      borderRadius: radius.full,
-      alignSelf: 'flex-start',
-    },
-    plainWordsText: {
-      fontSize: typeTokens.label.fontSize,
-      fontFamily: typeTokens.label.fontFamily,
-      color: dark.teal,
-      fontWeight: '600',
-    },
-    inputGroup: {
-      gap: space[1],
-    },
-    inputWrapper: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      gap: space[2],
-      backgroundColor: dark.s2,
-      borderRadius: radius.control,
-      borderWidth: 1,
-      borderColor: dark.hairline,
-      paddingHorizontal: space[3],
-      minHeight: 44,
-    },
-    input: {
-      flex: 1,
-      color: dark.textHi,
-      fontSize: typeTokens.bodyS.fontSize,
-      fontFamily: typeTokens.bodyS.fontFamily,
-      minHeight: 44,
-    },
-    trendSummaryCard: {
-      backgroundColor: dark.s2,
-      borderRadius: radius.card,
-      padding: space[3],
-      borderWidth: 1,
-      borderColor: dark.hairline,
-      gap: space[2],
-    },
-    summaryTitle: {
-      fontSize: typeTokens.label.fontSize,
-      fontFamily: typeTokens.label.fontFamily,
-      color: dark.textHi,
-      fontWeight: '700',
-    },
-    summaryGrid: {
-      flexDirection: 'row',
-      justifyContent: 'space-between',
-      marginVertical: space[1],
-    },
-    summaryItem: {
-      flex: 1,
-      gap: 2,
-    },
-    summaryItemLabel: {
-      fontSize: typeTokens.micro.fontSize,
-      fontFamily: typeTokens.micro.fontFamily,
-      color: dark.textLo,
-    },
-    summaryItemVal: {
-      fontSize: typeTokens.bodyS.fontSize,
-      fontFamily: typeTokens.bodyS.fontFamily,
-      fontVariant: ['tabular-nums'],
-      color: dark.textHi,
-      fontWeight: '600',
-    },
-    paceRow: {
-      paddingTop: space[2],
-      borderTopWidth: 1,
-      borderTopColor: dark.hairline,
-    },
-    paceInfo: {
-      flexDirection: 'row',
-      justifyContent: 'space-between',
-      alignItems: 'center',
-      flexWrap: 'wrap',
-      gap: space[2],
-    },
-    paceText: {
-      fontSize: typeTokens.micro.fontSize,
-      fontFamily: typeTokens.micro.fontFamily,
-      color: dark.apricot,
-      fontWeight: '600',
-    },
-    projectionText: {
-      fontSize: typeTokens.micro.fontSize,
-      fontFamily: typeTokens.micro.fontFamily,
-      color: dark.teal,
-      fontWeight: '600',
-    },
-    trendPendingText: {
-      fontSize: typeTokens.micro.fontSize,
-      fontFamily: typeTokens.micro.fontFamily,
-      color: dark.textLo,
-    },
-    errorText: {
-      fontSize: typeTokens.label.fontSize,
-      fontFamily: typeTokens.label.fontFamily,
-      color: dark.danger,
-    },
-    actionsRow: {
-      gap: space[2],
-      marginTop: space[2],
-    },
-    saveBtn: {
-      minHeight: 48,
-      borderRadius: radius.button,
-      backgroundColor: dark.apricot,
-      alignItems: 'center',
-      justifyContent: 'center',
-    },
-    saveBtnText: {
-      fontSize: typeTokens.body.fontSize,
-      fontFamily: typeTokens.body.fontFamily,
-      color: dark.onBrand, // the onBrand token
-      fontWeight: '700',
-    },
-    btnDisabled: {
-      opacity: 0.5,
-    },
-  });
+const styles = StyleSheet.create({
+  screen: {
+    flex: 1,
+    backgroundColor: colors.bg0,
+    paddingHorizontal: layout.screenPaddingX,
+  },
+  topNav: {
+    height: layout.navRowHeight,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: space.md,
+  },
+  navSpacer: {
+    width: 44,
+  },
+  scrollContent: {
+    gap: space.lg,
+    paddingBottom: space.lg,
+  },
+  controlsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: space.sm,
+  },
+  datePill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: space.xs,
+    backgroundColor: colors.s1,
+    borderWidth: borders.width,
+    borderColor: colors.hairline,
+    borderRadius: radius.full,
+    paddingHorizontal: space.md,
+    minHeight: 36,
+  },
+  dateNotesRow: {
+    gap: space.sm,
+  },
+  compactDateBar: {
+    height: 1,
+    opacity: 0,
+    overflow: 'hidden',
+  },
+  dateTextInput: {
+    backgroundColor: colors.s1,
+    borderWidth: borders.width,
+    borderColor: colors.hairline,
+    borderRadius: radius.input,
+    paddingHorizontal: space.md,
+    minHeight: 42,
+    color: colors.textHi,
+    fontFamily: fonts.regular,
+    fontSize: 14,
+  },
+  notesInput: {
+    backgroundColor: colors.s1,
+    borderWidth: borders.width,
+    borderColor: colors.hairline,
+    borderRadius: radius.input,
+    paddingHorizontal: space.md,
+    minHeight: 42,
+    color: colors.textHi,
+    fontFamily: fonts.regular,
+    fontSize: 14,
+  },
+  heroDisplayBlock: {
+    alignItems: 'center',
+    gap: space.sm,
+  },
+  heroWeightRow: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    justifyContent: 'center',
+  },
+  heroNumericInput: {
+    fontFamily: fonts.display,
+    fontSize: 68,
+    lineHeight: 74,
+    letterSpacing: -2.4,
+    color: colors.textHi,
+    textAlign: 'center',
+    minWidth: 132,
+    padding: 0,
+    fontVariant: ['tabular-nums'],
+  },
+  heroUnit: {
+    marginLeft: space.xs,
+  },
+  deltaPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.s2,
+    borderWidth: borders.width,
+    borderColor: colors.hairline,
+    borderRadius: radius.full,
+    paddingHorizontal: space.md,
+    paddingVertical: space.xs,
+  },
+  rulerWrap: {
+    alignItems: 'center',
+  },
+  progressCard: {
+    backgroundColor: colors.s1,
+    borderWidth: borders.width,
+    borderColor: colors.hairline,
+    borderRadius: radius.card,
+    padding: layout.cardPadding,
+    gap: space.sm,
+  },
+  cardHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  progressGoalsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  checkInsWrap: {
+    marginTop: space.xs,
+    paddingTop: space.sm,
+    borderTopWidth: borders.width,
+    borderTopColor: colors.s2,
+    gap: space.xs,
+  },
+  checkInRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: space.xs,
+  },
+  checkInDate: {
+    flex: 1,
+  },
+  checkInDelta: {
+    minWidth: 48,
+    textAlign: 'right',
+  },
+  photoCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: space.md,
+    backgroundColor: colors.s1,
+    borderWidth: borders.width,
+    borderColor: colors.hairline,
+    borderRadius: radius.card,
+    padding: layout.cardPadding,
+  },
+  photoCardPressed: {
+    backgroundColor: colors.s2,
+  },
+  photoIconTile: {
+    width: 40,
+    height: 40,
+    borderRadius: radius.iconTile,
+    backgroundColor: colors.s2,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  photoCopy: {
+    flex: 1,
+    gap: 2,
+  },
+  errorText: {
+    textAlign: 'center',
+  },
+  ctaFooter: {
+    paddingTop: space.sm,
+  },
+});

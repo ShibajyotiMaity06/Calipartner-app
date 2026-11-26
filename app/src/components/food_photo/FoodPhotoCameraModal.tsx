@@ -307,19 +307,14 @@ export function FoodPhotoCameraModal({
               style={StyleSheet.absoluteFill}
             />
 
-            {/* Soft dark ambient plate outline when idle / behind viewfinder */}
-            <View pointerEvents="none" style={styles.plateBackdrop}>
-              <View style={styles.plateOuterRing} />
-            </View>
-
             {/* Top Overlay Controls */}
             <View style={[styles.topBar, { paddingTop: insets.top + layout.topContentOffset }]}>
               <IconButton
                 icon={<CloseIcon size={18} color={colors.textHi} />}
+                variant="glass"
                 onPress={back}
                 accessibilityLabel={t('common.cancel')}
                 testID="btn-close-camera"
-                style={styles.glassCircle}
               />
 
               <View style={styles.dropdownAnchor}>
@@ -367,10 +362,10 @@ export function FoodPhotoCameraModal({
               <View style={styles.topRightPair}>
                 <IconButton
                   icon={<FlashIcon size={18} color={flashOn ? colors.apricot : colors.textHi} />}
+                  variant="glass"
                   onPress={() => setFlashOn((prev) => !prev)}
                   accessibilityLabel={t('captureV1.flashToggle')}
                   testID="btn-toggle-flash"
-                  style={[styles.glassCircle, flashOn ? styles.glassCircleActive : null]}
                 />
                 <Pressable
                   onPress={() => setFacing(facing === 'back' ? 'front' : 'back')}

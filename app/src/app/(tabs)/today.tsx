@@ -47,6 +47,7 @@ import {
 } from '@/components/home/TodayV1Components';
 import { MonthlyPlanCheckIn } from '@/components/profile/MonthlyPlanCheckIn';
 import { TrackingPreferencesSheet } from '@/components/rooms/TrackingPreferencesSheet';
+import { CustomWaterModal } from '@/components/trackers/CustomWaterModal';
 import { WaterAlarmModal } from '@/components/trackers/WaterAlarmModal';
 import { useAuth } from '@/contexts/AuthContext';
 import { getDb } from '@/db';
@@ -138,6 +139,7 @@ export default function TodayScreen() {
   const [inspectingSection, setInspectingSection] = useState<MealSection | null>(null);
   const [showCaloriesDetail, setShowCaloriesDetail] = useState(false);
   const [showDatePicker, setShowDatePicker] = useState(false);
+  const [showWaterModal, setShowWaterModal] = useState(false);
   const [showWaterAlarmModal, setShowWaterAlarmModal] = useState(false);
   const [editingEntry, setEditingEntry] = useState<FoodEntry | null>(null);
   const [scrolledPastHero, setScrolledPastHero] = useState(false);
@@ -310,7 +312,7 @@ export default function TodayScreen() {
             tracking.loading || tracking.error ? undefined : () => setEditingTracking(true)
           }
           onQuickAddWater={() => void water.addWater(250)}
-          onOpenWater={() => setShowWaterAlarmModal(true)}
+          onOpenWater={() => setShowWaterModal(true)}
         />
 
         <TodaySquadCardV1
@@ -422,6 +424,29 @@ export default function TodayScreen() {
           }}
         />
       ) : null}
+
+      <CustomWaterModal
+        visible={showWaterModal}
+        totalMl={water.totalMl}
+        goalMl={currentGoalProfile?.water_ml_goal ?? water.goalMl}
+        logs={water.logs}
+        onClose={() => {
+          setShowWaterModal(false);
+          void refreshWater();
+        }}
+        onSave={async (amountMl) => {
+          await water.addWater(amountMl);
+          await refreshWater();
+        }}
+        onUndo={async () => {
+          await water.undoLast();
+          await refreshWater();
+        }}
+        onOpenReminders={() => {
+          setShowWaterModal(false);
+          setShowWaterAlarmModal(true);
+        }}
+      />
 
       <WaterAlarmModal
         visible={showWaterAlarmModal}
