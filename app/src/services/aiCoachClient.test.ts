@@ -39,3 +39,26 @@ it('returns a verified server response with clean text', async () => {
     source: 'edge_function',
   });
 });
+
+it('forwards optional structured feedback card and quick replies from the Edge Function', async () => {
+  invoke.mockResolvedValue({
+    data: {
+      message: { content: 'Solid lunch. Here is the quick read.' },
+      card: {
+        points: [{ kind: 'positive', lead: 'Protein 42 g', detail: 'on target for a meal' }],
+        actions: [{ label: 'Plan my dinner', prompt: 'Plan my dinner', primary: true }],
+      },
+      quick_replies: ['Swap the rice', 'More protein'],
+    },
+    error: null,
+  });
+  expect(await queryAiCoach(messages, context)).toMatchObject({
+    content: 'Solid lunch. Here is the quick read.',
+    card: {
+      points: [{ kind: 'positive', lead: 'Protein 42 g', detail: 'on target for a meal' }],
+      actions: [{ label: 'Plan my dinner', prompt: 'Plan my dinner', primary: true }],
+    },
+    quickReplies: ['Swap the rice', 'More protein'],
+    source: 'edge_function',
+  });
+});

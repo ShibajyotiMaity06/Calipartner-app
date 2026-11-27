@@ -1,5 +1,13 @@
-import type { CoachMealDraft } from '@calipartner/core';
+import type { CoachMealDraft, CoachStructuredCard } from '@calipartner/core';
 export type CoachRole = 'user' | 'assistant';
+
+export interface CoachAttachedMeal {
+  title: string;
+  calories: number;
+  protein: number;
+  carbs: number;
+  fat: number;
+}
 
 export interface CoachSuggestion {
   id: string;
@@ -17,6 +25,9 @@ export interface CoachSuggestion {
 export interface CoachMessage {
   mealDraft?: CoachMealDraft | null;
   mealLogged?: boolean;
+  card?: CoachStructuredCard | null;
+  quickReplies?: string[];
+  attachedMeal?: CoachAttachedMeal | null;
   id: string;
   role: CoachRole;
   content: string;

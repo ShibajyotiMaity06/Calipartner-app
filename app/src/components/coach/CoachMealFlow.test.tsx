@@ -26,8 +26,24 @@ vi.mock('@calipartner/ui/v1', async () => {
   const theme = await import('../../../../packages/ui/src/v1/theme');
   return {
     ...theme,
+    AlertCircleIcon: 'AlertCircleIcon',
+    ArrowRightIcon: 'ArrowRightIcon',
+    BrandRingMark: 'BrandRingMark',
+    CameraIcon: 'CameraIcon',
+    Card: ({ children, ...rest }: Record<string, unknown>) =>
+      React.createElement('Card', rest, children as React.ReactNode),
+    ChartBarIcon: 'ChartBarIcon',
+    CheckCircleIcon: 'CheckCircleIcon',
+    ChevronLeftIcon: 'ChevronLeftIcon',
+    ChevronRightIcon: 'ChevronRightIcon',
+    DumbbellIcon: 'DumbbellIcon',
+    MoreDotsIcon: 'MoreDotsIcon',
+    Ring: ({ children, ...rest }: Record<string, unknown>) =>
+      React.createElement('Ring', rest, children as React.ReactNode),
+    ScaleIcon: 'ScaleIcon',
     Text: ({ children, ...rest }: Record<string, unknown>) =>
       React.createElement('Text', rest, children as React.ReactNode),
+    UtensilsIcon: 'UtensilsIcon',
   };
 });
 vi.mock('@expo/vector-icons', () => ({ Ionicons: 'Icon' }));

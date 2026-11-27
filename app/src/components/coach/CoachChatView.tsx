@@ -1,6 +1,15 @@
-import { Button } from '@calipartner/ui';
-import { NavigationIcon } from '@calipartner/ui';
-import { type as inputTypography } from '@calipartner/ui';
+import {
+  ArrowRightIcon,
+  CameraIcon,
+  ChevronLeftIcon,
+  MoreDotsIcon,
+  Text as V1Text,
+  borders as v1Borders,
+  colors as v1Colors,
+  fonts as v1Fonts,
+  radius as v1Radius,
+  space as v1Space,
+} from '@calipartner/ui/v1';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
@@ -12,8 +21,8 @@ import {
   TextInput,
   View,
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import { Text, homeLayout, type as typography } from '@calipartner/ui';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { CoachStartV1 } from './CoachStartV1';
 import {
   acceptAiProcessingConsent,
   type SupabaseFunctionsClient,
@@ -26,8 +35,6 @@ import { useNetworkStatus } from '@/hooks/useNetworkStatus';
 import { usePaywall } from '@/hooks/usePaywall';
 import { useCoachSession } from './CoachSessionProvider';
 import { t } from '@/i18n';
-import { fontSize, radius, spacing } from '@/theme/tokens';
-import { useTheme } from '@/theme/useTheme';
 import { CoachDailyLimitBanner, CoachOfflineBanner } from './CoachBanners';
 import { CoachConsentModal } from './CoachConsentModal';
 import { CoachHistoryModal } from './CoachHistoryModal';
@@ -37,7 +44,7 @@ import { CoachSuggestedPrompts } from './CoachSuggestedPrompts';
 import { useTargets } from '@/hooks/useTargets';
 import { createLogger } from '@/lib/logger';
 import type { CoachMessage, CoachReportReason, CoachSuggestion } from './types';
-import type { CoachMealDraft } from '@calipartner/core';
+import type { CoachMealDraft, CoachStructuredCard } from '@calipartner/core';
 
 const log = createLogger('CoachChatView');
 
@@ -49,8 +56,9 @@ export interface CoachChatViewProps {
 const MAX_CHAR_COUNT = 1000;
 
 export function CoachChatView({ onBack, initialConversationId }: CoachChatViewProps) {
-  const { colors } = useTheme();
+  const insets = useSafeAreaInsets();
   const { currentGoalProfile } = useTargets();
+  const [menuOpen, setMenuOpen] = useState(false);
   const {
     subscription: { currentTier, hasActiveAccess, isTrial, loading: subLoading },
     inputText,
@@ -162,6 +170,8 @@ export function CoachChatView({ onBack, initialConversationId }: CoachChatViewPr
       let finalContent = '';
       let suggestions: CoachSuggestion[] | undefined;
       let mealDraft: CoachMealDraft | null | undefined;
+      let structuredCard: CoachStructuredCard | null | undefined;
+      let quickReplies: string[] | undefined;
 
       try {
         if (!currentGoalProfile) throw new Error(t('common.targetUnavailable'));
@@ -189,6 +199,8 @@ export function CoachChatView({ onBack, initialConversationId }: CoachChatViewPr
         finalContent = aiResult.content;
         suggestions = aiResult.suggestions;
         mealDraft = aiResult.mealDraft;
+        structuredCard = aiResult.card ?? null;
+        quickReplies = aiResult.quickReplies ?? [];
       } catch (coachErr: unknown) {
         const code = (coachErr as { code?: string })?.code;
         const allowanceReached = code === 'MONTHLY_LIMIT_REACHED' || code === 'DAILY_LIMIT_REACHED';
@@ -219,7 +231,15 @@ export function CoachChatView({ onBack, initialConversationId }: CoachChatViewPr
       setMessages((previous) =>
         previous.map((message) =>
           message.id === assistantMsgId
-            ? { ...message, content: finalContent, isStreaming: false, suggestions, mealDraft }
+            ? {
+                ...message,
+                content: finalContent,
+                isStreaming: false,
+                suggestions,
+                mealDraft,
+                card: structuredCard ?? null,
+                quickReplies: quickReplies ?? [],
+              }
             : message,
         ),
       );
@@ -297,11 +317,8 @@ export function CoachChatView({ onBack, initialConversationId }: CoachChatViewPr
   // 1. Loading state for subscriptions
   if (subLoading) {
     return (
-      <View
-        style={[styles.centerContainer, { backgroundColor: colors.background }]}
-        testID="view-coach-loading"
-      >
-        <ActivityIndicator size="large" color={colors.accent} />
+      <View style={styles.centerContainer} testID="view-coach-loading">
+        <ActivityIndicator size="large" color={v1Colors.apricot} />
       </View>
     );
   }
@@ -309,29 +326,29 @@ export function CoachChatView({ onBack, initialConversationId }: CoachChatViewPr
   // 2. Gating: Pro plan holders only (PRD 6.22 AIC-1, SUB-16)
   if (!isPro) {
     return (
-      <View
-        style={[styles.lockedContainer, { backgroundColor: colors.background }]}
-        testID="view-coach-locked"
-      >
-        {/* Header */}
+      <View style={styles.lockedContainer} testID="view-coach-locked">
         <View
-          style={[styles.header, { backgroundColor: colors.surface, borderColor: colors.border }]}
+          style={[styles.header, { paddingTop: Math.max(v1Space.sm, insets.top + v1Space.xs) }]}
         >
-          {onBack && (
-            <Button
-              variant="tertiary"
-              fullWidth={false}
-              label="Back"
-              iconOnly
-              icon={<NavigationIcon action="back" />}
-              onPress={onBack}
-              style={styles.backBtn}
-              accessibilityRole="button"
-              accessibilityLabel="Back"
-              testID="btn-coach-back-locked"
-            />
-          )}
-          <Text style={[styles.headerTitle, { color: colors.text }]}>{t('coach.title')}</Text>
+          <View style={styles.headerLeft}>
+            {onBack ? (
+              <Pressable
+                onPress={onBack}
+                accessibilityRole="button"
+                accessibilityLabel={t('common.back')}
+                style={({ pressed }) => [
+                  styles.circleBtn,
+                  pressed ? styles.circleBtnPressed : null,
+                ]}
+                testID="btn-coach-back-locked"
+              >
+                <ChevronLeftIcon size={18} color={v1Colors.textHi} />
+              </Pressable>
+            ) : null}
+            <V1Text variant="rowTitle" color="textHi">
+              {t('coachV1.headerTitle')}
+            </V1Text>
+          </View>
         </View>
 
         <ScrollView
@@ -353,176 +370,256 @@ export function CoachChatView({ onBack, initialConversationId }: CoachChatViewPr
     );
   }
 
+  const hasStartedChat = messages.some((m) => m.role === 'user') || messages.length > 1;
+  const lastAssistantMsg = [...messages].reverse().find((m) => m.role === 'assistant');
+  const activeQuickReplies =
+    lastAssistantMsg?.quickReplies && lastAssistantMsg.quickReplies.length > 0
+      ? lastAssistantMsg.quickReplies
+      : lastAssistantMsg?.mealDraft
+        ? [
+            t('coachV1.quickSwapRice'),
+            t('coachV1.quickMoreProtein'),
+            t('coachV1.quickLighterOption'),
+          ]
+        : undefined;
+  const canSend = Boolean(inputText.trim()) && !inputDisabled;
+
   // 3. Authenticated Plan Holder Chat Screen
   return (
     <KeyboardAvoidingView
-      style={[styles.container, { backgroundColor: colors.background }]}
+      style={styles.container}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       testID="screen-coach-chat"
     >
-      {/* Top Header */}
-      <View
-        style={[styles.header, { backgroundColor: colors.surface, borderColor: colors.border }]}
-      >
+      {/* Compact Header (No star icon, minimal top padding) */}
+      <View style={[styles.header, { paddingTop: Math.max(v1Space.sm, insets.top + v1Space.xs) }]}>
         <View style={styles.headerLeft}>
-          {onBack && (
-            <Button
-              variant="tertiary"
-              fullWidth={false}
-              label="Back"
-              iconOnly
-              icon={<NavigationIcon action="back" />}
+          {onBack ? (
+            <Pressable
               onPress={onBack}
-              style={styles.backBtn}
               accessibilityRole="button"
-              accessibilityLabel="Back"
+              accessibilityLabel={t('common.back')}
+              style={({ pressed }) => [styles.circleBtn, pressed ? styles.circleBtnPressed : null]}
               testID="btn-coach-back"
-            />
-          )}
+            >
+              <ChevronLeftIcon size={18} color={v1Colors.textHi} />
+            </Pressable>
+          ) : null}
           <View style={styles.titleWrap}>
-            <View style={styles.titleRow}>
-              <Text style={[styles.headerTitle, { color: colors.text }]}>{t('coach.title')}</Text>
-              <View style={[styles.badgePill, { backgroundColor: colors.cardHighlight }]}>
-                <Text style={[styles.badgeText, { color: colors.accent }]}>{t('coach.badge')}</Text>
-              </View>
-            </View>
-            <Text style={[styles.headerSubtitle, { color: colors.textMuted }]}>
-              {t('coach.subtitle')}
-            </Text>
+            <V1Text variant="rowTitle" color="textHi" numberOfLines={1}>
+              {t('coachV1.headerTitle')}
+            </V1Text>
+            <V1Text variant="meta" color="textLo" numberOfLines={1}>
+              {t('coachV1.headerSubtitle')}
+            </V1Text>
           </View>
         </View>
 
         <View style={styles.headerRight}>
-          <Button
-            variant="tertiary"
-            fullWidth={false}
-            label="Privacy & Data Info"
-            iconOnly
-            icon={<Ionicons name="shield-checkmark-outline" size={20} color={colors.text} />}
-            onPress={() => setShowConsentModal(true)}
-            style={styles.headerIconBtn}
+          <Pressable
+            onPress={() => setMenuOpen((prev) => !prev)}
             accessibilityRole="button"
-            accessibilityLabel="Privacy & Data Info"
-            testID="btn-coach-privacy"
-          />
-
-          <Button
-            variant="tertiary"
-            fullWidth={false}
-            label="View History"
-            iconOnly
-            icon={<Ionicons name="time-outline" size={22} color={colors.text} />}
-            onPress={() => setShowHistoryModal(true)}
-            style={styles.headerIconBtn}
-            accessibilityRole="button"
-            accessibilityLabel="View History"
-            testID="btn-coach-history"
-          />
+            accessibilityLabel={t('coachV1.menuHistory')}
+            style={({ pressed }) => [styles.circleBtn, pressed ? styles.circleBtnPressed : null]}
+            testID="btn-coach-menu"
+          >
+            <MoreDotsIcon size={18} color={v1Colors.textHi} />
+          </Pressable>
         </View>
       </View>
+
+      {menuOpen ? (
+        <View style={styles.menuDropdown} testID="coach-header-menu">
+          <Pressable
+            onPress={() => {
+              setMenuOpen(false);
+              setShowHistoryModal(true);
+            }}
+            accessibilityRole="button"
+            style={({ pressed }) => [styles.menuItem, pressed ? styles.menuItemPressed : null]}
+            testID="btn-coach-history"
+          >
+            <V1Text variant="label" color="textHi">
+              {t('coachV1.menuHistory')}
+            </V1Text>
+          </Pressable>
+          <View style={styles.menuDivider} />
+          <Pressable
+            onPress={() => {
+              setMenuOpen(false);
+              setShowConsentModal(true);
+            }}
+            accessibilityRole="button"
+            style={({ pressed }) => [styles.menuItem, pressed ? styles.menuItemPressed : null]}
+            testID="btn-coach-privacy"
+          >
+            <V1Text variant="label" color="textHi">
+              {t('coachV1.menuPrivacy')}
+            </V1Text>
+          </Pressable>
+          {hasStartedChat ? (
+            <>
+              <View style={styles.menuDivider} />
+              <Pressable
+                onPress={() => {
+                  setMenuOpen(false);
+                  setMessages([]);
+                  setRequestError(null);
+                  setCurrentConversationId(generateClientUuid());
+                }}
+                accessibilityRole="button"
+                style={({ pressed }) => [styles.menuItem, pressed ? styles.menuItemPressed : null]}
+                testID="btn-coach-new-chat"
+              >
+                <V1Text variant="label" color="apricot">
+                  {t('coachV1.menuNewChat')}
+                </V1Text>
+              </Pressable>
+            </>
+          ) : null}
+        </View>
+      ) : null}
 
       {/* Status Banners (Offline or Daily Limit) */}
       {isOffline && <CoachOfflineBanner />}
       {isDailyLimitReached && <CoachDailyLimitBanner />}
 
-      {/* Chat Messages */}
-      <ScrollView
-        ref={scrollViewRef}
-        onContentSizeChange={() => scrollViewRef.current?.scrollToEnd({ animated: false })}
-        style={styles.messageList}
-        contentContainerStyle={styles.messageListContent}
-        showsVerticalScrollIndicator={false}
-      >
-        {messages.map((msg) => (
-          <CoachMessageBubble
-            key={msg.id}
-            message={msg}
-            onThumbsUp={handleThumbsUp}
-            onThumbsDown={handleThumbsDown}
-            onReport={(id) => setReportTargetId(id)}
-            onLogSuggestion={handleLogSuggestion}
-            mealDisabled={
-              isSending || isOffline || messages.at(-1)?.id !== msg.id || msg.mealLogged
-            }
-            onMealLogged={() =>
-              setMessages((previous) =>
-                previous.map((message) =>
-                  message.id === msg.id ? { ...message, mealLogged: true } : message,
-                ),
-              )
-            }
+      {!hasStartedChat ? (
+        <View style={styles.startWrap}>
+          <CoachStartV1
+            onSelectPrompt={(prompt) => void handleSendMessage(prompt)}
+            disabled={inputDisabled}
           />
-        ))}
-      </ScrollView>
+        </View>
+      ) : (
+        <>
+          <ScrollView
+            ref={scrollViewRef}
+            onContentSizeChange={() => scrollViewRef.current?.scrollToEnd({ animated: false })}
+            style={styles.messageList}
+            contentContainerStyle={styles.messageListContent}
+            showsVerticalScrollIndicator={false}
+          >
+            <View style={styles.contextPillCenter}>
+              <View style={styles.usingLogsPill} testID="coach-using-logs-pill">
+                <V1Text variant="micro" color="textMid">
+                  {t('coachV1.usingLogsPill')}
+                </V1Text>
+              </View>
+            </View>
 
-      {/* Suggested Prompts Strip */}
-      <CoachSuggestedPrompts onSelectPrompt={handleSendMessage} disabled={inputDisabled} />
+            {messages.map((msg) => (
+              <CoachMessageBubble
+                key={msg.id}
+                message={msg}
+                onThumbsUp={handleThumbsUp}
+                onThumbsDown={handleThumbsDown}
+                onReport={(id) => setReportTargetId(id)}
+                onLogSuggestion={handleLogSuggestion}
+                onActionPrompt={(prompt) => void handleSendMessage(prompt)}
+                onAnotherIdea={() => void handleSendMessage(t('coachV1.anotherIdeaPrompt'))}
+                mealDisabled={
+                  isSending || isOffline || messages.at(-1)?.id !== msg.id || msg.mealLogged
+                }
+                onMealLogged={() =>
+                  setMessages((previous) =>
+                    previous.map((message) =>
+                      message.id === msg.id ? { ...message, mealLogged: true } : message,
+                    ),
+                  )
+                }
+              />
+            ))}
+          </ScrollView>
 
-      {requestError && (
-        <Text accessibilityRole="alert" style={{ color: colors.danger }}>
-          {requestError}
-        </Text>
+          <CoachSuggestedPrompts
+            onSelectPrompt={(prompt) => void handleSendMessage(prompt)}
+            disabled={inputDisabled}
+            quickReplies={activeQuickReplies}
+          />
+        </>
       )}
-      {/* Bottom TextInput Bar */}
+
+      {requestError ? (
+        <V1Text
+          variant="meta"
+          color="danger"
+          accessibilityRole="alert"
+          style={styles.errorBannerText}
+        >
+          {requestError}
+        </V1Text>
+      ) : null}
+
+      {/* Bottom Composer Bar */}
       <View
         style={[
-          styles.inputContainer,
-          { backgroundColor: colors.surface, borderColor: colors.border },
+          styles.composerWrap,
+          { paddingBottom: Math.max(v1Space.md, insets.bottom + v1Space.xs) },
         ]}
       >
-        <TextInput
-          value={inputText}
-          onChangeText={setInputText}
-          placeholder={t('coach.input.placeholder')}
-          placeholderTextColor={colors.textMuted}
-          editable={!inputDisabled}
-          maxLength={MAX_CHAR_COUNT}
-          multiline
-          style={[
-            [
+        <View style={styles.composerPill}>
+          <Pressable
+            onPress={() => setShowFoodLogModal(true)}
+            disabled={inputDisabled}
+            accessibilityRole="button"
+            accessibilityLabel={t('homeV1.scanMeal')}
+            style={({ pressed }) => [
+              styles.cameraBtn,
+              pressed ? styles.circleBtnPressed : null,
+              inputDisabled ? styles.btnDisabled : null,
+            ]}
+            testID="btn-coach-camera"
+          >
+            <CameraIcon size={18} color={v1Colors.textMid} />
+          </Pressable>
+
+          <TextInput
+            value={inputText}
+            onChangeText={setInputText}
+            placeholder={t('coachV1.inputPlaceholder')}
+            placeholderTextColor={v1Colors.textLo}
+            editable={!inputDisabled}
+            maxLength={MAX_CHAR_COUNT}
+            multiline
+            style={[
               styles.textInput,
               {
-                backgroundColor: colors.surfaceAlt,
-                borderColor: colors.border,
-                color: colors.text,
                 opacity: inputDisabled ? 0.6 : 1,
+                fontFamily: v1Fonts.regular,
               },
-            ],
-            { fontFamily: inputTypography.body.fontFamily },
-          ]}
-          testID="input-coach-message"
-        />
+            ]}
+            testID="input-coach-message"
+          />
 
-        <Pressable
-          onPress={() => handleSendMessage(inputText)}
-          disabled={!inputText.trim() || inputDisabled}
-          style={[
-            styles.sendButton,
-            {
-              backgroundColor: colors.accent,
-              opacity: !inputText.trim() || inputDisabled ? 0.4 : 1,
-            },
-          ]}
-          accessibilityRole="button"
-          accessibilityLabel={t('coach.input.send')}
-          testID="btn-coach-send"
-        >
-          {isSending ? (
-            <ActivityIndicator size="small" color={colors.onAccent} />
-          ) : (
-            <Ionicons name="arrow-up" size={18} color={colors.onAccent} />
-          )}
-        </Pressable>
-      </View>
-
-      {/* Character count when typing */}
-      {inputText.length > 800 && (
-        <View style={styles.charCountRow}>
-          <Text style={[styles.charCountText, { color: colors.textMuted }]}>
-            {t('coach.input.charCount', { count: inputText.length })}
-          </Text>
+          <Pressable
+            onPress={() => void handleSendMessage(inputText)}
+            disabled={!canSend}
+            style={({ pressed }) => [
+              styles.sendButton,
+              canSend ? styles.sendButtonActive : styles.sendButtonIdle,
+              canSend && pressed ? styles.sendButtonPressed : null,
+            ]}
+            accessibilityRole="button"
+            accessibilityLabel={t('coach.input.send')}
+            testID="btn-coach-send"
+          >
+            {isSending ? (
+              <ActivityIndicator size="small" color={v1Colors.onBrand} />
+            ) : (
+              <ArrowRightIcon size={18} color={canSend ? v1Colors.onBrand : v1Colors.textLo} />
+            )}
+          </Pressable>
         </View>
-      )}
+
+        {inputText.length > 800 ? (
+          <View style={styles.charCountRow}>
+            <V1Text variant="micro" color="textLo" tabular>
+              {t('coach.input.charCount', { count: inputText.length })}
+            </V1Text>
+          </View>
+        ) : null}
+      </View>
 
       {/* 4. Consent Modal */}
       <CoachConsentModal
@@ -570,17 +667,20 @@ export function CoachChatView({ onBack, initialConversationId }: CoachChatViewPr
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: v1Colors.bg0,
   },
   centerContainer: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
+    backgroundColor: v1Colors.bg0,
   },
   lockedContainer: {
     flex: 1,
+    backgroundColor: v1Colors.bg0,
   },
   lockedContent: {
-    padding: spacing.md,
+    padding: v1Space.lg,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -588,96 +688,141 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: spacing.md,
-    paddingTop: Platform.OS === 'ios' ? 44 : spacing.md,
-    paddingBottom: spacing.sm + 4,
-    borderBottomWidth: 1,
+    paddingHorizontal: v1Space.xl,
+    paddingBottom: v1Space.sm + 2,
+    backgroundColor: v1Colors.bg0,
   },
   headerLeft: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: spacing.xs,
+    gap: v1Space.md,
     flex: 1,
   },
-  backBtn: {
-    padding: spacing.xs,
-    marginLeft: -spacing.xs,
+  circleBtn: {
+    width: 40,
+    height: 40,
+    borderRadius: v1Radius.full,
+    backgroundColor: v1Colors.s1,
+    borderWidth: v1Borders.width,
+    borderColor: v1Colors.hairline,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  circleBtnPressed: {
+    backgroundColor: v1Colors.s2,
+  },
+  btnDisabled: {
+    opacity: 0.45,
   },
   titleWrap: {
     flex: 1,
-  },
-  titleRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.xs,
-  },
-  headerTitle: {
-    fontSize: fontSize.md + 2,
-    fontWeight: '700',
-  },
-  badgePill: {
-    paddingHorizontal: 6,
-    paddingVertical: 1,
-    borderRadius: radius.pill,
-  },
-  badgeText: {
-    fontSize: fontSize.xs - 2,
-    fontWeight: '700',
-    textTransform: 'uppercase',
-  },
-  headerSubtitle: {
-    fontSize: fontSize.xs,
-    marginTop: 1,
+    gap: 1,
   },
   headerRight: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: spacing.xs,
+    gap: v1Space.xs,
   },
-  headerIconBtn: {
-    padding: spacing.xs + 2,
-    borderRadius: radius.pill,
+  menuDropdown: {
+    marginHorizontal: v1Space.xl,
+    marginBottom: v1Space.sm,
+    backgroundColor: v1Colors.s1,
+    borderWidth: v1Borders.width,
+    borderColor: v1Colors.hairlineLit,
+    borderRadius: v1Radius.chip,
+    overflow: 'hidden',
+  },
+  menuItem: {
+    paddingHorizontal: v1Space.lg,
+    paddingVertical: v1Space.md,
+  },
+  menuItemPressed: {
+    backgroundColor: v1Colors.s2,
+  },
+  menuDivider: {
+    height: v1Borders.width,
+    backgroundColor: v1Colors.hairline,
+  },
+  startWrap: {
+    flex: 1,
   },
   messageList: {
     flex: 1,
   },
   messageListContent: {
-    paddingTop: spacing.md,
-    paddingBottom: spacing.sm,
+    paddingTop: v1Space.sm,
+    paddingBottom: v1Space.md,
   },
-  inputContainer: {
+  contextPillCenter: {
+    alignItems: 'center',
+    marginBottom: v1Space.lg,
+  },
+  usingLogsPill: {
+    backgroundColor: v1Colors.s1,
+    borderWidth: v1Borders.width,
+    borderColor: v1Colors.hairline,
+    borderRadius: v1Radius.full,
+    paddingHorizontal: v1Space.lg,
+    paddingVertical: v1Space.xs + 2,
+  },
+  errorBannerText: {
+    paddingHorizontal: v1Space.xl,
+    paddingBottom: v1Space.xs,
+  },
+  composerWrap: {
+    paddingHorizontal: v1Space.xl,
+    paddingTop: v1Space.xs,
+  },
+  composerPill: {
     flexDirection: 'row',
-    alignItems: 'flex-end',
-    gap: spacing.xs + 2,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
-    borderTopWidth: 1,
+    alignItems: 'center',
+    gap: v1Space.sm,
+    backgroundColor: v1Colors.s1,
+    borderWidth: v1Borders.width,
+    borderColor: v1Colors.hairline,
+    borderRadius: v1Radius.full,
+    paddingHorizontal: v1Space.sm,
+    paddingVertical: v1Space.xs + 2,
+    minHeight: 52,
   },
-  textInput: {
-    flex: 1,
-    minHeight: 40,
-    maxHeight: 120,
-    borderRadius: radius.md,
-    borderWidth: 1,
-    paddingHorizontal: spacing.md,
-    paddingTop: Platform.OS === 'ios' ? 10 : 8,
-    paddingBottom: Platform.OS === 'ios' ? 10 : 8,
-    fontSize: fontSize.sm + 1,
-    fontFamily: typography.body.fontFamily,
-  },
-  sendButton: {
-    width: homeLayout.touchSize,
-    height: homeLayout.touchSize,
-    borderRadius: radius.pill,
+  cameraBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: v1Radius.full,
+    backgroundColor: v1Colors.s2,
     alignItems: 'center',
     justifyContent: 'center',
   },
+  textInput: {
+    flex: 1,
+    minHeight: 36,
+    maxHeight: 110,
+    paddingHorizontal: v1Space.xs,
+    paddingVertical: Platform.OS === 'ios' ? 8 : 6,
+    fontSize: 15,
+    color: v1Colors.textHi,
+  },
+  sendButton: {
+    width: 40,
+    height: 40,
+    borderRadius: v1Radius.full,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  sendButtonActive: {
+    backgroundColor: v1Colors.apricot,
+  },
+  sendButtonIdle: {
+    backgroundColor: v1Colors.s2,
+    borderWidth: v1Borders.width,
+    borderColor: v1Colors.hairline,
+  },
+  sendButtonPressed: {
+    backgroundColor: v1Colors.apricotPressed,
+  },
   charCountRow: {
     alignItems: 'flex-end',
-    paddingHorizontal: spacing.md,
-    paddingBottom: 2,
-  },
-  charCountText: {
-    fontSize: fontSize.xs - 1,
+    paddingTop: v1Space.xs,
+    paddingRight: v1Space.sm,
   },
 });

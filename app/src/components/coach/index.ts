@@ -7,4 +7,6 @@ export * from './CoachMessageBubble';
 export * from './CoachBanners';
 export * from './CoachHistoryModal';
 export * from './CoachChatView';
+export * from './CoachLockedSheetV1';
+export * from './CoachStartV1';
 export * from './FloatingAiCoachButton';

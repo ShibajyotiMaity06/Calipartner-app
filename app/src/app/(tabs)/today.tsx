@@ -36,7 +36,10 @@ import { FoodLogModal } from '@/components/diary/FoodLogModal';
 import { MealDetailSheet } from '@/components/diary/MealDetailSheet';
 import { QuantityModal } from '@/components/diary/QuantityModal';
 import { RepeatYesterdayMeals } from '@/components/diary/RepeatYesterdayMeals';
+import { CoachLockedSheetV1 } from '@/components/coach/CoachLockedSheetV1';
+import { PaywallModal } from '@/components/rooms/PaywallModal';
 import {
+  TodayCoachCardV1,
   TodayDayCardV1,
   TodayFastingCardV1,
   TodayHeaderV1,
@@ -143,6 +146,8 @@ export default function TodayScreen() {
   const [showWaterAlarmModal, setShowWaterAlarmModal] = useState(false);
   const [editingEntry, setEditingEntry] = useState<FoodEntry | null>(null);
   const [scrolledPastHero, setScrolledPastHero] = useState(false);
+  const [coachLockedOpen, setCoachLockedOpen] = useState(false);
+  const [coachPaywallOpen, setCoachPaywallOpen] = useState(false);
   const [copyModalState, setCopyModalState] = useState<{
     visible: boolean;
     mode: 'meal' | 'day';
@@ -313,6 +318,17 @@ export default function TodayScreen() {
           }
           onQuickAddWater={() => void water.addWater(250)}
           onOpenWater={() => setShowWaterModal(true)}
+        />
+
+        <TodayCoachCardV1
+          isPro={isPro}
+          onPress={() => {
+            if (isPro) {
+              router.push('/coach' as Href);
+            } else {
+              setCoachLockedOpen(true);
+            }
+          }}
         />
 
         <TodaySquadCardV1
@@ -541,6 +557,27 @@ export default function TodayScreen() {
         onSuccess={() => {
           setCopyModalState({ visible: false, mode: 'day' });
           void refresh();
+        }}
+      />
+
+      <CoachLockedSheetV1
+        visible={coachLockedOpen}
+        onClose={() => setCoachLockedOpen(false)}
+        onSeeAllPlans={() => setCoachPaywallOpen(true)}
+        onUnlocked={() => {
+          setCoachLockedOpen(false);
+          router.push('/coach' as Href);
+        }}
+      />
+
+      <PaywallModal
+        visible={coachPaywallOpen}
+        preselectedTier="pro"
+        context="coach"
+        onClose={() => setCoachPaywallOpen(false)}
+        onSuccess={() => {
+          setCoachPaywallOpen(false);
+          router.push('/coach' as Href);
         }}
       />
     </View>

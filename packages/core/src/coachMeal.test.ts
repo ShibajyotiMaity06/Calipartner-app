@@ -57,6 +57,34 @@ describe('Confirmed coach meal drafts', () => {
       ).mealDraft,
     ).toMatchObject({ localDate: '2026-11-03', items: [item] });
   });
+  it('parses optional structured feedback cards and quick replies safely', () => {
+    const parsed = parseCoachMealReply(
+      JSON.stringify({
+        content: 'Solid lunch. Here is the quick read.',
+        meal: null,
+        card: {
+          points: [
+            { kind: 'positive', lead: 'Protein 42 g', detail: 'on target for a meal' },
+            { kind: 'note', lead: 'Fiber looks low', detail: 'add greens or beans' },
+          ],
+          actions: [
+            { label: 'Plan my dinner', prompt: 'Plan my dinner', primary: true },
+            { label: 'Swap ideas', prompt: 'Give me lighter swap ideas' },
+          ],
+        },
+        quick_replies: ['Swap the rice', 'More protein'],
+      }),
+      '2026-11-03',
+    );
+    expect(parsed.card?.points).toHaveLength(2);
+    expect(parsed.card?.actions).toHaveLength(2);
+    expect(parsed.quickReplies).toEqual(['Swap the rice', 'More protein']);
+    const invalidCard = parseCoachMealReply(
+      JSON.stringify({ content: 'Plain reply.', meal: null, card: { points: [] } }),
+      '2026-11-03',
+    );
+    expect(invalidCard.card).toBeNull();
+  });
   it.each([NaN, Infinity, -1, 100001])(
     'rejects invalid nutrition %s instead of enabling a log action',
     (calories) => {

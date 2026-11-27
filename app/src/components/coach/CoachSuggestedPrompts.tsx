@@ -1,49 +1,32 @@
-import { homeLayout, Text } from '@calipartner/ui';
+import { Text, borders, colors, radius, space } from '@calipartner/ui/v1';
 import React from 'react';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
 import { t } from '@/i18n';
-import { fontSize, radius, spacing } from '@/theme/tokens';
-import { useTheme } from '@/theme/useTheme';
 
 export interface CoachSuggestedPromptsProps {
   onSelectPrompt: (promptText: string) => void;
   disabled?: boolean;
+  quickReplies?: string[];
 }
 
 export function CoachSuggestedPrompts({
   onSelectPrompt,
   disabled = false,
+  quickReplies,
 }: CoachSuggestedPromptsProps) {
-  const { colors } = useTheme();
-
-  const prompts = [
-    {
-      id: 'meal',
-      text: t('coach.meal.prompt'),
-      icon: 'restaurant-outline' as const,
-      testID: 'chip-prompt-meal',
-    },
-
-    {
-      id: 'week',
-      text: t('coach.prompts.week'),
-      icon: 'trending-up-outline' as const,
-      testID: 'chip-prompt-week',
-    },
-    {
-      id: 'protein',
-      text: t('coach.prompts.protein'),
-      icon: 'restaurant-outline' as const,
-      testID: 'chip-prompt-protein',
-    },
-    {
-      id: 'target',
-      text: t('coach.prompts.target'),
-      icon: 'calculator-outline' as const,
-      testID: 'chip-prompt-target',
-    },
-  ];
+  const items =
+    quickReplies && quickReplies.length > 0
+      ? quickReplies.map((text, idx) => ({
+          id: `reply-${idx}`,
+          text,
+          testID: `chip-quick-reply-${idx}`,
+        }))
+      : [
+          { id: 'meal', text: t('coach.meal.prompt'), testID: 'chip-prompt-meal' },
+          { id: 'week', text: t('coach.prompts.week'), testID: 'chip-prompt-week' },
+          { id: 'protein', text: t('coach.prompts.protein'), testID: 'chip-prompt-protein' },
+          { id: 'target', text: t('coach.prompts.target'), testID: 'chip-prompt-target' },
+        ];
 
   return (
     <View style={styles.container}>
@@ -52,7 +35,7 @@ export function CoachSuggestedPrompts({
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}
       >
-        {prompts.map((item) => (
+        {items.map((item) => (
           <Pressable
             key={item.id}
             testID={item.testID}
@@ -62,15 +45,13 @@ export function CoachSuggestedPrompts({
             disabled={disabled}
             style={({ pressed }) => [
               styles.chip,
-              {
-                backgroundColor: colors.surface,
-                borderColor: colors.copper,
-                opacity: disabled ? 0.5 : pressed ? 0.75 : 1,
-              },
+              pressed && !disabled ? styles.chipPressed : null,
+              disabled ? styles.chipDisabled : null,
             ]}
           >
-            <Ionicons name={item.icon} size={14} color={colors.accent} />
-            <Text style={[styles.chipText, { color: colors.text }]}>{item.text}</Text>
+            <Text variant="meta" color="textHi">
+              {item.text}
+            </Text>
           </Pressable>
         ))}
       </ScrollView>
@@ -80,24 +61,28 @@ export function CoachSuggestedPrompts({
 
 const styles = StyleSheet.create({
   container: {
-    paddingVertical: spacing.xs,
+    paddingTop: space.xs,
+    paddingBottom: space.xs,
   },
   scrollContent: {
-    paddingHorizontal: spacing.md,
-    gap: spacing.xs + 2,
+    paddingHorizontal: space.lg,
+    gap: space.sm,
   },
   chip: {
-    minHeight: homeLayout.touchSize,
-    flexDirection: 'row',
+    minHeight: 36,
     alignItems: 'center',
-    gap: 6,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: radius.pill,
-    borderWidth: 1,
+    justifyContent: 'center',
+    paddingHorizontal: space.md,
+    paddingVertical: space.xs + 2,
+    borderRadius: radius.full,
+    backgroundColor: colors.s1,
+    borderWidth: borders.width,
+    borderColor: colors.hairline,
   },
-  chipText: {
-    fontSize: fontSize.xs + 1,
-    fontWeight: '500',
+  chipPressed: {
+    backgroundColor: colors.s2,
+  },
+  chipDisabled: {
+    opacity: 0.45,
   },
 });

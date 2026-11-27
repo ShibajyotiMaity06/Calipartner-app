@@ -26,6 +26,7 @@ import {
   getLocalDateString,
   parseCoachMealReply,
   type CoachMealDraft,
+  type CoachStructuredCard,
 } from '@calipartner/core';
 import { createClient, type SupabaseClient } from 'npm:@supabase/supabase-js@2.117.3';
 
@@ -564,11 +565,15 @@ Use the verified profile, goals and diary context below. Missing values are unkn
       assistantResponseText = COACH_GREETING;
 
     let mealDraft: CoachMealDraft | null = null;
+    let structuredCard: CoachStructuredCard | null = null;
+    let quickReplies: string[] = [];
     if (mealLogging) {
       try {
         const parsed = parseCoachMealReply(assistantResponseText, localDate);
         assistantResponseText = parsed.content;
         mealDraft = parsed.mealDraft;
+        structuredCard = parsed.card;
+        quickReplies = parsed.quickReplies;
       } catch {
         return new Response(
           JSON.stringify({
@@ -596,6 +601,8 @@ Use the verified profile, goals and diary context below. Missing values are unkn
         success: true,
         message: { role: 'assistant', content: cleanResponseText },
         meal_draft: mealDraft,
+        card: structuredCard,
+        quick_replies: quickReplies,
         model: 'calipartner-coach',
       },
       tokensUsed + classificationUsage,

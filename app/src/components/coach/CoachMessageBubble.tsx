@@ -1,15 +1,19 @@
-import { visualPrimitives } from '@calipartner/ui/tokens';
-import { Button } from '@calipartner/ui';
 import React from 'react';
-import { CaliPartnerLogo } from '@/components/brand/CaliPartnerLogo';
-import { ActivityIndicator, StyleSheet, View } from 'react-native';
-import { Text, space } from '@calipartner/ui';
-import { CoachMealDraftCard } from './CoachMealDraftCard';
+import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
+import {
+  AlertCircleIcon,
+  BrandRingMark,
+  CheckCircleIcon,
+  Text,
+  borders,
+  colors,
+  radius,
+  space,
+} from '@calipartner/ui/v1';
 import { Ionicons } from '@expo/vector-icons';
 import { t } from '@/i18n';
-import { fontSize, radius, spacing } from '@/theme/tokens';
-import { useTheme } from '@/theme/useTheme';
 import { cleanCoachResponse } from '@/services/aiCoachClient';
+import { CoachMealDraftCard } from './CoachMealDraftCard';
 import { CoachSuggestionCard } from './CoachSuggestionCard';
 import type { CoachMessage, CoachSuggestion } from './types';
 
@@ -20,6 +24,8 @@ export interface CoachMessageBubbleProps {
   onThumbsDown?: (messageId: string) => void;
   onReport?: (messageId: string) => void;
   onLogSuggestion?: (suggestion: CoachSuggestion) => void;
+  onActionPrompt?: (prompt: string) => void;
+  onAnotherIdea?: () => void;
   onMealLogged?: () => void;
   mealDisabled?: boolean;
 }
@@ -31,11 +37,16 @@ export function CoachMessageBubble({
   onThumbsDown,
   onReport,
   onLogSuggestion,
+  onActionPrompt,
+  onAnotherIdea,
   onMealLogged,
   mealDisabled,
 }: CoachMessageBubbleProps) {
-  const { colors } = useTheme();
   const isUser = message.role === 'user';
+  const hasRichCard = Boolean(
+    !isUser && !message.isStreaming && (message.card || message.mealDraft),
+  );
+  const cleanText = isUser ? message.content : cleanCoachResponse(message.content);
 
   return (
     <View
@@ -46,135 +57,212 @@ export function CoachMessageBubble({
       ]}
       testID={`msg-bubble-${message.id}`}
     >
-      {/* Coach Avatar */}
       {!demo && !isUser && (
         <View style={styles.avatar} testID={`avatar-coach-${message.id}`}>
-          <CaliPartnerLogo size={space[6]} />
+          <BrandRingMark size={16} color={colors.apricot} />
         </View>
       )}
 
-      <View style={[styles.bubbleContentWrap, isUser && styles.userContentWrap]}>
-        {/* Message Card */}
-        <View
-          style={[
-            styles.bubble,
-            isUser
-              ? [styles.userBubble, { backgroundColor: colors.accent }]
-              : [
-                  styles.coachBubble,
-                  { backgroundColor: colors.surface, borderColor: colors.border },
-                ],
-          ]}
-        >
-          <Text
-            style={[styles.messageText, { color: isUser ? colors.onAccent : colors.text }]}
-            testID={`text-msg-content-${message.id}`}
-          >
-            {isUser ? message.content : cleanCoachResponse(message.content)}
-          </Text>
-
-          {/* Streaming typing indicator */}
-          {message.isStreaming && (
-            <View style={styles.streamingIndicator} testID={`indicator-streaming-${message.id}`}>
-              <ActivityIndicator size="small" color={colors.accent} />
-              <Text style={[styles.streamingText, { color: colors.textMuted }]}>typing…</Text>
-            </View>
-          )}
-        </View>
-        {!isUser && !message.isStreaming && message.mealDraft && (
-          <CoachMealDraftCard
-            draft={message.mealDraft}
-            onLogged={onMealLogged}
-            disabled={mealDisabled}
-          />
-        )}
-
-        {/* Suggestion Cards */}
-        {!isUser && message.suggestions && message.suggestions.length > 0 && onLogSuggestion && (
-          <View style={styles.suggestionsContainer}>
-            {message.suggestions.map((sug) => (
-              <CoachSuggestionCard key={sug.id} suggestion={sug} onLog={onLogSuggestion} />
-            ))}
+      <View
+        style={[
+          styles.bubbleContentWrap,
+          isUser ? styles.userContentWrap : styles.coachContentWrap,
+        ]}
+      >
+        {isUser ? (
+          <View style={styles.userBubble}>
+            <Text variant="body" color="textHi" testID={`text-msg-content-${message.id}`}>
+              {cleanText}
+            </Text>
+            {message.attachedMeal ? (
+              <View style={styles.attachedMealCard} testID={`coach-attached-meal-${message.id}`}>
+                <View style={styles.attachedMealIcon}>
+                  <BrandRingMark size={14} color={colors.textMid} />
+                </View>
+                <View style={styles.attachedMealInfo}>
+                  <Text variant="label" color="textHi" numberOfLines={1} tabular>
+                    {`${message.attachedMeal.title} · ${Math.round(message.attachedMeal.calories)} kcal`}
+                  </Text>
+                  <Text variant="micro" color="textLo" tabular>
+                    {`P ${Math.round(message.attachedMeal.protein)}   C ${Math.round(message.attachedMeal.carbs)}   F ${Math.round(message.attachedMeal.fat)}`}
+                  </Text>
+                </View>
+              </View>
+            ) : null}
           </View>
-        )}
-
-        {/* Footer for Coach Answers: Thumbs up/down, Report & Medical Disclaimer */}
-        {!demo && !isUser && !message.isStreaming && (
-          <View style={styles.coachFooter}>
-            {/* Disclaimer Label */}
-            <View style={styles.disclaimerRow}>
-              <Ionicons name="alert-circle-outline" size={12} color={colors.textMuted} />
+        ) : (
+          <View style={styles.assistantStack}>
+            {hasRichCard ? (
               <Text
-                style={[styles.disclaimerText, { color: colors.textMuted }]}
-                testID="text-coach-disclaimer"
+                variant="body"
+                color="textHi"
+                style={styles.leadCopy}
+                testID={`text-msg-content-${message.id}`}
               >
-                {t('coach.disclaimer')}
+                {cleanText}
               </Text>
-            </View>
+            ) : (
+              <View style={styles.coachPlainBubble}>
+                <Text variant="body" color="textHi" testID={`text-msg-content-${message.id}`}>
+                  {cleanText}
+                </Text>
+                {message.isStreaming ? (
+                  <View
+                    style={styles.streamingIndicator}
+                    testID={`indicator-streaming-${message.id}`}
+                  >
+                    <ActivityIndicator size="small" color={colors.apricot} />
+                    <Text variant="meta" color="textLo">
+                      typing…
+                    </Text>
+                  </View>
+                ) : null}
+              </View>
+            )}
 
-            {/* Thumbs up / down and Report actions */}
-            <View style={styles.feedbackRow}>
-              <Button
-                variant="tertiary"
-                fullWidth={false}
-                label={t('coach.feedback.helpful')}
-                iconOnly
-                icon={
-                  <Ionicons
-                    name={message.feedback === 'up' ? 'thumbs-up' : 'thumbs-up-outline'}
-                    size={15}
-                    color={message.feedback === 'up' ? colors.accent : colors.textMuted}
-                  />
-                }
-                onPress={() => onThumbsUp?.(message.id)}
-                style={[
-                  styles.actionBtn,
-                  message.feedback === 'up' && {
-                    backgroundColor: colors.cardHighlight,
-                  },
-                ]}
-                accessibilityRole="button"
-                accessibilityLabel={t('coach.feedback.helpful')}
-                testID={`btn-coach-thumbs-up-${message.id}`}
-              />
+            {!message.isStreaming && message.card ? (
+              <View style={styles.structuredCard} testID={`coach-structured-card-${message.id}`}>
+                {message.card.eyebrow ? (
+                  <Text variant="eyebrow" color="textLo">
+                    {message.card.eyebrow}
+                  </Text>
+                ) : null}
 
-              <Button
-                variant="destructive"
-                fullWidth={false}
-                label={t('coach.feedback.unhelpful')}
-                iconOnly
-                icon={
-                  <Ionicons
-                    name={message.feedback === 'down' ? 'thumbs-down' : 'thumbs-down-outline'}
-                    size={15}
-                    color={message.feedback === 'down' ? colors.danger : colors.textMuted}
-                  />
-                }
-                onPress={() => onThumbsDown?.(message.id)}
-                style={[
-                  styles.actionBtn,
-                  message.feedback === 'down' && {
-                    backgroundColor: colors.cardHighlight,
-                  },
-                ]}
-                accessibilityRole="button"
-                accessibilityLabel={t('coach.feedback.unhelpful')}
-                testID={`btn-coach-thumbs-down-${message.id}`}
-              />
+                <View style={styles.pointsList}>
+                  {message.card.points.map((point, idx) => (
+                    <View key={`${point.lead}-${idx}`} style={styles.pointRow}>
+                      {point.kind === 'positive' ? (
+                        <CheckCircleIcon size={18} color={colors.apricot} />
+                      ) : (
+                        <AlertCircleIcon size={18} color={colors.hairlineLit} />
+                      )}
+                      <Text style={styles.pointText}>
+                        <Text variant="rowTitle" color="textHi">
+                          {point.lead}
+                        </Text>
+                        {point.detail ? (
+                          <Text variant="body" color="textLo">
+                            {`  ${point.detail}`}
+                          </Text>
+                        ) : null}
+                      </Text>
+                    </View>
+                  ))}
+                </View>
 
-              <Button
-                variant="tertiary"
-                fullWidth={false}
-                label={t('coach.feedback.report')}
-                iconOnly
-                icon={<Ionicons name="flag-outline" size={14} color={colors.textMuted} />}
-                onPress={() => onReport?.(message.id)}
-                style={styles.actionBtn}
-                accessibilityRole="button"
-                accessibilityLabel={t('coach.feedback.report')}
-                testID={`btn-coach-report-${message.id}`}
+                {message.card.actions?.length ? (
+                  <View style={styles.cardActionsRow}>
+                    {message.card.actions.map((action, idx) => (
+                      <Pressable
+                        key={`${action.label}-${idx}`}
+                        onPress={() => onActionPrompt?.(action.prompt)}
+                        accessibilityRole="button"
+                        accessibilityLabel={action.label}
+                        style={({ pressed }) => [
+                          action.primary ? styles.cardPrimaryBtn : styles.cardSecondaryBtn,
+                          pressed
+                            ? action.primary
+                              ? styles.primaryPressed
+                              : styles.secondaryPressed
+                            : null,
+                        ]}
+                        testID={`coach-card-action-${message.id}-${idx}`}
+                      >
+                        <Text
+                          variant="buttonS"
+                          color={action.primary ? 'onBrand' : 'textHi'}
+                          numberOfLines={1}
+                        >
+                          {action.label}
+                        </Text>
+                      </Pressable>
+                    ))}
+                  </View>
+                ) : null}
+              </View>
+            ) : null}
+
+            {!message.isStreaming && message.mealDraft ? (
+              <CoachMealDraftCard
+                draft={message.mealDraft}
+                onLogged={onMealLogged}
+                onAnotherIdea={onAnotherIdea}
+                disabled={mealDisabled}
               />
-            </View>
+            ) : null}
+
+            {message.suggestions && message.suggestions.length > 0 && onLogSuggestion ? (
+              <View style={styles.suggestionsContainer}>
+                {message.suggestions.map((sug) => (
+                  <CoachSuggestionCard key={sug.id} suggestion={sug} onLog={onLogSuggestion} />
+                ))}
+              </View>
+            ) : null}
+
+            {!demo && !message.isStreaming ? (
+              <View style={styles.coachFooter}>
+                <View style={styles.disclaimerRow}>
+                  <Ionicons name="alert-circle-outline" size={12} color={colors.textOff} />
+                  <Text
+                    variant="micro"
+                    color="textLo"
+                    style={styles.disclaimerText}
+                    testID="text-coach-disclaimer"
+                  >
+                    {t('coach.disclaimer')}
+                  </Text>
+                </View>
+
+                <View style={styles.feedbackRow}>
+                  <Pressable
+                    onPress={() => onThumbsUp?.(message.id)}
+                    hitSlop={6}
+                    accessibilityRole="button"
+                    accessibilityLabel={t('coach.feedback.helpful')}
+                    style={[
+                      styles.actionBtn,
+                      message.feedback === 'up' ? styles.actionBtnActive : null,
+                    ]}
+                    testID={`btn-coach-thumbs-up-${message.id}`}
+                  >
+                    <Ionicons
+                      name={message.feedback === 'up' ? 'thumbs-up' : 'thumbs-up-outline'}
+                      size={14}
+                      color={message.feedback === 'up' ? colors.apricot : colors.textLo}
+                    />
+                  </Pressable>
+
+                  <Pressable
+                    onPress={() => onThumbsDown?.(message.id)}
+                    hitSlop={6}
+                    accessibilityRole="button"
+                    accessibilityLabel={t('coach.feedback.unhelpful')}
+                    style={[
+                      styles.actionBtn,
+                      message.feedback === 'down' ? styles.actionBtnActive : null,
+                    ]}
+                    testID={`btn-coach-thumbs-down-${message.id}`}
+                  >
+                    <Ionicons
+                      name={message.feedback === 'down' ? 'thumbs-down' : 'thumbs-down-outline'}
+                      size={14}
+                      color={message.feedback === 'down' ? colors.danger : colors.textLo}
+                    />
+                  </Pressable>
+
+                  <Pressable
+                    onPress={() => onReport?.(message.id)}
+                    hitSlop={6}
+                    accessibilityRole="button"
+                    accessibilityLabel={t('coach.feedback.report')}
+                    style={styles.actionBtn}
+                    testID={`btn-coach-report-${message.id}`}
+                  >
+                    <Ionicons name="flag-outline" size={13} color={colors.textLo} />
+                  </Pressable>
+                </View>
+              </View>
+            ) : null}
           </View>
         )}
       </View>
@@ -183,84 +271,172 @@ export function CoachMessageBubble({
 }
 
 const styles = StyleSheet.create({
-  demoRow: { paddingHorizontal: space[0] },
+  demoRow: { paddingHorizontal: 0 },
   rowWrap: {
     flexDirection: 'row',
-    marginBottom: spacing.md,
-    paddingHorizontal: spacing.md,
-    gap: 8,
+    marginBottom: space.lg,
+    paddingHorizontal: space.lg,
+    gap: space.sm,
   },
   userRowWrap: {
     justifyContent: 'flex-end',
   },
   coachRowWrap: {
     justifyContent: 'flex-start',
+    alignItems: 'flex-start',
   },
   avatar: {
-    width: space[7],
-    height: space[7],
+    width: 28,
+    height: 28,
+    borderRadius: radius.full,
+    backgroundColor: colors.s2,
+    borderWidth: borders.width,
+    borderColor: colors.hairline,
     alignItems: 'center',
     justifyContent: 'center',
-    marginTop: space[1],
+    marginTop: 2,
   },
   bubbleContentWrap: {
-    maxWidth: '82%',
+    flexShrink: 1,
   },
   userContentWrap: {
+    maxWidth: '84%',
     alignItems: 'flex-end',
   },
-  bubble: {
-    borderRadius: radius.md,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm + 2,
+  coachContentWrap: {
+    flex: 1,
   },
   userBubble: {
-    borderBottomRightRadius: visualPrimitives.radii[2],
+    backgroundColor: colors.s2,
+    borderWidth: borders.width,
+    borderColor: colors.hairline,
+    borderRadius: radius.card,
+    paddingHorizontal: space.lg,
+    paddingVertical: space.md,
+    gap: space.sm + 2,
   },
-  coachBubble: {
-    borderWidth: 1,
-    borderBottomLeftRadius: visualPrimitives.radii[2],
+  attachedMealCard: {
+    backgroundColor: colors.s1,
+    borderWidth: borders.width,
+    borderColor: colors.hairline,
+    borderRadius: radius.chip,
+    paddingHorizontal: space.md,
+    paddingVertical: space.sm,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: space.sm + 2,
   },
-  messageText: {
-    fontSize: fontSize.sm + 1,
-    lineHeight: 21,
+  attachedMealIcon: {
+    width: 28,
+    height: 28,
+    borderRadius: radius.full,
+    backgroundColor: colors.s2,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  attachedMealInfo: {
+    gap: 2,
+    flexShrink: 1,
+  },
+  assistantStack: {
+    gap: space.sm + 2,
+  },
+  leadCopy: {
+    paddingTop: 2,
+  },
+  coachPlainBubble: {
+    backgroundColor: colors.s1,
+    borderWidth: borders.width,
+    borderColor: colors.hairline,
+    borderRadius: radius.card,
+    paddingHorizontal: space.lg,
+    paddingVertical: space.md,
   },
   streamingIndicator: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
-    marginTop: 6,
+    gap: space.xs + 2,
+    marginTop: space.xs + 2,
   },
-  streamingText: {
-    fontSize: fontSize.xs,
-    fontStyle: 'italic',
+  structuredCard: {
+    backgroundColor: colors.s1,
+    borderWidth: borders.width,
+    borderColor: colors.hairline,
+    borderRadius: radius.card,
+    padding: space.lg,
+    gap: space.md,
+  },
+  pointsList: {
+    gap: space.sm + 2,
+  },
+  pointRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: space.sm + 2,
+  },
+  pointText: {
+    flex: 1,
+  },
+  cardActionsRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: space.sm,
+  },
+  cardPrimaryBtn: {
+    minHeight: 40,
+    paddingHorizontal: space.lg,
+    borderRadius: radius.button,
+    backgroundColor: colors.apricot,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  cardSecondaryBtn: {
+    minHeight: 40,
+    paddingHorizontal: space.lg,
+    borderRadius: radius.button,
+    backgroundColor: colors.s2,
+    borderWidth: borders.width,
+    borderColor: colors.hairlineLit,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  primaryPressed: {
+    backgroundColor: colors.apricotPressed,
+  },
+  secondaryPressed: {
+    backgroundColor: colors.s3,
   },
   suggestionsContainer: {
-    marginTop: 4,
-    width: '100%',
+    gap: space.sm,
   },
   coachFooter: {
-    marginTop: 6,
-    gap: 4,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: space.sm,
   },
   disclaimerRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
+    flexShrink: 1,
   },
   disclaimerText: {
-    fontSize: fontSize.xs - 1,
+    opacity: 0.75,
   },
   feedbackRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
-    marginTop: 2,
+    gap: 4,
   },
   actionBtn: {
-    padding: 6,
-    borderRadius: radius.sm,
+    width: 30,
+    height: 30,
+    borderRadius: radius.full,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  actionBtnActive: {
+    backgroundColor: colors.s2,
   },
 });

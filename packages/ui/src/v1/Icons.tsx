@@ -1113,3 +1113,106 @@ export function InfoCircleIcon({
     </Svg>
   );
 }
+
+export function CheckCircleIcon({
+  size = 18,
+  color = colors.apricot,
+  strokeWidth = DEFAULT_STROKE,
+}: DSIconProps): React.JSX.Element {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Circle cx={12} cy={12} r={9} stroke={color} strokeWidth={strokeWidth} />
+      <Polyline
+        points="8.5 12.2 11 14.7 15.8 9.8"
+        stroke={color}
+        strokeWidth={strokeWidth}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </Svg>
+  );
+}
+
+export function AlertCircleIcon({
+  size = 18,
+  color = colors.apricot,
+  strokeWidth = DEFAULT_STROKE,
+}: DSIconProps): React.JSX.Element {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Circle cx={12} cy={12} r={9} stroke={color} strokeWidth={strokeWidth} />
+      <Line
+        x1={12}
+        y1={8}
+        x2={12}
+        y2={12.5}
+        stroke={color}
+        strokeWidth={strokeWidth}
+        strokeLinecap="round"
+      />
+      <Circle cx={12} cy={16} r={0.9} fill={color} />
+    </Svg>
+  );
+}
+
+export function ChatBubbleIcon({
+  size = 18,
+  color = colors.apricot,
+  strokeWidth = DEFAULT_STROKE,
+}: DSIconProps): React.JSX.Element {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Path
+        d="M21 11.5a8.5 8.5 0 0 1-8.5 8.5c-1.5 0-2.9-.4-4.1-1L4 20.5l1.4-4.2A8.5 8.5 0 1 1 21 11.5z"
+        stroke={color}
+        strokeWidth={strokeWidth}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </Svg>
+  );
+}
+
+export function MoreDotsIcon({ size = 18, color = colors.textHi }: DSIconProps): React.JSX.Element {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Circle cx={6} cy={12} r={1.6} fill={color} />
+      <Circle cx={12} cy={12} r={1.6} fill={color} />
+      <Circle cx={18} cy={12} r={1.6} fill={color} />
+    </Svg>
+  );
+}
+
+export function ShareUploadIcon({
+  size = 18,
+  color = colors.textHi,
+  strokeWidth = DEFAULT_STROKE,
+}: DSIconProps): React.JSX.Element {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Path
+        d="M4 13v5a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-5"
+        stroke={color}
+        strokeWidth={strokeWidth}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <Polyline
+        points="16 8 12 4 8 8"
+        stroke={color}
+        strokeWidth={strokeWidth}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <Line
+        x1={12}
+        y1={4}
+        x2={12}
+        y2={15}
+        stroke={color}
+        strokeWidth={strokeWidth}
+        strokeLinecap="round"
+      />
+    </Svg>
+  );
+}

@@ -13,6 +13,7 @@ export * from './ConsistencyHistoryChart';
 export * from './ProgressHubSummary';
 export * from './MondayRecapModal';
 export * from './WeeklySummaryModal';
+export * from './ProgressV1Components';
 export * from './ChallengesComingSoon';
 export * from './ChallengesView';
 export * from './CreateChallengeModal';

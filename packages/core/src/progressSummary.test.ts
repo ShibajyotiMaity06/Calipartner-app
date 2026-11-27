@@ -1,5 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import { enrichProgress, summarizeProgress, weightMilestone } from './progressSummary';
+import {
+  enrichProgress,
+  isCalorieDayWithinPercent,
+  summarizeHabitsProgress,
+  summarizeProgress,
+  weightMilestone,
+} from './progressSummary';
 describe('weight milestones', () => {
   it('handles gain, loss, overshooting, regression and missing weights without false completion', () => {
     expect(weightMilestone(80, 75, 70)).toMatchObject({ percent: 50, change: -5, remaining: 5 });
@@ -151,5 +157,45 @@ describe('progress summaries', () => {
     expect(summarizeProgress(enriched).strength).toEqual({ name: 'Press', value: 70 });
     expect(data.workouts.exercise_progression).toEqual([]);
     expect(enrichProgress(fixture()).workouts.exercise_progression).toEqual([]);
+  });
+
+  it('computes perfect habit days and 10% calorie tolerance across tracked goals', () => {
+    expect(isCalorieDayWithinPercent(1950, 1900)).toBe(true);
+    expect(isCalorieDayWithinPercent(2200, 1900)).toBe(false);
+    const data = fixture();
+    data.calories.daily = [
+      {
+        date: '2026-11-10',
+        calories: 1950,
+        target_calories: 1900,
+        is_logged_day: true,
+        is_goal_day: true,
+      },
+      {
+        date: '2026-11-11',
+        calories: 2250,
+        target_calories: 1900,
+        is_logged_day: true,
+        is_goal_day: false,
+      },
+    ];
+    data.steps.daily = [
+      { date: '2026-11-10', steps: 10200, distance_km: 7.5 },
+      { date: '2026-11-11', steps: 11000, distance_km: 8.1 },
+    ];
+    data.water.daily = [
+      { date: '2026-11-10', water_ml: 2500 },
+      { date: '2026-11-11', water_ml: 1500 },
+    ];
+    const summary = summarizeHabitsProgress(
+      data,
+      { calories: true, steps: true, water: true },
+      { goalSteps: 10000, goalWaterMl: 2500, fastingCompletedDates: ['2026-11-10'] },
+    );
+    expect(summary.totalDays).toBe(7);
+    expect(summary.perfectDays).toBe(1);
+    expect(summary.waterHitDays).toBe(1);
+    expect(summary.fastingCompletedDays).toBe(1);
+    expect(summary.last7Days).toHaveLength(7);
   });
 });

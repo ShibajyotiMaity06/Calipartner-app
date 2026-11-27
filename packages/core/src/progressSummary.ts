@@ -124,3 +124,106 @@ export function summarizeProgress(data: IndividualProgressData) {
     })),
   };
 }
+
+export function isCalorieDayWithinPercent(
+  calories: number,
+  target: number,
+  tolerance = 0.1,
+): boolean {
+  if (!Number.isFinite(calories) || !Number.isFinite(target) || target <= 0 || calories <= 0) {
+    return false;
+  }
+  return Math.abs(calories - target) <= target * tolerance;
+}
+
+export interface HabitDayStatus {
+  date: string;
+  caloriesHit: boolean;
+  stepsHit: boolean;
+  waterHit: boolean;
+  fastingCompleted: boolean;
+  isPerfect: boolean;
+}
+
+export function summarizeHabitsProgress(
+  data: IndividualProgressData,
+  tracking: { calories?: boolean; steps?: boolean; water?: boolean },
+  options: {
+    targetCalories?: number | null;
+    goalSteps?: number | null;
+    goalWaterMl?: number | null;
+    fastingCompletedDates?: string[];
+  } = {},
+) {
+  const trackCalories = tracking.calories !== false;
+  const trackSteps = tracking.steps === true;
+  const trackWater = tracking.water === true;
+  const targetCalories = options.targetCalories ?? data.calories.average_target ?? 0;
+  const goalSteps = options.goalSteps ?? data.steps.goal_steps ?? 0;
+  const goalWaterMl = options.goalWaterMl ?? data.water.goal_water_ml ?? 0;
+
+  const calMap = new Map(data.calories.daily.map((d) => [d.date, d]));
+  const stepMap = new Map(data.steps.daily.map((d) => [d.date, d]));
+  const waterMap = new Map(data.water.daily.map((d) => [d.date, d]));
+  const fastingSet = new Set([
+    ...(data.fasting?.daily_hours ?? []).filter((d) => d.completed).map((d) => d.date),
+    ...(options.fastingCompletedDates ?? []),
+  ]);
+
+  const totalDays = Math.min(
+    366,
+    Math.max(1, getDaysDifference(data.end_date, data.start_date) + 1),
+  );
+  const anyTracked = trackCalories || trackSteps || trackWater;
+  const days: HabitDayStatus[] = Array.from({ length: totalDays }, (_, i) => {
+    const date = getPreviousDateString(data.end_date, totalDays - 1 - i);
+    const calRow = calMap.get(date);
+    const effectiveTarget = calRow?.target_calories || targetCalories;
+    const caloriesHit = Boolean(
+      calRow &&
+      (calRow.is_goal_day || isCalorieDayWithinPercent(calRow.calories, effectiveTarget, 0.1)),
+    );
+    const stepRow = stepMap.get(date);
+    const stepsHit = Boolean(goalSteps > 0 && stepRow && stepRow.steps >= goalSteps);
+    const waterRow = waterMap.get(date);
+    const waterHit = Boolean(goalWaterMl > 0 && waterRow && waterRow.water_ml >= goalWaterMl);
+    const fastingCompleted = fastingSet.has(date);
+
+    const isPerfect =
+      anyTracked &&
+      (!trackCalories || caloriesHit) &&
+      (!trackSteps || stepsHit) &&
+      (!trackWater || waterHit);
+
+    return { date, caloriesHit, stepsHit, waterHit, fastingCompleted, isPerfect };
+  });
+
+  const last7Days = Array.from({ length: 7 }, (_, i) => {
+    const date = getPreviousDateString(data.end_date, 6 - i);
+    const match = days.find((d) => d.date === date);
+    if (match) return match;
+    const calRow = calMap.get(date);
+    const stepRow = stepMap.get(date);
+    const waterRow = waterMap.get(date);
+    return {
+      date,
+      caloriesHit: Boolean(
+        calRow &&
+        isCalorieDayWithinPercent(calRow.calories, calRow.target_calories || targetCalories, 0.1),
+      ),
+      stepsHit: Boolean(goalSteps > 0 && stepRow && stepRow.steps >= goalSteps),
+      waterHit: Boolean(goalWaterMl > 0 && waterRow && waterRow.water_ml >= goalWaterMl),
+      fastingCompleted: fastingSet.has(date),
+      isPerfect: false,
+    };
+  });
+
+  return {
+    totalDays,
+    perfectDays: days.filter((d) => d.isPerfect).length,
+    waterHitDays: days.filter((d) => d.waterHit).length,
+    fastingCompletedDays: days.filter((d) => d.fastingCompleted).length,
+    last7Days,
+    days,
+  };
+}

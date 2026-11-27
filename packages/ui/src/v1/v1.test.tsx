@@ -102,6 +102,11 @@ import {
   heatmapScale,
   HistoryClockIcon,
   InfoCircleIcon,
+  ShareUploadIcon,
+  MoreDotsIcon,
+  CheckCircleIcon,
+  AlertCircleIcon,
+  ChatBubbleIcon,
   HomeIcon,
   IconButton,
   Input,
@@ -422,6 +427,11 @@ describe('CaliPartner Design System v1 — Foundation & Primitives', () => {
           <FlashIcon />
           <CubeIcon />
           <InfoCircleIcon />
+          <ShareUploadIcon />
+          <MoreDotsIcon />
+          <CheckCircleIcon />
+          <AlertCircleIcon />
+          <ChatBubbleIcon />
         </View>,
       );
     });

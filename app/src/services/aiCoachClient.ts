@@ -17,6 +17,12 @@ export interface AiCoachCallResult {
   content: string;
   suggestions?: CoachSuggestion[];
   mealDraft?: CoachMealDraft | null;
+  card?: {
+    eyebrow?: string;
+    points: Array<{ kind: 'positive' | 'note'; lead: string; detail?: string }>;
+    actions?: Array<{ label: string; prompt: string; primary?: boolean }>;
+  } | null;
+  quickReplies?: string[];
   source: 'edge_function';
 }
 
@@ -86,6 +92,11 @@ export async function queryAiCoach(
     content: cleanCoachResponse(data.message.content),
     suggestions: data.suggestions,
     mealDraft: data.meal_draft ? validateCoachMealDraft(data.meal_draft) : null,
+    card:
+      data.card && Array.isArray(data.card.points) && data.card.points.length > 0
+        ? data.card
+        : null,
+    quickReplies: Array.isArray(data.quick_replies) ? data.quick_replies : [],
     source: 'edge_function',
   };
 }

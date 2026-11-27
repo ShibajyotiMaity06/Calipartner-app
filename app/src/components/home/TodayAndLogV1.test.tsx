@@ -90,6 +90,7 @@ vi.mock('@calipartner/ui/v1', async () => {
     CameraIcon: 'CameraIcon',
     Card: ({ children, ...rest }: Record<string, unknown>) =>
       React.createElement('Card', rest, children as React.ReactNode),
+    ChatBubbleIcon: 'ChatBubbleIcon',
     CheckIcon: 'CheckIcon',
     ChevronLeftIcon: 'ChevronLeftIcon',
     ChevronRightIcon: 'ChevronRightIcon',
@@ -242,6 +243,7 @@ vi.mock('@/components/fasting/FastingTimerModal', () => ({
 }));
 
 import {
+  TodayCoachCardV1,
   TodayDayCardV1,
   TodayHeaderV1,
   TodayMealRowV1,
@@ -308,6 +310,7 @@ describe('Screens 26–28 Design System v1 Today & Log sheet', () => {
             visible
             onRetry={onRetrySquad}
           />
+          <TodayCoachCardV1 isPro={false} onPress={onUpgrade} />
         </>,
       );
     });
@@ -470,5 +473,24 @@ describe('Screens 26–28 Design System v1 Today & Log sheet', () => {
     await act(async () => byId('log-tile-post').props.onPress());
     expect(onClose).toHaveBeenCalledOnce();
     expect(mocks.routerPush).toHaveBeenCalledWith('/feed/create');
+  });
+
+  it('renders Ask your coach banner with PRO badge when free and chevron when Pro', async () => {
+    const onFreePress = vi.fn();
+    const onProPress = vi.fn();
+
+    await act(async () => {
+      tree = create(
+        <>
+          <TodayCoachCardV1 isPro={false} onPress={onFreePress} />
+          <TodayCoachCardV1 isPro onPress={onProPress} />
+        </>,
+      );
+    });
+
+    const cards = tree.root.findAllByProps({ testID: 'today-coach-card' });
+    expect(cards.filter((c) => String(c.type) === 'Card')).toHaveLength(2);
+    expect(tree.root.findAllByType('Badge' as React.ElementType)).toHaveLength(1);
+    expect(tree.root.findAllByType('ChevronRightIcon' as React.ElementType)).toHaveLength(1);
   });
 });

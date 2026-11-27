@@ -1,5 +1,5 @@
 import React, { useRef, useState } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 import { Button } from '@calipartner/ui';
 import { Text, borders, colors, radius, space } from '@calipartner/ui/v1';
 import { sumNutrientSnapshots, type CoachMealDraft } from '@calipartner/core';
@@ -13,10 +13,12 @@ import { t } from '@/i18n';
 export function CoachMealDraftCard({
   draft,
   onLogged,
+  onAnotherIdea,
   disabled = false,
 }: {
   draft: CoachMealDraft;
   onLogged?: () => void;
+  onAnotherIdea?: () => void;
   disabled?: boolean;
 }) {
   const request = useRef<CoachMealSave | null>(null);
@@ -123,13 +125,35 @@ export function CoachMealDraftCard({
         </Text>
       ) : null}
 
-      <Button
-        label={t(saved ? 'coach.meal.logged' : 'coach.meal.log')}
-        onPress={() => void save()}
-        loading={saving}
-        disabled={disabled || saved}
-        testID="coach-meal-log"
-      />
+      <View style={styles.actionsRow}>
+        <View style={styles.actionFlex}>
+          <Button
+            label={t(saved ? 'coach.meal.logged' : 'coach.meal.log')}
+            onPress={() => void save()}
+            loading={saving}
+            disabled={disabled || saved}
+            testID="coach-meal-log"
+          />
+        </View>
+        {onAnotherIdea && !saved ? (
+          <Pressable
+            onPress={onAnotherIdea}
+            disabled={disabled}
+            accessibilityRole="button"
+            accessibilityLabel={t('coachV1.anotherIdea')}
+            style={({ pressed }) => [
+              styles.anotherBtn,
+              pressed ? styles.anotherPressed : null,
+              disabled ? styles.anotherDisabled : null,
+            ]}
+            testID="coach-meal-another-idea"
+          >
+            <Text variant="buttonM" color="textHi">
+              {t('coachV1.anotherIdea')}
+            </Text>
+          </Pressable>
+        ) : null}
+      </View>
     </View>
   );
 }
@@ -187,5 +211,29 @@ const styles = StyleSheet.create({
   divider: {
     height: borders.width,
     backgroundColor: colors.s2,
+  },
+  actionsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: space.sm,
+  },
+  actionFlex: {
+    flex: 1,
+  },
+  anotherBtn: {
+    minHeight: 46,
+    paddingHorizontal: space.lg,
+    borderRadius: radius.button,
+    backgroundColor: colors.s2,
+    borderWidth: borders.width,
+    borderColor: colors.hairlineLit,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  anotherPressed: {
+    backgroundColor: colors.s3,
+  },
+  anotherDisabled: {
+    opacity: 0.45,
   },
 });

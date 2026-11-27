@@ -15,6 +15,7 @@ import {
   Badge,
   BowlIcon,
   Card,
+  ChatBubbleIcon,
   ChevronLeftIcon,
   ChevronRightIcon,
   DumbbellIcon,
@@ -1449,4 +1450,54 @@ const styles = StyleSheet.create({
   workoutEyebrow: {
     letterSpacing: 1.2,
   },
+  coachCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: space.md,
+    paddingVertical: space.optical14,
+    paddingHorizontal: space.lg,
+  },
+  coachIconTile: {
+    width: 40,
+    height: 40,
+    borderRadius: radius.iconTile,
+    backgroundColor: colors.s2,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
 });
+
+export interface TodayCoachCardV1Props {
+  isPro: boolean;
+  onPress: () => void;
+}
+
+export function TodayCoachCardV1({ isPro, onPress }: TodayCoachCardV1Props): React.JSX.Element {
+  return (
+    <Card
+      onPress={onPress}
+      accessibilityLabel={t('homeV1.askCoachTitle')}
+      style={styles.coachCard}
+      testID="today-coach-card"
+    >
+      <View style={styles.coachIconTile}>
+        <ChatBubbleIcon size={18} color={colors.apricot} />
+      </View>
+
+      <View style={styles.flexOne}>
+        <Text variant="rowTitle" color="textHi" numberOfLines={1}>
+          {t('homeV1.askCoachTitle')}
+        </Text>
+        <Text variant="meta" color="textLo" numberOfLines={1}>
+          {t('homeV1.askCoachSubtitle')}
+        </Text>
+      </View>
+
+      {isPro ? (
+        <ChevronRightIcon size={18} color={colors.textLo} />
+      ) : (
+        <Badge variant="pro" label={t('onboardingV1.paywallColPro')} />
+      )}
+    </Card>
+  );
+}
